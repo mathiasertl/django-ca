@@ -1,7 +1,7 @@
+*.py[co]
+*.sw[po]
 /bin/
 /include/
 /lib/
 /local/
 /share/
-*.py[co]
-*.sw[po]
