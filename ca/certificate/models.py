@@ -1,6 +1,10 @@
 from django.db import models
 
-class Certificate(models):
+from certificate.managers import CertificateManager
+
+class Certificate(models.Model):
+    objects = CertificateManager()
+
     created = models.DateTimeField(auto_now=True)
     expires = models.DateTimeField(null=False, blank=False)
 
