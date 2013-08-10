@@ -9,10 +9,15 @@ from OpenSSL import crypto
 from django.conf import settings
 from django.db import models
 
+DIGEST_ALGORITHM = getattr(settings, 'DIGEST_ALGORITHM', 'sha512')
+
 
 class CertificateManager(models.Manager):
 
-    def from_csr(self, csr, subjectAltNames=None, days=720):
+    def from_csr(self, csr, subjectAltNames=None, days=720, algorithm=None):
+        # get algorithm used to sign certificate
+        if algorithm is None:
+            algorithm = DIGEST_ALGORITHM
 
         # get certificate information
         req = crypto.load_certificate_request(crypto.FILETYPE_PEM, csr)
@@ -38,7 +43,7 @@ class CertificateManager(models.Manager):
         cert.set_issuer(issuerPub.get_subject())
         cert.set_subject(req.get_subject())
         cert.set_pubkey(req.get_pubkey())
-        cert.sign(issuerKey, settings.DIGEST_ALGORITHM)
+        cert.sign(issuerKey, algorithm)
 
         # create database object
         obj = self.create(
@@ -48,4 +53,4 @@ class CertificateManager(models.Manager):
             expires=expires,
         )
 
-        return obj
+        return obj, cert
