@@ -66,4 +66,4 @@ class CertificateManager(models.Manager):
             expires=expires,
         )
 
-        return obj, cert
+        return obj
