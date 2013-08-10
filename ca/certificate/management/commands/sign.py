@@ -1,6 +1,7 @@
 from optparse import make_option
 
-from django.core.management.base import BaseCommand, CommandError
+from django.contrib.auth.models import User
+from django.core.management.base import BaseCommand
 from django.utils import six
 
 from certificate.models import Certificate
@@ -23,11 +24,18 @@ class Command(BaseCommand):
             help='The path to the certificate to sign, if ommitted, you will be be prompted.'
         ),
         make_option(
-            '--name',
+            '--alt',
             metavar='DOMAIN',
             action='append',
             default=[],
             help='Add a subjectAltName to the certificate (may be given multiple times)'
+        ),
+        make_option(
+            '--watch',
+            metavar='EMAIL',
+            action='append',
+            default=[],
+            help='Email EMAIL when this certificate expires (may be given multiple times)',
         ),
         make_option(
             '--out',
@@ -46,9 +54,14 @@ class Command(BaseCommand):
         else:
             csr = open(options['csr']).read()
 
+        watchers = []
+        for addr in options['watch']:
+            watchers.append(User.objects.get_or_create(
+                email=addr, defaults={'username': addr})[0])
+
         cert = Certificate.objects.from_csr(
-            csr, subjectAltNames=options['name'], days=options['days'],
-            algorithm=options['algorithm'])
+            csr, subjectAltNames=options['alt'], days=options['days'],
+            algorithm=options['algorithm'], watchers=watchers)
 
         if options['out']:
             f = open(options['out'], 'w')
