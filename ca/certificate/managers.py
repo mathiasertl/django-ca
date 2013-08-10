@@ -14,7 +14,7 @@ DIGEST_ALGORITHM = getattr(settings, 'DIGEST_ALGORITHM', 'sha512')
 
 class CertificateManager(models.Manager):
 
-    def from_csr(self, csr, subjectAltNames=None, days=720, algorithm=None, watchers=None):
+    def from_csr(self, csr, subjectAltNames=None, days=730, algorithm=None, watchers=None):
         # get algorithm used to sign certificate
         if algorithm is None:
             algorithm = DIGEST_ALGORITHM
