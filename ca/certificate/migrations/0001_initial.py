@@ -20,13 +20,12 @@ class Migration(SchemaMigration):
         db.send_create_signal(u'certificate', ['Certificate'])
 
         # Adding M2M table for field watchers on 'Certificate'
-        m2m_table_name = db.shorten_name(u'certificate_certificate_watchers')
-        db.create_table(m2m_table_name, (
+        db.create_table(u'certificate_certificate_watchers', (
             ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
             ('certificate', models.ForeignKey(orm[u'certificate.certificate'], null=False)),
             ('user', models.ForeignKey(orm[u'auth.user'], null=False))
         ))
-        db.create_unique(m2m_table_name, ['certificate_id', 'user_id'])
+        db.create_unique(u'certificate_certificate_watchers', ['certificate_id', 'user_id'])
 
 
     def backwards(self, orm):
@@ -34,7 +33,7 @@ class Migration(SchemaMigration):
         db.delete_table(u'certificate_certificate')
 
         # Removing M2M table for field watchers on 'Certificate'
-        db.delete_table(db.shorten_name(u'certificate_certificate_watchers'))
+        db.delete_table('certificate_certificate_watchers')
 
 
     models = {
