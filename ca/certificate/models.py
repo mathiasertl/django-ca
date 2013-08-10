@@ -1,9 +1,12 @@
+from django.contrib.auth.models import user
 from django.db import models
 
 from certificate.managers import CertificateManager
 
 class Certificate(models.Model):
     objects = CertificateManager()
+
+    watchers = models.ManyToManyField(user)
 
     created = models.DateTimeField(auto_now=True)
     expires = models.DateTimeField(null=False, blank=False)
