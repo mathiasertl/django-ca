@@ -13,7 +13,7 @@ DATABASES = {
 
 # Path to your certificate authorities public and private key:
 CA_PRIVATE_KEY = '/etc/fsinf-ca/private/private.key'
-CA_PUBLIC_KEY = '/etc/fsinf-ca/certs/public.crt'
+CA_PUBLIC_KEY = '/etc/fsinf-ca/cert/public.crt'
 
 # You can also override the default algorithm used to sign certificates:
 #DIGEST_ALGORITHM = 'sha512'
