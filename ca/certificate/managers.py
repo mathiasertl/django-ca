@@ -43,6 +43,18 @@ class CertificateManager(models.Manager):
         cert.set_issuer(issuerPub.get_subject())
         cert.set_subject(req.get_subject())
         cert.set_pubkey(req.get_pubkey())
+
+        extensions = []
+
+        # add subjectAltName if given:
+        if subjectAltNames:
+            subjData = ','.join(['DNS:%s' % n for n in subjectAltNames])
+            ext = crypto.X509Extension('subjectAltName', 0, subjData)
+            extensions.append(ext)
+
+        cert.add_extensions(extensions)
+
+        # finally sign the certificate:
         cert.sign(issuerKey, algorithm)
 
         # create database object
