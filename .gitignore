@@ -7,3 +7,4 @@
 /share/
 /priv/
 ca.sqlite3
+ca/ca/localsettings.py
