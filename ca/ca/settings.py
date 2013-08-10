@@ -11,8 +11,8 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'ca.sqlite3',                      # Or path to database file if using sqlite3.
+        'ENGINE': 'django.db.backends.', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': '',                      # Or path to database file if using sqlite3.
         # The following settings are not used with sqlite3:
         'USER': '',
         'PASSWORD': '',
@@ -159,6 +159,10 @@ LOGGING = {
     }
 }
 
-CA_PRIVATE_KEY = '/home/mati/git/fsinf/certificate-authority/priv/priv.key'
-CA_PUBLIC_KEY = '/home/mati/git/fsinf/certificate-authority/fsinf_at.crt'
-DIGEST_ALGORITHM = 'md5'
+# custom defaults
+DIGEST_ALGORITHM = 'sha512'
+
+try:
+    from localsettings import *
+except ImportError:
+    pass
