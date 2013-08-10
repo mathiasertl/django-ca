@@ -44,6 +44,7 @@ class CertificateManager(models.Manager):
         cert.set_subject(req.get_subject())
         cert.set_pubkey(req.get_pubkey())
 
+        # collect any extension
         extensions = []
 
         # add subjectAltName if given:
