@@ -8,6 +8,8 @@ from certificate.models import Certificate
 
 
 class Command(BaseCommand):
+    help = "Sign a CSR and output signed certificate."
+
     option_list = BaseCommand.option_list + (
         make_option('--days',
             default=720,
