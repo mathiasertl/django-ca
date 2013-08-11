@@ -14,7 +14,7 @@ DIGEST_ALGORITHM = getattr(settings, 'DIGEST_ALGORITHM', 'sha512')
 
 class CertificateManager(models.Manager):
 
-    def from_csr(self, csr, subjectAltNames=None, days=720, algorithm=None, watchers=None):
+    def from_csr(self, csr, subjectAltNames=None, days=730, algorithm=None, watchers=None):
         # get algorithm used to sign certificate
         if algorithm is None:
             algorithm = DIGEST_ALGORITHM
@@ -33,13 +33,12 @@ class CertificateManager(models.Manager):
         # compute notAfter info
         expires = datetime.today() + timedelta(days=days + 1)
         expires = expires.replace(hour=0, minute=0, second=0, microsecond=0)
-        notAfter = time.mktime(expires.utctimetuple())
 
         # create signed certificate
         cert = crypto.X509()
         cert.set_serial_number(uuid.uuid4().int)
-        cert.gmtime_adj_notBefore(int(time.time()))
-        cert.gmtime_adj_notAfter(int(notAfter))
+        cert.set_notBefore(datetime.now().strftime('%Y%m%d%H%M%SZ'))
+        cert.set_notAfter(expires.strftime('%Y%m%d%H%M%SZ'))
         cert.set_issuer(issuerPub.get_subject())
         cert.set_subject(req.get_subject())
         cert.set_pubkey(req.get_pubkey())
