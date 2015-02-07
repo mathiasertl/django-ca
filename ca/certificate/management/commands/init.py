@@ -23,6 +23,8 @@ from __future__ import unicode_literals
 import os
 import uuid
 
+from datetime import datetime
+from datetime import timedelta
 from optparse import make_option
 
 from django.conf import settings
@@ -52,6 +54,9 @@ class Command(BaseCommand):
         if os.path.exists(crt_path):
             raise CommandError("%s: public key already exists." % crt_path)
 
+        now = datetime.utcnow()
+        expires = now + timedelta(days=options['expires'])
+
         key = crypto.PKey()
         key.generate_key(crypto.TYPE_RSA, 4096)
 
@@ -63,8 +68,8 @@ class Command(BaseCommand):
         cert.get_subject().OU = ou
         cert.get_subject().CN = cn
         cert.set_serial_number(uuid.uuid4().int)
-        cert.gmtime_adj_notBefore(0)
-        cert.gmtime_adj_notAfter(10*365*24*60*60)
+        cert.gmtime_adj_notBefore(now.strftime('%Y%m%d%H%M%SZ'))
+        cert.gmtime_adj_notAfter(expires.strftime('%Y%m%d%H%M%SZ'))
         cert.set_issuer(cert.get_subject())
         cert.set_pubkey(key)
         cert.sign(key, settings.DIGEST_ALGORITHM)
