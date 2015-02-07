@@ -155,6 +155,9 @@ LOGGING = {
 
 # custom defaults
 DIGEST_ALGORITHM = 'sha512'
+CA_DIR = os.path.join(BASE_DIR, 'files')
+if not os.path.exists(CA_DIR):
+    os.makedirs(CA_DIR)
 
 try:
     from localsettings import *
