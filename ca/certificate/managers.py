@@ -38,9 +38,11 @@ class CertificateManager(models.Manager):
         subject = req.get_subject()
         cn = dict(subject.get_components())['CN']
 
-        # get issuer cert:
-        issuerKey = crypto.load_privatekey(crypto.FILETYPE_PEM, open(settings.CA_KEY).read())
-        issuerPub = crypto.load_certificate(crypto.FILETYPE_PEM, open(settings.CA_CRT).read())
+        # load CA key and cert
+        with open(settings.CA_KEY) as ca_key:
+            issuerKey = crypto.load_privatekey(crypto.FILETYPE_PEM, ca_key.read())
+        with open(settings.CA_CRT) as ca_crt:
+            issuerPub = crypto.load_certificate(crypto.FILETYPE_PEM, ca_crt.read())
 
         # compute notAfter info
         expires = datetime.today() + timedelta(days=days + 1)
