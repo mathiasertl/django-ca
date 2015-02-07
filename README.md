@@ -32,6 +32,35 @@ The file ``ca/ca/localsettings.py.example`` contains documentation on available 
 
 ## Management
 
+Certificate management is done via ``manage.py``. In general, all commands have a ``-h`` option.
+
+### Creating a private key
+
+Like any good CA, this project does never creates private certificates for you. Instead, create a
+private certificate and certificate-signing request (CSR) on the machine that will use the
+certificate:
+
+```
+openssl genrsa -out example.com.key 4096
+openssl req -new -key example.com.key -out example.com.csr -utf8 -batch -sha512
+```
+
+### Sign a private key
+
+Copy the CSR and sign it:
+
+```
+python ca/manage.py sign --csr example.com.csr --out example.com.crt
+```
+
+Note that the ``sign`` command has a few useful options, try the ``-h`` parameter for options.
+
+### View certificate
+
+### Send warning emails on expired certificates
+
+### Add/Remove watchers to certificates
+
 ## License
 
 This project is free software licensed under the [GPLv3](http://www.gnu.org/licenses/gpl.txt).
