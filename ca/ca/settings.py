@@ -170,4 +170,4 @@ if not os.path.exists(CA_DIR):
     os.makedirs(CA_DIR)
 
 CA_KEY = os.path.join(CA_DIR, 'ca.key')
-cA_CRT = os.path.join(CA_DIR, 'ca.crt')
+CA_CRT = os.path.join(CA_DIR, 'ca.crt')
