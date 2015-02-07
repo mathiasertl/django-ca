@@ -27,8 +27,8 @@ class Command(BaseCommand):
 
         if not options['expired']:
             certs = certs.filter(expires__gt=datetime.now())
-        if options['revoked']:
-            certs = certs.filter(revoked=True)
+        if not options['revoked']:
+            certs = certs.filter(revoked=False)
 
         for cert in certs:
             print('%s: %s (expires: %s)' % (cert.pk, cert.cn,
