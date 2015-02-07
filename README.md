@@ -96,6 +96,7 @@ PATH=/root/certificate-authority/bin
 ## ToDo
 
 1. Finish documentation (this doc, localsettings example)
+2. Add ability to override keyUsage/extendedKeyUsage when signing a new cert
 
 ## License
 
