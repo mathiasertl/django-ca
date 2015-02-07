@@ -36,7 +36,9 @@ class CertificateManager(models.Manager):
         # get certificate information
         req = crypto.load_certificate_request(crypto.FILETYPE_PEM, csr)
         subject = req.get_subject()
-        cn = dict(subject.get_components())['CN']
+        cn = dict(subject.get_components()).get('CN')
+        if cn is None:
+            raise Exception('CSR has no CommonName!')
 
         # load CA key and cert
         with open(settings.CA_KEY) as ca_key:
