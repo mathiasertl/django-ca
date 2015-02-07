@@ -7,7 +7,7 @@ This simple project allows you to manage a local TLS certificate authority from 
 1. Set up a secure certification authority in a few minutes.
 2. Manage your entire certificate authority from the command line.
 3. Get email notifications about certificates about to expire.
-4. Support for certificate revocation lists (CRLs).
+4. Support for certificate revocation lists (CRLs) and OCSP (both have to be hosted separately).
 
 ## Setup
 
@@ -92,6 +92,10 @@ PATH=/root/certificate-authority/bin
 ```
 
 ### Add/Remove watchers to certificates
+
+## ToDo
+
+1. Finish documentation (this doc, localsettings example)
 
 ## License
 
