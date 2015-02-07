@@ -3,6 +3,7 @@ from django.db import models
 
 from certificate.managers import CertificateManager
 
+
 class Certificate(models.Model):
     objects = CertificateManager()
 

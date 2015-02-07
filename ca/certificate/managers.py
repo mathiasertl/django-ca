@@ -1,4 +1,3 @@
-import time
 import uuid
 
 from datetime import datetime
@@ -14,7 +13,8 @@ DIGEST_ALGORITHM = getattr(settings, 'DIGEST_ALGORITHM', 'sha512')
 
 class CertificateManager(models.Manager):
 
-    def from_csr(self, csr, subjectAltNames=None, days=730, algorithm=None, watchers=None):
+    def from_csr(self, csr, subjectAltNames=None, days=730, algorithm=None,
+                 watchers=None):
         # get algorithm used to sign certificate
         if algorithm is None:
             algorithm = DIGEST_ALGORITHM
@@ -25,10 +25,10 @@ class CertificateManager(models.Manager):
         cn = dict(subject.get_components())['CN']
 
         # get issuer cert:
-        issuerKey = crypto.load_privatekey(crypto.FILETYPE_PEM,
-                                           open(settings.CA_PRIVATE_KEY).read())
-        issuerPub = crypto.load_certificate(crypto.FILETYPE_PEM,
-                                            open(settings.CA_PUBLIC_KEY).read())
+        issuerKey = crypto.load_privatekey(
+            crypto.FILETYPE_PEM, open(settings.CA_PRIVATE_KEY).read())
+        issuerPub = crypto.load_certificate(
+            crypto.FILETYPE_PEM, open(settings.CA_PUBLIC_KEY).read())
 
         # compute notAfter info
         expires = datetime.today() + timedelta(days=days + 1)
@@ -37,7 +37,7 @@ class CertificateManager(models.Manager):
         # create signed certificate
         cert = crypto.X509()
         cert.set_serial_number(uuid.uuid4().int)
-        cert.set_notBefore(datetime.now().strftime('%Y%m%d%H%M%SZ'))
+        cert.set_notBefore(datetime.utcnow().strftime('%Y%m%d%H%M%SZ'))
         cert.set_notAfter(expires.strftime('%Y%m%d%H%M%SZ'))
         cert.set_issuer(issuerPub.get_subject())
         cert.set_subject(req.get_subject())
