@@ -28,7 +28,7 @@ DATE_FMT = '%Y%m%d%H%M%SZ'
 
 
 class Command(BaseCommand):
-    args = '<id>'
+    args = '<serial>'
     help = 'View a given certificate by ID'
 
     def handle(self, *args, **options):
@@ -38,7 +38,7 @@ class Command(BaseCommand):
             sys.exit()
 
         try:
-            cert = Certificate.objects.get(pk=args[0])
+            cert = Certificate.objects.get(serial=args[0])
         except Certificate.DoesNotExist:
             self.stderr.write('Certificate with given ID not found.')
             sys.exit(1)
@@ -67,3 +67,4 @@ class Command(BaseCommand):
         print('    sha1: %s' % cert.x509.digest('sha1'))
         print('    sha256: %s' % cert.x509.digest('sha256'))
         print('    sha512: %s' % cert.x509.digest('sha512'))
+        print(cert.pub)
