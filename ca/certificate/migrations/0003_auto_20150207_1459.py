@@ -9,7 +9,7 @@ def compute_serial(apps, schema_editor):
     Certificate = apps.get_model('certificate', 'Certificate')
     for cert in Certificate.objects.filter(serial='missing'):
         x509 = crypto.load_certificate(crypto.FILETYPE_PEM, cert.pub)
-        cert.serial = hex(x509.get_serial_number())
+        cert.serial = hex(x509.get_serial_number())[2:-1].upper()
         cert.save()
 
 
