@@ -2,6 +2,13 @@
 
 This simple project allows you to manage a local TLS certificate authority from the command line.
 
+## Features
+
+1. Set up a secure certification authority in a few minutes.
+2. Manage your entire certificate authority from the command line.
+3. Get email notifications about certificates about to expire.
+4. Support for certificate revocation lists (CRLs).
+
 ## Setup
 
 First, download the project, create a virtualenv, install requirements:
