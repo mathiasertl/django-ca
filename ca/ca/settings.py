@@ -2,6 +2,8 @@
 
 import os
 
+from OpenSSL import crypto
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
@@ -156,10 +158,15 @@ LOGGING = {
 # custom defaults
 DIGEST_ALGORITHM = 'sha512'
 CA_DIR = os.path.join(BASE_DIR, 'files')
-if not os.path.exists(CA_DIR):
-    os.makedirs(CA_DIR)
+CA_KEY_TYPE = crypto.TYPE_RSA
 
 try:
     from localsettings import *
 except ImportError:
     pass
+
+if not os.path.exists(CA_DIR):
+    os.makedirs(CA_DIR)
+
+CA_KEY = os.path.join(CA_DIR, 'ca.key')
+cA_PEM = os.path.join(CA_DIR, 'ca.pem')
