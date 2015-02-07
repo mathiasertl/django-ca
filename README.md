@@ -55,7 +55,7 @@ python ca/manage.py sign --csr example.com.csr --out example.com.crt
 
 Note that the ``sign`` command has a few useful options, try the ``-h`` parameter for options.
 
-### View certificate
+### List certificates/View certificate
 
 ### Send warning emails on expired certificates
 
