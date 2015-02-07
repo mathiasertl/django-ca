@@ -110,6 +110,7 @@ PATH=/root/certificate-authority/bin
 ## ToDo
 
 1. Add ability to override keyUsage/extendedKeyUsage when signing a new cert
+2. Ensure good permissions on certificate, warn about unsecure permissions.
 
 ## License
 
