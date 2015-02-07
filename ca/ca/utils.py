@@ -26,6 +26,11 @@ CA_KEY = None
 CA_CRT = None
 
 
+def format_date(date):
+    """Format date as ASN1 GENERALIZEDTIME, as required by various fields."""
+    return date.strftime('%Y%m%d%H%M%SZ')
+
+
 def get_ca_key(reload=False):
     global CA_KEY
     if CA_KEY is None or reload is True:
