@@ -23,6 +23,7 @@ from certificate.models import Certificate
 
 class Command(BaseCommand):
     help = "Revoke a certificate."
+    args = '[serial]'
 
     def handle(self, serial, **options):
         try:
