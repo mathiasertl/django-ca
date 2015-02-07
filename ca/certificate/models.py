@@ -48,7 +48,7 @@ class Certificate(models.Model):
 
     def save(self, *args, **kwargs):
         if self.pk is None or self.serial is None:
-            self.serial = hex(self.x509.get_serial_number())
+            self.serial = hex(self.x509.get_serial_number())[2:-1].upper()
         super(Certificate, self).save(*args, **kwargs)
 
     @property
