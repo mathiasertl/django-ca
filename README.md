@@ -59,6 +59,21 @@ Note that the ``sign`` command has a few useful options, try the ``-h`` paramete
 
 ### Send warning emails on expired certificates
 
+To notify admins about expiring certificates, use the ``manage.py watch`` command. Who will receive
+notifications is configured either at signing time using the ``--watch`` parameter or using the
+``manage.py watchers`` command (see below).
+
+It is recommended you execute this job daily via cron:
+
+```
+# assuming you cloned the repo at /root/:
+HOME=/root/certificate-authority
+PATH=/root/certificate-authority/bin
+
+# m h  dom mon dow     user           command
+* 8    * * *           xmpp-account   python ca/manage.py watch
+```
+
 ### Add/Remove watchers to certificates
 
 ## License
