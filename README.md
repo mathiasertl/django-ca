@@ -21,7 +21,7 @@ Then create the certificate authority ("CA"), the arguments is required certific
 fill in our own data:
 
 ```
-python ca/manage.py init AT Vienna Vienna "HTU Wien" "Fachschaft Informatik" fsinf.at
+python ca/manage.py init AT Vienna Vienna "HTU Wien" "Fachschaft Informatik" ca.fsinf.at
 ```
 
 **Note:** You can set some options for your CA, try the ``-h`` parameter.
