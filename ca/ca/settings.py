@@ -160,6 +160,10 @@ DIGEST_ALGORITHM = 'sha512'
 CA_DIR = os.path.join(BASE_DIR, 'files')
 CA_KEY_TYPE = crypto.TYPE_RSA
 CA_BITSIZE = 4096
+CA_ISSUER_ALT_NAME = None
+CA_CRL_DISTRIBUTION_POINTS = []
+CA_OSCP = None
+CA_ISSUER = None
 
 try:
     from localsettings import *
