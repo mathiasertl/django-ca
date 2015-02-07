@@ -25,6 +25,7 @@ import uuid
 
 from datetime import datetime
 from datetime import timedelta
+from getpass import getpass
 from optparse import make_option
 
 from django.conf import settings
@@ -73,8 +74,15 @@ class Command(BaseCommand):
         cert.set_pubkey(key)
         cert.sign(key, settings.DIGEST_ALGORITHM)
 
+        if options['password'] is None:
+            args = []
+        elif options['password'] == '':
+            args = ['des3', getpass()]
+        else:
+            args = ['des3', options['passwprd']]
+
         with open(settings.CA_KEY, 'w') as key_file:
             # TODO: optionally add 'des3', 'passphrase' as args
-            key_file.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, key))
+            key_file.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, key, *args))
         with open(settings.CA_CRT, 'w') as cert_file:
             cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
