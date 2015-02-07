@@ -55,6 +55,12 @@ class Command(BaseCommand):
 
         emails = [w.email for w in cert.watchers.all()]
         print('Watchers: %s' % ', '.join(emails))
+        if cert.revoked:
+            print('Status: Revoked')
+        elif cert.expires < datetime.utcnow():
+            print('Status: Expired')
+        else:
+            print('Status: Valud')
 
         validFrom = datetime.strptime(cert.x509.get_notBefore(), DATE_FMT)
         validUntil = datetime.strptime(cert.x509.get_notAfter(), DATE_FMT)
