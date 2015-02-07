@@ -38,6 +38,13 @@ class Certificate(models.Model):
     pub = models.TextField(null=False, blank=False)
 
     cn = models.CharField(max_length=64, null=False, blank=False)
+    serial = models.CharField(max_length=35, null=False, blank=False)
+    revoked = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        if self.pk is None or self.serial is None:
+            self.serial = hex(self.x509.get_serial_number())
+        super(Certificate, self).save(*args, **kwargs)
 
     @property
     def x509(self):
