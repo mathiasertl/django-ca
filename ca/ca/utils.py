@@ -42,7 +42,6 @@ def get_ca_key(reload=False):
 def get_ca_crt(reload=False):
     global CA_CRT
     if CA_CRT is None or reload is True:
-        print('loading')
         with open(settings.CA_CRT) as ca_crt:
             CA_CRT = crypto.load_certificate(crypto.FILETYPE_PEM, ca_crt.read())
     return CA_CRT
