@@ -58,6 +58,6 @@ class Certificate(models.Model):
 
         if self.revoked:
             r = crypto.Revoked()
-            r.set_serial(self.serial)
-            r.set_reason(self.revoked_reason)
+            r.set_serial(str(self.serial))
+            r.set_reason(str(self.revoked_reason))
             return r
