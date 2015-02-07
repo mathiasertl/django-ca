@@ -8,8 +8,6 @@ from OpenSSL import crypto
 from django.conf import settings
 from django.db import models
 
-DIGEST_ALGORITHM = getattr(settings, 'DIGEST_ALGORITHM', 'sha512')
-
 
 class CertificateManager(models.Manager):
 
@@ -17,7 +15,7 @@ class CertificateManager(models.Manager):
                  watchers=None):
         # get algorithm used to sign certificate
         if algorithm is None:
-            algorithm = DIGEST_ALGORITHM
+            algorithm = settings.DIGEST_ALGORITHM
 
         # get certificate information
         req = crypto.load_certificate_request(crypto.FILETYPE_PEM, csr)
