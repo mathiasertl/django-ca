@@ -68,8 +68,8 @@ class Command(BaseCommand):
         cert.get_subject().OU = ou
         cert.get_subject().CN = cn
         cert.set_serial_number(uuid.uuid4().int)
-        cert.gmtime_adj_notBefore(now.strftime('%Y%m%d%H%M%SZ'))
-        cert.gmtime_adj_notAfter(expires.strftime('%Y%m%d%H%M%SZ'))
+        cert.set_notBefore(now.strftime('%Y%m%d%H%M%SZ'))
+        cert.set_notAfter(expires.strftime('%Y%m%d%H%M%SZ'))
         cert.set_issuer(cert.get_subject())
         cert.set_pubkey(key)
         cert.sign(key, settings.DIGEST_ALGORITHM)
@@ -77,9 +77,9 @@ class Command(BaseCommand):
         if options['password'] is None:
             args = []
         elif options['password'] == '':
-            args = ['des3', getpass()]
+            args = [str('des3'), getpass()]
         else:
-            args = ['des3', options['passwprd']]
+            args = [str('des3'), options['password']]
 
         with open(settings.CA_KEY, 'w') as key_file:
             # TODO: optionally add 'des3', 'passphrase' as args
