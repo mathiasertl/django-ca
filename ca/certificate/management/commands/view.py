@@ -63,8 +63,8 @@ class Command(BaseCommand):
         print('Valid until: %s' % validUntil.strftime('%Y-%m-%d %H:%M'))
 
         print('Digest:')
-        print('    md5: %s' % cert.x509.digest('md5'))
-        print('    sha1: %s' % cert.x509.digest('sha1'))
-        print('    sha256: %s' % cert.x509.digest('sha256'))
-        print('    sha512: %s' % cert.x509.digest('sha512'))
+        print('    md5: %s' % cert.x509.digest(str('md5')))
+        print('    sha1: %s' % cert.x509.digest(str('sha1')))
+        print('    sha256: %s' % cert.x509.digest(str('sha256')))
+        print('    sha512: %s' % cert.x509.digest(str('sha512')))
         print(cert.pub)
