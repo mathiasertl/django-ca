@@ -87,8 +87,8 @@ class CertificateManager(models.Manager):
 
         # Add authorityInfoAccess
         auth_info_access = []
-        if settings.CA_OSCP:
-            auth_info_access.append('OCSP;URI:%s' % settings.CA_OSCP)
+        if settings.CA_OCSP:
+            auth_info_access.append('OCSP;URI:%s' % settings.CA_OCSP)
         if settings.CA_ISSUER:
             auth_info_access.append('caIssuers;URI:%s' % settings.CA_ISSUER)
         if auth_info_access:

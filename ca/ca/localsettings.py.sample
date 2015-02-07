@@ -42,7 +42,7 @@ DATABASES = {
 #CA_CRL_DISTRIBUTION_POINTS = []
 
 # URL of a OCSP service.
-#CA_OSCP = None
+#CA_OCSP = None
 
 # URL of the CA root certificate
 #CA_ISSUER = None

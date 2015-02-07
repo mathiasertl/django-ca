@@ -162,7 +162,7 @@ CA_KEY_TYPE = crypto.TYPE_RSA
 CA_BITSIZE = 4096
 CA_ISSUER_ALT_NAME = None
 CA_CRL_DISTRIBUTION_POINTS = []
-CA_OSCP = None
+CA_OCSP = None
 CA_ISSUER = None
 # see https://www.openssl.org/docs/apps/x509v3_config.html
 CA_KEY_USAGE = (
