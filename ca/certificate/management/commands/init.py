@@ -21,6 +21,7 @@ https://skippylovesmalorie.wordpress.com/2010/02/12/how-to-generate-a-self-signe
 from __future__ import unicode_literals
 
 import os
+import uuid
 
 from optparse import make_option
 
@@ -61,7 +62,7 @@ class Command(BaseCommand):
         cert.get_subject().O = org
         cert.get_subject().OU = ou
         cert.get_subject().CN = cn
-        cert.set_serial_number(1000)
+        cert.set_serial_number(uuid.uuid4().int)
         cert.gmtime_adj_notBefore(0)
         cert.gmtime_adj_notAfter(10*365*24*60*60)
         cert.set_issuer(cert.get_subject())
