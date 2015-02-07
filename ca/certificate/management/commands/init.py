@@ -51,8 +51,8 @@ class Command(BaseCommand):
     def handle(self, country, state, city, org, ou, cn, **options):
         if os.path.exists(settings.CA_KEY):
             raise CommandError("%s: private key already exists." % settings.CA_KEY)
-        if os.path.exists(settings.CA_PATH):
-            raise CommandError("%s: public key already exists." % settings.CA_PATH)
+        if os.path.exists(settings.CA_CRT):
+            raise CommandError("%s: public key already exists." % settings.CA_CRT)
 
         now = datetime.utcnow()
         expires = now + timedelta(days=options['expires'])
