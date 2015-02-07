@@ -91,11 +91,7 @@ expire) using ``manage.py watchers``.
 
 ## Regular cron-jobs
 
-To notify admins about expiring certificates, use the ``manage.py watch`` command. Who will receive
-notifications is configured either at signing time using the ``--watch`` parameter or using the
-``manage.py watchers`` command (see below).
-
-It is recommended you execute this job daily via cron:
+It is recommended you execute this job daily via cron, but non are required for basic operations:
 
 ```
 # assuming you cloned the repo at /root/:
