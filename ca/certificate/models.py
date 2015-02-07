@@ -16,6 +16,8 @@
 
 from __future__ import unicode_literals
 
+from datetime import datetime
+
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -40,7 +42,8 @@ class Certificate(models.Model):
     cn = models.CharField(max_length=64, null=False, blank=False)
     serial = models.CharField(max_length=35, null=False, blank=False)
     revoked = models.BooleanField(default=False)
-    revoked_reason = models.CharField(max_length=32, null=False, blank=False, default='unspecified')
+    revoked_date = models.DateTimeField(null=True, blank=True)
+    revoked_reason = models.CharField(max_length=32, null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if self.pk is None or self.serial is None:
@@ -52,6 +55,12 @@ class Certificate(models.Model):
         if self._x509 is None:
             self._x509 = crypto.load_certificate(crypto.FILETYPE_PEM, self.pub)
         return self._x509
+
+    def revoke(self, reason='unspecified'):
+        self.revoked = True
+        self.revoked_date = datetime.utcnow()
+        self.revoked_reason = reason
+        self.save()
 
     def get_revocation(self):
         """Get a crypto.Revoked object or None if the cert is not revoked."""
