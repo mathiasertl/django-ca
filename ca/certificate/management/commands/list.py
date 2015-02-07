@@ -24,7 +24,7 @@ from certificate.models import Certificate
 
 
 class Command(BaseCommand):
-    help = "List all certificates"
+    help = "List all certificates."
 
     option_list = BaseCommand.option_list + (
         make_option('--expired',
@@ -48,5 +48,8 @@ class Command(BaseCommand):
             certs = certs.filter(revoked=False)
 
         for cert in certs:
-            print('%s: %s (expires: %s)' % (cert.pk, cert.cn,
-                                            cert.expires.strftime('%Y-%m-%d')))
+            if cert.revoked is True:
+                info = 'revoked'
+            else:
+                info = 'expires: %s' % cert.expires.strftime('%Y-%m-%d')
+            print('%s: %s (%s)' % (cert.serial, cert.cn, info))
