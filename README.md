@@ -42,7 +42,7 @@ certificate:
 
 ```
 openssl genrsa -out example.com.key 4096
-openssl req -new -key example.com.key -out example.com.csr -utf8 -batch -sha512
+openssl req -new -key example.com.key -out example.com.csr -utf8 -sha512
 ```
 
 ### Sign a private key
