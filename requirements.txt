@@ -1,1 +1,2 @@
 Django==1.7.3
+pyOpenSSL==0.14
