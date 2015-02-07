@@ -64,9 +64,29 @@ class CertificateManager(models.Manager):
 
         # add subjectAltName if given:
         if subjectAltNames:
-            subjData = ','.join(['DNS:%s' % n for n in subjectAltNames])
-            ext = crypto.X509Extension('subjectAltName', 0, subjData)
+            subjData = str(','.join(['DNS:%s' % n for n in subjectAltNames]))
+            ext = crypto.X509Extension(str('subjectAltName'), 0, subjData)
             extensions.append(ext)
+
+        # set CRL distribution points:
+        if settings.CA_CRL_DISTRIBUTION_POINTS:
+            value = ','.join(['URI:%s' % uri for uri in settings.CA_CRL_DISTRIBUTION_POINTS])
+            extensions.append(crypto.X509Extension(str('crlDistributionPoints'), 0, str(value)))
+
+        # Add issuerAltName
+        if settings.CA_ISSUER_ALT_NAME:
+            alt_name = 'URI:%s' % settings.CA_ISSUER_ALT_NAME
+            extensions.append(crypto.X509Extension(str('issuerAltName'), 0, str(alt_name)))
+
+        # Add authorityInfoAccess
+        auth_info_access = []
+        if settings.CA_OSCP:
+            auth_info_access.append('OSCP;URI:%s' % settings.CA_OSCP)
+        if settings.CA_ISSUER:
+            auth_info_access.append('caIssuers;URI:%s' % settings.CA_ISSUER)
+#        if auth_info_access:
+#            auth_info_access = str(','.join(auth_info_access))
+#            extensions.append(crypto.X509Extension(str('authorityInfoAccess'), 0, auth_info_access))
 
         cert.add_extensions(extensions)
 
