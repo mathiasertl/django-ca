@@ -23,12 +23,11 @@ from certificate.models import Certificate
 
 class Command(BaseCommand):
     help = "Revoke a certificate."
-    args = '[serial]'
+    args = 'serial [reason]'
 
-    def handle(self, serial, **options):
+    def handle(self, serial, reason=None, **options):
         try:
             cert = Certificate.objects.get(serial=serial)
         except Certificate.DoesNotExist:
             raise CommandError("Certificate does not exist.")
-        cert.revoked = True
-        cert.save()
+        cert.revoke(reason=reason)
