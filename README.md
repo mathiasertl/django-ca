@@ -57,6 +57,16 @@ Note that the ``sign`` command has a few useful options, try the ``-h`` paramete
 
 ### List certificates/View certificate
 
+### Revoke a certificate
+
+To revoke a certificate, use
+
+```
+python ca/manage.py revoke <serial>
+```
+
+The serial can be optained via ``python ca/manage.py list``.
+
 ### Send warning emails on expired certificates
 
 To notify admins about expiring certificates, use the ``manage.py watch`` command. Who will receive
