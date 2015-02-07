@@ -15,11 +15,16 @@ pip install -r requirements.txt
 ```
 
 Copy ``ca/ca/localsettings.py.example`` to ``ca/ca/localsettings.py`` and make
-the necesarry adjustments. Then create the certificate authority:
+the necesarry adjustments. 
+
+Then create the certificate authority ("CA"), the arguments is required certificate information,
+fill in our own data:
 
 ```
-python ca/manage.py init
+python ca/manage.py init AT Vienna Vienna "HTU Wien" "Fachschaft Informatik" fsinf.at
 ```
+
+**Note:** You can set some options for your CA, try the ``-h`` parameter.
 
 ## Configuration
 
