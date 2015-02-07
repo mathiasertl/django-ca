@@ -88,6 +88,9 @@ class CertificateManager(models.Manager):
             auth_info_access = str(','.join(auth_info_access))
             extensions.append(crypto.X509Extension(str('authorityInfoAccess'), 0, auth_info_access))
 
+        # add basicConstraints
+        extensions.append(crypto.X509Extension(str('basicConstraints'), 0, str('CA:FALSE')))
+
         cert.add_extensions(extensions)
 
         # finally sign the certificate:

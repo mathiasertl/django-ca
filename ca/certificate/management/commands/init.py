@@ -74,6 +74,14 @@ class Command(BaseCommand):
         cert.set_pubkey(key)
         cert.sign(key, settings.DIGEST_ALGORITHM)
 
+        extensions = []
+
+        # create basicConstraints extension
+        extensions.append(crypto.X509Extension(str('basicConstraints'), 0, str('CA:TRUE')))
+
+        # add extensions
+        cert.add_extensions(extensions)
+
         if options['password'] is None:
             args = []
         elif options['password'] == '':
