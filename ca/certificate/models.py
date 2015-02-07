@@ -57,7 +57,7 @@ class Certificate(models.Model):
             self._x509 = crypto.load_certificate(crypto.FILETYPE_PEM, self.pub)
         return self._x509
 
-    def revoke(self, reason='unspecified'):
+    def revoke(self, reason=None):
         self.revoked = True
         self.revoked_date = datetime.utcnow()
         self.revoked_reason = reason
@@ -69,6 +69,7 @@ class Certificate(models.Model):
         if self.revoked:
             r = crypto.Revoked()
             r.set_serial(str(self.serial))
-            r.set_reason(str(self.revoked_reason))
+            if self.revoked_reason:
+                r.set_reason(str(self.revoked_reason))
             r.set_rev_date(format_date(self.revoked_date))
             return r
