@@ -101,7 +101,7 @@ class CertificateManager(models.Manager):
         extensions.append(crypto.X509Extension(str('extendedKeyUsage'), 0,
                                                str(','.join(ext_key_usage))))
         extensions.append(crypto.X509Extension(str('subjectKeyIdentifier'), 0, str('hash'),
-                                               subject=cert))
+                                               subject=issuerPub))
         extensions.append(crypto.X509Extension(str('authorityKeyIdentifier'), 0,
                                                str('keyid,issuer'), issuer=issuerPub))
 
