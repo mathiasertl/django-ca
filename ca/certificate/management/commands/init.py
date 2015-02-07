@@ -43,7 +43,8 @@ class Command(BaseCommand):
                     help='CA certificate expires in DAYS days (default: %default).'
         ),
         make_option('--password', nargs=1,
-                    help="Optional password used to encrypt the private key.")
+                    help="Optional password used to encrypt the private key. If omitted, no "
+                    "password is used, use \"--password=\" to prompt for a password.")
     )
 
     def handle(self, country, state, city, org, ou, cn, **options):
@@ -58,7 +59,7 @@ class Command(BaseCommand):
         expires = now + timedelta(days=options['expires'])
 
         key = crypto.PKey()
-        key.generate_key(crypto.TYPE_RSA, 4096)
+        key.generate_key(settings.CA_KEY_TYPE, settings.CA_BITSIZE)
 
         cert = crypto.X509()
         cert.get_subject().C = country

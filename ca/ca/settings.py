@@ -159,6 +159,7 @@ LOGGING = {
 DIGEST_ALGORITHM = 'sha512'
 CA_DIR = os.path.join(BASE_DIR, 'files')
 CA_KEY_TYPE = crypto.TYPE_RSA
+CA_BITSIZE = 4096
 
 try:
     from localsettings import *
