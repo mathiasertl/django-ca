@@ -34,6 +34,8 @@ from django.core.management.base import CommandError
 
 from OpenSSL import crypto
 
+from ca.utils import format_date
+
 
 class Command(BaseCommand):
     help = "Initiate a certificate authority."
@@ -68,8 +70,8 @@ class Command(BaseCommand):
         cert.get_subject().OU = ou
         cert.get_subject().CN = cn
         cert.set_serial_number(uuid.uuid4().int)
-        cert.set_notBefore(now.strftime('%Y%m%d%H%M%SZ'))
-        cert.set_notAfter(expires.strftime('%Y%m%d%H%M%SZ'))
+        cert.set_notBefore(format_date(now))
+        cert.set_notAfter(format_date(expires))
         cert.set_issuer(cert.get_subject())
         cert.set_pubkey(key)
         cert.sign(key, settings.DIGEST_ALGORITHM)

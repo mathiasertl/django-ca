@@ -25,6 +25,8 @@ from OpenSSL import crypto
 from django.conf import settings
 from django.db import models
 
+from ca.utils import format_date
+
 
 class CertificateManager(models.Manager):
 
@@ -53,8 +55,8 @@ class CertificateManager(models.Manager):
         # create signed certificate
         cert = crypto.X509()
         cert.set_serial_number(uuid.uuid4().int)
-        cert.set_notBefore(datetime.utcnow().strftime('%Y%m%d%H%M%SZ'))
-        cert.set_notAfter(expires.strftime('%Y%m%d%H%M%SZ'))
+        cert.set_notBefore(format_date(datetime.utcnow()))
+        cert.set_notAfter(format_date(expires))
         cert.set_issuer(issuerPub.get_subject())
         cert.set_subject(req.get_subject())
         cert.set_pubkey(req.get_pubkey())
