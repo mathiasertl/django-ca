@@ -76,13 +76,15 @@ class Command(BaseCommand):
         cert.set_pubkey(key)
         cert.sign(key, settings.DIGEST_ALGORITHM)
 
-        extensions = []
-
-        # create basicConstraints extension
-        extensions.append(crypto.X509Extension(str('basicConstraints'), 0, str('CA:TRUE')))
-
-        # add extensions
-        cert.add_extensions(extensions)
+        # add various extensions
+        cert.add_extensions([
+            crypto.X509Extension(str('basicConstraints'), True, str('CA:TRUE, pathlen:0')),
+            crypto.X509Extension(str('keyUsage'), 0, str('keyCertSign,cRLSign')),
+            crypto.X509Extension(str('subjectKeyIdentifier'), False, str('hash'), subject=cert),
+        ])
+        cert.add_extensions([
+            crypto.X509Extension(str('authorityKeyIdentifier'), False, str('keyid:always'), issuer=cert),
+        ])
 
         if options['password'] is None:
             args = []
