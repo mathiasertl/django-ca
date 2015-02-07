@@ -13,7 +13,12 @@ class Command(BaseCommand):
         make_option('--expired',
             default=False,
             action='store_true',
-            help='Also list expired certificates'
+            help='Also list expired certificates.'
+        ),
+        make_option('--revoked',
+            default=False,
+            action='store_true',
+            help='Also list revoked certificates.'
         ),
     )
 
@@ -22,6 +27,8 @@ class Command(BaseCommand):
 
         if not options['expired']:
             certs = certs.filter(expires__gt=datetime.now())
+        if options['revoked']:
+            certs = certs.filter(revoked=True)
 
         for cert in certs:
             print('%s: %s (expires: %s)' % (cert.pk, cert.cn,
