@@ -1,3 +1,8 @@
+import os
+from OpenSSL import crypto
+
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+
 # configure your database here:
 DATABASES = {
     'default': {
@@ -11,9 +16,49 @@ DATABASES = {
     }
 }
 
-# Path to your certificate authorities public and private key:
-CA_PRIVATE_KEY = '/etc/fsinf-ca/private/private.key'
-CA_PUBLIC_KEY = '/etc/fsinf-ca/cert/public.crt'
+##################
+### CA options ###
+##################
+# The directory where your CA files are located
+#CA_DIR = os.path.join(BASE_DIR, 'files')
 
-# You can also override the default algorithm used to sign certificates:
+# The key type to use for create the ca private key
+#CA_KEY_TYPE = crypto.TYPE_RSA
+
+###########################
+### Certificate options ###
+###########################
+# The digest algorithm used for signing certificates, use sha256 with older (pre 2010) clients.
 #DIGEST_ALGORITHM = 'sha512'
+
+# Bits used for private keys
+#CA_BITSIZE = 4096
+
+# Any URL you have for your CA
+#CA_ISSUER_ALT_NAME = None
+
+# List of URLs where clients can fetch a CRL. The CRL can be generated with the "manage.py crl"
+# command. You have to take care of hosting the CRL.
+#CA_CRL_DISTRIBUTION_POINTS = []
+
+# URL of a OCSP service.
+#CA_OSCP = None
+
+# URL of the CA root certificate
+#CA_ISSUER = None
+
+# List of default key usage attributes for new certificates. See
+#   https://www.openssl.org/docs/apps/x509v3_config.html#key_usage_
+# for more information.
+#CA_KEY_USAGE = (
+#    'keyEncipherment',
+#    'keyAgreement',
+#    'digitalSignature',
+#)
+
+# List of default extended key usage attributes for new certificates. See
+#   https://www.openssl.org/docs/apps/x509v3_config.html#extended_key_usage_
+# for more information.
+#CA_EXT_KEY_USAGE = (
+#    'clientAuth',
+#)
