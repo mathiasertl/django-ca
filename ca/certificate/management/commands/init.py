@@ -48,12 +48,10 @@ class Command(BaseCommand):
     )
 
     def handle(self, country, state, city, org, ou, cn, **options):
-        key_path = os.path.join(settings.CA_DIR, 'ca.key')
-        crt_path = os.path.join(settings.CA_DIR, 'ca.crt')
-        if os.path.exists(key_path):
-            raise CommandError("%s: private key already exists." % key_path)
-        if os.path.exists(crt_path):
-            raise CommandError("%s: public key already exists." % crt_path)
+        if os.path.exists(settings.CA_KEY):
+            raise CommandError("%s: private key already exists." % settings.CA_KEY)
+        if os.path.exists(settings.CA_PATH):
+            raise CommandError("%s: public key already exists." % settings.CA_PATH)
 
         now = datetime.utcnow()
         expires = now + timedelta(days=options['expires'])
@@ -75,8 +73,8 @@ class Command(BaseCommand):
         cert.set_pubkey(key)
         cert.sign(key, settings.DIGEST_ALGORITHM)
 
-        with open(key_path, 'w') as key_file:
+        with open(settings.CA_KEY, 'w') as key_file:
             # TODO: optionally add 'des3', 'passphrase' as args
             key_file.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, key))
-        with open(crt_path, 'w') as cert_file:
+        with open(settings.CA_CRT, 'w') as cert_file:
             cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
