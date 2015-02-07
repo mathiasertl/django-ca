@@ -23,6 +23,7 @@ from django.db import models
 
 from OpenSSL import crypto
 
+from ca.utils import format_date
 from certificate.managers import CertificateManager
 
 
@@ -69,4 +70,5 @@ class Certificate(models.Model):
             r = crypto.Revoked()
             r.set_serial(str(self.serial))
             r.set_reason(str(self.revoked_reason))
+            r.set_rev_date(format_date(self.revoked_date))
             return r
