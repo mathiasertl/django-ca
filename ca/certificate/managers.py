@@ -30,10 +30,15 @@ from ca.utils import format_date
 
 class CertificateManager(models.Manager):
 
-    def from_csr(self, csr, subjectAltNames=None, days=730, algorithm=None, watchers=None):
+    def from_csr(self, csr, subjectAltNames=None, key_usage=None, ext_key_usage=None, days=730,
+                 algorithm=None, watchers=None):
         # get algorithm used to sign certificate
         if algorithm is None:
             algorithm = settings.DIGEST_ALGORITHM
+        if key_usage is None:
+            key_usage = settings.CA_KEY_USAGE
+        if ext_key_usage is None:
+            ext_key_usage = settings.CA_EXT_KEY_USAGE
 
         # get certificate information
         req = crypto.load_certificate_request(crypto.FILETYPE_PEM, csr)
@@ -90,8 +95,16 @@ class CertificateManager(models.Manager):
             auth_info_access = str(','.join(auth_info_access))
             extensions.append(crypto.X509Extension(str('authorityInfoAccess'), 0, auth_info_access))
 
-        # add basicConstraints
+        # add basicConstraints, keyUsage and extendedKeyUsage
         extensions.append(crypto.X509Extension(str('basicConstraints'), 0, str('CA:FALSE')))
+        extensions.append(crypto.X509Extension(str('keyUsage'), 0, str(','.join(key_usage))))
+        extensions.append(crypto.X509Extension(str('extendedKeyUsage'), 0,
+                                               str(','.join(ext_key_usage))))
+        extensions.append(crypto.X509Extension(str('subjectKeyIdentifier'), 0, str('hash'),
+                                               subject=cert))
+        extensions.append(crypto.X509Extension(str('authorityKeyIdentifier'), 0,
+                                               str('keyid,issuer'), issuer=issuerPub))
+
 
         cert.add_extensions(extensions)
 
