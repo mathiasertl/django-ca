@@ -64,6 +64,16 @@ Note that the ``sign`` command has a few useful options, try the ``-h`` paramete
 
 ### List certificates/View certificate
 
+To get a list of all certificates, use ``manage.py list``, to view details of a certificate,
+use ``manage.py view`` (``$`` signals the shell prompt):
+
+```
+$ python manage.py list
+BBB6B79C12604B1BB32E7DBC08942410: test.example.com (expires: 2017-01-28)
+$ python ca/manage.py view BBB6B79C12604B1BB32E7DBC08942410
+...
+```
+
 ### Revoke a certificate
 
 To revoke a certificate, use
@@ -74,7 +84,9 @@ python ca/manage.py revoke <serial>
 
 The serial can be optained via ``python ca/manage.py list``.
 
-### Send warning emails on expired certificates
+### Add/Remove watchers to certificates
+
+## Regular cron-jobs
 
 To notify admins about expiring certificates, use the ``manage.py watch`` command. Who will receive
 notifications is configured either at signing time using the ``--watch`` parameter or using the
@@ -87,11 +99,14 @@ It is recommended you execute this job daily via cron:
 HOME=/root/certificate-authority
 PATH=/root/certificate-authority/bin
 
-# m h  dom mon dow     user           command
-* 8    * * *           xmpp-account   python ca/manage.py watch
-```
+# m h  dom mon dow     user           commanda
 
-### Add/Remove watchers to certificates
+# notify watchers about certificates about to expire
+* 8    * * *           xmpp-account   python ca/manage.py watch
+
+# recreate CRL (hourly)
+12 *    * * *           xmpp-account   python ca/manage.py crl
+```
 
 ## ToDo
 
