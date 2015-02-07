@@ -4,4 +4,6 @@ This simple project allows you to manage a local TLS certificate authority from 
 
 ## Setup
 
+## Configuration
+
 ## Management
