@@ -107,6 +107,16 @@ PATH=/root/certificate-authority/bin
 12 *    * * *           xmpp-account   python ca/manage.py crl
 ```
 
+## ChangeLog
+
+### 0.2 (not yet released)
+
+* Add requirements-dev.txt
+
+### 0.1 (2015-02-08)
+
+* Initial release
+
 ## ToDo
 
 1. Add ability to override keyUsage/extendedKeyUsage when signing a new cert
