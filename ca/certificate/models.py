@@ -65,6 +65,11 @@ class Certificate(models.Model):
             self._extensions = {ext.get_short_name(): ext for ext in exts}
         return self._extensions
 
+    @property
+    def distinguishedName(self):
+        name = self.x509.get_subject()
+        return '/%s'  % '/'.join(['%s=%s' % (k, v) for k, v in name.get_components()])
+
     def revoke(self, reason=None):
         self.revoked = True
         self.revoked_date = datetime.utcnow()
