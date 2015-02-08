@@ -117,6 +117,7 @@ PATH=/root/certificate-authority/bin
   * Add the ``-n``/``--no-pem`` option.
   * Add the ``-e``/``--extensions`` option to print all certificate extensions.
   * Make output clearer.
+* Update the remove command to take a serial.
 * Add requirements-dev.txt
 
 ### 0.1 (2015-02-08)
