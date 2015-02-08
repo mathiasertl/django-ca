@@ -41,7 +41,8 @@ DATABASES = {
 # command. You have to take care of hosting the CRL.
 #CA_CRL_DISTRIBUTION_POINTS = []
 
-# URL of a OCSP service.
+# URL of a OCSP service. Do not set this unless you actually intend to run an OCSP service, as
+# OCSP-enabled clients will reject a connection if the OCSP-service is not available.
 #CA_OCSP = None
 
 # URL of the CA root certificate
@@ -60,5 +61,5 @@ DATABASES = {
 #   https://www.openssl.org/docs/apps/x509v3_config.html#extended_key_usage_
 # for more information.
 #CA_EXT_KEY_USAGE = (
-#    'clientAuth',
+#    'serverAuth',
 #)
