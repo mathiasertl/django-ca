@@ -22,6 +22,7 @@ from datetime import datetime
 from optparse import make_option
 
 from django.core.management.base import BaseCommand
+from django.utils import six
 
 from certificate.models import Certificate
 
@@ -33,10 +34,16 @@ class Command(BaseCommand):
     help = 'View a given certificate by ID'
     option_list = BaseCommand.option_list + (
         make_option(
-            '--no-pem',
+            '-n', '--no-pem',
             default=False,
             action='store_true',
             help='Do not output public certificate in PEM format.'
+        ),
+        make_option(
+            '-e', '--extensions',
+            default=False,
+            action='store_true',
+            help='Show all extensions, not just subjectAltName.'
         ),
     )
 
@@ -51,14 +58,19 @@ class Command(BaseCommand):
         except Certificate.DoesNotExist:
             self.stderr.write('Certificate with given ID not found.')
             sys.exit(1)
-
         print('Common Name: %s' % cert.cn)
-        exts = [cert.x509.get_extension(i) for i in range(0, cert.x509.get_extension_count())]
-        exts = {ext.get_short_name(): ext.get_data() for ext in exts}
 
-        if exts.get('subjectAltName'):
-            names = exts['subjectAltName'].lstrip('0D\x82\x0f').split('\x82\x0f')
-            print('Alternative Names: %s' % ', '.join(names))
+        # print extensions
+        if options['extensions']:
+            for name, value in six.iteritems(cert.extensions):
+                print("%s:" % name)
+                for line in str(value).strip().splitlines():
+                    print("\t%s" % line)
+        else:
+            ext = cert.extensions.get('subjectAltName')
+            if ext:
+                print('%s:' % ext.get_short_name())
+                print("\t%s" % str(ext))
 
         emails = cert.watchers.values_list('email', flat=True)
         print('Watchers: %s' % ', '.join(emails))
@@ -67,7 +79,7 @@ class Command(BaseCommand):
         elif cert.expires < datetime.utcnow():
             print('Status: Expired')
         else:
-            print('Status: Valud')
+            print('Status: Valid')
 
         validFrom = datetime.strptime(cert.x509.get_notBefore(), DATE_FMT)
         validUntil = datetime.strptime(cert.x509.get_notAfter(), DATE_FMT)
