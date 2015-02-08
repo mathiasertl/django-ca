@@ -184,4 +184,7 @@ if not os.path.exists(CA_DIR):
 
 CA_KEY = os.path.join(CA_DIR, 'ca.key')
 CA_CRT = os.path.join(CA_DIR, 'ca.crt')
+
+# used by "openssl OCSP
 CA_INDEX = os.path.join(CA_DIR, 'ca.index.txt')
+CA_FILE_PEM = os.path.join(CA_DIR, 'cafile.pem')
