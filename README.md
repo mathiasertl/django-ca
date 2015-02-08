@@ -6,8 +6,10 @@ This simple project allows you to manage a local TLS certificate authority from 
 
 1. Set up a secure certification authority in a few minutes.
 2. Manage your entire certificate authority from the command line.
-3. Get email notifications about certificates about to expire.
-4. Support for certificate revocation lists (CRLs) and OCSP (both have to be hosted separately).
+3. Written in pure Python using [pyOpenSSL](pythonhosted.org/pyOpenSSL/) and the ORM of
+   [Django](https://www.djangoproject.com/).
+4. Get email notifications about certificates about to expire.
+5. Support for certificate revocation lists (CRLs) and OCSP (both have to be hosted separately).
 
 ## Setup
 
@@ -103,7 +105,8 @@ PATH=/root/certificate-authority/bin
 # notify watchers about certificates about to expire
 * 8    * * *           xmpp-account   python ca/manage.py watch
 
-# recreate CRL (hourly)
+# recreate the CRL (hourly), also creates an OpenSSL CA index file and a pem with the CA cert and
+# the CRL (required for "openssl ocsp")
 12 *    * * *           xmpp-account   python ca/manage.py crl
 ```
 
@@ -132,8 +135,7 @@ PATH=/root/certificate-authority/bin
 ## ToDo
 
 1. Ensure good permissions on certificate, warn about unsecure permissions.
-2. Add options to create a OCSP certificate.
-3. Write man-page for scripts.
+2. Write man-page for scripts.
 
 ## License
 
