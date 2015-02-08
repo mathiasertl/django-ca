@@ -76,11 +76,11 @@ class Command(BaseCommand):
         cert.set_pubkey(key)
         cert.sign(key, settings.DIGEST_ALGORITHM)
 
-        # add various extensions
         cert.add_extensions([
             crypto.X509Extension(str('basicConstraints'), True, str('CA:TRUE, pathlen:0')),
             crypto.X509Extension(str('keyUsage'), 0, str('keyCertSign,cRLSign')),
             crypto.X509Extension(str('subjectKeyIdentifier'), False, str('hash'), subject=cert),
+            crypto.X509Extension(str('subjectAltName'), 0, str('DNS:%s' % cn))
         ])
         cert.add_extensions([
             crypto.X509Extension(str('authorityKeyIdentifier'), False, str('keyid:always'), issuer=cert),
