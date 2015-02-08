@@ -82,7 +82,7 @@ class CertificateManager(models.Manager):
 
         # Add issuerAltName
         if settings.CA_ISSUER_ALT_NAME:
-            issuerAltName = 'URI:%s' % settings.CA_ISSUER_ALT_NAME
+            issuerAltName = str('URI:%s' % settings.CA_ISSUER_ALT_NAME)
         else:
             issuerAltName = str('issuer:copy')
         extensions.append(crypto.X509Extension(str('issuerAltName'), 0, issuerAltName,
