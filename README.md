@@ -138,6 +138,7 @@ PATH=/root/certificate-authority/bin
 ## ToDo
 
 1. Write man-page for scripts.
+2. Immediately rewrite CRL and index file when revoking a certificate.
 
 ## Test CRL and OCSP
 
