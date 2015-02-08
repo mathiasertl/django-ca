@@ -60,6 +60,20 @@ class Command(BaseCommand):
             sys.exit(1)
         print('Common Name: %s' % cert.cn)
 
+        # print notBefore/notAfter
+        validFrom = datetime.strptime(cert.x509.get_notBefore(), DATE_FMT)
+        validUntil = datetime.strptime(cert.x509.get_notAfter(), DATE_FMT)
+        print('Valid from: %s' % validFrom.strftime('%Y-%m-%d %H:%M'))
+        print('Valid until: %s' % validUntil.strftime('%Y-%m-%d %H:%M'))
+
+        # print status
+        if cert.revoked:
+            print('Status: Revoked')
+        elif cert.expires < datetime.utcnow():
+            print('Status: Expired')
+        else:
+            print('Status: Valid')
+
         # print extensions
         if options['extensions']:
             for name, value in six.iteritems(cert.extensions):
@@ -74,18 +88,6 @@ class Command(BaseCommand):
 
         emails = cert.watchers.values_list('email', flat=True)
         print('Watchers: %s' % ', '.join(emails))
-        if cert.revoked:
-            print('Status: Revoked')
-        elif cert.expires < datetime.utcnow():
-            print('Status: Expired')
-        else:
-            print('Status: Valid')
-
-        validFrom = datetime.strptime(cert.x509.get_notBefore(), DATE_FMT)
-        validUntil = datetime.strptime(cert.x509.get_notAfter(), DATE_FMT)
-
-        print('Valid from: %s' % validFrom.strftime('%Y-%m-%d %H:%M'))
-        print('Valid until: %s' % validUntil.strftime('%Y-%m-%d %H:%M'))
 
         print('Digest:')
         print('    md5: %s' % cert.x509.digest(str('md5')))
