@@ -120,7 +120,7 @@ PATH=/root/certificate-authority/bin
 * The ``sign`` command now has
   * a ``--key-usage`` option to override the ``keyUsage`` extended attribute.
   * a ``--ext-key-usage`` option to override the ``extendedKeyUsage`` extended attribute.
-  * a ``--ocsp`` option to create a key for an OCSP server.
+  * a ``--ocsp`` option to sign a certificate for an OCSP server.
 * The default ``extendedKeyUsage`` is now ``serverAuth``, not ``clientAuth``.
 * Update the remove command to take a serial.
 * Add requirements-dev.txt
