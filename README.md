@@ -118,6 +118,7 @@ PATH=/root/certificate-authority/bin
   * Add the ``-e``/``--extensions`` option to print all certificate extensions.
   * Make output clearer.
 * The ``sign`` command now allows you to override the keyUsage and extendedKeyUsage attributes.
+* The default ``extendedKeyUsage`` is now ``serverAuth``, not ``clientAuth``.
 * Update the remove command to take a serial.
 * Add requirements-dev.txt
 

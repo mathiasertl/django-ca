@@ -171,7 +171,7 @@ CA_KEY_USAGE = (
     'digitalSignature',
 )
 CA_EXT_KEY_USAGE = (
-    'clientAuth',
+    'serverAuth',
 )
 
 try:
