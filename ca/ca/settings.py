@@ -184,3 +184,4 @@ if not os.path.exists(CA_DIR):
 
 CA_KEY = os.path.join(CA_DIR, 'ca.key')
 CA_CRT = os.path.join(CA_DIR, 'ca.crt')
+CA_INDEX = os.path.join(CA_DIR, 'ca.index.txt')
