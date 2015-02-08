@@ -51,7 +51,7 @@ class Command(BaseCommand):
             names = exts['subjectAltName'].lstrip('0D\x82\x0f').split('\x82\x0f')
             print('Alternative Names: %s' % ', '.join(names))
 
-        emails = [w.email for w in cert.watchers.all()]
+        emails = cert.watchers.values_list('email', flat=True)
         print('Watchers: %s' % ', '.join(emails))
         if cert.revoked:
             print('Status: Revoked')
