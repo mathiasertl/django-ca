@@ -93,8 +93,10 @@ class Command(BaseCommand):
         else:
             args = [str('des3'), options['password']]
 
+        oldmask = os.umask(247)
         with open(settings.CA_KEY, 'w') as key_file:
             # TODO: optionally add 'des3', 'passphrase' as args
             key_file.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, key, *args))
         with open(settings.CA_CRT, 'w') as cert_file:
             cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
+        os.umask(oldmask)
