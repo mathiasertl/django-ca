@@ -117,7 +117,10 @@ PATH=/root/certificate-authority/bin
   * Add the ``-n``/``--no-pem`` option.
   * Add the ``-e``/``--extensions`` option to print all certificate extensions.
   * Make output clearer.
-* The ``sign`` command now allows you to override the keyUsage and extendedKeyUsage attributes.
+* The ``sign`` command now has
+  * a ``--key-usage`` option to override the ``keyUsage`` extended attribute.
+  * a ``--ext-key-usage`` option to override the ``extendedKeyUsage`` extended attribute.
+  * a ``--ocsp`` option to create a key for an OCSP server.
 * The default ``extendedKeyUsage`` is now ``serverAuth``, not ``clientAuth``.
 * Update the remove command to take a serial.
 * Add requirements-dev.txt

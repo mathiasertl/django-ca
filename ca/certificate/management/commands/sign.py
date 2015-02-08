@@ -49,6 +49,8 @@ class Command(BaseCommand):
                     help="Override keyUsage attribute (default: CA_KEY_USAGE setting: %default)."),
         make_option('--ext-key-usage', default=','.join(settings.CA_EXT_KEY_USAGE), metavar='NAMES',
                     help="Override keyUsage attribute (default: CA_EXT_KEY_USAGE setting: %default)."),
+        make_option('--ocsp', default=False, action='store_true',
+                    help="Issue a certificate for an OCSP server.")
     )
 
     def handle(self, *args, **options):
@@ -66,8 +68,13 @@ class Command(BaseCommand):
             watchers.append(User.objects.get_or_create(
                 email=addr, defaults={'username': addr})[0])
 
-        key_usage = options['key_usage'].split(',')
-        ext_key_usage = options['ext_key_usage'].split(',')
+        if not options['ocsp']:
+            key_usage = options['key_usage'].split(',')
+            ext_key_usage = options['ext_key_usage'].split(',')
+        else:
+            key_usage = (str('nonRepudiation'), str('digitalSignature'), str('keyEncipherment'), )
+            ext_key_usage = (str('OCSPSigning'), )
+
         cert = Certificate.objects.from_csr(
             csr, subjectAltNames=options['alt'], days=options['days'],
             algorithm=options['algorithm'], watchers=watchers, key_usage=key_usage,
