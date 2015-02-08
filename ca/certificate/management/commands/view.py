@@ -44,14 +44,12 @@ class Command(BaseCommand):
             sys.exit(1)
 
         print('Common Name: %s' % cert.cn)
+        exts = [cert.x509.get_extension(i) for i in range(0, cert.x509.get_extension_count())]
+        exts = {ext.get_short_name(): ext.get_data() for ext in exts}
 
-        for i in range(0, cert.x509.get_extension_count()):
-            ext = cert.x509.get_extension(i)
-            if ext.get_short_name() == 'subjectAltName':
-                names = ext.get_data().lstrip('0D\x82\x0f').split('\x82\x0f')
-                print('Alternative Names: %s' % ', '.join(names))
-
-                break
+        if exts.get('subjectAltName'):
+            names = exts['subjectAltName'].lstrip('0D\x82\x0f').split('\x82\x0f')
+            print('Alternative Names: %s' % ', '.join(names))
 
         emails = [w.email for w in cert.watchers.all()]
         print('Watchers: %s' % ', '.join(emails))
