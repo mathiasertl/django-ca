@@ -17,12 +17,14 @@ from __future__ import unicode_literals
 
 from datetime import datetime
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from OpenSSL import crypto
 
 from ca.utils import get_ca_crt
 from ca.utils import get_ca_key
+from ca.utils import format_date
 from certificate.models import Certificate
 
 
@@ -32,11 +34,38 @@ class Command(BaseCommand):
 
     def handle(self, path, **options):
         crl = crypto.CRL()
+        index = []
+        now = datetime.utcnow()
 
-        revoked_certs = Certificate.objects.filter(expires__gt=datetime.utcnow(), revoked=True)
-        for cert in revoked_certs:
-            crl.add_revoked(cert.get_revocation())
+        for cert in Certificate.objects.all():
+            revocation = ''
+            if cert.expires < now:
+                status = 'E'
+            elif cert.revoked:
+                status = 'R'
+                crl.add_revoked(cert.get_revocation())
+                revocation = format_date(cert.revoked_date)
+                if cert.revoked_reason:
+                    revocation += ',%s' % cert.revoked_reason
+            else:
+                status = 'V'
 
+            # Format see: http://pki-tutorial.readthedocs.org/en/latest/cadb.html
+            index.append((
+                status,
+                format_date(cert.expires),
+                revocation,
+                cert.serial,
+                'unknown',  # we don't save to any file
+                cert.distinguishedName,
+            ))
+
+        # write CRL
         crl = crl.export(get_ca_crt(), get_ca_key())
         with open(path, 'w') as crl_file:
             crl_file.write(crl)
+
+        # write index
+        with open(settings.CA_INDEX, 'w') as index_file:
+            for entry in index:
+                index_file.write('%s\n' % '\t'.join(entry))
