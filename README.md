@@ -126,6 +126,7 @@ PATH=/root/certificate-authority/bin
   * a ``--ocsp`` option to sign a certificate for an OCSP server.
 * The default ``extendedKeyUsage`` is now ``serverAuth``, not ``clientAuth``.
 * Update the remove command to take a serial.
+* Ensure restrictive file permissions when creating a CA.
 * Add requirements-dev.txt
 
 ### 0.1 (2015-02-08)
@@ -134,8 +135,7 @@ PATH=/root/certificate-authority/bin
 
 ## ToDo
 
-1. Ensure good permissions on certificate, warn about unsecure permissions.
-2. Write man-page for scripts.
+1. Write man-page for scripts.
 
 ## Test CRL and OCSP
 
