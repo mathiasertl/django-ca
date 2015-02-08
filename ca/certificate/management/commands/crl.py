@@ -24,8 +24,10 @@ from OpenSSL import crypto
 
 from ca.utils import get_ca_crt
 from ca.utils import get_ca_key
-from ca.utils import format_date
 from certificate.models import Certificate
+
+# We need a two-letter year, otherwise OCSP doesn't work
+date_format = '%y%m%d%H%M%SZ'
 
 
 class Command(BaseCommand):
@@ -43,8 +45,9 @@ class Command(BaseCommand):
                 status = 'E'
             elif cert.revoked:
                 status = 'R'
-                crl.add_revoked(cert.get_revocation())
-                revocation = format_date(cert.revoked_date)
+                crl.add_revoked(cert.get_revocation())  # add to CRL
+
+                revocation = cert.revoked_date.strftime(date_format)
                 if cert.revoked_reason:
                     revocation += ',%s' % cert.revoked_reason
             else:
@@ -53,7 +56,7 @@ class Command(BaseCommand):
             # Format see: http://pki-tutorial.readthedocs.org/en/latest/cadb.html
             index.append((
                 status,
-                format_date(cert.expires),
+                cert.x509.get_notAfter(),
                 revocation,
                 cert.serial,
                 'unknown',  # we don't save to any file
@@ -69,3 +72,9 @@ class Command(BaseCommand):
         with open(settings.CA_INDEX, 'w') as index_file:
             for entry in index:
                 index_file.write('%s\n' % '\t'.join(entry))
+
+        # write cafile (required by "openssl ocsp"):
+        with open(settings.CA_CRT) as ca_file, open(settings.CA_FILE_PEM, 'w') as out:
+            ca = ca_file.read()
+            out.write(ca)
+            out.write(crl)
