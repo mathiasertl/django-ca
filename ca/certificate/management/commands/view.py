@@ -16,12 +16,11 @@
 
 from __future__ import unicode_literals
 
-import sys
-
 from datetime import datetime
 from optparse import make_option
 
 from django.core.management.base import BaseCommand
+from django.core.management.base import CommandError
 from django.utils import six
 
 from certificate.models import Certificate
@@ -49,15 +48,12 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if len(args) != 1:
-            self.stderr.write(
-                "Please give exactly one ID (first colum of list command)")
-            sys.exit()
+            raise CommandError('Please give exactly one serial (first colum of list command)')
 
         try:
             cert = Certificate.objects.get(serial=args[0])
         except Certificate.DoesNotExist:
-            self.stderr.write('Certificate with given ID not found.')
-            sys.exit(1)
+            raise CommandError('Certificate with given serial not found.')
         print('Common Name: %s' % cert.cn)
 
         # print notBefore/notAfter
