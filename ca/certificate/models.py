@@ -29,6 +29,7 @@ from certificate.managers import CertificateManager
 
 class Certificate(models.Model):
     _x509 = None
+    _extensions = None
 
     objects = CertificateManager()
 
@@ -56,6 +57,13 @@ class Certificate(models.Model):
         if self._x509 is None:
             self._x509 = crypto.load_certificate(crypto.FILETYPE_PEM, self.pub)
         return self._x509
+
+    @property
+    def extensions(self):
+        if self._extensions is None:
+            exts = [self.x509.get_extension(i) for i in range(0, self.x509.get_extension_count())]
+            self._extensions = {ext.get_short_name(): ext for ext in exts}
+        return self._extensions
 
     def revoke(self, reason=None):
         self.revoked = True
