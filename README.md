@@ -129,6 +129,8 @@ PATH=/root/certificate-authority/bin
 ## ToDo
 
 1. Ensure good permissions on certificate, warn about unsecure permissions.
+2. Add options to create a OCSP certificate.
+3. Write man-page for scripts.
 
 ## License
 
