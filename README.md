@@ -137,6 +137,59 @@ PATH=/root/certificate-authority/bin
 1. Ensure good permissions on certificate, warn about unsecure permissions.
 2. Write man-page for scripts.
 
+## Test CRL and OCSP
+
+```
+# create the CA
+python manage.py init AT example example example example ca.example.com
+
+# create private keys
+openssl genrsa -out files/localhost.key 4096  # for OCSP service
+openssl genrsa -out files/host1.example.com.key 4096
+openssl genrsa -out files/host2.example.com.key 4096
+openssl genrsa -out files/host3.example.com.key 4096
+openssl genrsa -out files/host4.example.com.key 4096
+
+# create CSRs
+openssl req -new -key files/localhost.key -out files/localhost.csr -utf8 -sha512
+openssl req -new -key files/host1.example.com.key -out files/host1.example.com.csr -utf8 -sha512
+openssl req -new -key files/host2.example.com.key -out files/host2.example.com.csr -utf8 -sha512
+openssl req -new -key files/host3.example.com.key -out files/host3.example.com.csr -utf8 -sha512
+openssl req -new -key files/host4.example.com.key -out files/host4.example.com.csr -utf8 -sha512
+
+# sign certificates
+python manage.py sign --csr files/localhost.csr --out files/localhost.crt --ocsp
+python manage.py sign --csr files/host1.example.com.csr --out files/host1.example.com.crt
+python manage.py sign --csr files/host2.example.com.csr --out files/host2.example.com.crt
+python manage.py sign --csr files/host3.example.com.csr --out files/host3.example.com.crt
+python manage.py sign --csr files/host4.example.com.csr --out files/host4.example.com.crt
+
+# list serials of certificates
+python manage.py list
+
+# revoke two certificates (example assumes host1 and host2, second with reason)
+python manage.py revoke <serial>
+python manage.py revoke <serial> keyCompromise
+
+# generate CRL, index file
+python manage.py crl files/ca.crl
+
+# verify CRL
+openssl verify -CAfile files/cafile.pem -crl_check files/host1.example.com.crt
+openssl verify -CAfile files/cafile.pem -crl_check files/host2.example.com.crt
+openssl verify -CAfile files/cafile.pem -crl_check files/host3.example.com.crt
+openssl verify -CAfile files/cafile.pem -crl_check files/host4.example.com.crt
+
+# start OCSP daemon
+openssl ocsp -index files/ca.index.txt -port 8888 -rsigner files/localhost.crt -rkey files/localhost.key -CA files/cafile.pem -text -out log.txt
+
+# test certificates
+openssl ocsp -CAfile files/cafile.pem -issuer files/cafile.pem  -cert files/host1.example.com.crt -url http://localhost:8888 -resp_text
+openssl ocsp -CAfile files/cafile.pem -issuer files/cafile.pem  -cert files/host2.example.com.crt -url http://localhost:8888 -resp_text
+openssl ocsp -CAfile files/cafile.pem -issuer files/cafile.pem  -cert files/host3.example.com.crt -url http://localhost:8888 -resp_text
+openssl ocsp -CAfile files/cafile.pem -issuer files/cafile.pem  -cert files/host4.example.com.crt -url http://localhost:8888 -resp_text
+```
+
 ## License
 
 This project is free software licensed under the [GPLv3](http://www.gnu.org/licenses/gpl.txt).
