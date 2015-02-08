@@ -113,6 +113,8 @@ PATH=/root/certificate-authority/bin
 
 * The ``watchers`` command now takes a serial, like any other command.
 * Reworked ``view`` command for more robustness.
+  * Improve extension handling.
+  * Add the ``--no-pem`` option.
 * Add requirements-dev.txt
 
 ### 0.1 (2015-02-08)

@@ -19,6 +19,7 @@ from __future__ import unicode_literals
 import sys
 
 from datetime import datetime
+from optparse import make_option
 
 from django.core.management.base import BaseCommand
 
@@ -30,6 +31,14 @@ DATE_FMT = '%Y%m%d%H%M%SZ'
 class Command(BaseCommand):
     args = '<serial>'
     help = 'View a given certificate by ID'
+    option_list = BaseCommand.option_list + (
+        make_option(
+            '--no-pem',
+            default=False,
+            action='store_true',
+            help='Do not output public certificate in PEM format.'
+        ),
+    )
 
     def handle(self, *args, **options):
         if len(args) != 1:
@@ -71,4 +80,6 @@ class Command(BaseCommand):
         print('    sha1: %s' % cert.x509.digest(str('sha1')))
         print('    sha256: %s' % cert.x509.digest(str('sha256')))
         print('    sha512: %s' % cert.x509.digest(str('sha512')))
-        print(cert.pub)
+
+        if not options['no_pem']:
+            print(cert.pub.strip())
