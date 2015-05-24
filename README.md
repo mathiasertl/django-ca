@@ -112,9 +112,11 @@ PATH=/root/certificate-authority/bin
 
 ## ChangeLog
 
-### 0.3 (not yet released)
+### 0.2.1 (2015-05-24)
 
 * Signed certificates are valid five minutes in the past to account for possible clock skew.
+* Add documentation on how to test CRLs.
+* Improve support for OCSP.
 
 ### 0.2 (2015-02-08)
 
