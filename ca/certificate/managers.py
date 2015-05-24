@@ -60,7 +60,7 @@ class CertificateManager(models.Manager):
         # create signed certificate
         cert = crypto.X509()
         cert.set_serial_number(uuid.uuid4().int)
-        cert.set_notBefore(format_date(datetime.utcnow()))
+        cert.set_notBefore(format_date(datetime.utcnow() - timedelta(minutes=5)))
         cert.set_notAfter(format_date(expires))
         cert.set_issuer(issuerPub.get_subject())
         cert.set_subject(req.get_subject())

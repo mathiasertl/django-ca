@@ -70,7 +70,7 @@ class Command(BaseCommand):
         cert.get_subject().OU = ou
         cert.get_subject().CN = cn
         cert.set_serial_number(uuid.uuid4().int)
-        cert.set_notBefore(format_date(now))
+        cert.set_notBefore(format_date(now - timedelta(minutes=5)))
         cert.set_notAfter(format_date(expires))
         cert.set_issuer(cert.get_subject())
         cert.set_pubkey(key)

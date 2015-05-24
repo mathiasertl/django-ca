@@ -114,6 +114,8 @@ PATH=/root/certificate-authority/bin
 
 ### 0.3 (not yet released)
 
+* Signed certificates are valid five minutes in the past to account for possible clock skew.
+
 ### 0.2 (2015-02-08)
 
 * The ``watchers`` command now takes a serial, like any other command.
