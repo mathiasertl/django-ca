@@ -1,2 +1,2 @@
-Django==1.7.3
-pyOpenSSL==0.14
+Django==1.7.7
+pyOpenSSL==0.15.1
