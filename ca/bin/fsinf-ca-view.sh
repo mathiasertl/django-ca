@@ -1,3 +1,3 @@
 #!/bin/sh
 
-python manage.py view $@
+python manage.py view "$@"

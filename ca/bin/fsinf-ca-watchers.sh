@@ -1,3 +1,3 @@
 #!/bin/sh
 
-python manage.py watchers $@
+python manage.py watchers "$@"

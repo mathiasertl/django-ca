@@ -1,3 +1,3 @@
 #!/bin/sh
 
-python manage.py crl $@
+python manage.py crl "$@"

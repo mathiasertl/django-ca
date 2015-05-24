@@ -1,3 +1,3 @@
 #!/bin/sh
 
-python manage.py remove $@
+python manage.py remove "$@"

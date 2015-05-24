@@ -1,3 +1,3 @@
 #!/bin/sh
 
-python manage.py revoke $@
+python manage.py revoke "$@"

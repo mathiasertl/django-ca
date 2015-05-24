@@ -1,3 +1,3 @@
 #!/bin/sh
 
-python manage.py sign $@
+python manage.py sign "$@"

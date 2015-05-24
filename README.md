@@ -115,6 +115,7 @@ PATH=/root/certificate-authority/bin
 ### 0.2.1 (2015-05-24)
 
 * Signed certificates are valid five minutes in the past to account for possible clock skew.
+* Shell-scripts: Correctly pass quoted parameters to manage.py.
 * Add documentation on how to test CRLs.
 * Improve support for OCSP.
 

@@ -1,3 +1,3 @@
 #!/bin/sh
 
-python manage.py list $@
+python manage.py list "$@"
