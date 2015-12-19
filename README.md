@@ -75,12 +75,12 @@ Note that the ``sign_cert`` command has a few useful options, try the ``-h`` par
 ### List certificates/View certificate
 
 To get a list of all certificates, use ``manage.py list_certs``, to view details of a certificate,
-use ``manage.py view`` (``$`` signals the shell prompt):
+use `manage.py view_cert` (`$` signals the shell prompt):
 
 ```
 $ python manage.py list_certs
 BBB6B79C12604B1BB32E7DBC08942410: test.example.com (expires: 2017-01-28)
-$ python ca/manage.py view BBB6B79C12604B1BB32E7DBC08942410
+$ python ca/manage.py view_cert BBB6B79C12604B1BB32E7DBC08942410
 ...
 ```
 
@@ -134,6 +134,7 @@ PATH=/root/certificate-authority/bin
   * `list` -> `list_ca`
   * `revoke` -> `revoke_cert`
   * `crl` -> `dump_crl`
+  * `view` -> `view_cert`
 
 ### 0.2.1 (2015-05-24)
 
