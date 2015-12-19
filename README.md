@@ -74,11 +74,11 @@ Note that the ``sign`` command has a few useful options, try the ``-h`` paramete
 
 ### List certificates/View certificate
 
-To get a list of all certificates, use ``manage.py list``, to view details of a certificate,
+To get a list of all certificates, use ``manage.py list_certs``, to view details of a certificate,
 use ``manage.py view`` (``$`` signals the shell prompt):
 
 ```
-$ python manage.py list
+$ python manage.py list_certs
 BBB6B79C12604B1BB32E7DBC08942410: test.example.com (expires: 2017-01-28)
 $ python ca/manage.py view BBB6B79C12604B1BB32E7DBC08942410
 ...
@@ -92,7 +92,7 @@ To revoke a certificate, use
 python ca/manage.py revoke <serial>
 ```
 
-The serial can be optained via ``python ca/manage.py list``.
+The serial can be optained via ``python ca/manage.py list_certs``.
 
 ### Add/Remove watchers to certificates
 
@@ -181,7 +181,7 @@ python manage.py sign --csr files/host3.example.com.csr --out files/host3.exampl
 python manage.py sign --csr files/host4.example.com.csr --out files/host4.example.com.crt
 
 # list serials of certificates
-python manage.py list
+python manage.py list_certs
 
 # revoke two certificates (example assumes host1 and host2, second with reason)
 python manage.py revoke <serial>
