@@ -17,7 +17,6 @@
 from __future__ import unicode_literals
 
 from datetime import datetime
-from optparse import make_option
 
 from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
@@ -29,67 +28,57 @@ DATE_FMT = '%Y%m%d%H%M%SZ'
 
 
 class Command(BaseCommand):
-    args = '<serial>'
-    help = 'View a given certificate by ID'
-    option_list = BaseCommand.option_list + (
-        make_option(
-            '-n', '--no-pem',
-            default=False,
-            action='store_true',
-            help='Do not output public certificate in PEM format.'
-        ),
-        make_option(
-            '-e', '--extensions',
-            default=False,
-            action='store_true',
-            help='Show all extensions, not just subjectAltName.'
-        ),
-    )
+    help = 'View a certificate by serial. The "list_certs" command lists all known certificates.'
 
-    def handle(self, *args, **options):
-        if len(args) != 1:
-            raise CommandError('Please give exactly one serial (first colum of list command)')
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '-n', '--no-pem', default=False, action='store_true',
+            help='Do not output public certificate in PEM format.')
+        parser.add_argument(
+            '-e', '--extensions', default=False, action='store_true',
+            help='Show all extensions, not just subjectAltName.')
+        parser.add_argument('serial')
 
+    def handle(self, serial, **options):
         try:
-            cert = Certificate.objects.get(serial=args[0])
+            cert = Certificate.objects.get(serial=serial)
         except Certificate.DoesNotExist:
             raise CommandError('Certificate with given serial not found.')
-        print('Common Name: %s' % cert.cn)
+        self.stdout.write('Common Name: %s' % cert.cn)
 
-        # print notBefore/notAfter
-        validFrom = datetime.strptime(cert.x509.get_notBefore(), DATE_FMT)
-        validUntil = datetime.strptime(cert.x509.get_notAfter(), DATE_FMT)
-        print('Valid from: %s' % validFrom.strftime('%Y-%m-%d %H:%M'))
-        print('Valid until: %s' % validUntil.strftime('%Y-%m-%d %H:%M'))
+        # self.stdout.write notBefore/notAfter
+        validFrom = datetime.strptime(cert.x509.get_notBefore().decode('utf-8'), DATE_FMT)
+        validUntil = datetime.strptime(cert.x509.get_notAfter().decode('utf-8'), DATE_FMT)
+        self.stdout.write('Valid from: %s' % validFrom.strftime('%Y-%m-%d %H:%M'))
+        self.stdout.write('Valid until: %s' % validUntil.strftime('%Y-%m-%d %H:%M'))
 
-        # print status
+        # self.stdout.write status
         if cert.revoked:
-            print('Status: Revoked')
+            self.stdout.write('Status: Revoked')
         elif cert.expires < datetime.utcnow():
-            print('Status: Expired')
+            self.stdout.write('Status: Expired')
         else:
-            print('Status: Valid')
+            self.stdout.write('Status: Valid')
 
-        # print extensions
+        # self.stdout.write extensions
         if options['extensions']:
             for name, value in six.iteritems(cert.extensions):
-                print("%s:" % name)
+                self.stdout.write("%s:" % name.decode('utf-8'))
                 for line in str(value).strip().splitlines():
-                    print("\t%s" % line)
+                    self.stdout.write("    %s" % line)
         else:
             ext = cert.extensions.get('subjectAltName')
             if ext:
-                print('%s:' % ext.get_short_name())
-                print("\t%s" % str(ext))
+                self.stdout.write('%s:' % ext.get_short_name().decode('utf-8'))
+                self.stdout.write("    %s" % ext)
 
         emails = cert.watchers.values_list('email', flat=True)
-        print('Watchers: %s' % ', '.join(emails))
+        self.stdout.write('Watchers: %s' % ', '.join(emails))
 
-        print('Digest:')
-        print('    md5: %s' % cert.x509.digest(str('md5')))
-        print('    sha1: %s' % cert.x509.digest(str('sha1')))
-        print('    sha256: %s' % cert.x509.digest(str('sha256')))
-        print('    sha512: %s' % cert.x509.digest(str('sha512')))
+        self.stdout.write('Digest:')
+        for algo in ['md5', 'sha1', 'sha256', 'sha512']:
+            value = cert.x509.digest(algo).decode('utf-8')
+            self.stdout.write('    %s: %s' % (algo, value))
 
         if not options['no_pem']:
-            print(cert.pub.strip())
+            self.stdout.write(cert.pub.strip())
