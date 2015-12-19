@@ -67,7 +67,7 @@ class Command(BaseCommand):
 
         if options['out']:
             f = open(options['out'], 'w')
-            f.write(cert.pub)
+            f.write(cert.pub.decode('utf-8'))
             f.close()
         else:
             print(cert.pub)

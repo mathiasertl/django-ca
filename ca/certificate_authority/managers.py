@@ -41,7 +41,6 @@ class CertificateManager(models.Manager):
         # get certificate information
         req = crypto.load_certificate_request(crypto.FILETYPE_PEM, csr)
         subject = req.get_subject()
-        print(subject.get_components())
         cn = dict(subject.get_components()).get(b'CN')
         if cn is None:
             raise Exception('CSR has no CommonName!')
@@ -63,7 +62,13 @@ class CertificateManager(models.Manager):
         cert.set_pubkey(req.get_pubkey())
 
         # collect any extension
-        extensions = []
+        extensions = [
+            crypto.X509Extension(b'basicConstraints', 0, b'CA:FALSE'),
+            crypto.X509Extension(b'keyUsage', 0, bytes(','.join(key_usage), 'utf-8')),
+            crypto.X509Extension(b'extendedKeyUsage', 0, bytes(','.join(ext_key_usage), 'utf-8')),
+            crypto.X509Extension(b'subjectKeyIdentifier', 0, b'hash', subject=cert),
+            crypto.X509Extension(b'authorityKeyIdentifier', 0, b'keyid,issuer', issuer=issuerPub),
+        ]
 
         # add subjectAltName if given:
         if subjectAltNames:
@@ -81,8 +86,8 @@ class CertificateManager(models.Manager):
             issuerAltName = str('URI:%s' % settings.CA_ISSUER_ALT_NAME)
         else:
             issuerAltName = str('issuer:copy')
-        extensions.append(crypto.X509Extension(str('issuerAltName'), 0, issuerAltName,
-                                               issuer=issuerPub))
+        extensions.append(crypto.X509Extension(
+            b'issuerAltName', 0, issuerAltName.encode('utf-8'), issuer=issuerPub))
 
         # Add authorityInfoAccess
         auth_info_access = []
@@ -93,16 +98,6 @@ class CertificateManager(models.Manager):
         if auth_info_access:
             auth_info_access = str(','.join(auth_info_access))
             extensions.append(crypto.X509Extension(str('authorityInfoAccess'), 0, auth_info_access))
-
-        # add basicConstraints, keyUsage and extendedKeyUsage
-        extensions.append(crypto.X509Extension(str('basicConstraints'), 0, str('CA:FALSE')))
-        extensions.append(crypto.X509Extension(str('keyUsage'), 0, str(','.join(key_usage))))
-        extensions.append(crypto.X509Extension(str('extendedKeyUsage'), 0,
-                                               str(','.join(ext_key_usage))))
-        extensions.append(crypto.X509Extension(str('subjectKeyIdentifier'), 0, str('hash'),
-                                               subject=cert))
-        extensions.append(crypto.X509Extension(str('authorityKeyIdentifier'), 0,
-                                               str('keyid,issuer'), issuer=issuerPub))
 
 
         cert.add_extensions(extensions)
