@@ -67,10 +67,10 @@ openssl req -new -key example.com.key -out example.com.csr -utf8 -sha512
 Copy the CSR and sign it:
 
 ```
-python ca/manage.py sign --csr example.com.csr --out example.com.crt
+python ca/manage.py sign_cert --csr example.com.csr --out example.com.crt
 ```
 
-Note that the ``sign`` command has a few useful options, try the ``-h`` parameter for options.
+Note that the ``sign_cert`` command has a few useful options, try the ``-h`` parameter for options.
 
 ### List certificates/View certificate
 
@@ -119,6 +119,19 @@ PATH=/root/certificate-authority/bin
 ```
 
 ## ChangeLog
+
+### 1.0.0
+
+* This version now absolutely assumes Python3. Python2 is no longer supported.
+* The main app was renamed from `certificate` to `certificate_authority`. To migrate, use `python
+  manage.py dumpdata --indet=4 > certs.json`, then update the source code, apply database
+  migrations with `python manage.py migrate`, modfify `certs.json` to use the correct path, and
+  load the data with `python manage.py loaddata certs.json`.
+* Update Django dependency to 1.9.
+* `manage.py` commands are now renamed to be more specific:
+  * `init` -> `init_ca`
+  * `sign` -> `sign_cert`
+  * `list` -> `list-ca`
 
 ### 0.2.1 (2015-05-24)
 
@@ -174,11 +187,11 @@ openssl req -new -key files/host3.example.com.key -out files/host3.example.com.c
 openssl req -new -key files/host4.example.com.key -out files/host4.example.com.csr -utf8 -sha512
 
 # sign certificates
-python manage.py sign --csr files/localhost.csr --out files/localhost.crt --ocsp
-python manage.py sign --csr files/host1.example.com.csr --out files/host1.example.com.crt
-python manage.py sign --csr files/host2.example.com.csr --out files/host2.example.com.crt
-python manage.py sign --csr files/host3.example.com.csr --out files/host3.example.com.crt
-python manage.py sign --csr files/host4.example.com.csr --out files/host4.example.com.crt
+python manage.py sign_cert --csr files/localhost.csr --out files/localhost.crt --ocsp
+python manage.py sign_cert --csr files/host1.example.com.csr --out files/host1.example.com.crt
+python manage.py sign_cert --csr files/host2.example.com.csr --out files/host2.example.com.crt
+python manage.py sign_cert --csr files/host3.example.com.csr --out files/host3.example.com.crt
+python manage.py sign_cert --csr files/host4.example.com.csr --out files/host4.example.com.crt
 
 # list serials of certificates
 python manage.py list_certs
