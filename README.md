@@ -13,7 +13,14 @@ This simple project allows you to manage a local TLS certificate authority from 
 
 ## Setup
 
-First, download the project, create a virtualenv, install requirements:
+You will need the development headers required by pyOpenSSL, on Debian/Ubuntu
+systems, this should suffice:
+
+```
+apt-get install libffi-dev libssl-dev
+```
+
+Next, download the project, create a virtualenv, install requirements:
 
 ```
 git clone https://github.com/fsinf/certificate-authority.git
