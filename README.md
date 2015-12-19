@@ -168,6 +168,7 @@ PATH=/root/certificate-authority/bin
 
 1. Write man-page for scripts.
 2. Immediately rewrite CRL and index file when revoking a certificate.
+3. Only send out one notification if multiple certificates expire for a user.
 
 ## Test CRL and OCSP
 

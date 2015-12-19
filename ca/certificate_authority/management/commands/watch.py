@@ -18,7 +18,6 @@ from __future__ import unicode_literals
 
 from datetime import datetime
 from datetime import timedelta
-from optparse import make_option
 
 from django.conf import settings
 from django.core.mail import send_mail
@@ -30,11 +29,9 @@ from certificate_authority.models import Certificate
 class Command(BaseCommand):
     help = "Send notifications about expiring certificates to watchers."
 
-    option_list = BaseCommand.option_list + (
-        make_option('--days', type='int', default=14,
-                    help='Warn DAYS days ahead of time (default: %default).'
-        ),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument('--days', type=int, default=14,
+                            help='Warn DAYS days ahead of time (default: %(default)s).')
 
     def handle(self, *args, **options):
         now = datetime.utcnow()
