@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of fsinf-certificate-authority (https://github.com/fsinf/certificate-authority).
+# This file is part of fsinf-certificate-authority
+# (https://github.com/fsinf/certificate-authority).
 #
 # fsinf-certificate-authority is free software: you can redistribute it and/or modify it under the
 # terms of the GNU General Public License as published by the Free Software Foundation, either
@@ -25,7 +26,8 @@ class Command(BaseCommand):
     help = "Revoke a certificate."
 
     def add_arguments(self, parser):
-        parser.add_argument('serial', help='Serial of the certificate (see the list_certs command).')
+        parser.add_argument('serial',
+                            help='Serial of the certificate (see the list_certs command).')
         parser.add_argument('--reason', help="An optional reason for revokation.")
 
     def handle(self, serial, **options):

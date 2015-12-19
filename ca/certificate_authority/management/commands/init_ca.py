@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of fsinf-certificate-authority (https://github.com/fsinf/certificate-authority).
+# This file is part of fsinf-certificate-authority
+# (https://github.com/fsinf/certificate-authority).
 #
 # fsinf-certificate-authority is free software: you can redistribute it and/or modify it under the
 # terms of the GNU General Public License as published by the Free Software Foundation, either
@@ -21,7 +22,6 @@ https://skippylovesmalorie.wordpress.com/2010/02/12/how-to-generate-a-self-signe
 from __future__ import unicode_literals
 
 import os
-import uuid
 
 from datetime import datetime
 from datetime import timedelta
@@ -33,7 +33,6 @@ from django.core.management.base import CommandError
 
 from OpenSSL import crypto
 
-from certificate_authority.utils import format_date
 from certificate_authority.utils import get_cert
 
 
