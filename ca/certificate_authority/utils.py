@@ -52,8 +52,11 @@ def get_ca_crt(reload=False):
     return CA_CRT
 
 def get_cert(expires):
+    not_before = format_date(datetime.utcnow() - timedelta(minutes=5))
+    not_after = format_date(expires)
+
     cert = crypto.X509()
     cert.set_serial_number(uuid.uuid4().int)
-    cert.set_notBefore(format_date(datetime.utcnow() - timedelta(minutes=5)))
-    cert.set_notAfter(format_date(expires))
+    cert.set_notBefore(not_before.encode('utf-8'))
+    cert.set_notAfter(not_after.encode('utf-8'))
     return cert
