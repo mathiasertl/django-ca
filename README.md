@@ -115,7 +115,7 @@ PATH=/root/certificate-authority/bin
 
 # recreate the CRL (hourly), also creates an OpenSSL CA index file and a pem with the CA cert and
 # the CRL (required for "openssl ocsp")
-12 *    * * *           xmpp-account   python ca/manage.py crl
+12 *    * * *           xmpp-account   python ca/manage.py dump_crl
 ```
 
 ## ChangeLog
@@ -133,6 +133,7 @@ PATH=/root/certificate-authority/bin
   * `sign` -> `sign_cert`
   * `list` -> `list_ca`
   * `revoke` -> `revoke_cert`
+  * `crl` -> `dump_crl`
 
 ### 0.2.1 (2015-05-24)
 
@@ -202,7 +203,7 @@ python manage.py revoke <serial>
 python manage.py revoke <serial> keyCompromise
 
 # generate CRL, index file
-python manage.py crl files/ca.crl
+python manage.py dump_crl files/ca.crl
 
 # verify CRL
 openssl verify -CAfile files/cafile.pem -crl_check files/host1.example.com.crt
