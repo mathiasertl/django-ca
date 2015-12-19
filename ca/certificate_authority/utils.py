@@ -18,6 +18,11 @@
 
 from __future__ import unicode_literals
 
+import uuid
+
+from datetime import datetime
+from datetime import timedelta
+
 from django.conf import settings
 
 from OpenSSL import crypto
@@ -45,3 +50,10 @@ def get_ca_crt(reload=False):
         with open(settings.CA_CRT) as ca_crt:
             CA_CRT = crypto.load_certificate(crypto.FILETYPE_PEM, ca_crt.read())
     return CA_CRT
+
+def get_cert(expires):
+    cert = crypto.X509()
+    cert.set_serial_number(uuid.uuid4().int)
+    cert.set_notBefore(format_date(datetime.utcnow() - timedelta(minutes=5)))
+    cert.set_notAfter(format_date(expires))
+    return cert
