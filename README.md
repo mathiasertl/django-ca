@@ -131,7 +131,8 @@ PATH=/root/certificate-authority/bin
 * `manage.py` commands are now renamed to be more specific:
   * `init` -> `init_ca`
   * `sign` -> `sign_cert`
-  * `list` -> `list-ca`
+  * `list` -> `list_ca`
+  * `revoke` -> `revoke_cert`
 
 ### 0.2.1 (2015-05-24)
 
