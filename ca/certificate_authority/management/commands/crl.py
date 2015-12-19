@@ -17,6 +17,7 @@
 from __future__ import unicode_literals
 
 from datetime import datetime
+from argparse import FileType
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -33,7 +34,9 @@ date_format = '%y%m%d%H%M%SZ'
 
 class Command(BaseCommand):
     help = "Write the certificate revocation list (CRL)."
-    args = 'path'
+
+    def add_arguments(self, parser):
+        parser.add_argument('path', type=FileType('w'))
 
     def handle(self, path, **options):
         crl = crypto.CRL()
@@ -57,25 +60,24 @@ class Command(BaseCommand):
             # Format see: http://pki-tutorial.readthedocs.org/en/latest/cadb.html
             index.append((
                 status,
-                cert.x509.get_notAfter(),
+                cert.x509.get_notAfter().decode('utf-8'),
                 revocation,
                 cert.serial,
                 'unknown',  # we don't save to any file
                 cert.distinguishedName,
             ))
 
-        # write CRL
+        # Write CRL
         crl = crl.export(get_ca_crt(), get_ca_key())
-        with open(path, 'w') as crl_file:
-            crl_file.write(crl)
+        path.write(crl.decode('utf-8'))
 
-        # write index
+        # Write index file (required by "openssl ocsp")
         with open(settings.CA_INDEX, 'w') as index_file:
             for entry in index:
                 index_file.write('%s\n' % '\t'.join(entry))
 
-        # write cafile (required by "openssl ocsp"):
+        # Write cafile (required by "openssl ocsp")
         with open(settings.CA_CRT) as ca_file, open(settings.CA_FILE_PEM, 'w') as out:
             ca = ca_file.read()
             out.write(ca)
-            out.write(crl)
+            out.write(crl.decode('utf-8'))
