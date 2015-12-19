@@ -136,6 +136,7 @@ PATH=/root/certificate-authority/bin
   * `crl` -> `dump_crl`
   * `view` -> `view_cert`
   * `watch` -> `notify_expiring_certs`
+* Removed the `manage.py remove` command.
 
 ### 0.2.1 (2015-05-24)
 
