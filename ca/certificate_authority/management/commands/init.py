@@ -26,7 +26,6 @@ import uuid
 from datetime import datetime
 from datetime import timedelta
 from getpass import getpass
-from optparse import make_option
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -39,16 +38,22 @@ from certificate_authority.utils import format_date
 
 class Command(BaseCommand):
     help = "Initiate a certificate authority."
-    args = "Country State City Org OrgUnit CommonName"
 
-    option_list = BaseCommand.option_list + (
-        make_option('--expires', metavar='DAYS', type="int", default=365 * 10,
-                    help='CA certificate expires in DAYS days (default: %default).'
-        ),
-        make_option('--password', nargs=1,
-                    help="Optional password used to encrypt the private key. If omitted, no "
-                    "password is used, use \"--password=\" to prompt for a password.")
-    )
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--expires', metavar='DAYS', type=int, default=365 * 10,
+            help='CA certificate expires in DAYS days (default: %(default)s).'
+        )
+        parser.add_argument(
+            '--password', nargs=1,
+            help="Optional password used to encrypt the private key. If omitted, no "
+                 "password is used, use \"--password=\" to prompt for a password.")
+        parser.add_argument('country', help='Two-letter country code, e.g. "US" or "AT".')
+        parser.add_argument('state', help='State for this CA.')
+        parser.add_argument('city', help='City for this CA.')
+        parser.add_argument('org', help='Organization where this CA is used.')
+        parser.add_argument('ou', help='Organizational Unit where this CA is used.')
+        parser.add_argument('cn', help='Common name for this CA.')
 
     def handle(self, country, state, city, org, ou, cn, **options):
         if os.path.exists(settings.CA_KEY):
