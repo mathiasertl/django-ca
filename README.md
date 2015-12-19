@@ -97,7 +97,7 @@ The serial can be optained via ``python ca/manage.py list_certs``.
 ### Add/Remove watchers to certificates
 
 You can add/remove watchers (users that get emails about certificates about to
-expire) using ``manage.py watchers``.
+expire) using ``manage.py cert_watchers``.
 
 ## Regular cron-jobs
 
