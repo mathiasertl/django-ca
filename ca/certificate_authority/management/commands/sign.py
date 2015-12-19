@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 from django.utils import six
 
-from certificate.models import Certificate
+from certificate_authority.models import Certificate
 
 
 class Command(BaseCommand):

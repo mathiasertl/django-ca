@@ -23,7 +23,7 @@ from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 from django.utils import six
 
-from certificate.models import Certificate
+from certificate_authority.models import Certificate
 
 DATE_FMT = '%Y%m%d%H%M%SZ'
 

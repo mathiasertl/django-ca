@@ -19,7 +19,7 @@ from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 
-from certificate.models import Certificate
+from certificate_authority.models import Certificate
 
 
 class Command(BaseCommand):

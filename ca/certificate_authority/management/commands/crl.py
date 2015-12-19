@@ -24,7 +24,7 @@ from OpenSSL import crypto
 
 from ca.utils import get_ca_crt
 from ca.utils import get_ca_key
-from certificate.models import Certificate
+from certificate_authority.models import Certificate
 
 # We need a two-letter year, otherwise OCSP doesn't work
 date_format = '%y%m%d%H%M%SZ'
