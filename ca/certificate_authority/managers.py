@@ -25,7 +25,7 @@ from OpenSSL import crypto
 from django.conf import settings
 from django.db import models
 
-from ca.utils import format_date
+from .utils import format_date
 
 
 class CertificateManager(models.Manager):

@@ -22,9 +22,9 @@ from django.core.management.base import BaseCommand
 
 from OpenSSL import crypto
 
-from ca.utils import get_ca_crt
-from ca.utils import get_ca_key
 from certificate_authority.models import Certificate
+from certificate_authority.utils import get_ca_crt
+from certificate_authority.utils import get_ca_key
 
 # We need a two-letter year, otherwise OCSP doesn't work
 date_format = '%y%m%d%H%M%SZ'

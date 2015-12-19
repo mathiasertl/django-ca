@@ -34,7 +34,7 @@ from django.core.management.base import CommandError
 
 from OpenSSL import crypto
 
-from ca.utils import format_date
+from certificate_authority.utils import format_date
 
 
 class Command(BaseCommand):

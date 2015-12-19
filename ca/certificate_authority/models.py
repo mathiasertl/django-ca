@@ -23,7 +23,7 @@ from django.db import models
 
 from OpenSSL import crypto
 
-from ca.utils import format_date
+from .utils import format_date
 from .managers import CertificateManager
 
 
