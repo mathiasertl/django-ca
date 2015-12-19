@@ -38,7 +38,7 @@ Then create the certificate authority ("CA"), the arguments is required certific
 fill in our own data:
 
 ```
-python ca/manage.py init AT Vienna Vienna "HTU Wien" "Fachschaft Informatik" ca.fsinf.at
+python ca/manage.py init_ca AT Vienna Vienna "HTU Wien" "Fachschaft Informatik" ca.fsinf.at
 ```
 
 **Note:** You can set some options for your CA, try the ``-h`` parameter.
@@ -157,7 +157,7 @@ PATH=/root/certificate-authority/bin
 
 ```
 # create the CA
-python manage.py init AT example example example example ca.example.com
+python manage.py init_ca AT example example example example ca.example.com
 
 # create private keys
 openssl genrsa -out files/localhost.key 4096  # for OCSP service
