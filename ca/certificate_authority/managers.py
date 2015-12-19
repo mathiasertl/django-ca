@@ -51,17 +51,17 @@ class CertificateManager(models.Manager):
         with open(settings.CA_CRT) as ca_crt:
             issuerPub = crypto.load_certificate(crypto.FILETYPE_PEM, ca_crt.read())
 
-        # compute notAfter info
+        # Compute notAfter info
         expires = datetime.today() + timedelta(days=days + 1)
         expires = expires.replace(hour=0, minute=0, second=0, microsecond=0)
 
-        # create signed certificate
+        # Create signed certificate
         cert = get_cert(expires)
         cert.set_issuer(issuerPub.get_subject())
         cert.set_subject(req.get_subject())
         cert.set_pubkey(req.get_pubkey())
 
-        # collect any extension
+        # Collect extensions
         extensions = [
             crypto.X509Extension(b'basicConstraints', 0, b'CA:FALSE'),
             crypto.X509Extension(b'keyUsage', 0, bytes(','.join(key_usage), 'utf-8')),
@@ -70,13 +70,13 @@ class CertificateManager(models.Manager):
             crypto.X509Extension(b'authorityKeyIdentifier', 0, b'keyid,issuer', issuer=issuerPub),
         ]
 
-        # add subjectAltName if given:
+        # Add subjectAltName if given:
         if subjectAltNames:
             subjData = str(','.join(['DNS:%s' % n for n in subjectAltNames]))
             ext = crypto.X509Extension(str('subjectAltName'), 0, subjData)
             extensions.append(ext)
 
-        # set CRL distribution points:
+        # Set CRL distribution points:
         if settings.CA_CRL_DISTRIBUTION_POINTS:
             value = ','.join(['URI:%s' % uri for uri in settings.CA_CRL_DISTRIBUTION_POINTS])
             extensions.append(crypto.X509Extension(str('crlDistributionPoints'), 0, str(value)))
@@ -99,17 +99,17 @@ class CertificateManager(models.Manager):
             auth_info_access = str(','.join(auth_info_access))
             extensions.append(crypto.X509Extension(str('authorityInfoAccess'), 0, auth_info_access))
 
-
+        # Add collected extensions
         cert.add_extensions(extensions)
 
-        # finally sign the certificate:
+        # Finally sign the certificate:
         cert.sign(issuerKey, algorithm)
 
-        # create database object
+        # Create database object
         crt = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
         obj = self.create(csr=csr, pub=crt, cn=cn, expires=expires)
 
-        # add watchers:
+        # Add watchers:
         if watchers:
             obj.watchers.add(*watchers)
 
