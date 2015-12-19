@@ -27,6 +27,7 @@ git clone https://github.com/fsinf/certificate-authority.git
 cd certificate-authority
 virtualenv .
 source bin/activate
+pip install -U pip setuptools
 pip install -r requirements.txt
 ```
 
