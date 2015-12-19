@@ -1,5 +1,6 @@
 *.py[co]
 *.sw[po]
+*.sqlite3
 /bin/
 /include/
 /lib/
