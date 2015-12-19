@@ -75,20 +75,21 @@ class Command(BaseCommand):
         cert.get_subject().OU = ou
         cert.get_subject().CN = cn
         cert.set_serial_number(uuid.uuid4().int)
-        cert.set_notBefore(format_date(now - timedelta(minutes=5)))
-        cert.set_notAfter(format_date(expires))
+        cert.set_notBefore(format_date(now - timedelta(minutes=5)).encode('utf-8'))
+        cert.set_notAfter(format_date(expires).encode('utf-8'))
         cert.set_issuer(cert.get_subject())
         cert.set_pubkey(key)
         cert.sign(key, settings.DIGEST_ALGORITHM)
 
+        san = bytes('DNS:%s' % cn, 'utf-8')
         cert.add_extensions([
-            crypto.X509Extension(str('basicConstraints'), True, str('CA:TRUE, pathlen:0')),
-            crypto.X509Extension(str('keyUsage'), 0, str('keyCertSign,cRLSign')),
-            crypto.X509Extension(str('subjectKeyIdentifier'), False, str('hash'), subject=cert),
-            crypto.X509Extension(str('subjectAltName'), 0, str('DNS:%s' % cn))
+            crypto.X509Extension(b'basicConstraints', True, b'CA:TRUE, pathlen:0'),
+            crypto.X509Extension(b'keyUsage', 0, b'keyCertSign,cRLSign'),
+            crypto.X509Extension(b'subjectKeyIdentifier', False, b'hash', subject=cert),
+            crypto.X509Extension(b'subjectAltName', 0, san)
         ])
         cert.add_extensions([
-            crypto.X509Extension(str('authorityKeyIdentifier'), False, str('keyid:always'), issuer=cert),
+            crypto.X509Extension(b'authorityKeyIdentifier', False, b'keyid:always', issuer=cert),
         ])
 
         if options['password'] is None:
@@ -101,7 +102,9 @@ class Command(BaseCommand):
         oldmask = os.umask(247)
         with open(settings.CA_KEY, 'w') as key_file:
             # TODO: optionally add 'des3', 'passphrase' as args
-            key_file.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, key, *args))
+            key = crypto.dump_privatekey(crypto.FILETYPE_PEM, key, *args)
+            key_file.write(key.decode('utf-8'))
         with open(settings.CA_CRT, 'w') as cert_file:
-            cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
+            cert = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
+            cert_file.write(cert.decode('utf-8'))
         os.umask(oldmask)
