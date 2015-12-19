@@ -15,8 +15,6 @@
 
 from __future__ import unicode_literals
 
-import uuid
-
 from datetime import datetime
 from datetime import timedelta
 
@@ -25,7 +23,7 @@ from OpenSSL import crypto
 from django.conf import settings
 from django.db import models
 
-from .utils import format_date
+from .utils import get_cert
 
 
 class CertificateManager(models.Manager):
@@ -43,7 +41,8 @@ class CertificateManager(models.Manager):
         # get certificate information
         req = crypto.load_certificate_request(crypto.FILETYPE_PEM, csr)
         subject = req.get_subject()
-        cn = dict(subject.get_components()).get('CN')
+        print(subject.get_components())
+        cn = dict(subject.get_components()).get(b'CN')
         if cn is None:
             raise Exception('CSR has no CommonName!')
 
@@ -58,10 +57,7 @@ class CertificateManager(models.Manager):
         expires = expires.replace(hour=0, minute=0, second=0, microsecond=0)
 
         # create signed certificate
-        cert = crypto.X509()
-        cert.set_serial_number(uuid.uuid4().int)
-        cert.set_notBefore(format_date(datetime.utcnow() - timedelta(minutes=5)))
-        cert.set_notAfter(format_date(expires))
+        cert = get_cert(expires)
         cert.set_issuer(issuerPub.get_subject())
         cert.set_subject(req.get_subject())
         cert.set_pubkey(req.get_pubkey())

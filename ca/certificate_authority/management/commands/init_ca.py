@@ -34,6 +34,7 @@ from django.core.management.base import CommandError
 from OpenSSL import crypto
 
 from certificate_authority.utils import format_date
+from certificate_authority.utils import get_cert
 
 
 class Command(BaseCommand):
@@ -67,16 +68,13 @@ class Command(BaseCommand):
         key = crypto.PKey()
         key.generate_key(settings.CA_KEY_TYPE, settings.CA_BITSIZE)
 
-        cert = crypto.X509()
+        cert = get_cert(expires)
         cert.get_subject().C = country
         cert.get_subject().ST = state
         cert.get_subject().L = city
         cert.get_subject().O = org
         cert.get_subject().OU = ou
         cert.get_subject().CN = cn
-        cert.set_serial_number(uuid.uuid4().int)
-        cert.set_notBefore(format_date(now - timedelta(minutes=5)).encode('utf-8'))
-        cert.set_notAfter(format_date(expires).encode('utf-8'))
         cert.set_issuer(cert.get_subject())
         cert.set_pubkey(key)
         cert.sign(key, settings.DIGEST_ALGORITHM)
