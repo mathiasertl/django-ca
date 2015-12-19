@@ -111,7 +111,7 @@ PATH=/root/certificate-authority/bin
 # m h  dom mon dow     user           commanda
 
 # notify watchers about certificates about to expire
-* 8    * * *           xmpp-account   python ca/manage.py watch
+* 8    * * *           xmpp-account   python ca/manage.py notify_expiring_certs
 
 # recreate the CRL (hourly), also creates an OpenSSL CA index file and a pem with the CA cert and
 # the CRL (required for "openssl ocsp")
@@ -135,6 +135,7 @@ PATH=/root/certificate-authority/bin
   * `revoke` -> `revoke_cert`
   * `crl` -> `dump_crl`
   * `view` -> `view_cert`
+  * `watch` -> `notify_expiring_certs`
 
 ### 0.2.1 (2015-05-24)
 
