@@ -56,5 +56,7 @@ class Command(BaseCommand):
             data = crypto.dump_certificate(crypto.FILETYPE_TEXT, cert.x509)
 
         if 'b' not in path.mode:
+            if format == 'asn1':
+                raise CommandError("ASN1 cannot be reliably printed to stdout.")
             data = data.decode('utf-8')
         path.write(data)
