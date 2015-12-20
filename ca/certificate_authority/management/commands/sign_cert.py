@@ -66,8 +66,7 @@ class Command(BaseCommand):
             ext_key_usage=ext_key_usage)
 
         if options['out']:
-            f = open(options['out'], 'w')
-            f.write(cert.pub.decode('utf-8'))
-            f.close()
+            with open(options['out'], 'w') as f:
+                f.write(cert.pub.decode('utf-8'))
         else:
             print(cert.pub)
