@@ -127,7 +127,6 @@ PATH=/root/certificate-authority/bin
   manage.py dumpdata --indet=4 > certs.json`, then update the source code, apply database
   migrations with `python manage.py migrate`, modfify `certs.json` to use the correct path, and
   load the data with `python manage.py loaddata certs.json`.
-* Update Django dependency to 1.9.
 * `manage.py` commands are now renamed to be more specific:
   * `init` -> `init_ca`
   * `sign` -> `sign_cert`
@@ -137,7 +136,9 @@ PATH=/root/certificate-authority/bin
   * `view` -> `view_cert`
   * `watch` -> `notify_expiring_certs`
   * `watchers` -> `cert_watchers`
+* New command `dump_cert` to dump certificates to a file.
 * Removed the `manage.py remove` command.
+* Update Django dependency to 1.9.
 
 ### 0.2.1 (2015-05-24)
 
