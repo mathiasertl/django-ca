@@ -123,7 +123,7 @@ PATH=/root/certificate-authority/bin
 ### 1.0.0
 
 * This version now absolutely assumes Python3. Python2 is no longer supported.
-* The main app was renamed from `certificate` to `certificate_authority`. To migrate, use `python
+* The main app was renamed from `certificate` to `django_ca`. To migrate, use `python
   manage.py dumpdata --indet=4 > certs.json`, then update the source code, apply database
   migrations with `python manage.py migrate`, modfify `certs.json` to use the correct path, and
   load the data with `python manage.py loaddata certs.json`.
