@@ -33,7 +33,7 @@ from django.core.management.base import CommandError
 
 from OpenSSL import crypto
 
-from certificate_authority.utils import get_cert
+from django_ca.utils import get_cert
 
 
 class Command(BaseCommand):

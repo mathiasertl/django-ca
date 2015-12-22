@@ -20,7 +20,7 @@ from datetime import datetime
 
 from django.core.management.base import BaseCommand
 
-from certificate_authority.models import Certificate
+from django_ca.models import Certificate
 
 
 class Command(BaseCommand):
