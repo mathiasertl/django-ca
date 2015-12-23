@@ -12,9 +12,6 @@ class CertificateAdmin(admin.ModelAdmin):
     readonly_fields = ('expires', 'csr', 'pub', 'cn', 'serial', 'revoked', 'revoked_date',
                        'revoked_reason', )
 
-    def csr(self, obj):
-        return 'omg'
-
     def status(self, obj):
         if obj.revoked:
             return _('Revoked')
@@ -22,10 +19,12 @@ class CertificateAdmin(admin.ModelAdmin):
             return _('Expired')
         else:
             return _('Valid')
+    status.short_description = _('Status')
 
     def expires_date(self, obj):
         return obj.expires.date()
     expires_date.short_description = _('Expires')
+    expires_date.admin_order_field = 'expires'
 
     class Media:
         css = {
