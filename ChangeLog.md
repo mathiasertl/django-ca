@@ -4,10 +4,6 @@
 
 * This version now absolutely assumes Python3. Python2 is no longer supported.
 * The main app was renamed from `certificate` to `django_ca`. See below for how to upgrade.
-To migrate, use `python
-  manage.py dumpdata --indet=4 > certs.json`, then update the source code, apply database
-  migrations with `python manage.py migrate`, modfify `certs.json` to use the correct path, and
-  load the data with `python manage.py loaddata certs.json`.
 * `manage.py` commands are now renamed to be more specific:
   * `init` -> `init_ca`
   * `sign` -> `sign_cert`
