@@ -2,8 +2,11 @@
 
 ### 1.0.0
 
+* Move this project from https://github.com/fsinf/certificate-authority to
+  https://github.com/mathiasertl/django-ca.
 * This version now absolutely assumes Python3. Python2 is no longer supported.
 * The main app was renamed from `certificate` to `django_ca`. See below for how to upgrade.
+* Include a setup.py file so the project can be installed via pip.
 * `manage.py` commands are now renamed to be more specific:
   * `init` -> `init_ca`
   * `sign` -> `sign_cert`
