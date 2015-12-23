@@ -9,7 +9,7 @@ with open('requirements.txt') as reqs:
 
 setup(
     name='django-ca',
-    version='1.0.0',
+    version='1.0.0b1',
     description='',
     author='Mathias Ertl',
     author_email='mati@er.tl',
