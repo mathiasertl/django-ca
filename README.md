@@ -1,11 +1,15 @@
 # django-ca
 
-This simple project allows you to manage a local TLS certificate authority from the command line.
+This Django app allows you to manage a local TLS certificate authority. The app can be included in
+any Django project or used with the example project included. Certificates can be managed through
+Djangos admin interface or via `manage.py` commands - no webserver is needed, if you're happy with
+the command-line.
 
 ## Features
 
 1. Set up a secure certification authority in a few minutes.
-2. Manage your entire certificate authority from the command line.
+2. Manage your entire certificate authority from the command line and/or via Djangos admin
+   interface.
 3. Written in pure Python using [pyOpenSSL](pythonhosted.org/pyOpenSSL/) and the ORM of
    [Django](https://www.djangoproject.com/).
 4. Get email notifications about certificates about to expire.
@@ -23,11 +27,10 @@ apt-get install libffi-dev libssl-dev
 Next, download the project, create a virtualenv, install requirements:
 
 ```
-git clone https://github.com/fsinf/certificate-authority.git
-cd certificate-authority
-virtualenv .
+git clone https://github.com/mathiasertl/django-ca
+cd django-ca
+virtualenv -p /usr/bin/python3 .
 source bin/activate
-pip install -U pip setuptools
 pip install -r requirements.txt
 ```
 
@@ -105,10 +108,10 @@ It is recommended you execute this job daily via cron, but non are required for 
 
 ```
 # assuming you cloned the repo at /root/:
-HOME=/root/certificate-authority
-PATH=/root/certificate-authority/bin
+HOME=/root/django-ca
+PATH=/root/django-ca/bin
 
-# m h  dom mon dow     user           commanda
+# m h  dom mon dow     user           command
 
 # notify watchers about certificates about to expire
 * 8    * * *           xmpp-account   python ca/manage.py notify_expiring_certs
