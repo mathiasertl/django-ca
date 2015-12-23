@@ -25,6 +25,10 @@ setup(
         'django_ca.management.commands',
         'django_ca.migrations',
     ],
+    install_requires=[
+        'Django==1.9',
+        'pyOpenSSL==0.15.1',
+    ],
     classifiers=[
         'Framework :: Django',
         'Programming Language :: Python :: 3',
