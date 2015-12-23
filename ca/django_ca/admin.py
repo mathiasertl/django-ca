@@ -6,9 +6,30 @@ from django.utils.translation import ugettext_lazy as _
 
 from .models import Certificate
 
+class StatusListFilter(admin.SimpleListFilter):
+    title = _('Status')
+    parameter_name = 'status'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('valid', _('Valid')),
+            ('expired', _('Expired')),
+            ('revoked', _('Revoked')),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'valid':
+            return queryset.filter(revoked=False, expires__gt=datetime.utcnow())
+        elif self.value() == 'expired':
+            return queryset.filter(revoked=False, expires__lt=datetime.utcnow())
+        elif self.value() == 'revoked':
+            return queryset.filter(revoked=True)
+
+
 @admin.register(Certificate)
 class CertificateAdmin(admin.ModelAdmin):
     list_display = ('cn', 'status', 'expires_date')
+    list_filter = (StatusListFilter, )
     readonly_fields = ('expires', 'csr', 'pub', 'cn', 'serial', 'revoked', 'revoked_date',
                        'revoked_reason', )
 
