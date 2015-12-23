@@ -4,6 +4,8 @@ from distutils.core import setup
 
 with open('requirements.txt') as reqs:
     install_requires = reqs.readlines()
+    # we replace == requirements with >=, makes it easier to use.
+    install_requires = [r.replace('==', '>=') for r in install_requires]
 
 setup(
     name='django-ca',
