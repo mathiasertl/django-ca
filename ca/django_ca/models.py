@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License along with
 # fsinf-certificate-authority.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import unicode_literals
-
 from datetime import datetime
 
 from django.contrib.auth.models import User
@@ -87,3 +85,6 @@ class Certificate(models.Model):
                 r.set_reason(str(self.revoked_reason))
             r.set_rev_date(format_date(self.revoked_date))
             return r
+
+    def __str__(self):
+        return self.cn
