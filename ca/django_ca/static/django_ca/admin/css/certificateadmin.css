@@ -1,0 +1,11 @@
+.field-csr p,
+.field-pub p
+{
+    white-space: pre;
+    white-space: pre-wrap;
+    font-family: monospace;
+    background: #faf8f0;
+    border: 1px solid #bebab0;
+    padding: 10px 15px !important;
+    display: table;
+}
