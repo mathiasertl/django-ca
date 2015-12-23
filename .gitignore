@@ -11,3 +11,5 @@ ca.sqlite3
 ca/ca/localsettings.py
 /ca/files/
 /pip-selfcheck.json
+/MANIFEST
+/dist
