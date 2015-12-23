@@ -2,6 +2,9 @@
 
 from distutils.core import setup
 
+with open('requirements.txt') as reqs:
+    install_requires = reqs.readlines()
+
 setup(
     name='django-ca',
     version='1.0.0',
@@ -16,10 +19,7 @@ setup(
         'django_ca.migrations',
     ],
     package_dir={'': 'ca'},
-    install_requires=[
-        'Django==1.9',
-        'pyOpenSSL==0.15.1',
-    ],
+    install_requires=install_requires,
     classifiers=[
         'Framework :: Django',
         'Programming Language :: Python :: 3',
