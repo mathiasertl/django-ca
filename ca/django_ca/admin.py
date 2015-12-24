@@ -1,4 +1,3 @@
-from datetime import datetime
 
 from django.contrib import admin
 from django.utils import timezone
@@ -19,9 +18,9 @@ class StatusListFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value() == 'valid':
-            return queryset.filter(revoked=False, expires__gt=datetime.utcnow())
+            return queryset.filter(revoked=False, expires__gt=timezone.now())
         elif self.value() == 'expired':
-            return queryset.filter(revoked=False, expires__lt=datetime.utcnow())
+            return queryset.filter(revoked=False, expires__lt=timezone.now())
         elif self.value() == 'revoked':
             return queryset.filter(revoked=True)
 
@@ -36,7 +35,7 @@ class CertificateAdmin(admin.ModelAdmin):
     def status(self, obj):
         if obj.revoked:
             return _('Revoked')
-        if obj.expires < datetime.utcnow():
+        if obj.expires < timezone.now():
             return _('Expired')
         else:
             return _('Valid')
