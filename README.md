@@ -21,7 +21,7 @@ You will need the development headers required by pyOpenSSL, on Debian/Ubuntu
 systems, this should suffice:
 
 ```
-apt-get install libffi-dev libssl-dev
+apt-get install gcc python3-dev libffi-dev libssl-dev
 ```
 
 Next, download the project, create a virtualenv, install requirements:
