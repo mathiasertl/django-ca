@@ -181,7 +181,10 @@ CA_EXT_KEY_USAGE = (
 )
 
 try:
-    from localsettings import *
+    try:
+        from .localsettings import *
+    except ImportError:
+        from localsettings import *
 except ImportError:
     pass
 
