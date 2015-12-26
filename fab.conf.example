@@ -1,0 +1,69 @@
+# Example deployment config file. Copy this file to "fab.conf" and fill in the details.  The file
+# provides settings to deploy django-ca as an entire project or as an app that is included in a
+# different project. Use "fab deploy_app", "fab deploy_project" or "fab deploy", the latter deploys
+# both (if app=True and project=True).
+#
+# Mandatory settings are uncommented, optional settings are commented and show the default value.
+# app-* settings are only used if app = True, project-* settings only when project = True.
+#
+# By default, the DEFAULT section is used. You can use a different section by passing it as an
+# argument:
+#   fab deploy:section=somesection
+
+[DEFAULT]
+# Push the local source code to this git remote before deploying. Leave empty to not push at all.
+#remote = origin
+
+# The branch to push to the remote.
+#branch = master
+
+# Set to True to deploy django-ca as an app in an independent project.
+#app = False
+
+# Where to pull the source from. This will be called with "pip install -e"
+#app-origin = git+https://github.com/mathiasertl/django-ca.git#egg=django-ca
+
+# Hostname of the host where the app is deployed. Note that the fabfile simply calls ssh on the
+# command line, so you can name anything configured in ~/.ssh/config.
+app-host = 
+
+# Location of the virtualenv to use.
+app-venv = 
+
+# Location of the Django project that uses django-ca as an app. This is the directory where your
+# 'manage.py' script is located. By default, the value of the app-venv setting is used.
+#app-project-dir = %(app-venv)s
+
+# Set to "False" if "manage.py migrate" should not be called when deploying.
+#app-migrate = True
+
+# Migrate a different database upon deployment, this will pass "--database=..." to the migrate
+# command.
+#app-database = django-ca
+
+# Set to "False" if "manage.py collectstatic" should not be called when deploying.
+#app-collectstatic = True
+
+# Set to True to deploy django-ca as its own project.
+#project = False
+
+# Hostname of the host where the project is deployed. Note that the fabfile simply calls ssh on the
+# command line, so you can name anything configured in ~/.ssh/config.
+project-host = 
+
+# Location of the virtualenv to use.
+project-venv = 
+
+# Where the git checkout of this project is on the remote host. By default, the value of the
+# project-venv setting is used.
+#project-git = %(project-venv)s
+
+# Set to "False" if "manage.py migrate" should not be called when deploying.
+#project-migrate = True
+
+# Migrate a different database upon deployment, this will pass "--database=..." to the migrate
+# command.
+#project-database = django-ca
+
+# Set to "False" if "manage.py collectstatic" should not be called when deploying.
+#project-collectstatic = True
