@@ -134,34 +134,9 @@ See ChangeLog.md.
 ## Test CRL and OCSP
 
 ```
-# create the CA
-python manage.py init_ca AT example example example example ca.example.com
-
-# create private keys
-openssl genrsa -out files/localhost.key 4096  # for OCSP service
-openssl genrsa -out files/host1.example.com.key 4096
-openssl genrsa -out files/host2.example.com.key 4096
-openssl genrsa -out files/host3.example.com.key 4096
-openssl genrsa -out files/host4.example.com.key 4096
-
-# create CSRs
-openssl req -new -key files/localhost.key -out files/localhost.csr -utf8 -sha512 \
-    -batch -subj '/C=AT/ST=Vienna/L=Vienna/CN=localhost/'
-openssl req -new -key files/host1.example.com.key -out files/host1.example.com.csr -utf8 -sha512 \
-    -batch -subj '/C=AT/ST=Vienna/L=Vienna/CN=host1.example.com/'
-openssl req -new -key files/host2.example.com.key -out files/host2.example.com.csr -utf8 -sha512 \
-    -batch -subj '/C=AT/ST=Vienna/L=Vienna/CN=host2.example.com/'
-openssl req -new -key files/host3.example.com.key -out files/host3.example.com.csr -utf8 -sha512 \
-    -batch -subj '/C=AT/ST=Vienna/L=Vienna/CN=host3.example.com/'
-openssl req -new -key files/host4.example.com.key -out files/host4.example.com.csr -utf8 -sha512 \
-    -batch -subj '/C=AT/ST=Vienna/L=Vienna/CN=host4.example.com/'
-
-# sign certificates
-python manage.py sign_cert --csr files/localhost.csr --out files/localhost.crt --ocsp
-python manage.py sign_cert --csr files/host1.example.com.csr --out files/host1.example.com.crt
-python manage.py sign_cert --csr files/host2.example.com.csr --out files/host2.example.com.crt
-python manage.py sign_cert --csr files/host3.example.com.csr --out files/host3.example.com.crt
-python manage.py sign_cert --csr files/host4.example.com.csr --out files/host4.example.com.crt
+# creates a CA, an OCSP cert and four host certs:
+fab init_demo
+cd ca
 
 # list serials of certificates
 python manage.py list_certs

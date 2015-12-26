@@ -113,3 +113,30 @@ def deploy_project(section='DEFAULT'):
 def deploy(section='DEFAULT'):
     deploy_project(section=section)
     deploy_app(section=section)
+
+
+def init_demo():
+    os.chdir('ca')
+
+    # create db
+    local('python manage.py migrate')
+
+    # init CA
+    local('python manage.py init_ca AT example example example example ca.example.com')
+
+    # generate OCSP certificate
+    local('openssl genrsa -out files/localhost.key 4096')  # for OCSP service
+    local("openssl req -new -key files/localhost.key -out files/localhost.csr -utf8 -sha512 -batch -subj '/C=AT/ST=Vienna/L=Vienna/CN=localhost/'""")
+    local('python manage.py sign_cert --csr files/localhost.csr --out files/localhost.crt --ocsp')
+
+    for name in ['host1', 'host2', 'host3', 'host4']:
+        hostname = '%s.example.com' % name
+        key = 'files/%s.key' % hostname
+        csr = 'files/%s.csr' % hostname
+        pem = 'files/%s.pem' % hostname
+        subj = '/C=AT/ST=Vienna/L=Vienna/CN=%s/' % hostname
+
+        local('openssl genrsa -out %s 2048' % key)
+        local("openssl req -new -key %s -out %s -utf8 -sha512 -batch -subj 'subj'" % (
+            key, csr, subj))
+        local('python manage.py sign_cert --csr %s --out %s' % (csr, pem))
