@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of django-ca
-# (https://github.com/mathiasertl/django-ca).
+# This file is part of django-ca (https://github.com/mathiasertl/django-ca).
 #
 # django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU
 # General Public License as published by the Free Software Foundation, either version 3 of the
@@ -14,10 +13,9 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from datetime import datetime
-
 from django.contrib.auth.models import User
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from OpenSSL import crypto
@@ -73,7 +71,7 @@ class Certificate(models.Model):
 
     def revoke(self, reason=None):
         self.revoked = True
-        self.revoked_date = datetime.utcnow()
+        self.revoked_date = timezone.ow()
         self.revoked_reason = reason
         self.save()
 
