@@ -69,4 +69,4 @@ class Command(BaseCommand):
             with open(options['out'], 'w') as f:
                 f.write(cert.pub.decode('utf-8'))
         else:
-            print(cert.pub)
+            print(cert.pub.decode('utf-8'))
