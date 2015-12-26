@@ -13,17 +13,16 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from datetime import datetime
 from argparse import FileType
+from datetime import datetime
+
+from OpenSSL import crypto
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from OpenSSL import crypto
-
 from django_ca.models import Certificate
-from django_ca.utils import get_ca_crt
-from django_ca.utils import get_ca_key
+from django_ca.crl import get_crl
 
 # We need a two-letter year, otherwise OCSP doesn't work
 date_format = '%y%m%d%H%M%SZ'
@@ -33,48 +32,56 @@ class Command(BaseCommand):
     help = "Write the certificate revocation list (CRL)."
 
     def add_arguments(self, parser):
+        parser.add_argument(
+            '-d', '--days', type=int,
+            help="The number of days until the next update of this CRL (default: 100).")
+        parser.add_argument('-t', '--type', choices=['pem', 'asn1', 'text'],
+                            help="Format of the CRL file (default: pem).")
+        parser.add_argument('--digest',
+                            help="The name of the message digest to use (default: sha512).")
         parser.add_argument('path', type=FileType('w'))
 
     def handle(self, path, **options):
-        crl = crypto.CRL()
-        index = []
+        kwargs = {}
+        if options['days']:
+            kwargs['days'] = options['days']
+        if options['type']:
+            kwargs['type'] = getattr(crypto, 'FILETYPE_%s' % options['type'].upper())
+        if options['digest']:
+            kwargs['digest'] = bytes(options['digest'], 'utf-8')
+
+        crl = get_crl(**kwargs).decode('utf-8')
+        path.write(crl)
+
         now = datetime.utcnow()
-
-        for cert in Certificate.objects.all():
-            revocation = ''
-            if cert.expires < now:
-                status = 'E'
-            elif cert.revoked:
-                status = 'R'
-                crl.add_revoked(cert.get_revocation())  # add to CRL
-
-                revocation = cert.revoked_date.strftime(date_format)
-                if cert.revoked_reason:
-                    revocation += ',%s' % cert.revoked_reason
-            else:
-                status = 'V'
-
-            # Format see: http://pki-tutorial.readthedocs.org/en/latest/cadb.html
-            index.append((
-                status,
-                cert.x509.get_notAfter().decode('utf-8'),
-                revocation,
-                cert.serial,
-                'unknown',  # we don't save to any file
-                cert.distinguishedName,
-            ))
-
-        # Write CRL
-        crl = crl.export(get_ca_crt(), get_ca_key())
-        path.write(crl.decode('utf-8'))
 
         # Write index file (required by "openssl ocsp")
         with open(settings.CA_INDEX, 'w') as index_file:
-            for entry in index:
-                index_file.write('%s\n' % '\t'.join(entry))
+            for cert in Certificate.objects.all():
+                revocation = ''
+                if cert.expires < now:
+                    status = 'E'
+                elif cert.revoked:
+                    status = 'R'
+
+                    revocation = cert.revoked_date.strftime(date_format)
+                    if cert.revoked_reason:
+                        revocation += ',%s' % cert.revoked_reason
+                else:
+                    status = 'V'
+
+                # Format see: http://pki-tutorial.readthedocs.org/en/latest/cadb.html
+                index_file.write('%s\n' % '\t'.join([
+                    status,
+                    cert.x509.get_notAfter().decode('utf-8'),
+                    revocation,
+                    cert.serial,
+                    'unknown',  # we don't save to any file
+                    cert.distinguishedName,
+                ]))
 
         # Write cafile (required by "openssl ocsp")
         with open(settings.CA_CRT) as ca_file, open(settings.CA_FILE_PEM, 'w') as out:
             ca = ca_file.read()
             out.write(ca)
-            out.write(crl.decode('utf-8'))
+            out.write(crl)
