@@ -18,6 +18,7 @@ from argparse import FileType
 from OpenSSL import crypto
 
 from django.core.management.base import BaseCommand
+from django.core.management.base import CommandError
 
 from django_ca.crl import get_crl
 
@@ -36,7 +37,7 @@ class Command(BaseCommand):
                             help="Format of the CRL file (default: pem).")
         parser.add_argument('--digest',
                             help="The name of the message digest to use (default: sha512).")
-        parser.add_argument('path', type=FileType('w'))
+        parser.add_argument('path', type=FileType('wb'))
 
     def handle(self, path, **options):
         kwargs = {}
@@ -47,5 +48,10 @@ class Command(BaseCommand):
         if options['digest']:
             kwargs['digest'] = bytes(options['digest'], 'utf-8')
 
-        crl = get_crl(**kwargs).decode('utf-8')
+        crl = get_crl(**kwargs)
+        if 'b' not in path.mode:  # writing to stdout
+            if kwargs['type'] == 'asn1':
+                raise CommandError("ASN1 cannot be reliably printed to stdout.")
+
+            crl = crl.decode('utf-8')
         path.write(crl)
