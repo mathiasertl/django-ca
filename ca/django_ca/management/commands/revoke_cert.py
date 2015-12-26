@@ -26,13 +26,14 @@ class Command(BaseCommand):
     help = "Revoke a certificate."
 
     def add_arguments(self, parser):
-        parser.add_argument('serial',
+        parser.add_argument('serial', nargs='+',
                             help='Serial of the certificate (see the list_certs command).')
         parser.add_argument('--reason', help="An optional reason for revokation.")
 
-    def handle(self, serial, **options):
-        try:
-            cert = Certificate.objects.get(serial=serial)
-        except Certificate.DoesNotExist:
-            raise CommandError("Certificate does not exist.")
-        cert.revoke(reason=options.get('reason'))
+    def handle(self, *args, **options):
+        for serial in options.get('serial'):
+            try:
+                cert = Certificate.objects.get(serial=serial)
+                cert.revoke(reason=options.get('reason'))
+            except Certificate.DoesNotExist:
+                self.stderr.write('Certificate "%s" does not exist.' % serial)
