@@ -71,7 +71,7 @@ class Certificate(models.Model):
 
     def revoke(self, reason=None):
         self.revoked = True
-        self.revoked_date = timezone.ow()
+        self.revoked_date = timezone.now()
         self.revoked_reason = reason
         self.save()
 
