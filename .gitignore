@@ -6,6 +6,7 @@ localsettings.py
 /bin/
 /ca/files/
 /dist
+/fab.conf
 /include/
 /lib/
 /local/
