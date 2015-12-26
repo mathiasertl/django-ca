@@ -31,7 +31,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-f', '--format', choices=['pem', 'asn1', 'text'], default='pem',
+            '-f', '--format', choices=['pem', 'asn1', 'text', 'der'], default='pem',
             help='The format to use, default is %(default)s.')
         parser.add_argument('serial', help='''The serial of the certificate to dump.
  The "list_certs" command lists all known certificates.''')
@@ -47,7 +47,7 @@ class Command(BaseCommand):
         format = options.get('format')
         if format == 'pem':
             data = cert.pub.encode('utf-8')
-        elif format == 'asn1':
+        elif format == 'asn1' or format == 'der':
             data = crypto.dump_certificate(crypto.FILETYPE_ASN1, cert.x509)
         elif format == 'text':
             data = crypto.dump_certificate(crypto.FILETYPE_TEXT, cert.x509)

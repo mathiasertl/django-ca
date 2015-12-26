@@ -33,7 +33,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '-d', '--days', type=int,
             help="The number of days until the next update of this CRL (default: 100).")
-        parser.add_argument('-t', '--type', choices=['pem', 'asn1', 'text'],
+        parser.add_argument('-t', '--type', choices=['pem', 'asn1', 'text', 'der'],
                             help="Format of the CRL file (default: pem).")
         parser.add_argument('--digest',
                             help="The name of the message digest to use (default: sha512).")
@@ -44,6 +44,8 @@ class Command(BaseCommand):
         if options['days']:
             kwargs['days'] = options['days']
         if options['type']:
+            if options.get('type') == 'der':
+                options['type'] = 'asn1'
             kwargs['type'] = getattr(crypto, 'FILETYPE_%s' % options['type'].upper())
         if options['digest']:
             kwargs['digest'] = bytes(options['digest'], 'utf-8')
