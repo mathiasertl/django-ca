@@ -145,11 +145,16 @@ openssl genrsa -out files/host3.example.com.key 4096
 openssl genrsa -out files/host4.example.com.key 4096
 
 # create CSRs
-openssl req -new -key files/localhost.key -out files/localhost.csr -utf8 -sha512
-openssl req -new -key files/host1.example.com.key -out files/host1.example.com.csr -utf8 -sha512
-openssl req -new -key files/host2.example.com.key -out files/host2.example.com.csr -utf8 -sha512
-openssl req -new -key files/host3.example.com.key -out files/host3.example.com.csr -utf8 -sha512
-openssl req -new -key files/host4.example.com.key -out files/host4.example.com.csr -utf8 -sha512
+openssl req -new -key files/localhost.key -out files/localhost.csr -utf8 -sha512 \
+    -batch -subj '/C=AT/ST=Vienna/L=Vienna/CN=localhost/'
+openssl req -new -key files/host1.example.com.key -out files/host1.example.com.csr -utf8 -sha512 \
+    -batch -subj '/C=AT/ST=Vienna/L=Vienna/CN=host1.example.com/'
+openssl req -new -key files/host2.example.com.key -out files/host2.example.com.csr -utf8 -sha512 \
+    -batch -subj '/C=AT/ST=Vienna/L=Vienna/CN=host2.example.com/'
+openssl req -new -key files/host3.example.com.key -out files/host3.example.com.csr -utf8 -sha512 \
+    -batch -subj '/C=AT/ST=Vienna/L=Vienna/CN=host3.example.com/'
+openssl req -new -key files/host4.example.com.key -out files/host4.example.com.csr -utf8 -sha512 \
+    -batch -subj '/C=AT/ST=Vienna/L=Vienna/CN=host4.example.com/'
 
 # sign certificates
 python manage.py sign_cert --csr files/localhost.csr --out files/localhost.crt --ocsp
@@ -162,21 +167,21 @@ python manage.py sign_cert --csr files/host4.example.com.csr --out files/host4.e
 python manage.py list_certs
 
 # revoke two certificates (example assumes host1 and host2, second with reason)
-python manage.py revoke <serial>
-python manage.py revoke <serial> keyCompromise
+python manage.py revoke_cert <serial>
+python manage.py revoke_cert <serial> --reason=keyCompromise
 
 # generate CRL, OCSP index file
-python manage.py dump_crl files/crl
-python manage.py dump_ocsp_index files/ocsp_index
+python manage.py dump_crl files/crl.pem
+python manage.py dump_ocsp_index files/ocsp.index
 
 # This file is only needed by the "openssl verify" command:
-cat files/ca.crt files/crl > files/ca_crl_chain.pem
+cat files/ca.crt files/crl.pem > files/ca_crl.pem
 
 # verify CRL
-openssl verify -CAfile files/ca_crl_chain.pem -crl_check files/host1.example.com.crt
-openssl verify -CAfile files/ca_crl_chain.pem -crl_check files/host2.example.com.crt
-openssl verify -CAfile files/ca_crl_chain.pem -crl_check files/host3.example.com.crt
-openssl verify -CAfile files/ca_crl_chain.pem -crl_check files/host4.example.com.crt
+openssl verify -CAfile files/ca_crl.pem -crl_check files/host1.example.com.crt
+openssl verify -CAfile files/ca_crl.pem -crl_check files/host2.example.com.crt
+openssl verify -CAfile files/ca_crl.pem -crl_check files/host3.example.com.crt
+openssl verify -CAfile files/ca_crl.pem -crl_check files/host4.example.com.crt
 
 # start OCSP daemon
 openssl ocsp -index files/ca.index.txt -port 8888 -rsigner files/localhost.crt -rkey files/localhost.key -CA files/ca.crt -text -out log.txt
