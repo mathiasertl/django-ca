@@ -27,7 +27,7 @@ class StatusListFilter(admin.SimpleListFilter):
 
 @admin.register(Certificate)
 class CertificateAdmin(admin.ModelAdmin):
-    list_display = ('cn', 'status', 'expires_date')
+    list_display = ('cn', 'serial', 'status', 'expires_date')
     list_filter = (StatusListFilter, )
     readonly_fields = ('expires', 'csr', 'pub', 'cn', 'serial', 'revoked', 'revoked_date',
                        'revoked_reason', )
