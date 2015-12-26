@@ -81,6 +81,9 @@ def deploy_app(section='DEFAULT'):
                 command += ' --database=%s' % database
             sudo(command)
 
+        if config.getboolean(section, 'app-collectstatic'):
+            sudo('%s collectstatic --noinput' % manage)
+
 
 def deploy_project(section='DEFAULT'):
     if not config.getboolean(section, 'project'):
@@ -92,9 +95,10 @@ def deploy_project(section='DEFAULT'):
     pip = os.path.join(venv, 'bin', 'pip')
     python = os.path.join(venv, 'bin', 'python')
     manage = '%s %s' % (python, os.path.join(gitdir, 'ca', 'manage.py'))
-    with settings(host=config.get(section, 'project-host')), cd(gitdir):
-        sudo('git pull origin master')
-        sudo('%s install -U -r requirements.txt' % pip)
+    with settings(host=config.get(section, 'project-host')):
+        with cd(gitdir):
+            sudo('git pull origin master')
+            sudo('%s install -U -r requirements.txt' % pip)
 
         if config.getboolean(section, 'project-migrate'):
             database = config.get(section, 'project-database')
@@ -105,8 +109,8 @@ def deploy_project(section='DEFAULT'):
             sudo(command)
 
         if config.getboolean(section, 'project-collectstatic'):
-            sudo('%s collectstatic --noinput', manage)
+            sudo('%s collectstatic --noinput' % manage)
 
 def deploy(section='DEFAULT'):
     deploy_project(section=section)
-#    deploy_app(section=section)
+    deploy_app(section=section)
