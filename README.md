@@ -165,20 +165,24 @@ python manage.py list_certs
 python manage.py revoke <serial>
 python manage.py revoke <serial> keyCompromise
 
-# generate CRL, index file
-python manage.py dump_crl files/ca.crl
+# generate CRL, OCSP index file
+python manage.py dump_crl files/crl
+python manage.py dump_ocsp_index files/ocsp_index
+
+# This file is only needed by the "openssl verify" command:
+cat files/ca.crt files/crl > files/ca_crl_chain.pem
 
 # verify CRL
-openssl verify -CAfile files/cafile.pem -crl_check files/host1.example.com.crt
-openssl verify -CAfile files/cafile.pem -crl_check files/host2.example.com.crt
-openssl verify -CAfile files/cafile.pem -crl_check files/host3.example.com.crt
-openssl verify -CAfile files/cafile.pem -crl_check files/host4.example.com.crt
+openssl verify -CAfile files/ca_crl_chain.pem -crl_check files/host1.example.com.crt
+openssl verify -CAfile files/ca_crl_chain.pem -crl_check files/host2.example.com.crt
+openssl verify -CAfile files/ca_crl_chain.pem -crl_check files/host3.example.com.crt
+openssl verify -CAfile files/ca_crl_chain.pem -crl_check files/host4.example.com.crt
 
 # start OCSP daemon
-openssl ocsp -index files/ca.index.txt -port 8888 -rsigner files/localhost.crt -rkey files/localhost.key -CA files/cafile.pem -text -out log.txt
+openssl ocsp -index files/ca.index.txt -port 8888 -rsigner files/localhost.crt -rkey files/localhost.key -CA files/ca.crt -text -out log.txt
 
 # test certificates
-openssl ocsp -CAfile files/cafile.pem -issuer files/cafile.pem  -cert files/host1.example.com.crt -url http://localhost:8888 -resp_text
+openssl ocsp -CAfile files/ca.crt -issuer files/ca.crt -cert files/host1.example.com.crt -url http://localhost:8888 -resp_text
 openssl ocsp -CAfile files/cafile.pem -issuer files/cafile.pem  -cert files/host2.example.com.crt -url http://localhost:8888 -resp_text
 openssl ocsp -CAfile files/cafile.pem -issuer files/cafile.pem  -cert files/host3.example.com.crt -url http://localhost:8888 -resp_text
 openssl ocsp -CAfile files/cafile.pem -issuer files/cafile.pem  -cert files/host4.example.com.crt -url http://localhost:8888 -resp_text
