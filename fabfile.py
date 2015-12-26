@@ -26,9 +26,17 @@ from fabric.decorators import runs_once
 
 
 config = configparser.ConfigParser({
-    'remote': 'origin',
-    'branch': 'master',
+    'app': 'False',
+    'app-database': '',
+    'app-migrate': 'True',
     'app-origin': 'git+https://github.com/mathiasertl/django-ca.git#egg=django-ca',
+    'app-project-dir': '%(app-venv)s',
+    'branch': 'master',
+    'project': 'False',
+    'project-database': '',
+    'project-git': '%(project-venv)s',
+    'project-migrate': 'False',
+    'remote': 'origin',
 })
 config.read('fab.conf')
 env.use_ssh_config = True
@@ -49,17 +57,49 @@ def push(section):
 
 
 def deploy_app(section='DEFAULT'):
+    if not config.getboolean(section, 'app'):
+        return
     push(section)
 
     venv = config.get(section, 'app-venv')
     pip = os.path.join(venv, 'bin', 'pip')
+    python = os.path.join(venv, 'bin', 'python')
+    project_dir = config.get(section, 'app-project-dir')
+    manage = '%s %s' % (python, os.path.join(project_dir, 'manage.py'))
+
     with settings(host=config.get(section, 'app-host')):
         sudo('%s install -e %s' % (pip, config.get(section, 'app-origin')))
 
+        if config.getboolean(section, 'app-migrate'):
+            database = config.get(section, 'app-database')
+
+            command = '%s migrate --noinput' % manage
+            if database:
+                command += ' --database=%s' % database
+            sudo(command)
+
 
 def deploy_project(section='DEFAULT'):
+    if not config.getboolean(section, 'project'):
+        return
     push(section)
 
+    venv = config.get(section, 'project-venv')
+    gitdir = config.get(section, 'project-git')
+    pip = os.path.join(venv, 'bin', 'pip')
+    python = os.path.join(venv, 'bin', 'python')
+    manage = '%s %s' % (python, os.path.join(gitdir, 'ca', 'manage.py'))
+    with settings(host=config.get(section, 'project-host')), cd(gitdir):
+        sudo('git pull origin master')
+        sudo('%s install -U -r requirements.txt' % pip)
+
+        if config.getboolean(section, 'project-migrate'):
+            database = config.get(section, 'project-database')
+
+            command = '%s migrate --noinput' % manage
+            if database:
+                command += ' --database=%s' % database
+            sudo(command)
 
 def deploy(section='DEFAULT'):
     deploy_project(section=section)
