@@ -15,37 +15,22 @@
 
 from argparse import FileType
 
-from OpenSSL import crypto
-
 from django.core.management.base import BaseCommand
 
-from django_ca.crl import get_crl
+from django_ca.ocsp import get_index
 
 # We need a two-letter year, otherwise OCSP doesn't work
 date_format = '%y%m%d%H%M%SZ'
 
 
 class Command(BaseCommand):
-    help = "Write the certificate revocation list (CRL)."
+    help = "Write an OCSP index file."
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            '-d', '--days', type=int,
-            help="The number of days until the next update of this CRL (default: 100).")
-        parser.add_argument('-t', '--type', choices=['pem', 'asn1', 'text'],
-                            help="Format of the CRL file (default: pem).")
-        parser.add_argument('--digest',
-                            help="The name of the message digest to use (default: sha512).")
-        parser.add_argument('path', type=FileType('w'))
+        parser.add_argument('path', type=FileType('w'),
+                            help="Where to write the index (default: %(default)s)")
 
     def handle(self, path, **options):
-        kwargs = {}
-        if options['days']:
-            kwargs['days'] = options['days']
-        if options['type']:
-            kwargs['type'] = getattr(crypto, 'FILETYPE_%s' % options['type'].upper())
-        if options['digest']:
-            kwargs['digest'] = bytes(options['digest'], 'utf-8')
-
-        crl = get_crl(**kwargs).decode('utf-8')
-        path.write(crl)
+        # Write index file (required by "openssl ocsp")
+        for line in get_index():
+            path.write(line)

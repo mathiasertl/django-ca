@@ -17,6 +17,7 @@
   * `watch` -> `notify_expiring_certs`
   * `watchers` -> `cert_watchers`
 * New command `dump_cert` to dump certificates to a file.
+* New command `dump_ocsp_index` for an OCSP responder, `dump_crl` no longer outputs this file.
 * Removed the `manage.py remove` command.
 * Update Django dependency to 1.9.
 
