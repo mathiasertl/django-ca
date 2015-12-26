@@ -27,15 +27,17 @@ from fabric.decorators import runs_once
 
 config = configparser.ConfigParser({
     'app': 'False',
+    'app-collectstatic': 'True',
     'app-database': '',
     'app-migrate': 'True',
     'app-origin': 'git+https://github.com/mathiasertl/django-ca.git#egg=django-ca',
     'app-project-dir': '%(app-venv)s',
     'branch': 'master',
     'project': 'False',
+    'project-collectstatic': 'True',
     'project-database': '',
     'project-git': '%(project-venv)s',
-    'project-migrate': 'False',
+    'project-migrate': 'True',
     'remote': 'origin',
 })
 config.read('fab.conf')
@@ -53,7 +55,8 @@ def sudo(cmd):
 def push(section):
     remote = config.get(section, 'remote')
     branch = config.get(section, 'branch')
-    local('git push %s %s' % (remote, branch))
+    if remote:
+        local('git push %s %s' % (remote, branch))
 
 
 def deploy_app(section='DEFAULT'):
@@ -100,6 +103,9 @@ def deploy_project(section='DEFAULT'):
             if database:
                 command += ' --database=%s' % database
             sudo(command)
+
+        if config.getboolean(section, 'project-collectstatic'):
+            sudo('%s collectstatic --noinput', manage)
 
 def deploy(section='DEFAULT'):
     deploy_project(section=section)
