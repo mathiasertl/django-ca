@@ -72,22 +72,23 @@ class CertificateManager(models.Manager):
 
         # Add subjectAltName if given:
         if subjectAltNames:
-            subjData = str(','.join(['DNS:%s' % n for n in subjectAltNames]))
-            ext = crypto.X509Extension(str('subjectAltName'), 0, subjData)
+            subjData = bytes(','.join(['DNS:%s' % n for n in subjectAltNames]), 'utf-8')
+            ext = crypto.X509Extension(b'subjectAltName', 0, subjData)
             extensions.append(ext)
 
         # Set CRL distribution points:
         if settings.CA_CRL_DISTRIBUTION_POINTS:
             value = ','.join(['URI:%s' % uri for uri in settings.CA_CRL_DISTRIBUTION_POINTS])
-            extensions.append(crypto.X509Extension(str('crlDistributionPoints'), 0, str(value)))
+            value = bytes(value, 'utf-8')
+            extensions.append(crypto.X509Extension(b'crlDistributionPoints', 0, value))
 
         # Add issuerAltName
         if settings.CA_ISSUER_ALT_NAME:
-            issuerAltName = str('URI:%s' % settings.CA_ISSUER_ALT_NAME)
+            issuerAltName = bytes('URI:%s' % settings.CA_ISSUER_ALT_NAME, 'utf-8')
         else:
-            issuerAltName = str('issuer:copy')
+            issuerAltName = b'issuer:copy'
         extensions.append(crypto.X509Extension(
-            b'issuerAltName', 0, issuerAltName.encode('utf-8'), issuer=issuerPub))
+            b'issuerAltName', 0, issuerAltName, issuer=issuerPub))
 
         # Add authorityInfoAccess
         auth_info_access = []
@@ -96,8 +97,8 @@ class CertificateManager(models.Manager):
         if settings.CA_ISSUER:
             auth_info_access.append('caIssuers;URI:%s' % settings.CA_ISSUER)
         if auth_info_access:
-            auth_info_access = str(','.join(auth_info_access))
-            extensions.append(crypto.X509Extension(str('authorityInfoAccess'), 0, auth_info_access))
+            auth_info_access = bytes(','.join(auth_info_access), 'utf-8')
+            extensions.append(crypto.X509Extension(b'authorityInfoAccess', 0, auth_info_access))
 
         # Add collected extensions
         cert.add_extensions(extensions)
