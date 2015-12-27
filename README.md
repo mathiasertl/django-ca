@@ -127,9 +127,11 @@ See ChangeLog.md.
 
 ## ToDo
 
-1. Write man-page for scripts.
-2. Immediately rewrite CRL and index file when revoking a certificate.
-3. Only send out one notification if multiple certificates expire for a user.
+1. Immediately rewrite CRL and index file when revoking a certificate.
+2. Only send out one notification if multiple certificates expire for a user.
+3. Do not use standard users but separate email instances so that you don't have to have a user for
+   every certificate.
+4. Make certificates editable via the admin interface.
 
 ## Test CRL and OCSP
 
