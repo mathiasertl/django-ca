@@ -21,13 +21,13 @@ long_description = """django-ca is a Django app that provides a SSL/TLS certific
 app can be included in any Django project or (if installed via directly via git) includes it's own
 basic project.
 
-Features::
+Features:
 
-    * Set up a secure certificate authority in just a few minutes.
-    * Manage the certificate authority either via command line or the Django admin interface.
-    * Written in pure Python, requires Python 3.4+.
-    * Get e-mail notifications when certificates expire.
-    * Generates certificate revocation lists (CRLs) and OCSP index files.
+* Set up a secure certificate authority in just a few minutes.
+* Manage the certificate authority either via command line or the Django admin interface.
+* Written in pure Python, requires Python 3.4+.
+* Get e-mail notifications when certificates expire.
+* Generates certificate revocation lists (CRLs) and OCSP index files.
 """
 
 setup(
