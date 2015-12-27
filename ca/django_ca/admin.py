@@ -57,7 +57,7 @@ class CertificateAdmin(admin.ModelAdmin):
 
     fieldsets = (
         (None, {
-            'fields': ('cn', 'subjectAltName', 'serial', 'expires', ),
+            'fields': ('cn', 'subjectAltName', 'serial', 'expires', 'watchers', ),
         }),
         (_('X509 Extensions'), {
             'fields': _x509_ext_fields,
