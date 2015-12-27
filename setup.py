@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
-from distutils.core import setup
+from setuptools import find_packages
+from setuptools import setup
+from pkg_resources import resource_string
 
-with open('requirements.txt') as reqs:
-    install_requires = reqs.readlines()
-    # we replace == requirements with >=, makes it easier to use.
-    install_requires = [r.replace('==', '>=') for r in install_requires]
+
+requirements = resource_string(__name__, 'requirements.txt').decode('utf-8').splitlines()
+requirements = [r.replace('==', '>=') for r in requirements]
 
 setup(
     name='django-ca',
@@ -14,14 +15,10 @@ setup(
     author='Mathias Ertl',
     author_email='mati@er.tl',
     url='https://github.com/mathiasertl/django-ca',
-    packages=[
-        'django_ca',
-        'django_ca.management',
-        'django_ca.management.commands',
-        'django_ca.migrations',
-    ],
-    package_dir={'': 'ca'},
-    install_requires=install_requires,
+    packages=find_packages('ca', exclude=['ca']),
+    package_dir={'django_ca': 'ca/django_ca'},
+    zip_safe=False,  # because of the static files
+    install_requires=requirements,
     classifiers=[
         'Framework :: Django',
         'Framework :: Django :: 1.9',
