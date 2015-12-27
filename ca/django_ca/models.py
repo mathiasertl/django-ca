@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import re
+
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
@@ -26,6 +28,15 @@ from .managers import CertificateManager
 class Watcher(models.Model):
     name = models.CharField(max_length=64, null=True, blank=True, verbose_name=_('CommonName'))
     mail = models.EmailField(verbose_name=_('E-Mail'))
+
+    @classmethod
+    def from_addr(cls, addr):
+        defaults = {}
+        if '<' in addr:
+            name, addr = re.match('(.*) <(.*)>', addr).groups()
+            defaults['name'] = name
+
+        return cls.objects.update_or_create(mail=addr, defaults=defaults)[0]
 
     def __str__(self):
         if self.name:
