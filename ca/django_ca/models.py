@@ -65,6 +65,34 @@ class Certificate(models.Model):
     revoked_reason = models.CharField(max_length=32, null=True, blank=True,
                                      verbose_name=_('Reason for revokation'))
 
+    def subjectAltNames(self):
+        return self.extensions.get(b'subjectAltNames', '')
+    subjectAltNames.short_description = 'subjectAltNames'
+
+    def basicConstraints(self):
+        return self.extensions[b'basicConstraints']
+    basicConstraints.short_description = 'basicConstraints'
+
+    def keyUsage(self):
+        return self.extensions[b'keyUsage']
+    keyUsage.short_description = 'keyUsage'
+
+    def extendedKeyUsage(self):
+        return self.extensions[b'extendedKeyUsage']
+    extendedKeyUsage.short_description = 'extendedKeyUsage'
+
+    def subjectKeyIdentifier(self):
+        return self.extensions[b'subjectKeyIdentifier']
+    subjectKeyIdentifier.short_description = 'subjectKeyIdentifier'
+
+    def issuerAltName(self):
+        return self.extensions[b'issuerAltName']
+    issuerAltName.short_description = 'issuerAltName'
+
+    def authorityKeyIdentifier(self):
+        return self.extensions[b'authorityKeyIdentifier']
+    authorityKeyIdentifier.short_description = 'authorityKeyIdentifier'
+
     def save(self, *args, **kwargs):
         if self.pk is None or self.serial is None:
             self.serial = hex(self.x509.get_serial_number())[2:].upper()
