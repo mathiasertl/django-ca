@@ -20,6 +20,8 @@ from django.utils.translation import ugettext_lazy as _
 from .models import Certificate
 from .models import Watcher
 
+_x509_ext_fields = ['keyUsage', 'extendedKeyUsage', 'basicConstraints', 'subjectKeyIdentifier',
+                    'issuerAltName', 'authorityKeyIdentifier', ]
 
 @admin.register(Watcher)
 class WatcherAdmin(admin.ModelAdmin):
@@ -50,8 +52,33 @@ class StatusListFilter(admin.SimpleListFilter):
 class CertificateAdmin(admin.ModelAdmin):
     list_display = ('cn', 'serial', 'status', 'expires_date')
     list_filter = (StatusListFilter, )
-    readonly_fields = ('expires', 'csr', 'pub', 'cn', 'serial', 'revoked', 'revoked_date',
-                       'revoked_reason', )
+    readonly_fields = ['expires', 'csr', 'pub', 'cn', 'serial', 'revoked', 'revoked_date',
+                       'revoked_reason', 'subjectAltNames', ] + _x509_ext_fields
+
+    fieldsets = (
+        (None, {
+            'fields': ('cn', 'subjectAltNames', 'serial', 'expires', ),
+        }),
+        (_('X509 Extensions'), {
+            'fields': _x509_ext_fields,
+            'classes': ('collapse', ),
+        }),
+        (_('Revocation'), {
+            'fields': ('revoked', 'revoked_date', 'revoked_reason', ),
+        }),
+        (_('Certificate'), {
+            'fields': ('pub', 'csr', ),
+            'classes': ('collapse', ),
+        }),
+    )
+
+    def get_fieldsets(self, request, obj=None):
+        """Collapse the "Revocation" section unless the certificate is revoked."""
+        fieldsets = super(CertificateAdmin, self).get_fieldsets(request, obj=obj)
+
+        if obj is not None and obj.revoked is False:
+            fieldsets[2][1]['classes'] = ('collapse', )
+        return fieldsets
 
     def status(self, obj):
         if obj.revoked:
