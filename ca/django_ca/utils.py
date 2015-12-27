@@ -15,10 +15,12 @@
 
 """Central functions to load CA key and cert as PKey/X509 objects."""
 
+import re
 import uuid
 
 from datetime import datetime
 from datetime import timedelta
+from ipaddress import ip_address
 
 from django.conf import settings
 
@@ -57,3 +59,37 @@ def get_cert(expires):
     cert.set_notBefore(not_before.encode('utf-8'))
     cert.set_notAfter(not_after.encode('utf-8'))
     return cert
+
+
+def get_subjectAltName(names, cn=None):
+    """Compute the value of the subjectAltName extension based on the given list of names.
+
+    The `cn` parameter, if provided, isprepended if not present in the list of names.
+
+    This method supports the `IP`, `email`, `URI` and `DNS` options automatically, if you need a
+    different option (or think the automatic parsing is wrong), give the full value verbatim (e.g.
+    `otherName:1.2.3.4;UTF8:some other identifier`.
+    """
+    values = []
+    names = sorted(set(names))
+    if cn is not None and cn not in names:
+        names.insert(0, cn)
+
+    for name in names:
+        try:
+            ip_address(name)
+            values.append('IP:%s' % name)
+            continue
+        except ValueError:
+            pass
+
+        if re.match('[a-z0-9]{2,}://', name):
+            values.append('URI:%s' % name)
+        elif '@' in name:
+            values.append('email:%s' % name)
+        elif ':' in name:
+            values.append(name)
+        else:
+            values.append('DNS:%s' % name)
+
+    return bytes(','.join(values), 'utf-8')
