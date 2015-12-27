@@ -57,3 +57,4 @@ class Command(BaseCommand):
 
             crl = crl.decode('utf-8')
         path.write(crl)
+        path.flush()  # Make sure contents are written to disk (required by fab init_demo)
