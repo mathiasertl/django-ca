@@ -69,6 +69,14 @@ class Certificate(models.Model):
         return self.extensions.get(b'subjectAltName', '')
     subjectAltName.short_description = 'subjectAltName'
 
+    def crlDistributionPoints(self):
+        return self.extensions.get(b'crlDistributionPoints', '')
+    crlDistributionPoints.short_description = 'crlDistributionPoints'
+
+    def authorityInfoAccess(self):
+        return self.extensions.get(b'authorityInfoAccess', '')
+    authorityInfoAccess.short_description = 'authorityInfoAccess'
+
     def basicConstraints(self):
         return self.extensions[b'basicConstraints']
     basicConstraints.short_description = 'basicConstraints'
