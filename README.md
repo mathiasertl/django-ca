@@ -135,6 +135,7 @@ See ChangeLog.md.
 5. Publish good documentation on RTD.
 6. Add support for client certificates (= emails as CN/SAN)
 7. revoke_cert should be able to revoke by hostname.
+8. Store additional certificate extensions (key usage, ...) in the database.
 
 ## Test CRL and OCSP
 
