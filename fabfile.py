@@ -87,6 +87,9 @@ def deploy_app(section='DEFAULT'):
         if config.getboolean(section, 'app-collectstatic'):
             sudo('%s collectstatic --noinput' % manage)
 
+        if config.get(section, 'app-uwsgi-vassal'):
+            sudo('touch %s' % config.get(section, 'app-uwsgi-vassal'))
+
 
 def deploy_project(section='DEFAULT'):
     if not config.getboolean(section, 'project'):
@@ -113,6 +116,9 @@ def deploy_project(section='DEFAULT'):
 
         if config.getboolean(section, 'project-collectstatic'):
             sudo('%s collectstatic --noinput' % manage)
+
+        if config.get(section, 'project-uwsgi-vassal'):
+            sudo('touch %s' % config.get(section, 'project-uwsgi-vassal'))
 
 def deploy(section='DEFAULT'):
     deploy_project(section=section)
