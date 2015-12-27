@@ -132,6 +132,7 @@ See ChangeLog.md.
 3. Make certificates editable via the admin interface.
 4. Publish good documentation on RTD.
 5. Add support for client certificates (= emails as CN/SAN)
+6. Make sure that the CN is always also a SAN.
 
 ## Test CRL and OCSP
 
