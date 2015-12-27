@@ -147,7 +147,7 @@ def init_demo():
            'ca.example.com')
 
     # generate OCSP certificate
-    print(green('Generate OCSP certificate'))
+    print(green('Generate OCSP certificate...'))
     ocsp_key = os.path.join(settings.CA_DIR, 'localhost.key')
     ocsp_csr = os.path.join(settings.CA_DIR, 'localhost.csr')
     ocsp_pem = os.path.join(settings.CA_DIR, 'localhost.pem')
@@ -200,7 +200,7 @@ def init_demo():
     host1_pem = rel(os.path.join(settings.CA_DIR, 'host1.example.com.pem'))
     print("")
     print(green('* All certificates are in %s' % rel(settings.CA_KEY)))
-    print(green('* Verify with crl:'))
+    print(green('* Verify with CRL:'))
     print('\topenssl verify -CAfile %s -crl_check %s' % (rel(ca_crl_path), rel(host1_pem)))
     print(green('* Run OCSP responder:'))
     print('\topenssl ocsp -index %s -port 8888 -rsigner %s -rkey %s -CA %s -text' % (rel(ocsp_index), rel(ocsp_pem), rel(ocsp_key), ca_crt))
