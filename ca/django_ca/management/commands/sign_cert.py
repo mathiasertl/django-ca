@@ -49,9 +49,21 @@ class Command(BaseCommand):
         parser.add_argument(
             '--ext-key-usage', default=','.join(settings.CA_EXT_KEY_USAGE), metavar='NAMES',
             help="Override keyUsage attribute (default: CA_EXT_KEY_USAGE setting: %(default)s).")
-        parser.add_argument(
+
+        group = parser.add_argument_group(
+            'profiles', """Sign certificate based on the given profile. This overrides the
+--key-usage and --ext-key-usage arguments.""")
+        group = group.add_mutually_exclusive_group()
+        group.add_argument(
             '--ocsp', default=False, action='store_true',
             help="Issue a certificate for an OCSP server.")
+        group.add_argument(
+            '--client', default=False, action='store_true',
+            help="""Issue a client certificate - allows client authentication and email
+protection.""")
+        group.add_argument(
+            '--server', default=False, action='store_true',
+            help="Issue a server certificate - only allows server authentication.")
 
     def handle(self, *args, **options):
         if options['csr'] is None:
@@ -66,9 +78,16 @@ class Command(BaseCommand):
         # get list of watchers
         watchers = [Watcher.from_addr(addr) for addr in options['watch']]
 
+        # get keyUsage and extendedKeyUsage flags based on profiles
         if options['ocsp'] is True:
-            key_usage = (str('nonRepudiation'), str('digitalSignature'), str('keyEncipherment'), )
+            key_usage = ('nonRepudiation', 'digitalSignature', 'keyEncipherment', )
             ext_key_usage = (str('OCSPSigning'), )
+        elif options['client'] is True:
+            key_usage = ('keyEncipherment', 'dataEncipherment', 'digitalSignature', )
+            ext_key_usage = ('clientAuth', 'emailProtection', )
+        elif options['server'] is True:
+            key_usage = ('digitalSignature', 'keyEncipherment', 'keyAgreement', )
+            ext_key_usage = ('serverAuth', )
         else:
             key_usage = options['key_usage'].split(',')
             ext_key_usage = options['ext_key_usage'].split(',')
