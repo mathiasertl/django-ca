@@ -132,6 +132,7 @@ See ChangeLog.md.
 3. Do not use standard users but separate email instances so that you don't have to have a user for
    every certificate.
 4. Make certificates editable via the admin interface.
+5. Publish good documentation on RTD.
 
 ## Test CRL and OCSP
 
