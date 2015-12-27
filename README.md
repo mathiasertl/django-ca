@@ -129,13 +129,11 @@ See ChangeLog.md.
 
 1. Immediately rewrite CRL and index file when revoking a certificate.
 2. Only send out one notification if multiple certificates expire for a user.
-3. Do not use standard users but separate email instances so that you don't have to have a user for
-   every certificate.
-4. Make certificates editable via the admin interface.
-5. Publish good documentation on RTD.
-6. Add support for client certificates (= emails as CN/SAN)
-7. revoke_cert should be able to revoke by hostname.
-8. Store additional certificate extensions (key usage, ...) in the database.
+3. Make certificates editable via the admin interface.
+4. Publish good documentation on RTD.
+5. Add support for client certificates (= emails as CN/SAN)
+6. revoke_cert should be able to revoke by hostname.
+7. Store additional certificate extensions (key usage, ...) in the database.
 
 ## Test CRL and OCSP
 
