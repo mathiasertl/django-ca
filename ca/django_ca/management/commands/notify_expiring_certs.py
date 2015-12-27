@@ -39,5 +39,5 @@ class Command(BaseCommand):
             timestamp = cert.expires.strftime('%Y-%m-%d')
             subj = 'Certificate expiration for %s on %s' % (cert.cn, timestamp)
             msg = 'The certificate for %s will expire on %s.' % (cert.cn, timestamp)
-            to = [u.email for u in cert.watchers.all()]
+            to = list(cert.watchers.values_list('mail', flat=True))
             send_mail(subj, msg, settings.DEFAULT_FROM_EMAIL, to)

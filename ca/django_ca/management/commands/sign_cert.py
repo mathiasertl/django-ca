@@ -14,11 +14,11 @@
 # see <http://www.gnu.org/licenses/>.
 
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 from django.utils import six
 
 from django_ca.models import Certificate
+from django_ca.models import Watcher
 
 
 class Command(BaseCommand):
@@ -63,10 +63,8 @@ class Command(BaseCommand):
         else:
             csr = open(options['csr']).read()
 
-        watchers = []
-        for addr in options['watch']:
-            watchers.append(User.objects.get_or_create(
-                email=addr, defaults={'username': addr})[0])
+        # get list of watchers
+        watchers = [Watcher.from_addr(addr) for addr in options['watch']]
 
         if not options['ocsp']:
             key_usage = options['key_usage'].split(',')

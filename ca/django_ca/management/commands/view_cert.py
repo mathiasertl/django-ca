@@ -69,8 +69,9 @@ class Command(BaseCommand):
                 self.stdout.write('%s:' % ext.get_short_name().decode('utf-8'))
                 self.stdout.write("    %s" % ext)
 
-        emails = cert.watchers.values_list('email', flat=True)
-        self.stdout.write('Watchers: %s' % ', '.join(emails))
+        self.stdout.write('Watchers:')
+        for watcher in cert.watchers.all():
+            self.stdout.write('* %s' % watcher)
 
         self.stdout.write('Digest:')
         for algo in ['md5', 'sha1', 'sha256', 'sha512']:

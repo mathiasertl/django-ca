@@ -13,11 +13,11 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 
 from django_ca.models import Certificate
+from django_ca.models import Watcher
 
 
 class Command(BaseCommand):
@@ -41,10 +41,8 @@ class Command(BaseCommand):
             raise CommandError('Certificate with given serial not found.')
 
         # add users:
-        add = [User.objects.get_or_create(email=e, defaults={'username': e})[0]
-               for e in options['add']]
-        cert.watchers.add(*add)
+        cert.watchers.add(*[Watcher.from_addr(addr) for addr in options['add']])
 
         # remove users:
         if options['rm']:
-            cert.watchers.filter(email__in=options['rm']).delete()
+            cert.watchers.remove(*[Watcher.from_addr(addr) for addr in options['rm']])
