@@ -14,15 +14,19 @@
 # see <http://www.gnu.org/licenses/>.
 
 import os
+import sys
 
 from six.moves import configparser
 
-from fabric.api import local
 from fabric.api import env
-from fabric.context_managers import settings
+from fabric.api import local
+from fabric.colors import green
+from fabric.colors import red
 from fabric.context_managers import cd
+from fabric.context_managers import hide
+from fabric.context_managers import settings
 from fabric.decorators import runs_once
-
+from fabric.utils import abort
 
 config = configparser.ConfigParser({
     'app': 'False',
@@ -116,27 +120,89 @@ def deploy(section='DEFAULT'):
 
 
 def init_demo():
+    # setup environment
     os.chdir('ca')
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.settings")
+    sys.path.insert(0, os.getcwd())
 
-    # create db
-    local('python manage.py migrate')
+    # setup django
+    import django
+    django.setup()
 
-    # init CA
-    local('python manage.py init_ca AT example example example example ca.example.com')
+    # finally - imports!
+    from django.conf import settings
+    from django.core.management import call_command as manage
+    from django_ca.models import Certificate
+
+    if settings.DEBUG is not True:
+        abort(red('Refusing to run if settings.DEBUG != True.'))
+
+    if os.path.exists(settings.CA_KEY) or os.path.exists(settings.CA_CRT):
+        abort(red('CA already set up.'))
+
+    print(green('Creating database...'))
+    manage('migrate', verbosity=0)
+    print(green('Initiating CA...'))
+    manage('init_ca', 'AT', 'Vienna', 'Vienna', 'example', 'example',
+           'ca.example.com')
 
     # generate OCSP certificate
-    local('openssl genrsa -out files/localhost.key 4096')  # for OCSP service
-    local("openssl req -new -key files/localhost.key -out files/localhost.csr -utf8 -sha512 -batch -subj '/C=AT/ST=Vienna/L=Vienna/CN=localhost/'""")
-    local('python manage.py sign_cert --csr files/localhost.csr --out files/localhost.crt --ocsp')
+    print(green('Generate OCSP certificate'))
+    ocsp_key = os.path.join(settings.CA_DIR, 'localhost.key')
+    ocsp_csr = os.path.join(settings.CA_DIR, 'localhost.csr')
+    ocsp_pem = os.path.join(settings.CA_DIR, 'localhost.pem')
+    with hide('everything'):
+        local('openssl genrsa -out files/localhost.key 2048')
+        local("openssl req -new -key %s -out %s -utf8 -sha512 -batch -subj '/C=AT/ST=Vienna/L=Vienna/CN=localhost/'" % (ocsp_key, ocsp_csr))
+    manage('sign_cert', csr=ocsp_csr, out=ocsp_pem, ocsp=True)
 
+    # Create some client certificates
     for name in ['host1', 'host2', 'host3', 'host4']:
         hostname = '%s.example.com' % name
+        print(green('Generate certificate for %s...' % hostname))
         key = 'files/%s.key' % hostname
         csr = 'files/%s.csr' % hostname
-        pem = 'files/%s.pem' % hostname
         subj = '/C=AT/ST=Vienna/L=Vienna/CN=%s/' % hostname
 
-        local('openssl genrsa -out %s 2048' % key)
-        local("openssl req -new -key %s -out %s -utf8 -sha512 -batch -subj 'subj'" % (
-            key, csr, subj))
-        local('python manage.py sign_cert --csr %s --out %s' % (csr, pem))
+        with hide('everything'):
+            local('openssl genrsa -out %s 2048' % key)
+            local("openssl req -new -key %s -out %s -utf8 -sha512 -batch -subj '%s'" % (
+                key, csr, subj))
+        manage('sign_cert', csr=csr, out='files/%s.pem' % hostname)
+
+    # Revoke host1 and host2
+    print(green('Revoke host1.example.com and host2.example.com...'))
+    cert = Certificate.objects.get(cn='host1.example.com')
+    cert.revoke()
+    cert.save()
+
+    cert = Certificate.objects.get(cn='host2.example.com')
+    cert.revoke('keyCompromise')
+    cert.save()
+
+    print(green('Create CRL and OCSP index...'))
+    crl_path = os.path.join(settings.CA_DIR, 'crl.pem')
+    ocsp_index = os.path.join(settings.CA_DIR, 'ocsp_index.txt')
+    manage('dump_crl', crl_path)
+    manage('dump_ocsp_index', ocsp_index)
+
+    ca_crl_path = os.path.join(settings.CA_DIR, 'ca_crl.pem')
+
+    # Concat the CA certificate and the CRL, this is required by "openssl verify"
+    with open(crl_path) as crl, open(settings.CA_CRT) as ca_pem, open(ca_crl_path, 'w') as ca_crl:
+        ca_crl.write(ca_pem.read())
+        ca_crl.write(crl.read())
+
+    os.chdir('../')
+    cwd = os.getcwd()
+    rel = lambda p: os.path.relpath(p, cwd)
+    ca_crt = rel(settings.CA_CRT)
+    host1_pem = rel(os.path.join(settings.CA_DIR, 'host1.example.com.pem'))
+    print("")
+    print(green('* All certificates are in %s' % rel(settings.CA_KEY)))
+    print(green('* Verify with crl:'))
+    print('\topenssl verify -CAfile %s -crl_check %s' % (rel(ca_crl_path), rel(host1_pem)))
+    print(green('* Run OCSP responder:'))
+    print('\topenssl ocsp -index %s -port 8888 -rsigner %s -rkey %s -CA %s -text' % (rel(ocsp_index), rel(ocsp_pem), rel(ocsp_key), ca_crt))
+    print(green('* Verify certificate with OCSP:'))
+    print('\topenssl ocsp -CAfile %s -issuer %s -cert %s -url http://localhost:8888 -resp_text' % (ca_crt, ca_crt, host1_pem))

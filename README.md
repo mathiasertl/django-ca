@@ -133,40 +133,16 @@ See ChangeLog.md.
 
 ## Test CRL and OCSP
 
+To create a demo certificate authority with an OCSP responder, simply use the `init_demo` fabfile
+target:
+
 ```
-# creates a CA, an OCSP cert and four host certs:
 fab init_demo
-cd ca
-
-# list serials of certificates
-python manage.py list_certs
-
-# revoke two certificates (example assumes host1 and host2, second with reason)
-python manage.py revoke_cert <serial>
-python manage.py revoke_cert <serial> --reason=keyCompromise
-
-# generate CRL, OCSP index file
-python manage.py dump_crl files/crl.pem
-python manage.py dump_ocsp_index files/ocsp_index.txt
-
-# This file is only needed by the "openssl verify" command:
-cat files/ca.crt files/crl.pem > files/ca_crl.pem
-
-# verify CRL
-openssl verify -CAfile files/ca_crl.pem -crl_check files/host1.example.com.pem
-openssl verify -CAfile files/ca_crl.pem -crl_check files/host2.example.com.pem
-openssl verify -CAfile files/ca_crl.pem -crl_check files/host3.example.com.pem
-openssl verify -CAfile files/ca_crl.pem -crl_check files/host4.example.com.pem
-
-# start OCSP daemon
-openssl ocsp -index files/ocsp_index.txt -port 8888 -rsigner files/localhost.crt -rkey files/localhost.key -CA files/ca.crt -text -out log.txt
-
-# test certificates
-openssl ocsp -CAfile files/ca.crt -issuer files/ca.crt -cert files/host1.example.com.pem -url http://localhost:8888 -resp_text
-openssl ocsp -CAfile files/cafile.pem -issuer files/cafile.pem  -cert files/host2.example.com.pem -url http://localhost:8888 -resp_text
-openssl ocsp -CAfile files/cafile.pem -issuer files/cafile.pem  -cert files/host3.example.com.pem -url http://localhost:8888 -resp_text
-openssl ocsp -CAfile files/cafile.pem -issuer files/cafile.pem  -cert files/host4.example.com.pem -url http://localhost:8888 -resp_text
 ```
+
+This will create all certificates in `ca/files` and tell you how to run the OCSP responder and
+verify via CRL and OCSP. Four server certificates are created, `host1.example.com` through
+`host4.example.com`, the first two are revoked.
 
 ## License
 
