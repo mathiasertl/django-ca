@@ -20,9 +20,4 @@ class Migration(migrations.Migration):
                 ('mail', models.EmailField(max_length=254, verbose_name='E-Mail')),
             ],
         ),
-        migrations.AlterField(
-            model_name='certificate',
-            name='watchers',
-            field=models.ManyToManyField(related_name='certificates', to='django_ca.Watcher'),
-        ),
     ]
