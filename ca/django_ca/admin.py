@@ -18,6 +18,13 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from .models import Certificate
+from .models import Watcher
+
+
+@admin.register(Watcher)
+class WatcherAdmin(admin.ModelAdmin):
+    pass
+
 
 class StatusListFilter(admin.SimpleListFilter):
     title = _('Status')

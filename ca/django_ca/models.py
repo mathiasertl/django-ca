@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
@@ -24,13 +23,23 @@ from .utils import format_date
 from .managers import CertificateManager
 
 
+class Watcher(models.Model):
+    name = models.CharField(max_length=64, null=True, blank=True, verbose_name=_('CommonName'))
+    mail = models.EmailField(verbose_name=_('E-Mail'))
+
+    def __str__(self):
+        if self.name:
+            return '%s <%s>' % (self.name, self.mail)
+        return self.mail
+
+
 class Certificate(models.Model):
     _x509 = None
     _extensions = None
 
     objects = CertificateManager()
 
-    watchers = models.ManyToManyField(User)
+    watchers = models.ManyToManyField(Watcher, related_name='certificates')
 
     created = models.DateTimeField(auto_now=True)
     expires = models.DateTimeField(null=False, blank=False)
