@@ -69,10 +69,8 @@ class CertificateManager(models.Manager):
         ]
 
         # Add subjectAltNames, always also contains the CommonName
-        subjectAltNames = sorted(set(subjectAltNames + [cn]))
-        subjData = bytes(','.join(['DNS:%s' % n for n in subjectAltNames]), 'utf-8')
-        ext = crypto.X509Extension(b'subjectAltName', 0, subjData)
-        extensions.append(ext)
+        subjectAltNames = get_subjectAltName(subjectAltNames, cn=cn)
+        extensions.append(crypto.X509Extension(b'subjectAltName', 0, subjectAltNames))
 
         # Set CRL distribution points:
         if settings.CA_CRL_DISTRIBUTION_POINTS:
