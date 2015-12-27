@@ -2,11 +2,7 @@
 
 from setuptools import find_packages
 from setuptools import setup
-from pkg_resources import resource_string
 
-
-requirements = resource_string(__name__, 'requirements.txt').decode('utf-8').splitlines()
-requirements = [r.replace('==', '>=') for r in requirements]
 
 setup(
     name='django-ca',
@@ -18,7 +14,10 @@ setup(
     packages=find_packages('ca', exclude=['ca']),
     package_dir={'django_ca': 'ca/django_ca'},
     zip_safe=False,  # because of the static files
-    install_requires=requirements,
+    install_requires=[
+        'Django>=1.9',
+        'pyOpenSSL>=0.15',
+    ],
     classifiers=[
         'Framework :: Django',
         'Framework :: Django :: 1.9',
