@@ -66,12 +66,12 @@ class Command(BaseCommand):
         # get list of watchers
         watchers = [Watcher.from_addr(addr) for addr in options['watch']]
 
-        if not options['ocsp']:
-            key_usage = options['key_usage'].split(',')
-            ext_key_usage = options['ext_key_usage'].split(',')
-        else:
+        if options['ocsp'] is True:
             key_usage = (str('nonRepudiation'), str('digitalSignature'), str('keyEncipherment'), )
             ext_key_usage = (str('OCSPSigning'), )
+        else:
+            key_usage = options['key_usage'].split(',')
+            ext_key_usage = options['ext_key_usage'].split(',')
 
         cert = Certificate.objects.from_csr(
             csr, subjectAltNames=options['alt'], days=options['days'],
