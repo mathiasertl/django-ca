@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-from setuptools import find_packages
-from setuptools import setup
+from distutils.core import setup
 
 
 setup(
@@ -11,8 +10,13 @@ setup(
     author='Mathias Ertl',
     author_email='mati@er.tl',
     url='https://github.com/mathiasertl/django-ca',
-    packages=find_packages('ca', exclude=['ca']),
-    package_dir={'django_ca': 'ca/django_ca'},
+    packages=[
+        'django_ca',
+        'django_ca.management',
+        'django_ca.management.commands',
+        'django_ca.migrations',
+    ],
+    package_dir={'': 'ca'},
     zip_safe=False,  # because of the static files
     install_requires=[
         'Django>=1.9',
