@@ -50,7 +50,7 @@ class Certificate(models.Model):
 
     objects = CertificateManager()
 
-    watchers = models.ManyToManyField(Watcher, related_name='certificates')
+    watchers = models.ManyToManyField(Watcher, related_name='certificates', blank=True)
 
     created = models.DateTimeField(auto_now=True)
     expires = models.DateTimeField(null=False, blank=False)
