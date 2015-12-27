@@ -65,9 +65,9 @@ class Certificate(models.Model):
     revoked_reason = models.CharField(max_length=32, null=True, blank=True,
                                      verbose_name=_('Reason for revokation'))
 
-    def subjectAltNames(self):
-        return self.extensions.get(b'subjectAltNames', '')
-    subjectAltNames.short_description = 'subjectAltNames'
+    def subjectAltName(self):
+        return self.extensions.get(b'subjectAltName', '')
+    subjectAltName.short_description = 'subjectAltName'
 
     def basicConstraints(self):
         return self.extensions[b'basicConstraints']
