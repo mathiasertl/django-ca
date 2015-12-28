@@ -52,6 +52,7 @@ class StatusListFilter(admin.SimpleListFilter):
 
 @admin.register(Certificate)
 class CertificateAdmin(admin.ModelAdmin):
+    actions = ['revoke', ]
     list_display = ('cn', 'serial', 'status', 'expires_date')
     list_filter = (StatusListFilter, )
     readonly_fields = ['expires', 'csr', 'pub', 'cn', 'serial', 'revoked', 'revoked_date',
@@ -73,6 +74,11 @@ class CertificateAdmin(admin.ModelAdmin):
             'classes': ('collapse', ),
         }),
     )
+
+    def revoke(self, request, queryset):
+        for cert in queryset:
+            cert.revoke()
+    revoke.short_description = _('Revoke selected certificates')
 
     def get_fieldsets(self, request, obj=None):
         """Collapse the "Revocation" section unless the certificate is revoked."""
