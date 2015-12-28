@@ -20,9 +20,11 @@ from django_ca.models import Certificate
 
 
 class BaseCommand(_BaseCommand):
+    certificate_queryset = Certificate.objects.filter(revoked=False)
+
     def get_certificate(self, id):
         try:
-            return Certificate.objects.filter(revoked=False).get_by_serial_or_cn(id)
+            return self.certificate_queryset.get_by_serial_or_cn(id)
         except Certificate.DoesNotExist:
             raise CommandError('No valid certificate with CommonName/serial "%s" exists.' % id)
         except Certificate.MultipleObjectsReturned:
