@@ -15,7 +15,6 @@
 
 from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
-from django.db.models import Q
 
 from django_ca.models import Certificate
 
@@ -33,7 +32,7 @@ CommonName.''')
     def handle(self, *args, **options):
         cert = options['cert']
         try:
-            cert = Certificate.objects.filter(revoked=False).get(Q(serial=cert) | Q(cn=cert))
+            cert = Certificate.objects.filter(revoked=False).get_by_serial_or_cn(cert)
             cert.revoke(reason=options.get('reason'))
         except Certificate.DoesNotExist:
             raise CommandError('No valid certificate with CommonName/serial "%s" exists.' % cert)
