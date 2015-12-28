@@ -82,6 +82,12 @@ class CertificateAdmin(admin.ModelAdmin):
         actions.pop('delete_selected', '')
         return actions
 
+    def get_urls(self):
+        # Remove the delete action from the URLs
+        urls = super(CertificateAdmin, self).get_urls()
+        name = '%s_%s_delete' % (self.model._meta.app_label, self.model._meta.verbose_name)
+        return [u for u in urls if u.name != name]
+
     def revoke(self, request, queryset):
         for cert in queryset:
             cert.revoke()
