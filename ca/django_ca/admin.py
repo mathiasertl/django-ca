@@ -43,11 +43,11 @@ class StatusListFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value() == 'valid':
-            return queryset.filter(revoked=False, expires__gt=timezone.now())
+            return queryset.valid()
         elif self.value() == 'expired':
-            return queryset.filter(revoked=False, expires__lt=timezone.now())
+            return queryset.expired()
         elif self.value() == 'revoked':
-            return queryset.filter(revoked=True)
+            return queryset.revoked()
 
 
 @admin.register(Certificate)
