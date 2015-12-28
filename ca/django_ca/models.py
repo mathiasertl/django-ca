@@ -23,6 +23,7 @@ from OpenSSL import crypto
 
 from .utils import format_date
 from .managers import CertificateManager
+from .querysets import CertificateQuerySet
 
 
 class Watcher(models.Model):
@@ -48,7 +49,7 @@ class Certificate(models.Model):
     _x509 = None
     _extensions = None
 
-    objects = CertificateManager()
+    objects = CertificateManager.from_queryset(CertificateQuerySet)
 
     watchers = models.ManyToManyField(Watcher, related_name='certificates', blank=True)
 
