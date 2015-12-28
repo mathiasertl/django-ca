@@ -13,14 +13,11 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from django.core.management.base import BaseCommand
-from django.core.management.base import CommandError
-
-from django_ca.models import Certificate
+from django_ca.management.base import CertCommand
 from django_ca.models import Watcher
 
 
-class Command(BaseCommand):
+class Command(CertCommand):
     help = '''Add/remove addresses to be notified of an expiring certificate. The
         "list_certs" command lists all known certificates.
 
@@ -37,17 +34,11 @@ class Command(BaseCommand):
             '-r', '--rm', metavar='EMAIL', default=[], action='append',
             help='''Address that shoult no longer be notified when the certificate expires
                 (may be given multiple times).''')
-        parser.add_argument('serial', help='The serial of the certificate to edit.')
+        super(Command, self).add_arguments(parser)
 
-    def handle(self, serial, **options):
-        try:
-            cert = Certificate.objects.get(serial=serial)
-        except Certificate.DoesNotExist:
-            raise CommandError('Certificate with given serial not found.')
+    def handle(self, cert, **options):
+        cert = self.get_certificate(cert)
 
-        # add users:
+        # add/remove users:
         cert.watchers.add(*[Watcher.from_addr(addr) for addr in options['add']])
-
-        # remove users:
-        if options['rm']:
-            cert.watchers.remove(*[Watcher.from_addr(addr) for addr in options['rm']])
+        cert.watchers.remove(*[Watcher.from_addr(addr) for addr in options['rm']])
