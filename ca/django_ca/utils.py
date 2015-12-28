@@ -77,6 +77,9 @@ def get_subjectAltName(names, cn=None):
         names.insert(0, cn)
 
     for name in names:
+        if isinstance(name, bytes):
+            name = name.decode('utf-8')
+
         try:
             ip_address(name)
             values.append('IP:%s' % name)
