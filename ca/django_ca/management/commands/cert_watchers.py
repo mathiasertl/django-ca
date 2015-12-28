@@ -27,11 +27,12 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             '-a', '--add', metavar='EMAIL', default=[], action='append',
-            help='Address that now should be notified when the certificate expires.Add an email to be notified of an expiring certificate (may be given multiple times).')
+            help='''Address that now should be notified when the certificate expires. Add an email
+                to be notified of an expiring certificate (may be given multiple times).''')
         parser.add_argument(
             '-r', '--rm', metavar='EMAIL', default=[], action='append',
             help='''Address that shoult no longer be notified when the certificate expires
-(may be given multiple times).''')
+                (may be given multiple times).''')
         parser.add_argument('serial', help='The serial of the certificate to edit.')
 
     def handle(self, serial, **options):

@@ -50,6 +50,7 @@ def get_ca_crt(reload=False):
             CA_CRT = crypto.load_certificate(crypto.FILETYPE_PEM, ca_crt.read())
     return CA_CRT
 
+
 def get_basic_cert(expires):
     not_before = format_date(datetime.utcnow() - timedelta(minutes=5))
     not_after = format_date(expires)

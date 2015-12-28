@@ -25,7 +25,9 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'cert', help='''CommonName or serial of the certificate. If you give a CommonName (which is not by definition unique) there must be only one valid certificate with the given CommonName.''')
+            'cert', help='''CommonName or serial of the certificate. If you give a CommonName
+(which is not by definition unique) there must be only one valid certificate with the given
+CommonName.''')
         parser.add_argument('--reason', help="An optional reason for revokation.")
 
     def handle(self, *args, **options):

@@ -15,9 +15,6 @@
 
 from datetime import datetime
 
-from django.conf import settings
-
-from .crl import get_crl
 from .models import Certificate
 
 # We need a two-letter year, otherwise OCSP doesn't work
@@ -50,13 +47,3 @@ def get_index():
             'unknown',  # we don't save to any file
             cert.distinguishedName,
         ])
-
-def get_ocsp_crl(**kwargs):
-    """TODO: Verify that this is really needed!?"""
-    crl = get_crl(**kwargs).decode('utf-8')
-
-    # Write cafile (required by "openssl ocsp")
-    with open(settings.CA_CRT) as ca_file, open(settings.CA_FILE_PEM, 'w') as out:
-        ca = ca_file.read()
-        out.write(ca)
-        out.write(crl)

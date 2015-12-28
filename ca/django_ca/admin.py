@@ -24,6 +24,7 @@ _x509_ext_fields = [
     'keyUsage', 'extendedKeyUsage', 'basicConstraints', 'subjectKeyIdentifier', 'issuerAltName',
     'authorityKeyIdentifier', 'crlDistributionPoints', 'authorityInfoAccess', ]
 
+
 @admin.register(Watcher)
 class WatcherAdmin(admin.ModelAdmin):
     pass

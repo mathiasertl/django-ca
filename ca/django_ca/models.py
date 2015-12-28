@@ -63,7 +63,7 @@ class Certificate(models.Model):
     revoked = models.BooleanField(default=False)
     revoked_date = models.DateTimeField(null=True, blank=True, verbose_name=_('Revoked on'))
     revoked_reason = models.CharField(max_length=32, null=True, blank=True,
-                                     verbose_name=_('Reason for revokation'))
+                                      verbose_name=_('Reason for revokation'))
 
     def subjectAltName(self):
         return self.extensions.get(b'subjectAltName', '')
@@ -122,8 +122,8 @@ class Certificate(models.Model):
     @property
     def distinguishedName(self):
         name = self.x509.get_subject()
-        return '/%s'  % '/'.join(['%s=%s' % (k.decode('utf-8'), v.decode('utf-8'))
-                                  for k, v in name.get_components()])
+        return '/%s' % '/'.join(['%s=%s' % (k.decode('utf-8'), v.decode('utf-8'))
+                                 for k, v in name.get_components()])
 
     def revoke(self, reason=None):
         self.revoked = True
