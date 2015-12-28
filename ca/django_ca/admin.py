@@ -57,6 +57,7 @@ class CertificateAdmin(admin.ModelAdmin):
     list_filter = (StatusListFilter, )
     readonly_fields = ['expires', 'csr', 'pub', 'cn', 'serial', 'revoked', 'revoked_date',
                        'revoked_reason', 'subjectAltName', ] + _x509_ext_fields
+    search_fields = ['cn', 'serial', ]
 
     fieldsets = (
         (None, {
