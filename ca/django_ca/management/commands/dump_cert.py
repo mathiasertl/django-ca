@@ -15,34 +15,28 @@
 
 from argparse import FileType
 
-from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 
 from OpenSSL import crypto
 
+from django_ca.management.base import CertCommand
 from django_ca.models import Certificate
 
-# We need a two-letter year, otherwise OCSP doesn't work
-date_format = '%y%m%d%H%M%SZ'
 
-
-class Command(BaseCommand):
+class Command(CertCommand):
     help = "Dump a certificate to a file."
+    certificate_queryset = Certificate.objects.all()
 
     def add_arguments(self, parser):
+        super(Command, self).add_arguments(parser)
         parser.add_argument(
             '-f', '--format', choices=['pem', 'asn1', 'text', 'der'], default='pem',
             help='The format to use, default is %(default)s.')
-        parser.add_argument('serial', help='''The serial of the certificate to dump.
- The "list_certs" command lists all known certificates.''')
         parser.add_argument('path', type=FileType('wb'),
                             help='Path where to dump the certificate. Use "-" for stdout.')
 
-    def handle(self, serial, path, **options):
-        try:
-            cert = Certificate.objects.get(serial=serial)
-        except Certificate.DoesNotExist:
-            raise CommandError('Certificate with given serial not found.')
+    def handle(self, cert, path, **options):
+        cert = self.get_certificate(cert)
 
         format = options.get('format')
         if format == 'pem':

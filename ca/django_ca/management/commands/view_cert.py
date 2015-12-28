@@ -15,17 +15,15 @@
 
 from datetime import datetime
 
-from django.core.management.base import BaseCommand
-from django.core.management.base import CommandError
-from django.utils import six
-
+from django_ca.management.base import CertCommand
 from django_ca.models import Certificate
 
 DATE_FMT = '%Y%m%d%H%M%SZ'
 
 
-class Command(BaseCommand):
-    help = 'View a certificate by serial. The "list_certs" command lists all known certificates.'
+class Command(CertCommand):
+    help = 'View a certificate. The "list_certs" command lists all known certificates.'
+    certificate_queryset = Certificate.objects.all()
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -34,13 +32,10 @@ class Command(BaseCommand):
         parser.add_argument(
             '-e', '--extensions', default=False, action='store_true',
             help='Show all extensions, not just subjectAltName.')
-        parser.add_argument('serial')
+        super(Command, self).add_arguments(self, parser)
 
-    def handle(self, serial, **options):
-        try:
-            cert = Certificate.objects.get(serial=serial)
-        except Certificate.DoesNotExist:
-            raise CommandError('Certificate with given serial not found.')
+    def handle(self, cert, **options):
+        cert = self.get_certificate(cert)
         self.stdout.write('Common Name: %s' % cert.cn)
 
         # self.stdout.write notBefore/notAfter
@@ -59,7 +54,7 @@ class Command(BaseCommand):
 
         # self.stdout.write extensions
         if options['extensions']:
-            for name, value in six.iteritems(cert.extensions):
+            for name, value in cert.extensions.items():
                 self.stdout.write("%s:" % name.decode('utf-8'))
                 for line in str(value).strip().splitlines():
                     self.stdout.write("    %s" % line)
