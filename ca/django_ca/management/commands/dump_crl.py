@@ -21,9 +21,6 @@ from django_ca.crl import get_crl
 from django_ca.management.base import BaseCommand
 from django_ca.management.base import format_parser
 
-# We need a two-letter year, otherwise OCSP doesn't work
-date_format = '%y%m%d%H%M%SZ'
-
 
 class Command(BaseCommand):
     help = "Write the certificate revocation list (CRL)."
