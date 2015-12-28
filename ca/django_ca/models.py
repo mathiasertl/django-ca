@@ -49,7 +49,7 @@ class Certificate(models.Model):
     _x509 = None
     _extensions = None
 
-    objects = CertificateManager.from_queryset(CertificateQuerySet)
+    objects = CertificateManager.from_queryset(CertificateQuerySet)()
 
     watchers = models.ManyToManyField(Watcher, related_name='certificates', blank=True)
 

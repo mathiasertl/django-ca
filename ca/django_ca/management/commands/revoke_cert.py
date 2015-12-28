@@ -13,28 +13,15 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from django.core.management.base import BaseCommand
-from django.core.management.base import CommandError
-
-from django_ca.models import Certificate
+from django_ca.management.base import CertCommand
 
 
-class Command(BaseCommand):
+class Command(CertCommand):
     help = "Revoke a certificate."
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            'cert', help='''CommonName or serial of the certificate. If you give a CommonName
-(which is not by definition unique) there must be only one valid certificate with the given
-CommonName.''')
         parser.add_argument('--reason', help="An optional reason for revokation.")
+        super(Command, self).add_arguments(parser)
 
-    def handle(self, *args, **options):
-        cert = options['cert']
-        try:
-            cert = Certificate.objects.filter(revoked=False).get_by_serial_or_cn(cert)
-            cert.revoke(reason=options.get('reason'))
-        except Certificate.DoesNotExist:
-            raise CommandError('No valid certificate with CommonName/serial "%s" exists.' % cert)
-        except Certificate.MultipleObjectsReturned:
-            raise CommandError('Multiple valid certificates with CommonName "%s" found.' % cert)
+    def handle(self, cert, **options):
+        self.get_certificate(cert).revoke(reason=options.get('reason'))
