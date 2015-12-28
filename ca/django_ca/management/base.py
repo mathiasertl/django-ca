@@ -13,14 +13,53 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import argparse
+
+from OpenSSL import crypto
+
+
 from django.core.management.base import BaseCommand as _BaseCommand
 from django.core.management.base import CommandError
 
 from django_ca.models import Certificate
 
 
+class FormatAction(argparse.Action):
+    def __call__(self, parser, namespace, value, option_string=None):
+        value = value.strip().upper()
+        print('c: %s' % value)
+        if value == 'DER':
+            value = 'ASN1'
+        try:
+            value = getattr(crypto, 'FILETYPE_%s' % value)
+        except AttributeError:
+            parser.error('Unknown format "%s".' % value)
+        setattr(namespace, self.dest, value)
+
+
+format_parser = argparse.ArgumentParser(add_help=False)
+format_parser.add_argument(
+    '-f', '--format', metavar='{PEM,ASN1,DER,TEXT}', default='PEM', action=FormatAction,
+    help='The format to use, default is %(default)s.')
+
+
 class BaseCommand(_BaseCommand):
     certificate_queryset = Certificate.objects.filter(revoked=False)
+    parents = []
+
+    def add_parents(self, parser):
+        for parent in self.parents:
+            parser._add_container_actions(parent)
+            try:
+                defaults = parent._defaults
+            except AttributeError:
+                pass
+            else:
+                parser._defaults.update(defaults)
+
+    def add_arguments(self, parser):
+        self.add_parents(parser)
+        super(BaseCommand, self).add_arguments(parser)
 
     def get_certificate(self, id):
         try:
