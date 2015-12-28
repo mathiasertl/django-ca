@@ -131,7 +131,6 @@ See ChangeLog.md.
 2. Only send out one notification if multiple certificates expire for a user.
 3. Make certificates editable via the admin interface.
 4. Publish good documentation on RTD.
-5. Add support for client certificates (= emails as CN/SAN)
 
 ## Test CRL and OCSP
 
