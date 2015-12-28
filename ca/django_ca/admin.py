@@ -76,6 +76,12 @@ class CertificateAdmin(admin.ModelAdmin):
         }),
     )
 
+    def get_actions(self, request):
+        # Disable the "delete selected" admin action
+        actions = super(CertificateAdmin, self).get_actions(request)
+        actions.pop('delete_selected', '')
+        return actions
+
     def revoke(self, request, queryset):
         for cert in queryset:
             cert.revoke()
