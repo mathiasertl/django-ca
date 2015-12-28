@@ -13,7 +13,9 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+from django.conf.urls import url
 from django.contrib import admin
+from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
@@ -86,8 +88,23 @@ class CertificateAdmin(admin.ModelAdmin):
     def get_urls(self):
         # Remove the delete action from the URLs
         urls = super(CertificateAdmin, self).get_urls()
-        name = '%s_%s_delete' % (self.model._meta.app_label, self.model._meta.verbose_name)
-        return [u for u in urls if u.name != name]
+        meta = self.model._meta
+
+        # remove the delete URL
+#        delete_name = '%s_%s_delete' % (meta.app_label, meta.verbose_name)
+#        urls = [u for u in urls if u.name != delete_name]
+
+        # add revokation URL
+        revoke_name = '%s_%s_revoke' % (meta.app_label, meta.verbose_name)
+        urls.insert(0, url(r'^(?P<pk>.*)/revoke/$', self.revoke_view, name=revoke_name))
+
+        return urls
+
+    def revoke_view(self, request):
+        context = dict(
+            self.admin_site.each_context(request)
+        )
+        return TemplateResponse(request, 'django_ca/admin/revoke.html', context)
 
     def revoke(self, request, queryset):
         for cert in queryset:
