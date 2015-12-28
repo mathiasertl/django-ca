@@ -30,7 +30,7 @@ from django.core.management.base import CommandError
 
 from OpenSSL import crypto
 
-from django_ca.utils import get_cert
+from django_ca.utils import get_basic_cert
 
 
 class Command(BaseCommand):
@@ -64,7 +64,7 @@ class Command(BaseCommand):
         key = crypto.PKey()
         key.generate_key(settings.CA_KEY_TYPE, settings.CA_BITSIZE)
 
-        cert = get_cert(expires)
+        cert = get_basic_cert(expires)
         cert.get_subject().C = country
         cert.get_subject().ST = state
         cert.get_subject().L = city

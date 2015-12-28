@@ -21,7 +21,8 @@ from OpenSSL import crypto
 from django.conf import settings
 from django.db import models
 
-from .utils import get_cert
+from .utils import get_basic_cert
+from .utils import get_subjectAltName
 
 
 class CertificateManager(models.Manager):
@@ -54,7 +55,7 @@ class CertificateManager(models.Manager):
         expires = expires.replace(hour=0, minute=0, second=0, microsecond=0)
 
         # Create signed certificate
-        cert = get_cert(expires)
+        cert = get_basic_cert(expires)
         cert.set_issuer(issuerPub.get_subject())
         cert.set_subject(req.get_subject())
         cert.set_pubkey(req.get_pubkey())
