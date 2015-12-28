@@ -22,7 +22,11 @@ from django_ca.models import Watcher
 
 class Command(BaseCommand):
     help = '''Add/remove addresses to be notified of an expiring certificate. The
-        "list_certs" command lists all known certificates.'''
+        "list_certs" command lists all known certificates.
+
+        E-Mail addresses can be verbatim ("user@example.com") or with a name, e.g. "Your Name
+        <user@example.com>", the latter case must be quoted on the shell.
+        '''
 
     def add_arguments(self, parser):
         parser.add_argument(
