@@ -43,6 +43,6 @@ def get_crl(**kwargs):
     kwargs.setdefault('digest', b'sha512')
 
     crl = crypto.CRL()
-    for cert in Certificate.objects.filter(revoked=True):
+    for cert in Certificate.objects.revoked():
         crl.add_revoked(cert.get_revocation())
     return crl.export(get_ca_crt(), get_ca_key(), **kwargs)

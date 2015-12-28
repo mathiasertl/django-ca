@@ -34,7 +34,7 @@ class Command(BaseCommand):
         now = datetime.utcnow()
         expires = now + timedelta(days=options['days'])
 
-        qs = Certificate.objects.filter(expires__lt=expires, expires__gt=now)
+        qs = Certificate.objects.valid().filter(expires__lt=expires)
         for cert in qs:
             timestamp = cert.expires.strftime('%Y-%m-%d')
             subj = 'Certificate expiration for %s on %s' % (cert.cn, timestamp)
