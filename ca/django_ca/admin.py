@@ -53,6 +53,7 @@ class StatusListFilter(admin.SimpleListFilter):
 @admin.register(Certificate)
 class CertificateAdmin(admin.ModelAdmin):
     actions = ['revoke', ]
+    change_form_template = 'django_ca/admin/change_form.html'
     list_display = ('cn', 'serial', 'status', 'expires_date')
     list_filter = (StatusListFilter, )
     readonly_fields = ['expires', 'csr', 'pub', 'cn', 'serial', 'revoked', 'revoked_date',
