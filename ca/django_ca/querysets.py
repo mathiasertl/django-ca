@@ -14,7 +14,23 @@
 # see <http://www.gnu.org/licenses/>.
 
 from django.db import models
+from django.utils import timezone
 
 
 class CertificateQuerySet(models.QuerySet):
-    pass
+    def valid(self):
+        """Return valid certificates."""
+
+        return self.exclude(revoked=True).filter(expires__gt=timezone.now())
+
+    def expired(self):
+        """Returns expired certificates.
+
+        Note that this method does not return revoked certificates that would otherwise be expired.
+        """
+        return self.exclude(revoked=True).filter(expires__lt=timezone.now())
+
+    def revoked(self):
+        """Return revoked certificates."""
+
+        return self.filter(revoked=True)
