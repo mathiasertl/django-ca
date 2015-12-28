@@ -15,12 +15,11 @@
 
 from argparse import FileType
 
-from OpenSSL import crypto
-
-from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 
 from django_ca.crl import get_crl
+from django_ca.management.base import BaseCommand
+from django_ca.management.base import format_parser
 
 # We need a two-letter year, otherwise OCSP doesn't work
 date_format = '%y%m%d%H%M%SZ'
@@ -28,25 +27,23 @@ date_format = '%y%m%d%H%M%SZ'
 
 class Command(BaseCommand):
     help = "Write the certificate revocation list (CRL)."
+    parents = [format_parser]
 
     def add_arguments(self, parser):
         parser.add_argument(
             '-d', '--days', type=int,
             help="The number of days until the next update of this CRL (default: 100).")
-        parser.add_argument('-t', '--type', choices=['pem', 'asn1', 'text', 'der'],
-                            help="Format of the CRL file (default: pem).")
         parser.add_argument('--digest',
                             help="The name of the message digest to use (default: sha512).")
         parser.add_argument('path', type=FileType('wb'))
+        super(Command, self).add_arguments(parser)
 
     def handle(self, path, **options):
-        kwargs = {}
+        kwargs = {
+            'type': options['format'],
+        }
         if options['days']:
             kwargs['days'] = options['days']
-        if options['type']:
-            if options.get('type') == 'der':
-                options['type'] = 'asn1'
-            kwargs['type'] = getattr(crypto, 'FILETYPE_%s' % options['type'].upper())
         if options['digest']:
             kwargs['digest'] = bytes(options['digest'], 'utf-8')
 
