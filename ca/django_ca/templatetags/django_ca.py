@@ -18,9 +18,6 @@ from django.contrib.admin.templatetags.admin_modify import submit_row
 
 register = template.Library()
 
-@register.inclusion_tag('admin/submit_line.html', takes_context=True)
+@register.inclusion_tag('django_ca/admin/submit_line.html', takes_context=True)
 def django_ca_certificate_submit_row(context):
-    ctx = submit_row(context)
-    ctx['show_delete_link'] = False
-    ctx['show_save_and_add_another'] = False
-    return ctx
+    return submit_row(context)
