@@ -79,7 +79,10 @@ class CertificateAdmin(admin.ModelAdmin):
         fieldsets = super(CertificateAdmin, self).get_fieldsets(request, obj=obj)
 
         if obj is not None and obj.revoked is False:
-            fieldsets[2][1]['classes'] = ('collapse', )
+            fieldsets[2][1]['classes'] = ['collapse', ]
+        else:
+            if 'collapse' in fieldsets[2][1].get('classes', []):
+                fieldsets[2][1]['classes'].remove('collapse')
         return fieldsets
 
     def status(self, obj):
