@@ -20,34 +20,26 @@ from django.core.management.base import CommandError
 from OpenSSL import crypto
 
 from django_ca.management.base import CertCommand
+from django_ca.management.base import format_parser
 from django_ca.models import Certificate
 
 
 class Command(CertCommand):
     help = "Dump a certificate to a file."
     certificate_queryset = Certificate.objects.all()
+    parents = [format_parser, ]
 
     def add_arguments(self, parser):
         super(Command, self).add_arguments(parser)
-        parser.add_argument(
-            '-f', '--format', choices=['pem', 'asn1', 'text', 'der'], default='pem',
-            help='The format to use, default is %(default)s.')
         parser.add_argument('path', type=FileType('wb'),
                             help='Path where to dump the certificate. Use "-" for stdout.')
 
     def handle(self, cert, path, **options):
         cert = self.get_certificate(cert)
-
-        format = options.get('format')
-        if format == 'pem':
-            data = cert.pub.encode('utf-8')
-        elif format == 'asn1' or format == 'der':
-            data = crypto.dump_certificate(crypto.FILETYPE_ASN1, cert.x509)
-        elif format == 'text':
-            data = crypto.dump_certificate(crypto.FILETYPE_TEXT, cert.x509)
+        data = crypto.dump_certificate(options['format'], cert.x509)
 
         if 'b' not in path.mode:
-            if format == 'asn1':
+            if options['format'] == crypto.FILETYPE_ASN1:
                 raise CommandError("ASN1 cannot be reliably printed to stdout.")
             data = data.decode('utf-8')
         path.write(data)
