@@ -27,7 +27,6 @@ from django_ca.models import Certificate
 class FormatAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
         value = value.strip().upper()
-        print('c: %s' % value)
         if value == 'DER':
             value = 'ASN1'
         try:
