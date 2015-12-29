@@ -19,6 +19,7 @@ from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
+from .forms import CreateCertificateForm
 from .models import Certificate
 from .models import Watcher
 from .views import RevokeCertificateView
@@ -85,6 +86,12 @@ class CertificateAdmin(admin.ModelAdmin):
         actions = super(CertificateAdmin, self).get_actions(request)
         actions.pop('delete_selected', '')
         return actions
+
+    def get_form(self, request, obj=None, **kwargs):
+        if obj is None:
+            return CreateCertificateForm
+        else:
+            return super(CertificateAdmin, self).get_form(request, obj=obj, **kwargs)
 
     def get_urls(self):
         # Remove the delete action from the URLs
