@@ -14,6 +14,7 @@
 # see <http://www.gnu.org/licenses/>.
 
 from django.views.generic.edit import UpdateView
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 
 from .forms import RevokeCertificateForm
@@ -33,6 +34,9 @@ class RevokeCertificateView(UpdateView):
         return context
 
     def form_valid(self, form):
+        if form.instance.revoked is True:
+            raise PermissionDenied  # We cannot revoke an already revoked cert
+
         reason = form.cleaned_data['reason'] or None
         form.instance.revoke(reason=reason)
         form.save()
