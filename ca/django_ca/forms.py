@@ -20,6 +20,7 @@ from .models import Certificate
 
 
 class CreateCertificateForm(forms.ModelForm):
+    subjectAltName = forms.CharField(label='subjectAltName')
     class Meta:
         model = Certificate
         fields = ['cn', 'csr', 'watchers', ]
