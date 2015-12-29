@@ -19,6 +19,12 @@ from django.utils.translation import ugettext_lazy as _
 from .models import Certificate
 
 
+class CreateCertificateForm(forms.ModelForm):
+    class Meta:
+        model = Certificate
+        fields = ['cn', 'csr', 'watchers', ]
+
+
 class RevokeCertificateForm(forms.ModelForm):
     reason = forms.ChoiceField(required=False, choices=(
         ('', _('No reason')),
