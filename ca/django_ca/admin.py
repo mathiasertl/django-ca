@@ -21,6 +21,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from .models import Certificate
 from .models import Watcher
+from .views import RevokeCertificateView
 
 _x509_ext_fields = [
     'keyUsage', 'extendedKeyUsage', 'basicConstraints', 'subjectKeyIdentifier', 'issuerAltName',
@@ -96,7 +97,9 @@ class CertificateAdmin(admin.ModelAdmin):
 
         # add revokation URL
         revoke_name = '%s_%s_revoke' % (meta.app_label, meta.verbose_name)
-        urls.insert(0, url(r'^(?P<pk>.*)/revoke/$', self.revoke_view, name=revoke_name))
+        revoke_view = self.admin_site.admin_view(
+            RevokeCertificateView.as_view(admin_site=self.admin_site))
+        urls.insert(0, url(r'^(?P<pk>.*)/revoke/$', revoke_view, name=revoke_name))
 
         return urls
 
