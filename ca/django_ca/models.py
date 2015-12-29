@@ -109,12 +109,18 @@ class Certificate(models.Model):
 
     @property
     def x509(self):
+        if not self.pub:
+            return None
+
         if self._x509 is None:
             self._x509 = crypto.load_certificate(crypto.FILETYPE_PEM, self.pub)
         return self._x509
 
     @property
     def extensions(self):
+        if self.x509 is None:
+            return {}
+
         if self._extensions is None:
             exts = [self.x509.get_extension(i) for i in range(0, self.x509.get_extension_count())]
             self._extensions = {ext.get_short_name(): ext for ext in exts}
