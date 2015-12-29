@@ -13,9 +13,10 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from django.views.generic.edit import UpdateView
-from django.core.exceptions import PermissionDenied
+from django.contrib import messages
 from django.core.urlresolvers import reverse
+from django.utils.translation import ugettext as _
+from django.views.generic.edit import UpdateView
 
 from .forms import RevokeCertificateForm
 from .models import Certificate
@@ -35,11 +36,12 @@ class RevokeCertificateView(UpdateView):
 
     def form_valid(self, form):
         if form.instance.revoked is True:
-            raise PermissionDenied  # We cannot revoke an already revoked cert
+            messages.error(self.request, _('The Certificate is already revoked.'))
+        else:
+            reason = form.cleaned_data['reason'] or None
+            form.instance.revoke(reason=reason)
+            form.save()
 
-        reason = form.cleaned_data['reason'] or None
-        form.instance.revoke(reason=reason)
-        form.save()
         return super(RevokeCertificateView, self).form_valid(form)
 
     def get_success_url(self):
