@@ -1,8 +1,29 @@
 {% extends "admin/base_site.html" %}
-{% block content %}
+{% load admin_static %}
 
+{% block extrahead %}{{ block.super }}
+<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+{{ media }}
+{% endblock %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}" />{% endblock %}
+
+{% block content %}
 <form action="" method="post">{% csrf_token %}
-    {{ form.as_p }}
+    <fieldset class="module aligned {{ fieldset.classes }}">
+        <div class="form-row{% if form.non_field_errors %} errors{% endif %} field-reason">
+            {{ form.non_field_errors }}
+
+            <div class="field-box field-reason{% if form.reason.errors %} errors{% endif %}">
+                {{ form.reason.errors }}
+                {{ form.reason.label_tag }}
+                {{ form.reason }}
+                {% if form.reason.help_text %}
+                    <p class="help">{{ form.reason.help_text|safe }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </fieldset>
     <input type="submit" value="Update" />
 </form>
 {% endblock %}
