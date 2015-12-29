@@ -64,9 +64,9 @@ class CertificateAdmin(admin.ModelAdmin):
                        'revoked_reason', 'subjectAltName', ] + _x509_ext_fields
     search_fields = ['cn', 'serial', ]
 
-    fieldsets = (
+    fieldsets = [
         (None, {
-            'fields': ('cn', 'subjectAltName', 'serial', 'expires', 'watchers', ),
+            'fields': ['cn', 'subjectAltName', 'serial', 'expires', 'watchers', ],
         }),
         (_('X509 Extensions'), {
             'fields': _x509_ext_fields,
@@ -76,10 +76,18 @@ class CertificateAdmin(admin.ModelAdmin):
             'fields': ('revoked', 'revoked_date', 'revoked_reason', ),
         }),
         (_('Certificate'), {
-            'fields': ('pub', 'csr', ),
+            'fields': ['pub', 'csr', ],
             'classes': ('collapse', ),
         }),
-    )
+    ]
+    add_fieldsets = [
+        (None, {
+            'fields': ['cn', 'subjectAltName', 'watchers', 'csr', ],
+        }),
+        (_('X509 Extensions'), {
+            'fields': ['keyUsage', 'extendedKeyUsage', 'basicConstraints', ]
+        }),
+    ]
 
     def get_actions(self, request):
         # Disable the "delete selected" admin action
@@ -125,12 +133,20 @@ class CertificateAdmin(admin.ModelAdmin):
         """Collapse the "Revocation" section unless the certificate is revoked."""
         fieldsets = super(CertificateAdmin, self).get_fieldsets(request, obj=obj)
 
-        if obj is not None and obj.revoked is False:
+        if obj is None:
+            return self.add_fieldsets
+
+        if obj.revoked is False:
             fieldsets[2][1]['classes'] = ['collapse', ]
         else:
             if 'collapse' in fieldsets[2][1].get('classes', []):
                 fieldsets[2][1]['classes'].remove('collapse')
         return fieldsets
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj is None:
+            return []
+        return super(CertificateAdmin, self).get_readonly_fields(request, obj=obj)
 
     def status(self, obj):
         if obj.revoked:
