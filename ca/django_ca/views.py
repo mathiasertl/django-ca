@@ -29,6 +29,7 @@ class RevokeCertificateView(UpdateView):
     def get_context_data(self, **kwargs):
         context = super(RevokeCertificateView, self).get_context_data(**kwargs)
         context.update(self.admin_site.each_context(self.request))
+        context['opts'] = self.model._meta  # required by breadcrumbs
         return context
 
     def form_valid(self, form):
