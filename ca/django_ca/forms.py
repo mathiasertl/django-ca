@@ -20,7 +20,7 @@ from .models import Certificate
 
 
 class RevokeCertificateForm(forms.ModelForm):
-    reason = forms.ChoiceField(required=True, choices=(
+    reason = forms.ChoiceField(required=False, choices=(
         ('', _('No reason')),
     ))
 
