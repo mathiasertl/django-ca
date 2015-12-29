@@ -79,27 +79,27 @@ class Certificate(models.Model):
     authorityInfoAccess.short_description = 'authorityInfoAccess'
 
     def basicConstraints(self):
-        return self.extensions[b'basicConstraints']
+        return self.extensions.get(b'basicConstraints', '')
     basicConstraints.short_description = 'basicConstraints'
 
     def keyUsage(self):
-        return self.extensions[b'keyUsage']
+        return self.extensions.get(b'keyUsage', '')
     keyUsage.short_description = 'keyUsage'
 
     def extendedKeyUsage(self):
-        return self.extensions[b'extendedKeyUsage']
+        return self.extensions.get(b'extendedKeyUsage', '')
     extendedKeyUsage.short_description = 'extendedKeyUsage'
 
     def subjectKeyIdentifier(self):
-        return self.extensions[b'subjectKeyIdentifier']
+        return self.extensions.get(b'subjectKeyIdentifier', '')
     subjectKeyIdentifier.short_description = 'subjectKeyIdentifier'
 
     def issuerAltName(self):
-        return self.extensions[b'issuerAltName']
+        return self.extensions.get(b'issuerAltName', '')
     issuerAltName.short_description = 'issuerAltName'
 
     def authorityKeyIdentifier(self):
-        return self.extensions[b'authorityKeyIdentifier']
+        return self.extensions.get(b'authorityKeyIdentifier', '')
     authorityKeyIdentifier.short_description = 'authorityKeyIdentifier'
 
     def save(self, *args, **kwargs):
