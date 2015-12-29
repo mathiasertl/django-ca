@@ -24,7 +24,6 @@ class RevokeCertificateView(UpdateView):
     admin_site = None
     model = Certificate
     form_class = RevokeCertificateForm
-    template_name_suffix = '_revoke_form'
     template_name = 'django_ca/admin/certificate_revoke_form.html'
 
     def get_context_data(self, **kwargs):
