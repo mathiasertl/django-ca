@@ -91,8 +91,8 @@ class CertificateAdmin(admin.ModelAdmin):
         meta = self.model._meta
 
         # remove the delete URL
-#        delete_name = '%s_%s_delete' % (meta.app_label, meta.verbose_name)
-#        urls = [u for u in urls if u.name != delete_name]
+        delete_name = '%s_%s_delete' % (meta.app_label, meta.verbose_name)
+        urls = [u for u in urls if u.name != delete_name]
 
         # add revokation URL
         revoke_name = '%s_%s_revoke' % (meta.app_label, meta.verbose_name)
