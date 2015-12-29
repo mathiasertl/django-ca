@@ -38,8 +38,9 @@ class FormatAction(argparse.Action):
 
 format_parser = argparse.ArgumentParser(add_help=False)
 format_parser.add_argument(
-    '-f', '--format', metavar='{PEM,ASN1,DER,TEXT}', default='PEM', action=FormatAction,
-    help='The format to use, default is %(default)s.')
+    '-f', '--format', metavar='{PEM,ASN1,DER,TEXT}',
+    default=crypto.FILETYPE_PEM, action=FormatAction,
+    help='The format to use, default is PEM.')
 
 
 class BaseCommand(_BaseCommand):
