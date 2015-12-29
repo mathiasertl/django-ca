@@ -26,6 +26,8 @@
     <li class="error">{% trans "The certificate is already revoked." %}</li>
 </ul>
 {% else %}
+<h2>{% trans "Revoke a certificate" %}</h2>
+
 <form action="" method="post">{% csrf_token %}
     <fieldset class="module aligned {{ fieldset.classes }}">
         <div class="form-row{% if form.non_field_errors %} errors{% endif %} field-reason">
@@ -41,7 +43,7 @@
             </div>
         </div>
     </fieldset>
-    <input type="submit" value="Update" />
+    <input type="submit" value="{% trans "Revoke" %}" />
 </form>
 {% endif %}
 {% endblock %}
