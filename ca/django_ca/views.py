@@ -31,6 +31,12 @@ class RevokeCertificateView(UpdateView):
         context.update(self.admin_site.each_context(self.request))
         return context
 
+    def form_valid(self, form):
+        reason = form.cleaned_data['reason'] or None
+        form.instance.revoke(reason=reason)
+        form.save()
+        return super(RevokeCertificateView, self).form_valid(form)
+
     def get_success_url(self):
         meta = self.model._meta
         return reverse('admin:%s_%s_change' % (meta.app_label, meta.verbose_name),
