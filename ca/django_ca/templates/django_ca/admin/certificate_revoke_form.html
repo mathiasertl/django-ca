@@ -21,6 +21,11 @@
 {% endif %}
 
 {% block content %}
+{% if object.revoked %}
+<ul class="messagelist">
+    <li class="error">{% trans "The certificate is already revoked." %}</li>
+</ul>
+{% else %}
 <form action="" method="post">{% csrf_token %}
     <fieldset class="module aligned {{ fieldset.classes }}">
         <div class="form-row{% if form.non_field_errors %} errors{% endif %} field-reason">
@@ -38,4 +43,5 @@
     </fieldset>
     <input type="submit" value="Update" />
 </form>
+{% endif %}
 {% endblock %}
