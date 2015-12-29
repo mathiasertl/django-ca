@@ -163,7 +163,7 @@ def init_demo():
     manage('sign_cert', csr=ocsp_csr, out=ocsp_pem, ocsp=True)
 
     # Create some client certificates
-    for i in range(1, 5):
+    for i in range(1, 10):
         hostname = 'host%s.example.com' % i
         print(green('Generate certificate for %s...' % hostname))
         key = 'files/%s.key' % hostname
