@@ -21,6 +21,10 @@ from .models import Certificate
 
 class CreateCertificateForm(forms.ModelForm):
     subjectAltName = forms.CharField(label='subjectAltName')
+    keyUsage = forms.CharField(label='keyUsage')
+    extendedKeyUsage = forms.CharField(label='extendedKeyUsage')
+    basicConstraints = forms.CharField(label='basicConstraints')
+
     class Meta:
         model = Certificate
         fields = ['cn', 'csr', 'watchers', ]
