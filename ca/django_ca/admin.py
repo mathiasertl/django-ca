@@ -162,6 +162,12 @@ class CertificateAdmin(admin.ModelAdmin):
     expires_date.short_description = _('Expires')
     expires_date.admin_order_field = 'expires'
 
+    def save_model(self, request, obj, form, change):
+        if change is False:  # We're adding a new certificate
+
+            pass
+        obj.save()
+
     class Media:
         css = {
             'all': ('django_ca/admin/css/certificateadmin.css', )
