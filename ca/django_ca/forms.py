@@ -53,7 +53,16 @@ class CreateCertificateForm(forms.ModelForm):
         ('msCTLSign', 'Microsoft Trust List Signing'),
         ('msEFS', 'Microsoft Encrypted File System'),
     ))
-    basicConstraints = BasicConstraintsField(label='basicConstraints', initial=[True, False, ''])
+    basicConstraints = BasicConstraintsField(label='basicConstraints')
+
+    def clean_csr(self):
+        data = self.cleaned_data['csr']
+        lines = data.splitlines()
+        if lines[0] != '-----BEGIN CERTIFICATE REQUEST-----' \
+                or lines[-1] != '-----END CERTIFICATE REQUEST-----':
+            raise forms.ValidationError(_("Enter a valid CSR (in PEM format)."))
+
+        return data
 
     class Meta:
         model = Certificate
