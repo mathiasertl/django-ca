@@ -67,44 +67,39 @@ class Certificate(models.Model):
                                       verbose_name=_('Reason for revokation'))
 
     def subjectAltName(self):
-        return self.extensions.get(b'subjectAltName', '')
+        return self.ext_as_str(b'subjectAltName')
     subjectAltName.short_description = 'subjectAltName'
 
     def crlDistributionPoints(self):
-        return self.extensions.get(b'crlDistributionPoints', '')
+        return self.ext_as_str(b'crlDistributionPoints')
     crlDistributionPoints.short_description = 'crlDistributionPoints'
 
     def authorityInfoAccess(self):
-        return self.extensions.get(b'authorityInfoAccess', '')
+        return self.ext_as_str(b'authorityInfoAccess')
     authorityInfoAccess.short_description = 'authorityInfoAccess'
 
     def basicConstraints(self):
-        if b'basicConstraints' not in self.extensions:
-            return ''
-        value = self.extensions[b'basicConstraints']
-        if value.get_critical():
-            value = 'critical,%s' % value
-        return value
+        return self.ext_as_str(b'basicConstraints')
     basicConstraints.short_description = 'basicConstraints'
 
     def keyUsage(self):
-        return self.extensions.get(b'keyUsage', '')
+        return self.ext_as_str(b'keyUsage')
     keyUsage.short_description = 'keyUsage'
 
     def extendedKeyUsage(self):
-        return self.extensions.get(b'extendedKeyUsage', '')
+        return self.ext_as_str(b'extendedKeyUsage')
     extendedKeyUsage.short_description = 'extendedKeyUsage'
 
     def subjectKeyIdentifier(self):
-        return self.extensions.get(b'subjectKeyIdentifier', '')
+        return self.ext_as_str(b'subjectKeyIdentifier')
     subjectKeyIdentifier.short_description = 'subjectKeyIdentifier'
 
     def issuerAltName(self):
-        return self.extensions.get(b'issuerAltName', '')
+        return self.ext_as_str(b'issuerAltName')
     issuerAltName.short_description = 'issuerAltName'
 
     def authorityKeyIdentifier(self):
-        return self.extensions.get(b'authorityKeyIdentifier', '')
+        return self.ext_as_str(b'authorityKeyIdentifier')
     authorityKeyIdentifier.short_description = 'authorityKeyIdentifier'
 
     def save(self, *args, **kwargs):
@@ -130,6 +125,15 @@ class Certificate(models.Model):
             exts = [self.x509.get_extension(i) for i in range(0, self.x509.get_extension_count())]
             self._extensions = {ext.get_short_name(): ext for ext in exts}
         return self._extensions
+
+    def ext_as_str(self, key):
+        if key not in self.extensions:
+            return ''
+
+        value = self.extensions[key]
+        if value.get_critical():
+            value = 'critical,%s' % value
+        return value
 
     @property
     def distinguishedName(self):
