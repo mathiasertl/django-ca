@@ -53,7 +53,7 @@ class CreateCertificateForm(forms.ModelForm):
         ('msCTLSign', 'Microsoft Trust List Signing'),
         ('msEFS', 'Microsoft Encrypted File System'),
     ))
-    basicConstraints = BasicConstraintsField(label='basicConstraints')
+    basicConstraints = BasicConstraintsField(label='basicConstraints', initial=[True, False, ''])
 
     class Meta:
         model = Certificate
