@@ -34,8 +34,6 @@ class BasicConstraintsField(forms.MultiValueField):
     def compress(self, values):
         value = ''
         critical, ca, pathlen = values
-        if critical:
-            value += 'critical,'
         if ca:
             value += 'CA:TRUE'
         else:
@@ -43,5 +41,4 @@ class BasicConstraintsField(forms.MultiValueField):
 
         if ca and pathlen is not None:
             value += ',pathlen:%s' % pathlen
-        print('compress(%s) -> %s' % (values, value))
-        return value
+        return (critical, value)

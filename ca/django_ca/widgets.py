@@ -29,16 +29,13 @@ class BasicConstraintsWidget(widgets.MultiWidget):
 
     def decompress(self, value):
         if value:
-            match = re.match(
-                '((?P<critical>critical),)?CA:(?P<ca>TRUE|FALSE)(,pathlen:(?P<pathlen>[0-9]))?',
-                value)
-            critical = match.group('critical') == 'critical'
+            critical, value = value
+            match = re.match('CA:(?P<ca>TRUE|FALSE)(,pathlen:(?P<pathlen>[0-9]))?', value)
             ca = match.group('ca') == 'TRUE'
             pathlen = match.group('pathlen')
 
             if pathlen is None or ca is False:
                 pathlen = ''
 
-            print('decompress(%s) -> %s, %s, %s' % (value, critical, ca, pathlen))
             return [critical, ca, pathlen]
         return [False, False, '']
