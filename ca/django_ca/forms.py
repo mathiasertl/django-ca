@@ -30,7 +30,10 @@ def _initial_expires():
 
 class CreateCertificateForm(forms.ModelForm):
     expires = forms.DateField(initial=_initial_expires)
-    subjectAltName = forms.CharField(label='subjectAltName', required=False)
+    subjectAltName = forms.CharField(
+        label='subjectAltName', required=False,
+        help_text=_('''Coma-separated list of alternative names for the certificate.''')
+    )
     keyUsage = forms.MultipleChoiceField(label='keyUsage', required=False, choices=(
         ('cRLSign', 'cRLSign'),
         ('dataEncipherment', 'dataEncipherment'),
@@ -67,6 +70,9 @@ class CreateCertificateForm(forms.ModelForm):
     class Meta:
         model = Certificate
         fields = ['cn', 'csr', 'watchers', ]
+        help_texts = {
+            'csr': _('The Certificate Signing Request (CSR) in PEM format.'),
+        }
 
 
 class RevokeCertificateForm(forms.ModelForm):

@@ -27,6 +27,7 @@ from .forms import CreateCertificateForm
 from .models import Certificate
 from .models import Watcher
 from .utils import get_cert
+from .utils import get_subjectAltName
 from .views import RevokeCertificateView
 
 _x509_ext_fields = [
@@ -172,11 +173,16 @@ class CertificateAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         if change is False:  # We're adding a new certificate
             data = form.cleaned_data
+
+            # parse subjectAltName field
+            names = [e.strip() for e in data['subjectAltName'].split(',')]
+            names = get_subjectAltName(names, data['cn'])
+
             x509 = get_cert(
                 csr=data['csr'],
                 expires=data['expires'],
                 basic_constraints=data['basicConstraints'],
-                subject_alt_names=data['subjectAltName'],
+                subject_alt_names=names,
                 key_usage=data['keyUsage'],
                 ext_key_usage=data['extendedKeyUsage'],
             )
