@@ -63,7 +63,8 @@ def get_basic_cert(expires):
 
 
 def get_cert(csr, csr_format=crypto.FILETYPE_PEM, expires=None, algorithm=None,
-             subject_alt_names=None, key_usage=None, ext_key_usage=None):
+             basic_constraints='critical,CA:FALSE', subject_alt_names=None, key_usage=None,
+             ext_key_usage=None):
     """Create a signed certificate from a CSR.
 
     Parameters
@@ -79,6 +80,9 @@ def get_cert(csr, csr_format=crypto.FILETYPE_PEM, expires=None, algorithm=None,
         number of days from now. The default is the CA_DEFAULT_EXPIRES setting.
     algorithm : {'sha512', 'sha256', ...}, optional
         Algorithm used to sign the certificate. The default is the DIGEST_ALGORITHM setting.
+    basic_constraints : bool or None or str, optional
+        Value for the `basicConstraints` X509 extension. May be `None` to omit it, a bool for
+        `CA:TRUE` or `CA:FALSE`, or a str for a verbatim value. The default is `critical,CA:FALSE`.
     subject_alt_names : list of str, optional
     key_usage : list of str, optional
     ext_key_usage : list of str, optional
@@ -125,12 +129,20 @@ def get_cert(csr, csr_format=crypto.FILETYPE_PEM, expires=None, algorithm=None,
     cert.set_pubkey(req.get_pubkey())
 
     extensions = [
-        crypto.X509Extension(b'basicConstraints', 0, b'CA:FALSE'),
         crypto.X509Extension(b'keyUsage', 0, bytes(','.join(key_usage), 'utf-8')),
         crypto.X509Extension(b'extendedKeyUsage', 0, bytes(','.join(ext_key_usage), 'utf-8')),
         crypto.X509Extension(b'subjectKeyIdentifier', 0, b'hash', subject=cert),
         crypto.X509Extension(b'authorityKeyIdentifier', 0, b'keyid,issuer', issuer=ca_crt),
     ]
+    if basic_constraints is True:
+        basic_constraints = 'CA:TRUE'
+    elif basic_constraints is False:
+        basic_constraints = 'CA:FALSE'
+
+    if basic_constraints is not None:
+        print('Setting basic_constraints: %s' % basic_constraints)
+        extensions.append(crypto.X509Extension(b'basicConstraints', 0,
+                                               bytes(basic_constraints, 'utf-8')))
 
     # Add subjectAltNames, always also contains the CommonName
     subjectAltNames = get_subjectAltName(subject_alt_names, cn=cn)
