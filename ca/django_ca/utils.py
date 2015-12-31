@@ -92,11 +92,11 @@ def get_cert(csr, csr_format=crypto.FILETYPE_PEM, expires=None, algorithm=None,
     req = crypto.load_certificate_request(csr_format, csr)
 
     # get algorithm used to sign certificate
-    if algorithm is None:
+    if not algorithm:
         algorithm = settings.DIGEST_ALGORITHM
-    if key_usage is None:
+    if not key_usage:
         key_usage = settings.CA_KEY_USAGE
-    if ext_key_usage is None:
+    if not ext_key_usage:
         ext_key_usage = settings.CA_EXT_KEY_USAGE
 
     # Compute notAfter info
