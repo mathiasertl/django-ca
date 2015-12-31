@@ -79,7 +79,12 @@ class Certificate(models.Model):
     authorityInfoAccess.short_description = 'authorityInfoAccess'
 
     def basicConstraints(self):
-        return self.extensions.get(b'basicConstraints', '')
+        if b'basicConstraints' not in self.extensions:
+            return ''
+        value = self.extensions[b'basicConstraints']
+        if value.get_critical():
+            value = 'critical,%s' % value
+        return value
     basicConstraints.short_description = 'basicConstraints'
 
     def keyUsage(self):
