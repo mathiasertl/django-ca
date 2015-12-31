@@ -21,6 +21,7 @@ from .widgets import BasicConstraintsWidget
 class BasicConstraintsField(forms.MultiValueField):
     def __init__(self, *args, **kwargs):
         error_messages = {}
+        kwargs.setdefault('initial', [True, False, ''])
 
         fields = (
             forms.BooleanField(label="Critical", required=False),
