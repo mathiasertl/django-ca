@@ -172,13 +172,14 @@ class CertificateAdmin(admin.ModelAdmin):
             data = form.cleaned_data
             x509 = get_cert(
                 csr=data['csr'],
+                expires=data['expires'],
                 basic_constraints=data['basicConstraints'],
                 subject_alt_names=data['subjectAltName'],
                 key_usage=data['keyUsage'],
                 ext_key_usage=data['extendedKeyUsage'],
             )
 
-            obj.expires = datetime.today() #TODO, obviously
+            obj.expires = data['expires']
             obj.pub = crypto.dump_certificate(crypto.FILETYPE_PEM, x509)
         obj.save()
 
