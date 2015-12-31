@@ -135,7 +135,7 @@ def get_cert(csr, csr_format=crypto.FILETYPE_PEM, expires=None, algorithm=None,
         crypto.X509Extension(b'authorityKeyIdentifier', 0, b'keyid,issuer', issuer=ca_crt),
     ]
     if basic_constraints is True:
-        basic_constraints = 'CA:TRUE'
+        basic_constraints = 'CA:TRUE,pathlen:0'
     elif basic_constraints is False:
         basic_constraints = 'CA:FALSE'
 
