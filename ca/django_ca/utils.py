@@ -62,6 +62,112 @@ def get_basic_cert(expires):
     return cert
 
 
+def get_cert(csr, csr_format=crypto.FILETYPE_PEM, expires=None, algorithm=None,
+             subject_alt_names=None, key_usage=None, ext_key_usage=None):
+    """Create a signed certificate from a CSR.
+
+    Parameters
+    ----------
+
+    csr : str
+        A valid CSR in PEM format. If none is given, `self.csr` will be used.
+    csr_format : int, optional
+        The format of the submitted CSR request. One of the OpenSSL.crypto.FILETYPE_*
+        constants. The default is PEM.
+    expires : int or datetime, optional
+        When the certificate should expire. Either a datetime object or an int representing the
+        number of days from now. The default is the CA_DEFAULT_EXPIRES setting.
+    algorithm : {'sha512', 'sha256', ...}, optional
+        Algorithm used to sign the certificate. The default is the DIGEST_ALGORITHM setting.
+    subject_alt_names : list of str, optional
+    key_usage : list of str, optional
+    ext_key_usage : list of str, optional
+
+    Returns
+    -------
+
+    OpenSSL.crypto.X509
+        The signed certificate.
+    """
+    req = crypto.load_certificate_request(csr_format, csr)
+
+    # get algorithm used to sign certificate
+    if algorithm is None:
+        algorithm = settings.DIGEST_ALGORITHM
+    if key_usage is None:
+        key_usage = settings.CA_KEY_USAGE
+    if ext_key_usage is None:
+        ext_key_usage = settings.CA_EXT_KEY_USAGE
+
+    # Compute notAfter info
+    if expires is None:
+        expires = settings.CA_DEFAULT_EXPIRES
+    if isinstance(expires, int):
+        expires = datetime.today() + timedelta(days=expires + 1)
+        expires = expires.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # get CA key and cert
+    ca_crt = get_ca_crt()
+    ca_key = get_ca_key()
+
+    # get the common name from the CSR
+    cn = dict(req.get_subject().get_components()).get(b'CN')
+    if cn is None:
+        raise Exception('CSR has no CommonName!')
+    elif cn not in subject_alt_names:
+        # TODO: Replace CN with the first name in subject_alt_names
+        pass
+
+    # Create signed certificate
+    cert = get_basic_cert(expires)
+    cert.set_issuer(ca_crt.get_subject())
+    cert.set_subject(req.get_subject())
+    cert.set_pubkey(req.get_pubkey())
+
+    extensions = [
+        crypto.X509Extension(b'basicConstraints', 0, b'CA:FALSE'),
+        crypto.X509Extension(b'keyUsage', 0, bytes(','.join(key_usage), 'utf-8')),
+        crypto.X509Extension(b'extendedKeyUsage', 0, bytes(','.join(ext_key_usage), 'utf-8')),
+        crypto.X509Extension(b'subjectKeyIdentifier', 0, b'hash', subject=cert),
+        crypto.X509Extension(b'authorityKeyIdentifier', 0, b'keyid,issuer', issuer=ca_crt),
+    ]
+
+    # Add subjectAltNames, always also contains the CommonName
+    subjectAltNames = get_subjectAltName(subject_alt_names, cn=cn)
+    extensions.append(crypto.X509Extension(b'subjectAltName', 0, subjectAltNames))
+
+    # Set CRL distribution points:
+    if settings.CA_CRL_DISTRIBUTION_POINTS:
+        value = ','.join(['URI:%s' % uri for uri in settings.CA_CRL_DISTRIBUTION_POINTS])
+        value = bytes(value, 'utf-8')
+        extensions.append(crypto.X509Extension(b'crlDistributionPoints', 0, value))
+
+    # Add issuerAltName
+    if settings.CA_ISSUER_ALT_NAME:
+        issuerAltName = bytes('URI:%s' % settings.CA_ISSUER_ALT_NAME, 'utf-8')
+    else:
+        issuerAltName = b'issuer:copy'
+    extensions.append(crypto.X509Extension(b'issuerAltName', 0, issuerAltName, issuer=ca_crt))
+
+    # Add authorityInfoAccess
+    auth_info_access = []
+    if settings.CA_OCSP:
+        auth_info_access.append('OCSP;URI:%s' % settings.CA_OCSP)
+    if settings.CA_ISSUER:
+        auth_info_access.append('caIssuers;URI:%s' % settings.CA_ISSUER)
+    if auth_info_access:
+        auth_info_access = bytes(','.join(auth_info_access), 'utf-8')
+        extensions.append(crypto.X509Extension(b'authorityInfoAccess', 0, auth_info_access))
+
+    # Add collected extensions
+    cert.add_extensions(extensions)
+
+    # Finally sign the certificate:
+    cert.sign(ca_key, algorithm)
+
+    return cert
+
+
 def get_subjectAltName(names, cn=None):
     """Compute the value of the subjectAltName extension based on the given list of names.
 
