@@ -82,7 +82,9 @@ class CertificateAdmin(admin.ModelAdmin):
         }),
         (_('Certificate'), {
             'fields': ['pub', 'csr', ],
-            'classes': ('collapse', ),
+            # The "as-code" class is used so CSS can only match this section (and only in an
+            # existing cert).
+            'classes': ('collapse', 'as-code'),
         }),
     ]
     add_fieldsets = [

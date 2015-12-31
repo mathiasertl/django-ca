@@ -13,8 +13,8 @@ You should have received a copy of the GNU General Public License along with dja
 see <http://www.gnu.org/licenses/>.
 */
 
-.field-csr p,
-.field-pub p
+fieldset.as-code .field-csr p,
+fieldset.as-code .field-pub p
 {
     white-space: pre;
     white-space: pre-wrap;
