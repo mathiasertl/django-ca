@@ -13,6 +13,10 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+from datetime import datetime
+
+from OpenSSL import crypto
+
 from django.conf.urls import url
 from django.contrib import admin
 from django.template.response import TemplateResponse
@@ -22,6 +26,7 @@ from django.utils.translation import ugettext_lazy as _
 from .forms import CreateCertificateForm
 from .models import Certificate
 from .models import Watcher
+from .utils import get_cert
 from .views import RevokeCertificateView
 
 _x509_ext_fields = [
@@ -164,8 +169,16 @@ class CertificateAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         if change is False:  # We're adding a new certificate
+            data = form.cleaned_data
+            x509 = get_cert(
+                csr=data['csr'],
+                subject_alt_names=data['subjectAltName'],
+                key_usage=data['keyUsage'],
+                ext_key_usage=data['extendedKeyUsage'],
+            )
 
-            pass
+            obj.expires = datetime.today() #TODO, obviously
+            obj.pub = crypto.dump_certificate(crypto.FILETYPE_PEM, x509)
         obj.save()
 
     class Media:
