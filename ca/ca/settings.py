@@ -170,6 +170,7 @@ CA_ISSUER_ALT_NAME = None
 CA_CRL_DISTRIBUTION_POINTS = []
 CA_OCSP = None
 CA_ISSUER = None
+CA_DEFAULT_EXPIRES = 730
 # see https://www.openssl.org/docs/apps/x509v3_config.html
 CA_KEY_USAGE = (
     'keyEncipherment',
