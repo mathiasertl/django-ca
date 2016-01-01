@@ -22,8 +22,8 @@ class BasicConstraintsWidget(widgets.MultiWidget):
     def __init__(self, attrs=None):
         _widgets = (
             widgets.CheckboxInput(attrs=attrs),
-            widgets.CheckboxInput(attrs=attrs),
             widgets.TextInput(attrs=attrs),
+            widgets.CheckboxInput(attrs=attrs),
         )
         super(BasicConstraintsWidget, self).__init__(_widgets, attrs)
 
@@ -37,5 +37,5 @@ class BasicConstraintsWidget(widgets.MultiWidget):
             if pathlen is None or ca is False:
                 pathlen = ''
 
-            return [critical, ca, pathlen]
-        return [False, False, '']
+            return [ca, pathlen, critical]
+        return [False, '', False]

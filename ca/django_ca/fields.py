@@ -21,12 +21,12 @@ from .widgets import BasicConstraintsWidget
 class BasicConstraintsField(forms.MultiValueField):
     def __init__(self, *args, **kwargs):
         error_messages = {}
-        kwargs.setdefault('initial', [True, False, ''])
+        kwargs.setdefault('initial', [False, '', True])
 
         fields = (
-            forms.BooleanField(label="Critical", required=False),
             forms.BooleanField(label="CA certificate", required=False),
             forms.IntegerField(min_value=0, label="Path length", required=False),
+            forms.BooleanField(label="Critical", required=False),
         )
         super(BasicConstraintsField, self).__init__(
             error_messages=error_messages, fields=fields, require_all_fields=False,
@@ -34,7 +34,7 @@ class BasicConstraintsField(forms.MultiValueField):
 
     def compress(self, values):
         value = ''
-        critical, ca, pathlen = values
+        ca, pathlen, critical = values
         if ca:
             value += 'CA:TRUE'
         else:
