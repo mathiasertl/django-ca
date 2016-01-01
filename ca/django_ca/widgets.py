@@ -16,6 +16,20 @@
 import re
 
 from django.forms import widgets
+from django.utils.translation import ugettext as _
+
+
+class CriticalWidget(widgets.CheckboxInput):
+    def render(self, name, value, attrs=None):
+        html = super(CriticalWidget, self).render(name, value, attrs=attrs)
+        label = '<label for="%s">%s</label>' % (attrs.get('id'), _('critical'))
+        html = '<span class="critical-widget-wrapper">%s%s</span>' % (html, label)
+        return html
+
+    class Media:
+        css = {
+            'all': ('django_ca/admin/css/criticalwidget.css', ),
+        }
 
 
 class BasicConstraintsWidget(widgets.MultiWidget):
@@ -23,7 +37,7 @@ class BasicConstraintsWidget(widgets.MultiWidget):
         _widgets = (
             widgets.CheckboxInput(attrs=attrs),
             widgets.TextInput(attrs=attrs),
-            widgets.CheckboxInput(attrs=attrs),
+            CriticalWidget(),
         )
         super(BasicConstraintsWidget, self).__init__(_widgets, attrs)
 
@@ -39,3 +53,9 @@ class BasicConstraintsWidget(widgets.MultiWidget):
 
             return [ca, pathlen, critical]
         return [False, '', False]
+
+    def format_output(self, rendered_widgets):
+        # NOTE: We use a <p> because djangos stock forms.css takes care of indent this way.
+        rendered_widgets.insert(0, '<p class="multi-widget">')
+        rendered_widgets.append('</p>')
+        return ''.join(rendered_widgets)
