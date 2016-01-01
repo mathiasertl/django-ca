@@ -57,9 +57,9 @@ class KeyUsageWidget(CustomMultiWidget):
 
 
 class BasicConstraintsWidget(CustomMultiWidget):
-    def __init__(self, attrs=None):
+    def __init__(self, choices, attrs=None):
         _widgets = (
-            widgets.CheckboxInput(attrs=attrs),
+            widgets.Select(choices=choices, attrs=attrs),
             widgets.TextInput(attrs=attrs),
             CriticalWidget(),
         )
@@ -67,13 +67,5 @@ class BasicConstraintsWidget(CustomMultiWidget):
 
     def decompress(self, value):
         if value:
-            critical, value = value
-            match = re.match('CA:(?P<ca>TRUE|FALSE)(,pathlen:(?P<pathlen>[0-9]))?', value)
-            ca = match.group('ca') == 'TRUE'
-            pathlen = match.group('pathlen')
-
-            if pathlen is None or ca is False:
-                pathlen = ''
-
-            return [ca, pathlen, critical]
-        return [False, '', False]
+            return value
+        return ['CA:FALSE', None, True]

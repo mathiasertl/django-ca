@@ -14,6 +14,7 @@
 # see <http://www.gnu.org/licenses/>.
 
 from django import forms
+from django.utils.translation import ugettext_lazy as _
 
 from .widgets import BasicConstraintsWidget
 from .widgets import KeyUsageWidget
@@ -37,25 +38,20 @@ class KeyUsageField(forms.MultiValueField):
 class BasicConstraintsField(forms.MultiValueField):
     def __init__(self, *args, **kwargs):
         error_messages = {}
-        kwargs.setdefault('initial', [False, '', True])
+        kwargs.setdefault('initial', ['CA:FALSE', '', True])
+        choices = (
+            ('CA:FALSE', _('No')),
+            ('CA:TRUE', _('Yes')),
+        )
 
         fields = (
-            forms.BooleanField(required=False),
+            forms.ChoiceField(required=True, choices=choices),
             forms.IntegerField(required=False, min_value=0),
             forms.BooleanField(required=False),
         )
         super(BasicConstraintsField, self).__init__(
             error_messages=error_messages, fields=fields, require_all_fields=False,
-            widget=BasicConstraintsWidget, *args, **kwargs)
+            widget=BasicConstraintsWidget(choices), *args, **kwargs)
 
     def compress(self, values):
-        value = ''
-        ca, pathlen, critical = values
-        if ca:
-            value += 'CA:TRUE'
-        else:
-            value += 'CA:FALSE'
-
-        if ca and pathlen is not None:
-            value += ',pathlen:%s' % pathlen
-        return (critical, value)
+        return values
