@@ -58,7 +58,8 @@ class CreateCertificateForm(forms.ModelForm):
         ('msCTLSign', 'Microsoft Trust List Signing'),
         ('msEFS', 'Microsoft Encrypted File System'),
     ))
-    basicConstraints = BasicConstraintsField(label='basicConstraints')
+    basicConstraints = BasicConstraintsField(label='basicConstraints', help_text=_(
+        'Wether or not this certificate can be used as a CA.'))
 
     def clean_csr(self):
         data = self.cleaned_data['csr']
