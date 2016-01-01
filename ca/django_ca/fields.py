@@ -16,6 +16,33 @@
 from django import forms
 
 from .widgets import BasicConstraintsWidget
+from .widgets import KeyUsageWidget
+
+
+class KeyUsageField(forms.MultiValueField):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('initial', [[], True])
+        choices = (
+            ('cRLSign', 'cRLSign'),
+            ('dataEncipherment', 'dataEncipherment'),
+            ('decipherOnly', 'decipherOnly'),
+            ('digitalSignature', 'digitalSignature'),
+            ('encipherOnly', 'encipherOnly'),
+            ('keyAgreement', 'keyAgreement'),
+            ('keyCertSign', 'keyCertSign'),
+            ('keyEncipherment', 'keyEncipherment'),
+            ('nonRepudiation', 'nonRepudiation'),
+        )
+        fields = (
+            forms.MultipleChoiceField(label='keyUsage', required=False, choices=choices),
+            forms.BooleanField(required=False),
+        )
+        super(KeyUsageField, self).__init__(
+            fields=fields, require_all_fields=False, widget=KeyUsageWidget(choices=choices),
+            *args, **kwargs)
+
+    def compress(self, values):
+        return values
 
 
 class BasicConstraintsField(forms.MultiValueField):

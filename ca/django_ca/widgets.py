@@ -32,7 +32,31 @@ class CriticalWidget(widgets.CheckboxInput):
         }
 
 
-class BasicConstraintsWidget(widgets.MultiWidget):
+class CustomMultiWidget(widgets.MultiWidget):
+    """Wraps the multi widget into a <p> element."""
+
+    def format_output(self, rendered_widgets):
+        # NOTE: We use a <p> because djangos stock forms.css takes care of indent this way.
+        rendered_widgets.insert(0, '<p class="multi-widget">')
+        rendered_widgets.append('</p>')
+        return ''.join(rendered_widgets)
+
+
+class KeyUsageWidget(CustomMultiWidget):
+    def __init__(self, choices, attrs=None):
+        _widgets = (
+            widgets.SelectMultiple(choices=choices, attrs=attrs),
+            CriticalWidget(),
+        )
+        super(KeyUsageWidget, self).__init__(_widgets, attrs)
+
+    def decompress(self, value):
+        if value:
+            return value
+        return ([], True)
+
+
+class BasicConstraintsWidget(CustomMultiWidget):
     def __init__(self, attrs=None):
         _widgets = (
             widgets.CheckboxInput(attrs=attrs),
@@ -53,9 +77,3 @@ class BasicConstraintsWidget(widgets.MultiWidget):
 
             return [ca, pathlen, critical]
         return [False, '', False]
-
-    def format_output(self, rendered_widgets):
-        # NOTE: We use a <p> because djangos stock forms.css takes care of indent this way.
-        rendered_widgets.insert(0, '<p class="multi-widget">')
-        rendered_widgets.append('</p>')
-        return ''.join(rendered_widgets)
