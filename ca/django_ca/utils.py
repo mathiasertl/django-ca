@@ -84,10 +84,9 @@ def get_cert(csr, csr_format=crypto.FILETYPE_PEM, expires=None, algorithm=None,
         number of days from now. The default is the CA_DEFAULT_EXPIRES setting.
     algorithm : {'sha512', 'sha256', ...}, optional
         Algorithm used to sign the certificate. The default is the DIGEST_ALGORITHM setting.
+    subject_alt_names : list of str, optional
     basic_constraints : bool or None or str, optional
         Value for the `basicConstraints` X509 extension. May be `None` to omit it, a bool for
-        `CA:TRUE` or `CA:FALSE`, or a str for a verbatim value. The default is `critical,CA:FALSE`.
-    subject_alt_names : list of str, optional
     key_usage : list of str, optional
     ext_key_usage : list of str, optional
 
@@ -133,24 +132,21 @@ def get_cert(csr, csr_format=crypto.FILETYPE_PEM, expires=None, algorithm=None,
     cert.set_pubkey(req.get_pubkey())
 
     extensions = [
-        crypto.X509Extension(b'keyUsage', 0, bytes(','.join(key_usage), 'utf-8')),
-        crypto.X509Extension(b'extendedKeyUsage', 0, bytes(','.join(ext_key_usage), 'utf-8')),
         crypto.X509Extension(b'subjectKeyIdentifier', 0, b'hash', subject=cert),
         crypto.X509Extension(b'authorityKeyIdentifier', 0, b'keyid,issuer', issuer=ca_crt),
     ]
-    if basic_constraints is True:
-        basic_constraints = (True, 'CA:TRUE,pathlen:0')
-    elif basic_constraints is False:
-        basic_constraints = (True, 'CA:FALSE')
+
+    if key_usage is not None:
+        extensions.append(crypto.X509Extension(b'keyUsage', *key_usage))
+    if ext_key_usage is not None:
+        extensions.append(crypto.X509Extension(b'extendedKeyUsage', *ext_key_usage))
 
     if basic_constraints is not None:
-        critical, value = basic_constraints
-        extensions.append(crypto.X509Extension(b'basicConstraints', critical,
-                                               bytes(value, 'utf-8')))
+        extensions.append(crypto.X509Extension(b'basicConstraints', *basic_constraints))
 
     # Add subjectAltNames, always also contains the CommonName
-    subjectAltNames = get_subjectAltName(subject_alt_names, cn=cn)
-    extensions.append(crypto.X509Extension(b'subjectAltName', 0, subjectAltNames))
+    #subjectAltNames = get_subjectAltName(subject_alt_names, cn=cn)
+    extensions.append(crypto.X509Extension(b'subjectAltName', 0, subject_alt_names))
 
     # Set CRL distribution points:
     if settings.CA_CRL_DISTRIBUTION_POINTS:
@@ -199,6 +195,8 @@ def get_subjectAltName(names, cn=None):
         names.insert(0, cn)
 
     for name in names:
+        if not name:
+            continue
         if isinstance(name, bytes):
             name = name.decode('utf-8')
 
