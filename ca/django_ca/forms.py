@@ -75,21 +75,23 @@ class CreateCertificateForm(forms.ModelForm):
 
     def clean_keyUsage(self):
         value, critical = self.cleaned_data['keyUsage']
+        if not value:
+            return None
         value = bytes(','.join(value), 'utf-8')
         return critical, value
 
     def clean_extendedKeyUsage(self):
         value, critical = self.cleaned_data['extendedKeyUsage']
+        if not value:
+            return None
         value = bytes(','.join(value), 'utf-8')
         return critical, value
 
     def clean_basicConstraints(self):
         value, pathlen, critical = self.cleaned_data['basicConstraints']
-        print('basicConstraints: %s, %s, %s' % (critical, value, pathlen))
 
         if value == 'CA:TRUE' and pathlen is not None:
             value += ',pathlen:%s' % pathlen
-        print('final: (%s, %s)' % (critical, value))
         return critical, bytes(value, 'utf-8')
 
     class Meta:
