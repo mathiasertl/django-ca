@@ -71,6 +71,13 @@ def get_cert(csr, csr_format=crypto.FILETYPE_PEM, expires=None, algorithm=None,
              ext_key_usage=None):
     """Create a signed certificate from a CSR.
 
+    X509 extensions (`basic_constraints`, `key_usage`, `ext_key_usage`) may either be None (in
+    which case they are not added) or a tuple with the first value being a bool indicating if the
+    value is critical and the second value being a byte-array indicating the extension value.
+    Example::
+
+        (True, b'CA:FALSE')
+
     Parameters
     ----------
 
@@ -85,10 +92,12 @@ def get_cert(csr, csr_format=crypto.FILETYPE_PEM, expires=None, algorithm=None,
     algorithm : {'sha512', 'sha256', ...}, optional
         Algorithm used to sign the certificate. The default is the DIGEST_ALGORITHM setting.
     subject_alt_names : list of str, optional
-    basic_constraints : bool or None or str, optional
-        Value for the `basicConstraints` X509 extension. May be `None` to omit it, a bool for
-    key_usage : list of str, optional
-    ext_key_usage : list of str, optional
+    basic_constraints : tuple or None
+        Value for the `basicConstraints` X509 extension. See description for format details.
+    key_usage : tuple or None
+        Value for the `keyUsage` X509 extension. See description for format details.
+    ext_key_usage : tuple or None
+        Value for the `extendedKeyUsage` X509 extension. See description for format details.
 
     Returns
     -------
