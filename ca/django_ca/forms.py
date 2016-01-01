@@ -18,6 +18,7 @@ from datetime import timedelta
 
 from django import forms
 from django.conf import settings
+from django.contrib.admin.widgets import AdminDateWidget
 from django.utils.translation import ugettext_lazy as _
 
 from .fields import BasicConstraintsField
@@ -29,7 +30,7 @@ def _initial_expires():
 
 
 class CreateCertificateForm(forms.ModelForm):
-    expires = forms.DateField(initial=_initial_expires)
+    expires = forms.DateField(initial=_initial_expires, widget=AdminDateWidget())
     subjectAltName = forms.CharField(
         label='subjectAltName', required=False,
         help_text=_('''Coma-separated list of alternative names for the certificate.''')
