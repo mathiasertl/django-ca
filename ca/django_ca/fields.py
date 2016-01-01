@@ -24,9 +24,9 @@ class BasicConstraintsField(forms.MultiValueField):
         kwargs.setdefault('initial', [False, '', True])
 
         fields = (
-            forms.BooleanField(label="CA certificate", required=False),
-            forms.IntegerField(min_value=0, label="Path length", required=False),
-            forms.BooleanField(label="Critical", required=False),
+            forms.BooleanField(required=False),
+            forms.IntegerField(required=False, min_value=0),
+            forms.BooleanField(required=False),
         )
         super(BasicConstraintsField, self).__init__(
             error_messages=error_messages, fields=fields, require_all_fields=False,
