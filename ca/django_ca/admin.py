@@ -176,7 +176,7 @@ class CertificateAdmin(admin.ModelAdmin):
 
             # parse subjectAltName field
             names = [e.strip() for e in data['subjectAltName'].split(',')]
-            names = get_subjectAltName(names, data['cn'])
+            names = get_subjectAltName(names, cn=data['cn'])
 
             x509 = get_cert(
                 csr=data['csr'],
