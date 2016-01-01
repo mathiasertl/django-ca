@@ -23,12 +23,16 @@ from datetime import timedelta
 from ipaddress import ip_address
 
 from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
 
 from OpenSSL import crypto
 
 CA_KEY = None
 CA_CRT = None
 
+# Description strings for various X509 extensions, taken from "man x509v3_config".
+EXTENDED_KEY_USAGE_DESC = _('Purposes for which the certificate public key can be used for.')
+KEY_USAGE_DESC = _('Permitted key usages.')
 
 def format_date(date):
     """Format date as ASN1 GENERALIZEDTIME, as required by various fields."""

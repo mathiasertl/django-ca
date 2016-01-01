@@ -24,6 +24,8 @@ from django.utils.translation import ugettext_lazy as _
 from .fields import BasicConstraintsField
 from .fields import KeyUsageField
 from .models import Certificate
+from .utils import KEY_USAGE_DESC
+from .utils import EXTENDED_KEY_USAGE_DESC
 
 
 def _initial_expires():
@@ -36,7 +38,7 @@ class CreateCertificateForm(forms.ModelForm):
         label='subjectAltName', required=False,
         help_text=_('''Coma-separated list of alternative names for the certificate.''')
     )
-    keyUsage = KeyUsageField(label='keyUsage', choices = (
+    keyUsage = KeyUsageField(label='keyUsage', help_text=KEY_USAGE_DESC, choices = (
         ('cRLSign', 'cRLSign'),
         ('dataEncipherment', 'dataEncipherment'),
         ('decipherOnly', 'decipherOnly'),
@@ -47,7 +49,8 @@ class CreateCertificateForm(forms.ModelForm):
         ('keyEncipherment', 'keyEncipherment'),
         ('nonRepudiation', 'nonRepudiation'),
     ))
-    extendedKeyUsage = KeyUsageField(label='extendedKeyUsage', initial=[[], False], choices=(
+    extendedKeyUsage = KeyUsageField(
+        label='extendedKeyUsage', initial=[[], False], help_text=EXTENDED_KEY_USAGE_DESC, choices=(
         ('serverAuth', 'SSL/TLS Web Server Authentication'),
         ('clientAuth', 'SSL/TLS Web Client Authentication'),
         ('codeSigning', 'Code signing'),
