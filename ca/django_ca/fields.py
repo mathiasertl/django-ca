@@ -20,21 +20,10 @@ from .widgets import KeyUsageWidget
 
 
 class KeyUsageField(forms.MultiValueField):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, choices, *args, **kwargs):
         kwargs.setdefault('initial', [[], True])
-        choices = (
-            ('cRLSign', 'cRLSign'),
-            ('dataEncipherment', 'dataEncipherment'),
-            ('decipherOnly', 'decipherOnly'),
-            ('digitalSignature', 'digitalSignature'),
-            ('encipherOnly', 'encipherOnly'),
-            ('keyAgreement', 'keyAgreement'),
-            ('keyCertSign', 'keyCertSign'),
-            ('keyEncipherment', 'keyEncipherment'),
-            ('nonRepudiation', 'nonRepudiation'),
-        )
         fields = (
-            forms.MultipleChoiceField(label='keyUsage', required=False, choices=choices),
+            forms.MultipleChoiceField(required=False, choices=choices),
             forms.BooleanField(required=False),
         )
         super(KeyUsageField, self).__init__(

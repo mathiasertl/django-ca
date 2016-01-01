@@ -36,7 +36,17 @@ class CreateCertificateForm(forms.ModelForm):
         label='subjectAltName', required=False,
         help_text=_('''Coma-separated list of alternative names for the certificate.''')
     )
-    keyUsage = KeyUsageField(label='keyUsage')
+    keyUsage = KeyUsageField(label='keyUsage', choices = (
+        ('cRLSign', 'cRLSign'),
+        ('dataEncipherment', 'dataEncipherment'),
+        ('decipherOnly', 'decipherOnly'),
+        ('digitalSignature', 'digitalSignature'),
+        ('encipherOnly', 'encipherOnly'),
+        ('keyAgreement', 'keyAgreement'),
+        ('keyCertSign', 'keyCertSign'),
+        ('keyEncipherment', 'keyEncipherment'),
+        ('nonRepudiation', 'nonRepudiation'),
+    ))
     extendedKeyUsage = forms.MultipleChoiceField(label='extendedKeyUsage', required=False, choices=(
         ('serverAuth', 'SSL/TLS Web Server Authentication'),
         ('clientAuth', 'SSL/TLS Web Client Authentication'),
