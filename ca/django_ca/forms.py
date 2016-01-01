@@ -47,7 +47,7 @@ class CreateCertificateForm(forms.ModelForm):
         ('keyEncipherment', 'keyEncipherment'),
         ('nonRepudiation', 'nonRepudiation'),
     ))
-    extendedKeyUsage = forms.MultipleChoiceField(label='extendedKeyUsage', required=False, choices=(
+    extendedKeyUsage = KeyUsageField(label='extendedKeyUsage', initial=[[], False], choices=(
         ('serverAuth', 'SSL/TLS Web Server Authentication'),
         ('clientAuth', 'SSL/TLS Web Client Authentication'),
         ('codeSigning', 'Code signing'),
