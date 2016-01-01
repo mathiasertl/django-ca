@@ -28,7 +28,7 @@ fieldset.as-code .field-pub p
 
 /* style the add certificate form */
 div.field-csr textarea {
-    min-height: 250px;
+    min-height: 260px;
     min-width: 540px;
     font-family: monospace;
 }
