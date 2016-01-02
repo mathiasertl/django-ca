@@ -68,8 +68,8 @@ def get_basic_cert(expires):
 
 
 def get_cert(csr, csr_format=crypto.FILETYPE_PEM, expires=None, algorithm=None,
-             basic_constraints='critical,CA:FALSE', subject_alt_names=None, key_usage=None,
-             ext_key_usage=None):
+             basicConstraints='critical,CA:FALSE', subjectAltName=None, keyUsage=None,
+             extendedKeyUsage=None):
     """Create a signed certificate from a CSR.
 
     X509 extensions (`basic_constraints`, `key_usage`, `ext_key_usage`) may either be None (in
@@ -92,12 +92,12 @@ def get_cert(csr, csr_format=crypto.FILETYPE_PEM, expires=None, algorithm=None,
         number of days from now. The default is the CA_DEFAULT_EXPIRES setting.
     algorithm : {'sha512', 'sha256', ...}, optional
         Algorithm used to sign the certificate. The default is the DIGEST_ALGORITHM setting.
-    subject_alt_names : list of str, optional
-    basic_constraints : tuple or None
+    subjectAltName : list of str, optional
+    basicConstraints : tuple or None
         Value for the `basicConstraints` X509 extension. See description for format details.
-    key_usage : tuple or None
+    keyUsage : tuple or None
         Value for the `keyUsage` X509 extension. See description for format details.
-    ext_key_usage : tuple or None
+    extendedKeyUsage : tuple or None
         Value for the `extendedKeyUsage` X509 extension. See description for format details.
 
     Returns
@@ -111,10 +111,10 @@ def get_cert(csr, csr_format=crypto.FILETYPE_PEM, expires=None, algorithm=None,
     # get algorithm used to sign certificate
     if not algorithm:
         algorithm = settings.DIGEST_ALGORITHM
-    if not key_usage:
-        key_usage = settings.CA_KEY_USAGE
-    if not ext_key_usage:
-        ext_key_usage = settings.CA_EXT_KEY_USAGE
+    if not keyUsage:
+        keyUsage = settings.CA_KEY_USAGE
+    if not extendedKeyUsage:
+        extendedKeyUsage = settings.CA_EXT_KEY_USAGE
 
     # Compute notAfter info
     if expires is None:
@@ -146,16 +146,16 @@ def get_cert(csr, csr_format=crypto.FILETYPE_PEM, expires=None, algorithm=None,
         crypto.X509Extension(b'authorityKeyIdentifier', 0, b'keyid,issuer', issuer=ca_crt),
     ]
 
-    if key_usage is not None:
-        extensions.append(crypto.X509Extension(b'keyUsage', *key_usage))
-    if ext_key_usage is not None:
-        extensions.append(crypto.X509Extension(b'extendedKeyUsage', *ext_key_usage))
+    if keyUsage is not None:
+        extensions.append(crypto.X509Extension(b'keyUsage', *keyUsage))
+    if extendedKeyUsage is not None:
+        extensions.append(crypto.X509Extension(b'extendedKeyUsage', *extendedKeyUsage))
 
-    if basic_constraints is not None:
-        extensions.append(crypto.X509Extension(b'basicConstraints', *basic_constraints))
+    if basicConstraints is not None:
+        extensions.append(crypto.X509Extension(b'basicConstraints', *basicConstraints))
 
     # Add subjectAltNames, always also contains the CommonName
-    extensions.append(crypto.X509Extension(b'subjectAltName', 0, subject_alt_names))
+    extensions.append(crypto.X509Extension(b'subjectAltName', 0, subjectAltName))
 
     # Set CRL distribution points:
     if settings.CA_CRL_DISTRIBUTION_POINTS:

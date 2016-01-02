@@ -13,8 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from datetime import datetime
-
 from OpenSSL import crypto
 
 from django.conf.urls import url
@@ -181,10 +179,10 @@ class CertificateAdmin(admin.ModelAdmin):
             x509 = get_cert(
                 csr=data['csr'],
                 expires=data['expires'],
-                basic_constraints=data['basicConstraints'],
-                subject_alt_names=names,
-                key_usage=data['keyUsage'],
-                ext_key_usage=data['extendedKeyUsage'],
+                basicConstraints=data['basicConstraints'],
+                subjectAltName=names,
+                keyUsage=data['keyUsage'],
+                extendedKeyUsage=data['extendedKeyUsage'],
             )
 
             obj.expires = data['expires']
