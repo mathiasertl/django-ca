@@ -39,6 +39,7 @@ class ProfileWidget(widgets.Select):
         html += '''<script type="text/javascript">
             var ca_profiles = %s;
         </script>''' % json.dumps(CA_PROFILES)
+        html += '<p class="help profile-desc"></p>'
         return html
 
     class Media:
