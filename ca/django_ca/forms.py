@@ -66,6 +66,7 @@ class CreateCertificateForm(forms.ModelForm):
             ('codeSigning', 'Code signing'),
             ('emailProtection', 'E-mail Protection (S/MIME)'),
             ('timeStamping', 'Trusted Timestamping'),
+            ('OCSPSigning', 'OCSP Signing'),
             ('msCodeInd', 'Microsoft Individual Code Signing (authenticode)'),
             ('msCodeCom', 'Microsoft Commercial Code Signing (authenticode)'),
             ('msCTLSign', 'Microsoft Trust List Signing'),
