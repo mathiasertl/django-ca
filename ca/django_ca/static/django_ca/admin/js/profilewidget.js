@@ -15,10 +15,17 @@ django.jQuery(document).ready(function() {
         extensions = ['basicConstraints', 'keyUsage', 'extendedKeyUsage']
         extensions.map(function(ext) {
             var critical_selector = '.field-' + ext + ' .critical-widget-wrapper input';
-            django.jQuery(critical_selector).prop('checked', profile[ext].critical);
             var value_selector = '.field-' + ext + ' select';
-            django.jQuery(value_selector).val(profile[ext].value);
-            django.jQuery(value_selector).change();  // so any existing callbacks are called
+            if (profile[ext] == null) {
+                // the extension may be null, meaning the extension should not be added
+                django.jQuery(critical_selector).prop('checked', false);
+                django.jQuery(value_selector).val([]);
+                django.jQuery(value_selector).change();  // so any existing callbacks are called
+            } else {
+                django.jQuery(critical_selector).prop('checked', profile[ext].critical);
+                django.jQuery(value_selector).val(profile[ext].value);
+                django.jQuery(value_selector).change();  // so any existing callbacks are called
+            }
         });
 
         // update description
