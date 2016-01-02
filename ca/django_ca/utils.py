@@ -27,6 +27,8 @@ from django.utils.translation import ugettext_lazy as _
 
 from OpenSSL import crypto
 
+from django_ca import ca_settings
+
 CA_KEY = None
 CA_CRT = None
 
@@ -65,6 +67,26 @@ def get_basic_cert(expires):
     cert.set_notBefore(not_before.encode('utf-8'))
     cert.set_notAfter(not_after.encode('utf-8'))
     return cert
+
+
+def get_cert_profile_kwargs(name=None):
+    """Get kwargs suitable for get_cert X509 keyword arguments from the given profile."""
+
+    if name is None:
+        name = ca_settings.CA_DEFAULT_PROFILE
+
+    profile = ca_settings.CA_PROFILES[name]
+    kwargs = {}
+    for arg in ['basicConstraints', 'keyUsage', 'extendedKeyUsage']:
+        config = profile[arg]
+        critical = config.get('critical', 'True')
+        if isinstance(config['value'], str):
+            kwargs[arg] = (critical, bytes(config['value'], 'utf-8'))
+        elif isinstance(config['value'], bytes):
+            kwargs[arg] = (critical, config['value'])
+        else:
+            kwargs[arg] = (critical, bytes(','.join(config['value']), 'utf-8'))
+    return kwargs
 
 
 def get_cert(csr, csr_format=crypto.FILETYPE_PEM, expires=None, algorithm=None,
