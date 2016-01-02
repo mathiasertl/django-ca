@@ -17,6 +17,7 @@ django.jQuery(document).ready(function() {
             django.jQuery(critical_selector).prop('checked', profile[ext].critical);
             var value_selector = '.field-' + ext + ' select';
             django.jQuery(value_selector).val(profile[ext].value);
+            django.jQuery(value_selector).change();  // so any existing callbacks are called
         });
     });
 });
