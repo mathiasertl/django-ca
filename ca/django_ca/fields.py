@@ -18,10 +18,17 @@ from django import forms
 from .widgets import BasicConstraintsWidget
 from .widgets import KeyUsageWidget
 
+from .ca_settings import CA_DEFAULT_PROFILE
+from .ca_settings import CA_PROFILES
+
 
 class KeyUsageField(forms.MultiValueField):
     def __init__(self, choices, *args, **kwargs):
-        kwargs.setdefault('initial', [[], True])
+        label = kwargs['label']
+        if CA_DEFAULT_PROFILE:
+            initial = CA_PROFILES[CA_DEFAULT_PROFILE][label]
+            kwargs.setdefault('initial', [initial['value'], initial['critical']])
+
         fields = (
             forms.MultipleChoiceField(required=False, choices=choices),
             forms.BooleanField(required=False),

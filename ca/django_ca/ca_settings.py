@@ -74,7 +74,6 @@ CA_PROFILES = getattr(settings, 'CA_PROFILES', {
         'extendedKeyUsage': {
             'critical': False,
             'value': [
-                'clientAuth',
                 'serverAuth',
             ],
         },
