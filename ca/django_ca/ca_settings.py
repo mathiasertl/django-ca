@@ -18,6 +18,7 @@ from django.utils.translation import ugettext_lazy as _
 
 CA_PROFILES = getattr(settings, 'CA_PROFILES', {
     'client': {
+        # see: http://security.stackexchange.com/questions/68491/
         'desc': _('Issue a certificate for a client.'),
         'basicConstraints': {
             'critical': True,
@@ -26,16 +27,13 @@ CA_PROFILES = getattr(settings, 'CA_PROFILES', {
         'keyUsage': {
             'critical': True,
             'value': [
-                'dataEncipherment',
                 'digitalSignature',
-                'keyEncipherment',
             ],
         },
         'extendedKeyUsage': {
             'critical': False,
             'value': [
                 'clientAuth',
-                'emailProtection',
             ],
         },
     },
@@ -62,6 +60,7 @@ CA_PROFILES = getattr(settings, 'CA_PROFILES', {
         },
     },
     'webserver': {
+        # see http://security.stackexchange.com/questions/24106/
         'desc': _('Issue a certificate for a webserver.'),
         'basicConstraints': {
             'critical': True,
@@ -83,6 +82,7 @@ CA_PROFILES = getattr(settings, 'CA_PROFILES', {
         },
     },
     'enduser': {
+        # see: http://security.stackexchange.com/questions/30066/
         'desc': _(
             '''Issue a certificate for an enduser, allows client authentication, code and email
 signing.'''),
