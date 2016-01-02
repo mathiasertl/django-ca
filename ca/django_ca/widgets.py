@@ -13,9 +13,12 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import json
+
 from django.forms import widgets
 from django.utils.translation import ugettext as _
 
+from .ca_settings import CA_PROFILES
 
 class CriticalWidget(widgets.CheckboxInput):
     def render(self, name, value, attrs=None):
@@ -28,6 +31,20 @@ class CriticalWidget(widgets.CheckboxInput):
         css = {
             'all': ('django_ca/admin/css/criticalwidget.css', ),
         }
+
+
+class ProfileWidget(widgets.Select):
+    def render(self, name, value, attrs=None):
+        html = super(ProfileWidget, self).render(name, value, attrs=attrs)
+        html += '''<script type="text/javascript">
+            var ca_profiles = %s;
+        </script>''' % json.dumps(CA_PROFILES)
+        return html
+
+    class Media:
+        js = (
+            'django_ca/admin/js/profilewidget.js',
+        )
 
 
 class PathlenWidget(widgets.TextInput):

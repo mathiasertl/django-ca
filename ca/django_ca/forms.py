@@ -21,15 +21,22 @@ from django.conf import settings
 from django.contrib.admin.widgets import AdminDateWidget
 from django.utils.translation import ugettext_lazy as _
 
+from .ca_settings import CA_PROFILES
+from .ca_settings import CA_DEFAULT_PROFILE
 from .fields import BasicConstraintsField
 from .fields import KeyUsageField
 from .models import Certificate
-from .utils import KEY_USAGE_DESC
 from .utils import EXTENDED_KEY_USAGE_DESC
+from .utils import KEY_USAGE_DESC
+from .widgets import ProfileWidget
 
 
 def _initial_expires():
     return datetime.today() + timedelta(days=settings.CA_DEFAULT_EXPIRES)
+
+
+def _profile_choices():
+    return [('', '----')] + [(p, p) for p in CA_PROFILES]
 
 
 class CreateCertificateForm(forms.ModelForm):
@@ -38,6 +45,9 @@ class CreateCertificateForm(forms.ModelForm):
         label='subjectAltName', required=False,
         help_text=_('''Coma-separated list of alternative names for the certificate.''')
     )
+    profile = forms.ChoiceField(
+        required=False, widget=ProfileWidget,
+        initial=CA_DEFAULT_PROFILE, choices=_profile_choices)
     keyUsage = KeyUsageField(label='keyUsage', help_text=KEY_USAGE_DESC, choices=(
         ('cRLSign', 'cRLSign'),
         ('dataEncipherment', 'dataEncipherment'),

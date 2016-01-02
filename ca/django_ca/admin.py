@@ -91,7 +91,7 @@ class CertificateAdmin(admin.ModelAdmin):
             'fields': ['cn', 'subjectAltName', 'expires', 'watchers', 'csr', ],
         }),
         (_('X509 Extensions'), {
-            'fields': ['keyUsage', 'extendedKeyUsage', 'basicConstraints', ]
+            'fields': ['profile', 'keyUsage', 'extendedKeyUsage', 'basicConstraints', ]
         }),
     ]
 
