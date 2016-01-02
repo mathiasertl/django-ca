@@ -95,7 +95,7 @@ class Command(BaseCommand):
         if options['ext_key_usage']:
             kwargs['extendedKeyUsage'] = self.parse_extension(options['ext_key_usage'])
 
-        expires = datetime.today() + timedelta(days=options['expires'] + 1)
+        expires = datetime.today() + timedelta(days=options['days'] + 1)
         expires = expires.replace(hour=0, minute=0, second=0, microsecond=0)
 
         x509 = get_cert(csr=csr, expires=expires, subjectAltName=options['alt'], **kwargs)
