@@ -79,3 +79,8 @@ class BasicConstraintsWidget(CustomMultiWidget):
         if value:
             return value
         return ['CA:FALSE', None, True]
+
+    class Media:
+        js = (
+            'django_ca/admin/js/basicconstraints.js',
+        )
