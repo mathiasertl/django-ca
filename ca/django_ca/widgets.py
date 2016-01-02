@@ -15,10 +15,14 @@
 
 import json
 
+from django.utils.encoding import force_text
 from django.forms import widgets
 from django.utils.translation import ugettext as _
 
 from .ca_settings import CA_PROFILES
+from .ca_settings import CA_DEFAULT_PROFILE
+from .utils import LazyEncoder
+
 
 class CriticalWidget(widgets.CheckboxInput):
     def render(self, name, value, attrs=None):
@@ -38,8 +42,9 @@ class ProfileWidget(widgets.Select):
         html = super(ProfileWidget, self).render(name, value, attrs=attrs)
         html += '''<script type="text/javascript">
             var ca_profiles = %s;
-        </script>''' % json.dumps(CA_PROFILES)
-        html += '<p class="help profile-desc"></p>'
+        </script>''' % json.dumps(CA_PROFILES, cls=LazyEncoder)
+        html += '<p class="help profile-desc">%s</p>' % force_text(
+            CA_PROFILES[CA_DEFAULT_PROFILE]['desc'])
         return html
 
     class Media:
