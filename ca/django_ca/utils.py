@@ -23,6 +23,9 @@ from datetime import timedelta
 from ipaddress import ip_address
 
 from django.conf import settings
+from django.core.serializers.json import DjangoJSONEncoder
+from django.utils.encoding import force_text
+from django.utils.functional import Promise
 from django.utils.translation import ugettext_lazy as _
 
 from OpenSSL import crypto
@@ -35,6 +38,15 @@ CA_CRT = None
 # Description strings for various X509 extensions, taken from "man x509v3_config".
 EXTENDED_KEY_USAGE_DESC = _('Purposes for which the certificate public key can be used for.')
 KEY_USAGE_DESC = _('Permitted key usages.')
+
+
+class LazyEncoder(DjangoJSONEncoder):
+    """Encoder that also encodes translated strings."""
+
+    def default(self, obj):
+        if isinstance(obj, Promise):
+            return force_text(obj)
+        return super(LazyEncoder, self).default(obj)
 
 
 def format_date(date):
