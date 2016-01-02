@@ -38,6 +38,16 @@ div.field-keyUsage select {
 div.field-extendedKeyUsage select {
     min-width: 375px;
 }
+
 span.critical-widget-wrapper label {
     padding-left: 5px;
+}
+
+#id_basicConstraints_1 {
+    margin-left: 5px;
+    width: 16px;
+}
+
+#id_subjectAltName {
+    min-width: 540px;
 }
