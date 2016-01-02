@@ -6,11 +6,12 @@ django.jQuery(document).ready(function() {
 
     django.jQuery(profile_selector).change(function() {
         if (this.value == '') {
+            django.jQuery('.field-profile .profile-desc').hide();
             return;  // do nothing if we don't select a profile
         }
 
         profile = ca_profiles[this.value];
-        console.log(profile);
+        // update extensions
         extensions = ['basicConstraints', 'keyUsage', 'extendedKeyUsage']
         extensions.map(function(ext) {
             var critical_selector = '.field-' + ext + ' .critical-widget-wrapper input';
@@ -19,5 +20,9 @@ django.jQuery(document).ready(function() {
             django.jQuery(value_selector).val(profile[ext].value);
             django.jQuery(value_selector).change();  // so any existing callbacks are called
         });
+
+        // update description
+        django.jQuery('.field-profile .profile-desc').show();
+        django.jQuery('.field-profile .profile-desc').text(profile.desc);
     });
 });
