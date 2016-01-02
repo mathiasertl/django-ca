@@ -34,6 +34,7 @@ CA_CRT = None
 EXTENDED_KEY_USAGE_DESC = _('Purposes for which the certificate public key can be used for.')
 KEY_USAGE_DESC = _('Permitted key usages.')
 
+
 def format_date(date):
     """Format date as ASN1 GENERALIZEDTIME, as required by various fields."""
     return date.strftime('%Y%m%d%H%M%SZ')
@@ -154,7 +155,6 @@ def get_cert(csr, csr_format=crypto.FILETYPE_PEM, expires=None, algorithm=None,
         extensions.append(crypto.X509Extension(b'basicConstraints', *basic_constraints))
 
     # Add subjectAltNames, always also contains the CommonName
-    #subjectAltNames = get_subjectAltName(subject_alt_names, cn=cn)
     extensions.append(crypto.X509Extension(b'subjectAltName', 0, subject_alt_names))
 
     # Set CRL distribution points:

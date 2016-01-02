@@ -38,7 +38,7 @@ class CreateCertificateForm(forms.ModelForm):
         label='subjectAltName', required=False,
         help_text=_('''Coma-separated list of alternative names for the certificate.''')
     )
-    keyUsage = KeyUsageField(label='keyUsage', help_text=KEY_USAGE_DESC, choices = (
+    keyUsage = KeyUsageField(label='keyUsage', help_text=KEY_USAGE_DESC, choices=(
         ('cRLSign', 'cRLSign'),
         ('dataEncipherment', 'dataEncipherment'),
         ('decipherOnly', 'decipherOnly'),
@@ -51,16 +51,16 @@ class CreateCertificateForm(forms.ModelForm):
     ))
     extendedKeyUsage = KeyUsageField(
         label='extendedKeyUsage', initial=[[], False], help_text=EXTENDED_KEY_USAGE_DESC, choices=(
-        ('serverAuth', 'SSL/TLS Web Server Authentication'),
-        ('clientAuth', 'SSL/TLS Web Client Authentication'),
-        ('codeSigning', 'Code signing'),
-        ('emailProtection', 'E-mail Protection (S/MIME)'),
-        ('timeStamping', 'Trusted Timestamping'),
-        ('msCodeInd', 'Microsoft Individual Code Signing (authenticode)'),
-        ('msCodeCom', 'Microsoft Commercial Code Signing (authenticode)'),
-        ('msCTLSign', 'Microsoft Trust List Signing'),
-        ('msEFS', 'Microsoft Encrypted File System'),
-    ))
+            ('serverAuth', 'SSL/TLS Web Server Authentication'),
+            ('clientAuth', 'SSL/TLS Web Client Authentication'),
+            ('codeSigning', 'Code signing'),
+            ('emailProtection', 'E-mail Protection (S/MIME)'),
+            ('timeStamping', 'Trusted Timestamping'),
+            ('msCodeInd', 'Microsoft Individual Code Signing (authenticode)'),
+            ('msCodeCom', 'Microsoft Commercial Code Signing (authenticode)'),
+            ('msCTLSign', 'Microsoft Trust List Signing'),
+            ('msEFS', 'Microsoft Encrypted File System'),
+        ))
     basicConstraints = BasicConstraintsField(label='basicConstraints', help_text=_(
         'Wether or not this certificate can be used as a CA.'))
 
@@ -113,7 +113,7 @@ class RevokeCertificateForm(forms.ModelForm):
         ('cessationOfOperation', _('Cessation of operation')),
         ('certificateHold', _('On Hold')),
         # Not currently useful according to "man ca":
-        #('removeFromCRL', _('Remove from CRL')),
+        # ('removeFromCRL', _('Remove from CRL')),
     ))
 
     class Meta:

@@ -29,6 +29,7 @@ class CriticalWidget(widgets.CheckboxInput):
             'all': ('django_ca/admin/css/criticalwidget.css', ),
         }
 
+
 class PathlenWidget(widgets.TextInput):
     def render(self, name, value, attrs=None):
         html = super(PathlenWidget, self).render(name, value, attrs=attrs)
