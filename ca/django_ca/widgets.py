@@ -13,8 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-import re
-
 from django.forms import widgets
 from django.utils.translation import ugettext as _
 
@@ -29,6 +27,18 @@ class CriticalWidget(widgets.CheckboxInput):
     class Media:
         css = {
             'all': ('django_ca/admin/css/criticalwidget.css', ),
+        }
+
+class PathlenWidget(widgets.TextInput):
+    def render(self, name, value, attrs=None):
+        html = super(PathlenWidget, self).render(name, value, attrs=attrs)
+        label = '<label for="%s">%s</label>' % (attrs.get('id'), _('pathlen:'))
+        html = '<span class="pathlen-widget-wrapper">%s%s</span>' % (label, html)
+        return html
+
+    class Media:
+        css = {
+            'all': ('django_ca/admin/css/pathlenwidget.css', ),
         }
 
 
@@ -60,7 +70,7 @@ class BasicConstraintsWidget(CustomMultiWidget):
     def __init__(self, choices, attrs=None):
         _widgets = (
             widgets.Select(choices=choices, attrs=attrs),
-            widgets.TextInput(attrs=attrs),
+            PathlenWidget(),
             CriticalWidget(),
         )
         super(BasicConstraintsWidget, self).__init__(_widgets, attrs)
