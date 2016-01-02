@@ -184,7 +184,7 @@ class CertificateAdmin(admin.ModelAdmin):
             if CA_ALLOW_CA_CERTIFICATES is True:
                 basicConstraints = data['basicConstraints']
             else:
-                basicConstraints = 'critical,CA:FALSE'
+                basicConstraints = (True, b'CA:FALSE')
 
             x509 = get_cert(
                 csr=data['csr'],
