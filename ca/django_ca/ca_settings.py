@@ -19,7 +19,7 @@ from django.utils.translation import ugettext_lazy as _
 CA_PROFILES = getattr(settings, 'CA_PROFILES', {
     'client': {
         # see: http://security.stackexchange.com/questions/68491/
-        'desc': _('Issue a certificate for a client.'),
+        'desc': _('A certificate for a client.'),
         'basicConstraints': {
             'critical': True,
             'value': 'CA:FALSE',
@@ -38,7 +38,7 @@ CA_PROFILES = getattr(settings, 'CA_PROFILES', {
         },
     },
     'server': {
-        'desc': _('Issue a certificate for a server, allows client and server authentication.'),
+        'desc': _('A certificate for a server, allows client and server authentication.'),
         'basicConstraints': {
             'critical': True,
             'value': 'CA:FALSE',
@@ -61,7 +61,7 @@ CA_PROFILES = getattr(settings, 'CA_PROFILES', {
     },
     'webserver': {
         # see http://security.stackexchange.com/questions/24106/
-        'desc': _('Issue a certificate for a webserver.'),
+        'desc': _('A certificate for a webserver.'),
         'basicConstraints': {
             'critical': True,
             'value': 'CA:FALSE',
@@ -84,8 +84,7 @@ CA_PROFILES = getattr(settings, 'CA_PROFILES', {
     'enduser': {
         # see: http://security.stackexchange.com/questions/30066/
         'desc': _(
-            '''Issue a certificate for an enduser, allows client authentication, code and email
-signing.'''),
+            'A certificate for an enduser, allows client authentication, code and email signing.'),
         'basicConstraints': {
             'critical': True,
             'value': 'CA:FALSE',
@@ -108,7 +107,7 @@ signing.'''),
         },
     },
     'ocsp': {
-        'desc': _('Issue a certificate for an OCSP responder.'),
+        'desc': _('A certificate for an OCSP responder.'),
         'basicConstraints': {
             'critical': True,
             'value': 'CA:FALSE',
@@ -129,7 +128,7 @@ signing.'''),
         },
     },
     'ca': {
-        'desc': _('Issue a CA certificate.'),
+        'desc': _('A CA certificate.'),
         'basicConstraints': {
             'critical': True,
             'value': 'CA:TRUE',
