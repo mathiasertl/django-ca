@@ -17,11 +17,11 @@ from datetime import datetime
 from datetime import timedelta
 
 from django import forms
-from django.conf import settings
 from django.contrib.admin.widgets import AdminDateWidget
 from django.utils.translation import ugettext_lazy as _
 
 from .ca_settings import CA_PROFILES
+from .ca_settings import CA_DEFAULT_EXPIRES
 from .ca_settings import CA_DEFAULT_PROFILE
 from .ca_settings import CA_ALLOW_CA_CERTIFICATES
 from .fields import BasicConstraintsField
@@ -33,7 +33,7 @@ from .widgets import ProfileWidget
 
 
 def _initial_expires():
-    return datetime.today() + timedelta(days=settings.CA_DEFAULT_EXPIRES)
+    return datetime.today() + timedelta(days=CA_DEFAULT_EXPIRES)
 
 
 def _profile_choices():
