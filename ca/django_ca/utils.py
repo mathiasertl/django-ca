@@ -91,6 +91,9 @@ def get_cert_profile_kwargs(name=None):
     kwargs = {}
     for arg in ['basicConstraints', 'keyUsage', 'extendedKeyUsage']:
         config = profile[arg]
+        if config is None:
+            continue
+
         critical = config.get('critical', 'True')
         if isinstance(config['value'], str):
             kwargs[arg] = (critical, bytes(config['value'], 'utf-8'))
