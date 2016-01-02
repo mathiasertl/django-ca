@@ -21,6 +21,7 @@ from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
+from .ca_settings import CA_ALLOW_CA_CERTIFICATES
 from .forms import CreateCertificateForm
 from .models import Certificate
 from .models import Watcher
@@ -140,7 +141,11 @@ class CertificateAdmin(admin.ModelAdmin):
         fieldsets = super(CertificateAdmin, self).get_fieldsets(request, obj=obj)
 
         if obj is None:
-            return self.add_fieldsets
+            fieldsets = self.add_fieldsets.copy()
+            if CA_ALLOW_CA_CERTIFICATES is False \
+                    and 'basicConstraints' in fieldsets[1][1]['fields']:
+                fieldsets[1][1]['fields'].remove('basicConstraints')
+            return fieldsets
 
         if obj.revoked is False:
             fieldsets[2][1]['classes'] = ['collapse', ]
@@ -176,11 +181,16 @@ class CertificateAdmin(admin.ModelAdmin):
             names = [e.strip() for e in data['subjectAltName'].split(',')]
             names = get_subjectAltName(names, cn=data['cn'])
 
+            if CA_ALLOW_CA_CERTIFICATES is True:
+                basicConstraints = data['basicConstraints']
+            else:
+                basicConstraints = 'critical,CA:FALSE'
+
             x509 = get_cert(
                 csr=data['csr'],
                 expires=data['expires'],
-                basicConstraints=data['basicConstraints'],
                 subjectAltName=names,
+                basicConstraints=basicConstraints,
                 keyUsage=data['keyUsage'],
                 extendedKeyUsage=data['extendedKeyUsage'],
             )

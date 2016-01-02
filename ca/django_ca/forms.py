@@ -23,6 +23,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from .ca_settings import CA_PROFILES
 from .ca_settings import CA_DEFAULT_PROFILE
+from .ca_settings import CA_ALLOW_CA_CERTIFICATES
 from .fields import BasicConstraintsField
 from .fields import KeyUsageField
 from .models import Certificate
@@ -36,7 +37,15 @@ def _initial_expires():
 
 
 def _profile_choices():
-    return [('', '----')] + [(p, p) for p in CA_PROFILES]
+    choices = [('', '----')] + [(p, p) for p in CA_PROFILES]
+    if CA_ALLOW_CA_CERTIFICATES is False:
+        print('CA_ALLOW_CA_CERTIFICATES is False')
+        for choice in choices[1:]:
+            print('choice: %s, value: %s' % (
+                choice, CA_PROFILES[choice[1]]['basicConstraints']['value']))
+            if CA_PROFILES[choice[1]]['basicConstraints']['value'] == 'CA:TRUE':
+                choices.remove(choice)
+    return sorted(choices, key=lambda e: e[0])
 
 
 class CreateCertificateForm(forms.ModelForm):
@@ -73,8 +82,9 @@ class CreateCertificateForm(forms.ModelForm):
             ('msCTLSign', 'Microsoft Trust List Signing'),
             ('msEFS', 'Microsoft Encrypted File System'),
         ))
-    basicConstraints = BasicConstraintsField(label='basicConstraints', help_text=_(
-        'Wether or not this certificate can be used as a CA.'))
+    if CA_ALLOW_CA_CERTIFICATES is True:
+        basicConstraints = BasicConstraintsField(label='basicConstraints', help_text=_(
+            'Wether or not this certificate can be used as a CA.'))
 
     def clean_csr(self):
         data = self.cleaned_data['csr']
