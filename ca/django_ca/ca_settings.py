@@ -14,9 +14,11 @@
 # see <http://www.gnu.org/licenses/>.
 
 from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
 
 CA_PROFILES = getattr(settings, 'CA_PROFILES', {
     'client': {
+        'desc': _('Issue a certificate for a client.'),
         'basicConstraints': {
             'critical': True,
             'value': 'CA:FALSE',
@@ -38,6 +40,7 @@ CA_PROFILES = getattr(settings, 'CA_PROFILES', {
         },
     },
     'server': {
+        'desc': _('Issue a certificate for a server, allows client and server authentication.'),
         'basicConstraints': {
             'critical': True,
             'value': 'CA:FALSE',
@@ -59,6 +62,7 @@ CA_PROFILES = getattr(settings, 'CA_PROFILES', {
         },
     },
     'webserver': {
+        'desc': _('Issue a certificate for a webserver.'),
         'basicConstraints': {
             'critical': True,
             'value': 'CA:FALSE',
@@ -79,6 +83,9 @@ CA_PROFILES = getattr(settings, 'CA_PROFILES', {
         },
     },
     'enduser': {
+        'desc': _(
+            '''Issue a certificate for an enduser, allows client authentication, code and email
+signing.'''),
         'basicConstraints': {
             'critical': True,
             'value': 'CA:FALSE',
@@ -101,6 +108,7 @@ CA_PROFILES = getattr(settings, 'CA_PROFILES', {
         },
     },
     'ocsp': {
+        'desc': _('Issue a certificate for an OCSP responder.'),
         'basicConstraints': {
             'critical': True,
             'value': 'CA:FALSE',
