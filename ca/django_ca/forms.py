@@ -47,6 +47,7 @@ class CreateCertificateForm(forms.ModelForm):
     )
     profile = forms.ChoiceField(
         required=False, widget=ProfileWidget,
+        help_text=_('Select a suitable profile or manually select X509 extensions below.'),
         initial=CA_DEFAULT_PROFILE, choices=_profile_choices)
     keyUsage = KeyUsageField(label='keyUsage', help_text=KEY_USAGE_DESC, choices=(
         ('cRLSign', 'cRLSign'),
