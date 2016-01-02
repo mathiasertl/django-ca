@@ -150,5 +150,6 @@ CA_CUSTOM_PROFILES = getattr(settings, 'CA_CUSTOM_PROFILES', {})
 if CA_CUSTOM_PROFILES is not None:
     CA_PROFILES.update(CA_CUSTOM_PROFILES)
 
-CA_DEFAULT_PROFILE = getattr(settings, 'CA_DEFAULT_PROFILE', 'webserver')
 CA_ALLOW_CA_CERTIFICATES = getattr(settings, 'CA_ALLOW_CA_CERTIFICATES', False)
+CA_DEFAULT_EXPIRES = getattr(settings, 'CA_DEFAULT_EXPIRES', 720)
+CA_DEFAULT_PROFILE = getattr(settings, 'CA_DEFAULT_PROFILE', 'webserver')
