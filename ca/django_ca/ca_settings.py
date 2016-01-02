@@ -128,6 +128,21 @@ signing.'''),
             ],
         },
     },
+    'ca': {
+        'desc': _('Issue a CA certificate.'),
+        'basicConstraints': {
+            'critical': True,
+            'value': 'CA:TRUE',
+        },
+        'keyUsage': {
+            'critical': True,
+            'value': [
+                'cRLSign',
+                'keyCertSign',
+            ],
+        },
+        'extendedKeyUsage': None,
+    },
 })
 
 # Add ability just override/add some profiles
