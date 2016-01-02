@@ -14,7 +14,6 @@
 # see <http://www.gnu.org/licenses/>.
 
 from django import forms
-from django.utils.translation import ugettext_lazy as _
 
 from .widgets import BasicConstraintsWidget
 from .widgets import KeyUsageWidget
@@ -40,8 +39,8 @@ class BasicConstraintsField(forms.MultiValueField):
         error_messages = {}
         kwargs.setdefault('initial', ['CA:FALSE', '', True])
         choices = (
-            ('CA:FALSE', _('No')),
-            ('CA:TRUE', _('Yes')),
+            ('CA:FALSE', 'CA:FALSE'),
+            ('CA:TRUE', 'CA:TRUE'),
         )
 
         fields = (
