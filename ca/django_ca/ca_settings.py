@@ -18,7 +18,7 @@ from django.conf import settings
 CA_PROFILES = getattr(settings, 'CA_PROFILES', {
     'client': {
         'basicConstraints': {
-            'critical': False,
+            'critical': True,
             'value': 'CA:FALSE',
         },
         'keyUsage': {
@@ -39,7 +39,7 @@ CA_PROFILES = getattr(settings, 'CA_PROFILES', {
     },
     'server': {
         'basicConstraints': {
-            'critical': False,
+            'critical': True,
             'value': 'CA:FALSE',
         },
         'keyUsage': {
@@ -60,7 +60,7 @@ CA_PROFILES = getattr(settings, 'CA_PROFILES', {
     },
     'webserver': {
         'basicConstraints': {
-            'critical': False,
+            'critical': True,
             'value': 'CA:FALSE',
         },
         'keyUsage': {
@@ -81,7 +81,7 @@ CA_PROFILES = getattr(settings, 'CA_PROFILES', {
     },
     'enduser': {
         'basicConstraints': {
-            'critical': False,
+            'critical': True,
             'value': 'CA:FALSE',
         },
         'keyUsage': {
@@ -103,7 +103,7 @@ CA_PROFILES = getattr(settings, 'CA_PROFILES', {
     },
     'ocsp': {
         'basicConstraints': {
-            'critical': False,
+            'critical': True,
             'value': 'CA:FALSE',
         },
         'keyUsage': {
@@ -127,3 +127,5 @@ CA_PROFILES = getattr(settings, 'CA_PROFILES', {
 CA_CUSTOM_PROFILES = getattr(settings, 'CA_CUSTOM_PROFILES', {})
 if CA_CUSTOM_PROFILES is not None:
     CA_PROFILES.update(CA_CUSTOM_PROFILES)
+
+CA_DEFAULT_PROFILE = getattr(settings, 'CA_DEFAULT_PROFILE', 'webserver')
