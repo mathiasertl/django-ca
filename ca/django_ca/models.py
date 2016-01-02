@@ -103,6 +103,8 @@ class Certificate(models.Model):
     authorityKeyIdentifier.short_description = 'authorityKeyIdentifier'
 
     def save(self, *args, **kwargs):
+        if self.pk is None and self.cn is None:
+            self.cn = dict(self.x509.get_subject().get_components()).get(b'CN').decode('utf-8')
         if self.pk is None or self.serial is None:
             self.serial = hex(self.x509.get_serial_number())[2:].upper()
         super(Certificate, self).save(*args, **kwargs)
