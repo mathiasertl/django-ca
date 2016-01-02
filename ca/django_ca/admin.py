@@ -26,7 +26,6 @@ from .forms import CreateCertificateForm
 from .models import Certificate
 from .models import Watcher
 from .utils import get_cert
-from .utils import get_subjectAltName
 from .views import RevokeCertificateView
 
 _x509_ext_fields = [
@@ -177,10 +176,6 @@ class CertificateAdmin(admin.ModelAdmin):
         if change is False:  # We're adding a new certificate
             data = form.cleaned_data
 
-            # parse subjectAltName field
-            names = [e.strip() for e in data['subjectAltName'].split(',')]
-            names = get_subjectAltName(names, cn=data['cn'])
-
             if CA_ALLOW_CA_CERTIFICATES is True:
                 basicConstraints = data['basicConstraints']
             else:
@@ -189,7 +184,7 @@ class CertificateAdmin(admin.ModelAdmin):
             x509 = get_cert(
                 csr=data['csr'],
                 expires=data['expires'],
-                subjectAltName=names,
+                subjectAltName=[e.strip() for e in data['subjectAltName'].split(',')],
                 basicConstraints=basicConstraints,
                 keyUsage=data['keyUsage'],
                 extendedKeyUsage=data['extendedKeyUsage'],

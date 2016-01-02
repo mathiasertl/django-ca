@@ -158,11 +158,7 @@ def get_cert(csr, expires, csr_format=crypto.FILETYPE_PEM, algorithm=None,
 
     # get the common name from the CSR
     cn = dict(req.get_subject().get_components()).get(b'CN')
-    if cn is None:
-        raise Exception('CSR has no CommonName!')
-#    elif cn not in subject_alt_names:
-#        # TODO: Replace CN with the first name in subject_alt_names
-#        pass
+    subjectAltName = get_subjectAltName(subjectAltName, cn=cn)
 
     # Create signed certificate
     cert = get_basic_cert(expires)
