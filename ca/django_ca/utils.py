@@ -154,6 +154,7 @@ def get_cert(csr, csr_format=crypto.FILETYPE_PEM, expires=None, algorithm=None,
         extendedKeyUsage = settings.CA_EXT_KEY_USAGE
 
     # Compute notAfter info
+    #TODO: We have a datetime object always anyway
     if expires is None:
         expires = settings.CA_DEFAULT_EXPIRES
     if isinstance(expires, int):
