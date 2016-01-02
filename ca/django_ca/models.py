@@ -118,6 +118,11 @@ class Certificate(models.Model):
             self._x509 = crypto.load_certificate(crypto.FILETYPE_PEM, self.pub)
         return self._x509
 
+    @x509.setter
+    def x509(self, value):
+        self._x509 = value
+        self.pub = crypto.dump_certificate(crypto.FILETYPE_PEM, value)
+
     @property
     def extensions(self):
         if self.x509 is None:
