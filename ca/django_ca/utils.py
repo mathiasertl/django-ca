@@ -104,7 +104,7 @@ def get_cert_profile_kwargs(name=None):
     return kwargs
 
 
-def get_cert(csr, csr_format=crypto.FILETYPE_PEM, expires=None, algorithm=None,
+def get_cert(csr, expires, csr_format=crypto.FILETYPE_PEM, algorithm=None,
              basicConstraints='critical,CA:FALSE', subjectAltName=None, keyUsage=None,
              extendedKeyUsage=None):
     """Create a signed certificate from a CSR.
@@ -121,12 +121,11 @@ def get_cert(csr, csr_format=crypto.FILETYPE_PEM, expires=None, algorithm=None,
 
     csr : str
         A valid CSR in PEM format. If none is given, `self.csr` will be used.
+    expires : datetime
+        When the certificate should expire.
     csr_format : int, optional
         The format of the submitted CSR request. One of the OpenSSL.crypto.FILETYPE_*
         constants. The default is PEM.
-    expires : int or datetime, optional
-        When the certificate should expire. Either a datetime object or an int representing the
-        number of days from now. The default is the CA_DEFAULT_EXPIRES setting.
     algorithm : {'sha512', 'sha256', ...}, optional
         Algorithm used to sign the certificate. The default is the DIGEST_ALGORITHM setting.
     subjectAltName : list of str, optional
@@ -152,14 +151,6 @@ def get_cert(csr, csr_format=crypto.FILETYPE_PEM, expires=None, algorithm=None,
         keyUsage = settings.CA_KEY_USAGE
     if not extendedKeyUsage:
         extendedKeyUsage = settings.CA_EXT_KEY_USAGE
-
-    # Compute notAfter info
-    #TODO: We have a datetime object always anyway
-    if expires is None:
-        expires = settings.CA_DEFAULT_EXPIRES
-    if isinstance(expires, int):
-        expires = datetime.today() + timedelta(days=expires + 1)
-        expires = expires.replace(hour=0, minute=0, second=0, microsecond=0)
 
     # get CA key and cert
     ca_crt = get_ca_crt()
