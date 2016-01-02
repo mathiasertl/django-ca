@@ -13,12 +13,19 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from django.conf import settings
+from datetime import datetime
+from datetime import timedelta
+
 from django.core.management.base import BaseCommand
 from django.utils import six
 
+from django_ca.ca_settings import CA_ALLOW_CA_CERTIFICATES
+from django_ca.ca_settings import CA_PROFILES
+from django_ca.ca_settings import CA_DEFAULT_EXPIRES
 from django_ca.models import Certificate
 from django_ca.models import Watcher
+from django_ca.utils import get_cert_profile_kwargs
+from django_ca.utils import get_cert
 
 
 class Command(BaseCommand):
@@ -26,7 +33,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--days', default=720, type=int,
+            '--days', default=CA_DEFAULT_EXPIRES, type=int,
             help='Sign the certificate for DAYS days (default: %(default)s)')
         parser.add_argument(
             '--algorithm',
@@ -43,27 +50,30 @@ class Command(BaseCommand):
         parser.add_argument(
             '--out', metavar='FILE',
             help='Save signed certificate to FILE. If omitted, print to stdout.')
+
         parser.add_argument(
-            '--key-usage', default=','.join(settings.CA_KEY_USAGE), metavar='NAMES',
-            help="Override keyUsage attribute (default: CA_KEY_USAGE setting: %(default)s).")
+            '--key-usage', metavar='VALUES',
+            help='Override the keyUsage extension, e.g. "critical,keyCertSign".')
         parser.add_argument(
-            '--ext-key-usage', default=','.join(settings.CA_EXT_KEY_USAGE), metavar='NAMES',
-            help="Override keyUsage attribute (default: CA_EXT_KEY_USAGE setting: %(default)s).")
+            '--ext-key-usage', metavar='VALUES',
+            help='Override the extendedKeyUsage extension, e.g. "serverAuth,clientAuth".')
 
         group = parser.add_argument_group(
             'profiles', """Sign certificate based on the given profile. This overrides the
 --key-usage and --ext-key-usage arguments.""")
         group = group.add_mutually_exclusive_group()
-        group.add_argument(
-            '--ocsp', default=False, action='store_true',
-            help="Issue a certificate for an OCSP server.")
-        group.add_argument(
-            '--client', default=False, action='store_true',
-            help="""Issue a client certificate - allows client authentication and email
-protection.""")
-        group.add_argument(
-            '--server', default=False, action='store_true',
-            help="Issue a server certificate - only allows server authentication.")
+        for name, profile in CA_PROFILES.items():
+            if CA_ALLOW_CA_CERTIFICATES is False \
+                    and profile['basicConstraints']['value'] != 'CA:FALSE':
+                continue
+
+            group.add_argument('--%s' % name, action='store_const', const=name, dest='profile',
+                               help=profile['desc'])
+
+    def parse_extension(self, value):
+        if value.startswith('critical,'):
+            return True, value[9:]
+        return False, value
 
     def handle(self, *args, **options):
         if options['csr'] is None:
@@ -79,23 +89,20 @@ protection.""")
         watchers = [Watcher.from_addr(addr) for addr in options['watch']]
 
         # get keyUsage and extendedKeyUsage flags based on profiles
-        if options['ocsp'] is True:
-            key_usage = ('nonRepudiation', 'digitalSignature', 'keyEncipherment', )
-            ext_key_usage = (str('OCSPSigning'), )
-        elif options['client'] is True:
-            key_usage = ('keyEncipherment', 'dataEncipherment', 'digitalSignature', )
-            ext_key_usage = ('clientAuth', 'emailProtection', )
-        elif options['server'] is True:
-            key_usage = ('digitalSignature', 'keyEncipherment', 'keyAgreement', )
-            ext_key_usage = ('serverAuth', )
-        else:
-            key_usage = options['key_usage'].split(',')
-            ext_key_usage = options['ext_key_usage'].split(',')
+        kwargs = get_cert_profile_kwargs(options['profile'])
+        if options['key_usage']:
+            kwargs['keyUsage'] = self.parse_extension(options['key_usage'])
+        if options['ext_key_usage']:
+            kwargs['extendedKeyUsage'] = self.parse_extension(options['ext_key_usage'])
 
-        cert = Certificate.objects.from_csr(
-            csr, subjectAltNames=options['alt'], days=options['days'],
-            algorithm=options['algorithm'], watchers=watchers, key_usage=key_usage,
-            ext_key_usage=ext_key_usage)
+        expires = datetime.today() + timedelta(days=options['expires'] + 1)
+        expires = expires.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        x509 = get_cert(csr=csr, expires=expires, subjectAltName=options['alt'], **kwargs)
+        cert = Certificate(csr=csr, expires=expires)
+        cert.x509 = x509
+        cert.save()
+        cert.watchers.add(*watchers)
 
         if options['out']:
             with open(options['out'], 'w') as f:
