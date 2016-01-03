@@ -160,9 +160,11 @@ def init_demo():
 
     # finally - imports!
     from django.conf import settings
+    from django.contrib.auth import get_user_model
     from django.core.management import call_command as manage
     from django_ca.models import Certificate
     from django_ca.models import Watcher
+    User = get_user_model()
 
     if settings.DEBUG is not True:
         abort(red('Refusing to run if settings.DEBUG != True.'))
@@ -212,6 +214,13 @@ def init_demo():
         ca_crl.write(ca_pem.read())
         ca_crl.write(crl.read())
 
+    # create a few watchers
+    Watcher.from_addr('First Last <user1@example.com>')
+    Watcher.from_addr('Second Last <user2@example.com>')
+
+    # create admin user for login
+    User.objects.create_superuser('user', 'user@example.com', 'nopass')
+
     os.chdir('../')
     cwd = os.getcwd()
     rel = lambda p: os.path.relpath(p, cwd)
@@ -225,7 +234,5 @@ def init_demo():
     print('\topenssl ocsp -index %s -port 8888 -rsigner %s -rkey %s -CA %s -text' % (rel(ocsp_index), rel(ocsp_pem), rel(ocsp_key), ca_crt))
     print(green('* Verify certificate with OCSP:'))
     print('\topenssl ocsp -CAfile %s -issuer %s -cert %s -url http://localhost:8888 -resp_text' % (ca_crt, ca_crt, host1_pem))
-
-    # create a few watchers
-    Watcher.from_addr('First Last <user1@example.com>')
-    Watcher.from_addr('Second Last <user2@example.com>')
+    print(green('* Start webserver on http://localhost:8000 (user: user, password: nopass) with:'))
+    print('\tpython ca/manage.py runserver')
