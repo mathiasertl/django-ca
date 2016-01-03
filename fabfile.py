@@ -160,7 +160,7 @@ def init_demo():
     with hide('everything'):
         local('openssl genrsa -out files/localhost.key 2048')
         local("openssl req -new -key %s -out %s -utf8 -sha512 -batch -subj '/C=AT/ST=Vienna/L=Vienna/CN=localhost/'" % (ocsp_key, ocsp_csr))
-    manage('sign_cert', csr=ocsp_csr, out=ocsp_pem, ocsp=True)
+    manage('sign_cert', csr=ocsp_csr, alt=['localhost'], out=ocsp_pem, profile='ocsp')
 
     # Create some client certificates
     for i in range(1, 10):
@@ -174,7 +174,7 @@ def init_demo():
             local('openssl genrsa -out %s 2048' % key)
             local("openssl req -new -key %s -out %s -utf8 -sha512 -batch -subj '%s'" % (
                 key, csr, subj))
-        manage('sign_cert', csr=csr, out='files/%s.pem' % hostname)
+        manage('sign_cert', csr=csr, alt=[hostname], out='files/%s.pem' % hostname)
 
     # Revoke host1 and host2
     print(green('Revoke host1.example.com and host2.example.com...'))
