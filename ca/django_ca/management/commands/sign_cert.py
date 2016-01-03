@@ -17,6 +17,7 @@ from datetime import datetime
 from datetime import timedelta
 
 from django.core.management.base import BaseCommand
+from django.core.management.base import CommandError
 from django.utils import six
 
 from django_ca.ca_settings import CA_ALLOW_CA_CERTIFICATES
@@ -32,6 +33,8 @@ class Command(BaseCommand):
     help = "Sign a CSR and output signed certificate."
 
     def add_arguments(self, parser):
+        parser.add_arugment(
+            '--cn', help="CommonName to use. If omitted, the first --alt value will be used.")
         parser.add_argument(
             '--days', default=CA_DEFAULT_EXPIRES, type=int,
             help='Sign the certificate for DAYS days (default: %(default)s)')
@@ -76,6 +79,13 @@ class Command(BaseCommand):
         return False, value
 
     def handle(self, *args, **options):
+        if not options['cn'] and not options['alt']:
+            raise CommandError("Must give at least --cn or one or more --alt arguments.")
+        elif not options['cn']:
+            options['cn'] = options['alt'][0]  #TODO: strip any prefix
+        elif not options['alt']:
+            options['alt'] = [options['cn']]  #TODO: parameter not to do that
+
         if options['csr'] is None:
             print('Please paste the CSR:')
             csr = ''
@@ -98,8 +108,9 @@ class Command(BaseCommand):
         expires = datetime.today() + timedelta(days=options['days'] + 1)
         expires = expires.replace(hour=0, minute=0, second=0, microsecond=0)
 
-        x509 = get_cert(csr=csr, expires=expires, subjectAltName=options['alt'], **kwargs)
-        cert = Certificate(csr=csr, expires=expires, cn=options['alt'][0])
+        x509 = get_cert(csr=csr, cn=options['cn'], expires=expires, subjectAltName=options['alt'],
+                        **kwargs)
+        cert = Certificate(csr=csr, expires=expires)
         cert.x509 = x509
         cert.save()
         cert.watchers.add(*watchers)
