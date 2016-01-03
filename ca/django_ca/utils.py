@@ -104,7 +104,7 @@ def get_cert_profile_kwargs(name=None):
     return kwargs
 
 
-def get_cert(csr, expires, csr_format=crypto.FILETYPE_PEM, algorithm=None,
+def get_cert(csr, expires, cn=None, csr_format=crypto.FILETYPE_PEM, algorithm=None,
              basicConstraints='critical,CA:FALSE', subjectAltName=None, keyUsage=None,
              extendedKeyUsage=None):
     """Create a signed certificate from a CSR.
@@ -123,12 +123,17 @@ def get_cert(csr, expires, csr_format=crypto.FILETYPE_PEM, algorithm=None,
         A valid CSR in PEM format. If none is given, `self.csr` will be used.
     expires : datetime
         When the certificate should expire.
+    cn : str, optional
+        The CommonName to use in the certificate. If omitted, the first element of the
+        `subjectAltName` parameter is used (and is obviously mandatory in this case).
     csr_format : int, optional
         The format of the submitted CSR request. One of the OpenSSL.crypto.FILETYPE_*
         constants. The default is PEM.
     algorithm : {'sha512', 'sha256', ...}, optional
         Algorithm used to sign the certificate. The default is the DIGEST_ALGORITHM setting.
     subjectAltName : list of str, optional
+        A list of values for the subjectAltName extension. Values are passed to
+        `get_subjectAltName`, see function documentation for how this value is parsed.
     basicConstraints : tuple or None
         Value for the `basicConstraints` X509 extension. See description for format details.
     keyUsage : tuple or None
@@ -142,6 +147,9 @@ def get_cert(csr, expires, csr_format=crypto.FILETYPE_PEM, algorithm=None,
     OpenSSL.crypto.X509
         The signed certificate.
     """
+    if not cn and not subjectAltName:
+        raise ValueError("Must at least cn or subjectAltName parameter.")
+
     req = crypto.load_certificate_request(csr_format, csr)
 
     # get algorithm used to sign certificate
@@ -156,9 +164,15 @@ def get_cert(csr, expires, csr_format=crypto.FILETYPE_PEM, algorithm=None,
     ca_crt = get_ca_crt()
     ca_key = get_ca_key()
 
-    # get the common name from the CSR
-    cn = dict(req.get_subject().get_components()).get(b'CN')
-    subjectAltName = get_subjectAltName(subjectAltName, cn=cn)
+    # Process CommonName and subjectAltName extension.
+    #TODO: There should be a parameter that the cn should not be added to the SANs
+    if cn is None:
+        cn = list(subjectAltName)[0]  #TODO: we should strip any valid prefix
+        subjectAltName = get_subjectAltName(subjectAltName)
+    elif not subjectAltName:
+        subjectAltName = get_subjectAltName([cn])
+    else:
+        subjectAltName = get_subjectAltName(subjectAltName, cn=cn)
 
     # Create signed certificate
     cert = get_basic_cert(expires)
@@ -217,7 +231,7 @@ def get_cert(csr, expires, csr_format=crypto.FILETYPE_PEM, algorithm=None,
 def get_subjectAltName(names, cn=None):
     """Compute the value of the subjectAltName extension based on the given list of names.
 
-    The `cn` parameter, if provided, isprepended if not present in the list of names.
+    The `cn` parameter, if provided, is prepended if not present in the list of names.
 
     This method supports the `IP`, `email`, `URI` and `DNS` options automatically, if you need a
     different option (or think the automatic parsing is wrong), give the full value verbatim (e.g.
