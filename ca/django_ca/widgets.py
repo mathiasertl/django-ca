@@ -24,16 +24,20 @@ from .ca_settings import CA_DEFAULT_PROFILE
 from .utils import LazyEncoder
 
 
-class CriticalWidget(widgets.CheckboxInput):
+class LabeledCheckboxInput(widgets.CheckboxInput):
+    """CheckboxInput widget that adds a label and wraps everything in a <span />.
+
+    This is necessary because widgets in MultiValueFields don't render with a label."""
+
     def render(self, name, value, attrs=None):
-        html = super(CriticalWidget, self).render(name, value, attrs=attrs)
+        html = super(LabeledCheckboxInput, self).render(name, value, attrs=attrs)
         label = '<label for="%s">%s</label>' % (attrs.get('id'), _('critical'))
         html = '<span class="critical-widget-wrapper">%s%s</span>' % (html, label)
         return html
 
     class Media:
         css = {
-            'all': ('django_ca/admin/css/criticalwidget.css', ),
+            'all': ('django_ca/admin/css/labeledcheckboxinput.css', ),
         }
 
 
@@ -80,7 +84,7 @@ class SubjectAltNameWidget(CustomMultiWidget):
     def __init__(self, attrs=None):
         _widgets = (
             widgets.TextInput(),
-            CriticalWidget()
+            LabeledCheckboxInput()
         )
         super(SubjectAltNameWidget, self).__init__(_widgets, attrs)
 
@@ -94,7 +98,7 @@ class KeyUsageWidget(CustomMultiWidget):
     def __init__(self, choices, attrs=None):
         _widgets = (
             widgets.SelectMultiple(choices=choices, attrs=attrs),
-            CriticalWidget(),
+            LabeledCheckboxInput(),
         )
         super(KeyUsageWidget, self).__init__(_widgets, attrs)
 
@@ -109,7 +113,7 @@ class BasicConstraintsWidget(CustomMultiWidget):
         _widgets = (
             widgets.Select(choices=choices, attrs=attrs),
             PathlenWidget(),
-            CriticalWidget(),
+            LabeledCheckboxInput(),
         )
         super(BasicConstraintsWidget, self).__init__(_widgets, attrs)
 
