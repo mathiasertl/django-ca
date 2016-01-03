@@ -184,6 +184,7 @@ class CertificateAdmin(admin.ModelAdmin):
             x509 = get_cert(
                 csr=data['csr'],
                 expires=data['expires'],
+                cn=data['cn'],
                 subjectAltName=[e.strip() for e in data['subjectAltName'].split(',')],
                 basicConstraints=basicConstraints,
                 keyUsage=data['keyUsage'],
