@@ -33,8 +33,11 @@ class Command(BaseCommand):
     help = "Sign a CSR and output signed certificate."
 
     def add_arguments(self, parser):
-        parser.add_arugment(
+        parser.add_argument(
             '--cn', help="CommonName to use. If omitted, the first --alt value will be used.")
+        parser.add_argument(
+            '--cn-not-in-san', default=True, action='store_false', dest='cn_in_san',
+            help='Do not add the CommonName as subjectAlternativeName.')
         parser.add_argument(
             '--days', default=CA_DEFAULT_EXPIRES, type=int,
             help='Sign the certificate for DAYS days (default: %(default)s)')
@@ -108,8 +111,8 @@ class Command(BaseCommand):
         expires = datetime.today() + timedelta(days=options['days'] + 1)
         expires = expires.replace(hour=0, minute=0, second=0, microsecond=0)
 
-        x509 = get_cert(csr=csr, cn=options['cn'], expires=expires, subjectAltName=options['alt'],
-                        **kwargs)
+        x509 = get_cert(csr=csr, cn=options['cn'], cn_in_san=options['cn_in_san'], expires=expires,
+                        subjectAltName=options['alt'], **kwargs)
         cert = Certificate(csr=csr, expires=expires)
         cert.x509 = x509
         cert.save()
