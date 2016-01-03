@@ -27,11 +27,14 @@ class SubjectAltNameField(forms.MultiValueField):
     def __init__(self, *args, **kwargs):
         fields = (
             forms.CharField(),
-            forms.BooleanField(),
+            forms.BooleanField(required=False),
         )
         kwargs.setdefault('widget', SubjectAltNameWidget)
         super(SubjectAltNameField, self).__init__(
             fields=fields, require_all_fields=False, *args, **kwargs)
+
+    def compress(self, values):
+        return values
 
 
 class KeyUsageField(forms.MultiValueField):
