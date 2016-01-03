@@ -139,6 +139,7 @@ def init_demo():
     from django.conf import settings
     from django.core.management import call_command as manage
     from django_ca.models import Certificate
+    from django_ca.models import Watcher
 
     if settings.DEBUG is not True:
         abort(red('Refusing to run if settings.DEBUG != True.'))
@@ -212,3 +213,7 @@ def init_demo():
     print('\topenssl ocsp -index %s -port 8888 -rsigner %s -rkey %s -CA %s -text' % (rel(ocsp_index), rel(ocsp_pem), rel(ocsp_key), ca_crt))
     print(green('* Verify certificate with OCSP:'))
     print('\topenssl ocsp -CAfile %s -issuer %s -cert %s -url http://localhost:8888 -resp_text' % (ca_crt, ca_crt, host1_pem))
+
+    # create a few watchers
+    Watcher.from_addr('First Last <user1@example.com>')
+    Watcher.from_addr('Second Last <user2@example.com>')
