@@ -20,6 +20,7 @@ from six.moves import configparser
 
 from fabric.api import env
 from fabric.api import local
+from fabric.api import task
 from fabric.colors import green
 from fabric.colors import red
 from fabric.context_managers import cd
@@ -27,6 +28,7 @@ from fabric.context_managers import hide
 from fabric.context_managers import settings
 from fabric.decorators import runs_once
 from fabric.utils import abort
+
 
 config = configparser.ConfigParser({
     'app': 'False',
@@ -62,6 +64,7 @@ def push(section):
         local('git push %s %s' % (remote, branch))
 
 
+@task
 def deploy_app(section='DEFAULT'):
     if not config.getboolean(section, 'app'):
         return
@@ -91,6 +94,7 @@ def deploy_app(section='DEFAULT'):
             sudo('touch %s' % config.get(section, 'app-uwsgi-vassal'))
 
 
+@task
 def deploy_project(section='DEFAULT'):
     if not config.getboolean(section, 'project'):
         return
@@ -120,11 +124,14 @@ def deploy_project(section='DEFAULT'):
         if config.get(section, 'project-uwsgi-vassal'):
             sudo('touch %s' % config.get(section, 'project-uwsgi-vassal'))
 
+
+@task
 def deploy(section='DEFAULT'):
     deploy_project(section=section)
     deploy_app(section=section)
 
 
+@task
 def init_demo():
     # setup environment
     os.chdir('ca')
