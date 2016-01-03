@@ -177,7 +177,7 @@ def get_cert(csr, expires, cn=None, csr_format=crypto.FILETYPE_PEM, algorithm=No
     # Create signed certificate
     cert = get_basic_cert(expires)
     cert.set_issuer(ca_crt.get_subject())
-    cert.set_subject(req.get_subject())
+    cert.get_subject().CN = cn
     cert.set_pubkey(req.get_pubkey())
 
     extensions = [
