@@ -142,11 +142,11 @@ class Certificate(models.Model):
             value = 'critical,%s' % value
         return value
 
-    @property
     def distinguishedName(self):
         name = self.x509.get_subject()
         return '/%s' % '/'.join(['%s=%s' % (k.decode('utf-8'), v.decode('utf-8'))
                                  for k, v in name.get_components()])
+    distinguishedName.short_description = 'Distinguished Name'
 
     def revoke(self, reason=None):
         self.revoked = True
