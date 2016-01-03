@@ -29,9 +29,13 @@ class LabeledCheckboxInput(widgets.CheckboxInput):
 
     This is necessary because widgets in MultiValueFields don't render with a label."""
 
+    def __init__(self, label, *args, **kwargs):
+        self.label = label
+        super(LabeledCheckboxInput, self).__init__(*args, **kwargs)
+
     def render(self, name, value, attrs=None):
         html = super(LabeledCheckboxInput, self).render(name, value, attrs=attrs)
-        label = '<label for="%s">%s</label>' % (attrs.get('id'), _('critical'))
+        label = '<label for="%s">%s</label>' % (attrs.get('id'), self.label)
         html = '<span class="critical-widget-wrapper">%s%s</span>' % (html, label)
         return html
 
@@ -84,7 +88,7 @@ class SubjectAltNameWidget(CustomMultiWidget):
     def __init__(self, attrs=None):
         _widgets = (
             widgets.TextInput(),
-            LabeledCheckboxInput()
+            LabeledCheckboxInput(label="Include CommonName")
         )
         super(SubjectAltNameWidget, self).__init__(_widgets, attrs)
 
@@ -98,7 +102,7 @@ class KeyUsageWidget(CustomMultiWidget):
     def __init__(self, choices, attrs=None):
         _widgets = (
             widgets.SelectMultiple(choices=choices, attrs=attrs),
-            LabeledCheckboxInput(),
+            LabeledCheckboxInput(label=_('critical')),
         )
         super(KeyUsageWidget, self).__init__(_widgets, attrs)
 
@@ -113,7 +117,7 @@ class BasicConstraintsWidget(CustomMultiWidget):
         _widgets = (
             widgets.Select(choices=choices, attrs=attrs),
             PathlenWidget(),
-            LabeledCheckboxInput(),
+            LabeledCheckboxInput(label=_('critical')),
         )
         super(BasicConstraintsWidget, self).__init__(_widgets, attrs)
 
