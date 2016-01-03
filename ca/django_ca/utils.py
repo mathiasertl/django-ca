@@ -104,7 +104,7 @@ def get_cert_profile_kwargs(name=None):
     return kwargs
 
 
-def get_cert(csr, expires, cn=None, csr_format=crypto.FILETYPE_PEM, algorithm=None,
+def get_cert(csr, expires, cn=None, cn_in_san=True, csr_format=crypto.FILETYPE_PEM, algorithm=None,
              basicConstraints='critical,CA:FALSE', subjectAltName=None, keyUsage=None,
              extendedKeyUsage=None):
     """Create a signed certificate from a CSR.
@@ -126,6 +126,9 @@ def get_cert(csr, expires, cn=None, csr_format=crypto.FILETYPE_PEM, algorithm=No
     cn : str, optional
         The CommonName to use in the certificate. If omitted, the first element of the
         `subjectAltName` parameter is used (and is obviously mandatory in this case).
+    cn_in_san : bool, optional
+        Wether the CommonName should also be included as subjectAlternativeName. The default is
+        `True`, but the parameter is ignored if no CommonName is given.
     csr_format : int, optional
         The format of the submitted CSR request. One of the OpenSSL.crypto.FILETYPE_*
         constants. The default is PEM.
@@ -165,14 +168,18 @@ def get_cert(csr, expires, cn=None, csr_format=crypto.FILETYPE_PEM, algorithm=No
     ca_key = get_ca_key()
 
     # Process CommonName and subjectAltName extension.
-    #TODO: There should be a parameter that the cn should not be added to the SANs
     if cn is None:
         cn = list(subjectAltName)[0]  #TODO: we should strip any valid prefix
         subjectAltName = get_subjectAltName(subjectAltName)
-    elif not subjectAltName:
-        subjectAltName = get_subjectAltName([cn])
-    else:
-        subjectAltName = get_subjectAltName(subjectAltName, cn=cn)
+    elif cn_in_san is True:
+        if subjectAltName:
+            subjectAltName = get_subjectAltName(subjectAltName, cn=cn)
+        else:
+            subjectAltName = get_subjectAltName([cn])
+
+    # subjectAltName might still be None, in which case the extension is not added.
+    elif subjectAltName:
+        subjectAltName = get_subjectAltName(subjectAltName)
 
     # Create signed certificate
     cert = get_basic_cert(expires)
@@ -194,7 +201,8 @@ def get_cert(csr, expires, cn=None, csr_format=crypto.FILETYPE_PEM, algorithm=No
         extensions.append(crypto.X509Extension(b'basicConstraints', *basicConstraints))
 
     # Add subjectAltNames, always also contains the CommonName
-    extensions.append(crypto.X509Extension(b'subjectAltName', 0, subjectAltName))
+    if subjectAltName is not None:
+        extensions.append(crypto.X509Extension(b'subjectAltName', 0, subjectAltName))
 
     # Set CRL distribution points:
     if settings.CA_CRL_DISTRIBUTION_POINTS:
