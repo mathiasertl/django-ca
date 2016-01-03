@@ -177,6 +177,17 @@ def init_demo():
                 key, csr, subj))
         manage('sign_cert', csr=csr, alt=[hostname], out='files/%s.pem' % hostname)
 
+    print(green('Creating client certificate...'))
+    client_key = os.path.join(settings.CA_DIR, 'client.key')
+    client_csr = os.path.join(settings.CA_DIR, 'client.csr')
+    client_pem = os.path.join(settings.CA_DIR, 'client.pem')
+    with hide('everything'):
+        local('openssl genrsa -out %s 2048' % client_key)
+        local("openssl req -new -key %s -out %s -utf8 -sha512 -batch -subj '%s'" % (
+            client_key, client_csr, subj))
+    manage('sign_cert', csr=client_csr, alt=['user@example.com'], cn='First Last', cn_in_san=False,
+          out=client_pem)
+
     # Revoke host1 and host2
     print(green('Revoke host1.example.com and host2.example.com...'))
     cert = Certificate.objects.get(cn='host1.example.com')
