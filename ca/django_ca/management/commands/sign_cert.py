@@ -99,7 +99,7 @@ class Command(BaseCommand):
         expires = expires.replace(hour=0, minute=0, second=0, microsecond=0)
 
         x509 = get_cert(csr=csr, expires=expires, subjectAltName=options['alt'], **kwargs)
-        cert = Certificate(csr=csr, expires=expires)
+        cert = Certificate(csr=csr, expires=expires, cn=options['alt'][0])
         cert.x509 = x509
         cert.save()
         cert.watchers.add(*watchers)
