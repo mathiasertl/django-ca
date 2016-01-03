@@ -131,6 +131,22 @@ def deploy(section='DEFAULT'):
     deploy_app(section=section)
 
 
+def create_cert(name, **kwargs):
+    from django.conf import settings
+    from django.core.management import call_command as manage
+
+    key = os.path.join(settings.CA_DIR, '%s.key' % name)
+    csr = os.path.join(settings.CA_DIR, '%s.csr' % name)
+    pem = os.path.join(settings.CA_DIR, '%s.pem' % name)
+    subj = '/C=AT/ST=Vienna/L=Vienna/CN=%s-should-not-show-up/' % name
+
+    with hide('everything'):
+        local('openssl genrsa -out %s 2048' % key)
+        local("openssl req -new -key %s -out %s -utf8 -batch -subj '%s'" % (key, csr, subj))
+    manage('sign_cert', csr=csr, out=pem, **kwargs)
+    return key, csr, pem
+
+
 @task
 def init_demo():
     # setup environment
@@ -162,38 +178,16 @@ def init_demo():
 
     # generate OCSP certificate
     print(green('Generate OCSP certificate...'))
-    ocsp_key = os.path.join(settings.CA_DIR, 'localhost.key')
-    ocsp_csr = os.path.join(settings.CA_DIR, 'localhost.csr')
-    ocsp_pem = os.path.join(settings.CA_DIR, 'localhost.pem')
-    with hide('everything'):
-        local('openssl genrsa -out files/localhost.key 2048')
-        local("openssl req -new -key %s -out %s -utf8 -sha512 -batch -subj '/C=AT/ST=Vienna/L=Vienna/CN=localhost/'" % (ocsp_key, ocsp_csr))
-    manage('sign_cert', csr=ocsp_csr, alt=['localhost'], out=ocsp_pem, profile='ocsp')
+    ocsp_key, ocsp_csr, ocsp_pem = create_cert('localhost', alt=['localhost'], profile='ocsp')
 
     # Create some client certificates
     for i in range(1, 10):
         hostname = 'host%s.example.com' % i
         print(green('Generate certificate for %s...' % hostname))
-        key = 'files/%s.key' % hostname
-        csr = 'files/%s.csr' % hostname
-        subj = '/C=AT/ST=Vienna/L=Vienna/CN=%s/' % hostname
-
-        with hide('everything'):
-            local('openssl genrsa -out %s 2048' % key)
-            local("openssl req -new -key %s -out %s -utf8 -sha512 -batch -subj '%s'" % (
-                key, csr, subj))
-        manage('sign_cert', csr=csr, alt=[hostname], out='files/%s.pem' % hostname)
+        create_cert(hostname, cn=hostname)
 
     print(green('Creating client certificate...'))
-    client_key = os.path.join(settings.CA_DIR, 'client.key')
-    client_csr = os.path.join(settings.CA_DIR, 'client.csr')
-    client_pem = os.path.join(settings.CA_DIR, 'client.pem')
-    with hide('everything'):
-        local('openssl genrsa -out %s 2048' % client_key)
-        local("openssl req -new -key %s -out %s -utf8 -sha512 -batch -subj '%s'" % (
-            client_key, client_csr, subj))
-    manage('sign_cert', csr=client_csr, alt=['user@example.com'], cn='First Last', cn_in_san=False,
-          out=client_pem)
+    create_cert('client', cn='First Last', cn_in_san=False, alt=['user@example.com'])
 
     # Revoke host1 and host2
     print(green('Revoke host1.example.com and host2.example.com...'))
