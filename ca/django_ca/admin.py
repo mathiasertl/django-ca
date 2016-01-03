@@ -183,11 +183,14 @@ class CertificateAdmin(admin.ModelAdmin):
             else:
                 basicConstraints = (True, b'CA:FALSE')
 
+            san, cn_in_san = data['subjectAltName']
+
             x509 = get_cert(
                 csr=data['csr'],
                 expires=data['expires'],
                 cn=data['cn'],
-                subjectAltName=[e.strip() for e in data['subjectAltName'].split(',')],
+                subjectAltName=[e.strip() for e in san.split(',')],
+                cn_in_san=cn_in_san,
                 basicConstraints=basicConstraints,
                 keyUsage=data['keyUsage'],
                 extendedKeyUsage=data['extendedKeyUsage'],
