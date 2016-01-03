@@ -40,10 +40,7 @@ def _initial_expires():
 def _profile_choices():
     choices = [('', '----')] + [(p, p) for p in CA_PROFILES]
     if CA_ALLOW_CA_CERTIFICATES is False:
-        print('CA_ALLOW_CA_CERTIFICATES is False')
         for choice in choices[1:]:
-            print('choice: %s, value: %s' % (
-                choice, CA_PROFILES[choice[1]]['basicConstraints']['value']))
             if CA_PROFILES[choice[1]]['basicConstraints']['value'] == 'CA:TRUE':
                 choices.remove(choice)
     return sorted(choices, key=lambda e: e[0])
