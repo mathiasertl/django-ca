@@ -15,11 +15,23 @@
 
 from django import forms
 
+from .widgets import SubjectAltNameWidget
 from .widgets import BasicConstraintsWidget
 from .widgets import KeyUsageWidget
 
 from .ca_settings import CA_DEFAULT_PROFILE
 from .ca_settings import CA_PROFILES
+
+
+class SubjectAltNameField(forms.MultiValueField):
+    def __init__(self, *args, **kwargs):
+        fields = (
+            forms.CharField(),
+            forms.BooleanField(),
+        )
+        kwargs.setdefault('widget', SubjectAltNameWidget)
+        super(SubjectAltNameField, self).__init__(
+            fields=fields, require_all_fields=False, *args, **kwargs)
 
 
 class KeyUsageField(forms.MultiValueField):

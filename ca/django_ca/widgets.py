@@ -76,6 +76,20 @@ class CustomMultiWidget(widgets.MultiWidget):
         return ''.join(rendered_widgets)
 
 
+class SubjectAltNameWidget(CustomMultiWidget):
+    def __init__(self, attrs=None):
+        _widgets = (
+            widgets.TextInput(),
+            CriticalWidget()
+        )
+        super(SubjectAltNameWidget, self).__init__(_widgets, attrs)
+
+    def decompress(self, value):
+        if value:
+            return value
+        return ('', True)
+
+
 class KeyUsageWidget(CustomMultiWidget):
     def __init__(self, choices, attrs=None):
         _widgets = (
