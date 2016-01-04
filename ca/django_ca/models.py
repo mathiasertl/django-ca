@@ -22,7 +22,6 @@ from django.utils.translation import ugettext_lazy as _
 from OpenSSL import crypto
 
 from .utils import format_date
-from .managers import CertificateManager
 from .querysets import CertificateQuerySet
 
 
@@ -49,7 +48,7 @@ class Certificate(models.Model):
     _x509 = None
     _extensions = None
 
-    objects = CertificateManager.from_queryset(CertificateQuerySet)()
+    objects = CertificateQuerySet.as_manager()
 
     watchers = models.ManyToManyField(Watcher, related_name='certificates', blank=True)
 
