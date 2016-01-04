@@ -10,7 +10,7 @@ the command-line.
 1. Set up a secure certification authority in a few minutes.
 2. Manage your entire certificate authority from the command line and/or via Djangos admin
    interface.
-3. Written in pure Python using [pyOpenSSL](pythonhosted.org/pyOpenSSL/) and the ORM of
+3. Written in pure Python using [pyOpenSSL](pythonhosted.org/pyOpenSSL/) and
    [Django](https://www.djangoproject.com/).
 4. Get email notifications about certificates about to expire.
 5. Support for certificate revocation lists (CRLs) and OCSP (both have to be hosted separately).
@@ -116,9 +116,9 @@ PATH=/root/django-ca/bin
 # notify watchers about certificates about to expire
 * 8    * * *           xmpp-account   python ca/manage.py notify_expiring_certs
 
-# recreate the CRL (hourly), also creates an OpenSSL CA index file and a pem with the CA cert and
-# the CRL (required for "openssl ocsp")
+# recreate the CRL and the OCSP index
 12 *    * * *           xmpp-account   python ca/manage.py dump_crl
+14 *    * * *           xmpp-account   python ca/manage.py dump_ocsp_index
 ```
 
 ## ChangeLog
