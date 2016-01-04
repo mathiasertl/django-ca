@@ -37,12 +37,14 @@ config = configparser.ConfigParser({
     'app-migrate': 'True',
     'app-origin': 'git+https://github.com/mathiasertl/django-ca.git#egg=django-ca',
     'app-project-dir': '%(app-venv)s',
+    'app-uwsgi-vassal': '',
     'branch': 'master',
     'project': 'False',
     'project-collectstatic': 'True',
     'project-database': '',
     'project-git': '%(project-venv)s',
     'project-migrate': 'True',
+    'project-uwsgi-vassal': '',
     'remote': 'origin',
 })
 config.read('fab.conf')
