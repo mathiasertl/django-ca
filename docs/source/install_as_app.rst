@@ -27,5 +27,8 @@ liking, then simply run::
    python manage.py migrate
    python manage.py collectstatic
 
+   # replace parameters after init_ca with your local details:
+   python manage.py init_ca AT Vienna Vienna Org OrgUnit ca.example.com
+
 After that, **django-ca** should show up in your admin interface and provide
 various ``manage.py`` commands.
