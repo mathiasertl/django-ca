@@ -31,6 +31,9 @@ Contents:
    install_as_app
    install_as_project
    settings
+   manage_commands
+   crl
+   ocsp
 
 
 Indices and tables
