@@ -89,9 +89,9 @@ class Command(BaseCommand):
         if options['password'] is None:
             args = []
         elif options['password'] == '':
-            args = [str('des3'), getpass()]
+            args = ['des3', getpass()]
         else:
-            args = [str('des3'), options['password']]
+            args = ['des3', options['password']]
 
         oldmask = os.umask(247)
         with open(settings.CA_KEY, 'w') as key_file:
