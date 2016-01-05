@@ -33,9 +33,6 @@ DATABASES = {
 # The digest algorithm used for signing certificates, use sha256 with older (pre 2010) clients.
 #DIGEST_ALGORITHM = 'sha512'
 
-# Bits used for private keys
-#CA_BITSIZE = 4096
-
 # Any URL you have for your CA
 #CA_ISSUER_ALT_NAME = None
 

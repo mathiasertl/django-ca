@@ -159,7 +159,6 @@ LOGGING = {
 # custom defaults
 DIGEST_ALGORITHM = 'sha512'
 CA_DIR = os.path.join(BASE_DIR, 'files')
-CA_BITSIZE = 4096
 CA_ISSUER_ALT_NAME = None
 CA_CRL_DISTRIBUTION_POINTS = []
 CA_OCSP = None

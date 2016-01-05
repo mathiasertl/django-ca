@@ -43,6 +43,9 @@ class Command(BaseCommand):
         parser.add_argument(
             '--key-type', choices=type_choices, default=type_default,
             help="Key type for the CA private key (default: %(default)s).")
+        parser.add_argument(
+            '--key-size', type=int, default=4096, metavar='{2048,4096,8192,...}',
+            help="Size of the key to generate (default: %(default)s).")
 
         parser.add_argument(
             '--expires', metavar='DAYS', type=int, default=365 * 10,
@@ -65,11 +68,18 @@ class Command(BaseCommand):
         if os.path.exists(ca_settings.CA_CRT):
             raise CommandError("%s: public key already exists." % ca_settings.CA_CRT)
 
+        # check that the bitsize is a power of two
+        is_power2 = lambda num: num != 0 and ((num & (num - 1)) == 0)
+        if not is_power2(options['key_size']):
+            raise CommandError("%s: Key size must be a power of two." % options['key_size'])
+        elif options['key_size'] < 2048:
+            raise CommandError("%s: Key must have a size of at least 2048 bits." % options['key_size'])
+
         now = datetime.utcnow()
         expires = now + timedelta(days=options['expires'])
 
         key = crypto.PKey()
-        key.generate_key(getattr(crypto, 'TYPE_%s' % options['key_type']), settings.CA_BITSIZE)
+        key.generate_key(getattr(crypto, 'TYPE_%s' % options['key_type']), options['key_size'])
 
         cert = get_basic_cert(expires)
         cert.get_subject().C = country
