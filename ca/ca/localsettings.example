@@ -1,6 +1,11 @@
+# This is an example localsettings.py file for django-ca. Also see
+#   http://django-ca.readthedocs.org/en/latest/settings.html
+# for more information.
+
 import os
 from OpenSSL import crypto
 
+# BASEDIR is the directory above this file, where your manage.py file is located.
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 # configure your database here:
