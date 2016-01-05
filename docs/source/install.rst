@@ -129,3 +129,21 @@ provides some info for using `Apache and mod_wsgi
 or you could use `uWSGI and nginx
 <http://uwsgi-docs.readthedocs.org/en/latest/tutorials/Django_and_nginx.html>`_,
 or any of the many other options available.
+
+Regular cronjobs
+________________
+
+Some ``manage.py`` commands are intended to be run as cronjobs::
+
+   # assuming you cloned the repo at /root/:
+   HOME=/root/django-ca
+   PATH=/root/django-ca/bin
+
+   # m h  dom mon dow      user  command
+
+   # notify watchers about certificates about to expire
+   * 8    * * *            root  python ca/manage.py notify_expiring_certs
+
+   # recreate the CRL and the OCSP index
+   12 *    * * *           root  python ca/manage.py dump_crl
+   14 *    * * *           root  python ca/manage.py dump_ocsp_index

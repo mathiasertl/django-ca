@@ -18,25 +18,6 @@ webserver is needed, if you’re happy with the command-line.
 
 Please see https://django-ca.readthedocs.org for more extensive documentation.
 
-## Regular cron-jobs
-
-It is recommended you execute this job daily via cron, but non are required for basic operations:
-
-```
-# assuming you cloned the repo at /root/:
-HOME=/root/django-ca
-PATH=/root/django-ca/bin
-
-# m h  dom mon dow     user           command
-
-# notify watchers about certificates about to expire
-* 8    * * *           xmpp-account   python ca/manage.py notify_expiring_certs
-
-# recreate the CRL and the OCSP index
-12 *    * * *           xmpp-account   python ca/manage.py dump_crl
-14 *    * * *           xmpp-account   python ca/manage.py dump_ocsp_index
-```
-
 ## ChangeLog
 
 See ChangeLog.md.
