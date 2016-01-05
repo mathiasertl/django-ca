@@ -13,8 +13,23 @@ also documented at :file:`ca/ca/localsettings.py.example`
 (`view on git
 <https://github.com/mathiasertl/django-ca/blob/master/ca/ca/localsettings.py.example>`_).
 
-CA_DIR
-   Default: ``ca/files``
+CA_ALLOW_CA_CERTIFICATES
+   Default: ``False``
+
+CA_CUSTOM_PROFILES
+   Default: ``{}``
+
+CA_DEFAULT_EXPIRES
+   Default: ``720``
+
+CA_DEFAULT_PROFILE
+   Default: ``webserver``
 
 CA_DIGEST_ALGORITHM
    Default: ``"sha512"``
+
+CA_DIR
+   Default: ``"ca/files"``
+
+CA_PROFILES
+   Default:
