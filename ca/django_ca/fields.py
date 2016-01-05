@@ -19,8 +19,7 @@ from .widgets import SubjectAltNameWidget
 from .widgets import BasicConstraintsWidget
 from .widgets import KeyUsageWidget
 
-from .ca_settings import CA_DEFAULT_PROFILE
-from .ca_settings import CA_PROFILES
+from . import ca_settings
 
 
 class SubjectAltNameField(forms.MultiValueField):
@@ -40,8 +39,8 @@ class SubjectAltNameField(forms.MultiValueField):
 class KeyUsageField(forms.MultiValueField):
     def __init__(self, choices, *args, **kwargs):
         label = kwargs['label']
-        if CA_DEFAULT_PROFILE:
-            initial = CA_PROFILES[CA_DEFAULT_PROFILE][label]
+        if ca_settings.CA_DEFAULT_PROFILE:
+            initial = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE][label]
             kwargs.setdefault('initial', [initial['value'], initial['critical']])
 
         fields = (

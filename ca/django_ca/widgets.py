@@ -19,8 +19,7 @@ from django.utils.encoding import force_text
 from django.forms import widgets
 from django.utils.translation import ugettext as _
 
-from .ca_settings import CA_PROFILES
-from .ca_settings import CA_DEFAULT_PROFILE
+from . import ca_settings
 from .utils import LazyEncoder
 
 
@@ -50,9 +49,9 @@ class ProfileWidget(widgets.Select):
         html = super(ProfileWidget, self).render(name, value, attrs=attrs)
         html += '''<script type="text/javascript">
             var ca_profiles = %s;
-        </script>''' % json.dumps(CA_PROFILES, cls=LazyEncoder)
+        </script>''' % json.dumps(ca_settings.CA_PROFILES, cls=LazyEncoder)
         html += '<p class="help profile-desc">%s</p>' % force_text(
-            CA_PROFILES[CA_DEFAULT_PROFILE]['desc'])
+            ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]['desc'])
         return html
 
     class Media:

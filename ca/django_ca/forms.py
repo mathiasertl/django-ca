@@ -20,10 +20,7 @@ from django import forms
 from django.contrib.admin.widgets import AdminDateWidget
 from django.utils.translation import ugettext_lazy as _
 
-from .ca_settings import CA_PROFILES
-from .ca_settings import CA_DEFAULT_EXPIRES
-from .ca_settings import CA_DEFAULT_PROFILE
-from .ca_settings import CA_ALLOW_CA_CERTIFICATES
+from . import ca_settings
 from .fields import BasicConstraintsField
 from .fields import KeyUsageField
 from .fields import SubjectAltNameField
@@ -34,14 +31,14 @@ from .widgets import ProfileWidget
 
 
 def _initial_expires():
-    return datetime.today() + timedelta(days=CA_DEFAULT_EXPIRES)
+    return datetime.today() + timedelta(days=ca_settings.CA_DEFAULT_EXPIRES)
 
 
 def _profile_choices():
-    choices = [('', '----')] + [(p, p) for p in CA_PROFILES]
-    if CA_ALLOW_CA_CERTIFICATES is False:
+    choices = [('', '----')] + [(p, p) for p in ca_settings.CA_PROFILES]
+    if ca_settings.CA_ALLOW_CA_CERTIFICATES is False:
         for choice in choices[1:]:
-            if CA_PROFILES[choice[1]]['basicConstraints']['value'] == 'CA:TRUE':
+            if ca_settings.CA_PROFILES[choice[1]]['basicConstraints']['value'] == 'CA:TRUE':
                 choices.remove(choice)
     return sorted(choices, key=lambda e: e[0])
 
@@ -55,7 +52,7 @@ class CreateCertificateForm(forms.ModelForm):
     profile = forms.ChoiceField(
         required=False, widget=ProfileWidget,
         help_text=_('Select a suitable profile or manually select X509 extensions below.'),
-        initial=CA_DEFAULT_PROFILE, choices=_profile_choices)
+        initial=ca_settings.CA_DEFAULT_PROFILE, choices=_profile_choices)
     keyUsage = KeyUsageField(label='keyUsage', help_text=KEY_USAGE_DESC, choices=(
         ('cRLSign', 'cRLSign'),
         ('dataEncipherment', 'dataEncipherment'),
@@ -80,7 +77,7 @@ class CreateCertificateForm(forms.ModelForm):
             ('msCTLSign', 'Microsoft Trust List Signing'),
             ('msEFS', 'Microsoft Encrypted File System'),
         ))
-    if CA_ALLOW_CA_CERTIFICATES is True:
+    if ca_settings.CA_ALLOW_CA_CERTIFICATES is True:
         basicConstraints = BasicConstraintsField(label='basicConstraints', help_text=_(
             'Wether or not this certificate can be used as a CA.'))
 
