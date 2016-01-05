@@ -30,8 +30,8 @@ DATABASES = {
 ###########################
 ### Certificate options ###
 ###########################
-# The digest algorithm used for signing certificates, use sha256 with older (pre 2010) clients.
-#DIGEST_ALGORITHM = 'sha512'
+# The default algorithm used for signing certificates, use sha256 with older (pre 2010) clients.
+#CA_DIGEST_ALGORITHM = 'sha512'
 
 # Any URL you have for your CA
 #CA_ISSUER_ALT_NAME = None

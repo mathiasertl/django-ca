@@ -133,7 +133,7 @@ def get_cert(csr, expires, cn=None, cn_in_san=True, csr_format=crypto.FILETYPE_P
         The format of the submitted CSR request. One of the OpenSSL.crypto.FILETYPE_*
         constants. The default is PEM.
     algorithm : {'sha512', 'sha256', ...}, optional
-        Algorithm used to sign the certificate. The default is the DIGEST_ALGORITHM setting.
+        Algorithm used to sign the certificate. The default is the CA_DIGEST_ALGORITHM setting.
     subjectAltName : list of str, optional
         A list of values for the subjectAltName extension. Values are passed to
         `get_subjectAltName`, see function documentation for how this value is parsed.
@@ -157,11 +157,7 @@ def get_cert(csr, expires, cn=None, cn_in_san=True, csr_format=crypto.FILETYPE_P
 
     # get algorithm used to sign certificate
     if not algorithm:
-        algorithm = settings.DIGEST_ALGORITHM
-    if not keyUsage:
-        keyUsage = settings.CA_KEY_USAGE
-    if not extendedKeyUsage:
-        extendedKeyUsage = settings.CA_EXT_KEY_USAGE
+        algorithm = ca_settings.CA_DIGEST_ALGORITHM
 
     # get CA key and cert
     ca_crt = get_ca_crt()

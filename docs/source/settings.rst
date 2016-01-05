@@ -15,3 +15,6 @@ also documented at :file:`ca/ca/localsettings.py.example`
 
 CA_DIR
    Default: ``ca/files``
+
+CA_DIGEST_ALGORITHM
+   Default: ``"sha512"``

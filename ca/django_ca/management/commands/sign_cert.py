@@ -41,9 +41,10 @@ class Command(BaseCommand):
         parser.add_argument(
             '--days', default=CA_DEFAULT_EXPIRES, type=int,
             help='Sign the certificate for DAYS days (default: %(default)s)')
+        # TODO: make this a parent so we can also use it in init_ca
         parser.add_argument(
             '--algorithm',
-            help='Algorithm to use (default: The DIGEST_ALGORITHM setting in settings.py)')
+            help='Algorithm to use (default: The CA_DIGEST_ALGORITHM setting).')
         parser.add_argument(
             '--csr', metavar='FILE',
             help='The path to the certificate to sign, if ommitted, you will be be prompted.')

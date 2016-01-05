@@ -24,7 +24,6 @@ from datetime import datetime
 from datetime import timedelta
 from getpass import getpass
 
-from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 
@@ -90,7 +89,7 @@ class Command(BaseCommand):
         cert.get_subject().CN = cn
         cert.set_issuer(cert.get_subject())
         cert.set_pubkey(key)
-        cert.sign(key, settings.DIGEST_ALGORITHM)
+        cert.sign(key, ca_settings.CA_DIGEST_ALGORITHM)
 
         san = bytes('DNS:%s' % cn, 'utf-8')
         cert.add_extensions([
