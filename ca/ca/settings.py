@@ -156,23 +156,6 @@ LOGGING = {
     }
 }
 
-# custom defaults
-CA_DIR = os.path.join(BASE_DIR, 'files')
-CA_ISSUER_ALT_NAME = None
-CA_CRL_DISTRIBUTION_POINTS = []
-CA_OCSP = None
-CA_ISSUER = None
-CA_DEFAULT_EXPIRES = 730
-# see https://www.openssl.org/docs/apps/x509v3_config.html
-CA_KEY_USAGE = (
-    'keyEncipherment',
-    'keyAgreement',
-    'digitalSignature',
-)
-CA_EXT_KEY_USAGE = (
-    'serverAuth',
-)
-
 try:
     try:
         from .localsettings import *
@@ -183,7 +166,3 @@ except ImportError:
 
 if not os.path.exists(CA_DIR):
     os.makedirs(CA_DIR)
-
-# used by "openssl OCSP
-CA_INDEX = os.path.join(CA_DIR, 'ca.index.txt')
-CA_FILE_PEM = os.path.join(CA_DIR, 'cafile.pem')
