@@ -28,8 +28,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   install_as_app
-   install_as_project
+   install
    settings
    manage_commands
    crl

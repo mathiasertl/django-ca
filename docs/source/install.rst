@@ -1,5 +1,8 @@
-Install as Django app (in your existing Django project)
-=======================================================
+Installation
+============
+
+As Django app (in an existing Django project)
+_____________________________________________
 
 This page assumes that you have an already running Django project and know how
 to use it.
@@ -31,4 +34,9 @@ liking, then simply run::
    python manage.py init_ca AT Vienna Vienna Org OrgUnit ca.example.com
 
 After that, **django-ca** should show up in your admin interface and provide
-various ``manage.py`` commands.
+various ``manage.py`` commands (see :doc:`manage_commands`).
+
+As standalone project
+_____________________
+
+nothing yet.
