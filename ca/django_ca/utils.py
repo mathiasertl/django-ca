@@ -22,7 +22,6 @@ from datetime import datetime
 from datetime import timedelta
 from ipaddress import ip_address
 
-from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.encoding import force_text
 from django.utils.functional import Promise
@@ -201,24 +200,24 @@ def get_cert(csr, expires, cn=None, cn_in_san=True, csr_format=crypto.FILETYPE_P
         extensions.append(crypto.X509Extension(b'subjectAltName', 0, subjectAltName))
 
     # Set CRL distribution points:
-    if settings.CA_CRL_DISTRIBUTION_POINTS:
-        value = ','.join(['URI:%s' % uri for uri in settings.CA_CRL_DISTRIBUTION_POINTS])
+    if ca_settings.CA_CRL_DISTRIBUTION_POINTS:
+        value = ','.join(['URI:%s' % uri for uri in ca_settings.CA_CRL_DISTRIBUTION_POINTS])
         value = bytes(value, 'utf-8')
         extensions.append(crypto.X509Extension(b'crlDistributionPoints', 0, value))
 
     # Add issuerAltName
-    if settings.CA_ISSUER_ALT_NAME:
-        issuerAltName = bytes('URI:%s' % settings.CA_ISSUER_ALT_NAME, 'utf-8')
+    if ca_settings.CA_ISSUER_ALT_NAME:
+        issuerAltName = bytes('URI:%s' % ca_settings.CA_ISSUER_ALT_NAME, 'utf-8')
     else:
         issuerAltName = b'issuer:copy'
     extensions.append(crypto.X509Extension(b'issuerAltName', 0, issuerAltName, issuer=ca_crt))
 
     # Add authorityInfoAccess
     auth_info_access = []
-    if settings.CA_OCSP:
-        auth_info_access.append('OCSP;URI:%s' % settings.CA_OCSP)
-    if settings.CA_ISSUER:
-        auth_info_access.append('caIssuers;URI:%s' % settings.CA_ISSUER)
+    if ca_settings.CA_OCSP:
+        auth_info_access.append('OCSP;URI:%s' % ca_settings.CA_OCSP)
+    if ca_settings.CA_ISSUER:
+        auth_info_access.append('caIssuers;URI:%s' % ca_settings.CA_ISSUER)
     if auth_info_access:
         auth_info_access = bytes(','.join(auth_info_access), 'utf-8')
         extensions.append(crypto.X509Extension(b'authorityInfoAccess', 0, auth_info_access))

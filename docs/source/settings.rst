@@ -16,6 +16,9 @@ also documented at :file:`ca/ca/localsettings.py.example`
 CA_ALLOW_CA_CERTIFICATES
    Default: ``False``
 
+CA_CRL_DISTRIBUTION_POINTS
+   Default: ``[]``
+
 CA_CUSTOM_PROFILES
    Default: ``{}``
 
@@ -30,6 +33,15 @@ CA_DIGEST_ALGORITHM
 
 CA_DIR
    Default: ``"ca/files"``
+
+CA_ISSUER
+   Default: ``None``
+
+CA_ISSUER_ALT_NAME
+   Default: ``None``
+
+CA_OCSP
+   Default: ``None``
 
 CA_PROFILES
    Default:
