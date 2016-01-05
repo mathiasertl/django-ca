@@ -18,58 +18,6 @@ webserver is needed, if you’re happy with the command-line.
 
 Please see https://django-ca.readthedocs.org for more extensive documentation.
 
-## Management
-
-Certificate management is done via ``manage.py``. In general, all commands have a ``-h`` option.
-
-### Creating a private key
-
-Like any good CA, this project does never creates private certificates for you. Instead, create a
-private certificate and certificate-signing request (CSR) on the machine that will use the
-certificate:
-
-```
-openssl genrsa -out example.com.key 4096
-openssl req -new -key example.com.key -out example.com.csr -utf8 -sha512
-```
-
-### Sign a private key
-
-Copy the CSR and sign it:
-
-```
-python ca/manage.py sign_cert --csr example.com.csr --out example.com.crt
-```
-
-Note that the ``sign_cert`` command has a few useful options, try the ``-h`` parameter for options.
-
-### List certificates/View certificate
-
-To get a list of all certificates, use ``manage.py list_certs``, to view details of a certificate,
-use `manage.py view_cert` (`$` signals the shell prompt):
-
-```
-$ python manage.py list_certs
-BBB6B79C12604B1BB32E7DBC08942410: test.example.com (expires: 2017-01-28)
-$ python ca/manage.py view_cert BBB6B79C12604B1BB32E7DBC08942410
-...
-```
-
-### Revoke a certificate
-
-To revoke a certificate, use
-
-```
-python ca/manage.py revoke <serial>
-```
-
-The serial can be optained via ``python ca/manage.py list_certs``.
-
-### Add/Remove watchers to certificates
-
-You can add/remove watchers (users that get emails about certificates about to
-expire) using ``manage.py cert_watchers``.
-
 ## Regular cron-jobs
 
 It is recommended you execute this job daily via cron, but non are required for basic operations:
@@ -100,6 +48,7 @@ See ChangeLog.md.
 3. Only send out one notification if multiple certificates expire for a user.
 4. Add a 'renew' button in the admin interface.
 5. Publish good documentation on RTD.
+6. Fix format for serials from certificates (with ":").
 
 ## Test CRL and OCSP
 
