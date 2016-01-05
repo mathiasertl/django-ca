@@ -157,6 +157,7 @@ CA_PROFILES = getattr(settings, 'CA_PROFILES', {
 CA_CUSTOM_PROFILES = getattr(settings, 'CA_CUSTOM_PROFILES', {})
 if CA_CUSTOM_PROFILES:
     CA_PROFILES.update(CA_CUSTOM_PROFILES)
+CA_PROFILES = {p: v for p, v in CA_PROFILES.items() if v}
 
 CA_ALLOW_CA_CERTIFICATES = getattr(settings, 'CA_ALLOW_CA_CERTIFICATES', False)
 CA_DEFAULT_EXPIRES = getattr(settings, 'CA_DEFAULT_EXPIRES', 720)
