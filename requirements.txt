@@ -1,4 +1,4 @@
-Django==1.9
+Django==1.9.1
 pyOpenSSL==0.15.1
 pip>=7.1.2
 setuptools>=19.1.1
