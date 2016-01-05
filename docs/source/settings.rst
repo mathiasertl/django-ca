@@ -2,7 +2,7 @@ Custom settings
 ===============
 
 You can use any of the settings understood by `Django
-<https://docs.djangoproject.com/en/dev/ref/settings/>` and **django-ca**
+<https://docs.djangoproject.com/en/dev/ref/settings/>`_ and **django-ca**
 provides some of its own settings.
 
 From Djangos settings, you especially need to configure ``DATABASES``,
