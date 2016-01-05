@@ -163,6 +163,3 @@ try:
         from localsettings import *
 except ImportError:
     pass
-
-if not os.path.exists(CA_DIR):
-    os.makedirs(CA_DIR)
