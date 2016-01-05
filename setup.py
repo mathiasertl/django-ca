@@ -17,17 +17,19 @@
 from distutils.core import setup
 
 
-long_description = """django-ca is a Django app that provides a SSL/TLS certificate authority. The
-app can be included in any Django project or (if installed via directly via git) includes it's own
-basic project.
+long_description = """django-ca provides you with a local TLS certificate authority. It is based on `pyOpenSSL <https://pyopenssl.readthedocs.org/>`_ and `Django <https://www.djangoproject.com/>`_, it can be used as an app in an existing Django project or with the basic project included. Certificates can be managed through Djangos admin interface or via ``manage.py`` commands - no webserver is needed, if you’re happy with the command-line.
 
 Features:
 
-* Set up a secure certificate authority in just a few minutes.
-* Manage the certificate authority either via command line or the Django admin interface.
-* Written in pure Python, requires Python 3.4+.
-* Get e-mail notifications when certificates expire.
-* Generates certificate revocation lists (CRLs) and OCSP index files.
+* Set up a secure local certificate authority in just a few minutes.
+* Written in Python3.4+.
+* Manage your entire certificate authority from the command line and/or via
+  Djangos admin interface.
+* Get email notifications about certificates about to expire.
+* Support for certificate revocation lists (CRLs) and OCSP (both have to be
+  hosted separately).
+
+Please see https://django-ca.readthedocs.org for more extensive documentation.
 """
 
 setup(

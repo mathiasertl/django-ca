@@ -1,54 +1,22 @@
 # django-ca
 
-This Django app allows you to manage a local TLS certificate authority. The app can be included in
-any Django project or used with the example project included. Certificates can be managed through
-Djangos admin interface or via `manage.py` commands - no webserver is needed, if you're happy with
-the command-line.
+django-ca provides you with a local TLS certificate authority. It is based on
+[pyOpenSSL](https://pyopenssl.readthedocs.org/) and [Django](https://www.djangoproject.com/>), it
+can be used as an app in an existing Django project or with the basic project included.
+Certificates can be managed through Djangos admin interface or via `manage.py` commands - no
+webserver is needed, if you’re happy with the command-line.
 
 ## Features
 
-1. Set up a secure certification authority in a few minutes.
-2. Manage your entire certificate authority from the command line and/or via Djangos admin
-   interface.
-3. Written in pure Python using [pyOpenSSL](pythonhosted.org/pyOpenSSL/) and
-   [Django](https://www.djangoproject.com/).
+1. Set up a secure local certificate authority in just a few minutes.
+2. Written in Python3.4+.
+3. Manage your entire certificate authority from the command line and/or via
+   Djangos admin interface.
 4. Get email notifications about certificates about to expire.
-5. Support for certificate revocation lists (CRLs) and OCSP (both have to be hosted separately).
+5. Support for certificate revocation lists (CRLs) and OCSP (both have to be
+   hosted separately).
 
-## Setup
-
-You will need the development headers required by pyOpenSSL, on Debian/Ubuntu
-systems, this should suffice:
-
-```
-apt-get install gcc python3-dev libffi-dev libssl-dev
-```
-
-Next, download the project, create a virtualenv, install requirements:
-
-```
-git clone https://github.com/mathiasertl/django-ca
-cd django-ca
-virtualenv -p /usr/bin/python3 .
-source bin/activate
-pip install -r requirements.txt
-```
-
-Copy ``ca/ca/localsettings.py.example`` to ``ca/ca/localsettings.py`` and make
-the necesarry adjustments. 
-
-Then create the certificate authority ("CA"), the arguments is required certificate information,
-fill in our own data:
-
-```
-python ca/manage.py init_ca AT Vienna Vienna "HTU Wien" "Fachschaft Informatik" ca.fsinf.at
-```
-
-**Note:** You can set some options for your CA, try the ``-h`` parameter.
-
-## Configuration
-
-The file ``ca/ca/localsettings.py.example`` contains documentation on available settings.
+Please see https://django-ca.readthedocs.org for more extensive documentation.
 
 ## Management
 
