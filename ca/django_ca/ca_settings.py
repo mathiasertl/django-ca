@@ -19,7 +19,6 @@ from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 CA_DIR = getattr(settings, 'CA_DIR', os.path.join(settings.BASE_DIR, 'files'))
-CA_KEY_TYPE = getattr(settings, 'CA_KEY_TYPE', 'RSA')
 
 # exact certificate locations are not documented, but you may still override them if you know what
 # you're doing.

@@ -30,7 +30,6 @@ from django.core.management.base import CommandError
 
 from OpenSSL import crypto
 
-from django_ca.ca_settings import CA_KEY_TYPE
 from django_ca import ca_settings
 from django_ca.utils import get_basic_cert
 
@@ -39,6 +38,12 @@ class Command(BaseCommand):
     help = "Initiate a certificate authority."
 
     def add_arguments(self, parser):
+        type_choices = [t[5:] for t in dir(crypto) if t.startswith('TYPE_')]
+        type_default = 'RSA' if 'RSA' in type_choices else type_choices[0]
+        parser.add_argument(
+            '--key-type', choices=type_choices, default=type_default,
+            help="Key type for the CA private key (default: %(default)s).")
+
         parser.add_argument(
             '--expires', metavar='DAYS', type=int, default=365 * 10,
             help='CA certificate expires in DAYS days (default: %(default)s).'
@@ -59,16 +64,12 @@ class Command(BaseCommand):
             raise CommandError("%s: private key already exists." % ca_settings.CA_KEY)
         if os.path.exists(ca_settings.CA_CRT):
             raise CommandError("%s: public key already exists." % ca_settings.CA_CRT)
-        try:
-            key_type = getattr(crypto, 'TYPE_%s' % CA_KEY_TYPE)
-        except:
-            raise CommandError("Unknown CA_KEY_TYPE: %s" % CA_KEY_TYPE)
 
         now = datetime.utcnow()
         expires = now + timedelta(days=options['expires'])
 
         key = crypto.PKey()
-        key.generate_key(key_type, settings.CA_BITSIZE)
+        key.generate_key(getattr(crypto, 'TYPE_%s' % options['key_type']), settings.CA_BITSIZE)
 
         cert = get_basic_cert(expires)
         cert.get_subject().C = country
