@@ -30,6 +30,7 @@ from django.core.management.base import CommandError
 
 from OpenSSL import crypto
 
+from django_ca.ca_settings import CA_KEY_TYPE
 from django_ca.utils import get_basic_cert
 
 
@@ -57,12 +58,16 @@ class Command(BaseCommand):
             raise CommandError("%s: private key already exists." % settings.CA_KEY)
         if os.path.exists(settings.CA_CRT):
             raise CommandError("%s: public key already exists." % settings.CA_CRT)
+        try:
+            key_type = getattr(crypto, 'TYPE_%s' % CA_KEY_TYPE)
+        except:
+            raise CommandError("Unknown CA_KEY_TYPE: %s" % CA_KEY_TYPE)
 
         now = datetime.utcnow()
         expires = now + timedelta(days=options['expires'])
 
         key = crypto.PKey()
-        key.generate_key(settings.CA_KEY_TYPE, settings.CA_BITSIZE)
+        key.generate_key(key_type, settings.CA_BITSIZE)
 
         cert = get_basic_cert(expires)
         cert.get_subject().C = country

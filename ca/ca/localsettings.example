@@ -28,7 +28,7 @@ DATABASES = {
 #CA_DIR = os.path.join(BASE_DIR, 'files')
 
 # The key type to use for create the ca private key
-#CA_KEY_TYPE = crypto.TYPE_RSA
+#CA_KEY_TYPE = "RSA"
 
 ###########################
 ### Certificate options ###

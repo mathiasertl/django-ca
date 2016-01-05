@@ -12,3 +12,9 @@ All settings used by **django-ca** start with the ``CA_`` prefix. Settings are
 also documented at :file:`ca/ca/localsettings.py.example`
 (`view on git
 <https://github.com/mathiasertl/django-ca/blob/master/ca/ca/localsettings.py.example>`_).
+
+CA_DIR
+   Default: ``ca/files``
+
+CA_KEY_TYPE
+   Default: ``RSA``

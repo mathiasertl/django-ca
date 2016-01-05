@@ -13,8 +13,13 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import os
+
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
+
+CA_DIR = getattr(settings, 'CA_DIR', os.path.join(settings.BASE_DIR, 'files'))
+CA_KEY_TYPE = getattr(settings, 'CA_KEY_TYPE', 'RSA')
 
 CA_PROFILES = getattr(settings, 'CA_PROFILES', {
     'client': {
