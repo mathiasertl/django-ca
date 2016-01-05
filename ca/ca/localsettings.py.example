@@ -3,7 +3,6 @@
 # for more information.
 
 import os
-from OpenSSL import crypto
 
 # BASEDIR is the directory above this file, where your manage.py file is located.
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -11,15 +10,28 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 # configure your database here:
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',  # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': '/etc/fsinf-ca/db.sqlite3',  # Or path to database file if using sqlite3.
-        # The following settings are not used with sqlite3:
+        # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'ENGINE': 'django.db.backends.',  
+        'NAME': '',
         'USER': '',
         'PASSWORD': '',
-        'HOST': '',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
-        'PORT': '',                      # Set to empty string for default.
+        'HOST': '',                      
+        'PORT': '',                      
     }
 }
+
+# This should be long, random and unique:
+SECRET_KEY = ''
+
+# Hostnames under which this project will be available. This setting is only required if you want
+# to run the admin webinterface.
+#ALLOWED_HOSTS = [
+#   'ca.example.com',
+#]
+
+# Where static files (CSS/JavaScript/...) should be collected to. This setting is only required if
+# you want to run the admin webinterface.
+#STATIC_ROOT = /var/www/ca.example.com/static
 
 ##################
 ### CA options ###
@@ -30,40 +42,34 @@ DATABASES = {
 ###########################
 ### Certificate options ###
 ###########################
-# The default algorithm used for signing certificates, use sha256 with older (pre 2010) clients.
+# The default algorithm used for signing certificates.
 #CA_DIGEST_ALGORITHM = 'sha512'
 
-#CA_PROFILES = {}
+# Allow this CA to issue certificates that an themself be used as CA.
 #CA_ALLOW_CA_CERTIFICATES = False
+
+# Override any existing CA profiles.
+#CA_PROFILES = {}
+
+# Default time in days for signed certificates to expire.
 #CA_DEFAULT_EXPIRES = getattr(settings, 'CA_DEFAULT_EXPIRES', 720)
+
+# Default profile used for signing certificates.
 #CA_DEFAULT_PROFILE = getattr(settings, 'CA_DEFAULT_PROFILE', 'webserver')
 
-# Any URL you have for your CA
+# Any URL you have for your CA, otherwise the CommonName from the root CA is copied.
 #CA_ISSUER_ALT_NAME = None
 
 # List of URLs where clients can fetch a CRL. The CRL can be generated with the "manage.py crl"
-# command. You have to take care of hosting the CRL.
+# command. You have to take care of hosting the CRL. More information:
+#       http://django-ca.readthedocs.org/en/latest/crl.html
 #CA_CRL_DISTRIBUTION_POINTS = []
 
 # URL of a OCSP service. Do not set this unless you actually intend to run an OCSP service, as
-# OCSP-enabled clients will reject a connection if the OCSP-service is not available.
+# OCSP-enabled clients will reject a connection if the OCSP-service is not available. You can
+# generate an OCSP index with "manage.py dump_ocsp_index". More information:
+#       http://django-ca.readthedocs.org/en/latest/ocsp.html
 #CA_OCSP = None
 
-# URL of the CA root certificate
+# Further information about the CA. This might just be an URL pointing to the root certificate.
 #CA_ISSUER = None
-
-# List of default key usage attributes for new certificates. See
-#   https://www.openssl.org/docs/apps/x509v3_config.html#key_usage_
-# for more information.
-#CA_KEY_USAGE = (
-#    'keyEncipherment',
-#    'keyAgreement',
-#    'digitalSignature',
-#)
-
-# List of default extended key usage attributes for new certificates. See
-#   https://www.openssl.org/docs/apps/x509v3_config.html#extended_key_usage_
-# for more information.
-#CA_EXT_KEY_USAGE = (
-#    'serverAuth',
-#)
