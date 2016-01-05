@@ -57,7 +57,7 @@ def format_date(date):
 def get_ca_key(reload=False):
     global _CA_KEY
     if _CA_KEY is None or reload is True:
-        with open(settings.CA_KEY) as ca_key:
+        with open(ca_settings.CA_KEY) as ca_key:
             _CA_KEY = crypto.load_privatekey(crypto.FILETYPE_PEM, ca_key.read())
     return _CA_KEY
 
@@ -65,7 +65,7 @@ def get_ca_key(reload=False):
 def get_ca_crt(reload=False):
     global _CA_CRT
     if _CA_CRT is None or reload is True:
-        with open(settings.CA_CRT) as ca_crt:
+        with open(ca_settings.CA_CRT) as ca_crt:
             _CA_CRT = crypto.load_certificate(crypto.FILETYPE_PEM, ca_crt.read())
     return _CA_CRT
 

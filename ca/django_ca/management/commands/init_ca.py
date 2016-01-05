@@ -31,6 +31,7 @@ from django.core.management.base import CommandError
 from OpenSSL import crypto
 
 from django_ca.ca_settings import CA_KEY_TYPE
+from django_ca import ca_settings
 from django_ca.utils import get_basic_cert
 
 
@@ -54,10 +55,10 @@ class Command(BaseCommand):
         parser.add_argument('cn', help='Common name for this CA.')
 
     def handle(self, country, state, city, org, ou, cn, **options):
-        if os.path.exists(settings.CA_KEY):
-            raise CommandError("%s: private key already exists." % settings.CA_KEY)
-        if os.path.exists(settings.CA_CRT):
-            raise CommandError("%s: public key already exists." % settings.CA_CRT)
+        if os.path.exists(ca_settings.CA_KEY):
+            raise CommandError("%s: private key already exists." % ca_settings.CA_KEY)
+        if os.path.exists(ca_settings.CA_CRT):
+            raise CommandError("%s: public key already exists." % ca_settings.CA_CRT)
         try:
             key_type = getattr(crypto, 'TYPE_%s' % CA_KEY_TYPE)
         except:
