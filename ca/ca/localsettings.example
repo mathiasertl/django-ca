@@ -33,8 +33,7 @@ DATABASES = {
 # The default algorithm used for signing certificates, use sha256 with older (pre 2010) clients.
 #CA_DIGEST_ALGORITHM = 'sha512'
 
-#CA_PROFILES = ...
-#CA_CUSTOM_PROFILES = {}
+#CA_PROFILES = {}
 #CA_ALLOW_CA_CERTIFICATES = False
 #CA_DEFAULT_EXPIRES = getattr(settings, 'CA_DEFAULT_EXPIRES', 720)
 #CA_DEFAULT_PROFILE = getattr(settings, 'CA_DEFAULT_PROFILE', 'webserver')

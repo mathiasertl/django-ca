@@ -19,9 +19,6 @@ CA_ALLOW_CA_CERTIFICATES
 CA_CRL_DISTRIBUTION_POINTS
    Default: ``[]``
 
-CA_CUSTOM_PROFILES
-   Default: ``{}``
-
 CA_DEFAULT_EXPIRES
    Default: ``720``
 
@@ -44,4 +41,4 @@ CA_OCSP
    Default: ``None``
 
 CA_PROFILES
-   Default:
+   Default: ``{}``
