@@ -43,6 +43,8 @@ liking, then simply run::
 After that, **django-ca** should show up in your admin interface and provide
 various ``manage.py`` commands (see :doc:`manage_commands`).
 
+.. _as-standalone:
+
 As standalone project
 _____________________
 
