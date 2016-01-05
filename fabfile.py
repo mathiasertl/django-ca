@@ -134,12 +134,12 @@ def deploy(section='DEFAULT'):
 
 
 def create_cert(name, **kwargs):
-    from django.conf import settings
     from django.core.management import call_command as manage
+    from django_ca import ca_settings
 
-    key = os.path.join(settings.CA_DIR, '%s.key' % name)
-    csr = os.path.join(settings.CA_DIR, '%s.csr' % name)
-    pem = os.path.join(settings.CA_DIR, '%s.pem' % name)
+    key = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
+    csr = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
+    pem = os.path.join(ca_settings.CA_DIR, '%s.pem' % name)
     subj = '/C=AT/ST=Vienna/L=Vienna/CN=%s-should-not-show-up/' % name
 
     with hide('everything'):
@@ -164,6 +164,7 @@ def init_demo():
     from django.conf import settings
     from django.contrib.auth import get_user_model
     from django.core.management import call_command as manage
+    from django_ca import ca_settings
     from django_ca.models import Certificate
     from django_ca.models import Watcher
     User = get_user_model()
@@ -171,7 +172,7 @@ def init_demo():
     if settings.DEBUG is not True:
         abort(red('Refusing to run if settings.DEBUG != True.'))
 
-    if os.path.exists(settings.CA_KEY) or os.path.exists(settings.CA_CRT):
+    if os.path.exists(ca_settings.CA_KEY) or os.path.exists(ca_settings.CA_CRT):
         abort(red('CA already set up.'))
 
     print(green('Creating database...'))
@@ -204,15 +205,15 @@ def init_demo():
     cert.save()
 
     print(green('Create CRL and OCSP index...'))
-    crl_path = os.path.join(settings.CA_DIR, 'crl.pem')
-    ocsp_index = os.path.join(settings.CA_DIR, 'ocsp_index.txt')
+    crl_path = os.path.join(ca_settings.CA_DIR, 'crl.pem')
+    ocsp_index = os.path.join(ca_settings.CA_DIR, 'ocsp_index.txt')
     manage('dump_crl', crl_path)
     manage('dump_ocsp_index', ocsp_index)
 
-    ca_crl_path = os.path.join(settings.CA_DIR, 'ca_crl.pem')
+    ca_crl_path = os.path.join(ca_settings.CA_DIR, 'ca_crl.pem')
 
     # Concat the CA certificate and the CRL, this is required by "openssl verify"
-    with open(crl_path) as crl, open(settings.CA_CRT) as ca_pem, open(ca_crl_path, 'w') as ca_crl:
+    with open(crl_path) as crl, open(ca_settings.CA_CRT) as ca_pem, open(ca_crl_path, 'w') as ca_crl:
         ca_crl.write(ca_pem.read())
         ca_crl.write(crl.read())
 
@@ -226,10 +227,10 @@ def init_demo():
     os.chdir('../')
     cwd = os.getcwd()
     rel = lambda p: os.path.relpath(p, cwd)
-    ca_crt = rel(settings.CA_CRT)
-    host1_pem = rel(os.path.join(settings.CA_DIR, 'host1.example.com.pem'))
+    ca_crt = rel(ca_settings.CA_CRT)
+    host1_pem = rel(os.path.join(ca_settings.CA_DIR, 'host1.example.com.pem'))
     print("")
-    print(green('* All certificates are in %s' % rel(settings.CA_KEY)))
+    print(green('* All certificates are in %s' % rel(ca_settings.CA_KEY)))
     print(green('* Verify with CRL:'))
     print('\topenssl verify -CAfile %s -crl_check %s' % (rel(ca_crl_path), rel(host1_pem)))
     print(green('* Run OCSP responder:'))
