@@ -1,8 +1,8 @@
 Installation
 ============
 
-As Django app (in an existing Django project)
-_____________________________________________
+As Django app (in an your Django project)
+_________________________________________
 
 This page assumes that you have an already running Django project and know how
 to use it.
