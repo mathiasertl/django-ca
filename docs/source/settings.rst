@@ -16,29 +16,136 @@ also documented at :file:`ca/ca/localsettings.py.example`
 CA_ALLOW_CA_CERTIFICATES
    Default: ``False``
 
+   Determines if the root CA is allowed to issue certificates that themself can
+   be used as a CA. Setting this to ``True`` will enable a ``ca`` profile that
+   can be used in both the admin webinterface or with ``manage.py sign_cert
+   --ca``. On a certificate level, this sets the `basicConstraints` x509
+   extension to ``CA:TRUE``.
+
 CA_CRL_DISTRIBUTION_POINTS
    Default: ``[]``
+
+   A list of valid URLs for a Certificate Revokation Lists. See :doc:`crl` for
+   more information.
+
+   .. WARNING:: Do not set this value unless you actually plan on hosting the
+      CRL. CRL-enabled clients will refuse to connect if the CRL cannot be found.
 
 CA_DEFAULT_EXPIRES
    Default: ``720``
 
+   The default time, in days, that any signed certificate expires.
+
 CA_DEFAULT_PROFILE
    Default: ``webserver``
+
+   The default profile to use.
 
 CA_DIGEST_ALGORITHM
    Default: ``"sha512"``
 
+   The default digest algorithm used to sign certificates. You may want to use
+   ``"sha256"`` for older (pre-2010) clients. Note that this setting is also
+   used by the ``init_ca`` command, so if you have any clients that do not
+   understand sha512 hashes, you should change this beforehand.
+
 CA_DIR
    Default: ``"ca/files"``
+
+   Where the root certificate is stored. The default is a ``files`` directory
+   in the same location as your ``manage.py`` file.
 
 CA_ISSUER
    Default: ``None``
 
+   Add a ``caIssuers`` value to the ``authorityInfoAccess`` x509 extension of
+   signed certificates. This is usually a URL where further information about
+   the CA can be retrieved.
+
 CA_ISSUER_ALT_NAME
    Default: ``None``
+
+   Set a value for the ``issuerAltName`` x509 extension. By default, the
+   CommonName from the root certificate is copied (the last parameter of the
+   ``init_ca`` command).
 
 CA_OCSP
    Default: ``None``
 
+   Location of an OCSP responder. This will add the ``OCSP`` value to the
+   ``authorityInfoAccess`` x509 extension of signed certificates. See
+   :ref:`ocsp` for more information.
+
+   .. WARNING:: Do not set this value unless you actually plan on hosting an
+      OCSP responder. OCSP-enabled clients will refuse to connect if there is
+      no actual OCSP service.
+
 CA_PROFILES
    Default: ``{}``
+
+   Profiles determine the default values for the ``keyUsage``,
+   ``extendedKeyUsage`` and ``basicConstraints`` x509 extensions. In short,
+   they determine how your certificate can be used, be it for server and/or
+   client authentication, e-mail signing or anything else. By default,
+   **django-ca** provides these profiles:
+
+   =========== ======================================== =======================
+   Profile     keyUsage                                 extendedKeyUsage
+   =========== ======================================== =======================
+   client      digitalSignature                         clientAuth
+   server      digitalSignature, keyAgreement           clientAuth, serverAuth
+               keyEncipherment
+   webserver   digitalSignature, keyAgreement           serverAuth
+               keyEncipherment
+   enduser     dataEncipherment, digitalSignature,      clientAuth,
+               keyEncipherment                          emailProtection,
+                                                        codeSigning
+   ocsp        nonRepudiation, talSignature,            OCSPSigning
+               keyEncipherment
+   ca          cRLSign, keyCertSign
+   =========== ======================================== =======================
+
+   Further more,
+
+   * The ``keyUsage`` attribute is marked as critical.
+   * The ``extendedKeyUsage`` attribute is marked as non-critical.
+   * All profiles have their ``basicConstraints`` marked as critical
+     ``CA:FALSE``, except the "ca" profile, which has critical ``CA:TRUE``.
+
+   This should be fine for most usecases. But you can use the ``CA_PROFILES``
+   setting to either update or disable existing profiles or add new profiles
+   that you like. For that, set ``CA_PROFILES`` to a dictionary with the keys
+   defining the profile name and the value being either:
+
+   * ``None`` to disable an existing profile.
+   * A dictionary defining the three controllable extensions, which are itself
+     a dictionary.
+
+   Here is a full example:
+
+     .. code-block:: python
+
+         CA_DEFAULT_PROFILES = {
+             'client': {
+                 'desc': _('desc will show up at "sign_cert -h" and in webinterface.'),
+                 'basicConstraints': {
+                     'critical': True,
+                     'value': 'CA:FALSE',
+                 },
+                 'keyUsage': {
+                     'critical': True,
+                     'value': [
+                        'digitalSignature',
+                     ],
+                 },
+                 'extendedKeyUsage': {
+                     'critical': False,
+                     'value': [
+                        'clientAuth',
+                     ],
+                  },
+              },
+
+              # We really don't like the "ocsp" profile, so we remove it.
+              'ocsp': None,
+         }
