@@ -20,9 +20,7 @@ from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 from django.utils import six
 
-from django_ca.ca_settings import CA_ALLOW_CA_CERTIFICATES
-from django_ca.ca_settings import CA_PROFILES
-from django_ca.ca_settings import CA_DEFAULT_EXPIRES
+from django_ca import ca_settings
 from django_ca.models import Certificate
 from django_ca.models import Watcher
 from django_ca.utils import get_cert_profile_kwargs
@@ -39,7 +37,7 @@ class Command(BaseCommand):
             '--cn-not-in-san', default=True, action='store_false', dest='cn_in_san',
             help='Do not add the CommonName as subjectAlternativeName.')
         parser.add_argument(
-            '--days', default=CA_DEFAULT_EXPIRES, type=int,
+            '--days', default=ca_settings.CA_DEFAULT_EXPIRES, type=int,
             help='Sign the certificate for DAYS days (default: %(default)s)')
         # TODO: make this a parent so we can also use it in init_ca
         parser.add_argument(
@@ -69,8 +67,8 @@ class Command(BaseCommand):
             'profiles', """Sign certificate based on the given profile. This overrides the
 --key-usage and --ext-key-usage arguments.""")
         group = group.add_mutually_exclusive_group()
-        for name, profile in CA_PROFILES.items():
-            if CA_ALLOW_CA_CERTIFICATES is False \
+        for name, profile in ca_settings.CA_PROFILES.items():
+            if ca_settings.CA_ALLOW_CA_CERTIFICATES is False \
                     and profile['basicConstraints']['value'] != 'CA:FALSE':
                 continue
 
