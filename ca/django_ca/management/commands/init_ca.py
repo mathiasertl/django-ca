@@ -73,6 +73,10 @@ class Command(BaseCommand):
             raise CommandError("%s: Key size must be a power of two." % options['key_size'])
         elif options['key_size'] < 2048:
             raise CommandError("%s: Key must have a size of at least 2048 bits." % options['key_size'])
+        for path in [ca_settings.CA_KEY, ca_settings.CA_CRT]:
+            path = os.path.dirname(path)
+            if not os.path.exists(path):
+                os.makedirs(path)
 
         now = datetime.utcnow()
         expires = now + timedelta(days=options['expires'])
