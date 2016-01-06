@@ -15,6 +15,8 @@
 
 from django_ca.management.base import CertCommand
 
+from django_ca.crl import write_crl
+
 
 class Command(CertCommand):
     help = "Revoke a certificate."
@@ -25,3 +27,4 @@ class Command(CertCommand):
 
     def handle(self, cert, **options):
         self.get_certificate(cert).revoke(reason=options.get('reason'))
+        write_crl()
