@@ -63,7 +63,7 @@ def get_crl_settings():
     settings.setdefault('days', 1)
     settings.setdefault('type', crypto.FILETYPE_PEM)
 
-    if isinstance(settings['type'], 'str'):
+    if isinstance(settings['type'], str):
         settings['type'] = getattr(crypto, 'FILETYPE_%s' % settings['type'])
     if isinstance(settings['digest'], str):
         settings['digest'] = bytes(settings['digest'], 'utf-8')
@@ -84,7 +84,7 @@ def write_crl():
 
     crl = get_crl(**settings)
     dirname = os.path.dirname(path)
-    if not os.path.exists(dirname):
+    if dirname and not os.path.exists(dirname):
         os.makedirs(dirname)
 
     with open(path, 'wb') as out:
