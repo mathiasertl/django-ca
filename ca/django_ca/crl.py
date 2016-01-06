@@ -35,7 +35,7 @@ def get_crl(**kwargs):
     type : int
     days : int
     digest : hash
-        Unlike the current pyOpenSSL default (md5), sha512 is used.
+        Unlike the current pyOpenSSL default (md5), sha512 is the default.
 
 
     Returns
@@ -54,24 +54,30 @@ def get_crl(**kwargs):
 def get_crl_settings():
     """Get CRL settings with appropriate defaults."""
 
-    if ca_settings.CA_CRL_SETTINGS is None:
-        return None
+    try:
+        settings = dict(ca_settings.CA_CRL_SETTINGS)
+    except TypeError:  # CA_CRL_SETTINGS is most likely None (not defined).
+        settings = {}
 
-    settings = dict(ca_settings.CA_CRL_SETTINGS)
-    if 'path' not in settings:
-        raise ValueError('"path" is a mandatory value.')
     settings.setdefault('digest', b'sha512')
     settings.setdefault('days', 1)
     settings.setdefault('type', crypto.FILETYPE_PEM)
+
+    if isinstance(settings['type'], 'str'):
+        settings['type'] = getattr(crypto, 'FILETYPE_%s' % settings['type'])
+    if isinstance(settings['digest'], str):
+        settings['digest'] = bytes(settings['digest'], 'utf-8')
+
     return settings
 
 
 def write_crl():
     """Write the CRL based on ``CA_CRL_SETTINGS``.
 
+    This method silently does nothing if no path is defined.
     """
     settings = get_crl_settings()
-    if settings is None:
+    if not settings.get('path'):
         return
 
     path = settings.pop('path')

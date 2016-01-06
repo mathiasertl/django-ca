@@ -65,6 +65,15 @@ SECRET_KEY = ''
 #       http://django-ca.readthedocs.org/en/latest/crl.html
 #CA_CRL_DISTRIBUTION_POINTS = []
 
+# Any default settings for automatically generating CRLs.
+#CA_CRL_SETTINGS = {
+#   # This will cause any certificate revokation to automatically regenerate the CRL.
+#   'path': '/var/www/ca.example.com/ca.crl',
+#   'digest': 'sha512',
+#   'type': 'PEM',
+#   'days': 1,
+#}
+
 # URL of a OCSP service. Do not set this unless you actually intend to run an OCSP service, as
 # OCSP-enabled clients will reject a connection if the OCSP-service is not available. You can
 # generate an OCSP index with "manage.py dump_ocsp_index". More information:

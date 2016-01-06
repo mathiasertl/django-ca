@@ -13,12 +13,14 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import os
+
 from argparse import FileType
 
 from django.core.management.base import CommandError
 
-from django_ca import ca_settings
 from django_ca.crl import get_crl
+from django_ca.crl import get_crl_settings
 from django_ca.management.base import BaseCommand
 from django_ca.management.base import format_parser
 
@@ -30,7 +32,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             '-d', '--days', type=int,
-            help="The number of days until the next update of this CRL (default: 100).")
+            help="The number of days until the next update of this CRL (default: 1).")
         parser.add_argument('--digest',
                             help="The name of the message digest to use (default: sha512).")
         parser.add_argument(
@@ -41,14 +43,22 @@ class Command(BaseCommand):
         super(Command, self).add_arguments(parser)
 
     def handle(self, path, **options):
-        if not path and not ca_settings.CA_CRL_PATH:
-            raise CommandError("CA_CRL_PATH setting required if no path provided.""")
-        if not path:
-            path = open(ca_settings.CA_CRL_PATH, 'wb')
+        kwargs = get_crl_settings()
 
-        kwargs = {
-            'type': options['format'],
-        }
+        if not path and not kwargs.get('path'):
+            raise CommandError("CA_CRL_SETTINGS setting required if no path is provided.""")
+
+        if not path:
+            path = kwargs.pop('path')
+            dirname = os.path.dirname(path)
+            if dirname and not os.path.exists(dirname):
+                os.makedirs(dirname)
+            path = open(path, 'wb')
+
+
+        if options['format']:
+            # TODO: this defaults to PEM, overriding the default from CA_CRL_SETTINGS
+            kwargs['type'] = options['format']
         if options['days']:
             kwargs['days'] = options['days']
         if options['digest']:
