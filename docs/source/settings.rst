@@ -31,6 +31,13 @@ CA_CRL_DISTRIBUTION_POINTS
    .. WARNING:: Do not set this value unless you actually plan on hosting the
       CRL. CRL-enabled clients will refuse to connect if the CRL cannot be found.
 
+CA_CRL_PATH
+   Default: ``None``
+
+   An absolute path where the CRL should be dumped to. If set, revoking a
+   certificate (either via webinterface or via command line) will automatically
+   update the CRL.
+
 CA_DEFAULT_EXPIRES
    Default: ``720``
 

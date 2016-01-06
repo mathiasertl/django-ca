@@ -17,6 +17,7 @@ from argparse import FileType
 
 from django.core.management.base import CommandError
 
+from django_ca import ca_settings
 from django_ca.crl import get_crl
 from django_ca.management.base import BaseCommand
 from django_ca.management.base import format_parser
@@ -32,10 +33,19 @@ class Command(BaseCommand):
             help="The number of days until the next update of this CRL (default: 100).")
         parser.add_argument('--digest',
                             help="The name of the message digest to use (default: sha512).")
-        parser.add_argument('path', type=FileType('wb'))
+        parser.add_argument(
+            'path', type=FileType('wb'), nargs='?',
+            help='''Path for the output file. Use "-" for stdout. If omitted, CA_CRL_PATH '''
+                 '''must be set.'''
+        )
         super(Command, self).add_arguments(parser)
 
     def handle(self, path, **options):
+        if not path and not ca_settings.CA_CRL_PATH:
+            raise CommandError("CA_CRL_PATH setting required if no path provided.""")
+        if not path:
+            path = open(ca_settings.CA_CRL_PATH, 'wb')
+
         kwargs = {
             'type': options['format'],
         }

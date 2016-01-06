@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import os
+
 from OpenSSL import crypto
 
 from django_ca.models import Certificate
@@ -46,3 +48,18 @@ def get_crl(**kwargs):
     for cert in Certificate.objects.revoked():
         crl.add_revoked(cert.get_revocation())
     return crl.export(get_ca_crt(), get_ca_key(), **kwargs)
+
+
+def write_crl(path, **kwargs):
+    """Write the CRL to the given path.
+
+    All kwargs are passed to get_crl.
+    """
+    crl = get_crl(**kwargs)
+    dirname = os.path.dirname(path)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+
+    with open(path, 'wb') as out:
+        out.write(crl)
+        out.flush()
