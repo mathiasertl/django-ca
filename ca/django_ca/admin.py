@@ -22,6 +22,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from .ca_settings import CA_ALLOW_CA_CERTIFICATES
+from .crl import write_crl
 from .forms import CreateCertificateForm
 from .models import Certificate
 from .models import Watcher
@@ -135,6 +136,7 @@ class CertificateAdmin(admin.ModelAdmin):
     def revoke(self, request, queryset):
         for cert in queryset:
             cert.revoke()
+        write_crl()
     revoke.short_description = _('Revoke selected certificates')
 
     def get_fieldsets(self, request, obj=None):
