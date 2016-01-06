@@ -59,7 +59,7 @@ class Certificate(models.Model):
     pub = models.TextField(null=False, blank=False, verbose_name=_('Public key'))
 
     cn = models.CharField(max_length=64, null=False, blank=False, verbose_name=_('CommonName'))
-    serial = models.CharField(max_length=35, null=False, blank=False)
+    serial = models.CharField(max_length=48, null=False, blank=False)
     revoked = models.BooleanField(default=False)
     revoked_date = models.DateTimeField(null=True, blank=True, verbose_name=_('Revoked on'))
     revoked_reason = models.CharField(max_length=32, null=True, blank=True,
