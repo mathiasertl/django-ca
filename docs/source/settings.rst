@@ -109,6 +109,12 @@ CA_OCSP
       OCSP responder. OCSP-enabled clients will refuse to connect if there is
       no actual OCSP service.
 
+CA_OCSP_INDEX_PATH
+   Default: ``None``
+
+   A path to dump the OCSP index to. Setting this value will cause
+   **django-ca** to regenerate the index whenever you revoke a certificate.
+
 CA_PROFILES
    Default: ``{}``
 

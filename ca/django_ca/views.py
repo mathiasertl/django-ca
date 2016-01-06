@@ -21,6 +21,7 @@ from django.views.generic.edit import UpdateView
 from .forms import RevokeCertificateForm
 from .models import Certificate
 from .crl import write_crl
+from .ocsp import write_index
 
 
 class RevokeCertificateView(UpdateView):
@@ -43,6 +44,7 @@ class RevokeCertificateView(UpdateView):
             form.instance.revoke(reason=reason)
             form.save()
             write_crl()
+            write_index()
 
         return super(RevokeCertificateView, self).form_valid(form)
 

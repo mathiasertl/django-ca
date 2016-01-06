@@ -13,8 +13,12 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import os
+import sys
+
 from datetime import datetime
 
+from . import ca_settings
 from .models import Certificate
 
 # We need a two-letter year, otherwise OCSP doesn't work
@@ -47,3 +51,26 @@ def get_index():
             'unknown',  # we don't save to any file
             cert.distinguishedName(),
         ])
+
+def write_index(path=None, stdout=None):
+    if path is None:
+        path = ca_settings.CA_OCSP_INDEX_PATH
+
+    # if path is still None, we don't do anything
+    if path is None:
+        return
+
+    if path == '-':
+        if stdout is None:
+            stdout = sys.stdout
+
+        for line in get_index():
+            stdout.write(line)
+    else:
+        dirname = os.path.dirname(path)
+        if dirname and not os.path.exists(dirname):
+            os.makedirs(dirname)
+
+        with open(path, 'w') as out:
+            for line in get_index():
+                out.write(line)

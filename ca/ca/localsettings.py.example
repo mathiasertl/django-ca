@@ -80,5 +80,9 @@ SECRET_KEY = ''
 #       http://django-ca.readthedocs.org/en/latest/ocsp.html
 #CA_OCSP = None
 
+# Where to dump the OCSP index to. Setting this will automatically regenerate the index whenever
+# you revoke a certificate.
+#CA_OCSP_INDEX_PATH = None
+
 # Further information about the CA. This might just be an URL pointing to the root certificate.
 #CA_ISSUER = None

@@ -26,6 +26,7 @@ from .crl import write_crl
 from .forms import CreateCertificateForm
 from .models import Certificate
 from .models import Watcher
+from .ocsp import write_index
 from .utils import get_cert
 from .views import RevokeCertificateView
 
@@ -137,6 +138,7 @@ class CertificateAdmin(admin.ModelAdmin):
         for cert in queryset:
             cert.revoke()
         write_crl()
+        write_index()
     revoke.short_description = _('Revoke selected certificates')
 
     def get_fieldsets(self, request, obj=None):
