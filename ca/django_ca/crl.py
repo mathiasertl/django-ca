@@ -17,6 +17,7 @@ import os
 
 from OpenSSL import crypto
 
+from django_ca import ca_settings
 from django_ca.models import Certificate
 from django_ca.utils import get_ca_crt
 from django_ca.utils import get_ca_key
@@ -50,12 +51,32 @@ def get_crl(**kwargs):
     return crl.export(get_ca_crt(), get_ca_key(), **kwargs)
 
 
-def write_crl(path, **kwargs):
-    """Write the CRL to the given path.
+def get_crl_settings():
+    """Get CRL settings with appropriate defaults."""
 
-    All kwargs are passed to get_crl.
+    if ca_settings.CA_CRL_SETTINGS is None:
+        return None
+
+    settings = dict(ca_settings.CA_CRL_SETTINGS)
+    if 'path' not in settings:
+        raise ValueError('"path" is a mandatory value.')
+    settings.setdefault('digest', b'sha512')
+    settings.setdefault('days', 1)
+    settings.setdefault('type', crypto.FILETYPE_PEM)
+    return settings
+
+
+def write_crl():
+    """Write the CRL based on ``CA_CRL_SETTINGS``.
+
     """
-    crl = get_crl(**kwargs)
+    settings = get_crl_settings()
+    if settings is None:
+        return
+
+    path = settings.pop('path')
+
+    crl = get_crl(**settings)
     dirname = os.path.dirname(path)
     if not os.path.exists(dirname):
         os.makedirs(dirname)
