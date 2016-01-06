@@ -28,7 +28,6 @@ See ChangeLog.md.
 2. Immediately rewrite CRL and index file when revoking a certificate.
 3. Only send out one notification if multiple certificates expire for a user.
 4. Add a 'renew' button in the admin interface.
-5. Fix format for serials from certificates (with ":").
 
 ## Test CRL and OCSP
 

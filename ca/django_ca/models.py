@@ -105,7 +105,8 @@ class Certificate(models.Model):
         if self.pk is None and not self.cn:
             self.cn = dict(self.x509.get_subject().get_components()).get(b'CN').decode('utf-8')
         if self.pk is None or self.serial is None:
-            self.serial = hex(self.x509.get_serial_number())[2:].upper()
+            s = hex(self.x509.get_serial_number())[2:].upper()
+            self.serial = ':'.join(a+b for a,b in zip(s[::2], s[1::2]))
         super(Certificate, self).save(*args, **kwargs)
 
     @property
