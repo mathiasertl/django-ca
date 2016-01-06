@@ -43,7 +43,7 @@ def get_index():
             status,
             cert.x509.get_notAfter().decode('utf-8'),
             revocation,
-            cert.serial,
+            cert.serial.replace(':', ''),
             'unknown',  # we don't save to any file
             cert.distinguishedName(),
         ])
