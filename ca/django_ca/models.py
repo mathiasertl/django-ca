@@ -159,6 +159,7 @@ class Certificate(models.Model):
 
         if self.revoked:
             r = crypto.Revoked()
+            # set_serial expects a str without the ':'
             r.set_serial(bytes(self.serial.replace(':', ''), 'utf-8'))
             if self.revoked_reason:
                 r.set_reason(bytes(self.revoked_reason, 'utf-8'))
