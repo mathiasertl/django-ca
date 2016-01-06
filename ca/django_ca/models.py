@@ -159,7 +159,7 @@ class Certificate(models.Model):
 
         if self.revoked:
             r = crypto.Revoked()
-            r.set_serial(bytes(self.serial, 'utf-8'))
+            r.set_serial(bytes(self.serial.replace(':', ''), 'utf-8'))
             if self.revoked_reason:
                 r.set_reason(bytes(self.revoked_reason, 'utf-8'))
             r.set_rev_date(bytes(format_date(self.revoked_date), 'utf-8'))
