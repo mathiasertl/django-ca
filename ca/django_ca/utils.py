@@ -267,8 +267,6 @@ def get_subjectAltName(names, cn=None):
             values.append('URI:%s' % name)
         elif '@' in name:
             values.append('email:%s' % name)
-        elif ':' in name:
-            values.append(name)
         else:
             values.append('DNS:%s' % name)
 
