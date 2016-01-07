@@ -24,19 +24,21 @@ from datetime import datetime
 from datetime import timedelta
 from getpass import getpass
 
-from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 
 from OpenSSL import crypto
 
 from django_ca import ca_settings
 from django_ca.utils import get_basic_cert
+from django_ca.management.base import BaseCommand
 
 
 class Command(BaseCommand):
     help = "Initiate a certificate authority."
 
     def add_arguments(self, parser):
+        self.add_algorithm(parser)
+
         type_choices = [t[5:] for t in dir(crypto) if t.startswith('TYPE_')]
         type_default = 'RSA' if 'RSA' in type_choices else type_choices[0]
         parser.add_argument(
@@ -78,6 +80,9 @@ class Command(BaseCommand):
             if not os.path.exists(path):
                 os.makedirs(path)
 
+        if not options['algorithm']:
+            options['algorithm'] = ca_settings.CA_DIGEST_ALGORITHM
+
         now = datetime.utcnow()
         expires = now + timedelta(days=options['expires'])
 
@@ -93,7 +98,7 @@ class Command(BaseCommand):
         cert.get_subject().CN = cn
         cert.set_issuer(cert.get_subject())
         cert.set_pubkey(key)
-        cert.sign(key, ca_settings.CA_DIGEST_ALGORITHM)
+        cert.sign(key, options['algorithm'])
 
         san = bytes('DNS:%s' % cn, 'utf-8')
         cert.add_extensions([
