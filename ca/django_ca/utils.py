@@ -253,7 +253,7 @@ def get_subjectAltName(names, cn=None):
             name = name.decode('utf-8')
 
         # Match any known literal values
-        if re.match('(email|URI|IP|DNS|RID|dirName|otherName):', name):
+        if re.match(SAN_OPTIONS_RE, name):
             values.append(name)
             continue
 
