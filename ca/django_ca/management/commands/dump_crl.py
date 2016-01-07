@@ -53,7 +53,7 @@ class Command(BaseCommand):
             if dirname and not os.path.exists(dirname):
                 os.makedirs(dirname)
             path = open(path, 'wb')
-        else:
+        elif 'path' in kwargs:
             kwargs.pop('path')
 
 
