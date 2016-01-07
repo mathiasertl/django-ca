@@ -82,8 +82,6 @@ class Command(BaseCommand):
             raise CommandError("Must give at least --cn or one or more --alt arguments.")
         elif not options['cn']:
             options['cn'] = options['alt'][0]  #TODO: strip any prefix
-        elif not options['alt']:
-            options['alt'] = [options['cn']]  #TODO: parameter not to do that
 
         if options['csr'] is None:
             print('Please paste the CSR:')
