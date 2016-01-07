@@ -24,10 +24,8 @@ See ChangeLog.md.
 
 ## ToDo
 
-1. Add setting for location of CRL and OCSP index (so we can automatically dump).
-2. Immediately rewrite CRL and index file when revoking a certificate.
-3. Only send out one notification if multiple certificates expire for a user.
-4. Add a 'renew' button in the admin interface.
+1. Only send out one notification if multiple certificates expire for a user.
+2. Add a 'renew' button in the admin interface.
 
 ## Test CRL and OCSP
 
