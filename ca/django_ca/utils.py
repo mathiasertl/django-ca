@@ -251,6 +251,11 @@ def get_subjectAltName(names, cn=None):
         if isinstance(name, bytes):
             name = name.decode('utf-8')
 
+        # Match any known literal values
+        if re.match('(email|URI|IP|DNS|RID|dirName|otherName):', name):
+            values.append(name)
+            continue
+
         try:
             ip_address(name)
             values.append('IP:%s' % name)
