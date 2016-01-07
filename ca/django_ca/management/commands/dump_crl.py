@@ -38,7 +38,7 @@ class Command(BaseCommand):
             help='''Path for the output file. Use "-" for stdout. If omitted, CA_CRL_PATH '''
                  '''must be set.'''
         )
-        self.add_format(parser)
+        self.add_format(parser, default=None)
         super(Command, self).add_arguments(parser)
 
     def handle(self, path, **options):
@@ -56,7 +56,6 @@ class Command(BaseCommand):
 
 
         if options['format']:
-            # TODO: this defaults to PEM, overriding the default from CA_CRL_SETTINGS
             kwargs['type'] = options['format']
         if options['days']:
             kwargs['days'] = options['days']
