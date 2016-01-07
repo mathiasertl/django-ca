@@ -38,17 +38,6 @@ class FormatAction(argparse.Action):
 
 class BaseCommand(_BaseCommand):
     certificate_queryset = Certificate.objects.filter(revoked=False)
-    parents = []
-
-    def add_parents(self, parser):
-        for parent in self.parents:
-            parser._add_container_actions(parent)
-            try:
-                defaults = parent._defaults
-            except AttributeError:
-                pass
-            else:
-                parser._defaults.update(defaults)
 
     def add_format(self, parser, default=crypto.FILETYPE_PEM):
         help_text = 'The format to use ("DER" is an alias for "ASN1"%s).'
@@ -63,10 +52,6 @@ class BaseCommand(_BaseCommand):
 
         parser.add_argument('-f', '--format', metavar='{PEM,ASN1,DER,TEXT}', default=default,
                             action=FormatAction, help=help_text)
-
-    def add_arguments(self, parser):
-        self.add_parents(parser)
-        super(BaseCommand, self).add_arguments(parser)
 
     def get_certificate(self, id):
         try:
