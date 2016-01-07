@@ -16,11 +16,11 @@
 from datetime import datetime
 from datetime import timedelta
 
-from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 from django.utils import six
 
 from django_ca import ca_settings
+from django_ca.management.base import BaseCommand
 from django_ca.models import Certificate
 from django_ca.models import Watcher
 from django_ca.utils import get_cert_profile_kwargs

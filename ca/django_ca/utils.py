@@ -37,6 +37,7 @@ _CA_CRT = None
 # Description strings for various X509 extensions, taken from "man x509v3_config".
 EXTENDED_KEY_USAGE_DESC = _('Purposes for which the certificate public key can be used for.')
 KEY_USAGE_DESC = _('Permitted key usages.')
+SAN_OPTIONS_RE = '(email|URI|IP|DNS|RID|dirName|otherName):'
 
 
 class LazyEncoder(DjangoJSONEncoder):
@@ -164,8 +165,8 @@ def get_cert(csr, expires, cn=None, cn_in_san=True, csr_format=crypto.FILETYPE_P
 
     # Process CommonName and subjectAltName extension.
     if cn is None:
+        cn = re.sub('^%s' % SAN_OPTIONS_RE, '', subjectAltName[0])
         subjectAltName = get_subjectAltName(subjectAltName)
-        _type, cn = subjectAltName[0].split(':', 1)[1]
     elif cn_in_san is True:
         if subjectAltName:
             subjectAltName = get_subjectAltName(subjectAltName, cn=cn)
