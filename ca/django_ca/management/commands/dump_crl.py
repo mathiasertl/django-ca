@@ -22,12 +22,10 @@ from django.core.management.base import CommandError
 from django_ca.crl import get_crl
 from django_ca.crl import get_crl_settings
 from django_ca.management.base import BaseCommand
-from django_ca.management.base import format_parser
 
 
 class Command(BaseCommand):
     help = "Write the certificate revocation list (CRL)."
-    parents = [format_parser]
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -40,6 +38,7 @@ class Command(BaseCommand):
             help='''Path for the output file. Use "-" for stdout. If omitted, CA_CRL_PATH '''
                  '''must be set.'''
         )
+        self.add_format(parser)
         super(Command, self).add_arguments(parser)
 
     def handle(self, path, **options):

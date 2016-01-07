@@ -36,13 +36,6 @@ class FormatAction(argparse.Action):
         setattr(namespace, self.dest, value)
 
 
-format_parser = argparse.ArgumentParser(add_help=False)
-format_parser.add_argument(
-    '-f', '--format', metavar='{PEM,ASN1,DER,TEXT}',
-    default=crypto.FILETYPE_PEM, action=FormatAction,
-    help='The format to use, default is PEM.')
-
-
 class BaseCommand(_BaseCommand):
     certificate_queryset = Certificate.objects.filter(revoked=False)
     parents = []
@@ -56,6 +49,20 @@ class BaseCommand(_BaseCommand):
                 pass
             else:
                 parser._defaults.update(defaults)
+
+    def add_format(self, parser, default=crypto.FILETYPE_PEM):
+        help_text = 'The format to use ("DER" is an alias for "ASN1"%s).'
+        if default == crypto.FILETYPE_PEM:
+            help_text %= ', default: PEM'
+        elif default == crypto.FILETYPE_ASN1:
+            help_text %= ', default: ASN1'
+        elif default == crypto.FILETYPE_TEXT:
+            help_text %= ', default: TEXT'
+        else:
+            help_text %= ''
+
+        parser.add_argument('-f', '--format', metavar='{PEM,ASN1,DER,TEXT}', default=default,
+                            action=FormatAction, help=help_text)
 
     def add_arguments(self, parser):
         self.add_parents(parser)

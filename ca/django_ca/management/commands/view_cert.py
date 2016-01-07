@@ -18,7 +18,6 @@ from datetime import datetime
 from OpenSSL import crypto
 
 from django_ca.management.base import CertCommand
-from django_ca.management.base import format_parser
 from django_ca.models import Certificate
 
 DATE_FMT = '%Y%m%d%H%M%SZ'
@@ -27,7 +26,6 @@ DATE_FMT = '%Y%m%d%H%M%SZ'
 class Command(CertCommand):
     help = 'View a certificate. The "list_certs" command lists all known certificates.'
     certificate_queryset = Certificate.objects.all()
-    parents = [format_parser, ]
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -36,6 +34,7 @@ class Command(CertCommand):
         parser.add_argument(
             '-e', '--extensions', default=False, action='store_true',
             help='Show all extensions, not just subjectAltName.')
+        self.add_format(parser)
         super(Command, self).add_arguments(parser)
 
     def handle(self, cert, **options):

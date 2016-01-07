@@ -20,17 +20,16 @@ from django.core.management.base import CommandError
 from OpenSSL import crypto
 
 from django_ca.management.base import CertCommand
-from django_ca.management.base import format_parser
 from django_ca.models import Certificate
 
 
 class Command(CertCommand):
     help = "Dump a certificate to a file."
     certificate_queryset = Certificate.objects.all()
-    parents = [format_parser, ]
 
     def add_arguments(self, parser):
         super(Command, self).add_arguments(parser)
+        self.add_format(parser)
         parser.add_argument('path', type=FileType('wb'),
                             help='Path where to dump the certificate. Use "-" for stdout.')
 
