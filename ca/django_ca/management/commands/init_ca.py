@@ -115,7 +115,6 @@ class Command(BaseCommand):
 
         oldmask = os.umask(247)
         with open(ca_settings.CA_KEY, 'w') as key_file:
-            # TODO: optionally add 'des3', 'passphrase' as args
             key = crypto.dump_privatekey(crypto.FILETYPE_PEM, key, *args)
             key_file.write(key.decode('utf-8'))
         with open(ca_settings.CA_CRT, 'w') as cert_file:
