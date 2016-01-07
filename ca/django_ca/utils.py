@@ -164,8 +164,8 @@ def get_cert(csr, expires, cn=None, cn_in_san=True, csr_format=crypto.FILETYPE_P
 
     # Process CommonName and subjectAltName extension.
     if cn is None:
-        cn = list(subjectAltName)[0]  #TODO: we should strip any valid prefix
         subjectAltName = get_subjectAltName(subjectAltName)
+        _type, cn = subjectAltName[0].split(':', 1)[1]
     elif cn_in_san is True:
         if subjectAltName:
             subjectAltName = get_subjectAltName(subjectAltName, cn=cn)
