@@ -21,6 +21,7 @@ from OpenSSL import crypto
 from django.core.management.base import BaseCommand as _BaseCommand
 from django.core.management.base import CommandError
 
+from django_ca import ca_settings
 from django_ca.models import Certificate
 
 
@@ -39,7 +40,16 @@ class FormatAction(argparse.Action):
 class BaseCommand(_BaseCommand):
     certificate_queryset = Certificate.objects.filter(revoked=False)
 
+    def add_algorithm(self, parser):
+        """Add the --algorithm option."""
+
+        parser.add_argument(
+            '--algorithm', metavar='{sha512,sha256,...}',
+            help='Algorithm to use (default: %s).' % ca_settings.CA_DIGEST_ALGORITHM)
+
     def add_format(self, parser, default=crypto.FILETYPE_PEM):
+        """Add the --format option."""
+
         help_text = 'The format to use ("DER" is an alias for "ASN1"%s).'
         if default == crypto.FILETYPE_PEM:
             help_text %= ', default: PEM'
