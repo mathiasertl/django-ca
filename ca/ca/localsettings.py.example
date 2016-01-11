@@ -31,7 +31,7 @@ SECRET_KEY = ''
 
 # Where static files (CSS/JavaScript/...) should be collected to. This setting is only required if
 # you want to run the admin webinterface.
-#STATIC_ROOT = /var/www/ca.example.com/static
+#STATIC_ROOT = '/var/www/ca.example.com/static'
 
 ##################
 ### CA options ###
