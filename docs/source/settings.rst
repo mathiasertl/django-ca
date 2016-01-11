@@ -61,7 +61,7 @@ CA_CRL_SETTINGS
       }
 
 CA_DEFAULT_EXPIRES
-   Default: ``720``
+   Default: ``730``
 
    The default time, in days, that any signed certificate expires.
 
