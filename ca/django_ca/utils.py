@@ -104,7 +104,7 @@ def get_cert_profile_kwargs(name=None):
     return kwargs
 
 
-def get_cert(csr, expires, cn=None, cn_in_san=True, csr_format=crypto.FILETYPE_PEM, algorithm=None,
+def get_cert(csr, expires, subject=None, cn_in_san=True, csr_format=crypto.FILETYPE_PEM, algorithm=None,
              basicConstraints='critical,CA:FALSE', subjectAltName=None, keyUsage=None,
              extendedKeyUsage=None):
     """Create a signed certificate from a CSR.
@@ -123,12 +123,16 @@ def get_cert(csr, expires, cn=None, cn_in_san=True, csr_format=crypto.FILETYPE_P
         A valid CSR in PEM format. If none is given, `self.csr` will be used.
     expires : datetime
         When the certificate should expire.
-    cn : str, optional
-        The CommonName to use in the certificate. If omitted, the first element of the
-        `subjectAltName` parameter is used (and is obviously mandatory in this case).
+    subject : dict, optional
+        The Subject to use in the certificate.  The keys of this dict are the fields of an X509
+        subject, that is `"C"`, `"ST"`, `"L"`, `"OU"` and `"CN"`. If ommited or if the value does
+        not contain a `"CN"` key, the first value of the `subjectAltName` parameter is used as
+        CommonName (and is obviously mandatory in this case).
     cn_in_san : bool, optional
         Wether the CommonName should also be included as subjectAlternativeName. The default is
-        `True`, but the parameter is ignored if no CommonName is given.
+        `True`, but the parameter is ignored if no CommonName is given. This is typically set to
+        `False` when creating a client certificate, where the subjects CommonName has no meaningful
+        value as subjectAltName.
     csr_format : int, optional
         The format of the submitted CSR request. One of the OpenSSL.crypto.FILETYPE_*
         constants. The default is PEM.
@@ -150,7 +154,9 @@ def get_cert(csr, expires, cn=None, cn_in_san=True, csr_format=crypto.FILETYPE_P
     OpenSSL.crypto.X509
         The signed certificate.
     """
-    if not cn and not subjectAltName:
+    if subject is None:
+        subject = {}
+    if not subject.get('CN') and not subjectAltName:
         raise ValueError("Must at least cn or subjectAltName parameter.")
 
     req = crypto.load_certificate_request(csr_format, csr)
@@ -164,14 +170,14 @@ def get_cert(csr, expires, cn=None, cn_in_san=True, csr_format=crypto.FILETYPE_P
     ca_key = get_ca_key()
 
     # Process CommonName and subjectAltName extension.
-    if cn is None:
-        cn = re.sub('^%s' % SAN_OPTIONS_RE, '', subjectAltName[0])
+    if subject.get('CN') is None:
+        subject['CN'] = re.sub('^%s' % SAN_OPTIONS_RE, '', subjectAltName[0])
         subjectAltName = get_subjectAltName(subjectAltName)
     elif cn_in_san is True:
         if subjectAltName:
-            subjectAltName = get_subjectAltName(subjectAltName, cn=cn)
+            subjectAltName = get_subjectAltName(subjectAltName, cn=subject['CN'])
         else:
-            subjectAltName = get_subjectAltName([cn])
+            subjectAltName = get_subjectAltName([subject['CN']])
 
     # subjectAltName might still be None, in which case the extension is not added.
     elif subjectAltName:
@@ -180,7 +186,8 @@ def get_cert(csr, expires, cn=None, cn_in_san=True, csr_format=crypto.FILETYPE_P
     # Create signed certificate
     cert = get_basic_cert(expires)
     cert.set_issuer(ca_crt.get_subject())
-    cert.get_subject().CN = cn
+    for key, value in subject.items():
+        setattr(cert.get_subject(), key, bytes(value, 'utf-8'))
     cert.set_pubkey(req.get_pubkey())
 
     extensions = [
