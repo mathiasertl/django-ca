@@ -125,7 +125,14 @@ class SubjectWidget(CustomMultiWidget):
     def decompress(self, value):
         if value is None:
             return ('', '', '', '', '', '')
-        return [value['C'], value['ST'], value['L'], value['O'], value['OU'], value['CN']]
+        return [
+            value.get('C', ''),
+            value.get('ST', ''),
+            value.get('L', ''),
+            value.get('O', ''),
+            value.get('OU', ''),
+            value.get('CN', ''),
+        ]
 
 
 class SubjectAltNameWidget(CustomMultiWidget):
