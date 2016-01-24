@@ -88,7 +88,10 @@ def get_cert_profile_kwargs(name=None):
         name = ca_settings.CA_DEFAULT_PROFILE
 
     profile = ca_settings.CA_PROFILES[name]
-    kwargs = {}
+    kwargs = {
+        'cn_in_san': profile['cn_in_san'],
+        'subject': profile['subject'],
+    }
     for arg in ['basicConstraints', 'keyUsage', 'extendedKeyUsage']:
         config = profile[arg]
         if config is None:
