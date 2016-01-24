@@ -70,6 +70,20 @@ CA_DEFAULT_PROFILE
 
    The default profile to use.
 
+CA_DEFAULT_SUBJECT
+   Default: ``{}``
+
+   The default subject to use. The keys of this dictionary are the valid fields
+   in X509 certificate subjects. Example::
+
+      CA_DEFAULT_SUBJECT = {
+         'C': 'AT',
+         'ST': 'Vienna',
+         'L': 'Vienna',
+         'O': 'HTU Wien',
+         'OU': 'Fachschaft Informatik',
+      }
+
 CA_DIGEST_ALGORITHM
    Default: ``"sha512"``
 
@@ -153,11 +167,21 @@ CA_PROFILES
    defining the profile name and the value being either:
 
    * ``None`` to disable an existing profile.
-   * A dictionary defining the three controllable extensions, which are itself
-     a dictionary.
+   * A dictionary defining the profile. If the name of the profile is an
+     existing profile, the dictionary is updated, so you can ommit a value to
+     leave it as the default. The possible keys are:
 
-   If you specify an existing profile, the existing profile will be updated, so
-   any keys not specified will be left untouched.
+     ====================== ======================================================================
+     key                    Description
+     ====================== ======================================================================
+     ``"keyUsage"``         The ``keyUsage`` X509 extension.
+     ``"extendedKeyUsage"`` The ``extendedKeyUsage`` X509 extension.
+     ``"desc"``             A human-readable description, shows up with "sing_cert -h" and in the
+                            webinterface profile selection.
+     ``"basicConstraints"`` The ``basicConstraints`` X509 extension.
+     ``"subject"``          The default subject to use. If ommited, ``CA_DEFAULT_SUBJECT`` is
+                            used.
+     ====================== ======================================================================
 
    Here is a full example:
 
@@ -165,7 +189,7 @@ CA_PROFILES
 
          CA_DEFAULT_PROFILES = {
              'client': {
-                 'desc': _('desc will show up at "sign_cert -h" and in the webinterface.'),
+                 'desc': _('Nice description.'),
                  'basicConstraints': {
                      'critical': True,
                      'value': 'CA:FALSE',
@@ -182,6 +206,10 @@ CA_PROFILES
                         'clientAuth',
                      ],
                   },
+                  'subject': {
+                     'C': 'AT',
+                     'L': 'Vienna',
+                  }
               },
 
               # We really don't like the "ocsp" profile, so we remove it.
