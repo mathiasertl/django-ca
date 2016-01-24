@@ -49,12 +49,39 @@ of subjectAltNames (given by --alt).""")
             help='Add the CommonName as subjectAlternativeName%s.' % (
                 ' (default)' if default else ''))
 
-    def add_arguments(self, parser):
-        self.add_algorithm(parser)
-        self.add_cn_in_san(parser)
-
-        parser.add_argument(
+    def add_subject(self, parser):
+        subject = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]['subject']
+        group = parser.add_argument_group(
+            'Certificate subject',
+            'The subject to use. Empty values are not included in the subject.')
+        group.add_argument(
+            '--C', metavar='CC',
+            help='Two-letter country code, e.g. "AT" (default: "%s").' % (subject.get('C') or '')
+        )
+        group.add_argument(
+            '--ST', metavar='STATE',
+            help='The state you are in (default "%s").' % (subject.get('ST') or '')
+        )
+        group.add_argument(
+            '--L', metavar='CITY',
+            help='The city you are in (default "%s").' % (subject.get('L') or '')
+        )
+        group.add_argument(
+            '--O', metavar='ORG',
+            help='Your organization (default: "%s").' % (subject.get('O') or '')
+        )
+        group.add_argument(
+            '--OU', metavar='ORGUNIT',
+            help='Your organizational unit (default: "%s").' % (subject.get('OU') or '')
+        )
+        group.add_argument(
             '--cn', help="CommonName to use. If omitted, the first --alt value will be used.")
+
+    def add_arguments(self, parser):
+        self.add_subject(parser)
+        self.add_cn_in_san(parser)
+        self.add_algorithm(parser)
+
         parser.add_argument(
             '--days', default=ca_settings.CA_DEFAULT_EXPIRES, type=int,
             help='Sign the certificate for DAYS days (default: %(default)s)')
