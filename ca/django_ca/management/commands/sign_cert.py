@@ -28,15 +28,33 @@ from django_ca.utils import get_cert
 
 
 class Command(BaseCommand):
-    help = "Sign a CSR and output signed certificate."
+    help = """Sign a CSR and output signed certificate. The defaults depend on the configured
+default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
+
+    def add_cn_in_san(self, parser):
+        default = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]['cn_in_san']
+
+        group = parser.add_argument_group(
+            'CommonName in subjectAltName',
+            """Whether or not to automatically include the CommonName (given by --cn) in the list
+of subjectAltNames (given by --alt).""")
+        group = group.add_mutually_exclusive_group()
+
+        group.add_argument(
+            '--cn-not-in-san', default=None, action='store_false', dest='cn_in_san',
+            help='Do not add the CommonName as subjectAlternativeName%s.' % (
+                ' (default)' if not default else ''))
+        group.add_argument(
+            '--cn-in-san', default=None, action='store_true', dest='cn_in_san',
+            help='Add the CommonName as subjectAlternativeName%s.' % (
+                ' (default)' if default else ''))
 
     def add_arguments(self, parser):
         self.add_algorithm(parser)
+        self.add_cn_in_san(parser)
+
         parser.add_argument(
             '--cn', help="CommonName to use. If omitted, the first --alt value will be used.")
-        parser.add_argument(
-            '--cn-not-in-san', default=True, action='store_false', dest='cn_in_san',
-            help='Do not add the CommonName as subjectAlternativeName.')
         parser.add_argument(
             '--days', default=ca_settings.CA_DEFAULT_EXPIRES, type=int,
             help='Sign the certificate for DAYS days (default: %(default)s)')
@@ -95,6 +113,8 @@ the default values, options like --key-usage still override the profile.""")
 
         # get keyUsage and extendedKeyUsage flags based on profiles
         kwargs = get_cert_profile_kwargs(options['profile'])
+        if options['cn_in_san'] is not None:
+            kwargs['cn_in_san'] = options['cn_in_san']
         if options['key_usage']:
             kwargs['keyUsage'] = self.parse_extension(options['key_usage'])
         if options['ext_key_usage']:
@@ -103,8 +123,7 @@ the default values, options like --key-usage still override the profile.""")
         expires = datetime.today() + timedelta(days=options['days'] + 1)
         expires = expires.replace(hour=0, minute=0, second=0, microsecond=0)
 
-        x509 = get_cert(csr=csr, cn=options['cn'], cn_in_san=options['cn_in_san'], expires=expires,
-                        subjectAltName=options['alt'], **kwargs)
+        x509 = get_cert(csr=csr, expires=expires, subjectAltName=options['alt'], **kwargs)
         cert = Certificate(csr=csr, expires=expires)
         cert.x509 = x509
         cert.save()
