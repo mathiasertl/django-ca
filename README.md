@@ -29,16 +29,23 @@ See ChangeLog.md.
 
 ## Test CRL and OCSP
 
-To create a demo certificate authority with an OCSP responder, simply use the `init_demo` fabfile
-target:
+To create a demo certificate authority with an OCSP responder, configure a minimal
+`ca/ca/localsettings.py`:
+
+```
+DEBUG = True
+SECRET_KEY = "whatever"
+```
+
+and simply execute the `init_demo` fabfile target:
 
 ```
 fab init_demo
 ```
 
-This will create all certificates in `ca/files` and tell you how to run the OCSP responder and
-verify via CRL and OCSP. Four server certificates are created, `host1.example.com` through
-`host4.example.com`, the first two are revoked.
+This will create all certificates in `ca/files`, a user named `user` with the password `nopass` and
+tell you how to run the OCSP responder and verify via CRL and OCSP. Four server certificates are
+created, `host1.example.com` through `host4.example.com`, the first two are revoked.
 
 ## License
 
