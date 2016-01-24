@@ -92,7 +92,7 @@ class CertificateAdmin(admin.ModelAdmin):
     ]
     add_fieldsets = [
         (None, {
-            'fields': ['cn', 'subject', 'subjectAltName', 'expires', 'watchers', 'csr', ],
+            'fields': ['subject', 'subjectAltName', 'expires', 'watchers', 'csr', ],
         }),
         (_('X509 Extensions'), {
             'fields': ['profile', 'keyUsage', 'extendedKeyUsage', 'basicConstraints', ]
@@ -192,7 +192,7 @@ class CertificateAdmin(admin.ModelAdmin):
             x509 = get_cert(
                 csr=data['csr'],
                 expires=data['expires'],
-                cn=data['cn'],
+                subject=data['subject'],
                 subjectAltName=[e.strip() for e in san.split(',')],
                 cn_in_san=cn_in_san,
                 basicConstraints=basicConstraints,
@@ -200,6 +200,7 @@ class CertificateAdmin(admin.ModelAdmin):
                 extendedKeyUsage=data['extendedKeyUsage'],
             )
 
+            obj.cn = x509.get_subject().CN
             obj.expires = data['expires']
             obj.pub = crypto.dump_certificate(crypto.FILETYPE_PEM, x509)
         obj.save()
