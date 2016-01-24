@@ -7,7 +7,7 @@ from OpenSSL import crypto
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-DEBUG = True
+DEBUG = False
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -81,7 +81,7 @@ STATICFILES_FINDERS = (
 )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = '8@e=1pls(zm+96k%bu!$na+wwsjg+d174dmw42=_it_@c!z8l('
+SECRET_KEY = ''
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
