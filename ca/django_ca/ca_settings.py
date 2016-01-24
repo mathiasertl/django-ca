@@ -25,7 +25,7 @@ CA_DIR = getattr(settings, 'CA_DIR', os.path.join(settings.BASE_DIR, 'files'))
 CA_KEY = getattr(settings, 'CA_KEY', os.path.join(CA_DIR, 'ca.key'))
 CA_CRT = getattr(settings, 'CA_CRT', os.path.join(CA_DIR, 'ca.crt'))
 
-CA_DEFAULT_PROFILES = {
+CA_PROFILES = {
     'client': {
         # see: http://security.stackexchange.com/questions/68491/
         'desc': _('A certificate for a client.'),
@@ -154,10 +154,14 @@ CA_DEFAULT_PROFILES = {
 }
 
 # Add ability just override/add some profiles
-_CA_PROFILES = getattr(settings, 'CA_PROFILES', {})
-if _CA_PROFILES:
-    CA_DEFAULT_PROFILES.update(_CA_PROFILES)
-CA_PROFILES = {p: v for p, v in CA_DEFAULT_PROFILES.items() if v}
+_CA_PROFILE_OVERRIDES = getattr(settings, 'CA_PROFILES', {})
+for name, profile in _CA_PROFILE_OVERRIDES.items():
+    if settings is None:
+        del CA_PROFILES[name]
+    elif name in CA_PROFILES:
+        CA_PROFILES[name].update(profile)
+    else:
+        CA_PROFILES[name] = profile
 
 CA_ALLOW_CA_CERTIFICATES = getattr(settings, 'CA_ALLOW_CA_CERTIFICATES', False)
 CA_DEFAULT_EXPIRES = getattr(settings, 'CA_DEFAULT_EXPIRES', 730)

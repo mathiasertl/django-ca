@@ -156,13 +156,16 @@ CA_PROFILES
    * A dictionary defining the three controllable extensions, which are itself
      a dictionary.
 
+   If you specify an existing profile, the existing profile will be updated, so
+   any keys not specified will be left untouched.
+
    Here is a full example:
 
      .. code-block:: python
 
          CA_DEFAULT_PROFILES = {
              'client': {
-                 'desc': _('desc will show up at "sign_cert -h" and in webinterface.'),
+                 'desc': _('desc will show up at "sign_cert -h" and in the webinterface.'),
                  'basicConstraints': {
                      'critical': True,
                      'value': 'CA:FALSE',
