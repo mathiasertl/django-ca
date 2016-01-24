@@ -35,6 +35,8 @@ class SubjectField(forms.MultiValueField):
             forms.CharField(required=False),  # OU
             forms.CharField(),  # CN
         )
+        initial = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get('subject', {})
+        kwargs.setdefault('initial', initial)
         kwargs.setdefault('widget', SubjectWidget)
         super(SubjectField, self).__init__(fields=fields, require_all_fields=False,
                                            *args, **kwargs)
