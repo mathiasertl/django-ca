@@ -1,2 +1,2 @@
 Fabric3==1.10.2.post1
-ipython==4.0.1
+ipython==4.0.3
