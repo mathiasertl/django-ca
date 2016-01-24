@@ -181,6 +181,7 @@ CA_PROFILES
      ``"basicConstraints"`` The ``basicConstraints`` X509 extension.
      ``"subject"``          The default subject to use. If ommited, ``CA_DEFAULT_SUBJECT`` is
                             used.
+     ``"cn_in_san"``        If to include the CommonName in the subjectAltName by default.
      ====================== ======================================================================
 
    Here is a full example:

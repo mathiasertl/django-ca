@@ -114,6 +114,7 @@ CA_PROFILES = {
                 'emailProtection',
             ],
         },
+        'cn_in_san': False,
     },
     'ocsp': {
         'desc': _('A certificate for an OCSP responder.'),
@@ -156,6 +157,7 @@ CA_PROFILES = {
 _CA_DEFAULT_SUBJECT = getattr(settings, 'CA_DEFAULT_SUBJECT', {})
 for name, profile in CA_PROFILES.items():
     profile['subject'] = _CA_DEFAULT_SUBJECT
+    profile.setdefault('cn_in_san', True)
 
 # Add ability just override/add some profiles
 _CA_PROFILE_OVERRIDES = getattr(settings, 'CA_PROFILES', {})
@@ -165,8 +167,8 @@ for name, profile in _CA_PROFILE_OVERRIDES.items():
     elif name in CA_PROFILES:
         CA_PROFILES[name].update(profile)
     else:
-        if 'subject' not in 'profile':
-            profile['subject'] = _CA_DEFAULT_SUBJECT
+        profile.setdefault('subject', _CA_DEFAULT_SUBJECT)
+        profile.setdefault('cn_in_san', True)
         CA_PROFILES[name] = profile
 
 CA_ALLOW_CA_CERTIFICATES = getattr(settings, 'CA_ALLOW_CA_CERTIFICATES', False)
