@@ -11,6 +11,28 @@ django.jQuery(document).ready(function() {
         }
 
         profile = ca_profiles[this.value];
+
+        // set subject
+        var subject = profile.subject;
+        if (typeof subject.C !== 'undefined') {
+            django.jQuery('.field-subject #country input').val(subject.C);
+        }
+        if (typeof subject.ST !== 'undefined') {
+            django.jQuery('.field-subject #state input').val(subject.ST);
+        }
+        if (typeof subject.L !== 'undefined') {
+            django.jQuery('.field-subject #location input').val(subject.L);
+        }
+        if (typeof subject.O !== 'undefined') {
+            django.jQuery('.field-subject #organization input').val(subject.O);
+        }
+        if (typeof subject.OU !== 'undefined') {
+            django.jQuery('.field-subject #organizational-unit input').val(subject.OU);
+        }
+        if (typeof subject.CN !== 'undefined') {
+            django.jQuery('.field-subject #commonname input').val(subject.CN);
+        }
+
         // update extensions
         extensions = ['basicConstraints', 'keyUsage', 'extendedKeyUsage']
         extensions.map(function(ext) {
