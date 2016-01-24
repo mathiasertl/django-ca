@@ -61,8 +61,8 @@ class Command(BaseCommand):
             help='Override the extendedKeyUsage extension, e.g. "serverAuth,clientAuth".')
 
         group = parser.add_argument_group(
-            'profiles', """Sign certificate based on the given profile. This overrides the
---key-usage and --ext-key-usage arguments.""")
+            'profiles', """Sign certificate based on the given profile. A profile only sets the
+the default values, options like --key-usage still override the profile.""")
         group = group.add_mutually_exclusive_group()
         for name, profile in ca_settings.CA_PROFILES.items():
             if ca_settings.CA_ALLOW_CA_CERTIFICATES is False \
