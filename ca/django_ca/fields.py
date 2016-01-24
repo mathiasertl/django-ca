@@ -56,6 +56,8 @@ class SubjectAltNameField(forms.MultiValueField):
             forms.BooleanField(required=False),
         )
         kwargs.setdefault('widget', SubjectAltNameWidget)
+        initial = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get('cn_in_san', True)
+        kwargs.setdefault('initial', ['', initial])
         super(SubjectAltNameField, self).__init__(
             fields=fields, require_all_fields=False, *args, **kwargs)
 
