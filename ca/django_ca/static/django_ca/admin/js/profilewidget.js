@@ -33,6 +33,17 @@ django.jQuery(document).ready(function() {
             django.jQuery('.field-subject #commonname input').val(subject.CN);
         }
 
+        // set wether to include the CommonName in the subjectAltName
+        cn_in_san = '.field-subjectAltName .critical-widget-wrapper input';
+        console.log(profile.cn_in_san);
+        if (typeof profile.cn_in_san === 'undefined' || profile.cn_in_san) {
+            console.log('set to true');
+            django.jQuery(cn_in_san).prop('checked', true);
+        } else {
+            console.log('set to false');
+            django.jQuery(cn_in_san).prop('checked', false);
+        }
+
         // update extensions
         extensions = ['basicConstraints', 'keyUsage', 'extendedKeyUsage']
         extensions.map(function(ext) {
