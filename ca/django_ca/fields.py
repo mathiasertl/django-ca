@@ -52,7 +52,7 @@ class SubjectField(forms.MultiValueField):
 class SubjectAltNameField(forms.MultiValueField):
     def __init__(self, *args, **kwargs):
         fields = (
-            forms.CharField(),
+            forms.CharField(required=False),
             forms.BooleanField(required=False),
         )
         kwargs.setdefault('widget', SubjectAltNameWidget)
