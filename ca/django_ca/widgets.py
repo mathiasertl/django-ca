@@ -44,6 +44,29 @@ class LabeledCheckboxInput(widgets.CheckboxInput):
         }
 
 
+class LabeledTextInput(widgets.TextInput):
+    """CheckboxInput widget that adds a label and wraps everything in a <span />.
+
+    This is necessary because widgets in MultiValueFields don't render with a label."""
+
+    def __init__(self, label, *args, **kwargs):
+        self.label = label
+        super(LabeledTextInput, self).__init__(*args, **kwargs)
+
+    def render(self, name, value, attrs=None):
+        html = super(LabeledTextInput, self).render(name, value, attrs=attrs)
+        label = '<label for="%s">%s</label>' % (attrs.get('id'), self.label)
+
+        cssid = self.label.lower().replace(' ', '-')
+        html = '<span id="%s" class="labeled-text-multiwidget">%s%s</span>' % (cssid, html, label)
+        return html
+
+    class Media:
+        css = {
+            'all': ('django_ca/admin/css/labeledtextinput.css', ),
+        }
+
+
 class ProfileWidget(widgets.Select):
     def render(self, name, value, attrs=None):
         html = super(ProfileWidget, self).render(name, value, attrs=attrs)
@@ -81,6 +104,24 @@ class CustomMultiWidget(widgets.MultiWidget):
         rendered_widgets.insert(0, '<p class="multi-widget">')
         rendered_widgets.append('</p>')
         return ''.join(rendered_widgets)
+
+
+class SubjectWidget(CustomMultiWidget):
+    def __init__(self, attrs=None):
+        _widgets = (
+            LabeledTextInput(label=_('Country')),
+            LabeledTextInput(label=_('State')),
+            LabeledTextInput(label=_('Location')),
+            LabeledTextInput(label=_('Organization')),
+            LabeledTextInput(label=_('Organizational Unit')),
+            LabeledTextInput(label=_('CommonName')),
+        )
+        super(SubjectWidget, self).__init__(_widgets, attrs)
+
+    def decompress(self, value):
+        if value:
+            return value
+        return ('', '', '', '', '', '')
 
 
 class SubjectAltNameWidget(CustomMultiWidget):

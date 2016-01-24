@@ -16,10 +16,29 @@
 from django import forms
 
 from .widgets import SubjectAltNameWidget
+from .widgets import SubjectWidget
 from .widgets import BasicConstraintsWidget
 from .widgets import KeyUsageWidget
 
 from . import ca_settings
+
+
+class SubjectField(forms.MultiValueField):
+    def __init__(self, *args, **kwargs):
+        fields = (
+            forms.CharField(),  # C
+            forms.CharField(),  # ST
+            forms.CharField(),  # L
+            forms.CharField(),  # O
+            forms.CharField(),  # OU
+            forms.CharField(),  # CN
+        )
+        kwargs.setdefault('widget', SubjectWidget)
+        super(SubjectField, self).__init__(fields=fields, require_all_fields=False,
+                                           *args, **kwargs)
+
+    def compress(self, values):
+        return values
 
 
 class SubjectAltNameField(forms.MultiValueField):
