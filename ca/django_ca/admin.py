@@ -92,10 +92,10 @@ class CertificateAdmin(admin.ModelAdmin):
     ]
     add_fieldsets = [
         (None, {
-            'fields': ['subject', 'subjectAltName', 'expires', 'watchers', 'csr', ],
+            'fields': ['csr', 'profile', 'subject', 'subjectAltName', 'expires', 'watchers', ],
         }),
         (_('X509 Extensions'), {
-            'fields': ['profile', 'keyUsage', 'extendedKeyUsage', 'basicConstraints', ]
+            'fields': ['keyUsage', 'extendedKeyUsage', 'basicConstraints', ]
         }),
     ]
 
