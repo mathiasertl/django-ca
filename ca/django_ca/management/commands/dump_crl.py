@@ -1,83 +1,74 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of fsinf-certificate-authority
-# (https://github.com/fsinf/certificate-authority).
+# This file is part of django-ca (https://github.com/mathiasertl/django-ca).
 #
-# fsinf-certificate-authority is free software: you can redistribute it and/or modify it under the
-# terms of the GNU General Public License as published by the Free Software Foundation, either
-# version 3 of the License, or (at your option) any later version.
+# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU
+# General Public License as published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
 #
-# fsinf-certificate-authority is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-# PURPOSE.  See the GNU General Public License for more details.
+# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License along with
-# fsinf-certificate-authority.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with django-ca.  If not,
+# see <http://www.gnu.org/licenses/>.
 
-from __future__ import unicode_literals
+import os
 
-from datetime import datetime
 from argparse import FileType
 
-from django.conf import settings
-from django.core.management.base import BaseCommand
+from django.core.management.base import CommandError
 
-from OpenSSL import crypto
-
-from django_ca.models import Certificate
-from django_ca.utils import get_ca_crt
-from django_ca.utils import get_ca_key
-
-# We need a two-letter year, otherwise OCSP doesn't work
-date_format = '%y%m%d%H%M%SZ'
+from django_ca.crl import get_crl
+from django_ca.crl import get_crl_settings
+from django_ca.management.base import BaseCommand
 
 
 class Command(BaseCommand):
     help = "Write the certificate revocation list (CRL)."
 
     def add_arguments(self, parser):
-        parser.add_argument('path', type=FileType('w'))
+        parser.add_argument(
+            '-d', '--days', type=int,
+            help="The number of days until the next update of this CRL (default: 1).")
+        parser.add_argument('--digest',
+                            help="The name of the message digest to use (default: sha512).")
+        parser.add_argument(
+            'path', type=FileType('wb'), nargs='?',
+            help='''Path for the output file. Use "-" for stdout. If omitted, CA_CRL_PATH '''
+                 '''must be set.'''
+        )
+        self.add_format(parser, default=None)
+        super(Command, self).add_arguments(parser)
 
     def handle(self, path, **options):
-        crl = crypto.CRL()
-        index = []
-        now = datetime.utcnow()
+        kwargs = get_crl_settings()
 
-        for cert in Certificate.objects.all():
-            revocation = ''
-            if cert.expires < now:
-                status = 'E'
-            elif cert.revoked:
-                status = 'R'
-                crl.add_revoked(cert.get_revocation())  # add to CRL
+        if not path and not kwargs.get('path'):
+            raise CommandError("CA_CRL_SETTINGS setting required if no path is provided.""")
 
-                revocation = cert.revoked_date.strftime(date_format)
-                if cert.revoked_reason:
-                    revocation += ',%s' % cert.revoked_reason
-            else:
-                status = 'V'
+        if not path:
+            path = kwargs.pop('path')
+            dirname = os.path.dirname(path)
+            if dirname and not os.path.exists(dirname):
+                os.makedirs(dirname)
+            path = open(path, 'wb')
+        elif 'path' in kwargs:
+            kwargs.pop('path')
 
-            # Format see: http://pki-tutorial.readthedocs.org/en/latest/cadb.html
-            index.append((
-                status,
-                cert.x509.get_notAfter().decode('utf-8'),
-                revocation,
-                cert.serial,
-                'unknown',  # we don't save to any file
-                cert.distinguishedName,
-            ))
 
-        # Write CRL
-        crl = crl.export(get_ca_crt(), get_ca_key())
-        path.write(crl.decode('utf-8'))
+        if options['format']:
+            kwargs['type'] = options['format']
+        if options['days']:
+            kwargs['days'] = options['days']
+        if options['digest']:
+            kwargs['digest'] = bytes(options['digest'], 'utf-8')
 
-        # Write index file (required by "openssl ocsp")
-        with open(settings.CA_INDEX, 'w') as index_file:
-            for entry in index:
-                index_file.write('%s\n' % '\t'.join(entry))
+        crl = get_crl(**kwargs)
+        if 'b' not in path.mode:  # writing to stdout
+            if kwargs['type'] == 'asn1':
+                raise CommandError("ASN1 cannot be reliably printed to stdout.")
 
-        # Write cafile (required by "openssl ocsp")
-        with open(settings.CA_CRT) as ca_file, open(settings.CA_FILE_PEM, 'w') as out:
-            ca = ca_file.read()
-            out.write(ca)
-            out.write(crl.decode('utf-8'))
+            crl = crl.decode('utf-8')
+        path.write(crl)
+        path.flush()  # Make sure contents are written to disk (required by fab init_demo)

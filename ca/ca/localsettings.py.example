@@ -1,0 +1,88 @@
+# This is an example localsettings.py file for django-ca. Also see
+#   http://django-ca.readthedocs.org/en/latest/settings.html
+# for more information.
+
+import os
+
+# BASEDIR is the directory above this file, where your manage.py file is located.
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+
+# configure your database here:
+DATABASES = {
+    'default': {
+        # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'ENGINE': 'django.db.backends.',  
+        'NAME': '',
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': '',                      
+        'PORT': '',                      
+    }
+}
+
+# This should be long, random and unique:
+SECRET_KEY = ''
+
+# Hostnames under which this project will be available. This setting is only required if you want
+# to run the admin webinterface.
+#ALLOWED_HOSTS = [
+#   'ca.example.com',
+#]
+
+# Where static files (CSS/JavaScript/...) should be collected to. This setting is only required if
+# you want to run the admin webinterface.
+#STATIC_ROOT = '/var/www/ca.example.com/static'
+
+##################
+### CA options ###
+##################
+# The directory where your CA files are located
+#CA_DIR = os.path.join(BASE_DIR, 'files')
+
+###########################
+### Certificate options ###
+###########################
+# The default algorithm used for signing certificates.
+#CA_DIGEST_ALGORITHM = 'sha512'
+
+# Allow this CA to issue certificates that an themself be used as CA.
+#CA_ALLOW_CA_CERTIFICATES = False
+
+# Override any existing CA profiles.
+#CA_PROFILES = {}
+
+# Default time in days for signed certificates to expire.
+#CA_DEFAULT_EXPIRES = getattr(settings, 'CA_DEFAULT_EXPIRES', 730)
+
+# Default profile used for signing certificates.
+#CA_DEFAULT_PROFILE = getattr(settings, 'CA_DEFAULT_PROFILE', 'webserver')
+
+# Any URL you have for your CA, otherwise the CommonName from the root CA is copied.
+#CA_ISSUER_ALT_NAME = None
+
+# List of URLs where clients can fetch a CRL. The CRL can be generated with the "manage.py crl"
+# command. You have to take care of hosting the CRL. More information:
+#       http://django-ca.readthedocs.org/en/latest/crl.html
+#CA_CRL_DISTRIBUTION_POINTS = []
+
+# Any default settings for automatically generating CRLs.
+#CA_CRL_SETTINGS = {
+#   # This will cause any certificate revokation to automatically regenerate the CRL.
+#   'path': '/var/www/ca.example.com/ca.crl',
+#   'digest': 'sha512',
+#   'type': 'PEM',
+#   'days': 1,
+#}
+
+# URL of a OCSP service. Do not set this unless you actually intend to run an OCSP service, as
+# OCSP-enabled clients will reject a connection if the OCSP-service is not available. You can
+# generate an OCSP index with "manage.py dump_ocsp_index". More information:
+#       http://django-ca.readthedocs.org/en/latest/ocsp.html
+#CA_OCSP = None
+
+# Where to dump the OCSP index to. Setting this will automatically regenerate the index whenever
+# you revoke a certificate.
+#CA_OCSP_INDEX_PATH = None
+
+# Further information about the CA. This might just be an URL pointing to the root certificate.
+#CA_ISSUER = None

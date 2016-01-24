@@ -1,25 +1,22 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of fsinf-certificate-authority
-# (https://github.com/fsinf/certificate-authority).
+# This file is part of django-ca (https://github.com/mathiasertl/django-ca).
 #
-# fsinf-certificate-authority is free software: you can redistribute it and/or modify it under the
-# terms of the GNU General Public License as published by the Free Software Foundation, either
-# version 3 of the License, or (at your option) any later version.
+# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU
+# General Public License as published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
 #
-# fsinf-certificate-authority is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-# PURPOSE.  See the GNU General Public License for more details.
+# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License along with
-# fsinf-certificate-authority.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with django-ca.  If not,
+# see <http://www.gnu.org/licenses/>.
 
 """
 Inspired by:
 https://skippylovesmalorie.wordpress.com/2010/02/12/how-to-generate-a-self-signed-certificate-using-pyopenssl/
 """
-
-from __future__ import unicode_literals
 
 import os
 
@@ -27,19 +24,30 @@ from datetime import datetime
 from datetime import timedelta
 from getpass import getpass
 
-from django.conf import settings
-from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 
 from OpenSSL import crypto
 
-from django_ca.utils import get_cert
+from django_ca import ca_settings
+from django_ca.utils import get_basic_cert
+from django_ca.management.base import BaseCommand
 
 
 class Command(BaseCommand):
     help = "Initiate a certificate authority."
 
     def add_arguments(self, parser):
+        self.add_algorithm(parser)
+
+        type_choices = [t[5:] for t in dir(crypto) if t.startswith('TYPE_')]
+        type_default = 'RSA' if 'RSA' in type_choices else type_choices[0]
+        parser.add_argument(
+            '--key-type', choices=type_choices, default=type_default,
+            help="Key type for the CA private key (default: %(default)s).")
+        parser.add_argument(
+            '--key-size', type=int, default=4096, metavar='{2048,4096,8192,...}',
+            help="Size of the key to generate (default: %(default)s).")
+
         parser.add_argument(
             '--expires', metavar='DAYS', type=int, default=365 * 10,
             help='CA certificate expires in DAYS days (default: %(default)s).'
@@ -56,18 +64,32 @@ class Command(BaseCommand):
         parser.add_argument('cn', help='Common name for this CA.')
 
     def handle(self, country, state, city, org, ou, cn, **options):
-        if os.path.exists(settings.CA_KEY):
-            raise CommandError("%s: private key already exists." % settings.CA_KEY)
-        if os.path.exists(settings.CA_CRT):
-            raise CommandError("%s: public key already exists." % settings.CA_CRT)
+        if os.path.exists(ca_settings.CA_KEY):
+            raise CommandError("%s: private key already exists." % ca_settings.CA_KEY)
+        if os.path.exists(ca_settings.CA_CRT):
+            raise CommandError("%s: public key already exists." % ca_settings.CA_CRT)
+
+        # check that the bitsize is a power of two
+        is_power2 = lambda num: num != 0 and ((num & (num - 1)) == 0)
+        if not is_power2(options['key_size']):
+            raise CommandError("%s: Key size must be a power of two." % options['key_size'])
+        elif options['key_size'] < 2048:
+            raise CommandError("%s: Key must have a size of at least 2048 bits." % options['key_size'])
+        for path in [ca_settings.CA_KEY, ca_settings.CA_CRT]:
+            path = os.path.dirname(path)
+            if not os.path.exists(path):
+                os.makedirs(path)
+
+        if not options['algorithm']:
+            options['algorithm'] = ca_settings.CA_DIGEST_ALGORITHM
 
         now = datetime.utcnow()
         expires = now + timedelta(days=options['expires'])
 
         key = crypto.PKey()
-        key.generate_key(settings.CA_KEY_TYPE, settings.CA_BITSIZE)
+        key.generate_key(getattr(crypto, 'TYPE_%s' % options['key_type']), options['key_size'])
 
-        cert = get_cert(expires)
+        cert = get_basic_cert(expires)
         cert.get_subject().C = country
         cert.get_subject().ST = state
         cert.get_subject().L = city
@@ -76,7 +98,7 @@ class Command(BaseCommand):
         cert.get_subject().CN = cn
         cert.set_issuer(cert.get_subject())
         cert.set_pubkey(key)
-        cert.sign(key, settings.DIGEST_ALGORITHM)
+        cert.sign(key, options['algorithm'])
 
         san = bytes('DNS:%s' % cn, 'utf-8')
         cert.add_extensions([
@@ -92,16 +114,15 @@ class Command(BaseCommand):
         if options['password'] is None:
             args = []
         elif options['password'] == '':
-            args = [str('des3'), getpass()]
+            args = ['des3', getpass()]
         else:
-            args = [str('des3'), options['password']]
+            args = ['des3', options['password']]
 
         oldmask = os.umask(247)
-        with open(settings.CA_KEY, 'w') as key_file:
-            # TODO: optionally add 'des3', 'passphrase' as args
+        with open(ca_settings.CA_KEY, 'w') as key_file:
             key = crypto.dump_privatekey(crypto.FILETYPE_PEM, key, *args)
             key_file.write(key.decode('utf-8'))
-        with open(settings.CA_CRT, 'w') as cert_file:
+        with open(ca_settings.CA_CRT, 'w') as cert_file:
             cert = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
             cert_file.write(cert.decode('utf-8'))
         os.umask(oldmask)

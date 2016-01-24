@@ -44,6 +44,10 @@ app-venv =
 # Set to "False" if "manage.py collectstatic" should not be called when deploying.
 #app-collectstatic = True
 
+# If your project is run by UWSGI emperor, name the full path of the vassals file here to
+# automatically restart it.
+#app-uwsgi-vassal = /etc/uwsgi-emperor/vassals/your_project.ini
+
 # Set to True to deploy django-ca as its own project.
 #project = False
 
@@ -67,3 +71,7 @@ project-venv =
 
 # Set to "False" if "manage.py collectstatic" should not be called when deploying.
 #project-collectstatic = True
+
+# If your project is run by UWSGI emperor, name the full path of the vassals file here to
+# automatically restart it.
+#app-uwsgi-vassal = /etc/uwsgi-emperor/vassals/django_ca.ini

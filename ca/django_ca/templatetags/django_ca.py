@@ -13,20 +13,12 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from django_ca.management.base import CertCommand
+from django import template
+from django.contrib.admin.templatetags.admin_modify import submit_row
 
-from django_ca.crl import write_crl
-from django_ca.ocsp import write_index
+register = template.Library()
 
 
-class Command(CertCommand):
-    help = "Revoke a certificate."
-
-    def add_arguments(self, parser):
-        parser.add_argument('--reason', help="An optional reason for revokation.")
-        super(Command, self).add_arguments(parser)
-
-    def handle(self, cert, **options):
-        self.get_certificate(cert).revoke(reason=options.get('reason'))
-        write_crl()
-        write_index()
+@register.inclusion_tag('django_ca/admin/submit_line.html', takes_context=True)
+def django_ca_certificate_submit_row(context):
+    return submit_row(context)

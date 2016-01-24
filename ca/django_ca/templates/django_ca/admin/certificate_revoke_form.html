@@ -1,0 +1,49 @@
+{% extends "admin/base_site.html" %}
+{% load admin_static i18n admin_urls %}
+
+{% block extrahead %}{{ block.super }}
+<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+{{ media }}
+{% endblock %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}" />{% endblock %}
+
+{% if not is_popup %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+    &rsaquo; {% if perms.django_ca.change_certificate %}<a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>{% else %}{{ opts.verbose_name_plural|capfirst }}{% endif %}
+    &rsaquo; {% if perms.django_ca.change_certificate %}<a href="{% url opts|admin_urlname:'change' object.pk %}">{{ object|truncatewords:"18" }}</a>{% else %}{{ object|truncatewords:"18" }}{% endif %}
+    &rsaquo; {% trans "Revoke" %}
+</div>
+{% endblock %}
+{% endif %}
+
+{% block content %}
+{% if object.revoked %}
+<ul class="messagelist">
+    <li class="error">{% trans "The certificate is already revoked." %}</li>
+</ul>
+{% else %}
+<h2>{% trans "Revoke a certificate" %}</h2>
+
+<form action="" method="post">{% csrf_token %}
+    <fieldset class="module aligned {{ fieldset.classes }}">
+        <div class="form-row{% if form.non_field_errors %} errors{% endif %} field-reason">
+            {{ form.non_field_errors }}
+
+            <div class="field-box field-reason{% if form.reason.errors %} errors{% endif %}">
+                {{ form.reason.errors }}
+                {{ form.reason.label_tag }}
+                {{ form.reason }}
+                {% if form.reason.help_text %}
+                    <p class="help">{{ form.reason.help_text|safe }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </fieldset>
+    <input type="submit" value="{% trans "Revoke" %}" />
+</form>
+{% endif %}
+{% endblock %}

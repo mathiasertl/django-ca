@@ -5,7 +5,7 @@ import os
 from OpenSSL import crypto
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 DEBUG = True
 
@@ -16,13 +16,8 @@ ADMINS = (
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'db.sqlite3',                      # Or path to database file if using sqlite3.
-        # The following settings are not used with sqlite3:
-        'USER': '',
-        'PASSWORD': '',
-        'HOST': '',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
-        'PORT': '',                      # Set to empty string for default.
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
 
@@ -161,25 +156,6 @@ LOGGING = {
     }
 }
 
-# custom defaults
-DIGEST_ALGORITHM = 'sha512'
-CA_DIR = os.path.join(BASE_DIR, 'files')
-CA_KEY_TYPE = crypto.TYPE_RSA
-CA_BITSIZE = 4096
-CA_ISSUER_ALT_NAME = None
-CA_CRL_DISTRIBUTION_POINTS = []
-CA_OCSP = None
-CA_ISSUER = None
-# see https://www.openssl.org/docs/apps/x509v3_config.html
-CA_KEY_USAGE = (
-    'keyEncipherment',
-    'keyAgreement',
-    'digitalSignature',
-)
-CA_EXT_KEY_USAGE = (
-    'serverAuth',
-)
-
 try:
     try:
         from .localsettings import *
@@ -187,13 +163,3 @@ try:
         from localsettings import *
 except ImportError:
     pass
-
-if not os.path.exists(CA_DIR):
-    os.makedirs(CA_DIR)
-
-CA_KEY = os.path.join(CA_DIR, 'ca.key')
-CA_CRT = os.path.join(CA_DIR, 'ca.crt')
-
-# used by "openssl OCSP
-CA_INDEX = os.path.join(CA_DIR, 'ca.index.txt')
-CA_FILE_PEM = os.path.join(CA_DIR, 'cafile.pem')

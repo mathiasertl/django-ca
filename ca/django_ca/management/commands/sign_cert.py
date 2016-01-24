@@ -1,21 +1,45 @@
-from django.conf import settings
-from django.contrib.auth.models import User
-from django.core.management.base import BaseCommand
+# -*- coding: utf-8 -*-
+#
+# This file is part of django-ca (https://github.com/mathiasertl/django-ca).
+#
+# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU
+# General Public License as published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with django-ca.  If not,
+# see <http://www.gnu.org/licenses/>.
+
+from datetime import datetime
+from datetime import timedelta
+
+from django.core.management.base import CommandError
 from django.utils import six
 
+from django_ca import ca_settings
+from django_ca.management.base import BaseCommand
 from django_ca.models import Certificate
+from django_ca.models import Watcher
+from django_ca.utils import get_cert_profile_kwargs
+from django_ca.utils import get_cert
 
 
 class Command(BaseCommand):
     help = "Sign a CSR and output signed certificate."
 
     def add_arguments(self, parser):
+        self.add_algorithm(parser)
         parser.add_argument(
-            '--days', default=720, type=int,
+            '--cn', help="CommonName to use. If omitted, the first --alt value will be used.")
+        parser.add_argument(
+            '--cn-not-in-san', default=True, action='store_false', dest='cn_in_san',
+            help='Do not add the CommonName as subjectAlternativeName.')
+        parser.add_argument(
+            '--days', default=ca_settings.CA_DEFAULT_EXPIRES, type=int,
             help='Sign the certificate for DAYS days (default: %(default)s)')
-        parser.add_argument(
-            '--algorithm',
-            help='Algorithm to use (default: The DIGEST_ALGORITHM setting in settings.py)')
         parser.add_argument(
             '--csr', metavar='FILE',
             help='The path to the certificate to sign, if ommitted, you will be be prompted.')
@@ -28,17 +52,35 @@ class Command(BaseCommand):
         parser.add_argument(
             '--out', metavar='FILE',
             help='Save signed certificate to FILE. If omitted, print to stdout.')
+
         parser.add_argument(
-            '--key-usage', default=','.join(settings.CA_KEY_USAGE), metavar='NAMES',
-            help="Override keyUsage attribute (default: CA_KEY_USAGE setting: %(default)s).")
+            '--key-usage', metavar='VALUES',
+            help='Override the keyUsage extension, e.g. "critical,keyCertSign".')
         parser.add_argument(
-            '--ext-key-usage', default=','.join(settings.CA_EXT_KEY_USAGE), metavar='NAMES',
-            help="Override keyUsage attribute (default: CA_EXT_KEY_USAGE setting: %(default)s).")
-        parser.add_argument(
-            '--ocsp', default=False, action='store_true',
-            help="Issue a certificate for an OCSP server.")
+            '--ext-key-usage', metavar='VALUES',
+            help='Override the extendedKeyUsage extension, e.g. "serverAuth,clientAuth".')
+
+        group = parser.add_argument_group(
+            'profiles', """Sign certificate based on the given profile. This overrides the
+--key-usage and --ext-key-usage arguments.""")
+        group = group.add_mutually_exclusive_group()
+        for name, profile in ca_settings.CA_PROFILES.items():
+            if ca_settings.CA_ALLOW_CA_CERTIFICATES is False \
+                    and profile['basicConstraints']['value'] != 'CA:FALSE':
+                continue
+
+            group.add_argument('--%s' % name, action='store_const', const=name, dest='profile',
+                               help=profile['desc'])
+
+    def parse_extension(self, value):
+        if value.startswith('critical,'):
+            return True, value[9:]
+        return False, value
 
     def handle(self, *args, **options):
+        if not options['cn'] and not options['alt']:
+            raise CommandError("Must give at least --cn or one or more --alt arguments.")
+
         if options['csr'] is None:
             print('Please paste the CSR:')
             csr = ''
@@ -48,25 +90,28 @@ class Command(BaseCommand):
         else:
             csr = open(options['csr']).read()
 
-        watchers = []
-        for addr in options['watch']:
-            watchers.append(User.objects.get_or_create(
-                email=addr, defaults={'username': addr})[0])
+        # get list of watchers
+        watchers = [Watcher.from_addr(addr) for addr in options['watch']]
 
-        if not options['ocsp']:
-            key_usage = options['key_usage'].split(',')
-            ext_key_usage = options['ext_key_usage'].split(',')
-        else:
-            key_usage = (str('nonRepudiation'), str('digitalSignature'), str('keyEncipherment'), )
-            ext_key_usage = (str('OCSPSigning'), )
+        # get keyUsage and extendedKeyUsage flags based on profiles
+        kwargs = get_cert_profile_kwargs(options['profile'])
+        if options['key_usage']:
+            kwargs['keyUsage'] = self.parse_extension(options['key_usage'])
+        if options['ext_key_usage']:
+            kwargs['extendedKeyUsage'] = self.parse_extension(options['ext_key_usage'])
 
-        cert = Certificate.objects.from_csr(
-            csr, subjectAltNames=options['alt'], days=options['days'],
-            algorithm=options['algorithm'], watchers=watchers, key_usage=key_usage,
-            ext_key_usage=ext_key_usage)
+        expires = datetime.today() + timedelta(days=options['days'] + 1)
+        expires = expires.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        x509 = get_cert(csr=csr, cn=options['cn'], cn_in_san=options['cn_in_san'], expires=expires,
+                        subjectAltName=options['alt'], **kwargs)
+        cert = Certificate(csr=csr, expires=expires)
+        cert.x509 = x509
+        cert.save()
+        cert.watchers.add(*watchers)
 
         if options['out']:
             with open(options['out'], 'w') as f:
                 f.write(cert.pub.decode('utf-8'))
         else:
-            print(cert.pub)
+            print(cert.pub.decode('utf-8'))

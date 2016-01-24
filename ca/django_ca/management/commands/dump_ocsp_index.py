@@ -13,20 +13,23 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from django_ca.management.base import CertCommand
+from django.core.management.base import BaseCommand
 
-from django_ca.crl import write_crl
+from django_ca import ca_settings
 from django_ca.ocsp import write_index
 
+# We need a two-letter year, otherwise OCSP doesn't work
+date_format = '%y%m%d%H%M%SZ'
 
-class Command(CertCommand):
-    help = "Revoke a certificate."
+
+class Command(BaseCommand):
+    help = "Write an OCSP index file."
 
     def add_arguments(self, parser):
-        parser.add_argument('--reason', help="An optional reason for revokation.")
-        super(Command, self).add_arguments(parser)
+        parser.add_argument(
+            'path', type=str, nargs='?', default=ca_settings.CA_OCSP_INDEX_PATH,
+            help="Where to write the index (default: %(default)s)")
 
-    def handle(self, cert, **options):
-        self.get_certificate(cert).revoke(reason=options.get('reason'))
-        write_crl()
-        write_index()
+    def handle(self, path, **options):
+        # Write index file (required by "openssl ocsp")
+        write_index(path, stdout=self.stdout)

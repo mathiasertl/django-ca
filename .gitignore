@@ -1,11 +1,13 @@
 *.py[co]
 *.sw[po]
 *.sqlite3
+*.egg-info
 localsettings.py
 /MANIFEST
 /bin/
 /ca/files/
 /dist
+/docs/build/
 /fab.conf
 /include/
 /lib/
