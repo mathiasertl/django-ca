@@ -24,6 +24,7 @@ from . import ca_settings
 from .fields import BasicConstraintsField
 from .fields import KeyUsageField
 from .fields import SubjectAltNameField
+from .fields import SubjectField
 from .models import Certificate
 from .utils import EXTENDED_KEY_USAGE_DESC
 from .utils import KEY_USAGE_DESC
@@ -45,6 +46,7 @@ def _profile_choices():
 
 class CreateCertificateForm(forms.ModelForm):
     expires = forms.DateField(initial=_initial_expires, widget=AdminDateWidget())
+    subject = SubjectField(label="Subject", required=True)
     subjectAltName = SubjectAltNameField(
         label='subjectAltName', required=False,
         help_text=_('''Coma-separated list of alternative names for the certificate.''')
