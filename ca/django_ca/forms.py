@@ -115,7 +115,7 @@ class CreateCertificateForm(forms.ModelForm):
 
     class Meta:
         model = Certificate
-        fields = ['cn', 'csr', 'watchers', ]
+        fields = ['csr', 'watchers', ]
         help_texts = {
             'csr': _('The Certificate Signing Request (CSR) in PEM format.'),
         }
