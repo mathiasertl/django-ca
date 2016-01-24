@@ -26,11 +26,11 @@ from . import ca_settings
 class SubjectField(forms.MultiValueField):
     def __init__(self, *args, **kwargs):
         fields = (
-            forms.CharField(),  # C
-            forms.CharField(),  # ST
-            forms.CharField(),  # L
-            forms.CharField(),  # O
-            forms.CharField(),  # OU
+            forms.CharField(required=False),  # C
+            forms.CharField(required=False),  # ST
+            forms.CharField(required=False),  # L
+            forms.CharField(required=False),  # O
+            forms.CharField(required=False),  # OU
             forms.CharField(),  # CN
         )
         kwargs.setdefault('widget', SubjectWidget)
@@ -38,7 +38,11 @@ class SubjectField(forms.MultiValueField):
                                            *args, **kwargs)
 
     def compress(self, values):
-        return values
+        value = {}
+        for i, val in enumerate(['C', 'ST', 'L', 'O', 'OU', 'CN']):
+            if values[i]:
+                value[val] = values[i]
+        return value
 
 
 class SubjectAltNameField(forms.MultiValueField):
