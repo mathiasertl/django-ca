@@ -55,7 +55,11 @@ class LabeledTextInput(widgets.TextInput):
 
     def render(self, name, value, attrs=None):
         html = super(LabeledTextInput, self).render(name, value, attrs=attrs)
-        label = '<label for="%s">%s</label>' % (attrs.get('id'), self.label)
+        required = ''
+        if self.attrs.get('required', False):
+            required = 'class="required" '
+
+        label = '<label %sfor="%s">%s</label>' % (required, attrs.get('id'), self.label)
 
         cssid = self.label.lower().replace(' ', '-')
         html = '<span id="%s" class="labeled-text-multiwidget">%s%s</span>' % (cssid, html, label)
@@ -114,7 +118,7 @@ class SubjectWidget(CustomMultiWidget):
             LabeledTextInput(label=_('Location')),
             LabeledTextInput(label=_('Organization')),
             LabeledTextInput(label=_('Organizational Unit')),
-            LabeledTextInput(label=_('CommonName')),
+            LabeledTextInput(label=_('CommonName'), attrs={'required': True}),
         )
         super(SubjectWidget, self).__init__(_widgets, attrs)
 
