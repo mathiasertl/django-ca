@@ -57,6 +57,42 @@ django.jQuery(document).ready(function() {
                 email.val(data.subject.E);
                 prev_email = data.subject.E;
             }
+
+            if (data.subject.C) {
+                django.jQuery('.field-subject #country .from-csr').text(data.subject.C);
+            } else {
+                django.jQuery('.field-subject #country .from-csr').text();
+            }
+            if (data.subject.ST) {
+                django.jQuery('.field-subject #state .from-csr').text(data.subject.ST);
+            } else {
+                django.jQuery('.field-subject #state .from-csr').text();
+            }
+            if (data.subject.L) {
+                django.jQuery('.field-subject #location .from-csr').text(data.subject.L);
+            } else {
+                django.jQuery('.field-subject #location .from-csr').text();
+            }
+            if (data.subject.O) {
+                django.jQuery('.field-subject #organization .from-csr').text(data.subject.O);
+            } else {
+                django.jQuery('.field-subject #organization .from-csr').text();
+            }
+            if (data.subject.OU) {
+                django.jQuery('.field-subject #organizational-unit .from-csr').text(data.subject.OU);
+            } else {
+                django.jQuery('.field-subject #organizational-unit .from-csr').text();
+            }
+            if (data.subject.CN) {
+                django.jQuery('.field-subject #commonname .from-csr').text(data.subject.CN);
+            } else {
+                django.jQuery('.field-subject #commonname .from-csr').text();
+            }
+            if (data.subject.E) {
+                django.jQuery('.field-subject #e-mail .from-csr').text(data.subject.E);
+            } else {
+                django.jQuery('.field-subject #e-mail .from-csr').text();
+            }
         });
     });
 });
