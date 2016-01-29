@@ -79,7 +79,7 @@ of subjectAltNames (given by --alt).""")
         group.add_argument(
             '--CN', help="CommonName to use. If omitted, the first --alt value will be used.")
         group.add_argument('--E', metavar='E-Mail',
-            help='E-mail to use (default: "%s").' % (subject.get('E') or ''))
+            help='E-mail to use (default: "%s").' % (subject.get('emailAddress') or ''))
 
     def add_arguments(self, parser):
         self.add_subject(parser)
@@ -135,6 +135,8 @@ the default values, options like --key-usage still override the profile.""")
         for field in ['C', 'ST', 'L', 'O', 'OU', 'CN', ]:
             if options.get(field):
                 subject[field] = options[field]
+        if options.get('E'):
+            subject['emailAddress'] = options['E']
 
         if options['csr'] is None:
             print('Please paste the CSR:')
