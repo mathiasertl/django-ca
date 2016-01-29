@@ -28,6 +28,10 @@ django.jQuery.ajaxSetup({
     }
 });
 
+// what the previous CSR contained - we overwrite the value if user didn't change it
+var prev_email;
+var prev_cn;
+
 django.jQuery(document).ready(function() {
     django.jQuery('.field-csr textarea').bind('input', function() {
         var value = django.jQuery(this).val();
@@ -41,14 +45,17 @@ django.jQuery(document).ready(function() {
         django.jQuery.post('/admin/django_ca/certificate/ajax/csr-details', {
             'csr': value,
         }).done(function(data) {
-            // populate CN/E, if they are currently empty
+            // populate CN/E, if they are currently empty, or fields were not changed from
+            // previous CSR
             var cn = django.jQuery('.field-subject #commonname input');
-            if (! cn.val() && data.subject.CN) {
+            if ((! cn.val() || cn.val() === prev_cn) && data.subject.CN) {
                 cn.val(data.subject.CN);
+                prev_cn = data.subject.CN;
             }
             var email = django.jQuery('.field-subject #e-mail input');
-            if (! email.val() && data.subject.E) {
+            if ((! email.val() || email.val() === prev_email) && data.subject.E) {
                 email.val(data.subject.E);
+                prev_email = data.subject.E;
             }
         });
     });
