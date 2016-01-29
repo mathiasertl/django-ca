@@ -75,7 +75,7 @@ of subjectAltNames (given by --alt).""")
             help='Your organizational unit (default: "%s").' % (subject.get('OU') or '')
         )
         group.add_argument(
-            '--cn', help="CommonName to use. If omitted, the first --alt value will be used.")
+            '--CN', help="CommonName to use. If omitted, the first --alt value will be used.")
 
     def add_arguments(self, parser):
         self.add_subject(parser)
@@ -123,8 +123,14 @@ the default values, options like --key-usage still override the profile.""")
         return False, value
 
     def handle(self, *args, **options):
-        if not options['cn'] and not options['alt']:
-            raise CommandError("Must give at least --cn or one or more --alt arguments.")
+        if not options['CN'] and not options['alt']:
+            raise CommandError("Must give at least --CN or one or more --alt arguments.")
+
+        # construct subject
+        subject = {}
+        for field in ['C', 'ST', 'L', 'O', 'OU', 'CN', ]:
+            if options.get(field):
+                subject[field] = options[field]
 
         if options['csr'] is None:
             print('Please paste the CSR:')
@@ -146,6 +152,8 @@ the default values, options like --key-usage still override the profile.""")
             kwargs['keyUsage'] = self.parse_extension(options['key_usage'])
         if options['ext_key_usage']:
             kwargs['extendedKeyUsage'] = self.parse_extension(options['ext_key_usage'])
+        if subject:
+            kwargs['subject'] = subject
 
         expires = datetime.today() + timedelta(days=options['days'] + 1)
         expires = expires.replace(hour=0, minute=0, second=0, microsecond=0)
