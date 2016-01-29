@@ -34,7 +34,7 @@ Please see https://django-ca.readthedocs.org for more extensive documentation.
 
 setup(
     name='django-ca',
-    version='1.0.0a1',
+    version='1.0.0b1',
     description='A Django app providing a SSL/TLS certificate authority.',
     long_description=long_description,
     author='Mathias Ertl',
