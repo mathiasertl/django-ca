@@ -82,6 +82,7 @@ CA_DEFAULT_SUBJECT
          'L': 'Vienna',
          'O': 'HTU Wien',
          'OU': 'Fachschaft Informatik',
+         'emailAddress': 'user@example.com',
       }
 
 CA_DIGEST_ALGORITHM
