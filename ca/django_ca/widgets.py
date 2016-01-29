@@ -53,22 +53,33 @@ class LabeledTextInput(widgets.TextInput):
         self.label = label
         super(LabeledTextInput, self).__init__(*args, **kwargs)
 
-    def render(self, name, value, attrs=None):
+    def render_wrapped(self, name, value, attrs):
         html = super(LabeledTextInput, self).render(name, value, attrs=attrs)
         required = ''
         if self.attrs.get('required', False):
             required = 'class="required" '
 
-        label = '<label %sfor="%s">%s</label>' % (required, attrs.get('id'), self.label)
+        html += '<label %sfor="%s">%s</label>' % (required, attrs.get('id'), self.label)
 
+        return html
+
+    def render(self, name, value, attrs=None):
+        html = self.render_wrapped(name, value, attrs)
         cssid = self.label.lower().replace(' ', '-')
-        html = '<span id="%s" class="labeled-text-multiwidget">%s%s</span>' % (cssid, html, label)
+        html = '<span id="%s" class="labeled-text-multiwidget">%s</span>' % (cssid, html)
         return html
 
     class Media:
         css = {
             'all': ('django_ca/admin/css/labeledtextinput.css', ),
         }
+
+
+class SubjectTextInput(LabeledTextInput):
+    def render_wrapped(self, name, value, attrs):
+        html = super(SubjectTextInput, self).render_wrapped(name, value, attrs)
+        html += '<span class="from-csr"></span>'
+        return html
 
 
 class ProfileWidget(widgets.Select):
@@ -113,13 +124,13 @@ class CustomMultiWidget(widgets.MultiWidget):
 class SubjectWidget(CustomMultiWidget):
     def __init__(self, attrs=None):
         _widgets = (
-            LabeledTextInput(label=_('Country')),
-            LabeledTextInput(label=_('State')),
-            LabeledTextInput(label=_('Location')),
-            LabeledTextInput(label=_('Organization')),
-            LabeledTextInput(label=_('Organizational Unit')),
-            LabeledTextInput(label=_('CommonName'), attrs={'required': True}),
-            LabeledTextInput(label=_('E-Mail')),
+            SubjectTextInput(label=_('Country')),
+            SubjectTextInput(label=_('State')),
+            SubjectTextInput(label=_('Location')),
+            SubjectTextInput(label=_('Organization')),
+            SubjectTextInput(label=_('Organizational Unit')),
+            SubjectTextInput(label=_('CommonName'), attrs={'required': True}),
+            SubjectTextInput(label=_('E-Mail')),
         )
         super(SubjectWidget, self).__init__(_widgets, attrs)
 
