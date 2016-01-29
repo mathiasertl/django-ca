@@ -41,7 +41,15 @@ django.jQuery(document).ready(function() {
         django.jQuery.post('/admin/django_ca/certificate/ajax/csr-details', {
             'csr': value,
         }).done(function(data) {
-            console.log(data);
+            // populate CN/E, if they are currently empty
+            var cn = django.jQuery('.field-subject #commonname input');
+            if (! cn.val() && data.subject.CN) {
+                cn.val(data.subject.CN);
+            }
+            var email = django.jQuery('.field-subject #e-mail input');
+            if (! email.val() && data.subject.E) {
+                email.val(data.subject.E);
+            }
         });
     });
 });
