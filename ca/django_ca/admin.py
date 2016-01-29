@@ -13,11 +13,14 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import json
+
 from OpenSSL import crypto
 
 from django.conf.urls import url
 from django.contrib import admin
 from django.http import HttpResponse
+from django.http import HttpResponseBadRequest
 from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
@@ -113,9 +116,21 @@ class CertificateAdmin(admin.ModelAdmin):
             return super(CertificateAdmin, self).get_form(request, obj=obj, **kwargs)
 
     def csr_details_view(self, request):
-        csr = crypto.load_certificate_request(crypto.FILETYPE_PEM, request.POST['csr'])
-        print(csr.get_subject())
-        return HttpResponse('ok')
+        try:
+            csr = crypto.load_certificate_request(crypto.FILETYPE_PEM, request.POST['csr'])
+        except Exception as e:
+            return HttpResponseBadRequest(json.dumps({
+                'message': str(e),
+            }), content_type='application/json')
+        csr_subject = csr.get_subject()
+        subject = {}
+        for attr in ['C', 'ST', 'L', 'O', 'OU', 'CN', 'E', ]:
+            if hasattr(csr_subject, attr):
+                subject[attr] = getattr(csr_subject, attr)
+
+        return HttpResponse(json.dumps({
+            'subject': subject,
+        }), content_type='application/json')
 
     def get_urls(self):
         # Remove the delete action from the URLs
