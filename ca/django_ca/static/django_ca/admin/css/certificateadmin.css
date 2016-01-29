@@ -46,3 +46,11 @@ span.critical-widget-wrapper label {
 #id_subjectAltName {
     min-width: 540px;
 }
+
+/* style from-csr */
+.field-subject .from-csr {
+    color: #999;
+    font-size: 11px;
+    padding-left: 5px;
+    display: none;
+}
