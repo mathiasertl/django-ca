@@ -31,7 +31,12 @@ django.jQuery.ajaxSetup({
 django.jQuery(document).ready(function() {
     django.jQuery('.field-csr textarea').bind('input', function() {
         var value = django.jQuery(this).val();
-        // todo: do some basic format validation
+
+        if (! (value.startsWith('-----BEGIN CERTIFICATE REQUEST-----\n')
+               && value.endsWith('\n-----END CERTIFICATE REQUEST-----'))) {
+            console.log('not a valid csr');
+            return;
+        }
 
         django.jQuery.post('/admin/django_ca/certificate/ajax/csr-details', {
             'csr': value,
