@@ -132,8 +132,8 @@ class CertificateAdmin(admin.ModelAdmin):
 
         # add csr-details url
         csr_name = '%s_%s_csr_details' % (meta.app_label, meta.verbose_name)
-        urls.insert(0, url(r'^ajax/csr-details'), self.admin_site.admin_view(self.csr_details_view),
-                    name=csr_name)
+        urls.insert(0, url(r'^ajax/csr-details', self.admin_site.admin_view(self.csr_details_view),
+                    name=csr_name))
 
         return urls
 
@@ -218,3 +218,6 @@ class CertificateAdmin(admin.ModelAdmin):
         css = {
             'all': ('django_ca/admin/css/certificateadmin.css', )
         }
+        js = (
+            'django_ca/admin/js/sign.js',
+        )
