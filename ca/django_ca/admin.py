@@ -113,6 +113,8 @@ class CertificateAdmin(admin.ModelAdmin):
             return super(CertificateAdmin, self).get_form(request, obj=obj, **kwargs)
 
     def csr_details_view(self, request):
+        csr = crypto.load_certificate_request(crypto.FILETYPE_PEM, request.POST['csr'])
+        print(csr.get_subject())
         return HttpResponse('ok')
 
     def get_urls(self):
