@@ -144,7 +144,7 @@ class SubjectWidget(CustomMultiWidget):
             value.get('O', ''),
             value.get('OU', ''),
             value.get('CN', ''),
-            value.get('E', ''),
+            value.get('emailAddress', ''),
         ]
 
 

@@ -106,8 +106,8 @@ django.jQuery(document).ready(function() {
                 django.jQuery('.field-subject #commonname .from-csr span').text();
                 django.jQuery('.field-subject #commonname .from-csr').hide();
             }
-            if (data.subject.E) {
-                django.jQuery('.field-subject #e-mail .from-csr span').text(data.subject.E);
+            if (data.subject.emailAddress) {
+                django.jQuery('.field-subject #e-mail .from-csr span').text(data.subject.emailAddress);
                 django.jQuery('.field-subject #e-mail .from-csr').show();
             } else {
                 django.jQuery('.field-subject #e-mail .from-csr span').text();

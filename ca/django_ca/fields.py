@@ -44,7 +44,7 @@ class SubjectField(forms.MultiValueField):
 
     def compress(self, values):
         value = OrderedDict()
-        for i, val in enumerate(['C', 'ST', 'L', 'O', 'OU', 'CN', 'E', ]):
+        for i, val in enumerate(['C', 'ST', 'L', 'O', 'OU', 'CN', 'emailAddress', ]):
             if values[i]:
                 value[val] = values[i]
         return value
