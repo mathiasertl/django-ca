@@ -38,7 +38,13 @@ django.jQuery(document).ready(function() {
 
         if (! (value.startsWith('-----BEGIN CERTIFICATE REQUEST-----\n')
                && value.endsWith('\n-----END CERTIFICATE REQUEST-----'))) {
-            console.log('not a valid csr');
+            django.jQuery('.field-subject #country .from-csr').hide();
+            django.jQuery('.field-subject #state .from-csr').hide();
+            django.jQuery('.field-subject #location .from-csr').hide();
+            django.jQuery('.field-subject #organization .from-csr').hide();
+            django.jQuery('.field-subject #organizational-unit .from-csr').hide();
+            django.jQuery('.field-subject #commonname .from-csr').hide();
+            django.jQuery('.field-subject #e-mail .from-csr').hide();
             return;
         }
 
@@ -59,39 +65,53 @@ django.jQuery(document).ready(function() {
             }
 
             if (data.subject.C) {
-                django.jQuery('.field-subject #country .from-csr').text(data.subject.C);
+                django.jQuery('.field-subject #country .from-csr span').text(data.subject.C);
+                django.jQuery('.field-subject #country .from-csr').show();
             } else {
-                django.jQuery('.field-subject #country .from-csr').text();
+                django.jQuery('.field-subject #country .from-csr span').text();
+                django.jQuery('.field-subject #country .from-csr').hide();
             }
             if (data.subject.ST) {
-                django.jQuery('.field-subject #state .from-csr').text(data.subject.ST);
+                django.jQuery('.field-subject #state .from-csr span').text(data.subject.ST);
+                django.jQuery('.field-subject #state .from-csr').show();
             } else {
-                django.jQuery('.field-subject #state .from-csr').text();
+                django.jQuery('.field-subject #state .from-csr span').text();
+                django.jQuery('.field-subject #state .from-csr').hide();
             }
             if (data.subject.L) {
-                django.jQuery('.field-subject #location .from-csr').text(data.subject.L);
+                django.jQuery('.field-subject #location .from-csr span').text(data.subject.L);
+                django.jQuery('.field-subject #location .from-csr').show();
             } else {
-                django.jQuery('.field-subject #location .from-csr').text();
+                django.jQuery('.field-subject #location .from-csr span').text();
+                django.jQuery('.field-subject #location .from-csr').hide();
             }
             if (data.subject.O) {
-                django.jQuery('.field-subject #organization .from-csr').text(data.subject.O);
+                django.jQuery('.field-subject #organization .from-csr span').text(data.subject.O);
+                django.jQuery('.field-subject #organization .from-csr').show();
             } else {
-                django.jQuery('.field-subject #organization .from-csr').text();
+                django.jQuery('.field-subject #organization .from-csr span').text();
+                django.jQuery('.field-subject #organization .from-csr').hide();
             }
             if (data.subject.OU) {
-                django.jQuery('.field-subject #organizational-unit .from-csr').text(data.subject.OU);
+                django.jQuery('.field-subject #organizational-unit .from-csr span').text(data.subject.OU);
+                django.jQuery('.field-subject #organizational-unit .from-csr').show();
             } else {
-                django.jQuery('.field-subject #organizational-unit .from-csr').text();
+                django.jQuery('.field-subject #organizational-unit .from-csr span').text();
+                django.jQuery('.field-subject #organizational-unit .from-csr').hide();
             }
             if (data.subject.CN) {
-                django.jQuery('.field-subject #commonname .from-csr').text(data.subject.CN);
+                django.jQuery('.field-subject #commonname .from-csr span').text(data.subject.CN);
+                django.jQuery('.field-subject #commonname .from-csr').show();
             } else {
-                django.jQuery('.field-subject #commonname .from-csr').text();
+                django.jQuery('.field-subject #commonname .from-csr span').text();
+                django.jQuery('.field-subject #commonname .from-csr').hide();
             }
             if (data.subject.E) {
-                django.jQuery('.field-subject #e-mail .from-csr').text(data.subject.E);
+                django.jQuery('.field-subject #e-mail .from-csr span').text(data.subject.E);
+                django.jQuery('.field-subject #e-mail .from-csr').show();
             } else {
-                django.jQuery('.field-subject #e-mail .from-csr').text();
+                django.jQuery('.field-subject #e-mail .from-csr span').text();
+                django.jQuery('.field-subject #e-mail .from-csr').hide();
             }
         });
     });
