@@ -17,6 +17,7 @@ from OpenSSL import crypto
 
 from django.conf.urls import url
 from django.contrib import admin
+from django.http import HttpResponse
 from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
@@ -111,6 +112,9 @@ class CertificateAdmin(admin.ModelAdmin):
         else:
             return super(CertificateAdmin, self).get_form(request, obj=obj, **kwargs)
 
+    def csr_details_view(self, request):
+        return HttpResponse('ok')
+
     def get_urls(self):
         # Remove the delete action from the URLs
         urls = super(CertificateAdmin, self).get_urls()
@@ -125,6 +129,11 @@ class CertificateAdmin(admin.ModelAdmin):
         revoke_view = self.admin_site.admin_view(
             RevokeCertificateView.as_view(admin_site=self.admin_site))
         urls.insert(0, url(r'^(?P<pk>.*)/revoke/$', revoke_view, name=revoke_name))
+
+        # add csr-details url
+        csr_name = '%s_%s_csr_details' % (meta.app_label, meta.verbose_name)
+        urls.insert(0, url(r'^ajax/csr-details'), self.admin_site.admin_view(self.csr_details_view),
+                    name=csr_name)
 
         return urls
 
