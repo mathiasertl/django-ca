@@ -117,7 +117,10 @@ class CreateCertificateForm(forms.ModelForm):
         model = Certificate
         fields = ['csr', 'watchers', ]
         help_texts = {
-            'csr': _('The Certificate Signing Request (CSR) in PEM format.'),
+            'csr': _('''The Certificate Signing Request (CSR) in PEM format. To create a new one:
+<span class="shell">openssl genrsa -out hostname.key 2048
+openssl req -new -key hostname.key -out hostname.csr -utf8 -batch -subj 'CN=hostname/E=root@hostname'
+</span>'''),
         }
 
 

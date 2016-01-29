@@ -15,7 +15,8 @@ see <http://www.gnu.org/licenses/>.
 
 /* Viewing the CSR and PEM as code. */
 fieldset.as-code .field-csr p,
-fieldset.as-code .field-pub p
+fieldset.as-code .field-pub p,
+.shell
 {
     white-space: pre;
     white-space: pre-wrap;
@@ -24,6 +25,7 @@ fieldset.as-code .field-pub p
     border: 1px solid #bebab0;
     padding: 10px 15px !important;
     display: table;
+    margin-top: 3px;
 }
 
 /* style the add certificate form */
