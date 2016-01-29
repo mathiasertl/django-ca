@@ -119,6 +119,7 @@ class SubjectWidget(CustomMultiWidget):
             LabeledTextInput(label=_('Organization')),
             LabeledTextInput(label=_('Organizational Unit')),
             LabeledTextInput(label=_('CommonName'), attrs={'required': True}),
+            LabeledTextInput(label=_('E-Mail')),
         )
         super(SubjectWidget, self).__init__(_widgets, attrs)
 
@@ -132,6 +133,7 @@ class SubjectWidget(CustomMultiWidget):
             value.get('O', ''),
             value.get('OU', ''),
             value.get('CN', ''),
+            value.get('E', ''),
         ]
 
 

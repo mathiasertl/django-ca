@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+from collections import OrderedDict
 from datetime import datetime
 from datetime import timedelta
 
@@ -53,7 +54,8 @@ of subjectAltNames (given by --alt).""")
         subject = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]['subject']
         group = parser.add_argument_group(
             'Certificate subject',
-            'The subject to use. Empty values are not included in the subject.')
+            '''The subject to use. Empty values are not included in the subject. The default values
+            depend on the default profile and the CA_DEFAULT_SUBJECT setting.''')
         group.add_argument(
             '--C', metavar='CC',
             help='Two-letter country code, e.g. "AT" (default: "%s").' % (subject.get('C') or '')
@@ -76,6 +78,8 @@ of subjectAltNames (given by --alt).""")
         )
         group.add_argument(
             '--CN', help="CommonName to use. If omitted, the first --alt value will be used.")
+        group.add_argument('--E', metavar='E-Mail',
+            help='E-mail to use (default: "%s").' % (subject.get('E') or ''))
 
     def add_arguments(self, parser):
         self.add_subject(parser)
@@ -127,7 +131,7 @@ the default values, options like --key-usage still override the profile.""")
             raise CommandError("Must give at least --CN or one or more --alt arguments.")
 
         # construct subject
-        subject = {}
+        subject = OrderedDict()
         for field in ['C', 'ST', 'L', 'O', 'OU', 'CN', ]:
             if options.get(field):
                 subject[field] = options[field]

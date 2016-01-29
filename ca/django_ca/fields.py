@@ -34,6 +34,7 @@ class SubjectField(forms.MultiValueField):
             forms.CharField(required=False),  # O
             forms.CharField(required=False),  # OU
             forms.CharField(),  # CN
+            forms.CharField(required=False),  # E
         )
         initial = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get('subject', {})
         kwargs.setdefault('initial', initial)
@@ -43,7 +44,7 @@ class SubjectField(forms.MultiValueField):
 
     def compress(self, values):
         value = OrderedDict()
-        for i, val in enumerate(['C', 'ST', 'L', 'O', 'OU', 'CN']):
+        for i, val in enumerate(['C', 'ST', 'L', 'O', 'OU', 'CN', 'E', ]):
             if values[i]:
                 value[val] = values[i]
         return value
