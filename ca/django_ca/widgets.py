@@ -78,7 +78,7 @@ class LabeledTextInput(widgets.TextInput):
 class SubjectTextInput(LabeledTextInput):
     def render_wrapped(self, name, value, attrs):
         html = super(SubjectTextInput, self).render_wrapped(name, value, attrs)
-        html += '<span class="from-csr"></span>'
+        html += '<span class="from-csr">%s <span></span></span>' % _('from CSR:')
         return html
 
 
