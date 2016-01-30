@@ -26,6 +26,10 @@ from . import utils
 class override_settings(_override_settings):
     """Enhance override_settings to also reload django_ca.ca_settings."""
 
+    def save_options(self, test_func):
+        super(override_settings, self).save_options(test_func)
+        reload_module(ca_settings)
+
     def enable(self):
         super(override_settings, self).enable()
         reload_module(ca_settings)
@@ -52,6 +56,9 @@ class override_tmpcadir(override_settings):
 
 class DjangoCATestCase(TestCase):
     """Base class for all testcases with some enhancements."""
+
+    def setUp(self):
+        reload_module(ca_settings)
 
     def settings(self, **kwargs):
         return override_settings(**kwargs)
@@ -148,16 +155,13 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(cert.get_signature_algorithm(), six.b('sha1WithRSAEncryption'))
 
 
+@override_tmpcadir()
 class SignCertTest(DjangoCATestCase):
-#    @classmethod
-#    def setUpClass(cls):
-#        cls.init_ca()
-
-    @override_tmpcadir()
     def test_basic(self):
         self.init_ca()
+        out = six.StringIO()
         key, csr = self.create_csr()
-        call_command('sign_cert', alt=['example.com'], csr=csr)
+        call_command('sign_cert', alt=['example.com'], csr=csr, stdout=out)
 
 
 class TestUtils(DjangoCATestCase):
