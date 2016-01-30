@@ -80,7 +80,7 @@ class Command(BaseCommand):
             if not os.path.exists(path):
                 os.makedirs(path)
 
-        if not options['algorithm']:
+        if not options.get('algorithm'):
             options['algorithm'] = ca_settings.CA_DIGEST_ALGORITHM
 
         now = datetime.utcnow()
