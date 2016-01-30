@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import os
+import sys
+
+from distutils.cmd import Command
 from distutils.core import setup
 
 
@@ -31,6 +35,51 @@ Features:
 
 Please see https://django-ca.readthedocs.org for more extensive documentation.
 """
+
+class BaseCommand(Command):
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run_tests(self):
+        sys.path.insert(0, os.path.join(os.getcwd(), 'ca'))
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.settings")
+        import django
+        django.setup()
+
+        from django.core.management import call_command
+        call_command('check')
+        call_command('test', 'django_ca')
+
+
+class TestCommand(BaseCommand):
+    description = 'Run the test-suite for django-ca.'
+
+    def run(self):
+        self.run_tests()
+
+class CoverageCommand(BaseCommand):
+    description = 'Generate test-coverage for django-ca.'
+
+    def run(self):
+        import coverage
+
+        cov = coverage.Coverage(cover_pylib=False, branch=True,
+                                source=['django_ca'], omit=['*migrations/*.py'])
+        cov.start()
+
+        self.run_tests()
+
+        cov.stop()
+        cov.save()
+
+        htmlcov = os.path.join('docs', 'build', 'coverage')
+        cov.html_report(directory=htmlcov)
+
 
 setup(
     name='django-ca',
@@ -52,6 +101,10 @@ setup(
         'Django>=1.9',
         'pyOpenSSL>=0.15',
     ],
+    cmdclass={
+        'coverage': CoverageCommand,
+        'test': TestCommand,
+    },
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Framework :: Django :: 1.9',
