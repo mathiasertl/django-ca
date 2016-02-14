@@ -152,7 +152,6 @@ the default values, options like --key-usage still override the profile.""")
 
         # get keyUsage and extendedKeyUsage flags based on profiles
         kwargs = get_cert_profile_kwargs(options['profile'])
-        print(kwargs)
         if options['cn_in_san'] is not None:
             kwargs['cn_in_san'] = options['cn_in_san']
         if options['key_usage']:
