@@ -1,5 +1,5 @@
-Django==1.9.1
+Django==1.9.2
 pyOpenSSL==0.15.1
 ndg-httpsclient==0.4.0
 pip>=8.0.2
-setuptools>=19.5
+setuptools>=20.1.1
