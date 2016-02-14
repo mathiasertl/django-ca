@@ -123,8 +123,8 @@ the default values, options like --key-usage still override the profile.""")
 
     def parse_extension(self, value):
         if value.startswith('critical,'):
-            return True, value[9:]
-        return False, value
+            return True, value[9:].encode('utf-8')
+        return False, value.encode('utf-8')
 
     def handle(self, *args, **options):
         if not options['CN'] and not options['alt']:
