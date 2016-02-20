@@ -43,71 +43,9 @@ class Watcher(models.Model):
             return '%s <%s>' % (self.name, self.mail)
         return self.mail
 
-
-class Certificate(models.Model):
+class X509CertMixin(object):
     _x509 = None
     _extensions = None
-
-    objects = CertificateQuerySet.as_manager()
-
-    watchers = models.ManyToManyField(Watcher, related_name='certificates', blank=True)
-
-    created = models.DateTimeField(auto_now=True)
-    expires = models.DateTimeField(null=False, blank=False)
-
-    csr = models.TextField(null=False, blank=False, verbose_name=_('CSR'))
-    pub = models.TextField(null=False, blank=False, verbose_name=_('Public key'))
-
-    cn = models.CharField(max_length=64, null=False, blank=False, verbose_name=_('CommonName'))
-    serial = models.CharField(max_length=48, null=False, blank=False)
-    revoked = models.BooleanField(default=False)
-    revoked_date = models.DateTimeField(null=True, blank=True, verbose_name=_('Revoked on'))
-    revoked_reason = models.CharField(max_length=32, null=True, blank=True,
-                                      verbose_name=_('Reason for revokation'))
-
-    def subjectAltName(self):
-        return self.ext_as_str(b'subjectAltName')
-    subjectAltName.short_description = 'subjectAltName'
-
-    def crlDistributionPoints(self):
-        return self.ext_as_str(b'crlDistributionPoints')
-    crlDistributionPoints.short_description = 'crlDistributionPoints'
-
-    def authorityInfoAccess(self):
-        return self.ext_as_str(b'authorityInfoAccess')
-    authorityInfoAccess.short_description = 'authorityInfoAccess'
-
-    def basicConstraints(self):
-        return self.ext_as_str(b'basicConstraints')
-    basicConstraints.short_description = 'basicConstraints'
-
-    def keyUsage(self):
-        return self.ext_as_str(b'keyUsage')
-    keyUsage.short_description = 'keyUsage'
-
-    def extendedKeyUsage(self):
-        return self.ext_as_str(b'extendedKeyUsage')
-    extendedKeyUsage.short_description = 'extendedKeyUsage'
-
-    def subjectKeyIdentifier(self):
-        return self.ext_as_str(b'subjectKeyIdentifier')
-    subjectKeyIdentifier.short_description = 'subjectKeyIdentifier'
-
-    def issuerAltName(self):
-        return self.ext_as_str(b'issuerAltName')
-    issuerAltName.short_description = 'issuerAltName'
-
-    def authorityKeyIdentifier(self):
-        return self.ext_as_str(b'authorityKeyIdentifier')
-    authorityKeyIdentifier.short_description = 'authorityKeyIdentifier'
-
-    def save(self, *args, **kwargs):
-        if self.pk is None and not self.cn:
-            self.cn = dict(self.x509.get_subject().get_components()).get(b'CN').decode('utf-8')
-        if self.pk is None or self.serial is None:
-            s = hex(self.x509.get_serial_number())[2:].upper()
-            self.serial = ':'.join(a+b for a,b in zip(s[::2], s[1::2]))
-        super(Certificate, self).save(*args, **kwargs)
 
     @property
     def x509(self):
@@ -147,6 +85,69 @@ class Certificate(models.Model):
         return '/%s' % '/'.join(['%s=%s' % (k.decode('utf-8'), v.decode('utf-8'))
                                  for k, v in name.get_components()])
     distinguishedName.short_description = 'Distinguished Name'
+
+    def subjectAltName(self):
+        return self.ext_as_str(b'subjectAltName')
+    subjectAltName.short_description = 'subjectAltName'
+
+    def crlDistributionPoints(self):
+        return self.ext_as_str(b'crlDistributionPoints')
+    crlDistributionPoints.short_description = 'crlDistributionPoints'
+
+    def authorityInfoAccess(self):
+        return self.ext_as_str(b'authorityInfoAccess')
+    authorityInfoAccess.short_description = 'authorityInfoAccess'
+
+    def basicConstraints(self):
+        return self.ext_as_str(b'basicConstraints')
+    basicConstraints.short_description = 'basicConstraints'
+
+    def keyUsage(self):
+        return self.ext_as_str(b'keyUsage')
+    keyUsage.short_description = 'keyUsage'
+
+    def extendedKeyUsage(self):
+        return self.ext_as_str(b'extendedKeyUsage')
+    extendedKeyUsage.short_description = 'extendedKeyUsage'
+
+    def subjectKeyIdentifier(self):
+        return self.ext_as_str(b'subjectKeyIdentifier')
+    subjectKeyIdentifier.short_description = 'subjectKeyIdentifier'
+
+    def issuerAltName(self):
+        return self.ext_as_str(b'issuerAltName')
+    issuerAltName.short_description = 'issuerAltName'
+
+    def authorityKeyIdentifier(self):
+        return self.ext_as_str(b'authorityKeyIdentifier')
+    authorityKeyIdentifier.short_description = 'authorityKeyIdentifier'
+
+
+class Certificate(models.Model, X509CertMixin):
+    objects = CertificateQuerySet.as_manager()
+
+    watchers = models.ManyToManyField(Watcher, related_name='certificates', blank=True)
+
+    created = models.DateTimeField(auto_now=True)
+    expires = models.DateTimeField(null=False, blank=False)
+
+    csr = models.TextField(null=False, blank=False, verbose_name=_('CSR'))
+    pub = models.TextField(null=False, blank=False, verbose_name=_('Public key'))
+
+    cn = models.CharField(max_length=64, null=False, blank=False, verbose_name=_('CommonName'))
+    serial = models.CharField(max_length=48, null=False, blank=False)
+    revoked = models.BooleanField(default=False)
+    revoked_date = models.DateTimeField(null=True, blank=True, verbose_name=_('Revoked on'))
+    revoked_reason = models.CharField(max_length=32, null=True, blank=True,
+                                      verbose_name=_('Reason for revokation'))
+
+    def save(self, *args, **kwargs):
+        if self.pk is None and not self.cn:
+            self.cn = dict(self.x509.get_subject().get_components()).get(b'CN').decode('utf-8')
+        if self.pk is None or self.serial is None:
+            s = hex(self.x509.get_serial_number())[2:].upper()
+            self.serial = ':'.join(a+b for a,b in zip(s[::2], s[1::2]))
+        super(Certificate, self).save(*args, **kwargs)
 
     def revoke(self, reason=None):
         self.revoked = True
