@@ -123,6 +123,19 @@ class X509CertMixin(object):
     authorityKeyIdentifier.short_description = 'authorityKeyIdentifier'
 
 
+class CertificateAuthority(models.Model, X509CertMixin):
+    name = models.CharField(max_length=32, help_text=_('A human-readable name'))
+    created = models.DateTimeField(auto_now=True)
+    enabled = models.BooleanField(default=True)
+    pub = models.TextField(null=False, blank=False, verbose_name=_('Public key'))
+    parent = models.ForeignKey('self', null=True, blank=True, related_name='children')
+    private_key_path = models.CharField(max_length=256, null=True, blank=True,
+                                        help_text=_('Path to the private key.'))
+
+    def __str__(self):
+        return self.name
+
+
 class Certificate(models.Model, X509CertMixin):
     objects = CertificateQuerySet.as_manager()
 
