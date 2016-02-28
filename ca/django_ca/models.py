@@ -61,6 +61,10 @@ class X509CertMixin(object):
         self._x509 = value
         self.pub = crypto.dump_certificate(crypto.FILETYPE_PEM, value)
 
+        # set serial
+        s = hex(value.get_serial_number())[2:].upper()
+        self.serial = ':'.join(a+b for a,b in zip(s[::2], s[1::2]))
+
     @property
     def extensions(self):
         if self.x509 is None:
