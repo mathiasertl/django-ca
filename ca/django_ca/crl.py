@@ -41,7 +41,7 @@ def get_crl(**kwargs):
     Returns
     -------
 
-    Returns the CRL as bytes (since this is was pyOpenSSL returns).
+    Returns the CRL as bytes (since this is what pyOpenSSL returns).
     """
     kwargs.setdefault('digest', b'sha512')
 
