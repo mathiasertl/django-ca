@@ -136,6 +136,16 @@ class CertificateAuthority(models.Model, X509CertMixin):
     parent = models.ForeignKey('self', null=True, blank=True, related_name='children')
     private_key_path = models.CharField(max_length=256, help_text=_('Path to the private key.'))
 
+    _key = None
+
+    @property
+    def key(self):
+        if self._key is None:
+            with open(self.private_key_path) as f:
+                return crypto.load_privatekey(crypto.FILETYPE_PEM, f.read())
+
+        return self._key
+
     def save(self, *args, **kwargs):
         if not self.serial:
             s = hex(self.x509.get_serial_number())[2:].upper()
