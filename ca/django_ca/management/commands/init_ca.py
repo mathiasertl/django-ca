@@ -53,7 +53,7 @@ class Command(BaseCommand):
             '--expires', metavar='DAYS', type=int, default=365 * 10,
             help='CA certificate expires in DAYS days (default: %(default)s).'
         )
-        parser.add_argument('--parent', metavar='SERIAL', help="Serial of the parent CA.")
+        self.add_ca('--parent', help='Serial of the parent CA.')
         parser.add_argument(
             '--password', nargs=1,
             help="Optional password used to encrypt the private key. If omitted, no "
