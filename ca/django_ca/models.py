@@ -134,12 +134,10 @@ class CertificateAuthority(models.Model, X509CertMixin):
                                         help_text=_('Path to the private key.'))
 
     def save(self, *args, **kwargs):
-        if self.pk is None and not self.cn:
-            self.cn = dict(self.x509.get_subject().get_components()).get(b'CN').decode('utf-8')
-        if self.pk is None or self.serial is None:
+        if not self.serial:
             s = hex(self.x509.get_serial_number())[2:].upper()
             self.serial = ':'.join(a+b for a,b in zip(s[::2], s[1::2]))
-        super(Certificate, self).save(*args, **kwargs)
+        super(CertificateAuthority, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.name
