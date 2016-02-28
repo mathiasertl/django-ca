@@ -29,6 +29,7 @@ from django.core.management.base import CommandError
 from OpenSSL import crypto
 
 from django_ca import ca_settings
+from django_ca.models import CertificateAuthority
 from django_ca.utils import get_basic_cert
 from django_ca.management.base import BaseCommand
 
@@ -56,6 +57,7 @@ class Command(BaseCommand):
             '--password', nargs=1,
             help="Optional password used to encrypt the private key. If omitted, no "
                  "password is used, use \"--password=\" to prompt for a password.")
+        parser.add_argument('name', help='Human-readable name of the CA')
         parser.add_argument('country', help='Two-letter country code, e.g. "US" or "AT".')
         parser.add_argument('state', help='State for this CA.')
         parser.add_argument('city', help='City for this CA.')
@@ -63,7 +65,7 @@ class Command(BaseCommand):
         parser.add_argument('ou', help='Organizational Unit where this CA is used.')
         parser.add_argument('cn', help='Common name for this CA.')
 
-    def handle(self, country, state, city, org, ou, cn, **options):
+    def handle(self, name, country, state, city, org, ou, cn, **options):
         if os.path.exists(ca_settings.CA_KEY):
             raise CommandError("%s: private key already exists." % ca_settings.CA_KEY)
         if os.path.exists(ca_settings.CA_CRT):
@@ -117,6 +119,11 @@ class Command(BaseCommand):
             args = ['des3', getpass()]
         else:
             args = ['des3', options['password']]
+
+        # create certificate in database
+        ca = CertificateAuthority(name=name, private_key_path=ca_settings.CA_KEY)
+        ca.x509 = cert
+        ca.save()
 
         oldmask = os.umask(247)
         with open(ca_settings.CA_KEY, 'w') as key_file:

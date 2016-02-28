@@ -69,7 +69,8 @@ class DjangoCATestCase(TestCase):
     @classmethod
     def init_ca(cls, **kwargs):
         kwargs.setdefault('key_size', 2048)
-        call_command('init_ca', 'AT', 'Vienna', 'Vienna', 'HTU', 'FSINF', 'ca.fsinf.at', **kwargs)
+        call_command('init_ca', 'Root CA', 'AT', 'Vienna', 'Vienna', 'HTU', 'FSINF', 'ca.fsinf.at',
+                     **kwargs)
 
     def create_csr(self, name='example.com', key_size=512):
         key = os.path.join(ca_settings.CA_DIR, '%s.key' % name)

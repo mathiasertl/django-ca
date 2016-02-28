@@ -178,8 +178,7 @@ def init_demo():
     print(green('Creating database...'))
     manage('migrate', verbosity=0)
     print(green('Initiating CA...'))
-    manage('init_ca', 'AT', 'Vienna', 'Vienna', 'example', 'example',
-           'ca.example.com')
+    manage('init_ca', 'Root CA', 'AT', 'Vienna', 'Vienna', 'example', 'example', 'ca.example.com')
 
     # generate OCSP certificate
     print(green('Generate OCSP certificate...'))

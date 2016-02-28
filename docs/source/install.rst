@@ -38,7 +38,7 @@ liking, then simply run::
 
    # FINALLY, create the root certificates for your CA:
    #     (replace parameters after init_ca with your local details)
-   python manage.py init_ca AT Vienna Vienna Org OrgUnit ca.example.com
+   python manage.py init_ca "Root CA" AT Vienna Vienna Org OrgUnit ca.example.com
 
 After that, **django-ca** should show up in your admin interface and provide
 various ``manage.py`` commands (see :doc:`manage_commands`).
