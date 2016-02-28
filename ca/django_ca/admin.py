@@ -48,6 +48,7 @@ class WatcherAdmin(admin.ModelAdmin):
 @admin.register(CertificateAuthority)
 class CertificateAuthorityAdmin(admin.ModelAdmin):
     list_display = ['enabled', 'name', 'serial', ]
+    list_display_links = ['enabled', 'name', ]
     search_fields = ['cn', 'name', 'serial', ]
 
 
