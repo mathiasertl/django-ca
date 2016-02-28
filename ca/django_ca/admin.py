@@ -54,6 +54,11 @@ class CertificateAuthorityAdmin(admin.ModelAdmin):
     search_fields = ['cn', 'name', 'serial', ]
     readonly_fields = ['serial', 'pub', 'parent', ]
 
+    class Media:
+        css = {
+            'all': ('django_ca/admin/css/certificateauthorityadmin.css', )
+        }
+
 
 class StatusListFilter(admin.SimpleListFilter):
     title = _('Status')
