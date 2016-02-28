@@ -29,6 +29,7 @@ from .ca_settings import CA_ALLOW_CA_CERTIFICATES
 from .crl import write_crl
 from .forms import CreateCertificateForm
 from .models import Certificate
+from .models import CertificateAuthority
 from .models import Watcher
 from .ocsp import write_index
 from .utils import get_cert
@@ -42,6 +43,12 @@ _x509_ext_fields = [
 @admin.register(Watcher)
 class WatcherAdmin(admin.ModelAdmin):
     pass
+
+
+@admin.register(CertificateAuthority)
+class CertificateAuthorityAdmin(admin.ModelAdmin):
+    list_display = ['enabled', 'name', 'serial', ]
+    search_fields = ['cn', 'name', 'serial', ]
 
 
 class StatusListFilter(admin.SimpleListFilter):
