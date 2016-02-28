@@ -49,7 +49,7 @@ def _profile_choices():
 class CertificateAuthorityAdminForm(forms.ModelForm):
     def clean_private_key_path(self):
         path = self.cleaned_data['private_key_path']
-        if not os.path.exists(path):
+        if path and not os.path.exists(path):
             raise forms.ValidationError(_('Path to private key does not exist.'))
 
         return path
