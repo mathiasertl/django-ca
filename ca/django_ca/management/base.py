@@ -47,6 +47,9 @@ class BaseCommand(_BaseCommand):
             '--algorithm', metavar='{sha512,sha256,...}',
             help='Algorithm to use (default: %s).' % ca_settings.CA_DIGEST_ALGORITHM)
 
+    def add_ca(self, parser, arg='ca', help='Certificate authority to use'):
+        parser.add_argument('--%s' % arg, metavar='SERIAL', help=help)
+
     def add_format(self, parser, default=crypto.FILETYPE_PEM):
         """Add the --format option."""
 
