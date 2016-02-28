@@ -130,8 +130,7 @@ class CertificateAuthority(models.Model, X509CertMixin):
     enabled = models.BooleanField(default=True)
     pub = models.TextField(null=False, blank=False, verbose_name=_('Public key'))
     parent = models.ForeignKey('self', null=True, blank=True, related_name='children')
-    private_key_path = models.CharField(max_length=256, null=True, blank=True,
-                                        help_text=_('Path to the private key.'))
+    private_key_path = models.CharField(max_length=256, help_text=_('Path to the private key.'))
 
     def save(self, *args, **kwargs):
         if not self.serial:
