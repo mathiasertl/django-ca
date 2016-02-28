@@ -67,11 +67,6 @@ class Command(BaseCommand):
         parser.add_argument('cn', help='Common name for this CA.')
 
     def handle(self, name, country, state, city, org, ou, cn, **options):
-        if os.path.exists(ca_settings.CA_KEY):
-            raise CommandError("%s: private key already exists." % ca_settings.CA_KEY)
-        if os.path.exists(ca_settings.CA_CRT):
-            raise CommandError("%s: public key already exists." % ca_settings.CA_CRT)
-
         # get a possible parent CA
         parent = options['parent']
         if parent is not None:
@@ -96,10 +91,9 @@ class Command(BaseCommand):
             raise CommandError("%s: Key size must be a power of two." % options['key_size'])
         elif options['key_size'] < 2048:
             raise CommandError("%s: Key must have a size of at least 2048 bits." % options['key_size'])
-        for path in [ca_settings.CA_KEY, ca_settings.CA_CRT]:
-            path = os.path.dirname(path)
-            if not os.path.exists(path):
-                os.makedirs(path)
+
+        if not os.path.exists(ca_settings.CA_DIR):
+            os.makedirs(ca_settings.CA_DIR)
 
         if not options.get('algorithm'):
             options['algorithm'] = ca_settings.CA_DIGEST_ALGORITHM
@@ -145,16 +139,15 @@ class Command(BaseCommand):
         else:
             args = ['des3', options['password']]
 
+
         # create certificate in database
-        ca = CertificateAuthority(name=name, parent=parent, private_key_path=ca_settings.CA_KEY)
+        ca = CertificateAuthority(name=name, parent=parent)
         ca.x509 = cert
+        ca.private_key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % ca.serial)
         ca.save()
 
         oldmask = os.umask(247)
-        with open(ca_settings.CA_KEY, 'w') as key_file:
+        with open(ca.private_key_path, 'w') as key_file:
             key = crypto.dump_privatekey(crypto.FILETYPE_PEM, key, *args)
             key_file.write(key.decode('utf-8'))
-        with open(ca_settings.CA_CRT, 'w') as cert_file:
-            cert = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
-            cert_file.write(cert.decode('utf-8'))
         os.umask(oldmask)
