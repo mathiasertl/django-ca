@@ -53,6 +53,7 @@ class Command(BaseCommand):
             '--expires', metavar='DAYS', type=int, default=365 * 10,
             help='CA certificate expires in DAYS days (default: %(default)s).'
         )
+        parser.add_argument('--parent', metavar='SERIAL', help="Serial of the parent CA.")
         parser.add_argument(
             '--password', nargs=1,
             help="Optional password used to encrypt the private key. If omitted, no "
@@ -70,6 +71,24 @@ class Command(BaseCommand):
             raise CommandError("%s: private key already exists." % ca_settings.CA_KEY)
         if os.path.exists(ca_settings.CA_CRT):
             raise CommandError("%s: public key already exists." % ca_settings.CA_CRT)
+
+        # get a possible parent CA
+        parent = options['parent']
+        if parent is not None:
+            try:
+                parent = CertificateAuthority.objects.get(serial=parent)
+            except CertificateAuthority.DoesNotExist:
+                raise CommandError('Specified parent CA does not exist.')
+
+            try:
+                with open(parent.private_key_path) as instream:
+                    sign_key = crypto.load_privatekey(crypto.FILETYPE_PEM, instream.read())
+            except FileNotFoundError:
+                raise CommandError(
+                    '%s: Parent CA private key not available.' % parent.private_key_path)
+            except Exception as e:
+                # TODO: we should catch unparseable keys in own except clause
+                raise CommandError(str(e))
 
         # check that the bitsize is a power of two
         is_power2 = lambda num: num != 0 and ((num & (num - 1)) == 0)
@@ -91,6 +110,7 @@ class Command(BaseCommand):
         key = crypto.PKey()
         key.generate_key(getattr(crypto, 'TYPE_%s' % options['key_type']), options['key_size'])
 
+        # set basic properties
         cert = get_basic_cert(expires)
         cert.get_subject().C = country
         cert.get_subject().ST = state
@@ -100,7 +120,12 @@ class Command(BaseCommand):
         cert.get_subject().CN = cn
         cert.set_issuer(cert.get_subject())
         cert.set_pubkey(key)
-        cert.sign(key, options['algorithm'])
+
+        # sign the certificate
+        if parent is None:
+            cert.sign(key, options['algorithm'])
+        else:
+            cert.sign(sign_key, options['algorithm'])
 
         san = bytes('DNS:%s' % cn, 'utf-8')
         cert.add_extensions([
@@ -121,7 +146,7 @@ class Command(BaseCommand):
             args = ['des3', options['password']]
 
         # create certificate in database
-        ca = CertificateAuthority(name=name, private_key_path=ca_settings.CA_KEY)
+        ca = CertificateAuthority(name=name, parent=parent, private_key_path=ca_settings.CA_KEY)
         ca.x509 = cert
         ca.save()
 
