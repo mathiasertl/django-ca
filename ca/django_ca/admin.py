@@ -28,6 +28,7 @@ from django.utils.translation import ugettext_lazy as _
 from .ca_settings import CA_ALLOW_CA_CERTIFICATES
 from .crl import write_crl
 from .forms import CreateCertificateForm
+from .forms import CertificateAuthorityAdminForm
 from .models import Certificate
 from .models import CertificateAuthority
 from .models import Watcher
@@ -47,9 +48,11 @@ class WatcherAdmin(admin.ModelAdmin):
 
 @admin.register(CertificateAuthority)
 class CertificateAuthorityAdmin(admin.ModelAdmin):
+    form = CertificateAuthorityAdminForm
     list_display = ['enabled', 'name', 'serial', ]
     list_display_links = ['enabled', 'name', ]
     search_fields = ['cn', 'name', 'serial', ]
+    readonly_fields = ['serial', 'pub', 'parent', ]
 
 
 class StatusListFilter(admin.SimpleListFilter):

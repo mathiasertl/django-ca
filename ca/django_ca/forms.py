@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import os
+
 from datetime import datetime
 from datetime import timedelta
 
@@ -42,6 +44,15 @@ def _profile_choices():
             if ca_settings.CA_PROFILES[choice[1]]['basicConstraints']['value'] == 'CA:TRUE':
                 choices.remove(choice)
     return sorted(choices, key=lambda e: e[0])
+
+
+class CertificateAuthorityAdminForm(forms.ModelForm):
+    def clean_private_key_path(self):
+        path = self.cleaned_data['private_key_path']
+        if not os.path.exists(path):
+            raise forms.ValidationError(_('Path to private key does not exist.'))
+
+        return path
 
 
 class CreateCertificateForm(forms.ModelForm):
