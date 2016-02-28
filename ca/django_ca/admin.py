@@ -48,15 +48,29 @@ class WatcherAdmin(admin.ModelAdmin):
 
 @admin.register(CertificateAuthority)
 class CertificateAuthorityAdmin(admin.ModelAdmin):
+    fieldsets = (
+        (None, {
+            'fields': ['name', 'enabled', 'parent', 'created' ],
+        }),
+        (_('Certificate'), {
+            'fields': ['serial', 'private_key_path', 'pub', ],
+            # The "as-code" class is used so CSS can only match this section (and only in an
+            # existing cert).
+            'classes': ('as-code', ),
+        }),
+    )
     form = CertificateAuthorityAdminForm
     list_display = ['enabled', 'name', 'serial', ]
     list_display_links = ['enabled', 'name', ]
     search_fields = ['cn', 'name', 'serial', ]
-    readonly_fields = ['serial', 'pub', 'parent', ]
+    readonly_fields = ['serial', 'pub', 'parent', 'created', ]
 
     class Media:
         css = {
-            'all': ('django_ca/admin/css/certificateauthorityadmin.css', )
+            'all': (
+                'django_ca/admin/css/certificateauthorityadmin.css',
+                'django_ca/admin/css/monospace.css',
+            ),
         }
 
 
@@ -249,7 +263,10 @@ class CertificateAdmin(admin.ModelAdmin):
 
     class Media:
         css = {
-            'all': ('django_ca/admin/css/certificateadmin.css', )
+            'all': (
+                'django_ca/admin/css/certificateadmin.css',
+                'django_ca/admin/css/monospace.css',
+            ),
         }
         js = (
             'django_ca/admin/js/sign.js',
