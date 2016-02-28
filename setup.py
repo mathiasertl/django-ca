@@ -18,7 +18,7 @@ import os
 import sys
 
 from distutils.cmd import Command
-from distutils.core import setup
+from setuptools import setup
 
 
 long_description = """django-ca provides you with a local TLS certificate authority. It is based on `pyOpenSSL <https://pyopenssl.readthedocs.org/>`_ and `Django <https://www.djangoproject.com/>`_, it can be used as an app in an existing Django project or with the basic project included. Certificates can be managed through Djangos admin interface or via ``manage.py`` commands - no webserver is needed, if you’re happy with the command-line.
