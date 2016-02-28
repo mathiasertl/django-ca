@@ -125,6 +125,7 @@ class X509CertMixin(object):
 
 class CertificateAuthority(models.Model, X509CertMixin):
     name = models.CharField(max_length=32, help_text=_('A human-readable name'))
+    serial = models.CharField(max_length=48, null=False, blank=False)
     created = models.DateTimeField(auto_now=True)
     enabled = models.BooleanField(default=True)
     pub = models.TextField(null=False, blank=False, verbose_name=_('Public key'))
