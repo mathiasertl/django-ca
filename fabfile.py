@@ -145,7 +145,7 @@ def create_cert(name, **kwargs):
     with hide('everything'):
         local('openssl genrsa -out %s 2048' % key)
         local("openssl req -new -key %s -out %s -utf8 -batch -subj '%s'" % (key, csr, subj))
-    manage('sign_cert', csr=csr, out=pem, **kwargs)
+    manage('sign_cert', CN=name, csr=csr, out=pem, **kwargs)
     return key, csr, pem
 
 
