@@ -93,8 +93,6 @@ class TestDjangoCATestCase(DjangoCATestCase):
     def test_override_tmpcadir(self):
         ca_dir = ca_settings.CA_DIR
         self.assertTrue(ca_dir.startswith(tempfile.gettempdir()))
-        self.assertEqual(ca_settings.CA_KEY, os.path.join(ca_dir, 'ca.key'))
-        self.assertEqual(ca_settings.CA_CRT, os.path.join(ca_dir, 'ca.crt'))
 
     def test_tmpcadir(self):
         old_ca_dir = ca_settings.CA_DIR
@@ -103,8 +101,6 @@ class TestDjangoCATestCase(DjangoCATestCase):
             ca_dir = ca_settings.CA_DIR
             self.assertNotEqual(ca_dir, old_ca_dir)
             self.assertTrue(ca_dir.startswith(tempfile.gettempdir()))
-            self.assertEqual(ca_settings.CA_KEY, os.path.join(ca_dir, 'ca.key'))
-            self.assertEqual(ca_settings.CA_CRT, os.path.join(ca_dir, 'ca.crt'))
 
         self.assertEqual(ca_settings.CA_DIR, old_ca_dir)  # ensure that they're equal again
 
@@ -121,13 +117,6 @@ class InitCATest(DjangoCATestCase):
     def test_init_twice(self):
         # test that creating a CA twice doesn't work
         self.init_ca()
-        with self.assertRaises(CommandError):
-            self.init_ca()
-
-    @override_tmpcadir()
-    def test_key_exists(self):
-        with open(ca_settings.CA_KEY, 'w') as fp:
-            fp.write('')
         with self.assertRaises(CommandError):
             self.init_ca()
 
