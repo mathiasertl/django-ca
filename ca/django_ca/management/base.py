@@ -23,6 +23,7 @@ from django.core.management.base import CommandError
 
 from django_ca import ca_settings
 from django_ca.models import Certificate
+from django_ca.models import CertificateAuthority
 
 
 class FormatAction(argparse.Action):
@@ -37,6 +38,17 @@ class FormatAction(argparse.Action):
         setattr(namespace, self.dest, value)
 
 
+class CertificateAuthorityAction(argparse.Action):
+    def __call__(self, parser, namespace, value, option_string=None):
+        value = value.strip().upper()
+        try:
+            value = CertificateAuthority.objects.get(serial=value)
+        except CertificateAuthority.DoesNotExist:
+            parser.error('%s: Unknown Certiciate Authority.' % value)
+
+        setattr(namespace, self.dest, value)
+
+
 class BaseCommand(_BaseCommand):
     certificate_queryset = Certificate.objects.filter(revoked=False)
 
@@ -48,7 +60,8 @@ class BaseCommand(_BaseCommand):
             help='Algorithm to use (default: %s).' % ca_settings.CA_DIGEST_ALGORITHM)
 
     def add_ca(self, parser, arg='--ca', help='Certificate authority to use'):
-        parser.add_argument('%s' % arg, metavar='SERIAL', help=help)
+        parser.add_argument('%s' % arg, metavar='SERIAL', help=help,
+                            action=CertificateAuthorityAction)
 
     def add_format(self, parser, default=crypto.FILETYPE_PEM):
         """Add the --format option."""
