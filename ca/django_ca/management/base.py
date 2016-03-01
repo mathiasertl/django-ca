@@ -59,8 +59,10 @@ class BaseCommand(_BaseCommand):
             '--algorithm', metavar='{sha512,sha256,...}',
             help='Algorithm to use (default: %s).' % ca_settings.CA_DIGEST_ALGORITHM)
 
-    def add_ca(self, parser, arg='--ca', help='Certificate authority to use'):
-        parser.add_argument('%s' % arg, metavar='SERIAL', help=help,
+    def add_ca(self, parser, arg='--ca', help='Certificate authority to use (default: %s).'):
+        default = CertificateAuthority.objects.filter(enabled=True).first()
+        help = help % default
+        parser.add_argument('%s' % arg, metavar='SERIAL', help=help, default=default,
                             action=CertificateAuthorityAction)
 
     def add_format(self, parser, default=crypto.FILETYPE_PEM):
