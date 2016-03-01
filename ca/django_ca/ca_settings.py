@@ -20,11 +20,6 @@ from django.utils.translation import ugettext_lazy as _
 
 CA_DIR = getattr(settings, 'CA_DIR', os.path.join(settings.BASE_DIR, 'files'))
 
-# exact certificate locations are not documented, but you may still override them if you know what
-# you're doing.
-CA_KEY = getattr(settings, 'CA_KEY', os.path.join(CA_DIR, 'ca.key'))
-CA_CRT = getattr(settings, 'CA_CRT', os.path.join(CA_DIR, 'ca.crt'))
-
 CA_PROFILES = {
     'client': {
         # see: http://security.stackexchange.com/questions/68491/

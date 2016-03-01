@@ -19,11 +19,9 @@ from OpenSSL import crypto
 
 from django_ca import ca_settings
 from django_ca.models import Certificate
-from django_ca.utils import get_ca_crt
-from django_ca.utils import get_ca_key
 
 
-def get_crl(**kwargs):
+def get_crl(ca, **kwargs):
     """Function to generate a Certificate Revocation List (CRL).
 
     All keyword arguments are passed as-is to :py:func:`OpenSSL.crypto.CRL.export`. Please see the
@@ -48,7 +46,7 @@ def get_crl(**kwargs):
     crl = crypto.CRL()
     for cert in Certificate.objects.revoked():
         crl.add_revoked(cert.get_revocation())
-    return crl.export(get_ca_crt(), get_ca_key(), **kwargs)
+    return crl.export(ca.key, ca.x509, **kwargs)
 
 
 def get_crl_settings():
