@@ -69,15 +69,10 @@ class Command(BaseCommand):
     def handle(self, name, country, state, city, org, ou, cn, **options):
         # get a possible parent CA
         parent = options['parent']
+
         if parent is not None:
             try:
-                parent = CertificateAuthority.objects.get(serial=parent)
-            except CertificateAuthority.DoesNotExist:
-                raise CommandError('Specified parent CA does not exist.')
-
-            try:
-                with open(parent.private_key_path) as instream:
-                    sign_key = crypto.load_privatekey(crypto.FILETYPE_PEM, instream.read())
+                parent.key
             except FileNotFoundError:
                 raise CommandError(
                     '%s: Parent CA private key not available.' % parent.private_key_path)
