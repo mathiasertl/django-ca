@@ -63,6 +63,9 @@ class CertificateAuthorityAdmin(admin.ModelAdmin):
     search_fields = ['cn', 'name', 'serial', ]
     readonly_fields = ['serial', 'pub', 'parent', 'created', ]
 
+    def has_add_permission(self, request):
+        return False
+
     def get_urls(self):
         # Remove the delete action from the URLs
         urls = super(CertificateAuthorityAdmin, self).get_urls()
