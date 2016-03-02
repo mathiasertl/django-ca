@@ -115,7 +115,7 @@ class CreateCertificateForm(forms.ModelForm):
 
     class Meta:
         model = Certificate
-        fields = ['csr', 'watchers', ]
+        fields = ['csr', 'watchers', 'ca', ]
         help_texts = {
             'csr': _('''The Certificate Signing Request (CSR) in PEM format. To create a new one:
 <span class="shell">openssl genrsa -out hostname.key 2048

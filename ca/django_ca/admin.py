@@ -124,7 +124,7 @@ class CertificateAdmin(admin.ModelAdmin):
     ]
     add_fieldsets = [
         (None, {
-            'fields': ['csr', 'profile', 'subject', 'subjectAltName', 'expires', 'watchers', ],
+            'fields': ['csr', 'ca', 'profile', 'subject', 'subjectAltName', 'expires', 'watchers', ],
         }),
         (_('X509 Extensions'), {
             'fields': ['keyUsage', 'extendedKeyUsage', 'basicConstraints', ]
@@ -244,6 +244,8 @@ class CertificateAdmin(admin.ModelAdmin):
             san, cn_in_san = data['subjectAltName']
 
             x509 = get_cert(
+                ca_key=data['ca'].key,
+                ca_crt=data['ca'].x509,
                 csr=data['csr'],
                 expires=data['expires'],
                 subject=data['subject'],
