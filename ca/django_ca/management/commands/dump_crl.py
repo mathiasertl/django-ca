@@ -39,6 +39,7 @@ class Command(BaseCommand):
                  '''must be set.'''
         )
         self.add_format(parser, default=None)
+        self.add_ca(parser)
         super(Command, self).add_arguments(parser)
 
     def handle(self, path, **options):
@@ -64,7 +65,7 @@ class Command(BaseCommand):
         if options['digest']:
             kwargs['digest'] = bytes(options['digest'], 'utf-8')
 
-        crl = get_crl(**kwargs)
+        crl = get_crl(ca=options['ca'], **kwargs)
         if 'b' not in path.mode:  # writing to stdout
             if kwargs['type'] == 'asn1':
                 raise CommandError("ASN1 cannot be reliably printed to stdout.")
