@@ -182,7 +182,9 @@ def init_demo():
     manage('init_ca', 'Root CA', 'AT', 'Vienna', 'Vienna', 'example', 'example', 'ca.example.com',
           pathlen=1)
     print(green('Initiating Child-CA...'))
-    manage('init_ca', 'Child CA', 'AT', 'Vienna', 'Vienna', 'example', 'example', 'sub.ca.example.com')
+    test = manage('init_ca', 'Child CA', 'AT', 'Vienna', 'Vienna', 'example', 'example', 'sub.ca.example.com')
+    print(test)
+    return
 
     # generate OCSP certificate
     print(green('Generate OCSP certificate...'))

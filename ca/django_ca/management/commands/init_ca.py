@@ -136,7 +136,7 @@ class Command(BaseCommand):
             crypto.X509Extension(b'basicConstraints', True, b'CA:TRUE, pathlen:0'),
             crypto.X509Extension(b'keyUsage', 0, b'keyCertSign,cRLSign'),
             crypto.X509Extension(b'subjectKeyIdentifier', False, b'hash', subject=cert),
-            crypto.X509Extension(b'subjectAltName', 0, san)
+            crypto.X509Extension(b'subjectAltName', 0, san),
         ])
         cert.add_extensions([
             crypto.X509Extension(b'authorityKeyIdentifier', False, b'keyid:always', issuer=cert),
@@ -148,7 +148,6 @@ class Command(BaseCommand):
             args = ['des3', getpass()]
         else:
             args = ['des3', options['password']]
-
 
         # create certificate in database
         ca = CertificateAuthority(name=name, parent=parent)
