@@ -166,6 +166,7 @@ def init_demo():
     from django.core.management import call_command as manage
     from django_ca import ca_settings
     from django_ca.models import Certificate
+    from django_ca.models import CertificateAuthority
     from django_ca.models import Watcher
     User = get_user_model()
 
@@ -210,10 +211,11 @@ def init_demo():
     manage('dump_ocsp_index', ocsp_index)
 
     ca_crl_path = os.path.join(ca_settings.CA_DIR, 'ca_crl.pem')
+    ca = CertificateAuthority.objects.first()
 
     # Concat the CA certificate and the CRL, this is required by "openssl verify"
-    with open(crl_path) as crl, open(ca_settings.CA_CRT) as ca_pem, open(ca_crl_path, 'w') as ca_crl:
-        ca_crl.write(ca_pem.read())
+    with open(crl_path) as crl, open(ca_crl_path, 'w') as ca_crl:
+        ca_crl.write(ca.pub)
         ca_crl.write(crl.read())
 
     # create a few watchers
@@ -223,13 +225,18 @@ def init_demo():
     # create admin user for login
     User.objects.create_superuser('user', 'user@example.com', 'nopass')
 
+    # write public ca cert so it can be used by demo commands below
+    ca_crt = os.path.join(ca_settings.CA_DIR, '%s.pem' % ca.serial)
+    with open(ca_crt, 'w') as outstream:
+        outstream.write(ca.pub)
+
     os.chdir('../')
     cwd = os.getcwd()
     rel = lambda p: os.path.relpath(p, cwd)
-    ca_crt = rel(ca_settings.CA_CRT)
+    ca_crt = rel(ca_crt)
     host1_pem = rel(os.path.join(ca_settings.CA_DIR, 'host1.example.com.pem'))
     print("")
-    print(green('* All certificates are in %s' % rel(ca_settings.CA_KEY)))
+    print(green('* All certificates are in %s' % rel(ca_settings.CA_DIR)))
     print(green('* Verify with CRL:'))
     print('\topenssl verify -CAfile %s -crl_check %s' % (rel(ca_crl_path), rel(host1_pem)))
     print(green('* Run OCSP responder:'))
