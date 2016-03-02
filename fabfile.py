@@ -180,6 +180,8 @@ def init_demo():
     manage('migrate', verbosity=0)
     print(green('Initiating CA...'))
     manage('init_ca', 'Root CA', 'AT', 'Vienna', 'Vienna', 'example', 'example', 'ca.example.com')
+    print(green('Initiating Child-CA...'))
+    manage('init_ca', 'Child CA', 'AT', 'Vienna', 'Vienna', 'example', 'example', 'sub.ca.example.com')
 
     # generate OCSP certificate
     print(green('Generate OCSP certificate...'))
