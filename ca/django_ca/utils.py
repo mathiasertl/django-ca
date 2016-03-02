@@ -107,9 +107,9 @@ def get_cert_profile_kwargs(name=None):
     return kwargs
 
 
-def get_cert(csr, expires, subject=None, cn_in_san=True, csr_format=crypto.FILETYPE_PEM, algorithm=None,
-             basicConstraints='critical,CA:FALSE', subjectAltName=None, keyUsage=None,
-             extendedKeyUsage=None):
+def get_cert(ca_key, ca_crt, csr, expires, subject=None, cn_in_san=True,
+             csr_format=crypto.FILETYPE_PEM, algorithm=None, basicConstraints='critical,CA:FALSE',
+             subjectAltName=None, keyUsage=None, extendedKeyUsage=None):
     """Create a signed certificate from a CSR.
 
     X509 extensions (`basic_constraints`, `key_usage`, `ext_key_usage`) may either be None (in
@@ -122,6 +122,10 @@ def get_cert(csr, expires, subject=None, cn_in_san=True, csr_format=crypto.FILET
     Parameters
     ----------
 
+    ca_key : OpenSSL.crypto.PKey
+        The private key of the certificate authority.
+    ca_crt : OpenSSL.crypto.X509
+        The public key of the certificate authority.
     csr : str
         A valid CSR in PEM format. If none is given, `self.csr` will be used.
     expires : datetime
@@ -167,10 +171,6 @@ def get_cert(csr, expires, subject=None, cn_in_san=True, csr_format=crypto.FILET
     # get algorithm used to sign certificate
     if not algorithm:
         algorithm = ca_settings.CA_DIGEST_ALGORITHM
-
-    # get CA key and cert
-    ca_crt = get_ca_crt()
-    ca_key = get_ca_key()
 
     # Process CommonName and subjectAltName extension.
     if subject.get('CN') is None:
