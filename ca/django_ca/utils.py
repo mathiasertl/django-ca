@@ -31,8 +31,6 @@ from OpenSSL import crypto
 
 from django_ca import ca_settings
 
-_CA_KEY = None
-_CA_CRT = None
 
 # Description strings for various X509 extensions, taken from "man x509v3_config".
 EXTENDED_KEY_USAGE_DESC = _('Purposes for which the certificate public key can be used for.')
@@ -52,22 +50,6 @@ class LazyEncoder(DjangoJSONEncoder):
 def format_date(date):
     """Format date as ASN1 GENERALIZEDTIME, as required by various fields."""
     return date.strftime('%Y%m%d%H%M%SZ')
-
-
-def get_ca_key(reload=False):
-    global _CA_KEY
-    if _CA_KEY is None or reload is True:
-        with open(ca_settings.CA_KEY) as ca_key:
-            _CA_KEY = crypto.load_privatekey(crypto.FILETYPE_PEM, ca_key.read())
-    return _CA_KEY
-
-
-def get_ca_crt(reload=False):
-    global _CA_CRT
-    if _CA_CRT is None or reload is True:
-        with open(ca_settings.CA_CRT) as ca_crt:
-            _CA_CRT = crypto.load_certificate(crypto.FILETYPE_PEM, ca_crt.read())
-    return _CA_CRT
 
 
 def get_basic_cert(expires):

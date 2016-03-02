@@ -10,8 +10,6 @@ import shutil
 import subprocess
 import tempfile
 
-from OpenSSL import crypto
-
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
@@ -20,7 +18,7 @@ from django.utils import six
 from django.utils.six.moves import reload_module
 
 from . import ca_settings
-from . import utils
+from .models import CertificateAuthority
 
 
 class override_settings(_override_settings):
@@ -109,21 +107,13 @@ class InitCATest(DjangoCATestCase):
     @override_tmpcadir()
     def test_basic(self):
         self.init_ca()
-        with open(ca_settings.CA_CRT) as crt:
-            cert = crypto.load_certificate(crypto.FILETYPE_PEM, crt.read())
+        cert = CertificateAuthority.objects.first().x509
         self.assertEqual(cert.get_signature_algorithm(), six.b('sha512WithRSAEncryption'))
 
     @override_tmpcadir()
     def test_init_twice(self):
         # test that creating a CA twice doesn't work
         self.init_ca()
-        with self.assertRaises(CommandError):
-            self.init_ca()
-
-    @override_tmpcadir()
-    def test_crt_exists(self):
-        with open(ca_settings.CA_CRT, 'w') as fp:
-            fp.write('')
         with self.assertRaises(CommandError):
             self.init_ca()
 
@@ -140,8 +130,7 @@ class InitCATest(DjangoCATestCase):
     @override_tmpcadir()
     def test_algorithm(self):
         self.init_ca(algorithm='sha1')
-        with open(ca_settings.CA_CRT) as crt:
-            cert = crypto.load_certificate(crypto.FILETYPE_PEM, crt.read())
+        cert = CertificateAuthority.objects.first().x509
         self.assertEqual(cert.get_signature_algorithm(), six.b('sha1WithRSAEncryption'))
 
 
@@ -152,27 +141,3 @@ class SignCertTest(DjangoCATestCase):
         out = six.StringIO()
         key, csr = self.create_csr()
         call_command('sign_cert', alt=['example.com'], csr=csr, stdout=out)
-
-
-class TestUtils(DjangoCATestCase):
-    @override_tmpcadir()
-    def test_get_ca_funcs(self):
-        self.init_ca()
-        key_first = utils.get_ca_key()
-        key_second = utils.get_ca_key()
-        self.assertEqual(key_first, key_second)
-
-        crt_first = utils.get_ca_crt()
-        crt_second = utils.get_ca_crt()
-        self.assertEqual(crt_first, crt_second)
-
-        # test that the functions indeed cache
-        os.remove(ca_settings.CA_KEY)
-        os.remove(ca_settings.CA_CRT)
-        self.init_ca()
-        self.assertEqual(key_first, utils.get_ca_key())
-        self.assertEqual(crt_first, utils.get_ca_crt())
-
-        # test force-reload:
-        self.assertNotEqual(key_first, utils.get_ca_key(reload=True))
-        self.assertNotEqual(crt_first, utils.get_ca_crt(reload=True))
