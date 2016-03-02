@@ -172,7 +172,7 @@ def init_demo():
     if settings.DEBUG is not True:
         abort(red('Refusing to run if settings.DEBUG != True.'))
 
-    if os.path.exists(ca_settings.CA_KEY) or os.path.exists(ca_settings.CA_CRT):
+    if os.path.exists(os.path.join('ca', 'db.sqlite3')):
         abort(red('CA already set up.'))
 
     print(green('Creating database...'))
