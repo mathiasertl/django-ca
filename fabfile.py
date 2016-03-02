@@ -181,10 +181,9 @@ def init_demo():
     print(green('Initiating CA...'))
     manage('init_ca', 'Root CA', 'AT', 'Vienna', 'Vienna', 'example', 'example', 'ca.example.com',
           pathlen=1)
-    print(green('Initiating Child-CA...'))
-    test = manage('init_ca', 'Child CA', 'AT', 'Vienna', 'Vienna', 'example', 'example', 'sub.ca.example.com')
-    print(test)
-    return
+    print(green('Initiating Child CA...'))
+    manage('init_ca', 'Child CA', 'AT', 'Vienna', 'Vienna', 'example', 'example', 'sub.ca.example.com')
+    client_ca = CertificateAuthority.objects.get(name='Child CA')
 
     # generate OCSP certificate
     print(green('Generate OCSP certificate...'))
@@ -197,7 +196,7 @@ def init_demo():
         create_cert(hostname, cn=hostname)
 
     print(green('Creating client certificate...'))
-    create_cert('client', cn='First Last', cn_in_san=False, alt=['user@example.com'])
+    create_cert('client', cn='First Last', cn_in_san=False, alt=['user@example.com'], ca=client_ca)
 
     # Revoke host1 and host2
     print(green('Revoke host1.example.com and host2.example.com...'))
