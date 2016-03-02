@@ -63,6 +63,12 @@ class CertificateAuthorityAdmin(admin.ModelAdmin):
     search_fields = ['cn', 'name', 'serial', ]
     readonly_fields = ['serial', 'pub', 'parent', 'created', ]
 
+    def get_urls(self):
+        # Remove the delete action from the URLs
+        urls = super(CertificateAuthorityAdmin, self).get_urls()
+        add_name = '%s_%s_add' % (self.model._meta.app_label, self.model._meta.model_name)
+        return [u for u in urls if u.name != add_name]
+
     class Media:
         css = {
             'all': (
