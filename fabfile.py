@@ -179,7 +179,8 @@ def init_demo():
     print(green('Creating database...'))
     manage('migrate', verbosity=0)
     print(green('Initiating CA...'))
-    manage('init_ca', 'Root CA', 'AT', 'Vienna', 'Vienna', 'example', 'example', 'ca.example.com')
+    manage('init_ca', 'Root CA', 'AT', 'Vienna', 'Vienna', 'example', 'example', 'ca.example.com',
+          pathlen=1)
     print(green('Initiating Child-CA...'))
     manage('init_ca', 'Child CA', 'AT', 'Vienna', 'Vienna', 'example', 'example', 'sub.ca.example.com')
 
