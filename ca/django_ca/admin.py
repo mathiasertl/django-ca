@@ -97,15 +97,15 @@ class CertificateAdmin(admin.ModelAdmin):
     actions = ['revoke', ]
     change_form_template = 'django_ca/admin/change_form.html'
     list_display = ('cn', 'serial', 'status', 'expires_date')
-    list_filter = (StatusListFilter, )
+    list_filter = (StatusListFilter, 'ca')
     readonly_fields = [
         'expires', 'csr', 'pub', 'cn', 'serial', 'revoked', 'revoked_date', 'revoked_reason',
-        'subjectAltName', 'distinguishedName', ] + _x509_ext_fields
+        'subjectAltName', 'distinguishedName', 'ca', ] + _x509_ext_fields
     search_fields = ['cn', 'serial', ]
 
     fieldsets = [
         (None, {
-            'fields': ['cn', 'subjectAltName', 'distinguishedName', 'serial', 'expires',
+            'fields': ['cn', 'subjectAltName', 'distinguishedName', 'serial', 'ca', 'expires',
                        'watchers', ],
         }),
         (_('X509 Extensions'), {
