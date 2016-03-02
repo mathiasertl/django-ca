@@ -49,10 +49,10 @@ class WatcherAdmin(admin.ModelAdmin):
 class CertificateAuthorityAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
-            'fields': ['name', 'enabled', 'parent', 'created' ],
+            'fields': ['name', 'enabled', 'parent', ],
         }),
         (_('Certificate'), {
-            'fields': ['serial', 'private_key_path', 'pub', ],
+            'fields': ['serial', 'pub', ],
             # The "as-code" class is used so CSS can only match this section (and only in an
             # existing cert).
             'classes': ('as-code', ),
@@ -61,7 +61,7 @@ class CertificateAuthorityAdmin(admin.ModelAdmin):
     list_display = ['enabled', 'name', 'serial', ]
     list_display_links = ['enabled', 'name', ]
     search_fields = ['cn', 'name', 'serial', ]
-    readonly_fields = ['serial', 'pub', 'parent', 'created', ]
+    readonly_fields = ['serial', 'pub', 'parent', ]
 
     def has_add_permission(self, request):
         return False
