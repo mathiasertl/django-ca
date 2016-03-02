@@ -149,6 +149,7 @@ the default values, options like --key-usage still override the profile.""")
             csr = open(options['csr']).read()
 
         # get list of watchers
+        ca = options['ca']
         watchers = [Watcher.from_addr(addr) for addr in options['watch']]
 
         # get keyUsage and extendedKeyUsage flags based on profiles
@@ -165,7 +166,8 @@ the default values, options like --key-usage still override the profile.""")
         expires = datetime.today() + timedelta(days=options['days'] + 1)
         expires = expires.replace(hour=0, minute=0, second=0, microsecond=0)
 
-        x509 = get_cert(csr=csr, expires=expires, subjectAltName=options['alt'], **kwargs)
+        x509 = get_cert(ca_key=ca.key, ca_crt=ca.x509, csr=csr, expires=expires,
+                        subjectAltName=options['alt'], **kwargs)
         cert = Certificate(csr=csr, expires=expires)
         cert.x509 = x509
         cert.save()
