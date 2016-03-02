@@ -129,7 +129,7 @@ class Command(BaseCommand):
 
         pathlen = b'CA:TRUE'
         if options['pathlen'] is not False:
-            pathlen += b', pathlen:%s' % str(options['pathlen']).encode('utf-8')
+            pathlen += b', pathlen:%s' + str(options['pathlen']).encode('utf-8')
 
         san = bytes('DNS:%s' % cn, 'utf-8')
         cert.add_extensions([
