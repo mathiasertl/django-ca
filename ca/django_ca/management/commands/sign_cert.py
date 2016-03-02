@@ -85,6 +85,7 @@ of subjectAltNames (given by --alt).""")
         self.add_subject(parser)
         self.add_cn_in_san(parser)
         self.add_algorithm(parser)
+        self.add_ca(parser)
 
         parser.add_argument(
             '--days', default=ca_settings.CA_DEFAULT_EXPIRES, type=int,
