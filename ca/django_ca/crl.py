@@ -46,7 +46,7 @@ def get_crl(ca, **kwargs):
     crl = crypto.CRL()
     for cert in Certificate.objects.revoked():
         crl.add_revoked(cert.get_revocation())
-    return crl.export(ca.key, ca.x509, **kwargs)
+    return crl.export(ca.x509, ca.key, **kwargs)
 
 
 def get_crl_settings():
