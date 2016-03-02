@@ -111,13 +111,6 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(cert.get_signature_algorithm(), six.b('sha512WithRSAEncryption'))
 
     @override_tmpcadir()
-    def test_init_twice(self):
-        # test that creating a CA twice doesn't work
-        self.init_ca()
-        with self.assertRaises(CommandError):
-            self.init_ca()
-
-    @override_tmpcadir()
     def test_small_key_size(self):
         with self.assertRaises(CommandError):
             self.init_ca(key_size=256)
