@@ -125,7 +125,7 @@ class Command(BaseCommand):
         if parent is None:
             cert.sign(key, options['algorithm'])
         else:
-            cert.sign(sign_key, options['algorithm'])
+            cert.sign(parent.key, options['algorithm'])
 
         pathlen = b'CA:TRUE'
         if options['pathlen'] is not False:
