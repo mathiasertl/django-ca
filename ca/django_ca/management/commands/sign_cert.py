@@ -168,7 +168,7 @@ the default values, options like --key-usage still override the profile.""")
 
         x509 = get_cert(ca_key=ca.key, ca_crt=ca.x509, csr=csr, expires=expires,
                         subjectAltName=options['alt'], **kwargs)
-        cert = Certificate(csr=csr, expires=expires)
+        cert = Certificate(ca=ca, csr=csr, expires=expires)
         cert.x509 = x509
         cert.save()
         cert.watchers.add(*watchers)
