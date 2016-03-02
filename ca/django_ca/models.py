@@ -164,6 +164,7 @@ class Certificate(models.Model, X509CertMixin):
     created = models.DateTimeField(auto_now=True)
     expires = models.DateTimeField(null=False, blank=False)
 
+    ca = models.ForeignKey(CertificateAuthority, verbose_name=_('Certificate Authority'))
     csr = models.TextField(null=False, blank=False, verbose_name=_('CSR'))
     pub = models.TextField(null=False, blank=False, verbose_name=_('Public key'))
 
