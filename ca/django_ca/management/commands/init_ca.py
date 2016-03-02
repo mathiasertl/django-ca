@@ -66,6 +66,17 @@ class Command(BaseCommand):
         parser.add_argument('ou', help='Organizational Unit where this CA is used.')
         parser.add_argument('cn', help='Common name for this CA.')
 
+        group = parser.add_argument_group(
+            'pathlen attribute',
+            """Maximum number of CAs that can appear below this one. A pathlen of zero (the
+            default) means it can only be used to sign end user certificates and not further
+            CAs.""")
+        group = group.add_mutually_exclusive_group()
+        group.add_argument('--pathlen', default=0, type=int,
+                           help='Maximum number of sublevel CAs (default: %(default)s).')
+        group.add_argument('--no-pathlen', action='store_false', dest='pathlen',
+                           help='Do not add a pathlen attribute.')
+
     def handle(self, name, country, state, city, org, ou, cn, **options):
         # get a possible parent CA
         parent = options['parent']
@@ -115,6 +126,10 @@ class Command(BaseCommand):
             cert.sign(key, options['algorithm'])
         else:
             cert.sign(sign_key, options['algorithm'])
+
+        pathlen = b'CA:TRUE'
+        if options['pathlen'] is not False:
+            pathlen += b', pathlen:%s' % str(options['pathlen']).encode('utf-8')
 
         san = bytes('DNS:%s' % cn, 'utf-8')
         cert.add_extensions([
