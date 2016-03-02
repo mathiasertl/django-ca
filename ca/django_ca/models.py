@@ -152,6 +152,10 @@ class CertificateAuthority(models.Model, X509CertMixin):
             self.serial = ':'.join(a+b for a,b in zip(s[::2], s[1::2]))
         super(CertificateAuthority, self).save(*args, **kwargs)
 
+    class Meta:
+        verbose_name = _('Certificate Authority')
+        verbose_name_plural = _('Certificate Authorities')
+
     def __str__(self):
         return self.name
 
