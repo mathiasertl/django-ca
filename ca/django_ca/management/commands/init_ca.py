@@ -127,13 +127,13 @@ class Command(BaseCommand):
         else:
             cert.sign(parent.key, options['algorithm'])
 
-        pathlen = b'CA:TRUE'
+        basicConstraints = b'CA:TRUE'
         if options['pathlen'] is not False:
-            pathlen += b', pathlen:%s' + str(options['pathlen']).encode('utf-8')
+            basicConstraints += b', pathlen:%s' + str(options['pathlen']).encode('utf-8')
 
         san = bytes('DNS:%s' % cn, 'utf-8')
         cert.add_extensions([
-            crypto.X509Extension(b'basicConstraints', True, b'CA:TRUE, pathlen:0'),
+            crypto.X509Extension(b'basicConstraints', True, basicConstraints),
             crypto.X509Extension(b'keyUsage', 0, b'keyCertSign,cRLSign'),
             crypto.X509Extension(b'subjectKeyIdentifier', False, b'hash', subject=cert),
             crypto.X509Extension(b'subjectAltName', 0, san),
