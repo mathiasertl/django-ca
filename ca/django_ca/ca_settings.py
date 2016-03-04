@@ -24,10 +24,6 @@ CA_PROFILES = {
     'client': {
         # see: http://security.stackexchange.com/questions/68491/
         'desc': _('A certificate for a client.'),
-        'basicConstraints': {
-            'critical': True,
-            'value': 'CA:FALSE',
-        },
         'keyUsage': {
             'critical': True,
             'value': [
@@ -43,10 +39,6 @@ CA_PROFILES = {
     },
     'server': {
         'desc': _('A certificate for a server, allows client and server authentication.'),
-        'basicConstraints': {
-            'critical': True,
-            'value': 'CA:FALSE',
-        },
         'keyUsage': {
             'critical': True,
             'value': [
@@ -66,10 +58,6 @@ CA_PROFILES = {
     'webserver': {
         # see http://security.stackexchange.com/questions/24106/
         'desc': _('A certificate for a webserver.'),
-        'basicConstraints': {
-            'critical': True,
-            'value': 'CA:FALSE',
-        },
         'keyUsage': {
             'critical': True,
             'value': [
@@ -89,10 +77,6 @@ CA_PROFILES = {
         # see: http://security.stackexchange.com/questions/30066/
         'desc': _(
             'A certificate for an enduser, allows client authentication, code and email signing.'),
-        'basicConstraints': {
-            'critical': True,
-            'value': 'CA:FALSE',
-        },
         'keyUsage': {
             'critical': True,
             'value': [
@@ -113,10 +97,6 @@ CA_PROFILES = {
     },
     'ocsp': {
         'desc': _('A certificate for an OCSP responder.'),
-        'basicConstraints': {
-            'critical': True,
-            'value': 'CA:FALSE',
-        },
         'keyUsage': {
             'critical': True,
             'value': [
@@ -131,21 +111,6 @@ CA_PROFILES = {
                 'OCSPSigning',
             ],
         },
-    },
-    'ca': {
-        'desc': _('A CA certificate.'),
-        'basicConstraints': {
-            'critical': True,
-            'value': 'CA:TRUE',
-        },
-        'keyUsage': {
-            'critical': True,
-            'value': [
-                'cRLSign',
-                'keyCertSign',
-            ],
-        },
-        'extendedKeyUsage': None,
     },
 }
 
@@ -166,7 +131,6 @@ for name, profile in _CA_PROFILE_OVERRIDES.items():
         profile.setdefault('cn_in_san', True)
         CA_PROFILES[name] = profile
 
-CA_ALLOW_CA_CERTIFICATES = getattr(settings, 'CA_ALLOW_CA_CERTIFICATES', False)
 CA_DEFAULT_EXPIRES = getattr(settings, 'CA_DEFAULT_EXPIRES', 730)
 CA_DEFAULT_PROFILE = getattr(settings, 'CA_DEFAULT_PROFILE', 'webserver')
 CA_DIGEST_ALGORITHM = getattr(settings, 'CA_DIGEST_ALGORITHM', "sha512")

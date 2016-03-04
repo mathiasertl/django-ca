@@ -13,15 +13,6 @@ also documented at :file:`ca/ca/localsettings.py.example`
 (`view on git
 <https://github.com/mathiasertl/django-ca/blob/master/ca/ca/localsettings.py.example>`_).
 
-CA_ALLOW_CA_CERTIFICATES
-   Default: ``False``
-
-   Determines if the root CA is allowed to issue certificates that themself can
-   be used as a CA. Setting this to ``True`` will enable a ``ca`` profile that
-   can be used in both the admin webinterface or with ``manage.py sign_cert
-   --ca``. On a certificate level, this sets the `basicConstraints` x509
-   extension to ``CA:TRUE``.
-
 CA_CRL_DISTRIBUTION_POINTS
    Default: ``[]``
 
@@ -133,11 +124,10 @@ CA_OCSP_INDEX_PATH
 CA_PROFILES
    Default: ``{}``
 
-   Profiles determine the default values for the ``keyUsage``,
-   ``extendedKeyUsage`` and ``basicConstraints`` x509 extensions. In short,
-   they determine how your certificate can be used, be it for server and/or
-   client authentication, e-mail signing or anything else. By default,
-   **django-ca** provides these profiles:
+   Profiles determine the default values for the ``keyUsage``, ``extendedKeyUsage`` x509
+   extensions. In short, they determine how your certificate can be used, be it for server and/or
+   client authentication, e-mail signing or anything else. By default, **django-ca** provides these
+   profiles:
 
    =========== ======================================== =======================
    Profile     keyUsage                                 extendedKeyUsage
@@ -152,15 +142,12 @@ CA_PROFILES
                                                         codeSigning
    ocsp        nonRepudiation, talSignature,            OCSPSigning
                keyEncipherment
-   ca          cRLSign, keyCertSign
    =========== ======================================== =======================
 
    Further more,
 
    * The ``keyUsage`` attribute is marked as critical.
    * The ``extendedKeyUsage`` attribute is marked as non-critical.
-   * All profiles have their ``basicConstraints`` marked as critical
-     ``CA:FALSE``, except the "ca" profile, which has critical ``CA:TRUE``.
 
    This should be fine for most usecases. But you can use the ``CA_PROFILES``
    setting to either update or disable existing profiles or add new profiles
@@ -179,7 +166,6 @@ CA_PROFILES
      ``"extendedKeyUsage"`` The ``extendedKeyUsage`` X509 extension.
      ``"desc"``             A human-readable description, shows up with "sing_cert -h" and in the
                             webinterface profile selection.
-     ``"basicConstraints"`` The ``basicConstraints`` X509 extension.
      ``"subject"``          The default subject to use. If ommited, ``CA_DEFAULT_SUBJECT`` is
                             used.
      ``"cn_in_san"``        If to include the CommonName in the subjectAltName by default. The
@@ -193,10 +179,6 @@ CA_PROFILES
          CA_DEFAULT_PROFILES = {
              'client': {
                  'desc': _('Nice description.'),
-                 'basicConstraints': {
-                     'critical': True,
-                     'value': 'CA:FALSE',
-                 },
                  'keyUsage': {
                      'critical': True,
                      'value': [

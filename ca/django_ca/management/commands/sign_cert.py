@@ -115,10 +115,6 @@ of subjectAltNames (given by --alt).""")
 the default values, options like --key-usage still override the profile.""")
         group = group.add_mutually_exclusive_group()
         for name, profile in ca_settings.CA_PROFILES.items():
-            if ca_settings.CA_ALLOW_CA_CERTIFICATES is False \
-                    and profile['basicConstraints']['value'] != 'CA:FALSE':
-                continue
-
             group.add_argument('--%s' % name, action='store_const', const=name, dest='profile',
                                help=profile['desc'])
 

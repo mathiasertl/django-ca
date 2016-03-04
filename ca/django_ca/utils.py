@@ -74,7 +74,7 @@ def get_cert_profile_kwargs(name=None):
         'cn_in_san': profile['cn_in_san'],
         'subject': profile['subject'],
     }
-    for arg in ['basicConstraints', 'keyUsage', 'extendedKeyUsage']:
+    for arg in ['keyUsage', 'extendedKeyUsage']:
         config = profile[arg]
         if config is None or not config.get('value'):
             continue
@@ -90,16 +90,15 @@ def get_cert_profile_kwargs(name=None):
 
 
 def get_cert(ca_key, ca_crt, csr, expires, subject=None, cn_in_san=True,
-             csr_format=crypto.FILETYPE_PEM, algorithm=None, basicConstraints='critical,CA:FALSE',
-             subjectAltName=None, keyUsage=None, extendedKeyUsage=None):
+             csr_format=crypto.FILETYPE_PEM, algorithm=None, subjectAltName=None, keyUsage=None,
+             extendedKeyUsage=None):
     """Create a signed certificate from a CSR.
 
-    X509 extensions (`basic_constraints`, `key_usage`, `ext_key_usage`) may either be None (in
-    which case they are not added) or a tuple with the first value being a bool indicating if the
-    value is critical and the second value being a byte-array indicating the extension value.
-    Example::
+    X509 extensions (`key_usage`, `ext_key_usage`) may either be None (in which case they are not
+    added) or a tuple with the first value being a bool indicating if the value is critical and the
+    second value being a byte-array indicating the extension value. Example::
 
-        (True, b'CA:FALSE')
+        (True, b'value')
 
     Parameters
     ----------
@@ -130,8 +129,6 @@ def get_cert(ca_key, ca_crt, csr, expires, subject=None, cn_in_san=True,
     subjectAltName : list of str, optional
         A list of values for the subjectAltName extension. Values are passed to
         `get_subjectAltName`, see function documentation for how this value is parsed.
-    basicConstraints : tuple or None
-        Value for the `basicConstraints` X509 extension. See description for format details.
     keyUsage : tuple or None
         Value for the `keyUsage` X509 extension. See description for format details.
     extendedKeyUsage : tuple or None
@@ -178,15 +175,13 @@ def get_cert(ca_key, ca_crt, csr, expires, subject=None, cn_in_san=True,
     extensions = [
         crypto.X509Extension(b'subjectKeyIdentifier', 0, b'hash', subject=cert),
         crypto.X509Extension(b'authorityKeyIdentifier', 0, b'keyid,issuer', issuer=ca_crt),
+        crypto.X509Extension(b'basicConstraints', True, b'CA:FALSE'),
     ]
 
     if keyUsage is not None:
         extensions.append(crypto.X509Extension(b'keyUsage', *keyUsage))
     if extendedKeyUsage is not None:
         extensions.append(crypto.X509Extension(b'extendedKeyUsage', *extendedKeyUsage))
-
-    if basicConstraints is not None:
-        extensions.append(crypto.X509Extension(b'basicConstraints', *basicConstraints))
 
     # Add subjectAltNames, always also contains the CommonName
     if subjectAltName is not None:

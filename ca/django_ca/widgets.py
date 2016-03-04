@@ -174,23 +174,3 @@ class KeyUsageWidget(CustomMultiWidget):
         if value:
             return value
         return ([], True)
-
-
-class BasicConstraintsWidget(CustomMultiWidget):
-    def __init__(self, choices, attrs=None):
-        _widgets = (
-            widgets.Select(choices=choices, attrs=attrs),
-            PathlenWidget(),
-            LabeledCheckboxInput(label=_('critical')),
-        )
-        super(BasicConstraintsWidget, self).__init__(_widgets, attrs)
-
-    def decompress(self, value):
-        if value:
-            return value
-        return ['CA:FALSE', None, True]
-
-    class Media:
-        js = (
-            'django_ca/admin/js/basicconstraints.js',
-        )

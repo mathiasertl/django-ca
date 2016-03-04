@@ -45,9 +45,6 @@ SECRET_KEY = ''
 # The default algorithm used for signing certificates.
 #CA_DIGEST_ALGORITHM = 'sha512'
 
-# Allow this CA to issue certificates that an themself be used as CA.
-#CA_ALLOW_CA_CERTIFICATES = False
-
 # Override any existing CA profiles.
 #CA_PROFILES = {}
 

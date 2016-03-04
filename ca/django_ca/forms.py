@@ -21,7 +21,6 @@ from django.contrib.admin.widgets import AdminDateWidget
 from django.utils.translation import ugettext_lazy as _
 
 from . import ca_settings
-from .fields import BasicConstraintsField
 from .fields import KeyUsageField
 from .fields import SubjectAltNameField
 from .fields import SubjectField
@@ -37,10 +36,6 @@ def _initial_expires():
 
 def _profile_choices():
     choices = [('', '----')] + [(p, p) for p in ca_settings.CA_PROFILES]
-    if ca_settings.CA_ALLOW_CA_CERTIFICATES is False:
-        for choice in choices[1:]:
-            if ca_settings.CA_PROFILES[choice[1]]['basicConstraints']['value'] == 'CA:TRUE':
-                choices.remove(choice)
     return sorted(choices, key=lambda e: e[0])
 
 
@@ -79,9 +74,6 @@ class CreateCertificateForm(forms.ModelForm):
             ('msCTLSign', 'Microsoft Trust List Signing'),
             ('msEFS', 'Microsoft Encrypted File System'),
         ))
-    if ca_settings.CA_ALLOW_CA_CERTIFICATES is True:
-        basicConstraints = BasicConstraintsField(label='basicConstraints', help_text=_(
-            'Wether or not this certificate can be used as a CA.'))
 
     def clean_csr(self):
         data = self.cleaned_data['csr']
@@ -105,13 +97,6 @@ class CreateCertificateForm(forms.ModelForm):
             return None
         value = bytes(','.join(value), 'utf-8')
         return critical, value
-
-    def clean_basicConstraints(self):
-        value, pathlen, critical = self.cleaned_data['basicConstraints']
-
-        if value == 'CA:TRUE' and pathlen is not None:
-            value += ',pathlen:%s' % pathlen
-        return critical, bytes(value, 'utf-8')
 
     class Meta:
         model = Certificate

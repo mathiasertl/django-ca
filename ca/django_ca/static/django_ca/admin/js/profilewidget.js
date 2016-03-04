@@ -45,7 +45,7 @@ django.jQuery(document).ready(function() {
         }
 
         // update extensions
-        extensions = ['basicConstraints', 'keyUsage', 'extendedKeyUsage']
+        extensions = ['keyUsage', 'extendedKeyUsage']
         extensions.map(function(ext) {
             var critical_selector = '.field-' + ext + ' .critical-widget-wrapper input';
             var value_selector = '.field-' + ext + ' select';

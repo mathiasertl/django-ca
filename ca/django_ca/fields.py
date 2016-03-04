@@ -19,7 +19,6 @@ from django import forms
 
 from .widgets import SubjectAltNameWidget
 from .widgets import SubjectWidget
-from .widgets import BasicConstraintsWidget
 from .widgets import KeyUsageWidget
 
 from . import ca_settings
@@ -80,28 +79,6 @@ class KeyUsageField(forms.MultiValueField):
         super(KeyUsageField, self).__init__(
             fields=fields, require_all_fields=False, widget=KeyUsageWidget(choices=choices),
             *args, **kwargs)
-
-    def compress(self, values):
-        return values
-
-
-class BasicConstraintsField(forms.MultiValueField):
-    def __init__(self, *args, **kwargs):
-        error_messages = {}
-        kwargs.setdefault('initial', ['CA:FALSE', '', True])
-        choices = (
-            ('CA:FALSE', 'CA:FALSE'),
-            ('CA:TRUE', 'CA:TRUE'),
-        )
-
-        fields = (
-            forms.ChoiceField(required=True, choices=choices),
-            forms.IntegerField(required=False, min_value=0),
-            forms.BooleanField(required=False),
-        )
-        super(BasicConstraintsField, self).__init__(
-            error_messages=error_messages, fields=fields, require_all_fields=False,
-            widget=BasicConstraintsWidget(choices), *args, **kwargs)
 
     def compress(self, values):
         return values

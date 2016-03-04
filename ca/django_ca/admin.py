@@ -25,7 +25,6 @@ from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
-from .ca_settings import CA_ALLOW_CA_CERTIFICATES
 from .crl import write_crl
 from .forms import CreateCertificateForm
 from .models import Certificate
@@ -36,7 +35,7 @@ from .utils import get_cert
 from .views import RevokeCertificateView
 
 _x509_ext_fields = [
-    'keyUsage', 'extendedKeyUsage', 'basicConstraints', 'subjectKeyIdentifier', 'issuerAltName',
+    'keyUsage', 'extendedKeyUsage', 'subjectKeyIdentifier', 'issuerAltName',
     'authorityKeyIdentifier', 'crlDistributionPoints', 'authorityInfoAccess', ]
 
 
@@ -136,7 +135,7 @@ class CertificateAdmin(admin.ModelAdmin):
             'fields': ['csr', 'ca', 'profile', 'subject', 'subjectAltName', 'expires', 'watchers', ],
         }),
         (_('X509 Extensions'), {
-            'fields': ['keyUsage', 'extendedKeyUsage', 'basicConstraints', ]
+            'fields': ['keyUsage', 'extendedKeyUsage', ]
         }),
     ]
 
@@ -209,11 +208,7 @@ class CertificateAdmin(admin.ModelAdmin):
         fieldsets = super(CertificateAdmin, self).get_fieldsets(request, obj=obj)
 
         if obj is None:
-            fieldsets = self.add_fieldsets.copy()
-            if CA_ALLOW_CA_CERTIFICATES is False \
-                    and 'basicConstraints' in fieldsets[1][1]['fields']:
-                fieldsets[1][1]['fields'].remove('basicConstraints')
-            return fieldsets
+            return self.add_fieldsets
 
         if obj.revoked is False:
             fieldsets[2][1]['classes'] = ['collapse', ]
@@ -245,11 +240,6 @@ class CertificateAdmin(admin.ModelAdmin):
         if change is False:  # We're adding a new certificate
             data = form.cleaned_data
 
-            if CA_ALLOW_CA_CERTIFICATES is True:
-                basicConstraints = data['basicConstraints']
-            else:
-                basicConstraints = (True, b'CA:FALSE')
-
             san, cn_in_san = data['subjectAltName']
 
             x509 = get_cert(
@@ -260,7 +250,6 @@ class CertificateAdmin(admin.ModelAdmin):
                 subject=data['subject'],
                 subjectAltName=[e.strip() for e in san.split(',')],
                 cn_in_san=cn_in_san,
-                basicConstraints=basicConstraints,
                 keyUsage=data['keyUsage'],
                 extendedKeyUsage=data['extendedKeyUsage'],
             )
