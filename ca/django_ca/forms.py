@@ -50,6 +50,14 @@ class CreateCertificateForm(forms.ModelForm):
         required=False, widget=ProfileWidget,
         help_text=_('Select a suitable profile or manually select X509 extensions below.'),
         initial=ca_settings.CA_DEFAULT_PROFILE, choices=_profile_choices)
+    algorithm = forms.ChoiceField(
+        choices=[
+            ('sha512', 'sha512'),
+            ('sha256', 'sha256'),
+            ('sha1', 'sha1 (insecure!)'),
+            ('md5', 'md5 (insecure!)'),
+        ]
+    )
     keyUsage = KeyUsageField(label='keyUsage', help_text=KEY_USAGE_DESC, choices=(
         ('cRLSign', 'cRLSign'),
         ('dataEncipherment', 'dataEncipherment'),
