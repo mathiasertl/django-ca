@@ -80,8 +80,8 @@ class CoverageCommand(BaseCommand):
         import coverage
 
         cov = coverage.Coverage(cover_pylib=False, branch=True,
-                                source=['.'],
-                                omit=['*migrations/*.py']
+                                source=['django_ca'],
+                                omit=['*migrations/*.py', ]
                                )
         cov.start()
 
