@@ -1,6 +1,7 @@
 """Test utility functions."""
 
 from datetime import datetime
+from datetime import timedelta
 
 from django.test import TestCase
 
@@ -42,6 +43,23 @@ class Power2TestCase(TestCase):
 
 
 class GetBasicCertTestCase(TestCase):
-    def test_basic(self):
-        cert = get_basic_cert(720)
+    def assertCert(self, delta):
+        now = datetime.utcnow()
+        before = now.replace(second=0, microsecond=0)
+        after = before.replace(hour=0, minute=0) + timedelta(delta + 1)
+
+        cert = get_basic_cert(delta, now=now)
         self.assertFalse(cert.has_expired())
+        self.assertEqual(parse_date(cert.get_notBefore().decode('utf-8')), before)
+        self.assertEqual(parse_date(cert.get_notAfter().decode('utf-8')), after)
+
+    def test_basic(self):
+        self.assertCert(720)
+        self.assertCert(365)
+
+    def test_zero(self):
+        self.assertCert(0)
+
+    def test_negative(self):
+        with self.assertRaises(ValueError):
+            self.assertCert(-1)

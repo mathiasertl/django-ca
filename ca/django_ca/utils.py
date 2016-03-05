@@ -71,8 +71,12 @@ def get_basic_cert(expires, now=None):
     expires : int
         When, in number of days from now, this certificate will expire.
     """
-    if now is None:
+    if expires < 0:
+        raise ValueError("Expires must not be negative.")
+
+    if now is None:  # pragma: no cover
         now = datetime.utcnow()
+    now = now.replace(second=0, microsecond=0)
 
     not_before = format_date(now)
 
