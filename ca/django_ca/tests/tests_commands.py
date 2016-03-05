@@ -10,8 +10,8 @@ from django.core.management.base import CommandError
 from django.utils import six
 
 from django_ca.models import CertificateAuthority
-from django_ca.tests.tests_base import DjangoCATestCase
-from django_ca.tests.tests_base import override_tmpcadir
+from django_ca.tests.base import DjangoCATestCase
+from django_ca.tests.base import override_tmpcadir
 
 
 class InitCATest(DjangoCATestCase):
