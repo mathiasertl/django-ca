@@ -154,3 +154,17 @@ class GetSubjectAltNamesTest(TestCase):
 
     def test_bytes(self):
         self.assertEqual(get_subjectAltName([b'example.com']), b'DNS:example.com')
+        self.assertEqual(get_subjectAltName([b'DNS:example.com']), b'DNS:example.com')
+
+    def test_cn(self):
+        self.assertEqual(get_subjectAltName([], cn='example.com'), b'DNS:example.com')
+        self.assertEqual(get_subjectAltName(['example.com'], cn='example.com'), b'DNS:example.com')
+        self.assertEqual(get_subjectAltName(['DNS:example.com'], cn='example.com'), b'DNS:example.com')
+
+        self.assertEqual(
+            get_subjectAltName(['example.com', 'example.org'], cn='example.com'),
+            b'DNS:example.com,DNS:example.org')
+
+        self.assertEqual(
+            get_subjectAltName(['example.org'], cn='example.com'),
+            b'DNS:example.com,DNS:example.org')
