@@ -42,7 +42,7 @@ class CertificateAuthorityAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
         value = value.strip().upper()
         try:
-            value = CertificateAuthority.objects.get(serial=value)
+            value = CertificateAuthority.objects.filter(enabled=True).get(serial=value)
         except CertificateAuthority.DoesNotExist:
             parser.error('%s: Unknown Certiciate Authority.' % value)
 
