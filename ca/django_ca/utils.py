@@ -62,7 +62,7 @@ def is_power2(num):
     return num != 0 and ((num & (num - 1)) == 0)
 
 
-def get_basic_cert(expires):
+def get_basic_cert(expires, now=None):
     """Get a basic X509 cert object.
 
     Parameters
@@ -71,10 +71,13 @@ def get_basic_cert(expires):
     expires : int
         When, in number of days from now, this certificate will expire.
     """
-    not_before = format_date(datetime.utcnow() - timedelta(minutes=5))
+    if now is None:
+        now = datetime.utcnow()
+
+    not_before = format_date(now - timedelta(minutes=5))
 
     # make expires to a datetime
-    expires = datetime.today() + timedelta(days=expires + 1)
+    expires = now + timedelta(days=expires + 1)
     expires = expires.replace(hour=0, minute=0, second=0, microsecond=0)
 
     not_after = format_date(expires)
