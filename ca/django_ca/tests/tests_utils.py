@@ -120,6 +120,11 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
         with self.settings(CA_PROFILES=CA_PROFILES):
             self.assertEqual(get_cert_profile_kwargs('testprofile'), expected)
 
+        CA_PROFILES['testprofile']['keyUsage']['value'] = b''
+        del expected['keyUsage']
+        with self.settings(CA_PROFILES=CA_PROFILES):
+            self.assertEqual(get_cert_profile_kwargs('testprofile'), expected)
+
 
 class GetSubjectAltNamesTest(TestCase):
     def test_basic(self):
