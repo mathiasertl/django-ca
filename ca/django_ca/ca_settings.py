@@ -140,3 +140,6 @@ CA_ISSUER = getattr(settings, 'CA_ISSUER', None)
 CA_ISSUER_ALT_NAME = getattr(settings, 'CA_ISSUER_ALT_NAME', None)
 CA_CRL_DISTRIBUTION_POINTS = getattr(settings, 'CA_CRL_DISTRIBUTION_POINTS', None)
 CA_CRL_SETTINGS = getattr(settings, 'CA_CRL_SETTINGS', None)
+
+# Undocumented options, e.g. to share values between different parts of code
+CA_MIN_KEY_SIZE = getattr(settings, 'CA_MIN_KEY_SIZE', 2048)

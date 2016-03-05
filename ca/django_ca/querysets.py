@@ -34,8 +34,9 @@ class CertificateAuthorityQuerySet(models.QuerySet):
         #       True in the real world. None the less they are here as a safety precaution.
         if not is_power2(key_size):
             raise RuntimeError("%s: Key size must be a power of two." % key_size)
-        elif key_size < 2048:
-            raise RuntimeError("%s: Key must have a size of at least 2048 bits." % key_size)
+        elif key_size < ca_settings.CA_MIN_KEY_SIZE:
+            raise RuntimeError("%s: Key size must be least %s bits."
+                               % (key_size, ca_settings.CA_MIN_KEY_SIZE))
 
         private_key = crypto.PKey()
         private_key.generate_key(getattr(crypto, 'TYPE_%s' % key_type), key_size)

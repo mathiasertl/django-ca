@@ -43,8 +43,8 @@ class KeySizeAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
         if not is_power2(value):
             parser.error('--key-size must be a power of two (2048, 4096, ...)')
-        elif value < 2048:
-            parser.error('--key-size must be at least 2048 bits.')
+        elif value < ca_settings.CA_MIN_KEY_SIZE:
+            parser.error('--key-size must be at least %s bits.' % ca_settings.CA_MIN_KEY_SIZE)
         setattr(namespace, self.dest, value)
 
 
