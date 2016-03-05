@@ -6,6 +6,8 @@ from datetime import timedelta
 from django.test import TestCase
 
 from django_ca import ca_settings
+from django_ca.tests.base import DjangoCATestCase
+from django_ca.tests.base import override_settings
 from django_ca.utils import format_date
 from django_ca.utils import get_basic_cert
 from django_ca.utils import get_cert_profile_kwargs
@@ -69,13 +71,15 @@ class GetBasicCertTestCase(TestCase):
             self.assertCert(-2)
 
 
-class GetCertProfileKwargs(TestCase):
+class GetCertProfileKwargs(DjangoCATestCase):
     # NOTE: These test-cases will start failing if you change the default profiles.
 
+    @override_settings(CA_PROFILES={})
     def test_default(self):
         expected = {
             'cn_in_san': True,
             'keyUsage': (True, b'digitalSignature,keyAgreement,keyEncipherment'),
+            'extendedKeyUsage': (False, b'serverAuth'),
             'subject': {
                 'C': 'AT',
                 'L': 'Vienna',
@@ -85,3 +89,32 @@ class GetCertProfileKwargs(TestCase):
         }
         self.assertEqual(get_cert_profile_kwargs(), expected)
         self.assertEqual(get_cert_profile_kwargs(ca_settings.CA_DEFAULT_PROFILE), expected)
+
+    def test_types(self):
+        expected = {
+            'cn_in_san': True,
+            'keyUsage': (False, b'digitalSignature'),
+            'subject': {
+                'C': 'AT',
+                'L': 'Vienna',
+                'OU': 'Fachschaft Informatik',
+                'ST': 'Vienna',
+            },
+        }
+
+        CA_PROFILES = {
+            'testprofile': {
+                'keyUsage': {
+                    'critical': False,
+                    'value': 'digitalSignature',
+                },
+            },
+        }
+
+        with self.settings(CA_PROFILES=CA_PROFILES):
+            self.assertEqual(get_cert_profile_kwargs('testprofile'), expected)
+
+        CA_PROFILES['testprofile']['keyUsage']['value'] = b'encipherOnly'
+        expected['keyUsage'] = (False, b'encipherOnly')
+        with self.settings(CA_PROFILES=CA_PROFILES):
+            self.assertEqual(get_cert_profile_kwargs('testprofile'), expected)
