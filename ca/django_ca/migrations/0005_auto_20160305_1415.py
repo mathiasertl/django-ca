@@ -30,7 +30,9 @@ def import_ca(apps, schema_editor):
 
     # create a CA
     CertificateAuthority = apps.get_model('django_ca', 'CertificateAuthority')
-    ca = CertificateAuthority.objects.create(name='Root CA', private_key_path=ca_key, pub=raw_crt)
+    ca = CertificateAuthority(name='Root CA', private_key_path=ca_key)
+    ca.pub = raw_crt
+    ca.save()
 
     # move private key to correct location
     key_dir = os.path.dirname(ca_key)
