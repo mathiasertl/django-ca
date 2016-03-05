@@ -36,6 +36,9 @@ Features:
 Please see https://django-ca.readthedocs.org for more extensive documentation.
 """
 
+_rootdir = os.path.dirname(os.path.realpath(__file__))
+
+
 class BaseCommand(Command):
     user_options = []
 
@@ -46,7 +49,11 @@ class BaseCommand(Command):
         pass
 
     def run_tests(self):
-        sys.path.insert(0, os.path.join(os.getcwd(), 'ca'))
+        work_dir = os.path.join(_rootdir, 'ca')
+
+        os.chdir(work_dir)
+        sys.path.insert(0, work_dir)
+
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.settings")
         import django
         django.setup()
@@ -66,10 +73,16 @@ class CoverageCommand(BaseCommand):
     description = 'Generate test-coverage for django-ca.'
 
     def run(self):
+        work_dir = os.path.join(_rootdir, 'ca')
+        report_dir = os.path.join(_rootdir, 'docs', 'build', 'coverage')
+        os.chdir(work_dir)
+
         import coverage
 
         cov = coverage.Coverage(cover_pylib=False, branch=True,
-                                source=['django_ca'], omit=['*migrations/*.py'])
+                                source=['.'],
+                                omit=['*migrations/*.py']
+                               )
         cov.start()
 
         self.run_tests()
@@ -77,8 +90,7 @@ class CoverageCommand(BaseCommand):
         cov.stop()
         cov.save()
 
-        htmlcov = os.path.join('docs', 'build', 'coverage')
-        cov.html_report(directory=htmlcov)
+        cov.html_report(directory=report_dir)
 
 
 setup(
