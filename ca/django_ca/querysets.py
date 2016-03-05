@@ -13,9 +13,65 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import os
+
+from OpenSSL import crypto
+
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
+
+from .utils import get_basic_cert
+from . import ca_settings
+
+
+class CertificateAuthorityQuerySet(models.QuerySet):
+    def init(self, name, key_size, key_type, algorithm, expires, parent, pathlen, subject):
+        # check that the bitsize is a power of two
+        is_power2 = lambda num: num != 0 and ((num & (num - 1)) == 0)
+        if not is_power2(key_size):
+            raise RuntimeError("%s: Key size must be a power of two." % key_size)
+        elif key_size < 2048:
+            raise RuntimeError("%s: Key must have a size of at least 2048 bits." % key_size)
+
+        key = crypto.PKey()
+        key.generate_key(getattr(crypto, 'TYPE_%s' % key_type), key_size)
+
+        # set basic properties
+        cert = get_basic_cert(expires)
+        for key, value in subject.items():
+            setattr(cert.get_subject(), key, bytes(value, 'utf-8'))
+        cert.set_issuer(cert.get_subject())
+        cert.set_pubkey(key)
+
+        # sign the certificate
+        if parent is None:
+            cert.sign(key, algorithm)
+        else:
+            cert.sign(parent.key, algorithm)
+
+        basicConstraints = b'CA:TRUE'
+        if pathlen is not False:
+            basicConstraints += b', pathlen:%s' + str(pathlen).encode('utf-8')
+
+        san = b'DNS:' + bytes(subject['CN'], 'utf-8')
+        cert.add_extensions([
+            crypto.X509Extension(b'basicConstraints', True, basicConstraints),
+            crypto.X509Extension(b'keyUsage', 0, b'keyCertSign,cRLSign'),
+            crypto.X509Extension(b'subjectKeyIdentifier', False, b'hash', subject=cert),
+            crypto.X509Extension(b'subjectAltName', 0, san),
+        ])
+        cert.add_extensions([
+            crypto.X509Extension(b'authorityKeyIdentifier', False, b'keyid:always', issuer=cert),
+        ])
+
+        # create certificate in database
+        ca = self.model(name=name, parent=parent)
+        ca.x509 = cert
+        ca.private_key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % ca.serial)
+        ca.save()
+
+        return key, ca
 
 
 class CertificateQuerySet(models.QuerySet):
