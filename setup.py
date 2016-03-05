@@ -81,7 +81,7 @@ class CoverageCommand(BaseCommand):
 
         cov = coverage.Coverage(cover_pylib=False, branch=True,
                                 source=['django_ca'],
-                                omit=['*migrations/*', '*/tests.py' ]
+                                omit=['*migrations/*', '*/tests/*' ]
                                )
         cov.start()
 

@@ -17,8 +17,8 @@ from django.test.utils import override_settings as _override_settings
 from django.utils import six
 from django.utils.six.moves import reload_module
 
-from . import ca_settings
-from .models import CertificateAuthority
+from django_ca import ca_settings
+from django_ca.models import CertificateAuthority
 
 
 class override_settings(_override_settings):
