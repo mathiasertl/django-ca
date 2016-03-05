@@ -57,6 +57,11 @@ def format_date(date):
     return date.strftime(_datetime_format)
 
 
+def is_power2(num):
+    """Return True if num is a power of 2."""
+    return num != 0 and ((num & (num - 1)) == 0)
+
+
 def get_basic_cert(expires):
     """Get a basic X509 cert object.
 
