@@ -103,7 +103,7 @@ class TestDjangoCATestCase(DjangoCATestCase):
         self.assertEqual(ca_settings.CA_DIR, old_ca_dir)  # ensure that they're equal again
 
 
-class InitCATest(DjangoCATestCase):
+#class InitCATest(DjangoCATestCase):
 #    @override_tmpcadir()
 #    def test_basic(self):
 #        self.init_ca()
