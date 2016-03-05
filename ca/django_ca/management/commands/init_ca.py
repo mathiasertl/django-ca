@@ -30,7 +30,6 @@ from OpenSSL import crypto
 
 from django_ca import ca_settings
 from django_ca.models import CertificateAuthority
-from django_ca.utils import get_basic_cert
 from django_ca.management.base import BaseCommand
 
 
@@ -84,19 +83,12 @@ class Command(BaseCommand):
         if parent is not None:
             try:
                 parent.key
-            except FileNotFoundError:
+            except OSError:
                 raise CommandError(
                     '%s: Parent CA private key not available.' % parent.private_key_path)
             except Exception as e:
                 # TODO: we should catch unparseable keys in own except clause
                 raise CommandError(str(e))
-
-        # check that the bitsize is a power of two
-        is_power2 = lambda num: num != 0 and ((num & (num - 1)) == 0)
-        if not is_power2(options['key_size']):
-            raise CommandError("%s: Key size must be a power of two." % options['key_size'])
-        elif options['key_size'] < 2048:
-            raise CommandError("%s: Key must have a size of at least 2048 bits." % options['key_size'])
 
         if not os.path.exists(ca_settings.CA_DIR):
             os.makedirs(ca_settings.CA_DIR)
@@ -107,41 +99,6 @@ class Command(BaseCommand):
         now = datetime.utcnow()
         expires = now + timedelta(days=options['expires'])
 
-        key = crypto.PKey()
-        key.generate_key(getattr(crypto, 'TYPE_%s' % options['key_type']), options['key_size'])
-
-        # set basic properties
-        cert = get_basic_cert(expires)
-        cert.get_subject().C = country
-        cert.get_subject().ST = state
-        cert.get_subject().L = city
-        cert.get_subject().O = org
-        cert.get_subject().OU = ou
-        cert.get_subject().CN = cn
-        cert.set_issuer(cert.get_subject())
-        cert.set_pubkey(key)
-
-        # sign the certificate
-        if parent is None:
-            cert.sign(key, options['algorithm'])
-        else:
-            cert.sign(parent.key, options['algorithm'])
-
-        basicConstraints = b'CA:TRUE'
-        if options['pathlen'] is not False:
-            basicConstraints += b', pathlen:%s' + str(options['pathlen']).encode('utf-8')
-
-        san = bytes('DNS:%s' % cn, 'utf-8')
-        cert.add_extensions([
-            crypto.X509Extension(b'basicConstraints', True, basicConstraints),
-            crypto.X509Extension(b'keyUsage', 0, b'keyCertSign,cRLSign'),
-            crypto.X509Extension(b'subjectKeyIdentifier', False, b'hash', subject=cert),
-            crypto.X509Extension(b'subjectAltName', 0, san),
-        ])
-        cert.add_extensions([
-            crypto.X509Extension(b'authorityKeyIdentifier', False, b'keyid:always', issuer=cert),
-        ])
-
         if options['password'] is None:
             args = []
         elif options['password'] == '':
@@ -149,11 +106,18 @@ class Command(BaseCommand):
         else:
             args = ['des3', options['password']]
 
-        # create certificate in database
-        ca = CertificateAuthority(name=name, parent=parent)
-        ca.x509 = cert
-        ca.private_key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % ca.serial)
-        ca.save()
+        subject = {'C': country, 'ST': state, 'L': city, 'O': org, 'OU': ou, 'CN': cn, }
+
+        try:
+            key, ca = CertificateAuthority.objects.init(
+                key_size=options['key_size'], key_type=options['key_type'],
+                algorithm=options['algorithm'],
+                expires=expires,
+                parent=options['parent'],
+                pathlen=options['pathlen'],
+                name=name, subject=subject)
+        except Exception as e:
+            raise CommandError(e)
 
         oldmask = os.umask(247)
         with open(ca.private_key_path, 'w') as key_file:
