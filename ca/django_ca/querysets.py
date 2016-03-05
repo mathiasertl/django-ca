@@ -29,7 +29,9 @@ from . import ca_settings
 class CertificateAuthorityQuerySet(models.QuerySet):
     def init(self, name, key_size, key_type, algorithm, expires, parent, pathlen, subject):
         """Create a Certificate Authority."""
-        # check that the bitsize is a power of two
+
+        # NOTE: This is already verified by KeySizeAction, so none of these checks should ever be
+        #       True in the real world. None the less they are here as a safety precaution.
         if not is_power2(key_size):
             raise RuntimeError("%s: Key size must be a power of two." % key_size)
         elif key_size < 2048:
