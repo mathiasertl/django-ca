@@ -5,8 +5,10 @@ from datetime import timedelta
 
 from django.test import TestCase
 
+from django_ca import ca_settings
 from django_ca.utils import format_date
 from django_ca.utils import get_basic_cert
+from django_ca.utils import get_cert_profile_kwargs
 from django_ca.utils import is_power2
 from django_ca.utils import parse_date
 
@@ -63,3 +65,23 @@ class GetBasicCertTestCase(TestCase):
     def test_negative(self):
         with self.assertRaises(ValueError):
             self.assertCert(-1)
+        with self.assertRaises(ValueError):
+            self.assertCert(-2)
+
+
+class GetCertProfileKwargs(TestCase):
+    # NOTE: These test-cases will start failing if you change the default profiles.
+
+    def test_default(self):
+        expected = {
+            'cn_in_san': True,
+            'keyUsage': (True, b'digitalSignature,keyAgreement,keyEncipherment'),
+            'subject': {
+                'C': 'AT',
+                'L': 'Vienna',
+                'OU': 'Fachschaft Informatik',
+                'ST': 'Vienna',
+            },
+        }
+        self.assertEqual(get_cert_profile_kwargs(), expected)
+        self.assertEqual(get_cert_profile_kwargs(ca_settings.CA_DEFAULT_PROFILE), expected)
