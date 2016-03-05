@@ -62,6 +62,8 @@ class CertificateAuthorityQuerySet(models.QuerySet):
             crypto.X509Extension(b'subjectKeyIdentifier', False, b'hash', subject=cert),
             crypto.X509Extension(b'subjectAltName', 0, san),
         ])
+
+        # TODO: the issuer-kwarg might be wrong for sub-CAs
         cert.add_extensions([
             crypto.X509Extension(b'authorityKeyIdentifier', False, b'keyid:always', issuer=cert),
         ])
