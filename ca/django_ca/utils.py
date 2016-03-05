@@ -106,7 +106,7 @@ def get_cert_profile_kwargs(name=None):
         'subject': profile['subject'],
     }
     for arg in ['keyUsage', 'extendedKeyUsage']:
-        config = profile[arg]
+        config = profile.get(arg)
         if config is None or not config.get('value'):
             continue
 
