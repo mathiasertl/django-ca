@@ -70,8 +70,8 @@ class BaseCommand(_BaseCommand):
         """Add the --algorithm option."""
 
         parser.add_argument(
-            '--algorithm', metavar='{sha512,sha256,...}',
-            help='Algorithm to use (default: %s).' % ca_settings.CA_DIGEST_ALGORITHM)
+            '--algorithm', metavar='{sha512,sha256,...}', default=ca_settings.CA_DIGEST_ALGORITHM,
+            help='Algorithm to use (default: %(default)s).')
 
     def add_ca(self, parser, arg='--ca', help='Certificate authority to use (default: %s).'):
         default = CertificateAuthority.objects.filter(enabled=True).first()

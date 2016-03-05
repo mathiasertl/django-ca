@@ -158,8 +158,8 @@ the default values, options like --key-usage still override the profile.""")
         if subject:
             kwargs['subject'] = subject
 
-        x509 = get_cert(ca_key=ca.key, ca_crt=ca.x509, csr=csr, expires=options['days'],
-                        subjectAltName=options['alt'], **kwargs)
+        x509 = get_cert(ca_key=ca.key, ca_crt=ca.x509, csr=csr, algorithm=options['algorithm'],
+                        expires=options['days'], subjectAltName=options['alt'], **kwargs)
         expires = parse_date(x509.get_notAfter().decode('utf-8'))
         cert = Certificate(ca=ca, csr=csr, expires=expires)
         cert.x509 = x509

@@ -79,9 +79,6 @@ class Command(BaseCommand):
         if not os.path.exists(ca_settings.CA_DIR):
             os.makedirs(ca_settings.CA_DIR)
 
-        if not options.get('algorithm'):
-            options['algorithm'] = ca_settings.CA_DIGEST_ALGORITHM
-
         if options['password'] is None:
             args = []
         elif options['password'] == '':

@@ -107,8 +107,8 @@ def get_cert_profile_kwargs(name=None):
     return kwargs
 
 
-def get_cert(ca_key, ca_crt, csr, expires, subject=None, cn_in_san=True,
-             csr_format=crypto.FILETYPE_PEM, algorithm=None, subjectAltName=None, keyUsage=None,
+def get_cert(ca_key, ca_crt, csr, expires, algorithm, subject=None, cn_in_san=True,
+             csr_format=crypto.FILETYPE_PEM, subjectAltName=None, keyUsage=None,
              extendedKeyUsage=None):
     """Create a signed certificate from a CSR.
 
@@ -129,6 +129,8 @@ def get_cert(ca_key, ca_crt, csr, expires, subject=None, cn_in_san=True,
         A valid CSR in PEM format. If none is given, `self.csr` will be used.
     expires : int
         When the certificate should expire (passed to :py:func:`get_basic_cert`).
+    algorithm : {'sha512', 'sha256', ...}
+        Algorithm used to sign the certificate. The default is the CA_DIGEST_ALGORITHM setting.
     subject : dict, optional
         The Subject to use in the certificate.  The keys of this dict are the fields of an X509
         subject, that is `"C"`, `"ST"`, `"L"`, `"OU"` and `"CN"`. If ommited or if the value does
@@ -142,8 +144,6 @@ def get_cert(ca_key, ca_crt, csr, expires, subject=None, cn_in_san=True,
     csr_format : int, optional
         The format of the submitted CSR request. One of the OpenSSL.crypto.FILETYPE_*
         constants. The default is PEM.
-    algorithm : {'sha512', 'sha256', ...}, optional
-        Algorithm used to sign the certificate. The default is the CA_DIGEST_ALGORITHM setting.
     subjectAltName : list of str, optional
         A list of values for the subjectAltName extension. Values are passed to
         `get_subjectAltName`, see function documentation for how this value is parsed.
@@ -164,10 +164,6 @@ def get_cert(ca_key, ca_crt, csr, expires, subject=None, cn_in_san=True,
         raise ValueError("Must at least cn or subjectAltName parameter.")
 
     req = crypto.load_certificate_request(csr_format, csr)
-
-    # get algorithm used to sign certificate
-    if not algorithm:
-        algorithm = ca_settings.CA_DIGEST_ALGORITHM
 
     # Process CommonName and subjectAltName extension.
     if subject.get('CN') is None:
