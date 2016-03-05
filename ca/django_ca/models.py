@@ -131,7 +131,7 @@ class X509CertMixin(object):
 class CertificateAuthority(models.Model, X509CertMixin):
     objects = CertificateAuthorityQuerySet.as_manager()
 
-    name = models.CharField(max_length=32, help_text=_('A human-readable name'))
+    name = models.CharField(max_length=32, help_text=_('A human-readable name'), unique=True)
     serial = models.CharField(max_length=48, null=False, blank=False)
     created = models.DateTimeField(auto_now=True)
     enabled = models.BooleanField(default=True)
