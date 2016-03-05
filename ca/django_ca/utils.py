@@ -36,6 +36,7 @@ from django_ca import ca_settings
 EXTENDED_KEY_USAGE_DESC = _('Purposes for which the certificate public key can be used for.')
 KEY_USAGE_DESC = _('Permitted key usages.')
 SAN_OPTIONS_RE = '(email|URI|IP|DNS|RID|dirName|otherName):'
+_datetime_format = '%Y%m%d%H%M%SZ'
 
 
 class LazyEncoder(DjangoJSONEncoder):
@@ -47,13 +48,30 @@ class LazyEncoder(DjangoJSONEncoder):
         return super(LazyEncoder, self).default(obj)
 
 
+def parse_date(date):
+    return datetime.strptime(date, _datetime_format)
+
+
 def format_date(date):
     """Format date as ASN1 GENERALIZEDTIME, as required by various fields."""
-    return date.strftime('%Y%m%d%H%M%SZ')
+    return date.strftime(_datetime_format)
 
 
 def get_basic_cert(expires):
+    """Get a basic X509 cert object.
+
+    Parameters
+    ----------
+
+    expires : int
+        When, in number of days from now, this certificate will expire.
+    """
     not_before = format_date(datetime.utcnow() - timedelta(minutes=5))
+
+    # make expires to a datetime
+    expires = datetime.today() + timedelta(days=expires + 1)
+    expires = expires.replace(hour=0, minute=0, second=0, microsecond=0)
+
     not_after = format_date(expires)
 
     cert = crypto.X509()
@@ -109,8 +127,8 @@ def get_cert(ca_key, ca_crt, csr, expires, subject=None, cn_in_san=True,
         The public key of the certificate authority.
     csr : str
         A valid CSR in PEM format. If none is given, `self.csr` will be used.
-    expires : datetime
-        When the certificate should expire.
+    expires : int
+        When the certificate should expire (passed to :py:func:`get_basic_cert`).
     subject : dict, optional
         The Subject to use in the certificate.  The keys of this dict are the fields of an X509
         subject, that is `"C"`, `"ST"`, `"L"`, `"OU"` and `"CN"`. If ommited or if the value does

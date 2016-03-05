@@ -14,8 +14,6 @@
 # see <http://www.gnu.org/licenses/>.
 
 from collections import OrderedDict
-from datetime import datetime
-from datetime import timedelta
 
 from django.core.management.base import CommandError
 from django.utils import six
@@ -26,6 +24,7 @@ from django_ca.models import Certificate
 from django_ca.models import Watcher
 from django_ca.utils import get_cert_profile_kwargs
 from django_ca.utils import get_cert
+from django_ca.utils import parse_date
 
 
 class Command(BaseCommand):
@@ -159,11 +158,9 @@ the default values, options like --key-usage still override the profile.""")
         if subject:
             kwargs['subject'] = subject
 
-        expires = datetime.today() + timedelta(days=options['days'] + 1)
-        expires = expires.replace(hour=0, minute=0, second=0, microsecond=0)
-
-        x509 = get_cert(ca_key=ca.key, ca_crt=ca.x509, csr=csr, expires=expires,
+        x509 = get_cert(ca_key=ca.key, ca_crt=ca.x509, csr=csr, expires=options['days'],
                         subjectAltName=options['alt'], **kwargs)
+        expires = parse_date(x509.get_notAfter().decode('utf-8'))
         cert = Certificate(ca=ca, csr=csr, expires=expires)
         cert.x509 = x509
         cert.save()

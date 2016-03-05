@@ -20,8 +20,6 @@ https://skippylovesmalorie.wordpress.com/2010/02/12/how-to-generate-a-self-signe
 
 import os
 
-from datetime import datetime
-from datetime import timedelta
 from getpass import getpass
 
 from django.core.management.base import CommandError
@@ -83,9 +81,6 @@ class Command(BaseCommand):
         if not options.get('algorithm'):
             options['algorithm'] = ca_settings.CA_DIGEST_ALGORITHM
 
-        now = datetime.utcnow()
-        expires = now + timedelta(days=options['expires'])
-
         if options['password'] is None:
             args = []
         elif options['password'] == '':
@@ -99,7 +94,7 @@ class Command(BaseCommand):
             key, ca = CertificateAuthority.objects.init(
                 key_size=options['key_size'], key_type=options['key_type'],
                 algorithm=options['algorithm'],
-                expires=expires,
+                expires=options['expires'],
                 parent=options['parent'],
                 pathlen=options['pathlen'],
                 name=name, subject=subject)
