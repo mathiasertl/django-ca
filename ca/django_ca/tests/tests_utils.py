@@ -13,6 +13,7 @@ from django_ca.utils import get_basic_cert
 from django_ca.utils import get_cert_profile_kwargs
 from django_ca.utils import is_power2
 from django_ca.utils import parse_date
+from django_ca.utils import get_subjectAltName
 
 
 class FormatDateTestCase(TestCase):
@@ -71,7 +72,7 @@ class GetBasicCertTestCase(TestCase):
             self.assertCert(-2)
 
 
-class GetCertProfileKwargs(DjangoCATestCase):
+class GetCertProfileKwargsTestCase(DjangoCATestCase):
     # NOTE: These test-cases will start failing if you change the default profiles.
 
     @override_settings(CA_PROFILES={})
@@ -118,3 +119,38 @@ class GetCertProfileKwargs(DjangoCATestCase):
         expected['keyUsage'] = (False, b'encipherOnly')
         with self.settings(CA_PROFILES=CA_PROFILES):
             self.assertEqual(get_cert_profile_kwargs('testprofile'), expected)
+
+
+class GetSubjectAltNamesTest(TestCase):
+    def test_basic(self):
+        self.assertEqual(get_subjectAltName(['https://example.com']), b'URI:https://example.com')
+        self.assertEqual(get_subjectAltName(['user@example.com']), b'email:user@example.com')
+        self.assertEqual(get_subjectAltName(['example.com']), b'DNS:example.com')
+        self.assertEqual(get_subjectAltName(['8.8.8.8']), b'IP:8.8.8.8')
+
+        # NOTE: I could not find any info on if this format is correct or we need to use square brackets
+        self.assertEqual(get_subjectAltName(['2001:4860:4860::8888']), b'IP:2001:4860:4860::8888')
+
+    def test_multiple(self):
+        self.assertEqual(get_subjectAltName(
+            ['https://example.com', 'https://example.org']),
+            b'URI:https://example.com,URI:https://example.org')
+
+        self.assertEqual(get_subjectAltName(
+            ['https://example.com', 'user@example.org']),
+            b'URI:https://example.com,email:user@example.org')
+
+    def test_literal(self):
+        self.assertEqual(get_subjectAltName(['URI:foo']), b'URI:foo')
+        self.assertEqual(get_subjectAltName(['email:foo']), b'email:foo')
+        self.assertEqual(get_subjectAltName(['IP:foo']), b'IP:foo')
+        self.assertEqual(get_subjectAltName(['RID:foo']), b'RID:foo')
+        self.assertEqual(get_subjectAltName(['dirName:foo']), b'dirName:foo')
+        self.assertEqual(get_subjectAltName(['otherName:foo']), b'otherName:foo')
+
+    def test_empty(self):
+        self.assertEqual(get_subjectAltName([]), b'')
+        self.assertEqual(get_subjectAltName(['']), b'')
+
+    def test_bytes(self):
+        self.assertEqual(get_subjectAltName([b'example.com']), b'DNS:example.com')
