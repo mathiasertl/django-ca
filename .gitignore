@@ -3,7 +3,7 @@
 *.sqlite3
 *.egg-info
 localsettings.py
-/.coverage
+/ca/.coverage
 /MANIFEST
 /bin/
 /ca/files/
