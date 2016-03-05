@@ -30,6 +30,7 @@ from OpenSSL import crypto
 from django_ca import ca_settings
 from django_ca.models import CertificateAuthority
 from django_ca.management.base import BaseCommand
+from django_ca.management.base import KeySizeAction
 
 
 class Command(BaseCommand):
@@ -44,7 +45,8 @@ class Command(BaseCommand):
             '--key-type', choices=type_choices, default=type_default,
             help="Key type for the CA private key (default: %(default)s).")
         parser.add_argument(
-            '--key-size', type=int, default=4096, metavar='{2048,4096,8192,...}',
+            '--key-size', type=int, action=KeySizeAction, default=4096,
+            metavar='{2048,4096,8192,...}',
             help="Size of the key to generate (default: %(default)s).")
 
         parser.add_argument(

@@ -22,6 +22,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from .utils import get_basic_cert
+from .utils import is_power2
 from . import ca_settings
 
 
@@ -29,7 +30,6 @@ class CertificateAuthorityQuerySet(models.QuerySet):
     def init(self, name, key_size, key_type, algorithm, expires, parent, pathlen, subject):
         """Create a Certificate Authority."""
         # check that the bitsize is a power of two
-        is_power2 = lambda num: num != 0 and ((num & (num - 1)) == 0)
         if not is_power2(key_size):
             raise RuntimeError("%s: Key size must be a power of two." % key_size)
         elif key_size < 2048:

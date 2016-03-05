@@ -22,6 +22,7 @@ from django.core.management.base import BaseCommand as _BaseCommand
 from django.core.management.base import CommandError
 
 from django_ca import ca_settings
+from django_ca.utils import is_power2
 from django_ca.models import Certificate
 from django_ca.models import CertificateAuthority
 
@@ -35,6 +36,15 @@ class FormatAction(argparse.Action):
             value = getattr(crypto, 'FILETYPE_%s' % value)
         except AttributeError:
             parser.error('Unknown format "%s".' % value)
+        setattr(namespace, self.dest, value)
+
+
+class KeySizeAction(argparse.Action):
+    def __call__(self, parser, namespace, value, option_string=None):
+        if not is_power2(value):
+            parser.error('--key-size must be a power of two (2048, 4096, ...)')
+        elif value < 2048:
+            parser.error('--key-size must be at least 2048 bits.')
         setattr(namespace, self.dest, value)
 
 
