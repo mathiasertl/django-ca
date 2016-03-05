@@ -17,7 +17,7 @@ def import_ca(apps, schema_editor):
 
     ca_key = getattr(ca_settings, 'CA_KEY', None)
     if ca_key is None:
-        ca_key = os.path.join(ca_settings.CA_KEY, 'ca.key')
+        ca_key = os.path.join(ca_settings.CA_DIR, 'ca.key')
 
     # Public or private key not present. The former case happens in initial migrations, the latter
     # case is a misconfiguration.
