@@ -34,25 +34,25 @@ class CertificateAuthorityQuerySet(models.QuerySet):
         elif key_size < 2048:
             raise RuntimeError("%s: Key must have a size of at least 2048 bits." % key_size)
 
-        key = crypto.PKey()
-        key.generate_key(getattr(crypto, 'TYPE_%s' % key_type), key_size)
+        private_key = crypto.PKey()
+        private_key.generate_key(getattr(crypto, 'TYPE_%s' % key_type), key_size)
 
         # set basic properties
         cert = get_basic_cert(expires)
         for key, value in subject.items():
             setattr(cert.get_subject(), key, bytes(value, 'utf-8'))
         cert.set_issuer(cert.get_subject())
-        cert.set_pubkey(key)
+        cert.set_pubkey(private_key)
 
         # sign the certificate
         if parent is None:
-            cert.sign(key, algorithm)
+            cert.sign(private_key, algorithm)
         else:
             cert.sign(parent.key, algorithm)
 
         basicConstraints = b'CA:TRUE'
         if pathlen is not False:
-            basicConstraints += b', pathlen:%s' + str(pathlen).encode('utf-8')
+            basicConstraints += b', pathlen:' + str(pathlen).encode('utf-8')
 
         san = b'DNS:' + bytes(subject['CN'], 'utf-8')
         cert.add_extensions([
@@ -71,7 +71,7 @@ class CertificateAuthorityQuerySet(models.QuerySet):
         ca.private_key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % ca.serial)
         ca.save()
 
-        return key, ca
+        return private_key, ca
 
 
 class CertificateQuerySet(models.QuerySet):
