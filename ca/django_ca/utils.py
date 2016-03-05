@@ -18,6 +18,7 @@
 import re
 import uuid
 
+from copy import deepcopy
 from datetime import datetime
 from datetime import timedelta
 from ipaddress import ip_address
@@ -99,7 +100,7 @@ def get_cert_profile_kwargs(name=None):
     if name is None:
         name = ca_settings.CA_DEFAULT_PROFILE
 
-    profile = ca_settings.CA_PROFILES[name]
+    profile = deepcopy(ca_settings.CA_PROFILES[name])
     kwargs = {
         'cn_in_san': profile['cn_in_san'],
         'subject': profile['subject'],
