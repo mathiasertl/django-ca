@@ -50,13 +50,13 @@ class CertificateAuthorityQuerySet(models.QuerySet):
         else:
             cert.sign(parent.key, algorithm)
 
-        basicConstraints = b'CA:TRUE'
+        basicConstraints = 'CA:TRUE'
         if pathlen is not False:
-            basicConstraints += b', pathlen:' + str(pathlen).encode('utf-8')
+            basicConstraints += ', pathlen:%s' % pathlen
 
         san = b'DNS:' + bytes(subject['CN'], 'utf-8')
         cert.add_extensions([
-            crypto.X509Extension(b'basicConstraints', True, basicConstraints),
+            crypto.X509Extension(b'basicConstraints', True, basicConstraints.encode('utf-8')),
             crypto.X509Extension(b'keyUsage', 0, b'keyCertSign,cRLSign'),
             crypto.X509Extension(b'subjectKeyIdentifier', False, b'hash', subject=cert),
             crypto.X509Extension(b'subjectAltName', 0, san),
