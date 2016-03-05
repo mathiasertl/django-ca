@@ -23,6 +23,7 @@ from OpenSSL import crypto
 
 from .utils import format_date
 from .querysets import CertificateQuerySet
+from .querysets import CertificateAuthorityQuerySet
 
 
 class Watcher(models.Model):
@@ -128,6 +129,8 @@ class X509CertMixin(object):
 
 
 class CertificateAuthority(models.Model, X509CertMixin):
+    objects = CertificateAuthorityQuerySet.as_manager()
+
     name = models.CharField(max_length=32, help_text=_('A human-readable name'))
     serial = models.CharField(max_length=48, null=False, blank=False)
     created = models.DateTimeField(auto_now=True)
