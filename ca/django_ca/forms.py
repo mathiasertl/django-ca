@@ -51,12 +51,13 @@ class CreateCertificateForm(forms.ModelForm):
         help_text=_('Select a suitable profile or manually select X509 extensions below.'),
         initial=ca_settings.CA_DEFAULT_PROFILE, choices=_profile_choices)
     algorithm = forms.ChoiceField(
-        choices=[
-            ('sha512', 'sha512'),
-            ('sha256', 'sha256'),
-            ('sha1', 'sha1 (insecure!)'),
-            ('md5', 'md5 (insecure!)'),
-        ]
+        label=_('Signature algorithm'), choices=[
+            ('sha512', 'SHA-512'),
+            ('sha256', 'SHA-256'),
+            ('sha1', 'SHA-1 (insecure!)'),
+            ('md5', 'MD5 (insecure!)'),
+        ],
+        help_text=_('Algorithm used for signing the certificate. SHA-512 should be fine in most cases.'),
     )
     keyUsage = KeyUsageField(label='keyUsage', help_text=KEY_USAGE_DESC, choices=(
         ('cRLSign', 'cRLSign'),
