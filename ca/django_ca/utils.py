@@ -74,7 +74,7 @@ def get_basic_cert(expires, now=None):
     if now is None:
         now = datetime.utcnow()
 
-    not_before = format_date(now - timedelta(minutes=5))
+    not_before = format_date(now)
 
     # make expires to a datetime
     expires = now + timedelta(days=expires + 1)
