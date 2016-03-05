@@ -77,19 +77,6 @@ class Command(BaseCommand):
                            help='Do not add a pathlen attribute.')
 
     def handle(self, name, country, state, city, org, ou, cn, **options):
-        # get a possible parent CA
-        parent = options['parent']
-
-        if parent is not None:
-            try:
-                parent.key
-            except OSError:
-                raise CommandError(
-                    '%s: Parent CA private key not available.' % parent.private_key_path)
-            except Exception as e:
-                # TODO: we should catch unparseable keys in own except clause
-                raise CommandError(str(e))
-
         if not os.path.exists(ca_settings.CA_DIR):
             os.makedirs(ca_settings.CA_DIR)
 

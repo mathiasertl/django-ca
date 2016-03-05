@@ -14,9 +14,9 @@
 # see <http://www.gnu.org/licenses/>.
 
 import argparse
+import os
 
 from OpenSSL import crypto
-
 
 from django.core.management.base import BaseCommand as _BaseCommand
 from django.core.management.base import CommandError
@@ -45,6 +45,20 @@ class CertificateAuthorityAction(argparse.Action):
             value = CertificateAuthority.objects.get(serial=value)
         except CertificateAuthority.DoesNotExist:
             parser.error('%s: Unknown Certiciate Authority.' % value)
+
+        # verify that the private key exists
+        if not os.path.exists(value.private_key_path):
+            parser.error('%s: %s: Private key does not exist.' % (value, value.private_key_path))
+
+        # try to parse the private key
+        try:
+            value.key
+        except OSError:
+            raise CommandError(
+                '%s: %s: Could not read private key.' % (value, value.private_key_path))
+        except Exception as e:
+            # TODO: we should catch unparseable keys in own except clause
+            raise CommandError(str(e))
 
         setattr(namespace, self.dest, value)
 
