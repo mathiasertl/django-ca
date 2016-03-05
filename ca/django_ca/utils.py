@@ -257,8 +257,6 @@ def get_subjectAltName(names, cn=None):
     """
     values = []
     names = sorted(set(names))
-    if cn is not None and cn not in names:
-        names.insert(0, cn)
 
     for name in names:
         if not name:
@@ -284,5 +282,10 @@ def get_subjectAltName(names, cn=None):
             values.append('email:%s' % name)
         else:
             values.append('DNS:%s' % name)
+
+    if cn is not None:
+        value = 'DNS:%s' % cn
+        if value not in values:
+            values.insert(0, value)
 
     return bytes(','.join(values), 'utf-8')
