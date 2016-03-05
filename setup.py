@@ -40,10 +40,12 @@ _rootdir = os.path.dirname(os.path.realpath(__file__))
 
 
 class BaseCommand(Command):
-    user_options = []
+    user_options = [
+        ('suite=', None, 'Testsuite to run', )
+    ]
 
     def initialize_options(self):
-        pass
+        self.suite = ''
 
     def finalize_options(self):
         pass
@@ -58,9 +60,13 @@ class BaseCommand(Command):
         import django
         django.setup()
 
+        suite = 'django_ca'
+        if self.suite:
+            suite += '.tests.%s' % self.suite
+
         from django.core.management import call_command
         call_command('check')
-        call_command('test', 'django_ca')
+        call_command('test', suite)
 
 
 class TestCommand(BaseCommand):
