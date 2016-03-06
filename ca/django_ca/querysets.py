@@ -27,7 +27,8 @@ from . import ca_settings
 
 
 class CertificateAuthorityQuerySet(models.QuerySet):
-    def init(self, name, key_size, key_type, algorithm, expires, parent, pathlen, subject):
+    def init(self, name, key_size, key_type, algorithm, expires, parent, pathlen, subject,
+             password=None):
         """Create a Certificate Authority."""
 
         # NOTE: This is already verified by KeySizeAction, so none of these checks should ever be
@@ -76,6 +77,17 @@ class CertificateAuthorityQuerySet(models.QuerySet):
         ca.x509 = cert
         ca.private_key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % ca.serial)
         ca.save()
+
+        dump_args = []
+        if password is not None:
+            dump_args = ['des3', password]
+
+        # write private key to file
+        oldmask = os.umask(247)
+        with open(ca.private_key_path, 'w') as key_file:
+            key = crypto.dump_privatekey(crypto.FILETYPE_PEM, private_key, *dump_args)
+            key_file.write(key.decode('utf-8'))
+        os.umask(oldmask)
 
         return private_key, ca
 

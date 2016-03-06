@@ -81,12 +81,8 @@ class Command(BaseCommand):
         if not os.path.exists(ca_settings.CA_DIR):
             os.makedirs(ca_settings.CA_DIR)
 
-        if options['password'] is None:
-            args = []
-        elif options['password'] == '':
-            args = ['des3', getpass()]
-        else:
-            args = ['des3', options['password']]
+        if options['password'] == '':
+            options['password'] = getpass()
 
         subject = OrderedDict([
             ('C', country), ('ST', state), ('L', city), ('O', org), ('OU', ou), ('CN', cn), ])
@@ -98,12 +94,6 @@ class Command(BaseCommand):
                 expires=options['expires'],
                 parent=options['parent'],
                 pathlen=options['pathlen'],
-                name=name, subject=subject)
+                name=name, subject=subject, password=options['password'])
         except Exception as e:
             raise CommandError(e)
-
-        oldmask = os.umask(247)
-        with open(ca.private_key_path, 'w') as key_file:
-            key = crypto.dump_privatekey(crypto.FILETYPE_PEM, key, *args)
-            key_file.write(key.decode('utf-8'))
-        os.umask(oldmask)
