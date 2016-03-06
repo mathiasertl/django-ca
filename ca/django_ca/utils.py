@@ -120,7 +120,7 @@ def get_cert_profile_kwargs(name=None):
     return kwargs
 
 
-def get_cert(ca_key, ca_crt, csr, expires, algorithm, subject=None, cn_in_san=True,
+def get_cert(ca, csr, expires, algorithm, subject=None, cn_in_san=True,
              csr_format=crypto.FILETYPE_PEM, subjectAltName=None, keyUsage=None,
              extendedKeyUsage=None):
     """Create a signed certificate from a CSR.
@@ -134,10 +134,8 @@ def get_cert(ca_key, ca_crt, csr, expires, algorithm, subject=None, cn_in_san=Tr
     Parameters
     ----------
 
-    ca_key : OpenSSL.crypto.PKey
-        The private key of the certificate authority.
-    ca_crt : OpenSSL.crypto.X509
-        The public key of the certificate authority.
+    ca : django_ca.models.CertificateAuthority
+        The certificate authority to sign the certificate with.
     csr : str
         A valid CSR in PEM format. If none is given, `self.csr` will be used.
     expires : int
@@ -194,14 +192,14 @@ def get_cert(ca_key, ca_crt, csr, expires, algorithm, subject=None, cn_in_san=Tr
 
     # Create signed certificate
     cert = get_basic_cert(expires)
-    cert.set_issuer(ca_crt.get_subject())
+    cert.set_issuer(ca.x509.get_subject())
     for key, value in subject.items():
         setattr(cert.get_subject(), key, bytes(value, 'utf-8'))
     cert.set_pubkey(req.get_pubkey())
 
     extensions = [
         crypto.X509Extension(b'subjectKeyIdentifier', 0, b'hash', subject=cert),
-        crypto.X509Extension(b'authorityKeyIdentifier', 0, b'keyid,issuer', issuer=ca_crt),
+        crypto.X509Extension(b'authorityKeyIdentifier', 0, b'keyid,issuer', issuer=ca.x509),
         crypto.X509Extension(b'basicConstraints', True, b'CA:FALSE'),
     ]
 
@@ -225,7 +223,7 @@ def get_cert(ca_key, ca_crt, csr, expires, algorithm, subject=None, cn_in_san=Tr
         issuerAltName = bytes('URI:%s' % ca_settings.CA_ISSUER_ALT_NAME, 'utf-8')
     else:
         issuerAltName = b'issuer:copy'
-    extensions.append(crypto.X509Extension(b'issuerAltName', 0, issuerAltName, issuer=ca_crt))
+    extensions.append(crypto.X509Extension(b'issuerAltName', 0, issuerAltName, issuer=ca.x509))
 
     # Add authorityInfoAccess
     auth_info_access = []
@@ -241,7 +239,7 @@ def get_cert(ca_key, ca_crt, csr, expires, algorithm, subject=None, cn_in_san=Tr
     cert.add_extensions(extensions)
 
     # Finally sign the certificate:
-    cert.sign(ca_key, algorithm)
+    cert.sign(ca.key, algorithm)
 
     return cert
 

@@ -244,8 +244,7 @@ class CertificateAdmin(admin.ModelAdmin):
             san, cn_in_san = data['subjectAltName']
 
             x509 = get_cert(
-                ca_key=data['ca'].key,
-                ca_crt=data['ca'].x509,
+                ca=data['ca'],
                 csr=data['csr'],
                 expires=data['expires'],
                 subject=data['subject'],
