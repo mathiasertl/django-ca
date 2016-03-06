@@ -94,6 +94,11 @@ class DjangoCATestCase(TestCase):
     def tmpcadir(self, **kwargs):
         return override_tmpcadir(**kwargs)
 
+    def assertSubject(self, cert, expected):
+        actual = cert.get_subject().get_components()
+        actual = [(k.decode('utf-8'), v.decode('utf-8')) for k, v in actual]
+        self.assertEqual(actual, expected)
+
     @classmethod
     def init_ca(cls, **kwargs):
         kwargs.setdefault('key_size', 2048)
