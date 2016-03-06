@@ -19,7 +19,11 @@ from django_ca.models import CertificateAuthority
 
 
 class override_settings(_override_settings):
-    """Enhance override_settings to also reload django_ca.ca_settings."""
+    """Enhance override_settings to also reload django_ca.ca_settings.
+
+    .. WARNING:: When using this class as a class decorator, the decorated class must inherit from
+       :py:class:`~django_ca.tests.base.DjangoCATestCase`.
+    """
 
     def __call__(self, test_func):
         if isinstance(test_func, type) and not issubclass(test_func, DjangoCATestCase):
