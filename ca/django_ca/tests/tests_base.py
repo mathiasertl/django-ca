@@ -7,9 +7,12 @@ Replace this with more appropriate tests for your application.
 
 import tempfile
 
+from django.test import TestCase
+
 from django_ca import ca_settings
 from django_ca.tests.base import DjangoCATestCase
 from django_ca.tests.base import override_tmpcadir
+from django_ca.tests.base import override_settings
 
 
 class TestDjangoCATestCase(DjangoCATestCase):
@@ -29,3 +32,26 @@ class TestDjangoCATestCase(DjangoCATestCase):
             self.assertTrue(ca_dir.startswith(tempfile.gettempdir()))
 
         self.assertEqual(ca_settings.CA_DIR, old_ca_dir)  # ensure that they're equal again
+
+
+class OverrideSettingsFuncTestCase(TestCase):
+    @override_settings(CA_MIN_KEY_SIZE=256)
+    def test_basic(self):
+        self.assertEqual(ca_settings.CA_MIN_KEY_SIZE, 256)
+
+
+@override_settings(CA_MIN_KEY_SIZE=128)
+class OverrideSettingsClassTestCase(DjangoCATestCase):
+    def test_basic(self):
+        self.assertEqual(ca_settings.CA_MIN_KEY_SIZE, 128)
+
+    @override_settings(CA_MIN_KEY_SIZE=256)
+    def test_double(self):
+        self.assertEqual(ca_settings.CA_MIN_KEY_SIZE, 256)
+
+    def test_wrong_base(self):
+
+        with self.assertRaises(Exception):
+            @override_settings(CA_MIN_KEY_SIZE=256)
+            class DummyTest(TestCase):
+                pass
