@@ -82,8 +82,8 @@ class X509CertMixin(object):
 
         value = self.extensions[key]
         if value.get_critical():
-            value = 'critical,%s' % value
-        return value
+            return 'critical,%s' % value
+        return str(value)
 
     def distinguishedName(self):
         name = self.x509.get_subject()
