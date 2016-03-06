@@ -50,7 +50,6 @@ class OverrideSettingsClassTestCase(DjangoCATestCase):
         self.assertEqual(ca_settings.CA_MIN_KEY_SIZE, 256)
 
     def test_wrong_base(self):
-
         with self.assertRaises(Exception):
             @override_settings(CA_MIN_KEY_SIZE=256)
             class DummyTest(TestCase):
