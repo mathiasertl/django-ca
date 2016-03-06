@@ -20,22 +20,23 @@ from OpenSSL import crypto
 from django_ca.tests.base import DjangoCATestCase
 
 from django_ca import ca_settings
+from django_ca.models import Certificate
 from django_ca.models import CertificateAuthority
 
 
 class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
     def test_basic(self):
         key_size = ca_settings.CA_MIN_KEY_SIZE
-        key, ca = CertificateAuthority.objects.init(
+        ca = CertificateAuthority.objects.init(
             name='Root CA', key_size=key_size, key_type='RSA', algorithm='sha256', expires=720,
             parent=None, pathlen=0, subject={'CN': 'ca.example.com', })
 
         self.assertEqual(ca.name, 'Root CA')
 
         # verify private key properties
-        self.assertTrue(key.check())
-        self.assertEqual(key.bits(), 2048)
-        self.assertEqual(key.type(), crypto.TYPE_RSA)
+        self.assertTrue(ca.key.check())
+        self.assertEqual(ca.key.bits(), 2048)
+        self.assertEqual(ca.key.type(), crypto.TYPE_RSA)
 
         # verity public key properties
         self.assertEqual(ca.x509.get_signature_algorithm(), b'sha256WithRSAEncryption')
@@ -59,12 +60,12 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
             key_size=key_size, key_type='RSA', algorithm='sha256', expires=720, parent=None,
             subject={'CN': 'ca.example.com'})
 
-        key, ca = CertificateAuthority.objects.init(pathlen=False, name='1', **kwargs)
+        ca = CertificateAuthority.objects.init(pathlen=False, name='1', **kwargs)
         self.assertEqual(ca.basicConstraints(), 'critical,CA:TRUE')
 
-        key, ca = CertificateAuthority.objects.init(pathlen=0, name='2', **kwargs)
+        ca = CertificateAuthority.objects.init(pathlen=0, name='2', **kwargs)
         self.assertEqual(ca.basicConstraints(), 'critical,CA:TRUE, pathlen:0')
-        key, ca = CertificateAuthority.objects.init(pathlen=2, name='3', **kwargs)
+        ca = CertificateAuthority.objects.init(pathlen=2, name='3', **kwargs)
         self.assertEqual(ca.basicConstraints(), 'critical,CA:TRUE, pathlen:2')
 
     def test_parent(self):
@@ -74,11 +75,10 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
             key_size=key_size, key_type='RSA', algorithm='sha256', expires=720,
             subject={'CN': 'ca.example.com', })
 
-        _pkey, parent = CertificateAuthority.objects.init(
-            name='Root', parent=None, pathlen=1, **kwargs)
+        parent = CertificateAuthority.objects.init(name='Root', parent=None, pathlen=1, **kwargs)
+        child = CertificateAuthority.objects.init(name='Child', parent=parent, pathlen=0, **kwargs)
 
-        _ckey, child = CertificateAuthority.objects.init(
-            name='Child', parent=parent, pathlen=0, **kwargs)
+        # TODO: What do we need to verify here?
 
     def test_key_size(self):
         kwargs = dict(
@@ -88,10 +88,11 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         key_size = ca_settings.CA_MIN_KEY_SIZE
 
         with self.assertRaises(RuntimeError):
-            key, ca = CertificateAuthority.objects.init(key_size=key_size * 3, **kwargs)
+            CertificateAuthority.objects.init(key_size=key_size * 3, **kwargs)
         with self.assertRaises(RuntimeError):
-            key, ca = CertificateAuthority.objects.init(key_size=key_size + 1, **kwargs)
+            CertificateAuthority.objects.init(key_size=key_size + 1, **kwargs)
         with self.assertRaises(RuntimeError):
-            key, ca = CertificateAuthority.objects.init(key_size=int(key_size / 2), **kwargs)
+            CertificateAuthority.objects.init(key_size=int(key_size / 2), **kwargs)
         with self.assertRaises(RuntimeError):
-            key, ca = CertificateAuthority.objects.init(key_size=int(key_size / 4), **kwargs)
+            CertificateAuthority.objects.init(key_size=int(key_size / 4), **kwargs)
+

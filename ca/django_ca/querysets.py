@@ -79,7 +79,7 @@ class CertificateAuthorityQuerySet(models.QuerySet):
         ca.save()
 
         dump_args = []
-        if password is not None:
+        if password is not None:  # pragma: no cover
             dump_args = ['des3', password]
 
         # write private key to file
@@ -89,7 +89,7 @@ class CertificateAuthorityQuerySet(models.QuerySet):
             key_file.write(key.decode('utf-8'))
         os.umask(oldmask)
 
-        return private_key, ca
+        return ca
 
 
 class CertificateQuerySet(models.QuerySet):

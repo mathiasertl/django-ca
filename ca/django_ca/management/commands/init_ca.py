@@ -88,7 +88,7 @@ class Command(BaseCommand):
             ('C', country), ('ST', state), ('L', city), ('O', org), ('OU', ou), ('CN', cn), ])
 
         try:
-            key, ca = CertificateAuthority.objects.init(
+            CertificateAuthority.objects.init(
                 key_size=options['key_size'], key_type=options['key_type'],
                 algorithm=options['algorithm'],
                 expires=options['expires'],
