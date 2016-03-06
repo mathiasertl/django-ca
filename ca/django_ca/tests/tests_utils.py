@@ -8,8 +8,10 @@ from django.test import TestCase
 from django_ca import ca_settings
 from django_ca.tests.base import DjangoCATestCase
 from django_ca.tests.base import override_settings
+from django_ca.tests.base import override_tmpcadir
 from django_ca.utils import format_date
 from django_ca.utils import get_basic_cert
+from django_ca.utils import get_cert
 from django_ca.utils import get_cert_profile_kwargs
 from django_ca.utils import is_power2
 from django_ca.utils import parse_date
@@ -173,3 +175,22 @@ class GetSubjectAltNamesTest(TestCase):
         self.assertEqual(
             get_subjectAltName(['example.org'], cn='example.com'),
             b'DNS:example.com,DNS:example.org')
+
+
+@override_tmpcadir(CA_MIN_KEY_SIZE=128, CA_PROFILES={})
+class GetCertTestCase(DjangoCATestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(GetCertTestCase, cls).setUpClass()
+        cls.ca = cls.init_ca()
+
+    def test_basic(self):
+        kwargs = get_cert_profile_kwargs()
+        key, csr = self.create_csr()
+        with open(csr, 'rb') as csr_stream:
+            csr = csr_stream.read()
+
+        cert = get_cert(self.ca, csr, expires=720, algorithm='sha256',
+                        subjectAltName=['example.com'], **kwargs)
+
+        self.assertEqual(cert.get_signature_algorithm(), b'sha256WithRSAEncryption')
