@@ -22,6 +22,7 @@ from django.utils.translation import ugettext_lazy as _
 from OpenSSL import crypto
 
 from .utils import format_date
+from .utils import multiline_url_validator
 from .querysets import CertificateQuerySet
 from .querysets import CertificateAuthorityQuerySet
 
@@ -138,6 +139,15 @@ class CertificateAuthority(models.Model, X509CertMixin):
     pub = models.TextField(null=False, blank=False, verbose_name=_('Public key'))
     parent = models.ForeignKey('self', null=True, blank=True, related_name='children')
     private_key_path = models.CharField(max_length=256, help_text=_('Path to the private key.'))
+
+    # various details used when signing certs
+    crl_url = models.TextField(blank=True, null=True, validators=[multiline_url_validator],
+                               help_text=_("URLs, one per line, where you can retrieve the CRL."))
+    issuer_url = models.URLField(blank=True, null=True,
+                                 help_text=_("URL where to view additional info about your CA."))
+    ocsp_url = models.URLField(blank=True, null=True,
+                               help_text=_("URL of a OCSP responser for the CA."))
+    isuser_alt_name = models.URLField(blank=True, null=True, help_text=_("URL for your CA."))
 
     _key = None
 
