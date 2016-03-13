@@ -63,6 +63,9 @@ def is_power2(num):
     return num != 0 and ((num & (num - 1)) == 0)
 
 
+def multiline_url_validator(value):
+    pass
+
 def get_basic_cert(expires, now=None):
     """Get a basic X509 cert object.
 
