@@ -147,7 +147,7 @@ class CertificateAuthority(models.Model, X509CertMixin):
                                  help_text=_("URL where to view additional info about your CA."))
     ocsp_url = models.URLField(blank=True, null=True,
                                help_text=_("URL of a OCSP responser for the CA."))
-    isuser_alt_name = models.URLField(blank=True, null=True, help_text=_("URL for your CA."))
+    issuer_alt_name = models.URLField(blank=True, null=True, help_text=_("URL for your CA."))
 
     _key = None
 
