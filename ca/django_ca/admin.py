@@ -57,6 +57,9 @@ class CertificateAuthorityAdmin(admin.ModelAdmin):
             # existing cert).
             'classes': ('as-code', ),
         }),
+        (_('Details'), {
+            'fields': ['crl_url', 'issuer_url', 'ocsp_url', 'issuer_alt_name', ]
+        }),
     )
     list_display = ['enabled', 'name', 'serial', ]
     list_display_links = ['enabled', 'name', ]
