@@ -190,6 +190,11 @@ class GetCertTestCase(DjangoCATestCase):
         super(GetCertTestCase, cls).setUpClass()
         cls.ca = cls.init_ca()
 
+        key, csr = cls.create_csr()
+        cls.csr_path = csr
+        with open(csr, 'rb') as csr_stream:
+            cls.csr = csr_stream.read()
+
     def assertExtensions(self, cert, expected):
         expected[b'basicConstraints'] = 'CA:FALSE'
         expected[b'authorityKeyIdentifier'] = self.ca.authorityKeyIdentifier()
@@ -204,14 +209,9 @@ class GetCertTestCase(DjangoCATestCase):
         self.assertEqual(exts, expected)
 
     def test_basic(self):
-        self.maxDiff = None
         kwargs = get_cert_profile_kwargs()
-        key, csr = self.create_csr()
-        with open(csr, 'rb') as csr_stream:
-            csr = csr_stream.read()
 
-
-        cert = get_cert(self.ca, csr, expires=720, algorithm='sha256',
+        cert = get_cert(self.ca, self.csr, expires=720, algorithm='sha256',
                         subjectAltName=['example.com'], **kwargs)
 
         self.assertEqual(cert.get_signature_algorithm(), b'sha256WithRSAEncryption')
@@ -221,6 +221,9 @@ class GetCertTestCase(DjangoCATestCase):
         expected_subject['CN'] = 'example.com'
         self.assertSubject(cert, list(expected_subject.items()))
 
+        self.assertEqual(cert.get_signature_algorithm(), b'sha256WithRSAEncryption')
+
+        # verify extensions
         self.assertExtensions(cert, {
             b'authorityInfoAccess': 'OCSP - URI:https://ocsp.ca.example.com\n'
                                     'CA Issuers - URI:https://ca.example.com/ca.crt\n',
@@ -230,3 +233,33 @@ class GetCertTestCase(DjangoCATestCase):
             b'keyUsage': 'Digital Signature, Key Encipherment, Key Agreement',
             b'subjectAltName': 'DNS:example.com',
         })
+
+    def test_no_subject(self):
+        kwargs = get_cert_profile_kwargs()
+        del kwargs['subject']
+        cert = get_cert(self.ca, self.csr, expires=720, algorithm='sha256',
+                        subjectAltName=['example.com'], **kwargs)
+
+        self.assertSubject(cert, [('CN', 'example.com')])
+
+        # verify extensions
+        self.assertExtensions(cert, {
+            b'authorityInfoAccess': 'OCSP - URI:https://ocsp.ca.example.com\n'
+                                    'CA Issuers - URI:https://ca.example.com/ca.crt\n',
+            b'crlDistributionPoints': '\nFull Name:\n  URI:https://ca.example.com/crl.pem\n',
+            b'extendedKeyUsage': 'TLS Web Server Authentication',
+            b'issuerAltName': 'URI:https://ca.example.com',
+            b'keyUsage': 'Digital Signature, Key Encipherment, Key Agreement',
+            b'subjectAltName': 'DNS:example.com',
+        })
+
+    def test_no_names(self):
+        kwargs = get_cert_profile_kwargs()
+        del kwargs['subject']
+
+        with self.assertRaises(ValueError):
+            get_cert(self.ca, self.csr, expires=720, algorithm='sha256', subjectAltName=[],
+                     **kwargs)
+        with self.assertRaises(ValueError):
+            get_cert(self.ca, self.csr, expires=720, algorithm='sha256', subjectAltName=None,
+                     **kwargs)
