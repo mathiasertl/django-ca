@@ -106,7 +106,8 @@ class DjangoCATestCase(TestCase):
             name='Root CA', key_type='RSA', algorithm='sha256', expires=720, parent=None, pathlen=0,
             subject={'CN': 'ca.example.com', }, **kwargs)
 
-    def create_csr(self, name='example.com', key_size=512):
+    @classmethod
+    def create_csr(cls, name='example.com', key_size=512):
         key = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
         csr = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
         subj = '/C=AT/ST=Vienna/L=Vienna/CN=csr.%s' % name
