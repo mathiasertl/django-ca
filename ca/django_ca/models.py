@@ -142,12 +142,14 @@ class CertificateAuthority(models.Model, X509CertMixin):
 
     # various details used when signing certs
     crl_url = models.TextField(blank=True, null=True, validators=[multiline_url_validator],
+                               verbose_name=_('CRL URLs'),
                                help_text=_("URLs, one per line, where you can retrieve the CRL."))
-    issuer_url = models.URLField(blank=True, null=True,
+    issuer_url = models.URLField(blank=True, null=True, verbose_name=_('Issuer URL'),
                                  help_text=_("URL where to view additional info about your CA."))
-    ocsp_url = models.URLField(blank=True, null=True,
+    ocsp_url = models.URLField(blank=True, null=True, verbose_name=_('OCSP responder URL'),
                                help_text=_("URL of a OCSP responser for the CA."))
-    issuer_alt_name = models.URLField(blank=True, null=True, help_text=_("URL for your CA."))
+    issuer_alt_name = models.URLField(blank=True, null=True, verbose_name=_('issuerAltName'),
+                                      help_text=_("URL for your CA."))
 
     _key = None
 
