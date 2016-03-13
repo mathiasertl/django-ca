@@ -48,7 +48,8 @@ class WatcherAdmin(admin.ModelAdmin):
 class CertificateAuthorityAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
-            'fields': ['name', 'enabled', 'parent', ],
+            'fields': ['name', 'enabled', 'parent', 'subjectKeyIdentifier', 'authorityInfoAccess',
+                       'issuerAltName', 'authorityKeyIdentifier'],
         }),
         (_('Certificate'), {
             'fields': ['serial', 'pub', ],
@@ -60,7 +61,8 @@ class CertificateAuthorityAdmin(admin.ModelAdmin):
     list_display = ['enabled', 'name', 'serial', ]
     list_display_links = ['enabled', 'name', ]
     search_fields = ['cn', 'name', 'serial', ]
-    readonly_fields = ['serial', 'pub', 'parent', ]
+    readonly_fields = ['serial', 'pub', 'parent', 'subjectKeyIdentifier', 'issuerAltName',
+                       'authorityKeyIdentifier', 'authorityInfoAccess']
 
     def has_add_permission(self, request):
         return False
