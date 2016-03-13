@@ -78,7 +78,8 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         parent = CertificateAuthority.objects.init(name='Root', parent=None, pathlen=1, **kwargs)
         child = CertificateAuthority.objects.init(name='Child', parent=parent, pathlen=0, **kwargs)
 
-        # TODO: What do we need to verify here?
+        childAuthKeyId = child.authorityKeyIdentifier()
+        self.assertEqual(childAuthKeyId, 'keyid:%s\n' % parent.subjectKeyIdentifier())
 
     def test_key_size(self):
         kwargs = dict(

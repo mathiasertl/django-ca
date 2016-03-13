@@ -67,10 +67,13 @@ class CertificateAuthorityQuerySet(models.QuerySet):
             crypto.X509Extension(b'subjectAltName', 0, san),
         ])
 
-        # TODO: the issuer-kwarg might be wrong for sub-CAs
-        cert.add_extensions([
-            crypto.X509Extension(b'authorityKeyIdentifier', False, b'keyid:always', issuer=cert),
-        ])
+        if parent is None:
+            authKeyId = crypto.X509Extension(b'authorityKeyIdentifier', False,
+                                             b'keyid:always', issuer=cert)
+        else:
+            authKeyId = crypto.X509Extension(b'authorityKeyIdentifier', False,
+                                             b'keyid,issuer', issuer=parent.x509)
+        cert.add_extensions([authKeyId])
 
         # create certificate in database
         ca = self.model(name=name, parent=parent)
