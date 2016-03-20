@@ -77,6 +77,11 @@ class X509CertMixin(object):
             self._extensions = {ext.get_short_name(): ext for ext in exts}
         return self._extensions
 
+    @property
+    def subject(self):
+        return {k.decode('utf-8'): v.decode('utf-8')
+                for k, v in self.x509.get_subject().get_components()}
+
     def ext_as_str(self, key):
         if key not in self.extensions:
             return ''
