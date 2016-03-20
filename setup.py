@@ -117,7 +117,7 @@ setup(
     zip_safe=False,  # because of the static files
     install_requires=[
         'Django>=1.9',
-        'pyOpenSSL>=0.15',
+        'pyOpenSSL>=16.0',
     ],
     cmdclass={
         'coverage': CoverageCommand,
