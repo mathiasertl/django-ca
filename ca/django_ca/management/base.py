@@ -77,7 +77,7 @@ class CertificateAuthorityAction(argparse.Action):
 class URLAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
         parsed = urlsplit(value.strip())
-        if not parsed.scheme or not parsed.netloc:
+        if value and (not parsed.scheme or not parsed.netloc):
             parser.error('%s: Not a valid URL.' % value)
         setattr(namespace, self.dest, value)
 
@@ -85,7 +85,7 @@ class URLAction(argparse.Action):
 class MultipleURLAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
         parsed = urlsplit(value.strip())
-        if not parsed.scheme or not parsed.netloc:
+        if value and (not parsed.scheme or not parsed.netloc):
             parser.error('%s: Not a valid URL.' % value)
 
         if getattr(namespace, self.dest) is None:
