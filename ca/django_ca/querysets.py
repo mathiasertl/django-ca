@@ -28,7 +28,7 @@ from . import ca_settings
 
 class CertificateAuthorityQuerySet(models.QuerySet):
     def init(self, name, key_size, key_type, algorithm, expires, parent, pathlen, subject,
-             password=None):
+             issuer_url=None, issuer_alt_name=None, crl_url=None, ocsp_url=None, password=None):
         """Create a Certificate Authority."""
 
         # NOTE: This is already verified by KeySizeAction, so none of these checks should ever be
@@ -75,8 +75,12 @@ class CertificateAuthorityQuerySet(models.QuerySet):
                                              b'keyid,issuer', issuer=parent.x509)
         cert.add_extensions([authKeyId])
 
+        if crl_url is not None:
+            crl_url = '\n'.join(crl_url)
+
         # create certificate in database
-        ca = self.model(name=name, parent=parent)
+        ca = self.model(name=name, issuer_url=issuer_url, issuer_alt_name=issuer_alt_name,
+                        ocsp_url=ocsp_url, crl_url=crl_url, parent=parent)
         ca.x509 = cert
         ca.private_key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % ca.serial)
         ca.save()

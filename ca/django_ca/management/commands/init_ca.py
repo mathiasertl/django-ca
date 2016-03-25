@@ -31,9 +31,10 @@ from django_ca import ca_settings
 from django_ca.models import CertificateAuthority
 from django_ca.management.base import BaseCommand
 from django_ca.management.base import KeySizeAction
+from ..base import CertificateAuthorityDetailMixin
 
 
-class Command(BaseCommand):
+class Command(BaseCommand, CertificateAuthorityDetailMixin):
     help = "Initiate a certificate authority."
 
     def add_arguments(self, parser):
@@ -77,6 +78,8 @@ class Command(BaseCommand):
         group.add_argument('--no-pathlen', action='store_false', dest='pathlen',
                            help='Do not add a pathlen attribute.')
 
+        self.add_ca_args(parser)
+
     def handle(self, name, country, state, city, org, ou, cn, **options):
         if not os.path.exists(ca_settings.CA_DIR):
             os.makedirs(ca_settings.CA_DIR)
@@ -94,6 +97,10 @@ class Command(BaseCommand):
                 expires=options['expires'],
                 parent=options['parent'],
                 pathlen=options['pathlen'],
+                issuer_url=options['issuer_url'],
+                issuer_alt_name=options['issuer_alt_name'],
+                crl_url=options['crl_url'],
+                ocsp_url=options['ocsp_url'],
                 name=name, subject=subject, password=options['password'])
         except Exception as e:
             raise CommandError(e)
