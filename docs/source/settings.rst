@@ -13,6 +13,7 @@ also documented at :file:`ca/ca/localsettings.py.example`
 (`view on git
 <https://github.com/mathiasertl/django-ca/blob/master/ca/ca/localsettings.py.example>`_).
 
+
 CA_CRL_SETTINGS
    Default: ``None``
 
@@ -74,6 +75,8 @@ CA_DIGEST_ALGORITHM
    ``"sha256"`` for older (pre-2010) clients. Note that this setting is also
    used by the ``init_ca`` command, so if you have any clients that do not
    understand sha512 hashes, you should change this beforehand.
+
+.. _settings-ca-dir:
 
 CA_DIR
    Default: ``"ca/files"``

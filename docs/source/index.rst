@@ -29,6 +29,7 @@ Contents:
    :maxdepth: 2
 
    install
+   ca_management
    settings
    manage_commands
    crl
