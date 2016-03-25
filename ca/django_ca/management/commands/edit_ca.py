@@ -1,0 +1,36 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of django-ca (https://github.com/mathiasertl/django-ca).
+#
+# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU
+# General Public License as published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with django-ca.  If not,
+# see <http://www.gnu.org/licenses/>.
+
+from ..base import BaseCommand
+from ..base import CertificateAuthorityDetailMixin
+
+class Command(BaseCommand, CertificateAuthorityDetailMixin):
+    help = 'Edit a certificate authority.'
+
+    def add_arguments(self, parser):
+        self.add_ca(parser, 'ca')
+        self.add_ca_args(parser)
+
+    def handle(self, ca, **options):
+        if options['issuer_url'] is not None:
+            ca.issuer_url = options['issuer_url']
+        if options['issuer_alt_name'] is not None:
+            ca.issuer_alt_name = options['issuer_alt_name']
+        if options['ocsp_url'] is not None:
+            ca.ocsp_url = options['ocsp_url']
+        if options['crl_url'] is not None:
+            ca.crl_url = '\n'.join(options['crl_url'])
+        ca.save()
+
