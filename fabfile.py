@@ -67,6 +67,10 @@ def push(section):
 
 
 @task
+def livehtml(port=8001):
+    local('sphinx-autobuild docs/source docs/build/html -p %s -z ca -i *.swp -i *~ -i *4913' % port)
+
+@task
 def deploy_app(section='DEFAULT'):
     if not config.getboolean(section, 'app'):
         return
