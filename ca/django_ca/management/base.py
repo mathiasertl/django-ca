@@ -16,6 +16,8 @@
 import argparse
 import os
 
+from urllib.parse import urlsplit
+
 from OpenSSL import crypto
 
 from django.core.management.base import BaseCommand as _BaseCommand
@@ -72,6 +74,25 @@ class CertificateAuthorityAction(argparse.Action):
 
         setattr(namespace, self.dest, value)
 
+class URLAction(argparse.Action):
+    def __call__(self, parser, namespace, value, option_string=None):
+        parsed = urlsplit(value.strip())
+        if not parsed.scheme or not parsed.netloc:
+            parser.error('%s: Not a valid URL.' % value)
+        setattr(namespace, self.dest, value)
+
+
+class MultipleURLAction(argparse.Action):
+    def __call__(self, parser, namespace, value, option_string=None):
+        parsed = urlsplit(value.strip())
+        if not parsed.scheme or not parsed.netloc:
+            parser.error('%s: Not a valid URL.' % value)
+
+        if getattr(namespace, self.dest) is None:
+            setattr(namespace, self.dest, [])
+
+        getattr(namespace, self.dest).append(value)
+
 
 class BaseCommand(_BaseCommand):
     certificate_queryset = Certificate.objects.filter(revoked=False)
@@ -122,3 +143,23 @@ class CertCommand(BaseCommand):
                 definition unique) there must be only one valid certificate with the given
                 CommonName.''')
         super(CertCommand, self).add_arguments(parser)
+
+
+class CertificateAuthorityDetailMixin(object):
+    def add_ca_args(self, parser):
+        group = parser.add_argument_group(
+            'x509 extensions', 'Define various x509 extensions used when signing certificates.')
+        group.add_argument('--issuer-url', metavar='URL', action=URLAction,
+                           help='URL to the certificate of your CA (in DER format).')
+        group.add_argument(
+            '--issuer-alt-name', metavar='URL', action=URLAction,
+            help='URL to the homepage of your CA.'
+        )
+        group.add_argument(
+            '--crl-url', metavar='URL', action=MultipleURLAction, default=[],
+            help='URL to a certificate revokation list. Can be given multiple times.'
+        )
+        group.add_argument(
+            '--ocsp-url', metavar='URL', action=URLAction,
+            help='URL of an OCSP responder.'
+        )
