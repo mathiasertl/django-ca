@@ -51,10 +51,19 @@ class KeySizeAction(argparse.Action):
 
 
 class CertificateAuthorityAction(argparse.Action):
+    def __init__(self, allow_disabled=False, **kwargs):
+        super(CertificateAuthorityAction, self).__init__(**kwargs)
+        self.allow_disabled = allow_disabled
+
     def __call__(self, parser, namespace, value, option_string=None):
         value = value.strip().upper()
+
+        qs = CertificateAuthority.objects.all()
+        if self.allow_disabled is False:
+            qs = qs.filter(enabled=True)
+
         try:
-            value = CertificateAuthority.objects.filter(enabled=True).get(serial=value)
+            value = qs.get(serial=value)
         except CertificateAuthority.DoesNotExist:
             parser.error('%s: Unknown Certiciate Authority.' % value)
 
@@ -104,11 +113,12 @@ class BaseCommand(_BaseCommand):
             '--algorithm', metavar='{sha512,sha256,...}', default=ca_settings.CA_DIGEST_ALGORITHM,
             help='Algorithm to use (default: %(default)s).')
 
-    def add_ca(self, parser, arg='--ca', help='Certificate authority to use (default: %s).'):
+    def add_ca(self, parser, arg='--ca', help='Certificate authority to use (default: %s).',
+               allow_disabled=False):
         default = CertificateAuthority.objects.filter(enabled=True).first()
         help = help % default
         parser.add_argument('%s' % arg, metavar='SERIAL', help=help, default=default,
-                            action=CertificateAuthorityAction)
+                            allow_disabled=allow_disabled, action=CertificateAuthorityAction)
 
     def add_format(self, parser, default=crypto.FILETYPE_PEM):
         """Add the --format option."""

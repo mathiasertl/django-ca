@@ -20,7 +20,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
     help = 'Edit a certificate authority.'
 
     def add_arguments(self, parser):
-        self.add_ca(parser, 'ca')
+        self.add_ca(parser, 'ca', allow_disabled=True)
         self.add_ca_args(parser)
 
         group = parser.add_mutually_exclusive_group()
