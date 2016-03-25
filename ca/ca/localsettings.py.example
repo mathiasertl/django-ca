@@ -54,11 +54,6 @@ SECRET_KEY = ''
 # Default profile used for signing certificates.
 #CA_DEFAULT_PROFILE = getattr(settings, 'CA_DEFAULT_PROFILE', 'webserver')
 
-# List of URLs where clients can fetch a CRL. The CRL can be generated with the "manage.py crl"
-# command. You have to take care of hosting the CRL. More information:
-#       http://django-ca.readthedocs.org/en/latest/crl.html
-#CA_CRL_DISTRIBUTION_POINTS = []
-
 # Any default settings for automatically generating CRLs.
 #CA_CRL_SETTINGS = {
 #   # This will cause any certificate revokation to automatically regenerate the CRL.

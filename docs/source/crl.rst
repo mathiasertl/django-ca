@@ -17,5 +17,5 @@ to host that file is entirely up to you. If you run a Django project with a
 webserver already, one possibility is to dump it to a directory named by the
 ``STATIC_DIRS`` setting.
 
-To have signed certificates use the CRL, simply configure the
-``CA_CRL_DISTRIBUTION_POINTS`` setting (see :doc:`settings`).
+To have signed certificates contain one or more CRL urls, simply configure them
+with the Certificate Authority used for signing.

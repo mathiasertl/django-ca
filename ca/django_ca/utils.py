@@ -216,8 +216,9 @@ def get_cert(ca, csr, expires, algorithm, subject=None, cn_in_san=True,
         extensions.append(crypto.X509Extension(b'subjectAltName', 0, subjectAltName))
 
     # Set CRL distribution points:
-    if ca_settings.CA_CRL_DISTRIBUTION_POINTS:
-        value = ','.join(['URI:%s' % uri for uri in ca_settings.CA_CRL_DISTRIBUTION_POINTS])
+    if ca.crl_url:
+        crl_urls = [url.strip() for url in ca.crl_url.split()]
+        value = ','.join(['URI:%s' % uri for uri in crl_urls])
         value = bytes(value, 'utf-8')
         extensions.append(crypto.X509Extension(b'crlDistributionPoints', 0, value))
 

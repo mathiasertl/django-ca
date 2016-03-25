@@ -13,15 +13,6 @@ also documented at :file:`ca/ca/localsettings.py.example`
 (`view on git
 <https://github.com/mathiasertl/django-ca/blob/master/ca/ca/localsettings.py.example>`_).
 
-CA_CRL_DISTRIBUTION_POINTS
-   Default: ``[]``
-
-   A list of valid URLs for a Certificate Revokation Lists. See :doc:`crl` for
-   more information.
-
-   .. WARNING:: Do not set this value unless you actually plan on hosting the
-      CRL. CRL-enabled clients will refuse to connect if the CRL cannot be found.
-
 CA_CRL_SETTINGS
    Default: ``None``
 
