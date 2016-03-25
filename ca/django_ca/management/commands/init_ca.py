@@ -35,7 +35,7 @@ from ..base import CertificateAuthorityDetailMixin
 
 
 class Command(BaseCommand, CertificateAuthorityDetailMixin):
-    help = "Initiate a certificate authority."
+    help = "Create a certificate authority."
 
     def add_arguments(self, parser):
         self.add_algorithm(parser)
