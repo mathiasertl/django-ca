@@ -179,7 +179,6 @@ class GetSubjectAltNamesTest(TestCase):
 
 @override_tmpcadir(
     CA_MIN_KEY_SIZE=128, CA_PROFILES={},
-    CA_OCSP='https://ocsp.ca.example.com',
     CA_ISSUER='https://ca.example.com/ca.crt',
 )
 class GetCertTestCase(DjangoCATestCase):
@@ -205,6 +204,14 @@ class GetCertTestCase(DjangoCATestCase):
         # TODO: Does not account for multiple CRLs yet
         if self.ca.crl_url:
             expected[b'crlDistributionPoints']  = '\nFull Name:\n  URI:%s\n' % self.ca.crl_url
+
+        auth_info_access = ''
+        if self.ca.ocsp_url:
+            auth_info_access += 'OCSP - URI:https://ocsp.ca.example.com\n'
+        if ca_settings.CA_ISSUER:
+            auth_info_access += 'CA Issuers - URI:https://ca.example.com/ca.crt\n'
+        if auth_info_access:
+            expected[b'authorityInfoAccess'] = auth_info_access
 
         exts = [cert.get_extension(i) for i in range(0, cert.get_extension_count())]
         exts = {ext.get_short_name(): str(ext) for ext in exts}
@@ -232,8 +239,8 @@ class GetCertTestCase(DjangoCATestCase):
 
         # verify extensions
         extensions = {
-            b'authorityInfoAccess': 'OCSP - URI:https://ocsp.ca.example.com\n'
-                                    'CA Issuers - URI:https://ca.example.com/ca.crt\n',
+#            b'authorityInfoAccess': 'OCSP - URI:https://ocsp.ca.example.com\n'
+#                                    'CA Issuers - URI:https://ca.example.com/ca.crt\n',
             b'extendedKeyUsage': 'TLS Web Server Authentication',
             b'keyUsage': 'Digital Signature, Key Encipherment, Key Agreement',
             b'subjectAltName': 'DNS:example.com',

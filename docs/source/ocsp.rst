@@ -23,6 +23,4 @@ OpenSSL itself allows you to run an OCSP responder with this command::
       -rkey ocsp.example.com.key -CA files/ca.crt -text
 
 To make signed certificates include the OCSP responder URL, simply configure
-the ``CA_OCSP`` setting (see :doc:`settings`)::
-
-   CA_OCSP = "http://ocsp.example.com"
+it for the certificate authority used.

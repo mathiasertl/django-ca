@@ -88,17 +88,6 @@ CA_ISSUER
    signed certificates. This is usually a URL where further information about
    the CA can be retrieved.
 
-CA_OCSP
-   Default: ``None``
-
-   Location of an OCSP responder. This will add the ``OCSP`` value to the
-   ``authorityInfoAccess`` x509 extension of signed certificates. See
-   :ref:`ocsp` for more information.
-
-   .. WARNING:: Do not set this value unless you actually plan on hosting an
-      OCSP responder. OCSP-enabled clients will refuse to connect if there is
-      no actual OCSP service.
-
 CA_OCSP_INDEX_PATH
    Default: ``None``
 
