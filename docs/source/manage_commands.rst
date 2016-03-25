@@ -29,10 +29,20 @@ cert_watchers         Add/remove addresses to be notified of an expiring certifi
 dump_cert             Dump a certificate to a file.
 dump_crl              Write the certificate revocation list (CRL).
 dump_ocsp_index       Write an OCSP index file.
-init_ca               Initialize the CA (runs only once).
 list_certs            List all certificates.
 notify_expiring_certs Send notifications about expiring certificates to watchers.
 revoke_cert           Revoke a certificate.
 sign_cert             Sign a certificate.
 view_cert             View a certificate.
+===================== ===============================================================
+
+Certificate authority management
+--------------------------------
+
+===================== ===============================================================
+Command               Description
+===================== ===============================================================
+init_ca               Create a new certificate authority.
+list_cas              List currently configured certificate authorities.
+edit_ca               Edit an existing certificate authority.
 ===================== ===============================================================
