@@ -165,7 +165,7 @@ class CertificateAuthority(models.Model, X509CertMixin):
     # Google IA G2:    URI: http://pki.google.com/GIAG2.crt
     # Microsoft IT:    URI: http://www.microsoft.com/pki/mscorp/msitwww2.crt
     issuer_url = models.URLField(blank=True, null=True, verbose_name=_('Issuer URL'),
-                                 help_text=_("URL where to view additional info about your CA."))
+                                 help_text=_("URL to the certificate of this CA (in DER format)."))
 
     # StartSSL class2: http://ocsp.startssl.com/sub/class2/server/ca
     # LetsEncrypt X1:  URI: http://ocsp.int-x1.letsencrypt.org/
