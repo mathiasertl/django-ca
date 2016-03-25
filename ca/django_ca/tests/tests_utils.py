@@ -179,7 +179,6 @@ class GetSubjectAltNamesTest(TestCase):
 
 @override_tmpcadir(
     CA_MIN_KEY_SIZE=128, CA_PROFILES={},
-    CA_ISSUER='https://ca.example.com/ca.crt',
 )
 class GetCertTestCase(DjangoCATestCase):
     @classmethod
@@ -207,9 +206,9 @@ class GetCertTestCase(DjangoCATestCase):
 
         auth_info_access = ''
         if self.ca.ocsp_url:
-            auth_info_access += 'OCSP - URI:https://ocsp.ca.example.com\n'
-        if ca_settings.CA_ISSUER:
-            auth_info_access += 'CA Issuers - URI:https://ca.example.com/ca.crt\n'
+            auth_info_access += 'OCSP - URI:%s\n' % self.ca.ocsp_url
+        if self.ca.issuer_url:
+            auth_info_access += 'CA Issuers - URI:%s\n' % self.ca.issuer_url
         if auth_info_access:
             expected[b'authorityInfoAccess'] = auth_info_access
 
@@ -258,8 +257,6 @@ class GetCertTestCase(DjangoCATestCase):
 
         # verify extensions
         self.assertExtensions(cert, {
-            b'authorityInfoAccess': 'OCSP - URI:https://ocsp.ca.example.com\n'
-                                    'CA Issuers - URI:https://ca.example.com/ca.crt\n',
             b'extendedKeyUsage': 'TLS Web Server Authentication',
             b'keyUsage': 'Digital Signature, Key Encipherment, Key Agreement',
             b'subjectAltName': 'DNS:example.com',

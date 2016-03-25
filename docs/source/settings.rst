@@ -81,13 +81,6 @@ CA_DIR
    Where the root certificate is stored. The default is a ``files`` directory
    in the same location as your ``manage.py`` file.
 
-CA_ISSUER
-   Default: ``None``
-
-   Add a ``caIssuers`` value to the ``authorityInfoAccess`` x509 extension of
-   signed certificates. This is usually a URL where further information about
-   the CA can be retrieved.
-
 CA_OCSP_INDEX_PATH
    Default: ``None``
 

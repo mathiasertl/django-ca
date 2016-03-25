@@ -233,8 +233,8 @@ def get_cert(ca, csr, expires, algorithm, subject=None, cn_in_san=True,
     auth_info_access = []
     if ca.ocsp_url:
         auth_info_access.append('OCSP;URI:%s' % ca.ocsp_url)
-    if ca_settings.CA_ISSUER:
-        auth_info_access.append('caIssuers;URI:%s' % ca_settings.CA_ISSUER)
+    if ca.issuer_url:
+        auth_info_access.append('caIssuers;URI:%s' % ca.issuer_url)
     if auth_info_access:
         auth_info_access = bytes(','.join(auth_info_access), 'utf-8')
         extensions.append(crypto.X509Extension(b'authorityInfoAccess', 0, auth_info_access))
