@@ -36,8 +36,7 @@ sign_cert             Sign a certificate.
 view_cert             View a certificate.
 ===================== ===============================================================
 
-Certificate authority management
---------------------------------
+The following commands are used to manage certificate autorities:
 
 ===================== ===============================================================
 Command               Description
