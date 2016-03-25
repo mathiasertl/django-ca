@@ -97,13 +97,6 @@ CA_ISSUER
    signed certificates. This is usually a URL where further information about
    the CA can be retrieved.
 
-CA_ISSUER_ALT_NAME
-   Default: ``None``
-
-   Set a value for the ``issuerAltName`` x509 extension. By default, the
-   CommonName from the root certificate is copied (the last parameter of the
-   ``init_ca`` command).
-
 CA_OCSP
    Default: ``None``
 

@@ -54,9 +54,6 @@ SECRET_KEY = ''
 # Default profile used for signing certificates.
 #CA_DEFAULT_PROFILE = getattr(settings, 'CA_DEFAULT_PROFILE', 'webserver')
 
-# Any URL you have for your CA, otherwise the CommonName from the root CA is copied.
-#CA_ISSUER_ALT_NAME = None
-
 # List of URLs where clients can fetch a CRL. The CRL can be generated with the "manage.py crl"
 # command. You have to take care of hosting the CRL. More information:
 #       http://django-ca.readthedocs.org/en/latest/crl.html

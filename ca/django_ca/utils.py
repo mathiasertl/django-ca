@@ -222,8 +222,8 @@ def get_cert(ca, csr, expires, algorithm, subject=None, cn_in_san=True,
         extensions.append(crypto.X509Extension(b'crlDistributionPoints', 0, value))
 
     # Add issuerAltName
-    if ca_settings.CA_ISSUER_ALT_NAME:
-        issuerAltName = bytes('URI:%s' % ca_settings.CA_ISSUER_ALT_NAME, 'utf-8')
+    if ca.issuer_alt_name:
+        issuerAltName = bytes('URI:%s' % ca.issuer_alt_name, 'utf-8')
     else:
         issuerAltName = b'issuer:copy'
     extensions.append(crypto.X509Extension(b'issuerAltName', 0, issuerAltName, issuer=ca.x509))

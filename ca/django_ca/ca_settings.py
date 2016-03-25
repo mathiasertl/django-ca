@@ -137,7 +137,6 @@ CA_DIGEST_ALGORITHM = getattr(settings, 'CA_DIGEST_ALGORITHM', "sha512")
 CA_OCSP = getattr(settings, 'CA_OCSP', None)
 CA_OCSP_INDEX_PATH = getattr(settings, 'CA_OCSP_INDEX_PATH', None)
 CA_ISSUER = getattr(settings, 'CA_ISSUER', None)
-CA_ISSUER_ALT_NAME = getattr(settings, 'CA_ISSUER_ALT_NAME', None)
 CA_CRL_DISTRIBUTION_POINTS = getattr(settings, 'CA_CRL_DISTRIBUTION_POINTS', None)
 CA_CRL_SETTINGS = getattr(settings, 'CA_CRL_SETTINGS', None)
 

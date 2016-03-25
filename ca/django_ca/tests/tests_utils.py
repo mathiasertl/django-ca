@@ -179,7 +179,6 @@ class GetSubjectAltNamesTest(TestCase):
 
 @override_tmpcadir(
     CA_MIN_KEY_SIZE=128, CA_PROFILES={},
-    CA_ISSUER_ALT_NAME='https://ca.example.com',
     CA_CRL_DISTRIBUTION_POINTS=['https://ca.example.com/crl.pem', ],
     CA_OCSP='https://ocsp.ca.example.com',
     CA_ISSUER='https://ca.example.com/ca.crt',
@@ -198,6 +197,11 @@ class GetCertTestCase(DjangoCATestCase):
     def assertExtensions(self, cert, expected):
         expected[b'basicConstraints'] = 'CA:FALSE'
         expected[b'authorityKeyIdentifier'] = self.ca.authorityKeyIdentifier()
+
+        if self.ca.issuer_alt_name:
+            expected[b'issuerAltName'] = 'URI:%s' % self.ca.issuer_alt_name
+        else:
+            expected[b'issuerAltName'] = self.ca.subjectAltName()
 
         exts = [cert.get_extension(i) for i in range(0, cert.get_extension_count())]
         exts = {ext.get_short_name(): str(ext) for ext in exts}
@@ -224,15 +228,16 @@ class GetCertTestCase(DjangoCATestCase):
         self.assertEqual(cert.get_signature_algorithm(), b'sha256WithRSAEncryption')
 
         # verify extensions
-        self.assertExtensions(cert, {
+        extensions = {
             b'authorityInfoAccess': 'OCSP - URI:https://ocsp.ca.example.com\n'
                                     'CA Issuers - URI:https://ca.example.com/ca.crt\n',
             b'crlDistributionPoints': '\nFull Name:\n  URI:https://ca.example.com/crl.pem\n',
             b'extendedKeyUsage': 'TLS Web Server Authentication',
-            b'issuerAltName': 'URI:https://ca.example.com',
             b'keyUsage': 'Digital Signature, Key Encipherment, Key Agreement',
             b'subjectAltName': 'DNS:example.com',
-        })
+        }
+
+        self.assertExtensions(cert, extensions)
 
     def test_no_subject(self):
         kwargs = get_cert_profile_kwargs()
@@ -248,7 +253,6 @@ class GetCertTestCase(DjangoCATestCase):
                                     'CA Issuers - URI:https://ca.example.com/ca.crt\n',
             b'crlDistributionPoints': '\nFull Name:\n  URI:https://ca.example.com/crl.pem\n',
             b'extendedKeyUsage': 'TLS Web Server Authentication',
-            b'issuerAltName': 'URI:https://ca.example.com',
             b'keyUsage': 'Digital Signature, Key Encipherment, Key Agreement',
             b'subjectAltName': 'DNS:example.com',
         })
