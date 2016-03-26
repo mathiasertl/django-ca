@@ -44,4 +44,5 @@ Command               Description
 init_ca               Create a new certificate authority.
 list_cas              List currently configured certificate authorities.
 edit_ca               Edit an existing certificate authority.
+view_ca               View details of a certificate authority.
 ===================== ===============================================================
