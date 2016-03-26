@@ -94,12 +94,16 @@ commands::
 
    python ca/manage.py migrate
 
-   # if you intend to run the webinterface
+   # if you intend to run the webinterface (requires STATIC_ROOT setting!)
    python ca/manage.py collectstatic
 
-   # FINALLY, create the root certificates for your CA:
+   # FINALLY, create a certificate authority:
    #     (replace parameters after init_ca with your local details)
    python manage.py init_ca AT Vienna Vienna Org OrgUnit ca.example.com
+
+Please also see :doc:`ca_management` for further information on how to create
+certificate authorities. You can also run ``init_ca`` with the ``-h`` parameter
+for available arguments.
 
 Create manage.py shortcut
 -------------------------
