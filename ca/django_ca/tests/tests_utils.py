@@ -5,6 +5,7 @@ import json
 from datetime import datetime
 from datetime import timedelta
 
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy as _l
@@ -21,6 +22,20 @@ from django_ca.utils import is_power2
 from django_ca.utils import parse_date
 from django_ca.utils import get_subjectAltName
 from django_ca.utils import LazyEncoder
+from django_ca.utils import multiline_url_validator
+
+
+class LazyEncoderTestCase(TestCase):
+    def test_basic(self):
+        self.assertEqual('{"a": "b"}', json.dumps({'a': 'b'}, cls=LazyEncoder))
+
+    def test_translated(self):
+        self.assertEqual('{"a": "b"}', json.dumps({'a': _l('b')}, cls=LazyEncoder))
+
+        # these are just here to improve branch coverage :-)
+        self.assertEqual('{"a": "b"}', json.dumps({'a': _('b')}, cls=LazyEncoder))
+        self.assertEqual('{"a": "2016-03-26T00:00:00"}',
+                         json.dumps({'a': datetime(2016, 3, 26)}, cls=LazyEncoder))
 
 
 class FormatDateTestCase(TestCase):
@@ -54,16 +69,22 @@ class Power2TestCase(TestCase):
             self.assertFalse(is_power2((2 ** i) + 1))
 
 
-class LazyEncoderTestCase(TestCase):
+class MultilineURLValidatorTestCase(TestCase):
     def test_basic(self):
-        self.assertEqual('{"a": "b"}', json.dumps({'a': 'b'}, cls=LazyEncoder))
+        multiline_url_validator('')
+        multiline_url_validator('http://example.com')
+        multiline_url_validator('http://example.com\nhttp://www.example.org')
+        multiline_url_validator('http://example.com\nhttp://www.example.org\nhttp://www.example.net')
 
-    def test_translated(self):
-        self.assertEqual('{"a": "b"}', json.dumps({'a': _('b')}, cls=LazyEncoder))
-        self.assertEqual('{"a": "b"}', json.dumps({'a': _l('b')}, cls=LazyEncoder))
-        self.assertEqual('{"a": "2016-03-26T00:00:00"}',
-                         json.dumps({'a': datetime(2016, 3, 26)}, cls=LazyEncoder))
-
+    def test_error(self):
+        with self.assertRaises(ValidationError):
+            multiline_url_validator('foo')
+        with self.assertRaises(ValidationError):
+            multiline_url_validator('foo\nhttp://www.example.com')
+        with self.assertRaises(ValidationError):
+            multiline_url_validator('http://www.example.com\nfoo')
+        with self.assertRaises(ValidationError):
+            multiline_url_validator('http://www.example.com\nfoo\nhttp://example.org')
 
 class GetBasicCertTestCase(TestCase):
     def assertCert(self, delta):

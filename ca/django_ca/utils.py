@@ -23,6 +23,7 @@ from datetime import datetime
 from datetime import timedelta
 from ipaddress import ip_address
 
+from django.core.validators import URLValidator
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.encoding import force_text
 from django.utils.functional import Promise
@@ -64,7 +65,15 @@ def is_power2(num):
 
 
 def multiline_url_validator(value):
-    pass
+    """Validate that a TextField contains one valid URL per line.
+
+    .. seealso:: https://docs.djangoproject.com/en/1.9/ref/validators/
+    """
+    validator = URLValidator()
+
+    for line in value.splitlines():
+        validator(line)
+
 
 def get_basic_cert(expires, now=None):
     """Get a basic X509 cert object.
