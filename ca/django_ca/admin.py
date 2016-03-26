@@ -196,12 +196,6 @@ class CertificateAdmin(admin.ModelAdmin):
 
         return urls
 
-    def revoke_view(self, request):
-        context = dict(
-            self.admin_site.each_context(request)
-        )
-        return TemplateResponse(request, 'django_ca/admin/revoke.html', context)
-
     def revoke(self, request, queryset):
         for cert in queryset:
             cert.revoke()
