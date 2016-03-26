@@ -1,9 +1,13 @@
 """Test utility functions."""
 
+import json
+
 from datetime import datetime
 from datetime import timedelta
 
 from django.test import TestCase
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _l
 
 from django_ca import ca_settings
 from django_ca.tests.base import DjangoCATestCase
@@ -16,6 +20,7 @@ from django_ca.utils import get_cert_profile_kwargs
 from django_ca.utils import is_power2
 from django_ca.utils import parse_date
 from django_ca.utils import get_subjectAltName
+from django_ca.utils import LazyEncoder
 
 
 class FormatDateTestCase(TestCase):
@@ -47,6 +52,17 @@ class Power2TestCase(TestCase):
         for i in range(2, 20):
             self.assertFalse(is_power2((2 ** i) - 1))
             self.assertFalse(is_power2((2 ** i) + 1))
+
+
+class LazyEncoderTestCase(TestCase):
+    def test_basic(self):
+        self.assertEqual('{"a": "b"}', json.dumps({'a': 'b'}, cls=LazyEncoder))
+
+    def test_translated(self):
+        self.assertEqual('{"a": "b"}', json.dumps({'a': _('b')}, cls=LazyEncoder))
+        self.assertEqual('{"a": "b"}', json.dumps({'a': _l('b')}, cls=LazyEncoder))
+        self.assertEqual('{"a": "2016-03-26T00:00:00"}',
+                         json.dumps({'a': datetime(2016, 3, 26)}, cls=LazyEncoder))
 
 
 class GetBasicCertTestCase(TestCase):
