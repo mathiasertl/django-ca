@@ -343,3 +343,17 @@ class GetCertTestCase(DjangoCATestCase):
         cert = get_cert(self.ca, self.csr, expires=720, algorithm='sha256', **kwargs)
         self.assertEqual(self.get_subject(cert)['CN'], 'cn.example.com')
         self.assertNotIn('subjectAltName', self.get_extensions(cert))
+
+    def test_no_key_usage(self):
+        kwargs = get_cert_profile_kwargs()
+        del kwargs['keyUsage']
+        cert = get_cert(self.ca, self.csr, expires=720, algorithm='sha256',
+                        subjectAltName=['example.com'], **kwargs)
+        self.assertNotIn('keyUsage', self.get_extensions(cert))
+
+    def test_no_ext_key_usage(self):
+        kwargs = get_cert_profile_kwargs()
+        del kwargs['extendedKeyUsage']
+        cert = get_cert(self.ca, self.csr, expires=720, algorithm='sha256',
+                        subjectAltName=['example.com'], **kwargs)
+        self.assertNotIn('extendedKeyUsage', self.get_extensions(cert))
