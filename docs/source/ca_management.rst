@@ -30,3 +30,20 @@ view_ca  View details of a certificate authority.
 
 Various details of the certificate authority, mostly the x509 extensions used
 when signing a certificate, can also be managed via the webinterface.
+
+Here is a shell session that illustrates the respective manage.py commands::
+
+   $ python manage.py init_ca --pathlen=2
+      --crl-url=http://ca.example.com/crl \
+      --ocsp-url=http://ocsp.ca.example.com \
+      --issuer-url=http://ca.example.com/ca.crt \
+      "Test CA" AT Vienna Vienna Example ExampleUnit ca.example.com
+   $ python manage.py list_cas
+   BD:5B:AB:5B:A2:1C:49:0D:9A:B2:AA:BC:68:ED:ED:7D - Test CA
+   $ python manage.py view_ca BD:5B:AB:5B:A2:1C:49:0D:9A:B2:AA:BC:68:ED:ED:7D \
+      | grep OCSP
+   * OCSP URL: http://ocsp.ca.example.com
+   $ python manage.py edit_ca --ocsp-url=http://new-ocsp.ca.example.com
+   $ python manage.py view_ca BD:5B:AB:5B:A2:1C:49:0D:9A:B2:AA:BC:68:ED:ED:7D \
+      | grep OCSP
+   * OCSP URL: http://new-ocsp.ca.example.com
