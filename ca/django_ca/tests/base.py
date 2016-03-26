@@ -119,3 +119,17 @@ class DjangoCATestCase(TestCase):
                                '-batch', '-subj', '%s' % subj])
         p2.communicate()
         return key, csr
+
+    @classmethod
+    def get_subject(cls, x509):
+        return {k.decode('utf-8'): v.decode('utf-8') for k, v
+                in x509.get_subject().get_components()}
+
+    @classmethod
+    def get_extensions(cls, x509):
+        exts = [x509.get_extension(i) for i in range(0, x509.get_extension_count())]
+        return {ext.get_short_name().decode('utf-8'): str(ext) for ext in exts}
+
+    @classmethod
+    def get_alt_names(cls, x509):
+        return [n.strip() for n in cls.get_extensions(x509)['subjectAltName'].split(',')]
