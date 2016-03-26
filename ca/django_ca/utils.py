@@ -41,7 +41,7 @@ _datetime_format = '%Y%m%d%H%M%SZ'
 
 
 class LazyEncoder(DjangoJSONEncoder):
-    """Encoder that also encodes translated strings."""
+    """Encoder that also encodes strings translated with ugettext_lazy."""
 
     def default(self, obj):
         if isinstance(obj, Promise):
