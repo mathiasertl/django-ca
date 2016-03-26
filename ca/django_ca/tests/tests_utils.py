@@ -309,3 +309,37 @@ class GetCertTestCase(DjangoCATestCase):
         with self.assertRaises(ValueError):
             get_cert(self.ca, self.csr, expires=720, algorithm='sha256', subjectAltName=None,
                      **kwargs)
+
+    def test_cn_in_san(self):
+        kwargs = get_cert_profile_kwargs()
+        kwargs['subject']['CN'] = 'cn.example.com'
+        cert = get_cert(self.ca, self.csr, expires=720, algorithm='sha256',
+                        subjectAltName=['example.com'], **kwargs)
+
+        self.assertEqual(self.get_subject(cert)['CN'], 'cn.example.com')
+        self.assertIn('subjectAltName', self.get_extensions(cert))
+        self.assertEqual(['DNS:cn.example.com', 'DNS:example.com'], self.get_alt_names(cert))
+
+        # try the same with no SAN at all
+        cert = get_cert(self.ca, self.csr, expires=720, algorithm='sha256', **kwargs)
+        self.assertEqual(self.get_subject(cert)['CN'], 'cn.example.com')
+        self.assertIn('subjectAltName', self.get_extensions(cert))
+        self.assertEqual(['DNS:cn.example.com'], self.get_alt_names(cert))
+
+    def test_cn_not_in_san(self):
+        kwargs = get_cert_profile_kwargs()
+        kwargs['subject']['CN'] = 'cn.example.com'
+        kwargs['cn_in_san'] = False
+        cert = get_cert(self.ca, self.csr, expires=720, algorithm='sha256',
+                        subjectAltName=['example.com'], **kwargs)
+        self.assertEqual(self.get_subject(cert)['CN'], 'cn.example.com')
+        self.assertIn('subjectAltName', self.get_extensions(cert))
+        self.assertEqual(['DNS:example.com'], self.get_alt_names(cert))
+
+    def test_no_san(self):
+        kwargs = get_cert_profile_kwargs()
+        kwargs['subject']['CN'] = 'cn.example.com'
+        kwargs['cn_in_san'] = False
+        cert = get_cert(self.ca, self.csr, expires=720, algorithm='sha256', **kwargs)
+        self.assertEqual(self.get_subject(cert)['CN'], 'cn.example.com')
+        self.assertNotIn('subjectAltName', self.get_extensions(cert))
