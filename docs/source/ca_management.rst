@@ -2,10 +2,13 @@
 Certificate authority management
 ################################
 
-The only way to create and manage certificate authorities is via the command
-line. It is obviously most important that the private keys of the certificate
-authorities are never exposed to any attacker, and any web interface would pose
-an unnecessary risk.
+**django-ca** supports managing multiple certificate authorities as well as
+child certificate authorities.
+
+The only way to create certificate authorities is via the command line via
+:doc:`manage.py commands <manage_commands>`. It is obviously most important that
+the private keys of the certificate authorities are never exposed to any
+attacker, and any web interface would pose an unnecessary risk.
 
 For the same reason, the private key of a certificate authority is stored on the
 filesystem and not in the database. The initial location of the private key is
@@ -13,3 +16,17 @@ configured by the :ref:`CA_DIR setting <settings-ca-dir>`. This also means that
 you can run your **django-ca** on two hosts, where one host has the private key
 and only uses the command line, and one with the webinterface that can still be
 used to revoke certificates.
+
+To manage certificate authorities, use the following `manage.py` commands:
+
+======== ======================================================
+Command  Description
+======== ======================================================
+init_ca  Create a new certificate authority.
+list_cas List all currently configured certificate authorities.
+edit_ca  Edit a certificate authority.
+view_ca  View details of a certificate authority.
+======== ======================================================
+
+Various details of the certificate authority, mostly the x509 extensions used
+when signing a certificate, can also be managed via the webinterface.
