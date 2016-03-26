@@ -11,6 +11,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy as _l
 
 from django_ca import ca_settings
+from django_ca.models import CertificateAuthority
 from django_ca.tests.base import DjangoCATestCase
 from django_ca.tests.base import override_settings
 from django_ca.tests.base import override_tmpcadir
@@ -357,3 +358,62 @@ class GetCertTestCase(DjangoCATestCase):
         cert = get_cert(self.ca, self.csr, expires=720, algorithm='sha256',
                         subjectAltName=['example.com'], **kwargs)
         self.assertNotIn('extendedKeyUsage', self.get_extensions(cert))
+
+    def test_crl(self):
+        # get from the db to make sure that values do not influence other testcases
+        ca = CertificateAuthority.objects.first()
+        ca.crl_url = 'http://crl.example.com'
+
+        kwargs = get_cert_profile_kwargs()
+        cert = get_cert(ca, self.csr, expires=720, algorithm='sha256',
+                        subjectAltName=['example.com'], **kwargs)
+        self.assertEqual(self.get_extensions(cert)['crlDistributionPoints'],
+                         '\nFull Name:\n  URI:%s\n' % ca .crl_url)
+
+        # test multiple URLs
+        ca.crl_url = 'http://crl.example.com\nhttp://crl.example.org'
+        kwargs = get_cert_profile_kwargs()
+        cert = get_cert(ca, self.csr, expires=720, algorithm='sha256',
+                        subjectAltName=['example.com'], **kwargs)
+
+        expected = '\nFull Name:\n  URI:%s\n\nFull Name:\n  URI:%s\n' % tuple(
+            ca.crl_url.splitlines())
+        self.assertEqual(self.get_extensions(cert)['crlDistributionPoints'], expected)
+
+    def test_issuer_alt_name(self):
+        ca = CertificateAuthority.objects.first()
+        ca.issuer_alt_name = 'http://ian.example.com'
+
+        kwargs = get_cert_profile_kwargs()
+        cert = get_cert(ca, self.csr, expires=720, algorithm='sha256',
+                        subjectAltName=['example.com'], **kwargs)
+
+        self.assertEqual(self.get_extensions(cert)['issuerAltName'], 'URI:%s' % ca.issuer_alt_name)
+
+    def test_auth_info_access(self):
+        ca = CertificateAuthority.objects.first()
+        kwargs = get_cert_profile_kwargs()
+
+        # test only with ocsp url
+        ca.ocsp_url = 'http://ocsp.ca.example.com'
+        cert = get_cert(ca, self.csr, expires=720, algorithm='sha256',
+                        subjectAltName=['example.com'], **kwargs)
+
+        self.assertEqual(self.get_extensions(cert)['authorityInfoAccess'],
+                         'OCSP - URI:%s\n' % ca.ocsp_url)
+
+        # test with both ocsp_url and issuer_url
+        ca.issuer_url = 'http://ca.example.com/ca.crt'
+        cert = get_cert(ca, self.csr, expires=720, algorithm='sha256',
+                        subjectAltName=['example.com'], **kwargs)
+
+        self.assertEqual(self.get_extensions(cert)['authorityInfoAccess'],
+                         'OCSP - URI:%s\nCA Issuers - URI:%s\n' % (ca.ocsp_url, ca.issuer_url))
+
+        # test only with issuer url
+        ca.ocsp_url = None
+        cert = get_cert(ca, self.csr, expires=720, algorithm='sha256',
+                        subjectAltName=['example.com'], **kwargs)
+
+        self.assertEqual(self.get_extensions(cert)['authorityInfoAccess'],
+                         'CA Issuers - URI:%s\n' % ca.issuer_url)
