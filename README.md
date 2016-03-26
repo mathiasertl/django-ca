@@ -24,8 +24,13 @@ See ChangeLog.md.
 
 ## ToDo
 
+Ideas on what we could do for future releases:
+
 1. Only send out one notification if multiple certificates expire for a user.
-2. Add a 'renew' button in the admin interface.
+2. Add a "renew" button in the admin interface.
+3. Admin interface should account for cases where the private key is not present.
+4. Add a generic view to provide a CRL.
+5. Add a OCSP service maybe (would be huge).
 
 ## Test CRL and OCSP
 
