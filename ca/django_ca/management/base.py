@@ -16,8 +16,6 @@
 import argparse
 import os
 
-from urllib.parse import urlsplit
-
 from OpenSSL import crypto
 
 from django.core.management.base import BaseCommand as _BaseCommand
@@ -99,8 +97,10 @@ class URLAction(argparse.Action):
 
 class MultipleURLAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
-        parsed = urlsplit(value.strip())
-        if value and (not parsed.scheme or not parsed.netloc):
+        validator = URLValidator()
+        try:
+            validator(value)
+        except:
             parser.error('%s: Not a valid URL.' % value)
 
         if getattr(namespace, self.dest) is None:
