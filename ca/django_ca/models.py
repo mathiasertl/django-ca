@@ -198,6 +198,13 @@ class CertificateAuthority(models.Model, X509CertMixin):
 
         return self._key
 
+    @property
+    def pathlen(self):
+        constraints = self.basicConstraints()
+        if 'pathlen' in constraints:
+            return int(constraints.split('pathlen:')[1])
+        return None
+
     def save(self, *args, **kwargs):
         if not self.serial:
             s = hex(self.x509.get_serial_number())[2:].upper()

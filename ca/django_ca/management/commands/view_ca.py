@@ -39,10 +39,8 @@ class Command(BaseCommand):
         else:
             self.stdout.write('* Has no children.')
 
-        constraints = ca.basicConstraints()
-        if 'pathlen' in constraints:
-            pathlen = constraints.split('pathlen:')[1]
-        else:
+        pathlen = ca.pathlen
+        if pathlen is None:
             pathlen = 'unlimited'
 
         self.stdout.write('* Distinguished Name: %s' % ca.distinguishedName())
