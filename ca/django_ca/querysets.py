@@ -98,6 +98,9 @@ class CertificateAuthorityQuerySet(models.QuerySet):
 
         return ca
 
+    def enabled(self):
+        return self.filter(enabled=True)
+
 
 class CertificateQuerySet(models.QuerySet):
     def valid(self):

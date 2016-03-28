@@ -64,7 +64,7 @@ class CertificateAuthorityAction(argparse.Action):
 
         qs = CertificateAuthority.objects.all()
         if self.allow_disabled is False:
-            qs = qs.filter(enabled=True)
+            qs = qs.enabled()
 
         try:
             value = qs.get(serial=value)
@@ -121,7 +121,7 @@ class BaseCommand(_BaseCommand):
 
     def add_ca(self, parser, arg='--ca', help='Certificate authority to use (default: %s).',
                allow_disabled=False):
-        default = CertificateAuthority.objects.filter(enabled=True).first()
+        default = CertificateAuthority.objects.enabled().first()
         help = help % default
         parser.add_argument('%s' % arg, metavar='SERIAL', help=help, default=default,
                             allow_disabled=allow_disabled, action=CertificateAuthorityAction)
