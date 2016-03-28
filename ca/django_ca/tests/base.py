@@ -5,7 +5,6 @@ when you run "manage.py test".
 Replace this with more appropriate tests for your application.
 """
 
-import io
 import os
 import shutil
 import subprocess
@@ -13,8 +12,10 @@ import tempfile
 
 from mock import patch
 
+from django.core.management import call_command
 from django.test import TestCase
 from django.test.utils import override_settings as _override_settings
+from django.utils.six import StringIO
 from django.utils.six.moves import reload_module
 
 from django_ca import ca_settings
@@ -140,13 +141,19 @@ class DjangoCATestCase(TestCase):
     def assertParserError(self, args, expected):
         """Assert that given args throw a parser error."""
 
-        buf = io.StringIO()
+        buf = StringIO()
         with self.assertRaises(SystemExit), patch('sys.stderr', buf):
             self.parser.parse_args(args)
 
         output = buf.getvalue()
         self.assertEqual(output, expected)
         return output
+
+    def cmd(self, *args, **kwargs):
+        kwargs['stdout'] = StringIO()
+        kwargs['stderr'] = StringIO()
+        call_command(*args, **kwargs)
+        return kwargs['stdout'].getvalue(), kwargs['stderr'].getvalue()
 
 
 @override_settings(CA_MIN_KEY_SIZE=512)
