@@ -149,7 +149,10 @@ class DjangoCATestCase(TestCase):
     def cmd(self, *args, **kwargs):
         kwargs['stdout'] = StringIO()
         kwargs['stderr'] = StringIO()
-        call_command(*args, **kwargs)
+        stdin = kwargs.pop('stdin', StringIO())
+
+        with patch('sys.stdin', stdin):
+            call_command(*args, **kwargs)
         return kwargs['stdout'].getvalue(), kwargs['stderr'].getvalue()
 
 
@@ -169,4 +172,4 @@ class DjangoCAWithCSRTestCase(DjangoCAWithCATestCase):
         super(DjangoCAWithCSRTestCase, cls).setUpClass()
 
         cls.key, cls.csr = cls.create_csr()
-        cls.csr_pem = crypto.dump_certificate_request(crypto.FILETYPE_PEM, cls.csr)
+        cls.csr_pem = crypto.dump_certificate_request(crypto.FILETYPE_PEM, cls.csr).decode('utf-8')
