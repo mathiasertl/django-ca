@@ -17,17 +17,52 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.utils import six
 
+from .. import ca_settings
 from django_ca.models import CertificateAuthority
 from django_ca.tests.base import DjangoCATestCase
 from django_ca.tests.base import override_tmpcadir
 
 
 class InitCATest(DjangoCATestCase):
-    @override_tmpcadir()
+    def init_ca(self, **kwargs):
+        kwargs.setdefault('key_size', ca_settings.CA_MIN_KEY_SIZE)
+        return self.cmd('init_ca', 'Test CA', 'AT', 'Vienna', 'Vienna', 'Org', 'OrgUnit',
+                        'Test CA', **kwargs)
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_basic(self):
-        self.init_ca()
-        cert = CertificateAuthority.objects.first().x509
-        self.assertEqual(cert.get_signature_algorithm(), six.b('sha512WithRSAEncryption'))
+        out, err = self.init_ca()
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+
+        ca = CertificateAuthority.objects.first()
+        self.assertEqual(ca.x509.get_signature_algorithm(), six.b('sha512WithRSAEncryption'))
+
+        self.assertEqual(ca.x509.get_subject().get_components(),
+                         [(b'C', b'AT'), (b'ST', b'Vienna'), (b'L', b'Vienna'), (b'O', b'Org'),
+                          (b'OU', b'OrgUnit'), (b'CN', b'Test CA')])
+
+    @override_tmpcadir()
+    def test_arguments(self):
+        self.init_ca(
+            algorithm='sha1',
+            key_type='DSA',
+            key_size=2048,
+            expires=720,
+            pathlen=3,
+            issuer_url='http://issuer.ca.example.com',
+            issuer_alt_name='http://ian.ca.example.com',
+            crl_url=['http://crl.example.com'],
+            ocsp_url='http://ocsp.example.com'
+        )
+        ca = CertificateAuthority.objects.first()
+
+        self.assertEqual(ca.x509.get_signature_algorithm(), six.b('dsaWithSHA1'))
+        self.assertEqual(ca.pathlen, 3)
+        self.assertEqual(ca.issuer_url, 'http://issuer.ca.example.com')
+        self.assertEqual(ca.issuer_alt_name, 'http://ian.ca.example.com')
+        self.assertEqual(ca.crl_url, 'http://crl.example.com')
+        self.assertEqual(ca.ocsp_url, 'http://ocsp.example.com')
 
     @override_tmpcadir()
     def test_small_key_size(self):
@@ -39,17 +74,11 @@ class InitCATest(DjangoCATestCase):
         with self.assertRaises(CommandError):
             self.init_ca(key_size=2049)
 
-    @override_tmpcadir()
-    def test_algorithm(self):
-        self.init_ca(algorithm='sha1')
-        cert = CertificateAuthority.objects.first().x509
-        self.assertEqual(cert.get_signature_algorithm(), six.b('sha1WithRSAEncryption'))
 
-
-@override_tmpcadir()
-class SignCertTest(DjangoCATestCase):
-    def test_basic(self):
-        self.init_ca()
-        out = six.StringIO()
-        key, csr = self.create_csr()
-        call_command('sign_cert', alt=['example.com'], csr=csr, stdout=out)
+#@override_tmpcadir()
+#class SignCertTest(DjangoCATestCase):
+#    def test_basic(self):
+#        self.init_ca()
+#        out = six.StringIO()
+#        key, csr = self.create_csr()
+#        call_command('sign_cert', alt=['example.com'], csr=csr, stdout=out)
