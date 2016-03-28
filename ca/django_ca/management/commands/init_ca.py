@@ -54,7 +54,8 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
             '--expires', metavar='DAYS', type=int, default=365 * 10,
             help='CA certificate expires in DAYS days (default: %(default)s).'
         )
-        self.add_ca(parser, '--parent', help='Serial of the parent CA (default: %s).')
+        self.add_ca(parser, '--parent', help='Serial of the parent CA (default: %s).',
+                    no_default=True)
         parser.add_argument(
             '--password', nargs=1,
             help="Optional password used to encrypt the private key. If omitted, no "

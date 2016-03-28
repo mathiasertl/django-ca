@@ -120,8 +120,12 @@ class BaseCommand(_BaseCommand):
             help='Algorithm to use (default: %(default)s).')
 
     def add_ca(self, parser, arg='--ca', help='Certificate authority to use (default: %s).',
-               allow_disabled=False):
-        default = CertificateAuthority.objects.enabled().first()
+               allow_disabled=False, no_default=False):
+        if no_default is True:
+            default = None
+        else:
+            default = CertificateAuthority.objects.enabled().first()
+
         help = help % default
         parser.add_argument('%s' % arg, metavar='SERIAL', help=help, default=default,
                             allow_disabled=allow_disabled, action=CertificateAuthorityAction)
