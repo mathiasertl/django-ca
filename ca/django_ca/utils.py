@@ -221,7 +221,7 @@ def get_cert(ca, csr, expires, algorithm, subject=None, cn_in_san=True,
         extensions.append(crypto.X509Extension(b'extendedKeyUsage', *extendedKeyUsage))
 
     # Add subjectAltNames, always also contains the CommonName
-    if subjectAltName is not None:
+    if subjectAltName:
         extensions.append(crypto.X509Extension(b'subjectAltName', 0, subjectAltName))
 
     # Set CRL distribution points:
