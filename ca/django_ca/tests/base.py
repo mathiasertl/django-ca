@@ -143,3 +143,14 @@ class DjangoCAWithCATestCase(DjangoCATestCase):
     def setUpClass(cls):
         super(DjangoCAWithCATestCase, cls).setUpClass()
         cls.ca = cls.init_ca()
+
+
+class DjangoCAWithCSRTestCase(DjangoCAWithCATestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(DjangoCAWithCSRTestCase, cls).setUpClass()
+
+        key, csr = cls.create_csr()
+        cls.csr_path = csr
+        with open(csr, 'rb') as csr_stream:
+            cls.csr = csr_stream.read()

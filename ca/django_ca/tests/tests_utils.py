@@ -13,9 +13,8 @@ from django.utils.translation import ugettext_lazy as _l
 from django_ca import ca_settings
 from django_ca.models import CertificateAuthority
 from django_ca.tests.base import DjangoCATestCase
-from django_ca.tests.base import DjangoCAWithCATestCase
+from django_ca.tests.base import DjangoCAWithCSRTestCase
 from django_ca.tests.base import override_settings
-from django_ca.tests.base import override_tmpcadir
 from django_ca.utils import format_date
 from django_ca.utils import get_basic_cert
 from django_ca.utils import get_cert
@@ -216,17 +215,8 @@ class GetSubjectAltNamesTest(TestCase):
             b'DNS:example.com,DNS:example.org')
 
 
-@override_tmpcadir(CA_PROFILES={})
-class GetCertTestCase(DjangoCAWithCATestCase):
-    @classmethod
-    def setUpClass(cls):
-        super(GetCertTestCase, cls).setUpClass()
-
-        key, csr = cls.create_csr()
-        cls.csr_path = csr
-        with open(csr, 'rb') as csr_stream:
-            cls.csr = csr_stream.read()
-
+@override_settings(CA_PROFILES={})
+class GetCertTestCase(DjangoCAWithCSRTestCase):
     def assertExtensions(self, cert, expected):
         expected[b'basicConstraints'] = 'CA:FALSE'
         expected[b'authorityKeyIdentifier'] = self.ca.authorityKeyIdentifier()
