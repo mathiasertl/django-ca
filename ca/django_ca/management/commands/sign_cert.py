@@ -135,7 +135,7 @@ the default values, options like --key-usage still override the profile.""")
             subject['emailAddress'] = options['E']
 
         if options['csr'] is None:
-            print('Please paste the CSR:')
+            self.stdout.write('Please paste the CSR:')
             csr = ''
             while not csr.endswith('-----END CERTIFICATE REQUEST-----\n'):
                 csr += '%s\n' % six.moves.input()
