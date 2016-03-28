@@ -101,7 +101,7 @@ class DjangoCATestCase(TestCase):
 
     @classmethod
     def init_ca(cls, **kwargs):
-        kwargs.setdefault('key_size', 2048)
+        kwargs.setdefault('key_size', ca_settings.CA_MIN_KEY_SIZE)
         return CertificateAuthority.objects.init(
             name='Root CA', key_type='RSA', algorithm='sha256', expires=720, parent=None, pathlen=0,
             subject={'CN': 'ca.example.com', }, **kwargs)
@@ -133,3 +133,13 @@ class DjangoCATestCase(TestCase):
     @classmethod
     def get_alt_names(cls, x509):
         return [n.strip() for n in cls.get_extensions(x509)['subjectAltName'].split(',')]
+
+
+@override_tmpcadir(CA_MIN_KEY_SIZE=512)
+class DjangoCAWithCATestCase(DjangoCATestCase):
+    """A test class that already has a CA predefined."""
+
+    @classmethod
+    def setUpClass(cls):
+        super(DjangoCAWithCATestCase, cls).setUpClass()
+        cls.ca = cls.init_ca()
