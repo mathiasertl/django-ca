@@ -135,7 +135,7 @@ class DjangoCATestCase(TestCase):
         return [n.strip() for n in cls.get_extensions(x509)['subjectAltName'].split(',')]
 
 
-@override_tmpcadir(CA_MIN_KEY_SIZE=512)
+@override_settings(CA_MIN_KEY_SIZE=512)
 class DjangoCAWithCATestCase(DjangoCATestCase):
     """A test class that already has a CA predefined."""
 

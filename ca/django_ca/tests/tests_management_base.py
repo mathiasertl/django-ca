@@ -23,6 +23,8 @@ from mock import patch
 
 from ..management import base
 from .base import override_settings
+from .base import override_tmpcadir
+from .base import DjangoCAWithCATestCase
 
 
 class FormatActionTestCase(TestCase):
@@ -90,3 +92,15 @@ setup.py: error: --size must be a power of two (2048, 4096, ...)\n''')
 
         self.assertEqual(buf.getvalue(), '''usage: setup.py [-h] [--size SIZE]
 setup.py: error: --size must be at least 2048 bits.\n''')
+
+
+@override_tmpcadir()
+class CertificateAuthorityActionTestCase(DjangoCAWithCATestCase):
+    def setUp(self):
+        super(CertificateAuthorityActionTestCase, self).setUp()
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument('ca', action=base.CertificateAuthorityAction)
+
+    def test_basic(self):
+        ns = self.parser.parse_args([self.ca.serial])
+        self.assertEqual(ns.ca, self.ca)

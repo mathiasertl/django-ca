@@ -15,6 +15,7 @@ from django_ca.models import CertificateAuthority
 from django_ca.tests.base import DjangoCATestCase
 from django_ca.tests.base import DjangoCAWithCSRTestCase
 from django_ca.tests.base import override_settings
+from django_ca.tests.base import override_tmpcadir
 from django_ca.utils import format_date
 from django_ca.utils import get_basic_cert
 from django_ca.utils import get_cert
@@ -215,7 +216,7 @@ class GetSubjectAltNamesTest(TestCase):
             b'DNS:example.com,DNS:example.org')
 
 
-@override_settings(CA_PROFILES={})
+@override_tmpcadir(CA_PROFILES={})
 class GetCertTestCase(DjangoCAWithCSRTestCase):
     def assertExtensions(self, cert, expected):
         expected[b'basicConstraints'] = 'CA:FALSE'
