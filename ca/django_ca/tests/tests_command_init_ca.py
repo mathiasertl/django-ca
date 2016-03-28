@@ -25,9 +25,10 @@ from django_ca.tests.base import override_tmpcadir
 
 class InitCATest(DjangoCATestCase):
     def init_ca(self, **kwargs):
+        name = kwargs.pop('name', 'Test CA')
         kwargs.setdefault('key_size', ca_settings.CA_MIN_KEY_SIZE)
-        return self.cmd('init_ca', 'Test CA', 'AT', 'Vienna', 'Vienna', 'Org', 'OrgUnit',
-                        'Test CA', **kwargs)
+        return self.cmd('init_ca', name, 'AT', 'Vienna', 'Vienna', 'Org', 'OrgUnit', name,
+                        **kwargs)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_basic(self):
@@ -44,7 +45,7 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_arguments(self):
-        self.init_ca(
+        out, err = self.init_ca(
             algorithm='sha1',
             key_type='DSA',
             key_size=2048,
@@ -55,6 +56,8 @@ class InitCATest(DjangoCATestCase):
             crl_url=['http://crl.example.com'],
             ocsp_url='http://ocsp.example.com'
         )
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
 
         self.assertEqual(ca.x509.get_signature_algorithm(), six.b('dsaWithSHA1'))
@@ -63,6 +66,24 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(ca.issuer_alt_name, 'http://ian.ca.example.com')
         self.assertEqual(ca.crl_url, 'http://crl.example.com')
         self.assertEqual(ca.ocsp_url, 'http://ocsp.example.com')
+
+    @override_tmpcadir()
+    def test_parent(self):
+        self.init_ca(name='Parent')
+        parent = CertificateAuthority.objects.get(name='Parent')
+
+        # test that the default is not a child-relationship
+        self.init_ca(name='Second')
+        second = CertificateAuthority.objects.get(name='Second')
+        self.assertIsNone(second.parent)
+
+        self.init_ca(name='Child', parent=parent)
+        child = CertificateAuthority.objects.get(name='Child')
+
+        self.assertIsNone(parent.parent)
+        self.assertEqual(child.parent, parent)
+        self.assertEqual(list(child.children.all()), [])
+        self.assertEqual(list(parent.children.all()), [child])
 
     @override_tmpcadir()
     def test_small_key_size(self):
