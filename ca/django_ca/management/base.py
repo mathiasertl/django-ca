@@ -22,6 +22,7 @@ from OpenSSL import crypto
 
 from django.core.management.base import BaseCommand as _BaseCommand
 from django.core.management.base import CommandError
+from django.core.validators import URLValidator
 
 from django_ca import ca_settings
 from django_ca.utils import is_power2
@@ -88,8 +89,10 @@ class CertificateAuthorityAction(argparse.Action):
 
 class URLAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
-        parsed = urlsplit(value.strip())
-        if value and (not parsed.scheme or not parsed.netloc):
+        validator = URLValidator()
+        try:
+            validator(value)
+        except:
             parser.error('%s: Not a valid URL.' % value)
         setattr(namespace, self.dest, value)
 
