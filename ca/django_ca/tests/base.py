@@ -5,10 +5,13 @@ when you run "manage.py test".
 Replace this with more appropriate tests for your application.
 """
 
+import io
 import os
 import shutil
 import subprocess
 import tempfile
+
+from mock import patch
 
 from django.test import TestCase
 from django.test.utils import override_settings as _override_settings
@@ -133,6 +136,17 @@ class DjangoCATestCase(TestCase):
     @classmethod
     def get_alt_names(cls, x509):
         return [n.strip() for n in cls.get_extensions(x509)['subjectAltName'].split(',')]
+
+    def assertParserError(self, args, expected):
+        """Assert that given args throw a parser error."""
+
+        buf = io.StringIO()
+        with self.assertRaises(SystemExit), patch('sys.stderr', buf):
+            self.parser.parse_args(args)
+
+        output = buf.getvalue()
+        self.assertEqual(output, expected)
+        return output
 
 
 @override_settings(CA_MIN_KEY_SIZE=512)
