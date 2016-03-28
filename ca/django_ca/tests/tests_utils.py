@@ -13,6 +13,7 @@ from django.utils.translation import ugettext_lazy as _l
 from django_ca import ca_settings
 from django_ca.models import CertificateAuthority
 from django_ca.tests.base import DjangoCATestCase
+from django_ca.tests.base import DjangoCAWithCATestCase
 from django_ca.tests.base import override_settings
 from django_ca.tests.base import override_tmpcadir
 from django_ca.utils import format_date
@@ -215,14 +216,11 @@ class GetSubjectAltNamesTest(TestCase):
             b'DNS:example.com,DNS:example.org')
 
 
-@override_tmpcadir(
-    CA_MIN_KEY_SIZE=128, CA_PROFILES={},
-)
-class GetCertTestCase(DjangoCATestCase):
+@override_tmpcadir(CA_PROFILES={})
+class GetCertTestCase(DjangoCAWithCATestCase):
     @classmethod
     def setUpClass(cls):
         super(GetCertTestCase, cls).setUpClass()
-        cls.ca = cls.init_ca()
 
         key, csr = cls.create_csr()
         cls.csr_path = csr
