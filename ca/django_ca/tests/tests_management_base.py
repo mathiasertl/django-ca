@@ -15,19 +15,17 @@
 
 import argparse
 
-from io import StringIO
-
 from OpenSSL import crypto
-from django.test import TestCase
-from mock import patch
 
 from ..management import base
+from ..models import CertificateAuthority
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import DjangoCAWithCATestCase
+from .base import DjangoCATestCase
 
 
-class FormatActionTestCase(TestCase):
+class FormatActionTestCase(DjangoCATestCase):
     def setUp(self):
         super(FormatActionTestCase, self).setUp()
         self.parser = argparse.ArgumentParser()
@@ -54,16 +52,12 @@ class FormatActionTestCase(TestCase):
         self.assertEqual(ns.action, crypto.FILETYPE_PEM)
 
     def test_error(self):
-        buf = StringIO()
-
-        with self.assertRaises(SystemExit), patch('sys.stderr', buf):
-            self.parser.parse_args(['--action=foo'])
-
-        self.assertEqual(buf.getvalue(), '''usage: setup.py [-h] [--action ACTION]
-setup.py: error: Unknown format "FOO".\n''')
+        self.assertParserError(['--action=foo'],
+                                'usage: setup.py [-h] [--action ACTION]\n'
+                                'setup.py: error: Unknown format "FOO".\n')
 
 
-class KeySizeActionTestCase(TestCase):
+class KeySizeActionTestCase(DjangoCATestCase):
     def setUp(self):
         super(KeySizeActionTestCase, self).setUp()
 
@@ -78,20 +72,22 @@ class KeySizeActionTestCase(TestCase):
         self.assertEqual(ns.size, 4096)
 
     def test_no_power_two(self):
-        buf = StringIO()
-        with self.assertRaises(SystemExit), patch('sys.stderr', buf):
-            self.parser.parse_args(['--size=2047'])
-        self.assertEqual(buf.getvalue(), '''usage: setup.py [-h] [--size SIZE]
-setup.py: error: --size must be a power of two (2048, 4096, ...)\n''')
+        expected = '''usage: setup.py [-h] [--size SIZE]
+setup.py: error: --size must be a power of two (2048, 4096, ...)\n'''
+
+        self.assertParserError(['--size=2047'], expected)
+        self.assertParserError(['--size=2049'], expected)
+        self.assertParserError(['--size=3084'], expected)
+        self.assertParserError(['--size=4095'], expected)
 
     @override_settings(CA_MIN_KEY_SIZE=2048)
     def test_to_small(self):
-        buf = StringIO()
-        with self.assertRaises(SystemExit), patch('sys.stderr', buf):
-            self.parser.parse_args(['--size=1024'])
+        expected = '''usage: setup.py [-h] [--size SIZE]
+setup.py: error: --size must be at least 2048 bits.\n'''
 
-        self.assertEqual(buf.getvalue(), '''usage: setup.py [-h] [--size SIZE]
-setup.py: error: --size must be at least 2048 bits.\n''')
+        self.assertParserError(['--size=1024'], expected)
+        self.assertParserError(['--size=512'], expected)
+        self.assertParserError(['--size=256'], expected)
 
 
 @override_tmpcadir()
@@ -104,3 +100,34 @@ class CertificateAuthorityActionTestCase(DjangoCAWithCATestCase):
     def test_basic(self):
         ns = self.parser.parse_args([self.ca.serial])
         self.assertEqual(ns.ca, self.ca)
+
+    def test_missing(self):
+        self.assertParserError(['foo'], '''usage: setup.py [-h] ca\n'''
+                                        '''setup.py: error: FOO: Unknown Certiciate Authority.\n''')
+
+    def test_disabled(self):
+        ca = CertificateAuthority.objects.first()
+        ca.enabled = False
+        ca.save()
+
+        expected = '''usage: setup.py [-h] ca
+setup.py: error: %s: Unknown Certiciate Authority.\n''' % ca.serial
+
+        self.assertParserError([ca.serial], expected)
+
+        # test allow_disabled=True
+        parser = argparse.ArgumentParser()
+        parser.add_argument('ca', action=base.CertificateAuthorityAction, allow_disabled=True)
+
+        ns = parser.parse_args([ca.serial])
+        self.assertEqual(ns.ca, ca)
+
+    def test_pkey_doesnt_exists(self):
+        ca = CertificateAuthority.objects.first()
+        ca.private_key_path = '/does-not-exist'
+        ca.save()
+
+        expected = '''usage: setup.py [-h] ca
+setup.py: error: %s: %s: Private key does not exist.\n''' % (ca.name, ca.private_key_path)
+
+        self.assertParserError([ca.serial], expected)
