@@ -147,3 +147,28 @@ class URLActionTestCase(DjangoCATestCase):
     def test_error(self):
         self.assertParserError(['--url=foo'], 'usage: setup.py [-h] [--url URL]\n'
                                               'setup.py: error: foo: Not a valid URL.\n')
+
+class MultipleURLActionTestCase(DjangoCATestCase):
+    def setUp(self):
+        super(MultipleURLActionTestCase, self).setUp()
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument('--url', action=base.MultipleURLAction, default=[])
+
+    def test_basic(self):
+        urls = ['http://example.com', 'https://www.example.org']
+
+        for url in urls:
+            parser = argparse.ArgumentParser()
+            parser.add_argument('--url', action=base.MultipleURLAction)
+
+            ns = parser.parse_args(['--url=%s' % url])
+            self.assertEqual(ns.url, [url])
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--url', action=base.MultipleURLAction, default=[])
+        ns = parser.parse_args(['--url=%s' % urls[0], '--url=%s' % urls[1]])
+        self.assertEqual(ns.url, urls)
+
+    def test_error(self):
+        self.assertParserError(['--url=foo'], 'usage: setup.py [-h] [--url URL]\n'
+                                              'setup.py: error: foo: Not a valid URL.\n')
