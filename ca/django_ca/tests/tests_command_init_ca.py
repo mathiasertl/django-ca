@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.utils import six
 
@@ -94,12 +93,3 @@ class InitCATest(DjangoCATestCase):
     def test_key_not_power_of_two(self):
         with self.assertRaises(CommandError):
             self.init_ca(key_size=2049)
-
-
-#@override_tmpcadir()
-#class SignCertTest(DjangoCATestCase):
-#    def test_basic(self):
-#        self.init_ca()
-#        out = six.StringIO()
-#        key, csr = self.create_csr()
-#        call_command('sign_cert', alt=['example.com'], csr=csr, stdout=out)
