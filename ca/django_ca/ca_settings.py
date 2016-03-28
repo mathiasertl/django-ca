@@ -122,8 +122,9 @@ for name, profile in CA_PROFILES.items():
 # Add ability just override/add some profiles
 _CA_PROFILE_OVERRIDES = getattr(settings, 'CA_PROFILES', {})
 for name, profile in _CA_PROFILE_OVERRIDES.items():
-    if settings is None:
+    if profile is None:
         del CA_PROFILES[name]
+
     elif name in CA_PROFILES:
         CA_PROFILES[name].update(profile)
     else:
