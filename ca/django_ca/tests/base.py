@@ -5,11 +5,10 @@ when you run "manage.py test".
 Replace this with more appropriate tests for your application.
 """
 
-import os
 import shutil
-import subprocess
 import tempfile
 
+from OpenSSL import crypto
 from mock import patch
 
 from django.core.management import call_command
@@ -111,18 +110,16 @@ class DjangoCATestCase(TestCase):
             subject={'CN': 'ca.example.com', }, **kwargs)
 
     @classmethod
-    def create_csr(cls, name='example.com', key_size=512):
-        key = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
-        csr = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
-        subj = '/C=AT/ST=Vienna/L=Vienna/CN=csr.%s' % name
+    def create_csr(cls):
+        # see also: https://github.com/msabramo/pyOpenSSL/blob/master/examples/certgen.py
+        pkey = crypto.PKey()
+        pkey.generate_key(crypto.TYPE_RSA, 1024)
 
-        p1 = subprocess.Popen(['openssl', 'genrsa', '-out', key, str(key_size)],
-                              stderr=subprocess.PIPE)
-        p1.communicate()
-        p2 = subprocess.Popen(['openssl', 'req', '-new', '-key', key, '-out', csr, '-utf8',
-                               '-batch', '-subj', '%s' % subj])
-        p2.communicate()
-        return key, csr
+        req = crypto.X509Req()
+        #subj = req.get_subject()
+        req.set_pubkey(pkey)
+        req.sign(pkey, 'sha256')
+        return pkey, req
 
     @classmethod
     def get_subject(cls, x509):
@@ -171,7 +168,5 @@ class DjangoCAWithCSRTestCase(DjangoCAWithCATestCase):
     def setUpClass(cls):
         super(DjangoCAWithCSRTestCase, cls).setUpClass()
 
-        key, csr = cls.create_csr()
-        cls.csr_path = csr
-        with open(csr, 'rb') as csr_stream:
-            cls.csr = csr_stream.read()
+        cls.key, cls.csr = cls.create_csr()
+        cls.csr_pem = crypto.dump_certificate_request(crypto.FILETYPE_PEM, cls.csr)
