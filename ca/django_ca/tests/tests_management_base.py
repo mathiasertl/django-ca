@@ -131,3 +131,19 @@ setup.py: error: %s: Unknown Certiciate Authority.\n''' % ca.serial
 setup.py: error: %s: %s: Private key does not exist.\n''' % (ca.name, ca.private_key_path)
 
         self.assertParserError([ca.serial], expected)
+
+
+class URLActionTestCase(DjangoCATestCase):
+    def setUp(self):
+        super(URLActionTestCase, self).setUp()
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument('--url', action=base.URLAction)
+
+    def test_basic(self):
+        for url in ['http://example.com', 'https://www.example.org']:
+            ns = self.parser.parse_args(['--url=%s' % url])
+            self.assertEqual(ns.url, url)
+
+    def test_error(self):
+        self.assertParserError(['--url=foo'], 'usage: setup.py [-h] [--url URL]\n'
+                                              'setup.py: error: foo: Not a valid URL.\n')
