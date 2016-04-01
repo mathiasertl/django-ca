@@ -19,6 +19,7 @@ from django.utils.six.moves import reload_module
 
 from django_ca import ca_settings
 from django_ca.models import CertificateAuthority
+from django_ca.utils import get_cert_subject
 
 
 class override_settings(_override_settings):
@@ -100,7 +101,8 @@ class DjangoCATestCase(TestCase):
     def assertSubject(self, cert, expected):
         actual = cert.get_subject().get_components()
         actual = [(k.decode('utf-8'), v.decode('utf-8')) for k, v in actual]
-        self.assertEqual(actual, expected)
+
+        self.assertEqual(actual, get_cert_subject(expected))
 
     @classmethod
     def init_ca(cls, **kwargs):

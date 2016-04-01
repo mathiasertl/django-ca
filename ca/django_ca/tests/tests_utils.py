@@ -216,7 +216,7 @@ class GetSubjectAltNamesTest(TestCase):
             b'DNS:example.com,DNS:example.org')
 
 
-@override_tmpcadir(CA_PROFILES={})
+@override_tmpcadir(CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class GetCertTestCase(DjangoCAWithCSRTestCase):
     def assertExtensions(self, cert, expected):
         expected[b'basicConstraints'] = 'CA:FALSE'
@@ -249,6 +249,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         self.assertEqual(exts, expected)
 
     def test_basic(self):
+        self.maxDiff =None
         kwargs = get_cert_profile_kwargs()
 
         cert = get_cert(self.ca, self.csr_pem, expires=720, algorithm='sha256',
@@ -259,7 +260,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         # verify subject
         expected_subject = kwargs['subject']
         expected_subject['CN'] = 'example.com'
-        self.assertSubject(cert, list(expected_subject.items()))
+        self.assertSubject(cert, expected_subject)
 
         self.assertEqual(cert.get_signature_algorithm(), b'sha256WithRSAEncryption')
 
@@ -280,7 +281,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         cert = get_cert(self.ca, self.csr_pem, expires=720, algorithm='sha256',
                         subjectAltName=['example.com'], **kwargs)
 
-        self.assertSubject(cert, [('CN', 'example.com')])
+        self.assertSubject(cert, {'CN': 'example.com'})
 
         # verify extensions
         self.assertExtensions(cert, {
