@@ -74,6 +74,17 @@ def multiline_url_validator(value):
     for line in value.splitlines():
         validator(line)
 
+def get_cert_subject(d):
+    """Returns an itemized dictionary in the correct order for a x509 subject.
+
+    As a bonus, this translates the ``"E"`` key into ``"emailAddress"``.
+    """
+    if d.get('E'):
+        d['emailAddress'] = d.pop('E')
+
+    order = ['C', 'ST', 'L', 'O', 'OU', 'CN', 'emailAddress', ]
+    return sorted(d.items(), key=lambda e: order.index(e[0]))
+
 
 def get_basic_cert(expires, now=None):
     """Get a basic X509 cert object.
@@ -205,7 +216,7 @@ def get_cert(ca, csr, expires, algorithm, subject=None, cn_in_san=True,
     # Create signed certificate
     cert = get_basic_cert(expires)
     cert.set_issuer(ca.x509.get_subject())
-    for key, value in subject.items():
+    for key, value in get_cert_subject(subject):
         setattr(cert.get_subject(), key, bytes(value, 'utf-8'))
     cert.set_pubkey(req.get_pubkey())
 
