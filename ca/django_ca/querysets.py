@@ -21,6 +21,7 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
+from .utils import get_cert_subject
 from .utils import get_basic_cert
 from .utils import is_power2
 from . import ca_settings
@@ -44,7 +45,7 @@ class CertificateAuthorityQuerySet(models.QuerySet):
 
         # set basic properties
         cert = get_basic_cert(expires)
-        for key, value in subject.items():
+        for key, value in get_cert_subject(subject):
             setattr(cert.get_subject(), key, bytes(value, 'utf-8'))
         cert.set_issuer(cert.get_subject())
         cert.set_pubkey(private_key)
