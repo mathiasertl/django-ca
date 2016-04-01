@@ -20,7 +20,6 @@ https://skippylovesmalorie.wordpress.com/2010/02/12/how-to-generate-a-self-signe
 
 import os
 
-from collections import OrderedDict
 from getpass import getpass
 
 from django.core.management.base import CommandError
@@ -88,8 +87,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         if options['password'] == '':
             options['password'] = getpass()
 
-        subject = OrderedDict([
-            ('C', country), ('ST', state), ('L', city), ('O', org), ('OU', ou), ('CN', cn), ])
+        subject = {'C': country, 'ST': state, 'L': city, 'O': org, 'OU': ou, 'CN': cn, }
 
         try:
             CertificateAuthority.objects.init(

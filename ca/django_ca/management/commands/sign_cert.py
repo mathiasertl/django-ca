@@ -13,8 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from collections import OrderedDict
-
 from django.core.management.base import CommandError
 from django.utils import six
 
@@ -127,12 +125,10 @@ the default values, options like --key-usage still override the profile.""")
             raise CommandError("Must give at least --CN or one or more --alt arguments.")
 
         # construct subject
-        subject = OrderedDict()
-        for field in ['C', 'ST', 'L', 'O', 'OU', 'CN', ]:
+        subject = {}
+        for field in ['C', 'ST', 'L', 'O', 'OU', 'CN', 'E']:
             if options.get(field):
                 subject[field] = options[field]
-        if options.get('E'):
-            subject['emailAddress'] = options['E']
 
         if options['csr'] is None:
             self.stdout.write('Please paste the CSR:')
@@ -155,6 +151,7 @@ the default values, options like --key-usage still override the profile.""")
             kwargs['keyUsage'] = self.parse_extension(options['key_usage'])
         if options['ext_key_usage']:
             kwargs['extendedKeyUsage'] = self.parse_extension(options['ext_key_usage'])
+
         if subject:
             kwargs['subject'] = subject
 
