@@ -54,6 +54,9 @@ of subjectAltNames (given by --alt).""")
             'Certificate subject',
             '''The subject to use. Empty values are not included in the subject. The default values
             depend on the default profile and the CA_DEFAULT_SUBJECT setting.''')
+
+        # NOTE: We do not set the default argument here because that would mask the user not
+        # setting anything at all.
         group.add_argument(
             '--C', metavar='CC',
             help='Two-letter country code, e.g. "AT" (default: "%s").' % (subject.get('C') or '')
