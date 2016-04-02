@@ -16,6 +16,7 @@
 from ..base import BaseCommand
 from ..base import CertificateAuthorityDetailMixin
 
+
 class Command(BaseCommand, CertificateAuthorityDetailMixin):
     help = 'Edit a certificate authority.'
 
@@ -28,7 +29,6 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
                            help='Enable the certificate authority.')
         group.add_argument('--disable', action='store_false',
                            help='Disable the certificate authority.')
-
 
     def handle(self, ca, **options):
         if options['issuer_url'] is not None:
@@ -45,6 +45,4 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         if options.get('disable') is False:
             ca.enabled = False
 
-
         ca.save()
-

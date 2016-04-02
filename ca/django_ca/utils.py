@@ -76,6 +76,7 @@ def multiline_url_validator(value):
     for line in value.splitlines():
         validator(line)
 
+
 def get_cert_subject(d):
     """Returns an itemized dictionary in the correct order for a x509 subject.
 

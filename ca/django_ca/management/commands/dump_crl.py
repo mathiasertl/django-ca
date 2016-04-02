@@ -57,7 +57,6 @@ class Command(BaseCommand):
         elif 'path' in kwargs:
             kwargs.pop('path')
 
-
         if options['format']:
             kwargs['type'] = options['format']
         if options['days']:

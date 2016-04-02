@@ -45,6 +45,7 @@ class Watcher(models.Model):
             return '%s <%s>' % (self.name, self.mail)
         return self.mail
 
+
 class X509CertMixin(object):
     _x509 = None
     _extensions = None
@@ -65,7 +66,7 @@ class X509CertMixin(object):
 
         # set serial
         s = hex(value.get_serial_number())[2:].upper()
-        self.serial = ':'.join(a+b for a,b in zip(s[::2], s[1::2]))
+        self.serial = ':'.join(a+b for a, b in zip(s[::2], s[1::2]))
 
     @property
     def extensions(self):
@@ -208,7 +209,7 @@ class CertificateAuthority(models.Model, X509CertMixin):
     def save(self, *args, **kwargs):
         if not self.serial:
             s = hex(self.x509.get_serial_number())[2:].upper()
-            self.serial = ':'.join(a+b for a,b in zip(s[::2], s[1::2]))
+            self.serial = ':'.join(a+b for a, b in zip(s[::2], s[1::2]))
         super(CertificateAuthority, self).save(*args, **kwargs)
 
     class Meta:
@@ -243,7 +244,7 @@ class Certificate(models.Model, X509CertMixin):
             self.cn = dict(self.x509.get_subject().get_components()).get(b'CN').decode('utf-8')
         if self.pk is None or self.serial is None:
             s = hex(self.x509.get_serial_number())[2:].upper()
-            self.serial = ':'.join(a+b for a,b in zip(s[::2], s[1::2]))
+            self.serial = ':'.join(a+b for a, b in zip(s[::2], s[1::2]))
         super(Certificate, self).save(*args, **kwargs)
 
     def revoke(self, reason=None):

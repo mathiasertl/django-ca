@@ -52,6 +52,7 @@ def get_index():
             cert.distinguishedName(),
         ])
 
+
 def write_index(path=None, stdout=None):
     if path is None:
         path = ca_settings.CA_OCSP_INDEX_PATH

@@ -57,7 +57,9 @@ class CreateCertificateForm(forms.ModelForm):
             ('sha1', 'SHA-1 (insecure!)'),
             ('md5', 'MD5 (insecure!)'),
         ],
-        help_text=_('Algorithm used for signing the certificate. SHA-512 should be fine in most cases.'),
+        help_text=_(
+            'Algorithm used for signing the certificate. SHA-512 should be fine in most cases.'
+        ),
     )
     keyUsage = KeyUsageField(label='keyUsage', help_text=KEY_USAGE_DESC, choices=(
         ('cRLSign', 'cRLSign'),
@@ -113,7 +115,8 @@ class CreateCertificateForm(forms.ModelForm):
         help_texts = {
             'csr': _('''The Certificate Signing Request (CSR) in PEM format. To create a new one:
 <span class="shell">openssl genrsa -out hostname.key 2048
-openssl req -new -key hostname.key -out hostname.csr -utf8 -batch -subj 'CN=/hostname/emailAddress=root@hostname'
+openssl req -new -key hostname.key -out hostname.csr -utf8 -batch \
+                     -subj '/CN=/hostname/emailAddress=root@hostname'
 </span>'''),
         }
 

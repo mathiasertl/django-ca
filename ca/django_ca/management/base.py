@@ -85,6 +85,7 @@ class CertificateAuthorityAction(argparse.Action):
 
         setattr(namespace, self.dest, value)
 
+
 class URLAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
         validator = URLValidator()

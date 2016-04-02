@@ -78,9 +78,12 @@ of subjectAltNames (given by --alt).""")
             help='Your organizational unit (default: "%s").' % (subject.get('OU') or '')
         )
         group.add_argument(
-            '--CN', help="CommonName to use. If omitted, the first --alt value will be used.")
-        group.add_argument('--E', metavar='E-Mail', dest='emailAddress',
-            help='E-mail to use (default: "%s").' % (subject.get('emailAddress') or ''))
+            '--CN', help="CommonName to use. If omitted, the first --alt value will be used."
+        )
+        group.add_argument(
+            '--E', metavar='E-Mail', dest='emailAddress',
+            help='E-mail to use (default: "%s").' % (subject.get('emailAddress') or '')
+        )
 
     def add_arguments(self, parser):
         self.add_subject(parser)
