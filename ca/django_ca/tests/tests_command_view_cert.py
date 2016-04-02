@@ -132,7 +132,6 @@ Digest:
 
     def test_no_san_with_watchers(self):
         # test a cert with no subjectAltNames but with watchers.
-        self.maxDiff = None
         cert = self.create_cert(self.ca, self.csr_pem, {'CN': 'example.com'}, cn_in_san=False)
         watcher = Watcher.from_addr('user@example.com')
         cert.watchers.add(watcher)
@@ -150,3 +149,7 @@ Digest:
     sha256: %(sha256)s
     sha512: %(sha512)s
 ''' % self._get_format(cert))
+
+    def test_unknown_cert(self):
+        with self.assertRaises(CommandError):
+            self.cmd('view_cert', 'fooobar', no_pem=True)
