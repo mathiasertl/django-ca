@@ -153,7 +153,10 @@ the default values, options like --key-usage still override the profile.""")
         # update subject with arguments from the command line
         kwargs.setdefault('subject', {})
         for field in SUBJECT_FIELDS:
-            if options.get(field):
+            value = options.get(field)
+            if value == '' and field in kwargs['subject']:
+                del kwargs['subject'][field]
+            elif value:
                 kwargs['subject'][field] = options[field]
 
         x509 = get_cert(ca=ca, csr=csr, algorithm=options['algorithm'], expires=options['days'],
