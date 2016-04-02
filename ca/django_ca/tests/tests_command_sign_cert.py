@@ -47,7 +47,8 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
             csr_stream.write(self.csr_pem)
 
         try:
-            stdout, stderr = self.cmd('sign_cert', CN='example.com', E='user@example.com', csr=csr_path)
+            stdout, stderr = self.cmd('sign_cert', CN='example.com', E='user@example.com',
+                                      csr=csr_path)
             self.assertEqual(stderr, '')
 
             cert = Certificate.objects.first()
@@ -140,7 +141,6 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
                  C='', ST='', L='', O='', OU='', CN='empty', E='')
         cert = Certificate.objects.get(cn='empty')
         self.assertSubject(cert.x509, {'CN': 'empty'})
-
 
     def test_extensions(self):
         stdin = six.StringIO(self.csr_pem)
