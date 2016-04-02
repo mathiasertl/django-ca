@@ -24,7 +24,6 @@ from django.http import HttpResponseBadRequest
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
-from .crl import write_crl
 from .forms import CreateCertificateForm
 from .models import Certificate
 from .models import CertificateAuthority
@@ -199,7 +198,6 @@ class CertificateAdmin(admin.ModelAdmin):
     def revoke(self, request, queryset):
         for cert in queryset:
             cert.revoke()
-        write_crl()
         write_index()
     revoke.short_description = _('Revoke selected certificates')
 

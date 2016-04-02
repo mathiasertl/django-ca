@@ -136,7 +136,6 @@ CA_DEFAULT_EXPIRES = getattr(settings, 'CA_DEFAULT_EXPIRES', 730)
 CA_DEFAULT_PROFILE = getattr(settings, 'CA_DEFAULT_PROFILE', 'webserver')
 CA_DIGEST_ALGORITHM = getattr(settings, 'CA_DIGEST_ALGORITHM', "sha512")
 CA_OCSP_INDEX_PATH = getattr(settings, 'CA_OCSP_INDEX_PATH', None)
-CA_CRL_SETTINGS = getattr(settings, 'CA_CRL_SETTINGS', None)
 
 # Undocumented options, e.g. to share values between different parts of code
 CA_MIN_KEY_SIZE = getattr(settings, 'CA_MIN_KEY_SIZE', 2048)

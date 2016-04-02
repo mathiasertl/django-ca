@@ -13,14 +13,11 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-import os
-
-from argparse import FileType
+from OpenSSL import crypto
 
 from django.core.management.base import CommandError
 
 from django_ca.crl import get_crl
-from django_ca.crl import get_crl_settings
 from django_ca.management.base import BaseCommand
 
 
@@ -29,46 +26,32 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-d', '--days', type=int,
-            help="The number of days until the next update of this CRL (default: 1).")
-        parser.add_argument('--digest',
-                            help="The name of the message digest to use (default: sha512).")
+            '-d', '--days', type=int, default=1,
+            help="The number of days until the next update of this CRL (default: %(default)s).")
+        parser.add_argument('--digest', default='sha512',
+                            help="The name of the message digest to use (default: %(default)s).")
         parser.add_argument(
-            'path', type=FileType('wb'), nargs='?',
+            'path', nargs='?', default='-',
             help='''Path for the output file. Use "-" for stdout. If omitted, CA_CRL_PATH '''
                  '''must be set.'''
         )
-        self.add_format(parser, default=None)
+        self.add_format(parser)
         self.add_ca(parser)
         super(Command, self).add_arguments(parser)
 
     def handle(self, path, **options):
-        kwargs = get_crl_settings()
-
-        if not path and not kwargs.get('path'):
-            raise CommandError("CA_CRL_SETTINGS setting required if no path is provided.""")
-
-        if not path:
-            path = kwargs.pop('path')
-            dirname = os.path.dirname(path)
-            if dirname and not os.path.exists(dirname):
-                os.makedirs(dirname)
-            path = open(path, 'wb')
-        elif 'path' in kwargs:
-            kwargs.pop('path')
-
-        if options['format']:
-            kwargs['type'] = options['format']
-        if options['days']:
-            kwargs['days'] = options['days']
-        if options['digest']:
-            kwargs['digest'] = bytes(options['digest'], 'utf-8')
+        kwargs = {
+            'type': options['format'],
+            'days': options['days'],
+            'digest': bytes(options['digest'], 'utf-8'),
+        }
 
         crl = get_crl(ca=options['ca'], **kwargs)
-        if 'b' not in path.mode:  # writing to stdout
-            if kwargs['type'] == 'asn1':
-                raise CommandError("ASN1 cannot be reliably printed to stdout.")
 
-            crl = crl.decode('utf-8')
-        path.write(crl)
-        path.flush()  # Make sure contents are written to disk (required by fab init_demo)
+        if path == '-':
+            if kwargs['type'] == crypto.FILETYPE_ASN1:
+                raise CommandError("ASN1 cannot be reliably printed to stdout.")
+            self.stdout.write(crl.decode('utf-8'))
+        else:
+            with open(path, 'wb') as stream:
+                stream.write(crl)

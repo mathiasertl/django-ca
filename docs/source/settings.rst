@@ -14,35 +14,6 @@ also documented at :file:`ca/ca/localsettings.py.example`
 <https://github.com/mathiasertl/django-ca/blob/master/ca/ca/localsettings.py.example>`_).
 
 
-CA_CRL_SETTINGS
-   Default: ``None``
-
-   A dictionary containing settings for how to generate the CRLs. It acts as a
-   default ``manage.py dump_crl`` and, if set, causes **django-ca** to
-   regenerate the CRL whenever a certificate is revoked. It contains the
-   following keys:
-
-   path (mandatory)
-      Path to dump the CRL to.
-   days
-      The number of days until the next update of this CRL. The default is one
-      day. Note that the lower limit of one day is a pyOpenSSL restriction.
-   type
-      The export format, either ``PEM``, ``ASN1`` or ``TEXT``. The default is
-      ``PEM``.
-   digest
-      The name of the message digest to use. The default is the value of the
-      ``CA_DIGEST_ALGORITHM`` setting.
-
-   A full example::
-
-      CA_CRL_SETTINGS = {
-         'path': '/var/www/ca.example.com/ca.crl',
-         'days': 3,  # We recreate the CRL every three days
-         'type': 'ASN1',
-         'digest': 'sha256',
-      }
-
 CA_DEFAULT_EXPIRES
    Default: ``730``
 
