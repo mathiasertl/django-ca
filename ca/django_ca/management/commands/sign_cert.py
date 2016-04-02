@@ -75,7 +75,7 @@ of subjectAltNames (given by --alt).""")
         )
         group.add_argument(
             '--CN', help="CommonName to use. If omitted, the first --alt value will be used.")
-        group.add_argument('--E', metavar='E-Mail',
+        group.add_argument('--E', metavar='E-Mail', dest='emailAddress',
             help='E-mail to use (default: "%s").' % (subject.get('emailAddress') or ''))
 
     def add_arguments(self, parser):
@@ -148,11 +148,9 @@ the default values, options like --key-usage still override the profile.""")
 
         # update subject with arguments from the command line
         kwargs.setdefault('subject', {})
-        for field in ['C', 'ST', 'L', 'O', 'OU', 'CN', ]:
+        for field in ['C', 'ST', 'L', 'O', 'OU', 'CN', 'emailAddress']:
             if options.get(field):
                 kwargs['subject'][field] = options[field]
-        if options.get('E'):
-            kwargs['subject']['emailAddress'] = options['E']
 
         x509 = get_cert(ca=ca, csr=csr, algorithm=options['algorithm'], expires=options['days'],
                         subjectAltName=options['alt'], **kwargs)
