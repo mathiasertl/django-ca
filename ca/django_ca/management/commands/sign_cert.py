@@ -16,14 +16,14 @@
 from django.core.management.base import CommandError
 from django.utils import six
 
-from django_ca import ca_settings
-from django_ca.management.base import BaseCommand
-from django_ca.models import Certificate
-from django_ca.models import Watcher
-from django_ca.utils import get_cert_profile_kwargs
-from django_ca.utils import get_cert
-from django_ca.utils import parse_date
-from django_ca.utils import SUBJECT_FIELDS
+from ... import ca_settings
+from ...management.base import BaseCommand
+from ...models import Certificate
+from ...models import Watcher
+from ...utils import get_cert_profile_kwargs
+from ...utils import get_cert
+from ...utils import parse_date
+from ...utils import SUBJECT_FIELDS
 
 
 class Command(BaseCommand):
