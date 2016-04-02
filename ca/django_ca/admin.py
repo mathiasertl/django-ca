@@ -21,7 +21,6 @@ from django.conf.urls import url
 from django.contrib import admin
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
-from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
@@ -31,6 +30,7 @@ from .models import Certificate
 from .models import CertificateAuthority
 from .models import Watcher
 from .ocsp import write_index
+from .utils import SUBJECT_FIELDS
 from .utils import get_cert
 from .views import RevokeCertificateView
 
@@ -166,7 +166,7 @@ class CertificateAdmin(admin.ModelAdmin):
             }), content_type='application/json')
         csr_subject = csr.get_subject()
         subject = {}
-        for attr in ['C', 'ST', 'L', 'O', 'OU', 'CN', 'E', ]:
+        for attr in SUBJECT_FIELDS:
             if hasattr(csr_subject, attr):
                 subject[attr] = getattr(csr_subject, attr)
 

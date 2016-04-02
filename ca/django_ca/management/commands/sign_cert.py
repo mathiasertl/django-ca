@@ -23,6 +23,7 @@ from django_ca.models import Watcher
 from django_ca.utils import get_cert_profile_kwargs
 from django_ca.utils import get_cert
 from django_ca.utils import parse_date
+from django_ca.utils import SUBJECT_FIELDS
 
 
 class Command(BaseCommand):
@@ -148,7 +149,7 @@ the default values, options like --key-usage still override the profile.""")
 
         # update subject with arguments from the command line
         kwargs.setdefault('subject', {})
-        for field in ['C', 'ST', 'L', 'O', 'OU', 'CN', 'emailAddress']:
+        for field in SUBJECT_FIELDS:
             if options.get(field):
                 kwargs['subject'][field] = options[field]
 

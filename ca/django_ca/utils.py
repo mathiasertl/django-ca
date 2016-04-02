@@ -33,6 +33,8 @@ from OpenSSL import crypto
 
 from django_ca import ca_settings
 
+# List of possible subject fields, in order
+SUBJECT_FIELDS = ['C', 'ST', 'L', 'O', 'OU', 'CN', 'emailAddress', ]
 
 # Description strings for various X509 extensions, taken from "man x509v3_config".
 EXTENDED_KEY_USAGE_DESC = _('Purposes for which the certificate public key can be used for.')
@@ -82,8 +84,7 @@ def get_cert_subject(d):
     if d.get('E'):
         d['emailAddress'] = d.pop('E')
 
-    order = ['C', 'ST', 'L', 'O', 'OU', 'CN', 'emailAddress', ]
-    return sorted(d.items(), key=lambda e: order.index(e[0]))
+    return sorted(d.items(), key=lambda e: SUBJECT_FIELDS.index(e[0]))
 
 
 def get_basic_cert(expires, now=None):
