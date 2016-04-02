@@ -15,6 +15,8 @@
 
 from OpenSSL import crypto
 
+from django.utils import timezone
+
 from django_ca.models import Certificate
 
 
@@ -41,6 +43,6 @@ def get_crl(ca, **kwargs):
     kwargs.setdefault('digest', b'sha512')
 
     crl = crypto.CRL()
-    for cert in Certificate.objects.revoked():
+    for cert in Certificate.objects.filter(ca=ca, expires__gt=timezone.now()).revoked():
         crl.add_revoked(cert.get_revocation())
     return crl.export(ca.x509, ca.key, **kwargs)
