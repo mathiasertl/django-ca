@@ -128,13 +128,14 @@ class DjangoCATestCase(TestCase):
         return pkey, req
 
     @classmethod
-    def create_cert(cls, ca, csr, subject=None, san=None):
-        kwargs = get_cert_profile_kwargs()
-        kwargs.setdefault('subject', {})
+    def create_cert(cls, ca, csr, subject=None, san=None, **kwargs):
+        cert_kwargs = get_cert_profile_kwargs()
+        cert_kwargs.update(kwargs)
+        cert_kwargs.setdefault('subject', {})
         if subject:
-            kwargs['subject'].update(subject)
+            cert_kwargs['subject'].update(subject)
         x509 = get_cert(ca=ca, csr=csr, algorithm='sha256', expires=720, subjectAltName=san,
-                        **kwargs)
+                        **cert_kwargs)
         expires = parse_date(x509.get_notAfter().decode('utf-8'))
 
         cert = Certificate(ca=ca, csr=csr, expires=expires)
