@@ -62,7 +62,7 @@ class Command(CertCommand):
                 for line in str(value).strip().splitlines():
                     self.stdout.write("    %s" % line)
         else:
-            ext = cert.extensions.get('subjectAltName')
+            ext = cert.extensions.get(b'subjectAltName')
             if ext:
                 self.stdout.write('%s:' % ext.get_short_name().decode('utf-8'))
                 self.stdout.write("    %s" % ext)
