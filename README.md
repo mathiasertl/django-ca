@@ -29,9 +29,10 @@ Ideas on what we could do for future releases:
 1. Only send out one notification if multiple certificates expire for a user.
 2. Add a "renew" button in the admin interface.
 3. Admin interface should account for cases where the private key is not present.
-4. Add a generic view to provide a CRL.
-5. Add a OCSP service maybe (would be huge).
-6. Print HPKP hashes with the `view_ca` and `view_cert` commands.
+4. Add ability to automatically regenerate CRLs when a certificate is revoked.
+5. Add a generic view to provide a CRL.
+6. Add a OCSP service maybe (would be huge).
+7. Print HPKP hashes with the `view_ca` and `view_cert` commands.
 
 ## Test CRL and OCSP
 
