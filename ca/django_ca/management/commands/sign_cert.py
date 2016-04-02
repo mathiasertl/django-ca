@@ -124,12 +124,6 @@ the default values, options like --key-usage still override the profile.""")
         if not options['CN'] and not options['alt']:
             raise CommandError("Must give at least --CN or one or more --alt arguments.")
 
-        # construct subject
-        subject = {}
-        for field in ['C', 'ST', 'L', 'O', 'OU', 'CN', 'E']:
-            if options.get(field):
-                subject[field] = options[field]
-
         if options['csr'] is None:
             self.stdout.write('Please paste the CSR:')
             csr = ''
@@ -152,8 +146,13 @@ the default values, options like --key-usage still override the profile.""")
         if options['ext_key_usage']:
             kwargs['extendedKeyUsage'] = self.parse_extension(options['ext_key_usage'])
 
-        if subject:
-            kwargs['subject'] = subject
+        # update subject with arguments from the command line
+        kwargs.setdefault('subject', {})
+        for field in ['C', 'ST', 'L', 'O', 'OU', 'CN', ]:
+            if options.get(field):
+                kwargs['subject'][field] = options[field]
+        if options.get('E'):
+            kwargs['subject']['emailAddress'] = options['E']
 
         x509 = get_cert(ca=ca, csr=csr, algorithm=options['algorithm'], expires=options['days'],
                         subjectAltName=options['alt'], **kwargs)

@@ -25,7 +25,7 @@ from .base import override_settings
 from .base import override_tmpcadir
 
 
-@override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={})
+@override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class SignCertTestCase(DjangoCAWithCSRTestCase):
     def test_from_stdin(self):
         stdin = six.StringIO(self.csr_pem)
