@@ -31,6 +31,7 @@ Ideas on what we could do for future releases:
 3. Admin interface should account for cases where the private key is not present.
 4. Add a generic view to provide a CRL.
 5. Add a OCSP service maybe (would be huge).
+6. Print HPKP hashes with the `view_ca` and `view_cert` commands.
 
 ## Test CRL and OCSP
 
