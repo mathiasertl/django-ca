@@ -101,6 +101,39 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertEqual(stderr, '')
         self.assertEqual(cert.subjectAltName(), '')
 
+    @override_settings(CA_DEFAULT_SUBJECT={
+        'C': 'AT',
+        'ST': 'Vienna',
+        'L': 'Vienna',
+        'O': 'MyOrg',
+        'OU': 'MyOrgUnit',
+        'CN': 'CommonName',
+        'emailAddress': 'user@example.com',
+    })
+    def test_profile_subject(self):
+        # first, we only pass an subjectAltName, meaning that even the CommonName is used.
+        stdin = six.StringIO(self.csr_pem)
+        stdout, stderr = self.cmd('sign_cert', cn_in_san=False, alt=['example.net'], stdin=stdin)
+        cert = Certificate.objects.first()
+        self.assertSubject(cert.x509, ca_settings._CA_DEFAULT_SUBJECT)
+
+        # replace subject fields via command-line argument:
+        subject = {
+            'C': 'US',
+            'ST': 'California',
+            'L': 'San Francisco',
+            'O': 'MyOrg2',
+            'OU': 'MyOrg2Unit2',
+            'CN': 'CommonName2',
+            'emailAddress': 'user@example.net',
+        }
+        stdin = six.StringIO(self.csr_pem)
+        self.cmd('sign_cert', cn_in_san=False, alt=['example.net'], stdin=stdin,
+                 C='US', ST='California', L='San Francisco', O='MyOrg2', OU='MyOrg2Unit2',
+                 CN='CommonName2', E='user@example.net')
+        cert = Certificate.objects.get(cn='CommonName2')
+        self.assertSubject(cert.x509, subject)
+
     def test_extensions(self):
         stdin = six.StringIO(self.csr_pem)
         stdout, stderr = self.cmd('sign_cert', CN='example.com',
