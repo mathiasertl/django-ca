@@ -20,8 +20,6 @@ from OpenSSL import crypto
 from django_ca.management.base import CertCommand
 from django_ca.models import Certificate
 
-DATE_FMT = '%Y%m%d%H%M%SZ'
-
 
 class Command(CertCommand):
     help = 'View a certificate. The "list_certs" command lists all known certificates.'
@@ -42,10 +40,8 @@ class Command(CertCommand):
         self.stdout.write('Common Name: %s' % cert.cn)
 
         # self.stdout.write notBefore/notAfter
-        validFrom = datetime.strptime(cert.x509.get_notBefore().decode('utf-8'), DATE_FMT)
-        validUntil = datetime.strptime(cert.x509.get_notAfter().decode('utf-8'), DATE_FMT)
-        self.stdout.write('Valid from: %s' % validFrom.strftime('%Y-%m-%d %H:%M'))
-        self.stdout.write('Valid until: %s' % validUntil.strftime('%Y-%m-%d %H:%M'))
+        self.stdout.write('Valid from: %s' % cert.not_before.strftime('%Y-%m-%d %H:%M'))
+        self.stdout.write('Valid until: %s' % cert.not_after.strftime('%Y-%m-%d %H:%M'))
 
         # self.stdout.write status
         if cert.revoked:
@@ -57,7 +53,7 @@ class Command(CertCommand):
 
         # self.stdout.write extensions
         if options['extensions']:
-            for name, value in cert.extensions.items():
+            for name, value in sorted(cert.extensions.items(), key=lambda k: k[0]):
                 self.stdout.write("%s:" % name.decode('utf-8'))
                 for line in str(value).strip().splitlines():
                     self.stdout.write("    %s" % line)
@@ -73,8 +69,7 @@ class Command(CertCommand):
 
         self.stdout.write('Digest:')
         for algo in ['md5', 'sha1', 'sha256', 'sha512']:
-            value = cert.x509.digest(algo).decode('utf-8')
-            self.stdout.write('    %s: %s' % (algo, value))
+            self.stdout.write('    %s: %s' % (algo, cert.get_digest(algo)))
 
         if not options['no_pem']:
             data = crypto.dump_certificate(options['format'], cert.x509)
