@@ -85,7 +85,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         stdout, stderr = self.cmd('sign_cert', CN='example.net', cn_in_san=False,
                                   alt=['example.com'], stdin=stdin)
         cert = Certificate.objects.first()
-#        self.assertEqual(cert.x509.get_subject().get_components(), [(b'CN', b'example.com')])
+        self.assertEqual(cert.x509.get_subject().get_components(), [(b'CN', b'example.net')])
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
         self.assertEqual(stderr, '')
         self.assertEqual(cert.subjectAltName(), 'DNS:example.com')
@@ -96,7 +96,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         stdout, stderr = self.cmd('sign_cert', CN='example.net', cn_in_san=False,
                                   alt=[], stdin=stdin)
         cert = Certificate.objects.first()
-#        self.assertEqual(cert.x509.get_subject().get_components(), [(b'CN', b'example.com')])
+        self.assertEqual(cert.x509.get_subject().get_components(), [(b'CN', b'example.net')])
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
         self.assertEqual(stderr, '')
         self.assertEqual(cert.subjectAltName(), '')
