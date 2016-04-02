@@ -18,8 +18,12 @@ from django.utils.six import StringIO
 from django.utils.six.moves import reload_module
 
 from django_ca import ca_settings
+from django_ca.models import Certificate
 from django_ca.models import CertificateAuthority
 from django_ca.utils import get_cert_subject
+from django_ca.utils import get_cert
+from django_ca.utils import get_cert_profile_kwargs
+from django_ca.utils import parse_date
 
 
 class override_settings(_override_settings):
@@ -124,6 +128,21 @@ class DjangoCATestCase(TestCase):
         return pkey, req
 
     @classmethod
+    def create_cert(cls, ca, csr, subject=None, san=None):
+        kwargs = get_cert_profile_kwargs()
+        kwargs.setdefault('subject', {})
+        if subject:
+            kwargs['subject'].update(subject)
+        x509 = get_cert(ca=ca, csr=csr, algorithm='sha256', expires=720, subjectAltName=san,
+                        **kwargs)
+        expires = parse_date(x509.get_notAfter().decode('utf-8'))
+
+        cert = Certificate(ca=ca, csr=csr, expires=expires)
+        cert.x509 = x509
+        cert.save()
+        return cert
+
+    @classmethod
     def get_subject(cls, x509):
         return {k.decode('utf-8'): v.decode('utf-8') for k, v
                 in x509.get_subject().get_components()}
@@ -175,3 +194,10 @@ class DjangoCAWithCSRTestCase(DjangoCAWithCATestCase):
 
         cls.key, cls.csr = cls.create_csr()
         cls.csr_pem = crypto.dump_certificate_request(crypto.FILETYPE_PEM, cls.csr).decode('utf-8')
+
+
+class DjangoCAWithCertTestCase(DjangoCAWithCSRTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(DjangoCAWithCertTestCase, cls).setUpClass()
+        cls.cert = cls.create_cert(cls.ca, cls.csr_pem, {'CN': 'example.com'})
