@@ -23,6 +23,7 @@ from OpenSSL import crypto
 
 from .utils import format_date
 from .utils import multiline_url_validator
+from .utils import parse_date
 from .querysets import CertificateQuerySet
 from .querysets import CertificateAuthorityQuerySet
 
@@ -82,6 +83,14 @@ class X509CertMixin(object):
     def subject(self):
         return {k.decode('utf-8'): v.decode('utf-8')
                 for k, v in self.x509.get_subject().get_components()}
+
+    @property
+    def not_before(self):
+        return parse_date(self.x509.get_notBefore().decode('utf-8'))
+
+    @property
+    def not_after(self):
+        return parse_date(self.x509.get_notAfter().decode('utf-8'))
 
     def ext_as_str(self, key):
         if key not in self.extensions:
