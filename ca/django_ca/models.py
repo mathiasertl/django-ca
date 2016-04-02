@@ -143,6 +143,9 @@ class X509CertMixin(object):
         return self.ext_as_str(b'authorityKeyIdentifier')
     authorityKeyIdentifier.short_description = 'authorityKeyIdentifier'
 
+    def get_digest(self, algo):
+        return self.x509.digest(algo).decode('utf-8')
+
 
 class CertificateAuthority(models.Model, X509CertMixin):
     objects = CertificateAuthorityQuerySet.as_manager()
