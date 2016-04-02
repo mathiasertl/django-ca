@@ -137,11 +137,11 @@ class BaseCommand(_BaseCommand):
         help_text = 'The format to use ("DER" is an alias for "ASN1"%s).'
         if default == crypto.FILETYPE_PEM:
             help_text %= ', default: PEM'
-        elif default == crypto.FILETYPE_ASN1:
+        elif default == crypto.FILETYPE_ASN1:  # pragma: no cover
             help_text %= ', default: ASN1'
-        elif default == crypto.FILETYPE_TEXT:
+        elif default == crypto.FILETYPE_TEXT:  # pragma: no cover
             help_text %= ', default: TEXT'
-        else:
+        else:  # pragma: no cover
             help_text %= ''
 
         parser.add_argument('-f', '--format', metavar='{PEM,ASN1,DER,TEXT}', default=default,
@@ -152,7 +152,7 @@ class BaseCommand(_BaseCommand):
             return self.certificate_queryset.get_by_serial_or_cn(id)
         except Certificate.DoesNotExist:
             raise CommandError('No valid certificate with CommonName/serial "%s" exists.' % id)
-        except Certificate.MultipleObjectsReturned:
+        except Certificate.MultipleObjectsReturned:  # pragma: no cover - super unlikely
             raise CommandError('Multiple valid certificates with CommonName "%s" found.' % id)
 
 
