@@ -63,7 +63,7 @@ class X509CertMixin(object):
     @x509.setter
     def x509(self, value):
         self._x509 = value
-        self.pub = crypto.dump_certificate(crypto.FILETYPE_PEM, value)
+        self.pub = crypto.dump_certificate(crypto.FILETYPE_PEM, value).decode('utf-8')
 
         # set serial
         s = hex(value.get_serial_number())[2:].upper()
