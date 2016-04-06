@@ -172,6 +172,6 @@ the default values, options like --key-usage still override the profile.""")
 
         if options['out']:
             with open(options['out'], 'w') as f:
-                f.write(cert.pub.decode('utf-8'))
+                f.write(cert.pub)
         else:
-            self.stdout.write(cert.pub.decode('utf-8'))
+            self.stdout.write(cert.pub)

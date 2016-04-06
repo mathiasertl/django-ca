@@ -31,7 +31,7 @@ class ViewCertTestCase(DjangoCAWithCertTestCase):
             'cn': cert.cn,
             'from': cert.not_before.strftime('%Y-%m-%d %H:%M'),
             'until': cert.not_after.strftime('%Y-%m-%d %H:%M'),
-            'pub': cert.pub.decode('utf-8'),
+            'pub': cert.pub,
             'md5': cert.get_digest('md5'),
             'sha1': cert.get_digest('sha1'),
             'sha256': cert.get_digest('sha256'),
