@@ -110,10 +110,14 @@ class DjangoCATestCase(TestCase):
 
     @classmethod
     def init_ca(cls, **kwargs):
+        kwargs.setdefault('name', 'Root CA')
+        kwargs.setdefault('parent', None)
         kwargs.setdefault('key_size', ca_settings.CA_MIN_KEY_SIZE)
+        kwargs.setdefault('pathlen', 1)
+
         return CertificateAuthority.objects.init(
-            name='Root CA', key_type='RSA', algorithm='sha256', expires=720, parent=None, pathlen=0,
-            subject={'CN': 'ca.example.com', }, **kwargs)
+            key_type='RSA', algorithm='sha256', expires=720, subject={'CN': 'ca.example.com', },
+            **kwargs)
 
     @classmethod
     def create_csr(cls):
