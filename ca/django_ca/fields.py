@@ -20,6 +20,7 @@ from .widgets import SubjectWidget
 from .widgets import KeyUsageWidget
 
 from . import ca_settings
+from .utils import SUBJECT_FIELDS
 
 
 class SubjectField(forms.MultiValueField):
@@ -40,7 +41,7 @@ class SubjectField(forms.MultiValueField):
                                            *args, **kwargs)
 
     def compress(self, values):
-        return dict(values)
+        return dict(zip(SUBJECT_FIELDS, values))
 
 
 class SubjectAltNameField(forms.MultiValueField):
