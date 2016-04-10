@@ -157,6 +157,8 @@ class CertificateAdmin(admin.ModelAdmin):
             return super(CertificateAdmin, self).get_form(request, obj=obj, **kwargs)
 
     def csr_details_view(self, request):
+        """Returns details of a CSR request."""
+
         try:
             csr = crypto.load_certificate_request(crypto.FILETYPE_PEM, request.POST['csr'])
         except Exception as e:
