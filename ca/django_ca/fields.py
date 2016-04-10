@@ -13,8 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from collections import OrderedDict
-
 from django import forms
 
 from .widgets import SubjectAltNameWidget
@@ -22,6 +20,7 @@ from .widgets import SubjectWidget
 from .widgets import KeyUsageWidget
 
 from . import ca_settings
+from .utils import SUBJECT_FIELDS
 
 
 class SubjectField(forms.MultiValueField):
@@ -42,11 +41,7 @@ class SubjectField(forms.MultiValueField):
                                            *args, **kwargs)
 
     def compress(self, values):
-        value = OrderedDict()
-        for i, val in enumerate(['C', 'ST', 'L', 'O', 'OU', 'CN', 'emailAddress', ]):
-            if values[i]:
-                value[val] = values[i]
-        return value
+        return dict(zip(SUBJECT_FIELDS, values))
 
 
 class SubjectAltNameField(forms.MultiValueField):

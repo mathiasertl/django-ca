@@ -13,11 +13,10 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-import os
-
 from OpenSSL import crypto
 
-from django_ca import ca_settings
+from django.utils import timezone
+
 from django_ca.models import Certificate
 
 
@@ -44,47 +43,6 @@ def get_crl(ca, **kwargs):
     kwargs.setdefault('digest', b'sha512')
 
     crl = crypto.CRL()
-    for cert in Certificate.objects.revoked():
+    for cert in Certificate.objects.filter(ca=ca, expires__gt=timezone.now()).revoked():
         crl.add_revoked(cert.get_revocation())
     return crl.export(ca.x509, ca.key, **kwargs)
-
-
-def get_crl_settings():
-    """Get CRL settings with appropriate defaults."""
-
-    try:
-        settings = dict(ca_settings.CA_CRL_SETTINGS)
-    except TypeError:  # CA_CRL_SETTINGS is most likely None (not defined).
-        settings = {}
-
-    settings.setdefault('digest', b'sha512')
-    settings.setdefault('days', 1)
-    settings.setdefault('type', crypto.FILETYPE_PEM)
-
-    if isinstance(settings['type'], str):
-        settings['type'] = getattr(crypto, 'FILETYPE_%s' % settings['type'])
-    if isinstance(settings['digest'], str):
-        settings['digest'] = bytes(settings['digest'], 'utf-8')
-
-    return settings
-
-
-def write_crl():
-    """Write the CRL based on ``CA_CRL_SETTINGS``.
-
-    This method silently does nothing if no path is defined.
-    """
-    settings = get_crl_settings()
-    if not settings.get('path'):
-        return
-
-    path = settings.pop('path')
-
-    crl = get_crl(**settings)
-    dirname = os.path.dirname(path)
-    if dirname and not os.path.exists(dirname):
-        os.makedirs(dirname)
-
-    with open(path, 'wb') as out:
-        out.write(crl)
-        out.flush()

@@ -16,12 +16,11 @@
 import argparse
 import os
 
-from urllib.parse import urlsplit
-
 from OpenSSL import crypto
 
 from django.core.management.base import BaseCommand as _BaseCommand
 from django.core.management.base import CommandError
+from django.core.validators import URLValidator
 
 from django_ca import ca_settings
 from django_ca.utils import is_power2
@@ -43,10 +42,13 @@ class FormatAction(argparse.Action):
 
 class KeySizeAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
+        option_string = option_string or 'key size'
+
         if not is_power2(value):
-            parser.error('--key-size must be a power of two (2048, 4096, ...)')
+            parser.error('%s must be a power of two (2048, 4096, ...)' % option_string)
         elif value < ca_settings.CA_MIN_KEY_SIZE:
-            parser.error('--key-size must be at least %s bits.' % ca_settings.CA_MIN_KEY_SIZE)
+            parser.error('%s must be at least %s bits.'
+                         % (option_string, ca_settings.CA_MIN_KEY_SIZE))
         setattr(namespace, self.dest, value)
 
 
@@ -60,7 +62,7 @@ class CertificateAuthorityAction(argparse.Action):
 
         qs = CertificateAuthority.objects.all()
         if self.allow_disabled is False:
-            qs = qs.filter(enabled=True)
+            qs = qs.enabled()
 
         try:
             value = qs.get(serial=value)
@@ -83,18 +85,23 @@ class CertificateAuthorityAction(argparse.Action):
 
         setattr(namespace, self.dest, value)
 
+
 class URLAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
-        parsed = urlsplit(value.strip())
-        if value and (not parsed.scheme or not parsed.netloc):
+        validator = URLValidator()
+        try:
+            validator(value)
+        except:
             parser.error('%s: Not a valid URL.' % value)
         setattr(namespace, self.dest, value)
 
 
 class MultipleURLAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
-        parsed = urlsplit(value.strip())
-        if value and (not parsed.scheme or not parsed.netloc):
+        validator = URLValidator()
+        try:
+            validator(value)
+        except:
             parser.error('%s: Not a valid URL.' % value)
 
         if getattr(namespace, self.dest) is None:
@@ -114,8 +121,12 @@ class BaseCommand(_BaseCommand):
             help='Algorithm to use (default: %(default)s).')
 
     def add_ca(self, parser, arg='--ca', help='Certificate authority to use (default: %s).',
-               allow_disabled=False):
-        default = CertificateAuthority.objects.filter(enabled=True).first()
+               allow_disabled=False, no_default=False):
+        if no_default is True:
+            default = None
+        else:
+            default = CertificateAuthority.objects.enabled().first()
+
         help = help % default
         parser.add_argument('%s' % arg, metavar='SERIAL', help=help, default=default,
                             allow_disabled=allow_disabled, action=CertificateAuthorityAction)
@@ -126,11 +137,11 @@ class BaseCommand(_BaseCommand):
         help_text = 'The format to use ("DER" is an alias for "ASN1"%s).'
         if default == crypto.FILETYPE_PEM:
             help_text %= ', default: PEM'
-        elif default == crypto.FILETYPE_ASN1:
+        elif default == crypto.FILETYPE_ASN1:  # pragma: no cover
             help_text %= ', default: ASN1'
-        elif default == crypto.FILETYPE_TEXT:
+        elif default == crypto.FILETYPE_TEXT:  # pragma: no cover
             help_text %= ', default: TEXT'
-        else:
+        else:  # pragma: no cover
             help_text %= ''
 
         parser.add_argument('-f', '--format', metavar='{PEM,ASN1,DER,TEXT}', default=default,
@@ -141,7 +152,7 @@ class BaseCommand(_BaseCommand):
             return self.certificate_queryset.get_by_serial_or_cn(id)
         except Certificate.DoesNotExist:
             raise CommandError('No valid certificate with CommonName/serial "%s" exists.' % id)
-        except Certificate.MultipleObjectsReturned:
+        except Certificate.MultipleObjectsReturned:  # pragma: no cover - super unlikely
             raise CommandError('Multiple valid certificates with CommonName "%s" found.' % id)
 
 

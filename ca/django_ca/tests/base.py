@@ -5,17 +5,25 @@ when you run "manage.py test".
 Replace this with more appropriate tests for your application.
 """
 
-import os
 import shutil
-import subprocess
 import tempfile
 
+from OpenSSL import crypto
+from mock import patch
+
+from django.core.management import call_command
 from django.test import TestCase
 from django.test.utils import override_settings as _override_settings
+from django.utils.six import StringIO
 from django.utils.six.moves import reload_module
 
 from django_ca import ca_settings
+from django_ca.models import Certificate
 from django_ca.models import CertificateAuthority
+from django_ca.utils import get_cert_subject
+from django_ca.utils import get_cert
+from django_ca.utils import get_cert_profile_kwargs
+from django_ca.utils import parse_date
 
 
 class override_settings(_override_settings):
@@ -97,28 +105,47 @@ class DjangoCATestCase(TestCase):
     def assertSubject(self, cert, expected):
         actual = cert.get_subject().get_components()
         actual = [(k.decode('utf-8'), v.decode('utf-8')) for k, v in actual]
-        self.assertEqual(actual, expected)
+
+        self.assertEqual(actual, get_cert_subject(expected))
 
     @classmethod
     def init_ca(cls, **kwargs):
-        kwargs.setdefault('key_size', 2048)
+        kwargs.setdefault('name', 'Root CA')
+        kwargs.setdefault('parent', None)
+        kwargs.setdefault('key_size', ca_settings.CA_MIN_KEY_SIZE)
+        kwargs.setdefault('pathlen', 1)
+
         return CertificateAuthority.objects.init(
-            name='Root CA', key_type='RSA', algorithm='sha256', expires=720, parent=None, pathlen=0,
-            subject={'CN': 'ca.example.com', }, **kwargs)
+            key_type='RSA', algorithm='sha256', expires=720, subject={'CN': 'ca.example.com', },
+            **kwargs)
 
     @classmethod
-    def create_csr(cls, name='example.com', key_size=512):
-        key = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
-        csr = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
-        subj = '/C=AT/ST=Vienna/L=Vienna/CN=csr.%s' % name
+    def create_csr(cls):
+        # see also: https://github.com/msabramo/pyOpenSSL/blob/master/examples/certgen.py
+        pkey = crypto.PKey()
+        pkey.generate_key(crypto.TYPE_RSA, 1024)
 
-        p1 = subprocess.Popen(['openssl', 'genrsa', '-out', key, str(key_size)],
-                              stderr=subprocess.PIPE)
-        p1.communicate()
-        p2 = subprocess.Popen(['openssl', 'req', '-new', '-key', key, '-out', csr, '-utf8',
-                               '-batch', '-subj', '%s' % subj])
-        p2.communicate()
-        return key, csr
+        req = crypto.X509Req()
+        #subj = req.get_subject()
+        req.set_pubkey(pkey)
+        req.sign(pkey, 'sha256')
+        return pkey, req
+
+    @classmethod
+    def create_cert(cls, ca, csr, subject=None, san=None, **kwargs):
+        cert_kwargs = get_cert_profile_kwargs()
+        cert_kwargs.update(kwargs)
+        cert_kwargs.setdefault('subject', {})
+        if subject:
+            cert_kwargs['subject'].update(subject)
+        x509 = get_cert(ca=ca, csr=csr, algorithm='sha256', expires=720, subjectAltName=san,
+                        **cert_kwargs)
+        expires = parse_date(x509.get_notAfter().decode('utf-8'))
+
+        cert = Certificate(ca=ca, csr=csr, expires=expires)
+        cert.x509 = x509
+        cert.save()
+        return cert
 
     @classmethod
     def get_subject(cls, x509):
@@ -133,3 +160,50 @@ class DjangoCATestCase(TestCase):
     @classmethod
     def get_alt_names(cls, x509):
         return [n.strip() for n in cls.get_extensions(x509)['subjectAltName'].split(',')]
+
+    def assertParserError(self, args, expected):
+        """Assert that given args throw a parser error."""
+
+        buf = StringIO()
+        with self.assertRaises(SystemExit), patch('sys.stderr', buf):
+            self.parser.parse_args(args)
+
+        output = buf.getvalue()
+        self.assertEqual(output, expected)
+        return output
+
+    def cmd(self, *args, **kwargs):
+        kwargs['stdout'] = StringIO()
+        kwargs['stderr'] = StringIO()
+        stdin = kwargs.pop('stdin', StringIO())
+
+        with patch('sys.stdin', stdin):
+            call_command(*args, **kwargs)
+        return kwargs['stdout'].getvalue(), kwargs['stderr'].getvalue()
+
+
+@override_settings(CA_MIN_KEY_SIZE=512)
+class DjangoCAWithCATestCase(DjangoCATestCase):
+    """A test class that already has a CA predefined."""
+
+    @classmethod
+    def setUpClass(cls):
+        super(DjangoCAWithCATestCase, cls).setUpClass()
+        cls.ca = cls.init_ca()
+
+
+class DjangoCAWithCSRTestCase(DjangoCAWithCATestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(DjangoCAWithCSRTestCase, cls).setUpClass()
+
+        cls.key, cls.csr = cls.create_csr()
+        cls.csr_pem = crypto.dump_certificate_request(
+            crypto.FILETYPE_PEM, cls.csr).decode('utf-8').strip()
+
+
+class DjangoCAWithCertTestCase(DjangoCAWithCSRTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(DjangoCAWithCertTestCase, cls).setUpClass()
+        cls.cert = cls.create_cert(cls.ca, cls.csr_pem, {'CN': 'example.com'})

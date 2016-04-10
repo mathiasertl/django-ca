@@ -15,22 +15,23 @@
 
 import json
 
+from datetime import date
+
 from OpenSSL import crypto
 
 from django.conf.urls import url
 from django.contrib import admin
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
-from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
-from .crl import write_crl
 from .forms import CreateCertificateForm
 from .models import Certificate
 from .models import CertificateAuthority
 from .models import Watcher
 from .ocsp import write_index
+from .utils import SUBJECT_FIELDS
 from .utils import get_cert
 from .views import RevokeCertificateView
 
@@ -158,6 +159,8 @@ class CertificateAdmin(admin.ModelAdmin):
             return super(CertificateAdmin, self).get_form(request, obj=obj, **kwargs)
 
     def csr_details_view(self, request):
+        """Returns details of a CSR request."""
+
         try:
             csr = crypto.load_certificate_request(crypto.FILETYPE_PEM, request.POST['csr'])
         except Exception as e:
@@ -166,7 +169,7 @@ class CertificateAdmin(admin.ModelAdmin):
             }), content_type='application/json')
         csr_subject = csr.get_subject()
         subject = {}
-        for attr in ['C', 'ST', 'L', 'O', 'OU', 'CN', 'E', ]:
+        for attr in SUBJECT_FIELDS:
             if hasattr(csr_subject, attr):
                 subject[attr] = getattr(csr_subject, attr)
 
@@ -199,7 +202,6 @@ class CertificateAdmin(admin.ModelAdmin):
     def revoke(self, request, queryset):
         for cert in queryset:
             cert.revoke()
-        write_crl()
         write_index()
     revoke.short_description = _('Revoke selected certificates')
 
@@ -237,26 +239,27 @@ class CertificateAdmin(admin.ModelAdmin):
     expires_date.admin_order_field = 'expires'
 
     def save_model(self, request, obj, form, change):
-        if change is False:  # We're adding a new certificate
-            data = form.cleaned_data
+        data = form.cleaned_data
 
-            san, cn_in_san = data['subjectAltName']
+        san, cn_in_san = data['subjectAltName']
+        subject = {k: v for k, v in data['subject'].items() if v}
+        expires_days = (data['expires'] - date.today()).days
 
-            x509 = get_cert(
-                ca=data['ca'],
-                csr=data['csr'],
-                expires=data['expires'],
-                subject=data['subject'],
-                algorithm=data['algorithm'],
-                subjectAltName=[e.strip() for e in san.split(',')],
-                cn_in_san=cn_in_san,
-                keyUsage=data['keyUsage'],
-                extendedKeyUsage=data['extendedKeyUsage'],
-            )
+        x509 = get_cert(
+            ca=data['ca'],
+            csr=data['csr'],
+            expires=expires_days,
+            subject=subject,
+            algorithm=data['algorithm'],
+            subjectAltName=[e.strip() for e in san.split(',')],
+            cn_in_san=cn_in_san,
+            keyUsage=data['keyUsage'],
+            extendedKeyUsage=data['extendedKeyUsage'],
+        )
 
-            obj.cn = x509.get_subject().CN
-            obj.expires = data['expires']
-            obj.pub = crypto.dump_certificate(crypto.FILETYPE_PEM, x509)
+        obj.cn = x509.get_subject().CN
+        obj.expires = data['expires']
+        obj.pub = crypto.dump_certificate(crypto.FILETYPE_PEM, x509)
         obj.save()
 
     class Media:

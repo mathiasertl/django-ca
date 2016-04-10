@@ -20,7 +20,6 @@ https://skippylovesmalorie.wordpress.com/2010/02/12/how-to-generate-a-self-signe
 
 import os
 
-from collections import OrderedDict
 from getpass import getpass
 
 from django.core.management.base import CommandError
@@ -54,7 +53,8 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
             '--expires', metavar='DAYS', type=int, default=365 * 10,
             help='CA certificate expires in DAYS days (default: %(default)s).'
         )
-        self.add_ca(parser, '--parent', help='Serial of the parent CA (default: %s).')
+        self.add_ca(parser, '--parent', help='Serial of the parent CA (default: %s).',
+                    no_default=True)
         parser.add_argument(
             '--password', nargs=1,
             help="Optional password used to encrypt the private key. If omitted, no "
@@ -87,8 +87,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         if options['password'] == '':
             options['password'] = getpass()
 
-        subject = OrderedDict([
-            ('C', country), ('ST', state), ('L', city), ('O', org), ('OU', ou), ('CN', cn), ])
+        subject = {'C': country, 'ST': state, 'L': city, 'O': org, 'OU': ou, 'CN': cn, }
 
         try:
             CertificateAuthority.objects.init(

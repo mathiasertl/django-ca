@@ -33,6 +33,8 @@ from OpenSSL import crypto
 
 from django_ca import ca_settings
 
+# List of possible subject fields, in order
+SUBJECT_FIELDS = ['C', 'ST', 'L', 'O', 'OU', 'CN', 'emailAddress', ]
 
 # Description strings for various X509 extensions, taken from "man x509v3_config".
 EXTENDED_KEY_USAGE_DESC = _('Purposes for which the certificate public key can be used for.')
@@ -73,6 +75,17 @@ def multiline_url_validator(value):
 
     for line in value.splitlines():
         validator(line)
+
+
+def get_cert_subject(d):
+    """Returns an itemized dictionary in the correct order for a x509 subject.
+
+    As a bonus, this translates the ``"E"`` key into ``"emailAddress"``.
+    """
+    if d.get('E'):
+        d['emailAddress'] = d.pop('E')
+
+    return sorted(d.items(), key=lambda e: SUBJECT_FIELDS.index(e[0]))
 
 
 def get_basic_cert(expires, now=None):
@@ -205,7 +218,7 @@ def get_cert(ca, csr, expires, algorithm, subject=None, cn_in_san=True,
     # Create signed certificate
     cert = get_basic_cert(expires)
     cert.set_issuer(ca.x509.get_subject())
-    for key, value in subject.items():
+    for key, value in get_cert_subject(subject):
         setattr(cert.get_subject(), key, bytes(value, 'utf-8'))
     cert.set_pubkey(req.get_pubkey())
 
@@ -221,7 +234,7 @@ def get_cert(ca, csr, expires, algorithm, subject=None, cn_in_san=True,
         extensions.append(crypto.X509Extension(b'extendedKeyUsage', *extendedKeyUsage))
 
     # Add subjectAltNames, always also contains the CommonName
-    if subjectAltName is not None:
+    if subjectAltName:
         extensions.append(crypto.X509Extension(b'subjectAltName', 0, subjectAltName))
 
     # Set CRL distribution points:

@@ -23,6 +23,7 @@ from OpenSSL import crypto
 
 from .utils import format_date
 from .utils import multiline_url_validator
+from .utils import parse_date
 from .querysets import CertificateQuerySet
 from .querysets import CertificateAuthorityQuerySet
 
@@ -45,6 +46,7 @@ class Watcher(models.Model):
             return '%s <%s>' % (self.name, self.mail)
         return self.mail
 
+
 class X509CertMixin(object):
     _x509 = None
     _extensions = None
@@ -61,11 +63,11 @@ class X509CertMixin(object):
     @x509.setter
     def x509(self, value):
         self._x509 = value
-        self.pub = crypto.dump_certificate(crypto.FILETYPE_PEM, value)
+        self.pub = crypto.dump_certificate(crypto.FILETYPE_PEM, value).decode('utf-8')
 
         # set serial
         s = hex(value.get_serial_number())[2:].upper()
-        self.serial = ':'.join(a+b for a,b in zip(s[::2], s[1::2]))
+        self.serial = ':'.join(a+b for a, b in zip(s[::2], s[1::2]))
 
     @property
     def extensions(self):
@@ -81,6 +83,18 @@ class X509CertMixin(object):
     def subject(self):
         return {k.decode('utf-8'): v.decode('utf-8')
                 for k, v in self.x509.get_subject().get_components()}
+
+    @property
+    def subject_str(self):
+        return '/%s' % ('/'.join(['%s=%s' % (k, v) for k, v in self.subject.items()]))
+
+    @property
+    def not_before(self):
+        return parse_date(self.x509.get_notBefore().decode('utf-8'))
+
+    @property
+    def not_after(self):
+        return parse_date(self.x509.get_notAfter().decode('utf-8'))
 
     def ext_as_str(self, key):
         if key not in self.extensions:
@@ -132,6 +146,9 @@ class X509CertMixin(object):
     def authorityKeyIdentifier(self):
         return self.ext_as_str(b'authorityKeyIdentifier')
     authorityKeyIdentifier.short_description = 'authorityKeyIdentifier'
+
+    def get_digest(self, algo):
+        return self.x509.digest(algo).decode('utf-8')
 
 
 class CertificateAuthority(models.Model, X509CertMixin):
@@ -198,10 +215,17 @@ class CertificateAuthority(models.Model, X509CertMixin):
 
         return self._key
 
+    @property
+    def pathlen(self):
+        constraints = self.basicConstraints()
+        if 'pathlen' in constraints:
+            return int(constraints.split('pathlen:')[1])
+        return None
+
     def save(self, *args, **kwargs):
         if not self.serial:
             s = hex(self.x509.get_serial_number())[2:].upper()
-            self.serial = ':'.join(a+b for a,b in zip(s[::2], s[1::2]))
+            self.serial = ':'.join(a+b for a, b in zip(s[::2], s[1::2]))
         super(CertificateAuthority, self).save(*args, **kwargs)
 
     class Meta:
@@ -236,7 +260,7 @@ class Certificate(models.Model, X509CertMixin):
             self.cn = dict(self.x509.get_subject().get_components()).get(b'CN').decode('utf-8')
         if self.pk is None or self.serial is None:
             s = hex(self.x509.get_serial_number())[2:].upper()
-            self.serial = ':'.join(a+b for a,b in zip(s[::2], s[1::2]))
+            self.serial = ':'.join(a+b for a, b in zip(s[::2], s[1::2]))
         super(Certificate, self).save(*args, **kwargs)
 
     def revoke(self, reason=None):

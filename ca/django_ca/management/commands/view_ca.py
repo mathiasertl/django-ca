@@ -39,15 +39,13 @@ class Command(BaseCommand):
         else:
             self.stdout.write('* Has no children.')
 
-        constraints = ca.basicConstraints()
-        if 'pathlen' in constraints:
-            pathlen = constraints.split('pathlen:')[1]
-        else:
+        pathlen = ca.pathlen
+        if pathlen is None:
             pathlen = 'unlimited'
 
         self.stdout.write('* Distinguished Name: %s' % ca.distinguishedName())
         self.stdout.write('* Maximum levels of sub-CAs (pathlen): %s' % pathlen)
-        self.stdout.write('* Certificate Revokation List (CRL): %s ' % (ca.crl_url or None))
+        self.stdout.write('* Certificate Revokation List (CRL): %s' % (ca.crl_url or None))
         self.stdout.write('* Issuer URL: %s' % (ca.issuer_url or None))
         self.stdout.write('* OCSP URL: %s' % (ca.ocsp_url or None))
         self.stdout.write('* Issuer Alternative Name: %s' % (ca.issuer_alt_name or None))

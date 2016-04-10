@@ -54,15 +54,6 @@ SECRET_KEY = ''
 # Default profile used for signing certificates.
 #CA_DEFAULT_PROFILE = getattr(settings, 'CA_DEFAULT_PROFILE', 'webserver')
 
-# Any default settings for automatically generating CRLs.
-#CA_CRL_SETTINGS = {
-#   # This will cause any certificate revokation to automatically regenerate the CRL.
-#   'path': '/var/www/ca.example.com/ca.crl',
-#   'digest': 'sha512',
-#   'type': 'PEM',
-#   'days': 1,
-#}
-
 # Where to dump the OCSP index to. Setting this will automatically regenerate the index whenever
 # you revoke a certificate.
 #CA_OCSP_INDEX_PATH = None

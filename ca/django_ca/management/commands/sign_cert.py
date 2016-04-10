@@ -13,18 +13,17 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from collections import OrderedDict
-
 from django.core.management.base import CommandError
 from django.utils import six
 
-from django_ca import ca_settings
-from django_ca.management.base import BaseCommand
-from django_ca.models import Certificate
-from django_ca.models import Watcher
-from django_ca.utils import get_cert_profile_kwargs
-from django_ca.utils import get_cert
-from django_ca.utils import parse_date
+from ... import ca_settings
+from ...management.base import BaseCommand
+from ...models import Certificate
+from ...models import Watcher
+from ...utils import get_cert_profile_kwargs
+from ...utils import get_cert
+from ...utils import parse_date
+from ...utils import SUBJECT_FIELDS
 
 
 class Command(BaseCommand):
@@ -55,6 +54,9 @@ of subjectAltNames (given by --alt).""")
             'Certificate subject',
             '''The subject to use. Empty values are not included in the subject. The default values
             depend on the default profile and the CA_DEFAULT_SUBJECT setting.''')
+
+        # NOTE: We do not set the default argument here because that would mask the user not
+        # setting anything at all.
         group.add_argument(
             '--C', metavar='CC',
             help='Two-letter country code, e.g. "AT" (default: "%s").' % (subject.get('C') or '')
@@ -76,9 +78,12 @@ of subjectAltNames (given by --alt).""")
             help='Your organizational unit (default: "%s").' % (subject.get('OU') or '')
         )
         group.add_argument(
-            '--CN', help="CommonName to use. If omitted, the first --alt value will be used.")
-        group.add_argument('--E', metavar='E-Mail',
-            help='E-mail to use (default: "%s").' % (subject.get('emailAddress') or ''))
+            '--CN', help="CommonName to use. If omitted, the first --alt value will be used."
+        )
+        group.add_argument(
+            '--E', metavar='E-Mail', dest='emailAddress',
+            help='E-mail to use (default: "%s").' % (subject.get('emailAddress') or '')
+        )
 
     def add_arguments(self, parser):
         self.add_subject(parser)
@@ -126,16 +131,8 @@ the default values, options like --key-usage still override the profile.""")
         if not options['CN'] and not options['alt']:
             raise CommandError("Must give at least --CN or one or more --alt arguments.")
 
-        # construct subject
-        subject = OrderedDict()
-        for field in ['C', 'ST', 'L', 'O', 'OU', 'CN', ]:
-            if options.get(field):
-                subject[field] = options[field]
-        if options.get('E'):
-            subject['emailAddress'] = options['E']
-
         if options['csr'] is None:
-            print('Please paste the CSR:')
+            self.stdout.write('Please paste the CSR:')
             csr = ''
             while not csr.endswith('-----END CERTIFICATE REQUEST-----\n'):
                 csr += '%s\n' % six.moves.input()
@@ -155,8 +152,15 @@ the default values, options like --key-usage still override the profile.""")
             kwargs['keyUsage'] = self.parse_extension(options['key_usage'])
         if options['ext_key_usage']:
             kwargs['extendedKeyUsage'] = self.parse_extension(options['ext_key_usage'])
-        if subject:
-            kwargs['subject'] = subject
+
+        # update subject with arguments from the command line
+        kwargs.setdefault('subject', {})
+        for field in SUBJECT_FIELDS:
+            value = options.get(field)
+            if value == '' and field in kwargs['subject']:
+                del kwargs['subject'][field]
+            elif value:
+                kwargs['subject'][field] = options[field]
 
         x509 = get_cert(ca=ca, csr=csr, algorithm=options['algorithm'], expires=options['days'],
                         subjectAltName=options['alt'], **kwargs)
@@ -168,6 +172,6 @@ the default values, options like --key-usage still override the profile.""")
 
         if options['out']:
             with open(options['out'], 'w') as f:
-                f.write(cert.pub.decode('utf-8'))
+                f.write(cert.pub)
         else:
-            self.stdout.write(cert.pub.decode('utf-8'))
+            self.stdout.write(cert.pub)

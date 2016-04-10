@@ -11,20 +11,17 @@
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
-# see <http://www.gnu.org/licenses/>.
+# see <http://www.gnu.org/licenses/>
 
-from django_ca.management.base import CertCommand
+from django.test import TestCase
 
-from django_ca.ocsp import write_index
+from .. import ca_settings
+from .base import override_settings
 
 
-class Command(CertCommand):
-    help = "Revoke a certificate."
+class SettingsTestCase(TestCase):
+    def test_none_profiles(self):
+        self.assertIn('client', ca_settings.CA_PROFILES)
 
-    def add_arguments(self, parser):
-        parser.add_argument('--reason', help="An optional reason for revokation.")
-        super(Command, self).add_arguments(parser)
-
-    def handle(self, cert, **options):
-        self.get_certificate(cert).revoke(reason=options.get('reason'))
-        write_index()
+        with override_settings(CA_PROFILES={'client': None}):
+            self.assertNotIn('client', ca_settings.CA_PROFILES)
