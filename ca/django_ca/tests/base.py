@@ -198,7 +198,8 @@ class DjangoCAWithCSRTestCase(DjangoCAWithCATestCase):
         super(DjangoCAWithCSRTestCase, cls).setUpClass()
 
         cls.key, cls.csr = cls.create_csr()
-        cls.csr_pem = crypto.dump_certificate_request(crypto.FILETYPE_PEM, cls.csr).decode('utf-8')
+        cls.csr_pem = crypto.dump_certificate_request(
+            crypto.FILETYPE_PEM, cls.csr).decode('utf-8').strip()
 
 
 class DjangoCAWithCertTestCase(DjangoCAWithCSRTestCase):
