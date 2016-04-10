@@ -239,27 +239,27 @@ class CertificateAdmin(admin.ModelAdmin):
     expires_date.admin_order_field = 'expires'
 
     def save_model(self, request, obj, form, change):
-        if change is False:  # We're adding a new certificate
-            data = form.cleaned_data
+        data = form.cleaned_data
 
-            san, cn_in_san = data['subjectAltName']
-            expires_days = (data['expires'] - date.today()).days
+        san, cn_in_san = data['subjectAltName']
+        subject = {k: v for k, v in data['subject'].items() if v}
+        expires_days = (data['expires'] - date.today()).days
 
-            x509 = get_cert(
-                ca=data['ca'],
-                csr=data['csr'],
-                expires=expires_days,
-                subject=data['subject'],
-                algorithm=data['algorithm'],
-                subjectAltName=[e.strip() for e in san.split(',')],
-                cn_in_san=cn_in_san,
-                keyUsage=data['keyUsage'],
-                extendedKeyUsage=data['extendedKeyUsage'],
-            )
+        x509 = get_cert(
+            ca=data['ca'],
+            csr=data['csr'],
+            expires=expires_days,
+            subject=subject,
+            algorithm=data['algorithm'],
+            subjectAltName=[e.strip() for e in san.split(',')],
+            cn_in_san=cn_in_san,
+            keyUsage=data['keyUsage'],
+            extendedKeyUsage=data['extendedKeyUsage'],
+        )
 
-            obj.cn = x509.get_subject().CN
-            obj.expires = data['expires']
-            obj.pub = crypto.dump_certificate(crypto.FILETYPE_PEM, x509)
+        obj.cn = x509.get_subject().CN
+        obj.expires = data['expires']
+        obj.pub = crypto.dump_certificate(crypto.FILETYPE_PEM, x509)
         obj.save()
 
     class Media:
