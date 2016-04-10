@@ -15,6 +15,8 @@
 
 import json
 
+from datetime import date
+
 from OpenSSL import crypto
 
 from django.conf.urls import url
@@ -241,11 +243,12 @@ class CertificateAdmin(admin.ModelAdmin):
             data = form.cleaned_data
 
             san, cn_in_san = data['subjectAltName']
+            expires_days = (data['expires'] - date.today()).days
 
             x509 = get_cert(
                 ca=data['ca'],
                 csr=data['csr'],
-                expires=data['expires'],
+                expires=expires_days,
                 subject=data['subject'],
                 algorithm=data['algorithm'],
                 subjectAltName=[e.strip() for e in san.split(',')],
