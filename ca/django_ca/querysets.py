@@ -80,7 +80,6 @@ class CertificateAuthorityQuerySet(models.QuerySet):
             ])
 
         if ocsp_url:
-            print("OCSP;URI:{}".format(ocsp_url))
             cert.add_extensions([
                 crypto.X509Extension(b'authorityInfoAccess', False, bytes("OCSP;URI:{}".format(ocsp_url), 'utf-8')),
             ])
