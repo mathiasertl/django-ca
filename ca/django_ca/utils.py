@@ -113,6 +113,7 @@ def get_basic_cert(expires, now=None):
     not_after = format_date(expires)
 
     cert = crypto.X509()
+    ca.set_version(2) # V3 certificate
     cert.set_serial_number(uuid.uuid4().int)
     cert.set_notBefore(not_before.encode('utf-8'))
     cert.set_notAfter(not_after.encode('utf-8'))
