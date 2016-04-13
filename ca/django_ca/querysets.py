@@ -70,19 +70,6 @@ class CertificateAuthorityQuerySet(models.QuerySet):
                                              b'keyid,issuer', issuer=parent.x509)
         cert.add_extensions([authKeyId])
 
-        crl_urls = []
-        if crl_url:
-            for url in crl_url:
-               crl_urls.append("URI:{}".format(url))
-
-            cert.add_extensions([
-                crypto.X509Extension(b'crlDistributionPoints', False, bytes(str.join(',', crl_urls), 'utf-8'))
-            ])
-
-        if ocsp_url:
-            cert.add_extensions([
-                crypto.X509Extension(b'authorityInfoAccess', False, bytes("OCSP;URI:{}".format(ocsp_url), 'utf-8')),
-            ])
 
         # sign the certificate
         if parent is None:
