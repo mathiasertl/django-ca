@@ -55,12 +55,6 @@ CA_DIR
    Where the root certificate is stored. The default is a ``files`` directory
    in the same location as your ``manage.py`` file.
 
-CA_OCSP_INDEX_PATH
-   Default: ``None``
-
-   A path to dump the OCSP index to. Setting this value will cause
-   **django-ca** to regenerate the index whenever you revoke a certificate.
-
 CA_PROFILES
    Default: ``{}``
 

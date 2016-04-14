@@ -13,10 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from django.core.management.base import BaseCommand
-
-from django_ca import ca_settings
-from django_ca.ocsp import write_index
+from ...ocsp import get_index
+from ..base import BaseCommand
 
 # We need a two-letter year, otherwise OCSP doesn't work
 date_format = '%y%m%d%H%M%SZ'
@@ -26,10 +24,16 @@ class Command(BaseCommand):
     help = "Write an OCSP index file."
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            'path', type=str, nargs='?', default=ca_settings.CA_OCSP_INDEX_PATH,
-            help="Where to write the index (default: %(default)s)")
+        self.add_ca(parser, 'ca', allow_disabled=True)
+        parser.add_argument('path', type=str, default='-', nargs='?',
+                            help="Where to write the index (default: stdout)")
 
-    def handle(self, path, **options):
-        # Write index file (required by "openssl ocsp")
-        write_index(path, stdout=self.stdout)
+    def handle(self, ca, path, **options):
+        if path == '-':
+            for line in get_index(ca):
+                self.stdout.write(line)
+        else:
+            with open(path, 'w') as stream:
+                for line in get_index(ca):
+                    stream.write(line)
+

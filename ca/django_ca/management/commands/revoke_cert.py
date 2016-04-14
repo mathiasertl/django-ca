@@ -15,8 +15,6 @@
 
 from django_ca.management.base import CertCommand
 
-from django_ca.ocsp import write_index
-
 
 class Command(CertCommand):
     help = "Revoke a certificate."
@@ -27,4 +25,3 @@ class Command(CertCommand):
 
     def handle(self, cert, **options):
         self.get_certificate(cert).revoke(reason=options.get('reason'))
-        write_index()
