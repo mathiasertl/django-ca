@@ -15,11 +15,14 @@
 
 import argparse
 import os
+import sys
 
 from OpenSSL import crypto
 
 from django.core.management.base import BaseCommand as _BaseCommand
 from django.core.management.base import CommandError
+from django.core.management.base import OutputWrapper
+from django.core.management.color import no_style
 from django.core.validators import URLValidator
 
 from django_ca import ca_settings
@@ -110,8 +113,41 @@ class MultipleURLAction(argparse.Action):
         getattr(namespace, self.dest).append(value)
 
 
+class BinaryOutputWrapper(OutputWrapper):
+    def __init__(self, out, style_func=None, ending=b'\n'):
+        super(BinaryOutputWrapper, self).__init__(out, style_func=None, ending=ending)
+
+    def write(self, msg, style_func=None, ending=None):
+        ending = self.ending if ending is None else ending
+        if isinstance(msg, str):
+            msg = msg.encode('utf-8')
+
+        if ending and not msg.endswith(ending):
+            msg += ending
+        self._out.write(msg)
+
+
 class BaseCommand(_BaseCommand):
     certificate_queryset = Certificate.objects.filter(revoked=False)
+    binary_output = False
+
+    def __init__(self, stdout=None, stderr=None, no_color=False):
+        if self.binary_output is True:
+            self.stdout = BinaryOutputWrapper(stdout or sys.stdout.buffer)
+            self.stderr = BinaryOutputWrapper(stderr or sys.stderr.buffer)
+            self.style = no_style()
+        else:
+            super(BaseCommand, self).__init__(stdout, stderr, no_color=no_color)
+
+    def execute(self, *args, **options):
+        if self.binary_output is True:
+            if options.get('stdout'):
+                self.stdout = BinaryOutputWrapper(options.pop('stdout'))            
+            if options.get('stderr'):
+                self.stderr = BinaryOutputWrapper(options.pop('stderr'))
+            options['no_color'] = True
+
+        super(BaseCommand, self).execute(*args, **options)
 
     def add_algorithm(self, parser):
         """Add the --algorithm option."""
