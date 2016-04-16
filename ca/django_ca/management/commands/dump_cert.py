@@ -13,8 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from argparse import FileType
-
 from django.core.management.base import CommandError
 
 from OpenSSL import crypto
@@ -25,20 +23,23 @@ from django_ca.models import Certificate
 
 class Command(CertCommand):
     help = "Dump a certificate to a file."
+    binary_output = True
     certificate_queryset = Certificate.objects.all()
 
     def add_arguments(self, parser):
         super(Command, self).add_arguments(parser)
         self.add_format(parser)
-        parser.add_argument('path', type=FileType('wb'),
+        parser.add_argument('path', nargs='?', default='-',
                             help='Path where to dump the certificate. Use "-" for stdout.')
 
     def handle(self, cert, path, **options):
         cert = self.get_certificate(cert)
         data = crypto.dump_certificate(options['format'], cert.x509)
-
-        if 'b' not in path.mode:
-            if options['format'] == crypto.FILETYPE_ASN1:
-                raise CommandError("ASN1 cannot be reliably printed to stdout.")
-            data = data.decode('utf-8')
-        path.write(data)
+        if path == '-':
+            self.stdout.write(data)
+        else:
+            try:
+                with open(path, 'wb') as stream:
+                    stream.write(data)
+            except FileNotFoundError as e:
+                raise CommandError(e)
