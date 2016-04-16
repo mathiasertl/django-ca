@@ -173,8 +173,8 @@ class DjangoCATestCase(TestCase):
         return output
 
     def cmd(self, *args, **kwargs):
-        kwargs['stdout'] = StringIO()
-        kwargs['stderr'] = StringIO()
+        kwargs.setdefault('stdout', StringIO())
+        kwargs.setdefault('stderr', StringIO())
         stdin = kwargs.pop('stdin', StringIO())
 
         with patch('sys.stdin', stdin):
