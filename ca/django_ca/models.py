@@ -211,7 +211,7 @@ class CertificateAuthority(models.Model, X509CertMixin):
     def key(self):
         if self._key is None:
             with open(self.private_key_path) as f:
-                return crypto.load_privatekey(crypto.FILETYPE_PEM, f.read())
+                self._key = crypto.load_privatekey(crypto.FILETYPE_PEM, f.read())
 
         return self._key
 
