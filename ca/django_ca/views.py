@@ -22,14 +22,14 @@ from .models import Certificate
 
 class RevokeCertificateView(UpdateView):
     admin_site = None
-    model = Certificate
+    queryset = Certificate.objects.filter(revoked=False)
     form_class = RevokeCertificateForm
     template_name = 'django_ca/admin/certificate_revoke_form.html'
 
     def get_context_data(self, **kwargs):
         context = super(RevokeCertificateView, self).get_context_data(**kwargs)
         context.update(self.admin_site.each_context(self.request))
-        context['opts'] = self.model._meta  # required by breadcrumbs
+        context['opts'] = self.queryset.model._meta  # required by breadcrumbs
         return context
 
     def form_valid(self, form):
@@ -40,6 +40,6 @@ class RevokeCertificateView(UpdateView):
         return super(RevokeCertificateView, self).form_valid(form)
 
     def get_success_url(self):
-        meta = self.model._meta
+        meta = self.queryset.model._meta
         return reverse('admin:%s_%s_change' % (meta.app_label, meta.verbose_name),
                        args=(self.object.pk, ))
