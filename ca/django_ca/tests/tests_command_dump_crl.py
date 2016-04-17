@@ -30,7 +30,7 @@ from .base import override_tmpcadir
 
 
 @override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
-class ViewCertTestCase(DjangoCAWithCertTestCase):
+class DumpCRLTestCase(DjangoCAWithCertTestCase):
     def assertSerial(self, revokation, cert):
         self.assertEqual(revokation.get_serial(),
                          cert.serial.replace(':', '').encode('utf-8'))
