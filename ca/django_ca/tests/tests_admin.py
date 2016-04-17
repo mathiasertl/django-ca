@@ -309,17 +309,15 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(cert.revoked_reason, 'certificateHold')
 
     def test_revoked(self):
-        response = self.client.post(self.url, data={'reason': ''})
-        self.assertRedirects(response, self.change_url())
-        self.assertTemplateUsed('django_ca/admin/certificate_revoke_form.html')
-
         cert = Certificate.objects.get(serial=self.cert.serial)
-        self.assertTrue(cert.revoked)
-        self.assertIsNone(cert.revoked_reason)
+        cert.revoked = True
+        cert.save()
 
-        response = self.client.post(self.url, data={'reason': 'CACompromise'})
-        self.assertEquals(response.status_code, 302)
-        self.assertFormError(response, 'form', None, errors='The Certificate is already revoked.')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 404)
+
+        response = self.client.post(self.url, data={'reason': 'certificateHold'})
+        self.assertEqual(response.status_code, 404)
 
         cert = Certificate.objects.get(serial=self.cert.serial)
         self.assertTrue(cert.revoked)
