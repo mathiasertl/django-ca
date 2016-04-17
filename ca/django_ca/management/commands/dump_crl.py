@@ -13,8 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from OpenSSL import crypto
-
 from django.core.management.base import CommandError
 
 from django_ca.crl import get_crl
@@ -23,6 +21,7 @@ from django_ca.management.base import BaseCommand
 
 class Command(BaseCommand):
     help = "Write the certificate revocation list (CRL)."
+    binary_output = True
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -30,11 +29,8 @@ class Command(BaseCommand):
             help="The number of days until the next update of this CRL (default: %(default)s).")
         parser.add_argument('--digest', default='sha512',
                             help="The name of the message digest to use (default: %(default)s).")
-        parser.add_argument(
-            'path', nargs='?', default='-',
-            help='''Path for the output file. Use "-" for stdout. If omitted, CA_CRL_PATH '''
-                 '''must be set.'''
-        )
+        parser.add_argument('path', nargs='?', default='-', 
+                            help='Path for the output file. Use "-" for stdout.')
         self.add_format(parser)
         self.add_ca(parser)
         super(Command, self).add_arguments(parser)
@@ -49,9 +45,12 @@ class Command(BaseCommand):
         crl = get_crl(ca=options['ca'], **kwargs)
 
         if path == '-':
-            if kwargs['type'] == crypto.FILETYPE_ASN1:
-                raise CommandError("ASN1 cannot be reliably printed to stdout.")
-            self.stdout.write(crl.decode('utf-8'))
+            self.stdout.write(crl, ending=b'')
         else:
-            with open(path, 'wb') as stream:
-                stream.write(crl)
+            try:
+               # mistakenly reported by coverage 4.0.3 as missed branch, fixed in 4.1:
+               # https://bitbucket.org/ned/coveragepy/issues/146/context-managers-confuse-branch-coverage#comment-24552176
+                with open(path, 'wb') as stream:  # pragma: no branch
+                    stream.write(crl)
+            except FileNotFoundError as e:
+                raise CommandError(e)

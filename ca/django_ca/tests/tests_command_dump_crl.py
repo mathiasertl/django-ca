@@ -15,16 +15,14 @@
 
 import os
 
-from datetime import timedelta
+from io import BytesIO
 
 from OpenSSL import crypto
 
 from django.core.management.base import CommandError
-from django.utils import six
-from django.utils import timezone
 
 from ..models import Certificate
-from ..models import Watcher
+from .. import ca_settings
 from .base import DjangoCAWithCertTestCase
 from .base import override_tmpcadir
 
@@ -36,14 +34,31 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
                          cert.serial.replace(':', '').encode('utf-8'))
 
     def test_basic(self):
-        stdout, stderr = self.cmd('dump_crl')
+        stdout, stderr = self.cmd('dump_crl', stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stderr, b'')
         crl = crypto.load_crl(crypto.FILETYPE_PEM, stdout)
         self.assertIsNone(crl.get_revoked())
+
+    def test_file(self):
+        path = os.path.join(ca_settings.CA_DIR, 'crl-test.crl')
+        stdout, stderr = self.cmd('dump_crl', path, stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stdout, b'')
+        self.assertEqual(stderr, b'')
+
+        with open(path, 'rb') as stream:
+            crl = crypto.load_crl(crypto.FILETYPE_PEM, stream.read())
+        self.assertIsNone(crl.get_revoked())
+
+        # test an output path that doesn't exist
+        path = os.path.join(ca_settings.CA_DIR, 'test', 'crl-test.crl')
+        with self.assertRaises(CommandError):
+            self.cmd('dump_crl', path, stdout=BytesIO(), stderr=BytesIO())
 
     def test_revoked(self):
         cert = Certificate.objects.get(serial=self.cert.serial)
         cert.revoke()
-        stdout, stderr = self.cmd('dump_crl')
+        stdout, stderr = self.cmd('dump_crl', stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stderr, b'')
         crl = crypto.load_crl(crypto.FILETYPE_PEM, stdout)
 
         revoked = crl.get_revoked()
@@ -64,7 +79,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
             cert.revoked_reason = byte_reason.decode('utf-8')
             cert.save()
 
-            stdout, stderr = self.cmd('dump_crl')
+            stdout, stderr = self.cmd('dump_crl', stdout=BytesIO(), stderr=BytesIO())
             crl = crypto.load_crl(crypto.FILETYPE_PEM, stdout)
             revoked = crl.get_revoked()
             self.assertEqual(len(revoked), 1)
