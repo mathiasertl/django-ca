@@ -78,13 +78,7 @@ def multiline_url_validator(value):
 
 
 def get_cert_subject(d):
-    """Returns an itemized dictionary in the correct order for a x509 subject.
-
-    As a bonus, this translates the ``"E"`` key into ``"emailAddress"``.
-    """
-    if d.get('E'):
-        d['emailAddress'] = d.pop('E')
-
+    """Returns an itemized dictionary in the correct order for a x509 subject."""
     return sorted(d.items(), key=lambda e: SUBJECT_FIELDS.index(e[0]))
 
 
