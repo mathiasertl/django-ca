@@ -39,6 +39,9 @@ class Command(BaseCommand):
         if not options['revoked']:
             certs = certs.filter(revoked=False)
 
+        if options['ca'] is not None:
+            certs = certs.filter(ca=options['ca'])
+
         for cert in certs:
             if cert.revoked is True:
                 info = 'revoked'

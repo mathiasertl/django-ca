@@ -26,7 +26,7 @@ from .base import override_tmpcadir
 
 
 @override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
-class ViewCertTestCase(DjangoCAWithCertTestCase):
+class ListCertsTestCase(DjangoCAWithCertTestCase):
     def line(self, cert):
         if cert.revoked is True:
             info = 'revoked'
@@ -66,4 +66,20 @@ class ViewCertTestCase(DjangoCAWithCertTestCase):
 
         stdout, stderr = self.cmd('list_certs', revoked=True)
         self.assertEqual(stdout, '%s\n' % self.line(cert))
+        self.assertEqual(stderr, '')
+
+    def test_ca(self):
+        child_ca = self.init_ca(name='Child CA', parent=self.ca)
+        cert = Certificate.objects.get(serial=self.cert.serial)
+
+        stdout, stderr = self.cmd('list_certs')
+        self.assertEqual(stdout, '%s\n' % self.line(self.cert))
+        self.assertEqual(stderr, '')
+
+        stdout, stderr = self.cmd('list_certs', ca=self.ca)
+        self.assertEqual(stdout, '%s\n' % self.line(self.cert))
+        self.assertEqual(stderr, '')
+
+        stdout, stderr = self.cmd('list_certs', ca=child_ca)
+        self.assertEqual(stdout, '')
         self.assertEqual(stderr, '')
