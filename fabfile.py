@@ -228,7 +228,7 @@ def init_demo():
     crl_path = os.path.join(ca_settings.CA_DIR, 'crl.pem')
     ocsp_index = os.path.join(ca_settings.CA_DIR, 'ocsp_index.txt')
     manage('dump_crl', crl_path)
-    manage('dump_ocsp_index', root_ca.serial, ocsp_index)
+    manage('dump_ocsp_index', ocsp_index, ca=root_ca)
 
     ca_crl_path = os.path.join(ca_settings.CA_DIR, 'ca_crl.pem')
 
