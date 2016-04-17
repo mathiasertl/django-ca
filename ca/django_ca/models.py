@@ -53,7 +53,7 @@ class X509CertMixin(object):
 
     @property
     def x509(self):
-        if not self.pub:
+        if not self.pub:  # pragma: no cover
             return None
 
         if self._x509 is None:
@@ -71,7 +71,7 @@ class X509CertMixin(object):
 
     @property
     def extensions(self):
-        if self.x509 is None:
+        if self.x509 is None:  # pragma: no cover
             return {}
 
         if self._extensions is None:
