@@ -222,12 +222,6 @@ class CertificateAuthority(models.Model, X509CertMixin):
             return int(constraints.split('pathlen:')[1])
         return None
 
-    def save(self, *args, **kwargs):
-        if not self.serial:
-            s = hex(self.x509.get_serial_number())[2:].upper()
-            self.serial = ':'.join(a+b for a, b in zip(s[::2], s[1::2]))
-        super(CertificateAuthority, self).save(*args, **kwargs)
-
     class Meta:
         verbose_name = _('Certificate Authority')
         verbose_name_plural = _('Certificate Authorities')
