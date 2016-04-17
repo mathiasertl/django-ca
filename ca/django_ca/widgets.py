@@ -98,19 +98,6 @@ class ProfileWidget(widgets.Select):
         )
 
 
-class PathlenWidget(widgets.TextInput):
-    def render(self, name, value, attrs=None):
-        html = super(PathlenWidget, self).render(name, value, attrs=attrs)
-        label = '<label for="%s">%s</label>' % (attrs.get('id'), _('pathlen:'))
-        html = '<span class="pathlen-widget-wrapper">%s%s</span>' % (label, html)
-        return html
-
-    class Media:
-        css = {
-            'all': ('django_ca/admin/css/pathlenwidget.css', ),
-        }
-
-
 class CustomMultiWidget(widgets.MultiWidget):
     """Wraps the multi widget into a <p> element."""
 
