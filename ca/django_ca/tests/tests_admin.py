@@ -15,6 +15,8 @@
 
 from datetime import timedelta
 
+from OpenSSL import crypto
+
 from django.contrib.auth.models import User
 from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.core.urlresolvers import reverse
@@ -22,11 +24,13 @@ from django.test import Client
 from django.utils import timezone
 
 from ..models import Certificate
+from ..utils import SUBJECT_FIELDS
 from .base import DjangoCAWithCertTestCase
+from .base import DjangoCAWithCSRTestCase
 from .base import override_tmpcadir
 
 
-class AdminTestCase(DjangoCAWithCertTestCase):
+class AdminTestMixin(object):
     def setUp(self):
         self.user = User.objects.create_superuser(username='user', password='password',
                                                   email='user@example.com')
@@ -34,7 +38,7 @@ class AdminTestCase(DjangoCAWithCertTestCase):
         self.changelist_url = reverse('admin:django_ca_certificate_changelist')
         self.client = Client()
         self.assertTrue(self.client.login(username='user', password='password'))
-        super(AdminTestCase, self).setUp()
+        super(AdminTestMixin, self).setUp()
 
     def assertCSS(self, response, path):
         css = '<link href="%s" type="text/css" media="all" rel="stylesheet" />' % static(path)
@@ -48,7 +52,7 @@ class AdminTestCase(DjangoCAWithCertTestCase):
 
 
 @override_tmpcadir()
-class ChangelistTestCase(AdminTestCase):
+class ChangelistTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     """Test the changelist view."""
 
     def assertCerts(self, response, certs):
@@ -94,7 +98,7 @@ class ChangelistTestCase(AdminTestCase):
 
 
 @override_tmpcadir()
-class RevokeActionTestCase(AdminTestCase):
+class RevokeActionTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     """Test the "revoke" action in the changelist."""
 
     def test_basic(self):
@@ -116,7 +120,7 @@ class RevokeActionTestCase(AdminTestCase):
 
 
 @override_tmpcadir()
-class ChangeTestCase(AdminTestCase):
+class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     def test_basic(self):
         response = self.client.get(self.change_url())
         self.assertEqual(response.status_code, 200)
@@ -129,7 +133,7 @@ class ChangeTestCase(AdminTestCase):
 
 
 @override_tmpcadir()
-class AddTestCase(AdminTestCase):
+class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
     def test_get(self):
         response = self.client.get(self.add_url)
         self.assertEqual(response.status_code, 200)
@@ -220,3 +224,31 @@ class AddTestCase(AdminTestCase):
 
         with self.assertRaises(Certificate.DoesNotExist):
             Certificate.objects.get(cn=cn)
+
+
+@override_tmpcadir()
+class CSRDetailTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
+    def setUp(self):
+        self.url = reverse('admin:django_ca_certificate_csr_details')
+        super(CSRDetailTestCase, self).setUp()
+
+    def test_basic(self):
+        response = self.client.post(self.url, data={'csr': self.csr_pem})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'subject': {}})
+
+    def test_fields(self):
+        subject = {f: 'test-%s' % f for f in SUBJECT_FIELDS}
+        subject['C'] = 'AT'
+        key, csr = self.create_csr(**subject)
+        csr_pem = crypto.dump_certificate_request(crypto.FILETYPE_PEM, csr).decode('utf-8')
+
+        response = self.client.post(self.url, data={'csr': csr_pem})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'subject': {
+            'C': 'AT', 'CN': 'test-CN', 'L': 'test-L', 'O': 'test-O', 'OU': 'test-OU', 'ST':
+            'test-ST', 'emailAddress': 'test-emailAddress'}})
+
+    def test_bad_request(self):
+        response = self.client.post(self.url, data={'csr': 'foobar'})
+        self.assertEqual(response.status_code, 400)

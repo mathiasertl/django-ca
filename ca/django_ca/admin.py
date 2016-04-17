@@ -169,8 +169,9 @@ class CertificateAdmin(admin.ModelAdmin):
         csr_subject = csr.get_subject()
         subject = {}
         for attr in SUBJECT_FIELDS:
-            if hasattr(csr_subject, attr):
-                subject[attr] = getattr(csr_subject, attr)
+            value = getattr(csr_subject, attr)
+            if value:
+                subject[attr] = value
 
         return HttpResponse(json.dumps({
             'subject': subject,

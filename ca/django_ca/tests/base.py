@@ -120,13 +120,17 @@ class DjangoCATestCase(TestCase):
             **kwargs)
 
     @classmethod
-    def create_csr(cls):
+    def create_csr(cls, **fields):
         # see also: https://github.com/msabramo/pyOpenSSL/blob/master/examples/certgen.py
         pkey = crypto.PKey()
         pkey.generate_key(crypto.TYPE_RSA, 1024)
 
         req = crypto.X509Req()
-        #subj = req.get_subject()
+
+        subj = req.get_subject()
+        for key, value in fields.items():
+            setattr(subj, key, value)
+
         req.set_pubkey(pkey)
         req.sign(pkey, 'sha256')
         return pkey, req
