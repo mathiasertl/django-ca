@@ -162,3 +162,56 @@ class AddTestCase(AdminTestCase):
                          'TLS Web Client Authentication, TLS Web Server Authentication')
         self.assertEqual(cert.ca, self.ca)
         self.assertEqual(cert.csr, self.csr_pem)
+
+    def test_add_no_key_usage(self):
+        cn = 'test-add2.example.com'
+        response = self.client.post(self.add_url, data={
+            'csr': self.csr_pem,
+            'ca': self.ca.pk,
+            'profile': 'webserver',
+            'subject_0': 'US',
+            'subject_5': cn,
+            'subjectAltName_1': True,
+            'algorithm': 'sha256',
+            'expires': '2018-04-12',
+            'keyUsage_0': [],
+            'keyUsage_1': False,
+            'extendedKeyUsage_0': [],
+            'extendedKeyUsage_1': False,
+        })
+        self.assertEqual(response.status_code, 302)
+        cert = Certificate.objects.get(cn=cn)
+        self.assertEqual(response['Location'], self.changelist_url)
+
+        self.assertSubject(cert.x509, {'C': 'US', 'CN': cn})
+        self.assertEqual(cert.subjectAltName(), 'DNS:%s' % cn)
+        self.assertEqual(cert.basicConstraints(), 'critical,CA:FALSE')
+        self.assertEqual(cert.keyUsage(), '')
+        self.assertEqual(cert.extendedKeyUsage(), '')
+        self.assertEqual(cert.ca, self.ca)
+        self.assertEqual(cert.csr, self.csr_pem)
+
+    def test_wrong_csr(self):
+        cn = 'test-add-wrong-csr.example.com'
+        response = self.client.post(self.add_url, data={
+            'csr': 'whatever\n%s' % self.csr_pem,
+            'ca': self.ca.pk,
+            'profile': 'webserver',
+            'subject_0': 'US',
+            'subject_5': cn,
+            'subjectAltName_1': True,
+            'algorithm': 'sha256',
+            'expires': '2018-04-12',
+            'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
+            'keyUsage_1': True,
+            'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
+            'extendedKeyUsage_1': False,
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Enter a valid CSR (in PEM format).", response.content.decode('utf-8'))
+        self.assertFalse(response.context['adminform'].form.is_valid())
+        self.assertEqual(response.context['adminform'].form.errors,
+                         {'csr': ['Enter a valid CSR (in PEM format).']})
+
+        with self.assertRaises(Certificate.DoesNotExist):
+            Certificate.objects.get(cn=cn)
