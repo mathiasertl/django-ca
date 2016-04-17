@@ -16,6 +16,7 @@
 from datetime import datetime
 
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 
 from django_ca.models import Certificate
 
@@ -41,5 +42,9 @@ class Command(BaseCommand):
             if cert.revoked is True:
                 info = 'revoked'
             else:
-                info = 'expires: %s' % cert.expires.strftime('%Y-%m-%d')
-            self.stdout.write('%s: %s (%s)' % (cert.serial, cert.cn, info))
+                word = 'expires'
+                if cert.expires < timezone.now():
+                    word = 'expired'
+
+                info = '%s: %s' % (word, cert.expires.strftime('%Y-%m-%d'))
+            self.stdout.write('%s - %s (%s)' % (cert.serial, cert.cn, info))
