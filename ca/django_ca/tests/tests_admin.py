@@ -131,6 +131,20 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertCSS(response, 'django_ca/admin/css/monospace.css')
         self.assertCSS(response, 'django_ca/admin/css/certificateadmin.css')
 
+    def test_revoked(self):
+        # view a revoked certificate (fieldsets are collapsed differently)
+        cert = Certificate.objects.get(serial=self.cert.serial)
+        cert.revoke()
+
+        response = self.client.get(self.change_url())
+        self.assertEqual(response.status_code, 200)
+
+        templates = [t.name for t in response.templates]
+        self.assertIn('django_ca/admin/change_form.html', templates)
+        self.assertIn('admin/change_form.html', templates)
+        self.assertCSS(response, 'django_ca/admin/css/monospace.css')
+        self.assertCSS(response, 'django_ca/admin/css/certificateadmin.css')
+
 
 @override_tmpcadir()
 class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
@@ -252,3 +266,9 @@ class CSRDetailTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
     def test_bad_request(self):
         response = self.client.post(self.url, data={'csr': 'foobar'})
         self.assertEqual(response.status_code, 400)
+
+    def test_not_logged_in(self):
+        client = Client()
+
+        response = client.post(self.url, data={'csr': self.csr_pem})
+        self.assertEqual(response.status_code, 302)
