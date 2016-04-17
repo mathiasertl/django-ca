@@ -119,10 +119,10 @@ class BinaryOutputWrapper(OutputWrapper):
 
     def write(self, msg, style_func=None, ending=None):
         ending = self.ending if ending is None else ending
-        if isinstance(msg, str):
+        if isinstance(msg, str):  # pragma: no cover
             msg = msg.encode('utf-8')
 
-        if ending and not msg.endswith(ending):
+        if ending and not msg.endswith(ending):  # pragma: no cover
             msg += ending
         self._out.write(msg)
 
@@ -141,9 +141,9 @@ class BaseCommand(_BaseCommand):
 
     def execute(self, *args, **options):
         if self.binary_output is True:
-            if options.get('stdout'):
+            if options.get('stdout'):  # pragma: no branch
                 self.stdout = BinaryOutputWrapper(options.pop('stdout'))            
-            if options.get('stderr'):
+            if options.get('stderr'):  # pragma: no branch
                 self.stderr = BinaryOutputWrapper(options.pop('stderr'))
             options['no_color'] = True
 
