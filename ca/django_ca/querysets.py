@@ -77,6 +77,9 @@ class CertificateAuthorityQuerySet(models.QuerySet):
         else:
             cert.sign(parent.key, algorithm)
 
+        if crl_url is not None:
+            crl_url = '\n'.join(crl_url)
+
         # create certificate in database
         ca = self.model(name=name, issuer_url=issuer_url, issuer_alt_name=issuer_alt_name,
                         ocsp_url=ocsp_url, crl_url=crl_url, parent=parent)
