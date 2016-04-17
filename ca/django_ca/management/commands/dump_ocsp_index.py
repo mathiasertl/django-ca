@@ -16,15 +16,12 @@
 from ...ocsp import get_index
 from ..base import BaseCommand
 
-# We need a two-letter year, otherwise OCSP doesn't work
-date_format = '%y%m%d%H%M%SZ'
-
 
 class Command(BaseCommand):
     help = "Write an OCSP index file."
 
     def add_arguments(self, parser):
-        self.add_ca(parser, 'ca', allow_disabled=True)
+        self.add_ca(parser, allow_disabled=True)
         parser.add_argument('path', type=str, default='-', nargs='?',
                             help="Where to write the index (default: stdout)")
 
