@@ -214,14 +214,15 @@ def init_demo():
     cert.revoke('keyCompromise')
     cert.save()
 
+    ca = CertificateAuthority.objects.first()
+
     print(green('Create CRL and OCSP index...'))
     crl_path = os.path.join(ca_settings.CA_DIR, 'crl.pem')
     ocsp_index = os.path.join(ca_settings.CA_DIR, 'ocsp_index.txt')
     manage('dump_crl', crl_path)
-    manage('dump_ocsp_index', ocsp_index)
+    manage('dump_ocsp_index', ca.serial, ocsp_index)
 
     ca_crl_path = os.path.join(ca_settings.CA_DIR, 'ca_crl.pem')
-    ca = CertificateAuthority.objects.first()
 
     # Concat the CA certificate and the CRL, this is required by "openssl verify"
     with open(crl_path) as crl, open(ca_crl_path, 'w') as ca_crl:
