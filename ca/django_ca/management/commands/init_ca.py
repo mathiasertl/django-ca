@@ -81,10 +81,10 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         self.add_ca_args(parser)
 
     def handle(self, name, country, state, city, org, ou, cn, **options):
-        if not os.path.exists(ca_settings.CA_DIR):
+        if not os.path.exists(ca_settings.CA_DIR):  # pragma: no cover
             os.makedirs(ca_settings.CA_DIR)
 
-        if options['password'] == '':
+        if options['password'] == '':  # pragma: no cover
             options['password'] = getpass()
 
         subject = {'C': country, 'ST': state, 'L': city, 'O': org, 'OU': ou, 'CN': cn, }
