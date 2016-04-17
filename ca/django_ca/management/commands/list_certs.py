@@ -15,10 +15,10 @@
 
 from datetime import datetime
 
-from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from django_ca.models import Certificate
+from ...models import Certificate
+from ..base import BaseCommand
 
 
 class Command(BaseCommand):
