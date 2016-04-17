@@ -196,11 +196,19 @@ def init_demo():
     print(green('Generate OCSP certificate...'))
     ocsp_key, ocsp_csr, ocsp_pem = create_cert('localhost', alt=['localhost'], profile='ocsp')
 
-    # Create some client certificates
+    # Create some client certificates (always trust localhost to ease testing)
     for i in range(1, 10):
         hostname = 'host%s.example.com' % i
         print(green('Generate certificate for %s...' % hostname))
         create_cert(hostname, cn=hostname, alt=['localhost'])
+
+    # create stunnel.pem
+    key_path = os.path.join(ca_settings.CA_DIR, 'host1.example.com.key')
+    pem_path = os.path.join(ca_settings.CA_DIR, 'host1.example.com.pem')
+    stunnel_path = os.path.join(ca_settings.CA_DIR, 'stunnel.pem')
+    with open(key_path) as key, open(pem_path) as pem, open(stunnel_path, 'w') as stunnel:
+        stunnel.write(key.read())
+        stunnel.write(pem.read())
 
     print(green('Creating client certificate...'))
     create_cert('client', cn='First Last', cn_in_san=False, alt=['user@example.com'], ca=child_ca)
