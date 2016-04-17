@@ -50,12 +50,6 @@ class CertificateAuthorityQuerySet(models.QuerySet):
         cert.set_issuer(cert.get_subject())
         cert.set_pubkey(private_key)
 
-        # sign the certificate
-        if parent is None:
-            cert.sign(private_key, algorithm)
-        else:
-            cert.sign(parent.key, algorithm)
-
         basicConstraints = 'CA:TRUE'
         if pathlen is not False:
             basicConstraints += ', pathlen:%s' % pathlen
@@ -76,8 +70,12 @@ class CertificateAuthorityQuerySet(models.QuerySet):
                                              b'keyid,issuer', issuer=parent.x509)
         cert.add_extensions([authKeyId])
 
-        if crl_url is not None:
-            crl_url = '\n'.join(crl_url)
+
+        # sign the certificate
+        if parent is None:
+            cert.sign(private_key, algorithm)
+        else:
+            cert.sign(parent.key, algorithm)
 
         # create certificate in database
         ca = self.model(name=name, issuer_url=issuer_url, issuer_alt_name=issuer_alt_name,
