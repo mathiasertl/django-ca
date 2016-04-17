@@ -50,6 +50,10 @@ class AdminTestMixin(object):
 
         return reverse('admin:django_ca_certificate_change', args=(pk, ))
 
+    def assertRequiresLogin(self, response):
+        expected = '%s?next=%s' % (reverse('admin:login'), response.wsgi_request.path)
+        self.assertRedirects(response, expected)
+
 
 @override_tmpcadir()
 class ChangelistTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
@@ -94,7 +98,7 @@ class ChangelistTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     def test_unauthorized(self):
         client = Client()
         response = client.get(self.changelist_url)
-        self.assertEqual(response.status_code, 302)
+        self.assertRequiresLogin(response)
 
 
 @override_tmpcadir()
@@ -271,4 +275,39 @@ class CSRDetailTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         client = Client()
 
         response = client.post(self.url, data={'csr': self.csr_pem})
-        self.assertEqual(response.status_code, 302)
+        self.assertRequiresLogin(response)
+
+
+@override_tmpcadir()
+class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
+    def get_url(self, cert):
+        return reverse('admin:django_ca_certificate_revoke', kwargs={'pk': cert.pk})
+
+    @property
+    def url(self):
+        return self.get_url(cert=self.cert)
+    
+    def test_no_reason(self):
+        self.client.post(self.url, data={'reason': ''})
+        cert = Certificate.objects.get(serial=self.cert.serial)
+        self.assertTrue(cert.revoked)
+        self.assertIsNone(cert.revoked_reason)
+
+    def test_with_reason(self):
+        self.client.post(self.url, data={'reason': 'certificateHold'})
+        cert = Certificate.objects.get(serial=self.cert.serial)
+        self.assertTrue(cert.revoked)
+        self.assertEqual(cert.revoked_reason, 'certificateHold')
+
+    def test_not_logged_in(self):
+        client = Client()
+
+        response = client.get(self.url)
+        self.assertRequiresLogin(response)
+
+        response = client.post(self.url, data={})
+        self.assertRequiresLogin(response)
+
+        # redirect ok, but not revoked either, right?
+        cert = Certificate.objects.get(serial=self.cert.serial)
+        self.assertFalse(cert.revoked)
