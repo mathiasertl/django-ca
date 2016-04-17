@@ -19,11 +19,13 @@ from OpenSSL import crypto
 
 from django_ca.tests.base import DjangoCATestCase
 
-from django_ca import ca_settings
-from django_ca.models import Certificate
-from django_ca.models import CertificateAuthority
+from .. import ca_settings
+from ..models import CertificateAuthority
+
+from .base import override_tmpcadir
 
 
+@override_tmpcadir()
 class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
     def test_basic(self):
         key_size = ca_settings.CA_MIN_KEY_SIZE

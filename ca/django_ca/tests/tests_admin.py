@@ -23,6 +23,7 @@ from django.utils import timezone
 
 from ..models import Certificate
 from .base import DjangoCAWithCertTestCase
+from .base import override_tmpcadir
 
 
 class AdminTestCase(DjangoCAWithCertTestCase):
@@ -46,6 +47,7 @@ class AdminTestCase(DjangoCAWithCertTestCase):
         return reverse('admin:django_ca_certificate_change', args=(pk, ))
 
 
+@override_tmpcadir()
 class ChangelistTestCase(AdminTestCase):
     """Test the changelist view."""
 
@@ -91,6 +93,7 @@ class ChangelistTestCase(AdminTestCase):
         self.assertEqual(response.status_code, 302)
 
 
+@override_tmpcadir()
 class RevokeActionTestCase(AdminTestCase):
     """Test the "revoke" action in the changelist."""
 
@@ -112,6 +115,7 @@ class RevokeActionTestCase(AdminTestCase):
         self.assertEqual(response['Location'], self.changelist_url)
 
 
+@override_tmpcadir()
 class ChangeTestCase(AdminTestCase):
     def test_basic(self):
         response = self.client.get(self.change_url())
@@ -124,6 +128,7 @@ class ChangeTestCase(AdminTestCase):
         self.assertCSS(response, 'django_ca/admin/css/certificateadmin.css')
 
 
+@override_tmpcadir()
 class AddTestCase(AdminTestCase):
     def test_get(self):
         response = self.client.get(self.add_url)
