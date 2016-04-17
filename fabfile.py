@@ -190,7 +190,7 @@ def init_demo():
     print(green('Initiating Child CA...'))
     manage('init_ca', 'Child CA', 'AT', 'Vienna', 'Vienna', 'example', 'example', 'sub.ca.example.com')
     root_ca = CertificateAuthority.objects.get(name='Root CA')
-    client_ca = CertificateAuthority.objects.get(name='Child CA')
+    child_ca = CertificateAuthority.objects.get(name='Child CA')
 
     # generate OCSP certificate
     print(green('Generate OCSP certificate...'))
@@ -203,7 +203,7 @@ def init_demo():
         create_cert(hostname, cn=hostname, alt=['localhost'])
 
     print(green('Creating client certificate...'))
-    create_cert('client', cn='First Last', cn_in_san=False, alt=['user@example.com'], ca=client_ca)
+    create_cert('client', cn='First Last', cn_in_san=False, alt=['user@example.com'], ca=child_ca)
 
     # Revoke host1 and host2
     print(green('Revoke host1.example.com and host2.example.com...'))
@@ -240,6 +240,9 @@ def init_demo():
     ca_crt = os.path.join(ca_settings.CA_DIR, '%s.pem' % root_ca.serial)
     with open(ca_crt, 'w') as outstream:
         outstream.write(root_ca.pub)
+    ca_crt = os.path.join(ca_settings.CA_DIR, '%s.pem' % child_ca.serial)
+    with open(ca_crt, 'w') as outstream:
+        outstream.write(child_ca.pub)
 
     os.chdir('../')
     cwd = os.getcwd()
