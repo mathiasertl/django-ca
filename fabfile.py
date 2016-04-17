@@ -199,7 +199,7 @@ def init_demo():
     for i in range(1, 10):
         hostname = 'host%s.example.com' % i
         print(green('Generate certificate for %s...' % hostname))
-        create_cert(hostname, cn=hostname)
+        create_cert(hostname, cn=hostname, alt=['localhost'])
 
     print(green('Creating client certificate...'))
     create_cert('client', cn='First Last', cn_in_san=False, alt=['user@example.com'], ca=client_ca)
