@@ -189,6 +189,7 @@ def init_demo():
           )
     print(green('Initiating Child CA...'))
     manage('init_ca', 'Child CA', 'AT', 'Vienna', 'Vienna', 'example', 'example', 'sub.ca.example.com')
+    root_ca = CertificateAuthority.objects.get(name='Root CA')
     client_ca = CertificateAuthority.objects.get(name='Child CA')
 
     # generate OCSP certificate
@@ -214,19 +215,18 @@ def init_demo():
     cert.revoke('keyCompromise')
     cert.save()
 
-    ca = CertificateAuthority.objects.first()
 
     print(green('Create CRL and OCSP index...'))
     crl_path = os.path.join(ca_settings.CA_DIR, 'crl.pem')
     ocsp_index = os.path.join(ca_settings.CA_DIR, 'ocsp_index.txt')
     manage('dump_crl', crl_path)
-    manage('dump_ocsp_index', ca.serial, ocsp_index)
+    manage('dump_ocsp_index', root_ca.serial, ocsp_index)
 
     ca_crl_path = os.path.join(ca_settings.CA_DIR, 'ca_crl.pem')
 
     # Concat the CA certificate and the CRL, this is required by "openssl verify"
     with open(crl_path) as crl, open(ca_crl_path, 'w') as ca_crl:
-        ca_crl.write(ca.pub)
+        ca_crl.write(root_ca.pub)
         ca_crl.write(crl.read())
 
     # create a few watchers
@@ -237,9 +237,9 @@ def init_demo():
     User.objects.create_superuser('user', 'user@example.com', 'nopass')
 
     # write public ca cert so it can be used by demo commands below
-    ca_crt = os.path.join(ca_settings.CA_DIR, '%s.pem' % ca.serial)
+    ca_crt = os.path.join(ca_settings.CA_DIR, '%s.pem' % root_ca.serial)
     with open(ca_crt, 'w') as outstream:
-        outstream.write(ca.pub)
+        outstream.write(root_ca.pub)
 
     os.chdir('../')
     cwd = os.getcwd()
