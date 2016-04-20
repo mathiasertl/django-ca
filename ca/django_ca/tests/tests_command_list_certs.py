@@ -15,12 +15,9 @@
 
 from datetime import timedelta
 
-from django.core import mail
-from django.core.management.base import CommandError
 from django.utils import timezone
 
 from ..models import Certificate
-from ..models import Watcher
 from .base import DjangoCAWithCertTestCase
 from .base import override_tmpcadir
 
@@ -70,7 +67,6 @@ class ListCertsTestCase(DjangoCAWithCertTestCase):
 
     def test_ca(self):
         child_ca = self.init_ca(name='Child CA', parent=self.ca)
-        cert = Certificate.objects.get(serial=self.cert.serial)
 
         stdout, stderr = self.cmd('list_certs')
         self.assertEqual(stdout, '%s\n' % self.line(self.cert))
