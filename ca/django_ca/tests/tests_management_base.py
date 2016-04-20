@@ -14,6 +14,8 @@
 # see <http://www.gnu.org/licenses/>
 
 import argparse
+import os
+import tempfile
 
 from OpenSSL import crypto
 
@@ -133,6 +135,26 @@ setup.py: error: %s: %s: Private key does not exist.\n''' % (ca.name, ca.private
 
         self.assertParserError([ca.serial], expected)
 
+    def test_unparseable(self):
+
+        fd, path = tempfile.mkstemp()
+        stream = os.fdopen(fd, mode='w')
+
+        try:
+            ca = CertificateAuthority.objects.first()
+            ca.private_key_path = path
+            ca.save()
+
+            expected = '''usage: setup.py [-h] ca
+setup.py: error: %s: %s: Could not read private key.\n''' % (ca.name, ca.private_key_path)
+
+            stream.write('unparseable')
+            stream.close()
+
+            self.assertParserError([ca.serial], expected)
+        finally:
+            stream.close()
+            os.remove(path)
 
 class URLActionTestCase(DjangoCATestCase):
     def setUp(self):
