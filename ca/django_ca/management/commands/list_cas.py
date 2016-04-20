@@ -22,5 +22,8 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         for ca in CertificateAuthority.objects.all():
-            self.stdout.write(
-                '%s - %s%s' % (ca.serial, ca.name, ' (disabled)' if not ca.enabled else ''))
+            text = '%s - %s' % (ca.serial, ca.name)
+            if ca.enabled is False:
+                text += ' (disabled)'
+
+            self.stdout.write(text)
