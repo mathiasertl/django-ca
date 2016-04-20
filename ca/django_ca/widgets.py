@@ -122,7 +122,7 @@ class SubjectWidget(CustomMultiWidget):
         super(SubjectWidget, self).__init__(_widgets, attrs)
 
     def decompress(self, value):
-        if value is None:
+        if value is None:  # pragma: no cover
             return ('', '', '', '', '', '')
         return [
             value.get('C', ''),
@@ -143,7 +143,7 @@ class SubjectAltNameWidget(CustomMultiWidget):
         )
         super(SubjectAltNameWidget, self).__init__(_widgets, attrs)
 
-    def decompress(self, value):
+    def decompress(self, value):  # pragma: no cover
         if value:
             return value
         return ('', True)
@@ -157,7 +157,7 @@ class KeyUsageWidget(CustomMultiWidget):
         )
         super(KeyUsageWidget, self).__init__(_widgets, attrs)
 
-    def decompress(self, value):
+    def decompress(self, value):  # pragma: no cover
         if value:
             return value
         return ([], True)
