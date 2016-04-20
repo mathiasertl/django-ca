@@ -63,9 +63,8 @@ class SubjectAltNameField(forms.MultiValueField):
 class KeyUsageField(forms.MultiValueField):
     def __init__(self, choices, *args, **kwargs):
         label = kwargs['label']
-        if ca_settings.CA_DEFAULT_PROFILE:
-            initial = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE][label]
-            kwargs.setdefault('initial', [initial['value'], initial['critical']])
+        initial = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE][label]
+        kwargs.setdefault('initial', [initial['value'], initial['critical']])
 
         fields = (
             forms.MultipleChoiceField(required=False, choices=choices),
