@@ -42,7 +42,6 @@ class Watcher(models.Model):
         try:
             w = cls.objects.get(mail=addr)
             if w.name != name:
-                # TODO: func should have a non-update parameter
                 w.name = name
                 w.save()
         except cls.DoesNotExist:
