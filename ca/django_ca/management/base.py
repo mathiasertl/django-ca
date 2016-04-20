@@ -79,12 +79,9 @@ class CertificateAuthorityAction(argparse.Action):
         # try to parse the private key
         try:
             value.key
-        except OSError:
-            raise CommandError(
+        except (OSError, crypto.Error):
+            raise parser.error(
                 '%s: %s: Could not read private key.' % (value, value.private_key_path))
-        except Exception as e:
-            # TODO: we should catch unparseable keys in own except clause
-            raise CommandError(str(e))
 
         setattr(namespace, self.dest, value)
 
@@ -142,7 +139,7 @@ class BaseCommand(_BaseCommand):
     def execute(self, *args, **options):
         if self.binary_output is True:
             if options.get('stdout'):  # pragma: no branch
-                self.stdout = BinaryOutputWrapper(options.pop('stdout'))            
+                self.stdout = BinaryOutputWrapper(options.pop('stdout'))
             if options.get('stderr'):  # pragma: no branch
                 self.stderr = BinaryOutputWrapper(options.pop('stderr'))
             options['no_color'] = True
