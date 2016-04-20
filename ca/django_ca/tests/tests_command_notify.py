@@ -56,6 +56,6 @@ class ViewCertTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(stdout, '')
         self.assertEqual(stderr, '')
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].subject, 
+        self.assertEqual(mail.outbox[0].subject,
                          'Certificate expiration for %s on %s' % (cert.cn, timestamp))
-        self.assertEqual(mail.outbox[0].to, [email]) 
+        self.assertEqual(mail.outbox[0].to, [email])

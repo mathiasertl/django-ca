@@ -34,15 +34,15 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
             status = 'E'
         elif cert.revoked is True:
             status = 'R'
-            revocation = cert.revoked_date.strftime(date_format) 
+            revocation = cert.revoked_date.strftime(date_format)
 
-            if cert.revoked_reason: 
-                revocation += ',%s' % cert.revoked_reason 
+            if cert.revoked_reason:
+                revocation += ',%s' % cert.revoked_reason
         else:
             status = 'V'
 
         return '%s\t%s\t%s\t%s\tunknown\t%s' % (
-            status, 
+            status,
             cert.x509.get_notAfter().decode('utf-8'),
             revocation,
             cert.serial.replace(':', ''),

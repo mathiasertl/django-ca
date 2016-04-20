@@ -29,7 +29,7 @@ from .base import override_tmpcadir
 @override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class DumpCertTestCase(DjangoCAWithCertTestCase):
     def test_basic(self):
-        stdout, stderr = self.cmd('dump_cert', self.cert.serial, 
+        stdout, stderr = self.cmd('dump_cert', self.cert.serial,
                                   stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
         self.assertEqual(stdout, self.cert.pub.encode('utf-8'))

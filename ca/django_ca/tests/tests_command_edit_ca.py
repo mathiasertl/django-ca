@@ -45,7 +45,7 @@ class SignCertTestCase(DjangoCAWithCATestCase):
         ca.save()
 
         # we can also change nothing at all
-        stdout, stderr = self.cmd( 'edit_ca', self.ca.serial, enable=True, crl_url=None)
+        stdout, stderr = self.cmd('edit_ca', self.ca.serial, enable=True, crl_url=None)
         self.assertEqual(stdout, '')
         self.assertEqual(stderr, '')
 

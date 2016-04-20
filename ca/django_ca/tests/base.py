@@ -92,7 +92,6 @@ class DjangoCATestCase(TestCase):
             if ca_dir is not None:
                 shutil.rmtree(ca_dir)
 
-
     def setUp(self):
         reload_module(ca_settings)
 

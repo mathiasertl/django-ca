@@ -286,7 +286,7 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     @property
     def url(self):
         return self.get_url(cert=self.cert)
-    
+
     def test_get(self):
         self.client.get(self.url)
 

@@ -20,20 +20,21 @@ from .base import override_tmpcadir
 @override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class CertWatchersTestCase(DjangoCAWithCertTestCase):
     def test_basic(self):
-        stdout, stderr = self.cmd('cert_watchers', self.cert.serial, add=['user-added@example.com'])
+        stdout, stderr = self.cmd('cert_watchers', self.cert.serial,
+                                  add=['user-added@example.com'])
         self.assertEqual(stdout, '')
         self.assertEqual(stderr, '')
         self.assertTrue(self.cert.watchers.filter(mail='user-added@example.com').exists())
 
         # remove user again
-        stdout, stderr = self.cmd('cert_watchers', self.cert.serial, 
+        stdout, stderr = self.cmd('cert_watchers', self.cert.serial,
                                   rm=['user-added@example.com'])
         self.assertEqual(stdout, '')
         self.assertEqual(stderr, '')
         self.assertFalse(self.cert.watchers.filter(mail='user-added@example.com').exists())
 
         # removing again does nothing, but doesn't throw an error either
-        stdout, stderr = self.cmd('cert_watchers', self.cert.serial, 
+        stdout, stderr = self.cmd('cert_watchers', self.cert.serial,
                                   rm=['user-added@example.com'])
         self.assertEqual(stdout, '')
         self.assertEqual(stderr, '')

@@ -53,8 +53,8 @@ class FormatActionTestCase(DjangoCATestCase):
 
     def test_error(self):
         self.assertParserError(['--action=foo'],
-                                'usage: setup.py [-h] [--action ACTION]\n'
-                                'setup.py: error: Unknown format "FOO".\n')
+                               'usage: setup.py [-h] [--action ACTION]\n'
+                               'setup.py: error: Unknown format "FOO".\n')
 
 
 class KeySizeActionTestCase(DjangoCATestCase):
@@ -102,8 +102,9 @@ class CertificateAuthorityActionTestCase(DjangoCAWithCATestCase):
         self.assertEqual(ns.ca, self.ca)
 
     def test_missing(self):
-        self.assertParserError(['foo'], '''usage: setup.py [-h] ca\n'''
-                                        '''setup.py: error: FOO: Unknown Certiciate Authority.\n''')
+        self.assertParserError(['foo'],
+                               '''usage: setup.py [-h] ca\n'''
+                               '''setup.py: error: FOO: Unknown Certiciate Authority.\n''')
 
     def test_disabled(self):
         ca = CertificateAuthority.objects.first()
@@ -147,6 +148,7 @@ class URLActionTestCase(DjangoCATestCase):
     def test_error(self):
         self.assertParserError(['--url=foo'], 'usage: setup.py [-h] [--url URL]\n'
                                               'setup.py: error: foo: Not a valid URL.\n')
+
 
 class MultipleURLActionTestCase(DjangoCATestCase):
     def setUp(self):

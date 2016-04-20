@@ -55,7 +55,6 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
 #        self.assertEqual(ca.authorityKeyIdentifier(), 'DNS:ca.example.com')  # a serial
         self.assertEqual(ca.issuerAltName(), '')
 
-
     def test_pathlen(self):
         key_size = ca_settings.CA_MIN_KEY_SIZE
         kwargs = dict(
@@ -98,4 +97,3 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
             CertificateAuthority.objects.init(key_size=int(key_size / 2), **kwargs)
         with self.assertRaises(RuntimeError):
             CertificateAuthority.objects.init(key_size=int(key_size / 4), **kwargs)
-

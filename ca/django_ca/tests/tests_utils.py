@@ -76,7 +76,8 @@ class MultilineURLValidatorTestCase(TestCase):
         multiline_url_validator('')
         multiline_url_validator('http://example.com')
         multiline_url_validator('http://example.com\nhttp://www.example.org')
-        multiline_url_validator('http://example.com\nhttp://www.example.org\nhttp://www.example.net')
+        multiline_url_validator('''http://example.com\nhttp://www.example.org
+http://www.example.net''')
 
     def test_error(self):
         with self.assertRaises(ValidationError):
@@ -87,6 +88,7 @@ class MultilineURLValidatorTestCase(TestCase):
             multiline_url_validator('http://www.example.com\nfoo')
         with self.assertRaises(ValidationError):
             multiline_url_validator('http://www.example.com\nfoo\nhttp://example.org')
+
 
 class GetBasicCertTestCase(TestCase):
     def assertCert(self, delta):
@@ -174,7 +176,8 @@ class GetSubjectAltNamesTest(TestCase):
         self.assertEqual(get_subjectAltName(['example.com']), b'DNS:example.com')
         self.assertEqual(get_subjectAltName(['8.8.8.8']), b'IP:8.8.8.8')
 
-        # NOTE: I could not find any info on if this format is correct or we need to use square brackets
+        # NOTE: I could not find any info on if this format is correct or we need to use square
+        #       brackets
         self.assertEqual(get_subjectAltName(['2001:4860:4860::8888']), b'IP:2001:4860:4860::8888')
 
     def test_multiple(self):
@@ -205,7 +208,8 @@ class GetSubjectAltNamesTest(TestCase):
     def test_cn(self):
         self.assertEqual(get_subjectAltName([], cn='example.com'), b'DNS:example.com')
         self.assertEqual(get_subjectAltName(['example.com'], cn='example.com'), b'DNS:example.com')
-        self.assertEqual(get_subjectAltName(['DNS:example.com'], cn='example.com'), b'DNS:example.com')
+        self.assertEqual(get_subjectAltName(['DNS:example.com'], cn='example.com'),
+                         b'DNS:example.com')
 
         self.assertEqual(
             get_subjectAltName(['example.com', 'example.org'], cn='example.com'),
@@ -229,7 +233,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
         # TODO: Does not account for multiple CRLs yet
         if self.ca.crl_url:
-            expected[b'crlDistributionPoints']  = '\nFull Name:\n  URI:%s\n' % self.ca.crl_url
+            expected[b'crlDistributionPoints'] = '\nFull Name:\n  URI:%s\n' % self.ca.crl_url
 
         auth_info_access = ''
         if self.ca.ocsp_url:
@@ -265,8 +269,6 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
         # verify extensions
         extensions = {
-#            b'authorityInfoAccess': 'OCSP - URI:https://ocsp.ca.example.com\n'
-#                                    'CA Issuers - URI:https://ca.example.com/ca.crt\n',
             b'extendedKeyUsage': 'TLS Web Server Authentication',
             b'keyUsage': 'Digital Signature, Key Encipherment, Key Agreement',
             b'subjectAltName': 'DNS:example.com',
