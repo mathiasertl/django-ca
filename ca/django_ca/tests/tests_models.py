@@ -16,6 +16,7 @@
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 
+from ..models import Certificate
 from ..models import Watcher
 
 
@@ -65,3 +66,12 @@ class TestWatcher(TestCase):
 
         w.name = name
         self.assertEqual(str(w), '%s <%s>' % (name, mail))
+
+
+class CertificateTests(TestCase):
+    def test_revocation(self):
+        # Never really happens in real life, but should still be checked
+        c = Certificate(revoked=False)
+
+        with self.assertRaises(ValueError):
+            c.get_revocation()

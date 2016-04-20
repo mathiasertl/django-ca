@@ -276,14 +276,16 @@ class Certificate(models.Model, X509CertMixin):
     def get_revocation(self):
         """Get a crypto.Revoked object or None if the cert is not revoked."""
 
-        if self.revoked:
-            r = crypto.Revoked()
-            # set_serial expects a str without the ':'
-            r.set_serial(bytes(self.serial.replace(':', ''), 'utf-8'))
-            if self.revoked_reason:
-                r.set_reason(bytes(self.revoked_reason, 'utf-8'))
-            r.set_rev_date(bytes(format_date(self.revoked_date), 'utf-8'))
-            return r
+        if self.revoked is False:
+            raise ValueError('Certificate is not revoked.')
+
+        r = crypto.Revoked()
+        # set_serial expects a str without the ':'
+        r.set_serial(bytes(self.serial.replace(':', ''), 'utf-8'))
+        if self.revoked_reason:
+            r.set_reason(bytes(self.revoked_reason, 'utf-8'))
+        r.set_rev_date(bytes(format_date(self.revoked_date), 'utf-8'))
+        return r
 
     def __str__(self):
         return self.cn
