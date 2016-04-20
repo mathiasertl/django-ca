@@ -46,6 +46,16 @@ class TestWatcher(TestCase):
         with self.assertRaises(ValidationError):
             Watcher.from_addr('foobar @')
 
+    def test_update(self):
+        mail = 'user@example.com'
+        name = 'Firstname Lastname'
+        newname = 'Newfirst Newlast'
+
+        Watcher.from_addr('%s <%s>' % (name, mail))
+        w = Watcher.from_addr('%s <%s>' % (newname, mail))
+        self.assertEqual(w.mail, mail)
+        self.assertEqual(w.name, newname)
+
     def test_output(self):
         mail = 'user@example.com'
         name = 'Firstname Lastname'
