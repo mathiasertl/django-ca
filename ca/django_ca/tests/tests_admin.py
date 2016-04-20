@@ -192,12 +192,14 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
 
     def test_add_no_key_usage(self):
         cn = 'test-add2.example.com'
+        san = 'test-san.example.com'
         response = self.client.post(self.add_url, data={
             'csr': self.csr_pem,
             'ca': self.ca.pk,
             'profile': 'webserver',
             'subject_0': 'US',
             'subject_5': cn,
+            'subjectAltName_0': san,
             'subjectAltName_1': True,
             'algorithm': 'sha256',
             'expires': '2018-04-12',
@@ -211,7 +213,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertEqual(response['Location'], self.changelist_url)
 
         self.assertSubject(cert.x509, {'C': 'US', 'CN': cn})
-        self.assertEqual(cert.subjectAltName(), 'DNS:%s' % cn)
+        self.assertEqual(cert.subjectAltName(), 'DNS:%s, DNS:%s' % (cn, san))
         self.assertEqual(cert.basicConstraints(), 'critical,CA:FALSE')
         self.assertEqual(cert.keyUsage(), '')
         self.assertEqual(cert.extendedKeyUsage(), '')
