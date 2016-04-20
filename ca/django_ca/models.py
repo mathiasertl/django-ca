@@ -34,12 +34,23 @@ class Watcher(models.Model):
 
     @classmethod
     def from_addr(cls, addr):
-        defaults = {}
-        if '<' in addr:
-            name, addr = re.match('(.*) <(.*)>', addr).groups()
-            defaults['name'] = name
+        name = None
+        match = re.match('(.*?)\s*<(.*)>', addr)
+        if match is not None:
+            name, addr = match.groups()
 
-        return cls.objects.update_or_create(mail=addr, defaults=defaults)[0]
+        try:
+            w = cls.objects.get(mail=addr)
+            if w.name != name:
+                # TODO: func should have a non-update parameter
+                w.name = name
+                w.save()
+        except cls.DoesNotExist:
+            w = cls(mail=addr, name=name)
+            w.full_clean()
+            w.save()
+
+        return w
 
     def __str__(self):
         if self.name:

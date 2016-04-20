@@ -14,10 +14,38 @@
 # see <http://www.gnu.org/licenses/>.
 
 from django.test import TestCase
+from django.core.exceptions import ValidationError
 
 from ..models import Watcher
 
+
 class TestWatcher(TestCase):
+    def test_from_addr(self):
+        mail = 'user@example.com'
+        name = 'Firstname Lastname'
+
+        w = Watcher.from_addr('%s <%s>' % (name, mail))
+        self.assertEqual(w.mail, mail)
+        self.assertEqual(w.name, name)
+
+    def test_spaces(self):
+        mail = 'user@example.com'
+        name = 'Firstname Lastname'
+
+        w = Watcher.from_addr('%s     <%s>' % (name, mail))
+        self.assertEqual(w.mail, mail)
+        self.assertEqual(w.name, name)
+
+        w = Watcher.from_addr('%s<%s>' % (name, mail))
+        self.assertEqual(w.mail, mail)
+        self.assertEqual(w.name, name)
+
+    def test_error(self):
+        with self.assertRaises(ValidationError):
+            Watcher.from_addr('foobar ')
+        with self.assertRaises(ValidationError):
+            Watcher.from_addr('foobar @')
+
     def test_output(self):
         mail = 'user@example.com'
         name = 'Firstname Lastname'
