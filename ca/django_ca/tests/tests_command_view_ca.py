@@ -15,13 +15,9 @@
 
 import os
 
-from django.core.management.base import CommandError
-from django.utils import six
-
 from .. import ca_settings
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
-from .base import override_settings
 from .base import override_tmpcadir
 
 
@@ -61,12 +57,10 @@ class SignCertTestCase(DjangoCAWithCATestCase):
 
     def test_basic(self):
         stdout, stderr = self.cmd('view_ca', self.ca.serial)
-        self.maxDiff = None
         self.assertOutput(self.ca, stdout)
         self.assertEqual(stderr, '')
 
     def test_family(self):
-        self.maxDiff = None
         parent = CertificateAuthority.objects.get(name=self.ca.name)
         child = self.init_ca(name='Child CA', parent=self.ca, pathlen=False)
 

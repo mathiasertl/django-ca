@@ -249,7 +249,6 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         self.assertEqual(exts, expected)
 
     def test_basic(self):
-        self.maxDiff =None
         kwargs = get_cert_profile_kwargs()
 
         cert = get_cert(self.ca, self.csr_pem, expires=720, algorithm='sha256',

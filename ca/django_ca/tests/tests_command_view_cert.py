@@ -58,7 +58,6 @@ Digest:
         self.assertEqual(stderr, '')
 
         # test with no pem but with extensions
-        self.maxDiff = None
         stdout, stderr = self.cmd('view_cert', self.cert.serial, no_pem=True, extensions=True)
         self.assertEqual(stdout, '''Common Name: %(cn)s
 Valid from: %(from)s
