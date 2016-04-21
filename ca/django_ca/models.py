@@ -30,7 +30,7 @@ from .querysets import CertificateAuthorityQuerySet
 
 class Watcher(models.Model):
     name = models.CharField(max_length=64, null=True, blank=True, verbose_name=_('CommonName'))
-    mail = models.EmailField(verbose_name=_('E-Mail'))
+    mail = models.EmailField(verbose_name=_('E-Mail'), unique=True)
 
     @classmethod
     def from_addr(cls, addr):
