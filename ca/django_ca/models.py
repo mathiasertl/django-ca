@@ -21,6 +21,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from OpenSSL import crypto
 
+from .managers import CertificateAuthorityManager
 from .utils import format_date
 from .utils import multiline_url_validator
 from .utils import parse_date
@@ -162,7 +163,7 @@ class X509CertMixin(object):
 
 
 class CertificateAuthority(models.Model, X509CertMixin):
-    objects = CertificateAuthorityQuerySet.as_manager()
+    objects = CertificateAuthorityManager.from_queryset(CertificateAuthorityQuerySet)()
 
     name = models.CharField(max_length=32, help_text=_('A human-readable name'), unique=True)
     serial = models.CharField(max_length=48, null=False, blank=False, unique=True)
