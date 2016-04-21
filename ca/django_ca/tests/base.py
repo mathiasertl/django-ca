@@ -21,7 +21,6 @@ from django_ca import ca_settings
 from django_ca.models import Certificate
 from django_ca.models import CertificateAuthority
 from django_ca.utils import get_cert_subject
-from django_ca.utils import get_cert
 from django_ca.utils import get_cert_profile_kwargs
 from django_ca.utils import parse_date
 
@@ -141,8 +140,8 @@ class DjangoCATestCase(TestCase):
         cert_kwargs.setdefault('subject', {})
         if subject:
             cert_kwargs['subject'].update(subject)
-        x509 = get_cert(ca=ca, csr=csr, algorithm='sha256', expires=720, subjectAltName=san,
-                        **cert_kwargs)
+        x509 = Certificate.objects.init(ca=ca, csr=csr, algorithm='sha256', expires=720,
+                                        subjectAltName=san, **cert_kwargs)
         expires = parse_date(x509.get_notAfter().decode('utf-8'))
 
         cert = Certificate(ca=ca, csr=csr, expires=expires)

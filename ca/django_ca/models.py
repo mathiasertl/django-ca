@@ -22,12 +22,11 @@ from django.utils.translation import ugettext_lazy as _
 from OpenSSL import crypto
 
 from .managers import CertificateAuthorityManager
-from .managers import CertificateManager
-from .querysets import CertificateAuthorityQuerySet
-from .querysets import CertificateQuerySet
 from .utils import format_date
 from .utils import multiline_url_validator
 from .utils import parse_date
+from .querysets import CertificateQuerySet
+from .querysets import CertificateAuthorityQuerySet
 
 
 class Watcher(models.Model):
@@ -243,7 +242,7 @@ class CertificateAuthority(models.Model, X509CertMixin):
 
 
 class Certificate(models.Model, X509CertMixin):
-    objects = CertificateManager.from_queryset(CertificateQuerySet)()
+    objects = CertificateQuerySet.as_manager()
 
     REVOCATION_REASONS = {
         '': _('No reason'),
