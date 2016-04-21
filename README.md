@@ -1,10 +1,13 @@
 # django-ca
 
-django-ca provides you with a local TLS certificate authority. It is based on
-[pyOpenSSL](https://pyopenssl.readthedocs.org/) and [Django](https://www.djangoproject.com/>), it
-can be used as an app in an existing Django project or with the basic project included.
-Certificates can be managed through Djangos admin interface or via `manage.py` commands - no
-webserver is needed, if you’re happy with the command-line.
+**django-ca** is a small project to manage TLS certificate authorities and easily issue
+certificates.  It is based on [pyOpenSSL](https://pyopenssl.readthedocs.org/) and
+[Django](https://www.djangoproject.com/>). It can be used as an app in an existing Django project
+or stand-alone with the basic project included.  Certificates can be managed through Djangos admin
+interface or via `manage.py` commands - so no webserver is needed, if you’re happy with the
+command-line.
+
+Documentation is available at http://django-ca.readthedocs.org/.
 
 ## Features
 
@@ -13,10 +16,14 @@ webserver is needed, if you’re happy with the command-line.
 3. Manage your entire certificate authority from the command line and/or via
    Djangos admin interface.
 4. Get email notifications about certificates about to expire.
-5. Support for certificate revocation lists (CRLs) and OCSP (both have to be
-   hosted separately).
+5. Support generating for certificate revocation lists (CRLs).
+6. Generates index files that can be used with the `openssl ocsp` command for a crude OCSP service.
 
 Please see https://django-ca.readthedocs.org for more extensive documentation.
+
+## Documentation
+
+Documentation is available at http://django-ca.readthedocs.org/.
 
 ## ChangeLog
 
