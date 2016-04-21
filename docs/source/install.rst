@@ -88,9 +88,9 @@ example file and edit it with your favourite editor::
 The most important settings are documented there, but you can of course use any
 setting `provided by Django
 <https://docs.djangoproject.com/en/dev/topics/settings/>`_. After you have
-configured **django-ca** (especially ``DATABASES`` and, if you intend to use
-the webinterface, ``STATIC_ROOT``), you need to run a few ``manage.py``
-commands::
+configured **django-ca** (especially ``SECRET_KEY``, ``DATABASES`` and, if you
+intend to use the webinterface, ``STATIC_ROOT``), you need to run a few
+``manage.py`` commands::
 
    python ca/manage.py migrate
 
