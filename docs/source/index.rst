@@ -18,7 +18,7 @@ Features:
 * Set up a secure local certificate authority in just a few minutes.
 * Written in Python3.4+.
 * Manage your entire certificate authority from the command line and/or via
-   Djangos admin interface.
+  Djangos admin interface.
 * Get email notifications about certificates about to expire.
 * Support generating for certificate revocation lists (CRLs).
 * Generates index files that can be used with the `openssl ocsp` command for a crude OCSP service.
