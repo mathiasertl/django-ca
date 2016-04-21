@@ -43,26 +43,6 @@ Ideas on what we could do for future releases:
 8. Update documenation (it says you can run an OCSP responder with django-ca)
 9. Add ability to download PEM/DER of certificates and the CA.
 
-## Test CRL and OCSP
-
-To create a demo certificate authority with an OCSP responder, configure a minimal
-`ca/ca/localsettings.py`:
-
-```
-DEBUG = True
-SECRET_KEY = "whatever"
-```
-
-and simply execute the `init_demo` fabfile target:
-
-```
-fab init_demo
-```
-
-This will create all certificates in `ca/files`, a user named `user` with the password `nopass` and
-tell you how to run the OCSP responder and verify via CRL and OCSP. Four server certificates are
-created, `host1.example.com` through `host4.example.com`, the first two are revoked.
-
 ## License
 
 This project is free software licensed under the [GPLv3](http://www.gnu.org/licenses/gpl.txt).

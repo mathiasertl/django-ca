@@ -6,8 +6,13 @@ Development
 Setup demo
 **********
 
-You can set up a demo using ``fab init_demo``. It creates two certificate
-authorities, webserver and client certificates and a CRL and a OCSP index.
+You can set up a demo using ``fab init_demo``. First create a minimal
+``localsettings.py`` file (in ``ca/ca/localsettings.py``)::
+
+   DEBUG = True
+   SECRET_KEY = "whatever"
+
+And then simply run ``fab init_demo`` from the root directory of your project.
 
 *****************************
 Development webserver via SSL
