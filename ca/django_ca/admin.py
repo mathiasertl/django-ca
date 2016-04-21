@@ -243,7 +243,7 @@ class CertificateAdmin(admin.ModelAdmin):
         subject = {k: v for k, v in data['subject'].items() if v}
         expires_days = (data['expires'] - date.today()).days
 
-        x509 = self.model.objects.init(
+        obj.x509 = self.model.objects.init(
             ca=data['ca'],
             csr=data['csr'],
             expires=expires_days,
@@ -254,10 +254,6 @@ class CertificateAdmin(admin.ModelAdmin):
             keyUsage=data['keyUsage'],
             extendedKeyUsage=data['extendedKeyUsage'],
         )
-
-        obj.cn = x509.get_subject().CN
-        obj.expires = data['expires']
-        obj.pub = crypto.dump_certificate(crypto.FILETYPE_PEM, x509)
         obj.save()
 
     class Media:

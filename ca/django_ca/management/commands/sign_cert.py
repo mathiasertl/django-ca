@@ -21,7 +21,6 @@ from ...management.base import BaseCommand
 from ...models import Certificate
 from ...models import Watcher
 from ...utils import get_cert_profile_kwargs
-from ...utils import parse_date
 from ...utils import SUBJECT_FIELDS
 
 
@@ -165,7 +164,6 @@ the default values, options like --key-usage still override the profile.""")
         cert.x509 = Certificate.objects.init(
             ca=ca, csr=csr, algorithm=options['algorithm'], expires=options['days'],
             subjectAltName=options['alt'], **kwargs)
-        cert.expires = parse_date(cert.x509.get_notAfter().decode('utf-8'))
         cert.save()
         cert.watchers.add(*watchers)
 

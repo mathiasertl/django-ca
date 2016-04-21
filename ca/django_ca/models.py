@@ -83,8 +83,10 @@ class X509CertMixin(models.Model):
     def x509(self, value):
         self._x509 = value
         self.pub = crypto.dump_certificate(crypto.FILETYPE_PEM, value).decode('utf-8')
+        self.cn = dict(self.x509.get_subject().get_components()).get(b'CN').decode('utf-8')
+        self.expires = self.not_after
 
-        # set serial
+        # compute serial with ':' after every second character
         s = hex(value.get_serial_number())[2:].upper()
         self.serial = ':'.join(a+b for a, b in zip(s[::2], s[1::2]))
 
@@ -275,14 +277,6 @@ class Certificate(X509CertMixin):
     revoked_reason = models.CharField(
         max_length=32, null=True, blank=True, verbose_name=_('Reason for revokation'),
         choices=REVOCATION_REASONS)
-
-    def save(self, *args, **kwargs):
-        if self.pk is None and not self.cn:
-            self.cn = dict(self.x509.get_subject().get_components()).get(b'CN').decode('utf-8')
-        if self.pk is None or self.serial is None:
-            s = hex(self.x509.get_serial_number())[2:].upper()
-            self.serial = ':'.join(a+b for a, b in zip(s[::2], s[1::2]))
-        super(Certificate, self).save(*args, **kwargs)
 
     def revoke(self, reason=None):
         self.revoked = True
