@@ -293,7 +293,7 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.client.get(self.url)
 
     def test_no_reason(self):
-        response = self.client.post(self.url, data={'reason': ''})
+        response = self.client.post(self.url, data={'revoked_reason': ''})
         self.assertRedirects(response, self.change_url())
         self.assertTemplateUsed('django_ca/admin/certificate_revoke_form.html')
 
@@ -302,7 +302,7 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertIsNone(cert.revoked_reason)
 
     def test_with_reason(self):
-        response = self.client.post(self.url, data={'reason': 'certificateHold'})
+        response = self.client.post(self.url, data={'revoked_reason': 'certificateHold'})
         self.assertRedirects(response, self.change_url())
         self.assertTemplateUsed('django_ca/admin/certificate_revoke_form.html')
 
@@ -318,7 +318,7 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 404)
 
-        response = self.client.post(self.url, data={'reason': 'certificateHold'})
+        response = self.client.post(self.url, data={'revoked_reason': 'certificateHold'})
         self.assertEqual(response.status_code, 404)
 
         cert = Certificate.objects.get(serial=self.cert.serial)

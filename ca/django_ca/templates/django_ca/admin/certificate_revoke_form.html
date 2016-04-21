@@ -34,11 +34,11 @@
             {{ form.non_field_errors }}
 
             <div class="field-box field-reason{% if form.reason.errors %} errors{% endif %}">
-                {{ form.reason.errors }}
-                {{ form.reason.label_tag }}
-                {{ form.reason }}
-                {% if form.reason.help_text %}
-                    <p class="help">{{ form.reason.help_text|safe }}</p>
+                {{ form.revoked_reason.errors }}
+                {{ form.revoked_reason.label_tag }}
+                {{ form.revoked_reason }}
+                {% if form.revoked_reason.help_text %}
+                    <p class="help">{{ form.revoked_reason.help_text|safe }}</p>
                 {% endif %}
             </div>
         </div>

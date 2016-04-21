@@ -122,19 +122,6 @@ openssl req -new -key hostname.key -out hostname.csr -utf8 -batch \
 
 
 class RevokeCertificateForm(forms.ModelForm):
-    reason = forms.ChoiceField(required=False, choices=(
-        ('', _('No reason')),
-        ('unspecified', _('Unspecified')),
-        ('keyCompromise', _('Key compromised')),
-        ('CACompromise', _('CA compromised')),
-        ('affiliationChanged', _('Affiliation changed')),
-        ('superseded', _('Superseded')),
-        ('cessationOfOperation', _('Cessation of operation')),
-        ('certificateHold', _('On Hold')),
-        # Not currently useful according to "man ca":
-        # ('removeFromCRL', _('Remove from CRL')),
-    ))
-
     class Meta:
         model = Certificate
-        fields = []
+        fields = ['revoked_reason']

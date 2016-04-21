@@ -33,9 +33,8 @@ class RevokeCertificateView(UpdateView):
         return context
 
     def form_valid(self, form):
-        reason = form.cleaned_data['reason'] or None
+        reason = form.cleaned_data['revoked_reason'] or None
         form.instance.revoke(reason=reason)
-        form.save()
 
         return super(RevokeCertificateView, self).form_valid(form)
 

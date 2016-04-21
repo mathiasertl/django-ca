@@ -243,6 +243,19 @@ class CertificateAuthority(models.Model, X509CertMixin):
 class Certificate(models.Model, X509CertMixin):
     objects = CertificateQuerySet.as_manager()
 
+    REVOCATION_REASONS = {
+        '': _('No reason'),
+        'unspecified': _('Unspecified'),
+        'keyCompromise': _('Key compromised'),
+        'CACompromise': _('CA compromised'),
+        'affiliationChanged': _('Affiliation changed'),
+        'superseded': _('Superseded'),
+        'cessationOfOperation': _('Cessation of operation'),
+        'certificateHold': _('On Hold'),
+        # Not currently useful according to "man ca":
+        #'removeFromCRL': _('Remove from CRL'),
+    }
+
     watchers = models.ManyToManyField(Watcher, related_name='certificates', blank=True)
 
     created = models.DateTimeField(auto_now=True)
@@ -257,6 +270,7 @@ class Certificate(models.Model, X509CertMixin):
     revoked = models.BooleanField(default=False)
     revoked_date = models.DateTimeField(null=True, blank=True, verbose_name=_('Revoked on'))
     revoked_reason = models.CharField(max_length=32, null=True, blank=True,
+                                      choices=REVOCATION_REASONS.items(),
                                       verbose_name=_('Reason for revokation'))
 
     def save(self, *args, **kwargs):
