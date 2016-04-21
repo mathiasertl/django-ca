@@ -31,7 +31,6 @@ from .models import Certificate
 from .models import CertificateAuthority
 from .models import Watcher
 from .utils import SUBJECT_FIELDS
-from .utils import get_cert
 from .views import RevokeCertificateView
 
 _x509_ext_fields = [
@@ -244,7 +243,7 @@ class CertificateAdmin(admin.ModelAdmin):
         subject = {k: v for k, v in data['subject'].items() if v}
         expires_days = (data['expires'] - date.today()).days
 
-        x509 = get_cert(
+        x509 = self.model.objects.init(
             ca=data['ca'],
             csr=data['csr'],
             expires=expires_days,
