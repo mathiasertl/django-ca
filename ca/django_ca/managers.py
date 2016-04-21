@@ -99,3 +99,129 @@ class CertificateAuthorityManager(models.Manager):
         os.umask(oldmask)
 
         return ca
+
+
+class CertificateManager(models.Manager):
+    def init(self, ca, csr, expires, algorithm, subject=None, cn_in_san=True,
+             csr_format=crypto.FILETYPE_PEM, subjectAltName=None, keyUsage=None,
+                 extendedKeyUsage=None):
+        """Create a signed certificate from a CSR.
+
+        X509 extensions (`key_usage`, `ext_key_usage`) may either be None (in which case they are
+        not added) or a tuple with the first value being a bool indicating if the value is critical
+        and the second value being a byte-array indicating the extension value. Example::
+
+            (True, b'value')
+
+        Parameters
+        ----------
+
+        ca : django_ca.models.CertificateAuthority
+            The certificate authority to sign the certificate with.
+        csr : str
+            A valid CSR in PEM format. If none is given, `self.csr` will be used.
+        expires : int
+            When the certificate should expire (passed to :py:func:`get_basic_cert`).
+        algorithm : {'sha512', 'sha256', ...}
+            Algorithm used to sign the certificate. The default is the CA_DIGEST_ALGORITHM setting.
+        subject : dict, optional
+            The Subject to use in the certificate.  The keys of this dict are the fields of an X509
+            subject, that is `"C"`, `"ST"`, `"L"`, `"OU"` and `"CN"`. If ommited or if the value
+            does not contain a `"CN"` key, the first value of the `subjectAltName` parameter is
+            used as CommonName (and is obviously mandatory in this case).
+        cn_in_san : bool, optional
+            Wether the CommonName should also be included as subjectAlternativeName. The default is
+            `True`, but the parameter is ignored if no CommonName is given. This is typically set
+            to `False` when creating a client certificate, where the subjects CommonName has no
+            meaningful value as subjectAltName.
+        csr_format : int, optional
+            The format of the submitted CSR request. One of the OpenSSL.crypto.FILETYPE_*
+            constants. The default is PEM.
+        subjectAltName : list of str, optional
+            A list of values for the subjectAltName extension. Values are passed to
+            `get_subjectAltName`, see function documentation for how this value is parsed.
+        keyUsage : tuple or None
+            Value for the `keyUsage` X509 extension. See description for format details.
+        extendedKeyUsage : tuple or None
+            Value for the `extendedKeyUsage` X509 extension. See description for format details.
+
+        Returns
+        -------
+
+        OpenSSL.crypto.X509
+            The signed certificate.
+        """
+        if subject is None:
+            subject = {}
+        if not subject.get('CN') and not subjectAltName:
+            raise ValueError("Must at least cn or subjectAltName parameter.")
+
+        req = crypto.load_certificate_request(csr_format, csr)
+
+        # Process CommonName and subjectAltName extension.
+        if subject.get('CN') is None:
+            subject['CN'] = re.sub('^%s' % SAN_OPTIONS_RE, '', subjectAltName[0])
+            subjectAltName = get_subjectAltName(subjectAltName)
+        elif cn_in_san is True:
+            if subjectAltName:
+                subjectAltName = get_subjectAltName(subjectAltName, cn=subject['CN'])
+            else:
+                subjectAltName = get_subjectAltName([subject['CN']])
+
+        # subjectAltName might still be None, in which case the extension is not added.
+        elif subjectAltName:
+            subjectAltName = get_subjectAltName(subjectAltName)
+
+        # Create signed certificate
+        cert = get_basic_cert(expires)
+        cert.set_issuer(ca.x509.get_subject())
+        for key, value in get_cert_subject(subject):
+            setattr(cert.get_subject(), key, bytes(value, 'utf-8'))
+        cert.set_pubkey(req.get_pubkey())
+
+        extensions = [
+            crypto.X509Extension(b'subjectKeyIdentifier', 0, b'hash', subject=cert),
+            crypto.X509Extension(b'authorityKeyIdentifier', 0, b'keyid,issuer', issuer=ca.x509),
+            crypto.X509Extension(b'basicConstraints', True, b'CA:FALSE'),
+        ]
+
+        if keyUsage is not None:
+            extensions.append(crypto.X509Extension(b'keyUsage', *keyUsage))
+        if extendedKeyUsage is not None:
+            extensions.append(crypto.X509Extension(b'extendedKeyUsage', *extendedKeyUsage))
+
+        # Add subjectAltNames, always also contains the CommonName
+        if subjectAltName:
+            extensions.append(crypto.X509Extension(b'subjectAltName', 0, subjectAltName))
+
+        # Set CRL distribution points:
+        if ca.crl_url:
+            crl_urls = [url.strip() for url in ca.crl_url.split()]
+            value = ','.join(['URI:%s' % uri for uri in crl_urls])
+            value = bytes(value, 'utf-8')
+            extensions.append(crypto.X509Extension(b'crlDistributionPoints', 0, value))
+
+        # Add issuerAltName
+        if ca.issuer_alt_name:
+            issuerAltName = bytes('URI:%s' % ca.issuer_alt_name, 'utf-8')
+        else:
+            issuerAltName = b'issuer:copy'
+        extensions.append(crypto.X509Extension(b'issuerAltName', 0, issuerAltName, issuer=ca.x509))
+
+        # Add authorityInfoAccess
+        auth_info_access = []
+        if ca.ocsp_url:
+            auth_info_access.append('OCSP;URI:%s' % ca.ocsp_url)
+        if ca.issuer_url:
+            auth_info_access.append('caIssuers;URI:%s' % ca.issuer_url)
+        if auth_info_access:
+            auth_info_access = bytes(','.join(auth_info_access), 'utf-8')
+            extensions.append(crypto.X509Extension(b'authorityInfoAccess', 0, auth_info_access))
+
+        # Add collected extensions
+        cert.add_extensions(extensions)
+
+        # Finally sign the certificate:
+        cert.sign(ca.key, algorithm)
+
+        return cert
