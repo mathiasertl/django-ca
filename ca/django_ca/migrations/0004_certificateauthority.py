@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 
 from django.db import migrations, models
 import django.db.models.deletion
-import django_ca.models
 
 
 class Migration(migrations.Migration):
@@ -30,6 +29,6 @@ class Migration(migrations.Migration):
                 'verbose_name': 'Certificate Authority',
                 'verbose_name_plural': 'Certificate Authorities',
             },
-            bases=(models.Model, django_ca.models.X509CertMixin),
+            bases=(models.Model, ),
         ),
     ]

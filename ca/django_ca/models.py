@@ -59,7 +59,14 @@ class Watcher(models.Model):
         return self.mail
 
 
-class X509CertMixin(object):
+class X509CertMixin(models.Model):
+    created = models.DateTimeField(auto_now=True)
+    expires = models.DateTimeField(null=False, blank=False)
+
+    pub = models.TextField(null=False, blank=False, verbose_name=_('Public key'))
+    cn = models.CharField(max_length=64, null=False, blank=False, verbose_name=_('CommonName'))
+    serial = models.CharField(max_length=48, null=False, blank=False, unique=True)
+
     _x509 = None
     _extensions = None
 
@@ -162,15 +169,15 @@ class X509CertMixin(object):
     def get_digest(self, algo):
         return self.x509.digest(algo).decode('utf-8')
 
+    class Meta:
+        abstract = True
 
-class CertificateAuthority(models.Model, X509CertMixin):
+
+class CertificateAuthority(X509CertMixin):
     objects = CertificateAuthorityManager.from_queryset(CertificateAuthorityQuerySet)()
 
     name = models.CharField(max_length=32, help_text=_('A human-readable name'), unique=True)
-    serial = models.CharField(max_length=48, null=False, blank=False, unique=True)
-    created = models.DateTimeField(auto_now=True)
     enabled = models.BooleanField(default=True)
-    pub = models.TextField(null=False, blank=False, verbose_name=_('Public key'))
     parent = models.ForeignKey('self', null=True, blank=True, related_name='children')
     private_key_path = models.CharField(max_length=256, help_text=_('Path to the private key.'))
 
@@ -242,7 +249,7 @@ class CertificateAuthority(models.Model, X509CertMixin):
         return self.name
 
 
-class Certificate(models.Model, X509CertMixin):
+class Certificate(X509CertMixin):
     objects = CertificateManager.from_queryset(CertificateQuerySet)()
 
     REVOCATION_REASONS = {
@@ -260,15 +267,9 @@ class Certificate(models.Model, X509CertMixin):
 
     watchers = models.ManyToManyField(Watcher, related_name='certificates', blank=True)
 
-    created = models.DateTimeField(auto_now=True)
-    expires = models.DateTimeField(null=False, blank=False)
-
     ca = models.ForeignKey(CertificateAuthority, verbose_name=_('Certificate Authority'))
     csr = models.TextField(null=False, blank=False, verbose_name=_('CSR'))
-    pub = models.TextField(null=False, blank=False, verbose_name=_('Public key'))
 
-    cn = models.CharField(max_length=64, null=False, blank=False, verbose_name=_('CommonName'))
-    serial = models.CharField(max_length=48, null=False, blank=False, unique=True)
     revoked = models.BooleanField(default=False)
     revoked_date = models.DateTimeField(null=True, blank=True, verbose_name=_('Revoked on'))
     revoked_reason = models.CharField(max_length=32, null=True, blank=True,
