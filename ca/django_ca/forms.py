@@ -62,14 +62,14 @@ class CreateCertificateForm(forms.ModelForm):
         ),
     )
     keyUsage = KeyUsageField(label='keyUsage', help_text=KEY_USAGE_DESC, choices=(
-        ('cRLSign', 'cRLSign'),
+        ('cRLSign', 'CRL Sign'),
         ('dataEncipherment', 'dataEncipherment'),
         ('decipherOnly', 'decipherOnly'),
-        ('digitalSignature', 'digitalSignature'),
+        ('digitalSignature', 'Digital Signature'),
         ('encipherOnly', 'encipherOnly'),
-        ('keyAgreement', 'keyAgreement'),
-        ('keyCertSign', 'keyCertSign'),
-        ('keyEncipherment', 'keyEncipherment'),
+        ('keyAgreement', 'Key Agreement'),
+        ('keyCertSign', 'Certificate Sign'),
+        ('keyEncipherment', 'Key Encipherment'),
         ('nonRepudiation', 'nonRepudiation'),
     ))
     extendedKeyUsage = KeyUsageField(
