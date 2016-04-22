@@ -2,8 +2,8 @@
 x509 extensions in other CAs
 ############################
 
-This page documents the x509 extensions (e.g. for CRLs, etc.) set by other CAs.
-
+This page documents the x509 extensions (e.g. for CRLs, etc.) set by other CAs. The information
+here is used by **django-ca** to initialize and sign certificate authorities and certificates.
 
 *******************
 authorityInfoAccess
