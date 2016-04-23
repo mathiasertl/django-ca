@@ -24,6 +24,7 @@ from django.contrib import admin
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
 from django.utils import timezone
+from django.utils.html import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
 from .forms import CreateCertificateForm
@@ -43,12 +44,21 @@ class WatcherAdmin(admin.ModelAdmin):
     pass
 
 
+class CertificateMixin(object):
+    def hpkp_pin(self, obj):
+        return mark_safe('''%s<p class="help">SHA-256 HPKP pin of this certificate. See also <a
+href="https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning">HTTP Public Key Pinning</a> on
+Wikipedia.</a></p>''' % obj.hpkp_pin)
+    hpkp_pin.short_description = _('HPKP pin (SHA-256)')
+
+
 @admin.register(CertificateAuthority)
-class CertificateAuthorityAdmin(admin.ModelAdmin):
+class CertificateAuthorityAdmin(admin.ModelAdmin, CertificateMixin):
     fieldsets = (
         (None, {
             'fields': ['name', 'enabled', 'cn', 'parent', 'subjectKeyIdentifier',
-                       'authorityInfoAccess', 'issuerAltName', 'authorityKeyIdentifier'],
+                       'authorityInfoAccess', 'issuerAltName', 'authorityKeyIdentifier',
+                       'hpkp_pin', ],
         }),
         (_('Certificate'), {
             'fields': ['serial', 'pub', 'expires'],
@@ -64,7 +74,7 @@ class CertificateAuthorityAdmin(admin.ModelAdmin):
     list_display_links = ['enabled', 'name', ]
     search_fields = ['cn', 'name', 'serial', ]
     readonly_fields = ['serial', 'pub', 'parent', 'subjectKeyIdentifier', 'issuerAltName',
-                       'authorityKeyIdentifier', 'authorityInfoAccess', 'cn', 'expires']
+                       'authorityKeyIdentifier', 'authorityInfoAccess', 'cn', 'expires', 'hpkp_pin']
 
     def has_add_permission(self, request):
         return False
@@ -105,20 +115,20 @@ class StatusListFilter(admin.SimpleListFilter):
 
 
 @admin.register(Certificate)
-class CertificateAdmin(admin.ModelAdmin):
+class CertificateAdmin(admin.ModelAdmin, CertificateMixin):
     actions = ['revoke', ]
     change_form_template = 'django_ca/admin/change_form.html'
     list_display = ('cn', 'serial', 'status', 'expires_date')
     list_filter = (StatusListFilter, 'ca')
     readonly_fields = [
         'expires', 'csr', 'pub', 'cn', 'serial', 'revoked', 'revoked_date', 'revoked_reason',
-        'subjectAltName', 'distinguishedName', 'ca', ] + _x509_ext_fields
+        'subjectAltName', 'distinguishedName', 'ca', 'hpkp_pin' ] + _x509_ext_fields
     search_fields = ['cn', 'serial', ]
 
     fieldsets = [
         (None, {
             'fields': ['cn', 'subjectAltName', 'distinguishedName', 'serial', 'ca', 'expires',
-                       'watchers', ],
+                       'watchers', 'hpkp_pin'],
         }),
         (_('X509 Extensions'), {
             'fields': _x509_ext_fields,
