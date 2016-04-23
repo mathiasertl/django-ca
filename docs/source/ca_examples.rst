@@ -24,8 +24,9 @@ StartSSL Class 3  * OCSP - URI:http://ocsp.startssl.com
                   * CA Issuers - URI:http://aia.startssl.com/certs/ca.crt
 GeoTrust Global
 RapidSSL G3       OCSP - URI:http://g.symcd.com
-Comodo
-Comodo DV
+Comodo            OCSP - URI:http://ocsp.usertrust.com
+Comodo DV         * CA Issuers - URI:http://crt.comodoca.com/COMODORSAAddTrustCA.crt
+                  * OCSP - URI:http://ocsp.comodoca.com
 GlobalSign
 GlobalSign DV
 ================= =================================================================================
@@ -45,7 +46,8 @@ StartSSL Class 3 * OCSP - URI:http://ocsp.startssl.com
                  * CA Issuers - URI:http://aia.startssl.com/certs/sca.server3.crt
 RapidSSL G3      * OCSP - URI:http://gv.symcd.com
                  * CA Issuers - URI:http://gv.symcb.com/gv.crt
-Comodo DV
+Comodo DV        * CA Issuers - URI:http://crt.comodoca.com/COMODORSADomainValidationSecureServerCA.crt
+                 * OCSP - URI:http://ocsp.comodoca.com
 GlobalSign DV
 ================ =================================================================================
 
@@ -65,8 +67,8 @@ StartSSL Class 2 keyid:4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:
 StartSSL Class 3 keyid:4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2
 GeoTrust Global  keyid:C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E
 RapidSSL G3      keyid:C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E
-Comodo
-Comodo DV
+Comodo           keyid:AD:BD:98:7A:34:B4:26:F7:FA:C4:26:54:EF:03:BD:E0:24:CB:54:1A
+Comodo DV        keyid:BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4
 GlobalSign
 GlobalSign DV
 ================ =================================================================================
@@ -81,7 +83,7 @@ Let's Encrypt    keyid:A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:
 StartSSL Class 2 keyid:11:DB:23:45:FD:54:CC:6A:71:6F:84:8A:03:D7:BE:F7:01:2F:26:86
 StartSSL Class 3 keyid:B1:3F:1C:92:7B:92:B0:5A:25:B3:38:FB:9C:07:A4:26:50:32:E3:51
 RapidSSL G3      keyid:C3:9C:F3:FC:D3:46:08:34:BB:CE:46:7F:A0:7C:5B:F3:E2:08:CB:59
-Comodo DV
+Comodo DV        keyid:90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7
 GlobalSign DV
 ================ =================================================================================
 
@@ -106,8 +108,8 @@ StartSSL Class 2 (critical) CA:TRUE, pathlen:0
 StartSSL Class 3 (critical) CA:TRUE, pathlen:0
 GeoTrust Global  (critical) CA:TRUE
 RapidSSL G3      (critical) CA:TRUE, pathlen:0
-Comodo
-Comodo DV
+Comodo           (critical) CA:TRUE
+Comodo DV        (critical) CA:TRUE, pathlen:0
 GlobalSign
 GlobalSign DV
 ================ =================================================================================
@@ -122,7 +124,7 @@ Let's Encrypt    (critical) CA:FALSE
 StartSSL Class 2 (critical) CA:FALSE
 StartSSL Class 3 CA:FALSE
 RapidSSL G3      (critical) CA:FALSE
-Comodo DV
+Comodo DV        (critical) CA:FALSE
 GlobalSign DV
 ================ =================================================================================
 
@@ -142,8 +144,8 @@ StartSSL Class 2 URI:http://crl.startssl.com/sfsca.crl
 StartSSL Class 3 URI:http://crl.startssl.com/sfsca.crl
 GeoTrust Global
 RapidSSL G3      URI:http://g.symcb.com/crls/gtglobal.crl
-Comodo
-Comodo DV
+Comodo           URI:http://crl.usertrust.com/AddTrustExternalCARoot.crl
+Comodo DV        URI:http://crl.comodoca.com/COMODORSACertificationAuthority.crl
 GlobalSign
 GlobalSign DV
 ================ =================================================================================
@@ -158,7 +160,7 @@ Let's Encrypt    (not present)
 StartSSL Class 2 URI:http://crl.startssl.com/crt2-crl.crl
 StartSSL Class 3 URI:http://crl.startssl.com/sca-server3.crl
 RapidSSL G3      URI:http://gv.symcb.com/gv.crl
-Comodo DV
+Comodo DV        URI:http://crl.comodoca.com/COMODORSADomainValidationSecureServerCA.crl
 GlobalSign DV
 ================ =================================================================================
 
@@ -179,7 +181,7 @@ StartSSL Class 3 TLS Web Client Authentication, TLS Web Server Authentication
 GeoTrust Global
 RapidSSL G3
 Comodo
-Comodo DV
+Comodo DV        TLS Web Server Authentication, TLS Web Client Authentication
 GlobalSign
 GlobalSign DV
 ================ =================================================================================
@@ -194,7 +196,7 @@ Let's Encrypt    TLS Web Server Authentication, TLS Web Client Authentication
 StartSSL Class 2 TLS Web Client Authentication, TLS Web Server Authentication
 StartSSL Class 3 TLS Web Client Authentication, TLS Web Server Authentication
 RapidSSL G3      TLS Web Server Authentication, TLS Web Client Authentication
-Comodo DV
+Comodo DV        TLS Web Server Authentication, TLS Web Client Authentication
 GlobalSign DV
 ================ =================================================================================
 
@@ -250,8 +252,8 @@ StartSSL Class 2 (critical) Certificate Sign, CRL Sign
 StartSSL Class 3 (critical) Certificate Sign, CRL Sign
 GeoTrust Global  (critical) Certificate Sign, CRL Sign
 RapidSSL G3
-Comodo
-Comodo DV
+Comodo           (critical) Digital Signature, Certificate Sign, CRL Sign
+Comodo DV        (critical) Digital Signature, Certificate Sign, CRL Sign
 GlobalSign
 GlobalSign DV
 ================ =================================================================================
@@ -266,7 +268,7 @@ Let's Encrypt    (critical) Digital Signature, Key Encipherment
 StartSSL Class 2 Digital Signature, Key Encipherment, Key Agreement
 StartSSL Class 3 Digital Signature, Key Encipherment
 RapidSSL G3      (critical) Digital Signature, Key Encipherment
-Comodo DV
+Comodo DV        (critical) Digital Signature, Key Encipherment
 GlobalSign DV
 ================ =================================================================================
 
@@ -286,8 +288,8 @@ StartSSL Class 2 11:DB:23:45:FD:54:CC:6A:71:6F:84:8A:03:D7:BE:F7:01:2F:26:86
 StartSSL Class 3 B1:3F:1C:92:7B:92:B0:5A:25:B3:38:FB:9C:07:A4:26:50:32:E3:51
 GeoTrust Global  C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E
 RapidSSL G3      C3:9C:F3:FC:D3:46:08:34:BB:CE:46:7F:A0:7C:5B:F3:E2:08:CB:59
-Comodo
-Comodo DV
+Comodo           BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4
+Comodo DV        90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7
 GlobalSign
 GlobalSign DV
 ================ =================================================================================
@@ -302,7 +304,7 @@ Let's Encrypt    F4:F3:B8:F5:43:90:2E:A2:7F:DD:51:4A:5F:3E:AC:FB:F1:33:EE:95
 StartSSL Class 2 C7:AA:D9:A4:F0:BC:D1:C1:1B:05:D2:19:71:0A:86:F8:58:0F:F0:99
 StartSSL Class 3 F0:72:65:5E:21:AA:16:76:2C:6F:D0:63:53:0C:68:D5:89:50:2A:73
 RapidSSL G3
-Comodo DV
+Comodo DV        F2:CB:1F:E9:6E:D5:43:E3:85:75:98:5F:97:7C:B0:59:7F:D5:C0:C0
 GlobalSign DV
 ================ =================================================================================
 
@@ -325,8 +327,8 @@ StartSSL Class 2 X509v3 Certificate Policies
 StartSSL Class 3 X509v3 Certificate Policies
 GeoTrust Global
 RapidSSL G3      X509v3 Certificate Policies
-Comodo
-Comodo DV
+Comodo           X509v3 Certificate Policies
+Comodo DV        X509v3 Certificate Policies
 GlobalSign
 GlobalSign DV
 ================ =================================================================================
@@ -342,6 +344,6 @@ Let's Encrypt    X509v3 Certificate Policies
 StartSSL Class 2 X509v3 Certificate Policies
 StartSSL Class 3 X509v3 Certificate Policies
 RapidSSL G3      X509v3 Certificate Policies
-Comodo DV
+Comodo DV        X509v3 Certificate Policies
 GlobalSign DV
 ================ =================================================================================
