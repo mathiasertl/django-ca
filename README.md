@@ -18,6 +18,7 @@ Documentation is available at http://django-ca.readthedocs.org/.
 4. Get email notifications about certificates about to expire.
 5. Support generating for certificate revocation lists (CRLs).
 6. Generates index files that can be used with the `openssl ocsp` command for a crude OCSP service.
+7. Display Serial in view_(cert,ca) commands.
 
 Please see https://django-ca.readthedocs.org for more extensive documentation.
 
