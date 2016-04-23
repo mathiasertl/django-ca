@@ -40,8 +40,7 @@ Ideas on what we could do for future releases:
 5. Add a generic view to provide a CRL.
 6. Add a OCSP service maybe (would be huge).
 7. Print HPKP hashes with the `view_ca` and `view_cert` commands.
-8. Update documenation (it says you can run an OCSP responder with django-ca)
-9. Add ability to download PEM/DER of certificates and the CA.
+8. Add ability to download PEM/DER of certificates and the CA.
 
 ## License
 
