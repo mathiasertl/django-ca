@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import base64
+import hashlib
 import re
 
 from django.db import models
@@ -170,6 +172,16 @@ class X509CertMixin(models.Model):
 
     def get_digest(self, algo):
         return self.x509.digest(algo).decode('utf-8')
+
+    @property
+    def hpkp_pin(self):
+        # taken from
+        # https://github.com/shazow/urllib3/pull/607/files#diff-f86c7f2eb1a0a2deadac493decdd0b7eR337
+
+        key = self.x509.get_pubkey()
+        public_key_raw = crypto.dump_publickey(crypto.FILETYPE_ASN1, key)
+        public_key_hash = hashlib.sha256(public_key_raw).digest()
+        return base64.b64encode(public_key_hash).decode('utf-8')
 
     class Meta:
         abstract = True
