@@ -6,3 +6,4 @@ mock==2.0.0
 pip
 setuptools
 sphinx-autobuild==0.6.0
+wheel==0.29.0
