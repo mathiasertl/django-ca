@@ -14,6 +14,22 @@ You can set up a demo using ``fab init_demo``. First create a minimal
 
 And then simply run ``fab init_demo`` from the root directory of your project.
 
+**************
+Run test-suite
+**************
+
+To run the test-suite, simply execute::
+
+   python setup.py test
+
+... or just run some of the tests::
+
+   python setup.py test --suite=tests_command_dump_crl
+
+To generate a coverate report::
+
+   python setup.py coverage
+
 ***********************
 Useful OpenSSL commands
 ***********************
