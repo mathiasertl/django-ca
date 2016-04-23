@@ -22,12 +22,12 @@ StartSSL Class 2  * OCSP - URI:http://ocsp.startssl.com/ca
                   * CA Issuers - URI:http://aia.startssl.com/certs/ca.crt
 StartSSL Class 3  * OCSP - URI:http://ocsp.startssl.com
                   * CA Issuers - URI:http://aia.startssl.com/certs/ca.crt
-GeoTrust Global
+GeoTrust Global   (not present)
 RapidSSL G3       OCSP - URI:http://g.symcd.com
 Comodo            OCSP - URI:http://ocsp.usertrust.com
 Comodo DV         * CA Issuers - URI:http://crt.comodoca.com/COMODORSAAddTrustCA.crt
                   * OCSP - URI:http://ocsp.comodoca.com
-GlobalSign
+GlobalSign        (not present)
 GlobalSign DV     OCSP - URI:http://ocsp.globalsign.com/rootr1
 ================= =================================================================================
 
@@ -70,7 +70,7 @@ GeoTrust Global  keyid:C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:
 RapidSSL G3      keyid:C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E
 Comodo           keyid:AD:BD:98:7A:34:B4:26:F7:FA:C4:26:54:EF:03:BD:E0:24:CB:54:1A
 Comodo DV        keyid:BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4
-GlobalSign
+GlobalSign       (not present)
 GlobalSign DV    keyid:60:7B:66:1A:45:0D:97:CA:89:50:2F:7D:04:CD:34:A8:FF:FC:FD:4B
 ================ =================================================================================
 
@@ -143,11 +143,11 @@ Let's Encrypt    URI:http://crl.identrust.com/DSTROOTCAX3CRL.crl
 StartSSL         URI:http://crl.startssl.com/sfsca.crl
 StartSSL Class 2 URI:http://crl.startssl.com/sfsca.crl
 StartSSL Class 3 URI:http://crl.startssl.com/sfsca.crl
-GeoTrust Global
+GeoTrust Global  (not present)
 RapidSSL G3      URI:http://g.symcb.com/crls/gtglobal.crl
 Comodo           URI:http://crl.usertrust.com/AddTrustExternalCARoot.crl
 Comodo DV        URI:http://crl.comodoca.com/COMODORSACertificationAuthority.crl
-GlobalSign
+GlobalSign       (not present)
 GlobalSign DV    URI:http://crl.globalsign.net/root.crl
 ================ =================================================================================
 
@@ -179,12 +179,12 @@ Let's Encrypt    (not present)
 StartSSL         (not present)
 StartSSL Class 2 (not present)
 StartSSL Class 3 TLS Web Client Authentication, TLS Web Server Authentication
-GeoTrust Global
-RapidSSL G3
-Comodo
+GeoTrust Global  (not present)
+RapidSSL G3      (not present)
+Comodo           (not present)
 Comodo DV        TLS Web Server Authentication, TLS Web Client Authentication
-GlobalSign
-GlobalSign DV
+GlobalSign       (not present)
+GlobalSign DV    (not present)
 ================ =================================================================================
 
 In signed certificates
@@ -215,12 +215,12 @@ Let's Encrypt    (not present)
 StartSSL         (not present)
 StartSSL Class 2 (not present)
 StartSSL Class 3 (not present)
-GeoTrust Global
-RapidSSL G3
-Comodo
-Comodo DV
-GlobalSign
-GlobalSign DV
+GeoTrust Global  (not present)
+RapidSSL G3      (not present)
+Comodo           (not present)
+Comodo DV        (not present)
+GlobalSign       (not present)
+GlobalSign DV    (not present)
 ================ =================================================================================
 
 In signed certificates
@@ -229,12 +229,12 @@ In signed certificates
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Let's Encrypt
+Let's Encrypt    (not present)
 StartSSL Class 2 URI:http://www.startssl.com/
 StartSSL Class 3 URI:http://www.startssl.com/
-RapidSSL G3
-Comodo DV
-GlobalSign DV
+RapidSSL G3      (not present)
+Comodo DV        (not present)
+GlobalSign DV    (not present)
 ================ =================================================================================
 
 ********
@@ -252,7 +252,7 @@ StartSSL         (critical) Certificate Sign, CRL Sign
 StartSSL Class 2 (critical) Certificate Sign, CRL Sign
 StartSSL Class 3 (critical) Certificate Sign, CRL Sign
 GeoTrust Global  (critical) Certificate Sign, CRL Sign
-RapidSSL G3
+RapidSSL G3      (critical) Certificate Sign, CRL Sign
 Comodo           (critical) Digital Signature, Certificate Sign, CRL Sign
 Comodo DV        (critical) Digital Signature, Certificate Sign, CRL Sign
 GlobalSign       (critical) Certificate Sign, CRL Sign
@@ -304,7 +304,7 @@ CA               Value
 Let's Encrypt    F4:F3:B8:F5:43:90:2E:A2:7F:DD:51:4A:5F:3E:AC:FB:F1:33:EE:95
 StartSSL Class 2 C7:AA:D9:A4:F0:BC:D1:C1:1B:05:D2:19:71:0A:86:F8:58:0F:F0:99
 StartSSL Class 3 F0:72:65:5E:21:AA:16:76:2C:6F:D0:63:53:0C:68:D5:89:50:2A:73
-RapidSSL G3
+RapidSSL G3      (not present)
 Comodo DV        F2:CB:1F:E9:6E:D5:43:E3:85:75:98:5F:97:7C:B0:59:7F:D5:C0:C0
 GlobalSign DV    52:5A:45:5B:D4:9D:AC:65:30:BD:67:80:6C:D1:A1:3E:09:F7:FD:92
 ================ =================================================================================
@@ -313,11 +313,11 @@ GlobalSign DV    52:5A:45:5B:D4:9D:AC:65:30:BD:67:80:6C:D1:A1:3E:09:F7:FD:92
 Other extensions
 ****************
 
-In CA certificates
-==================
-
 Extensions used by certificates encountered in the wild that django-ca does not (yet) support in
 any way.
+
+In CA certificates
+==================
 
 ================ =================================================================================
 CA               Value
@@ -326,11 +326,11 @@ Let's Encrypt    X509v3 Certificate Policies, X509v3 Name Constraints
 StartSSL         X509v3 Certificate Policies, Netscape Cert Type, Netscape Comment
 StartSSL Class 2 X509v3 Certificate Policies
 StartSSL Class 3 X509v3 Certificate Policies
-GeoTrust Global
+GeoTrust Global  (none)
 RapidSSL G3      X509v3 Certificate Policies
 Comodo           X509v3 Certificate Policies
 Comodo DV        X509v3 Certificate Policies
-GlobalSign
+GlobalSign       (none)
 GlobalSign DV    X509v3 Certificate Policies
 ================ =================================================================================
 
