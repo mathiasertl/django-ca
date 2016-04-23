@@ -48,7 +48,7 @@ class CertificateMixin(object):
     def hpkp_pin(self, obj):
         return mark_safe('''%s<p class="help">SHA-256 HPKP pin of this certificate. See also <a
 href="https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning">HTTP Public Key Pinning</a> on
-Wikipedia.</a></p>''' % obj.hpkp_pin)
+Wikipedia.</p>''' % obj.hpkp_pin)
     hpkp_pin.short_description = _('HPKP pin (SHA-256)')
 
 
