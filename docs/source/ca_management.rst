@@ -26,6 +26,7 @@ init_ca  Create a new certificate authority.
 list_cas List all currently configured certificate authorities.
 edit_ca  Edit a certificate authority.
 view_ca  View details of a certificate authority.
+dump_ca  Write the CA certificate to a file.
 ======== ======================================================
 
 Various details of the certificate authority, mostly the x509 extensions used
