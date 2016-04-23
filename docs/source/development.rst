@@ -14,6 +14,51 @@ You can set up a demo using ``fab init_demo``. First create a minimal
 
 And then simply run ``fab init_demo`` from the root directory of your project.
 
+***********************
+Useful OpenSSL commands
+***********************
+
+.. highlight:: none
+
+CRLs
+====
+
+Convert a CRL to text on stdout::
+
+   openssl crl -inform der -in sfsca.crl -noout -text
+
+Convert a CRL to PEM to a file::
+
+   openssl crl -inform der -in sfsca.crl -outform pem -out test.pem
+
+Verify a certificate using a CRL::
+
+   openssl verify -CAfile files/ca_crl.pem -crl_check cert.pem
+
+OCSP
+====
+
+Run a OCSP responder::
+
+   openssl ocsp -index files/ocsp_index.txt -port 8888 \
+      -rsigner files/localhost.pem -rkey files/localhost.key \
+      -CA ca.pem -text
+
+Verify a certificate using OCSP::
+
+  openssl ocsp -CAfile ca.pem -issuer ca.pem -cert cert.pem \
+      -url http://localhost:8888 -resp_text
+
+Other
+=====
+
+Convert a p7c/pkcs7 file to PEM (Let's Encrypt CA Issuer field) (see also
+:manpage:`pkcs7(1SSL)` -
+`online <https://www.openssl.org/docs/manmaster/apps/pkcs7.html>`_)::
+
+   openssl pkcs7 -inform der -in letsencrypt.p7c -print_certs \
+      -outform pem -out letsencrypt.pem
+
 *****************************
 Development webserver via SSL
 *****************************
