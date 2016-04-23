@@ -48,7 +48,7 @@ RapidSSL G3      * OCSP - URI:http://gv.symcd.com
                  * CA Issuers - URI:http://gv.symcb.com/gv.crt
 Comodo DV        * CA Issuers - URI:http://crt.comodoca.com/COMODORSADomainValidationSecureServerCA.crt
                  * OCSP - URI:http://ocsp.comodoca.com
-GlobalSign DV
+GlobalSign DV    OCSP - URI:http://ocsp.globalsign.com/rootr1
 ================ =================================================================================
 
 **********************
@@ -70,7 +70,7 @@ RapidSSL G3      keyid:C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:
 Comodo           keyid:AD:BD:98:7A:34:B4:26:F7:FA:C4:26:54:EF:03:BD:E0:24:CB:54:1A
 Comodo DV        keyid:BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4
 GlobalSign
-GlobalSign DV
+GlobalSign DV    keyid:60:7B:66:1A:45:0D:97:CA:89:50:2F:7D:04:CD:34:A8:FF:FC:FD:4B
 ================ =================================================================================
 
 In signed certificates
@@ -111,7 +111,7 @@ RapidSSL G3      (critical) CA:TRUE, pathlen:0
 Comodo           (critical) CA:TRUE
 Comodo DV        (critical) CA:TRUE, pathlen:0
 GlobalSign       (critical) CA:TRUE
-GlobalSign DV
+GlobalSign DV    (critical) CA:TRUE, pathlen:0
 ================ =================================================================================
 
 In signed certificates
@@ -147,7 +147,7 @@ RapidSSL G3      URI:http://g.symcb.com/crls/gtglobal.crl
 Comodo           URI:http://crl.usertrust.com/AddTrustExternalCARoot.crl
 Comodo DV        URI:http://crl.comodoca.com/COMODORSACertificationAuthority.crl
 GlobalSign
-GlobalSign DV
+GlobalSign DV    URI:http://crl.globalsign.net/root.crl
 ================ =================================================================================
 
 In signed certificates
@@ -255,7 +255,7 @@ RapidSSL G3
 Comodo           (critical) Digital Signature, Certificate Sign, CRL Sign
 Comodo DV        (critical) Digital Signature, Certificate Sign, CRL Sign
 GlobalSign       (critical) Certificate Sign, CRL Sign
-GlobalSign DV
+GlobalSign DV    (critical) Certificate Sign, CRL Sign
 ================ =================================================================================
 
 In signed certificates
@@ -291,7 +291,7 @@ RapidSSL G3      C3:9C:F3:FC:D3:46:08:34:BB:CE:46:7F:A0:7C:5B:F3:E2:08:CB:59
 Comodo           BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4
 Comodo DV        90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7
 GlobalSign       60:7B:66:1A:45:0D:97:CA:89:50:2F:7D:04:CD:34:A8:FF:FC:FD:4B
-GlobalSign DV
+GlobalSign DV    EA:4E:7C:D4:80:2D:E5:15:81:86:26:8C:82:6D:C0:98:A4:CF:97:0F
 ================ =================================================================================
 
 In signed certificates
@@ -330,7 +330,7 @@ RapidSSL G3      X509v3 Certificate Policies
 Comodo           X509v3 Certificate Policies
 Comodo DV        X509v3 Certificate Policies
 GlobalSign
-GlobalSign DV
+GlobalSign DV    X509v3 Certificate Policies
 ================ =================================================================================
 
 
