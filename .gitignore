@@ -6,6 +6,7 @@ localsettings.py
 /ca/.coverage
 /MANIFEST
 /bin/
+/build/
 /ca/files/
 /dist
 /docs/build/
