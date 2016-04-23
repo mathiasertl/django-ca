@@ -71,6 +71,9 @@ class Command(CertCommand):
         for algo in ['md5', 'sha1', 'sha256', 'sha512']:
             self.stdout.write('    %s: %s' % (algo, cert.get_digest(algo)))
 
+        self.stdout.write('HPKP pin: %s' % cert.hpkp_pin)
+
         if not options['no_pem']:
+            self.stdout.write('')
             data = crypto.dump_certificate(options['format'], cert.x509)
             self.stdout.write(data.decode('utf-8'))

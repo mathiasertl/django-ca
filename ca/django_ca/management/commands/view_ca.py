@@ -49,4 +49,5 @@ class Command(BaseCommand):
         self.stdout.write('* Issuer URL: %s' % (ca.issuer_url or None))
         self.stdout.write('* OCSP URL: %s' % (ca.ocsp_url or None))
         self.stdout.write('* Issuer Alternative Name: %s' % (ca.issuer_alt_name or None))
+        self.stdout.write('* HPKP pin: %s' % ca.hpkp_pin)
         self.stdout.write('\n%s' % ca.pub)

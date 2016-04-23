@@ -52,8 +52,10 @@ class SignCertTestCase(DjangoCAWithCATestCase):
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
+* HPKP pin: %s
 
-%s''' % (ca.name, status, ca.serial, path, parent, children, ca.subject_str, pathlen, ca.pub))
+%s''' % (ca.name, status, ca.serial, path, parent, children, ca.subject_str, pathlen,
+         ca.hpkp_pin, ca.pub))
 
     def test_basic(self):
         stdout, stderr = self.cmd('view_ca', self.ca.serial)

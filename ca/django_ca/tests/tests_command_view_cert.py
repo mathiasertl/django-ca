@@ -38,6 +38,7 @@ class ViewCertTestCase(DjangoCAWithCertTestCase):
             'sha512': cert.get_digest('sha512'),
             'subjectKeyIdentifier': cert.subjectKeyIdentifier(),
             'authorityKeyIdentifier': cert.ca.subjectKeyIdentifier(),
+            'hpkp': cert.hpkp_pin,
         }
 
     def test_basic(self):
@@ -54,6 +55,8 @@ Digest:
     sha1: %(sha1)s
     sha256: %(sha256)s
     sha512: %(sha512)s
+HPKP pin: %(hpkp)s
+
 %(pub)s''' % self._get_format(self.cert))
         self.assertEqual(stderr, '')
 
@@ -83,6 +86,7 @@ Digest:
     sha1: %(sha1)s
     sha256: %(sha256)s
     sha512: %(sha512)s
+HPKP pin: %(hpkp)s
 ''' % self._get_format(self.cert))
         self.assertEqual(stderr, '')
 
@@ -103,6 +107,7 @@ Digest:
     sha1: %(sha1)s
     sha256: %(sha256)s
     sha512: %(sha512)s
+HPKP pin: %(hpkp)s
 ''' % self._get_format(self.cert))
         self.assertEqual(stderr, '')
 
@@ -124,6 +129,7 @@ Digest:
     sha1: %(sha1)s
     sha256: %(sha256)s
     sha512: %(sha512)s
+HPKP pin: %(hpkp)s
 ''' % self._get_format(self.cert))
         self.assertEqual(stderr, '')
 
@@ -145,6 +151,7 @@ Digest:
     sha1: %(sha1)s
     sha256: %(sha256)s
     sha512: %(sha512)s
+HPKP pin: %(hpkp)s
 ''' % self._get_format(cert))
 
     def test_unknown_cert(self):
