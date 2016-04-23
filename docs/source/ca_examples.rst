@@ -110,7 +110,7 @@ GeoTrust Global  (critical) CA:TRUE
 RapidSSL G3      (critical) CA:TRUE, pathlen:0
 Comodo           (critical) CA:TRUE
 Comodo DV        (critical) CA:TRUE, pathlen:0
-GlobalSign
+GlobalSign       (critical) CA:TRUE
 GlobalSign DV
 ================ =================================================================================
 
@@ -254,7 +254,7 @@ GeoTrust Global  (critical) Certificate Sign, CRL Sign
 RapidSSL G3
 Comodo           (critical) Digital Signature, Certificate Sign, CRL Sign
 Comodo DV        (critical) Digital Signature, Certificate Sign, CRL Sign
-GlobalSign
+GlobalSign       (critical) Certificate Sign, CRL Sign
 GlobalSign DV
 ================ =================================================================================
 
@@ -290,7 +290,7 @@ GeoTrust Global  C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E
 RapidSSL G3      C3:9C:F3:FC:D3:46:08:34:BB:CE:46:7F:A0:7C:5B:F3:E2:08:CB:59
 Comodo           BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4
 Comodo DV        90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7
-GlobalSign
+GlobalSign       60:7B:66:1A:45:0D:97:CA:89:50:2F:7D:04:CD:34:A8:FF:FC:FD:4B
 GlobalSign DV
 ================ =================================================================================
 
