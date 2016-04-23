@@ -5,12 +5,27 @@ x509 extensions in other CAs
 This page documents the x509 extensions (e.g. for CRLs, etc.) set by other CAs. The information
 here is used by **django-ca** to initialize and sign certificate authorities and certificates.
 
+Helpful descriptions of the meaning of various extensions can also be found in
+:manpage:`x509v3_config(5SSL)` (`online
+<https://www.openssl.org/docs/manmaster/apps/x509v3_config.html>`_).
+
 *******************
 authorityInfoAccess
 *******************
 
+.. seealso:: https://tools.ietf.org/html/rfc5280#section-4.2.2.1
+
+The "CA Issuers" is a URI pointing to the signing certificate. The certificate is in DER/ASN1 format
+and has a ``Content-Type: application/x-x509-ca-cert`` header (except where noted).
+
 In CA certificates
 ==================
+
+Let's Encrypt is notable here because its CA Issuers field points to a pkcs7 file and the HTTP
+response returns a ``Content-Type: application/x-pkcs7-mime`` header.
+
+The certificate pointed to by the CA Issuers field is the root certificate (so the Comodo DV CA
+points to the AddTrust CA that signed the Comodo Root CA).
 
 ================= =================================================================================
 CA                Value
@@ -35,6 +50,13 @@ GlobalSign DV     OCSP - URI:http://ocsp.globalsign.com/rootr1
 In signed certificates
 ======================
 
+Let's Encrypt is again special in that the response has a ``Content-Type: application/pkix-cert``
+header (but at least it's in DER format like every other certificate). RapidSSL uses
+``Content-Type: text/plain``.
+
+The CA Issuers field sometimes points to the signing certificate (e.g. StartSSL) or to the root CA
+(e.g. Comodo DV, which points to the AddTrust Root CA)
+
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
@@ -52,9 +74,26 @@ GlobalSign DV    * CA Issuers - URI:http://secure.globalsign.com/cacert/gsdomain
                  * OCSP - URI:http://ocsp2.globalsign.com/gsdomainvalsha2g2
 ================ =================================================================================
 
+.. _authorityKeyIdentifier:
+
 **********************
 authorityKeyIdentifier
 **********************
+
+.. seealso:: https://tools.ietf.org/html/rfc5280#section-4.2.1.1
+
+A hash identifying the CA used to sign the certificate. In theory the identifier may also be based
+on the issuer name and serial number, but in the wild, all certificates reference the
+:ref:`subjectKeyIdentifier`. Self-signed certificates (e.g. Root CAs, like StartSSL and Comodo
+below) will reference themself, while signed certificates reference the signed CA, e.g.:
+
+=============== ==================== ======================
+Name            subjectKeyIdentifier authorityKeyIdentifier
+=============== ==================== ======================
+Root CA         foo                  keyid:foo
+Intermediate CA bar                  keyid:foo
+Client Cert     bla                  keyid:bar
+=============== ==================== ======================
 
 In CA certificates
 ==================
@@ -91,6 +130,8 @@ GlobalSign DV    keyid:EA:4E:7C:D4:80:2D:E5:15:81:86:26:8C:82:6D:C0:98:A4:CF:97:
 ****************
 basicConstraints
 ****************
+
+.. seealso:: https://tools.ietf.org/html/rfc5280#section-4.2.1.9
 
 The ``basicConstraints`` extension specifies if the certificate can be used as a certificate
 authority. It is always marked as critical. The ``pathlen`` attribute specifies the levels of
@@ -133,41 +174,61 @@ GlobalSign DV    CA:FALSE
 crlDistributionPoints
 *********************
 
+.. seealso:: https://tools.ietf.org/html/rfc5280#section-4.2.1.13
+
+In theory a complex multi-valued extension, this extension usually just holds a URI pointing to a
+Certificate Revokation List (CRL).
+
+Root certificate authorities (StartSSL, GeoTrust Global, GlobalSign) do not set this field. This
+usually isn't a problem since clients have a list of trusted root certificates anyway, and browsers
+and distributions should get regular updates on the list of trusted certificates.
+
+All CRLs linked here are all in DER/ASN1 format, and the ``Content-Type`` header in the response is
+set to ``application/pkix-crl``. Only Comodo uses ``application/x-pkcs7-crl``, but it is also in
+DER/ASN1 format.
+
 In CA certificates
 ==================
 
-================ =================================================================================
-CA               Value
-================ =================================================================================
-Let's Encrypt    URI:http://crl.identrust.com/DSTROOTCAX3CRL.crl
-StartSSL         URI:http://crl.startssl.com/sfsca.crl
-StartSSL Class 2 URI:http://crl.startssl.com/sfsca.crl
-StartSSL Class 3 URI:http://crl.startssl.com/sfsca.crl
+================ =============================================================== =======================
+CA               Value                                                           Content-Type
+================ =============================================================== =======================
+Let's Encrypt    URI:http://crl.identrust.com/DSTROOTCAX3CRL.crl                 application/pkix-crl
+StartSSL         (not present)
+StartSSL Class 2 URI:http://crl.startssl.com/sfsca.crl                           application/pkix-crl
+StartSSL Class 3 URI:http://crl.startssl.com/sfsca.crl                           application/pkix-crl
 GeoTrust Global  (not present)
-RapidSSL G3      URI:http://g.symcb.com/crls/gtglobal.crl
-Comodo           URI:http://crl.usertrust.com/AddTrustExternalCARoot.crl
-Comodo DV        URI:http://crl.comodoca.com/COMODORSACertificationAuthority.crl
+RapidSSL G3      URI:http://g.symcb.com/crls/gtglobal.crl                        application/pkix-crl
+Comodo           URI:http://crl.usertrust.com/AddTrustExternalCARoot.crl         application/x-pkcs7-crl
+Comodo DV        URI:http://crl.comodoca.com/COMODORSACertificationAuthority.crl application/x-pkcs7-crl
 GlobalSign       (not present)
-GlobalSign DV    URI:http://crl.globalsign.net/root.crl
-================ =================================================================================
+GlobalSign DV    URI:http://crl.globalsign.net/root.crl                          application/pkix-crl
+================ =============================================================== =======================
 
 In signed certificates
 ======================
 
-================ =================================================================================
-CA               Value
-================ =================================================================================
+Let's Encrypt is so far the only CA that does not maintain a CRL for signed certificates. Major CAs
+usually don't fancy CRLs much because they are a large file (e.g. Comodos CRL is 1.5MB) containing
+all certificates and cause major traffic for CAs. OCSP is just better in every way.
+
+================ ======================================================================== =======================
+CA               Value                                                                    Content-Type
+================ ======================================================================== =======================
 Let's Encrypt    (not present)
-StartSSL Class 2 URI:http://crl.startssl.com/crt2-crl.crl
-StartSSL Class 3 URI:http://crl.startssl.com/sca-server3.crl
-RapidSSL G3      URI:http://gv.symcb.com/gv.crl
-Comodo DV        URI:http://crl.comodoca.com/COMODORSADomainValidationSecureServerCA.crl
-GlobalSign DV    URI:http://crl.globalsign.com/gs/gsdomainvalsha2g2.crl
-================ =================================================================================
+StartSSL Class 2 URI:http://crl.startssl.com/crt2-crl.crl                                 application/pkix-crl
+StartSSL Class 3 URI:http://crl.startssl.com/sca-server3.crl                              application/pkix-crl
+RapidSSL G3      URI:http://gv.symcb.com/gv.crl                                           application/pkix-crl
+Comodo DV        URI:http://crl.comodoca.com/COMODORSADomainValidationSecureServerCA.crl  application/x-pkcs7-crl
+GlobalSign DV    URI:http://crl.globalsign.com/gs/gsdomainvalsha2g2.crl                   application/pkix-crl
+================ ======================================================================== =======================
 
 ****************
 extendedKeyUsage
 ****************
+
+A list of purposes for which the certificate can be used for. CA certificates usually do not set
+this field.
 
 In CA certificates
 ==================
@@ -205,6 +266,10 @@ GlobalSign DV    TLS Web Server Authentication, TLS Web Client Authentication
 issuerAltName
 *************
 
+.. seealso:: https://tools.ietf.org/html/rfc5280#section-4.2.1.7
+
+Only StartSSL sets this field in its signed certificates. It's a URI pointing to their homepage.
+
 In CA certificates
 ==================
 
@@ -241,6 +306,11 @@ GlobalSign DV    (not present)
 keyUsage
 ********
 
+.. seealso:: https://tools.ietf.org/html/rfc5280#section-4.2.1.3
+
+List of permitted key usages. Usually marked as critical, except for certificates signed by
+StartSSL.
+
 In CA certificates
 ==================
 
@@ -273,9 +343,20 @@ Comodo DV        (critical) Digital Signature, Key Encipherment
 GlobalSign DV    (critical) Digital Signature, Key Encipherment
 ================ =================================================================================
 
+.. _subjectKeyIdentifier:
+
 ********************
 subjectKeyIdentifier
 ********************
+
+.. seealso:: https://tools.ietf.org/html/rfc5280#section-4.2.1.2
+
+The subjectKeyIdentifier extension provides a means of identifying certificates. It is a
+mandatory extension for CA certificates. Currently only RapidSSL does not set this for signed
+certificates.
+
+The value of the subjectKeyIdentifier extension reappears in the :ref:`authorityKeyIdentifier`
+extension (prefixed with ``keyid:``).
 
 In CA certificates
 ==================
