@@ -1,6 +1,8 @@
 Fabric3==1.10.2.post3
 Sphinx==1.4.1
 coverage==4.0.3
-ipython==4.1.2
+ipython
 mock==2.0.0
+pip
+setuptools
 sphinx-autobuild==0.6.0
