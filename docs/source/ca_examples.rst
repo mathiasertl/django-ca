@@ -28,7 +28,7 @@ Comodo            OCSP - URI:http://ocsp.usertrust.com
 Comodo DV         * CA Issuers - URI:http://crt.comodoca.com/COMODORSAAddTrustCA.crt
                   * OCSP - URI:http://ocsp.comodoca.com
 GlobalSign
-GlobalSign DV
+GlobalSign DV     OCSP - URI:http://ocsp.globalsign.com/rootr1
 ================= =================================================================================
 
 
@@ -48,7 +48,8 @@ RapidSSL G3      * OCSP - URI:http://gv.symcd.com
                  * CA Issuers - URI:http://gv.symcb.com/gv.crt
 Comodo DV        * CA Issuers - URI:http://crt.comodoca.com/COMODORSADomainValidationSecureServerCA.crt
                  * OCSP - URI:http://ocsp.comodoca.com
-GlobalSign DV    OCSP - URI:http://ocsp.globalsign.com/rootr1
+GlobalSign DV    * CA Issuers - URI:http://secure.globalsign.com/cacert/gsdomainvalsha2g2r1.crt
+                 * OCSP - URI:http://ocsp2.globalsign.com/gsdomainvalsha2g2
 ================ =================================================================================
 
 **********************
@@ -84,7 +85,7 @@ StartSSL Class 2 keyid:11:DB:23:45:FD:54:CC:6A:71:6F:84:8A:03:D7:BE:F7:01:2F:26:
 StartSSL Class 3 keyid:B1:3F:1C:92:7B:92:B0:5A:25:B3:38:FB:9C:07:A4:26:50:32:E3:51
 RapidSSL G3      keyid:C3:9C:F3:FC:D3:46:08:34:BB:CE:46:7F:A0:7C:5B:F3:E2:08:CB:59
 Comodo DV        keyid:90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7
-GlobalSign DV
+GlobalSign DV    keyid:EA:4E:7C:D4:80:2D:E5:15:81:86:26:8C:82:6D:C0:98:A4:CF:97:0F
 ================ =================================================================================
 
 ****************
@@ -125,7 +126,7 @@ StartSSL Class 2 (critical) CA:FALSE
 StartSSL Class 3 CA:FALSE
 RapidSSL G3      (critical) CA:FALSE
 Comodo DV        (critical) CA:FALSE
-GlobalSign DV
+GlobalSign DV    CA:FALSE
 ================ =================================================================================
 
 *********************
@@ -161,7 +162,7 @@ StartSSL Class 2 URI:http://crl.startssl.com/crt2-crl.crl
 StartSSL Class 3 URI:http://crl.startssl.com/sca-server3.crl
 RapidSSL G3      URI:http://gv.symcb.com/gv.crl
 Comodo DV        URI:http://crl.comodoca.com/COMODORSADomainValidationSecureServerCA.crl
-GlobalSign DV
+GlobalSign DV    URI:http://crl.globalsign.com/gs/gsdomainvalsha2g2.crl
 ================ =================================================================================
 
 ****************
@@ -197,7 +198,7 @@ StartSSL Class 2 TLS Web Client Authentication, TLS Web Server Authentication
 StartSSL Class 3 TLS Web Client Authentication, TLS Web Server Authentication
 RapidSSL G3      TLS Web Server Authentication, TLS Web Client Authentication
 Comodo DV        TLS Web Server Authentication, TLS Web Client Authentication
-GlobalSign DV
+GlobalSign DV    TLS Web Server Authentication, TLS Web Client Authentication
 ================ =================================================================================
 
 *************
@@ -269,7 +270,7 @@ StartSSL Class 2 Digital Signature, Key Encipherment, Key Agreement
 StartSSL Class 3 Digital Signature, Key Encipherment
 RapidSSL G3      (critical) Digital Signature, Key Encipherment
 Comodo DV        (critical) Digital Signature, Key Encipherment
-GlobalSign DV
+GlobalSign DV    (critical) Digital Signature, Key Encipherment
 ================ =================================================================================
 
 ********************
@@ -305,7 +306,7 @@ StartSSL Class 2 C7:AA:D9:A4:F0:BC:D1:C1:1B:05:D2:19:71:0A:86:F8:58:0F:F0:99
 StartSSL Class 3 F0:72:65:5E:21:AA:16:76:2C:6F:D0:63:53:0C:68:D5:89:50:2A:73
 RapidSSL G3
 Comodo DV        F2:CB:1F:E9:6E:D5:43:E3:85:75:98:5F:97:7C:B0:59:7F:D5:C0:C0
-GlobalSign DV
+GlobalSign DV    52:5A:45:5B:D4:9D:AC:65:30:BD:67:80:6C:D1:A1:3E:09:F7:FD:92
 ================ =================================================================================
 
 ****************
@@ -345,5 +346,5 @@ StartSSL Class 2 X509v3 Certificate Policies
 StartSSL Class 3 X509v3 Certificate Policies
 RapidSSL G3      X509v3 Certificate Policies
 Comodo DV        X509v3 Certificate Policies
-GlobalSign DV
+GlobalSign DV    X509v3 Certificate Policies
 ================ =================================================================================
