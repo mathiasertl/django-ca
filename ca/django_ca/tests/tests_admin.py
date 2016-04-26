@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
+import json
+
 from datetime import timedelta
 
 from OpenSSL import crypto
@@ -110,8 +112,7 @@ class RevokeActionTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
             'action': 'revoke', '_selected_action': [self.cert.pk],
         }
         response = self.client.post(self.changelist_url, data)
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], self.changelist_url)
+        self.assertRedirects(response, self.changelist_url)
 
         cert = Certificate.objects.get(serial=self.cert.serial)
         self.assertTrue(cert.revoked)
@@ -119,8 +120,7 @@ class RevokeActionTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
         # revoking revoked certs does nothing:
         response = self.client.post(self.changelist_url, data)
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], self.changelist_url)
+        self.assertRedirects(response, self.changelist_url)
 
 
 @override_tmpcadir()
@@ -177,10 +177,9 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
             'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
             'extendedKeyUsage_1': False,
         })
-        self.assertEqual(response.status_code, 302)
-        cert = Certificate.objects.get(cn=cn)
-        self.assertEqual(response['Location'], self.changelist_url)
+        self.assertRedirects(response, self.changelist_url)
 
+        cert = Certificate.objects.get(cn=cn)
         self.assertSubject(cert.x509, {'C': 'US', 'CN': cn})
         self.assertEqual(cert.subjectAltName(), 'DNS:%s' % cn)
         self.assertEqual(cert.basicConstraints(), 'critical,CA:FALSE')
@@ -208,10 +207,9 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
             'extendedKeyUsage_0': [],
             'extendedKeyUsage_1': False,
         })
-        self.assertEqual(response.status_code, 302)
-        cert = Certificate.objects.get(cn=cn)
-        self.assertEqual(response['Location'], self.changelist_url)
+        self.assertRedirects(response, self.changelist_url)
 
+        cert = Certificate.objects.get(cn=cn)
         self.assertSubject(cert.x509, {'C': 'US', 'CN': cn})
         self.assertEqual(cert.subjectAltName(), 'DNS:%s, DNS:%s' % (cn, san))
         self.assertEqual(cert.basicConstraints(), 'critical,CA:FALSE')
@@ -255,7 +253,7 @@ class CSRDetailTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
     def test_basic(self):
         response = self.client.post(self.url, data={'csr': self.csr_pem})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {'subject': {}})
+        self.assertEqual(json.loads(response.content.decode('utf-8')), {'subject': {}})
 
     def test_fields(self):
         subject = {f: 'test-%s' % f for f in SUBJECT_FIELDS}
@@ -265,7 +263,7 @@ class CSRDetailTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
 
         response = self.client.post(self.url, data={'csr': csr_pem})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {'subject': {
+        self.assertEqual(json.loads(response.content.decode('utf-8')), {'subject': {
             'C': 'AT', 'CN': 'test-CN', 'L': 'test-L', 'O': 'test-O', 'OU': 'test-OU', 'ST':
             'test-ST', 'emailAddress': 'test-emailAddress'}})
 
