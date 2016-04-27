@@ -19,6 +19,7 @@ import re
 from OpenSSL import crypto
 
 from django.db import models
+from django.utils.encoding import force_bytes
 
 from . import ca_settings
 from .utils import SAN_OPTIONS_RE
@@ -47,7 +48,7 @@ class CertificateAuthorityManager(models.Manager):
         # set basic properties
         cert = get_basic_cert(expires)
         for key, value in get_cert_subject(subject):
-            setattr(cert.get_subject(), key, bytes(value, 'utf-8'))
+            setattr(cert.get_subject(), key, force_bytes(value))
         cert.set_issuer(cert.get_subject())
         cert.set_pubkey(private_key)
 
@@ -55,7 +56,7 @@ class CertificateAuthorityManager(models.Manager):
         if pathlen is not False:
             basicConstraints += ', pathlen:%s' % pathlen
 
-        san = b'DNS:' + bytes(subject['CN'], 'utf-8')
+        san = force_bytes('DNS:%s' % subject['CN'])
         cert.add_extensions([
             crypto.X509Extension(b'basicConstraints', True, basicConstraints.encode('utf-8')),
             crypto.X509Extension(b'keyUsage', 0, b'keyCertSign,cRLSign'),
@@ -176,7 +177,7 @@ class CertificateManager(models.Manager):
         cert = get_basic_cert(expires)
         cert.set_issuer(ca.x509.get_subject())
         for key, value in get_cert_subject(subject):
-            setattr(cert.get_subject(), key, bytes(value, 'utf-8'))
+            setattr(cert.get_subject(), key, force_bytes(value))
         cert.set_pubkey(req.get_pubkey())
 
         extensions = [

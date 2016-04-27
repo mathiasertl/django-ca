@@ -24,6 +24,7 @@ from django.core.management.base import CommandError
 from django.core.management.base import OutputWrapper
 from django.core.management.color import no_style
 from django.core.validators import URLValidator
+from django.utils import six
 
 from django_ca import ca_settings
 from django_ca.utils import is_power2
@@ -132,7 +133,7 @@ class BaseCommand(_BaseCommand):
     requires_system_checks = True
 
     def __init__(self, stdout=None, stderr=None, no_color=False):
-        if self.binary_output is True:
+        if self.binary_output is True and six.PY3 is True:
             self.stdout = BinaryOutputWrapper(stdout or sys.stdout.buffer)
             self.stderr = BinaryOutputWrapper(stderr or sys.stderr.buffer)
             self.style = no_style()

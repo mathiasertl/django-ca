@@ -25,6 +25,7 @@ from ipaddress import ip_address
 
 from django.core.validators import URLValidator
 from django.core.serializers.json import DjangoJSONEncoder
+from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 from django.utils.functional import Promise
 from django.utils.translation import ugettext_lazy as _
@@ -136,7 +137,7 @@ def get_cert_profile_kwargs(name=None):
         elif isinstance(config['value'], bytes):
             kwargs[arg] = (critical, config['value'])
         else:
-            kwargs[arg] = (critical, bytes(','.join(config['value']), 'utf-8'))
+            kwargs[arg] = (critical, force_bytes(','.join(config['value'])))
     return kwargs
 
 
@@ -182,4 +183,4 @@ def get_subjectAltName(names, cn=None):
         if value not in values:
             values.insert(0, value)
 
-    return bytes(','.join(values), 'utf-8')
+    return force_bytes(','.join(values))
