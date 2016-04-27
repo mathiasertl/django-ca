@@ -19,6 +19,7 @@ import re
 
 from django.db import models
 from django.utils import timezone
+from django.utils.encoding import force_bytes
 from django.utils.translation import ugettext_lazy as _
 
 from OpenSSL import crypto
@@ -304,10 +305,10 @@ class Certificate(X509CertMixin):
 
         r = crypto.Revoked()
         # set_serial expects a str without the ':'
-        r.set_serial(bytes(self.serial.replace(':', ''), 'utf-8'))
+        r.set_serial(force_bytes(self.serial.replace(':', '')))
         if self.revoked_reason:
-            r.set_reason(bytes(self.revoked_reason, 'utf-8'))
-        r.set_rev_date(bytes(format_date(self.revoked_date), 'utf-8'))
+            r.set_reason(force_bytes(self.revoked_reason))
+        r.set_rev_date(force_bytes(format_date(self.revoked_date)))
         return r
 
     def __str__(self):

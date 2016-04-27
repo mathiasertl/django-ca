@@ -17,6 +17,7 @@ from django.core.management.base import CommandError
 
 from django_ca.crl import get_crl
 from django_ca.management.base import BaseCommand
+from django.utils.encoding import force_bytes
 
 
 class Command(BaseCommand):
@@ -29,7 +30,7 @@ class Command(BaseCommand):
             help="The number of days until the next update of this CRL (default: %(default)s).")
         parser.add_argument('--digest', default='sha512',
                             help="The name of the message digest to use (default: %(default)s).")
-        parser.add_argument('path', nargs='?', default='-', 
+        parser.add_argument('path', nargs='?', default='-',
                             help='Path for the output file. Use "-" for stdout.')
         self.add_format(parser)
         self.add_ca(parser)
@@ -39,7 +40,7 @@ class Command(BaseCommand):
         kwargs = {
             'type': options['format'],
             'days': options['days'],
-            'digest': bytes(options['digest'], 'utf-8'),
+            'digest': force_bytes(options['digest']),
         }
 
         crl = get_crl(ca=options['ca'], **kwargs)
@@ -52,5 +53,5 @@ class Command(BaseCommand):
                # https://bitbucket.org/ned/coveragepy/issues/146/context-managers-confuse-branch-coverage#comment-24552176
                 with open(path, 'wb') as stream:  # pragma: no branch
                     stream.write(crl)
-            except FileNotFoundError as e:
+            except IOError as e:
                 raise CommandError(e)
