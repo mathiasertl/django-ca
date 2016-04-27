@@ -2,6 +2,7 @@
 
 ### 1.0.1
 
+* Officially support Python2.7 again.
 * Make sure that certificate authorities cannot be removed via the web interface.
 
 ### 1.0.0 (2016-04-27)

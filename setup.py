@@ -105,7 +105,7 @@ class CoverageCommand(BaseCommand):
 
 setup(
     name='django-ca',
-    version='1.0.0',
+    version='1.0.1',
     description='A Django app providing a SSL/TLS certificate authority.',
     long_description=long_description,
     author='Mathias Ertl',
