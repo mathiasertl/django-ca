@@ -46,9 +46,12 @@ class WatcherAdmin(admin.ModelAdmin):
 
 class CertificateMixin(object):
     def hpkp_pin(self, obj):
-        return mark_safe('''%s<p class="help">SHA-256 HPKP pin of this certificate. See also <a
-href="https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning">HTTP Public Key Pinning</a> on
-Wikipedia.</p>''' % obj.hpkp_pin)
+        # TODO/Django 1.9: We replace newlines because Django 1.8 inserts HTML breaks for them
+
+        help_text = '''<p class="help">SHA-256 HPKP pin of this certificate. See also
+<a href="https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning">HTTP Public Key Pinning</a>
+on Wikipedia.</p>'''.replace('\n', ' ')
+        return mark_safe('%s%s' % (obj.hpkp_pin, help_text))
     hpkp_pin.short_description = _('HPKP pin (SHA-256)')
 
 
