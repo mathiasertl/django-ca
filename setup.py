@@ -120,7 +120,7 @@ setup(
     package_dir={'': 'ca'},
     zip_safe=False,  # because of the static files
     install_requires=[
-        'Django>=1.9',
+        'Django>=1.8',
         'pyOpenSSL>=16.0',
     ],
     cmdclass={

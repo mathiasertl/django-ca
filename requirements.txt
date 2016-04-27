@@ -1,3 +1,2 @@
-Django==1.9.5
+Django>=1.8
 pyOpenSSL==16.0.0
-ndg-httpsclient==0.4.0
