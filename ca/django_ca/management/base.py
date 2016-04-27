@@ -128,6 +128,9 @@ class BaseCommand(_BaseCommand):
     certificate_queryset = Certificate.objects.filter(revoked=False)
     binary_output = False
 
+    # TODO/Django1.9: Only necessary in Django 1.8
+    requires_system_checks = True
+
     def __init__(self, stdout=None, stderr=None, no_color=False):
         if self.binary_output is True:
             self.stdout = BinaryOutputWrapper(stdout or sys.stdout.buffer)
