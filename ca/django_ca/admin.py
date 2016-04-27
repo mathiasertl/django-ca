@@ -54,9 +54,18 @@ on Wikipedia.</p>'''.replace('\n', ' ')
         return mark_safe('%s%s' % (obj.hpkp_pin, help_text))
     hpkp_pin.short_description = _('HPKP pin (SHA-256)')
 
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def get_actions(self, request):
+        # Disable the "delete selected" admin action
+        actions = super(CertificateMixin, self).get_actions(request)
+        actions.pop('delete_selected', '')
+        return actions
+
 
 @admin.register(CertificateAuthority)
-class CertificateAuthorityAdmin(admin.ModelAdmin, CertificateMixin):
+class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
     fieldsets = (
         (None, {
             'fields': ['name', 'enabled', 'cn', 'parent', 'subjectKeyIdentifier',
@@ -81,12 +90,6 @@ class CertificateAuthorityAdmin(admin.ModelAdmin, CertificateMixin):
 
     def has_add_permission(self, request):
         return False
-
-    def get_urls(self):
-        # Remove the delete action from the URLs
-        urls = super(CertificateAuthorityAdmin, self).get_urls()
-        add_name = '%s_%s_add' % (self.model._meta.app_label, self.model._meta.model_name)
-        return [u for u in urls if u.name != add_name]
 
     class Media:
         css = {
@@ -118,7 +121,7 @@ class StatusListFilter(admin.SimpleListFilter):
 
 
 @admin.register(Certificate)
-class CertificateAdmin(admin.ModelAdmin, CertificateMixin):
+class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
     actions = ['revoke', ]
     change_form_template = 'django_ca/admin/change_form.html'
     list_display = ('cn', 'serial', 'status', 'expires_date')
@@ -157,12 +160,6 @@ class CertificateAdmin(admin.ModelAdmin, CertificateMixin):
         }),
     ]
 
-    def get_actions(self, request):
-        # Disable the "delete selected" admin action
-        actions = super(CertificateAdmin, self).get_actions(request)
-        actions.pop('delete_selected', '')
-        return actions
-
     def get_form(self, request, obj=None, **kwargs):
         if obj is None:
             return CreateCertificateForm
@@ -193,10 +190,6 @@ class CertificateAdmin(admin.ModelAdmin, CertificateMixin):
         # Remove the delete action from the URLs
         urls = super(CertificateAdmin, self).get_urls()
         meta = self.model._meta
-
-        # remove the delete URL
-        delete_name = '%s_%s_delete' % (meta.app_label, meta.verbose_name)
-        urls = [u for u in urls if u.name != delete_name]
 
         # add revokation URL
         revoke_name = '%s_%s_revoke' % (meta.app_label, meta.verbose_name)

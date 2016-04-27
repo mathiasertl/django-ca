@@ -1,5 +1,9 @@
 ## ChangeLog
 
+### 1.0.1
+
+* Make sure that certificate authorities cannot be removed via the web interface.
+
 ### 1.0.0
 
 * Move this project from https://github.com/fsinf/certificate-authority to
