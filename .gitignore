@@ -3,12 +3,13 @@
 *.sqlite3
 *.egg-info
 localsettings.py
-/ca/.coverage
 /MANIFEST
 /bin/
 /build/
+/ca/.coverage
 /ca/files/
 /dist
+/dj18/
 /docs/build/
 /fab.conf
 /include/
@@ -17,4 +18,3 @@ localsettings.py
 /pip-selfcheck.json
 /priv/
 /share/
-/dj18/
