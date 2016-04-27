@@ -133,7 +133,7 @@ def get_cert_profile_kwargs(name=None):
 
         critical = config.get('critical', 'True')
         if isinstance(config['value'], str):
-            kwargs[arg] = (critical, bytes(config['value'], 'utf-8'))
+            kwargs[arg] = (critical, force_bytes(config['value']))
         elif isinstance(config['value'], bytes):
             kwargs[arg] = (critical, config['value'])
         else:

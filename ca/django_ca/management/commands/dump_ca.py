@@ -41,5 +41,5 @@ class Command(BaseCommand):
                 # https://bitbucket.org/ned/coveragepy/issues/146/context-managers-confuse-branch-coverage#comment-24552176
                 with open(path, 'wb') as stream:  # pragma: no branch
                     stream.write(data)
-            except FileNotFoundError as e:
+            except IOError as e:
                 raise CommandError(e)

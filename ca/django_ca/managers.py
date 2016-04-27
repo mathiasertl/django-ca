@@ -198,13 +198,12 @@ class CertificateManager(models.Manager):
         # Set CRL distribution points:
         if ca.crl_url:
             crl_urls = [url.strip() for url in ca.crl_url.split()]
-            value = ','.join(['URI:%s' % uri for uri in crl_urls])
-            value = bytes(value, 'utf-8')
+            value = force_bytes(','.join(['URI:%s' % uri for uri in crl_urls]))
             extensions.append(crypto.X509Extension(b'crlDistributionPoints', 0, value))
 
         # Add issuerAltName
         if ca.issuer_alt_name:
-            issuerAltName = bytes('URI:%s' % ca.issuer_alt_name, 'utf-8')
+            issuerAltName = force_bytes('URI:%s' % ca.issuer_alt_name)
         else:
             issuerAltName = b'issuer:copy'
         extensions.append(crypto.X509Extension(b'issuerAltName', 0, issuerAltName, issuer=ca.x509))
@@ -216,13 +215,13 @@ class CertificateManager(models.Manager):
         if ca.issuer_url:
             auth_info_access.append('caIssuers;URI:%s' % ca.issuer_url)
         if auth_info_access:
-            auth_info_access = bytes(','.join(auth_info_access), 'utf-8')
+            auth_info_access = force_bytes(','.join(auth_info_access))
             extensions.append(crypto.X509Extension(b'authorityInfoAccess', 0, auth_info_access))
 
         # Add collected extensions
         cert.add_extensions(extensions)
 
         # Finally sign the certificate:
-        cert.sign(ca.key, algorithm)
+        cert.sign(ca.key, str(algorithm))  # str() to force py2 unicode to str
 
         return cert

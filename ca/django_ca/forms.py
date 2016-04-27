@@ -18,6 +18,7 @@ from datetime import timedelta
 
 from django import forms
 from django.contrib.admin.widgets import AdminDateWidget
+from django.utils.encoding import force_bytes
 from django.utils.translation import ugettext_lazy as _
 
 from . import ca_settings
@@ -99,14 +100,14 @@ class CreateCertificateForm(forms.ModelForm):
         value, critical = self.cleaned_data['keyUsage']
         if not value:
             return None
-        value = bytes(','.join(value), 'utf-8')
+        value = force_bytes(','.join(value))
         return critical, value
 
     def clean_extendedKeyUsage(self):
         value, critical = self.cleaned_data['extendedKeyUsage']
         if not value:
             return None
-        value = bytes(','.join(value), 'utf-8')
+        value = force_bytes(','.join(value))
         return critical, value
 
     class Meta:
