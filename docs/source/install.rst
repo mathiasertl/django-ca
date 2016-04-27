@@ -5,7 +5,12 @@ You can run **django-ca** as a regular app in any existing Django project of
 yours, but if you don't have any Django project running, you can run it as a
 `standalone project <#as-standalone-project>`_.
 
-.. WARNING:: Please remember that **django-ca** requires Python3.4+ to run.
+Requirements
+____________
+
+* Python 2.7 or Python 3.4+
+* Django 1.8+
+* Any database supported by Django (sqlite3/MySQL/PostgreSQL/...)
 
 As Django app (in an your Django project)
 _________________________________________

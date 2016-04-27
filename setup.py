@@ -31,7 +31,7 @@ command-line.
 Features:
 
 * Set up a secure local certificate authority in just a few minutes.
-* Written in Python3.4+.
+* Written in Python 2.7/Python3.4+.
 * Manage your entire certificate authority from the command line and/or via Djangos admin interface.
 * Get email notifications about certificates about to expire.
 * Support generating for certificate revocation lists (CRLs).
@@ -134,6 +134,8 @@ setup(
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',

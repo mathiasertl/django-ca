@@ -12,7 +12,7 @@ Documentation is available at http://django-ca.readthedocs.org/.
 ## Features
 
 1. Set up a secure local certificate authority in just a few minutes.
-2. Written in Python3.4+.
+2. Written in Python2.7/Python3.4+.
 3. Manage your entire certificate authority from the command line and/or via
    Djangos admin interface.
 4. Get email notifications about certificates about to expire.

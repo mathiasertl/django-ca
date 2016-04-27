@@ -16,7 +16,7 @@ command-line.
 Features:
 
 * Set up a secure local certificate authority in just a few minutes.
-* Written in Python3.4+.
+* Written in Python2.7/Python3.4+.
 * Manage your entire certificate authority from the command line and/or via
   Djangos admin interface.
 * Get email notifications about certificates about to expire.
