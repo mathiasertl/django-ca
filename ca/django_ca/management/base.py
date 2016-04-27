@@ -117,7 +117,7 @@ class BinaryOutputWrapper(OutputWrapper):
 
     def write(self, msg, style_func=None, ending=None):
         ending = self.ending if ending is None else ending
-        if isinstance(msg, str):  # pragma: no cover
+        if six.PY3 is True and isinstance(msg, str):  # pragma: no cover
             msg = msg.encode('utf-8')
 
         if ending and not msg.endswith(ending):  # pragma: no cover

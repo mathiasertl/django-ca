@@ -138,7 +138,7 @@ setup.py: error: %s: %s: Private key does not exist.\n''' % (ca.name, ca.private
     def test_unparseable(self):
 
         fd, path = tempfile.mkstemp()
-        stream = os.fdopen(fd, mode='w')
+        stream = os.fdopen(fd, 'w')
 
         try:
             ca = CertificateAuthority.objects.first()
