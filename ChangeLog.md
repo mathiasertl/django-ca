@@ -4,7 +4,7 @@
 
 * Make sure that certificate authorities cannot be removed via the web interface.
 
-### 1.0.0
+### 1.0.0 (2016-04-27)
 
 * Move this project from https://github.com/fsinf/certificate-authority to
   https://github.com/mathiasertl/django-ca.
