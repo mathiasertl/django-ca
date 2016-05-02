@@ -22,6 +22,16 @@ import shlex
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('.'))
 
+_BASE_DIR = os.path.dirname(os.path.abspath(__name__))
+_ROOT_DIR = os.path.dirname(os.path.dirname(_BASE_DIR))
+_SRC_DIR = os.path.join(_ROOT_DIR, 'ca')
+sys.path.insert(0, _SRC_DIR)
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ca.settings')
+
+import django
+django.setup()
+
+
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
