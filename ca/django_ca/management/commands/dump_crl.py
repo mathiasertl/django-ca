@@ -26,8 +26,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-d', '--days', type=int, default=1,
-            help="The number of days until the next update of this CRL (default: %(default)s).")
+            '-e', '--expires', type=int, default=86400, metavar='SECONDS',
+            help="Seconds until a new CRL will be available (default: %(default)s).")
         parser.add_argument('--digest', default='sha512',
                             help="The name of the message digest to use (default: %(default)s).")
         parser.add_argument('path', nargs='?', default='-',
@@ -39,7 +39,7 @@ class Command(BaseCommand):
     def handle(self, path, **options):
         kwargs = {
             'type': options['format'],
-            'days': options['days'],
+            'expires': options['expires'],
             'digest': force_bytes(options['digest']),
         }
 

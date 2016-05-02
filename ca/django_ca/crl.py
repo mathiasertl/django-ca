@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+from decimal import Decimal
+
 from OpenSSL import crypto
 
 from django.utils import timezone
@@ -29,8 +31,11 @@ def get_crl(ca, **kwargs):
     Parameters
     ----------
 
+    ca : :py:class:`~django_ca.models.CertificateAuthority`
     type : int
-    days : int
+        One of OpenSSL.crypto.FILETYPE_*.
+    expires : int, optional
+        The time in seconds until a new CRL will be generated. The default is 86400 (one day).
     digest : hash
         Unlike the current pyOpenSSL default (md5), sha512 is the default.
 
@@ -41,6 +46,7 @@ def get_crl(ca, **kwargs):
     Returns the CRL as bytes (since this is what pyOpenSSL returns).
     """
     kwargs.setdefault('digest', b'sha512')
+    kwargs['days'] = Decimal(kwargs.pop('expires', 86400)) / 86400
 
     crl = crypto.CRL()
     for cert in Certificate.objects.filter(ca=ca, expires__gt=timezone.now()).revoked():

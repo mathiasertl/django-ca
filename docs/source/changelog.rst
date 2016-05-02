@@ -6,6 +6,8 @@ ChangeLog
 1.0.2 (not yet released)
 ************************
 
+* Expiry time of CRLs can now be specified in seconds. ``manage.py dump_crl`` now uses the
+  ``--expires`` instead of the old ``--days`` parameter.
 * Move this ChangeLog from a top-level .md file to this location.
 
 ******************
