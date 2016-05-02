@@ -30,10 +30,14 @@ from .models import CertificateAuthority
 
 
 class CertificateRevocationListView(View, SingleObjectMixin):
+    """Generic view that provides Certificate Revocation Lists (CRLs)."""
+
     queryset = CertificateAuthority.objects.all().prefetch_related('certificate_set')
 
     # parameters for the CRL itself
     type = crypto.FILETYPE_ASN1
+    """foo""
+
     timeout = 600
     digest = 'sha512'
 

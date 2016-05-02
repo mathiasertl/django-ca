@@ -36,7 +36,14 @@ via the command line::
 Use generic view to host a CRL
 ******************************
 
-TODO.
+**django-ca** provides the generic view
+:py:class:`~django_ca.views.CertificateRevocationListView` to provide CRLs via HTTP.
+
+If you use **django-ca** as a full project, a default CRL is already available
+
+.. autoclass:: django_ca.views.CertificateRevocationListView
+   :members:
+
 
 ****************
 Generate the CRL
