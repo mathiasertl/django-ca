@@ -36,6 +36,7 @@ Contents:
    crl
    ocsp
    ca_examples
+   changelog
    development
 
 
