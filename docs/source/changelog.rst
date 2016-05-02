@@ -8,6 +8,7 @@ ChangeLog
 
 * Expiry time of CRLs can now be specified in seconds. ``manage.py dump_crl`` now uses the
   ``--expires`` instead of the old ``--days`` parameter.
+* The app now provides a generic view to generate CRLs. See :ref:`crl-generic` for more information.
 * Move this ChangeLog from a top-level .md file to this location.
 
 ******************

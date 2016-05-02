@@ -29,6 +29,15 @@ via the command line::
    $ python manage.py edit_ca --crl-url=http://ca.example.com/crl.pem \
           34:D6:02:B5:B8:27:4F:51:9A:16:0C:B8:56:B7:79:3F
 
+
+.. _crl-generic:
+
+******************************
+Use generic view to host a CRL
+******************************
+
+TODO.
+
 ****************
 Generate the CRL
 ****************
