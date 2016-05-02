@@ -15,6 +15,7 @@
 
 from OpenSSL import crypto
 
+from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.utils.encoding import force_bytes
@@ -40,8 +41,13 @@ class CertificateRevocationListView(View, SingleObjectMixin):
     content_type = 'application/pkix-crl'
 
     def get(self, request, pk):
-        ca = self.get_object()
-        crl = get_crl(ca, type=self.type, expires=self.timeout, digest=force_bytes(self.digest))
+        cache_key = 'crl_%s_%s_%s' % (pk, self.type, self.digest)
+        crl = cache.get(cache_key)
+        if crl is None:
+            ca = self.get_object()
+            crl = get_crl(ca, type=self.type, expires=self.timeout, digest=force_bytes(self.digest))
+            cache.set(cache_key, crl, self.timeout)
+
         return HttpResponse(crl, content_type=self.content_type)
 
 
