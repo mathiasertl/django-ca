@@ -13,11 +13,40 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+from OpenSSL import crypto
+
 from django.core.urlresolvers import reverse
+from django.http import HttpResponse
+from django.utils.encoding import force_bytes
+from django.views.generic.base import View
+from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import UpdateView
 
+from .crl import get_crl
 from .forms import RevokeCertificateForm
 from .models import Certificate
+from .models import CertificateAuthority
+
+
+class CertificateRevocationListView(View, SingleObjectMixin):
+    queryset = CertificateAuthority.objects.all().prefetch_related('certificate_set')
+
+    # parameters for the CRL itself
+    type = crypto.FILETYPE_ASN1
+    timeout = 1
+    digest = 'sha512'
+
+    # header used in the request
+    content_type = 'application/pkix-crl'
+
+    def get(self, request, pk):
+        if pk == 'ca':
+            pass  # TODO: provide a CRL for CAs
+        else:
+            ca = self.get_object()
+
+        crl = get_crl(ca, type=self.type, days=self.timeout, digest=force_bytes(self.digest))
+        return HttpResponse(crl, content_type=self.content_type)
 
 
 class RevokeCertificateView(UpdateView):
