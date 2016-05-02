@@ -2,7 +2,7 @@
 Run a OCSP responder
 ####################
 
-Hosting an OCSP service is the second method (besides :doc:`CRLs <crl`) of
+Hosting an OCSP service is the second method (besides :doc:`CRLs <crl>`) of
 letting a client know if a certificate has been revoked.
 
 **django-ca** does not provide a way to host an OCSP service itself, but all
