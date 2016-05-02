@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+from decimal import Decimal
+
 from OpenSSL import crypto
 
 from django.core.urlresolvers import reverse
@@ -33,7 +35,7 @@ class CertificateRevocationListView(View, SingleObjectMixin):
 
     # parameters for the CRL itself
     type = crypto.FILETYPE_ASN1
-    timeout = 1
+    timeout = 600
     digest = 'sha512'
 
     # header used in the request
@@ -45,7 +47,9 @@ class CertificateRevocationListView(View, SingleObjectMixin):
         else:
             ca = self.get_object()
 
-        crl = get_crl(ca, type=self.type, days=self.timeout, digest=force_bytes(self.digest))
+        timeout = Decimal(self.timeout) / 86400
+
+        crl = get_crl(ca, type=self.type, days=timeout, digest=force_bytes(self.digest))
         return HttpResponse(crl, content_type=self.content_type)
 
 
