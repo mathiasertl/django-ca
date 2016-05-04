@@ -15,9 +15,12 @@
 
 from django.conf.urls import url
 
+from . import ca_settings
 from . import views
 
 app_name = 'django_ca'
-urlpatterns = [
-    url(r'^crl/(?P<pk>\d+)/$', views.CertificateRevocationListView.as_view(), name='crl'),
-]
+urlpatterns = []
+
+if ca_settings.CA_GENERIC_CRL is True:
+    urlpatterns.append(
+        url(r'^crl/(?P<pk>\d+)/$', views.CertificateRevocationListView.as_view(), name='crl'))

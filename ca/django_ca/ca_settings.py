@@ -138,3 +138,4 @@ CA_DIGEST_ALGORITHM = getattr(settings, 'CA_DIGEST_ALGORITHM', "sha512")
 
 # Undocumented options, e.g. to share values between different parts of code
 CA_MIN_KEY_SIZE = getattr(settings, 'CA_MIN_KEY_SIZE', 2048)
+CA_PROVIDE_GENERIC_CRL = getattr(settings, 'CA_PROVIDE_GENERIC_CRL', True)

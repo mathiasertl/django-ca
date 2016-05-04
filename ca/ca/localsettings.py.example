@@ -39,6 +39,9 @@ SECRET_KEY = ''
 # The directory where your CA files are located
 #CA_DIR = os.path.join(BASE_DIR, 'files')
 
+# Do not provide a generic CRL view.
+#CA_PROVIDE_GENERIC_CRL = False
+
 ###########################
 ### Certificate options ###
 ###########################
