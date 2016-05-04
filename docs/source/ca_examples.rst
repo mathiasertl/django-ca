@@ -170,6 +170,8 @@ Comodo DV        (critical) CA:FALSE
 GlobalSign DV    CA:FALSE
 ================ =================================================================================
 
+.. _ca-example-crlDistributionPoints:
+
 *********************
 crlDistributionPoints
 *********************
