@@ -51,8 +51,8 @@ class CertificateRevocationListView(View, SingleObjectMixin):
     content_type = 'application/pkix-crl'
     """The value of the Content-Type header used in the response."""
 
-    def get(self, request, pk):
-        cache_key = 'crl_%s_%s_%s' % (pk, self.type, self.digest)
+    def get(self, request, serial):
+        cache_key = 'crl_%s_%s_%s' % (serial, self.type, self.digest)
         crl = cache.get(cache_key)
         if crl is None:
             ca = self.get_object()

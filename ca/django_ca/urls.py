@@ -23,4 +23,4 @@ urlpatterns = []
 
 if ca_settings.CA_PROVIDE_GENERIC_CRL is True:
     urlpatterns.append(
-        url(r'^crl/(?P<serial>\d+)/$', views.CertificateRevocationListView.as_view(), name='crl'))
+        url(r'^crl/(?P<serial>[0-9A-F:]+)/$', views.CertificateRevocationListView.as_view(), name='crl'))
