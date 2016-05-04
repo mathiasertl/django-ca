@@ -49,14 +49,23 @@ fine for TLS clients that use CRLs and is in fact similar to what public CAs use
 :ref:`ca-example-crlDistributionPoints`). If you want to change any of these settings, you can
 override them as parameters in a URL conf::
 
+   from OpenSSL import crypto
    from django_ca.views import CertificateRevocationListView
 
    urlpatterns = [
       # ... your other patterns
 
-      url(r'^crl/(?P<serial>\d+)/$', CertificateRevocationListView.as_view(digest='sha256'), 
-          name='sha256-crl'))
+      # We need a CRL in PEM format with a sha256 digest
+      url(r'^crl/(?P<serial>[0-9A-F:]+)/$', 
+          CertificateRevocationListView.as_view(
+              type=crypto.FILETYPE_PEM,
+              digest='sha256'
+          ), 
+          name='sha256-crl')),
    ]
+
+If you do not want to include the automatically hosted CRL, please set ``CA_PROVIDE_GENERIC_CRL``
+to ``False`` in your settings.
 
 .. autoclass:: django_ca.views.CertificateRevocationListView
    :members:
