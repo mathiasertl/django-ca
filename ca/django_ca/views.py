@@ -32,6 +32,8 @@ from .models import CertificateAuthority
 class CertificateRevocationListView(View, SingleObjectMixin):
     """Generic view that provides Certificate Revocation Lists (CRLs)."""
 
+    slug_field = 'serial'
+    slug_url_kwarg = 'serial'
     queryset = CertificateAuthority.objects.all().prefetch_related('certificate_set')
 
     # parameters for the CRL itself
