@@ -36,13 +36,18 @@ class CertificateRevocationListView(View, SingleObjectMixin):
 
     # parameters for the CRL itself
     type = crypto.FILETYPE_ASN1
-    """foo""
+    """Filetype for CRL, one of the ``OpenSSL.crypto.FILETYPE_*`` variables. The default is
+    ``OpenSSL.crypto.FILETYPE_ASN1``."""
 
     timeout = 600
+    """Timout for the CRL in seconds."""
+
     digest = 'sha512'
+    """Digest used for generating the CRL."""
 
     # header used in the request
     content_type = 'application/pkix-crl'
+    """The value of the Content-Type header used in the response."""
 
     def get(self, request, pk):
         cache_key = 'crl_%s_%s_%s' % (pk, self.type, self.digest)
