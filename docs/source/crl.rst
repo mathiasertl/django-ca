@@ -36,10 +36,27 @@ via the command line::
 Use generic view to host a CRL
 ******************************
 
-**django-ca** provides the generic view
-:py:class:`~django_ca.views.CertificateRevocationListView` to provide CRLs via HTTP.
+**django-ca** provides the generic view :py:class:`~django_ca.views.CertificateRevocationListView`
+to provide CRLs via HTTP.
 
-If you use **django-ca** as a full project, a default CRL is already available
+If you installed **django-ca** as a full project, a default CRL is already available for all CAs.
+If you installed django-ca on "ca.example.com", the CRL is available at
+``http://ca.example.com/django_ca/crl/<serial>/``. If you installed django-ca as an app, you only
+need to include ``django_ca.urls`` in your URL conf at the appropriate location.
+
+The default CRL provides a ASN1/DER CRL signed with sha512, that expires every 10 minutes. This is
+fine for TLS clients that use CRLs and is in fact similar to what public CAs use (see
+:ref:`ca-example-crlDistributionPoints`). If you want to change any of these settings, you can
+override them as parameters in a URL conf::
+
+   from django_ca.views import CertificateRevocationListView
+
+   urlpatterns = [
+      # ... your other patterns
+
+      url(r'^crl/(?P<serial>\d+)/$', CertificateRevocationListView.as_view(digest='sha256'), 
+          name='sha256-crl'))
+   ]
 
 .. autoclass:: django_ca.views.CertificateRevocationListView
    :members:
