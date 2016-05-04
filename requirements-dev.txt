@@ -1,4 +1,4 @@
-Fabric3==1.10.2.post3
+Fabric3==1.11.1.post1
 Sphinx==1.4.1
 coverage==4.0.3
 ipython
