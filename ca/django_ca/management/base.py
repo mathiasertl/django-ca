@@ -157,12 +157,15 @@ class BaseCommand(_BaseCommand):
             '--algorithm', metavar='{sha512,sha256,...}', default=ca_settings.CA_DIGEST_ALGORITHM,
             help='Algorithm to use (default: %(default)s).')
 
-    def add_ca(self, parser, arg='--ca', help='Certificate authority to use (default: %s).',
+    def add_ca(self, parser, arg='--ca',
+               help='Certificate authority to use (default: %(default)s).',
                allow_disabled=False, no_default=False):
         if no_default is True:
             default = None
         else:
             default = CertificateAuthority.objects.enabled().first()
+            if default is not None:
+                default = default.serial
 
         help = help % {'default': default}
         parser.add_argument('%s' % arg, metavar='SERIAL', help=help, default=default,
