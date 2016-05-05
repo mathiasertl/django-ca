@@ -41,8 +41,8 @@ class CertificateRevocationListView(View, SingleObjectMixin):
     """Filetype for CRL, one of the ``OpenSSL.crypto.FILETYPE_*`` variables. The default is
     ``OpenSSL.crypto.FILETYPE_ASN1``."""
 
-    timeout = 600
-    """Timout for the CRL in seconds."""
+    expires = 600
+    """CRL expires in this many seconds."""
 
     digest = 'sha512'
     """Digest used for generating the CRL."""
@@ -57,8 +57,8 @@ class CertificateRevocationListView(View, SingleObjectMixin):
         crl = cache.get(cache_key)
         if crl is None:
             ca = self.get_object()
-            crl = get_crl(ca, type=self.type, expires=self.timeout, digest=force_bytes(self.digest))
-            cache.set(cache_key, crl, self.timeout)
+            crl = get_crl(ca, type=self.type, expires=self.expires, digest=force_bytes(self.digest))
+            cache.set(cache_key, crl, self.expires)
 
         return HttpResponse(crl, content_type=self.content_type)
 
