@@ -44,8 +44,8 @@ If you installed django-ca on "ca.example.com", the CRL is available at
 ``http://ca.example.com/django_ca/crl/<serial>/``. If you installed django-ca as an app, you only
 need to include ``django_ca.urls`` in your URL conf at the appropriate location.
 
-The default CRL provides a ASN1/DER CRL signed with sha512, that expires every 10 minutes. This is
-fine for TLS clients that use CRLs and is in fact similar to what public CAs use (see
+The default CRL is in the ASN1/DER format, signed with sha512 and refreshed every ten minutes.
+This is fine for TLS clients that use CRLs and is in fact similar to what public CAs use (see
 :ref:`ca-example-crlDistributionPoints`). If you want to change any of these settings, you can
 override them as parameters in a URL conf::
 
@@ -59,7 +59,8 @@ override them as parameters in a URL conf::
       url(r'^crl/(?P<serial>[0-9A-F:]+)/$', 
           CertificateRevocationListView.as_view(
               type=crypto.FILETYPE_PEM,
-              digest='sha256'
+              digest='sha256',
+              content_type='text/plain',
           ), 
           name='sha256-crl')),
    ]
@@ -71,9 +72,9 @@ to ``False`` in your settings.
    :members:
 
 
-****************
-Generate the CRL
-****************
+*********************
+Write a CRL to a file
+*********************
 
 You can generate the CRL with the ``manage.py dump_crl`` command::
 
@@ -82,13 +83,8 @@ You can generate the CRL with the ``manage.py dump_crl`` command::
 .. NOTE:: The ``dump_crl`` command uses the first enabled CA by default, you can
    force a particular CA with ``--ca=<serial>``.
 
-CRLs expire after a certain time (default: one day, configure with
-``--days=N``), so you must periodically regenerate it, e.g. via a cron-job.
+CRLs expire after a certain time (default: one day, configure with ``--expires=SECS``), so you must
+periodically regenerate it, e.g. via a cron-job.
 
-************
-Host the CRL
-************
-
-How and where to host that file is entirely up to you. If you run a Django
-project with a webserver already, one possibility is to dump it to your
-``MEDIA_ROOT`` directory.
+How and where to host the file is entirely up to you. If you run a Django project with a webserver
+already, one possibility is to dump it to your ``MEDIA_ROOT`` directory.
