@@ -38,9 +38,8 @@ Ideas on what we could do for future releases:
 2. Add a "renew" button in the admin interface.
 3. Admin interface should account for cases where the private key is not present.
 4. Add ability to automatically regenerate CRLs when a certificate is revoked.
-5. Add a generic view to provide a CRL.
-6. Add a OCSP service maybe (would be huge).
-7. Add ability to download PEM/DER of certificates and the CA.
+5. Add a OCSP service maybe (would be huge).
+6. Add ability to download PEM/DER of certificates and the CA.
 
 ## License
 
