@@ -28,7 +28,7 @@ Documentation is available at http://django-ca.readthedocs.org/.
 
 ## ChangeLog
 
-Please see http://django-ca.readthedocs.io/en/latest/development.html.
+Please see http://django-ca.readthedocs.io/en/latest/changelog.html
 
 ## ToDo
 
