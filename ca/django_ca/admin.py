@@ -160,6 +160,9 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
         }),
     ]
 
+    def has_add_permission(self, request):
+        return CertificateAuthority.objects.filter(enabled=True).exists()
+
     def get_form(self, request, obj=None, **kwargs):
         if obj is None:
             return CreateCertificateForm
