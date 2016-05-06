@@ -11,6 +11,7 @@ ChangeLog
 * The app now provides a generic view to generate CRLs. See :ref:`crl-generic` for more information.
 * Fix the display of the default value of the --ca args.
 * Move this ChangeLog from a top-level .md file to this location.
+* Fix shell example when issueing certificates.
 
 ******************
 1.0.1 (2016-04-27)
