@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import os
 import json
 
 from datetime import date
@@ -161,7 +162,11 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
     ]
 
     def has_add_permission(self, request):
-        return CertificateAuthority.objects.filter(enabled=True).exists()
+        # Only grant add permissions if there is at least one useable CA
+        for ca in CertificateAuthority.objects.filter(enabled=True):
+            if os.path.exists(ca.private_key_path):
+                return True
+        return False
 
     def get_form(self, request, obj=None, **kwargs):
         if obj is None:
