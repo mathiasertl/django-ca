@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import os
+
 from datetime import datetime
 from datetime import timedelta
 
@@ -41,6 +43,17 @@ def _profile_choices():
 
 
 class CreateCertificateForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(CreateCertificateForm, self).__init__(*args, **kwargs)
+
+        # Set choices so we can filter out CAs where the private key does not exist locally
+        field = self.fields['ca']
+        field.choices = [
+            (field.prepare_value(ca), field.label_from_instance(ca)) 
+            for ca in self.fields['ca'].queryset.filter(enabled=True)
+            if os.path.exists(ca.private_key_path)
+        ]
+
     expires = forms.DateField(initial=_initial_expires, widget=AdminDateWidget())
     subject = SubjectField(label="Subject", required=True)
     subjectAltName = SubjectAltNameField(
