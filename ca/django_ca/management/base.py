@@ -165,7 +165,7 @@ class BaseCommand(_BaseCommand):
         else:
             default = CertificateAuthority.objects.enabled().first()
 
-        help = help % {'default': default.serial}
+        help = help % {'default': default.serial if default else None}
         parser.add_argument('%s' % arg, metavar='SERIAL', help=help, default=default,
                             allow_disabled=allow_disabled, action=CertificateAuthorityAction)
 
