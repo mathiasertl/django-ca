@@ -27,6 +27,27 @@ from .base import DjangoCAWithCATestCase
 from .base import DjangoCATestCase
 
 
+class SubjectActionTestCase(DjangoCATestCase):
+    def setUp(self):
+        super(SubjectActionTestCase, self).setUp()
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument('--subject', action=base.SubjectAction)
+
+    def test_basic(self):
+        ns = self.parser.parse_args(['--subject=/CN=example.com'])
+        self.assertEqual(ns.subject, {'CN': 'example.com'})
+
+        ns = self.parser.parse_args(['--subject=/ST=foo/CN=example.com'])
+        self.assertEqual(ns.subject, {'ST': 'foo', 'CN': 'example.com'})
+
+        ns = self.parser.parse_args(['--subject=/ST=/CN=example.com'])
+        self.assertEqual(ns.subject, {'ST': '', 'CN': 'example.com'})
+
+    def test_error(self):
+        self.assertParserError(['--subject=ST=/CN=example.com'], 
+                               'usage: setup.py [-h] [--subject SUBJECT]\n'
+                               'setup.py: error: Unparseable subject: Does not start with a "/".\n')
+
 class FormatActionTestCase(DjangoCATestCase):
     def setUp(self):
         super(FormatActionTestCase, self).setUp()
