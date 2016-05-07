@@ -123,7 +123,8 @@ the default values, options like --key-usage still override the profile.""")
 
         # update subject with arguments from the command line
         kwargs.setdefault('subject', {})
-        kwargs['subject'].update(options['subject'])  # update from command line
+        if options.get('subject'):
+            kwargs['subject'].update(options['subject'])  # update from command line
         kwargs['subject'] = {k: v for k, v in kwargs['subject'] if v} # filter empty values
 
         if not options['CN'] and not options['alt']:
