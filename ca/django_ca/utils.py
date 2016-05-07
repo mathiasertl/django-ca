@@ -107,7 +107,7 @@ def parse_subject(raw):
         raise ValueError('Unparseable subject: Does not start with a "/".')
 
     # find all subject elements
-    matches = re.findall('/\s*([^=/]+)=([^/]+)', raw)
+    matches = re.findall('/\s*([^=/]+)=([^/]+)?', raw)
 
     # remove any spaces on beginning/end
     matches = [(k.strip(), v.strip()) for k, v in matches]

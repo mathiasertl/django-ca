@@ -79,6 +79,19 @@ class ParseSubjectTestCase(TestCase):
         self.assertEqual(parse_subject(''), {})
         self.assertEqual(parse_subject('   '), {})
 
+    def test_multiple_slashes(self):
+        self.assertEqual(parse_subject('/C=AT/O=GNU'), {'C': 'AT', 'O': 'GNU'}) 
+        self.assertEqual(parse_subject('//C=AT/O=GNU'), {'C': 'AT', 'O': 'GNU'}) 
+        self.assertEqual(parse_subject('/C=AT//O=GNU'), {'C': 'AT', 'O': 'GNU'}) 
+        self.assertEqual(parse_subject('/C=AT///O=GNU'), {'C': 'AT', 'O': 'GNU'})
+
+    def test_empty_field(self):
+        self.assertEqual(parse_subject('/C=AT/O=GNU/OU=foo'), {'C': 'AT', 'O': 'GNU', 'OU': 'foo'}) 
+        self.assertEqual(parse_subject('/C=/O=GNU/OU=foo'), {'C': '', 'O': 'GNU', 'OU': 'foo'}) 
+        self.assertEqual(parse_subject('/C=AT/O=/OU=foo'), {'C': 'AT', 'O': '', 'OU': 'foo'}) 
+        self.assertEqual(parse_subject('/C=AT/O=GNU/OU='), {'C': 'AT', 'O': 'GNU', 'OU': ''}) 
+        self.assertEqual(parse_subject('/C=/O=/OU='), {'C': '', 'O': '', 'OU': ''}) 
+
     def test_no_slash_at_start(self):
         with self.assertRaises(ValueError) as e:
             parse_subject('CN=example.com')
