@@ -29,6 +29,7 @@ from .managers import CertificateManager
 from .querysets import CertificateAuthorityQuerySet
 from .querysets import CertificateQuerySet
 from .utils import format_date
+from .utils import format_subject
 from .utils import multiline_url_validator
 from .utils import parse_date
 
@@ -130,9 +131,7 @@ class X509CertMixin(models.Model):
         return str(value)
 
     def distinguishedName(self):
-        name = self.x509.get_subject()
-        return '/%s' % '/'.join(['%s=%s' % (k.decode('utf-8'), v.decode('utf-8'))
-                                 for k, v in name.get_components()])
+        return format_subject(self.x509.get_subject())
     distinguishedName.short_description = 'Distinguished Name'
 
     def subjectAltName(self):
