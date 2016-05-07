@@ -57,6 +57,78 @@ def parse_date(date):
     return datetime.strptime(date, _datetime_format)
 
 
+def parse_subject(raw):
+    """Parses a subject string as used in OpenSSLs command line utilities. 
+
+    Examples of where this string is used are:
+
+    .. code-block:: console
+
+        # openssl req -new -key priv.key -out csr -utf8 -batch -sha256 -subj '/C=AT/CN=example.com'
+        # openssl x509 -in cert.pem -noout -subject -nameopt compat
+        /C=AT/L=Vienna/CN=example.com
+
+    .. NOTE:: This isn't a terribly smart format, it doesn't account for any escaping of special
+        characters, doesn't account for duplicate attribute fields (e.g. two ``C`` attributes) and
+        happily outputs completely broken data if any subject field happens to ambiguous. For
+        exampe, consider a certificate where the subject has ``C=US`` and ``OU=example.com/C=AT``.
+        OpenSSL will happily outpu
+
+        .. code-block:: console
+
+            # openssl x509 -in cert.pem -noout -subject -nameopt compat
+            /C=US/OU=example.com/C=AT
+
+        .. which is of course not meaningful.
+
+    The function tries to be forgiving to user input, in particular it
+
+    * strips any leading or trailing spaces anywhere (e.g. ``" / CN = example.com /..."``
+    * ignores case in fields (e.g. ``"OU"`` is the same as ``"ou"``
+    * throws an error on duplicate or unknown field names
+    * order of the given fields is ignored
+
+    Examples of how to use this function::
+
+        >>> parse_subject('')
+        {}
+        >>> parse_subject('/CN=example.com')
+        {'CN': 'example.com'}
+        >>> parse_subject(' / CN  = example.com    ')
+        {'CN': 'example.com'}
+        >>> parse_subject('/eMAILadreSs=user@example.com')
+        {'emailAddress: 'user@example.com'}
+
+    """
+    raw = raw.strip()
+    if not raw:  # empty subjects are ok
+        return {}
+    if not raw.startswith('/'):
+        raise ValueError('Unparseable subject: Does not start with a "/".')
+
+    # find all subject elements
+    matches = re.findall('/\s*([^=/]+)=([^/]+)', raw)
+
+    # remove any spaces on beginning/end
+    matches = [(k.strip(), v.strip()) for k, v in matches]
+
+    subject = {}
+    for k, v in matches:
+        if k.lower() == 'emailaddress':
+            key = 'emailAddress'
+        elif k.upper() in SUBJECT_FIELDS:
+            key = k.upper()
+        else:
+            raise ValueError('Unparseable subject: Unknown field "%s".' % k)
+
+        if key in subject:
+            raise ValueError('Unparseable subject: Duplicate field "%s".' % key)
+
+        subject[key] = v
+
+    return subject
+
+
 def format_date(date):
     """Format date as ASN1 GENERALIZEDTIME, as required by various fields."""
     return date.strftime(_datetime_format)

@@ -14,6 +14,7 @@ from django_ca import ca_settings
 from django_ca.tests.base import DjangoCATestCase
 from django_ca.tests.base import override_settings
 from django_ca.utils import format_date
+from django_ca.utils import parse_subject
 from django_ca.utils import get_basic_cert
 from django_ca.utils import get_cert_profile_kwargs
 from django_ca.utils import is_power2
@@ -50,6 +51,50 @@ class FormatDateTestCase(TestCase):
         d = datetime(2016, 3, 5, 14, 53, 12)
         f = format_date(d)
         self.assertEqual(d, parse_date(f))
+
+
+class ParseSubjectTestCase(TestCase):
+    def test_basic(self):
+        self.assertEqual(parse_subject('/CN=example.com'), {'CN': 'example.com'})
+
+        # leading or trailing spaces are always ok.
+        self.assertEqual(parse_subject(' /CN = example.com '), {'CN': 'example.com'})
+
+        # emailAddress is special because of the case
+        self.assertEqual(parse_subject('/emailAddress=user@example.com'), 
+                         {'emailAddress': 'user@example.com'})
+
+    def test_multiple(self):
+        self.assertEqual(parse_subject('/C=AT/OU=foo/CN=example.com'), 
+                         {'C': 'AT', 'OU': 'foo', 'CN': 'example.com'})
+
+    def test_case(self):
+        # test that we generally ignore case in subject keys
+        self.assertEqual(parse_subject('/c=AT/ou=foo/cn=example.com/eMAIladdreSS=user@example.com'), 
+                         {'C': 'AT', 'OU': 'foo', 'CN': 'example.com', 
+                          'emailAddress': 'user@example.com'})
+
+    def test_emtpy(self):
+        # empty subjects are ok
+        self.assertEqual(parse_subject(''), {})
+        self.assertEqual(parse_subject('   '), {})
+
+    def test_no_slash_at_start(self):
+        with self.assertRaises(ValueError) as e:
+            parse_subject('CN=example.com')
+        self.assertEqual(e.exception.args, ('Unparseable subject: Does not start with a "/".', ))
+
+    def test_duplicate_fields(self):
+        with self.assertRaises(ValueError) as e:
+            parse_subject('/CN=example.com/ CN = example.org')
+        self.assertEqual(e.exception.args, ('Unparseable subject: Duplicate field "CN".', ))
+
+    def test_unknown(self):
+        field = 'ABC'
+        with self.assertRaises(ValueError) as e:
+            parse_subject('/%s=example.com' % field)
+        self.assertEqual(e.exception.args, ('Unparseable subject: Unknown field "%s".' % field, ))
+
 
 
 class Power2TestCase(TestCase):
