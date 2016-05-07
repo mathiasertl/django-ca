@@ -22,12 +22,14 @@ Add CRL URL to new certificates
 
 To include the URL to a CRL in newly issued certificates (you cannot add it to
 already issued certificates, obviously), either set it in the admin interface or
-via the command line::
+via the command line:
+
+.. code-block:: console
 
    $ python manage.py list_cas
    34:D6:02:B5:B8:27:4F:51:9A:16:0C:B8:56:B7:79:3F - Root CA
    $ python manage.py edit_ca --crl-url=http://ca.example.com/crl.pem \
-          34:D6:02:B5:B8:27:4F:51:9A:16:0C:B8:56:B7:79:3F
+   >     34:D6:02:B5:B8:27:4F:51:9A:16:0C:B8:56:B7:79:3F
 
 
 .. _crl-generic:

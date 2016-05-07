@@ -37,16 +37,16 @@ Here is a shell session that illustrates the respective manage.py commands:
 .. code-block:: console
 
    $ python manage.py init_ca --pathlen=2
-      --crl-url=http://ca.example.com/crl \
-      --ocsp-url=http://ocsp.ca.example.com \
-      --issuer-url=http://ca.example.com/ca.crt \
-      TestCA /C=AT/L=Vienna/L=Vienna/O=Example/OU=ExampleUnit/CN=ca.example.com
+   >     --crl-url=http://ca.example.com/crl \
+   >     --ocsp-url=http://ocsp.ca.example.com \
+   >     --issuer-url=http://ca.example.com/ca.crt \
+   >     TestCA /C=AT/L=Vienna/L=Vienna/O=Example/OU=ExampleUnit/CN=ca.example.com
    $ python manage.py list_cas
    BD:5B:AB:5B:A2:1C:49:0D:9A:B2:AA:BC:68:ED:ED:7D - TestCA
    $ python manage.py view_ca BD:5B:AB:5B:A2:1C:49:0D:9A:B2:AA:BC:68:ED:ED:7D \
-      | grep OCSP
+   ...
    * OCSP URL: http://ocsp.ca.example.com
    $ python manage.py edit_ca --ocsp-url=http://new-ocsp.ca.example.com
    $ python manage.py view_ca BD:5B:AB:5B:A2:1C:49:0D:9A:B2:AA:BC:68:ED:ED:7D \
-      | grep OCSP
+   ...
    * OCSP URL: http://new-ocsp.ca.example.com
