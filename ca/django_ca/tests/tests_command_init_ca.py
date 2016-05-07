@@ -26,7 +26,7 @@ class InitCATest(DjangoCATestCase):
     def init_ca(self, **kwargs):
         name = kwargs.pop('name', 'Test CA')
         kwargs.setdefault('key_size', ca_settings.CA_MIN_KEY_SIZE)
-        return self.cmd('init_ca', name, 'AT', 'Vienna', 'Vienna', 'Org', 'OrgUnit', name,
+        return self.cmd('init_ca', name, '/C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=%s' % name,
                         **kwargs)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
@@ -38,9 +38,8 @@ class InitCATest(DjangoCATestCase):
         ca = CertificateAuthority.objects.first()
         self.assertEqual(ca.x509.get_signature_algorithm(), six.b('sha512WithRSAEncryption'))
 
-        self.assertEqual(ca.x509.get_subject().get_components(),
-                         [(b'C', b'AT'), (b'ST', b'Vienna'), (b'L', b'Vienna'), (b'O', b'Org'),
-                          (b'OU', b'OrgUnit'), (b'CN', b'Test CA')])
+        self.assertSubject(ca.x509, {'C': 'AT', 'ST': 'Vienna', 'L': 'Vienna', 'O': 'Org', 
+                                     'OU': 'OrgUnit', 'CN': 'Test CA'})
 
     @override_tmpcadir()
     def test_arguments(self):
