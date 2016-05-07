@@ -24,7 +24,7 @@ from django.utils.encoding import force_bytes
 from . import ca_settings
 from .utils import SAN_OPTIONS_RE
 from .utils import get_basic_cert
-from .utils import get_cert_subject
+from .utils import sort_subject_dict
 from .utils import get_subjectAltName
 from .utils import is_power2
 
@@ -47,7 +47,7 @@ class CertificateAuthorityManager(models.Manager):
 
         # set basic properties
         cert = get_basic_cert(expires)
-        for key, value in get_cert_subject(subject):
+        for key, value in sort_subject_dict(subject):
             setattr(cert.get_subject(), key, force_bytes(value))
         cert.set_issuer(cert.get_subject())
         cert.set_pubkey(private_key)
@@ -176,7 +176,7 @@ class CertificateManager(models.Manager):
         # Create signed certificate
         cert = get_basic_cert(expires)
         cert.set_issuer(ca.x509.get_subject())
-        for key, value in get_cert_subject(subject):
+        for key, value in sort_subject_dict(subject):
             setattr(cert.get_subject(), key, force_bytes(value))
         cert.set_pubkey(req.get_pubkey())
 

@@ -134,7 +134,7 @@ def parse_subject(raw):
     return subject
 
 
-def get_cert_subject(d):
+def sort_subject_dict(d):
     """Returns an itemized dictionary in the correct order for a x509 subject."""
     return sorted(d.items(), key=lambda e: SUBJECT_FIELDS.index(e[0]))
 
@@ -155,7 +155,7 @@ def format_subject(subject):
     if isinstance(subject, crypto.X509Name):
         subject = subject.get_components()
     if isinstance(subject, dict):
-        subject = get_cert_subject(subject)
+        subject = sort_subject_dict(subject)
     return '/%s' % ('/'.join(['%s=%s' % (force_text(k), force_text(v)) for k, v in subject]))
 
 

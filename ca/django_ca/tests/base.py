@@ -20,7 +20,7 @@ from django.utils.six.moves import reload_module
 from django_ca import ca_settings
 from django_ca.models import Certificate
 from django_ca.models import CertificateAuthority
-from django_ca.utils import get_cert_subject
+from django_ca.utils import sort_subject_dict
 from django_ca.utils import get_cert_profile_kwargs
 from django_ca.utils import parse_date
 
@@ -104,7 +104,7 @@ class DjangoCATestCase(TestCase):
         actual = cert.get_subject().get_components()
         actual = [(k.decode('utf-8'), v.decode('utf-8')) for k, v in actual]
 
-        self.assertEqual(actual, get_cert_subject(expected))
+        self.assertEqual(actual, sort_subject_dict(expected))
 
     @classmethod
     def init_ca(cls, **kwargs):
