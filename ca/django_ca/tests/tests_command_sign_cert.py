@@ -29,11 +29,12 @@ from .base import override_tmpcadir
 class SignCertTestCase(DjangoCAWithCSRTestCase):
     def test_from_stdin(self):
         stdin = six.StringIO(self.csr_pem)
-        stdout, stderr = self.cmd('sign_cert', CN='example.com', stdin=stdin)
+        subject = {'CN': 'example.com'}
+        stdout, stderr = self.cmd('sign_cert', subject=subject, stdin=stdin)
         self.assertEqual(stderr, '')
 
         cert = Certificate.objects.first()
-        self.assertEqual(cert.x509.get_subject().get_components(), [(b'CN', b'example.com')])
+        self.assertSubject(cert.x509, subject)
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
 
         self.assertEqual(cert.keyUsage(),
@@ -47,13 +48,12 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
             csr_stream.write(self.csr_pem)
 
         try:
-            stdout, stderr = self.cmd('sign_cert', CN='example.com', E='user@example.com',
-                                      csr=csr_path)
+            subject = {'CN': 'example.com', 'emailAddress': 'user@example.com'}
+            stdout, stderr = self.cmd('sign_cert', subject=subject, csr=csr_path)
             self.assertEqual(stderr, '')
 
             cert = Certificate.objects.first()
-            self.assertEqual(cert.x509.get_subject().get_components(),
-                             [(b'CN', b'example.com'), (b'emailAddress', b'user@example.com')])
+            self.assertSubject(cert.x509, subject)
             self.assertEqual(stdout, cert.pub)
 
             self.assertEqual(cert.keyUsage(),
@@ -68,7 +68,8 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         stdin = six.StringIO(self.csr_pem)
 
         try:
-            stdout, stderr = self.cmd('sign_cert', CN='example.com', out=out_path, stdin=stdin)
+            stdout, stderr = self.cmd('sign_cert', subject={'CN': 'example.com'}, 
+                                      out=out_path, stdin=stdin)
             cert = Certificate.objects.first()
             self.assertEqual(stdout, 'Please paste the CSR:\n')
             self.assertEqual(stderr, '')
@@ -83,7 +84,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
 
     def test_cn_not_in_san(self):
         stdin = six.StringIO(self.csr_pem)
-        stdout, stderr = self.cmd('sign_cert', CN='example.net', cn_in_san=False,
+        stdout, stderr = self.cmd('sign_cert', subject={'CN': 'example.net'}, cn_in_san=False,
                                   alt=['example.com'], stdin=stdin)
         cert = Certificate.objects.first()
         self.assertEqual(cert.x509.get_subject().get_components(), [(b'CN', b'example.net')])
@@ -94,10 +95,11 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
     def test_no_san(self):
         # test with no subjectAltNames:
         stdin = six.StringIO(self.csr_pem)
-        stdout, stderr = self.cmd('sign_cert', CN='example.net', cn_in_san=False,
-                                  alt=[], stdin=stdin)
+        subject = {'CN': 'example.net'}
+        stdout, stderr = self.cmd('sign_cert', subject=subject, cn_in_san=False, alt=[],
+                                  stdin=stdin)
         cert = Certificate.objects.first()
-        self.assertEqual(cert.x509.get_subject().get_components(), [(b'CN', b'example.net')])
+        self.assertSubject(cert.x509, subject)
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
         self.assertEqual(stderr, '')
         self.assertEqual(cert.subjectAltName(), '')
@@ -129,22 +131,21 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
             'emailAddress': 'user@example.net',
         }
         stdin = six.StringIO(self.csr_pem)
-        self.cmd('sign_cert', cn_in_san=False, alt=['example.net'], stdin=stdin,
-                 C='US', ST='California', L='San Francisco', O='MyOrg2', OU='MyOrg2Unit2',
-                 CN='CommonName2', E='user@example.net')
+        self.cmd('sign_cert', cn_in_san=False, alt=['example.net'], stdin=stdin, subject=subject)
         cert = Certificate.objects.get(cn='CommonName2')
         self.assertSubject(cert.x509, subject)
 
         # set some empty values to see if we can remove subject fields:
         stdin = six.StringIO(self.csr_pem)
         self.cmd('sign_cert', cn_in_san=False, alt=['example.net'], stdin=stdin,
-                 C='', ST='', L='', O='', OU='', CN='empty', E='')
+                 subject={'C': '', 'ST': '', 'L': '', 'O': '', 'OU': '', 'emailAddress': '', 'CN':
+                          'empty'})
         cert = Certificate.objects.get(cn='empty')
         self.assertSubject(cert.x509, {'CN': 'empty'})
 
     def test_extensions(self):
         stdin = six.StringIO(self.csr_pem)
-        stdout, stderr = self.cmd('sign_cert', CN='example.com',
+        stdout, stderr = self.cmd('sign_cert', subject={'CN': 'example.com'},
                                   key_usage='critical,keyCertSign',
                                   ext_key_usage='clientAuth',
                                   alt=['URI:https://example.net'],
