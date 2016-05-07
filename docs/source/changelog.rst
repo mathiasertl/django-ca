@@ -10,6 +10,9 @@ ChangeLog
   form that is frequently used by OpenSSL, "/C=AT/L=...".
 * Expiry time of CRLs can now be specified in seconds. ``manage.py dump_crl`` now uses the
   ``--expires`` instead of the old ``--days`` parameter.
+* The admin interface now accounts for cases where some or all CAs are not useable because the
+  private key is not accessable. Such a scenario might occur if the private keys are hosted on a
+  different machine.
 * The app now provides a generic view to generate CRLs. See :ref:`crl-generic` for more information.
 * Fix the display of the default value of the --ca args.
 * Move this ChangeLog from a top-level .md file to this location.
