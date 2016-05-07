@@ -57,6 +57,11 @@ def parse_date(date):
     return datetime.strptime(date, _datetime_format)
 
 
+def format_date(date):
+    """Format date as ASN1 GENERALIZEDTIME, as required by various fields."""
+    return date.strftime(_datetime_format)
+
+
 def parse_subject(raw):
     """Parses a subject string as used in OpenSSLs command line utilities. 
 
@@ -129,6 +134,11 @@ def parse_subject(raw):
     return subject
 
 
+def get_cert_subject(d):
+    """Returns an itemized dictionary in the correct order for a x509 subject."""
+    return sorted(d.items(), key=lambda e: SUBJECT_FIELDS.index(e[0]))
+
+
 def format_subject(subject):
     """Convert a subject into the canonical form for distinguished names.
 
@@ -149,11 +159,6 @@ def format_subject(subject):
     return '/%s' % ('/'.join(['%s=%s' % (force_text(k), force_text(v)) for k, v in subject]))
 
 
-def format_date(date):
-    """Format date as ASN1 GENERALIZEDTIME, as required by various fields."""
-    return date.strftime(_datetime_format)
-
-
 def is_power2(num):
     """Return True if num is a power of 2."""
     return num != 0 and ((num & (num - 1)) == 0)
@@ -168,11 +173,6 @@ def multiline_url_validator(value):
 
     for line in value.splitlines():
         validator(line)
-
-
-def get_cert_subject(d):
-    """Returns an itemized dictionary in the correct order for a x509 subject."""
-    return sorted(d.items(), key=lambda e: SUBJECT_FIELDS.index(e[0]))
 
 
 def get_basic_cert(expires, now=None):
