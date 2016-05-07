@@ -20,7 +20,7 @@ properties. Luckily, **django-ca** has a profile predefined for you:
    $ openssl genrsa -out ocsp.key 4096
    $ openssl req -new -key ocsp.key -out ocsp.csr -utf8 -batch
    $ python manage.py sign_cert --csr=ocsp.csr --out=ocsp.pem \
-   >     --cn=ocsp.example.com --ocsp
+   >     --subject /CN=ocsp.example.com --ocsp
 
 
 ********************************
