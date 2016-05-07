@@ -114,6 +114,10 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         'emailAddress': 'user@example.com',
     })
     def test_profile_subject(self):
+        # just to make sure we actually have defaults
+        self.assertEqual(ca_settings._CA_DEFAULT_SUBJECT['O'], 'MyOrg')
+        self.assertEqual(ca_settings._CA_DEFAULT_SUBJECT['OU'], 'MyOrgUnit')
+
         # first, we only pass an subjectAltName, meaning that even the CommonName is used.
         stdin = six.StringIO(self.csr_pem)
         stdout, stderr = self.cmd('sign_cert', cn_in_san=False, alt=['example.net'], stdin=stdin)
