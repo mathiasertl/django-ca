@@ -125,9 +125,9 @@ the default values, options like --key-usage still override the profile.""")
         kwargs.setdefault('subject', {})
         if options.get('subject'):
             kwargs['subject'].update(options['subject'])  # update from command line
-        kwargs['subject'] = {k: v for k, v in kwargs['subject'] if v} # filter empty values
+        kwargs['subject'] = {k: v for k, v in kwargs['subject'].items() if v} # filter empty values
 
-        if not options['CN'] and not options['alt']:
+        if not kwargs['subject'].get('CN') and not options['alt']:
             raise CommandError(
                 "Must give at least a CN in --subject or one or more --alt arguments.")
 
