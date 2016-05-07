@@ -129,6 +129,26 @@ def parse_subject(raw):
     return subject
 
 
+def format_subject(subject):
+    """Convert a subject into the canonical form for distinguished names.
+
+    Examples::
+
+        >>> format_subject(ca.x509.get_subject())
+        '/CN=example.com'
+        >>> format_subject([('CN', 'example.com'), ])
+        '/CN=example.com'
+        >>> format_subject({'CN': 'example.com'})
+        '/CN=example.com'
+
+    """
+    if isinstance(subject, crypto.X509Name):
+        subject = subject.get_components()
+    if isinstance(subject, dict):
+        subject = get_cert_subject(subject)
+    return '/%s' % ('/'.join(['%s=%s' % (force_text(k), force_text(v)) for k, v in subject]))
+
+
 def format_date(date):
     """Format date as ASN1 GENERALIZEDTIME, as required by various fields."""
     return date.strftime(_datetime_format)
