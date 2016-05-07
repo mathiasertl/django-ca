@@ -29,6 +29,7 @@ from django.utils import six
 from django_ca import ca_settings
 from django_ca.utils import is_power2
 from django_ca.utils import parse_subject
+from django_ca.utils import SUBJECT_FIELDS
 from django_ca.models import Certificate
 from django_ca.models import CertificateAuthority
 
@@ -167,12 +168,14 @@ class BaseCommand(_BaseCommand):
             '--algorithm', metavar='{sha512,sha256,...}', default=ca_settings.CA_DIGEST_ALGORITHM,
             help='Algorithm to use (default: %(default)s).')
 
-    def add_subject(self, parser, arg='subject', metavar=None):
-        parser.add_argument(
-            arg, action=SubjectAction, metavar=metavar,
-            help='Subject name, formatted as "/key1=value1/key2=value2/...", keys may be one of '
-                 'C, L, ST, O, OU, CN and emailAddress.'
-        )
+        
+    @property
+    def valid_subject_keys(self):
+        fields = ['"%s"' % f for f in SUBJECT_FIELDS]
+        return '%s and %s' % (', '.join(fields[:-1]), fields[-1])
+
+    def add_subject(self, parser, arg='subject', metavar=None, help=None):
+        parser.add_argument(arg, action=SubjectAction, metavar=metavar, help=help)
 
     def add_ca(self, parser, arg='--ca',
                help='Certificate authority to use (default: %(default)s).',

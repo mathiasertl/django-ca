@@ -32,8 +32,8 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
 
         group = parser.add_argument_group(
             'CommonName in subjectAltName',
-            """Whether or not to automatically include the CommonName (given by --cn) in the list
-of subjectAltNames (given by --alt).""")
+            """Whether or not to automatically include the CommonName (given in --subject) in the
+            list of subjectAltNames (given by --alt).""")
         group = group.add_mutually_exclusive_group()
 
         group.add_argument(
@@ -45,18 +45,25 @@ of subjectAltNames (given by --alt).""")
             help='Add the CommonName as subjectAlternativeName%s.' % (
                 ' (default)' if default else ''))
 
+
+    
     def add_subject_group(self, parser):
-        subject = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]['subject']
+        # TODO: show the default
+        #subject = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]['subject']
         group = parser.add_argument_group(
             'Certificate subject',
-            '''Override subject fields using --subject. The default depends on CA_DEFAULT_SUBJECT
-            and the profile used. Pass empty values (e.g. "/C=/CN=example.com") to skip a
-            particular field.'''
+            '''The certificate subject of the CSR is not used. The default subject is configured
+            with the CA_DEFAULT_SUBJECT setting and may be overwritten by a profile named with
+            --profile. The --subject option allows you to name a CommonName (which is not usually
+            in the defaults) and override any default values.'''
         )
 
         # NOTE: We do not set the default argument here because that would mask the user not
         # setting anything at all.
-        self.add_subject(group, arg='--subject', metavar='/key1=value1/key2=value2/...')
+        self.add_subject(
+            group, arg='--subject', metavar='/key1=value1/key2=value2/...',
+            help='''Valid keys are %s. Pass an empty value (e.g. "/C=/ST=...") to remove a field
+                 from the subject.''' % self.valid_subject_keys)
 
     def add_arguments(self, parser):
         self.add_subject_group(parser)

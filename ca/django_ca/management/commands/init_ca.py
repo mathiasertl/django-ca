@@ -60,7 +60,9 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
             help="Optional password used to encrypt the private key. If omitted, no "
                  "password is used, use \"--password=\" to prompt for a password.")
         parser.add_argument('name', help='Human-readable name of the CA')
-        self.add_subject(parser)
+        self.add_subject(
+            parser, help='''The subject of the CA in the format "/key1=value1/key2=value2/...",
+                            valid keys are %s. "CN" is required.''' % self.valid_subject_keys)
 
         group = parser.add_argument_group(
             'pathlen attribute',
@@ -83,7 +85,9 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
             options['password'] = getpass()
 
         # filter empty values in the subject
-        subject = {k: v for k, v in subject.items if v}
+        subject = {k: v for k, v in subject.items() if v}
+        if 'CN' not in subject:
+            raise CommandError('CN is a required subject field.')
 
         try:
             CertificateAuthority.objects.init(
