@@ -86,8 +86,8 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
             options['password'] = getpass()
 
         # filter empty values in the subject
-        subject = {k: v for k, v in subject.items() if v}
         subject.setdefault('CN', name)
+        subject = {k: v for k, v in subject.items() if v}
 
         try:
             CertificateAuthority.objects.init(
