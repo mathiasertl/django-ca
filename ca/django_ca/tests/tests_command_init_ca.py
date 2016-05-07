@@ -66,6 +66,15 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(ca.ocsp_url, 'http://ocsp.example.com')
 
     @override_tmpcadir()
+    def test_empty_subject_fields(self):
+        out, err = self.cmd('init_ca', 'test', '/C=/ST=/L=/O=/OU=/CN=test',
+                            key_size=ca_settings.CA_MIN_KEY_SIZE)
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        ca = CertificateAuthority.objects.first()
+        self.assertSubject(ca.x509, {'CN': 'test'})
+
+    @override_tmpcadir()
     def test_parent(self):
         self.init_ca(name='Parent')
         parent = CertificateAuthority.objects.get(name='Parent')
