@@ -62,7 +62,8 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         parser.add_argument('name', help='Human-readable name of the CA')
         self.add_subject(
             parser, help='''The subject of the CA in the format "/key1=value1/key2=value2/...",
-                            valid keys are %s. "CN" is required.''' % self.valid_subject_keys)
+                            valid keys are %s. If "CN" is not set, the name is used.''' 
+            % self.valid_subject_keys)
 
         group = parser.add_argument_group(
             'pathlen attribute',
@@ -86,8 +87,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
 
         # filter empty values in the subject
         subject = {k: v for k, v in subject.items() if v}
-        if 'CN' not in subject:
-            raise CommandError('CN is a required subject field.')
+        subject.setdefault('CN', name)
 
         try:
             CertificateAuthority.objects.init(

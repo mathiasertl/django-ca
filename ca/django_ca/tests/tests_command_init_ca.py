@@ -75,6 +75,15 @@ class InitCATest(DjangoCATestCase):
         self.assertSubject(ca.x509, {'CN': 'test'})
 
     @override_tmpcadir()
+    def test_no_cn(self):
+        out, err = self.cmd('init_ca', 'test', '/C=/ST=/L=/O=/OU=smth',
+                            key_size=ca_settings.CA_MIN_KEY_SIZE)
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        ca = CertificateAuthority.objects.first()
+        self.assertSubject(ca.x509, {'OU': 'smth', 'CN': 'test'})
+
+    @override_tmpcadir()
     def test_parent(self):
         self.init_ca(name='Parent')
         parent = CertificateAuthority.objects.get(name='Parent')
