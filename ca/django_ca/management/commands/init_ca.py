@@ -60,12 +60,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
             help="Optional password used to encrypt the private key. If omitted, no "
                  "password is used, use \"--password=\" to prompt for a password.")
         parser.add_argument('name', help='Human-readable name of the CA')
-        parser.add_argument('country', help='Two-letter country code, e.g. "US" or "AT".')
-        parser.add_argument('state', help='State for this CA.')
-        parser.add_argument('city', help='City for this CA.')
-        parser.add_argument('org', help='Organization where this CA is used.')
-        parser.add_argument('ou', help='Organizational Unit where this CA is used.')
-        parser.add_argument('cn', help='Common name for this CA.')
+        self.add_subject(parser)
 
         group = parser.add_argument_group(
             'pathlen attribute',
@@ -80,14 +75,12 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
 
         self.add_ca_args(parser)
 
-    def handle(self, name, country, state, city, org, ou, cn, **options):
+    def handle(self, name, subject, **options):
         if not os.path.exists(ca_settings.CA_DIR):  # pragma: no cover
             os.makedirs(ca_settings.CA_DIR)
 
         if options['password'] == '':  # pragma: no cover
             options['password'] = getpass()
-
-        subject = {'C': country, 'ST': state, 'L': city, 'O': org, 'OU': ou, 'CN': cn, }
 
         try:
             CertificateAuthority.objects.init(

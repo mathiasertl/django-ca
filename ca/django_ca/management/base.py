@@ -28,8 +28,18 @@ from django.utils import six
 
 from django_ca import ca_settings
 from django_ca.utils import is_power2
+from django_ca.utils import parse_subject
 from django_ca.models import Certificate
 from django_ca.models import CertificateAuthority
+
+
+class SubjectAction(argparse.Action):
+    def __call__(self, parser, namespace, value, option_string=None):
+        try:
+            value = parse_subject(value)
+        except ValueError as e:
+            parser.error(e)
+        setattr(namespace, self.dest, value)
 
 
 class FormatAction(argparse.Action):
@@ -156,6 +166,13 @@ class BaseCommand(_BaseCommand):
         parser.add_argument(
             '--algorithm', metavar='{sha512,sha256,...}', default=ca_settings.CA_DIGEST_ALGORITHM,
             help='Algorithm to use (default: %(default)s).')
+
+    def add_subject(self, parser):
+        parser.add_argument(
+            'subject', action=SubjectAction, 
+            help='Subject name, formatted as "/key1=value1/key2=value2/...", keys may be one of '
+                 'C, L, ST, O, OU, CN and emailAddress.'
+        )
 
     def add_ca(self, parser, arg='--ca',
                help='Certificate authority to use (default: %(default)s).',
