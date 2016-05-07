@@ -167,9 +167,9 @@ class BaseCommand(_BaseCommand):
             '--algorithm', metavar='{sha512,sha256,...}', default=ca_settings.CA_DIGEST_ALGORITHM,
             help='Algorithm to use (default: %(default)s).')
 
-    def add_subject(self, parser):
+    def add_subject(self, parser, arg='subject', metavar=None):
         parser.add_argument(
-            'subject', action=SubjectAction, 
+            arg, action=SubjectAction, metavar=metavar,
             help='Subject name, formatted as "/key1=value1/key2=value2/...", keys may be one of '
                  'C, L, ST, O, OU, CN and emailAddress.'
         )

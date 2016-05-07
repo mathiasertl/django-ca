@@ -21,7 +21,6 @@ from ...management.base import BaseCommand
 from ...models import Certificate
 from ...models import Watcher
 from ...utils import get_cert_profile_kwargs
-from ...utils import SUBJECT_FIELDS
 
 
 class Command(BaseCommand):
@@ -46,45 +45,21 @@ of subjectAltNames (given by --alt).""")
             help='Add the CommonName as subjectAlternativeName%s.' % (
                 ' (default)' if default else ''))
 
-    def add_subject(self, parser):
+    def add_subject_group(self, parser):
         subject = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]['subject']
         group = parser.add_argument_group(
             'Certificate subject',
-            '''The subject to use. Empty values are not included in the subject. The default values
-            depend on the default profile and the CA_DEFAULT_SUBJECT setting.''')
+            '''Override subject fields using --subject. The default depends on CA_DEFAULT_SUBJECT
+            and the profile used. Pass empty values (e.g. "/C=/CN=example.com") to skip a
+            particular field.'''
+        )
 
         # NOTE: We do not set the default argument here because that would mask the user not
         # setting anything at all.
-        group.add_argument(
-            '--C', metavar='CC',
-            help='Two-letter country code, e.g. "AT" (default: "%s").' % (subject.get('C') or '')
-        )
-        group.add_argument(
-            '--ST', metavar='STATE',
-            help='The state you are in (default "%s").' % (subject.get('ST') or '')
-        )
-        group.add_argument(
-            '--L', metavar='CITY',
-            help='The city you are in (default "%s").' % (subject.get('L') or '')
-        )
-        group.add_argument(
-            '--O', metavar='ORG',
-            help='Your organization (default: "%s").' % (subject.get('O') or '')
-        )
-        group.add_argument(
-            '--OU', metavar='ORGUNIT',
-            help='Your organizational unit (default: "%s").' % (subject.get('OU') or '')
-        )
-        group.add_argument(
-            '--CN', help="CommonName to use. If omitted, the first --alt value will be used."
-        )
-        group.add_argument(
-            '--E', metavar='E-Mail', dest='emailAddress',
-            help='E-mail to use (default: "%s").' % (subject.get('emailAddress') or '')
-        )
+        self.add_subject(group, arg='--subject', metavar='/key1=value1/key2=value2/...')
 
     def add_arguments(self, parser):
-        self.add_subject(parser)
+        self.add_subject_group(parser)
         self.add_cn_in_san(parser)
         self.add_algorithm(parser)
         self.add_ca(parser)
@@ -126,18 +101,6 @@ the default values, options like --key-usage still override the profile.""")
         return False, value.encode('utf-8')
 
     def handle(self, *args, **options):
-        if not options['CN'] and not options['alt']:
-            raise CommandError("Must give at least --CN or one or more --alt arguments.")
-
-        if options['csr'] is None:
-            self.stdout.write('Please paste the CSR:')
-            csr = ''
-            while not csr.endswith('-----END CERTIFICATE REQUEST-----\n'):
-                csr += '%s\n' % six.moves.input()
-            csr = csr.strip()
-        else:
-            csr = open(options['csr']).read()
-
         # get list of watchers
         ca = options['ca']
         watchers = [Watcher.from_addr(addr) for addr in options['watch']]
@@ -153,12 +116,22 @@ the default values, options like --key-usage still override the profile.""")
 
         # update subject with arguments from the command line
         kwargs.setdefault('subject', {})
-        for field in SUBJECT_FIELDS:
-            value = options.get(field)
-            if value == '' and field in kwargs['subject']:
-                del kwargs['subject'][field]
-            elif value:
-                kwargs['subject'][field] = options[field]
+        kwargs['subject'].update(options['subject'])  # update from command line
+        kwargs['subject'] = {k: v for k, v in kwargs['subject'] if v} # filter empty values
+
+        if not options['CN'] and not options['alt']:
+            raise CommandError(
+                "Must give at least a CN in --subject or one or more --alt arguments.")
+
+        # Read the CSR
+        if options['csr'] is None:
+            self.stdout.write('Please paste the CSR:')
+            csr = ''
+            while not csr.endswith('-----END CERTIFICATE REQUEST-----\n'):
+                csr += '%s\n' % six.moves.input()
+            csr = csr.strip()
+        else:
+            csr = open(options['csr']).read()
 
         cert = Certificate(ca=ca, csr=csr)
         cert.x509 = Certificate.objects.init(
