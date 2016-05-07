@@ -6,6 +6,8 @@ ChangeLog
 1.0.2 (not yet released)
 ************************
 
+* The subject in the ``manage.py init_ca`` and ``manage.py sign_cert`` is now given in the same
+  form that is frequently used by OpenSSL, "/C=AT/L=...".
 * Expiry time of CRLs can now be specified in seconds. ``manage.py dump_crl`` now uses the
   ``--expires`` instead of the old ``--days`` parameter.
 * The app now provides a generic view to generate CRLs. See :ref:`crl-generic` for more information.

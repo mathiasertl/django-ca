@@ -19,13 +19,17 @@ This chapter assumes that you have an already running Django project and know ho
 to use it.
 
 You need various development headers for pyOpenSSL, on Debian/Ubuntu systems,
-simply install these packages::
+simply install these packages:
 
-   apt-get install gcc python3-dev libffi-dev libssl-dev
+.. code-block:: console
 
-You can install **django-ca** simply via pip::
+   $ apt-get install gcc python3-dev libffi-dev libssl-dev
 
-   pip install django-ca
+You can install **django-ca** simply via pip:
+
+.. code-block:: console
+
+   $ pip install django-ca
 
 and add it to your ``INSTALLED_APPS``::
 
@@ -36,14 +40,17 @@ and add it to your ``INSTALLED_APPS``::
    ]
 
 ... and configure the :doc:`other available settings <settings>` to your
-liking, then simply run::
+liking, then simply run:
 
-   python manage.py migrate
-   python manage.py collectstatic
+.. code-block:: console
+
+   $ python manage.py migrate
+   $ python manage.py collectstatic
 
    # FINALLY, create the root certificates for your CA:
    #     (replace parameters after init_ca with your local details)
-   python manage.py init_ca "Root CA" AT Vienna Vienna Org OrgUnit ca.example.com
+   $ python manage.py init_ca RootCA \
+   >     /C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=ca.example.com
 
 After that, **django-ca** should show up in your admin interface and provide
 various ``manage.py`` commands (see :doc:`manage_commands`).
@@ -57,54 +64,62 @@ In this variant, you can run **django-ca** stand-alone. You can use the project
 strictly from the command line, the webinterface is completely optional.
 
 In the following code-snippet, you'll do all necessary steps to get a basic
-setup::
+setup:
+
+.. code-block:: console
 
    # install dependencies (adapt to your distro):
-   apt-get install gcc git python3-dev libffi-dev libssl-dev virtualenv
+   $ apt-get install gcc git python3-dev libffi-dev libssl-dev virtualenv
 
    # clone git repository:
-   git clone https://github.com/mathiasertl/django-ca.git
+   $ git clone https://github.com/mathiasertl/django-ca.git
 
    # create virtualenv:
-   cd django-ca
-   virtualenv -p /usr/bin/python3 .
-   source bin/activate
+   $ cd django-ca
+   $ virtualenv -p /usr/bin/python3 .
+   $ source bin/activate
 
    # install Python dependencies:
-   pip install -U pip setuptools
-   pip install -r requirements.txt
+   $ pip install -U pip setuptools
+   $ pip install -r requirements.txt
 
 In the above script, you have created a `virtualenv
 <http://docs.python-guide.org/en/latest/dev/virtualenvs/>`_, meaning that all
 libraries you install with ``pip install`` are installed in the virtualenv (and
 don't pollute your system). It also means that before you execute any
 ``manage.py`` commands, you'll have to activate your virtualenv, by doing, in
-the directory of the git checkout::
+the directory of the git checkout:
 
-   source bin/activate
+.. code-block:: console
+
+   $ source bin/activate
 
 Before you continue, you have to configure **django-ca**. Django uses a file
 called ``settings.py``, but so you don't have to change any files managed by
 git, it includes ``localsettings.py`` in the same directory. So copy the
-example file and edit it with your favourite editor::
+example file and edit it with your favourite editor:
 
-   cp ca/ca/localsettings.py.example ca/ca/localsettings.py
+.. code-block:: console
+
+   $ cp ca/ca/localsettings.py.example ca/ca/localsettings.py
 
 The most important settings are documented there, but you can of course use any
 setting `provided by Django
 <https://docs.djangoproject.com/en/dev/topics/settings/>`_. After you have
 configured **django-ca** (especially ``SECRET_KEY``, ``DATABASES`` and, if you
 intend to use the webinterface, ``STATIC_ROOT``), you need to run a few
-``manage.py`` commands::
+``manage.py`` commands:
 
-   python ca/manage.py migrate
+.. code-block:: console
+
+   $ python ca/manage.py migrate
 
    # if you intend to run the webinterface (requires STATIC_ROOT setting!)
-   python ca/manage.py collectstatic
+   $ python ca/manage.py collectstatic
 
    # FINALLY, create a certificate authority:
    #     (replace parameters after init_ca with your local details)
-   python manage.py init_ca AT Vienna Vienna Org OrgUnit ca.example.com
+   $ python manage.py init_ca AT Vienna Vienna Org OrgUnit ca.example.com
 
 Please also see :doc:`ca_management` for further information on how to create
 certificate authorities. You can also run ``init_ca`` with the ``-h`` parameter
@@ -126,7 +141,7 @@ script somewhere in your ``PATH`` (e.g. ``/usr/local/bin``):
    PYTHON=${BASEDIR}/bin/python
    MANAGE=${BASEDIR}/ca/manage.py
 
-   ${PYTHON} ${MANAGE} $@
+   ${PYTHON} ${MANAGE} "$@"
 
 Setup a webserver
 -----------------
