@@ -28,7 +28,10 @@ _SRC_DIR = os.path.join(_ROOT_DIR, 'ca')
 sys.path.insert(0, _SRC_DIR)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ca.settings')
 
+
 import django
+from django.conf import settings
+settings.configure(SECRET_KEY='dummy', BASE_DIR=_SRC_DIR, INSTALLED_APPS=['django_ca'])
 django.setup()
 
 
