@@ -43,10 +43,15 @@ Here is a shell session that illustrates the respective manage.py commands:
    >     TestCA /C=AT/L=Vienna/L=Vienna/O=Example/OU=ExampleUnit/CN=ca.example.com
    $ python manage.py list_cas
    BD:5B:AB:5B:A2:1C:49:0D:9A:B2:AA:BC:68:ED:ED:7D - TestCA
-   $ python manage.py view_ca BD:5B:AB:5B:A2:1C:49:0D:9A:B2:AA:BC:68:ED:ED:7D \
+
+   $ python manage.py view_ca BD:5B:AB:5B:A2
    ...
    * OCSP URL: http://ocsp.ca.example.com
-   $ python manage.py edit_ca --ocsp-url=http://new-ocsp.ca.example.com
-   $ python manage.py view_ca BD:5B:AB:5B:A2:1C:49:0D:9A:B2:AA:BC:68:ED:ED:7D \
+   $ python manage.py edit_ca --ocsp-url=http://new-ocsp.ca.example.com \
+   >     BD:5B:AB:5B:A2
+   $ python manage.py view_ca BD:5B:AB:5B:A2
    ...
    * OCSP URL: http://new-ocsp.ca.example.com
+
+Note that you can just use the start of a serial to identify the CA, as long as
+that still uniquely identifies the CA.
