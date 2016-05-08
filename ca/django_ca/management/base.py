@@ -79,7 +79,7 @@ class CertificateAction(argparse.Action):
         try:
             setattr(namespace, self.dest, queryset.get_by_serial_or_cn(value))
         except Certificate.DoesNotExist:
-            raise parser.error('No valid certificate with CommonName/serial "%s" exists.' % value)
+            raise parser.error('%s: Certificate not found.' % value)
         except Certificate.MultipleObjectsReturned:
             raise parser.error('%s: Multiple certificates match.' % value)
 
@@ -97,9 +97,9 @@ class CertificateAuthorityAction(argparse.Action):
         try:
             value = qs.get_by_serial_or_cn(value)
         except CertificateAuthority.DoesNotExist:
-            parser.error('%s: Unknown Certiciate Authority.' % value)
+            parser.error('%s: Certiciate authority not found.' % value)
         except CertificateAuthority.MultipleObjectsReturned:
-            parser.error('%s: Multiple Certificate Authorities match.' % value)
+            parser.error('%s: Multiple Certificate authorities match.' % value)
 
         # verify that the private key exists
         if not os.path.exists(value.private_key_path):
