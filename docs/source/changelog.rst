@@ -2,13 +2,13 @@
 ChangeLog
 #########
 
-************************
-1.0.2 (not yet released)
-************************
+******************
+1.1.0 (2016-05-08)
+******************
 
 * The subject given in the ``manage.py init_ca`` and ``manage.py sign_cert`` is now given in the
   same form that is frequently used by OpenSSL, "/C=AT/L=...".
-* On the command line, both CAs and certificates can now be named either by their CommonName or 
+* On the command line, both CAs and certificates can now be named either by their CommonName or
   with their serial. The serial can be given with only the first few letters as long as it's
   unique, as it is matched as long as the serial starts with the given serial.
 * Expiry time of CRLs can now be specified in seconds. ``manage.py dump_crl`` now uses the

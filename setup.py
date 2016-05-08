@@ -105,7 +105,7 @@ class CoverageCommand(BaseCommand):
 
 setup(
     name='django-ca',
-    version='1.0.1',
+    version='1.1.0',
     description='A Django app providing a SSL/TLS certificate authority.',
     long_description=long_description,
     author='Mathias Ertl',
@@ -128,7 +128,8 @@ setup(
         'test': TestCommand,
     },
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
+        'Framework :: Django :: 1.8',
         'Framework :: Django :: 1.9',
         'Framework :: Django',
         'Intended Audience :: Developers',
