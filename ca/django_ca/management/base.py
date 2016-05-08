@@ -90,16 +90,16 @@ class CertificateAuthorityAction(argparse.Action):
         self.allow_disabled = allow_disabled
 
     def __call__(self, parser, namespace, value, option_string=None):
-        value = value.strip().upper()
-
         qs = CertificateAuthority.objects.all()
         if self.allow_disabled is False:
             qs = qs.enabled()
 
         try:
-            value = qs.get(serial=value)
+            value = qs.get_by_serial_or_cn(value)
         except CertificateAuthority.DoesNotExist:
             parser.error('%s: Unknown Certiciate Authority.' % value)
+        except CertificateAuthority.MultipleObjectsReturned:
+            parser.error('%s: Multiple Certificate Authorities match.' % value)
 
         # verify that the private key exists
         if not os.path.exists(value.private_key_path):
