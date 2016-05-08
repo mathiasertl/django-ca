@@ -72,8 +72,6 @@ class CertificateAction(argparse.Action):
         self.allow_revoked = allow_revoked
 
     def __call__(self, parser, namespace, value, option_string=None):
-        value = value.strip()
-
         queryset = Certificate.objects.all()
         if self.allow_revoked is False:
             queryset = queryset.filter(revoked=False)

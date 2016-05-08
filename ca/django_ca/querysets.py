@@ -18,12 +18,20 @@ from django.db.models import Q
 from django.utils import timezone
 
 
-class CertificateAuthorityQuerySet(models.QuerySet):
+class SerialMixin(object):
+    def get_by_serial_or_cn(self, identifier):
+        identifier = identifier.strip()
+        serial = identifier.upper()
+
+        return self.get(Q(serial=serial) | Q(cn=identifier))
+
+
+class CertificateAuthorityQuerySet(models.QuerySet, SerialMixin):
     def enabled(self):
         return self.filter(enabled=True)
 
 
-class CertificateQuerySet(models.QuerySet):
+class CertificateQuerySet(models.QuerySet, SerialMixin):
     def valid(self):
         """Return valid certificates."""
 
@@ -40,6 +48,3 @@ class CertificateQuerySet(models.QuerySet):
         """Return revoked certificates."""
 
         return self.filter(revoked=True)
-
-    def get_by_serial_or_cn(self, identifier):
-        return self.get(Q(serial=identifier) | Q(cn=identifier))
