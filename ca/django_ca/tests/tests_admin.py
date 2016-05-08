@@ -26,6 +26,7 @@ from django.test import Client
 from django.utils import timezone
 
 from ..models import Certificate
+from ..models import CertificateAuthority
 from ..utils import SUBJECT_FIELDS
 from .base import DjangoCAWithCertTestCase
 from .base import DjangoCAWithCSRTestCase
@@ -242,6 +243,54 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
 
         with self.assertRaises(Certificate.DoesNotExist):
             Certificate.objects.get(cn=cn)
+
+    def test_add_no_cas(self):
+        CertificateAuthority.objects.update(enabled=False)
+        response = self.client.get(self.add_url)
+        self.assertEqual(response.status_code, 403)
+
+        cn = 'test-add.example.com'
+        response = self.client.post(self.add_url, data={
+            'csr': self.csr_pem,
+            'ca': self.ca.pk,
+            'profile': 'webserver',
+            'subject_0': 'US',
+            'subject_5': cn,
+            'subjectAltName_1': True,
+            'algorithm': 'sha256',
+            'expires': '2018-04-12',
+            'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
+            'keyUsage_1': True,
+            'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
+            'extendedKeyUsage_1': False,
+        })
+        self.assertEqual(response.status_code, 403)
+
+    def test_add_unusable_cas(self):
+        CertificateAuthority.objects.update(private_key_path='/does/not/exist')
+
+        # check that we have some enabled CAs, just to make sure this test is really useful
+        self.assertTrue(CertificateAuthority.objects.filter(enabled=True).exists())
+
+        response = self.client.get(self.add_url)
+        self.assertEqual(response.status_code, 403)
+
+        cn = 'test-add.example.com'
+        response = self.client.post(self.add_url, data={
+            'csr': self.csr_pem,
+            'ca': self.ca.pk,
+            'profile': 'webserver',
+            'subject_0': 'US',
+            'subject_5': cn,
+            'subjectAltName_1': True,
+            'algorithm': 'sha256',
+            'expires': '2018-04-12',
+            'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
+            'keyUsage_1': True,
+            'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
+            'extendedKeyUsage_1': False,
+        })
+        self.assertEqual(response.status_code, 403)
 
 
 @override_tmpcadir()
