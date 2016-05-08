@@ -37,8 +37,6 @@ class Command(CertCommand):
         super(Command, self).add_arguments(parser)
 
     def handle(self, cert, **options):
-        cert = self.get_certificate(cert)
-
         # add/remove users:
         cert.watchers.add(*[Watcher.from_addr(addr) for addr in options['add']])
         cert.watchers.remove(*[Watcher.from_addr(addr) for addr in options['rm']])

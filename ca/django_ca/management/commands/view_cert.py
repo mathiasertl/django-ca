@@ -18,12 +18,11 @@ from datetime import datetime
 from OpenSSL import crypto
 
 from django_ca.management.base import CertCommand
-from django_ca.models import Certificate
 
 
 class Command(CertCommand):
+    allow_revoked = True
     help = 'View a certificate. The "list_certs" command lists all known certificates.'
-    certificate_queryset = Certificate.objects.all()
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -36,7 +35,6 @@ class Command(CertCommand):
         super(Command, self).add_arguments(parser)
 
     def handle(self, cert, **options):
-        cert = self.get_certificate(cert)
         self.stdout.write('Common Name: %s' % cert.cn)
 
         # self.stdout.write notBefore/notAfter

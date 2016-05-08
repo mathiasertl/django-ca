@@ -18,13 +18,12 @@ from django.core.management.base import CommandError
 from OpenSSL import crypto
 
 from django_ca.management.base import CertCommand
-from django_ca.models import Certificate
 
 
 class Command(CertCommand):
-    help = "Dump a certificate to a file."
+    allow_revoked = True
     binary_output = True
-    certificate_queryset = Certificate.objects.all()
+    help = "Dump a certificate to a file."
 
     def add_arguments(self, parser):
         super(Command, self).add_arguments(parser)
@@ -33,7 +32,6 @@ class Command(CertCommand):
                             help='Path where to dump the certificate. Use "-" for stdout.')
 
     def handle(self, cert, path, **options):
-        cert = self.get_certificate(cert)
         data = crypto.dump_certificate(options['format'], cert.x509)
         if path == '-':
             self.stdout.write(data, ending=b'')

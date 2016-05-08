@@ -24,4 +24,4 @@ class Command(CertCommand):
         super(Command, self).add_arguments(parser)
 
     def handle(self, cert, **options):
-        self.get_certificate(cert).revoke(reason=options.get('reason'))
+        cert.revoke(reason=options.get('reason'))

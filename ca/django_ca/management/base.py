@@ -20,7 +20,6 @@ import sys
 from OpenSSL import crypto
 
 from django.core.management.base import BaseCommand as _BaseCommand
-from django.core.management.base import CommandError
 from django.core.management.base import OutputWrapper
 from django.core.management.color import no_style
 from django.core.validators import URLValidator
@@ -65,6 +64,26 @@ class KeySizeAction(argparse.Action):
             parser.error('%s must be at least %s bits.'
                          % (option_string, ca_settings.CA_MIN_KEY_SIZE))
         setattr(namespace, self.dest, value)
+
+
+class CertificateAction(argparse.Action):
+    def __init__(self, allow_revoked=False, **kwargs):
+        super(CertificateAction, self).__init__(**kwargs)
+        self.allow_revoked = allow_revoked
+
+    def __call__(self, parser, namespace, value, option_string=None):
+        value = value.strip()
+
+        queryset = Certificate.objects.all()
+        if self.allow_revoked is False:
+            queryset = queryset.filter(revoked=False)
+
+        try:
+            setattr(namespace, self.dest, queryset.get_by_serial_or_cn(value))
+        except Certificate.DoesNotExist:
+            raise parser.error('No valid certificate with CommonName/serial "%s" exists.' % id)
+        except Certificate.MultipleObjectsReturned:  # pragma: no cover - super unlikely
+            raise parser.error('Multiple valid certificates with CommonName "%s" found.' % id)
 
 
 class CertificateAuthorityAction(argparse.Action):
@@ -137,7 +156,6 @@ class BinaryOutputWrapper(OutputWrapper):
 
 
 class BaseCommand(_BaseCommand):
-    certificate_queryset = Certificate.objects.filter(revoked=False)
     binary_output = False
 
     # TODO/Django1.9: Only necessary in Django 1.8
@@ -205,19 +223,13 @@ class BaseCommand(_BaseCommand):
         parser.add_argument('-f', '--format', metavar='{PEM,ASN1,DER,TEXT}', default=default,
                             action=FormatAction, help=help_text)
 
-    def get_certificate(self, id):
-        try:
-            return self.certificate_queryset.get_by_serial_or_cn(id)
-        except Certificate.DoesNotExist:
-            raise CommandError('No valid certificate with CommonName/serial "%s" exists.' % id)
-        except Certificate.MultipleObjectsReturned:  # pragma: no cover - super unlikely
-            raise CommandError('Multiple valid certificates with CommonName "%s" found.' % id)
-
 
 class CertCommand(BaseCommand):
+    allow_revoked = False
+
     def add_arguments(self, parser):
         parser.add_argument(
-            'cert',
+            'cert', action=CertificateAction, allow_revoked=self.allow_revoked,
             help='''Certificate by CommonName or serial. If you give a CommonName (which is not by
                 definition unique) there must be only one valid certificate with the given
                 CommonName.''')
