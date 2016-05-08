@@ -127,7 +127,7 @@ class CertificateAuthorityActionTestCase(DjangoCAWithCATestCase):
     def test_missing(self):
         self.assertParserError(['foo'],
                                '''usage: setup.py [-h] ca\n'''
-                               '''setup.py: error: FOO: Unknown Certiciate Authority.\n''')
+                               '''setup.py: error: foo: Unknown Certiciate Authority.\n''')
 
     def test_disabled(self):
         ca = CertificateAuthority.objects.first()
