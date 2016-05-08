@@ -23,7 +23,7 @@ class SerialMixin(object):
         identifier = identifier.strip()
         serial = identifier.upper()
 
-        return self.get(Q(serial=serial) | Q(cn=identifier))
+        return self.get(Q(serial__startswith=serial) | Q(cn=identifier))
 
 
 class CertificateAuthorityQuerySet(models.QuerySet, SerialMixin):
