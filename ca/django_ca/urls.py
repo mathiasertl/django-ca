@@ -21,6 +21,6 @@ from . import views
 app_name = 'django_ca'
 urlpatterns = []
 
-if ca_settings.CA_PROVIDE_GENERIC_CRL is True:
+if ca_settings.CA_PROVIDE_GENERIC_CRL is True:  # pragma: no branch
     urlpatterns.append(
         url(r'^crl/(?P<serial>[0-9A-F:]+)/$', views.CertificateRevocationListView.as_view(), name='crl'))
