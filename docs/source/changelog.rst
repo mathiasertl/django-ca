@@ -2,6 +2,8 @@
 ChangeLog
 #########
 
+.. _changelog-1.1.0:
+
 ******************
 1.1.0 (2016-05-08)
 ******************
@@ -21,12 +23,16 @@ ChangeLog
 * Move this ChangeLog from a top-level .md file to this location.
 * Fix shell example when issueing certificates.
 
+.. _changelog-1.0.1:
+
 ******************
 1.0.1 (2016-04-27)
 ******************
 
 * Officially support Python2.7 again.
 * Make sure that certificate authorities cannot be removed via the web interface.
+
+.. _changelog-1.0.0:
 
 ******************
 1.0.0 (2016-04-27)
@@ -77,6 +83,8 @@ manage.py interface
 * Removed the ``manage.py remove`` command.
 * ``dump_{ca,cert,crl}`` can now output DER/ASN1 data to stdout.
 
+.. _changelog-0.2.1:
+
 ******************
 0.2.1 (2015-05-24)
 ******************
@@ -85,6 +93,8 @@ manage.py interface
 * Shell-scripts: Correctly pass quoted parameters to manage.py.
 * Add documentation on how to test CRLs.
 * Improve support for OCSP.
+
+.. _changelog-0.2:
 
 ****************
 0.2 (2015-02-08)
@@ -108,6 +118,8 @@ manage.py interface
 * Update the remove command to take a serial.
 * Ensure restrictive file permissions when creating a CA.
 * Add requirements-dev.txt
+
+.. _changelog-0.1:
 
 ****************
 0.1 (2015-02-07)

@@ -18,9 +18,9 @@ then upgrade with these commands::
    # if you use the webinterface
    python ca/manage.py collectstatic
 
-*****************
-Update to 1.0.0b2
-*****************
+*******************
+Update from 1.0.0b2
+*******************
 
 If you're updating from a version earlier then 1.0.0 (which was the first real
 release), you have to first update to 1.0.0.b1 (see below), then to 1.0.0.b2,
