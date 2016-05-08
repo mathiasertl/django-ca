@@ -81,9 +81,9 @@ class CertificateAction(argparse.Action):
         try:
             setattr(namespace, self.dest, queryset.get_by_serial_or_cn(value))
         except Certificate.DoesNotExist:
-            raise parser.error('No valid certificate with CommonName/serial "%s" exists.' % id)
+            raise parser.error('No valid certificate with CommonName/serial "%s" exists.' % value)
         except Certificate.MultipleObjectsReturned:  # pragma: no cover - super unlikely
-            raise parser.error('Multiple valid certificates with CommonName "%s" found.' % id)
+            raise parser.error('Multiple valid certificates with CommonName "%s" found.' % value)
 
 
 class CertificateAuthorityAction(argparse.Action):
