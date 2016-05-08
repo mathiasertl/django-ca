@@ -24,6 +24,7 @@ from ..models import CertificateAuthority
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import DjangoCAWithCATestCase
+from .base import DjangoCAWithCertTestCase
 from .base import DjangoCATestCase
 
 
@@ -44,7 +45,7 @@ class SubjectActionTestCase(DjangoCATestCase):
         self.assertEqual(ns.subject, {'ST': '', 'CN': 'example.com'})
 
     def test_error(self):
-        self.assertParserError(['--subject=ST=/CN=example.com'], 
+        self.assertParserError(['--subject=ST=/CN=example.com'],
                                'usage: setup.py [-h] [--subject SUBJECT]\n'
                                'setup.py: error: Unparseable subject: Does not start with a "/".\n')
 
@@ -114,6 +115,39 @@ setup.py: error: --size must be at least 2048 bits.\n'''
 
 
 @override_tmpcadir()
+class CertificateActionTestCase(DjangoCAWithCertTestCase):
+    def setUp(self):
+        super(CertificateActionTestCase, self).setUp()
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument('cert', action=base.CertificateAction)
+
+    def test_basic(self):
+        ns = self.parser.parse_args([self.cert.serial])
+        self.assertEqual(ns.cert, self.cert)
+
+    def test_abbreviation(self):
+        ns = self.parser.parse_args([self.cert.serial[:4]])
+        self.assertEqual(ns.cert, self.cert)
+
+    def test_missing(self):
+        serial = 'foo'
+        self.assertParserError([serial],
+                               'usage: setup.py [-h] cert\n'
+                               'setup.py: error: %s: Certificate not found.\n' % serial)
+
+    def test_multiple(self):
+        # Create a second cert and manually set almost the same serial
+        cert2 = self.create_cert(self.ca, self.csr_pem, {'CN': 'example.com'})
+        cert2.serial = self.cert.serial[:-1] + 'X'
+        cert2.save()
+
+        serial = cert2.serial[:8]
+        self.assertParserError([serial],
+                               'usage: setup.py [-h] cert\n'
+                               'setup.py: error: %s: Multiple certificates match.\n'
+                               % serial)
+
+@override_tmpcadir()
 class CertificateAuthorityActionTestCase(DjangoCAWithCATestCase):
     def setUp(self):
         super(CertificateAuthorityActionTestCase, self).setUp()
@@ -124,10 +158,26 @@ class CertificateAuthorityActionTestCase(DjangoCAWithCATestCase):
         ns = self.parser.parse_args([self.ca.serial])
         self.assertEqual(ns.ca, self.ca)
 
+    def test_abbreviation(self):
+        ns = self.parser.parse_args([self.ca.serial[:4]])
+        self.assertEqual(ns.ca, self.ca)
+
     def test_missing(self):
         self.assertParserError(['foo'],
                                '''usage: setup.py [-h] ca\n'''
                                '''setup.py: error: foo: Unknown Certiciate Authority.\n''')
+
+    def test_multiple(self):
+        # Create a second CA and manually set the same serial
+        ca2 = self.init_ca(name='ca2')
+        ca2.serial = self.ca.serial[:-1] + 'X'
+        ca2.save()
+
+        serial = ca2.serial[:8]
+        self.assertParserError([serial],
+                               'usage: setup.py [-h] ca\n'
+                               'setup.py: error: %s: Multiple Certificate Authorities match.\n'
+                               % serial)
 
     def test_disabled(self):
         ca = CertificateAuthority.objects.first()
