@@ -67,7 +67,7 @@ def format_date(date):
 
 
 def parse_subject(raw):
-    """Parses a subject string as used in OpenSSLs command line utilities. 
+    """Parses a subject string as used in OpenSSLs command line utilities.
 
     Examples of where this string is used are:
 
@@ -177,6 +177,11 @@ def multiline_url_validator(value):
 
     for line in value.splitlines():
         validator(line)
+
+
+def serial_from_int(i):
+    s = hex(i)[2:].upper()
+    return ':'.join(a+b for a, b in zip(s[::2], s[1::2]))
 
 
 def get_basic_cert(expires, now=None):
