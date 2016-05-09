@@ -21,11 +21,15 @@ from datetime import timedelta
 import asn1crypto
 
 from OpenSSL import crypto
+from ocspbuilder import OCSPResponseBuilder
+from oscrypto.asymmetric import load_certificate
+from oscrypto.asymmetric import load_private_key
 
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.utils import timezone
+from django.utils.decorators import classonlymethod
 from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes
 from django.views.decorators.csrf import csrf_exempt
@@ -100,10 +104,6 @@ class RevokeCertificateView(UpdateView):
                        args=(self.object.pk, ))
 
 
-from ocspbuilder import OCSPResponseBuilder
-from oscrypto.asymmetric import load_certificate
-from oscrypto.asymmetric import load_private_key
-from django.utils.decorators import classonlymethod
 class OCSPView(View):
     ca_serial = None
     responder_key = None
@@ -132,8 +132,16 @@ class OCSPView(View):
                 pub = stream.read()
         return load_certificate(pub)
 
+    def fail(self, reason):
+        builder = OCSPResponseBuilder(response_status=reason)
+        return builder.build()
+
     def process_ocsp_request(self, data):
-        response = self.get_ocsp_response(data)
+        try:
+            response = self.get_ocsp_response(data)
+        except:
+            response = self.fail('internal_error')
+
         return HttpResponse(response.dump(), content_type='application/ocsp-response')
 
     def get_ocsp_response(self, data):
@@ -153,7 +161,7 @@ class OCSPView(View):
         try:
             cert = Certificate.objects.filter(ca=ca).get(serial=serial)
         except Certificate.DoesNotExist:
-            pass  # TODO: return a 'unkown' response
+            return self.fail('internal_error')  # TODO: return a 'unkown' response instead
 
         builder = OCSPResponseBuilder(
             response_status='successful',  # ResponseStatus.successful.value,
