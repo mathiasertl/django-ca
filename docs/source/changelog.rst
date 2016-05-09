@@ -2,6 +2,25 @@
 ChangeLog
 #########
 
+.. _changelog-head:
+
+************************
+1.1.2 (not yet released)
+************************
+
+.. _changelog-1.1.1:
+
+************************
+1.1.1 (not yet released)
+************************
+
+* Fix the ``fab init_demo`` command.
+* Fix installation via ``setup.py install``, fixes
+  `#2 <https://github.com/mathiasertl/django-ca/issues/2>`_ and `#4
+  <https://github.com/mathiasertl/django-ca/issues/4>`_.  Thanks to Jon McKenzie for the fixes!
+
+.. _changelog-1.1.0:
+
 ******************
 1.1.0 (2016-05-08)
 ******************

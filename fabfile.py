@@ -145,12 +145,11 @@ def create_cert(name, **kwargs):
     key = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
     csr = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
     pem = os.path.join(ca_settings.CA_DIR, '%s.pem' % name)
-    subj = '/C=AT/ST=Vienna/L=Vienna/CN=%s-should-not-show-up/' % name
 
     with hide('everything'):
         local('openssl genrsa -out %s 2048' % key)
-        local("openssl req -new -key %s -out %s -utf8 -batch -subj '%s'" % (key, csr, subj))
-    manage('sign_cert', CN=name, csr=csr, out=pem, **kwargs)
+        local("openssl req -new -key %s -out %s -utf8 -batch" % (key, csr))
+    manage('sign_cert', subject={'CN': name}, csr=csr, out=pem, **kwargs)
     return key, csr, pem
 
 
@@ -184,12 +183,13 @@ def init_demo():
     print(green('Creating database...'))
     manage('migrate', verbosity=0)
     print(green('Initiating CA...'))
-    manage('init_ca', 'Root CA', 'AT', 'Vienna', 'Vienna', 'example', 'example', 'ca.example.com',
+    manage('init_ca', 'Root CA', '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=ca.example.com',
            pathlen=1, ocsp_url='http://ocsp.ca.example.com', crl_url=['http://ca.example.com/crl'],
            issuer_url='http://ca.example.com/ca.crt', issuer_alt_name='https://ca.example.com'
           )
     print(green('Initiating Child CA...'))
-    manage('init_ca', 'Child CA', 'AT', 'Vienna', 'Vienna', 'example', 'example', 'sub.ca.example.com')
+    manage('init_ca', 'Child CA',
+           '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=sub.ca.example.com')
     root_ca = CertificateAuthority.objects.get(name='Root CA')
     child_ca = CertificateAuthority.objects.get(name='Child CA')
 
