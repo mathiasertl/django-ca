@@ -105,6 +105,11 @@ class RevokeCertificateView(UpdateView):
 
 
 class OCSPView(View):
+    """View to provide an OCSP responder.
+
+    This is heavily inspired by
+    https://github.com/threema-ch/ocspresponder/blob/master/ocspresponder/__init__.py.
+    """
     ca_serial = None
     responder_key = None
     responder_cert = None
@@ -145,22 +150,27 @@ class OCSPView(View):
         return HttpResponse(response.dump(), content_type='application/ocsp-response')
 
     def get_ocsp_response(self, data):
-        ocsp_request = asn1crypto.ocsp.OCSPRequest.load(data)
+        try:
+            ocsp_request = asn1crypto.ocsp.OCSPRequest.load(data)
 
-        tbs_request = ocsp_request['tbs_request']
-        request_list = tbs_request['request_list']
-        if len(request_list) != 1:
-            print('Received OCSP request with multiple sub requests')
-            raise NotImplemented('Combined requests not yet supported')
-        single_request = request_list[0]  # TODO: Support more than one request
-        req_cert = single_request['req_cert']
-        serial = serial_from_int(req_cert['serial_number'].native)
+            tbs_request = ocsp_request['tbs_request']
+            request_list = tbs_request['request_list']
+            if len(request_list) != 1:
+                log.error('Received OCSP request with multiple sub requests')
+                raise NotImplemented('Combined requests not yet supported')
+            single_request = request_list[0]  # TODO: Support more than one request
+            req_cert = single_request['req_cert']
+            serial = serial_from_int(req_cert['serial_number'].native)
+        except Exception as e:
+            log.exception('Error parsing OCSP request: %s', e)
+            return self.fail('malformed_request')
 
         ca = CertificateAuthority.objects.get(serial=self.ca_serial)
 
         try:
             cert = Certificate.objects.filter(ca=ca).get(serial=serial)
         except Certificate.DoesNotExist:
+            log.warn('OCSP request for unknown cert received.')
             return self.fail('internal_error')  # TODO: return a 'unkown' response instead
 
         builder = OCSPResponseBuilder(
@@ -193,7 +203,7 @@ class OCSPView(View):
             if unknown is True and critical is True:
                 log.warning('Could not parse unknown critical extension: %r',
                         dict(extension.native))
-#                return self._fail(ResponseStatus.internal_error)
+                return self._fail('internal_error')
 
             # If it's an unknown non-critical extension, we can safely ignore it.
             elif unknown is True:
