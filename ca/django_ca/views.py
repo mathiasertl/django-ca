@@ -133,6 +133,10 @@ class OCSPView(View):
         return load_certificate(pub)
 
     def process_ocsp_request(self, data):
+        response = self.get_ocsp_response(data)
+        return HttpResponse(response.dump(), content_type='application/ocsp-response')
+
+    def get_ocsp_response(self, data):
         ocsp_request = asn1crypto.ocsp.OCSPRequest.load(data)
 
         tbs_request = ocsp_request['tbs_request']
@@ -192,6 +196,4 @@ class OCSPView(View):
 
         responder_cert = self.get_responder_cert()
 
-        response = builder.build(self.responder_key, responder_cert)
-
-        return HttpResponse(response.dump(), content_type='application/ocsp-response')
+        return builder.build(self.responder_key, responder_cert)
