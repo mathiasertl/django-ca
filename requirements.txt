@@ -1,2 +1,3 @@
 Django>=1.8
+ocspbuilder==0.10.1
 pyOpenSSL==16.0.0
