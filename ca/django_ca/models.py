@@ -257,6 +257,8 @@ class CertificateAuthority(X509CertMixin):
 class Certificate(X509CertMixin):
     objects = CertificateManager.from_queryset(CertificateQuerySet)()
 
+    # reasons are defined in http://www.ietf.org/rfc/rfc3280.txt
+    # TODO: add privilegeWithdrawn and aACompromise
     REVOCATION_REASONS = (
         ('', _('No reason')),
         ('unspecified', _('Unspecified')),
@@ -300,6 +302,35 @@ class Certificate(X509CertMixin):
             r.set_reason(force_bytes(self.revoked_reason))
         r.set_rev_date(force_bytes(format_date(self.revoked_date)))
         return r
+
+    @property
+    def ocsp_status(self):
+        # NOTE: The OCSP status 'good' does not say if the certificate has expired.
+        if self.revoked is False:
+            return 'good'
+
+        if self.revoked_reason is None:
+            return 'revoked'
+        elif self.revoked_reason == 'keyCompromise':
+            return 'key_compromise'
+        elif self.revoked_reason == 'CACompromise':
+            return 'ca_compromise'
+        elif self.revoked_reason == 'affiliationChanged':
+            return 'affiliation_changed'
+        elif self.revoked_reason == 'superseded':
+            return 'superseded'
+        elif self.revoked_reason == 'cessationOfOperation':
+            return 'cessation_of_operation'
+        elif self.revoked_reason == 'certificateHold':
+            return 'certificate_hold'
+        elif self.revoked_reason == 'removeFromCRL':
+            return 'remove_from_crl',
+        elif self.revoked_reason == 'privilegeWithdrawn':
+            return 'privilege_withdrawn'
+        elif self.revoked_reason == 'aACompromise':
+            return 'aa_compromise'  # TODO: this is only guessed.
+        else:
+            return 'revoked'
 
     def __str__(self):
         return self.cn

@@ -101,6 +101,8 @@ class RevokeCertificateView(UpdateView):
 
 
 from ocspbuilder import OCSPResponseBuilder
+from oscrypto.asymmetric import load_certificate
+from oscrypto.asymmetric import load_private_key
 class OCSPView(View):
     ca_serial = None
     responder_key = None
@@ -116,26 +118,20 @@ class OCSPView(View):
     def post(self, request):
         return self.process_ocsp_request(request.body)
 
+    def get_issuer_cert(self):
+        ca = CertificateAuthority.objects.get(serial=self.ca_serial)
+        return load_certificate(force_bytes(ca.pub))
+
     def get_responder_cert(self):
         try:
-            return Certificate.objects.get(serial=self.responder_cert).pub
+            pub = force_bytes(Certificate.objects.get(serial=self.responder_cert).pub)
         except Certificate.DoesNotExist:
-            with open(self.responder_cert) as stream:
-                return stream.read()
+            with open(self.responder_cert, 'rb') as stream:
+                pub = stream.read()
+        return load_certificate(pub)
 
-    def get_key(self, path):
-        with open(path, 'rb') as stream:
-            pem = stream.read()
-
-        _type_name, _headers, der = asn1crypto.pem.unarmor(force_bytes(pem))
-        parsed = asn1crypto.keys.RSAPrivateKey.load(der)
-        parsed.native
-        return asn1crypto.keys.PrivateKeyInfo.wrap(parsed, 'rsa')
-
-    def get_cert(self, pem):
-        # make the public key a asn1crypto.x509.Certificate instance
-        _type_name, _headers, der_bytes = asn1crypto.pem.unarmor(force_bytes(pem))
-        return asn1crypto.x509.Certificate.load(der_bytes)
+    def get_responder_key(self):
+        return load_private_key(self.responder_key)
 
     def process_ocsp_request(self, data):
         ocsp_request = asn1crypto.ocsp.OCSPRequest.load(data)
@@ -150,14 +146,16 @@ class OCSPView(View):
         serial = serial_from_int(req_cert['serial_number'].native)
         print('OCSP request for %s' % serial)
 
-        ca = CertificateAuthority.objects.get(serial=self.ca_serial)
-        cert = Certificate.objects.get(serial=serial)
+        try:
+            cert = Certificate.objects.get(serial=serial)
+        except Certificate.DoesNotExist:
+            pass  # TODO: return a 'unkown' response
 
         builder = OCSPResponseBuilder(
             response_status='successful',  # ResponseStatus.successful.value,
-            certificate=self.get_cert(cert.pub),
-            certificate_status='good',
-            revocation_date=None
+            certificate=load_certificate(force_bytes(cert.pub)),
+            certificate_status=cert.ocsp_status,
+            revocation_date=cert.revoked_date,
         )
 
         # Parse extensions
@@ -189,11 +187,11 @@ class OCSPView(View):
             elif unknown is True:
                 log.info('Ignored unknown non-critical extension: %r', dict(extension.native))
 
-        builder.certificate_issuer = self.get_cert(ca.pub)
+        builder.certificate_issuer = self.get_issuer_cert()
         builder.next_update = timezone.now() + timedelta(days=1)
 
-        responder_key = self.get_key(self.responder_key)
-        responder_cert = self.get_cert(self.get_responder_cert())
+        responder_key = self.get_responder_key()
+        responder_cert = self.get_responder_cert()
 
         response = builder.build(responder_key, responder_cert)
 
