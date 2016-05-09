@@ -103,10 +103,16 @@ class RevokeCertificateView(UpdateView):
 from ocspbuilder import OCSPResponseBuilder
 from oscrypto.asymmetric import load_certificate
 from oscrypto.asymmetric import load_private_key
+from django.utils.decorators import classonlymethod
 class OCSPView(View):
     ca_serial = None
     responder_key = None
     responder_cert = None
+
+    @classonlymethod
+    def as_view(cls, **kwargs):
+        kwargs['responder_key'] = load_private_key(kwargs['responder_key'])
+        return super(OCSPView, cls).as_view(**kwargs)
 
     @method_decorator(csrf_exempt)
     def dispatch(self, *args, **kwargs):
@@ -126,9 +132,6 @@ class OCSPView(View):
                 pub = stream.read()
         return load_certificate(pub)
 
-    def get_responder_key(self):
-        return load_private_key(self.responder_key)
-
     def process_ocsp_request(self, data):
         ocsp_request = asn1crypto.ocsp.OCSPRequest.load(data)
 
@@ -140,7 +143,6 @@ class OCSPView(View):
         single_request = request_list[0]  # TODO: Support more than one request
         req_cert = single_request['req_cert']
         serial = serial_from_int(req_cert['serial_number'].native)
-        print('OCSP request for %s' % serial)
 
         ca = CertificateAuthority.objects.get(serial=self.ca_serial)
 
@@ -188,9 +190,8 @@ class OCSPView(View):
         builder.certificate_issuer = load_certificate(force_bytes(ca.pub))
         builder.next_update = timezone.now() + timedelta(days=1)
 
-        responder_key = self.get_responder_key()
         responder_cert = self.get_responder_cert()
 
-        response = builder.build(responder_key, responder_cert)
+        response = builder.build(self.responder_key, responder_cert)
 
         return HttpResponse(response.dump(), content_type='application/ocsp-response')
