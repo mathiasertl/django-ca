@@ -121,6 +121,8 @@ setup(
     zip_safe=False,  # because of the static files
     install_requires=[
         'Django>=1.8',
+        'ocspbuilder==0.10.1',
+        'oscrypto==0.15.0',
         'pyOpenSSL>=16.0',
     ],
     cmdclass={
