@@ -32,6 +32,7 @@ from .utils import format_date
 from .utils import format_subject
 from .utils import multiline_url_validator
 from .utils import parse_date
+from .utils import serial_from_int
 
 
 class Watcher(models.Model):
@@ -91,8 +92,7 @@ class X509CertMixin(models.Model):
         self.expires = self.not_after
 
         # compute serial with ':' after every second character
-        s = hex(value.get_serial_number())[2:].upper()
-        self.serial = ':'.join(a+b for a, b in zip(s[::2], s[1::2]))
+        self.serial = serial_from_int(value.get_serial_number())
 
     @property
     def extensions(self):
