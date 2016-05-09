@@ -13,12 +13,22 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import base64
+import logging
+
+from datetime import timedelta
+
+import asn1crypto
+
 from OpenSSL import crypto
 
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
+from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import UpdateView
@@ -27,6 +37,9 @@ from .crl import get_crl
 from .forms import RevokeCertificateForm
 from .models import Certificate
 from .models import CertificateAuthority
+from .utils import serial_from_int
+
+log = logging.getLogger(__name__)
 
 
 class CertificateRevocationListView(View, SingleObjectMixin):
@@ -87,18 +100,8 @@ class RevokeCertificateView(UpdateView):
                        args=(self.object.pk, ))
 
 
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-import base64
-from asn1crypto.ocsp import OCSPRequest
-from .utils import serial_from_int
 from ocspbuilder import OCSPResponseBuilder
-from datetime import timedelta
-from django.utils import timezone
-import asn1crypto
 from oscrypto import asymmetric
-import logging
-log = logging.getLogger(__name__)
 class OCSPView(View):
     ca_serial = None
     responder_key = None
@@ -133,7 +136,7 @@ class OCSPView(View):
         return asn1crypto.x509.Certificate.load(der_bytes)
 
     def process_ocsp_request(self, data):
-        ocsp_request = OCSPRequest.load(data)
+        ocsp_request = asn1crypto.ocsp.OCSPRequest.load(data)
 
         tbs_request = ocsp_request['tbs_request']
         request_list = tbs_request['request_list']
