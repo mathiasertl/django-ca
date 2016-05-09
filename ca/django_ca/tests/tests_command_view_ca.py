@@ -54,15 +54,17 @@ class SignCertTestCase(DjangoCAWithCATestCase):
 * Issuer Alternative Name: None
 * HPKP pin: %s
 
-%s''' % (ca.name, status, ca.serial, path, parent, children, ca.subject_str, pathlen,
+%s''' % (ca.name, status, ca.serial, path, parent, children, ca.distinguishedName(), pathlen,
          ca.hpkp_pin, ca.pub))
 
     def test_basic(self):
+        self.maxDiff = None
         stdout, stderr = self.cmd('view_ca', self.ca.serial)
         self.assertOutput(self.ca, stdout)
         self.assertEqual(stderr, '')
 
     def test_family(self):
+        self.maxDiff = None
         parent = CertificateAuthority.objects.get(name=self.ca.name)
         child = self.init_ca(name='Child CA', parent=self.ca, pathlen=False)
 

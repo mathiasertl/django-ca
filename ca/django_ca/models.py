@@ -105,15 +105,6 @@ class X509CertMixin(models.Model):
         return self._extensions
 
     @property
-    def subject(self):
-        return {k.decode('utf-8'): v.decode('utf-8')
-                for k, v in self.x509.get_subject().get_components()}
-
-    @property
-    def subject_str(self):
-        return '/%s' % ('/'.join(['%s=%s' % (k, v) for k, v in self.subject.items()]))
-
-    @property
     def not_before(self):
         return parse_date(self.x509.get_notBefore().decode('utf-8'))
 
