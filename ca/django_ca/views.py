@@ -118,10 +118,6 @@ class OCSPView(View):
     def post(self, request):
         return self.process_ocsp_request(request.body)
 
-    def get_issuer_cert(self):
-        ca = CertificateAuthority.objects.get(serial=self.ca_serial)
-        return load_certificate(force_bytes(ca.pub))
-
     def get_responder_cert(self):
         try:
             pub = force_bytes(Certificate.objects.get(serial=self.responder_cert).pub)
@@ -146,8 +142,10 @@ class OCSPView(View):
         serial = serial_from_int(req_cert['serial_number'].native)
         print('OCSP request for %s' % serial)
 
+        ca = CertificateAuthority.objects.get(serial=self.ca_serial)
+
         try:
-            cert = Certificate.objects.get(serial=serial)
+            cert = Certificate.objects.filter(ca=ca).get(serial=serial)
         except Certificate.DoesNotExist:
             pass  # TODO: return a 'unkown' response
 
@@ -187,7 +185,7 @@ class OCSPView(View):
             elif unknown is True:
                 log.info('Ignored unknown non-critical extension: %r', dict(extension.native))
 
-        builder.certificate_issuer = self.get_issuer_cert()
+        builder.certificate_issuer = load_certificate(force_bytes(ca.pub))
         builder.next_update = timezone.now() + timedelta(days=1)
 
         responder_key = self.get_responder_key()
