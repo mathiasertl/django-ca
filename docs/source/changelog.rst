@@ -2,6 +2,14 @@
 ChangeLog
 #########
 
+.. _changelog-head:
+
+************************
+1.1.1 (not yet released)
+************************
+
+* Fix the ``fab init_demo`` command.
+
 .. _changelog-1.1.0:
 
 ******************
