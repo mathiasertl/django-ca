@@ -85,3 +85,111 @@ class RevokeCertificateView(UpdateView):
         meta = self.queryset.model._meta
         return reverse('admin:%s_%s_change' % (meta.app_label, meta.verbose_name),
                        args=(self.object.pk, ))
+
+
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+import base64
+from asn1crypto.ocsp import OCSPRequest
+from .utils import serial_from_int
+from ocspbuilder import OCSPResponseBuilder
+from datetime import timedelta
+from django.utils import timezone
+import asn1crypto
+from oscrypto import asymmetric
+import logging
+log = logging.getLogger(__name__)
+class OCSPView(View):
+    ca_serial = None
+    responder_key = None
+    responder_cert = None
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super(OCSPView, self).dispatch(*args, **kwargs)
+
+    def get(self, request, data):
+        return self.process_ocsp_request(base64.b64decode(data))
+
+    def post(self, request):
+        return self.process_ocsp_request(request.body)
+
+    def get_responder_cert(self):
+        try:
+            return Certificate.objects.get(serial=self.responder_cert).pub
+        except Certificate.DoesNotExist:
+            with open(self.responder_cert) as stream:
+                return stream.read()
+
+    def get_key(self, path):
+        # make the public key a asn1crypto.x509.Certificate instancea
+        return asymmetric.load_private_key(path)
+#        _type_name, _headers, der_bytes = asn1crypto.pem.unarmor(force_bytes(pem))
+#        return asn1crypto.keys.RSAPrivateKey.load(der_bytes)
+
+    def get_cert(self, pem):
+        # make the public key a asn1crypto.x509.Certificate instance
+        _type_name, _headers, der_bytes = asn1crypto.pem.unarmor(force_bytes(pem))
+        return asn1crypto.x509.Certificate.load(der_bytes)
+
+    def process_ocsp_request(self, data):
+        ocsp_request = OCSPRequest.load(data)
+
+        tbs_request = ocsp_request['tbs_request']
+        request_list = tbs_request['request_list']
+        if len(request_list) != 1:
+            print('Received OCSP request with multiple sub requests')
+            raise NotImplemented('Combined requests not yet supported')
+        single_request = request_list[0]  # TODO: Support more than one request
+        req_cert = single_request['req_cert']
+        serial = serial_from_int(req_cert['serial_number'].native)
+        print('OCSP request for %s' % serial)
+
+        ca = CertificateAuthority.objects.get(serial=self.ca_serial)
+        cert = Certificate.objects.get(serial=serial)
+
+        builder = OCSPResponseBuilder(
+            response_status='successful',  # ResponseStatus.successful.value,
+            certificate=self.get_cert(cert.pub),
+            certificate_status='good',
+            revocation_date=None
+        )
+
+        # Parse extensions
+        for extension in tbs_request['request_extensions']:
+            extn_id = extension['extn_id'].native
+            critical = extension['critical'].native
+            value = extension['extn_value'].parsed
+
+            # This variable tracks whether any unknown extensions were encountered
+            unknown = False
+
+            # Handle nonce extension
+            if extn_id == 'nonce':
+                builder.nonce = value.native
+
+            # That's all we know
+            else:
+                unknown = True
+
+            # If an unknown critical extension is encountered (which should not
+            # usually happen, according to RFC 6960 4.1.2), we should throw our
+            # hands up in despair and run.
+            if unknown is True and critical is True:
+                log.warning('Could not parse unknown critical extension: %r',
+                        dict(extension.native))
+#                return self._fail(ResponseStatus.internal_error)
+
+            # If it's an unknown non-critical extension, we can safely ignore it.
+            elif unknown is True:
+                log.info('Ignored unknown non-critical extension: %r', dict(extension.native))
+
+        builder.certificate_issuer = self.get_cert(ca.pub)
+        builder.next_update = timezone.now() + timedelta(days=1)
+
+        responder_key = self.get_key(self.responder_key)
+        responder_cert = self.get_cert(self.get_responder_cert())
+
+        response = builder.build(responder_key, responder_cert)
+
+        return HttpResponse(response.dump(), content_type='application/ocsp-response')

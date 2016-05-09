@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+from django.conf import settings
 from django.conf.urls import url
 
 from . import ca_settings
@@ -21,6 +22,27 @@ from . import views
 app_name = 'django_ca'
 urlpatterns = []
 
+
+CA_PROVIDE_OCSP = getattr(settings, 'CA_PROVIDE_OCSP', {})
+
 if ca_settings.CA_PROVIDE_GENERIC_CRL is True:  # pragma: no branch
     urlpatterns.append(
         url(r'^crl/(?P<serial>[0-9A-F:]+)/$', views.CertificateRevocationListView.as_view(), name='crl'))
+
+for ca, details in CA_PROVIDE_OCSP.items():
+    name = details.get('name')
+    if not name:
+        pass  # TODO: Raise runtime error'
+
+    kwargs = {
+        'ca_serial': details['ca'],
+        'responder_key': details['responder_key'],
+        'responder_cert': details['responder_cert'],
+    }
+
+    urlpatterns += [
+        url(r'ocsp/%s/$' % name, views.OCSPView.as_view(**kwargs),
+            name='ocsp-post-%s' % name),
+        url(r'ocsp/%s/(?P<data>[a-zA-Z0-9=]+)$' % name, views.OCSPView.as_view(**kwargs),
+            name='ocsp-get-%s' % name)
+    ]
