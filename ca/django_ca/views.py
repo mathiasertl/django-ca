@@ -101,7 +101,6 @@ class RevokeCertificateView(UpdateView):
 
 
 from ocspbuilder import OCSPResponseBuilder
-from oscrypto import asymmetric
 class OCSPView(View):
     ca_serial = None
     responder_key = None
@@ -125,10 +124,13 @@ class OCSPView(View):
                 return stream.read()
 
     def get_key(self, path):
-        # make the public key a asn1crypto.x509.Certificate instancea
-        return asymmetric.load_private_key(path)
-#        _type_name, _headers, der_bytes = asn1crypto.pem.unarmor(force_bytes(pem))
-#        return asn1crypto.keys.RSAPrivateKey.load(der_bytes)
+        with open(path, 'rb') as stream:
+            pem = stream.read()
+
+        _type_name, _headers, der = asn1crypto.pem.unarmor(force_bytes(pem))
+        parsed = asn1crypto.keys.RSAPrivateKey.load(der)
+        parsed.native
+        return asn1crypto.keys.PrivateKeyInfo.wrap(parsed, 'rsa')
 
     def get_cert(self, pem):
         # make the public key a asn1crypto.x509.Certificate instance
