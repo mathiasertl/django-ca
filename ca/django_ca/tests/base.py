@@ -26,6 +26,12 @@ from django_ca.utils import get_cert_profile_kwargs
 from django_ca.utils import parse_date
 
 
+_fixtures_dir = os.path.join(os.path.dirname(__file__), 'fixtures')
+_pubkey = os.path.join(_fixtures_dir, 'root.pem')
+with open(_pubkey, 'rb') as stream:
+    root_pubkey = crypto.load_certificate(crypto.FILETYPE_PEM, stream.read())
+
+
 class override_settings(_override_settings):
     """Enhance override_settings to also reload django_ca.ca_settings.
 
@@ -69,7 +75,7 @@ class override_tmpcadir(override_settings):
 
 class DjangoCATestCase(TestCase):
     """Base class for all testcases with some enhancements."""
-    fixtures_dir = os.path.join(os.path.dirname(__file__), 'fixtures')
+    fixtures_dir = _fixtures_dir
 
     @classmethod
     def setUpClass(cls):
@@ -192,17 +198,9 @@ class DjangoCAWithCATestCase(DjangoCATestCase):
     @classmethod
     def setUpClass(cls):
         super(DjangoCAWithCATestCase, cls).setUpClass()
-
-        pubkey = os.path.join(cls.fixtures_dir, 'root.pem')
-        with open(pubkey, 'rb') as stream:
-            pubkey = stream.read()
-
-
-        cls.ca = CertificateAuthority(
-            name='root', enabled=True, parent=None,
-            private_key_path=os.path.join(cls.fixtures_dir, 'root.key')
-        )
-        cls.ca.x509 = crypto.load_certificate(crypto.FILETYPE_PEM, pubkey)
+        cls.ca = CertificateAuthority(name='root', enabled=True, parent=None,
+                                      private_key_path=os.path.join(cls.fixtures_dir, 'root.key'))
+        cls.ca.x509 = root_pubkey  # calculates serial etc
         cls.ca.save()
 
 
