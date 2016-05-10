@@ -187,45 +187,13 @@ class CertificateAuthority(X509CertMixin):
     private_key_path = models.CharField(max_length=256, help_text=_('Path to the private key.'))
 
     # various details used when signing certs
-    # StartSSL class 2: URI: http://crl.startssl.com/crt2-crl.crl
-    # LetsEncrypt X1:   -
-    # DigiCert EV:      URI: http://crl{3,4}.digicert.com/sha2-ev-server-g1.crl
-    # Thawte EV:        URI: http://ti.symcb.com/ti.crl
-    # RapidSSL G3:      URI: http://gv.symcb.com/gv.crl
-    # Google IA G2:     URI: http://pki.google.com/GIAG2.crl
-    # Microsoft IT:     URI: http://mscrl.microsoft.com/pki/mscorp/crl/msitwww2.crl
     crl_url = models.TextField(blank=True, null=True, validators=[multiline_url_validator],
                                verbose_name=_('CRL URLs'),
                                help_text=_("URLs, one per line, where you can retrieve the CRL."))
-
-    # StartSSL class2: URI: http://aia.startssl.com/certs/sub.class2.server.ca.crt
-    # LetsEncrypt X1:  URI: http://cert.int-x1.letsencrypt.org/
-    # DigiCert EV:     URI: http://cacerts.digicert.com/DigiCertSHA2ExtendedValidationServerCA.crt
-    # Thawte EV:       URI: http://ti.symcb.com/ti.crt
-    # RapidSSL G3:     URI: http://gv.symcb.com/gv.crt
-    # Google IA G2:    URI: http://pki.google.com/GIAG2.crt
-    # Microsoft IT:    URI: http://www.microsoft.com/pki/mscorp/msitwww2.crt
     issuer_url = models.URLField(blank=True, null=True, verbose_name=_('Issuer URL'),
                                  help_text=_("URL to the certificate of this CA (in DER format)."))
-
-    # StartSSL class2: http://ocsp.startssl.com/sub/class2/server/ca
-    # LetsEncrypt X1:  URI: http://ocsp.int-x1.letsencrypt.org/
-    # DigiCert EV:     URI: http://ocsp.digicert.com
-    # Thawte EV:       URI: http://ti.symcd.com
-    # RapidSSL G3:     URI: http://gv.symcd.com
-    # Google IA G2:    URI: http://clients1.google.com/ocsp
-    # Microsoft IT:    URI: http://ocsp.msocsp.com
     ocsp_url = models.URLField(blank=True, null=True, verbose_name=_('OCSP responder URL'),
                                help_text=_("URL of a OCSP responser for the CA."))
-
-    # StartSSL class2: URI: http://www.startssl.com/
-    # LetsEncrypt X1:  -
-    # DigiCert EV:     -
-    # Thawte EV:       -
-    # RapidSSL G3:     -
-    # Google IA G2:    -
-    # Microsoft IT:
-    # NOTE: "issuer:copy" copies all subjectAltNames from the signing cert
     issuer_alt_name = models.URLField(blank=True, null=True, verbose_name=_('issuerAltName'),
                                       help_text=_("URL for your CA."))
 
