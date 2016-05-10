@@ -25,7 +25,6 @@ from .base import override_tmpcadir
 class SignCertTestCase(DjangoCAWithCATestCase):
     def assertOutput(self, ca, stdout):
         status = 'enabled' if self.ca.enabled else 'disabled'
-        path = os.path.join(ca_settings.CA_DIR, '%s.key' % ca.serial)
         if ca.children.all():
             children = '* Children:\n'
             for child in ca.children.all():
@@ -54,8 +53,8 @@ class SignCertTestCase(DjangoCAWithCATestCase):
 * Issuer Alternative Name: None
 * HPKP pin: %s
 
-%s''' % (ca.name, status, ca.serial, path, parent, children, ca.distinguishedName(), pathlen,
-         ca.hpkp_pin, ca.pub))
+%s''' % (ca.name, status, ca.serial, ca.private_key_path, parent, children, ca.distinguishedName(),
+         pathlen, ca.hpkp_pin, ca.pub))
 
     def test_basic(self):
         stdout, stderr = self.cmd('view_ca', self.ca.serial)
