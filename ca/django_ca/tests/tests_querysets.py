@@ -25,7 +25,7 @@ from ..models import CertificateAuthority
 from .base import override_tmpcadir
 
 
-@override_tmpcadir()
+@override_tmpcadir(CA_MIN_KEY_SIZE=1024)
 class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
     def test_basic(self):
         key_size = ca_settings.CA_MIN_KEY_SIZE
@@ -37,7 +37,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
 
         # verify private key properties
         self.assertTrue(ca.key.check())
-        self.assertEqual(ca.key.bits(), 2048)
+        self.assertEqual(ca.key.bits(), 1024)
         self.assertEqual(ca.key.type(), crypto.TYPE_RSA)
 
         # verity public key properties
