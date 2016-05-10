@@ -29,7 +29,6 @@ from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.utils import timezone
-from django.utils.decorators import classonlymethod
 from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes
 from django.views.decorators.csrf import csrf_exempt
@@ -114,11 +113,6 @@ class OCSPView(View):
     responder_key = None
     responder_cert = None
 
-    @classonlymethod
-    def as_view(cls, **kwargs):
-        kwargs['responder_key'] = load_private_key(kwargs['responder_key'])
-        return super(OCSPView, cls).as_view(**kwargs)
-
     @method_decorator(csrf_exempt)
     def dispatch(self, *args, **kwargs):
         return super(OCSPView, self).dispatch(*args, **kwargs)
@@ -128,6 +122,9 @@ class OCSPView(View):
 
     def post(self, request):
         return self.process_ocsp_request(request.body)
+
+    def get_responder_key(self):
+        return load_private_key(self.responder_key)
 
     def get_responder_cert(self):
         try:
@@ -212,6 +209,7 @@ class OCSPView(View):
         builder.certificate_issuer = load_certificate(force_bytes(ca.pub))
         builder.next_update = timezone.now() + timedelta(days=1)
 
+        responder_key = self.get_responder_key()
         responder_cert = self.get_responder_cert()
 
-        return builder.build(self.responder_key, responder_cert)
+        return builder.build(responder_key, responder_cert)
