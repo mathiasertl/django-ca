@@ -5,6 +5,7 @@ when you run "manage.py test".
 Replace this with more appropriate tests for your application.
 """
 
+import os
 import shutil
 import tempfile
 
@@ -68,6 +69,7 @@ class override_tmpcadir(override_settings):
 
 class DjangoCATestCase(TestCase):
     """Base class for all testcases with some enhancements."""
+    fixtures_dir = os.path.join(os.path.dirname(__file__), 'fixtures')
 
     @classmethod
     def setUpClass(cls):
@@ -190,7 +192,18 @@ class DjangoCAWithCATestCase(DjangoCATestCase):
     @classmethod
     def setUpClass(cls):
         super(DjangoCAWithCATestCase, cls).setUpClass()
-        cls.ca = cls.init_ca()
+
+        pubkey = os.path.join(cls.fixtures_dir, 'root.pem')
+        with open(pubkey, 'rb') as stream:
+            pubkey = stream.read()
+
+
+        cls.ca = CertificateAuthority(
+            name='root', enabled=True, parent=None,
+            private_key_path=os.path.join(cls.fixtures_dir, 'root.key')
+        )
+        cls.ca.x509 = crypto.load_certificate(crypto.FILETYPE_PEM, pubkey)
+        cls.ca.save()
 
 
 class DjangoCAWithCSRTestCase(DjangoCAWithCATestCase):
