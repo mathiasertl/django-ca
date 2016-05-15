@@ -46,9 +46,11 @@ class SubjectActionTestCase(DjangoCATestCase):
         self.assertEqual(ns.subject, {'ST': '', 'CN': 'example.com'})
 
     def test_error(self):
-        self.assertParserError(['--subject=ST=/CN=example.com'],
-                               'usage: setup.py [-h] [--subject SUBJECT]\n'
-                               'setup.py: error: Unparseable subject: Does not start with a "/".\n')
+        self.assertParserError(
+            ['--subject=ST=/CN=example.com'],
+            'usage: setup.py [-h] [--subject SUBJECT]\n'
+            'setup.py: error: Unparseable subject: Does not start with a "/".\n')
+
 
 class FormatActionTestCase(DjangoCATestCase):
     def setUp(self):
@@ -227,6 +229,7 @@ setup.py: error: %s: %s: Could not read private key.\n''' % (ca.name, ca.private
         finally:
             stream.close()
             os.remove(path)
+
 
 class URLActionTestCase(DjangoCATestCase):
     def setUp(self):
