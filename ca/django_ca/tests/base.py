@@ -137,6 +137,7 @@ class DjangoCATestCase(TestCase):
 
     @classmethod
     def init_ca(cls, **kwargs):
+        """Create a new CA."""
         kwargs.setdefault('name', 'Root CA')
         kwargs.setdefault('parent', None)
         kwargs.setdefault('key_size', ca_settings.CA_MIN_KEY_SIZE)
@@ -148,6 +149,7 @@ class DjangoCATestCase(TestCase):
 
     @classmethod
     def load_ca(cls, name, x509, enabled=True, parent=None, **kwargs):
+        """Load a CA from one of the preloaded files."""
         path = os.path.join(_fixtures_dir, '%s.key' % name)
         ca = CertificateAuthority(name=name, private_key_path=path, enabled=enabled, parent=parent,
                                   **kwargs)
