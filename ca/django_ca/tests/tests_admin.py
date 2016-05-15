@@ -30,7 +30,6 @@ from ..models import CertificateAuthority
 from ..utils import SUBJECT_FIELDS
 from .base import DjangoCAWithCertTestCase
 from .base import DjangoCAWithCSRTestCase
-from .base import override_tmpcadir
 
 
 class AdminTestMixin(object):
@@ -58,7 +57,6 @@ class AdminTestMixin(object):
         self.assertRedirects(response, expected)
 
 
-@override_tmpcadir()
 class ChangelistTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     """Test the changelist view."""
 
@@ -104,7 +102,6 @@ class ChangelistTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertRequiresLogin(response)
 
 
-@override_tmpcadir()
 class RevokeActionTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     """Test the "revoke" action in the changelist."""
 
@@ -124,7 +121,6 @@ class RevokeActionTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertRedirects(response, self.changelist_url)
 
 
-@override_tmpcadir()
 class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     def test_basic(self):
         response = self.client.get(self.change_url())
@@ -151,7 +147,6 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertCSS(response, 'django_ca/admin/css/certificateadmin.css')
 
 
-@override_tmpcadir()
 class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
     def test_get(self):
         response = self.client.get(self.add_url)
@@ -293,7 +288,6 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertEqual(response.status_code, 403)
 
 
-@override_tmpcadir()
 class CSRDetailTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
     def setUp(self):
         self.url = reverse('admin:django_ca_certificate_csr_details')
@@ -328,7 +322,6 @@ class CSRDetailTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertRequiresLogin(response)
 
 
-@override_tmpcadir()
 class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     def get_url(self, cert):
         return reverse('admin:django_ca_certificate_revoke', kwargs={'pk': cert.pk})
