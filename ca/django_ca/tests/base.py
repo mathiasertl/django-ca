@@ -189,6 +189,13 @@ class DjangoCATestCase(TestCase):
         return cert
 
     @classmethod
+    def load_cert(cls, ca, x509):
+        cert = Certificate(ca=ca, csr='none')
+        cert.x509 = x509
+        cert.save()
+        return cert
+
+    @classmethod
     def get_subject(cls, x509):
         return {k.decode('utf-8'): v.decode('utf-8') for k, v
                 in x509.get_subject().get_components()}
@@ -247,4 +254,4 @@ class DjangoCAWithCertTestCase(DjangoCAWithCSRTestCase):
     @classmethod
     def setUpClass(cls):
         super(DjangoCAWithCertTestCase, cls).setUpClass()
-        cls.cert = cls.create_cert(cls.ca, cls.csr_pem, {'CN': 'example.com'})
+        cls.cert = cls.load_cert(cls.ca, x509=cert1_pubkey)
