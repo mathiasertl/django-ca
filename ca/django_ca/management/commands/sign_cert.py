@@ -45,8 +45,6 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
             help='Add the CommonName as subjectAlternativeName%s.' % (
                 ' (default)' if default else ''))
 
-
-    
     def add_subject_group(self, parser):
         # TODO: show the default
         #subject = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]['subject']
