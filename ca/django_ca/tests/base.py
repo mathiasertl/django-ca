@@ -147,6 +147,15 @@ class DjangoCATestCase(TestCase):
             **kwargs)
 
     @classmethod
+    def load_ca(cls, name, x509, enabled=True, parent=None, **kwargs):
+        path = os.path.join(_fixtures_dir, '%s.key' % name)
+        ca = CertificateAuthority(name=name, private_key_path=path, enabled=enabled, parent=parent,
+                                  **kwargs)
+        ca.x509 = x509  # calculates serial etc
+        ca.save()
+        return ca
+
+    @classmethod
     def create_csr(cls, **fields):
         # see also: https://github.com/msabramo/pyOpenSSL/blob/master/examples/certgen.py
         pkey = crypto.PKey()
@@ -219,10 +228,7 @@ class DjangoCAWithCATestCase(DjangoCATestCase):
     @classmethod
     def setUpClass(cls):
         super(DjangoCAWithCATestCase, cls).setUpClass()
-        cls.ca = CertificateAuthority(name='root', enabled=True, parent=None,
-                                      private_key_path=os.path.join(cls.fixtures_dir, 'root.key'))
-        cls.ca.x509 = root_pubkey  # calculates serial etc
-        cls.ca.save()
+        cls.ca = cls.load_ca(name='root', x509=root_pubkey)
 
 
 class DjangoCAWithCSRTestCase(DjangoCAWithCATestCase):
