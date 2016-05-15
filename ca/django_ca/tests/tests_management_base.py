@@ -21,6 +21,7 @@ from OpenSSL import crypto
 
 from ..management import base
 from ..models import CertificateAuthority
+from .base import child_pubkey
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import DjangoCAWithCATestCase
@@ -147,7 +148,7 @@ class CertificateActionTestCase(DjangoCAWithCertTestCase):
                                'setup.py: error: %s: Multiple certificates match.\n'
                                % serial)
 
-@override_tmpcadir()
+
 class CertificateAuthorityActionTestCase(DjangoCAWithCATestCase):
     def setUp(self):
         super(CertificateAuthorityActionTestCase, self).setUp()
@@ -168,8 +169,8 @@ class CertificateAuthorityActionTestCase(DjangoCAWithCATestCase):
                                '''setup.py: error: foo: Certiciate authority not found.\n''')
 
     def test_multiple(self):
-        # Create a second CA and manually set the same serial
-        ca2 = self.init_ca(name='ca2')
+        # Create a second CA and manually set (almost) the same serial
+        ca2 = self.load_ca(name='child', x509=child_pubkey)
         ca2.serial = self.ca.serial[:-1] + 'X'
         ca2.save()
 

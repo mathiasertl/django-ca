@@ -13,12 +13,10 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
-import os
-
-from .. import ca_settings
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
 from .base import override_tmpcadir
+from .base import child_pubkey
 
 
 @override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
@@ -63,7 +61,7 @@ class SignCertTestCase(DjangoCAWithCATestCase):
 
     def test_family(self):
         parent = CertificateAuthority.objects.get(name=self.ca.name)
-        child = self.init_ca(name='Child CA', parent=self.ca, pathlen=False)
+        child = self.load_ca(name='child', x509=child_pubkey, parent=self.ca, pathlen=False)
 
         stdout, stderr = self.cmd('view_ca', parent.serial)
         self.assertOutput(parent, stdout)

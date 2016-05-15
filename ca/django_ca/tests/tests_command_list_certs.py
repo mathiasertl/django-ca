@@ -19,6 +19,7 @@ from django.utils import timezone
 
 from ..models import Certificate
 from .base import DjangoCAWithCertTestCase
+from .base import child_pubkey
 from .base import override_tmpcadir
 
 
@@ -66,7 +67,7 @@ class ListCertsTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(stderr, '')
 
     def test_ca(self):
-        child_ca = self.init_ca(name='Child CA', parent=self.ca)
+        child_ca = self.load_ca(name='child', x509=child_pubkey, parent=self.ca)
 
         stdout, stderr = self.cmd('list_certs')
         self.assertEqual(stdout, '%s\n' % self.line(self.cert))
