@@ -302,7 +302,8 @@ class CSRDetailTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
     def test_basic(self):
         response = self.client.post(self.url, data={'csr': self.csr_pem})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(json.loads(response.content.decode('utf-8')), {'subject': {}})
+        self.assertEqual(json.loads(response.content.decode('utf-8')),
+                         {'subject': {'CN': 'cert1-csr.example.com'}})
 
     def test_fields(self):
         subject = {f: 'test-%s' % f for f in SUBJECT_FIELDS}
