@@ -43,6 +43,14 @@ root_key = _load_key('root.key')
 root_pubkey = _load_cert('root.pem')
 child_key = _load_key('child.key')
 child_pubkey = _load_cert('child.pem')
+ocsp_key = _load_key('ocsp.key')
+ocsp_pubkey = _load_cert('ocsp.pem')
+cert1_key = _load_key('cert1.key')
+cert1_pubkey = _load_cert('cert1.pem')
+cert2_key = _load_key('cert2.key')
+cert2_pubkey = _load_cert('cert2.pem')
+cert2_key = _load_key('cert2.key')
+cert2_pubkey = _load_cert('cert2.pem')
 
 
 class override_settings(_override_settings):
