@@ -34,10 +34,10 @@ def _load_key(path, typ=crypto.FILETYPE_PEM):
         return crypto.load_privatekey(typ, stream.read())
 
 
-def _load_csr(path, typ=crypto.FILETYPE_PEM):
+def _load_csr(path):
     path = os.path.join(_fixtures_dir, path)
-    with open(path, 'rb') as stream:
-        return crypto.load_certificate_request(typ, stream.read())
+    with open(path, 'r') as stream:
+        return stream.read().strip()
 
 
 def _load_cert(path, typ=crypto.FILETYPE_PEM):
@@ -257,9 +257,7 @@ class DjangoCAWithCSRTestCase(DjangoCAWithCATestCase):
         super(DjangoCAWithCSRTestCase, cls).setUpClass()
 
         cls.key = cert1_key
-        cls.csr = cert1_csr
-        cls.csr_pem = crypto.dump_certificate_request(
-            crypto.FILETYPE_PEM, cls.csr).decode('utf-8').strip()
+        cls.csr_pem = cert1_csr
 
 
 class DjangoCAWithCertTestCase(DjangoCAWithCSRTestCase):
