@@ -25,11 +25,24 @@ from django_ca.utils import sort_subject_dict
 from django_ca.utils import get_cert_profile_kwargs
 from django_ca.utils import parse_date
 
-
 _fixtures_dir = os.path.join(os.path.dirname(__file__), 'fixtures')
-_pubkey = os.path.join(_fixtures_dir, 'root.pem')
-with open(_pubkey, 'rb') as stream:
-    root_pubkey = crypto.load_certificate(crypto.FILETYPE_PEM, stream.read())
+
+
+def _load_key(path, typ=crypto.FILETYPE_PEM):
+    path = os.path.join(_fixtures_dir, path)
+    with open(path, 'rb') as stream:
+        return crypto.load_privatekey(typ, stream.read())
+
+
+def _load_cert(path, typ=crypto.FILETYPE_PEM):
+    path = os.path.join(_fixtures_dir, path)
+    with open(path, 'rb') as stream:
+        return crypto.load_certificate(typ, stream.read())
+
+root_key = _load_key('root.key')
+root_pubkey = _load_cert('root.pem')
+child_key = _load_key('child.key')
+child_pubkey = _load_cert('child.pem')
 
 
 class override_settings(_override_settings):
