@@ -64,9 +64,9 @@ cert2_key = _load_key('cert2.key')
 cert2_csr = _load_csr('cert2.csr')
 cert2_pubkey = _load_cert('cert2.pem')
 cert2_serial = '26:f2:78:85:6b:46:46:67:b0:12:1c:0b:cb:0f:85:43'
-cert2_key = _load_key('cert2.key')
-cert2_csr = _load_csr('cert2.csr')
-cert2_pubkey = _load_cert('cert2.pem')
+cert3_key = _load_key('cert3.key')
+cert3_csr = _load_csr('cert3.csr')
+cert3_pubkey = _load_cert('cert3.pem')
 cert3_serial = 'a0:36:c7:6b:91:36:44:4c:85:0f:34:e7:f6:d0:42:5e'
 
 
