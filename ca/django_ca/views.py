@@ -16,6 +16,7 @@
 import base64
 import logging
 
+from datetime import datetime
 from datetime import timedelta
 
 import asn1crypto
@@ -29,7 +30,6 @@ from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
-from django.utils import timezone
 from django.utils.decorators import classonlymethod
 from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes
@@ -235,5 +235,5 @@ class OCSPView(View):
                 log.info('Ignored unknown non-critical extension: %r', dict(extension.native))
 
         builder.certificate_issuer = ca_cert
-        builder.next_update = timezone.now() + timedelta(seconds=self.expires)
+        builder.next_update = datetime.utcnow() + timedelta(seconds=self.expires)
         return builder.build(responder_key, responder_cert)
