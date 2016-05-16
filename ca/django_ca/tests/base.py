@@ -153,18 +153,6 @@ class DjangoCATestCase(TestCase):
         self.assertEqual(actual, sort_subject_dict(expected))
 
     @classmethod
-    def init_ca(cls, **kwargs):
-        """Create a new CA."""
-        kwargs.setdefault('name', 'Root CA')
-        kwargs.setdefault('parent', None)
-        kwargs.setdefault('key_size', ca_settings.CA_MIN_KEY_SIZE)
-        kwargs.setdefault('pathlen', 1)
-
-        return CertificateAuthority.objects.init(
-            key_type='RSA', algorithm='sha256', expires=720, subject={'CN': 'ca.example.com', },
-            **kwargs)
-
-    @classmethod
     def load_ca(cls, name, x509, enabled=True, parent=None, **kwargs):
         """Load a CA from one of the preloaded files."""
         path = os.path.join(fixtures_dir, '%s.key' % name)
