@@ -25,23 +25,23 @@ from django_ca.utils import sort_subject_dict
 from django_ca.utils import get_cert_profile_kwargs
 from django_ca.utils import parse_date
 
-_fixtures_dir = os.path.join(os.path.dirname(__file__), 'fixtures')
+fixtures_dir = os.path.join(os.path.dirname(__file__), 'fixtures')
 
 
 def _load_key(path, typ=crypto.FILETYPE_PEM):
-    path = os.path.join(_fixtures_dir, path)
+    path = os.path.join(fixtures_dir, path)
     with open(path, 'rb') as stream:
         return crypto.load_privatekey(typ, stream.read())
 
 
 def _load_csr(path):
-    path = os.path.join(_fixtures_dir, path)
+    path = os.path.join(fixtures_dir, path)
     with open(path, 'r') as stream:
         return stream.read().strip()
 
 
 def _load_cert(path, typ=crypto.FILETYPE_PEM):
-    path = os.path.join(_fixtures_dir, path)
+    path = os.path.join(fixtures_dir, path)
     with open(path, 'rb') as stream:
         return crypto.load_certificate(typ, stream.read())
 
@@ -107,7 +107,6 @@ class override_tmpcadir(override_settings):
 
 class DjangoCATestCase(TestCase):
     """Base class for all testcases with some enhancements."""
-    fixtures_dir = _fixtures_dir
 
     @classmethod
     def setUpClass(cls):
@@ -161,7 +160,7 @@ class DjangoCATestCase(TestCase):
     @classmethod
     def load_ca(cls, name, x509, enabled=True, parent=None, **kwargs):
         """Load a CA from one of the preloaded files."""
-        path = os.path.join(_fixtures_dir, '%s.key' % name)
+        path = os.path.join(fixtures_dir, '%s.key' % name)
         ca = CertificateAuthority(name=name, private_key_path=path, enabled=enabled, parent=parent,
                                   **kwargs)
         ca.x509 = x509  # calculates serial etc
