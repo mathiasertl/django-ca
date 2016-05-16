@@ -42,6 +42,16 @@ SECRET_KEY = ''
 # Do not provide a generic CRL view.
 #CA_PROVIDE_GENERIC_CRL = False
 
+# OCSP configuration, for more information please see:
+#   http://django-ca.readthedocs.io/en/latest/ocsp.html
+#CA_OCSP_URLS = {
+#    'myca': {
+#        'ca': '<serial>',
+#        'responder_key': '/path/to/responder.key',
+#        'responder_cert': '<serial>',  # could also be a filesystem path
+#    }
+#}
+
 ###########################
 ### Certificate options ###
 ###########################
