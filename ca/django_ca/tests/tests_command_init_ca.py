@@ -41,12 +41,12 @@ class InitCATest(DjangoCATestCase):
         self.assertSubject(ca.x509, {'C': 'AT', 'ST': 'Vienna', 'L': 'Vienna', 'O': 'Org',
                                      'OU': 'OrgUnit', 'CN': 'Test CA'})
 
-    @override_tmpcadir()
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_arguments(self):
         out, err = self.init_ca(
             algorithm='sha1',
             key_type='DSA',
-            key_size=2048,
+            key_size=1024,
             expires=720,
             pathlen=3,
             issuer_url='http://issuer.ca.example.com',
@@ -65,31 +65,15 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(ca.crl_url, 'http://crl.example.com')
         self.assertEqual(ca.ocsp_url, 'http://ocsp.example.com')
 
-    @override_tmpcadir()
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_no_pathlen(self):
-        out, err = self.init_ca(
-            algorithm='sha1',
-            key_type='DSA',
-            key_size=2048,
-            expires=720,
-            pathlen=False,
-            issuer_url='http://issuer.ca.example.com',
-            issuer_alt_name='http://ian.ca.example.com',
-            crl_url=['http://crl.example.com'],
-            ocsp_url='http://ocsp.example.com'
-        )
+        out, err = self.init_ca(pathlen=False)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
-
-        self.assertEqual(ca.x509.get_signature_algorithm(), six.b('dsaWithSHA1'))
         self.assertEqual(ca.pathlen, None)
-        self.assertEqual(ca.issuer_url, 'http://issuer.ca.example.com')
-        self.assertEqual(ca.issuer_alt_name, 'http://ian.ca.example.com')
-        self.assertEqual(ca.crl_url, 'http://crl.example.com')
-        self.assertEqual(ca.ocsp_url, 'http://ocsp.example.com')
 
-    @override_tmpcadir()
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_empty_subject_fields(self):
         out, err = self.cmd('init_ca', 'test', '/C=/ST=/L=/O=/OU=/CN=test',
                             key_size=ca_settings.CA_MIN_KEY_SIZE)
@@ -98,7 +82,7 @@ class InitCATest(DjangoCATestCase):
         ca = CertificateAuthority.objects.first()
         self.assertSubject(ca.x509, {'CN': 'test'})
 
-    @override_tmpcadir()
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_no_cn(self):
         out, err = self.cmd('init_ca', 'test', '/C=/ST=/L=/O=/OU=smth',
                             key_size=ca_settings.CA_MIN_KEY_SIZE)
@@ -107,7 +91,7 @@ class InitCATest(DjangoCATestCase):
         ca = CertificateAuthority.objects.first()
         self.assertSubject(ca.x509, {'OU': 'smth', 'CN': 'test'})
 
-    @override_tmpcadir()
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_parent(self):
         self.init_ca(name='Parent')
         parent = CertificateAuthority.objects.get(name='Parent')
