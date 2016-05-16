@@ -84,6 +84,8 @@ class OCSPTestView(DjangoCAWithCertTestCase):
         self.assertEqual(translated, expected)
 
     def assertOCSP(self, http_response, requested, status='successful', nonce=None):
+        self.assertEqual(http_response['Content-Type'], 'application/ocsp-response')
+
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(http_response.content)
         self.assertEqual(ocsp_response['response_status'].native, status)
 
@@ -174,7 +176,7 @@ class OCSPTestView(DjangoCAWithCertTestCase):
 
         return sign_func(self.ocsp_private_key, tbs_request.dump(), algo)
 
-    def test_basic(self):
+    def test_get(self):
         data = base64.b64encode(req1).decode('utf-8')
         response = self.client.get(reverse('get', kwargs={'data': data}))
         self.assertEqual(response.status_code, 200)
