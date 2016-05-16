@@ -14,6 +14,7 @@
 # see <http://www.gnu.org/licenses/>
 
 import base64
+import logging
 import os
 
 import asn1crypto
@@ -37,7 +38,8 @@ from .base import override_settings
 from .base import root_serial
 
 
-#openssl ocsp -CAfile files/ca.pem -issuer files/ca.pem -serial 123  -reqout file -resp_text
+#openssl ocsp -issuer django_ca/tests/fixtures/root.pem -serial 123  \
+#        -reqout django_ca/tests/fixtures/ocsp/unknown-serial -resp_text
 def _load_req(req):
     path = os.path.join(fixtures_dir, 'ocsp', req)
     with open(path, 'rb') as stream:
@@ -45,6 +47,7 @@ def _load_req(req):
 
 req1 = _load_req('req1')
 req1_nonce = b'\xedf\x00S\xbef\x16Y\xcc\xe9\xe9\xa3\x08\xf7\xc2\xda'
+unknown_req = _load_req('unknown-serial')
 
 ocsp_key_path = os.path.join(fixtures_dir, 'ocsp.key')
 urlpatterns = [
@@ -61,7 +64,6 @@ urlpatterns = [
     ), name='get'),
 ]
 
-
 @override_settings(ROOT_URLCONF=__name__)
 class OCSPTestView(DjangoCAWithCertTestCase):
     _subject_mapping = {
@@ -77,6 +79,8 @@ class OCSPTestView(DjangoCAWithCertTestCase):
     @classmethod
     def setUpClass(cls):
         super(OCSPTestView, cls).setUpClass()
+
+        logging.disable(logging.CRITICAL)
         cls.client = Client()
         cls.ocsp_cert = cls.load_cert(ca=cls.ca, x509=ocsp_pubkey)
 
@@ -233,10 +237,16 @@ class OCSPTestView(DjangoCAWithCertTestCase):
             OCSPView.as_view(ca=root_serial, responder_key=ocsp_key_path, responder_cert='gone')
         self.assertEqual(e.exception.args, ('gone: Could not read public key.', ))
 
+    def test_unknown(self):
+        data = base64.b64encode(unknown_req).decode('utf-8')
+        response = self.client.get(reverse('get', kwargs={'data': data}))
+        self.assertEqual(response.status_code, 200)
+        ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
+        self.assertEqual(ocsp_response['response_status'].native, 'internal_error')
+
     def test_bad_request(self):
         data = base64.b64encode(b'foobar').decode('utf-8')
         response = self.client.get(reverse('get', kwargs={'data': data}))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, b'0\x03\n\x01\x01')
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
         self.assertEqual(ocsp_response['response_status'].native, 'malformed_request')
