@@ -35,7 +35,7 @@ for ca, details in CA_PROVIDE_OCSP.items():
         pass  # TODO: Raise runtime error'
 
     kwargs = {
-        'ca_serial': details['ca'],
+        'ca': details['ca'],
         'responder_key': details['responder_key'],
         'responder_cert': details['responder_cert'],
     }

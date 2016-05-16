@@ -46,13 +46,13 @@ req1_nonce = b'\xedf\x00S\xbef\x16Y\xcc\xe9\xe9\xa3\x08\xf7\xc2\xda'
 ocsp_key_path = os.path.join(fixtures_dir, 'ocsp.key')
 urlpatterns = [
     url(r'^ocsp/$', OCSPView.as_view(
-        ca_serial=root_serial,
+        ca=root_serial,
         responder_key=ocsp_key_path,
         responder_cert=ocsp_serial,
     ), name='post'),
 
     url(r'^ocsp/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
-        ca_serial=root_serial,
+        ca=root_serial,
         responder_key=ocsp_key_path,
         responder_cert=ocsp_serial,
     ), name='get'),

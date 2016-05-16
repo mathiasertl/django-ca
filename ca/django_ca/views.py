@@ -26,9 +26,11 @@ from oscrypto.asymmetric import load_certificate
 from oscrypto.asymmetric import load_private_key
 
 from django.core.cache import cache
+from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.utils import timezone
+from django.utils.decorators import classonlymethod
 from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes
 from django.views.decorators.csrf import csrf_exempt
@@ -109,9 +111,33 @@ class OCSPView(View):
     This is heavily inspired by
     https://github.com/threema-ch/ocspresponder/blob/master/ocspresponder/__init__.py.
     """
-    ca_serial = None
+    ca = None
     responder_key = None
     responder_cert = None
+
+    @classonlymethod
+    def as_view(cls, **kwargs):
+        """Preload the responder key and certificate for faster access."""
+
+        responder_key = kwargs.get('responder_key')
+        try:
+            with open(responder_key, 'rb') as stream:
+                kwargs['responder_key'] = stream.read()
+        except:
+            raise ImproperlyConfigured('%s: Could not read private key.' % responder_key)
+
+        responder_cert = kwargs.get('responder_cert')
+        try:
+            cert = Certificate.objects.get(serial=responder_cert)
+            kwargs['responder_cert'] = force_bytes(cert.pub)
+        except Certificate.DoesNotExist:
+            try:
+                with open(responder_cert, 'rb') as stream:
+                    kwargs['responder_cert'] = stream.read()
+            except:
+                raise ImproperlyConfigured('%s: Could not read public key.' % responder_cert)
+
+        return super(OCSPView, cls).as_view(**kwargs)
 
     @method_decorator(csrf_exempt)
     def dispatch(self, *args, **kwargs):
@@ -127,12 +153,7 @@ class OCSPView(View):
         return load_private_key(self.responder_key)
 
     def get_responder_cert(self):
-        try:
-            pub = force_bytes(Certificate.objects.get(serial=self.responder_cert).pub)
-        except Certificate.DoesNotExist:
-            with open(self.responder_cert, 'rb') as stream:
-                pub = stream.read()
-        return load_certificate(pub)
+        return load_certificate(self.responder_cert)
 
     def fail(self, reason):
         builder = OCSPResponseBuilder(response_status=reason)
@@ -165,7 +186,7 @@ class OCSPView(View):
             log.exception('Error parsing OCSP request: %s', e)
             return self.fail('malformed_request')
 
-        ca = CertificateAuthority.objects.get(serial=self.ca_serial)
+        ca = CertificateAuthority.objects.get(serial=self.ca)
 
         try:
             cert = Certificate.objects.filter(ca=ca).get(serial=serial)
