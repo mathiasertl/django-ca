@@ -74,6 +74,14 @@ class OCSPTestView(DjangoCAWithCertTestCase):
         # used for verifying signatures
         cls.ocsp_private_key = asymmetric.load_private_key(ocsp_key_path)
 
+    def assertOCSPSubject(self, got, expected):
+        translated = {}
+        for frm, to in self._subject_mapping.items():
+            if frm in got:
+                translated[to] = got.pop(frm)
+
+        self.assertEqual(got, {})
+        self.assertEqual(translated, expected)
 
     def assertOCSP(self, http_response, requested, status='successful', nonce=None):
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(http_response.content)
@@ -95,6 +103,10 @@ class OCSPTestView(DjangoCAWithCertTestCase):
         self.assertEqual(len(certs), 1)
         serials = [serial_from_int(c['tbs_certificate']['serial_number'].native) for c in certs]
         self.assertEqual(serials, [ocsp_serial])
+
+        # verify subjects of certificates
+        self.assertOCSPSubject(certs[0]['tbs_certificate']['subject'].native, self.ocsp_cert.subject)
+        self.assertOCSPSubject(certs[0]['tbs_certificate']['issuer'].native, self.ocsp_cert.ca.subject)
 
         tbs_response_data = response['tbs_response_data']
         self.assertEqual(tbs_response_data['version'].native, 'v1')
@@ -134,8 +146,7 @@ class OCSPTestView(DjangoCAWithCertTestCase):
             self.assertFalse(issuer_subject['critical'].native)
 
             self.assertEqual(len(issuer_subject['extn_value'].native), 1)
-            self.assertEqual(self.translate_subject(issuer_subject['extn_value'].native[0]),
-                             cert.ca.subject)
+            self.assertOCSPSubject(issuer_subject['extn_value'].native[0], cert.ca.subject)
             self.assertEqual(single_extensions, {})  # None are left
 
             cert_id = response['cert_id']
@@ -162,13 +173,6 @@ class OCSPTestView(DjangoCAWithCertTestCase):
             sign_func = asymmetric.ecdsa_sign
 
         return sign_func(self.ocsp_private_key, tbs_request.dump(), algo)
-
-    def translate_subject(self, d):
-        ret = {}
-        for frm, to in self._subject_mapping.items():
-            if frm in d:
-                ret[to] = d.pop(frm)
-        return ret
 
     def test_basic(self):
         data = base64.b64encode(req1).decode('utf-8')
