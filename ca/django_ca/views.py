@@ -114,6 +114,7 @@ class OCSPView(View):
     ca = None
     responder_key = None
     responder_cert = None
+    expires = 600
 
     @classonlymethod
     def as_view(cls, **kwargs):
@@ -234,5 +235,5 @@ class OCSPView(View):
                 log.info('Ignored unknown non-critical extension: %r', dict(extension.native))
 
         builder.certificate_issuer = ca_cert
-        builder.next_update = timezone.now() + timedelta(days=1)
+        builder.next_update = timezone.now() + timedelta(seconds=self.expires)
         return builder.build(responder_key, responder_cert)
