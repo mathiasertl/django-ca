@@ -139,12 +139,15 @@ class OCSPView(View):
         return builder.build()
 
     def process_ocsp_request(self, data):
+        status = 200
         try:
             response = self.get_ocsp_response(data)
         except:
             response = self.fail('internal_error')
+            status = 500
 
-        return HttpResponse(response.dump(), content_type='application/ocsp-response')
+        return HttpResponse(response.dump(), status=status,
+                            content_type='application/ocsp-response')
 
     def get_ocsp_response(self, data):
         try:
