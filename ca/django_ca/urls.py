@@ -43,6 +43,6 @@ for ca, details in CA_PROVIDE_OCSP.items():
     urlpatterns += [
         url(r'ocsp/%s/$' % name, views.OCSPView.as_view(**kwargs),
             name='ocsp-post-%s' % name),
-        url(r'ocsp/%s/(?P<data>[a-zA-Z0-9=]+)$' % name, views.OCSPView.as_view(**kwargs),
+        url(r'ocsp/%s/(?P<data>[a-zA-Z0-9=+/]+)$' % name, views.OCSPView.as_view(**kwargs),
             name='ocsp-get-%s' % name)
     ]
