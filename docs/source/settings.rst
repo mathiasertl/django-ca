@@ -55,6 +55,11 @@ CA_DIR
    Where the root certificate is stored. The default is a ``files`` directory
    in the same location as your ``manage.py`` file.
 
+CA_OCSP_URLS
+   Default: ``{}``
+
+   Configuration for OCSP responders. See :doc:`ocsp` for more information.
+
 CA_PROFILES
    Default: ``{}``
 
