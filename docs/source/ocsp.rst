@@ -36,6 +36,11 @@ properties. Luckily, **django-ca** has a profile predefined for you:
    $ python manage.py sign_cert --csr=ocsp.csr --out=ocsp.pem \
    >     --subject /CN=ocsp.example.com --ocsp
 
+.. WARNING::
+
+   The CommonName in the certificates subject must match the domain where you host your
+   **django-ca** installation.
+
 .. _ocsp-generic-views:
 
 Configure generic views

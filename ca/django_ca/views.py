@@ -121,6 +121,8 @@ class OCSPView(View):
     """Absolute path or serial of the public key used for signing OCSP responses."""
 
     expires = 600
+    """Time in seconds that the responses remain valid. The default is 600 seconds or ten
+    minutes."""
 
     @classonlymethod
     def as_view(cls, **kwargs):
