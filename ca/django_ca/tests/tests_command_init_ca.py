@@ -38,7 +38,7 @@ class InitCATest(DjangoCATestCase):
         ca = CertificateAuthority.objects.first()
         self.assertEqual(ca.x509.get_signature_algorithm(), six.b('sha512WithRSAEncryption'))
 
-        self.assertSubject(ca.x509, {'C': 'AT', 'ST': 'Vienna', 'L': 'Vienna', 'O': 'Org', 
+        self.assertSubject(ca.x509, {'C': 'AT', 'ST': 'Vienna', 'L': 'Vienna', 'O': 'Org',
                                      'OU': 'OrgUnit', 'CN': 'Test CA'})
 
     @override_tmpcadir()
@@ -60,6 +60,30 @@ class InitCATest(DjangoCATestCase):
 
         self.assertEqual(ca.x509.get_signature_algorithm(), six.b('dsaWithSHA1'))
         self.assertEqual(ca.pathlen, 3)
+        self.assertEqual(ca.issuer_url, 'http://issuer.ca.example.com')
+        self.assertEqual(ca.issuer_alt_name, 'http://ian.ca.example.com')
+        self.assertEqual(ca.crl_url, 'http://crl.example.com')
+        self.assertEqual(ca.ocsp_url, 'http://ocsp.example.com')
+
+    @override_tmpcadir()
+    def test_no_pathlen(self):
+        out, err = self.init_ca(
+            algorithm='sha1',
+            key_type='DSA',
+            key_size=2048,
+            expires=720,
+            pathlen=False,
+            issuer_url='http://issuer.ca.example.com',
+            issuer_alt_name='http://ian.ca.example.com',
+            crl_url=['http://crl.example.com'],
+            ocsp_url='http://ocsp.example.com'
+        )
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        ca = CertificateAuthority.objects.first()
+
+        self.assertEqual(ca.x509.get_signature_algorithm(), six.b('dsaWithSHA1'))
+        self.assertEqual(ca.pathlen, None)
         self.assertEqual(ca.issuer_url, 'http://issuer.ca.example.com')
         self.assertEqual(ca.issuer_alt_name, 'http://ian.ca.example.com')
         self.assertEqual(ca.crl_url, 'http://crl.example.com')
