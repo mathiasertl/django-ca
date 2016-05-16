@@ -17,6 +17,8 @@ import base64
 import logging
 import os
 
+from datetime import timedelta
+
 import asn1crypto
 from oscrypto import asymmetric
 
@@ -57,6 +59,7 @@ urlpatterns = [
         ca=root_serial,
         responder_key=ocsp_key_path,
         responder_cert=ocsp_serial,
+        expires=1200,
     ), name='post'),
 
     url(r'^ocsp/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
@@ -104,7 +107,8 @@ class OCSPTestView(DjangoCAWithCertTestCase):
         self.assertEqual(got, {})
         self.assertEqual(translated, expected)
 
-    def assertOCSP(self, http_response, requested, status='successful', nonce=None):
+    def assertOCSP(self, http_response, requested, status='successful', nonce=None,
+                   expires=600):
         self.assertEqual(http_response['Content-Type'], 'application/ocsp-response')
 
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(http_response.content)
@@ -148,6 +152,8 @@ class OCSPTestView(DjangoCAWithCertTestCase):
         self.assertEqual(responder_id.name, 'by_key')
         #TODO: Validate responder id
 
+        produced_at = tbs_response_data['produced_at'].native
+
         # Verify responses
         responses = tbs_response_data['responses']
         self.assertEqual(len(responses), len(requested))
@@ -169,6 +175,12 @@ class OCSPTestView(DjangoCAWithCertTestCase):
                     self.assertEqual(revocation_reason, cert.ocsp_status)
                 self.assertEqual(revocation_time, cert.revoked_date.replace(microsecond=0))
 
+            # test next_update
+            this_update = response['this_update'].native
+            self.assertEqual(produced_at, this_update)
+            next_update = response['next_update'].native
+            self.assertEqual(this_update + timedelta(seconds=expires), next_update)
+
             single_extensions = {e['extn_id'].native: e for e in response['single_extensions']}
 
             # test certificate_issuer single extension
@@ -179,8 +191,8 @@ class OCSPTestView(DjangoCAWithCertTestCase):
             self.assertOCSPSubject(issuer_subject['extn_value'].native[0], cert.ca.subject)
             self.assertEqual(single_extensions, {})  # None are left
 
-            cert_id = response['cert_id']
             # TODO: verify issuer_name_hash and issuer_key_hash
+            #cert_id = response['cert_id']
 
         # TODO: Verify signature
         expected_signature = self.sign_func(tbs_response_data, signature_algo)
@@ -213,7 +225,7 @@ class OCSPTestView(DjangoCAWithCertTestCase):
     def test_post(self):
         response = self.client.post(reverse('post'), req1, content_type='application/ocsp-request')
         self.assertEqual(response.status_code, 200)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1200)
 
     def test_no_nonce(self):
         data = base64.b64encode(req1).decode('utf-8')
