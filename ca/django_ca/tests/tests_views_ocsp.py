@@ -151,7 +151,7 @@ class OCSPTestView(DjangoCAWithCertTestCase):
                 if cert.revoked_reason is None:
                     self.assertEqual(revocation_reason, 'unspecified')
                 else:
-                    self.assertEqual(revocation_reason, cert.revoked_reason)
+                    self.assertEqual(revocation_reason, cert.ocsp_status)
                 self.assertEqual(revocation_time, cert.revoked_date.replace(microsecond=0))
 
             single_extensions = {e['extn_id'].native: e for e in response['single_extensions']}

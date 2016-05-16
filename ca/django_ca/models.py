@@ -301,7 +301,7 @@ class Certificate(X509CertMixin):
         elif self.revoked_reason == 'privilegeWithdrawn':
             return 'privilege_withdrawn'
         elif self.revoked_reason == 'aACompromise':
-            return 'aa_compromise'  # TODO: this is only guessed.
+            return 'aa_compromise'
         else:
             return 'revoked'
 
