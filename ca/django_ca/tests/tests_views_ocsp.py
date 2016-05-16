@@ -47,7 +47,9 @@ def _load_req(req):
 
 req1 = _load_req('req1')
 req1_nonce = b'\xedf\x00S\xbef\x16Y\xcc\xe9\xe9\xa3\x08\xf7\xc2\xda'
+no_nonce_req = _load_req('req-no-nonce')
 unknown_req = _load_req('unknown-serial')
+multiple_req = _load_req('multiple-serial')
 
 ocsp_key_path = os.path.join(fixtures_dir, 'ocsp.key')
 urlpatterns = [
@@ -62,6 +64,12 @@ urlpatterns = [
         responder_key=ocsp_key_path,
         responder_cert=ocsp_serial,
     ), name='get'),
+
+    url(r'^ocsp-unknown/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
+        ca='unknown',
+        responder_key=ocsp_key_path,
+        responder_cert=ocsp_serial,
+    ), name='unknown'),
 ]
 
 @override_settings(ROOT_URLCONF=__name__)
@@ -207,6 +215,12 @@ class OCSPTestView(DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
 
+    def test_no_nonce(self):
+        data = base64.b64encode(req1).decode('utf-8')
+        response = self.client.get(reverse('get', kwargs={'data': data}))
+        self.assertEqual(response.status_code, 200)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
+
     def test_revoked(self):
         cert = Certificate.objects.get(pk=self.cert.pk)
         cert.revoke()
@@ -221,6 +235,7 @@ class OCSPTestView(DjangoCAWithCertTestCase):
         self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
 
     def test_kwargs(self):
+        # test kwargs to the view function
         view = OCSPView.as_view(ca=root_serial, responder_key=ocsp_key_path,
                                 responder_cert=ocsp_serial)
         kwargs = view.view_initkwargs
@@ -228,7 +243,6 @@ class OCSPTestView(DjangoCAWithCertTestCase):
         self.assertEqual(kwargs['responder_cert'], ocsp_pem)
 
     def test_bad_kwarg(self):
-        # test kwargs to the view function
         with self.assertRaises(ImproperlyConfigured) as e:
             OCSPView.as_view(ca=root_serial, responder_key='/gone', responder_cert=ocsp_serial)
         self.assertEqual(e.exception.args, ('/gone: Could not read private key.', ))
@@ -236,6 +250,13 @@ class OCSPTestView(DjangoCAWithCertTestCase):
         with self.assertRaises(ImproperlyConfigured) as e:
             OCSPView.as_view(ca=root_serial, responder_key=ocsp_key_path, responder_cert='gone')
         self.assertEqual(e.exception.args, ('gone: Could not read public key.', ))
+
+    def test_bad_ca(self):
+        data = base64.b64encode(req1).decode('utf-8')
+        response = self.client.get(reverse('unknown', kwargs={'data': data}))
+        self.assertEqual(response.status_code, 500)
+        ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
+        self.assertEqual(ocsp_response['response_status'].native, 'internal_error')
 
     def test_unknown(self):
         data = base64.b64encode(unknown_req).decode('utf-8')
@@ -246,6 +267,13 @@ class OCSPTestView(DjangoCAWithCertTestCase):
 
     def test_bad_request(self):
         data = base64.b64encode(b'foobar').decode('utf-8')
+        response = self.client.get(reverse('get', kwargs={'data': data}))
+        self.assertEqual(response.status_code, 200)
+        ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
+        self.assertEqual(ocsp_response['response_status'].native, 'malformed_request')
+
+    def test_multiple(self):
+        data = base64.b64encode(multiple_req).decode('utf-8')
         response = self.client.get(reverse('get', kwargs={'data': data}))
         self.assertEqual(response.status_code, 200)
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
