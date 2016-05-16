@@ -108,17 +108,23 @@ class RevokeCertificateView(UpdateView):
 class OCSPView(View):
     """View to provide an OCSP responder.
 
-    This is heavily inspired by
-    https://github.com/threema-ch/ocspresponder/blob/master/ocspresponder/__init__.py.
+    .. seealso:: This is heavily inspired by
+        https://github.com/threema-ch/ocspresponder/blob/master/ocspresponder/__init__.py.
     """
     ca = None
+    """The serial of your certificate authority."""
+
     responder_key = None
+    """Absolute path to the private key used for signing OCSP responses."""
+
     responder_cert = None
+    """Absolute path or serial of the public key used for signing OCSP responses."""
+
     expires = 600
 
     @classonlymethod
     def as_view(cls, **kwargs):
-        """Preload the responder key and certificate for faster access."""
+        # Preload the responder key and certificate for faster access.
 
         responder_key = kwargs.get('responder_key')
         try:
