@@ -71,6 +71,10 @@ class OCSPTestView(DjangoCAWithCertTestCase):
         cls.client = Client()
         cls.ocsp_cert = cls.load_cert(ca=cls.ca, x509=ocsp_pubkey)
 
+        # used for verifying signatures
+        cls.ocsp_private_key = asymmetric.load_private_key(ocsp_key_path)
+
+
     def assertOCSP(self, http_response, requested, status='successful', nonce=None):
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(http_response.content)
         self.assertEqual(ocsp_response['response_status'].native, status)
@@ -81,8 +85,10 @@ class OCSPTestView(DjangoCAWithCertTestCase):
         response = response_bytes['response'].parsed
 
         # assert signature algorithm
-        self.assertEqual(response['signature_algorithm']['algorithm'].native, 'sha256_rsa')
-        self.assertIsNone(response['signature_algorithm']['parameters'].native)
+        signature = response['signature']
+        signature_algo = response['signature_algorithm']
+        self.assertEqual(signature_algo['algorithm'].native, 'sha256_rsa')
+        self.assertIsNone(signature_algo['parameters'].native)
 
         # verify the responder cert
         certs = response['certs']
@@ -106,10 +112,6 @@ class OCSPTestView(DjangoCAWithCertTestCase):
         responder_id = tbs_response_data['responder_id']
         self.assertEqual(responder_id.name, 'by_key')
         #TODO: Validate responder id
-
-        # get the responses signature
-        signature = response['signature']
-        signature_algo = response['signature_algorithm']
 
         # Verify responses
         responses = tbs_response_data['responses']
@@ -144,9 +146,6 @@ class OCSPTestView(DjangoCAWithCertTestCase):
         self.assertEqual(signature.native, expected_signature)
 
     def sign_func(self, tbs_request, algo):
-        # TODO: move to setUpClass
-        responder_private_key = asymmetric.load_private_key(ocsp_key_path)
-
         if algo['algorithm'].native == 'sha256_rsa':
             algo = 'sha256'
         else:
@@ -155,14 +154,14 @@ class OCSPTestView(DjangoCAWithCertTestCase):
             raise ValueError('Unknown algorithm: %s' % algo.native)
 
         # from ocspbuilder.OCSPResponseBuilder.build:
-        if responder_private_key.algorithm == 'rsa':
+        if self.ocsp_private_key.algorithm == 'rsa':
             sign_func = asymmetric.rsa_pkcs1v15_sign
-        elif responder_private_key.algorithm == 'dsa':
+        elif self.ocsp_private_key.algorithm == 'dsa':
             sign_func = asymmetric.dsa_sign
-        elif responder_private_key.algorithm == 'ec':
+        elif self.ocsp_private_key.algorithm == 'ec':
             sign_func = asymmetric.ecdsa_sign
 
-        return sign_func(responder_private_key, tbs_request.dump(), algo)
+        return sign_func(self.ocsp_private_key, tbs_request.dump(), algo)
 
     def translate_subject(self, d):
         ret = {}
