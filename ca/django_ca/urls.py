@@ -23,23 +23,13 @@ app_name = 'django_ca'
 urlpatterns = []
 
 
-CA_PROVIDE_OCSP = getattr(settings, 'CA_PROVIDE_OCSP', {})
+CA_OCSP_URLS = getattr(settings, 'CA_OCSP_URLS', {})
 
 if ca_settings.CA_PROVIDE_GENERIC_CRL is True:  # pragma: no branch
     urlpatterns.append(
         url(r'^crl/(?P<serial>[0-9A-F:]+)/$', views.CertificateRevocationListView.as_view(), name='crl'))
 
-for ca, details in CA_PROVIDE_OCSP.items():
-    name = details.get('name')
-    if not name:
-        pass  # TODO: Raise runtime error'
-
-    kwargs = {
-        'ca': details['ca'],
-        'responder_key': details['responder_key'],
-        'responder_cert': details['responder_cert'],
-    }
-
+for name, kwargs in CA_OCSP_URLS.items():
     urlpatterns += [
         url(r'ocsp/%s/$' % name, views.OCSPView.as_view(**kwargs),
             name='ocsp-post-%s' % name),
