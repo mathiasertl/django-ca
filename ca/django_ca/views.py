@@ -149,12 +149,6 @@ class OCSPView(View):
     def post(self, request):
         return self.process_ocsp_request(request.body)
 
-    def get_responder_key(self):
-        return load_private_key(self.responder_key)
-
-    def get_responder_cert(self):
-        return load_certificate(self.responder_cert)
-
     def fail(self, reason):
         builder = OCSPResponseBuilder(response_status=reason)
         return builder.build()
@@ -186,13 +180,18 @@ class OCSPView(View):
             log.exception('Error parsing OCSP request: %s', e)
             return self.fail('malformed_request')
 
+        # Get CA and certificate
         ca = CertificateAuthority.objects.get(serial=self.ca)
-
         try:
             cert = Certificate.objects.filter(ca=ca).get(serial=serial)
         except Certificate.DoesNotExist:
             log.warn('OCSP request for unknown cert received.')
             return self.fail('internal_error')  # TODO: return a 'unkown' response instead
+
+        # load ca cert and responder key/cert
+        ca_cert = load_certificate(force_bytes(ca.pub))
+        responder_key = load_private_key(self.responder_key)
+        responder_cert = load_certificate(self.responder_cert)
 
         builder = OCSPResponseBuilder(
             response_status='successful',  # ResponseStatus.successful.value,
@@ -230,10 +229,6 @@ class OCSPView(View):
             elif unknown is True:
                 log.info('Ignored unknown non-critical extension: %r', dict(extension.native))
 
-        builder.certificate_issuer = load_certificate(force_bytes(ca.pub))
+        builder.certificate_issuer = ca_cert
         builder.next_update = timezone.now() + timedelta(days=1)
-
-        responder_key = self.get_responder_key()
-        responder_cert = self.get_responder_cert()
-
         return builder.build(responder_key, responder_cert)
