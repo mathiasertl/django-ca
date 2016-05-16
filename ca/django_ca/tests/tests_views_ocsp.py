@@ -98,6 +98,12 @@ class OCSPTestView(DjangoCAWithCertTestCase):
         # used for verifying signatures
         cls.ocsp_private_key = asymmetric.load_private_key(ocsp_key_path)
 
+    def assertAlmostEqualDate(self, got, expected):
+        # Sometimes next_update timestamps are of by a second or so, so we test
+        # if they are just close
+        delta = timedelta(seconds=3)
+        self.assertTrue(got < expected + delta and got > expected - delta)
+
     def assertOCSPSubject(self, got, expected):
         translated = {}
         for frm, to in self._subject_mapping.items():
@@ -179,7 +185,7 @@ class OCSPTestView(DjangoCAWithCertTestCase):
             this_update = response['this_update'].native
             self.assertEqual(produced_at, this_update)
             next_update = response['next_update'].native
-            self.assertEqual(this_update + timedelta(seconds=expires), next_update)
+            self.assertAlmostEqualDate(this_update + timedelta(seconds=expires), next_update)
 
             single_extensions = {e['extn_id'].native: e for e in response['single_extensions']}
 
@@ -231,6 +237,8 @@ class OCSPTestView(DjangoCAWithCertTestCase):
         data = base64.b64encode(req1).decode('utf-8')
         response = self.client.get(reverse('get', kwargs={'data': data}))
         self.assertEqual(response.status_code, 200)
+
+        # TODO: this should fail
         self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
 
     def test_revoked(self):
@@ -239,12 +247,12 @@ class OCSPTestView(DjangoCAWithCertTestCase):
 
         response = self.client.post(reverse('post'), req1, content_type='application/ocsp-request')
         self.assertEqual(response.status_code, 200)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1200)
 
         cert.revoke('affiliationChanged')
         response = self.client.post(reverse('post'), req1, content_type='application/ocsp-request')
         self.assertEqual(response.status_code, 200)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1200)
 
     def test_kwargs(self):
         # test kwargs to the view function
