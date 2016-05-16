@@ -20,6 +20,7 @@ import re
 from django.db import models
 from django.utils import timezone
 from django.utils.encoding import force_bytes
+from django.utils.encoding import force_text
 from django.utils.translation import ugettext_lazy as _
 
 from OpenSSL import crypto
@@ -93,6 +94,10 @@ class X509CertMixin(models.Model):
 
         # compute serial with ':' after every second character
         self.serial = serial_from_int(value.get_serial_number())
+
+    @property
+    def subject(self):
+        return {force_text(k): force_text(v) for k, v in self.x509.get_subject().get_components()}
 
     @property
     def extensions(self):
