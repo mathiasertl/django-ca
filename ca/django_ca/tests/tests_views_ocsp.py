@@ -45,6 +45,12 @@ req1_nonce = b'\xedf\x00S\xbef\x16Y\xcc\xe9\xe9\xa3\x08\xf7\xc2\xda'
 
 ocsp_key_path = os.path.join(fixtures_dir, 'ocsp.key')
 urlpatterns = [
+    url(r'^ocsp/$', OCSPView.as_view(
+        ca_serial=root_serial,
+        responder_key=ocsp_key_path,
+        responder_cert=ocsp_serial,
+    ), name='post'),
+
     url(r'^ocsp/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca_serial=root_serial,
         responder_key=ocsp_key_path,
@@ -135,11 +141,18 @@ class OCSPTestView(DjangoCAWithCertTestCase):
             cert = Certificate.objects.get(serial=serial)
 
             # test cert_status
+            cert_status = response['cert_status'].native
             if cert.revoked is False:
-                self.assertIsNone(response['cert_status'].native)
+                self.assertIsNone(cert_status)
             else:
-                # TODO: not yet implemented
-                self.assertIsNone(response['cert_status'].native)
+                revocation_time = cert_status['revocation_time'].replace(tzinfo=None)
+                revocation_reason = cert_status['revocation_reason']
+
+                if cert.revoked_reason is None:
+                    self.assertEqual(revocation_reason, 'unspecified')
+                else:
+                    self.assertEqual(revocation_reason, cert.revoked_reason)
+                self.assertEqual(revocation_time, cert.revoked_date.replace(microsecond=0))
 
             single_extensions = {e['extn_id'].native: e for e in response['single_extensions']}
 
@@ -179,5 +192,23 @@ class OCSPTestView(DjangoCAWithCertTestCase):
     def test_get(self):
         data = base64.b64encode(req1).decode('utf-8')
         response = self.client.get(reverse('get', kwargs={'data': data}))
+        self.assertEqual(response.status_code, 200)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
+
+    def test_post(self):
+        response = self.client.post(reverse('post'), req1, content_type='application/ocsp-request')
+        self.assertEqual(response.status_code, 200)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
+
+    def test_revoked(self):
+        cert = Certificate.objects.get(pk=self.cert.pk)
+        cert.revoke()
+
+        response = self.client.post(reverse('post'), req1, content_type='application/ocsp-request')
+        self.assertEqual(response.status_code, 200)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
+
+        cert.revoke('affiliationChanged')
+        response = self.client.post(reverse('post'), req1, content_type='application/ocsp-request')
         self.assertEqual(response.status_code, 200)
         self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
