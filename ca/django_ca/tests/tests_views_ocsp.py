@@ -20,14 +20,17 @@ import asn1crypto
 from oscrypto import asymmetric
 
 from django.conf.urls import url
+from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.test import Client
 
 from ..models import Certificate
+from ..models import CertificateAuthority
 from ..utils import serial_from_int
 from ..views import OCSPView
 from .base import DjangoCAWithCertTestCase
 from .base import fixtures_dir
+from .base import ocsp_pem
 from .base import ocsp_pubkey
 from .base import ocsp_serial
 from .base import override_settings
@@ -212,3 +215,28 @@ class OCSPTestView(DjangoCAWithCertTestCase):
         response = self.client.post(reverse('post'), req1, content_type='application/ocsp-request')
         self.assertEqual(response.status_code, 200)
         self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
+
+    def test_kwargs(self):
+        view = OCSPView.as_view(ca=root_serial, responder_key=ocsp_key_path,
+                                responder_cert=ocsp_serial)
+        kwargs = view.view_initkwargs
+        CertificateAuthority.objects.get(serial=kwargs['ca'])
+        self.assertEqual(kwargs['responder_cert'], ocsp_pem)
+
+    def test_bad_kwarg(self):
+        # test kwargs to the view function
+        with self.assertRaises(ImproperlyConfigured) as e:
+            OCSPView.as_view(ca=root_serial, responder_key='/gone', responder_cert=ocsp_serial)
+        self.assertEqual(e.exception.args, ('/gone: Could not read private key.', ))
+
+        with self.assertRaises(ImproperlyConfigured) as e:
+            OCSPView.as_view(ca=root_serial, responder_key=ocsp_key_path, responder_cert='gone')
+        self.assertEqual(e.exception.args, ('gone: Could not read public key.', ))
+
+    def test_bad_request(self):
+        data = base64.b64encode(b'foobar').decode('utf-8')
+        response = self.client.get(reverse('get', kwargs={'data': data}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b'0\x03\n\x01\x01')
+        ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
+        self.assertEqual(ocsp_response['response_status'].native, 'malformed_request')
