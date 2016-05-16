@@ -48,26 +48,26 @@ def _load_cert(path, typ=crypto.FILETYPE_PEM):
 
 root_key = _load_key('root.key')
 root_pubkey = _load_cert('root.pem')
-root_serial = '35:db:d2:ad:79:0a:4d:1f:b5:26:ed:5f:83:74:c0:c2'
+root_serial = '35:DB:D2:AD:79:0A:4D:1F:B5:26:ED:5F:83:74:C0:C2'
 child_key = _load_key('child.key')
 child_pubkey = _load_cert('child.pem')
-child_serial = '6a:a2:3d:f9:5a:4a:44:8a:9f:91:64:54:a2:0d:04:29'
+child_serial = '6A:A2:3D:F9:5A:4A:44:8A:9F:91:64:54:A2:0D:04:29'
 ocsp_key = _load_key('ocsp.key')
 ocsp_csr = _load_csr('ocsp.csr')
 ocsp_pubkey = _load_cert('ocsp.pem')
-ocsp_serial = '32:18:b8:ee:52:c9:43:f4:83:08:62:fb:8b:43:0b:bb'
+ocsp_serial = '32:18:B8:EE:52:C9:43:F4:83:08:62:FB:8B:43:0B:BB'
 cert1_key = _load_key('cert1.key')
 cert1_csr = _load_csr('cert1.csr')
 cert1_pubkey = _load_cert('cert1.pem')
-cert1_serial = '23:14:e2:ed:5f:5b:49:0f:bb:da:14:00:4a:c8:a1:1b'
+cert1_serial = '23:14:E2:ED:5F:5B:49:0F:BB:DA:14:00:4A:C8:A1:1B'
 cert2_key = _load_key('cert2.key')
 cert2_csr = _load_csr('cert2.csr')
 cert2_pubkey = _load_cert('cert2.pem')
-cert2_serial = '26:f2:78:85:6b:46:46:67:b0:12:1c:0b:cb:0f:85:43'
+cert2_serial = '26:F2:78:85:6B:46:46:67:B0:12:1C:0B:CB:0F:85:43'
 cert3_key = _load_key('cert3.key')
 cert3_csr = _load_csr('cert3.csr')
 cert3_pubkey = _load_cert('cert3.pem')
-cert3_serial = 'a0:36:c7:6b:91:36:44:4c:85:0f:34:e7:f6:d0:42:5e'
+cert3_serial = 'A0:36:C7:6B:91:36:44:4C:85:0F:34:E7:F6:D0:42:5E'
 
 
 class override_settings(_override_settings):
