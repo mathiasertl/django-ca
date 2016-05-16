@@ -244,6 +244,17 @@ class Certificate(X509CertMixin):
         # Not currently useful according to "man ca",
         #('removeFromCRL', _('Remove from CRL')),
     )
+    OCSP_REASON_MAPPINGS = {
+        'keyCompromise': 'key_compromise',
+        'CACompromise': 'ca_compromise',
+        'affiliationChanged': 'affiliation_changed',
+        'superseded': 'superseded',
+        'cessationOfOperation': 'cessation_of_operation',
+        'certificateHold': 'certificate_hold',
+        'removeFromCRL': 'remove_from_crl',
+        'privilegeWithdrawn': 'privilege_withdrawn',
+        'aACompromise': 'aa_compromise',
+    }
 
     watchers = models.ManyToManyField(Watcher, related_name='certificates', blank=True)
 
@@ -282,28 +293,7 @@ class Certificate(X509CertMixin):
         if self.revoked is False:
             return 'good'
 
-        if self.revoked_reason is None:
-            return 'revoked'
-        elif self.revoked_reason == 'keyCompromise':
-            return 'key_compromise'
-        elif self.revoked_reason == 'CACompromise':
-            return 'ca_compromise'
-        elif self.revoked_reason == 'affiliationChanged':
-            return 'affiliation_changed'
-        elif self.revoked_reason == 'superseded':
-            return 'superseded'
-        elif self.revoked_reason == 'cessationOfOperation':
-            return 'cessation_of_operation'
-        elif self.revoked_reason == 'certificateHold':
-            return 'certificate_hold'
-        elif self.revoked_reason == 'removeFromCRL':
-            return 'remove_from_crl',
-        elif self.revoked_reason == 'privilegeWithdrawn':
-            return 'privilege_withdrawn'
-        elif self.revoked_reason == 'aACompromise':
-            return 'aa_compromise'
-        else:
-            return 'revoked'
+        return self.OCSP_REASON_MAPPINGS.get(self.revoked_reason, 'revoked')
 
     def __str__(self):
         return self.cn
