@@ -12,13 +12,12 @@ Documentation is available at http://django-ca.readthedocs.org/.
 ## Features
 
 1. Set up a secure local certificate authority in just a few minutes.
-2. Written in Python2.7/Python3.4+.
+2. Written in Python2.7/Python3.4+, requires Django 1.8 or later.
 3. Manage your entire certificate authority from the command line and/or via
    Djangos admin interface.
 4. Get email notifications about certificates about to expire.
-5. Support generating for certificate revocation lists (CRLs).
-6. Generates index files that can be used with the `openssl ocsp` command for a crude OCSP service.
-7. Display Serial in view_(cert,ca) commands.
+5. Certificate validation using Certificate Revocation Lists (CRLs) and via an included OCSP
+   responder.
 
 Please see https://django-ca.readthedocs.org for more extensive documentation.
 
