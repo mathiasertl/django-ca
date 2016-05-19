@@ -15,12 +15,13 @@ command-line.
 
 Features:
 
-* Set up a secure local certificate authority in just a few minutes.
-* Written in Python2.7/Python3.4+, requires Django 1.8 or later.
-* Manage your entire certificate authority from the command line and/or via
-  Djangos admin interface.
-* Get email notifications about certificates about to expire.
-* Certificate validation using Certificate Revocation Lists (CRLs) and via an included OCSP responder.
+* Create certificate authorities, issue and revoke certificates in minutes.
+* Receive e-mail notifications of certificates about to expire.
+* Certificate validation using the included OCSP responder and via Certificate Revocation Lists
+  (CRLs).
+* Complete, consistent and powerful command line interface.
+* Optional web interface for certificate handling (e.g. issuing, revoking, ...).
+* Written in pure Python2.7/Python3.4+, using Django 1.8 or later.
 
 Contents:
 
