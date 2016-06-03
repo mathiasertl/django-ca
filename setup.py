@@ -116,6 +116,7 @@ setup(
         'django_ca.management',
         'django_ca.management.commands',
         'django_ca.migrations',
+        'django_ca.templatetags',
     ],
     package_dir={'': 'ca'},
     zip_safe=False,  # because of the static files
