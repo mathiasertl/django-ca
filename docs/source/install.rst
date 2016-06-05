@@ -11,15 +11,15 @@ ____________
 * Python 2.7 or Python 3.4+
 * Django 1.8+
 * Any database supported by Django (sqlite3/MySQL/PostgreSQL/...)
+* Python, OpenSSL and libffi development headers
 
-As Django app (in an your Django project)
-_________________________________________
+As Django app (in your existing Django project)
+_______________________________________________
 
-This chapter assumes that you have an already running Django project and know how
-to use it.
+This chapter assumes that you have an already running Django project and know how to use it.
 
-You need various development headers for pyOpenSSL, on Debian/Ubuntu systems,
-simply install these packages:
+You need various development headers for pyOpenSSL, on Debian/Ubuntu systems, simply install these
+packages:
 
 .. code-block:: console
 
@@ -39,8 +39,7 @@ and add it to your ``INSTALLED_APPS``::
       'django_ca',
    ]
 
-... and configure the :doc:`other available settings <settings>` to your
-liking, then simply run:
+... and configure the :doc:`other available settings <settings>` to your liking, then simply run:
 
 .. code-block:: console
 
@@ -52,19 +51,27 @@ liking, then simply run:
    $ python manage.py init_ca RootCA \
    >     /C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=ca.example.com
 
-After that, **django-ca** should show up in your admin interface and provide
-various ``manage.py`` commands (see :doc:`manage_commands`).
+After that, **django-ca** should show up in your admin interface (see :doc:`web_interface`) and
+provide various ``manage.py`` commands (see :doc:`cli_interface`).
 
 .. _as-standalone:
 
 As standalone project
 _____________________
 
-In this variant, you can run **django-ca** stand-alone. You can use the project
-strictly from the command line, the webinterface is completely optional.
+You can also install **django-ca** as a stand-alone project, if you install it via git. The project
+provides a :doc:`command-line interface <cli_interface>` that provides complete functionality. The
+:doc:`web interface <web_interface>` is optional.
 
-In the following code-snippet, you'll do all necessary steps to get a basic
-setup:
+.. NOTE::
+
+   If you don't want the private keys of your CAs on the same machine as the web interface, you can
+   also host the web interface on a second server that accesses the same database (CA private keys
+   are hosted on the filesystem, not in the database). You obviously will not be able to sign
+   certificates using the web interface, but you can still e.g. revoke certificates or run a
+   :doc:`OCSP responder <ocsp>`.
+
+In the following code-snippet, you'll do all necessary steps to get a basic setup:
 
 .. code-block:: console
 
@@ -94,32 +101,42 @@ the directory of the git checkout:
 
    $ source bin/activate
 
-Before you continue, you have to configure **django-ca**. Django uses a file
-called ``settings.py``, but so you don't have to change any files managed by
-git, it includes ``localsettings.py`` in the same directory. So copy the
-example file and edit it with your favourite editor:
+Configure django-ca
+-------------------
+
+Before you continue, you have to configure **django-ca**. Django uses a file called
+``settings.py``, but so you don't have to change any files managed by git, it includes
+``localsettings.py`` in the same directory. So copy the example file and edit it with your
+favourite editor:
 
 .. code-block:: console
 
    $ cp ca/ca/localsettings.py.example ca/ca/localsettings.py
 
-The most important settings are documented there, but you can of course use any
-setting `provided by Django
-<https://docs.djangoproject.com/en/dev/topics/settings/>`_. After you have
-configured **django-ca** (especially ``SECRET_KEY``, ``DATABASES`` and, if you
-intend to use the webinterface, ``STATIC_ROOT``), you need to run a few
+The most important settings are documented there, but you can of course use any setting `provided
+by Django <https://docs.djangoproject.com/en/dev/topics/settings/>`_.
+
+.. WARNING::
+
+   The ``SECRET_KEY`` and ``DATABASES`` settings are absolutely mandatory. If you use the
+   :doc:`web_interface`, the ``STATIC_ROOT`` setting is also mandatory.
+
+Initialize the project
+----------------------
+
+After you have configured **django-ca**, you need to initialize the project by running a few
 ``manage.py`` commands:
 
 .. code-block:: console
 
    $ python ca/manage.py migrate
 
-   # if you intend to run the webinterface (requires STATIC_ROOT setting!)
+   # If you intend to run the webinterface (requires STATIC_ROOT setting!)
    $ python ca/manage.py collectstatic
 
    # FINALLY, create a certificate authority:
    #     (replace parameters after init_ca with your local details)
-   $ python manage.py init_ca AT Vienna Vienna Org OrgUnit ca.example.com
+   $ python manage.py init_ca /C=AT/ST=Vienna/L=Vienna/O=Org/CN=ca.example.com
 
 Please also see :doc:`ca_management` for further information on how to create
 certificate authorities. You can also run ``init_ca`` with the ``-h`` parameter
