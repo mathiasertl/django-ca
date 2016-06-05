@@ -33,6 +33,7 @@ from django.http import HttpResponse
 from django.utils.decorators import classonlymethod
 from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes
+from django.utils.encoding import force_text
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin
@@ -163,7 +164,7 @@ class OCSPView(View):
         return self.process_ocsp_request(request.body)
 
     def fail(self, reason):
-        builder = OCSPResponseBuilder(response_status=reason)
+        builder = OCSPResponseBuilder(response_status=force_text(reason))
         return builder.build()
 
     def process_ocsp_request(self, data):
