@@ -6,7 +6,7 @@
 Welcome to django-ca's documentation!
 =====================================
 
-**django-ca** is a small project to manage TLS certificate authorities and easily issue
+**django-ca** is a small project to manage TLS certificate authorities and easily issue and revoke
 certificates. It is based on `pyOpenSSL <https://pyopenssl.readthedocs.org/>`_ and `Django
 <https://www.djangoproject.com/>`_.  It can be used as an app in an existing Django project or
 stand-alone with the basic project included.  Certificates can be managed through Djangos admin
@@ -17,8 +17,7 @@ Features:
 
 * Create certificate authorities, issue and revoke certificates in minutes.
 * Receive e-mail notifications of certificates about to expire.
-* Certificate validation using the included OCSP responder and via Certificate Revocation Lists
-  (CRLs).
+* Certificate validation via the included OCSP responder and Certificate Revocation Lists (CRLs).
 * Complete, consistent and powerful command line interface.
 * Optional web interface for certificate handling (e.g. issuing, revoking, ...).
 * Written in pure Python2.7/Python3.4+, using Django 1.8 or later.
