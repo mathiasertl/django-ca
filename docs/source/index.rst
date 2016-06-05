@@ -29,11 +29,19 @@ Contents:
 
    install
    update
-   ca_management
    settings
-   manage_commands
+   cli_interface
+   web_interface
+   ca_management
+   cert_management
    crl
    ocsp
+
+Development documentation:
+
+.. toctree::
+   :maxdepth: 1
+
    ca_examples
    changelog
    development

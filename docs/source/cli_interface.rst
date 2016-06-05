@@ -1,5 +1,5 @@
-Custom manage.py commands
-=========================
+Command-line interface
+======================
 
 You can run your entire CA from the console without any webinterface at all,
 using Djangos ``manage.py`` script. In case you also run a webinterface, this
