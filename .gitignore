@@ -20,3 +20,4 @@ localsettings.py
 /share/
 /py2/
 /venv/
+/Makefile
