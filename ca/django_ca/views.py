@@ -164,15 +164,16 @@ class OCSPView(View):
         return self.process_ocsp_request(request.body)
 
     def fail(self, reason):
-        builder = OCSPResponseBuilder(response_status=force_text(reason))
+        builder = OCSPResponseBuilder(response_status=reason)
         return builder.build()
 
     def process_ocsp_request(self, data):
         status = 200
         try:
             response = self.get_ocsp_response(data)
-        except:
-            response = self.fail('internal_error')
+        except Exception as e:
+            log.exception(e)
+            response = self.fail(u'internal_error')
             status = 500
 
         return HttpResponse(response.dump(), status=status,
@@ -192,7 +193,7 @@ class OCSPView(View):
             serial = serial_from_int(req_cert['serial_number'].native)
         except Exception as e:
             log.exception('Error parsing OCSP request: %s', e)
-            return self.fail('malformed_request')
+            return self.fail(u'malformed_request')
 
         # Get CA and certificate
         ca = CertificateAuthority.objects.get(serial=self.ca)
@@ -200,7 +201,7 @@ class OCSPView(View):
             cert = Certificate.objects.filter(ca=ca).get(serial=serial)
         except Certificate.DoesNotExist:
             log.warn('OCSP request for unknown cert received.')
-            return self.fail('internal_error')
+            return self.fail(u'internal_error')
 
         # load ca cert and responder key/cert
         ca_cert = load_certificate(force_bytes(ca.pub))
@@ -208,9 +209,9 @@ class OCSPView(View):
         responder_cert = load_certificate(self.responder_cert)
 
         builder = OCSPResponseBuilder(
-            response_status='successful',  # ResponseStatus.successful.value,
+            response_status=u'successful',  # ResponseStatus.successful.value,
             certificate=load_certificate(force_bytes(cert.pub)),
-            certificate_status=cert.ocsp_status,
+            certificate_status=force_text(cert.ocsp_status),
             revocation_date=cert.revoked_date,
         )
 
