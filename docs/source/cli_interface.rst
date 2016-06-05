@@ -2,9 +2,9 @@ Command-line interface
 ======================
 
 **django-ca** provides a complete command-line interface for all functionality. It is implemented
-as subcommands of Djangos ``manage.py`` script. You can use it for all :doc:`certificate
-management <cert_management>` operations, and :doc:`ca_management` is only possible via the
-command-line interface for security reasons.
+as subcommands of Djangos ``manage.py`` script. You can use it for all certificate management
+operations, and :doc:`ca_management` is only possible via the command-line interface for security
+reasons.
 
 In general, run ``manage.py`` without any parameters for available subcommands::
 
@@ -34,7 +34,7 @@ list_cas              List currently configured certificate authorities.
 view_ca               View details of a certificate authority.
 ===================== ===============================================================
 
-``manage.py`` subcommands for :doc:`certificate management <cert_management>`:
+``manage.py`` subcommands for certificate management:
 
 ===================== ===============================================================
 Command               Description

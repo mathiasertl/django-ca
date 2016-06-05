@@ -33,7 +33,6 @@ Contents:
    cli_interface
    web_interface
    ca_management
-   cert_management
    crl
    ocsp
 
