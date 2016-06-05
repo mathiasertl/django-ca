@@ -25,6 +25,7 @@ from oscrypto import asymmetric
 from django.conf.urls import url
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
+from django.utils.encoding import force_text
 from django.test import Client
 
 from ..models import Certificate
@@ -96,7 +97,7 @@ class OCSPTestView(DjangoCAWithCertTestCase):
         cls.ocsp_cert = cls.load_cert(ca=cls.ca, x509=ocsp_pubkey)
 
         # used for verifying signatures
-        cls.ocsp_private_key = asymmetric.load_private_key(ocsp_key_path)
+        cls.ocsp_private_key = asymmetric.load_private_key(force_text(ocsp_key_path))
 
     def assertAlmostEqualDate(self, got, expected):
         # Sometimes next_update timestamps are of by a second or so, so we test
