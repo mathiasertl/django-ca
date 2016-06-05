@@ -2,20 +2,19 @@
 Certificate authority management
 ################################
 
-**django-ca** supports managing multiple certificate authorities as well as
-child certificate authorities.
+**django-ca** supports managing multiple certificate authorities as well as child certificate
+authorities.
 
-The only way to create certificate authorities is via the command line via
-:doc:`manage.py commands <manage_commands>`. It is obviously most important that
-the private keys of the certificate authorities are never exposed to any
-attacker, and any web interface would pose an unnecessary risk.
+The only way to create certificate authorities is via the :doc:`command-line interface
+<cli_interface>`.  It is obviously most important that the private keys of the certificate
+authorities are never exposed to any attacker, and any web interface would pose an unnecessary
+risk.
 
-For the same reason, the private key of a certificate authority is stored on the
-filesystem and not in the database. The initial location of the private key is
-configured by the :ref:`CA_DIR setting <settings-ca-dir>`. This also means that
-you can run your **django-ca** on two hosts, where one host has the private key
-and only uses the command line, and one with the webinterface that can still be
-used to revoke certificates.
+For the same reason, the private key of a certificate authority is stored on the filesystem and not
+in the database. The initial location of the private key is configured by the :ref:`CA_DIR setting
+<settings-ca-dir>`. This also means that you can run your **django-ca** on two hosts, where one
+host has the private key and only uses the command line, and one with the webinterface that can
+still be used to revoke certificates.
 
 To manage certificate authorities, use the following `manage.py` commands:
 
