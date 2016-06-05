@@ -138,9 +138,8 @@ After you have configured **django-ca**, you need to initialize the project by r
    #     (replace parameters after init_ca with your local details)
    $ python manage.py init_ca /C=AT/ST=Vienna/L=Vienna/O=Org/CN=ca.example.com
 
-Please also see :doc:`ca_management` for further information on how to create
-certificate authorities. You can also run ``init_ca`` with the ``-h`` parameter
-for available arguments.
+Please also see :doc:`ca_management` for further information on how to create certificate
+authorities. You can also run ``init_ca`` with the ``-h`` parameter for available arguments.
 
 Create manage.py shortcut
 -------------------------
