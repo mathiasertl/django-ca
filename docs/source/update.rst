@@ -6,7 +6,7 @@ Since 1.0.0, this project updates like any other project. First, update the sour
 
    git pull origin master
 
-and if you are on pip::
+or if you installed **django-ca** via pip::
 
    pip install -U django-ca
 
@@ -17,6 +17,13 @@ then upgrade with these commands::
 
    # if you use the webinterface
    python ca/manage.py collectstatic
+
+.. WARNING::
+
+   If you installed **django-ca** in a virtualenv, don't forget to activate it before executing any
+   python or pip commands using::
+
+      source bin/activate
 
 *******************
 Update from 1.0.0b2
