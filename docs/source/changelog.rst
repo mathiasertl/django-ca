@@ -4,9 +4,11 @@ ChangeLog
 
 .. _changelog-head:
 
-************************
-1.2.0 (not yet released)
-************************
+.. _changelog-1.2.0:
+
+******************
+1.2.0 (2016-06-05)
+******************
 
 * **django-ca** now provides a complete :doc:`OCSP responder <ocsp>`.
 * Various tests are now run with a pre-computed CA, making tests much fater and output more
