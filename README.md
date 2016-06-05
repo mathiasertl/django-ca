@@ -36,8 +36,7 @@ Ideas on what we could do for future releases:
 1. Only send out one notification if multiple certificates expire for a user.
 2. Add a "renew" button in the admin interface.
 3. Add ability to automatically regenerate CRLs when a certificate is revoked.
-4. Add a OCSP service maybe (would be huge).
-5. Add ability to download PEM/DER of certificates and the CA.
+4. Add ability to download PEM/DER of certificates and the CA.
 
 ## License
 
