@@ -7,6 +7,11 @@ OCSP, or the `Online Certificate Status Protocol
 second method (besides :doc:`CRLs <crl>`) for a client to find out if a
 certificate has been revoked.
 
+.. WARNING::
+
+   The OCSP responder included in **django-ca** is still very experimental. Expect problems when
+   using it. Please also expect major changes in how it is configured in future versions.
+
 *****************************
 Configure OCSP with django-ca
 *****************************
