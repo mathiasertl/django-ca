@@ -102,6 +102,16 @@ class CoverageCommand(BaseCommand):
 
         cov.html_report(directory=report_dir)
 
+def find_package_data(dir):
+    data = []
+    package_root = os.path.join('ca', 'django_ca')
+    for root, dirs, files in os.walk(os.path.join(package_root, dir)):
+        for file in files:
+            data.append(os.path.join(root, file).lstrip(package_root))
+    return data
+
+package_data = find_package_data('static') + \
+               find_package_data('templates')
 
 setup(
     name='django-ca',
@@ -118,6 +128,7 @@ setup(
         'django_ca.migrations',
     ],
     package_dir={'': 'ca'},
+    package_data={'': package_data},
     zip_safe=False,  # because of the static files
     install_requires=[
         'Django>=1.8',
