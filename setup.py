@@ -126,6 +126,7 @@ setup(
         'django_ca.management',
         'django_ca.management.commands',
         'django_ca.migrations',
+        'django_ca.templatetags',
     ],
     package_dir={'': 'ca'},
     package_data={'': package_data},
