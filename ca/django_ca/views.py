@@ -131,9 +131,7 @@ class OCSPView(View):
 
         responder_key = kwargs.get('responder_key')
         try:
-            # mistakenly reported by coverage 4.0.3 as missed branch, fixed in 4.1:
-            # https://bitbucket.org/ned/coveragepy/issues/146/context-managers-confuse-branch-coverage#comment-24552176
-            with open(responder_key, 'rb') as stream:  # pragma: no branch
+            with open(responder_key, 'rb') as stream:
                 kwargs['responder_key'] = stream.read()
         except:
             raise ImproperlyConfigured('%s: Could not read private key.' % responder_key)
@@ -144,9 +142,7 @@ class OCSPView(View):
             kwargs['responder_cert'] = force_bytes(cert.pub)
         except Certificate.DoesNotExist:
             try:
-                # mistakenly reported by coverage 4.0.3 as missed branch, fixed in 4.1:
-                # https://bitbucket.org/ned/coveragepy/issues/146/context-managers-confuse-branch-coverage#comment-24552176
-                with open(responder_cert, 'rb') as stream:  # pragma: no branch
+                with open(responder_cert, 'rb') as stream:
                     kwargs['responder_cert'] = stream.read()
             except:
                 raise ImproperlyConfigured('%s: Could not read public key.' % responder_cert)

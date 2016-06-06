@@ -37,9 +37,7 @@ class Command(CertCommand):
             self.stdout.write(data, ending=b'')
         else:
             try:
-                # mistakenly reported by coverage 4.0.3 as missed branch, fixed in 4.1:
-                # https://bitbucket.org/ned/coveragepy/issues/146/context-managers-confuse-branch-coverage#comment-24552176
-                with open(path, 'wb') as stream:  # pragma: no branch
+                with open(path, 'wb') as stream:
                     stream.write(data)
             except IOError as e:
                 raise CommandError(e)
