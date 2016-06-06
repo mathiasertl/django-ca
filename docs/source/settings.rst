@@ -55,6 +55,12 @@ CA_DIR
    Where the root certificate is stored. The default is a ``files`` directory
    in the same location as your ``manage.py`` file.
 
+CA_NOTIFICATION_DAYS
+   Default: ``[14, 7, 3, 1, ]``
+
+   Days before expiry that certificate watchers will receive notifications. By default, watchers
+   will receive notifications 14, seven, three and one days before expiry.
+
 CA_OCSP_URLS
    Default: ``{}``
 

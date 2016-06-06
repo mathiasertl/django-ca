@@ -20,6 +20,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
 
+from django_ca import ca_settings
 from django_ca.models import Certificate
 
 
@@ -36,6 +37,11 @@ class Command(BaseCommand):
 
         qs = Certificate.objects.valid().filter(expires__lt=expires)
         for cert in qs:
+            days = (cert.expires - now).days
+
+            if days not in ca_settings.CA_NOTIFICATION_DAYS:
+                continue
+
             timestamp = cert.expires.strftime('%Y-%m-%d')
             subj = 'Certificate expiration for %s on %s' % (cert.cn, timestamp)
             msg = 'The certificate for %s will expire on %s.' % (cert.cn, timestamp)

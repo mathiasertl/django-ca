@@ -4,6 +4,14 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.2.1:
+
+************************
+1.2.1 (not yet released)
+************************
+
+* Add the ``CA_NOTIFICATION_DAYS`` setting so that watchers don't receive too many emails.
+
 .. _changelog-1.2.0:
 
 ******************
