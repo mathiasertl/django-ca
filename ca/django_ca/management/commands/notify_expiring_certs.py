@@ -33,7 +33,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         now = datetime.utcnow()
-        expires = now + timedelta(days=options['days'])
+        expires = now + timedelta(days=options['days'] + 1)  # add a day to avoid one-of errors
 
         qs = Certificate.objects.valid().filter(expires__lt=expires)
         for cert in qs:
