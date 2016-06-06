@@ -25,3 +25,8 @@ class SettingsTestCase(TestCase):
 
         with override_settings(CA_PROFILES={'client': None}):
             self.assertNotIn('client', ca_settings.CA_PROFILES)
+
+    def test_ca_profile_update(self):
+        desc = 'testdesc'
+        with override_settings(CA_PROFILES={'client': {'desc': desc}}):
+            self.assertEqual(ca_settings.CA_PROFILES['client']['desc'], desc)
