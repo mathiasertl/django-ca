@@ -24,7 +24,8 @@ from .base import DjangoCAWithCertTestCase
 from .base import override_tmpcadir
 
 
-@override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
+@override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={},
+                   CA_NOTIFICATION_DAYS=[14, 7, 3, 1])
 class ViewCertTestCase(DjangoCAWithCertTestCase):
     def test_no_certs(self):
         stdout, stderr = self.cmd('notify_expiring_certs')
@@ -59,3 +60,22 @@ class ViewCertTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(mail.outbox[0].subject,
                          'Certificate expiration for %s on %s' % (cert.cn, timestamp))
         self.assertEqual(mail.outbox[0].to, [email])
+
+    def test_notification_days(self):
+        now = timezone.now()
+
+        cert = Certificate.objects.get(serial=self.cert.serial)
+        email = 'user1@example.com'
+        watcher = Watcher.from_addr('First Last <%s>' % email)
+        cert.watchers.add(watcher)
+
+        for i in reversed(range(0, 20)):
+            cert = Certificate.objects.get(serial=self.cert.serial)
+            cert.expires = now + timedelta(days=i)
+            cert.save()
+
+            stdout, stderr = self.cmd('notify_expiring_certs', days=14)
+            self.assertEqual(stdout, '')
+            self.assertEqual(stderr, '')
+
+        self.assertEqual(len(mail.outbox), 4)
