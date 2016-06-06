@@ -6,9 +6,9 @@ ChangeLog
 
 .. _changelog-1.2.1:
 
-************************
-1.2.1 (not yet released)
-************************
+******************
+1.2.1 (2016-06-06)
+******************
 
 * Add the ``CA_NOTIFICATION_DAYS`` setting so that watchers don't receive too many emails.
 * Fix changing a certificate in the admin interface (only watchers can be changed at present).
