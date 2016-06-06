@@ -253,21 +253,22 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         data = form.cleaned_data
 
-        san, cn_in_san = data['subjectAltName']
-        subject = {k: v for k, v in data['subject'].items() if v}
-        expires_days = (data['expires'] - date.today()).days
+        if change is False:  # New certificate
+            san, cn_in_san = data['subjectAltName']
+            subject = {k: v for k, v in data['subject'].items() if v}
+            expires_days = (data['expires'] - date.today()).days
 
-        obj.x509 = self.model.objects.init(
-            ca=data['ca'],
-            csr=data['csr'],
-            expires=expires_days,
-            subject=subject,
-            algorithm=data['algorithm'],
-            subjectAltName=[e.strip() for e in san.split(',')],
-            cn_in_san=cn_in_san,
-            keyUsage=data['keyUsage'],
-            extendedKeyUsage=data['extendedKeyUsage'],
-        )
+            obj.x509 = self.model.objects.init(
+                ca=data['ca'],
+                csr=data['csr'],
+                expires=expires_days,
+                subject=subject,
+                algorithm=data['algorithm'],
+                subjectAltName=[e.strip() for e in san.split(',')],
+                cn_in_san=cn_in_san,
+                keyUsage=data['keyUsage'],
+                extendedKeyUsage=data['extendedKeyUsage'],
+            )
         obj.save()
 
     class Media:
