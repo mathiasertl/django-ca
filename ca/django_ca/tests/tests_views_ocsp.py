@@ -55,24 +55,25 @@ unknown_req = _load_req('unknown-serial')
 multiple_req = _load_req('multiple-serial')
 
 ocsp_key_path = os.path.join(fixtures_dir, 'ocsp.key')
+ocsp_pem_path = os.path.join(fixtures_dir, 'ocsp.pem')
 urlpatterns = [
     url(r'^ocsp/$', OCSPView.as_view(
         ca=root_serial,
         responder_key=ocsp_key_path,
-        responder_cert=ocsp_serial,
+        responder_cert=ocsp_pem_path,
         expires=1200,
     ), name='post'),
 
     url(r'^ocsp/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca=root_serial,
         responder_key=ocsp_key_path,
-        responder_cert=ocsp_serial,
+        responder_cert=ocsp_pem_path,
     ), name='get'),
 
     url(r'^ocsp-unknown/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca='unknown',
         responder_key=ocsp_key_path,
-        responder_cert=ocsp_serial,
+        responder_cert=ocsp_pem_path,
     ), name='unknown'),
 ]
 
