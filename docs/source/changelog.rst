@@ -4,6 +4,14 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.2.2:
+
+******************
+1.2.2 (2016-06-30)
+******************
+
+* Rebuild to remove old migrations accidentally present in previous release.
+
 .. _changelog-1.2.1:
 
 ******************
