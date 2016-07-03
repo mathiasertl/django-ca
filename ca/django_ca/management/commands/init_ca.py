@@ -53,8 +53,9 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
             '--expires', metavar='DAYS', type=int, default=365 * 10,
             help='CA certificate expires in DAYS days (default: %(default)s).'
         )
-        self.add_ca(parser, '--parent', help='Serial of the parent CA (default: %s).',
-                    no_default=True)
+        self.add_ca(parser, '--parent',
+                    help='''Make the CA an intermediate CA of the named CA. By default, this is a
+                    new root CA.''', no_default=True)
         parser.add_argument(
             '--password', nargs=1,
             help="Optional password used to encrypt the private key. If omitted, no "
@@ -62,7 +63,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         parser.add_argument('name', help='Human-readable name of the CA')
         self.add_subject(
             parser, help='''The subject of the CA in the format "/key1=value1/key2=value2/...",
-                            valid keys are %s. If "CN" is not set, the name is used.''' 
+                            valid keys are %s. If "CN" is not set, the name is used.'''
             % self.valid_subject_keys)
 
         group = parser.add_argument_group(
