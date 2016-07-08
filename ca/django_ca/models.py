@@ -100,6 +100,10 @@ class X509CertMixin(models.Model):
         return {force_text(k): force_text(v) for k, v in self.x509.get_subject().get_components()}
 
     @property
+    def issuer(self):
+        return {force_text(k): force_text(v) for k, v in self.x509.get_issuer().get_components()}
+
+    @property
     def extensions(self):
         if self.x509 is None:  # pragma: no cover
             return {}
