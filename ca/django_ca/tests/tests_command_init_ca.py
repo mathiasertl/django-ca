@@ -108,6 +108,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(child.parent, parent)
         self.assertEqual(list(child.children.all()), [])
         self.assertEqual(list(parent.children.all()), [child])
+        self.assertEqual(child.issuer, parent.subject)
         self.assertEqual(child.authorityKeyIdentifier().strip(), 'keyid:%s' % parent.subjectKeyIdentifier())
 
     @override_tmpcadir()

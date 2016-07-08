@@ -49,7 +49,6 @@ class CertificateAuthorityManager(models.Manager):
         cert = get_basic_cert(expires)
         for key, value in sort_subject_dict(subject):
             setattr(cert.get_subject(), key, force_bytes(value))
-        cert.set_issuer(cert.get_subject())
         cert.set_pubkey(private_key)
 
         basicConstraints = 'CA:TRUE'
@@ -65,9 +64,11 @@ class CertificateAuthorityManager(models.Manager):
         ])
 
         if parent is None:
+            cert.set_issuer(cert.get_subject())
             authKeyId = crypto.X509Extension(b'authorityKeyIdentifier', False,
                                              b'keyid:always', issuer=cert)
         else:
+            cert.set_issuer(parent.x509.get_subject())
             authKeyId = crypto.X509Extension(b'authorityKeyIdentifier', False,
                                              b'keyid,issuer', issuer=parent.x509)
         cert.add_extensions([authKeyId])
