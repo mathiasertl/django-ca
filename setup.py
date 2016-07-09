@@ -137,7 +137,7 @@ setup(
         'Django>=1.8',
         'asn1crypto==0.17.1',
         'ocspbuilder==0.10.1',
-        'oscrypto==0.15.0',
+        'oscrypto==0.16.0',
         'pyOpenSSL>=16.0',
     ],
     cmdclass={
