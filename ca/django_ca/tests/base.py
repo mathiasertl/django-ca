@@ -12,6 +12,7 @@ import tempfile
 from OpenSSL import crypto
 from mock import patch
 
+from django.conf import settings
 from django.core.management import call_command
 from django.test import TestCase
 from django.test.utils import override_settings as _override_settings
@@ -25,23 +26,21 @@ from django_ca.utils import sort_subject_dict
 from django_ca.utils import get_cert_profile_kwargs
 from django_ca.utils import parse_date
 
-fixtures_dir = os.path.join(os.path.dirname(__file__), 'fixtures')
-
 
 def _load_key(path, typ=crypto.FILETYPE_PEM):
-    path = os.path.join(fixtures_dir, path)
+    path = os.path.join(settings.FIXTURES_DIR, path)
     with open(path, 'rb') as stream:
         return crypto.load_privatekey(typ, stream.read())
 
 
 def _load_csr(path):
-    path = os.path.join(fixtures_dir, path)
+    path = os.path.join(settings.FIXTURES_DIR, path)
     with open(path, 'r') as stream:
         return stream.read().strip()
 
 
 def _load_cert(path, typ=crypto.FILETYPE_PEM):
-    path = os.path.join(fixtures_dir, path)
+    path = os.path.join(settings.FIXTURES_DIR, path)
     with open(path, 'rb') as stream:
         pem = stream.read()
         return pem, crypto.load_certificate(typ, pem)
@@ -55,7 +54,6 @@ child_serial = '6A:A2:3D:F9:5A:4A:44:8A:9F:91:64:54:A2:0D:04:29'
 ocsp_key = _load_key('ocsp.key')
 ocsp_csr = _load_csr('ocsp.csr')
 ocsp_pem, ocsp_pubkey = _load_cert('ocsp.pem')
-ocsp_serial = '32:18:B8:EE:52:C9:43:F4:83:08:62:FB:8B:43:0B:BB'
 cert1_key = _load_key('cert1.key')
 cert1_csr = _load_csr('cert1.csr')
 cert1_pem, cert1_pubkey = _load_cert('cert1.pem')
@@ -161,7 +159,7 @@ class DjangoCATestCase(TestCase):
     @classmethod
     def load_ca(cls, name, x509, enabled=True, parent=None, **kwargs):
         """Load a CA from one of the preloaded files."""
-        path = os.path.join(fixtures_dir, '%s.key' % name)
+        path = os.path.join(settings.FIXTURES_DIR, '%s.key' % name)
         ca = CertificateAuthority(name=name, private_key_path=path, enabled=enabled, parent=parent,
                                   **kwargs)
         ca.x509 = x509  # calculates serial etc

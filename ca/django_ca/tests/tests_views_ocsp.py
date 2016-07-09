@@ -34,17 +34,15 @@ from ..models import CertificateAuthority
 from ..utils import serial_from_int
 from ..views import OCSPView
 from .base import DjangoCAWithCertTestCase
-from .base import fixtures_dir
 from .base import ocsp_pem
 from .base import ocsp_pubkey
-from .base import ocsp_serial
 from .base import override_settings
 
 
 # openssl ocsp -issuer django_ca/tests/fixtures/root.pem -serial 123  \
 #         -reqout django_ca/tests/fixtures/ocsp/unknown-serial -resp_text
 def _load_req(req):
-    path = os.path.join(fixtures_dir, 'ocsp', req)
+    path = os.path.join(settings.FIXTURES_DIR, 'ocsp', req)
     with open(path, 'rb') as stream:
         return stream.read()
 
@@ -153,7 +151,7 @@ class OCSPViewTestMixin(object):
         certs = response['certs']
         self.assertEqual(len(certs), 1)
         serials = [serial_from_int(c['tbs_certificate']['serial_number'].native) for c in certs]
-        self.assertEqual(serials, [ocsp_serial])
+        self.assertEqual(serials, [settings.OCSP_SERIAL])
 
         # verify subjects of certificates
         self.assertOCSPSubject(certs[0]['tbs_certificate']['subject'].native,
@@ -277,7 +275,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
     def test_kwargs(self):
         # test kwargs to the view function
         view = OCSPView.as_view(ca=settings.ROOT_SERIAL, responder_key=settings.OCSP_KEY_PATH,
-                                responder_cert=ocsp_serial)
+                                responder_cert=settings.OCSP_SERIAL)
         kwargs = view.view_initkwargs
         CertificateAuthority.objects.get(serial=kwargs['ca'])
         self.assertEqual(kwargs['responder_cert'], ocsp_pem)
@@ -285,7 +283,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
     def test_bad_kwarg(self):
         with self.assertRaises(ImproperlyConfigured) as e:
             OCSPView.as_view(ca=settings.ROOT_SERIAL, responder_key='/gone',
-                             responder_cert=ocsp_serial)
+                             responder_cert=settings.OCSP_SERIAL)
         self.assertEqual(e.exception.args, ('/gone: Could not read private key.', ))
 
         with self.assertRaises(ImproperlyConfigured) as e:
