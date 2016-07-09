@@ -8,6 +8,7 @@ ChangeLog
 HEAD
 ****
 
+* Add links for downloading the certificate in PEM/ASN format in the admin interface.
 * Add an extra chapter in documentation on how to create intermediate CAs.
 * Correctly set the issuer field when generating intermediate CAs.
 * ``fab init_demo`` now actually creates an intermediate CA.
