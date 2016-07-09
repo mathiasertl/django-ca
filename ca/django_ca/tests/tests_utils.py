@@ -63,17 +63,17 @@ class ParseSubjectTestCase(TestCase):
         self.assertEqual(parse_subject(' /CN = example.com '), {'CN': 'example.com'})
 
         # emailAddress is special because of the case
-        self.assertEqual(parse_subject('/emailAddress=user@example.com'), 
+        self.assertEqual(parse_subject('/emailAddress=user@example.com'),
                          {'emailAddress': 'user@example.com'})
 
     def test_multiple(self):
-        self.assertEqual(parse_subject('/C=AT/OU=foo/CN=example.com'), 
+        self.assertEqual(parse_subject('/C=AT/OU=foo/CN=example.com'),
                          {'C': 'AT', 'OU': 'foo', 'CN': 'example.com'})
 
     def test_case(self):
         # test that we generally ignore case in subject keys
-        self.assertEqual(parse_subject('/c=AT/ou=foo/cn=example.com/eMAIladdreSS=user@example.com'), 
-                         {'C': 'AT', 'OU': 'foo', 'CN': 'example.com', 
+        self.assertEqual(parse_subject('/c=AT/ou=foo/cn=example.com/eMAIladdreSS=user@example.com'),
+                         {'C': 'AT', 'OU': 'foo', 'CN': 'example.com',
                           'emailAddress': 'user@example.com'})
 
     def test_emtpy(self):
@@ -82,17 +82,17 @@ class ParseSubjectTestCase(TestCase):
         self.assertEqual(parse_subject('   '), {})
 
     def test_multiple_slashes(self):
-        self.assertEqual(parse_subject('/C=AT/O=GNU'), {'C': 'AT', 'O': 'GNU'}) 
-        self.assertEqual(parse_subject('//C=AT/O=GNU'), {'C': 'AT', 'O': 'GNU'}) 
-        self.assertEqual(parse_subject('/C=AT//O=GNU'), {'C': 'AT', 'O': 'GNU'}) 
+        self.assertEqual(parse_subject('/C=AT/O=GNU'), {'C': 'AT', 'O': 'GNU'})
+        self.assertEqual(parse_subject('//C=AT/O=GNU'), {'C': 'AT', 'O': 'GNU'})
+        self.assertEqual(parse_subject('/C=AT//O=GNU'), {'C': 'AT', 'O': 'GNU'})
         self.assertEqual(parse_subject('/C=AT///O=GNU'), {'C': 'AT', 'O': 'GNU'})
 
     def test_empty_field(self):
-        self.assertEqual(parse_subject('/C=AT/O=GNU/OU=foo'), {'C': 'AT', 'O': 'GNU', 'OU': 'foo'}) 
-        self.assertEqual(parse_subject('/C=/O=GNU/OU=foo'), {'C': '', 'O': 'GNU', 'OU': 'foo'}) 
-        self.assertEqual(parse_subject('/C=AT/O=/OU=foo'), {'C': 'AT', 'O': '', 'OU': 'foo'}) 
-        self.assertEqual(parse_subject('/C=AT/O=GNU/OU='), {'C': 'AT', 'O': 'GNU', 'OU': ''}) 
-        self.assertEqual(parse_subject('/C=/O=/OU='), {'C': '', 'O': '', 'OU': ''}) 
+        self.assertEqual(parse_subject('/C=AT/O=GNU/OU=foo'), {'C': 'AT', 'O': 'GNU', 'OU': 'foo'})
+        self.assertEqual(parse_subject('/C=/O=GNU/OU=foo'), {'C': '', 'O': 'GNU', 'OU': 'foo'})
+        self.assertEqual(parse_subject('/C=AT/O=/OU=foo'), {'C': 'AT', 'O': '', 'OU': 'foo'})
+        self.assertEqual(parse_subject('/C=AT/O=GNU/OU='), {'C': 'AT', 'O': 'GNU', 'OU': ''})
+        self.assertEqual(parse_subject('/C=/O=/OU='), {'C': '', 'O': '', 'OU': ''})
 
     def test_no_slash_at_start(self):
         with self.assertRaises(ValueError) as e:
@@ -115,7 +115,7 @@ class FormatSubjectTestCase(TestCase):
     def test_basic(self):
         subject = '/C=AT/ST=Vienna/L=Vienna/O=O/OU=OU/CN=example.com/emailAddress=user@example.com'
 
-        subject_dict = {'emailAddress': 'user@example.com', 'C': 'AT', 'L': 'Vienna', 
+        subject_dict = {'emailAddress': 'user@example.com', 'C': 'AT', 'L': 'Vienna',
                         'ST': 'Vienna', 'O': 'O', 'OU': 'OU', 'CN': 'example.com', }
         self.assertEqual(format_subject(subject_dict), subject)
 
@@ -194,7 +194,8 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
             'subject': {
                 'C': 'AT',
                 'L': 'Vienna',
-                'OU': 'Fachschaft Informatik',
+                'O': 'Django CA',
+                'OU': 'Django CA Testsuite',
                 'ST': 'Vienna',
             },
         }
@@ -208,7 +209,8 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
             'subject': {
                 'C': 'AT',
                 'L': 'Vienna',
-                'OU': 'Fachschaft Informatik',
+                'O': 'Django CA',
+                'OU': 'Django CA Testsuite',
                 'ST': 'Vienna',
             },
         }

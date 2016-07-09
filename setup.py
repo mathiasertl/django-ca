@@ -60,7 +60,7 @@ class BaseCommand(Command):
         os.chdir(work_dir)
         sys.path.insert(0, work_dir)
 
-        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.settings")
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.test_settings")
         import django
         django.setup()
 
@@ -83,6 +83,8 @@ class CoverageCommand(BaseCommand):
     description = 'Generate test-coverage for django-ca.'
 
     def run(self):
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.test_settings")
+
         work_dir = os.path.join(_rootdir, 'ca')
         report_dir = os.path.join(_rootdir, 'docs', 'build', 'coverage')
         os.chdir(work_dir)
