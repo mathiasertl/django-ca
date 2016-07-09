@@ -27,6 +27,7 @@ from django.http import HttpResponseBadRequest
 from django.utils import timezone
 from django.utils.html import mark_safe
 from django.utils.translation import ugettext_lazy as _
+from django.http import Http404
 
 from .forms import CreateCertificateForm
 from .models import Certificate
@@ -54,6 +55,40 @@ class CertificateMixin(object):
 on Wikipedia.</p>'''.replace('\n', ' ')
         return mark_safe('%s%s' % (obj.hpkp_pin, help_text))
     hpkp_pin.short_description = _('HPKP pin (SHA-256)')
+
+
+    def get_urls(self):
+        urls = [
+            url(r'^(?P<pk>\d+)/download/$', self.admin_site.admin_view(self.download_view)),
+        ]
+        urls += super(CertificateMixin, self).get_urls()
+        return urls
+
+    def download_view(self, request, pk):
+        """A view that allows the user to download a certificate in PEM or DER/ASN1 format."""
+
+        # get object in question
+        try:
+            obj = self.model.objects.get(pk=pk)
+        except self.model.DoesNotExist:
+            raise Http404
+
+        # get filetype
+        filetype = request.GET.get('format', 'PEM').upper().strip()
+
+        if filetype == 'PEM':
+            data = crypto.dump_certificate(crypto.FILETYPE_PEM, obj.x509)
+            content_type = 'application/pkix-cert'  # TOOD: is this correct?
+        elif filetype == 'DER':
+            data = crypto.dump_certificate(crypto.FILETYPE_ASN1, obj.x509)
+            content_type = 'application/pkix-cert'
+        else:
+            return HttpResponseBadRequest()
+
+        filename = '%s.%s' % (obj.serial, filetype.lower())
+        response = HttpResponse(data, content_type=content_type)
+        response['Content-Disposition'] = 'attachment; filename=%s' % filename
+        return response
 
     def has_delete_permission(self, request, obj=None):
         return False
