@@ -30,6 +30,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.http import Http404
 
 from .forms import CreateCertificateForm
+from .forms import X509CertMixinAdminForm
 from .models import Certificate
 from .models import CertificateAuthority
 from .models import Watcher
@@ -47,6 +48,8 @@ class WatcherAdmin(admin.ModelAdmin):
 
 
 class CertificateMixin(object):
+    form = X509CertMixinAdminForm
+
     def hpkp_pin(self, obj):
         # TODO/Django 1.9: We replace newlines because Django 1.8 inserts HTML breaks for them
 
