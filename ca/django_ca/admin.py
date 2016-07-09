@@ -78,15 +78,13 @@ on Wikipedia.</p>'''.replace('\n', ' ')
 
         if filetype == 'PEM':
             data = crypto.dump_certificate(crypto.FILETYPE_PEM, obj.x509)
-            content_type = 'application/pkix-cert'  # TOOD: is this correct?
         elif filetype == 'DER':
             data = crypto.dump_certificate(crypto.FILETYPE_ASN1, obj.x509)
-            content_type = 'application/pkix-cert'
         else:
             return HttpResponseBadRequest()
 
         filename = '%s.%s' % (obj.serial, filetype.lower())
-        response = HttpResponse(data, content_type=content_type)
+        response = HttpResponse(data, content_type='application/pkix-cert')
         response['Content-Disposition'] = 'attachment; filename=%s' % filename
         return response
 
