@@ -13,9 +13,12 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
+from django.conf import settings
+
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
 from .base import child_pubkey
+from .base import override_tmpcadir
 
 
 class ViewCATestCase(DjangoCAWithCATestCase):
@@ -67,4 +70,20 @@ class ViewCATestCase(DjangoCAWithCATestCase):
 
         stdout, stderr = self.cmd('view_ca', child.serial)
         self.assertOutput(child, stdout)
+        self.assertEqual(stderr, '')
+
+    @override_tmpcadir()
+    def test_no_pathlen(self):
+        name = 'no-pathlen'
+        kwargs = {
+            'key_size': settings.CA_MIN_KEY_SIZE,
+            'algorithm': 'sha256',
+        }
+
+        self.cmd('init_ca', name, '/C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=%s' % name,
+                 pathlen=False, **kwargs)
+
+        ca = CertificateAuthority.objects.get(name=name)
+        stdout, stderr = self.cmd('view_ca', ca.serial)
+        self.assertOutput(ca, stdout)
         self.assertEqual(stderr, '')

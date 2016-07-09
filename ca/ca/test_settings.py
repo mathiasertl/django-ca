@@ -172,7 +172,7 @@ CA_DEFAULT_SUBJECT = {
     'O': 'Django CA',
     'OU': 'Django CA Testsuite',
 }
-CA_MIN_KEY_SIZE=1024
+CA_MIN_KEY_SIZE = 1024
 
 
 CA_OCSP_URLS = {
