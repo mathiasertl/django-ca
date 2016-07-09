@@ -4,9 +4,11 @@ ChangeLog
 
 .. _changelog-head:
 
-****
-HEAD
-****
+.. _changelog-1.3.0:
+
+******************
+1.3.0 (2016-07-09)
+******************
 
 * Add links for downloading the certificate in PEM/ASN format in the admin interface.
 * Add an extra chapter in documentation on how to create intermediate CAs.
