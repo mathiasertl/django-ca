@@ -24,6 +24,7 @@ from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.core.urlresolvers import reverse
 from django.test import Client
 from django.utils import timezone
+from django.utils.encoding import force_text
 
 from ..models import Certificate
 from ..models import CertificateAuthority
@@ -323,6 +324,46 @@ class CSRDetailTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         client = Client()
 
         response = client.post(self.url, data={'csr': self.csr_pem})
+        self.assertRequiresLogin(response)
+
+class CertDownloadTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
+    def get_url(self, cert):
+        return reverse('admin:django_ca_certificate_download', kwargs={'pk': cert.pk})
+
+    @property
+    def url(self):
+        return self.get_url(cert=self.cert)
+
+    def test_basic(self):
+        filename = '%s.pem' % self.cert.serial
+        response = self.client.get('%s?format=PEM' % self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pkix-cert')
+        self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
+        self.assertEqual(force_text(response.content), self.cert.pub)
+
+    def test_der(self):
+        filename = '%s.der' % self.cert.serial
+        response = self.client.get('%s?format=DER' % self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pkix-cert')
+        self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
+        self.assertEqual(response.content,
+                         crypto.dump_certificate(crypto.FILETYPE_ASN1, self.cert.x509))
+
+    def test_not_found(self):
+        url = reverse('admin:django_ca_certificate_download', kwargs={'pk': '123'})
+        response = self.client.get('%s?format=DER' % url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_bad_format(self):
+        response = self.client.get('%s?format=bad' % self.url)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content, b'')
+
+    def test_not_logged_in(self):
+        client = Client()
+        response = client.get(self.url)
         self.assertRequiresLogin(response)
 
 
