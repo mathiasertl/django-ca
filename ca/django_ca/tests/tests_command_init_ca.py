@@ -40,6 +40,8 @@ class InitCATest(DjangoCATestCase):
 
         self.assertSubject(ca.x509, {'C': 'AT', 'ST': 'Vienna', 'L': 'Vienna', 'O': 'Org',
                                      'OU': 'OrgUnit', 'CN': 'Test CA'})
+        self.assertIssuer(ca, ca)
+        self.assertAuthorityKeyIdentifier(ca, ca)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_arguments(self):
@@ -64,6 +66,8 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(ca.issuer_alt_name, 'http://ian.ca.example.com')
         self.assertEqual(ca.crl_url, 'http://crl.example.com')
         self.assertEqual(ca.ocsp_url, 'http://ocsp.example.com')
+        self.assertIssuer(ca, ca)
+        self.assertAuthorityKeyIdentifier(ca, ca)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_no_pathlen(self):
@@ -72,6 +76,8 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
         self.assertEqual(ca.pathlen, None)
+        self.assertIssuer(ca, ca)
+        self.assertAuthorityKeyIdentifier(ca, ca)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_empty_subject_fields(self):
@@ -81,6 +87,8 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
         self.assertSubject(ca.x509, {'CN': 'test'})
+        self.assertIssuer(ca, ca)
+        self.assertAuthorityKeyIdentifier(ca, ca)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_no_cn(self):
@@ -90,6 +98,8 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
         self.assertSubject(ca.x509, {'OU': 'smth', 'CN': 'test'})
+        self.assertIssuer(ca, ca)
+        self.assertAuthorityKeyIdentifier(ca, ca)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_parent(self):
@@ -108,8 +118,8 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(child.parent, parent)
         self.assertEqual(list(child.children.all()), [])
         self.assertEqual(list(parent.children.all()), [child])
-        self.assertEqual(child.issuer, parent.subject)
-        self.assertEqual(child.authorityKeyIdentifier().strip(), 'keyid:%s' % parent.subjectKeyIdentifier())
+        self.assertIssuer(parent, child)
+        self.assertAuthorityKeyIdentifier(parent, child)
 
     @override_tmpcadir()
     def test_small_key_size(self):

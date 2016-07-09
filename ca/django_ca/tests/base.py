@@ -152,6 +152,13 @@ class DjangoCATestCase(TestCase):
 
         self.assertEqual(actual, sort_subject_dict(expected))
 
+    def assertIssuer(self, issuer, cert):
+        self.assertEqual(cert.issuer, issuer.subject)
+
+    def assertAuthorityKeyIdentifier(self, issuer, cert):
+        self.assertEqual(cert.authorityKeyIdentifier().strip(),
+                         'keyid:%s' % issuer.subjectKeyIdentifier())
+
     @classmethod
     def load_ca(cls, name, x509, enabled=True, parent=None, **kwargs):
         """Load a CA from one of the preloaded files."""
