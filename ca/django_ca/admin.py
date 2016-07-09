@@ -295,7 +295,8 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         data = form.cleaned_data
 
-        if change is False:  # New certificate
+        # If this is a new certificate, initialize it.
+        if change is False:  # # pragma: no branch
             san, cn_in_san = data['subjectAltName']
             subject = {k: v for k, v in data['subject'].items() if v}
             expires_days = (data['expires'] - date.today()).days

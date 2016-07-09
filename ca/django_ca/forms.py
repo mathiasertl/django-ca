@@ -59,7 +59,7 @@ class X509CertMixinAdminForm(forms.ModelForm):
         super(X509CertMixinAdminForm, self).__init__(*args, **kwargs)
 
         # help_texts is None if we have no Meta class defined here
-        if self._meta.help_texts is None:
+        if self._meta.help_texts is None:  # pragma: no branch
             self._meta.help_texts = {}
 
         info = self.instance._meta.app_label, self.instance._meta.model_name
