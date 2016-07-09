@@ -78,6 +78,30 @@ urlpatterns = [
 ]
 
 
+@override_settings(
+CA_OCSP_URLS={
+    'root': {
+            'ca': root_serial,
+            'responder_key': ocsp_key_path,
+            'responder_cert': ocsp_pem_path,
+    },
+})
+class OCSPTestGenericView(DjangoCAWithCertTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(OCSPTestGenericView, cls).setUpClass()
+
+        logging.disable(logging.CRITICAL)
+        cls.client = Client()
+
+    def test_get(self):
+        data = base64.b64encode(req1).decode('utf-8')
+        url = reverse('ocsp-get-root', kwargs={'name': 'root', 'data': data})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
+
+
 @override_settings(ROOT_URLCONF=__name__)
 class OCSPTestView(DjangoCAWithCertTestCase):
     _subject_mapping = {
