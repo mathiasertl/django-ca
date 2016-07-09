@@ -4,6 +4,15 @@ ChangeLog
 
 .. _changelog-head:
 
+****
+HEAD
+****
+
+* Add an extra chapter in documentation on how to create intermediate CAs.
+* Correctly set the issuer field when generating intermediate CAs.
+* ``fab init_demo`` now actually creates an intermediate CA.
+* Fix help text for the ``--parent`` parameter for ``manage.py init_ca``.
+
 .. _changelog-1.2.2:
 
 ******************
