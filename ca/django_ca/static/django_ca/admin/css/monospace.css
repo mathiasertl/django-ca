@@ -14,8 +14,8 @@ see <http://www.gnu.org/licenses/>.
 */
 
 /* Viewing the CSR and PEM as code. */
-fieldset.as-code .field-csr p,
-fieldset.as-code .field-pub p,
+fieldset.as-code .field-csr p:not(.help),
+fieldset.as-code .field-pub p:not(.help),
 .shell
 {
     white-space: pre;
