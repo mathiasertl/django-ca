@@ -2,8 +2,6 @@
 
 import os
 
-from OpenSSL import crypto
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -156,6 +154,12 @@ LOGGING = {
     }
 }
 
+# Fixture data used by test cases
+FIXTURES_DIR = os.path.join(BASE_DIR, 'django_ca', 'tests', 'fixtures')
+ROOT_SERIAL = '35:DB:D2:AD:79:0A:4D:1F:B5:26:ED:5F:83:74:C0:C2'
+OCSP_KEY_PATH = os.path.join(FIXTURES_DIR, 'ocsp.key')
+OCSP_PEM_PATH = os.path.join(FIXTURES_DIR, 'ocsp.pem')
+
 # Custom settings
 CA_DEFAULT_SUBJECT = {
     'C': 'AT',
@@ -165,3 +169,12 @@ CA_DEFAULT_SUBJECT = {
     'OU': 'Django CA Testsuite',
 }
 CA_MIN_KEY_SIZE=1024
+
+
+CA_OCSP_URLS = {
+    'root': {
+        'ca': ROOT_SERIAL,
+        'responder_key': OCSP_KEY_PATH,
+        'responder_cert': OCSP_PEM_PATH,
+    },
+}

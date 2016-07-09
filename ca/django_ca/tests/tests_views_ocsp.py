@@ -78,32 +78,7 @@ urlpatterns = [
 ]
 
 
-@override_settings(
-CA_OCSP_URLS={
-    'root': {
-            'ca': root_serial,
-            'responder_key': ocsp_key_path,
-            'responder_cert': ocsp_pem_path,
-    },
-})
-class OCSPTestGenericView(DjangoCAWithCertTestCase):
-    @classmethod
-    def setUpClass(cls):
-        super(OCSPTestGenericView, cls).setUpClass()
-
-        logging.disable(logging.CRITICAL)
-        cls.client = Client()
-
-    def test_get(self):
-        data = base64.b64encode(req1).decode('utf-8')
-        url = reverse('ocsp-get-root', kwargs={'name': 'root', 'data': data})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
-
-
-@override_settings(ROOT_URLCONF=__name__)
-class OCSPTestView(DjangoCAWithCertTestCase):
+class OCSPViewTestMixin(object):
     _subject_mapping = {
         'country_name': 'C',
         'state_or_province_name': 'ST',
@@ -114,9 +89,33 @@ class OCSPTestView(DjangoCAWithCertTestCase):
         'email_address': 'emailAddress',
     }
 
+    def assertAlmostEqualDate(self, got, expected):
+        # Sometimes next_update timestamps are of by a second or so, so we test
+        # if they are just close
+        delta = timedelta(seconds=3)
+        self.assertTrue(got < expected + delta and got > expected - delta)
+
+    def sign_func(self, tbs_request, algo):
+        if algo['algorithm'].native == 'sha256_rsa':
+            algo = 'sha256'
+        else:
+            # OCSPResponseBuilder (used server-side) statically uses sha256, so this should never
+            # happen for now.
+            raise ValueError('Unknown algorithm: %s' % algo.native)
+
+        # from ocspbuilder.OCSPResponseBuilder.build:
+        if self.ocsp_private_key.algorithm == 'rsa':
+            sign_func = asymmetric.rsa_pkcs1v15_sign
+        elif self.ocsp_private_key.algorithm == 'dsa':
+            sign_func = asymmetric.dsa_sign
+        elif self.ocsp_private_key.algorithm == 'ec':
+            sign_func = asymmetric.ecdsa_sign
+
+        return sign_func(self.ocsp_private_key, tbs_request.dump(), algo)
+
     @classmethod
     def setUpClass(cls):
-        super(OCSPTestView, cls).setUpClass()
+        super(OCSPViewTestMixin, cls).setUpClass()
 
         logging.disable(logging.CRITICAL)
         cls.client = Client()
@@ -124,12 +123,6 @@ class OCSPTestView(DjangoCAWithCertTestCase):
 
         # used for verifying signatures
         cls.ocsp_private_key = asymmetric.load_private_key(force_text(ocsp_key_path))
-
-    def assertAlmostEqualDate(self, got, expected):
-        # Sometimes next_update timestamps are of by a second or so, so we test
-        # if they are just close
-        delta = timedelta(seconds=3)
-        self.assertTrue(got < expected + delta and got > expected - delta)
 
     def assertOCSPSubject(self, got, expected):
         translated = {}
@@ -233,24 +226,24 @@ class OCSPTestView(DjangoCAWithCertTestCase):
         expected_signature = self.sign_func(tbs_response_data, signature_algo)
         self.assertEqual(signature.native, expected_signature)
 
-    def sign_func(self, tbs_request, algo):
-        if algo['algorithm'].native == 'sha256_rsa':
-            algo = 'sha256'
-        else:
-            # OCSPResponseBuilder (used server-side) statically uses sha256, so this should never
-            # happen for now.
-            raise ValueError('Unknown algorithm: %s' % algo.native)
 
-        # from ocspbuilder.OCSPResponseBuilder.build:
-        if self.ocsp_private_key.algorithm == 'rsa':
-            sign_func = asymmetric.rsa_pkcs1v15_sign
-        elif self.ocsp_private_key.algorithm == 'dsa':
-            sign_func = asymmetric.dsa_sign
-        elif self.ocsp_private_key.algorithm == 'ec':
-            sign_func = asymmetric.ecdsa_sign
+class OCSPTestGenericView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
+    def test_get(self):
+        data = base64.b64encode(req1).decode('utf-8')
+        url = reverse('django_ca:ocsp-get-root', kwargs={'data': data})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
 
-        return sign_func(self.ocsp_private_key, tbs_request.dump(), algo)
+    def test_post(self):
+        response = self.client.post(reverse('django_ca:ocsp-post-root'), req1,
+                                    content_type='application/ocsp-request')
+        self.assertEqual(response.status_code, 200)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
 
+
+@override_settings(ROOT_URLCONF=__name__)
+class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
     def test_get(self):
         data = base64.b64encode(req1).decode('utf-8')
         response = self.client.get(reverse('get', kwargs={'data': data}))
