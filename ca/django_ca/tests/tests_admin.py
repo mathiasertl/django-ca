@@ -177,6 +177,8 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
 
         cert = Certificate.objects.get(cn=cn)
         self.assertSubject(cert.x509, {'C': 'US', 'CN': cn})
+        self.assertIssuer(self.ca, cert)
+        self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(cert.subjectAltName(), 'DNS:%s' % cn)
         self.assertEqual(cert.basicConstraints(), 'critical,CA:FALSE')
         self.assertEqual(cert.keyUsage(), 'critical,Digital Signature, Key Agreement')
@@ -207,6 +209,8 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
 
         cert = Certificate.objects.get(cn=cn)
         self.assertSubject(cert.x509, {'C': 'US', 'CN': cn})
+        self.assertIssuer(self.ca, cert)
+        self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(cert.subjectAltName(), 'DNS:%s, DNS:%s' % (cn, san))
         self.assertEqual(cert.basicConstraints(), 'critical,CA:FALSE')
         self.assertEqual(cert.keyUsage(), '')

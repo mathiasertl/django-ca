@@ -41,6 +41,8 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
                          'critical,Digital Signature, Key Encipherment, Key Agreement')
         self.assertEqual(cert.extendedKeyUsage(), 'TLS Web Server Authentication')
         self.assertEqual(cert.subjectAltName(), 'DNS:example.com')
+        self.assertIssuer(self.ca, cert)
+        self.assertAuthorityKeyIdentifier(self.ca, cert)
 
     def test_from_file(self):
         csr_path = os.path.join(ca_settings.CA_DIR, 'test.csr')
@@ -53,9 +55,9 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
             self.assertEqual(stderr, '')
 
             cert = Certificate.objects.first()
+
             self.assertSubject(cert.x509, subject)
             self.assertEqual(stdout, cert.pub)
-
             self.assertEqual(cert.keyUsage(),
                              'critical,Digital Signature, Key Encipherment, Key Agreement')
             self.assertEqual(cert.extendedKeyUsage(), 'TLS Web Server Authentication')
@@ -68,11 +70,14 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         stdin = six.StringIO(self.csr_pem)
 
         try:
-            stdout, stderr = self.cmd('sign_cert', subject={'CN': 'example.com'}, 
+            stdout, stderr = self.cmd('sign_cert', subject={'CN': 'example.com'},
                                       out=out_path, stdin=stdin)
             cert = Certificate.objects.first()
             self.assertEqual(stdout, 'Please paste the CSR:\n')
             self.assertEqual(stderr, '')
+
+            self.assertIssuer(self.ca, cert)
+            self.assertAuthorityKeyIdentifier(self.ca, cert)
 
             with open(out_path) as out_stream:
                 from_file = out_stream.read()
@@ -87,6 +92,8 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         stdout, stderr = self.cmd('sign_cert', subject={'CN': 'example.net'}, cn_in_san=False,
                                   alt=['example.com'], stdin=stdin)
         cert = Certificate.objects.first()
+        self.assertIssuer(self.ca, cert)
+        self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(cert.x509.get_subject().get_components(), [(b'CN', b'example.net')])
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
         self.assertEqual(stderr, '')
@@ -100,6 +107,8 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
                                   stdin=stdin)
         cert = Certificate.objects.first()
         self.assertSubject(cert.x509, subject)
+        self.assertIssuer(self.ca, cert)
+        self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
         self.assertEqual(stderr, '')
         self.assertEqual(cert.subjectAltName(), '')
@@ -123,6 +132,8 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         stdout, stderr = self.cmd('sign_cert', cn_in_san=False, alt=['example.net'], stdin=stdin)
         cert = Certificate.objects.first()
         self.assertSubject(cert.x509, ca_settings._CA_DEFAULT_SUBJECT)
+        self.assertIssuer(self.ca, cert)
+        self.assertAuthorityKeyIdentifier(self.ca, cert)
 
         # replace subject fields via command-line argument:
         subject = {
