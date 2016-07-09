@@ -59,7 +59,11 @@ on Wikipedia.</p>'''.replace('\n', ' ')
         return False
 
     def get_actions(self, request):
-        # Disable the "delete selected" admin action
+        """Disable the "delete selected" admin action.
+
+        Otherwise the action is present even though has_delete_permission is False, it just doesn't
+        work.
+        """
         actions = super(CertificateMixin, self).get_actions(request)
         actions.pop('delete_selected', '')
         return actions
