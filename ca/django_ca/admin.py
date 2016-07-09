@@ -61,8 +61,10 @@ on Wikipedia.</p>'''.replace('\n', ' ')
 
 
     def get_urls(self):
+        info = self.model._meta.app_label, self.model._meta.model_name
         urls = [
-            url(r'^(?P<pk>\d+)/download/$', self.admin_site.admin_view(self.download_view)),
+            url(r'^(?P<pk>\d+)/download/$', self.admin_site.admin_view(self.download_view),
+                name='%s_%s_download' % info),
         ]
         urls += super(CertificateMixin, self).get_urls()
         return urls
