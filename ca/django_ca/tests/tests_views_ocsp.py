@@ -41,8 +41,8 @@ from .base import override_settings
 from .base import root_serial
 
 
-#openssl ocsp -issuer django_ca/tests/fixtures/root.pem -serial 123  \
-#        -reqout django_ca/tests/fixtures/ocsp/unknown-serial -resp_text
+# openssl ocsp -issuer django_ca/tests/fixtures/root.pem -serial 123  \
+#         -reqout django_ca/tests/fixtures/ocsp/unknown-serial -resp_text
 def _load_req(req):
     path = os.path.join(fixtures_dir, 'ocsp', req)
     with open(path, 'rb') as stream:
@@ -76,6 +76,7 @@ urlpatterns = [
         responder_cert=ocsp_pem_path,
     ), name='unknown'),
 ]
+
 
 @override_settings(ROOT_URLCONF=__name__)
 class OCSPTestView(DjangoCAWithCertTestCase):
@@ -140,8 +141,10 @@ class OCSPTestView(DjangoCAWithCertTestCase):
         self.assertEqual(serials, [ocsp_serial])
 
         # verify subjects of certificates
-        self.assertOCSPSubject(certs[0]['tbs_certificate']['subject'].native, self.ocsp_cert.subject)
-        self.assertOCSPSubject(certs[0]['tbs_certificate']['issuer'].native, self.ocsp_cert.ca.subject)
+        self.assertOCSPSubject(certs[0]['tbs_certificate']['subject'].native,
+                               self.ocsp_cert.subject)
+        self.assertOCSPSubject(certs[0]['tbs_certificate']['issuer'].native,
+                               self.ocsp_cert.ca.subject)
 
         tbs_response_data = response['tbs_response_data']
         self.assertEqual(tbs_response_data['version'].native, 'v1')
@@ -158,7 +161,7 @@ class OCSPTestView(DjangoCAWithCertTestCase):
         # Verify responder id
         responder_id = tbs_response_data['responder_id']
         self.assertEqual(responder_id.name, 'by_key')
-        #TODO: Validate responder id
+        # TODO: Validate responder id
 
         produced_at = tbs_response_data['produced_at'].native
 
@@ -200,7 +203,7 @@ class OCSPTestView(DjangoCAWithCertTestCase):
             self.assertEqual(single_extensions, {})  # None are left
 
             # TODO: verify issuer_name_hash and issuer_key_hash
-            #cert_id = response['cert_id']
+            # cert_id = response['cert_id']
 
         # TODO: Verify signature
         expected_signature = self.sign_func(tbs_response_data, signature_algo)
