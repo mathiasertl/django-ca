@@ -22,6 +22,7 @@ from datetime import timedelta
 import asn1crypto
 from oscrypto import asymmetric
 
+from django.conf import settings
 from django.conf.urls import url
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
@@ -38,7 +39,6 @@ from .base import ocsp_pem
 from .base import ocsp_pubkey
 from .base import ocsp_serial
 from .base import override_settings
-from .base import root_serial
 
 
 # openssl ocsp -issuer django_ca/tests/fixtures/root.pem -serial 123  \
@@ -54,26 +54,24 @@ no_nonce_req = _load_req('req-no-nonce')
 unknown_req = _load_req('unknown-serial')
 multiple_req = _load_req('multiple-serial')
 
-ocsp_key_path = os.path.join(fixtures_dir, 'ocsp.key')
-ocsp_pem_path = os.path.join(fixtures_dir, 'ocsp.pem')
 urlpatterns = [
     url(r'^ocsp/$', OCSPView.as_view(
-        ca=root_serial,
-        responder_key=ocsp_key_path,
-        responder_cert=ocsp_pem_path,
+        ca=settings.ROOT_SERIAL,
+        responder_key=settings.OCSP_KEY_PATH,
+        responder_cert=settings.OCSP_PEM_PATH,
         expires=1200,
     ), name='post'),
 
     url(r'^ocsp/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
-        ca=root_serial,
-        responder_key=ocsp_key_path,
-        responder_cert=ocsp_pem_path,
+        ca=settings.ROOT_SERIAL,
+        responder_key=settings.OCSP_KEY_PATH,
+        responder_cert=settings.OCSP_PEM_PATH,
     ), name='get'),
 
     url(r'^ocsp-unknown/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca='unknown',
-        responder_key=ocsp_key_path,
-        responder_cert=ocsp_pem_path,
+        responder_key=settings.OCSP_KEY_PATH,
+        responder_cert=settings.OCSP_PEM_PATH,
     ), name='unknown'),
 ]
 
@@ -122,7 +120,7 @@ class OCSPViewTestMixin(object):
         cls.ocsp_cert = cls.load_cert(ca=cls.ca, x509=ocsp_pubkey)
 
         # used for verifying signatures
-        cls.ocsp_private_key = asymmetric.load_private_key(force_text(ocsp_key_path))
+        cls.ocsp_private_key = asymmetric.load_private_key(force_text(settings.OCSP_KEY_PATH))
 
     def assertOCSPSubject(self, got, expected):
         translated = {}
@@ -278,7 +276,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
 
     def test_kwargs(self):
         # test kwargs to the view function
-        view = OCSPView.as_view(ca=root_serial, responder_key=ocsp_key_path,
+        view = OCSPView.as_view(ca=settings.ROOT_SERIAL, responder_key=settings.OCSP_KEY_PATH,
                                 responder_cert=ocsp_serial)
         kwargs = view.view_initkwargs
         CertificateAuthority.objects.get(serial=kwargs['ca'])
@@ -286,11 +284,13 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
 
     def test_bad_kwarg(self):
         with self.assertRaises(ImproperlyConfigured) as e:
-            OCSPView.as_view(ca=root_serial, responder_key='/gone', responder_cert=ocsp_serial)
+            OCSPView.as_view(ca=settings.ROOT_SERIAL, responder_key='/gone',
+                             responder_cert=ocsp_serial)
         self.assertEqual(e.exception.args, ('/gone: Could not read private key.', ))
 
         with self.assertRaises(ImproperlyConfigured) as e:
-            OCSPView.as_view(ca=root_serial, responder_key=ocsp_key_path, responder_cert='gone')
+            OCSPView.as_view(ca=settings.ROOT_SERIAL, responder_key=settings.OCSP_KEY_PATH,
+                             responder_cert='gone')
         self.assertEqual(e.exception.args, ('gone: Could not read public key.', ))
 
     def test_bad_ca(self):

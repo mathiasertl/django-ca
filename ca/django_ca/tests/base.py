@@ -49,7 +49,6 @@ def _load_cert(path, typ=crypto.FILETYPE_PEM):
 
 root_key = _load_key('root.key')
 root_pem, root_pubkey = _load_cert('root.pem')
-root_serial = '35:DB:D2:AD:79:0A:4D:1F:B5:26:ED:5F:83:74:C0:C2'
 child_key = _load_key('child.key')
 child_pem, child_pubkey = _load_cert('child.pem')
 child_serial = '6A:A2:3D:F9:5A:4A:44:8A:9F:91:64:54:A2:0D:04:29'
