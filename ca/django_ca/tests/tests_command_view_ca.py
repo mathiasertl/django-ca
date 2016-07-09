@@ -15,12 +15,10 @@
 
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
-from .base import override_tmpcadir
 from .base import child_pubkey
 
 
-@override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
-class SignCertTestCase(DjangoCAWithCATestCase):
+class ViewCATestCase(DjangoCAWithCATestCase):
     def assertOutput(self, ca, stdout):
         status = 'enabled' if self.ca.enabled else 'disabled'
         if ca.children.all():
