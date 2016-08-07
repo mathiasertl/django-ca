@@ -62,7 +62,7 @@ class ViewCATestCase(DjangoCAWithCATestCase):
 
     def test_family(self):
         parent = CertificateAuthority.objects.get(name=self.ca.name)
-        child = self.load_ca(name='child', x509=child_pubkey, parent=self.ca, pathlen=False)
+        child = self.load_ca(name='child', x509=child_pubkey, parent=self.ca)
 
         stdout, stderr = self.cmd('view_ca', parent.serial)
         self.assertOutput(parent, stdout)
