@@ -85,8 +85,6 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
 
         try:
             password = options['password'][0]
-            if password == '':  # pragma: no cover
-               raise ValueError()
         except:
             password = getpass()
         finally:
