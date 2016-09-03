@@ -89,13 +89,10 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
             if password == '':
                 password = getpass()
         except:
-            password = ''
-        finally:
-            if password == '':
-                password = None
-            else:
-                # cast str to bytes
-                password = force_bytes(password)
+            password = None
+
+        if password is not None:
+            password = force_bytes(password)
 
 
         # filter empty values in the subject
