@@ -86,6 +86,8 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
 
         try:
             password = options['password'][0]
+            if password == '':
+                password = getpass()
         except:
             password = ''
         finally:
