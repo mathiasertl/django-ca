@@ -30,6 +30,7 @@ from django_ca import ca_settings
 from django_ca.models import CertificateAuthority
 from django_ca.management.base import BaseCommand
 from django_ca.management.base import KeySizeAction
+from django.utils.encoding import force_bytes
 from ..base import CertificateAuthorityDetailMixin
 
 
@@ -86,14 +87,13 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         try:
             password = options['password'][0]
         except:
-            password = getpass()
+            password = ''
         finally:
             if password == '':
-                # Allow empty password
                 password = None
             else:
                 # cast str to bytes
-                password = str.encode(password)
+                password = force_bytes(password)
 
 
         # filter empty values in the subject
