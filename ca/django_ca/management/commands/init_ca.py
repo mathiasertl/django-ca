@@ -30,7 +30,6 @@ from django_ca import ca_settings
 from django_ca.models import CertificateAuthority
 from django_ca.management.base import BaseCommand
 from django_ca.management.base import KeySizeAction
-from django.utils.encoding import force_bytes
 from ..base import CertificateAuthorityDetailMixin
 
 
@@ -92,7 +91,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
             password = None
 
         if password is not None:
-            password = force_bytes(password)
+            password = str.encode(password)
 
 
         # filter empty values in the subject
