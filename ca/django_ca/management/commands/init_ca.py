@@ -83,8 +83,16 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         if not os.path.exists(ca_settings.CA_DIR):  # pragma: no cover
             os.makedirs(ca_settings.CA_DIR)
 
-        if options['password'] == '':  # pragma: no cover
-            options['password'] = getpass()
+        try:
+            password = options['password'][0]
+            if password == '':
+                password = getpass()
+        except:
+            password = None
+
+        if password is not None:
+            password = str.encode(password)
+
 
         # filter empty values in the subject
         subject.setdefault('CN', name)
@@ -101,6 +109,6 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
                 issuer_alt_name=options['issuer_alt_name'],
                 crl_url=options['crl_url'],
                 ocsp_url=options['ocsp_url'],
-                name=name, subject=subject, password=options['password'])
+                name=name, subject=subject, password=password)
         except Exception as e:
             raise CommandError(e)
