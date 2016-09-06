@@ -109,6 +109,6 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
                 issuer_alt_name=options['issuer_alt_name'],
                 crl_url=options['crl_url'],
                 ocsp_url=options['ocsp_url'],
-                name=name, subject=subject, password=options['password'])
+                name=name, subject=subject, password=password)
         except Exception as e:
             raise CommandError(e)
