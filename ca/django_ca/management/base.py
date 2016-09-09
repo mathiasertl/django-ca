@@ -17,6 +17,9 @@ import argparse
 import os
 import sys
 
+from datetime import datetime
+from datetime import timedelta
+
 from OpenSSL import crypto
 
 from django.core.management.base import BaseCommand as _BaseCommand
@@ -125,6 +128,26 @@ class URLAction(argparse.Action):
         setattr(namespace, self.dest, value)
 
 
+class ExpiresAction(argparse.Action):
+    def __init__(self, *args, **kwargs):
+        kwargs['type'] = int  # force int
+
+        default = kwargs.get('default')  # default may either be int or datetime
+        if isinstance(default, int):
+            kwargs['default'] = self._get_delta(kwargs['default'])
+
+        super(ExpiresAction, self).__init__(*args, **kwargs)
+
+    def _get_delta(self, value):
+        now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        return now + timedelta(days=value + 1)
+
+    def __call__(self, parser, namespace, value, option_string=None):
+        if value < 0:
+            raise parser.error("Expires must not be negative.")
+
+        setattr(namespace, self.dest, self._get_delta(value))
+
 class MultipleURLAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
         validator = URLValidator()
@@ -184,7 +207,7 @@ class BaseCommand(_BaseCommand):
             '--algorithm', metavar='{sha512,sha256,...}', default=ca_settings.CA_DIGEST_ALGORITHM,
             help='Algorithm to use (default: %(default)s).')
 
-        
+
     @property
     def valid_subject_keys(self):
         fields = ['"%s"' % f for f in SUBJECT_FIELDS]
