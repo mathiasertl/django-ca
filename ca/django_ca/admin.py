@@ -128,6 +128,7 @@ class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
                 'authorityInfoAccess',
                 'authorityKeyIdentifier',
                 'issuerAltName',
+                'nameConstraints',
                 'subjectKeyIdentifier',
             ],
         }),
@@ -136,7 +137,8 @@ class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
     list_display_links = ['enabled', 'name', ]
     search_fields = ['cn', 'name', 'serial', ]
     readonly_fields = ['serial', 'pub', 'parent', 'subjectKeyIdentifier', 'issuerAltName',
-                       'authorityKeyIdentifier', 'authorityInfoAccess', 'cn', 'expires', 'hpkp_pin']
+                       'authorityKeyIdentifier', 'authorityInfoAccess', 'cn', 'expires',
+                       'hpkp_pin', 'nameConstraints', ]
 
     def has_add_permission(self, request):
         return False

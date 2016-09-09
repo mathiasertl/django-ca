@@ -223,6 +223,10 @@ class CertificateAuthority(X509CertMixin):
             return int(constraints.split('pathlen:')[1])
         return None
 
+    def nameConstraints(self):
+        return self.ext_as_str(b'nameConstraints')
+    nameConstraints.short_description = 'nameConstraints'
+
     class Meta:
         verbose_name = _('Certificate Authority')
         verbose_name_plural = _('Certificate Authorities')
