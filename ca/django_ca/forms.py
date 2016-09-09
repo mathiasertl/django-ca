@@ -15,12 +15,13 @@
 
 import os
 
+from datetime import date
 from datetime import datetime
 from datetime import timedelta
 
 from django import forms
-from django.core.urlresolvers import reverse
 from django.contrib.admin.widgets import AdminDateWidget
+from django.core.urlresolvers import reverse
 from django.utils.encoding import force_bytes
 from django.utils.translation import ugettext_lazy as _
 
@@ -149,6 +150,21 @@ class CreateCertificateForm(forms.ModelForm):
             return None
         value = force_bytes(','.join(value))
         return critical, value
+
+    def clean_expires(self):
+        expires = self.cleaned_data['expires']
+        if expires < date.today():
+            raise forms.ValidationError(_('Certificate cannot expire in the past.'))
+
+    def clean(self):
+        data = super(CreateCertificateForm, self).clean()
+        expires = data.get('expires')
+        ca = data.get('ca')
+
+        if ca and expires and ca.expires.date() < expires:
+            stamp = ca.expires.strftime('%Y-%d-%m')
+            self.add_error('expires', _(
+                'CA expires on %s, certificate must not expire after that.') % stamp)
 
     class Meta:
         model = Certificate

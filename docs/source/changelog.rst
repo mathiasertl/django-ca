@@ -4,6 +4,15 @@ ChangeLog
 
 .. _changelog-head:
 
+****
+HEAD
+****
+
+* Make sure that Child CAs never expire after their parents. If the user specifies an expiry after
+  that of the parent, it is silently changed to the parents expiry.
+* Make sure that certificates never expire after their CAs. If the user specifies an expiry after
+  that of the parent, throw an error.
+
 .. _changelog-1.3.0:
 
 ******************
