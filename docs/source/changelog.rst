@@ -12,6 +12,9 @@ HEAD
   that of the parent, it is silently changed to the parents expiry.
 * Make sure that certificates never expire after their CAs. If the user specifies an expiry after
   that of the parent, throw an error.
+* Add support for the ``nameConstraints`` X509 extension when creating CAs. The option to the
+  ``init_ca`` command is ``--name-constraint`` and can be given multiple times to indicate multiple
+  constraints.
 * Add support for the ``tlsfeature`` extension, a.k.a. "TLS Must Staple". Since OpenSSL 1.1 is
   required for this extension, support is currently totally untested.
 
