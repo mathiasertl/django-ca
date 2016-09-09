@@ -12,6 +12,9 @@ HEAD
   that of the parent, it is silently changed to the parents expiry.
 * Make sure that certificates never expire after their CAs. If the user specifies an expiry after
   that of the parent, throw an error.
+* Improve help-output of ``--init-ca`` and ``--sign-cert`` by further grouping arguments into
+  argument groups.
+* Add ability to add CRL-, OCSP- and Issuer-URLs when creating CAs using the ``--ca-*`` options.
 * Add support for the ``nameConstraints`` X509 extension when creating CAs. The option to the
   ``init_ca`` command is ``--name-constraint`` and can be given multiple times to indicate multiple
   constraints.

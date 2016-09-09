@@ -45,9 +45,19 @@ class Command(BaseCommand):
 
         self.stdout.write('* Distinguished Name: %s' % ca.distinguishedName())
         self.stdout.write('* Maximum levels of sub-CAs (pathlen): %s' % pathlen)
+        self.stdout.write('* HPKP pin: %s' % ca.hpkp_pin)
+
+        self.stdout.write('')
+        self.stdout.write('X509 v3 certificate extensions for CA:')
+        for name, value in sorted(ca.extensions.items(), key=lambda k: k[0]):
+            self.stdout.write("%s:" % name.decode('utf-8'))
+            for line in str(value).strip().splitlines():
+                self.stdout.write("    %s" % line)
+
+        self.stdout.write('')
+        self.stdout.write('X509 v3 certificate extensions for signed certificates:')
         self.stdout.write('* Certificate Revokation List (CRL): %s' % (ca.crl_url or None))
         self.stdout.write('* Issuer URL: %s' % (ca.issuer_url or None))
         self.stdout.write('* OCSP URL: %s' % (ca.ocsp_url or None))
         self.stdout.write('* Issuer Alternative Name: %s' % (ca.issuer_alt_name or None))
-        self.stdout.write('* HPKP pin: %s' % ca.hpkp_pin)
         self.stdout.write('\n%s' % ca.pub)
