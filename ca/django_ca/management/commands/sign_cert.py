@@ -15,12 +15,14 @@
 
 from django.core.management.base import CommandError
 from django.utils import six
+from django.utils import timezone
 
 from ... import ca_settings
 from ...management.base import BaseCommand
 from ...models import Certificate
 from ...models import Watcher
 from ...utils import get_cert_profile_kwargs
+from ..base import ExpiresAction
 
 
 class Command(BaseCommand):
@@ -69,8 +71,9 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
         self.add_algorithm(parser)
         self.add_ca(parser)
 
+        # TODO: init_ca has --expires, should be unified
         parser.add_argument(
-            '--days', default=ca_settings.CA_DEFAULT_EXPIRES, type=int,
+            '--days', default=ca_settings.CA_DEFAULT_EXPIRES, action=ExpiresAction,
             help='Sign the certificate for DAYS days (default: %(default)s)')
         parser.add_argument(
             '--csr', metavar='FILE',
@@ -106,8 +109,13 @@ the default values, options like --key-usage still override the profile.""")
         return False, value.encode('utf-8')
 
     def handle(self, *args, **options):
-        # get list of watchers
         ca = options['ca']
+        if ca.expires < options['days']:
+            max_days = (ca.expires - timezone.now()).days
+            raise CommandError(
+                'Certificate would outlive CA, maximum expiry for this CA is %s days.' % max_days)
+
+        # get list of watchers
         watchers = [Watcher.from_addr(addr) for addr in options['watch']]
 
         # get keyUsage and extendedKeyUsage flags based on profiles
