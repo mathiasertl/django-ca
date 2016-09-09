@@ -111,9 +111,11 @@ on Wikipedia.</p>'''.replace('\n', ' ')
 class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
     fieldsets = (
         (None, {
-            'fields': ['name', 'enabled', 'cn', 'parent', 'subjectKeyIdentifier',
-                       'authorityInfoAccess', 'issuerAltName', 'authorityKeyIdentifier',
-                       'hpkp_pin', ],
+            'fields': ['name', 'enabled', 'cn', 'parent', 'hpkp_pin', ],
+        }),
+        (_('Details'), {
+            'description': _('Information to add to newly signed certificates.'),
+            'fields': ['crl_url', 'issuer_url', 'ocsp_url', 'issuer_alt_name', ]
         }),
         (_('Certificate'), {
             'fields': ['serial', 'pub', 'expires'],
@@ -121,8 +123,13 @@ class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
             # existing cert).
             'classes': ('as-code', ),
         }),
-        (_('Details'), {
-            'fields': ['crl_url', 'issuer_url', 'ocsp_url', 'issuer_alt_name', ]
+        (_('X509 extensions'), {
+            'fields': [
+                'authorityInfoAccess',
+                'authorityKeyIdentifier',
+                'issuerAltName',
+                'subjectKeyIdentifier',
+            ],
         }),
     )
     list_display = ['enabled', 'name', 'serial', ]
