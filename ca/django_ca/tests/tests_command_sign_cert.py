@@ -192,7 +192,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         expires = self.ca.expires + timedelta(days=3)
         with self.assertRaises(CommandError):
             stdin = six.StringIO(self.csr_pem)
-            stdout, stderr = self.cmd('sign_cert', alt=['example.com'], days=expires,
+            stdout, stderr = self.cmd('sign_cert', alt=['example.com'], expires=expires,
                                       stdin=stdin)
 
     def test_no_cn_or_san(self):

@@ -71,9 +71,8 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
         self.add_algorithm(parser)
         self.add_ca(parser)
 
-        # TODO: init_ca has --expires, should be unified
         parser.add_argument(
-            '--days', default=ca_settings.CA_DEFAULT_EXPIRES, action=ExpiresAction,
+            '--expires', default=ca_settings.CA_DEFAULT_EXPIRES, action=ExpiresAction,
             help='Sign the certificate for DAYS days (default: %(default)s)')
         parser.add_argument(
             '--csr', metavar='FILE',
@@ -117,7 +116,7 @@ the default values, options like --key-usage still override the profile.""")
 
     def handle(self, *args, **options):
         ca = options['ca']
-        if ca.expires < options['days']:
+        if ca.expires < options['expires']:
             max_days = (ca.expires - timezone.now()).days
             raise CommandError(
                 'Certificate would outlive CA, maximum expiry for this CA is %s days.' % max_days)
@@ -158,7 +157,7 @@ the default values, options like --key-usage still override the profile.""")
 
         cert = Certificate(ca=ca, csr=csr)
         cert.x509 = Certificate.objects.init(
-            ca=ca, csr=csr, algorithm=options['algorithm'], expires=options['days'],
+            ca=ca, csr=csr, algorithm=options['algorithm'], expires=options['expires'],
             subjectAltName=options['alt'], **kwargs)
         cert.save()
         cert.watchers.add(*watchers)

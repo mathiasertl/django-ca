@@ -12,6 +12,8 @@ HEAD
   that of the parent, it is silently changed to the parents expiry.
 * Make sure that certificates never expire after their CAs. If the user specifies an expiry after
   that of the parent, throw an error.
+* Rename the ``--days`` parameter of the ``sign_cert`` command to ``--expires`` to match what we
+  use for ``init_ca``.
 * Improve help-output of ``--init-ca`` and ``--sign-cert`` by further grouping arguments into
   argument groups.
 * Add ability to add CRL-, OCSP- and Issuer-URLs when creating CAs using the ``--ca-*`` options.
