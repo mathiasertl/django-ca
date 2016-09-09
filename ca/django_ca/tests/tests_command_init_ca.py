@@ -49,7 +49,7 @@ class InitCATest(DjangoCATestCase):
             algorithm='sha1',
             key_type='DSA',
             key_size=1024,
-            expires=720,
+            expires=self.expires(720),
             pathlen=3,
             issuer_url='http://issuer.ca.example.com',
             issuer_alt_name='http://ian.ca.example.com',

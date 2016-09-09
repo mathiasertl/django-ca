@@ -16,6 +16,8 @@
 import os
 import json
 
+from datetime import datetime
+
 from OpenSSL import crypto
 
 from django.conf.urls import url
@@ -297,11 +299,12 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
         if change is False:  # # pragma: no branch
             san, cn_in_san = data['subjectAltName']
             subject = {k: v for k, v in data['subject'].items() if v}
+            expires = datetime.combine(data['expires'], datetime.min.time())
 
             obj.x509 = self.model.objects.init(
                 ca=data['ca'],
                 csr=data['csr'],
-                expires=data['expires'],
+                expires=expires,
                 subject=subject,
                 algorithm=data['algorithm'],
                 subjectAltName=[e.strip() for e in san.split(',')],
