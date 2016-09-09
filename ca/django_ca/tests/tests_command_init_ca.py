@@ -54,13 +54,21 @@ class InitCATest(DjangoCATestCase):
             issuer_url='http://issuer.ca.example.com',
             issuer_alt_name='http://ian.ca.example.com',
             crl_url=['http://crl.example.com'],
-            ocsp_url='http://ocsp.example.com'
+            ocsp_url='http://ocsp.example.com',
+            ca_issuer_url='http://ca.issuer.ca.example.com',
+            ca_crl_url=['http://ca.crl.example.com'],
+            ca_ocsp_url='http://ca.ocsp.example.com'
         )
         self.assertEqual(out, '')
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
 
         self.assertEqual(ca.x509.get_signature_algorithm(), six.b('dsaWithSHA1'))
+        self.assertEqual(ca.crlDistributionPoints(), '\nFull Name:\n'
+                         '  URI:http://ca.crl.example.com\n')
+        self.assertEqual(ca.authorityInfoAccess(),
+                         'OCSP - URI:http://ca.ocsp.example.com\n'
+                         'CA Issuers - URI:http://ca.issuer.ca.example.com\n')
         self.assertEqual(ca.pathlen, 3)
         self.assertEqual(ca.issuer_url, 'http://issuer.ca.example.com')
         self.assertEqual(ca.issuer_alt_name, 'http://ian.ca.example.com')
