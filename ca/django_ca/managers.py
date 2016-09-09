@@ -106,7 +106,7 @@ class CertificateAuthorityManager(models.Manager):
 class CertificateManager(models.Manager):
     def init(self, ca, csr, expires, algorithm, subject=None, cn_in_san=True,
              csr_format=crypto.FILETYPE_PEM, subjectAltName=None, keyUsage=None,
-                 extendedKeyUsage=None):
+             extendedKeyUsage=None, tlsfeature=None):
         """Create a signed certificate from a CSR.
 
         X509 extensions (`key_usage`, `ext_key_usage`) may either be None (in which case they are
@@ -146,6 +146,8 @@ class CertificateManager(models.Manager):
             Value for the `keyUsage` X509 extension. See description for format details.
         extendedKeyUsage : tuple or None
             Value for the `extendedKeyUsage` X509 extension. See description for format details.
+        tlsfeature : tuple or None
+            Value for the `tlsfeature` extension. See description for format details.
 
         Returns
         -------
@@ -191,6 +193,8 @@ class CertificateManager(models.Manager):
             extensions.append(crypto.X509Extension(b'keyUsage', *keyUsage))
         if extendedKeyUsage is not None:
             extensions.append(crypto.X509Extension(b'extendedKeyUsage', *extendedKeyUsage))
+        if tlsfeature is not None:
+            extensions.append(crypto.X509Extension(b'tlsFeature', *tlsfeature))
 
         # Add subjectAltNames, always also contains the CommonName
         if subjectAltName:
