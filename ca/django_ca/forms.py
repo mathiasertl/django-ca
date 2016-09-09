@@ -155,6 +155,7 @@ class CreateCertificateForm(forms.ModelForm):
         expires = self.cleaned_data['expires']
         if expires < date.today():
             raise forms.ValidationError(_('Certificate cannot expire in the past.'))
+        return expires
 
     def clean(self):
         data = super(CreateCertificateForm, self).clean()
