@@ -93,6 +93,9 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
             '--ca-ocsp-url', metavar='URL', action=URLAction,
             help='URL of an OCSP responder.'
         )
+        group.add_argument(
+            '--ca-issuer-alt-name', metavar='URL', action=URLAction,
+            help='URL to the homepage of your CA.')
         group.add_argument('--ca-issuer-url', metavar='URL', action=URLAction,
                            help='URL to the certificate of your CA (in DER format).')
         group.add_argument(
