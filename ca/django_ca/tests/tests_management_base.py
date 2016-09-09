@@ -17,6 +17,9 @@ import argparse
 import os
 import tempfile
 
+from datetime import datetime
+from datetime import timedelta
+
 from OpenSSL import crypto
 
 from ..management import base
@@ -245,6 +248,46 @@ class URLActionTestCase(DjangoCATestCase):
     def test_error(self):
         self.assertParserError(['--url=foo'], 'usage: setup.py [-h] [--url URL]\n'
                                               'setup.py: error: foo: Not a valid URL.\n')
+
+
+class ExpiresActionTestCase(DjangoCATestCase):
+    def setUp(self):
+        super(ExpiresActionTestCase, self).setUp()
+        self.now = datetime(2016, 9, 9)
+
+    def test_basic(self):
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument('--expires', action=base.ExpiresAction, default=100, now=self.now)
+
+        # this always is one day more, because N days jumps to the next midnight.
+        expires = self.now + timedelta(days=31)
+        ns = self.parser.parse_args(['--expires=30'])
+        self.assertEqual(ns.expires, expires)
+
+    def test_default(self):
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument('--expires', action=base.ExpiresAction, default=100, now=self.now)
+
+        # this always is one day more, because N days jumps to the next midnight.
+        expires = self.now + timedelta(days=101)
+        ns = self.parser.parse_args([])
+        self.assertEqual(ns.expires, expires)
+
+    def test_default_datetime(self):
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument('--expires', action=base.ExpiresAction, default=self.now)
+
+        # this always is one day more, because N days jumps to the next midnight.
+        ns = self.parser.parse_args([])
+        self.assertEqual(ns.expires, self.now)
+
+    def test_negative(self):
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument('--expires', action=base.ExpiresAction, default=100, now=self.now)
+
+        # this always is one day more, because N days jumps to the next midnight.
+        self.assertParserError(['--expires=-1'], 'usage: setup.py [-h] [--expires EXPIRES]\n'
+                               'setup.py: error: Expires must not be negative.\n')
 
 
 class MultipleURLActionTestCase(DjangoCATestCase):
