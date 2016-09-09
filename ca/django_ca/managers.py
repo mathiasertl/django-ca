@@ -30,13 +30,14 @@ from .utils import sort_subject_dict
 
 
 class CertificateManagerMixin(object):
-    def get_common_extensions(issuer_url=None, crl_url=None, ocsp_url=None):
+    def get_common_extensions(self, issuer_url=None, crl_url=None, ocsp_url=None):
         extensions = []
 
         # Set CRL distribution points:
         if crl_url:
-            crl_urls = [url.strip() for url in crl_url.split()]
-            value = force_bytes(','.join(['URI:%s' % uri for uri in crl_urls]))
+            if isinstance(crl_url, str):
+                crl_url = [url.strip() for url in crl_url.split()]
+            value = force_bytes(','.join(['URI:%s' % uri for uri in crl_url]))
             extensions.append(crypto.X509Extension(b'crlDistributionPoints', 0, value))
 
         auth_info_access = []
@@ -213,7 +214,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         cert.set_pubkey(req.get_pubkey())
 
         extensions = self.get_common_extensions(ca.issuer_url, ca.crl_url, ca.ocsp_url)
-        extensions = [
+        extensions += [
             crypto.X509Extension(b'subjectKeyIdentifier', 0, b'hash', subject=cert),
             crypto.X509Extension(b'authorityKeyIdentifier', 0, b'keyid,issuer', issuer=ca.x509),
             crypto.X509Extension(b'basicConstraints', True, b'CA:FALSE'),
