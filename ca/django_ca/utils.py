@@ -190,29 +190,24 @@ def get_basic_cert(expires, now=None):
     Parameters
     ----------
 
-    expires : int
-        When, in number of days from now, this certificate will expire.
+    expires : datetime
+        When this certificate will expire.
     """
-    if expires < 0:
-        raise ValueError("Expires must not be negative.")
-
     if now is None:  # pragma: no cover
         now = datetime.utcnow()
     now = now.replace(second=0, microsecond=0)
 
-    not_before = format_date(now)
+    if expires < now:
+        raise ValueError("Expires must not be negative.")
 
-    # make expires to a datetime
-    expires = now + timedelta(days=expires + 1)
-    expires = expires.replace(hour=0, minute=0, second=0, microsecond=0)
-
-    not_after = format_date(expires)
+    not_before = format_date(now).encode('utf-8')
+    not_after = format_date(expires).encode('utf-8')
 
     cert = crypto.X509()
     cert.set_version(2) # V3 certificate
     cert.set_serial_number(uuid.uuid4().int)
-    cert.set_notBefore(not_before.encode('utf-8'))
-    cert.set_notAfter(not_after.encode('utf-8'))
+    cert.set_notBefore(not_before)
+    cert.set_notAfter(not_after)
     return cert
 
 
