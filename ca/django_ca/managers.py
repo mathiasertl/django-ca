@@ -65,7 +65,7 @@ class CertificateAuthorityManager(models.Manager):
         ])
 
         extensions = []
-        if name_constraints is not None:
+        if name_constraints:
             name_constraints = ','.join(name_constraints).encode('utf-8')
             extensions.append(crypto.X509Extension(b'nameConstraints', True, name_constraints))
 
