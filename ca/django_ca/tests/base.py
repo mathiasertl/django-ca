@@ -9,6 +9,9 @@ import os
 import shutil
 import tempfile
 
+from datetime import datetime
+from datetime import timedelta
+
 from OpenSSL import crypto
 from mock import patch
 
@@ -155,6 +158,13 @@ class DjangoCATestCase(TestCase):
     def assertAuthorityKeyIdentifier(self, issuer, cert):
         self.assertEqual(cert.authorityKeyIdentifier().strip(),
                          'keyid:%s' % issuer.subjectKeyIdentifier())
+
+    def expires(self, days, now=None):
+        if now is None:
+            now = datetime.utcnow()
+        now = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        return now + timedelta(days + 1)
 
     @classmethod
     def load_ca(cls, name, x509, enabled=True, parent=None, **kwargs):
