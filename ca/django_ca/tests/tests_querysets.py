@@ -30,8 +30,8 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
     def test_basic(self):
         key_size = ca_settings.CA_MIN_KEY_SIZE
         ca = CertificateAuthority.objects.init(
-            name='Root CA', key_size=key_size, key_type='RSA', algorithm='sha256', expires=720,
-            parent=None, pathlen=0, subject={'CN': 'ca.example.com', })
+            name='Root CA', key_size=key_size, key_type='RSA', algorithm='sha256',
+            expires=self.expires(720), parent=None, pathlen=0, subject={'CN': 'ca.example.com', })
 
         self.assertEqual(ca.name, 'Root CA')
 
@@ -58,8 +58,8 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
     def test_pathlen(self):
         key_size = ca_settings.CA_MIN_KEY_SIZE
         kwargs = dict(
-            key_size=key_size, key_type='RSA', algorithm='sha256', expires=720, parent=None,
-            subject={'CN': 'ca.example.com'})
+            key_size=key_size, key_type='RSA', algorithm='sha256', expires=self.expires(720),
+            parent=None, subject={'CN': 'ca.example.com', })
 
         ca = CertificateAuthority.objects.init(pathlen=False, name='1', **kwargs)
         self.assertEqual(ca.basicConstraints(), 'critical,CA:TRUE')
@@ -73,7 +73,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         key_size = ca_settings.CA_MIN_KEY_SIZE
 
         kwargs = dict(
-            key_size=key_size, key_type='RSA', algorithm='sha256', expires=720,
+            key_size=key_size, key_type='RSA', algorithm='sha256', expires=self.expires(720),
             subject={'CN': 'ca.example.com', })
 
         parent = CertificateAuthority.objects.init(name='Root', parent=None, pathlen=1, **kwargs)
@@ -84,8 +84,8 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
 
     def test_key_size(self):
         kwargs = dict(
-            name='Root CA', key_type='RSA', algorithm='sha256', expires=720, parent=None,
-            pathlen=0, subject={'CN': 'ca.example.com'})
+            name='Root CA', key_type='RSA', algorithm='sha256', expires=self.expires(720),
+            parent=None, pathlen=0, subject={'CN': 'ca.example.com', })
 
         key_size = ca_settings.CA_MIN_KEY_SIZE
 

@@ -163,7 +163,7 @@ class GetBasicCertTestCase(TestCase):
         before = now.replace(second=0, microsecond=0)
         after = before.replace(hour=0, minute=0) + timedelta(delta + 1)
 
-        cert = get_basic_cert(delta, now=now)
+        cert = get_basic_cert(after, now=now)
         self.assertFalse(cert.has_expired())
         self.assertEqual(parse_date(cert.get_notBefore().decode('utf-8')), before)
         self.assertEqual(parse_date(cert.get_notAfter().decode('utf-8')), after)
