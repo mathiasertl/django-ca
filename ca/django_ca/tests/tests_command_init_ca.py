@@ -59,7 +59,8 @@ class InitCATest(DjangoCATestCase):
             ocsp_url='http://ocsp.example.com',
             ca_issuer_url='http://ca.issuer.ca.example.com',
             ca_crl_url=['http://ca.crl.example.com'],
-            ca_ocsp_url='http://ca.ocsp.example.com'
+            ca_ocsp_url='http://ca.ocsp.example.com',
+            name_constraint=['permitted;DNS:.com'],
         )
         self.assertEqual(out, '')
         self.assertEqual(err, '')
@@ -71,6 +72,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(ca.authorityInfoAccess(),
                          'OCSP - URI:http://ca.ocsp.example.com\n'
                          'CA Issuers - URI:http://ca.issuer.ca.example.com\n')
+        self.assertEqual(ca.nameConstraints(), 'critical,Permitted:\n  DNS:.com\n')
         self.assertEqual(ca.pathlen, 3)
         self.assertEqual(ca.issuer_url, 'http://issuer.ca.example.com')
         self.assertEqual(ca.issuer_alt_name, 'http://ian.ca.example.com')
