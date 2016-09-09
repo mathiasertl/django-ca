@@ -159,7 +159,8 @@ class DjangoCATestCase(TestCase):
         self.assertEqual(cert.authorityKeyIdentifier().strip(),
                          'keyid:%s' % issuer.subjectKeyIdentifier())
 
-    def expires(self, days, now=None):
+    @classmethod
+    def expires(cls, days, now=None):
         if now is None:
             now = datetime.utcnow()
         now = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -198,8 +199,9 @@ class DjangoCATestCase(TestCase):
         cert_kwargs.update(kwargs)
         cert_kwargs.setdefault('subject', {})
         cert_kwargs['subject'].update(subject)
-        x509 = Certificate.objects.init(ca=ca, csr=csr, algorithm='sha256', expires=720,
-                                        subjectAltName=san, **cert_kwargs)
+        x509 = Certificate.objects.init(
+            ca=ca, csr=csr, algorithm='sha256', expires=cls.expires(720), subjectAltName=san,
+            **cert_kwargs)
         expires = parse_date(x509.get_notAfter().decode('utf-8'))
 
         cert = Certificate(ca=ca, csr=csr, expires=expires)
