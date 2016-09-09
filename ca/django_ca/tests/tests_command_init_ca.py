@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+from datetime import timedelta
+
 from django.core.management.base import CommandError
 from django.utils import six
 
@@ -122,6 +124,30 @@ class InitCATest(DjangoCATestCase):
         self.init_ca(name='Child', parent=parent)
         child = CertificateAuthority.objects.get(name='Child')
 
+        self.assertIsNone(parent.parent)
+        self.assertEqual(child.parent, parent)
+        self.assertEqual(list(child.children.all()), [])
+        self.assertEqual(list(parent.children.all()), [child])
+        self.assertIssuer(parent, child)
+        self.assertAuthorityKeyIdentifier(parent, child)
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_expires_override(self):
+        # If we request an expiry after that of the parrent, we silently override to that of the
+        # parent.
+
+        self.init_ca(name='Parent')
+        parent = CertificateAuthority.objects.get(name='Parent')
+
+        # test that the default is not a child-relationship
+        self.init_ca(name='Second')
+        second = CertificateAuthority.objects.get(name='Second')
+        self.assertIsNone(second.parent)
+
+        self.init_ca(name='Child', parent=parent, expires=parent.expires + timedelta(days=10))
+        child = CertificateAuthority.objects.get(name='Child')
+
+        self.assertEqual(parent.expires, child.expires)
         self.assertIsNone(parent.parent)
         self.assertEqual(child.parent, parent)
         self.assertEqual(list(child.children.all()), [])
