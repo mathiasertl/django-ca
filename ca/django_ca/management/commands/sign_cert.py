@@ -88,10 +88,11 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
             '--out', metavar='FILE',
             help='Save signed certificate to FILE. If omitted, print to stdout.')
 
-        parser.add_argument(
+        group = parser.add_argument_group('X509 v3 certificate extensions')
+        group.add_argument(
             '--key-usage', metavar='VALUES',
             help='Override the keyUsage extension, e.g. "critical,keyCertSign".')
-        parser.add_argument(
+        group.add_argument(
             '--ext-key-usage', metavar='VALUES',
             help='Override the extendedKeyUsage extension, e.g. "serverAuth,clientAuth".')
 
