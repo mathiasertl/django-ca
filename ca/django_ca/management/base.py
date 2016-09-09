@@ -260,7 +260,8 @@ class CertCommand(BaseCommand):
 class CertificateAuthorityDetailMixin(object):
     def add_ca_args(self, parser):
         group = parser.add_argument_group(
-            'x509 extensions', 'Define various x509 extensions used when signing certificates.')
+            'X509 v3 certificate extensions for signed certificates',
+            'Extensions added when signing certificates.')
         group.add_argument('--issuer-url', metavar='URL', action=URLAction,
                            help='URL to the certificate of your CA (in DER format).')
         group.add_argument(

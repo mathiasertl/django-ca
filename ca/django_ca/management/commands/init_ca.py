@@ -67,12 +67,6 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
                             valid keys are %s. If "CN" is not set, the name is used.'''
             % self.valid_subject_keys)
 
-        group = parser.add_argument_group('X509 v3 certificate extensions')
-        group.add_argument(
-            '--name-constraint', default=[], action='append', metavar='CONSTRAINT',
-            help='''Name constraints for the certificate, can be given multiple times, e.g.
-                "permitted;IP:192.168.0.0/255.255.0.0" or "excluded;DNS:.com".''')
-
         group = parser.add_argument_group(
             'pathlen attribute',
             """Maximum number of CAs that can appear below this one. A pathlen of zero (the
@@ -83,6 +77,17 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
                            help='Maximum number of sublevel CAs (default: %(default)s).')
         group.add_argument('--no-pathlen', action='store_false', dest='pathlen',
                            help='Do not add a pathlen attribute.')
+
+        group = parser.add_argument_group(
+            'X509 v3 certificate extensions for CA',
+            '''Extensions added to the certificate authority itself. These options cannot be
+            changed without creating a new authority.'''
+        )
+        group.add_argument(
+            '--name-constraint', default=[], action='append', metavar='CONSTRAINT',
+            help='''Name constraints for the certificate, can be given multiple times, e.g.
+                "permitted;IP:192.168.0.0/255.255.0.0" or "excluded;DNS:.com".''')
+
 
         self.add_ca_args(parser)
 
