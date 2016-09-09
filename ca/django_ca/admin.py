@@ -127,7 +127,6 @@ class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
             'fields': [
                 'authorityInfoAccess',
                 'authorityKeyIdentifier',
-                'issuerAltName',
                 'nameConstraints',
                 'subjectKeyIdentifier',
             ],
