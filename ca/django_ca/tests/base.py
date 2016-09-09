@@ -160,11 +160,8 @@ class DjangoCATestCase(TestCase):
                          'keyid:%s' % issuer.subjectKeyIdentifier())
 
     @classmethod
-    def expires(cls, days, now=None):
-        if now is None:
-            now = datetime.utcnow()
-        now = now.replace(hour=0, minute=0, second=0, microsecond=0)
-
+    def expires(cls, days):
+        now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         return now + timedelta(days + 1)
 
     @classmethod
