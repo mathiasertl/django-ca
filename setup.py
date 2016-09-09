@@ -138,7 +138,7 @@ setup(
         'asn1crypto==0.17.1',
         'ocspbuilder==0.10.2',
         'oscrypto==0.16.2',
-        'pyOpenSSL>=16.0',
+        'pyOpenSSL>=16.1',
     ],
     cmdclass={
         'coverage': CoverageCommand,
