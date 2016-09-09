@@ -31,6 +31,7 @@ from django_ca.models import CertificateAuthority
 from django_ca.management.base import BaseCommand
 from django_ca.management.base import KeySizeAction
 from ..base import CertificateAuthorityDetailMixin
+from ..base import ExpiresAction
 
 
 class Command(BaseCommand, CertificateAuthorityDetailMixin):
@@ -50,7 +51,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
             help="Size of the key to generate (default: %(default)s).")
 
         parser.add_argument(
-            '--expires', metavar='DAYS', type=int, default=365 * 10,
+            '--expires', metavar='DAYS', action=ExpiresAction, default=365 * 10,
             help='CA certificate expires in DAYS days (default: %(default)s).'
         )
         self.add_ca(parser, '--parent',
@@ -86,6 +87,15 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         if options['password'] == '':  # pragma: no cover
             options['password'] = getpass()
 
+        # In case of CAs, we silently set the expiry date to that of the parent CA, if the user
+        # specified a number of days that would make the CA expire after the parent CA.
+        #
+        # The reasoning is simple: When issuing the child CA, the default is automatically after
+        # that of the parent if it wasn't issued on the same day.
+        parent = options['parent']
+        if parent and options['expires'] > parent.expires:
+            options['expires'] = parent.expires
+
         # filter empty values in the subject
         subject.setdefault('CN', name)
         subject = {k: v for k, v in subject.items() if v}
@@ -95,7 +105,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
                 key_size=options['key_size'], key_type=options['key_type'],
                 algorithm=options['algorithm'],
                 expires=options['expires'],
-                parent=options['parent'],
+                parent=parent,
                 pathlen=options['pathlen'],
                 issuer_url=options['issuer_url'],
                 issuer_alt_name=options['issuer_alt_name'],
