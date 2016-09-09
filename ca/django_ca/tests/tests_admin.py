@@ -15,6 +15,7 @@
 
 import json
 
+from datetime import datetime
 from datetime import timedelta
 
 from OpenSSL import crypto
@@ -229,7 +230,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
             'subject_5': cn,
             'subjectAltName_1': True,
             'algorithm': 'sha256',
-            'expires': '2018-04-12',
+            'expires': self.ca.expires.strftime('%Y-%m-%d'),
             'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
             'keyUsage_1': True,
             'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
@@ -240,6 +241,60 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertFalse(response.context['adminform'].form.is_valid())
         self.assertEqual(response.context['adminform'].form.errors,
                          {'csr': ['Enter a valid CSR (in PEM format).']})
+
+        with self.assertRaises(Certificate.DoesNotExist):
+            Certificate.objects.get(cn=cn)
+
+    def test_expires_in_the_past(self):
+        cn = 'test-expires-in-the-past.example.com'
+        expires = datetime.now() - timedelta(days=3)
+        response = self.client.post(self.add_url, data={
+            'csr': self.csr_pem,
+            'ca': self.ca.pk,
+            'profile': 'webserver',
+            'subject_0': 'US',
+            'subject_5': cn,
+            'subjectAltName_1': True,
+            'algorithm': 'sha256',
+            'expires': expires.strftime('%Y-%m-%d'),
+            'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
+            'keyUsage_1': True,
+            'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
+            'extendedKeyUsage_1': False,
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Certificate cannot expire in the past.', response.content.decode('utf-8'))
+        self.assertFalse(response.context['adminform'].form.is_valid())
+        self.assertEqual(response.context['adminform'].form.errors,
+                         {'expires': ['Certificate cannot expire in the past.']})
+
+        with self.assertRaises(Certificate.DoesNotExist):
+            Certificate.objects.get(cn=cn)
+
+    def test_expires_too_late(self):
+        cn = 'test-expires-in-the-past.example.com'
+        expires = self.ca.expires + timedelta(days=3)
+        correct_expires = self.ca.expires.strftime('%Y-%m-%d')
+        error = 'CA expires on %s, certificate must not expire after that.' % correct_expires
+
+        response = self.client.post(self.add_url, data={
+            'csr': self.csr_pem,
+            'ca': self.ca.pk,
+            'profile': 'webserver',
+            'subject_0': 'US',
+            'subject_5': cn,
+            'subjectAltName_1': True,
+            'algorithm': 'sha256',
+            'expires': expires.strftime('%Y-%m-%d'),
+            'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
+            'keyUsage_1': True,
+            'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
+            'extendedKeyUsage_1': False,
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(error, response.content.decode('utf-8'))
+        self.assertFalse(response.context['adminform'].form.is_valid())
+        self.assertEqual(response.context['adminform'].form.errors, {'expires': [error]})
 
         with self.assertRaises(Certificate.DoesNotExist):
             Certificate.objects.get(cn=cn)
