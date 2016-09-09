@@ -15,6 +15,9 @@
 
 import os
 
+from datetime import timedelta
+from datetime import datetime
+
 from django.core.management.base import CommandError
 from django.utils import six
 
@@ -184,6 +187,13 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
         self.assertEqual(stderr, '')
         self.assertEqual(cert.subjectAltName(), 'DNS:example.com')
+
+    def test_expiry_too_late(self):
+        expires = self.ca.expires + timedelta(days=3)
+        with self.assertRaises(CommandError):
+            stdin = six.StringIO(self.csr_pem)
+            stdout, stderr = self.cmd('sign_cert', alt=['example.com'], days=expires,
+                                      stdin=stdin)
 
     def test_no_cn_or_san(self):
         with self.assertRaises(CommandError):
