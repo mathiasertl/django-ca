@@ -32,6 +32,8 @@ from django_ca.management.base import BaseCommand
 from django_ca.management.base import KeySizeAction
 from ..base import CertificateAuthorityDetailMixin
 from ..base import ExpiresAction
+from ..base import MultipleURLAction
+from ..base import URLAction
 
 
 class Command(BaseCommand, CertificateAuthorityDetailMixin):
@@ -84,9 +86,19 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
             changed without creating a new authority.'''
         )
         group.add_argument(
+            '--ca-crl-url', metavar='URL', action=MultipleURLAction, default=[],
+            help='URL to a certificate revokation list. Can be given multiple times.'
+        )
+        group.add_argument(
+            '--ca-ocsp-url', metavar='URL', action=URLAction,
+            help='URL of an OCSP responder.'
+        )
+        group.add_argument('--ca-issuer-url', metavar='URL', action=URLAction,
+                           help='URL to the certificate of your CA (in DER format).')
+        group.add_argument(
             '--name-constraint', default=[], action='append', metavar='CONSTRAINT',
             help='''Name constraints for the certificate, can be given multiple times, e.g.
-                "permitted;IP:192.168.0.0/255.255.0.0" or "excluded;DNS:.com".''')
+                "permitted;email:.example.com" or "excluded;DNS:.com".''')
 
 
         self.add_ca_args(parser)
