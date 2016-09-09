@@ -29,9 +29,32 @@ from .utils import is_power2
 from .utils import sort_subject_dict
 
 
-class CertificateAuthorityManager(models.Manager):
+class CertificateManagerMixin(object):
+    def get_common_extensions(issuer_url=None, crl_url=None, ocsp_url=None):
+        extensions = []
+
+        # Set CRL distribution points:
+        if crl_url:
+            crl_urls = [url.strip() for url in crl_url.split()]
+            value = force_bytes(','.join(['URI:%s' % uri for uri in crl_urls]))
+            extensions.append(crypto.X509Extension(b'crlDistributionPoints', 0, value))
+
+        auth_info_access = []
+        if ocsp_url:
+            auth_info_access.append('OCSP;URI:%s' % ocsp_url)
+        if issuer_url:
+            auth_info_access.append('caIssuers;URI:%s' % issuer_url)
+        if auth_info_access:
+            auth_info_access = force_bytes(','.join(auth_info_access))
+            extensions.append(crypto.X509Extension(b'authorityInfoAccess', 0, auth_info_access))
+
+        return extensions
+
+
+class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
     def init(self, name, key_size, key_type, algorithm, expires, parent, pathlen, subject,
              issuer_url=None, issuer_alt_name=None, crl_url=None, ocsp_url=None,
+             ca_issuer_url=None, ca_crl_url=None, ca_ocsp_url=None,
              name_constraints=None, password=None):
         """Create a Certificate Authority."""
 
@@ -64,7 +87,7 @@ class CertificateAuthorityManager(models.Manager):
             crypto.X509Extension(b'subjectAltName', 0, san),
         ])
 
-        extensions = []
+        extensions = self.get_common_extensions(ca_issuer_url, ca_crl_url, ca_ocsp_url)
         if name_constraints:
             name_constraints = ','.join(name_constraints).encode('utf-8')
             extensions.append(crypto.X509Extension(b'nameConstraints', True, name_constraints))
@@ -109,7 +132,7 @@ class CertificateAuthorityManager(models.Manager):
         return ca
 
 
-class CertificateManager(models.Manager):
+class CertificateManager(CertificateManagerMixin, models.Manager):
     def init(self, ca, csr, expires, algorithm, subject=None, cn_in_san=True,
              csr_format=crypto.FILETYPE_PEM, subjectAltName=None, keyUsage=None,
              extendedKeyUsage=None, tlsfeature=None):
@@ -189,6 +212,7 @@ class CertificateManager(models.Manager):
             setattr(cert.get_subject(), key, force_bytes(value))
         cert.set_pubkey(req.get_pubkey())
 
+        extensions = self.get_common_extensions(ca.issuer_url, ca.crl_url, ca.ocsp_url)
         extensions = [
             crypto.X509Extension(b'subjectKeyIdentifier', 0, b'hash', subject=cert),
             crypto.X509Extension(b'authorityKeyIdentifier', 0, b'keyid,issuer', issuer=ca.x509),
@@ -207,28 +231,12 @@ class CertificateManager(models.Manager):
         if subjectAltName:
             extensions.append(crypto.X509Extension(b'subjectAltName', 0, subjectAltName))
 
-        # Set CRL distribution points:
-        if ca.crl_url:
-            crl_urls = [url.strip() for url in ca.crl_url.split()]
-            value = force_bytes(','.join(['URI:%s' % uri for uri in crl_urls]))
-            extensions.append(crypto.X509Extension(b'crlDistributionPoints', 0, value))
-
         # Add issuerAltName
         if ca.issuer_alt_name:
             issuerAltName = force_bytes('URI:%s' % ca.issuer_alt_name)
         else:
             issuerAltName = b'issuer:copy'
         extensions.append(crypto.X509Extension(b'issuerAltName', 0, issuerAltName, issuer=ca.x509))
-
-        # Add authorityInfoAccess
-        auth_info_access = []
-        if ca.ocsp_url:
-            auth_info_access.append('OCSP;URI:%s' % ca.ocsp_url)
-        if ca.issuer_url:
-            auth_info_access.append('caIssuers;URI:%s' % ca.issuer_url)
-        if auth_info_access:
-            auth_info_access = force_bytes(','.join(auth_info_access))
-            extensions.append(crypto.X509Extension(b'authorityInfoAccess', 0, auth_info_access))
 
         # Add collected extensions
         cert.add_extensions(extensions)
