@@ -23,6 +23,7 @@ from .base import override_tmpcadir
 
 class ViewCATestCase(DjangoCAWithCATestCase):
     def assertOutput(self, ca, stdout):
+        self.maxDiff = None
         status = 'enabled' if self.ca.enabled else 'disabled'
         if ca.children.all():
             children = '* Children:\n'
@@ -46,14 +47,29 @@ class ViewCATestCase(DjangoCAWithCATestCase):
 %s
 * Distinguished Name: %s
 * Maximum levels of sub-CAs (pathlen): %s
+* HPKP pin: %s
+
+X509 v3 certificate extensions for CA:
+authorityKeyIdentifier:
+    %s
+basicConstraints:
+    %s
+keyUsage:
+    Certificate Sign, CRL Sign
+subjectAltName:
+    %s
+subjectKeyIdentifier:
+    %s
+
+X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
-* HPKP pin: %s
 
 %s''' % (ca.name, status, ca.serial, ca.private_key_path, parent, children, ca.distinguishedName(),
-         pathlen, ca.hpkp_pin, ca.pub))
+         pathlen, ca.hpkp_pin, ca.authorityKeyIdentifier().strip(), ca.basicConstraints(),
+         ca.subjectAltName(), ca.subjectKeyIdentifier(), ca.pub))
 
     def test_basic(self):
         stdout, stderr = self.cmd('view_ca', self.ca.serial)
