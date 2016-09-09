@@ -163,7 +163,7 @@ class CreateCertificateForm(forms.ModelForm):
         ca = data.get('ca')
 
         if ca and expires and ca.expires.date() < expires:
-            stamp = ca.expires.strftime('%Y-%d-%m')
+            stamp = ca.expires.strftime('%Y-%m-%d')
             self.add_error('expires', _(
                 'CA expires on %s, certificate must not expire after that.') % stamp)
 
