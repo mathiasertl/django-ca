@@ -67,6 +67,12 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
                             valid keys are %s. If "CN" is not set, the name is used.'''
             % self.valid_subject_keys)
 
+        group = parser.add_argument_group('X509 v3 certificate extensions')
+        group.add_argument(
+            '--name-constraint', default=[], action='append', metavar='CONSTRAINT',
+            help='''Name constraints for the certificate, can be given multiple times, e.g.
+                "permitted;IP:192.168.0.0/255.255.0.0" or "excluded;DNS:.com".''')
+
         group = parser.add_argument_group(
             'pathlen attribute',
             """Maximum number of CAs that can appear below this one. A pathlen of zero (the
@@ -111,6 +117,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
                 issuer_alt_name=options['issuer_alt_name'],
                 crl_url=options['crl_url'],
                 ocsp_url=options['ocsp_url'],
+                name_constraints=options['name_constraint'],
                 name=name, subject=subject, password=options['password'])
         except Exception as e:
             raise CommandError(e)

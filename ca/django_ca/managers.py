@@ -31,7 +31,8 @@ from .utils import sort_subject_dict
 
 class CertificateAuthorityManager(models.Manager):
     def init(self, name, key_size, key_type, algorithm, expires, parent, pathlen, subject,
-             issuer_url=None, issuer_alt_name=None, crl_url=None, ocsp_url=None, password=None):
+             issuer_url=None, issuer_alt_name=None, crl_url=None, ocsp_url=None,
+             name_constraints=None, password=None):
         """Create a Certificate Authority."""
 
         # NOTE: This is already verified by KeySizeAction, so none of these checks should ever be
@@ -63,15 +64,20 @@ class CertificateAuthorityManager(models.Manager):
             crypto.X509Extension(b'subjectAltName', 0, san),
         ])
 
+        extensions = []
+        if name_constraints is not None:
+            name_constraints = ','.join(name_constraints).encode('utf-8')
+            extensions.append(crypto.X509Extension(b'nameConstraints', False, name_constraints))
+
         if parent is None:
             cert.set_issuer(cert.get_subject())
-            authKeyId = crypto.X509Extension(b'authorityKeyIdentifier', False,
-                                             b'keyid:always', issuer=cert)
+            extensions.append(crypto.X509Extension(b'authorityKeyIdentifier', False,
+                                                   b'keyid:always', issuer=cert))
         else:
             cert.set_issuer(parent.x509.get_subject())
-            authKeyId = crypto.X509Extension(b'authorityKeyIdentifier', False,
-                                             b'keyid,issuer', issuer=parent.x509)
-        cert.add_extensions([authKeyId])
+            extensions.append(crypto.X509Extension(b'authorityKeyIdentifier', False,
+                                                   b'keyid,issuer', issuer=parent.x509))
+        cert.add_extensions(extensions)
 
         # sign the certificate
         if parent is None:
@@ -193,7 +199,8 @@ class CertificateManager(models.Manager):
             extensions.append(crypto.X509Extension(b'keyUsage', *keyUsage))
         if extendedKeyUsage is not None:
             extensions.append(crypto.X509Extension(b'extendedKeyUsage', *extendedKeyUsage))
-        if tlsfeature is not None:
+
+        if tlsfeature is not None:  # pragma: no cover
             extensions.append(crypto.X509Extension(b'tlsFeature', *tlsfeature))
 
         # Add subjectAltNames, always also contains the CommonName
