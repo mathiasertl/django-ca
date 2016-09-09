@@ -24,9 +24,9 @@ from django.utils.encoding import force_bytes
 from . import ca_settings
 from .utils import SAN_OPTIONS_RE
 from .utils import get_basic_cert
-from .utils import sort_subject_dict
 from .utils import get_subjectAltName
 from .utils import is_power2
+from .utils import sort_subject_dict
 
 
 class CertificateAuthorityManager(models.Manager):
