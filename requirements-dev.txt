@@ -1,10 +1,10 @@
-Fabric3==1.11.1.post1
-Sphinx==1.4.4
-coverage==4.1
-dateparser==0.3.5
-ipython
+Fabric3==1.12.post1
+Sphinx==1.4.6
+coverage==4.2
+dateparser==0.4.0
+ipython>=5.1.0
 mock==2.0.0
 pip
-setuptools
+setuptools>=26.1.1
 sphinx-autobuild==0.6.0
 wheel==0.29.0
