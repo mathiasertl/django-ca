@@ -117,7 +117,7 @@ package_data = find_package_data('static') + \
 
 setup(
     name='django-ca',
-    version='1.3.0',
+    version='1.4.0',
     description='A Django app providing a SSL/TLS certificate authority.',
     long_description=long_description,
     author='Mathias Ertl',
@@ -148,6 +148,7 @@ setup(
         'Development Status :: 4 - Beta',
         'Framework :: Django :: 1.8',
         'Framework :: Django :: 1.9',
+        'Framework :: Django :: 1.10',
         'Framework :: Django',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',

@@ -4,9 +4,11 @@ ChangeLog
 
 .. _changelog-head:
 
-****
-HEAD
-****
+.. _changelog-1.4.0:
+
+******************
+1.4.0 (2016-09-09)
+******************
 
 * Make sure that Child CAs never expire after their parents. If the user specifies an expiry after
   that of the parent, it is silently changed to the parents expiry.
