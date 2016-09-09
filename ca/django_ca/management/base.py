@@ -131,6 +131,7 @@ class URLAction(argparse.Action):
 class ExpiresAction(argparse.Action):
     def __init__(self, *args, **kwargs):
         kwargs['type'] = int  # force int
+        self.now = kwargs.pop('now', None)  # for testing
 
         default = kwargs.get('default')  # default may either be int or datetime
         if isinstance(default, int):
@@ -139,7 +140,10 @@ class ExpiresAction(argparse.Action):
         super(ExpiresAction, self).__init__(*args, **kwargs)
 
     def _get_delta(self, value):
-        now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        now = self.now
+        if now is None:  # pragma: no cover
+            now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+
         return now + timedelta(days=value + 1)
 
     def __call__(self, parser, namespace, value, option_string=None):
