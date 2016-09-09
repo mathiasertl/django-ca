@@ -134,9 +134,9 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
                 issuer_alt_name=options['issuer_alt_name'],
                 crl_url=options['crl_url'],
                 ocsp_url=options['ocsp_url'],
-                ca_issuer_url=options['issuer_url'],
-                ca_crl_url=options['crl_url'],
-                ca_ocsp_url=options['ocsp_url'],
+                ca_issuer_url=options['ca_issuer_url'],
+                ca_crl_url=options['ca_crl_url'],
+                ca_ocsp_url=options['ca_ocsp_url'],
                 name_constraints=options['name_constraint'],
                 name=name, subject=subject, password=options['password'])
         except Exception as e:
