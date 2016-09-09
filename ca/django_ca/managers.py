@@ -67,7 +67,7 @@ class CertificateAuthorityManager(models.Manager):
         extensions = []
         if name_constraints is not None:
             name_constraints = ','.join(name_constraints).encode('utf-8')
-            extensions.append(crypto.X509Extension(b'nameConstraints', False, name_constraints))
+            extensions.append(crypto.X509Extension(b'nameConstraints', True, name_constraints))
 
         if parent is None:
             cert.set_issuer(cert.get_subject())
