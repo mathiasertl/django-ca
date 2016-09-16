@@ -170,6 +170,19 @@ or you could use `uWSGI and nginx
 <http://uwsgi-docs.readthedocs.org/en/latest/tutorials/Django_and_nginx.html>`_,
 or any of the many other options available.
 
+Apache and mod_wsgi
+___________________
+
+Github user `Raoul Thill <https://github.com/rthill>`_ notes that you need some special
+configuration variable if you use Apache together with mod_wsgi (see `here
+<https://github.com/mathiasertl/django-ca/issues/12#issuecomment-247282915>`_)::
+
+        WSGIDaemonProcess django_ca processes=1 python-path=/opt/django-ca/ca:/opt/django-ca/ca/ca:/opt/django-ca/lib/python2.7/site-packages threads=5
+        WSGIProcessGroup django_ca
+        WSGIApplicationGroup %{GLOBAL}
+        WSGIScriptAlias / /opt/django-ca/ca/ca/wsgi.py
+
+
 Regular cronjobs
 ________________
 
