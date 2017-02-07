@@ -52,14 +52,6 @@ class LazyEncoder(DjangoJSONEncoder):
         return super(LazyEncoder, self).default(obj)
 
 
-def parse_date(date):
-    """Parse a date string formatted in ASN GENERALIZEDTIME.
-
-    This is the inverse of :py:func:`format_date`.
-    """
-    return datetime.strptime(date, _datetime_format)
-
-
 def format_date(date):
     """Format date as ASN1 GENERALIZEDTIME, as required by various fields."""
     return date.strftime(_datetime_format)

@@ -27,7 +27,6 @@ from django_ca.models import Certificate
 from django_ca.models import CertificateAuthority
 from django_ca.utils import sort_subject_dict
 from django_ca.utils import get_cert_profile_kwargs
-from django_ca.utils import parse_date
 
 
 def _load_key(path, typ=crypto.FILETYPE_PEM):
@@ -199,10 +198,10 @@ class DjangoCATestCase(TestCase):
         x509 = Certificate.objects.init(
             ca=ca, csr=csr, algorithm='sha256', expires=cls.expires(720), subjectAltName=san,
             **cert_kwargs)
-        expires = parse_date(x509.get_notAfter().decode('utf-8'))
 
-        cert = Certificate(ca=ca, csr=csr, expires=expires)
+        cert = Certificate(ca=ca, csr=csr)
         cert.x509 = x509
+        cert.expires = cert.not_after  # this comes from the cert
         cert.save()
         return cert
 

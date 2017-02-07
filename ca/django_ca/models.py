@@ -24,6 +24,8 @@ from django.utils.encoding import force_text
 from django.utils.translation import ugettext_lazy as _
 
 from OpenSSL import crypto
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 
 from .managers import CertificateAuthorityManager
 from .managers import CertificateManager
@@ -32,7 +34,6 @@ from .querysets import CertificateQuerySet
 from .utils import format_date
 from .utils import format_subject
 from .utils import multiline_url_validator
-from .utils import parse_date
 from .utils import serial_from_int
 
 
@@ -74,6 +75,7 @@ class X509CertMixin(models.Model):
     serial = models.CharField(max_length=48, null=False, blank=False, unique=True)
 
     _x509 = None
+    _x509c = None
     _extensions = None
 
     @property
@@ -96,6 +98,13 @@ class X509CertMixin(models.Model):
         self.serial = serial_from_int(value.get_serial_number())
 
     @property
+    def x509c(self):
+        if self._x509c is None:
+            backend = default_backend()
+            self._x509c = x509.load_pem_x509_certificate(force_bytes(self.pub), backend)
+        return self._x509c
+
+    @property
     def subject(self):
         return {force_text(k): force_text(v) for k, v in self.x509.get_subject().get_components()}
 
@@ -115,11 +124,11 @@ class X509CertMixin(models.Model):
 
     @property
     def not_before(self):
-        return parse_date(self.x509.get_notBefore().decode('utf-8'))
+        return self.x509c.not_valid_before
 
     @property
     def not_after(self):
-        return parse_date(self.x509.get_notAfter().decode('utf-8'))
+        return self.x509c.not_valid_after
 
     def ext_as_str(self, key):
         if key not in self.extensions:

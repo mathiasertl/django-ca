@@ -20,7 +20,6 @@ from django_ca.utils import sort_subject_dict
 from django_ca.utils import get_basic_cert
 from django_ca.utils import get_cert_profile_kwargs
 from django_ca.utils import is_power2
-from django_ca.utils import parse_date
 from django_ca.utils import get_subjectAltName
 from django_ca.utils import LazyEncoder
 from django_ca.utils import multiline_url_validator
@@ -43,16 +42,6 @@ class FormatDateTestCase(TestCase):
     def test_format(self):
         d = datetime(2016, 3, 5, 14, 53, 12)
         self.assertEqual(format_date(d), '20160305145312Z')
-
-    def test_parse(self):
-        d = datetime(2016, 3, 5, 14, 53, 12)
-        formatted = '20160305145312Z'
-        self.assertEqual(parse_date(formatted), d)
-
-    def test_indempotent(self):
-        d = datetime(2016, 3, 5, 14, 53, 12)
-        f = format_date(d)
-        self.assertEqual(d, parse_date(f))
 
 
 class ParseSubjectTestCase(TestCase):
@@ -158,6 +147,9 @@ http://www.example.net''')
 
 
 class GetBasicCertTestCase(TestCase):
+    def parse_date(self, date):
+        return datetime.strptime(date, '%Y%m%d%H%M%SZ')
+
     def assertCert(self, delta):
         now = datetime.utcnow()
         before = now.replace(second=0, microsecond=0)
@@ -165,8 +157,8 @@ class GetBasicCertTestCase(TestCase):
 
         cert = get_basic_cert(after, now=now)
         self.assertFalse(cert.has_expired())
-        self.assertEqual(parse_date(cert.get_notBefore().decode('utf-8')), before)
-        self.assertEqual(parse_date(cert.get_notAfter().decode('utf-8')), after)
+        self.assertEqual(self.parse_date(cert.get_notBefore().decode('utf-8')), before)
+        self.assertEqual(self.parse_date(cert.get_notAfter().decode('utf-8')), after)
 
     def test_basic(self):
         self.assertCert(720)
