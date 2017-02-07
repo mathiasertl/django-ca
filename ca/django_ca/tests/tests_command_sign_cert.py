@@ -16,7 +16,6 @@
 import os
 
 from datetime import timedelta
-from datetime import datetime
 
 from django.core.management.base import CommandError
 from django.utils import six

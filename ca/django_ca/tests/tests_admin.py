@@ -381,6 +381,7 @@ class CSRDetailTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         response = client.post(self.url, data={'csr': self.csr_pem})
         self.assertRequiresLogin(response)
 
+
 class CertDownloadTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     def get_url(self, cert):
         return reverse('admin:django_ca_certificate_download', kwargs={'pk': cert.pk})

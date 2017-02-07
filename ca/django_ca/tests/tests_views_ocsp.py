@@ -46,6 +46,7 @@ def _load_req(req):
     with open(path, 'rb') as stream:
         return stream.read()
 
+
 req1 = _load_req('req1')
 req1_nonce = b'\xedf\x00S\xbef\x16Y\xcc\xe9\xe9\xa3\x08\xf7\xc2\xda'
 no_nonce_req = _load_req('req-no-nonce')

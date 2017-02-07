@@ -31,17 +31,18 @@ from .base import DjangoCAWithCertTestCase
 from .base import override_tmpcadir
 
 urlpatterns = [
-    url(r'^crl/(?P<serial>[0-9A-F:]+)/$', CertificateRevocationListView.as_view(), 
+    url(r'^crl/(?P<serial>[0-9A-F:]+)/$', CertificateRevocationListView.as_view(),
         name='default'),
-    url(r'^adv/(?P<serial>[0-9A-F:]+)/$', 
+    url(r'^adv/(?P<serial>[0-9A-F:]+)/$',
         CertificateRevocationListView.as_view(
             content_type='text/plain',
             digest='md5',
             expires=321,
             type=crypto.FILETYPE_TEXT,
-        ), 
+        ),
         name='advanced'),
 ]
+
 
 # CRL code complains about 512 bit keys
 @override_tmpcadir(ROOT_URLCONF=__name__, CA_MIN_KEY_SIZE=1024)

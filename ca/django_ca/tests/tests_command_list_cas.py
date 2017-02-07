@@ -46,4 +46,3 @@ class ListCertsTestCase(DjangoCAWithCATestCase):
         stdout, stderr = self.cmd('list_cas')
         self.assertEqual(stdout, '%s - %s (disabled)\n' % (self.ca.serial, self.ca.name))
         self.assertEqual(stderr, '')
-

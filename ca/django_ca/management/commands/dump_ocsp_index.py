@@ -33,4 +33,3 @@ class Command(BaseCommand):
             with open(path, 'w') as stream:
                 for line in get_index(ca):
                     stream.write(line)
-

@@ -27,7 +27,8 @@ CA_OCSP_URLS = getattr(settings, 'CA_OCSP_URLS', {})
 
 if ca_settings.CA_PROVIDE_GENERIC_CRL is True:  # pragma: no branch
     urlpatterns.append(
-        url(r'^crl/(?P<serial>[0-9A-F:]+)/$', views.CertificateRevocationListView.as_view(), name='crl'))
+        url(r'^crl/(?P<serial>[0-9A-F:]+)/$', views.CertificateRevocationListView.as_view(),
+            name='crl'))
 
 for name, kwargs in CA_OCSP_URLS.items():
     urlpatterns += [

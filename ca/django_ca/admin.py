@@ -59,7 +59,6 @@ on Wikipedia.</p>'''.replace('\n', ' ')
         return mark_safe('%s%s' % (obj.hpkp_pin, help_text))
     hpkp_pin.short_description = _('HPKP pin (SHA-256)')
 
-
     def get_urls(self):
         info = self.model._meta.app_label, self.model._meta.model_name
         urls = [
@@ -115,7 +114,7 @@ class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
         }),
         (_('Details'), {
             'description': _('Information to add to newly signed certificates.'),
-            'fields': ['crl_url', 'issuer_url', 'ocsp_url', 'issuer_alt_name', ]
+            'fields': ['crl_url', 'issuer_url', 'ocsp_url', 'issuer_alt_name', ],
         }),
         (_('Certificate'), {
             'fields': ['serial', 'pub', 'expires'],
@@ -179,7 +178,7 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
     list_filter = (StatusListFilter, 'ca')
     readonly_fields = [
         'expires', 'csr', 'pub', 'cn', 'serial', 'revoked', 'revoked_date', 'revoked_reason',
-        'subjectAltName', 'distinguishedName', 'ca', 'hpkp_pin' ] + _x509_ext_fields
+        'subjectAltName', 'distinguishedName', 'ca', 'hpkp_pin', ] + _x509_ext_fields
     search_fields = ['cn', 'serial', ]
 
     fieldsets = [

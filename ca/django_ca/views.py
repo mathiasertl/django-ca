@@ -76,7 +76,8 @@ class CertificateRevocationListView(View, SingleObjectMixin):
         crl = cache.get(cache_key)
         if crl is None:
             ca = self.get_object()
-            crl = get_crl(ca, type=self.type, expires=self.expires, digest=force_bytes(self.digest))
+            crl = get_crl(ca, type=self.type, expires=self.expires,
+                          digest=force_bytes(self.digest))
             cache.set(cache_key, crl, self.expires)
 
         return HttpResponse(crl, content_type=self.content_type)
@@ -233,7 +234,7 @@ class OCSPView(View):
             # hands up in despair and run.
             if unknown is True and critical is True:  # pragma: no cover
                 log.warning('Could not parse unknown critical extension: %r',
-                        dict(extension.native))
+                            dict(extension.native))
                 return self._fail('internal_error')
 
             # If it's an unknown non-critical extension, we can safely ignore it.

@@ -25,7 +25,8 @@ class Command(BaseCommand):
     help = "List all certificates."
 
     def add_arguments(self, parser):
-        self.add_ca(parser, no_default=True, help="Only output certificates by the named authority.")
+        self.add_ca(parser, no_default=True,
+                    help="Only output certificates by the named authority.")
         parser.add_argument('--expired', default=False, action='store_true',
                             help='Also list expired certificates.')
         parser.add_argument('--revoked', default=False, action='store_true',
