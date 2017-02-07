@@ -192,7 +192,7 @@ def get_basic_cert(expires, now=None):
     expires : datetime
         When this certificate will expire.
     """
-    if now is None:  # pragma: no cover
+    if now is None:
         now = datetime.utcnow()
     now = now.replace(second=0, microsecond=0)
 
