@@ -20,7 +20,6 @@ import uuid
 
 from copy import deepcopy
 from datetime import datetime
-from datetime import timedelta
 from ipaddress import ip_address
 
 from django.core.validators import URLValidator
@@ -181,7 +180,7 @@ def multiline_url_validator(value):
 
 def serial_from_int(i):
     s = hex(i)[2:].upper()
-    return ':'.join(a+b for a, b in zip(s[::2], s[1::2]))
+    return ':'.join(a + b for a, b in zip(s[::2], s[1::2]))
 
 
 def get_basic_cert(expires, now=None):
@@ -204,7 +203,7 @@ def get_basic_cert(expires, now=None):
     not_after = format_date(expires).encode('utf-8')
 
     cert = crypto.X509()
-    cert.set_version(2) # V3 certificate
+    cert.set_version(2)  # V3 certificate
     cert.set_serial_number(uuid.uuid4().int)
     cert.set_notBefore(not_before)
     cert.set_notAfter(not_after)
