@@ -4,6 +4,12 @@ ChangeLog
 
 .. _changelog-head:
 
+**********************
+1.4.0 (to be released)
+**********************
+
+* Update requirements.
+
 .. _changelog-1.4.0:
 
 ******************
