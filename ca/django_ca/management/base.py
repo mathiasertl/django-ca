@@ -141,7 +141,7 @@ class ExpiresAction(argparse.Action):
 
     def _get_delta(self, value):
         now = self.now
-        if now is None:  # pragma: no cover
+        if now is None:
             now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
 
         return now + timedelta(days=value + 1)
@@ -151,6 +151,7 @@ class ExpiresAction(argparse.Action):
             raise parser.error("Expires must not be negative.")
 
         setattr(namespace, self.dest, self._get_delta(value))
+
 
 class MultipleURLAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
@@ -210,7 +211,6 @@ class BaseCommand(_BaseCommand):
         parser.add_argument(
             '--algorithm', metavar='{sha512,sha256,...}', default=ca_settings.CA_DIGEST_ALGORITHM,
             help='Algorithm to use (default: %(default)s).')
-
 
     @property
     def valid_subject_keys(self):
