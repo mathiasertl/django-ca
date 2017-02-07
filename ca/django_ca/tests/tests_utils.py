@@ -61,9 +61,9 @@ class ParseSubjectTestCase(TestCase):
 
     def test_case(self):
         # test that we generally ignore case in subject keys
-        self.assertEqual(parse_subject('/c=AT/ou=foo/cn=example.com/eMAIladdreSS=user@example.com'),
-                         {'C': 'AT', 'OU': 'foo', 'CN': 'example.com',
-                          'emailAddress': 'user@example.com'})
+        self.assertEqual(
+            parse_subject('/c=AT/ou=foo/cn=example.com/eMAIladdreSS=user@example.com'),
+            {'C': 'AT', 'OU': 'foo', 'CN': 'example.com', 'emailAddress': 'user@example.com'})
 
     def test_emtpy(self):
         # empty subjects are ok
