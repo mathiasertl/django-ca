@@ -161,6 +161,21 @@ class X509CertMixin(models.Model):
 
     def crlDistributionPoints(self):
         return self.ext_as_str(b'crlDistributionPoints')
+        try:
+            crldp = self.x509c.extensions.get_extension_for_oid(
+                ExtensionOID.CRL_DISTRIBUTION_POINTS)
+        except x509.ExtensionNotFound:
+            return ''
+
+        ll = [v.full_name for v in crldp.value]
+        items = [item for sublist in ll for item in sublist]
+
+        value = ', '.join(['%s:%s' % (SAN_NAME_MAPPINGS[type(s)], s.value) for s in items])
+        if crldp.critical:
+            value = 'critical,%s' % value
+
+        return value
+
     crlDistributionPoints.short_description = 'crlDistributionPoints'
 
     def authorityInfoAccess(self):
