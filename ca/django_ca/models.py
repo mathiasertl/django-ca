@@ -24,6 +24,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from OpenSSL import crypto
 from cryptography import x509
+from cryptography.x509.oid import ExtensionOID
 from cryptography.hazmat.backends import default_backend
 
 from .managers import CertificateAuthorityManager
@@ -35,6 +36,7 @@ from .utils import format_subject
 from .utils import multiline_url_validator
 from .utils import serial_from_int
 from .utils import OID_NAME_MAPPINGS
+from .utils import SAN_NAME_MAPPINGS
 
 
 class Watcher(models.Model):
@@ -140,11 +142,21 @@ class X509CertMixin(models.Model):
         return str(value)
 
     def distinguishedName(self):
-        return format_subject(self.x509.get_subject())
+        return format_subject(self.subject)
     distinguishedName.short_description = 'Distinguished Name'
 
     def subjectAltName(self):
-        return self.ext_as_str(b'subjectAltName')
+        try:
+            ext = self.x509c.extensions.get_extension_for_oid(
+                ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
+        except x509.ExtensionNotFound:
+            return ''
+
+        value = ', '.join(['%s:%s' % (SAN_NAME_MAPPINGS[type(s)], s.value) for s in ext.value])
+        if ext.critical:
+            value = 'critical,%s' % value
+
+        return value
     subjectAltName.short_description = 'subjectAltName'
 
     def crlDistributionPoints(self):

@@ -30,6 +30,7 @@ from django.utils.functional import Promise
 from django.utils.translation import ugettext_lazy as _
 
 from OpenSSL import crypto
+from cryptography import x509
 from cryptography.x509.oid import NameOID
 
 from django_ca import ca_settings
@@ -42,6 +43,16 @@ EXTENDED_KEY_USAGE_DESC = _('Purposes for which the certificate public key can b
 KEY_USAGE_DESC = _('Permitted key usages.')
 SAN_OPTIONS_RE = '(email|URI|IP|DNS|RID|dirName|otherName):'
 _datetime_format = '%Y%m%d%H%M%SZ'
+
+SAN_NAME_MAPPINGS = {
+    x509.DNSName: 'DNS',
+    x509.RFC822Name: 'email',
+    x509.DirectoryName: 'dirname',
+    x509.UniformResourceIdentifier: 'URI',
+    x509.IPAddress: 'IP',
+    x509.RegisteredID: 'RID',
+    x509.OtherName: 'otherName',
+}
 
 OID_NAME_MAPPINGS = {
     NameOID.COUNTRY_NAME: 'C',
