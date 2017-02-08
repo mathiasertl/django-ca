@@ -30,6 +30,7 @@ from django.utils.functional import Promise
 from django.utils.translation import ugettext_lazy as _
 
 from OpenSSL import crypto
+from cryptography.x509.oid import NameOID
 
 from django_ca import ca_settings
 
@@ -41,6 +42,16 @@ EXTENDED_KEY_USAGE_DESC = _('Purposes for which the certificate public key can b
 KEY_USAGE_DESC = _('Permitted key usages.')
 SAN_OPTIONS_RE = '(email|URI|IP|DNS|RID|dirName|otherName):'
 _datetime_format = '%Y%m%d%H%M%SZ'
+
+OID_NAME_MAPPINGS = {
+    NameOID.COUNTRY_NAME: 'C',
+    NameOID.STATE_OR_PROVINCE_NAME: 'ST',
+    NameOID.LOCALITY_NAME: 'L',
+    NameOID.ORGANIZATION_NAME: 'O',
+    NameOID.ORGANIZATIONAL_UNIT_NAME: 'OU',
+    NameOID.COMMON_NAME: 'CN',
+    NameOID.EMAIL_ADDRESS: 'emailAddress',
+}
 
 
 class LazyEncoder(DjangoJSONEncoder):

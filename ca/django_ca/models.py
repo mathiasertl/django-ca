@@ -35,6 +35,7 @@ from .utils import format_date
 from .utils import format_subject
 from .utils import multiline_url_validator
 from .utils import serial_from_int
+from .utils import OID_NAME_MAPPINGS
 
 
 class Watcher(models.Model):
@@ -106,7 +107,7 @@ class X509CertMixin(models.Model):
 
     @property
     def subject(self):
-        return {force_text(k): force_text(v) for k, v in self.x509.get_subject().get_components()}
+        return {OID_NAME_MAPPINGS[s.oid]: s.value for s in self.x509c.subject}
 
     @property
     def issuer(self):
