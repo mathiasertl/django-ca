@@ -20,7 +20,6 @@ import re
 from django.db import models
 from django.utils import timezone
 from django.utils.encoding import force_bytes
-from django.utils.encoding import force_text
 from django.utils.translation import ugettext_lazy as _
 
 from OpenSSL import crypto
@@ -111,7 +110,7 @@ class X509CertMixin(models.Model):
 
     @property
     def issuer(self):
-        return {force_text(k): force_text(v) for k, v in self.x509.get_issuer().get_components()}
+        return {OID_NAME_MAPPINGS[s.oid]: s.value for s in self.x509c.issuer}
 
     @property
     def extensions(self):
