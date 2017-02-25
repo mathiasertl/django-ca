@@ -15,14 +15,12 @@
 
 import base64
 import logging
-
 from datetime import datetime
 from datetime import timedelta
 
 import asn1crypto
-
-from OpenSSL import crypto
 from ocspbuilder import OCSPResponseBuilder
+from OpenSSL import crypto
 from oscrypto.asymmetric import load_certificate
 from oscrypto.asymmetric import load_private_key
 

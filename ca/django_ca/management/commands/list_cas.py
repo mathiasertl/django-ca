@@ -13,8 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from ..base import BaseCommand
 from ...models import CertificateAuthority
+from ..base import BaseCommand
 
 
 class Command(BaseCommand):

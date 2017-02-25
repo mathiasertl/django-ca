@@ -16,7 +16,6 @@
 import re
 
 import dateparser
-
 from OpenSSL import crypto
 
 from django.conf.urls import url
@@ -25,8 +24,8 @@ from django.core.urlresolvers import reverse
 from django.test import Client
 from django.utils.encoding import force_text
 
-from ..views import CertificateRevocationListView
 from ..models import Certificate
+from ..views import CertificateRevocationListView
 from .base import DjangoCAWithCertTestCase
 from .base import override_tmpcadir
 

@@ -15,8 +15,8 @@
 
 import json
 
-from django.utils.encoding import force_text
 from django.forms import widgets
+from django.utils.encoding import force_text
 from django.utils.translation import ugettext as _
 
 from . import ca_settings

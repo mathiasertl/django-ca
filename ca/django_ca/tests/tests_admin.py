@@ -14,7 +14,6 @@
 # see <http://www.gnu.org/licenses/>
 
 import json
-
 from datetime import datetime
 from datetime import timedelta
 

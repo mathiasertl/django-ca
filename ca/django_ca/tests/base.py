@@ -8,12 +8,11 @@ Replace this with more appropriate tests for your application.
 import os
 import shutil
 import tempfile
-
 from datetime import datetime
 from datetime import timedelta
 
-from OpenSSL import crypto
 from mock import patch
+from OpenSSL import crypto
 
 from django.conf import settings
 from django.core.management import call_command
@@ -25,8 +24,8 @@ from django.utils.six.moves import reload_module
 from django_ca import ca_settings
 from django_ca.models import Certificate
 from django_ca.models import CertificateAuthority
-from django_ca.utils import sort_subject_dict
 from django_ca.utils import get_cert_profile_kwargs
+from django_ca.utils import sort_subject_dict
 
 
 def _load_key(path, typ=crypto.FILETYPE_PEM):

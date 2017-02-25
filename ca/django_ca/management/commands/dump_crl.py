@@ -14,10 +14,10 @@
 # see <http://www.gnu.org/licenses/>.
 
 from django.core.management.base import CommandError
+from django.utils.encoding import force_bytes
 
 from django_ca.crl import get_crl
 from django_ca.management.base import BaseCommand
-from django.utils.encoding import force_bytes
 
 
 class Command(BaseCommand):

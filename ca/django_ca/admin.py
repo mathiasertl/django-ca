@@ -13,21 +13,20 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-import os
 import json
-
+import os
 from datetime import datetime
 
 from OpenSSL import crypto
 
 from django.conf.urls import url
 from django.contrib import admin
+from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
 from django.utils import timezone
 from django.utils.html import mark_safe
 from django.utils.translation import ugettext_lazy as _
-from django.http import Http404
 
 from .forms import CreateCertificateForm
 from .forms import X509CertMixinAdminForm

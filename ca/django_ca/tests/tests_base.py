@@ -11,8 +11,8 @@ from django.test import TestCase
 
 from django_ca import ca_settings
 from django_ca.tests.base import DjangoCATestCase
-from django_ca.tests.base import override_tmpcadir
 from django_ca.tests.base import override_settings
+from django_ca.tests.base import override_tmpcadir
 
 
 class TestDjangoCATestCase(DjangoCATestCase):

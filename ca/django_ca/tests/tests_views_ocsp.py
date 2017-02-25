@@ -17,7 +17,6 @@ import base64
 import logging
 import os
 import unittest
-
 from datetime import timedelta
 
 import asn1crypto
@@ -28,8 +27,8 @@ from django.conf import settings
 from django.conf.urls import url
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
-from django.utils.encoding import force_text
 from django.test import Client
+from django.utils.encoding import force_text
 
 from ..models import Certificate
 from ..models import CertificateAuthority

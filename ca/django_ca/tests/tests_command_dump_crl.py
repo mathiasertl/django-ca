@@ -14,15 +14,14 @@
 # see <http://www.gnu.org/licenses/>
 
 import os
-
 from io import BytesIO
 
 from OpenSSL import crypto
 
 from django.core.management.base import CommandError
 
-from ..models import Certificate
 from .. import ca_settings
+from ..models import Certificate
 from .base import DjangoCAWithCertTestCase
 from .base import override_tmpcadir
 

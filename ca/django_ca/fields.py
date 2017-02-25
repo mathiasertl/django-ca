@@ -15,12 +15,11 @@
 
 from django import forms
 
-from .widgets import SubjectAltNameWidget
-from .widgets import SubjectWidget
-from .widgets import KeyUsageWidget
-
 from . import ca_settings
 from .utils import SUBJECT_FIELDS
+from .widgets import KeyUsageWidget
+from .widgets import SubjectAltNameWidget
+from .widgets import SubjectWidget
 
 
 class SubjectField(forms.MultiValueField):

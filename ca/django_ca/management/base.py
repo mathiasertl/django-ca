@@ -16,7 +16,6 @@
 import argparse
 import os
 import sys
-
 from datetime import datetime
 from datetime import timedelta
 
@@ -29,11 +28,11 @@ from django.core.validators import URLValidator
 from django.utils import six
 
 from django_ca import ca_settings
-from django_ca.utils import is_power2
-from django_ca.utils import parse_subject
-from django_ca.utils import SUBJECT_FIELDS
 from django_ca.models import Certificate
 from django_ca.models import CertificateAuthority
+from django_ca.utils import SUBJECT_FIELDS
+from django_ca.utils import is_power2
+from django_ca.utils import parse_subject
 
 
 class SubjectAction(argparse.Action):

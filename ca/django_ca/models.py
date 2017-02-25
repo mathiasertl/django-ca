@@ -17,26 +17,26 @@ import base64
 import hashlib
 import re
 
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.x509.oid import ExtensionOID
+from OpenSSL import crypto
+
 from django.db import models
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.translation import ugettext_lazy as _
 
-from OpenSSL import crypto
-from cryptography import x509
-from cryptography.x509.oid import ExtensionOID
-from cryptography.hazmat.backends import default_backend
-
 from .managers import CertificateAuthorityManager
 from .managers import CertificateManager
 from .querysets import CertificateAuthorityQuerySet
 from .querysets import CertificateQuerySet
+from .utils import OID_NAME_MAPPINGS
+from .utils import SAN_NAME_MAPPINGS
 from .utils import format_date
 from .utils import format_subject
 from .utils import multiline_url_validator
 from .utils import serial_from_int
-from .utils import OID_NAME_MAPPINGS
-from .utils import SAN_NAME_MAPPINGS
 
 
 class Watcher(models.Model):

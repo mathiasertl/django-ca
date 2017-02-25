@@ -16,7 +16,6 @@
 import argparse
 import os
 import tempfile
-
 from datetime import datetime
 from datetime import timedelta
 
@@ -24,12 +23,12 @@ from OpenSSL import crypto
 
 from ..management import base
 from ..models import CertificateAuthority
+from .base import DjangoCATestCase
+from .base import DjangoCAWithCATestCase
+from .base import DjangoCAWithCertTestCase
 from .base import child_pubkey
 from .base import override_settings
 from .base import override_tmpcadir
-from .base import DjangoCAWithCATestCase
-from .base import DjangoCAWithCertTestCase
-from .base import DjangoCATestCase
 
 
 class SubjectActionTestCase(DjangoCATestCase):

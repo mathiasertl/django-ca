@@ -19,17 +19,17 @@ https://skippylovesmalorie.wordpress.com/2010/02/12/how-to-generate-a-self-signe
 """
 
 import os
-
 from getpass import getpass
-
-from django.core.management.base import CommandError
 
 from OpenSSL import crypto
 
+from django.core.management.base import CommandError
+
 from django_ca import ca_settings
-from django_ca.models import CertificateAuthority
 from django_ca.management.base import BaseCommand
 from django_ca.management.base import KeySizeAction
+from django_ca.models import CertificateAuthority
+
 from ..base import CertificateAuthorityDetailMixin
 from ..base import ExpiresAction
 from ..base import MultipleURLAction

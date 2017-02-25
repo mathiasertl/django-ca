@@ -14,7 +14,6 @@
 # see <http://www.gnu.org/licenses/>
 
 import os
-
 from io import BytesIO
 
 from OpenSSL import crypto

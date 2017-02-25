@@ -21,7 +21,6 @@ from django_ca.tests.base import DjangoCATestCase
 
 from .. import ca_settings
 from ..models import CertificateAuthority
-
 from .base import override_tmpcadir
 
 

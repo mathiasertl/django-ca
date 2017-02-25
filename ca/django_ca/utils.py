@@ -17,21 +17,20 @@
 
 import re
 import uuid
-
 from copy import deepcopy
 from datetime import datetime
 from ipaddress import ip_address
 
-from django.core.validators import URLValidator
+from cryptography import x509
+from cryptography.x509.oid import NameOID
+from OpenSSL import crypto
+
 from django.core.serializers.json import DjangoJSONEncoder
+from django.core.validators import URLValidator
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 from django.utils.functional import Promise
 from django.utils.translation import ugettext_lazy as _
-
-from OpenSSL import crypto
-from cryptography import x509
-from cryptography.x509.oid import NameOID
 
 from django_ca import ca_settings
 
