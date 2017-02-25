@@ -16,8 +16,6 @@
 import os
 import sys
 
-from six.moves import configparser
-
 from fabric.api import env
 from fabric.api import local
 from fabric.api import task
@@ -28,6 +26,7 @@ from fabric.context_managers import hide
 from fabric.context_managers import settings
 from fabric.decorators import runs_once
 from fabric.utils import abort
+from six.moves import configparser
 
 
 config = configparser.ConfigParser({
