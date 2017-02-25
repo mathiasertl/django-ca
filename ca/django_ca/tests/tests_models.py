@@ -72,6 +72,10 @@ class TestWatcher(TestCase):
 
 
 class CertificateTests(DjangoCAWithCertTestCase):
+    def setUp(self):
+        self.cert2 = self.load_cert(self.ca, cert2_pubkey)
+        self.cert3 = self.load_cert(self.ca, cert3_pubkey)
+
     def test_revocation(self):
         # Never really happens in real life, but should still be checked
         c = Certificate(revoked=False)
@@ -80,13 +84,11 @@ class CertificateTests(DjangoCAWithCertTestCase):
             c.get_revocation()
 
     def test_hpkp_pin(self):
-        cert2 = self.load_cert(self.ca, cert2_pubkey)
-        cert3 = self.load_cert(self.ca, cert3_pubkey)
 
         # get hpkp pins using
         #   openssl x509 -in cert1.pem -pubkey -noout \
         #       | openssl rsa -pubin -outform der \
         #       | openssl dgst -sha256 -binary | base64
         self.assertEqual(self.cert.hpkp_pin, '/W7D0lNdHVFrH/hzI16BPkhoojMVl5JmjEunZqXaEKI=')
-        self.assertEqual(cert2.hpkp_pin, 'K8Kykt/NPbgrMs20gZ9vXpyBT8FQqa5QyRsEgNXQTZc=')
-        self.assertEqual(cert3.hpkp_pin, 'wqXwnXNXwtIEXGx6j9x7Tg8zAnoiNjKbH1OKqumXCFg=')
+        self.assertEqual(self.cert2.hpkp_pin, 'K8Kykt/NPbgrMs20gZ9vXpyBT8FQqa5QyRsEgNXQTZc=')
+        self.assertEqual(self.cert3.hpkp_pin, 'wqXwnXNXwtIEXGx6j9x7Tg8zAnoiNjKbH1OKqumXCFg=')
