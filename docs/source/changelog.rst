@@ -5,10 +5,13 @@ ChangeLog
 .. _changelog-head:
 
 **********************
-1.4.0 (to be released)
+1.4.1 (to be released)
 **********************
 
 * Update requirements.
+* Examples now consistently use 4096 bit certificates.
+* Some functionality is now migrated to ``cryptography`` in the ongoing process to deprecate
+  pyOpenSSL (which is no longer maintained).
 
 .. _changelog-1.4.0:
 
