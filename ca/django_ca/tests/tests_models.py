@@ -18,6 +18,9 @@ from django.test import TestCase
 
 from ..models import Certificate
 from ..models import Watcher
+from .base import DjangoCAWithCertTestCase
+from .base import cert2_pubkey
+from .base import cert3_pubkey
 
 
 class TestWatcher(TestCase):
@@ -68,10 +71,22 @@ class TestWatcher(TestCase):
         self.assertEqual(str(w), '%s <%s>' % (name, mail))
 
 
-class CertificateTests(TestCase):
+class CertificateTests(DjangoCAWithCertTestCase):
     def test_revocation(self):
         # Never really happens in real life, but should still be checked
         c = Certificate(revoked=False)
 
         with self.assertRaises(ValueError):
             c.get_revocation()
+
+    def test_hpkp_pin(self):
+        cert2 = self.load_cert(self.ca, cert2_pubkey)
+        cert3 = self.load_cert(self.ca, cert3_pubkey)
+
+        # get hpkp pins using
+        #   openssl x509 -in cert1.pem -pubkey -noout \
+        #       | openssl rsa -pubin -outform der \
+        #       | openssl dgst -sha256 -binary | base64
+        self.assertEqual(self.cert.hpkp_pin, '/W7D0lNdHVFrH/hzI16BPkhoojMVl5JmjEunZqXaEKI=')
+        self.assertEqual(cert2.hpkp_pin, 'K8Kykt/NPbgrMs20gZ9vXpyBT8FQqa5QyRsEgNXQTZc=')
+        self.assertEqual(cert3.hpkp_pin, 'wqXwnXNXwtIEXGx6j9x7Tg8zAnoiNjKbH1OKqumXCFg=')
