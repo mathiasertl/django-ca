@@ -17,6 +17,7 @@ import os
 import re
 
 from OpenSSL import crypto
+from idna.core import decode as decode_hostname
 
 from django.db import models
 from django.utils.encoding import force_bytes
@@ -80,15 +81,23 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         if pathlen is not False:
             basicConstraints += ', pathlen:%s' % pathlen
 
-        san = force_bytes('DNS:%s' % subject['CN'])
         cert.add_extensions([
             crypto.X509Extension(b'basicConstraints', True, basicConstraints.encode('utf-8')),
             crypto.X509Extension(b'keyUsage', 0, b'keyCertSign,cRLSign'),
             crypto.X509Extension(b'subjectKeyIdentifier', False, b'hash', subject=cert),
-            crypto.X509Extension(b'subjectAltName', 0, san),
         ])
 
         extensions = self.get_common_extensions(ca_issuer_url, ca_crl_url, ca_ocsp_url)
+
+        try:
+            # Only add CommonName to subjectAltName if it is a valid label
+            decode_hostname(subject['CN'])
+        except:
+            pass
+        else:
+            san = force_bytes('DNS:%s' % subject['CN'])
+            extensions.append(crypto.X509Extension(b'subjectAltName', 0, san))
+
         if name_constraints:
             name_constraints = ','.join(name_constraints).encode('utf-8')
             extensions.append(crypto.X509Extension(b'nameConstraints', True, name_constraints))
