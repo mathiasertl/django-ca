@@ -16,12 +16,14 @@
 import base64
 import logging
 import os
+import unittest
 
 from datetime import timedelta
 
 import asn1crypto
 from oscrypto import asymmetric
 
+import django
 from django.conf import settings
 from django.conf.urls import url
 from django.core.exceptions import ImproperlyConfigured
@@ -273,6 +275,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1200)
 
+    @unittest.skipIf(django.VERSION < (1, 9, ), "view.view_initkwargs was added in Django 1.9")
     def test_kwargs(self):
         # test kwargs to the view function
         view = OCSPView.as_view(ca=settings.ROOT_SERIAL, responder_key=settings.OCSP_KEY_PATH,
