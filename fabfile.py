@@ -70,6 +70,7 @@ def livehtml(port=8001):
     local('sphinx-autobuild docs/source docs/build/html -p %s -z ca '
           '-i *.swp -i *.swo -i *.swx -i *~ -i *4913' % port)
 
+
 @task
 def deploy_app(section='DEFAULT'):
     if not config.getboolean(section, 'app'):
@@ -185,7 +186,7 @@ def init_demo():
     manage('init_ca', 'Root CA', '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=ca.example.com',
            pathlen=1, ocsp_url='http://ocsp.ca.example.com', crl_url=['http://ca.example.com/crl'],
            issuer_url='http://ca.example.com/ca.crt', issuer_alt_name='https://ca.example.com'
-          )
+           )
     root_ca = CertificateAuthority.objects.get(name='Root CA')
 
     print(green('Initiating Child CA...'))
@@ -224,7 +225,6 @@ def init_demo():
     cert.revoke('keyCompromise')
     cert.save()
 
-
     print(green('Create CRL and OCSP index...'))
     crl_path = os.path.join(ca_settings.CA_DIR, 'crl.pem')
     ocsp_index = os.path.join(ca_settings.CA_DIR, 'ocsp_index.txt')
@@ -255,7 +255,7 @@ def init_demo():
 
     os.chdir('../')
     cwd = os.getcwd()
-    rel = lambda p: os.path.relpath(p, cwd)
+    rel = lambda p: os.path.relpath(p, cwd)  # NOQA
     ca_crt = rel(ca_crt)
     host1_pem = rel(os.path.join(ca_settings.CA_DIR, 'host1.example.com.pem'))
     print("")
@@ -263,8 +263,10 @@ def init_demo():
     print(green('* Verify with CRL:'))
     print('\topenssl verify -CAfile %s -crl_check %s' % (rel(ca_crl_path), rel(host1_pem)))
     print(green('* Run OCSP responder:'))
-    print('\topenssl ocsp -index %s -port 8888 -rsigner %s -rkey %s -CA %s -text' % (rel(ocsp_index), rel(ocsp_pem), rel(ocsp_key), ca_crt))
+    print('\topenssl ocsp -index %s -port 8888 -rsigner %s -rkey %s -CA %s -text' %
+          (rel(ocsp_index), rel(ocsp_pem), rel(ocsp_key), ca_crt))
     print(green('* Verify certificate with OCSP:'))
-    print('\topenssl ocsp -CAfile %s -issuer %s -cert %s -url http://localhost:8888 -resp_text' % (ca_crt, ca_crt, host1_pem))
+    print('\topenssl ocsp -CAfile %s -issuer %s -cert %s -url http://localhost:8888 -resp_text' %
+          (ca_crt, ca_crt, host1_pem))
     print(green('* Start webserver on http://localhost:8000 (user: user, password: nopass) with:'))
     print('\tpython ca/manage.py runserver')
