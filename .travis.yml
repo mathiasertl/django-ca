@@ -1,0 +1,21 @@
+language: python
+python:
+  - "2.7"
+  - "3.4"
+  - "3.5"
+  - "3.6"
+  - "nightly"
+install:
+  # Build/test dependencies
+  - pip install -r requirements.txt
+#before_script:
+script:
+  - python setup.py test
+#notifications:
+#  irc:
+#    channels: "irc.freenode.org#fabric"
+#    template:
+#      - "%{repository}@%{branch}: %{message} (%{build_url})"
+#    on_success: change
+#    on_failure: change
+#  email: false
