@@ -9,6 +9,33 @@ Helpful descriptions of the meaning of various extensions can also be found in
 :manpage:`x509v3_config(5SSL)` (`online
 <https://www.openssl.org/docs/manmaster/apps/x509v3_config.html>`_).
 
+**********
+CommonName
+**********
+
+Of course not an extension, but included here for completeness.
+
+================ =================================================================================
+CA               Value
+================ =================================================================================
+Let's Encrypt    C=US, O=Let's Encrypt, CN=Let's Encrypt Authority X1
+StartSSL         C=IL, O=StartCom Ltd., OU=Secure Digital Certificate Signing, CN=StartCom
+                 Certification Authority
+StartSSL Class 2 C=IL, O=StartCom Ltd., OU=Secure Digital Certificate Signing, CN=StartCom Class 2
+                 Primary Intermediate Server CA
+StartSSL Class 3 C=IL, O=StartCom Ltd., OU=StartCom Certification Authority, CN=StartCom Class 3 OV
+                 Server CA
+GeoTrust Global  C=US, O=GeoTrust Inc., CN=GeoTrust Global CA
+RapidSSL G3      C=US, O=GeoTrust Inc., CN=RapidSSL SHA256 CA - G3
+Comodo           C=GB, ST=Greater Manchester, L=Salford, O=COMODO CA Limited, CN=COMODO RSA
+                 Certification Authority
+Comodo DV        C=GB, ST=Greater Manchester, L=Salford, O=COMODO CA Limited, CN=COMODO RSA Domain
+                 Validation Secure Server CA
+GlobalSign       C=BE, O=GlobalSign nv-sa, OU=Root CA, CN=GlobalSign Root CA
+GlobalSign DV    C=BE, O=GlobalSign nv-sa, CN=GlobalSign Domain Validation CA - SHA256 - G2
+================ =================================================================================
+
+
 *******************
 authorityInfoAccess
 *******************
@@ -343,6 +370,33 @@ StartSSL Class 3 Digital Signature, Key Encipherment
 RapidSSL G3      (critical) Digital Signature, Key Encipherment
 Comodo DV        (critical) Digital Signature, Key Encipherment
 GlobalSign DV    (critical) Digital Signature, Key Encipherment
+================ =================================================================================
+
+.. _subjectAltName:
+
+**************
+subjectAltName
+**************
+
+The ``subjectAltName`` extension is not present in any CA certificate, and of course whatever the
+customer requests in signed certificates.
+
+In CA certificates
+==================
+
+================ =================================================================================
+CA               Value
+================ =================================================================================
+Let's Encrypt    -
+StartSSL         -
+StartSSL Class 2 -
+StartSSL Class 3 -
+GeoTrust Global  -
+RapidSSL G3      -
+Comodo           -
+Comodo DV        -
+GlobalSign       -
+GlobalSign DV    -
 ================ =================================================================================
 
 .. _subjectKeyIdentifier:
