@@ -11,6 +11,7 @@ install:
 #before_script:
 script:
   - python setup.py test
+
 #notifications:
 #  irc:
 #    channels: "irc.freenode.org#fabric"
