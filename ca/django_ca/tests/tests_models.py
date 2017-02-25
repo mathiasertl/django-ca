@@ -83,6 +83,19 @@ class CertificateTests(DjangoCAWithCertTestCase):
         with self.assertRaises(ValueError):
             c.get_revocation()
 
+    def test_issuerAltName(self):
+        self.assertEqual(self.cert.issuerAltName(), 'DNS:ca.example.com')
+        self.assertEqual(self.cert2.issuerAltName(), 'DNS:ca.example.com')
+        self.assertEqual(self.cert3.issuerAltName(), 'DNS:ca.example.com')
+
+    def test_authorityKeyIdentifier(self):
+        self.assertEqual(self.cert.authorityKeyIdentifier(),
+                         'keyid:6B:C8:CF:56:29:FC:00:55:DD:A5:ED:5A:55:B7:7C:65:49:AC:AD:B1\n')
+        self.assertEqual(self.cert2.authorityKeyIdentifier(),
+                         'keyid:6B:C8:CF:56:29:FC:00:55:DD:A5:ED:5A:55:B7:7C:65:49:AC:AD:B1\n')
+        self.assertEqual(self.cert3.authorityKeyIdentifier(),
+                         'keyid:6B:C8:CF:56:29:FC:00:55:DD:A5:ED:5A:55:B7:7C:65:49:AC:AD:B1\n')
+
     def test_hpkp_pin(self):
 
         # get hpkp pins using
