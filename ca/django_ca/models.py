@@ -14,6 +14,7 @@
 # see <http://www.gnu.org/licenses/>.
 
 import base64
+import binascii
 import hashlib
 import re
 
@@ -39,6 +40,7 @@ from .utils import format_date
 from .utils import format_subject
 from .utils import multiline_url_validator
 from .utils import serial_from_int
+from .utils import add_colons
 
 
 class Watcher(models.Model):
@@ -205,7 +207,17 @@ class X509CertMixin(models.Model):
     issuerAltName.short_description = 'issuerAltName'
 
     def authorityKeyIdentifier(self):
-        return self.ext_as_str(b'authorityKeyIdentifier')
+        try:
+            ext = self.x509c.extensions.get_extension_for_oid(
+                ExtensionOID.AUTHORITY_KEY_IDENTIFIER)
+        except x509.ExtensionNotFound:
+            return ''
+
+        hexlified = binascii.hexlify(ext.value.key_identifier).upper().decode('utf-8')
+        value = 'keyid:%s\n' % add_colons(hexlified)
+        if ext.critical:
+            value = 'critical,%s' % value
+        return value
     authorityKeyIdentifier.short_description = 'authorityKeyIdentifier'
 
     def get_digest(self, algo):
