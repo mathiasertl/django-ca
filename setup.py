@@ -32,7 +32,8 @@ Features:
 
 * Set up a secure local certificate authority in just a few minutes.
 * Written in Python 2.7/Python3.4+, requires Django 1.8 or later.
-* Manage your entire certificate authority from the command line and/or via Djangos admin interface.
+* Manage your entire certificate authority from the command line and/or via Djangos admin
+  interface.
 * Get email notifications about certificates about to expire.
 * Certificate validation using Certificate Revocation Lists (CRLs) and via an included OCSP
   responder.
@@ -80,6 +81,7 @@ class TestCommand(BaseCommand):
     def run(self):
         self.run_tests()
 
+
 class CoverageCommand(BaseCommand):
     description = 'Generate test-coverage for django-ca.'
 
@@ -94,8 +96,8 @@ class CoverageCommand(BaseCommand):
 
         cov = coverage.Coverage(cover_pylib=False, branch=True,
                                 source=['django_ca'],
-                                omit=['*migrations/*', '*/tests/tests*' ]
-                               )
+                                omit=['*migrations/*', '*/tests/tests*', ]
+                                )
         cov.start()
 
         self.run_tests()
@@ -105,6 +107,7 @@ class CoverageCommand(BaseCommand):
 
         cov.html_report(directory=report_dir)
 
+
 def find_package_data(dir):
     data = []
     package_root = os.path.join('ca', 'django_ca')
@@ -113,8 +116,8 @@ def find_package_data(dir):
             data.append(os.path.join(root, file).lstrip(package_root))
     return data
 
-package_data = find_package_data('static') + \
-               find_package_data('templates')
+
+package_data = find_package_data('static') + find_package_data('templates')
 
 setup(
     name='django-ca',
