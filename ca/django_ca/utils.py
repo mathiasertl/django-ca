@@ -191,9 +191,13 @@ def multiline_url_validator(value):
         validator(line)
 
 
+def add_colons(s):
+    return ':'.join(a + b for a, b in zip(s[::2], s[1::2]))
+
+
 def serial_from_int(i):
     s = hex(i)[2:].upper()
-    return ':'.join(a + b for a, b in zip(s[::2], s[1::2]))
+    return add_colons(s)
 
 
 def get_basic_cert(expires, now=None):
