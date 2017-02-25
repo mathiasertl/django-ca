@@ -4,6 +4,7 @@ coverage==4.3.4
 dateparser==0.5.1
 flake8==3.3.0
 ipython>=5.2.2
+isort==4.2.5
 mock==2.0.0
 pip>=9.0.1
 setuptools>=34.1.1
