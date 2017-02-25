@@ -17,10 +17,12 @@ import base64
 import hashlib
 import re
 
+from OpenSSL import crypto
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.serialization import Encoding
+from cryptography.hazmat.primitives.serialization import PublicFormat
 from cryptography.x509.oid import ExtensionOID
-from OpenSSL import crypto
 
 from django.db import models
 from django.utils import timezone
@@ -211,11 +213,11 @@ class X509CertMixin(models.Model):
 
     @property
     def hpkp_pin(self):
-        # taken from
-        # https://github.com/shazow/urllib3/pull/607/files#diff-f86c7f2eb1a0a2deadac493decdd0b7eR337
+        # taken from https://github.com/luisgf/hpkp-python/blob/master/hpkp.py
 
-        key = self.x509.get_pubkey()
-        public_key_raw = crypto.dump_publickey(crypto.FILETYPE_ASN1, key)
+        public_key_raw = self.x509c.public_bytes(Encoding.DER)
+        public_key_raw = self.x509c.public_key().public_bytes(
+            encoding=Encoding.DER, format=PublicFormat.SubjectPublicKeyInfo)
         public_key_hash = hashlib.sha256(public_key_raw).digest()
         return base64.b64encode(public_key_hash).decode('utf-8')
 
