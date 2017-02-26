@@ -16,6 +16,7 @@
 
 import os
 import sys
+import subprocess
 
 from distutils.cmd import Command
 from setuptools import setup
@@ -108,6 +109,40 @@ class CoverageCommand(BaseCommand):
         cov.html_report(directory=report_dir)
 
 
+class CheckCommand(Command):
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        print('isort --check-only -rc ca/ fabfile.py setup.py')
+        status = subprocess.call(['isort', '--check-only', '-rc', 'ca/', 'fabfile.py', 'setup.py'])
+        if status != 0:
+            return
+
+        print('flake8 ca/ fabfile.py setup.py')
+        status = subprocess.call(['flake8', 'ca/', 'fabfile.py', 'setup.py'])
+        if status != 0:
+            return
+
+        work_dir = os.path.join(_rootdir, 'ca')
+
+        os.chdir(work_dir)
+        sys.path.insert(0, work_dir)
+
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.test_settings")
+        import django
+        django.setup()
+
+        from django.core.management import call_command
+        call_command('migrate')
+        call_command('check')
+
+
 def find_package_data(dir):
     data = []
     package_root = os.path.join('ca', 'django_ca')
@@ -147,6 +182,7 @@ setup(
     cmdclass={
         'coverage': CoverageCommand,
         'test': TestCommand,
+        'check': CheckCommand,
     },
     classifiers=[
         'Development Status :: 4 - Beta',
