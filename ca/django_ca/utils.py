@@ -63,6 +63,9 @@ OID_NAME_MAPPINGS = {
     NameOID.EMAIL_ADDRESS: 'emailAddress',
 }
 
+# same, but reversed
+NAME_OID_MAPPINGS = {v: k for k, v in OID_NAME_MAPPINGS.items()}
+
 
 class LazyEncoder(DjangoJSONEncoder):
     """Encoder that also encodes strings translated with ugettext_lazy."""
@@ -231,6 +234,28 @@ def get_basic_cert(expires, now=None):
     cert.set_notBefore(not_before)
     cert.set_notAfter(not_after)
     return cert
+
+
+def get_cert_builder(expires, now=None):
+    """Get a basic X509 cert object.
+
+    Parameters
+    ----------
+
+    expires : datetime
+        When this certificate will expire.
+    """
+    if now is None:
+        now = datetime.utcnow()
+    now = now.replace(second=0, microsecond=0)
+    expires = expires.replace(second=0, microsecond=0)
+
+    builder = x509.CertificateBuilder()
+    builder = builder.not_valid_before(now)
+    builder = builder.not_valid_after(expires)
+    builder = builder.serial_number(x509.random_serial_number())
+
+    return builder
 
 
 def get_cert_profile_kwargs(name=None):
