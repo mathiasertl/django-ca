@@ -15,6 +15,8 @@ ChangeLog
 * Examples now consistently use 4096 bit certificates.
 * Some functionality is now migrated to ``cryptography`` in the ongoing process to deprecate
   pyOpenSSL (which is no longer maintained).
+* OCSPView now supports directly passing the public key as bytes. As a consequence, a bad
+  certificate is now only detected at runtime.
 
 .. _changelog-1.4.0:
 
