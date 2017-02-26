@@ -90,6 +90,13 @@ class CertificateTests(DjangoCAWithCertTestCase):
         # accidentally used cert2 in cn/san
         self.assertEqual(self.cert3.subjectAltName(), 'DNS:cert2.example.com')
 
+    def test_basicConstraints(self):
+        self.assertEqual(self.ca.basicConstraints(), 'critical,CA:TRUE, pathlen:1')
+        self.assertEqual(self.cert.basicConstraints(), 'critical,CA:FALSE')
+        self.assertEqual(self.cert2.basicConstraints(), 'critical,CA:FALSE')
+        # accidentally used cert2 in cn/san
+        self.assertEqual(self.cert3.basicConstraints(), 'critical,CA:FALSE')
+
     def test_issuerAltName(self):
         self.assertEqual(self.cert.issuerAltName(), 'DNS:ca.example.com')
         self.assertEqual(self.cert2.issuerAltName(), 'DNS:ca.example.com')
