@@ -25,7 +25,6 @@ from oscrypto import asymmetric
 import django
 from django.conf import settings
 from django.conf.urls import url
-from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.test import Client
 from django.utils.encoding import force_text
