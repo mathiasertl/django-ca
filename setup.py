@@ -71,8 +71,6 @@ class BaseCommand(Command):
             suite += '.tests.%s' % self.suite
 
         from django.core.management import call_command
-        call_command('migrate')
-        call_command('check')
         call_command('test', suite)
 
 
