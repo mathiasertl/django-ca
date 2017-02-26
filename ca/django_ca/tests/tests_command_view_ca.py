@@ -22,7 +22,7 @@ from .base import override_tmpcadir
 
 
 class ViewCATestCase(DjangoCAWithCATestCase):
-    def assertOutput(self, ca, stdout):
+    def assertOutput(self, ca, stdout, san=''):
         self.maxDiff = None
         status = 'enabled' if self.ca.enabled else 'disabled'
         if ca.children.all():
@@ -38,6 +38,9 @@ class ViewCATestCase(DjangoCAWithCATestCase):
         else:
             parent = '* Parent: %s (%s)' % (ca.parent.name, ca.parent.serial)
         pathlen = 'unlimited' if ca.pathlen is None else ca.pathlen
+
+        if san != '':
+            san = '\nsubjectAltName:\n    DNS:%s' % san
 
         self.assertEqual(stdout, '''%s (%s):
 * Serial: %s
@@ -55,9 +58,7 @@ authorityKeyIdentifier:
 basicConstraints:
     %s
 keyUsage:
-    Certificate Sign, CRL Sign
-subjectAltName:
-    %s
+    Certificate Sign, CRL Sign%s
 subjectKeyIdentifier:
     %s
 
@@ -69,11 +70,11 @@ X509 v3 certificate extensions for signed certificates:
 
 %s''' % (ca.name, status, ca.serial, ca.private_key_path, parent, children, ca.distinguishedName(),
          pathlen, ca.hpkp_pin, ca.authorityKeyIdentifier().strip(), ca.basicConstraints(),
-         ca.subjectAltName(), ca.subjectKeyIdentifier(), ca.pub))
+         san, ca.subjectKeyIdentifier(), ca.pub))
 
     def test_basic(self):
         stdout, stderr = self.cmd('view_ca', self.ca.serial)
-        self.assertOutput(self.ca, stdout)
+        self.assertOutput(self.ca, stdout, san='ca.example.com')
         self.assertEqual(stderr, '')
 
     def test_family(self):
@@ -81,11 +82,11 @@ X509 v3 certificate extensions for signed certificates:
         child = self.load_ca(name='child', x509=child_pubkey, parent=self.ca)
 
         stdout, stderr = self.cmd('view_ca', parent.serial)
-        self.assertOutput(parent, stdout)
+        self.assertOutput(parent, stdout, san='ca.example.com')
         self.assertEqual(stderr, '')
 
         stdout, stderr = self.cmd('view_ca', child.serial)
-        self.assertOutput(child, stdout)
+        self.assertOutput(child, stdout, san='sub.ca.example.com')
         self.assertEqual(stderr, '')
 
     @override_tmpcadir()
