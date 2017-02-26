@@ -117,7 +117,7 @@ class CheckCommand(Command):
         pass
 
     def run(self):
-        print('isort --check-only --dirr -rc ca/ fabfile.py setup.py')
+        print('isort --check-only --diff -rc ca/ fabfile.py setup.py')
         status = subprocess.call(['isort', '--check-only', '--diff', '-rc',
                                   'ca/', 'fabfile.py', 'setup.py'])
         if status != 0:
