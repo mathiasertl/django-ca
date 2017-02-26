@@ -15,8 +15,8 @@
 # see <http://www.gnu.org/licenses/>.
 
 import os
-import sys
 import subprocess
+import sys
 
 from distutils.cmd import Command
 from setuptools import setup
@@ -119,8 +119,9 @@ class CheckCommand(Command):
         pass
 
     def run(self):
-        print('isort --check-only -rc ca/ fabfile.py setup.py')
-        status = subprocess.call(['isort', '--check-only', '-rc', 'ca/', 'fabfile.py', 'setup.py'])
+        print('isort --check-only --dirr -rc ca/ fabfile.py setup.py')
+        status = subprocess.call(['isort', '--check-only', '--diff', '-rc',
+                                  'ca/', 'fabfile.py', 'setup.py'])
         if status != 0:
             return
 
@@ -134,12 +135,11 @@ class CheckCommand(Command):
         os.chdir(work_dir)
         sys.path.insert(0, work_dir)
 
-        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.test_settings")
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.settings")
         import django
         django.setup()
 
         from django.core.management import call_command
-        call_command('migrate')
         call_command('check')
 
 
