@@ -15,6 +15,7 @@
 
 import base64
 import logging
+import os
 from datetime import datetime
 from datetime import timedelta
 
@@ -28,6 +29,7 @@ from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
+from django.utils import six
 from django.utils.decorators import classonlymethod
 from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes
@@ -118,35 +120,37 @@ class OCSPView(View):
     """Absolute path to the private key used for signing OCSP responses."""
 
     responder_cert = None
-    """Absolute path or serial of the public key used for signing OCSP responses."""
+    """Absolute path, serial of the public key or key itself used for signing OCSP responses."""
 
     expires = 600
     """Time in seconds that the responses remain valid. The default is 600 seconds or ten
     minutes."""
 
     @classonlymethod
-    def as_view(cls, **kwargs):
+    def as_view(cls, responder_key, responder_cert, **kwargs):
         # Preload the responder key and certificate for faster access.
 
-        responder_key = kwargs.get('responder_key')
         try:
             with open(responder_key, 'rb') as stream:
-                kwargs['responder_key'] = stream.read()
+                responder_key = stream.read()
         except:
             raise ImproperlyConfigured('%s: Could not read private key.' % responder_key)
 
-        responder_cert = kwargs.get('responder_cert')
-        try:
-            cert = Certificate.objects.get(serial=responder_cert)
-            kwargs['responder_cert'] = force_bytes(cert.pub)
-        except Certificate.DoesNotExist:
+        if os.path.exists(responder_cert):
+            with open(responder_cert, 'rb') as stream:
+                responder_cert = stream.read()
+        elif isinstance(responder_cert, six.string_types) and len(responder_cert) == 47:
             try:
-                with open(responder_cert, 'rb') as stream:
-                    kwargs['responder_cert'] = stream.read()
-            except:
-                raise ImproperlyConfigured('%s: Could not read public key.' % responder_cert)
+                cert = Certificate.objects.get(serial=responder_cert)
+                responder_cert = force_bytes(cert.pub)
+            except Certificate.DoesNotExist:
+                pass
 
-        return super(OCSPView, cls).as_view(**kwargs)
+        if not responder_cert:
+            raise ImproperlyConfigured('%s: Could not read public key.' % responder_cert)
+
+        return super(OCSPView, cls).as_view(
+            responder_key=responder_key, responder_cert=responder_cert, **kwargs)
 
     @method_decorator(csrf_exempt)
     def dispatch(self, *args, **kwargs):

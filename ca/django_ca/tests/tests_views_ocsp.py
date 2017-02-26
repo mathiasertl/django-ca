@@ -73,6 +73,12 @@ urlpatterns = [
         responder_key=settings.OCSP_KEY_PATH,
         responder_cert=settings.OCSP_PEM_PATH,
     ), name='unknown'),
+
+    url(r'^ocsp-bad-response/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
+        ca=settings.ROOT_SERIAL,
+        responder_key=settings.OCSP_KEY_PATH,
+        responder_cert='gone',
+    ), name='bad-response'),
 ]
 
 
@@ -283,17 +289,6 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         CertificateAuthority.objects.get(serial=kwargs['ca'])
         self.assertEqual(kwargs['responder_cert'], ocsp_pem)
 
-    def test_bad_kwarg(self):
-        with self.assertRaises(ImproperlyConfigured) as e:
-            OCSPView.as_view(ca=settings.ROOT_SERIAL, responder_key='/gone',
-                             responder_cert=settings.OCSP_SERIAL)
-        self.assertEqual(e.exception.args, ('/gone: Could not read private key.', ))
-
-        with self.assertRaises(ImproperlyConfigured) as e:
-            OCSPView.as_view(ca=settings.ROOT_SERIAL, responder_key=settings.OCSP_KEY_PATH,
-                             responder_cert='gone')
-        self.assertEqual(e.exception.args, ('gone: Could not read public key.', ))
-
     def test_bad_ca(self):
         data = base64.b64encode(req1).decode('utf-8')
         response = self.client.get(reverse('unknown', kwargs={'data': data}))
@@ -302,6 +297,13 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(ocsp_response['response_status'].native, 'internal_error')
 
     def test_unknown(self):
+        data = base64.b64encode(unknown_req).decode('utf-8')
+        response = self.client.get(reverse('get', kwargs={'data': data}))
+        self.assertEqual(response.status_code, 200)
+        ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
+        self.assertEqual(ocsp_response['response_status'].native, 'internal_error')
+
+    def test_bad_responder_cert(self):
         data = base64.b64encode(unknown_req).decode('utf-8')
         response = self.client.get(reverse('get', kwargs={'data': data}))
         self.assertEqual(response.status_code, 200)
