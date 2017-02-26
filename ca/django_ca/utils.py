@@ -175,6 +175,12 @@ def format_subject(subject):
     return '/%s' % ('/'.join(['%s=%s' % (force_text(k), force_text(v)) for k, v in subject]))
 
 
+def format_general_names(names):
+    """Format a list of general names."""
+
+    return ', '.join(['%s:%s' % (SAN_NAME_MAPPINGS[type(s)], s.value) for s in names])
+
+
 def is_power2(num):
     """Return True if num is a power of 2."""
     return num != 0 and ((num & (num - 1)) == 0)
