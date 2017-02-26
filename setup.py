@@ -42,7 +42,19 @@ Features:
 Please see https://django-ca.readthedocs.org for more extensive documentation.
 """
 
+PY2 = sys.version_info[0] == 2
+PY3 = sys.version_info[0] == 3
 _rootdir = os.path.dirname(os.path.realpath(__file__))
+install_requires = [
+    'Django>=1.8',
+    'asn1crypto>=0.21.1',
+    'ocspbuilder>=0.10.2',
+    'oscrypto>=0.18.0',
+    'pyOpenSSL>=16.2',
+]
+
+if PY2:
+    install_requires.append('ipaddress>=1.0.18')
 
 
 class BaseCommand(Command):
@@ -174,13 +186,7 @@ setup(
     package_dir={'': 'ca'},
     package_data={'': package_data},
     zip_safe=False,  # because of the static files
-    install_requires=[
-        'Django>=1.8',
-        'asn1crypto==0.21.1',
-        'ocspbuilder==0.10.2',
-        'oscrypto==0.18.0',
-        'pyOpenSSL>=16.2',
-    ],
+    install_requires=install_requires,
     cmdclass={
         'coverage': CoverageCommand,
         'test': TestCommand,
