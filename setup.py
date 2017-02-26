@@ -119,7 +119,7 @@ class CoverageCommand(BaseCommand):
         cov.html_report(directory=report_dir)
 
 
-class CheckCommand(Command):
+class QualityCommand(Command):
     user_options = []
 
     def initialize_options(self):
@@ -190,7 +190,7 @@ setup(
     cmdclass={
         'coverage': CoverageCommand,
         'test': TestCommand,
-        'check': CheckCommand,
+        'code_quality': QualityCommand,
     },
     classifiers=[
         'Development Status :: 4 - Beta',
