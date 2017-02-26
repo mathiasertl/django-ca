@@ -83,6 +83,13 @@ class CertificateTests(DjangoCAWithCertTestCase):
         with self.assertRaises(ValueError):
             c.get_revocation()
 
+    def test_subjectAltName(self):
+        self.assertEqual(self.ca.subjectAltName(), 'DNS:ca.example.com')
+        self.assertEqual(self.cert.subjectAltName(), 'DNS:cert1.example.com')
+        self.assertEqual(self.cert2.subjectAltName(), 'DNS:cert2.example.com')
+        # accidentally used cert2 in cn/san
+        self.assertEqual(self.cert3.subjectAltName(), 'DNS:cert2.example.com')
+
     def test_issuerAltName(self):
         self.assertEqual(self.cert.issuerAltName(), 'DNS:ca.example.com')
         self.assertEqual(self.cert2.issuerAltName(), 'DNS:ca.example.com')
