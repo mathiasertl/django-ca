@@ -1,5 +1,5 @@
 Fabric3==1.13.1.post1
-Sphinx==1.5.2
+Sphinx==1.5.3
 coverage==4.3.4
 dateparser==0.5.1
 flake8==3.3.0
