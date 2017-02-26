@@ -188,7 +188,21 @@ class X509CertMixin(models.Model):
     authorityInfoAccess.short_description = 'authorityInfoAccess'
 
     def basicConstraints(self):
-        return self.ext_as_str(b'basicConstraints')
+        try:
+            ext = self.x509c.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
+        except x509.ExtensionNotFound:
+            return ''
+
+        if ext.value.ca is True:
+            value = 'CA:TRUE'
+        else:
+            value = 'CA:FALSE'
+        if ext.value.path_length is not None:
+            value = '%s, pathlen:%s' % (value, ext.value.path_length)
+
+        if ext.critical:
+            value = 'critical,%s' % value
+        return value
     basicConstraints.short_description = 'basicConstraints'
 
     def keyUsage(self):
