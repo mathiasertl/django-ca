@@ -17,13 +17,22 @@ import os
 import re
 
 from OpenSSL import crypto
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.serialization import Encoding
+from cryptography.hazmat.primitives.serialization import PrivateFormat
 
 from django.db import models
 from django.utils.encoding import force_bytes
 
 from . import ca_settings
+from .utils import NAME_OID_MAPPINGS
 from .utils import SAN_OPTIONS_RE
 from .utils import get_basic_cert
+from .utils import get_cert_builder
 from .utils import get_subjectAltName
 from .utils import is_power2
 from .utils import sort_subject_dict
@@ -53,6 +62,75 @@ class CertificateManagerMixin(object):
 
 
 class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
+    def init_builder(self, name, key_size, key_type, algorithm, expires, parent, pathlen, subject,
+                     issuer_url=None, issuer_alt_name=None, crl_url=None, ocsp_url=None,
+                     ca_issuer_url=None, ca_crl_url=None, ca_ocsp_url=None, name_constraints=None,
+                     password=None):
+        # NOTE: This is already verified by KeySizeAction, so none of these checks should ever be
+        #       True in the real world. None the less they are here as a safety precaution.
+        if not is_power2(key_size):
+            raise RuntimeError("%s: Key size must be a power of two." % key_size)
+        elif key_size < ca_settings.CA_MIN_KEY_SIZE:
+            raise RuntimeError("%s: Key size must be least %s bits."
+                               % (key_size, ca_settings.CA_MIN_KEY_SIZE))
+
+        try:
+            algorithm = getattr(hashes, algorithm)
+        except AttributeError:
+            raise RuntimeError('Unknown algorithm specified: %s' % algorithm)
+
+        private_key = rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=key_size,
+            backend=default_backend()
+        )
+        public_key = private_key.public_key()
+
+        builder = get_cert_builder(expires)
+        builder = builder.public_key(public_key)
+
+        # Set subject
+        # TODO: is order still important?
+        subject = [x509.NameAttribute(NAME_OID_MAPPINGS[k], v) for k, v in subject.items()]
+        print(subject)
+        builder = builder.subject_name(x509.Name(subject))
+
+        # TODO: pathlen=None is currently False :/
+        builder = builder.add_extension(
+            x509.BasicConstraints(ca=True, path_length=pathlen), critical=True)
+
+        if parent is None:
+            builder = builder.issuer_name(x509.Name(subject))
+            #extensions.append(crypto.X509Extension(b'authorityKeyIdentifier', False,
+            #                                       b'keyid:always', issuer=cert))
+        else:
+            #cert.set_issuer(parent.x509.get_subject())
+            #extensions.append(crypto.X509Extension(b'authorityKeyIdentifier', False,
+            #                                       b'keyid,issuer', issuer=parent.x509))
+            pass
+
+        certificate = builder.sign(
+            private_key=private_key, algorithm=algorithm(),
+            backend=default_backend()
+        )
+
+        ca = self.model(name=name, issuer_url=issuer_url, issuer_alt_name=issuer_alt_name,
+                        ocsp_url=ocsp_url, crl_url=crl_url, parent=parent)
+        ca.x509c = certificate
+        ca.private_key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % ca.serial)
+        ca.save()
+
+        # write private key to file
+        oldmask = os.umask(247)
+        pem = private_key.private_bytes(encoding=Encoding.PEM,
+                                        format=PrivateFormat.TraditionalOpenSSL,
+                                        encryption_algorithm=serialization.NoEncryption())
+        with open(ca.private_key_path, 'wb') as key_file:
+            key_file.write(pem)
+        os.umask(oldmask)
+
+        return ca
+
     def init(self, name, key_size, key_type, algorithm, expires, parent, pathlen, subject,
              issuer_url=None, issuer_alt_name=None, crl_url=None, ocsp_url=None,
              ca_issuer_url=None, ca_crl_url=None, ca_ocsp_url=None,
