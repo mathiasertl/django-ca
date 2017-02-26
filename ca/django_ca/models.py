@@ -18,12 +18,12 @@ import binascii
 import hashlib
 import re
 
-from OpenSSL import crypto
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PublicFormat
 from cryptography.x509.oid import ExtensionOID
+from OpenSSL import crypto
 
 from django.db import models
 from django.utils import timezone
