@@ -135,11 +135,15 @@ class CheckCommand(Command):
         os.chdir(work_dir)
         sys.path.insert(0, work_dir)
 
-        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.settings")
         import django
+
+        # This does not import settings.py but instead loads our own settings
+        from django.conf import settings
+        settings.configure(DEBUG=True)
         django.setup()
 
         from django.core.management import call_command
+        print('python ca/manage.py check')
         call_command('check')
 
 
