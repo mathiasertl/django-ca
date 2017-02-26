@@ -38,8 +38,8 @@ from .utils import OID_NAME_MAPPINGS
 from .utils import SAN_NAME_MAPPINGS
 from .utils import add_colons
 from .utils import format_date
-from .utils import format_subject
 from .utils import format_general_names
+from .utils import format_subject
 from .utils import multiline_url_validator
 from .utils import serial_from_int
 
