@@ -157,7 +157,7 @@ class X509CertMixin(models.Model):
         except x509.ExtensionNotFound:
             return ''
 
-        value = ', '.join(['%s:%s' % (SAN_NAME_MAPPINGS[type(s)], s.value) for s in ext.value])
+        value = format_general_names(ext.value)
         if ext.critical:
             value = 'critical,%s' % value
 
