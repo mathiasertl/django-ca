@@ -111,6 +111,14 @@ class X509CertMixin(models.Model):
             self._x509c = x509.load_pem_x509_certificate(force_bytes(self.pub), backend)
         return self._x509c
 
+    @x509c.setter
+    def x509c(self, value):
+        self._x509c = value
+        self.pub = value.public_bytes(encoding=Encoding.PEM)
+        self.cn = self.subject['CN']
+        self.expires = self.not_after
+        self.serial = serial_from_int(value.serial_number)
+
     @property
     def subject(self):
         return {OID_NAME_MAPPINGS[s.oid]: s.value for s in self.x509c.subject}
