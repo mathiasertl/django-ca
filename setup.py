@@ -121,12 +121,12 @@ class CheckCommand(Command):
         status = subprocess.call(['isort', '--check-only', '--diff', '-rc',
                                   'ca/', 'fabfile.py', 'setup.py'])
         if status != 0:
-            return
+            sys.exit(status)
 
         print('flake8 ca/ fabfile.py setup.py')
         status = subprocess.call(['flake8', 'ca/', 'fabfile.py', 'setup.py'])
         if status != 0:
-            return
+            sys.exit(status)
 
         work_dir = os.path.join(_rootdir, 'ca')
 
