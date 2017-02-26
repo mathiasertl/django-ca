@@ -39,6 +39,7 @@ from .utils import SAN_NAME_MAPPINGS
 from .utils import add_colons
 from .utils import format_date
 from .utils import format_subject
+from .utils import format_general_names
 from .utils import multiline_url_validator
 from .utils import serial_from_int
 
@@ -203,7 +204,16 @@ class X509CertMixin(models.Model):
     subjectKeyIdentifier.short_description = 'subjectKeyIdentifier'
 
     def issuerAltName(self):
-        return self.ext_as_str(b'issuerAltName')
+        try:
+            ext = self.x509c.extensions.get_extension_for_oid(
+                ExtensionOID.ISSUER_ALTERNATIVE_NAME)
+        except x509.ExtensionNotFound:
+            return ''
+
+        value = format_general_names(ext.value)
+        if ext.critical:
+            value = 'critical,%s' % value
+        return value
     issuerAltName.short_description = 'issuerAltName'
 
     def authorityKeyIdentifier(self):
