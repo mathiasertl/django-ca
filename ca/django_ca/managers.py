@@ -98,14 +98,19 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
         # TODO: pathlen=None is currently False :/
         builder = builder.add_extension(x509.BasicConstraints(ca=True, path_length=pathlen), critical=True)
-        builder = builder.add_extension(x509.KeyUsage(key_cert_sign=True, crl_sign=True), critical=True)
+        builder = builder.add_extension(x509.KeyUsage(
+            key_cert_sign=True, crl_sign=True, digital_signature=False, content_commitment=False,
+            key_encipherment=False, data_encipherment=False, key_agreement=False, encipher_only=False,
+            decipher_only=False), critical=True)
 
         subject_key_id = x509.SubjectKeyIdentifier.from_public_key(public_key)
         builder = builder.add_extension(subject_key_id, critical=True)
 
         if parent is None:
             builder = builder.issuer_name(x509.Name(subject))
-            auth_key_id = x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(subject_key_id)
+            auth_key_id = x509.AuthorityKeyIdentifier(
+                key_identifier=subject_key_id.digest, authority_cert_issuer=None,
+                authority_cert_serial_number=None)
         else:
             builder = builder.issuer_name(parent.x509c.subject)
             auth_key_id = parent.x509c.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_KEY_IDENTIFIER)
