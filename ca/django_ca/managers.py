@@ -20,10 +20,11 @@ from OpenSSL import crypto
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
+from cryptography.x509.oid import ExtensionOID
 
 from django.db import models
 from django.utils.encoding import force_bytes
@@ -96,18 +97,23 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         builder = builder.subject_name(x509.Name(subject))
 
         # TODO: pathlen=None is currently False :/
-        builder = builder.add_extension(
-            x509.BasicConstraints(ca=True, path_length=pathlen), critical=True)
+        builder = builder.add_extension(x509.BasicConstraints(ca=True, path_length=pathlen), critical=True)
+        builder = builder.add_extension(x509.KeyUsage(key_cert_sign=True, crl_sign=True), critical=True)
+
+        subject_key_id = x509.SubjectKeyIdentifier.from_public_key(public_key)
+        builder = builder.add_extension(subject_key_id, critical=True)
 
         if parent is None:
             builder = builder.issuer_name(x509.Name(subject))
-            #extensions.append(crypto.X509Extension(b'authorityKeyIdentifier', False,
-            #                                       b'keyid:always', issuer=cert))
+            auth_key_id = x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(subject_key_id)
         else:
-            #cert.set_issuer(parent.x509.get_subject())
-            #extensions.append(crypto.X509Extension(b'authorityKeyIdentifier', False,
-            #                                       b'keyid,issuer', issuer=parent.x509))
-            pass
+            builder = builder.issuer_name(parent.x509c.subject)
+            auth_key_id = parent.x509c.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_KEY_IDENTIFIER)
+
+        builder = builder.add_extension(auth_key_id, critical=False)
+
+        # Still missing:
+        #extensions = self.get_common_extensions(ca_issuer_url, ca_crl_url, ca_ocsp_url)
 
         certificate = builder.sign(
             private_key=private_key, algorithm=algorithm(),
