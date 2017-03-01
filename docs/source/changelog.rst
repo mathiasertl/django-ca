@@ -4,9 +4,22 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.5.0:
+
 **********************
-1.4.1 (to be released)
+1.5.0 (to be released)
 **********************
+
+.. NOTE:: This release is currently in development.
+
+* Completely remove pyOpenSSL and consistently use `cryptography <https://cryptography.io/>`_.
+* The ``keyUsage`` extension is now marked as critical for certificate authorities.
+
+.. _changelog-1.4.0:
+
+******************
+1.4.1 (2017-02-26)
+******************
 
 * Update requirements.
 * Use `Travis CI <https://travis-ci.org>`_ for continuous integration. **django-ca** is now tested
