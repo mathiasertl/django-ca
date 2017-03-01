@@ -88,10 +88,10 @@ class CertificateManagerMixin(object):
 
 
 class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
-    def init_builder(self, name, key_size, key_type, algorithm, expires, parent, pathlen, subject,
-                     issuer_url=None, issuer_alt_name=None, crl_url=None, ocsp_url=None,
-                     ca_issuer_url=None, ca_crl_url=None, ca_ocsp_url=None, name_constraints=None,
-                     password=None):
+    def init(self, name, key_size, key_type, algorithm, expires, parent, pathlen, subject,
+             issuer_url=None, issuer_alt_name=None, crl_url=None, ocsp_url=None,
+             ca_issuer_url=None, ca_crl_url=None, ca_ocsp_url=None, name_constraints=None,
+             password=None):
         # NOTE: This is already verified by KeySizeAction, so none of these checks should ever be
         #       True in the real world. None the less they are here as a safety precaution.
         if not is_power2(key_size):
@@ -101,7 +101,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
                                % (key_size, ca_settings.CA_MIN_KEY_SIZE))
 
         try:
-            algorithm = getattr(hashes, algorithm)
+            algorithm = getattr(hashes, algorithm.upper())
         except AttributeError:
             raise RuntimeError('Unknown algorithm specified: %s' % algorithm)
 
@@ -168,10 +168,10 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
         return ca
 
-    def init(self, name, key_size, key_type, algorithm, expires, parent, pathlen, subject,
-             issuer_url=None, issuer_alt_name=None, crl_url=None, ocsp_url=None,
-             ca_issuer_url=None, ca_crl_url=None, ca_ocsp_url=None,
-             name_constraints=None, password=None):
+    def _init(self, name, key_size, key_type, algorithm, expires, parent, pathlen, subject,
+              issuer_url=None, issuer_alt_name=None, crl_url=None, ocsp_url=None,
+              ca_issuer_url=None, ca_crl_url=None, ca_ocsp_url=None,
+              name_constraints=None, password=None):
         """Create a Certificate Authority."""
 
         # NOTE: This is already verified by KeySizeAction, so none of these checks should ever be
