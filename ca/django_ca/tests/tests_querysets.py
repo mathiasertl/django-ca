@@ -45,7 +45,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
 
         # verify X509 properties
         self.assertEqual(ca.basicConstraints(), 'critical,CA:TRUE, pathlen:0')
-        self.assertEqual(ca.keyUsage(), 'Certificate Sign, CRL Sign')
+        self.assertEqual(ca.keyUsage(), 'critical,Certificate Sign, CRL Sign')
         self.assertEqual(ca.subjectAltName(), '')
 
         # TODO: What do LetsEncrypt, StartSSL and Gandi set for this?

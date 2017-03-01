@@ -58,7 +58,7 @@ authorityKeyIdentifier:
 basicConstraints:
     %s
 keyUsage:
-    Certificate Sign, CRL Sign%s
+    critical,Certificate Sign, CRL Sign%s
 subjectKeyIdentifier:
     %s
 
