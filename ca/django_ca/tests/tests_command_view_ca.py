@@ -22,8 +22,9 @@ from .base import override_tmpcadir
 
 
 class ViewCATestCase(DjangoCAWithCATestCase):
+    maxDiff = None
+
     def assertOutput(self, ca, stdout, san=''):
-        self.maxDiff = None
         status = 'enabled' if self.ca.enabled else 'disabled'
         if ca.children.all():
             children = '* Children:\n'
@@ -74,7 +75,54 @@ X509 v3 certificate extensions for signed certificates:
 
     def test_basic(self):
         stdout, stderr = self.cmd('view_ca', self.ca.serial)
-        self.assertOutput(self.ca, stdout, san='ca.example.com')
+        self.assertEqual(stdout, '''root (enabled):
+* Serial: 35:DB:D2:AD:79:0A:4D:1F:B5:26:ED:5F:83:74:C0:C2
+* Path to private key:
+  /home/mati/git/mati/django-ca/ca/django_ca/tests/fixtures/root.key
+* Is a root CA.
+* Has no children.
+* Distinguished Name: /C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=ca.example.com/emailAddress=ca@example.com
+* Maximum levels of sub-CAs (pathlen): 1
+* HPKP pin: XmTZPvdKBPls+/JoVM98/8ASycc/9WMd3fgmbaN2rII=
+
+X509 v3 certificate extensions for CA:
+authorityKeyIdentifier:
+    keyid:6B:C8:CF:56:29:FC:00:55:DD:A5:ED:5A:55:B7:7C:65:49:AC:AD:B1
+basicConstraints:
+    critical,CA:TRUE, pathlen:1
+keyUsage:
+    Certificate Sign, CRL Sign
+subjectAltName:
+    DNS:ca.example.com
+subjectKeyIdentifier:
+    6B:C8:CF:56:29:FC:00:55:DD:A5:ED:5A:55:B7:7C:65:49:AC:AD:B1
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+-----BEGIN CERTIFICATE-----
+MIIDFzCCAoCgAwIBAgIQNdvSrXkKTR+1Ju1fg3TAwjANBgkqhkiG9w0BAQ0FADCB
+hzELMAkGA1UEBhMCQVQxDzANBgNVBAgMBlZpZW5uYTEPMA0GA1UEBwwGVmllbm5h
+MQwwCgYDVQQKDANPcmcxEDAOBgNVBAsMB09yZ1VuaXQxFzAVBgNVBAMMDmNhLmV4
+YW1wbGUuY29tMR0wGwYJKoZIhvcNAQkBFg5jYUBleGFtcGxlLmNvbTAiGA8yMDE2
+MDUxMDE3NTYwMFoYDzIxMTYwNDE3MDAwMDAwWjCBhzELMAkGA1UEBhMCQVQxDzAN
+BgNVBAgMBlZpZW5uYTEPMA0GA1UEBwwGVmllbm5hMQwwCgYDVQQKDANPcmcxEDAO
+BgNVBAsMB09yZ1VuaXQxFzAVBgNVBAMMDmNhLmV4YW1wbGUuY29tMR0wGwYJKoZI
+hvcNAQkBFg5jYUBleGFtcGxlLmNvbTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkC
+gYEArdnr5gKSNJdxtjJJ49kpC4Yd79GcBEwhQeiRciGNdap/wbDl5Xff4EapLvP1
+KMlXPyb6af2HVpCjuVSUjOtxzNgSOgLbWKYuuSaxzRvSS7ydXBMLJCJFTGFwul39
+2U/zNO0JmDyd7Pk5trpqImpmSetSxRz5AL5mhxY2FNWkegUCAwEAAaN+MHwwEgYD
+VR0TAQH/BAgwBgEB/wIBATALBgNVHQ8EBAMCAQYwHQYDVR0OBBYEFGvIz1Yp/ABV
+3aXtWlW3fGVJrK2xMBkGA1UdEQQSMBCCDmNhLmV4YW1wbGUuY29tMB8GA1UdIwQY
+MBaAFGvIz1Yp/ABV3aXtWlW3fGVJrK2xMA0GCSqGSIb3DQEBDQUAA4GBAIT/5guU
+8uWiyQ6e3lRuuY4ioeaTOBI94Ygn1Dym328hVJfjsdFXHAP9Tfs2Sg3+Sj0CICnX
+TzM06CLgrbfk/hQjU+H+dcfh5ahBH78MbytsAnzs8KlfBPnfeuLti3RnfXSkOAUZ
+kbfhROu065IYOU0LmqufhP3IdGSeFtiw6nPw
+-----END CERTIFICATE-----
+''')
         self.assertEqual(stderr, '')
 
     def test_family(self):
@@ -82,11 +130,108 @@ X509 v3 certificate extensions for signed certificates:
         child = self.load_ca(name='child', x509=child_pubkey, parent=self.ca)
 
         stdout, stderr = self.cmd('view_ca', parent.serial)
-        self.assertOutput(parent, stdout, san='ca.example.com')
+        #self.assertOutput(parent, stdout, san='ca.example.com')
+        self.assertEqual(stdout, '''root (enabled):
+* Serial: 35:DB:D2:AD:79:0A:4D:1F:B5:26:ED:5F:83:74:C0:C2
+* Path to private key:
+  /home/mati/git/mati/django-ca/ca/django_ca/tests/fixtures/root.key
+* Is a root CA.
+* Children:
+  * child (6A:A2:3D:F9:5A:4A:44:8A:9F:91:64:54:A2:0D:04:29)
+* Distinguished Name: /C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=ca.example.com/emailAddress=ca@example.com
+* Maximum levels of sub-CAs (pathlen): 1
+* HPKP pin: XmTZPvdKBPls+/JoVM98/8ASycc/9WMd3fgmbaN2rII=
+
+X509 v3 certificate extensions for CA:
+authorityKeyIdentifier:
+    keyid:6B:C8:CF:56:29:FC:00:55:DD:A5:ED:5A:55:B7:7C:65:49:AC:AD:B1
+basicConstraints:
+    critical,CA:TRUE, pathlen:1
+keyUsage:
+    Certificate Sign, CRL Sign
+subjectAltName:
+    DNS:ca.example.com
+subjectKeyIdentifier:
+    6B:C8:CF:56:29:FC:00:55:DD:A5:ED:5A:55:B7:7C:65:49:AC:AD:B1
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+-----BEGIN CERTIFICATE-----
+MIIDFzCCAoCgAwIBAgIQNdvSrXkKTR+1Ju1fg3TAwjANBgkqhkiG9w0BAQ0FADCB
+hzELMAkGA1UEBhMCQVQxDzANBgNVBAgMBlZpZW5uYTEPMA0GA1UEBwwGVmllbm5h
+MQwwCgYDVQQKDANPcmcxEDAOBgNVBAsMB09yZ1VuaXQxFzAVBgNVBAMMDmNhLmV4
+YW1wbGUuY29tMR0wGwYJKoZIhvcNAQkBFg5jYUBleGFtcGxlLmNvbTAiGA8yMDE2
+MDUxMDE3NTYwMFoYDzIxMTYwNDE3MDAwMDAwWjCBhzELMAkGA1UEBhMCQVQxDzAN
+BgNVBAgMBlZpZW5uYTEPMA0GA1UEBwwGVmllbm5hMQwwCgYDVQQKDANPcmcxEDAO
+BgNVBAsMB09yZ1VuaXQxFzAVBgNVBAMMDmNhLmV4YW1wbGUuY29tMR0wGwYJKoZI
+hvcNAQkBFg5jYUBleGFtcGxlLmNvbTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkC
+gYEArdnr5gKSNJdxtjJJ49kpC4Yd79GcBEwhQeiRciGNdap/wbDl5Xff4EapLvP1
+KMlXPyb6af2HVpCjuVSUjOtxzNgSOgLbWKYuuSaxzRvSS7ydXBMLJCJFTGFwul39
+2U/zNO0JmDyd7Pk5trpqImpmSetSxRz5AL5mhxY2FNWkegUCAwEAAaN+MHwwEgYD
+VR0TAQH/BAgwBgEB/wIBATALBgNVHQ8EBAMCAQYwHQYDVR0OBBYEFGvIz1Yp/ABV
+3aXtWlW3fGVJrK2xMBkGA1UdEQQSMBCCDmNhLmV4YW1wbGUuY29tMB8GA1UdIwQY
+MBaAFGvIz1Yp/ABV3aXtWlW3fGVJrK2xMA0GCSqGSIb3DQEBDQUAA4GBAIT/5guU
+8uWiyQ6e3lRuuY4ioeaTOBI94Ygn1Dym328hVJfjsdFXHAP9Tfs2Sg3+Sj0CICnX
+TzM06CLgrbfk/hQjU+H+dcfh5ahBH78MbytsAnzs8KlfBPnfeuLti3RnfXSkOAUZ
+kbfhROu065IYOU0LmqufhP3IdGSeFtiw6nPw
+-----END CERTIFICATE-----
+''')
         self.assertEqual(stderr, '')
 
         stdout, stderr = self.cmd('view_ca', child.serial)
-        self.assertOutput(child, stdout, san='sub.ca.example.com')
+        self.assertEqual(stdout, '''child (enabled):
+* Serial: 6A:A2:3D:F9:5A:4A:44:8A:9F:91:64:54:A2:0D:04:29
+* Path to private key:
+  /home/mati/git/mati/django-ca/ca/django_ca/tests/fixtures/child.key
+* Parent: root (35:DB:D2:AD:79:0A:4D:1F:B5:26:ED:5F:83:74:C0:C2)
+* Has no children.
+* Distinguished Name: /C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=sub.ca.example.com/emailAddress=sub.ca@example.com
+* Maximum levels of sub-CAs (pathlen): 0
+* HPKP pin: zX54clL03NhaRzlm1R3JbCTvx9ddQgKcOceeVwgoTSw=
+
+X509 v3 certificate extensions for CA:
+authorityKeyIdentifier:
+    keyid:6B:C8:CF:56:29:FC:00:55:DD:A5:ED:5A:55:B7:7C:65:49:AC:AD:B1
+basicConstraints:
+    critical,CA:TRUE, pathlen:0
+keyUsage:
+    Certificate Sign, CRL Sign
+subjectAltName:
+    DNS:sub.ca.example.com
+subjectKeyIdentifier:
+    EE:78:8B:01:C8:22:5D:4C:41:6A:DE:07:74:AA:C9:63:66:0A:92:EE
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+-----BEGIN CERTIFICATE-----
+MIIDLTCCApagAwIBAgIQaqI9+VpKRIqfkWRUog0EKTANBgkqhkiG9w0BAQ0FADCB
+jzELMAkGA1UEBhMCQVQxDzANBgNVBAgMBlZpZW5uYTEPMA0GA1UEBwwGVmllbm5h
+MQwwCgYDVQQKDANPcmcxEDAOBgNVBAsMB09yZ1VuaXQxGzAZBgNVBAMMEnN1Yi5j
+YS5leGFtcGxlLmNvbTEhMB8GCSqGSIb3DQEJARYSc3ViLmNhQGV4YW1wbGUuY29t
+MCIYDzIwMTYwNTEwMTgwMzAwWhgPMjExNjA0MTcwMDAwMDBaMIGPMQswCQYDVQQG
+EwJBVDEPMA0GA1UECAwGVmllbm5hMQ8wDQYDVQQHDAZWaWVubmExDDAKBgNVBAoM
+A09yZzEQMA4GA1UECwwHT3JnVW5pdDEbMBkGA1UEAwwSc3ViLmNhLmV4YW1wbGUu
+Y29tMSEwHwYJKoZIhvcNAQkBFhJzdWIuY2FAZXhhbXBsZS5jb20wgZ8wDQYJKoZI
+hvcNAQEBBQADgY0AMIGJAoGBAMvCSMjmOxI7wa8aqb9WbCS37dBYWDEY1+5ioQhZ
+8FiyXOZZxNGVqn6Dt9TkikhTR9I4Rs3p2pyrMZZM63McFAWKyo//160RIvBwQOYM
+9PpLuFZNx3In8/Fw5/GISgIsOF72jF1/VI1owLe/YShNuzwqzS7qQ5p/E4skUv3O
++25bAgMBAAGjgYMwgYAwEgYDVR0TAQH/BAgwBgEB/wIBADALBgNVHQ8EBAMCAQYw
+HQYDVR0OBBYEFO54iwHIIl1MQWreB3SqyWNmCpLuMB0GA1UdEQQWMBSCEnN1Yi5j
+YS5leGFtcGxlLmNvbTAfBgNVHSMEGDAWgBRryM9WKfwAVd2l7VpVt3xlSaytsTAN
+BgkqhkiG9w0BAQ0FAAOBgQA6T7GffThrQKMyVq8Cf7Jb7dXrRw3EZgEfTpFND9C6
+r2dgotB+5o5RVJkxQWs2i9XT2q10gXh76fgL3rUAF/nUzWkpD3htMETwDus6WmqF
+IIBeA+G1PVe+gBRnKyXL7le66AihBU3lMmhhihW+6V43NkzB/F9essMZAF7e0/Pe
+5A==
+-----END CERTIFICATE-----
+''')
         self.assertEqual(stderr, '')
 
     @override_tmpcadir()
