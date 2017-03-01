@@ -131,7 +131,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             decipher_only=False), critical=True)
 
         subject_key_id = x509.SubjectKeyIdentifier.from_public_key(public_key)
-        builder = builder.add_extension(subject_key_id, critical=True)
+        builder = builder.add_extension(subject_key_id, critical=False)
 
         if parent is None:
             builder = builder.issuer_name(x509.Name(subject))
