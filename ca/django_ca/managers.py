@@ -115,9 +115,9 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         builder = get_cert_builder(expires)
         builder = builder.public_key(public_key)
 
-        # Set subject
-        # TODO: is order still important?
-        subject = [x509.NameAttribute(NAME_OID_MAPPINGS[k], v) for k, v in subject.items()]
+        # Set subject (order is important!)
+        subject = [x509.NameAttribute(NAME_OID_MAPPINGS[k], v)
+                   for k, v in sort_subject_dict(subject)]
         builder = builder.subject_name(x509.Name(subject))
 
         # TODO: pathlen=None is currently False :/
@@ -153,6 +153,9 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             private_key=private_key, algorithm=algorithm(),
             backend=default_backend()
         )
+
+        if crl_url is not None:
+            crl_url = '\n'.join(crl_url)
 
         ca = self.model(name=name, issuer_url=issuer_url, issuer_alt_name=issuer_alt_name,
                         ocsp_url=ocsp_url, crl_url=crl_url, parent=parent)
