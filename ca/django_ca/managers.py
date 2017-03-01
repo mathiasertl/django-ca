@@ -121,6 +121,9 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         builder = builder.subject_name(x509.Name(subject))
 
         # TODO: pathlen=None is currently False :/
+        if pathlen is False:
+            pathlen = None
+
         builder = builder.add_extension(x509.BasicConstraints(ca=True, path_length=pathlen), critical=True)
         builder = builder.add_extension(x509.KeyUsage(
             key_cert_sign=True, crl_sign=True, digital_signature=False, content_commitment=False,
