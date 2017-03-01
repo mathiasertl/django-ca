@@ -24,6 +24,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
+from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtensionOID
 
 from django.db import models
@@ -61,6 +62,30 @@ class CertificateManagerMixin(object):
 
         return extensions
 
+    def get_common_builder_extensions(self, issuer_url=None, crl_url=None, ocsp_url=None):
+        extensions = []
+        if crl_url:
+            #x509.CRLDistributionPoints([x509.DistributionPoint(full_name=[x509.UniformResourceIdentifier(
+            #    'http://crl.example.com')], relative_name=None, reasons=None, crl_issuer=None)])
+            if isinstance(crl_url, str):
+                crl_url = [url.strip() for url in crl_url.split()]
+            urls = [x509.UniformResourceIdentifier(c) for c in crl_url]
+            dps = [x509.DistributionPoint(full_name=[c], relative_name=None, crl_issuer=None, reasons=None)
+                   for c in urls]
+            extensions.append((False, x509.CRLDistributionPoints(dps)))
+        auth_info_access = []
+        if ocsp_url:
+            uri = x509.UniformResourceIdentifier(ocsp_url)
+            auth_info_access.append(x509.AccessDescription(
+                access_method=AuthorityInformationAccessOID.OCSP, access_location=uri))
+        if issuer_url:
+            uri = x509.UniformResourceIdentifier(ocsp_url)
+            auth_info_access.append(x509.AccessDescription(
+                access_method=AuthorityInformationAccessOID.CA_ISSUERS, access_location=uri))
+        if auth_info_access:
+            extensions.append((False, x509.AuthorityInformationAccess(auth_info_access)))
+        return extensions
+
 
 class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
     def init_builder(self, name, key_size, key_type, algorithm, expires, parent, pathlen, subject,
@@ -93,7 +118,6 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         # Set subject
         # TODO: is order still important?
         subject = [x509.NameAttribute(NAME_OID_MAPPINGS[k], v) for k, v in subject.items()]
-        print(subject)
         builder = builder.subject_name(x509.Name(subject))
 
         # TODO: pathlen=None is currently False :/
@@ -119,6 +143,8 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
         # Still missing:
         #extensions = self.get_common_extensions(ca_issuer_url, ca_crl_url, ca_ocsp_url)
+        for critical, ext in self.get_common_builder_extensions(ca_issuer_url, ca_crl_url, ca_ocsp_url):
+            builder = builder.add_extension(ext, critical=critical)
 
         certificate = builder.sign(
             private_key=private_key, algorithm=algorithm(),
