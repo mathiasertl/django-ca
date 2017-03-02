@@ -22,6 +22,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
 from cryptography.x509.oid import AuthorityInformationAccessOID
@@ -105,11 +106,11 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         except AttributeError:
             raise RuntimeError('Unknown algorithm specified: %s' % algorithm)
 
-        private_key = rsa.generate_private_key(
-            public_exponent=65537,
-            key_size=key_size,
-            backend=default_backend()
-        )
+        if key_type == 'DSA':
+            private_key = dsa.generate_private_key(key_size=key_size, backend=default_backend())
+        else:
+            private_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size,
+                                                   backend=default_backend())
         public_key = private_key.public_key()
 
         builder = get_cert_builder(expires)
