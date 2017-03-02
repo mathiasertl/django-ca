@@ -15,6 +15,8 @@
 
 from datetime import timedelta
 
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import dsa
 from django.core.management.base import CommandError
 from django.utils import six
 
@@ -67,7 +69,8 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
 
-        self.assertEqual(ca.x509.get_signature_algorithm(), six.b('dsaWithSHA1'))
+        self.assertTrue(isinstance(ca.x509c.signature_hash_algorithm, hashes.SHA1))
+        self.assertTrue(isinstance(ca.x509c.public_key(), dsa.DSAPublicKey))
         self.assertEqual(ca.crlDistributionPoints(), '\nFull Name:\n'
                          '  URI:http://ca.crl.example.com\n')
         self.assertEqual(ca.authorityInfoAccess(),
