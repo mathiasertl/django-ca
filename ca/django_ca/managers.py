@@ -80,7 +80,7 @@ class CertificateManagerMixin(object):
             auth_info_access.append(x509.AccessDescription(
                 access_method=AuthorityInformationAccessOID.OCSP, access_location=uri))
         if issuer_url:
-            uri = x509.UniformResourceIdentifier(ocsp_url)
+            uri = x509.UniformResourceIdentifier(issuer_url)
             auth_info_access.append(x509.AccessDescription(
                 access_method=AuthorityInformationAccessOID.CA_ISSUERS, access_location=uri))
         if auth_info_access:
