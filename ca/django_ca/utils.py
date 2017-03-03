@@ -351,6 +351,7 @@ def parse_general_name(name):
         ...
     idna.core.IDNAError: Empty domain
     """
+    name = force_text(name)
     typ = None
     match = GENERAL_NAME_RE.match(name)
     if match is not None:
@@ -384,12 +385,12 @@ def parse_general_name(name):
             pass
 
         # Almost anything passes as DNS name, so this is our default fallback
-        return x509.DNSName(force_text(name))
+        return x509.DNSName(name)
 
     if typ == 'uri':
-        return x509.UniformResourceIdentifier(force_text(name))
+        return x509.UniformResourceIdentifier(name)
     elif typ == 'email':
-        return x509.RFC822Name(force_text(name))
+        return x509.RFC822Name(name)
     elif typ == 'ip':
         try:
             return x509.IPAddress(ip_address(name))

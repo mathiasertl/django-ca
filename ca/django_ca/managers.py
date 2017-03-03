@@ -46,17 +46,17 @@ class CertificateManagerMixin(object):
         if crl_url:
             if isinstance(crl_url, str):
                 crl_url = [url.strip() for url in crl_url.split()]
-            urls = [x509.UniformResourceIdentifier(c) for c in crl_url]
+            urls = [x509.UniformResourceIdentifier(force_text(c)) for c in crl_url]
             dps = [x509.DistributionPoint(full_name=[c], relative_name=None, crl_issuer=None, reasons=None)
                    for c in urls]
             extensions.append((False, x509.CRLDistributionPoints(dps)))
         auth_info_access = []
         if ocsp_url:
-            uri = x509.UniformResourceIdentifier(ocsp_url)
+            uri = x509.UniformResourceIdentifier(force_text(ocsp_url))
             auth_info_access.append(x509.AccessDescription(
                 access_method=AuthorityInformationAccessOID.OCSP, access_location=uri))
         if issuer_url:
-            uri = x509.UniformResourceIdentifier(issuer_url)
+            uri = x509.UniformResourceIdentifier(force_text(issuer_url))
             auth_info_access.append(x509.AccessDescription(
                 access_method=AuthorityInformationAccessOID.CA_ISSUERS, access_location=uri))
         if auth_info_access:
@@ -93,7 +93,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         builder = builder.public_key(public_key)
 
         # Set subject (order is important!)
-        subject = [x509.NameAttribute(NAME_OID_MAPPINGS[k], v)
+        subject = [x509.NameAttribute(NAME_OID_MAPPINGS[k], force_text(v))
                    for k, v in sort_subject_dict(subject)]
         builder = builder.subject_name(x509.Name(subject))
 
