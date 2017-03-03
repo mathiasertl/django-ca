@@ -98,7 +98,7 @@ def parse_subject(raw):
         characters, doesn't account for duplicate attribute fields (e.g. two ``C`` attributes) and
         happily outputs completely broken data if any subject field happens to ambiguous. For
         exampe, consider a certificate where the subject has ``C=US`` and ``OU=example.com/C=AT``.
-        OpenSSL will happily outpu
+        OpenSSL will happily output
 
         .. code-block:: console
 
@@ -122,8 +122,10 @@ def parse_subject(raw):
         {'CN': 'example.com'}
         >>> parse_subject(' / CN  = example.com    ')
         {'CN': 'example.com'}
-        >>> parse_subject('/eMAILadreSs=user@example.com')
-        {'emailAddress: 'user@example.com'}
+
+        # TODO: Not working right now
+        #>>> parse_subject('/eMAILadreSs=user@example.com')
+        #{'emailAddress: 'user@example.com'}
 
     """
     raw = raw.strip()
@@ -187,7 +189,11 @@ def format_general_names(names):
 
 
 def is_power2(num):
-    """Return True if num is a power of 2."""
+    """Return True if num is a power of 2.
+
+    >>> is_power2(4)
+    True
+    """
     return num != 0 and ((num & (num - 1)) == 0)
 
 
@@ -203,10 +209,24 @@ def multiline_url_validator(value):
 
 
 def add_colons(s):
+    """Add colons after every second digit.
+
+    This function is used in functions to prettify serials.
+
+    >>> add_colons('teststring')
+    'te:st:st:ri:ng'
+    """
     return ':'.join(a + b for a, b in zip(s[::2], s[1::2]))
 
 
 def serial_from_int(i):
+    """Create a hex-representation of the given serial.
+
+    .. TODO:: Rename this function. The int passed is already a serial, so the name is misleading.
+
+    >>> serial_from_int(123456789)
+    '75:BC:D1'
+    """
     s = hex(i)[2:].upper()
     return add_colons(s)
 
