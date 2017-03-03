@@ -1,6 +1,7 @@
 """Test utility functions."""
 
 import json
+import doctest
 from datetime import datetime
 from datetime import timedelta
 
@@ -10,6 +11,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy as _l
 
 from django_ca import ca_settings
+from django_ca import utils
 from django_ca.tests.base import DjangoCATestCase
 from django_ca.tests.base import override_settings
 from django_ca.utils import LazyEncoder
@@ -22,6 +24,11 @@ from django_ca.utils import is_power2
 from django_ca.utils import multiline_url_validator
 from django_ca.utils import parse_subject
 from django_ca.utils import sort_subject_dict
+
+
+def load_tests(loader, tests, ignore):
+    tests.addTests(doctest.DocTestSuite(utils))
+    return tests
 
 
 class LazyEncoderTestCase(TestCase):
