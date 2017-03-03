@@ -149,7 +149,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             builder = builder.add_extension(ext, critical=critical)
 
         # TODO: pass separate lists maybe?
-        if name_constraints is not None:
+        if name_constraints:
             excluded = []
             permitted = []
             for constraint in name_constraints:
