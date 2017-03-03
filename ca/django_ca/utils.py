@@ -37,11 +37,19 @@ from django_ca import ca_settings
 
 # List of possible subject fields, in order
 SUBJECT_FIELDS = ['C', 'ST', 'L', 'O', 'OU', 'CN', 'emailAddress', ]
+SUBJECT_FIELDS_RE = re.compile('^\s*(C|ST|L|OU|O|CN|emailAddress)\s*=', re.I)
 
 # Description strings for various X509 extensions, taken from "man x509v3_config".
 EXTENDED_KEY_USAGE_DESC = _('Purposes for which the certificate public key can be used for.')
 KEY_USAGE_DESC = _('Permitted key usages.')
 SAN_OPTIONS_RE = '(email|URI|IP|DNS|RID|dirName|otherName):'
+
+#: Regular expression to match RDNs out of a full x509 name.
+NAME_RE = re.compile(r'(C|ST|L|OU|O|CN|emailAddress)\s*'
+                     r'=(?P<quote>[\'"])?(?P<content>(?(quote).*?|[^/]*))'
+                     r'(?(quote)(?<!\\)(?P=quote))', re.I)
+
+#: Regular expression to match general names.
 GENERAL_NAME_RE = re.compile('^(email|URI|IP|DNS|RID|dirName|otherName):(.*)', flags=re.I)
 _datetime_format = '%Y%m%d%H%M%SZ'
 
@@ -62,7 +70,7 @@ OID_NAME_MAPPINGS = {
     NameOID.ORGANIZATION_NAME: 'O',
     NameOID.ORGANIZATIONAL_UNIT_NAME: 'OU',
     NameOID.COMMON_NAME: 'CN',
-    NameOID.EMAIL_ADDRESS: 'emailAddress',
+    NameOID.EMAIL_ADDRESS: 'EMAILADDRESS',
 }
 
 # same, but reversed
@@ -229,6 +237,32 @@ def serial_from_int(i):
     return add_colons(s)
 
 
+def parse_name(name):
+    """Parses a subject string as used in OpenSSLs command line utilities.
+
+    >>> parse_name('/CN=example.com')
+    [<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>]
+    >>> parse_name('c=AT/l=Vienna/ou="example org"/CN=example.com')  # doctest: +NORMALIZE_WHITESPACE
+    [<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, value='AT')>,
+     <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.7, name=localityName)>, value='Vienna')>,
+     <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.11, name=organizationalUnitName)>, value='example org')>,
+     <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>]
+
+    Examples of where this string is used are:
+
+    .. code-block:: console
+
+        # openssl req -new -key priv.key -out csr -utf8 -batch -sha256 -subj '/C=AT/CN=example.com'
+        # openssl x509 -in cert.pem -noout -subject -nameopt compat
+        /C=AT/L=Vienna/CN=example.com
+    """
+    name = name.strip()
+    if not name:  # empty subjects are ok
+        return {}
+    parsed = [(t[0].upper(), t[2]) for t in NAME_RE.findall(name)]
+    return [x509.NameAttribute(NAME_OID_MAPPINGS[typ], value) for typ, value in parsed]
+
+
 def parse_general_name(name):
     """Parse a general name from user input.
 
@@ -243,7 +277,7 @@ def parse_general_name(name):
     >>> parse_general_name('1.2.3.4')
     <IPAddress(value=1.2.3.4)>
 
-    The default fallback is to assume a :py:class:`cryptography:cryptography.x509.DNSName`. This isn't
+    The default fallback is to assume a :py:class:`~cryptography:cryptography.x509.DNSName`. This isn't
     terribly safe, as almost anything passes:
 
     >>> parse_general_name('foo..bar`*123')

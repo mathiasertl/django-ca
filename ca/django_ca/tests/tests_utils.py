@@ -2,6 +2,7 @@
 
 import json
 import doctest
+import re
 from datetime import datetime
 from datetime import timedelta
 
@@ -15,6 +16,7 @@ from django_ca import utils
 from django_ca.tests.base import DjangoCATestCase
 from django_ca.tests.base import override_settings
 from django_ca.utils import LazyEncoder
+from django_ca.utils import NAME_RE
 from django_ca.utils import format_date
 from django_ca.utils import format_subject
 from django_ca.utils import get_basic_cert
@@ -29,6 +31,95 @@ from django_ca.utils import sort_subject_dict
 def load_tests(loader, tests, ignore):
     tests.addTests(doctest.DocTestSuite(utils))
     return tests
+
+
+class NameMatchTest(TestCase):
+    def match(self, value, expected):
+        value = [(t[0], t[2]) for t in NAME_RE.findall(value)]
+        self.assertEqual(value, expected)
+
+    def test_empty(self):
+        self.match('', [])
+        self.match(' ', [])
+        self.match('  ', [])
+
+    def test_single(self):
+        self.match('C=AT', [('C', 'AT')])
+        self.match('C="AT"', [('C', 'AT')])
+        self.match('C=" AT "', [('C', ' AT ')])
+
+        # test quotes
+        self.match('C=" AT \' DE"', [('C', ' AT \' DE')])
+        self.match('C=\' AT " DE\'', [('C', ' AT " DE')])
+
+        self.match('C=AT/DE', [('C', 'AT')])  # slash is delimiter when unquoted
+        self.match('C="AT/DE"', [('C', 'AT/DE')])
+        self.match("C='AT/DE/US'", [('C', 'AT/DE/US')])
+        self.match("C='AT/DE'", [('C', 'AT/DE')])
+        self.match("C='AT/DE/US'", [('C', 'AT/DE/US')])
+
+        self.match("C='AT \\' DE'", [('C', "AT \\' DE")])
+
+    def test_two(self):
+        self.match('C=AT/OU=example', [('C', 'AT'), ('OU', 'example')])
+        self.match('C="AT"/OU=example', [('C', 'AT'), ('OU', 'example')])
+        self.match('C=" AT "/OU=example', [('C', ' AT '), ('OU', 'example')])
+
+        # test quotes
+        self.match('C=" AT \' DE"/OU=example', [('C', ' AT \' DE'), ('OU', 'example')])
+        self.match('C=\' AT " DE\'/OU=example', [('C', ' AT " DE'), ('OU', 'example')])
+
+        self.match('C=AT/DE/OU=example', [('C', 'AT'), ('OU', 'example')])
+        self.match('C="AT/DE"/OU=example', [('C', 'AT/DE'), ('OU', 'example')])
+        self.match("C='AT/DE/US'/OU=example", [('C', 'AT/DE/US'), ('OU', 'example')])
+        self.match("C='AT/DE'/OU=example", [('C', 'AT/DE'), ('OU', 'example')])
+        self.match("C='AT/DE/US'/OU=example", [('C', 'AT/DE/US'), ('OU', 'example')])
+
+        self.match("C='AT \\' DE'/OU=example", [('C', "AT \\' DE"), ('OU', 'example')])
+
+        # now both are quoted
+        self.match('C="AT"/OU="ex ample"', [('C', 'AT'), ('OU', 'ex ample')])
+        self.match('C=" AT "/OU="ex ample"', [('C', ' AT '), ('OU', 'ex ample')])
+        self.match('C=" AT \' DE"/OU="ex ample"', [('C', ' AT \' DE'), ('OU', 'ex ample')])
+        self.match('C=\' AT " DE\'/OU="ex ample"', [('C', ' AT " DE'), ('OU', 'ex ample')])
+        self.match('C=AT/DE/OU="ex ample"', [('C', 'AT'), ('OU', 'ex ample')])
+        self.match('C="AT/DE"/OU="ex ample"', [('C', 'AT/DE'), ('OU', 'ex ample')])
+        self.match("C='AT/DE/US'/OU='ex ample'", [('C', 'AT/DE/US'), ('OU', 'ex ample')])
+        self.match("C='AT/DE'/OU='ex ample'", [('C', 'AT/DE'), ('OU', 'ex ample')])
+        self.match("C='AT/DE/US'/OU='ex ample'", [('C', 'AT/DE/US'), ('OU', 'ex ample')])
+
+        self.match("C='AT \\' DE'/OU='ex ample'", [('C', "AT \\' DE"), ('OU', 'ex ample')])
+
+        # Now include a slash in OU
+        self.match('C="AT"/OU="ex / ample"', [('C', 'AT'), ('OU', 'ex / ample')])
+        self.match('C=" AT "/OU="ex / ample"', [('C', ' AT '), ('OU', 'ex / ample')])
+        self.match('C=" AT \' DE"/OU="ex / ample"', [('C', ' AT \' DE'), ('OU', 'ex / ample')])
+        self.match('C=\' AT " DE\'/OU="ex / ample"', [('C', ' AT " DE'), ('OU', 'ex / ample')])
+        self.match('C=AT/DE/OU="ex / ample"', [('C', 'AT'), ('OU', 'ex / ample')])
+        self.match('C="AT/DE"/OU="ex / ample"', [('C', 'AT/DE'), ('OU', 'ex / ample')])
+        self.match("C='AT/DE/US'/OU='ex / ample'", [('C', 'AT/DE/US'), ('OU', 'ex / ample')])
+        self.match("C='AT/DE'/OU='ex / ample'", [('C', 'AT/DE'), ('OU', 'ex / ample')])
+        self.match("C='AT/DE/US'/OU='ex / ample'", [('C', 'AT/DE/US'), ('OU', 'ex / ample')])
+        self.match("C='AT \\' DE'/OU='ex / ample'", [('C', "AT \\' DE"), ('OU', 'ex / ample')])
+
+        # Append a slash in the end (It's a delimiter - doesn't influence the output)
+        self.match('C="AT"/OU="ex / ample"/', [('C', 'AT'), ('OU', 'ex / ample')])
+        self.match('C=" AT "/OU="ex / ample"/', [('C', ' AT '), ('OU', 'ex / ample')])
+        self.match('C=" AT \' DE"/OU="ex / ample"/', [('C', ' AT \' DE'), ('OU', 'ex / ample')])
+        self.match('C=\' AT " DE\'/OU="ex / ample"/', [('C', ' AT " DE'), ('OU', 'ex / ample')])
+        self.match('C=AT/DE/OU="ex / ample"/', [('C', 'AT'), ('OU', 'ex / ample')])
+        self.match('C="AT/DE"/OU="ex / ample"/', [('C', 'AT/DE'), ('OU', 'ex / ample')])
+        self.match("C='AT/DE/US'/OU='ex / ample'/", [('C', 'AT/DE/US'), ('OU', 'ex / ample')])
+        self.match("C='AT/DE'/OU='ex / ample'/", [('C', 'AT/DE'), ('OU', 'ex / ample')])
+        self.match("C='AT/DE/US'/OU='ex / ample'/", [('C', 'AT/DE/US'), ('OU', 'ex / ample')])
+        self.match("C='AT \\' DE'/OU='ex / ample'/", [('C', "AT \\' DE"), ('OU', 'ex / ample')])
+
+    def test_full_examples(self):
+        expected = [('C', 'AT'), ('ST', 'Vienna'), ('L', 'Loc Fünf'), ('O', 'Org Name'),
+                    ('OU', 'Org Unit'), ('CN', 'example.com')]
+
+        self.match('/C=AT/ST=Vienna/L=Loc Fünf/O=Org Name/OU=Org Unit/CN=example.com', expected)
+        self.match('/C=AT/ST=Vienna/L="Loc Fünf"/O=\'Org Name\'/OU=Org Unit/CN=example.com', expected)
 
 
 class LazyEncoderTestCase(TestCase):
