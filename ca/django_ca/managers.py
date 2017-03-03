@@ -262,9 +262,9 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
                 subjectAltName.insert(0, cn_name)
 
         if csr_format == 'PEM':
-            req = x509.load_pem_x509_csr(csr, default_backend())
+            req = x509.load_pem_x509_csr(force_bytes(csr), default_backend())
         elif csr_format == 'DER':
-            req = x509.load_der_x509_csr(csr, default_backend())
+            req = x509.load_der_x509_csr(force_bytes(csr), default_backend())
         else:
             raise ValueError('Unknown CSR format passed: %s' % csr_format)
 
