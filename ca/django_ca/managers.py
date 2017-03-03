@@ -38,6 +38,7 @@ from .utils import get_basic_cert
 from .utils import get_cert_builder
 from .utils import get_subjectAltName
 from .utils import is_power2
+from .utils import parse_general_name
 from .utils import sort_subject_dict
 
 
@@ -146,12 +147,20 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         for critical, ext in self.get_common_builder_extensions(ca_issuer_url, ca_crl_url, ca_ocsp_url):
             builder = builder.add_extension(ext, critical=critical)
 
+        # TODO: pass separate lists maybe?
         if name_constraints is not None:
             excluded = []
             permitted = []
             for constraint in name_constraints:
                 typ, name = constraint.split(';', 1)
+                parsed = parse_general_name(name)
+                if typ == 'permitted':
+                    permitted.append(parsed)
+                else:
+                    excluded.append(parsed)
 
+            builder = builder.add_extension(x509.NameConstraints(
+                permitted_subtrees=permitted, excluded_subtrees=excluded), critical=True)
 
         certificate = builder.sign(
             private_key=private_key, algorithm=algorithm(),
