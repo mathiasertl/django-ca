@@ -167,8 +167,6 @@ def format_subject(subject):
 
     Examples::
 
-        >>> format_subject(ca.x509.get_subject())
-        '/CN=example.com'
         >>> format_subject([('CN', 'example.com'), ])
         '/CN=example.com'
         >>> format_subject({'CN': 'example.com'})
