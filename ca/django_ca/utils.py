@@ -41,6 +41,7 @@ SUBJECT_FIELDS = ['C', 'ST', 'L', 'O', 'OU', 'CN', 'emailAddress', ]
 EXTENDED_KEY_USAGE_DESC = _('Purposes for which the certificate public key can be used for.')
 KEY_USAGE_DESC = _('Permitted key usages.')
 SAN_OPTIONS_RE = '(email|URI|IP|DNS|RID|dirName|otherName):'
+NAME_RE = re.compile('^(email|URI|IP|DNS|RID|dirName|otherName):(.*)')
 _datetime_format = '%Y%m%d%H%M%SZ'
 
 SAN_NAME_MAPPINGS = {
@@ -207,6 +208,49 @@ def add_colons(s):
 def serial_from_int(i):
     s = hex(i)[2:].upper()
     return add_colons(s)
+
+
+def parse_name(name):
+    typ = None
+    match = NAME_RE.match(name)
+    if match is not None:
+        typ, name = match.groups()
+        typ = typ.lower()
+
+    if typ == 'uri' or (typ is None and re.match('[a-z0-9]{2,}://', name)):
+        return x509.UniformResourceIdentifier(name)
+    elif typ == 'email' or (typ is None and '@' in value):
+        return x509.RFC822Name(value)
+
+    if typ == 'ip':
+        try:
+            return x509.IPAddress(ip_address(name))
+        except ValueError:
+            pass
+
+        try:
+            return x509.IPAddress(ip_network(name))
+        except ValueError:
+            pass
+
+        raise ValueError('Could not parse IP address.')
+
+
+    else:
+        try:
+            typ, value = 'IP', name
+        except ValueError:
+            typ, value = 'DNS', name
+
+    if typ == 'email':
+        return x509.RFC822Name(value)
+    elif typ == 'URI':
+        return x509.UniformResourceIdentifier(value)
+    elif typ == 'IP':
+        return x509.IPAddress(value)
+    elif typ == 'DNS':
+        return x509.DNSName(value)
+
 
 
 def get_basic_cert(expires, now=None):
