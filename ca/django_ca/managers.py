@@ -193,8 +193,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
 class CertificateManager(CertificateManagerMixin, models.Manager):
     def init_builder(self, ca, csr, expires, algorithm, subject=None, cn_in_san=True,
-                     csr_format='PEM', subjectAltName=None, keyUsage=None, extendedKeyUsage=None,
-                     tlsfeature=None):
+                     csr_format='PEM', subjectAltName=None, keyUsage=None, extendedKeyUsage=None):
         if subject is None:
             subject = {}
         if not subject.get('CN') and not subjectAltName:
@@ -263,29 +262,6 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
                 [parse_general_name(ca.issuer_alt_name)]))
 
         return builder.sign(private_key=ca.keyc, algorithm=algorithm(), backend=default_backend())
-
-        # Create signed certificate
-        cert = get_basic_cert(expires)
-
-        extensions = []
-
-        if tlsfeature is not None:  # pragma: no cover
-            extensions.append(crypto.X509Extension(b'tlsFeature', *tlsfeature))
-
-        # Add issuerAltName
-        if ca.issuer_alt_name:
-            issuerAltName = force_bytes('URI:%s' % ca.issuer_alt_name)
-        else:
-            issuerAltName = b'issuer:copy'
-        extensions.append(crypto.X509Extension(b'issuerAltName', 0, issuerAltName, issuer=ca.x509))
-
-        # Add collected extensions
-        cert.add_extensions(extensions)
-
-        # Finally sign the certificate:
-        cert.sign(ca.key, str(algorithm))  # str() to force py2 unicode to str
-
-        return cert
 
     def init(self, ca, csr, expires, algorithm, subject=None, cn_in_san=True,
              csr_format=crypto.FILETYPE_PEM, subjectAltName=None, keyUsage=None,
