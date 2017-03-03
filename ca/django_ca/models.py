@@ -29,6 +29,7 @@ from OpenSSL import crypto
 from django.db import models
 from django.utils import timezone
 from django.utils.encoding import force_bytes
+from django.utils.encoding import force_str
 from django.utils.translation import ugettext_lazy as _
 
 from .managers import CertificateAuthorityManager
@@ -115,7 +116,7 @@ class X509CertMixin(models.Model):
     @x509c.setter
     def x509c(self, value):
         self._x509c = value
-        self.pub = value.public_bytes(encoding=Encoding.PEM)
+        self.pub = force_str(value.public_bytes(encoding=Encoding.PEM))
         self.cn = self.subject['CN']
         self.expires = self.not_after
         self.serial = serial_from_int(value.serial_number)
