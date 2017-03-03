@@ -13,6 +13,13 @@ ChangeLog
 .. NOTE:: This release is currently in development.
 
 * Completely remove pyOpenSSL and consistently use `cryptography <https://cryptography.io/>`_.
+* Due to the transitition to cryptography, some features have been removed:
+
+  * The ``tlsfeature`` extension is no longer supported. It will be again once cryptography adds support.
+  * The ``msCodeInd``, ``msCodeCom``, ``msCTLSign``, ``msEFS`` values for the ExtendedKeyUsage extension are
+    no longer supported. Support for these was largely academic anyway, so they most likely will not be added
+    again.
+
 * The ``keyUsage`` extension is now marked as critical for certificate authorities.
 
 .. _changelog-1.4.0:
