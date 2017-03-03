@@ -273,8 +273,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         builder = builder.public_key(public_key)
         builder = builder.issuer_name(ca.x509c.subject)
 
-        subject = [x509.NameAttribute(NAME_OID_MAPPINGS[k], v)
-                   for k, v in sort_subject_dict(subject)]
+        subject = [x509.NameAttribute(NAME_OID_MAPPINGS[k.upper()], v) for k, v in sort_subject_dict(subject)]
         builder = builder.subject_name(x509.Name(subject))
 
         # Add extensions
