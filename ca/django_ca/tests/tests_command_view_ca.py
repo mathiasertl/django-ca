@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
+import os
+
 from django.conf import settings
 
 from ..models import CertificateAuthority
@@ -75,10 +77,11 @@ X509 v3 certificate extensions for signed certificates:
 
     def test_basic(self):
         stdout, stderr = self.cmd('view_ca', self.ca.serial)
+        path = os.path.join(settings.FIXTURES_DIR, 'root.key')
         self.assertEqual(stdout, '''root (enabled):
 * Serial: 35:DB:D2:AD:79:0A:4D:1F:B5:26:ED:5F:83:74:C0:C2
 * Path to private key:
-  /home/mati/git/mati/django-ca/ca/django_ca/tests/fixtures/root.key
+  %s
 * Is a root CA.
 * Has no children.
 * Distinguished Name: /C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=ca.example.com/emailAddress=ca@example.com
@@ -122,7 +125,7 @@ MBaAFGvIz1Yp/ABV3aXtWlW3fGVJrK2xMA0GCSqGSIb3DQEBDQUAA4GBAIT/5guU
 TzM06CLgrbfk/hQjU+H+dcfh5ahBH78MbytsAnzs8KlfBPnfeuLti3RnfXSkOAUZ
 kbfhROu065IYOU0LmqufhP3IdGSeFtiw6nPw
 -----END CERTIFICATE-----
-''')
+''' % path)
         self.assertEqual(stderr, '')
 
     def test_family(self):
@@ -131,10 +134,11 @@ kbfhROu065IYOU0LmqufhP3IdGSeFtiw6nPw
 
         stdout, stderr = self.cmd('view_ca', parent.serial)
         #self.assertOutput(parent, stdout, san='ca.example.com')
+        path = os.path.join(settings.FIXTURES_DIR, 'root.key')
         self.assertEqual(stdout, '''root (enabled):
 * Serial: 35:DB:D2:AD:79:0A:4D:1F:B5:26:ED:5F:83:74:C0:C2
 * Path to private key:
-  /home/mati/git/mati/django-ca/ca/django_ca/tests/fixtures/root.key
+  %s
 * Is a root CA.
 * Children:
   * child (6A:A2:3D:F9:5A:4A:44:8A:9F:91:64:54:A2:0D:04:29)
@@ -179,15 +183,16 @@ MBaAFGvIz1Yp/ABV3aXtWlW3fGVJrK2xMA0GCSqGSIb3DQEBDQUAA4GBAIT/5guU
 TzM06CLgrbfk/hQjU+H+dcfh5ahBH78MbytsAnzs8KlfBPnfeuLti3RnfXSkOAUZ
 kbfhROu065IYOU0LmqufhP3IdGSeFtiw6nPw
 -----END CERTIFICATE-----
-''')
+''' % path)
         self.assertEqual(stderr, '')
 
         stdout, stderr = self.cmd('view_ca', child.serial)
         subject = '/C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=sub.ca.example.com/emailAddress=sub.ca@example.com'  # NOQA
+        path = os.path.join(settings.FIXTURES_DIR, 'child.key')
         self.assertEqual(stdout, '''child (enabled):
 * Serial: 6A:A2:3D:F9:5A:4A:44:8A:9F:91:64:54:A2:0D:04:29
 * Path to private key:
-  /home/mati/git/mati/django-ca/ca/django_ca/tests/fixtures/child.key
+  %s
 * Parent: root (35:DB:D2:AD:79:0A:4D:1F:B5:26:ED:5F:83:74:C0:C2)
 * Has no children.
 * Distinguished Name: %s
@@ -232,7 +237,7 @@ r2dgotB+5o5RVJkxQWs2i9XT2q10gXh76fgL3rUAF/nUzWkpD3htMETwDus6WmqF
 IIBeA+G1PVe+gBRnKyXL7le66AihBU3lMmhhihW+6V43NkzB/F9essMZAF7e0/Pe
 5A==
 -----END CERTIFICATE-----
-''' % subject)
+''' % (path, subject))
         self.assertEqual(stderr, '')
 
     @override_tmpcadir()
