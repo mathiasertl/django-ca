@@ -121,10 +121,6 @@ class CreateCertificateForm(forms.ModelForm):
             ('emailProtection', 'E-mail Protection (S/MIME)'),
             ('timeStamping', 'Trusted Timestamping'),
             ('OCSPSigning', 'OCSP Signing'),
-            ('msCodeInd', 'Microsoft Individual Code Signing (authenticode)'),
-            ('msCodeCom', 'Microsoft Commercial Code Signing (authenticode)'),
-            ('msCTLSign', 'Microsoft Trust List Signing'),
-            ('msEFS', 'Microsoft Encrypted File System'),
         ))
 
     def clean_csr(self):
