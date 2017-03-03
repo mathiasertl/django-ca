@@ -22,6 +22,7 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PublicFormat
+from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.x509.oid import ExtensionOID
 from OpenSSL import crypto
 
@@ -295,6 +296,7 @@ class CertificateAuthority(X509CertMixin):
                                       help_text=_("URL for your CA."))
 
     _key = None
+    _keyc = None
 
     @property
     def key(self):
@@ -303,6 +305,13 @@ class CertificateAuthority(X509CertMixin):
                 self._key = crypto.load_privatekey(crypto.FILETYPE_PEM, f.read())
 
         return self._key
+
+    @property
+    def keyc(self):
+        if self._keyc is None:
+            with open(self.private_key_path, 'rb') as f:
+                self._keyc = load_pem_private_key(f.read(), None, default_backend())
+        return self._keyc
 
     @property
     def pathlen(self):
