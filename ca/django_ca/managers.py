@@ -194,6 +194,52 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 class CertificateManager(CertificateManagerMixin, models.Manager):
     def init_builder(self, ca, csr, expires, algorithm, subject=None, cn_in_san=True,
                      csr_format='PEM', subjectAltName=None, keyUsage=None, extendedKeyUsage=None):
+        """Create a signed certificate from a CSR.
+
+        X509 extensions (`key_usage`, `ext_key_usage`) may either be None (in which case they are
+        not added) or a tuple with the first value being a bool indicating if the value is critical
+        and the second value being a byte-array indicating the extension value. Example::
+
+            (True, b'value')
+
+        Parameters
+        ----------
+
+        ca : django_ca.models.CertificateAuthority
+            The certificate authority to sign the certificate with.
+        csr : str
+            A valid CSR in PEM format. If none is given, `self.csr` will be used.
+        expires : int
+            When the certificate should expire (passed to :py:func:`get_basic_cert`).
+        algorithm : {'sha512', 'sha256', ...}
+            Algorithm used to sign the certificate. The default is the CA_DIGEST_ALGORITHM setting.
+        subject : dict, optional
+            The Subject to use in the certificate.  The keys of this dict are the fields of an X509
+            subject, that is `"C"`, `"ST"`, `"L"`, `"OU"` and `"CN"`. If ommited or if the value
+            does not contain a `"CN"` key, the first value of the `subjectAltName` parameter is
+            used as CommonName (and is obviously mandatory in this case).
+        cn_in_san : bool, optional
+            Wether the CommonName should also be included as subjectAlternativeName. The default is
+            `True`, but the parameter is ignored if no CommonName is given. This is typically set
+            to `False` when creating a client certificate, where the subjects CommonName has no
+            meaningful value as subjectAltName.
+        csr_format : int, optional
+            The format of the submitted CSR request. One of the OpenSSL.crypto.FILETYPE_*
+            constants. The default is PEM.
+        subjectAltName : list of str, optional
+            A list of values for the subjectAltName extension. Values are passed to
+            `get_subjectAltName`, see function documentation for how this value is parsed.
+        keyUsage : tuple or None
+            Value for the `keyUsage` X509 extension. See description for format details.
+        extendedKeyUsage : tuple or None
+            Value for the `extendedKeyUsage` X509 extension. See description for format details.
+
+        Returns
+        -------
+
+        cryptography.x509.Certificate
+            The signed certificate.
+        """
         if subject is None:
             subject = {}
         if not subject.get('CN') and not subjectAltName:
@@ -266,54 +312,6 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
     def init(self, ca, csr, expires, algorithm, subject=None, cn_in_san=True,
              csr_format=crypto.FILETYPE_PEM, subjectAltName=None, keyUsage=None,
              extendedKeyUsage=None, tlsfeature=None):
-        """Create a signed certificate from a CSR.
-
-        X509 extensions (`key_usage`, `ext_key_usage`) may either be None (in which case they are
-        not added) or a tuple with the first value being a bool indicating if the value is critical
-        and the second value being a byte-array indicating the extension value. Example::
-
-            (True, b'value')
-
-        Parameters
-        ----------
-
-        ca : django_ca.models.CertificateAuthority
-            The certificate authority to sign the certificate with.
-        csr : str
-            A valid CSR in PEM format. If none is given, `self.csr` will be used.
-        expires : int
-            When the certificate should expire (passed to :py:func:`get_basic_cert`).
-        algorithm : {'sha512', 'sha256', ...}
-            Algorithm used to sign the certificate. The default is the CA_DIGEST_ALGORITHM setting.
-        subject : dict, optional
-            The Subject to use in the certificate.  The keys of this dict are the fields of an X509
-            subject, that is `"C"`, `"ST"`, `"L"`, `"OU"` and `"CN"`. If ommited or if the value
-            does not contain a `"CN"` key, the first value of the `subjectAltName` parameter is
-            used as CommonName (and is obviously mandatory in this case).
-        cn_in_san : bool, optional
-            Wether the CommonName should also be included as subjectAlternativeName. The default is
-            `True`, but the parameter is ignored if no CommonName is given. This is typically set
-            to `False` when creating a client certificate, where the subjects CommonName has no
-            meaningful value as subjectAltName.
-        csr_format : int, optional
-            The format of the submitted CSR request. One of the OpenSSL.crypto.FILETYPE_*
-            constants. The default is PEM.
-        subjectAltName : list of str, optional
-            A list of values for the subjectAltName extension. Values are passed to
-            `get_subjectAltName`, see function documentation for how this value is parsed.
-        keyUsage : tuple or None
-            Value for the `keyUsage` X509 extension. See description for format details.
-        extendedKeyUsage : tuple or None
-            Value for the `extendedKeyUsage` X509 extension. See description for format details.
-        tlsfeature : tuple or None
-            Value for the `tlsfeature` extension. See description for format details.
-
-        Returns
-        -------
-
-        OpenSSL.crypto.X509
-            The signed certificate.
-        """
         if subject is None:
             subject = {}
         if not subject.get('CN') and not subjectAltName:
