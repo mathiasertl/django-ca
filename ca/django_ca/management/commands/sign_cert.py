@@ -94,12 +94,6 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
         group.add_argument(
             '--ext-key-usage', metavar='VALUES',
             help='Override the extendedKeyUsage extension, e.g. "serverAuth,clientAuth".')
-        group.add_argument(
-            '--tls-feature', metavar='VALUES',
-            help='''[UNTESTED - requires OpenSSL 1.1] Comma-separated list of TLS feature
-                extensions used for "OCSP must staple". Supported extensions are "status_request"
-                and "status_request_v2", e.g.  "status_request,status_request_v2". Note that
-                marking this extension as critical is not recommended.''')
 
         group = parser.add_argument_group(
             'profiles', """Sign certificate based on the given profile. A profile only sets the
@@ -132,8 +126,6 @@ the default values, options like --key-usage still override the profile.""")
             kwargs['keyUsage'] = self.parse_extension(options['key_usage'])
         if options['ext_key_usage']:
             kwargs['extendedKeyUsage'] = self.parse_extension(options['ext_key_usage'])
-        if options['tls_feature']:  # pragma: no cover
-            kwargs['tlsfeature'] = self.parse_extension(options['tls_feature'])
 
         # update subject with arguments from the command line
         kwargs.setdefault('subject', {})
