@@ -206,6 +206,9 @@ class X509CertMixin(models.Model):
                 output += 'OCSP - %s\n' % format_general_names([desc.access_location])
             elif desc.access_method == AuthorityInformationAccessOID.CA_ISSUERS:
                 output += 'CA Issuers - %s\n' % format_general_names([desc.access_location])
+
+        if ext.critical:
+            value = 'critical,%s' % value
         return output
     authorityInfoAccess.short_description = 'authorityInfoAccess'
 
@@ -236,7 +239,16 @@ class X509CertMixin(models.Model):
     extendedKeyUsage.short_description = 'extendedKeyUsage'
 
     def subjectKeyIdentifier(self):
-        return self.ext_as_str(b'subjectKeyIdentifier')
+        try:
+            ext = self.x509c.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_KEY_IDENTIFIER)
+        except x509.ExtensionNotFound:
+            return ''
+
+        hexlified = binascii.hexlify(ext.value.digest).upper().decode('utf-8')
+        value = add_colons(hexlified)
+        if ext.critical:
+            value = 'critical,%s' % value
+        return value
     subjectKeyIdentifier.short_description = 'subjectKeyIdentifier'
 
     def issuerAltName(self):
