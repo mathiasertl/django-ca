@@ -35,7 +35,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertEqual(stderr, '')
 
         cert = Certificate.objects.first()
-        self.assertSubject(cert.x509, subject)
+        self.assertSubject(cert.x509c, subject)
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
 
         self.assertEqual(cert.keyUsage(),
@@ -57,7 +57,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
 
             cert = Certificate.objects.first()
 
-            self.assertSubject(cert.x509, subject)
+            self.assertSubject(cert.x509c, subject)
             self.assertEqual(stdout, cert.pub)
             self.assertEqual(cert.keyUsage(),
                              'critical,Digital Signature, Key Encipherment, Key Agreement')
@@ -107,7 +107,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         stdout, stderr = self.cmd('sign_cert', subject=subject, cn_in_san=False, alt=[],
                                   stdin=stdin)
         cert = Certificate.objects.first()
-        self.assertSubject(cert.x509, subject)
+        self.assertSubject(cert.x509c, subject)
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)

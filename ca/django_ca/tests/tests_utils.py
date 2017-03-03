@@ -18,6 +18,7 @@ from django_ca.utils import LazyEncoder
 from django_ca.utils import NAME_RE
 from django_ca.utils import format_date
 from django_ca.utils import format_subject
+from django_ca.utils import get_cert_builder
 from django_ca.utils import get_cert_profile_kwargs
 from django_ca.utils import is_power2
 from django_ca.utils import multiline_url_validator
@@ -245,12 +246,13 @@ class GetBasicCertTestCase(TestCase):
         return datetime.strptime(date, '%Y%m%d%H%M%SZ')
 
     def assertCert(self, delta):
-        # TODO: Write new tests for this function
         now = datetime.utcnow()
         before = now.replace(second=0, microsecond=0)
         after = before.replace(hour=0, minute=0) + timedelta(delta + 1)
 
-        # cert = get_basic_cert(after, now=now)
+        cert = get_cert_builder(after, now=now)
+
+        # TODO: Write new tests for this function
         # self.assertFalse(cert.has_expired())
         # self.assertEqual(self.parse_date(cert.get_notBefore().decode('utf-8')), before)
         # self.assertEqual(self.parse_date(cert.get_notAfter().decode('utf-8')), after)

@@ -43,8 +43,8 @@ class InitCATest(DjangoCATestCase):
         ca = CertificateAuthority.objects.first()
         self.assertEqual(ca.x509.get_signature_algorithm(), six.b('sha512WithRSAEncryption'))
 
-        self.assertSubject(ca.x509, {'C': 'AT', 'ST': 'Vienna', 'L': 'Vienna', 'O': 'Org',
-                                     'OU': 'OrgUnit', 'CN': 'Test CA'})
+        self.assertSubject(ca.x509c, {'C': 'AT', 'ST': 'Vienna', 'L': 'Vienna', 'O': 'Org',
+                                      'OU': 'OrgUnit', 'CN': 'Test CA'})
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
 
@@ -102,7 +102,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(out, '')
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
-        self.assertSubject(ca.x509, {'CN': 'test'})
+        self.assertSubject(ca.x509c, {'CN': 'test'})
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
 
@@ -113,7 +113,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(out, '')
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
-        self.assertSubject(ca.x509, {'OU': 'smth', 'CN': 'test'})
+        self.assertSubject(ca.x509c, {'OU': 'smth', 'CN': 'test'})
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
 
