@@ -307,7 +307,7 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
             subject = {k: v for k, v in data['subject'].items() if v}
             expires = datetime.combine(data['expires'], datetime.min.time())
 
-            obj.x509 = self.model.objects.init(
+            obj.x509c = self.model.objects.init(
                 ca=data['ca'],
                 csr=data['csr'],
                 expires=expires,
