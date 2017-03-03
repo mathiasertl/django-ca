@@ -140,7 +140,8 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
                 authority_cert_serial_number=None)
         else:
             builder = builder.issuer_name(parent.x509c.subject)
-            auth_key_id = parent.x509c.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_KEY_IDENTIFIER)
+            auth_key_id = parent.x509c.extensions.get_extension_for_oid(
+                ExtensionOID.AUTHORITY_KEY_IDENTIFIER).value
 
         builder = builder.add_extension(auth_key_id, critical=False)
 
