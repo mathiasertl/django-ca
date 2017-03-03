@@ -123,17 +123,11 @@ class X509CertMixin(models.Model):
 
     @property
     def subject(self):
-        value = {OID_NAME_MAPPINGS[s.oid]: s.value for s in self.x509c.subject}
-        if 'EMAILADDRESS' in value:
-            value['emailAddress'] = value.pop('EMAILADDRESS')
-        return value
+        return {OID_NAME_MAPPINGS[s.oid]: s.value for s in self.x509c.subject}
 
     @property
     def issuer(self):
-        value = {OID_NAME_MAPPINGS[s.oid]: s.value for s in self.x509c.issuer}
-        if 'EMAILADDRESS' in value:
-            value['emailAddress'] = value.pop('EMAILADDRESS')
-        return value
+        return {OID_NAME_MAPPINGS[s.oid]: s.value for s in self.x509c.issuer}
 
     @property
     def extensions(self):

@@ -69,11 +69,12 @@ OID_NAME_MAPPINGS = {
     NameOID.ORGANIZATION_NAME: 'O',
     NameOID.ORGANIZATIONAL_UNIT_NAME: 'OU',
     NameOID.COMMON_NAME: 'CN',
-    NameOID.EMAIL_ADDRESS: 'EMAILADDRESS',
+    NameOID.EMAIL_ADDRESS: 'emailAddress',
 }
 
 # same, but reversed
 NAME_OID_MAPPINGS = {v: k for k, v in OID_NAME_MAPPINGS.items()}
+NAME_OID_MAPPINGS_UPPER = {v.upper(): k for k, v in OID_NAME_MAPPINGS.items()}
 
 KEY_USAGE_MAPPING = {
     b'cRLSign': 'crl_sign',
@@ -300,7 +301,7 @@ def parse_name(name):
     if not name:  # empty subjects are ok
         return {}
     parsed = [(t[0].upper(), t[2]) for t in NAME_RE.findall(name)]
-    return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], value) for typ, value in parsed])
+    return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS_UPPER[typ], value) for typ, value in parsed])
 
 
 def parse_general_name(name):
