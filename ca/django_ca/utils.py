@@ -22,8 +22,8 @@ from ipaddress import ip_address
 from ipaddress import ip_network
 
 from cryptography import x509
-from cryptography.x509.oid import NameOID
 from cryptography.x509.oid import ExtendedKeyUsageOID
+from cryptography.x509.oid import NameOID
 from OpenSSL import crypto
 
 from django.core.serializers.json import DjangoJSONEncoder

@@ -26,9 +26,9 @@ from django.utils.six.moves import reload_module
 from django_ca import ca_settings
 from django_ca.models import Certificate
 from django_ca.models import CertificateAuthority
+from django_ca.utils import OID_NAME_MAPPINGS
 from django_ca.utils import get_cert_profile_kwargs
 from django_ca.utils import sort_subject_dict
-from django_ca.utils import OID_NAME_MAPPINGS
 
 
 def _load_key(path, typ=crypto.FILETYPE_PEM):

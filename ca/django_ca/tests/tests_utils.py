@@ -1,7 +1,7 @@
 """Test utility functions."""
 
-import json
 import doctest
+import json
 from datetime import datetime
 from datetime import timedelta
 
@@ -14,8 +14,8 @@ from django_ca import ca_settings
 from django_ca import utils
 from django_ca.tests.base import DjangoCATestCase
 from django_ca.tests.base import override_settings
-from django_ca.utils import LazyEncoder
 from django_ca.utils import NAME_RE
+from django_ca.utils import LazyEncoder
 from django_ca.utils import format_date
 from django_ca.utils import format_subject
 from django_ca.utils import get_cert_builder
@@ -250,7 +250,7 @@ class GetBasicCertTestCase(TestCase):
         before = now.replace(second=0, microsecond=0)
         after = before.replace(hour=0, minute=0) + timedelta(delta + 1)
 
-        cert = get_cert_builder(after, now=now)
+        cert = get_cert_builder(after, now=now)  # NOQA
 
         # TODO: Write new tests for this function
         # self.assertFalse(cert.has_expired())

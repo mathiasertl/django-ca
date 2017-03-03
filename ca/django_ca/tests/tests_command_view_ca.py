@@ -183,13 +183,14 @@ kbfhROu065IYOU0LmqufhP3IdGSeFtiw6nPw
         self.assertEqual(stderr, '')
 
         stdout, stderr = self.cmd('view_ca', child.serial)
+        subject = '/C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=sub.ca.example.com/emailAddress=sub.ca@example.com'  # NOQA
         self.assertEqual(stdout, '''child (enabled):
 * Serial: 6A:A2:3D:F9:5A:4A:44:8A:9F:91:64:54:A2:0D:04:29
 * Path to private key:
   /home/mati/git/mati/django-ca/ca/django_ca/tests/fixtures/child.key
 * Parent: root (35:DB:D2:AD:79:0A:4D:1F:B5:26:ED:5F:83:74:C0:C2)
 * Has no children.
-* Distinguished Name: /C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=sub.ca.example.com/emailAddress=sub.ca@example.com
+* Distinguished Name: %s
 * Maximum levels of sub-CAs (pathlen): 0
 * HPKP pin: zX54clL03NhaRzlm1R3JbCTvx9ddQgKcOceeVwgoTSw=
 
@@ -231,7 +232,7 @@ r2dgotB+5o5RVJkxQWs2i9XT2q10gXh76fgL3rUAF/nUzWkpD3htMETwDus6WmqF
 IIBeA+G1PVe+gBRnKyXL7le66AihBU3lMmhhihW+6V43NkzB/F9essMZAF7e0/Pe
 5A==
 -----END CERTIFICATE-----
-''')
+''' % subject)
         self.assertEqual(stderr, '')
 
     @override_tmpcadir()
