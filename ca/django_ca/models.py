@@ -208,7 +208,7 @@ class X509CertMixin(models.Model):
                 output += 'CA Issuers - %s\n' % format_general_names([desc.access_location])
 
         if ext.critical:
-            value = 'critical,%s' % value
+            output = 'critical,%s' % output
         return output
     authorityInfoAccess.short_description = 'authorityInfoAccess'
 
@@ -334,10 +334,11 @@ class CertificateAuthority(X509CertMixin):
 
     @property
     def pathlen(self):
-        constraints = self.basicConstraints()
-        if 'pathlen' in constraints:
-            return int(constraints.split('pathlen:')[1])
-        return None
+        try:
+            ext = self.x509c.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
+        except x509.ExtensionNotFound:
+            return ''
+        return ext.value.path_length
 
     def nameConstraints(self):
         return self.ext_as_str(b'nameConstraints')
