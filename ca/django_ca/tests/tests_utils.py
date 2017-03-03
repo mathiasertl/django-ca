@@ -9,9 +9,9 @@ from datetime import timedelta
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.utils import six
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy as _l
-from django.utils import six
 
 from django_ca import ca_settings
 from django_ca import utils
