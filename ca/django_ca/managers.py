@@ -66,8 +66,6 @@ class CertificateManagerMixin(object):
     def get_common_builder_extensions(self, issuer_url=None, crl_url=None, ocsp_url=None):
         extensions = []
         if crl_url:
-            #x509.CRLDistributionPoints([x509.DistributionPoint(full_name=[x509.UniformResourceIdentifier(
-            #    'http://crl.example.com')], relative_name=None, reasons=None, crl_issuer=None)])
             if isinstance(crl_url, str):
                 crl_url = [url.strip() for url in crl_url.split()]
             urls = [x509.UniformResourceIdentifier(c) for c in crl_url]
@@ -145,10 +143,15 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
         builder = builder.add_extension(auth_key_id, critical=False)
 
-        # Still missing:
-        #extensions = self.get_common_extensions(ca_issuer_url, ca_crl_url, ca_ocsp_url)
         for critical, ext in self.get_common_builder_extensions(ca_issuer_url, ca_crl_url, ca_ocsp_url):
             builder = builder.add_extension(ext, critical=critical)
+
+        if name_constraints is not None:
+            excluded = []
+            permitted = []
+            for constraint in name_constraints:
+                typ, name = constraint.split(';', 1)
+
 
         certificate = builder.sign(
             private_key=private_key, algorithm=algorithm(),
