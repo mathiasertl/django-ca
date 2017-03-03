@@ -24,7 +24,6 @@ from ipaddress import ip_network
 from cryptography import x509
 from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import NameOID
-from OpenSSL import crypto
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import URLValidator
@@ -202,8 +201,6 @@ def format_subject(subject):
         '/CN=example.com'
 
     """
-    if isinstance(subject, crypto.X509Name):  # TODO: remove
-        subject = subject.get_components()
     if isinstance(subject, dict):
         subject = sort_subject_dict(subject)
     return '/%s' % ('/'.join(['%s=%s' % (force_text(k), force_text(v)) for k, v in subject]))
