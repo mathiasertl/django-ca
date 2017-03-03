@@ -103,7 +103,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         try:
             algorithm = getattr(hashes, algorithm.upper())
         except AttributeError:
-            raise RuntimeError('Unknown algorithm specified: %s' % algorithm)
+            raise ValueError('Unknown algorithm specified: %s' % algorithm)
 
         if key_type == 'DSA':
             private_key = dsa.generate_private_key(key_size=key_size, backend=default_backend())
@@ -190,6 +190,90 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
 
 class CertificateManager(CertificateManagerMixin, models.Manager):
+    def init_builder(self, ca, csr, expires, algorithm, subject=None, cn_in_san=True,
+                     csr_format='PEM', subjectAltName=None, keyUsage=None, extendedKeyUsage=None,
+                     tlsfeature=None):
+        if subject is None:
+            subject = {}
+        if not subject.get('CN') and not subjectAltName:
+            raise ValueError("Must name at least a CN or a subjectAltName.")
+        try:
+            algorithm = getattr(hashes, algorithm.upper())
+        except AttributeError:
+            raise ValueError('Unknown algorithm specified: %s' % algorithm)
+
+        if subjectAltName:
+            subjectAltName = [parse_general_name(san) for san in subjectAltName]
+        else:
+            subjectAltName = []  # so we can append the CN if requested
+
+        if not subject.get('CN'):  # use first SAN as CN if CN is not set
+            subject['CN'] = subjectAltName[0].value
+        elif cn_in_san and subject.get('CN'):  # add CN to SAN if cn_in_san is True (default)
+            cn_name = parse_general_name(subject['CN'])
+            if cn_name not in subjectAltName:
+                subjectAltName.insert(0, cn_name)
+
+        if csr_format == 'PEM':
+            req = x509.load_pem_x509_csr(csr, default_backend())
+        elif csr_format == 'DER':
+            req = x509.load_der_x509_csr(csr, default_backend())
+        else:
+            raise ValueError('Unknown CSR format passed: %s' % csr_format)
+
+        public_key = req.public_key()
+        builder = get_cert_builder(expires)
+        builder = builder.public_key(public_key)
+        builder = builder.issuer_name(ca.x509c.subject)
+
+        subject = [x509.NameAttribute(NAME_OID_MAPPINGS[k], v)
+                   for k, v in sort_subject_dict(subject)]
+        builder = builder.subject_name(x509.Name(subject))
+
+        # Add extensions
+        builder = builder.add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
+        builder = builder.add_extension(
+            ca.x509c.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_KEY_IDENTIFIER).value,
+            critical=False)
+        builder = builder.add_extension(
+            x509.SubjectKeyIdentifier.from_public_key(public_key), critical=False)
+
+        for critical, ext in self.get_common_builder_extensions(ca.issuer_url, ca.crl_url, ca.ocsp_url):
+            builder = builder.add_extension(ext, critical=critical)
+
+        if subjectAltName:
+            builder = builder.add_extension(x509.SubjectAlternativeName(subjectAltName), critical=False)
+
+        return builder.sign(private_key=ca.keyc, algorithm=algorithm(), backend=default_backend())
+
+        # Create signed certificate
+        cert = get_basic_cert(expires)
+
+        extensions = []
+
+        if keyUsage is not None:
+            extensions.append(crypto.X509Extension(b'keyUsage', *keyUsage))
+        if extendedKeyUsage is not None:
+            extensions.append(crypto.X509Extension(b'extendedKeyUsage', *extendedKeyUsage))
+
+        if tlsfeature is not None:  # pragma: no cover
+            extensions.append(crypto.X509Extension(b'tlsFeature', *tlsfeature))
+
+        # Add issuerAltName
+        if ca.issuer_alt_name:
+            issuerAltName = force_bytes('URI:%s' % ca.issuer_alt_name)
+        else:
+            issuerAltName = b'issuer:copy'
+        extensions.append(crypto.X509Extension(b'issuerAltName', 0, issuerAltName, issuer=ca.x509))
+
+        # Add collected extensions
+        cert.add_extensions(extensions)
+
+        # Finally sign the certificate:
+        cert.sign(ca.key, str(algorithm))  # str() to force py2 unicode to str
+
+        return cert
+
     def init(self, ca, csr, expires, algorithm, subject=None, cn_in_san=True,
              csr_format=crypto.FILETYPE_PEM, subjectAltName=None, keyUsage=None,
              extendedKeyUsage=None, tlsfeature=None):
