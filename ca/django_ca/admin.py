@@ -313,7 +313,7 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
                 expires=expires,
                 subject=subject,
                 algorithm=data['algorithm'],
-                subjectAltName=[e.strip() for e in san.split(',')],
+                subjectAltName=[e.strip() for e in san.split(',') if e.strip()],
                 cn_in_san=cn_in_san,
                 keyUsage=data['keyUsage'],
                 extendedKeyUsage=data['extendedKeyUsage'],
