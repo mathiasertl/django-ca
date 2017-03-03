@@ -28,6 +28,7 @@ from cryptography.x509.oid import ExtensionOID
 
 from django.db import models
 from django.utils.encoding import force_bytes
+from django.utils.encoding import force_text
 
 from . import ca_settings
 from .utils import EXTENDED_KEY_USAGE_MAPPING
@@ -248,7 +249,8 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         builder = builder.public_key(public_key)
         builder = builder.issuer_name(ca.x509c.subject)
 
-        subject = [x509.NameAttribute(NAME_OID_MAPPINGS[k], v) for k, v in sort_subject_dict(subject)]
+        subject = [x509.NameAttribute(NAME_OID_MAPPINGS[k], force_text(v))
+                   for k, v in sort_subject_dict(subject)]
         builder = builder.subject_name(x509.Name(subject))
 
         # Add extensions

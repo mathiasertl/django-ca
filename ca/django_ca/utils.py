@@ -297,7 +297,7 @@ def parse_name(name):
     name = name.strip()
     if not name:  # empty subjects are ok
         return {}
-    parsed = [(t[0].upper(), t[2]) for t in NAME_RE.findall(name)]
+    parsed = [(t[0].upper(), force_text(t[2])) for t in NAME_RE.findall(name)]
     return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS_UPPER[typ], value) for typ, value in parsed])
 
 
@@ -384,12 +384,12 @@ def parse_general_name(name):
             pass
 
         # Almost anything passes as DNS name, so this is our default fallback
-        return x509.DNSName(name)
+        return x509.DNSName(force_text(name))
 
     if typ == 'uri':
-        return x509.UniformResourceIdentifier(name)
+        return x509.UniformResourceIdentifier(force_text(name))
     elif typ == 'email':
-        return x509.RFC822Name(name)
+        return x509.RFC822Name(force_text(name))
     elif typ == 'ip':
         try:
             return x509.IPAddress(ip_address(name))
