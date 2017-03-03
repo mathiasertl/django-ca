@@ -11,6 +11,8 @@ import tempfile
 from datetime import datetime
 from datetime import timedelta
 
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import rsa
 from mock import patch
 from OpenSSL import crypto
 
@@ -144,6 +146,12 @@ class DjangoCATestCase(TestCase):
 
     def tmpcadir(self, **kwargs):
         return override_tmpcadir(**kwargs)
+
+    def assertBasic(self, cert, algo='SHA256'):
+        """Assert some basic key properties."""
+        algo = getattr(hashes, algo.upper())
+        self.assertTrue(isinstance(cert.signature_hash_algorithm, algo))
+        self.assertTrue(isinstance(cert.public_key(), rsa.RSAPublicKey))
 
     def assertSubject(self, cert, expected):
         actual = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in cert.subject]

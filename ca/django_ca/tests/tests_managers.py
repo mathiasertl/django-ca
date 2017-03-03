@@ -62,19 +62,19 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
             self.ca, self.csr_pem, expires=self.expires(720), algorithm='sha256',
             subjectAltName=['example.com'], **kwargs)
 
-        self.assertEqual(cert.get_signature_algorithm(), b'sha256WithRSAEncryption')
+        self.assertBasic(cert)
 
         # verify subject
         expected_subject = kwargs['subject']
         expected_subject['CN'] = 'example.com'
         self.assertSubject(cert, expected_subject)
 
-        self.assertEqual(cert.get_signature_algorithm(), b'sha256WithRSAEncryption')
+        self.assertBasic(cert)
 
         # verify extensions
         extensions = {
             b'extendedKeyUsage': 'TLS Web Server Authentication',
-            b'keyUsage': 'Digital Signature, Key Encipherment, Key Agreement',
+            b'keyUsage': 'critical,Digital Signature, Key Encipherment, Key Agreement',
             b'subjectAltName': 'DNS:example.com',
         }
 
