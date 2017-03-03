@@ -26,6 +26,7 @@ from django_ca.models import Certificate
 from django_ca.models import CertificateAuthority
 from django_ca.utils import get_cert_profile_kwargs
 from django_ca.utils import sort_subject_dict
+from django_ca.utils import OID_NAME_MAPPINGS
 
 
 def _load_key(path, typ=crypto.FILETYPE_PEM):
@@ -145,8 +146,7 @@ class DjangoCATestCase(TestCase):
         return override_tmpcadir(**kwargs)
 
     def assertSubject(self, cert, expected):
-        actual = cert.get_subject().get_components()
-        actual = [(k.decode('utf-8'), v.decode('utf-8')) for k, v in actual]
+        actual = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in cert.subject]
 
         self.assertEqual(actual, sort_subject_dict(expected))
 
