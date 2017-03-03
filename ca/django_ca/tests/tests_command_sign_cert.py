@@ -132,7 +132,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         stdin = six.StringIO(self.csr_pem)
         stdout, stderr = self.cmd('sign_cert', cn_in_san=False, alt=['example.net'], stdin=stdin)
         cert = Certificate.objects.first()
-        self.assertSubject(cert.x509, ca_settings._CA_DEFAULT_SUBJECT)
+        self.assertSubject(cert.x509c, ca_settings._CA_DEFAULT_SUBJECT)
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
 
@@ -149,7 +149,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         stdin = six.StringIO(self.csr_pem)
         self.cmd('sign_cert', cn_in_san=False, alt=['example.net'], stdin=stdin, subject=subject)
         cert = Certificate.objects.get(cn='CommonName2')
-        self.assertSubject(cert.x509, subject)
+        self.assertSubject(cert.x509c, subject)
 
         # set some empty values to see if we can remove subject fields:
         stdin = six.StringIO(self.csr_pem)
@@ -157,7 +157,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
                  subject={'C': '', 'ST': '', 'L': '', 'O': '', 'OU': '', 'emailAddress': '', 'CN':
                           'empty'})
         cert = Certificate.objects.get(cn='empty')
-        self.assertSubject(cert.x509, {'CN': 'empty'})
+        self.assertSubject(cert.x509c, {'CN': 'empty'})
 
     def test_extensions(self):
         stdin = six.StringIO(self.csr_pem)
