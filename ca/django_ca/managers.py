@@ -32,6 +32,8 @@ from django.db import models
 from django.utils.encoding import force_bytes
 
 from . import ca_settings
+from .utils import EXTENDED_KEY_USAGE_MAPPING
+from .utils import KEY_USAGE_MAPPING
 from .utils import NAME_OID_MAPPINGS
 from .utils import SAN_OPTIONS_RE
 from .utils import get_basic_cert
@@ -244,17 +246,28 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         if subjectAltName:
             builder = builder.add_extension(x509.SubjectAlternativeName(subjectAltName), critical=False)
 
+        if keyUsage:
+            critical, values = keyUsage
+            params = {v: False for v in KEY_USAGE_MAPPING.values()}
+            for value in [KEY_USAGE_MAPPING[k] for k in keyUsage.split(b',')]:
+                params[value] = True
+            builder = builder.add_extension(x509.KeyUsage(**params))
+
+        if extendedKeyUsage:
+            critical, usages = extendedKeyUsage
+            usages = [EXTENDED_KEY_USAGE_MAPPING[u] for u in extendedKeyUsage.split(b',')]
+            builder = builder.add_extension(x509.ExtendedKeyUsage(usages))
+
+        if ca.issuer_alt_name:
+            builder = builder.add_extension(x509.IssuerAlternativeName(
+                [parse_general_name(ca.issuer_alt_name)]))
+
         return builder.sign(private_key=ca.keyc, algorithm=algorithm(), backend=default_backend())
 
         # Create signed certificate
         cert = get_basic_cert(expires)
 
         extensions = []
-
-        if keyUsage is not None:
-            extensions.append(crypto.X509Extension(b'keyUsage', *keyUsage))
-        if extendedKeyUsage is not None:
-            extensions.append(crypto.X509Extension(b'extendedKeyUsage', *extendedKeyUsage))
 
         if tlsfeature is not None:  # pragma: no cover
             extensions.append(crypto.X509Extension(b'tlsFeature', *tlsfeature))
