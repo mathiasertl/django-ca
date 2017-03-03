@@ -212,9 +212,11 @@ class DjangoCATestCase(TestCase):
         return cert
 
     @classmethod
-    def get_subject(cls, x509):
-        return {k.decode('utf-8'): v.decode('utf-8') for k, v
-                in x509.get_subject().get_components()}
+    def get_subject(cls, cert):
+        value = {OID_NAME_MAPPINGS[s.oid]: s.value for s in cert.subject}
+        if 'EMAILADDRESS' in value:
+            value['emailAddress'] = value.pop('EMAILADDRESS')
+        return value
 
     @classmethod
     def get_extensions(cls, x509):

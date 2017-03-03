@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+from django.utils.encoding import force_bytes
+
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..utils import get_cert_profile_kwargs
@@ -23,13 +25,11 @@ from .base import override_tmpcadir
 @override_tmpcadir(CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class GetCertTestCase(DjangoCAWithCSRTestCase):
     def assertExtensions(self, cert, expected):
-        expected[b'basicConstraints'] = 'CA:FALSE'
+        expected[b'basicConstraints'] = 'critical,CA:FALSE'
         expected[b'authorityKeyIdentifier'] = self.ca.authorityKeyIdentifier()
 
         if self.ca.issuer_alt_name:
             expected[b'issuerAltName'] = 'URI:%s' % self.ca.issuer_alt_name
-        else:
-            expected[b'issuerAltName'] = self.ca.subjectAltName()
 
         # TODO: Does not account for multiple CRLs yet
         if self.ca.crl_url:
@@ -43,10 +43,12 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         if auth_info_access:
             expected[b'authorityInfoAccess'] = auth_info_access
 
-        exts = [cert.get_extension(i) for i in range(0, cert.get_extension_count())]
-        exts = {ext.get_short_name(): str(ext) for ext in exts}
+        c = Certificate()
+        c.x509c = cert
+        exts = [e.oid._name for e in cert.extensions]
+        # TODO: don't force bytes here, completely unnecessary
+        exts = {force_bytes(name): getattr(c, name)() for name in exts}
 
-        # TODO: Can't find out how to calculate this, so we just verify presence and length
         skid = exts.pop(b'subjectKeyIdentifier')
         self.assertEqual(len(skid), 59)
 
@@ -89,7 +91,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         # verify extensions
         self.assertExtensions(cert, {
             b'extendedKeyUsage': 'TLS Web Server Authentication',
-            b'keyUsage': 'Digital Signature, Key Encipherment, Key Agreement',
+            b'keyUsage': 'critical,Digital Signature, Key Encipherment, Key Agreement',
             b'subjectAltName': 'DNS:example.com',
         })
 
