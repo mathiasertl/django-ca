@@ -202,12 +202,12 @@ class DjangoCATestCase(TestCase):
         cert_kwargs.update(kwargs)
         cert_kwargs.setdefault('subject', {})
         cert_kwargs['subject'].update(subject)
-        x509 = Certificate.objects.init(
+        x509c = Certificate.objects.init(
             ca=ca, csr=csr, algorithm='sha256', expires=cls.expires(720), subjectAltName=san,
             **cert_kwargs)
 
         cert = Certificate(ca=ca, csr=csr)
-        cert.x509 = x509
+        cert.x509c = x509c
         cert.expires = cert.not_after  # this comes from the cert
         cert.save()
         return cert
