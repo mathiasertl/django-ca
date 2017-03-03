@@ -23,6 +23,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PublicFormat
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
+from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtensionOID
 from OpenSSL import crypto
 
@@ -194,7 +195,18 @@ class X509CertMixin(models.Model):
     crlDistributionPoints.short_description = 'crlDistributionPoints'
 
     def authorityInfoAccess(self):
-        return self.ext_as_str(b'authorityInfoAccess')
+        try:
+            ext = self.x509c.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS)
+        except x509.ExtensionNotFound:
+            return ''
+
+        output = ''
+        for desc in ext.value:
+            if desc.access_method == AuthorityInformationAccessOID.OCSP:
+                output += 'OCSP - %s\n' % format_general_names([desc.access_location])
+            elif desc.access_method == AuthorityInformationAccessOID.CA_ISSUERS:
+                output += 'CA Issuers - %s\n' % format_general_names([desc.access_location])
+        return output
     authorityInfoAccess.short_description = 'authorityInfoAccess'
 
     def basicConstraints(self):
