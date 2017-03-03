@@ -20,6 +20,7 @@ import uuid
 from copy import deepcopy
 from datetime import datetime
 from ipaddress import ip_address
+from ipaddress import ip_network
 
 from cryptography import x509
 from cryptography.x509.oid import NameOID
@@ -219,8 +220,8 @@ def parse_name(name):
 
     if typ == 'uri' or (typ is None and re.match('[a-z0-9]{2,}://', name)):
         return x509.UniformResourceIdentifier(name)
-    elif typ == 'email' or (typ is None and '@' in value):
-        return x509.RFC822Name(value)
+    elif typ == 'email' or (typ is None and '@' in name):
+        return x509.RFC822Name(name)
 
     if typ == 'ip':
         try:
@@ -234,7 +235,6 @@ def parse_name(name):
             pass
 
         raise ValueError('Could not parse IP address.')
-
 
     else:
         try:
@@ -250,7 +250,6 @@ def parse_name(name):
         return x509.IPAddress(value)
     elif typ == 'DNS':
         return x509.DNSName(value)
-
 
 
 def get_basic_cert(expires, now=None):
