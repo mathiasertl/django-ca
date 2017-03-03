@@ -219,9 +219,14 @@ class DjangoCATestCase(TestCase):
         return value
 
     @classmethod
-    def get_extensions(cls, x509):
-        exts = [x509.get_extension(i) for i in range(0, x509.get_extension_count())]
-        return {ext.get_short_name().decode('utf-8'): str(ext) for ext in exts}
+    def get_extensions(cls, cert):
+        c = Certificate()
+        c.x509c = cert
+        exts = [e.oid._name for e in cert.extensions]
+        if 'cRLDistributionPoints' in exts:
+            exts.remove('cRLDistributionPoints')
+            exts.append('crlDistributionPoints')
+        return {name: getattr(c, name)() for name in exts}
 
     @classmethod
     def get_alt_names(cls, x509):

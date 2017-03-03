@@ -47,6 +47,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         c.x509c = cert
         exts = [e.oid._name for e in cert.extensions]
         # TODO: don't force bytes here, completely unnecessary
+        # TODO: use self.get_extensions()
         exts = {force_bytes(name): getattr(c, name)() for name in exts}
 
         skid = exts.pop(b'subjectKeyIdentifier')
