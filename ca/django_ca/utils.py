@@ -78,24 +78,24 @@ OID_NAME_MAPPINGS = {
 NAME_OID_MAPPINGS = {v: k for k, v in OID_NAME_MAPPINGS.items()}
 
 KEY_USAGE_MAPPING = {
-    'cRLSign': 'crl_sign',
-    'dataEncipherment': 'data_encipherment',
-    'decipherOnly': 'decipher_only',
-    'digitalSignature': 'digital_signature',
-    'encipherOnly': 'encipher_only',
-    'keyAgreement': 'key_agreement',
-    'keyCertSign': 'key_cert_sign',
-    'keyEncipherment': 'key_encipherment',
-    'nonRepudiation': 'content_commitment',  # http://marc.info/?t=107176106300005&r=1&w=2
+    b'cRLSign': 'crl_sign',
+    b'dataEncipherment': 'data_encipherment',
+    b'decipherOnly': 'decipher_only',
+    b'digitalSignature': 'digital_signature',
+    b'encipherOnly': 'encipher_only',
+    b'keyAgreement': 'key_agreement',
+    b'keyCertSign': 'key_cert_sign',
+    b'keyEncipherment': 'key_encipherment',
+    b'nonRepudiation': 'content_commitment',  # http://marc.info/?t=107176106300005&r=1&w=2
 }
 
 EXTENDED_KEY_USAGE_MAPPING = {
-    'serverAuth': ExtendedKeyUsageOID.SERVER_AUTH,
-    'clientAuth': ExtendedKeyUsageOID.CLIENT_AUTH,
-    'codeSigning': ExtendedKeyUsageOID.CODE_SIGNING,
-    'emailProtection': ExtendedKeyUsageOID.EMAIL_PROTECTION,
-    'timeStamping': ExtendedKeyUsageOID.TIME_STAMPING,
-    'OCSPSigning': ExtendedKeyUsageOID.OCSP_SIGNING,
+    b'serverAuth': ExtendedKeyUsageOID.SERVER_AUTH,
+    b'clientAuth': ExtendedKeyUsageOID.CLIENT_AUTH,
+    b'codeSigning': ExtendedKeyUsageOID.CODE_SIGNING,
+    b'emailProtection': ExtendedKeyUsageOID.EMAIL_PROTECTION,
+    b'timeStamping': ExtendedKeyUsageOID.TIME_STAMPING,
+    b'OCSPSigning': ExtendedKeyUsageOID.OCSP_SIGNING,
 }
 
 
