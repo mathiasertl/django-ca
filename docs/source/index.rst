@@ -45,6 +45,13 @@ Development documentation:
    changelog
    development
 
+API documentation:
+
+.. toctree::
+   :maxdepth: 1
+
+   django_ca/utils
+
 
 Indices and tables
 ==================
