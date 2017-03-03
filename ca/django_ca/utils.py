@@ -16,7 +16,6 @@
 """Central functions to load CA key and cert as PKey/X509 objects."""
 
 import re
-import uuid
 from copy import deepcopy
 from datetime import datetime
 from ipaddress import ip_address
@@ -43,7 +42,6 @@ SUBJECT_FIELDS_RE = re.compile('^\s*(C|ST|L|OU|O|CN|emailAddress)\s*=', re.I)
 # Description strings for various X509 extensions, taken from "man x509v3_config".
 EXTENDED_KEY_USAGE_DESC = _('Purposes for which the certificate public key can be used for.')
 KEY_USAGE_DESC = _('Permitted key usages.')
-SAN_OPTIONS_RE = '(email|URI|IP|DNS|RID|dirName|otherName):'
 
 #: Regular expression to match RDNs out of a full x509 name.
 NAME_RE = re.compile(r'(C|ST|L|OU|O|CN|emailAddress)\s*'
@@ -419,33 +417,6 @@ def parse_general_name(name):
         return x509.DNSName(name)
 
 
-def get_basic_cert(expires, now=None):
-    """Get a basic X509 cert object.
-
-    Parameters
-    ----------
-
-    expires : datetime
-        When this certificate will expire.
-    """
-    if now is None:
-        now = datetime.utcnow()
-    now = now.replace(second=0, microsecond=0)
-
-    if expires < now:
-        raise ValueError("Expires must not be negative.")
-
-    not_before = format_date(now).encode('utf-8')
-    not_after = format_date(expires).encode('utf-8')
-
-    cert = crypto.X509()
-    cert.set_version(2)  # V3 certificate
-    cert.set_serial_number(uuid.uuid4().int)
-    cert.set_notBefore(not_before)
-    cert.set_notAfter(not_after)
-    return cert
-
-
 def get_cert_builder(expires, now=None):
     """Get a basic X509 cert object.
 
@@ -492,48 +463,3 @@ def get_cert_profile_kwargs(name=None):
         else:
             kwargs[arg] = (critical, force_bytes(','.join(config['value'])))
     return kwargs
-
-
-def get_subjectAltName(names, cn=None):
-    """Compute the value of the subjectAltName extension based on the given list of names.
-
-    The `cn` parameter, if provided, is prepended if not present in the list of names.
-
-    This method supports the `IP`, `email`, `URI` and `DNS` options automatically, if you need a
-    different option (or think the automatic parsing is wrong), give the full value verbatim (e.g.
-    `otherName:1.2.3.4;UTF8:some other identifier`.
-    """
-    values = []
-    names = sorted(set(names))
-
-    for name in names:
-        if not name:
-            continue
-        if isinstance(name, bytes):
-            name = name.decode('utf-8')
-
-        # Match any known literal values
-        if re.match(SAN_OPTIONS_RE, name):
-            values.append(name)
-            continue
-
-        try:
-            ip_address(name)
-            values.append('IP:%s' % name)
-            continue
-        except ValueError:
-            pass
-
-        if re.match('[a-z0-9]{2,}://', name):
-            values.append('URI:%s' % name)
-        elif '@' in name:
-            values.append('email:%s' % name)
-        else:
-            values.append('DNS:%s' % name)
-
-    if cn is not None:
-        value = 'DNS:%s' % cn
-        if value not in values:
-            values.insert(0, value)
-
-    return force_bytes(','.join(values))

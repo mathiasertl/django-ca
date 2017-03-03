@@ -15,7 +15,6 @@
 
 import os
 
-from OpenSSL import crypto
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -42,27 +41,6 @@ from .utils import sort_subject_dict
 
 class CertificateManagerMixin(object):
     def get_common_extensions(self, issuer_url=None, crl_url=None, ocsp_url=None):
-        extensions = []
-
-        # Set CRL distribution points:
-        if crl_url:
-            if isinstance(crl_url, str):
-                crl_url = [url.strip() for url in crl_url.split()]
-            value = force_bytes(','.join(['URI:%s' % uri for uri in crl_url]))
-            extensions.append(crypto.X509Extension(b'crlDistributionPoints', 0, value))
-
-        auth_info_access = []
-        if ocsp_url:
-            auth_info_access.append('OCSP;URI:%s' % ocsp_url)
-        if issuer_url:
-            auth_info_access.append('caIssuers;URI:%s' % issuer_url)
-        if auth_info_access:
-            auth_info_access = force_bytes(','.join(auth_info_access))
-            extensions.append(crypto.X509Extension(b'authorityInfoAccess', 0, auth_info_access))
-
-        return extensions
-
-    def get_common_builder_extensions(self, issuer_url=None, crl_url=None, ocsp_url=None):
         extensions = []
         if crl_url:
             if isinstance(crl_url, str):
@@ -143,7 +121,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
         builder = builder.add_extension(auth_key_id, critical=False)
 
-        for critical, ext in self.get_common_builder_extensions(ca_issuer_url, ca_crl_url, ca_ocsp_url):
+        for critical, ext in self.get_common_extensions(ca_issuer_url, ca_crl_url, ca_ocsp_url):
             builder = builder.add_extension(ext, critical=critical)
 
         # TODO: pass separate lists maybe?
@@ -206,7 +184,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         csr : str
             A valid CSR in PEM format. If none is given, `self.csr` will be used.
         expires : int
-            When the certificate should expire (passed to :py:func:`get_basic_cert`).
+            When the certificate should expire (passed to :py:func:`get_cert_builder`).
         algorithm : {'sha512', 'sha256', ...}
             Algorithm used to sign the certificate. The default is the CA_DIGEST_ALGORITHM setting.
         subject : dict, optional
@@ -224,7 +202,8 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             constants. The default is PEM.
         subjectAltName : list of str, optional
             A list of values for the subjectAltName extension. Values are passed to
-            `get_subjectAltName`, see function documentation for how this value is parsed.
+            :py:func:`~django_ca.utils.parse_general_name`, see function documentation for how this value is
+            parsed.
         keyUsage : tuple or None
             Value for the `keyUsage` X509 extension. See description for format details.
         extendedKeyUsage : tuple or None
@@ -280,7 +259,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         builder = builder.add_extension(
             x509.SubjectKeyIdentifier.from_public_key(public_key), critical=False)
 
-        for critical, ext in self.get_common_builder_extensions(ca.issuer_url, ca.crl_url, ca.ocsp_url):
+        for critical, ext in self.get_common_extensions(ca.issuer_url, ca.crl_url, ca.ocsp_url):
             builder = builder.add_extension(ext, critical=critical)
 
         if subjectAltName:
