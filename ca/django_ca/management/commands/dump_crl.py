@@ -13,8 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from cryptography.hazmat.primitives import hashes
-
 from django.core.management.base import CommandError
 
 from django_ca.crl import get_crl_cryptography
@@ -29,10 +27,9 @@ class Command(BaseCommand):
         parser.add_argument(
             '-e', '--expires', type=int, default=86400, metavar='SECONDS',
             help="Seconds until a new CRL will be available (default: %(default)s).")
-        parser.add_argument('--digest', default='sha512',
-                            help="The name of the message digest to use (default: %(default)s).")
         parser.add_argument('path', nargs='?', default='-',
                             help='Path for the output file. Use "-" for stdout.')
+        self.add_algorithm(parser)
         self.add_format(parser)
         self.add_ca(parser)
         super(Command, self).add_arguments(parser)
@@ -41,7 +38,7 @@ class Command(BaseCommand):
         kwargs = {
             'encoding': options['format'],
             'expires': options['expires'],
-            'algorithm': getattr(hashes, options['digest'].upper())(),
+            'algorithm': options['algorithm'],
         }
 
         crl = get_crl_cryptography(ca=options['ca'], **kwargs)
