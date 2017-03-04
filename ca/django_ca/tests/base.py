@@ -17,7 +17,6 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from mock import patch
-from OpenSSL import crypto
 
 from django.conf import settings
 from django.core.management import call_command
@@ -26,12 +25,13 @@ from django.test.utils import override_settings as _override_settings
 from django.utils.six import StringIO
 from django.utils.six.moves import reload_module
 
-from django_ca import ca_settings
-from django_ca.models import Certificate
-from django_ca.models import CertificateAuthority
-from django_ca.utils import OID_NAME_MAPPINGS
-from django_ca.utils import get_cert_profile_kwargs
-from django_ca.utils import sort_subject_dict
+from .. import ca_settings
+from ..models import Certificate
+from ..models import CertificateAuthority
+from ..utils import OID_NAME_MAPPINGS
+from ..utils import get_cert_profile_kwargs
+from ..utils import sort_subject_dict
+from ..utils import x509_name
 
 
 def _load_key(path):
@@ -183,20 +183,16 @@ class DjangoCATestCase(TestCase):
         return ca
 
     @classmethod
-    def create_csr(cls, **fields):
-        # see also: https://github.com/msabramo/pyOpenSSL/blob/master/examples/certgen.py
-        pkey = crypto.PKey()
-        pkey.generate_key(crypto.TYPE_RSA, 1024)
+    def create_csr(cls, **subject):
+        private_key = rsa.generate_private_key(
+            public_exponent=65537, key_size=1024, backend=default_backend())
+        builder = x509.CertificateSigningRequestBuilder()
 
-        req = crypto.X509Req()
+        builder = builder.subject_name(x509_name(subject))
+        builder = builder.add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
+        request = builder.sign(private_key, hashes.SHA256(), default_backend())
 
-        subj = req.get_subject()
-        for key, value in fields.items():
-            setattr(subj, key, value)
-
-        req.set_pubkey(pkey)
-        req.sign(pkey, 'sha256')
-        return pkey, req
+        return private_key, request
 
     @classmethod
     def create_cert(cls, ca, csr, subject, san=None, **kwargs):
