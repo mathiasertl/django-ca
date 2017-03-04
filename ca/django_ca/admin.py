@@ -18,6 +18,7 @@ import os
 from datetime import datetime
 
 from OpenSSL import crypto
+from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.conf.urls import url
 from django.contrib import admin
@@ -80,9 +81,9 @@ on Wikipedia.</p>'''.replace('\n', ' ')
         filetype = request.GET.get('format', 'PEM').upper().strip()
 
         if filetype == 'PEM':
-            data = crypto.dump_certificate(crypto.FILETYPE_PEM, obj.x509)
+            data = obj.pub
         elif filetype == 'DER':
-            data = crypto.dump_certificate(crypto.FILETYPE_ASN1, obj.x509)
+            data = obj.x509c.public_bytes(encoding=Encoding.DER)
         else:
             return HttpResponseBadRequest()
 
