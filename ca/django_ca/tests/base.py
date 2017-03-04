@@ -11,7 +11,10 @@ import tempfile
 from datetime import datetime
 from datetime import timedelta
 
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from mock import patch
 from OpenSSL import crypto
@@ -31,10 +34,10 @@ from django_ca.utils import get_cert_profile_kwargs
 from django_ca.utils import sort_subject_dict
 
 
-def _load_key(path, typ=crypto.FILETYPE_PEM):
+def _load_key(path):
     path = os.path.join(settings.FIXTURES_DIR, path)
     with open(path, 'rb') as stream:
-        return crypto.load_privatekey(typ, stream.read())
+        return serialization.load_pem_private_key(stream.read(), password=None, backend=default_backend())
 
 
 def _load_csr(path):
@@ -43,11 +46,11 @@ def _load_csr(path):
         return stream.read().strip()
 
 
-def _load_cert(path, typ=crypto.FILETYPE_PEM):
+def _load_cert(path):
     path = os.path.join(settings.FIXTURES_DIR, path)
     with open(path, 'rb') as stream:
         pem = stream.read()
-        return pem, crypto.load_certificate(typ, pem)
+        return pem, x509.load_pem_x509_certificate(pem, default_backend())
 
 
 root_key = _load_key('root.key')
@@ -175,7 +178,7 @@ class DjangoCATestCase(TestCase):
         path = os.path.join(settings.FIXTURES_DIR, '%s.key' % name)
         ca = CertificateAuthority(name=name, private_key_path=path, enabled=enabled, parent=parent,
                                   **kwargs)
-        ca.x509 = x509  # calculates serial etc
+        ca.x509c = x509  # calculates serial etc
         ca.save()
         return ca
 
@@ -214,7 +217,7 @@ class DjangoCATestCase(TestCase):
     @classmethod
     def load_cert(cls, ca, x509):
         cert = Certificate(ca=ca, csr='none')
-        cert.x509 = x509
+        cert.x509c = x509
         cert.save()
         return cert
 
