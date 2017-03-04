@@ -184,8 +184,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertEqual(cert.subjectAltName(), 'DNS:%s' % cn)
         self.assertEqual(cert.basicConstraints(), 'critical,CA:FALSE')
         self.assertEqual(cert.keyUsage(), 'critical,digitalSignature,keyAgreement')
-        self.assertEqual(cert.extendedKeyUsage(),
-                         'TLS Web Client Authentication, TLS Web Server Authentication')
+        self.assertEqual(cert.extendedKeyUsage(), 'clientAuth,serverAuth')
         self.assertEqual(cert.ca, self.ca)
         self.assertEqual(cert.csr, self.csr_pem)
 

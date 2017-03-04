@@ -37,6 +37,7 @@ from .managers import CertificateAuthorityManager
 from .managers import CertificateManager
 from .querysets import CertificateAuthorityQuerySet
 from .querysets import CertificateQuerySet
+from .utils import EXTENDED_KEY_USAGE_REVERSED
 from .utils import KEY_USAGE_MAPPING
 from .utils import OID_NAME_MAPPINGS
 from .utils import SAN_NAME_MAPPINGS
@@ -243,7 +244,20 @@ class X509CertMixin(models.Model):
     keyUsage.short_description = 'keyUsage'
 
     def extendedKeyUsage(self):
-        return self.ext_as_str(b'extendedKeyUsage')
+        value = ''
+        try:
+            ext = self.x509c.extensions.get_extension_for_oid(ExtensionOID.EXTENDED_KEY_USAGE)
+        except x509.ExtensionNotFound:
+            return value
+
+        usages = []
+        for usage in ext.value:
+            usages.append(EXTENDED_KEY_USAGE_REVERSED[usage].decode('utf-8'))
+        value = ','.join(sorted(usages))
+
+        if ext.critical:
+            value = 'critical,%s' % value
+        return value
     extendedKeyUsage.short_description = 'extendedKeyUsage'
 
     def subjectKeyIdentifier(self):

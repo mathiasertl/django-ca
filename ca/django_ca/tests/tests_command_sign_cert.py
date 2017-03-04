@@ -39,7 +39,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
 
         self.assertEqual(cert.keyUsage(), 'critical,digitalSignature,keyAgreement,keyEncipherment')
-        self.assertEqual(cert.extendedKeyUsage(), 'TLS Web Server Authentication')
+        self.assertEqual(cert.extendedKeyUsage(), 'serverAuth')
         self.assertEqual(cert.subjectAltName(), 'DNS:example.com')
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
@@ -59,7 +59,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
             self.assertSubject(cert.x509c, subject)
             self.assertEqual(stdout, cert.pub)
             self.assertEqual(cert.keyUsage(), 'critical,digitalSignature,keyAgreement,keyEncipherment')
-            self.assertEqual(cert.extendedKeyUsage(), 'TLS Web Server Authentication')
+            self.assertEqual(cert.extendedKeyUsage(), 'serverAuth')
             self.assertEqual(cert.subjectAltName(), 'DNS:example.com')
         finally:
             os.remove(csr_path)
@@ -170,7 +170,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertEqual(cert.x509.get_subject().get_components(), [(b'CN', b'example.com')])
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
         self.assertEqual(cert.keyUsage(), 'critical,keyCertSign')
-        self.assertEqual(cert.extendedKeyUsage(), 'TLS Web Client Authentication')
+        self.assertEqual(cert.extendedKeyUsage(), 'clientAuth')
         self.assertEqual(cert.subjectAltName(), 'DNS:example.com, URI:https://example.net')
 
     @override_settings(CA_DEFAULT_SUBJECT={})

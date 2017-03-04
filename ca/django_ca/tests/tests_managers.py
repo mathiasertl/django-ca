@@ -75,7 +75,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
         # verify extensions
         extensions = {
-            b'extendedKeyUsage': 'TLS Web Server Authentication',
+            b'extendedKeyUsage': 'serverAuth',
             b'keyUsage': 'critical,digitalSignature,keyAgreement,keyEncipherment',
             b'subjectAltName': 'DNS:example.com',
         }
@@ -93,7 +93,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
         # verify extensions
         self.assertExtensions(cert, {
-            b'extendedKeyUsage': 'TLS Web Server Authentication',
+            b'extendedKeyUsage': 'serverAuth',
             b'keyUsage': 'critical,digitalSignature,keyAgreement,keyEncipherment',
             b'subjectAltName': 'DNS:example.com',
         })

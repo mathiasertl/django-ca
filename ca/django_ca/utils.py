@@ -101,6 +101,7 @@ EXTENDED_KEY_USAGE_MAPPING = {
     b'timeStamping': ExtendedKeyUsageOID.TIME_STAMPING,
     b'OCSPSigning': ExtendedKeyUsageOID.OCSP_SIGNING,
 }
+EXTENDED_KEY_USAGE_REVERSED = {v: k for k, v in EXTENDED_KEY_USAGE_MAPPING.items()}
 
 
 class LazyEncoder(DjangoJSONEncoder):
