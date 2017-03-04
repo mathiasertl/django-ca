@@ -155,7 +155,6 @@ class DjangoCATestCase(TestCase):
 
     def assertSubject(self, cert, expected):
         actual = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in cert.subject]
-
         self.assertEqual(actual, sort_subject_dict(expected))
 
     def assertIssuer(self, issuer, cert):

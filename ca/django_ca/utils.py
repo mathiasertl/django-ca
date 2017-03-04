@@ -329,7 +329,7 @@ def x509_name(name):
     if isinstance(name, six.string_types):
         name = parse_name(name).items()
     elif isinstance(name, dict):
-        name = name.items()
+        name = sort_subject_dict(name)
 
     return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], value) for typ, value in name])
 
