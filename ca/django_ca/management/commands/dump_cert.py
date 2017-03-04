@@ -13,8 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from OpenSSL import crypto
-
 from django.core.management.base import CommandError
 
 from django_ca.management.base import CertCommand
@@ -32,7 +30,7 @@ class Command(CertCommand):
                             help='Path where to dump the certificate. Use "-" for stdout.')
 
     def handle(self, cert, path, **options):
-        data = crypto.dump_certificate(options['format'], cert.x509)
+        data = cert.dump_certificate(options['format'])
         if path == '-':
             self.stdout.write(data, ending=b'')
         else:
