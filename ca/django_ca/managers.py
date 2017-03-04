@@ -17,7 +17,6 @@ import os
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -76,11 +75,6 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             raise RuntimeError("%s: Key size must be least %s bits."
                                % (key_size, ca_settings.CA_MIN_KEY_SIZE))
 
-        try:
-            algorithm = getattr(hashes, algorithm.upper())
-        except AttributeError:
-            raise ValueError('Unknown algorithm specified: %s' % algorithm)
-
         if key_type == 'DSA':
             private_key = dsa.generate_private_key(key_size=key_size, backend=default_backend())
         else:
@@ -136,10 +130,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             builder = builder.add_extension(x509.NameConstraints(
                 permitted_subtrees=permitted, excluded_subtrees=excluded), critical=True)
 
-        certificate = builder.sign(
-            private_key=private_key, algorithm=algorithm(),
-            backend=default_backend()
-        )
+        certificate = builder.sign(private_key=private_key, algorithm=algorithm, backend=default_backend())
 
         if crl_url is not None:
             crl_url = '\n'.join(crl_url)
@@ -215,10 +206,6 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             subject = {}
         if not subject.get('CN') and not subjectAltName:
             raise ValueError("Must name at least a CN or a subjectAltName.")
-        try:
-            algorithm = getattr(hashes, algorithm.upper())
-        except AttributeError:
-            raise ValueError('Unknown algorithm specified: %s' % algorithm)
 
         if subjectAltName:
             subjectAltName = [parse_general_name(san) for san in subjectAltName]
@@ -277,4 +264,4 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             builder = builder.add_extension(x509.IssuerAlternativeName(
                 [parse_general_name(ca.issuer_alt_name)]), critical=False)
 
-        return builder.sign(private_key=ca.keyc, algorithm=algorithm(), backend=default_backend())
+        return builder.sign(private_key=ca.keyc, algorithm=algorithm, backend=default_backend())
