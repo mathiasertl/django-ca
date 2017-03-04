@@ -69,6 +69,7 @@ HPKP pin: %(hpkp)s
         # test with no pem but with extensions
         stdout, stderr = self.cmd('view_cert', self.cert.serial, no_pem=True, extensions=True,
                                   stdout=BytesIO(), stderr=BytesIO())
+        self.maxDiff = None
         self.assertEqual(stdout.decode('utf-8'), '''Common Name: %(cn)s
 Valid from: %(from)s
 Valid until: %(until)s
@@ -76,13 +77,13 @@ Status: Valid
 authorityKeyIdentifier:
     keyid:%(authorityKeyIdentifier)s
 basicConstraints:
-    CA:FALSE
+    critical,CA:FALSE
 extendedKeyUsage:
-    TLS Web Server Authentication
+    serverAuth
 issuerAltName:
     DNS:ca.example.com
 keyUsage:
-    Digital Signature, Key Encipherment, Key Agreement
+    critical,digitalSignature,keyAgreement,keyEncipherment
 subjectAltName:
     DNS:%(cn)s
 subjectKeyIdentifier:

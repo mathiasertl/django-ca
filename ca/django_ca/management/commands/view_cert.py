@@ -50,15 +50,12 @@ class Command(CertCommand):
 
         # self.stdout.write extensions
         if options['extensions']:
-            for name, value in sorted(cert.extensions.items(), key=lambda k: k[0]):
-                self.stdout.write("%s:" % name.decode('utf-8'))
-                for line in str(value).strip().splitlines():
-                    self.stdout.write("    %s" % line)
+            for name, value in cert.extensions_cryptography():
+                self.stdout.write('%s:\n    %s' % (name, value))
         else:
-            ext = cert.extensions.get(b'subjectAltName')
-            if ext:
-                self.stdout.write('%s:' % ext.get_short_name().decode('utf-8'))
-                self.stdout.write("    %s" % ext)
+            san = cert.subjectAltName()
+            if san:
+                self.stdout.write('subjectAltName:\n    %s' % san)
 
         self.stdout.write('Watchers:')
         for watcher in cert.watchers.all():

@@ -47,7 +47,7 @@ class ViewCATestCase(DjangoCAWithCATestCase):
         if san != '':
             san = '\nsubjectAltName:\n    DNS:%s' % san
 
-        self.assertEqual(stdout, '''%s (%s):
+        self.assertMultiLineEqual(stdout, '''%s (%s):
 * Serial: %s
 * Path to private key:
   %s
@@ -63,7 +63,7 @@ authorityKeyIdentifier:
 basicConstraints:
     %s
 keyUsage:
-    critical,Certificate Sign, CRL Sign%s
+    critical,cRLSign,keyCertSign%s
 subjectKeyIdentifier:
     %s
 
@@ -80,7 +80,7 @@ X509 v3 certificate extensions for signed certificates:
     def test_basic(self):
         stdout, stderr = self.cmd('view_ca', self.ca.serial)
         path = os.path.join(settings.FIXTURES_DIR, 'root.key')
-        self.assertEqual(stdout, '''root (enabled):
+        self.assertMultiLineEqual(stdout, '''root (enabled):
 * Serial: 35:DB:D2:AD:79:0A:4D:1F:B5:26:ED:5F:83:74:C0:C2
 * Path to private key:
   %s
@@ -96,7 +96,7 @@ authorityKeyIdentifier:
 basicConstraints:
     critical,CA:TRUE, pathlen:1
 keyUsage:
-    Certificate Sign, CRL Sign
+    cRLSign,keyCertSign
 subjectAltName:
     DNS:ca.example.com
 subjectKeyIdentifier:
@@ -137,7 +137,7 @@ kbfhROu065IYOU0LmqufhP3IdGSeFtiw6nPw
         stdout, stderr = self.cmd('view_ca', parent.serial)
         #self.assertOutput(parent, stdout, san='ca.example.com')
         path = os.path.join(settings.FIXTURES_DIR, 'root.key')
-        self.assertEqual(stdout, '''root (enabled):
+        self.assertMultiLineEqual(stdout, '''root (enabled):
 * Serial: 35:DB:D2:AD:79:0A:4D:1F:B5:26:ED:5F:83:74:C0:C2
 * Path to private key:
   %s
@@ -154,7 +154,7 @@ authorityKeyIdentifier:
 basicConstraints:
     critical,CA:TRUE, pathlen:1
 keyUsage:
-    Certificate Sign, CRL Sign
+    cRLSign,keyCertSign
 subjectAltName:
     DNS:ca.example.com
 subjectKeyIdentifier:
@@ -191,7 +191,7 @@ kbfhROu065IYOU0LmqufhP3IdGSeFtiw6nPw
         stdout, stderr = self.cmd('view_ca', child.serial)
         subject = '/C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=sub.ca.example.com/emailAddress=sub.ca@example.com'  # NOQA
         path = os.path.join(settings.FIXTURES_DIR, 'child.key')
-        self.assertEqual(stdout, '''child (enabled):
+        self.assertMultiLineEqual(stdout, '''child (enabled):
 * Serial: 6A:A2:3D:F9:5A:4A:44:8A:9F:91:64:54:A2:0D:04:29
 * Path to private key:
   %s
@@ -207,7 +207,7 @@ authorityKeyIdentifier:
 basicConstraints:
     critical,CA:TRUE, pathlen:0
 keyUsage:
-    Certificate Sign, CRL Sign
+    cRLSign,keyCertSign
 subjectAltName:
     DNS:sub.ca.example.com
 subjectKeyIdentifier:

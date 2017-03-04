@@ -49,9 +49,8 @@ class Command(BaseCommand):
 
         self.stdout.write('')
         self.stdout.write('X509 v3 certificate extensions for CA:')
-        for name in sorted(ca.extensions.keys()):
-            self.stdout.write("%s:" % name.decode('utf-8'))
-            self.stdout.write('    %s' % ca.ext_as_str(name))
+        for name, value in ca.extensions_cryptography():
+            self.stdout.write('%s:\n    %s' % (name, value))
 
         self.stdout.write('')
         self.stdout.write('X509 v3 certificate extensions for signed certificates:')
