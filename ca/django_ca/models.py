@@ -362,22 +362,16 @@ class Certificate(X509CertMixin):
     # TODO: add privilegeWithdrawn and aACompromise
     REVOCATION_REASONS = (
         ('', _('No reason')),
-        ('unspecified', _('Unspecified')),
-        ('keyCompromise', _('Key compromised')),
-        ('CACompromise', _('CA compromised')),
-        ('affiliationChanged', _('Affiliation changed')),
-        ('superseded', _('Superseded')),
-        ('cessationOfOperation', _('Cessation of operation')),
-        ('certificateHold', _('On Hold')),
-
-        ('key_compromise', _('Key compromised')),
-        ('ca_compromise', _('CA compromised')),
-        ('affiliation_changed', _('Affiliation changed')),
-        ('cessation_of_operation', _('Cessation of operation')),
-        ('certificate_hold', _('On Hold')),
-        ('privilege_withdrawn', _('Privilege withdrawn')),
         ('aa_compromise', _('Attribute Authority compromised')),
+        ('affiliation_changed', _('Affiliation changed')),
+        ('ca_compromise', _('CA compromised')),
+        ('certificate_hold', _('On Hold')),
+        ('cessation_of_operation', _('Cessation of operation')),
+        ('key_compromise', _('Key compromised')),
+        ('privilege_withdrawn', _('Privilege withdrawn')),
         ('remove_from_crl', _('Removed from CRL')),
+        ('superseded', _('Superseded')),
+        ('unspecified', _('Unspecified')),
     )
     OCSP_REASON_MAPPINGS = {
         'keyCompromise': 'key_compromise',
