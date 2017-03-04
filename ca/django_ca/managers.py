@@ -63,7 +63,7 @@ class CertificateManagerMixin(object):
 
 
 class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
-    def init(self, name, key_size, key_type, algorithm, expires, parent, pathlen, subject,
+    def init(self, name, key_size, key_type, algorithm, expires, parent, subject, pathlen=None,
              issuer_url=None, issuer_alt_name=None, crl_url=None, ocsp_url=None,
              ca_issuer_url=None, ca_crl_url=None, ca_ocsp_url=None, name_constraints=None,
              password=None):
@@ -86,10 +86,6 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         builder = get_cert_builder(expires)
         builder = builder.public_key(public_key)
         builder = builder.subject_name(subject)
-
-        # TODO: pathlen=None is currently False :/
-        if pathlen is False:
-            pathlen = None
 
         builder = builder.add_extension(x509.BasicConstraints(ca=True, path_length=pathlen), critical=True)
         builder = builder.add_extension(x509.KeyUsage(

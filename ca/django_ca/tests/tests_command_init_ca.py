@@ -86,7 +86,7 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_no_pathlen(self):
-        out, err = self.init_ca(pathlen=False)
+        out, err = self.init_ca(pathlen=None)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()

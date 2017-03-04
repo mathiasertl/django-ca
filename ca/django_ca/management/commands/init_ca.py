@@ -73,7 +73,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         group = group.add_mutually_exclusive_group()
         group.add_argument('--pathlen', default=0, type=int,
                            help='Maximum number of sublevel CAs (default: %(default)s).')
-        group.add_argument('--no-pathlen', action='store_false', dest='pathlen',
+        group.add_argument('--no-pathlen', action='store_const', const=None, dest='pathlen',
                            help='Do not add a pathlen attribute.')
 
         group = parser.add_argument_group(
