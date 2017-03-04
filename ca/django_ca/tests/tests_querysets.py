@@ -16,7 +16,7 @@
 """Test querysets."""
 
 from cryptography.hazmat.primitives import hashes
-from OpenSSL import crypto
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 
 from django_ca.tests.base import DjangoCATestCase
 
@@ -36,23 +36,19 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         self.assertEqual(ca.name, 'Root CA')
 
         # verify private key properties
-        self.assertTrue(ca.key.check())
-        self.assertEqual(ca.key.bits(), 1024)
-        self.assertEqual(ca.key.type(), crypto.TYPE_RSA)
+        self.assertEqual(ca.keyc.key_size, 1024)
+        self.assertIsInstance(ca.keyc.public_key(), RSAPublicKey)
 
-        # verity public key properties
-        self.assertEqual(ca.x509.get_signature_algorithm(), b'sha256WithRSAEncryption')
-        self.assertEqual(ca.x509.get_subject().get_components(), [(b'CN', b'ca.example.com')])
+        # verity public key propertiesa
+        self.assertBasic(ca.x509c)
+        self.assertEqual(ca.subject, {'CN': 'ca.example.com'})
 
         # verify X509 properties
         self.assertEqual(ca.basicConstraints(), 'critical,CA:TRUE, pathlen:0')
         self.assertEqual(ca.keyUsage(), 'critical,cRLSign,keyCertSign')
         self.assertEqual(ca.subjectAltName(), '')
 
-        # TODO: What do LetsEncrypt, StartSSL and Gandi set for this?
         self.assertEqual(ca.extendedKeyUsage(), '')
-#        self.assertEqual(ca.subjectKeyIdentifier(), 'DNS:ca.example.com')  # a serial
-#        self.assertEqual(ca.authorityKeyIdentifier(), 'DNS:ca.example.com')  # a serial
         self.assertEqual(ca.issuerAltName(), '')
 
     def test_pathlen(self):

@@ -152,9 +152,9 @@ class DjangoCATestCase(TestCase):
 
     def assertBasic(self, cert, algo='SHA256'):
         """Assert some basic key properties."""
-        algo = getattr(hashes, algo.upper())
-        self.assertTrue(isinstance(cert.signature_hash_algorithm, algo))
-        self.assertTrue(isinstance(cert.public_key(), rsa.RSAPublicKey))
+        self.assertEqual(cert.version, x509.Version.v3)
+        self.assertIsInstance(cert.public_key(), rsa.RSAPublicKey)
+        self.assertIsInstance(cert.signature_hash_algorithm, getattr(hashes, algo.upper()))
 
     def assertSubject(self, cert, expected):
         actual = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in cert.subject]
