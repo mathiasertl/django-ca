@@ -19,7 +19,7 @@ import tempfile
 from datetime import datetime
 from datetime import timedelta
 
-from OpenSSL import crypto
+from cryptography.hazmat.primitives.serialization import Encoding
 
 from ..management import base
 from ..models import CertificateAuthority
@@ -61,23 +61,23 @@ class FormatActionTestCase(DjangoCATestCase):
 
     def test_basic(self):
         ns = self.parser.parse_args(['--action=DER'])
-        self.assertEqual(ns.action, crypto.FILETYPE_ASN1)
+        self.assertEqual(ns.action, Encoding.DER)
 
         ns = self.parser.parse_args(['--action=ASN1'])
-        self.assertEqual(ns.action, crypto.FILETYPE_ASN1)
+        self.assertEqual(ns.action, Encoding.DER)
 
         ns = self.parser.parse_args(['--action=PEM'])
-        self.assertEqual(ns.action, crypto.FILETYPE_PEM)
-
-        ns = self.parser.parse_args(['--action=TEXT'])
-        self.assertEqual(ns.action, crypto.FILETYPE_TEXT)
+        self.assertEqual(ns.action, Encoding.PEM)
 
     def test_case(self):
         ns = self.parser.parse_args(['--action=der'])
-        self.assertEqual(ns.action, crypto.FILETYPE_ASN1)
+        self.assertEqual(ns.action, Encoding.DER)
+
+        ns = self.parser.parse_args(['--action=asn1'])
+        self.assertEqual(ns.action, Encoding.DER)
 
         ns = self.parser.parse_args(['--action= pEm'])
-        self.assertEqual(ns.action, crypto.FILETYPE_PEM)
+        self.assertEqual(ns.action, Encoding.PEM)
 
     def test_error(self):
         self.assertParserError(['--action=foo'],
