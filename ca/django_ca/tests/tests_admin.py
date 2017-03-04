@@ -174,7 +174,6 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
             'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
             'extendedKeyUsage_1': False,
         })
-        print(response.content.decode('utf-8'))
         self.assertRedirects(response, self.changelist_url)
 
         cert = Certificate.objects.get(cn=cn)
