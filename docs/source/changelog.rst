@@ -22,8 +22,9 @@ ChangeLog
   * ``TEXT`` is no longer a supported output format for dumping certificates.
 
 * The ``keyUsage`` extension is now marked as critical for certificate authorities.
+* Add the ``privilegeWithdrawn`` and ``aACompromise`` attributes for revocation lists.
 
-.. _changelog-1.4.0:
+.. _changelog-1.4.1:
 
 ******************
 1.4.1 (2017-02-26)

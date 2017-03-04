@@ -367,7 +367,6 @@ class Certificate(X509CertMixin):
     objects = CertificateManager.from_queryset(CertificateQuerySet)()
 
     # reasons are defined in http://www.ietf.org/rfc/rfc3280.txt
-    # TODO: add privilegeWithdrawn and aACompromise
     REVOCATION_REASONS = (
         ('', _('No reason')),
         ('aa_compromise', _('Attribute Authority compromised')),
