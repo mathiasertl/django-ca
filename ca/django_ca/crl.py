@@ -27,6 +27,29 @@ from django_ca.models import Certificate
 
 
 def get_crl_cryptography(ca, encoding, expires, algorithm):
+    """Function to generate a Certificate Revocation List (CRL).
+
+    All keyword arguments are passed as-is to :py:func:`OpenSSL.crypto.CRL.export`. Please see the
+    documentation of that function for details.
+
+    Parameters
+    ----------
+
+    ca : :py:class:`~django_ca.models.CertificateAuthority`
+    encoding : :py:class:`cryptography:cryptography.hazmat.primitives.serialization.Encoding`
+        The encoding format for the CRL.
+    expires : int
+        The time in seconds until a new CRL will be generated
+    algorithm : :py:class:`cryptography:cryptography.hazmat.primitives import hashes`
+        The hash algorithm to use.
+
+
+    Returns
+    -------
+
+    bytes
+        The CRL in the requested format.
+    """
     now = datetime.utcnow()
     builder = x509.CertificateRevocationListBuilder()
     builder = builder.issuer_name(ca.x509c.subject)
@@ -41,28 +64,6 @@ def get_crl_cryptography(ca, encoding, expires, algorithm):
 
 
 def get_crl(ca, **kwargs):
-    """Function to generate a Certificate Revocation List (CRL).
-
-    All keyword arguments are passed as-is to :py:func:`OpenSSL.crypto.CRL.export`. Please see the
-    documentation of that function for details.
-
-    Parameters
-    ----------
-
-    ca : :py:class:`~django_ca.models.CertificateAuthority`
-    type : int
-        One of OpenSSL.crypto.FILETYPE_*.
-    expires : int, optional
-        The time in seconds until a new CRL will be generated. The default is 86400 (one day).
-    digest : hash
-        Unlike the current pyOpenSSL default (md5), sha512 is the default.
-
-
-    Returns
-    -------
-
-    Returns the CRL as bytes (since this is what pyOpenSSL returns).
-    """
     kwargs.setdefault('digest', b'sha512')
     kwargs['days'] = Decimal(kwargs.pop('expires', 86400)) / 86400
 
