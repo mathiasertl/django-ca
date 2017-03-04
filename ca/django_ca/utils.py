@@ -46,7 +46,7 @@ KEY_USAGE_DESC = _('Permitted key usages.')
 
 #: Regular expression to match RDNs out of a full x509 name.
 NAME_RE = re.compile(r'(C|ST|L|OU|O|CN|emailAddress)\s*'
-                     r'=(?P<quote>[\'"])?(?P<content>(?(quote).*?|[^/]*))'
+                     r'=(?P<quote>[\'"])?\s*(?P<content>(?(quote).*?|[^/]*))\s*'
                      r'(?(quote)(?<!\\)(?P=quote))', re.I)
 
 #: Regular expression to match general names.
@@ -264,12 +264,12 @@ def parse_name(name):
 
     The ``name`` is expected to be close to the subject format commonly used by OpenSSL, for example
     ``/C=AT/L=Vienna/CN=example.com/emailAddress=user@example.com``. The function does its best to be lenient
-    on deviations from the format, object identifiers are case-insensitive (e.g. ``cn`` is the same as ``CN``
-    and the subject does not have to start with a slash (``/``).
+    on deviations from the format, object identifiers are case-insensitive (e.g. ``cn`` is the same as ``CN``,
+    whitespace at the start and end is stripped and the subject does not have to start with a slash (``/``).
 
     >>> parse_name('/CN=example.com')
     OrderedDict([('CN', 'example.com')])
-    >>> parse_name('c=AT/l=Vienna/o="ex org"/CN=example.com')
+    >>> parse_name('c=AT/l= Vienna/o="ex org"/CN=example.com')
     OrderedDict([('C', 'AT'), ('L', 'Vienna'), ('O', 'ex org'), ('CN', 'example.com')])
 
     Dictionary keys are normalized to the values of :py:const:`OID_NAME_MAPPINGS` and keys will be sorted
@@ -290,8 +290,8 @@ def parse_name(name):
     *not* a valid subject, the location is just bogus, and whatever you were expecting as output, it's
     certainly different:
 
-    >>> parse_name('L="Vienna " District"/CN=example.com')  # doctest: +NORMALIZE_WHITESPACE
-    OrderedDict([('L', 'Vienna '), ('CN', 'example.com')])
+    >>> parse_name('L="Vienna " District"/CN=example.com')
+    OrderedDict([('L', 'Vienna'), ('CN', 'example.com')])
 
     Examples of where this string is used are:
 
