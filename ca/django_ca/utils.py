@@ -38,7 +38,6 @@ from django_ca import ca_settings
 
 # List of possible subject fields, in order
 SUBJECT_FIELDS = ['C', 'ST', 'L', 'O', 'OU', 'CN', 'emailAddress', ]
-SUBJECT_FIELDS_RE = re.compile('^\s*(C|ST|L|OU|O|CN|emailAddress)\s*=', re.I)
 
 # Description strings for various X509 extensions, taken from "man x509v3_config".
 EXTENDED_KEY_USAGE_DESC = _('Purposes for which the certificate public key can be used for.')
@@ -111,11 +110,6 @@ class LazyEncoder(DjangoJSONEncoder):
         if isinstance(obj, Promise):
             return force_text(obj)
         return super(LazyEncoder, self).default(obj)
-
-
-def format_date(date):
-    """Format date as ASN1 GENERALIZEDTIME, as required by various fields."""
-    return date.strftime(_datetime_format)
 
 
 def sort_subject_dict(d):

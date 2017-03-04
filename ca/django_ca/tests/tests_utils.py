@@ -19,7 +19,6 @@ from django_ca.tests.base import DjangoCATestCase
 from django_ca.tests.base import override_settings
 from django_ca.utils import NAME_RE
 from django_ca.utils import LazyEncoder
-from django_ca.utils import format_date
 from django_ca.utils import format_subject
 from django_ca.utils import get_cert_builder
 from django_ca.utils import get_cert_profile_kwargs
@@ -138,12 +137,6 @@ class LazyEncoderTestCase(TestCase):
         self.assertEqual('{"a": "b"}', json.dumps({'a': _('b')}, cls=LazyEncoder))
         self.assertEqual('{"a": "2016-03-26T00:00:00"}',
                          json.dumps({'a': datetime(2016, 3, 26)}, cls=LazyEncoder))
-
-
-class FormatDateTestCase(TestCase):
-    def test_format(self):
-        d = datetime(2016, 3, 5, 14, 53, 12)
-        self.assertEqual(format_date(d), '20160305145312Z')
 
 
 class ParseNameTestCase(TestCase):
