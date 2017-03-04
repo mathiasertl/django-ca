@@ -17,8 +17,8 @@ import json
 from datetime import datetime
 from datetime import timedelta
 
-from OpenSSL import crypto
 from cryptography.hazmat.primitives.serialization import Encoding
+from OpenSSL import crypto
 
 from django.contrib.auth.models import User
 from django.contrib.staticfiles.templatetags.staticfiles import static

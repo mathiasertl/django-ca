@@ -20,8 +20,8 @@ from ..models import Certificate
 from ..models import Watcher
 from .base import DjangoCAWithCertTestCase
 from .base import cert2_pubkey
-from .base import cert3_pubkey
 from .base import cert3_csr
+from .base import cert3_pubkey
 from .base import child_pubkey
 from .base import ocsp_pubkey
 
