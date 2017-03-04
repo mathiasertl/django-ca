@@ -317,14 +317,13 @@ class CertificateAuthority(X509CertMixin):
                                       help_text=_("URL for your CA."))
 
     _key = None
-    _keyc = None
 
     @property
-    def keyc(self):
-        if self._keyc is None:
+    def key(self):
+        if self._key is None:
             with open(self.private_key_path, 'rb') as f:
-                self._keyc = load_pem_private_key(f.read(), None, default_backend())
-        return self._keyc
+                self._key = load_pem_private_key(f.read(), None, default_backend())
+        return self._key
 
     @property
     def pathlen(self):
