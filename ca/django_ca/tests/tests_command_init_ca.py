@@ -17,6 +17,7 @@ from datetime import timedelta
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa
+
 from django.core.management.base import CommandError
 
 from django_ca.models import CertificateAuthority
