@@ -39,19 +39,18 @@ class SubjectActionTestCase(DjangoCATestCase):
 
     def test_basic(self):
         ns = self.parser.parse_args(['--subject=/CN=example.com'])
-        self.assertEqual(ns.subject, {'CN': 'example.com'})
+        self.assertCountEqual(ns.subject.items(), [('CN', 'example.com')])
 
         ns = self.parser.parse_args(['--subject=/ST=foo/CN=example.com'])
-        self.assertEqual(ns.subject, {'ST': 'foo', 'CN': 'example.com'})
+        self.assertCountEqual(ns.subject.items(), [('ST', 'foo'), ('CN', 'example.com')])
 
         ns = self.parser.parse_args(['--subject=/ST=/CN=example.com'])
-        self.assertEqual(ns.subject, {'ST': '', 'CN': 'example.com'})
+        self.assertCountEqual(ns.subject.items(), [('ST', ''), ('CN', 'example.com')])
 
-    def test_error(self):
-        self.assertParserError(
-            ['--subject=ST=/CN=example.com'],
-            'usage: setup.py [-h] [--subject SUBJECT]\n'
-            'setup.py: error: Unparseable subject: Does not start with a "/".\n')
+    def test_order(self):
+        # this should be an ordered dict
+        ns = self.parser.parse_args(['--subject=/CN=example.com/ST=foo'])
+        self.assertCountEqual(ns.subject.items(), [('ST', 'foo'), ('CN', 'example.com')])
 
 
 class FormatActionTestCase(DjangoCATestCase):
