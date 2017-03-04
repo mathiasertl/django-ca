@@ -17,7 +17,8 @@ import json
 import os
 from datetime import datetime
 
-from OpenSSL import crypto
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.conf.urls import url
@@ -26,6 +27,7 @@ from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
 from django.utils import timezone
+from django.utils.encoding import force_bytes
 from django.utils.html import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
@@ -34,7 +36,7 @@ from .forms import X509CertMixinAdminForm
 from .models import Certificate
 from .models import CertificateAuthority
 from .models import Watcher
-from .utils import SUBJECT_FIELDS
+from .utils import OID_NAME_MAPPINGS
 from .views import RevokeCertificateView
 
 _x509_ext_fields = [
@@ -227,18 +229,13 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
         """Returns details of a CSR request."""
 
         try:
-            csr = crypto.load_certificate_request(crypto.FILETYPE_PEM, request.POST['csr'])
+            csr = x509.load_pem_x509_csr(force_bytes(request.POST['csr']), default_backend())
         except Exception as e:
             return HttpResponseBadRequest(json.dumps({
                 'message': str(e),
             }), content_type='application/json')
-        csr_subject = csr.get_subject()
-        subject = {}
-        for attr in SUBJECT_FIELDS:
-            value = getattr(csr_subject, attr)
-            if value:
-                subject[attr] = value
 
+        subject = {OID_NAME_MAPPINGS[s.oid]: s.value for s in csr.subject}
         return HttpResponse(json.dumps({
             'subject': subject,
         }), content_type='application/json')
