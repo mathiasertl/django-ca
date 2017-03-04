@@ -18,7 +18,6 @@ from datetime import timedelta
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa
 from django.core.management.base import CommandError
-from django.utils import six
 
 from django_ca.models import CertificateAuthority
 from django_ca.tests.base import DjangoCATestCase
