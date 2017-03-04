@@ -45,7 +45,7 @@ EXTENDED_KEY_USAGE_DESC = _('Purposes for which the certificate public key can b
 KEY_USAGE_DESC = _('Permitted key usages.')
 
 #: Regular expression to match RDNs out of a full x509 name.
-NAME_RE = re.compile(r'(?:\A|/)\s*(C|ST|L|OU|O|CN|emailAddress)\s*'
+NAME_RE = re.compile(r'(?:\A|/)\s*(?P<field>C|ST|L|OU|O|CN|emailAddress)\s*'
                      r'=(?P<quote>[\'"])?\s*(?P<content>(?(quote).*?|[^/]*))\s*'
                      r'(?(quote)(?<!\\)(?P=quote))', re.I)
 
