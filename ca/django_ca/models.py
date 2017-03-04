@@ -17,16 +17,15 @@ import base64
 import binascii
 import hashlib
 import re
-import warnings
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PublicFormat
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtensionOID
-from OpenSSL import crypto
 
 from django.db import models
 from django.utils import timezone
@@ -42,7 +41,6 @@ from .utils import EXTENDED_KEY_USAGE_REVERSED
 from .utils import KEY_USAGE_MAPPING
 from .utils import OID_NAME_MAPPINGS
 from .utils import add_colons
-from .utils import format_date
 from .utils import format_general_names
 from .utils import format_subject
 from .utils import multiline_url_validator
@@ -86,18 +84,7 @@ class X509CertMixin(models.Model):
     cn = models.CharField(max_length=64, null=False, blank=False, verbose_name=_('CommonName'))
     serial = models.CharField(max_length=48, null=False, blank=False, unique=True)
 
-    _x509 = None
     _x509c = None
-
-    @property
-    def x509(self):
-        warnings.warn('Deprecated property x509', stacklevel=2)
-        if not self.pub:  # pragma: no cover
-            return None
-
-        if self._x509 is None:
-            self._x509 = crypto.load_certificate(crypto.FILETYPE_PEM, self.pub)
-        return self._x509
 
     @property
     def x509c(self):
@@ -291,7 +278,8 @@ class X509CertMixin(models.Model):
     authorityKeyIdentifier.short_description = 'authorityKeyIdentifier'
 
     def get_digest(self, algo):
-        return self.x509.digest(algo).decode('utf-8')
+        algo = getattr(hashes, algo.upper())()
+        return add_colons(binascii.hexlify(self.x509c.fingerprint(algo)).upper().decode('utf-8'))
 
     @property
     def hpkp_pin(self):
@@ -330,14 +318,6 @@ class CertificateAuthority(X509CertMixin):
 
     _key = None
     _keyc = None
-
-    @property
-    def key(self):
-        if self._key is None:
-            with open(self.private_key_path) as f:
-                self._key = crypto.load_privatekey(crypto.FILETYPE_PEM, f.read())
-
-        return self._key
 
     @property
     def keyc(self):
@@ -445,14 +425,6 @@ class Certificate(X509CertMixin):
             revoked_cert = revoked_cert.add_extension(x509.CRLReason(reason_flag), critical=False)
 
         return revoked_cert.build(default_backend())
-
-        r = crypto.Revoked()
-        # set_serial expects a str without the ':'
-        r.set_serial(force_bytes(self.serial.replace(':', '')))
-        if self.revoked_reason:
-            r.set_reason(force_bytes(self.revoked_reason))
-        r.set_rev_date(force_bytes(format_date(self.revoked_date)))
-        return r
 
     @property
     def ocsp_status(self):
