@@ -13,11 +13,9 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from decimal import Decimal
 from datetime import datetime
 from datetime import timedelta
 
-from OpenSSL import crypto
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
@@ -61,13 +59,3 @@ def get_crl_cryptography(ca, encoding, expires, algorithm):
 
     crl = builder.sign(private_key=ca.keyc, algorithm=algorithm, backend=default_backend())
     return crl.public_bytes(encoding)
-
-
-def get_crl(ca, **kwargs):
-    kwargs.setdefault('digest', b'sha512')
-    kwargs['days'] = Decimal(kwargs.pop('expires', 86400)) / 86400
-
-    crl = crypto.CRL()
-    for cert in Certificate.objects.filter(ca=ca, expires__gt=timezone.now()).revoked():
-        crl.add_revoked(cert.get_revocation())
-    return crl.export(ca.x509, ca.key, **kwargs)
