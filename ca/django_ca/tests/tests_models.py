@@ -114,6 +114,14 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertEqual(self.cert3.keyUsage(), 'critical,digitalSignature,keyAgreement,keyEncipherment')
         self.assertEqual(self.ocsp.keyUsage(), 'critical,digitalSignature,keyEncipherment,nonRepudiation')
 
+    def test_extendedKeyUsage(self):
+        self.assertEqual(self.ca.extendedKeyUsage(), '')
+        self.assertEqual(self.ca2.extendedKeyUsage(), '')
+        self.assertEqual(self.cert.extendedKeyUsage(), 'TLS Web Server Authentication')
+        self.assertEqual(self.cert2.extendedKeyUsage(), 'TLS Web Server Authentication')
+        self.assertEqual(self.cert3.extendedKeyUsage(), 'TLS Web Server Authentication')
+        self.assertEqual(self.ocsp.extendedKeyUsage(), 'OCSP Signing')
+
     def test_authorityKeyIdentifier(self):
         self.assertEqual(self.cert.authorityKeyIdentifier(),
                          'keyid:6B:C8:CF:56:29:FC:00:55:DD:A5:ED:5A:55:B7:7C:65:49:AC:AD:B1\n')
