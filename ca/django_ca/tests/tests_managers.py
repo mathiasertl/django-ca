@@ -176,7 +176,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
             ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
         self.assertEqual(self.get_extensions(cert)['crlDistributionPoints'],
-                         '\nFull Name:\n  URI:%s\n' % ca .crl_url)
+                         'Full Name: URI:%s' % ca .crl_url)
 
         # test multiple URLs
         ca.crl_url = 'http://crl.example.com\nhttp://crl.example.org'
@@ -185,8 +185,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
             ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
 
-        expected = '\nFull Name:\n  URI:%s\n\nFull Name:\n  URI:%s\n' % tuple(
-            ca.crl_url.splitlines())
+        expected = 'Full Name: URI:%s\nFull Name: URI:%s' % tuple(ca.crl_url.splitlines())
         self.assertEqual(self.get_extensions(cert)['crlDistributionPoints'], expected)
 
     def test_issuer_alt_name(self):

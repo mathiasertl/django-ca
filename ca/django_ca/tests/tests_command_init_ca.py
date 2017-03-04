@@ -71,8 +71,7 @@ class InitCATest(DjangoCATestCase):
 
         self.assertTrue(isinstance(ca.x509c.signature_hash_algorithm, hashes.SHA1))
         self.assertTrue(isinstance(ca.x509c.public_key(), dsa.DSAPublicKey))
-        self.assertEqual(ca.crlDistributionPoints(), '\nFull Name:\n'
-                         '  URI:http://ca.crl.example.com\n')
+        self.assertEqual(ca.crlDistributionPoints(), 'Full Name: URI:http://ca.crl.example.com')
         self.assertEqual(ca.authorityInfoAccess(),
                          'OCSP - URI:http://ca.ocsp.example.com\n'
                          'CA Issuers - URI:http://ca.issuer.ca.example.com\n')

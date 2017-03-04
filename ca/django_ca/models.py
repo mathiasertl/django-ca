@@ -154,8 +154,7 @@ class X509CertMixin(models.Model):
 
     def subjectAltName(self):
         try:
-            ext = self.x509c.extensions.get_extension_for_oid(
-                ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
+            ext = self.x509c.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
         except x509.ExtensionNotFound:
             return ''
 
@@ -175,7 +174,7 @@ class X509CertMixin(models.Model):
         value = ''
         for dp in crldp.value:
             if dp.full_name:
-                value += 'Full Name: %s' % format_general_names(dp.full_name)
+                value += 'Full Name: %s\n' % format_general_names(dp.full_name)
             else:
                 formatted = '/%s' % '/'.join(['%s=%s' % (OID_NAME_MAPPINGS[s.oid], s.value)
                                               for s in dp.relative_name])
@@ -184,7 +183,7 @@ class X509CertMixin(models.Model):
         if crldp.critical:
             value = 'critical,%s' % value
 
-        return value
+        return value.strip()
     crlDistributionPoints.short_description = 'crlDistributionPoints'
 
     def authorityInfoAccess(self):
