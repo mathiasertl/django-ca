@@ -15,6 +15,8 @@
 
 import os
 
+from cryptography.hazmat.primitives import hashes
+
 from django.conf import settings
 
 from ..models import CertificateAuthority
@@ -245,7 +247,7 @@ IIBeA+G1PVe+gBRnKyXL7le66AihBU3lMmhhihW+6V43NkzB/F9essMZAF7e0/Pe
         name = 'no-pathlen'
         kwargs = {
             'key_size': settings.CA_MIN_KEY_SIZE,
-            'algorithm': 'sha256',
+            'algorithm': hashes.SHA256(),
         }
 
         self.cmd('init_ca', name, '/C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=%s' % name,

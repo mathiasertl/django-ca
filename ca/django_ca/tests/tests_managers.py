@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+from cryptography.hazmat.primitives import hashes
+
 from django.utils.encoding import force_bytes
 
 from ..models import Certificate
@@ -59,7 +61,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         kwargs = get_cert_profile_kwargs()
 
         cert = Certificate.objects.init(
-            self.ca, self.csr_pem, expires=self.expires(720), algorithm='sha256',
+            self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
 
         self.assertBasic(cert)
@@ -84,7 +86,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         kwargs = get_cert_profile_kwargs()
         del kwargs['subject']
         cert = Certificate.objects.init(
-            self.ca, self.csr_pem, expires=self.expires(720), algorithm='sha256',
+            self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
 
         self.assertSubject(cert, {'CN': 'example.com'})
@@ -102,18 +104,18 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
         with self.assertRaises(ValueError):
             Certificate.objects.init(
-                self.ca, self.csr_pem, expires=self.expires(720), algorithm='sha256',
+                self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
                 subjectAltName=[], **kwargs)
         with self.assertRaises(ValueError):
             Certificate.objects.init(
-                self.ca, self.csr_pem, expires=self.expires(720), algorithm='sha256',
+                self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
                 subjectAltName=None, **kwargs)
 
     def test_cn_in_san(self):
         kwargs = get_cert_profile_kwargs()
         kwargs['subject']['CN'] = 'cn.example.com'
         cert = Certificate.objects.init(
-            self.ca, self.csr_pem, expires=self.expires(720), algorithm='sha256',
+            self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
 
         self.assertEqual(self.get_subject(cert)['CN'], 'cn.example.com')
@@ -122,7 +124,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
         # try the same with no SAN at all
         cert = Certificate.objects.init(
-            self.ca, self.csr_pem, expires=self.expires(720), algorithm='sha256', **kwargs)
+            self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(), **kwargs)
         self.assertEqual(self.get_subject(cert)['CN'], 'cn.example.com')
         self.assertIn('subjectAltName', self.get_extensions(cert))
         self.assertEqual(['DNS:cn.example.com'], self.get_alt_names(cert))
@@ -132,7 +134,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         kwargs['subject']['CN'] = 'cn.example.com'
         kwargs['cn_in_san'] = False
         cert = Certificate.objects.init(
-            self.ca, self.csr_pem, expires=self.expires(720), algorithm='sha256',
+            self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
 
         self.assertEqual(self.get_subject(cert)['CN'], 'cn.example.com')
@@ -144,7 +146,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         kwargs['subject']['CN'] = 'cn.example.com'
         kwargs['cn_in_san'] = False
         cert = Certificate.objects.init(
-            self.ca, self.csr_pem, expires=self.expires(720), algorithm='sha256', **kwargs)
+            self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(), **kwargs)
         self.assertEqual(self.get_subject(cert)['CN'], 'cn.example.com')
         self.assertNotIn('subjectAltName', self.get_extensions(cert))
 
@@ -152,7 +154,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         kwargs = get_cert_profile_kwargs()
         del kwargs['keyUsage']
         cert = Certificate.objects.init(
-            self.ca, self.csr_pem, expires=self.expires(720), algorithm='sha256',
+            self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
         self.assertNotIn('keyUsage', self.get_extensions(cert))
 
@@ -160,7 +162,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         kwargs = get_cert_profile_kwargs()
         del kwargs['extendedKeyUsage']
         cert = Certificate.objects.init(
-            self.ca, self.csr_pem, expires=self.expires(720), algorithm='sha256',
+            self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
         self.assertNotIn('extendedKeyUsage', self.get_extensions(cert))
 
@@ -171,7 +173,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
         kwargs = get_cert_profile_kwargs()
         cert = Certificate.objects.init(
-            ca, self.csr_pem, expires=self.expires(720), algorithm='sha256',
+            ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
         self.assertEqual(self.get_extensions(cert)['crlDistributionPoints'],
                          '\nFull Name:\n  URI:%s\n' % ca .crl_url)
@@ -180,7 +182,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         ca.crl_url = 'http://crl.example.com\nhttp://crl.example.org'
         kwargs = get_cert_profile_kwargs()
         cert = Certificate.objects.init(
-            ca, self.csr_pem, expires=self.expires(720), algorithm='sha256',
+            ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
 
         expected = '\nFull Name:\n  URI:%s\n\nFull Name:\n  URI:%s\n' % tuple(
@@ -193,7 +195,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
         kwargs = get_cert_profile_kwargs()
         cert = Certificate.objects.init(
-            ca, self.csr_pem, expires=self.expires(720), algorithm='sha256',
+            ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
 
         self.assertEqual(self.get_extensions(cert)['issuerAltName'], 'URI:%s' % ca.issuer_alt_name)
@@ -205,7 +207,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         # test only with ocsp url
         ca.ocsp_url = 'http://ocsp.ca.example.com'
         cert = Certificate.objects.init(
-            ca, self.csr_pem, expires=self.expires(720), algorithm='sha256',
+            ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
 
         self.assertEqual(self.get_extensions(cert)['authorityInfoAccess'],
@@ -214,7 +216,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         # test with both ocsp_url and issuer_url
         ca.issuer_url = 'http://ca.example.com/ca.crt'
         cert = Certificate.objects.init(
-            ca, self.csr_pem, expires=self.expires(720), algorithm='sha256',
+            ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
 
         self.assertEqual(self.get_extensions(cert)['authorityInfoAccess'],
@@ -223,7 +225,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         # test only with issuer url
         ca.ocsp_url = None
         cert = Certificate.objects.init(
-            ca, self.csr_pem, expires=self.expires(720), algorithm='sha256',
+            ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
 
         self.assertEqual(self.get_extensions(cert)['authorityInfoAccess'],

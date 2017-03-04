@@ -51,7 +51,7 @@ class InitCATest(DjangoCATestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_arguments(self):
         out, err = self.init_ca(
-            algorithm='sha1',
+            algorithm=hashes.SHA1(),
             key_type='DSA',
             key_size=1024,
             expires=self.expires(720),
