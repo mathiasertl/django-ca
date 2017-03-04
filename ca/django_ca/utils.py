@@ -16,6 +16,7 @@
 """Central functions to load CA key and cert as PKey/X509 objects."""
 
 import re
+from collections import Iterable
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime
@@ -80,25 +81,25 @@ NAME_CASE_MAPPINGS = {v.upper(): v for v in OID_NAME_MAPPINGS.values()}
 
 # TODO: should this really be bytes?
 KEY_USAGE_MAPPING = {
-    b'cRLSign': 'crl_sign',
-    b'dataEncipherment': 'data_encipherment',
-    b'decipherOnly': 'decipher_only',
-    b'digitalSignature': 'digital_signature',
-    b'encipherOnly': 'encipher_only',
-    b'keyAgreement': 'key_agreement',
-    b'keyCertSign': 'key_cert_sign',
-    b'keyEncipherment': 'key_encipherment',
-    b'nonRepudiation': 'content_commitment',  # http://marc.info/?t=107176106300005&r=1&w=2
+    'cRLSign': 'crl_sign',
+    'dataEncipherment': 'data_encipherment',
+    'decipherOnly': 'decipher_only',
+    'digitalSignature': 'digital_signature',
+    'encipherOnly': 'encipher_only',
+    'keyAgreement': 'key_agreement',
+    'keyCertSign': 'key_cert_sign',
+    'keyEncipherment': 'key_encipherment',
+    'nonRepudiation': 'content_commitment',  # http://marc.info/?t=107176106300005&r=1&w=2
 }
 
 
 EXTENDED_KEY_USAGE_MAPPING = {
-    b'serverAuth': ExtendedKeyUsageOID.SERVER_AUTH,
-    b'clientAuth': ExtendedKeyUsageOID.CLIENT_AUTH,
-    b'codeSigning': ExtendedKeyUsageOID.CODE_SIGNING,
-    b'emailProtection': ExtendedKeyUsageOID.EMAIL_PROTECTION,
-    b'timeStamping': ExtendedKeyUsageOID.TIME_STAMPING,
-    b'OCSPSigning': ExtendedKeyUsageOID.OCSP_SIGNING,
+    'serverAuth': ExtendedKeyUsageOID.SERVER_AUTH,
+    'clientAuth': ExtendedKeyUsageOID.CLIENT_AUTH,
+    'codeSigning': ExtendedKeyUsageOID.CODE_SIGNING,
+    'emailProtection': ExtendedKeyUsageOID.EMAIL_PROTECTION,
+    'timeStamping': ExtendedKeyUsageOID.TIME_STAMPING,
+    'OCSPSigning': ExtendedKeyUsageOID.OCSP_SIGNING,
 }
 EXTENDED_KEY_USAGE_REVERSED = {v: k for k, v in EXTENDED_KEY_USAGE_MAPPING.items()}
 
@@ -424,10 +425,13 @@ def get_cert_profile_kwargs(name=None):
             continue
 
         critical = config.get('critical', 'True')
-        if isinstance(config['value'], str):
-            kwargs[arg] = (critical, force_bytes(config['value']))
-        elif isinstance(config['value'], bytes):
-            kwargs[arg] = (critical, config['value'])
+        value = config['value']
+        if isinstance(value, six.string_types):
+            kwargs[arg] = (critical, value)
+        elif isinstance(value, bytes):
+            kwargs[arg] = (critical, value.decode('utf-8'))
+        elif isinstance(value, Iterable):
+            kwargs[arg] = (critical, ','.join([force_text(v) for v in value]))
         else:
-            kwargs[arg] = (critical, force_bytes(','.join(config['value'])))
+            kwargs[arg] = (critical, force_text(value))
     return kwargs

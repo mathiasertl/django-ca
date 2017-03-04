@@ -272,8 +272,8 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
     def test_default(self):
         expected = {
             'cn_in_san': True,
-            'keyUsage': (True, b'digitalSignature,keyAgreement,keyEncipherment'),
-            'extendedKeyUsage': (False, b'serverAuth'),
+            'keyUsage': (True, 'digitalSignature,keyAgreement,keyEncipherment'),
+            'extendedKeyUsage': (False, 'serverAuth'),
             'subject': {
                 'C': 'AT',
                 'L': 'Vienna',
@@ -288,7 +288,7 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
     def test_types(self):
         expected = {
             'cn_in_san': True,
-            'keyUsage': (False, b'digitalSignature'),
+            'keyUsage': (False, 'digitalSignature'),
             'subject': {
                 'C': 'AT',
                 'L': 'Vienna',
@@ -310,8 +310,8 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
         with self.settings(CA_PROFILES=CA_PROFILES):
             self.assertEqual(get_cert_profile_kwargs('testprofile'), expected)
 
-        CA_PROFILES['testprofile']['keyUsage']['value'] = b'encipherOnly'
-        expected['keyUsage'] = (False, b'encipherOnly')
+        CA_PROFILES['testprofile']['keyUsage']['value'] = 'encipherOnly'
+        expected['keyUsage'] = (False, 'encipherOnly')
         with self.settings(CA_PROFILES=CA_PROFILES):
             self.assertEqual(get_cert_profile_kwargs('testprofile'), expected)
 

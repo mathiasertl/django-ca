@@ -210,7 +210,7 @@ class X509CertMixin(models.Model):
         for key, value in KEY_USAGE_MAPPING.items():
             try:
                 if getattr(ext.value, value):
-                    usages.append(key.decode('utf-8'))
+                    usages.append(key)
             except ValueError:
                 pass
         value = ','.join(sorted(usages))
@@ -229,7 +229,7 @@ class X509CertMixin(models.Model):
 
         usages = []
         for usage in ext.value:
-            usages.append(EXTENDED_KEY_USAGE_REVERSED[usage].decode('utf-8'))
+            usages.append(EXTENDED_KEY_USAGE_REVERSED[usage])
         value = ','.join(sorted(usages))
 
         if ext.critical:

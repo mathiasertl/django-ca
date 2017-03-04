@@ -251,13 +251,13 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         if keyUsage:
             critical, values = keyUsage
             params = {v: False for v in KEY_USAGE_MAPPING.values()}
-            for value in [KEY_USAGE_MAPPING[k] for k in values.split(b',')]:
+            for value in [KEY_USAGE_MAPPING[k] for k in values.split(',')]:
                 params[value] = True
             builder = builder.add_extension(x509.KeyUsage(**params), critical=critical)
 
         if extendedKeyUsage:
             critical, usages = extendedKeyUsage
-            usages = [EXTENDED_KEY_USAGE_MAPPING[u] for u in usages.split(b',')]
+            usages = [EXTENDED_KEY_USAGE_MAPPING[u] for u in usages.split(',')]
             builder = builder.add_extension(x509.ExtendedKeyUsage(usages), critical=critical)
 
         if ca.issuer_alt_name:

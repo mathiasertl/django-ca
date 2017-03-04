@@ -146,14 +146,14 @@ class CreateCertificateForm(forms.ModelForm):
         value, critical = self.cleaned_data['keyUsage']
         if not value:
             return None
-        value = force_bytes(','.join(value))
+        value = ','.join(value)
         return critical, value
 
     def clean_extendedKeyUsage(self):
         value, critical = self.cleaned_data['extendedKeyUsage']
         if not value:
             return None
-        value = force_bytes(','.join(value))
+        value = ','.join(value)
         return critical, value
 
     def clean_expires(self):
