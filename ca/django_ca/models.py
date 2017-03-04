@@ -139,15 +139,6 @@ class X509CertMixin(models.Model):
     def not_after(self):
         return self.x509c.not_valid_after
 
-    def ext_as_str(self, key):
-        if key not in self.extensions:
-            return ''
-
-        value = self.extensions[key]
-        if value.get_critical():
-            return 'critical,%s' % value
-        return str(value)
-
     def extensions_cryptography(self):
         for ext in sorted(self.x509c.extensions, key=lambda e: e.oid._name):
             name = ext.oid._name
