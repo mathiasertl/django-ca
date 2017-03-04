@@ -17,6 +17,7 @@ import base64
 import binascii
 import hashlib
 import re
+import warnings
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -90,6 +91,7 @@ class X509CertMixin(models.Model):
 
     @property
     def x509(self):
+        warnings.warn('Deprecated property x509', stacklevel=2)
         if not self.pub:  # pragma: no cover
             return None
 

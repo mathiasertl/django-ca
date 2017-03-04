@@ -18,7 +18,6 @@ from datetime import datetime
 from datetime import timedelta
 
 from cryptography.hazmat.primitives.serialization import Encoding
-from OpenSSL import crypto
 
 from django.contrib.auth.models import User
 from django.contrib.staticfiles.templatetags.staticfiles import static
@@ -403,8 +402,7 @@ class CertDownloadTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
         self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
-        self.assertEqual(response.content,
-                         crypto.dump_certificate(crypto.FILETYPE_ASN1, self.cert.x509))
+        self.assertEqual(response.content, self.cert.dump_certificate(Encoding.DER))
 
     def test_not_found(self):
         url = reverse('admin:django_ca_certificate_download', kwargs={'pk': '123'})
