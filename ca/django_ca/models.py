@@ -252,8 +252,7 @@ class X509CertMixin(models.Model):
 
     def issuerAltName(self):
         try:
-            ext = self.x509.extensions.get_extension_for_oid(
-                ExtensionOID.ISSUER_ALTERNATIVE_NAME)
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.ISSUER_ALTERNATIVE_NAME)
         except x509.ExtensionNotFound:
             return ''
 
@@ -265,8 +264,7 @@ class X509CertMixin(models.Model):
 
     def authorityKeyIdentifier(self):
         try:
-            ext = self.x509.extensions.get_extension_for_oid(
-                ExtensionOID.AUTHORITY_KEY_IDENTIFIER)
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_KEY_IDENTIFIER)
         except x509.ExtensionNotFound:
             return ''
 
@@ -430,6 +428,7 @@ class Certificate(X509CertMixin):
         if self.revoked is False:
             return 'good'
 
+        # TODO: This most like always returns the default value due to the changes in self.revoked_reason
         return self.OCSP_REASON_MAPPINGS.get(self.revoked_reason, 'revoked')
 
     def __str__(self):
