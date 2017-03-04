@@ -41,7 +41,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(err, '')
 
         ca = CertificateAuthority.objects.first()
-        self.assertEqual(ca.x509.get_signature_algorithm(), six.b('sha512WithRSAEncryption'))
+        self.assertBasic(ca.x509c, algo='sha512')
 
         self.assertSubject(ca.x509c, {'C': 'AT', 'ST': 'Vienna', 'L': 'Vienna', 'O': 'Org',
                                       'OU': 'OrgUnit', 'CN': 'Test CA'})
