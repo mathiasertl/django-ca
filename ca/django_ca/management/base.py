@@ -19,7 +19,7 @@ import sys
 from datetime import datetime
 from datetime import timedelta
 
-from OpenSSL import crypto
+from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import BaseCommand as _BaseCommand
 from django.core.management.base import OutputWrapper
@@ -47,12 +47,14 @@ class SubjectAction(argparse.Action):
 class FormatAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
         value = value.strip().upper()
-        if value == 'DER':
-            value = 'ASN1'
+        if value == 'ASN1':
+            value = 'DER'
+
         try:
-            value = getattr(crypto, 'FILETYPE_%s' % value)
+            value = getattr(Encoding, value)
         except AttributeError:
             parser.error('Unknown format "%s".' % value)
+
         setattr(namespace, self.dest, value)
 
 
@@ -230,20 +232,11 @@ class BaseCommand(_BaseCommand):
         parser.add_argument('%s' % arg, metavar='SERIAL', help=help, default=default,
                             allow_disabled=allow_disabled, action=CertificateAuthorityAction)
 
-    def add_format(self, parser, default=crypto.FILETYPE_PEM):
+    def add_format(self, parser, default=Encoding.PEM):
         """Add the --format option."""
 
-        help_text = 'The format to use ("DER" is an alias for "ASN1"%s).'
-        if default == crypto.FILETYPE_PEM:
-            help_text %= ', default: PEM'
-        elif default == crypto.FILETYPE_ASN1:  # pragma: no cover
-            help_text %= ', default: ASN1'
-        elif default == crypto.FILETYPE_TEXT:  # pragma: no cover
-            help_text %= ', default: TEXT'
-        else:  # pragma: no cover
-            help_text %= ''
-
-        parser.add_argument('-f', '--format', metavar='{PEM,ASN1,DER,TEXT}', default=default,
+        help_text = 'The format to use ("ASN1" is an alias for "DER", default: %s).' % default.name
+        parser.add_argument('-f', '--format', metavar='{PEM,ASN1,DER}', default=default,
                             action=FormatAction, help=help_text)
 
 
