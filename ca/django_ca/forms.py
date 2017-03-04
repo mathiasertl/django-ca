@@ -18,6 +18,8 @@ from datetime import date
 from datetime import datetime
 from datetime import timedelta
 
+from cryptography.hazmat.primitives import hashes
+
 from django import forms
 from django.contrib.admin.widgets import AdminDateWidget
 from django.core.urlresolvers import reverse
@@ -93,10 +95,10 @@ class CreateCertificateForm(forms.ModelForm):
         initial=ca_settings.CA_DEFAULT_PROFILE, choices=_profile_choices)
     algorithm = forms.ChoiceField(
         label=_('Signature algorithm'), initial=ca_settings.CA_DIGEST_ALGORITHM, choices=[
-            ('sha512', 'SHA-512'),
-            ('sha256', 'SHA-256'),
-            ('sha1', 'SHA-1 (insecure!)'),
-            ('md5', 'MD5 (insecure!)'),
+            ('SHA512', 'SHA-512'),
+            ('SHA256', 'SHA-256'),
+            ('SHA1', 'SHA-1 (insecure!)'),
+            ('MD5', 'MD5 (insecure!)'),
         ],
         help_text=_(
             'Algorithm used for signing the certificate. SHA-512 should be fine in most cases.'
@@ -131,6 +133,14 @@ class CreateCertificateForm(forms.ModelForm):
             raise forms.ValidationError(_("Enter a valid CSR (in PEM format)."))
 
         return data
+
+    def clean_algorithm(self):
+        algo = self.cleaned_data['algorithm']
+        try:
+            algo = getattr(hashes, algo.upper())()
+        except AttributeError:
+            raise forms.ValidationError(_('Unknown hash algorithm: %s') % algo)
+        return algo
 
     def clean_keyUsage(self):
         value, critical = self.cleaned_data['keyUsage']
