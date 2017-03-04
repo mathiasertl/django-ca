@@ -19,6 +19,7 @@ import sys
 from datetime import datetime
 from datetime import timedelta
 
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import BaseCommand as _BaseCommand
@@ -54,6 +55,18 @@ class FormatAction(argparse.Action):
             value = getattr(Encoding, value)
         except AttributeError:
             parser.error('Unknown format "%s".' % value)
+
+        setattr(namespace, self.dest, value)
+
+
+class AlgorithmAction(argparse.Action):
+    def __call__(self, parser, namespace, value, option_string=None):
+        value = value.strip().upper()
+
+        try:
+            value = getattr(hashes, value)()
+        except AttributeError:
+            parser.error('Unknown hash algorithm: %s' % value)
 
         setattr(namespace, self.dest, value)
 
