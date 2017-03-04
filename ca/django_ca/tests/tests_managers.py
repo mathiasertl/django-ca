@@ -48,11 +48,9 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         c = Certificate()
         c.x509 = cert
         exts = [e.oid._name for e in cert.extensions]
-        # TODO: don't force bytes here, completely unnecessary
-        # TODO: use self.get_extensions()
-        exts = {force_bytes(name): getattr(c, name)() for name in exts}
+        exts = {name: getattr(c, name)() for name in exts}
 
-        skid = exts.pop(b'subjectKeyIdentifier')
+        skid = exts.pop('subjectKeyIdentifier')
         self.assertEqual(len(skid), 59)
 
         self.assertEqual(exts, expected)
