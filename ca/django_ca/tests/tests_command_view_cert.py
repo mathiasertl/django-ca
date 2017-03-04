@@ -14,6 +14,9 @@
 # see <http://www.gnu.org/licenses/>
 
 from datetime import timedelta
+from io import BytesIO
+
+from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandError
 from django.utils import timezone
@@ -42,8 +45,9 @@ class ViewCertTestCase(DjangoCAWithCertTestCase):
         }
 
     def test_basic(self):
-        stdout, stderr = self.cmd('view_cert', self.cert.serial)
-        self.assertEqual(stdout, '''Common Name: %(cn)s
+        stdout, stderr = self.cmd('view_cert', self.cert.serial,
+                                  stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stdout.decode('utf-8'), '''Common Name: %(cn)s
 Valid from: %(from)s
 Valid until: %(until)s
 Status: Valid
@@ -58,11 +62,12 @@ Digest:
 HPKP pin: %(hpkp)s
 
 %(pub)s''' % self._get_format(self.cert))
-        self.assertEqual(stderr, '')
+        self.assertEqual(stderr, b'')
 
         # test with no pem but with extensions
-        stdout, stderr = self.cmd('view_cert', self.cert.serial, no_pem=True, extensions=True)
-        self.assertEqual(stdout, '''Common Name: %(cn)s
+        stdout, stderr = self.cmd('view_cert', self.cert.serial, no_pem=True, extensions=True,
+                                  stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stdout.decode('utf-8'), '''Common Name: %(cn)s
 Valid from: %(from)s
 Valid until: %(until)s
 Status: Valid
@@ -88,14 +93,18 @@ Digest:
     sha512: %(sha512)s
 HPKP pin: %(hpkp)s
 ''' % self._get_format(self.cert))
-        self.assertEqual(stderr, '')
+        self.assertEqual(stderr, b'')
+
+    def test_der(self):
+        stdout, stderr = self.cmd('view_cert', self.cert.serial, format=Encoding.DER,
+                                  stdout=BytesIO(), stderr=BytesIO())
 
     def test_revoked(self):
         cert = Certificate.objects.get(serial=self.cert.serial)
         cert.revoked = True
         cert.save()
-        stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True)
-        self.assertEqual(stdout, '''Common Name: %(cn)s
+        stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stdout.decode('utf-8'), '''Common Name: %(cn)s
 Valid from: %(from)s
 Valid until: %(until)s
 Status: Revoked
@@ -109,15 +118,15 @@ Digest:
     sha512: %(sha512)s
 HPKP pin: %(hpkp)s
 ''' % self._get_format(self.cert))
-        self.assertEqual(stderr, '')
+        self.assertEqual(stderr, b'')
 
     def test_expired(self):
         cert = Certificate.objects.get(serial=self.cert.serial)
         cert.expires = timezone.now() - timedelta(days=30)
         cert.save()
 
-        stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True)
-        self.assertEqual(stdout, '''Common Name: %(cn)s
+        stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stdout.decode('utf-8'), '''Common Name: %(cn)s
 Valid from: %(from)s
 Valid until: %(until)s
 Status: Expired
@@ -131,7 +140,7 @@ Digest:
     sha512: %(sha512)s
 HPKP pin: %(hpkp)s
 ''' % self._get_format(self.cert))
-        self.assertEqual(stderr, '')
+        self.assertEqual(stderr, b'')
 
     def test_no_san_with_watchers(self):
         # test a cert with no subjectAltNames but with watchers.
@@ -139,8 +148,8 @@ HPKP pin: %(hpkp)s
         watcher = Watcher.from_addr('user@example.com')
         cert.watchers.add(watcher)
 
-        stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True)
-        self.assertEqual(stdout, '''Common Name: %(cn)s
+        stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stdout.decode('utf-8'), '''Common Name: %(cn)s
 Valid from: %(from)s
 Valid until: %(until)s
 Status: Valid
@@ -153,6 +162,7 @@ Digest:
     sha512: %(sha512)s
 HPKP pin: %(hpkp)s
 ''' % self._get_format(cert))
+        self.assertEqual(stderr, b'')
 
     def test_unknown_cert(self):
         with self.assertRaises(CommandError):

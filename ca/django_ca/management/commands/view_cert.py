@@ -15,12 +15,13 @@
 
 from datetime import datetime
 
-from OpenSSL import crypto
+from django.utils.encoding import force_bytes
 
 from django_ca.management.base import CertCommand
 
 
 class Command(CertCommand):
+    binary_output = True
     allow_revoked = True
     help = 'View a certificate. The "list_certs" command lists all known certificates.'
 
@@ -73,5 +74,4 @@ class Command(CertCommand):
 
         if not options['no_pem']:
             self.stdout.write('')
-            data = crypto.dump_certificate(options['format'], cert.x509)
-            self.stdout.write(data.decode('utf-8'))
+            self.stdout.write(cert.dump_certificate(options['format']))
