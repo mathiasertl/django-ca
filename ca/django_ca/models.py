@@ -117,7 +117,7 @@ class X509CertMixin(models.Model):
     @x509c.setter
     def x509c(self, value):
         self._x509c = value
-        self.pub = force_str(value.public_bytes(encoding=Encoding.PEM))
+        self.pub = force_str(self.dump_certificate(Encoding.PEM))
         self.cn = self.subject['CN']
         self.expires = self.not_after
         self.serial = serial_from_int(value.serial_number)
@@ -285,7 +285,7 @@ class X509CertMixin(models.Model):
     def hpkp_pin(self):
         # taken from https://github.com/luisgf/hpkp-python/blob/master/hpkp.py
 
-        public_key_raw = self.x509c.public_bytes(Encoding.DER)
+        public_key_raw = self.dump_certificate(Encoding.DER)
         public_key_raw = self.x509c.public_key().public_bytes(
             encoding=Encoding.DER, format=PublicFormat.SubjectPublicKeyInfo)
         public_key_hash = hashlib.sha256(public_key_raw).digest()
