@@ -16,7 +16,6 @@
 import os
 from io import BytesIO
 
-from OpenSSL import crypto
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -38,8 +37,10 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
     def test_basic(self):
         stdout, stderr = self.cmd('dump_crl', stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
-        crl = crypto.load_crl(crypto.FILETYPE_PEM, stdout)
-        self.assertIsNone(crl.get_revoked())
+
+        crl = x509.load_pem_x509_crl(stdout, default_backend())
+        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
+        self.assertEqual(list(crl), [])
 
     def test_file(self):
         path = os.path.join(ca_settings.CA_DIR, 'crl-test.crl')
@@ -48,8 +49,9 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(stderr, b'')
 
         with open(path, 'rb') as stream:
-            crl = crypto.load_crl(crypto.FILETYPE_PEM, stream.read())
-        self.assertIsNone(crl.get_revoked())
+            crl = x509.load_pem_x509_crl(stream.read(), default_backend())
+        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
+        self.assertEqual(list(crl), [])
 
         # test an output path that doesn't exist
         path = os.path.join(ca_settings.CA_DIR, 'test', 'crl-test.crl')
@@ -61,7 +63,6 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         cert.revoke()
         stdout, stderr = self.cmd('dump_crl', stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
-        crl = crypto.load_crl(crypto.FILETYPE_PEM, stdout)
 
         crl = x509.load_pem_x509_crl(stdout, default_backend())
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
