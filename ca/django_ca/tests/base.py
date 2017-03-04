@@ -11,12 +11,13 @@ import tempfile
 from datetime import datetime
 from datetime import timedelta
 
+from mock import patch
+
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from mock import patch
 
 from django.conf import settings
 from django.core.management import call_command
