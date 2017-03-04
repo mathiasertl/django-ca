@@ -87,7 +87,6 @@ class X509CertMixin(models.Model):
 
     _x509 = None
     _x509c = None
-    _extensions = None
 
     @property
     def x509(self):
@@ -120,16 +119,6 @@ class X509CertMixin(models.Model):
     @property
     def issuer(self):
         return {OID_NAME_MAPPINGS[s.oid]: s.value for s in self.x509c.issuer}
-
-    @property
-    def extensions(self):
-        if self.x509 is None:  # pragma: no cover
-            return {}
-
-        if self._extensions is None:
-            exts = [self.x509.get_extension(i) for i in range(0, self.x509.get_extension_count())]
-            self._extensions = {ext.get_short_name(): ext for ext in exts}
-        return self._extensions
 
     @property
     def not_before(self):
