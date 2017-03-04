@@ -15,7 +15,7 @@
 
 from django.core.management.base import CommandError
 
-from django_ca.crl import get_crl_cryptography
+from django_ca.crl import get_crl
 from django_ca.management.base import BaseCommand
 
 
@@ -41,7 +41,7 @@ class Command(BaseCommand):
             'algorithm': options['algorithm'],
         }
 
-        crl = get_crl_cryptography(ca=options['ca'], **kwargs)
+        crl = get_crl(ca=options['ca'], **kwargs)
 
         if path == '-':
             self.stdout.write(crl, ending=b'')

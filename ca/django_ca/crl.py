@@ -24,7 +24,7 @@ from django.utils import timezone
 from django_ca.models import Certificate
 
 
-def get_crl_cryptography(ca, encoding, expires, algorithm):
+def get_crl(ca, encoding, expires, algorithm):
     """Function to generate a Certificate Revocation List (CRL).
 
     All keyword arguments are passed as-is to :py:func:`OpenSSL.crypto.CRL.export`. Please see the

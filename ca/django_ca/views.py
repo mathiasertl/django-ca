@@ -40,7 +40,7 @@ from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import UpdateView
 
-from .crl import get_crl_cryptography
+from .crl import get_crl
 from .forms import RevokeCertificateForm
 from .models import Certificate
 from .models import CertificateAuthority
@@ -77,8 +77,7 @@ class CertificateRevocationListView(View, SingleObjectMixin):
         crl = cache.get(cache_key)
         if crl is None:
             ca = self.get_object()
-            crl = get_crl_cryptography(ca, encoding=self.type, expires=self.expires,
-                                       algorithm=self.digest)
+            crl = get_crl(ca, encoding=self.type, expires=self.expires, algorithm=self.digest)
             cache.set(cache_key, crl, self.expires)
 
         return HttpResponse(crl, content_type=self.content_type)
