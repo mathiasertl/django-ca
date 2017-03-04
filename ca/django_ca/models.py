@@ -408,9 +408,14 @@ class Certificate(X509CertMixin):
         if self.revoked is False:
             raise ValueError('Certificate is not revoked.')
 
-        # TODO: reason
-        return x509.RevokedCertificateBuilder().serial_number(self.x509c.serial).revocation_date(
-            self.revoked_date).build(default_backend())
+        revoked_cert = x509.RevokedCertificateBuilder().serial_number(self.x509c.serial).revocation_date(
+            self.revoked_date)
+
+        if self.revoked_reason:
+            reason_flag = getattr(x509.ReasonFlags, self.revoked_reason)
+            revoked_cert = revoked_cert.add_extension(x509.CRLReason(reason_flag), critical=False)
+
+        return revoked_cert.build(default_backend())
 
         r = crypto.Revoked()
         # set_serial expects a str without the ':'

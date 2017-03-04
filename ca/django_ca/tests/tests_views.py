@@ -13,16 +13,15 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-import re
-
-import dateparser
-from OpenSSL import crypto
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.conf.urls import url
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.test import Client
-from django.utils.encoding import force_text
 
 from ..models import Certificate
 from ..views import CertificateRevocationListView
@@ -35,9 +34,9 @@ urlpatterns = [
     url(r'^adv/(?P<serial>[0-9A-F:]+)/$',
         CertificateRevocationListView.as_view(
             content_type='text/plain',
-            digest='md5',
+            digest=hashes.MD5(),
             expires=321,
-            type=crypto.FILETYPE_TEXT,
+            type=Encoding.PEM,
         ),
         name='advanced'),
 ]
@@ -54,10 +53,11 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
         # test the default view
         response = self.client.get(reverse('default', kwargs={'serial': self.ca.serial}))
         self.assertEqual(response.status_code, 200)
-
-        crl = crypto.load_crl(crypto.FILETYPE_ASN1, response.content)
         self.assertEqual(response['Content-Type'], 'application/pkix-crl')
-        self.assertIsNone(crl.get_revoked())
+
+        crl = x509.load_der_x509_crl(response.content, default_backend())
+        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
+        self.assertEqual(list(crl), [])
 
         # revoke a certificate
         cert = Certificate.objects.get(serial=self.cert.serial)
@@ -67,33 +67,27 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
         response = self.client.get(reverse('default', kwargs={'serial': self.ca.serial}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-crl')
-        crl = crypto.load_crl(crypto.FILETYPE_ASN1, response.content)
-        self.assertIsNone(crl.get_revoked())
+        crl = x509.load_der_x509_crl(response.content, default_backend())
+        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
+        self.assertEqual(list(crl), [])
 
         # clear the cache and fetch again
         cache.clear()
         response = self.client.get(reverse('default', kwargs={'serial': self.ca.serial}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-crl')
-        crl = crypto.load_crl(crypto.FILETYPE_ASN1, response.content)
-        self.assertEqual(len(crl.get_revoked()), 1)
+        crl = x509.load_der_x509_crl(response.content, default_backend())
+        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
+        self.assertEqual(len(list(crl)), 1)
+        self.assertEqual(crl[0].serial_number, cert.x509c.serial)
 
     def test_overwrite(self):
         response = self.client.get(reverse('advanced', kwargs={'serial': self.ca.serial}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'text/plain')
 
-        # OpenSSL does not allow loading of TEXT CRLs :-(
-        #crl = crypto.load_crl(crypto.FILETYPE_TEXT, response.content)
-        #self.assertIsNone(crl.get_revoked())
-
-        # The CRL object does not give any access to how the CRL was signed etc, so we do some
-        # primitive string matching
-        content = force_text(response.content)
-        self.assertIn('Signature Algorithm: md5WithRSAEncryption', content)
-        self.assertIn('No Revoked Certificates.', content)
+        crl = x509.load_pem_x509_crl(response.content, default_backend())
+        self.assertIsInstance(crl.signature_hash_algorithm, hashes.MD5)
 
         # parse Last/Next Update to see if they match 321 seconds
-        last = dateparser.parse(re.search('Last Update: (.*)', content).groups()[0])
-        next = dateparser.parse(re.search('Next Update: (.*)', content).groups()[0])
-        self.assertEqual((next - last).seconds, 321)
+        self.assertEqual((crl.next_update - crl.last_update).seconds, 321)

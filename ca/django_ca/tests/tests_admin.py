@@ -444,13 +444,13 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertIsNone(cert.revoked_reason)
 
     def test_with_reason(self):
-        response = self.client.post(self.url, data={'revoked_reason': 'certificateHold'})
+        response = self.client.post(self.url, data={'revoked_reason': 'certificate_hold'})
         self.assertRedirects(response, self.change_url())
         self.assertTemplateUsed('django_ca/admin/certificate_revoke_form.html')
 
         cert = Certificate.objects.get(serial=self.cert.serial)
         self.assertTrue(cert.revoked)
-        self.assertEqual(cert.revoked_reason, 'certificateHold')
+        self.assertEqual(cert.revoked_reason, 'certificate_hold')
 
     def test_revoked(self):
         cert = Certificate.objects.get(serial=self.cert.serial)

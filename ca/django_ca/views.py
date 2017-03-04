@@ -20,8 +20,9 @@ from datetime import datetime
 from datetime import timedelta
 
 import asn1crypto
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.serialization import Encoding
 from ocspbuilder import OCSPResponseBuilder
-from OpenSSL import crypto
 from oscrypto.asymmetric import load_certificate
 from oscrypto.asymmetric import load_private_key
 
@@ -39,7 +40,7 @@ from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import UpdateView
 
-from .crl import get_crl
+from .crl import get_crl_cryptography
 from .forms import RevokeCertificateForm
 from .models import Certificate
 from .models import CertificateAuthority
@@ -56,14 +57,14 @@ class CertificateRevocationListView(View, SingleObjectMixin):
     queryset = CertificateAuthority.objects.all().prefetch_related('certificate_set')
 
     # parameters for the CRL itself
-    type = crypto.FILETYPE_ASN1
+    type = Encoding.DER
     """Filetype for CRL, one of the ``OpenSSL.crypto.FILETYPE_*`` variables. The default is
     ``OpenSSL.crypto.FILETYPE_ASN1``."""
 
     expires = 600
     """CRL expires in this many seconds."""
 
-    digest = 'sha512'
+    digest = hashes.SHA512()
     """Digest used for generating the CRL."""
 
     # header used in the request
@@ -72,12 +73,12 @@ class CertificateRevocationListView(View, SingleObjectMixin):
     PEM format, use ``"text/plain"``."""
 
     def get(self, request, serial):
-        cache_key = 'crl_%s_%s_%s' % (serial, self.type, self.digest)
+        cache_key = 'crl_%s_%s_%s' % (serial, self.type, self.digest.name)
         crl = cache.get(cache_key)
         if crl is None:
             ca = self.get_object()
-            crl = get_crl(ca, type=self.type, expires=self.expires,
-                          digest=force_bytes(self.digest))
+            crl = get_crl_cryptography(ca, encoding=self.type, expires=self.expires,
+                                       algorithm=self.digest)
             cache.set(cache_key, crl, self.expires)
 
         return HttpResponse(crl, content_type=self.content_type)

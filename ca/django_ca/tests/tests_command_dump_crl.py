@@ -17,6 +17,9 @@ import os
 from io import BytesIO
 
 from OpenSSL import crypto
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
 
 from django.core.management.base import CommandError
 
@@ -60,27 +63,20 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(stderr, b'')
         crl = crypto.load_crl(crypto.FILETYPE_PEM, stdout)
 
-        revoked = crl.get_revoked()
-        self.assertEqual(len(revoked), 1)
-        self.assertIsNone(revoked[0].get_reason())
-        self.assertSerial(revoked[0], cert)
+        crl = x509.load_pem_x509_crl(stdout, default_backend())
+        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
+        self.assertEqual(len(list(crl)), 1)
+        self.assertEqual(crl[0].serial_number, cert.x509c.serial)
+        self.assertEqual(len(crl[0].extensions), 0)
 
         # try all possible reasons
-        for readable_reason, byte_reason in [
-            (b'Unspecified', b'unspecified'),
-            (b'Key Compromise', b'keyCompromise'),
-            (b'CA Compromise', b'CACompromise'),
-            (b'Affiliation Changed', b'affiliationChanged'),
-            (b'Superseded', b'superseded'),
-            (b'Cessation Of Operation', b'cessationOfOperation'),
-            (b'Certificate Hold', b'certificateHold'),
-        ]:
-            cert.revoked_reason = byte_reason.decode('utf-8')
+        for reason in [r[0] for r in Certificate.REVOCATION_REASONS if r[0]]:
+            cert.revoked_reason = reason
             cert.save()
 
             stdout, stderr = self.cmd('dump_crl', stdout=BytesIO(), stderr=BytesIO())
-            crl = crypto.load_crl(crypto.FILETYPE_PEM, stdout)
-            revoked = crl.get_revoked()
-            self.assertEqual(len(revoked), 1)
-            self.assertEqual(revoked[0].get_reason(), readable_reason)
-            self.assertSerial(revoked[0], cert)
+            crl = x509.load_pem_x509_crl(stdout, default_backend())
+            self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
+            self.assertEqual(len(list(crl)), 1)
+            self.assertEqual(crl[0].serial_number, cert.x509c.serial)
+            self.assertEqual(crl[0].extensions[0].value.reason.name, reason)
