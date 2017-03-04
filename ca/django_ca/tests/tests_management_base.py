@@ -221,7 +221,8 @@ setup.py: error: %s: %s: Private key does not exist.\n''' % (ca.name, ca.private
             ca.save()
 
             expected = '''usage: setup.py [-h] ca
-setup.py: error: %s: %s: Could not read private key.\n''' % (ca.name, ca.private_key_path)
+setup.py: error: %s: %s: Could not read private key: Could not unserialize key data.\n''' % (
+                ca.name, ca.private_key_path)
 
             stream.write('unparseable')
             stream.close()

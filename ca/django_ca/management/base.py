@@ -109,10 +109,9 @@ class CertificateAuthorityAction(argparse.Action):
 
         # try to parse the private key
         try:
-            value.key
-        except (OSError, crypto.Error):
-            raise parser.error(
-                '%s: %s: Could not read private key.' % (value, value.private_key_path))
+            value.keyc
+        except Exception as e:
+            raise parser.error('%s: %s: Could not read private key: %s' % (value, value.private_key_path, e))
 
         setattr(namespace, self.dest, value)
 
