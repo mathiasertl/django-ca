@@ -38,8 +38,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertSubject(cert.x509c, subject)
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
 
-        self.assertEqual(cert.keyUsage(),
-                         'critical,Digital Signature, Key Encipherment, Key Agreement')
+        self.assertEqual(cert.keyUsage(), 'critical,digitalSignature,keyAgreement,keyEncipherment')
         self.assertEqual(cert.extendedKeyUsage(), 'TLS Web Server Authentication')
         self.assertEqual(cert.subjectAltName(), 'DNS:example.com')
         self.assertIssuer(self.ca, cert)
@@ -59,8 +58,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
 
             self.assertSubject(cert.x509c, subject)
             self.assertEqual(stdout, cert.pub)
-            self.assertEqual(cert.keyUsage(),
-                             'critical,Digital Signature, Key Encipherment, Key Agreement')
+            self.assertEqual(cert.keyUsage(), 'critical,digitalSignature,keyAgreement,keyEncipherment')
             self.assertEqual(cert.extendedKeyUsage(), 'TLS Web Server Authentication')
             self.assertEqual(cert.subjectAltName(), 'DNS:example.com')
         finally:
@@ -171,7 +169,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         cert = Certificate.objects.first()
         self.assertEqual(cert.x509.get_subject().get_components(), [(b'CN', b'example.com')])
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
-        self.assertEqual(cert.keyUsage(), 'critical,Certificate Sign')
+        self.assertEqual(cert.keyUsage(), 'critical,keyCertSign')
         self.assertEqual(cert.extendedKeyUsage(), 'TLS Web Client Authentication')
         self.assertEqual(cert.subjectAltName(), 'DNS:example.com, URI:https://example.net')
 

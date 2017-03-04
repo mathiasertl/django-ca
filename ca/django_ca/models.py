@@ -37,6 +37,7 @@ from .managers import CertificateAuthorityManager
 from .managers import CertificateManager
 from .querysets import CertificateAuthorityQuerySet
 from .querysets import CertificateQuerySet
+from .utils import KEY_USAGE_MAPPING
 from .utils import OID_NAME_MAPPINGS
 from .utils import SAN_NAME_MAPPINGS
 from .utils import add_colons
@@ -221,7 +222,24 @@ class X509CertMixin(models.Model):
     basicConstraints.short_description = 'basicConstraints'
 
     def keyUsage(self):
-        return self.ext_as_str(b'keyUsage')
+        value = ''
+        try:
+            ext = self.x509c.extensions.get_extension_for_oid(ExtensionOID.KEY_USAGE)
+        except x509.ExtensionNotFound:
+            return value
+
+        usages = []
+        for key, value in KEY_USAGE_MAPPING.items():
+            try:
+                if getattr(ext.value, value):
+                    usages.append(key.decode('utf-8'))
+            except ValueError:
+                pass
+        value = ','.join(sorted(usages))
+
+        if ext.critical:
+            value = 'critical,%s' % value
+        return value
     keyUsage.short_description = 'keyUsage'
 
     def extendedKeyUsage(self):

@@ -79,6 +79,7 @@ NAME_OID_MAPPINGS = {v: k for k, v in OID_NAME_MAPPINGS.items()}
 # uppercase values as keys for normalizing case
 NAME_CASE_MAPPINGS = {v.upper(): v for v in OID_NAME_MAPPINGS.values()}
 
+# TODO: should this really be bytes?
 KEY_USAGE_MAPPING = {
     b'cRLSign': 'crl_sign',
     b'dataEncipherment': 'data_encipherment',
@@ -90,6 +91,7 @@ KEY_USAGE_MAPPING = {
     b'keyEncipherment': 'key_encipherment',
     b'nonRepudiation': 'content_commitment',  # http://marc.info/?t=107176106300005&r=1&w=2
 }
+
 
 EXTENDED_KEY_USAGE_MAPPING = {
     b'serverAuth': ExtendedKeyUsageOID.SERVER_AUTH,

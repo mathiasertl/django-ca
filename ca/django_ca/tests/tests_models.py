@@ -21,6 +21,8 @@ from ..models import Watcher
 from .base import DjangoCAWithCertTestCase
 from .base import cert2_pubkey
 from .base import cert3_pubkey
+from .base import child_pubkey
+from .base import ocsp_pubkey
 
 
 class TestWatcher(TestCase):
@@ -73,8 +75,10 @@ class TestWatcher(TestCase):
 
 class CertificateTests(DjangoCAWithCertTestCase):
     def setUp(self):
+        self.ca2 = self.load_ca('child', child_pubkey, parent=self.ca)
         self.cert2 = self.load_cert(self.ca, cert2_pubkey)
         self.cert3 = self.load_cert(self.ca, cert3_pubkey)
+        self.ocsp = self.load_cert(self.ca, ocsp_pubkey)
 
     def test_revocation(self):
         # Never really happens in real life, but should still be checked
@@ -101,6 +105,14 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertEqual(self.cert.issuerAltName(), 'DNS:ca.example.com')
         self.assertEqual(self.cert2.issuerAltName(), 'DNS:ca.example.com')
         self.assertEqual(self.cert3.issuerAltName(), 'DNS:ca.example.com')
+
+    def test_keyUsage(self):
+        self.assertEqual(self.ca.keyUsage(), 'cRLSign,keyCertSign')
+        self.assertEqual(self.ca2.keyUsage(), 'cRLSign,keyCertSign')
+        self.assertEqual(self.cert.keyUsage(), 'critical,digitalSignature,keyAgreement,keyEncipherment')
+        self.assertEqual(self.cert2.keyUsage(), 'critical,digitalSignature,keyAgreement,keyEncipherment')
+        self.assertEqual(self.cert3.keyUsage(), 'critical,digitalSignature,keyAgreement,keyEncipherment')
+        self.assertEqual(self.ocsp.keyUsage(), 'critical,digitalSignature,keyEncipherment,nonRepudiation')
 
     def test_authorityKeyIdentifier(self):
         self.assertEqual(self.cert.authorityKeyIdentifier(),
