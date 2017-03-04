@@ -291,6 +291,9 @@ class X509CertMixin(models.Model):
         public_key_hash = hashlib.sha256(public_key_raw).digest()
         return base64.b64encode(public_key_hash).decode('utf-8')
 
+    def dump_certificate(self, encoding=Encoding.PEM):
+        return self.x509c.public_bytes(encoding=encoding)
+
     class Meta:
         abstract = True
 
