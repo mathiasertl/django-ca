@@ -17,6 +17,7 @@
 
 import re
 from copy import deepcopy
+from collections import OrderedDict
 from datetime import datetime
 from ipaddress import ip_address
 from ipaddress import ip_network
@@ -30,6 +31,7 @@ from django.core.validators import URLValidator
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 from django.utils.functional import Promise
+from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 
 from django_ca import ca_settings
@@ -73,7 +75,9 @@ OID_NAME_MAPPINGS = {
 
 # same, but reversed
 NAME_OID_MAPPINGS = {v: k for k, v in OID_NAME_MAPPINGS.items()}
-NAME_OID_MAPPINGS_UPPER = {v.upper(): k for k, v in OID_NAME_MAPPINGS.items()}
+
+# uppercase values as keys for normalizing case
+NAME_CASE_MAPPINGS = {v.upper(): v for v in OID_NAME_MAPPINGS.values()}
 
 KEY_USAGE_MAPPING = {
     b'cRLSign': 'crl_sign',
@@ -255,6 +259,57 @@ def serial_from_int(i):
     return add_colons(s)
 
 
+def parse_name_dict(name):
+    """Parses a subject string as used in OpenSSLs command line utilities.
+
+    The ``name`` is expected to be close to the subject format commonly used by OpenSSL, for example
+    ``/C=AT/L=Vienna/CN=example.com/emailAddress=user@example.com``. The function does its best to be lenient
+    on deviations from the format, object identifiers are case-insensitive (e.g. ``cn`` is the same as ``CN``
+    and the subject does not have to start with a slash (``/``).
+
+    >>> parse_name_dict('/CN=example.com')
+    OrderedDict([('CN', 'example.com')])
+    >>> parse_name_dict('c=AT/l=Vienna/o="ex org"/CN=example.com')
+    OrderedDict([('C', 'AT'), ('L', 'Vienna'), ('O', 'ex org'), ('CN', 'example.com')])
+
+    Dictionary keys are normalized to the values of :py:const:`OID_NAME_MAPPINGS` and keys will be sorted
+    based on x509 name specifications regardless of the given order:
+
+    >>> parse_name_dict('L="Vienna / District"/cn=example.com/EMAILaddress=user@example.com')
+    OrderedDict([('L', 'Vienna / District'), ('CN', 'example.com'), ('emailAddress', 'user@example.com')])
+    >>> parse_name_dict('/C=AT/CN=example.com') == parse_name_dict('/CN=example.com/C=AT')
+    True
+
+    Due to the magic of :py:const:`NAME_RE`, the function even supports quoting strings and including slashes,
+    so strings like ``/OU="Org / Org Unit"/CN=example.com`` will work as expected.
+
+    >>> parse_name_dict('L="Vienna / District"/CN=example.com')
+    OrderedDict([('L', 'Vienna / District'), ('CN', 'example.com')])
+
+    But note that it's still easy to trick this function, if you really want to. The following example is
+    *not* a valid subject, the location is just bogus, and whatever you were expecting as output, it's
+    certainly different:
+
+    >>> parse_name_dict('L="Vienna " District"/CN=example.com')  # doctest: +NORMALIZE_WHITESPACE
+    OrderedDict([('L', 'Vienna '), ('CN', 'example.com')])
+
+    Examples of where this string is used are:
+
+    .. code-block:: console
+
+        # openssl req -new -key priv.key -out csr -utf8 -batch -sha256 -subj '/C=AT/CN=example.com'
+        # openssl x509 -in cert.pem -noout -subject -nameopt compat
+        /C=AT/L=Vienna/CN=example.com
+    """
+    name = name.strip()
+    if not name:  # empty subjects are ok
+        return {}
+
+    items = ((NAME_CASE_MAPPINGS[t[0].upper()], force_text(t[2])) for t in NAME_RE.findall(name))
+    parsed = sorted(items, key=lambda e: SUBJECT_FIELDS.index(e[0]))
+    return OrderedDict(parsed)
+
+
 def parse_name(name):
     """Parses a subject string as used in OpenSSLs command line utilities.
 
@@ -294,11 +349,12 @@ def parse_name(name):
         # openssl x509 -in cert.pem -noout -subject -nameopt compat
         /C=AT/L=Vienna/CN=example.com
     """
-    name = name.strip()
-    if not name:  # empty subjects are ok
-        return {}
-    parsed = [(t[0].upper(), force_text(t[2])) for t in NAME_RE.findall(name)]
-    return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS_UPPER[typ], value) for typ, value in parsed])
+    if isinstance(name, six.string_types):
+        name = parse_name_dict(name).items()
+    elif isinstance(name, dict):
+        name = name.items()
+
+    return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], value) for typ, value in name])
 
 
 def parse_general_name(name):
