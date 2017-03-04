@@ -148,6 +148,14 @@ class X509CertMixin(models.Model):
             return 'critical,%s' % value
         return str(value)
 
+    def extensions_cryptography(self):
+        for ext in sorted(self.x509c.extensions, key=lambda e: e.oid._name):
+            name = ext.oid._name
+            if hasattr(self, name):
+                yield name, getattr(self, name)()
+            else:
+                yield name, ext.value
+
     def distinguishedName(self):
         return format_subject(self.subject)
     distinguishedName.short_description = 'Distinguished Name'
