@@ -38,6 +38,7 @@ from .utils import get_cert_builder
 from .utils import is_power2
 from .utils import parse_general_name
 from .utils import sort_subject_dict
+from .utils import x509_name
 
 
 class CertificateManagerMixin(object):
@@ -88,14 +89,11 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             private_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size,
                                                    backend=default_backend())
         public_key = private_key.public_key()
+        subject = x509_name(subject)
 
         builder = get_cert_builder(expires)
         builder = builder.public_key(public_key)
-
-        # Set subject (order is important!)
-        subject = [x509.NameAttribute(NAME_OID_MAPPINGS[k], force_text(v))
-                   for k, v in sort_subject_dict(subject)]
-        builder = builder.subject_name(x509.Name(subject))
+        builder = builder.subject_name(subject)
 
         # TODO: pathlen=None is currently False :/
         if pathlen is False:
@@ -111,7 +109,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         builder = builder.add_extension(subject_key_id, critical=False)
 
         if parent is None:
-            builder = builder.issuer_name(x509.Name(subject))
+            builder = builder.issuer_name(subject)
             auth_key_id = x509.AuthorityKeyIdentifier(
                 key_identifier=subject_key_id.digest, authority_cert_issuer=None,
                 authority_cert_serial_number=None)
@@ -245,13 +243,12 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             raise ValueError('Unknown CSR format passed: %s' % csr_format)
 
         public_key = req.public_key()
+
         builder = get_cert_builder(expires)
         builder = builder.public_key(public_key)
         builder = builder.issuer_name(ca.x509c.subject)
 
-        subject = [x509.NameAttribute(NAME_OID_MAPPINGS[k], force_text(v))
-                   for k, v in sort_subject_dict(subject)]
-        builder = builder.subject_name(x509.Name(subject))
+        builder = builder.subject_name(x509_name(subject))
 
         # Add extensions
         builder = builder.add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
