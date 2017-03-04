@@ -369,8 +369,15 @@ class Certificate(X509CertMixin):
         ('superseded', _('Superseded')),
         ('cessationOfOperation', _('Cessation of operation')),
         ('certificateHold', _('On Hold')),
-        # Not currently useful according to "man ca",
-        #('removeFromCRL', _('Remove from CRL')),
+
+        ('key_compromise', _('Key compromised')),
+        ('ca_compromise', _('CA compromised')),
+        ('affiliation_changed', _('Affiliation changed')),
+        ('cessation_of_operation', _('Cessation of operation')),
+        ('certificate_hold', _('On Hold')),
+        ('privilege_withdrawn', _('Privilege withdrawn')),
+        ('aa_compromise', _('Attribute Authority compromised')),
+        ('remove_from_crl', _('Removed from CRL')),
     )
     OCSP_REASON_MAPPINGS = {
         'keyCompromise': 'key_compromise',
