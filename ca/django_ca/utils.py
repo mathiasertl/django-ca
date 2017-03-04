@@ -16,8 +16,8 @@
 """Central functions to load CA key and cert as PKey/X509 objects."""
 
 import re
-from copy import deepcopy
 from collections import OrderedDict
+from copy import deepcopy
 from datetime import datetime
 from ipaddress import ip_address
 from ipaddress import ip_network
@@ -28,10 +28,10 @@ from cryptography.x509.oid import NameOID
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import URLValidator
+from django.utils import six
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 from django.utils.functional import Promise
-from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 
 from django_ca import ca_settings

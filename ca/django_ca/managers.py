@@ -33,11 +33,9 @@ from django.utils.encoding import force_text
 from . import ca_settings
 from .utils import EXTENDED_KEY_USAGE_MAPPING
 from .utils import KEY_USAGE_MAPPING
-from .utils import NAME_OID_MAPPINGS
 from .utils import get_cert_builder
 from .utils import is_power2
 from .utils import parse_general_name
-from .utils import sort_subject_dict
 from .utils import x509_name
 
 
