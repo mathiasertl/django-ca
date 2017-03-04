@@ -293,7 +293,6 @@ class X509CertMixin(models.Model):
     def hpkp_pin(self):
         # taken from https://github.com/luisgf/hpkp-python/blob/master/hpkp.py
 
-        public_key_raw = self.dump_certificate(Encoding.DER)
         public_key_raw = self.x509c.public_key().public_bytes(
             encoding=Encoding.DER, format=PublicFormat.SubjectPublicKeyInfo)
         public_key_hash = hashlib.sha256(public_key_raw).digest()
