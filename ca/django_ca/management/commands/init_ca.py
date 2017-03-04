@@ -21,8 +21,6 @@ https://skippylovesmalorie.wordpress.com/2010/02/12/how-to-generate-a-self-signe
 import os
 from getpass import getpass
 
-from OpenSSL import crypto
-
 from django.core.management.base import CommandError
 
 from django_ca import ca_settings
@@ -42,10 +40,8 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
     def add_arguments(self, parser):
         self.add_algorithm(parser)
 
-        type_choices = [t[5:] for t in dir(crypto) if t.startswith('TYPE_')]
-        type_default = 'RSA' if 'RSA' in type_choices else type_choices[0]
         parser.add_argument(
-            '--key-type', choices=type_choices, default=type_default,
+            '--key-type', choices=['RSA', 'DSA'], default='RSA',
             help="Key type for the CA private key (default: %(default)s).")
         parser.add_argument(
             '--key-size', type=int, action=KeySizeAction, default=4096,
