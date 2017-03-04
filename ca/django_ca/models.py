@@ -97,16 +97,6 @@ class X509CertMixin(models.Model):
             self._x509 = crypto.load_certificate(crypto.FILETYPE_PEM, self.pub)
         return self._x509
 
-    @x509.setter
-    def x509(self, value):
-        self._x509 = value
-        self.pub = crypto.dump_certificate(crypto.FILETYPE_PEM, value).decode('utf-8')
-        self.cn = dict(self.x509.get_subject().get_components()).get(b'CN').decode('utf-8')
-        self.expires = self.not_after
-
-        # compute serial with ':' after every second character
-        self.serial = serial_from_int(value.get_serial_number())
-
     @property
     def x509c(self):
         if self._x509c is None:
