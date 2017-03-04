@@ -188,6 +188,8 @@ class BinaryOutputWrapper(OutputWrapper):
         ending = self.ending if ending is None else ending
         if six.PY3 is True and isinstance(msg, str):  # pragma: no cover
             msg = msg.encode('utf-8')
+        elif six.PY2 is True and isinstance(msg, unicode):  # pragma: no cover
+            msg = msg.encode('utf-8')
 
         if ending and not msg.endswith(ending):  # pragma: no cover
             msg += ending
