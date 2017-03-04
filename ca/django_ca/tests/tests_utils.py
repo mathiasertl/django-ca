@@ -72,7 +72,6 @@ class NameMatchTest(TestCase):
         self.match('C=" AT \' DE"/OU=example', [('C', 'AT \' DE'), ('OU', 'example')])
         self.match('C=\' AT " DE\'/OU=example', [('C', 'AT " DE'), ('OU', 'example')])
 
-        self.match('C=AT/DE/OU=example', [('C', 'AT'), ('OU', 'example')])
         self.match('C="AT/DE"/OU=example', [('C', 'AT/DE'), ('OU', 'example')])
         self.match("C='AT/DE/US'/OU=example", [('C', 'AT/DE/US'), ('OU', 'example')])
         self.match("C='AT/DE'/OU=example", [('C', 'AT/DE'), ('OU', 'example')])
@@ -85,7 +84,6 @@ class NameMatchTest(TestCase):
         self.match('C=" AT "/OU="ex ample"', [('C', 'AT'), ('OU', 'ex ample')])
         self.match('C=" AT \' DE"/OU="ex ample"', [('C', 'AT \' DE'), ('OU', 'ex ample')])
         self.match('C=\' AT " DE\'/OU="ex ample"', [('C', 'AT " DE'), ('OU', 'ex ample')])
-        self.match('C=AT/DE/OU="ex ample"', [('C', 'AT'), ('OU', 'ex ample')])
         self.match('C="AT/DE"/OU="ex ample"', [('C', 'AT/DE'), ('OU', 'ex ample')])
         self.match("C='AT/DE/US'/OU='ex ample'", [('C', 'AT/DE/US'), ('OU', 'ex ample')])
         self.match("C='AT/DE'/OU='ex ample'", [('C', 'AT/DE'), ('OU', 'ex ample')])
@@ -98,7 +96,6 @@ class NameMatchTest(TestCase):
         self.match('C=" AT "/OU="ex / ample"', [('C', 'AT'), ('OU', 'ex / ample')])
         self.match('C=" AT \' DE"/OU="ex / ample"', [('C', 'AT \' DE'), ('OU', 'ex / ample')])
         self.match('C=\' AT " DE\'/OU="ex / ample"', [('C', 'AT " DE'), ('OU', 'ex / ample')])
-        self.match('C=AT/DE/OU="ex / ample"', [('C', 'AT'), ('OU', 'ex / ample')])
         self.match('C="AT/DE"/OU="ex / ample"', [('C', 'AT/DE'), ('OU', 'ex / ample')])
         self.match("C='AT/DE/US'/OU='ex / ample'", [('C', 'AT/DE/US'), ('OU', 'ex / ample')])
         self.match("C='AT/DE'/OU='ex / ample'", [('C', 'AT/DE'), ('OU', 'ex / ample')])
@@ -110,12 +107,17 @@ class NameMatchTest(TestCase):
         self.match('C=" AT "/OU="ex / ample"/', [('C', 'AT'), ('OU', 'ex / ample')])
         self.match('C=" AT \' DE"/OU="ex / ample"/', [('C', 'AT \' DE'), ('OU', 'ex / ample')])
         self.match('C=\' AT " DE\'/OU="ex / ample"/', [('C', 'AT " DE'), ('OU', 'ex / ample')])
-        self.match('C=AT/DE/OU="ex / ample"/', [('C', 'AT'), ('OU', 'ex / ample')])
         self.match('C="AT/DE"/OU="ex / ample"/', [('C', 'AT/DE'), ('OU', 'ex / ample')])
         self.match("C='AT/DE/US'/OU='ex / ample'/", [('C', 'AT/DE/US'), ('OU', 'ex / ample')])
         self.match("C='AT/DE'/OU='ex / ample'/", [('C', 'AT/DE'), ('OU', 'ex / ample')])
         self.match("C='AT/DE/US'/OU='ex / ample'/", [('C', 'AT/DE/US'), ('OU', 'ex / ample')])
         self.match("C='AT \\' DE'/OU='ex / ample'/", [('C', "AT \\' DE"), ('OU', 'ex / ample')])
+
+    def test_unquoted_slashes(self):
+        self.match('C=AT/DE/OU=example', [('C', 'AT'), ('DE/OU', 'example')])
+        self.match('C=AT/DE/OU="ex ample"', [('C', 'AT'), ('DE/OU', 'ex ample')])
+        self.match('C=AT/DE/OU="ex / ample"', [('C', 'AT'), ('DE/OU', 'ex / ample')])
+        self.match('C=AT/DE/OU="ex / ample"/', [('C', 'AT'), ('DE/OU', 'ex / ample')])
 
     def test_full_examples(self):
         expected = [('C', 'AT'), ('ST', 'Vienna'), ('L', 'Loc Fünf'), ('O', 'Org Name'),
@@ -196,7 +198,7 @@ class ParseNameTestCase(TestCase):
         field = 'ABC'
         with self.assertRaises(ValueError) as e:
             parse_name('/%s=example.com' % field)
-        self.assertEqual(e.exception.args, ('Unparseable subject: Unknown field "%s".' % field, ))
+        self.assertEqual(e.exception.args, ('Unknown x509 name field: %s' % field, ))
 
 
 class FormatSubjectTestCase(TestCase):

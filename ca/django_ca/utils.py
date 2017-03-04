@@ -305,7 +305,11 @@ def parse_name(name):
     if not name:  # empty subjects are ok
         return {}
 
-    items = ((NAME_CASE_MAPPINGS[t[0].upper()], force_text(t[2])) for t in NAME_RE.findall(name))
+    try:
+        items = [(NAME_CASE_MAPPINGS[t[0].upper()], force_text(t[2])) for t in NAME_RE.findall(name)]
+    except KeyError as e:
+        raise ValueError('Unknown x509 name field: %s' % e.args[0])
+
     parsed = sorted(items, key=lambda e: SUBJECT_FIELDS.index(e[0]))
     return OrderedDict(parsed)
 
