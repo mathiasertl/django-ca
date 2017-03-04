@@ -16,7 +16,7 @@
 import os
 from io import BytesIO
 
-from OpenSSL import crypto
+from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandError
 
@@ -34,12 +34,12 @@ class DumpCertTestCase(DjangoCAWithCATestCase):
         self.assertEqual(stdout, self.ca.pub.encode('utf-8'))
 
     def test_format(self):
-        for option in ['PEM', 'TEXT', 'ASN1']:
-            format = getattr(crypto, 'FILETYPE_%s' % option)
-            stdout, stderr = self.cmd('dump_ca', self.ca.serial, format=format,
+        for option in ['PEM', 'DER']:
+            encoding = getattr(Encoding, option)
+            stdout, stderr = self.cmd('dump_ca', self.ca.serial, format=encoding,
                                       stdout=BytesIO(), stderr=BytesIO())
             self.assertEqual(stderr, b'')
-            self.assertEqual(stdout, crypto.dump_certificate(format, self.ca.x509))
+            self.assertEqual(stdout, self.ca.dump_certificate(encoding))
 
     def test_explicit_stdout(self):
         stdout, stderr = self.cmd('dump_ca', self.ca.serial, '-',
