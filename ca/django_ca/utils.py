@@ -276,7 +276,7 @@ def parse_name(name):
     based on x509 name specifications regardless of the given order:
 
     >>> parse_name('L="Vienna / District"/EMAILaddress=user@example.com')
-    OrderedDict(['L', 'Vienna / District'), ('emailAddress', 'user@example.com')])
+    OrderedDict([('L', 'Vienna / District'), ('emailAddress', 'user@example.com')])
     >>> parse_name('/C=AT/CN=example.com') == parse_name('/CN=example.com/C=AT')
     True
 
@@ -311,7 +311,10 @@ def parse_name(name):
 
 
 def x509_name(name):
-    """Parses a subject string as used in OpenSSLs command line utilities.
+    """Parses a subject string into a :py:class:`x509.Name <cryptography:cryptography.x509.Name>`.
+
+    If ``name`` is a string, :py:func:`parse_name` is used to parse it. A list of tuples or a ``dict``
+    (preferrably an :py:class:`~python:collections.OrderedDict`) is also supported.
 
     >>> x509_name('/C=AT/CN=example.com')  # doctest: +NORMALIZE_WHITESPACE
     <Name([<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, value='AT')>,
