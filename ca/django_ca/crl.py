@@ -14,12 +14,30 @@
 # see <http://www.gnu.org/licenses/>.
 
 from decimal import Decimal
+from datetime import datetime
+from datetime import timedelta
 
 from OpenSSL import crypto
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 
 from django.utils import timezone
 
 from django_ca.models import Certificate
+
+
+def get_crl_cryptography(ca, encoding, expires, algorithm):
+    now = datetime.utcnow()
+    builder = x509.CertificateRevocationListBuilder()
+    builder = builder.issuer_name(ca.x509c.subject)
+    builder = builder.last_update(now)
+    builder = builder.next_update(now + timedelta(seconds=expires))
+
+    for cert in Certificate.objects.filter(ca=ca, expires__gt=timezone.now()).revoked():
+        builder = builder.add_revoked_certificate(cert.get_revocation())
+
+    crl = builder.sign(private_key=ca.keyc, algorithm=algorithm, backend=default_backend())
+    return crl.public_bytes(encoding)
 
 
 def get_crl(ca, **kwargs):

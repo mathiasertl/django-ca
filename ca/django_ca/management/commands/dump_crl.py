@@ -13,10 +13,11 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from django.core.management.base import CommandError
-from django.utils.encoding import force_bytes
+from cryptography.hazmat.primitives import hashes
 
-from django_ca.crl import get_crl
+from django.core.management.base import CommandError
+
+from django_ca.crl import get_crl_cryptography
 from django_ca.management.base import BaseCommand
 
 
@@ -38,12 +39,12 @@ class Command(BaseCommand):
 
     def handle(self, path, **options):
         kwargs = {
-            'type': options['format'],
+            'encoding': options['format'],
             'expires': options['expires'],
-            'digest': force_bytes(options['digest']),
+            'algorithm': getattr(hashes, options['digest'].upper())(),
         }
 
-        crl = get_crl(ca=options['ca'], **kwargs)
+        crl = get_crl_cryptography(ca=options['ca'], **kwargs)
 
         if path == '-':
             self.stdout.write(crl, ending=b'')
