@@ -41,10 +41,10 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(err, '')
 
         ca = CertificateAuthority.objects.first()
-        self.assertBasic(ca.x509c, algo='sha512')
+        self.assertBasic(ca.x509, algo='sha512')
 
-        self.assertSubject(ca.x509c, {'C': 'AT', 'ST': 'Vienna', 'L': 'Vienna', 'O': 'Org',
-                                      'OU': 'OrgUnit', 'CN': 'Test CA'})
+        self.assertSubject(ca.x509, {'C': 'AT', 'ST': 'Vienna', 'L': 'Vienna', 'O': 'Org',
+                                     'OU': 'OrgUnit', 'CN': 'Test CA'})
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
 
@@ -69,8 +69,8 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
 
-        self.assertTrue(isinstance(ca.x509c.signature_hash_algorithm, hashes.SHA1))
-        self.assertTrue(isinstance(ca.x509c.public_key(), dsa.DSAPublicKey))
+        self.assertTrue(isinstance(ca.x509.signature_hash_algorithm, hashes.SHA1))
+        self.assertTrue(isinstance(ca.x509.public_key(), dsa.DSAPublicKey))
         self.assertEqual(ca.crlDistributionPoints(), 'Full Name: URI:http://ca.crl.example.com')
         self.assertEqual(ca.authorityInfoAccess(),
                          'OCSP - URI:http://ca.ocsp.example.com\n'
@@ -101,7 +101,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(out, '')
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
-        self.assertSubject(ca.x509c, {'CN': 'test'})
+        self.assertSubject(ca.x509, {'CN': 'test'})
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
 
@@ -112,7 +112,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(out, '')
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
-        self.assertSubject(ca.x509c, {'OU': 'smth', 'CN': 'test'})
+        self.assertSubject(ca.x509, {'OU': 'smth', 'CN': 'test'})
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
 

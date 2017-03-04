@@ -106,8 +106,8 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
                 key_identifier=subject_key_id.digest, authority_cert_issuer=None,
                 authority_cert_serial_number=None)
         else:
-            builder = builder.issuer_name(parent.x509c.subject)
-            auth_key_id = parent.x509c.extensions.get_extension_for_oid(
+            builder = builder.issuer_name(parent.x509.subject)
+            auth_key_id = parent.x509.extensions.get_extension_for_oid(
                 ExtensionOID.AUTHORITY_KEY_IDENTIFIER).value
 
         builder = builder.add_extension(auth_key_id, critical=False)
@@ -137,7 +137,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
         ca = self.model(name=name, issuer_url=issuer_url, issuer_alt_name=issuer_alt_name,
                         ocsp_url=ocsp_url, crl_url=crl_url, parent=parent)
-        ca.x509c = certificate
+        ca.x509 = certificate
         ca.private_key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % ca.serial)
         ca.save()
 
@@ -230,14 +230,14 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
 
         builder = get_cert_builder(expires)
         builder = builder.public_key(public_key)
-        builder = builder.issuer_name(ca.x509c.subject)
+        builder = builder.issuer_name(ca.x509.subject)
 
         builder = builder.subject_name(x509_name(subject))
 
         # Add extensions
         builder = builder.add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
         builder = builder.add_extension(
-            ca.x509c.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_KEY_IDENTIFIER).value,
+            ca.x509.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_KEY_IDENTIFIER).value,
             critical=False)
         builder = builder.add_extension(
             x509.SubjectKeyIdentifier.from_public_key(public_key), critical=False)

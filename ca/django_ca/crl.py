@@ -50,7 +50,7 @@ def get_crl(ca, encoding, expires, algorithm):
     """
     now = datetime.utcnow()
     builder = x509.CertificateRevocationListBuilder()
-    builder = builder.issuer_name(ca.x509c.subject)
+    builder = builder.issuer_name(ca.x509.subject)
     builder = builder.last_update(now)
     builder = builder.next_update(now + timedelta(seconds=expires))
 

@@ -42,7 +42,7 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
 
         return '%s\t%s\t%s\t%s\tunknown\t%s' % (
             status,
-            cert.x509c.not_valid_after.strftime(date_format),
+            cert.x509.not_valid_after.strftime(date_format),
             revocation,
             cert.serial.replace(':', ''),
             cert.distinguishedName(),

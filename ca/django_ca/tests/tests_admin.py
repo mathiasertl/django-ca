@@ -177,7 +177,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertRedirects(response, self.changelist_url)
 
         cert = Certificate.objects.get(cn=cn)
-        self.assertSubject(cert.x509c, {'C': 'US', 'CN': cn})
+        self.assertSubject(cert.x509, {'C': 'US', 'CN': cn})
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(cert.subjectAltName(), 'DNS:%s' % cn)
@@ -208,7 +208,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertRedirects(response, self.changelist_url)
 
         cert = Certificate.objects.get(cn=cn)
-        self.assertSubject(cert.x509c, {'C': 'US', 'CN': cn})
+        self.assertSubject(cert.x509, {'C': 'US', 'CN': cn})
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(cert.subjectAltName(), 'DNS:%s, DNS:%s' % (cn, san))

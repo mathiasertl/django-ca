@@ -46,7 +46,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
             expected[b'authorityInfoAccess'] = auth_info_access
 
         c = Certificate()
-        c.x509c = cert
+        c.x509 = cert
         exts = [e.oid._name for e in cert.extensions]
         # TODO: don't force bytes here, completely unnecessary
         # TODO: use self.get_extensions()

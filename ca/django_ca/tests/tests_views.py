@@ -79,7 +79,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
         crl = x509.load_der_x509_crl(response.content, default_backend())
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
         self.assertEqual(len(list(crl)), 1)
-        self.assertEqual(crl[0].serial_number, cert.x509c.serial)
+        self.assertEqual(crl[0].serial_number, cert.x509.serial)
 
     def test_overwrite(self):
         response = self.client.get(reverse('advanced', kwargs={'serial': self.ca.serial}))

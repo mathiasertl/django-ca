@@ -148,7 +148,7 @@ the default values, options like --key-usage still override the profile.""")
             csr = open(options['csr']).read()
 
         cert = Certificate(ca=ca, csr=csr)
-        cert.x509c = Certificate.objects.init(
+        cert.x509 = Certificate.objects.init(
             ca=ca, csr=csr, algorithm=options['algorithm'], expires=options['expires'],
             subjectAltName=options['alt'], **kwargs)
         cert.save()

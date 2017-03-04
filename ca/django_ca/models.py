@@ -84,18 +84,18 @@ class X509CertMixin(models.Model):
     cn = models.CharField(max_length=64, null=False, blank=False, verbose_name=_('CommonName'))
     serial = models.CharField(max_length=48, null=False, blank=False, unique=True)
 
-    _x509c = None
+    _x509 = None
 
     @property
-    def x509c(self):
-        if self._x509c is None:
+    def x509(self):
+        if self._x509 is None:
             backend = default_backend()
-            self._x509c = x509.load_pem_x509_certificate(force_bytes(self.pub), backend)
-        return self._x509c
+            self._x509 = x509.load_pem_x509_certificate(force_bytes(self.pub), backend)
+        return self._x509
 
-    @x509c.setter
-    def x509c(self, value):
-        self._x509c = value
+    @x509.setter
+    def x509(self, value):
+        self._x509 = value
         self.pub = force_str(self.dump_certificate(Encoding.PEM))
         self.cn = self.subject['CN']
         self.expires = self.not_after
@@ -103,22 +103,22 @@ class X509CertMixin(models.Model):
 
     @property
     def subject(self):
-        return {OID_NAME_MAPPINGS[s.oid]: s.value for s in self.x509c.subject}
+        return {OID_NAME_MAPPINGS[s.oid]: s.value for s in self.x509.subject}
 
     @property
     def issuer(self):
-        return {OID_NAME_MAPPINGS[s.oid]: s.value for s in self.x509c.issuer}
+        return {OID_NAME_MAPPINGS[s.oid]: s.value for s in self.x509.issuer}
 
     @property
     def not_before(self):
-        return self.x509c.not_valid_before
+        return self.x509.not_valid_before
 
     @property
     def not_after(self):
-        return self.x509c.not_valid_after
+        return self.x509.not_valid_after
 
     def extensions_cryptography(self):
-        for ext in sorted(self.x509c.extensions, key=lambda e: e.oid._name):
+        for ext in sorted(self.x509.extensions, key=lambda e: e.oid._name):
             name = ext.oid._name
             if hasattr(self, name):
                 yield name, getattr(self, name)()
@@ -131,7 +131,7 @@ class X509CertMixin(models.Model):
 
     def subjectAltName(self):
         try:
-            ext = self.x509c.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
         except x509.ExtensionNotFound:
             return ''
 
@@ -144,7 +144,7 @@ class X509CertMixin(models.Model):
 
     def crlDistributionPoints(self):
         try:
-            crldp = self.x509c.extensions.get_extension_for_oid(ExtensionOID.CRL_DISTRIBUTION_POINTS)
+            crldp = self.x509.extensions.get_extension_for_oid(ExtensionOID.CRL_DISTRIBUTION_POINTS)
         except x509.ExtensionNotFound:
             return ''
 
@@ -165,7 +165,7 @@ class X509CertMixin(models.Model):
 
     def authorityInfoAccess(self):
         try:
-            ext = self.x509c.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS)
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS)
         except x509.ExtensionNotFound:
             return ''
 
@@ -183,7 +183,7 @@ class X509CertMixin(models.Model):
 
     def basicConstraints(self):
         try:
-            ext = self.x509c.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
         except x509.ExtensionNotFound:
             return ''
 
@@ -202,7 +202,7 @@ class X509CertMixin(models.Model):
     def keyUsage(self):
         value = ''
         try:
-            ext = self.x509c.extensions.get_extension_for_oid(ExtensionOID.KEY_USAGE)
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.KEY_USAGE)
         except x509.ExtensionNotFound:
             return value
 
@@ -223,7 +223,7 @@ class X509CertMixin(models.Model):
     def extendedKeyUsage(self):
         value = ''
         try:
-            ext = self.x509c.extensions.get_extension_for_oid(ExtensionOID.EXTENDED_KEY_USAGE)
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.EXTENDED_KEY_USAGE)
         except x509.ExtensionNotFound:
             return value
 
@@ -239,7 +239,7 @@ class X509CertMixin(models.Model):
 
     def subjectKeyIdentifier(self):
         try:
-            ext = self.x509c.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_KEY_IDENTIFIER)
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_KEY_IDENTIFIER)
         except x509.ExtensionNotFound:
             return ''
 
@@ -252,7 +252,7 @@ class X509CertMixin(models.Model):
 
     def issuerAltName(self):
         try:
-            ext = self.x509c.extensions.get_extension_for_oid(
+            ext = self.x509.extensions.get_extension_for_oid(
                 ExtensionOID.ISSUER_ALTERNATIVE_NAME)
         except x509.ExtensionNotFound:
             return ''
@@ -265,7 +265,7 @@ class X509CertMixin(models.Model):
 
     def authorityKeyIdentifier(self):
         try:
-            ext = self.x509c.extensions.get_extension_for_oid(
+            ext = self.x509.extensions.get_extension_for_oid(
                 ExtensionOID.AUTHORITY_KEY_IDENTIFIER)
         except x509.ExtensionNotFound:
             return ''
@@ -279,19 +279,19 @@ class X509CertMixin(models.Model):
 
     def get_digest(self, algo):
         algo = getattr(hashes, algo.upper())()
-        return add_colons(binascii.hexlify(self.x509c.fingerprint(algo)).upper().decode('utf-8'))
+        return add_colons(binascii.hexlify(self.x509.fingerprint(algo)).upper().decode('utf-8'))
 
     @property
     def hpkp_pin(self):
         # taken from https://github.com/luisgf/hpkp-python/blob/master/hpkp.py
 
-        public_key_raw = self.x509c.public_key().public_bytes(
+        public_key_raw = self.x509.public_key().public_bytes(
             encoding=Encoding.DER, format=PublicFormat.SubjectPublicKeyInfo)
         public_key_hash = hashlib.sha256(public_key_raw).digest()
         return base64.b64encode(public_key_hash).decode('utf-8')
 
     def dump_certificate(self, encoding=Encoding.PEM):
-        return self.x509c.public_bytes(encoding=encoding)
+        return self.x509.public_bytes(encoding=encoding)
 
     class Meta:
         abstract = True
@@ -328,14 +328,14 @@ class CertificateAuthority(X509CertMixin):
     @property
     def pathlen(self):
         try:
-            ext = self.x509c.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
         except x509.ExtensionNotFound:
             return ''
         return ext.value.path_length
 
     def nameConstraints(self):
         try:
-            ext = self.x509c.extensions.get_extension_for_oid(ExtensionOID.NAME_CONSTRAINTS)
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.NAME_CONSTRAINTS)
         except x509.ExtensionNotFound:
             return ''
 
@@ -416,7 +416,7 @@ class Certificate(X509CertMixin):
         if self.revoked is False:
             raise ValueError('Certificate is not revoked.')
 
-        revoked_cert = x509.RevokedCertificateBuilder().serial_number(self.x509c.serial).revocation_date(
+        revoked_cert = x509.RevokedCertificateBuilder().serial_number(self.x509.serial).revocation_date(
             self.revoked_date)
 
         if self.revoked_reason:

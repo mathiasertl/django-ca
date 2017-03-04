@@ -179,7 +179,7 @@ class DjangoCATestCase(TestCase):
         path = os.path.join(settings.FIXTURES_DIR, '%s.key' % name)
         ca = CertificateAuthority(name=name, private_key_path=path, enabled=enabled, parent=parent,
                                   **kwargs)
-        ca.x509c = x509  # calculates serial etc
+        ca.x509 = x509  # calculates serial etc
         ca.save()
         return ca
 
@@ -201,12 +201,12 @@ class DjangoCATestCase(TestCase):
         cert_kwargs.update(kwargs)
         cert_kwargs.setdefault('subject', {})
         cert_kwargs['subject'].update(subject)
-        x509c = Certificate.objects.init(
+        x509 = Certificate.objects.init(
             ca=ca, csr=csr, algorithm=hashes.SHA256(), expires=cls.expires(720), subjectAltName=san,
             **cert_kwargs)
 
         cert = Certificate(ca=ca, csr=csr)
-        cert.x509c = x509c
+        cert.x509 = x509
         cert.expires = cert.not_after  # this comes from the cert
         cert.save()
         return cert
@@ -214,7 +214,7 @@ class DjangoCATestCase(TestCase):
     @classmethod
     def load_cert(cls, ca, x509):
         cert = Certificate(ca=ca, csr='none')
-        cert.x509c = x509
+        cert.x509 = x509
         cert.save()
         return cert
 
@@ -228,7 +228,7 @@ class DjangoCATestCase(TestCase):
     @classmethod
     def get_extensions(cls, cert):
         c = Certificate()
-        c.x509c = cert
+        c.x509 = cert
         exts = [e.oid._name for e in cert.extensions]
         if 'cRLDistributionPoints' in exts:
             exts.remove('cRLDistributionPoints')

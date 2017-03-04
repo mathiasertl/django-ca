@@ -35,7 +35,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertEqual(stderr, '')
 
         cert = Certificate.objects.first()
-        self.assertSubject(cert.x509c, subject)
+        self.assertSubject(cert.x509, subject)
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
 
         self.assertEqual(cert.keyUsage(), 'critical,digitalSignature,keyAgreement,keyEncipherment')
@@ -56,7 +56,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
 
             cert = Certificate.objects.first()
 
-            self.assertSubject(cert.x509c, subject)
+            self.assertSubject(cert.x509, subject)
             self.assertEqual(stdout, cert.pub)
             self.assertEqual(cert.keyUsage(), 'critical,digitalSignature,keyAgreement,keyEncipherment')
             self.assertEqual(cert.extendedKeyUsage(), 'serverAuth')
@@ -93,7 +93,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         cert = Certificate.objects.first()
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
-        self.assertSubject(cert.x509c, {'CN': 'example.net'})
+        self.assertSubject(cert.x509, {'CN': 'example.net'})
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
         self.assertEqual(stderr, '')
         self.assertEqual(cert.subjectAltName(), 'DNS:example.com')
@@ -105,7 +105,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         stdout, stderr = self.cmd('sign_cert', subject=subject, cn_in_san=False, alt=[],
                                   stdin=stdin)
         cert = Certificate.objects.first()
-        self.assertSubject(cert.x509c, subject)
+        self.assertSubject(cert.x509, subject)
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
@@ -130,7 +130,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         stdin = six.StringIO(self.csr_pem)
         stdout, stderr = self.cmd('sign_cert', cn_in_san=False, alt=['example.net'], stdin=stdin)
         cert = Certificate.objects.first()
-        self.assertSubject(cert.x509c, ca_settings._CA_DEFAULT_SUBJECT)
+        self.assertSubject(cert.x509, ca_settings._CA_DEFAULT_SUBJECT)
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
 
@@ -147,7 +147,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         stdin = six.StringIO(self.csr_pem)
         self.cmd('sign_cert', cn_in_san=False, alt=['example.net'], stdin=stdin, subject=subject)
         cert = Certificate.objects.get(cn='CommonName2')
-        self.assertSubject(cert.x509c, subject)
+        self.assertSubject(cert.x509, subject)
 
         # set some empty values to see if we can remove subject fields:
         stdin = six.StringIO(self.csr_pem)
@@ -155,7 +155,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
                  subject={'C': '', 'ST': '', 'L': '', 'O': '', 'OU': '', 'emailAddress': '', 'CN':
                           'empty'})
         cert = Certificate.objects.get(cn='empty')
-        self.assertSubject(cert.x509c, {'CN': 'empty'})
+        self.assertSubject(cert.x509, {'CN': 'empty'})
 
     def test_extensions(self):
         stdin = six.StringIO(self.csr_pem)
@@ -167,7 +167,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertEqual(stderr, '')
 
         cert = Certificate.objects.first()
-        self.assertSubject(cert.x509c, {'CN': 'example.com'})
+        self.assertSubject(cert.x509, {'CN': 'example.com'})
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
         self.assertEqual(cert.keyUsage(), 'critical,keyCertSign')
         self.assertEqual(cert.extendedKeyUsage(), 'clientAuth')
@@ -179,7 +179,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         stdin = six.StringIO(self.csr_pem)
         stdout, stderr = self.cmd('sign_cert', alt=['example.com'], stdin=stdin)
         cert = Certificate.objects.first()
-        self.assertSubject(cert.x509c, {'CN': 'example.com'})
+        self.assertSubject(cert.x509, {'CN': 'example.com'})
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
         self.assertEqual(stderr, '')
         self.assertEqual(cert.subjectAltName(), 'DNS:example.com')
