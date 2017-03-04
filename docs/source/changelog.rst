@@ -19,6 +19,7 @@ ChangeLog
   * The ``msCodeInd``, ``msCodeCom``, ``msCTLSign``, ``msEFS`` values for the ExtendedKeyUsage extension are
     no longer supported. Support for these was largely academic anyway, so they most likely will not be added
     again.
+  * ``TEXT`` is no longer a supported output format for dumping certificates.
 
 * The ``keyUsage`` extension is now marked as critical for certificate authorities.
 
