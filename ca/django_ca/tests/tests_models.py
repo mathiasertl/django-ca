@@ -21,6 +21,7 @@ from ..models import Watcher
 from .base import DjangoCAWithCertTestCase
 from .base import cert2_pubkey
 from .base import cert3_pubkey
+from .base import cert3_csr
 from .base import child_pubkey
 from .base import ocsp_pubkey
 
@@ -74,6 +75,15 @@ class TestWatcher(TestCase):
 
 
 class CertificateTests(DjangoCAWithCertTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(CertificateTests, cls).setUpClass()
+
+        # A certificate with all extensions, can do everything, etc
+        cls.full = cls.create_cert(
+            cls.ca, cert3_csr, {'CN': 'all.example.com'},
+            san=['dirname:/C=AT/CN=example.com', 'email:user@example.com', 'fd00::1'])
+
     def setUp(self):
         self.ca2 = self.load_ca('child', child_pubkey, parent=self.ca)
         self.cert2 = self.load_cert(self.ca, cert2_pubkey)
@@ -93,6 +103,10 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertEqual(self.cert2.subjectAltName(), 'DNS:cert2.example.com')
         # accidentally used cert2 in cn/san
         self.assertEqual(self.cert3.subjectAltName(), 'DNS:cert2.example.com')
+
+        self.assertEqual(
+            self.full.subjectAltName(),
+            'DNS:all.example.com, dirname:/C=AT/CN=example.com, email:user@example.com, IP:fd00::1')
 
     def test_basicConstraints(self):
         self.assertEqual(self.ca.basicConstraints(), 'critical,CA:TRUE, pathlen:1')
@@ -121,6 +135,14 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertEqual(self.cert2.extendedKeyUsage(), 'serverAuth')
         self.assertEqual(self.cert3.extendedKeyUsage(), 'serverAuth')
         self.assertEqual(self.ocsp.extendedKeyUsage(), 'OCSPSigning')
+
+    def test_crlDistributionPoints(self):
+        self.assertEqual(self.ca.crlDistributionPoints(), '')
+        self.assertEqual(self.ca2.crlDistributionPoints(), '')
+        self.assertEqual(self.cert.crlDistributionPoints(), '')
+        self.assertEqual(self.cert2.crlDistributionPoints(), '')
+        self.assertEqual(self.cert3.crlDistributionPoints(), '')
+        self.assertEqual(self.ocsp.crlDistributionPoints(), '')
 
     def test_authorityKeyIdentifier(self):
         self.assertEqual(self.cert.authorityKeyIdentifier(),

@@ -141,7 +141,17 @@ def format_subject(subject):
 def format_general_names(names):
     """Format a list of general names."""
 
-    return ', '.join(['%s:%s' % (SAN_NAME_MAPPINGS[type(s)], s.value) for s in names])
+    formatted = []
+
+    for name in names:
+        if isinstance(name, x509.DirectoryName):
+            value = '/%s' % '/'.join(['%s=%s' % (OID_NAME_MAPPINGS[s.oid], s.value) for s in name.value])
+        else:
+            value = name.value
+
+        formatted.append('%s:%s' % (SAN_NAME_MAPPINGS[type(name)], value))
+
+    return ', '.join(formatted)
 
 
 def is_power2(num):
