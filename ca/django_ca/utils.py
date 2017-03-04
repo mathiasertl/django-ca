@@ -129,7 +129,6 @@ def format_subject(subject):
         '/CN=example.com'
         >>> format_subject({'CN': 'example.com'})
         '/CN=example.com'
-
     """
     if isinstance(subject, dict):
         subject = sort_subject_dict(subject)
@@ -261,7 +260,7 @@ def x509_name(name):
     elif isinstance(name, dict):
         name = sort_subject_dict(name)
 
-    return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], value) for typ, value in name])
+    return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], force_text(value)) for typ, value in name])
 
 
 def parse_general_name(name):
