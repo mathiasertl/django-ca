@@ -44,7 +44,7 @@ from .utils import add_colons
 from .utils import format_general_names
 from .utils import format_subject
 from .utils import multiline_url_validator
-from .utils import serial_from_int
+from .utils import int_to_hex
 
 
 class Watcher(models.Model):
@@ -99,7 +99,7 @@ class X509CertMixin(models.Model):
         self.pub = force_str(self.dump_certificate(Encoding.PEM))
         self.cn = self.subject['CN']
         self.expires = self.not_after
-        self.serial = serial_from_int(value.serial_number)
+        self.serial = int_to_hex(value.serial_number)
 
     @property
     def subject(self):

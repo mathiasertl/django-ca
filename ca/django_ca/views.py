@@ -44,7 +44,7 @@ from .crl import get_crl
 from .forms import RevokeCertificateForm
 from .models import Certificate
 from .models import CertificateAuthority
-from .utils import serial_from_int
+from .utils import int_to_hex
 
 log = logging.getLogger(__name__)
 
@@ -189,7 +189,7 @@ class OCSPView(View):
                 raise NotImplemented('Combined requests not yet supported')
             single_request = request_list[0]  # TODO: Support more than one request
             req_cert = single_request['req_cert']
-            serial = serial_from_int(req_cert['serial_number'].native)
+            serial = int_to_hex(req_cert['serial_number'].native)
         except Exception as e:
             log.exception('Error parsing OCSP request: %s', e)
             return self.fail(u'malformed_request')

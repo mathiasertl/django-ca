@@ -79,7 +79,6 @@ NAME_OID_MAPPINGS = {v: k for k, v in OID_NAME_MAPPINGS.items()}
 # uppercase values as keys for normalizing case
 NAME_CASE_MAPPINGS = {v.upper(): v for v in OID_NAME_MAPPINGS.values()}
 
-# TODO: should this really be bytes?
 KEY_USAGE_MAPPING = {
     'cRLSign': 'crl_sign',
     'dataEncipherment': 'data_encipherment',
@@ -180,12 +179,10 @@ def add_colons(s):
     return ':'.join(a + b for a, b in zip(s[::2], s[1::2]))
 
 
-def serial_from_int(i):
+def int_to_hex(i):
     """Create a hex-representation of the given serial.
 
-    .. TODO:: Rename this function. The int passed is already a serial, so the name is misleading.
-
-    >>> serial_from_int(123456789)
+    >>> int_to_hex(123456789)
     '75:BC:D1'
     """
     s = hex(i)[2:].upper()

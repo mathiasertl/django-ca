@@ -31,7 +31,7 @@ from django.utils.encoding import force_text
 
 from ..models import Certificate
 from ..models import CertificateAuthority
-from ..utils import serial_from_int
+from ..utils import int_to_hex
 from ..views import OCSPView
 from .base import DjangoCAWithCertTestCase
 from .base import ocsp_pem
@@ -157,7 +157,7 @@ class OCSPViewTestMixin(object):
         # verify the responder cert
         certs = response['certs']
         self.assertEqual(len(certs), 1)
-        serials = [serial_from_int(c['tbs_certificate']['serial_number'].native) for c in certs]
+        serials = [int_to_hex(c['tbs_certificate']['serial_number'].native) for c in certs]
         self.assertEqual(serials, [settings.OCSP_SERIAL])
 
         # verify subjects of certificates
@@ -188,7 +188,7 @@ class OCSPViewTestMixin(object):
         # Verify responses
         responses = tbs_response_data['responses']
         self.assertEqual(len(responses), len(requested))
-        responses = {serial_from_int(r['cert_id']['serial_number'].native): r for r in responses}
+        responses = {int_to_hex(r['cert_id']['serial_number'].native): r for r in responses}
         for serial, response in responses.items():
             cert = Certificate.objects.get(serial=serial)
 
