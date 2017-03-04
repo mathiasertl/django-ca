@@ -40,7 +40,6 @@ from .querysets import CertificateQuerySet
 from .utils import EXTENDED_KEY_USAGE_REVERSED
 from .utils import KEY_USAGE_MAPPING
 from .utils import OID_NAME_MAPPINGS
-from .utils import SAN_NAME_MAPPINGS
 from .utils import add_colons
 from .utils import format_date
 from .utils import format_general_names
@@ -168,22 +167,24 @@ class X509CertMixin(models.Model):
     subjectAltName.short_description = 'subjectAltName'
 
     def crlDistributionPoints(self):
-        return self.ext_as_str(b'crlDistributionPoints')
         try:
-            crldp = self.x509c.extensions.get_extension_for_oid(
-                ExtensionOID.CRL_DISTRIBUTION_POINTS)
+            crldp = self.x509c.extensions.get_extension_for_oid(ExtensionOID.CRL_DISTRIBUTION_POINTS)
         except x509.ExtensionNotFound:
             return ''
 
-        ll = [v.full_name for v in crldp.value]
-        items = [item for sublist in ll for item in sublist]
+        value = ''
+        for dp in crldp.value:
+            if dp.full_name:
+                value += 'Full Name: %s' % format_general_names(dp.full_name)
+            else:
+                formatted = '/%s' % '/'.join(['%s=%s' % (OID_NAME_MAPPINGS[s.oid], s.value)
+                                              for s in dp.relative_name])
+                value += 'Relative Name:\n  %s' % formatted
 
-        value = ', '.join(['%s:%s' % (SAN_NAME_MAPPINGS[type(s)], s.value) for s in items])
         if crldp.critical:
             value = 'critical,%s' % value
 
         return value
-
     crlDistributionPoints.short_description = 'crlDistributionPoints'
 
     def authorityInfoAccess(self):

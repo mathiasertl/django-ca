@@ -80,6 +80,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
         super(CertificateTests, cls).setUpClass()
 
         # A certificate with all extensions, can do everything, etc
+        cls.ca.crl_url = 'https://ca.example.com/crl.der'
         cls.full = cls.create_cert(
             cls.ca, cert3_csr, {'CN': 'all.example.com'},
             san=['dirname:/C=AT/CN=example.com', 'email:user@example.com', 'fd00::1'])
@@ -143,6 +144,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertEqual(self.cert2.crlDistributionPoints(), '')
         self.assertEqual(self.cert3.crlDistributionPoints(), '')
         self.assertEqual(self.ocsp.crlDistributionPoints(), '')
+        self.assertEqual(self.full.crlDistributionPoints(), 'Full Name: URI:https://ca.example.com/crl.der')
 
     def test_authorityKeyIdentifier(self):
         self.assertEqual(self.cert.authorityKeyIdentifier(),
