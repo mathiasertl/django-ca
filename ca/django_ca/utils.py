@@ -259,7 +259,7 @@ def serial_from_int(i):
     return add_colons(s)
 
 
-def parse_name_dict(name):
+def parse_name(name):
     """Parses a subject string as used in OpenSSLs command line utilities.
 
     The ``name`` is expected to be close to the subject format commonly used by OpenSSL, for example
@@ -267,30 +267,30 @@ def parse_name_dict(name):
     on deviations from the format, object identifiers are case-insensitive (e.g. ``cn`` is the same as ``CN``
     and the subject does not have to start with a slash (``/``).
 
-    >>> parse_name_dict('/CN=example.com')
+    >>> parse_name('/CN=example.com')
     OrderedDict([('CN', 'example.com')])
-    >>> parse_name_dict('c=AT/l=Vienna/o="ex org"/CN=example.com')
+    >>> parse_name('c=AT/l=Vienna/o="ex org"/CN=example.com')
     OrderedDict([('C', 'AT'), ('L', 'Vienna'), ('O', 'ex org'), ('CN', 'example.com')])
 
     Dictionary keys are normalized to the values of :py:const:`OID_NAME_MAPPINGS` and keys will be sorted
     based on x509 name specifications regardless of the given order:
 
-    >>> parse_name_dict('L="Vienna / District"/cn=example.com/EMAILaddress=user@example.com')
-    OrderedDict([('L', 'Vienna / District'), ('CN', 'example.com'), ('emailAddress', 'user@example.com')])
-    >>> parse_name_dict('/C=AT/CN=example.com') == parse_name_dict('/CN=example.com/C=AT')
+    >>> parse_name('L="Vienna / District"/EMAILaddress=user@example.com')
+    OrderedDict(['L', 'Vienna / District'), ('emailAddress', 'user@example.com')])
+    >>> parse_name('/C=AT/CN=example.com') == parse_name('/CN=example.com/C=AT')
     True
 
     Due to the magic of :py:const:`NAME_RE`, the function even supports quoting strings and including slashes,
     so strings like ``/OU="Org / Org Unit"/CN=example.com`` will work as expected.
 
-    >>> parse_name_dict('L="Vienna / District"/CN=example.com')
+    >>> parse_name('L="Vienna / District"/CN=example.com')
     OrderedDict([('L', 'Vienna / District'), ('CN', 'example.com')])
 
     But note that it's still easy to trick this function, if you really want to. The following example is
     *not* a valid subject, the location is just bogus, and whatever you were expecting as output, it's
     certainly different:
 
-    >>> parse_name_dict('L="Vienna " District"/CN=example.com')  # doctest: +NORMALIZE_WHITESPACE
+    >>> parse_name('L="Vienna " District"/CN=example.com')  # doctest: +NORMALIZE_WHITESPACE
     OrderedDict([('L', 'Vienna '), ('CN', 'example.com')])
 
     Examples of where this string is used are:
@@ -310,47 +310,21 @@ def parse_name_dict(name):
     return OrderedDict(parsed)
 
 
-def parse_name(name):
+def x509_name(name):
     """Parses a subject string as used in OpenSSLs command line utilities.
 
-    The ``name`` is expected to be close to the subject format commonly used by OpenSSL, for example
-    ``/C=AT/L=Vienna/CN=example.com/emailAddress=user@example.com``. The function does its best to be lenient
-    on deviations from the format, object identifiers are case-insensitive (e.g. ``cn`` is the same as ``CN``
-    and the subject does not have to start with a slash (``/``).
-
-    >>> parse_name('/CN=example.com')
-    <Name([<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>])>
-    >>> parse_name('c=AT/l=Vienna/o="ex org"/CN=example.com')  # doctest: +NORMALIZE_WHITESPACE
-     <Name([<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, value='AT')>,
-            <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.7, name=localityName)>, value='Vienna')>,
-            <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.10, name=organizationName)>, value='ex org')>,
-            <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>])>
-
-    Due to the magic of :py:const:`NAME_RE`, the function even supports quoting strings and including slashes,
-    so strings like ``/OU="Org / Org Unit"/CN=example.com`` will work as expected:
-
-    >>> parse_name('L="Vienna / District"/CN=example.com')  # doctest: +NORMALIZE_WHITESPACE
-    <Name([<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.7, name=localityName)>, value='Vienna / District')>,
+    >>> x509_name('/C=AT/CN=example.com')  # doctest: +NORMALIZE_WHITESPACE
+    <Name([<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, value='AT')>,
            <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>])>
-
-    But note that it's still easy to trick this function, if you really want to. The following example is
-    *not* a valid subject, the location is just bogus, and whatever you were expecting as output, it's
-    certainly different:
-
-    >>> parse_name('L="Vienna " District"/CN=example.com')  # doctest: +NORMALIZE_WHITESPACE
-    <Name([<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.7, name=localityName)>, value='Vienna ')>,
+    >>> x509_name(OrderedDict([('C', 'AT'), ('CN', 'example.com')]))  # doctest: +NORMALIZE_WHITESPACE
+    <Name([<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, value='AT')>,
            <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>])>
-
-    Examples of where this string is used are:
-
-    .. code-block:: console
-
-        # openssl req -new -key priv.key -out csr -utf8 -batch -sha256 -subj '/C=AT/CN=example.com'
-        # openssl x509 -in cert.pem -noout -subject -nameopt compat
-        /C=AT/L=Vienna/CN=example.com
+    >>> x509_name(OrderedDict([('C', 'AT'), ('CN', 'example.com')]))  # doctest: +NORMALIZE_WHITESPACE
+    <Name([<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, value='AT')>,
+           <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>])>
     """
     if isinstance(name, six.string_types):
-        name = parse_name_dict(name).items()
+        name = parse_name(name).items()
     elif isinstance(name, dict):
         name = name.items()
 
@@ -428,7 +402,7 @@ def parse_general_name(name):
                 pass
 
         if name.strip().startswith('/'):  # maybe it's a dirname?
-            return x509.DirectoryName(parse_name(name.strip()))
+            return x509.DirectoryName(x509_name(name))
 
         # Try to parse this as IPAddress/Network
         try:
@@ -467,7 +441,7 @@ def parse_general_name(name):
         value = force_bytes(value)
         return x509.OtherName(type_id, value)
     elif typ == 'dirname':
-        return x509.DirectoryName(parse_name(name.strip()))
+        return x509.DirectoryName(x509_name(name))
     else:
         return x509.DNSName(name)
 
