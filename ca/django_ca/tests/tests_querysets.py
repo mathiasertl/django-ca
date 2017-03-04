@@ -15,9 +15,8 @@
 
 """Test querysets."""
 
-from OpenSSL import crypto
-
 from cryptography.hazmat.primitives import hashes
+from OpenSSL import crypto
 
 from django_ca.tests.base import DjangoCATestCase
 

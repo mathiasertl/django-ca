@@ -15,8 +15,6 @@
 
 from datetime import datetime
 
-from django.utils.encoding import force_bytes
-
 from django_ca.management.base import CertCommand
 
 
