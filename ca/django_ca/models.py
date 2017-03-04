@@ -334,7 +334,25 @@ class CertificateAuthority(X509CertMixin):
         return ext.value.path_length
 
     def nameConstraints(self):
-        return self.ext_as_str(b'nameConstraints')
+        try:
+            ext = self.x509c.extensions.get_extension_for_oid(ExtensionOID.NAME_CONSTRAINTS)
+        except x509.ExtensionNotFound:
+            return ''
+
+        value = ''
+        if ext.value.permitted_subtrees:
+            value += 'Permitted:\n'
+            for general_name in ext.value.permitted_subtrees:
+                value += '  %s\n' % format_general_names([general_name])
+        if ext.value.excluded_subtrees:
+            value += 'Excluded:\n'
+            for general_name in ext.value.excluded_subtrees:
+                value += '  %s\n' % format_general_names([general_name])
+
+        if ext.critical:
+            value = 'critical,%s' % value
+
+        return value
     nameConstraints.short_description = 'nameConstraints'
 
     class Meta:

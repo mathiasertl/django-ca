@@ -110,6 +110,9 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertEqual(self.cert3.authorityKeyIdentifier(),
                          'keyid:6B:C8:CF:56:29:FC:00:55:DD:A5:ED:5A:55:B7:7C:65:49:AC:AD:B1\n')
 
+    def test_nameConstraints(self):
+        self.assertEqual(self.ca.nameConstraints(), '')
+
     def test_hpkp_pin(self):
 
         # get hpkp pins using
