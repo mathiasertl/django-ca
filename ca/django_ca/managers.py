@@ -194,9 +194,8 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             `True`, but the parameter is ignored if no CommonName is given. This is typically set
             to `False` when creating a client certificate, where the subjects CommonName has no
             meaningful value as subjectAltName.
-        csr_format : int, optional
-            The format of the submitted CSR request. One of the OpenSSL.crypto.FILETYPE_*
-            constants. The default is PEM.
+        csr_format : {'PEM', 'DER'}, optional
+            The format of the CSR. The default is ``'PEM'``.
         subjectAltName : list of str, optional
             A list of values for the subjectAltName extension. Values are passed to
             :py:func:`~django_ca.utils.parse_general_name`, see function documentation for how this value is
