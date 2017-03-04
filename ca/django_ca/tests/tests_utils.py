@@ -189,11 +189,6 @@ class ParseNameTestCase(TestCase):
     def test_no_slash_at_start(self):
         self.assertSubject('CN=example.com', [('CN', 'example.com')])
 
-    def test_duplicate_fields(self):
-        with self.assertRaises(ValueError) as e:
-            parse_name('/CN=example.com/ CN = example.org')
-        self.assertEqual(e.exception.args, ('Unparseable subject: Duplicate field "CN".', ))
-
     def test_unknown(self):
         field = 'ABC'
         with self.assertRaises(ValueError) as e:
