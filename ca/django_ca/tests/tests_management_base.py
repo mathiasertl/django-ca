@@ -19,6 +19,7 @@ import tempfile
 from datetime import datetime
 from datetime import timedelta
 
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from ..management import base
@@ -52,6 +53,11 @@ class SubjectActionTestCase(DjangoCATestCase):
         ns = self.parser.parse_args(['--subject=/CN=example.com/ST=foo'])
         self.assertEqual(list(ns.subject.items()), [('ST', 'foo'), ('CN', 'example.com')])
 
+    def test_error(self):
+        self.assertParserError(['--subject=/WRONG=foobar'],
+                               'usage: setup.py [-h] [--subject SUBJECT]\n'
+                               'setup.py: error: Unknown x509 name field: WRONG\n')
+
 
 class FormatActionTestCase(DjangoCATestCase):
     def setUp(self):
@@ -83,6 +89,38 @@ class FormatActionTestCase(DjangoCATestCase):
         self.assertParserError(['--action=foo'],
                                'usage: setup.py [-h] [--action ACTION]\n'
                                'setup.py: error: Unknown format "FOO".\n')
+
+
+class AlgorithmActionTestCase(DjangoCATestCase):
+    def setUp(self):
+        super(AlgorithmActionTestCase, self).setUp()
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument('--algo', action=base.AlgorithmAction)
+
+    def test_basic(self):
+        ns = self.parser.parse_args(['--algo=sha256'])
+        self.assertIsInstance(ns.algo, hashes.SHA256)
+
+        ns = self.parser.parse_args(['--algo=md5'])
+        self.assertIsInstance(ns.algo, hashes.MD5)
+
+        ns = self.parser.parse_args(['--algo=sha512'])
+        self.assertIsInstance(ns.algo, hashes.SHA512)
+
+    def test_case(self):
+        ns = self.parser.parse_args(['--algo=sHa256'])
+        self.assertIsInstance(ns.algo, hashes.SHA256)
+
+        ns = self.parser.parse_args(['--algo=mD5'])
+        self.assertIsInstance(ns.algo, hashes.MD5)
+
+        ns = self.parser.parse_args(['--algo=sHa512'])
+        self.assertIsInstance(ns.algo, hashes.SHA512)
+
+    def test_error(self):
+        self.assertParserError(['--algo=foo'],
+                               'usage: setup.py [-h] [--algo ALGO]\n'
+                               'setup.py: error: Unknown hash algorithm: FOO\n')
 
 
 class KeySizeActionTestCase(DjangoCATestCase):
