@@ -282,6 +282,8 @@ def x509_name(name):
     """
     if isinstance(name, six.string_types):
         name = parse_name(name).items()
+    elif isinstance(name, OrderedDict):
+        name = name.items()
     elif isinstance(name, dict):
         name = sort_subject_dict(name)
 
