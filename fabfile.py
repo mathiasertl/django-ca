@@ -222,7 +222,7 @@ def init_demo():
     cert.save()
 
     cert = Certificate.objects.get(cn='host2.example.com')
-    cert.revoke('keyCompromise')
+    cert.revoke('key_compromise')
     cert.save()
 
     print(green('Create CRL and OCSP index...'))
