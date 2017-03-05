@@ -17,6 +17,7 @@ import base64
 import binascii
 import hashlib
 import re
+from collections import OrderedDict
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -103,13 +104,11 @@ class X509CertMixin(models.Model):
 
     @property
     def subject(self):
-        # TODO: OrderedDict!!!
-        return {OID_NAME_MAPPINGS[s.oid]: s.value for s in self.x509.subject}
+        return OrderedDict([(OID_NAME_MAPPINGS[s.oid], s.value) for s in self.x509.subject])
 
     @property
     def issuer(self):
-        # TODO: OrderedDict!!!
-        return {OID_NAME_MAPPINGS[s.oid]: s.value for s in self.x509.issuer}
+        return OrderedDict([(OID_NAME_MAPPINGS[s.oid], s.value) for s in self.x509.issuer])
 
     @property
     def not_before(self):
