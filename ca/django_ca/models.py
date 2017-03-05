@@ -137,7 +137,7 @@ class X509CertMixin(models.Model):
             return ''
 
         value = format_general_names(ext.value)
-        if ext.critical:
+        if ext.critical:  # pragma: no cover - not usually critical
             value = 'critical,%s' % value
 
         return value
@@ -153,12 +153,10 @@ class X509CertMixin(models.Model):
         for dp in crldp.value:
             if dp.full_name:
                 value += 'Full Name: %s\n' % format_general_names(dp.full_name)
-            else:
-                formatted = '/%s' % '/'.join(['%s=%s' % (OID_NAME_MAPPINGS[s.oid], s.value)
-                                              for s in dp.relative_name])
-                value += 'Relative Name:\n  %s' % formatted
+            else:  # pragma: no cover - not really used in the wild
+                value += 'Relative Name:\n  %s' % format_name(dp.relative_name.value)
 
-        if crldp.critical:
+        if crldp.critical:  # pragma: no cover - not usually critical
             value = 'critical,%s' % value
 
         return value.strip()
@@ -174,10 +172,10 @@ class X509CertMixin(models.Model):
         for desc in ext.value:
             if desc.access_method == AuthorityInformationAccessOID.OCSP:
                 output += 'OCSP - %s\n' % format_general_names([desc.access_location])
-            elif desc.access_method == AuthorityInformationAccessOID.CA_ISSUERS:
+            elif desc.access_method == AuthorityInformationAccessOID.CA_ISSUERS:  # pragma: no branch
                 output += 'CA Issuers - %s\n' % format_general_names([desc.access_location])
 
-        if ext.critical:
+        if ext.critical:  # pragma: no cover - not usually critical
             output = 'critical,%s' % output
         return output
     authorityInfoAccess.short_description = 'authorityInfoAccess'
@@ -185,7 +183,7 @@ class X509CertMixin(models.Model):
     def basicConstraints(self):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
-        except x509.ExtensionNotFound:
+        except x509.ExtensionNotFound:  # pragma: no cover - extension should always be present
             return ''
 
         if ext.value.ca is True:
@@ -195,7 +193,7 @@ class X509CertMixin(models.Model):
         if ext.value.path_length is not None:
             value = '%s, pathlen:%s' % (value, ext.value.path_length)
 
-        if ext.critical:
+        if ext.critical:  # pragma: no branch - should always be critical
             value = 'critical,%s' % value
         return value
     basicConstraints.short_description = 'basicConstraints'
@@ -233,7 +231,7 @@ class X509CertMixin(models.Model):
             usages.append(EXTENDED_KEY_USAGE_REVERSED[usage])
         value = ','.join(sorted(usages))
 
-        if ext.critical:
+        if ext.critical:  # pragma: no cover - not usually critical
             value = 'critical,%s' % value
         return value
     extendedKeyUsage.short_description = 'extendedKeyUsage'
@@ -241,12 +239,12 @@ class X509CertMixin(models.Model):
     def subjectKeyIdentifier(self):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_KEY_IDENTIFIER)
-        except x509.ExtensionNotFound:
+        except x509.ExtensionNotFound:  # pragma: no cover - extension should always be present
             return ''
 
         hexlified = binascii.hexlify(ext.value.digest).upper().decode('utf-8')
         value = add_colons(hexlified)
-        if ext.critical:
+        if ext.critical:  # pragma: no cover - not usually critical
             value = 'critical,%s' % value
         return value
     subjectKeyIdentifier.short_description = 'subjectKeyIdentifier'
@@ -258,7 +256,7 @@ class X509CertMixin(models.Model):
             return ''
 
         value = format_general_names(ext.value)
-        if ext.critical:
+        if ext.critical:  # pragma: no cover - not usually critical
             value = 'critical,%s' % value
         return value
     issuerAltName.short_description = 'issuerAltName'
@@ -266,12 +264,12 @@ class X509CertMixin(models.Model):
     def authorityKeyIdentifier(self):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_KEY_IDENTIFIER)
-        except x509.ExtensionNotFound:
+        except x509.ExtensionNotFound:  # pragma: no cover - extension should always be present
             return ''
 
         hexlified = binascii.hexlify(ext.value.key_identifier).upper().decode('utf-8')
         value = 'keyid:%s\n' % add_colons(hexlified)
-        if ext.critical:
+        if ext.critical:  # pragma: no cover - not usually critical
             value = 'critical,%s' % value
         return value
     authorityKeyIdentifier.short_description = 'authorityKeyIdentifier'
@@ -328,7 +326,7 @@ class CertificateAuthority(X509CertMixin):
     def pathlen(self):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
-        except x509.ExtensionNotFound:
+        except x509.ExtensionNotFound:  # pragma: no cover - extension should always be present
             return ''
         return ext.value.path_length
 
@@ -348,7 +346,7 @@ class CertificateAuthority(X509CertMixin):
             for general_name in ext.value.excluded_subtrees:
                 value += '  %s\n' % format_general_names([general_name])
 
-        if ext.critical:
+        if ext.critical:  # pragma: no branch - currently always critical
             value = 'critical,%s' % value
 
         return value
