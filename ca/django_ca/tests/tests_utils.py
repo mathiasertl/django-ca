@@ -25,7 +25,6 @@ from django_ca.utils import get_cert_profile_kwargs
 from django_ca.utils import is_power2
 from django_ca.utils import multiline_url_validator
 from django_ca.utils import parse_name
-from django_ca.utils import sort_subject_dict
 
 
 def load_tests(loader, tests, ignore):
@@ -193,12 +192,9 @@ class FormatNameTestCase(TestCase):
     def test_basic(self):
         subject = '/C=AT/ST=Vienna/L=Vienna/O=O/OU=OU/CN=example.com/emailAddress=user@example.com'
 
-        subject_dict = {'emailAddress': 'user@example.com', 'C': 'AT', 'L': 'Vienna',
-                        'ST': 'Vienna', 'O': 'O', 'OU': 'OU', 'CN': 'example.com', }
+        subject_dict = [('C', 'AT'), ('ST', 'Vienna'), ('L', 'Vienna'), ('O', 'O'), ('OU', 'OU'),
+                        ('CN', 'example.com'), ('emailAddress', 'user@example.com'), ]
         self.assertEqual(format_name(subject_dict), subject)
-
-        subject_list = sort_subject_dict(subject_dict)
-        self.assertEqual(format_name(subject_list), subject)
 
 
 class Power2TestCase(TestCase):

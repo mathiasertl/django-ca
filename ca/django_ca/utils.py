@@ -16,6 +16,7 @@
 """Central functions to load CA key and cert as PKey/X509 objects."""
 
 import re
+import warnings
 from collections import Iterable
 from collections import OrderedDict
 from copy import deepcopy
@@ -124,17 +125,13 @@ def format_name(subject):
 
         >>> format_name([('CN', 'example.com'), ])
         '/CN=example.com'
-        >>> format_name({'CN': 'example.com'})
-        '/CN=example.com'
     """
-    if isinstance(subject, x509.DirectoryName):
-        subject = subject.value
-
     if isinstance(subject, x509.Name):
         subject = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in subject]
     elif isinstance(subject, OrderedDict):
         subject = subject.items()
     elif isinstance(subject, dict):
+        warnings.warn('format_name() called with a non-ordered dict', stacklevel=2)
         subject = sort_subject_dict(subject)
 
     return '/%s' % ('/'.join(['%s=%s' % (force_text(k), force_text(v)) for k, v in subject]))
