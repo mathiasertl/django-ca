@@ -337,11 +337,11 @@ class CertificateAuthority(X509CertMixin):
             return ''
 
         value = ''
-        if ext.value.permitted_subtrees:
+        if ext.value.permitted_subtrees:  # pragma: no branch
             value += 'Permitted:\n'
             for general_name in ext.value.permitted_subtrees:
                 value += '  %s\n' % format_general_names([general_name])
-        if ext.value.excluded_subtrees:
+        if ext.value.excluded_subtrees:  # pragma: no branch
             value += 'Excluded:\n'
             for general_name in ext.value.excluded_subtrees:
                 value += '  %s\n' % format_general_names([general_name])

@@ -127,10 +127,6 @@ def format_name(subject):
     """
     if isinstance(subject, x509.Name):
         subject = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in subject]
-    elif isinstance(subject, OrderedDict):
-        subject = subject.items()
-    elif isinstance(subject, dict):
-        subject = sort_subject_dict(subject)
 
     return '/%s' % ('/'.join(['%s=%s' % (force_text(k), force_text(v)) for k, v in subject]))
 
