@@ -220,21 +220,18 @@ class BaseCommand(_BaseCommand):
 
         super(BaseCommand, self).execute(*args, **options)
 
-    def add_algorithm(self, parser, default=None, help=None):
+    def add_algorithm(self, parser):
         """Add the --algorithm option."""
 
-        if default is None:
-            default = ca_settings.CA_DIGEST_ALGORITHM
+        default = ca_settings.CA_DIGEST_ALGORITHM
 
         try:
             default = getattr(hashes, default.upper())()
         except AttributeError:
             parser.error('Unknown hash algorithm: %s' % default)
 
-        if help is None:
-            help = 'The HashAlgorithm that will be used to generate the signature (default: %(default)s).'
-
-        help = help % {'default': default.name, }
+        help = 'The HashAlgorithm that will be used to generate the signature (default: %(default)s).' % {
+            'default': default.name, }
 
         parser.add_argument(
             '--algorithm', metavar='{sha512,sha256,...}', default=default, action=AlgorithmAction, help=help)
