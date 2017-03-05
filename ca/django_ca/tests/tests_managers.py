@@ -15,8 +15,6 @@
 
 from cryptography.hazmat.primitives import hashes
 
-from django.utils.encoding import force_bytes
-
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..utils import get_cert_profile_kwargs
@@ -27,15 +25,15 @@ from .base import override_tmpcadir
 @override_tmpcadir(CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class GetCertTestCase(DjangoCAWithCSRTestCase):
     def assertExtensions(self, cert, expected):
-        expected[b'basicConstraints'] = 'critical,CA:FALSE'
-        expected[b'authorityKeyIdentifier'] = self.ca.authorityKeyIdentifier()
+        expected['basicConstraints'] = 'critical,CA:FALSE'
+        expected['authorityKeyIdentifier'] = self.ca.authorityKeyIdentifier()
 
         if self.ca.issuer_alt_name:
             expected[b'issuerAltName'] = 'URI:%s' % self.ca.issuer_alt_name
 
         # TODO: Does not account for multiple CRLs yet
         if self.ca.crl_url:
-            expected[b'crlDistributionPoints'] = '\nFull Name:\n  URI:%s\n' % self.ca.crl_url
+            expected['crlDistributionPoints'] = '\nFull Name:\n  URI:%s\n' % self.ca.crl_url
 
         auth_info_access = ''
         if self.ca.ocsp_url:
@@ -73,9 +71,9 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
         # verify extensions
         extensions = {
-            b'extendedKeyUsage': 'serverAuth',
-            b'keyUsage': 'critical,digitalSignature,keyAgreement,keyEncipherment',
-            b'subjectAltName': 'DNS:example.com',
+            'extendedKeyUsage': 'serverAuth',
+            'keyUsage': 'critical,digitalSignature,keyAgreement,keyEncipherment',
+            'subjectAltName': 'DNS:example.com',
         }
 
         self.assertExtensions(cert, extensions)
@@ -91,9 +89,9 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
         # verify extensions
         self.assertExtensions(cert, {
-            b'extendedKeyUsage': 'serverAuth',
-            b'keyUsage': 'critical,digitalSignature,keyAgreement,keyEncipherment',
-            b'subjectAltName': 'DNS:example.com',
+            'extendedKeyUsage': 'serverAuth',
+            'keyUsage': 'critical,digitalSignature,keyAgreement,keyEncipherment',
+            'subjectAltName': 'DNS:example.com',
         })
 
     def test_no_names(self):
