@@ -14,6 +14,7 @@
 # see <http://www.gnu.org/licenses/>
 
 import os
+from collections import OrderedDict
 from datetime import timedelta
 
 from django.core.management.base import CommandError
@@ -30,7 +31,7 @@ from .base import override_tmpcadir
 class SignCertTestCase(DjangoCAWithCSRTestCase):
     def test_from_stdin(self):
         stdin = six.StringIO(self.csr_pem)
-        subject = {'CN': 'example.com'}
+        subject = OrderedDict([('CN', 'example.com')])
         stdout, stderr = self.cmd('sign_cert', subject=subject, stdin=stdin)
         self.assertEqual(stderr, '')
 
@@ -50,7 +51,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
             csr_stream.write(self.csr_pem)
 
         try:
-            subject = {'CN': 'example.com', 'emailAddress': 'user@example.com'}
+            subject = OrderedDict([('CN', 'example.com'), ('emailAddress', 'user@example.com')])
             stdout, stderr = self.cmd('sign_cert', subject=subject, csr=csr_path)
             self.assertEqual(stderr, '')
 
@@ -69,7 +70,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         stdin = six.StringIO(self.csr_pem)
 
         try:
-            stdout, stderr = self.cmd('sign_cert', subject={'CN': 'example.com'},
+            stdout, stderr = self.cmd('sign_cert', subject=OrderedDict([('CN', 'example.com')]),
                                       out=out_path, stdin=stdin)
             cert = Certificate.objects.first()
             self.assertEqual(stdout, 'Please paste the CSR:\n')
@@ -88,7 +89,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
 
     def test_cn_not_in_san(self):
         stdin = six.StringIO(self.csr_pem)
-        stdout, stderr = self.cmd('sign_cert', subject={'CN': 'example.net'}, cn_in_san=False,
+        stdout, stderr = self.cmd('sign_cert', subject=OrderedDict([('CN', 'example.net')]), cn_in_san=False,
                                   alt=['example.com'], stdin=stdin)
         cert = Certificate.objects.first()
         self.assertIssuer(self.ca, cert)

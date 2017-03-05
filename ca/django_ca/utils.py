@@ -16,7 +16,6 @@
 """Central functions to load CA key and cert as PKey/X509 objects."""
 
 import re
-import warnings
 from collections import Iterable
 from collections import OrderedDict
 from copy import deepcopy
@@ -131,7 +130,6 @@ def format_name(subject):
     elif isinstance(subject, OrderedDict):
         subject = subject.items()
     elif isinstance(subject, dict):
-        warnings.warn('format_name() called with a non-ordered dict', stacklevel=2)
         subject = sort_subject_dict(subject)
 
     return '/%s' % ('/'.join(['%s=%s' % (force_text(k), force_text(v)) for k, v in subject]))
@@ -268,6 +266,9 @@ def x509_name(name):
     (preferrably an :py:class:`~python:collections.OrderedDict`) is also supported.
 
     >>> x509_name('/C=AT/CN=example.com')  # doctest: +NORMALIZE_WHITESPACE
+    <Name([<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, value='AT')>,
+           <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>])>
+    >>> x509_name([('C', 'AT'), ('CN', 'example.com')])  # doctest: +NORMALIZE_WHITESPACE
     <Name([<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, value='AT')>,
            <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>])>
     >>> x509_name(OrderedDict([('C', 'AT'), ('CN', 'example.com')]))  # doctest: +NORMALIZE_WHITESPACE
@@ -433,7 +434,7 @@ def get_cert_profile_kwargs(name=None):
     profile = deepcopy(ca_settings.CA_PROFILES[name])
     kwargs = {
         'cn_in_san': profile['cn_in_san'],
-        'subject': profile['subject'],
+        'subject': OrderedDict(sort_subject_dict(profile['subject'])),
     }
     for arg in ['keyUsage', 'extendedKeyUsage']:
         config = profile.get(arg)
