@@ -118,13 +118,13 @@ class X509CertMixin(models.Model):
     def not_after(self):
         return self.x509.not_valid_after
 
-    def extensions_cryptography(self):
+    def extensions(self):
         for ext in sorted(self.x509.extensions, key=lambda e: e.oid._name):
             name = ext.oid._name
             if hasattr(self, name):
                 yield name, getattr(self, name)()
-            else:
-                yield name, ext.value
+            else:  # pragma: no cover  - we have a function for everything we support
+                yield name, str(ext.value)
 
     def distinguishedName(self):
         return format_name(self.x509.subject)

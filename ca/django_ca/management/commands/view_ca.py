@@ -49,7 +49,7 @@ class Command(BaseCommand):
 
         self.stdout.write('')
         self.stdout.write('X509 v3 certificate extensions for CA:')
-        for name, value in ca.extensions_cryptography():
+        for name, value in ca.extensions():
             self.stdout.write('%s:\n    %s' % (name, value))
 
         self.stdout.write('')

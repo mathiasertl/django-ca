@@ -50,7 +50,7 @@ class Command(CertCommand):
 
         # self.stdout.write extensions
         if options['extensions']:
-            for name, value in cert.extensions_cryptography():
+            for name, value in cert.extensions():
                 self.stdout.write('%s:\n    %s' % (name, value))
         else:
             san = cert.subjectAltName()
