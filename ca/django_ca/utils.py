@@ -127,19 +127,39 @@ def format_subject(subject):
         >>> format_subject({'CN': 'example.com'})
         '/CN=example.com'
     """
-    if isinstance(subject, dict):
+    if isinstance(subject, x509.DirectoryName):
+        subject = subject.value
+
+    if isinstance(subject, x509.Name):
+        subject = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in subject]
+    elif isinstance(subject, OrderedDict):
+        subject = subject.items()
+    elif isinstance(subject, dict):
         subject = sort_subject_dict(subject)
+
     return '/%s' % ('/'.join(['%s=%s' % (force_text(k), force_text(v)) for k, v in subject]))
 
 
 def format_general_names(names):
-    """Format a list of general names."""
+    """Format a list of general names.
+
+    >>> import ipaddress
+    >>> format_general_names([x509.DNSName('example.com')])
+    'DNS:example.com'
+    >>> format_general_names([x509.IPAddress(ipaddress.IPv4Address('127.0.0.1'))])
+    'IP:127.0.0.1'
+    >>> format_general_names([x509.DirectoryName(
+    ...     x509.Name([x509.NameAttribute(x509.oid.NameOID.COMMON_NAME, 'example.com')]))])
+    'dirname:/CN=example.com'
+    >>> format_general_names([x509.DNSName('example.com'), x509.DNSName('example.net')])
+    'DNS:example.com, DNS:example.net'
+    """
 
     formatted = []
 
     for name in names:
         if isinstance(name, x509.DirectoryName):
-            value = '/%s' % '/'.join(['%s=%s' % (OID_NAME_MAPPINGS[s.oid], s.value) for s in name.value])
+            value = format_subject(name.value)
         else:
             value = name.value
 
