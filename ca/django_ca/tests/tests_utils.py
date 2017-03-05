@@ -213,6 +213,10 @@ class ParseGeneralNameTest(TestCase):
         self.assertEqual(parse_general_name('ip:fd00::0/32'),
                          x509.IPAddress(ipaddress.ip_network('fd00::0/32')))
 
+    def test_error(self):
+        with self.assertRaises(ValueError):
+            parse_general_name('ip:1.2.3.4/24')
+
 
 class FormatNameTestCase(TestCase):
     def test_basic(self):

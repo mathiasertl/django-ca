@@ -345,7 +345,7 @@ def parse_general_name(name):
         if re.match('[a-z0-9]{2,}://', name):  # Looks like a URI
             try:
                 return x509.UniformResourceIdentifier(name)
-            except:
+            except:  # pragma: no cover - this really accepts anything
                 pass
 
         if '@' in name:  # Looks like an Email address
@@ -441,10 +441,8 @@ def get_cert_profile_kwargs(name=None):
         value = config['value']
         if isinstance(value, six.string_types):
             kwargs[arg] = (critical, value)
-        elif isinstance(value, bytes):
-            kwargs[arg] = (critical, value.decode('utf-8'))
         elif isinstance(value, Iterable):
             kwargs[arg] = (critical, ','.join([force_text(v) for v in value]))
-        else:
+        else:  # pragma: no cover
             kwargs[arg] = (critical, force_text(value))
     return kwargs
