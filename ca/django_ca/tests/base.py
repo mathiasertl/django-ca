@@ -184,7 +184,7 @@ class DjangoCATestCase(TestCase):
         return ca
 
     @classmethod
-    def create_csr(cls, **subject):
+    def create_csr(cls, subject):
         private_key = rsa.generate_private_key(
             public_exponent=65537, key_size=1024, backend=default_backend())
         builder = x509.CertificateSigningRequestBuilder()

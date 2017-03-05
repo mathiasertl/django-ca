@@ -358,9 +358,8 @@ class CSRDetailTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                          {'subject': {'CN': 'cert1-csr.example.com'}})
 
     def test_fields(self):
-        subject = {f: 'test-%s' % f for f in SUBJECT_FIELDS}
-        subject['C'] = 'AT'
-        key, csr = self.create_csr(**subject)
+        subject = [(f, 'AT' if f == 'C' else 'test-%s' % f) for f in SUBJECT_FIELDS]
+        key, csr = self.create_csr(subject)
         csr_pem = csr.public_bytes(Encoding.PEM).decode('utf-8')
 
         response = self.client.post(self.url, data={'csr': csr_pem})
