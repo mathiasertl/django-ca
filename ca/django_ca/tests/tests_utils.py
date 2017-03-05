@@ -19,7 +19,7 @@ from django_ca.tests.base import DjangoCATestCase
 from django_ca.tests.base import override_settings
 from django_ca.utils import NAME_RE
 from django_ca.utils import LazyEncoder
-from django_ca.utils import format_subject
+from django_ca.utils import format_name
 from django_ca.utils import get_cert_builder
 from django_ca.utils import get_cert_profile_kwargs
 from django_ca.utils import is_power2
@@ -189,16 +189,16 @@ class ParseNameTestCase(TestCase):
         self.assertEqual(e.exception.args, ('Unknown x509 name field: %s' % field, ))
 
 
-class FormatSubjectTestCase(TestCase):
+class FormatNameTestCase(TestCase):
     def test_basic(self):
         subject = '/C=AT/ST=Vienna/L=Vienna/O=O/OU=OU/CN=example.com/emailAddress=user@example.com'
 
         subject_dict = {'emailAddress': 'user@example.com', 'C': 'AT', 'L': 'Vienna',
                         'ST': 'Vienna', 'O': 'O', 'OU': 'OU', 'CN': 'example.com', }
-        self.assertEqual(format_subject(subject_dict), subject)
+        self.assertEqual(format_name(subject_dict), subject)
 
         subject_list = sort_subject_dict(subject_dict)
-        self.assertEqual(format_subject(subject_list), subject)
+        self.assertEqual(format_name(subject_list), subject)
 
 
 class Power2TestCase(TestCase):

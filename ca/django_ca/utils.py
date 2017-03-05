@@ -117,14 +117,14 @@ def sort_subject_dict(d):
     return sorted(d.items(), key=lambda e: SUBJECT_FIELDS.index(e[0]))
 
 
-def format_subject(subject):
+def format_name(subject):
     """Convert a subject into the canonical form for distinguished names.
 
     Examples::
 
-        >>> format_subject([('CN', 'example.com'), ])
+        >>> format_name([('CN', 'example.com'), ])
         '/CN=example.com'
-        >>> format_subject({'CN': 'example.com'})
+        >>> format_name({'CN': 'example.com'})
         '/CN=example.com'
     """
     if isinstance(subject, x509.DirectoryName):
@@ -159,7 +159,7 @@ def format_general_names(names):
 
     for name in names:
         if isinstance(name, x509.DirectoryName):
-            value = format_subject(name.value)
+            value = format_name(name.value)
         else:
             value = name.value
 

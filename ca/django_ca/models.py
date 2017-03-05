@@ -42,7 +42,7 @@ from .utils import KEY_USAGE_MAPPING
 from .utils import OID_NAME_MAPPINGS
 from .utils import add_colons
 from .utils import format_general_names
-from .utils import format_subject
+from .utils import format_name
 from .utils import int_to_hex
 from .utils import multiline_url_validator
 
@@ -103,10 +103,12 @@ class X509CertMixin(models.Model):
 
     @property
     def subject(self):
+        # TODO: OrderedDict!!!
         return {OID_NAME_MAPPINGS[s.oid]: s.value for s in self.x509.subject}
 
     @property
     def issuer(self):
+        # TODO: OrderedDict!!!
         return {OID_NAME_MAPPINGS[s.oid]: s.value for s in self.x509.issuer}
 
     @property
@@ -126,7 +128,7 @@ class X509CertMixin(models.Model):
                 yield name, ext.value
 
     def distinguishedName(self):
-        return format_subject(self.subject)
+        return format_name(self.x509.subject)
     distinguishedName.short_description = 'Distinguished Name'
 
     def subjectAltName(self):
