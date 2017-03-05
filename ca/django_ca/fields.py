@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+from collections import OrderedDict
+
 from django import forms
 
 from . import ca_settings
@@ -40,7 +42,8 @@ class SubjectField(forms.MultiValueField):
                                            *args, **kwargs)
 
     def compress(self, values):
-        return dict(zip(SUBJECT_FIELDS, values))
+        # list comprehension is to filter empty fields
+        return OrderedDict([(k, v) for k, v in zip(SUBJECT_FIELDS, values) if v])
 
 
 class SubjectAltNameField(forms.MultiValueField):

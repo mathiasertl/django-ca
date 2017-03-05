@@ -15,7 +15,6 @@
 
 import json
 import os
-from collections import OrderedDict
 from datetime import datetime
 
 from cryptography import x509
@@ -303,14 +302,13 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
         # If this is a new certificate, initialize it.
         if change is False:  # # pragma: no branch
             san, cn_in_san = data['subjectAltName']
-            subject = OrderedDict([(k, v) for k, v in data['subject'].items() if v])
             expires = datetime.combine(data['expires'], datetime.min.time())
 
             obj.x509 = self.model.objects.init(
                 ca=data['ca'],
                 csr=data['csr'],
                 expires=expires,
-                subject=subject,
+                subject=data['subject'],
                 algorithm=data['algorithm'],
                 subjectAltName=[e.strip() for e in san.split(',') if e.strip()],
                 cn_in_san=cn_in_san,
