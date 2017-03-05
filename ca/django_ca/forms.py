@@ -23,7 +23,6 @@ from cryptography.hazmat.primitives import hashes
 from django import forms
 from django.contrib.admin.widgets import AdminDateWidget
 from django.core.urlresolvers import reverse
-from django.utils.encoding import force_bytes
 from django.utils.translation import ugettext_lazy as _
 
 from . import ca_settings

@@ -43,8 +43,8 @@ from .utils import OID_NAME_MAPPINGS
 from .utils import add_colons
 from .utils import format_general_names
 from .utils import format_subject
-from .utils import multiline_url_validator
 from .utils import int_to_hex
+from .utils import multiline_url_validator
 
 
 class Watcher(models.Model):
