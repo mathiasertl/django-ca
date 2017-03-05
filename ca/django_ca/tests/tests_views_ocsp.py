@@ -274,7 +274,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1200)
 
-        cert.revoke('affiliationChanged')
+        cert.revoke('affiliation_changed')
         response = self.client.post(reverse('post'), req1, content_type='application/ocsp-request')
         self.assertEqual(response.status_code, 200)
         self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1200)

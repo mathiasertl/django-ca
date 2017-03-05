@@ -377,17 +377,6 @@ class Certificate(X509CertMixin):
         ('superseded', _('Superseded')),
         ('unspecified', _('Unspecified')),
     )
-    OCSP_REASON_MAPPINGS = {
-        'keyCompromise': 'key_compromise',
-        'CACompromise': 'ca_compromise',
-        'affiliationChanged': 'affiliation_changed',
-        'superseded': 'superseded',
-        'cessationOfOperation': 'cessation_of_operation',
-        'certificateHold': 'certificate_hold',
-        'removeFromCRL': 'remove_from_crl',
-        'privilegeWithdrawn': 'privilege_withdrawn',
-        'aACompromise': 'aa_compromise',
-    }
 
     watchers = models.ManyToManyField(Watcher, related_name='certificates', blank=True)
 
@@ -427,8 +416,7 @@ class Certificate(X509CertMixin):
         if self.revoked is False:
             return 'good'
 
-        # TODO: This most like always returns the default value due to the changes in self.revoked_reason
-        return self.OCSP_REASON_MAPPINGS.get(self.revoked_reason, 'revoked')
+        return self.revoked_reason or 'revoked'
 
     def __str__(self):
         return self.cn
