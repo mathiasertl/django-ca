@@ -6,11 +6,9 @@ ChangeLog
 
 .. _changelog-1.5.0:
 
-**********************
-1.5.0 (to be released)
-**********************
-
-.. NOTE:: This release is currently in development.
+******************
+1.5.0 (2017-03-05)
+******************
 
 * Completely remove pyOpenSSL and consistently use `cryptography <https://cryptography.io/>`_.
 * Due to the transitition to cryptography, some features have been removed:
