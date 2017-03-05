@@ -27,8 +27,8 @@ from django_ca.utils import get_cert_builder
 from django_ca.utils import get_cert_profile_kwargs
 from django_ca.utils import is_power2
 from django_ca.utils import multiline_url_validator
-from django_ca.utils import parse_name
 from django_ca.utils import parse_general_name
+from django_ca.utils import parse_name
 
 
 def load_tests(loader, tests, ignore):
