@@ -3,9 +3,12 @@
 """Test utility functions."""
 
 import doctest
+import ipaddress
 import json
 from datetime import datetime
 from datetime import timedelta
+
+from cryptography import x509
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -25,6 +28,7 @@ from django_ca.utils import get_cert_profile_kwargs
 from django_ca.utils import is_power2
 from django_ca.utils import multiline_url_validator
 from django_ca.utils import parse_name
+from django_ca.utils import parse_general_name
 
 
 def load_tests(loader, tests, ignore):
@@ -186,6 +190,28 @@ class ParseNameTestCase(TestCase):
         with self.assertRaises(ValueError) as e:
             parse_name('/%s=example.com' % field)
         self.assertEqual(e.exception.args, ('Unknown x509 name field: %s' % field, ))
+
+
+class ParseGeneralNameTest(TestCase):
+    # some paths are not covered in doctests
+
+    def test_ipv4(self):
+        self.assertEqual(parse_general_name('1.2.3.4'), x509.IPAddress(ipaddress.ip_address('1.2.3.4')))
+        self.assertEqual(parse_general_name('ip:1.2.3.4'), x509.IPAddress(ipaddress.ip_address('1.2.3.4')))
+
+    def test_ipv4_network(self):
+        self.assertEqual(parse_general_name('1.2.3.0/24'), x509.IPAddress(ipaddress.ip_network('1.2.3.0/24')))
+        self.assertEqual(parse_general_name('ip:1.2.3.0/24'),
+                         x509.IPAddress(ipaddress.ip_network('1.2.3.0/24')))
+
+    def test_ipv6(self):
+        self.assertEqual(parse_general_name('fd00::32'), x509.IPAddress(ipaddress.ip_address('fd00::32')))
+        self.assertEqual(parse_general_name('ip:fd00::32'), x509.IPAddress(ipaddress.ip_address('fd00::32')))
+
+    def test_ipv6_network(self):
+        self.assertEqual(parse_general_name('fd00::0/32'), x509.IPAddress(ipaddress.ip_network('fd00::0/32')))
+        self.assertEqual(parse_general_name('ip:fd00::0/32'),
+                         x509.IPAddress(ipaddress.ip_network('fd00::0/32')))
 
 
 class FormatNameTestCase(TestCase):
