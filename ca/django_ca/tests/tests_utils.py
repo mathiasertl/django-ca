@@ -196,22 +196,24 @@ class ParseGeneralNameTest(TestCase):
     # some paths are not covered in doctests
 
     def test_ipv4(self):
-        self.assertEqual(parse_general_name('1.2.3.4'), x509.IPAddress(ipaddress.ip_address('1.2.3.4')))
-        self.assertEqual(parse_general_name('ip:1.2.3.4'), x509.IPAddress(ipaddress.ip_address('1.2.3.4')))
+        self.assertEqual(parse_general_name('1.2.3.4'), x509.IPAddress(ipaddress.ip_address(u'1.2.3.4')))
+        self.assertEqual(parse_general_name('ip:1.2.3.4'), x509.IPAddress(ipaddress.ip_address(u'1.2.3.4')))
 
     def test_ipv4_network(self):
-        self.assertEqual(parse_general_name('1.2.3.0/24'), x509.IPAddress(ipaddress.ip_network('1.2.3.0/24')))
+        self.assertEqual(parse_general_name('1.2.3.0/24'),
+                         x509.IPAddress(ipaddress.ip_network(u'1.2.3.0/24')))
         self.assertEqual(parse_general_name('ip:1.2.3.0/24'),
-                         x509.IPAddress(ipaddress.ip_network('1.2.3.0/24')))
+                         x509.IPAddress(ipaddress.ip_network(u'1.2.3.0/24')))
 
     def test_ipv6(self):
-        self.assertEqual(parse_general_name('fd00::32'), x509.IPAddress(ipaddress.ip_address('fd00::32')))
-        self.assertEqual(parse_general_name('ip:fd00::32'), x509.IPAddress(ipaddress.ip_address('fd00::32')))
+        self.assertEqual(parse_general_name('fd00::32'), x509.IPAddress(ipaddress.ip_address(u'fd00::32')))
+        self.assertEqual(parse_general_name('ip:fd00::32'), x509.IPAddress(ipaddress.ip_address(u'fd00::32')))
 
     def test_ipv6_network(self):
-        self.assertEqual(parse_general_name('fd00::0/32'), x509.IPAddress(ipaddress.ip_network('fd00::0/32')))
+        self.assertEqual(parse_general_name('fd00::0/32'),
+                         x509.IPAddress(ipaddress.ip_network(u'fd00::0/32')))
         self.assertEqual(parse_general_name('ip:fd00::0/32'),
-                         x509.IPAddress(ipaddress.ip_network('fd00::0/32')))
+                         x509.IPAddress(ipaddress.ip_network(u'fd00::0/32')))
 
     def test_error(self):
         with self.assertRaises(ValueError):
