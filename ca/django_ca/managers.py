@@ -260,4 +260,9 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             builder = builder.add_extension(x509.IssuerAlternativeName(
                 [parse_general_name(ca.issuer_alt_name)]), critical=False)
 
-        return builder.sign(private_key=ca.key, algorithm=algorithm, backend=default_backend())
+        cert = builder.sign(private_key=ca.key, algorithm=algorithm, backend=default_backend())
+
+        c = self.model(ca=ca, csr=csr)
+        c.x509 = cert
+        c.save()
+        return c
