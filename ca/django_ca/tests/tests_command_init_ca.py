@@ -25,6 +25,7 @@ from django_ca.tests.base import DjangoCATestCase
 from django_ca.tests.base import override_tmpcadir
 
 from .. import ca_settings
+from ..utils import int_to_hex
 
 
 class InitCATest(DjangoCATestCase):
@@ -41,12 +42,14 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(err, '')
 
         ca = CertificateAuthority.objects.first()
+        ca.full_clean()  # assert e.g. max_length in serials
         self.assertBasic(ca.x509, algo='sha512')
 
         self.assertSubject(ca.x509, {'C': 'AT', 'ST': 'Vienna', 'L': 'Vienna', 'O': 'Org',
                                      'OU': 'OrgUnit', 'CN': 'Test CA'})
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
+        self.assertEqual(ca.serial, int_to_hex(ca.x509.serial_number))
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_arguments(self):
@@ -68,6 +71,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(out, '')
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
+        ca.full_clean()  # assert e.g. max_length in serials
 
         self.assertTrue(isinstance(ca.x509.signature_hash_algorithm, hashes.SHA1))
         self.assertTrue(isinstance(ca.x509.public_key(), dsa.DSAPublicKey))
@@ -91,6 +95,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(out, '')
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
+        ca.full_clean()  # assert e.g. max_length in serials
         self.assertEqual(ca.pathlen, None)
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
@@ -102,6 +107,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(out, '')
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
+        ca.full_clean()  # assert e.g. max_length in serials
         self.assertSubject(ca.x509, {'CN': 'test'})
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
@@ -113,6 +119,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(out, '')
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
+        ca.full_clean()  # assert e.g. max_length in serials
         self.assertSubject(ca.x509, {'OU': 'smth', 'CN': 'test'})
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
@@ -121,14 +128,17 @@ class InitCATest(DjangoCATestCase):
     def test_parent(self):
         self.init_ca(name='Parent')
         parent = CertificateAuthority.objects.get(name='Parent')
+        parent.full_clean()  # assert e.g. max_length in serials
 
         # test that the default is not a child-relationship
         self.init_ca(name='Second')
         second = CertificateAuthority.objects.get(name='Second')
+        second.full_clean()  # assert e.g. max_length in serials
         self.assertIsNone(second.parent)
 
         self.init_ca(name='Child', parent=parent)
         child = CertificateAuthority.objects.get(name='Child')
+        child.full_clean()  # assert e.g. max_length in serials
 
         self.assertIsNone(parent.parent)
         self.assertEqual(child.parent, parent)
@@ -144,14 +154,17 @@ class InitCATest(DjangoCATestCase):
 
         self.init_ca(name='Parent')
         parent = CertificateAuthority.objects.get(name='Parent')
+        parent.full_clean()  # assert e.g. max_length in serials
 
         # test that the default is not a child-relationship
         self.init_ca(name='Second')
         second = CertificateAuthority.objects.get(name='Second')
+        second.full_clean()  # assert e.g. max_length in serials
         self.assertIsNone(second.parent)
 
         self.init_ca(name='Child', parent=parent, expires=parent.expires + timedelta(days=10))
         child = CertificateAuthority.objects.get(name='Child')
+        child.full_clean()  # assert e.g. max_length in serials
 
         self.assertEqual(parent.expires, child.expires)
         self.assertIsNone(parent.parent)
