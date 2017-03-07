@@ -201,9 +201,11 @@ class DjangoCATestCase(TestCase):
         cert_kwargs.update(kwargs)
         cert_kwargs.setdefault('subject', {})
         cert_kwargs['subject'].update(subject)
-        return Certificate.objects.init(
+        cert = Certificate.objects.init(
             ca=ca, csr=csr, algorithm=hashes.SHA256(), expires=cls.expires(720), subjectAltName=san,
             **cert_kwargs)
+        cert.full_clean()
+        return cert
 
     @classmethod
     def load_cert(cls, ca, x509):
