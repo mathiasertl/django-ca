@@ -81,9 +81,9 @@ class X509CertMixin(models.Model):
     created = models.DateTimeField(auto_now=True)
     expires = models.DateTimeField(null=False, blank=False)
 
-    pub = models.TextField(null=False, blank=False, verbose_name=_('Public key'))
-    cn = models.CharField(max_length=128, null=False, blank=False, verbose_name=_('CommonName'))
-    serial = models.CharField(max_length=64, null=False, blank=False, unique=True)
+    pub = models.TextField(verbose_name=_('Public key'))
+    cn = models.CharField(max_length=128, verbose_name=_('CommonName'))
+    serial = models.CharField(max_length=64, unique=True)
 
     _x509 = None
 
@@ -381,7 +381,7 @@ class Certificate(X509CertMixin):
     watchers = models.ManyToManyField(Watcher, related_name='certificates', blank=True)
 
     ca = models.ForeignKey(CertificateAuthority, verbose_name=_('Certificate Authority'))
-    csr = models.TextField(null=False, blank=False, verbose_name=_('CSR'))
+    csr = models.TextField(verbose_name=_('CSR'))
 
     revoked = models.BooleanField(default=False)
     revoked_date = models.DateTimeField(null=True, blank=True, verbose_name=_('Revoked on'))
