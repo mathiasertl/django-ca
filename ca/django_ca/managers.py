@@ -150,8 +150,8 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
 
 class CertificateManager(CertificateManagerMixin, models.Manager):
-    def init(self, ca, csr, expires, algorithm, subject=None, cn_in_san=True, csr_format='PEM',
-             subjectAltName=None, keyUsage=None, extendedKeyUsage=None):
+    def sign_cert(self, ca, csr, expires, algorithm, subject=None, cn_in_san=True, csr_format='PEM',
+                  subjectAltName=None, keyUsage=None, extendedKeyUsage=None):
         """Create a signed certificate from a CSR.
 
         X509 extensions (`key_usage`, `ext_key_usage`) may either be None (in which case they are
@@ -260,9 +260,10 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             builder = builder.add_extension(x509.IssuerAlternativeName(
                 [parse_general_name(ca.issuer_alt_name)]), critical=False)
 
-        cert = builder.sign(private_key=ca.key, algorithm=algorithm, backend=default_backend())
+        return builder.sign(private_key=ca.key, algorithm=algorithm, backend=default_backend())
 
+    def init(self, ca, csr, *args, **kwargs):
         c = self.model(ca=ca, csr=csr)
-        c.x509 = cert
+        c.x509 = self.sign_cert(ca, csr, *args, **kwargs)
         c.save()
         return c
