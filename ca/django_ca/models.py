@@ -82,8 +82,8 @@ class X509CertMixin(models.Model):
     expires = models.DateTimeField(null=False, blank=False)
 
     pub = models.TextField(null=False, blank=False, verbose_name=_('Public key'))
-    cn = models.CharField(max_length=64, null=False, blank=False, verbose_name=_('CommonName'))
-    serial = models.CharField(max_length=48, null=False, blank=False, unique=True)
+    cn = models.CharField(max_length=128, null=False, blank=False, verbose_name=_('CommonName'))
+    serial = models.CharField(max_length=64, null=False, blank=False, unique=True)
 
     _x509 = None
 
