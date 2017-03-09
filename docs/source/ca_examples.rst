@@ -18,7 +18,8 @@ Of course not an extension, but included here for completeness.
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Let's Encrypt    C=US, O=Let's Encrypt, CN=Let's Encrypt Authority X1
+Let's Encrypt X1 C=US, O=Let's Encrypt, CN=Let's Encrypt Authority X1
+Let's Encrypt X3 C=US, O=Let's Encrypt, CN=Let's Encrypt Authority X3
 StartSSL         C=IL, O=StartCom Ltd., OU=Secure Digital Certificate Signing, CN=StartCom
                  Certification Authority
 StartSSL Class 2 C=IL, O=StartCom Ltd., OU=Secure Digital Certificate Signing, CN=StartCom Class 2
@@ -57,7 +58,9 @@ points to the AddTrust CA that signed the Comodo Root CA).
 ================= =================================================================================
 CA                Value
 ================= =================================================================================
-Let's Encrypt     * OCSP - URI:http://isrg.trustid.ocsp.identrust.com
+Let's Encrypt X1  * OCSP - URI:http://isrg.trustid.ocsp.identrust.com
+                  * CA Issuers - URI:http://apps.identrust.com/roots/dstrootcax3.p7c
+Let's Encrypt X3  * OCSP - URI:http://isrg.trustid.ocsp.identrust.com
                   * CA Issuers - URI:http://apps.identrust.com/roots/dstrootcax3.p7c
 StartSSL          (not present)
 StartSSL Class 2  * OCSP - URI:http://ocsp.startssl.com/ca
@@ -87,8 +90,10 @@ The CA Issuers field sometimes points to the signing certificate (e.g. StartSSL)
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Let's Encrypt    * OCSP - URI:http://ocsp.int-x1.letsencrypt.org/
+Let's Encrypt X1 * OCSP - URI:http://ocsp.int-x1.letsencrypt.org/
                  * CA Issuers - URI:http://cert.int-x1.letsencrypt.org
+Let's Encrypt X3 * OCSP - URI:http://ocsp.int-x3.letsencrypt.org/
+                 * CA Issuers - URI:http://cert.int-x3.letsencrypt.org/
 StartSSL Class 2 * OCSP - URI:http://ocsp.startssl.com/sub/class2/server/ca
                  * CA Issuers - URI:http://aia.startssl.com/certs/sub.class2.server.ca.crt
 StartSSL Class 3 * OCSP - URI:http://ocsp.startssl.com
@@ -128,7 +133,8 @@ In CA certificates
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Let's Encrypt    keyid:C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10
+Let's Encrypt X1 keyid:C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10
+Let's Encrypt X3 keyid:C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10  
 StartSSL         keyid:4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2
 StartSSL Class 2 keyid:4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2
 StartSSL Class 3 keyid:4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2
@@ -146,7 +152,8 @@ In signed certificates
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Let's Encrypt    keyid:A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1
+Let's Encrypt X1 keyid:A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1
+Let's Encrypt X3 keyid:A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1
 StartSSL Class 2 keyid:11:DB:23:45:FD:54:CC:6A:71:6F:84:8A:03:D7:BE:F7:01:2F:26:86
 StartSSL Class 3 keyid:B1:3F:1C:92:7B:92:B0:5A:25:B3:38:FB:9C:07:A4:26:50:32:E3:51
 RapidSSL G3      keyid:C3:9C:F3:FC:D3:46:08:34:BB:CE:46:7F:A0:7C:5B:F3:E2:08:CB:59
@@ -171,7 +178,8 @@ In CA certificates
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Let's Encrypt    (critical) CA:TRUE, pathlen:0
+Let's Encrypt X1 (critical) CA:TRUE, pathlen:0
+Let's Encrypt X3 (critical) CA:TRUE, pathlen:0  
 StartSSL         (critical) CA:TRUE
 StartSSL Class 2 (critical) CA:TRUE, pathlen:0
 StartSSL Class 3 (critical) CA:TRUE, pathlen:0
@@ -189,7 +197,8 @@ In signed certificates
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Let's Encrypt    (critical) CA:FALSE
+Let's Encrypt X1 (critical) CA:FALSE
+Let's Encrypt X3 (critical) CA:FALSE
 StartSSL Class 2 (critical) CA:FALSE
 StartSSL Class 3 CA:FALSE
 RapidSSL G3      (critical) CA:FALSE
@@ -222,7 +231,8 @@ In CA certificates
 ================ =============================================================== =======================
 CA               Value                                                           Content-Type
 ================ =============================================================== =======================
-Let's Encrypt    URI:http://crl.identrust.com/DSTROOTCAX3CRL.crl                 application/pkix-crl
+Let's Encrypt X1 URI:http://crl.identrust.com/DSTROOTCAX3CRL.crl                 application/pkix-crl
+Let's Encrypt X3 URI:http://crl.identrust.com/DSTROOTCAX3CRL.crl                 application/pkix-crl  
 StartSSL         (not present)
 StartSSL Class 2 URI:http://crl.startssl.com/sfsca.crl                           application/pkix-crl
 StartSSL Class 3 URI:http://crl.startssl.com/sfsca.crl                           application/pkix-crl
@@ -265,7 +275,8 @@ In CA certificates
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Let's Encrypt    (not present)
+Let's Encrypt X1 (not present)
+Let's Encrypt X3 (not present)
 StartSSL         (not present)
 StartSSL Class 2 (not present)
 StartSSL Class 3 TLS Web Client Authentication, TLS Web Server Authentication
@@ -283,7 +294,8 @@ In signed certificates
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Let's Encrypt    TLS Web Server Authentication, TLS Web Client Authentication
+Let's Encrypt X1 TLS Web Server Authentication, TLS Web Client Authentication
+Let's Encrypt X3 TLS Web Server Authentication, TLS Web Client Authentication  
 StartSSL Class 2 TLS Web Client Authentication, TLS Web Server Authentication
 StartSSL Class 3 TLS Web Client Authentication, TLS Web Server Authentication
 RapidSSL G3      TLS Web Server Authentication, TLS Web Client Authentication
@@ -346,7 +358,8 @@ In CA certificates
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Let's Encrypt    (critical) Digital Signature, Certificate Sign, CRL Sign
+Let's Encrypt X1 (critical) Digital Signature, Certificate Sign, CRL Sign
+Let's Encrypt X3 (critical) Digital Signature, Certificate Sign, CRL Sign 
 StartSSL         (critical) Certificate Sign, CRL Sign
 StartSSL Class 2 (critical) Certificate Sign, CRL Sign
 StartSSL Class 3 (critical) Certificate Sign, CRL Sign
@@ -364,7 +377,8 @@ In signed certificates
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Let's Encrypt    (critical) Digital Signature, Key Encipherment
+Let's Encrypt X1 (critical) Digital Signature, Key Encipherment
+Let's Encrypt X3 (critical) Digital Signature, Key Encipherment 
 StartSSL Class 2 Digital Signature, Key Encipherment, Key Agreement
 StartSSL Class 3 Digital Signature, Key Encipherment
 RapidSSL G3      (critical) Digital Signature, Key Encipherment
@@ -420,7 +434,8 @@ In CA certificates
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Let's Encrypt    A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1
+Let's Encrypt X1 A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1
+Let's Encrypt X3 A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1  
 StartSSL         4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2
 StartSSL Class 2 11:DB:23:45:FD:54:CC:6A:71:6F:84:8A:03:D7:BE:F7:01:2F:26:86
 StartSSL Class 3 B1:3F:1C:92:7B:92:B0:5A:25:B3:38:FB:9C:07:A4:26:50:32:E3:51
@@ -438,7 +453,8 @@ In signed certificates
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Let's Encrypt    F4:F3:B8:F5:43:90:2E:A2:7F:DD:51:4A:5F:3E:AC:FB:F1:33:EE:95
+Let's Encrypt X1 F4:F3:B8:F5:43:90:2E:A2:7F:DD:51:4A:5F:3E:AC:FB:F1:33:EE:95
+Let's Encrypt X3 71:57:F2:DC:D2:02:5C:00:5E:74:28:57:4C:7E:61:43:44:44:AF:84
 StartSSL Class 2 C7:AA:D9:A4:F0:BC:D1:C1:1B:05:D2:19:71:0A:86:F8:58:0F:F0:99
 StartSSL Class 3 F0:72:65:5E:21:AA:16:76:2C:6F:D0:63:53:0C:68:D5:89:50:2A:73
 RapidSSL G3      (not present)
@@ -459,7 +475,8 @@ In CA certificates
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Let's Encrypt    X509v3 Certificate Policies, X509v3 Name Constraints
+Let's Encrypt X1 X509v3 Certificate Policies, X509v3 Name Constraints
+Let's Encrypt X3 X509v3 Certificate Policies  
 StartSSL         X509v3 Certificate Policies, Netscape Cert Type, Netscape Comment
 StartSSL Class 2 X509v3 Certificate Policies
 StartSSL Class 3 X509v3 Certificate Policies
@@ -478,7 +495,8 @@ In signed certificates
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Let's Encrypt    X509v3 Certificate Policies
+Let's Encrypt X1 X509v3 Certificate Policies
+Let's Encrypt X3 X509v3 Certificate Policies
 StartSSL Class 2 X509v3 Certificate Policies
 StartSSL Class 3 X509v3 Certificate Policies
 RapidSSL G3      X509v3 Certificate Policies
