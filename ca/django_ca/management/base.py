@@ -114,7 +114,7 @@ class CertificateAuthorityAction(argparse.Action):
         try:
             value = qs.get_by_serial_or_cn(value)
         except CertificateAuthority.DoesNotExist:
-            parser.error('%s: Certiciate authority not found.' % value)
+            parser.error('%s: Certificate authority not found.' % value)
         except CertificateAuthority.MultipleObjectsReturned:
             parser.error('%s: Multiple Certificate authorities match.' % value)
 

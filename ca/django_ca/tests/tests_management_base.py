@@ -207,7 +207,7 @@ class CertificateAuthorityActionTestCase(DjangoCAWithCATestCase):
     def test_missing(self):
         self.assertParserError(['foo'],
                                '''usage: setup.py [-h] ca\n'''
-                               '''setup.py: error: foo: Certiciate authority not found.\n''')
+                               '''setup.py: error: foo: Certificate authority not found.\n''')
 
     def test_multiple(self):
         # Create a second CA and manually set (almost) the same serial
@@ -227,7 +227,7 @@ class CertificateAuthorityActionTestCase(DjangoCAWithCATestCase):
         ca.save()
 
         expected = '''usage: setup.py [-h] ca
-setup.py: error: %s: Certiciate authority not found.\n''' % ca.serial
+setup.py: error: %s: Certificate authority not found.\n''' % ca.serial
 
         self.assertParserError([ca.serial], expected)
 
