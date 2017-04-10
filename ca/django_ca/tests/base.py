@@ -11,6 +11,7 @@ import tempfile
 from datetime import datetime
 from datetime import timedelta
 
+import six
 from mock import patch
 
 from cryptography import x509
@@ -126,6 +127,9 @@ class DjangoCATestCase(TestCase):
 
         if cls._overridden_settings:
             reload_module(ca_settings)
+
+    if six.PY2:
+        assertRaisesRegex = TestCase.assertRaisesRegexp
 
     @classmethod
     def tearDownClass(cls):
