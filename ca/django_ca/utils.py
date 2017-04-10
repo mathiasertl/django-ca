@@ -308,11 +308,11 @@ def parse_general_name(name):
     >>> parse_general_name('foo..bar`*123')
     Traceback (most recent call last):
         ...
-    idna.core.IDNAError: No Input
+    idna.core.IDNAError: The label b'' is not a valid A-label
     >>> parse_general_name('foo bar')
     Traceback (most recent call last):
         ...
-    idna.core.InvalidCodepoint: Codepoint U+0027 at position 2 of "b'foo bar'" not allowed
+    idna.core.IDNAError: The label b'foo bar' is not a valid A-label
 
     If you want to override detection, you can prefix the name to match :py:const:`GENERAL_NAME_RE`:
 
