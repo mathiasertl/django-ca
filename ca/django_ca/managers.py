@@ -214,7 +214,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         elif cn_in_san and subject.get('CN'):  # add CN to SAN if cn_in_san is True (default)
             try:
                 cn_name = parse_general_name(subject['CN'])
-            except idna.InvalidCodepoint:
+            except idna.IDNAError:
                 raise ValueError('%s: Could not parse CommonName as subjectAltName.' % subject['CN'])
             else:
                 if cn_name not in subjectAltName:
