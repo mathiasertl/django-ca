@@ -23,6 +23,7 @@ from datetime import datetime
 from ipaddress import ip_address
 from ipaddress import ip_network
 
+import idna
 from cryptography import x509
 from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import NameOID
@@ -301,11 +302,17 @@ def parse_general_name(name):
     <DirectoryName(value=<Name([<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>,
                                                value='example.com')>])>)>
 
-    The default fallback is to assume a :py:class:`~cryptography:cryptography.x509.DNSName`. This isn't
-    terribly safe, as almost anything passes:
+    The default fallback is to assume a :py:class:`~cryptography:cryptography.x509.DNSName`. If this doesn't
+    work, an exception will be raised:
 
     >>> parse_general_name('foo..bar`*123')
-    <DNSName(value=foo..bar`*123)>
+    Traceback (most recent call last):
+        ...
+    idna.core.IDNAError: No Input
+    >>> parse_general_name('foo bar')
+    Traceback (most recent call last):
+        ...
+    idna.core.InvalidCodepoint: Codepoint U+0027 at position 2 of "b'foo bar'" not allowed
 
     If you want to override detection, you can prefix the name to match :py:const:`GENERAL_NAME_RE`:
 
@@ -327,8 +334,6 @@ def parse_general_name(name):
     If you give a prefixed value, this function is less forgiving of any typos and does not catch any
     exceptions:
 
-    >>> parse_general_name('foo@')
-    <DNSName(value=foo@)>
     >>> parse_general_name('email:foo@')
     Traceback (most recent call last):
         ...
@@ -368,6 +373,7 @@ def parse_general_name(name):
             pass
 
         # Almost anything passes as DNS name, so this is our default fallback
+        idna.encode(name.encode('utf-8'))  # fails if this is an invalid domain name
         return x509.DNSName(name)
 
     if typ == 'uri':
@@ -396,6 +402,7 @@ def parse_general_name(name):
     elif typ == 'dirname':
         return x509.DirectoryName(x509_name(name))
     else:
+        idna.encode(name.encode('utf-8'))  # fails if this is an invalid domain name
         return x509.DNSName(name)
 
 

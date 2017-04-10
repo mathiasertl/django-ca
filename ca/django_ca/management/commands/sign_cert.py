@@ -151,9 +151,13 @@ the default values, options like --key-usage still override the profile.""")
         else:
             csr = open(options['csr']).read()
 
-        cert = Certificate.objects.init(
-            ca=ca, csr=csr, algorithm=options['algorithm'], expires=options['expires'],
-            subjectAltName=options['alt'], **kwargs)
+        try:
+            cert = Certificate.objects.init(
+                ca=ca, csr=csr, algorithm=options['algorithm'], expires=options['expires'],
+                subjectAltName=options['alt'], **kwargs)
+        except Exception as e:
+            raise CommandError(e)
+
         cert.watchers.add(*watchers)
 
         if options['out']:

@@ -87,6 +87,18 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
             if os.path.exists(out_path):
                 os.remove(out_path)
 
+    def test_no_dns_cn(self):
+        # Use a CommonName that is *not* a valid DNSName. By default, this is added as a subjectAltName, which
+        # should fail.
+
+        stdin = six.StringIO(self.csr_pem)
+        cn = 'foo bar'
+        msg = '^%s: Could not parse CommonName as subjectAltName\.$' % cn
+
+        with self.assertRaisesRegex(CommandError, msg):
+            stdout, stderr = self.cmd('sign_cert', subject=OrderedDict([('CN', cn)]), cn_in_san=True,
+                                      stdin=stdin)
+
     def test_cn_not_in_san(self):
         stdin = six.StringIO(self.csr_pem)
         stdout, stderr = self.cmd('sign_cert', subject=OrderedDict([('CN', 'example.net')]), cn_in_san=False,

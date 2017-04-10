@@ -15,6 +15,7 @@
 
 import os
 
+import idna
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -211,9 +212,13 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         if not subject.get('CN'):  # use first SAN as CN if CN is not set
             subject['CN'] = subjectAltName[0].value
         elif cn_in_san and subject.get('CN'):  # add CN to SAN if cn_in_san is True (default)
-            cn_name = parse_general_name(subject['CN'])
-            if cn_name not in subjectAltName:
-                subjectAltName.insert(0, cn_name)
+            try:
+                cn_name = parse_general_name(subject['CN'])
+            except idna.InvalidCodepoint:
+                raise ValueError('%s: Could not parse CommonName as subjectAltName.' % subject['CN'])
+            else:
+                if cn_name not in subjectAltName:
+                    subjectAltName.insert(0, cn_name)
 
         if csr_format == 'PEM':
             req = x509.load_pem_x509_csr(force_bytes(csr), default_backend())
