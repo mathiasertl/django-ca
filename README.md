@@ -1,7 +1,7 @@
 # django-ca
 
 **django-ca** is a small project to manage TLS certificate authorities and easily issue
-certificates.  It is based on [pyOpenSSL](https://pyopenssl.readthedocs.org/) and
+certificates.  It is based on [cryptography](https://cryptography.io/) and
 [Django](https://www.djangoproject.com/>). It can be used as an app in an existing Django project
 or stand-alone with the basic project included.  Certificates can be managed through Djangos admin
 interface or via `manage.py` commands - so no webserver is needed, if you’re happy with the
