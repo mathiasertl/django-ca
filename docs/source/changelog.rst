@@ -4,6 +4,14 @@ ChangeLog
 
 .. _changelog-head:
 
+****
+HEAD
+****
+
+* Validate DNSNames when parsing general names. This means that signing a certificate with CommonName 
+  that is not a valid domain name fails if it should also be added as subjectAltName (see ``--cn-in-san``
+  option).
+
 .. _changelog-1.5.1:
 
 ******************
