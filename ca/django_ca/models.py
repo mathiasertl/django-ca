@@ -270,7 +270,7 @@ class X509CertMixin(models.Model):
             return ''
 
         hexlified = binascii.hexlify(ext.value.key_identifier).upper().decode('utf-8')
-        value = 'keyid:%s\n' % add_colons(hexlified)
+        value = 'keyid:%s' % add_colons(hexlified)
         if ext.critical:  # pragma: no cover - not usually critical
             value = 'critical,%s' % value
         return value
