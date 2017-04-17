@@ -14,6 +14,10 @@ from datetime import timedelta
 import six
 from mock import patch
 
+from OpenSSL.crypto import FILETYPE_PEM
+from OpenSSL.crypto import X509Store
+from OpenSSL.crypto import X509StoreContext
+from OpenSSL.crypto import load_certificate
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -171,6 +175,15 @@ class DjangoCATestCase(TestCase):
     def assertAuthorityKeyIdentifier(self, issuer, cert):
         self.assertEqual(cert.authorityKeyIdentifier().strip(),
                          'keyid:%s' % issuer.subjectKeyIdentifier())
+
+    def assertSignature(self, chain, cert):
+        store = X509Store()
+        for elem in chain:
+            store.add_cert(load_certificate(FILETYPE_PEM, elem.dump_certificate()))
+
+        cert = load_certificate(FILETYPE_PEM, cert.dump_certificate())
+        store_ctx = X509StoreContext(store, cert)
+        self.assertIsNone(store_ctx.verify_certificate())
 
     @classmethod
     def expires(cls, days):
