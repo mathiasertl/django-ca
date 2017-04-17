@@ -156,7 +156,7 @@ LOGGING = {
 
 # Fixture data used by test cases
 FIXTURES_DIR = os.path.join(BASE_DIR, 'django_ca', 'tests', 'fixtures')
-ROOT_SERIAL = '35:DB:D2:AD:79:0A:4D:1F:B5:26:ED:5F:83:74:C0:C2'
+ROOT_SERIAL = '4E:1E:2A:29:F9:4C:45:CF:12:2F:2B:17:9E:BF:D4:80:29:C6:37:C7'
 ROOT_KEY_PATH = os.path.join(FIXTURES_DIR, 'root.key')
 ROOT_PEM_PATH = os.path.join(FIXTURES_DIR, 'root.pem')
 
