@@ -63,25 +63,20 @@ def _load_cert(path):
 
 root_key = _load_key('root.key')
 root_pem, root_pubkey = _load_cert('root.pem')
-root_serial = '41:16:C4:03:87:65:43:F6:2A:FD:75:9B:7C:7D:F0:2F:E1:17:71:BA'
 child_key = _load_key('child.key')
 child_pem, child_pubkey = _load_cert('child.pem')
-child_serial = '44:43:24:36:A2:95:25:1A:48:17:CA:C2:E0:93:49:3E:2D:45:90:06'
 ocsp_key = _load_key('ocsp.key')
 ocsp_csr = _load_csr('ocsp.csr')
 ocsp_pem, ocsp_pubkey = _load_cert('ocsp.pem')
 cert1_key = _load_key('cert1.key')
 cert1_csr = _load_csr('cert1.csr')
 cert1_pem, cert1_pubkey = _load_cert('cert1.pem')
-cert1_serial = '23:14:E2:ED:5F:5B:49:0F:BB:DA:14:00:4A:C8:A1:1B'
 cert2_key = _load_key('cert2.key')
 cert2_csr = _load_csr('cert2.csr')
 cert2_pem, cert2_pubkey = _load_cert('cert2.pem')
-cert2_serial = '26:F2:78:85:6B:46:46:67:B0:12:1C:0B:CB:0F:85:43'
 cert3_key = _load_key('cert3.key')
 cert3_csr = _load_csr('cert3.csr')
 cert3_pem, cert3_pubkey = _load_cert('cert3.pem')
-cert3_serial = 'A0:36:C7:6B:91:36:44:4C:85:0F:34:E7:F6:D0:42:5E'
 
 certs = {
     'root': {
@@ -130,6 +125,7 @@ certs = {
         'authInfoAccess': 'OCSP - URI:http://ocsp.ca.example.com\n    CA Issuers - URI:http://ca.example.com/ca.crt',  # NOQA
         'crl': 'Full Name: URI:http://ca.example.com/crl',
         'der': cert1_pubkey.public_bytes(encoding=Encoding.DER),
+        'serial': '5A:1B:A2:63:A1:E4:D8:D1:4D:82:60:46:D3:8F:E0:C3:A5:B3:E4:89',
     },
     'cert2': {
         'issuerAltName': 'URI:https://ca.example.com',
@@ -141,6 +137,7 @@ certs = {
         'authKeyIdentifier': 'keyid:79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
         'hpkp': 'i+ccTaizbK5r9luNHFW358cxzaORJ4rS3WYHlEnaQoI=',
         'crl': 'Full Name: URI:http://ca.example.com/crl',
+        'serial': '4E:2B:01:C4:8B:CC:1F:71:94:12:88:64:68:0C:AA:04:D3:F8:BB:45',
     },
     'cert3': {
         'issuerAltName': 'URI:https://ca.example.com',
@@ -152,9 +149,11 @@ certs = {
         'authKeyIdentifier': 'keyid:79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
         'hpkp': 'ZuJoB0pw8rd2os1WFVe5f8Vky6eg3vHxCrnaZxupFQo=',
         'crl': 'Full Name: URI:http://ca.example.com/crl',
+        'serial': '32:A7:B0:8E:88:A2:1A:EC:05:C8:BA:18:D7:8B:D9:35:45:9D:82:FA',
     },
     'ocsp': {
         'crl': 'Full Name: URI:http://ca.example.com/crl',
+        'serial': '49:BC:F2:FE:FA:31:03:B6:E0:CC:3D:16:93:4E:2D:B0:8A:D2:C5:87',
     },
 }
 
