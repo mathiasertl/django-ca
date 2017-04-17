@@ -99,11 +99,13 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
         if parent is None:
             builder = builder.issuer_name(subject)
+            private_sign_key = private_key
             auth_key_id = x509.AuthorityKeyIdentifier(
                 key_identifier=subject_key_id.digest, authority_cert_issuer=None,
                 authority_cert_serial_number=None)
         else:
             builder = builder.issuer_name(parent.x509.subject)
+            private_sign_key = parent.key
             auth_key_id = parent.x509.extensions.get_extension_for_oid(
                 ExtensionOID.AUTHORITY_KEY_IDENTIFIER).value
 
@@ -127,8 +129,8 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             builder = builder.add_extension(x509.NameConstraints(
                 permitted_subtrees=permitted, excluded_subtrees=excluded), critical=True)
 
-        print(private_key)
-        certificate = builder.sign(private_key=private_key, algorithm=algorithm, backend=default_backend())
+        certificate = builder.sign(private_key=private_sign_key, algorithm=algorithm,
+                                   backend=default_backend())
 
         if crl_url is not None:
             crl_url = '\n'.join(crl_url)
