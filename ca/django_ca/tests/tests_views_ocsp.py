@@ -16,13 +16,11 @@
 import base64
 import logging
 import os
-import unittest
 from datetime import timedelta
 
 import asn1crypto
 from oscrypto import asymmetric
 
-import django
 from django.conf import settings
 from django.conf.urls import url
 from django.core.urlresolvers import reverse
@@ -30,17 +28,18 @@ from django.test import Client
 from django.utils.encoding import force_text
 
 from ..models import Certificate
-from ..models import CertificateAuthority
 from ..utils import int_to_hex
 from ..views import OCSPView
 from .base import DjangoCAWithCertTestCase
-from .base import ocsp_pem
+from .base import certs
 from .base import ocsp_pubkey
 from .base import override_settings
 
 
-# openssl ocsp -issuer django_ca/tests/fixtures/root.pem -serial 123  \
+# openssl ocsp -issuer django_ca/tests/fixtures/root.pem -serial <serial> \
 #         -reqout django_ca/tests/fixtures/ocsp/unknown-serial -resp_text
+#
+# WHERE serial is an int: (int('0x<hex>'.replace(':', '').lower(), 0)
 def _load_req(req):
     path = os.path.join(settings.FIXTURES_DIR, 'ocsp', req)
     with open(path, 'rb') as stream:
@@ -48,21 +47,21 @@ def _load_req(req):
 
 
 req1 = _load_req('req1')
-req1_nonce = b'\xedf\x00S\xbef\x16Y\xcc\xe9\xe9\xa3\x08\xf7\xc2\xda'
+req1_nonce = b'5ul\xc4\xb6\xccP\xe8\xd8\xbd\x16xA \r9'
 no_nonce_req = _load_req('req-no-nonce')
 unknown_req = _load_req('unknown-serial')
 multiple_req = _load_req('multiple-serial')
 
 urlpatterns = [
     url(r'^ocsp/$', OCSPView.as_view(
-        ca=settings.ROOT_SERIAL,
+        ca=certs['root']['serial'],
         responder_key=settings.OCSP_KEY_PATH,
         responder_cert=settings.OCSP_PEM_PATH,
         expires=1200,
     ), name='post'),
 
     url(r'^ocsp/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
-        ca=settings.ROOT_SERIAL,
+        ca=certs['root']['serial'],
         responder_key=settings.OCSP_KEY_PATH,
         responder_cert=settings.OCSP_PEM_PATH,
     ), name='get'),
@@ -74,7 +73,7 @@ urlpatterns = [
     ), name='unknown'),
 
     url(r'^ocsp-bad-response/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
-        ca=settings.ROOT_SERIAL,
+        ca=certs['root']['serial'],
         responder_key=settings.OCSP_KEY_PATH,
         responder_cert='gone',
     ), name='bad-response'),
@@ -230,6 +229,13 @@ class OCSPViewTestMixin(object):
         self.assertEqual(signature.native, expected_signature)
 
 
+@override_settings(CA_OCSP_URLS={
+    'root': {
+        'ca': certs['root']['serial'],
+        'responder_key': os.path.join(settings.FIXTURES_DIR, 'ocsp.key'),
+        'responder_cert': os.path.join(settings.FIXTURES_DIR, 'ocsp.pem'),
+    },
+})
 class OCSPTestGenericView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
     def test_get(self):
         data = base64.b64encode(req1).decode('utf-8')
@@ -278,15 +284,6 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         response = self.client.post(reverse('post'), req1, content_type='application/ocsp-request')
         self.assertEqual(response.status_code, 200)
         self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1200)
-
-    @unittest.skipIf(django.VERSION < (1, 9, ), "view.view_initkwargs was added in Django 1.9")
-    def test_kwargs(self):
-        # test kwargs to the view function
-        view = OCSPView.as_view(ca=settings.ROOT_SERIAL, responder_key=settings.OCSP_KEY_PATH,
-                                responder_cert=settings.OCSP_SERIAL)
-        kwargs = view.view_initkwargs
-        CertificateAuthority.objects.get(serial=kwargs['ca'])
-        self.assertEqual(kwargs['responder_cert'], ocsp_pem)
 
     def test_bad_ca(self):
         data = base64.b64encode(req1).decode('utf-8')

@@ -99,6 +99,14 @@ class CertificateTests(DjangoCAWithCertTestCase):
         with self.assertRaises(ValueError):
             c.get_revocation()
 
+    def test_serial(self):
+        self.assertEqual(self.ca.serial, certs['root']['serial'])
+        self.assertEqual(self.ca2.serial, certs['child']['serial'])
+        self.assertEqual(self.cert.serial, certs['cert1']['serial'])
+        self.assertEqual(self.cert2.serial, certs['cert2']['serial'])
+        self.assertEqual(self.cert3.serial, certs['cert3']['serial'])
+        self.assertEqual(self.ocsp.serial, certs['ocsp']['serial'])
+
     def test_subjectAltName(self):
         self.assertEqual(self.ca.subjectAltName(), '')
         self.assertEqual(self.cert.subjectAltName(), certs['cert1']['san'])
