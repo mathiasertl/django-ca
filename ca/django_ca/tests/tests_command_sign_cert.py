@@ -24,7 +24,6 @@ from .. import ca_settings
 from ..models import Certificate
 from .base import DjangoCAWithCSRTestCase
 from .base import child_pubkey
-from .base import child_serial
 from .base import override_settings
 from .base import override_tmpcadir
 
@@ -38,6 +37,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertEqual(stderr, '')
 
         cert = Certificate.objects.first()
+        self.assertSignature([self.ca], cert)
         self.assertSubject(cert.x509, subject)
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
 
@@ -58,6 +58,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
             self.assertEqual(stderr, '')
 
             cert = Certificate.objects.first()
+            self.assertSignature([self.ca], cert)
 
             self.assertSubject(cert.x509, subject)
             self.assertEqual(stdout, cert.pub)
@@ -75,6 +76,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
             stdout, stderr = self.cmd('sign_cert', subject=OrderedDict([('CN', 'example.com')]),
                                       out=out_path, stdin=stdin)
             cert = Certificate.objects.first()
+            self.assertSignature([self.ca], cert)
             self.assertEqual(stdout, 'Please paste the CSR:\n')
             self.assertEqual(stderr, '')
 
@@ -106,6 +108,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         stdout, stderr = self.cmd('sign_cert', subject=OrderedDict([('CN', 'example.net')]), cn_in_san=False,
                                   alt=['example.com'], stdin=stdin)
         cert = Certificate.objects.first()
+        self.assertSignature([self.ca], cert)
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertSubject(cert.x509, {'CN': 'example.net'})
@@ -120,6 +123,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         stdout, stderr = self.cmd('sign_cert', subject=subject, cn_in_san=False, alt=[],
                                   stdin=stdin)
         cert = Certificate.objects.first()
+        self.assertSignature([self.ca], cert)
         self.assertSubject(cert.x509, subject)
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
@@ -145,6 +149,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         stdin = six.StringIO(self.csr_pem)
         stdout, stderr = self.cmd('sign_cert', cn_in_san=False, alt=['example.net'], stdin=stdin)
         cert = Certificate.objects.first()
+        self.assertSignature([self.ca], cert)
         self.assertSubject(cert.x509, ca_settings._CA_DEFAULT_SUBJECT)
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
@@ -182,6 +187,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertEqual(stderr, '')
 
         cert = Certificate.objects.first()
+        self.assertSignature([self.ca], cert)
         self.assertSubject(cert.x509, {'CN': 'example.com'})
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
         self.assertEqual(cert.keyUsage(), 'critical,keyCertSign')
@@ -194,6 +200,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         stdin = six.StringIO(self.csr_pem)
         stdout, stderr = self.cmd('sign_cert', alt=['example.com'], stdin=stdin)
         cert = Certificate.objects.first()
+        self.assertSignature([self.ca], cert)
         self.assertSubject(cert.x509, {'CN': 'example.com'})
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
         self.assertEqual(stderr, '')
@@ -226,6 +233,7 @@ class SignCertChildCATestCase(DjangoCAWithCSRTestCase):
         self.assertEqual(stderr, '')
 
         cert = Certificate.objects.first()
+        self.assertSignature([self.ca, self.child_ca], cert)
         self.assertSubject(cert.x509, subject)
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
 
