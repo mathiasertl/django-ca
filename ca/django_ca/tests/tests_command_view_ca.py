@@ -21,6 +21,7 @@ from django.conf import settings
 
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
+from .base import certs
 from .base import child_pubkey
 from .base import override_tmpcadir
 
@@ -80,27 +81,27 @@ X509 v3 certificate extensions for signed certificates:
     def test_basic(self):
         stdout, stderr = self.cmd('view_ca', self.ca.serial)
         path = os.path.join(settings.FIXTURES_DIR, 'root.key')
+        data = certs['root'].copy()
+        data['path'] = path
         self.assertMultiLineEqual(stdout, '''root (enabled):
-* Serial: 35:DB:D2:AD:79:0A:4D:1F:B5:26:ED:5F:83:74:C0:C2
+* Serial: %(serial)s
 * Path to private key:
-  %s
+  %(path)s
 * Is a root CA.
 * Has no children.
-* Distinguished Name: /C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=ca.example.com/emailAddress=ca@example.com
+* Distinguished Name: %(dn)s
 * Maximum levels of sub-CAs (pathlen): 1
-* HPKP pin: XmTZPvdKBPls+/JoVM98/8ASycc/9WMd3fgmbaN2rII=
+* HPKP pin: %(hpkp)s
 
 X509 v3 certificate extensions for CA:
 authorityKeyIdentifier:
-    keyid:6B:C8:CF:56:29:FC:00:55:DD:A5:ED:5A:55:B7:7C:65:49:AC:AD:B1
+    %(authKeyIdentifier)s
 basicConstraints:
     critical,CA:TRUE, pathlen:1
 keyUsage:
-    cRLSign,keyCertSign
-subjectAltName:
-    DNS:ca.example.com
+    critical,cRLSign,keyCertSign
 subjectKeyIdentifier:
-    6B:C8:CF:56:29:FC:00:55:DD:A5:ED:5A:55:B7:7C:65:49:AC:AD:B1
+    %(subjectKeyIdentifier)s
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -108,26 +109,7 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
------BEGIN CERTIFICATE-----
-MIIDFzCCAoCgAwIBAgIQNdvSrXkKTR+1Ju1fg3TAwjANBgkqhkiG9w0BAQ0FADCB
-hzELMAkGA1UEBhMCQVQxDzANBgNVBAgMBlZpZW5uYTEPMA0GA1UEBwwGVmllbm5h
-MQwwCgYDVQQKDANPcmcxEDAOBgNVBAsMB09yZ1VuaXQxFzAVBgNVBAMMDmNhLmV4
-YW1wbGUuY29tMR0wGwYJKoZIhvcNAQkBFg5jYUBleGFtcGxlLmNvbTAiGA8yMDE2
-MDUxMDE3NTYwMFoYDzIxMTYwNDE3MDAwMDAwWjCBhzELMAkGA1UEBhMCQVQxDzAN
-BgNVBAgMBlZpZW5uYTEPMA0GA1UEBwwGVmllbm5hMQwwCgYDVQQKDANPcmcxEDAO
-BgNVBAsMB09yZ1VuaXQxFzAVBgNVBAMMDmNhLmV4YW1wbGUuY29tMR0wGwYJKoZI
-hvcNAQkBFg5jYUBleGFtcGxlLmNvbTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkC
-gYEArdnr5gKSNJdxtjJJ49kpC4Yd79GcBEwhQeiRciGNdap/wbDl5Xff4EapLvP1
-KMlXPyb6af2HVpCjuVSUjOtxzNgSOgLbWKYuuSaxzRvSS7ydXBMLJCJFTGFwul39
-2U/zNO0JmDyd7Pk5trpqImpmSetSxRz5AL5mhxY2FNWkegUCAwEAAaN+MHwwEgYD
-VR0TAQH/BAgwBgEB/wIBATALBgNVHQ8EBAMCAQYwHQYDVR0OBBYEFGvIz1Yp/ABV
-3aXtWlW3fGVJrK2xMBkGA1UdEQQSMBCCDmNhLmV4YW1wbGUuY29tMB8GA1UdIwQY
-MBaAFGvIz1Yp/ABV3aXtWlW3fGVJrK2xMA0GCSqGSIb3DQEBDQUAA4GBAIT/5guU
-8uWiyQ6e3lRuuY4ioeaTOBI94Ygn1Dym328hVJfjsdFXHAP9Tfs2Sg3+Sj0CICnX
-TzM06CLgrbfk/hQjU+H+dcfh5ahBH78MbytsAnzs8KlfBPnfeuLti3RnfXSkOAUZ
-kbfhROu065IYOU0LmqufhP3IdGSeFtiw6nPw
------END CERTIFICATE-----
-''' % path)
+%(pem)s''' % data)
         self.assertEqual(stderr, '')
 
     def test_family(self):
@@ -136,29 +118,29 @@ kbfhROu065IYOU0LmqufhP3IdGSeFtiw6nPw
 
         stdout, stderr = self.cmd('view_ca', parent.serial)
         #self.assertOutput(parent, stdout, san='ca.example.com')
-        path = os.path.join(settings.FIXTURES_DIR, 'root.key')
+        data = certs['root'].copy()
+        data['path'] = os.path.join(settings.FIXTURES_DIR, 'root.key')
+        data['child_serial'] = certs['child']['serial']
         self.assertMultiLineEqual(stdout, '''root (enabled):
-* Serial: 35:DB:D2:AD:79:0A:4D:1F:B5:26:ED:5F:83:74:C0:C2
+* Serial: %(serial)s
 * Path to private key:
-  %s
+  %(path)s
 * Is a root CA.
 * Children:
-  * child (6A:A2:3D:F9:5A:4A:44:8A:9F:91:64:54:A2:0D:04:29)
-* Distinguished Name: /C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=ca.example.com/emailAddress=ca@example.com
+  * child (%(child_serial)s)
+* Distinguished Name: %(dn)s
 * Maximum levels of sub-CAs (pathlen): 1
-* HPKP pin: XmTZPvdKBPls+/JoVM98/8ASycc/9WMd3fgmbaN2rII=
+* HPKP pin: %(hpkp)s
 
 X509 v3 certificate extensions for CA:
 authorityKeyIdentifier:
-    keyid:6B:C8:CF:56:29:FC:00:55:DD:A5:ED:5A:55:B7:7C:65:49:AC:AD:B1
+    %(authKeyIdentifier)s
 basicConstraints:
     critical,CA:TRUE, pathlen:1
 keyUsage:
-    cRLSign,keyCertSign
-subjectAltName:
-    DNS:ca.example.com
+    critical,cRLSign,keyCertSign
 subjectKeyIdentifier:
-    6B:C8:CF:56:29:FC:00:55:DD:A5:ED:5A:55:B7:7C:65:49:AC:AD:B1
+    %(subjectKeyIdentifier)s
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -166,52 +148,32 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
------BEGIN CERTIFICATE-----
-MIIDFzCCAoCgAwIBAgIQNdvSrXkKTR+1Ju1fg3TAwjANBgkqhkiG9w0BAQ0FADCB
-hzELMAkGA1UEBhMCQVQxDzANBgNVBAgMBlZpZW5uYTEPMA0GA1UEBwwGVmllbm5h
-MQwwCgYDVQQKDANPcmcxEDAOBgNVBAsMB09yZ1VuaXQxFzAVBgNVBAMMDmNhLmV4
-YW1wbGUuY29tMR0wGwYJKoZIhvcNAQkBFg5jYUBleGFtcGxlLmNvbTAiGA8yMDE2
-MDUxMDE3NTYwMFoYDzIxMTYwNDE3MDAwMDAwWjCBhzELMAkGA1UEBhMCQVQxDzAN
-BgNVBAgMBlZpZW5uYTEPMA0GA1UEBwwGVmllbm5hMQwwCgYDVQQKDANPcmcxEDAO
-BgNVBAsMB09yZ1VuaXQxFzAVBgNVBAMMDmNhLmV4YW1wbGUuY29tMR0wGwYJKoZI
-hvcNAQkBFg5jYUBleGFtcGxlLmNvbTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkC
-gYEArdnr5gKSNJdxtjJJ49kpC4Yd79GcBEwhQeiRciGNdap/wbDl5Xff4EapLvP1
-KMlXPyb6af2HVpCjuVSUjOtxzNgSOgLbWKYuuSaxzRvSS7ydXBMLJCJFTGFwul39
-2U/zNO0JmDyd7Pk5trpqImpmSetSxRz5AL5mhxY2FNWkegUCAwEAAaN+MHwwEgYD
-VR0TAQH/BAgwBgEB/wIBATALBgNVHQ8EBAMCAQYwHQYDVR0OBBYEFGvIz1Yp/ABV
-3aXtWlW3fGVJrK2xMBkGA1UdEQQSMBCCDmNhLmV4YW1wbGUuY29tMB8GA1UdIwQY
-MBaAFGvIz1Yp/ABV3aXtWlW3fGVJrK2xMA0GCSqGSIb3DQEBDQUAA4GBAIT/5guU
-8uWiyQ6e3lRuuY4ioeaTOBI94Ygn1Dym328hVJfjsdFXHAP9Tfs2Sg3+Sj0CICnX
-TzM06CLgrbfk/hQjU+H+dcfh5ahBH78MbytsAnzs8KlfBPnfeuLti3RnfXSkOAUZ
-kbfhROu065IYOU0LmqufhP3IdGSeFtiw6nPw
------END CERTIFICATE-----
-''' % path)
+%(pem)s''' % data)
         self.assertEqual(stderr, '')
 
         stdout, stderr = self.cmd('view_ca', child.serial)
-        subject = '/C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=sub.ca.example.com/emailAddress=sub.ca@example.com'  # NOQA
-        path = os.path.join(settings.FIXTURES_DIR, 'child.key')
+        data = certs['child'].copy()
+        data['path'] = os.path.join(settings.FIXTURES_DIR, 'child.key')
+        data['root_serial'] = certs['root']['serial']
         self.assertMultiLineEqual(stdout, '''child (enabled):
-* Serial: 6A:A2:3D:F9:5A:4A:44:8A:9F:91:64:54:A2:0D:04:29
+* Serial: %(serial)s
 * Path to private key:
-  %s
-* Parent: root (35:DB:D2:AD:79:0A:4D:1F:B5:26:ED:5F:83:74:C0:C2)
+  %(path)s
+* Parent: root (%(root_serial)s)
 * Has no children.
-* Distinguished Name: %s
+* Distinguished Name: %(dn)s
 * Maximum levels of sub-CAs (pathlen): 0
-* HPKP pin: zX54clL03NhaRzlm1R3JbCTvx9ddQgKcOceeVwgoTSw=
+* HPKP pin: %(hpkp)s
 
 X509 v3 certificate extensions for CA:
 authorityKeyIdentifier:
-    keyid:6B:C8:CF:56:29:FC:00:55:DD:A5:ED:5A:55:B7:7C:65:49:AC:AD:B1
+    %(authKeyIdentifier)s
 basicConstraints:
     critical,CA:TRUE, pathlen:0
 keyUsage:
-    cRLSign,keyCertSign
-subjectAltName:
-    DNS:sub.ca.example.com
+    critical,cRLSign,keyCertSign
 subjectKeyIdentifier:
-    EE:78:8B:01:C8:22:5D:4C:41:6A:DE:07:74:AA:C9:63:66:0A:92:EE
+    %(subjectKeyIdentifier)s
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -219,27 +181,7 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
------BEGIN CERTIFICATE-----
-MIIDLTCCApagAwIBAgIQaqI9+VpKRIqfkWRUog0EKTANBgkqhkiG9w0BAQ0FADCB
-jzELMAkGA1UEBhMCQVQxDzANBgNVBAgMBlZpZW5uYTEPMA0GA1UEBwwGVmllbm5h
-MQwwCgYDVQQKDANPcmcxEDAOBgNVBAsMB09yZ1VuaXQxGzAZBgNVBAMMEnN1Yi5j
-YS5leGFtcGxlLmNvbTEhMB8GCSqGSIb3DQEJARYSc3ViLmNhQGV4YW1wbGUuY29t
-MCIYDzIwMTYwNTEwMTgwMzAwWhgPMjExNjA0MTcwMDAwMDBaMIGPMQswCQYDVQQG
-EwJBVDEPMA0GA1UECAwGVmllbm5hMQ8wDQYDVQQHDAZWaWVubmExDDAKBgNVBAoM
-A09yZzEQMA4GA1UECwwHT3JnVW5pdDEbMBkGA1UEAwwSc3ViLmNhLmV4YW1wbGUu
-Y29tMSEwHwYJKoZIhvcNAQkBFhJzdWIuY2FAZXhhbXBsZS5jb20wgZ8wDQYJKoZI
-hvcNAQEBBQADgY0AMIGJAoGBAMvCSMjmOxI7wa8aqb9WbCS37dBYWDEY1+5ioQhZ
-8FiyXOZZxNGVqn6Dt9TkikhTR9I4Rs3p2pyrMZZM63McFAWKyo//160RIvBwQOYM
-9PpLuFZNx3In8/Fw5/GISgIsOF72jF1/VI1owLe/YShNuzwqzS7qQ5p/E4skUv3O
-+25bAgMBAAGjgYMwgYAwEgYDVR0TAQH/BAgwBgEB/wIBADALBgNVHQ8EBAMCAQYw
-HQYDVR0OBBYEFO54iwHIIl1MQWreB3SqyWNmCpLuMB0GA1UdEQQWMBSCEnN1Yi5j
-YS5leGFtcGxlLmNvbTAfBgNVHSMEGDAWgBRryM9WKfwAVd2l7VpVt3xlSaytsTAN
-BgkqhkiG9w0BAQ0FAAOBgQA6T7GffThrQKMyVq8Cf7Jb7dXrRw3EZgEfTpFND9C6
-r2dgotB+5o5RVJkxQWs2i9XT2q10gXh76fgL3rUAF/nUzWkpD3htMETwDus6WmqF
-IIBeA+G1PVe+gBRnKyXL7le66AihBU3lMmhhihW+6V43NkzB/F9essMZAF7e0/Pe
-5A==
------END CERTIFICATE-----
-''' % (path, subject))
+%(pem)s''' % data)
         self.assertEqual(stderr, '')
 
     @override_tmpcadir()
