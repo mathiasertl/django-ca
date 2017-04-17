@@ -153,6 +153,9 @@ certs = {
         'hpkp': 'ZuJoB0pw8rd2os1WFVe5f8Vky6eg3vHxCrnaZxupFQo=',
         'crl': 'Full Name: URI:http://ca.example.com/crl',
     },
+    'ocsp': {
+        'crl': 'Full Name: URI:http://ca.example.com/crl',
+    },
 }
 
 

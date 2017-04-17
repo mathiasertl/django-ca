@@ -143,7 +143,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertEqual(self.cert.crlDistributionPoints(), certs['cert1']['crl'])
         self.assertEqual(self.cert2.crlDistributionPoints(), certs['cert2']['crl'])
         self.assertEqual(self.cert3.crlDistributionPoints(), certs['cert3']['crl'])
-        self.assertEqual(self.ocsp.crlDistributionPoints(), '')
+        self.assertEqual(self.ocsp.crlDistributionPoints(), certs['ocsp']['crl'])
         self.assertEqual(self.full.crlDistributionPoints(), 'Full Name: URI:https://ca.example.com/crl.der')
 
     def test_digest(self):
