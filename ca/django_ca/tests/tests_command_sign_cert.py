@@ -23,6 +23,8 @@ from django.utils import six
 from .. import ca_settings
 from ..models import Certificate
 from .base import DjangoCAWithCSRTestCase
+from .base import child_pubkey
+from .base import child_serial
 from .base import override_settings
 from .base import override_tmpcadir
 
@@ -207,3 +209,28 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
     def test_no_cn_or_san(self):
         with self.assertRaises(CommandError):
             self.cmd('sign_cert', C='AT', OU='OrgUnit')
+
+
+@override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
+class SignCertChildCATestCase(DjangoCAWithCSRTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(SignCertChildCATestCase, cls).setUpClass()
+
+        cls.child_ca = cls.load_ca(name='child', x509=child_pubkey)
+
+    def test_from_stdin(self):
+        stdin = six.StringIO(self.csr_pem)
+        subject = OrderedDict([('CN', 'example.com')])
+        stdout, stderr = self.cmd('sign_cert', ca=self.child_ca, subject=subject, stdin=stdin)
+        self.assertEqual(stderr, '')
+
+        cert = Certificate.objects.first()
+        self.assertSubject(cert.x509, subject)
+        self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
+
+        self.assertEqual(cert.keyUsage(), 'critical,digitalSignature,keyAgreement,keyEncipherment')
+        self.assertEqual(cert.extendedKeyUsage(), 'serverAuth')
+        self.assertEqual(cert.subjectAltName(), 'DNS:example.com')
+        self.assertIssuer(self.child_ca, cert)
+        self.assertAuthorityKeyIdentifier(self.child_ca, cert)
