@@ -127,6 +127,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             builder = builder.add_extension(x509.NameConstraints(
                 permitted_subtrees=permitted, excluded_subtrees=excluded), critical=True)
 
+        print(private_key)
         certificate = builder.sign(private_key=private_key, algorithm=algorithm, backend=default_backend())
 
         if crl_url is not None:
