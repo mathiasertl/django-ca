@@ -25,8 +25,8 @@ from django.utils.encoding import force_bytes
 from ..models import Certificate
 from ..models import Watcher
 from .base import DjangoCAWithCertTestCase
-from .base import override_tmpcadir
 from .base import certs
+from .base import override_tmpcadir
 
 
 # TODO: Use verbatim strings instead of interpolating
