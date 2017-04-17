@@ -28,6 +28,7 @@ from django.conf import settings
 from django.core.management import call_command
 from django.test import TestCase
 from django.test.utils import override_settings as _override_settings
+from django.utils.encoding import force_text
 from django.utils.six import StringIO
 from django.utils.six.moves import reload_module
 
@@ -80,6 +81,35 @@ cert3_key = _load_key('cert3.key')
 cert3_csr = _load_csr('cert3.csr')
 cert3_pem, cert3_pubkey = _load_cert('cert3.pem')
 cert3_serial = 'A0:36:C7:6B:91:36:44:4C:85:0F:34:E7:F6:D0:42:5E'
+
+certs = {
+    'root': {
+        'pem': force_text(root_pem),
+        'serial': '4E:1E:2A:29:F9:4C:45:CF:12:2F:2B:17:9E:BF:D4:80:29:C6:37:C7',
+    },
+    'child': {
+        'pem': force_text(child_pem),
+        'serial': '32:BE:A9:E8:7E:21:BF:3E:E9:A1:F3:F9:E4:06:14:B4:C4:9D:B2:6C',
+    },
+    'cert1': {
+        'pem': force_text(cert1_pem),
+        'hpkp': 'ZHsPuAAhLPHXbSjBW8/2/CylrtpcPlNUcLDMmuMtiWY=',
+        'md5': '7B:42:32:BB:7F:C1:E5:CE:3C:ED:1B:74:2F:36:4B:44',
+        'sha1': '69:CA:37:7F:82:E5:6E:D9:7B:5A:72:60:F8:94:C6:2B:99:C1:2D:EA',
+        'sha256': '88:99:CB:BE:D8:31:9F:76:08:4F:13:03:98:96:81:8D:35:92:E4:11:0D:72:62:F6:00:B9:1A:0F:CB:8B:60:1B',  # NOQA
+        'sha512': '51:9E:A7:43:8D:9A:E4:E0:AA:94:C0:4E:60:7F:5E:42:CD:03:E1:E9:D3:93:CB:A6:70:C1:D8:F2:D4:31:F3:A2:F3:17:D6:73:90:DC:66:F3:0F:65:FD:46:BB:BB:FA:1E:AC:D9:FC:D4:80:9F:38:A3:47:71:28:CD:DD:C2:32:F1', # NOQA
+        'san': 'DNS:host1.example.com',
+        'cn': 'host1.example.com',
+        'from': '2017-04-17 11:47',
+        'until': '2019-04-18 00:00',
+        'status': 'Valid',
+        'subjectKeyIdentifier': 'D2:1B:D1:90:35:0E:44:58:F7:0A:21:BB:DC:BE:3D:7F:ED:83:E4:FA',
+        'authKeyIdentifier': 'keyid:79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
+        'issuerAltName': 'URI:https://ca.example.com',
+        'authInfoAccess': 'OCSP - URI:http://ocsp.ca.example.com\n    CA Issuers - URI:http://ca.example.com/ca.crt',  # NOQA
+        'crl': 'Full Name: URI:http://ca.example.com/crl',
+    },
+}
 
 
 class override_settings(_override_settings):
