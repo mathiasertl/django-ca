@@ -22,6 +22,7 @@ from django_ca.tests.base import DjangoCATestCase
 
 from .. import ca_settings
 from ..models import CertificateAuthority
+from .base import certs
 from .base import override_tmpcadir
 
 
@@ -76,7 +77,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         child = CertificateAuthority.objects.init(name='Child', parent=parent, pathlen=0, **kwargs)
 
         childAuthKeyId = child.authorityKeyIdentifier()
-        self.assertEqual(childAuthKeyId, 'keyid:%s\n' % parent.subjectKeyIdentifier())
+        self.assertEqual(childAuthKeyId, 'keyid:%s' % parent.subjectKeyIdentifier())
 
     def test_key_size(self):
         kwargs = dict(
