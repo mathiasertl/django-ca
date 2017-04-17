@@ -154,7 +154,8 @@ def create_cert(name, **kwargs):
 
 
 @task
-def init_demo():
+def init_demo(fixture='n'):
+    fixture = fixture == 'y'
     # setup environment
     os.chdir('ca')
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.settings")
@@ -202,7 +203,10 @@ def init_demo():
     for i in range(1, 10):
         hostname = 'host%s.example.com' % i
         print(green('Generate certificate for %s...' % hostname))
-        create_cert(hostname, cn=hostname, alt=['localhost'])
+        if fixture:
+            create_cert(hostname, cn=hostname)
+        else:
+            create_cert(hostname, cn=hostname, alt=['localhost'])
 
     # create stunnel.pem
     key_path = os.path.join(ca_settings.CA_DIR, 'host1.example.com.key')
@@ -216,14 +220,15 @@ def init_demo():
     create_cert('client', cn='First Last', cn_in_san=False, alt=['user@example.com'], ca=child_ca)
 
     # Revoke host1 and host2
-    print(green('Revoke host1.example.com and host2.example.com...'))
-    cert = Certificate.objects.get(cn='host1.example.com')
-    cert.revoke()
-    cert.save()
+    if not fixture:
+        print(green('Revoke host1.example.com and host2.example.com...'))
+        cert = Certificate.objects.get(cn='host1.example.com')
+        cert.revoke()
+        cert.save()
 
-    cert = Certificate.objects.get(cn='host2.example.com')
-    cert.revoke('key_compromise')
-    cert.save()
+        cert = Certificate.objects.get(cn='host2.example.com')
+        cert.revoke('key_compromise')
+        cert.save()
 
     print(green('Create CRL and OCSP index...'))
     crl_path = os.path.join(ca_settings.CA_DIR, 'crl.pem')
