@@ -23,6 +23,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.conf import settings
 from django.core.management import call_command
@@ -86,10 +87,26 @@ certs = {
     'root': {
         'pem': force_text(root_pem),
         'serial': '4E:1E:2A:29:F9:4C:45:CF:12:2F:2B:17:9E:BF:D4:80:29:C6:37:C7',
+        'md5': '63:C1:A3:28:B4:01:80:A3:96:22:23:96:57:17:98:7D',
+        'sha1': '98:10:30:97:99:DB:85:29:74:E6:D0:5E:EE:C8:C5:B7:06:BA:D1:19',
+        'sha256': 'DA:0B:C6:6A:60:79:70:94:E1:D2:BE:68:F4:E8:FD:02:80:2A:A9:DF:85:52:49:5F:99:31:DA:15:D7:BF:BA:2E',  # NOQA
+        'sha512': '12:33:63:35:91:95:69:58:B5:D0:44:1F:12:C4:40:FD:08:21:86:53:E5:05:9D:C5:49:EC:59:B5:27:63:21:AE:52:F5:BD:AA:B9:BB:F4:A1:42:BD:71:48:5B:7D:1D:0A:54:BD:2A:1F:C4:70:C5:F7:57:94:19:A8:C6:DB:B3:9D', # NOQA
+        'san': '',
+        'authKeyIdentifier': 'keyid:79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
+        'hpkp': 'MWvvGs9cF37mKmi2iXqBBqpkBT8zaWfT09DRSlpg8tQ=',
+        'crl': '',
     },
     'child': {
         'pem': force_text(child_pem),
         'serial': '32:BE:A9:E8:7E:21:BF:3E:E9:A1:F3:F9:E4:06:14:B4:C4:9D:B2:6C',
+        'md5': '63:C1:A3:28:B4:01:80:A3:96:22:23:96:57:17:98:7D',
+        'sha1': '98:10:30:97:99:DB:85:29:74:E6:D0:5E:EE:C8:C5:B7:06:BA:D1:19',
+        'sha256': 'DA:0B:C6:6A:60:79:70:94:E1:D2:BE:68:F4:E8:FD:02:80:2A:A9:DF:85:52:49:5F:99:31:DA:15:D7:BF:BA:2E',  # NOQA
+        'sha512': '12:33:63:35:91:95:69:58:B5:D0:44:1F:12:C4:40:FD:08:21:86:53:E5:05:9D:C5:49:EC:59:B5:27:63:21:AE:52:F5:BD:AA:B9:BB:F4:A1:42:BD:71:48:5B:7D:1D:0A:54:BD:2A:1F:C4:70:C5:F7:57:94:19:A8:C6:DB:B3:9D', # NOQA
+        'san': '',
+        'authKeyIdentifier': 'keyid:79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
+        'hpkp': '5Wpp4svwRWrKl3WeBIExoOl3a6/QK3WZAaIPRpgVrBA=',
+        'crl': '',  # TODO: add a CRL
     },
     'cert1': {
         'pem': force_text(cert1_pem),
@@ -107,6 +124,29 @@ certs = {
         'authKeyIdentifier': 'keyid:79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
         'issuerAltName': 'URI:https://ca.example.com',
         'authInfoAccess': 'OCSP - URI:http://ocsp.ca.example.com\n    CA Issuers - URI:http://ca.example.com/ca.crt',  # NOQA
+        'crl': 'Full Name: URI:http://ca.example.com/crl',
+        'der': cert1_pubkey.public_bytes(encoding=Encoding.DER),
+    },
+    'cert2': {
+        'issuerAltName': 'URI:https://ca.example.com',
+        'md5': '4B:1C:B9:1E:34:B3:E0:7A:F9:95:E4:92:94:54:19:6B',
+        'sha1': '3B:EB:92:1C:99:0D:E9:C6:57:2E:ED:A0:25:00:84:21:9E:37:25:87',
+        'sha256': 'A2:18:2B:7E:5D:A3:A8:64:B4:9B:74:D5:4A:FB:46:60:DC:B7:A5:20:ED:0E:0E:EC:7A:2E:20:01:20:E9:3F:4C',  # NOQA
+        'sha512': '63:86:08:13:70:6E:A2:C3:95:2B:E6:33:16:D8:1C:6E:48:FA:7B:73:6D:51:D0:98:AD:7D:F3:9F:79:5C:03:A0:21:23:DA:88:5C:DD:BB:03:86:E0:A8:77:C3:36:46:06:E9:AA:0C:02:A5:56:81:2B:04:1A:37:11:2A:DE:A2:A5', # NOQA
+        'san': 'DNS:host2.example.com',
+        'authKeyIdentifier': 'keyid:79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
+        'hpkp': 'i+ccTaizbK5r9luNHFW358cxzaORJ4rS3WYHlEnaQoI=',
+        'crl': 'Full Name: URI:http://ca.example.com/crl',
+    },
+    'cert3': {
+        'issuerAltName': 'URI:https://ca.example.com',
+        'md5': '43:47:4B:6D:7C:7E:3A:BB:85:AF:0F:2E:70:2B:12:07',
+        'sha1': '28:65:FB:33:4E:60:DD:44:22:5D:5F:61:FF:C0:6C:FB:3F:23:55:87',
+        'sha256': '2A:18:6B:D9:B4:A9:B7:12:17:41:20:A6:6C:D4:AA:0D:D7:98:A0:5F:53:26:C7:47:AA:00:A4:2C:DF:7A:07:96',  # NOQA
+        'sha512': 'B2:E8:35:D7:56:37:DA:76:B7:F7:94:5C:A5:66:A7:6E:CC:A7:18:26:35:DC:1C:AD:AC:27:56:83:CA:4E:FD:66:4B:E9:89:6E:D5:A1:7D:94:94:0B:9B:35:E3:45:B5:78:AD:50:8F:CF:5C:9B:1E:16:70:54:B7:76:C4:86:30:66', # NOQA
+        'san': 'DNS:host3.example.com',
+        'authKeyIdentifier': 'keyid:79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
+        'hpkp': 'ZuJoB0pw8rd2os1WFVe5f8Vky6eg3vHxCrnaZxupFQo=',
         'crl': 'Full Name: URI:http://ca.example.com/crl',
     },
 }
