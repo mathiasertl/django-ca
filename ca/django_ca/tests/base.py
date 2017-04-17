@@ -61,9 +61,10 @@ def _load_cert(path):
 
 root_key = _load_key('root.key')
 root_pem, root_pubkey = _load_cert('root.pem')
+root_serial = '41:16:C4:03:87:65:43:F6:2A:FD:75:9B:7C:7D:F0:2F:E1:17:71:BA'
 child_key = _load_key('child.key')
 child_pem, child_pubkey = _load_cert('child.pem')
-child_serial = '6A:A2:3D:F9:5A:4A:44:8A:9F:91:64:54:A2:0D:04:29'
+child_serial = '44:43:24:36:A2:95:25:1A:48:17:CA:C2:E0:93:49:3E:2D:45:90:06'
 ocsp_key = _load_key('ocsp.key')
 ocsp_csr = _load_csr('ocsp.csr')
 ocsp_pem, ocsp_pubkey = _load_cert('ocsp.pem')
@@ -177,6 +178,7 @@ class DjangoCATestCase(TestCase):
                          'keyid:%s' % issuer.subjectKeyIdentifier())
 
     def assertSignature(self, chain, cert):
+        # see: http://stackoverflow.com/questions/30700348
         store = X509Store()
         for elem in chain:
             store.add_cert(load_certificate(FILETYPE_PEM, elem.dump_certificate()))
