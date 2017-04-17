@@ -30,7 +30,6 @@ from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
-from django.utils import six
 from django.utils.decorators import classonlymethod
 from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes
@@ -139,12 +138,6 @@ class OCSPView(View):
         if os.path.exists(responder_cert):
             with open(responder_cert, 'rb') as stream:
                 responder_cert = stream.read()
-        elif isinstance(responder_cert, six.string_types) and len(responder_cert) == 47:
-            try:
-                cert = Certificate.objects.get(serial=responder_cert)
-                responder_cert = force_bytes(cert.pub)
-            except Certificate.DoesNotExist:
-                pass
 
         if not responder_cert:
             raise ImproperlyConfigured('%s: Could not read public key.' % responder_cert)
