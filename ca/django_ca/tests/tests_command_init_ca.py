@@ -17,6 +17,7 @@ from datetime import timedelta
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 
 from django.core.management.base import CommandError
 
@@ -46,6 +47,11 @@ class InitCATest(DjangoCATestCase):
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertBasic(ca.x509, algo='sha512')
 
+        # test the private key
+        key = ca.key(None)
+        self.assertIsInstance(key, RSAPrivateKey)
+        self.assertEqual(key.key_size, 1024)
+
         self.assertSubject(ca.x509, {'C': 'AT', 'ST': 'Vienna', 'L': 'Vienna', 'O': 'Org',
                                      'OU': 'OrgUnit', 'CN': 'Test CA'})
         self.assertIssuer(ca, ca)
@@ -74,6 +80,11 @@ class InitCATest(DjangoCATestCase):
         ca = CertificateAuthority.objects.first()
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
+
+        # test the private key
+        key = ca.key(None)
+        self.assertIsInstance(key, dsa.DSAPrivateKey)
+        self.assertEqual(key.key_size, 1024)
 
         self.assertTrue(isinstance(ca.x509.signature_hash_algorithm, hashes.SHA1))
         self.assertTrue(isinstance(ca.x509.public_key(), dsa.DSAPublicKey))
@@ -184,6 +195,48 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(list(parent.children.all()), [child])
         self.assertIssuer(parent, child)
         self.assertAuthorityKeyIdentifier(parent, child)
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_password(self):
+        password = b'testpassword'
+        self.init_ca(name='Parent', password=password)
+        parent = CertificateAuthority.objects.get(name='Parent')
+        parent.full_clean()  # assert e.g. max_length in serials
+        self.assertSignature([parent], parent)
+
+        # Assert that we cannot access this without a password
+        msg = '^Password was not given but private key is encrypted$'
+        with self.assertRaisesRegex(TypeError, msg):
+            parent.key(None)
+
+        # Wrong password doesn't work either
+        with self.assertRaisesRegex(ValueError, '^Bad decrypt. Incorrect password?'):
+            parent.key(b'wrong')
+
+        # test the private key
+        key = parent.key(password)
+        self.assertIsInstance(key, RSAPrivateKey)
+        self.assertEqual(key.key_size, 1024)
+
+        # create a child ca, also password protected
+        child_password = b'childpassword'
+        parent = CertificateAuthority.objects.get(name='Parent')  # Get again, key is cached
+
+        with self.assertRaisesRegex(CommandError, '^Password was not given but private key is encrypted$'):
+            self.init_ca(name='Child', parent=parent, password=child_password)
+        self.assertIsNone(CertificateAuthority.objects.filter(name='Child').first())
+
+        # Create again with parent ca
+        self.init_ca(name='Child', parent=parent, password=child_password, parent_password=password)
+
+        child = CertificateAuthority.objects.get(name='Child')
+        child.full_clean()  # assert e.g. max_length in serials
+        self.assertSignature([parent], child)
+
+        # test the private key
+        key = child.key(child_password)
+        self.assertIsInstance(key, RSAPrivateKey)
+        self.assertEqual(key.key_size, 1024)
 
     @override_tmpcadir()
     def test_small_key_size(self):
