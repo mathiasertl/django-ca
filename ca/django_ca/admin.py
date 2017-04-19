@@ -303,12 +303,6 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
         if change is False:  # # pragma: no branch
             san, cn_in_san = data['subjectAltName']
             expires = datetime.combine(data['expires'], datetime.min.time())
-            password = data['password']
-
-            if password:
-                password = password.encode('utf-8')
-            else:
-                password = None
 
             obj.x509 = self.model.objects.sign_cert(
                 ca=data['ca'],
@@ -320,7 +314,7 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
                 cn_in_san=cn_in_san,
                 keyUsage=data['keyUsage'],
                 extendedKeyUsage=data['extendedKeyUsage'],
-                password=password,
+                password=data['password']
             )
         obj.save()
 
