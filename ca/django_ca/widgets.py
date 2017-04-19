@@ -66,6 +66,7 @@ class LabeledTextInput(widgets.TextInput):
         ctx = super(LabeledTextInput, self).get_context(*args, **kwargs)
         ctx['widget']['label'] = self.label
         ctx['widget']['subrequired'] = self.attrs.get('required')
+        ctx['widget']['cssid'] = self.label.lower().replace(' ', '-')
         return ctx
 
     def render_wrapped(self, name, value, attrs):  # pragma: no cover - <= Django 1.11
@@ -91,7 +92,7 @@ class LabeledTextInput(widgets.TextInput):
 
 
 class SubjectTextInput(LabeledTextInput):
-    #template_name = 'django_ca/forms/widgets/subjecttextinput.html'
+    template_name = 'django_ca/forms/widgets/subjecttextinput.html'
 
     def render_wrapped(self, name, value, attrs):  # pragma: no cover - <= Django 1.11
         html = super(SubjectTextInput, self).render_wrapped(name, value, attrs)
