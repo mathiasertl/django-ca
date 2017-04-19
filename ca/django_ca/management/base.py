@@ -28,6 +28,7 @@ from django.core.management.base import OutputWrapper
 from django.core.management.color import no_style
 from django.core.validators import URLValidator
 from django.utils import six
+from django.utils.encoding import force_bytes
 
 from django_ca import ca_settings
 from django_ca.models import Certificate
@@ -203,12 +204,9 @@ class BinaryOutputWrapper(OutputWrapper):
 
     def write(self, msg, style_func=None, ending=None):
         ending = self.ending if ending is None else ending
-        if six.PY3 is True and isinstance(msg, str):  # pragma: no cover
-            msg = msg.encode('utf-8')
-        elif six.PY2 is True and isinstance(msg, six.text_type):  # pragma: no cover
-            msg = msg.encode('utf-8')
+        msg = force_bytes(msg)
 
-        if ending and not msg.endswith(ending):  # pragma: no cover
+        if ending and not msg.endswith(ending):
             msg += ending
         self._out.write(msg)
 
