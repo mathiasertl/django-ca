@@ -55,6 +55,10 @@ class CertificateRevocationListView(View, SingleObjectMixin):
     slug_url_kwarg = 'serial'
     queryset = CertificateAuthority.objects.all().prefetch_related('certificate_set')
 
+    password = None
+    """Password used to load the private key of the certificate authority. If not set, the private key is
+    assumed to be unencrypted."""
+
     # parameters for the CRL itself
     type = Encoding.DER
     """Filetype for CRL, one of the ``OpenSSL.crypto.FILETYPE_*`` variables. The default is
@@ -76,7 +80,7 @@ class CertificateRevocationListView(View, SingleObjectMixin):
         crl = cache.get(cache_key)
         if crl is None:
             ca = self.get_object()
-            crl = get_crl(ca, encoding=self.type, expires=self.expires, algorithm=self.digest)
+            crl = get_crl(ca, encoding=self.type, expires=self.expires, algorithm=self.digest, password=self.password)
             cache.set(cache_key, crl, self.expires)
 
         return HttpResponse(crl, content_type=self.content_type)
