@@ -59,5 +59,5 @@ def get_crl(ca, encoding, expires, algorithm, password):
     for cert in Certificate.objects.filter(ca=ca, expires__gt=timezone.now()).revoked():
         builder = builder.add_revoked_certificate(cert.get_revocation())
 
-    crl = builder.sign(private_key=ca.key(), algorithm=algorithm, backend=default_backend())
+    crl = builder.sign(private_key=ca.key(password), algorithm=algorithm, backend=default_backend())
     return crl.public_bytes(encoding)
