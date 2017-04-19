@@ -82,6 +82,8 @@ class CreateCertificateForm(forms.ModelForm):
             if os.path.exists(ca.private_key_path)
         ]
 
+    password = forms.CharField(widget=forms.PasswordInput, required=False, help_text=_(
+        'Password for the private key. If not given, the private key must be unencrypted.'))
     expires = forms.DateField(initial=_initial_expires, widget=AdminDateWidget())
     subject = SubjectField(label="Subject", required=True)
     subjectAltName = SubjectAltNameField(
