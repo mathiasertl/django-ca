@@ -67,13 +67,15 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
     def init(self, name, key_size, key_type, algorithm, expires, parent, subject, pathlen=None,
              issuer_url=None, issuer_alt_name=None, crl_url=None, ocsp_url=None,
              ca_issuer_url=None, ca_crl_url=None, ca_ocsp_url=None, name_constraints=None,
-             password=None):
+             password=None, parent_password=None):
         """
         Parameters
         ----------
 
         password : bytes, optional
             Password to encrypt the private key with.
+        parent_password : bytes, optional
+            Password that the private key of the parent CA is encrypted with.
         """
         # NOTE: This is already verified by KeySizeAction, so none of these checks should ever be
         #       True in the real world. None the less they are here as a safety precaution.
@@ -112,7 +114,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
                 authority_cert_serial_number=None)
         else:
             builder = builder.issuer_name(parent.x509.subject)
-            private_sign_key = parent.key()
+            private_sign_key = parent.key(parent_password)
             auth_key_id = parent.x509.extensions.get_extension_for_oid(
                 ExtensionOID.AUTHORITY_KEY_IDENTIFIER).value
 

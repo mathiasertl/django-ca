@@ -132,8 +132,9 @@ class CertificateAuthorityAction(argparse.Action):
             parser.error('%s: %s: Private key does not exist.' % (value, value.private_key_path))
 
         # try to parse the private key
+        # TODO: Must be moved into a the Command implementation itself, since any password is available here.
         try:
-            value.key()
+            value.key(None)
         except Exception as e:
             raise parser.error('%s: %s: Could not read private key: %s' % (value, value.private_key_path, e))
 
