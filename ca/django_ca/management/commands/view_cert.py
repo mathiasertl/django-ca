@@ -39,7 +39,7 @@ class Command(CertCommand):
     def indent(self, s, prefix='    '):
         if six.PY3:
             return textwrap.indent(s, prefix)
-        else:
+        else:  # pragma: no cover
             # copied from py3.4 version of textwrap.indent
             def prefixed_lines():
                 for line in s.splitlines(True):
