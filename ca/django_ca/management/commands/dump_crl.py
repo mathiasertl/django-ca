@@ -32,6 +32,7 @@ class Command(BaseCommand):
         self.add_algorithm(parser)
         self.add_format(parser)
         self.add_ca(parser)
+        self.add_password(parser)
         super(Command, self).add_arguments(parser)
 
     def handle(self, path, **options):
@@ -39,6 +40,7 @@ class Command(BaseCommand):
             'encoding': options['format'],
             'expires': options['expires'],
             'algorithm': options['algorithm'],
+            'password': options['password'],
         }
 
         crl = get_crl(ca=options['ca'], **kwargs)
