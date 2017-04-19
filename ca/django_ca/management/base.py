@@ -85,9 +85,16 @@ class KeySizeAction(argparse.Action):
 
 
 class PasswordAction(argparse.Action):
+    def __init__(self, prompt=None, **kwargs):
+        super(PasswordAction, self).__init__(**kwargs)
+        self.prompt = prompt
+
     def __call__(self, parser, namespace, value, option_string=None):
         if value is None:
-            value = getpass()
+            kwargs = {}
+            if self.prompt:
+                kwargs['prompt'] = self.prompt
+            value = getpass(**kwargs)
 
         setattr(namespace, self.dest, value.encode('utf-8'))
 

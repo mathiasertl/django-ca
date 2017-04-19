@@ -19,7 +19,6 @@ https://skippylovesmalorie.wordpress.com/2010/02/12/how-to-generate-a-self-signe
 """
 
 import os
-from getpass import getpass
 
 from django.core.management.base import CommandError
 
@@ -31,6 +30,7 @@ from django_ca.models import CertificateAuthority
 from ..base import CertificateAuthorityDetailMixin
 from ..base import ExpiresAction
 from ..base import MultipleURLAction
+from ..base import PasswordAction
 from ..base import URLAction
 
 
@@ -63,6 +63,9 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         self.add_password(
             parser, help='Optional password used to encrypt the private key. If no argument is passed, you '
                          'will be prompted.')
+        parser.add_argument('--parent-password', nargs='?', action=PasswordAction, metavar='PASSWORD',
+                            prompt='Password for parent CA: ',
+                            help='Password for the private key of any parent CA.')
 
         group = parser.add_argument_group(
             'pathlen attribute',
@@ -129,6 +132,8 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
                 ca_crl_url=options['ca_crl_url'],
                 ca_ocsp_url=options['ca_ocsp_url'],
                 name_constraints=options['name_constraint'],
-                name=name, subject=subject, password=options['password'])
+                name=name, subject=subject, password=options['password'],
+                parent_password=options['parent_password']
+            )
         except Exception as e:
             raise CommandError(e)
