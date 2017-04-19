@@ -14,11 +14,11 @@
 # see <http://www.gnu.org/licenses/>.
 
 import argparse
+import getpass
 import os
 import sys
 from datetime import datetime
 from datetime import timedelta
-from getpass import getpass
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -94,7 +94,7 @@ class PasswordAction(argparse.Action):
             kwargs = {}
             if self.prompt:
                 kwargs['prompt'] = self.prompt
-            value = getpass(**kwargs)
+            value = getpass.getpass(**kwargs)
 
         setattr(namespace, self.dest, value.encode('utf-8'))
 

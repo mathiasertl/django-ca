@@ -18,6 +18,12 @@ import os
 import tempfile
 from datetime import datetime
 from datetime import timedelta
+from io import StringIO
+
+try:
+    import unittest.mock as mock
+except ImportError:
+    import mock
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -154,6 +160,30 @@ setup.py: error: --size must be at least 2048 bits.\n'''
         self.assertParserError(['--size=1024'], expected)
         self.assertParserError(['--size=512'], expected)
         self.assertParserError(['--size=256'], expected)
+
+
+class PasswordActionTestCase(DjangoCATestCase):
+    def setUp(self):
+        super(PasswordActionTestCase, self).setUp()
+
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument('--password', nargs='?', action=base.PasswordAction)
+
+    def test_none(self):
+        ns = self.parser.parse_args([])
+        self.assertIsNone(ns.password)
+
+    def test_given(self):
+        ns = self.parser.parse_args(['--password=foobar'])
+        self.assertEqual(ns.password, b'foobar')
+
+    @mock.patch("getpass.getpass", return_value="prompted")
+    def test_prompt(self, getpass):
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--password', nargs='?', action=base.PasswordAction)
+        ns = parser.parse_args(['--password'])
+
+        self.assertEqual(ns.password, b'prompted')
 
 
 @override_tmpcadir()
