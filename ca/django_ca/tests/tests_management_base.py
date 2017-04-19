@@ -19,11 +19,6 @@ import tempfile
 from datetime import datetime
 from datetime import timedelta
 
-try:
-    import unittest.mock as mock
-except ImportError:
-    import mock
-
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
@@ -35,6 +30,11 @@ from .base import DjangoCAWithCertTestCase
 from .base import child_pubkey
 from .base import override_settings
 from .base import override_tmpcadir
+
+try:
+    import unittest.mock as mock
+except ImportError:
+    import mock
 
 
 class SubjectActionTestCase(DjangoCATestCase):

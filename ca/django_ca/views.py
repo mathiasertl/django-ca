@@ -80,7 +80,8 @@ class CertificateRevocationListView(View, SingleObjectMixin):
         crl = cache.get(cache_key)
         if crl is None:
             ca = self.get_object()
-            crl = get_crl(ca, encoding=self.type, expires=self.expires, algorithm=self.digest, password=self.password)
+            crl = get_crl(ca, encoding=self.type, expires=self.expires, algorithm=self.digest,
+                          password=self.password)
             cache.set(cache_key, crl, self.expires)
 
         return HttpResponse(crl, content_type=self.content_type)
