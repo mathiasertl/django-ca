@@ -68,6 +68,13 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
              issuer_url=None, issuer_alt_name=None, crl_url=None, ocsp_url=None,
              ca_issuer_url=None, ca_crl_url=None, ca_ocsp_url=None, name_constraints=None,
              password=None):
+        """
+        Parameters
+        ----------
+
+        password : bytes, optional
+            Password to encrypt the private key with.
+        """
         # NOTE: This is already verified by KeySizeAction, so none of these checks should ever be
         #       True in the real world. None the less they are here as a safety precaution.
         if not is_power2(key_size):
@@ -141,11 +148,16 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         ca.private_key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % ca.serial)
         ca.save()
 
+        if password is None:
+            encryption = serialization.NoEncryption()
+        else:
+            encryption = serialization.BestAvailableEncryption(password)
+
         # write private key to file
         oldmask = os.umask(247)
         pem = private_key.private_bytes(encoding=Encoding.PEM,
                                         format=PrivateFormat.TraditionalOpenSSL,
-                                        encryption_algorithm=serialization.NoEncryption())
+                                        encryption_algorithm=encryption)
         with open(ca.private_key_path, 'wb') as key_file:
             key_file.write(pem)
         os.umask(oldmask)
