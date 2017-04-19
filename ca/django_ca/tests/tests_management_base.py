@@ -18,7 +18,6 @@ import os
 import tempfile
 from datetime import datetime
 from datetime import timedelta
-from io import StringIO
 
 try:
     import unittest.mock as mock
