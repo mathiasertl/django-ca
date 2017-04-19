@@ -317,7 +317,6 @@ class CertificateAuthority(X509CertMixin):
 
     _key = None
 
-    @property
     def key(self):
         if self._key is None:
             with open(self.private_key_path, 'rb') as f:

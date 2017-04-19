@@ -112,7 +112,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
                 authority_cert_serial_number=None)
         else:
             builder = builder.issuer_name(parent.x509.subject)
-            private_sign_key = parent.key
+            private_sign_key = parent.key()
             auth_key_id = parent.x509.extensions.get_extension_for_oid(
                 ExtensionOID.AUTHORITY_KEY_IDENTIFIER).value
 
@@ -284,7 +284,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             builder = builder.add_extension(x509.IssuerAlternativeName(
                 [parse_general_name(ca.issuer_alt_name)]), critical=False)
 
-        return builder.sign(private_key=ca.key, algorithm=algorithm, backend=default_backend())
+        return builder.sign(private_key=ca.key(), algorithm=algorithm, backend=default_backend())
 
     def init(self, ca, csr, *args, **kwargs):
         c = self.model(ca=ca, csr=csr)

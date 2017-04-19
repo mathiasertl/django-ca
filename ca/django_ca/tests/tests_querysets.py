@@ -36,8 +36,8 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         self.assertEqual(ca.name, 'Root CA')
 
         # verify private key properties
-        self.assertEqual(ca.key.key_size, 1024)
-        self.assertIsInstance(ca.key.public_key(), RSAPublicKey)
+        self.assertEqual(ca.key().key_size, 1024)
+        self.assertIsInstance(ca.key().public_key(), RSAPublicKey)
 
         # verity public key propertiesa
         self.assertBasic(ca.x509)
