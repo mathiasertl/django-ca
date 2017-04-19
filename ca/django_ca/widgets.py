@@ -56,9 +56,17 @@ class LabeledTextInput(widgets.TextInput):
 
     This is necessary because widgets in MultiValueFields don't render with a label."""
 
+    template_name = 'django_ca/forms/widgets/labeledtextinput.html'
+
     def __init__(self, label, *args, **kwargs):
         self.label = label
         super(LabeledTextInput, self).__init__(*args, **kwargs)
+
+    def get_context(self, *args, **kwargs):
+        ctx = super(LabeledTextInput, self).get_context(*args, **kwargs)
+        ctx['widget']['label'] = self.label
+        ctx['widget']['subrequired'] = self.attrs.get('required')
+        return ctx
 
     def render_wrapped(self, name, value, attrs):  # pragma: no cover - <= Django 1.11
         html = super(LabeledTextInput, self).render(name, value, attrs=attrs)
@@ -83,6 +91,8 @@ class LabeledTextInput(widgets.TextInput):
 
 
 class SubjectTextInput(LabeledTextInput):
+    #template_name = 'django_ca/forms/widgets/subjecttextinput.html'
+
     def render_wrapped(self, name, value, attrs):  # pragma: no cover - <= Django 1.11
         html = super(SubjectTextInput, self).render_wrapped(name, value, attrs)
         html += '<span class="from-csr">%s <span></span></span>' % _('from CSR:')
