@@ -28,11 +28,18 @@ class LabeledCheckboxInput(widgets.CheckboxInput):
 
     This is necessary because widgets in MultiValueFields don't render with a label."""
 
+    template_name = 'django_ca/forms/widgets/labeledcheckboxinput.html'
+
     def __init__(self, label, *args, **kwargs):
         self.label = label
         super(LabeledCheckboxInput, self).__init__(*args, **kwargs)
 
-    def render(self, name, value, attrs=None):
+    def get_context(self, *args, **kwargs):
+        ctx = super(LabeledCheckboxInput, self).get_context(*args, **kwargs)
+        ctx['widget']['label'] = self.label
+        return ctx
+
+    def render(self, name, value, attrs=None):  # pragma: no cover - <= Django 1.11
         html = super(LabeledCheckboxInput, self).render(name, value, attrs=attrs)
         label = '<label for="%s">%s</label>' % (attrs.get('id'), self.label)
         html = '<span class="critical-widget-wrapper">%s%s</span>' % (html, label)
@@ -53,7 +60,7 @@ class LabeledTextInput(widgets.TextInput):
         self.label = label
         super(LabeledTextInput, self).__init__(*args, **kwargs)
 
-    def render_wrapped(self, name, value, attrs):
+    def render_wrapped(self, name, value, attrs):  # pragma: no cover - <= Django 1.11
         html = super(LabeledTextInput, self).render(name, value, attrs=attrs)
         required = ''
         if self.attrs.get('required', False):
@@ -63,7 +70,7 @@ class LabeledTextInput(widgets.TextInput):
 
         return html
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None):  # pragma: no cover - <= Django 1.11
         html = self.render_wrapped(name, value, attrs)
         cssid = self.label.lower().replace(' ', '-')
         html = '<span id="%s" class="labeled-text-multiwidget">%s</span>' % (cssid, html)
@@ -76,7 +83,7 @@ class LabeledTextInput(widgets.TextInput):
 
 
 class SubjectTextInput(LabeledTextInput):
-    def render_wrapped(self, name, value, attrs):
+    def render_wrapped(self, name, value, attrs):  # pragma: no cover - <= Django 1.11
         html = super(SubjectTextInput, self).render_wrapped(name, value, attrs)
         html += '<span class="from-csr">%s <span></span></span>' % _('from CSR:')
         return html
@@ -101,7 +108,9 @@ class ProfileWidget(widgets.Select):
 class CustomMultiWidget(widgets.MultiWidget):
     """Wraps the multi widget into a <p> element."""
 
-    def format_output(self, rendered_widgets):
+    template_name = 'django_ca/forms/widgets/custommultiwidget.html'
+
+    def format_output(self, rendered_widgets):  # pragma: no cover - <= Django 1.11
         # NOTE: We use a <p> because djangos stock forms.css takes care of indent this way.
         rendered_widgets.insert(0, '<p class="multi-widget">')
         rendered_widgets.append('</p>')
