@@ -55,15 +55,14 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         self.add_ca(parser, '--parent',
                     help='''Make the CA an intermediate CA of the named CA. By default, this is a
                     new root CA.''', no_default=True)
-        parser.add_argument(
-            '--password', nargs=1,
-            help="Optional password used to encrypt the private key. If omitted, no "
-                 "password is used, use \"--password=\" to prompt for a password.")
         parser.add_argument('name', help='Human-readable name of the CA')
         self.add_subject(
             parser, help='''The subject of the CA in the format "/key1=value1/key2=value2/...",
                             valid keys are %s. If "CN" is not set, the name is used.'''
             % self.valid_subject_keys)
+        self.add_password(
+            parser, help='Optional password used to encrypt the private key. If no argument is passed, you '
+                         'will be prompted.')
 
         group = parser.add_argument_group(
             'pathlen attribute',
@@ -101,9 +100,6 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
     def handle(self, name, subject, **options):
         if not os.path.exists(ca_settings.CA_DIR):  # pragma: no cover
             os.makedirs(ca_settings.CA_DIR)
-
-        if options['password'] == '':  # pragma: no cover
-            options['password'] = getpass()
 
         # In case of CAs, we silently set the expiry date to that of the parent CA, if the user
         # specified a number of days that would make the CA expire after the parent CA.
