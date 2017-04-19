@@ -176,6 +176,16 @@ class PasswordActionTestCase(DjangoCATestCase):
         ns = self.parser.parse_args(['--password=foobar'])
         self.assertEqual(ns.password, b'foobar')
 
+    @mock.patch('getpass.getpass', return_value='prompted')
+    def test_output(self, getpass):
+        prompt = 'new prompt: '
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--password', nargs='?', action=base.PasswordAction, prompt=prompt)
+        ns = parser.parse_args(['--password'])
+        self.assertEqual(ns.password, b'prompted')
+
+        getpass.assert_called_once_with(prompt=prompt)
+
     @mock.patch("getpass.getpass", return_value="prompted")
     def test_prompt(self, getpass):
         parser = argparse.ArgumentParser()
