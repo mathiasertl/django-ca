@@ -163,10 +163,23 @@ class CreateCertificateForm(forms.ModelForm):
             raise forms.ValidationError(_('Certificate cannot expire in the past.'))
         return expires
 
+    def clean_password(self):
+        password = self.cleaned_data['password']
+        if not password:
+            return None
+        return password.encode('utf-8')
+
     def clean(self):
         data = super(CreateCertificateForm, self).clean()
         expires = data.get('expires')
         ca = data.get('ca')
+        password = data.get('password')
+
+        # test the password
+        try:
+            ca.key(password)
+        except Exception as e:
+            self.add_error('password', str(e))
 
         if ca and expires and ca.expires.date() < expires:
             stamp = ca.expires.strftime('%Y-%m-%d')
