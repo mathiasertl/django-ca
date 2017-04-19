@@ -18,6 +18,7 @@ import os
 import sys
 from datetime import datetime
 from datetime import timedelta
+from getpass import getpass
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -81,6 +82,14 @@ class KeySizeAction(argparse.Action):
             parser.error('%s must be at least %s bits.'
                          % (option_string, ca_settings.CA_MIN_KEY_SIZE))
         setattr(namespace, self.dest, value)
+
+
+class PasswordAction(argparse.Action):
+    def __call__(self, parser, namespace, value, option_string=None):
+        if value is None:
+            value = getpass()
+
+        setattr(namespace, self.dest, value.encode('utf-8'))
 
 
 class CertificateAction(argparse.Action):
@@ -262,6 +271,11 @@ class BaseCommand(_BaseCommand):
         help_text = 'The format to use ("ASN1" is an alias for "DER", default: %s).' % default.name
         parser.add_argument('-f', '--format', metavar='{PEM,ASN1,DER}', default=default,
                             action=FormatAction, help=help_text)
+
+    def add_password(self, parser, help=None):
+        if help is None:
+            help = 'Password used for accessing the private key of the CA.'
+        parser.add_argument('-p', '--password', nargs='?', action=PasswordAction, help=help)
 
 
 class CertCommand(BaseCommand):
