@@ -238,6 +238,12 @@ class InitCATest(DjangoCATestCase):
         self.assertIsInstance(key, RSAPrivateKey)
         self.assertEqual(key.key_size, 1024)
 
+    # Test that a false CA_DIGEST_ALGORITHM raises a CommandError
+    @override_tmpcadir(CA_DIGEST_ALGORITHM='broken')
+    def test_wrong_algorithm(self):
+        with self.assertRaisesRegex(CommandError, '^Error: Unknown hash algorithm: broken$'):
+            self.init_ca(name='foobar')
+
     @override_tmpcadir()
     def test_small_key_size(self):
         with self.assertRaises(CommandError):
