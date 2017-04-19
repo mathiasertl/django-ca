@@ -5,6 +5,7 @@ flake8==3.3.0
 ipython>=5.2.2
 isort==4.2.5
 mock==2.0.0
+mock==2.0.0; python_version < '3'
 pip>=9.0.1
 pyOpenSSL==16.2.0
 setuptools>=34.4.0
