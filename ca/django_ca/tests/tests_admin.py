@@ -31,6 +31,7 @@ from ..models import CertificateAuthority
 from ..utils import SUBJECT_FIELDS
 from .base import DjangoCAWithCertTestCase
 from .base import DjangoCAWithCSRTestCase
+from .base import override_tmpcadir
 
 
 class AdminTestMixin(object):
@@ -216,6 +217,82 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertEqual(cert.keyUsage(), '')
         self.assertEqual(cert.extendedKeyUsage(), '')
         self.assertEqual(cert.ca, self.ca)
+        self.assertEqual(cert.csr, self.csr_pem)
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_add_with_password(self):
+        password = b'foobar'
+        name = 'ca_with_pass'
+        cn = 'example.com'
+        self.cmd('init_ca', name, cn, password=password)
+        ca = CertificateAuthority.objects.get(name=name)
+
+        # first post without password
+        response = self.client.post(self.add_url, data={
+            'csr': self.csr_pem,
+            'ca': ca.pk,
+            'profile': 'webserver',
+            'subject_0': 'US',
+            'subject_5': cn,
+            'subjectAltName_1': True,
+            'algorithm': 'SHA256',
+            'expires': self.ca.expires.strftime('%Y-%m-%d'),
+            'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
+            'keyUsage_1': True,
+            'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
+            'extendedKeyUsage_1': False,
+        })
+        self.assertFalse(response.context['adminform'].form.is_valid())
+        self.assertEqual(response.context['adminform'].form.errors,
+                         {'password': ['Password was not given but private key is encrypted']})
+
+        # now post with a false password
+        response = self.client.post(self.add_url, data={
+            'csr': self.csr_pem,
+            'ca': ca.pk,
+            'profile': 'webserver',
+            'subject_0': 'US',
+            'subject_5': cn,
+            'subjectAltName_1': True,
+            'algorithm': 'SHA256',
+            'expires': self.ca.expires.strftime('%Y-%m-%d'),
+            'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
+            'keyUsage_1': True,
+            'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
+            'extendedKeyUsage_1': False,
+            'password': b'wrong',
+        })
+        self.assertFalse(response.context['adminform'].form.is_valid())
+        self.assertEqual(response.context['adminform'].form.errors,
+                         {'password': ['Bad decrypt. Incorrect password?']})
+
+        # post with correct password!
+        response = self.client.post(self.add_url, data={
+            'csr': self.csr_pem,
+            'ca': ca.pk,
+            'profile': 'webserver',
+            'subject_0': 'US',
+            'subject_5': cn,
+            'subjectAltName_1': True,
+            'algorithm': 'SHA256',
+            'expires': self.ca.expires.strftime('%Y-%m-%d'),
+            'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
+            'keyUsage_1': True,
+            'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
+            'extendedKeyUsage_1': False,
+            'password': 'foobar',
+        })
+        self.assertRedirects(response, self.changelist_url)
+
+        cert = Certificate.objects.get(cn=cn)
+        self.assertSubject(cert.x509, {'C': 'US', 'CN': cn})
+        self.assertIssuer(ca, cert)
+        self.assertAuthorityKeyIdentifier(ca, cert)
+        self.assertEqual(cert.subjectAltName(), 'DNS:%s' % cn)
+        self.assertEqual(cert.basicConstraints(), 'critical,CA:FALSE')
+        self.assertEqual(cert.keyUsage(), 'critical,digitalSignature,keyAgreement')
+        self.assertEqual(cert.extendedKeyUsage(), 'clientAuth,serverAuth')
+        self.assertEqual(cert.ca, ca)
         self.assertEqual(cert.csr, self.csr_pem)
 
     def test_wrong_csr(self):
