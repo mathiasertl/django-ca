@@ -4,9 +4,11 @@ ChangeLog
 
 .. _changelog-head:
 
-****
-HEAD
-****
+.. _changelog-1.6.0:
+
+******************
+1.6.0 (2017-04-21)
+******************
 
 New features and improvements
 =============================
