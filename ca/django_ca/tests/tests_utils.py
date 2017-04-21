@@ -218,7 +218,11 @@ class ParseGeneralNameTest(TestCase):
                          x509.IPAddress(ipaddress.ip_network(u'fd00::0/32')))
 
     def test_wrong_email(self):
-        with self.assertRaisesRegex(IDNAError, "The label b'user@' is not a valid A-label"):
+        if six.PY2:
+            msg = "The label user@ is not a valid A-label"
+        else:
+            msg = "The label b'user@' is not a valid A-label"
+        with self.assertRaisesRegex(IDNAError, msg):
             parse_general_name('user@')
 
         with self.assertRaisesRegex(IDNAError, '^Empty domain$'):
