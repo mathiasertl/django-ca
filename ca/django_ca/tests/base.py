@@ -70,6 +70,9 @@ ocsp_csr = _load_csr('ocsp.csr')
 ocsp_pem, ocsp_pubkey = _load_cert('ocsp.pem')
 cert1_key = _load_key('cert1.key')
 cert1_csr = _load_csr('cert1.csr')
+with open(os.path.join(settings.FIXTURES_DIR, 'cert1-der.csr'), 'rb') as stream:
+    cert1_csr_der = stream.read()
+
 cert1_pem, cert1_pubkey = _load_cert('cert1.pem')
 cert2_key = _load_key('cert2.key')
 cert2_csr = _load_csr('cert2.csr')
@@ -384,6 +387,7 @@ class DjangoCAWithCSRTestCase(DjangoCAWithCATestCase):
 
         cls.key = cert1_key
         cls.csr_pem = cert1_csr
+        cls.csr_der = cert1_csr_der
 
 
 class DjangoCAWithCertTestCase(DjangoCAWithCSRTestCase):
