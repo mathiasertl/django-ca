@@ -167,7 +167,7 @@ class X509CertMixin(models.Model):
     def authorityInfoAccess(self):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS)
-        except x509.ExtensionNotFound:
+        except x509.ExtensionNotFound:  # pragma: no cover - extension should always be present
             return ''
 
         output = ''
