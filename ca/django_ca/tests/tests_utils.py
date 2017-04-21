@@ -9,6 +9,7 @@ from datetime import datetime
 from datetime import timedelta
 
 from cryptography import x509
+from idna.core import IDNAError
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -214,6 +215,13 @@ class ParseGeneralNameTest(TestCase):
                          x509.IPAddress(ipaddress.ip_network(u'fd00::0/32')))
         self.assertEqual(parse_general_name('ip:fd00::0/32'),
                          x509.IPAddress(ipaddress.ip_network(u'fd00::0/32')))
+
+    def test_wrong_email(self):
+        with self.assertRaisesRegex(IDNAError, "The label b'user@' is not a valid A-label"):
+            parse_general_name('user@')
+
+        with self.assertRaisesRegex(IDNAError, '^Empty domain$'):
+            parse_general_name('email:user@')
 
     def test_error(self):
         with self.assertRaises(ValueError):
