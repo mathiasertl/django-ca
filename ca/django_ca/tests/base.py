@@ -330,10 +330,7 @@ class DjangoCATestCase(TestCase):
 
     @classmethod
     def get_subject(cls, cert):
-        value = {OID_NAME_MAPPINGS[s.oid]: s.value for s in cert.subject}
-        if 'EMAILADDRESS' in value:
-            value['emailAddress'] = value.pop('EMAILADDRESS')
-        return value
+        return {OID_NAME_MAPPINGS[s.oid]: s.value for s in cert.subject}
 
     @classmethod
     def get_extensions(cls, cert):
