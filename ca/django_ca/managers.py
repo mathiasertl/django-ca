@@ -68,10 +68,24 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
              issuer_url=None, issuer_alt_name=None, crl_url=None, ocsp_url=None,
              ca_issuer_url=None, ca_crl_url=None, ca_ocsp_url=None, name_constraints=None,
              password=None, parent_password=None):
-        """
+        """Create a new certificate authority.
+
         Parameters
         ----------
 
+        key_size : int
+            Integer, must be a power of two (e.g. 2048, 4096, ...)
+        key_type: str, optional
+            Either ``"RSA"`` or ``"DSA"`` for a RSA or DSA key, with ``"RSA"`` being the default.
+        algorithm : :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`
+            Hash algorithm used when signing the certificate. Must be an instance of
+            :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`, e.g.
+            :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.SHA512`.
+        expires : datetime
+            Datetime for when this certificate expires.
+        parent : :py:class:`~django_ca.models.CertificateAuthority`, optional
+            Parent certificate authority for the new CA. This means that this CA will be an intermediate
+            authority.
         password : bytes, optional
             Password to encrypt the private key with.
         parent_password : bytes, optional
