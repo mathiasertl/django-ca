@@ -308,7 +308,8 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         return builder.sign(private_key=ca.key(password), algorithm=algorithm, backend=default_backend()), req
 
     def init(self, ca, csr, *args, **kwargs):
-        c = self.model(ca=ca, csr=csr)
+        c = self.model(ca=ca)
         c.x509, csr = self.sign_cert(ca, csr, *args, **kwargs)
+        c.csr = csr.public_bytes(Encoding.PEM).decode('utf-8')
         c.save()
         return c
