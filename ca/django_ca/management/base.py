@@ -277,7 +277,8 @@ class BaseCommand(_BaseCommand):
         if opts is None:
             opts = ['-f', '--format']
         if help_text is None:
-            help_text = 'The format to use ("ASN1" is an alias for "DER", default: %s).' % default.name
+            help_text = 'The format to use ("ASN1" is an alias for "DER", default: %(default.name)s).'
+        help_text = help_text % {'default': default.name}
         parser.add_argument(*opts, metavar='{PEM,ASN1,DER}', default=default,
                             action=FormatAction, help=help_text)
 
