@@ -88,6 +88,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             authority.
         subject : str
             Subject string, e.g. ``"/CN=example.com"``.
+        pathlen : int, optional
         password : bytes, optional
             Password to encrypt the private key with.
         parent_password : bytes, optional

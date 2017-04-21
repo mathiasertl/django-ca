@@ -193,7 +193,7 @@ X509 v3 certificate extensions for signed certificates:
         }
 
         self.cmd('init_ca', name, '/C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=%s' % name,
-                 pathlen=False, **kwargs)
+                 pathlen=None, **kwargs)
 
         ca = CertificateAuthority.objects.get(name=name)
         stdout, stderr = self.cmd('view_ca', ca.serial)
