@@ -8,17 +8,24 @@ ChangeLog
 HEAD
 ****
 
+New features and improvements
+=============================
+
 * Support CSRs in DER format when signing a certificate via ``manage.py sign_cert``.
-* Fix the ``authorityKeyIdentifier`` extension when signing certificates with an intermediate CA.
-* Fix creation of intermediate CAs.
 * Support encrypting private keys of CAs with a password.
+* Support Django 1.11.
+* Allow creating CRLs of disabled CAs via ``manage.py dump_crl``.
 * Validate DNSNames when parsing general names. This means that signing a certificate with CommonName 
   that is not a valid domain name fails if it should also be added as subjectAltName (see ``--cn-in-san``
   option).
-* Support Django 1.11.
 * When configuring :py:class:`~django_ca.views.OCSPView`, the responder key and certificate are verified
   during configuration. An erroneous configuration thus throws an error on startup, not during runtime.
-* Allow creating CRLs of disabled CAs via ``manage.py dump_crl``.
+
+Bugfixes
+========
+
+* Fix the ``authorityKeyIdentifier`` extension when signing certificates with an intermediate CA.
+* Fix creation of intermediate CAs.
 
 .. _changelog-1.5.1:
 
