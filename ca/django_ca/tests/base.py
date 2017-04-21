@@ -212,7 +212,7 @@ class DjangoCATestCase(TestCase):
         if cls._overridden_settings:
             reload_module(ca_settings)
 
-    if six.PY2:
+    if six.PY2:  # pragma: no cover
         assertRaisesRegex = TestCase.assertRaisesRegexp
 
     @classmethod
