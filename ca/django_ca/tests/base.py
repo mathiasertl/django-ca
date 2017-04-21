@@ -278,7 +278,7 @@ class DjangoCATestCase(TestCase):
         kwargs.setdefault('key_size', settings.CA_MIN_KEY_SIZE)
         kwargs.setdefault('key_type', 'RSA')
         kwargs.setdefault('algorithm', hashes.SHA256())
-        kwargs.setdefault('expires', datetime.now() + timedelta(days=356))
+        kwargs.setdefault('expires', datetime.now() + timedelta(days=3560))
         kwargs.setdefault('parent', None)
         kwargs.setdefault('subject', '/CN=generated.example.com')
 
