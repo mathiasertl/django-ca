@@ -17,6 +17,7 @@ HEAD
 * Support Django 1.11.
 * When configuring :py:class:`~django_ca.views.OCSPView`, the responder key and certificate are verified
   during configuration. An erroneous configuration thus throws an error on startup, not during runtime.
+* Allow creating CRLs of disabled CAs via ``manage.py dump_crl``.
 
 .. _changelog-1.5.1:
 

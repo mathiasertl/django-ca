@@ -31,7 +31,7 @@ class Command(BaseCommand):
                             help='Path for the output file. Use "-" for stdout.')
         self.add_algorithm(parser)
         self.add_format(parser)
-        self.add_ca(parser)
+        self.add_ca(parser, allow_disabled=True)
         self.add_password(parser)
         super(Command, self).add_arguments(parser)
 
