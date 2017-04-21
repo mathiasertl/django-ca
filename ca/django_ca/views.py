@@ -124,7 +124,7 @@ class OCSPView(View):
     """Absolute path to the private key used for signing OCSP responses."""
 
     responder_cert = None
-    """Absolute path, serial of the public key or key itself used for signing OCSP responses."""
+    """Absolute path or key itself used for signing OCSP responses."""
 
     expires = 600
     """Time in seconds that the responses remain valid. The default is 600 seconds or ten
