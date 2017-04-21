@@ -43,7 +43,10 @@ class Command(BaseCommand):
             'password': options['password'],
         }
 
-        crl = get_crl(ca=options['ca'], **kwargs)
+        try:
+            crl = get_crl(ca=options['ca'], **kwargs)
+        except Exception as e:
+            raise CommandError(str(e))
 
         if path == '-':
             self.stdout.write(crl, ending=b'')
