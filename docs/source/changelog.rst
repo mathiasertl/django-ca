@@ -8,6 +8,7 @@ ChangeLog
 HEAD
 ****
 
+* Support CSRs in DER format when signing a certificate via ``manage.py sign_cert``.
 * Fix the ``authorityKeyIdentifier`` extension when signing certificates with an intermediate CA.
 * Fix creation of intermediate CAs.
 * Support encrypting private keys of CAs with a password.

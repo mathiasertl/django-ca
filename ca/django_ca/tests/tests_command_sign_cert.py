@@ -266,6 +266,12 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
                 CommandError, '^Must give at least a CN in --subject or one or more --alt arguments\.$'):
             self.cmd('sign_cert', subject={'C': 'AT'})
 
+    def test_wrong_format(self):
+        stdin = six.StringIO(self.csr_pem)
+
+        with self.assertRaisesRegex(CommandError, 'Unknown CSR format passed: foo$'):
+            self.cmd('sign_cert', alt=['example.com'], csr_format='foo', stdin=stdin)
+
 
 @override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class SignCertChildCATestCase(DjangoCAWithCSRTestCase):
