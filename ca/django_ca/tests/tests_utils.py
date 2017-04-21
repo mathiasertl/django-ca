@@ -144,7 +144,7 @@ class LazyEncoderTestCase(TestCase):
                          json.dumps({'a': datetime(2016, 3, 26)}, cls=LazyEncoder))
 
 
-class ParseNameTestCase(TestCase):
+class ParseNameTestCase(DjangoCATestCase):
     def assertSubject(self, actual, expected):
         self.assertEqual(list(parse_name(actual).items()), expected)
 
@@ -194,7 +194,7 @@ class ParseNameTestCase(TestCase):
         self.assertEqual(e.exception.args, ('Unknown x509 name field: %s' % field, ))
 
 
-class ParseGeneralNameTest(TestCase):
+class ParseGeneralNameTest(DjangoCATestCase):
     # some paths are not covered in doctests
 
     def test_ipv4(self):
@@ -283,7 +283,7 @@ http://www.example.net''')
         self.assertEqual(e.exception.args, ('Enter a valid URL.', 'invalid', None))
 
 
-class GetBasicCertTestCase(TestCase):
+class GetBasicCertTestCase(DjangoCATestCase):
     def parse_date(self, date):
         return datetime.strptime(date, '%Y%m%d%H%M%SZ')
 
