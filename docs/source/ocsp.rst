@@ -89,6 +89,7 @@ interface or via the command line:
    34:D6:02:B5:B8:27:4F:51:9A:16:0C:B8:56:B7:79:3F - Root CA
    $ python manage.py edit_ca --ocsp-url=http://ocsp.example.com/ \
    >     34:D6:02:B5:B8:27:4F:51:9A:16:0C:B8:56:B7:79:3F
+
 *******************************************
 Run an OCSP responser with ``openssl ocsp``
 *******************************************
