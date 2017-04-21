@@ -269,6 +269,22 @@ class DjangoCATestCase(TestCase):
         return now + timedelta(days + 1)
 
     @classmethod
+    def create_ca(cls, name, **kwargs):
+        """Create a new CA.
+
+        Sets sane defaults for all required kwargs, so you only have to pass the name.
+        """
+
+        kwargs.setdefault('key_size', settings.CA_MIN_KEY_SIZE)
+        kwargs.setdefault('key_type', 'RSA')
+        kwargs.setdefault('algorithm', hashes.SHA256())
+        kwargs.setdefault('expires', datetime.now() + timedelta(days=356))
+        kwargs.setdefault('parent', None)
+        kwargs.setdefault('subject', '/CN=generated.example.com')
+
+        return CertificateAuthority.objects.init(name=name, **kwargs)
+
+    @classmethod
     def load_ca(cls, name, x509, enabled=True, parent=None, **kwargs):
         """Load a CA from one of the preloaded files."""
         path = os.path.join(settings.FIXTURES_DIR, '%s.key' % name)
