@@ -23,6 +23,7 @@ from oscrypto import asymmetric
 
 from django.conf import settings
 from django.conf.urls import url
+from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.test import Client
 from django.utils.encoding import force_text
@@ -319,3 +320,12 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 200)
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
         self.assertEqual(ocsp_response['response_status'].native, 'malformed_request')
+
+    def test_view_parameters(self):
+        with self.assertRaisesRegex(ImproperlyConfigured, '^wrong path: Could not read private key\.$'):
+            OCSPView.as_view(ca=certs['root']['serial'], responder_key='wrong path',
+                             responder_cert=settings.OCSP_PEM_PATH)
+
+        with self.assertRaisesRegex(ImproperlyConfigured, '^: Could not read public key\.$'):
+            OCSPView.as_view(ca=certs['root']['serial'], responder_key=settings.OCSP_KEY_PATH,
+                             responder_cert='')
