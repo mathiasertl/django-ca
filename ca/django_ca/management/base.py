@@ -271,12 +271,14 @@ class BaseCommand(_BaseCommand):
         parser.add_argument('%s' % arg, metavar='SERIAL', help=help, default=default,
                             allow_disabled=allow_disabled, action=CertificateAuthorityAction)
 
-    def add_format(self, parser, default=Encoding.PEM, help_text=None):
+    def add_format(self, parser, default=Encoding.PEM, help_text=None, opts=None):
         """Add the --format option."""
 
+        if opts is None:
+            opts = ['-f', '--format']
         if help_text is None:
             help_text = 'The format to use ("ASN1" is an alias for "DER", default: %s).' % default.name
-        parser.add_argument('-f', '--format', metavar='{PEM,ASN1,DER}', default=default,
+        parser.add_argument(*opts, metavar='{PEM,ASN1,DER}', default=default,
                             action=FormatAction, help=help_text)
 
     def add_password(self, parser, help=None):
