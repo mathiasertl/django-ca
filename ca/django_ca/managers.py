@@ -184,7 +184,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
 
 class CertificateManager(CertificateManagerMixin, models.Manager):
-    def sign_cert(self, ca, csr, expires, algorithm, subject=None, cn_in_san=True, csr_format='PEM',
+    def sign_cert(self, ca, csr, expires, algorithm, subject=None, cn_in_san=True, csr_format=Encoding.PEM,
                   subjectAltName=None, keyUsage=None, extendedKeyUsage=None, password=None):
         """Create a signed certificate from a CSR.
 
@@ -197,10 +197,10 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         Parameters
         ----------
 
-        ca : django_ca.models.CertificateAuthority
+        ca : :py:class:`~django_ca.models.CertificateAuthority`
             The certificate authority to sign the certificate with.
         csr : str
-            A valid CSR in PEM format. If none is given, `self.csr` will be used.
+            A valid CSR. The format is given by the ``csr_format`` parameter.
         expires : int
             When the certificate should expire (passed to :py:func:`get_cert_builder`).
         algorithm : {'sha512', 'sha256', ...}
@@ -215,8 +215,8 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             `True`, but the parameter is ignored if no CommonName is given. This is typically set
             to `False` when creating a client certificate, where the subjects CommonName has no
             meaningful value as subjectAltName.
-        csr_format : {'PEM', 'DER'}, optional
-            The format of the CSR. The default is ``'PEM'``.
+        csr_format : :py:class:`~cryptography:cryptography.hazmat.primitives.serialization.Encoding`, optional
+            The format of the CSR. The default is ``PEM``.
         subjectAltName : list of str, optional
             A list of values for the subjectAltName extension. Values are passed to
             :py:func:`~django_ca.utils.parse_general_name`, see function documentation for how this value is
@@ -256,9 +256,9 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
                 if cn_name not in subjectAltName:
                     subjectAltName.insert(0, cn_name)
 
-        if csr_format == 'PEM':
+        if csr_format == Encoding.PEM:
             req = x509.load_pem_x509_csr(force_bytes(csr), default_backend())
-        elif csr_format == 'DER':
+        elif csr_format == Encoding.DER:
             req = x509.load_der_x509_csr(force_bytes(csr), default_backend())
         else:
             raise ValueError('Unknown CSR format passed: %s' % csr_format)
