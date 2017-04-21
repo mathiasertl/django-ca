@@ -22,6 +22,7 @@ from django.utils import six
 
 from .. import ca_settings
 from ..models import Certificate
+from ..models import CertificateAuthority
 from .base import DjangoCAWithCSRTestCase
 from .base import child_pubkey
 from .base import override_settings
@@ -205,6 +206,29 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
         self.assertEqual(stderr, '')
         self.assertEqual(cert.subjectAltName(), 'DNS:example.com')
+
+    @override_settings(CA_DEFAULT_SUBJECT={})
+    def test_with_password(self):
+        password = b'testpassword'
+        ca = self.create_ca('with password', password=password)
+
+        ca = CertificateAuthority.objects.get(pk=ca.pk)
+
+        # Giving no password raises a CommandError
+        stdin = six.StringIO(self.csr_pem)
+        with self.assertRaisesRegex(CommandError, '^Password was not given but private key is encrypted$'):
+            self.cmd('sign_cert', ca=ca, alt=['example.com'], stdin=stdin)
+
+        # Pass a password
+        stdin = six.StringIO(self.csr_pem)
+        ca = CertificateAuthority.objects.get(pk=ca.pk)
+        stdout, stderr = self.cmd('sign_cert', ca=ca, alt=['example.com'], stdin=stdin, password=password)
+
+        # Pass the wrong password
+        stdin = six.StringIO(self.csr_pem)
+        ca = CertificateAuthority.objects.get(pk=ca.pk)
+        with self.assertRaisesRegex(CommandError, '^Bad decrypt\. Incorrect password\?$'):
+            self.cmd('sign_cert', ca=ca, alt=['example.com'], stdin=stdin, password=b'wrong')
 
     def test_expiry_too_late(self):
         expires = self.ca.expires + timedelta(days=3)
