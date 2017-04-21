@@ -132,20 +132,33 @@ class OCSPView(View):
 
     @classonlymethod
     def as_view(cls, responder_key, responder_cert, **kwargs):
-        # Preload the responder key and certificate for faster access.
+        priv_err_msg = '%s: Could not read private key.' % responder_key
+        pub_err_msg = '%s: Could not read public key.' % responder_cert
 
+        # Preload the responder key and certificate for faster access.
         try:
             with open(responder_key, 'rb') as stream:
                 responder_key = stream.read()
         except:
-            raise ImproperlyConfigured('%s: Could not read private key.' % responder_key)
+            raise ImproperlyConfigured(priv_err_msg)
+
+        try:
+            # try to load responder key and cert with oscrypto, to make sure they are actually usable
+            load_private_key(responder_key)
+        except:
+            raise ImproperlyConfigured(priv_err_msg)
 
         if os.path.exists(responder_cert):
             with open(responder_cert, 'rb') as stream:
                 responder_cert = stream.read()
 
         if not responder_cert:
-            raise ImproperlyConfigured('%s: Could not read public key.' % responder_cert)
+            raise ImproperlyConfigured(pub_err_msg)
+
+        try:
+            load_certificate(responder_cert)
+        except:
+            raise ImproperlyConfigured(pub_err_msg)
 
         return super(OCSPView, cls).as_view(
             responder_key=responder_key, responder_cert=responder_cert, **kwargs)

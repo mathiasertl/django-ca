@@ -73,11 +73,6 @@ urlpatterns = [
         responder_cert=settings.OCSP_PEM_PATH,
     ), name='unknown'),
 
-    url(r'^ocsp-bad-response/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
-        ca=certs['root']['serial'],
-        responder_key=settings.OCSP_KEY_PATH,
-        responder_cert='gone',
-    ), name='bad-response'),
 ]
 
 
@@ -329,3 +324,12 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         with self.assertRaisesRegex(ImproperlyConfigured, '^: Could not read public key\.$'):
             OCSPView.as_view(ca=certs['root']['serial'], responder_key=settings.OCSP_KEY_PATH,
                              responder_cert='')
+
+        # Try to pass this file as private or public key, which is of course not a valid key
+        with self.assertRaisesRegex(ImproperlyConfigured, '^%s: Could not read private key\.$' % __file__):
+            OCSPView.as_view(ca=certs['root']['serial'], responder_key=__file__,
+                             responder_cert=settings.OCSP_PEM_PATH)
+
+        with self.assertRaisesRegex(ImproperlyConfigured, '^%s: Could not read public key\.$' % __file__):
+            OCSPView.as_view(ca=certs['root']['serial'], responder_key=settings.OCSP_KEY_PATH,
+                             responder_cert=__file__)
