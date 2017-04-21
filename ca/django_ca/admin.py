@@ -304,7 +304,7 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
             san, cn_in_san = data['subjectAltName']
             expires = datetime.combine(data['expires'], datetime.min.time())
 
-            obj.x509 = self.model.objects.sign_cert(
+            obj.x509, req = self.model.objects.sign_cert(
                 ca=data['ca'],
                 csr=data['csr'],
                 expires=expires,
