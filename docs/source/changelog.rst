@@ -15,6 +15,8 @@ HEAD
   that is not a valid domain name fails if it should also be added as subjectAltName (see ``--cn-in-san``
   option).
 * Support Django 1.11.
+* When configuring :py:class:`~django_ca.views.OCSPView`, the responder key and certificate are verified
+  during configuration. An erroneous configuration thus throws an error on startup, not during runtime.
 
 .. _changelog-1.5.1:
 
