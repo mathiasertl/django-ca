@@ -20,6 +20,8 @@ New features and improvements
   option).
 * When configuring :py:class:`~django_ca.views.OCSPView`, the responder key and certificate are verified
   during configuration. An erroneous configuration thus throws an error on startup, not during runtime.
+* The testsuite now tests certificate signatures itself via ``pyOpenSSL``,  so an independent library
+  is used for verification.
 
 Bugfixes
 ========
