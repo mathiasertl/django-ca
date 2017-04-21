@@ -21,9 +21,11 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 
 from django.core.management.base import CommandError
+from django.utils import six
 
 from .. import ca_settings
 from ..models import Certificate
+from ..models import CertificateAuthority
 from .base import DjangoCAWithCertTestCase
 from .base import override_tmpcadir
 
@@ -57,6 +59,42 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         path = os.path.join(ca_settings.CA_DIR, 'test', 'crl-test.crl')
         with self.assertRaises(CommandError):
             self.cmd('dump_crl', path, stdout=BytesIO(), stderr=BytesIO())
+
+    def test_password(self):
+        password = b'testpassword'
+        ca = self.create_ca('with password', password=password)
+        ca = CertificateAuthority.objects.get(pk=ca.pk)
+
+        # Giving no password raises a CommandError
+        stdin = six.StringIO(self.csr_pem)
+        with self.assertRaisesRegex(CommandError, '^Password was not given but private key is encrypted$'):
+            self.cmd('dump_crl', ca=ca, alt=['example.com'], stdin=stdin)
+
+        # False password
+        stdin = six.StringIO(self.csr_pem)
+        ca = CertificateAuthority.objects.get(pk=ca.pk)
+        stdin = six.StringIO(self.csr_pem)
+        with self.assertRaisesRegex(CommandError, '^Bad decrypt\. Incorrect password\?$'):
+            self.cmd('dump_crl', ca=ca, alt=['example.com'], stdin=stdin, password=b'wrong')
+
+        stdout, stderr = self.cmd('dump_crl', ca=ca, stdout=BytesIO(), stderr=BytesIO(), password=password)
+        self.assertEqual(stderr, b'')
+
+        crl = x509.load_pem_x509_crl(stdout, default_backend())
+        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
+        self.assertEqual(list(crl), [])
+
+    def test_disabled(self):
+        ca = self.create_ca('disabled')
+        ca.enabled = False
+        ca.save()
+
+        stdout, stderr = self.cmd('dump_crl', ca=ca, stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stderr, b'')
+
+        crl = x509.load_pem_x509_crl(stdout, default_backend())
+        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
+        self.assertEqual(list(crl), [])
 
     def test_revoked(self):
         cert = Certificate.objects.get(serial=self.cert.serial)
