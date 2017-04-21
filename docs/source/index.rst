@@ -49,6 +49,7 @@ API documentation:
 .. toctree::
    :maxdepth: 1
 
+   django_ca/models
    django_ca/utils
 
 
