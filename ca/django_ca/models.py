@@ -216,7 +216,7 @@ class X509CertMixin(models.Model):
                 pass
         value = ','.join(sorted(usages))
 
-        if ext.critical:
+        if ext.critical:  # pragma: no branch - should always be critical
             value = 'critical,%s' % value
         return value
     keyUsage.short_description = 'keyUsage'
