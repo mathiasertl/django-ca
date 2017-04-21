@@ -188,7 +188,7 @@ class ParseNameTestCase(TestCase):
 
     def test_unknown(self):
         field = 'ABC'
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaisesRegex(ValueError, '^Unknown x509 name field: ABC$') as e:
             parse_name('/%s=example.com' % field)
         self.assertEqual(e.exception.args, ('Unknown x509 name field: %s' % field, ))
 
@@ -224,7 +224,7 @@ class ParseGeneralNameTest(TestCase):
             parse_general_name('email:user@')
 
     def test_error(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, '^Could not parse IP address\.$'):
             parse_general_name('ip:1.2.3.4/24')
 
 
@@ -261,14 +261,21 @@ class MultilineURLValidatorTestCase(TestCase):
 http://www.example.net''')
 
     def test_error(self):
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(ValidationError) as e:
             multiline_url_validator('foo')
+        self.assertEqual(e.exception.args, ('Enter a valid URL.', 'invalid', None))
+
         with self.assertRaises(ValidationError):
             multiline_url_validator('foo\nhttp://www.example.com')
+        self.assertEqual(e.exception.args, ('Enter a valid URL.', 'invalid', None))
+
         with self.assertRaises(ValidationError):
             multiline_url_validator('http://www.example.com\nfoo')
+        self.assertEqual(e.exception.args, ('Enter a valid URL.', 'invalid', None))
+
         with self.assertRaises(ValidationError):
             multiline_url_validator('http://www.example.com\nfoo\nhttp://example.org')
+        self.assertEqual(e.exception.args, ('Enter a valid URL.', 'invalid', None))
 
 
 class GetBasicCertTestCase(TestCase):
@@ -295,9 +302,11 @@ class GetBasicCertTestCase(TestCase):
         self.assertCert(0)
 
     def test_negative(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError,
+                                    '^The not valid after date must be after the not valid before date\.$'):
             self.assertCert(-1)
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError,
+                                    '^The not valid after date must be after the not valid before date\.$'):
             self.assertCert(-2)
 
 
