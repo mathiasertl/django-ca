@@ -8,11 +8,13 @@ ChangeLog
 HEAD
 ****
 
-* Fix value of the ``authorityKeyIdentifier`` extension when signing certificates with an intermediate CA.
-* Fix creation of child CAs.
+* Fix the ``authorityKeyIdentifier`` extension when signing certificates with an intermediate CA.
+* Fix creation of intermediate CAs.
+* Support encrypting private keys of CAs with a password.
 * Validate DNSNames when parsing general names. This means that signing a certificate with CommonName 
   that is not a valid domain name fails if it should also be added as subjectAltName (see ``--cn-in-san``
   option).
+* Support Django 1.11.
 
 .. _changelog-1.5.1:
 
