@@ -232,14 +232,16 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
 
     def test_expiry_too_late(self):
         expires = self.ca.expires + timedelta(days=3)
-        with self.assertRaises(CommandError):
-            stdin = six.StringIO(self.csr_pem)
-            stdout, stderr = self.cmd('sign_cert', alt=['example.com'], expires=expires,
-                                      stdin=stdin)
+        stdin = six.StringIO(self.csr_pem)
+
+        with self.assertRaisesRegex(
+                CommandError, '^Certificate would outlive CA, maximum expiry for this CA is 3646 days\.$'):
+            self.cmd('sign_cert', alt=['example.com'], expires=expires, stdin=stdin)
 
     def test_no_cn_or_san(self):
-        with self.assertRaises(CommandError):
-            self.cmd('sign_cert', C='AT', OU='OrgUnit')
+        with self.assertRaisesRegex(
+                CommandError, '^Must give at least a CN in --subject or one or more --alt arguments\.$'):
+            self.cmd('sign_cert', subject={'C': 'AT'})
 
 
 @override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
