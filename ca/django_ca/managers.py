@@ -86,6 +86,8 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         parent : :py:class:`~django_ca.models.CertificateAuthority`, optional
             Parent certificate authority for the new CA. This means that this CA will be an intermediate
             authority.
+        subject : str
+            Subject string, e.g. ``"/CN=example.com"``.
         password : bytes, optional
             Password to encrypt the private key with.
         parent_password : bytes, optional
