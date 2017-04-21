@@ -72,6 +72,7 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
         self.add_cn_in_san(parser)
         self.add_algorithm(parser)
         self.add_ca(parser)
+        self.add_password(parser)
 
         parser.add_argument(
             '--expires', default=ca_settings.CA_DEFAULT_EXPIRES, action=ExpiresAction,
@@ -122,6 +123,7 @@ the default values, options like --key-usage still override the profile.""")
 
         # get keyUsage and extendedKeyUsage flags based on profiles
         kwargs = get_cert_profile_kwargs(options['profile'])
+        kwargs['password'] = options['password']
         if options['cn_in_san'] is not None:
             kwargs['cn_in_san'] = options['cn_in_san']
         if options['key_usage']:
