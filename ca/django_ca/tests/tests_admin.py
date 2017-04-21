@@ -320,6 +320,29 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         with self.assertRaises(Certificate.DoesNotExist):
             Certificate.objects.get(cn=cn)
 
+    def test_wrong_algorithm(self):
+        cn = 'test-add-wrong-algo.example.com'
+        response = self.client.post(self.add_url, data={
+            'csr': self.csr_pem,
+            'ca': self.ca.pk,
+            'profile': 'webserver',
+            'subject_0': 'US',
+            'subject_5': cn,
+            'subjectAltName_1': True,
+            'algorithm': 'wrong algo',
+            'expires': self.ca.expires.strftime('%Y-%m-%d'),
+            'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
+            'keyUsage_1': True,
+            'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
+            'extendedKeyUsage_1': False,
+        })
+        self.assertEqual(response.status_code, 200)
+
+        self.assertFalse(response.context['adminform'].form.is_valid())
+        self.assertEqual(
+            response.context['adminform'].form.errors,
+            {'algorithm': ['Select a valid choice. wrong algo is not one of the available choices.']})
+
     def test_expires_in_the_past(self):
         cn = 'test-expires-in-the-past.example.com'
         expires = datetime.now() - timedelta(days=3)

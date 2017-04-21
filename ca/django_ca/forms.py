@@ -139,7 +139,9 @@ class CreateCertificateForm(forms.ModelForm):
         algo = self.cleaned_data['algorithm']
         try:
             algo = getattr(hashes, algo.upper())()
-        except AttributeError:
+        except AttributeError:  # pragma: no cover
+            # We only add what is known to cryptography in `choices`, and other values posted are caught
+            # during Djangos standard form validation, so this should never happen.
             raise forms.ValidationError(_('Unknown hash algorithm: %s') % algo)
         return algo
 
