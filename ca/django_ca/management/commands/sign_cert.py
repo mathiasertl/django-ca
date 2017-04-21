@@ -80,6 +80,8 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
         parser.add_argument(
             '--csr', metavar='FILE',
             help='The path to the certificate to sign, if ommitted, you will be be prompted.')
+        self.add_format(parser, opts=['--csr-format'],
+                        help_text='Format of the CSR ("ASN1" is an alias for "DER", default: %(default)s)')
         parser.add_argument(
             '--alt', metavar='DOMAIN', action='append', default=[],
             help='Add a subjectAltName to the certificate (may be given multiple times)')
@@ -124,6 +126,7 @@ the default values, options like --key-usage still override the profile.""")
         # get keyUsage and extendedKeyUsage flags based on profiles
         kwargs = get_cert_profile_kwargs(options['profile'])
         kwargs['password'] = options['password']
+        kwargs['csr_format'] = options['csr_format']
         if options['cn_in_san'] is not None:
             kwargs['cn_in_san'] = options['cn_in_san']
         if options['key_usage']:
@@ -151,7 +154,8 @@ the default values, options like --key-usage still override the profile.""")
                 csr += '%s\n' % six.moves.input()
             csr = csr.strip()
         else:
-            csr = open(options['csr']).read()
+            with open(options['csr'], 'rb') as stream:
+                csr = stream.read()
 
         try:
             cert = Certificate.objects.init(
