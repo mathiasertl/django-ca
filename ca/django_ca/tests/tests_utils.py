@@ -8,8 +8,9 @@ import json
 from datetime import datetime
 from datetime import timedelta
 
-from cryptography import x509
 from idna.core import IDNAError
+
+from cryptography import x509
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
