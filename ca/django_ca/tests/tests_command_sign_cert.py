@@ -17,6 +17,8 @@ import os
 from collections import OrderedDict
 from datetime import timedelta
 
+from cryptography.hazmat.primitives.serialization import Encoding
+
 from django.core.management.base import CommandError
 from django.utils import six
 
@@ -229,6 +231,27 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         ca = CertificateAuthority.objects.get(pk=ca.pk)
         with self.assertRaisesRegex(CommandError, '^Bad decrypt\. Incorrect password\?$'):
             self.cmd('sign_cert', ca=ca, alt=['example.com'], stdin=stdin, password=b'wrong')
+
+    def test_der_csr(self):
+        csr_path = os.path.join(ca_settings.CA_DIR, 'test.csr')
+        with open(csr_path, 'wb') as csr_stream:
+            csr_stream.write(self.csr_der)
+
+        try:
+            subject = OrderedDict([('CN', 'example.com'), ('emailAddress', 'user@example.com')])
+            stdout, stderr = self.cmd('sign_cert', subject=subject, csr=csr_path, csr_format=Encoding.DER)
+            self.assertEqual(stderr, '')
+
+            cert = Certificate.objects.first()
+            self.assertSignature([self.ca], cert)
+
+            self.assertSubject(cert.x509, subject)
+            self.assertEqual(stdout, cert.pub)
+            self.assertEqual(cert.keyUsage(), 'critical,digitalSignature,keyAgreement,keyEncipherment')
+            self.assertEqual(cert.extendedKeyUsage(), 'serverAuth')
+            self.assertEqual(cert.subjectAltName(), 'DNS:example.com')
+        finally:
+            os.remove(csr_path)
 
     def test_expiry_too_late(self):
         expires = self.ca.expires + timedelta(days=3)
