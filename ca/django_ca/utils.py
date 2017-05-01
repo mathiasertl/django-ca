@@ -402,7 +402,8 @@ def parse_general_name(name):
     elif typ == 'dirname':
         return x509.DirectoryName(x509_name(name))
     else:
-        idna.encode(name)  # fails if this is an invalid domain name
+        # fails if this is an invalid domain name
+        idna.encode(name[2:] if name.startswith("*.") else name)
         return x509.DNSName(name)
 
 
