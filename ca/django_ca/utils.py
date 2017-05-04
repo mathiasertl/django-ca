@@ -342,17 +342,26 @@ def parse_general_name(name):
 
     Wildcard subdomains are allowed in DNS entries, however RFC 2595 limits their use to a single
     wildcard in the outermost level
-
     >>> parse_general_name('*.example.com')
     'DNS:*.example.com'
-    >>> parse_general_name('*.*.example.com')
+    >>> try:
+    ...     parse_general_name('*.*.example.com')
+    ... except idna.core.InvalidCodepoint:
+    ...     raise Exception("Wildcard error")
+    ... except idna.core.IDNAError:
+    ...     raise Exception("Wildcard error")
     Traceback (most recent call last):
     ...
-    idna.core.IDNAError: The label * is not a valid A-label
-    >>> parse_general_name('domain.*.example.com')
+    Exception: Wildcard error
+    >>> try:
+    ...     parse_general_name('domain.*.example.com')
+    ... except idna.core.InvalidCodepoint:
+    ...     raise Exception("Wildcard error")
+    ... except idna.core.IDNAError:
+    ...     raise Exception("Wildcard error")
     Traceback (most recent call last):
     ...
-    idna.core.IDNAError: The label * is not a valid A-label
+    Exception: Wildcard error
     """
     name = force_text(name)
     typ = None
