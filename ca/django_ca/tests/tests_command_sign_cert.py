@@ -15,6 +15,7 @@
 
 import os
 from collections import OrderedDict
+from datetime import datetime
 from datetime import timedelta
 
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -255,10 +256,13 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
 
     def test_expiry_too_late(self):
         expires = self.ca.expires + timedelta(days=3)
+        time_left = (self.ca.expires - datetime.now()).days
         stdin = six.StringIO(self.csr_pem)
 
         with self.assertRaisesRegex(
-                CommandError, '^Certificate would outlive CA, maximum expiry for this CA is 3646 days\.$'):
+                CommandError,
+                '^Certificate would outlive CA, maximum expiry for this CA is {} days\.$'.format(time_left)
+        ):
             self.cmd('sign_cert', alt=['example.com'], expires=expires, stdin=stdin)
 
     def test_no_cn_or_san(self):
