@@ -338,6 +338,21 @@ def parse_general_name(name):
     Traceback (most recent call last):
         ...
     idna.core.IDNAError: Empty domain
+
+
+    Wildcard subdomains are allowed in DNS entries, however RFC 2595 limits their use to a single
+    wildcard in the outermost level
+
+    >>> parse_general_name('*.example.com')
+    'DNS:*.example.com'
+    >>> parse_general_name('*.*.example.com')
+    Traceback (most recent call last):
+    ...
+    idna.core.IDNAError: The label * is not a valid A-label
+    >>> parse_general_name('domain.*.example.com')
+    Traceback (most recent call last):
+    ...
+    idna.core.IDNAError: The label * is not a valid A-label
     """
     name = force_text(name)
     typ = None
