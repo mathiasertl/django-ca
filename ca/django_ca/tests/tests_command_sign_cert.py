@@ -15,7 +15,8 @@
 
 import os
 from collections import OrderedDict
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
