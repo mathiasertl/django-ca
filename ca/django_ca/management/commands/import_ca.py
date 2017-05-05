@@ -81,10 +81,10 @@ Note that the private key will be copied to the directory configured by the CA_D
 
         # load private key
         try:
-            key_loaded = x509.load_pem_private_key(key_data, import_password, default_backend())
+            key_loaded = serialization.load_pem_private_key(key_data, import_password, default_backend())
         except:
             try:
-                key_loaded = x509.load_der_private_key(key_data, import_password, default_backend())
+                key_loaded = serialization.load_der_private_key(key_data, import_password, default_backend())
             except Exception as e:
                 raise CommandError('Unable to load public pem.')
 
