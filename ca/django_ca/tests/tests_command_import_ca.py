@@ -65,3 +65,24 @@ class ImportCATest(DjangoCATestCase):
         self.assertIsInstance(key, RSAPrivateKey)
         self.assertEqual(key.key_size, certs['root']['key_size'])
         self.assertEqual(ca.serial, certs['root']['serial'])
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_der(self):
+        name = 'testname'
+        pem_path = os.path.join(settings.FIXTURES_DIR, 'root-pub.der')
+        key_path = os.path.join(settings.FIXTURES_DIR, 'root-key.der')
+        out, err = self.cmd('import_ca', name, key_path, pem_path)
+
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+
+        ca = CertificateAuthority.objects.get(name=name)
+        self.assertSignature([ca], ca)
+        ca.full_clean()  # assert e.g. max_length in serials
+        self.assertBasic(ca.x509, algo='sha512')
+
+        # test the private key
+        key = ca.key(None)
+        self.assertIsInstance(key, RSAPrivateKey)
+        self.assertEqual(key.key_size, certs['root']['key_size'])
+        self.assertEqual(ca.serial, certs['root']['serial'])
