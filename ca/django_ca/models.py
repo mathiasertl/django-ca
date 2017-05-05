@@ -301,7 +301,7 @@ class CertificateAuthority(X509CertMixin):
 
     name = models.CharField(max_length=32, help_text=_('A human-readable name'), unique=True)
     enabled = models.BooleanField(default=True)
-    parent = models.ForeignKey('self', null=True, blank=True, related_name='children')
+    parent = models.ForeignKey('self', models.SET_NULL, null=True, blank=True, related_name='children')
     private_key_path = models.CharField(max_length=256, help_text=_('Path to the private key.'))
 
     # various details used when signing certs
@@ -381,7 +381,7 @@ class Certificate(X509CertMixin):
 
     watchers = models.ManyToManyField(Watcher, related_name='certificates', blank=True)
 
-    ca = models.ForeignKey(CertificateAuthority, verbose_name=_('Certificate Authority'))
+    ca = models.ForeignKey(CertificateAuthority, models.CASCADE, verbose_name=_('Certificate Authority'))
     csr = models.TextField(verbose_name=_('CSR'), blank=True)
 
     revoked = models.BooleanField(default=False)
