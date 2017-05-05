@@ -382,7 +382,7 @@ class Certificate(X509CertMixin):
     watchers = models.ManyToManyField(Watcher, related_name='certificates', blank=True)
 
     ca = models.ForeignKey(CertificateAuthority, verbose_name=_('Certificate Authority'))
-    csr = models.TextField(verbose_name=_('CSR'))
+    csr = models.TextField(verbose_name=_('CSR'), blank=True)
 
     revoked = models.BooleanField(default=False)
     revoked_date = models.DateTimeField(null=True, blank=True, verbose_name=_('Revoked on'))
