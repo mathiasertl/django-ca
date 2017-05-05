@@ -55,7 +55,6 @@ The authority that that signed the certificate must exist in the database."""
             except:
                 raise CommandError('Unable to load public key.')
 
-        print(options['ca'])
         cert = Certificate(ca=options['ca'])
         cert.x509 = pub_loaded
         cert.save()
