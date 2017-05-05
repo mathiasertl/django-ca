@@ -60,7 +60,7 @@ Note that the private key will be copied to the directory configured by the CA_D
             os.makedirs(ca_settings.CA_DIR)
 
         password = options['password']
-        import_password = options['password']
+        import_password = options['import_password']
         parent = options['parent']
         pem_data = pem.read()
         key_data = key.read()
