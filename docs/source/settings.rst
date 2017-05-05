@@ -121,7 +121,7 @@ CA_PROFILES
 
      .. code-block:: python
 
-         CA_DEFAULT_PROFILES = {
+         CA_PROFILES = {
              'client': {
                  'desc': _('Nice description.'),
                  'keyUsage': {
