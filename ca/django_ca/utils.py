@@ -343,7 +343,7 @@ def parse_general_name(name):
     Wildcard subdomains are allowed in DNS entries, however RFC 2595 limits their use to a single
     wildcard in the outermost level
     >>> parse_general_name('*.example.com')
-    'DNS:*.example.com'
+    <DNSName(value=*.example.com)>
     >>> try:
     ...     parse_general_name('*.*.example.com')
     ... except idna.core.InvalidCodepoint:
