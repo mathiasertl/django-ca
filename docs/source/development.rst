@@ -65,8 +65,16 @@ Verify a certificate using OCSP::
   openssl ocsp -CAfile ca.pem -issuer ca.pem -cert cert.pem \
       -url http://localhost:8888 -resp_text
 
-Other
-=====
+Conversion
+==========
+
+Convert a PEM formatted public key to DER::
+
+   openssl x509 -in pub.pem -outform der -out pub.der
+
+Convert a PEM formatted **private** key to DER::
+
+   openssl rsa -in priv.pem -outform der -out priv.der
 
 Convert a p7c/pkcs7 file to PEM (Let's Encrypt CA Issuer field) (see also
 :manpage:`pkcs7(1SSL)` -
