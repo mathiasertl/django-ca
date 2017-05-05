@@ -95,6 +95,7 @@ certs = {
         'crl': '',
         'subjectKeyIdentifier': '79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
         'dn': '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=ca.example.com',
+        'key_size': 4096,
     },
     'child': {
         'pem': force_text(child_pem),
