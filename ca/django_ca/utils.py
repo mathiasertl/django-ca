@@ -298,6 +298,8 @@ def parse_general_name(name):
 
     >>> parse_general_name('example.com')
     <DNSName(value=example.com)>
+    >>> parse_general_name('*.example.com')
+    <DNSName(value=*.example.com)>
     >>> parse_general_name('user@example.com')
     <RFC822Name(value=user@example.com)>
     >>> parse_general_name('https://example.com')
@@ -345,29 +347,6 @@ def parse_general_name(name):
         ...
     idna.core.IDNAError: Empty domain
 
-
-    Wildcard subdomains are allowed in DNS entries, however RFC 2595 limits their use to a single
-    wildcard in the outermost level
-    >>> parse_general_name('*.example.com')
-    <DNSName(value=*.example.com)>
-    >>> try:
-    ...     parse_general_name('*.*.example.com')
-    ... except idna.core.InvalidCodepoint:
-    ...     raise Exception("Wildcard error")
-    ... except idna.core.IDNAError:
-    ...     raise Exception("Wildcard error")
-    Traceback (most recent call last):
-    ...
-    Exception: Wildcard error
-    >>> try:
-    ...     parse_general_name('domain.*.example.com')
-    ... except idna.core.InvalidCodepoint:
-    ...     raise Exception("Wildcard error")
-    ... except idna.core.IDNAError:
-    ...     raise Exception("Wildcard error")
-    Traceback (most recent call last):
-    ...
-    Exception: Wildcard error
     """
     name = force_text(name)
     typ = None
