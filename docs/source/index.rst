@@ -40,9 +40,10 @@ Development documentation:
 .. toctree::
    :maxdepth: 1
 
+   development
+   contribute
    ca_examples
    changelog
-   development
 
 API documentation:
 
