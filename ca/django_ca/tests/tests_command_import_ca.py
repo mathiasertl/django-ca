@@ -112,6 +112,9 @@ class ImportCATest(DjangoCATestCase):
         self.assertEqual(key.key_size, certs['root']['key_size'])
         self.assertEqual(ca.serial, certs['root']['serial'])
 
+    def test_intermediate(self):
+        pass  # TODO
+
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_bogus_pub(self):
         name = 'testname'
