@@ -217,6 +217,19 @@ class ParseGeneralNameTest(DjangoCATestCase):
         self.assertEqual(parse_general_name('ip:fd00::0/32'),
                          x509.IPAddress(ipaddress.ip_network(u'fd00::0/32')))
 
+    def test_wildcard_domain(self):
+        self.assertEqual(parse_general_name('*.example.com'), x509.DNSName('*.example.com'))
+        self.assertEqual(parse_general_name('DNS:*.example.com'), x509.DNSName('*.example.com'))
+
+        # Wildcard subdomains are allowed in DNS entries, however RFC 2595 limits their use to a single
+        # wildcard in the outermost level
+        with self.assertRaisesRegex(IDNAError, '^The label b?\'\*\' is not a valid A-label$'):
+            parse_general_name('test.*.example.com')
+        with self.assertRaisesRegex(IDNAError, '^The label b?\'\*\' is not a valid A-label$'):
+            parse_general_name('*.*.example.com')
+        with self.assertRaisesRegex(IDNAError, '^The label b?\'\*\' is not a valid A-label$'):
+            parse_general_name('example.com.*')
+
     def test_wrong_email(self):
         if six.PY2:
             msg = "The label user@ is not a valid A-label"
