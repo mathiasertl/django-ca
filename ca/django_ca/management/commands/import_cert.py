@@ -14,23 +14,15 @@
 # see <http://www.gnu.org/licenses/>.
 
 import argparse
-import binascii
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.hazmat.primitives.serialization import PrivateFormat
-from cryptography.x509.oid import ExtensionOID
 
 from django.core.management.base import CommandError
 
-from django_ca import ca_settings
 from django_ca.models import Certificate
-from django_ca.models import CertificateAuthority
 
 from ..base import BaseCommand
-from ...utils import add_colons
 
 
 class Command(BaseCommand):
