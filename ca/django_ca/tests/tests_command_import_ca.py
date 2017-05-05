@@ -15,12 +15,9 @@
 
 import os
 from io import BufferedReader
-from datetime import timedelta
 
 from six import BytesIO
 
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 
 from django.conf import settings
@@ -32,7 +29,6 @@ from django_ca.tests.base import override_tmpcadir
 
 from .base import certs
 from .. import ca_settings
-from ..utils import int_to_hex
 
 
 class ImportCATest(DjangoCATestCase):
