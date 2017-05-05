@@ -338,6 +338,30 @@ def parse_general_name(name):
     Traceback (most recent call last):
         ...
     idna.core.IDNAError: Empty domain
+
+
+    Wildcard subdomains are allowed in DNS entries, however RFC 2595 limits their use to a single
+    wildcard in the outermost level
+    >>> parse_general_name('*.example.com')
+    <DNSName(value=*.example.com)>
+    >>> try:
+    ...     parse_general_name('*.*.example.com')
+    ... except idna.core.InvalidCodepoint:
+    ...     raise Exception("Wildcard error")
+    ... except idna.core.IDNAError:
+    ...     raise Exception("Wildcard error")
+    Traceback (most recent call last):
+    ...
+    Exception: Wildcard error
+    >>> try:
+    ...     parse_general_name('domain.*.example.com')
+    ... except idna.core.InvalidCodepoint:
+    ...     raise Exception("Wildcard error")
+    ... except idna.core.IDNAError:
+    ...     raise Exception("Wildcard error")
+    Traceback (most recent call last):
+    ...
+    Exception: Wildcard error
     """
     name = force_text(name)
     typ = None
@@ -372,8 +396,14 @@ def parse_general_name(name):
         except ValueError:
             pass
 
+        # Try to encode the domain name. DNSName() does not validate the domain name, but this
+        # check will fail.
+        if name.startswith('*.'):
+            idna.encode(name[2:])
+        else:
+            idna.encode(name)
+
         # Almost anything passes as DNS name, so this is our default fallback
-        idna.encode(name)  # fails if this is an invalid domain name
         return x509.DNSName(name)
 
     if typ == 'uri':
@@ -402,7 +432,13 @@ def parse_general_name(name):
     elif typ == 'dirname':
         return x509.DirectoryName(x509_name(name))
     else:
-        idna.encode(name)  # fails if this is an invalid domain name
+        # Try to encode the domain name. DNSName() does not validate the domain name, but this
+        # check will fail.
+        if name.startswith('*.'):
+            idna.encode(name[2:])
+        else:
+            idna.encode(name)
+
         return x509.DNSName(name)
 
 
