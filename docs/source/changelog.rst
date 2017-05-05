@@ -4,6 +4,14 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.6.1:
+
+***********
+1.6.1 (TBR)
+***********
+
+* Fix signing of wildcard certificates (thanks `RedNixon <https://github.com/mathiasertl/django-ca/pull/25>`_).
+
 .. _changelog-1.6.0:
 
 ******************
