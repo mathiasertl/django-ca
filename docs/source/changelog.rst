@@ -6,9 +6,9 @@ ChangeLog
 
 .. _changelog-1.6.1:
 
-***********
-1.6.1 (TBR)
-***********
+******************
+1.6.1 (2017-05-05)
+******************
 
 * Fix signing of wildcard certificates (thanks `RedNixon <https://github.com/mathiasertl/django-ca/pull/25>`_).
 * Add new management commands ``import_ca`` and ``import_cert`` so users can import existing CAs and
