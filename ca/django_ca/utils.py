@@ -121,10 +121,14 @@ def sort_subject_dict(d):
 def format_name(subject):
     """Convert a subject into the canonical form for distinguished names.
 
+    This function does not take care of sorting the subject in any meaningful order.
+
     Examples::
 
         >>> format_name([('CN', 'example.com'), ])
         '/CN=example.com'
+        >>> format_name([('CN', 'example.com'), ('O', "My Organization"), ])
+        '/CN=example.com/O=My Organization'
     """
     if isinstance(subject, x509.Name):
         subject = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in subject]
@@ -165,6 +169,8 @@ def is_power2(num):
 
     >>> is_power2(4)
     True
+    >>> is_power2(3)
+    False
     """
     return num != 0 and ((num & (num - 1)) == 0)
 
@@ -450,6 +456,8 @@ def get_cert_builder(expires, now=None):
 
     expires : datetime
         When this certificate will expire.
+    now : datetime
+        The functions notion of "now", used for testing.
     """
     if now is None:
         now = datetime.utcnow()
