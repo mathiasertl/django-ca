@@ -35,8 +35,7 @@ from ..base import PasswordAction
 class Command(BaseCommand, CertificateAuthorityDetailMixin):
     help = """Import an existing certificate authority.
 
-Note that the private key will be copied to the directory configured by the CA_DIR setting (%s).
-""" % (ca_settings.CA_DIR)
+Note that the private key will be copied to the directory configured by the CA_DIR setting."""
 
     def add_arguments(self, parser):
         self.add_ca(parser, '--parent',
