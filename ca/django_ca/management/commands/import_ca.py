@@ -64,16 +64,17 @@ Note that the private key will be copied to the directory configured by the CA_D
         parent = options['parent']
         pem_data = pem.read()
         key_data = key.read()
+        crl_url = '\n'.join(options['crl_url'])
 
         ca = CertificateAuthority(name=name, parent=parent, issuer_url=options['issuer_url'],
-                                  issuer_alt_name=options['issuer_alt_name'], crl_url=options['crl_url'])
+                                  issuer_alt_name=options['issuer_alt_name'], crl_url=crl_url)
 
         # load public key
         try:
-            pem_loaded = x509.load_der_x509_certificate(pem_data, default_backend())
+            pem_loaded = x509.load_pem_x509_certificate(pem_data, default_backend())
         except:
             try:
-                pem_loaded = x509.load_pem_x509_certificate(pem_data, default_backend())
+                pem_loaded = x509.load_der_x509_certificate(pem_data, default_backend())
             except Exception as e:
                 raise CommandError('Unable to load public pem.')
         ca.x509 = pem_loaded
