@@ -396,8 +396,14 @@ def parse_general_name(name):
         except ValueError:
             pass
 
+        # Try to encode the domain name. DNSName() does not validate the domain name, but this
+        # check will fail.
+        if name.startswith('*.'):
+            idna.encode(name[2:])
+        else:
+            idna.encode(name)
+
         # Almost anything passes as DNS name, so this is our default fallback
-        idna.encode(name)  # fails if this is an invalid domain name
         return x509.DNSName(name)
 
     if typ == 'uri':
@@ -426,8 +432,13 @@ def parse_general_name(name):
     elif typ == 'dirname':
         return x509.DirectoryName(x509_name(name))
     else:
-        # fails if this is an invalid domain name
-        idna.encode(name[2:] if name.startswith("*.") else name)
+        # Try to encode the domain name. DNSName() does not validate the domain name, but this
+        # check will fail.
+        if name.startswith('*.'):
+            idna.encode(name[2:])
+        else:
+            idna.encode(name)
+
         return x509.DNSName(name)
 
 
