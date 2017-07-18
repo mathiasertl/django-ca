@@ -131,7 +131,7 @@ class CustomMultiWidget(widgets.MultiWidget):
 class SubjectWidget(CustomMultiWidget):
     def __init__(self, attrs=None):
         _widgets = (
-            SubjectTextInput(label=_('Country')),
+            SubjectTextInput(label=_('Country'), attrs={'placeholder': '2 character country code'}),
             SubjectTextInput(label=_('State')),
             SubjectTextInput(label=_('Location')),
             SubjectTextInput(label=_('Organization')),
