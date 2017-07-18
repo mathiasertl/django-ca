@@ -13,6 +13,7 @@ ChangeLog
 * No longer require a strict cryptography version but only ``>=1.8``. The previously pinned version
   is incompatible with Python 3.5.
 * Update requirements files to newest versions.
+* Update imports to ``django.urls.reverse`` so they are compatible with Django 2.0 and 1.8.
 * Conform to new sorting restrictions for ``isort``.
 
 .. _changelog-1.6.1:

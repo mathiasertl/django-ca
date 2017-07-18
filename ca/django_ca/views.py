@@ -28,7 +28,6 @@ from oscrypto.asymmetric import load_private_key
 
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
-from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.utils.decorators import classonlymethod
 from django.utils.decorators import method_decorator
@@ -46,6 +45,10 @@ from .models import CertificateAuthority
 from .utils import int_to_hex
 
 log = logging.getLogger(__name__)
+try:
+    from django.urls import reverse
+except ImportError:  # Django 1.8 import
+    from django.core.urlresolvers import reverse
 
 
 class CertificateRevocationListView(View, SingleObjectMixin):

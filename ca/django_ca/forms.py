@@ -22,7 +22,6 @@ from cryptography.hazmat.primitives import hashes
 
 from django import forms
 from django.contrib.admin.widgets import AdminDateWidget
-from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_lazy as _
 
 from . import ca_settings
@@ -33,6 +32,11 @@ from .models import Certificate
 from .utils import EXTENDED_KEY_USAGE_DESC
 from .utils import KEY_USAGE_DESC
 from .widgets import ProfileWidget
+
+try:
+    from django.urls import reverse
+except ImportError:  # Django 1.8 import
+    from django.core.urlresolvers import reverse
 
 
 def _initial_expires():

@@ -21,7 +21,6 @@ from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.contrib.auth.models import User
 from django.contrib.staticfiles.templatetags.staticfiles import static
-from django.core.urlresolvers import reverse
 from django.test import Client
 from django.utils import timezone
 from django.utils.encoding import force_text
@@ -32,6 +31,11 @@ from ..utils import SUBJECT_FIELDS
 from .base import DjangoCAWithCertTestCase
 from .base import DjangoCAWithCSRTestCase
 from .base import override_tmpcadir
+
+try:
+    from django.urls import reverse
+except ImportError:  # Django 1.8 import
+    from django.core.urlresolvers import reverse
 
 
 class AdminTestMixin(object):
