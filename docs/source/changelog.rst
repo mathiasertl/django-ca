@@ -4,6 +4,16 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.6.2:
+
+******************
+1.6.2 (2017-07-18)
+******************
+
+* No longer require a strict cryptography version but only ``>=1.8``. The previously pinned version
+  is incompatible with Python 3.5.
+* Update requirements files to newest versions.
+
 .. _changelog-1.6.1:
 
 ******************
