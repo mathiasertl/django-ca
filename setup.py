@@ -143,6 +143,8 @@ class QualityCommand(Command):
         os.chdir(work_dir)
         print('python -Wd manage.py check')
         status = subprocess.call(['python', '-Wd', 'manage.py', 'check'])
+        if status != 0:
+            sys.exit(status)
 
 
 def find_package_data(dir):
