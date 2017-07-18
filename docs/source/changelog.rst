@@ -14,6 +14,7 @@ ChangeLog
   is incompatible with Python 3.5.
 * Update requirements files to newest versions.
 * Update imports to ``django.urls.reverse`` so they are compatible with Django 2.0 and 1.8.
+* Make sure that ``manage.py check`` exit status is not ignored for ``setup.py code_quality``.
 * Conform to new sorting restrictions for ``isort``.
 
 .. _changelog-1.6.1:
