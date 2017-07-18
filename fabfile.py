@@ -26,8 +26,8 @@ from fabric.context_managers import hide
 from fabric.context_managers import settings
 from fabric.decorators import runs_once
 from fabric.utils import abort
-from six.moves import configparser
 
+from six.moves import configparser
 
 config = configparser.ConfigParser({
     'app': 'False',

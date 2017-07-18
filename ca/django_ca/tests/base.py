@@ -13,11 +13,11 @@ from datetime import timedelta
 
 import six
 from mock import patch
-
 from OpenSSL.crypto import FILETYPE_PEM
 from OpenSSL.crypto import X509Store
 from OpenSSL.crypto import X509StoreContext
 from OpenSSL.crypto import load_certificate
+
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes

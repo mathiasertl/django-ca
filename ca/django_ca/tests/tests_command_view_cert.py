@@ -28,8 +28,8 @@ from .base import DjangoCAWithCertTestCase
 from .base import certs
 from .base import override_tmpcadir
 
-
 # TODO: Use verbatim strings instead of interpolating
+
 
 @override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class ViewCertTestCase(DjangoCAWithCertTestCase):

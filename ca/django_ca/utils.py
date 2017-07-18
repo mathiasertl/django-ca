@@ -24,6 +24,7 @@ from ipaddress import ip_address
 from ipaddress import ip_network
 
 import idna
+
 from cryptography import x509
 from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import NameOID
