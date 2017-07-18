@@ -36,6 +36,18 @@ Useful OpenSSL commands
 
 .. highlight:: none
 
+Verification
+============
+
+Verify a certificate signed by a root CA (``cert.crt`` could also be an
+intermediate CA)::
+
+   openssl verify -CAfile ca.crt cert.crt
+
+If you have an intermediate CA::
+   
+   openssl verify -CAfile ca.crt -untrusted intermediate.crt cert.crt
+
 CRLs
 ====
 
