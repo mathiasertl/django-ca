@@ -127,6 +127,8 @@ class QualityCommand(Command):
         pass
 
     def run(self):
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.test_settings")
+
         print('isort --check-only --diff -rc ca/ fabfile.py setup.py')
         status = subprocess.call(['isort', '--check-only', '--diff', '-rc',
                                   'ca/', 'fabfile.py', 'setup.py'])
