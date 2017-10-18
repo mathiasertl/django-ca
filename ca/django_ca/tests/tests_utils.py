@@ -239,7 +239,7 @@ class ParseGeneralNameTest(DjangoCATestCase):
         with self.assertRaisesRegex(IDNAError, msg):
             parse_general_name('user@')
 
-        with self.assertRaisesRegex(IDNAError, '^Empty domain$'):
+        with self.assertRaisesRegex(ValueError, '^Invalid domain: $'):
             parse_general_name('email:user@')
 
     def test_error(self):

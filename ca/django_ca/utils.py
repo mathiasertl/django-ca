@@ -292,19 +292,44 @@ def x509_name(name):
     return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], force_text(value)) for typ, value in name])
 
 
+def validate_email(addr):
+    """Validate an email address.
+
+    This function raises ``ValueError`` if the email address is not valid.
+
+    >>> validate_email('foo@bar.com')
+    'foo@bar.com'
+    >>> validate_email('foo@bar com')
+    Traceback (most recent call last):
+        ...
+    ValueError: Invalid domain: bar com
+
+    """
+    if '@' not in addr:
+        raise ValueError('Invalid email address: %s' % addr)
+
+    node, domain = addr.split('@', 1)
+    try:
+        domain = idna.encode(domain)
+    except idna.core.IDNAError:
+        raise ValueError('Invalid domain: %s' % domain)
+
+    return '%s@%s' % (node, force_text(domain))
+
+
 def parse_general_name(name):
     """Parse a general name from user input.
 
     This function will do its best to detect the intended type of any value passed to it:
 
     >>> parse_general_name('example.com')
-    <DNSName(value=example.com)>
+    <DNSName(value='example.com')>
     >>> parse_general_name('*.example.com')
-    <DNSName(value=*.example.com)>
+    <DNSName(value='*.example.com')>
     >>> parse_general_name('user@example.com')
-    <RFC822Name(value=user@example.com)>
+    <RFC822Name(value='user@example.com')>
     >>> parse_general_name('https://example.com')
-    <UniformResourceIdentifier(value=https://example.com)>
+    <UniformResourceIdentifier(value='https://example.com')>
     >>> parse_general_name('1.2.3.4')
     <IPAddress(value=1.2.3.4)>
     >>> parse_general_name('/CN=example.com')  # doctest: +NORMALIZE_WHITESPACE
@@ -326,9 +351,9 @@ def parse_general_name(name):
     If you want to override detection, you can prefix the name to match :py:const:`GENERAL_NAME_RE`:
 
     >>> parse_general_name('email:user@example.com')
-    <RFC822Name(value=user@example.com)>
+    <RFC822Name(value='user@example.com')>
     >>> parse_general_name('URI:https://example.com')
-    <UniformResourceIdentifier(value=https://example.com)>
+    <UniformResourceIdentifier(value='https://example.com')>
     >>> parse_general_name('dirname:/CN=example.com')  # doctest: +NORMALIZE_WHITESPACE
     <DirectoryName(value=<Name([<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>,
                                                value='example.com')>])>)>
@@ -343,10 +368,10 @@ def parse_general_name(name):
     If you give a prefixed value, this function is less forgiving of any typos and does not catch any
     exceptions:
 
-    >>> parse_general_name('email:foo@')
+    >>> parse_general_name('email:foo@bar com')
     Traceback (most recent call last):
         ...
-    idna.core.IDNAError: Empty domain
+    ValueError: Invalid domain: bar com
 
     """
     name = force_text(name)
@@ -365,7 +390,7 @@ def parse_general_name(name):
 
         if '@' in name:  # Looks like an Email address
             try:
-                return x509.RFC822Name(name)
+                return x509.RFC822Name(validate_email(name))
             except:
                 pass
 
@@ -395,7 +420,7 @@ def parse_general_name(name):
     if typ == 'uri':
         return x509.UniformResourceIdentifier(name)
     elif typ == 'email':
-        return x509.RFC822Name(name)
+        return x509.RFC822Name(validate_email(name))
     elif typ == 'ip':
         try:
             return x509.IPAddress(ip_address(name))
