@@ -115,7 +115,7 @@ the default values, options like --key-usage still override the profile.""")
 
     def handle(self, *args, **options):
         ca = options['ca']
-        if ca.expires < options['expires']:
+        if ca.expires.date() < options['expires'].date():
             max_days = (ca.expires - timezone.now()).days
             raise CommandError(
                 'Certificate would outlive CA, maximum expiry for this CA is %s days.' % max_days)
