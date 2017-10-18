@@ -22,11 +22,12 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from django.core.management.base import CommandError
 
 from django_ca.models import CertificateAuthority
-from django_ca.tests.base import DjangoCATestCase
-from django_ca.tests.base import override_tmpcadir
 
 from .. import ca_settings
 from ..utils import int_to_hex
+from .base import DjangoCATestCase
+from .base import override_settings
+from .base import override_tmpcadir
 
 
 class InitCATest(DjangoCATestCase):
@@ -57,6 +58,10 @@ class InitCATest(DjangoCATestCase):
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
         self.assertEqual(ca.serial, int_to_hex(ca.x509.serial_number))
+
+    @override_settings(USE_TZ=True)
+    def test_basic_with_use_tz(self):
+        return self.test_basic()
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_arguments(self):
@@ -101,6 +106,10 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(ca.ocsp_url, 'http://ocsp.example.com')
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
+
+    @override_settings(USE_TZ=True)
+    def test_arguements_with_use_tz(self):
+        self.test_arguments()
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_no_pathlen(self):

@@ -4,6 +4,12 @@ ChangeLog
 
 .. _changelog-head:
 
+***********
+1.6.3 (TBR)
+***********
+
+* Fix singing certificates when ``USE_TZ`` is ``True``.
+
 .. _changelog-1.6.2:
 
 ******************

@@ -19,6 +19,8 @@ import hashlib
 import re
 from collections import OrderedDict
 
+import pytz
+
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -28,6 +30,7 @@ from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtensionOID
 
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django.utils.encoding import force_bytes
@@ -100,6 +103,9 @@ class X509CertMixin(models.Model):
         self.pub = force_str(self.dump_certificate(Encoding.PEM))
         self.cn = self.subject['CN']
         self.expires = self.not_after
+        if settings.USE_TZ:
+            self.expires = timezone.make_aware(self.expires, timezone=pytz.utc)
+
         self.serial = int_to_hex(value.serial_number)
 
     @property

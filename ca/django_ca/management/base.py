@@ -23,11 +23,13 @@ from datetime import timedelta
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
+from django.conf import settings
 from django.core.management.base import BaseCommand as _BaseCommand
 from django.core.management.base import OutputWrapper
 from django.core.management.color import no_style
 from django.core.validators import URLValidator
 from django.utils import six
+from django.utils import timezone
 from django.utils.encoding import force_bytes
 
 from django_ca import ca_settings
@@ -174,6 +176,10 @@ class ExpiresAction(argparse.Action):
         now = self.now
         if now is None:
             now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+
+        # If USE_TZ is True, we make the object timezone aware, otherwise comparing goes wrong.
+        if settings.USE_TZ:
+            now = timezone.make_aware(now)
 
         return now + timedelta(days=value + 1)
 

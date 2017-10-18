@@ -51,6 +51,10 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
 
+    @override_settings(USE_TZ=True)
+    def test_from_stdin_with_use_tz(self):
+        self.test_from_stdin()
+
     def test_from_file(self):
         csr_path = os.path.join(ca_settings.CA_DIR, 'test.csr')
         with open(csr_path, 'w') as csr_stream:
@@ -71,6 +75,10 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
             self.assertEqual(cert.subjectAltName(), 'DNS:example.com')
         finally:
             os.remove(csr_path)
+
+    @override_settings(USE_TZ=True)
+    def test_from_file_with_tz(self):
+        self.test_from_file()
 
     def test_to_file(self):
         out_path = os.path.join(ca_settings.CA_DIR, 'test.pem')
