@@ -9,6 +9,7 @@ ChangeLog
 ***********
 
 * Fix singing certificates when ``USE_TZ`` is ``True``.
+* Require ``cryptography>=2.0``, older versions are not broken, but not tested either.
 
 .. _changelog-1.6.2:
 
