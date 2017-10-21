@@ -25,6 +25,7 @@ from django.test import Client
 from ..models import Certificate
 from ..views import CertificateRevocationListView
 from .base import DjangoCAWithCertTestCase
+from .base import override_settings
 from .base import override_tmpcadir
 
 try:
@@ -53,6 +54,9 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
     def setUp(self):
         self.client = Client()
         super(GenericCRLViewTests, self).setUp()
+
+    def tearDown(self):
+        cache.clear()
 
     def test_basic(self):
         # test the default view
@@ -86,6 +90,10 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
         self.assertEqual(len(list(crl)), 1)
         self.assertEqual(crl[0].serial_number, cert.x509.serial)
 
+    @override_settings(USE_TZ=True)
+    def test_basic_with_use_tz(self):
+        self.test_basic()
+
     def test_overwrite(self):
         response = self.client.get(reverse('advanced', kwargs={'serial': self.ca.serial}))
         self.assertEqual(response.status_code, 200)
@@ -96,3 +104,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
 
         # parse Last/Next Update to see if they match 321 seconds
         self.assertEqual((crl.next_update - crl.last_update).seconds, 321)
+
+    @override_settings(USE_TZ=True)
+    def test_overwrite_with_use_tz(self):
+        self.test_overwrite()

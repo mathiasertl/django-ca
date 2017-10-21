@@ -244,11 +244,19 @@ class OCSPTestGenericView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
 
+    @override_settings(USE_TZ=True)
+    def test_get_with_use_tz(self):
+        self.test_get()
+
     def test_post(self):
         response = self.client.post(reverse('django_ca:ocsp-post-root'), req1,
                                     content_type='application/ocsp-request')
         self.assertEqual(response.status_code, 200)
         self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
+
+    @override_settings(USE_TZ=True)
+    def test_post_with_use_tz(self):
+        self.test_post()
 
 
 @override_settings(ROOT_URLCONF=__name__)
@@ -259,10 +267,18 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
 
+    @override_settings(USE_TZ=True)
+    def test_get_with_use_tz(self):
+        self.test_get()
+
     def test_post(self):
         response = self.client.post(reverse('post'), req1, content_type='application/ocsp-request')
         self.assertEqual(response.status_code, 200)
         self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1200)
+
+    @override_settings(USE_TZ=True)
+    def test_post_with_use_tz(self):
+        self.test_post()
 
     def test_no_nonce(self):
         data = base64.b64encode(req1).decode('utf-8')
