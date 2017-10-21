@@ -14,9 +14,9 @@
 # see <http://www.gnu.org/licenses/>.
 
 import textwrap
-from datetime import datetime
 
 from django.utils import six
+from django.utils import timezone
 
 from django_ca.management.base import CertCommand
 
@@ -57,7 +57,7 @@ class Command(CertCommand):
         # self.stdout.write status
         if cert.revoked:
             self.stdout.write('Status: Revoked')
-        elif cert.expires < datetime.utcnow():
+        elif cert.expires < timezone.now():
             self.stdout.write('Status: Expired')
         else:
             self.stdout.write('Status: Valid')

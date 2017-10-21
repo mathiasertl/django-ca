@@ -26,6 +26,7 @@ from ..models import Certificate
 from ..models import Watcher
 from .base import DjangoCAWithCertTestCase
 from .base import certs
+from .base import override_settings
 from .base import override_tmpcadir
 
 # TODO: Use verbatim strings instead of interpolating
@@ -105,6 +106,10 @@ HPKP pin: %(hpkp)s
 ''' % certs['cert1'])
         self.assertEqual(stderr, b'')
 
+    @override_settings(USE_TZ=True)
+    def test_basic_with_use_tz(self):
+        self.test_basic()
+
     def test_der(self):
         self.maxDiff = None
         stdout, stderr = self.cmd('view_cert', self.cert.serial, format=Encoding.DER,
@@ -171,6 +176,10 @@ Digest:
 HPKP pin: %(hpkp)s
 ''' % certs['cert1'])
         self.assertEqual(stderr, b'')
+
+    @override_settings(USE_TZ=True)
+    def test_expired_with_use_tz(self):
+        self.test_expired()
 
     def test_no_san_with_watchers(self):
         # test a cert with no subjectAltNames but with watchers.
