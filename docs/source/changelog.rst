@@ -11,7 +11,8 @@ ChangeLog
 * Fix various operations when ``USE_TZ`` is ``True``.
 * Email addresses are now independently validated by ``validate_email``. cryptography 2.1 no longer
   validates email addresses itself.
-* Require ``cryptography>=2.0``, older versions are not broken, but not tested either.
+* Require ``cryptography>=2.1``. Older versions should not be broken, but the output changes
+  breaking doctests, meaning they're no longer tested either.
 
 .. _changelog-1.6.2:
 

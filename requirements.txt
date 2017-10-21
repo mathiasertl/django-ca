@@ -1,6 +1,6 @@
 Django>=1.8
 asn1crypto==0.23.0
-cryptography==2.1.1
+cryptography>=2.1
 ocspbuilder==0.10.2
 oscrypto==0.18.0
 ipaddress==1.0.18 ; python_version < '3'
