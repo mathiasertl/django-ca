@@ -4,9 +4,11 @@ ChangeLog
 
 .. _changelog-head:
 
-***********
-1.6.3 (TBR)
-***********
+.. _changelog-1.6.3:
+
+******************
+1.6.3 (2017-10-21)
+******************
 
 * Fix various operations when ``USE_TZ`` is ``True``.
 * Email addresses are now independently validated by ``validate_email``. cryptography 2.1 no longer
