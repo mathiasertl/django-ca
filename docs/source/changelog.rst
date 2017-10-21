@@ -15,6 +15,7 @@ ChangeLog
   validates email addresses itself.
 * Require ``cryptography>=2.1``. Older versions should not be broken, but the output changes
   breaking doctests, meaning they're no longer tested either.
+* CA keys are no longer stored with colons in their filename, fixing ``init_ca`` under Windows.
 
 .. _changelog-1.6.2:
 
