@@ -23,6 +23,7 @@ from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
 from .base import certs
 from .base import child_pubkey
+from .base import override_settings
 from .base import override_tmpcadir
 
 
@@ -112,6 +113,10 @@ X509 v3 certificate extensions for signed certificates:
 %(pem)s''' % data)
         self.assertEqual(stderr, '')
 
+    @override_settings(USE_TZ=True)
+    def test_basic_with_use_tz(self):
+        self.test_basic()
+
     def test_family(self):
         parent = CertificateAuthority.objects.get(name=self.ca.name)
         child = self.load_ca(name='child', x509=child_pubkey, parent=self.ca)
@@ -183,6 +188,10 @@ X509 v3 certificate extensions for signed certificates:
 
 %(pem)s''' % data)
         self.assertEqual(stderr, '')
+
+    @override_settings(USE_TZ=True)
+    def test_family_with_use_tz(self):
+        self.test_family()
 
     @override_tmpcadir()
     def test_no_pathlen(self):
