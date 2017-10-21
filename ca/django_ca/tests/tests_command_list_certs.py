@@ -20,6 +20,7 @@ from django.utils import timezone
 from ..models import Certificate
 from .base import DjangoCAWithCertTestCase
 from .base import child_pubkey
+from .base import override_settings
 from .base import override_tmpcadir
 
 
@@ -41,6 +42,12 @@ class ListCertsTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(stdout, '%s\n' % self.line(self.cert))
         self.assertEqual(stderr, '')
 
+    @override_settings(USE_TZ=True)
+    def test_basic_with_use_tz(self):
+        # reload cert, otherwise self.cert is still the object created in setUp()
+        self.cert = Certificate.objects.get(serial=self.cert.serial)
+        self.test_basic()
+
     def test_expired(self):
         cert = Certificate.objects.get(serial=self.cert.serial)
         cert.expires = timezone.now() - timedelta(days=3)
@@ -53,6 +60,10 @@ class ListCertsTestCase(DjangoCAWithCertTestCase):
         stdout, stderr = self.cmd('list_certs', expired=True)
         self.assertEqual(stdout, '%s\n' % self.line(cert))
         self.assertEqual(stderr, '')
+
+    @override_settings(USE_TZ=True)
+    def test_expired_with_use_tz(self):
+        self.test_expired()
 
     def test_revoked(self):
         cert = Certificate.objects.get(serial=self.cert.serial)

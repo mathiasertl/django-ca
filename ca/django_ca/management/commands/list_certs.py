@@ -13,8 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from datetime import datetime
-
 from django.utils import timezone
 
 from ...models import Certificate
@@ -36,7 +34,7 @@ class Command(BaseCommand):
         certs = Certificate.objects.all()
 
         if not options['expired']:
-            certs = certs.filter(expires__gt=datetime.now())
+            certs = certs.filter(expires__gt=timezone.now())
         if not options['revoked']:
             certs = certs.filter(revoked=False)
 

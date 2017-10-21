@@ -17,6 +17,7 @@ from django.utils import timezone
 
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
+from .base import override_settings
 from .base import override_tmpcadir
 
 
@@ -38,6 +39,10 @@ class ListCertsTestCase(DjangoCAWithCATestCase):
         self.assertEqual(stdout, '%s - %s\n' % (self.ca.serial, self.ca.name))
         self.assertEqual(stderr, '')
 
+    @override_settings(USE_TZ=True)
+    def test_basic_with_use_tz(self):
+        self.test_basic()
+
     def test_disabled(self):
         ca = CertificateAuthority.objects.get(serial=self.ca.serial)
         ca.enabled = False
@@ -46,3 +51,7 @@ class ListCertsTestCase(DjangoCAWithCATestCase):
         stdout, stderr = self.cmd('list_cas')
         self.assertEqual(stdout, '%s - %s (disabled)\n' % (self.ca.serial, self.ca.name))
         self.assertEqual(stderr, '')
+
+    @override_settings(USE_TZ=True)
+    def test_disabled_with_use_tz(self):
+        self.test_disabled()
