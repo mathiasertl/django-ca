@@ -175,18 +175,18 @@ class X509CertMixin(models.Model):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS)
         except x509.ExtensionNotFound:  # pragma: no cover - extension should always be present
-            return ''
+            return None
 
-        output = ''
+        output = []
         for desc in ext.value:
             if desc.access_method == AuthorityInformationAccessOID.OCSP:
-                output += 'OCSP - %s\n' % format_general_names([desc.access_location])
-            elif desc.access_method == AuthorityInformationAccessOID.CA_ISSUERS:  # pragma: no branch
-                output += 'CA Issuers - %s\n' % format_general_names([desc.access_location])
+                output.append('OCSP - %s' % format_general_names([desc.access_location]))
+            elif desc.access_method == AuthorityInformationAccessOID.CA_ISSUERS:
+                output.append('CA Issuers - %s' % format_general_names([desc.access_location]))
+            else:  # pramga: no cover - nothing else is known currently.
+                output.append('Unknown')
 
-        if ext.critical:  # pragma: no cover - not usually critical
-            output = 'critical,%s' % output
-        return output
+        return ext.critical, output
     authorityInfoAccess.short_description = 'authorityInfoAccess'
 
     def basicConstraints(self):

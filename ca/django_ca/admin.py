@@ -42,7 +42,7 @@ from .views import RevokeCertificateView
 
 _x509_ext_fields = [
     'key_usage', 'extended_key_usage', 'subjectKeyIdentifier', 'issuerAltName', 'basic_constraints',
-    'authorityKeyIdentifier', 'crlDistributionPoints', 'authorityInfoAccess', 'tls_feature',
+    'authorityKeyIdentifier', 'crlDistributionPoints', 'auth_info_access', 'tls_feature',
 ]
 
 
@@ -322,6 +322,10 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
     def basic_constraints(self, obj):
         return self.output_extension(obj.basicConstraints())
     basic_constraints.short_description = 'basicConstraints'
+
+    def auth_info_access(self, obj):
+        return self.output_extension(obj.authorityInfoAccess())
+    auth_info_access.short_description = 'authorityInfoAccess'
 
     def key_usage(self, obj):
         return self.output_extension(obj.keyUsage())
