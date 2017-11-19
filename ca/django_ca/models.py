@@ -27,6 +27,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PublicFormat
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
+from cryptography.x509 import TLSFeatureType
 from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtensionOID
 
@@ -281,6 +282,20 @@ class X509CertMixin(models.Model):
             value = 'critical,%s' % value
         return value
     authorityKeyIdentifier.short_description = 'authorityKeyIdentifier'
+
+    def TLSFeature(self):
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.TLS_FEATURE)
+        except x509.ExtensionNotFound:  # pragma: no cover - extension should always be present
+            return ''
+
+        features = []
+        for feature in ext.value:
+            if feature == TLSFeatureType.status_request:
+                features.append('OCSP Must-Staple')
+            else:
+                features.append('Unknown TLS Feature.')
+        return features
 
     def get_digest(self, algo):
         algo = getattr(hashes, algo.upper())()
