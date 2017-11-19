@@ -26,6 +26,7 @@ from django.contrib import admin
 from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
+from django.utils import six
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.html import mark_safe
@@ -41,7 +42,8 @@ from .views import RevokeCertificateView
 
 _x509_ext_fields = [
     'keyUsage', 'extendedKeyUsage', 'subjectKeyIdentifier', 'issuerAltName',
-    'authorityKeyIdentifier', 'crlDistributionPoints', 'authorityInfoAccess', ]
+    'authorityKeyIdentifier', 'crlDistributionPoints', 'authorityInfoAccess', 'tls_feature',
+]
 
 
 @admin.register(Watcher)
@@ -295,6 +297,29 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
         return obj.expires.date()
     expires_date.short_description = _('Expires')
     expires_date.admin_order_field = 'expires'
+
+    def tls_feature(self, obj):
+        value = obj.TLSFeature()
+        if value is None:
+            text = _('Not present')
+            return mark_safe('<img src="/static/admin/img/icon-no.svg" alt="%s"> %s' % (text, text))
+
+        critical, value = value
+        html = ''
+        if critical is True:
+            text = _('Not present')
+            html = '<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text)
+
+        if isinstance(value, six.string_types):
+            html += value
+        else:  # list
+            html += '<ul class="x509-extension-value">'
+            for val in value:
+                html += '<li>%s</li>' % val
+            html += '</ul>'
+
+        return mark_safe(html)
+    tls_feature.short_description = _('TLS Feature')
 
     def save_model(self, request, obj, form, change):
         data = form.cleaned_data
