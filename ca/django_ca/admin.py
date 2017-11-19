@@ -307,7 +307,7 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
         critical, value = value
         html = ''
         if critical is True:
-            text = _('Not present')
+            text = _('Critical')
             html = '<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text)
 
         if isinstance(value, six.string_types):
