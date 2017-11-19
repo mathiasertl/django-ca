@@ -81,15 +81,28 @@ STATICFILES_FINDERS = (
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'fake-key'
 
-MIDDLEWARE_CLASSES = (
-    'django.middleware.common.CommonMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    # Uncomment the next line for simple clickjacking protection:
-    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
-)
+from django import VERSION
+if VERSION[:2] >= (1, 9):
+    MIDDLEWARE = [
+        'django.middleware.security.SecurityMiddleware',
+        'django.contrib.sessions.middleware.SessionMiddleware',
+        'django.middleware.common.CommonMiddleware',
+        'django.middleware.csrf.CsrfViewMiddleware',
+        'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'django.contrib.messages.middleware.MessageMiddleware',
+        'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    ]
+else:
+    MIDDLEWARE_CLASSES = (
+        'django.middleware.common.CommonMiddleware',
+        'django.contrib.sessions.middleware.SessionMiddleware',
+        'django.middleware.csrf.CsrfViewMiddleware',
+        'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'django.contrib.messages.middleware.MessageMiddleware',
+        # Uncomment the next line for simple clickjacking protection:
+        # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    )
+
 
 ROOT_URLCONF = 'ca.urls'
 
