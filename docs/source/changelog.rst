@@ -4,6 +4,12 @@ ChangeLog
 
 .. _changelog-head:
 
+****
+HEAD
+****
+
+* Add missing migration.
+
 .. _changelog-1.6.3:
 
 ******************
