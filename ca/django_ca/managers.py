@@ -189,7 +189,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
 class CertificateManager(CertificateManagerMixin, models.Manager):
     def sign_cert(self, ca, csr, expires, algorithm, subject=None, cn_in_san=True, csr_format=Encoding.PEM,
-                  subjectAltName=None, keyUsage=None, extendedKeyUsage=None, ocsp_must_staple=None,
+                  subjectAltName=None, keyUsage=None, extendedKeyUsage=None, tls_features=None,
                   password=None):
         """Create a signed certificate from a CSR.
 
@@ -308,12 +308,13 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             usages = [EXTENDED_KEY_USAGE_MAPPING[u] for u in usages.split(',')]
             builder = builder.add_extension(x509.ExtendedKeyUsage(usages), critical=critical)
 
+        if tls_features:
+            critical, features = tls_features
+            builder = builder.add_extension(TLSFeature([TLSFeatureType.status_request]), critical=False)
+
         if ca.issuer_alt_name:
             builder = builder.add_extension(x509.IssuerAlternativeName(
                 [parse_general_name(ca.issuer_alt_name)]), critical=False)
-
-        if ocsp_must_staple:
-            builder = builder.add_extension(TLSFeature([TLSFeatureType.status_request]), critical=False)
 
         return builder.sign(private_key=ca.key(password), algorithm=algorithm, backend=default_backend()), req
 
