@@ -25,7 +25,6 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
 from cryptography.x509 import TLSFeature
-from cryptography.x509 import TLSFeatureType
 from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtensionOID
 
@@ -36,6 +35,7 @@ from django.utils.encoding import force_text
 from . import ca_settings
 from .utils import EXTENDED_KEY_USAGE_MAPPING
 from .utils import KEY_USAGE_MAPPING
+from .utils import TLS_FEATURE_MAPPING
 from .utils import get_cert_builder
 from .utils import is_power2
 from .utils import parse_general_name
@@ -310,7 +310,8 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
 
         if tls_features:
             critical, features = tls_features
-            builder = builder.add_extension(TLSFeature([TLSFeatureType.status_request]), critical=False)
+            features = [TLS_FEATURE_MAPPING[f] for f in features.split(',')]
+            builder = builder.add_extension(TLSFeature(features), critical=critical)
 
         if ca.issuer_alt_name:
             builder = builder.add_extension(x509.IssuerAlternativeName(
