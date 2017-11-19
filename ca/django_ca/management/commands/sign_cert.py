@@ -99,6 +99,8 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
         group.add_argument(
             '--ext-key-usage', metavar='VALUES',
             help='Override the extendedKeyUsage extension, e.g. "serverAuth,clientAuth".')
+        group.add_argument(
+            '--ocsp-must-staple', action='store_true', help='Enable OCSP Must-Staple.')
 
         group = parser.add_argument_group(
             'profiles', """Sign certificate based on the given profile. A profile only sets the
@@ -133,6 +135,8 @@ the default values, options like --key-usage still override the profile.""")
             kwargs['keyUsage'] = self.parse_extension(options['key_usage'])
         if options['ext_key_usage']:
             kwargs['extendedKeyUsage'] = self.parse_extension(options['ext_key_usage'])
+        if options['ocsp_must_staple']:
+            kwargs['ocsp_must_staple'] = True
 
         # update subject with arguments from the command line
         kwargs.setdefault('subject', OrderedDict())
