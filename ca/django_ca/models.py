@@ -323,23 +323,18 @@ class CertificateAuthority(X509CertMixin):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.NAME_CONSTRAINTS)
         except x509.ExtensionNotFound:
-            return ''
+            return None
 
-        value = ''
+        value = []
         if ext.value.permitted_subtrees:  # pragma: no branch
-            value += 'Permitted:\n'
             for general_name in ext.value.permitted_subtrees:
-                value += '  %s\n' % format_general_names([general_name])
+                value.append('Permitted: %s' % format_general_name(general_name))
+
         if ext.value.excluded_subtrees:  # pragma: no branch
-            value += 'Excluded:\n'
             for general_name in ext.value.excluded_subtrees:
-                value += '  %s\n' % format_general_names([general_name])
+                value.append('Excluded: %s' % format_general_name(general_name))
 
-        if ext.critical:  # pragma: no branch - currently always critical
-            value = 'critical,%s' % value
-
-        return value
-    nameConstraints.short_description = 'nameConstraints'
+        return ext.critical, value
 
     class Meta:
         verbose_name = _('Certificate Authority')
