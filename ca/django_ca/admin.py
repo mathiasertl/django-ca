@@ -41,7 +41,7 @@ from .utils import OID_NAME_MAPPINGS
 from .views import RevokeCertificateView
 
 _x509_ext_fields = [
-    'keyUsage', 'extendedKeyUsage', 'subjectKeyIdentifier', 'issuerAltName',
+    'key_usage', 'extendedKeyUsage', 'subjectKeyIdentifier', 'issuerAltName',
     'authorityKeyIdentifier', 'crlDistributionPoints', 'authorityInfoAccess', 'tls_feature',
 ]
 
@@ -298,8 +298,7 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
     expires_date.short_description = _('Expires')
     expires_date.admin_order_field = 'expires'
 
-    def tls_feature(self, obj):
-        value = obj.TLSFeature()
+    def output_extension(self, value):
         if value is None:
             text = _('Not present')
             return mark_safe('<img src="/static/admin/img/icon-no.svg" alt="%s"> %s' % (text, text))
@@ -319,6 +318,13 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
             html += '</ul>'
 
         return mark_safe(html)
+
+    def key_usage(self, obj):
+        return self.output_extension(obj.keyUsage())
+    key_usage.short_description = 'keyUsage'
+
+    def tls_feature(self, obj):
+        return self.output_extension(obj.TLSFeature())
     tls_feature.short_description = _('TLS Feature')
 
     def save_model(self, request, obj, form, change):

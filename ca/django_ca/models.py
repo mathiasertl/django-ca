@@ -208,11 +208,10 @@ class X509CertMixin(models.Model):
     basicConstraints.short_description = 'basicConstraints'
 
     def keyUsage(self):
-        value = ''
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.KEY_USAGE)
         except x509.ExtensionNotFound:
-            return value
+            return None
 
         usages = []
         for key, value in KEY_USAGE_MAPPING.items():
@@ -221,12 +220,8 @@ class X509CertMixin(models.Model):
                     usages.append(key)
             except ValueError:
                 pass
-        value = ','.join(sorted(usages))
 
-        if ext.critical:  # pragma: no branch - should always be critical
-            value = 'critical,%s' % value
-        return value
-    keyUsage.short_description = 'keyUsage'
+        return ext.critical, usages
 
     def extendedKeyUsage(self):
         value = ''
