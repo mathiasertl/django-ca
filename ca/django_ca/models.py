@@ -149,7 +149,7 @@ class X509CertMixin(models.Model):
         if ext.critical:  # pragma: no cover - not usually critical
             value = 'critical,%s' % value
 
-        return value
+        return ext.critical, value
     subjectAltName.short_description = 'subjectAltName'
 
     def crlDistributionPoints(self):
@@ -233,38 +233,27 @@ class X509CertMixin(models.Model):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_KEY_IDENTIFIER)
         except x509.ExtensionNotFound:  # pragma: no cover - extension should always be present
-            return ''
+            return None
 
         hexlified = binascii.hexlify(ext.value.digest).upper().decode('utf-8')
-        value = add_colons(hexlified)
-        if ext.critical:  # pragma: no cover - not usually critical
-            value = 'critical,%s' % value
-        return value
-    subjectKeyIdentifier.short_description = 'subjectKeyIdentifier'
+        return ext.critical, add_colons(hexlified)
 
     def issuerAltName(self):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.ISSUER_ALTERNATIVE_NAME)
         except x509.ExtensionNotFound:
-            return ''
+            return None
 
-        value = format_general_names(ext.value)
-        if ext.critical:  # pragma: no cover - not usually critical
-            value = 'critical,%s' % value
-        return value
-    issuerAltName.short_description = 'issuerAltName'
+        return ext.critical, format_general_names(ext.value)
 
     def authorityKeyIdentifier(self):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_KEY_IDENTIFIER)
         except x509.ExtensionNotFound:  # pragma: no cover - extension should always be present
-            return ''
+            return None
 
         hexlified = binascii.hexlify(ext.value.key_identifier).upper().decode('utf-8')
-        value = 'keyid:%s' % add_colons(hexlified)
-        if ext.critical:  # pragma: no cover - not usually critical
-            value = 'critical,%s' % value
-        return value
+        return ext.critical, 'keyid:%s' % add_colons(hexlified)
     authorityKeyIdentifier.short_description = 'authorityKeyIdentifier'
 
     def TLSFeature(self):

@@ -41,8 +41,8 @@ from .utils import OID_NAME_MAPPINGS
 from .views import RevokeCertificateView
 
 _x509_ext_fields = [
-    'key_usage', 'extended_key_usage', 'subjectKeyIdentifier', 'issuerAltName', 'basic_constraints',
-    'authorityKeyIdentifier', 'crlDistributionPoints', 'auth_info_access', 'tls_feature',
+    'key_usage', 'extended_key_usage', 'subject_key_identifier', 'issuer_alt_name', 'basic_constraints',
+    'auth_key_identifier', 'crlDistributionPoints', 'auth_info_access', 'tls_feature',
 ]
 
 
@@ -367,6 +367,18 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
     def tls_feature(self, obj):
         return self.output_extension(obj.TLSFeature())
     tls_feature.short_description = _('TLS Feature')
+
+    def subject_key_identifier(self, obj):
+        return self.output_extension(obj.subjectKeyIdentifier())
+    subject_key_identifier.short_description = _('subjectKeyIdentifier')
+
+    def issuer_alt_name(self, obj):
+        return self.output_extension(obj.issuerAltName())
+    issuer_alt_name.short_description = _('issuerAltName')
+
+    def auth_key_identifier(self, obj):
+        return self.output_extension(obj.authorityKeyIdentifier())
+    auth_key_identifier.short_description = _('authorityKeyIdentifier')
 
     class Media:
         css = {
