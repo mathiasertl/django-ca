@@ -131,8 +131,8 @@ class CreateCertificateForm(forms.ModelForm):
         ))
     tls_features = KeyUsageField(
         label='TLS Features', choices=(
-            ('ocsp_must-staple', 'OCSP Must-Staple'),
-            ('ocsp_multiple-cert-status-request', 'Multiple Certificate Status Request'),
+            ('OCSPMustStaple', 'OCSP Must-Staple'),
+            ('MultipleCertStatusRequest', 'Multiple Certificate Status Request'),
         ))
 
     def clean_csr(self):

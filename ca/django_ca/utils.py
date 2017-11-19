@@ -107,9 +107,9 @@ EXTENDED_KEY_USAGE_REVERSED = {v: k for k, v in EXTENDED_KEY_USAGE_MAPPING.items
 
 TLS_FEATURE_MAPPING = {
     # https://tools.ietf.org/html/rfc6066.html:
-    'ocsp_must-staple': TLSFeatureType.status_request,
+    'OCSPMustStaple': TLSFeatureType.status_request,
     # https://tools.ietf.org/html/rfc6961.html (not commonly used):
-    'ocsp_multiple-cert-status-request': TLSFeatureType.status_request_v2,
+    'MultipleCertStatusRequest': TLSFeatureType.status_request_v2,
 }
 
 
