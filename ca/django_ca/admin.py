@@ -208,7 +208,7 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
                        'expires', 'watchers', ],
         }),
         (_('X509 Extensions'), {
-            'fields': ['keyUsage', 'extendedKeyUsage', ]
+            'fields': ['keyUsage', 'extendedKeyUsage', 'tls_features', ]
         }),
     ]
 
@@ -314,6 +314,7 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
                 cn_in_san=cn_in_san,
                 keyUsage=data['keyUsage'],
                 extendedKeyUsage=data['extendedKeyUsage'],
+                tls_features=data['tls_features'],
                 password=data['password']
             )
         obj.save()

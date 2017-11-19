@@ -189,7 +189,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
 class CertificateManager(CertificateManagerMixin, models.Manager):
     def sign_cert(self, ca, csr, expires, algorithm, subject=None, cn_in_san=True, csr_format=Encoding.PEM,
-                  subjectAltName=None, keyUsage=None, extendedKeyUsage=None, ocsp_must_staple=False,
+                  subjectAltName=None, keyUsage=None, extendedKeyUsage=None, ocsp_must_staple=None,
                   password=None):
         """Create a signed certificate from a CSR.
 
@@ -230,8 +230,8 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             Value for the `keyUsage` X509 extension. See description for format details.
         extendedKeyUsage : tuple or None
             Value for the `extendedKeyUsage` X509 extension. See description for format details.
-        ocsp_must_staple : boolean, optional
-            Wether to enable the OCSP Must-Staple TLS feature. The default is ``False``.
+        tls_features : tuple
+            Value for the `TLS Feature` X509 extension. See description for format details.
         password : bytes, optional
             Password used to load the private key of the certificate authority. If not passed, the private key
             is assumed to be unencrypted.
