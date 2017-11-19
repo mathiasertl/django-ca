@@ -193,7 +193,7 @@ class X509CertMixin(models.Model):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
         except x509.ExtensionNotFound:  # pragma: no cover - extension should always be present
-            return ''
+            return None
 
         if ext.value.ca is True:
             value = 'CA:TRUE'
@@ -202,9 +202,7 @@ class X509CertMixin(models.Model):
         if ext.value.path_length is not None:
             value = '%s, pathlen:%s' % (value, ext.value.path_length)
 
-        if ext.critical:  # pragma: no branch - should always be critical
-            value = 'critical,%s' % value
-        return value
+        return ext.critical, value
     basicConstraints.short_description = 'basicConstraints'
 
     def keyUsage(self):

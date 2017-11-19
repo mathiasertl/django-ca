@@ -41,7 +41,7 @@ from .utils import OID_NAME_MAPPINGS
 from .views import RevokeCertificateView
 
 _x509_ext_fields = [
-    'key_usage', 'extended_key_usage', 'subjectKeyIdentifier', 'issuerAltName',
+    'key_usage', 'extended_key_usage', 'subjectKeyIdentifier', 'issuerAltName', 'basic_constraints',
     'authorityKeyIdentifier', 'crlDistributionPoints', 'authorityInfoAccess', 'tls_feature',
 ]
 
@@ -310,7 +310,7 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
             html = '<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text)
 
         if isinstance(value, six.string_types):
-            html += value
+            html += '<p>%s</p>' % value
         else:  # list
             html += '<ul class="x509-extension-value">'
             for val in value:
@@ -318,6 +318,10 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
             html += '</ul>'
 
         return mark_safe(html)
+
+    def basic_constraints(self, obj):
+        return self.output_extension(obj.basicConstraints())
+    basic_constraints.short_description = 'basicConstraints'
 
     def key_usage(self, obj):
         return self.output_extension(obj.keyUsage())
