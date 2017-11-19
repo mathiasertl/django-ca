@@ -224,21 +224,12 @@ class X509CertMixin(models.Model):
         return ext.critical, usages
 
     def extendedKeyUsage(self):
-        value = ''
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.EXTENDED_KEY_USAGE)
         except x509.ExtensionNotFound:
-            return value
+            return None
 
-        usages = []
-        for usage in ext.value:
-            usages.append(EXTENDED_KEY_USAGE_REVERSED[usage])
-        value = ','.join(sorted(usages))
-
-        if ext.critical:  # pragma: no cover - not usually critical
-            value = 'critical,%s' % value
-        return value
-    extendedKeyUsage.short_description = 'extendedKeyUsage'
+        return ext.critical, [EXTENDED_KEY_USAGE_REVERSED[u] for u in ext.value]
 
     def subjectKeyIdentifier(self):
         try:

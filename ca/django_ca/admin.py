@@ -41,7 +41,7 @@ from .utils import OID_NAME_MAPPINGS
 from .views import RevokeCertificateView
 
 _x509_ext_fields = [
-    'key_usage', 'extendedKeyUsage', 'subjectKeyIdentifier', 'issuerAltName',
+    'key_usage', 'extended_key_usage', 'subjectKeyIdentifier', 'issuerAltName',
     'authorityKeyIdentifier', 'crlDistributionPoints', 'authorityInfoAccess', 'tls_feature',
 ]
 
@@ -322,6 +322,10 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
     def key_usage(self, obj):
         return self.output_extension(obj.keyUsage())
     key_usage.short_description = 'keyUsage'
+
+    def extended_key_usage(self, obj):
+        return self.output_extension(obj.extendedKeyUsage())
+    extended_key_usage.short_description = 'extendedKeyUsage'
 
     def tls_feature(self, obj):
         return self.output_extension(obj.TLSFeature())
