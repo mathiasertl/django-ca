@@ -37,7 +37,9 @@ class Command(CertCommand):
         super(Command, self).add_arguments(parser)
 
     def indent(self, s, prefix='    '):
-        if six.PY3:
+        if isinstance(s, list):
+            return ''.join(['%s* %s\n' % (prefix, l) for l in s])
+        elif six.PY3:
             return textwrap.indent(s, prefix)
         else:  # pragma: no cover
             # copied from py3.4 version of textwrap.indent
