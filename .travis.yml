@@ -20,6 +20,12 @@ script:
   - python setup.py test
   - python setup.py install
 
+matrix:
+    exclude:
+        # Django 2.0 no longer supports python2
+        - env: DJANGO_VERSION="2.0rc1"
+          python: 2.7
+
 #notifications:
 #  irc:
 #    channels: "irc.freenode.org#fabric"
