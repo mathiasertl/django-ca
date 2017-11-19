@@ -293,8 +293,10 @@ class X509CertMixin(models.Model):
         for feature in ext.value:
             if feature == TLSFeatureType.status_request:
                 features.append('OCSP Must-Staple')
-            else:
-                features.append('Unknown TLS Feature.')
+            elif feature == TLSFeatureType.status_request_v2:
+                features.append('Multiple Certificate Status Request')
+            else:  # pragma: no cover - all features of cryptography 2.1 are covered
+                features.append('Unknown TLS Feature')
 
         return ext.critical, features
 
