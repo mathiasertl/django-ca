@@ -41,10 +41,10 @@ The authority that that signed the certificate must exist in the database."""
         # load public key
         try:
             pub_loaded = x509.load_pem_x509_certificate(pub_data, default_backend())
-        except:
+        except Exception:
             try:
                 pub_loaded = x509.load_der_x509_certificate(pub_data, default_backend())
-            except:
+            except Exception:
                 raise CommandError('Unable to load public key.')
 
         cert = Certificate(ca=options['ca'])

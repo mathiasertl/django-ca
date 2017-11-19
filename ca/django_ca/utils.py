@@ -385,13 +385,13 @@ def parse_general_name(name):
         if re.match('[a-z0-9]{2,}://', name):  # Looks like a URI
             try:
                 return x509.UniformResourceIdentifier(name)
-            except:  # pragma: no cover - this really accepts anything
+            except Exception:  # pragma: no cover - this really accepts anything
                 pass
 
         if '@' in name:  # Looks like an Email address
             try:
                 return x509.RFC822Name(validate_email(name))
-            except:
+            except Exception:
                 pass
 
         if name.strip().startswith('/'):  # maybe it's a dirname?

@@ -142,13 +142,13 @@ class OCSPView(View):
         try:
             with open(responder_key, 'rb') as stream:
                 responder_key = stream.read()
-        except:
+        except Exception as e:
             raise ImproperlyConfigured(priv_err_msg)
 
         try:
             # try to load responder key and cert with oscrypto, to make sure they are actually usable
             load_private_key(responder_key)
-        except:
+        except Exception as e:
             raise ImproperlyConfigured(priv_err_msg)
 
         if os.path.exists(responder_cert):
@@ -160,7 +160,7 @@ class OCSPView(View):
 
         try:
             load_certificate(responder_cert)
-        except:
+        except Exception as e:
             raise ImproperlyConfigured(pub_err_msg)
 
         return super(OCSPView, cls).as_view(

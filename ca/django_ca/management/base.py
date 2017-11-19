@@ -156,7 +156,7 @@ class URLAction(argparse.Action):
         validator = URLValidator()
         try:
             validator(value)
-        except:
+        except Exception:
             parser.error('%s: Not a valid URL.' % value)
         setattr(namespace, self.dest, value)
 
@@ -195,7 +195,7 @@ class MultipleURLAction(argparse.Action):
         validator = URLValidator()
         try:
             validator(value)
-        except:
+        except Exception:
             parser.error('%s: Not a valid URL.' % value)
 
         if getattr(namespace, self.dest) is None:

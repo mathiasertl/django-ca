@@ -72,10 +72,10 @@ Note that the private key will be copied to the directory configured by the CA_D
         # load public key
         try:
             pem_loaded = x509.load_pem_x509_certificate(pem_data, default_backend())
-        except:
+        except Exception:
             try:
                 pem_loaded = x509.load_der_x509_certificate(pem_data, default_backend())
-            except:
+            except Exception:
                 raise CommandError('Unable to load public key.')
         ca.x509 = pem_loaded
         ca.private_key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % ca.serial)
@@ -83,10 +83,10 @@ Note that the private key will be copied to the directory configured by the CA_D
         # load private key
         try:
             key_loaded = serialization.load_pem_private_key(key_data, import_password, default_backend())
-        except:
+        except Exception:
             try:
                 key_loaded = serialization.load_der_private_key(key_data, import_password, default_backend())
-            except:
+            except Exception:
                 raise CommandError('Unable to load private key.')
 
         if password is None:
