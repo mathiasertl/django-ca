@@ -46,6 +46,7 @@ from .utils import EXTENDED_KEY_USAGE_REVERSED
 from .utils import KEY_USAGE_MAPPING
 from .utils import OID_NAME_MAPPINGS
 from .utils import add_colons
+from .utils import format_general_name
 from .utils import format_general_names
 from .utils import format_name
 from .utils import int_to_hex
@@ -143,13 +144,9 @@ class X509CertMixin(models.Model):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
         except x509.ExtensionNotFound:
-            return ''
+            return None
 
-        value = format_general_names(ext.value)
-        if ext.critical:  # pragma: no cover - not usually critical
-            value = 'critical,%s' % value
-
-        return ext.critical, value
+        return ext.critical, [format_general_name(name) for name in ext.value]
     subjectAltName.short_description = 'subjectAltName'
 
     def crlDistributionPoints(self):
@@ -179,9 +176,9 @@ class X509CertMixin(models.Model):
         output = []
         for desc in ext.value:
             if desc.access_method == AuthorityInformationAccessOID.OCSP:
-                output.append('OCSP - %s' % format_general_names([desc.access_location]))
+                output.append('OCSP - %s' % format_general_name(desc.access_location))
             elif desc.access_method == AuthorityInformationAccessOID.CA_ISSUERS:
-                output.append('CA Issuers - %s' % format_general_names([desc.access_location]))
+                output.append('CA Issuers - %s' % format_general_name(desc.access_location))
             else:  # pramga: no cover - nothing else is known currently.
                 output.append('Unknown')
 
@@ -201,7 +198,6 @@ class X509CertMixin(models.Model):
             value = '%s, pathlen:%s' % (value, ext.value.path_length)
 
         return ext.critical, value
-    basicConstraints.short_description = 'basicConstraints'
 
     def keyUsage(self):
         try:
@@ -252,7 +248,6 @@ class X509CertMixin(models.Model):
 
         hexlified = binascii.hexlify(ext.value.key_identifier).upper().decode('utf-8')
         return ext.critical, 'keyid:%s' % add_colons(hexlified)
-    authorityKeyIdentifier.short_description = 'authorityKeyIdentifier'
 
     def TLSFeature(self):
         try:

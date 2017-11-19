@@ -67,20 +67,22 @@ class Command(CertCommand):
         # self.stdout.write extensions
         if options['extensions']:
             for name, value in cert.extensions():
-                if isinstance(value, tuple):
-                    critical, value = value
-                    if critical:
-                        self.stdout.write('%s (critical):' % name)
-                    else:
-                        self.stdout.write('%s:' % name)
-
-                else:  # old str value
+                critical, value = value
+                if critical:
+                    self.stdout.write('%s (critical):' % name)
+                else:
                     self.stdout.write('%s:' % name)
+
                 self.stdout.write(self.indent(value))
         else:
-            san = cert.subjectAltName()
+            critical, san = cert.subjectAltName()
             if san:
-                self.stdout.write('subjectAltName:\n    %s' % san)
+                if critical:
+                    self.stdout.write('subjectAltName (critical):')
+                else:
+                    self.stdout.write('subjectAltName:')
+
+                self.stdout.write(self.indent(san))
 
         self.stdout.write('Watchers:')
         for watcher in cert.watchers.all():

@@ -182,12 +182,12 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
     list_filter = (StatusListFilter, 'ca')
     readonly_fields = [
         'expires', 'csr', 'pub', 'cn', 'serial', 'revoked', 'revoked_date', 'revoked_reason',
-        'subjectAltName', 'distinguishedName', 'ca', 'hpkp_pin', ] + _x509_ext_fields
+        'subject_alt_name', 'distinguishedName', 'ca', 'hpkp_pin', ] + _x509_ext_fields
     search_fields = ['cn', 'serial', ]
 
     fieldsets = [
         (None, {
-            'fields': ['cn', 'subjectAltName', 'distinguishedName', 'serial', 'ca', 'expires',
+            'fields': ['cn', 'subject_alt_name', 'distinguishedName', 'serial', 'ca', 'expires',
                        'watchers', 'hpkp_pin'],
         }),
         (_('X509 Extensions'), {
@@ -383,6 +383,10 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
     def crl_distribution_points(self, obj):
         return self.output_extension(obj.crlDistributionPoints())
     crl_distribution_points.short_description = _('CRL Distribution Points')
+
+    def subject_alt_name(self, obj):
+        return self.output_extension(obj.subjectAltName())
+    subject_alt_name.short_description = _('subjectAltName')
 
     class Media:
         css = {
