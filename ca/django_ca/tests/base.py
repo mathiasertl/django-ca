@@ -92,7 +92,7 @@ certs = {
         'san': '',
         'authKeyIdentifier': 'keyid:79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
         'hpkp': 'MWvvGs9cF37mKmi2iXqBBqpkBT8zaWfT09DRSlpg8tQ=',
-        'crl': '',
+        'crl': None,
         'subjectKeyIdentifier': '79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
         'dn': '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=ca.example.com',
         'key_size': 4096,
@@ -107,7 +107,7 @@ certs = {
         'san': '',
         'authKeyIdentifier': 'keyid:79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
         'hpkp': '5Wpp4svwRWrKl3WeBIExoOl3a6/QK3WZAaIPRpgVrBA=',
-        'crl': '',  # TODO: add a CRL
+        'crl': None,  # TODO: add a CRL
         'dn': '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=sub.ca.example.com',
         'subjectKeyIdentifier': '4A:D5:57:27:D8:CC:01:B7:EF:AE:C1:FE:9A:9F:56:73:36:C3:0B:74',
     },
@@ -118,7 +118,7 @@ certs = {
         'sha1': '69:CA:37:7F:82:E5:6E:D9:7B:5A:72:60:F8:94:C6:2B:99:C1:2D:EA',
         'sha256': '88:99:CB:BE:D8:31:9F:76:08:4F:13:03:98:96:81:8D:35:92:E4:11:0D:72:62:F6:00:B9:1A:0F:CB:8B:60:1B',  # NOQA
         'sha512': '51:9E:A7:43:8D:9A:E4:E0:AA:94:C0:4E:60:7F:5E:42:CD:03:E1:E9:D3:93:CB:A6:70:C1:D8:F2:D4:31:F3:A2:F3:17:D6:73:90:DC:66:F3:0F:65:FD:46:BB:BB:FA:1E:AC:D9:FC:D4:80:9F:38:A3:47:71:28:CD:DD:C2:32:F1', # NOQA
-        'san': 'DNS:host1.example.com',
+        'san': (False, ['DNS:host1.example.com']),
         'cn': 'host1.example.com',
         'from': '2017-04-17 11:47',
         'until': '2019-04-18 00:00',

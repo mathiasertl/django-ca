@@ -108,7 +108,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertEqual(self.ocsp.serial, certs['ocsp']['serial'])
 
     def test_subjectAltName(self):
-        self.assertEqual(self.ca.subjectAltName(), '')
+        self.assertEqual(self.ca.subjectAltName(), None)
         self.assertEqual(self.cert.subjectAltName(), certs['cert1']['san'])
         self.assertEqual(self.cert2.subjectAltName(), certs['cert2']['san'])
         self.assertEqual(self.cert3.subjectAltName(), certs['cert3']['san'])
@@ -138,7 +138,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertEqual(self.ocsp.keyUsage(), 'critical,digitalSignature,keyEncipherment,nonRepudiation')
 
     def test_extendedKeyUsage(self):
-        self.assertEqual(self.ca.extendedKeyUsage(), '')
+        self.assertEqual(self.ca.extendedKeyUsage(), None)
         self.assertEqual(self.ca2.extendedKeyUsage(), '')
         self.assertEqual(self.cert.extendedKeyUsage(), 'serverAuth')
         self.assertEqual(self.cert2.extendedKeyUsage(), 'serverAuth')
