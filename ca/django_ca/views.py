@@ -160,7 +160,7 @@ class OCSPView(View):
 
         try:
             load_certificate(responder_cert)
-        except Exception as e:
+        except Exception:
             raise ImproperlyConfigured(pub_err_msg)
 
         return super(OCSPView, cls).as_view(
