@@ -73,14 +73,14 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         # Giving no password raises a CommandError
         stdin = six.StringIO(self.csr_pem)
         with self.assertRaisesRegex(CommandError, '^Password was not given but private key is encrypted$'):
-            self.cmd('dump_crl', ca=ca, alt=['example.com'], stdin=stdin)
+            self.cmd('dump_crl', ca=ca, stdin=stdin)
 
         # False password
         stdin = six.StringIO(self.csr_pem)
         ca = CertificateAuthority.objects.get(pk=ca.pk)
         stdin = six.StringIO(self.csr_pem)
         with self.assertRaisesRegex(CommandError, '^Bad decrypt\. Incorrect password\?$'):
-            self.cmd('dump_crl', ca=ca, alt=['example.com'], stdin=stdin, password=b'wrong')
+            self.cmd('dump_crl', ca=ca, stdin=stdin, password=b'wrong')
 
         stdout, stderr = self.cmd('dump_crl', ca=ca, stdout=BytesIO(), stderr=BytesIO(), password=password)
         self.assertEqual(stderr, b'')
