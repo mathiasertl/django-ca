@@ -147,7 +147,6 @@ class X509CertMixin(models.Model):
             return None
 
         return ext.critical, [format_general_name(name) for name in ext.value]
-    subjectAltName.short_description = 'subjectAltName'
 
     def crlDistributionPoints(self):
         try:
@@ -161,9 +160,6 @@ class X509CertMixin(models.Model):
                 value.append('Full Name: %s' % format_general_names(dp.full_name))
             else:  # pragma: no cover - not really used in the wild
                 value.append('Relative Name: %s' % format_name(dp.relative_name.value))
-
-        if ext.critical:  # pragma: no cover - not usually critical
-            value = 'critical,%s' % value
 
         return ext.critical, value
 
