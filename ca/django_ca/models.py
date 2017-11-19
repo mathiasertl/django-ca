@@ -154,22 +154,21 @@ class X509CertMixin(models.Model):
 
     def crlDistributionPoints(self):
         try:
-            crldp = self.x509.extensions.get_extension_for_oid(ExtensionOID.CRL_DISTRIBUTION_POINTS)
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.CRL_DISTRIBUTION_POINTS)
         except x509.ExtensionNotFound:
-            return ''
+            return None
 
-        value = ''
-        for dp in crldp.value:
+        value = []
+        for dp in ext.value:
             if dp.full_name:
-                value += 'Full Name: %s\n' % format_general_names(dp.full_name)
+                value.append('Full Name: %s' % format_general_names(dp.full_name))
             else:  # pragma: no cover - not really used in the wild
-                value += 'Relative Name:\n  %s' % format_name(dp.relative_name.value)
+                value.append('Relative Name: %s' % format_name(dp.relative_name.value))
 
-        if crldp.critical:  # pragma: no cover - not usually critical
+        if ext.critical:  # pragma: no cover - not usually critical
             value = 'critical,%s' % value
 
-        return value.strip()
-    crlDistributionPoints.short_description = 'crlDistributionPoints'
+        return ext.critical, value
 
     def authorityInfoAccess(self):
         try:
@@ -187,7 +186,6 @@ class X509CertMixin(models.Model):
                 output.append('Unknown')
 
         return ext.critical, output
-    authorityInfoAccess.short_description = 'authorityInfoAccess'
 
     def basicConstraints(self):
         try:

@@ -42,7 +42,7 @@ from .views import RevokeCertificateView
 
 _x509_ext_fields = [
     'key_usage', 'extended_key_usage', 'subject_key_identifier', 'issuer_alt_name', 'basic_constraints',
-    'auth_key_identifier', 'crlDistributionPoints', 'auth_info_access', 'tls_feature',
+    'auth_key_identifier', 'crl_distribution_points', 'auth_info_access', 'tls_feature',
 ]
 
 
@@ -379,6 +379,10 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
     def auth_key_identifier(self, obj):
         return self.output_extension(obj.authorityKeyIdentifier())
     auth_key_identifier.short_description = _('authorityKeyIdentifier')
+
+    def crl_distribution_points(self, obj):
+        return self.output_extension(obj.crlDistributionPoints())
+    crl_distribution_points.short_description = _('CRL Distribution Points')
 
     class Media:
         css = {
