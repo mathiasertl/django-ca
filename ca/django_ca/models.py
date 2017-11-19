@@ -286,8 +286,8 @@ class X509CertMixin(models.Model):
     def TLSFeature(self):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.TLS_FEATURE)
-        except x509.ExtensionNotFound:  # pragma: no cover - extension should always be present
-            return ''
+        except x509.ExtensionNotFound:
+            return None
 
         features = []
         for feature in ext.value:
