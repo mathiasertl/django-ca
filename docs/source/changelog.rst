@@ -9,6 +9,7 @@ HEAD
 ****
 
 * Add missing migration.
+* Also run test-suite against Django 2.0rc1.
 
 .. _changelog-1.6.3:
 
