@@ -145,6 +145,23 @@ def format_name(subject):
     return '/%s' % ('/'.join(['%s=%s' % (force_text(k), force_text(v)) for k, v in subject]))
 
 
+def format_general_name(name):
+    """Format a single general name.
+
+    >>> import ipaddress
+    >>> format_general_name(x509.DNSName('example.com'))
+    'DNS:example.com'
+    >>> format_general_name(x509.IPAddress(ipaddress.IPv4Address('127.0.0.1')))
+    'IP:127.0.0.1'
+    """
+
+    if isinstance(name, x509.DirectoryName):
+        value = format_name(name.value)
+    else:
+        value = name.value
+    return '%s:%s' % (SAN_NAME_MAPPINGS[type(name)], value)
+
+
 def format_general_names(names):
     """Format a list of general names.
 
@@ -160,17 +177,7 @@ def format_general_names(names):
     'DNS:example.com, DNS:example.net'
     """
 
-    formatted = []
-
-    for name in names:
-        if isinstance(name, x509.DirectoryName):
-            value = format_name(name.value)
-        else:
-            value = name.value
-
-        formatted.append('%s:%s' % (SAN_NAME_MAPPINGS[type(name)], value))
-
-    return ', '.join(formatted)
+    return ', '.join([format_general_name(n) for n in names])
 
 
 def is_power2(num):
