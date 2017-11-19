@@ -100,7 +100,7 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
             '--ext-key-usage', metavar='VALUES',
             help='Override the extendedKeyUsage extension, e.g. "serverAuth,clientAuth".')
         group.add_argument(
-            '--ocsp-must-staple', action='store_true', help='Enable OCSP Must-Staple.')
+            '--tls-features', metavar='VALUES', help='TLS Feature extensions.')
 
         group = parser.add_argument_group(
             'profiles', """Sign certificate based on the given profile. A profile only sets the
@@ -135,8 +135,8 @@ the default values, options like --key-usage still override the profile.""")
             kwargs['keyUsage'] = self.parse_extension(options['key_usage'])
         if options['ext_key_usage']:
             kwargs['extendedKeyUsage'] = self.parse_extension(options['ext_key_usage'])
-        if options['ocsp_must_staple']:
-            kwargs['ocsp_must_staple'] = True
+        if options['tls_features']:
+            kwargs['tls_features'] = self.parse_extension(options['tls_features'])
 
         # update subject with arguments from the command line
         kwargs.setdefault('subject', OrderedDict())
