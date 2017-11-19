@@ -129,6 +129,11 @@ class CreateCertificateForm(forms.ModelForm):
             ('timeStamping', 'Trusted Timestamping'),
             ('OCSPSigning', 'OCSP Signing'),
         ))
+    tls_features = KeyUsageField(
+        label='TLS Features', choices=(
+            ('ocsp_must-staple', 'OCSP Must-Staple'),
+            ('ocsp_multiple-cert-status-request', 'Multiple Certificate Status Request'),
+        ))
 
     def clean_csr(self):
         data = self.cleaned_data['csr']
@@ -158,6 +163,13 @@ class CreateCertificateForm(forms.ModelForm):
 
     def clean_extendedKeyUsage(self):
         value, critical = self.cleaned_data['extendedKeyUsage']
+        if not value:
+            return None
+        value = ','.join(value)
+        return critical, value
+
+    def clean_tls_features(self):
+        value, critical = self.cleaned_data['tls_features']
         if not value:
             return None
         value = ','.join(value)
