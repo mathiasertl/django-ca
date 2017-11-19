@@ -295,7 +295,8 @@ class X509CertMixin(models.Model):
                 features.append('OCSP Must-Staple')
             else:
                 features.append('Unknown TLS Feature.')
-        return features
+
+        return ext.critical, features
 
     def get_digest(self, algo):
         algo = getattr(hashes, algo.upper())()
