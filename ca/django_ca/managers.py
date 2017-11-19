@@ -24,6 +24,8 @@ from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
+from cryptography.x509 import TLSFeature
+from cryptography.x509 import TLSFeatureType
 from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtensionOID
 
@@ -187,7 +189,8 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
 class CertificateManager(CertificateManagerMixin, models.Manager):
     def sign_cert(self, ca, csr, expires, algorithm, subject=None, cn_in_san=True, csr_format=Encoding.PEM,
-                  subjectAltName=None, keyUsage=None, extendedKeyUsage=None, password=None):
+                  subjectAltName=None, keyUsage=None, extendedKeyUsage=None, ocsp_must_staple=False,
+                  password=None):
         """Create a signed certificate from a CSR.
 
         X509 extensions (`key_usage`, `ext_key_usage`) may either be None (in which case they are
@@ -227,6 +230,8 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             Value for the `keyUsage` X509 extension. See description for format details.
         extendedKeyUsage : tuple or None
             Value for the `extendedKeyUsage` X509 extension. See description for format details.
+        ocsp_must_staple : boolean, optional
+            Wether to enable the OCSP Must-Staple TLS feature. The default is ``False``.
         password : bytes, optional
             Password used to load the private key of the certificate authority. If not passed, the private key
             is assumed to be unencrypted.
@@ -306,6 +311,9 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         if ca.issuer_alt_name:
             builder = builder.add_extension(x509.IssuerAlternativeName(
                 [parse_general_name(ca.issuer_alt_name)]), critical=False)
+
+        if ocsp_must_staple:
+            builder = builder.add_extension(TLSFeature([TLSFeatureType.status_request]), critical=False)
 
         return builder.sign(private_key=ca.key(password), algorithm=algorithm, backend=default_backend()), req
 
