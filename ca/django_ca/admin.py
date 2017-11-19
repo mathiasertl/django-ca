@@ -298,7 +298,36 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
     expires_date.short_description = _('Expires')
     expires_date.admin_order_field = 'expires'
 
+    def save_model(self, request, obj, form, change):
+        data = form.cleaned_data
+
+        # If this is a new certificate, initialize it.
+        if change is False:  # # pragma: no branch
+            san, cn_in_san = data['subjectAltName']
+            expires = datetime.combine(data['expires'], datetime.min.time())
+
+            obj.x509, req = self.model.objects.sign_cert(
+                ca=data['ca'],
+                csr=data['csr'],
+                expires=expires,
+                subject=data['subject'],
+                algorithm=data['algorithm'],
+                subjectAltName=[e.strip() for e in san.split(',') if e.strip()],
+                cn_in_san=cn_in_san,
+                keyUsage=data['keyUsage'],
+                extendedKeyUsage=data['extendedKeyUsage'],
+                tls_features=data['tls_features'],
+                password=data['password']
+            )
+        obj.save()
+
+    ##################################
+    # Properties for x509 extensions #
+    ##################################
+
     def output_extension(self, value):
+        # shared function for formatting extension values
+
         if value is None:
             text = _('Not present')
             return mark_safe('<img src="/static/admin/img/icon-no.svg" alt="%s"> %s' % (text, text))
@@ -338,29 +367,6 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
     def tls_feature(self, obj):
         return self.output_extension(obj.TLSFeature())
     tls_feature.short_description = _('TLS Feature')
-
-    def save_model(self, request, obj, form, change):
-        data = form.cleaned_data
-
-        # If this is a new certificate, initialize it.
-        if change is False:  # # pragma: no branch
-            san, cn_in_san = data['subjectAltName']
-            expires = datetime.combine(data['expires'], datetime.min.time())
-
-            obj.x509, req = self.model.objects.sign_cert(
-                ca=data['ca'],
-                csr=data['csr'],
-                expires=expires,
-                subject=data['subject'],
-                algorithm=data['algorithm'],
-                subjectAltName=[e.strip() for e in san.split(',') if e.strip()],
-                cn_in_san=cn_in_san,
-                keyUsage=data['keyUsage'],
-                extendedKeyUsage=data['extendedKeyUsage'],
-                tls_features=data['tls_features'],
-                password=data['password']
-            )
-        obj.save()
 
     class Media:
         css = {
