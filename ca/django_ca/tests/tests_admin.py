@@ -617,3 +617,8 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         response = client.get(self.url)
         self.assertRequiresLogin(response, target_status_code=302)
         self.assertNotRevoked(self.cert)
+
+        # Also try to submit
+        response = client.post(self.url, data={'revoked_reason': ''})
+        self.assertRequiresLogin(response, target_status_code=302)
+        self.assertNotRevoked(self.cert)
