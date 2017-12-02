@@ -26,7 +26,7 @@ from ocspbuilder import OCSPResponseBuilder
 from oscrypto.asymmetric import load_certificate
 from oscrypto.asymmetric import load_private_key
 
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.mixins import PermissionDenied
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponse
@@ -91,13 +91,16 @@ class CertificateRevocationListView(View, SingleObjectMixin):
         return HttpResponse(crl, content_type=self.content_type)
 
 
-class RevokeCertificateView(PermissionRequiredMixin, UpdateView):
+class RevokeCertificateView(UpdateView):
     admin_site = None
     queryset = Certificate.objects.filter(revoked=False)
     form_class = RevokeCertificateForm
     template_name = 'django_ca/admin/certificate_revoke_form.html'
-    raise_exception = True
-    permission_required = 'django_ca.change_certificate'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.request.user.has_perm('django_ca.change_certificate'):
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super(RevokeCertificateView, self).get_context_data(**kwargs)
