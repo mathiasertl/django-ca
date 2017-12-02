@@ -123,7 +123,7 @@ X509 v3 certificate extensions for signed certificates:
 
         stdout, stderr = self.cmd('view_ca', parent.serial)
         #self.assertOutput(parent, stdout, san='ca.example.com')
-        data = certs['root'].copy()
+        data = self.get_cert_context('root')
         data['path'] = os.path.join(settings.FIXTURES_DIR, 'root.key')
         data['child_serial'] = certs['child']['serial']
         self.assertMultiLineEqual(stdout, '''root (enabled):
@@ -140,10 +140,11 @@ X509 v3 certificate extensions for signed certificates:
 X509 v3 certificate extensions for CA:
 authorityKeyIdentifier:
     %(authKeyIdentifier)s
-basicConstraints:
-    critical,CA:TRUE, pathlen:1
-keyUsage:
-    critical,cRLSign,keyCertSign
+basicConstraints (critical):
+    CA:TRUE, pathlen:1
+keyUsage (critical):
+    * %(keyUsage_0)s
+    * %(keyUsage_1)s
 subjectKeyIdentifier:
     %(subjectKeyIdentifier)s
 
@@ -157,7 +158,7 @@ X509 v3 certificate extensions for signed certificates:
         self.assertEqual(stderr, '')
 
         stdout, stderr = self.cmd('view_ca', child.serial)
-        data = certs['child'].copy()
+        data = self.get_cert_context('child')
         data['path'] = os.path.join(settings.FIXTURES_DIR, 'child.key')
         data['root_serial'] = certs['root']['serial']
         self.assertMultiLineEqual(stdout, '''child (enabled):
@@ -173,10 +174,11 @@ X509 v3 certificate extensions for signed certificates:
 X509 v3 certificate extensions for CA:
 authorityKeyIdentifier:
     %(authKeyIdentifier)s
-basicConstraints:
-    critical,CA:TRUE, pathlen:0
-keyUsage:
-    critical,cRLSign,keyCertSign
+basicConstraints (critical):
+    CA:TRUE, pathlen:0
+keyUsage (critical):
+    * %(keyUsage_0)s
+    * %(keyUsage_1)s
 subjectKeyIdentifier:
     %(subjectKeyIdentifier)s
 
