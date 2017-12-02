@@ -16,7 +16,6 @@
 import json
 from datetime import datetime
 from datetime import timedelta
-from urllib.parse import quote
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
@@ -26,6 +25,7 @@ from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.test import Client
 from django.utils import timezone
 from django.utils.encoding import force_text
+from django.utils.six.moves.urllib.parse import quote
 
 from ..models import Certificate
 from ..models import CertificateAuthority
