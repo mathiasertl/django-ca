@@ -17,6 +17,7 @@ import argparse
 import getpass
 import os
 import sys
+import textwrap
 from datetime import datetime
 from datetime import timedelta
 
@@ -292,6 +293,29 @@ class BaseCommand(_BaseCommand):
         if help is None:
             help = 'Password used for accessing the private key of the CA.'
         parser.add_argument('-p', '--password', nargs='?', action=PasswordAction, help=help)
+
+    def indent(self, s, prefix='    '):
+        if isinstance(s, list):
+            return ''.join(['%s* %s\n' % (prefix, l) for l in s])
+        elif six.PY3:
+            return textwrap.indent(s, prefix)
+        else:  # pragma: no cover
+            # copied from py3.4 version of textwrap.indent
+            def prefixed_lines():
+                for line in s.splitlines(True):
+                    yield prefix + line
+
+            return ''.join(prefixed_lines())
+
+    def print_extensions(self, cert):
+        for name, value in sorted(dict(cert.extensions()).items()):
+            critical, value = value
+            if critical:
+                self.stdout.write('%s (critical):' % name)
+            else:
+                self.stdout.write('%s:' % name)
+
+            self.stdout.write(self.indent(value))
 
 
 class CertCommand(BaseCommand):

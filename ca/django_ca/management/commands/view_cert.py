@@ -13,9 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-import textwrap
-
-from django.utils import six
 from django.utils import timezone
 
 from django_ca.management.base import CertCommand
@@ -36,19 +33,6 @@ class Command(CertCommand):
         self.add_format(parser)
         super(Command, self).add_arguments(parser)
 
-    def indent(self, s, prefix='    '):
-        if isinstance(s, list):
-            return ''.join(['%s* %s\n' % (prefix, l) for l in s])
-        elif six.PY3:
-            return textwrap.indent(s, prefix)
-        else:  # pragma: no cover
-            # copied from py3.4 version of textwrap.indent
-            def prefixed_lines():
-                for line in s.splitlines(True):
-                    yield prefix + line
-
-            return ''.join(prefixed_lines())
-
     def handle(self, cert, **options):
         self.stdout.write('Common Name: %s' % cert.cn)
 
@@ -66,14 +50,7 @@ class Command(CertCommand):
 
         # self.stdout.write extensions
         if options['extensions']:
-            for name, value in cert.extensions():
-                critical, value = value
-                if critical:
-                    self.stdout.write('%s (critical):' % name)
-                else:
-                    self.stdout.write('%s:' % name)
-
-                self.stdout.write(self.indent(value))
+            self.print_extensions(cert)
         else:
             critical, san = cert.subjectAltName()
             if san:
