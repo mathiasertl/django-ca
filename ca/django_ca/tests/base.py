@@ -96,6 +96,7 @@ certs = {
         'subjectKeyIdentifier': '79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
         'dn': '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=ca.example.com',
         'key_size': 4096,
+        'basicConstraints': (True, 'CA:TRUE, pathlen:1'),
         'keyUsage': (True, ['cRLSign', 'keyCertSign']),
     },
     'child': {
@@ -112,6 +113,7 @@ certs = {
         'dn': '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=sub.ca.example.com',
         'subjectKeyIdentifier': '4A:D5:57:27:D8:CC:01:B7:EF:AE:C1:FE:9A:9F:56:73:36:C3:0B:74',
         'keyUsage': (True, ['cRLSign', 'keyCertSign']),
+        'basicConstraints': (True, 'CA:TRUE, pathlen:0'),
     },
     'cert1': {
         'pem': force_text(cert1_pem),
