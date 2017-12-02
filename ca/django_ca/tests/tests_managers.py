@@ -25,7 +25,7 @@ from .base import override_tmpcadir
 @override_tmpcadir(CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class GetCertTestCase(DjangoCAWithCSRTestCase):
     def assertExtensions(self, cert, expected):
-        expected['basicConstraints'] = 'critical,CA:FALSE'
+        expected['basicConstraints'] = (True, 'CA:FALSE')
         expected['authorityKeyIdentifier'] = self.ca.authorityKeyIdentifier()
 
         if self.ca.issuer_alt_name:
@@ -48,7 +48,8 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         exts = [e.oid._name for e in cert.extensions]
         exts = {name: getattr(c, name)() for name in exts}
 
-        skid = exts.pop('subjectKeyIdentifier')
+        skid_critical, skid = exts.pop('subjectKeyIdentifier')
+        self.assertFalse(skid_critical)
         self.assertEqual(len(skid), 59)
 
         self.assertEqual(exts, expected)
@@ -70,9 +71,9 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
         # verify extensions
         extensions = {
-            'extendedKeyUsage': 'serverAuth',
-            'keyUsage': 'critical,digitalSignature,keyAgreement,keyEncipherment',
-            'subjectAltName': 'DNS:example.com',
+            'extendedKeyUsage': (False, ['serverAuth']),
+            'keyUsage': (True, ['digitalSignature', 'keyAgreement', 'keyEncipherment']),
+            'subjectAltName': (False, ['DNS:example.com']),
         }
 
         self.assertExtensions(cert.x509, extensions)
@@ -88,9 +89,9 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
         # verify extensions
         self.assertExtensions(cert.x509, {
-            'extendedKeyUsage': 'serverAuth',
-            'keyUsage': 'critical,digitalSignature,keyAgreement,keyEncipherment',
-            'subjectAltName': 'DNS:example.com',
+            'extendedKeyUsage': (False, ['serverAuth']),
+            'keyUsage': (True, ['digitalSignature', 'keyAgreement', 'keyEncipherment']),
+            'subjectAltName': (False, ['DNS:example.com']),
         })
 
     def test_no_names(self):
@@ -171,7 +172,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
             ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
         self.assertEqual(self.get_extensions(cert.x509)['crlDistributionPoints'],
-                         'Full Name: URI:%s' % ca .crl_url)
+                         (False, ['Full Name: URI:%s' % ca .crl_url]))
 
         # test multiple URLs
         ca.crl_url = 'http://crl.example.com\nhttp://crl.example.org'
@@ -180,8 +181,9 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
             ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
 
-        expected = 'Full Name: URI:%s\nFull Name: URI:%s' % tuple(ca.crl_url.splitlines())
-        self.assertEqual(self.get_extensions(cert.x509)['crlDistributionPoints'], expected)
+        crl_a, crl_b = ca.crl_url.splitlines()
+        expected = ['Full Name: URI:%s' % url for url in ca.crl_url.splitlines()]
+        self.assertEqual(self.get_extensions(cert.x509)['crlDistributionPoints'], (False, expected))
 
     def test_issuer_alt_name(self):
         ca = CertificateAuthority.objects.first()
@@ -192,7 +194,8 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
             ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
 
-        self.assertEqual(self.get_extensions(cert.x509)['issuerAltName'], 'URI:%s' % ca.issuer_alt_name)
+        self.assertEqual(self.get_extensions(cert.x509)['issuerAltName'],
+                         (False, 'URI:%s' % ca.issuer_alt_name))
 
     def test_auth_info_access(self):
         ca = CertificateAuthority.objects.first()
@@ -205,7 +208,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
             subjectAltName=['example.com'], **kwargs)
 
         self.assertEqual(self.get_extensions(cert.x509)['authorityInfoAccess'],
-                         'OCSP - URI:%s\n' % ca.ocsp_url)
+                         (False, ['OCSP - URI:%s' % ca.ocsp_url]))
 
         # test with both ocsp_url and issuer_url
         ca.issuer_url = 'http://ca.example.com/ca.crt'
@@ -214,7 +217,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
             subjectAltName=['example.com'], **kwargs)
 
         self.assertEqual(self.get_extensions(cert.x509)['authorityInfoAccess'],
-                         'OCSP - URI:%s\nCA Issuers - URI:%s\n' % (ca.ocsp_url, ca.issuer_url))
+                         (False, ['OCSP - URI:%s' % ca.ocsp_url, 'CA Issuers - URI:%s' % ca.issuer_url]))
 
         # test only with issuer url
         ca.ocsp_url = None
@@ -223,4 +226,4 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
             subjectAltName=['example.com'], **kwargs)
 
         self.assertEqual(self.get_extensions(cert.x509)['authorityInfoAccess'],
-                         'CA Issuers - URI:%s\n' % ca.issuer_url)
+                         (False, ['CA Issuers - URI:%s' % ca.issuer_url]))

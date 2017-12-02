@@ -367,7 +367,7 @@ class DjangoCATestCase(TestCase):
 
     @classmethod
     def get_alt_names(cls, x509):
-        return [n.strip() for n in cls.get_extensions(x509)['subjectAltName'].split(',')]
+        return cls.get_extensions(x509)['subjectAltName'][1]
 
     def assertParserError(self, args, expected):
         """Assert that given args throw a parser error."""
