@@ -20,6 +20,7 @@ from datetime import timedelta
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.contrib.auth.models import User
+from django.contrib.auth.models import Permission
 from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.test import Client
 from django.utils import timezone
@@ -125,6 +126,49 @@ class RevokeActionTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         # revoking revoked certs does nothing:
         response = self.client.post(self.changelist_url, data)
         self.assertRedirects(response, self.changelist_url)
+
+    def test_permissions(self):
+        data = {
+            'action': 'revoke', '_selected_action': [self.cert.pk],
+        }
+
+        # make an anonymous request
+        client = Client()
+        response = client.post(self.changelist_url, data)
+        self.assertRequiresLogin(response)
+
+        # cert is not revoked
+        cert = Certificate.objects.get(serial=self.cert.serial)
+        self.assertFalse(cert.revoked)
+        self.assertIsNone(cert.revoked_reason)
+
+        # test with a logged in user, but not staff
+        user = User.objects.create_user(username='staff', password='password', email='staff@example.com')
+        self.assertTrue(client.login(username='staff', password='password'))
+
+        response = client.post(self.changelist_url, data)
+        self.assertRequiresLogin(response)
+        cert = Certificate.objects.get(serial=self.cert.serial)
+        self.assertFalse(cert.revoked)
+        self.assertIsNone(cert.revoked_reason)
+
+        # make the user "staff"
+        user.is_staff = True
+        user.save()
+        response = client.post(self.changelist_url, data)
+        self.assertEqual(response.status_code, 403)
+        cert = Certificate.objects.get(serial=self.cert.serial)
+        self.assertTrue(User.objects.get(username='staff').is_staff)  # really is staff, right?
+        self.assertFalse(cert.revoked)
+        self.assertIsNone(cert.revoked_reason)
+
+        # now give appropriate permission
+        p = Permission.objects.get(codename='change_certificate')
+        user.user_permissions.add(p)
+        response = client.post(self.changelist_url, data)
+        cert = Certificate.objects.get(serial=self.cert.serial)
+        self.assertTrue(cert.revoked)
+        self.assertIsNone(cert.revoked_reason)
 
 
 class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
