@@ -26,9 +26,9 @@ from ocspbuilder import OCSPResponseBuilder
 from oscrypto.asymmetric import load_certificate
 from oscrypto.asymmetric import load_private_key
 
-from django.contrib.auth.mixins import PermissionDenied
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.utils.decorators import classonlymethod
 from django.utils.decorators import method_decorator
