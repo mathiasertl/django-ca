@@ -533,8 +533,9 @@ class CSRDetailTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
     def test_no_perms(self):
         # User is staff but has no permissions
         client = Client()
-        User.objects.create_user(username='staff', password='password', email='staff@example.com',
-                                 is_staff=True)
+        user = User.objects.create_user(username='staff', password='password', email='staff@example.com')
+        user.is_staff = True  # TODO: Django 1.8 does not allow is_staff as kwarg
+        user.save()
         self.assertTrue(client.login(username='staff', password='password'))
 
         response = client.post(self.url, data={'csr': self.csr_pem})
@@ -604,8 +605,9 @@ class CertDownloadTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     def test_no_perms(self):
         # User is staff but has no permissions
         client = Client()
-        User.objects.create_user(username='no_perms', password='password', email='user@example.com',
-                                 is_staff=True)
+        user = User.objects.create_user(username='no_perms', password='password', email='user@example.com')
+        user.is_staff = True  # TODO: Django 1.8 does not allow is_staff as kwarg
+        user.save()
         self.assertTrue(client.login(username='no_perms', password='password'))
 
         response = client.get('%s?format=PEM' % self.url)
@@ -687,8 +689,9 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     def test_no_perms(self):
         # User is staff but has no permissions
         client = Client()
-        User.objects.create_user(username='staff', password='password', email='staff@example.com',
-                                 is_staff=True)
+        user = User.objects.create_user(username='staff', password='password', email='staff@example.com')
+        user.is_staff = True  # TODO: Django 1.8 does not allow is_staff as kwarg
+        user.save()
         self.assertTrue(client.login(username='staff', password='password'))
 
         response = client.get(self.url)
