@@ -209,7 +209,7 @@ class X509CertMixin(models.Model):
             except ValueError:
                 pass
 
-        return ext.critical, usages
+        return ext.critical, list(sorted(usages))
 
     def extendedKeyUsage(self):
         try:
