@@ -113,19 +113,19 @@ class RevokeActionTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     """Test the "revoke" action in the changelist."""
 
     def test_basic(self):
+        self.assertNotRevoked(self.cert)
+
         data = {
             'action': 'revoke', '_selected_action': [self.cert.pk],
         }
         response = self.client.post(self.changelist_url, data)
         self.assertRedirects(response, self.changelist_url)
-
-        cert = Certificate.objects.get(serial=self.cert.serial)
-        self.assertTrue(cert.revoked)
-        self.assertIsNone(cert.revoked_reason)
+        self.assertRevoked(self.cert)
 
         # revoking revoked certs does nothing:
         response = self.client.post(self.changelist_url, data)
         self.assertRedirects(response, self.changelist_url)
+        self.assertRevoked(self.cert)
 
     def test_permissions(self):
         data = {
@@ -148,27 +148,21 @@ class RevokeActionTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
         response = client.post(self.changelist_url, data)
         self.assertRequiresLogin(response)
-        cert = Certificate.objects.get(serial=self.cert.serial)
-        self.assertFalse(cert.revoked)
-        self.assertIsNone(cert.revoked_reason)
+        self.assertNotRevoked(self.cert)
 
         # make the user "staff"
         user.is_staff = True
         user.save()
+        self.assertTrue(User.objects.get(username='staff').is_staff)  # really is staff, right?
         response = client.post(self.changelist_url, data)
         self.assertEqual(response.status_code, 403)
-        cert = Certificate.objects.get(serial=self.cert.serial)
-        self.assertTrue(User.objects.get(username='staff').is_staff)  # really is staff, right?
-        self.assertFalse(cert.revoked)
-        self.assertIsNone(cert.revoked_reason)
+        self.assertNotRevoked(self.cert)
 
         # now give appropriate permission
         p = Permission.objects.get(codename='change_certificate')
         user.user_permissions.add(p)
         response = client.post(self.changelist_url, data)
-        cert = Certificate.objects.get(serial=self.cert.serial)
-        self.assertTrue(cert.revoked)
-        self.assertIsNone(cert.revoked_reason)
+        self.assertRevoked(self.cert)
 
 
 class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
@@ -582,19 +576,14 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         response = self.client.post(self.url, data={'revoked_reason': ''})
         self.assertRedirects(response, self.change_url())
         self.assertTemplateUsed('django_ca/admin/certificate_revoke_form.html')
-
-        cert = Certificate.objects.get(serial=self.cert.serial)
-        self.assertTrue(cert.revoked)
-        self.assertIsNone(cert.revoked_reason)
+        self.assertRevoked(self.cert)
 
     def test_with_reason(self):
-        response = self.client.post(self.url, data={'revoked_reason': 'certificate_hold'})
+        reason = 'certificate_hold'
+        response = self.client.post(self.url, data={'revoked_reason': reason})
         self.assertRedirects(response, self.change_url())
         self.assertTemplateUsed('django_ca/admin/certificate_revoke_form.html')
-
-        cert = Certificate.objects.get(serial=self.cert.serial)
-        self.assertTrue(cert.revoked)
-        self.assertEqual(cert.revoked_reason, 'certificate_hold')
+        self.assertRevoked(self.cert, reason=reason)
 
     def test_revoked(self):
         cert = Certificate.objects.get(serial=self.cert.serial)
@@ -606,10 +595,7 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
         response = self.client.post(self.url, data={'revoked_reason': 'certificateHold'})
         self.assertEqual(response.status_code, 404)
-
-        cert = Certificate.objects.get(serial=self.cert.serial)
-        self.assertTrue(cert.revoked)
-        self.assertIsNone(cert.revoked_reason)
+        self.assertRevoked(self.cert)
 
     def test_not_logged_in(self):
         client = Client()
@@ -619,7 +605,4 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
         response = client.post(self.url, data={})
         self.assertRequiresLogin(response)
-
-        # redirect ok, but not revoked either, right?
-        cert = Certificate.objects.get(serial=self.cert.serial)
-        self.assertFalse(cert.revoked)
+        self.assertNotRevoked(self.cert)
