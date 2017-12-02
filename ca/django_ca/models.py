@@ -60,7 +60,7 @@ class Watcher(models.Model):
     @classmethod
     def from_addr(cls, addr):
         name = None
-        match = re.match('(.*?)\s*<(.*)>', addr)
+        match = re.match(r'(.*?)\s*<(.*)>', addr)
         if match is not None:
             name, addr = match.groups()
 
