@@ -16,6 +16,7 @@
 import json
 from datetime import datetime
 from datetime import timedelta
+from urllib.parse import quote
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
@@ -60,7 +61,7 @@ class AdminTestMixin(object):
         return reverse('admin:django_ca_certificate_change', args=(pk, ))
 
     def assertRequiresLogin(self, response, **kwargs):
-        expected = '%s?next=%s' % (reverse('admin:login'), response.wsgi_request.path)
+        expected = '%s?next=%s' % (reverse('admin:login'), quote(response.wsgi_request.get_full_path()))
         self.assertRedirects(response, expected, **kwargs)
 
 
@@ -555,9 +556,41 @@ class CertDownloadTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.content, b'')
 
-    def test_not_logged_in(self):
+    def test_anonymous(self):
+        # Try an anonymous download
         client = Client()
-        response = client.get(self.url)
+        response = client.get('%s?format=PEM' % self.url)
+        self.assertRequiresLogin(response)
+
+    def test_plain_user(self):
+        # User isn't staff and has no permissions
+        client = Client()
+        User.objects.create_user(username='plain', password='password', email='user@example.com')
+        self.assertTrue(client.login(username='plain', password='password'))
+        response = client.get('%s?format=PEM' % self.url)
+        self.assertRequiresLogin(response)
+
+    def test_no_perms(self):
+        # User is staff but has no permissions
+        client = Client()
+        User.objects.create_user(username='no_perms', password='password', email='user@example.com',
+                                 is_staff=True)
+        self.assertTrue(client.login(username='no_perms', password='password'))
+
+        response = client.get('%s?format=PEM' % self.url)
+        self.assertEqual(response.status_code, 403)
+
+    def test_no_staff(self):
+        # User isn't staff but has permissions
+        client = Client()
+        response = client.get('%s?format=PEM' % self.url)
+
+        # create a user
+        user = User.objects.create_user(username='no_perms', password='password', email='user@example.com')
+        p = Permission.objects.get(codename='change_certificate')
+        user.user_permissions.add(p)
+        self.assertTrue(client.login(username='no_perms', password='password'))
+
         self.assertRequiresLogin(response)
 
 

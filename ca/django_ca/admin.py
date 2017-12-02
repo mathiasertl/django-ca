@@ -23,6 +23,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.conf.urls import url
 from django.contrib import admin
+from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
@@ -74,6 +75,10 @@ on Wikipedia.</p>'''.replace('\n', ' ')
 
     def download_view(self, request, pk):
         """A view that allows the user to download a certificate in PEM or DER/ASN1 format."""
+
+        if not request.user.is_staff or not self.has_change_permission(request):
+            # NOTE: is_staff is already assured by ModelAdmin, but just to be sure
+            raise PermissionDenied
 
         # get object in question
         try:
