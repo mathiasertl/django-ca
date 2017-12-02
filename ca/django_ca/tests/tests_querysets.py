@@ -44,12 +44,12 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         self.assertEqual(ca.subject, {'CN': 'ca.example.com'})
 
         # verify X509 properties
-        self.assertEqual(ca.basicConstraints(), 'critical,CA:TRUE, pathlen:0')
-        self.assertEqual(ca.keyUsage(), 'critical,cRLSign,keyCertSign')
-        self.assertEqual(ca.subjectAltName(), '')
+        self.assertEqual(ca.basicConstraints(), (True, 'CA:TRUE, pathlen:0'))
+        self.assertEqual(ca.keyUsage(), (True, ['cRLSign', 'keyCertSign']))
+        self.assertEqual(ca.subjectAltName(), None)
 
-        self.assertEqual(ca.extendedKeyUsage(), '')
-        self.assertEqual(ca.issuerAltName(), '')
+        self.assertEqual(ca.extendedKeyUsage(), None)
+        self.assertEqual(ca.issuerAltName(), None)
 
     def test_pathlen(self):
         key_size = ca_settings.CA_MIN_KEY_SIZE
@@ -58,12 +58,12 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
             parent=None, subject={'CN': 'ca.example.com', })
 
         ca = CertificateAuthority.objects.init(name='1', **kwargs)
-        self.assertEqual(ca.basicConstraints(), 'critical,CA:TRUE')
+        self.assertEqual(ca.basicConstraints(), (True, 'CA:TRUE'))
 
         ca = CertificateAuthority.objects.init(pathlen=0, name='2', **kwargs)
-        self.assertEqual(ca.basicConstraints(), 'critical,CA:TRUE, pathlen:0')
+        self.assertEqual(ca.basicConstraints(), (True, 'CA:TRUE, pathlen:0'))
         ca = CertificateAuthority.objects.init(pathlen=2, name='3', **kwargs)
-        self.assertEqual(ca.basicConstraints(), 'critical,CA:TRUE, pathlen:2')
+        self.assertEqual(ca.basicConstraints(), (True, 'CA:TRUE, pathlen:2'))
 
     def test_parent(self):
         key_size = ca_settings.CA_MIN_KEY_SIZE
@@ -76,7 +76,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         child = CertificateAuthority.objects.init(name='Child', parent=parent, pathlen=0, **kwargs)
 
         childAuthKeyId = child.authorityKeyIdentifier()
-        self.assertEqual(childAuthKeyId, 'keyid:%s' % parent.subjectKeyIdentifier())
+        self.assertEqual(childAuthKeyId, (False, 'keyid:%s' % parent.subjectKeyIdentifier()[1]))
 
     def test_key_size(self):
         kwargs = dict(
