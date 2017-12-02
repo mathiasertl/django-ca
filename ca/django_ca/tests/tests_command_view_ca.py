@@ -28,61 +28,10 @@ from .base import override_tmpcadir
 
 
 class ViewCATestCase(DjangoCAWithCATestCase):
-    maxDiff = None
-
-    def assertOutput(self, ca, stdout, san=''):
-        status = 'enabled' if self.ca.enabled else 'disabled'
-        if ca.children.all():
-            children = '* Children:\n'
-            for child in ca.children.all():
-                children += '  * %s (%s)\n' % (child.name, child.serial)
-            children = children.strip()
-        else:
-            children = '* Has no children.'
-
-        if ca.parent is None:
-            parent = '* Is a root CA.'
-        else:
-            parent = '* Parent: %s (%s)' % (ca.parent.name, ca.parent.serial)
-        pathlen = 'unlimited' if ca.pathlen is None else ca.pathlen
-
-        if san != '':
-            san = '\nsubjectAltName:\n    DNS:%s' % san
-
-        self.assertMultiLineEqual(stdout, '''%s (%s):
-* Serial: %s
-* Path to private key:
-  %s
-%s
-%s
-* Distinguished Name: %s
-* Maximum levels of sub-CAs (pathlen): %s
-* HPKP pin: %s
-
-X509 v3 certificate extensions for CA:
-authorityKeyIdentifier:
-    %s
-basicConstraints:
-    %s
-keyUsage:
-    critical,cRLSign,keyCertSign%s
-subjectKeyIdentifier:
-    %s
-
-X509 v3 certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
-* Issuer URL: None
-* OCSP URL: None
-* Issuer Alternative Name: None
-
-%s''' % (ca.name, status, ca.serial, ca.private_key_path, parent, children, ca.distinguishedName(),
-         pathlen, ca.hpkp_pin, ca.authorityKeyIdentifier().strip(), ca.basicConstraints(),
-         san, ca.subjectKeyIdentifier(), ca.pub))
-
     def test_basic(self):
         stdout, stderr = self.cmd('view_ca', self.ca.serial)
         path = os.path.join(settings.FIXTURES_DIR, 'root.key')
-        data = certs['root'].copy()
+        data = self.get_cert_context('root')
         data['path'] = path
         self.assertMultiLineEqual(stdout, '''root (enabled):
 * Serial: %(serial)s
@@ -97,10 +46,11 @@ X509 v3 certificate extensions for signed certificates:
 X509 v3 certificate extensions for CA:
 authorityKeyIdentifier:
     %(authKeyIdentifier)s
-basicConstraints:
-    critical,CA:TRUE, pathlen:1
-keyUsage:
-    critical,cRLSign,keyCertSign
+basicConstraints (critical):
+    %(basicConstraints)s
+keyUsage (critical):
+    * %(keyUsage_0)s
+    * %(keyUsage_1)s
 subjectKeyIdentifier:
     %(subjectKeyIdentifier)s
 
@@ -122,7 +72,6 @@ X509 v3 certificate extensions for signed certificates:
         child = self.load_ca(name='child', x509=child_pubkey, parent=self.ca)
 
         stdout, stderr = self.cmd('view_ca', parent.serial)
-        #self.assertOutput(parent, stdout, san='ca.example.com')
         data = self.get_cert_context('root')
         data['path'] = os.path.join(settings.FIXTURES_DIR, 'root.key')
         data['child_serial'] = certs['child']['serial']
@@ -141,7 +90,7 @@ X509 v3 certificate extensions for CA:
 authorityKeyIdentifier:
     %(authKeyIdentifier)s
 basicConstraints (critical):
-    CA:TRUE, pathlen:1
+    %(basicConstraints)s
 keyUsage (critical):
     * %(keyUsage_0)s
     * %(keyUsage_1)s
@@ -175,7 +124,7 @@ X509 v3 certificate extensions for CA:
 authorityKeyIdentifier:
     %(authKeyIdentifier)s
 basicConstraints (critical):
-    CA:TRUE, pathlen:0
+    %(basicConstraints)s
 keyUsage (critical):
     * %(keyUsage_0)s
     * %(keyUsage_1)s
@@ -208,5 +157,46 @@ X509 v3 certificate extensions for signed certificates:
 
         ca = CertificateAuthority.objects.get(name=name)
         stdout, stderr = self.cmd('view_ca', ca.serial)
-        self.assertOutput(ca, stdout)
+
+        context = {
+            'path': ca.private_key_path,
+            'serial': ca.serial,
+            'dn': ca.distinguishedName(),
+            'hpkp': ca.hpkp_pin,
+            'authKeyIdentifier': ca.authorityKeyIdentifier()[1],
+            'basicConstraints': ca.basicConstraints()[1],
+            'keyUsage_0': ca.keyUsage()[1][0],
+            'keyUsage_1': ca.keyUsage()[1][1],
+            'subjectKeyIdentifier': ca.subjectKeyIdentifier()[1],
+            'pem': ca.pub,
+            'name': ca.name,
+        }
+        self.assertMultiLineEqual(stdout, '''%(name)s (enabled):
+* Serial: %(serial)s
+* Path to private key:
+  %(path)s
+* Is a root CA.
+* Has no children.
+* Distinguished Name: %(dn)s
+* Maximum levels of sub-CAs (pathlen): unlimited
+* HPKP pin: %(hpkp)s
+
+X509 v3 certificate extensions for CA:
+authorityKeyIdentifier:
+    %(authKeyIdentifier)s
+basicConstraints (critical):
+    %(basicConstraints)s
+keyUsage (critical):
+    * %(keyUsage_0)s
+    * %(keyUsage_1)s
+subjectKeyIdentifier:
+    %(subjectKeyIdentifier)s
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+%(pem)s''' % context)
         self.assertEqual(stderr, '')
