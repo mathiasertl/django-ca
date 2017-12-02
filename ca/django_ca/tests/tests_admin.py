@@ -59,9 +59,9 @@ class AdminTestMixin(object):
 
         return reverse('admin:django_ca_certificate_change', args=(pk, ))
 
-    def assertRequiresLogin(self, response):
+    def assertRequiresLogin(self, response, **kwargs):
         expected = '%s?next=%s' % (reverse('admin:login'), response.wsgi_request.path)
-        self.assertRedirects(response, expected)
+        self.assertRedirects(response, expected, **kwargs)
 
 
 class ChangelistTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
@@ -615,4 +615,5 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertTrue(client.login(username='staff', password='password'))
 
         response = client.get(self.url)
-        self.assertRequiresLogin(response)
+        self.assertRequiresLogin(response, target_status_code=302)
+        self.assertNotRevoked(self.cert)
