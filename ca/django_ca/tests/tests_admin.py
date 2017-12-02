@@ -606,3 +606,13 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         response = client.post(self.url, data={})
         self.assertRequiresLogin(response)
         self.assertNotRevoked(self.cert)
+
+    def test_staff_user(self):
+        # User is staff, but has no appropriate permissions
+        client = Client()
+        User.objects.create_user(username='staff', password='password', email='staff@example.com',
+                                 is_staff=True)
+        self.assertTrue(client.login(username='staff', password='password'))
+
+        response = client.get(self.url)
+        self.assertRequiresLogin(response)
