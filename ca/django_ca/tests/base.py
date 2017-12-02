@@ -267,6 +267,28 @@ class DjangoCATestCase(TestCase):
         store_ctx = X509StoreContext(store, cert)
         self.assertIsNone(store_ctx.verify_certificate())
 
+    def assertRevoked(self, cert, reason=None):
+        if isinstance(cert, CertificateAuthority):
+            cert = CertificateAuthority.objects.get(serial=cert.serial)
+        else:
+            cert = Certificate.objects.get(serial=cert.serial)
+
+        self.assertTrue(cert.revoked)
+
+        if reason is None:
+            self.assertIsNone(cert.revoked_reason)
+        else:
+            self.assertEqual(cert.revoked_reason, reason)
+
+    def assertNotRevoked(self, cert):
+        if isinstance(cert, CertificateAuthority):
+            cert = CertificateAuthority.objects.get(serial=cert.serial)
+        else:
+            cert = Certificate.objects.get(serial=cert.serial)
+
+        self.assertFalse(cert.revoked)
+        self.assertIsNone(cert.revoked_reason)
+
     @classmethod
     def expires(cls, days):
         now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
