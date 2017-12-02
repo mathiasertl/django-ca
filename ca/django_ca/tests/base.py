@@ -120,13 +120,15 @@ certs = {
         'sha512': '51:9E:A7:43:8D:9A:E4:E0:AA:94:C0:4E:60:7F:5E:42:CD:03:E1:E9:D3:93:CB:A6:70:C1:D8:F2:D4:31:F3:A2:F3:17:D6:73:90:DC:66:F3:0F:65:FD:46:BB:BB:FA:1E:AC:D9:FC:D4:80:9F:38:A3:47:71:28:CD:DD:C2:32:F1', # NOQA
         'san': (False, ['DNS:host1.example.com']),
         'cn': 'host1.example.com',
+        'keyUsage': (True, ['digitalSignature', 'keyAgreement', 'keyEncipherment']),
         'from': '2017-04-17 11:47',
         'until': '2019-04-18 00:00',
         'status': 'Valid',
         'subjectKeyIdentifier': 'D2:1B:D1:90:35:0E:44:58:F7:0A:21:BB:DC:BE:3D:7F:ED:83:E4:FA',
         'authKeyIdentifier': (False, 'keyid:79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47'),
         'issuerAltName': (False, 'URI:https://ca.example.com'),
-        'authInfoAccess': 'OCSP - URI:http://ocsp.ca.example.com\n    CA Issuers - URI:http://ca.example.com/ca.crt',  # NOQA
+        'authInfoAccess': (False, ['OCSP - URI:http://ocsp.ca.example.com',
+                                   'CA Issuers - URI:http://ca.example.com/ca.crt']),
         'crl': (False, ['Full Name: URI:http://ca.example.com/crl']),
         'der': cert1_pubkey.public_bytes(encoding=Encoding.DER),
         'serial': '5A:1B:A2:63:A1:E4:D8:D1:4D:82:60:46:D3:8F:E0:C3:A5:B3:E4:89',

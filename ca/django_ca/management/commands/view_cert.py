@@ -52,8 +52,10 @@ class Command(CertCommand):
         if options['extensions']:
             self.print_extensions(cert)
         else:
-            critical, san = cert.subjectAltName()
+            san = cert.subjectAltName()
             if san:
+                critical, san = cert.subjectAltName()
+
                 if critical:
                     self.stdout.write('subjectAltName (critical):')
                 else:
