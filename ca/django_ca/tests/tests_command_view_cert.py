@@ -50,23 +50,6 @@ class ViewCertTestCase(DjangoCAWithCertTestCase):
             'san': cert.subjectAltName(),
         }
 
-    def get_cert_context(self, name):
-        ctx = {}
-        for key, value in certs[name].items():
-            if isinstance(value, tuple):
-                crit, val = value
-                ctx['%s_critical' % key] = crit
-
-                if isinstance(val, list):
-                    for i, val_i in enumerate(val):
-                        ctx['%s_%s' % (key, i)] = val_i
-                else:
-                    ctx[key] = val
-            else:
-                ctx[key] = value
-
-        return ctx
-
     def test_basic(self):
         stdout, stderr = self.cmd('view_cert', self.cert.serial, stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stdout.decode('utf-8'), '''Common Name: %(cn)s

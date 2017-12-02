@@ -291,6 +291,24 @@ class DjangoCATestCase(TestCase):
         self.assertFalse(cert.revoked)
         self.assertIsNone(cert.revoked_reason)
 
+    def get_cert_context(self, name):
+        # Get a dictionary suitable for testing output based on the dictionary in basic.certs
+        ctx = {}
+        for key, value in certs[name].items():
+            if isinstance(value, tuple):
+                crit, val = value
+                ctx['%s_critical' % key] = crit
+
+                if isinstance(val, list):
+                    for i, val_i in enumerate(val):
+                        ctx['%s_%s' % (key, i)] = val_i
+                else:
+                    ctx[key] = val
+            else:
+                ctx[key] = value
+
+        return ctx
+
     @classmethod
     def expires(cls, days):
         now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
