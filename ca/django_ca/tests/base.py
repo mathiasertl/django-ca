@@ -253,9 +253,9 @@ class DjangoCATestCase(TestCase):
     def assertIssuer(self, issuer, cert):
         self.assertEqual(cert.issuer, issuer.subject)
 
-    def assertAuthorityKeyIdentifier(self, issuer, cert):
-        self.assertEqual(cert.authorityKeyIdentifier().strip(),
-                         'keyid:%s' % issuer.subjectKeyIdentifier())
+    def assertAuthorityKeyIdentifier(self, issuer, cert, critical=False):
+        key_id = 'keyid:%s' % issuer.subjectKeyIdentifier()[1]
+        self.assertEqual(cert.authorityKeyIdentifier(), (critical, key_id))
 
     def assertSignature(self, chain, cert):
         # see: http://stackoverflow.com/questions/30700348
