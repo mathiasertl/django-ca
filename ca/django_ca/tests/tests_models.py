@@ -108,21 +108,27 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertEqual(self.ocsp.serial, certs['ocsp']['serial'])
 
     def test_subjectAltName(self):
-        self.assertEqual(self.ca.subjectAltName(), None)
+        self.assertEqual(self.ca.subjectAltName(), certs['root']['san'])
+        self.assertEqual(self.ca2.subjectAltName(), certs['child']['san'])
         self.assertEqual(self.cert.subjectAltName(), certs['cert1']['san'])
         self.assertEqual(self.cert2.subjectAltName(), certs['cert2']['san'])
         self.assertEqual(self.cert3.subjectAltName(), certs['cert3']['san'])
 
         self.assertEqual(
             self.full.subjectAltName(),
-            'DNS:all.example.com, dirname:/C=AT/CN=example.com, email:user@example.com, IP:fd00::1')
+            (False, [
+                'DNS:all.example.com',
+                'dirname:/C=AT/CN=example.com',
+                'email:user@example.com',
+                'IP:fd00::1',
+            ]))
 
     def test_basicConstraints(self):
-        self.assertEqual(self.ca.basicConstraints(), 'critical,CA:TRUE, pathlen:1')
-        self.assertEqual(self.cert.basicConstraints(), 'critical,CA:FALSE')
-        self.assertEqual(self.cert2.basicConstraints(), 'critical,CA:FALSE')
+        self.assertEqual(self.ca.basicConstraints(), (True, 'CA:TRUE, pathlen:1'))
+        self.assertEqual(self.cert.basicConstraints(), (True, 'CA:FALSE'))
+        self.assertEqual(self.cert2.basicConstraints(), (True, 'CA:FALSE'))
         # accidentally used cert2 in cn/san
-        self.assertEqual(self.cert3.basicConstraints(), 'critical,CA:FALSE')
+        self.assertEqual(self.cert3.basicConstraints(), (True, 'CA:FALSE'))
 
     def test_issuerAltName(self):
         self.assertEqual(self.cert.issuerAltName(), certs['cert1']['issuerAltName'])
@@ -130,29 +136,34 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertEqual(self.cert3.issuerAltName(), certs['cert3']['issuerAltName'])
 
     def test_keyUsage(self):
-        self.assertEqual(self.ca.keyUsage(), 'critical,cRLSign,keyCertSign')
-        self.assertEqual(self.ca2.keyUsage(), 'critical,cRLSign,keyCertSign')
-        self.assertEqual(self.cert.keyUsage(), 'critical,digitalSignature,keyAgreement,keyEncipherment')
-        self.assertEqual(self.cert2.keyUsage(), 'critical,digitalSignature,keyAgreement,keyEncipherment')
-        self.assertEqual(self.cert3.keyUsage(), 'critical,digitalSignature,keyAgreement,keyEncipherment')
-        self.assertEqual(self.ocsp.keyUsage(), 'critical,digitalSignature,keyEncipherment,nonRepudiation')
+        self.assertEqual(self.ca.keyUsage(), (True, ['cRLSign', 'keyCertSign']))
+        self.assertEqual(self.ca2.keyUsage(), (True, ['cRLSign', 'keyCertSign']))
+        self.assertEqual(self.cert.keyUsage(),
+                         (True, ['digitalSignature', 'keyAgreement', 'keyEncipherment']))
+        self.assertEqual(self.cert2.keyUsage(),
+                         (True, ['digitalSignature', 'keyAgreement', 'keyEncipherment']))
+        self.assertEqual(self.cert3.keyUsage(),
+                         (True, ['digitalSignature', 'keyAgreement', 'keyEncipherment']))
+        self.assertEqual(self.ocsp.keyUsage(),
+                         (True, ['digitalSignature', 'keyEncipherment', 'nonRepudiation']))
 
     def test_extendedKeyUsage(self):
         self.assertEqual(self.ca.extendedKeyUsage(), None)
-        self.assertEqual(self.ca2.extendedKeyUsage(), '')
-        self.assertEqual(self.cert.extendedKeyUsage(), 'serverAuth')
-        self.assertEqual(self.cert2.extendedKeyUsage(), 'serverAuth')
-        self.assertEqual(self.cert3.extendedKeyUsage(), 'serverAuth')
-        self.assertEqual(self.ocsp.extendedKeyUsage(), 'OCSPSigning')
+        self.assertEqual(self.ca2.extendedKeyUsage(), None)
+        self.assertEqual(self.cert.extendedKeyUsage(), (False, ['serverAuth']))
+        self.assertEqual(self.cert2.extendedKeyUsage(), (False, ['serverAuth']))
+        self.assertEqual(self.cert3.extendedKeyUsage(), (False, ['serverAuth']))
+        self.assertEqual(self.ocsp.extendedKeyUsage(), (False, ['OCSPSigning']))
 
     def test_crlDistributionPoints(self):
-        self.assertEqual(self.ca.crlDistributionPoints(), certs['root']['crl'])
-        self.assertEqual(self.ca2.crlDistributionPoints(), certs['child']['crl'])
+        self.assertEqual(self.ca.crlDistributionPoints(), certs['root']['crl'])  # None
+        self.assertEqual(self.ca2.crlDistributionPoints(), certs['child']['crl'])  # None
         self.assertEqual(self.cert.crlDistributionPoints(), certs['cert1']['crl'])
         self.assertEqual(self.cert2.crlDistributionPoints(), certs['cert2']['crl'])
         self.assertEqual(self.cert3.crlDistributionPoints(), certs['cert3']['crl'])
         self.assertEqual(self.ocsp.crlDistributionPoints(), certs['ocsp']['crl'])
-        self.assertEqual(self.full.crlDistributionPoints(), 'Full Name: URI:https://ca.example.com/crl.der')
+        self.assertEqual(self.full.crlDistributionPoints(),
+                         (False, ['Full Name: URI:https://ca.example.com/crl.der']))
 
     def test_digest(self):
         self.assertEqual(self.ca.get_digest('md5'), certs['root']['md5'])
@@ -188,7 +199,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertEqual(self.cert3.authorityKeyIdentifier(), certs['cert3']['authKeyIdentifier'])
 
     def test_nameConstraints(self):
-        self.assertEqual(self.ca.nameConstraints(), '')
+        self.assertEqual(self.ca.nameConstraints(), None)
 
     def test_hpkp_pin(self):
 
