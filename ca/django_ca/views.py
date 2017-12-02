@@ -26,6 +26,7 @@ from ocspbuilder import OCSPResponseBuilder
 from oscrypto.asymmetric import load_certificate
 from oscrypto.asymmetric import load_private_key
 
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponse
@@ -90,11 +91,16 @@ class CertificateRevocationListView(View, SingleObjectMixin):
         return HttpResponse(crl, content_type=self.content_type)
 
 
-class RevokeCertificateView(UpdateView):
+class RevokeCertificateView(PermissionRequiredMixin, UpdateView):
     admin_site = None
     queryset = Certificate.objects.filter(revoked=False)
     form_class = RevokeCertificateForm
     template_name = 'django_ca/admin/certificate_revoke_form.html'
+    permission_required = 'django_ca.change_certificate'
+
+    def get_login_url(self):
+        # This is strictly an admin view, so we don't redirect to settings.LOGIN_URL
+        return reverse('admin:login')
 
     def get_context_data(self, **kwargs):
         context = super(RevokeCertificateView, self).get_context_data(**kwargs)
