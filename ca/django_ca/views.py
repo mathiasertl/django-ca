@@ -100,7 +100,7 @@ class RevokeCertificateView(UpdateView):
     def dispatch(self, request, *args, **kwargs):
         if not self.request.user.has_perm('django_ca.change_certificate'):
             raise PermissionDenied
-        return super().dispatch(request, *args, **kwargs)
+        return super(RevokeCertificateView, self).dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super(RevokeCertificateView, self).get_context_data(**kwargs)
