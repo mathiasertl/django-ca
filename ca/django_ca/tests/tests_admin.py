@@ -515,8 +515,39 @@ class CSRDetailTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         response = self.client.post(self.url, data={'csr': 'foobar'})
         self.assertEqual(response.status_code, 400)
 
-    def test_not_logged_in(self):
+    def test_anonymous(self):
         client = Client()
+
+        response = client.post(self.url, data={'csr': self.csr_pem})
+        self.assertRequiresLogin(response)
+
+    def test_plain_user(self):
+        # User isn't staff and has no permissions
+        client = Client()
+        User.objects.create_user(username='plain', password='password', email='plain@example.com')
+        self.assertTrue(client.login(username='plain', password='password'))
+
+        response = client.post(self.url, data={'csr': self.csr_pem})
+        self.assertRequiresLogin(response)
+
+    def test_no_perms(self):
+        # User is staff but has no permissions
+        client = Client()
+        User.objects.create_user(username='staff', password='password', email='staff@example.com',
+                                 is_staff=True)
+        self.assertTrue(client.login(username='staff', password='password'))
+
+        response = client.post(self.url, data={'csr': self.csr_pem})
+        self.assertEqual(response.status_code, 403)
+
+    def test_no_staff(self):
+        # User isn't staff but has permissions
+        client = Client()
+        user = User.objects.create_user(username='no_perms', password='password',
+                                        email='no_perms@example.com')
+        p = Permission.objects.get(codename='change_certificate')
+        user.user_permissions.add(p)
+        self.assertTrue(client.login(username='no_perms', password='password'))
 
         response = client.post(self.url, data={'csr': self.csr_pem})
         self.assertRequiresLogin(response)

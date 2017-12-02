@@ -235,6 +235,10 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
     def csr_details_view(self, request):
         """Returns details of a CSR request."""
 
+        if not request.user.is_staff or not self.has_change_permission(request):
+            # NOTE: is_staff is already assured by ModelAdmin, but just to be sure
+            raise PermissionDenied
+
         try:
             csr = x509.load_pem_x509_csr(force_bytes(request.POST['csr']), default_backend())
         except Exception as e:
