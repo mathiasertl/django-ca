@@ -19,8 +19,8 @@ from datetime import timedelta
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
-from django.contrib.auth.models import User
 from django.contrib.auth.models import Permission
+from django.contrib.auth.models import User
 from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.test import Client
 from django.utils import timezone
