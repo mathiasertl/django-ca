@@ -93,12 +93,15 @@ class InitCATest(DjangoCATestCase):
 
         self.assertTrue(isinstance(ca.x509.signature_hash_algorithm, hashes.SHA1))
         self.assertTrue(isinstance(ca.x509.public_key(), dsa.DSAPublicKey))
-        self.assertEqual(ca.crlDistributionPoints(), 'Full Name: URI:http://ca.crl.example.com')
-        self.assertEqual(ca.authorityInfoAccess(),
-                         'OCSP - URI:http://ca.ocsp.example.com\n'
-                         'CA Issuers - URI:http://ca.issuer.ca.example.com\n')
-        self.assertEqual(ca.nameConstraints(),
-                         'critical,Permitted:\n  DNS:.com\nExcluded:\n  DNS:.net\n')
+        self.assertEqual(ca.crlDistributionPoints(), (False, ['Full Name: URI:http://ca.crl.example.com']))
+        self.assertEqual(ca.authorityInfoAccess(), (False, [
+            'OCSP - URI:http://ca.ocsp.example.com',
+            'CA Issuers - URI:http://ca.issuer.ca.example.com'
+        ]))
+        self.assertEqual(ca.nameConstraints(), (True, [
+            'Permitted: DNS:.com',
+            'Excluded: DNS:.net'
+        ]))
         self.assertEqual(ca.pathlen, 3)
         self.assertEqual(ca.issuer_url, 'http://issuer.ca.example.com')
         self.assertEqual(ca.issuer_alt_name, 'http://ian.ca.example.com')
