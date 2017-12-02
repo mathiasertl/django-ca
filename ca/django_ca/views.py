@@ -96,11 +96,8 @@ class RevokeCertificateView(PermissionRequiredMixin, UpdateView):
     queryset = Certificate.objects.filter(revoked=False)
     form_class = RevokeCertificateForm
     template_name = 'django_ca/admin/certificate_revoke_form.html'
+    raise_exception = True
     permission_required = 'django_ca.change_certificate'
-
-    def get_login_url(self):
-        # This is strictly an admin view, so we don't redirect to settings.LOGIN_URL
-        return reverse('admin:login')
 
     def get_context_data(self, **kwargs):
         context = super(RevokeCertificateView, self).get_context_data(**kwargs)

@@ -630,7 +630,7 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 404)
         self.assertRevoked(self.cert)
 
-    def test_not_logged_in(self):
+    def test_anonymous(self):
         client = Client()
 
         response = client.get(self.url)
@@ -640,18 +640,46 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertRequiresLogin(response)
         self.assertNotRevoked(self.cert)
 
-    def test_staff_user(self):
-        # User is staff, but has no appropriate permissions
+    def test_plain_user(self):
+        # User isn't staff and has no permissions
+        client = Client()
+        User.objects.create_user(username='plain', password='password', email='plain@example.com')
+        self.assertTrue(client.login(username='plain', password='password'))
+
+        response = client.get(self.url)
+        self.assertRequiresLogin(response)
+
+        response = client.post(self.url, data={})
+        self.assertRequiresLogin(response)
+        self.assertNotRevoked(self.cert)
+
+    def test_no_perms(self):
+        # User is staff but has no permissions
         client = Client()
         User.objects.create_user(username='staff', password='password', email='staff@example.com',
                                  is_staff=True)
         self.assertTrue(client.login(username='staff', password='password'))
 
         response = client.get(self.url)
-        self.assertRequiresLogin(response, target_status_code=302)
+        self.assertEqual(response.status_code, 403)
         self.assertNotRevoked(self.cert)
 
-        # Also try to submit
-        response = client.post(self.url, data={'revoked_reason': ''})
-        self.assertRequiresLogin(response, target_status_code=302)
+        response = client.post(self.url, data={})
+        self.assertEqual(response.status_code, 403)
+        self.assertNotRevoked(self.cert)
+
+    def test_no_staff(self):
+        # User isn't staff but has permissions
+        client = Client()
+        user = User.objects.create_user(username='no_perms', password='password',
+                                        email='no_perms@example.com')
+        p = Permission.objects.get(codename='change_certificate')
+        user.user_permissions.add(p)
+        self.assertTrue(client.login(username='no_perms', password='password'))
+
+        response = client.get(self.url)
+        self.assertRequiresLogin(response)
+
+        response = client.post(self.url, data={})
+        self.assertRequiresLogin(response)
         self.assertNotRevoked(self.cert)
