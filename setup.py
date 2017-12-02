@@ -43,8 +43,8 @@ Please see https://django-ca.readthedocs.org for more extensive documentation.
 PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
 _rootdir = os.path.dirname(os.path.realpath(__file__))
+
 install_requires = [
-    'Django>=1.8',
     'asn1crypto>=0.22.0',
     'cryptography>=2.1',
     'ocspbuilder>=0.10.2',
@@ -53,6 +53,9 @@ install_requires = [
 
 if PY2:
     install_requires.append('ipaddress>=1.0.18')
+    install_requires.append('Django>=1.8,<2.0')
+else:
+    install_requires.append('Django>=1.8')
 
 
 class BaseCommand(Command):
