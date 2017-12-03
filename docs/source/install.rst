@@ -52,7 +52,7 @@ and add it to your ``INSTALLED_APPS``::
    >     /C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=ca.example.com
 
 After that, **django-ca** should show up in your admin interface (see :doc:`web_interface`) and
-provide various ``manage.py`` commands (see :doc:`cli_interface`).
+provide various ``manage.py`` commands (see :doc:`/cli/intro`).
 
 .. _as-standalone:
 
@@ -60,7 +60,7 @@ As standalone project
 _____________________
 
 You can also install **django-ca** as a stand-alone project, if you install it via git. The project
-provides a :doc:`command-line interface <cli_interface>` that provides complete functionality. The
+provides a :doc:`command-line interface </cli/intro>` that provides complete functionality. The
 :doc:`web interface <web_interface>` is optional.
 
 .. NOTE::
@@ -138,7 +138,7 @@ After you have configured **django-ca**, you need to initialize the project by r
    #     (replace parameters after init_ca with your local details)
    $ python manage.py init_ca /C=AT/ST=Vienna/L=Vienna/O=Org/CN=ca.example.com
 
-Please also see :doc:`ca_management` for further information on how to create certificate
+Please also see :doc:`/cli/cas` for further information on how to create certificate
 authorities. You can also run ``init_ca`` with the ``-h`` parameter for available arguments.
 
 .. _manage_py_shortcut:

@@ -24,24 +24,17 @@ Features:
 Contents:
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    install
    update
    settings
+   cli/intro
    web_interface
    crl
    ocsp
 
 Command-line interface:
-
-.. toctree::
-   :maxdepth: 1
-
-   CLI Introduction <cli/intro>
-   cli/cas
-   cli/certs
-   cli/various
 
 Development documentation:
 

@@ -1,10 +1,10 @@
-#####################################
-Command-line interface - introduction
-#####################################
+######################
+Command-line interface
+######################
 
 **django-ca** provides a complete command-line interface for all functionality. It is implemented
 as subcommands of Djangos ``manage.py`` script. You can use it for all certificate management
-operations, and :doc:`ca_management` is only possible via the command-line interface for security
+operations, and :doc:`/cli/cas` is only possible via the command-line interface for security
 reasons.
 
 In general, run ``manage.py`` without any parameters for available subcommands::
@@ -18,20 +18,20 @@ In general, run ``manage.py`` without any parameters for available subcommands::
        dump_crl
        ...
 
-.. WARNING:: Remember to use the virtualenv if you installed **django-ca** in one.
+Various tasks for the command-line interface are documented in individual documents:
 
-For example, to get a list of signed certificates, give::
+.. toctree::
+   :maxdepth: 1
 
-   $ python manage.py list_certs
-   49:BC:F2:FE:FA:31:03:B6:E0:CC:3D:16:93:4E:2D:B0:8A:D2:C5:87 - localhost (expires: 2019-04-18)
-   5A:1B:A2:63:A1:E4:D8:D1:4D:82:60:46:D3:8F:E0:C3:A5:B3:E4:89 - host1.example.com (expires: 2019-04-18)
-   ...
+   CA management </cli/cas>
+   Certificate management </cli/certs>
+   Miscellaneous commands </cli/misc>
 
 .. NOTE:: Consider :ref:`creating a bash script <manage_py_shortcut>` to easily access your manage.py script.
 
-*****************************
-Overview of existing commands
-*****************************
+**************************
+Index of existing commands
+**************************
 
 ``manage.py`` subcommands for :doc:`certificate authority management <cli/cas>`:
 
