@@ -83,12 +83,34 @@ class Watcher(models.Model):
 
 
 class X509CertMixin(models.Model):
+    # reasons are defined in http://www.ietf.org/rfc/rfc3280.txt
+    REVOCATION_REASONS = (
+        ('', _('No reason')),
+        ('aa_compromise', _('Attribute Authority compromised')),
+        ('affiliation_changed', _('Affiliation changed')),
+        ('ca_compromise', _('CA compromised')),
+        ('certificate_hold', _('On Hold')),
+        ('cessation_of_operation', _('Cessation of operation')),
+        ('key_compromise', _('Key compromised')),
+        ('privilege_withdrawn', _('Privilege withdrawn')),
+        ('remove_from_crl', _('Removed from CRL')),
+        ('superseded', _('Superseded')),
+        ('unspecified', _('Unspecified')),
+    )
+
     created = models.DateTimeField(auto_now=True)
     expires = models.DateTimeField(null=False, blank=False)
 
     pub = models.TextField(verbose_name=_('Public key'))
     cn = models.CharField(max_length=128, verbose_name=_('CommonName'))
     serial = models.CharField(max_length=64, unique=True)
+
+    # revocation information
+    revoked = models.BooleanField(default=False)
+    revoked_date = models.DateTimeField(null=True, blank=True, verbose_name=_('Revoked on'))
+    revoked_reason = models.CharField(
+        max_length=32, null=True, blank=True, verbose_name=_('Reason for revokation'),
+        choices=REVOCATION_REASONS)
 
     _x509 = None
 
@@ -278,6 +300,35 @@ class X509CertMixin(models.Model):
     def dump_certificate(self, encoding=Encoding.PEM):
         return self.x509.public_bytes(encoding=encoding)
 
+    def revoke(self, reason=None):
+        self.revoked = True
+        self.revoked_date = timezone.now()
+        self.revoked_reason = reason
+        self.save()
+
+    def get_revocation(self):
+        """Get a crypto.Revoked object or None if the cert is not revoked."""
+
+        if self.revoked is False:
+            raise ValueError('Certificate is not revoked.')
+
+        revoked_cert = x509.RevokedCertificateBuilder().serial_number(self.x509.serial).revocation_date(
+            self.revoked_date)
+
+        if self.revoked_reason:
+            reason_flag = getattr(x509.ReasonFlags, self.revoked_reason)
+            revoked_cert = revoked_cert.add_extension(x509.CRLReason(reason_flag), critical=False)
+
+        return revoked_cert.build(default_backend())
+
+    @property
+    def ocsp_status(self):
+        # NOTE: The OCSP status 'good' does not say if the certificate has expired.
+        if self.revoked is False:
+            return 'good'
+
+        return self.revoked_reason or 'revoked'
+
     class Meta:
         abstract = True
 
@@ -369,62 +420,12 @@ class CertificateAuthority(X509CertMixin):
 class Certificate(X509CertMixin):
     objects = CertificateManager.from_queryset(CertificateQuerySet)()
 
-    # reasons are defined in http://www.ietf.org/rfc/rfc3280.txt
-    REVOCATION_REASONS = (
-        ('', _('No reason')),
-        ('aa_compromise', _('Attribute Authority compromised')),
-        ('affiliation_changed', _('Affiliation changed')),
-        ('ca_compromise', _('CA compromised')),
-        ('certificate_hold', _('On Hold')),
-        ('cessation_of_operation', _('Cessation of operation')),
-        ('key_compromise', _('Key compromised')),
-        ('privilege_withdrawn', _('Privilege withdrawn')),
-        ('remove_from_crl', _('Removed from CRL')),
-        ('superseded', _('Superseded')),
-        ('unspecified', _('Unspecified')),
-    )
-
     watchers = models.ManyToManyField(Watcher, related_name='certificates', blank=True)
 
     # WARNING: on_delete MUST be a keyword argument in Django 1.8.
     ca = models.ForeignKey(CertificateAuthority, on_delete=models.CASCADE,
                            verbose_name=_('Certificate Authority'))
     csr = models.TextField(verbose_name=_('CSR'), blank=True)
-
-    revoked = models.BooleanField(default=False)
-    revoked_date = models.DateTimeField(null=True, blank=True, verbose_name=_('Revoked on'))
-    revoked_reason = models.CharField(
-        max_length=32, null=True, blank=True, verbose_name=_('Reason for revokation'),
-        choices=REVOCATION_REASONS)
-
-    def revoke(self, reason=None):
-        self.revoked = True
-        self.revoked_date = timezone.now()
-        self.revoked_reason = reason
-        self.save()
-
-    def get_revocation(self):
-        """Get a crypto.Revoked object or None if the cert is not revoked."""
-
-        if self.revoked is False:
-            raise ValueError('Certificate is not revoked.')
-
-        revoked_cert = x509.RevokedCertificateBuilder().serial_number(self.x509.serial).revocation_date(
-            self.revoked_date)
-
-        if self.revoked_reason:
-            reason_flag = getattr(x509.ReasonFlags, self.revoked_reason)
-            revoked_cert = revoked_cert.add_extension(x509.CRLReason(reason_flag), critical=False)
-
-        return revoked_cert.build(default_backend())
-
-    @property
-    def ocsp_status(self):
-        # NOTE: The OCSP status 'good' does not say if the certificate has expired.
-        if self.revoked is False:
-            return 'good'
-
-        return self.revoked_reason or 'revoked'
 
     def __str__(self):
         return self.cn
