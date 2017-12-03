@@ -18,20 +18,25 @@ from django.db.models import Q
 from django.utils import timezone
 
 
-class SerialMixin(object):
+class DjangoCAMixin(object):
     def get_by_serial_or_cn(self, identifier):
         identifier = identifier.strip()
         serial = identifier.upper()
 
         return self.get(Q(serial__startswith=serial) | Q(cn=identifier))
 
+    def revoked(self):
+        """Return revoked certificates."""
 
-class CertificateAuthorityQuerySet(models.QuerySet, SerialMixin):
+        return self.filter(revoked=True)
+
+
+class CertificateAuthorityQuerySet(models.QuerySet, DjangoCAMixin):
     def enabled(self):
         return self.filter(enabled=True)
 
 
-class CertificateQuerySet(models.QuerySet, SerialMixin):
+class CertificateQuerySet(models.QuerySet, DjangoCAMixin):
     def valid(self):
         """Return valid certificates."""
 
@@ -43,8 +48,3 @@ class CertificateQuerySet(models.QuerySet, SerialMixin):
         Note that this method does not return revoked certificates that would otherwise be expired.
         """
         return self.filter(revoked=False, expires__lt=timezone.now())
-
-    def revoked(self):
-        """Return revoked certificates."""
-
-        return self.filter(revoked=True)
