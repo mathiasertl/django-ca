@@ -17,7 +17,6 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from ..models import Certificate
-from ..models import CertificateAuthority
 from ..models import Watcher
 from .base import DjangoCAWithCertTestCase
 from .base import cert2_pubkey
