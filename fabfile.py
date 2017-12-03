@@ -67,6 +67,7 @@ def push(section):
 
 @task
 def livehtml(port=8001):
+    local('make -C docs clean')
     local('sphinx-autobuild docs/source docs/build/html -p %s -z ca '
           '-i *.swp -i *.swo -i *.swx -i *~ -i *4913' % port)
 
