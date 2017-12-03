@@ -9,7 +9,7 @@ HEAD
 ****
 
 * Add missing migration.
-* Also run test-suite against Django 2.0rc1.
+* Django 2.0 is now fully supported.
 * Fix the value of the crlDistributionPoints x509 extension when signing certificates with Python2.
 
 .. _changelog-1.6.3:
