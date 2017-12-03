@@ -12,6 +12,8 @@ HEAD
 * Django 2.0 is now fully supported.
 * Fix the value of the crlDistributionPoints x509 extension when signing certificates with Python2.
 * Do sanity checks on the "pathlen" attribute when creating Certificate Authorities.
+* Add support for the ``tlsFeature`` extension.
+* Massively update documentation for the command-line interface.
 
 .. _changelog-1.6.3:
 
