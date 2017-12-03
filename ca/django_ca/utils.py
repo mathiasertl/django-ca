@@ -347,6 +347,8 @@ def parse_general_name(name):
     <UniformResourceIdentifier(value='https://example.com')>
     >>> parse_general_name('1.2.3.4')
     <IPAddress(value=1.2.3.4)>
+    >>> parse_general_name('fd00::1')
+    <IPAddress(value=fd00::1)>
     >>> parse_general_name('/CN=example.com')  # doctest: +NORMALIZE_WHITESPACE
     <DirectoryName(value=<Name([<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>,
                                                value='example.com')>])>)>
