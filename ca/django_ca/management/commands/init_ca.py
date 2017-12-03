@@ -52,9 +52,9 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
             '--expires', metavar='DAYS', action=ExpiresAction, default=365 * 10,
             help='CA certificate expires in DAYS days (default: %(default)s).'
         )
-        self.add_ca(parser, '--parent',
-                    help='''Make the CA an intermediate CA of the named CA. By default, this is a
-                    new root CA.''', no_default=True)
+        self.add_ca(
+            parser, '--parent', no_default=True,
+            help='''Make the CA an intermediate CA of the named CA. By default, this is a new root CA.''')
         parser.add_argument('name', help='Human-readable name of the CA')
         self.add_subject(
             parser, help='''The subject of the CA in the format "/key1=value1/key2=value2/...",
@@ -104,11 +104,11 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         if not os.path.exists(ca_settings.CA_DIR):  # pragma: no cover
             os.makedirs(ca_settings.CA_DIR)
 
-        # In case of CAs, we silently set the expiry date to that of the parent CA, if the user
-        # specified a number of days that would make the CA expire after the parent CA.
+        # In case of CAs, we silently set the expiry date to that of the parent CA if the user specified a
+        # number of days that would make the CA expire after the parent CA.
         #
-        # The reasoning is simple: When issuing the child CA, the default is automatically after
-        # that of the parent if it wasn't issued on the same day.
+        # The reasoning is simple: When issuing the child CA, the default is automatically after that of the
+        # parent if it wasn't issued on the same day.
         parent = options['parent']
         if parent and options['expires'] > parent.expires:
             options['expires'] = parent.expires
