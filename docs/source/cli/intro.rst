@@ -7,7 +7,9 @@ as subcommands of Djangos ``manage.py`` script. You can use it for all certifica
 operations, and :doc:`/cli/cas` is only possible via the command-line interface for security
 reasons.
 
-In general, run ``manage.py`` without any parameters for available subcommands::
+In general, run ``manage.py`` without any parameters for available subcommands:
+
+.. code-block:: console
 
    $ python manage.py
 
@@ -81,14 +83,18 @@ names as well, e.g. email addresses or URLs. Those names also occur in other pla
 :ref:`name_constraints` extension for CAs.
 
 On the command-line, **django-ca** will do its best to guess what you want. This example would issue a
-certificate valid for one domain and and one email address::
+certificate valid for one domain and and one email address:
 
-   python manage.py sign_cert --alt example.com --alt user@example.net ...
+.. code-block:: console
+
+   $ python manage.py sign_cert --alt example.com --alt user@example.net ...
 
 If the name you're giving might be ambigious or you just want to make sure that the value is interpreted
-correctly, you can always use a prefix to force a particular type. This is equivalent to the above example::
+correctly, you can always use a prefix to force a particular type. This is equivalent to the above example:
 
-   python manage.py sign_cert --alt DNS:example.com --alt email:user@example.net ...
+.. code-block:: console
+
+   $ python manage.py sign_cert --alt DNS:example.com --alt email:user@example.net ...
 
 Valid prefixes right now are:
 
@@ -108,14 +114,18 @@ Wildcard names
 ==============
 
 In some cases you might want to use a wildcard in DNS names. The most common use cases are "wildcard
-certificates", which are valid for all given subdomains. Creating such certificates is simple::
+certificates", which are valid for all given subdomains. Creating such certificates is simple:
 
-   python manage.py sign_cert --alt *.example.com ...
+.. code-block:: console
+
+   $ python manage.py sign_cert --alt *.example.com ...
 
 IP addresses
 ============
 
 Both IPv4 and IPv6 addresses are supported, e.g. this certificate is valid for localhost on both IPv4 and
-IPv6::
+IPv6:
+
+.. code-block:: console
 
    python manage.py sign_cert --alt ::1 --alt 127.0.0.1 ...
