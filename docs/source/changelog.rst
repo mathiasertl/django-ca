@@ -8,12 +8,19 @@ ChangeLog
 HEAD
 ****
 
-* Add missing migration.
 * Django 2.0 is now fully supported.
-* Fix the value of the crlDistributionPoints x509 extension when signing certificates with Python2.
-* Do sanity checks on the "pathlen" attribute when creating Certificate Authorities.
 * Add support for the ``tlsFeature`` extension.
+* Do sanity checks on the "pathlen" attribute when creating Certificate Authorities.
 * Massively update documentation for the command-line interface.
+
+Bugfixes
+========
+
+* Check for permissions when downloading certificates from the admin interface. Previously, users
+  without admin interface access but without permissions to access certificates, where able to
+  guess the URL and download public keys.
+* Add a missing migration.
+* Fix the value of the crlDistributionPoints x509 extension when signing certificates with Python2.
 
 .. _changelog-1.6.3:
 
