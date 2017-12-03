@@ -141,6 +141,8 @@ After you have configured **django-ca**, you need to initialize the project by r
 Please also see :doc:`ca_management` for further information on how to create certificate
 authorities. You can also run ``init_ca`` with the ``-h`` parameter for available arguments.
 
+.. _manage_py_shortcut:
+
 Create manage.py shortcut
 -------------------------
 

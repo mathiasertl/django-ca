@@ -29,11 +29,19 @@ Contents:
    install
    update
    settings
-   cli_interface
    web_interface
-   ca_management
    crl
    ocsp
+
+Command-line interface:
+
+.. toctree::
+   :maxdepth: 1
+
+   CLI Introduction <cli/intro>
+   cli/cas
+   cli/certs
+   cli/various
 
 Development documentation:
 
