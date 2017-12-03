@@ -61,6 +61,36 @@ If you have defined multiple CAs, you also have to name the CA:
    32:BE:A9:E8:7E:21:BF:3E:E9:A1:F3:F9:E4:06:14:B4:C4:9D:B2:6C - Child CA
    $ python manage.py sign_cert --ca 32:BE:A9 --alt example.com --csr example.csr --out example.pub
 
+Subject and subjectAltName
+==========================
+
+The Certificate's Subject (that is, it's CommonName) and the names given in the ``subjectAltName`` extension
+define where the certificate is valid.
+
+The CommonName is usually added to the ``subjectAltName`` extension as well and vice versa. This means that
+these two will give the same CommonName and ``subjectAltName``:
+
+.. code-block:: console
+
+   $ python manage.py sign_cert --subject /C=AT/.../CN=example.com
+   $ python manage.py sign_cert --alt example.com
+
+A given CommonName is only added as ``subjectAltName`` if it is a valid :ref:`name <names_on_cli>`. If you
+give multiple names via ``--alt`` but no CommonName, the first one will be used as CommonName. Names passed
+via ``alt`` are parsed as :ref:`names <names_on_cli>`, so you can also use e.g.:
+
+.. code-block:: console
+
+   $ python manage.py sign_cert --alt IP:127.0.0.1
+
+You can also disable adding the CommonName as ``subjectAltName``:
+
+.. code-block:: console
+
+   $ python manage.py sign_cert --cn-not-in-san --subject /C=AT/.../CN=example.com --alt=example.net
+
+... this will only have "example.net" but not example.com as ``subjectAltName``.
+
 Using profiles
 ==============
 
