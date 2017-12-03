@@ -2,3 +2,134 @@
 Managing certificates
 #####################
 
+All certificate operations can be done via the command line. You do not have to use this interface, all
+functionality is also available via the :doc:`/web_interface`, if it has access to the private key of the
+certificate authority.
+
+*****************
+Index of commands
+*****************
+
+To manage certificate, use the following manage.py commands:
+
+===================== ===============================================================
+Command               Description
+===================== ===============================================================
+cert_watchers         Add/remove addresses to be notified of an expiring certificate.
+dump_cert             Dump a certificate to a file.
+import_cert           Import an existing certificate.
+list_certs            List all certificates.
+notify_expiring_certs Send notifications about expiring certificates to watchers.
+revoke_cert           Revoke a certificate.
+sign_cert             Sign a certificate.
+view_cert             View a certificate.
+===================== ===============================================================
+
+Like all *manage.py* subcommands, you can run ``manage.py <subcomand> -h`` to get a list of availabble
+parameters.
+
+********************
+Signing certificates
+********************
+
+Signing certificates is done using ``manage.py sign_cert``. The only requirements are that you provide either
+a full subject and/or one or more subjectAltNames. Obviously, you also need to create at least one certificate
+authority first (:doc:`documentation </cli/cas>`).
+
+Like any good certificate authority, **django-ca** never handles private keys of signed certificates. Instead,
+you sign certificates from a Certificate Signing Request (CSR) that you generate from the private key. Using
+the OpenSSL command-line tools, you can create a CSR *on the host that should use the certificate*:
+
+.. code-block:: console
+
+   $ openssl genrsa -out example.key 4096
+   $ openssl req -new -key example.key -out example.csr -utf8
+
+Next, simply copy the CSR file (``example.csr`` in the above example) to the host where you installed
+**django-ca**. You can now create a signed certificate using:
+
+.. code-block:: console
+
+   $ python manage.py sign_cert --alt example.com --csr example.csr --out example.pub
+
+If you have defined multiple CAs, you also have to name the CA:
+
+.. code-block:: console
+
+   $ python manage.py list_cas
+   4E:1E:2A:29:F9:4C:45:CF:12:2F:2B:17:9E:BF:D4:80:29:C6:37:C7 - Root CA
+   32:BE:A9:E8:7E:21:BF:3E:E9:A1:F3:F9:E4:06:14:B4:C4:9D:B2:6C - Child CA
+   $ python manage.py sign_cert --ca 32:BE:A9 --alt example.com --csr example.csr --out example.pub
+
+Using profiles
+==============
+
+Certificates have extensions that define certain aspects of how/why/where/when a certificate can be used. Some
+extensions are added based on how the Certificate Authority is configured, e.g. CRL/OCSP URLs. Extensions that
+define for what purposes are a certificate can be used can be configured on a per-certificate basis. 
+
+The easiest way is to use profiles that define what extensions are added to any certificate. **django-ca**
+adds these predefined profiles:
+
+========== ==========================================================================================
+Name       Purpose
+========== ==========================================================================================
+client     Allows the certificate to be used on the client-side of a TLS connection.
+server     Allows the certificate to be used on the client- and server-side of a connections.
+enduser    Allows client authentication and code and email signing.
+webserver  Allows only the server-side of a TLS connection, it can't be used as a client certificate.
+ocsp       Allows the certificate to be used for signing OCSP responses.
+========== ==========================================================================================
+
+You can add and modify profiles using the :ref:`CA_PROFILES <settings-ca-profiles>` setting. The default
+profile is configured by the :ref:`CA_DEFAULT_PROFILE <settings-ca-default-profile>` setting.
+
+Override extensions
+===================
+
+You can override some extensions using command-line parameters. Currently, this includes ``keyUsage``,
+``extendedKeyUsage`` and ``tlsFeature``.  In every case, prefixing the value with ``critical`` marks the
+extension as critical (meaning a TLS client that does not understand the extension will reject the
+connection):
+
+.. code-block:: console
+
+   $ python manage.py sign_cert \
+      --key-usage critical,keyCertSign \
+      --ext-key-usage serverAuth,clientAuth \
+      --tls-features OCSPMustStaple \
+      ...
+
+For more information on these extensions, their meaning and typical values, see :doc:`/extensions`.
+
+*******************
+Revoke certificates
+*******************
+
+To revoke a certificate, use:
+
+.. code-block:: console
+
+   $ python manage.py list_certs
+   49:BC:F2:FE:FA:31:03:B6:E0:CC:3D:16:93:4E:2D:B0:8A:D2:C5:87 - localhost (expires: 2019-04-18)
+   ...
+   $ python manage.py revoke_cert 49:BC:F2:FE:FA:31:03:B6:E0:CC:3D:16:93:4E:2D:B0:8A:D2:C5:87
+
+*********************
+Expiring certificates
+*********************
+
+You can add email addresses to be notified of expiring certificates using the ``--watch`` parameter:
+
+.. code-block:: console
+
+   $ python manage.py --sign-cert --watch user@example.com --watch user@example.net ...
+
+Or modify to add/remove watchers later:
+
+.. code-block:: console
+
+   $ python manage.py list_certs
+   49:BC:F2:FE:FA:31:03:B6:E0:CC:3D:16:93:4E:2D:B0:8A:D2:C5:87 - localhost (expires: 2019-04-18)
+   ...
+   $ python manage.py cert_watchers -a add@example.com -r user@example.net 49:BC:F2

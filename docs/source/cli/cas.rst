@@ -127,6 +127,8 @@ To add a OCSP URL to intermediate CAs, use the ``--ca-ocsp-url`` option::
       --ca-ocsp-url http://ocsp.ca.example.com/root \
       ...
 
+.. _name_constraints:
+
 Name constraints
 ================
 
@@ -143,12 +145,12 @@ a good explanation.
    connection.
 
 To add name constraints to a CA, use the ``--name-constraint`` option, which can be given multiple times.
-Prefix the value with either ``permitted;`` or ``excluded;`` to add them to the Permitted or Excluded
-subtree::
+Values are any valid name, see :ref:`names_on_cli` for detailed documentation.  Prefix the value with either
+``permitted;`` or ``excluded;`` to add them to the Permitted or Excluded subtree::
 
    python manage.py init_ca \
-      --name-constraint permitted;DNS:.com
-      --name-constraint permitted;DNS:.net
+      --name-constraint permitted;DNS:com
+      --name-constraint permitted;DNS:net
       --name-constraint excluded;DNS:evil.com
       ...
 

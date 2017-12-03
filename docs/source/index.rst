@@ -33,6 +33,7 @@ Contents:
    web_interface
    crl
    ocsp
+   extensions
 
 Command-line interface:
 

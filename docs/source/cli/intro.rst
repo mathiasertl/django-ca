@@ -18,14 +18,13 @@ In general, run ``manage.py`` without any parameters for available subcommands::
        dump_crl
        ...
 
-Various tasks for the command-line interface are documented in individual documents:
+Creating Certificate Authorities and managing Certificates is documented on individual pages:
 
 .. toctree::
    :maxdepth: 1
 
    CA management </cli/cas>
    Certificate management </cli/certs>
-   Miscellaneous commands </cli/misc>
 
 .. NOTE:: Consider :ref:`creating a bash script <manage_py_shortcut>` to easily access your manage.py script.
 
@@ -33,7 +32,7 @@ Various tasks for the command-line interface are documented in individual docume
 Index of existing commands
 **************************
 
-``manage.py`` subcommands for :doc:`certificate authority management <cli/cas>`:
+``manage.py`` subcommands for :doc:`certificate authority management </cli/cas>`:
 
 ===================== ===============================================================
 Command               Description
@@ -46,7 +45,7 @@ list_cas              List currently configured certificate authorities.
 view_ca               View details of a certificate authority.
 ===================== ===============================================================
 
-``manage.py`` subcommands for :doc:`certificate management <cli/certs>`:
+``manage.py`` subcommands for :doc:`certificate management </cli/certs>`:
 
 ===================== ===============================================================
 Command               Description
@@ -61,11 +60,62 @@ sign_cert             Sign a certificate.
 view_cert             View a certificate.
 ===================== ===============================================================
 
-Miscellaneous ``manage.py`` subcommands (see :doc:`documentation <cli/various>`):
+Miscellaneous ``manage.py`` subcommands (see :doc:`documentation </cli/misc>`):
 
 ===================== ===============================================================
 Command               Description
 ===================== ===============================================================
-dump_crl              Write the certificate revocation list (CRL), see :doc:`crl`.
-dump_ocsp_index       Write an OCSP index file, see :doc:`ocsp`.
+dump_crl              Write the certificate revocation list (CRL), see :doc:`/crl`.
+dump_ocsp_index       Write an OCSP index file, see :doc:`/ocsp`.
 ===================== ===============================================================
+
+.. _names_on_cli:
+
+*************************
+Names on the command-line
+*************************
+
+The most common use case for certificates is to issue certificates for domains. For example, a certificate for
+"example.com" is valid for exactly that domain and no other. But certificates can be valid for various other
+names as well, e.g. email addresses or URLs. Those names also occur in other places, like in the
+:ref:`name_constraints` extension for CAs.
+
+On the command-line, **django-ca** will do its best to guess what you want. This example would issue a
+certificate valid for one domain and and one email address::
+
+   python manage.py sign_cert --alt example.com --alt user@example.net ...
+
+If the name you're giving might be ambigious or you just want to make sure that the value is interpreted
+correctly, you can always use a prefix to force a particular type. This is equivalent to the above example::
+
+   python manage.py sign_cert --alt DNS:example.com --alt email:user@example.net ...
+
+Valid prefixes right now are:
+
+========== =============================================================================
+Prefix     Meaning
+========== =============================================================================
+DNS        A DNS name, the most common use case.
+email      An email address (e.g. used when using S/MIME to sign emails).
+dirname    An LDAP-style directory name, e.g. "/C=AT/L=Vienna/CN=example.at".
+URI        A URI, e.g. https://example.com.
+IP         An IP address, both IPv4 and IPv6 are supported.
+RID        A "Registered ID". No real-world examples are known, you're on your own. 
+otherName  Anything not covered in the above values. Same restrictions as for RID apply.
+========== =============================================================================
+
+Wildcard names
+==============
+
+In some cases you might want to use a wildcard in DNS names. The most common use cases are "wildcard
+certificates", which are valid for all given subdomains. Creating such certificates is simple::
+
+   python manage.py sign_cert --alt *.example.com ...
+
+IP addresses
+============
+
+Both IPv4 and IPv6 addresses are supported, e.g. this certificate is valid for localhost on both IPv4 and
+IPv6::
+
+   python manage.py sign_cert --alt ::1 --alt 127.0.0.1 ...

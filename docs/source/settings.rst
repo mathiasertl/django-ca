@@ -19,6 +19,8 @@ CA_DEFAULT_EXPIRES
 
    The default time, in days, that any signed certificate expires.
 
+.. _settings-ca-default-profile:
+
 CA_DEFAULT_PROFILE
    Default: ``webserver``
 
@@ -65,6 +67,8 @@ CA_OCSP_URLS
    Default: ``{}``
 
    Configuration for OCSP responders. See :doc:`ocsp` for more information.
+
+.. _settings-ca-profiles:
 
 CA_PROFILES
    Default: ``{}``
