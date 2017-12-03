@@ -11,6 +11,7 @@ HEAD
 * Add missing migration.
 * Django 2.0 is now fully supported.
 * Fix the value of the crlDistributionPoints x509 extension when signing certificates with Python2.
+* Do sanity checks on the "pathlen" attribute when creating Certificate Authorities.
 
 .. _changelog-1.6.3:
 

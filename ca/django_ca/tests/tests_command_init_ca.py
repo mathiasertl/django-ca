@@ -103,6 +103,7 @@ class InitCATest(DjangoCATestCase):
             'Excluded: DNS:.net'
         ]))
         self.assertEqual(ca.pathlen, 3)
+        self.assertTrue(ca.allows_intermediate_ca)
         self.assertEqual(ca.issuer_url, 'http://issuer.ca.example.com')
         self.assertEqual(ca.issuer_alt_name, 'http://ian.ca.example.com')
         self.assertEqual(ca.crl_url, 'http://crl.example.com')
@@ -123,6 +124,7 @@ class InitCATest(DjangoCATestCase):
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
         self.assertEqual(ca.pathlen, None)
+        self.assertTrue(ca.allows_intermediate_ca)
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
 
@@ -154,7 +156,7 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_parent(self):
-        self.init_ca(name='Parent')
+        self.init_ca(name='Parent', pathlen=1)
         parent = CertificateAuthority.objects.get(name='Parent')
         parent.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([parent], parent)
@@ -179,11 +181,57 @@ class InitCATest(DjangoCATestCase):
         self.assertAuthorityKeyIdentifier(parent, child)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_intermediate_check(self):
+        self.init_ca(name='default')
+        parent = CertificateAuthority.objects.get(name='default')
+        parent.full_clean()  # assert e.g. max_length in serials
+        self.assertEqual(parent.pathlen, 0)
+        self.assertEqual(parent.max_pathlen, 0)
+        self.assertFalse(parent.allows_intermediate_ca)
+
+        self.init_ca(name='pathlen-1', pathlen=1)
+        pathlen_1 = CertificateAuthority.objects.get(name='pathlen-1')
+        pathlen_1.full_clean()  # assert e.g. max_length in serials
+        self.assertEqual(pathlen_1.pathlen, 1)
+        self.assertEqual(pathlen_1.max_pathlen, 1)
+        self.assertTrue(pathlen_1.allows_intermediate_ca)
+
+        self.init_ca(name='pathlen-1-none', pathlen=None, parent=pathlen_1)
+        pathlen_1_none = CertificateAuthority.objects.get(name='pathlen-1-none')
+        pathlen_1_none.full_clean()  # assert e.g. max_length in serials
+
+        # pathlen_1_none cannot have an intermediate CA because parent has pathlen=1
+        self.assertIsNone(pathlen_1_none.pathlen)
+        self.assertEqual(pathlen_1_none.max_pathlen, 0)
+        self.assertFalse(pathlen_1_none.allows_intermediate_ca)
+        with self.assertRaisesRegex(CommandError,
+                                    '^Parent CA cannot create intermediate CA due to pathlen restrictions.$'):
+            self.init_ca(name='wrong', parent=pathlen_1_none)
+
+        self.init_ca(name='pathlen-1-three', pathlen=3, parent=pathlen_1)
+        pathlen_1_three = CertificateAuthority.objects.get(name='pathlen-1-three')
+        pathlen_1_three.full_clean()  # assert e.g. max_length in serials
+
+        # pathlen_1_none cannot have an intermediate CA because parent has pathlen=1
+        self.assertEqual(pathlen_1_three.pathlen, 3)
+        self.assertEqual(pathlen_1_three.max_pathlen, 0)
+        self.assertFalse(pathlen_1_three.allows_intermediate_ca)
+        with self.assertRaisesRegex(CommandError,
+                                    '^Parent CA cannot create intermediate CA due to pathlen restrictions.$'):
+            self.init_ca(name='wrong', parent=pathlen_1_none)
+
+        self.init_ca(name='pathlen-none', pathlen=None)
+        parent = CertificateAuthority.objects.get(name='pathlen-none')
+        parent.full_clean()  # assert e.g. max_length in serials
+        self.assertIsNone(parent.pathlen)
+        self.assertTrue(parent.allows_intermediate_ca)
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_expires_override(self):
         # If we request an expiry after that of the parrent, we silently override to that of the
         # parent.
 
-        self.init_ca(name='Parent')
+        self.init_ca(name='Parent', pathlen=1)
         parent = CertificateAuthority.objects.get(name='Parent')
         parent.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([parent], parent)
@@ -211,7 +259,7 @@ class InitCATest(DjangoCATestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_password(self):
         password = b'testpassword'
-        self.init_ca(name='Parent', password=password)
+        self.init_ca(name='Parent', password=password, pathlen=1)
         parent = CertificateAuthority.objects.get(name='Parent')
         parent.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([parent], parent)

@@ -69,9 +69,8 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
 
         group = parser.add_argument_group(
             'pathlen attribute',
-            """Maximum number of CAs that can appear below this one. A pathlen of zero (the
-            default) means it can only be used to sign end user certificates and not further
-            CAs.""")
+            """Maximum number of CAs that can appear below this one. A pathlen of zero (the default) means it
+            can only be used to sign end user certificates and not further CAs.""")
         group = group.add_mutually_exclusive_group()
         group.add_argument('--pathlen', default=0, type=int,
                            help='Maximum number of sublevel CAs (default: %(default)s).')
@@ -80,8 +79,8 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
 
         group = parser.add_argument_group(
             'X509 v3 certificate extensions for CA',
-            '''Extensions added to the certificate authority itself. These options cannot be
-            changed without creating a new authority.'''
+            '''Extensions added to the certificate authority itself. These options cannot be changed without
+            creating a new authority.'''
         )
         group.add_argument(
             '--ca-crl-url', metavar='URL', action=MultipleURLAction, default=[],
@@ -112,6 +111,8 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         parent = options['parent']
         if parent and options['expires'] > parent.expires:
             options['expires'] = parent.expires
+        if parent and not parent.allows_intermediate_ca:
+            raise CommandError("Parent CA cannot create intermediate CA due to pathlen restrictions.")
 
         # filter empty values in the subject
         subject.setdefault('CN', name)

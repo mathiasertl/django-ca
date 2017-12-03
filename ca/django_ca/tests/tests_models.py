@@ -17,6 +17,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from ..models import Certificate
+from ..models import CertificateAuthority
 from ..models import Watcher
 from .base import DjangoCAWithCertTestCase
 from .base import cert2_pubkey
@@ -91,6 +92,18 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.cert2 = self.load_cert(self.ca, cert2_pubkey)
         self.cert3 = self.load_cert(self.ca, cert3_pubkey)
         self.ocsp = self.load_cert(self.ca, ocsp_pubkey)
+
+    def test_pathlen(self):
+        self.assertEqual(self.ca.pathlen, 1)
+        self.assertEqual(self.ca2.pathlen, 0)
+
+    def test_max_pathlen(self):
+        self.assertEqual(self.ca.max_pathlen, 1)
+        self.assertEqual(self.ca2.pathlen, 0)
+
+    def test_allows_intermediate(self):
+        self.assertTrue(self.ca.allows_intermediate_ca, 1)
+        self.assertFalse(self.ca2.allows_intermediate_ca, 0)
 
     def test_revocation(self):
         # Never really happens in real life, but should still be checked

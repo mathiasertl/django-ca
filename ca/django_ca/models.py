@@ -319,6 +319,28 @@ class CertificateAuthority(X509CertMixin):
             return ''
         return ext.value.path_length
 
+    @property
+    def max_pathlen(self):
+        pathlen = self.pathlen
+        if self.parent is None:
+            return pathlen
+
+        max_parent = self.parent.max_pathlen
+
+        if max_parent is None:
+            return pathlen
+        elif pathlen is None:
+            return max_parent - 1
+        else:
+            return min(self.pathlen, max_parent - 1)
+
+    @property
+    def allows_intermediate_ca(self):
+        """Wether this CA allows creating intermediate CAs."""
+
+        max_pathlen = self.max_pathlen
+        return max_pathlen is None or max_pathlen > 0
+
     def nameConstraints(self):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.NAME_CONSTRAINTS)
