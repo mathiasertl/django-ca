@@ -22,9 +22,10 @@ from cryptography.hazmat.backends import default_backend
 from django.utils import timezone
 
 from django_ca.models import Certificate
+from django_ca.models import CertificateAuthority
 
 
-def get_crl(ca, encoding, expires, algorithm, password):
+def get_crl(ca, encoding, expires, algorithm, password, ca_crl=False):
     """Function to generate a Certificate Revocation List (CRL).
 
     All keyword arguments are passed as-is to :py:func:`OpenSSL.crypto.CRL.export`. Please see the
@@ -43,6 +44,8 @@ def get_crl(ca, encoding, expires, algorithm, password):
     password : bytes, optional
         Password used to load the private key of the certificate authority. If not passed, the private key is
         assumed to be unencrypted.
+    ca_crl : boolean, optional
+        If ``True``, add revoked child CAs instead of revoked certificates.
 
     Returns
     -------
@@ -56,7 +59,12 @@ def get_crl(ca, encoding, expires, algorithm, password):
     builder = builder.last_update(now)
     builder = builder.next_update(now + timedelta(seconds=expires))
 
-    for cert in Certificate.objects.filter(ca=ca, expires__gt=timezone.now()).revoked():
+    if ca_crl is True:
+        qs = CertificateAuthority.objects.filter(parent=ca, expires__gt=timezone.now())
+    else:
+        qs = Certificate.objects.filter(ca=ca, expires__gt=timezone.now())
+
+    for cert in qs.revoked():
         builder = builder.add_revoked_certificate(cert.get_revocation())
 
     crl = builder.sign(private_key=ca.key(password), algorithm=algorithm, backend=default_backend())
