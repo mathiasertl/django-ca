@@ -2,16 +2,16 @@
 #
 # This file is part of django-ca (https://github.com/mathiasertl/django-ca).
 #
-# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
+# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU General
+# Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
 #
-# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
+# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+# for more details.
 #
-# You should have received a copy of the GNU General Public License along with django-ca.  If not,
-# see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with django-ca. If not, see
+# <http://www.gnu.org/licenses/>.
 
 import base64
 import logging
@@ -65,8 +65,7 @@ class CertificateRevocationListView(View, SingleObjectMixin):
 
     # parameters for the CRL itself
     type = Encoding.DER
-    """Filetype for CRL, one of the ``OpenSSL.crypto.FILETYPE_*`` variables. The default is
-    ``OpenSSL.crypto.FILETYPE_ASN1``."""
+    """Filetype for CRL."""
 
     expires = 600
     """CRL expires in this many seconds."""
@@ -76,8 +75,7 @@ class CertificateRevocationListView(View, SingleObjectMixin):
 
     # header used in the request
     content_type = 'application/pkix-crl'
-    """The value of the Content-Type header used in the response. For CRLs in
-    PEM format, use ``"text/plain"``."""
+    """Value of the Content-Type header used in the response. For CRLs in PEM format, use ``text/plain``."""
 
     def get(self, request, serial):
         cache_key = 'crl_%s_%s_%s' % (serial, self.type, self.digest.name)
@@ -123,7 +121,9 @@ class RevokeCertificateView(UpdateView):
 class OCSPView(View):
     """View to provide an OCSP responder.
 
-    .. seealso:: This is heavily inspired by
+    .. seealso::
+
+        This is heavily inspired by
         https://github.com/threema-ch/ocspresponder/blob/master/ocspresponder/__init__.py.
     """
     ca = None
