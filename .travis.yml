@@ -19,6 +19,7 @@ script:
   - python setup.py code_quality
   - python setup.py test
   - python setup.py install
+  - fab init_demo
 
 matrix:
     exclude:
