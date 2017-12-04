@@ -29,6 +29,8 @@ class Command(BaseCommand):
             help="Seconds until a new CRL will be available (default: %(default)s).")
         parser.add_argument('path', nargs='?', default='-',
                             help='Path for the output file. Use "-" for stdout.')
+        parser.add_argument('--ca-crl', action='store_true', default=False,
+                            help="Generate the CRL for revoked child CAs.")
         self.add_algorithm(parser)
         self.add_format(parser)
         self.add_ca(parser, allow_disabled=True)
@@ -41,6 +43,7 @@ class Command(BaseCommand):
             'expires': options['expires'],
             'algorithm': options['algorithm'],
             'password': options['password'],
+            'ca_crl': options['ca_crl'],
         }
 
         try:
