@@ -74,7 +74,7 @@ class CertificateRevocationListView(View, SingleObjectMixin):
     """Digest used for generating the CRL."""
 
     # header used in the request
-    content_type = 'application/pkix-crl'
+    content_type = None
     """Value of the Content-Type header used in the response. For CRLs in PEM format, use ``text/plain``."""
 
     def get(self, request, serial):
@@ -86,7 +86,14 @@ class CertificateRevocationListView(View, SingleObjectMixin):
                           password=self.password)
             cache.set(cache_key, crl, self.expires)
 
-        return HttpResponse(crl, content_type=self.content_type)
+        content_type = self.content_type
+        if content_type is None:
+            if self.type == Encoding.DER:
+                content_type = 'application/pkix-crl'
+            elif self.type == Encoding.PEM:
+                content_type = 'text/plain'
+
+        return HttpResponse(crl, content_type=content_type)
 
 
 class RevokeCertificateView(UpdateView):

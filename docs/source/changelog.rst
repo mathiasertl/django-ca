@@ -12,6 +12,8 @@ HEAD
 * Add support for the ``tlsFeature`` extension.
 * Do sanity checks on the "pathlen" attribute when creating Certificate Authorities.
 * Massively update documentation for the command-line interface.
+* The ``Content-Type`` header of CRL responses now defaults to the correct value regardless of type
+  (DER or PEM) used.
 
 Bugfixes
 ========
