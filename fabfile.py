@@ -146,11 +146,13 @@ def create_cert(name, **kwargs):
     key = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
     csr = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
     pem = os.path.join(ca_settings.CA_DIR, '%s.pem' % name)
+    kwargs.setdefault('subject', {})
+    kwargs['subject'].setdefault('CN', name)
 
     with hide('everything'):
         local('openssl genrsa -out %s 2048' % key)
         local("openssl req -new -key %s -out %s -utf8 -batch" % (key, csr))
-    manage('sign_cert', subject={'CN': name}, csr=csr, out=pem, **kwargs)
+    manage('sign_cert', csr=csr, out=pem, **kwargs)
     return key, csr, pem
 
 
@@ -205,9 +207,9 @@ def init_demo(fixture='n'):
         hostname = 'host%s.example.com' % i
         print(green('Generate certificate for %s...' % hostname))
         if fixture:
-            create_cert(hostname, cn=hostname)
+            create_cert(hostname)
         else:
-            create_cert(hostname, cn=hostname, alt=['localhost'])
+            create_cert(hostname, alt=['localhost'])
 
     # create stunnel.pem
     key_path = os.path.join(ca_settings.CA_DIR, 'host1.example.com.key')
@@ -218,7 +220,8 @@ def init_demo(fixture='n'):
         stunnel.write(pem.read())
 
     print(green('Creating client certificate...'))
-    create_cert('client', cn='First Last', cn_in_san=False, alt=['user@example.com'], ca=child_ca)
+    create_cert('client', subject={'CN': 'First Last'}, cn_in_san=False, alt=['user@example.com'],
+                ca=child_ca)
 
     # Revoke host1 and host2
     if not fixture:
