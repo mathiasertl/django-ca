@@ -188,14 +188,16 @@ def init_demo(fixture='n'):
     manage('migrate', verbosity=0)
     print(green('Initiating CA...'))
     manage('init_ca', 'Root CA', '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=ca.example.com',
-           pathlen=1, ocsp_url='http://ocsp.ca.example.com', crl_url=['http://ca.example.com/crl'],
+           pathlen=1, ocsp_url='http://ocsp.ca.example.com', crl_url=['http://localhost/certs.crl'],
            issuer_url='http://ca.example.com/ca.crt', issuer_alt_name='https://ca.example.com'
            )
     root_ca = CertificateAuthority.objects.get(name='Root CA')
 
     print(green('Initiating Child CA...'))
-    manage('init_ca', 'Child CA',
-           '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=sub.ca.example.com', parent=root_ca)
+    manage(
+        'init_ca', 'Child CA', '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=sub.ca.example.com',
+        parent=root_ca, ca_crl_url='http://localhost/ca.crl',
+    )
     child_ca = CertificateAuthority.objects.get(name='Child CA')
 
     # generate OCSP certificate
