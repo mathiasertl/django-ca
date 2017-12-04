@@ -114,6 +114,73 @@ on Wikipedia.</p>'''.replace('\n', ' ')
         actions.pop('delete_selected', '')
         return actions
 
+    ##################################
+    # Properties for x509 extensions #
+    ##################################
+
+    def output_extension(self, value):
+        # shared function for formatting extension values
+
+        if value is None:
+            text = _('Not present')
+            return mark_safe('<img src="/static/admin/img/icon-no.svg" alt="%s"> %s' % (text, text))
+
+        critical, value = value
+        html = ''
+        if critical is True:
+            text = _('Critical')
+            html = '<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text)
+
+        if isinstance(value, six.string_types):
+            html += '<p>%s</p>' % value
+        else:  # list
+            html += '<ul class="x509-extension-value">'
+            for val in value:
+                html += '<li>%s</li>' % val
+            html += '</ul>'
+
+        return mark_safe(html)
+
+    def basic_constraints(self, obj):
+        return self.output_extension(obj.basicConstraints())
+    basic_constraints.short_description = 'basicConstraints'
+
+    def auth_info_access(self, obj):
+        return self.output_extension(obj.authorityInfoAccess())
+    auth_info_access.short_description = 'authorityInfoAccess'
+
+    def key_usage(self, obj):
+        return self.output_extension(obj.keyUsage())
+    key_usage.short_description = 'keyUsage'
+
+    def extended_key_usage(self, obj):
+        return self.output_extension(obj.extendedKeyUsage())
+    extended_key_usage.short_description = 'extendedKeyUsage'
+
+    def tls_feature(self, obj):
+        return self.output_extension(obj.TLSFeature())
+    tls_feature.short_description = _('TLS Feature')
+
+    def subject_key_identifier(self, obj):
+        return self.output_extension(obj.subjectKeyIdentifier())
+    subject_key_identifier.short_description = _('subjectKeyIdentifier')
+
+    def issuer_alt_name(self, obj):
+        return self.output_extension(obj.issuerAltName())
+    issuer_alt_name.short_description = _('issuerAltName')
+
+    def auth_key_identifier(self, obj):
+        return self.output_extension(obj.authorityKeyIdentifier())
+    auth_key_identifier.short_description = _('authorityKeyIdentifier')
+
+    def crl_distribution_points(self, obj):
+        return self.output_extension(obj.crlDistributionPoints())
+    crl_distribution_points.short_description = _('CRL Distribution Points')
+
+    def subject_alt_name(self, obj):
+        return self.output_extension(obj.subjectAltName())
+    subject_alt_name.short_description = _('subjectAltName')
+
 
 @admin.register(CertificateAuthority)
 class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
@@ -133,19 +200,20 @@ class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
         }),
         (_('X509 extensions'), {
             'fields': [
-                'authorityInfoAccess',
-                'authorityKeyIdentifier',
+                'auth_info_access',
+                'auth_key_identifier',
                 'nameConstraints',
-                'subjectKeyIdentifier',
+                'subject_key_identifier',
+                'crl_distribution_points',
             ],
         }),
     )
     list_display = ['enabled', 'name', 'serial', ]
     list_display_links = ['enabled', 'name', ]
     search_fields = ['cn', 'name', 'serial', ]
-    readonly_fields = ['serial', 'pub', 'parent', 'subjectKeyIdentifier', 'issuerAltName',
-                       'authorityKeyIdentifier', 'authorityInfoAccess', 'cn', 'expires',
-                       'hpkp_pin', 'nameConstraints', ]
+    readonly_fields = ['serial', 'pub', 'parent', 'subject_key_identifier', 'issuerAltName',
+                       'auth_key_identifier', 'auth_info_access', 'cn', 'expires',
+                       'hpkp_pin', 'nameConstraints', 'crl_distribution_points']
 
     def has_add_permission(self, request):
         return False
@@ -329,73 +397,6 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
                 password=data['password']
             )
         obj.save()
-
-    ##################################
-    # Properties for x509 extensions #
-    ##################################
-
-    def output_extension(self, value):
-        # shared function for formatting extension values
-
-        if value is None:
-            text = _('Not present')
-            return mark_safe('<img src="/static/admin/img/icon-no.svg" alt="%s"> %s' % (text, text))
-
-        critical, value = value
-        html = ''
-        if critical is True:
-            text = _('Critical')
-            html = '<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text)
-
-        if isinstance(value, six.string_types):
-            html += '<p>%s</p>' % value
-        else:  # list
-            html += '<ul class="x509-extension-value">'
-            for val in value:
-                html += '<li>%s</li>' % val
-            html += '</ul>'
-
-        return mark_safe(html)
-
-    def basic_constraints(self, obj):
-        return self.output_extension(obj.basicConstraints())
-    basic_constraints.short_description = 'basicConstraints'
-
-    def auth_info_access(self, obj):
-        return self.output_extension(obj.authorityInfoAccess())
-    auth_info_access.short_description = 'authorityInfoAccess'
-
-    def key_usage(self, obj):
-        return self.output_extension(obj.keyUsage())
-    key_usage.short_description = 'keyUsage'
-
-    def extended_key_usage(self, obj):
-        return self.output_extension(obj.extendedKeyUsage())
-    extended_key_usage.short_description = 'extendedKeyUsage'
-
-    def tls_feature(self, obj):
-        return self.output_extension(obj.TLSFeature())
-    tls_feature.short_description = _('TLS Feature')
-
-    def subject_key_identifier(self, obj):
-        return self.output_extension(obj.subjectKeyIdentifier())
-    subject_key_identifier.short_description = _('subjectKeyIdentifier')
-
-    def issuer_alt_name(self, obj):
-        return self.output_extension(obj.issuerAltName())
-    issuer_alt_name.short_description = _('issuerAltName')
-
-    def auth_key_identifier(self, obj):
-        return self.output_extension(obj.authorityKeyIdentifier())
-    auth_key_identifier.short_description = _('authorityKeyIdentifier')
-
-    def crl_distribution_points(self, obj):
-        return self.output_extension(obj.crlDistributionPoints())
-    crl_distribution_points.short_description = _('CRL Distribution Points')
-
-    def subject_alt_name(self, obj):
-        return self.output_extension(obj.subjectAltName())
-    subject_alt_name.short_description = _('subjectAltName')
 
     class Media:
         css = {
