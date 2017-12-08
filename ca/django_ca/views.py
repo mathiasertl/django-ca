@@ -149,8 +149,10 @@ class OCSPView(View):
     """Absolute path or key itself used for signing OCSP responses."""
 
     expires = 600
-    """Time in seconds that the responses remain valid. The default is 600 seconds or ten
-    minutes."""
+    """Time in seconds that the responses remain valid. The default is 600 seconds or ten minutes."""
+
+    ca_ocsp = False
+    """If set to ``True``, validate child CAs instead."""
 
     @classonlymethod
     def as_view(cls, responder_key, responder_cert, **kwargs):
@@ -229,11 +231,18 @@ class OCSPView(View):
 
         # Get CA and certificate
         ca = CertificateAuthority.objects.get(serial=self.ca)
-        try:
-            cert = Certificate.objects.filter(ca=ca).get(serial=serial)
-        except Certificate.DoesNotExist:
-            log.warn('OCSP request for unknown cert received.')
-            return self.fail(u'internal_error')
+        if self.ca_ocsp is True:
+            try:
+                cert = CertificateAuthority.objects.filter(parent=ca).get(serial=serial)
+            except CertificateAuthority.DoesNotExist:
+                log.warn('OCSP request for unknown CA received.')
+                return self.fail(u'internal_error')
+        else:
+            try:
+                cert = Certificate.objects.filter(ca=ca).get(serial=serial)
+            except Certificate.DoesNotExist:
+                log.warn('OCSP request for unknown cert received.')
+                return self.fail(u'internal_error')
 
         # load ca cert and responder key/cert
         ca_cert = load_certificate(force_bytes(ca.pub))
