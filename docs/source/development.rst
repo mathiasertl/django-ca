@@ -14,6 +14,31 @@ You can set up a demo using ``fab init_demo``. First create a minimal
 
 And then simply run ``fab init_demo`` from the root directory of your project.
 
+Development webserver via SSL
+=============================
+
+To test a certificate in your webserver, first install the root certificate
+authority in your browser, then run ``stunnel4`` and ``manage.py runserver`` in
+two separate shells:
+
+.. code-block:: console
+
+   $ stunnel4 .stunnel4.conf
+
+There is also a second config file using a revoked certificate. If you use it, browsers will display an error.
+
+.. code-block:: console
+
+   $ stunnel4  .stunnel4-revoked.conf
+
+You can now start your development webserver normally:
+
+.. code-block:: console
+
+   $ python manage.py runserver
+
+... and visit https://localhost:8443.
+
 **************
 Run test-suite
 **************
@@ -95,15 +120,3 @@ Convert a p7c/pkcs7 file to PEM (Let's Encrypt CA Issuer field) (see also
    openssl pkcs7 -inform der -in letsencrypt.p7c -print_certs \
       -outform pem -out letsencrypt.pem
 
-*****************************
-Development webserver via SSL
-*****************************
-
-To test a certificate in your webserver, first install the root certificate
-authority in your browser, then run ``stunnel4`` and ``manage.py runserver`` in
-two separate shells::
-
-   stunnel4
-   HTTPS=1 python manage.py runserver 8001
-
-Then visit https://localhost:8443.
