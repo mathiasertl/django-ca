@@ -167,6 +167,8 @@ def init_demo(fixture='n'):
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.settings")
     sys.path.insert(0, os.getcwd())
 
+    base_url = 'http://localhost:8000/'
+
     # setup django
     import django
     django.setup()
@@ -208,12 +210,12 @@ def init_demo(fixture='n'):
 
     # Compute and set CRL URL for the root CA
     root_crl_path = reverse('django_ca:crl', kwargs={'serial': root_ca.serial})
-    root_ca.crl_url = urljoin('http://localhost:8000/', root_crl_path)
+    root_ca.crl_url = urljoin(base_url, root_crl_path)
     root_ca.save()
 
-    # Get CRL URL for child CAs
+    # Get OCSP/CRL URL for child CAs
     root_ca_crl_path = reverse('django_ca:ca-crl', kwargs={'serial': root_ca.serial})
-    root_ca_crl = urljoin('http://localhost:8000/', root_ca_crl_path)
+    root_ca_crl = urljoin(base_url, root_ca_crl_path)
 
     print('Creating Intermediate CA...', end='')
     manage(
@@ -225,7 +227,7 @@ def init_demo(fixture='n'):
 
     # Compute and set CRL URL for the child CA
     child_crl_path = reverse('django_ca:crl', kwargs={'serial': child_ca.serial})
-    child_ca.crl_url = urljoin('http://localhost:8000/', child_crl_path)
+    child_ca.crl_url = urljoin(base_url, child_crl_path)
     child_ca.save()
 
     # Create some client certificates (always trust localhost to ease testing)
@@ -310,7 +312,7 @@ def init_demo(fixture='n'):
     print('\topenssl ocsp -index %s -port 8888 -rsigner %s -rkey %s -CA %s -text' %
           (rel(ocsp_index), rel(ocsp_pem), rel(ocsp_key), ca_crt))
     print(green('* Verify certificate with OCSP:'))
-    print('\topenssl ocsp -CAfile %s -issuer %s -cert %s -url http://localhost:8888 -resp_text' %
-          (ca_crt, ca_crt, host1_pem))
-    print(green('* Start webserver on http://localhost:8000 (user: user, password: nopass) with:'))
+    print('\topenssl ocsp -CAfile %s -issuer %s -cert %s -url %s -resp_text' %
+          (ca_crt, ca_crt, host1_pem, base_url))
+    print(green('* Start webserver on %s (user: user, password: nopass) with:', base_url))
     print('\tpython ca/manage.py runserver')
