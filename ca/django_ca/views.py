@@ -67,6 +67,9 @@ class CertificateRevocationListView(View, SingleObjectMixin):
     type = Encoding.DER
     """Filetype for CRL."""
 
+    ca_crl = False
+    """If set to ``True``, return a CRL for child CAs instead."""
+
     expires = 600
     """CRL expires in this many seconds."""
 
@@ -79,11 +82,14 @@ class CertificateRevocationListView(View, SingleObjectMixin):
 
     def get(self, request, serial):
         cache_key = 'crl_%s_%s_%s' % (serial, self.type, self.digest.name)
+        if self.ca_crl is True:
+            cache_key += '_ca'
+
         crl = cache.get(cache_key)
         if crl is None:
             ca = self.get_object()
             crl = get_crl(ca, encoding=self.type, expires=self.expires, algorithm=self.digest,
-                          password=self.password)
+                          password=self.password, ca_crl=self.ca_crl)
             cache.set(cache_key, crl, self.expires)
 
         content_type = self.content_type
