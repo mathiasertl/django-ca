@@ -189,19 +189,22 @@ def init_demo(fixture='n'):
     if os.path.exists(os.path.join('ca', 'db.sqlite3')):
         abort(red('CA already set up.'))
 
-    print(green('Creating database...'))
+    print('Creating database...', end='')
     manage('migrate', verbosity=0)
-    print(green('Initiating CA...'))
+    ok()
 
+    print('Creating Root CA', end='')
     manage('init_ca', 'Root CA', '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=ca.example.com',
            pathlen=1, ocsp_url='http://ocsp.ca.example.com',
            issuer_url='http://ca.example.com/ca.crt', issuer_alt_name='https://ca.example.com'
            )
     root_ca = CertificateAuthority.objects.get(name='Root CA')
+    ok()
 
     # generate OCSP certificate
-    print(green('Generate OCSP certificate...'))
+    print('Creating OCSP certificate...', end='')
     ocsp_key, ocsp_csr, ocsp_pem = create_cert('localhost', alt=['localhost'], profile='ocsp')
+    ok()
 
     # Compute and set CRL URL for the root CA
     root_crl_path = reverse('django_ca:crl', kwargs={'serial': root_ca.serial})
@@ -212,12 +215,13 @@ def init_demo(fixture='n'):
     root_ca_crl_path = reverse('django_ca:ca-crl', kwargs={'serial': root_ca.serial})
     root_ca_crl = urljoin('http://localhost:8000/', root_ca_crl_path)
 
-    print(green('Initiating Child CA...'))
+    print('Creating Intermediate CA...', end='')
     manage(
-        'init_ca', 'Child CA', '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=sub.ca.example.com',
+        'init_ca', 'Intermediate CA', '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=sub.ca.example.com',
         parent=root_ca, ca_crl_url=root_ca_crl,
     )
-    child_ca = CertificateAuthority.objects.get(name='Child CA')
+    child_ca = CertificateAuthority.objects.get(name='Intermediate CA')
+    ok()
 
     # Compute and set CRL URL for the child CA
     child_crl_path = reverse('django_ca:crl', kwargs={'serial': child_ca.serial})
@@ -227,14 +231,15 @@ def init_demo(fixture='n'):
     # Create some client certificates (always trust localhost to ease testing)
     for i in range(1, 10):
         hostname = 'host%s.example.com' % i
-        print(green('Generate certificate for %s...' % hostname))
+        print('Creating certificate for %s...' % hostname, end='')
         if fixture:
             create_cert(hostname, ca=child_ca)
         else:
             create_cert(hostname, alt=['localhost'], ca=child_ca)
+        ok()
 
     # create stunnel.pem
-    print('Create combined certificate for stunnel...', end='')
+    print('Creating combined certificate file for stunnel...', end='')
     key_path = os.path.join(ca_settings.CA_DIR, 'host1.example.com.key')
     pem_path = os.path.join(ca_settings.CA_DIR, 'host1.example.com.pem')
     stunnel_path = os.path.join(ca_settings.CA_DIR, 'stunnel.pem')
@@ -246,26 +251,29 @@ def init_demo(fixture='n'):
         stunnel.write(child_ca.pub)
     ok()
 
-    print(green('Creating client certificate...'))
+    print('Create a client certificate...', end='')
     create_cert('client', subject={'CN': 'First Last'}, cn_in_san=False, alt=['user@example.com'],
                 ca=child_ca)
+    ok()
 
     # Revoke host1 and host2
     if not fixture:
-        print(green('Revoke host1.example.com and host2.example.com...'))
-        cert = Certificate.objects.get(cn='host1.example.com')
+        print('Revoke host2.example.com and host3.example.com...', end='')
+        cert = Certificate.objects.get(cn='host2.example.com')
         cert.revoke()
         cert.save()
 
-        cert = Certificate.objects.get(cn='host2.example.com')
+        cert = Certificate.objects.get(cn='host3.example.com')
         cert.revoke('key_compromise')
         cert.save()
+        print(ok())
 
-    print(green('Create CRL and OCSP index...'))
+    print('Create CRL and OCSP index...', end='')
     crl_path = os.path.join(ca_settings.CA_DIR, 'crl.pem')
     ocsp_index = os.path.join(ca_settings.CA_DIR, 'ocsp_index.txt')
     manage('dump_crl', crl_path)
     manage('dump_ocsp_index', ocsp_index, ca=root_ca)
+    ok()
 
     ca_crl_path = os.path.join(ca_settings.CA_DIR, 'ca_crl.pem')
 
