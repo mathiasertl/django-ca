@@ -23,7 +23,6 @@ from oscrypto import asymmetric
 
 from django.conf import settings
 from django.conf.urls import url
-from django.core.exceptions import ImproperlyConfigured
 from django.test import Client
 from django.utils.encoding import force_text
 
@@ -77,6 +76,19 @@ urlpatterns = [
         responder_cert=settings.OCSP_PEM_PATH,
     ), name='unknown'),
 
+    url(r'^ocsp/false-key/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
+        ca=certs['root']['serial'],
+        responder_key='/false/foobar',
+        responder_cert=settings.OCSP_PEM_PATH,
+        expires=1200,
+    ), name='false-key'),
+
+    url(r'^ocsp/false-pem/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
+        ca=certs['root']['serial'],
+        responder_key=settings.OCSP_KEY_PATH,
+        responder_cert='/false/foobar/',
+        expires=1200,
+    ), name='false-pem'),
 ]
 
 
@@ -336,20 +348,18 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
         self.assertEqual(ocsp_response['response_status'].native, 'malformed_request')
 
-    def test_view_parameters(self):
-        with self.assertRaisesRegex(ImproperlyConfigured, '^wrong path: Could not read private key\.$'):
-            OCSPView.as_view(ca=certs['root']['serial'], responder_key='wrong path',
-                             responder_cert=settings.OCSP_PEM_PATH)
+    def test_bad_responder_key(self):
+        data = base64.b64encode(req1).decode('utf-8')
 
-        with self.assertRaisesRegex(ImproperlyConfigured, '^: Could not read public key\.$'):
-            OCSPView.as_view(ca=certs['root']['serial'], responder_key=settings.OCSP_KEY_PATH,
-                             responder_cert='')
+        response = self.client.get(reverse('false-key', kwargs={'data': data}))
+        self.assertEqual(response.status_code, 500)
+        ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
+        self.assertEqual(ocsp_response['response_status'].native, 'internal_error')
 
-        # Try to pass this file as private or public key, which is of course not a valid key
-        with self.assertRaisesRegex(ImproperlyConfigured, '^%s: Could not read private key\.$' % __file__):
-            OCSPView.as_view(ca=certs['root']['serial'], responder_key=__file__,
-                             responder_cert=settings.OCSP_PEM_PATH)
+    def test_bad_responder_pem(self):
+        data = base64.b64encode(req1).decode('utf-8')
 
-        with self.assertRaisesRegex(ImproperlyConfigured, '^%s: Could not read public key\.$' % __file__):
-            OCSPView.as_view(ca=certs['root']['serial'], responder_key=settings.OCSP_KEY_PATH,
-                             responder_cert=__file__)
+        response = self.client.get(reverse('false-pem', kwargs={'data': data}))
+        self.assertEqual(response.status_code, 500)
+        ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
+        self.assertEqual(ocsp_response['response_status'].native, 'internal_error')
