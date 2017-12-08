@@ -158,6 +158,9 @@ def create_cert(name, **kwargs):
 
 @task
 def init_demo(fixture='n'):
+    def ok():
+        print(green(' OK.'))
+
     fixture = fixture == 'y'
     # setup environment
     os.chdir('ca')
@@ -231,12 +234,17 @@ def init_demo(fixture='n'):
             create_cert(hostname, alt=['localhost'], ca=child_ca)
 
     # create stunnel.pem
+    print('Create combined certificate for stunnel...', end='')
     key_path = os.path.join(ca_settings.CA_DIR, 'host1.example.com.key')
     pem_path = os.path.join(ca_settings.CA_DIR, 'host1.example.com.pem')
     stunnel_path = os.path.join(ca_settings.CA_DIR, 'stunnel.pem')
     with open(key_path) as key, open(pem_path) as pem, open(stunnel_path, 'w') as stunnel:
         stunnel.write(key.read())
         stunnel.write(pem.read())
+
+        # cert is signed by intermediate CA, so we need to attach it as well
+        stunnel.write(child_ca.pub)
+    ok()
 
     print(green('Creating client certificate...'))
     create_cert('client', subject={'CN': 'First Last'}, cn_in_san=False, alt=['user@example.com'],
