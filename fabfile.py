@@ -205,7 +205,9 @@ def init_demo(fixture='n'):
 
     # generate OCSP certificate
     print('Creating OCSP certificate...', end='')
-    ocsp_key, ocsp_csr, ocsp_pem = create_cert('localhost', alt=['localhost'], profile='ocsp')
+    ocsp_key, ocsp_csr, ocsp_pem = create_cert(
+        'root-ocsp', subject={'CN': 'localhost'}, profile='ocsp'
+    )
     ok()
 
     # Compute and set CRL URL for the root CA
@@ -223,6 +225,13 @@ def init_demo(fixture='n'):
         parent=root_ca, ca_crl_url=root_ca_crl,
     )
     child_ca = CertificateAuthority.objects.get(name='Intermediate CA')
+    ok()
+
+    # generate OCSP certificate
+    print('Creating OCSP certificate for intermediate CA...', end='')
+    ocsp_key, ocsp_csr, ocsp_pem = create_cert(
+        'intermediate-ocsp', subject={'CN': 'localhost'}, profile='ocsp', ca=child_ca
+    )
     ok()
 
     # Compute and set CRL URL for the child CA
