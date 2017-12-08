@@ -172,6 +172,8 @@ def init_demo(fixture='n'):
     from django.conf import settings
     from django.contrib.auth import get_user_model
     from django.core.management import call_command as manage
+    from django.urls import reverse
+    from django.utils.six.moves.urllib.parse import urljoin
     from django_ca import ca_settings
     from django_ca.models import Certificate
     from django_ca.models import CertificateAuthority
@@ -187,22 +189,37 @@ def init_demo(fixture='n'):
     print(green('Creating database...'))
     manage('migrate', verbosity=0)
     print(green('Initiating CA...'))
+
     manage('init_ca', 'Root CA', '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=ca.example.com',
-           pathlen=1, ocsp_url='http://ocsp.ca.example.com', crl_url=['http://localhost/certs.crl'],
+           pathlen=1, ocsp_url='http://ocsp.ca.example.com',
            issuer_url='http://ca.example.com/ca.crt', issuer_alt_name='https://ca.example.com'
            )
     root_ca = CertificateAuthority.objects.get(name='Root CA')
 
-    print(green('Initiating Child CA...'))
-    manage(
-        'init_ca', 'Child CA', '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=sub.ca.example.com',
-        parent=root_ca, ca_crl_url='http://localhost/ca.crl',
-    )
-    child_ca = CertificateAuthority.objects.get(name='Child CA')
-
     # generate OCSP certificate
     print(green('Generate OCSP certificate...'))
     ocsp_key, ocsp_csr, ocsp_pem = create_cert('localhost', alt=['localhost'], profile='ocsp')
+
+    # Compute and set CRL URL for the root CA
+    root_crl_path = reverse('django_ca:crl', kwargs={'serial': root_ca.serial})
+    root_ca.crl_url = urljoin('http://localhost:8000/', root_crl_path)
+    root_ca.save()
+
+    # Get CRL URL for child CAs
+    root_ca_crl_path = reverse('django_ca:ca-crl', kwargs={'serial': root_ca.serial})
+    root_ca_crl = urljoin('http://localhost:8000/', root_ca_crl_path)
+
+    print(green('Initiating Child CA...'))
+    manage(
+        'init_ca', 'Child CA', '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=sub.ca.example.com',
+        parent=root_ca, ca_crl_url=root_ca_crl,
+    )
+    child_ca = CertificateAuthority.objects.get(name='Child CA')
+
+    # Compute and set CRL URL for the child CA
+    child_crl_path = reverse('django_ca:crl', kwargs={'serial': child_ca.serial})
+    child_ca.crl_url = urljoin('http://localhost:8000/', child_crl_path)
+    child_ca.save()
 
     # Create some client certificates (always trust localhost to ease testing)
     for i in range(1, 10):
