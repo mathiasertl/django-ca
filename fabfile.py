@@ -253,10 +253,20 @@ def init_demo(fixture='n'):
         ok()
 
     # create stunnel.pem
-    print('Creating combined certificate file for stunnel...', end='')
+    print('Creating combined certificates file for stunnel...', end='')
     key_path = os.path.join(ca_settings.CA_DIR, 'host1.example.com.key')
     pem_path = os.path.join(ca_settings.CA_DIR, 'host1.example.com.pem')
     stunnel_path = os.path.join(ca_settings.CA_DIR, 'stunnel.pem')
+    with open(key_path) as key, open(pem_path) as pem, open(stunnel_path, 'w') as stunnel:
+        stunnel.write(key.read())
+        stunnel.write(pem.read())
+
+        # cert is signed by intermediate CA, so we need to attach it as well
+        stunnel.write(child_ca.pub)
+
+    key_path = os.path.join(ca_settings.CA_DIR, 'host2.example.com.key')
+    pem_path = os.path.join(ca_settings.CA_DIR, 'host2.example.com.pem')
+    stunnel_path = os.path.join(ca_settings.CA_DIR, 'stunnel-revoked.pem')
     with open(key_path) as key, open(pem_path) as pem, open(stunnel_path, 'w') as stunnel:
         stunnel.write(key.read())
         stunnel.write(pem.read())
