@@ -226,9 +226,9 @@ def init_demo(fixture='n'):
         hostname = 'host%s.example.com' % i
         print(green('Generate certificate for %s...' % hostname))
         if fixture:
-            create_cert(hostname)
+            create_cert(hostname, ca=child_ca)
         else:
-            create_cert(hostname, alt=['localhost'])
+            create_cert(hostname, alt=['localhost'], ca=child_ca)
 
     # create stunnel.pem
     key_path = os.path.join(ca_settings.CA_DIR, 'host1.example.com.key')
