@@ -15,7 +15,6 @@
 
 import base64
 import logging
-import os
 from datetime import datetime
 from datetime import timedelta
 
@@ -30,7 +29,6 @@ from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
-from django.utils.decorators import classonlymethod
 from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
@@ -154,39 +152,6 @@ class OCSPView(View):
     ca_ocsp = False
     """If set to ``True``, validate child CAs instead."""
 
-    @classonlymethod
-    def as_view(cls, responder_key, responder_cert, **kwargs):
-        priv_err_msg = '%s: Could not read private key.' % responder_key
-        pub_err_msg = '%s: Could not read public key.' % responder_cert
-
-        # Preload the responder key and certificate for faster access.
-        try:
-            with open(responder_key, 'rb') as stream:
-                responder_key = stream.read()
-        except Exception:
-            raise ImproperlyConfigured(priv_err_msg)
-
-        try:
-            # try to load responder key and cert with oscrypto, to make sure they are actually usable
-            load_private_key(responder_key)
-        except Exception:
-            raise ImproperlyConfigured(priv_err_msg)
-
-        if os.path.exists(responder_cert):
-            with open(responder_cert, 'rb') as stream:
-                responder_cert = stream.read()
-
-        if not responder_cert:
-            raise ImproperlyConfigured(pub_err_msg)
-
-        try:
-            load_certificate(responder_cert)
-        except Exception:
-            raise ImproperlyConfigured(pub_err_msg)
-
-        return super(OCSPView, cls).as_view(
-            responder_key=responder_key, responder_cert=responder_cert, **kwargs)
-
     @method_decorator(csrf_exempt)
     def dispatch(self, *args, **kwargs):
         return super(OCSPView, self).dispatch(*args, **kwargs)
@@ -212,6 +177,35 @@ class OCSPView(View):
 
         return HttpResponse(response.dump(), status=status,
                             content_type='application/ocsp-response')
+
+    def get_responder_key(self):
+        priv_err_msg = '%s: Could not read private key.' % self.responder_key
+
+        try:
+            with open(self.responder_key, 'rb') as stream:
+                responder_key = stream.read()
+        except Exception:
+            raise ImproperlyConfigured(priv_err_msg)
+
+        try:
+            # try to load responder key and cert with oscrypto, to make sure they are actually usable
+            return load_private_key(responder_key)
+        except Exception:
+            raise ImproperlyConfigured(priv_err_msg)
+
+    def get_responder_cert(self):
+        pub_err_msg = '%s: Could not read public key.' % self.responder_cert
+
+        try:
+            with open(self.responder_cert, 'rb') as stream:
+                responder_cert = stream.read()
+        except Exception:
+            raise ImproperlyConfigured(pub_err_msg)
+
+        try:
+            return load_certificate(responder_cert)
+        except Exception:
+            raise ImproperlyConfigured(pub_err_msg)
 
     def get_ocsp_response(self, data):
         try:
@@ -246,8 +240,8 @@ class OCSPView(View):
 
         # load ca cert and responder key/cert
         ca_cert = load_certificate(force_bytes(ca.pub))
-        responder_key = load_private_key(self.responder_key)
-        responder_cert = load_certificate(self.responder_cert)
+        responder_key = self.get_responder_key()
+        responder_cert = self.get_responder_cert()
 
         builder = OCSPResponseBuilder(
             response_status=u'successful',  # ResponseStatus.successful.value,
