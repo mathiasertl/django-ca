@@ -307,15 +307,18 @@ class BaseCommand(_BaseCommand):
 
             return ''.join(prefixed_lines())
 
+    def print_extension(self, name, value):
+        critical, value = value
+        if critical:
+            self.stdout.write('%s (critical):' % name)
+        else:
+            self.stdout.write('%s:' % name)
+
+        self.stdout.write(self.indent(value))
+
     def print_extensions(self, cert):
         for name, value in sorted(dict(cert.extensions()).items()):
-            critical, value = value
-            if critical:
-                self.stdout.write('%s (critical):' % name)
-            else:
-                self.stdout.write('%s:' % name)
-
-            self.stdout.write(self.indent(value))
+            self.print_extension(name, value)
 
 
 class CertCommand(BaseCommand):

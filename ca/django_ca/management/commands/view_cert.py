@@ -54,14 +54,7 @@ class Command(CertCommand):
         else:
             san = cert.subjectAltName()
             if san:
-                critical, san = cert.subjectAltName()
-
-                if critical:
-                    self.stdout.write('subjectAltName (critical):')
-                else:
-                    self.stdout.write('subjectAltName:')
-
-                self.stdout.write(self.indent(san))
+                self.print_extension('subjectAltName', san)
 
         self.stdout.write('Watchers:')
         for watcher in cert.watchers.all():
