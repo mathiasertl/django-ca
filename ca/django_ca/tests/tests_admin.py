@@ -217,6 +217,8 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
             'keyUsage_1': True,
             'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
             'extendedKeyUsage_1': False,
+            'tlsFeature_0': ['OCSPMustStaple', 'MultipleCertStatusRequest'],
+            'tlsFeature_1': False,
         })
         self.assertRedirects(response, self.changelist_url)
 
@@ -228,8 +230,14 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertEqual(cert.basicConstraints(), (True, 'CA:FALSE'))
         self.assertEqual(cert.keyUsage(), (True, ['digitalSignature', 'keyAgreement']))
         self.assertEqual(cert.extendedKeyUsage(), (False, ['clientAuth', 'serverAuth']))
+        self.assertEqual(cert.TLSFeature(),
+                         (False, ['OCSP Must-Staple', 'Multiple Certificate Status Request']))
         self.assertEqual(cert.ca, self.ca)
         self.assertEqual(cert.csr, self.csr_pem)
+
+        # Test that we can view the certificate
+        response = self.client.get(self.change_url(cert.pk))
+        self.assertEqual(response.status_code, 200)
 
     def test_add_no_key_usage(self):
         cn = 'test-add2.example.com'
@@ -261,6 +269,11 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertEqual(cert.extendedKeyUsage(), None)  # not present
         self.assertEqual(cert.ca, self.ca)
         self.assertEqual(cert.csr, self.csr_pem)
+        self.assertIsNone(cert.TLSFeature())
+
+        # Test that we can view the certificate
+        response = self.client.get(self.change_url(cert.pk))
+        self.assertEqual(response.status_code, 200)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_add_with_password(self):
@@ -337,6 +350,10 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertEqual(cert.extendedKeyUsage(), (False, ['clientAuth', 'serverAuth']))
         self.assertEqual(cert.ca, ca)
         self.assertEqual(cert.csr, self.csr_pem)
+
+        # Test that we can view the certificate
+        response = self.client.get(self.change_url(cert.pk))
+        self.assertEqual(response.status_code, 200)
 
     def test_wrong_csr(self):
         cn = 'test-add-wrong-csr.example.com'
