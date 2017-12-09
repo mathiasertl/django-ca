@@ -364,9 +364,6 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
 
         if obj.revoked is False:
             fieldsets[2][1]['classes'] = ['collapse', ]
-        else:
-            if 'collapse' in fieldsets[2][1].get('classes', []):
-                fieldsets[2][1]['classes'].remove('collapse')
         return fieldsets
 
     def get_readonly_fields(self, request, obj=None):
