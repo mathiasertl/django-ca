@@ -117,10 +117,6 @@ on Wikipedia.</p>'''.replace('\n', ' ')
     def output_extension(self, value):
         # shared function for formatting extension values
 
-        if value is None:
-            text = _('Not present')
-            return mark_safe('<img src="/static/admin/img/icon-no.svg" alt="%s"> %s' % (text, text))
-
         critical, value = value
         html = ''
         if critical is True:
