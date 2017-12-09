@@ -208,7 +208,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         csr : str
             A valid CSR. The format is given by the ``csr_format`` parameter.
         expires : int
-            When the certificate should expire (passed to :py:func:`get_cert_builder`).
+            When the certificate should expire (passed to :py:func:`~django_ca.utils.get_cert_builder`).
         algorithm : {'sha512', 'sha256', ...}
             Algorithm used to sign the certificate. The default is the CA_DIGEST_ALGORITHM setting.
         subject : dict, optional
