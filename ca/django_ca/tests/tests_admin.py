@@ -76,7 +76,7 @@ class ChangelistTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertCerts(response, [self.cert])
 
-        self.assertCSS(response, 'django_ca/admin/css/monospace.css')
+        self.assertCSS(response, 'django_ca/admin/css/base.css')
         self.assertCSS(response, 'django_ca/admin/css/certificateadmin.css')
 
     def test_status(self):
@@ -174,7 +174,7 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         templates = [t.name for t in response.templates]
         self.assertIn('django_ca/admin/change_form.html', templates)
         self.assertIn('admin/change_form.html', templates)
-        self.assertCSS(response, 'django_ca/admin/css/monospace.css')
+        self.assertCSS(response, 'django_ca/admin/css/base.css')
         self.assertCSS(response, 'django_ca/admin/css/certificateadmin.css')
 
     def test_revoked(self):
@@ -188,7 +188,7 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         templates = [t.name for t in response.templates]
         self.assertIn('django_ca/admin/change_form.html', templates)
         self.assertIn('admin/change_form.html', templates)
-        self.assertCSS(response, 'django_ca/admin/css/monospace.css')
+        self.assertCSS(response, 'django_ca/admin/css/base.css')
         self.assertCSS(response, 'django_ca/admin/css/certificateadmin.css')
 
 
@@ -199,7 +199,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         templates = [t.name for t in response.templates]
         self.assertIn('django_ca/admin/change_form.html', templates)
         self.assertIn('admin/change_form.html', templates)
-        self.assertCSS(response, 'django_ca/admin/css/monospace.css')
+        self.assertCSS(response, 'django_ca/admin/css/base.css')
         self.assertCSS(response, 'django_ca/admin/css/certificateadmin.css')
 
     def test_add(self):
