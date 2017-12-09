@@ -106,10 +106,33 @@ class CoverageCommand(BaseCommand):
 
         import coverage
 
-        cov = coverage.Coverage(cover_pylib=False, branch=True,
-                                source=['django_ca'],
-                                omit=['*migrations/*', '*/tests/tests*', ]
-                                )
+        cov = coverage.Coverage(cover_pylib=False, branch=True, source=['django_ca'],
+                                omit=['*migrations/*', '*/tests/tests*', ])
+
+        # exclude version-specific code
+        if PY2:
+            cov.exclude('only py3')
+        else:
+            cov.exclude('only py2')
+
+        from django import VERSION
+        django_versions = [(1, 8), (1, 9), (1, 10), (1, 11), (2, 0), (2, 1)]
+        this_version = VERSION[:2]
+
+        for version in django_versions:
+            version_str = '.'.join([str(v) for v in version])
+
+            if version != this_version:
+                cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only django==%s' % version_str)
+
+            if version > this_version:
+                cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only django>%s' % version_str)
+                cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only django>=%s' % version_str)
+
+            if version < this_version:
+                cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only django<%s' % version_str)
+                cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only django<=%s' % version_str)
+
         cov.start()
 
         self.run_tests()
