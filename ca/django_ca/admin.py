@@ -184,7 +184,10 @@ on Wikipedia.</p>'''.replace('\n', ' ')
             return fieldsets
 
         fieldsets = copy.deepcopy(fieldsets)
-        fieldsets[self.x509_fieldset_index][1]['fields'] += list(sorted(dict(obj.extensions()).keys()))
+        for name, _value in sorted(obj.extensions()):
+            # TODO: we should handle unknown extensions here
+            fieldsets[self.x509_fieldset_index][1]['fields'].append(name)
+
         return fieldsets
 
     def get_readonly_fields(self, request, obj=None):
