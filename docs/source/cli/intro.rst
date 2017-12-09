@@ -62,7 +62,7 @@ sign_cert             Sign a certificate.
 view_cert             View a certificate.
 ===================== ===============================================================
 
-Miscellaneous ``manage.py`` subcommands (see :doc:`documentation </cli/misc>`):
+Miscellaneous ``manage.py`` subcommands:
 
 ===================== ===============================================================
 Command               Description
