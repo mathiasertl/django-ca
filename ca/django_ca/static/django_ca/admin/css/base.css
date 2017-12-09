@@ -13,7 +13,8 @@ You should have received a copy of the GNU General Public License along with dja
 see <http://www.gnu.org/licenses/>.
 */
 
-/* Viewing the CSR and PEM as code. 
+/**
+ * Viewing the CSR and PEM as code. 
  *
  * Django 2.0 uses div.readonly, Django<2.0 uses p's
  */
@@ -31,4 +32,14 @@ fieldset.as-code .field-pub div.readonly,
     padding: 10px 15px !important;
     display: table;
     margin-top: 3px;
+}
+
+/**
+ * Style lists for x509 extensions.
+ */
+form .aligned ul.x509-extension-value {
+    margin-left: 6px;
+}
+form .aligned ul.x509-extension-value li {
+    list-style: initial;
 }

@@ -41,9 +41,3 @@ span.critical-widget-wrapper label {
     padding-left: 5px;
     display: none;
 }
-form .aligned ul.x509-extension-value {
-    margin-left: 6px;
-}
-form .aligned ul.x509-extension-value li {
-    list-style: initial;
-}
