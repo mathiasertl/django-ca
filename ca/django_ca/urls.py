@@ -32,6 +32,7 @@ if ca_settings.CA_PROVIDE_GENERIC_CRL is True:  # pragma: no branch
             name='ca-crl'))
 
 for name, kwargs in getattr(settings, 'CA_OCSP_URLS', {}).items():
+    kwargs.setdefault('ca', name)
     urlpatterns += [
         url(r'ocsp/%s/$' % name, views.OCSPView.as_view(**kwargs),
             name='ocsp-post-%s' % name),
