@@ -336,5 +336,5 @@ def init_demo(fixture='n'):
     print(green('* Verify certificate with OCSP:'))
     print('\topenssl ocsp -CAfile %s -issuer %s -cert %s -url %s -resp_text' %
           (ca_crt, ca_crt, host1_pem, base_url))
-    print(green('* Start webserver on %s (user: user, password: nopass) with:', base_url))
+    print(green('* Start webserver on %s (user: user, password: nopass) with:' % base_url))
     print('\tDJANGO_SETTINGS_MODULE=ca.demosettings python ca/manage.py runserver')
