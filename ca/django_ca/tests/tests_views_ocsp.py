@@ -316,7 +316,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
     def test_bad_ca(self):
         data = base64.b64encode(req1).decode('utf-8')
         response = self.client.get(reverse('unknown', kwargs={'data': data}))
-        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.status_code, 200)
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
         self.assertEqual(ocsp_response['response_status'].native, 'internal_error')
 
@@ -352,7 +352,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         data = base64.b64encode(req1).decode('utf-8')
 
         response = self.client.get(reverse('false-key', kwargs={'data': data}))
-        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.status_code, 200)
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
         self.assertEqual(ocsp_response['response_status'].native, 'internal_error')
 
@@ -360,6 +360,6 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         data = base64.b64encode(req1).decode('utf-8')
 
         response = self.client.get(reverse('false-pem', kwargs={'data': data}))
-        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.status_code, 200)
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
         self.assertEqual(ocsp_response['response_status'].native, 'internal_error')
