@@ -100,6 +100,7 @@ class InitCATest(DjangoCATestCase):
             'Excluded: DNS:.net'
         ]))
         self.assertEqual(ca.pathlen, 3)
+        self.assertEqual(ca.max_pathlen, 3)
         self.assertTrue(ca.allows_intermediate_ca)
         self.assertEqual(ca.issuer_url, 'http://issuer.ca.example.com')
         self.assertEqual(ca.issuer_alt_name, 'http://ian.ca.example.com')
@@ -120,6 +121,7 @@ class InitCATest(DjangoCATestCase):
         ca = CertificateAuthority.objects.first()
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
+        self.assertEqual(ca.max_pathlen, None)
         self.assertEqual(ca.pathlen, None)
         self.assertTrue(ca.allows_intermediate_ca)
         self.assertIssuer(ca, ca)
@@ -226,10 +228,23 @@ class InitCATest(DjangoCATestCase):
             self.init_ca(name='wrong', parent=pathlen_1_none)
 
         self.init_ca(name='pathlen-none', pathlen=None)
-        parent = CertificateAuthority.objects.get(name='pathlen-none')
-        parent.full_clean()  # assert e.g. max_length in serials
-        self.assertIsNone(parent.pathlen)
-        self.assertTrue(parent.allows_intermediate_ca)
+        pathlen_none = CertificateAuthority.objects.get(name='pathlen-none')
+        pathlen_none.full_clean()  # assert e.g. max_length in serials
+        self.assertIsNone(pathlen_none.pathlen)
+        self.assertIsNone(pathlen_none.max_pathlen, None)
+        self.assertTrue(pathlen_none.allows_intermediate_ca)
+
+        self.init_ca(name='pathlen-none-none', pathlen=None, parent=pathlen_none)
+        pathlen_none_none = CertificateAuthority.objects.get(name='pathlen-none-none')
+        pathlen_none_none.full_clean()  # assert e.g. max_length in serials
+        self.assertIsNone(pathlen_none_none.pathlen)
+        self.assertIsNone(pathlen_none_none.max_pathlen)
+
+        self.init_ca(name='pathlen-none-1', pathlen=1, parent=pathlen_none)
+        pathlen_none_1 = CertificateAuthority.objects.get(name='pathlen-none-1')
+        pathlen_none_1.full_clean()  # assert e.g. max_length in serials
+        self.assertEqual(pathlen_none_1.pathlen, 1)
+        self.assertEqual(pathlen_none_1.max_pathlen, 1)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_expires_override(self):
