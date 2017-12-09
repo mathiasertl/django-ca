@@ -138,13 +138,13 @@ class OCSPView(View):
         https://github.com/threema-ch/ocspresponder/blob/master/ocspresponder/__init__.py.
     """
     ca = None
-    """The serial of your certificate authority."""
+    """The name or serial of your Certificate Authority."""
 
     responder_key = None
     """Absolute path to the private key used for signing OCSP responses."""
 
     responder_cert = None
-    """Absolute path or key itself used for signing OCSP responses."""
+    """Absolute path to the public key used for signing OCSP responses."""
 
     expires = 600
     """Time in seconds that the responses remain valid. The default is 600 seconds or ten minutes."""
