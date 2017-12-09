@@ -15,6 +15,7 @@
 
 import base64
 import logging
+import os
 from datetime import datetime
 from datetime import timedelta
 
@@ -144,7 +145,8 @@ class OCSPView(View):
     """Absolute path to the private key used for signing OCSP responses."""
 
     responder_cert = None
-    """Absolute path to the public key used for signing OCSP responses."""
+    """Absolute path to the public key used for signing OCSP responses. May also be a serial identifying a
+    certificate from the database."""
 
     expires = 600
     """Time in seconds that the responses remain valid. The default is 600 seconds or ten minutes."""
@@ -196,11 +198,18 @@ class OCSPView(View):
     def get_responder_cert(self):
         pub_err_msg = '%s: Could not read public key.' % self.responder_cert
 
-        try:
-            with open(self.responder_cert, 'rb') as stream:
-                responder_cert = stream.read()
-        except Exception:
-            raise ImproperlyConfigured(pub_err_msg)
+        if os.path.exists(self.responder_cert):
+            try:
+                with open(self.responder_cert, 'rb') as stream:
+                    responder_cert = stream.read()
+            except Exception:
+                raise ImproperlyConfigured(pub_err_msg)
+
+        else:
+            try:
+                responder_cert = Certificate.objects.get(serial=self.responder_cert)
+            except Certificate.DoesNotExist:
+                raise ImproperlyConfigured(pub_err_msg)
 
         try:
             return load_certificate(responder_cert)
@@ -244,9 +253,18 @@ class OCSPView(View):
                 return self.fail(u'internal_error')
 
         # load ca cert and responder key/cert
-        ca_cert = load_certificate(force_bytes(ca.pub))
-        responder_key = self.get_responder_key()
-        responder_cert = self.get_responder_cert()
+        try:
+            ca_cert = load_certificate(force_bytes(ca.pub))
+        except Exception:
+            log.error('Could not load CA certificate.')
+            return self.fail(u'internal_error')
+
+        try:
+            responder_key = self.get_responder_key()
+            responder_cert = self.get_responder_cert()
+        except Exception:
+            log.error('Could not read responder key/cert.')
+            return self.fail(u'internal_error')
 
         builder = OCSPResponseBuilder(
             response_status=u'successful',  # ResponseStatus.successful.value,
