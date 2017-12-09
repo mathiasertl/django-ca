@@ -224,7 +224,12 @@ class OCSPView(View):
             return self.fail(u'malformed_request')
 
         # Get CA and certificate
-        ca = CertificateAuthority.objects.get(serial=self.ca)
+        try:
+            ca = CertificateAuthority.objects.get_by_serial_or_cn(serial=self.ca)
+        except CertificateAuthority.DoesNotExist:
+            log.error('%s: Certificate Authority could not be found.')
+            return self.fail(u'internal_error')
+
         if self.ca_ocsp is True:
             try:
                 cert = CertificateAuthority.objects.filter(parent=ca).get(serial=serial)

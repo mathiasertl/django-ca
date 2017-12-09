@@ -8,12 +8,12 @@ ChangeLog
 HEAD
 ****
 
-* Django 2.0 is now fully supported.
+* Django 2.0 is now fully supported. This release still supports Django 1.8, 1.10 and 1.11.
 * Add support for the ``tlsFeature`` extension.
 * Do sanity checks on the "pathlen" attribute when creating Certificate Authorities.
 * Massively update documentation for the command-line interface.
-* The ``Content-Type`` header of CRL responses now defaults to the correct value regardless of type
-  (DER or PEM) used.
+* CAs can now be identified using name or serial (previously: only by serial) in :ref:`CA_OCSP_URLS
+  <settings-ca-ocsp-urls>`.
 
 Bugfixes
 ========
@@ -23,6 +23,10 @@ Bugfixes
   guess the URL and download public keys.
 * Add a missing migration.
 * Fix the value of the crlDistributionPoints x509 extension when signing certificates with Python2.
+* The ``Content-Type`` header of CRL responses now defaults to the correct value regardless of type
+  (DER or PEM) used.
+* If a wrong CA is specified in :ref:`CA_OCSP_URLS <settings-ca-ocsp-urls>`, an OCSP internal error
+  is returned instead of an uncought exception.
 
 .. _changelog-1.6.3:
 
