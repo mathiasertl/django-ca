@@ -47,7 +47,7 @@ from .utils import int_to_hex
 log = logging.getLogger(__name__)
 try:
     from django.urls import reverse
-except ImportError:  # Django 1.8 import
+except ImportError:  # pragma: only django<=1.8
     from django.core.urlresolvers import reverse
 
 
