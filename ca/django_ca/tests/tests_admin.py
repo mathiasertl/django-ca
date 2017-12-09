@@ -29,6 +29,7 @@ from django.utils.six.moves.urllib.parse import quote
 
 from ..models import Certificate
 from ..models import CertificateAuthority
+from ..models import Watcher
 from ..utils import SUBJECT_FIELDS
 from .base import DjangoCAWithCertTestCase
 from .base import DjangoCAWithCSRTestCase
@@ -190,6 +191,18 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertIn('admin/change_form.html', templates)
         self.assertCSS(response, 'django_ca/admin/css/base.css')
         self.assertCSS(response, 'django_ca/admin/css/certificateadmin.css')
+
+    def test_change_watchers(self):
+        cert = Certificate.objects.get(serial=self.cert.serial)
+        watcher = Watcher.objects.create(name='User', mail='user@example.com')
+
+        response = self.client.post(self.change_url(), data={
+            'watchers': [watcher.pk],
+        })
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, self.changelist_url)
+        self.assertEqual(list(cert.watchers.all()), [watcher])
 
 
 class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
