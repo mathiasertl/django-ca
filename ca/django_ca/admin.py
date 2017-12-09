@@ -149,9 +149,9 @@ on Wikipedia.</p>'''.replace('\n', ' ')
         return self.output_extension(obj.extendedKeyUsage())
     extendedKeyUsage.short_description = 'extendedKeyUsage'
 
-    def tlsFeature(self, obj):
+    def TLSFeature(self, obj):
         return self.output_extension(obj.TLSFeature())
-    tlsFeature.short_description = _('TLS Feature')
+    TLSFeature.short_description = _('TLS Feature')
 
     def subjectKeyIdentifier(self, obj):
         return self.output_extension(obj.subjectKeyIdentifier())
