@@ -76,8 +76,6 @@ class InitCATest(DjangoCATestCase):
             crl_url=['http://crl.example.com'],
             ocsp_url='http://ocsp.example.com',
             ca_issuer_url='http://ca.issuer.ca.example.com',
-            ca_crl_url=['http://ca.crl.example.com'],
-            ca_ocsp_url='http://ca.ocsp.example.com',
             name_constraint=['permitted;DNS:.com', 'excluded;DNS:.net'],
         )
         self.assertEqual(out, '')
@@ -93,9 +91,8 @@ class InitCATest(DjangoCATestCase):
 
         self.assertTrue(isinstance(ca.x509.signature_hash_algorithm, hashes.SHA1))
         self.assertTrue(isinstance(ca.x509.public_key(), dsa.DSAPublicKey))
-        self.assertEqual(ca.crlDistributionPoints(), (False, ['Full Name: URI:http://ca.crl.example.com']))
+        self.assertIsNone(ca.crlDistributionPoints())
         self.assertEqual(ca.authorityInfoAccess(), (False, [
-            'OCSP - URI:http://ca.ocsp.example.com',
             'CA Issuers - URI:http://ca.issuer.ca.example.com'
         ]))
         self.assertEqual(ca.nameConstraints(), (True, [
@@ -168,7 +165,11 @@ class InitCATest(DjangoCATestCase):
         self.assertSignature([second], second)
         self.assertIsNone(second.parent)
 
-        self.init_ca(name='Child', parent=parent)
+        self.init_ca(
+            name='Child', parent=parent,
+            ca_crl_url=['http://ca.crl.example.com'],
+            ca_ocsp_url='http://ca.ocsp.example.com',
+        )
         child = CertificateAuthority.objects.get(name='Child')
         child.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([parent], child)
@@ -179,6 +180,10 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(list(parent.children.all()), [child])
         self.assertIssuer(parent, child)
         self.assertAuthorityKeyIdentifier(parent, child)
+        self.assertEqual(child.crlDistributionPoints(), (False, ['Full Name: URI:http://ca.crl.example.com']))
+        self.assertEqual(child.authorityInfoAccess(), (False, [
+            'OCSP - URI:http://ca.ocsp.example.com',
+        ]))
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_intermediate_check(self):

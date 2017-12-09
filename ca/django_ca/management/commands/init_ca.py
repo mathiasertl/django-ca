@@ -113,6 +113,10 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
             options['expires'] = parent.expires
         if parent and not parent.allows_intermediate_ca:
             raise CommandError("Parent CA cannot create intermediate CA due to pathlen restrictions.")
+        if not parent and options['ca_crl_url']:
+            raise CommandError("CRLs cannot be used to revoke root CAs.")
+        if not parent and options['ca_ocsp_url']:
+            raise CommandError("OCSP cannot be used to revoke root CAs.")
 
         # filter empty values in the subject
         subject.setdefault('CN', name)

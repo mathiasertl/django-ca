@@ -34,11 +34,10 @@ Please see http://django-ca.readthedocs.io/en/latest/changelog.html
 Ideas on what we could do for future releases:
 
 1. Add parameter to add generic CRL/OCSP URLs to CAs.
-2. Throw error when user tries to add CRL/OCSP URLs to Root CA cert.
-3. Test CRL signing certificates.
-4. Only send out one notification if multiple certificates expire for a user.
-5. Add a "renew" button in the admin interface.
-6. Add ability to automatically regenerate CRLs when a certificate is revoked.
+2. Test CRL signing certificates.
+3. Only send out one notification if multiple certificates expire for a user.
+4. Add a "renew" button in the admin interface.
+5. Add ability to automatically regenerate CRLs when a certificate is revoked.
 
 ## License
 
