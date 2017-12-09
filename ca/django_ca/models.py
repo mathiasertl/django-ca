@@ -367,7 +367,7 @@ class CertificateAuthority(X509CertMixin):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
         except x509.ExtensionNotFound:  # pragma: no cover - extension should always be present
-            return ''
+            return None
         return ext.value.path_length
 
     @property
