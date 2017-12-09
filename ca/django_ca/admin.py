@@ -181,6 +181,13 @@ on Wikipedia.</p>'''.replace('\n', ' ')
         return self.output_extension(obj.subjectAltName())
     subject_alt_name.short_description = _('subjectAltName')
 
+    class Media:
+        css = {
+            'all': (
+                'django_ca/admin/css/base.css',
+            ),
+        }
+
 
 @admin.register(CertificateAuthority)
 class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
@@ -221,8 +228,8 @@ class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
     class Media:
         css = {
             'all': (
+                'django_ca/admin/css/base.css',
                 'django_ca/admin/css/certificateauthorityadmin.css',
-                'django_ca/admin/css/monospace.css',
             ),
         }
 
@@ -401,8 +408,8 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
     class Media:
         css = {
             'all': (
+                'django_ca/admin/css/base.css',
                 'django_ca/admin/css/certificateadmin.css',
-                'django_ca/admin/css/monospace.css',
             ),
         }
         js = (
