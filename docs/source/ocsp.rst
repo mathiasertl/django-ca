@@ -7,11 +7,6 @@ OCSP, or the `Online Certificate Status Protocol
 second method (besides :doc:`CRLs <crl>`) for a client to find out if a
 certificate has been revoked.
 
-.. WARNING::
-
-   The OCSP responder included in **django-ca** is still very experimental. Expect problems when
-   using it. Please also expect major changes in how it is configured in future versions.
-
 *****************************
 Configure OCSP with django-ca
 *****************************
@@ -58,13 +53,28 @@ configure the ``CA_OCSP_URLS`` setting. It's a dictionary configuring instances 
 dictionary for the arguments of the view. For example::
 
    CA_OCSP_URLS = {
-       'root': {
-           'ca': '34:D6:02:B5:B8:27:4F:51:9A:16:0C:B8:56:B7:79:3F',
+       'Root CA': {
            'responder_key': '/usr/share/django-ca/ocsp.key',
-           'responder_cert': 'F2:5F:7F:31:E1:91:4F:D7:9A:D4:19:65:17:3D:43:88',
+           'responder_cert': '/usr/share/django-ca/ocsp.pem',
+           
+           # optional: The name or serial of the CA. By default, the dictionary key ("Root CA" in
+           #           this example is assumed to be the CA name or serial.
+           #'ca': '34:D6:02:B5:B8:27:4F:51:9A:16:0C:B8:56:B7:79:3F',
+            
            # optional: How long OCSP responses are valid
            #'expires': 3600,
        },
+
+       # This URL can be added to any intermediate CA using the --ca-ocsp-url parameter
+       'Root CA - intermediate': {
+           # Dictionary key is not the name of the root CA, so we pass a serial instead:
+           'ca': '34:D6:02:B5:B8:27:4F:51:9A:16:0C:B8:56:B7:79:3F',
+           'responder_key': '/usr/share/django-ca/ocsp.key',
+           'responder_cert': '/usr/share/django-ca/ocsp.pem',
+
+           # optional: This URL serves OCSP responses for Child CAs, not signed enduser certs:
+           #'ca_ocsp': True,
+       }
    }
 
 This would mean that your OCSP responder would be located at ``/django_ca/ocsp/root/`` at whatever
