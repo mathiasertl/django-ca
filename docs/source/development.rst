@@ -35,7 +35,7 @@ You can now start your development webserver normally:
 
 .. code-block:: console
 
-   $ python manage.py runserver
+   $ DJANGO_SETTINGS_MODULE=ca.demosettings python manage.py runserver
 
 ... and visit https://localhost:8443.
 

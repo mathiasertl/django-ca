@@ -164,7 +164,7 @@ def init_demo(fixture='n'):
     fixture = fixture == 'y'
     # setup environment
     os.chdir('ca')
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.settings")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.demosettings")
     sys.path.insert(0, os.getcwd())
 
     base_url = 'http://localhost:8000/'
@@ -337,4 +337,4 @@ def init_demo(fixture='n'):
     print('\topenssl ocsp -CAfile %s -issuer %s -cert %s -url %s -resp_text' %
           (ca_crt, ca_crt, host1_pem, base_url))
     print(green('* Start webserver on %s (user: user, password: nopass) with:', base_url))
-    print('\tpython ca/manage.py runserver')
+    print('\tDJANGO_SETTINGS_MODULE=ca.demosettings python ca/manage.py runserver')
