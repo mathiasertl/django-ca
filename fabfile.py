@@ -179,13 +179,17 @@ def init_demo(fixture='n'):
     from django.conf import settings
     from django.contrib.auth import get_user_model
     from django.core.management import call_command as manage
-    from django.urls import reverse
     from django.utils.six.moves.urllib.parse import urljoin
     from django_ca import ca_settings
     from django_ca.models import Certificate
     from django_ca.models import CertificateAuthority
     from django_ca.models import Watcher
     User = get_user_model()
+
+    try:
+            from django.urls import reverse
+    except ImportError:  # Django 1.8 import
+        from django.core.urlresolvers import reverse
 
     if settings.DEBUG is not True:
         abort(red('Refusing to run if settings.DEBUG != True.'))
