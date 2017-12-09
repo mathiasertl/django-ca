@@ -31,6 +31,7 @@ from django_ca.utils import is_power2
 from django_ca.utils import multiline_url_validator
 from django_ca.utils import parse_general_name
 from django_ca.utils import parse_name
+from django_ca.utils import validate_email
 
 
 def load_tests(loader, tests, ignore):
@@ -192,6 +193,25 @@ class ParseNameTestCase(DjangoCATestCase):
         with self.assertRaisesRegex(ValueError, '^Unknown x509 name field: ABC$') as e:
             parse_name('/%s=example.com' % field)
         self.assertEqual(e.exception.args, ('Unknown x509 name field: %s' % field, ))
+
+
+class ValidateEmailTestCase(DjangoCATestCase):
+    def test_basic(self):
+        self.assertEqual(validate_email('user@example.com'), 'user@example.com')
+
+    def test_i18n(self):
+        self.assertEqual(validate_email('user@exämple.com'), 'user@xn--exmple-cua.com')
+
+    def test_invalid_domain(self):
+        with self.assertRaisesRegex(ValueError, '^Invalid domain: example.com$'):
+            validate_email('user@example com')
+
+    def test_no_at(self):
+        with self.assertRaisesRegex(ValueError, '^Invalid email address: user$'):
+            validate_email('user')
+
+        with self.assertRaisesRegex(ValueError, '^Invalid email address: example.com$'):
+            validate_email('example.com')
 
 
 class ParseGeneralNameTest(DjangoCATestCase):
