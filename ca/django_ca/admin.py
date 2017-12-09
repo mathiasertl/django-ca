@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import copy
 import json
 import os
 from datetime import datetime
@@ -40,11 +41,6 @@ from .models import CertificateAuthority
 from .models import Watcher
 from .utils import OID_NAME_MAPPINGS
 from .views import RevokeCertificateView
-
-_x509_ext_fields = [
-    'key_usage', 'extended_key_usage', 'subject_key_identifier', 'issuer_alt_name', 'basic_constraints',
-    'auth_key_identifier', 'crl_distribution_points', 'auth_info_access', 'tls_feature',
-]
 
 
 @admin.register(Watcher)
@@ -141,45 +137,62 @@ on Wikipedia.</p>'''.replace('\n', ' ')
 
         return mark_safe(html)
 
-    def basic_constraints(self, obj):
+    def basicConstraints(self, obj):
         return self.output_extension(obj.basicConstraints())
-    basic_constraints.short_description = 'basicConstraints'
+    basicConstraints.short_description = 'basicConstraints'
 
-    def auth_info_access(self, obj):
+    def authorityInfoAccess(self, obj):
         return self.output_extension(obj.authorityInfoAccess())
-    auth_info_access.short_description = 'authorityInfoAccess'
+    authorityInfoAccess.short_description = 'authorityInfoAccess'
 
-    def key_usage(self, obj):
+    def keyUsage(self, obj):
         return self.output_extension(obj.keyUsage())
-    key_usage.short_description = 'keyUsage'
+    keyUsage.short_description = 'keyUsage'
 
-    def extended_key_usage(self, obj):
+    def extendedKeyUsage(self, obj):
         return self.output_extension(obj.extendedKeyUsage())
-    extended_key_usage.short_description = 'extendedKeyUsage'
+    extendedKeyUsage.short_description = 'extendedKeyUsage'
 
-    def tls_feature(self, obj):
+    def tlsFeature(self, obj):
         return self.output_extension(obj.TLSFeature())
-    tls_feature.short_description = _('TLS Feature')
+    tlsFeature.short_description = _('TLS Feature')
 
-    def subject_key_identifier(self, obj):
+    def subjectKeyIdentifier(self, obj):
         return self.output_extension(obj.subjectKeyIdentifier())
-    subject_key_identifier.short_description = _('subjectKeyIdentifier')
+    subjectKeyIdentifier.short_description = _('subjectKeyIdentifier')
 
-    def issuer_alt_name(self, obj):
+    def issuerAltName(self, obj):
         return self.output_extension(obj.issuerAltName())
-    issuer_alt_name.short_description = _('issuerAltName')
+    issuerAltName.short_description = _('issuerAltName')
 
-    def auth_key_identifier(self, obj):
+    def authorityKeyIdentifier(self, obj):
         return self.output_extension(obj.authorityKeyIdentifier())
-    auth_key_identifier.short_description = _('authorityKeyIdentifier')
+    authorityKeyIdentifier.short_description = _('authorityKeyIdentifier')
 
-    def crl_distribution_points(self, obj):
+    def cRLDistributionPoints(self, obj):
         return self.output_extension(obj.crlDistributionPoints())
-    crl_distribution_points.short_description = _('CRL Distribution Points')
+    cRLDistributionPoints.short_description = _('CRL Distribution Points')
 
-    def subject_alt_name(self, obj):
+    def subjectAltName(self, obj):
         return self.output_extension(obj.subjectAltName())
-    subject_alt_name.short_description = _('subjectAltName')
+    subjectAltName.short_description = _('subjectAltName')
+
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super(CertificateMixin, self).get_fieldsets(request, obj=obj)
+
+        if obj is None:
+            return fieldsets
+
+        fieldsets = copy.deepcopy(fieldsets)
+        fieldsets[self.x509_fieldset_index][1]['fields'] += list(sorted(dict(obj.extensions()).keys()))
+        return fieldsets
+
+    def get_readonly_fields(self, request, obj=None):
+        fields = super(CertificateMixin, self).get_readonly_fields(request, obj=obj)
+        if obj is None:
+            return fields
+
+        return list(fields) + list(dict(obj.extensions()).keys())
 
     class Media:
         css = {
@@ -206,21 +219,14 @@ class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
             'classes': ('as-code', ),
         }),
         (_('X509 extensions'), {
-            'fields': [
-                'auth_info_access',
-                'auth_key_identifier',
-                'nameConstraints',
-                'subject_key_identifier',
-                'crl_distribution_points',
-            ],
+            'fields': [],  # dynamically added by add_fieldsets
         }),
     )
     list_display = ['enabled', 'name', 'serial', ]
     list_display_links = ['enabled', 'name', ]
     search_fields = ['cn', 'name', 'serial', ]
-    readonly_fields = ['serial', 'pub', 'parent', 'subject_key_identifier', 'issuerAltName',
-                       'auth_key_identifier', 'auth_info_access', 'cn', 'expires',
-                       'hpkp_pin', 'nameConstraints', 'crl_distribution_points']
+    readonly_fields = ['serial', 'pub', 'parent', 'cn', 'expires', 'hpkp_pin', ]
+    x509_fieldset_index = 3
 
     def has_add_permission(self, request):
         return False
@@ -262,16 +268,16 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
     list_filter = (StatusListFilter, 'ca')
     readonly_fields = [
         'expires', 'csr', 'pub', 'cn', 'serial', 'revoked', 'revoked_date', 'revoked_reason',
-        'subject_alt_name', 'distinguishedName', 'ca', 'hpkp_pin', ] + _x509_ext_fields
+        'distinguishedName', 'ca', 'hpkp_pin', ]
     search_fields = ['cn', 'serial', ]
 
     fieldsets = [
         (None, {
-            'fields': ['cn', 'subject_alt_name', 'distinguishedName', 'serial', 'ca', 'expires',
+            'fields': ['cn', 'subjectAltName', 'distinguishedName', 'serial', 'ca', 'expires',
                        'watchers', 'hpkp_pin'],
         }),
         (_('X509 Extensions'), {
-            'fields': _x509_ext_fields,
+            'fields': [],
             'classes': ('collapse', ),
         }),
         (_('Revocation'), {
@@ -293,6 +299,7 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
             'fields': ['keyUsage', 'extendedKeyUsage', 'tls_features', ]
         }),
     ]
+    x509_fieldset_index = 1
 
     def has_add_permission(self, request):
         # Only grant add permissions if there is at least one useable CA

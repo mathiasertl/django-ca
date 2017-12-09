@@ -17,6 +17,7 @@ HEAD
 * Make ``fab init_demo`` a lot more useful by signing certificates with the client CA and include CRL
   and OCSP links.
 * Run ``fab init_demo`` and documentation generation through Travis-CI.
+* Always display all extensions in the django admin interface.
 
 Bugfixes
 ========
