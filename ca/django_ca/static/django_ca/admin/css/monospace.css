@@ -13,9 +13,14 @@ You should have received a copy of the GNU General Public License along with dja
 see <http://www.gnu.org/licenses/>.
 */
 
-/* Viewing the CSR and PEM as code. */
+/* Viewing the CSR and PEM as code. 
+ *
+ * Django 2.0 uses div.readonly, Django<2.0 uses p's
+ */
 fieldset.as-code .field-csr p:not(.help),
 fieldset.as-code .field-pub p:not(.help),
+fieldset.as-code .field-csr div.readonly,
+fieldset.as-code .field-pub div.readonly,
 .shell
 {
     white-space: pre;
