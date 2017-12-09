@@ -20,6 +20,7 @@ script:
   - python setup.py test
   - python setup.py install
   - fab init_demo
+  - make -C docs html-check
 
 matrix:
     exclude:
