@@ -197,7 +197,7 @@ class X509CertMixin(models.Model):
                 output.append('OCSP - %s' % format_general_name(desc.access_location))
             elif desc.access_method == AuthorityInformationAccessOID.CA_ISSUERS:
                 output.append('CA Issuers - %s' % format_general_name(desc.access_location))
-            else:  # pramga: no cover - nothing else is known currently.
+            else:  # pragma: no cover - nothing else is known currently.
                 output.append('Unknown')
 
         return ext.critical, output
