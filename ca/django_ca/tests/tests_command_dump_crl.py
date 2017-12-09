@@ -128,6 +128,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
     def test_ca_crl(self):
         # create a child CA
         child = self.create_ca(name='Child', parent=self.ca)
+        self.assertNotRevoked(child)
 
         stdout, stderr = self.cmd('dump_crl', ca=self.ca, ca_crl=True,
                                   stdout=BytesIO(), stderr=BytesIO())
@@ -139,6 +140,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
 
         # revoke the CA and see if it's there
         child.revoke()
+        self.assertRevoked(child)
         stdout, stderr = self.cmd('dump_crl', ca=self.ca, ca_crl=True, stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
 
