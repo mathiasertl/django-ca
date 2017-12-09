@@ -14,6 +14,8 @@ HEAD
 * Massively update :doc:`documentation for the command-line interface </cli/intro>`.
 * CAs can now be identified using name or serial (previously: only by serial) in 
   :ref:`CA_OCSP_URLS <settings-ca-ocsp-urls>`.
+* Make the demo-setup a lot more useful by signing certificates with the client CA and include CRL
+  and OCSP links.
 
 Bugfixes
 ========
