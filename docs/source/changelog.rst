@@ -11,7 +11,7 @@ HEAD
 * Django 2.0 is now fully supported. This release still supports Django 1.8, 1.10 and 1.11.
 * Add support for the ``tlsFeature`` extension.
 * Do sanity checks on the "pathlen" attribute when creating Certificate Authorities.
-* Massively update documentation for the command-line interface.
+* Massively update :doc:`documentation for the command-line interface </cli/intro>`.
 * CAs can now be identified using name or serial (previously: only by serial) in :ref:`CA_OCSP_URLS
   <settings-ca-ocsp-urls>`.
 
