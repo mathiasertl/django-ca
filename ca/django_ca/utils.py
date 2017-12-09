@@ -66,6 +66,7 @@ SAN_NAME_MAPPINGS = {
     x509.OtherName: 'otherName',
 }
 
+#: Map OID objects to IDs used in subject strings
 OID_NAME_MAPPINGS = {
     NameOID.COUNTRY_NAME: 'C',
     NameOID.STATE_OR_PROVINCE_NAME: 'ST',
