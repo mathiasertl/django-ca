@@ -2,6 +2,7 @@
 x509 extensions
 ###############
 
+.. _extension-key-usage:
 
 ********
 keyUsage
@@ -40,6 +41,7 @@ keyEncipherment   ✗      ✓      ✓         ✓       ✓
 nonRepudiation    ✗      ✗      ✗         ✗       ✓
 ================= ====== ====== ========= ======= ====
 
+.. _extension-extended-key-usage:
 
 ****************
 extendedKeyUsage
@@ -72,6 +74,8 @@ emailProtection   ✗      ✗      ✗         ✗       ✗
 timeStamping      ✗      ✗      ✗         ✗       ✗
 OCSPSigning       ✗      ✗      ✗         ✗       ✓
 ================= ====== ====== ========= ======= ====
+
+.. _extension-tls-feature:
 
 **********
 tlsFeature

@@ -63,6 +63,8 @@ CA_NOTIFICATION_DAYS
    Days before expiry that certificate watchers will receive notifications. By default, watchers
    will receive notifications 14, seven, three and one days before expiry.
 
+.. _settings-ca-ocsp-urls:
+
 CA_OCSP_URLS
    Default: ``{}``
 
