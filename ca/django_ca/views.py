@@ -234,7 +234,7 @@ class OCSPView(View):
 
         # Get CA and certificate
         try:
-            ca = CertificateAuthority.objects.get_by_serial_or_cn(serial=self.ca)
+            ca = CertificateAuthority.objects.get_by_serial_or_cn(self.ca)
         except CertificateAuthority.DoesNotExist:
             log.error('%s: Certificate Authority could not be found.')
             return self.fail(u'internal_error')
