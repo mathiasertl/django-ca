@@ -188,7 +188,10 @@ on Wikipedia.</p>'''.replace('\n', ' ')
 
     def get_readonly_fields(self, request, obj=None):
         fields = super(CertificateMixin, self).get_readonly_fields(request, obj=obj)
-        if obj is None:
+
+        if obj is None:  # pragma: no cover
+            # This is never True because CertificateAdmin (the only case where objects are added) doesn't call
+            # the superclass in this case.
             return fields
 
         return list(fields) + list(dict(obj.extensions()).keys())
@@ -389,7 +392,7 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
         data = form.cleaned_data
 
         # If this is a new certificate, initialize it.
-        if change is False:  # # pragma: no branch
+        if change is False:
             san, cn_in_san = data['subjectAltName']
             expires = datetime.combine(data['expires'], datetime.min.time())
 
