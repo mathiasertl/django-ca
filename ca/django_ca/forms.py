@@ -35,7 +35,7 @@ from .widgets import ProfileWidget
 
 try:
     from django.urls import reverse
-except ImportError:  # Django 1.8 import
+except ImportError:  # pragma: only django<=1.8
     from django.core.urlresolvers import reverse
 
 

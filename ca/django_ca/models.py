@@ -399,11 +399,11 @@ class CertificateAuthority(X509CertMixin):
             return None
 
         value = []
-        if ext.value.permitted_subtrees:  # pragma: no branch
+        if ext.value.permitted_subtrees:
             for general_name in ext.value.permitted_subtrees:
                 value.append('Permitted: %s' % format_general_name(general_name))
 
-        if ext.value.excluded_subtrees:  # pragma: no branch
+        if ext.value.excluded_subtrees:
             for general_name in ext.value.excluded_subtrees:
                 value.append('Excluded: %s' % format_general_name(general_name))
 
