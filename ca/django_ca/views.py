@@ -27,7 +27,6 @@ from oscrypto.asymmetric import load_certificate
 from oscrypto.asymmetric import load_private_key
 
 from django.core.cache import cache
-from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.http import HttpResponseServerError
@@ -185,40 +184,20 @@ class OCSPView(View):
                             content_type='application/ocsp-response')
 
     def get_responder_key(self):
-        priv_err_msg = '%s: Could not read private key.' % self.responder_key
+        with open(self.responder_key, 'rb') as stream:
+            responder_key = stream.read()
 
-        try:
-            with open(self.responder_key, 'rb') as stream:
-                responder_key = stream.read()
-        except Exception:
-            raise ImproperlyConfigured(priv_err_msg)
-
-        try:
-            # try to load responder key and cert with oscrypto, to make sure they are actually usable
-            return load_private_key(responder_key)
-        except Exception:
-            raise ImproperlyConfigured(priv_err_msg)
+        # try to load responder key and cert with oscrypto, to make sure they are actually usable
+        return load_private_key(responder_key)
 
     def get_responder_cert(self):
-        pub_err_msg = '%s: Could not read public key.' % self.responder_cert
-
         if os.path.exists(self.responder_cert):
-            try:
-                with open(self.responder_cert, 'rb') as stream:
-                    responder_cert = stream.read()
-            except Exception:
-                raise ImproperlyConfigured(pub_err_msg)
-
+            with open(self.responder_cert, 'rb') as stream:
+                responder_cert = stream.read()
         else:
-            try:
-                responder_cert = Certificate.objects.get(serial=self.responder_cert)
-            except Certificate.DoesNotExist:
-                raise ImproperlyConfigured(pub_err_msg)
+            responder_cert = Certificate.objects.get(serial=self.responder_cert)
 
-        try:
-            return load_certificate(responder_cert)
-        except Exception:
-            raise ImproperlyConfigured(pub_err_msg)
+        return load_certificate(responder_cert)
 
     def get_ocsp_response(self, data):
         try:
