@@ -64,11 +64,18 @@ urlpatterns = [
         expires=1200,
     ), name='post'),
 
-    url(r'^ocsp/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
+    url(r'^ocsp/cert/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca=certs['root']['serial'],
         responder_key=settings.OCSP_KEY_PATH,
         responder_cert=settings.OCSP_PEM_PATH,
     ), name='get'),
+
+    url(r'^ocsp/ca/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
+        ca=certs['root']['serial'],
+        responder_key=settings.OCSP_KEY_PATH,
+        responder_cert=settings.OCSP_PEM_PATH,
+        ca_ocsp=True,
+    ), name='get-ca'),
 
     url(r'^ocsp-unknown/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca='unknown',
@@ -313,6 +320,14 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1200)
 
+    def test_ca_ocsp(self):
+        data = base64.b64encode(req1).decode('utf-8')
+        response = self.client.get(reverse('get-ca', kwargs={'data': data}))
+        self.assertEqual(response.status_code, 200)
+        ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
+        print(ocsp_response['response_status'].native)
+        #self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1200)
+
     def test_bad_ca(self):
         data = base64.b64encode(req1).decode('utf-8')
         response = self.client.get(reverse('unknown', kwargs={'data': data}))
@@ -347,6 +362,16 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 200)
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
         self.assertEqual(ocsp_response['response_status'].native, 'malformed_request')
+
+    def test_bad_ca_cert(self):
+        self.ca.pub = 'foobar'
+        self.ca.save()
+
+        data = base64.b64encode(req1).decode('utf-8')
+        response = self.client.get(reverse('get', kwargs={'data': data}))
+        self.assertEqual(response.status_code, 200)
+        ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
+        self.assertEqual(ocsp_response['response_status'].native, 'internal_error')
 
     def test_bad_responder_key(self):
         data = base64.b64encode(req1).decode('utf-8')
