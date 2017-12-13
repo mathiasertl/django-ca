@@ -326,7 +326,7 @@ def validate_email(addr):
 
     node, domain = addr.split('@', 1)
     try:
-        domain = idna.encode(domain)
+        domain = idna.encode(force_text(domain))
     except idna.core.IDNAError:
         raise ValueError('Invalid domain: %s' % domain)
 
