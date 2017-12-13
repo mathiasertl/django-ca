@@ -109,6 +109,30 @@ class InitCATest(DjangoCATestCase):
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
 
+    def test_permitted(self):
+        out, err = self.init_ca(
+            name='permitted',
+            name_constraint=['permitted;DNS:.com'],
+        )
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        ca = CertificateAuthority.objects.first()
+        ca.full_clean()  # assert e.g. max_length in serials
+        self.assertSignature([ca], ca)
+        self.assertEqual(ca.nameConstraints(), (True, ['Permitted: DNS:.com']))
+
+    def test_excluded(self):
+        out, err = self.init_ca(
+            name='excluded',
+            name_constraint=['excluded;DNS:.com'],
+        )
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        ca = CertificateAuthority.objects.first()
+        ca.full_clean()  # assert e.g. max_length in serials
+        self.assertSignature([ca], ca)
+        self.assertEqual(ca.nameConstraints(), (True, ['Excluded: DNS:.com']))
+
     @override_settings(USE_TZ=True)
     def test_arguements_with_use_tz(self):
         self.test_arguments()
