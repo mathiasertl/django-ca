@@ -324,8 +324,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         data = base64.b64encode(req1).decode('utf-8')
         response = self.client.get(reverse('get-ca', kwargs={'data': data}))
         self.assertEqual(response.status_code, 200)
-        ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
-        print(ocsp_response['response_status'].native)
+        asn1crypto.ocsp.OCSPResponse.load(response.content)
         #self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1200)
 
     def test_bad_ca(self):
