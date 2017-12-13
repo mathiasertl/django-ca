@@ -45,6 +45,9 @@ urlpatterns = [
             type=Encoding.PEM,
         ),
         name='advanced'),
+    url(r'^crl/ca/(?P<serial>[0-9A-F:]+)/$', CertificateRevocationListView.as_view(
+        ca_crl=True, type=Encoding.PEM
+    ), name='ca_crl'),
 ]
 
 
@@ -93,6 +96,37 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
     @override_settings(USE_TZ=True)
     def test_basic_with_use_tz(self):
         self.test_basic()
+
+    def test_ca_crl(self):
+        child = self.create_ca(name='child', parent=self.ca)
+
+        response = self.client.get(reverse('ca_crl', kwargs={'serial': self.ca.serial}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'text/plain')
+        crl = x509.load_pem_x509_crl(response.content, default_backend())
+        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
+        self.assertEqual(list(crl), [])
+
+        child.revoke()
+        child.save()
+
+        # fetch again - we should see a cached response
+        response = self.client.get(reverse('ca_crl', kwargs={'serial': self.ca.serial}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'text/plain')
+        crl = x509.load_pem_x509_crl(response.content, default_backend())
+        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
+        self.assertEqual(len(list(crl)), 0)
+
+        # clear the cache and fetch again
+        cache.clear()
+        response = self.client.get(reverse('ca_crl', kwargs={'serial': self.ca.serial}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'text/plain')
+        crl = x509.load_pem_x509_crl(response.content, default_backend())
+        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
+        self.assertEqual(len(list(crl)), 1)
+        self.assertEqual(crl[0].serial_number, child.x509.serial)
 
     def test_overwrite(self):
         response = self.client.get(reverse('advanced', kwargs={'serial': self.ca.serial}))

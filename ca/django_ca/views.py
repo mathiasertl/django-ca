@@ -30,6 +30,7 @@ from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
+from django.http import HttpResponseServerError
 from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
@@ -97,6 +98,9 @@ class CertificateRevocationListView(View, SingleObjectMixin):
                 content_type = 'application/pkix-crl'
             elif self.type == Encoding.PEM:
                 content_type = 'text/plain'
+            else:  # pragma: no cover
+                # DER/PEM are all known encoding types, so this shouldn't happen
+                return HttpResponseServerError()
 
         return HttpResponse(crl, content_type=content_type)
 
