@@ -318,6 +318,16 @@ class InitCATest(DjangoCATestCase):
         self.assertIsInstance(key, RSAPrivateKey)
         self.assertEqual(key.key_size, 1024)
 
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_root_ca_crl_url(self):
+        with self.assertRaisesRegex(CommandError, '^CRLs cannot be used to revoke root CAs\.$'):
+            self.init_ca(name='foobar', ca_crl_url='https://example.com')
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_root_ca_ocsp_url(self):
+        with self.assertRaisesRegex(CommandError, '^OCSP cannot be used to revoke root CAs\.$'):
+            self.init_ca(name='foobar', ca_ocsp_url='https://example.com')
+
     # Test that a false CA_DIGEST_ALGORITHM raises a CommandError
     @override_tmpcadir(CA_DIGEST_ALGORITHM='broken')
     def test_wrong_algorithm(self):
