@@ -175,7 +175,8 @@ class OCSPView(View):
         status = 200
         try:
             response = self.get_ocsp_response(data)
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
+            # all exceptions in the function should be covered.
             log.exception(e)
             response = self.fail(u'internal_error')
             status = 500
