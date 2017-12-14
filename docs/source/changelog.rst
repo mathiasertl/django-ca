@@ -24,6 +24,8 @@ HEAD
   and OCSP links.
 * Run ``fab init_demo`` and documentation generation through Travis-CI.
 * Always display all extensions in the django admin interface.
+* NameConstraints are now delimited using a ``,`` instead of a ``;``, for consistency with other
+  parameters and so no bash special character is used.
 
 Bugfixes
 ========

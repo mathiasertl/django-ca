@@ -95,7 +95,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         group.add_argument(
             '--name-constraint', default=[], action='append', metavar='CONSTRAINT',
             help='''Name constraints for the certificate, can be given multiple times, e.g.
-                "permitted;email:.example.com" or "excluded;DNS:.com".''')
+                "permitted,email:.example.com" or "excluded,DNS:.com".''')
 
         self.add_ca_args(parser)
 

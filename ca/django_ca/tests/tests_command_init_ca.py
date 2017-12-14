@@ -76,7 +76,7 @@ class InitCATest(DjangoCATestCase):
             crl_url=['http://crl.example.com'],
             ocsp_url='http://ocsp.example.com',
             ca_issuer_url='http://ca.issuer.ca.example.com',
-            name_constraint=['permitted;DNS:.com', 'excluded;DNS:.net'],
+            name_constraint=['permitted,DNS:.com', 'excluded,DNS:.net'],
         )
         self.assertEqual(out, '')
         self.assertEqual(err, '')
@@ -112,7 +112,7 @@ class InitCATest(DjangoCATestCase):
     def test_permitted(self):
         out, err = self.init_ca(
             name='permitted',
-            name_constraint=['permitted;DNS:.com'],
+            name_constraint=['permitted,DNS:.com'],
         )
         self.assertEqual(out, '')
         self.assertEqual(err, '')
@@ -124,7 +124,7 @@ class InitCATest(DjangoCATestCase):
     def test_excluded(self):
         out, err = self.init_ca(
             name='excluded',
-            name_constraint=['excluded;DNS:.com'],
+            name_constraint=['excluded,DNS:.com'],
         )
         self.assertEqual(out, '')
         self.assertEqual(err, '')

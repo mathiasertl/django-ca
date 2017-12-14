@@ -149,7 +149,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             excluded = []
             permitted = []
             for constraint in name_constraints:
-                typ, name = constraint.split(';', 1)
+                typ, name = constraint.split(',', 1)
                 parsed = parse_general_name(name)
                 if typ == 'permitted':
                     permitted.append(parsed)

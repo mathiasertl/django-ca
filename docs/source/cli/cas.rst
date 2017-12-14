@@ -146,12 +146,12 @@ a good explanation.
 
 To add name constraints to a CA, use the ``--name-constraint`` option, which can be given multiple times.
 Values are any valid name, see :ref:`names_on_cli` for detailed documentation.  Prefix the value with either
-``permitted;`` or ``excluded;`` to add them to the Permitted or Excluded subtree::
+``permitted,`` or ``excluded,`` to add them to the Permitted or Excluded subtree::
 
    python manage.py init_ca \
-      --name-constraint permitted;DNS:com
-      --name-constraint permitted;DNS:net
-      --name-constraint excluded;DNS:evil.com
+      --name-constraint permitted,DNS:com
+      --name-constraint permitted,DNS:net
+      --name-constraint excluded,DNS:evil.com
       ...
 
 This will restrict the CA to issuing certificates for .com and .net subdomains, except for evil.com, which
