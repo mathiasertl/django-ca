@@ -291,6 +291,18 @@ class Power2TestCase(TestCase):
             self.assertFalse(is_power2((2 ** i) + 1))
 
 
+class AddColonsTestCase(TestCase):
+    def test_basic(self):
+        self.assertEqual(utils.add_colons(''), '')
+        self.assertEqual(utils.add_colons('a'), 'a')
+        self.assertEqual(utils.add_colons('ab'), 'ab')
+        self.assertEqual(utils.add_colons('abc'), 'ab:c')
+        self.assertEqual(utils.add_colons('abcd'), 'ab:cd')
+        self.assertEqual(utils.add_colons('abcde'), 'ab:cd:e')
+        self.assertEqual(utils.add_colons('abcdef'), 'ab:cd:ef')
+        self.assertEqual(utils.add_colons('abcdefg'), 'ab:cd:ef:g')
+
+
 class MultilineURLValidatorTestCase(TestCase):
     def test_basic(self):
         multiline_url_validator('')

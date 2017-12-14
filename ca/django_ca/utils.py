@@ -211,14 +211,14 @@ def add_colons(s):
     >>> add_colons('teststring')
     'te:st:st:ri:ng'
     """
-    return ':'.join(a + b for a, b in zip(s[::2], s[1::2]))
+    return ':'.join([s[i:i + 2] for i in range(0, len(s), 2)])
 
 
 def int_to_hex(i):
     """Create a hex-representation of the given serial.
 
-    >>> int_to_hex(123456789)
-    '75:BC:D1'
+    >>> int_to_hex(12345678)
+    'BC:61:4E'
     """
     s = hex(i)[2:].upper()
     return add_colons(s)
