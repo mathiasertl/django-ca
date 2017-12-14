@@ -4,9 +4,11 @@ ChangeLog
 
 .. _changelog-head:
 
-****
-HEAD
-****
+.. _changelog-1.7.0:
+
+******************
+1.7.0 (2017-12-14)
+******************
 
 * Django 2.0 is now fully supported. This release still supports Django 1.8, 1.10 and 1.11.
 * Add support for the :ref:`tlsFeature <extension-tls-feature>` extension.
@@ -39,6 +41,8 @@ Bugfixes
   (DER or PEM) used.
 * If a wrong CA is specified in :ref:`CA_OCSP_URLS <settings-ca-ocsp-urls>`, an OCSP internal error
   is returned instead of an uncought exception.
+* Fix some edge cases for serial conversion in Python2. Some serials where converted with an "L"
+  prefix in Python 2, because ``hex(0L)`` returns ``"0x0L"``.
 
 .. _changelog-1.6.3:
 
