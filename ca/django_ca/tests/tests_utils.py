@@ -5,6 +5,7 @@
 import doctest
 import ipaddress
 import json
+import unittest
 from datetime import datetime
 from datetime import timedelta
 
@@ -35,7 +36,7 @@ from django_ca.utils import validate_email
 
 
 def load_tests(loader, tests, ignore):
-    if six.PY3:
+    if six.PY3:  # pragma: only py3
         # unicode strings make this very hard to test doctests in both py2 and py3
         tests.addTests(doctest.DocTestSuite(utils))
     return tests
@@ -374,10 +375,11 @@ class IntToHexTestCase(TestCase):
         self.assertEqual(utils.int_to_hex(1513282112), '5A:32:DA:40')
         self.assertEqual(utils.int_to_hex(1513282113), '5A:32:DA:41')
 
+    @unittest.skipUnless(six.PY2, 'long is only defined in py2')
     def test_long(self):
-        self.assertEqual(utils.int_to_hex(0L), '0')
-        self.assertEqual(utils.int_to_hex(43L), '2B')
-        self.assertEqual(utils.int_to_hex(1513282104L), '5A:32:DA:38')
+        self.assertEqual(utils.int_to_hex(long(0)), '0')  # NOQA
+        self.assertEqual(utils.int_to_hex(long(43)), '2B')  # NOQA
+        self.assertEqual(utils.int_to_hex(long(1513282104)), '5A:32:DA:38')  # NOQA
 
 
 class MultilineURLValidatorTestCase(TestCase):
