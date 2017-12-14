@@ -374,6 +374,11 @@ class IntToHexTestCase(TestCase):
         self.assertEqual(utils.int_to_hex(1513282112), '5A:32:DA:40')
         self.assertEqual(utils.int_to_hex(1513282113), '5A:32:DA:41')
 
+    def test_long(self):
+        self.assertEqual(utils.int_to_hex(0L), '0')
+        self.assertEqual(utils.int_to_hex(43L), '2B')
+        self.assertEqual(utils.int_to_hex(1513282104L), '5A:32:DA:38')
+
 
 class MultilineURLValidatorTestCase(TestCase):
     def test_basic(self):

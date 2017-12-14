@@ -44,6 +44,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(err, '')
 
         ca = CertificateAuthority.objects.first()
+        self.assertSerial(ca.serial)
         self.assertSignature([ca], ca)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertBasic(ca.x509, algo='sha512')
@@ -81,6 +82,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(out, '')
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
+        self.assertSerial(ca.serial)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
 
@@ -117,6 +119,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(out, '')
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
+        self.assertSerial(ca.serial)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
         self.assertEqual(ca.nameConstraints(), (True, ['Permitted: DNS:.com']))
@@ -129,6 +132,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(out, '')
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
+        self.assertSerial(ca.serial)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
         self.assertEqual(ca.nameConstraints(), (True, ['Excluded: DNS:.com']))
@@ -143,6 +147,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(out, '')
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
+        self.assertSerial(ca.serial)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
         self.assertEqual(ca.max_pathlen, None)

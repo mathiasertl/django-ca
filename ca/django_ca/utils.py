@@ -221,6 +221,10 @@ def int_to_hex(i):
     'BC:61:4E'
     """
     s = hex(i)[2:].upper()
+    if six.PY2 is True and isinstance(i, long):  # pragma: only py2  # NOQA
+        # Strip the "L" suffix, since hex(1L) -> 0x1L.
+        # NOTE: Do not convert to int earlier. int(<very-large-long>) is still long
+        s = s[:-1]
     return add_colons(s)
 
 

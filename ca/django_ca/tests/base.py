@@ -6,6 +6,7 @@ Replace this with more appropriate tests for your application.
 """
 
 import os
+import re
 import shutil
 import tempfile
 from datetime import datetime
@@ -251,6 +252,9 @@ class DjangoCATestCase(TestCase):
         self.assertEqual(cert.version, x509.Version.v3)
         self.assertIsInstance(cert.public_key(), rsa.RSAPublicKey)
         self.assertIsInstance(cert.signature_hash_algorithm, getattr(hashes, algo.upper()))
+
+    def assertSerial(self, serial):
+        self.assertIsNotNone(re.match('^[0-9A-F:]*$', serial), serial)
 
     def assertSubject(self, cert, expected):
         actual = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in cert.subject]
