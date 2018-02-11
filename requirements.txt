@@ -1,7 +1,7 @@
 Django>=1.8,<2.0 ; python_version < '3'
 Django>=1.8 ; python_version >= '3'
-asn1crypto==0.23.0
+asn1crypto==0.24.0
 cryptography>=2.1
 ocspbuilder==0.10.2
-oscrypto==0.18.0
+oscrypto==0.19.1
 ipaddress==1.0.18 ; python_version < '3'
