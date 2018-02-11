@@ -205,6 +205,11 @@ setup(
     package_data={'': package_data},
     zip_safe=False,  # because of the static files
     install_requires=install_requires,
+    extras_require={
+        'docs': [
+            'numpydoc',
+        ],
+    },
     cmdclass={
         'coverage': CoverageCommand,
         'test': TestCommand,
