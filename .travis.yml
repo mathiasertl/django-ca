@@ -12,6 +12,7 @@ env:
   - DJANGO_VERSION=1.8.18
 install:
   # Build/test dependencies
+ - pip install -U pip setuptools
  - pip install -r requirements.txt -r requirements-dev.txt
  - pip install Django==$DJANGO_VERSION
 #before_script:
@@ -25,7 +26,7 @@ script:
 matrix:
     exclude:
         # Django 2.0 no longer supports python2
-        - env: DJANGO_VERSION=2.0
+        - env: DJANGO_VERSION=2.0.2
           python: "2.7"
 
 #notifications:
