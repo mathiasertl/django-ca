@@ -13,7 +13,6 @@ from datetime import datetime
 from datetime import timedelta
 
 import six
-from mock import patch
 from OpenSSL.crypto import FILETYPE_PEM
 from OpenSSL.crypto import X509Store
 from OpenSSL.crypto import X509StoreContext
@@ -41,6 +40,11 @@ from ..utils import OID_NAME_MAPPINGS
 from ..utils import get_cert_profile_kwargs
 from ..utils import sort_subject_dict
 from ..utils import x509_name
+
+if six.PY2:
+    from mock import patch
+else:
+    from unittest.mock import patch
 
 
 def _load_key(path):
