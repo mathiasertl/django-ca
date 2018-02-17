@@ -17,11 +17,9 @@ import base64
 import binascii
 import hashlib
 import re
-import sys
 from collections import OrderedDict
 
 import pytz
-import six
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -363,12 +361,7 @@ class CertificateAuthority(X509CertMixin):
             with open(self.private_key_path, 'rb') as f:
                 key_data = f.read()
 
-            try:
-                self._key = load_pem_private_key(key_data, password, default_backend())
-            except Exception:
-                print('key path: %s', self.private_key_path)
-                print(key_data)
-                six.reraise(*sys.exc_info())
+            self._key = load_pem_private_key(key_data, password, default_backend())
         return self._key
 
     @property
