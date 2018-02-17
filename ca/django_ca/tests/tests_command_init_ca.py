@@ -44,6 +44,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(err, '')
 
         ca = CertificateAuthority.objects.first()
+        self.assertPrivateKey(ca)
         self.assertSerial(ca.serial)
         self.assertSignature([ca], ca)
         ca.full_clean()  # assert e.g. max_length in serials
@@ -82,6 +83,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(out, '')
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
+        self.assertPrivateKey(ca)
         self.assertSerial(ca.serial)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
@@ -122,6 +124,7 @@ class InitCATest(DjangoCATestCase):
         ca = CertificateAuthority.objects.first()
         self.assertSerial(ca.serial)
         ca.full_clean()  # assert e.g. max_length in serials
+        self.assertPrivateKey(ca)
         self.assertSignature([ca], ca)
         self.assertEqual(ca.nameConstraints(), (True, ['Permitted: DNS:.com']))
 
@@ -134,6 +137,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(out, '')
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
+        self.assertPrivateKey(ca)
         self.assertSerial(ca.serial)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
@@ -151,6 +155,7 @@ class InitCATest(DjangoCATestCase):
         ca = CertificateAuthority.objects.first()
         self.assertSerial(ca.serial)
         ca.full_clean()  # assert e.g. max_length in serials
+        self.assertPrivateKey(ca)
         self.assertSignature([ca], ca)
         self.assertEqual(ca.max_pathlen, None)
         self.assertEqual(ca.pathlen, None)
@@ -180,6 +185,7 @@ class InitCATest(DjangoCATestCase):
         ca = CertificateAuthority.objects.first()
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
+        self.assertPrivateKey(ca)
         self.assertSubject(ca.x509, {'OU': 'smth', 'CN': 'test'})
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
@@ -189,6 +195,7 @@ class InitCATest(DjangoCATestCase):
         self.init_ca(name='Parent', pathlen=1)
         parent = CertificateAuthority.objects.get(name='Parent')
         parent.full_clean()  # assert e.g. max_length in serials
+        self.assertPrivateKey(parent)
         self.assertSignature([parent], parent)
 
         # test that the default is not a child-relationship
@@ -206,6 +213,7 @@ class InitCATest(DjangoCATestCase):
         child = CertificateAuthority.objects.get(name='Child')
         child.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([parent], child)
+        self.assertPrivateKey(child)
 
         self.assertIsNone(parent.parent)
         self.assertEqual(child.parent, parent)
@@ -222,6 +230,7 @@ class InitCATest(DjangoCATestCase):
     def test_intermediate_check(self):
         self.init_ca(name='default')
         parent = CertificateAuthority.objects.get(name='default')
+        self.assertPrivateKey(parent)
         parent.full_clean()  # assert e.g. max_length in serials
         self.assertEqual(parent.pathlen, 0)
         self.assertEqual(parent.max_pathlen, 0)
@@ -230,6 +239,7 @@ class InitCATest(DjangoCATestCase):
         self.init_ca(name='pathlen-1', pathlen=1)
         pathlen_1 = CertificateAuthority.objects.get(name='pathlen-1')
         pathlen_1.full_clean()  # assert e.g. max_length in serials
+        self.assertPrivateKey(pathlen_1)
         self.assertEqual(pathlen_1.pathlen, 1)
         self.assertEqual(pathlen_1.max_pathlen, 1)
         self.assertTrue(pathlen_1.allows_intermediate_ca)
@@ -237,6 +247,7 @@ class InitCATest(DjangoCATestCase):
         self.init_ca(name='pathlen-1-none', pathlen=None, parent=pathlen_1)
         pathlen_1_none = CertificateAuthority.objects.get(name='pathlen-1-none')
         pathlen_1_none.full_clean()  # assert e.g. max_length in serials
+        self.assertPrivateKey(pathlen_1_none)
 
         # pathlen_1_none cannot have an intermediate CA because parent has pathlen=1
         self.assertIsNone(pathlen_1_none.pathlen)
@@ -249,6 +260,7 @@ class InitCATest(DjangoCATestCase):
         self.init_ca(name='pathlen-1-three', pathlen=3, parent=pathlen_1)
         pathlen_1_three = CertificateAuthority.objects.get(name='pathlen-1-three')
         pathlen_1_three.full_clean()  # assert e.g. max_length in serials
+        self.assertPrivateKey(pathlen_1_three)
 
         # pathlen_1_none cannot have an intermediate CA because parent has pathlen=1
         self.assertEqual(pathlen_1_three.pathlen, 3)
@@ -261,6 +273,7 @@ class InitCATest(DjangoCATestCase):
         self.init_ca(name='pathlen-none', pathlen=None)
         pathlen_none = CertificateAuthority.objects.get(name='pathlen-none')
         pathlen_none.full_clean()  # assert e.g. max_length in serials
+        self.assertPrivateKey(pathlen_none)
         self.assertIsNone(pathlen_none.pathlen)
         self.assertIsNone(pathlen_none.max_pathlen, None)
         self.assertTrue(pathlen_none.allows_intermediate_ca)
@@ -285,6 +298,7 @@ class InitCATest(DjangoCATestCase):
         self.init_ca(name='Parent', pathlen=1)
         parent = CertificateAuthority.objects.get(name='Parent')
         parent.full_clean()  # assert e.g. max_length in serials
+        self.assertPrivateKey(parent)
         self.assertSignature([parent], parent)
 
         # test that the default is not a child-relationship
@@ -313,6 +327,7 @@ class InitCATest(DjangoCATestCase):
         self.init_ca(name='Parent', password=password, pathlen=1)
         parent = CertificateAuthority.objects.get(name='Parent')
         parent.full_clean()  # assert e.g. max_length in serials
+        self.assertPrivateKey(parent, password=password)
         self.assertSignature([parent], parent)
 
         # Assert that we cannot access this without a password
@@ -321,7 +336,7 @@ class InitCATest(DjangoCATestCase):
             parent.key(None)
 
         # Wrong password doesn't work either
-        with self.assertRaisesRegex(ValueError, '^Bad decrypt. Incorrect password?'):
+        with self.assertRaisesRegex(ValueError, self.re_false_password):
             parent.key(b'wrong')
 
         # test the private key

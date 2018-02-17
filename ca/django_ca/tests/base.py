@@ -217,6 +217,8 @@ class override_tmpcadir(override_settings):
 class DjangoCATestCase(TestCase):
     """Base class for all testcases with some enhancements."""
 
+    re_false_password = '^(Bad decrypt\. Incorrect password\?|Could not deserialize key data\.)$'
+
     @classmethod
     def setUpClass(cls):
         super(DjangoCATestCase, cls).setUpClass()
@@ -302,6 +304,14 @@ class DjangoCATestCase(TestCase):
 
         self.assertFalse(cert.revoked)
         self.assertIsNone(cert.revoked_reason)
+
+    def assertPrivateKey(self, ca, password=None):
+        with open(ca.private_key_path, 'rb') as f:
+            key_data = f.read()
+
+        key = serialization.load_pem_private_key(key_data, password, default_backend())
+        self.assertIsNotNone(key)
+        self.assertTrue(key.key_size > 0)
 
     def get_cert_context(self, name):
         # Get a dictionary suitable for testing output based on the dictionary in basic.certs

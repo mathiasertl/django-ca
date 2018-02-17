@@ -241,7 +241,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         # Pass the wrong password
         stdin = six.StringIO(self.csr_pem)
         ca = CertificateAuthority.objects.get(pk=ca.pk)
-        with self.assertRaisesRegex(CommandError, '^Bad decrypt\. Incorrect password\?$'):
+        with self.assertRaisesRegex(CommandError, self.re_false_password):
             self.cmd('sign_cert', ca=ca, alt=['example.com'], stdin=stdin, password=b'wrong')
 
     def test_der_csr(self):
