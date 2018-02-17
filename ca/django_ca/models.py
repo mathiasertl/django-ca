@@ -18,6 +18,8 @@ import binascii
 import hashlib
 import re
 from collections import OrderedDict
+from datetime import datetime
+from datetime import timedelta
 
 import pytz
 
@@ -38,6 +40,7 @@ from django.utils.encoding import force_bytes
 from django.utils.encoding import force_str
 from django.utils.translation import ugettext_lazy as _
 
+from .import ca_settings
 from .managers import CertificateAuthorityManager
 from .managers import CertificateManager
 from .querysets import CertificateAuthorityQuerySet
@@ -428,6 +431,36 @@ class Certificate(X509CertMixin):
     ca = models.ForeignKey(CertificateAuthority, on_delete=models.CASCADE,
                            verbose_name=_('Certificate Authority'))
     csr = models.TextField(verbose_name=_('CSR'), blank=True)
+
+    def resign(self, **kwargs):
+        kwargs.setdefault('algorithm', getattr(hashes, ca_settings.CA_DIGEST_ALGORITHM.upper())())
+        kwargs.setdefault('subject', self.subject)
+        kwargs.setdefault('cn_in_san', False)  # this should already be the case
+        kwargs.setdefault('subjectAltName', self.subjectAltName()[1])
+
+        now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        expires = now + timedelta(days=ca_settings.CA_DEFAULT_EXPIRES)
+        kwargs.setdefault('expires', expires)
+
+        try:
+            ext_key_usage = self.x509.extensions.get_extension_for_oid(ExtensionOID.EXTENDED_KEY_USAGE)
+            kwargs.setdefault('extendedKeyUsage', (ext_key_usage.critical, ext_key_usage.value))
+        except x509.ExtensionNotFound:
+            pass
+
+        try:
+            key_usage = self.x509.extensions.get_extension_for_oid(ExtensionOID.KEY_USAGE)
+            kwargs.setdefault('keyUsage', (key_usage.critical, key_usage.value))
+        except x509.ExtensionNotFound:
+            pass
+
+        try:
+            tls_features = self.x509.extensions.get_extension_for_oid(ExtensionOID.TLS_FEATURE)
+            kwargs.setdefault('tls_features', (tls_features.critical, tls_features.value))
+        except x509.ExtensionNotFound:
+            pass
+
+        return Certificate.objects.init(self.ca, self.csr, **kwargs)
 
     def __str__(self):
         return self.cn
