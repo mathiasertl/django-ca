@@ -336,7 +336,15 @@ class DjangoCATestCase(TestCase):
         kwargs.setdefault('parent', None)
         kwargs.setdefault('subject', '/CN=generated.example.com')
 
-        return CertificateAuthority.objects.init(name=name, **kwargs)
+        ca = CertificateAuthority.objects.init(name=name, **kwargs)
+
+        # load the CA, because we see some rare cases of generated CAs not being readable, see:
+        #       https://travis-ci.org/mathiasertl/django-ca/jobs/342085991
+        password = kwargs.get('password')
+        # Passing cls to an instance method is a little hacky, but it should never fail anyway!
+        cls.assertIsNotNone(cls, ca.key(password=password))
+
+        return ca
 
     @classmethod
     def load_ca(cls, name, x509, enabled=True, parent=None, **kwargs):
