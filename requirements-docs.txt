@@ -3,7 +3,7 @@ asn1crypto==0.24.0
 cryptography>=2.1
 ocspbuilder==0.10.2
 oscrypto==0.19.1
-Sphinx==1.6.7
+Sphinx==1.7.0
 coverage==4.5.1
 numpydoc==0.7.0
 six==1.11.0
