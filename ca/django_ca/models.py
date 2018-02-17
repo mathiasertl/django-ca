@@ -359,7 +359,9 @@ class CertificateAuthority(X509CertMixin):
     def key(self, password):
         if self._key is None:
             with open(self.private_key_path, 'rb') as f:
-                self._key = load_pem_private_key(f.read(), password, default_backend())
+                key_data = f.read()
+
+            self._key = load_pem_private_key(key_data, password, default_backend())
         return self._key
 
     @property
