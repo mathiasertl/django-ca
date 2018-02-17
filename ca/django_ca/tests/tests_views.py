@@ -99,6 +99,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
 
     def test_ca_crl(self):
         child = self.create_ca(name='child', parent=self.ca)
+        self.assertIsNotNone(child.key(password=None))
 
         response = self.client.get(reverse('ca_crl', kwargs={'serial': self.ca.serial}))
         self.assertEqual(response.status_code, 200)

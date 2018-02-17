@@ -68,6 +68,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
     def test_password(self):
         password = b'testpassword'
         ca = self.create_ca('with password', password=password)
+        self.assertIsNotNone(ca.key(password=password))
         ca = CertificateAuthority.objects.get(pk=ca.pk)
 
         # Giving no password raises a CommandError
@@ -91,6 +92,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
 
     def test_disabled(self):
         ca = self.create_ca('disabled')
+        self.assertIsNotNone(ca.key(password=None))
         ca.enabled = False
         ca.save()
 
@@ -128,6 +130,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
     def test_ca_crl(self):
         # create a child CA
         child = self.create_ca(name='Child', parent=self.ca)
+        self.assertIsNotNone(child.key(password=None))
         self.assertNotRevoked(child)
 
         stdout, stderr = self.cmd('dump_crl', ca=self.ca, ca_crl=True,

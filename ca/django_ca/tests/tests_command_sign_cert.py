@@ -224,6 +224,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
     def test_with_password(self):
         password = b'testpassword'
         ca = self.create_ca('with password', password=password)
+        self.assertIsNotNone(ca.key(password=password))
 
         ca = CertificateAuthority.objects.get(pk=ca.pk)
 
