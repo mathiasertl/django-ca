@@ -111,6 +111,7 @@ class InitCATest(DjangoCATestCase):
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
 
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_permitted(self):
         out, err = self.init_ca(
             name='permitted',
@@ -124,6 +125,7 @@ class InitCATest(DjangoCATestCase):
         self.assertSignature([ca], ca)
         self.assertEqual(ca.nameConstraints(), (True, ['Permitted: DNS:.com']))
 
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_excluded(self):
         out, err = self.init_ca(
             name='excluded',
