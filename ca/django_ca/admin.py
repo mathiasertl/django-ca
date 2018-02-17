@@ -396,6 +396,7 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
             san, cn_in_san = data['subjectAltName']
             expires = datetime.combine(data['expires'], datetime.min.time())
 
+            # Note: CSR is set by model form already
             obj.x509, req = self.model.objects.sign_cert(
                 ca=data['ca'],
                 csr=data['csr'],
