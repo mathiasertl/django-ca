@@ -10,6 +10,9 @@ env:
   - DJANGO_VERSION=1.11.10
   - DJANGO_VERSION=1.10.8
   - DJANGO_VERSION=1.8.18
+before_install:
+ - sudo apt-get -qq update
+ - sudo apt-get install -y python-pip libpython-dev
 install:
   # Build/test dependencies
  - pip install -U pip setuptools
