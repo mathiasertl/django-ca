@@ -99,7 +99,7 @@ class CreateCertificateForm(forms.ModelForm):
         help_text=_('Select a suitable profile or manually select X509 extensions below.'),
         initial=ca_settings.CA_DEFAULT_PROFILE, choices=_profile_choices)
     algorithm = forms.ChoiceField(
-        label=_('Signature algorithm'), initial=ca_settings.CA_DIGEST_ALGORITHM, choices=[
+        label=_('Signature algorithm'), initial=ca_settings.CA_DIGEST_ALGORITHM.name, choices=[
             ('SHA512', 'SHA-512'),
             ('SHA256', 'SHA-256'),
             ('SHA1', 'SHA-1 (insecure!)'),

@@ -15,7 +15,10 @@
 
 import os
 
+from cryptography.hazmat.primitives import hashes
+
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import ugettext_lazy as _
 
 CA_DIR = getattr(settings, 'CA_DIR', os.path.join(settings.BASE_DIR, 'files'))
@@ -134,9 +137,14 @@ for name, profile in _CA_PROFILE_OVERRIDES.items():
 
 CA_DEFAULT_EXPIRES = getattr(settings, 'CA_DEFAULT_EXPIRES', 730)
 CA_DEFAULT_PROFILE = getattr(settings, 'CA_DEFAULT_PROFILE', 'webserver')
-CA_DIGEST_ALGORITHM = getattr(settings, 'CA_DIGEST_ALGORITHM', "sha512")
 CA_NOTIFICATION_DAYS = getattr(settings, 'CA_NOTIFICATION_DAYS', [14, 7, 3, 1, ])
 
 # Undocumented options, e.g. to share values between different parts of code
 CA_MIN_KEY_SIZE = getattr(settings, 'CA_MIN_KEY_SIZE', 2048)
 CA_PROVIDE_GENERIC_CRL = getattr(settings, 'CA_PROVIDE_GENERIC_CRL', True)
+
+CA_DIGEST_ALGORITHM = getattr(settings, 'CA_DIGEST_ALGORITHM', "sha512").strip().upper()
+try:
+    CA_DIGEST_ALGORITHM = getattr(hashes, CA_DIGEST_ALGORITHM)()
+except AttributeError:
+    raise ImproperlyConfigured('Unkown CA_DIGEST_ALGORITHM: %s' % settings.CA_DIGEST_ALGORITHM)

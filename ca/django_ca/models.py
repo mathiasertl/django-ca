@@ -433,7 +433,7 @@ class Certificate(X509CertMixin):
     csr = models.TextField(verbose_name=_('CSR'), blank=True)
 
     def resign(self, **kwargs):
-        kwargs.setdefault('algorithm', getattr(hashes, ca_settings.CA_DIGEST_ALGORITHM.upper())())
+        kwargs.setdefault('algorithm', ca_settings.CA_DIGEST_ALGORITHM)
         kwargs.setdefault('subject', self.subject)
         kwargs.setdefault('cn_in_san', False)  # this should already be the case
         kwargs.setdefault('subjectAltName', self.subjectAltName()[1])
