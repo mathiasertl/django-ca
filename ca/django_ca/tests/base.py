@@ -192,7 +192,16 @@ class override_settings(_override_settings):
 
     def enable(self):
         super(override_settings, self).enable()
-        reload_module(ca_settings)
+
+        try:
+            reload_module(ca_settings)
+        except Exception:
+            # If an exception is thrown reloading ca_settings, we disable everything again.
+            # Otherwise an exception in ca_settings will cause overwritten settings to persist
+            # to the next tests.
+            super(override_settings, self).disable()
+            reload_module(ca_settings)
+            raise
 
     def disable(self):
         super(override_settings, self).disable()
