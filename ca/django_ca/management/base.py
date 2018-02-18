@@ -66,10 +66,8 @@ class FormatAction(argparse.Action):
 
 class AlgorithmAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
-        value = value.strip().upper()
-
         try:
-            value = getattr(hashes, value)()
+            value = getattr(hashes, value.upper().strip())()
         except AttributeError:
             parser.error('Unknown hash algorithm: %s' % value)
 
