@@ -93,7 +93,7 @@ class FormatActionTestCase(DjangoCATestCase):
     def test_error(self):
         self.assertParserError(['--action=foo'],
                                'usage: setup.py [-h] [--action ACTION]\n'
-                               'setup.py: error: Unknown format "FOO".\n')
+                               'setup.py: error: Unknown format "foo".\n')
 
 
 class AlgorithmActionTestCase(DjangoCATestCase):
