@@ -40,7 +40,7 @@ from django.utils.encoding import force_bytes
 from django.utils.encoding import force_str
 from django.utils.translation import ugettext_lazy as _
 
-from .import ca_settings
+from . import ca_settings
 from .managers import CertificateAuthorityManager
 from .managers import CertificateManager
 from .querysets import CertificateAuthorityQuerySet
