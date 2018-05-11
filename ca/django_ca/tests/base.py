@@ -323,7 +323,7 @@ class DjangoCATestCase(TestCase):
         self.assertIsNotNone(key)
         self.assertTrue(key.key_size > 0)
 
-    def call_command(self, command, *argv):
+    def call_command(self, command, *argv, **kwargs):
         argv = ['manage.py'] + list(argv)
         utility = ManagementUtility(argv)
         command = utility.fetch_command(command)
