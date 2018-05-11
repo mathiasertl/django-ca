@@ -374,11 +374,9 @@ class InitCATest(DjangoCATestCase):
         with self.assertRaisesRegex(CommandError, '^OCSP cannot be used to revoke root CAs\.$'):
             self.init_ca(name='foobar', ca_ocsp_url='https://example.com')
 
-    # Test that a false CA_DIGEST_ALGORITHM raises a CommandError
-    @override_tmpcadir(CA_DIGEST_ALGORITHM='broken')
     def test_wrong_algorithm(self):
         with self.assertRaisesRegex(CommandError, '^Error: Unknown hash algorithm: broken$'):
-            self.init_ca(name='foobar')
+            out, err = self.call_command('init_ca', '--algorithm=broken', 'wrong_algo', 'subject')
 
     @override_tmpcadir()
     def test_small_key_size(self):

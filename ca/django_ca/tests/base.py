@@ -26,6 +26,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.conf import settings
+from django.core.management import ManagementUtility
 from django.core.management import call_command
 from django.test import TestCase
 from django.test.utils import override_settings as _override_settings
@@ -321,6 +322,22 @@ class DjangoCATestCase(TestCase):
         key = serialization.load_pem_private_key(key_data, password, default_backend())
         self.assertIsNotNone(key)
         self.assertTrue(key.key_size > 0)
+
+    def call_command(self, command, *argv):
+        argv = ['manage.py'] + list(argv)
+        utility = ManagementUtility(argv)
+        command = utility.fetch_command(command)
+        parser = command.create_parser('manage.py', command)
+        options = parser.parse_args(argv[1:])
+        cmd_options = vars(options)
+
+        cmd_options.setdefault('stdout', StringIO())
+        cmd_options.setdefault('stderr', StringIO())
+
+        stdin = kwargs.pop('stdin', StringIO())
+        with patch('sys.stdin', stdin):
+            command.execute(**cmd_options)
+        return cmd_options['stdout'].getvalue(), cmd_options['stderr'].getvalue()
 
     def get_cert_context(self, name):
         # Get a dictionary suitable for testing output based on the dictionary in basic.certs
