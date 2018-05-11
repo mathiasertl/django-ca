@@ -112,7 +112,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         crl = x509.load_pem_x509_crl(stdout, default_backend())
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
         self.assertEqual(len(list(crl)), 1)
-        self.assertEqual(crl[0].serial_number, cert.x509.serial)
+        self.assertEqual(crl[0].serial_number, cert.x509.serial_number)
         self.assertEqual(len(crl[0].extensions), 0)
 
         # try all possible reasons
@@ -124,7 +124,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
             crl = x509.load_pem_x509_crl(stdout, default_backend())
             self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
             self.assertEqual(len(list(crl)), 1)
-            self.assertEqual(crl[0].serial_number, cert.x509.serial)
+            self.assertEqual(crl[0].serial_number, cert.x509.serial_number)
             self.assertEqual(crl[0].extensions[0].value.reason.name, reason)
 
     def test_ca_crl(self):
@@ -150,7 +150,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         crl = x509.load_pem_x509_crl(stdout, default_backend())
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
         self.assertEqual(len(list(crl)), 1)
-        self.assertEqual(crl[0].serial_number, child.x509.serial)
+        self.assertEqual(crl[0].serial_number, child.x509.serial_number)
         self.assertEqual(len(crl[0].extensions), 0)
 
     @override_settings(USE_TZ=True)

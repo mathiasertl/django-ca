@@ -315,8 +315,8 @@ class X509CertMixin(models.Model):
         if self.revoked is False:
             raise ValueError('Certificate is not revoked.')
 
-        revoked_cert = x509.RevokedCertificateBuilder().serial_number(self.x509.serial).revocation_date(
-            self.revoked_date)
+        revoked_cert = x509.RevokedCertificateBuilder().serial_number(
+            self.x509.serial_number).revocation_date(self.revoked_date)
 
         if self.revoked_reason:
             reason_flag = getattr(x509.ReasonFlags, self.revoked_reason)
