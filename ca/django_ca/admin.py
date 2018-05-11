@@ -270,7 +270,7 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
     list_filter = (StatusListFilter, 'ca')
     readonly_fields = [
         'expires', 'csr', 'pub', 'cn', 'serial', 'revoked', 'revoked_date', 'revoked_reason',
-        'distinguishedName', 'ca', 'hpkp_pin', ]
+        'distinguishedName', 'ca', 'hpkp_pin', 'subjectAltName']
     search_fields = ['cn', 'serial', ]
 
     fieldsets = [
