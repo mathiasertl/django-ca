@@ -4,6 +4,13 @@ ChangeLog
 
 .. _changelog-head:
 
+************
+next release
+************
+
+* Drop support for Django 1.8 and Django 1.10.
+* Fix admin view of certificates with no subjectAltName.
+
 .. _changelog-1.7.0:
 
 ******************

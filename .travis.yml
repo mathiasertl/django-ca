@@ -8,8 +8,6 @@ python:
 env:
   - DJANGO_VERSION=2.0.2
   - DJANGO_VERSION=1.11.10
-  - DJANGO_VERSION=1.10.8
-  - DJANGO_VERSION=1.8.18
 install:
   # Build/test dependencies
  - pip install -U pip setuptools
@@ -28,11 +26,7 @@ matrix:
         # Django 2.0 no longer supports python2
         - env: DJANGO_VERSION=2.0.2
           python: "2.7"
-        - env: DJANGO_VERSION=1.8.18
-          python: "nightly"
         - env: DJANGO_VERSION=1.11.10
-          python: "nightly"
-        - env: DJANGO_VERSION=1.10.8
           python: "nightly"
 
 #notifications:
