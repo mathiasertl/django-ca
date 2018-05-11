@@ -93,7 +93,7 @@ class FormatActionTestCase(DjangoCATestCase):
     def test_error(self):
         self.assertParserError(['--action=foo'],
                                'usage: setup.py [-h] [--action ACTION]\n'
-                               'setup.py: error: Unknown format "foo".\n')
+                               'setup.py: error: Unknown format "FOO".\n')
 
 
 class AlgorithmActionTestCase(DjangoCATestCase):
@@ -125,7 +125,7 @@ class AlgorithmActionTestCase(DjangoCATestCase):
     def test_error(self):
         self.assertParserError(['--algo=foo'],
                                'usage: setup.py [-h] [--algo ALGO]\n'
-                               'setup.py: error: Unknown hash algorithm: FOO\n')
+                               'setup.py: error: Unknown hash algorithm: foo\n')
 
 
 class KeySizeActionTestCase(DjangoCATestCase):
