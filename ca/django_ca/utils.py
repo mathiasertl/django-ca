@@ -25,7 +25,8 @@ from ipaddress import ip_network
 
 import idna
 
-from asn1crypto.core import OctetString, UTF8String
+from asn1crypto.core import OctetString
+from asn1crypto.core import UTF8String
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
 from cryptography.x509.oid import ExtendedKeyUsageOID
