@@ -40,6 +40,7 @@ from ..models import Certificate
 from ..models import CertificateAuthority
 from ..signals import post_issue_cert
 from ..signals import post_create_ca
+from ..signals import post_revoke_cert
 from ..utils import OID_NAME_MAPPINGS
 from ..utils import get_cert_profile_kwargs
 from ..utils import sort_subject_dict
@@ -289,6 +290,9 @@ class DjangoCATestCase(TestCase):
 
     def assertPostIssueCert(self, post, cert):
         post.assert_called_once_with(cert=cert, signal=post_issue_cert, sender=Certificate)
+
+    def assertPostRevoke(self, post, cert):
+        post.assert_called_once_with(cert=cert, signal=post_revoke_cert, sender=Certificate)
 
     def assertSubject(self, cert, expected):
         actual = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in cert.subject]

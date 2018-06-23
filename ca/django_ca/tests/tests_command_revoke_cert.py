@@ -16,6 +16,8 @@
 from django.core.management.base import CommandError
 
 from ..models import Certificate
+from ..signals import post_revoke_cert
+from ..signals import pre_revoke_cert
 from .base import DjangoCAWithCertTestCase
 from .base import override_tmpcadir
 
@@ -25,11 +27,14 @@ class RevokeCertTestCase(DjangoCAWithCertTestCase):
     def test_no_reason(self):
         self.assertFalse(self.cert.revoked)
 
-        stdout, stderr = self.cmd('revoke_cert', self.cert.serial)
+        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
+            stdout, stderr = self.cmd('revoke_cert', self.cert.serial)
+        self.assertEqual(pre.call_count, 1)
         self.assertEqual(stdout, '')
         self.assertEqual(stderr, '')
 
         cert = Certificate.objects.get(serial=self.cert.serial)
+        self.assertPostRevoke(post, cert)
         self.assertTrue(cert.revoked)
         self.assertTrue(cert.revoked_date is not None)
         self.assertIsNone(cert.revoked_reason)
@@ -37,11 +42,14 @@ class RevokeCertTestCase(DjangoCAWithCertTestCase):
     def test_with_reason(self):
         self.assertFalse(self.cert.revoked)
 
-        stdout, stderr = self.cmd('revoke_cert', self.cert.serial, reason='keyCompromise')
+        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
+            stdout, stderr = self.cmd('revoke_cert', self.cert.serial, reason='keyCompromise')
+        self.assertEqual(pre.call_count, 1)
         self.assertEqual(stdout, '')
         self.assertEqual(stderr, '')
 
         cert = Certificate.objects.get(serial=self.cert.serial)
+        self.assertPostRevoke(post, cert)
         self.assertTrue(cert.revoked)
         self.assertTrue(cert.revoked_date is not None)
         self.assertEqual(cert.revoked_reason, 'keyCompromise')
@@ -51,10 +59,18 @@ class RevokeCertTestCase(DjangoCAWithCertTestCase):
 
         self.assertFalse(self.cert.revoked)
 
-        self.cmd('revoke_cert', self.cert.serial, reason='keyCompromise')
+        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
+            self.cmd('revoke_cert', self.cert.serial, reason='keyCompromise')
 
-        with self.assertRaises(CommandError):
+        cert = Certificate.objects.get(serial=self.cert.serial)
+        self.assertEqual(pre.call_count, 1)
+        self.assertPostRevoke(post, cert)
+
+        with self.assertRaises(CommandError), \
+                self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
             self.cmd('revoke_cert', self.cert.serial, reason='certificateHold')
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
 
         cert = Certificate.objects.get(serial=self.cert.serial)
         self.assertTrue(cert.revoked)

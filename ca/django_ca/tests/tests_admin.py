@@ -31,7 +31,9 @@ from ..models import Certificate
 from ..models import CertificateAuthority
 from ..models import Watcher
 from ..signals import post_issue_cert
+from ..signals import post_revoke_cert
 from ..signals import pre_issue_cert
+from ..signals import pre_revoke_cert
 from ..utils import SUBJECT_FIELDS
 from .base import DjangoCAWithCertTestCase
 from .base import DjangoCAWithCSRTestCase
@@ -704,17 +706,26 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         return self.get_url(cert=self.cert)
 
     def test_get(self):
-        self.client.get(self.url)
+        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
+            self.client.get(self.url)
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
 
     def test_no_reason(self):
-        response = self.client.post(self.url, data={'revoked_reason': ''})
+        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
+            response = self.client.post(self.url, data={'revoked_reason': ''})
+        self.assertTrue(pre.called)
+        self.assertPostRevoke(post, self.cert)
         self.assertRedirects(response, self.change_url())
         self.assertTemplateUsed('django_ca/admin/certificate_revoke_form.html')
         self.assertRevoked(self.cert)
 
     def test_with_reason(self):
         reason = 'certificate_hold'
-        response = self.client.post(self.url, data={'revoked_reason': reason})
+        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
+            response = self.client.post(self.url, data={'revoked_reason': reason})
+        self.assertTrue(pre.called)
+        self.assertPostRevoke(post, self.cert)
         self.assertRedirects(response, self.change_url())
         self.assertTemplateUsed('django_ca/admin/certificate_revoke_form.html')
         self.assertRevoked(self.cert, reason=reason)
@@ -724,20 +735,32 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         cert.revoked = True
         cert.save()
 
-        response = self.client.get(self.url)
+        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
+            response = self.client.get(self.url)
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
         self.assertEqual(response.status_code, 404)
 
-        response = self.client.post(self.url, data={'revoked_reason': 'certificateHold'})
+        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
+            response = self.client.post(self.url, data={'revoked_reason': 'certificateHold'})
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
         self.assertEqual(response.status_code, 404)
         self.assertRevoked(self.cert)
 
     def test_anonymous(self):
         client = Client()
 
-        response = client.get(self.url)
+        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
+            response = client.get(self.url)
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
         self.assertRequiresLogin(response)
 
-        response = client.post(self.url, data={})
+        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
+            response = client.post(self.url, data={})
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
         self.assertRequiresLogin(response)
         self.assertNotRevoked(self.cert)
 
@@ -747,10 +770,16 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         User.objects.create_user(username='plain', password='password', email='plain@example.com')
         self.assertTrue(client.login(username='plain', password='password'))
 
-        response = client.get(self.url)
+        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
+            response = client.get(self.url)
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
         self.assertRequiresLogin(response)
 
-        response = client.post(self.url, data={})
+        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
+            response = client.post(self.url, data={})
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
         self.assertRequiresLogin(response)
         self.assertNotRevoked(self.cert)
 
@@ -762,11 +791,17 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         user.save()
         self.assertTrue(client.login(username='staff', password='password'))
 
-        response = client.get(self.url)
+        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
+            response = client.get(self.url)
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
         self.assertEqual(response.status_code, 403)
         self.assertNotRevoked(self.cert)
 
-        response = client.post(self.url, data={})
+        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
+            response = client.post(self.url, data={})
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
         self.assertEqual(response.status_code, 403)
         self.assertNotRevoked(self.cert)
 
@@ -779,9 +814,15 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         user.user_permissions.add(p)
         self.assertTrue(client.login(username='no_perms', password='password'))
 
-        response = client.get(self.url)
+        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
+            response = client.get(self.url)
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
         self.assertRequiresLogin(response)
 
-        response = client.post(self.url, data={})
+        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
+            response = client.post(self.url, data={})
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
         self.assertRequiresLogin(response)
         self.assertNotRevoked(self.cert)
