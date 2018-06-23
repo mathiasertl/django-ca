@@ -38,8 +38,8 @@ from django.utils.six.moves import reload_module
 from .. import ca_settings
 from ..models import Certificate
 from ..models import CertificateAuthority
-from ..signals import post_issue_cert
 from ..signals import post_create_ca
+from ..signals import post_issue_cert
 from ..signals import post_revoke_cert
 from ..utils import OID_NAME_MAPPINGS
 from ..utils import get_cert_profile_kwargs
