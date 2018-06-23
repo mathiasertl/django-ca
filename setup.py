@@ -116,7 +116,7 @@ class CoverageCommand(BaseCommand):
             cov.exclude('only py2')
 
         from django import VERSION
-        django_versions = [(1, 8), (1, 9), (1, 10), (1, 11), (2, 0), (2, 1)]
+        django_versions = [(1, 11), (2, 0), (2, 1), (2, 2), (2, 3)]
         this_version = VERSION[:2]
 
         for version in django_versions:
