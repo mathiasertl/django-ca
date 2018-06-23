@@ -34,6 +34,10 @@ from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 
 from . import ca_settings
+from .signals import post_create_ca
+from .signals import post_issue_cert
+from .signals import pre_create_ca
+from .signals import pre_issue_cert
 from .utils import EXTENDED_KEY_USAGE_MAPPING
 from .utils import KEY_USAGE_MAPPING
 from .utils import TLS_FEATURE_MAPPING
@@ -105,6 +109,13 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         elif key_size < ca_settings.CA_MIN_KEY_SIZE:
             raise RuntimeError("%s: Key size must be least %s bits."
                                % (key_size, ca_settings.CA_MIN_KEY_SIZE))
+
+        pre_create_ca.send(
+            sender=self.model, name=name, key_size=key_size, key_type=key_type, algorithm=algorithm,
+            expires=expires, parent=parent, subject=subject, pathlen=pathlen, issuer_url=issuer_url,
+            issuer_alt_name=issuer_alt_name, crl_url=crl_url, ocsp_url=ocsp_url, ca_issuer_url=ca_issuer_url,
+            ca_crl_url=ca_crl_url, ca_ocsp_url=ca_ocsp_url, name_constraints=name_constraints,
+            password=password, parent_password=parent_password)
 
         if key_type == 'DSA':
             private_key = dsa.generate_private_key(key_size=key_size, backend=default_backend())
@@ -185,6 +196,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             key_file.write(pem)
         os.umask(oldmask)
 
+        post_create_ca.send(sender=self.model, ca=self)
         return ca
 
 
@@ -330,8 +342,14 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         return builder.sign(private_key=ca.key(password), algorithm=algorithm, backend=default_backend()), req
 
     def init(self, ca, csr, *args, **kwargs):
+        if args:
+            raise Exception("received non-kwarg args, it's a problem with signals")
+        pre_issue_cert.send(sender=self.model, ca=ca, csr=csr, **kwargs)
+
         c = self.model(ca=ca)
         c.x509, csr = self.sign_cert(ca, csr, *args, **kwargs)
         c.csr = csr.public_bytes(Encoding.PEM).decode('utf-8')
         c.save()
+
+        post_issue_cert.send(sender=self.model, cert=c)
         return c

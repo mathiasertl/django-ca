@@ -45,6 +45,8 @@ from .managers import CertificateAuthorityManager
 from .managers import CertificateManager
 from .querysets import CertificateAuthorityQuerySet
 from .querysets import CertificateQuerySet
+from .signals import post_revoke_cert
+from .signals import pre_revoke_cert
 from .utils import EXTENDED_KEY_USAGE_REVERSED
 from .utils import KEY_USAGE_MAPPING
 from .utils import OID_NAME_MAPPINGS
@@ -304,10 +306,14 @@ class X509CertMixin(models.Model):
         return self.x509.public_bytes(encoding=encoding)
 
     def revoke(self, reason=None):
+        pre_revoke_cert.send(sender=self.__class__, cert=self, reason=reason)
+
         self.revoked = True
         self.revoked_date = timezone.now()
         self.revoked_reason = reason
         self.save()
+
+        post_revoke_cert.send(sender=self.__class__, cert=self)
 
     def get_revocation(self):
         """Get a crypto.Revoked object or None if the cert is not revoked."""
