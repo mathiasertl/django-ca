@@ -9,6 +9,7 @@ import os
 import re
 import shutil
 import tempfile
+from contextlib import contextmanager
 from datetime import datetime
 from datetime import timedelta
 
@@ -37,14 +38,17 @@ from django.utils.six.moves import reload_module
 from .. import ca_settings
 from ..models import Certificate
 from ..models import CertificateAuthority
+from ..signals import post_issue_cert
 from ..utils import OID_NAME_MAPPINGS
 from ..utils import get_cert_profile_kwargs
 from ..utils import sort_subject_dict
 from ..utils import x509_name
 
 if six.PY2:
+    from mock import Mock
     from mock import patch
 else:
+    from unittest.mock import Mock
     from unittest.mock import patch
 
 
@@ -271,6 +275,16 @@ class DjangoCATestCase(TestCase):
 
     def assertSerial(self, serial):
         self.assertIsNotNone(re.match('^[0-9A-F:]*$', serial), serial)
+
+    @contextmanager
+    def assertSignal(self, signal):
+        handler = Mock()
+        signal.connect(handler)
+        yield handler
+        signal.disconnect(handler)
+
+    def assertPostIssueCert(self, post, cert):
+        post.assert_called_once_with(cert=cert, signal=post_issue_cert, sender=Certificate)
 
     def assertSubject(self, cert, expected):
         actual = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in cert.subject]
