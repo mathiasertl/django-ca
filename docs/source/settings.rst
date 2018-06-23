@@ -14,6 +14,17 @@ also documented at :file:`ca/ca/localsettings.py.example`
 <https://github.com/mathiasertl/django-ca/blob/master/ca/ca/localsettings.py.example>`_).
 
 
+.. _settings-ca-custom-apps:
+
+CA_CUSTOM_APPS
+   Default: ``[]``
+
+   This setting is only used when you use **django-ca** as a standalone project to let you add custom apps to
+   the project, e.g. to add :doc:`signals`.
+
+   The list gets appended to the standard ``INSTALLED_APPS`` setting. If you need more control, you can always
+   override that setting instead.
+
 CA_DEFAULT_EXPIRES
    Default: ``730``
 

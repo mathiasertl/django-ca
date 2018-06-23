@@ -33,6 +33,11 @@ SECRET_KEY = ''
 # you want to run the admin webinterface.
 #STATIC_ROOT = '/var/www/ca.example.com/static'
 
+# If you want to add custom Django apps to the default apps, you can do so here. These apps get appended to
+# the standard INSTALLED_APPS. You can also override that setting instead if you need to insert apps in a
+# different location.
+#CA_CUSTOM_APPS = []
+
 ##################
 ### CA options ###
 ##################

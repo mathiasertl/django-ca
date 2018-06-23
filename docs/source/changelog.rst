@@ -10,6 +10,9 @@ next release
 
 * Add :doc:`Django signals </signals>` to important events to let users add
   custom actions (such as email notifications etc.) to those events.
+* Add the :ref:`CA_CUSTOM_APPS <settings-ca-custom-apps>` setting to let users
+  that use **django-ca** as a :ref:`standalone project <as-standalone>` add
+  custom apps, e.g. to register signals.
 * Improve compatability with newer ``idna`` versions (``".com"`` now also throws
   an error).
 * Drop support for Django 1.8 and Django 1.10.

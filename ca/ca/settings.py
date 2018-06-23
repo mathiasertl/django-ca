@@ -104,7 +104,7 @@ ROOT_URLCONF = 'ca.urls'
 # Python dotted path to the WSGI application used by Django's runserver.
 WSGI_APPLICATION = 'ca.wsgi.application'
 
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -115,7 +115,8 @@ INSTALLED_APPS = (
     # 'django.contrib.admindocs',
 
     'django_ca',
-)
+]
+CA_CUSTOM_APPS = []
 
 TEMPLATES = [
     {
@@ -169,3 +170,6 @@ try:
         from localsettings import *  # NOQA
 except ImportError:
     pass
+
+
+INSTALLED_APPS.append(CA_CUSTOM_APPS)
