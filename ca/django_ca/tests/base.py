@@ -39,6 +39,7 @@ from .. import ca_settings
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..signals import post_issue_cert
+from ..signals import post_create_ca
 from ..utils import OID_NAME_MAPPINGS
 from ..utils import get_cert_profile_kwargs
 from ..utils import sort_subject_dict
@@ -282,6 +283,9 @@ class DjangoCATestCase(TestCase):
         signal.connect(handler)
         yield handler
         signal.disconnect(handler)
+
+    def assertPostCreateCa(self, post, ca):
+        post.assert_called_once_with(ca=ca, signal=post_create_ca, sender=CertificateAuthority)
 
     def assertPostIssueCert(self, post, cert):
         post.assert_called_once_with(cert=cert, signal=post_issue_cert, sender=Certificate)

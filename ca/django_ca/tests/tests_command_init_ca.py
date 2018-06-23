@@ -24,6 +24,8 @@ from django.core.management.base import CommandError
 from django_ca.models import CertificateAuthority
 
 from .. import ca_settings
+from ..signals import post_create_ca
+from ..signals import pre_create_ca
 from ..utils import int_to_hex
 from .base import DjangoCATestCase
 from .base import override_settings
@@ -39,11 +41,14 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_basic(self):
-        out, err = self.init_ca()
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca()
+        self.assertTrue(pre.called)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
 
         ca = CertificateAuthority.objects.first()
+        self.assertPostCreateCa(post, ca)
         self.assertPrivateKey(ca)
         self.assertSerial(ca.serial)
         self.assertSignature([ca], ca)
@@ -67,22 +72,25 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_arguments(self):
-        out, err = self.init_ca(
-            algorithm=hashes.SHA1(),
-            key_type='DSA',
-            key_size=1024,
-            expires=self.expires(720),
-            pathlen=3,
-            issuer_url='http://issuer.ca.example.com',
-            issuer_alt_name='http://ian.ca.example.com',
-            crl_url=['http://crl.example.com'],
-            ocsp_url='http://ocsp.example.com',
-            ca_issuer_url='http://ca.issuer.ca.example.com',
-            name_constraint=['permitted,DNS:.com', 'excluded,DNS:.net'],
-        )
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(
+                algorithm=hashes.SHA1(),
+                key_type='DSA',
+                key_size=1024,
+                expires=self.expires(720),
+                pathlen=3,
+                issuer_url='http://issuer.ca.example.com',
+                issuer_alt_name='http://ian.ca.example.com',
+                crl_url=['http://crl.example.com'],
+                ocsp_url='http://ocsp.example.com',
+                ca_issuer_url='http://ca.issuer.ca.example.com',
+                name_constraint=['permitted,DNS:.com', 'excluded,DNS:.net'],
+            )
+        self.assertTrue(pre.called)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
+        self.assertPostCreateCa(post, ca)
         self.assertPrivateKey(ca)
         self.assertSerial(ca.serial)
         ca.full_clean()  # assert e.g. max_length in serials
@@ -115,13 +123,17 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_permitted(self):
-        out, err = self.init_ca(
-            name='permitted',
-            name_constraint=['permitted,DNS:.com'],
-        )
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(
+                name='permitted',
+                name_constraint=['permitted,DNS:.com'],
+            )
+        self.assertTrue(pre.called)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
+
         ca = CertificateAuthority.objects.first()
+        self.assertPostCreateCa(post, ca)
         self.assertSerial(ca.serial)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertPrivateKey(ca)
@@ -130,13 +142,16 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_excluded(self):
-        out, err = self.init_ca(
-            name='excluded',
-            name_constraint=['excluded,DNS:.com'],
-        )
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(
+                name='excluded',
+                name_constraint=['excluded,DNS:.com'],
+            )
+        self.assertTrue(pre.called)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
+        self.assertPostCreateCa(post, ca)
         self.assertPrivateKey(ca)
         self.assertSerial(ca.serial)
         ca.full_clean()  # assert e.g. max_length in serials
@@ -149,10 +164,13 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_no_pathlen(self):
-        out, err = self.init_ca(pathlen=None)
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(pathlen=None)
+        self.assertTrue(pre.called)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
+        self.assertPostCreateCa(post, ca)
         self.assertSerial(ca.serial)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertPrivateKey(ca)
@@ -165,11 +183,14 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_empty_subject_fields(self):
-        out, err = self.cmd('init_ca', 'test', '/C=/ST=/L=/O=/OU=/CN=test',
-                            key_size=ca_settings.CA_MIN_KEY_SIZE)
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.cmd('init_ca', 'test', '/C=/ST=/L=/O=/OU=/CN=test',
+                                key_size=ca_settings.CA_MIN_KEY_SIZE)
+        self.assertTrue(pre.called)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
         ca = CertificateAuthority.objects.first()
+        self.assertPostCreateCa(post, ca)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
         self.assertSubject(ca.x509, {'CN': 'test'})
@@ -192,25 +213,41 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_parent(self):
-        self.init_ca(name='Parent', pathlen=1)
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(name='Parent', pathlen=1)
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        self.assertTrue(pre.called)
         parent = CertificateAuthority.objects.get(name='Parent')
+        self.assertPostCreateCa(post, parent)
         parent.full_clean()  # assert e.g. max_length in serials
         self.assertPrivateKey(parent)
         self.assertSignature([parent], parent)
 
         # test that the default is not a child-relationship
-        self.init_ca(name='Second')
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(name='Second')
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        self.assertTrue(pre.called)
+
         second = CertificateAuthority.objects.get(name='Second')
+        self.assertPostCreateCa(post, second)
         second.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([second], second)
         self.assertIsNone(second.parent)
 
-        self.init_ca(
-            name='Child', parent=parent,
-            ca_crl_url=['http://ca.crl.example.com'],
-            ca_ocsp_url='http://ca.ocsp.example.com',
-        )
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(
+                name='Child', parent=parent,
+                ca_crl_url=['http://ca.crl.example.com'],
+                ca_ocsp_url='http://ca.ocsp.example.com',
+            )
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        self.assertTrue(pre.called)
         child = CertificateAuthority.objects.get(name='Child')
+        self.assertPostCreateCa(post, child)
         child.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([parent], child)
         self.assertPrivateKey(child)
@@ -228,24 +265,39 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_intermediate_check(self):
-        self.init_ca(name='default')
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(name='default')
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        self.assertTrue(pre.called)
         parent = CertificateAuthority.objects.get(name='default')
+        self.assertPostCreateCa(post, parent)
         self.assertPrivateKey(parent)
         parent.full_clean()  # assert e.g. max_length in serials
         self.assertEqual(parent.pathlen, 0)
         self.assertEqual(parent.max_pathlen, 0)
         self.assertFalse(parent.allows_intermediate_ca)
 
-        self.init_ca(name='pathlen-1', pathlen=1)
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(name='pathlen-1', pathlen=1)
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        self.assertTrue(pre.called)
         pathlen_1 = CertificateAuthority.objects.get(name='pathlen-1')
+        self.assertPostCreateCa(post, pathlen_1)
         pathlen_1.full_clean()  # assert e.g. max_length in serials
         self.assertPrivateKey(pathlen_1)
         self.assertEqual(pathlen_1.pathlen, 1)
         self.assertEqual(pathlen_1.max_pathlen, 1)
         self.assertTrue(pathlen_1.allows_intermediate_ca)
 
-        self.init_ca(name='pathlen-1-none', pathlen=None, parent=pathlen_1)
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(name='pathlen-1-none', pathlen=None, parent=pathlen_1)
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        self.assertTrue(pre.called)
         pathlen_1_none = CertificateAuthority.objects.get(name='pathlen-1-none')
+        self.assertPostCreateCa(post, pathlen_1_none)
         pathlen_1_none.full_clean()  # assert e.g. max_length in serials
         self.assertPrivateKey(pathlen_1_none)
 
@@ -253,12 +305,20 @@ class InitCATest(DjangoCATestCase):
         self.assertIsNone(pathlen_1_none.pathlen)
         self.assertEqual(pathlen_1_none.max_pathlen, 0)
         self.assertFalse(pathlen_1_none.allows_intermediate_ca)
-        with self.assertRaisesRegex(CommandError,
-                                    '^Parent CA cannot create intermediate CA due to pathlen restrictions.$'):
-            self.init_ca(name='wrong', parent=pathlen_1_none)
+        with self.assertRaisesRegex(
+                CommandError, '^Parent CA cannot create intermediate CA due to pathlen restrictions.$'), \
+                self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(name='wrong', parent=pathlen_1_none)
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
 
-        self.init_ca(name='pathlen-1-three', pathlen=3, parent=pathlen_1)
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(name='pathlen-1-three', pathlen=3, parent=pathlen_1)
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        self.assertTrue(pre.called)
         pathlen_1_three = CertificateAuthority.objects.get(name='pathlen-1-three')
+        self.assertPostCreateCa(post, pathlen_1_three)
         pathlen_1_three.full_clean()  # assert e.g. max_length in serials
         self.assertPrivateKey(pathlen_1_three)
 
@@ -266,26 +326,45 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(pathlen_1_three.pathlen, 3)
         self.assertEqual(pathlen_1_three.max_pathlen, 0)
         self.assertFalse(pathlen_1_three.allows_intermediate_ca)
-        with self.assertRaisesRegex(CommandError,
-                                    '^Parent CA cannot create intermediate CA due to pathlen restrictions.$'):
-            self.init_ca(name='wrong', parent=pathlen_1_none)
+        with self.assertRaisesRegex(
+                CommandError, '^Parent CA cannot create intermediate CA due to pathlen restrictions.$'), \
+                self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, _err = self.init_ca(name='wrong', parent=pathlen_1_none)
+        self.assertEqual(out, '')
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
 
-        self.init_ca(name='pathlen-none', pathlen=None)
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(name='pathlen-none', pathlen=None)
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        self.assertTrue(pre.called)
         pathlen_none = CertificateAuthority.objects.get(name='pathlen-none')
+        self.assertPostCreateCa(post, pathlen_none)
         pathlen_none.full_clean()  # assert e.g. max_length in serials
         self.assertPrivateKey(pathlen_none)
         self.assertIsNone(pathlen_none.pathlen)
         self.assertIsNone(pathlen_none.max_pathlen, None)
         self.assertTrue(pathlen_none.allows_intermediate_ca)
 
-        self.init_ca(name='pathlen-none-none', pathlen=None, parent=pathlen_none)
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(name='pathlen-none-none', pathlen=None, parent=pathlen_none)
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        self.assertTrue(pre.called)
         pathlen_none_none = CertificateAuthority.objects.get(name='pathlen-none-none')
+        self.assertPostCreateCa(post, pathlen_none_none)
         pathlen_none_none.full_clean()  # assert e.g. max_length in serials
         self.assertIsNone(pathlen_none_none.pathlen)
         self.assertIsNone(pathlen_none_none.max_pathlen)
 
-        self.init_ca(name='pathlen-none-1', pathlen=1, parent=pathlen_none)
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(name='pathlen-none-1', pathlen=1, parent=pathlen_none)
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        self.assertTrue(pre.called)
         pathlen_none_1 = CertificateAuthority.objects.get(name='pathlen-none-1')
+        self.assertPostCreateCa(post, pathlen_none_1)
         pathlen_none_1.full_clean()  # assert e.g. max_length in serials
         self.assertEqual(pathlen_none_1.pathlen, 1)
         self.assertEqual(pathlen_none_1.max_pathlen, 1)
@@ -295,21 +374,36 @@ class InitCATest(DjangoCATestCase):
         # If we request an expiry after that of the parrent, we silently override to that of the
         # parent.
 
-        self.init_ca(name='Parent', pathlen=1)
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(name='Parent', pathlen=1)
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        self.assertTrue(pre.called)
         parent = CertificateAuthority.objects.get(name='Parent')
+        self.assertPostCreateCa(post, parent)
         parent.full_clean()  # assert e.g. max_length in serials
         self.assertPrivateKey(parent)
         self.assertSignature([parent], parent)
 
         # test that the default is not a child-relationship
-        self.init_ca(name='Second')
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(name='Second')
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        self.assertTrue(pre.called)
         second = CertificateAuthority.objects.get(name='Second')
+        self.assertPostCreateCa(post, second)
         second.full_clean()  # assert e.g. max_length in serials
         self.assertIsNone(second.parent)
         self.assertSignature([second], second)
 
-        self.init_ca(name='Child', parent=parent, expires=parent.expires + timedelta(days=10))
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(name='Child', parent=parent, expires=parent.expires + timedelta(days=10))
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        self.assertTrue(pre.called)
         child = CertificateAuthority.objects.get(name='Child')
+        self.assertPostCreateCa(post, child)
         child.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([parent], child)
 
@@ -324,8 +418,13 @@ class InitCATest(DjangoCATestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_password(self):
         password = b'testpassword'
-        self.init_ca(name='Parent', password=password, pathlen=1)
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(name='Parent', password=password, pathlen=1)
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        self.assertTrue(pre.called)
         parent = CertificateAuthority.objects.get(name='Parent')
+        self.assertPostCreateCa(post, parent)
         parent.full_clean()  # assert e.g. max_length in serials
         self.assertPrivateKey(parent, password=password)
         self.assertSignature([parent], parent)
@@ -348,14 +447,25 @@ class InitCATest(DjangoCATestCase):
         child_password = b'childpassword'
         parent = CertificateAuthority.objects.get(name='Parent')  # Get again, key is cached
 
-        with self.assertRaisesRegex(CommandError, '^Password was not given but private key is encrypted$'):
-            self.init_ca(name='Child', parent=parent, password=child_password)
+        with self.assertRaisesRegex(CommandError, '^Password was not given but private key is encrypted$'), \
+                self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(name='Child', parent=parent, password=child_password)
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        self.assertTrue(pre.called)
+        self.assertFalse(post.called)
         self.assertIsNone(CertificateAuthority.objects.filter(name='Child').first())
 
         # Create again with parent ca
-        self.init_ca(name='Child', parent=parent, password=child_password, parent_password=password)
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(name='Child', parent=parent, password=child_password,
+                                    parent_password=password)
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        self.assertTrue(pre.called)
 
         child = CertificateAuthority.objects.get(name='Child')
+        self.assertPostCreateCa(post, child)
         child.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([parent], child)
 
@@ -366,24 +476,39 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_root_ca_crl_url(self):
-        with self.assertRaisesRegex(CommandError, '^CRLs cannot be used to revoke root CAs\.$'):
+        with self.assertRaisesRegex(CommandError, '^CRLs cannot be used to revoke root CAs\.$'), \
+                self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
             self.init_ca(name='foobar', ca_crl_url='https://example.com')
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_root_ca_ocsp_url(self):
-        with self.assertRaisesRegex(CommandError, '^OCSP cannot be used to revoke root CAs\.$'):
+        with self.assertRaisesRegex(CommandError, '^OCSP cannot be used to revoke root CAs\.$'), \
+                self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
             self.init_ca(name='foobar', ca_ocsp_url='https://example.com')
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
 
     def test_wrong_algorithm(self):
-        with self.assertRaisesRegex(CommandError, '^Error: Unknown hash algorithm: broken$'):
+        with self.assertRaisesRegex(CommandError, '^Error: Unknown hash algorithm: broken$'), \
+                self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
             out, err = self.call_command('init_ca', '--algorithm=broken', 'wrong_algo', 'subject')
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
 
     @override_tmpcadir()
     def test_small_key_size(self):
-        with self.assertRaises(CommandError):
+        with self.assertRaises(CommandError), \
+                self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
             self.init_ca(key_size=256)
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
 
     @override_tmpcadir()
     def test_key_not_power_of_two(self):
-        with self.assertRaises(CommandError):
+        with self.assertRaises(CommandError), \
+                self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
             self.init_ca(key_size=2049)
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
