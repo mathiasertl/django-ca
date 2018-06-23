@@ -29,6 +29,7 @@ from cryptography import x509
 from cryptography.x509 import TLSFeatureType
 from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import NameOID
+from asn1crypto.core import UTF8String, OctetString
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import URLValidator
@@ -462,8 +463,13 @@ def parse_general_name(name):
     elif typ == 'rid':
         return x509.RegisteredID(x509.ObjectIdentifier(name))
     elif typ == 'othername':
-        type_id, value = name.split(',', 1)
+        type_id, type_asn, value = name.split(',', 2)
         type_id = x509.ObjectIdentifier(type_id)
+        if type_asn == 'UTF8':
+                value = UTF8String(value).dump()
+        if type_asn == 'OctetString':
+                value = bytes.fromhex(value)
+                value = OctetString(value).dump()
         value = force_bytes(value)
         return x509.OtherName(type_id, value)
     elif typ == 'dirname':
