@@ -13,13 +13,74 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""
+**django-ca** adds a few custom Django signals to important events to let you execute custom actions when
+these events happen. Please see `Djangos documentation on signals
+<https://docs.djangoproject.com/en/dev/ref/signals/>`_ for further information on how to use signals.
+"""
+
 import django.dispatch
 
 pre_create_ca = django.dispatch.Signal(providing_args=['name', '**kwargs'])
+"""Called before a new certificate authority is created.
+
+Parameters
+----------
+
+name : str
+    The name of the future CA.
+**kwargs
+"""
+
 post_create_ca = django.dispatch.Signal(providing_args=['ca'])
+"""Called after a new certificate authority was created.
+
+Parameters
+----------
+
+ca : :py:class:`~django_ca.models.CertificateAuthority`
+    The certificate authority that was just created.
+"""
+
 
 pre_issue_cert = django.dispatch.Signal(providing_args=['ca', 'csr', '**kwargs'])
+"""Called before a new certificate is issued.
+
+Parameters
+----------
+
+ca
+csr
+**kwargs
+"""
+
 post_issue_cert = django.dispatch.Signal(providing_args=['cert'])
+"""Called after a new certificate was issued.
+
+Parameters
+----------
+
+cert : :py:class:`~django_ca.models.Certificate`
+    The certificate that was just issued.
+"""
 
 pre_revoke_cert = django.dispatch.Signal(providing_args=['cert', 'reason'])
+"""Called before a certificate is revoked.
+
+Parameters
+----------
+
+ca
+csr
+**kwargs
+"""
+
 post_revoke_cert = django.dispatch.Signal(providing_args=['cert'])
+"""Called after a certificate was revoked
+
+Parameters
+----------
+
+cert : :py:class:`~django_ca.models.Certificate`
+    The certificate that was just revoked.
+"""

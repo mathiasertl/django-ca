@@ -8,6 +8,8 @@ ChangeLog
 next release
 ************
 
+* Add :doc:`Django signals </signals>` to important events to let users add
+  custom actions (such as email notifications etc.) to those events.
 * Improve compatability with newer ``idna`` versions (``".com"`` now also throws
   an error).
 * Drop support for Django 1.8 and Django 1.10.
