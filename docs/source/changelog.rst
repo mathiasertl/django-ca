@@ -8,6 +8,8 @@ ChangeLog
 next release
 ************
 
+* Improve compatability with newer ``idna`` versions (``".com"`` now also throws
+  an error).
 * Drop support for Django 1.8 and Django 1.10.
 * Fix admin view of certificates with no subjectAltName.
 

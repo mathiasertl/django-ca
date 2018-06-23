@@ -346,6 +346,8 @@ def parse_general_name(name):
     <DNSName(value='example.com')>
     >>> parse_general_name('*.example.com')
     <DNSName(value='*.example.com')>
+    >>> parse_general_name('.example.com')  # Syntax used e.g. for NameConstraints: All levels of subdomains
+    <DNSName(value='.example.com')>
     >>> parse_general_name('user@example.com')
     <RFC822Name(value='user@example.com')>
     >>> parse_general_name('https://example.com')
@@ -433,6 +435,8 @@ def parse_general_name(name):
         # check will fail.
         if name.startswith('*.'):
             idna.encode(name[2:])
+        elif name.startswith('.'):
+            idna.encode(name[1:])
         else:
             idna.encode(name)
 
@@ -469,6 +473,8 @@ def parse_general_name(name):
         # check will fail.
         if name.startswith('*.'):
             idna.encode(name[2:])
+        elif name.startswith('.'):
+            idna.encode(name[1:])
         else:
             idna.encode(name)
 
