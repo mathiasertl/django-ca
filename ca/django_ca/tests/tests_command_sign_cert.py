@@ -33,7 +33,6 @@ from .base import child_pubkey
 from .base import override_settings
 from .base import override_tmpcadir
 
-
 if six.PY2:
     import mock
 else:
