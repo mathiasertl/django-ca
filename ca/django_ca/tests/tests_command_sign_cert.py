@@ -134,7 +134,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
             stdout, stderr = self.cmd('sign_cert', subject=OrderedDict([('CN', cn)]), cn_in_san=True,
                                       stdin=stdin)
         self.assertEqual(pre.call_count, 1)
-        post.assert_not_called()
+        self.assertFalse(post.called)
 
     def test_cn_not_in_san(self):
         stdin = six.StringIO(self.csr_pem)
@@ -294,7 +294,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
                 self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             self.cmd('sign_cert', ca=ca, alt=['example.com'], stdin=stdin, password=b'wrong')
         self.assertEqual(pre.call_count, 1)
-        post.assert_not_called()
+        self.assertFalse(post.called)
 
     def test_der_csr(self):
         csr_path = os.path.join(ca_settings.CA_DIR, 'test.csr')
@@ -330,16 +330,16 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
                 '^Certificate would outlive CA, maximum expiry for this CA is {} days\.$'.format(time_left)
         ), self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             self.cmd('sign_cert', alt=['example.com'], expires=expires, stdin=stdin)
-        pre.assert_not_called()
-        post.assert_not_called()
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
 
     def test_no_cn_or_san(self):
         with self.assertRaisesRegex(
                 CommandError, '^Must give at least a CN in --subject or one or more --alt arguments\.$'), \
                 self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             self.cmd('sign_cert', subject={'C': 'AT', })
-        pre.assert_not_called()
-        post.assert_not_called()
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
 
     def test_wrong_format(self):
         stdin = six.StringIO(self.csr_pem)
@@ -348,7 +348,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
                 self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             self.cmd('sign_cert', alt=['example.com'], csr_format='foo', stdin=stdin)
         self.assertEqual(pre.call_count, 1)
-        post.assert_not_called()
+        self.assertFalse(post.called)
 
 
 @override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})

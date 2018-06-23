@@ -39,6 +39,8 @@ from .forms import X509CertMixinAdminForm
 from .models import Certificate
 from .models import CertificateAuthority
 from .models import Watcher
+from .signals import post_issue_cert
+from .signals import pre_issue_cert
 from .utils import OID_NAME_MAPPINGS
 from .views import RevokeCertificateView
 
@@ -395,22 +397,32 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
         if change is False:
             san, cn_in_san = data['subjectAltName']
             expires = datetime.combine(data['expires'], datetime.min.time())
+            subjectAltName = [e.strip() for e in san.split(',') if e.strip()]
+
+            kwargs = {
+                'ca': data['ca'],
+                'csr': data['csr'],
+                'expires': expires,
+                'subject': data['subject'],
+                'algorithm': data['algorithm'],
+                'subjectAltName': subjectAltName,
+                'cn_in_san': cn_in_san,
+                'keyUsage': data['keyUsage'],
+                'extendedKeyUsage': data['extendedKeyUsage'],
+                'tls_features': data['tlsFeature'],
+                'password': data['password'],
+            }
+
+            pre_issue_cert.send(sender=self.model, **kwargs)
 
             # Note: CSR is set by model form already
-            obj.x509, req = self.model.objects.sign_cert(
-                ca=data['ca'],
-                csr=data['csr'],
-                expires=expires,
-                subject=data['subject'],
-                algorithm=data['algorithm'],
-                subjectAltName=[e.strip() for e in san.split(',') if e.strip()],
-                cn_in_san=cn_in_san,
-                keyUsage=data['keyUsage'],
-                extendedKeyUsage=data['extendedKeyUsage'],
-                tls_features=data['tlsFeature'],
-                password=data['password']
-            )
-        obj.save()
+            obj.x509, req = self.model.objects.sign_cert(**kwargs)
+            obj.save()
+
+            # call signals
+            post_issue_cert.send(sender=self.model, cert=obj)
+        else:
+            obj.save()
 
     class Media:
         css = {

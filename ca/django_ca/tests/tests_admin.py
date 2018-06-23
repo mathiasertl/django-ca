@@ -30,6 +30,8 @@ from django.utils.six.moves.urllib.parse import quote
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..models import Watcher
+from ..signals import post_issue_cert
+from ..signals import pre_issue_cert
 from ..utils import SUBJECT_FIELDS
 from .base import DjangoCAWithCertTestCase
 from .base import DjangoCAWithCSRTestCase
@@ -217,25 +219,28 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
 
     def test_add(self):
         cn = 'test-add.example.com'
-        response = self.client.post(self.add_url, data={
-            'csr': self.csr_pem,
-            'ca': self.ca.pk,
-            'profile': 'webserver',
-            'subject_0': 'US',
-            'subject_5': cn,
-            'subjectAltName_1': True,
-            'algorithm': 'SHA256',
-            'expires': self.ca.expires.strftime('%Y-%m-%d'),
-            'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
-            'keyUsage_1': True,
-            'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
-            'extendedKeyUsage_1': False,
-            'tlsFeature_0': ['OCSPMustStaple', 'MultipleCertStatusRequest'],
-            'tlsFeature_1': False,
-        })
+        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            response = self.client.post(self.add_url, data={
+                'csr': self.csr_pem,
+                'ca': self.ca.pk,
+                'profile': 'webserver',
+                'subject_0': 'US',
+                'subject_5': cn,
+                'subjectAltName_1': True,
+                'algorithm': 'SHA256',
+                'expires': self.ca.expires.strftime('%Y-%m-%d'),
+                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
+                'keyUsage_1': True,
+                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
+                'extendedKeyUsage_1': False,
+                'tlsFeature_0': ['OCSPMustStaple', 'MultipleCertStatusRequest'],
+                'tlsFeature_1': False,
+            })
         self.assertRedirects(response, self.changelist_url)
+        self.assertEqual(pre.call_count, 1)
 
         cert = Certificate.objects.get(cn=cn)
+        self.assertPostIssueCert(post, cert)
         self.assertSubject(cert.x509, {'C': 'US', 'CN': cn})
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
@@ -255,24 +260,27 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
     def test_add_no_key_usage(self):
         cn = 'test-add2.example.com'
         san = 'test-san.example.com'
-        response = self.client.post(self.add_url, data={
-            'csr': self.csr_pem,
-            'ca': self.ca.pk,
-            'profile': 'webserver',
-            'subject_0': 'US',
-            'subject_5': cn,
-            'subjectAltName_0': san,
-            'subjectAltName_1': True,
-            'algorithm': 'SHA256',
-            'expires': self.ca.expires.strftime('%Y-%m-%d'),
-            'keyUsage_0': [],
-            'keyUsage_1': False,
-            'extendedKeyUsage_0': [],
-            'extendedKeyUsage_1': False,
-        })
+        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            response = self.client.post(self.add_url, data={
+                'csr': self.csr_pem,
+                'ca': self.ca.pk,
+                'profile': 'webserver',
+                'subject_0': 'US',
+                'subject_5': cn,
+                'subjectAltName_0': san,
+                'subjectAltName_1': True,
+                'algorithm': 'SHA256',
+                'expires': self.ca.expires.strftime('%Y-%m-%d'),
+                'keyUsage_0': [],
+                'keyUsage_1': False,
+                'extendedKeyUsage_0': [],
+                'extendedKeyUsage_1': False,
+            })
+        self.assertEqual(pre.call_count, 1)
         self.assertRedirects(response, self.changelist_url)
 
         cert = Certificate.objects.get(cn=cn)
+        self.assertPostIssueCert(post, cert)
         self.assertSubject(cert.x509, {'C': 'US', 'CN': cn})
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
@@ -297,63 +305,72 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         ca = CertificateAuthority.objects.get(name=name)
 
         # first post without password
-        response = self.client.post(self.add_url, data={
-            'csr': self.csr_pem,
-            'ca': ca.pk,
-            'profile': 'webserver',
-            'subject_0': 'US',
-            'subject_5': cn,
-            'subjectAltName_1': True,
-            'algorithm': 'SHA256',
-            'expires': self.ca.expires.strftime('%Y-%m-%d'),
-            'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
-            'keyUsage_1': True,
-            'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
-            'extendedKeyUsage_1': False,
-        })
+        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            response = self.client.post(self.add_url, data={
+                'csr': self.csr_pem,
+                'ca': ca.pk,
+                'profile': 'webserver',
+                'subject_0': 'US',
+                'subject_5': cn,
+                'subjectAltName_1': True,
+                'algorithm': 'SHA256',
+                'expires': self.ca.expires.strftime('%Y-%m-%d'),
+                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
+                'keyUsage_1': True,
+                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
+                'extendedKeyUsage_1': False,
+            })
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
         self.assertFalse(response.context['adminform'].form.is_valid())
         self.assertEqual(response.context['adminform'].form.errors,
                          {'password': ['Password was not given but private key is encrypted']})
 
         # now post with a false password
-        response = self.client.post(self.add_url, data={
-            'csr': self.csr_pem,
-            'ca': ca.pk,
-            'profile': 'webserver',
-            'subject_0': 'US',
-            'subject_5': cn,
-            'subjectAltName_1': True,
-            'algorithm': 'SHA256',
-            'expires': self.ca.expires.strftime('%Y-%m-%d'),
-            'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
-            'keyUsage_1': True,
-            'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
-            'extendedKeyUsage_1': False,
-            'password': b'wrong',
-        })
+        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            response = self.client.post(self.add_url, data={
+                'csr': self.csr_pem,
+                'ca': ca.pk,
+                'profile': 'webserver',
+                'subject_0': 'US',
+                'subject_5': cn,
+                'subjectAltName_1': True,
+                'algorithm': 'SHA256',
+                'expires': self.ca.expires.strftime('%Y-%m-%d'),
+                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
+                'keyUsage_1': True,
+                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
+                'extendedKeyUsage_1': False,
+                'password': b'wrong',
+            })
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
         self.assertFalse(response.context['adminform'].form.is_valid())
         self.assertEqual(response.context['adminform'].form.errors,
                          {'password': ['Bad decrypt. Incorrect password?']})
 
         # post with correct password!
-        response = self.client.post(self.add_url, data={
-            'csr': self.csr_pem,
-            'ca': ca.pk,
-            'profile': 'webserver',
-            'subject_0': 'US',
-            'subject_5': cn,
-            'subjectAltName_1': True,
-            'algorithm': 'SHA256',
-            'expires': self.ca.expires.strftime('%Y-%m-%d'),
-            'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
-            'keyUsage_1': True,
-            'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
-            'extendedKeyUsage_1': False,
-            'password': 'foobar',
-        })
+        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            response = self.client.post(self.add_url, data={
+                'csr': self.csr_pem,
+                'ca': ca.pk,
+                'profile': 'webserver',
+                'subject_0': 'US',
+                'subject_5': cn,
+                'subjectAltName_1': True,
+                'algorithm': 'SHA256',
+                'expires': self.ca.expires.strftime('%Y-%m-%d'),
+                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
+                'keyUsage_1': True,
+                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
+                'extendedKeyUsage_1': False,
+                'password': 'foobar',
+            })
+        self.assertEqual(pre.call_count, 1)
         self.assertRedirects(response, self.changelist_url)
 
         cert = Certificate.objects.get(cn=cn)
+        self.assertPostIssueCert(post, cert)
         self.assertSubject(cert.x509, {'C': 'US', 'CN': cn})
         self.assertIssuer(ca, cert)
         self.assertAuthorityKeyIdentifier(ca, cert)
@@ -370,20 +387,23 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
 
     def test_wrong_csr(self):
         cn = 'test-add-wrong-csr.example.com'
-        response = self.client.post(self.add_url, data={
-            'csr': 'whatever\n%s' % self.csr_pem,
-            'ca': self.ca.pk,
-            'profile': 'webserver',
-            'subject_0': 'US',
-            'subject_5': cn,
-            'subjectAltName_1': True,
-            'algorithm': 'SHA256',
-            'expires': self.ca.expires.strftime('%Y-%m-%d'),
-            'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
-            'keyUsage_1': True,
-            'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
-            'extendedKeyUsage_1': False,
-        })
+        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            response = self.client.post(self.add_url, data={
+                'csr': 'whatever\n%s' % self.csr_pem,
+                'ca': self.ca.pk,
+                'profile': 'webserver',
+                'subject_0': 'US',
+                'subject_5': cn,
+                'subjectAltName_1': True,
+                'algorithm': 'SHA256',
+                'expires': self.ca.expires.strftime('%Y-%m-%d'),
+                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
+                'keyUsage_1': True,
+                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
+                'extendedKeyUsage_1': False,
+            })
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
         self.assertEqual(response.status_code, 200)
         self.assertIn("Enter a valid CSR (in PEM format).", response.content.decode('utf-8'))
         self.assertFalse(response.context['adminform'].form.is_valid())
@@ -395,20 +415,23 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
 
     def test_wrong_algorithm(self):
         cn = 'test-add-wrong-algo.example.com'
-        response = self.client.post(self.add_url, data={
-            'csr': self.csr_pem,
-            'ca': self.ca.pk,
-            'profile': 'webserver',
-            'subject_0': 'US',
-            'subject_5': cn,
-            'subjectAltName_1': True,
-            'algorithm': 'wrong algo',
-            'expires': self.ca.expires.strftime('%Y-%m-%d'),
-            'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
-            'keyUsage_1': True,
-            'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
-            'extendedKeyUsage_1': False,
-        })
+        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            response = self.client.post(self.add_url, data={
+                'csr': self.csr_pem,
+                'ca': self.ca.pk,
+                'profile': 'webserver',
+                'subject_0': 'US',
+                'subject_5': cn,
+                'subjectAltName_1': True,
+                'algorithm': 'wrong algo',
+                'expires': self.ca.expires.strftime('%Y-%m-%d'),
+                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
+                'keyUsage_1': True,
+                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
+                'extendedKeyUsage_1': False,
+            })
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
         self.assertEqual(response.status_code, 200)
 
         self.assertFalse(response.context['adminform'].form.is_valid())
@@ -419,20 +442,23 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
     def test_expires_in_the_past(self):
         cn = 'test-expires-in-the-past.example.com'
         expires = datetime.now() - timedelta(days=3)
-        response = self.client.post(self.add_url, data={
-            'csr': self.csr_pem,
-            'ca': self.ca.pk,
-            'profile': 'webserver',
-            'subject_0': 'US',
-            'subject_5': cn,
-            'subjectAltName_1': True,
-            'algorithm': 'SHA256',
-            'expires': expires.strftime('%Y-%m-%d'),
-            'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
-            'keyUsage_1': True,
-            'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
-            'extendedKeyUsage_1': False,
-        })
+        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            response = self.client.post(self.add_url, data={
+                'csr': self.csr_pem,
+                'ca': self.ca.pk,
+                'profile': 'webserver',
+                'subject_0': 'US',
+                'subject_5': cn,
+                'subjectAltName_1': True,
+                'algorithm': 'SHA256',
+                'expires': expires.strftime('%Y-%m-%d'),
+                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
+                'keyUsage_1': True,
+                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
+                'extendedKeyUsage_1': False,
+            })
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Certificate cannot expire in the past.', response.content.decode('utf-8'))
         self.assertFalse(response.context['adminform'].form.is_valid())
@@ -448,20 +474,23 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         correct_expires = self.ca.expires.strftime('%Y-%m-%d')
         error = 'CA expires on %s, certificate must not expire after that.' % correct_expires
 
-        response = self.client.post(self.add_url, data={
-            'csr': self.csr_pem,
-            'ca': self.ca.pk,
-            'profile': 'webserver',
-            'subject_0': 'US',
-            'subject_5': cn,
-            'subjectAltName_1': True,
-            'algorithm': 'SHA256',
-            'expires': expires.strftime('%Y-%m-%d'),
-            'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
-            'keyUsage_1': True,
-            'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
-            'extendedKeyUsage_1': False,
-        })
+        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            response = self.client.post(self.add_url, data={
+                'csr': self.csr_pem,
+                'ca': self.ca.pk,
+                'profile': 'webserver',
+                'subject_0': 'US',
+                'subject_5': cn,
+                'subjectAltName_1': True,
+                'algorithm': 'SHA256',
+                'expires': expires.strftime('%Y-%m-%d'),
+                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
+                'keyUsage_1': True,
+                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
+                'extendedKeyUsage_1': False,
+            })
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
         self.assertEqual(response.status_code, 200)
         self.assertIn(error, response.content.decode('utf-8'))
         self.assertFalse(response.context['adminform'].form.is_valid())
@@ -476,21 +505,24 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertEqual(response.status_code, 403)
 
         cn = 'test-add.example.com'
-        response = self.client.post(self.add_url, data={
-            'csr': self.csr_pem,
-            'ca': self.ca.pk,
-            'profile': 'webserver',
-            'subject_0': 'US',
-            'subject_5': cn,
-            'subjectAltName_1': True,
-            'algorithm': 'SHA256',
-            'expires': '2018-04-12',
-            'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
-            'keyUsage_1': True,
-            'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
-            'extendedKeyUsage_1': False,
-        })
+        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            response = self.client.post(self.add_url, data={
+                'csr': self.csr_pem,
+                'ca': self.ca.pk,
+                'profile': 'webserver',
+                'subject_0': 'US',
+                'subject_5': cn,
+                'subjectAltName_1': True,
+                'algorithm': 'SHA256',
+                'expires': '2018-04-12',
+                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
+                'keyUsage_1': True,
+                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
+                'extendedKeyUsage_1': False,
+            })
         self.assertEqual(response.status_code, 403)
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
 
     def test_add_unusable_cas(self):
         CertificateAuthority.objects.update(private_key_path='/does/not/exist')
@@ -498,25 +530,31 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         # check that we have some enabled CAs, just to make sure this test is really useful
         self.assertTrue(CertificateAuthority.objects.filter(enabled=True).exists())
 
-        response = self.client.get(self.add_url)
+        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            response = self.client.get(self.add_url)
         self.assertEqual(response.status_code, 403)
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
 
         cn = 'test-add.example.com'
-        response = self.client.post(self.add_url, data={
-            'csr': self.csr_pem,
-            'ca': self.ca.pk,
-            'profile': 'webserver',
-            'subject_0': 'US',
-            'subject_5': cn,
-            'subjectAltName_1': True,
-            'algorithm': 'SHA256',
-            'expires': '2018-04-12',
-            'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
-            'keyUsage_1': True,
-            'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
-            'extendedKeyUsage_1': False,
-        })
+        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            response = self.client.post(self.add_url, data={
+                'csr': self.csr_pem,
+                'ca': self.ca.pk,
+                'profile': 'webserver',
+                'subject_0': 'US',
+                'subject_5': cn,
+                'subjectAltName_1': True,
+                'algorithm': 'SHA256',
+                'expires': '2018-04-12',
+                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
+                'keyUsage_1': True,
+                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
+                'extendedKeyUsage_1': False,
+            })
         self.assertEqual(response.status_code, 403)
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
 
 
 class CSRDetailTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
