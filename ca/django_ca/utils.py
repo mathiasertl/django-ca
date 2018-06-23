@@ -25,11 +25,11 @@ from ipaddress import ip_network
 
 import idna
 
+from asn1crypto.core import OctetString, UTF8String
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
 from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import NameOID
-from asn1crypto.core import OctetString
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import URLValidator
