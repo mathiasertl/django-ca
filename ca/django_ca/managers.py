@@ -196,7 +196,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             key_file.write(pem)
         os.umask(oldmask)
 
-        post_create_ca.send(sender=self.model, ca=self)
+        post_create_ca.send(sender=self.model, ca=ca)
         return ca
 
 
