@@ -25,6 +25,7 @@ from ipaddress import ip_network
 
 import idna
 
+from asn1crypto.core import OctetString
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
 from cryptography.x509.oid import ExtendedKeyUsageOID
@@ -465,10 +466,15 @@ def parse_general_name(name):
     elif typ == 'rid':
         return x509.RegisteredID(x509.ObjectIdentifier(name))
     elif typ == 'othername':
-        type_id, value = name.split(',', 1)
+        type_id, type_asn, value = name.split(',', 2)
         type_id = x509.ObjectIdentifier(type_id)
+        if type_asn == 'UTF8':
+                value = value.encode('utf-8')
+        if type_asn == 'OctetString':
+                value = bytes.fromhex(value)
+                value = OctetString(value).dump()
         value = force_bytes(value)
-        return x509.OtherName(type_id, value)
+return x509.OtherName(type_id, value)
     elif typ == 'dirname':
         return x509.DirectoryName(x509_name(name))
     else:
