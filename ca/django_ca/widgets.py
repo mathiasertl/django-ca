@@ -39,8 +39,8 @@ class LabeledCheckboxInput(widgets.CheckboxInput):
         ctx['widget']['label'] = self.label
         return ctx
 
-    def render(self, name, value, attrs=None):  # pragma: no cover - <= Django 1.11
-        html = super(LabeledCheckboxInput, self).render(name, value, attrs=attrs)
+    def render(self, name, value, attrs=None, renderer=None):  # pragma: no cover - <= Django 1.11
+        html = super(LabeledCheckboxInput, self).render(name, value, attrs=attrs, renderer=renderer)
         label = '<label for="%s">%s</label>' % (attrs.get('id'), self.label)
         html = '<span class="critical-widget-wrapper">%s%s</span>' % (html, label)
         return html
@@ -69,8 +69,8 @@ class LabeledTextInput(widgets.TextInput):
         ctx['widget']['cssid'] = self.label.lower().replace(' ', '-')
         return ctx
 
-    def render_wrapped(self, name, value, attrs):  # pragma: no cover - <= Django 1.11
-        html = super(LabeledTextInput, self).render(name, value, attrs=attrs)
+    def render_wrapped(self, name, value, attrs, renderer):  # pragma: no cover - <= Django 1.11
+        html = super(LabeledTextInput, self).render(name, value, attrs=attrs, renderer=renderer)
         required = ''
         if self.attrs.get('required', False):
             required = 'class="required" '
@@ -79,8 +79,8 @@ class LabeledTextInput(widgets.TextInput):
 
         return html
 
-    def render(self, name, value, attrs=None):  # pragma: no cover - <= Django 1.11
-        html = self.render_wrapped(name, value, attrs)
+    def render(self, name, value, attrs=None, renderer=None):  # pragma: no cover - <= Django 1.11
+        html = self.render_wrapped(name, value, attrs, renderer=renderer)
         cssid = self.label.lower().replace(' ', '-')
         html = '<span id="%s" class="labeled-text-multiwidget">%s</span>' % (cssid, html)
         return html
@@ -94,15 +94,15 @@ class LabeledTextInput(widgets.TextInput):
 class SubjectTextInput(LabeledTextInput):
     template_name = 'django_ca/forms/widgets/subjecttextinput.html'
 
-    def render_wrapped(self, name, value, attrs):  # pragma: no cover - <= Django 1.11
-        html = super(SubjectTextInput, self).render_wrapped(name, value, attrs)
+    def render_wrapped(self, name, value, attrs, renderer):  # pragma: no cover - <= Django 1.11
+        html = super(SubjectTextInput, self).render_wrapped(name, value, attrs, renderer=renderer)
         html += '<span class="from-csr">%s <span></span></span>' % _('from CSR:')
         return html
 
 
 class ProfileWidget(widgets.Select):
-    def render(self, name, value, attrs=None):
-        html = super(ProfileWidget, self).render(name, value, attrs=attrs)
+    def render(self, name, value, attrs=None, renderer=None):  # pragma: no cover - <= Django 1.11
+        html = super(ProfileWidget, self).render(name, value, attrs=attrs, renderer=renderer)
         html += '''<script type="text/javascript">
             var ca_profiles = %s;
         </script>''' % json.dumps(ca_settings.CA_PROFILES, cls=LazyEncoder)
