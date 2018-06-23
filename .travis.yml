@@ -6,6 +6,7 @@ python:
   - "3.6"
   - "nightly"
 env:
+  - DJANGO_VERSION=2.1b1
   - DJANGO_VERSION=2.0.6
   - DJANGO_VERSION=1.11.13
 install:
@@ -24,9 +25,13 @@ script:
 matrix:
     exclude:
         # Django 2.0 no longer supports python2
-        - env: DJANGO_VERSION=2.0.2
+        - env: DJANGO_VERSION=2.1b1
+          python: "3.4"
+        - env: DJANGO_VERSION=2.1b1
           python: "2.7"
-        - env: DJANGO_VERSION=1.11.10
+        - env: DJANGO_VERSION=2.0.6
+          python: "2.7"
+        - env: DJANGO_VERSION=1.11.13
           python: "nightly"
 
 #notifications:
