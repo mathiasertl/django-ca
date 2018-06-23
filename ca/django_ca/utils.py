@@ -387,7 +387,7 @@ def parse_general_name(name):
 
     >>> parse_general_name('rid:2.5.4.3')
     <RegisteredID(value=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>)>
-    >>> parse_general_name('otherName:2.5.4.3,example.com')
+    >>> parse_general_name('otherName:UTF8,2.5.4.3,example.com')
     <OtherName(type_id=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value=b'example.com')>
 
     If you give a prefixed value, this function is less forgiving of any typos and does not catch any
