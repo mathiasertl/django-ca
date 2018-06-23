@@ -29,6 +29,7 @@ from cryptography import x509
 from cryptography.x509 import TLSFeatureType
 from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import NameOID
+from cryptography.x509.oid import ObjectIdentifier
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import URLValidator
