@@ -19,23 +19,30 @@ Features:
 * Certificate validation via the included OCSP responder and Certificate Revocation Lists (CRLs).
 * Complete, consistent and powerful command line interface.
 * Optional web interface for certificate handling (e.g. issuing, revoking, ...).
-* Written in pure Python2.7/Python3.4+, using Django 1.8 or later.
+* Written in pure Python2.7/Python3.4+, using Django 1.11 or later.
 
-Contents:
+Installation/Configuration:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    install
    update
+   changelog
    settings
+   signals
+
+Usage:
+
+.. toctree::
+   :maxdepth: 1
+
    cli/intro
+   Command-line interface: Certificate Authority management <cli/cas>
+   Command-line interface: Certificate management <cli/certs>
    web_interface
    crl
    ocsp
-   extensions
-
-Command-line interface:
 
 Development documentation:
 
@@ -45,7 +52,7 @@ Development documentation:
    development
    contribute
    ca_examples
-   changelog
+   extensions
 
 API documentation:
 
