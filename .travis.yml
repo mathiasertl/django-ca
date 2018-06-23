@@ -6,7 +6,7 @@ python:
   - "3.6"
   - "nightly"
 env:
-  - DJANGO_VERSION=2.1b1
+  #- DJANGO_VERSION=2.1b1
   - DJANGO_VERSION=2.0.6
   - DJANGO_VERSION=1.11.13
 install:
