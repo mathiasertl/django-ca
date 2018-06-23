@@ -467,6 +467,7 @@ def parse_general_name(name):
         type_id = x509.ObjectIdentifier(type_id)
         if type_asn == 'UTF8':
                 value = UTF8String(value).dump()
+                value = value.replace('\x0C', '')
         if type_asn == 'OctetString':
                 value = bytes.fromhex(value)
                 value = OctetString(value).dump()
