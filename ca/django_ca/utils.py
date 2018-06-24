@@ -30,6 +30,7 @@ from cryptography import x509
 from cryptography.x509 import TLSFeatureType
 from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import NameOID
+from cryptography.x509.oid import ObjectIdentifier
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import URLValidator
@@ -104,6 +105,8 @@ EXTENDED_KEY_USAGE_MAPPING = {
     'emailProtection': ExtendedKeyUsageOID.EMAIL_PROTECTION,
     'timeStamping': ExtendedKeyUsageOID.TIME_STAMPING,
     'OCSPSigning': ExtendedKeyUsageOID.OCSP_SIGNING,
+    'smartcardLogon': ObjectIdentifier("1.3.6.1.4.1.311.20.2.2"),
+    'msKDC': ObjectIdentifier("1.3.6.1.5.2.3.5"),
 }
 EXTENDED_KEY_USAGE_REVERSED = {v: k for k, v in EXTENDED_KEY_USAGE_MAPPING.items()}
 
