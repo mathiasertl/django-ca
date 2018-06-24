@@ -171,5 +171,4 @@ try:
 except ImportError:
     pass
 
-
-INSTALLED_APPS.append(CA_CUSTOM_APPS)
+INSTALLED_APPS = INSTALLED_APPS + CA_CUSTOM_APPS
