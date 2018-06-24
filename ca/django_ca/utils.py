@@ -473,11 +473,11 @@ def parse_general_name(name):
                 val = bytes.fromhex(val)
                 val = OctetString(val).dump()
             else:
-                raise ValueError('Unsupported ASN type in otherName: %s' % as asn_typ)
+                raise ValueError('Unsupported ASN type in otherName: %s' % asn_typ)
             val = force_bytes(val)
             return x509.OtherName(type_id, val)
         else:
-            raise raise ValueError('Incorrect otherName format: %s' % as name)
+            raise raise ValueError('Incorrect otherName format: %s' % name)
     elif typ == 'dirname':
         return x509.DirectoryName(x509_name(name))
     else:
