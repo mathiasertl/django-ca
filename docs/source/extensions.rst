@@ -2,6 +2,11 @@
 x509 extensions
 ###############
 
+This page provides a list of supported TLS extensions. They can be selected in
+the admin interface or via the command line. Please see
+:ref:`override-extensions` for more information on how to set these extensions
+in the command line.
+
 .. _extension-key-usage:
 
 ********
