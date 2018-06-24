@@ -7,7 +7,7 @@ or stand-alone with the basic project included.  Certificates can be managed thr
 interface or via `manage.py` commands - so no webserver is needed, if you’re happy with the
 command-line.
 
-Documentation is available at http://django-ca.readthedocs.org/.
+Documentation is available at https://django-ca.readthedocs.org/.
 
 ## Features
 
@@ -23,11 +23,11 @@ Please see https://django-ca.readthedocs.org for more extensive documentation.
 
 ## Documentation
 
-Documentation is available at http://django-ca.readthedocs.org/.
+Documentation is available at https://django-ca.readthedocs.org/.
 
 ## ChangeLog
 
-Please see http://django-ca.readthedocs.io/en/latest/changelog.html
+Please see https://django-ca.readthedocs.io/en/latest/changelog.html
 
 ## ToDo
 
@@ -41,4 +41,4 @@ Ideas on what we could do for future releases:
 
 ## License
 
-This project is free software licensed under the [GPLv3](http://www.gnu.org/licenses/gpl.txt).
+This project is free software licensed under the [GPLv3](https://www.gnu.org/licenses/gpl.txt).

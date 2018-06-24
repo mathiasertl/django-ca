@@ -25,10 +25,12 @@ from ipaddress import ip_network
 
 import idna
 
+from asn1crypto.core import OctetString
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
 from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import NameOID
+from cryptography.x509.oid import ObjectIdentifier
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import URLValidator
@@ -103,6 +105,8 @@ EXTENDED_KEY_USAGE_MAPPING = {
     'emailProtection': ExtendedKeyUsageOID.EMAIL_PROTECTION,
     'timeStamping': ExtendedKeyUsageOID.TIME_STAMPING,
     'OCSPSigning': ExtendedKeyUsageOID.OCSP_SIGNING,
+    'smartcardLogon': ObjectIdentifier("1.3.6.1.4.1.311.20.2.2"),
+    'msKDC': ObjectIdentifier("1.3.6.1.5.2.3.5"),
 }
 EXTENDED_KEY_USAGE_REVERSED = {v: k for k, v in EXTENDED_KEY_USAGE_MAPPING.items()}
 
@@ -386,7 +390,7 @@ def parse_general_name(name):
 
     >>> parse_general_name('rid:2.5.4.3')
     <RegisteredID(value=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>)>
-    >>> parse_general_name('otherName:2.5.4.3,example.com')
+    >>> parse_general_name('otherName:2.5.4.3;UTF8:example.com')
     <OtherName(type_id=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value=b'example.com')>
 
     If you give a prefixed value, this function is less forgiving of any typos and does not catch any
@@ -462,10 +466,21 @@ def parse_general_name(name):
     elif typ == 'rid':
         return x509.RegisteredID(x509.ObjectIdentifier(name))
     elif typ == 'othername':
-        type_id, value = name.split(',', 1)
-        type_id = x509.ObjectIdentifier(type_id)
-        value = force_bytes(value)
-        return x509.OtherName(type_id, value)
+        regex = "(.*);(.*):(.*)"
+        if re.match(regex, name) is not None:
+            oid, asn_typ, val = re.match(regex, name).groups()
+            oid = x509.ObjectIdentifier(oid)
+            if asn_typ == 'UTF8':
+                val = val.encode('utf-8')
+            elif asn_typ == 'OctetString':
+                val = bytes(bytearray.fromhex(val))
+                val = OctetString(val).dump()
+            else:
+                raise ValueError('Unsupported ASN type in otherName: %s' % asn_typ)
+            val = force_bytes(val)
+            return x509.OtherName(oid, val)
+        else:
+            raise ValueError('Incorrect otherName format: %s' % name)
     elif typ == 'dirname':
         return x509.DirectoryName(x509_name(name))
     else:

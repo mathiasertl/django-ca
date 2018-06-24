@@ -30,6 +30,7 @@ from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.http import HttpResponseServerError
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
@@ -45,10 +46,6 @@ from .models import CertificateAuthority
 from .utils import int_to_hex
 
 log = logging.getLogger(__name__)
-try:
-    from django.urls import reverse
-except ImportError:  # pragma: only django<=1.8
-    from django.core.urlresolvers import reverse
 
 
 class CertificateRevocationListView(View, SingleObjectMixin):

@@ -24,6 +24,7 @@ from oscrypto import asymmetric
 from django.conf import settings
 from django.conf.urls import url
 from django.test import Client
+from django.urls import reverse
 from django.utils.encoding import force_text
 
 from ..models import Certificate
@@ -33,11 +34,6 @@ from .base import DjangoCAWithCertTestCase
 from .base import certs
 from .base import ocsp_pubkey
 from .base import override_settings
-
-try:
-    from django.urls import reverse
-except ImportError:  # Django 1.8 import
-    from django.core.urlresolvers import reverse
 
 
 # openssl ocsp -issuer django_ca/tests/fixtures/root.pem -serial <serial> \

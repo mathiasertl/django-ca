@@ -1,8 +1,8 @@
 ########################################
-Host a Certificate Revokation List (CRL)
+Host a Certificate Revocation List (CRL)
 ########################################
 
-A Certificate Revokation List (CRL) contains all revoked certificates signed by
+A Certificate Revocation List (CRL) contains all revoked certificates signed by
 a certificate authority. Having a CRL is completely optional (e.g. `Let's
 Encrypt <https://letsencrypt.org/>`_ certificates don't have one).
 
@@ -12,8 +12,8 @@ verify that the certificate has not been revoked. Some services (e.g. OpenVPN)
 also just keep a local copy of a CRL.
 
 .. NOTE:: CRLs are usually hosted via HTTP, **not** HTTPS. CRLs are always
-   signed, so hosting them via HTTP is not a security vulnerability. On the
-   other hand, you cannot verify the the certificate used when fetching the CRL
+   signed, so hosting them via HTTP is not a security vulnerability. Further,
+   you cannot verify the the certificate used when fetching the CRL
    anyway, since you would need the CRL for that.
 
 *******************************

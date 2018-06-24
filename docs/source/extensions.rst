@@ -2,6 +2,11 @@
 x509 extensions
 ###############
 
+This page provides a list of supported TLS extensions. They can be selected in
+the admin interface or via the command line. Please see
+:ref:`override-extensions` for more information on how to set these extensions
+in the command line.
+
 .. _extension-key-usage:
 
 ********
@@ -60,6 +65,8 @@ codeSigning       Code signing
 emailProtection   Email signing/encryption
 timeStamping      
 OCSPSigning       Running an OCSP responder
+smartcardLogon
+msKDC
 ================= ==========================================================================================
 
 Currently, the default profiles (see :ref:`CA_PROFILES <settings-ca-profiles>` setting) use these values:
@@ -73,6 +80,8 @@ codeSigning       ✗      ✗      ✗         ✓       ✗
 emailProtection   ✗      ✗      ✗         ✗       ✗
 timeStamping      ✗      ✗      ✗         ✗       ✗
 OCSPSigning       ✗      ✗      ✗         ✗       ✓
+smartcardLogon    ✗      ✗      ✗         ✗       ✗
+msKDC             ✗      ✗      ✗         ✗       ✗
 ================= ====== ====== ========= ======= ====
 
 .. _extension-tls-feature:
