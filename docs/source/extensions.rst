@@ -60,6 +60,8 @@ codeSigning       Code signing
 emailProtection   Email signing/encryption
 timeStamping      
 OCSPSigning       Running an OCSP responder
+smartcardLogon    Required for user certificates on smartcards for PKINIT logon on Windows
+msKDC             Required for Domain Controller certificates to authorise them for PKINIT logon on Windows
 ================= ==========================================================================================
 
 Currently, the default profiles (see :ref:`CA_PROFILES <settings-ca-profiles>` setting) use these values:
@@ -73,6 +75,8 @@ codeSigning       ✗      ✗      ✗         ✓       ✗
 emailProtection   ✗      ✗      ✗         ✗       ✗
 timeStamping      ✗      ✗      ✗         ✗       ✗
 OCSPSigning       ✗      ✗      ✗         ✗       ✓
+smartcardLogon    ✗      ✗      ✗         ✗       ✗
+msKDC             ✗      ✗      ✗         ✗       ✗
 ================= ====== ====== ========= ======= ====
 
 .. _extension-tls-feature:
