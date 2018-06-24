@@ -267,8 +267,8 @@ class ParseGeneralNameTest(DjangoCATestCase):
         self.assertEqual(parse_general_name(
                          'otherName:1.3.6.1.4.1.311.25.1;OctetString:09CFF1A8F6DEFD4B85CE95FFA1B54217'),
                          x509.OtherName(
-                         x509.oid.ObjectIdentifier('1.3.6.1.4.1.311.25.1',
-                         value=b'\x04\x10\t\xcf\xf1\xa8\xf6\xde\xfdK\x85\xce\x95\xff\xa1\xb5B\x17'))
+                         x509.oid.ObjectIdentifier('1.3.6.1.4.1.311.25.1'),
+                         b'\x04\x10\t\xcf\xf1\xa8\xf6\xde\xfdK\x85\xce\x95\xff\xa1\xb5B\x17'))
 
     def test_error(self):
         with self.assertRaisesRegex(ValueError, '^Could not parse IP address\.$'):
