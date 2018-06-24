@@ -29,7 +29,6 @@ from .base import DjangoCAWithCertTestCase
 from .base import override_settings
 from .base import override_tmpcadir
 
-
 urlpatterns = [
     url(r'^crl/(?P<serial>[0-9A-F:]+)/$', CertificateRevocationListView.as_view(),
         name='default'),

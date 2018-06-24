@@ -36,9 +36,9 @@ from ..signals import post_issue_cert
 from ..signals import post_revoke_cert
 from ..signals import pre_issue_cert
 from ..signals import pre_revoke_cert
-from ..utils import SUBJECT_FIELDS
 from ..utils import EXTENDED_KEY_USAGE_MAPPING
 from ..utils import KEY_USAGE_MAPPING
+from ..utils import SUBJECT_FIELDS
 from ..utils import TLS_FEATURE_MAPPING
 from .base import DjangoCAWithCertTestCase
 from .base import DjangoCAWithCSRTestCase
