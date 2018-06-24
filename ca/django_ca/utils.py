@@ -390,7 +390,7 @@ def parse_general_name(name):
     >>> parse_general_name('otherName:2.5.4.3;UTF8:example.com')
     <OtherName(type_id=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value=b'example.com')>
     >>> parse_general_name('otherName:1.3.6.1.4.1.311.25.1;OctetString:09CFF1A8F6DEFD4B85CE95FFA1B54217')
-    <OtherName(type_id=<ObjectIdentifier(oid=1.3.6.1.4.1.311.25.1, name=Unknown OID)>, value=OctetString.dump('09CFF1A8F6DEFD4B85CE95FFA1B54217'))>
+    <OtherName(type_id=<ObjectIdentifier(oid=1.3.6.1.4.1.311.25.1, name=Unknown OID)>, value=b'\x04\x10\t\xcf\xf1\xa8\xf6\xde\xfdK\x85\xce\x95\xff\xa1\xb5B\x17')>
 
     If you give a prefixed value, this function is less forgiving of any typos and does not catch any
     exceptions:
