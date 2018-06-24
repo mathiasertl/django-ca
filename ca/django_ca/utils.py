@@ -463,21 +463,21 @@ def parse_general_name(name):
     elif typ == 'rid':
         return x509.RegisteredID(x509.ObjectIdentifier(name))
     elif typ == 'othername':
-      regex = '(.*);(.*):(.*)'
+        regex = '(.*);(.*):(.*)'
         if re.match(regex, name) is not None:
-          oid, asn_typ, val = re.match(regex, name).groups()
-          oid = x509.ObjectIdentifier(oid)
-          if type_asn == 'UTF8':
-                  val = val.encode('utf-8')
-          elif type_asn == 'OctetString':
-                  val = bytes.fromhex(val)
-                  val = OctetString(val).dump()
+            oid, asn_typ, val = re.match(regex, name).groups()
+            oid = x509.ObjectIdentifier(oid)
+            if type_asn == 'UTF8':
+                val = val.encode('utf-8')
+            elif type_asn == 'OctetString':
+                val = bytes.fromhex(val)
+                val = OctetString(val).dump()
+            else:
+                raise ValueError('Unsupported ASN type in otherName: %s' % as asn_typ)
+            val = force_bytes(val)
+            return x509.OtherName(type_id, val)
           else:
-            raise ValueError('Unsupported ASN type in otherName: %s' % as asn_typ)
-          val = force_bytes(val)
-          return x509.OtherName(type_id, val)
-        else:
-          raise raise ValueError('Incorrect otherName format: %s' % as name)
+              raise raise ValueError('Incorrect otherName format: %s' % as name)
     elif typ == 'dirname':
         return x509.DirectoryName(x509_name(name))
     else:
