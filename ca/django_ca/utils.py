@@ -467,15 +467,15 @@ def parse_general_name(name):
         if re.match(regex, name) is not None:
             oid, asn_typ, val = re.match(regex, name).groups()
             oid = x509.ObjectIdentifier(oid)
-            if type_asn == 'UTF8':
+            if asn_typ == 'UTF8':
                 val = val.encode('utf-8')
-            elif type_asn == 'OctetString':
+            elif asn_typ == 'OctetString':
                 val = bytes.fromhex(val)
                 val = OctetString(val).dump()
             else:
                 raise ValueError('Unsupported ASN type in otherName: %s' % asn_typ)
             val = force_bytes(val)
-            return x509.OtherName(type_id, val)
+            return x509.OtherName(oid, val)
         else:
             raise ValueError('Incorrect otherName format: %s' % name)
     elif typ == 'dirname':
