@@ -477,7 +477,7 @@ def parse_general_name(name):
             val = force_bytes(val)
             return x509.OtherName(type_id, val)
         else:
-            raise raise ValueError('Incorrect otherName format: %s' % name)
+            raise ValueError('Incorrect otherName format: %s' % name)
     elif typ == 'dirname':
         return x509.DirectoryName(x509_name(name))
     else:
