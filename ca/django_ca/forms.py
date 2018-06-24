@@ -128,6 +128,8 @@ class CreateCertificateForm(forms.ModelForm):
             ('emailProtection', 'E-mail Protection (S/MIME)'),
             ('timeStamping', 'Trusted Timestamping'),
             ('OCSPSigning', 'OCSP Signing'),
+            ('smartcardLogon', 'Smart card logon'),
+            ('msKDC', 'Kerberos Domain Controller'),
         ))
     tlsFeature = KeyUsageField(
         label='TLS Features', choices=(

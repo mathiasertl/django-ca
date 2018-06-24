@@ -27,6 +27,7 @@ from django.utils import timezone
 from django.utils.encoding import force_text
 from django.utils.six.moves.urllib.parse import quote
 
+from ..forms import CreateCertificateForm
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..models import Watcher
@@ -35,6 +36,9 @@ from ..signals import post_revoke_cert
 from ..signals import pre_issue_cert
 from ..signals import pre_revoke_cert
 from ..utils import SUBJECT_FIELDS
+from ..utils import EXTENDED_KEY_USAGE_MAPPING
+from ..utils import KEY_USAGE_MAPPING
+from ..utils import TLS_FEATURE_MAPPING
 from .base import DjangoCAWithCertTestCase
 from .base import DjangoCAWithCSRTestCase
 from .base import override_tmpcadir
@@ -210,6 +214,34 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
 
 class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
+    def test_choices(self):
+        """Find inconsistencies in keyUsage, extendedKeyUsage or tlsFeature entries.
+
+        The choices in the admin form are not automatically derived from the properties in utils, so it's easy
+        to add an entry here and forget to add it there.
+        """
+
+        form = CreateCertificateForm()
+
+        choices = form.fields['keyUsage'].fields[0].choices
+        self.assertEqual(
+            KEY_USAGE_MAPPING.keys(), dict(choices).keys(),
+            'utils.KEY_USAGE_MAPPING and forms.CreateCertificateForm.keyUsage contain different choices.'
+        )
+
+        choices = form.fields['extendedKeyUsage'].fields[0].choices
+        self.assertEqual(
+            EXTENDED_KEY_USAGE_MAPPING.keys(), dict(choices).keys(),
+            'utils.EXTENDED_KEY_USAGE_MAPPING and forms.CreateCertificateForm.extendedKeyUsage '
+            'contain different choices.'
+        )
+
+        choices = form.fields['tlsFeature'].fields[0].choices
+        self.assertEqual(
+            TLS_FEATURE_MAPPING.keys(), dict(choices).keys(),
+            'utils.TLS_FEATURE_MAPPING and forms.CreateCertificateForm.tlsFeature contain different choices.'
+        )
+
     def test_get(self):
         response = self.client.get(self.add_url)
         self.assertEqual(response.status_code, 200)
