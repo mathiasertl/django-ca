@@ -9,9 +9,13 @@ next release
 ************
 
 * Add :doc:`Django signals </signals>` to important events to let users add custom actions (such as email
-  notifications etc.) to those events.
+  notifications etc.) to those events (fixes `#39 <https://github.com/mathiasertl/django-ca/issues/39>`_).
 * Add the :ref:`CA_CUSTOM_APPS <settings-ca-custom-apps>` setting to let users that use **django-ca** as a
   :ref:`standalone project <as-standalone>` add custom apps, e.g. to register signals.
+* Make the ``otherName`` extension actually usable and tested (see `PR47
+  <https://github.com/mathiasertl/django-ca/pull/47>`_)
+* Add the ``smartcardLogon`` and ``msKDC`` extended key usage types. They are needed for some AD and OpenLDAP
+  improvements (see `PR46 <https://github.com/mathiasertl/django-ca/pull/46>`_)
 * Improve compatability with newer ``idna`` versions (``".com"`` now also throws an error).
 * Drop support for Django 1.8 and Django 1.10.
 * Improve support for yet-to-be-released Django 2.1.
