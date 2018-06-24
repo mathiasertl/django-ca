@@ -114,6 +114,8 @@ ocsp       Allows the certificate to be used for signing OCSP responses.
 You can add and modify profiles using the :ref:`CA_PROFILES <settings-ca-profiles>` setting. The default
 profile is configured by the :ref:`CA_DEFAULT_PROFILE <settings-ca-default-profile>` setting.
 
+.. _override-extensions:
+
 Override extensions
 ===================
 

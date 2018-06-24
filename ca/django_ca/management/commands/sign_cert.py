@@ -92,13 +92,18 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
             '--out', metavar='FILE',
             help='Save signed certificate to FILE. If omitted, print to stdout.')
 
-        group = parser.add_argument_group('X509 v3 certificate extensions')
+        group = parser.add_argument_group(
+            'X509 v3 certificate extensions',
+            'Values for more complex x509 extensions. This is for advanced usage only, the profiles already '
+            'set the correct values for the most common use cases. See '
+            '   https://django-ca.readthedocs.io/en/latest/extensions.html for more information.'
+        )
         group.add_argument(
             '--key-usage', metavar='VALUES',
-            help='Override the keyUsage extension, e.g. "critical,keyCertSign".')
+            help='The keyUsage extension, e.g. "critical,keyCertSign".')
         group.add_argument(
             '--ext-key-usage', metavar='VALUES',
-            help='Override the extendedKeyUsage extension, e.g. "serverAuth,clientAuth".')
+            help='The extendedKeyUsage extension, e.g. "serverAuth,clientAuth".')
         group.add_argument(
             '--tls-features', metavar='VALUES', help='TLS Feature extensions.')
 
