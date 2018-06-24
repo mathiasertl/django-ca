@@ -23,6 +23,7 @@ from django.contrib.auth.models import Permission
 from django.contrib.auth.models import User
 from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.test import Client
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_text
 from django.utils.six.moves.urllib.parse import quote
@@ -42,11 +43,6 @@ from ..utils import TLS_FEATURE_MAPPING
 from .base import DjangoCAWithCertTestCase
 from .base import DjangoCAWithCSRTestCase
 from .base import override_tmpcadir
-
-try:
-    from django.urls import reverse
-except ImportError:  # Django 1.8 import
-    from django.core.urlresolvers import reverse
 
 
 class AdminTestMixin(object):

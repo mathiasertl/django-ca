@@ -21,17 +21,13 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.conf.urls import url
 from django.core.cache import cache
 from django.test import Client
+from django.urls import reverse
 
 from ..models import Certificate
 from ..views import CertificateRevocationListView
 from .base import DjangoCAWithCertTestCase
 from .base import override_settings
 from .base import override_tmpcadir
-
-try:
-    from django.urls import reverse
-except ImportError:  # Django 1.8 import
-    from django.core.urlresolvers import reverse
 
 
 urlpatterns = [
