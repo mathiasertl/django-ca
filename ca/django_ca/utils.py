@@ -26,6 +26,7 @@ from ipaddress import ip_network
 import idna
 
 from asn1crypto.core import OctetString
+from asn1crypto.core import UTF8String
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
 from cryptography.x509.oid import ExtendedKeyUsageOID
@@ -471,7 +472,7 @@ def parse_general_name(name):
             oid, asn_typ, val = re.match(regex, name).groups()
             oid = x509.ObjectIdentifier(oid)
             if asn_typ == 'UTF8':
-                val = val.encode('utf-8')
+                val =  UTF8String(val).dump()
             elif asn_typ == 'OctetString':
                 val = bytes(bytearray.fromhex(val))
                 val = OctetString(val).dump()
