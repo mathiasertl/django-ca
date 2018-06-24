@@ -8,13 +8,11 @@ ChangeLog
 next release
 ************
 
-* Add :doc:`Django signals </signals>` to important events to let users add
-  custom actions (such as email notifications etc.) to those events.
-* Add the :ref:`CA_CUSTOM_APPS <settings-ca-custom-apps>` setting to let users
-  that use **django-ca** as a :ref:`standalone project <as-standalone>` add
-  custom apps, e.g. to register signals.
-* Improve compatability with newer ``idna`` versions (``".com"`` now also throws
-  an error).
+* Add :doc:`Django signals </signals>` to important events to let users add custom actions (such as email
+  notifications etc.) to those events.
+* Add the :ref:`CA_CUSTOM_APPS <settings-ca-custom-apps>` setting to let users that use **django-ca** as a
+  :ref:`standalone project <as-standalone>` add custom apps, e.g. to register signals.
+* Improve compatability with newer ``idna`` versions (``".com"`` now also throws an error).
 * Drop support for Django 1.8 and Django 1.10.
 * Improve support for yet-to-be-released Django 2.1.
 * Fix admin view of certificates with no subjectAltName.
@@ -30,34 +28,34 @@ next release
 * Do sanity checks on the "pathlen" attribute when creating Certificate Authorities.
 * Add sanity checks when creating CAs:
 
-  * When creating an intermediate CA, check the ``pathlen`` attribute of the parent CA to make sure
-    that the resulting CA is not invalid.
+  * When creating an intermediate CA, check the ``pathlen`` attribute of the parent CA to make sure that the
+    resulting CA is not invalid.
   * Refuse to add a CRL or OCSP service to root CAs. These attributes are not meaningful there.
 
 * Massively update :doc:`documentation for the command-line interface </cli/intro>`.
 * CAs can now be identified using name or serial (previously: only by serial) in 
   :ref:`CA_OCSP_URLS <settings-ca-ocsp-urls>`.
-* Make ``fab init_demo`` a lot more useful by signing certificates with the client CA and include CRL
-  and OCSP links.
+* Make ``fab init_demo`` a lot more useful by signing certificates with the client CA and include CRL and OCSP
+  links.
 * Run ``fab init_demo`` and documentation generation through Travis-CI.
 * Always display all extensions in the django admin interface.
-* NameConstraints are now delimited using a ``,`` instead of a ``;``, for consistency with other
-  parameters and so no bash special character is used.
+* NameConstraints are now delimited using a ``,`` instead of a ``;``, for consistency with other parameters
+  and so no bash special character is used.
 
 Bugfixes
 ========
 
-* Check for permissions when downloading certificates from the admin interface. Previously, users
-  without admin interface access but without permissions to access certificates, where able to
-  guess the URL and download public keys.
+* Check for permissions when downloading certificates from the admin interface. Previously, users without
+  admin interface access but without permissions to access certificates, where able to guess the URL and
+  download public keys.
 * Add a missing migration.
 * Fix the value of the crlDistributionPoints x509 extension when signing certificates with Python2.
-* The ``Content-Type`` header of CRL responses now defaults to the correct value regardless of type
-  (DER or PEM) used.
-* If a wrong CA is specified in :ref:`CA_OCSP_URLS <settings-ca-ocsp-urls>`, an OCSP internal error
-  is returned instead of an uncought exception.
-* Fix some edge cases for serial conversion in Python2. Some serials where converted with an "L"
-  prefix in Python 2, because ``hex(0L)`` returns ``"0x0L"``.
+* The ``Content-Type`` header of CRL responses now defaults to the correct value regardless of type (DER or
+  PEM) used.
+* If a wrong CA is specified in :ref:`CA_OCSP_URLS <settings-ca-ocsp-urls>`, an OCSP internal error is
+  returned instead of an uncought exception.
+* Fix some edge cases for serial conversion in Python2. Some serials where converted with an "L" prefix in
+  Python 2, because ``hex(0L)`` returns ``"0x0L"``.
 
 .. _changelog-1.6.3:
 
@@ -66,10 +64,10 @@ Bugfixes
 ******************
 
 * Fix various operations when ``USE_TZ`` is ``True``.
-* Email addresses are now independently validated by ``validate_email``. cryptography 2.1 no longer
-  validates email addresses itself.
-* Require ``cryptography>=2.1``. Older versions should not be broken, but the output changes
-  breaking doctests, meaning they're no longer tested either.
+* Email addresses are now independently validated by ``validate_email``. cryptography 2.1 no longer validates
+  email addresses itself.
+* Require ``cryptography>=2.1``. Older versions should not be broken, but the output changes breaking
+  doctests, meaning they're no longer tested either.
 * CA keys are no longer stored with colons in their filename, fixing ``init_ca`` under Windows.
 
 .. _changelog-1.6.2:
@@ -78,8 +76,8 @@ Bugfixes
 1.6.2 (2017-07-18)
 ******************
 
-* No longer require a strict cryptography version but only ``>=1.8``. The previously pinned version
-  is incompatible with Python 3.5.
+* No longer require a strict cryptography version but only ``>=1.8``. The previously pinned version is
+  incompatible with Python 3.5.
 * Update requirements files to newest versions.
 * Update imports to ``django.urls.reverse`` so they are compatible with Django 2.0 and 1.8.
 * Make sure that ``manage.py check`` exit status is not ignored for ``setup.py code_quality``.
@@ -108,13 +106,12 @@ New features and improvements
 * Support encrypting private keys of CAs with a password.
 * Support Django 1.11.
 * Allow creating CRLs of disabled CAs via ``manage.py dump_crl``.
-* Validate DNSNames when parsing general names. This means that signing a certificate with CommonName 
-  that is not a valid domain name fails if it should also be added as subjectAltName (see ``--cn-in-san``
-  option).
+* Validate DNSNames when parsing general names. This means that signing a certificate with CommonName that is
+  not a valid domain name fails if it should also be added as subjectAltName (see ``--cn-in-san`` option).
 * When configuring :py:class:`~django_ca.views.OCSPView`, the responder key and certificate are verified
   during configuration. An erroneous configuration thus throws an error on startup, not during runtime.
-* The testsuite now tests certificate signatures itself via ``pyOpenSSL``,  so an independent library
-  is used for verification.
+* The testsuite now tests certificate signatures itself via ``pyOpenSSL``,  so an independent library is used
+  for verification.
 
 Bugfixes
 ========
