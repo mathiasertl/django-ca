@@ -470,7 +470,7 @@ def parse_general_name(name):
             if asn_typ == 'UTF8':
                 val = val.encode('utf-8')
             elif asn_typ == 'OctetString':
-                val = bytes.fromhex(val)
+                val = bytes(bytearray.fromhex(val))
                 val = OctetString(val).dump()
             else:
                 raise ValueError('Unsupported ASN type in otherName: %s' % asn_typ)
