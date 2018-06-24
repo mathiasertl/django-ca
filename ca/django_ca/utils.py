@@ -387,7 +387,7 @@ def parse_general_name(name):
 
     >>> parse_general_name('rid:2.5.4.3')
     <RegisteredID(value=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>)>
-    >>> parse_general_name('otherName:2.5.4.3,UTF8,example.com')
+    >>> parse_general_name('otherName:2.5.4.3;UTF8:example.com')
     <OtherName(type_id=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value=b'example.com')>
 
     If you give a prefixed value, this function is less forgiving of any typos and does not catch any
@@ -463,15 +463,21 @@ def parse_general_name(name):
     elif typ == 'rid':
         return x509.RegisteredID(x509.ObjectIdentifier(name))
     elif typ == 'othername':
-        type_id, type_asn, value = name.split(',', 2)
-        type_id = x509.ObjectIdentifier(type_id)
-        if type_asn == 'UTF8':
-                value = value.encode('utf-8')
-        if type_asn == 'OctetString':
-                value = bytes.fromhex(value)
-                value = OctetString(value).dump()
-        value = force_bytes(value)
-        return x509.OtherName(type_id, value)
+      regex = '(.*);(.*):(.*)'
+        if re.match(regex, name) is not None:
+          oid, asn_typ, val = re.match(regex, name).groups()
+          oid = x509.ObjectIdentifier(oid)
+          if type_asn == 'UTF8':
+                  val = val.encode('utf-8')
+          elif type_asn == 'OctetString':
+                  val = bytes.fromhex(val)
+                  val = OctetString(val).dump()
+          else:
+            raise ValueError('Unsupported ASN type in otherName: %s' % as asn_typ)
+          val = force_bytes(val)
+          return x509.OtherName(type_id, val)
+        else:
+          raise raise ValueError('Incorrect otherName format: %s' % as name)
     elif typ == 'dirname':
         return x509.DirectoryName(x509_name(name))
     else:
