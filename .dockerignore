@@ -1,0 +1,9 @@
+/bin/
+/docs/
+/include/
+/lib/
+/share/
+/.git/
+__pycache__
+/ca/ca/test_settings.py
+/ca/ca/localsettings.py
