@@ -219,24 +219,25 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
 
         form = CreateCertificateForm()
 
-        choices = list(sorted(form.fields['keyUsage'].fields[0].choices.keys()))
+        choices = list(sorted([k for k, v in form.fields['keyUsage'].fields[0].choices]))
         mapping = list(sorted(KEY_USAGE_MAPPING.keys()))
         self.assertEqual(
             mapping, choices,
             'KEY_USAGE_MAPPING and CreateCertificateForm.keyUsage differ:\n%s\n%s' % (
                 mapping, choices))
 
-        choices = list(sorted(form.fields['extendedKeyUsage'].fields[0].choices.keys()))
+        choices = list(sorted([k for k, v in form.fields['extendedKeyUsage'].fields[0].choices]))
         mapping = list(sorted(EXTENDED_KEY_USAGE_MAPPING.keys()))
         self.assertEqual(
             mapping, choices,
             'EXTENDED_KEY_USAGE_MAPPING and CreateCertificateForm.extendedKeyUsage differ:\n%s\n%s' % (
                 mapping, choices))
 
-        choices = form.fields['tlsFeature'].fields[0].choices
+        choices = list(sorted([k for k, v in form.fields['tlsFeature'].fields[0].choices]))
+        mapping = list(sorted(TLS_FEATURE_MAPPING.keys()))
         self.assertEqual(
-            TLS_FEATURE_MAPPING.keys(), dict(choices).keys(),
-            'utils.TLS_FEATURE_MAPPING and forms.CreateCertificateForm.tlsFeature contain different choices.'
+            mapping, choices,
+            'TLS_FEATURE_MAPPING and CreateCertificateForm.tlsFeature differ:\n%s\n%s' % (choices, mapping)
         )
 
     def test_get(self):
