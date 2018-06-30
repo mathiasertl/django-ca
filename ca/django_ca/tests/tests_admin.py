@@ -219,18 +219,19 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
 
         form = CreateCertificateForm()
 
-        choices = form.fields['keyUsage'].fields[0].choices
+        choices = list(sorted(form.fields['keyUsage'].fields[0].choices.keys()))
+        mapping = list(sorted(KEY_USAGE_MAPPING.keys()))
         self.assertEqual(
-            KEY_USAGE_MAPPING.keys(), dict(choices).keys(),
-            'utils.KEY_USAGE_MAPPING and forms.CreateCertificateForm.keyUsage contain different choices.'
-        )
+            mapping, choices,
+            'KEY_USAGE_MAPPING and CreateCertificateForm.keyUsage differ:\n%s\n%s' % (
+                mapping, choices))
 
-        choices = form.fields['extendedKeyUsage'].fields[0].choices
+        choices = list(sorted(form.fields['extendedKeyUsage'].fields[0].choices.keys()))
+        mapping = list(sorted(EXTENDED_KEY_USAGE_MAPPING.keys()))
         self.assertEqual(
-            EXTENDED_KEY_USAGE_MAPPING.keys(), dict(choices).keys(),
-            'utils.EXTENDED_KEY_USAGE_MAPPING and forms.CreateCertificateForm.extendedKeyUsage '
-            'contain different choices.'
-        )
+            mapping, choices,
+            'EXTENDED_KEY_USAGE_MAPPING and CreateCertificateForm.extendedKeyUsage differ:\n%s\n%s' % (
+                mapping, choices))
 
         choices = form.fields['tlsFeature'].fields[0].choices
         self.assertEqual(
