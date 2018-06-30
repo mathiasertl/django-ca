@@ -12,14 +12,8 @@ RUN chown django-ca:django-ca /var/lib/django-ca/
 # Collect static files
 RUN python ca/manage.py collectstatic --noinput
 
-# Cleanup 
-RUN find ca | grep pyc$ | xargs rm
-RUN find ca -type d -name __pycache__ | xargs rmdir
-RUN rm -f ca/ca/test_settings.py
-
 CMD python ca/manage.py migrate --noinput && uwsgi --static-map /static=/usr/share/django-ca --chdir=ca --http :8000 --module ca.wsgi
 
-USER django-ca
+USER django-ca:django-ca
 EXPOSE 8000
-VOLUME /var/lib/django-ca /etc/django-ca
 VOLUME ["/etc/django-ca/", "/var/lib/django-ca/"]
