@@ -8,5 +8,5 @@ coverage==4.5.1
 numpydoc==0.8.0
 six==1.11.0
 sphinx-autobuild==0.7.1
-sphinx-rtd-theme==0.3.1
+sphinx-rtd-theme==0.4.0
 setuptools>=38.5.1
