@@ -2,7 +2,6 @@ FROM python:3
 WORKDIR /usr/src/django-ca
 
 RUN mkdir -p /var/lib/django-ca/ /usr/share/django-ca/
-COPY requirements.txt ./
 COPY ca/ ca/
 COPY docker/localsettings.py ca/ca/
 COPY docker/standalone.ini /etc/django-ca/
