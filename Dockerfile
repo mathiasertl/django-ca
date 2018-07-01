@@ -4,6 +4,7 @@ WORKDIR /usr/src/django-ca
 RUN mkdir -p /var/lib/django-ca/ /usr/share/django-ca/
 COPY requirements.txt ./
 COPY ca/ ca/
+COPY uwsgi/ uwsgi/
 COPY docker/localsettings.py ca/ca/
 COPY docker/standalone.ini /etc/django-ca/
 RUN pip install --no-cache-dir -r requirements.txt uwsgi
