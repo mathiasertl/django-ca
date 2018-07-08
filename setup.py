@@ -53,9 +53,9 @@ install_requires = [
 
 if PY2:
     install_requires.append('ipaddress>=1.0.18')
-    install_requires.append('Django>=1.8,<2.0')
+    install_requires.append('Django>=1.11,<2.0')
 else:
-    install_requires.append('Django>=1.8')
+    install_requires.append('Django>=1.11')
 
 
 class BaseCommand(Command):

@@ -15,4 +15,4 @@ six==1.11.0
 # currently does not install in 3.7
 sphinx-autobuild==0.7.1; python_version < '3.7'
 sphinx-rtd-theme==0.4.0
-wheel==0.31.0
+wheel==0.31.1
