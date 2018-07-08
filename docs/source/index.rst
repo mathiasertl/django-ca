@@ -27,6 +27,7 @@ Installation/Configuration:
    :maxdepth: 1
 
    install
+   docker
    update
    changelog
    settings

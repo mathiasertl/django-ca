@@ -6,7 +6,7 @@ COPY requirements.txt docker/start.sh ./
 COPY ca/ ca/
 COPY uwsgi/ uwsgi/
 COPY docker/localsettings.py ca/ca/
-RUN pip install --no-cache-dir -r requirements.txt uwsgi
+RUN pip install --no-cache-dir -r requirements.txt uwsgi pyyaml
 RUN groupadd -r django-ca && useradd --no-log-init -r -g django-ca django-ca
 RUN chown django-ca:django-ca /var/lib/django-ca/
 
@@ -17,4 +17,4 @@ CMD ./start.sh
 
 USER django-ca:django-ca
 EXPOSE 8000
-VOLUME ["/etc/django-ca/", "/var/lib/django-ca/"]
+VOLUME ["/var/lib/django-ca/"]
