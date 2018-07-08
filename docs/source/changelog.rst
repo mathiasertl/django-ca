@@ -10,6 +10,7 @@ next release
 
 * Add :doc:`Django signals </signals>` to important events to let users add custom actions (such as email
   notifications etc.) to those events (fixes `#39 <https://github.com/mathiasertl/django-ca/issues/39>`_).
+* Provide a Docker container for fast deployment of **django-ca**.
 * Add the :ref:`CA_CUSTOM_APPS <settings-ca-custom-apps>` setting to let users that use **django-ca** as a
   :ref:`standalone project <as-standalone>` add custom apps, e.g. to register signals.
 * Make the ``otherName`` extension actually usable and tested (see `PR47
