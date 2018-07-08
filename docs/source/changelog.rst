@@ -4,9 +4,11 @@ ChangeLog
 
 .. _changelog-head:
 
-************
-next release
-************
+.. _changelog-1.8.0:
+
+******************
+1.8.0 (2018-07-08)
+******************
 
 * Add :doc:`Django signals </signals>` to important events to let users add custom actions (such as email
   notifications etc.) to those events (fixes `#39 <https://github.com/mathiasertl/django-ca/issues/39>`_).
