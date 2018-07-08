@@ -9,7 +9,7 @@ Requirements
 ____________
 
 * Python 2.7 or Python 3.4+
-* Django 1.8+
+* Django 1.11+
 * Any database supported by Django (sqlite3/MySQL/PostgreSQL/...)
 * Python, OpenSSL and libffi development headers
 
