@@ -25,3 +25,5 @@ if os.path.exists(_secret_key_path):
     with open(_secret_key_path) as stream:
         SECRET_KEY = stream.read()
     print('Read secret key: %s' % SECRET_KEY)
+
+CA_DIR = '/var/lib/django-ca/certs'
