@@ -25,22 +25,18 @@ _secret_key_path = '/var/lib/django-ca/secret_key'
 if os.path.exists(_secret_key_path):
     with open(_secret_key_path) as stream:
         SECRET_KEY = stream.read()
-    print('Read secret key: %s' % SECRET_KEY)
 
 CA_DIR = '/var/lib/django-ca/certs'
 
 _CA_SETTINGS_FILE = os.environ.get('DJANGO_CA_SETTINGS')
 if _CA_SETTINGS_FILE:
-    print('Reading %s' % _CA_SETTINGS_FILE)
     with open(_CA_SETTINGS_FILE) as stream:
         data = yaml.load(stream)
     for key, value in data.items():
-        print('SET %s -> %s' % (key, value))
         globals()[key] = value
 
 # Also use DJANGO_CA_ environment variables
-for key, value in {k: v for k, v in os.environ.items() if k.startswith('DJANGO_CA_')}.items():
-    if key == 'DJANGO_CA_SETTINGS':
+for key, value in {k[10:]: v for k, v in os.environ.items() if k.startswith('DJANGO_CA_')}.items():
+    if key == 'SETTINGS':
         continue
-    print('SET %s -> %s' % (key, value))
     globals()[key] = value
