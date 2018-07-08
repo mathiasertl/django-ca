@@ -7,7 +7,7 @@ python:
   - "nightly"
 env:
   #- DJANGO_VERSION=2.1b1
-  - DJANGO_VERSION=2.0.6
+  - DJANGO_VERSION=2.0.7
   - DJANGO_VERSION=1.11.13
 install:
   # Build/test dependencies
@@ -29,7 +29,7 @@ matrix:
           python: "3.4"
         - env: DJANGO_VERSION=2.1b1
           python: "2.7"
-        - env: DJANGO_VERSION=2.0.6
+        - env: DJANGO_VERSION=2.0.7
           python: "2.7"
         - env: DJANGO_VERSION=1.11.13
           python: "nightly"
