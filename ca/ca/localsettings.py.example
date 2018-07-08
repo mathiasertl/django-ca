@@ -67,10 +67,10 @@ SECRET_KEY = ''
 #CA_PROFILES = {}
 
 # Default time in days for signed certificates to expire.
-#CA_DEFAULT_EXPIRES = getattr(settings, 'CA_DEFAULT_EXPIRES', 730)
+#CA_DEFAULT_EXPIRES = 730
 
 # Default profile used for signing certificates.
-#CA_DEFAULT_PROFILE = getattr(settings, 'CA_DEFAULT_PROFILE', 'webserver')
+#CA_DEFAULT_PROFILE = 'webserver'
 
 # Notify certificate watchers before certificates expire. This is a list of days before expiration
 # that watchers will get an email, in this example 14, seven, three and one days before expiry.
