@@ -14,8 +14,6 @@
 # see <http://www.gnu.org/licenses/>
 
 import argparse
-import os
-import tempfile
 from datetime import datetime
 from datetime import timedelta
 
@@ -31,6 +29,7 @@ from .base import DjangoCAWithCertTestCase
 from .base import child_pubkey
 from .base import override_settings
 from .base import override_tmpcadir
+from .base import pwd_ca_pubkey
 
 try:
     import unittest.mock as mock
@@ -293,27 +292,11 @@ setup.py: error: %s: %s: Private key does not exist.\n''' % (ca.name, ca.private
 
         self.assertParserError([ca.serial], expected)
 
-    def test_unparseable(self):
-
-        fd, path = tempfile.mkstemp()
-        stream = os.fdopen(fd, 'w')
-
-        try:
-            ca = CertificateAuthority.objects.first()
-            ca.private_key_path = path
-            ca.save()
-
-            expected = '''usage: setup.py [-h] ca
-setup.py: error: %s: %s: Could not read private key: Could not deserialize key data.\n''' % (
-                ca.name, ca.private_key_path)
-
-            stream.write('unparseable')
-            stream.close()
-
-            self.assertParserError([ca.serial], expected)
-        finally:
-            stream.close()
-            os.remove(path)
+    def test_password(self):
+        # Test that the action works with a password-encrypted ca
+        pwd_ca = self.load_ca(name='pwd_ca', x509=pwd_ca_pubkey)
+        ns = self.parser.parse_args([pwd_ca.serial])
+        self.assertEqual(ns.ca, pwd_ca)
 
 
 class URLActionTestCase(DjangoCATestCase):
