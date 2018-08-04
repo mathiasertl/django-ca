@@ -14,6 +14,7 @@
 # see <http://www.gnu.org/licenses/>.
 
 import os
+import warnings
 
 import idna
 
@@ -38,6 +39,7 @@ from .signals import post_create_ca
 from .signals import post_issue_cert
 from .signals import pre_create_ca
 from .signals import pre_issue_cert
+from .subject import Subject
 from .utils import EXTENDED_KEY_USAGE_MAPPING
 from .utils import KEY_USAGE_MAPPING
 from .utils import TLS_FEATURE_MAPPING
@@ -127,8 +129,17 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
         builder = get_cert_builder(expires)
         builder = builder.public_key(public_key)
-        builder = builder.subject_name(x509_name(subject))
 
+        if isinstance(subject, list):
+            warnings.warn('Received a list: %s' % subject, stacklevel=2)
+            subject = x509_name(subject)
+        elif isinstance(subject, Subject):
+            subject = subject.name
+        else:
+            warnings.warn('Received %s: %s' % (type(subject).__name__, subject), stacklevel=2)
+            subject = x509_name(subject)
+
+        builder = builder.subject_name(subject)
         builder = builder.add_extension(x509.BasicConstraints(ca=True, path_length=pathlen), critical=True)
         builder = builder.add_extension(x509.KeyUsage(
             key_cert_sign=True, crl_sign=True, digital_signature=False, content_commitment=False,
@@ -294,7 +305,14 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         builder = builder.public_key(public_key)
         builder = builder.issuer_name(ca.x509.subject)
 
-        builder = builder.subject_name(x509_name(subject))
+        if isinstance(subject, list):
+            warnings.warn('Received a list: %s' % subject, stacklevel=2)
+            builder = builder.subject_name(x509_name(subject))
+        elif isinstance(subject, Subject):
+            builder = builder.subject_name(subject.name)
+        else:
+            warnings.warn('Received %s: %s' % (type(subject).__name__, subject), stacklevel=2)
+            builder = builder.subject_name(x509_name(subject))
 
         # Add extensions
         builder = builder.add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
