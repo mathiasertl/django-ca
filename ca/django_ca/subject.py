@@ -46,6 +46,11 @@ class Subject(object):
             else:
                 self._data[oid].append(value)
 
+    def __contains__(self, oid):
+        if isinstance(oid, six.string_types):
+            oid = NAME_OID_MAPPINGS[oid]
+        return oid in self._data
+
     def __eq__(self, other):
         return isinstance(other, Subject) and self._data == other._data
 

@@ -70,6 +70,14 @@ class TestSubject(TestCase):
         with self.assertRaisesRegex(ValueError, '^C: Must not occur multiple times$'):
             Subject([('C', 'AT'), ('C', 'US')])
 
+    def test_contains(self):
+        self.assertIn('CN', Subject('/CN=example.com'))
+        self.assertIn(NameOID.COMMON_NAME, Subject('/CN=example.com'))
+        self.assertNotIn(NameOID.LOCALITY_NAME, Subject('/CN=example.com'))
+        self.assertNotIn(NameOID.COUNTRY_NAME, Subject('/CN=example.com'))
+        self.assertIn(NameOID.COUNTRY_NAME, Subject('/C=AT/CN=example.com'))
+        self.assertIn(NameOID.COMMON_NAME, Subject('/C=AT/CN=example.com'))
+
     def test_eq(self):
         self.assertEqual(Subject('/CN=example.com'), Subject([('CN', 'example.com')]))
         self.assertNotEqual(Subject('/CN=example.com'), Subject([('CN', 'example.org')]))
