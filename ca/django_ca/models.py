@@ -129,7 +129,7 @@ class X509CertMixin(models.Model):
     def x509(self, value):
         self._x509 = value
         self.pub = force_str(self.dump_certificate(Encoding.PEM))
-        self.cn = self.subject['CN']
+        self.cn = self.subject.get('CN', '')
         self.expires = self.not_after
         if settings.USE_TZ:
             self.expires = timezone.make_aware(self.expires, timezone=pytz.utc)

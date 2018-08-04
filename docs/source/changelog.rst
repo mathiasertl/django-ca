@@ -12,6 +12,7 @@ ChangeLog
 
 * Allow the creation of Certificates with multiple OUs in their subject (command-line only).
 * Fix issues with handling CAs with a password on the command-line.
+* Fix handling of certificates with no CommonName.
 * Django 2.1 is now fully supported.
 * Fix example command to generate a CSR (had a stray '/').
 

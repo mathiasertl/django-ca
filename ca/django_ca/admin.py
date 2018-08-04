@@ -116,6 +116,8 @@ on Wikipedia.</p>'''
 
     def output_extension(self, value):
         # shared function for formatting extension values
+        if value is None:
+            return mark_safe('foo')
 
         critical, value = value
         html = ''
@@ -265,7 +267,7 @@ class StatusListFilter(admin.SimpleListFilter):
 class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
     actions = ['revoke', ]
     change_form_template = 'django_ca/admin/change_form.html'
-    list_display = ('cn', 'serial', 'status', 'expires_date')
+    list_display = ('cn_display', 'serial', 'status', 'expires_date')
     list_filter = (StatusListFilter, 'ca')
     readonly_fields = [
         'expires', 'csr', 'pub', 'cn', 'serial', 'revoked', 'revoked_date', 'revoked_reason',
@@ -308,6 +310,11 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
             if os.path.exists(ca.private_key_path):
                 return True
         return False
+
+    def cn_display(self, obj):
+        if obj.cn:
+            return obj.cn
+        return _('<none>')
 
     def get_form(self, request, obj=None, **kwargs):
         if obj is None:
