@@ -35,8 +35,9 @@ class SubjectField(forms.MultiValueField):
             forms.CharField(),  # CN
             forms.CharField(required=False),  # E
         )
-        initial = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get('subject', {})
-        kwargs.setdefault('initial', initial)
+
+        # NOTE: do not pass initial here as this is done on webserver invocation
+        #       This screws up tests.
         kwargs.setdefault('widget', SubjectWidget)
         super(SubjectField, self).__init__(fields=fields, require_all_fields=False,
                                            *args, **kwargs)

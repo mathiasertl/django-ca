@@ -43,6 +43,7 @@ from ..utils import TLS_FEATURE_MAPPING
 from .base import DjangoCAWithCertTestCase
 from .base import DjangoCAWithCSRTestCase
 from .base import override_tmpcadir
+from .base import override_settings
 
 
 class AdminTestMixin(object):
@@ -248,6 +249,10 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertIn('admin/change_form.html', templates)
         self.assertCSS(response, 'django_ca/admin/css/base.css')
         self.assertCSS(response, 'django_ca/admin/css/certificateadmin.css')
+
+    @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
+    def test_get_dict(self):
+        self.test_get()
 
     def test_add(self):
         cn = 'test-add.example.com'

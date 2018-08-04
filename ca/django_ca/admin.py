@@ -34,6 +34,7 @@ from django.utils.encoding import force_bytes
 from django.utils.html import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
+from . import ca_settings
 from .forms import CreateCertificateForm
 from .forms import X509CertMixinAdminForm
 from .models import Certificate
@@ -325,6 +326,11 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
             return CreateCertificateForm
         else:
             return super(CertificateAdmin, self).get_form(request, obj=obj, **kwargs)
+
+    def get_changeform_initial_data(self, request):
+        data = super(CertificateAdmin, self).get_changeform_initial_data(request)
+        data['subject'] = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get('subject', {})
+        return data
 
     def csr_details_view(self, request):
         """Returns details of a CSR request."""
