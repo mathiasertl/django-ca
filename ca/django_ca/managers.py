@@ -311,29 +311,20 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
 
         if keyUsage:
             critical, values = keyUsage
-            if isinstance(values, six.string_types):
-                params = {v: False for v in KEY_USAGE_MAPPING.values()}
-                for value in [KEY_USAGE_MAPPING[k] for k in values.split(',')]:
-                    params[value] = True
-                builder = builder.add_extension(x509.KeyUsage(**params), critical=critical)
-            else:
-                builder = builder.add_extension(values, critical=critical)
+            params = {v: False for v in KEY_USAGE_MAPPING.values()}
+            for value in [KEY_USAGE_MAPPING[k] for k in values.split(',')]:
+                params[value] = True
+            builder = builder.add_extension(x509.KeyUsage(**params), critical=critical)
 
         if extendedKeyUsage:
             critical, usages = extendedKeyUsage
-            if isinstance(usages, six.string_types):
-                usages = [EXTENDED_KEY_USAGE_MAPPING[u] for u in usages.split(',')]
-                builder = builder.add_extension(x509.ExtendedKeyUsage(usages), critical=critical)
-            else:
-                builder = builder.add_extension(usages, critical=critical)
+            usages = [EXTENDED_KEY_USAGE_MAPPING[u] for u in usages.split(',')]
+            builder = builder.add_extension(x509.ExtendedKeyUsage(usages), critical=critical)
 
         if tls_features:
             critical, features = tls_features
-            if isinstance(features, six.string_types):
-                features = [TLS_FEATURE_MAPPING[f] for f in features.split(',')]
-                builder = builder.add_extension(TLSFeature(features), critical=critical)
-            else:
-                builder = builder.add_extension(features, critical=critical)
+            features = [TLS_FEATURE_MAPPING[f] for f in features.split(',')]
+            builder = builder.add_extension(TLSFeature(features), critical=critical)
 
         if ca.issuer_alt_name:
             builder = builder.add_extension(x509.IssuerAlternativeName(

@@ -46,10 +46,10 @@ from ..utils import OID_NAME_MAPPINGS
 from ..utils import get_cert_profile_kwargs
 from ..utils import x509_name
 
-if six.PY2:
+if six.PY2:  # pragma: only py2
     from mock import Mock
     from mock import patch
-else:
+else:  # pragma: only py3
     from unittest.mock import Mock
     from unittest.mock import patch
 
