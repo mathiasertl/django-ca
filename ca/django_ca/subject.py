@@ -54,6 +54,9 @@ class Subject(object):
     def __eq__(self, other):
         return isinstance(other, Subject) and self._data == other._data
 
+    def __len__(self):
+        return len(self._data)
+
     def __str__(self):
         data = []
         for oid, values in self._data.items():
@@ -62,9 +65,6 @@ class Subject(object):
 
         data = ['%s=%s' % (k, v) for k, v in sort_name(data)]
         return '/%s' % '/'.join(data)
-
-    def __len__(self):
-        return len(self._data)
 
     def setdefault(self, oid, value):
         if isinstance(oid, six.string_types):
