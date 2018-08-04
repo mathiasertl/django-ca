@@ -181,7 +181,6 @@ on Wikipedia.</p>'''
 
         fieldsets = copy.deepcopy(fieldsets)
         for name, _value in sorted(obj.extensions()):
-            # TODO: we should handle unknown extensions here
             fieldsets[self.x509_fieldset_index][1]['fields'].append(name)
 
         return fieldsets
