@@ -14,6 +14,7 @@
 # see <http://www.gnu.org/licenses/>
 
 import os
+import stat
 from datetime import datetime
 from datetime import timedelta
 
@@ -279,13 +280,16 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         with self.assertRaisesRegex(CommandError, '^Password was not given but private key is encrypted$'), \
                 self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             self.cmd('sign_cert', ca=ca, alt=['example.com'], stdin=stdin)
-        self.assertEqual(pre.call_count, 1)
+        self.assertEqual(pre.call_count, 0)
+        self.assertEqual(post.call_count, 0)
 
         # Pass a password
         stdin = six.StringIO(self.csr_pem)
         ca = CertificateAuthority.objects.get(pk=ca.pk)
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd('sign_cert', ca=ca, alt=['example.com'], stdin=stdin, password=password)
+        self.assertEqual(pre.call_count, 1)
+        self.assertEqual(post.call_count, 1)
 
         # Pass the wrong password
         stdin = six.StringIO(self.csr_pem)
@@ -293,8 +297,26 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         with self.assertRaisesRegex(CommandError, self.re_false_password), \
                 self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             self.cmd('sign_cert', ca=ca, alt=['example.com'], stdin=stdin, password=b'wrong')
-        self.assertEqual(pre.call_count, 1)
+        self.assertFalse(pre.called)
         self.assertFalse(post.called)
+
+    @override_settings(CA_DEFAULT_SUBJECT={})
+    def test_unparseable(self):
+        ca = self.create_ca('test')
+        ca = CertificateAuthority.objects.get(pk=ca.pk)
+
+        os.chmod(ca.private_key_path, stat.S_IWUSR | stat.S_IRUSR)
+        with open(ca.private_key_path, 'w') as stream:
+            stream.write('bogus')
+        os.chmod(ca.private_key_path, stat.S_IRUSR)
+
+        # Giving no password raises a CommandError
+        stdin = six.StringIO(self.csr_pem)
+        with self.assertRaisesRegex(CommandError, '^Could not deserialize key data.$'), \
+                self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            self.cmd('sign_cert', ca=ca, alt=['example.com'], stdin=stdin)
+        self.assertEqual(pre.call_count, 0)
+        self.assertEqual(post.call_count, 0)
 
     def test_der_csr(self):
         csr_path = os.path.join(ca_settings.CA_DIR, 'test.csr')
