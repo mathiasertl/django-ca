@@ -17,6 +17,7 @@
 from django import forms
 
 from . import ca_settings
+from .subject import Subject
 from .utils import SUBJECT_FIELDS
 from .widgets import KeyUsageWidget
 from .widgets import SubjectAltNameWidget
@@ -42,7 +43,7 @@ class SubjectField(forms.MultiValueField):
 
     def compress(self, values):
         # list comprehension is to filter empty fields
-        return [(k, v) for k, v in zip(SUBJECT_FIELDS, values) if v]
+        return Subject([(k, v) for k, v in zip(SUBJECT_FIELDS, values) if v])
 
 
 class SubjectAltNameField(forms.MultiValueField):

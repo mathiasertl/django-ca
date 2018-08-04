@@ -144,6 +144,8 @@ class SubjectWidget(CustomMultiWidget):
     def decompress(self, value):
         if value is None:  # pragma: no cover
             return ('', '', '', '', '', '')
+
+        # TODO: probably not tested: should happen ad form submission
         return [
             value.get('C', ''),
             value.get('ST', ''),
