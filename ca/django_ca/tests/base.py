@@ -397,7 +397,7 @@ class DjangoCATestCase(TestCase):
         kwargs.setdefault('algorithm', hashes.SHA256())
         kwargs.setdefault('expires', datetime.now() + timedelta(days=3560))
         kwargs.setdefault('parent', None)
-        kwargs.setdefault('subject', '/CN=generated.example.com')
+        kwargs.setdefault('subject', Subject('/CN=generated.example.com'))
 
         ca = CertificateAuthority.objects.init(name=name, **kwargs)
         return ca

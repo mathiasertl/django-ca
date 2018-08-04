@@ -32,7 +32,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         key_size = ca_settings.CA_MIN_KEY_SIZE
         ca = CertificateAuthority.objects.init(
             name='Root CA', key_size=key_size, key_type='RSA', algorithm=hashes.SHA256(),
-            expires=self.expires(720), parent=None, pathlen=0, subject=[('CN', 'ca.example.com')])
+            expires=self.expires(720), parent=None, pathlen=0, subject=Subject([('CN', 'ca.example.com')]))
 
         self.assertEqual(ca.name, 'Root CA')
 
