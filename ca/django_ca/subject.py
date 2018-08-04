@@ -15,9 +15,12 @@
 
 import six
 
+from cryptography import x509
+
 from .utils import MULTIPLE_OIDS
 from .utils import OID_NAME_MAPPINGS
 from .utils import NAME_OID_MAPPINGS
+from .utils import SUBJECT_FIELDS
 from .utils import parse_name
 from .utils import sort_name
 
@@ -57,6 +60,20 @@ class Subject(object):
     def __len__(self):
         return len(self._data)
 
+    def __setitem__(self, key, value):
+        if isinstance(key, six.string_types):
+            key = NAME_OID_MAPPINGS[key]
+
+        if isinstance(value, six.string_types):
+            value = [value]
+        elif not isinstance(value, list):
+            raise ValueError('Value must be str or list')
+
+        if len(value) > 1 and key not in MULTIPLE_OIDS:
+            raise ValueError('%s: Must not occur multiple times' % OID_NAME_MAPPINGS[key])
+
+        self._data[key] = value
+
     def __str__(self):
         data = []
         for oid, values in self._data.items():
@@ -76,9 +93,29 @@ class Subject(object):
         if isinstance(value, six.string_types):
             value = [value]
         elif not isinstance(value, list):
-            raise ValueError('Default must be str or list')
+            raise ValueError('Value must be str or list')
 
         if len(value) > 1 and oid not in MULTIPLE_OIDS:
             raise ValueError('%s: Must not occur multiple times' % OID_NAME_MAPPINGS[oid])
 
         self._data[oid] = value
+
+    ####################
+    # Actual functions #
+    ####################
+    @property
+    def fields(self):
+        _sort = sorted(self._data.items(), key=lambda t: SUBJECT_FIELDS.index(OID_NAME_MAPPINGS[t[0]]))
+        for oid, values in _sort:
+            for val in values:
+                yield oid, val
+
+    @property
+    def name(self):
+        """This subject as :py:class:`x509.Name <cryptography:cryptography.x509.Name>`.
+
+        >>> Subject('/C=AT/CN=example.com').name  # doctest: +NORMALIZE_WHITESPACE
+        <Name([<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, value='AT')>,
+               <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>])>
+        """
+        return x509.Name([x509.NameAttribute(k, v) for k, v in self.fields])

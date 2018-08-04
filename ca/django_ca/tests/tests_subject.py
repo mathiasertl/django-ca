@@ -13,11 +13,22 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import doctest
+
+import six
+
 from cryptography.x509.oid import NameOID
 
 from django.test import TestCase
 
 from ..subject import Subject
+
+
+def load_tests(loader, tests, ignore):
+    if six.PY3:  # pragma: only py3
+        # unicode strings make this very hard to test doctests in both py2 and py3
+        tests.addTests(doctest.DocTestSuite('django_ca.subject'))
+    return tests
 
 
 class TestSubject(TestCase):
@@ -93,6 +104,28 @@ class TestSubject(TestCase):
         self.assertEqual(len(Subject('/C=AT/OU=foo/CN=example.com')), 3)
         self.assertEqual(len(Subject('/C=AT/OU=foo/OU=bar/CN=example.com')), 3)
 
+    def test_setitem(self):
+        s = Subject('')
+        s['C'] = 'AT'
+        self.assertEqual(s, Subject('/C=AT'))
+        s['C'] = 'DE'
+        self.assertEqual(s, Subject('/C=DE'))
+        s[NameOID.COUNTRY_NAME] = ['AT']
+        self.assertEqual(s, Subject('/C=AT'))
+
+        s = Subject('/CN=example.com')
+        s[NameOID.COUNTRY_NAME] = ['AT']
+        self.assertEqual(s, Subject('/C=AT/CN=example.com'))
+
+        # also test multiples
+        s = Subject('/C=AT/CN=example.com')
+        s['OU'] = ['foo', 'bar']
+        self.assertEqual(s, Subject('/C=AT/OU=foo/OU=bar/CN=example.com'))
+
+        with self.assertRaisesRegex(ValueError, 'L: Must not occur multiple times'):
+            s['L'] = ['foo', 'bar']
+        self.assertEqual(s, Subject('/C=AT/OU=foo/OU=bar/CN=example.com'))
+
     def test_setdefault(self):
         s = Subject('/CN=example.com')
         s.setdefault('CN', 'example.org')
@@ -115,3 +148,31 @@ class TestSubject(TestCase):
         # We can't set multiple C's
         with self.assertRaisesRegex(ValueError, 'L: Must not occur multiple times'):
             s.setdefault('L', ['AT', 'DE'])
+        self.assertEqual(s, Subject('/C=AT/OU=foo/OU=bar/CN=example.com'))
+
+    def test_fields(self):
+        s = Subject('')
+        self.assertEqual(list(s.fields), [])
+
+        s = Subject('/C=AT')
+        self.assertEqual(list(s.fields), [(NameOID.COUNTRY_NAME, 'AT')])
+
+        s = Subject('/C=AT/CN=example.com')
+        self.assertEqual(list(s.fields), [(NameOID.COUNTRY_NAME, 'AT'), (NameOID.COMMON_NAME, 'example.com')])
+
+        s = Subject('/C=AT/OU=foo/CN=example.com')
+        self.assertEqual(list(s.fields), [(NameOID.COUNTRY_NAME, 'AT'),
+                                          (NameOID.ORGANIZATIONAL_UNIT_NAME, 'foo'),
+                                          (NameOID.COMMON_NAME, 'example.com')])
+        s = Subject('/C=AT/OU=foo/OU=bar/CN=example.com')
+        self.assertEqual(list(s.fields), [(NameOID.COUNTRY_NAME, 'AT'),
+                                          (NameOID.ORGANIZATIONAL_UNIT_NAME, 'foo'),
+                                          (NameOID.ORGANIZATIONAL_UNIT_NAME, 'bar'),
+                                          (NameOID.COMMON_NAME, 'example.com')])
+
+        # Also test order
+        s = Subject('/CN=example.com/C=AT/OU=foo/OU=bar')
+        self.assertEqual(list(s.fields), [(NameOID.COUNTRY_NAME, 'AT'),
+                                          (NameOID.ORGANIZATIONAL_UNIT_NAME, 'foo'),
+                                          (NameOID.ORGANIZATIONAL_UNIT_NAME, 'bar'),
+                                          (NameOID.COMMON_NAME, 'example.com')])
