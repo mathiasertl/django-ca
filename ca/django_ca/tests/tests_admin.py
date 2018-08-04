@@ -633,8 +633,8 @@ class CSRDetailTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
     def test_no_perms(self):
         # User is staff but has no permissions
         client = Client()
-        user = User.objects.create_user(username='staff', password='password', email='staff@example.com')
-        user.is_staff = True  # TODO: Django 1.8 does not allow is_staff as kwarg
+        user = User.objects.create_user(username='staff', password='password', email='staff@example.com',
+                                        is_staff=True)
         user.save()
         self.assertTrue(client.login(username='staff', password='password'))
 
@@ -705,8 +705,8 @@ class CertDownloadTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     def test_no_perms(self):
         # User is staff but has no permissions
         client = Client()
-        user = User.objects.create_user(username='no_perms', password='password', email='user@example.com')
-        user.is_staff = True  # TODO: Django 1.8 does not allow is_staff as kwarg
+        user = User.objects.create_user(username='no_perms', password='password', email='user@example.com',
+                                        is_staff=True)
         user.save()
         self.assertTrue(client.login(username='no_perms', password='password'))
 
@@ -816,8 +816,8 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     def test_no_perms(self):
         # User is staff but has no permissions
         client = Client()
-        user = User.objects.create_user(username='staff', password='password', email='staff@example.com')
-        user.is_staff = True  # TODO: Django 1.8 does not allow is_staff as kwarg
+        user = User.objects.create_user(username='staff', password='password', email='staff@example.com',
+                                        is_staff=True)
         user.save()
         self.assertTrue(client.login(username='staff', password='password'))
 
