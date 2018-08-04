@@ -89,6 +89,27 @@ class TestSubject(TestCase):
         self.assertIn(NameOID.COUNTRY_NAME, Subject('/C=AT/CN=example.com'))
         self.assertIn(NameOID.COMMON_NAME, Subject('/C=AT/CN=example.com'))
 
+    def test_getitem(self):
+        self.assertEqual(Subject('/CN=example.com')['CN'], 'example.com')
+        self.assertEqual(Subject('/C=AT/CN=example.com')['C'], 'AT')
+        self.assertEqual(Subject('/C=AT/CN=example.com')['CN'], 'example.com')
+
+        # try NameOID:
+        self.assertEqual(Subject('/CN=example.com')[NameOID.COMMON_NAME], 'example.com')
+        self.assertEqual(Subject('/C=AT/CN=example.com')[NameOID.COUNTRY_NAME], 'AT')
+        self.assertEqual(Subject('/C=AT/CN=example.com')[NameOID.COMMON_NAME], 'example.com')
+
+        # OUs
+        self.assertEqual(Subject('/C=AT/OU=foo/CN=example.com')['OU'], ['foo'])
+        self.assertEqual(Subject('/C=AT/OU=foo/OU=bar/CN=example.com')['OU'], ['foo', 'bar'])
+
+        # test keyerror
+        with self.assertRaisesRegex(KeyError, "^'L'$"):
+            Subject('/C=AT/OU=foo/CN=example.com')['L']
+
+        with self.assertRaisesRegex(KeyError, "^'L'$"):
+            Subject('/C=AT/OU=foo/CN=example.com')[NameOID.LOCALITY_NAME]
+
     def test_eq(self):
         self.assertEqual(Subject('/CN=example.com'), Subject([('CN', 'example.com')]))
         self.assertNotEqual(Subject('/CN=example.com'), Subject([('CN', 'example.org')]))
@@ -125,6 +146,31 @@ class TestSubject(TestCase):
         with self.assertRaisesRegex(ValueError, 'L: Must not occur multiple times'):
             s['L'] = ['foo', 'bar']
         self.assertEqual(s, Subject('/C=AT/OU=foo/OU=bar/CN=example.com'))
+
+    def test_get(self):
+        self.assertEqual(Subject('/CN=example.com').get('CN'), 'example.com')
+        self.assertEqual(Subject('/C=AT/CN=example.com').get('C'), 'AT')
+        self.assertEqual(Subject('/C=AT/CN=example.com').get('CN'), 'example.com')
+
+        # try NameOID:
+        self.assertEqual(Subject('/CN=example.com').get(NameOID.COMMON_NAME), 'example.com')
+        self.assertEqual(Subject('/C=AT/CN=example.com').get(NameOID.COUNTRY_NAME), 'AT')
+        self.assertEqual(Subject('/C=AT/CN=example.com').get(NameOID.COMMON_NAME), 'example.com')
+
+        # OUs
+        self.assertEqual(Subject('/C=AT/OU=foo/CN=example.com').get('OU'), ['foo'])
+        self.assertEqual(Subject('/C=AT/OU=foo/OU=bar/CN=example.com').get('OU'), ['foo', 'bar'])
+
+        # test that default doesn't overwrite anytying
+        self.assertEqual(Subject('/CN=example.com').get('CN', 'x'), 'example.com')
+        self.assertEqual(Subject('/C=AT/CN=example.com').get('C', 'x'), 'AT')
+        self.assertEqual(Subject('/C=AT/CN=example.com').get('CN', 'x'), 'example.com')
+
+        # test default value
+        self.assertIsNone(Subject('/C=AT/OU=foo/CN=example.com').get('L'))
+        self.assertEqual(Subject('/C=AT/OU=foo/CN=example.com').get('L', 'foo'), 'foo')
+        self.assertIsNone(Subject('/C=AT/OU=foo/CN=example.com').get(NameOID.LOCALITY_NAME))
+        self.assertEqual(Subject('/C=AT/OU=foo/CN=example.com').get(NameOID.LOCALITY_NAME, 'foo'), 'foo')
 
     def test_setdefault(self):
         s = Subject('/CN=example.com')

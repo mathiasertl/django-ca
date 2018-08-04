@@ -57,6 +57,17 @@ class Subject(object):
     def __eq__(self, other):
         return isinstance(other, Subject) and self._data == other._data
 
+    def __getitem__(self, key):
+        if isinstance(key, six.string_types):
+            key = NAME_OID_MAPPINGS[key]
+
+        try:
+            if key in MULTIPLE_OIDS:
+                return self._data[key]
+            return self._data[key][0]
+        except KeyError:
+            raise KeyError(OID_NAME_MAPPINGS[key])
+
     def __len__(self):
         return len(self._data)
 
@@ -82,6 +93,12 @@ class Subject(object):
 
         data = ['%s=%s' % (k, v) for k, v in sort_name(data)]
         return '/%s' % '/'.join(data)
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
 
     def setdefault(self, oid, value):
         if isinstance(oid, six.string_types):
