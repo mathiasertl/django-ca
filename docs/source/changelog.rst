@@ -4,6 +4,14 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.9.0:
+
+***********
+1.9.0 (TBR)
+***********
+
+* Allow the creation of Certificates with multiple OUs in their subject (command-line only).
+
 .. _changelog-1.8.0:
 
 ******************
