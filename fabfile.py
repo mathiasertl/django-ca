@@ -143,11 +143,12 @@ def deploy(section='DEFAULT'):
 def create_cert(name, **kwargs):
     from django.core.management import call_command as manage
     from django_ca import ca_settings
+    from django_ca.subject import Subject
 
     key = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
     csr = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
     pem = os.path.join(ca_settings.CA_DIR, '%s.pem' % name)
-    kwargs.setdefault('subject', {})
+    kwargs.setdefault('subject', Subject())
     kwargs['subject'].setdefault('CN', name)
 
     with hide('everything'):
@@ -183,6 +184,7 @@ def init_demo(fixture='n'):
     from django_ca.models import Certificate
     from django_ca.models import CertificateAuthority
     from django_ca.models import Watcher
+    from django_ca.subject import Subject
     User = get_user_model()
 
     try:
@@ -211,7 +213,7 @@ def init_demo(fixture='n'):
     # generate OCSP certificate
     print('Creating OCSP certificate...', end='')
     ocsp_key, ocsp_csr, ocsp_pem = create_cert(
-        'root-ocsp', subject={'CN': 'localhost'}, profile='ocsp'
+        'root-ocsp', subject=Subject({'CN': 'localhost'}), profile='ocsp'
     )
     ok()
 
@@ -237,7 +239,7 @@ def init_demo(fixture='n'):
     # generate OCSP certificate
     print('Creating OCSP certificate for intermediate CA...', end='')
     ocsp_key, ocsp_csr, ocsp_pem = create_cert(
-        'intermediate-ocsp', subject={'CN': 'localhost'}, profile='ocsp', ca=child_ca
+        'intermediate-ocsp', subject=Subject({'CN': 'localhost'}), profile='ocsp', ca=child_ca
     )
     ok()
 
@@ -281,7 +283,7 @@ def init_demo(fixture='n'):
     ok()
 
     print('Create a client certificate...', end='')
-    create_cert('client', subject={'CN': 'First Last'}, cn_in_san=False, alt=['user@example.com'],
+    create_cert('client', subject=Subject({'CN': 'First Last'}), cn_in_san=False, alt=['user@example.com'],
                 ca=child_ca)
     ok()
 
