@@ -274,6 +274,8 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             _cn_present = sum(1 for t in subject if t[0] == 'CN') > 0
         elif isinstance(subject, Subject):
             _cn_present = 'CN' in subject
+        else:
+            raise ValueError('Received %s: %s' % (type(subject).__name__, subject))
 
         if not _cn_present and not subjectAltName:
             raise ValueError("Must name at least a CN or a subjectAltName.")
@@ -285,8 +287,13 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
 
         # use first SAN as CN if CN is not set
         if not _cn_present:
-            subject.append(('CN', subjectAltName[0].value))
-            subject = sort_name(subject)
+            if isinstance(subject, list):
+                subject.append(('CN', subjectAltName[0].value))
+                subject = sort_name(subject)
+            elif isinstance(subject, Subject):
+                _cn_present = subject['CN'] = subjectAltName[0].value
+            else:
+                raise ValueError('Received %s: %s' % (type(subject).__name__, subject))
 
         elif cn_in_san and _cn_present:  # add CN to SAN if cn_in_san is True (default)
             if isinstance(subject, list):
@@ -322,8 +329,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         elif isinstance(subject, Subject):
             builder = builder.subject_name(subject.name)
         else:
-            warnings.warn('Received %s: %s' % (type(subject).__name__, subject), stacklevel=2)
-            builder = builder.subject_name(x509_name(subject))
+            raise ValueError('Received %s: %s' % (type(subject).__name__, subject))
 
         # Add extensions
         builder = builder.add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
