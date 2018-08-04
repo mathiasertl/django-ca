@@ -118,6 +118,10 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         if not parent and options['ca_ocsp_url']:
             raise CommandError("OCSP cannot be used to revoke root CAs.")
 
+        # See if we can work with the private key
+        if parent:
+            self.test_private_key(parent, options['parent_password'])
+
         # Set CommonName to name if not set in subject
         if 'CN' not in subject:
             subject['CN'] = name

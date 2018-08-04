@@ -26,6 +26,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.conf import settings
 from django.core.management.base import BaseCommand as _BaseCommand
+from django.core.management.base import CommandError
 from django.core.management.base import OutputWrapper
 from django.core.management.color import no_style
 from django.core.validators import URLValidator
@@ -139,13 +140,6 @@ class CertificateAuthorityAction(argparse.Action):
         # verify that the private key exists
         if not os.path.exists(value.private_key_path):
             parser.error('%s: %s: Private key does not exist.' % (value, value.private_key_path))
-
-        # try to parse the private key
-        # TODO: Must be moved into a the Command implementation itself, since any password is available here.
-        try:
-            value.key(None)
-        except Exception as e:
-            raise parser.error('%s: %s: Could not read private key: %s' % (value, value.private_key_path, e))
 
         setattr(namespace, self.dest, value)
 
@@ -308,6 +302,12 @@ class BaseCommand(_BaseCommand):
     def print_extensions(self, cert):
         for name, value in sorted(dict(cert.extensions()).items()):
             self.print_extension(name, value)
+
+    def test_private_key(self, ca, password):
+        try:
+            ca.key(password)
+        except Exception as e:
+            raise CommandError(str(e))
 
 
 class CertCommand(BaseCommand):

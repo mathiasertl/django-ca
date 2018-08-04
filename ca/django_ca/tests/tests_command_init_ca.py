@@ -452,7 +452,7 @@ class InitCATest(DjangoCATestCase):
             out, err = self.init_ca(name='Child', parent=parent, password=child_password)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
-        self.assertTrue(pre.called)
+        self.assertFalse(pre.called)
         self.assertFalse(post.called)
         self.assertIsNone(CertificateAuthority.objects.filter(name='Child').first())
 

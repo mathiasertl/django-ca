@@ -126,6 +126,9 @@ the default values, options like --key-usage still override the profile.""")
             raise CommandError(
                 'Certificate would outlive CA, maximum expiry for this CA is %s days.' % max_days)
 
+        # See if we can work with the private key
+        self.test_private_key(ca, options['password'])
+
         # get list of watchers
         watchers = [Watcher.from_addr(addr) for addr in options['watch']]
 

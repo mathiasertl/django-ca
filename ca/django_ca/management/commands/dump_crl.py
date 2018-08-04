@@ -46,6 +46,9 @@ class Command(BaseCommand):
             'ca_crl': options['ca_crl'],
         }
 
+        # See if we can work with the private key
+        self.test_private_key(options['ca'], options['password'])
+
         try:
             crl = get_crl(ca=options['ca'], **kwargs)
         except Exception as e:
