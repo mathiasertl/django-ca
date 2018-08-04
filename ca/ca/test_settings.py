@@ -179,13 +179,13 @@ OCSP_KEY_PATH = os.path.join(FIXTURES_DIR, 'ocsp.key')
 OCSP_PEM_PATH = os.path.join(FIXTURES_DIR, 'ocsp.pem')
 
 # Custom settings
-CA_DEFAULT_SUBJECT = {
-    'C': 'AT',
-    'ST': 'Vienna',
-    'L': 'Vienna',
-    'O': 'Django CA',
-    'OU': 'Django CA Testsuite',
-}
+CA_DEFAULT_SUBJECT = [
+    ('C', 'AT'),
+    ('ST', 'Vienna'),
+    ('L', 'Vienna'),
+    ('O', 'Django CA'),
+    ('OU', 'Django CA Testsuite'),
+]
 CA_MIN_KEY_SIZE = 1024
 
 

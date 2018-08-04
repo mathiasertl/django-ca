@@ -185,7 +185,7 @@ HPKP pin: %(hpkp)s
 
     def test_no_san_with_watchers(self):
         # test a cert with no subjectAltNames but with watchers.
-        cert = self.create_cert(self.ca, self.csr_pem, {'CN': 'example.com'}, cn_in_san=False)
+        cert = self.create_cert(self.ca, self.csr_pem, [('CN', 'example.com')], cn_in_san=False)
         watcher = Watcher.from_addr('user@example.com')
         cert.watchers.add(watcher)
 

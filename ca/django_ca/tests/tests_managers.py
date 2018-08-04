@@ -65,8 +65,9 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         self.assertBasic(cert.x509)
 
         # verify subject
-        expected_subject = kwargs['subject']
-        expected_subject['CN'] = 'example.com'
+        expected_subject = [
+            ('CN', 'example.com'),
+        ]
         self.assertSubject(cert.x509, expected_subject)
 
         # verify extensions
@@ -85,7 +86,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
             self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
 
-        self.assertSubject(cert.x509, {'CN': 'example.com'})
+        self.assertSubject(cert.x509, [('CN', 'example.com')])
 
         # verify extensions
         self.assertExtensions(cert.x509, {
@@ -109,7 +110,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
     def test_cn_in_san(self):
         kwargs = get_cert_profile_kwargs()
-        kwargs['subject']['CN'] = 'cn.example.com'
+        kwargs['subject'].append(('CN', 'cn.example.com'))
         cert = Certificate.objects.init(
             self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
@@ -127,7 +128,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
     def test_cn_not_in_san(self):
         kwargs = get_cert_profile_kwargs()
-        kwargs['subject']['CN'] = 'cn.example.com'
+        kwargs['subject'].append(('CN', 'cn.example.com'))
         kwargs['cn_in_san'] = False
         cert = Certificate.objects.init(
             self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
@@ -139,7 +140,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
     def test_no_san(self):
         kwargs = get_cert_profile_kwargs()
-        kwargs['subject']['CN'] = 'cn.example.com'
+        kwargs['subject'].append(('CN', 'cn.example.com'))
         kwargs['cn_in_san'] = False
         cert = Certificate.objects.init(
             self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(), **kwargs)

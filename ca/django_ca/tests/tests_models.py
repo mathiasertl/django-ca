@@ -83,7 +83,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
         # A certificate with all extensions, can do everything, etc
         cls.ca.crl_url = 'https://ca.example.com/crl.der'
         cls.full = cls.create_cert(
-            cls.ca, cert3_csr, {'CN': 'all.example.com'},
+            cls.ca, cert3_csr, [('CN', 'all.example.com')],
             san=['dirname:/C=AT/CN=example.com', 'email:user@example.com', 'fd00::1'])
 
     def setUp(self):

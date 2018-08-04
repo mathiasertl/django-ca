@@ -13,8 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from collections import OrderedDict
-
 from django.core.management.base import CommandError
 from django.utils import six
 from django.utils import timezone
@@ -144,14 +142,14 @@ the default values, options like --key-usage still override the profile.""")
             kwargs['tls_features'] = self.parse_extension(options['tls_features'])
 
         # update subject with arguments from the command line
-        kwargs.setdefault('subject', OrderedDict())
+        kwargs.setdefault('subject', [])
         if options.get('subject'):
-            kwargs['subject'].update(options['subject'])  # update from command line
+            kwargs['subject'] = options['subject']  # update from command line
 
         # filter empty values
-        kwargs['subject'] = OrderedDict([(k, v) for k, v in kwargs['subject'].items() if v])
+        kwargs['subject'] = [(k, v) for k, v in kwargs['subject'] if v]
 
-        if not kwargs['subject'].get('CN') and not options['alt']:
+        if sum(1 for t in kwargs['subject'] if t[0] == 'CN') == 0 and not options['alt']:
             raise CommandError(
                 "Must give at least a CN in --subject or one or more --alt arguments.")
 

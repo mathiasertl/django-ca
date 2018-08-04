@@ -17,7 +17,6 @@
 
 import re
 from collections import Iterable
-from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime
 from ipaddress import ip_address
@@ -82,6 +81,11 @@ OID_NAME_MAPPINGS = {
 # same, but reversed
 NAME_OID_MAPPINGS = {v: k for k, v in OID_NAME_MAPPINGS.items()}
 
+# Some OIDs can occur multiple times
+MULTIPLE_OIDS = (
+    NameOID.ORGANIZATIONAL_UNIT_NAME,
+)
+
 # uppercase values as keys for normalizing case
 NAME_CASE_MAPPINGS = {v.upper(): v for v in OID_NAME_MAPPINGS.values()}
 
@@ -127,9 +131,9 @@ class LazyEncoder(DjangoJSONEncoder):
         return super(LazyEncoder, self).default(obj)
 
 
-def sort_subject_dict(d):
-    """Returns an itemized dictionary in the correct order for a x509 subject."""
-    return sorted(d.items(), key=lambda e: SUBJECT_FIELDS.index(e[0]))
+def sort_name(subject):
+    """Returns the subject in the correct order for a x509 subject."""
+    return sorted(subject, key=lambda e: SUBJECT_FIELDS.index(e[0]))
 
 
 def format_name(subject):
@@ -241,15 +245,15 @@ def parse_name(name):
     whitespace at the start and end is stripped and the subject does not have to start with a slash (``/``).
 
     >>> parse_name('/CN=example.com')
-    OrderedDict([('CN', 'example.com')])
+    [('CN', 'example.com')]
     >>> parse_name('c=AT/l= Vienna/o="ex org"/CN=example.com')
-    OrderedDict([('C', 'AT'), ('L', 'Vienna'), ('O', 'ex org'), ('CN', 'example.com')])
+    [('C', 'AT'), ('L', 'Vienna'), ('O', 'ex org'), ('CN', 'example.com')]
 
     Dictionary keys are normalized to the values of :py:const:`OID_NAME_MAPPINGS` and keys will be sorted
     based on x509 name specifications regardless of the given order:
 
     >>> parse_name('L="Vienna / District"/EMAILaddress=user@example.com')
-    OrderedDict([('L', 'Vienna / District'), ('emailAddress', 'user@example.com')])
+    [('L', 'Vienna / District'), ('emailAddress', 'user@example.com')]
     >>> parse_name('/C=AT/CN=example.com') == parse_name('/CN=example.com/C=AT')
     True
 
@@ -257,14 +261,14 @@ def parse_name(name):
     so strings like ``/OU="Org / Org Unit"/CN=example.com`` will work as expected.
 
     >>> parse_name('L="Vienna / District"/CN=example.com')
-    OrderedDict([('L', 'Vienna / District'), ('CN', 'example.com')])
+    [('L', 'Vienna / District'), ('CN', 'example.com')]
 
     But note that it's still easy to trick this function, if you really want to. The following example is
     *not* a valid subject, the location is just bogus, and whatever you were expecting as output, it's
     certainly different:
 
     >>> parse_name('L="Vienna " District"/CN=example.com')
-    OrderedDict([('L', 'Vienna'), ('CN', 'example.com')])
+    [('L', 'Vienna'), ('CN', 'example.com')]
 
     Examples of where this string is used are:
 
@@ -276,22 +280,25 @@ def parse_name(name):
     """
     name = name.strip()
     if not name:  # empty subjects are ok
-        return {}
+        return []
 
     try:
         items = [(NAME_CASE_MAPPINGS[t[0].upper()], force_text(t[2])) for t in NAME_RE.findall(name)]
     except KeyError as e:
         raise ValueError('Unknown x509 name field: %s' % e.args[0])
 
-    parsed = sorted(items, key=lambda e: SUBJECT_FIELDS.index(e[0]))
-    return OrderedDict(parsed)
+    # Check that no OIDs not in MULTIPLE_OIDS occur more then once
+    for key, oid in NAME_OID_MAPPINGS.items():
+        if sum(1 for t in items if t[0] == key) > 1 and oid not in MULTIPLE_OIDS:
+            raise ValueError('Subject contains multiple "%s" fields' % key)
+
+    return sort_name(items)
 
 
 def x509_name(name):
-    """Parses a subject string into a :py:class:`x509.Name <cryptography:cryptography.x509.Name>`.
+    """Parses a subject into a :py:class:`x509.Name <cryptography:cryptography.x509.Name>`.
 
-    If ``name`` is a string, :py:func:`parse_name` is used to parse it. A list of tuples or a ``dict``
-    (preferrably an :py:class:`~python:collections.OrderedDict`) is also supported.
+    If ``name`` is a string, :py:func:`parse_name` is used to parse it.
 
     >>> x509_name('/C=AT/CN=example.com')  # doctest: +NORMALIZE_WHITESPACE
     <Name([<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, value='AT')>,
@@ -299,19 +306,9 @@ def x509_name(name):
     >>> x509_name([('C', 'AT'), ('CN', 'example.com')])  # doctest: +NORMALIZE_WHITESPACE
     <Name([<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, value='AT')>,
            <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>])>
-    >>> x509_name(OrderedDict([('C', 'AT'), ('CN', 'example.com')]))  # doctest: +NORMALIZE_WHITESPACE
-    <Name([<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, value='AT')>,
-           <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>])>
-    >>> x509_name(OrderedDict([('C', 'AT'), ('CN', 'example.com')]))  # doctest: +NORMALIZE_WHITESPACE
-    <Name([<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, value='AT')>,
-           <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>])>
     """
     if isinstance(name, six.string_types):
-        name = parse_name(name).items()
-    elif isinstance(name, OrderedDict):
-        name = name.items()
-    elif isinstance(name, dict):
-        name = sort_subject_dict(name)
+        name = parse_name(name)
 
     return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], force_text(value)) for typ, value in name])
 
@@ -526,10 +523,11 @@ def get_cert_profile_kwargs(name=None):
     if name is None:
         name = ca_settings.CA_DEFAULT_PROFILE
 
+    # TODO: Account for old dictionary-style subjects!
     profile = deepcopy(ca_settings.CA_PROFILES[name])
     kwargs = {
         'cn_in_san': profile['cn_in_san'],
-        'subject': OrderedDict(sort_subject_dict(profile['subject'])),
+        'subject': sort_name(profile['subject']),
     }
     for arg in ['keyUsage', 'extendedKeyUsage']:
         config = profile.get(arg)

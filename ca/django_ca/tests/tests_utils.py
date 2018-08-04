@@ -148,7 +148,7 @@ class LazyEncoderTestCase(TestCase):
 
 class ParseNameTestCase(DjangoCATestCase):
     def assertSubject(self, actual, expected):
-        self.assertEqual(list(parse_name(actual).items()), expected)
+        self.assertEqual(parse_name(actual), expected)
 
     def test_basic(self):
         self.assertSubject('/CN=example.com', [('CN', 'example.com')])
@@ -188,6 +188,20 @@ class ParseNameTestCase(DjangoCATestCase):
 
     def test_no_slash_at_start(self):
         self.assertSubject('CN=example.com', [('CN', 'example.com')])
+
+    def test_multiple_ous(self):
+        self.assertSubject('/OU=foo/OU=bar', [('OU', 'foo'), ('OU', 'bar')])
+        self.assertSubject('/C=AT/O=bla/OU=foo/OU=bar/CN=example.com/',
+                           [('C', 'AT'), ('O', 'bla'), ('OU', 'foo'), ('OU', 'bar'), ('CN', 'example.com')])
+        self.assertSubject('/C=AT/O=bla/OU=foo/OU=bar/OU=hugo/CN=example.com/',
+                           [('C', 'AT'), ('O', 'bla'), ('OU', 'foo'), ('OU', 'bar'), ('OU', 'hugo'),
+                            ('CN', 'example.com')])
+
+    def test_multiple_other(self):
+        with self.assertRaisesRegex(ValueError, '^Subject contains multiple "C" fields$'):
+            parse_name('/C=AT/C=FOO')
+        with self.assertRaisesRegex(ValueError, '^Subject contains multiple "CN" fields$'):
+            parse_name('/CN=AT/CN=FOO')
 
     def test_unknown(self):
         field = 'ABC'
@@ -456,13 +470,13 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
             'cn_in_san': True,
             'keyUsage': (True, 'digitalSignature,keyAgreement,keyEncipherment'),
             'extendedKeyUsage': (False, 'serverAuth'),
-            'subject': {
-                'C': 'AT',
-                'L': 'Vienna',
-                'O': 'Django CA',
-                'OU': 'Django CA Testsuite',
-                'ST': 'Vienna',
-            },
+            'subject': [
+                ('C', 'AT'),
+                ('ST', 'Vienna'),
+                ('L', 'Vienna'),
+                ('O', 'Django CA'),
+                ('OU', 'Django CA Testsuite'),
+            ],
         }
         self.assertEqual(get_cert_profile_kwargs(), expected)
         self.assertEqual(get_cert_profile_kwargs(ca_settings.CA_DEFAULT_PROFILE), expected)
@@ -471,13 +485,13 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
         expected = {
             'cn_in_san': True,
             'keyUsage': (False, 'digitalSignature'),
-            'subject': {
-                'C': 'AT',
-                'L': 'Vienna',
-                'O': 'Django CA',
-                'OU': 'Django CA Testsuite',
-                'ST': 'Vienna',
-            },
+            'subject': [
+                ('C', 'AT'),
+                ('ST', 'Vienna'),
+                ('L', 'Vienna'),
+                ('O', 'Django CA'),
+                ('OU', 'Django CA Testsuite'),
+            ],
         }
 
         CA_PROFILES = {

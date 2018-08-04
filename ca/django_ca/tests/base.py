@@ -43,7 +43,6 @@ from ..signals import post_issue_cert
 from ..signals import post_revoke_cert
 from ..utils import OID_NAME_MAPPINGS
 from ..utils import get_cert_profile_kwargs
-from ..utils import sort_subject_dict
 from ..utils import x509_name
 
 if six.PY2:
@@ -296,7 +295,7 @@ class DjangoCATestCase(TestCase):
 
     def assertSubject(self, cert, expected):
         actual = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in cert.subject]
-        self.assertEqual(actual, sort_subject_dict(expected))
+        self.assertEqual(actual, expected)
 
     def assertIssuer(self, issuer, cert):
         self.assertEqual(cert.issuer, issuer.subject)
@@ -427,8 +426,7 @@ class DjangoCATestCase(TestCase):
     def create_cert(cls, ca, csr, subject, san=None, **kwargs):
         cert_kwargs = get_cert_profile_kwargs()
         cert_kwargs.update(kwargs)
-        cert_kwargs.setdefault('subject', {})
-        cert_kwargs['subject'].update(subject)
+        cert_kwargs['subject'] = subject
         cert = Certificate.objects.init(
             ca=ca, csr=csr, algorithm=hashes.SHA256(), expires=cls.expires(720), subjectAltName=san,
             **cert_kwargs)

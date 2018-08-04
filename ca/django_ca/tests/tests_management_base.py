@@ -45,18 +45,23 @@ class SubjectActionTestCase(DjangoCATestCase):
 
     def test_basic(self):
         ns = self.parser.parse_args(['--subject=/CN=example.com'])
-        self.assertEqual(list(ns.subject.items()), [('CN', 'example.com')])
+        self.assertEqual(ns.subject, [('CN', 'example.com')])
 
         ns = self.parser.parse_args(['--subject=/ST=foo/CN=example.com'])
-        self.assertEqual(list(ns.subject.items()), [('ST', 'foo'), ('CN', 'example.com')])
+        self.assertEqual(ns.subject, [('ST', 'foo'), ('CN', 'example.com')])
 
         ns = self.parser.parse_args(['--subject=/ST=/CN=example.com'])
-        self.assertEqual(list(ns.subject.items()), [('ST', ''), ('CN', 'example.com')])
+        self.assertEqual(ns.subject, [('ST', ''), ('CN', 'example.com')])
 
     def test_order(self):
         # this should be an ordered dict
         ns = self.parser.parse_args(['--subject=/CN=example.com/ST=foo'])
-        self.assertEqual(list(ns.subject.items()), [('ST', 'foo'), ('CN', 'example.com')])
+        self.assertEqual(ns.subject, [('ST', 'foo'), ('CN', 'example.com')])
+
+    def test_multiple(self):
+        # this should be an ordered dict
+        ns = self.parser.parse_args(['--subject=/C=AT/OU=foo/OU=bar'])
+        self.assertEqual(ns.subject, [('C', 'AT'), ('OU', 'foo'), ('OU', 'bar')])
 
     def test_error(self):
         self.assertParserError(['--subject=/WRONG=foobar'],
@@ -218,7 +223,7 @@ class CertificateActionTestCase(DjangoCAWithCertTestCase):
 
     def test_multiple(self):
         # Create a second cert and manually set almost the same serial
-        cert2 = self.create_cert(self.ca, self.csr_pem, {'CN': 'example.com'})
+        cert2 = self.create_cert(self.ca, self.csr_pem, [('CN', 'example.com')])
         cert2.serial = self.cert.serial[:-1] + 'X'
         cert2.save()
 

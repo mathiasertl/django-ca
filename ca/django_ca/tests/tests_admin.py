@@ -273,7 +273,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
 
         cert = Certificate.objects.get(cn=cn)
         self.assertPostIssueCert(post, cert)
-        self.assertSubject(cert.x509, {'C': 'US', 'CN': cn})
+        self.assertSubject(cert.x509, [('C', 'US'), ('CN', cn)])
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(cert.subjectAltName(), (False, ['DNS:%s' % cn]))
@@ -313,7 +313,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
 
         cert = Certificate.objects.get(cn=cn)
         self.assertPostIssueCert(post, cert)
-        self.assertSubject(cert.x509, {'C': 'US', 'CN': cn})
+        self.assertSubject(cert.x509, [('C', 'US'), ('CN', cn)])
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(cert.subjectAltName(), (False, ['DNS:%s' % cn, 'DNS:%s' % san]))
@@ -403,7 +403,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
 
         cert = Certificate.objects.get(cn=cn)
         self.assertPostIssueCert(post, cert)
-        self.assertSubject(cert.x509, {'C': 'US', 'CN': cn})
+        self.assertSubject(cert.x509, [('C', 'US'), ('CN', cn)])
         self.assertIssuer(ca, cert)
         self.assertAuthorityKeyIdentifier(ca, cert)
         self.assertEqual(cert.subjectAltName(), (False, ['DNS:%s' % cn]))

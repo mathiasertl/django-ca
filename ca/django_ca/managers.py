@@ -44,6 +44,7 @@ from .utils import TLS_FEATURE_MAPPING
 from .utils import get_cert_builder
 from .utils import is_power2
 from .utils import parse_general_name
+from .utils import sort_name
 from .utils import x509_name
 
 
@@ -256,8 +257,9 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             The signed certificate.
         """
         if subject is None:
-            subject = {}
-        if not subject.get('CN') and not subjectAltName:
+            subject = []
+        _cn_present = sum(1 for t in subject if t[0] == 'CN') > 0
+        if not _cn_present and not subjectAltName:
             raise ValueError("Must name at least a CN or a subjectAltName.")
 
         if subjectAltName:
@@ -265,13 +267,17 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         else:
             subjectAltName = []  # so we can append the CN if requested
 
-        if not subject.get('CN'):  # use first SAN as CN if CN is not set
-            subject['CN'] = subjectAltName[0].value
-        elif cn_in_san and subject.get('CN'):  # add CN to SAN if cn_in_san is True (default)
+        # use first SAN as CN if CN is not set
+        if not _cn_present:
+            subject.append(('CN', subjectAltName[0].value))
+            subject = sort_name(subject)
+
+        elif cn_in_san and _cn_present:  # add CN to SAN if cn_in_san is True (default)
+            cn = next(t[1] for t in subject if t[0] == 'CN')
             try:
-                cn_name = parse_general_name(subject['CN'])
+                cn_name = parse_general_name(cn)
             except idna.IDNAError:
-                raise ValueError('%s: Could not parse CommonName as subjectAltName.' % subject['CN'])
+                raise ValueError('%s: Could not parse CommonName as subjectAltName.' % cn)
             else:
                 if cn_name not in subjectAltName:
                     subjectAltName.insert(0, cn_name)
