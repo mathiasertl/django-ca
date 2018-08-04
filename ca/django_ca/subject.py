@@ -87,6 +87,9 @@ class Subject(object):
 
         self._data[key] = value
 
+    def __repr__(self):
+        return 'Subject("%s")' % str(self)
+
     def __str__(self):
         data = []
         for oid, values in self._data.items():

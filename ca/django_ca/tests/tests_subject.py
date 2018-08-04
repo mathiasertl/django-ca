@@ -126,6 +126,11 @@ class TestSubject(TestCase):
         self.assertEqual(len(Subject('/C=AT/OU=foo/CN=example.com')), 3)
         self.assertEqual(len(Subject('/C=AT/OU=foo/OU=bar/CN=example.com')), 3)
 
+    def test_repr(self):
+        self.assertEqual(repr(Subject('/C=AT/CN=example.com')), 'Subject("/C=AT/CN=example.com")')
+        self.assertEqual(repr(Subject('/CN=example.com/C=AT')), 'Subject("/C=AT/CN=example.com")')
+        self.assertEqual(repr(Subject('/cn=example.com/c=AT')), 'Subject("/C=AT/CN=example.com")')
+
     def test_setitem(self):
         s = Subject('')
         s['C'] = 'AT'
