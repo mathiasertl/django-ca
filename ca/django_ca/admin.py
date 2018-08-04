@@ -182,8 +182,12 @@ on Wikipedia.</p>'''
             return fieldsets
 
         fieldsets = copy.deepcopy(fieldsets)
-        for name, _value in sorted(obj.extensions()):
-            fieldsets[self.x509_fieldset_index][1]['fields'].append(name)
+        extensions = list(sorted(obj.extensions()))
+        if extensions:
+            for name, _value in sorted(obj.extensions()):
+                fieldsets[self.x509_fieldset_index][1]['fields'].append(name)
+        else:
+            fieldsets.pop(self.x509_fieldset_index)
 
         return fieldsets
 
