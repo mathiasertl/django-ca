@@ -145,7 +145,8 @@ class SubjectWidget(CustomMultiWidget):
         if value is None:  # pragma: no cover
             return ('', '', '', '', '', '')
 
-        # TODO: probably not tested: should happen ad form submission
+        # NOTE: this appears to be only relevant on initial form load or when editing an existing form. The
+        # latter is never true, so this isn't relevant anywhere else.
         return [
             value.get('C', ''),
             value.get('ST', ''),
