@@ -86,6 +86,10 @@ class TestSubject(TestCase):
         with self.assertRaisesRegex(ValueError, '^C: Must not occur multiple times$'):
             Subject([('C', 'AT'), ('C', 'US')])
 
+    def test_init_type(self):
+        with self.assertRaisesRegex(ValueError, '^subject: not a list/tuple.$'):
+            Subject(33)
+
     def test_contains(self):
         self.assertIn('CN', Subject('/CN=example.com'))
         self.assertIn(NameOID.COMMON_NAME, Subject('/CN=example.com'))
@@ -170,6 +174,9 @@ class TestSubject(TestCase):
         s['C'] = []
         self.assertEqual(s, Subject('/CN=example.com'))
 
+        with self.assertRaisesRegex(ValueError, '^Value must be str or list$'):
+            s['C'] = 33
+
     def test_get(self):
         self.assertEqual(Subject('/CN=example.com').get('CN'), 'example.com')
         self.assertEqual(Subject('/C=AT/CN=example.com').get('C'), 'AT')
@@ -218,6 +225,10 @@ class TestSubject(TestCase):
         with self.assertRaisesRegex(ValueError, 'L: Must not occur multiple times'):
             s.setdefault('L', ['AT', 'DE'])
         self.assertEqual(s, Subject('/C=AT/OU=foo/OU=bar/CN=example.com'))
+
+        s = Subject()
+        with self.assertRaisesRegex(ValueError, '^Value must be str or list$'):
+            s.setdefault('C', 33)
 
     def test_fields(self):
         s = Subject('')
