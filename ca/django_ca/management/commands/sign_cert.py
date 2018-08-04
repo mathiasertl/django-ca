@@ -134,6 +134,7 @@ the default values, options like --key-usage still override the profile.""")
 
         # get keyUsage and extendedKeyUsage flags based on profiles
         kwargs = get_cert_profile_kwargs(options['profile'])
+        kwargs['subject'] = Subject(kwargs.get('subject'))
         kwargs['password'] = options['password']
         kwargs['csr_format'] = options['csr_format']
         if options['cn_in_san'] is not None:
@@ -146,7 +147,6 @@ the default values, options like --key-usage still override the profile.""")
             kwargs['tls_features'] = self.parse_extension(options['tls_features'])
 
         # update subject with arguments from the command line
-        kwargs.setdefault('subject', Subject())
         if options.get('subject'):
             # TODO: Update value
             kwargs['subject'] = options['subject']  # update from command line

@@ -21,7 +21,6 @@ from django.utils.translation import ugettext_lazy as _l
 
 from django_ca import ca_settings
 from django_ca import utils
-from django_ca.subject import Subject
 from django_ca.tests.base import DjangoCATestCase
 from django_ca.tests.base import override_settings
 from django_ca.utils import NAME_RE
@@ -471,13 +470,13 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
             'cn_in_san': True,
             'keyUsage': (True, 'digitalSignature,keyAgreement,keyEncipherment'),
             'extendedKeyUsage': (False, 'serverAuth'),
-            'subject': Subject([
+            'subject': [
                 ('C', 'AT'),
                 ('ST', 'Vienna'),
                 ('L', 'Vienna'),
                 ('O', 'Django CA'),
                 ('OU', 'Django CA Testsuite'),
-            ]),
+            ],
         }
         self.assertEqual(get_cert_profile_kwargs(), expected)
         self.assertEqual(get_cert_profile_kwargs(ca_settings.CA_DEFAULT_PROFILE), expected)
@@ -486,13 +485,13 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
         expected = {
             'cn_in_san': True,
             'keyUsage': (False, 'digitalSignature'),
-            'subject': Subject([
+            'subject': [
                 ('C', 'AT'),
                 ('ST', 'Vienna'),
                 ('L', 'Vienna'),
                 ('O', 'Django CA'),
                 ('OU', 'Django CA Testsuite'),
-            ]),
+            ],
         }
 
         CA_PROFILES = {
