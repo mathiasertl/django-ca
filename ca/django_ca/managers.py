@@ -270,7 +270,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             subject = Subject()
 
         if isinstance(subject, list):
-            warnings.warn('Received a list: %s' % subject, stacklevel=2)
+            warnings.warn('Received a list: %s' % subject, stacklevel=3)
             _cn_present = sum(1 for t in subject if t[0] == 'CN') > 0
         elif isinstance(subject, Subject):
             _cn_present = 'CN' in subject
@@ -297,7 +297,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
 
         elif cn_in_san and _cn_present:  # add CN to SAN if cn_in_san is True (default)
             if isinstance(subject, list):
-                warnings.warn('Received a list: %s' % subject, stacklevel=2)
+                warnings.warn('Received a list: %s' % subject, stacklevel=3)
                 cn = next(t[1] for t in subject if t[0] == 'CN')
             elif isinstance(subject, Subject):
                 cn = subject['CN']
@@ -324,7 +324,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         builder = builder.issuer_name(ca.x509.subject)
 
         if isinstance(subject, list):
-            warnings.warn('Received a list: %s' % subject, stacklevel=2)
+            warnings.warn('Received a list: %s' % subject, stacklevel=3)
             builder = builder.subject_name(x509_name(subject))
         elif isinstance(subject, Subject):
             builder = builder.subject_name(subject.name)
