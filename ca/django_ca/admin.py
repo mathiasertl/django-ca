@@ -118,7 +118,7 @@ on Wikipedia.</p>'''
     def output_extension(self, value):
         # shared function for formatting extension values
         if value is None:
-            return mark_safe('foo')
+            return '<none>'
 
         critical, value = value
         html = ''

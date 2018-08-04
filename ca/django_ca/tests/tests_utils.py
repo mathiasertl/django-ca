@@ -252,6 +252,10 @@ class ParseGeneralNameTest(DjangoCATestCase):
         self.assertEqual(parse_general_name('ip:fd00::0/32'),
                          x509.IPAddress(ipaddress.ip_network(u'fd00::0/32')))
 
+    def test_domain(self):
+        self.assertEqual(parse_general_name('DNS:example.com'), x509.DNSName('example.com'))
+        self.assertEqual(parse_general_name('DNS:.example.com'), x509.DNSName('.example.com'))
+
     def test_wildcard_domain(self):
         self.assertEqual(parse_general_name('*.example.com'), x509.DNSName(u'*.example.com'))
         self.assertEqual(parse_general_name('DNS:*.example.com'), x509.DNSName(u'*.example.com'))
@@ -283,6 +287,12 @@ class ParseGeneralNameTest(DjangoCATestCase):
                          x509.OtherName(
                          x509.oid.ObjectIdentifier('1.3.6.1.4.1.311.25.1'),
                          b'\x04\x10\t\xcf\xf1\xa8\xf6\xde\xfdK\x85\xce\x95\xff\xa1\xb5B\x17'))
+
+        with self.assertRaisesRegex(ValueError, '^Incorrect otherName format: foobar$'):
+            parse_general_name('otherName:foobar')
+
+        with self.assertRaisesRegex(ValueError, '^Unsupported ASN type in otherName: MagicString$'):
+            parse_general_name('otherName:1.2.3;MagicString:Broken')
 
     def test_error(self):
         with self.assertRaisesRegex(ValueError, '^Could not parse IP address\.$'):

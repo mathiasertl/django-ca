@@ -432,8 +432,7 @@ def parse_general_name(name):
         except ValueError:
             pass
 
-        # Try to encode the domain name. DNSName() does not validate the domain name, but this
-        # check will fail.
+        # Try to encode as domain name. DNSName() does not validate the domain name, but this check will fail.
         if name.startswith('*.'):
             idna.encode(name[2:])
         elif name.startswith('.'):
