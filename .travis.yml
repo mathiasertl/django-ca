@@ -6,16 +6,16 @@ python:
   - "3.6"
   - "nightly"
 env:
-  - DJANGO_VERSION=2.1 CRYPTOGRAPHY_VERSION=2.3
-  - DJANGO_VERSION=2.1 CRYPTOGRAPHY_VERSION=2.2.2
-  - DJANGO_VERSION=2.1 CRYPTOGRAPHY_VERSION=2.1.4
-  - DJANGO_VERSION=2.0.8 CRYPTOGRAPHY_VERSION=2.3
-  - DJANGO_VERSION=1.11.15 CRYPTOGRAPHY_VERSION=2.3
+  - DJANGO=2.1 CRYPTOGRAPHY=2.3
+  - DJANGO=2.1 CRYPTOGRAPHY=2.2.2
+  - DJANGO=2.1 CRYPTOGRAPHY=2.1.4
+  - DJANGO=2.0.8 CRYPTOGRAPHY=2.3
+  - DJANGO=1.11.15 CRYPTOGRAPHY=2.3
 install:
   # Build/test dependencies
  - pip install -U pip setuptools
  - pip install -r requirements.txt -r requirements-dev.txt
- - pip install Django==$DJANGO_VERSION cryptography==$CRYPTOGRAPHY_VERSION
+ - pip install Django==$DJANGO cryptography==$CRYPTOGRAPHY
 #before_script:
 script:
   - python setup.py code_quality
@@ -28,21 +28,21 @@ matrix:
     exclude:
         # Django 2.0 no longer supports python2
         # Django 2.1 no longer supports python3
-        - env: DJANGO_VERSION=2.1 CRYPTOGRAPHY_VERSION=2.3
+        - env: DJANGO=2.1 CRYPTOGRAPHY=2.3
           python: "3.4"
-        - env: DJANGO_VERSION=2.1 CRYPTOGRAPHY_VERSION=2.3
+        - env: DJANGO=2.1 CRYPTOGRAPHY=2.3
           python: "2.7"
-        - env: DJANGO_VERSION=2.1 CRYPTOGRAPHY_VERSION=2.2.2
+        - env: DJANGO=2.1 CRYPTOGRAPHY=2.2.2
           python: "3.4"
-        - env: DJANGO_VERSION=2.1 CRYPTOGRAPHY_VERSION=2.2.2
+        - env: DJANGO=2.1 CRYPTOGRAPHY=2.2.2
           python: "2.7"
-        - env: DJANGO_VERSION=2.1 CRYPTOGRAPHY_VERSION=2.1.4
+        - env: DJANGO=2.1 CRYPTOGRAPHY=2.1.4
           python: "3.4"
-        - env: DJANGO_VERSION=2.1 CRYPTOGRAPHY_VERSION=2.1.4
+        - env: DJANGO=2.1 CRYPTOGRAPHY=2.1.4
           python: "2.7"
-        - env: DJANGO_VERSION=2.0.8 CRYPTOGRAPHY_VERSION=2.3
+        - env: DJANGO=2.0.8 CRYPTOGRAPHY=2.3
           python: "2.7"
-        - env: DJANGO_VERSION=1.11.15 CRYPTOGRAPHY_VERSION=2.3
+        - env: DJANGO=1.11.15 CRYPTOGRAPHY=2.3
           python: "nightly"
 
 #notifications:
