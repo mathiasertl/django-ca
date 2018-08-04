@@ -94,8 +94,8 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         parent : :py:class:`~django_ca.models.CertificateAuthority`, optional
             Parent certificate authority for the new CA. This means that this CA will be an intermediate
             authority.
-        subject : str
-            Subject string, e.g. ``"/CN=example.com"``.
+        subject : :py:class:`~django_ca.subject.Subject`
+            Subject string, e.g. ``Subject("/CN=example.com")``.
         pathlen : int, optional
         password : bytes, optional
             Password to encrypt the private key with.
@@ -155,7 +155,6 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         for critical, ext in self.get_common_extensions(ca_issuer_url, ca_crl_url, ca_ocsp_url):
             builder = builder.add_extension(ext, critical=critical)
 
-        # TODO: pass separate lists maybe?
         if name_constraints:
             excluded = []
             permitted = []
