@@ -54,10 +54,10 @@ else:
     from unittest.mock import patch
 
 
-def _load_key(path):
+def _load_key(path, password=None):
     path = os.path.join(settings.FIXTURES_DIR, path)
     with open(path, 'rb') as stream:
-        return serialization.load_pem_private_key(stream.read(), password=None, backend=default_backend())
+        return serialization.load_pem_private_key(stream.read(), password=password, backend=default_backend())
 
 
 def _load_csr(path):
@@ -77,6 +77,9 @@ root_key = _load_key('root.key')
 root_pem, root_pubkey = _load_cert('root.pem')
 child_key = _load_key('child.key')
 child_pem, child_pubkey = _load_cert('child.pem')
+pwd_ca_pwd = b'test_password'
+pwd_ca_key = _load_key('pwd_ca.key', password=pwd_ca_pwd)
+pwd_ca_pem, pwd_ca_pubkey = _load_cert('pwd_ca.pem')
 ocsp_key = _load_key('ocsp.key')
 ocsp_csr = _load_csr('ocsp.csr')
 ocsp_pem, ocsp_pubkey = _load_cert('ocsp.pem')
