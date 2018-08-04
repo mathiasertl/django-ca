@@ -41,6 +41,7 @@ from ..models import CertificateAuthority
 from ..signals import post_create_ca
 from ..signals import post_issue_cert
 from ..signals import post_revoke_cert
+from ..subject import Subject
 from ..utils import OID_NAME_MAPPINGS
 from ..utils import get_cert_profile_kwargs
 from ..utils import x509_name
@@ -426,7 +427,7 @@ class DjangoCATestCase(TestCase):
     def create_cert(cls, ca, csr, subject, san=None, **kwargs):
         cert_kwargs = get_cert_profile_kwargs()
         cert_kwargs.update(kwargs)
-        cert_kwargs['subject'] = subject
+        cert_kwargs['subject'] = Subject(subject)
         cert = Certificate.objects.init(
             ca=ca, csr=csr, algorithm=hashes.SHA256(), expires=cls.expires(720), subjectAltName=san,
             **cert_kwargs)
