@@ -11,6 +11,7 @@ ChangeLog
 ***********
 
 * Allow the creation of Certificates with multiple OUs in their subject (command-line only).
+* Django 2.1 is now fully supported.
 
 .. _changelog-1.8.0:
 
