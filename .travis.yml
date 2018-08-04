@@ -6,9 +6,9 @@ python:
   - "3.6"
   - "nightly"
 env:
-  #- DJANGO_VERSION=2.1b1
-  - DJANGO_VERSION=2.0.7
-  - DJANGO_VERSION=1.11.13
+  - DJANGO_VERSION=2.1
+  - DJANGO_VERSION=2.0.8
+  - DJANGO_VERSION=1.11.15
 install:
   # Build/test dependencies
  - pip install -U pip setuptools
@@ -25,13 +25,13 @@ script:
 matrix:
     exclude:
         # Django 2.0 no longer supports python2
-        - env: DJANGO_VERSION=2.1b1
+        - env: DJANGO_VERSION=2.1
           python: "3.4"
-        - env: DJANGO_VERSION=2.1b1
+        - env: DJANGO_VERSION=2.1
           python: "2.7"
-        - env: DJANGO_VERSION=2.0.7
+        - env: DJANGO_VERSION=2.0.8
           python: "2.7"
-        - env: DJANGO_VERSION=1.11.13
+        - env: DJANGO_VERSION=1.11.15
           python: "nightly"
 
 #notifications:
