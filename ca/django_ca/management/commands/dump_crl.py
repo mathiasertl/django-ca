@@ -51,7 +51,8 @@ class Command(BaseCommand):
 
         try:
             crl = get_crl(ca=options['ca'], **kwargs)
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
+            # Note: all parameters are already sanitized by parser actions
             raise CommandError(str(e))
 
         if path == '-':
