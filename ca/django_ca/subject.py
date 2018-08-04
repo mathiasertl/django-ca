@@ -27,6 +27,8 @@ from .utils import sort_name
 
 @six.python_2_unicode_compatible
 class Subject(object):
+    """Convenience class to handle X509 Subjects."""
+
     def __init__(self, subject=None):
         self._data = {}
 

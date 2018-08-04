@@ -5,3 +5,7 @@
 .. automodule:: django_ca.utils
    :members:
 
+
+.. automodule:: django_ca.subject
+   :members:
+
