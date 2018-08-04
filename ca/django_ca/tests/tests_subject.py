@@ -55,6 +55,7 @@ class TestSubject(TestCase):
                          '/C=AT/L=Vienna/O=example/CN=example.com')
 
     def test_init_empty(self):
+        self.assertEqual(str(Subject()), '/')
         self.assertEqual(str(Subject([])), '/')
         self.assertEqual(str(Subject({})), '/')
         self.assertEqual(str(Subject('')), '/')

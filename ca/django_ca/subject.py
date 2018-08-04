@@ -27,11 +27,13 @@ from .utils import sort_name
 
 @six.python_2_unicode_compatible
 class Subject(object):
-    def __init__(self, subject):
+    def __init__(self, subject=None):
         self._data = {}
 
         # Normalize input data to a list
-        if isinstance(subject, six.string_types):
+        if subject is None:
+            subject = []
+        elif isinstance(subject, six.string_types):
             subject = parse_name(subject)
         elif isinstance(subject, dict):
             subject = subject.items()
