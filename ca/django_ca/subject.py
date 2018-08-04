@@ -18,8 +18,8 @@ import six
 from cryptography import x509
 
 from .utils import MULTIPLE_OIDS
-from .utils import OID_NAME_MAPPINGS
 from .utils import NAME_OID_MAPPINGS
+from .utils import OID_NAME_MAPPINGS
 from .utils import SUBJECT_FIELDS
 from .utils import parse_name
 from .utils import sort_name

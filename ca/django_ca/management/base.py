@@ -36,9 +36,9 @@ from django.utils.encoding import force_bytes
 from django_ca import ca_settings
 from django_ca.models import Certificate
 from django_ca.models import CertificateAuthority
+from django_ca.subject import Subject
 from django_ca.utils import SUBJECT_FIELDS
 from django_ca.utils import is_power2
-from django_ca.subject import Subject
 
 
 class SubjectAction(argparse.Action):
