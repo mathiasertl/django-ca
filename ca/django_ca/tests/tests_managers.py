@@ -110,7 +110,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
     def test_cn_in_san(self):
         kwargs = get_cert_profile_kwargs()
-        kwargs['subject'].append(('CN', 'cn.example.com'))
+        kwargs['subject']['CN'] = 'cn.example.com'
         cert = Certificate.objects.init(
             self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
@@ -128,7 +128,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
     def test_cn_not_in_san(self):
         kwargs = get_cert_profile_kwargs()
-        kwargs['subject'].append(('CN', 'cn.example.com'))
+        kwargs['subject']['CN'] = 'cn.example.com'
         kwargs['cn_in_san'] = False
         cert = Certificate.objects.init(
             self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
@@ -140,7 +140,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
     def test_no_san(self):
         kwargs = get_cert_profile_kwargs()
-        kwargs['subject'].append(('CN', 'cn.example.com'))
+        kwargs['subject']['CN'] = 'cn.example.com'
         kwargs['cn_in_san'] = False
         cert = Certificate.objects.init(
             self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(), **kwargs)

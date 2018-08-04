@@ -17,7 +17,6 @@ import base64
 import binascii
 import hashlib
 import re
-from collections import OrderedDict
 from datetime import datetime
 from datetime import timedelta
 
@@ -47,9 +46,9 @@ from .querysets import CertificateAuthorityQuerySet
 from .querysets import CertificateQuerySet
 from .signals import post_revoke_cert
 from .signals import pre_revoke_cert
+from .subject import Subject
 from .utils import EXTENDED_KEY_USAGE_REVERSED
 from .utils import KEY_USAGE_MAPPING
-from .utils import OID_NAME_MAPPINGS
 from .utils import add_colons
 from .utils import format_general_name
 from .utils import format_general_names
@@ -139,11 +138,11 @@ class X509CertMixin(models.Model):
 
     @property
     def subject(self):
-        return OrderedDict([(OID_NAME_MAPPINGS[s.oid], s.value) for s in self.x509.subject])
+        return Subject([(s.oid, s.value) for s in self.x509.subject])
 
     @property
     def issuer(self):
-        return OrderedDict([(OID_NAME_MAPPINGS[s.oid], s.value) for s in self.x509.issuer])
+        return Subject([(s.oid, s.value) for s in self.x509.issuer])
 
     @property
     def not_before(self):

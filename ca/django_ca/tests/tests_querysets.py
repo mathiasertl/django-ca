@@ -22,6 +22,7 @@ from django_ca.tests.base import DjangoCATestCase
 
 from .. import ca_settings
 from ..models import CertificateAuthority
+from ..subject import Subject
 from .base import override_tmpcadir
 
 
@@ -41,7 +42,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
 
         # verity public key propertiesa
         self.assertBasic(ca.x509)
-        self.assertEqual(ca.subject, {'CN': 'ca.example.com'})
+        self.assertEqual(ca.subject, Subject({'CN': 'ca.example.com'}))
 
         # verify X509 properties
         self.assertEqual(ca.basicConstraints(), (True, 'CA:TRUE, pathlen:0'))
@@ -55,7 +56,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         key_size = ca_settings.CA_MIN_KEY_SIZE
         kwargs = dict(
             key_size=key_size, key_type='RSA', algorithm=hashes.SHA256(), expires=self.expires(720),
-            parent=None, subject=[('CN', 'ca.example.com')])
+            parent=None, subject=Subject([('CN', 'ca.example.com')]))
 
         ca = CertificateAuthority.objects.init(name='1', **kwargs)
         self.assertEqual(ca.basicConstraints(), (True, 'CA:TRUE'))
@@ -70,7 +71,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
 
         kwargs = dict(
             key_size=key_size, key_type='RSA', algorithm=hashes.SHA256(), expires=self.expires(720),
-            subject=[('CN', 'ca.example.com')])
+            subject=Subject([('CN', 'ca.example.com')]))
 
         parent = CertificateAuthority.objects.init(name='Root', parent=None, pathlen=1, **kwargs)
         child = CertificateAuthority.objects.init(name='Child', parent=parent, pathlen=0, **kwargs)

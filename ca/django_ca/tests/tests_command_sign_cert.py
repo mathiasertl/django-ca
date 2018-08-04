@@ -27,6 +27,7 @@ from ..models import Certificate
 from ..models import CertificateAuthority
 from ..signals import post_issue_cert
 from ..signals import pre_issue_cert
+from ..subject import Subject
 from .base import DjangoCAWithCSRTestCase
 from .base import child_pubkey
 from .base import override_settings
@@ -42,7 +43,7 @@ else:
 class SignCertTestCase(DjangoCAWithCSRTestCase):
     def test_from_stdin(self):
         stdin = six.StringIO(self.csr_pem)
-        subject = [('CN', 'example.com')]
+        subject = Subject([('CN', 'example.com')])
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd('sign_cert', subject=subject, stdin=stdin)
         self.assertEqual(stderr, '')
@@ -70,7 +71,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
             csr_stream.write(self.csr_pem)
 
         try:
-            subject = [('CN', 'example.com'), ('emailAddress', 'user@example.com')]
+            subject = Subject([('CN', 'example.com'), ('emailAddress', 'user@example.com')])
             with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
                 stdout, stderr = self.cmd('sign_cert', subject=subject, csr=csr_path)
             self.assertEqual(stderr, '')
@@ -98,7 +99,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
 
         try:
             with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
-                stdout, stderr = self.cmd('sign_cert', subject=[('CN', 'example.com')], out=out_path,
+                stdout, stderr = self.cmd('sign_cert', subject=Subject([('CN', 'example.com')]), out=out_path,
                                           stdin=stdin)
             self.assertEqual(pre.call_count, 1)
 
@@ -129,7 +130,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
 
         with self.assertRaisesRegex(CommandError, msg), self.assertSignal(pre_issue_cert) as pre, \
                 self.assertSignal(post_issue_cert) as post:
-            stdout, stderr = self.cmd('sign_cert', subject=[('CN', cn)], cn_in_san=True,
+            stdout, stderr = self.cmd('sign_cert', subject=Subject([('CN', cn)]), cn_in_san=True,
                                       stdin=stdin)
         self.assertEqual(pre.call_count, 1)
         self.assertFalse(post.called)
@@ -137,7 +138,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
     def test_cn_not_in_san(self):
         stdin = six.StringIO(self.csr_pem)
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
-            stdout, stderr = self.cmd('sign_cert', subject=[('CN', 'example.net')],
+            stdout, stderr = self.cmd('sign_cert', subject=Subject([('CN', 'example.net')]),
                                       cn_in_san=False, alt=['example.com'], stdin=stdin)
         self.assertEqual(pre.call_count, 1)
 
@@ -154,7 +155,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
     def test_no_san(self):
         # test with no subjectAltNames:
         stdin = six.StringIO(self.csr_pem)
-        subject = [('CN', 'example.net')]
+        subject = Subject([('CN', 'example.net')])
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd('sign_cert', subject=subject, cn_in_san=False, alt=[], stdin=stdin)
         self.assertEqual(pre.call_count, 1)
@@ -197,7 +198,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertAuthorityKeyIdentifier(self.ca, cert)
 
         # replace subject fields via command-line argument:
-        subject = [
+        subject = Subject([
             ('C', 'US'),
             ('ST', 'California'),
             ('L', 'San Francisco'),
@@ -205,7 +206,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
             ('OU', 'MyOrg2Unit2'),
             ('CN', 'CommonName2'),
             ('emailAddress', 'user@example.net'),
-        ]
+        ])
         stdin = six.StringIO(self.csr_pem)
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             self.cmd('sign_cert', cn_in_san=False, alt=['example.net'], stdin=stdin, subject=subject)
@@ -218,8 +219,8 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         # set some empty values to see if we can remove subject fields:
         stdin = six.StringIO(self.csr_pem)
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
-            subject = [('C', ''), ('ST', ''), ('L', ''), ('O', ''), ('OU', ''), ('emailAddress', ''),
-                       ('CN', 'empty')]
+            subject = Subject([('C', ''), ('ST', ''), ('L', ''), ('O', ''), ('OU', ''), ('emailAddress', ''),
+                               ('CN', 'empty')])
             self.cmd('sign_cert', cn_in_san=False, alt=['example.net'], stdin=stdin, subject=subject)
         self.assertEqual(pre.call_count, 1)
 
@@ -230,7 +231,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
     def test_extensions(self):
         stdin = six.StringIO(self.csr_pem)
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
-            stdout, stderr = self.cmd('sign_cert', subject=[('CN', 'example.com')],
+            stdout, stderr = self.cmd('sign_cert', subject=Subject([('CN', 'example.com')]),
                                       key_usage='critical,keyCertSign',
                                       ext_key_usage='clientAuth',
                                       alt=['URI:https://example.net'],
@@ -301,7 +302,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
             csr_stream.write(self.csr_der)
 
         try:
-            subject = [('CN', 'example.com'), ('emailAddress', 'user@example.com')]
+            subject = Subject([('CN', 'example.com'), ('emailAddress', 'user@example.com')])
             with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
                 stdout, stderr = self.cmd('sign_cert', subject=subject, csr=csr_path, csr_format=Encoding.DER)
             self.assertEqual(pre.call_count, 1)
@@ -336,7 +337,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         with self.assertRaisesRegex(
                 CommandError, '^Must give at least a CN in --subject or one or more --alt arguments\.$'), \
                 self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
-            self.cmd('sign_cert', subject=[('C', 'AT')])
+            self.cmd('sign_cert', subject=Subject([('C', 'AT')]))
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
@@ -360,7 +361,7 @@ class SignCertChildCATestCase(DjangoCAWithCSRTestCase):
 
     def test_from_stdin(self):
         stdin = six.StringIO(self.csr_pem)
-        subject = [('CN', 'example.com')]
+        subject = Subject([('CN', 'example.com')])
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd('sign_cert', ca=self.child_ca, subject=subject, stdin=stdin)
         self.assertEqual(pre.call_count, 1)

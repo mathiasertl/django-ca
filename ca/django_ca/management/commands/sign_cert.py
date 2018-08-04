@@ -21,6 +21,7 @@ from ... import ca_settings
 from ...management.base import BaseCommand
 from ...models import Certificate
 from ...models import Watcher
+from ...subject import Subject
 from ...utils import get_cert_profile_kwargs
 from ..base import ExpiresAction
 
@@ -142,16 +143,13 @@ the default values, options like --key-usage still override the profile.""")
             kwargs['tls_features'] = self.parse_extension(options['tls_features'])
 
         # update subject with arguments from the command line
-        kwargs.setdefault('subject', [])
+        kwargs.setdefault('subject', Subject())
         if options.get('subject'):
+            # TODO: Update value
             kwargs['subject'] = options['subject']  # update from command line
 
-        # filter empty values
-        kwargs['subject'] = [(k, v) for k, v in kwargs['subject'] if v]
-
-        if sum(1 for t in kwargs['subject'] if t[0] == 'CN') == 0 and not options['alt']:
-            raise CommandError(
-                "Must give at least a CN in --subject or one or more --alt arguments.")
+        if 'CN' not in kwargs['subject'] and not options['alt']:
+            raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")
 
         # Read the CSR
         if options['csr'] is None:

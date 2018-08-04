@@ -28,6 +28,7 @@ from django.urls import reverse
 from django.utils.encoding import force_text
 
 from ..models import Certificate
+from ..subject import Subject
 from ..utils import int_to_hex
 from ..views import OCSPView
 from .base import DjangoCAWithCertTestCase
@@ -148,7 +149,7 @@ class OCSPViewTestMixin(object):
                 translated[to] = got.pop(frm)
 
         self.assertEqual(got, {})
-        self.assertEqual(translated, expected)
+        self.assertEqual(Subject(translated), expected)
 
     def assertOCSP(self, http_response, requested, status='successful', nonce=None,
                    expires=600):

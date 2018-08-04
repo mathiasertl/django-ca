@@ -523,11 +523,13 @@ def get_cert_profile_kwargs(name=None):
     if name is None:
         name = ca_settings.CA_DEFAULT_PROFILE
 
-    # TODO: Account for old dictionary-style subjects!
+    # TODO: remove circular import
+    from .subject import Subject
+
     profile = deepcopy(ca_settings.CA_PROFILES[name])
     kwargs = {
         'cn_in_san': profile['cn_in_san'],
-        'subject': sort_name(profile['subject']),
+        'subject': Subject(profile['subject']),
     }
     for arg in ['keyUsage', 'extendedKeyUsage']:
         config = profile.get(arg)

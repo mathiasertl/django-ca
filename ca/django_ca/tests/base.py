@@ -295,8 +295,9 @@ class DjangoCATestCase(TestCase):
         post.assert_called_once_with(cert=cert, signal=post_revoke_cert, sender=Certificate)
 
     def assertSubject(self, cert, expected):
-        actual = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in cert.subject]
-        self.assertEqual(actual, expected)
+        if not isinstance(expected, Subject):
+            expected = Subject(expected)
+        self.assertEqual(Subject([(s.oid, s.value) for s in cert.subject]), expected)
 
     def assertIssuer(self, issuer, cert):
         self.assertEqual(cert.issuer, issuer.subject)
