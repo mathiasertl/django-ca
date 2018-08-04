@@ -332,13 +332,11 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
 
         return builder.sign(private_key=ca.key(password), algorithm=algorithm, backend=default_backend()), req
 
-    def init(self, ca, csr, *args, **kwargs):
-        if args:
-            raise Exception("received non-kwarg args, it's a problem with signals")
+    def init(self, ca, csr, **kwargs):
         pre_issue_cert.send(sender=self.model, ca=ca, csr=csr, **kwargs)
 
         c = self.model(ca=ca)
-        c.x509, csr = self.sign_cert(ca, csr, *args, **kwargs)
+        c.x509, csr = self.sign_cert(ca, csr, **kwargs)
         c.csr = csr.public_bytes(Encoding.PEM).decode('utf-8')
         c.save()
 
