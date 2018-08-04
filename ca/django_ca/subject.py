@@ -17,6 +17,8 @@ import six
 
 from cryptography import x509
 
+from django.utils.encoding import force_text
+
 from .utils import MULTIPLE_OIDS
 from .utils import NAME_OID_MAPPINGS
 from .utils import OID_NAME_MAPPINGS
@@ -139,7 +141,7 @@ class Subject(object):
         _sort = sorted(self._data.items(), key=lambda t: SUBJECT_FIELDS.index(OID_NAME_MAPPINGS[t[0]]))
         for oid, values in _sort:
             for val in values:
-                yield oid, val
+                yield oid, force_text(val)
 
     @property
     def name(self):
