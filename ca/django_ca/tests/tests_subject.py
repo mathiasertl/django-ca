@@ -36,23 +36,27 @@ class TestSubject(TestCase):
         self.assertEqual(str(Subject('/CN=example.com')), '/CN=example.com')
         self.assertEqual(str(Subject('/C=AT/L=Vienna/O=example/CN=example.com')),
                          '/C=AT/L=Vienna/O=example/CN=example.com')
+        self.assertEqual(str(Subject('/C=/CN=example.com')), '/CN=example.com')
 
     def test_init_dict(self):
         self.assertEqual(str(Subject({'CN': 'example.com'})), '/CN=example.com')
         self.assertEqual(str(Subject({'C': 'AT', 'L': 'Vienna', 'O': 'example', 'CN': 'example.com'})),
                          '/C=AT/L=Vienna/O=example/CN=example.com')
+        self.assertEqual(str(Subject({'C': '', 'CN': 'example.com'})), '/CN=example.com')
 
     def test_init_list(self):
         self.assertEqual(str(Subject([('CN', 'example.com')])), '/CN=example.com')
         self.assertEqual(str(Subject([('C', 'AT'), ('L', 'Vienna'), ('O', 'example'),
                                       ('CN', 'example.com')])),
                          '/C=AT/L=Vienna/O=example/CN=example.com')
+        self.assertEqual(str(Subject([('C', '')])), '/')
 
         # we also accept tuples
         self.assertEqual(str(Subject((('CN', 'example.com'), ))), '/CN=example.com')
         self.assertEqual(str(Subject((('C', 'AT'), ('L', 'Vienna'), ('O', 'example'),
                                       ('CN', 'example.com')))),
                          '/C=AT/L=Vienna/O=example/CN=example.com')
+        self.assertEqual(str(Subject((('C', ''), ('CN', 'example.com'), ))), '/CN=example.com')
 
     def test_init_empty(self):
         self.assertEqual(str(Subject()), '/')
@@ -152,6 +156,19 @@ class TestSubject(TestCase):
         with self.assertRaisesRegex(ValueError, 'L: Must not occur multiple times'):
             s['L'] = ['foo', 'bar']
         self.assertEqual(s, Subject('/C=AT/OU=foo/OU=bar/CN=example.com'))
+
+        # setting an empty str or list effectively removes the value
+        s = Subject('/C=AT/CN=example.com')
+        s['C'] = None
+        self.assertEqual(s, Subject('/CN=example.com'))
+
+        s = Subject('/C=AT/CN=example.com')
+        s['C'] = ''
+        self.assertEqual(s, Subject('/CN=example.com'))
+
+        s = Subject('/C=AT/CN=example.com')
+        s['C'] = []
+        self.assertEqual(s, Subject('/CN=example.com'))
 
     def test_get(self):
         self.assertEqual(Subject('/CN=example.com').get('CN'), 'example.com')

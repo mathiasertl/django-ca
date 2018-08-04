@@ -44,6 +44,9 @@ class Subject(object):
             if isinstance(oid, six.string_types):
                 oid = NAME_OID_MAPPINGS[oid]
 
+            if not value:
+                continue
+
             if oid not in self._data:
                 self._data[oid] = [value]
             elif oid not in MULTIPLE_OIDS:
@@ -77,8 +80,12 @@ class Subject(object):
         if isinstance(key, six.string_types):
             key = NAME_OID_MAPPINGS[key]
 
-        if isinstance(value, six.string_types):
+        if not value and key in self._data:
+            del self._data[key]
+            return
+        elif isinstance(value, six.string_types):
             value = [value]
+
         elif not isinstance(value, list):
             raise ValueError('Value must be str or list')
 

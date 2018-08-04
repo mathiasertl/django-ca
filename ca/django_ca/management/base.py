@@ -38,13 +38,13 @@ from django_ca.models import Certificate
 from django_ca.models import CertificateAuthority
 from django_ca.utils import SUBJECT_FIELDS
 from django_ca.utils import is_power2
-from django_ca.utils import parse_name
+from django_ca.subject import Subject
 
 
 class SubjectAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
         try:
-            value = parse_name(value)
+            value = Subject(value)
         except ValueError as e:
             parser.error(e)
         setattr(namespace, self.dest, value)

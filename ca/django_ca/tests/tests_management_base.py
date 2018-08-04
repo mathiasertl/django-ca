@@ -24,6 +24,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 
 from ..management import base
 from ..models import CertificateAuthority
+from ..subject import Subject
 from .base import DjangoCATestCase
 from .base import DjangoCAWithCATestCase
 from .base import DjangoCAWithCertTestCase
@@ -45,23 +46,23 @@ class SubjectActionTestCase(DjangoCATestCase):
 
     def test_basic(self):
         ns = self.parser.parse_args(['--subject=/CN=example.com'])
-        self.assertEqual(ns.subject, [('CN', 'example.com')])
+        self.assertEqual(ns.subject, Subject([('CN', 'example.com')]))
 
         ns = self.parser.parse_args(['--subject=/ST=foo/CN=example.com'])
-        self.assertEqual(ns.subject, [('ST', 'foo'), ('CN', 'example.com')])
+        self.assertEqual(ns.subject, Subject([('ST', 'foo'), ('CN', 'example.com')]))
 
         ns = self.parser.parse_args(['--subject=/ST=/CN=example.com'])
-        self.assertEqual(ns.subject, [('ST', ''), ('CN', 'example.com')])
+        self.assertEqual(ns.subject, Subject([('ST', ''), ('CN', 'example.com')]))
 
     def test_order(self):
         # this should be an ordered dict
         ns = self.parser.parse_args(['--subject=/CN=example.com/ST=foo'])
-        self.assertEqual(ns.subject, [('ST', 'foo'), ('CN', 'example.com')])
+        self.assertEqual(ns.subject, Subject([('ST', 'foo'), ('CN', 'example.com')]))
 
     def test_multiple(self):
         # this should be an ordered dict
         ns = self.parser.parse_args(['--subject=/C=AT/OU=foo/OU=bar'])
-        self.assertEqual(ns.subject, [('C', 'AT'), ('OU', 'foo'), ('OU', 'bar')])
+        self.assertEqual(ns.subject, Subject([('C', 'AT'), ('OU', 'foo'), ('OU', 'bar')]))
 
     def test_error(self):
         self.assertParserError(['--subject=/WRONG=foobar'],

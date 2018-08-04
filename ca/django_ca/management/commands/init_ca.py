@@ -119,11 +119,8 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
             raise CommandError("OCSP cannot be used to revoke root CAs.")
 
         # Set CommonName to name if not set in subject
-        if sum(1 for t in subject if t[0] == 'CN') == 0:
-            subject.append(('CN', name))
-
-        # filter empty values in the subject
-        subject = [(k, v) for k, v in subject if v]
+        if 'CN' not in subject:
+            subject['CN'] = name
 
         try:
             CertificateAuthority.objects.init(
