@@ -12,6 +12,7 @@ ChangeLog
 
 * Allow the creation of Certificates with multiple OUs in their subject (command-line only).
 * Django 2.1 is now fully supported.
+* Fix example command to generate a CSR (had a stray '/').
 
 .. _changelog-1.8.0:
 
