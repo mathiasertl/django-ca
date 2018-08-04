@@ -14,7 +14,6 @@
 # see <http://www.gnu.org/licenses/>.
 
 import os
-import warnings
 
 import idna
 
@@ -46,8 +45,6 @@ from .utils import TLS_FEATURE_MAPPING
 from .utils import get_cert_builder
 from .utils import is_power2
 from .utils import parse_general_name
-from .utils import sort_name
-from .utils import x509_name
 
 
 class CertificateManagerMixin(object):
@@ -129,15 +126,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
         builder = get_cert_builder(expires)
         builder = builder.public_key(public_key)
-
-        if isinstance(subject, list):
-            warnings.warn('Received a list: %s' % subject, stacklevel=2)
-            subject = x509_name(subject)
-        elif isinstance(subject, Subject):
-            subject = subject.name
-        else:
-            warnings.warn('Received %s: %s' % (type(subject).__name__, subject), stacklevel=2)
-            subject = x509_name(subject)
+        subject = subject.name
 
         builder = builder.subject_name(subject)
         builder = builder.add_extension(x509.BasicConstraints(ca=True, path_length=pathlen), critical=True)
@@ -269,15 +258,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         if subject is None:
             subject = Subject()
 
-        if isinstance(subject, list):
-            warnings.warn('Received a list: %s' % subject, stacklevel=3)
-            _cn_present = sum(1 for t in subject if t[0] == 'CN') > 0
-        elif isinstance(subject, Subject):
-            _cn_present = 'CN' in subject
-        else:
-            raise ValueError('Received %s: %s' % (type(subject).__name__, subject))
-
-        if not _cn_present and not subjectAltName:
+        if 'CN' not in subject and not subjectAltName:
             raise ValueError("Must name at least a CN or a subjectAltName.")
 
         if subjectAltName:
@@ -286,26 +267,13 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             subjectAltName = []  # so we can append the CN if requested
 
         # use first SAN as CN if CN is not set
-        if not _cn_present:
-            if isinstance(subject, list):
-                subject.append(('CN', subjectAltName[0].value))
-                subject = sort_name(subject)
-            elif isinstance(subject, Subject):
-                _cn_present = subject['CN'] = subjectAltName[0].value
-            else:
-                raise ValueError('Received %s: %s' % (type(subject).__name__, subject))
-
-        elif cn_in_san and _cn_present:  # add CN to SAN if cn_in_san is True (default)
-            if isinstance(subject, list):
-                warnings.warn('Received a list: %s' % subject, stacklevel=3)
-                cn = next(t[1] for t in subject if t[0] == 'CN')
-            elif isinstance(subject, Subject):
-                cn = subject['CN']
-
+        if 'CN' not in subject:
+            subject['CN'] = subjectAltName[0].value
+        elif cn_in_san and 'CN' in subject:  # add CN to SAN if cn_in_san is True (default)
             try:
-                cn_name = parse_general_name(cn)
+                cn_name = parse_general_name(subject['CN'])
             except idna.IDNAError:
-                raise ValueError('%s: Could not parse CommonName as subjectAltName.' % cn)
+                raise ValueError('%s: Could not parse CommonName as subjectAltName.' % subject['CN'])
             else:
                 if cn_name not in subjectAltName:
                     subjectAltName.insert(0, cn_name)
@@ -322,14 +290,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         builder = get_cert_builder(expires)
         builder = builder.public_key(public_key)
         builder = builder.issuer_name(ca.x509.subject)
-
-        if isinstance(subject, list):
-            warnings.warn('Received a list: %s' % subject, stacklevel=3)
-            builder = builder.subject_name(x509_name(subject))
-        elif isinstance(subject, Subject):
-            builder = builder.subject_name(subject.name)
-        else:
-            raise ValueError('Received %s: %s' % (type(subject).__name__, subject))
+        builder = builder.subject_name(subject.name)
 
         # Add extensions
         builder = builder.add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
