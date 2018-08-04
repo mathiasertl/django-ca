@@ -267,8 +267,14 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             The signed certificate.
         """
         if subject is None:
-            subject = []
-        _cn_present = sum(1 for t in subject if t[0] == 'CN') > 0
+            subject = Subject()
+
+        if isinstance(subject, list):
+            warnings.warn('Received a list: %s' % subject, stacklevel=2)
+            _cn_present = sum(1 for t in subject if t[0] == 'CN') > 0
+        elif isinstance(subject, Subject):
+            _cn_present = 'CN' in subject
+
         if not _cn_present and not subjectAltName:
             raise ValueError("Must name at least a CN or a subjectAltName.")
 
@@ -283,7 +289,12 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             subject = sort_name(subject)
 
         elif cn_in_san and _cn_present:  # add CN to SAN if cn_in_san is True (default)
-            cn = next(t[1] for t in subject if t[0] == 'CN')
+            if isinstance(subject, list):
+                warnings.warn('Received a list: %s' % subject, stacklevel=2)
+                cn = next(t[1] for t in subject if t[0] == 'CN')
+            elif isinstance(subject, Subject):
+                cn = subject['CN']
+
             try:
                 cn_name = parse_general_name(cn)
             except idna.IDNAError:
