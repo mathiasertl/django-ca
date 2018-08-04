@@ -124,11 +124,10 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             private_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size,
                                                    backend=default_backend())
         public_key = private_key.public_key()
-        subject = x509_name(subject)
 
         builder = get_cert_builder(expires)
         builder = builder.public_key(public_key)
-        builder = builder.subject_name(subject)
+        builder = builder.subject_name(x509_name(subject))
 
         builder = builder.add_extension(x509.BasicConstraints(ca=True, path_length=pathlen), critical=True)
         builder = builder.add_extension(x509.KeyUsage(
