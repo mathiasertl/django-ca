@@ -206,7 +206,6 @@ on Wikipedia.</p>'''
                     attr_name = name
 
                 fieldsets[self.x509_fieldset_index][1]['fields'].append(attr_name)
-            print(fieldsets[self.x509_fieldset_index][1]['fields'])
         else:
             fieldsets.pop(self.x509_fieldset_index)
 

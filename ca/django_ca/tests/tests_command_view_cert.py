@@ -26,6 +26,8 @@ from ..models import Certificate
 from ..models import Watcher
 from .base import DjangoCAWithCertTestCase
 from .base import certs
+from .base import cloudflare_1_pubkey
+from .base import multiple_ous_and_no_ext_pubkey
 from .base import override_settings
 from .base import override_tmpcadir
 
@@ -204,6 +206,128 @@ Digest:
 HPKP pin: %(hpkp)s
 ''' % self._get_format(cert))
         self.assertEqual(stderr, b'')
+
+    def test_contrib_multiple_ous_and_no_ext(self):
+        self.maxDiff = None
+        cert = self.load_cert(self.ca, x509=multiple_ous_and_no_ext_pubkey)
+        stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stderr, b'')
+        self.assertEqual(stdout.decode('utf-8'), '''Common Name: %(cn)s
+Valid from: 1998-05-18 00:00
+Valid until: 2028-08-01 23:59
+Status: Valid
+Watchers:
+Digest:
+    md5: A2:33:9B:4C:74:78:73:D4:6C:E7:C1:F3:8D:CB:5C:E9
+    sha1: 85:37:1C:A6:E5:50:14:3D:CE:28:03:47:1B:DE:3A:09:E8:F8:77:0F
+    sha256: 83:CE:3C:12:29:68:8A:59:3D:48:5F:81:97:3C:0F:91:95:43:1E:DA:37:CC:5E:36:43:0E:79:C7:A8:88:63:8B
+    sha512: 86:20:07:9F:8B:06:80:43:44:98:F6:7A:A4:22:DE:7E:2B:33:10:9B:65:72:79:C4:EB:F3:F3:0F:66:C8:6E:89:1D:4C:6C:09:1C:83:45:D1:25:6C:F8:65:EB:9A:B9:50:8F:26:A8:85:AE:3A:E4:8A:58:60:48:65:BB:44:B6:CE
+HPKP pin: AjyBzOjnxk+pQtPBUEhwfTXZu1uH9PVExb8bxWQ68vo=
+''' % {'cn': ''})  # NOQA
+
+    def test_contrib_cloudflare_1(self):
+        self.maxDiff = None
+        cert = self.load_cert(self.ca, x509=cloudflare_1_pubkey)
+        stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stderr, b'')
+        self.assertEqual(stdout.decode('utf-8'), '''Common Name: sni24142.cloudflaressl.com
+Valid from: 2018-07-18 00:00
+Valid until: 2019-01-24 23:59
+Status: Valid
+subjectAltName:
+    * DNS:sni24142.cloudflaressl.com
+    * DNS:*.animereborn.com
+    * DNS:*.beglideas.ga
+    * DNS:*.chroma.ink
+    * DNS:*.chuckscleanings.ga
+    * DNS:*.clipvuigiaitris.ga
+    * DNS:*.cmvsjns.ga
+    * DNS:*.competegraphs.ga
+    * DNS:*.consoleprints.ga
+    * DNS:*.copybreezes.ga
+    * DNS:*.corphreyeds.ga
+    * DNS:*.cyanigees.ga
+    * DNS:*.dadpbears.ga
+    * DNS:*.dahuleworldwides.ga
+    * DNS:*.dailyopeningss.ga
+    * DNS:*.daleylexs.ga
+    * DNS:*.danajweinkles.ga
+    * DNS:*.dancewthyogas.ga
+    * DNS:*.darkmoosevpss.ga
+    * DNS:*.daurat.com.ar
+    * DNS:*.deltaberg.com
+    * DNS:*.drjahanobgyns.ga
+    * DNS:*.drunkgirliess.ga
+    * DNS:*.duhiepkys.ga
+    * DNS:*.dujuanjsqs.ga
+    * DNS:*.dumbiseasys.ga
+    * DNS:*.dumpsoftdrinkss.ga
+    * DNS:*.dunhavenwoodss.ga
+    * DNS:*.durabiliteas.ga
+    * DNS:*.duxmangroups.ga
+    * DNS:*.dvpdrivewayss.ga
+    * DNS:*.dwellwizes.ga
+    * DNS:*.dwwkouis.ga
+    * DNS:*.entertastic.com
+    * DNS:*.estudiogolber.com.ar
+    * DNS:*.letsretro.team
+    * DNS:*.maccuish.org.uk
+    * DNS:*.madamsquiggles.com
+    * DNS:*.sftw.ninja
+    * DNS:*.spangenberg.io
+    * DNS:*.timmutton.com.au
+    * DNS:*.wyomingsexbook.com
+    * DNS:*.ych.bid
+    * DNS:animereborn.com
+    * DNS:beglideas.ga
+    * DNS:chroma.ink
+    * DNS:chuckscleanings.ga
+    * DNS:clipvuigiaitris.ga
+    * DNS:cmvsjns.ga
+    * DNS:competegraphs.ga
+    * DNS:consoleprints.ga
+    * DNS:copybreezes.ga
+    * DNS:corphreyeds.ga
+    * DNS:cyanigees.ga
+    * DNS:dadpbears.ga
+    * DNS:dahuleworldwides.ga
+    * DNS:dailyopeningss.ga
+    * DNS:daleylexs.ga
+    * DNS:danajweinkles.ga
+    * DNS:dancewthyogas.ga
+    * DNS:darkmoosevpss.ga
+    * DNS:daurat.com.ar
+    * DNS:deltaberg.com
+    * DNS:drjahanobgyns.ga
+    * DNS:drunkgirliess.ga
+    * DNS:duhiepkys.ga
+    * DNS:dujuanjsqs.ga
+    * DNS:dumbiseasys.ga
+    * DNS:dumpsoftdrinkss.ga
+    * DNS:dunhavenwoodss.ga
+    * DNS:durabiliteas.ga
+    * DNS:duxmangroups.ga
+    * DNS:dvpdrivewayss.ga
+    * DNS:dwellwizes.ga
+    * DNS:dwwkouis.ga
+    * DNS:entertastic.com
+    * DNS:estudiogolber.com.ar
+    * DNS:letsretro.team
+    * DNS:maccuish.org.uk
+    * DNS:madamsquiggles.com
+    * DNS:sftw.ninja
+    * DNS:spangenberg.io
+    * DNS:timmutton.com.au
+    * DNS:wyomingsexbook.com
+    * DNS:ych.bid
+Watchers:
+Digest:
+    md5: D6:76:03:E9:4F:3B:B0:F1:F7:E3:A1:40:80:8E:F0:4A
+    sha1: 71:BD:B8:21:80:BD:86:E8:E5:F4:2B:6D:96:82:B2:EF:19:53:ED:D3
+    sha256: 1D:8E:D5:41:E5:FF:19:70:6F:65:86:A9:A3:6F:DF:DE:F8:A0:07:22:92:71:9E:F1:CD:F8:28:37:39:02:E0:A1
+    sha512: FF:03:1B:8F:11:E8:A7:FF:91:4F:B9:97:E9:97:BC:77:37:C1:A7:69:86:F3:7C:E3:BB:BB:DF:A6:4F:0E:3C:C0:7F:B5:BC:CC:BD:0A:D5:EF:5F:94:55:E9:FF:48:41:34:B8:11:54:57:DD:90:85:41:2E:71:70:5E:FA:BA:E6:EA
+HPKP pin: bkunFfRSda4Yhz7UlMUaalgj0Gcus/9uGVp19Hceczg=
+''')  # NOQA
 
     def test_unknown_cert(self):
         with self.assertRaises(CommandError):
