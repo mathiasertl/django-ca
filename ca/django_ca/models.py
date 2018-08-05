@@ -154,13 +154,13 @@ class X509CertMixin(models.Model):
 
     def extensions(self):
         for ext in sorted(self.x509.extensions, key=lambda e: e.oid._name):
-            name = ext.oid._name
+            name = ext.oid._name.replace(' ', '')
             if hasattr(self, name):
                 yield name, getattr(self, name)()
             elif name == 'cRLDistributionPoints':
                 yield name, self.crlDistributionPoints()
             else:  # pragma: no cover  - we have a function for everything we support
-                yield name, str(ext.value)
+                yield name, ext.oid
 
     def distinguishedName(self):
         return format_name(self.x509.subject)

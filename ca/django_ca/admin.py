@@ -17,6 +17,7 @@ import copy
 import json
 import os
 from datetime import datetime
+from functools import partial
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -128,11 +129,13 @@ on Wikipedia.</p>'''
 
         if isinstance(value, six.string_types):
             html += '<p>%s</p>' % value
-        else:  # list
+        elif isinstance(value, list):
             html += '<ul class="x509-extension-value">'
             for val in value:
                 html += '<li>%s</li>' % val
             html += '</ul>'
+        else:
+            html += '<p>%s<p>' % value
 
         return mark_safe(html)
 
@@ -176,6 +179,19 @@ on Wikipedia.</p>'''
         return self.output_extension(obj.subjectAltName())
     subjectAltName.short_description = _('subjectAltName')
 
+    def UnknownOID(self, obj):
+        return 'unknown'
+
+    def certificatePolicies(self, obj):
+        return 'unknown'
+
+    def unknown_oid(self, oid, obj):
+        ext = obj.x509.extensions.get_extension_for_oid(oid)
+        return self.output_extension((ext.critical, ext.value.value))
+
+    def get_oid_name(self, oid):
+        return oid.dotted_string.replace('.', '_')
+
     def get_fieldsets(self, request, obj=None):
         fieldsets = super(CertificateMixin, self).get_fieldsets(request, obj=obj)
 
@@ -186,6 +202,12 @@ on Wikipedia.</p>'''
         extensions = list(sorted(obj.extensions()))
         if extensions:
             for name, _value in sorted(obj.extensions()):
+                if name == 'UnknownOID':
+                    name = self.get_oid_name(_value)
+                    func = partial(self.unknown_oid, _value)
+                    func.short_description = 'Unkown OID (%s)' % _value.dotted_string
+                    setattr(self, name, func)
+
                 fieldsets[self.x509_fieldset_index][1]['fields'].append(name)
         else:
             fieldsets.pop(self.x509_fieldset_index)
@@ -200,7 +222,13 @@ on Wikipedia.</p>'''
             # the superclass in this case.
             return fields
 
-        return list(fields) + list(dict(obj.extensions()).keys())
+        fields = list(fields)
+        for name, value in obj.extensions():
+            if name == 'UnknownOID':
+                fields.append(self.get_oid_name(value))
+            else:
+                fields.append(name)
+        return fields
 
     class Media:
         css = {

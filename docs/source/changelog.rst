@@ -13,6 +13,7 @@ ChangeLog
 * Allow the creation of Certificates with multiple OUs in their subject (command-line only).
 * Fix issues with handling CAs with a password on the command-line.
 * Fix handling of certificates with no CommonName and/or no x509 extensions.
+* Correctly display extensions with an OID unknown to cryptography.
 * Django 2.1 is now fully supported.
 * Fix example command to generate a CSR (had a stray '/').
 * Run test-suite with template debugging enabled to catch silently skipped template errors.
