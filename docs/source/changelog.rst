@@ -14,6 +14,7 @@ ChangeLog
 * Fix issues with handling CAs with a password on the command-line.
 * Fix handling of certificates with no CommonName and/or no x509 extensions.
 * Correctly display extensions with an OID unknown to django-ca or even cryptography.
+* Properly escape x509 extensions to prevent any injection attacks.
 * Django 2.1 is now fully supported.
 * Fix example command to generate a CSR (had a stray '/').
 * Run test-suite with template debugging enabled to catch silently skipped template errors.

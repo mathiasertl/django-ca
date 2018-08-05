@@ -29,9 +29,9 @@ from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
-from django.utils import six
 from django.utils import timezone
 from django.utils.encoding import force_bytes
+from django.utils.html import escape
 from django.utils.html import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
@@ -127,15 +127,13 @@ on Wikipedia.</p>'''
             text = _('Critical')
             html = '<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text)
 
-        if isinstance(value, six.string_types):
-            html += '<p>%s</p>' % value
-        elif isinstance(value, list):
+        if isinstance(value, list):
             html += '<ul class="x509-extension-value">'
             for val in value:
-                html += '<li>%s</li>' % val
+                html += '<li>%s</li>' % escape(val)
             html += '</ul>'
-        else:
-            html += '<p>%s<p>' % value
+        else:  # string or extension
+            html += '<p>%s<p>' % escape(value)
 
         return mark_safe(html)
 
