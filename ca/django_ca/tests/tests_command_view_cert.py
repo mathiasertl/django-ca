@@ -210,7 +210,8 @@ HPKP pin: %(hpkp)s
     def test_contrib_multiple_ous_and_no_ext(self):
         self.maxDiff = None
         cert = self.load_cert(self.ca, x509=multiple_ous_and_no_ext_pubkey)
-        stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, extensions=True,
+                                  stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
         self.assertEqual(stdout.decode('utf-8'), '''Common Name: %(cn)s
 Valid from: 1998-05-18 00:00
@@ -228,7 +229,8 @@ HPKP pin: AjyBzOjnxk+pQtPBUEhwfTXZu1uH9PVExb8bxWQ68vo=
     def test_contrib_cloudflare_1(self):
         self.maxDiff = None
         cert = self.load_cert(self.ca, x509=cloudflare_1_pubkey)
-        stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, extensions=True,
+                                  stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
         self.assertEqual(stdout.decode('utf-8'), '''Common Name: sni24142.cloudflaressl.com
 Valid from: 2018-07-18 00:00

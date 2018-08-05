@@ -160,7 +160,7 @@ class X509CertMixin(models.Model):
             elif name == 'cRLDistributionPoints':
                 yield name, self.crlDistributionPoints()
             else:  # pragma: no cover  - we have a function for everything we support
-                yield name, ext.oid
+                yield name, (ext.critical, ext.oid)
 
     def distinguishedName(self):
         return format_name(self.x509.subject)
