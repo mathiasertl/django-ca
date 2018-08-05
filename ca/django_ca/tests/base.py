@@ -96,6 +96,10 @@ cert3_key = _load_key('cert3.key')
 cert3_csr = _load_csr('cert3.csr')
 cert3_pem, cert3_pubkey = _load_cert('cert3.pem')
 
+# Various contributed certs
+_, multiple_ous_and_no_ext_pubkey = _load_cert(os.path.join('contrib', 'multiple_ous_and_no_ext.pem'))
+_, cloudflare_1_pubkey = _load_cert(os.path.join('contrib', 'cloudflare_1.pem'))
+
 certs = {
     'root': {
         'pem': force_text(root_pem),

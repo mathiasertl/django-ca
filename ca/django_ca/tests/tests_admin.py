@@ -44,6 +44,8 @@ from .base import DjangoCAWithCertTestCase
 from .base import DjangoCAWithCSRTestCase
 from .base import override_tmpcadir
 from .base import override_settings
+from .base import multiple_ous_and_no_ext_pubkey
+from .base import cloudflare_1_pubkey
 
 
 class AdminTestMixin(object):
@@ -65,6 +67,15 @@ class AdminTestMixin(object):
             pk = self.cert.pk
 
         return reverse('admin:django_ca_certificate_change', args=(pk, ))
+
+    def assertChangeResponse(self, response):
+        self.assertEqual(response.status_code, 200)
+
+        templates = [t.name for t in response.templates]
+        self.assertIn('django_ca/admin/change_form.html', templates)
+        self.assertIn('admin/change_form.html', templates)
+        self.assertCSS(response, 'django_ca/admin/css/base.css')
+        self.assertCSS(response, 'django_ca/admin/css/certificateadmin.css')
 
     def assertRequiresLogin(self, response, **kwargs):
         expected = '%s?next=%s' % (reverse('admin:login'), quote(response.wsgi_request.get_full_path()))
@@ -175,13 +186,7 @@ class RevokeActionTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     def test_basic(self):
         response = self.client.get(self.change_url())
-        self.assertEqual(response.status_code, 200)
-
-        templates = [t.name for t in response.templates]
-        self.assertIn('django_ca/admin/change_form.html', templates)
-        self.assertIn('admin/change_form.html', templates)
-        self.assertCSS(response, 'django_ca/admin/css/base.css')
-        self.assertCSS(response, 'django_ca/admin/css/certificateadmin.css')
+        self.assertChangeResponse(response)
 
     def test_revoked(self):
         # view a revoked certificate (fieldsets are collapsed differently)
@@ -189,13 +194,13 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         cert.revoke()
 
         response = self.client.get(self.change_url())
-        self.assertEqual(response.status_code, 200)
+        self.assertChangeResponse(response)
 
-        templates = [t.name for t in response.templates]
-        self.assertIn('django_ca/admin/change_form.html', templates)
-        self.assertIn('admin/change_form.html', templates)
-        self.assertCSS(response, 'django_ca/admin/css/base.css')
-        self.assertCSS(response, 'django_ca/admin/css/certificateadmin.css')
+    def test_no_san(self):
+        # Test display of a certificate with no SAN
+        cert = self.create_cert(self.ca, self.csr_pem, [('CN', 'example.com')], cn_in_san=False)
+        response = self.client.get(self.change_url(cert.pk))
+        self.assertChangeResponse(response)
 
     def test_change_watchers(self):
         cert = Certificate.objects.get(serial=self.cert.serial)
@@ -208,6 +213,16 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, self.changelist_url)
         self.assertEqual(list(cert.watchers.all()), [watcher])
+
+    def test_contrib_multiple_ous_and_no_ext(self):
+        cert = self.load_cert(self.ca, x509=multiple_ous_and_no_ext_pubkey)
+        response = self.client.get(self.change_url(cert.pk))
+        self.assertChangeResponse(response)
+
+    def test_contrib_cloudflare_1(self):
+        cert = self.load_cert(self.ca, x509=cloudflare_1_pubkey)
+        response = self.client.get(self.change_url(cert.pk))
+        self.assertChangeResponse(response)
 
 
 class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
