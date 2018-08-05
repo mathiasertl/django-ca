@@ -15,6 +15,7 @@ ChangeLog
 * Fix handling of certificates with no CommonName and/or no x509 extensions.
 * Django 2.1 is now fully supported.
 * Fix example command to generate a CSR (had a stray '/').
+* Run test-suite with template debugging enabled to catch silently skipped template errors.
 
 .. _changelog-1.8.0:
 
