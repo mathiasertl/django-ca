@@ -33,6 +33,7 @@ from django.core.validators import URLValidator
 from django.utils import six
 from django.utils import timezone
 from django.utils.encoding import force_bytes
+from django.utils.encoding import force_text
 
 from django_ca import ca_settings
 from django_ca.models import Certificate
@@ -281,11 +282,11 @@ class BaseCommand(_BaseCommand):
         if isinstance(s, list):
             return ''.join(['%s* %s\n' % (prefix, l) for l in s])
         elif six.PY3:
-            return textwrap.indent(s, prefix)
+            return textwrap.indent(force_text(s), prefix)
         else:  # pragma: no cover
             # copied from py3.4 version of textwrap.indent
             def prefixed_lines():
-                for line in s.splitlines(True):
+                for line in force_text(s).splitlines(True):
                     yield prefix + line
 
             return ''.join(prefixed_lines())
