@@ -179,15 +179,9 @@ on Wikipedia.</p>'''
         return self.output_extension(obj.subjectAltName())
     subjectAltName.short_description = _('subjectAltName')
 
-    def UnknownOID(self, obj):
-        return 'unknown'
-
-    def certificatePolicies(self, obj):
-        return 'unknown'
-
     def unknown_oid(self, oid, obj):
         ext = obj.x509.extensions.get_extension_for_oid(oid)
-        return self.output_extension((ext.critical, ext.value.value))
+        return self.output_extension((ext.critical, ext.value))
 
     def get_oid_name(self, oid):
         return oid.dotted_string.replace('.', '_')
@@ -202,13 +196,19 @@ on Wikipedia.</p>'''
         extensions = list(sorted(obj.extensions()))
         if extensions:
             for name, _value in sorted(obj.extensions()):
-                if name == 'UnknownOID':
-                    name = self.get_oid_name(_value)
+                if not hasattr(self, name):
+                    attr_name = self.get_oid_name(_value)
                     func = partial(self.unknown_oid, _value)
-                    func.short_description = 'Unkown OID (%s)' % _value.dotted_string
-                    setattr(self, name, func)
+                    if name == 'UnknownOID':
+                        func.short_description = 'Unkown OID (%s)' % _value.dotted_string
+                    else:
+                        func.short_description = name
+                    setattr(self, attr_name, func)
+                else:
+                    attr_name = name
 
-                fieldsets[self.x509_fieldset_index][1]['fields'].append(name)
+                fieldsets[self.x509_fieldset_index][1]['fields'].append(attr_name)
+            print(fieldsets[self.x509_fieldset_index][1]['fields'])
         else:
             fieldsets.pop(self.x509_fieldset_index)
 
@@ -224,7 +224,7 @@ on Wikipedia.</p>'''
 
         fields = list(fields)
         for name, value in obj.extensions():
-            if name == 'UnknownOID':
+            if not hasattr(self, name):
                 fields.append(self.get_oid_name(value))
             else:
                 fields.append(name)
