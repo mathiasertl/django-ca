@@ -236,6 +236,24 @@ HPKP pin: AjyBzOjnxk+pQtPBUEhwfTXZu1uH9PVExb8bxWQ68vo=
 Valid from: 2018-07-18 00:00
 Valid until: 2019-01-24 23:59
 Status: Valid
+UnknownOID (critical):
+    <ObjectIdentifier(oid=1.3.6.1.4.1.11129.2.4.3, name=Unknown OID)>
+authorityInfoAccess:
+    * CA Issuers - URI:http://crt.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crt
+    * OCSP - URI:http://ocsp.comodoca4.com
+authorityKeyIdentifier:
+    keyid:40:09:61:67:F0:BC:83:71:4F:DE:12:08:2C:6F:D4:D4:2B:76:3D:96
+basicConstraints (critical):
+    CA:FALSE
+cRLDistributionPoints:
+    * Full Name: URI:http://crl.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crl
+certificatePolicies:
+    <ObjectIdentifier(oid=2.5.29.32, name=certificatePolicies)>
+extendedKeyUsage:
+    * serverAuth
+    * clientAuth
+keyUsage (critical):
+    * digitalSignature
 subjectAltName:
     * DNS:sni24142.cloudflaressl.com
     * DNS:*.animereborn.com
@@ -322,6 +340,8 @@ subjectAltName:
     * DNS:timmutton.com.au
     * DNS:wyomingsexbook.com
     * DNS:ych.bid
+subjectKeyIdentifier:
+    05:86:D8:B4:ED:A9:7E:23:EE:2E:E7:75:AA:3B:2C:06:08:2A:93:B2
 Watchers:
 Digest:
     md5: D6:76:03:E9:4F:3B:B0:F1:F7:E3:A1:40:80:8E:F0:4A
