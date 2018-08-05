@@ -195,12 +195,24 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
         response = self.client.get(self.change_url())
         self.assertChangeResponse(response)
+        self.assertContains(response, text='''<div class="form-row field-revoked">
+                <div><label>Revoked:</label>
+                     <div class="readonly"><img src="/static/admin/img/icon-yes.svg" alt="True"></div>
+                </div> </div>''', html=True)
 
     def test_no_san(self):
         # Test display of a certificate with no SAN
         cert = self.create_cert(self.ca, self.csr_pem, [('CN', 'example.com')], cn_in_san=False)
         response = self.client.get(self.change_url(cert.pk))
         self.assertChangeResponse(response)
+        self.assertContains(response, text='''
+<div class="form-row field-subjectAltName">
+    <div>
+        <label>SubjectAltName:</label>
+        <div class="readonly">&lt;none&gt;</div>
+    </div>
+</div>
+''', html=True)
 
     def test_change_watchers(self):
         cert = Certificate.objects.get(serial=self.cert.serial)
