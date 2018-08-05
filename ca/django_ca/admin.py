@@ -195,10 +195,11 @@ on Wikipedia.</p>'''
         if extensions:
             for name, _value in sorted(obj.extensions()):
                 if not hasattr(self, name):
-                    attr_name = self.get_oid_name(_value)
-                    func = partial(self.unknown_oid, _value)
+                    critical, value = _value
+                    attr_name = self.get_oid_name(value)
+                    func = partial(self.unknown_oid, value)
                     if name == 'UnknownOID':
-                        func.short_description = 'Unkown OID (%s)' % _value.dotted_string
+                        func.short_description = 'Unkown OID (%s)' % value.dotted_string
                     else:
                         func.short_description = name
                     setattr(self, attr_name, func)
@@ -222,7 +223,7 @@ on Wikipedia.</p>'''
         fields = list(fields)
         for name, value in obj.extensions():
             if not hasattr(self, name):
-                fields.append(self.get_oid_name(value))
+                fields.append(self.get_oid_name(value[1]))
             else:
                 fields.append(name)
         return fields
