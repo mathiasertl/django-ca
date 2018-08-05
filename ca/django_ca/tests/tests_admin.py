@@ -40,8 +40,8 @@ from ..utils import EXTENDED_KEY_USAGE_MAPPING
 from ..utils import KEY_USAGE_MAPPING
 from ..utils import SUBJECT_FIELDS
 from ..utils import TLS_FEATURE_MAPPING
-from .base import DjangoCAWithCSRTestCase
 from .base import DjangoCAWithCertTestCase
+from .base import DjangoCAWithCSRTestCase
 from .base import cloudflare_1_pubkey
 from .base import multiple_ous_and_no_ext_pubkey
 from .base import override_settings
