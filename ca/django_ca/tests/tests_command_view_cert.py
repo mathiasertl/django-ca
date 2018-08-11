@@ -248,7 +248,8 @@ basicConstraints (critical):
 cRLDistributionPoints:
     * Full Name: URI:http://crl.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crl
 certificatePolicies:
-    <ObjectIdentifier(oid=2.5.29.32, name=certificatePolicies)>
+    * OID 1.3.6.1.4.1.6449.1.2.2.7: https://secure.comodo.com/CPS
+    * OID 2.23.140.1.2.1: None
 extendedKeyUsage:
     * serverAuth
     * clientAuth
