@@ -352,6 +352,28 @@ Digest:
 HPKP pin: bkunFfRSda4Yhz7UlMUaalgj0Gcus/9uGVp19Hceczg=
 ''')  # NOQA
 
+    def load_contrib(self, name):
+        return self.load_cert(self.ca, x509=multiple_ous_and_no_ext_pubkey)
+
+    def test_contrib_godaddy_derstandardat(self):
+        self.maxDiff = None
+        cert = self.load_contrib('godady_derstandardat')
+        stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, extensions=True,
+                                  stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stderr, b'')
+        self.assertEqual(stdout.decode('utf-8'), '''Common Name: %(cn)s
+Valid from: 1998-05-18 00:00
+Valid until: 2028-08-01 23:59
+Status: Valid
+Watchers:
+Digest:
+    md5: A2:33:9B:4C:74:78:73:D4:6C:E7:C1:F3:8D:CB:5C:E9
+    sha1: 85:37:1C:A6:E5:50:14:3D:CE:28:03:47:1B:DE:3A:09:E8:F8:77:0F
+    sha256: 83:CE:3C:12:29:68:8A:59:3D:48:5F:81:97:3C:0F:91:95:43:1E:DA:37:CC:5E:36:43:0E:79:C7:A8:88:63:8B
+    sha512: 86:20:07:9F:8B:06:80:43:44:98:F6:7A:A4:22:DE:7E:2B:33:10:9B:65:72:79:C4:EB:F3:F3:0F:66:C8:6E:89:1D:4C:6C:09:1C:83:45:D1:25:6C:F8:65:EB:9A:B9:50:8F:26:A8:85:AE:3A:E4:8A:58:60:48:65:BB:44:B6:CE
+HPKP pin: AjyBzOjnxk+pQtPBUEhwfTXZu1uH9PVExb8bxWQ68vo=
+''' % {'cn': ''})  # NOQA
+
     def test_unknown_cert(self):
         with self.assertRaises(CommandError):
             self.cmd('view_cert', 'fooobar', no_pem=True)
