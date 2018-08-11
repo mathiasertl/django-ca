@@ -288,6 +288,25 @@ class X509CertMixin(models.Model):
 
         return ext.critical, features
 
+    def _parse_policy_qualifier(self, qualifier):
+        if isinstance(qualifier, x509.extensions.UserNotice):
+            # https://tools.ietf.org/html/rfc5280#section-4.2.1.4
+            notice_ref = qualifier.notice_reference
+            text = qualifier.explicit_text
+            if notice_ref is None:
+                return text
+            else:
+                org = notice_ref.organization
+                numbers = notice_ref.notice_numbers
+                if not numbers:
+                    return '%s (Reference: %s)' % (text, org)
+                elif len(numbers) == 1:
+                    return '%s (Reference: %s, number %s)' % (text, org, numbers[0])
+                else:
+                    return '%s (Reference: %s, numbers %s)' % (text, org, ', '.join(numbers))
+
+        return qualifier
+
     def certificatePolicies(self):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES)
@@ -300,7 +319,7 @@ class X509CertMixin(models.Model):
             if value.policy_qualifiers is None:
                 output += "None"
             else:
-                output += ', '.join(value.policy_qualifiers)
+                output += ', '.join([self._parse_policy_qualifier(p) for p in value.policy_qualifiers])
             policies.append(output)
 
         return ext.critical, policies

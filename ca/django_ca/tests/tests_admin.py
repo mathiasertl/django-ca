@@ -14,6 +14,7 @@
 # see <http://www.gnu.org/licenses/>
 
 import json
+import os
 from datetime import datetime
 from datetime import timedelta
 
@@ -226,6 +227,12 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertRedirects(response, self.changelist_url)
         self.assertEqual(list(cert.watchers.all()), [watcher])
 
+    def assertContrib(self, name):
+        _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
+        cert = self.load_cert(self.ca, x509=pubkey)
+        response = self.client.get(self.change_url(cert.pk))
+        self.assertChangeResponse(response)
+
     def test_contrib_multiple_ous_and_no_ext(self):
         cert = self.load_cert(self.ca, x509=multiple_ous_and_no_ext_pubkey)
         response = self.client.get(self.change_url(cert.pk))
@@ -235,6 +242,12 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         cert = self.load_cert(self.ca, x509=cloudflare_1_pubkey)
         response = self.client.get(self.change_url(cert.pk))
         self.assertChangeResponse(response)
+
+    def test_contrib_godaddy_derstandardat(self):
+        self.assertContrib('godaddy_derstandardat')
+
+    def test_contrib_letsencrypt_jabber_at(self):
+        self.assertContrib('letsencrypt_jabber_at')
 
 
 class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
