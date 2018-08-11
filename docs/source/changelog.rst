@@ -13,6 +13,11 @@ ChangeLog
 * Allow the creation of Certificates with multiple OUs in their subject (command-line only).
 * Fix issues with handling CAs with a password on the command-line.
 * Fix handling of certificates with no CommonName and/or no x509 extensions.
+* Add support for displaying Signed Certificate Timestamps (SCT) Lists, as described in
+  `RFC 6962, section 3.3 <https://tools.ietf.org/html/rfc6962#section-3.3>`_.
+* Add limited support for displaying Certificate Policies, as described in
+  `RFC 5280, section 4.2.14 <https://tools.ietf.org/html/rfc5280#section-4.2.1.4>`_ and
+  `RFC 3647 <https://tools.ietf.org/html/rfc3647>`_.
 * Correctly display extensions with an OID unknown to django-ca or even cryptography.
 * Properly escape x509 extensions to prevent any injection attacks.
 * Django 2.1 is now fully supported.
