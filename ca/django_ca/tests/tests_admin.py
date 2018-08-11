@@ -234,14 +234,10 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertChangeResponse(response)
 
     def test_contrib_multiple_ous_and_no_ext(self):
-        cert = self.load_cert(self.ca, x509=multiple_ous_and_no_ext_pubkey)
-        response = self.client.get(self.change_url(cert.pk))
-        self.assertChangeResponse(response)
+        self.assertContrib('multiple_ous_and_no_ext')
 
     def test_contrib_cloudflare_1(self):
-        cert = self.load_cert(self.ca, x509=cloudflare_1_pubkey)
-        response = self.client.get(self.change_url(cert.pk))
-        self.assertChangeResponse(response)
+        self.assertContrib('cloudflare_1')
 
     def test_contrib_godaddy_derstandardat(self):
         self.assertContrib('godaddy_derstandardat')
