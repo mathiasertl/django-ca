@@ -321,7 +321,7 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
             'fields': ['cn', 'subjectAltName', 'distinguishedName', 'serial', 'ca', 'expires',
                        'watchers', 'hpkp_pin'],
         }),
-        (_('X509 Extensions'), {
+        (_('X.509 Extensions'), {
             'fields': [],
             'classes': ('collapse', ),
         }),
@@ -340,7 +340,7 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
             'fields': ['csr', ('ca', 'password'), 'profile', 'subject', 'subjectAltName', 'algorithm',
                        'expires', 'watchers', ],
         }),
-        (_('X509 Extensions'), {
+        (_('X.509 Extensions'), {
             'fields': ['keyUsage', 'extendedKeyUsage', 'tlsFeature', ]
         }),
     ]
