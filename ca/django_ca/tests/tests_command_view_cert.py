@@ -28,6 +28,7 @@ from ..models import Watcher
 from .base import DjangoCAWithCertTestCase
 from .base import certs
 from .base import cloudflare_1_pubkey
+from .base import cryptography_version
 from .base import multiple_ous_and_no_ext_pubkey
 from .base import override_settings
 from .base import override_tmpcadir
@@ -446,10 +447,21 @@ HPKP pin: %(hpkp)s
 })
 
     def test_contrib_letsencrypt_jabber_at(self):
+        if cryptography_version >= (2, 3):
+            signedCertificateTimestampList = '''
+signedCertificateTimestampList:
+    <ObjectIdentifier(oid=1.3.6.1.4.1.11129.2.4.2, name=signedCertificateTimestampList)>'''
+            unknown = ''
+        else:
+            signedCertificateTimestampList = ''
+            unknown = '''
+UnknownOID:
+    <ObjectIdentifier(oid=1.3.6.1.4.1.11129.2.4.2, name=Unknown OID)>'''
+
         self.assertContrib('letsencrypt_jabber_at', '''Common Name: %(cn)s
 Valid from: %(valid_from)s
 Valid until: %(valid_until)s
-Status: Valid
+Status: Valid%(unknown)s
 authorityInfoAccess:
     * OCSP - URI:http://ocsp.int-x3.letsencrypt.org
     * CA Issuers - URI:http://cert.int-x3.letsencrypt.org/
@@ -465,9 +477,7 @@ extendedKeyUsage:
     * clientAuth
 keyUsage (critical):
     * digitalSignature
-    * keyEncipherment
-signedCertificateTimestampList:
-    <ObjectIdentifier(oid=1.3.6.1.4.1.11129.2.4.2, name=signedCertificateTimestampList)>
+    * keyEncipherment%(signedCertificateTimestampList)s
 subjectAltName:
     * DNS:jabber.at
     * DNS:jabber.fsinf.at
@@ -492,6 +502,8 @@ HPKP pin: %(hpkp)s
     'cn': 'jabber.at',
     'valid_from': '2018-08-09 09:15',
     'valid_until': '2018-11-07 09:15',
+    'signedCertificateTimestampList': signedCertificateTimestampList,
+    'unknown': unknown,
     'md5': '90:32:2A:B8:6A:20:5D:A1:20:F3:D5:78:09:30:1F:B2',
     'sha1': 'E9:A5:B4:49:BB:5F:88:51:01:72:D9:B3:CF:E3:8B:F4:A2:C8:E4:08',
     'sha256': 'AF:2D:CE:A3:CE:62:6A:17:E1:CE:BA:7B:A5:A5:F1:A4:3F:0D:80:77:F1:F8:C4:5F:64:27:9A:F9:76:E9:0D:8D',  # NOQA

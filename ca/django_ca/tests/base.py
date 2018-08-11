@@ -19,6 +19,7 @@ from OpenSSL.crypto import X509Store
 from OpenSSL.crypto import X509StoreContext
 from OpenSSL.crypto import load_certificate
 
+import cryptography
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -73,6 +74,7 @@ def _load_cert(path):
         return pem, x509.load_pem_x509_certificate(pem, default_backend())
 
 
+cryptography_version = tuple([int(t) for t in cryptography.__version__.split('.')[:2]])
 root_key = _load_key('root.key')
 root_pem, root_pubkey = _load_cert('root.pem')
 child_key = _load_key('child.key')
