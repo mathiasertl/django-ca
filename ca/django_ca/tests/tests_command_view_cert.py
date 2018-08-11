@@ -116,7 +116,6 @@ HPKP pin: %(hpkp)s
         self.test_basic()
 
     def test_der(self):
-        self.maxDiff = None
         stdout, stderr = self.cmd('view_cert', self.cert.serial, format=Encoding.DER,
                                   stdout=BytesIO(), stderr=BytesIO())
         expected = '''Common Name: %(cn)s
@@ -209,7 +208,6 @@ HPKP pin: %(hpkp)s
         self.assertEqual(stderr, b'')
 
     def test_contrib_multiple_ous_and_no_ext(self):
-        self.maxDiff = None
         cert = self.load_cert(self.ca, x509=multiple_ous_and_no_ext_pubkey)
         stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, extensions=True,
                                   stdout=BytesIO(), stderr=BytesIO())
@@ -228,7 +226,6 @@ HPKP pin: AjyBzOjnxk+pQtPBUEhwfTXZu1uH9PVExb8bxWQ68vo=
 ''' % {'cn': ''})  # NOQA
 
     def test_contrib_cloudflare_1(self):
-        self.maxDiff = None
         cert = self.load_cert(self.ca, x509=cloudflare_1_pubkey)
         stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, extensions=True,
                                   stdout=BytesIO(), stderr=BytesIO())
@@ -362,7 +359,6 @@ HPKP pin: bkunFfRSda4Yhz7UlMUaalgj0Gcus/9uGVp19Hceczg=
         self.assertEqual(stdout.decode('utf-8'), expected)
 
     def test_contrib_godaddy_derstandardat(self):
-        self.maxDiff = None
         self.assertContrib('godaddy_derstandardat', '''Common Name: %(cn)s
 Valid from: %(valid_from)s
 Valid until: %(valid_until)s
@@ -450,7 +446,6 @@ HPKP pin: %(hpkp)s
 })
 
     def test_contrib_letsencrypt_jabber_at(self):
-        self.maxDiff = None
         self.assertContrib('letsencrypt_jabber_at', '''Common Name: %(cn)s
 Valid from: %(valid_from)s
 Valid until: %(valid_until)s
