@@ -214,6 +214,9 @@ on Wikipedia.</p>'''
                 else:
                     attr_name = name
 
+                if attr_name == 'subjectAltName':  # already displayed in main section
+                    continue
+
                 fieldsets[self.x509_fieldset_index][1]['fields'].append(attr_name)
         else:
             fieldsets.pop(self.x509_fieldset_index)
