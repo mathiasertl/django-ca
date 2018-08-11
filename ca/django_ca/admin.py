@@ -181,6 +181,10 @@ on Wikipedia.</p>'''
         return self.output_extension(obj.certificatePolicies())
     certificatePolicies.short_description = _('Certificate Policies')
 
+    def signedCertificateTimestampList(self, obj):
+        return self.output_extension(obj.signedCertificateTimestampList())
+    signedCertificateTimestampList.short_description = _('Signed Certificate Timestamps')
+
     def unknown_oid(self, oid, obj):
         ext = obj.x509.extensions.get_extension_for_oid(oid)
         return self.output_extension((ext.critical, ext.value))

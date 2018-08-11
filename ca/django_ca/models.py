@@ -29,6 +29,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PublicFormat
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.x509 import TLSFeatureType
+from cryptography.x509.certificate_transparency import LogEntryType
 from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtensionOID
 
@@ -323,6 +324,29 @@ class X509CertMixin(models.Model):
             policies.append(output)
 
         return ext.critical, policies
+
+    def signedCertificateTimestampList(self):
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(
+                ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
+        except x509.ExtensionNotFound:
+            return None
+
+        timestamps = []
+        for entry in ext.value:
+            if entry.entry_type == LogEntryType.PRE_CERTIFICATE:
+                entry_type = 'Precertificate'
+            elif entry.entry_type == LogEntryType.X509_CERTIFICATE:
+                entry_type = 'x509 certificate'
+            else:
+                entry_type = 'unknown'
+
+            timestamps.append('%s (%s): %s\n%s' % (
+                entry_type, entry.version.name, entry.timestamp,
+                '\n%s' % binascii.hexlify(entry.log_id).decode('utf-8')
+            ))
+
+        return ext.critical, timestamps
 
     def get_digest(self, algo):
         algo = getattr(hashes, algo.upper())()

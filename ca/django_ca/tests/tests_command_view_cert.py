@@ -450,7 +450,12 @@ HPKP pin: %(hpkp)s
         if cryptography_version >= (2, 3):
             signedCertificateTimestampList = '''
 signedCertificateTimestampList:
-    <ObjectIdentifier(oid=1.3.6.1.4.1.11129.2.4.2, name=signedCertificateTimestampList)>'''
+    * Precertificate (v1): 2018-08-09 10:15:21.724000
+
+293c519654c83965baaa50fc5807d4b76fbf587a2972dca4c30cf4e54547f478
+    * Precertificate (v1): 2018-08-09 10:15:21.749000
+
+db74afeecb29ecb1feca3e716d2ce5b9aabb36f7847183c75d9d4f37b61fbf64'''
             unknown = ''
         else:
             signedCertificateTimestampList = ''
