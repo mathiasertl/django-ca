@@ -177,6 +177,10 @@ on Wikipedia.</p>'''
         return self.output_extension(obj.subjectAltName())
     subjectAltName.short_description = _('subjectAltName')
 
+    def certificatePolicies(self, obj):
+        return self.output_extension(obj.certificatePolicies())
+    certificatePolicies.short_description = _('Certificate Policies')
+
     def unknown_oid(self, oid, obj):
         ext = obj.x509.extensions.get_extension_for_oid(oid)
         return self.output_extension((ext.critical, ext.value))

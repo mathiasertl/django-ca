@@ -288,6 +288,23 @@ class X509CertMixin(models.Model):
 
         return ext.critical, features
 
+    def certificatePolicies(self):
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES)
+        except x509.ExtensionNotFound:
+            return None
+
+        policies = []
+        for value in ext.value:
+            output = 'OID %s: ' % value.policy_identifier.dotted_string
+            if value.policy_qualifiers is None:
+                output += "None"
+            else:
+                output += ', '.join(value.policy_qualifiers)
+            policies.append(output)
+
+        return ext.critical, policies
+
     def get_digest(self, algo):
         algo = getattr(hashes, algo.upper())()
         return add_colons(binascii.hexlify(self.x509.fingerprint(algo)).upper().decode('utf-8'))
