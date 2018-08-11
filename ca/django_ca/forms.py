@@ -69,6 +69,13 @@ class X509CertMixinAdminForm(forms.ModelForm):
             'Download: <a href="%s?format=PEM">as PEM</a> | <a href="%s?format=DER">as DER</a>.'
         ) % (url, url)
 
+    class Meta:
+        help_texts = {
+            'hpkp_pin': _('''SHA-256 HPKP pin of this certificate. See also
+<a href="https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning">HTTP Public Key Pinning</a>
+on Wikipedia.'''),
+        }
+
 
 class CreateCertificateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):

@@ -55,12 +55,12 @@ class WatcherAdmin(admin.ModelAdmin):
 class CertificateMixin(object):
     form = X509CertMixinAdminForm
 
-    def hpkp_pin(self, obj):
-        help_text = '''<p class="help">SHA-256 HPKP pin of this certificate. See also
+    def _hpkp_pin(self, obj):
+        help_text = '''<div class="help">SHA-256 HPKP pin of this certificate. See also
 <a href="https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning">HTTP Public Key Pinning</a>
 on Wikipedia.</p>'''
         return mark_safe('%s%s' % (obj.hpkp_pin, help_text))
-    hpkp_pin.short_description = _('HPKP pin (SHA-256)')
+    _hpkp_pin.short_description = _('HPKP pin (SHA-256)')
 
     def get_urls(self):
         info = self.model._meta.app_label, self.model._meta.model_name
