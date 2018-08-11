@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import binascii
 import copy
 import json
 import os
@@ -22,6 +23,8 @@ from functools import partial
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding
+from cryptography.x509.certificate_transparency import LogEntryType
+from cryptography.x509.oid import ExtensionOID
 
 from django.conf.urls import url
 from django.contrib import admin
@@ -29,6 +32,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.html import escape
@@ -116,6 +120,12 @@ on Wikipedia.</p>'''
     # Properties for x509 extensions #
     ##################################
 
+    def _critical(self, ext):
+        if ext.critical is True:
+            text = _('Critical')
+            return mark_safe('<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text))
+        return mark_safe('')
+
     def output_extension(self, value):
         # shared function for formatting extension values
         if value is None:
@@ -182,7 +192,32 @@ on Wikipedia.</p>'''
     certificatePolicies.short_description = _('Certificate Policies')
 
     def signedCertificateTimestampList(self, obj):
-        return self.output_extension(obj.signedCertificateTimestampList())
+        try:
+            ext = obj.x509.extensions.get_extension_for_oid(
+                ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
+        except x509.ExtensionNotFound:
+            return ''
+
+        entries = []
+        for entry in ext.value:
+            if entry.entry_type == LogEntryType.PRE_CERTIFICATE:
+                entry_type = 'Precertificate'
+            elif entry.entry_type == LogEntryType.X509_CERTIFICATE:
+                entry_type = 'X.509 certificate'
+            else:
+                entry_type = _('Unknown type')
+
+            entries.append([
+                entry_type,
+                entry.version.name,
+                entry.timestamp,
+                binascii.hexlify(entry.log_id).decode('utf-8'),  # sha256 hash
+            ])
+
+        return render_to_string('django_ca/admin/signedCertificateTimestampList.html', {
+            'critical': ext.critical or True,
+            'entries': entries,
+        })
     signedCertificateTimestampList.short_description = _('Signed Certificate Timestamps')
 
     def unknown_oid(self, oid, obj):

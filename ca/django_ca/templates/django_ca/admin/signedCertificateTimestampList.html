@@ -1,0 +1,15 @@
+{% load i18n %}
+{% if critical %}
+  <img src="/static/admin/img/icon-yes.svg" alt="{% trans 'Critical' %}"> {% trans 'Critical' %}
+{% endif %}
+
+<ul class="x509-extension-value">
+{% for type, version, timestamp, hash in entries %}
+  <li>{% blocktrans %}{{ type}} ({{ version }}):{% endblocktrans %}
+    <ul class="x509-extension-value">
+      <li>{% blocktrans %}Hash: {{ hash }}{% endblocktrans %}</li>
+      <li>{% blocktrans %}Timestamp: {{ timestamp }}{% endblocktrans %}</li>
+    </ul>
+  </li>
+{% endfor %}
+</ul>
