@@ -8,3 +8,5 @@
 __pycache__
 /ca/ca/test_settings.py
 /ca/ca/localsettings.py
+*.sw[op]
+*.py[co]
