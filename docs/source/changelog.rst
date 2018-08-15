@@ -30,9 +30,12 @@ Docker
 * Base the :doc:`Docker image <docker>` on ``python:3-alpine`` (instead of ``python:3``), yielding a much
   smaller image (~965MB -> ~235MB).
 * Run complete test-suite in a separate build stage when building the image.
+* Provide ``uwsgi.ini`` for fast deployments with the uwsgi protocol.
 * Create user/group with a predefined uid/gid of 9000 to allow better sharing of containers.
 * Add ``/usr/share/django-ca/`` as named volume, allowing a setup where an external webserver serves static
   files.
+* Add documentation on how to run the container in combination with an external webserver.
+* Add documentation on how to run the container as a different uid/gid.
 
 .. _changelog-1.8.0:
 
