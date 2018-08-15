@@ -344,7 +344,7 @@ class X509CertMixin(models.Model):
                 entry_type = 'Precertificate'
             elif entry.entry_type == LogEntryType.X509_CERTIFICATE:
                 entry_type = 'x509 certificate'
-            else:
+            else:  # pragma: no cover - only the above two are part of the standard
                 entry_type = 'unknown'
 
             timestamps.append('%s (%s): %s\n%s' % (
