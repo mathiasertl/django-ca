@@ -12,7 +12,8 @@ DATABASES = {
         'NAME': '/var/lib/django-ca/db.sqlite3',
     },
 }
-STATIC_ROOT = '/usr/share/django-ca/'
+STATIC_ROOT = '/usr/share/django-ca/static/'
+MEDIA_ROOT = '/usr/share/django-ca/media/'
 ALLOWED_HOSTS = [
     '*'
 ]
