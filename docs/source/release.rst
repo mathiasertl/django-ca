@@ -2,7 +2,9 @@
 Release process
 ###############
 
-Before you release:
+**************
+Before release
+**************
 
 * Update ``requirements*.txt`` (use ``pip list -o``).
 * Make sure that ``setup.py`` has proper requirements.
@@ -12,15 +14,24 @@ Before you release:
 * Make sure that ``docs/source/changelog.rst`` is up to date.
 * Push the last commit and make sure that Travis and Read The Docs are updated.
 
-Release process:
+************
+Docker image
+************
+
+Create a docker image (note that we create a image revision by appending ``-1``)::
+
+   docker build -t django-ca .
+
+***************
+Release process
+***************
 
 * Tag the release: ``git tag -s $version``
 * Push the tag: ``git push origin --tags``
 * Create a `release on GitHub <https://github.com/mathiasertl/django-ca/tags>`_.
 * Upload release to PyPI: ``python setup.py sdist bdist_wheel upload``.
-* Create docker image (note that we create a image revision by appending ``-1``)::
+* Tag and upload the docker image:
 
-      docker build -t django-ca .
       docker tag django-ca mathiasertl/django-ca
       docker tag django-ca mathiasertl/django-ca:$version-1
       docker push mathiasertl/django-ca
