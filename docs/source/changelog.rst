@@ -24,7 +24,7 @@ ChangeLog
 * Fix example command to generate a CSR (had a stray '/').
 * Run test-suite with template debugging enabled to catch silently skipped template errors.
 * Base the :doc:`Docker image <docker>` on ``python:3-alpine`` (instead of ``python:3``), yielding a much
-  smaller image.
+  smaller image (~965MB -> 240MB).
 
 .. _changelog-1.8.0:
 
