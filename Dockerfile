@@ -16,7 +16,6 @@ RUN python setup.py test
 
 # cleanup some files so they are not included later
 RUN rm -r ca/django_ca/tests/
-RUN find ca/
 RUN find ca/ | grep pyc$ | xargs rm
 RUN find ca/ -type d | grep __pycache__ | xargs rmdir
 
