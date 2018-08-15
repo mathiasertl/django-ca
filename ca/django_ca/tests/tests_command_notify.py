@@ -45,7 +45,7 @@ class ViewCertTestCase(DjangoCAWithCertTestCase):
 
     def test_one_watcher(self):
         cert = Certificate.objects.get(serial=self.cert.serial)
-        cert.expires = timezone.now() + timedelta(days=3)
+        cert.expires = timezone.now() + timedelta(days=3, minutes=1)
         timestamp = cert.expires.strftime('%Y-%m-%d')
         cert.save()
 
