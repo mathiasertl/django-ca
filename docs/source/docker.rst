@@ -51,12 +51,56 @@ And then start the container with::
 uWSGI
 =====
 
-The container starts a `uWSGI webserver <https://uwsgi-docs.readthedocs.io/>`_ to let you use the admin
+The container starts a `uWSGI instance <https://uwsgi-docs.readthedocs.io/>`_ to let you use the admin
 interface. To replace the simple default configuration for something else, you can pass
 ``DJANGO_CA_UWSGI_INI`` as environment variable to set a different location::
 
    docker run -v /etc/django-ca/:/etc/django-ca \
       -e DJANGO_CA_UWSGI_INI=/etc/django-ca/uwsgi.ini ...
+
+Use NGINX or Apache
+===================
+
+In more professional setups, uWSGI will not serve HTTP directly, but a webserver like Apache or NGINX will
+be a proxy to uWSGI communicating via a dedicated protocol. Usually, the webserver serves static files
+directly and not via uWSGI.
+
+.. NOTE:: uWSGI supports a variety of webservers: https://uwsgi-docs.readthedocs.io/en/latest/WebServers.html
+
+First, you need to create a directory that you can use as a `Docker volume
+<https://docs.docker.com/storage/volumes/>`_ that will contain the static files that are served by the
+webserver.  Note that the process in the container runs with uid/gid of 9000 by default::
+
+   sudo mkdir /usr/share/django-ca
+   sudo chown 9000:9000 /usr/share/django-ca
+
+Now configure your webserver appropriately, e.g. for NGINX::
+
+   server {
+       # ... everything else
+
+       location / {
+           uwsgi_pass 127.0.0.1:8000;
+           include uwsgi_params;
+       }
+
+       location /static/ {
+           alias /home/mati/git/mati/django-ca/static/static/;
+       }
+   }
+
+
+Now all that's left is to start the container with that volume and set ``DJANGO_CA_UWSGI_INI`` to a different
+ini file::
+
+   docker run \
+      -e DJANGO_CA_UWSGI_INI=/usr/src/django-ca/uwsgi/uwsgi.ini \
+      -p 8000:8000 --name=django-ca \
+      -v /usr/share/django-ca:/usr/share/django-ca \
+      django-ca
+
+Note that ``/usr/share/django-ca`` on the host will now contain the static files served by your webserver. If
+you configured NGINX on port 80, you can now visit e.g. http://localhost/admin/ for the admin interface.
 
 ************************
 Build your own container
