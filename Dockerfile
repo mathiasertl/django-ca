@@ -28,8 +28,8 @@ WORKDIR /usr/src/django-ca
 COPY requirements.txt docker/start.sh ./
 RUN apk --no-cache add --update gcc linux-headers libc-dev libffi-dev libressl-dev && \
     pip install --no-cache-dir -r requirements.txt uwsgi pyyaml
-RUN addgroup -S django-ca && \
-    adduser -S -G django-ca django-ca && \
+RUN addgroup -g 9000 -S django-ca && \
+    adduser -S -u 9000 -G django-ca django-ca && \
     mkdir -p /usr/share/django-ca/ /var/lib/django-ca/ && \
     chown django-ca:django-ca /usr/share/django-ca/ /var/lib/django-ca/
 COPY --from=test /usr/src/django-ca/ca/ ca/
