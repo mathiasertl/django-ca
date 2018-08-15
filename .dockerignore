@@ -7,5 +7,7 @@
 /.git/
 __pycache__
 /ca/ca/localsettings.py
+/ca/db.sqlite3
+*egg-info
 *.sw[op]
 *.py[co]
