@@ -69,6 +69,12 @@ uwsgi.ini      Serves the uwsgi protocol supported by NGINX and Apache. Does not
                worker processes.
 ============== ===============================================================================================
 
+You can also always pass additional parameters to uWSGI using the ``DJANGO_CA_UWSGI_PARAMS`` environment
+variable. For example, to start six worker processes, simply use::
+
+   docker run -v /etc/django-ca/:/etc/django-ca \
+      -e DJANGO_CA_UWSGI_PARAMS="--processes=6" ...
+
 Use NGINX or Apache
 ===================
 

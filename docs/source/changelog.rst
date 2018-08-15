@@ -31,6 +31,8 @@ Docker
   smaller image (~965MB -> ~235MB).
 * Run complete test-suite in a separate build stage when building the image.
 * Provide ``uwsgi.ini`` for fast deployments with the uwsgi protocol.
+* Add support for passing additional parameters to uWSGI using the ``DJANGO_CA_UWSGI_PARAMS`` environment
+  variable.
 * Create user/group with a predefined uid/gid of 9000 to allow better sharing of containers.
 * Add ``/usr/share/django-ca/`` as named volume, allowing a setup where an external webserver serves static
   files.

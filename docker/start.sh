@@ -1,6 +1,7 @@
 #!/bin/sh
 
 DJANGO_CA_UWSGI_INI=${DJANGO_CA_UWSGI_INI:-/usr/src/django-ca/uwsgi/standalone.ini}
+DJANGO_CA_UWSGI_PARAMS=${DJANGO_CA_UWSGI_PARAMS:-}
 
 if [ ! -e ${DJANGO_CA_UWSGI_INI} ]; then
     echo "${DJANGO_CA_UWSGI_INI}: No such file or directory."
@@ -19,4 +20,4 @@ fi
 
 python ca/manage.py collectstatic --noinput
 python ca/manage.py migrate --noinput
-uwsgi --ini ${DJANGO_CA_UWSGI_INI}
+uwsgi --ini ${DJANGO_CA_UWSGI_INI} ${DJANGO_CA_UWSGI_PARAMS}
