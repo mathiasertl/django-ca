@@ -1,8 +1,11 @@
 #!/bin/sh
 
 DJANGO_CA_UWSGI_INI=${DJANGO_CA_UWSGI_INI:-/usr/src/django-ca/uwsgi/standalone.ini}
-ls -dl /var/lib/django-ca
-ls -dl /usr/share/django-ca
+
+if [ ! -e ${DJANGO_CA_UWSGI_INI} ]; then
+    echo "${DJANGO_CA_UWSGI_INI}: No such file or directory."
+    exit 1
+fi
 
 if [ ! -e /var/lib/django-ca/secret_key ]; then
     python <<EOF
