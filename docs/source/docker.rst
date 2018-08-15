@@ -102,6 +102,36 @@ ini file::
 Note that ``/usr/share/django-ca`` on the host will now contain the static files served by your webserver. If
 you configured NGINX on port 80, you can now visit e.g. http://localhost/admin/ for the admin interface.
 
+Run as different user
+=====================
+
+It is possible to run the uWSGI instance inside the container as a different user, *but* you have to make sure
+that ``/var/lib/django-ca/`` and ``/usr/share/django-ca/`` are writable by that user. 
+
+.. WARNING:: 
+
+   ``/var/lib/django-ca/`` contains all sensitive data including CA private keys and login credentials to the
+   admin interface. Make sure you protect this directory!
+
+Assuming you want to use uid 3000 and gid 3001, set up appropriate folders on the host::
+
+   mkdir /var/lib/django-ca/ /usr/share/django-ca/
+   chown 3000:3001 /var/lib/django-ca/ /usr/share/django-ca/
+   chmod go-rwx /var/lib/django-ca/
+
+If you want to keep any existing data, you now must copy the data for ``/var/lib/django-ca/`` in the container
+to the one on the host.
+
+Now you can run the container with the different uid/gid::
+
+   docker run \
+      -p 8000:8000 --name=django-ca \
+      -v /usr/share/django-ca:/usr/share/django-ca \
+      -v /var/lib/django-ca:/var/lib/django-ca \
+      --user 3000:3001 \
+      django-ca
+
+
 ************************
 Build your own container
 ************************
