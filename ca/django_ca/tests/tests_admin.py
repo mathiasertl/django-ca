@@ -361,7 +361,11 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertEqual(cert.extendedKeyUsage(), None)  # not present
         self.assertEqual(cert.ca, self.ca)
         self.assertEqual(cert.csr, self.csr_pem)
+
+        # Test some more properties
         self.assertIsNone(cert.TLSFeature())
+        self.assertIsNone(cert.certificatePolicies())
+        self.assertIsNone(cert.signedCertificateTimestampList())
 
         # Test that we can view the certificate
         response = self.client.get(self.change_url(cert.pk))
