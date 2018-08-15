@@ -24,6 +24,7 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.certificate_transparency import LogEntryType
+from cryptography.x509.extensions import UnrecognizedExtension
 from cryptography.x509.oid import ExtensionOID
 
 from django.conf.urls import url
@@ -197,6 +198,12 @@ on Wikipedia.</p>'''
                 ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
         except x509.ExtensionNotFound:
             return ''
+
+        if isinstance(ext.value, UnrecognizedExtension):
+            return render_to_string('django_ca/admin/unrecognizedextension.html', {
+                'critical': ext.critical or True,
+                'entries': ext.value,
+            })
 
         entries = []
         for entry in ext.value:
