@@ -23,8 +23,15 @@ ChangeLog
 * Django 2.1 is now fully supported.
 * Fix example command to generate a CSR (had a stray '/').
 * Run test-suite with template debugging enabled to catch silently skipped template errors.
+
+Docker
+======
+
 * Base the :doc:`Docker image <docker>` on ``python:3-alpine`` (instead of ``python:3``), yielding a much
   smaller image (~965MB -> ~235MB).
+* Run complete test-suite in a separate build stage when building the image.
+* Add ``/usr/share/django-ca/`` as named volume, allowing a setup where an external webserver serves static
+  files.
 
 .. _changelog-1.8.0:
 
