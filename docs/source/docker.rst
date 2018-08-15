@@ -74,7 +74,9 @@ webserver.  Note that the process in the container runs with uid/gid of 9000 by 
    sudo mkdir /usr/share/django-ca
    sudo chown 9000:9000 /usr/share/django-ca
 
-Now configure your webserver appropriately, e.g. for NGINX::
+Now configure your webserver appropriately, e.g. for NGINX:
+
+.. code-block:: nginx
 
    server {
        # ... everything else
