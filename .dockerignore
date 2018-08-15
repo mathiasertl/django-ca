@@ -2,6 +2,7 @@
 /docs/
 /include/
 /lib/
+/py2/
 /share/
 /.git/
 __pycache__
