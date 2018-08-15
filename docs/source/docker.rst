@@ -58,6 +58,17 @@ interface. To replace the simple default configuration for something else, you c
    docker run -v /etc/django-ca/:/etc/django-ca \
       -e DJANGO_CA_UWSGI_INI=/etc/django-ca/uwsgi.ini ...
 
+The docker container comes with different ini files, each located in ``/usr/src/django-ca/uwsgi/``:
+
+============== ===============================================================================================
+config         Description
+============== ===============================================================================================
+standalone.ini **Default**. Serves plain HTTP on port 8000, including static files. 
+               Suitable for basic setups.
+uwsgi.ini      Serves the uwsgi protocol supported by NGINX and Apache. Does not serve static files, has three
+               worker processes.
+============== ===============================================================================================
+
 Use NGINX or Apache
 ===================
 
@@ -93,7 +104,7 @@ Now configure your webserver appropriately, e.g. for NGINX:
 
 
 Now all that's left is to start the container with that volume and set ``DJANGO_CA_UWSGI_INI`` to a different
-ini file::
+ini file (note that this file is included in the container, see above)::
 
    docker run \
       -e DJANGO_CA_UWSGI_INI=/usr/src/django-ca/uwsgi/uwsgi.ini \
