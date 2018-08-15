@@ -17,6 +17,7 @@ import os
 from datetime import timedelta
 from io import BytesIO
 
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandError
@@ -447,8 +448,12 @@ HPKP pin: %(hpkp)s
 })
 
     def test_contrib_letsencrypt_jabber_at(self):
+        self.maxDiff = None
         if cryptography_version >= (2, 3):
-            signedCertificateTimestampList = '''
+            # Older versions of OpenSSL (and LibreSSL) cannot parse this extension
+            # see https://github.com/pyca/cryptography/blob/master/tests/x509/test_x509_ext.py#L4455-L4459
+            if default_backend()._lib.CRYPTOGRAPHY_OPENSSL_110F_OR_GREATER:
+                signedCertificateTimestampList = '''
 signedCertificateTimestampList:
     * Precertificate (v1): 2018-08-09 10:15:21.724000
 
@@ -456,6 +461,11 @@ signedCertificateTimestampList:
     * Precertificate (v1): 2018-08-09 10:15:21.749000
 
 db74afeecb29ecb1feca3e716d2ce5b9aabb36f7847183c75d9d4f37b61fbf64'''
+            else:
+                signedCertificateTimestampList = '''
+signedCertificateTimestampList:
+    * Parsing requires OpenSSL 1.1.0f+'''
+
             unknown = ''
         else:
             signedCertificateTimestampList = ''

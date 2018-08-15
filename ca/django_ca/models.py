@@ -30,6 +30,7 @@ from cryptography.hazmat.primitives.serialization import PublicFormat
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.x509 import TLSFeatureType
 from cryptography.x509.certificate_transparency import LogEntryType
+from cryptography.x509.extensions import UnrecognizedExtension
 from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtensionOID
 
@@ -331,6 +332,11 @@ class X509CertMixin(models.Model):
                 ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
         except x509.ExtensionNotFound:
             return None
+
+        if isinstance(ext.value, UnrecognizedExtension):
+            # Older versions of OpenSSL (and LibreSSL) cannot parse this extension
+            # see https://github.com/pyca/cryptography/blob/master/tests/x509/test_x509_ext.py#L4455-L4459
+            return ext.critical, ['Parsing requires OpenSSL 1.1.0f+']
 
         timestamps = []
         for entry in ext.value:
