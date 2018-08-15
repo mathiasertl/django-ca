@@ -20,7 +20,7 @@ Docker image
 
 Create a docker image (note that we create a image revision by appending ``-1``)::
 
-   docker build -t django-ca .
+   docker build --no-cache -t django-ca .
    docker run -d --name=django-ca -p 8000:8000 django-ca
    docker exec -it django-ca python ca/manage.py createsuperuser
    docker exec -it django-ca python ca/manage.py init_ca \
