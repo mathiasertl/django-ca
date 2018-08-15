@@ -1,3 +1,19 @@
+####################
+# Test build stage #
+####################
+FROM python:3-alpine as test
+COPY requirements.txt requirements-dev.txt setup.py ./
+COPY ca/ ca/
+RUN apk --no-cache add --update gcc linux-headers libc-dev libffi-dev libressl-dev
+
+# Additional utilities required for testing:
+RUN apk --no-cache add --update make
+RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
+RUN python setup.py test
+
+######################
+# Actual build stage #
+######################
 FROM python:3-alpine
 WORKDIR /usr/src/django-ca
 
