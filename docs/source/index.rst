@@ -52,6 +52,7 @@ Development documentation:
 
    development
    contribute
+   release
    ca_examples
    extensions
 
