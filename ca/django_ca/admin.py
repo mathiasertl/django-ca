@@ -34,7 +34,6 @@ from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
 from django.template.loader import render_to_string
-from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.html import escape
@@ -69,19 +68,6 @@ class CertificateMixin(object):
         ]
         urls += super(CertificateMixin, self).get_urls()
         return urls
-
-    def get_form(self, request, obj=None, **kwargs):
-        info = self.model._meta.app_label, self.model._meta.model_name
-
-        if obj is not None:
-            url = reverse('admin:%s_%s_download' % info, kwargs={'pk': obj.pk, })
-            help_text = _(
-                'Download: <a href="%s?format=PEM">as PEM</a> | <a href="%s?format=DER">as DER</a>.'
-            ) % (url, url)
-            kwargs.setdefault('help_texts', {})
-            kwargs['help_texts'].update({'pub': help_text, })
-
-        return super(CertificateMixin, self).get_form(request, obj=obj, **kwargs)
 
     def download_view(self, request, pk):
         """A view that allows the user to download a certificate in PEM or DER/ASN1 format."""
