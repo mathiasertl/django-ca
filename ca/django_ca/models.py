@@ -194,7 +194,7 @@ class X509CertMixin(models.Model):
     def authorityInfoAccess(self):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS)
-        except x509.ExtensionNotFound:  # pragma: no cover - extension should always be present
+        except x509.ExtensionNotFound:
             return None
 
         output = []
@@ -203,7 +203,7 @@ class X509CertMixin(models.Model):
                 output.append('OCSP - %s' % format_general_name(desc.access_location))
             elif desc.access_method == AuthorityInformationAccessOID.CA_ISSUERS:
                 output.append('CA Issuers - %s' % format_general_name(desc.access_location))
-            else:  # pragma: no cover - nothing else is known currently.
+            else:  # pragma: no cover - we don't know any other access methods
                 output.append('Unknown')
 
         return ext.critical, output
@@ -211,7 +211,7 @@ class X509CertMixin(models.Model):
     def basicConstraints(self):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
-        except x509.ExtensionNotFound:  # pragma: no cover - extension should always be present
+        except x509.ExtensionNotFound:
             return None
 
         if ext.value.ca is True:
@@ -250,7 +250,7 @@ class X509CertMixin(models.Model):
     def subjectKeyIdentifier(self):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_KEY_IDENTIFIER)
-        except x509.ExtensionNotFound:  # pragma: no cover - extension should always be present
+        except x509.ExtensionNotFound:
             return None
 
         hexlified = binascii.hexlify(ext.value.digest).upper().decode('utf-8')
@@ -267,7 +267,7 @@ class X509CertMixin(models.Model):
     def authorityKeyIdentifier(self):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_KEY_IDENTIFIER)
-        except x509.ExtensionNotFound:  # pragma: no cover - extension should always be present
+        except x509.ExtensionNotFound:
             return None
 
         hexlified = binascii.hexlify(ext.value.key_identifier).upper().decode('utf-8')
@@ -503,7 +503,7 @@ class Certificate(X509CertMixin):
                            verbose_name=_('Certificate Authority'))
     csr = models.TextField(verbose_name=_('CSR'), blank=True)
 
-    def resign(self, **kwargs):
+    def resign(self, **kwargs):  # pragma: no cover - not used yet
         kwargs.setdefault('algorithm', ca_settings.CA_DIGEST_ALGORITHM)
         kwargs.setdefault('subject', self.subject)
         kwargs.setdefault('cn_in_san', False)  # this should already be the case

@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import os
+
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
@@ -224,3 +226,19 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertEqual(self.cert.hpkp_pin, certs['cert1']['hpkp'])
         self.assertEqual(self.cert2.hpkp_pin, certs['cert2']['hpkp'])
         self.assertEqual(self.cert3.hpkp_pin, certs['cert3']['hpkp'])
+
+    def test_contrib_multiple_ous_and_no_ext(self):
+        name = 'multiple_ous_and_no_ext'
+        _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
+        cert = self.load_cert(self.ca, x509=pubkey)
+        self.assertIsNone(cert.authorityInfoAccess())
+        self.assertIsNone(cert.basicConstraints())
+        self.assertIsNone(cert.subjectAltName())
+        self.assertIsNone(cert.keyUsage())
+        self.assertIsNone(cert.extendedKeyUsage())
+        self.assertIsNone(cert.subjectKeyIdentifier())
+        self.assertIsNone(cert.issuerAltName())
+        self.assertIsNone(cert.authorityKeyIdentifier())
+        self.assertIsNone(cert.TLSFeature())
+        self.assertIsNone(cert.certificatePolicies())
+        self.assertIsNone(cert.signedCertificateTimestampList())
