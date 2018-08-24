@@ -34,7 +34,6 @@ from .base import child_pubkey
 from .base import cryptography_version
 from .base import ocsp_pubkey
 
-
 try:
     import unittest.mock as mock
 except ImportError:
