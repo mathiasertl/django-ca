@@ -14,6 +14,11 @@
 # see <http://www.gnu.org/licenses/>.
 
 import os
+import unittest
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.x509.extensions import UnrecognizedExtension
+from cryptography.x509.oid import ObjectIdentifier
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -26,7 +31,14 @@ from .base import cert3_csr
 from .base import cert3_pubkey
 from .base import certs
 from .base import child_pubkey
+from .base import cryptography_version
 from .base import ocsp_pubkey
+
+
+try:
+    import unittest.mock as mock
+except ImportError:
+    import mock
 
 
 class TestWatcher(TestCase):
@@ -242,3 +254,21 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertIsNone(cert.TLSFeature())
         self.assertIsNone(cert.certificatePolicies())
         self.assertIsNone(cert.signedCertificateTimestampList())
+
+    @unittest.skipUnless(
+        default_backend()._lib.CRYPTOGRAPHY_OPENSSL_110F_OR_GREATER,
+        'test only makes sense with older libreSSL/OpenSSL versions that don\'t support SCT.')
+    @unittest.skipUnless(cryptography_version >= (2, 3),
+                         'test requires cryptography >= 2.3')
+    def test_unsupported(self):
+        # Test return value for older versions of OpenSSL
+
+        name = 'letsencrypt_jabber_at'
+        _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
+        cert = self.load_cert(self.ca, x509=pubkey)
+
+        value = UnrecognizedExtension(ObjectIdentifier('1.1.1.1'), b'foo')
+
+        with mock.patch('cryptography.x509.extensions.Extension.value', value):
+            self.assertEqual(cert.signedCertificateTimestampList(),
+                             (False, ['Parsing requires OpenSSL 1.1.0f+']))
