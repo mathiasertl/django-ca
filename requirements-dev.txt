@@ -1,5 +1,5 @@
 Fabric3==1.14.post1
-Sphinx==1.7.6
+Sphinx==1.7.7
 coverage==4.5.1
 flake8==3.5.0
 ipython<6; python_version < '3.3'
