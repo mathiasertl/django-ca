@@ -22,7 +22,6 @@ from cryptography.hazmat.primitives import hashes
 
 from django import forms
 from django.contrib.admin.widgets import AdminDateWidget
-from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
 from . import ca_settings
@@ -45,31 +44,8 @@ def _profile_choices():
 
 
 class X509CertMixinAdminForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        """Override constructor to set the help_text for the pub field.
-
-        The help_text is set by adding a value to the help_texts dictionary of the models Meta
-        class. We use this unusual way because it should contain links referencing the currently
-        displayed object and the normal methods do not work this way:
-
-        * You cannot use the normal way of setting ``help_texts`` in the forms ``Meta`` class,
-          because we cannot reference the object instance here.
-        * We cannot access self.fields['pub'] in the constructor, because it is a readonly field
-          and thus not present in the form.
-        """
-        super(X509CertMixinAdminForm, self).__init__(*args, **kwargs)
-
-        # help_texts is None if we have no Meta class defined here
-        if self._meta.help_texts is None:  # pragma: no branch
-            self._meta.help_texts = {}
-
-        info = self.instance._meta.app_label, self.instance._meta.model_name
-        url = reverse('admin:%s_%s_download' % info, kwargs={'pk': self.instance.pk})
-        self._meta.help_texts['pub'] = _(
-            'Download: <a href="%s?format=PEM">as PEM</a> | <a href="%s?format=DER">as DER</a>.'
-        ) % (url, url)
-
     class Meta:
+        # NOTE: the pub field gets a dynamic help text in django_ca.admin.CertificateMixin.get_form.
         help_texts = {
             'hpkp_pin': _('''SHA-256 HPKP pin of this certificate. See also
 <a href="https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning">HTTP Public Key Pinning</a>
