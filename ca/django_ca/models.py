@@ -297,7 +297,7 @@ class X509CertMixin(models.Model):
             text = qualifier.explicit_text
             if notice_ref is None:
                 return text
-            else:
+            else:  # pragma: no cover - unseen in the wild
                 org = notice_ref.organization
                 numbers = notice_ref.notice_numbers
                 if not numbers:
@@ -342,7 +342,7 @@ class X509CertMixin(models.Model):
         for entry in ext.value:
             if entry.entry_type == LogEntryType.PRE_CERTIFICATE:
                 entry_type = 'Precertificate'
-            elif entry.entry_type == LogEntryType.X509_CERTIFICATE:
+            elif entry.entry_type == LogEntryType.X509_CERTIFICATE:  # pragma: no cover - unseen in the wild
                 entry_type = 'x509 certificate'
             else:  # pragma: no cover - only the above two are part of the standard
                 entry_type = 'unknown'
