@@ -412,7 +412,6 @@ class CertificateAuthority(X509CertMixin):
 
     name = models.CharField(max_length=32, help_text=_('A human-readable name'), unique=True)
     enabled = models.BooleanField(default=True)
-    # WARNING: on_delete MUST be a keyword argument in Django 1.8.
     parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True,
                                related_name='children')
     private_key_path = models.CharField(max_length=256, help_text=_('Path to the private key.'))
@@ -498,7 +497,6 @@ class Certificate(X509CertMixin):
 
     watchers = models.ManyToManyField(Watcher, related_name='certificates', blank=True)
 
-    # WARNING: on_delete MUST be a keyword argument in Django 1.8.
     ca = models.ForeignKey(CertificateAuthority, on_delete=models.CASCADE,
                            verbose_name=_('Certificate Authority'))
     csr = models.TextField(verbose_name=_('CSR'), blank=True)
