@@ -343,8 +343,10 @@ class X509CertMixin(models.Model):
             if entry.entry_type == LogEntryType.PRE_CERTIFICATE:
                 entry_type = 'Precertificate'
             elif entry.entry_type == LogEntryType.X509_CERTIFICATE:  # pragma: no cover - unseen in the wild
+                # NOTE: same pragma is also in django_ca.admin.CertificateMixin.signedCertificateTimestampList
                 entry_type = 'x509 certificate'
             else:  # pragma: no cover - only the above two are part of the standard
+                # NOTE: same pragma is also in django_ca.admin.CertificateMixin.signedCertificateTimestampList
                 entry_type = 'unknown'
 
             timestamps.append('%s (%s): %s\n%s' % (

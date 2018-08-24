@@ -196,9 +196,11 @@ class CertificateMixin(object):
         for entry in ext.value:
             if entry.entry_type == LogEntryType.PRE_CERTIFICATE:
                 entry_type = 'Precertificate'
-            elif entry.entry_type == LogEntryType.X509_CERTIFICATE:
+            elif entry.entry_type == LogEntryType.X509_CERTIFICATE:  # pragma: no cover - unseen in the wild
+                # NOTE: same pragma is also in django_ca.models.X509CertMixin.signedCertificateTimestampList
                 entry_type = 'X.509 certificate'
-            else:
+            else:  # pragma: no cover - only the above two are part of the standard
+                # NOTE: same pragma is also in django_ca.models.X509CertMixin.signedCertificateTimestampList
                 entry_type = _('Unknown type')
 
             entries.append([
