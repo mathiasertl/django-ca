@@ -15,10 +15,16 @@
 
 import json
 import os
+import unittest
 from datetime import datetime
 from datetime import timedelta
 
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding
+from cryptography.x509.extensions import Extension
+from cryptography.x509.extensions import UnrecognizedExtension
+from cryptography.x509.oid import ExtensionOID
+from cryptography.x509.oid import ObjectIdentifier
 
 from django.contrib.auth.models import Permission
 from django.contrib.auth.models import User
@@ -43,8 +49,14 @@ from ..utils import SUBJECT_FIELDS
 from ..utils import TLS_FEATURE_MAPPING
 from .base import DjangoCAWithCertTestCase
 from .base import DjangoCAWithCSRTestCase
+from .base import cryptography_version
 from .base import override_settings
 from .base import override_tmpcadir
+
+try:
+    import unittest.mock as mock
+except ImportError:
+    import mock
 
 
 class AdminTestMixin(object):
@@ -242,6 +254,34 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
     def test_contrib_letsencrypt_jabber_at(self):
         self.assertContrib('letsencrypt_jabber_at')
+
+    @unittest.skipUnless(
+        default_backend()._lib.CRYPTOGRAPHY_OPENSSL_110F_OR_GREATER,
+        'test only makes sense with older libreSSL/OpenSSL versions that don\'t support SCT.')
+    @unittest.skipUnless(cryptography_version >= (2, 3),
+                         'test requires cryptography >= 2.3')
+    def test_unsupported(self):
+        # Test return value for older versions of OpenSSL
+
+        name = 'letsencrypt_jabber_at'
+        _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
+        cert = self.load_cert(self.ca, x509=pubkey)
+
+        oid = ObjectIdentifier('1.1.1.1')
+        value = UnrecognizedExtension(oid, b'foo')
+        ext = Extension(oid=oid, critical=False, value=value)
+        orig_func = cert.x509.extensions.get_extension_for_oid
+
+        def side_effect(key):
+            if key == ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS:
+                return ext
+            else:
+                return orig_func(key)
+
+        with mock.patch('cryptography.x509.extensions.Extensions.get_extension_for_oid',
+                        side_effect=side_effect):
+            response = self.client.get(self.change_url(cert.pk))
+            self.assertChangeResponse(response)
 
 
 class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):

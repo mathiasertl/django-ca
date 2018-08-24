@@ -183,7 +183,7 @@ class CertificateMixin(object):
         try:
             ext = obj.x509.extensions.get_extension_for_oid(
                 ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
-        except x509.ExtensionNotFound:
+        except x509.ExtensionNotFound:  # pragma: no cover - method is only called when extension exists.
             return ''
 
         if isinstance(ext.value, UnrecognizedExtension):
