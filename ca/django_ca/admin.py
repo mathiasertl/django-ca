@@ -60,13 +60,6 @@ class WatcherAdmin(admin.ModelAdmin):
 class CertificateMixin(object):
     form = X509CertMixinAdminForm
 
-    def _hpkp_pin(self, obj):
-        help_text = '''<div class="help">SHA-256 HPKP pin of this certificate. See also
-<a href="https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning">HTTP Public Key Pinning</a>
-on Wikipedia.</p>'''
-        return mark_safe('%s%s' % (obj.hpkp_pin, help_text))
-    _hpkp_pin.short_description = _('HPKP pin (SHA-256)')
-
     def get_urls(self):
         info = self.model._meta.app_label, self.model._meta.model_name
         urls = [
@@ -120,12 +113,6 @@ on Wikipedia.</p>'''
     ##################################
     # Properties for x509 extensions #
     ##################################
-
-    def _critical(self, ext):
-        if ext.critical is True:
-            text = _('Critical')
-            return mark_safe('<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text))
-        return mark_safe('')
 
     def output_extension(self, value):
         # shared function for formatting extension values
