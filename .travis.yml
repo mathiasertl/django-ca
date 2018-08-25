@@ -9,8 +9,8 @@ env:
   - DJANGO=2.1 CRYPTOGRAPHY=2.3.1
   - DJANGO=2.1 CRYPTOGRAPHY=2.2.2
   - DJANGO=2.1 CRYPTOGRAPHY=2.1.4
-  - DJANGO=2.0.8 CRYPTOGRAPHY=2.3
-  - DJANGO=1.11.15 CRYPTOGRAPHY=2.3
+  - DJANGO=2.0.8 CRYPTOGRAPHY=2.3.1
+  - DJANGO=1.11.15 CRYPTOGRAPHY=2.3.1
 install:
   # Build/test dependencies
  - pip install -U pip setuptools
