@@ -19,7 +19,7 @@ Before release
 Docker image
 ************
 
-Create a docker image (note that we create a image revision by appending ``-1``)::
+Create a docker image::
 
    docker build --no-cache -t django-ca .
    docker run -d --name=django-ca -p 8000:8000 django-ca
@@ -37,7 +37,7 @@ Release process
 * Push the tag: ``git push origin --tags``
 * Create a `release on GitHub <https://github.com/mathiasertl/django-ca/tags>`_.
 * Upload release to PyPI: ``python setup.py sdist bdist_wheel upload``.
-* Tag and upload the docker image:
+* Tag and upload the docker image  (note that we create a image revision by appending ``-1``)::
 
       docker tag django-ca mathiasertl/django-ca
       docker tag django-ca mathiasertl/django-ca:$version-1
