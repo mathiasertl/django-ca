@@ -110,6 +110,10 @@ class CertificateMixin(object):
         actions.pop('delete_selected', '')
         return actions
 
+    def hpkp_pin(self, obj):
+        return obj.hpkp_pin
+    hpkp_pin.short_description = _('HPKP pin')
+
     def cn_display(self, obj):
         if obj.cn:
             return obj.cn
