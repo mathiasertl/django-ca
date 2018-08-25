@@ -12,6 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
 
 # copy this late so that changes do not trigger a cache miss during build
 COPY ca/ ca/
+RUN python setup.py code_quality
 RUN python setup.py test
 
 # cleanup some files so they are not included later
