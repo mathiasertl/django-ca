@@ -45,10 +45,10 @@ PY3 = sys.version_info[0] == 3
 _rootdir = os.path.dirname(os.path.realpath(__file__))
 
 install_requires = [
-    'asn1crypto>=0.22.0',
+    'asn1crypto>=0.24.0',
     'cryptography>=2.1',
     'ocspbuilder>=0.10.2',
-    'oscrypto>=0.18.0',
+    'oscrypto>=0.19.0',
 ]
 
 if PY2:
