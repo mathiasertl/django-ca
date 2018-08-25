@@ -6,9 +6,9 @@ ChangeLog
 
 .. _changelog-1.9.0:
 
-***********
-1.9.0 (TBR)
-***********
+******************
+1.9.0 (2018-08-25)
+******************
 
 * Allow the creation of Certificates with multiple OUs in their subject (command-line only).
 * Fix issues with handling CAs with a password on the command-line.
