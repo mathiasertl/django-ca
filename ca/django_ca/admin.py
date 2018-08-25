@@ -110,6 +110,12 @@ class CertificateMixin(object):
         actions.pop('delete_selected', '')
         return actions
 
+    def cn_display(self, obj):
+        if obj.cn:
+            return obj.cn
+        return _('<none>')
+    cn_display.short_description = _('CommonName')
+
     ##################################
     # Properties for x509 extensions #
     ##################################
@@ -239,7 +245,10 @@ class CertificateMixin(object):
                     func = partial(self.unknown_oid, value)
                     if name == 'UnknownOID':
                         func.short_description = 'Unkown OID (%s)' % value.dotted_string
-                    else:
+                    else:  # pragma: no branch
+                        # If this branch happens, it means that we encounter a known (to cryptography)
+                        # extension, that we do not yet support. This is usually fixed by us supporting the
+                        # extension, so it never happens.
                         func.short_description = name
                     setattr(self, attr_name, func)
                 else:
@@ -282,7 +291,7 @@ class CertificateMixin(object):
 class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
     fieldsets = (
         (None, {
-            'fields': ['name', 'enabled', 'cn', 'parent', 'hpkp_pin', ],
+            'fields': ['name', 'enabled', 'cn_display', 'parent', 'hpkp_pin', ],
         }),
         (_('Details'), {
             'description': _('Information to add to newly signed certificates.'),
@@ -301,7 +310,7 @@ class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
     list_display = ['enabled', 'name', 'serial', ]
     list_display_links = ['enabled', 'name', ]
     search_fields = ['cn', 'name', 'serial', ]
-    readonly_fields = ['serial', 'pub', 'parent', 'cn', 'expires', 'hpkp_pin', ]
+    readonly_fields = ['serial', 'pub', 'parent', 'cn_display', 'expires', 'hpkp_pin', ]
     x509_fieldset_index = 3
 
     def has_add_permission(self, request):
@@ -343,13 +352,13 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
     list_display = ('cn_display', 'serial', 'status', 'expires_date')
     list_filter = (StatusListFilter, 'ca')
     readonly_fields = [
-        'expires', 'csr', 'pub', 'cn', 'serial', 'revoked', 'revoked_date', 'revoked_reason',
+        'expires', 'csr', 'pub', 'cn_display', 'serial', 'revoked', 'revoked_date', 'revoked_reason',
         'distinguishedName', 'ca', 'hpkp_pin', 'subjectAltName']
     search_fields = ['cn', 'serial', ]
 
     fieldsets = [
         (None, {
-            'fields': ['cn', 'subjectAltName', 'distinguishedName', 'serial', 'ca', 'expires',
+            'fields': ['cn_display', 'subjectAltName', 'distinguishedName', 'serial', 'ca', 'expires',
                        'watchers', 'hpkp_pin'],
         }),
         (_('X.509 Extensions'), {
@@ -383,11 +392,6 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
             if os.path.exists(ca.private_key_path):
                 return True
         return False
-
-    def cn_display(self, obj):
-        if obj.cn:
-            return obj.cn
-        return _('<none>')
 
     def get_form(self, request, obj=None, **kwargs):
         if obj is None:
