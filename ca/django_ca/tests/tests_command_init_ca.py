@@ -490,13 +490,6 @@ class InitCATest(DjangoCATestCase):
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
-    def test_wrong_algorithm(self):
-        with self.assertRaisesRegex(CommandError, '^Error: Unknown hash algorithm: broken$'), \
-                self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
-            out, err = self.call_command('init_ca', '--algorithm=broken', 'wrong_algo', 'subject')
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
-
     @override_tmpcadir()
     def test_small_key_size(self):
         with self.assertRaises(CommandError), \

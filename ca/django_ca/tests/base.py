@@ -211,7 +211,7 @@ class override_settings(_override_settings):
 
         try:
             reload_module(ca_settings)
-        except Exception:
+        except Exception:  # pragma: no cover
             # If an exception is thrown reloading ca_settings, we disable everything again.
             # Otherwise an exception in ca_settings will cause overwritten settings to persist
             # to the next tests.
@@ -354,22 +354,6 @@ class DjangoCATestCase(TestCase):
         key = serialization.load_pem_private_key(key_data, password, default_backend())
         self.assertIsNotNone(key)
         self.assertTrue(key.key_size > 0)
-
-    def call_command(self, command, *argv, **kwargs):
-        argv = ['manage.py'] + list(argv)
-        utility = ManagementUtility(argv)
-        command = utility.fetch_command(command)
-        parser = command.create_parser('manage.py', command)
-        options = parser.parse_args(argv[1:])
-        cmd_options = vars(options)
-
-        cmd_options.setdefault('stdout', StringIO())
-        cmd_options.setdefault('stderr', StringIO())
-
-        stdin = kwargs.pop('stdin', StringIO())
-        with patch('sys.stdin', stdin):
-            command.execute(**cmd_options)
-        return cmd_options['stdout'].getvalue(), cmd_options['stderr'].getvalue()
 
     def get_cert_context(self, name):
         # Get a dictionary suitable for testing output based on the dictionary in basic.certs
