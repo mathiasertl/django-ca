@@ -96,27 +96,32 @@ class AdminTestMixin(object):
 class ChangelistTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     """Test the changelist view."""
 
-    def assertCerts(self, response, certs):
+    def assertResponse(self, response, certs=None):
+        if certs is None:
+            certs = []
+
+        self.assertEqual(response.status_code, 200)
+        self.assertCSS(response, 'django_ca/admin/css/base.css')
+        self.assertCSS(response, 'django_ca/admin/css/certificateadmin.css')
         self.assertEqual(set(response.context['cl'].result_list), set(certs))
+
+    def assertContrib(self, name):
+        _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
+        cert = self.load_cert(self.ca, x509=pubkey)
+        response = self.client.get(self.changelist_url)
+        self.assertResponse(response, [self.cert, cert])
 
     def test_get(self):
         response = self.client.get(self.changelist_url)
-        self.assertEqual(response.status_code, 200)
-        self.assertCerts(response, [self.cert])
-
-        self.assertCSS(response, 'django_ca/admin/css/base.css')
-        self.assertCSS(response, 'django_ca/admin/css/certificateadmin.css')
+        self.assertResponse(response, [self.cert])
 
     def test_status(self):
         response = self.client.get('%s?status=valid' % self.changelist_url)
-        self.assertEqual(response.status_code, 200)
-        self.assertCerts(response, [self.cert])
+        self.assertResponse(response, [self.cert])
         response = self.client.get('%s?status=expired' % self.changelist_url)
-        self.assertCerts(response, [])
-        self.assertEqual(response.status_code, 200)
+        self.assertResponse(response, [])
         response = self.client.get('%s?status=revoked' % self.changelist_url)
-        self.assertEqual(response.status_code, 200)
-        self.assertCerts(response, [])
+        self.assertResponse(response, [])
 
         # get the cert and manipulate it so that it shows up in the changelist:
         cert = Certificate.objects.get(serial=self.cert.serial)
@@ -124,13 +129,23 @@ class ChangelistTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         cert.save()
 
         response = self.client.get('%s?status=expired' % self.changelist_url)
-        self.assertCerts(response, [self.cert])
-        self.assertEqual(response.status_code, 200)
+        self.assertResponse(response, [self.cert])
 
         cert.revoke()
         response = self.client.get('%s?status=revoked' % self.changelist_url)
-        self.assertEqual(response.status_code, 200)
-        self.assertCerts(response, [self.cert])
+        self.assertResponse(response, [self.cert])
+
+    def test_contrib_multiple_ous_and_no_ext(self):
+        self.assertContrib('multiple_ous_and_no_ext')
+
+    def test_contrib_cloudflare_1(self):
+        self.assertContrib('cloudflare_1')
+
+    def test_contrib_godaddy_derstandardat(self):
+        self.assertContrib('godaddy_derstandardat')
+
+    def test_contrib_letsencrypt_jabber_at(self):
+        self.assertContrib('letsencrypt_jabber_at')
 
     def test_unauthorized(self):
         client = Client()
