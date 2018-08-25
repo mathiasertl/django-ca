@@ -9,6 +9,7 @@ Before release
 * Update ``requirements*.txt`` (use ``pip list -o``).
 * Make sure that ``setup.py`` has proper requirements.
 * Check ``.travis.yaml`` if the proper Django and cryptography versions are tested.
+* Check test coverage (``setup.py coverage``).
 * Update ``version`` parameter in ``setup.py``.
 * Update ``version`` and ``release`` in ``docs/source/conf.py``.
 * Make sure that ``docs/source/changelog.rst`` is up to date.
