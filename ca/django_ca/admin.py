@@ -245,7 +245,7 @@ class CertificateMixin(object):
                     func = partial(self.unknown_oid, value)
                     if name == 'UnknownOID':
                         func.short_description = 'Unkown OID (%s)' % value.dotted_string
-                    else:  # pragma: no branch
+                    else:  # pragma: no cover
                         # If this branch happens, it means that we encounter a known (to cryptography)
                         # extension, that we do not yet support. This is usually fixed by us supporting the
                         # extension, so it never happens.
