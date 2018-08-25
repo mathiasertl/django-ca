@@ -3,7 +3,7 @@
 ####################
 FROM python:3-alpine as test
 WORKDIR /usr/src/django-ca
-COPY requirements.txt requirements-dev.txt setup.py ./
+COPY requirements.txt requirements-dev.txt setup.py .isort.cfg tox.ini ./
 RUN apk --no-cache add --update gcc linux-headers libc-dev libffi-dev libressl-dev
 
 # Additional utilities required for testing:
@@ -12,6 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
 
 # copy this late so that changes do not trigger a cache miss during build
 COPY ca/ ca/
+RUN python setup.py code_quality
 RUN python setup.py test
 
 # cleanup some files so they are not included later
