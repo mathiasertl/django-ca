@@ -874,7 +874,6 @@ class CADownloadBundleTestCase(AdminTestMixin, DjangoCAWithChildCATestCase):
         self.assertEqual(self.ca, self.cert.ca)  # just to be sure we test the right thing
 
     def test_child(self):
-        self.maxDiff = None
         filename = '%s.pem' % self.child_ca.serial
         response = self.client.get('%s?format=PEM' % self.get_url(self.child_ca))
         self.assertEqual(response.status_code, 200)
