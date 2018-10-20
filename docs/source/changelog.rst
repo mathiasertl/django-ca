@@ -4,6 +4,14 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.10.0:
+
+************
+1.10.0 (TBR)
+************
+
+* Add link to easily download certificate bundles.
+
 .. _changelog-1.9.0:
 
 ******************
