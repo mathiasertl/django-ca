@@ -501,3 +501,12 @@ class DjangoCAWithCertTestCase(DjangoCAWithCSRTestCase):
     def setUpClass(cls):
         super(DjangoCAWithCertTestCase, cls).setUpClass()
         cls.cert = cls.load_cert(cls.ca, x509=cert1_pubkey)
+
+
+class DjangoCAWithChildCATestCase(DjangoCAWithCertTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(DjangoCAWithChildCATestCase, cls).setUpClass()
+        cls.child_ca = cls.load_ca(name='child', x509=child_pubkey)
+        cls.child_ca.parent = cls.ca
+        cls.child_ca.save()
