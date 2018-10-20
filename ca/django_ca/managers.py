@@ -189,7 +189,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         # write private key to file
         oldmask = os.umask(247)
         pem = private_key.private_bytes(encoding=Encoding.PEM,
-                                        format=PrivateFormat.TraditionalOpenSSL,
+                                        format=PrivateFormat.PKCS8,
                                         encryption_algorithm=encryption)
         with open(ca.private_key_path, 'wb') as key_file:
             key_file.write(pem)

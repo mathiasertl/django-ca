@@ -11,6 +11,8 @@ ChangeLog
 ************
 
 * Add link to easily download certificate bundles.
+* Store CA private keys in the more secure `PKCS8 format
+  <https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8>`_.
 
 .. _changelog-1.9.0:
 
