@@ -1,5 +1,5 @@
 Fabric3==1.14.post1
-Sphinx==1.7.7
+Sphinx==1.8.1
 coverage==4.5.1
 flake8==3.5.0
 ipython<6; python_version < '3.3'
@@ -9,10 +9,10 @@ mock==2.0.0; python_version < '3'
 numpydoc==0.8.0
 pip>=9.0.1
 pyOpenSSL==18.0.0
-setuptools>=39.2.0
+setuptools>=40.4.3
 six==1.11.0
 # Exclude python3.7 because sphinx-autobuild depends on pyYAML and that 
 # currently does not install in 3.7
 sphinx-autobuild==0.7.1; python_version < '3.7'
-sphinx-rtd-theme==0.4.1
-wheel==0.31.1
+sphinx-rtd-theme==0.4.2
+wheel==0.32.1
