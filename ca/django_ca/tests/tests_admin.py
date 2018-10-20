@@ -836,7 +836,7 @@ class CertDownloadBundleTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
     def test_cert(self):
         self.maxDiff = None
-        filename = '%s.pem' % self.cert.serial
+        filename = '%s_bundle.pem' % self.cert.serial
         response = self.client.get('%s?format=PEM' % self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
@@ -865,7 +865,7 @@ class CADownloadBundleTestCase(AdminTestMixin, DjangoCAWithChildCATestCase):
         return self.get_url(ca=self.ca)
 
     def test_root(self):
-        filename = '%s.pem' % self.ca.serial
+        filename = '%s_bundle.pem' % self.ca.serial
         response = self.client.get('%s?format=PEM' % self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
@@ -874,7 +874,7 @@ class CADownloadBundleTestCase(AdminTestMixin, DjangoCAWithChildCATestCase):
         self.assertEqual(self.ca, self.cert.ca)  # just to be sure we test the right thing
 
     def test_child(self):
-        filename = '%s.pem' % self.child_ca.serial
+        filename = '%s_bundle.pem' % self.child_ca.serial
         response = self.client.get('%s?format=PEM' % self.get_url(self.child_ca))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
