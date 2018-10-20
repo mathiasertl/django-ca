@@ -65,13 +65,13 @@ class CertificateMixin(object):
         urls = [
             url(r'^(?P<pk>\d+)/download/$', self.admin_site.admin_view(self.download_view),
                 name='%s_%s_download' % info),
+            url(r'^(?P<pk>\d+)/download_bundle/$', self.admin_site.admin_view(self.download_bundle_view),
+                name='%s_%s_download_bundle' % info),
         ]
         urls += super(CertificateMixin, self).get_urls()
         return urls
 
-    def download_view(self, request, pk):
-        """A view that allows the user to download a certificate in PEM or DER/ASN1 format."""
-
+    def _download_response(self, request, pk, bundle=False):
         if not request.user.is_staff or not self.has_change_permission(request):
             # NOTE: is_staff is already assured by ModelAdmin, but just to be sure
             raise PermissionDenied
@@ -86,8 +86,13 @@ class CertificateMixin(object):
         filetype = request.GET.get('format', 'PEM').upper().strip()
 
         if filetype == 'PEM':
-            data = obj.pub
+            if bundle is True:
+                data = '\n'.join([cert.pub.strip() for cert in obj.bundle])
+            else:
+                data = obj.pub
         elif filetype == 'DER':
+            if bundle is True:
+                return HttpResponseBadRequest(_('DER/ASN.1 certificates cannot be downloaded as a bundle.'))
             data = obj.x509.public_bytes(encoding=Encoding.DER)
         else:
             return HttpResponseBadRequest()
@@ -96,6 +101,16 @@ class CertificateMixin(object):
         response = HttpResponse(data, content_type='application/pkix-cert')
         response['Content-Disposition'] = 'attachment; filename=%s' % filename
         return response
+
+    def download_view(self, request, pk):
+        """A view that allows the user to download a certificate in PEM or DER/ASN1 format."""
+
+        return self._download_response(request, pk)
+
+    def download_bundle_view(self, request, pk):
+        """A view that allows the user to download a certificate bundle in PEM format."""
+
+        return self._download_response(request, pk, bundle=True)
 
     def has_delete_permission(self, request, obj=None):
         return False

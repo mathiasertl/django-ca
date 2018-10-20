@@ -65,9 +65,11 @@ class X509CertMixinAdminForm(forms.ModelForm):
 
         info = self.instance._meta.app_label, self.instance._meta.model_name
         url = reverse('admin:%s_%s_download' % info, kwargs={'pk': self.instance.pk})
+        bundle_url = reverse('admin:%s_%s_download_bundle' % info, kwargs={'pk': self.instance.pk})
         self._meta.help_texts['pub'] = _(
-            'Download: <a href="%s?format=PEM">as PEM</a> | <a href="%s?format=DER">as DER</a>.'
-        ) % (url, url)
+            'Download: <a href="%s?format=PEM">as PEM</a> | <a href="%s?format=DER">as DER</a><br />'
+            'Certificate bundle: <a href="%s?format=PEM">as PEM</a>'
+        ) % (url, url, bundle_url)
 
     class Meta:
         help_texts = {

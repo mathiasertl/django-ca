@@ -48,6 +48,7 @@ from ..utils import KEY_USAGE_MAPPING
 from ..utils import SUBJECT_FIELDS
 from ..utils import TLS_FEATURE_MAPPING
 from .base import DjangoCAWithCertTestCase
+from .base import DjangoCAWithChildCATestCase
 from .base import DjangoCAWithCSRTestCase
 from .base import cryptography_version
 from .base import override_settings
@@ -823,6 +824,75 @@ class CertDownloadTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertTrue(client.login(username='no_perms', password='password'))
 
         self.assertRequiresLogin(response)
+
+
+class CertDownloadBundleTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
+    def get_url(self, cert):
+        return reverse('admin:django_ca_certificate_download_bundle', kwargs={'pk': cert.pk})
+
+    @property
+    def url(self):
+        return self.get_url(cert=self.cert)
+
+    def test_cert(self):
+        self.maxDiff = None
+        filename = '%s.pem' % self.cert.serial
+        response = self.client.get('%s?format=PEM' % self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pkix-cert')
+        self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
+        self.assertEqual(force_text(response.content),
+                         '%s\n%s' % (self.ca.pub.strip(), self.cert.pub.strip()))
+        self.assertEqual(self.ca, self.cert.ca)  # just to be sure we test the right thing
+
+    def test_invalid_format(self):
+        response = self.client.get('%s?format=INVALID' % self.url)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content, b'')
+
+        # DER is not supported for bundles
+        response = self.client.get('%s?format=DER' % self.url)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content, b'DER/ASN.1 certificates cannot be downloaded as a bundle.')
+
+
+class CADownloadBundleTestCase(AdminTestMixin, DjangoCAWithChildCATestCase):
+    def get_url(self, ca):
+        return reverse('admin:django_ca_certificateauthority_download_bundle', kwargs={'pk': ca.pk})
+
+    @property
+    def url(self):
+        return self.get_url(ca=self.ca)
+
+    def test_root(self):
+        filename = '%s.pem' % self.ca.serial
+        response = self.client.get('%s?format=PEM' % self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pkix-cert')
+        self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
+        self.assertEqual(force_text(response.content), self.ca.pub.strip())
+        self.assertEqual(self.ca, self.cert.ca)  # just to be sure we test the right thing
+
+    def test_child(self):
+        self.maxDiff = None
+        filename = '%s.pem' % self.child_ca.serial
+        response = self.client.get('%s?format=PEM' % self.get_url(self.child_ca))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pkix-cert')
+        self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
+        self.assertEqual(force_text(response.content),
+                         '%s\n%s' % (self.ca.pub.strip(), self.child_ca.pub.strip()))
+        self.assertEqual(self.ca, self.cert.ca)  # just to be sure we test the right thing
+
+    def test_invalid_format(self):
+        response = self.client.get('%s?format=INVALID' % self.url)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content, b'')
+
+        # DER is not supported for bundles
+        response = self.client.get('%s?format=DER' % self.url)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content, b'DER/ASN.1 certificates cannot be downloaded as a bundle.')
 
 
 class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):

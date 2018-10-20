@@ -486,6 +486,16 @@ class CertificateAuthority(X509CertMixin):
 
         return ext.critical, value
 
+    @property
+    def bundle(self):
+        ca = self
+        bundle = [ca]
+
+        while ca.parent is not None:
+            bundle.append(ca.parent)
+            ca = ca.parent
+        return list(reversed(bundle))
+
     class Meta:
         verbose_name = _('Certificate Authority')
         verbose_name_plural = _('Certificate Authorities')
@@ -502,6 +512,10 @@ class Certificate(X509CertMixin):
     ca = models.ForeignKey(CertificateAuthority, on_delete=models.CASCADE,
                            verbose_name=_('Certificate Authority'))
     csr = models.TextField(verbose_name=_('CSR'), blank=True)
+
+    @property
+    def bundle(self):
+        return self.ca.bundle + [self]
 
     def resign(self, **kwargs):  # pragma: no cover - not used yet
         kwargs.setdefault('algorithm', ca_settings.CA_DIGEST_ALGORITHM)
