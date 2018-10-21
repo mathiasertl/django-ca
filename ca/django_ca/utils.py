@@ -43,8 +43,8 @@ from django_ca import ca_settings
 
 try:
     from collections.abc import Iterable  # pragma: only py3
-except ImportError:
-    from collections import Iterable  # pragma: only py2
+except ImportError:  # pragma: only py2
+    from collections import Iterable
 
 # List of possible subject fields, in order
 SUBJECT_FIELDS = ['C', 'ST', 'L', 'O', 'OU', 'CN', 'emailAddress', ]
