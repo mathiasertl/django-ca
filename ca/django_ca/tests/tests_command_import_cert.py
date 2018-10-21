@@ -54,6 +54,6 @@ class ImportCertTest(DjangoCAWithCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_bogus(self):
-        with self.assertRaisesRegex(CommandError, '^Unable to load public key\.$'):
+        with self.assertRaisesRegex(CommandError, r'^Unable to load public key\.$'):
             self.cmd('import_cert', __file__, ca=self.ca)
         self.assertEqual(Certificate.objects.count(), 0)
