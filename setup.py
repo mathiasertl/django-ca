@@ -71,9 +71,8 @@ class BaseCommand(Command):
 
     def run_tests(self):
         import warnings
-        warnings.filterwarnings(action='ignore', message=".*the imp module.*",
-                                category=DeprecationWarning, module='imp')
-        warnings.filterwarnings(action='always')
+        warnings.filterwarnings(action='ignore')
+        warnings.filterwarnings(action='error', module='django_ca')
 
         work_dir = os.path.join(_rootdir, 'ca')
 
