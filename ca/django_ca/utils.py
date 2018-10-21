@@ -16,7 +16,6 @@
 """Central functions to load CA key and cert as PKey/X509 objects."""
 
 import re
-from collections import Iterable
 from copy import deepcopy
 from datetime import datetime
 from ipaddress import ip_address
@@ -41,6 +40,11 @@ from django.utils.functional import Promise
 from django.utils.translation import ugettext_lazy as _
 
 from django_ca import ca_settings
+
+try:
+    from collections.abc import Iterable  # pragma: only py3
+except ImportError:
+    from collections import Iterable  # pragma: only py2
 
 # List of possible subject fields, in order
 SUBJECT_FIELDS = ['C', 'ST', 'L', 'O', 'OU', 'CN', 'emailAddress', ]
