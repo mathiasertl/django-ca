@@ -249,7 +249,7 @@ class override_tmpcadir(override_settings):
 class DjangoCATestCase(TestCase):
     """Base class for all testcases with some enhancements."""
 
-    re_false_password = '^(Bad decrypt\. Incorrect password\?|Could not deserialize key data\.)$'
+    re_false_password = r'^(Bad decrypt\. Incorrect password\?|Could not deserialize key data\.)$'
 
     @classmethod
     def setUpClass(cls):
