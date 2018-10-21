@@ -499,7 +499,7 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_root_ca_crl_url(self):
-        with self.assertRaisesRegex(CommandError, '^CRLs cannot be used to revoke root CAs\.$'), \
+        with self.assertRaisesRegex(CommandError, r'^CRLs cannot be used to revoke root CAs\.$'), \
                 self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
             self.init_ca(name='foobar', ca_crl_url='https://example.com')
         self.assertFalse(pre.called)
@@ -507,7 +507,7 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_root_ca_ocsp_url(self):
-        with self.assertRaisesRegex(CommandError, '^OCSP cannot be used to revoke root CAs\.$'), \
+        with self.assertRaisesRegex(CommandError, r'^OCSP cannot be used to revoke root CAs\.$'), \
                 self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
             self.init_ca(name='foobar', ca_ocsp_url='https://example.com')
         self.assertFalse(pre.called)

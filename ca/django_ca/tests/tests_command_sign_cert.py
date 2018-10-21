@@ -147,7 +147,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
 
         stdin = six.StringIO(self.csr_pem)
         cn = 'foo bar'
-        msg = '^%s: Could not parse CommonName as subjectAltName\.$' % cn
+        msg = r'^%s: Could not parse CommonName as subjectAltName\.$' % cn
 
         with self.assertRaisesRegex(CommandError, msg), self.assertSignal(pre_issue_cert) as pre, \
                 self.assertSignal(post_issue_cert) as post:
@@ -369,7 +369,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
 
         with self.assertRaisesRegex(
                 CommandError,
-                '^Certificate would outlive CA, maximum expiry for this CA is {} days\.$'.format(time_left)
+                r'^Certificate would outlive CA, maximum expiry for this CA is {} days\.$'.format(time_left)
         ), self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             self.cmd('sign_cert', alt=['example.com'], expires=expires, stdin=stdin)
         self.assertFalse(pre.called)
@@ -377,7 +377,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
 
     def test_no_cn_or_san(self):
         with self.assertRaisesRegex(
-                CommandError, '^Must give at least a CN in --subject or one or more --alt arguments\.$'), \
+                CommandError, r'^Must give at least a CN in --subject or one or more --alt arguments\.$'), \
                 self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             self.cmd('sign_cert', subject=Subject([('C', 'AT')]))
         self.assertFalse(pre.called)
