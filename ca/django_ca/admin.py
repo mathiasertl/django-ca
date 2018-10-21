@@ -29,6 +29,7 @@ from cryptography.x509.oid import ExtensionOID
 
 from django.conf.urls import url
 from django.contrib import admin
+from django.contrib.admin.helpers import AdminForm
 from django.contrib.messages import constants as messages
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
@@ -375,7 +376,7 @@ class StatusListFilter(admin.SimpleListFilter):
 @admin.register(Certificate)
 class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
     actions = ['revoke', ]
-    change_actions = ('revoke_change', )
+    change_actions = ('revoke_change', 'resign', )
     change_form_template = 'django_ca/admin/change_form.html'
     list_display = ('cn_display', 'serial', 'status', 'expires_date')
     list_filter = (StatusListFilter, 'ca')
@@ -462,6 +463,58 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                     name=csr_name))
 
         return urls
+
+    def resign(self, request, obj):
+        if not self.has_add_permission(request):
+            raise PermissionDenied
+
+        if request.method == 'POST':
+            form = CreateCertificateForm(request.POST, instance=obj)
+            if form.is_valid():
+                obj.revoke(reason=form.cleaned_data['revoked_reason'] or None)
+                return HttpResponseRedirect(obj.admin_change_url)
+        else:
+            san = obj.subjectAltName()
+            if san is None:
+                san = ('', False)
+            else:
+                san = (','.join(san[1]), False)
+            algo = obj.x509.signature_hash_algorithm.__class__.__name__
+
+            extKeyUsage = obj.extendedKeyUsage()
+            if extKeyUsage:
+                extKeyUsage = (extKeyUsage[1], extKeyUsage[0])
+
+            keyUsage = obj.keyUsage()
+            if keyUsage:
+                keyUsage = (keyUsage[1], keyUsage[0])
+
+            tlsFeatures = obj.TLSFeature()
+            if tlsFeatures:
+                tlsFeatures = (tlsFeatures[1], tlsFeatures[0])
+
+            form = CreateCertificateForm(initial={
+                'profile': '',
+                'csr': obj.csr,
+                'ca': obj.ca,
+                'subject': obj.subject,
+                'subjectAltName': san,
+                'algorithm': algo,
+                'watchers': obj.watchers.all(),
+                'extendedKeyUsage': extKeyUsage,
+            })
+
+        readonly_fields = self.get_readonly_fields(request, None)
+        form = AdminForm(
+            form,
+            list(self.get_fieldsets(request, None)),
+            self.get_prepopulated_fields(request, obj),
+            readonly_fields,
+            model_admin=self)
+
+        context = dict(self.admin_site.each_context(request), form=form, object=obj, opts=obj._meta,
+                       media=self.media)
+        return TemplateResponse(request, "django_ca/admin/certificate_resign_form.html", context)
 
     def revoke_change(self, request, obj):
         if not self.has_change_permission(request, obj):
