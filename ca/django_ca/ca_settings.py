@@ -16,6 +16,7 @@
 import os
 
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -148,3 +149,11 @@ try:
     CA_DIGEST_ALGORITHM = getattr(hashes, CA_DIGEST_ALGORITHM)()
 except AttributeError:  # pragma: no cover
     raise ImproperlyConfigured('Unkown CA_DIGEST_ALGORITHM: %s' % settings.CA_DIGEST_ALGORITHM)
+
+_CA_DEFAULT_ECC_CURVE = getattr(settings, 'CA_DEFAULT_ECC_CURVE', 'SECP256R1').strip()
+try:
+    CA_DEFAULT_ECC_CURVE = getattr(ec, _CA_DEFAULT_ECC_CURVE)()
+    if not isinstance(CA_DEFAULT_ECC_CURVE, ec.EllipticCurve):
+        raise ImproperlyConfigured('%s: Not an EllipticCurve.' % _CA_DEFAULT_ECC_CURVE)
+except AttributeError:
+    raise ImproperlyConfigured('Unkown CA_DEFAULT_ECC_CURVE: %s' % settings.CA_DEFAULT_ECC_CURVE)

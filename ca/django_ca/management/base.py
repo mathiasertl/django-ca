@@ -41,6 +41,7 @@ from django_ca.models import CertificateAuthority
 from django_ca.subject import Subject
 from django_ca.utils import SUBJECT_FIELDS
 from django_ca.utils import is_power2
+from django_ca.utils import parse_key_curve
 
 
 class SubjectAction(argparse.Action):
@@ -74,6 +75,18 @@ class AlgorithmAction(argparse.Action):
             parser.error('Unknown hash algorithm: %s' % value)
 
         setattr(namespace, self.dest, value)
+
+
+class KeyCurveAction(argparse.Action):
+    """Action to parse an ECC curve value."""
+
+    def __call__(self, parser, namespace, value, option_string=None):
+
+        try:
+            curve = parse_key_curve(value)
+        except ValueError as e:
+            parser.error(e)
+        setattr(namespace, self.dest, curve)
 
 
 class KeySizeAction(argparse.Action):

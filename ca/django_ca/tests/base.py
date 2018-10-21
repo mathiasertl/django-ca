@@ -81,6 +81,9 @@ child_pem, child_pubkey = _load_cert('child.pem')
 pwd_ca_pwd = b'test_password'
 pwd_ca_key = _load_key('pwd_ca.key', password=pwd_ca_pwd)
 pwd_ca_pem, pwd_ca_pubkey = _load_cert('pwd_ca.pem')
+ecc_ca_key = _load_key('ecc_ca.key')
+ecc_ca_pem, ecc_ca_pubkey = _load_cert('ecc_ca.pem')
+
 ocsp_key = _load_key('ocsp.key')
 ocsp_csr = _load_csr('ocsp.csr')
 ocsp_pem, ocsp_pubkey = _load_cert('ocsp.pem')
@@ -103,6 +106,7 @@ _, cloudflare_1_pubkey = _load_cert(os.path.join('contrib', 'cloudflare_1.pem'))
 
 certs = {
     'root': {
+        'name': 'root',
         'pem': force_text(root_pem),
         'serial': '4E:1E:2A:29:F9:4C:45:CF:12:2F:2B:17:9E:BF:D4:80:29:C6:37:C7',
         'md5': '63:C1:A3:28:B4:01:80:A3:96:22:23:96:57:17:98:7D',
@@ -134,6 +138,10 @@ certs = {
         'subjectKeyIdentifier': '4A:D5:57:27:D8:CC:01:B7:EF:AE:C1:FE:9A:9F:56:73:36:C3:0B:74',
         'keyUsage': (True, ['cRLSign', 'keyCertSign']),
         'basicConstraints': (True, 'CA:TRUE, pathlen:0'),
+    },
+    'ecc_ca': {
+        'name': 'ecc_ca',
+        'serial': '52:F4:84:51:D7:38:D9:E6:83:43:7A:4A:1D:EB:ED:A0:7D:6A:7F:D9',
     },
     'cert1': {
         'pem': force_text(cert1_pem),
@@ -484,6 +492,7 @@ class DjangoCAWithCATestCase(DjangoCATestCase):
     def setUpClass(cls):
         super(DjangoCAWithCATestCase, cls).setUpClass()
         cls.ca = cls.load_ca(name='root', x509=root_pubkey)
+        cls.ecc_ca = cls.load_ca(name='ecc_ca', x509=ecc_ca_pubkey)
 
 
 class DjangoCAWithCSRTestCase(DjangoCAWithCATestCase):

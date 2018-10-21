@@ -11,6 +11,7 @@ ChangeLog
 ************
 
 * Add link to easily download certificate bundles.
+* Support ECC private keys for new Certificate Authorities.
 * Store CA private keys in the more secure `PKCS8 format
   <https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8>`_.
 

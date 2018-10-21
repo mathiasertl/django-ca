@@ -29,6 +29,7 @@ from django_ca.models import CertificateAuthority
 
 from ..base import CertificateAuthorityDetailMixin
 from ..base import ExpiresAction
+from ..base import KeyCurveAction
 from ..base import MultipleURLAction
 from ..base import PasswordAction
 from ..base import URLAction
@@ -41,12 +42,19 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         self.add_algorithm(parser)
 
         parser.add_argument(
-            '--key-type', choices=['RSA', 'DSA'], default='RSA',
+            '--key-type', choices=['RSA', 'DSA', 'ECC'], default='RSA',
             help="Key type for the CA private key (default: %(default)s).")
         parser.add_argument(
             '--key-size', type=int, action=KeySizeAction, default=4096,
             metavar='{2048,4096,8192,...}',
             help="Size of the key to generate (default: %(default)s).")
+
+        curve_help = 'Elliptic Curve used for generating ECC keys (default: %(default)s).' % {
+            'default': ca_settings.CA_DEFAULT_ECC_CURVE.__class__.__name__,
+        }
+        parser.add_argument('--ecc-curve', type=str, action=KeyCurveAction,
+                            default=ca_settings.CA_DEFAULT_ECC_CURVE,
+                            help=curve_help)
 
         parser.add_argument(
             '--expires', metavar='DAYS', action=ExpiresAction, default=365 * 10,
@@ -129,6 +137,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         try:
             CertificateAuthority.objects.init(
                 key_size=options['key_size'], key_type=options['key_type'],
+                ecc_curve=options['ecc_curve'],
                 algorithm=options['algorithm'],
                 expires=options['expires'],
                 parent=parent,

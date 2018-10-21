@@ -66,6 +66,26 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
     def test_from_stdin_with_use_tz(self):
         self.test_from_stdin()
 
+    def test_ecc_ca(self):
+        stdin = six.StringIO(self.csr_pem)
+        subject = Subject([('CN', 'ecc-signed.example.com')])
+        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            stdout, stderr = self.cmd('sign_cert', ca=self.ecc_ca, subject=subject, stdin=stdin)
+        self.assertEqual(stderr, '')
+        self.assertEqual(pre.call_count, 1)
+
+        cert = Certificate.objects.first()
+        self.assertPostIssueCert(post, cert)
+        self.assertSignature([self.ecc_ca], cert)
+        self.assertSubject(cert.x509, subject)
+        self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
+
+        self.assertEqual(cert.keyUsage(), (True, ['digitalSignature', 'keyAgreement', 'keyEncipherment']))
+        self.assertEqual(cert.extendedKeyUsage(), (False, ['serverAuth']))
+        self.assertEqual(cert.subjectAltName(), (False, ['DNS:ecc-signed.example.com']))
+        self.assertIssuer(self.ecc_ca, cert)
+        self.assertAuthorityKeyIdentifier(self.ecc_ca, cert)
+
     def test_from_file(self):
         csr_path = os.path.join(ca_settings.CA_DIR, 'test.csr')
         with open(csr_path, 'w') as csr_stream:

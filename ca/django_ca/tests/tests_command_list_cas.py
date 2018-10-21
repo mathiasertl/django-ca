@@ -17,6 +17,7 @@ from django.utils import timezone
 
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
+from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
 
@@ -36,7 +37,9 @@ class ListCertsTestCase(DjangoCAWithCATestCase):
 
     def test_basic(self):
         stdout, stderr = self.cmd('list_cas')
-        self.assertEqual(stdout, '%s - %s\n' % (self.ca.serial, self.ca.name))
+        self.assertEqual(stdout, '%s - %s\n%s - %s\n' % (
+            certs['root']['serial'], certs['root']['name'],
+            certs['ecc_ca']['serial'], certs['ecc_ca']['name']))
         self.assertEqual(stderr, '')
 
     @override_settings(USE_TZ=True)
@@ -49,7 +52,9 @@ class ListCertsTestCase(DjangoCAWithCATestCase):
         ca.save()
 
         stdout, stderr = self.cmd('list_cas')
-        self.assertEqual(stdout, '%s - %s (disabled)\n' % (self.ca.serial, self.ca.name))
+        self.assertEqual(stdout, '%s - %s (disabled)\n%s - %s\n' % (
+            certs['root']['serial'], certs['root']['name'],
+            certs['ecc_ca']['serial'], certs['ecc_ca']['name']))
         self.assertEqual(stderr, '')
 
     @override_settings(USE_TZ=True)

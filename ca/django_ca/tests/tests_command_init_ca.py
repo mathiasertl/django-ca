@@ -17,6 +17,7 @@ from datetime import timedelta
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa
+from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 
 from django.core.management.base import CommandError
@@ -120,6 +121,28 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(ca.ocsp_url, 'http://ocsp.example.com')
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
+
+    def test_ecc(self):
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(
+                algorithm=hashes.SHA1(),
+                key_type='ECC',
+                key_size=1024,
+                expires=self.expires(720),
+                pathlen=3,
+                issuer_url='http://issuer.ca.example.com',
+                issuer_alt_name='http://ian.ca.example.com',
+                crl_url=['http://crl.example.com'],
+                ocsp_url='http://ocsp.example.com',
+                ca_issuer_url='http://ca.issuer.ca.example.com',
+                name_constraint=['permitted,DNS:.com', 'excluded,DNS:.net'],
+            )
+        self.assertTrue(pre.called)
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        ca = CertificateAuthority.objects.first()
+        self.assertPostCreateCa(post, ca)
+        self.assertIsInstance(ca.key(None), ec.EllipticCurvePrivateKey)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_permitted(self):

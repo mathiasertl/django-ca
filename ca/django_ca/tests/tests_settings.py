@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
+from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 
 from .. import ca_settings
@@ -30,3 +31,14 @@ class SettingsTestCase(TestCase):
         desc = 'testdesc'
         with override_settings(CA_PROFILES={'client': {'desc': desc}}):
             self.assertEqual(ca_settings.CA_PROFILES['client']['desc'], desc)
+
+
+class ImproperlyConfiguredTestCase(TestCase):
+    def test_default_ecc_curve(self):
+        with self.assertRaisesRegex(ImproperlyConfigured, '^Unkown CA_DEFAULT_ECC_CURVE: foo$'):
+            with override_settings(CA_DEFAULT_ECC_CURVE='foo'):
+                pass
+
+        with self.assertRaisesRegex(ImproperlyConfigured, '^ECDH: Not an EllipticCurve.$'):
+            with override_settings(CA_DEFAULT_ECC_CURVE='ECDH'):
+                pass

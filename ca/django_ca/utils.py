@@ -26,6 +26,7 @@ import idna
 
 from asn1crypto.core import OctetString
 from cryptography import x509
+from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509 import TLSFeatureType
 from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import NameOID
@@ -490,6 +491,59 @@ def parse_general_name(name):
             idna.encode(name)
 
         return x509.DNSName(name)
+
+
+def parse_key_curve(value=None):
+    """Parse an elliptic curve value.
+
+    This function uses a value identifying an elliptic curve to return an
+    :py:class:`~cryptography:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` instance. The name
+    must match a class name of one of the classes named under "Elliptic Curves" in
+    :any:`cryptography:hazmat/primitives/asymmetric/ec`.
+
+    For convenience, passing ``None`` will return the value of :ref:`CA_DEFAULT_ECC_CURVE
+    <settings-ca-default-ecc-curve>`, and passing an
+    :py:class:`~cryptography:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` will return that
+    instance unchanged.
+
+    Example usage::
+
+        >>> parse_key_curve('SECP256R1')  # doctest: +ELLIPSIS
+        <cryptography.hazmat.primitives.asymmetric.ec.SECP256R1 object at ...>
+        >>> parse_key_curve('SECP384R1')  # doctest: +ELLIPSIS
+        <cryptography.hazmat.primitives.asymmetric.ec.SECP384R1 object at ...>
+        >>> parse_key_curve(ec.SECP256R1())  # doctest: +ELLIPSIS
+        <cryptography.hazmat.primitives.asymmetric.ec.SECP256R1 object at ...>
+        >>> parse_key_curve()  # doctest: +ELLIPSIS
+        <cryptography.hazmat.primitives.asymmetric.ec.SECP256R1 object at ...>
+
+    Parameters
+    ----------
+
+    value : str, otional
+        The name of the curve or ``None`` to return the default curve.
+
+    Returns
+    -------
+
+    curve
+        An :py:class:`~cryptography:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` instance.
+
+    Raises
+    ------
+
+    ValueError
+        If the named curve is not supported.
+    """
+    if isinstance(value, ec.EllipticCurve):
+        return value  # name was already parsed
+    if value is None:
+        return ca_settings.CA_DEFAULT_ECC_CURVE
+
+    curve = getattr(ec, value.strip(), type)
+    if not issubclass(curve, ec.EllipticCurve):
+        raise ValueError('%s: Not a known Eliptic Curve' % value)
+    return curve()
 
 
 def get_cert_builder(expires, now=None):

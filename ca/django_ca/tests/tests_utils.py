@@ -27,6 +27,7 @@ from datetime import timedelta
 from idna.core import IDNAError
 
 from cryptography import x509
+from cryptography.hazmat.primitives.asymmetric import ec
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -46,6 +47,7 @@ from django_ca.utils import get_cert_profile_kwargs
 from django_ca.utils import is_power2
 from django_ca.utils import multiline_url_validator
 from django_ca.utils import parse_general_name
+from django_ca.utils import parse_key_curve
 from django_ca.utils import parse_name
 from django_ca.utils import validate_email
 
@@ -336,6 +338,21 @@ class Power2TestCase(TestCase):
         for i in range(2, 20):
             self.assertFalse(is_power2((2 ** i) - 1))
             self.assertFalse(is_power2((2 ** i) + 1))
+
+
+class ParseKeyCurveTestCase(TestCase):
+    def test_basic(self):
+        self.assertIsInstance(parse_key_curve(), type(ca_settings.CA_DEFAULT_ECC_CURVE))
+        self.assertIsInstance(parse_key_curve('SECT409R1'), ec.SECT409R1)
+        self.assertIsInstance(parse_key_curve('SECP521R1'), ec.SECP521R1)
+        self.assertIsInstance(parse_key_curve('BrainpoolP256R1'), ec.BrainpoolP256R1)
+
+    def test_error(self):
+        with self.assertRaisesRegex(ValueError, '^FOOBAR: Not a known Eliptic Curve$'):
+            parse_key_curve('FOOBAR')
+
+        with self.assertRaisesRegex(ValueError, '^ECDH: Not a known Eliptic Curve$'):
+            parse_key_curve('ECDH')  # present in the module, but *not* an EllipticCurve
 
 
 class AddColonsTestCase(TestCase):

@@ -18,6 +18,7 @@ from datetime import datetime
 from datetime import timedelta
 
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from ..management import base
@@ -99,6 +100,25 @@ class FormatActionTestCase(DjangoCATestCase):
         self.assertParserError(['--action=foo'],
                                'usage: setup.py [-h] [--action ACTION]\n'
                                'setup.py: error: Unknown format "FOO".\n')
+
+
+class CurveActionTestCase(DjangoCATestCase):
+    def setUp(self):
+        super(CurveActionTestCase, self).setUp()
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument('--curve', action=base.KeyCurveAction)
+
+    def test_basic(self):
+        ns = self.parser.parse_args(['--curve=SECT409K1'])
+        self.assertIsInstance(ns.curve, ec.SECT409K1)
+
+        ns = self.parser.parse_args(['--curve=SECT409R1'])
+        self.assertIsInstance(ns.curve, ec.SECT409R1)
+
+    def test_error(self):
+        self.assertParserError(['--curve=foo'],
+                               'usage: setup.py [-h] [--curve CURVE]\n'
+                               'setup.py: error: foo: Not a known Eliptic Curve\n')
 
 
 class AlgorithmActionTestCase(DjangoCATestCase):

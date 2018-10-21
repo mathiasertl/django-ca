@@ -25,6 +25,13 @@ CA_CUSTOM_APPS
    The list gets appended to the standard ``INSTALLED_APPS`` setting. If you need more control, you can always
    override that setting instead.
 
+.. _settings-ca-default-ecc-curve:
+
+CA_DEFAULT_ECC_CURVE
+   Default: ``"SECP256R1"``
+
+   The default elliptic curve used for generating CA private keys when ECC is used.
+
 CA_DEFAULT_EXPIRES
    Default: ``730``
 
