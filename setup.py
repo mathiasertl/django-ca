@@ -70,6 +70,11 @@ class BaseCommand(Command):
         pass
 
     def run_tests(self):
+        import warnings
+        warnings.filterwarnings(action='ignore', message=".*the imp module.*",
+                                category=DeprecationWarning, module='imp')
+        warnings.filterwarnings(action='always')
+
         work_dir = os.path.join(_rootdir, 'ca')
 
         os.chdir(work_dir)
