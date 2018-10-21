@@ -21,7 +21,7 @@ class Command(BaseCommand):
     help = 'List available certificate authorities.'
 
     def handle(self, **options):
-        for ca in CertificateAuthority.objects.all():
+        for ca in CertificateAuthority.objects.all().order_by('expires'):
             text = '%s - %s' % (ca.serial, ca.name)
             if ca.enabled is False:
                 text += ' (disabled)'

@@ -31,7 +31,7 @@ class Command(BaseCommand):
                             help='Also list revoked certificates.')
 
     def handle(self, *args, **options):
-        certs = Certificate.objects.all()
+        certs = Certificate.objects.order_by('expires')
 
         if not options['expired']:
             certs = certs.filter(expires__gt=timezone.now())
