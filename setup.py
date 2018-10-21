@@ -73,6 +73,8 @@ class BaseCommand(Command):
         import warnings
         warnings.filterwarnings(action='ignore', message=".*the imp module.*",
                                 category=DeprecationWarning, module='imp')
+        warnings.filterwarnings(action='ignore', message=".*the imp module.*",
+                                category=DeprecationWarning, module='distutils')
         warnings.filterwarnings(action='error')
 
         work_dir = os.path.join(_rootdir, 'ca')
