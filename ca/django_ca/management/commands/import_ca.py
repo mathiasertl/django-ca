@@ -69,7 +69,7 @@ Note that the private key will be copied to the directory configured by the CA_D
         try:  # close reader objects (otherwise we get a ResourceWarning)
             key.close()
             pem.close()
-        except Exception:
+        except Exception:  # pragma: no cover
             pass
 
         ca = CertificateAuthority(name=name, parent=parent, issuer_url=options['issuer_url'],

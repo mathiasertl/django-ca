@@ -40,7 +40,7 @@ The authority that that signed the certificate must exist in the database."""
 
         try:  # close reader objects (otherwise we get a ResourceWarning)
             pub.close()
-        except Exception:
+        except Exception:  # pragma: no cover
             pass
 
         # load public key
