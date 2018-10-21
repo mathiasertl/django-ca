@@ -47,6 +47,7 @@ _rootdir = os.path.dirname(os.path.realpath(__file__))
 install_requires = [
     'asn1crypto>=0.24.0',
     'cryptography>=2.1',
+    'django-object-actions>=1.0',
     'ocspbuilder>=0.10.2',
     'oscrypto>=0.19.0',
 ]

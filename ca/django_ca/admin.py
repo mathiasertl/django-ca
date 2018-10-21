@@ -29,19 +29,25 @@ from cryptography.x509.oid import ExtensionOID
 
 from django.conf.urls import url
 from django.contrib import admin
+from django.contrib.messages import constants as messages
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
+from django.http import HttpResponseRedirect
 from django.template.loader import render_to_string
+from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.html import escape
 from django.utils.html import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
+from django_object_actions import DjangoObjectActions
+
 from . import ca_settings
 from .forms import CreateCertificateForm
+from .forms import RevokeCertificateForm
 from .forms import X509CertMixinAdminForm
 from .models import Certificate
 from .models import CertificateAuthority
@@ -49,7 +55,6 @@ from .models import Watcher
 from .signals import post_issue_cert
 from .signals import pre_issue_cert
 from .utils import OID_NAME_MAPPINGS
-from .views import RevokeCertificateView
 
 
 @admin.register(Watcher)
@@ -368,8 +373,9 @@ class StatusListFilter(admin.SimpleListFilter):
 
 
 @admin.register(Certificate)
-class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
+class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
     actions = ['revoke', ]
+    change_actions = ('revoke_change', )
     change_form_template = 'django_ca/admin/change_form.html'
     list_display = ('cn_display', 'serial', 'status', 'expires_date')
     list_filter = (StatusListFilter, 'ca')
@@ -450,12 +456,6 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
         urls = super(CertificateAdmin, self).get_urls()
         meta = self.model._meta
 
-        # add revokation URL
-        revoke_name = '%s_%s_revoke' % (meta.app_label, meta.verbose_name)
-        revoke_view = self.admin_site.admin_view(
-            RevokeCertificateView.as_view(admin_site=self.admin_site))
-        urls.insert(0, url(r'^(?P<pk>.*)/revoke/$', revoke_view, name=revoke_name))
-
         # add csr-details url
         csr_name = '%s_%s_csr_details' % (meta.app_label, meta.verbose_name)
         urls.insert(0, url(r'^ajax/csr-details', self.admin_site.admin_view(self.csr_details_view),
@@ -463,10 +463,38 @@ class CertificateAdmin(CertificateMixin, admin.ModelAdmin):
 
         return urls
 
+    def revoke_change(self, request, obj):
+        if not self.has_change_permission(request, obj):
+            raise PermissionDenied
+        if obj.revoked:
+            self.message_user(request, _('Certificate is already revoked.'), level=messages.ERROR)
+            return HttpResponseRedirect(obj.admin_change_url)
+
+        if request.method == 'POST':
+            form = RevokeCertificateForm(request.POST, instance=obj)
+            if form.is_valid():
+                obj.revoke(reason=form.cleaned_data['revoked_reason'] or None)
+                return HttpResponseRedirect(obj.admin_change_url)
+        else:
+            form = RevokeCertificateForm(instance=obj)
+
+        context = dict(self.admin_site.each_context(request), form=form, object=obj, opts=obj._meta)
+        return TemplateResponse(request, "django_ca/admin/certificate_revoke_form.html", context)
+    revoke_change.label = _('Revoke')
+    revoke_change.short_description = _('Revoke this certificate')
+    revoke_change.allowed_permissions = ('change', )
+
     def revoke(self, request, queryset):
         for cert in queryset:
             cert.revoke()
     revoke.short_description = _('Revoke selected certificates')
+
+    def get_change_actions(self, request, object_id, form_url):
+        actions = list(super(CertificateAdmin, self).get_change_actions(request, object_id, form_url))
+        obj = self.model.objects.get(pk=object_id)
+        if obj.revoked:
+            actions.remove('revoke_change')
+        return actions
 
     def get_fieldsets(self, request, obj=None):
         """Collapse the "Revocation" section unless the certificate is revoked."""

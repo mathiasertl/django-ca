@@ -896,7 +896,7 @@ class CADownloadBundleTestCase(AdminTestMixin, DjangoCAWithChildCATestCase):
 
 class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     def get_url(self, cert):
-        return reverse('admin:django_ca_certificate_revoke', kwargs={'pk': cert.pk})
+        return reverse('admin:django_ca_certificate_actions', kwargs={'pk': cert.pk, 'tool': 'revoke_change'})
 
     @property
     def url(self):
@@ -936,13 +936,13 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
             response = self.client.get(self.url)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
-        self.assertEqual(response.status_code, 404)
+        self.assertRedirects(response, self.change_url())
 
         with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
             response = self.client.post(self.url, data={'revoked_reason': 'certificateHold'})
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
-        self.assertEqual(response.status_code, 404)
+        self.assertRedirects(response, self.change_url())
         self.assertRevoked(self.cert)
 
     def test_anonymous(self):

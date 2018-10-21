@@ -36,6 +36,7 @@ from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_str
@@ -404,6 +405,11 @@ class X509CertMixin(models.Model):
             return 'good'
 
         return self.revoked_reason or 'revoked'
+
+    @property
+    def admin_change_url(self):
+        return reverse('admin:%s_%s_change' % (self._meta.app_label, self._meta.verbose_name),
+                       args=(self.pk, ))
 
     class Meta:
         abstract = True

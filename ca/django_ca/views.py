@@ -27,20 +27,16 @@ from oscrypto.asymmetric import load_certificate
 from oscrypto.asymmetric import load_private_key
 
 from django.core.cache import cache
-from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.http import HttpResponseServerError
-from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin
-from django.views.generic.edit import UpdateView
 
 from .crl import get_crl
-from .forms import RevokeCertificateForm
 from .models import Certificate
 from .models import CertificateAuthority
 from .utils import int_to_hex
@@ -99,35 +95,6 @@ class CertificateRevocationListView(View, SingleObjectMixin):
                 return HttpResponseServerError()
 
         return HttpResponse(crl, content_type=content_type)
-
-
-class RevokeCertificateView(UpdateView):
-    admin_site = None
-    queryset = Certificate.objects.filter(revoked=False)
-    form_class = RevokeCertificateForm
-    template_name = 'django_ca/admin/certificate_revoke_form.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        if not self.request.user.has_perm('django_ca.change_certificate'):
-            raise PermissionDenied
-        return super(RevokeCertificateView, self).dispatch(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        context = super(RevokeCertificateView, self).get_context_data(**kwargs)
-        context.update(self.admin_site.each_context(self.request))
-        context['opts'] = self.queryset.model._meta  # required by breadcrumbs
-        return context
-
-    def form_valid(self, form):
-        reason = form.cleaned_data['revoked_reason'] or None
-        form.instance.revoke(reason=reason)
-
-        return super(RevokeCertificateView, self).form_valid(form)
-
-    def get_success_url(self):
-        meta = self.queryset.model._meta
-        return reverse('admin:%s_%s_change' % (meta.app_label, meta.verbose_name),
-                       args=(self.object.pk, ))
 
 
 class OCSPView(View):
