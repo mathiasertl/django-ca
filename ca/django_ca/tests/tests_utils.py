@@ -345,7 +345,7 @@ class ParseKeyCurveTestCase(TestCase):
         self.assertIsInstance(parse_key_curve(), type(ca_settings.CA_DEFAULT_ECC_CURVE))
         self.assertIsInstance(parse_key_curve('SECT409R1'), ec.SECT409R1)
         self.assertIsInstance(parse_key_curve('SECP521R1'), ec.SECP521R1)
-        self.assertIsInstance(parse_key_curve('BrainpoolP256R1'), ec.BrainpoolP256R1)
+        self.assertIsInstance(parse_key_curve('SECP192R1'), ec.SECP192R1)
 
     def test_error(self):
         with self.assertRaisesRegex(ValueError, '^FOOBAR: Not a known Eliptic Curve$'):
