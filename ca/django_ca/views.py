@@ -224,13 +224,13 @@ class OCSPView(View):
             try:
                 cert = CertificateAuthority.objects.filter(parent=ca).get(serial=serial)
             except CertificateAuthority.DoesNotExist:
-                log.warn('OCSP request for unknown CA received.')
+                log.warning('OCSP request for unknown CA received.')
                 return self.fail(u'internal_error')
         else:
             try:
                 cert = Certificate.objects.filter(ca=ca).get(serial=serial)
             except Certificate.DoesNotExist:
-                log.warn('OCSP request for unknown cert received.')
+                log.warning('OCSP request for unknown cert received.')
                 return self.fail(u'internal_error')
 
         # load ca cert and responder key/cert

@@ -120,7 +120,7 @@ class ImportCATest(DjangoCATestCase):
         name = 'testname'
         pem_path = os.path.join(settings.FIXTURES_DIR, __file__)
         key_path = os.path.join(settings.FIXTURES_DIR, 'root-key.der')
-        with self.assertRaisesRegex(CommandError, '^Unable to load public key\.$'):
+        with self.assertRaisesRegex(CommandError, r'^Unable to load public key\.$'):
             self.cmd('import_ca', name, key_path, pem_path)
         self.assertEqual(CertificateAuthority.objects.count(), 0)
 
@@ -129,6 +129,6 @@ class ImportCATest(DjangoCATestCase):
         name = 'testname'
         pem_path = os.path.join(settings.FIXTURES_DIR, 'root-pub.der')
         key_path = os.path.join(settings.FIXTURES_DIR, __file__)
-        with self.assertRaisesRegex(CommandError, '^Unable to load private key\.$'):
+        with self.assertRaisesRegex(CommandError, r'^Unable to load private key\.$'):
             self.cmd('import_ca', name, key_path, pem_path)
         self.assertEqual(CertificateAuthority.objects.count(), 0)

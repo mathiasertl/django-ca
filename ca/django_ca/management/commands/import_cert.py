@@ -38,6 +38,11 @@ The authority that that signed the certificate must exist in the database."""
     def handle(self, pub, **options):
         pub_data = pub.read()
 
+        try:  # close reader objects (otherwise we get a ResourceWarning)
+            pub.close()
+        except Exception:
+            pass
+
         # load public key
         try:
             pub_loaded = x509.load_pem_x509_certificate(pub_data, default_backend())

@@ -66,6 +66,12 @@ Note that the private key will be copied to the directory configured by the CA_D
         key_data = key.read()
         crl_url = '\n'.join(options['crl_url'])
 
+        try:  # close reader objects (otherwise we get a ResourceWarning)
+            key.close()
+            pem.close()
+        except Exception:
+            pass
+
         ca = CertificateAuthority(name=name, parent=parent, issuer_url=options['issuer_url'],
                                   issuer_alt_name=options['issuer_alt_name'], crl_url=crl_url)
 

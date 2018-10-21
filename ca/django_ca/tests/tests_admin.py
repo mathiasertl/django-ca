@@ -28,7 +28,7 @@ from cryptography.x509.oid import ObjectIdentifier
 
 from django.contrib.auth.models import Permission
 from django.contrib.auth.models import User
-from django.contrib.staticfiles.templatetags.staticfiles import static
+from django.templatetags.static import static
 from django.test import Client
 from django.urls import reverse
 from django.utils import timezone

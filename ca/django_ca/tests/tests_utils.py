@@ -279,7 +279,7 @@ class ParseGeneralNameTest(DjangoCATestCase):
 
         # Wildcard subdomains are allowed in DNS entries, however RFC 2595 limits their use to a single
         # wildcard in the outermost level
-        msg = '^The label b?\'?\*\'? is not a valid A-label$'
+        msg = r'^The label b?\'?\*\'? is not a valid A-label$'
         with self.assertRaisesRegex(IDNAError, msg):
             parse_general_name(u'test.*.example.com')
         with self.assertRaisesRegex(IDNAError, msg):
@@ -312,7 +312,7 @@ class ParseGeneralNameTest(DjangoCATestCase):
             parse_general_name('otherName:1.2.3;MagicString:Broken')
 
     def test_error(self):
-        with self.assertRaisesRegex(ValueError, '^Could not parse IP address\.$'):
+        with self.assertRaisesRegex(ValueError, r'^Could not parse IP address\.$'):
             parse_general_name('ip:1.2.3.4/24')
 
 
@@ -496,10 +496,10 @@ class GetBasicCertTestCase(DjangoCATestCase):
 
     def test_negative(self):
         with self.assertRaisesRegex(ValueError,
-                                    '^The not valid after date must be after the not valid before date\.$'):
+                                    r'^The not valid after date must be after the not valid before date\.$'):
             self.assertCert(-1)
         with self.assertRaisesRegex(ValueError,
-                                    '^The not valid after date must be after the not valid before date\.$'):
+                                    r'^The not valid after date must be after the not valid before date\.$'):
             self.assertCert(-2)
 
 
