@@ -14,6 +14,8 @@ ChangeLog
 * Support ECC private keys for new Certificate Authorities.
 * Store CA private keys in the more secure `PKCS8 format
   <https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8>`_.
+* Run test-suite with all warnings comming from **django-ca** turned into errors.
+* Also test with Python 3.7.0.
 
 .. _changelog-1.9.0:
 
