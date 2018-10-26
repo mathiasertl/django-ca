@@ -314,9 +314,8 @@ setup.py: error: %s: %s: Private key does not exist.\n''' % (ca.name, ca.private
 
     def test_password(self):
         # Test that the action works with a password-encrypted ca
-        pwd_ca = self.load_ca(name='pwd_ca', x509=pwd_ca_pubkey)
-        ns = self.parser.parse_args([pwd_ca.serial])
-        self.assertEqual(ns.ca, pwd_ca)
+        ns = self.parser.parse_args([self.pwd_ca.serial])
+        self.assertEqual(ns.ca, self.pwd_ca)
 
 
 class URLActionTestCase(DjangoCATestCase):

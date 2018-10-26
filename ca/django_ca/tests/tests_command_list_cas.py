@@ -13,8 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
-from django.utils import timezone
-
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
 from .base import certs
@@ -24,22 +22,13 @@ from .base import override_tmpcadir
 
 @override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class ListCertsTestCase(DjangoCAWithCATestCase):
-    def line(self, cert):
-        if cert.revoked is True:
-            info = 'revoked'
-        else:
-            word = 'expires'
-            if cert.expires < timezone.now():
-                word = 'expired'
-
-            info = '%s: %s' % (word, cert.expires.strftime('%Y-%m-%d'))
-        return '%s - %s (%s)' % (cert.serial, cert.cn, info)
-
     def test_basic(self):
         stdout, stderr = self.cmd('list_cas')
-        self.assertEqual(stdout, '%s - %s\n%s - %s\n' % (
+        self.assertEqual(stdout, '%s - %s\n%s - %s\n%s - %s\n' % (
             certs['root']['serial'], certs['root']['name'],
-            certs['ecc_ca']['serial'], certs['ecc_ca']['name']))
+            certs['pwd_ca']['serial'], certs['pwd_ca']['name'],
+            certs['ecc_ca']['serial'], certs['ecc_ca']['name'],
+        ))
         self.assertEqual(stderr, '')
 
     @override_settings(USE_TZ=True)
@@ -52,8 +41,9 @@ class ListCertsTestCase(DjangoCAWithCATestCase):
         ca.save()
 
         stdout, stderr = self.cmd('list_cas')
-        self.assertEqual(stdout, '%s - %s (disabled)\n%s - %s\n' % (
+        self.assertEqual(stdout, '%s - %s (disabled)\n%s - %s\n%s - %s\n' % (
             certs['root']['serial'], certs['root']['name'],
+            certs['pwd_ca']['serial'], certs['pwd_ca']['name'],
             certs['ecc_ca']['serial'], certs['ecc_ca']['name']))
         self.assertEqual(stderr, '')
 

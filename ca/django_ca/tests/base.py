@@ -150,6 +150,10 @@ certs = {
         'name': 'ecc_ca',
         'serial': '52:F4:84:51:D7:38:D9:E6:83:43:7A:4A:1D:EB:ED:A0:7D:6A:7F:D9',
     },
+    'pwd_ca': {
+        'name': 'pwd_ca',
+        'serial': '61:0A:D4:09:CE:18:6A:12:D6:69:F2:68:7D:4D:1A:7C:E9:89:02:62',
+    },
     'cert1': {
         'pem': force_text(cert1_pem),
         'hpkp': 'ZHsPuAAhLPHXbSjBW8/2/CylrtpcPlNUcLDMmuMtiWY=',
