@@ -11,6 +11,8 @@ ChangeLog
 ************
 
 * New dependency: `django-object-actions <https://github.com/crccheck/django-object-actions>`_.
+* Add ability to resign existing certificates (Admin interface only).
+* Management command ``list_cas`` now optionally supports a tree view.
 * Add link to easily download certificate bundles.
 * Support ECC private keys for new Certificate Authorities.
 * Store CA private keys in the more secure `PKCS8 format
