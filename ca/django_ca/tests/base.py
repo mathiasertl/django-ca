@@ -102,6 +102,11 @@ cert3_key = _load_key('cert3.key')
 cert3_csr = _load_csr('cert3.csr')
 cert3_pem, cert3_pubkey = _load_cert('cert3.pem')
 
+# this cert has (most) extensions we currently handle
+all_key = _load_key('all.key')
+all_csr = _load_csr('all.csr')
+all_pem, all_pubkey = _load_cert('all.pem')
+
 # Various contributed certs
 _, multiple_ous_and_no_ext_pubkey = _load_cert(os.path.join('contrib', 'multiple_ous_and_no_ext.pem'))
 _, cloudflare_1_pubkey = _load_cert(os.path.join('contrib', 'cloudflare_1.pem'))
@@ -513,6 +518,7 @@ class DjangoCAWithCertTestCase(DjangoCAWithCSRTestCase):
     def setUp(self):
         super(DjangoCAWithCertTestCase, self).setUp()
         self.cert = self.load_cert(self.ca, x509=cert1_pubkey, csr=cert1_csr)
+        self.cert_all = self.load_cert(self.ca, x509=all_pubkey, csr=all_csr)
 
 
 class DjangoCAWithChildCATestCase(DjangoCAWithCertTestCase):

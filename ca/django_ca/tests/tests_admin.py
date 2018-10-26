@@ -112,15 +112,15 @@ class ChangelistTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
         cert = self.load_cert(self.ca, x509=pubkey)
         response = self.client.get(self.changelist_url)
-        self.assertResponse(response, [self.cert, cert])
+        self.assertResponse(response, [self.cert, self.cert_all, cert])
 
     def test_get(self):
         response = self.client.get(self.changelist_url)
-        self.assertResponse(response, [self.cert])
+        self.assertResponse(response, [self.cert, self.cert_all])
 
     def test_status(self):
         response = self.client.get('%s?status=valid' % self.changelist_url)
-        self.assertResponse(response, [self.cert])
+        self.assertResponse(response, [self.cert, self.cert_all])
         response = self.client.get('%s?status=expired' % self.changelist_url)
         self.assertResponse(response, [])
         response = self.client.get('%s?status=revoked' % self.changelist_url)
@@ -972,7 +972,7 @@ class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithCertTestCase)
         form = self.app.get(self.url, user=self.user.username).form
         form.submit().follow()
 
-        resigned = Certificate.objects.exclude(pk=self.cert.pk).first()
+        resigned = Certificate.objects.filter(cn=self.cert.cn).exclude(pk=self.cert.pk).first()
         self.assertFalse(self.cert.revoked)
 
         self.assertEqual(self.cert.cn, resigned.cn)

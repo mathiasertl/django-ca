@@ -50,7 +50,7 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
 
     def test_basic(self):
         stdout, stderr = self.cmd('dump_ocsp_index')
-        self.assertEqual(stdout, '%s\n' % self.line(self.cert))
+        self.assertEqual(stdout, '%s\n%s\n' % (self.line(self.cert), self.line(self.cert_all)))
         self.assertEqual(stderr, '')
 
     def test_file(self):
@@ -61,7 +61,7 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(stderr, '')
 
         with open(path) as stream:
-            self.assertEqual(stream.read(), '%s\n' % self.line(self.cert))
+            self.assertEqual(stream.read(), '%s\n%s\n' % (self.line(self.cert), self.line(self.cert_all)))
 
     def test_expired(self):
         cert = Certificate.objects.get(serial=self.cert.serial)
@@ -69,7 +69,7 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
         cert.save()
 
         stdout, stderr = self.cmd('dump_ocsp_index')
-        self.assertEqual(stdout, '%s\n' % self.line(cert))
+        self.assertEqual(stdout, '%s\n%s\n' % (self.line(cert), self.line(self.cert_all)))
         self.assertEqual(stderr, '')
 
     def test_revoked(self):
@@ -77,12 +77,12 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
         cert.revoke()
 
         stdout, stderr = self.cmd('dump_ocsp_index')
-        self.assertEqual(stdout, '%s\n' % self.line(cert))
+        self.assertEqual(stdout, '%s\n%s\n' % (self.line(cert), self.line(self.cert_all)))
         self.assertEqual(stderr, '')
 
         cert = Certificate.objects.get(serial=self.cert.serial)
         cert.revoke('unspecified')
 
         stdout, stderr = self.cmd('dump_ocsp_index')
-        self.assertEqual(stdout, '%s\n' % self.line(cert))
+        self.assertEqual(stdout, '%s\n%s\n' % (self.line(cert), self.line(self.cert_all)))
         self.assertEqual(stderr, '')

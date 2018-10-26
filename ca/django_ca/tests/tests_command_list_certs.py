@@ -18,14 +18,13 @@ from datetime import timedelta
 from django.utils import timezone
 
 from ..models import Certificate
-from .base import DjangoCAWithCertTestCase
-from .base import child_pubkey
+from .base import DjangoCAWithChildCATestCase
 from .base import override_settings
 from .base import override_tmpcadir
 
 
 @override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
-class ListCertsTestCase(DjangoCAWithCertTestCase):
+class ListCertsTestCase(DjangoCAWithChildCATestCase):
     def line(self, cert):
         if cert.revoked is True:
             info = 'revoked'
@@ -37,57 +36,42 @@ class ListCertsTestCase(DjangoCAWithCertTestCase):
             info = '%s: %s' % (word, cert.expires.strftime('%Y-%m-%d'))
         return '%s - %s (%s)' % (cert.serial, cert.cn, info)
 
-    def test_basic(self):
-        stdout, stderr = self.cmd('list_certs')
-        self.assertEqual(stdout, '%s\n' % self.line(self.cert))
+    def assertCerts(self, *certs, **kwargs):
+        stdout, stderr = self.cmd('list_certs', **kwargs)
+        self.assertEqual(stdout, ''.join(['%s\n' % self.line(c) for c in certs]))
         self.assertEqual(stderr, '')
+
+    def test_basic(self):
+        self.assertCerts(self.cert, self.cert_all)
 
     @override_settings(USE_TZ=True)
     def test_basic_with_use_tz(self):
         # reload cert, otherwise self.cert is still the object created in setUp()
         self.cert = Certificate.objects.get(serial=self.cert.serial)
+        self.cert_all = Certificate.objects.get(serial=self.cert_all.serial)
         self.test_basic()
 
     def test_expired(self):
-        cert = Certificate.objects.get(serial=self.cert.serial)
-        cert.expires = timezone.now() - timedelta(days=3)
-        cert.save()
+        self.cert_all = Certificate.objects.get(serial=self.cert_all.serial)
+        self.cert = Certificate.objects.get(serial=self.cert.serial)
+        self.cert.expires = timezone.now() - timedelta(days=3)
+        self.cert.save()
 
-        stdout, stderr = self.cmd('list_certs')
-        self.assertEqual(stdout, '')
-        self.assertEqual(stderr, '')
-
-        stdout, stderr = self.cmd('list_certs', expired=True)
-        self.assertEqual(stdout, '%s\n' % self.line(cert))
-        self.assertEqual(stderr, '')
+        self.assertCerts(self.cert_all)
+        self.assertCerts(self.cert, self.cert_all, expired=True)
 
     @override_settings(USE_TZ=True)
     def test_expired_with_use_tz(self):
         self.test_expired()
 
     def test_revoked(self):
-        cert = Certificate.objects.get(serial=self.cert.serial)
-        cert.revoke()
+        self.cert.revoke()
+        self.cert_all.revoke()
 
-        stdout, stderr = self.cmd('list_certs')
-        self.assertEqual(stdout, '')
-        self.assertEqual(stderr, '')
-
-        stdout, stderr = self.cmd('list_certs', revoked=True)
-        self.assertEqual(stdout, '%s\n' % self.line(cert))
-        self.assertEqual(stderr, '')
+        self.assertCerts()
+        self.assertCerts(self.cert, self.cert_all, revoked=True)
 
     def test_ca(self):
-        child_ca = self.load_ca(name='child', x509=child_pubkey, parent=self.ca)
-
-        stdout, stderr = self.cmd('list_certs')
-        self.assertEqual(stdout, '%s\n' % self.line(self.cert))
-        self.assertEqual(stderr, '')
-
-        stdout, stderr = self.cmd('list_certs', ca=self.ca)
-        self.assertEqual(stdout, '%s\n' % self.line(self.cert))
-        self.assertEqual(stderr, '')
-
-        stdout, stderr = self.cmd('list_certs', ca=child_ca)
-        self.assertEqual(stdout, '')
-        self.assertEqual(stderr, '')
+        self.assertCerts(self.cert, self.cert_all)
+        self.assertCerts(self.cert, self.cert_all, ca=self.ca)
+        self.assertCerts(ca=self.child_ca)
