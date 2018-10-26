@@ -512,7 +512,10 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
         return urls
 
     def resign(self, request, obj):
-        # TODO: if there is no CSR, redirect back to change form with error message
+        if not obj.csr:
+            self.message_user(request, _('Certificate has no CSR (most likely because it was imported.'),
+                              messages.ERROR)
+            return HttpResponseRedirect(obj.admin_change_url)
 
         request._resign_obj = obj
         extra_context = {
