@@ -502,6 +502,7 @@ class DjangoCAWithCATestCase(DjangoCATestCase):
     def setUp(self):
         super(DjangoCAWithCATestCase, self).setUp()
         self.ca = self.load_ca(name='root', x509=root_pubkey)
+        self.pwd_ca = self.load_ca(name='pwd_ca', x509=pwd_ca_pubkey)
         self.ecc_ca = self.load_ca(name='ecc_ca', x509=ecc_ca_pubkey)
 
 
