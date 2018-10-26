@@ -26,7 +26,7 @@
 {% block content %}
 <h2>{% trans "Resign a certificate" %}</h2>
 
-<form action="" method="post">{% csrf_token %}
+<form action="" method="post" novalidate>{% csrf_token %}
   {% if form.has_errors %}{% trans "Please correct the errors below." %}{% endif %}
   {{ form.non_field_errors }}
   {% for fieldset in form %}
