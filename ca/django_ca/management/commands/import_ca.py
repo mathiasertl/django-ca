@@ -105,8 +105,11 @@ Note that the private key will be copied to the directory configured by the CA_D
         pem = key_loaded.private_bytes(encoding=Encoding.PEM,
                                        format=PrivateFormat.TraditionalOpenSSL,
                                        encryption_algorithm=encryption)
-        with open(ca.private_key_path, 'wb') as key_file:
-            key_file.write(pem)
+        try:
+            with open(ca.private_key_path, 'wb') as key_file:
+                key_file.write(pem)
+        except PermissionError as e:
+            raise CommandError(e)
         os.umask(oldmask)
 
         # Only save CA to database if we loaded all data and copied private key
