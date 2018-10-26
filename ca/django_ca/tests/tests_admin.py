@@ -49,9 +49,9 @@ from ..utils import EXTENDED_KEY_USAGE_MAPPING
 from ..utils import KEY_USAGE_MAPPING
 from ..utils import SUBJECT_FIELDS
 from ..utils import TLS_FEATURE_MAPPING
-from .base import DjangoCAWithCSRTestCase
 from .base import DjangoCAWithCertTestCase
 from .base import DjangoCAWithChildCATestCase
+from .base import DjangoCAWithCSRTestCase
 from .base import cryptography_version
 from .base import override_settings
 from .base import pwd_ca_pwd

@@ -30,7 +30,6 @@ from .base import DjangoCAWithCertTestCase
 from .base import child_pubkey
 from .base import override_settings
 from .base import override_tmpcadir
-from .base import pwd_ca_pubkey
 
 try:
     import unittest.mock as mock
