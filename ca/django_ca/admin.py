@@ -524,6 +524,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             'object_action': _('Resign'),
         }
         return self.changeform_view(request, extra_context=extra_context)
+    resign.short_description = _('Resign this certificate.')
 
     def revoke_change(self, request, obj):
         if not self.has_change_permission(request, obj):
@@ -544,7 +545,6 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
         return TemplateResponse(request, "django_ca/admin/certificate_revoke_form.html", context)
     revoke_change.label = _('Revoke')
     revoke_change.short_description = _('Revoke this certificate')
-    revoke_change.allowed_permissions = ('change', )
 
     def revoke(self, request, queryset):
         for cert in queryset:
