@@ -144,14 +144,13 @@ class SubjectWidget(CustomMultiWidget):
         if value is None:  # pragma: no cover
             return ('', '', '', '', '', '')
 
-        # NOTE: this appears to be only relevant on initial form load or when editing an existing form. The
-        # latter is never true, so this isn't relevant anywhere else.
+        # Used e.g. for initial form data (e.g. resigning a cert)
         return [
             value.get('C', ''),
             value.get('ST', ''),
             value.get('L', ''),
             value.get('O', ''),
-            value.get('OU', ''),
+            value.get('OU', '')[0],  # Multiple OUs are not supported in webinterface
             value.get('CN', ''),
             value.get('emailAddress', ''),
         ]
