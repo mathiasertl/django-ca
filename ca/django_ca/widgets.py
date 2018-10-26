@@ -144,13 +144,18 @@ class SubjectWidget(CustomMultiWidget):
         if value is None:  # pragma: no cover
             return ('', '', '', '', '', '')
 
+        # Multiple OUs are not supported in webinterface
+        ou = value.get('OU', '')
+        if isinstance(ou, list) and ou:
+            ou = ou[0]
+
         # Used e.g. for initial form data (e.g. resigning a cert)
         return [
             value.get('C', ''),
             value.get('ST', ''),
             value.get('L', ''),
             value.get('O', ''),
-            value.get('OU', '')[0],  # Multiple OUs are not supported in webinterface
+            ou,
             value.get('CN', ''),
             value.get('emailAddress', ''),
         ]
