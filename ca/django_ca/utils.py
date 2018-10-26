@@ -125,6 +125,7 @@ TLS_FEATURE_MAPPING = {
     # https://tools.ietf.org/html/rfc6961.html (not commonly used):
     'MultipleCertStatusRequest': TLSFeatureType.status_request_v2,
 }
+TLS_FEATURE_MAPPING_REVERSED = {v: k for k, v in TLS_FEATURE_MAPPING.items()}
 
 
 class LazyEncoder(DjangoJSONEncoder):
