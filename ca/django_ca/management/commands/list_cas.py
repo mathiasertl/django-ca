@@ -20,6 +20,13 @@ from ..base import BaseCommand
 class Command(BaseCommand):
     help = 'List available certificate authorities.'
 
+    def add_arguments(self, parser):
+        parser.add_argument('-t', '--tree', default=False, action='store_true',
+                            help="Output data in a tree view.")
+
+    def qs(self, qs):
+        return qs.order_by('expires', 'name')
+
     def list_ca(self, ca, indent=''):
         text = '%s%s - %s' % (indent, ca.serial, ca.name)
         if ca.enabled is False:
@@ -27,6 +34,28 @@ class Command(BaseCommand):
 
         self.stdout.write(text)
 
+    def list_children(self, ca, left, indent=''):
+        children = list(enumerate(self.qs(ca.children.all()), 1))
+        for index, child in children:
+            if index == len(children):  # last element
+                self.list_ca(child, indent=indent + '└───')
+            else:
+                self.list_ca(child, indent=indent + '│───')
+
+            children_left = len(children) - index
+            if children_left:
+                child_indent = indent + '│   '
+            else:
+                child_indent = indent + '    '
+
+            self.list_children(child, children_left, child_indent)
+
     def handle(self, **options):
-        for ca in CertificateAuthority.objects.all().order_by('expires'):
-            self.list_ca(ca)
+        if options['tree']:
+            cas = list(enumerate(self.qs(CertificateAuthority.objects.filter(parent__isnull=True)), 1))
+            for index, ca in cas:
+                self.list_ca(ca)
+                self.list_children(ca, left=(len(cas) - index))
+        else:
+            for ca in CertificateAuthority.objects.all().order_by('expires'):
+                self.list_ca(ca)
