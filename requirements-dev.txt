@@ -16,3 +16,4 @@ six==1.11.0
 sphinx-autobuild==0.7.1; python_version < '3.7'
 sphinx-rtd-theme==0.4.2
 wheel==0.32.1
+django-webtest==1.9.3

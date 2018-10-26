@@ -35,6 +35,8 @@ from django.utils import timezone
 from django.utils.encoding import force_text
 from django.utils.six.moves.urllib.parse import quote
 
+from django_webtest import WebTestMixin
+
 from ..forms import CreateCertificateForm
 from ..models import Certificate
 from ..models import CertificateAuthority
@@ -918,7 +920,7 @@ class CADownloadBundleTestCase(AdminTestMixin, DjangoCAWithChildCATestCase):
         self.assertEqual(response.content, b'DER/ASN.1 certificates cannot be downloaded as a bundle.')
 
 
-class ResignCertTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
+class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithCertTestCase):
     def get_url(self, cert):
         return reverse('admin:django_ca_certificate_actions', kwargs={'pk': cert.pk, 'tool': 'resign'})
 
@@ -965,6 +967,22 @@ class ResignCertTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
         self.assertMessages(response, ['Certificate has no CSR (most likely because it was imported).'])
+
+    def test_webtest(self):
+        form = self.app.get(self.url, user=self.user.username).form
+        form.submit().follow()
+
+        resigned = Certificate.objects.exclude(pk=self.cert.pk).first()
+        self.assertFalse(self.cert.revoked)
+
+        self.assertEqual(self.cert.cn, resigned.cn)
+        self.assertEqual(self.cert.csr, resigned.csr)
+        self.assertEqual(self.cert.distinguishedName(), resigned.distinguishedName())
+        self.assertEqual(list(self.cert.extensions()), list(resigned.extensions()))
+
+        # Some properties are obviously *not* equal
+        self.assertNotEqual(self.cert.pub, resigned.pub)
+        self.assertNotEqual(self.cert.serial, resigned.serial)
 
 
 class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
