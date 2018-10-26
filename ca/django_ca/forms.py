@@ -79,9 +79,9 @@ on Wikipedia.'''),
         }
 
 
-class CreateCertificateForm(forms.ModelForm):
+class CreateCertificateBaseForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
-        super(CreateCertificateForm, self).__init__(*args, **kwargs)
+        super(CreateCertificateBaseForm, self).__init__(*args, **kwargs)
 
         # Set choices so we can filter out CAs where the private key does not exist locally
         field = self.fields['ca']
@@ -142,15 +142,6 @@ class CreateCertificateForm(forms.ModelForm):
             ('MultipleCertStatusRequest', 'Multiple Certificate Status Request'),
         ))
 
-    def clean_csr(self):
-        data = self.cleaned_data['csr']
-        lines = data.splitlines()
-        if not lines or lines[0] != '-----BEGIN CERTIFICATE REQUEST-----' \
-                or lines[-1] != '-----END CERTIFICATE REQUEST-----':
-            raise forms.ValidationError(_("Enter a valid CSR (in PEM format)."))
-
-        return data
-
     def clean_algorithm(self):
         algo = self.cleaned_data['algorithm']
         try:
@@ -195,7 +186,7 @@ class CreateCertificateForm(forms.ModelForm):
         return password.encode('utf-8')
 
     def clean(self):
-        data = super(CreateCertificateForm, self).clean()
+        data = super(CreateCertificateBaseForm, self).clean()
         expires = data.get('expires')
         ca = data.get('ca')
         password = data.get('password')
@@ -213,6 +204,21 @@ class CreateCertificateForm(forms.ModelForm):
 
     class Meta:
         model = Certificate
+        fields = ['watchers', 'ca', ]
+
+
+class CreateCertificateForm(CreateCertificateBaseForm):
+    def clean_csr(self):
+        data = self.cleaned_data['csr']
+        lines = data.splitlines()
+        if not lines or lines[0] != '-----BEGIN CERTIFICATE REQUEST-----' \
+                or lines[-1] != '-----END CERTIFICATE REQUEST-----':
+            raise forms.ValidationError(_("Enter a valid CSR (in PEM format)."))
+
+        return data
+
+    class Meta:
+        model = Certificate
         fields = ['csr', 'watchers', 'ca', ]
         help_texts = {
             'csr': _('''The Certificate Signing Request (CSR) in PEM format. To create a new one:
@@ -221,6 +227,10 @@ openssl req -new -key hostname.key -out hostname.csr -utf8 -batch \\
                      -subj '/CN=hostname/emailAddress=root@hostname'
 </span>'''),
         }
+
+
+class ResignCertificateForm(CreateCertificateBaseForm):
+    pass
 
 
 class RevokeCertificateForm(forms.ModelForm):
