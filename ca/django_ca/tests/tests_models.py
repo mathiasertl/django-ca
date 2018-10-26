@@ -100,6 +100,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
             san=['dirname:/C=AT/CN=example.com', 'email:user@example.com', 'fd00::1'])
 
     def setUp(self):
+        super(CertificateTests, self).setUp()
         self.ca2 = self.load_ca('child', child_pubkey, parent=self.ca)
         self.cert2 = self.load_cert(self.ca, cert2_pubkey)
         self.cert3 = self.load_cert(self.ca, cert3_pubkey)
