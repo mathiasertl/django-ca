@@ -61,11 +61,13 @@ else:
 
 class BaseCommand(Command):
     user_options = [
-        ('suite=', None, 'Testsuite to run', )
+        ('suite=', None, 'Testsuite to run', ),
+        ('count=', None, 'Number of times to run the test-suite', ),
     ]
 
     def initialize_options(self):
         self.suite = ''
+        self.count = '1'
 
     def finalize_options(self):
         pass
@@ -89,7 +91,8 @@ class BaseCommand(Command):
             suite += '.tests.%s' % self.suite
 
         from django.core.management import call_command
-        call_command('test', suite)
+        for i in range(0, int(self.count)):
+            call_command('test', suite)
 
 
 class TestCommand(BaseCommand):
