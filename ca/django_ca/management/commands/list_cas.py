@@ -20,10 +20,13 @@ from ..base import BaseCommand
 class Command(BaseCommand):
     help = 'List available certificate authorities.'
 
+    def list_ca(self, ca, indent=''):
+        text = '%s%s - %s' % (indent, ca.serial, ca.name)
+        if ca.enabled is False:
+            text += ' (disabled)'
+
+        self.stdout.write(text)
+
     def handle(self, **options):
         for ca in CertificateAuthority.objects.all().order_by('expires'):
-            text = '%s - %s' % (ca.serial, ca.name)
-            if ca.enabled is False:
-                text += ' (disabled)'
-
-            self.stdout.write(text)
+            self.list_ca(ca)
