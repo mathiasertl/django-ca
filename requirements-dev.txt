@@ -1,7 +1,7 @@
 Fabric3==1.14.post1
 Sphinx==1.8.1
 coverage==4.5.1
-flake8==3.5.0
+flake8==3.6.0
 ipython<6; python_version < '3.3'
 ipython>=6; python_version >= '3.3'
 isort==4.3.4
