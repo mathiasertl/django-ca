@@ -20,6 +20,17 @@ install:
 script:
   - python setup.py code_quality
   - python setup.py test
+  - python setup.py test --suite=tests_admin.AddTestCase.test_add_with_password
+  - python setup.py test --suite=tests_admin.AddTestCase.test_add_with_password
+  - python setup.py test --suite=tests_admin.AddTestCase.test_add_with_password
+  - python setup.py test --suite=tests_admin.AddTestCase.test_add_with_password
+  - python setup.py test --suite=tests_admin.AddTestCase.test_add_with_password
+  - python setup.py test --suite=tests_admin.AddTestCase.test_add_with_password
+  - python setup.py test --suite=tests_admin.AddTestCase.test_add_with_password
+  - python setup.py test --suite=tests_admin.AddTestCase.test_add_with_password
+  - python setup.py test --suite=tests_admin.AddTestCase.test_add_with_password
+  - python setup.py test --suite=tests_admin.AddTestCase.test_add_with_password
+  - python setup.py test --suite=tests_admin.AddTestCase.test_add_with_password
   - python setup.py install
   - fab init_demo
   - make -C docs html-check
