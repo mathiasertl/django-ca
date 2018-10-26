@@ -518,6 +518,4 @@ class DjangoCAWithCertTestCase(DjangoCAWithCSRTestCase):
 class DjangoCAWithChildCATestCase(DjangoCAWithCertTestCase):
     def setUp(self):
         super(DjangoCAWithChildCATestCase, self).setUp()
-        self.child_ca = self.load_ca(name='child', x509=child_pubkey)
-        self.child_ca.parent = self.ca
-        self.child_ca.save()
+        self.child_ca = self.load_ca(name='child', x509=child_pubkey, parent=self.ca)
