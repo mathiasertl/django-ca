@@ -384,6 +384,31 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         response = self.client.get(self.change_url(cert.pk))
         self.assertEqual(response.status_code, 200)
 
+    def test_required_subject(self):
+        cn = 'test-add.example.com'
+        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            response = self.client.post(self.add_url, data={
+                'csr': self.csr_pem,
+                'ca': self.ca.pk,
+                'profile': 'webserver',
+                'subject_0': 'US',
+                'subjectAltName_1': True,
+                'algorithm': 'SHA256',
+                'expires': self.ca.expires.strftime('%Y-%m-%d'),
+                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
+                'keyUsage_1': True,
+                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
+                'extendedKeyUsage_1': False,
+                'tlsFeature_0': ['OCSPMustStaple', 'MultipleCertStatusRequest'],
+                'tlsFeature_1': False,
+            })
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
+        self.assertFalse(response.context['adminform'].form.is_valid())
+        self.assertEqual(response.context['adminform'].form.errors,
+                         {'subject': ['Enter a complete value.']})
+
     def test_add_no_key_usage(self):
         cn = 'test-add2.example.com'
         san = 'test-san.example.com'

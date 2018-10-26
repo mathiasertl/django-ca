@@ -65,7 +65,6 @@ class LabeledTextInput(widgets.TextInput):
     def get_context(self, *args, **kwargs):
         ctx = super(LabeledTextInput, self).get_context(*args, **kwargs)
         ctx['widget']['label'] = self.label
-        ctx['widget']['subrequired'] = self.attrs.get('required')
         ctx['widget']['cssid'] = self.label.lower().replace(' ', '-')
         return ctx
 
