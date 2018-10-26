@@ -29,7 +29,6 @@ from cryptography.x509.oid import ExtensionOID
 
 from django.conf.urls import url
 from django.contrib import admin
-from django.contrib.admin.helpers import AdminForm
 from django.contrib.messages import constants as messages
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
@@ -435,14 +434,50 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
         return False
 
     def get_form(self, request, obj=None, **kwargs):
-        if obj is None:
+        if hasattr(request, '_resign_obj'):
+            return ResignCertificateForm
+        elif obj is None:
             return CreateCertificateForm
         else:
             return super(CertificateAdmin, self).get_form(request, obj=obj, **kwargs)
 
     def get_changeform_initial_data(self, request):
         data = super(CertificateAdmin, self).get_changeform_initial_data(request)
-        data['subject'] = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get('subject', {})
+
+        if hasattr(request, '_resign_obj'):
+            resign_obj = getattr(request, '_resign_obj')
+            san = resign_obj.subjectAltName()
+            if san is None:
+                san = ('', False)
+            else:
+                san = (','.join(san[1]), False)
+            algo = resign_obj.x509.signature_hash_algorithm.__class__.__name__
+
+            extKeyUsage = resign_obj.extendedKeyUsage()
+            if extKeyUsage:
+                extKeyUsage = (extKeyUsage[1], extKeyUsage[0])
+
+            keyUsage = resign_obj.keyUsage()
+            if keyUsage:
+                keyUsage = (keyUsage[1], keyUsage[0])
+
+            tlsFeatures = resign_obj.TLSFeature()
+            if tlsFeatures:
+                tlsFeatures = (tlsFeatures[1], tlsFeatures[0])
+
+            data = {
+                'profile': '',
+                #'csr': obj.csr,
+                'ca': resign_obj.ca,
+                'subject': resign_obj.subject,
+                'subjectAltName': san,
+                'algorithm': algo,
+                'watchers': resign_obj.watchers.all(),
+                'extendedKeyUsage': extKeyUsage,
+            }
+        else:
+            data['subject'] = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get('subject', {})
+
         return data
 
     def csr_details_view(self, request):
@@ -477,60 +512,15 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
         return urls
 
     def resign(self, request, obj):
-        # TODO: reimplement this using changeform view from django (Add to request object for this)
-        if not self.has_add_permission(request):
-            raise PermissionDenied
+        # TODO: if there is no CSR, redirect back to change form with error message
 
-        if request.method == 'POST':
-            form = ResignCertificateForm(request.POST, request.FILES, instance=None)
-            #TODO: print(form.non_field_errors())
-            if form.is_valid():
-                form.cleaned_data['csr'] = obj.csr
-                new_object = self.save_form(request, form, change=False)
-                self.save_model(request, new_object, form, change=False)
-                return HttpResponseRedirect(obj.admin_change_url)
-        else:
-            san = obj.subjectAltName()
-            if san is None:
-                san = ('', False)
-            else:
-                san = (','.join(san[1]), False)
-            algo = obj.x509.signature_hash_algorithm.__class__.__name__
-
-            extKeyUsage = obj.extendedKeyUsage()
-            if extKeyUsage:
-                extKeyUsage = (extKeyUsage[1], extKeyUsage[0])
-
-            keyUsage = obj.keyUsage()
-            if keyUsage:
-                keyUsage = (keyUsage[1], keyUsage[0])
-
-            tlsFeatures = obj.TLSFeature()
-            if tlsFeatures:
-                tlsFeatures = (tlsFeatures[1], tlsFeatures[0])
-
-            form = ResignCertificateForm(initial={
-                'profile': '',
-                #'csr': obj.csr,
-                'ca': obj.ca,
-                'subject': obj.subject,
-                'subjectAltName': san,
-                'algorithm': algo,
-                'watchers': obj.watchers.all(),
-                'extendedKeyUsage': extKeyUsage,
-            })
-
-        readonly_fields = self.get_readonly_fields(request, None)
-        form = AdminForm(
-            form,
-            list(self.get_fieldsets(request, None, resign=True)),
-            self.get_prepopulated_fields(request, obj),
-            readonly_fields,
-            model_admin=self)
-
-        context = dict(self.admin_site.each_context(request), form=form, object=obj, opts=obj._meta,
-                       media=self.media)
-        return TemplateResponse(request, "django_ca/admin/certificate_resign_form.html", context)
+        request._resign_obj = obj
+        extra_context = {
+            'title': _('Resign %s for %s') % (obj._meta.verbose_name, obj),
+            'original_obj': obj,
+            'object_action': _('Resign'),
+        }
+        return self.changeform_view(request, extra_context=extra_context)
 
     def revoke_change(self, request, obj):
         if not self.has_change_permission(request, obj):
@@ -565,11 +555,11 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             actions.remove('revoke_change')
         return actions
 
-    def get_fieldsets(self, request, obj=None, resign=False):
+    def get_fieldsets(self, request, obj=None):
         """Collapse the "Revocation" section unless the certificate is revoked."""
         fieldsets = super(CertificateAdmin, self).get_fieldsets(request, obj=obj)
 
-        if resign is True:
+        if hasattr(request, '_resign_obj'):
             return self.resign_fieldsets
         if obj is None:
             return self.add_fieldsets
@@ -606,9 +596,16 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             expires = datetime.combine(data['expires'], datetime.min.time())
             subjectAltName = [e.strip() for e in san.split(',') if e.strip()]
 
+            if hasattr(request, '_resign_obj'):
+                csr = getattr(request, '_resign_obj').csr
+                obj.csr = csr
+            else:
+                # Note: CSR is set by model form already
+                csr = data['csr']
+
             kwargs = {
                 'ca': data['ca'],
-                'csr': data['csr'],
+                'csr': csr,
                 'expires': expires,
                 'subject': data['subject'],
                 'algorithm': data['algorithm'],
@@ -622,7 +619,6 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
 
             pre_issue_cert.send(sender=self.model, **kwargs)
 
-            # Note: CSR is set by model form already
             obj.x509, req = self.model.objects.sign_cert(**kwargs)
             obj.save()
 
