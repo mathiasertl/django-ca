@@ -28,6 +28,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.conf import settings
+from django.contrib.messages import get_messages
 from django.core.management import call_command
 from django.test import TestCase
 from django.test.utils import override_settings as _override_settings
@@ -93,6 +94,7 @@ with open(os.path.join(settings.FIXTURES_DIR, 'cert1-der.csr'), 'rb') as stream:
     cert1_csr_der = stream.read()
 
 cert1_pem, cert1_pubkey = _load_cert('cert1.pem')
+cert1_csr = _load_csr('cert1.csr')
 cert2_key = _load_key('cert2.key')
 cert2_csr = _load_csr('cert2.csr')
 cert2_pem, cert2_pubkey = _load_cert('cert2.pem')
@@ -301,6 +303,10 @@ class DjangoCATestCase(TestCase):
         yield handler
         signal.disconnect(handler)
 
+    def assertMessages(self, response, expected):
+        messages = [str(m) for m in list(get_messages(response.wsgi_request))]
+        self.assertEqual(messages, expected)
+
     def assertPostCreateCa(self, post, ca):
         post.assert_called_once_with(ca=ca, signal=post_create_ca, sender=CertificateAuthority)
 
@@ -436,8 +442,8 @@ class DjangoCATestCase(TestCase):
         return cert
 
     @classmethod
-    def load_cert(cls, ca, x509):
-        cert = Certificate(ca=ca, csr='none')
+    def load_cert(cls, ca, x509, csr=''):
+        cert = Certificate(ca=ca, csr=csr)
         cert.x509 = x509
         cert.save()
         return cert
@@ -509,7 +515,7 @@ class DjangoCAWithCertTestCase(DjangoCAWithCSRTestCase):
     @classmethod
     def setUpClass(cls):
         super(DjangoCAWithCertTestCase, cls).setUpClass()
-        cls.cert = cls.load_cert(cls.ca, x509=cert1_pubkey)
+        cls.cert = cls.load_cert(cls.ca, x509=cert1_pubkey, csr=cert1_csr)
 
 
 class DjangoCAWithChildCATestCase(DjangoCAWithCertTestCase):

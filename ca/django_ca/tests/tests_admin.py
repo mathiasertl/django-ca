@@ -385,7 +385,6 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_required_subject(self):
-        cn = 'test-add.example.com'
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.add_url, data={
                 'csr': self.csr_pem,
@@ -917,6 +916,55 @@ class CADownloadBundleTestCase(AdminTestMixin, DjangoCAWithChildCATestCase):
         response = self.client.get('%s?format=DER' % self.url)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.content, b'DER/ASN.1 certificates cannot be downloaded as a bundle.')
+
+
+class ResignCertTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
+    def get_url(self, cert):
+        return reverse('admin:django_ca_certificate_actions', kwargs={'pk': cert.pk, 'tool': 'resign'})
+
+    @property
+    def url(self):
+        return self.get_url(cert=self.cert)
+
+    def test_get(self):
+        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
+
+    def test_resign(self):
+        cn = 'resigned.example.com'
+        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            response = self.client.post(self.url, data={
+                'ca': self.ca.pk,
+                'profile': 'webserver',
+                'subject_5': cn,
+                'subjectAltName_1': True,
+                'algorithm': 'SHA256',
+                'expires': self.ca.expires.strftime('%Y-%m-%d'),
+                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
+                'keyUsage_1': True,
+                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
+                'extendedKeyUsage_1': False,
+                'tlsFeature_0': ['OCSPMustStaple', 'MultipleCertStatusRequest'],
+                'tlsFeature_1': False,
+            })
+        self.assertRedirects(response, self.changelist_url)
+        self.assertEqual(pre.call_count, 1)
+        self.assertEqual(post.call_count, 1)
+        self.assertTrue(Certificate.objects.get(cn=cn).cn, cn)
+
+    def test_no_csr(self):
+        self.cert.csr = ''
+        self.cert.save()
+
+        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            response = self.client.get(self.url)
+        self.assertRedirects(response, self.change_url())
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
+        self.assertMessages(response, ['Certificate has no CSR (most likely because it was imported).'])
 
 
 class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
