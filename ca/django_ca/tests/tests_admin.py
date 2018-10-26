@@ -978,7 +978,10 @@ class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithCertTestCase)
         self.assertEqual(self.cert.cn, resigned.cn)
         self.assertEqual(self.cert.csr, resigned.csr)
         self.assertEqual(self.cert.distinguishedName(), resigned.distinguishedName())
-        self.assertEqual(list(self.cert.extensions()), list(resigned.extensions()))
+        self.assertEqual(self.cert.extendedKeyUsage(), resigned.extendedKeyUsage())
+        self.assertEqual(self.cert.keyUsage(), resigned.keyUsage())
+        self.assertEqual(self.cert.subjectAltName(), resigned.subjectAltName())
+        self.assertEqual(self.cert.TLSFeature(), resigned.TLSFeature())
 
         # Some properties are obviously *not* equal
         self.assertNotEqual(self.cert.pub, resigned.pub)
