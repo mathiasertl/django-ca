@@ -28,7 +28,6 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PublicFormat
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
-from cryptography.x509 import TLSFeatureType
 from cryptography.x509.certificate_transparency import LogEntryType
 from cryptography.x509.extensions import UnrecognizedExtension
 from cryptography.x509.oid import AuthorityInformationAccessOID
@@ -52,6 +51,7 @@ from .signals import pre_revoke_cert
 from .subject import Subject
 from .utils import EXTENDED_KEY_USAGE_REVERSED
 from .utils import KEY_USAGE_MAPPING
+from .utils import TLS_FEATURE_MAPPING_REVERSED
 from .utils import add_colons
 from .utils import format_general_name
 from .utils import format_general_names
@@ -282,12 +282,7 @@ class X509CertMixin(models.Model):
 
         features = []
         for feature in ext.value:
-            if feature == TLSFeatureType.status_request:
-                features.append('OCSP Must-Staple')
-            elif feature == TLSFeatureType.status_request_v2:
-                features.append('Multiple Certificate Status Request')
-            else:  # pragma: no cover - all features of cryptography 2.1 are covered
-                features.append('Unknown TLS Feature')
+            features.append(TLS_FEATURE_MAPPING_REVERSED[feature])
 
         return ext.critical, features
 

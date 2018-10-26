@@ -445,6 +445,8 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
         data = super(CertificateAdmin, self).get_changeform_initial_data(request)
 
         if hasattr(request, '_resign_obj'):
+            # resign the cert, so we add initial data from the original cert
+
             resign_obj = getattr(request, '_resign_obj')
             san = resign_obj.subjectAltName()
             if san is None:
@@ -474,6 +476,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                 'algorithm': algo,
                 'watchers': resign_obj.watchers.all(),
                 'extendedKeyUsage': extKeyUsage,
+                'tlsFeature': tlsFeatures,
             }
         else:
             data['subject'] = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get('subject', {})

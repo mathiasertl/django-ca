@@ -968,7 +968,8 @@ class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithCertTestCase)
         self.assertFalse(post.called)
         self.assertMessages(response, ['Certificate has no CSR (most likely because it was imported).'])
 
-    def test_webtest(self):
+    def test_webtest_basic(self):
+        # resign the basic cert
         form = self.app.get(self.url, user=self.user.username).form
         form.submit().follow()
 
@@ -986,6 +987,26 @@ class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithCertTestCase)
         # Some properties are obviously *not* equal
         self.assertNotEqual(self.cert.pub, resigned.pub)
         self.assertNotEqual(self.cert.serial, resigned.serial)
+
+    def test_webtest_all(self):
+        # resign the basic cert
+        form = self.app.get(self.get_url(self.cert_all), user=self.user.username).form
+        form.submit().follow()
+
+        resigned = Certificate.objects.filter(cn=self.cert_all.cn).exclude(pk=self.cert_all.pk).first()
+        self.assertFalse(self.cert_all.revoked)
+
+        self.assertEqual(self.cert_all.cn, resigned.cn)
+        self.assertEqual(self.cert_all.csr, resigned.csr)
+        self.assertEqual(self.cert_all.distinguishedName(), resigned.distinguishedName())
+        self.assertEqual(self.cert_all.extendedKeyUsage(), resigned.extendedKeyUsage())
+        self.assertEqual(self.cert_all.keyUsage(), resigned.keyUsage())
+        self.assertEqual(self.cert_all.subjectAltName(), resigned.subjectAltName())
+        self.assertEqual(self.cert_all.TLSFeature(), resigned.TLSFeature())
+
+        # Some properties are obviously *not* equal
+        self.assertNotEqual(self.cert_all.pub, resigned.pub)
+        self.assertNotEqual(self.cert_all.serial, resigned.serial)
 
 
 class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
