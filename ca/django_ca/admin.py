@@ -48,6 +48,7 @@ from django_object_actions import DjangoObjectActions
 
 from . import ca_settings
 from .forms import CreateCertificateForm
+from .forms import ResignCertificateForm
 from .forms import RevokeCertificateForm
 from .forms import X509CertMixinAdminForm
 from .models import Certificate
@@ -413,6 +414,17 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             'fields': ['keyUsage', 'extendedKeyUsage', 'tlsFeature', ]
         }),
     ]
+
+    # same as add_fieldsets but without the csr
+    resign_fieldsets = [
+        (None, {
+            'fields': [('ca', 'password'), 'profile', 'subject', 'subjectAltName', 'algorithm',
+                       'expires', 'watchers', ],
+        }),
+        (_('X.509 Extensions'), {
+            'fields': ['keyUsage', 'extendedKeyUsage', 'tlsFeature', ]
+        }),
+    ]
     x509_fieldset_index = 1
 
     def has_add_permission(self, request):
@@ -493,9 +505,9 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             if tlsFeatures:
                 tlsFeatures = (tlsFeatures[1], tlsFeatures[0])
 
-            form = CreateCertificateForm(initial={
+            form = ResignCertificateForm(initial={
                 'profile': '',
-                'csr': obj.csr,
+                #'csr': obj.csr,
                 'ca': obj.ca,
                 'subject': obj.subject,
                 'subjectAltName': san,
@@ -507,7 +519,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
         readonly_fields = self.get_readonly_fields(request, None)
         form = AdminForm(
             form,
-            list(self.get_fieldsets(request, None)),
+            list(self.get_fieldsets(request, None, resign=True)),
             self.get_prepopulated_fields(request, obj),
             readonly_fields,
             model_admin=self)
@@ -549,10 +561,12 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             actions.remove('revoke_change')
         return actions
 
-    def get_fieldsets(self, request, obj=None):
+    def get_fieldsets(self, request, obj=None, resign=False):
         """Collapse the "Revocation" section unless the certificate is revoked."""
         fieldsets = super(CertificateAdmin, self).get_fieldsets(request, obj=obj)
 
+        if resign is True:
+            return self.resign_fieldsets
         if obj is None:
             return self.add_fieldsets
 
