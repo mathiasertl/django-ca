@@ -172,7 +172,7 @@ class OCSPView(View):
             request_list = tbs_request['request_list']
             if len(request_list) != 1:
                 log.error('Received OCSP request with multiple sub requests')
-                raise NotImplemented('Combined requests not yet supported')
+                raise NotImplementedError('Combined requests not yet supported')
             single_request = request_list[0]  # TODO: Support more than one request
             req_cert = single_request['req_cert']
             serial = int_to_hex(req_cert['serial_number'].native)
