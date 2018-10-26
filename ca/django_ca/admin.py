@@ -481,9 +481,12 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             raise PermissionDenied
 
         if request.method == 'POST':
-            form = CreateCertificateForm(request.POST, instance=obj)
+            form = ResignCertificateForm(request.POST, request.FILES, instance=None)
+            #TODO: print(form.non_field_errors())
             if form.is_valid():
-                obj.revoke(reason=form.cleaned_data['revoked_reason'] or None)
+                form.cleaned_data['csr'] = obj.csr
+                new_object = self.save_form(request, form, change=False)
+                self.save_model(request, new_object, form, change=False)
                 return HttpResponseRedirect(obj.admin_change_url)
         else:
             san = obj.subjectAltName()
