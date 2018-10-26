@@ -498,7 +498,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'keyUsage_1': True,
                 'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
                 'extendedKeyUsage_1': False,
-                'password': b'wrong',
+                'password': 'wrong',
             })
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
