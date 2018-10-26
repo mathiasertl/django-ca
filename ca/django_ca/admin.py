@@ -477,6 +477,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
         return urls
 
     def resign(self, request, obj):
+        # TODO: reimplement this using changeform view from django (Add to request object for this)
         if not self.has_add_permission(request):
             raise PermissionDenied
 
