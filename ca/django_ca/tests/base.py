@@ -512,10 +512,9 @@ class DjangoCAWithCSRTestCase(DjangoCAWithCATestCase):
 
 
 class DjangoCAWithCertTestCase(DjangoCAWithCSRTestCase):
-    @classmethod
-    def setUpClass(cls):
-        super(DjangoCAWithCertTestCase, cls).setUpClass()
-        cls.cert = cls.load_cert(cls.ca, x509=cert1_pubkey, csr=cert1_csr)
+    def setUp(self):
+        super(DjangoCAWithCertTestCase, self).setUp()
+        self.cert = self.load_cert(self.ca, x509=cert1_pubkey, csr=cert1_csr)
 
 
 class DjangoCAWithChildCATestCase(DjangoCAWithCertTestCase):

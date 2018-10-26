@@ -957,7 +957,6 @@ class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithCertTestCase)
         self.assertEqual(post.call_count, 1)
         self.assertTrue(Certificate.objects.get(cn=cn).cn, cn)
 
-    @unittest.skip("TODO: self.cert is a class instance!")
     def test_no_csr(self):
         self.cert.csr = ''
         self.cert.save()
