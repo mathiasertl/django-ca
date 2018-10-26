@@ -494,21 +494,19 @@ class DjangoCATestCase(TestCase):
 class DjangoCAWithCATestCase(DjangoCATestCase):
     """A test class that already has a CA predefined."""
 
-    @classmethod
-    def setUpClass(cls):
-        super(DjangoCAWithCATestCase, cls).setUpClass()
-        cls.ca = cls.load_ca(name='root', x509=root_pubkey)
-        cls.ecc_ca = cls.load_ca(name='ecc_ca', x509=ecc_ca_pubkey)
+    def setUp(self):
+        super(DjangoCAWithCATestCase, self).setUp()
+        self.ca = self.load_ca(name='root', x509=root_pubkey)
+        self.ecc_ca = self.load_ca(name='ecc_ca', x509=ecc_ca_pubkey)
 
 
 class DjangoCAWithCSRTestCase(DjangoCAWithCATestCase):
-    @classmethod
-    def setUpClass(cls):
-        super(DjangoCAWithCSRTestCase, cls).setUpClass()
+    def setUp(self):
+        super(DjangoCAWithCSRTestCase, self).setUp()
 
-        cls.key = cert1_key
-        cls.csr_pem = cert1_csr
-        cls.csr_der = cert1_csr_der
+        self.key = cert1_key
+        self.csr_pem = cert1_csr
+        self.csr_der = cert1_csr_der
 
 
 class DjangoCAWithCertTestCase(DjangoCAWithCSRTestCase):
@@ -518,9 +516,8 @@ class DjangoCAWithCertTestCase(DjangoCAWithCSRTestCase):
 
 
 class DjangoCAWithChildCATestCase(DjangoCAWithCertTestCase):
-    @classmethod
-    def setUpClass(cls):
-        super(DjangoCAWithChildCATestCase, cls).setUpClass()
-        cls.child_ca = cls.load_ca(name='child', x509=child_pubkey)
-        cls.child_ca.parent = cls.ca
-        cls.child_ca.save()
+    def setUp(self):
+        super(DjangoCAWithChildCATestCase, self).setUp()
+        self.child_ca = self.load_ca(name='child', x509=child_pubkey)
+        self.child_ca.parent = self.ca
+        self.child_ca.save()

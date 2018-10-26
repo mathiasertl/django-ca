@@ -107,6 +107,16 @@ class OCSPViewTestMixin(object):
         'email_address': 'emailAddress',
     }
 
+    def setUp(self):
+        super(OCSPViewTestMixin, self).setUp()
+
+        logging.disable(logging.CRITICAL)
+        self.client = Client()
+        self.ocsp_cert = self.load_cert(ca=self.ca, x509=ocsp_pubkey)
+
+        # used for verifying signatures
+        self.ocsp_private_key = asymmetric.load_private_key(force_text(settings.OCSP_KEY_PATH))
+
     def assertAlmostEqualDate(self, got, expected):
         # Sometimes next_update timestamps are of by a second or so, so we test
         # if they are just close
@@ -130,17 +140,6 @@ class OCSPViewTestMixin(object):
             sign_func = asymmetric.ecdsa_sign
 
         return sign_func(self.ocsp_private_key, tbs_request.dump(), algo)
-
-    @classmethod
-    def setUpClass(cls):
-        super(OCSPViewTestMixin, cls).setUpClass()
-
-        logging.disable(logging.CRITICAL)
-        cls.client = Client()
-        cls.ocsp_cert = cls.load_cert(ca=cls.ca, x509=ocsp_pubkey)
-
-        # used for verifying signatures
-        cls.ocsp_private_key = asymmetric.load_private_key(force_text(settings.OCSP_KEY_PATH))
 
     def assertOCSPSubject(self, got, expected):
         translated = {}

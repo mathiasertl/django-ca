@@ -89,18 +89,14 @@ class TestWatcher(TestCase):
 
 
 class CertificateTests(DjangoCAWithCertTestCase):
-    @classmethod
-    def setUpClass(cls):
-        super(CertificateTests, cls).setUpClass()
-
-        # A certificate with all extensions, can do everything, etc
-        cls.ca.crl_url = 'https://ca.example.com/crl.der'
-        cls.full = cls.create_cert(
-            cls.ca, cert3_csr, [('CN', 'all.example.com')],
-            san=['dirname:/C=AT/CN=example.com', 'email:user@example.com', 'fd00::1'])
-
     def setUp(self):
         super(CertificateTests, self).setUp()
+        # A certificate with all extensions, can do everything, etc
+        self.ca.crl_url = 'https://ca.example.com/crl.der'
+        self.full = self.create_cert(
+            self.ca, cert3_csr, [('CN', 'all.example.com')],
+            san=['dirname:/C=AT/CN=example.com', 'email:user@example.com', 'fd00::1'])
+
         self.ca2 = self.load_ca('child', child_pubkey, parent=self.ca)
         self.cert2 = self.load_cert(self.ca, cert2_pubkey)
         self.cert3 = self.load_cert(self.ca, cert3_pubkey)
