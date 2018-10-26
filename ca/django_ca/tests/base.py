@@ -107,6 +107,11 @@ all_key = _load_key('all.key')
 all_csr = _load_csr('all.csr')
 all_pem, all_pubkey = _load_cert('all.pem')
 
+# this cert has *no* extensions
+no_ext_key = _load_key('cert_no_ext.key')
+no_ext_csr = _load_csr('cert_no_ext.csr')
+no_ext_pem, no_ext_pubkey = _load_cert('cert_no_ext.pem')
+
 # Various contributed certs
 _, multiple_ous_and_no_ext_pubkey = _load_cert(os.path.join('contrib', 'multiple_ous_and_no_ext.pem'))
 _, cloudflare_1_pubkey = _load_cert(os.path.join('contrib', 'cloudflare_1.pem'))
@@ -254,7 +259,6 @@ class override_tmpcadir(override_settings):
 
     def disable(self):
         super(override_tmpcadir, self).disable()
-        print(self.options['CA_DIR'])
         shutil.rmtree(self.options['CA_DIR'])
 
 
@@ -525,6 +529,7 @@ class DjangoCAWithCertTestCase(DjangoCAWithCSRTestCase):
         super(DjangoCAWithCertTestCase, self).setUp()
         self.cert = self.load_cert(self.ca, x509=cert1_pubkey, csr=cert1_csr)
         self.cert_all = self.load_cert(self.ca, x509=all_pubkey, csr=all_csr)
+        self.cert_no_ext = self.load_cert(self.ca, x509=no_ext_pubkey, csr=no_ext_csr)
 
 
 class DjangoCAWithChildCATestCase(DjangoCAWithCertTestCase):

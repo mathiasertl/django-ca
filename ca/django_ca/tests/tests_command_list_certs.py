@@ -42,23 +42,25 @@ class ListCertsTestCase(DjangoCAWithChildCATestCase):
         self.assertEqual(stderr, '')
 
     def test_basic(self):
-        self.assertCerts(self.cert, self.cert_all)
+        self.assertCerts(self.cert, self.cert_all, self.cert_no_ext)
 
     @override_settings(USE_TZ=True)
     def test_basic_with_use_tz(self):
         # reload cert, otherwise self.cert is still the object created in setUp()
         self.cert = Certificate.objects.get(serial=self.cert.serial)
         self.cert_all = Certificate.objects.get(serial=self.cert_all.serial)
+        self.cert_no_ext = Certificate.objects.get(serial=self.cert_no_ext.serial)
         self.test_basic()
 
     def test_expired(self):
         self.cert_all = Certificate.objects.get(serial=self.cert_all.serial)
+        self.cert_no_ext = Certificate.objects.get(serial=self.cert_no_ext.serial)
         self.cert = Certificate.objects.get(serial=self.cert.serial)
         self.cert.expires = timezone.now() - timedelta(days=3)
         self.cert.save()
 
-        self.assertCerts(self.cert_all)
-        self.assertCerts(self.cert, self.cert_all, expired=True)
+        self.assertCerts(self.cert_all, self.cert_no_ext)
+        self.assertCerts(self.cert, self.cert_all, self.cert_no_ext, expired=True)
 
     @override_settings(USE_TZ=True)
     def test_expired_with_use_tz(self):
@@ -67,11 +69,12 @@ class ListCertsTestCase(DjangoCAWithChildCATestCase):
     def test_revoked(self):
         self.cert.revoke()
         self.cert_all.revoke()
+        self.cert_no_ext.revoke()
 
         self.assertCerts()
-        self.assertCerts(self.cert, self.cert_all, revoked=True)
+        self.assertCerts(self.cert, self.cert_all, self.cert_no_ext, revoked=True)
 
     def test_ca(self):
-        self.assertCerts(self.cert, self.cert_all)
-        self.assertCerts(self.cert, self.cert_all, ca=self.ca)
+        self.assertCerts(self.cert, self.cert_all, self.cert_no_ext)
+        self.assertCerts(self.cert, self.cert_all, self.cert_no_ext, ca=self.ca)
         self.assertCerts(ca=self.child_ca)

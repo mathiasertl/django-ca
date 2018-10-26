@@ -19,7 +19,6 @@ from datetime import timedelta
 from django.utils import timezone
 
 from .. import ca_settings
-from ..models import Certificate
 from ..ocsp import date_format
 from .base import DjangoCAWithCertTestCase
 from .base import override_tmpcadir
@@ -48,10 +47,20 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
             cert.distinguishedName(),
         )
 
-    def test_basic(self):
+    @property
+    def all_certs(self):
+        return [self.cert, self.cert_all, self.cert_no_ext]
+
+    def assertIndex(self, certs=None):
+        if certs is None:
+            certs = self.all_certs
+
         stdout, stderr = self.cmd('dump_ocsp_index')
-        self.assertEqual(stdout, '%s\n%s\n' % (self.line(self.cert), self.line(self.cert_all)))
+        self.assertEqual(stdout, ''.join(['%s\n' % self.line(c) for c in certs]))
         self.assertEqual(stderr, '')
+
+    def test_basic(self):
+        self.assertIndex()
 
     def test_file(self):
         path = os.path.join(ca_settings.CA_DIR, 'ocsp-index.txt')
@@ -61,28 +70,20 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(stderr, '')
 
         with open(path) as stream:
-            self.assertEqual(stream.read(), '%s\n%s\n' % (self.line(self.cert), self.line(self.cert_all)))
+            self.assertEqual(stream.read(), ''.join(['%s\n' % self.line(c) for c in self.all_certs]))
 
     def test_expired(self):
-        cert = Certificate.objects.get(serial=self.cert.serial)
-        cert.expires = timezone.now() - timedelta(days=3)
-        cert.save()
+        self.cert.expires = timezone.now() - timedelta(days=3)
+        self.cert.save()
 
-        stdout, stderr = self.cmd('dump_ocsp_index')
-        self.assertEqual(stdout, '%s\n%s\n' % (self.line(cert), self.line(self.cert_all)))
-        self.assertEqual(stderr, '')
+        self.assertIndex()
 
     def test_revoked(self):
-        cert = Certificate.objects.get(serial=self.cert.serial)
-        cert.revoke()
+        self.maxDiff = None
+        self.cert.revoke()
 
-        stdout, stderr = self.cmd('dump_ocsp_index')
-        self.assertEqual(stdout, '%s\n%s\n' % (self.line(cert), self.line(self.cert_all)))
-        self.assertEqual(stderr, '')
+        self.assertIndex()
 
-        cert = Certificate.objects.get(serial=self.cert.serial)
-        cert.revoke('unspecified')
+        self.cert.revoke('unspecified')
 
-        stdout, stderr = self.cmd('dump_ocsp_index')
-        self.assertEqual(stdout, '%s\n%s\n' % (self.line(cert), self.line(self.cert_all)))
-        self.assertEqual(stderr, '')
+        self.assertIndex()
