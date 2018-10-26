@@ -927,6 +927,25 @@ class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithCertTestCase)
     def url(self):
         return self.get_url(cert=self.cert)
 
+    def assertResigned(self, cert=None):
+        if cert is None:
+            cert = self.cert
+
+        resigned = Certificate.objects.filter(cn=cert.cn).exclude(pk=cert.pk).get()
+        self.assertFalse(cert.revoked)
+
+        self.assertEqual(cert.cn, resigned.cn)
+        self.assertEqual(cert.csr, resigned.csr)
+        self.assertEqual(cert.distinguishedName(), resigned.distinguishedName())
+        self.assertEqual(cert.extendedKeyUsage(), resigned.extendedKeyUsage())
+        self.assertEqual(cert.keyUsage(), resigned.keyUsage())
+        self.assertEqual(cert.subjectAltName(), resigned.subjectAltName())
+        self.assertEqual(cert.TLSFeature(), resigned.TLSFeature())
+
+        # Some properties are obviously *not* equal
+        self.assertNotEqual(cert.pub, resigned.pub)
+        self.assertNotEqual(cert.serial, resigned.serial)
+
     def test_get(self):
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.get(self.url)
@@ -971,41 +990,18 @@ class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithCertTestCase)
         # resign the basic cert
         form = self.app.get(self.url, user=self.user.username).form
         form.submit().follow()
-
-        resigned = Certificate.objects.filter(cn=self.cert.cn).exclude(pk=self.cert.pk).first()
-        self.assertFalse(self.cert.revoked)
-
-        self.assertEqual(self.cert.cn, resigned.cn)
-        self.assertEqual(self.cert.csr, resigned.csr)
-        self.assertEqual(self.cert.distinguishedName(), resigned.distinguishedName())
-        self.assertEqual(self.cert.extendedKeyUsage(), resigned.extendedKeyUsage())
-        self.assertEqual(self.cert.keyUsage(), resigned.keyUsage())
-        self.assertEqual(self.cert.subjectAltName(), resigned.subjectAltName())
-        self.assertEqual(self.cert.TLSFeature(), resigned.TLSFeature())
-
-        # Some properties are obviously *not* equal
-        self.assertNotEqual(self.cert.pub, resigned.pub)
-        self.assertNotEqual(self.cert.serial, resigned.serial)
+        self.assertResigned(self.cert)
 
     def test_webtest_all(self):
         # resign the basic cert
         form = self.app.get(self.get_url(self.cert_all), user=self.user.username).form
         form.submit().follow()
+        self.assertResigned(self.cert_all)
 
-        resigned = Certificate.objects.filter(cn=self.cert_all.cn).exclude(pk=self.cert_all.pk).first()
-        self.assertFalse(self.cert_all.revoked)
-
-        self.assertEqual(self.cert_all.cn, resigned.cn)
-        self.assertEqual(self.cert_all.csr, resigned.csr)
-        self.assertEqual(self.cert_all.distinguishedName(), resigned.distinguishedName())
-        self.assertEqual(self.cert_all.extendedKeyUsage(), resigned.extendedKeyUsage())
-        self.assertEqual(self.cert_all.keyUsage(), resigned.keyUsage())
-        self.assertEqual(self.cert_all.subjectAltName(), resigned.subjectAltName())
-        self.assertEqual(self.cert_all.TLSFeature(), resigned.TLSFeature())
-
-        # Some properties are obviously *not* equal
-        self.assertNotEqual(self.cert_all.pub, resigned.pub)
-        self.assertNotEqual(self.cert_all.serial, resigned.serial)
+    def test_webtest_no_ext(self):
+        form = self.app.get(self.get_url(self.cert_no_ext), user=self.user.username).form
+        form.submit().follow()
+        self.assertResigned(self.cert_no_ext)
 
 
 class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):

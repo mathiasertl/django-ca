@@ -458,14 +458,20 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             extKeyUsage = resign_obj.extendedKeyUsage()
             if extKeyUsage:
                 extKeyUsage = (extKeyUsage[1], extKeyUsage[0])
+            else:
+                extKeyUsage = [], False
 
             keyUsage = resign_obj.keyUsage()
             if keyUsage:
                 keyUsage = (keyUsage[1], keyUsage[0])
+            else:
+                keyUsage = [], False
 
             tlsFeatures = resign_obj.TLSFeature()
             if tlsFeatures:
                 tlsFeatures = (tlsFeatures[1], tlsFeatures[0])
+            else:
+                tlsFeatures = [], False
 
             data = {
                 'profile': '',
@@ -476,6 +482,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                 'algorithm': algo,
                 'watchers': resign_obj.watchers.all(),
                 'extendedKeyUsage': extKeyUsage,
+                'keyUsage': keyUsage,
                 'tlsFeature': tlsFeatures,
             }
         else:
