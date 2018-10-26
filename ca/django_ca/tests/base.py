@@ -254,6 +254,7 @@ class override_tmpcadir(override_settings):
 
     def disable(self):
         super(override_tmpcadir, self).disable()
+        print(self.options['CA_DIR'])
         shutil.rmtree(self.options['CA_DIR'])
 
 

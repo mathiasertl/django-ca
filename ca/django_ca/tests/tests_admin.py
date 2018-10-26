@@ -49,12 +49,12 @@ from ..utils import EXTENDED_KEY_USAGE_MAPPING
 from ..utils import KEY_USAGE_MAPPING
 from ..utils import SUBJECT_FIELDS
 from ..utils import TLS_FEATURE_MAPPING
+from .base import DjangoCAWithCSRTestCase
 from .base import DjangoCAWithCertTestCase
 from .base import DjangoCAWithChildCATestCase
-from .base import DjangoCAWithCSRTestCase
 from .base import cryptography_version
 from .base import override_settings
-from .base import override_tmpcadir
+from .base import pwd_ca_pwd
 
 try:
     import unittest.mock as mock
@@ -453,19 +453,14 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         response = self.client.get(self.change_url(cert.pk))
         self.assertEqual(response.status_code, 200)
 
-    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_add_with_password(self):
-        password = b'foobar'
-        name = 'ca_with_pass'
         cn = 'example.com'
-        self.cmd('init_ca', name, cn, password=password)
-        ca = CertificateAuthority.objects.get(name=name)
 
         # first post without password
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.add_url, data={
                 'csr': self.csr_pem,
-                'ca': ca.pk,
+                'ca': self.pwd_ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
@@ -487,7 +482,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.add_url, data={
                 'csr': self.csr_pem,
-                'ca': ca.pk,
+                'ca': self.pwd_ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
@@ -510,18 +505,18 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.add_url, data={
                 'csr': self.csr_pem,
-                'ca': ca.pk,
+                'ca': self.pwd_ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
                 'subjectAltName_1': True,
                 'algorithm': 'SHA256',
-                'expires': self.ca.expires.strftime('%Y-%m-%d'),
+                'expires': self.pwd_ca.expires.strftime('%Y-%m-%d'),
                 'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
                 'keyUsage_1': True,
                 'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
                 'extendedKeyUsage_1': False,
-                'password': 'foobar',
+                'password': pwd_ca_pwd.decode('utf-8'),
             })
         self.assertEqual(pre.call_count, 1)
         self.assertRedirects(response, self.changelist_url)
@@ -529,13 +524,13 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         cert = Certificate.objects.get(cn=cn)
         self.assertPostIssueCert(post, cert)
         self.assertSubject(cert.x509, [('C', 'US'), ('CN', cn)])
-        self.assertIssuer(ca, cert)
-        self.assertAuthorityKeyIdentifier(ca, cert)
+        self.assertIssuer(self.pwd_ca, cert)
+        self.assertAuthorityKeyIdentifier(self.pwd_ca, cert)
         self.assertEqual(cert.subjectAltName(), (False, ['DNS:%s' % cn]))
         self.assertEqual(cert.basicConstraints(), (True, 'CA:FALSE'))
         self.assertEqual(cert.keyUsage(), (True, ['digitalSignature', 'keyAgreement']))
         self.assertEqual(cert.extendedKeyUsage(), (False, ['clientAuth', 'serverAuth']))
-        self.assertEqual(cert.ca, ca)
+        self.assertEqual(cert.ca, self.pwd_ca)
         self.assertEqual(cert.csr, self.csr_pem)
 
         # Test that we can view the certificate
