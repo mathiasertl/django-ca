@@ -269,7 +269,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertEqual(cert.keyUsage(), (True, ['keyCertSign']))
         self.assertEqual(cert.extendedKeyUsage(), (False, ['clientAuth']))
         self.assertEqual(cert.subjectAltName(), (False, ['DNS:example.com', 'URI:https://example.net']))
-        self.assertEqual(cert.TLSFeature(), (False, ['OCSP Must-Staple']))
+        self.assertEqual(cert.TLSFeature(), (False, ['OCSPMustStaple']))
 
     @override_settings(CA_DEFAULT_SUBJECT={})
     def test_no_subject(self):

@@ -378,7 +378,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertEqual(cert.keyUsage(), (True, ['digitalSignature', 'keyAgreement']))
         self.assertEqual(cert.extendedKeyUsage(), (False, ['clientAuth', 'serverAuth']))
         self.assertEqual(cert.TLSFeature(),
-                         (False, ['OCSP Must-Staple', 'Multiple Certificate Status Request']))
+                         (False, ['OCSPMustStaple', 'MultipleCertStatusRequest']))
         self.assertEqual(cert.ca, self.ca)
         self.assertEqual(cert.csr, self.csr_pem)
 
