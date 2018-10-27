@@ -180,6 +180,9 @@ CA_DEFAULT_SUBJECT = [
 ]
 CA_MIN_KEY_SIZE = 1024
 
+# should be something that doesn't exist, so make sure we use a decorator everywhere
+CA_DIR = '/non/existent'
+
 
 CA_OCSP_URLS = {
     'root': {
