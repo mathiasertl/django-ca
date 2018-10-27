@@ -78,6 +78,11 @@ STATICFILES_FINDERS = (
     # 'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
+# Speeds up tests that create a Django user
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.MD5PasswordHasher',
+]
+
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'fake-key'
 MIDDLEWARE = [
