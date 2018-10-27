@@ -254,9 +254,9 @@ class override_tmpcadir(override_settings):
     .. NOTE: This also takes any additional settings.
     """
 
-    def __init__(self, **kwargs):
-        super(override_tmpcadir, self).__init__(**kwargs)
+    def enable(self):
         self.options['CA_DIR'] = tempfile.mkdtemp()
+        super(override_tmpcadir, self).enable()
 
     def disable(self):
         super(override_tmpcadir, self).disable()
