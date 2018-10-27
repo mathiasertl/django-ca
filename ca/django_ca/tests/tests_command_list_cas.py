@@ -13,6 +13,10 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
+from datetime import timedelta
+
+from django.utils import timezone
+
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
 from .base import certs
@@ -64,14 +68,26 @@ class ListCertsTestCase(DjangoCAWithCATestCase):
         self.assertEqual(stderr, '')
 
         # load intermediate ca
-        self.child_ca = self.load_ca(name='child', x509=child_pubkey, parent=self.ca)
+        self.child_ca = self.load_ca(name='child2', x509=child_pubkey, parent=self.ca)
+
+        # manually create Certificate objects
+        expires = timezone.now() + timedelta(days=3)
+        child3 = CertificateAuthority.objects.create(name='child3', serial='child3',
+                                                     parent=self.ca, expires=expires)
+        CertificateAuthority.objects.create(name='child4', serial='child4', parent=self.ca, expires=expires)
+        CertificateAuthority.objects.create(name='child3.1', serial='child3.1', parent=child3,
+                                            expires=expires)
+
         stdout, stderr = self.cmd('list_cas', tree=True)
         self.assertEqual(stdout, '''%s - %s
+│───child3 - child3
+│   └───child3.1 - child3.1
+│───child4 - child4
 └───%s - %s
 %s - %s
 %s - %s\n''' % (
             certs['root']['serial'], certs['root']['name'],
-            certs['child']['serial'], certs['child']['name'],
+            certs['child']['serial'], 'child2',
             certs['pwd_ca']['serial'], certs['pwd_ca']['name'],
             certs['ecc_ca']['serial'], certs['ecc_ca']['name'],
         ))
