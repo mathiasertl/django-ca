@@ -47,6 +47,7 @@ from .utils import get_cert_builder
 from .utils import is_power2
 from .utils import parse_general_name
 from .utils import parse_key_curve
+from .utils import write_private_file
 
 
 class CertificateManagerMixin(object):
@@ -108,6 +109,12 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         key_size : int, optional
             Integer specifying the key size, must be a power of two (e.g. 2048, 4096, ...) unused if
             ``key_type="ECC"`` but required otherwise.
+
+        Raises
+        ------
+
+        PermissionError
+            If the private key file cannot be written to disk.
         """
         # NOTE: This is already verified by KeySizeAction, so none of these checks should ever be
         #       True in the real world. None the less they are here as a safety precaution.
@@ -197,16 +204,12 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         else:
             encryption = serialization.BestAvailableEncryption(password)
 
-        # write private key to file
-        # TODO: use os.open() instead of setting umask for the whole system
-        #       https://stackoverflow.com/a/45368120/5894927
-        oldmask = os.umask(247)
         pem = private_key.private_bytes(encoding=Encoding.PEM,
                                         format=PrivateFormat.PKCS8,
                                         encryption_algorithm=encryption)
-        with open(ca.private_key_path, 'wb') as key_file:
-            key_file.write(pem)
-        os.umask(oldmask)
+
+        # write private key to file
+        write_private_file(ca.private_key_path, pem)
 
         post_create_ca.send(sender=self.model, ca=ca)
         return ca

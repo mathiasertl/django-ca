@@ -31,6 +31,10 @@ from django_ca.models import CertificateAuthority
 
 from ..base import CertificateAuthorityDetailMixin
 from ..base import PasswordAction
+from ...utils import write_private_file
+
+if six.PY2:
+    from ...utils import PermissionError
 
 
 class Command(BaseCommand, CertificateAuthorityDetailMixin):
@@ -102,22 +106,15 @@ Note that the private key will be copied to the directory configured by the CA_D
             encryption = serialization.BestAvailableEncryption(password)
 
         # write private key to file
-        oldmask = os.umask(247)
         pem = key_loaded.private_bytes(encoding=Encoding.PEM,
                                        format=PrivateFormat.TraditionalOpenSSL,
                                        encryption_algorithm=encryption)
+
         try:
-            with open(ca.private_key_path, 'wb') as key_file:
-                key_file.write(pem)
-        except Exception as e:
+            write_private_file(ca.private_key_path, pem)
+        except PermissionError:
             perm_denied = '%s: Permission denied: Could not open file for writing.' % ca.private_key_path
-            if six.PY3 and isinstance(e, PermissionError):  # pragma: only py3
-                raise CommandError(perm_denied)
-            elif six.PY2 and isinstance(e, (IOError, OSError)):  # pragma: only py2
-                raise CommandError(perm_denied)
-            raise
-        finally:
-            os.umask(oldmask)
+            raise CommandError(perm_denied)
 
         # Only save CA to database if we loaded all data and copied private key
         ca.save()

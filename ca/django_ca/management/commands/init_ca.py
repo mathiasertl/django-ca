@@ -109,6 +109,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
 
     def handle(self, name, subject, **options):
         if not os.path.exists(ca_settings.CA_DIR):  # pragma: no cover
+            # TODO: set permissions
             os.makedirs(ca_settings.CA_DIR)
 
         # In case of CAs, we silently set the expiry date to that of the parent CA if the user specified a
