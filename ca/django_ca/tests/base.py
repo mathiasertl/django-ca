@@ -255,6 +255,11 @@ class override_tmpcadir(override_settings):
     .. NOTE: This also takes any additional settings.
     """
 
+    def __call__(self, test_func):
+        if isinstance(test_func, type):
+            raise Exception("Only test methods can use override_tmpcadir()")
+        return super(override_tmpcadir, self).__call__(test_func)
+
     def enable(self):
         self.options['CA_DIR'] = tempfile.mkdtemp()
         super(override_tmpcadir, self).enable()
@@ -269,15 +274,15 @@ class DjangoCATestCase(TestCase):
 
     re_false_password = r'^(Bad decrypt\. Incorrect password\?|Could not deserialize key data\.)$'
 
+    if six.PY2:  # pragma: only py2
+        assertRaisesRegex = TestCase.assertRaisesRegexp
+
     @classmethod
     def setUpClass(cls):
         super(DjangoCATestCase, cls).setUpClass()
 
         if cls._overridden_settings:
             reload_module(ca_settings)
-
-    if six.PY2:  # pragma: only py2
-        assertRaisesRegex = TestCase.assertRaisesRegexp
 
     @classmethod
     def tearDownClass(cls):
@@ -289,9 +294,6 @@ class DjangoCATestCase(TestCase):
 
         if overridden is True:
             reload_module(ca_settings)
-
-    def setUp(self):
-        reload_module(ca_settings)
 
     def settings(self, **kwargs):
         return override_settings(**kwargs)
