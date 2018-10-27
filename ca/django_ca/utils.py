@@ -614,7 +614,9 @@ def write_private_file(path, data):
     try:
         with os.fdopen(os.open(path, os.O_CREAT | os.O_WRONLY, 0o400), 'wb') as fh:
             fh.write(data)
-    except PermissionError as e:
-        if six.PY2:  # pragma: only py2
-            raise PermissionError(e.errno)
+    except PermissionError:  # pragma: only py3
+        # In py3, we want to raise Exception unchanged, so there would be no need for this block.
+        # BUT (IOError, OSError) - see below - also matches, so we capture it here
         raise
+    except (IOError, OSError) as e:  # pragma: only py2
+        raise PermissionError(e.errno)
