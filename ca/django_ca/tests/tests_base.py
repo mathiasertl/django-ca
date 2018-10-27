@@ -9,10 +9,10 @@ import tempfile
 
 from django.test import TestCase
 
-from django_ca import ca_settings
-from django_ca.tests.base import DjangoCATestCase
-from django_ca.tests.base import override_settings
-from django_ca.tests.base import override_tmpcadir
+from .. import ca_settings
+from .base import DjangoCATestCase
+from .base import override_settings
+from .base import override_tmpcadir
 
 
 class TestDjangoCATestCase(DjangoCATestCase):

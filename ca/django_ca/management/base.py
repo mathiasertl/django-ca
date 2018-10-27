@@ -35,13 +35,13 @@ from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 
-from django_ca import ca_settings
-from django_ca.models import Certificate
-from django_ca.models import CertificateAuthority
-from django_ca.subject import Subject
-from django_ca.utils import SUBJECT_FIELDS
-from django_ca.utils import is_power2
-from django_ca.utils import parse_key_curve
+from .. import ca_settings
+from ..models import Certificate
+from ..models import CertificateAuthority
+from ..subject import Subject
+from ..utils import SUBJECT_FIELDS
+from ..utils import is_power2
+from ..utils import parse_key_curve
 
 
 class SubjectAction(argparse.Action):

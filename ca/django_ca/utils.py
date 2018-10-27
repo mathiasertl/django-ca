@@ -40,7 +40,7 @@ from django.utils.encoding import force_text
 from django.utils.functional import Promise
 from django.utils.translation import ugettext_lazy as _
 
-from django_ca import ca_settings
+from . import ca_settings
 
 try:
     from collections.abc import Iterable  # pragma: only py3

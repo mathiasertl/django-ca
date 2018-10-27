@@ -20,8 +20,7 @@ from cryptography.hazmat.backends import default_backend
 
 from django.core.management.base import CommandError
 
-from django_ca.models import Certificate
-
+from ...models import Certificate
 from ..base import BaseCommand
 
 

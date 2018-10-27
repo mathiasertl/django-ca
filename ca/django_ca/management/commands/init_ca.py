@@ -22,14 +22,13 @@ import os
 
 from django.core.management.base import CommandError
 
-from django_ca import ca_settings
-from django_ca.management.base import BaseCommand
-from django_ca.management.base import KeySizeAction
-from django_ca.models import CertificateAuthority
-
+from ... import ca_settings
+from ...models import CertificateAuthority
+from ..base import BaseCommand
 from ..base import CertificateAuthorityDetailMixin
 from ..base import ExpiresAction
 from ..base import KeyCurveAction
+from ..base import KeySizeAction
 from ..base import MultipleURLAction
 from ..base import PasswordAction
 from ..base import URLAction

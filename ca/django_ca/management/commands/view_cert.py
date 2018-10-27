@@ -15,7 +15,7 @@
 
 from django.utils import timezone
 
-from django_ca.management.base import CertCommand
+from ..base import CertCommand
 
 
 class Command(CertCommand):

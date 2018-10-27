@@ -18,11 +18,10 @@
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 
-from django_ca.tests.base import DjangoCATestCase
-
 from .. import ca_settings
 from ..models import CertificateAuthority
 from ..subject import Subject
+from .base import DjangoCATestCase
 from .base import override_tmpcadir
 
 

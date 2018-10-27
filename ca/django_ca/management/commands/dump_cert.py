@@ -15,7 +15,7 @@
 
 from django.core.management.base import CommandError
 
-from django_ca.management.base import CertCommand
+from ..base import CertCommand
 
 
 class Command(CertCommand):

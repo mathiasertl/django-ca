@@ -18,11 +18,10 @@ import os
 from django.conf import settings
 from django.core.management.base import CommandError
 
-from django_ca.models import Certificate
-from django_ca.tests.base import DjangoCAWithCATestCase
-from django_ca.tests.base import override_tmpcadir
-
+from ..models import Certificate
+from .base import DjangoCAWithCATestCase
 from .base import certs
+from .base import override_tmpcadir
 
 
 class ImportCertTest(DjangoCAWithCATestCase):

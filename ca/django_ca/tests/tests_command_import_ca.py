@@ -23,12 +23,11 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from django.conf import settings
 from django.core.management.base import CommandError
 
-from django_ca.models import CertificateAuthority
-from django_ca.tests.base import DjangoCATestCase
-from django_ca.tests.base import override_tmpcadir
-
 from .. import ca_settings
+from ..models import CertificateAuthority
+from .base import DjangoCATestCase
 from .base import certs
+from .base import override_tmpcadir
 
 
 class ImportCATest(DjangoCATestCase):

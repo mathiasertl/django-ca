@@ -20,8 +20,8 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
 
-from django_ca import ca_settings
-from django_ca.models import Certificate
+from ... import ca_settings
+from ...models import Certificate
 
 
 class Command(BaseCommand):

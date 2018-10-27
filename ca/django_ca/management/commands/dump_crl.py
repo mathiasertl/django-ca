@@ -15,8 +15,8 @@
 
 from django.core.management.base import CommandError
 
-from django_ca.crl import get_crl
-from django_ca.management.base import BaseCommand
+from ...crl import get_crl
+from ..base import BaseCommand
 
 
 class Command(BaseCommand):

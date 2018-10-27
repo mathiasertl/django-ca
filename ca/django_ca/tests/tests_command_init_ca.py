@@ -22,9 +22,8 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 
 from django.core.management.base import CommandError
 
-from django_ca.models import CertificateAuthority
-
 from .. import ca_settings
+from ..models import CertificateAuthority
 from ..signals import post_create_ca
 from ..signals import pre_create_ca
 from ..utils import int_to_hex

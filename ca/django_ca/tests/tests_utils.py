@@ -35,21 +35,21 @@ from django.utils import six
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy as _l
 
-from django_ca import ca_settings
-from django_ca import utils
-from django_ca.tests.base import DjangoCATestCase
-from django_ca.tests.base import override_settings
-from django_ca.utils import NAME_RE
-from django_ca.utils import LazyEncoder
-from django_ca.utils import format_name
-from django_ca.utils import get_cert_builder
-from django_ca.utils import get_cert_profile_kwargs
-from django_ca.utils import is_power2
-from django_ca.utils import multiline_url_validator
-from django_ca.utils import parse_general_name
-from django_ca.utils import parse_key_curve
-from django_ca.utils import parse_name
-from django_ca.utils import validate_email
+from .. import ca_settings
+from .. import utils
+from ..utils import NAME_RE
+from ..utils import LazyEncoder
+from ..utils import format_name
+from ..utils import get_cert_builder
+from ..utils import get_cert_profile_kwargs
+from ..utils import is_power2
+from ..utils import multiline_url_validator
+from ..utils import parse_general_name
+from ..utils import parse_key_curve
+from ..utils import parse_name
+from ..utils import validate_email
+from .base import DjangoCATestCase
+from .base import override_settings
 
 
 def load_tests(loader, tests, ignore):

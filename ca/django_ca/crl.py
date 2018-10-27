@@ -21,8 +21,8 @@ from cryptography.hazmat.backends import default_backend
 
 from django.utils import timezone
 
-from django_ca.models import Certificate
-from django_ca.models import CertificateAuthority
+from .models import Certificate
+from .models import CertificateAuthority
 
 
 def get_crl(ca, encoding, expires, algorithm, password, ca_crl=False):
