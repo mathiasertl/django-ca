@@ -1036,6 +1036,21 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertTemplateUsed('django_ca/admin/certificate_revoke_form.html')
         self.assertRevoked(self.cert, reason=reason)
 
+    def test_with_bogus_reason(self):
+        # so the form is not valid
+
+        reason = 'bogus'
+        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
+            response = self.client.post(self.url, data={'revoked_reason': reason})
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
+        self.assertNotRevoked(self.cert)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed('django_ca/admin/certificate_revoke_form.html')
+        self.assertEqual(
+            response.context['form'].errors,
+            {'revoked_reason': ['Select a valid choice. bogus is not one of the available choices.']})
+
     def test_revoked(self):
         cert = Certificate.objects.get(serial=self.cert.serial)
         cert.revoked = True
@@ -1062,6 +1077,7 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
         self.assertRequiresLogin(response)
+        self.assertNotRevoked(self.cert)
 
         with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
             response = client.post(self.url, data={})
@@ -1081,6 +1097,7 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
         self.assertRequiresLogin(response)
+        self.assertNotRevoked(self.cert)
 
         with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
             response = client.post(self.url, data={})
