@@ -29,9 +29,9 @@ from django_ca import ca_settings
 from django_ca.management.base import BaseCommand
 from django_ca.models import CertificateAuthority
 
+from ...utils import write_private_file
 from ..base import CertificateAuthorityDetailMixin
 from ..base import PasswordAction
-from ...utils import write_private_file
 
 if six.PY2:  # pragma: only py2
     from ...utils import PermissionError
