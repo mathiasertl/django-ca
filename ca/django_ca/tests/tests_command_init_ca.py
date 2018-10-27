@@ -122,6 +122,7 @@ class InitCATest(DjangoCATestCase):
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
 
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_ecc(self):
         with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
             out, err = self.init_ca(
