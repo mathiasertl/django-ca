@@ -198,6 +198,8 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             encryption = serialization.BestAvailableEncryption(password)
 
         # write private key to file
+        # TODO: use os.open() instead of setting umask for the whole system
+        #       https://stackoverflow.com/a/45368120/5894927
         oldmask = os.umask(247)
         pem = private_key.private_bytes(encoding=Encoding.PEM,
                                         format=PrivateFormat.PKCS8,
