@@ -32,9 +32,6 @@ from .base import cloudflare_1_pubkey
 from .base import cryptography_version
 from .base import multiple_ous_and_no_ext_pubkey
 from .base import override_settings
-#from .base import override_tmpcadir
-
-# TODO: Use verbatim strings instead of interpolating
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
