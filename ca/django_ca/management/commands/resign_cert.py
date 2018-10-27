@@ -87,8 +87,6 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
             'subjectAltName': options.get('alt', cert.subjectAltName()[1]),
         }
 
-        # get keyUsage and extendedKeyUsage flags based on profiles
-
         if 'CN' not in kwargs['subject'] and not options['alt']:
             raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")
 
