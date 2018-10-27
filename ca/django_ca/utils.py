@@ -15,6 +15,7 @@
 
 """Central functions to load CA key and cert as PKey/X509 objects."""
 
+import os
 import re
 from copy import deepcopy
 from datetime import datetime
@@ -600,3 +601,20 @@ def get_cert_profile_kwargs(name=None):
         else:  # pragma: no cover
             kwargs[arg] = (critical, force_text(value))
     return kwargs
+
+
+if six.PY2:
+    class PermissionError(IOError, OSError):
+        pass
+
+
+def write_private_file(path, data):
+    """Function to write binary data to a file that will only be readable to the user."""
+
+    try:
+        with open(os.open(path, os.O_CREAT | os.O_WRONLY, 0o400), 'wb') as fh:
+            fh.write(data)
+    except PermissionError as e:
+        if six.PY2:  # pragma: only py2
+            raise PermissionError(e.errno)
+        raise
