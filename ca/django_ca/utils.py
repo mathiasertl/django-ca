@@ -612,7 +612,7 @@ def write_private_file(path, data):
     """Function to write binary data to a file that will only be readable to the user."""
 
     try:
-        with open(os.open(path, os.O_CREAT | os.O_WRONLY, 0o400), 'wb') as fh:
+        with os.fdopen(os.open(path, os.O_CREAT | os.O_WRONLY, 0o400), 'wb') as fh:
             fh.write(data)
     except PermissionError as e:
         if six.PY2:  # pragma: only py2
