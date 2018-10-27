@@ -5,6 +5,7 @@ python:
   - "3.5"
   - "3.6"
   - "nightly"
+  # py3.7 currently not supported: https://github.com/travis-ci/travis-ci/issues/9815
 env:
   - DJANGO=2.1.2 CRYPTOGRAPHY=2.3.1
   - DJANGO=2.1.2 CRYPTOGRAPHY=2.2.2
