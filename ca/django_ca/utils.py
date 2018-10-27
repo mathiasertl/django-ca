@@ -603,7 +603,7 @@ def get_cert_profile_kwargs(name=None):
     return kwargs
 
 
-if six.PY2:
+if six.PY2:  # pragma: only py2
     class PermissionError(IOError, OSError):
         pass
 

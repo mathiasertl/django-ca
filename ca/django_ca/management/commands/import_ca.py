@@ -33,7 +33,7 @@ from ..base import CertificateAuthorityDetailMixin
 from ..base import PasswordAction
 from ...utils import write_private_file
 
-if six.PY2:
+if six.PY2:  # pragma: only py2
     from ...utils import PermissionError
 
 
