@@ -108,8 +108,9 @@ Note that the private key will be copied to the directory configured by the CA_D
         try:
             with open(ca.private_key_path, 'wb') as key_file:
                 key_file.write(pem)
-        except PermissionError as e:
-            raise CommandError(e)
+        except PermissionError:
+            raise CommandError('%s: Permission denied: Could not open file for writing.'
+                               % ca.private_key_path)
         os.umask(oldmask)
 
         # Only save CA to database if we loaded all data and copied private key
