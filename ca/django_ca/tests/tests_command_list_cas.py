@@ -16,6 +16,7 @@
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
 from .base import certs
+from .base import child_pubkey
 from .base import override_settings
 from .base import override_tmpcadir
 
@@ -50,3 +51,28 @@ class ListCertsTestCase(DjangoCAWithCATestCase):
     @override_settings(USE_TZ=True)
     def test_disabled_with_use_tz(self):
         self.test_disabled()
+
+    def test_tree(self):
+        stdout, stderr = self.cmd('list_cas', tree=True)
+        self.assertEqual(stdout, '''%s - %s
+%s - %s
+%s - %s\n''' % (
+            certs['root']['serial'], certs['root']['name'],
+            certs['pwd_ca']['serial'], certs['pwd_ca']['name'],
+            certs['ecc_ca']['serial'], certs['ecc_ca']['name'],
+        ))
+        self.assertEqual(stderr, '')
+
+        # load intermediate ca
+        self.child_ca = self.load_ca(name='child', x509=child_pubkey, parent=self.ca)
+        stdout, stderr = self.cmd('list_cas', tree=True)
+        self.assertEqual(stdout, '''%s - %s
+└───%s - %s
+%s - %s
+%s - %s\n''' % (
+            certs['root']['serial'], certs['root']['name'],
+            certs['child']['serial'], certs['child']['name'],
+            certs['pwd_ca']['serial'], certs['pwd_ca']['name'],
+            certs['ecc_ca']['serial'], certs['ecc_ca']['name'],
+        ))
+        self.assertEqual(stderr, '')

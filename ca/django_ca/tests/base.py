@@ -137,6 +137,7 @@ certs = {
         'keyUsage': (True, ['cRLSign', 'keyCertSign']),
     },
     'child': {
+        'name': 'child',
         'pem': force_text(child_pem),
         'serial': '32:BE:A9:E8:7E:21:BF:3E:E9:A1:F3:F9:E4:06:14:B4:C4:9D:B2:6C',
         'md5': '63:C1:A3:28:B4:01:80:A3:96:22:23:96:57:17:98:7D',
