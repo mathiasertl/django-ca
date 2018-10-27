@@ -30,6 +30,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.conf import settings
 from django.contrib.messages import get_messages
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import TestCase
 from django.test.utils import override_settings as _override_settings
 from django.utils.encoding import force_text
@@ -381,6 +382,11 @@ class DjangoCATestCase(TestCase):
         key = serialization.load_pem_private_key(key_data, password, default_backend())
         self.assertIsNotNone(key)
         self.assertTrue(key.key_size > 0)
+
+    @contextmanager
+    def assertCommandError(self, msg):
+        with self.assertRaisesRegex(CommandError, msg):
+            yield
 
     def get_cert_context(self, name):
         # Get a dictionary suitable for testing output based on the dictionary in basic.certs

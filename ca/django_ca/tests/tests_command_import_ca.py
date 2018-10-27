@@ -115,6 +115,20 @@ class ImportCATest(DjangoCATestCase):
     def test_intermediate(self):
         pass  # TODO
 
+    @override_tmpcadir()
+    def test_permission_denied(self):
+        # Import the same CA twice, 2nd time should throw an error, because the file already exists
+        name = 'testname'
+        pem_path = os.path.join(settings.FIXTURES_DIR, 'root.pem')
+        key_path = os.path.join(settings.FIXTURES_DIR, 'root.key')
+        out, err = self.cmd('import_ca', name, key_path, pem_path)
+
+        ca = CertificateAuthority.objects.get(name=name)
+
+        error = '%s: Permission denied: Could not open file for writing.' % ca.private_key_path
+        with self.assertCommandError(error):
+            out, err = self.cmd('import_ca', name, key_path, pem_path)
+
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_bogus_pub(self):
         name = 'testname'
