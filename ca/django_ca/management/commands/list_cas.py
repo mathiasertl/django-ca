@@ -57,5 +57,5 @@ class Command(BaseCommand):
                 self.list_ca(ca)
                 self.list_children(ca, left=(len(cas) - index))
         else:
-            for ca in CertificateAuthority.objects.all().order_by('expires'):
+            for ca in self.qs(CertificateAuthority.objects.all()):
                 self.list_ca(ca)
