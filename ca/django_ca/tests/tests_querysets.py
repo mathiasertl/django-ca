@@ -22,11 +22,13 @@ from .. import ca_settings
 from ..models import CertificateAuthority
 from ..subject import Subject
 from .base import DjangoCATestCase
+from .base import override_settings
 from .base import override_tmpcadir
 
 
-@override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+@override_settings(CA_MIN_KEY_SIZE=1024)
 class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
+    @override_tmpcadir()
     def test_basic(self):
         key_size = ca_settings.CA_MIN_KEY_SIZE
         ca = CertificateAuthority.objects.init(
@@ -51,6 +53,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         self.assertEqual(ca.extendedKeyUsage(), None)
         self.assertEqual(ca.issuerAltName(), None)
 
+    @override_tmpcadir()
     def test_pathlen(self):
         key_size = ca_settings.CA_MIN_KEY_SIZE
         kwargs = dict(
@@ -65,6 +68,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         ca = CertificateAuthority.objects.init(pathlen=2, name='3', **kwargs)
         self.assertEqual(ca.basicConstraints(), (True, 'CA:TRUE, pathlen:2'))
 
+    @override_tmpcadir()
     def test_parent(self):
         key_size = ca_settings.CA_MIN_KEY_SIZE
 
@@ -78,6 +82,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         childAuthKeyId = child.authorityKeyIdentifier()
         self.assertEqual(childAuthKeyId, (False, 'keyid:%s' % parent.subjectKeyIdentifier()[1]))
 
+    @override_tmpcadir()
     def test_key_size(self):
         kwargs = dict(
             name='Root CA', key_type='RSA', algorithm='sha256', expires=self.expires(720),

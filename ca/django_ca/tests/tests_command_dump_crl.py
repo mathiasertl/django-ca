@@ -31,7 +31,7 @@ from .base import override_settings
 from .base import override_tmpcadir
 
 
-@override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
+@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class DumpCRLTestCase(DjangoCAWithCertTestCase):
     def assertSerial(self, revokation, cert):
         self.assertEqual(revokation.get_serial(),
@@ -49,6 +49,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
     def test_basic_with_use_tz(self):
         self.test_basic()
 
+    @override_tmpcadir()
     def test_file(self):
         path = os.path.join(ca_settings.CA_DIR, 'crl-test.crl')
         stdout, stderr = self.cmd('dump_crl', path, stdout=BytesIO(), stderr=BytesIO())
@@ -65,6 +66,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         with self.assertRaises(CommandError):
             self.cmd('dump_crl', path, stdout=BytesIO(), stderr=BytesIO())
 
+    @override_tmpcadir()
     def test_password(self):
         password = b'testpassword'
         ca = self.create_ca('with password', password=password)
@@ -90,6 +92,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
         self.assertEqual(list(crl), [])
 
+    @override_tmpcadir()
     def test_disabled(self):
         ca = self.create_ca('disabled')
         self.assertIsNotNone(ca.key(password=None))
@@ -127,6 +130,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
             self.assertEqual(crl[0].serial_number, cert.x509.serial_number)
             self.assertEqual(crl[0].extensions[0].value.reason.name, reason)
 
+    @override_tmpcadir()
     def test_ca_crl(self):
         # create a child CA
         child = self.create_ca(name='Child', parent=self.ca)

@@ -21,10 +21,11 @@ from django.utils import timezone
 from .. import ca_settings
 from ..ocsp import date_format
 from .base import DjangoCAWithCertTestCase
+from .base import override_settings
 from .base import override_tmpcadir
 
 
-@override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
+@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class OCSPIndexTestCase(DjangoCAWithCertTestCase):
     def line(self, cert):
         revocation = ''
@@ -62,6 +63,7 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
     def test_basic(self):
         self.assertIndex()
 
+    @override_tmpcadir()
     def test_file(self):
         path = os.path.join(ca_settings.CA_DIR, 'ocsp-index.txt')
 

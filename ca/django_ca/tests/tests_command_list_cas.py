@@ -22,10 +22,9 @@ from .base import DjangoCAWithCATestCase
 from .base import certs
 from .base import child_pubkey
 from .base import override_settings
-from .base import override_tmpcadir
 
 
-@override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
+@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class ListCertsTestCase(DjangoCAWithCATestCase):
     def test_basic(self):
         stdout, stderr = self.cmd('list_cas')

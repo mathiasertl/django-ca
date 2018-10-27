@@ -22,10 +22,11 @@ from django.core.management.base import CommandError
 
 from .. import ca_settings
 from .base import DjangoCAWithCATestCase
+from .base import override_settings
 from .base import override_tmpcadir
 
 
-@override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
+@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class DumpCertTestCase(DjangoCAWithCATestCase):
     def test_basic(self):
         stdout, stderr = self.cmd('dump_ca', self.ca.serial,
@@ -47,6 +48,7 @@ class DumpCertTestCase(DjangoCAWithCATestCase):
         self.assertEqual(stderr, b'')
         self.assertEqual(stdout, self.ca.pub.encode('utf-8'))
 
+    @override_tmpcadir()
     def test_file_output(self):
         path = os.path.join(ca_settings.CA_DIR, 'test_ca.pem')
         stdout, stderr = self.cmd('dump_ca', self.ca.serial, path,

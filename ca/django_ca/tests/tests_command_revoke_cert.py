@@ -19,10 +19,10 @@ from ..models import Certificate
 from ..signals import post_revoke_cert
 from ..signals import pre_revoke_cert
 from .base import DjangoCAWithCertTestCase
-from .base import override_tmpcadir
+from .base import override_settings
 
 
-@override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
+@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class RevokeCertTestCase(DjangoCAWithCertTestCase):
     def test_no_reason(self):
         self.assertFalse(self.cert.revoked)

@@ -20,10 +20,9 @@ from django.utils import timezone
 from ..models import Certificate
 from .base import DjangoCAWithChildCATestCase
 from .base import override_settings
-from .base import override_tmpcadir
 
 
-@override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
+@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class ListCertsTestCase(DjangoCAWithChildCATestCase):
     def line(self, cert):
         if cert.revoked is True:

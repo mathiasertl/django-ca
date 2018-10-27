@@ -15,10 +15,10 @@
 
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
-from .base import override_tmpcadir
+from .base import override_settings
 
 
-@override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
+@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class SignCertTestCase(DjangoCAWithCATestCase):
     def test_basic(self):
         issuer = 'https://issuer-test.example.org'

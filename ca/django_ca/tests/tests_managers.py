@@ -20,10 +20,10 @@ from ..models import CertificateAuthority
 from ..subject import Subject
 from ..utils import get_cert_profile_kwargs
 from .base import DjangoCAWithCSRTestCase
-from .base import override_tmpcadir
+from .base import override_settings
 
 
-@override_tmpcadir(CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
+@override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class GetCertTestCase(DjangoCAWithCSRTestCase):
     def assertExtensions(self, cert, expected):
         expected['basicConstraints'] = (True, 'CA:FALSE')

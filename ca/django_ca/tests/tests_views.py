@@ -47,7 +47,7 @@ urlpatterns = [
 
 
 # CRL code complains about 512 bit keys
-@override_tmpcadir(ROOT_URLCONF=__name__, CA_MIN_KEY_SIZE=1024)
+@override_settings(ROOT_URLCONF=__name__, CA_MIN_KEY_SIZE=1024)
 class GenericCRLViewTests(DjangoCAWithCertTestCase):
     def setUp(self):
         self.client = Client()
@@ -92,6 +92,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
     def test_basic_with_use_tz(self):
         self.test_basic()
 
+    @override_tmpcadir()
     def test_ca_crl(self):
         child = self.create_ca(name='child', parent=self.ca)
         self.assertIsNotNone(child.key(password=None))

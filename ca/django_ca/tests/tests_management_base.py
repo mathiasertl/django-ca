@@ -29,7 +29,6 @@ from .base import DjangoCAWithCATestCase
 from .base import DjangoCAWithCertTestCase
 from .base import child_pubkey
 from .base import override_settings
-from .base import override_tmpcadir
 
 try:
     import unittest.mock as mock
@@ -219,7 +218,6 @@ class PasswordActionTestCase(DjangoCATestCase):
         self.assertEqual(ns.password, b'prompted')
 
 
-@override_tmpcadir()
 class CertificateActionTestCase(DjangoCAWithCertTestCase):
     def setUp(self):
         super(CertificateActionTestCase, self).setUp()

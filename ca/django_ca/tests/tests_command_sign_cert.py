@@ -40,7 +40,7 @@ else:
     from unittest import mock  # NOQA
 
 
-@override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
+@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class SignCertTestCase(DjangoCAWithCSRTestCase):
     def test_from_stdin(self):
         stdin = six.StringIO(self.csr_pem)
@@ -86,6 +86,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertIssuer(self.ecc_ca, cert)
         self.assertAuthorityKeyIdentifier(self.ecc_ca, cert)
 
+    @override_tmpcadir()
     def test_from_file(self):
         csr_path = os.path.join(ca_settings.CA_DIR, 'test.csr')
         with open(csr_path, 'w') as csr_stream:
@@ -114,6 +115,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
     def test_from_file_with_tz(self):
         self.test_from_file()
 
+    @override_tmpcadir()
     def test_to_file(self):
         out_path = os.path.join(ca_settings.CA_DIR, 'test.pem')
         stdin = six.StringIO(self.csr_pem)
@@ -287,7 +289,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertEqual(stderr, '')
         self.assertEqual(cert.subjectAltName(), (False, ['DNS:example.com']))
 
-    @override_settings(CA_DEFAULT_SUBJECT={})
+    @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_with_password(self):
         password = b'testpassword'
         ca = self.create_ca('with password', password=password)
@@ -320,7 +322,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
-    @override_settings(CA_DEFAULT_SUBJECT={})
+    @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_unparseable(self):
         ca = self.create_ca('test')
         ca = CertificateAuthority.objects.get(pk=ca.pk)
@@ -338,6 +340,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertEqual(pre.call_count, 0)
         self.assertEqual(post.call_count, 0)
 
+    @override_tmpcadir()
     def test_der_csr(self):
         csr_path = os.path.join(ca_settings.CA_DIR, 'test.csr')
         with open(csr_path, 'wb') as csr_stream:
@@ -393,7 +396,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertFalse(post.called)
 
 
-@override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
+@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class SignCertChildCATestCase(DjangoCAWithCSRTestCase):
     @classmethod
     def setUpClass(cls):

@@ -14,10 +14,10 @@
 # see <http://www.gnu.org/licenses/>
 
 from .base import DjangoCAWithCertTestCase
-from .base import override_tmpcadir
+from .base import override_settings
 
 
-@override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
+@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class CertWatchersTestCase(DjangoCAWithCertTestCase):
     def test_basic(self):
         stdout, stderr = self.cmd('cert_watchers', self.cert.serial,
