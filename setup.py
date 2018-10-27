@@ -77,6 +77,15 @@ class BaseCommand(Command):
         warnings.filterwarnings(action='always')
         warnings.filterwarnings(action='error', module='django_ca')
 
+        # ignore this warning in some modules to get cleaner output
+        msg = "Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated"
+        warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='webtest.lint',
+                                message=msg)
+        warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='markupsafe',
+                                message=msg)
+        warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='jinja2.utils',
+                                message=msg)
+
         work_dir = os.path.join(_rootdir, 'ca')
 
         os.chdir(work_dir)
