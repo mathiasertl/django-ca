@@ -23,6 +23,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
 
 from django.core.management.base import CommandError
+from django.utils import six
 
 from django_ca import ca_settings
 from django_ca.management.base import BaseCommand
@@ -108,9 +109,14 @@ Note that the private key will be copied to the directory configured by the CA_D
         try:
             with open(ca.private_key_path, 'wb') as key_file:
                 key_file.write(pem)
-        except PermissionError:
-            raise CommandError('%s: Permission denied: Could not open file for writing.'
-                               % ca.private_key_path)
+        except Exception as e:
+            perm_denied = '%s: Permission denied: Could not open file for writing.' % ca.private_key_path
+            if six.PY3 and isinstance(e, PermissionError):  # pragma: only py3
+                raise CommandError(perm_denied)
+            elif six.PY2 and isinstance(e, (IOError, OSError)):  # pragma: only py2
+                raise CommandError(perm_denied)
+            raise
+
         os.umask(oldmask)
 
         # Only save CA to database if we loaded all data and copied private key
