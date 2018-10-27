@@ -17,9 +17,19 @@ ChangeLog
 * Support ECC private keys for new Certificate Authorities.
 * Store CA private keys in the more secure `PKCS8 format
   <https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8>`_.
-* Run test-suite with all warnings comming from **django-ca** turned into errors.
 * The Certificate change view now has a second "Revoke" button as object action next to the "History" button.
+
+Testing
+=======
+
 * Also test with Python 3.7.0.
+* Add configuration for `tox <https://tox.readthedocs.io/en/latest/>`_.
+* Speed up test-suite by using :py:meth:`~django:django.test.Client.force_login` and
+  `PASSWORD_HASHERS <https://docs.djangoproject.com/en/dev/topics/testing/overview/#password-hashing>`_.
+* Load keys and certs in for every testcase instead for every class, improving testcase isolation.
+* Add two certificates that include all and no extensions at all respectively to be able to test edge cases
+  more consistently and thoroughly.
+* Error on any :py:mod:`python:warnings` coming from django-ca when running the test-suite.
 
 .. _changelog-1.9.0:
 
