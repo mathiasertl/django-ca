@@ -116,8 +116,8 @@ Note that the private key will be copied to the directory configured by the CA_D
             elif six.PY2 and isinstance(e, (IOError, OSError)):  # pragma: only py2
                 raise CommandError(perm_denied)
             raise
-
-        os.umask(oldmask)
+        finally:
+            os.umask(oldmask)
 
         # Only save CA to database if we loaded all data and copied private key
         ca.save()
