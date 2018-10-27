@@ -69,7 +69,7 @@ class AdminTestMixin(object):
         self.add_url = reverse('admin:django_ca_certificate_add')
         self.changelist_url = reverse('admin:django_ca_certificate_changelist')
         self.client = Client()
-        self.assertTrue(self.client.login(username='user', password='password'))
+        self.client.force_login(self.user)
         super(AdminTestMixin, self).setUp()
 
     def assertCSS(self, response, path):
@@ -195,7 +195,7 @@ class RevokeActionTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
         # test with a logged in user, but not staff
         user = User.objects.create_user(username='staff', password='password', email='staff@example.com')
-        self.assertTrue(client.login(username='staff', password='password'))
+        client.force_login(user=user)
 
         response = client.post(self.changelist_url, data)
         self.assertRequiresLogin(response)
@@ -748,8 +748,8 @@ class CSRDetailTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
     def test_plain_user(self):
         # User isn't staff and has no permissions
         client = Client()
-        User.objects.create_user(username='plain', password='password', email='plain@example.com')
-        self.assertTrue(client.login(username='plain', password='password'))
+        user = User.objects.create_user(username='plain', password='password', email='plain@example.com')
+        client.force_login(user=user)
 
         response = client.post(self.url, data={'csr': self.csr_pem})
         self.assertRequiresLogin(response)
@@ -759,8 +759,7 @@ class CSRDetailTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         client = Client()
         user = User.objects.create_user(username='staff', password='password', email='staff@example.com',
                                         is_staff=True)
-        user.save()
-        self.assertTrue(client.login(username='staff', password='password'))
+        client.force_login(user=user)
 
         response = client.post(self.url, data={'csr': self.csr_pem})
         self.assertEqual(response.status_code, 403)
@@ -772,7 +771,7 @@ class CSRDetailTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                                         email='no_perms@example.com')
         p = Permission.objects.get(codename='change_certificate')
         user.user_permissions.add(p)
-        self.assertTrue(client.login(username='no_perms', password='password'))
+        client.force_login(user=user)
 
         response = client.post(self.url, data={'csr': self.csr_pem})
         self.assertRequiresLogin(response)
