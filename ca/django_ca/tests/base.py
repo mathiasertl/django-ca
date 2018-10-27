@@ -281,17 +281,13 @@ class DjangoCATestCase(TestCase):
     @classmethod
     def tearDownClass(cls):
         overridden = False
-        ca_dir = None
         if hasattr(cls, '_cls_overridden_context'):
             overridden = True
-            ca_dir = cls._cls_overridden_context.options.get('CA_DIR')
 
         super(DjangoCATestCase, cls).tearDownClass()
 
         if overridden is True:
             reload_module(ca_settings)
-            if ca_dir is not None:
-                shutil.rmtree(ca_dir)
 
     def setUp(self):
         reload_module(ca_settings)
