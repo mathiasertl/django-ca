@@ -140,6 +140,10 @@ class X509CertMixin(models.Model):
         self.serial = int_to_hex(value.serial_number)
 
     @property
+    def algorithm(self):
+        return self.x509.signature_hash_algorithm
+
+    @property
     def subject(self):
         return Subject([(s.oid, s.value) for s in self.x509.subject])
 

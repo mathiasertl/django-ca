@@ -453,7 +453,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                 san = ('', False)
             else:
                 san = (','.join(san[1]), False)
-            algo = resign_obj.x509.signature_hash_algorithm.__class__.__name__
+            algo = resign_obj.algorithm.__class__.__name__
 
             extKeyUsage = resign_obj.extendedKeyUsage()
             if extKeyUsage:

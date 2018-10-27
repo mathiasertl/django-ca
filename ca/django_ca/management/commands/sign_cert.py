@@ -15,20 +15,26 @@
 
 from django.core.management.base import CommandError
 from django.utils import six
-from django.utils import timezone
 
 from ... import ca_settings
-from ...management.base import BaseCommand
+from ...management.base import BaseSignCommand
 from ...models import Certificate
 from ...models import Watcher
 from ...subject import Subject
 from ...utils import get_cert_profile_kwargs
-from ..base import ExpiresAction
 
 
-class Command(BaseCommand):
+class Command(BaseSignCommand):
     help = """Sign a CSR and output signed certificate. The defaults depend on the configured
 default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
+
+    add_extensions_help = '''Values for more complex x509 extensions. This is for advanced usage only, the
+profiles already set the correct values for the most common use cases. See
+https://django-ca.readthedocs.io/en/latest/extensions.html for more information.'''
+    subject_help = '''The certificate subject of the CSR is not used. The default subject is configured
+            with the CA_DEFAULT_SUBJECT setting and may be overwritten by a profile named with
+            --profile. The --subject option allows you to name a CommonName (which is not usually
+            in the defaults) and override any default values.'''
 
     def add_cn_in_san(self, parser):
         default = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]['cn_in_san']
@@ -48,63 +54,15 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
             help='Add the CommonName as subjectAlternativeName%s.' % (
                 ' (default)' if default else ''))
 
-    def add_subject_group(self, parser):
-        # TODO: show the default
-        #subject = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]['subject']
-        group = parser.add_argument_group(
-            'Certificate subject',
-            '''The certificate subject of the CSR is not used. The default subject is configured
-            with the CA_DEFAULT_SUBJECT setting and may be overwritten by a profile named with
-            --profile. The --subject option allows you to name a CommonName (which is not usually
-            in the defaults) and override any default values.'''
-        )
-
-        # NOTE: We do not set the default argument here because that would mask the user not
-        # setting anything at all.
-        self.add_subject(
-            group, arg='--subject', metavar='/key1=value1/key2=value2/...',
-            help='''Valid keys are %s. Pass an empty value (e.g. "/C=/ST=...") to remove a field
-                 from the subject.''' % self.valid_subject_keys)
-
     def add_arguments(self, parser):
-        self.add_subject_group(parser)
+        self.add_base_args(parser)
         self.add_cn_in_san(parser)
-        self.add_algorithm(parser)
-        self.add_ca(parser)
-        self.add_password(parser)
 
-        parser.add_argument(
-            '--expires', default=ca_settings.CA_DEFAULT_EXPIRES, action=ExpiresAction,
-            help='Sign the certificate for DAYS days (default: %(default)s)')
         parser.add_argument(
             '--csr', metavar='FILE',
             help='The path to the certificate to sign, if ommitted, you will be be prompted.')
         self.add_format(parser, opts=['--csr-format'],
                         help_text='Format of the CSR ("ASN1" is an alias for "DER", default: %(default)s)')
-        parser.add_argument(
-            '--alt', metavar='DOMAIN', action='append', default=[],
-            help='Add a subjectAltName to the certificate (may be given multiple times)')
-        parser.add_argument(
-            '--watch', metavar='EMAIL', action='append', default=[],
-            help='Email EMAIL when this certificate expires (may be given multiple times)')
-        parser.add_argument(
-            '--out', metavar='FILE',
-            help='Save signed certificate to FILE. If omitted, print to stdout.')
-
-        group = parser.add_argument_group(
-            'X509 v3 certificate extensions',
-            'Values for more complex x509 extensions. This is for advanced usage only, the profiles already '
-            'set the correct values for the most common use cases. See '
-            '   https://django-ca.readthedocs.io/en/latest/extensions.html for more information.'
-        )
-        group.add_argument(
-            '--key-usage', metavar='VALUES',
-            help='The keyUsage extension, e.g. "critical,keyCertSign".')
-        group.add_argument(
-            '--ext-key-usage', metavar='VALUES',
-            help='The extendedKeyUsage extension, e.g. "serverAuth,clientAuth".')
-        group.add_argument(
-            '--tls-features', metavar='VALUES', help='TLS Feature extensions.')
 
         group = parser.add_argument_group(
             'profiles', """Sign certificate based on the given profile. A profile only sets the
@@ -114,20 +72,9 @@ the default values, options like --key-usage still override the profile.""")
             group.add_argument('--%s' % name, action='store_const', const=name, dest='profile',
                                help=profile['desc'])
 
-    def parse_extension(self, value):
-        if value.startswith('critical,'):
-            return True, value[9:]
-        return False, value
-
     def handle(self, *args, **options):
         ca = options['ca']
-        if ca.expires < options['expires']:
-            max_days = (ca.expires - timezone.now()).days
-            raise CommandError(
-                'Certificate would outlive CA, maximum expiry for this CA is %s days.' % max_days)
-
-        # See if we can work with the private key
-        self.test_private_key(ca, options['password'])
+        self.test_options(*args, **options)
 
         # get list of watchers
         watchers = [Watcher.from_addr(addr) for addr in options['watch']]
