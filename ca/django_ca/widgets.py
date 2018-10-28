@@ -186,4 +186,4 @@ class MultiValueExtensionWidget(CustomMultiWidget):
     def decompress(self, value):
         if value:
             return value.form_decompress()
-        return ([], True)
+        return ([], False)
