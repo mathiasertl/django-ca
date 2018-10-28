@@ -123,6 +123,7 @@ class X509CertMixin(models.Model):
 
     @property
     def x509(self):
+        """The underlying :py:class:`cryptography:cryptography.x509.Certificate`."""
         if self._x509 is None:
             backend = default_backend()
             self._x509 = x509.load_pem_x509_certificate(force_bytes(self.pub), backend)
@@ -145,18 +146,22 @@ class X509CertMixin(models.Model):
 
     @property
     def subject(self):
+        """The certificates subject as :py:class:`~django_ca.subject.Subject`."""
         return Subject([(s.oid, s.value) for s in self.x509.subject])
 
     @property
     def issuer(self):
+        """The certificate issuer field as :py:class:`~django_ca.subject.Subject`."""
         return Subject([(s.oid, s.value) for s in self.x509.issuer])
 
     @property
     def not_before(self):
+        """Date/Time this certificate was created"""
         return self.x509.not_valid_before
 
     @property
     def not_after(self):
+        """Date/Time this certificate expires."""
         return self.x509.not_valid_after
 
     def extensions(self):
@@ -233,6 +238,7 @@ class X509CertMixin(models.Model):
 
     @property
     def keyUsage(self):
+        """The :py:class:`~django_ca.extensions.KeyUsage` extension, or ``None`` if it doesn't exist."""
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.KEY_USAGE)
         except x509.ExtensionNotFound:
@@ -241,6 +247,8 @@ class X509CertMixin(models.Model):
 
     @property
     def extendedKeyUsage(self):
+        """The :py:class:`~django_ca.extensions.ExtendedKeyUsage` extension, or ``None`` if it doesn't
+        exist."""
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.EXTENDED_KEY_USAGE)
         except x509.ExtensionNotFound:
@@ -249,6 +257,7 @@ class X509CertMixin(models.Model):
 
     @property
     def TLSFeature(self):
+        """The :py:class:`~django_ca.extensions.TLSFeature` extension, or ``None`` if it doesn't exist."""
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.TLS_FEATURE)
         except x509.ExtensionNotFound:
@@ -374,8 +383,6 @@ class X509CertMixin(models.Model):
         post_revoke_cert.send(sender=self.__class__, cert=self)
 
     def get_revocation(self):
-        """Get a crypto.Revoked object or None if the cert is not revoked."""
-
         if self.revoked is False:
             raise ValueError('Certificate is not revoked.')
 
@@ -524,6 +531,8 @@ class Certificate(X509CertMixin):
 
     @property
     def bundle(self):
+        """The complete certificate bundle. This includes all CAs as well as the certificates itself."""
+
         return self.ca.bundle + [self]
 
     def resign(self, **kwargs):  # pragma: no cover - not used yet

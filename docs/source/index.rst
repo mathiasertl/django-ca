@@ -53,6 +53,7 @@ Python API:
    signals
    python/extensions
    python/models
+   python/subject
    python/utils
 
 
