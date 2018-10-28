@@ -220,8 +220,8 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
                   password=None):
         """Create a signed certificate from a CSR.
 
-        X509 extensions (`key_usage`, `ext_key_usage`) may either be None (in which case they are
-        not added) or a tuple with the first value being a bool indicating if the value is critical
+        X509 extensions (`keyUsage`, `extendedKeyUsage` and `tls_features`) may either be None (in which case
+        they are not added) or a tuple with the first value being a bool indicating if the value is critical
         and the second value being a byte-array indicating the extension value. Example::
 
             (True, b'value')
@@ -253,7 +253,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             A list of values for the subjectAltName extension. Values are passed to
             :py:func:`~django_ca.utils.parse_general_name`, see function documentation for how this value is
             parsed.
-        keyUsage : tuple or None
+        keyUsage : :py:class:`~django_ca.extensions.KeyUsage`
             Value for the `keyUsage` X509 extension. See description for format details.
         extendedKeyUsage : tuple or None
             Value for the `extendedKeyUsage` X509 extension. See description for format details.
