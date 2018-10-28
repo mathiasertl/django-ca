@@ -13,15 +13,29 @@ ChangeLog
 * New dependency: `django-object-actions <https://github.com/crccheck/django-object-actions>`_.
 * Add ability to resign existing certificates.
 * Management command ``list_cas`` now optionally supports a tree view.
-* Use more consistent naming for extensions.
+* Use more consistent naming for extensions throughout the code and documentation.
 * Renamed the ``--tls-features`` option of the ``sign_cert`` command to ``--tls-feature``, in line with the 
   actual name of the extension.
 * Allow the ``TLSFeature`` extension in profiles.
-* Add link to easily download certificate bundles.
+* Add link in the admin interface to easily download certificate bundles.
 * Support ECC private keys for new Certificate Authorities.
 * Store CA private keys in the more secure `PKCS8 format
   <https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8>`_.
 * The Certificate change view now has a second "Revoke" button as object action next to the "History" button.
+
+Python API
+==========
+
+* Add the :doc:`Python API <python/intro>` as a fully supported interface to **django-ca**. 
+* New module :py:mod:`django_ca.extensions` to allow easy and consistent handling of X509 extensions.
+* Fully document various member attributes of :py:class:`~django_ca.models.CertificateAuthority` and
+  :py:class:`~django_ca.models.Certificate`, as well :py:class:`~django_ca.subject.Subject` and
+  as all new Python code.
+* The parameters for functions in :py:class:`~django_ca.managers.CertificateManager` and
+  :py:class:`~django_ca.managers.CertificateAuthorityManager` were cleaned up for consistent naming and so
+  that a user no longer needs to use classes from the cryptography libary. Parameters are now optional if
+  default settings exist.
+* Variable names have been renamed to be more consistent to make the code more readable.
 
 Testing
 =======

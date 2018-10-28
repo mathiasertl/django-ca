@@ -30,6 +30,7 @@ class Command(CertCommand):
                             help='Path where to dump the certificate. Use "-" for stdout.')
 
     def handle(self, cert, path, **options):
+        # TODO: add bundle flag
         data = cert.dump_certificate(options['format'])
         if path == '-':
             self.stdout.write(data, ending=b'')
