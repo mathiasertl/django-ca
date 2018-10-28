@@ -235,15 +235,13 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             When the certificate should expire (passed to :py:func:`~django_ca.utils.get_cert_builder`).
         algorithm : {'sha512', 'sha256', ...}
             Algorithm used to sign the certificate. The default is the CA_DIGEST_ALGORITHM setting.
-        subject : dict, optional
-            The Subject to use in the certificate.  The keys of this dict are the fields of an X509
-            subject, that is `"C"`, `"ST"`, `"L"`, `"OU"` and `"CN"`. If ommited or if the value
-            does not contain a `"CN"` key, the first value of the `subjectAltName` parameter is
-            used as CommonName (and is obviously mandatory in this case).
+        subject : :py:class:`~django_ca.subject.Subject`, optional
+            The Subject to use in the certificate. If this value is not passed or if the value does not
+            contain a CommonName, the first value of the ``subjectAltName`` parameter is used as CommonName.
         cn_in_san : bool, optional
             Wether the CommonName should also be included as subjectAlternativeName. The default is
-            `True`, but the parameter is ignored if no CommonName is given. This is typically set
-            to `False` when creating a client certificate, where the subjects CommonName has no
+            ``True``, but the parameter is ignored if no CommonName is given. This is typically set
+            to ``False`` when creating a client certificate, where the subjects CommonName has no
             meaningful value as subjectAltName.
         csr_format : :py:class:`~cryptography:cryptography.hazmat.primitives.serialization.Encoding`, optional
             The format of the CSR. The default is ``PEM``.
