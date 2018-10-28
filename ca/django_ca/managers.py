@@ -92,7 +92,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.SHA512`. The default is the
             ``CA_DIGEST_ALGORITHM`` setting.
         expires : datetime
-            Datetime for when this certificate expires.
+            Datetime for when this certificate authority will expire.
         subject : :py:class:`~django_ca.subject.Subject`
             Subject string, e.g. ``Subject("/CN=example.com")``.
         parent : :py:class:`~django_ca.models.CertificateAuthority`, optional
@@ -245,8 +245,8 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             The certificate authority to sign the certificate with.
         csr : str
             A valid CSR. The format is given by the ``csr_format`` parameter.
-        expires : int
-            When the certificate should expire (passed to :py:func:`~django_ca.utils.get_cert_builder`).
+        expires : datetime
+            Datetime for when this certificate authority will expire.
         algorithm : str or :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
             Hash algorithm used when signing the certificate. If a string is passed, it must be the name of
             one of the hashes in :py:mod:`~cryptography:cryptography.hazmat.primitives.hashes`, e.g.
