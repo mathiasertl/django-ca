@@ -144,13 +144,6 @@ class CreateCertificateBaseForm(forms.ModelForm):
             raise forms.ValidationError(_('Unknown hash algorithm: %s') % algo)
         return algo
 
-#    def clean_keyUsage(self):
-#        value, critical = self.cleaned_data['keyUsage']
-#        if not value:
-#            return None
-#        value = ','.join(value)
-#        return critical, value
-
     def clean_extendedKeyUsage(self):
         value, critical = self.cleaned_data['extendedKeyUsage']
         if not value:
