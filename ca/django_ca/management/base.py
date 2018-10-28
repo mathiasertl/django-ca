@@ -36,6 +36,7 @@ from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 
 from .. import ca_settings
+from ..extensions import KeyUsage
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..subject import Subject
@@ -372,7 +373,7 @@ class BaseSignCommand(BaseCommand):
     def add_extensions(self, parser):
         group = parser.add_argument_group('X509 v3 certificate extensions', self.add_extensions_help)
         group.add_argument(
-            '--key-usage', metavar='VALUES',
+            '--key-usage', metavar='VALUES', action=MultiValueExtensionAction, extension=KeyUsage,
             help='The keyUsage extension, e.g. "critical,keyCertSign".')
         group.add_argument(
             '--ext-key-usage', metavar='VALUES',
