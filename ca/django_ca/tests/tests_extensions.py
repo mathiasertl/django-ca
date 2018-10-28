@@ -70,3 +70,26 @@ class TestKeyUsage(TestCase):
         ext = KeyUsage('critical,cRLSign,keyCertSign')
         ext2 = KeyUsage(ext.as_extension())
         self.assertEqual(ext, ext2)
+
+    def test_empty_str(self):
+        # we want to accept an empty str as constructor
+        ku = KeyUsage('')
+        self.assertEqual(len(ku), 0)
+        self.assertFalse(bool(ku))
+
+    def test_dunder(self):
+        # test __contains__ and __len__
+        ku = KeyUsage('cRLSign')
+        self.assertIn('cRLSign', ku)
+        self.assertNotIn('keyCertSign', ku)
+        self.assertEqual(len(ku), 1)
+        self.assertTrue(bool(ku))
+
+    def test_error(self):
+        with self.assertRaisesRegex(ValueError, r'^Unknown value\(s\): foo$'):
+            KeyUsage('foo')
+        with self.assertRaisesRegex(ValueError, r'^Unknown value\(s\): foobar$'):
+            KeyUsage('foobar')
+
+        with self.assertRaisesRegex(ValueError, r'^Unknown value\(s\): foo$'):
+            KeyUsage('critical,foo')
