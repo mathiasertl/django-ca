@@ -134,6 +134,18 @@ class KeyUsage(MultiValueExtension):
     }
     KNOWN_VALUES = set(CRYPTOGRAPHY_MAPPING.keys())
 
+    CHOICES = (
+        ('cRLSign', 'CRL Sign'),
+        ('dataEncipherment', 'dataEncipherment'),
+        ('decipherOnly', 'decipherOnly'),
+        ('digitalSignature', 'Digital Signature'),
+        ('encipherOnly', 'encipherOnly'),
+        ('keyAgreement', 'Key Agreement'),
+        ('keyCertSign', 'Certificate Sign'),
+        ('keyEncipherment', 'Key Encipherment'),
+        ('nonRepudiation', 'nonRepudiation'),
+    )
+
     def _from_extension(self, ext):
         self.critical = ext.critical
         self.value = []
