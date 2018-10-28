@@ -47,7 +47,6 @@ from ..signals import post_revoke_cert
 from ..signals import pre_issue_cert
 from ..signals import pre_revoke_cert
 from ..utils import EXTENDED_KEY_USAGE_MAPPING
-from ..utils import KEY_USAGE_MAPPING
 from ..utils import SUBJECT_FIELDS
 from ..utils import TLS_FEATURE_MAPPING
 from .base import DjangoCAWithCertTestCase
@@ -316,13 +315,6 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         """
 
         form = CreateCertificateForm()
-
-        choices = list(sorted([k for k, v in form.fields['keyUsage'].fields[0].choices]))
-        mapping = list(sorted(KEY_USAGE_MAPPING.keys()))
-        self.assertEqual(
-            mapping, choices,
-            'KEY_USAGE_MAPPING and CreateCertificateForm.keyUsage differ:\n%s\n%s' % (
-                mapping, choices))
 
         choices = list(sorted([k for k, v in form.fields['extendedKeyUsage'].fields[0].choices]))
         mapping = list(sorted(EXTENDED_KEY_USAGE_MAPPING.keys()))

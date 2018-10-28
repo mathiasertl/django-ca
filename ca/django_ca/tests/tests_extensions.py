@@ -93,3 +93,9 @@ class TestKeyUsage(TestCase):
 
         with self.assertRaisesRegex(ValueError, r'^Unknown value\(s\): foo$'):
             KeyUsage('critical,foo')
+
+    def test_completeness(self):
+        # make sure whe haven't forgotton any keys anywhere
+
+        self.assertEqual(set(KeyUsage.CRYPTOGRAPHY_MAPPING.keys()),
+                         set([e[0] for e in KeyUsage.CHOICES]))

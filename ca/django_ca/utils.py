@@ -96,19 +96,6 @@ MULTIPLE_OIDS = (
 # uppercase values as keys for normalizing case
 NAME_CASE_MAPPINGS = {v.upper(): v for v in OID_NAME_MAPPINGS.values()}
 
-KEY_USAGE_MAPPING = {
-    'cRLSign': 'crl_sign',
-    'dataEncipherment': 'data_encipherment',
-    'decipherOnly': 'decipher_only',
-    'digitalSignature': 'digital_signature',
-    'encipherOnly': 'encipher_only',
-    'keyAgreement': 'key_agreement',
-    'keyCertSign': 'key_cert_sign',
-    'keyEncipherment': 'key_encipherment',
-    'nonRepudiation': 'content_commitment',  # http://marc.info/?t=107176106300005&r=1&w=2
-}
-
-
 EXTENDED_KEY_USAGE_MAPPING = {
     'serverAuth': ExtendedKeyUsageOID.SERVER_AUTH,
     'clientAuth': ExtendedKeyUsageOID.CLIENT_AUTH,
