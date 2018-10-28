@@ -1,6 +1,6 @@
-#######################################
-``django_ca.utils`` - utility functions
-#######################################
+####################################
+``django_ca.subject`` - X509 Subject
+####################################
 
 .. automodule:: django_ca.subject
    :members:

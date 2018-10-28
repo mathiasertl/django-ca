@@ -1,5 +1,5 @@
 ##########################################
-``django_ca.extensions`` - x509 extensions
+``django_ca.extensions`` - X509 extensions
 ##########################################
 
 .. autoclass:: django_ca.extensions.Extension
