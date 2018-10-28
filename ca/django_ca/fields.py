@@ -20,6 +20,7 @@ from . import ca_settings
 from .subject import Subject
 from .utils import SUBJECT_FIELDS
 from .widgets import KeyUsageWidget
+from .widgets import MultiValueExtensionWidget
 from .widgets import SubjectAltNameWidget
 from .widgets import SubjectWidget
 
@@ -82,3 +83,28 @@ class KeyUsageField(forms.MultiValueField):
 
     def compress(self, values):
         return values
+
+
+class MultiValueExtensionField(KeyUsageField):
+    def __init__(self, extension, *args, **kwargs):
+        self.extension = extension
+
+        label = kwargs['label']
+        initial = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get(label, {})
+        kwargs.setdefault('initial', [
+            initial.get('value', []),
+            initial.get('critical', False),
+        ])
+
+        fields = (
+            forms.MultipleChoiceField(required=False, choices=extension.CHOICES),
+            forms.BooleanField(required=False),
+        )
+
+        widget = MultiValueExtensionWidget(choices=extension.CHOICES)
+        super(KeyUsageField, self).__init__(
+            fields=fields, require_all_fields=False, widget=widget,
+            *args, **kwargs)
+
+    def compress(self, values):
+        return self.extension((values[1], values[0], ))

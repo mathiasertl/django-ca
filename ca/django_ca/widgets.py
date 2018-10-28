@@ -187,3 +187,17 @@ class KeyUsageWidget(CustomMultiWidget):
         if value:
             return value
         return ([], True)
+
+
+class MultiValueExtensionWidget(CustomMultiWidget):
+    def __init__(self, choices, attrs=None):
+        _widgets = (
+            widgets.SelectMultiple(choices=choices, attrs=attrs),
+            LabeledCheckboxInput(label=_('critical')),
+        )
+        super(MultiValueExtensionWidget, self).__init__(_widgets, attrs)
+
+    def decompress(self, value):
+        if value:
+            return value.form_decompress()
+        return ([], True)

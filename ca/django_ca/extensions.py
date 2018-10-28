@@ -118,6 +118,9 @@ class MultiValueExtension(Extension):
         if diff:
             raise ValueError('Unknown value(s): %s' % ', '.join(sorted(diff)))
 
+    def form_decompress(self):
+        return self.value, self.critical
+
 
 class KeyUsage(MultiValueExtension):
     oid = ExtensionOID.KEY_USAGE

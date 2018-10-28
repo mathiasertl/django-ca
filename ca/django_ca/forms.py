@@ -26,7 +26,9 @@ from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
 from . import ca_settings
+from .extensions import KeyUsage
 from .fields import KeyUsageField
+from .fields import MultiValueExtensionField
 from .fields import SubjectAltNameField
 from .fields import SubjectField
 from .models import Certificate
@@ -114,17 +116,7 @@ class CreateCertificateBaseForm(forms.ModelForm):
             'Algorithm used for signing the certificate. SHA-512 should be fine in most cases.'
         ),
     )
-    keyUsage = KeyUsageField(label='keyUsage', help_text=KEY_USAGE_DESC, choices=(
-        ('cRLSign', 'CRL Sign'),
-        ('dataEncipherment', 'dataEncipherment'),
-        ('decipherOnly', 'decipherOnly'),
-        ('digitalSignature', 'Digital Signature'),
-        ('encipherOnly', 'encipherOnly'),
-        ('keyAgreement', 'Key Agreement'),
-        ('keyCertSign', 'Certificate Sign'),
-        ('keyEncipherment', 'Key Encipherment'),
-        ('nonRepudiation', 'nonRepudiation'),
-    ))
+    keyUsage = MultiValueExtensionField(label='keyUsage', help_text=KEY_USAGE_DESC, extension=KeyUsage)
     extendedKeyUsage = KeyUsageField(
         label='extendedKeyUsage', help_text=EXTENDED_KEY_USAGE_DESC, choices=(
             ('serverAuth', 'SSL/TLS Web Server Authentication'),
@@ -152,12 +144,12 @@ class CreateCertificateBaseForm(forms.ModelForm):
             raise forms.ValidationError(_('Unknown hash algorithm: %s') % algo)
         return algo
 
-    def clean_keyUsage(self):
-        value, critical = self.cleaned_data['keyUsage']
-        if not value:
-            return None
-        value = ','.join(value)
-        return critical, value
+#    def clean_keyUsage(self):
+#        value, critical = self.cleaned_data['keyUsage']
+#        if not value:
+#            return None
+#        value = ','.join(value)
+#        return critical, value
 
     def clean_extendedKeyUsage(self):
         value, critical = self.cleaned_data['extendedKeyUsage']
