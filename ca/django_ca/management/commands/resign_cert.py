@@ -68,8 +68,8 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
             if ext_key_usage:
                 ext_key_usage = (ext_key_usage[0], ','.join(ext_key_usage[1]))
 
-        if options['tls_features']:
-            tls_feature = self.parse_extension(options['tls_features'])
+        if options['tls_feature']:
+            tls_feature = self.parse_extension(options['tls_feature'])
         else:
             tls_feature = cert.TLSFeature()
             if tls_feature:
@@ -81,7 +81,7 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
             'csr_format': Encoding.PEM,
             'keyUsage': key_usage,
             'extendedKeyUsage': ext_key_usage,
-            'tls_features': tls_feature,
+            'tls_feature': tls_feature,
             'algorithm': options.get('algorithm', cert.algorithm),
             'expires': options['expires'],
             'subjectAltName': options.get('alt', cert.subjectAltName()[1]),

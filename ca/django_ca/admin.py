@@ -629,7 +629,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                 'cn_in_san': cn_in_san,
                 'keyUsage': data['keyUsage'],
                 'extendedKeyUsage': data['extendedKeyUsage'],
-                'tls_features': data['tlsFeature'],
+                'tls_feature': data['tlsFeature'],
                 'password': data['password'],
             }
 

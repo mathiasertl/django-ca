@@ -90,8 +90,8 @@ the default values, options like --key-usage still override the profile.""")
             kwargs['keyUsage'] = options['key_usage']
         if options['ext_key_usage']:
             kwargs['extendedKeyUsage'] = self.parse_extension(options['ext_key_usage'])
-        if options['tls_features']:
-            kwargs['tls_features'] = self.parse_extension(options['tls_features'])
+        if options['tls_feature']:
+            kwargs['tls_feature'] = self.parse_extension(options['tls_feature'])
 
         # update subject with arguments from the command line
         if options.get('subject'):

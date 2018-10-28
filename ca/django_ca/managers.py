@@ -220,7 +220,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
 class CertificateManager(CertificateManagerMixin, models.Manager):
     def sign_cert(self, ca, csr, expires, algorithm, subject=None, cn_in_san=True, csr_format=Encoding.PEM,
-                  subjectAltName=None, keyUsage=None, extendedKeyUsage=None, tls_features=None,
+                  subjectAltName=None, keyUsage=None, extendedKeyUsage=None, tls_feature=None,
                   password=None):
         """Create a signed certificate from a CSR.
 
@@ -259,7 +259,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             Value for the `keyUsage` X509 extension.
         extendedKeyUsage : :py:class:`~django_ca.extensions.ExtendedKeyUsage`, optional
             Value for the ``extendedKeyUsage`` X509 extension.
-        tls_features : :py:class:`~django_ca.extensions.TLSFeature`, optional
+        tls_feature : :py:class:`~django_ca.extensions.TLSFeature`, optional
             Value for the ``TLSFeature`` X509 extension.
         password : bytes, optional
             Password used to load the private key of the certificate authority. If not passed, the private key
@@ -337,11 +337,11 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
                 usages = [EXTENDED_KEY_USAGE_MAPPING[u] for u in usages.split(',')]
                 builder = builder.add_extension(x509.ExtendedKeyUsage(usages), critical=critical)
 
-        if tls_features:
-            if isinstance(tls_features, TLSFeature):
-                builder = builder.add_extension(**tls_features.for_builder())
+        if tls_feature:
+            if isinstance(tls_feature, TLSFeature):
+                builder = builder.add_extension(**tls_feature.for_builder())
             else:
-                critical, features = tls_features
+                critical, features = tls_feature
                 features = [TLS_FEATURE_MAPPING[f] for f in features.split(',')]
                 builder = builder.add_extension(x509.TLSFeature(features), critical=critical)
 

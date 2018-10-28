@@ -129,7 +129,7 @@ connection):
    $ python manage.py sign_cert \
       --key-usage critical,keyCertSign \
       --ext-key-usage serverAuth,clientAuth \
-      --tls-features OCSPMustStaple \
+      --tls-feature OCSPMustStaple \
       ...
 
 For more information on these extensions, their meaning and typical values, see :doc:`/extensions`.

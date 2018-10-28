@@ -262,7 +262,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
             '--key-usage=critical,keyCertSign',
             '--ext-key-usage=clientAuth',
             '--alt=URI:https://example.net',
-            '--tls-features=OCSPMustStaple',
+            '--tls-feature=OCSPMustStaple',
         ]
 
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:

@@ -558,8 +558,8 @@ class Certificate(X509CertMixin):
             pass
 
         try:
-            tls_features = self.x509.extensions.get_extension_for_oid(ExtensionOID.TLS_FEATURE)
-            kwargs.setdefault('tls_features', (tls_features.critical, tls_features.value))
+            tls_feature = self.x509.extensions.get_extension_for_oid(ExtensionOID.TLS_FEATURE)
+            kwargs.setdefault('tls_feature', (tls_feature.critical, tls_feature.value))
         except x509.ExtensionNotFound:
             pass
 

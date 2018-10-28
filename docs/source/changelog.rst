@@ -11,8 +11,10 @@ ChangeLog
 ************
 
 * New dependency: `django-object-actions <https://github.com/crccheck/django-object-actions>`_.
-* Add ability to resign existing certificates (Admin interface only).
+* Add ability to resign existing certificates.
 * Management command ``list_cas`` now optionally supports a tree view.
+* Renamed the ``--tls-features`` option of the ``sign_cert`` command to ``--tls-feature``, in line with the 
+  actual name of the extension.
 * Add link to easily download certificate bundles.
 * Support ECC private keys for new Certificate Authorities.
 * Store CA private keys in the more secure `PKCS8 format

@@ -384,7 +384,7 @@ class BaseSignCommand(BaseCommand):
             '--ext-key-usage', metavar='VALUES',
             help='The extendedKeyUsage extension, e.g. "serverAuth,clientAuth".')
         group.add_argument(
-            '--tls-features', metavar='VALUES', help='TLS Feature extensions.')
+            '--tls-feature', metavar='VALUES', help='TLS Feature extensions.')
 
     def parse_extension(self, value):
         if value.startswith('critical,'):
