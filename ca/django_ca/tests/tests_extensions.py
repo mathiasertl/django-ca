@@ -18,12 +18,16 @@ import doctest
 import six
 
 from cryptography import x509
+from cryptography.x509 import TLSFeatureType
 from cryptography.x509.extensions import Extension
+from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import ExtensionOID
 
 from django.test import TestCase
 
+from ..extensions import ExtendedKeyUsage
 from ..extensions import KeyUsage
+from ..extensions import TLSFeature
 
 
 def load_tests(loader, tests, ignore):
@@ -40,17 +44,20 @@ class TestKeyUsage(TestCase):
         self.assertIn('keyCertSign', ext)
         self.assertNotIn('keyEncipherment', ext)
 
-        crypto = ext.extension_type
-        self.assertIsInstance(crypto, x509.KeyUsage)
-        self.assertTrue(crypto.crl_sign)
-        self.assertTrue(crypto.key_cert_sign)
-        self.assertFalse(crypto.key_encipherment)
+        typ = ext.extension_type
+        self.assertIsInstance(typ, x509.KeyUsage)
+        self.assertTrue(typ.crl_sign)
+        self.assertTrue(typ.key_cert_sign)
+        self.assertFalse(typ.key_encipherment)
+
+        crypto = ext.as_extension()
+        self.assertEqual(crypto.oid, ExtensionOID.KEY_USAGE)
 
     def test_basic(self):
         self.assertBasic(KeyUsage('critical,cRLSign,keyCertSign'))
-        self.assertBasic(KeyUsage(['critical', ['cRLSign', 'keyCertSign']]))
-        self.assertBasic(KeyUsage(('critical', ['cRLSign', 'keyCertSign'])))
-        self.assertBasic(KeyUsage(('critical', ('cRLSign', 'keyCertSign'))))
+        self.assertBasic(KeyUsage([True, ['cRLSign', 'keyCertSign']]))
+        self.assertBasic(KeyUsage((True, ['cRLSign', 'keyCertSign'])))
+        self.assertBasic(KeyUsage((True, ('cRLSign', 'keyCertSign'))))
         self.assertBasic(KeyUsage(Extension(
             oid=ExtensionOID.KEY_USAGE,
             critical=True,
@@ -96,6 +103,81 @@ class TestKeyUsage(TestCase):
 
     def test_completeness(self):
         # make sure whe haven't forgotton any keys anywhere
-
         self.assertEqual(set(KeyUsage.CRYPTOGRAPHY_MAPPING.keys()),
                          set([e[0] for e in KeyUsage.CHOICES]))
+
+
+class ExtendedKeyUsageTestCase(TestCase):
+    def assertBasic(self, ext, critical=True):
+        self.assertEqual(ext.critical, critical)
+        self.assertIn('clientAuth', ext)
+        self.assertIn('serverAuth', ext)
+        self.assertNotIn('smartcardLogon', ext)
+
+        typ = ext.extension_type
+        self.assertIsInstance(typ, x509.ExtendedKeyUsage)
+        self.assertEqual(typ.oid, ExtensionOID.EXTENDED_KEY_USAGE)
+
+        crypto = ext.as_extension()
+        self.assertEqual(crypto.critical, critical)
+        self.assertEqual(crypto.oid, ExtensionOID.EXTENDED_KEY_USAGE)
+
+        self.assertIn(ExtendedKeyUsageOID.SERVER_AUTH, crypto.value)
+        self.assertIn(ExtendedKeyUsageOID.CLIENT_AUTH, crypto.value)
+        self.assertNotIn(ExtendedKeyUsageOID.OCSP_SIGNING, crypto.value)
+
+    def test_basic(self):
+        self.assertBasic(ExtendedKeyUsage('critical,serverAuth,clientAuth'))
+        self.assertBasic(ExtendedKeyUsage([True, ['clientAuth', 'serverAuth']]))
+        self.assertBasic(ExtendedKeyUsage((True, ['clientAuth', 'serverAuth'])))
+        self.assertBasic(ExtendedKeyUsage((True, ('clientAuth', 'serverAuth'))))
+        self.assertBasic(ExtendedKeyUsage(Extension(
+            oid=ExtensionOID.EXTENDED_KEY_USAGE,
+            critical=True,
+            value=x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH])))
+        )
+
+    def test_not_critical(self):
+        self.assertBasic(ExtendedKeyUsage('serverAuth,clientAuth'), critical=False)
+        self.assertBasic(ExtendedKeyUsage([False, ['clientAuth', 'serverAuth']]), critical=False)
+        self.assertBasic(ExtendedKeyUsage((False, ['clientAuth', 'serverAuth'])), critical=False)
+        self.assertBasic(ExtendedKeyUsage((False, ('clientAuth', 'serverAuth'))), critical=False)
+        ext_value = x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH])
+        self.assertBasic(ExtendedKeyUsage(
+            Extension(
+                oid=ExtensionOID.EXTENDED_KEY_USAGE,
+                critical=False,
+                value=ext_value
+            ),
+        ), critical=False)
+
+    def test_completeness(self):
+        # make sure whe haven't forgotton any keys anywhere
+        self.assertEqual(set(ExtendedKeyUsage.CRYPTOGRAPHY_MAPPING.keys()),
+                         set([e[0] for e in ExtendedKeyUsage.CHOICES]))
+
+
+class TLSFeatureTestCase(TestCase):
+    def assertBasic(self, ext, critical=True):
+        self.assertEqual(ext.critical, critical)
+        self.assertEqual(ext.value, ['OCSPMustStaple'])
+
+        typ = ext.extension_type
+        self.assertIsInstance(typ, x509.TLSFeature)
+        self.assertEqual(typ.oid, ExtensionOID.TLS_FEATURE)
+
+        crypto = ext.as_extension()
+        self.assertEqual(crypto.critical, critical)
+        self.assertEqual(crypto.oid, ExtensionOID.TLS_FEATURE)
+
+        self.assertIn(TLSFeatureType.status_request, crypto.value)
+        self.assertNotIn(TLSFeatureType.status_request_v2, crypto.value)
+
+    def test_basic(self):
+        self.assertBasic(TLSFeature('critical,OCSPMustStaple'))
+        self.assertBasic(TLSFeature([True, ['OCSPMustStaple']]))
+
+    def test_completeness(self):
+        # make sure whe haven't forgotton any keys anywhere
+        self.assertEqual(set(TLSFeature.CRYPTOGRAPHY_MAPPING.keys()),
+                         set([e[0] for e in TLSFeature.CHOICES]))
