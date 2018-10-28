@@ -42,7 +42,9 @@ from django.utils.encoding import force_str
 from django.utils.translation import ugettext_lazy as _
 
 from . import ca_settings
+from .extensions import ExtendedKeyUsage
 from .extensions import KeyUsage
+from .extensions import TLSFeature
 from .managers import CertificateAuthorityManager
 from .managers import CertificateManager
 from .querysets import CertificateAuthorityQuerySet
@@ -50,8 +52,6 @@ from .querysets import CertificateQuerySet
 from .signals import post_revoke_cert
 from .signals import pre_revoke_cert
 from .subject import Subject
-from .utils import EXTENDED_KEY_USAGE_REVERSED
-from .utils import TLS_FEATURE_MAPPING_REVERSED
 from .utils import add_colons
 from .utils import format_general_name
 from .utils import format_general_names
@@ -239,13 +239,21 @@ class X509CertMixin(models.Model):
             return None
         return KeyUsage(ext)
 
+    @property
     def extendedKeyUsage(self):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.EXTENDED_KEY_USAGE)
         except x509.ExtensionNotFound:
             return None
+        return ExtendedKeyUsage(ext)
 
-        return ext.critical, [EXTENDED_KEY_USAGE_REVERSED[u] for u in ext.value]
+    @property
+    def TLSFeature(self):
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.TLS_FEATURE)
+        except x509.ExtensionNotFound:
+            return None
+        return TLSFeature(ext)
 
     def subjectKeyIdentifier(self):
         try:
@@ -272,18 +280,6 @@ class X509CertMixin(models.Model):
 
         hexlified = binascii.hexlify(ext.value.key_identifier).upper().decode('utf-8')
         return ext.critical, 'keyid:%s' % add_colons(hexlified)
-
-    def TLSFeature(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.TLS_FEATURE)
-        except x509.ExtensionNotFound:
-            return None
-
-        features = []
-        for feature in ext.value:
-            features.append(TLS_FEATURE_MAPPING_REVERSED[feature])
-
-        return ext.critical, features
 
     def _parse_policy_qualifier(self, qualifier):
         if isinstance(qualifier, x509.extensions.UserNotice):

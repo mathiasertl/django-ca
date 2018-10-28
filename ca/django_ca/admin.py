@@ -199,11 +199,11 @@ class CertificateMixin(object):
     keyUsage.short_description = 'keyUsage'
 
     def extendedKeyUsage(self, obj):
-        return self.output_extension(obj.extendedKeyUsage())
+        return self.output_extension(obj.extendedKeyUsage)
     extendedKeyUsage.short_description = 'extendedKeyUsage'
 
     def TLSFeature(self, obj):
-        return self.output_extension(obj.TLSFeature())
+        return self.output_extension(obj.TLSFeature)
     TLSFeature.short_description = _('TLS Feature')
 
     def subjectKeyIdentifier(self, obj):
@@ -472,19 +472,9 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                 san = (','.join(san[1]), False)
             algo = resign_obj.algorithm.__class__.__name__
 
-            extKeyUsage = resign_obj.extendedKeyUsage()
-            if extKeyUsage:
-                extKeyUsage = (extKeyUsage[1], extKeyUsage[0])
-            else:
-                extKeyUsage = [], False
-
             keyUsage = resign_obj.keyUsage
-
-            tlsFeatures = resign_obj.TLSFeature()
-            if tlsFeatures:
-                tlsFeatures = (tlsFeatures[1], tlsFeatures[0])
-            else:
-                tlsFeatures = [], False
+            extKeyUsage = resign_obj.extendedKeyUsage
+            tlsFeatures = resign_obj.TLSFeature
 
             data = {
                 'profile': '',

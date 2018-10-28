@@ -251,7 +251,7 @@ class TLSFeature(MultiValueExtension):
     KNOWN_VALUES = set(CRYPTOGRAPHY_MAPPING)
 
     def _from_extension(self, ext):
-        self.critical = self.critical
+        self.critical = ext.critical
         self.value = [self._CRYPTOGRAPHY_MAPPING_REVERSED[f] for f in ext.value]
 
     @property

@@ -15,6 +15,7 @@
 
 from cryptography.hazmat.primitives import hashes
 
+from ..extensions import ExtendedKeyUsage
 from ..extensions import KeyUsage
 from ..models import Certificate
 from ..models import CertificateAuthority
@@ -78,7 +79,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
         # verify extensions
         extensions = {
-            'extendedKeyUsage': (False, ['serverAuth']),
+            'extendedKeyUsage': ExtendedKeyUsage('serverAuth'),
             'keyUsage': KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'),
             'subjectAltName': (False, ['DNS:example.com']),
         }
@@ -96,7 +97,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
         # verify extensions
         self.assertExtensions(cert.x509, {
-            'extendedKeyUsage': (False, ['serverAuth']),
+            'extendedKeyUsage': ExtendedKeyUsage('serverAuth'),
             'keyUsage': KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'),
             'subjectAltName': (False, ['DNS:example.com']),
         })

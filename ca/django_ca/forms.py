@@ -26,8 +26,9 @@ from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
 from . import ca_settings
+from .extensions import ExtendedKeyUsage
 from .extensions import KeyUsage
-from .fields import KeyUsageField
+from .extensions import TLSFeature
 from .fields import MultiValueExtensionField
 from .fields import SubjectAltNameField
 from .fields import SubjectField
@@ -117,22 +118,9 @@ class CreateCertificateBaseForm(forms.ModelForm):
         ),
     )
     keyUsage = MultiValueExtensionField(label='keyUsage', help_text=KEY_USAGE_DESC, extension=KeyUsage)
-    extendedKeyUsage = KeyUsageField(
-        label='extendedKeyUsage', help_text=EXTENDED_KEY_USAGE_DESC, choices=(
-            ('serverAuth', 'SSL/TLS Web Server Authentication'),
-            ('clientAuth', 'SSL/TLS Web Client Authentication'),
-            ('codeSigning', 'Code signing'),
-            ('emailProtection', 'E-mail Protection (S/MIME)'),
-            ('timeStamping', 'Trusted Timestamping'),
-            ('OCSPSigning', 'OCSP Signing'),
-            ('smartcardLogon', 'Smart card logon'),
-            ('msKDC', 'Kerberos Domain Controller'),
-        ))
-    tlsFeature = KeyUsageField(
-        label='TLS Features', choices=(
-            ('OCSPMustStaple', 'OCSP Must-Staple'),
-            ('MultipleCertStatusRequest', 'Multiple Certificate Status Request'),
-        ))
+    extendedKeyUsage = MultiValueExtensionField(
+        label='extendedKeyUsage', help_text=EXTENDED_KEY_USAGE_DESC, extension=ExtendedKeyUsage)
+    tlsFeature = MultiValueExtensionField(label='TLS Features', extension=TLSFeature)
 
     def clean_algorithm(self):
         algo = self.cleaned_data['algorithm']
@@ -143,20 +131,6 @@ class CreateCertificateBaseForm(forms.ModelForm):
             # during Djangos standard form validation, so this should never happen.
             raise forms.ValidationError(_('Unknown hash algorithm: %s') % algo)
         return algo
-
-    def clean_extendedKeyUsage(self):
-        value, critical = self.cleaned_data['extendedKeyUsage']
-        if not value:
-            return None
-        value = ','.join(value)
-        return critical, value
-
-    def clean_tlsFeature(self):
-        value, critical = self.cleaned_data['tlsFeature']
-        if not value:
-            return None
-        value = ','.join(value)
-        return critical, value
 
     def clean_expires(self):
         expires = self.cleaned_data['expires']

@@ -19,7 +19,6 @@ from django import forms
 from . import ca_settings
 from .subject import Subject
 from .utils import SUBJECT_FIELDS
-from .widgets import KeyUsageWidget
 from .widgets import MultiValueExtensionWidget
 from .widgets import SubjectAltNameWidget
 from .widgets import SubjectWidget
@@ -64,28 +63,7 @@ class SubjectAltNameField(forms.MultiValueField):
         return values
 
 
-class KeyUsageField(forms.MultiValueField):
-    def __init__(self, choices, *args, **kwargs):
-        label = kwargs['label']
-        initial = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get(label, {})
-        kwargs.setdefault('initial', [
-            initial.get('value', []),
-            initial.get('critical', False),
-        ])
-
-        fields = (
-            forms.MultipleChoiceField(required=False, choices=choices),
-            forms.BooleanField(required=False),
-        )
-        super(KeyUsageField, self).__init__(
-            fields=fields, require_all_fields=False, widget=KeyUsageWidget(choices=choices),
-            *args, **kwargs)
-
-    def compress(self, values):
-        return values
-
-
-class MultiValueExtensionField(KeyUsageField):
+class MultiValueExtensionField(forms.MultiValueField):
     def __init__(self, extension, *args, **kwargs):
         self.extension = extension
 
@@ -102,7 +80,7 @@ class MultiValueExtensionField(KeyUsageField):
         )
 
         widget = MultiValueExtensionWidget(choices=extension.CHOICES)
-        super(KeyUsageField, self).__init__(
+        super(MultiValueExtensionField, self).__init__(
             fields=fields, require_all_fields=False, widget=widget,
             *args, **kwargs)
 

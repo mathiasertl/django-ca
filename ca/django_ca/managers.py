@@ -25,7 +25,6 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
-from cryptography.x509 import TLSFeature
 from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtensionOID
 
@@ -35,6 +34,8 @@ from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 
 from . import ca_settings
+from .extensions import ExtendedKeyUsage
+from .extensions import TLSFeature
 from .signals import post_create_ca
 from .signals import post_issue_cert
 from .signals import pre_create_ca
@@ -328,14 +329,20 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             builder = builder.add_extension(**keyUsage.for_builder())
 
         if extendedKeyUsage:
-            critical, usages = extendedKeyUsage
-            usages = [EXTENDED_KEY_USAGE_MAPPING[u] for u in usages.split(',')]
-            builder = builder.add_extension(x509.ExtendedKeyUsage(usages), critical=critical)
+            if isinstance(extendedKeyUsage, ExtendedKeyUsage):
+                builder = builder.add_extension(**extendedKeyUsage.for_builder())
+            else:
+                critical, usages = extendedKeyUsage
+                usages = [EXTENDED_KEY_USAGE_MAPPING[u] for u in usages.split(',')]
+                builder = builder.add_extension(x509.ExtendedKeyUsage(usages), critical=critical)
 
         if tls_features:
-            critical, features = tls_features
-            features = [TLS_FEATURE_MAPPING[f] for f in features.split(',')]
-            builder = builder.add_extension(TLSFeature(features), critical=critical)
+            if isinstance(tls_features, TLSFeature):
+                builder = builder.add_extension(**tls_features.for_builder())
+            else:
+                critical, features = tls_features
+                features = [TLS_FEATURE_MAPPING[f] for f in features.split(',')]
+                builder = builder.add_extension(x509.TLSFeature(features), critical=critical)
 
         if ca.issuer_alt_name:
             builder = builder.add_extension(x509.IssuerAlternativeName(

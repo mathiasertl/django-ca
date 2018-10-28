@@ -23,6 +23,7 @@ from cryptography.x509.oid import ObjectIdentifier
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
+from ..extensions import ExtendedKeyUsage
 from ..extensions import KeyUsage
 from ..models import Certificate
 from ..models import Watcher
@@ -171,12 +172,12 @@ class CertificateTests(DjangoCAWithCertTestCase):
                          KeyUsage('critical,digitalSignature,keyEncipherment,nonRepudiation'))
 
     def test_extendedKeyUsage(self):
-        self.assertEqual(self.ca.extendedKeyUsage(), None)
-        self.assertEqual(self.ca2.extendedKeyUsage(), None)
-        self.assertEqual(self.cert.extendedKeyUsage(), (False, ['serverAuth']))
-        self.assertEqual(self.cert2.extendedKeyUsage(), (False, ['serverAuth']))
-        self.assertEqual(self.cert3.extendedKeyUsage(), (False, ['serverAuth']))
-        self.assertEqual(self.ocsp.extendedKeyUsage(), (False, ['OCSPSigning']))
+        self.assertIsNone(self.ca.extendedKeyUsage)
+        self.assertIsNone(self.ca2.extendedKeyUsage)
+        self.assertEqual(self.cert.extendedKeyUsage, ExtendedKeyUsage('serverAuth'))
+        self.assertEqual(self.cert2.extendedKeyUsage, ExtendedKeyUsage('serverAuth'))
+        self.assertEqual(self.cert3.extendedKeyUsage, ExtendedKeyUsage('serverAuth'))
+        self.assertEqual(self.ocsp.extendedKeyUsage, ExtendedKeyUsage('OCSPSigning'))
 
     def test_crlDistributionPoints(self):
         self.assertEqual(self.ca.crlDistributionPoints(), certs['root']['crl'])  # None
@@ -244,11 +245,11 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertIsNone(cert.basicConstraints())
         self.assertIsNone(cert.subjectAltName())
         self.assertIsNone(cert.keyUsage)
-        self.assertIsNone(cert.extendedKeyUsage())
+        self.assertIsNone(cert.extendedKeyUsage)
         self.assertIsNone(cert.subjectKeyIdentifier())
         self.assertIsNone(cert.issuerAltName())
         self.assertIsNone(cert.authorityKeyIdentifier())
-        self.assertIsNone(cert.TLSFeature())
+        self.assertIsNone(cert.TLSFeature)
         self.assertIsNone(cert.certificatePolicies())
         self.assertIsNone(cert.signedCertificateTimestampList())
 

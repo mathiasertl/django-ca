@@ -49,10 +49,11 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         # verify X509 properties
         self.assertEqual(ca.basicConstraints(), (True, 'CA:TRUE, pathlen:0'))
         self.assertEqual(ca.keyUsage, KeyUsage('critical,cRLSign,keyCertSign'))
-        self.assertEqual(ca.subjectAltName(), None)
+        self.assertIsNone(ca.subjectAltName(), None)
 
-        self.assertEqual(ca.extendedKeyUsage(), None)
-        self.assertEqual(ca.issuerAltName(), None)
+        self.assertIsNone(ca.extendedKeyUsage)
+        self.assertIsNone(ca.TLSFeature)
+        self.assertIsNone(ca.issuerAltName())
 
     @override_tmpcadir()
     def test_pathlen(self):

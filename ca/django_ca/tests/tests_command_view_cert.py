@@ -53,7 +53,6 @@ class ViewCertTestCase(DjangoCAWithCertTestCase):
         }
 
     def test_basic(self):
-        self.maxDiff = None
         stdout, stderr = self.cmd('view_cert', self.cert.serial, stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stdout.decode('utf-8'), '''Common Name: %(cn)s
 Valid from: %(from)s
@@ -249,8 +248,8 @@ certificatePolicies:
     * OID 1.3.6.1.4.1.6449.1.2.2.7: https://secure.comodo.com/CPS
     * OID 2.23.140.1.2.1: None
 extendedKeyUsage:
-    * serverAuth
     * clientAuth
+    * serverAuth
 keyUsage (critical):
     * digitalSignature
 subjectAltName:
@@ -376,8 +375,8 @@ certificatePolicies:
     * OID 2.16.840.1.114413.1.7.23.1: http://certificates.godaddy.com/repository/
     * OID 2.23.140.1.2.1: None
 extendedKeyUsage:
-    * serverAuth
     * clientAuth
+    * serverAuth
 keyUsage (critical):
     * digitalSignature
     * keyEncipherment
@@ -446,7 +445,6 @@ HPKP pin: %(hpkp)s
 })
 
     def test_contrib_letsencrypt_jabber_at(self):
-        self.maxDiff = None
         if cryptography_version >= (2, 3):
             # Older versions of OpenSSL (and LibreSSL) cannot parse this extension
             # see https://github.com/pyca/cryptography/blob/master/tests/x509/test_x509_ext.py#L4455-L4459
@@ -486,8 +484,8 @@ certificatePolicies:
     * OID 2.23.140.1.2.1: None
     * OID 1.3.6.1.4.1.44947.1.1.1: http://cps.letsencrypt.org, This Certificate may only be relied upon by Relying Parties and only in accordance with the Certificate Policy found at https://letsencrypt.org/repository/
 extendedKeyUsage:
-    * serverAuth
     * clientAuth
+    * serverAuth
 keyUsage (critical):
     * digitalSignature
     * keyEncipherment%(signedCertificateTimestampList)s

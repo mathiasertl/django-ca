@@ -175,20 +175,6 @@ class SubjectAltNameWidget(CustomMultiWidget):
         return ('', True)
 
 
-class KeyUsageWidget(CustomMultiWidget):
-    def __init__(self, choices, attrs=None):
-        _widgets = (
-            widgets.SelectMultiple(choices=choices, attrs=attrs),
-            LabeledCheckboxInput(label=_('critical')),
-        )
-        super(KeyUsageWidget, self).__init__(_widgets, attrs)
-
-    def decompress(self, value):  # pragma: no cover
-        if value:
-            return value
-        return ([], True)
-
-
 class MultiValueExtensionWidget(CustomMultiWidget):
     def __init__(self, choices, attrs=None):
         _widgets = (
