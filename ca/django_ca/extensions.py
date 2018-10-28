@@ -88,7 +88,7 @@ class Extension(object):
         return x509.extensions.Extension(oid=self.oid, critical=self.critical, value=self.extension_type)
 
     def for_builder(self):
-        return {'extension': self.value, 'critical': self.critical}
+        return {'extension': self.extension_type, 'critical': self.critical}
 
 
 class MultiValueExtension(Extension):
