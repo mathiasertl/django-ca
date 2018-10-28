@@ -31,7 +31,6 @@ Installation/Configuration:
    update
    changelog
    settings
-   signals
 
 Usage:
 
@@ -45,6 +44,17 @@ Usage:
    crl
    ocsp
 
+Python API:
+
+.. toctree::
+   :maxdepth: 1
+
+   Introduction <python/intro>
+   signals
+   python/models
+   python/utils
+
+
 Development documentation:
 
 .. toctree::
@@ -55,14 +65,6 @@ Development documentation:
    release
    ca_examples
    extensions
-
-API documentation:
-
-.. toctree::
-   :maxdepth: 1
-
-   django_ca/models
-   django_ca/utils
 
 
 Indices and tables

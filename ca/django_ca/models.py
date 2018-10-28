@@ -406,9 +406,20 @@ class X509CertMixin(models.Model):
 
 
 class CertificateAuthority(X509CertMixin):
+    """foo
+
+    Parameters
+    ----------
+
+    name
+    enabled
+    parent
+    """
     objects = CertificateAuthorityManager.from_queryset(CertificateAuthorityQuerySet)()
 
     name = models.CharField(max_length=32, help_text=_('A human-readable name'), unique=True)
+    """Human-readable name of the CA, only used for displaying the CA."""
+
     enabled = models.BooleanField(default=True)
     parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True,
                                related_name='children')
@@ -437,6 +448,8 @@ class CertificateAuthority(X509CertMixin):
 
     @property
     def pathlen(self):
+        """The ``pathlen`` attribute of the ``BasicConstraints`` extension (either an ``int`` or ``None``)."""
+
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
         except x509.ExtensionNotFound:  # pragma: no cover - extension should always be present
@@ -445,6 +458,12 @@ class CertificateAuthority(X509CertMixin):
 
     @property
     def max_pathlen(self):
+        """The maximum pathlen for any intermediate CAs signed by this CA.
+
+        This value is either ``None``, if this and all parent CAs don't have a ``pathlen`` attribute, or an
+        ``int`` if any parent CA has the attribute.
+        """
+
         pathlen = self.pathlen
         if self.parent is None:
             return pathlen
@@ -484,6 +503,10 @@ class CertificateAuthority(X509CertMixin):
 
     @property
     def bundle(self):
+        """A list of any parent CAs, including this CA.
+
+        The list is ordered so the Root CA will be the first.
+        """
         ca = self
         bundle = [ca]
 

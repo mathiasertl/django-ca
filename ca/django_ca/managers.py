@@ -84,6 +84,9 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         Parameters
         ----------
 
+        name : str
+            The name of the CA. This can be a human-readable string and is used for administrative purposes
+            only.
         key_type: str, optional
             The type of private key to generate, must be one of ``"RSA"``, ``"DSA"`` or ``"ECC"``, with
             ``"RSA"`` being the default.
@@ -254,11 +257,11 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             A list of values for the subjectAltName extension. Values are passed to
             :py:func:`~django_ca.utils.parse_general_name`, see function documentation for how this value is
             parsed.
-        keyUsage : :py:class:`~django_ca.extensions.KeyUsage`
+        keyUsage : :py:class:`~django_ca.extensions.KeyUsage`, optional
             Value for the `keyUsage` X509 extension. See description for format details.
-        extendedKeyUsage : tuple or None
+        extendedKeyUsage : :py:class:`~django_ca.extensions.ExtendedKeyUsage`, optional
             Value for the `extendedKeyUsage` X509 extension. See description for format details.
-        tls_features : tuple
+        tls_features : :py:class:`~django_ca.extensions.TLSFeature`, optional
             Value for the `TLS Feature` X509 extension. See description for format details.
         password : bytes, optional
             Password used to load the private key of the certificate authority. If not passed, the private key
