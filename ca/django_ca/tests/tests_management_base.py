@@ -264,12 +264,11 @@ class CertificateActionTestCase(DjangoCAWithCertTestCase):
                                'setup.py: error: %s: Certificate not found.\n' % serial)
 
     def test_multiple(self):
-        # Create a second cert and manually set almost the same serial
-        cert2 = self.create_cert(self.ca, self.csr_pem, [('CN', 'example.com')])
-        cert2.serial = self.cert.serial[:-1] + 'X'
-        cert2.save()
+        # Manually set almost the same serial on second cert
+        self.cert_all.serial = self.cert.serial[:-1] + 'X'
+        self.cert_all.save()
 
-        serial = cert2.serial[:8]
+        serial = self.cert_all.serial[:8]
         self.assertParserError([serial],
                                'usage: setup.py [-h] cert\n'
                                'setup.py: error: %s: Multiple certificates match.\n'
