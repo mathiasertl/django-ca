@@ -97,6 +97,12 @@ class MultiValueExtension(Extension):
     """
     KNOWN_VALUES = set()
 
+    def _from_dict(self, value):
+        self.critical = value.get('critical', False)
+        self.value = value['value']
+        if isinstance(self.value, six.string_types):
+            self.value = [self.value]
+
     def _from_str(self, value):
         super(MultiValueExtension, self)._from_str(value)
         self.value = [v.strip() for v in self.value.split(',') if v.strip()]
