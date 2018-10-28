@@ -29,6 +29,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.conf import settings
 from django.contrib.messages import get_messages
+from django.core.management import ManagementUtility
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
@@ -498,6 +499,24 @@ class DjangoCATestCase(TestCase):
         output = buf.getvalue()
         self.assertEqual(output, expected)
         return output
+
+    def cmd_e2e(self, *cmd, stdin=None, stdout=None, stderr=None):
+        """Call a management command the way manage.py does.
+
+        Unlike call_command, this method also tests the argparse configuration of the called command.
+        """
+        if stdout is None:
+            stdout = StringIO()
+        if stderr is None:
+            stderr = StringIO()
+        if stdin is None:
+            stdin = StringIO()
+
+        with patch('sys.stdin', stdin), patch('sys.stdout', stdout), patch('sys.stderr', stderr):
+            util = ManagementUtility(['manage.py', ] + list(cmd))
+            util.execute()
+
+        return stdout.getvalue(), stderr.getvalue()
 
     def cmd(self, *args, **kwargs):
         kwargs.setdefault('stdout', StringIO())

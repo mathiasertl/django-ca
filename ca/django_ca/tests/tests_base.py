@@ -11,6 +11,7 @@ from django.test import TestCase
 
 from .. import ca_settings
 from .base import DjangoCATestCase
+from .base import DjangoCAWithCATestCase
 from .base import override_settings
 from .base import override_tmpcadir
 
@@ -89,3 +90,8 @@ class OverrideCaDirForFuncTestCase(DjangoCATestCase):
         self.assertTrue(ca_settings.CA_DIR.startswith(tempfile.gettempdir()), ca_settings.CA_DIR)
         self.assertNotIn(ca_settings.CA_DIR, self.seen_dirs)
         self.seen_dirs.add(ca_settings.CA_DIR)
+
+
+class CommandTestCase(DjangoCAWithCATestCase):
+    def test_basic(self):
+        self.cmd_e2e('list_cas')
