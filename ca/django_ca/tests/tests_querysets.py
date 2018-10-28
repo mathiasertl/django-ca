@@ -19,6 +19,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 
 from .. import ca_settings
+from ..extensions import KeyUsage
 from ..models import CertificateAuthority
 from ..subject import Subject
 from .base import DjangoCATestCase
@@ -47,7 +48,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
 
         # verify X509 properties
         self.assertEqual(ca.basicConstraints(), (True, 'CA:TRUE, pathlen:0'))
-        self.assertEqual(ca.keyUsage(), (True, ['cRLSign', 'keyCertSign']))
+        self.assertEqual(ca.keyUsage, KeyUsage('critical,cRLSign,keyCertSign'))
         self.assertEqual(ca.subjectAltName(), None)
 
         self.assertEqual(ca.extendedKeyUsage(), None)

@@ -42,6 +42,7 @@ from django.utils.encoding import force_str
 from django.utils.translation import ugettext_lazy as _
 
 from . import ca_settings
+from .extensions import KeyUsage
 from .managers import CertificateAuthorityManager
 from .managers import CertificateManager
 from .querysets import CertificateAuthorityQuerySet
@@ -50,7 +51,6 @@ from .signals import post_revoke_cert
 from .signals import pre_revoke_cert
 from .subject import Subject
 from .utils import EXTENDED_KEY_USAGE_REVERSED
-from .utils import KEY_USAGE_MAPPING
 from .utils import TLS_FEATURE_MAPPING_REVERSED
 from .utils import add_colons
 from .utils import format_general_name
@@ -163,7 +163,10 @@ class X509CertMixin(models.Model):
         for ext in sorted(self.x509.extensions, key=lambda e: e.oid._name):
             name = ext.oid._name.replace(' ', '')
             if hasattr(self, name):
-                yield name, getattr(self, name)()
+                value = getattr(self, name)
+                if callable(value):
+                    value = value()
+                yield name, value
             elif name == 'cRLDistributionPoints':
                 yield name, self.crlDistributionPoints()
             else:  # pragma: no cover  - we have a function for everything we support
@@ -228,21 +231,13 @@ class X509CertMixin(models.Model):
 
         return ext.critical, value
 
+    @property
     def keyUsage(self):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.KEY_USAGE)
         except x509.ExtensionNotFound:
             return None
-
-        usages = []
-        for key, value in KEY_USAGE_MAPPING.items():
-            try:
-                if getattr(ext.value, value):
-                    usages.append(key)
-            except ValueError:
-                pass
-
-        return ext.critical, list(sorted(usages))
+        return KeyUsage(ext)
 
     def extendedKeyUsage(self):
         try:

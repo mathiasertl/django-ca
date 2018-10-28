@@ -37,6 +37,7 @@ from django.utils.six.moves.urllib.parse import quote
 
 from django_webtest import WebTestMixin
 
+from ..extensions import KeyUsage
 from ..forms import CreateCertificateForm
 from ..models import Certificate
 from ..models import CertificateAuthority
@@ -379,7 +380,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(cert.subjectAltName(), (False, ['DNS:%s' % cn]))
         self.assertEqual(cert.basicConstraints(), (True, 'CA:FALSE'))
-        self.assertEqual(cert.keyUsage(), (True, ['digitalSignature', 'keyAgreement']))
+        self.assertEqual(cert.keyUsage, KeyUsage('critical,digitalSignature,keyAgreement'))
         self.assertEqual(cert.extendedKeyUsage(), (False, ['clientAuth', 'serverAuth']))
         self.assertEqual(cert.TLSFeature(),
                          (False, ['OCSPMustStaple', 'MultipleCertStatusRequest']))
@@ -443,7 +444,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(cert.subjectAltName(), (False, ['DNS:%s' % cn, 'DNS:%s' % san]))
         self.assertEqual(cert.basicConstraints(), (True, 'CA:FALSE'))
-        self.assertEqual(cert.keyUsage(), None)  # not present
+        self.assertIsNone(cert.keyUsage)  # not present
         self.assertEqual(cert.extendedKeyUsage(), None)  # not present
         self.assertEqual(cert.ca, self.ca)
         self.assertEqual(cert.csr, self.csr_pem)
@@ -532,7 +533,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertAuthorityKeyIdentifier(self.pwd_ca, cert)
         self.assertEqual(cert.subjectAltName(), (False, ['DNS:%s' % cn]))
         self.assertEqual(cert.basicConstraints(), (True, 'CA:FALSE'))
-        self.assertEqual(cert.keyUsage(), (True, ['digitalSignature', 'keyAgreement']))
+        self.assertEqual(cert.keyUsage, KeyUsage('critical,digitalSignature,keyAgreement'))
         self.assertEqual(cert.extendedKeyUsage(), (False, ['clientAuth', 'serverAuth']))
         self.assertEqual(cert.ca, self.pwd_ca)
         self.assertEqual(cert.csr, self.csr_pem)
@@ -937,7 +938,7 @@ class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithCertTestCase)
         self.assertEqual(cert.csr, resigned.csr)
         self.assertEqual(cert.distinguishedName(), resigned.distinguishedName())
         self.assertEqual(cert.extendedKeyUsage(), resigned.extendedKeyUsage())
-        self.assertEqual(cert.keyUsage(), resigned.keyUsage())
+        self.assertEqual(cert.keyUsage, resigned.keyUsage)
         self.assertEqual(cert.subjectAltName(), resigned.subjectAltName())
         self.assertEqual(cert.TLSFeature(), resigned.TLSFeature())
 

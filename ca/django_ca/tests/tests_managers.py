@@ -15,6 +15,7 @@
 
 from cryptography.hazmat.primitives import hashes
 
+from ..extensions import KeyUsage
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..subject import Subject
@@ -47,7 +48,9 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         c = Certificate()
         c.x509 = cert
         exts = [e.oid._name for e in cert.extensions]
-        exts = {name: getattr(c, name)() for name in exts}
+        # TODO: remove cruft if Extensions framework is fully implemented
+        exts = {name: getattr(c, name) for name in exts}
+        exts = {name: value() if callable(value) else value for name, value in exts.items()}
 
         skid_critical, skid = exts.pop('subjectKeyIdentifier')
         self.assertFalse(skid_critical)
@@ -56,6 +59,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         self.assertEqual(exts, expected)
 
     def test_basic(self):
+        self.maxDiff = None
         kwargs = get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
 
@@ -75,7 +79,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         # verify extensions
         extensions = {
             'extendedKeyUsage': (False, ['serverAuth']),
-            'keyUsage': (True, ['digitalSignature', 'keyAgreement', 'keyEncipherment']),
+            'keyUsage': KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'),
             'subjectAltName': (False, ['DNS:example.com']),
         }
 
@@ -93,7 +97,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         # verify extensions
         self.assertExtensions(cert.x509, {
             'extendedKeyUsage': (False, ['serverAuth']),
-            'keyUsage': (True, ['digitalSignature', 'keyAgreement', 'keyEncipherment']),
+            'keyUsage': KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'),
             'subjectAltName': (False, ['DNS:example.com']),
         })
 

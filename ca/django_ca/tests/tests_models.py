@@ -23,6 +23,7 @@ from cryptography.x509.oid import ObjectIdentifier
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
+from ..extensions import KeyUsage
 from ..models import Certificate
 from ..models import Watcher
 from .base import DjangoCAWithCertTestCase
@@ -158,16 +159,16 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertEqual(self.cert3.issuerAltName(), certs['cert3']['issuerAltName'])
 
     def test_keyUsage(self):
-        self.assertEqual(self.ca.keyUsage(), (True, ['cRLSign', 'keyCertSign']))
-        self.assertEqual(self.ca2.keyUsage(), (True, ['cRLSign', 'keyCertSign']))
-        self.assertEqual(self.cert.keyUsage(),
-                         (True, ['digitalSignature', 'keyAgreement', 'keyEncipherment']))
-        self.assertEqual(self.cert2.keyUsage(),
-                         (True, ['digitalSignature', 'keyAgreement', 'keyEncipherment']))
-        self.assertEqual(self.cert3.keyUsage(),
-                         (True, ['digitalSignature', 'keyAgreement', 'keyEncipherment']))
-        self.assertEqual(self.ocsp.keyUsage(),
-                         (True, ['digitalSignature', 'keyEncipherment', 'nonRepudiation']))
+        self.assertEqual(self.ca.keyUsage, KeyUsage('critical,cRLSign,keyCertSign'))
+        self.assertEqual(self.ca2.keyUsage, KeyUsage('critical,cRLSign,keyCertSign'))
+        self.assertEqual(self.cert.keyUsage,
+                         KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'))
+        self.assertEqual(self.cert2.keyUsage,
+                         KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'))
+        self.assertEqual(self.cert3.keyUsage,
+                         KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'))
+        self.assertEqual(self.ocsp.keyUsage,
+                         KeyUsage('critical,digitalSignature,keyEncipherment,nonRepudiation'))
 
     def test_extendedKeyUsage(self):
         self.assertEqual(self.ca.extendedKeyUsage(), None)
@@ -242,7 +243,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertIsNone(cert.authorityInfoAccess())
         self.assertIsNone(cert.basicConstraints())
         self.assertIsNone(cert.subjectAltName())
-        self.assertIsNone(cert.keyUsage())
+        self.assertIsNone(cert.keyUsage)
         self.assertIsNone(cert.extendedKeyUsage())
         self.assertIsNone(cert.subjectKeyIdentifier())
         self.assertIsNone(cert.issuerAltName())

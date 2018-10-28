@@ -165,8 +165,6 @@ X509 v3 certificate extensions for signed certificates:
             'hpkp': ca.hpkp_pin,
             'authKeyIdentifier': ca.authorityKeyIdentifier()[1],
             'basicConstraints': ca.basicConstraints()[1],
-            'keyUsage_0': ca.keyUsage()[1][0],
-            'keyUsage_1': ca.keyUsage()[1][1],
             'subjectKeyIdentifier': ca.subjectKeyIdentifier()[1],
             'pem': ca.pub,
             'name': ca.name,
@@ -187,8 +185,8 @@ authorityKeyIdentifier:
 basicConstraints (critical):
     %(basicConstraints)s
 keyUsage (critical):
-    * %(keyUsage_0)s
-    * %(keyUsage_1)s
+    * cRLSign
+    * keyCertSign
 subjectKeyIdentifier:
     %(subjectKeyIdentifier)s
 

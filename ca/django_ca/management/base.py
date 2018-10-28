@@ -36,6 +36,7 @@ from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 
 from .. import ca_settings
+from ..extensions import Extension
 from ..extensions import KeyUsage
 from ..models import Certificate
 from ..models import CertificateAuthority
@@ -320,6 +321,10 @@ class BaseCommand(_BaseCommand):
             return ''.join(prefixed_lines())
 
     def print_extension(self, name, value):
+        if isinstance(value, Extension):
+            self.stdout.write(value.as_text)
+            return
+
         critical, value = value
         if critical:
             self.stdout.write('%s (critical):' % name)

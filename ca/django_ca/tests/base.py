@@ -483,7 +483,10 @@ class DjangoCATestCase(TestCase):
         if 'cRLDistributionPoints' in exts:
             exts.remove('cRLDistributionPoints')
             exts.append('crlDistributionPoints')
-        return {name: getattr(c, name)() for name in exts}
+
+        # TODO: remove cruft if Extensions framework is fully implemented
+        exts = {name: getattr(c, name) for name in exts}
+        return {name: value() if callable(value) else value for name, value in exts.items()}
 
     @classmethod
     def get_alt_names(cls, x509):
@@ -500,7 +503,7 @@ class DjangoCATestCase(TestCase):
         self.assertEqual(output, expected)
         return output
 
-    def cmd_e2e(self, *cmd, stdin=None, stdout=None, stderr=None):
+    def cmd_e2e(self, cmd, stdin=None, stdout=None, stderr=None):
         """Call a management command the way manage.py does.
 
         Unlike call_command, this method also tests the argparse configuration of the called command.

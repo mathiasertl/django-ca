@@ -94,4 +94,4 @@ class OverrideCaDirForFuncTestCase(DjangoCATestCase):
 
 class CommandTestCase(DjangoCAWithCATestCase):
     def test_basic(self):
-        self.cmd_e2e('list_cas')
+        self.cmd_e2e(['list_cas'])

@@ -41,7 +41,6 @@ from .signals import pre_create_ca
 from .signals import pre_issue_cert
 from .subject import Subject
 from .utils import EXTENDED_KEY_USAGE_MAPPING
-from .utils import KEY_USAGE_MAPPING
 from .utils import TLS_FEATURE_MAPPING
 from .utils import get_cert_builder
 from .utils import is_power2
@@ -326,11 +325,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             builder = builder.add_extension(x509.SubjectAlternativeName(subjectAltName), critical=False)
 
         if keyUsage:
-            critical, values = keyUsage
-            params = {v: False for v in KEY_USAGE_MAPPING.values()}
-            for value in [KEY_USAGE_MAPPING[k] for k in values.split(',')]:
-                params[value] = True
-            builder = builder.add_extension(x509.KeyUsage(**params), critical=critical)
+            builder = builder.add_extension(**keyUsage.for_builder())
 
         if extendedKeyUsage:
             critical, usages = extendedKeyUsage

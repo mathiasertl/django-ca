@@ -84,8 +84,23 @@ class Extension(object):
     def _test_value(self):
         pass
 
+    @property
+    def _text_header(self):
+        if self.critical:
+            return '%s (critical):' % self.oid._name
+        else:
+            return '%s:' % self.oid._name
+
+    @property
+    def _text_value(self):
+        return self.value
+
     def as_extension(self):
         return x509.extensions.Extension(oid=self.oid, critical=self.critical, value=self.extension_type)
+
+    @property
+    def as_text(self):
+        return '%s\n    %s' % (self._text_header, self._text_value)
 
     def for_builder(self):
         return {'extension': self.extension_type, 'critical': self.critical}
@@ -96,6 +111,13 @@ class MultiValueExtension(Extension):
 
     """
     KNOWN_VALUES = set()
+
+    def __eq__(self, other):
+        return isinstance(other, type(self)) and self.critical == other.critical \
+            and sorted(self.value) == sorted(other.value)
+
+    def __str__(self):
+        return '<%s: %s, critical=%s>' % (self.__class__.__name__, sorted(self.value), self.critical)
 
     def _from_dict(self, value):
         self.critical = value.get('critical', False)
@@ -117,6 +139,11 @@ class MultiValueExtension(Extension):
         diff = set(self.value) - self.KNOWN_VALUES
         if diff:
             raise ValueError('Unknown value(s): %s' % ', '.join(sorted(diff)))
+
+    @property
+    def _text_value(self):
+        # note: we strip here because as_text() already appends the first four spaces
+        return '\n'.join(['    * %s' % v for v in sorted(self.value)]).strip()
 
     def form_decompress(self):
         return self.value, self.critical

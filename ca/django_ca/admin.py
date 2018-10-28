@@ -46,6 +46,8 @@ from django.utils.translation import ugettext_lazy as _
 from django_object_actions import DjangoObjectActions
 
 from . import ca_settings
+from .extensions import Extension
+from .extensions import MultiValueExtension
 from .forms import CreateCertificateForm
 from .forms import ResignCertificateForm
 from .forms import RevokeCertificateForm
@@ -150,22 +152,37 @@ class CertificateMixin(object):
 
     def output_extension(self, value):
         # shared function for formatting extension values
-        if value is None:
+        if not value:
             return '<none>'
 
-        critical, value = value
         html = ''
-        if critical is True:
-            text = _('Critical')
-            html = '<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text)
+        if isinstance(value, Extension):
+            if value.critical is True:
+                text = _('Critical')
+                html = '<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text)
 
-        if isinstance(value, list):
-            html += '<ul class="x509-extension-value">'
-            for val in value:
-                html += '<li>%s</li>' % escape(val)
-            html += '</ul>'
-        else:  # string or extension
-            html += '<p>%s<p>' % escape(value)
+            if isinstance(value, MultiValueExtension):
+                html += '<ul class="x509-extension-value">'
+                for val in value.value:
+                    html += '<li>%s</li>' % escape(val)
+                html += '</ul>'
+            else:
+                html += '<p>%s<p>' % escape(value)
+
+        # old-style extension objects
+        else:
+            critical, value = value
+            if critical is True:
+                text = _('Critical')
+                html = '<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text)
+
+            if isinstance(value, list):
+                html += '<ul class="x509-extension-value">'
+                for val in value:
+                    html += '<li>%s</li>' % escape(val)
+                html += '</ul>'
+            else:  # string or extension
+                html += '<p>%s<p>' % escape(value)
 
         return mark_safe(html)
 
@@ -178,7 +195,7 @@ class CertificateMixin(object):
     authorityInfoAccess.short_description = 'authorityInfoAccess'
 
     def keyUsage(self, obj):
-        return self.output_extension(obj.keyUsage())
+        return self.output_extension(obj.keyUsage)
     keyUsage.short_description = 'keyUsage'
 
     def extendedKeyUsage(self, obj):
@@ -461,11 +478,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             else:
                 extKeyUsage = [], False
 
-            keyUsage = resign_obj.keyUsage()
-            if keyUsage:
-                keyUsage = (keyUsage[1], keyUsage[0])
-            else:
-                keyUsage = [], False
+            keyUsage = resign_obj.keyUsage
 
             tlsFeatures = resign_obj.TLSFeature()
             if tlsFeatures:

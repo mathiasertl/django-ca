@@ -24,6 +24,7 @@ from django.core.management.base import CommandError
 from django.utils import six
 
 from .. import ca_settings
+from ..extensions import KeyUsage
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..signals import post_issue_cert
@@ -56,7 +57,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertSubject(cert.x509, subject)
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
 
-        self.assertEqual(cert.keyUsage(), (True, ['digitalSignature', 'keyAgreement', 'keyEncipherment']))
+        self.assertEqual(cert.keyUsage, KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'))
         self.assertEqual(cert.extendedKeyUsage(), (False, ['serverAuth']))
         self.assertEqual(cert.subjectAltName(), (False, ['DNS:example.com']))
         self.assertIssuer(self.ca, cert)
@@ -80,7 +81,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertSubject(cert.x509, subject)
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
 
-        self.assertEqual(cert.keyUsage(), (True, ['digitalSignature', 'keyAgreement', 'keyEncipherment']))
+        self.assertEqual(cert.keyUsage, KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'))
         self.assertEqual(cert.extendedKeyUsage(), (False, ['serverAuth']))
         self.assertEqual(cert.subjectAltName(), (False, ['DNS:ecc-signed.example.com']))
         self.assertIssuer(self.ecc_ca, cert)
@@ -105,7 +106,8 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
 
             self.assertSubject(cert.x509, subject)
             self.assertEqual(stdout, cert.pub)
-            self.assertEqual(cert.keyUsage(), (True, ['digitalSignature', 'keyAgreement', 'keyEncipherment']))
+            self.assertEqual(cert.keyUsage,
+                             KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'))
             self.assertEqual(cert.extendedKeyUsage(), (False, ['serverAuth']))
             self.assertEqual(cert.subjectAltName(), (False, ['DNS:example.com']))
         finally:
@@ -262,7 +264,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         ]
 
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
-            stdout, stderr = self.cmd_e2e(*cmdline, stdin=stdin)
+            stdout, stderr = self.cmd_e2e(cmdline, stdin=stdin)
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(stderr, '')
 
@@ -271,7 +273,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertSignature([self.ca], cert)
         self.assertSubject(cert.x509, [('CN', 'example.com')])
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
-        self.assertEqual(cert.keyUsage(), (True, ['keyCertSign']))
+        self.assertEqual(cert.keyUsage, KeyUsage('critical,keyCertSign'))
         self.assertEqual(cert.extendedKeyUsage(), (False, ['clientAuth']))
         self.assertEqual(cert.subjectAltName(), (False, ['DNS:example.com', 'URI:https://example.net']))
         self.assertEqual(cert.TLSFeature(), (False, ['OCSPMustStaple']))
@@ -362,7 +364,8 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
 
             self.assertSubject(cert.x509, subject)
             self.assertEqual(stdout, cert.pub)
-            self.assertEqual(cert.keyUsage(), (True, ['digitalSignature', 'keyAgreement', 'keyEncipherment']))
+            self.assertEqual(cert.keyUsage,
+                             KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'))
             self.assertEqual(cert.extendedKeyUsage(), (False, ['serverAuth']))
             self.assertEqual(cert.subjectAltName(), (False, ['DNS:example.com']))
         finally:
@@ -421,7 +424,7 @@ class SignCertChildCATestCase(DjangoCAWithCSRTestCase):
         self.assertSubject(cert.x509, subject)
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
 
-        self.assertEqual(cert.keyUsage(), (True, ['digitalSignature', 'keyAgreement', 'keyEncipherment']))
+        self.assertEqual(cert.keyUsage, KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'))
         self.assertEqual(cert.extendedKeyUsage(), (False, ['serverAuth']))
         self.assertEqual(cert.subjectAltName(), (False, ['DNS:example.com']))
         self.assertIssuer(self.child_ca, cert)
