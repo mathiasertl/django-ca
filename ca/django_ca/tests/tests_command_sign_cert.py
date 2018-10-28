@@ -253,13 +253,16 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
 
     def test_extensions(self):
         stdin = six.StringIO(self.csr_pem)
+        cmdline = [
+            'sign_cert', '--subject=%s' % Subject([('CN', 'example.com')]),
+            '--key-usage=critical,keyCertSign',
+            '--ext-key-usage=clientAuth',
+            '--alt=URI:https://example.net',
+            '--tls-features=OCSPMustStaple',
+        ]
+
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
-            stdout, stderr = self.cmd('sign_cert', subject=Subject([('CN', 'example.com')]),
-                                      key_usage='critical,keyCertSign',
-                                      ext_key_usage='clientAuth',
-                                      alt=['URI:https://example.net'],
-                                      tls_features='OCSPMustStaple',
-                                      stdin=stdin)
+            stdout, stderr = self.cmd_e2e(*cmdline, stdin=stdin)
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(stderr, '')
 
