@@ -19,6 +19,7 @@ import idna
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -71,7 +72,7 @@ class CertificateManagerMixin(object):
 
 
 class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
-    def init(self, name, algorithm, expires, subject, parent=None, pathlen=None,
+    def init(self, name, expires, subject, algorithm=None, parent=None, pathlen=None,
              issuer_url=None, issuer_alt_name=None, crl_url=None, ocsp_url=None,
              ca_issuer_url=None, ca_crl_url=None, ca_ocsp_url=None, name_constraints=None,
              password=None, parent_password=None, ecc_curve=None, key_type='RSA', key_size=None):
@@ -83,10 +84,13 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         name : str
             The name of the CA. This can be a human-readable string and is used for administrative purposes
             only.
-        algorithm : :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`
-            Hash algorithm used when signing the certificate. Must be an instance of
+        algorithm : str or :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
+            Hash algorithm used when signing the certificate. If a string is passed, it must be the name of
+            one of the hashes in :py:mod:`~cryptography:cryptography.hazmat.primitives.hashes`, e.g.
+            ``"SHA512"``. This method also accepts instances of
             :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`, e.g.
-            :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.SHA512`.
+            :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.SHA512`. The default is the
+            ``CA_DIGEST_ALGORITHM`` setting.
         expires : datetime
             Datetime for when this certificate expires.
         subject : :py:class:`~django_ca.subject.Subject`
@@ -112,6 +116,8 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         Raises
         ------
 
+        ValueError
+            For various cases of wrong input data (e.g. ``key_size`` not being the power of two).
         PermissionError
             If the private key file cannot be written to disk.
         """
@@ -123,6 +129,14 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             elif key_size < ca_settings.CA_MIN_KEY_SIZE:
                 raise RuntimeError("%s: Key size must be least %s bits."
                                    % (key_size, ca_settings.CA_MIN_KEY_SIZE))
+
+        if algorithm is None:
+            algorithm = ca_settings.CA_DIGEST_ALGORITHM
+        elif isinstance(algorithm, six.string_types):
+            try:
+                algorithm = getattr(hashes, algorithm.upper().strip())()
+            except AttributeError:
+                raise ValueError('Unknown hash algorithm: %s' % algorithm)
 
         pre_create_ca.send(
             sender=self.model, name=name, key_size=key_size, key_type=key_type, algorithm=algorithm,
@@ -215,7 +229,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
 
 class CertificateManager(CertificateManagerMixin, models.Manager):
-    def sign_cert(self, ca, csr, expires, algorithm, subject=None, cn_in_san=True, csr_format=Encoding.PEM,
+    def sign_cert(self, ca, csr, expires, algorithm=None, subject=None, cn_in_san=True, csr_format=Encoding.PEM,
                   subjectAltName=None, key_usage=None, extended_key_usage=None, tls_feature=None,
                   password=None):
         """Create a signed certificate from a CSR.
@@ -233,8 +247,13 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             A valid CSR. The format is given by the ``csr_format`` parameter.
         expires : int
             When the certificate should expire (passed to :py:func:`~django_ca.utils.get_cert_builder`).
-        algorithm : {'sha512', 'sha256', ...}
-            Algorithm used to sign the certificate. The default is the CA_DIGEST_ALGORITHM setting.
+        algorithm : str or :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
+            Hash algorithm used when signing the certificate. If a string is passed, it must be the name of
+            one of the hashes in :py:mod:`~cryptography:cryptography.hazmat.primitives.hashes`, e.g.
+            ``"SHA512"``. This method also accepts instances of
+            :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`, e.g.
+            :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.SHA512`. The default is the
+            ``CA_DIGEST_ALGORITHM`` setting.
         subject : :py:class:`~django_ca.subject.Subject`, optional
             The Subject to use in the certificate. If this value is not passed or if the value does not
             contain a CommonName, the first value of the ``subjectAltName`` parameter is used as CommonName.
@@ -270,6 +289,14 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
 
         if 'CN' not in subject and not subjectAltName:
             raise ValueError("Must name at least a CN or a subjectAltName.")
+
+        if algorithm is None:
+            algorithm = ca_settings.CA_DIGEST_ALGORITHM
+        elif isinstance(algorithm, six.string_types):
+            try:
+                algorithm = getattr(hashes, algorithm.upper().strip())()
+            except AttributeError:
+                raise ValueError('Unknown hash algorithm: %s' % algorithm)
 
         if subjectAltName:
             subjectAltName = [parse_general_name(san) for san in subjectAltName]

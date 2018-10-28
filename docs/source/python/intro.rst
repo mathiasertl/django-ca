@@ -46,8 +46,7 @@ creates a minimal CA::
    >>> from cryptography.hazmat.primitives import hashes
    >>> from datetime import datetime
    >>> ca = CertificateAuthority.objects.init(
-   ...     name='A new CA', algorithm=hashes.SHA512,
-   ...     expires=datetime(2018, 12, 24),
+   ...     name='A new CA', expires=datetime(2018, 12, 24),
    ...     subject=Subject('/CN=ca.example.com')
    ... )
 
