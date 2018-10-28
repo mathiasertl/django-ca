@@ -211,6 +211,20 @@ class MultipleURLAction(argparse.Action):
         getattr(namespace, self.dest).append(value)
 
 
+class MultiValueExtensionAction(argparse.Action):
+    def __init__(self, *args, **kwargs):
+        self.extension = kwargs.pop('extension')
+        super(MultiValueExtensionAction, self).__init__(*args, **kwargs)
+
+    def __call__(self, parser, namespace, value, option_string=None):
+        try:
+            value = self.extension(value)
+        except ValueError as e:
+            parser.error('Invalid extension value: %s: %s' % (value, e))
+
+        setattr(namespace, self.dest, value)
+
+
 class BinaryOutputWrapper(OutputWrapper):
     def __init__(self, out, style_func=None, ending=b'\n'):
         super(BinaryOutputWrapper, self).__init__(out, style_func=None, ending=ending)

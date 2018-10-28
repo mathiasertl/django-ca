@@ -21,6 +21,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
 
+from ..extensions import KeyUsage
 from ..management import base
 from ..models import CertificateAuthority
 from ..subject import Subject
@@ -66,6 +67,30 @@ class SubjectActionTestCase(DjangoCATestCase):
         self.assertParserError(['--subject=/WRONG=foobar'],
                                'usage: setup.py [-h] [--subject SUBJECT]\n'
                                'setup.py: error: Unknown x509 name field: WRONG\n')
+
+
+class MultiValueExtensionAction(DjangoCATestCase):
+    def setUp(self):
+        super(MultiValueExtensionAction, self).setUp()
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument('-e', action=base.MultiValueExtensionAction, extension=KeyUsage)
+
+    def test_basic(self):
+        ns = self.parser.parse_args(['-e=critical,keyAgreement'])
+        self.assertEqual(ns.e, KeyUsage('critical,keyAgreement'))
+        self.assertTrue(ns.e.critical)
+        self.assertEqual(ns.e.value, ['keyAgreement'])
+
+        # test a non-critical value
+        ns = self.parser.parse_args(['-e=keyAgreement'])
+        self.assertEqual(ns.e, KeyUsage('keyAgreement'))
+        self.assertFalse(ns.e.critical)
+        self.assertEqual(ns.e.value, ['keyAgreement'])
+
+    def test_error(self):
+        self.assertParserError(['-e=foobar'],
+                               'usage: setup.py [-h] [-e E]\n'
+                               'setup.py: error: Invalid extension value: foobar: Unknown value(s): foobar\n')
 
 
 class FormatActionTestCase(DjangoCATestCase):
