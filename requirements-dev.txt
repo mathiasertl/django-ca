@@ -12,8 +12,6 @@ pip>=9.0.1
 pyOpenSSL==18.0.0
 setuptools>=40.4.3
 six==1.11.0
-# Exclude python3.7 because sphinx-autobuild depends on pyYAML and that 
-# currently does not install in 3.7
-sphinx-autobuild==0.7.1; python_version < '3.7'
+sphinx-autobuild==0.7.1
 sphinx-rtd-theme==0.4.2
 wheel==0.32.2
