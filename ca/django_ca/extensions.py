@@ -56,6 +56,12 @@ class Extension(object):
     def __eq__(self, other):
         return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
 
+    def __repr__(self):
+        return str(self)
+
+    def __str__(self):
+        return '<%s: %s, critical=%s>' % (self.__class__.__name__, self.value, self.critical)
+
     def _from_str(self, value):
         if value.startswith('critical,'):
             self.critical = True
@@ -93,7 +99,7 @@ class MultiValueExtension(Extension):
 
     def _from_str(self, value):
         super(MultiValueExtension, self)._from_str(value)
-        self.value = self.value.split(',')
+        self.value = [v.strip() for v in self.value.split(',') if v.strip()]
 
     def __contains__(self, value):
         return value in self.value
@@ -101,7 +107,7 @@ class MultiValueExtension(Extension):
     def __len__(self):
         return len(self.value)
 
-    def test_value(self):
+    def _test_value(self):
         diff = set(self.value) - self.KNOWN_VALUES
         if diff:
             raise ValueError('Unknown value(s): %s' % ', '.join(sorted(diff)))
