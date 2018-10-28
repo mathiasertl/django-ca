@@ -68,7 +68,7 @@ Django model::
 Much like with certificate authorities, creating a new certificate requires a management method::
 
    >>> from django_ca.models import Certificate
-   >>> cert = Certificate.objects.sign_cert(ca, csr, ...)
+   >>> cert = Certificate.objects.init(ca, csr, ...)
 
 ***********************
 Subjects and Extensions
@@ -78,7 +78,7 @@ Subjects and Extensions
 certificates more easily. These classes are easy to instantiate and provide convenient access methods:
 
 * :py:class:`django_ca.subject.Subject` handles x509 subjects, e.g. as used in a certificate subject.
-* :py:class:`django_ca.extension` is a module that includes various classes that represent x509 extensions.
+* :py:class:`django_ca.extensions` is a module that includes various classes that represent x509 extensions.
 
 *******
 Signals

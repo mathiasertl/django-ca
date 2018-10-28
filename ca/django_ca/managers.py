@@ -224,11 +224,9 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
                   password=None):
         """Create a signed certificate from a CSR.
 
-        X509 extensions (`keyUsage`, `extendedKeyUsage` and `tls_features`) may either be None (in which case
-        they are not added) or a tuple with the first value being a bool indicating if the value is critical
-        and the second value being a byte-array indicating the extension value. Example::
-
-            (True, b'value')
+        **PLEASE NOTE:** This function creates the raw certificate and is usually not invoked directly. It is
+        called by :py:func:`Certificate.objects.init() <django_ca.managers.CertificateManager.init>`, which
+        passes along all parameters unchanged and saves the raw certificate to the database.
 
         Parameters
         ----------
@@ -354,6 +352,12 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         return builder.sign(private_key=ca.key(password), algorithm=algorithm, backend=default_backend()), req
 
     def init(self, ca, csr, **kwargs):
+        """Create a signed certificate from a CSR and store it to the database.
+
+        All parameters are passed on to :py:func:`Certificate.objects.sign_cert()
+        <django_ca.managers.CertificateManager.sign_cert>`.
+        """
+
         pre_issue_cert.send(sender=self.model, ca=ca, csr=csr, **kwargs)
 
         c = self.model(ca=ca)

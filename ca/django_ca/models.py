@@ -406,20 +406,10 @@ class X509CertMixin(models.Model):
 
 
 class CertificateAuthority(X509CertMixin):
-    """foo
-
-    Parameters
-    ----------
-
-    name
-    enabled
-    parent
-    """
     objects = CertificateAuthorityManager.from_queryset(CertificateAuthorityQuerySet)()
 
     name = models.CharField(max_length=32, help_text=_('A human-readable name'), unique=True)
     """Human-readable name of the CA, only used for displaying the CA."""
-
     enabled = models.BooleanField(default=True)
     parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True,
                                related_name='children')

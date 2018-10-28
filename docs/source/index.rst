@@ -51,6 +51,7 @@ Python API:
 
    Introduction <python/intro>
    signals
+   python/extensions
    python/models
    python/utils
 
