@@ -71,10 +71,10 @@ class CertificateManagerMixin(object):
 
 
 class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
-    def init(self, name, key_type, algorithm, expires, parent, subject, pathlen=None,
+    def init(self, name, algorithm, expires, parent, subject, pathlen=None,
              issuer_url=None, issuer_alt_name=None, crl_url=None, ocsp_url=None,
              ca_issuer_url=None, ca_crl_url=None, ca_ocsp_url=None, name_constraints=None,
-             password=None, parent_password=None, ecc_curve=None, key_size=None):
+             password=None, parent_password=None, ecc_curve=None, key_type='RSA', key_size=None):
         """Create a new certificate authority.
 
         Parameters
@@ -83,9 +83,6 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         name : str
             The name of the CA. This can be a human-readable string and is used for administrative purposes
             only.
-        key_type: str, optional
-            The type of private key to generate, must be one of ``"RSA"``, ``"DSA"`` or ``"ECC"``, with
-            ``"RSA"`` being the default.
         algorithm : :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`
             Hash algorithm used when signing the certificate. Must be an instance of
             :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`, e.g.
@@ -105,6 +102,9 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         ecc_curve : str or EllipticCurve, optional
             The elliptic curve to use for ECC type keys, passed verbatim to
             :py:func:`~django_ca.utils.parse_key_curve`.
+        key_type: str, optional
+            The type of private key to generate, must be one of ``"RSA"``, ``"DSA"`` or ``"ECC"``, with
+            ``"RSA"`` being the default.
         key_size : int, optional
             Integer specifying the key size, must be a power of two (e.g. 2048, 4096, ...) unused if
             ``key_type="ECC"`` but required otherwise.
