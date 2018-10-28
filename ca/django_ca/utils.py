@@ -27,10 +27,7 @@ import idna
 from asn1crypto.core import OctetString
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.x509 import TLSFeatureType
-from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import NameOID
-from cryptography.x509.oid import ObjectIdentifier
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import URLValidator
@@ -92,26 +89,6 @@ MULTIPLE_OIDS = (
 
 # uppercase values as keys for normalizing case
 NAME_CASE_MAPPINGS = {v.upper(): v for v in OID_NAME_MAPPINGS.values()}
-
-EXTENDED_KEY_USAGE_MAPPING = {
-    'serverAuth': ExtendedKeyUsageOID.SERVER_AUTH,
-    'clientAuth': ExtendedKeyUsageOID.CLIENT_AUTH,
-    'codeSigning': ExtendedKeyUsageOID.CODE_SIGNING,
-    'emailProtection': ExtendedKeyUsageOID.EMAIL_PROTECTION,
-    'timeStamping': ExtendedKeyUsageOID.TIME_STAMPING,
-    'OCSPSigning': ExtendedKeyUsageOID.OCSP_SIGNING,
-    'smartcardLogon': ObjectIdentifier("1.3.6.1.4.1.311.20.2.2"),
-    'msKDC': ObjectIdentifier("1.3.6.1.5.2.3.5"),
-}
-EXTENDED_KEY_USAGE_REVERSED = {v: k for k, v in EXTENDED_KEY_USAGE_MAPPING.items()}
-
-TLS_FEATURE_MAPPING = {
-    # https://tools.ietf.org/html/rfc6066.html:
-    'OCSPMustStaple': TLSFeatureType.status_request,
-    # https://tools.ietf.org/html/rfc6961.html (not commonly used):
-    'MultipleCertStatusRequest': TLSFeatureType.status_request_v2,
-}
-TLS_FEATURE_MAPPING_REVERSED = {v: k for k, v in TLS_FEATURE_MAPPING.items()}
 
 
 class LazyEncoder(DjangoJSONEncoder):
