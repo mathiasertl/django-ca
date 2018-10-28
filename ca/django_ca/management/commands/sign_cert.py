@@ -87,7 +87,7 @@ the default values, options like --key-usage still override the profile.""")
         if options['cn_in_san'] is not None:
             kwargs['cn_in_san'] = options['cn_in_san']
         if options['key_usage']:
-            kwargs['keyUsage'] = self.parse_extension(options['key_usage'])
+            kwargs['keyUsage'] = options['key_usage']
         if options['ext_key_usage']:
             kwargs['extendedKeyUsage'] = self.parse_extension(options['ext_key_usage'])
         if options['tls_features']:
