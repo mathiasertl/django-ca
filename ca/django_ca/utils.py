@@ -19,6 +19,7 @@ import os
 import re
 from copy import deepcopy
 from datetime import datetime
+from datetime import timedelta
 from ipaddress import ip_address
 from ipaddress import ip_network
 
@@ -29,9 +30,11 @@ from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509.oid import NameOID
 
+from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import URLValidator
 from django.utils import six
+from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 from django.utils.functional import Promise
@@ -514,6 +517,20 @@ def parse_key_curve(value=None):
     return curve()
 
 
+def get_expires(value=None, now=None):
+    if now is None:
+        now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+
+    if value is None:
+        value = ca_settings.CA_DEFAULT_EXPIRES
+
+    # If USE_TZ is True, we make the object timezone aware, otherwise comparing goes wrong.
+    if settings.USE_TZ:
+        now = timezone.make_aware(now)
+
+    return now + timedelta(days=value + 1)
+
+
 def get_cert_builder(expires, now=None):
     """Get a basic X509 cert object.
 
@@ -528,6 +545,9 @@ def get_cert_builder(expires, now=None):
     if now is None:
         now = datetime.utcnow()
     now = now.replace(second=0, microsecond=0)
+
+    if expires is None:
+        expires = get_expires(expires, now=now)
     expires = expires.replace(second=0, microsecond=0)
 
     builder = x509.CertificateBuilder()

@@ -18,13 +18,10 @@ import getpass
 import os
 import sys
 import textwrap
-from datetime import datetime
-from datetime import timedelta
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
-from django.conf import settings
 from django.core.management.base import BaseCommand as _BaseCommand
 from django.core.management.base import CommandError
 from django.core.management.base import OutputWrapper
@@ -44,6 +41,7 @@ from ..models import Certificate
 from ..models import CertificateAuthority
 from ..subject import Subject
 from ..utils import SUBJECT_FIELDS
+from ..utils import get_expires
 from ..utils import is_power2
 from ..utils import parse_key_curve
 
@@ -179,26 +177,15 @@ class ExpiresAction(argparse.Action):
 
         default = kwargs.get('default')  # default may either be int or datetime
         if isinstance(default, int):
-            kwargs['default'] = self._get_delta(kwargs['default'])
+            kwargs['default'] = get_expires(kwargs['default'], now=self.now)
 
         super(ExpiresAction, self).__init__(*args, **kwargs)
-
-    def _get_delta(self, value):
-        now = self.now
-        if now is None:
-            now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-
-        # If USE_TZ is True, we make the object timezone aware, otherwise comparing goes wrong.
-        if settings.USE_TZ:
-            now = timezone.make_aware(now)
-
-        return now + timedelta(days=value + 1)
 
     def __call__(self, parser, namespace, value, option_string=None):
         if value < 0:
             raise parser.error("Expires must not be negative.")
 
-        setattr(namespace, self.dest, self._get_delta(value))
+        setattr(namespace, self.dest, get_expires(value, now=self.now))
 
 
 class MultipleURLAction(argparse.Action):

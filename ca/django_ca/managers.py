@@ -72,7 +72,7 @@ class CertificateManagerMixin(object):
 
 
 class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
-    def init(self, name, expires, subject, algorithm=None, parent=None, pathlen=None,
+    def init(self, name, subject, expires=None, algorithm=None, parent=None, pathlen=None,
              issuer_url=None, issuer_alt_name=None, crl_url=None, ocsp_url=None,
              ca_issuer_url=None, ca_crl_url=None, ca_ocsp_url=None, name_constraints=None,
              password=None, parent_password=None, ecc_curve=None, key_type='RSA', key_size=None):
@@ -91,10 +91,11 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`, e.g.
             :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.SHA512`. The default is the
             ``CA_DIGEST_ALGORITHM`` setting.
-        expires : datetime
-            Datetime for when this certificate authority will expire.
         subject : :py:class:`~django_ca.subject.Subject`
             Subject string, e.g. ``Subject("/CN=example.com")``.
+        expires : datetime, optional
+            Datetime for when this certificate authority will expire, defaults to the ``CA_DEFAULT_EXPIRES``
+            setting.
         parent : :py:class:`~django_ca.models.CertificateAuthority`, optional
             Parent certificate authority for the new CA. This means that this CA will be an intermediate
             authority.
@@ -229,9 +230,9 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
 
 class CertificateManager(CertificateManagerMixin, models.Manager):
-    def sign_cert(self, ca, csr, expires, algorithm=None, subject=None, cn_in_san=True, csr_format=Encoding.PEM,
-                  subjectAltName=None, key_usage=None, extended_key_usage=None, tls_feature=None,
-                  password=None):
+    def sign_cert(self, ca, csr, expires=None, algorithm=None, subject=None, cn_in_san=True,
+                  csr_format=Encoding.PEM, subjectAltName=None, key_usage=None, extended_key_usage=None,
+                  tls_feature=None, password=None):
         """Create a signed certificate from a CSR.
 
         **PLEASE NOTE:** This function creates the raw certificate and is usually not invoked directly. It is
@@ -245,8 +246,8 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             The certificate authority to sign the certificate with.
         csr : str
             A valid CSR. The format is given by the ``csr_format`` parameter.
-        expires : datetime
-            Datetime for when this certificate authority will expire.
+        expires : datetime, optional
+            Datetime for when this certificate will expire, defaults to the ``CA_DEFAULT_EXPIRES`` setting.
         algorithm : str or :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
             Hash algorithm used when signing the certificate. If a string is passed, it must be the name of
             one of the hashes in :py:mod:`~cryptography:cryptography.hazmat.primitives.hashes`, e.g.
