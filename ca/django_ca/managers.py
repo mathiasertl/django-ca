@@ -71,7 +71,7 @@ class CertificateManagerMixin(object):
 
 
 class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
-    def init(self, name, algorithm, expires, parent, subject, pathlen=None,
+    def init(self, name, algorithm, expires, subject, parent=None, pathlen=None,
              issuer_url=None, issuer_alt_name=None, crl_url=None, ocsp_url=None,
              ca_issuer_url=None, ca_crl_url=None, ca_ocsp_url=None, name_constraints=None,
              password=None, parent_password=None, ecc_curve=None, key_type='RSA', key_size=None):
@@ -89,11 +89,11 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.SHA512`.
         expires : datetime
             Datetime for when this certificate expires.
+        subject : :py:class:`~django_ca.subject.Subject`
+            Subject string, e.g. ``Subject("/CN=example.com")``.
         parent : :py:class:`~django_ca.models.CertificateAuthority`, optional
             Parent certificate authority for the new CA. This means that this CA will be an intermediate
             authority.
-        subject : :py:class:`~django_ca.subject.Subject`
-            Subject string, e.g. ``Subject("/CN=example.com")``.
         pathlen : int, optional
         password : bytes, optional
             Password to encrypt the private key with.
