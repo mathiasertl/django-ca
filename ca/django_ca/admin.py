@@ -283,7 +283,7 @@ class CertificateMixin(object):
         fieldsets = copy.deepcopy(fieldsets)
         extensions = list(sorted(obj.extensions()))
         if extensions:
-            for name, _value in sorted(obj.extensions()):
+            for name, _value in extensions:
                 if not hasattr(self, name):
                     critical, value = _value
                     attr_name = self.get_oid_name(value)
