@@ -87,7 +87,7 @@ msKDC             ✗      ✗      ✗         ✗       ✗
 .. _extension-tls-feature:
 
 **********
-tlsFeature
+TLSFeature
 **********
 
 The ``TLSFeature`` extension is defined in `RFC7633 <https://tools.ietf.org/html/rfc7633>`_. This extension

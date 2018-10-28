@@ -41,12 +41,9 @@ from django.utils.functional import Promise
 from django.utils.translation import ugettext_lazy as _
 
 from . import ca_settings
+from .extensions import ExtendedKeyUsage
 from .extensions import KeyUsage
-
-try:
-    from collections.abc import Iterable  # pragma: only py3
-except ImportError:  # pragma: only py2
-    from collections import Iterable
+from .extensions import TLSFeature
 
 # List of possible subject fields, in order
 SUBJECT_FIELDS = ['C', 'ST', 'L', 'O', 'OU', 'CN', 'emailAddress', ]
@@ -575,22 +572,17 @@ def get_cert_profile_kwargs(name=None):
         'cn_in_san': profile['cn_in_san'],
         'subject': profile['subject'],
     }
-    for arg in ['keyUsage', 'extendedKeyUsage']:
-        config = profile.get(arg)
-        if config is None or not config.get('value'):
-            continue
 
-        if arg == 'keyUsage':
-            kwargs[arg] = KeyUsage(config)
-        else:
-            critical = config.get('critical', 'True')
-            value = config['value']
-            if isinstance(value, six.string_types):
-                kwargs[arg] = (critical, value)
-            elif isinstance(value, Iterable):
-                kwargs[arg] = (critical, ','.join([force_text(v) for v in value]))
-            else:  # pragma: no cover
-                kwargs[arg] = (critical, force_text(value))
+    key_usage = profile.get('keyUsage')
+    if key_usage and key_usage.get('value'):
+        kwargs['keyUsage'] = KeyUsage(key_usage)
+    ext_key_usage = profile.get('extendedKeyUsage')
+    if ext_key_usage and ext_key_usage.get('value'):
+        kwargs['extendedKeyUsage'] = ExtendedKeyUsage(ext_key_usage)
+    tls_feature = profile.get('TLSFeature')
+    if tls_feature and tls_feature.get('value'):
+        kwargs['TLSFeature'] = TLSFeature(tls_feature)
+
     return kwargs
 
 

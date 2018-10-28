@@ -36,8 +36,10 @@ from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 
 from .. import ca_settings
+from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
 from ..extensions import KeyUsage
+from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..subject import Subject
@@ -381,15 +383,12 @@ class BaseSignCommand(BaseCommand):
             '--key-usage', metavar='VALUES', action=MultiValueExtensionAction, extension=KeyUsage,
             help='The keyUsage extension, e.g. "critical,keyCertSign".')
         group.add_argument(
-            '--ext-key-usage', metavar='VALUES',
+            '--ext-key-usage', metavar='VALUES', action=MultiValueExtensionAction,
+            extension=ExtendedKeyUsage,
             help='The extendedKeyUsage extension, e.g. "serverAuth,clientAuth".')
         group.add_argument(
-            '--tls-feature', metavar='VALUES', help='TLS Feature extensions.')
-
-    def parse_extension(self, value):
-        if value.startswith('critical,'):
-            return True, value[9:]
-        return False, value
+            '--tls-feature', metavar='VALUES', action=MultiValueExtensionAction, extension=TLSFeature,
+            help='TLS Feature extensions.')
 
     def test_options(self, *args, **options):
         ca = options['ca']

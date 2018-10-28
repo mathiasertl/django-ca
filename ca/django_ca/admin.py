@@ -427,7 +427,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                        'expires', 'watchers', ],
         }),
         (_('X.509 Extensions'), {
-            'fields': ['keyUsage', 'extendedKeyUsage', 'tlsFeature', ]
+            'fields': ['keyUsage', 'extendedKeyUsage', 'tls_feature', ]
         }),
     ]
 
@@ -438,7 +438,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                        'expires', 'watchers', ],
         }),
         (_('X.509 Extensions'), {
-            'fields': ['keyUsage', 'extendedKeyUsage', 'tlsFeature', ]
+            'fields': ['keyUsage', 'extendedKeyUsage', 'tls_feature', ]
         }),
     ]
     x509_fieldset_index = 1
@@ -474,7 +474,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
 
             keyUsage = resign_obj.keyUsage
             extKeyUsage = resign_obj.extendedKeyUsage
-            tlsFeatures = resign_obj.TLSFeature
+            tls_feature = resign_obj.TLSFeature
 
             data = {
                 'profile': '',
@@ -486,7 +486,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                 'watchers': resign_obj.watchers.all(),
                 'extendedKeyUsage': extKeyUsage,
                 'keyUsage': keyUsage,
-                'tlsFeature': tlsFeatures,
+                'tls_feature': tls_feature,
             }
         else:
             data['subject'] = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get('subject', {})
@@ -629,7 +629,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                 'cn_in_san': cn_in_san,
                 'keyUsage': data['keyUsage'],
                 'extendedKeyUsage': data['extendedKeyUsage'],
-                'tls_feature': data['tlsFeature'],
+                'tls_feature': data['tls_feature'],
                 'password': data['password'],
             }
 

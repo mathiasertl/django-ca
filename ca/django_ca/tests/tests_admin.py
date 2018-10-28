@@ -40,7 +40,6 @@ from django_webtest import WebTestMixin
 from ..extensions import ExtendedKeyUsage
 from ..extensions import KeyUsage
 from ..extensions import TLSFeature
-from ..forms import CreateCertificateForm
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..models import Watcher
@@ -48,9 +47,7 @@ from ..signals import post_issue_cert
 from ..signals import post_revoke_cert
 from ..signals import pre_issue_cert
 from ..signals import pre_revoke_cert
-from ..utils import EXTENDED_KEY_USAGE_MAPPING
 from ..utils import SUBJECT_FIELDS
-from ..utils import TLS_FEATURE_MAPPING
 from .base import DjangoCAWithCertTestCase
 from .base import DjangoCAWithChildCATestCase
 from .base import DjangoCAWithCSRTestCase
@@ -309,29 +306,6 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
 
 class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
-    def test_choices(self):
-        """Find inconsistencies in keyUsage, extendedKeyUsage or tlsFeature entries.
-
-        The choices in the admin form are not automatically derived from the properties in utils, so it's easy
-        to add an entry here and forget to add it there.
-        """
-
-        form = CreateCertificateForm()
-
-        choices = list(sorted([k for k, v in form.fields['extendedKeyUsage'].fields[0].choices]))
-        mapping = list(sorted(EXTENDED_KEY_USAGE_MAPPING.keys()))
-        self.assertEqual(
-            mapping, choices,
-            'EXTENDED_KEY_USAGE_MAPPING and CreateCertificateForm.extendedKeyUsage differ:\n%s\n%s' % (
-                mapping, choices))
-
-        choices = list(sorted([k for k, v in form.fields['tlsFeature'].fields[0].choices]))
-        mapping = list(sorted(TLS_FEATURE_MAPPING.keys()))
-        self.assertEqual(
-            mapping, choices,
-            'TLS_FEATURE_MAPPING and CreateCertificateForm.tlsFeature differ:\n%s\n%s' % (choices, mapping)
-        )
-
     def test_get(self):
         response = self.client.get(self.add_url)
         self.assertEqual(response.status_code, 200)
@@ -361,8 +335,8 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'keyUsage_1': True,
                 'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
                 'extendedKeyUsage_1': False,
-                'tlsFeature_0': ['OCSPMustStaple', 'MultipleCertStatusRequest'],
-                'tlsFeature_1': False,
+                'tls_feature_0': ['OCSPMustStaple', 'MultipleCertStatusRequest'],
+                'tls_feature_1': False,
             })
         self.assertRedirects(response, self.changelist_url)
         self.assertEqual(pre.call_count, 1)
@@ -398,8 +372,8 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'keyUsage_1': True,
                 'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
                 'extendedKeyUsage_1': False,
-                'tlsFeature_0': ['OCSPMustStaple', 'MultipleCertStatusRequest'],
-                'tlsFeature_1': False,
+                'tls_feature_0': ['OCSPMustStaple', 'MultipleCertStatusRequest'],
+                'tls_feature_1': False,
             })
         self.assertEqual(response.status_code, 200)
         self.assertFalse(pre.called)
@@ -960,8 +934,8 @@ class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithCertTestCase)
                 'keyUsage_1': True,
                 'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
                 'extendedKeyUsage_1': False,
-                'tlsFeature_0': ['OCSPMustStaple', 'MultipleCertStatusRequest'],
-                'tlsFeature_1': False,
+                'tls_feature_0': ['OCSPMustStaple', 'MultipleCertStatusRequest'],
+                'tls_feature_1': False,
             })
         self.assertRedirects(response, self.changelist_url)
         self.assertEqual(pre.call_count, 1)

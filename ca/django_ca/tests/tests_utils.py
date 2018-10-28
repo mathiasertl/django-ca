@@ -37,6 +37,7 @@ from django.utils.translation import ugettext_lazy as _l
 
 from .. import ca_settings
 from .. import utils
+from ..extensions import ExtendedKeyUsage
 from ..extensions import KeyUsage
 from ..utils import NAME_RE
 from ..utils import LazyEncoder
@@ -512,7 +513,7 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
         expected = {
             'cn_in_san': True,
             'keyUsage': KeyUsage([True, ['digitalSignature', 'keyAgreement', 'keyEncipherment']]),
-            'extendedKeyUsage': (False, 'serverAuth'),
+            'extendedKeyUsage': ExtendedKeyUsage('serverAuth'),
             'subject': [
                 ('C', 'AT'),
                 ('ST', 'Vienna'),

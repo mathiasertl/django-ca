@@ -120,7 +120,7 @@ class CreateCertificateBaseForm(forms.ModelForm):
     keyUsage = MultiValueExtensionField(label='keyUsage', help_text=KEY_USAGE_DESC, extension=KeyUsage)
     extendedKeyUsage = MultiValueExtensionField(
         label='extendedKeyUsage', help_text=EXTENDED_KEY_USAGE_DESC, extension=ExtendedKeyUsage)
-    tlsFeature = MultiValueExtensionField(label='TLS Features', extension=TLSFeature)
+    tls_feature = MultiValueExtensionField(label='TLS Features', extension=TLSFeature)
 
     def clean_algorithm(self):
         algo = self.cleaned_data['algorithm']

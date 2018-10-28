@@ -120,7 +120,7 @@ Override extensions
 ===================
 
 You can override some extensions using command-line parameters. Currently, this includes ``keyUsage``,
-``extendedKeyUsage`` and ``tlsFeature``.  In every case, prefixing the value with ``critical`` marks the
+``extendedKeyUsage`` and ``TLSFeature``.  In every case, prefixing the value with ``critical`` marks the
 extension as critical (meaning a TLS client that does not understand the extension will reject the
 connection):
 

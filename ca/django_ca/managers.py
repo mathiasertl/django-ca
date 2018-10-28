@@ -34,15 +34,11 @@ from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 
 from . import ca_settings
-from .extensions import ExtendedKeyUsage
-from .extensions import TLSFeature
 from .signals import post_create_ca
 from .signals import post_issue_cert
 from .signals import pre_create_ca
 from .signals import pre_issue_cert
 from .subject import Subject
-from .utils import EXTENDED_KEY_USAGE_MAPPING
-from .utils import TLS_FEATURE_MAPPING
 from .utils import get_cert_builder
 from .utils import is_power2
 from .utils import parse_general_name
@@ -330,20 +326,10 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             builder = builder.add_extension(**keyUsage.for_builder())
 
         if extendedKeyUsage:
-            if isinstance(extendedKeyUsage, ExtendedKeyUsage):
-                builder = builder.add_extension(**extendedKeyUsage.for_builder())
-            else:
-                critical, usages = extendedKeyUsage
-                usages = [EXTENDED_KEY_USAGE_MAPPING[u] for u in usages.split(',')]
-                builder = builder.add_extension(x509.ExtendedKeyUsage(usages), critical=critical)
+            builder = builder.add_extension(**extendedKeyUsage.for_builder())
 
         if tls_feature:
-            if isinstance(tls_feature, TLSFeature):
-                builder = builder.add_extension(**tls_feature.for_builder())
-            else:
-                critical, features = tls_feature
-                features = [TLS_FEATURE_MAPPING[f] for f in features.split(',')]
-                builder = builder.add_extension(x509.TLSFeature(features), critical=critical)
+            builder = builder.add_extension(**tls_feature.for_builder())
 
         if ca.issuer_alt_name:
             builder = builder.add_extension(x509.IssuerAlternativeName(

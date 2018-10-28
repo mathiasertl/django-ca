@@ -54,26 +54,9 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
         else:
             subject = cert.subject
 
-        if options['key_usage']:
-            key_usage = self.parse_extension(options['key_usage'])
-        else:
-            key_usage = cert.keyUsage()
-            if key_usage:
-                key_usage = (key_usage[0], ','.join(key_usage[1]))
-
-        if options['ext_key_usage']:
-            ext_key_usage = self.parse_extension(options['ext_key_usage'])
-        else:
-            ext_key_usage = cert.extendedKeyUsage()
-            if ext_key_usage:
-                ext_key_usage = (ext_key_usage[0], ','.join(ext_key_usage[1]))
-
-        if options['tls_feature']:
-            tls_feature = self.parse_extension(options['tls_feature'])
-        else:
-            tls_feature = cert.TLSFeature()
-            if tls_feature:
-                tls_feature = (tls_feature[0], ','.join(tls_feature[1]))
+        key_usage = options.get('key_usage', cert.keyUsage)
+        ext_key_usage = options.get('ext_key_usage', cert.extendedKeyUsage)
+        tls_feature = options.get('tls_feature', cert.TLSFeature)
 
         kwargs = {
             'subject': subject,
