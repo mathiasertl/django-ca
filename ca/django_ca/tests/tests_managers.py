@@ -160,7 +160,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
     def test_no_key_usage(self):
         kwargs = get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
-        del kwargs['keyUsage']
+        del kwargs['key_usage']
         cert = Certificate.objects.init(
             self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
@@ -169,7 +169,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
     def test_no_ext_key_usage(self):
         kwargs = get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
-        del kwargs['extendedKeyUsage']
+        del kwargs['extended_key_usage']
         cert = Certificate.objects.init(
             self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)

@@ -117,8 +117,8 @@ class CreateCertificateBaseForm(forms.ModelForm):
             'Algorithm used for signing the certificate. SHA-512 should be fine in most cases.'
         ),
     )
-    keyUsage = MultiValueExtensionField(label='keyUsage', help_text=KEY_USAGE_DESC, extension=KeyUsage)
-    extendedKeyUsage = MultiValueExtensionField(
+    key_usage = MultiValueExtensionField(label='keyUsage', help_text=KEY_USAGE_DESC, extension=KeyUsage)
+    extended_key_usage = MultiValueExtensionField(
         label='extendedKeyUsage', help_text=EXTENDED_KEY_USAGE_DESC, extension=ExtendedKeyUsage)
     tls_feature = MultiValueExtensionField(label='TLS Features', extension=TLSFeature)
 

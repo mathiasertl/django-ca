@@ -427,7 +427,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                        'expires', 'watchers', ],
         }),
         (_('X.509 Extensions'), {
-            'fields': ['keyUsage', 'extendedKeyUsage', 'tls_feature', ]
+            'fields': ['key_usage', 'extended_key_usage', 'tls_feature', ]
         }),
     ]
 
@@ -438,7 +438,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                        'expires', 'watchers', ],
         }),
         (_('X.509 Extensions'), {
-            'fields': ['keyUsage', 'extendedKeyUsage', 'tls_feature', ]
+            'fields': ['key_usage', 'extended_key_usage', 'tls_feature', ]
         }),
     ]
     x509_fieldset_index = 1
@@ -472,21 +472,20 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                 san = (','.join(san[1]), False)
             algo = resign_obj.algorithm.__class__.__name__
 
-            keyUsage = resign_obj.keyUsage
-            extKeyUsage = resign_obj.extendedKeyUsage
+            key_usage = resign_obj.keyUsage
+            ext_key_usage = resign_obj.extendedKeyUsage
             tls_feature = resign_obj.TLSFeature
 
             data = {
-                'profile': '',
-                #'csr': obj.csr,
+                'algorithm': algo,
                 'ca': resign_obj.ca,
+                'extended_key_usage': ext_key_usage,
+                'key_usage': key_usage,
+                'profile': '',
                 'subject': resign_obj.subject,
                 'subjectAltName': san,
-                'algorithm': algo,
-                'watchers': resign_obj.watchers.all(),
-                'extendedKeyUsage': extKeyUsage,
-                'keyUsage': keyUsage,
                 'tls_feature': tls_feature,
+                'watchers': resign_obj.watchers.all(),
             }
         else:
             data['subject'] = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get('subject', {})
@@ -627,8 +626,8 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                 'algorithm': data['algorithm'],
                 'subjectAltName': subjectAltName,
                 'cn_in_san': cn_in_san,
-                'keyUsage': data['keyUsage'],
-                'extendedKeyUsage': data['extendedKeyUsage'],
+                'key_usage': data['key_usage'],
+                'extended_key_usage': data['extended_key_usage'],
                 'tls_feature': data['tls_feature'],
                 'password': data['password'],
             }

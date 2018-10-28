@@ -331,10 +331,10 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'subjectAltName_1': True,
                 'algorithm': 'SHA256',
                 'expires': self.ca.expires.strftime('%Y-%m-%d'),
-                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
-                'keyUsage_1': True,
-                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
-                'extendedKeyUsage_1': False,
+                'key_usage_0': ['digitalSignature', 'keyAgreement', ],
+                'key_usage_1': True,
+                'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
+                'extended_key_usage_1': False,
                 'tls_feature_0': ['OCSPMustStaple', 'MultipleCertStatusRequest'],
                 'tls_feature_1': False,
             })
@@ -368,10 +368,10 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'subjectAltName_1': True,
                 'algorithm': 'SHA256',
                 'expires': self.ca.expires.strftime('%Y-%m-%d'),
-                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
-                'keyUsage_1': True,
-                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
-                'extendedKeyUsage_1': False,
+                'key_usage_0': ['digitalSignature', 'keyAgreement', ],
+                'key_usage_1': True,
+                'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
+                'extended_key_usage_1': False,
                 'tls_feature_0': ['OCSPMustStaple', 'MultipleCertStatusRequest'],
                 'tls_feature_1': False,
             })
@@ -396,10 +396,10 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'subjectAltName_1': True,
                 'algorithm': 'SHA256',
                 'expires': self.ca.expires.strftime('%Y-%m-%d'),
-                'keyUsage_0': [],
-                'keyUsage_1': False,
-                'extendedKeyUsage_0': [],
-                'extendedKeyUsage_1': False,
+                'key_usage_0': [],
+                'key_usage_1': False,
+                'extended_key_usage_0': [],
+                'extended_Key_usage_1': False,
             })
         self.assertEqual(pre.call_count, 1)
         self.assertRedirects(response, self.changelist_url)
@@ -439,10 +439,10 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'subjectAltName_1': True,
                 'algorithm': 'SHA256',
                 'expires': self.ca.expires.strftime('%Y-%m-%d'),
-                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
-                'keyUsage_1': True,
-                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
-                'extendedKeyUsage_1': False,
+                'key_usage_0': ['digitalSignature', 'keyAgreement', ],
+                'key_usage_1': True,
+                'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
+                'extended_key_usage_1': False,
             })
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
@@ -461,10 +461,10 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'subjectAltName_1': True,
                 'algorithm': 'SHA256',
                 'expires': self.ca.expires.strftime('%Y-%m-%d'),
-                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
-                'keyUsage_1': True,
-                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
-                'extendedKeyUsage_1': False,
+                'key_usage_0': ['digitalSignature', 'keyAgreement', ],
+                'key_usage_1': True,
+                'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
+                'extended_key_usage_1': False,
                 'password': 'wrong',
             })
         self.assertFalse(pre.called)
@@ -484,10 +484,10 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'subjectAltName_1': True,
                 'algorithm': 'SHA256',
                 'expires': self.pwd_ca.expires.strftime('%Y-%m-%d'),
-                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
-                'keyUsage_1': True,
-                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
-                'extendedKeyUsage_1': False,
+                'key_usage_0': ['digitalSignature', 'keyAgreement', ],
+                'key_usage_1': True,
+                'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
+                'extended_key_usage_1': False,
                 'password': pwd_ca_pwd.decode('utf-8'),
             })
         self.assertEqual(pre.call_count, 1)
@@ -521,10 +521,10 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'subjectAltName_1': True,
                 'algorithm': 'SHA256',
                 'expires': self.ca.expires.strftime('%Y-%m-%d'),
-                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
-                'keyUsage_1': True,
-                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
-                'extendedKeyUsage_1': False,
+                'key_usage_0': ['digitalSignature', 'keyAgreement', ],
+                'key_usage_1': True,
+                'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
+                'extended_key_usage_1': False,
             })
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
@@ -549,10 +549,10 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'subjectAltName_1': True,
                 'algorithm': 'wrong algo',
                 'expires': self.ca.expires.strftime('%Y-%m-%d'),
-                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
-                'keyUsage_1': True,
-                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
-                'extendedKeyUsage_1': False,
+                'key_usage_0': ['digitalSignature', 'keyAgreement', ],
+                'key_usage_1': True,
+                'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
+                'extended_key_usage_1': False,
             })
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
@@ -576,10 +576,10 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'subjectAltName_1': True,
                 'algorithm': 'SHA256',
                 'expires': expires.strftime('%Y-%m-%d'),
-                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
-                'keyUsage_1': True,
-                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
-                'extendedKeyUsage_1': False,
+                'key_usage_0': ['digitalSignature', 'keyAgreement', ],
+                'key_usage_1': True,
+                'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
+                'extended_key_usage_1': False,
             })
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
@@ -608,10 +608,10 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'subjectAltName_1': True,
                 'algorithm': 'SHA256',
                 'expires': expires.strftime('%Y-%m-%d'),
-                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
-                'keyUsage_1': True,
-                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
-                'extendedKeyUsage_1': False,
+                'key_usage_0': ['digitalSignature', 'keyAgreement', ],
+                'key_usage_1': True,
+                'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
+                'extended_key_usage_1': False,
             })
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
@@ -639,10 +639,10 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'subjectAltName_1': True,
                 'algorithm': 'SHA256',
                 'expires': '2018-04-12',
-                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
-                'keyUsage_1': True,
-                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
-                'extendedKeyUsage_1': False,
+                'key_usage_0': ['digitalSignature', 'keyAgreement', ],
+                'key_usage_1': True,
+                'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
+                'extended_key_usage_1': False,
             })
         self.assertEqual(response.status_code, 403)
         self.assertFalse(pre.called)
@@ -671,10 +671,10 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'subjectAltName_1': True,
                 'algorithm': 'SHA256',
                 'expires': '2018-04-12',
-                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
-                'keyUsage_1': True,
-                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
-                'extendedKeyUsage_1': False,
+                'key_usage_0': ['digitalSignature', 'keyAgreement', ],
+                'key_usage_1': True,
+                'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
+                'extended_key_usage_1': False,
             })
         self.assertEqual(response.status_code, 403)
         self.assertFalse(pre.called)
@@ -930,10 +930,10 @@ class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithCertTestCase)
                 'subjectAltName_1': True,
                 'algorithm': 'SHA256',
                 'expires': self.ca.expires.strftime('%Y-%m-%d'),
-                'keyUsage_0': ['digitalSignature', 'keyAgreement', ],
-                'keyUsage_1': True,
-                'extendedKeyUsage_0': ['clientAuth', 'serverAuth', ],
-                'extendedKeyUsage_1': False,
+                'key_usage_0': ['digitalSignature', 'keyAgreement', ],
+                'key_usage_1': True,
+                'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
+                'extended_key_usage_1': False,
                 'tls_feature_0': ['OCSPMustStaple', 'MultipleCertStatusRequest'],
                 'tls_feature_1': False,
             })

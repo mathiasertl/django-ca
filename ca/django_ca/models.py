@@ -547,13 +547,13 @@ class Certificate(X509CertMixin):
 
         try:
             ext_key_usage = self.x509.extensions.get_extension_for_oid(ExtensionOID.EXTENDED_KEY_USAGE)
-            kwargs.setdefault('extendedKeyUsage', (ext_key_usage.critical, ext_key_usage.value))
+            kwargs.setdefault('extended_key_usage', (ext_key_usage.critical, ext_key_usage.value))
         except x509.ExtensionNotFound:
             pass
 
         try:
             key_usage = self.x509.extensions.get_extension_for_oid(ExtensionOID.KEY_USAGE)
-            kwargs.setdefault('keyUsage', (key_usage.critical, key_usage.value))
+            kwargs.setdefault('key_usage', (key_usage.critical, key_usage.value))
         except x509.ExtensionNotFound:
             pass
 

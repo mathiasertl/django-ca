@@ -79,7 +79,7 @@ the default values, options like --key-usage still override the profile.""")
         # get list of watchers
         watchers = [Watcher.from_addr(addr) for addr in options['watch']]
 
-        # get keyUsage and extendedKeyUsage flags based on profiles
+        # get extensions based on profiles
         kwargs = get_cert_profile_kwargs(options['profile'])
         kwargs['subject'] = Subject(kwargs.get('subject'))
         kwargs['password'] = options['password']
@@ -87,9 +87,9 @@ the default values, options like --key-usage still override the profile.""")
         if options['cn_in_san'] is not None:
             kwargs['cn_in_san'] = options['cn_in_san']
         if options['key_usage']:
-            kwargs['keyUsage'] = options['key_usage']
+            kwargs['key_usage'] = options['key_usage']
         if options['ext_key_usage']:
-            kwargs['extendedKeyUsage'] = options['ext_key_usage']
+            kwargs['extended_key_usage'] = options['ext_key_usage']
         if options['tls_feature']:
             kwargs['tls_feature'] = options['tls_feature']
 

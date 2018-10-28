@@ -216,7 +216,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
 class CertificateManager(CertificateManagerMixin, models.Manager):
     def sign_cert(self, ca, csr, expires, algorithm, subject=None, cn_in_san=True, csr_format=Encoding.PEM,
-                  subjectAltName=None, keyUsage=None, extendedKeyUsage=None, tls_feature=None,
+                  subjectAltName=None, key_usage=None, extended_key_usage=None, tls_feature=None,
                   password=None):
         """Create a signed certificate from a CSR.
 
@@ -251,9 +251,9 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             A list of values for the subjectAltName extension. Values are passed to
             :py:func:`~django_ca.utils.parse_general_name`, see function documentation for how this value is
             parsed.
-        keyUsage : :py:class:`~django_ca.extensions.KeyUsage`, optional
-            Value for the `keyUsage` X509 extension.
-        extendedKeyUsage : :py:class:`~django_ca.extensions.ExtendedKeyUsage`, optional
+        key_usage : :py:class:`~django_ca.extensions.KeyUsage`, optional
+            Value for the ``keyUsage`` X509 extension.
+        extended_key_usage : :py:class:`~django_ca.extensions.ExtendedKeyUsage`, optional
             Value for the ``extendedKeyUsage`` X509 extension.
         tls_feature : :py:class:`~django_ca.extensions.TLSFeature`, optional
             Value for the ``TLSFeature`` X509 extension.
@@ -322,11 +322,11 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         if subjectAltName:
             builder = builder.add_extension(x509.SubjectAlternativeName(subjectAltName), critical=False)
 
-        if keyUsage:
-            builder = builder.add_extension(**keyUsage.for_builder())
+        if key_usage:
+            builder = builder.add_extension(**key_usage.for_builder())
 
-        if extendedKeyUsage:
-            builder = builder.add_extension(**extendedKeyUsage.for_builder())
+        if extended_key_usage:
+            builder = builder.add_extension(**extended_key_usage.for_builder())
 
         if tls_feature:
             builder = builder.add_extension(**tls_feature.for_builder())
