@@ -311,7 +311,7 @@ texinfo_documents = [
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3.6', None),
     'cryptography': ('https://cryptography.io/en/latest/', None),
-    'django': ('https://django.readthedocs.io/en/latest/', None),
+    'django': ('https://docs.djangoproject.com/en/dev/', 'http://docs.djangoproject.com/en/dev/_objects/'),
 }
 
 import sphinx_rtd_theme
