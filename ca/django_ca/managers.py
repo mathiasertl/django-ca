@@ -256,11 +256,11 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             :py:func:`~django_ca.utils.parse_general_name`, see function documentation for how this value is
             parsed.
         keyUsage : :py:class:`~django_ca.extensions.KeyUsage`, optional
-            Value for the `keyUsage` X509 extension. See description for format details.
+            Value for the `keyUsage` X509 extension.
         extendedKeyUsage : :py:class:`~django_ca.extensions.ExtendedKeyUsage`, optional
-            Value for the `extendedKeyUsage` X509 extension. See description for format details.
+            Value for the ``extendedKeyUsage`` X509 extension.
         tls_features : :py:class:`~django_ca.extensions.TLSFeature`, optional
-            Value for the `TLS Feature` X509 extension. See description for format details.
+            Value for the ``TLSFeature`` X509 extension.
         password : bytes, optional
             Password used to load the private key of the certificate authority. If not passed, the private key
             is assumed to be unencrypted.
