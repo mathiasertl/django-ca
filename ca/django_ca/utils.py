@@ -41,6 +41,7 @@ from django.utils.functional import Promise
 from django.utils.translation import ugettext_lazy as _
 
 from . import ca_settings
+from .extensions import KeyUsage
 
 try:
     from collections.abc import Iterable  # pragma: only py3
@@ -592,14 +593,17 @@ def get_cert_profile_kwargs(name=None):
         if config is None or not config.get('value'):
             continue
 
-        critical = config.get('critical', 'True')
-        value = config['value']
-        if isinstance(value, six.string_types):
-            kwargs[arg] = (critical, value)
-        elif isinstance(value, Iterable):
-            kwargs[arg] = (critical, ','.join([force_text(v) for v in value]))
-        else:  # pragma: no cover
-            kwargs[arg] = (critical, force_text(value))
+        if arg == 'keyUsage':
+            kwargs[arg] = KeyUsage(config)
+        else:
+            critical = config.get('critical', 'True')
+            value = config['value']
+            if isinstance(value, six.string_types):
+                kwargs[arg] = (critical, value)
+            elif isinstance(value, Iterable):
+                kwargs[arg] = (critical, ','.join([force_text(v) for v in value]))
+            else:  # pragma: no cover
+                kwargs[arg] = (critical, force_text(value))
     return kwargs
 
 
