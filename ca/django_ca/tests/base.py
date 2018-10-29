@@ -39,6 +39,7 @@ from django.utils.six import StringIO
 from django.utils.six.moves import reload_module
 
 from .. import ca_settings
+from ..extensions import Extension
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..signals import post_create_ca
@@ -484,9 +485,17 @@ class DjangoCATestCase(TestCase):
             exts.remove('cRLDistributionPoints')
             exts.append('crlDistributionPoints')
 
-        # TODO: remove cruft if Extensions framework is fully implemented
-        exts = {name: getattr(c, name) for name in exts}
-        return {name: value() if callable(value) else value for name, value in exts.items()}
+        exts = {}
+        for ext in c.get_extensions():
+            if isinstance(ext, Extension):
+                exts[ext.__class__.__name__] = ext
+
+            # old extension framework
+            else:
+                name, value = ext
+                exts[name] = value
+
+        return exts
 
     @classmethod
     def get_alt_names(cls, x509):

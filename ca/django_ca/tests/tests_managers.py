@@ -32,7 +32,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         expected['authorityKeyIdentifier'] = self.ca.authorityKeyIdentifier()
 
         if self.ca.issuer_alt_name:
-            expected[b'issuerAltName'] = 'URI:%s' % self.ca.issuer_alt_name
+            expected['issuerAltName'] = 'URI:%s' % self.ca.issuer_alt_name
 
         # TODO: Does not account for multiple CRLs yet
         if self.ca.crl_url:
@@ -44,14 +44,9 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         if self.ca.issuer_url:
             auth_info_access += 'CA Issuers - URI:%s\n' % self.ca.issuer_url
         if auth_info_access:
-            expected[b'authorityInfoAccess'] = auth_info_access
+            expected['authorityInfoAccess'] = auth_info_access
 
-        c = Certificate()
-        c.x509 = cert
-        exts = [e.oid._name for e in cert.extensions]
-        # TODO: remove cruft if Extensions framework is fully implemented
-        exts = {name: getattr(c, name) for name in exts}
-        exts = {name: value() if callable(value) else value for name, value in exts.items()}
+        exts = self.get_extensions(cert)
 
         skid_critical, skid = exts.pop('subjectKeyIdentifier')
         self.assertFalse(skid_critical)
@@ -79,8 +74,8 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
         # verify extensions
         extensions = {
-            'extendedKeyUsage': ExtendedKeyUsage('serverAuth'),
-            'keyUsage': KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'),
+            'ExtendedKeyUsage': ExtendedKeyUsage('serverAuth'),
+            'KeyUsage': KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'),
             'subjectAltName': (False, ['DNS:example.com']),
         }
 
@@ -97,8 +92,8 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
         # verify extensions
         self.assertExtensions(cert.x509, {
-            'extendedKeyUsage': ExtendedKeyUsage('serverAuth'),
-            'keyUsage': KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'),
+            'ExtendedKeyUsage': ExtendedKeyUsage('serverAuth'),
+            'KeyUsage': KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'),
             'subjectAltName': (False, ['DNS:example.com']),
         })
 
@@ -185,7 +180,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         cert = Certificate.objects.init(
             ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
-        self.assertEqual(self.get_extensions(cert.x509)['crlDistributionPoints'],
+        self.assertEqual(self.get_extensions(cert.x509)['cRLDistributionPoints'],
                          (False, ['Full Name: URI:%s' % ca .crl_url]))
 
         # test multiple URLs
@@ -198,7 +193,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
         crl_a, crl_b = ca.crl_url.splitlines()
         expected = ['Full Name: URI:%s' % url for url in ca.crl_url.splitlines()]
-        self.assertEqual(self.get_extensions(cert.x509)['crlDistributionPoints'], (False, expected))
+        self.assertEqual(self.get_extensions(cert.x509)['cRLDistributionPoints'], (False, expected))
 
     def test_issuer_alt_name(self):
         ca = CertificateAuthority.objects.first()

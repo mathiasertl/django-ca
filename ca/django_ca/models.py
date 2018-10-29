@@ -449,23 +449,6 @@ class X509CertMixin(models.Model):
 
         return qualifier
 
-    ########################
-    # Deprecated accessors #
-    ########################
-    # These accessors are used by extensions() and should no longer be used.
-
-    @property
-    def extendedKeyUsage(self):
-        return self.extended_key_usage
-
-    @property
-    def keyUsage(self):
-        return self.key_usage
-
-    @property
-    def TLSFeature(self):
-        return self.tls_feature
-
 
 class CertificateAuthority(X509CertMixin):
     objects = CertificateAuthorityManager.from_queryset(CertificateAuthorityQuerySet)()
