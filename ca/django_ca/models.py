@@ -226,6 +226,46 @@ class X509CertMixin(models.Model):
     ###################
     # X509 extensions #
     ###################
+    OID_MAPPING = {
+        ExtensionOID.EXTENDED_KEY_USAGE: 'extended_key_usage',
+        ExtensionOID.KEY_USAGE: 'key_usage',
+        ExtensionOID.TLS_FEATURE: 'tls_feature',
+    }
+
+    def get_extension_fields(self):
+        for ext in sorted(self.x509.extensions, key=lambda e: e.oid._name.title()):
+            if ext.oid in self.OID_MAPPING:
+                yield self.OID_MAPPING[ext.oid]
+
+            # extension that does not support new extension framework
+            else:
+                name = ext.oid._name.replace(' ', '')
+                if hasattr(self, name):
+                    yield name
+                elif name == 'cRLDistributionPoints':
+                    yield 'cRLDistributionPoints'
+                else:  # pragma: no cover  - we have a function for everything we support
+                    #warnings.warn('Unknown extension encountered: %s' % ext.oid._name)
+                    yield ext
+
+    def get_extensions(self):
+        for ext in sorted(self.x509.extensions, key=lambda e: e.oid._name):
+            if ext.oid in self.OID_MAPPING:
+                yield getattr(self, self.OID_MAPPING[ext.oid])
+
+            # extension that does not support new extension framework
+            else:
+                name = ext.oid._name.replace(' ', '')
+                if hasattr(self, name):
+                    value = getattr(self, name)
+                    if callable(value):
+                        value = value()
+                    yield name, value
+                elif name == 'cRLDistributionPoints':
+                    yield name, self.crlDistributionPoints()
+                else:  # pragma: no cover  - we have a function for everything we support
+                    yield name, (ext.critical, ext.oid)
+
     @property
     def key_usage(self):
         """The :py:class:`~django_ca.extensions.KeyUsage` extension, or ``None`` if it doesn't exist."""
@@ -257,19 +297,6 @@ class X509CertMixin(models.Model):
     #################################
     # Old-style extension accessors #
     #################################
-
-    def extensions(self):
-        for ext in sorted(self.x509.extensions, key=lambda e: e.oid._name):
-            name = ext.oid._name.replace(' ', '')
-            if hasattr(self, name):
-                value = getattr(self, name)
-                if callable(value):
-                    value = value()
-                yield name, value
-            elif name == 'cRLDistributionPoints':
-                yield name, self.crlDistributionPoints()
-            else:  # pragma: no cover  - we have a function for everything we support
-                yield name, (ext.critical, ext.oid)
 
     def authorityInfoAccess(self):
         try:

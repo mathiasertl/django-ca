@@ -310,10 +310,7 @@ class BaseCommand(_BaseCommand):
             return ''.join(prefixed_lines())
 
     def print_extension(self, name, value):
-        if isinstance(value, Extension):
-            self.stdout.write(value.as_text)
-            return
-
+        # old extension framework
         critical, value = value
         if critical:
             self.stdout.write('%s (critical):' % name)
@@ -323,8 +320,13 @@ class BaseCommand(_BaseCommand):
         self.stdout.write(self.indent(value))
 
     def print_extensions(self, cert):
-        for name, value in sorted(dict(cert.extensions()).items()):
-            self.print_extension(name, value)
+        for ext in cert.get_extensions():
+            if isinstance(ext, Extension):
+                self.stdout.write(ext.as_text)
+            else:
+                # old extension framework
+                name, value = ext
+                self.print_extension(name, value)
 
     def test_private_key(self, ca, password):
         try:

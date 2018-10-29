@@ -194,17 +194,17 @@ class CertificateMixin(object):
         return self.output_extension(obj.authorityInfoAccess())
     authorityInfoAccess.short_description = 'authorityInfoAccess'
 
-    def keyUsage(self, obj):
-        return self.output_extension(obj.keyUsage)
-    keyUsage.short_description = 'keyUsage'
+    def key_usage(self, obj):
+        return self.output_extension(obj.key_usage)
+    key_usage.short_description = 'keyUsage'
 
-    def extendedKeyUsage(self, obj):
-        return self.output_extension(obj.extendedKeyUsage)
-    extendedKeyUsage.short_description = 'extendedKeyUsage'
+    def extended_key_usage(self, obj):
+        return self.output_extension(obj.extended_key_usage)
+    extended_key_usage.short_description = 'extendedKeyUsage'
 
-    def TLSFeature(self, obj):
-        return self.output_extension(obj.TLSFeature)
-    TLSFeature.short_description = _('TLS Feature')
+    def tls_feature(self, obj):
+        return self.output_extension(obj.tls_feature)
+    tls_feature.short_description = _('TLS Feature')
 
     def subjectKeyIdentifier(self, obj):
         return self.output_extension(obj.subjectKeyIdentifier())
@@ -281,29 +281,30 @@ class CertificateMixin(object):
             return fieldsets
 
         fieldsets = copy.deepcopy(fieldsets)
-        extensions = list(sorted(obj.extensions()))
-        if extensions:
-            for name, _value in extensions:
-                if not hasattr(self, name):
-                    critical, value = _value
-                    attr_name = self.get_oid_name(value)
-                    func = partial(self.unknown_oid, value)
-                    if name == 'UnknownOID':
-                        func.short_description = 'Unkown OID (%s)' % value.dotted_string
-                    else:  # pragma: no cover
-                        # If this branch happens, it means that we encounter a known (to cryptography)
-                        # extension, that we do not yet support. This is usually fixed by us supporting the
-                        # extension, so it never happens.
-                        func.short_description = name
-                    setattr(self, attr_name, func)
-                else:
-                    attr_name = name
 
-                if attr_name == 'subjectAltName':  # already displayed in main section
+        extensions = obj.get_extension_fields()
+        if extensions:
+            for field in extensions:
+                if field == 'subjectAltName':  # already displayed in main section
                     continue
 
-                fieldsets[self.x509_fieldset_index][1]['fields'].append(attr_name)
+                # If we encounter an object of type x509.Extension, it means that we do not yet support this
+                # extension, hence there are no accessors either. We compute a name for the extension based on
+                # the OID, create a partial function of unknown_oid and attach it under that name to this
+                # admin instance:
+                if isinstance(field, x509.Extension):
+                    func = partial(self.unknown_oid, field.oid)
+                    func.short_description = 'Unkown OID (%s)' % field.oid.dotted_string
+
+                    field = self.get_oid_name(field.oid)
+
+                    # attach function to this instance
+                    setattr(self, field, func)
+
+                fieldsets[self.x509_fieldset_index][1]['fields'].append(field)
+
         else:
+            # we have no extensions, so remove the whole fieldset
             fieldsets.pop(self.x509_fieldset_index)
 
         return fieldsets
@@ -317,11 +318,12 @@ class CertificateMixin(object):
             return fields
 
         fields = list(fields)
-        for name, value in obj.extensions():
-            if not hasattr(self, name):
-                fields.append(self.get_oid_name(value[1]))
-            else:
-                fields.append(name)
+        for field in obj.get_extension_fields():
+            if isinstance(field, x509.Extension):
+                field = self.get_oid_name(field.oid)
+
+            fields.append(field)
+
         return fields
 
     class Media:
