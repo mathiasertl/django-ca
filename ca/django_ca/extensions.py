@@ -45,6 +45,7 @@ class Extension(object):
 
     def __init__(self, value):
         if isinstance(value, x509.extensions.Extension):  # e.g. from a cert object
+            self.critical = value.critical
             self._from_extension(value)
         elif isinstance(value, (list, tuple)):  # e.g. from a form
             self._from_list(*value)
@@ -84,9 +85,6 @@ class Extension(object):
     def _from_list(self, critical, value):
         self.critical = critical
         self.value = value
-
-    def _from_extension(self, ext):
-        self.critical = ext.critical
 
     def _test_value(self):
         pass
@@ -196,7 +194,6 @@ class KeyUsage(MultiValueExtension):
     )
 
     def _from_extension(self, ext):
-        self.critical = ext.critical
         self.value = []
         for k, v in self.CRYPTOGRAPHY_MAPPING.items():
             try:
@@ -241,7 +238,6 @@ class ExtendedKeyUsage(MultiValueExtension):
     )
 
     def _from_extension(self, ext):
-        self.critical = ext.critical
         self.value = [self._CRYPTOGRAPHY_MAPPING_REVERSED[u] for u in ext.value]
 
     @property
@@ -253,7 +249,6 @@ class SubjectKeyIdentifier(KeyIdExtension):
     oid = ExtensionOID.SUBJECT_KEY_IDENTIFIER
 
     def _from_extension(self, ext):
-        self.critical = ext.critical  # TODO: can be done by the caller
         self.value = ext.value.digest
 
 
@@ -261,7 +256,6 @@ class AuthorityKeyIdentifier(KeyIdExtension):
     oid = ExtensionOID.AUTHORITY_KEY_IDENTIFIER
 
     def _from_extension(self, ext):
-        self.critical = ext.critical  # TODO: can be done by the caller
         self.value = ext.value.key_identifier
 
     @property
@@ -285,7 +279,6 @@ class TLSFeature(MultiValueExtension):
     KNOWN_VALUES = set(CRYPTOGRAPHY_MAPPING)
 
     def _from_extension(self, ext):
-        self.critical = ext.critical
         self.value = [self._CRYPTOGRAPHY_MAPPING_REVERSED[f] for f in ext.value]
 
     @property
