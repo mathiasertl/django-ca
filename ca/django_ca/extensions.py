@@ -65,10 +65,13 @@ class Extension(object):
         return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
 
     def __repr__(self):
-        return str(self)
+        return '<%r: %r, critical=%r>' % (self.__class__.__name__, self.value, self.critical)
 
     def __str__(self):
-        return '<%s: %s, critical=%s>' % (self.__class__.__name__, self.value, self.critical)
+        s = self._text_value
+        if self.critical:
+            s += '/critical'
+        return s
 
     def _from_str(self, value):
         if value.startswith('critical,'):
