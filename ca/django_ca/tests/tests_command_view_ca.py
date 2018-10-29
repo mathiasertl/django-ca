@@ -163,9 +163,9 @@ X509 v3 certificate extensions for signed certificates:
             'serial': ca.serial,
             'dn': ca.distinguishedName(),
             'hpkp': ca.hpkp_pin,
-            'authKeyIdentifier': ca.authority_key_identifier._text_value,
+            'authKeyIdentifier': ca.authority_key_identifier.text_value,
             'basicConstraints': ca.basicConstraints()[1],
-            'subjectKeyIdentifier': ca.subject_key_identifier._text_value,
+            'subjectKeyIdentifier': ca.subject_key_identifier.text_value,
             'pem': ca.pub,
             'name': ca.name,
         }

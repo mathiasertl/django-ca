@@ -322,7 +322,12 @@ class BaseCommand(_BaseCommand):
     def print_extensions(self, cert):
         for ext in cert.get_extensions():
             if isinstance(ext, Extension):
-                self.stdout.write(ext.as_text)
+                if ext.critical:
+                    self.stdout.write('%s (critical):' % ext.name)
+                else:
+                    self.stdout.write('%s:' % ext.name)
+
+                self.stdout.write(self.indent(ext.text_value))
             else:
                 # old extension framework
                 name, value = ext

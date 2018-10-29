@@ -46,8 +46,8 @@ class ViewCertTestCase(DjangoCAWithCertTestCase):
             'sha1': cert.get_digest('sha1'),
             'sha256': cert.get_digest('sha256'),
             'sha512': cert.get_digest('sha512'),
-            'subjectKeyIdentifier': cert.subject_key_identifier._text_value,
-            'authorityKeyIdentifier': cert.ca.subject_key_identifier._text_value,
+            'subjectKeyIdentifier': cert.subject_key_identifier.text_value,
+            'authorityKeyIdentifier': cert.ca.subject_key_identifier.text_value,
             'hpkp': cert.hpkp_pin,
             'san': cert.subjectAltName(),
         }

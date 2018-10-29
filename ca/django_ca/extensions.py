@@ -34,6 +34,7 @@ class Extension(object):
     * subclass of :py:class:`~cryptography:cryptography.x509.ExtensionType`
     * list/tuple, in which case the *first* value is assumed to be a
       boolean value denoting if the extension is ``critical``.
+    * dict, as configured in settings
     * str, in which case the extension is parsed
 
     Parameters
@@ -46,15 +47,15 @@ class Extension(object):
     def __init__(self, value):
         if isinstance(value, x509.extensions.Extension):  # e.g. from a cert object
             self.critical = value.critical
-            self._from_extension(value)
+            self.from_extension(value)
         elif isinstance(value, (list, tuple)):  # e.g. from a form
-            self._from_list(*value)
+            self.from_list(*value)
             self._test_value()
         elif isinstance(value, dict):  # e.g. from settings
-            self._from_dict(value)
+            self.from_dict(value)
             self._test_value()
         elif isinstance(value, six.string_types):  # e.g. from commandline parser
-            self._from_str(value)
+            self.from_str(value)
             self._test_value()
         else:
             raise ValueError('Value is of unsupported type %s' % type(value))
@@ -68,12 +69,11 @@ class Extension(object):
         return '<%r: %r, critical=%r>' % (self.__class__.__name__, self.value, self.critical)
 
     def __str__(self):
-        s = self._text_value
         if self.critical:
-            s += '/critical'
-        return s
+            return'%s/critical' % self.text_value
+        return self.text_value
 
-    def _from_str(self, value):
+    def from_str(self, value):
         if value.startswith('critical,'):
             self.critical = True
             self.value = value[9:]
@@ -81,11 +81,11 @@ class Extension(object):
             self.critical = False
             self.value = value
 
-    def _from_dict(self, value):
+    def from_dict(self, value):
         self.critical = value.get('critical', False)
         self.value = value['value']
 
-    def _from_list(self, critical, value):
+    def from_list(self, critical, value):
         self.critical = critical
         self.value = value
 
@@ -93,25 +93,18 @@ class Extension(object):
         pass
 
     @property
-    def _text_header(self):
-        if self.critical:
-            return '%s (critical):' % self.oid._name
-        else:
-            return '%s:' % self.oid._name
+    def name(self):
+        return self.oid._name
 
     def add_colons(self, s):
         return ':'.join([s[i:i + 2] for i in range(0, len(s), 2)])
-
-    @property
-    def _text_value(self):
-        return self.value
 
     def as_extension(self):
         return x509.extensions.Extension(oid=self.oid, critical=self.critical, value=self.extension_type)
 
     @property
-    def as_text(self):
-        return '%s\n    %s' % (self._text_header, self._text_value)
+    def text_value(self):
+        return self.value
 
     def for_builder(self):
         return {'extension': self.extension_type, 'critical': self.critical}
@@ -130,14 +123,14 @@ class MultiValueExtension(Extension):
     def __str__(self):
         return '<%s: %s, critical=%s>' % (self.__class__.__name__, sorted(self.value), self.critical)
 
-    def _from_dict(self, value):
+    def from_dict(self, value):
         self.critical = value.get('critical', False)
         self.value = value['value']
         if isinstance(self.value, six.string_types):
             self.value = [self.value]
 
-    def _from_str(self, value):
-        super(MultiValueExtension, self)._from_str(value)
+    def from_str(self, value):
+        super(MultiValueExtension, self).from_str(value)  # parses critical prefix
         self.value = [v.strip() for v in self.value.split(',') if v.strip()]
 
     def __contains__(self, value):
@@ -152,20 +145,16 @@ class MultiValueExtension(Extension):
             raise ValueError('Unknown value(s): %s' % ', '.join(sorted(diff)))
 
     @property
-    def _text_value(self):
-        # note: we strip here because as_text() already appends the first four spaces
-        return '\n'.join(['    * %s' % v for v in sorted(self.value)]).strip()
+    def text_value(self):
+        return '\n'.join(['* %s' % v for v in sorted(self.value)])
 
     def form_decompress(self):
         return self.value, self.critical
 
 
 class KeyIdExtension(Extension):
-    def __str__(self):
-        return '<%s: %s>' % (self.__class__.__name__, self._text_value)
-
     @property
-    def _text_value(self):
+    def text_value(self):
         return self.add_colons(binascii.hexlify(self.value).upper().decode('utf-8'))
 
 
@@ -196,7 +185,7 @@ class KeyUsage(MultiValueExtension):
         ('nonRepudiation', 'nonRepudiation'),
     )
 
-    def _from_extension(self, ext):
+    def from_extension(self, ext):
         self.value = []
         for k, v in self.CRYPTOGRAPHY_MAPPING.items():
             try:
@@ -240,7 +229,7 @@ class ExtendedKeyUsage(MultiValueExtension):
         ('msKDC', 'Kerberos Domain Controller'),
     )
 
-    def _from_extension(self, ext):
+    def from_extension(self, ext):
         self.value = [self._CRYPTOGRAPHY_MAPPING_REVERSED[u] for u in ext.value]
 
     @property
@@ -251,19 +240,19 @@ class ExtendedKeyUsage(MultiValueExtension):
 class SubjectKeyIdentifier(KeyIdExtension):
     oid = ExtensionOID.SUBJECT_KEY_IDENTIFIER
 
-    def _from_extension(self, ext):
+    def from_extension(self, ext):
         self.value = ext.value.digest
 
 
 class AuthorityKeyIdentifier(KeyIdExtension):
     oid = ExtensionOID.AUTHORITY_KEY_IDENTIFIER
 
-    def _from_extension(self, ext):
+    def from_extension(self, ext):
         self.value = ext.value.key_identifier
 
     @property
-    def _text_value(self):
-        return 'keyid:%s' % super(AuthorityKeyIdentifier, self)._text_value
+    def text_value(self):
+        return 'keyid:%s' % super(AuthorityKeyIdentifier, self).text_value
 
 
 class TLSFeature(MultiValueExtension):
@@ -281,7 +270,7 @@ class TLSFeature(MultiValueExtension):
     _CRYPTOGRAPHY_MAPPING_REVERSED = {v: k for k, v in CRYPTOGRAPHY_MAPPING.items()}
     KNOWN_VALUES = set(CRYPTOGRAPHY_MAPPING)
 
-    def _from_extension(self, ext):
+    def from_extension(self, ext):
         self.value = [self._CRYPTOGRAPHY_MAPPING_REVERSED[f] for f in ext.value]
 
     @property

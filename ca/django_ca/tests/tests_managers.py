@@ -50,7 +50,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
         key_id = exts.pop('SubjectKeyIdentifier')
         self.assertFalse(key_id.critical)
-        self.assertEqual(len(key_id._text_value), 59)
+        self.assertEqual(len(key_id.text_value), 59)
 
         self.assertEqual(exts, expected)
 
