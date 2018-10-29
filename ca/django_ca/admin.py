@@ -167,7 +167,7 @@ class CertificateMixin(object):
                     html += '<li>%s</li>' % escape(val)
                 html += '</ul>'
             else:
-                html += '<p>%s<p>' % escape(value._text_value)
+                html += '<p>%s<p>' % escape(value.as_text())
 
         # old-style extension objects
         else:

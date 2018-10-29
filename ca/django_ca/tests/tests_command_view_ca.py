@@ -29,6 +29,7 @@ from .base import override_tmpcadir
 
 class ViewCATestCase(DjangoCAWithCATestCase):
     def test_basic(self):
+        self.maxDiff = None
         stdout, stderr = self.cmd('view_ca', self.ca.serial)
         path = os.path.join(settings.FIXTURES_DIR, 'root.key')
         data = self.get_cert_context('root')
@@ -163,9 +164,9 @@ X509 v3 certificate extensions for signed certificates:
             'serial': ca.serial,
             'dn': ca.distinguishedName(),
             'hpkp': ca.hpkp_pin,
-            'authKeyIdentifier': ca.authority_key_identifier.text_value,
+            'authKeyIdentifier': ca.authority_key_identifier.as_text(),
             'basicConstraints': ca.basicConstraints()[1],
-            'subjectKeyIdentifier': ca.subject_key_identifier.text_value,
+            'subjectKeyIdentifier': ca.subject_key_identifier.as_text(),
             'pem': ca.pub,
             'name': ca.name,
         }

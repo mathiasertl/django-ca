@@ -576,7 +576,6 @@ def get_cert_profile_kwargs(name=None):
     ext_key_usage = profile.get('extendedKeyUsage')
     if ext_key_usage and ext_key_usage.get('value'):
         kwargs['extended_key_usage'] = ExtendedKeyUsage(ext_key_usage)
-
     tls_feature = profile.get('TLSFeature')
     if tls_feature and tls_feature.get('value'):
         kwargs['tls_feature'] = TLSFeature(tls_feature)

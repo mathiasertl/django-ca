@@ -28,20 +28,53 @@ from cryptography.x509.oid import ObjectIdentifier
 class Extension(object):
     """Convenience class to handle X509 Extensions.
 
-    The constructor accepts multiple types for the ``value`` parameter, so that it can be used in most
-    situations, it can be one of:
+    The class is designed to take whatever format an extension might occur, essentially providing a
+    convertible format for extensions that is used in many places throughout the code. It accepts ``str`` if
+    e.g. the value was received from the commandline::
 
-    * subclass of :py:class:`~cryptography:cryptography.x509.ExtensionType`
-    * list/tuple, in which case the *first* value is assumed to be a
-      boolean value denoting if the extension is ``critical``.
-    * dict, as configured in settings
-    * str, in which case the extension is parsed
+        >>> KeyUsage('keyAgreement,keyEncipherment')
+        <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=False>
+        >>> KeyUsage('critical,keyAgreement,keyEncipherment')
+        <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=True>
+
+    It also accepts a ``list``/``tuple`` of two elements, the first being the "critical" flag, the second
+    being a value (e.g. from a MultiValueField from a form)::
+
+        >>> KeyUsage((False, ['keyAgreement', 'keyEncipherment']))
+        <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=False>
+        >>> KeyUsage((True, ['keyAgreement', 'keyEncipherment']))
+        <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=True>
+
+    Or it can be a ``dict`` as used by the :ref:`CA_PROFILES <settings-ca-profiles>` setting::
+
+        >>> KeyUsage({'critical': False, 'value': ['keyAgreement', 'keyEncipherment']})
+        <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=False>
+        >>> KeyUsage({'critical': True, 'value': ['keyAgreement', 'keyEncipherment']})
+        <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=True>
+
+    ... and finally it can also use a subclass of :py:class:`~cryptography:cryptography.x509.ExtensionType`
+    from ``cryptography``::
+
+        >>> from cryptography import x509
+        >>> ExtendedKeyUsage(x509.extensions.Extension(
+        ...    oid=ExtensionOID.EXTENDED_KEY_USAGE,
+        ...    critical=False,
+        ...    value=x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH])
+        ... ))
+        <ExtendedKeyUsage: ['serverAuth'], critical=False>
+
+    Attributes
+    ----------
+
+    name
+    value
+        Raw value for this extension. The type various from subclass to subclass.
 
     Parameters
     ----------
 
-    value
-        The value of the extension.
+    value : list or tuple or dict or str or :py:class:`~cryptography:cryptography.x509.ExtensionType`
+        The value of the extension, the description provides further details.
     """
 
     def __init__(self, value):
@@ -66,12 +99,12 @@ class Extension(object):
         return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
 
     def __repr__(self):
-        return '<%r: %r, critical=%r>' % (self.__class__.__name__, self.value, self.critical)
+        return '<%s: %r, critical=%r>' % (self.__class__.__name__, self.value, self.critical)
 
     def __str__(self):
         if self.critical:
-            return'%s/critical' % self.text_value
-        return self.text_value
+            return'%s/critical' % self.as_text()
+        return self.as_text()
 
     def from_str(self, value):
         if value.startswith('critical,'):
@@ -94,25 +127,51 @@ class Extension(object):
 
     @property
     def name(self):
+        """A human readable name of this extension."""
         return self.oid._name
 
     def add_colons(self, s):
+        """new description
+
+        more description in the next line
+
+        Parameters
+        ----------
+
+        s : str
+            whatever
+        """
         return ':'.join([s[i:i + 2] for i in range(0, len(s), 2)])
 
     def as_extension(self):
+        """This extension as :py:class:`~cryptography:cryptography.x509.ExtensionType`."""
         return x509.extensions.Extension(oid=self.oid, critical=self.critical, value=self.extension_type)
 
-    @property
-    def text_value(self):
+    def as_text(self):
+        """Human-readable version of the *value*, not including the "critical" flag."""
         return self.value
 
     def for_builder(self):
+        """Return kwargs suitable for a :py:class:`~cryptography:cryptography.x509.CertificateBuilder`.
+
+        Example::
+
+            >>> kwargs = KeyUsage('keyAgreement,keyEncipherment').for_builder()
+            >>> builder.add_extension(**kwargs)  # doctest: +SKIP
+        """
         return {'extension': self.extension_type, 'critical': self.critical}
 
 
 class MultiValueExtension(Extension):
     """A generic base class for extensions that have multiple values.
 
+    Instances of this class have a ``len()`` and can be used with the ``in`` operator::
+
+        >>> ku = KeyUsage((False, ['keyAgreement', 'keyEncipherment']))
+        >>> 'keyAgreement' in ku
+        True
+        >>> len(ku)
+        2
     """
     KNOWN_VALUES = set()
 
@@ -144,8 +203,7 @@ class MultiValueExtension(Extension):
         if diff:
             raise ValueError('Unknown value(s): %s' % ', '.join(sorted(diff)))
 
-    @property
-    def text_value(self):
+    def as_text(self):
         return '\n'.join(['* %s' % v for v in sorted(self.value)])
 
     def form_decompress(self):
@@ -153,9 +211,18 @@ class MultiValueExtension(Extension):
 
 
 class KeyIdExtension(Extension):
-    @property
-    def text_value(self):
+    def as_text(self):
         return self.add_colons(binascii.hexlify(self.value).upper().decode('utf-8'))
+
+
+class AuthorityKeyIdentifier(KeyIdExtension):
+    oid = ExtensionOID.AUTHORITY_KEY_IDENTIFIER
+
+    def from_extension(self, ext):
+        self.value = ext.value.key_identifier
+
+    def as_text(self):
+        return 'keyid:%s' % super(AuthorityKeyIdentifier, self).as_text()
 
 
 class KeyUsage(MultiValueExtension):
@@ -242,17 +309,6 @@ class SubjectKeyIdentifier(KeyIdExtension):
 
     def from_extension(self, ext):
         self.value = ext.value.digest
-
-
-class AuthorityKeyIdentifier(KeyIdExtension):
-    oid = ExtensionOID.AUTHORITY_KEY_IDENTIFIER
-
-    def from_extension(self, ext):
-        self.value = ext.value.key_identifier
-
-    @property
-    def text_value(self):
-        return 'keyid:%s' % super(AuthorityKeyIdentifier, self).text_value
 
 
 class TLSFeature(MultiValueExtension):

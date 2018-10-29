@@ -28,8 +28,8 @@ sys.path.insert(0, _SRC_DIR)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ca.settings')
 
 
-import django
-from django.conf import settings
+import django  # NOQA
+from django.conf import settings  # NOQA
 settings.configure(SECRET_KEY='dummy', BASE_DIR=_SRC_DIR, INSTALLED_APPS=['django_ca'])
 django.setup()
 
@@ -228,25 +228,25 @@ htmlhelp_basename = 'django-cadoc'
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {
-# The paper size ('letterpaper' or 'a4paper').
-#'papersize': 'letterpaper',
+    # The paper size ('letterpaper' or 'a4paper').
+    #'papersize': 'letterpaper',
 
-# The font size ('10pt', '11pt' or '12pt').
-#'pointsize': '10pt',
+    # The font size ('10pt', '11pt' or '12pt').
+    #'pointsize': '10pt',
 
-# Additional stuff for the LaTeX preamble.
-#'preamble': '',
+    # Additional stuff for the LaTeX preamble.
+    #'preamble': '',
 
-# Latex figure (float) alignment
-#'figure_align': 'htbp',
+    # Latex figure (float) alignment
+    #'figure_align': 'htbp',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  (master_doc, 'django-ca.tex', 'django-ca Documentation',
-   'Mathias Ertl', 'manual'),
+    (master_doc, 'django-ca.tex', 'django-ca Documentation',
+     'Mathias Ertl', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -289,9 +289,9 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'django-ca', 'django-ca Documentation',
-   author, 'django-ca', 'One line description of project.',
-   'Miscellaneous'),
+    (master_doc, 'django-ca', 'django-ca Documentation',
+     author, 'django-ca', 'One line description of project.',
+     'Miscellaneous'),
 ]
 
 # Documents to append as an appendix to all manuals.
@@ -314,6 +314,6 @@ intersphinx_mapping = {
     'django': ('https://docs.djangoproject.com/en/dev/', 'http://docs.djangoproject.com/en/dev/_objects/'),
 }
 
-import sphinx_rtd_theme
+import sphinx_rtd_theme  # NOQA
 html_theme = "sphinx_rtd_theme"
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]

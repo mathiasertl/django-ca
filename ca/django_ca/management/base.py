@@ -327,7 +327,7 @@ class BaseCommand(_BaseCommand):
                 else:
                     self.stdout.write('%s:' % ext.name)
 
-                self.stdout.write(self.indent(ext.text_value))
+                self.stdout.write(self.indent(ext.as_text()))
             else:
                 # old extension framework
                 name, value = ext

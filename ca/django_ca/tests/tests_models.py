@@ -216,11 +216,11 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertEqual(self.cert3.get_digest('sha512'), certs['cert3']['sha512'])
 
     def test_authorityKeyIdentifier(self):
-        self.assertEqual(self.ca.authority_key_identifier.text_value, certs['root']['authKeyIdentifier'])
-        self.assertEqual(self.ca2.authority_key_identifier.text_value, certs['child']['authKeyIdentifier'])
-        self.assertEqual(self.cert.authority_key_identifier.text_value, certs['cert1']['authKeyIdentifier'])
-        self.assertEqual(self.cert2.authority_key_identifier.text_value, certs['cert2']['authKeyIdentifier'])
-        self.assertEqual(self.cert3.authority_key_identifier.text_value, certs['cert3']['authKeyIdentifier'])
+        self.assertEqual(self.ca.authority_key_identifier.as_text(), certs['root']['authKeyIdentifier'])
+        self.assertEqual(self.ca2.authority_key_identifier.as_text(), certs['child']['authKeyIdentifier'])
+        self.assertEqual(self.cert.authority_key_identifier.as_text(), certs['cert1']['authKeyIdentifier'])
+        self.assertEqual(self.cert2.authority_key_identifier.as_text(), certs['cert2']['authKeyIdentifier'])
+        self.assertEqual(self.cert3.authority_key_identifier.as_text(), certs['cert3']['authKeyIdentifier'])
 
     def test_nameConstraints(self):
         self.assertEqual(self.ca.nameConstraints(), None)
