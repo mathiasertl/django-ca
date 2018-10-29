@@ -42,11 +42,11 @@ from django.utils.encoding import force_str
 from django.utils.translation import ugettext_lazy as _
 
 from . import ca_settings
+from .extensions import AuthorityKeyIdentifier
 from .extensions import ExtendedKeyUsage
 from .extensions import KeyUsage
 from .extensions import SubjectKeyIdentifier
 from .extensions import TLSFeature
-from .extensions import AuthorityKeyIdentifier
 from .managers import CertificateAuthorityManager
 from .managers import CertificateManager
 from .querysets import CertificateAuthorityQuerySet

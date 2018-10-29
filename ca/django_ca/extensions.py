@@ -102,7 +102,6 @@ class Extension(object):
         return '<%s: %r, critical=%r>' % (self.__class__.__name__, self.value, self.critical)
 
     def __str__(self):
-        return 'foo'
         if self.critical:
             return'%s/critical' % self.as_text()
         return self.as_text()
