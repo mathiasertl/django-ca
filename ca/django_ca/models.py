@@ -121,6 +121,9 @@ class X509CertMixin(models.Model):
 
     _x509 = None
 
+    class Meta:
+        abstract = True
+
     @property
     def x509(self):
         """The underlying :py:class:`cryptography:cryptography.x509.Certificate`."""
@@ -141,13 +144,46 @@ class X509CertMixin(models.Model):
         self.serial = int_to_hex(value.serial_number)
 
     @property
+    def admin_change_url(self):
+        return reverse('admin:%s_%s_change' % (self._meta.app_label, self._meta.verbose_name),
+                       args=(self.pk, ))
+
+    ##########################
+    # Certificate properties #
+    ##########################
+
+    @property
     def algorithm(self):
         return self.x509.signature_hash_algorithm
 
+    def dump_certificate(self, encoding=Encoding.PEM):
+        return self.x509.public_bytes(encoding=encoding)
+
+    def get_digest(self, algo):
+        algo = getattr(hashes, algo.upper())()
+        return add_colons(binascii.hexlify(self.x509.fingerprint(algo)).upper().decode('utf-8'))
+
+    def get_revocation(self):
+        if self.revoked is False:
+            raise ValueError('Certificate is not revoked.')
+
+        revoked_cert = x509.RevokedCertificateBuilder().serial_number(
+            self.x509.serial_number).revocation_date(self.revoked_date)
+
+        if self.revoked_reason:
+            reason_flag = getattr(x509.ReasonFlags, self.revoked_reason)
+            revoked_cert = revoked_cert.add_extension(x509.CRLReason(reason_flag), critical=False)
+
+        return revoked_cert.build(default_backend())
+
     @property
-    def subject(self):
-        """The certificates subject as :py:class:`~django_ca.subject.Subject`."""
-        return Subject([(s.oid, s.value) for s in self.x509.subject])
+    def hpkp_pin(self):
+        # taken from https://github.com/luisgf/hpkp-python/blob/master/hpkp.py
+
+        public_key_raw = self.x509.public_key().public_bytes(
+            encoding=Encoding.DER, format=PublicFormat.SubjectPublicKeyInfo)
+        public_key_hash = hashlib.sha256(public_key_raw).digest()
+        return base64.b64encode(public_key_hash).decode('utf-8')
 
     @property
     def issuer(self):
@@ -164,6 +200,64 @@ class X509CertMixin(models.Model):
         """Date/Time this certificate expires."""
         return self.x509.not_valid_after
 
+    @property
+    def ocsp_status(self):
+        # NOTE: The OCSP status 'good' does not say if the certificate has expired.
+        if self.revoked is False:
+            return 'good'
+
+        return self.revoked_reason or 'revoked'
+
+    def revoke(self, reason=None):
+        pre_revoke_cert.send(sender=self.__class__, cert=self, reason=reason)
+
+        self.revoked = True
+        self.revoked_date = timezone.now()
+        self.revoked_reason = reason
+        self.save()
+
+        post_revoke_cert.send(sender=self.__class__, cert=self)
+
+    @property
+    def subject(self):
+        """The certificates subject as :py:class:`~django_ca.subject.Subject`."""
+        return Subject([(s.oid, s.value) for s in self.x509.subject])
+
+    ###################
+    # X509 extensions #
+    ###################
+    @property
+    def key_usage(self):
+        """The :py:class:`~django_ca.extensions.KeyUsage` extension, or ``None`` if it doesn't exist."""
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.KEY_USAGE)
+        except x509.ExtensionNotFound:
+            return None
+        return KeyUsage(ext)
+
+    @property
+    def extended_key_usage(self):
+        """The :py:class:`~django_ca.extensions.ExtendedKeyUsage` extension, or ``None`` if it doesn't
+        exist."""
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.EXTENDED_KEY_USAGE)
+        except x509.ExtensionNotFound:
+            return None
+        return ExtendedKeyUsage(ext)
+
+    @property
+    def tls_feature(self):
+        """The :py:class:`~django_ca.extensions.TLSFeature` extension, or ``None`` if it doesn't exist."""
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.TLS_FEATURE)
+        except x509.ExtensionNotFound:
+            return None
+        return TLSFeature(ext)
+
+    #################################
+    # Old-style extension accessors #
+    #################################
+
     def extensions(self):
         for ext in sorted(self.x509.extensions, key=lambda e: e.oid._name):
             name = ext.oid._name.replace(' ', '')
@@ -176,33 +270,6 @@ class X509CertMixin(models.Model):
                 yield name, self.crlDistributionPoints()
             else:  # pragma: no cover  - we have a function for everything we support
                 yield name, (ext.critical, ext.oid)
-
-    def distinguishedName(self):
-        return format_name(self.x509.subject)
-    distinguishedName.short_description = 'Distinguished Name'
-
-    def subjectAltName(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
-        except x509.ExtensionNotFound:
-            return None
-
-        return ext.critical, [format_general_name(name) for name in ext.value]
-
-    def crlDistributionPoints(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.CRL_DISTRIBUTION_POINTS)
-        except x509.ExtensionNotFound:
-            return None
-
-        value = []
-        for dp in ext.value:
-            if dp.full_name:
-                value.append('Full Name: %s' % format_general_names(dp.full_name))
-            else:  # pragma: no cover - not really used in the wild
-                value.append('Relative Name: %s' % format_name(dp.relative_name.value))
-
-        return ext.critical, value
 
     def authorityInfoAccess(self):
         try:
@@ -221,6 +288,15 @@ class X509CertMixin(models.Model):
 
         return ext.critical, output
 
+    def authorityKeyIdentifier(self):
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_KEY_IDENTIFIER)
+        except x509.ExtensionNotFound:
+            return None
+
+        hexlified = binascii.hexlify(ext.value.key_identifier).upper().decode('utf-8')
+        return ext.critical, 'keyid:%s' % add_colons(hexlified)
+
     def basicConstraints(self):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
@@ -235,79 +311,6 @@ class X509CertMixin(models.Model):
             value = '%s, pathlen:%s' % (value, ext.value.path_length)
 
         return ext.critical, value
-
-    @property
-    def keyUsage(self):
-        """The :py:class:`~django_ca.extensions.KeyUsage` extension, or ``None`` if it doesn't exist."""
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.KEY_USAGE)
-        except x509.ExtensionNotFound:
-            return None
-        return KeyUsage(ext)
-
-    @property
-    def extendedKeyUsage(self):
-        """The :py:class:`~django_ca.extensions.ExtendedKeyUsage` extension, or ``None`` if it doesn't
-        exist."""
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.EXTENDED_KEY_USAGE)
-        except x509.ExtensionNotFound:
-            return None
-        return ExtendedKeyUsage(ext)
-
-    @property
-    def TLSFeature(self):
-        """The :py:class:`~django_ca.extensions.TLSFeature` extension, or ``None`` if it doesn't exist."""
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.TLS_FEATURE)
-        except x509.ExtensionNotFound:
-            return None
-        return TLSFeature(ext)
-
-    def subjectKeyIdentifier(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_KEY_IDENTIFIER)
-        except x509.ExtensionNotFound:
-            return None
-
-        hexlified = binascii.hexlify(ext.value.digest).upper().decode('utf-8')
-        return ext.critical, add_colons(hexlified)
-
-    def issuerAltName(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.ISSUER_ALTERNATIVE_NAME)
-        except x509.ExtensionNotFound:
-            return None
-
-        return ext.critical, format_general_names(ext.value)
-
-    def authorityKeyIdentifier(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_KEY_IDENTIFIER)
-        except x509.ExtensionNotFound:
-            return None
-
-        hexlified = binascii.hexlify(ext.value.key_identifier).upper().decode('utf-8')
-        return ext.critical, 'keyid:%s' % add_colons(hexlified)
-
-    def _parse_policy_qualifier(self, qualifier):
-        if isinstance(qualifier, x509.extensions.UserNotice):
-            # https://tools.ietf.org/html/rfc5280#section-4.2.1.4
-            notice_ref = qualifier.notice_reference
-            text = qualifier.explicit_text
-            if notice_ref is None:
-                return text
-            else:  # pragma: no cover - unseen in the wild
-                org = notice_ref.organization
-                numbers = notice_ref.notice_numbers
-                if not numbers:
-                    return '%s (Reference: %s)' % (text, org)
-                elif len(numbers) == 1:
-                    return '%s (Reference: %s, number %s)' % (text, org, numbers[0])
-                else:
-                    return '%s (Reference: %s, numbers %s)' % (text, org, ', '.join(numbers))
-
-        return qualifier
 
     def certificatePolicies(self):
         try:
@@ -325,6 +328,33 @@ class X509CertMixin(models.Model):
             policies.append(output)
 
         return ext.critical, policies
+
+    def crlDistributionPoints(self):
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.CRL_DISTRIBUTION_POINTS)
+        except x509.ExtensionNotFound:
+            return None
+
+        value = []
+        for dp in ext.value:
+            if dp.full_name:
+                value.append('Full Name: %s' % format_general_names(dp.full_name))
+            else:  # pragma: no cover - not really used in the wild
+                value.append('Relative Name: %s' % format_name(dp.relative_name.value))
+
+        return ext.critical, value
+
+    def distinguishedName(self):
+        return format_name(self.x509.subject)
+    distinguishedName.short_description = 'Distinguished Name'
+
+    def issuerAltName(self):
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.ISSUER_ALTERNATIVE_NAME)
+        except x509.ExtensionNotFound:
+            return None
+
+        return ext.critical, format_general_names(ext.value)
 
     def signedCertificateTimestampList(self):
         try:
@@ -356,60 +386,58 @@ class X509CertMixin(models.Model):
 
         return ext.critical, timestamps
 
-    def get_digest(self, algo):
-        algo = getattr(hashes, algo.upper())()
-        return add_colons(binascii.hexlify(self.x509.fingerprint(algo)).upper().decode('utf-8'))
+    def subjectAltName(self):
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
+        except x509.ExtensionNotFound:
+            return None
+
+        return ext.critical, [format_general_name(name) for name in ext.value]
+
+    def subjectKeyIdentifier(self):
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_KEY_IDENTIFIER)
+        except x509.ExtensionNotFound:
+            return None
+
+        hexlified = binascii.hexlify(ext.value.digest).upper().decode('utf-8')
+        return ext.critical, add_colons(hexlified)
+
+    def _parse_policy_qualifier(self, qualifier):
+        if isinstance(qualifier, x509.extensions.UserNotice):
+            # https://tools.ietf.org/html/rfc5280#section-4.2.1.4
+            notice_ref = qualifier.notice_reference
+            text = qualifier.explicit_text
+            if notice_ref is None:
+                return text
+            else:  # pragma: no cover - unseen in the wild
+                org = notice_ref.organization
+                numbers = notice_ref.notice_numbers
+                if not numbers:
+                    return '%s (Reference: %s)' % (text, org)
+                elif len(numbers) == 1:
+                    return '%s (Reference: %s, number %s)' % (text, org, numbers[0])
+                else:
+                    return '%s (Reference: %s, numbers %s)' % (text, org, ', '.join(numbers))
+
+        return qualifier
+
+    ########################
+    # Deprecated accessors #
+    ########################
+    # These accessors are used by extensions() and should no longer be used.
 
     @property
-    def hpkp_pin(self):
-        # taken from https://github.com/luisgf/hpkp-python/blob/master/hpkp.py
-
-        public_key_raw = self.x509.public_key().public_bytes(
-            encoding=Encoding.DER, format=PublicFormat.SubjectPublicKeyInfo)
-        public_key_hash = hashlib.sha256(public_key_raw).digest()
-        return base64.b64encode(public_key_hash).decode('utf-8')
-
-    def dump_certificate(self, encoding=Encoding.PEM):
-        return self.x509.public_bytes(encoding=encoding)
-
-    def revoke(self, reason=None):
-        pre_revoke_cert.send(sender=self.__class__, cert=self, reason=reason)
-
-        self.revoked = True
-        self.revoked_date = timezone.now()
-        self.revoked_reason = reason
-        self.save()
-
-        post_revoke_cert.send(sender=self.__class__, cert=self)
-
-    def get_revocation(self):
-        if self.revoked is False:
-            raise ValueError('Certificate is not revoked.')
-
-        revoked_cert = x509.RevokedCertificateBuilder().serial_number(
-            self.x509.serial_number).revocation_date(self.revoked_date)
-
-        if self.revoked_reason:
-            reason_flag = getattr(x509.ReasonFlags, self.revoked_reason)
-            revoked_cert = revoked_cert.add_extension(x509.CRLReason(reason_flag), critical=False)
-
-        return revoked_cert.build(default_backend())
+    def extendedKeyUsage(self):
+        return self.extended_key_usage
 
     @property
-    def ocsp_status(self):
-        # NOTE: The OCSP status 'good' does not say if the certificate has expired.
-        if self.revoked is False:
-            return 'good'
-
-        return self.revoked_reason or 'revoked'
+    def keyUsage(self):
+        return self.key_usage
 
     @property
-    def admin_change_url(self):
-        return reverse('admin:%s_%s_change' % (self._meta.app_label, self._meta.verbose_name),
-                       args=(self.pk, ))
-
-    class Meta:
-        abstract = True
+    def TLSFeature(self):
+        return self.tls_feature
 
 
 class CertificateAuthority(X509CertMixin):

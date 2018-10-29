@@ -47,6 +47,9 @@ Testing
 * Load keys and certs in for every testcase instead for every class, improving testcase isolation.
 * Add two certificates that include all and no extensions at all respectively to be able to test edge cases
   more consistently and thoroughly.
+* Add function ``cmd_e2e`` to call ``manage.py`` scripts in a way that arguments are passed by argparse as if
+  they where called from the command-line. This allows more complete testing including parsing commandline
+  arguments.
 * Error on any :py:mod:`python:warnings` coming from django-ca when running the test-suite.
 
 .. _changelog-1.9.0:
