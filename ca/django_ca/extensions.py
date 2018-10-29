@@ -102,6 +102,7 @@ class Extension(object):
         return '<%s: %r, critical=%r>' % (self.__class__.__name__, self.value, self.critical)
 
     def __str__(self):
+        return 'foo'
         if self.critical:
             return'%s/critical' % self.as_text()
         return self.as_text()
@@ -131,15 +132,9 @@ class Extension(object):
         return self.oid._name
 
     def add_colons(self, s):
-        """new description
+        """Add colons to a string.
 
-        more description in the next line
-
-        Parameters
-        ----------
-
-        s : str
-            whatever
+        TODO: duplicate from utils :-(
         """
         return ':'.join([s[i:i + 2] for i in range(0, len(s), 2)])
 
@@ -172,6 +167,9 @@ class MultiValueExtension(Extension):
         True
         >>> len(ku)
         2
+
+    Known values are set in the ``KNOWN_VALUES`` attribute for each class. The constructor will raise
+    ``ValueError`` if an unknown value is passed.
     """
     KNOWN_VALUES = set()
 
@@ -211,11 +209,15 @@ class MultiValueExtension(Extension):
 
 
 class KeyIdExtension(Extension):
+    """Base class for extensions that contain a KeyID as value."""
+
     def as_text(self):
         return self.add_colons(binascii.hexlify(self.value).upper().decode('utf-8'))
 
 
 class AuthorityKeyIdentifier(KeyIdExtension):
+    """Class representing a AuthorityKeyIdentifier extension."""
+
     oid = ExtensionOID.AUTHORITY_KEY_IDENTIFIER
 
     def from_extension(self, ext):
@@ -226,6 +228,8 @@ class AuthorityKeyIdentifier(KeyIdExtension):
 
 
 class KeyUsage(MultiValueExtension):
+    """Class representing a KeyUsage extension."""
+
     oid = ExtensionOID.KEY_USAGE
     CRYPTOGRAPHY_MAPPING = {
         'cRLSign': 'crl_sign',
@@ -239,6 +243,7 @@ class KeyUsage(MultiValueExtension):
         'nonRepudiation': 'content_commitment',  # http://marc.info/?t=107176106300005&r=1&w=2
     }
     KNOWN_VALUES = set(CRYPTOGRAPHY_MAPPING)
+    """Known values for this extension."""
 
     CHOICES = (
         ('cRLSign', 'CRL Sign'),
@@ -272,6 +277,8 @@ class KeyUsage(MultiValueExtension):
 
 
 class ExtendedKeyUsage(MultiValueExtension):
+    """Class representing a ExtendedKeyUsage extension."""
+
     oid = ExtensionOID.EXTENDED_KEY_USAGE
     CRYPTOGRAPHY_MAPPING = {
         'serverAuth': ExtendedKeyUsageOID.SERVER_AUTH,
@@ -285,6 +292,8 @@ class ExtendedKeyUsage(MultiValueExtension):
     }
     _CRYPTOGRAPHY_MAPPING_REVERSED = {v: k for k, v in CRYPTOGRAPHY_MAPPING.items()}
     KNOWN_VALUES = set(CRYPTOGRAPHY_MAPPING)
+    """Known values for this extension."""
+
     CHOICES = (
         ('serverAuth', 'SSL/TLS Web Server Authentication'),
         ('clientAuth', 'SSL/TLS Web Client Authentication'),
@@ -305,6 +314,8 @@ class ExtendedKeyUsage(MultiValueExtension):
 
 
 class SubjectKeyIdentifier(KeyIdExtension):
+    """Class representing a SubjectKeyIdentifier extension."""
+
     oid = ExtensionOID.SUBJECT_KEY_IDENTIFIER
 
     def from_extension(self, ext):
@@ -312,6 +323,8 @@ class SubjectKeyIdentifier(KeyIdExtension):
 
 
 class TLSFeature(MultiValueExtension):
+    """Class representing a TLSFeature extension."""
+
     oid = ExtensionOID.TLS_FEATURE
     CHOICES = (
         ('OCSPMustStaple', 'OCSP Must-Staple'),
@@ -325,6 +338,7 @@ class TLSFeature(MultiValueExtension):
     }
     _CRYPTOGRAPHY_MAPPING_REVERSED = {v: k for k, v in CRYPTOGRAPHY_MAPPING.items()}
     KNOWN_VALUES = set(CRYPTOGRAPHY_MAPPING)
+    """Known values for this extension."""
 
     def from_extension(self, ext):
         self.value = [self._CRYPTOGRAPHY_MAPPING_REVERSED[f] for f in ext.value]
