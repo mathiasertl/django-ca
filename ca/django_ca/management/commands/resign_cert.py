@@ -54,9 +54,9 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
         else:
             subject = cert.subject
 
-        key_usage = options.get('key_usage', cert.keyUsage)
-        ext_key_usage = options.get('ext_key_usage', cert.extendedKeyUsage)
-        tls_feature = options.get('tls_feature', cert.TLSFeature)
+        key_usage = options.get('key_usage', cert.key_usage)
+        ext_key_usage = options.get('ext_key_usage', cert.extended_key_usage)
+        tls_feature = options.get('tls_feature', cert.tls_feature)
 
         kwargs = {
             'subject': subject,

@@ -348,9 +348,9 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(cert.subjectAltName(), (False, ['DNS:%s' % cn]))
         self.assertEqual(cert.basicConstraints(), (True, 'CA:FALSE'))
-        self.assertEqual(cert.keyUsage, KeyUsage('critical,digitalSignature,keyAgreement'))
-        self.assertEqual(cert.extendedKeyUsage, ExtendedKeyUsage('clientAuth,serverAuth'))
-        self.assertEqual(cert.TLSFeature, TLSFeature('OCSPMustStaple,MultipleCertStatusRequest'))
+        self.assertEqual(cert.key_usage, KeyUsage('critical,digitalSignature,keyAgreement'))
+        self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('clientAuth,serverAuth'))
+        self.assertEqual(cert.tls_feature, TLSFeature('OCSPMustStaple,MultipleCertStatusRequest'))
         self.assertEqual(cert.ca, self.ca)
         self.assertEqual(cert.csr, self.csr_pem)
 
@@ -411,13 +411,13 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(cert.subjectAltName(), (False, ['DNS:%s' % cn, 'DNS:%s' % san]))
         self.assertEqual(cert.basicConstraints(), (True, 'CA:FALSE'))
-        self.assertIsNone(cert.keyUsage)  # not present
-        self.assertIsNone(cert.extendedKeyUsage)  # not present
+        self.assertIsNone(cert.key_usage)  # not present
+        self.assertIsNone(cert.extended_key_usage)  # not present
         self.assertEqual(cert.ca, self.ca)
         self.assertEqual(cert.csr, self.csr_pem)
 
         # Test some more properties
-        self.assertIsNone(cert.TLSFeature)
+        self.assertIsNone(cert.tls_feature)
         self.assertIsNone(cert.certificatePolicies())
         self.assertIsNone(cert.signedCertificateTimestampList())
 
@@ -500,8 +500,8 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertAuthorityKeyIdentifier(self.pwd_ca, cert)
         self.assertEqual(cert.subjectAltName(), (False, ['DNS:%s' % cn]))
         self.assertEqual(cert.basicConstraints(), (True, 'CA:FALSE'))
-        self.assertEqual(cert.keyUsage, KeyUsage('critical,digitalSignature,keyAgreement'))
-        self.assertEqual(cert.extendedKeyUsage, ExtendedKeyUsage('clientAuth,serverAuth'))
+        self.assertEqual(cert.key_usage, KeyUsage('critical,digitalSignature,keyAgreement'))
+        self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('clientAuth,serverAuth'))
         self.assertEqual(cert.ca, self.pwd_ca)
         self.assertEqual(cert.csr, self.csr_pem)
 
@@ -904,10 +904,10 @@ class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithCertTestCase)
         self.assertEqual(cert.cn, resigned.cn)
         self.assertEqual(cert.csr, resigned.csr)
         self.assertEqual(cert.distinguishedName(), resigned.distinguishedName())
-        self.assertEqual(cert.extendedKeyUsage, resigned.extendedKeyUsage)
-        self.assertEqual(cert.keyUsage, resigned.keyUsage)
+        self.assertEqual(cert.extended_key_usage, resigned.extended_key_usage)
+        self.assertEqual(cert.key_usage, resigned.key_usage)
         self.assertEqual(cert.subjectAltName(), resigned.subjectAltName())
-        self.assertEqual(cert.TLSFeature, resigned.TLSFeature)
+        self.assertEqual(cert.tls_feature, resigned.TLSFeature)
 
         # Some properties are obviously *not* equal
         self.assertNotEqual(cert.pub, resigned.pub)

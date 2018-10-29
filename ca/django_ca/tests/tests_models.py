@@ -160,24 +160,24 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertEqual(self.cert3.issuerAltName(), certs['cert3']['issuerAltName'])
 
     def test_keyUsage(self):
-        self.assertEqual(self.ca.keyUsage, KeyUsage('critical,cRLSign,keyCertSign'))
-        self.assertEqual(self.ca2.keyUsage, KeyUsage('critical,cRLSign,keyCertSign'))
-        self.assertEqual(self.cert.keyUsage,
+        self.assertEqual(self.ca.key_usage, KeyUsage('critical,cRLSign,keyCertSign'))
+        self.assertEqual(self.ca2.key_usage, KeyUsage('critical,cRLSign,keyCertSign'))
+        self.assertEqual(self.cert.key_usage,
                          KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'))
-        self.assertEqual(self.cert2.keyUsage,
+        self.assertEqual(self.cert2.key_usage,
                          KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'))
-        self.assertEqual(self.cert3.keyUsage,
+        self.assertEqual(self.cert3.key_usage,
                          KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'))
-        self.assertEqual(self.ocsp.keyUsage,
+        self.assertEqual(self.ocsp.key_usage,
                          KeyUsage('critical,digitalSignature,keyEncipherment,nonRepudiation'))
 
     def test_extendedKeyUsage(self):
-        self.assertIsNone(self.ca.extendedKeyUsage)
-        self.assertIsNone(self.ca2.extendedKeyUsage)
-        self.assertEqual(self.cert.extendedKeyUsage, ExtendedKeyUsage('serverAuth'))
-        self.assertEqual(self.cert2.extendedKeyUsage, ExtendedKeyUsage('serverAuth'))
-        self.assertEqual(self.cert3.extendedKeyUsage, ExtendedKeyUsage('serverAuth'))
-        self.assertEqual(self.ocsp.extendedKeyUsage, ExtendedKeyUsage('OCSPSigning'))
+        self.assertIsNone(self.ca.extended_key_usage)
+        self.assertIsNone(self.ca2.extended_key_usage)
+        self.assertEqual(self.cert.extended_key_usage, ExtendedKeyUsage('serverAuth'))
+        self.assertEqual(self.cert2.extended_key_usage, ExtendedKeyUsage('serverAuth'))
+        self.assertEqual(self.cert3.extended_key_usage, ExtendedKeyUsage('serverAuth'))
+        self.assertEqual(self.ocsp.extended_key_usage, ExtendedKeyUsage('OCSPSigning'))
 
     def test_crlDistributionPoints(self):
         self.assertEqual(self.ca.crlDistributionPoints(), certs['root']['crl'])  # None
@@ -244,12 +244,12 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertIsNone(cert.authorityInfoAccess())
         self.assertIsNone(cert.basicConstraints())
         self.assertIsNone(cert.subjectAltName())
-        self.assertIsNone(cert.keyUsage)
-        self.assertIsNone(cert.extendedKeyUsage)
+        self.assertIsNone(cert.key_usage)
+        self.assertIsNone(cert.extended_key_usage)
         self.assertIsNone(cert.subjectKeyIdentifier())
         self.assertIsNone(cert.issuerAltName())
         self.assertIsNone(cert.authorityKeyIdentifier())
-        self.assertIsNone(cert.TLSFeature)
+        self.assertIsNone(cert.tls_feature)
         self.assertIsNone(cert.certificatePolicies())
         self.assertIsNone(cert.signedCertificateTimestampList())
 
