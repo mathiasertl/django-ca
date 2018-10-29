@@ -29,7 +29,28 @@ from .utils import sort_name
 
 @six.python_2_unicode_compatible
 class Subject(object):
-    """Convenience class to handle X509 Subjects."""
+    """Convenience class to handle X509 Subjects.
+
+    This class accepts a variety of values and intelligently parses them:
+
+    >>> Subject('/CN=example.com')
+    Subject("/CN=example.com")
+    >>> Subject({'CN': 'example.com'})
+    Subject("/CN=example.com")
+    >>> Subject([('CN', 'example.com'), ])
+    Subject("/CN=example.com")
+
+    In many respects, this class handles like a ``dict``:
+
+    >>> s = Subject('/CN=example.com')
+    >>> 'CN' in s
+    True
+    >>> s.get('OU', 'Default OU')
+    'Default OU'
+    >>> s.setdefault('C', 'AT')
+    >>> s['C'], s['CN']
+    ('AT', 'example.com')
+    """
 
     def __init__(self, subject=None):
         self._data = {}
@@ -138,6 +159,12 @@ class Subject(object):
     ####################
     @property
     def fields(self):
+        """This subject as a list of :py:class:`~cryptography:cryptography.x509.oid.NameOID` instances.
+
+        >>> list(Subject('/C=AT/CN=example.com').fields)  # doctest: +NORMALIZE_WHITESPACE
+        [(<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, 'AT'),
+         (<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, 'example.com')]
+        """
         _sort = sorted(self._data.items(), key=lambda t: SUBJECT_FIELDS.index(OID_NAME_MAPPINGS[t[0]]))
         for oid, values in _sort:
             for val in values:

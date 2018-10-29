@@ -272,7 +272,7 @@ class X509CertMixin(models.Model):
 
     @property
     def authority_key_identifier(self):
-        """The :py:class:`~django_ca.extensions.AuthorityKeyExtension` extension, or ``None`` if it doesn't
+        """The :py:class:`~django_ca.extensions.AuthorityKeyIdentifier` extension, or ``None`` if it doesn't
         exist."""
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_KEY_IDENTIFIER)
