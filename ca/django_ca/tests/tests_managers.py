@@ -29,7 +29,7 @@ from .base import override_settings
 class GetCertTestCase(DjangoCAWithCSRTestCase):
     def assertExtensions(self, cert, expected):
         expected['basicConstraints'] = (True, 'CA:FALSE')
-        expected['authorityKeyIdentifier'] = self.ca.authorityKeyIdentifier()
+        expected['AuthorityKeyIdentifier'] = self.ca.authority_key_identifier
 
         if self.ca.issuer_alt_name:
             expected['issuerAltName'] = 'URI:%s' % self.ca.issuer_alt_name
@@ -48,14 +48,13 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
         exts = self.get_extensions(cert)
 
-        skid_critical, skid = exts.pop('subjectKeyIdentifier')
-        self.assertFalse(skid_critical)
-        self.assertEqual(len(skid), 59)
+        key_id = exts.pop('SubjectKeyIdentifier')
+        self.assertFalse(key_id.critical)
+        self.assertEqual(len(key_id._text_value), 59)
 
         self.assertEqual(exts, expected)
 
     def test_basic(self):
-        self.maxDiff = None
         kwargs = get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
 

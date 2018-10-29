@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import binascii
+
 import six
 
 from cryptography import x509
@@ -96,6 +98,9 @@ class Extension(object):
         else:
             return '%s:' % self.oid._name
 
+    def add_colons(self, s):
+        return ':'.join([s[i:i + 2] for i in range(0, len(s), 2)])
+
     @property
     def _text_value(self):
         return self.value
@@ -152,6 +157,15 @@ class MultiValueExtension(Extension):
 
     def form_decompress(self):
         return self.value, self.critical
+
+
+class KeyIdExtension(Extension):
+    def __str__(self):
+        return '<%s: %s>' % (self.__class__.__name__, self._text_value)
+
+    @property
+    def _text_value(self):
+        return self.add_colons(binascii.hexlify(self.value).upper().decode('utf-8'))
 
 
 class KeyUsage(MultiValueExtension):
@@ -233,6 +247,26 @@ class ExtendedKeyUsage(MultiValueExtension):
     @property
     def extension_type(self):
         return x509.ExtendedKeyUsage([self.CRYPTOGRAPHY_MAPPING[u] for u in self.value])
+
+
+class SubjectKeyIdentifier(KeyIdExtension):
+    oid = ExtensionOID.SUBJECT_KEY_IDENTIFIER
+
+    def _from_extension(self, ext):
+        self.critical = ext.critical  # TODO: can be done by the caller
+        self.value = ext.value.digest
+
+
+class AuthorityKeyIdentifier(KeyIdExtension):
+    oid = ExtensionOID.AUTHORITY_KEY_IDENTIFIER
+
+    def _from_extension(self, ext):
+        self.critical = ext.critical  # TODO: can be done by the caller
+        self.value = ext.value.key_identifier
+
+    @property
+    def _text_value(self):
+        return 'keyid:%s' % super(AuthorityKeyIdentifier, self)._text_value
 
 
 class TLSFeature(MultiValueExtension):

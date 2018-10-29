@@ -167,7 +167,7 @@ class CertificateMixin(object):
                     html += '<li>%s</li>' % escape(val)
                 html += '</ul>'
             else:
-                html += '<p>%s<p>' % escape(value)
+                html += '<p>%s<p>' % escape(value._text_value)
 
         # old-style extension objects
         else:
@@ -206,17 +206,17 @@ class CertificateMixin(object):
         return self.output_extension(obj.tls_feature)
     tls_feature.short_description = _('TLS Feature')
 
-    def subjectKeyIdentifier(self, obj):
-        return self.output_extension(obj.subjectKeyIdentifier())
-    subjectKeyIdentifier.short_description = _('subjectKeyIdentifier')
+    def subject_key_identifier(self, obj):
+        return self.output_extension(obj.subject_key_identifier)
+    subject_key_identifier.short_description = _('subjectKeyIdentifier')
 
     def issuerAltName(self, obj):
         return self.output_extension(obj.issuerAltName())
     issuerAltName.short_description = _('issuerAltName')
 
-    def authorityKeyIdentifier(self, obj):
-        return self.output_extension(obj.authorityKeyIdentifier())
-    authorityKeyIdentifier.short_description = _('authorityKeyIdentifier')
+    def authority_key_identifier(self, obj):
+        return self.output_extension(obj.authority_key_identifier)
+    authority_key_identifier.short_description = _('authorityKeyIdentifier')
 
     def cRLDistributionPoints(self, obj):
         return self.output_extension(obj.crlDistributionPoints())

@@ -44,7 +44,9 @@ from django.utils.translation import ugettext_lazy as _
 from . import ca_settings
 from .extensions import ExtendedKeyUsage
 from .extensions import KeyUsage
+from .extensions import SubjectKeyIdentifier
 from .extensions import TLSFeature
+from .extensions import AuthorityKeyIdentifier
 from .managers import CertificateAuthorityManager
 from .managers import CertificateManager
 from .querysets import CertificateAuthorityQuerySet
@@ -227,8 +229,10 @@ class X509CertMixin(models.Model):
     # X509 extensions #
     ###################
     OID_MAPPING = {
+        ExtensionOID.AUTHORITY_KEY_IDENTIFIER: 'authority_key_identifier',
         ExtensionOID.EXTENDED_KEY_USAGE: 'extended_key_usage',
         ExtensionOID.KEY_USAGE: 'key_usage',
+        ExtensionOID.SUBJECT_KEY_IDENTIFIER: 'subject_key_identifier',
         ExtensionOID.TLS_FEATURE: 'tls_feature',
     }
 
@@ -267,6 +271,16 @@ class X509CertMixin(models.Model):
                     yield name, (ext.critical, ext.oid)
 
     @property
+    def authority_key_identifier(self):
+        """The :py:class:`~django_ca.extensions.AuthorityKeyExtension` extension, or ``None`` if it doesn't
+        exist."""
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_KEY_IDENTIFIER)
+        except x509.ExtensionNotFound:
+            return None
+        return AuthorityKeyIdentifier(ext)
+
+    @property
     def key_usage(self):
         """The :py:class:`~django_ca.extensions.KeyUsage` extension, or ``None`` if it doesn't exist."""
         try:
@@ -284,6 +298,16 @@ class X509CertMixin(models.Model):
         except x509.ExtensionNotFound:
             return None
         return ExtendedKeyUsage(ext)
+
+    @property
+    def subject_key_identifier(self):
+        """The :py:class:`~django_ca.extensions.SubjectKeyIdentifier` extension, or ``None`` if it doesn't
+        exist."""
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_KEY_IDENTIFIER)
+        except x509.ExtensionNotFound:
+            return None
+        return SubjectKeyIdentifier(ext)
 
     @property
     def tls_feature(self):
@@ -314,15 +338,6 @@ class X509CertMixin(models.Model):
                 output.append('Unknown')
 
         return ext.critical, output
-
-    def authorityKeyIdentifier(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_KEY_IDENTIFIER)
-        except x509.ExtensionNotFound:
-            return None
-
-        hexlified = binascii.hexlify(ext.value.key_identifier).upper().decode('utf-8')
-        return ext.critical, 'keyid:%s' % add_colons(hexlified)
 
     def basicConstraints(self):
         try:
@@ -420,15 +435,6 @@ class X509CertMixin(models.Model):
             return None
 
         return ext.critical, [format_general_name(name) for name in ext.value]
-
-    def subjectKeyIdentifier(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_KEY_IDENTIFIER)
-        except x509.ExtensionNotFound:
-            return None
-
-        hexlified = binascii.hexlify(ext.value.digest).upper().decode('utf-8')
-        return ext.critical, add_colons(hexlified)
 
     def _parse_policy_qualifier(self, qualifier):
         if isinstance(qualifier, x509.extensions.UserNotice):
