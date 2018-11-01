@@ -22,7 +22,6 @@ from ...management.base import BaseSignCommand
 from ...management.base import CertificateAction
 from ...models import Certificate
 from ...models import Watcher
-from ...subject import Subject
 
 
 class Command(BaseSignCommand):
@@ -49,14 +48,32 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
         else:
             watchers = list(cert.watchers.all())
 
-        if options.get('subject'):
-            subject = Subject(options['subject'])
+        if options['subject']:
+            subject = options['subject']
         else:
             subject = cert.subject
 
-        key_usage = options.get('key_usage', cert.key_usage)
-        ext_key_usage = options.get('ext_key_usage', cert.extended_key_usage)
-        tls_feature = options.get('tls_feature', cert.tls_feature)
+        if options['key_usage'] is None:
+            key_usage = cert.key_usage
+        else:
+            key_usage = options['key_usage']
+
+        if options['ext_key_usage'] is None:
+            ext_key_usage = cert.extended_key_usage
+        else:
+            ext_key_usage = options['ext_key_usage']
+
+        if options['tls_feature'] is None:
+            tls_feature = cert.tls_feature
+        else:
+            tls_feature = options['tls_feature']
+
+        if not options['alt']:
+            san = cert.subjectAltName()
+            if san:
+                san = san[1]
+        else:
+            san = options['alt']
 
         kwargs = {
             'subject': subject,
@@ -67,7 +84,8 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
             'tls_feature': tls_feature,
             'algorithm': options.get('algorithm', cert.algorithm),
             'expires': options['expires'],
-            'subjectAltName': options.get('alt', cert.subjectAltName()[1]),
+            'subjectAltName': san,
+            'cn_in_san': False,
         }
 
         if 'CN' not in kwargs['subject'] and not options['alt']:

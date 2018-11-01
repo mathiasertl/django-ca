@@ -558,6 +558,16 @@ def get_cert_builder(expires, now=None):
     return builder
 
 
+def get_default_subject(name=None):
+    """Get the default subject for the given profile."""
+
+    if name is None:
+        name = ca_settings.CA_DEFAULT_PROFILE
+
+    profile = deepcopy(ca_settings.CA_PROFILES[name])
+    return profile['subject']
+
+
 def get_cert_profile_kwargs(name=None):
     """Get kwargs suitable for get_cert X509 keyword arguments from the given profile."""
 
@@ -567,7 +577,7 @@ def get_cert_profile_kwargs(name=None):
     profile = deepcopy(ca_settings.CA_PROFILES[name])
     kwargs = {
         'cn_in_san': profile['cn_in_san'],
-        'subject': profile['subject'],
+        'subject': get_default_subject(name=name),
     }
 
     key_usage = profile.get('keyUsage')
