@@ -13,8 +13,11 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
+import os
+
 from django.utils import six
 
+from .. import ca_settings
 from ..extensions import ExtendedKeyUsage
 from ..extensions import KeyUsage
 from ..extensions import TLSFeature
@@ -24,6 +27,7 @@ from ..signals import post_issue_cert
 from ..signals import pre_issue_cert
 from ..subject import Subject
 from .base import DjangoCAWithCertTestCase
+from .base import override_tmpcadir
 
 if six.PY2:  # pragma: only py2
     from mock import patch
@@ -99,6 +103,23 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(new.extended_key_usage, ExtendedKeyUsage(ext_key_usage))
         self.assertEqual(new.tls_feature, TLSFeature(tls_feature))
         self.assertEqual(list(new.watchers.all()), [Watcher.objects.get(mail=watcher)])
+
+    @override_tmpcadir()
+    def test_to_file(self):
+        out_path = os.path.join(ca_settings.CA_DIR, 'test.pem')
+
+        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            stdout, stderr = self.cmd('resign_cert', self.cert.serial, out=out_path)
+        self.assertEqual(stderr, '')
+        self.assertEqual(pre.call_count, 1)
+        self.assertEqual(post.call_count, 1)
+
+        with open(out_path) as stream:
+            pub = stream.read()
+
+        new = Certificate.objects.get(pub=pub)
+        self.assertResigned(self.cert, new)
+        self.assertEqualExt(self.cert, new)
 
     def test_no_cn(self):
         subject = '/C=AT'  # has no CN
