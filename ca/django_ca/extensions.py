@@ -47,7 +47,7 @@ class Extension(object):
 
     Or it can be a ``dict`` as used by the :ref:`CA_PROFILES <settings-ca-profiles>` setting::
 
-        >>> KeyUsage({'critical': False, 'value': ['keyAgreement', 'keyEncipherment']})
+        >>> KeyUsage({'value': ['keyAgreement', 'keyEncipherment']})
         <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=False>
         >>> KeyUsage({'critical': True, 'value': ['keyAgreement', 'keyEncipherment']})
         <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=True>
@@ -82,18 +82,27 @@ class Extension(object):
             self.critical = value.critical
             self.from_extension(value)
         elif isinstance(value, (list, tuple)):  # e.g. from a form
-            self.from_list(*value)
+            self.critical, value = value
+            self.from_list(value)
             self._test_value()
         elif isinstance(value, dict):  # e.g. from settings
+            self.critical = value.get('critical', False)
             self.from_dict(value)
             self._test_value()
         elif isinstance(value, six.string_types):  # e.g. from commandline parser
+            if value.startswith('critical,'):
+                self.critical = True
+                value = value[9:]
+            else:
+                self.critical = False
+                value = value
+
             self.from_str(value)
             self._test_value()
         else:
-            raise ValueError('Value is of unsupported type %s' % type(value))
+            raise ValueError('Value is of unsupported type %s' % type(value).__name__)
         if not isinstance(self.critical, bool):
-            raise ValueError('%s: Invalid critical value passed.' % self.critical)
+            raise ValueError('%s: Invalid critical value passed' % self.critical)
 
     def __eq__(self, other):
         return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
@@ -106,20 +115,16 @@ class Extension(object):
             return'%s/critical' % self.as_text()
         return self.as_text()
 
+    def from_extension(self, value):
+        raise NotImplementedError
+
     def from_str(self, value):
-        if value.startswith('critical,'):
-            self.critical = True
-            self.value = value[9:]
-        else:
-            self.critical = False
-            self.value = value
+        self.value = value
 
     def from_dict(self, value):
-        self.critical = value.get('critical', False)
         self.value = value['value']
 
-    def from_list(self, critical, value):
-        self.critical = critical
+    def from_list(self, value):
         self.value = value
 
     def _test_value(self):
@@ -136,6 +141,12 @@ class Extension(object):
         TODO: duplicate from utils :-(
         """
         return ':'.join([s[i:i + 2] for i in range(0, len(s), 2)])
+
+    @property
+    def extension_type(self):
+        """The extension_type for this value."""
+
+        raise NotImplementedError
 
     def as_extension(self):
         """This extension as :py:class:`~cryptography:cryptography.x509.ExtensionType`."""
@@ -180,7 +191,6 @@ class MultiValueExtension(Extension):
         return '<%s: %s, critical=%s>' % (self.__class__.__name__, sorted(self.value), self.critical)
 
     def from_dict(self, value):
-        self.critical = value.get('critical', False)
         self.value = value['value']
         if isinstance(self.value, six.string_types):
             self.value = [self.value]

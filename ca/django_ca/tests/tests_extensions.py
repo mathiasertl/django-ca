@@ -19,14 +19,16 @@ import six
 
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
-from cryptography.x509.extensions import Extension
+#from cryptography.x509.extensions import Extension
 from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import ExtensionOID
 
 from django.test import TestCase
 
 from ..extensions import ExtendedKeyUsage
+from ..extensions import Extension
 from ..extensions import KeyUsage
+from ..extensions import MultiValueExtension
 from ..extensions import TLSFeature
 
 
@@ -35,6 +37,89 @@ def load_tests(loader, tests, ignore):
         # unicode strings make this very hard to test doctests in both py2 and py3
         tests.addTests(doctest.DocTestSuite('django_ca.extensions'))
     return tests
+
+
+class ExtensionTestCase(TestCase):
+    value = 'foobar'
+
+    def assertExtension(self, ext, critical=True):
+        self.assertEqual(ext.value, self.value)
+        self.assertEqual(ext.critical, critical)
+
+    def test_basic(self):
+        self.assertExtension(Extension([True, self.value]))
+        self.assertExtension(Extension('critical,%s' % self.value))
+        self.assertExtension(Extension({'critical': True, 'value': self.value}))
+
+        self.assertExtension(Extension([False, self.value]), critical=False)
+        self.assertExtension(Extension(self.value), critical=False)
+        self.assertExtension(Extension({'critical': False, 'value': self.value}), critical=False)
+        self.assertExtension(Extension({'value': self.value}), critical=False)
+
+    def test_eq(self):
+        ext = Extension([True, self.value])
+        self.assertEqual(ext, Extension([True, self.value]))
+        self.assertNotEqual(ext, Extension([False, self.value]))
+        self.assertNotEqual(ext, Extension([True, 'other']))
+        self.assertNotEqual(ext, Extension([False, 'other']))
+
+    def test_as_text(self):
+        self.assertEqual(Extension([True, self.value]).as_text(), self.value)
+
+    def test_str_repr(self):
+        self.assertEqual(str(Extension('critical,%s' % self.value)), '%s/critical' % self.value)
+        self.assertEqual(str(Extension(self.value)), self.value)
+
+        self.assertEqual(repr(Extension('critical,%s' % self.value)),
+                         '<Extension: \'%s\', critical=True>' % self.value)
+        self.assertEqual(repr(Extension(self.value)), '<Extension: \'%s\', critical=False>' % self.value)
+
+    def test_error(self):
+        with self.assertRaisesRegex(ValueError, r'^None: Invalid critical value passed$'):
+            Extension((None, ['cRLSign']))
+
+        with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type object$'):
+            Extension(object())
+
+        with self.assertRaises(NotImplementedError):
+            Extension(x509.extensions.Extension(ExtensionOID.BASIC_CONSTRAINTS, True, b''))
+
+        # Test that methods that should be implemented by sub-classes raise NotImplementedError
+        ext = Extension([True, self.value])
+        with self.assertRaises(NotImplementedError):
+            ext.extension_type
+
+        with self.assertRaises(NotImplementedError):
+            ext.for_builder()
+
+        # These do not work because base class does not define an OID
+        with self.assertRaises(AttributeError):
+            ext.as_extension()
+        with self.assertRaises(AttributeError):
+            ext.name
+
+
+class MultiValueExtensionTestCase(TestCase):
+    def setUp(self):
+        self.known = {'foo', 'bar', }
+
+        class TestExtension(MultiValueExtension):
+            KNOWN_VALUES = self.known
+
+        self.cls = TestExtension
+
+    def assertExtension(self, ext, value, critical=True):
+        self.assertEqual(ext.critical, critical)
+        self.assertCountEqual(ext.value, value)
+        self.assertEqual(len(ext), len(value))
+        for v in value:
+            self.assertIn(v, ext)
+
+    def test_basic(self):
+        self.assertExtension(self.cls('critical,'), [])
+        self.assertExtension(self.cls('critical,foo'), ['foo'])
+        self.assertExtension(self.cls('critical,bar'), ['bar'])
+        self.assertExtension(self.cls('critical,foo,bar'), ['foo', 'bar'])
 
 
 class TestKeyUsage(TestCase):
@@ -57,8 +142,10 @@ class TestKeyUsage(TestCase):
         self.assertBasic(KeyUsage('critical,cRLSign,keyCertSign'))
         self.assertBasic(KeyUsage([True, ['cRLSign', 'keyCertSign']]))
         self.assertBasic(KeyUsage((True, ['cRLSign', 'keyCertSign'])))
+        KeyUsage({'value': ['keyAgreement', 'keyEncipherment']})
         self.assertBasic(KeyUsage((True, ('cRLSign', 'keyCertSign'))))
-        self.assertBasic(KeyUsage(Extension(
+        self.assertBasic(KeyUsage({'critical': True, 'value': ['cRLSign', 'keyCertSign']}))
+        self.assertBasic(KeyUsage(x509.extensions.Extension(
             oid=ExtensionOID.KEY_USAGE,
             critical=True,
             value=x509.KeyUsage(
@@ -101,6 +188,12 @@ class TestKeyUsage(TestCase):
         with self.assertRaisesRegex(ValueError, r'^Unknown value\(s\): foo$'):
             KeyUsage('critical,foo')
 
+        with self.assertRaisesRegex(ValueError, r'^None: Invalid critical value passed$'):
+            KeyUsage((None, ['cRLSign']))
+
+        with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type object$'):
+            KeyUsage(object())
+
     def test_completeness(self):
         # make sure whe haven't forgotton any keys anywhere
         self.assertEqual(set(KeyUsage.CRYPTOGRAPHY_MAPPING.keys()),
@@ -131,7 +224,7 @@ class ExtendedKeyUsageTestCase(TestCase):
         self.assertBasic(ExtendedKeyUsage([True, ['clientAuth', 'serverAuth']]))
         self.assertBasic(ExtendedKeyUsage((True, ['clientAuth', 'serverAuth'])))
         self.assertBasic(ExtendedKeyUsage((True, ('clientAuth', 'serverAuth'))))
-        self.assertBasic(ExtendedKeyUsage(Extension(
+        self.assertBasic(ExtendedKeyUsage(x509.extensions.Extension(
             oid=ExtensionOID.EXTENDED_KEY_USAGE,
             critical=True,
             value=x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH])))
@@ -144,7 +237,7 @@ class ExtendedKeyUsageTestCase(TestCase):
         self.assertBasic(ExtendedKeyUsage((False, ('clientAuth', 'serverAuth'))), critical=False)
         ext_value = x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH])
         self.assertBasic(ExtendedKeyUsage(
-            Extension(
+            x509.extensions.Extension(
                 oid=ExtensionOID.EXTENDED_KEY_USAGE,
                 critical=False,
                 value=ext_value
