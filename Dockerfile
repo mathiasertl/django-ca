@@ -3,22 +3,26 @@
 ####################
 FROM python:3-alpine as test
 WORKDIR /usr/src/django-ca
+RUN apk --no-cache add --update gcc linux-headers libc-dev libffi-dev libressl-dev make
+
 COPY requirements.txt requirements-dev.txt setup.py tox.ini ./
-RUN apk --no-cache add --update gcc linux-headers libc-dev libffi-dev libressl-dev
+COPY ca/ ca/
 
 # Additional utilities required for testing:
-RUN apk --no-cache add --update make
 RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
 
+# Add user (some tests check if it's impossible to write a file)
+RUN addgroup -g 9000 -S django-ca && \
+    adduser -S -u 9000 -G django-ca django-ca
+USER django-ca:django-ca
+
 # copy this late so that changes do not trigger a cache miss during build
-COPY ca/ ca/
 RUN python setup.py code_quality
 RUN python setup.py test
 
 # cleanup some files so they are not included later
+USER root:root
 RUN rm -r ca/django_ca/tests/
-RUN find ca/ | grep pyc$ | xargs rm
-RUN find ca/ -type d | grep __pycache__ | xargs rmdir
 
 ######################
 # Actual build stage #
