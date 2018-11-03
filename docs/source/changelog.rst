@@ -6,9 +6,9 @@ ChangeLog
 
 .. _changelog-1.10.0:
 
-************
-1.10.0 (TBR)
-************
+*******************
+1.10.0 (2018-11-03)
+*******************
 
 * New dependency: `django-object-actions <https://github.com/crccheck/django-object-actions>`_.
 * Add ability to resign existing certificates.
