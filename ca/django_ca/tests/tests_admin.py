@@ -220,6 +220,12 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         response = self.client.get(self.change_url())
         self.assertChangeResponse(response)
 
+        response = self.client.get(self.change_url(self.cert_all.pk))
+        self.assertChangeResponse(response)
+
+        response = self.client.get(self.change_url(self.cert_no_ext.pk))
+        self.assertChangeResponse(response)
+
     def test_revoked(self):
         # view a revoked certificate (fieldsets are collapsed differently)
         cert = Certificate.objects.get(serial=self.cert.serial)

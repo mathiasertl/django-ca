@@ -516,10 +516,8 @@ class DjangoCATestCase(TestCase):
 
         Unlike call_command, this method also tests the argparse configuration of the called command.
         """
-        if stdout is None:
-            stdout = StringIO()
-        if stderr is None:
-            stderr = StringIO()
+        stdout = stdout or StringIO()
+        stderr = stderr or StringIO()
         if stdin is None:
             stdin = StringIO()
 

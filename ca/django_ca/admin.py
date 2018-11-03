@@ -282,7 +282,7 @@ class CertificateMixin(object):
 
         fieldsets = copy.deepcopy(fieldsets)
 
-        extensions = obj.get_extension_fields()
+        extensions = list(obj.get_extension_fields())
         if extensions:
             for field in extensions:
                 if field == 'subjectAltName':  # already displayed in main section

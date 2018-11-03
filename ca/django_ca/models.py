@@ -261,9 +261,7 @@ class X509CertMixin(models.Model):
             else:
                 name = ext.oid._name.replace(' ', '')
                 if hasattr(self, name):
-                    value = getattr(self, name)
-                    if callable(value):
-                        value = value()
+                    value = getattr(self, name)()
                     yield name, value
                 elif name == 'cRLDistributionPoints':
                     yield name, self.crlDistributionPoints()
