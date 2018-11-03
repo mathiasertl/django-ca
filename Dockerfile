@@ -3,7 +3,7 @@
 ####################
 FROM python:3-alpine as test
 WORKDIR /usr/src/django-ca
-COPY requirements.txt requirements-dev.txt setup.py .isort.cfg tox.ini ./
+COPY requirements.txt requirements-dev.txt setup.py tox.ini ./
 RUN apk --no-cache add --update gcc linux-headers libc-dev libffi-dev libressl-dev
 
 # Additional utilities required for testing:

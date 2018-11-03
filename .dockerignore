@@ -2,6 +2,7 @@
 **/*.sw[a-z]
 **/__pycache__
 /.git/
+/.tox/
 /bin/
 /ca/*.egg-info
 /ca/.coverage
