@@ -59,6 +59,8 @@ CA_DEFAULT_SUBJECT
          'emailAddress': 'user@example.com',
       }
 
+.. _settings-ca-digest-algorithm:
+
 CA_DIGEST_ALGORITHM
    Default: ``"sha512"``
 

@@ -151,23 +151,13 @@ class AlgorithmActionTestCase(DjangoCATestCase):
         self.parser.add_argument('--algo', action=base.AlgorithmAction)
 
     def test_basic(self):
-        ns = self.parser.parse_args(['--algo=sha256'])
+        ns = self.parser.parse_args(['--algo=SHA256'])
         self.assertIsInstance(ns.algo, hashes.SHA256)
 
-        ns = self.parser.parse_args(['--algo=md5'])
+        ns = self.parser.parse_args(['--algo=MD5'])
         self.assertIsInstance(ns.algo, hashes.MD5)
 
-        ns = self.parser.parse_args(['--algo=sha512'])
-        self.assertIsInstance(ns.algo, hashes.SHA512)
-
-    def test_case(self):
-        ns = self.parser.parse_args(['--algo=sHa256'])
-        self.assertIsInstance(ns.algo, hashes.SHA256)
-
-        ns = self.parser.parse_args(['--algo=mD5'])
-        self.assertIsInstance(ns.algo, hashes.MD5)
-
-        ns = self.parser.parse_args(['--algo=sHa512'])
+        ns = self.parser.parse_args(['--algo=SHA512'])
         self.assertIsInstance(ns.algo, hashes.SHA512)
 
     def test_error(self):

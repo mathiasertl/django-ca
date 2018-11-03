@@ -27,6 +27,7 @@ import idna
 
 from asn1crypto.core import OctetString
 from cryptography import x509
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509.oid import NameOID
 
@@ -462,6 +463,71 @@ def parse_general_name(name):
             idna.encode(name)
 
         return x509.DNSName(name)
+
+
+def parse_hash_algorithm(value=None):
+    """Parse a hash algorithm value.
+
+    The most common use case is to pass a str naming a class in
+    :py:mod:`~cryptography:cryptography.hazmat.primitives.hashes`.
+
+    For convenience, passing ``None`` will return the value of :ref:`CA_DIGEST_ALGORITHM
+    <settings-ca-digest-algorithm>`, and passing an
+    :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm` will return that
+    instance unchanged.
+
+    Example usage::
+
+        >>> parse_hash_algorithm()  # doctest: +ELLIPSIS
+        <cryptography.hazmat.primitives.hashes.SHA512 object at ...>
+        >>> parse_hash_algorithm('SHA512')  # doctest: +ELLIPSIS
+        <cryptography.hazmat.primitives.hashes.SHA512 object at ...>
+        >>> parse_hash_algorithm(' SHA512 ')  # doctest: +ELLIPSIS
+        <cryptography.hazmat.primitives.hashes.SHA512 object at ...>
+        >>> parse_hash_algorithm(hashes.SHA512)  # doctest: +ELLIPSIS
+        <cryptography.hazmat.primitives.hashes.SHA512 object at ...>
+        >>> parse_hash_algorithm(hashes.SHA512())  # doctest: +ELLIPSIS
+        <cryptography.hazmat.primitives.hashes.SHA512 object at ...>
+        >>> parse_hash_algorithm('Wrong')  # doctest: +ELLIPSIS
+        Traceback (most recent call last):
+            ...
+        ValueError: Unknown hash algorithm: Wrong
+        >>> parse_hash_algorithm(object())  # doctest: +ELLIPSIS
+        Traceback (most recent call last):
+            ...
+        ValueError: Unknown type passed: object
+
+    Parameters
+    ----------
+
+    value : str or :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
+        The value to parse, the function description on how possible values are used.
+
+    Returns
+    -------
+
+    algorithm
+        A :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm` instance.
+
+    Raises
+    ------
+
+    ValueError
+        If an unknown object is passed or if ``value`` does not name a known algorithm.
+    """
+    if value is None:
+        return ca_settings.CA_DIGEST_ALGORITHM
+    elif isinstance(value, type) and issubclass(value, hashes.HashAlgorithm):
+        return value()
+    elif isinstance(value, hashes.HashAlgorithm):
+        return value
+    elif isinstance(value, six.string_types):
+        try:
+            return getattr(hashes, value.strip())()
+        except AttributeError:
+            raise ValueError('Unknown hash algorithm: %s' % value)
+    else:
+        raise ValueError('Unknown type passed: %s' % type(value).__name__)
 
 
 def parse_key_curve(value=None):

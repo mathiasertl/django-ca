@@ -19,7 +19,6 @@ import idna
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -43,6 +42,7 @@ from .subject import Subject
 from .utils import get_cert_builder
 from .utils import is_power2
 from .utils import parse_general_name
+from .utils import parse_hash_algorithm
 from .utils import parse_key_curve
 from .utils import write_private_file
 
@@ -131,13 +131,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
                 raise ValueError("%s: Key size must be least %s bits" % (
                     key_size, ca_settings.CA_MIN_KEY_SIZE))
 
-        if algorithm is None:
-            algorithm = ca_settings.CA_DIGEST_ALGORITHM
-        elif isinstance(algorithm, six.string_types):
-            try:
-                algorithm = getattr(hashes, algorithm.upper().strip())()
-            except AttributeError:
-                raise ValueError('Unknown hash algorithm: %s' % algorithm)
+        algorithm = parse_hash_algorithm(algorithm)
 
         pre_create_ca.send(
             sender=self.model, name=name, key_size=key_size, key_type=key_type, algorithm=algorithm,
@@ -291,13 +285,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         if 'CN' not in subject and not subjectAltName:
             raise ValueError("Must name at least a CN or a subjectAltName.")
 
-        if algorithm is None:
-            algorithm = ca_settings.CA_DIGEST_ALGORITHM
-        elif isinstance(algorithm, six.string_types):
-            try:
-                algorithm = getattr(hashes, algorithm.upper().strip())()
-            except AttributeError:
-                raise ValueError('Unknown hash algorithm: %s' % algorithm)
+        algorithm = parse_hash_algorithm(algorithm)
 
         if subjectAltName:
             subjectAltName = [parse_general_name(san) for san in subjectAltName]

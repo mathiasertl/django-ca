@@ -19,7 +19,6 @@ import os
 import sys
 import textwrap
 
-from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import BaseCommand as _BaseCommand
@@ -43,6 +42,7 @@ from ..subject import Subject
 from ..utils import SUBJECT_FIELDS
 from ..utils import get_expires
 from ..utils import is_power2
+from ..utils import parse_hash_algorithm
 from ..utils import parse_key_curve
 
 
@@ -72,9 +72,9 @@ class FormatAction(argparse.Action):
 class AlgorithmAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
         try:
-            value = getattr(hashes, value.upper().strip())()
-        except AttributeError:
-            parser.error('Unknown hash algorithm: %s' % value)
+            value = parse_hash_algorithm(value)
+        except ValueError as e:
+            parser.error(str(e))
 
         setattr(namespace, self.dest, value)
 
