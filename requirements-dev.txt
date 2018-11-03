@@ -3,6 +3,7 @@ Sphinx==1.8.1
 coverage==4.5.1
 django-webtest==1.9.4
 flake8==3.6.0
+freezegun==0.3.11
 ipython<6; python_version < '3.3'
 ipython>=6; python_version >= '3.3'
 isort==4.3.4
