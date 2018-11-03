@@ -91,11 +91,11 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
 
         key_size = ca_settings.CA_MIN_KEY_SIZE
 
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(ValueError, r'^3072: Key size must be a power of two$'):
             CertificateAuthority.objects.init(key_size=key_size * 3, **kwargs)
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(ValueError, r'^1025: Key size must be a power of two$'):
             CertificateAuthority.objects.init(key_size=key_size + 1, **kwargs)
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(ValueError, r'^512: Key size must be least 1024 bits$'):
             CertificateAuthority.objects.init(key_size=int(key_size / 2), **kwargs)
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(ValueError, r'^256: Key size must be least 1024 bits$'):
             CertificateAuthority.objects.init(key_size=int(key_size / 4), **kwargs)

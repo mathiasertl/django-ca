@@ -122,14 +122,14 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         PermissionError
             If the private key file cannot be written to disk.
         """
-        # NOTE: This is already verified by KeySizeAction, so none of these checks should ever be
-        #       True in the real world. None the less they are here as a safety precaution.
+        # NOTE: Already verified by KeySizeAction, so these checks are only for when the Python API is used
+        #       directly.
         if key_type != 'ECC':
             if not is_power2(key_size):
-                raise RuntimeError("%s: Key size must be a power of two." % key_size)
+                raise ValueError("%s: Key size must be a power of two" % key_size)
             elif key_size < ca_settings.CA_MIN_KEY_SIZE:
-                raise RuntimeError("%s: Key size must be least %s bits."
-                                   % (key_size, ca_settings.CA_MIN_KEY_SIZE))
+                raise ValueError("%s: Key size must be least %s bits" % (
+                    key_size, ca_settings.CA_MIN_KEY_SIZE))
 
         if algorithm is None:
             algorithm = ca_settings.CA_DIGEST_ALGORITHM
