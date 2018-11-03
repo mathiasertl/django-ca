@@ -25,10 +25,12 @@ from cryptography.x509.oid import ExtensionOID
 
 from django.test import TestCase
 
+from ..extensions import AuthorityKeyIdentifier
 from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
 from ..extensions import KeyUsage
 from ..extensions import MultiValueExtension
+from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
 
 
@@ -121,8 +123,54 @@ class MultiValueExtensionTestCase(TestCase):
         self.assertExtension(self.cls('critical,bar'), ['bar'])
         self.assertExtension(self.cls('critical,foo,bar'), ['foo', 'bar'])
 
+        self.assertExtension(self.cls({'value': 'foo'}), ['foo'], critical=False)
+        self.assertExtension(self.cls({'critical': True, 'value': ['foo']}), ['foo'])
 
-class TestKeyUsage(TestCase):
+        with self.assertRaisesRegex(ValueError, r'^Unknown value\(s\): hugo$'):
+            self.cls({'value': 'hugo'})
+
+        with self.assertRaisesRegex(ValueError, r'^Unknown value\(s\): bla, hugo$'):
+            self.cls({'value': ['bla', 'hugo']})
+
+    def test_operators(self):
+        ext = self.cls('foo')
+
+        # in operator
+        self.assertIn('foo', ext)
+        self.assertNotIn('bar', ext)
+        self.assertNotIn('something else', ext)
+
+        # equality
+        self.assertEqual(ext, self.cls('foo'))
+        self.assertNotEqual(ext, self.cls('critical,foo'))
+        self.assertNotEqual(ext, self.cls('foo,bar'))
+        self.assertNotEqual(ext, self.cls('bar'))
+
+        # as_text
+        self.assertEqual(ext.as_text(), '* foo')
+        self.assertEqual(self.cls('foo,bar').as_text(), '* bar\n* foo')
+        self.assertEqual(self.cls('bar,foo').as_text(), '* bar\n* foo')
+        self.assertEqual(self.cls('bar').as_text(), '* bar')
+        self.assertEqual(self.cls('critical,bar').as_text(), '* bar')
+
+        # str()
+        self.assertEqual(str(ext), 'foo')
+        self.assertEqual(str(self.cls('foo,bar')), 'bar,foo')
+        self.assertEqual(str(self.cls('bar,foo')), 'bar,foo')
+        self.assertEqual(str(self.cls('bar')), 'bar')
+        self.assertEqual(str(self.cls('critical,bar')), 'bar/critical')
+        self.assertEqual(str(self.cls('critical,foo,bar')), 'bar,foo/critical')
+
+
+class AuthorityKeyIdentifierTestCase(TestCase):
+    def test_basic(self):
+        ext = AuthorityKeyIdentifier(x509.Extension(
+            oid=x509.ExtensionOID.AUTHORITY_KEY_IDENTIFIER, critical=True,
+            value=x509.AuthorityKeyIdentifier(b'33333', None, None)))
+        self.assertEqual(ext.as_text(), 'keyid:33:33:33:33:33')
+
+
+class KeyUsageTestCase(TestCase):
     def assertBasic(self, ext):
         self.assertTrue(ext.critical)
         self.assertIn('cRLSign', ext)
@@ -164,6 +212,10 @@ class TestKeyUsage(TestCase):
         ext = KeyUsage('critical,cRLSign,keyCertSign')
         ext2 = KeyUsage(ext.as_extension())
         self.assertEqual(ext, ext2)
+
+    def test_sanity_checks(self):
+        # there are some sanity checks
+        self.assertEqual(KeyUsage('decipherOnly').value, ['decipherOnly', 'keyAgreement'])
 
     def test_empty_str(self):
         # we want to accept an empty str as constructor
@@ -250,6 +302,14 @@ class ExtendedKeyUsageTestCase(TestCase):
                          set([e[0] for e in ExtendedKeyUsage.CHOICES]))
 
 
+class SubjectKeyIdentifierTestCase(TestCase):
+    def test_basic(self):
+        ext = SubjectKeyIdentifier(x509.Extension(
+            oid=x509.ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=True,
+            value=x509.SubjectKeyIdentifier(b'33333')))
+        self.assertEqual(ext.as_text(), '33:33:33:33:33')
+
+
 class TLSFeatureTestCase(TestCase):
     def assertBasic(self, ext, critical=True):
         self.assertEqual(ext.critical, critical)
@@ -269,6 +329,10 @@ class TLSFeatureTestCase(TestCase):
     def test_basic(self):
         self.assertBasic(TLSFeature('critical,OCSPMustStaple'))
         self.assertBasic(TLSFeature([True, ['OCSPMustStaple']]))
+        self.assertBasic(TLSFeature(x509.Extension(
+            oid=x509.ExtensionOID.TLS_FEATURE, critical=True,
+            value=x509.TLSFeature(features=[x509.TLSFeatureType.status_request])))
+        )
 
     def test_completeness(self):
         # make sure whe haven't forgotton any keys anywhere

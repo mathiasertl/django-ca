@@ -188,7 +188,10 @@ class MultiValueExtension(Extension):
             and sorted(self.value) == sorted(other.value)
 
     def __str__(self):
-        return '<%s: %s, critical=%s>' % (self.__class__.__name__, sorted(self.value), self.critical)
+        val = ','.join(sorted(self.value))
+        if self.critical:
+            return'%s/critical' % val
+        return val
 
     def from_dict(self, value):
         self.value = value['value']
@@ -213,19 +216,27 @@ class MultiValueExtension(Extension):
     def as_text(self):
         return '\n'.join(['* %s' % v for v in sorted(self.value)])
 
-    def form_decompress(self):
-        return self.value, self.critical
-
 
 class KeyIdExtension(Extension):
-    """Base class for extensions that contain a KeyID as value."""
+    """Base class for extensions that contain a KeyID as value.
+
+    .. TODO::
+
+        * All subclasses are only instantiated from a cryptography extension, so other values don't work.
+    """
 
     def as_text(self):
         return self.add_colons(binascii.hexlify(self.value).upper().decode('utf-8'))
 
 
 class AuthorityKeyIdentifier(KeyIdExtension):
-    """Class representing a AuthorityKeyIdentifier extension."""
+    """Class representing a AuthorityKeyIdentifier extension.
+
+    .. TODO::
+
+        * This class only supports key_identifier, should also support authority_cert_issuer and
+          authority_cert_serial_number (see underlying constructor).
+    """
 
     oid = ExtensionOID.AUTHORITY_KEY_IDENTIFIER
 
@@ -266,6 +277,13 @@ class KeyUsage(MultiValueExtension):
         ('nonRepudiation', 'nonRepudiation'),
     )
 
+    def __init__(self, *args, **kwargs):
+        super(KeyUsage, self).__init__(*args, **kwargs)
+
+        # decipherOnly only makes sense if keyAgreement is True
+        if 'decipherOnly' in self.value and 'keyAgreement' not in self.value:
+            self.value.append('keyAgreement')
+
     def from_extension(self, ext):
         self.value = []
         for k, v in self.CRYPTOGRAPHY_MAPPING.items():
@@ -280,8 +298,6 @@ class KeyUsage(MultiValueExtension):
     @property
     def extension_type(self):
         kwargs = {v: (k in self.value) for k, v in self.CRYPTOGRAPHY_MAPPING.items()}
-        if kwargs['decipher_only']:
-            kwargs['key_agreement'] = True
         return x509.KeyUsage(**kwargs)
 
 
