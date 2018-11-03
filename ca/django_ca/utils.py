@@ -620,11 +620,8 @@ def get_cert_builder(expires):
     return builder
 
 
-def get_default_subject(name=None):
+def get_default_subject(name):
     """Get the default subject for the given profile."""
-
-    if name is None:
-        name = ca_settings.CA_DEFAULT_PROFILE
 
     profile = deepcopy(ca_settings.CA_PROFILES[name])
     return profile['subject']

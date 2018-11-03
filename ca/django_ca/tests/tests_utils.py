@@ -40,6 +40,7 @@ from .. import ca_settings
 from .. import utils
 from ..extensions import ExtendedKeyUsage
 from ..extensions import KeyUsage
+from ..extensions import TLSFeature
 from ..utils import NAME_RE
 from ..utils import LazyEncoder
 from ..utils import format_name
@@ -525,6 +526,8 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
         expected = {
             'cn_in_san': True,
             'key_usage': KeyUsage([False, ['digitalSignature']]),
+            'extended_key_usage': ExtendedKeyUsage([True, ['msKDC']]),
+            'tls_feature': TLSFeature([True, ['OCSPMustStaple']]),
             'subject': [
                 ('C', 'AT'),
                 ('ST', 'Vienna'),
@@ -540,6 +543,14 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
                     'critical': False,
                     'value': 'digitalSignature',
                 },
+                'extendedKeyUsage': {
+                    'critical': True,
+                    'value': 'msKDC',
+                },
+                'TLSFeature': {
+                    'critical': True,
+                    'value': 'OCSPMustStaple',
+                },
             },
         }
 
@@ -553,5 +564,24 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
 
         CA_PROFILES['testprofile']['keyUsage']['value'] = b''
         del expected['key_usage']
+        with self.settings(CA_PROFILES=CA_PROFILES):
+            self.assertEqual(get_cert_profile_kwargs('testprofile'), expected)
+
+        # Ok, no we have *no* extensions
+        expected = {
+            'cn_in_san': True,
+            'subject': [
+                ('C', 'AT'),
+                ('ST', 'Vienna'),
+                ('L', 'Vienna'),
+                ('O', 'Django CA'),
+                ('OU', 'Django CA Testsuite'),
+            ],
+        }
+
+        CA_PROFILES = {
+            'testprofile': {},
+        }
+
         with self.settings(CA_PROFILES=CA_PROFILES):
             self.assertEqual(get_cert_profile_kwargs('testprofile'), expected)
