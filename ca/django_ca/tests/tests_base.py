@@ -99,7 +99,7 @@ class OverrideCaDirForFuncTestCase(DjangoCATestCase):
         self.seen_dirs.add(ca_settings.CA_DIR)
 
     def test_no_classes(self):
-        msg = r'^Only test methods can use override_tmpcadir\(\)$'
+        msg = r'^Only functions can use override_tmpcadir\(\)$'
         with self.assertRaisesRegex(ValueError, msg):
             @override_tmpcadir()
             class Foo():

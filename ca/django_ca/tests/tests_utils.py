@@ -488,12 +488,12 @@ class GetCertBuilderTestCase(DjangoCATestCase):
         builder = get_cert_builder(now + timedelta(days=720))
         self.assertEqual(builder._not_valid_after, after)
         self.assertEqual(builder._not_valid_before, before)
-        self.assertIsInstance(builder._serial_number, int)
+        self.assertIsInstance(builder._serial_number, six.integer_types)
 
         builder = get_cert_builder(None)
         self.assertEqual(builder._not_valid_after, datetime(2019, 2, 12, 11, 21))
         self.assertEqual(builder._not_valid_before, before)  # before shouldn't change
-        self.assertIsInstance(builder._serial_number, int)
+        self.assertIsInstance(builder._serial_number, six.integer_types)
 
     @freeze_time('2018-11-03 11:21:33')
     def test_negative(self):

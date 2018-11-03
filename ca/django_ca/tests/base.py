@@ -5,6 +5,7 @@ when you run "manage.py test".
 Replace this with more appropriate tests for your application.
 """
 
+import inspect
 import os
 import re
 import shutil
@@ -224,7 +225,7 @@ class override_settings(_override_settings):
     """
 
     def __call__(self, test_func):
-        if isinstance(test_func, type) and not issubclass(test_func, DjangoCATestCase):
+        if inspect.isclass(test_func) and not issubclass(test_func, DjangoCATestCase):
             raise ValueError("Only subclasses of DjangoCATestCase can use override_settings")
         inner = super(override_settings, self).__call__(test_func)
         return inner
@@ -258,8 +259,8 @@ class override_tmpcadir(override_settings):
     """
 
     def __call__(self, test_func):
-        if isinstance(test_func, type):
-            raise ValueError("Only test methods can use override_tmpcadir()")
+        if not inspect.isfunction(test_func):
+            raise ValueError("Only functions can use override_tmpcadir()")
         return super(override_tmpcadir, self).__call__(test_func)
 
     def enable(self):
