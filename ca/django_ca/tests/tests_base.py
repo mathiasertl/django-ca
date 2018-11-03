@@ -60,9 +60,16 @@ class OverrideSettingsClassTestCase(DjangoCATestCase):
         self.assertEqual(ca_settings.CA_MIN_KEY_SIZE, 256)
 
     def test_wrong_base(self):
-        with self.assertRaises(Exception):
+        msg = r'^Only subclasses of DjangoCATestCase can use override_settings$'
+        with self.assertRaisesRegex(ValueError, msg):
             @override_settings(CA_MIN_KEY_SIZE=256)
             class DummyTest(TestCase):
+                pass
+
+        msg = r'^Only subclasses of DjangoCATestCase can use override_settings$'
+        with self.assertRaisesRegex(ValueError, msg):
+            @override_settings(CA_MIN_KEY_SIZE=256)
+            class DummyTestTwo:
                 pass
 
 
@@ -90,6 +97,13 @@ class OverrideCaDirForFuncTestCase(DjangoCATestCase):
         self.assertTrue(ca_settings.CA_DIR.startswith(tempfile.gettempdir()), ca_settings.CA_DIR)
         self.assertNotIn(ca_settings.CA_DIR, self.seen_dirs)
         self.seen_dirs.add(ca_settings.CA_DIR)
+
+    def test_no_classes(self):
+        msg = r'^Only test methods can use override_tmpcadir\(\)$'
+        with self.assertRaisesRegex(ValueError, msg):
+            @override_tmpcadir()
+            class Foo():
+                pass
 
 
 class CommandTestCase(DjangoCAWithCATestCase):
