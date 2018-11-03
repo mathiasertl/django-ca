@@ -597,20 +597,16 @@ def get_expires(value=None, now=None):
     return now + timedelta(days=value + 1)
 
 
-def get_cert_builder(expires, now=None):
-    """Get a basic X509 cert object.
+def get_cert_builder(expires):
+    """Get a basic X509 cert builder object.
 
     Parameters
     ----------
 
     expires : datetime
         When this certificate will expire.
-    now : datetime
-        The functions notion of "now", used for testing.
     """
-    if now is None:
-        now = datetime.utcnow()
-    now = now.replace(second=0, microsecond=0)
+    now = datetime.utcnow().replace(second=0, microsecond=0)
 
     if expires is None:
         expires = get_expires(expires, now=now)

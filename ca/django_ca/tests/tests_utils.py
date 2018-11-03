@@ -24,6 +24,7 @@ import unittest
 from datetime import datetime
 from datetime import timedelta
 
+from freezegun import freeze_time
 from idna.core import IDNAError
 
 from cryptography import x509
@@ -473,36 +474,31 @@ http://www.example.net''')
         self.assertEqual(e.exception.args, ('Enter a valid URL.', 'invalid', None))
 
 
-class GetBasicCertTestCase(DjangoCATestCase):
+class GetCertBuilderTestCase(DjangoCATestCase):
     def parse_date(self, date):
         return datetime.strptime(date, '%Y%m%d%H%M%SZ')
 
-    def assertCert(self, delta):
-        now = datetime.utcnow()
-        before = now.replace(second=0, microsecond=0)
-        after = before.replace(hour=0, minute=0) + timedelta(delta + 1)
-
-        cert = get_cert_builder(after, now=now)  # NOQA
-
-        # TODO: Write new tests for this function
-        # self.assertFalse(cert.has_expired())
-        # self.assertEqual(self.parse_date(cert.get_notBefore().decode('utf-8')), before)
-        # self.assertEqual(self.parse_date(cert.get_notAfter().decode('utf-8')), after)
-
+    @freeze_time('2018-11-03 11:21:33')
+    @override_settings(CA_DEFAULT_EXPIRES=100)
     def test_basic(self):
-        self.assertCert(720)
-        self.assertCert(365)
+        now = datetime.utcnow()
+        after = datetime(2020, 10, 23, 11, 21)
+        before = datetime(2018, 11, 3, 11, 21)
+        builder = get_cert_builder(now + timedelta(days=720))
+        self.assertEqual(builder._not_valid_after, after)
+        self.assertEqual(builder._not_valid_before, before)
+        self.assertIsInstance(builder._serial_number, int)
 
-    def test_zero(self):
-        self.assertCert(0)
+        builder = get_cert_builder(None)
+        self.assertEqual(builder._not_valid_after, datetime(2019, 2, 12, 11, 21))
+        self.assertEqual(builder._not_valid_before, before)  # before shouldn't change
+        self.assertIsInstance(builder._serial_number, int)
 
+    @freeze_time('2018-11-03 11:21:33')
     def test_negative(self):
         with self.assertRaisesRegex(ValueError,
                                     r'^The not valid after date must be after the not valid before date\.$'):
-            self.assertCert(-1)
-        with self.assertRaisesRegex(ValueError,
-                                    r'^The not valid after date must be after the not valid before date\.$'):
-            self.assertCert(-2)
+            get_cert_builder(datetime(2017, 12, 12))
 
 
 class GetCertProfileKwargsTestCase(DjangoCATestCase):
