@@ -7,9 +7,9 @@ python:
   - "nightly"
   # py3.7 currently not supported: https://github.com/travis-ci/travis-ci/issues/9815
 env:
-  - DJANGO=2.1.2 CRYPTOGRAPHY=2.3.1
-  - DJANGO=2.1.2 CRYPTOGRAPHY=2.2.2
-  - DJANGO=2.1.2 CRYPTOGRAPHY=2.1.4
+  - DJANGO=2.1.3 CRYPTOGRAPHY=2.3.1
+  - DJANGO=2.1.3 CRYPTOGRAPHY=2.2.2
+  - DJANGO=2.1.3 CRYPTOGRAPHY=2.1.4
   - DJANGO=2.0.9 CRYPTOGRAPHY=2.3.1
   - DJANGO=1.11.16 CRYPTOGRAPHY=2.3.1
 install:
@@ -29,17 +29,17 @@ matrix:
     exclude:
         # Django 2.0 no longer supports python2
         # Django 2.1 no longer supports python3.4
-        - env: DJANGO=2.1.2 CRYPTOGRAPHY=2.3.1
+        - env: DJANGO=2.1.3 CRYPTOGRAPHY=2.3.1
           python: "3.4"
-        - env: DJANGO=2.1.2 CRYPTOGRAPHY=2.3.1
+        - env: DJANGO=2.1.3 CRYPTOGRAPHY=2.3.1
           python: "2.7"
-        - env: DJANGO=2.1.2 CRYPTOGRAPHY=2.2.2
+        - env: DJANGO=2.1.3 CRYPTOGRAPHY=2.2.2
           python: "3.4"
-        - env: DJANGO=2.1.2 CRYPTOGRAPHY=2.2.2
+        - env: DJANGO=2.1.3 CRYPTOGRAPHY=2.2.2
           python: "2.7"
-        - env: DJANGO=2.1.2 CRYPTOGRAPHY=2.1.4
+        - env: DJANGO=2.1.3 CRYPTOGRAPHY=2.1.4
           python: "3.4"
-        - env: DJANGO=2.1.2 CRYPTOGRAPHY=2.1.4
+        - env: DJANGO=2.1.3 CRYPTOGRAPHY=2.1.4
           python: "2.7"
         - env: DJANGO=2.0.9 CRYPTOGRAPHY=2.3.1
           python: "2.7"
