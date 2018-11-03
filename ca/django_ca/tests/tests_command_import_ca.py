@@ -21,7 +21,6 @@ from six import BytesIO
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 
 from django.conf import settings
-from django.core.management.base import CommandError
 
 from .. import ca_settings
 from ..models import CertificateAuthority
@@ -116,24 +115,24 @@ class ImportCATest(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_permission_denied(self):
-        # Import the same CA twice, 2nd time should throw an error, because the file already exists
         name = 'testname'
         pem_path = os.path.join(settings.FIXTURES_DIR, 'root.pem')
         key_path = os.path.join(settings.FIXTURES_DIR, 'root.key')
-        out, err = self.cmd('import_ca', name, key_path, pem_path)
+        os.chmod(settings.CA_DIR, 0o000)
 
-        ca = CertificateAuthority.objects.get(name=name)
-
-        error = '%s: Permission denied: Could not open file for writing.' % ca.private_key_path
+        error = r'^%s/%s.key: Permission denied: Could not open file for writing$' % (
+            settings.CA_DIR, certs['root']['serial']
+        )
         with self.assertCommandError(error):
-            out, err = self.cmd('import_ca', name, key_path, pem_path)
+            self.cmd('import_ca', name, key_path, pem_path)
+        os.chmod(settings.CA_DIR, 0o644)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_bogus_pub(self):
         name = 'testname'
         pem_path = os.path.join(settings.FIXTURES_DIR, __file__)
         key_path = os.path.join(settings.FIXTURES_DIR, 'root-key.der')
-        with self.assertRaisesRegex(CommandError, r'^Unable to load public key\.$'):
+        with self.assertCommandError(r'^Unable to load public key\.$'):
             self.cmd('import_ca', name, key_path, pem_path)
         self.assertEqual(CertificateAuthority.objects.count(), 0)
 
@@ -142,6 +141,6 @@ class ImportCATest(DjangoCATestCase):
         name = 'testname'
         pem_path = os.path.join(settings.FIXTURES_DIR, 'root-pub.der')
         key_path = os.path.join(settings.FIXTURES_DIR, __file__)
-        with self.assertRaisesRegex(CommandError, r'^Unable to load private key\.$'):
+        with self.assertCommandError(r'^Unable to load private key\.$'):
             self.cmd('import_ca', name, key_path, pem_path)
         self.assertEqual(CertificateAuthority.objects.count(), 0)
