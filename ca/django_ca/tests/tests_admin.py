@@ -836,14 +836,13 @@ class CertDownloadBundleTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         return self.get_url(cert=self.cert)
 
     def test_cert(self):
-        self.maxDiff = None
         filename = '%s_bundle.pem' % self.cert.serial
         response = self.client.get('%s?format=PEM' % self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
         self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
         self.assertEqual(force_text(response.content),
-                         '%s\n%s' % (self.ca.pub.strip(), self.cert.pub.strip()))
+                         '%s\n%s' % (self.cert.pub.strip(), self.ca.pub.strip()))
         self.assertEqual(self.ca, self.cert.ca)  # just to be sure we test the right thing
 
     def test_invalid_format(self):
@@ -881,7 +880,7 @@ class CADownloadBundleTestCase(AdminTestMixin, DjangoCAWithChildCATestCase):
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
         self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
         self.assertEqual(force_text(response.content),
-                         '%s\n%s' % (self.ca.pub.strip(), self.child_ca.pub.strip()))
+                         '%s\n%s' % (self.child_ca.pub.strip(), self.ca.pub.strip()))
         self.assertEqual(self.ca, self.cert.ca)  # just to be sure we test the right thing
 
     def test_invalid_format(self):

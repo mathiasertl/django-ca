@@ -556,7 +556,7 @@ class CertificateAuthority(X509CertMixin):
         while ca.parent is not None:
             bundle.append(ca.parent)
             ca = ca.parent
-        return list(reversed(bundle))
+        return bundle
 
     class Meta:
         verbose_name = _('Certificate Authority')
@@ -579,7 +579,7 @@ class Certificate(X509CertMixin):
     def bundle(self):
         """The complete certificate bundle. This includes all CAs as well as the certificates itself."""
 
-        return self.ca.bundle + [self]
+        return [self] + self.ca.bundle
 
     def resign(self, **kwargs):  # pragma: no cover - not used yet
         kwargs.setdefault('algorithm', ca_settings.CA_DIGEST_ALGORITHM)
