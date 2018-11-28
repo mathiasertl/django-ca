@@ -108,6 +108,8 @@ class X509CertMixin(models.Model):
     )
 
     created = models.DateTimeField(auto_now=True)
+
+    valid_from = models.DateTimeField(blank=False)
     expires = models.DateTimeField(null=False, blank=False)
 
     pub = models.TextField(verbose_name=_('Public key'))
