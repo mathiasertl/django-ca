@@ -4,6 +4,14 @@ ChangeLog
 
 .. _changelog-head:
 
+************
+1.1X.X (TBR)
+************
+
+* Add cryptography 2.4.2 to the test-suite.
+* Test for certificates that are not yet valid.
+* Freeze time in some test cases to avoid test failures when certificates eventually expire.
+
 .. _changelog-1.10.0:
 
 *******************

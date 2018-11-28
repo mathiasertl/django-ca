@@ -19,6 +19,8 @@ import unittest
 from datetime import datetime
 from datetime import timedelta
 
+from freezegun import freeze_time
+
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.extensions import Extension
@@ -121,6 +123,7 @@ class ChangelistTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         response = self.client.get(self.changelist_url)
         self.assertResponse(response, self.certs)
 
+    @freeze_time("2018-11-01")
     def test_status(self):
         response = self.client.get('%s?status=valid' % self.changelist_url)
         self.assertResponse(response, self.certs)
