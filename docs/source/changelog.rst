@@ -10,6 +10,7 @@ ChangeLog
 
 * Add cryptography 2.4.2 to the test-suite.
 * Fix certificate bundle order (fixes `#55 <https://github.com/mathiasertl/django-ca/issues/55>`_).
+* Management commands ``dump_ca`` and ``dump_cert`` can now dump whole certificate bundles.
 * Remove colons from CA private keys (fixes `#29 <https://github.com/mathiasertl/django-ca/issues/28>`_).
 * Test for certificates that are not yet valid.
 * Freeze time in some test cases to avoid test failures when certificates eventually expire.
