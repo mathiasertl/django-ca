@@ -145,6 +145,7 @@ class X509CertMixin(models.Model):
         self.valid_from = self.not_before
         if settings.USE_TZ:
             self.expires = timezone.make_aware(self.expires, timezone=pytz.utc)
+            self.valid_from = timezone.make_aware(self.valid_from, timezone=pytz.utc)
 
         self.serial = int_to_hex(value.serial_number)
 

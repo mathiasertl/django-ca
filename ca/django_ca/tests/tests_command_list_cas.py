@@ -71,11 +71,13 @@ class ListCertsTestCase(DjangoCAWithCATestCase):
 
         # manually create Certificate objects
         expires = timezone.now() + timedelta(days=3)
+        valid_from = timezone.now() - timedelta(days=3)
         child3 = CertificateAuthority.objects.create(name='child3', serial='child3',
-                                                     parent=self.ca, expires=expires)
-        CertificateAuthority.objects.create(name='child4', serial='child4', parent=self.ca, expires=expires)
+                                                     parent=self.ca, expires=expires, valid_from=valid_from)
+        CertificateAuthority.objects.create(name='child4', serial='child4', parent=self.ca, expires=expires,
+                                            valid_from=valid_from)
         CertificateAuthority.objects.create(name='child3.1', serial='child3.1', parent=child3,
-                                            expires=expires)
+                                            expires=expires, valid_from=valid_from)
 
         stdout, stderr = self.cmd('list_cas', tree=True)
         self.assertEqual(stdout, '''%s - %s
