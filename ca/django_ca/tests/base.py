@@ -138,6 +138,8 @@ certs = {
         'key_size': 4096,
         'basicConstraints': (True, 'CA:TRUE, pathlen:1'),
         'keyUsage': (True, ['cRLSign', 'keyCertSign']),
+        'expires': datetime(2027, 4, 16, 0, 0),
+        'valid_from': datetime(2017, 4, 17, 11, 47),
     },
     'child': {
         'name': 'child',
@@ -155,6 +157,8 @@ certs = {
         'subjectKeyIdentifier': '4A:D5:57:27:D8:CC:01:B7:EF:AE:C1:FE:9A:9F:56:73:36:C3:0B:74',
         'keyUsage': (True, ['cRLSign', 'keyCertSign']),
         'basicConstraints': (True, 'CA:TRUE, pathlen:0'),
+        'expires': datetime(2027, 4, 16, 0, 0),
+        'valid_from': datetime(2017, 4, 17, 11, 47),
     },
     'ecc_ca': {
         'name': 'ecc_ca',
@@ -185,6 +189,8 @@ certs = {
         'crl': (False, ['Full Name: URI:http://ca.example.com/crl']),
         'der': cert1_pubkey.public_bytes(encoding=Encoding.DER),
         'serial': '5A:1B:A2:63:A1:E4:D8:D1:4D:82:60:46:D3:8F:E0:C3:A5:B3:E4:89',
+        'expires': datetime(2019, 4, 18, 0, 0),
+        'valid_from': datetime(2017, 4, 17, 11, 47),
     },
     'cert2': {
         'issuerAltName': (False, 'URI:https://ca.example.com'),
@@ -197,6 +203,8 @@ certs = {
         'hpkp': 'i+ccTaizbK5r9luNHFW358cxzaORJ4rS3WYHlEnaQoI=',
         'crl': (False, ['Full Name: URI:http://ca.example.com/crl']),
         'serial': '4E:2B:01:C4:8B:CC:1F:71:94:12:88:64:68:0C:AA:04:D3:F8:BB:45',
+        'expires': datetime(2019, 4, 18, 0, 0),
+        'valid_from': datetime(2017, 4, 17, 11, 47),
     },
     'cert3': {
         'issuerAltName': (False, 'URI:https://ca.example.com'),
@@ -209,10 +217,14 @@ certs = {
         'hpkp': 'ZuJoB0pw8rd2os1WFVe5f8Vky6eg3vHxCrnaZxupFQo=',
         'crl': (False, ['Full Name: URI:http://ca.example.com/crl']),
         'serial': '32:A7:B0:8E:88:A2:1A:EC:05:C8:BA:18:D7:8B:D9:35:45:9D:82:FA',
+        'expires': datetime(2019, 4, 18, 0, 0),
+        'valid_from': datetime(2017, 4, 17, 11, 47),
     },
     'ocsp': {
         'crl': (False, ['Full Name: URI:http://ca.example.com/crl']),
         'serial': '49:BC:F2:FE:FA:31:03:B6:E0:CC:3D:16:93:4E:2D:B0:8A:D2:C5:87',
+        'expires': datetime(2019, 4, 18, 0, 0),
+        'valid_from': datetime(2017, 4, 17, 11, 47),
     },
 }
 

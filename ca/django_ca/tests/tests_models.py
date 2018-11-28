@@ -108,6 +108,21 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertEqual(self.ca.pathlen, 1)
         self.assertEqual(self.ca2.pathlen, 0)
 
+    def test_dates(self):
+        self.assertEqual(self.ca.expires, certs['root']['expires'])
+        self.assertEqual(self.ca2.expires, certs['child']['expires'])
+        self.assertEqual(self.cert.expires, certs['cert1']['expires'])
+        self.assertEqual(self.cert2.expires, certs['cert2']['expires'])
+        self.assertEqual(self.cert3.expires, certs['cert3']['expires'])
+        self.assertEqual(self.ocsp.expires, certs['ocsp']['expires'])
+
+        self.assertEqual(self.ca.valid_from, certs['root']['valid_from'])
+        self.assertEqual(self.ca2.valid_from, certs['child']['valid_from'])
+        self.assertEqual(self.cert.valid_from, certs['cert1']['valid_from'])
+        self.assertEqual(self.cert2.valid_from, certs['cert2']['valid_from'])
+        self.assertEqual(self.cert3.valid_from, certs['cert3']['valid_from'])
+        self.assertEqual(self.ocsp.valid_from, certs['ocsp']['valid_from'])
+
     def test_max_pathlen(self):
         self.assertEqual(self.ca.max_pathlen, 1)
         self.assertEqual(self.ca2.pathlen, 0)
