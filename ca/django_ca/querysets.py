@@ -37,10 +37,16 @@ class CertificateAuthorityQuerySet(models.QuerySet, DjangoCAMixin):
 
 
 class CertificateQuerySet(models.QuerySet, DjangoCAMixin):
+    def not_yet_valid(self):
+        """Return certificates that are not yet valid."""
+
+        return self.filter(revoked=False, valid_from__gt=timezone.now())
+
     def valid(self):
         """Return valid certificates."""
 
-        return self.filter(revoked=False, expires__gt=timezone.now())
+        now = timezone.now()
+        return self.filter(revoked=False, expires__gt=now, valid_from__lt=now)
 
     def expired(self):
         """Returns expired certificates.

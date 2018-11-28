@@ -142,6 +142,7 @@ class X509CertMixin(models.Model):
         self.pub = force_str(self.dump_certificate(Encoding.PEM))
         self.cn = self.subject.get('CN', '')
         self.expires = self.not_after
+        self.valid_from = self.not_before
         if settings.USE_TZ:
             self.expires = timezone.make_aware(self.expires, timezone=pytz.utc)
 
