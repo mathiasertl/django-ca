@@ -202,6 +202,22 @@ class TestSubject(TestCase):
         self.assertIsNone(Subject('/C=AT/OU=foo/CN=example.com').get(NameOID.LOCALITY_NAME))
         self.assertEqual(Subject('/C=AT/OU=foo/CN=example.com').get(NameOID.LOCALITY_NAME, 'foo'), 'foo')
 
+    def test_iters(self):
+        s = Subject('/CN=example.com')
+        self.assertCountEqual(s.keys(), ['CN'])
+        self.assertCountEqual(s.values(), ['example.com'])
+        self.assertCountEqual(s.items(), [('CN', 'example.com')])
+
+        s = Subject('/C=AT/O=Org/OU=foo/OU=bar/CN=example.com')
+        self.assertCountEqual(s.keys(), ['C', 'O', 'OU', 'OU', 'CN'])
+        self.assertCountEqual(s.values(), ['AT', 'Org', 'foo', 'bar', 'example.com'])
+        self.assertCountEqual(s.items(), [('C', 'AT'), ('O', 'Org'), ('OU', 'foo'), ('OU', 'bar'),
+                                          ('CN', 'example.com')])
+
+        keys = ['C', 'O', 'OU', 'OU', 'CN']
+        for i, key in enumerate(s):
+            self.assertEqual(key, keys[i])
+
     def test_setdefault(self):
         s = Subject('/CN=example.com')
         s.setdefault('CN', 'example.org')
@@ -229,6 +245,28 @@ class TestSubject(TestCase):
         s = Subject()
         with self.assertRaisesRegex(ValueError, '^Value must be str or list$'):
             s.setdefault('C', 33)
+
+    def test_clear_copy(self):
+        s = Subject('/O=Org/CN=example.com')
+        s2 = s.copy()
+        s.clear()
+        self.assertFalse(s)
+        self.assertTrue(s2)
+
+    def test_update(self):
+        merged = Subject('/C=AT/O=Org/CN=example.net')
+
+        s = Subject('/O=Org/CN=example.com')
+        s.update(Subject('/C=AT/CN=example.net'))
+        self.assertEqual(s, merged)
+
+        s = Subject('/O=Org/CN=example.com')
+        s.update({'C': 'AT', 'CN': 'example.net'})
+        self.assertEqual(s, merged)
+
+        s = Subject('/O=Org/CN=example.com')
+        s.update([('C', 'AT'), ('CN', 'example.net')])
+        self.assertEqual(s, merged)
 
     def test_fields(self):
         s = Subject('')
