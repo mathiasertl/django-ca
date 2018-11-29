@@ -39,6 +39,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_str
+from django.utils.text import slugify
 from django.utils.translation import ugettext_lazy as _
 
 from . import ca_settings
@@ -168,6 +169,14 @@ class X509CertMixin(models.Model):
     def get_digest(self, algo):
         algo = getattr(hashes, algo.upper())()
         return add_colons(binascii.hexlify(self.x509.fingerprint(algo)).upper().decode('utf-8'))
+
+    def get_filename(self, ext, bundle=False):
+        slug = slugify(self.cn.replace('.', '_'))
+
+        if bundle is True:
+            return '%s_bundle.%s' % (slug, ext.lower())
+        else:
+            return '%s.%s' % (slug, ext.lower())
 
     def get_revocation(self):
         if self.revoked is False:

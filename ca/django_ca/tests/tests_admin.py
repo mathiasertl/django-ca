@@ -763,7 +763,7 @@ class CertDownloadTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         return self.get_url(cert=self.cert)
 
     def test_basic(self):
-        filename = '%s.pem' % self.cert.serial
+        filename = 'host1_example_com.pem'
         response = self.client.get('%s?format=PEM' % self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
@@ -771,7 +771,7 @@ class CertDownloadTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(force_text(response.content), self.cert.pub)
 
     def test_der(self):
-        filename = '%s.der' % self.cert.serial
+        filename = 'host1_example_com.der'
         response = self.client.get('%s?format=DER' % self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
@@ -836,7 +836,7 @@ class CertDownloadBundleTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         return self.get_url(cert=self.cert)
 
     def test_cert(self):
-        filename = '%s_bundle.pem' % self.cert.serial
+        filename = 'host1_example_com_bundle.pem'
         response = self.client.get('%s?format=PEM' % self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
@@ -865,7 +865,7 @@ class CADownloadBundleTestCase(AdminTestMixin, DjangoCAWithChildCATestCase):
         return self.get_url(ca=self.ca)
 
     def test_root(self):
-        filename = '%s_bundle.pem' % self.ca.serial
+        filename = 'ca_example_com_bundle.pem'
         response = self.client.get('%s?format=PEM' % self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
@@ -874,7 +874,7 @@ class CADownloadBundleTestCase(AdminTestMixin, DjangoCAWithChildCATestCase):
         self.assertEqual(self.ca, self.cert.ca)  # just to be sure we test the right thing
 
     def test_child(self):
-        filename = '%s_bundle.pem' % self.child_ca.serial
+        filename = 'sub_ca_example_com_bundle.pem'
         response = self.client.get('%s?format=PEM' % self.get_url(self.child_ca))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')

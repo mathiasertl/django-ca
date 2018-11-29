@@ -105,10 +105,7 @@ class CertificateMixin(object):
         else:
             return HttpResponseBadRequest()
 
-        if bundle is True:
-            filename = '%s_bundle.%s' % (obj.serial, filetype.lower())
-        else:
-            filename = '%s.%s' % (obj.serial, filetype.lower())
+        filename = obj.get_filename(ext=filetype, bundle=bundle)
         response = HttpResponse(data, content_type='application/pkix-cert')
         response['Content-Disposition'] = 'attachment; filename=%s' % filename
         return response
