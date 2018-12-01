@@ -14,6 +14,7 @@
 # see <http://www.gnu.org/licenses/>.
 
 import binascii
+import re
 
 import six
 
@@ -76,6 +77,7 @@ class Extension(object):
     value : list or tuple or dict or str or :py:class:`~cryptography:cryptography.x509.ExtensionType`
         The value of the extension, the description provides further details.
     """
+    default_critical = False
 
     def __init__(self, value):
         if isinstance(value, x509.extensions.Extension):  # e.g. from a cert object
@@ -86,7 +88,7 @@ class Extension(object):
             self.from_list(value)
             self._test_value()
         elif isinstance(value, dict):  # e.g. from settings
-            self.critical = value.get('critical', False)
+            self.critical = value.get('critical', self.default_critical)
             self.from_dict(value)
             self._test_value()
         elif isinstance(value, six.string_types):  # e.g. from commandline parser
@@ -199,8 +201,7 @@ class MultiValueExtension(Extension):
             self.value = [self.value]
 
     def from_str(self, value):
-        super(MultiValueExtension, self).from_str(value)  # parses critical prefix
-        self.value = [v.strip() for v in self.value.split(',') if v.strip()]
+        self.value = [v.strip() for v in value.split(',') if v.strip()]
 
     def __contains__(self, value):
         return value in self.value
@@ -245,6 +246,75 @@ class AuthorityKeyIdentifier(KeyIdExtension):
 
     def as_text(self):
         return 'keyid:%s' % super(AuthorityKeyIdentifier, self).as_text()
+
+
+class BasicConstraints(Extension):
+    """Class representing a BasicConstraints extension.
+
+    This class has the boolean attributes ``ca`` and the attribute ``pathlen``, which is either ``None`` or an
+    ``int``. Note that this extension is marked as critical by default if you pass a dict to the constructor::
+
+        >>> BasicConstraints('critical,CA:TRUE, pathlen:3')
+        <BasicConstraints: 'CA:TRUE, pathlen:3', critical=True>
+        >>> bc = BasicConstraints({'ca': True, 'pathlen': 4})
+        >>> (bc.ca, bc.pathlen, bc.critical)
+        (True, 4, True)
+
+        # Note that string parsing ignores case and whitespace and is quite forgiving
+        >>> BasicConstraints('critical, ca=true    , pathlen: 3 ')
+        <BasicConstraints: 'CA:TRUE, pathlen:3', critical=True>
+    """
+
+    default_critical = True
+
+    def __init__(self, *args, **kwargs):
+        super(BasicConstraints, self).__init__(*args, **kwargs)
+        if self.ca is False and self.pathlen is not None:
+            raise ValueError('pathlen must be None when ca is False')
+
+    def __repr__(self):
+        return '<%s: %r, critical=%r>' % (self.__class__.__name__, self.as_text(), self.critical)
+
+    def from_extension(self, ext):
+        self.ca = ext.value.ca
+        self.pathlen = ext.value.path_length
+
+    def from_dict(self, value):
+        self.ca = bool(value.get('ca', False))
+        self.pathlen = value.get('pathlen', None)
+
+    def from_list(self, value):
+        self.ca, self.pathlen = value
+
+    def from_str(self, value):
+        value = value.strip().lower()
+        pathlen = None
+
+        if ',' in value:
+            value, pathlen = value.split(',', 1)
+            pathlen_match = re.search(r'\s*(?:pathlen\s*[:=]\s*)?([0-9]+)', pathlen.strip(), re.I)
+            if pathlen_match is None:
+                raise ValueError('Could not parse pathlen: %s' % pathlen.lstrip())
+            else:
+                pathlen = int(pathlen_match.group(1))
+        self.pathlen = pathlen
+
+        value = re.search(r'(?:CA\s*[:=]\s*)?(.*)', value.strip(), re.I).group(1)
+        self.ca = value == 'true'
+
+    @property
+    def extension_type(self):
+        return x509.BasicConstraints(ca=self.ca, path_length=self.pathlen)
+
+    def as_text(self):
+        if self.ca is True:
+            val = 'CA:TRUE'
+        else:
+            val = 'CA:FALSE'
+        if self.pathlen is not None:
+            val += ', pathlen:%s' % self.pathlen
+
+        return val
 
 
 class KeyUsage(MultiValueExtension):

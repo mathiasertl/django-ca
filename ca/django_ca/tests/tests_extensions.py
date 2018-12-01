@@ -26,6 +26,7 @@ from cryptography.x509.oid import ExtensionOID
 from django.test import TestCase
 
 from ..extensions import AuthorityKeyIdentifier
+from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
 from ..extensions import KeyUsage
@@ -168,6 +169,72 @@ class AuthorityKeyIdentifierTestCase(TestCase):
             oid=x509.ExtensionOID.AUTHORITY_KEY_IDENTIFIER, critical=True,
             value=x509.AuthorityKeyIdentifier(b'33333', None, None)))
         self.assertEqual(ext.as_text(), 'keyid:33:33:33:33:33')
+
+
+class BasicConstraintsTestCase(TestCase):
+    def assertBC(self, bc, ca, pathlen, critical=True):
+        self.assertEqual(bc.ca, ca)
+        self.assertEqual(bc.pathlen, pathlen)
+        self.assertEqual(bc.critical, critical)
+
+    def test_from_extension(self):
+        self.assertBC(BasicConstraints(x509.Extension(
+            oid=x509.ExtensionOID.BASIC_CONSTRAINTS, critical=True,
+            value=x509.BasicConstraints(ca=True, path_length=3))), True, 3, True)
+
+    def test_dict(self):
+        self.assertBC(BasicConstraints({'ca': True}), True, None, True)
+        self.assertBC(BasicConstraints({'ca': False}), False, None, True)
+        self.assertBC(BasicConstraints({'ca': True, 'pathlen': 3}), True, 3, True)
+        self.assertBC(BasicConstraints({'ca': True, 'pathlen': None}), True, None, True)
+        self.assertBC(BasicConstraints({'ca': True, 'critical': False}), True, None, False)
+
+    def test_list(self):
+        self.assertBC(BasicConstraints([False, (True, 3)]), True, 3, False)
+
+    def test_str(self):
+        # test without pathlen
+        self.assertBC(BasicConstraints('CA:FALSE'), False, None, False)
+        self.assertBC(BasicConstraints('CA : FAlse '), False, None, False)
+        self.assertBC(BasicConstraints('CA: true'), True, None, False)
+        self.assertBC(BasicConstraints('CA=true'), True, None, False)
+
+        # test adding a pathlen
+        self.assertBC(BasicConstraints('CA:TRUE,pathlen=0'), True, 0, False)
+        self.assertBC(BasicConstraints('CA:trUe,pathlen:1'), True, 1, False)
+        self.assertBC(BasicConstraints('CA: true , pathlen = 2 '), True, 2, False)
+
+        with self.assertRaisesRegex(ValueError, r'^Could not parse pathlen: pathlen=foo$'):
+            BasicConstraints('CA:FALSE, pathlen=foo')
+
+        with self.assertRaisesRegex(ValueError, r'^Could not parse pathlen: pathlen=$'):
+            BasicConstraints('CA:FALSE, pathlen=')
+
+        with self.assertRaisesRegex(ValueError, r'^Could not parse pathlen: foobar$'):
+            BasicConstraints('CA:FALSE, foobar')
+
+    def test_consistency(self):
+        # pathlen must be None if CA=False
+        with self.assertRaisesRegex(ValueError, r'^pathlen must be None when ca is False$'):
+            BasicConstraints('CA:FALSE, pathlen=3')
+
+    def test_as_text(self):
+        self.assertEqual(BasicConstraints('CA=true').as_text(), 'CA:TRUE')
+        self.assertEqual(BasicConstraints('CA= true , pathlen = 3').as_text(), 'CA:TRUE, pathlen:3')
+        self.assertEqual(BasicConstraints('CA = FALSE').as_text(), 'CA:FALSE')
+
+    def test_extension_type(self):
+        bc = BasicConstraints('CA=true').extension_type
+        self.assertTrue(bc.ca)
+        self.assertIsNone(bc.path_length)
+
+        bc = BasicConstraints('CA=true, pathlen: 5').extension_type
+        self.assertTrue(bc.ca)
+        self.assertEqual(bc.path_length, 5)
+
+        bc = BasicConstraints('CA=false').extension_type
+        self.assertFalse(bc.ca)
+        self.assertEqual(bc.path_length, None)
 
 
 class KeyUsageTestCase(TestCase):

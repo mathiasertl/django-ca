@@ -44,6 +44,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from . import ca_settings
 from .extensions import AuthorityKeyIdentifier
+from .extensions import BasicConstraints
 from .extensions import ExtendedKeyUsage
 from .extensions import KeyUsage
 from .extensions import SubjectKeyIdentifier
@@ -290,6 +291,14 @@ class X509CertMixin(models.Model):
         except x509.ExtensionNotFound:
             return None
         return AuthorityKeyIdentifier(ext)
+
+    @property
+    def basic_constraints(self):
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
+        except x509.ExtensionNotFound:
+            return None
+        return BasicConstraints(ext)
 
     @property
     def key_usage(self):
