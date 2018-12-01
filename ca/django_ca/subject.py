@@ -40,7 +40,7 @@ class Subject(object):
     >>> Subject([('CN', 'example.com'), ])
     Subject("/CN=example.com")
 
-    In many respects, this class handles like a ``dict``:
+    In most respects, this class handles like a ``dict``:
 
     >>> s = Subject('/CN=example.com')
     >>> 'CN' in s

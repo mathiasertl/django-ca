@@ -14,6 +14,7 @@ ChangeLog
 * Remove colons from CA private keys (fixes `#29 <https://github.com/mathiasertl/django-ca/issues/28>`_).
 * Filenames for downloading certificates through the webinterface now use the CommonName instead of the
   serial (fixes `#53 <https://github.com/mathiasertl/django-ca/issues/53>_`).
+* :py:class:`~django_ca.subject.Subject` now implements every ``dict`` method.
 * Test for certificates that are not yet valid.
 * Freeze time in some test cases to avoid test failures when certificates eventually expire.
 
