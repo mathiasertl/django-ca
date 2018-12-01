@@ -42,9 +42,6 @@ from django.utils.functional import Promise
 from django.utils.translation import ugettext_lazy as _
 
 from . import ca_settings
-from .extensions import ExtendedKeyUsage
-from .extensions import KeyUsage
-from .extensions import TLSFeature
 
 # List of possible subject fields, in order
 SUBJECT_FIELDS = ['C', 'ST', 'L', 'O', 'OU', 'CN', 'emailAddress', ]
@@ -625,31 +622,6 @@ def get_default_subject(name):
 
     profile = deepcopy(ca_settings.CA_PROFILES[name])
     return profile['subject']
-
-
-def get_cert_profile_kwargs(name=None):
-    """Get kwargs suitable for get_cert X509 keyword arguments from the given profile."""
-
-    if name is None:
-        name = ca_settings.CA_DEFAULT_PROFILE
-
-    profile = deepcopy(ca_settings.CA_PROFILES[name])
-    kwargs = {
-        'cn_in_san': profile['cn_in_san'],
-        'subject': get_default_subject(name=name),
-    }
-
-    key_usage = profile.get('keyUsage')
-    if key_usage and key_usage.get('value'):
-        kwargs['key_usage'] = KeyUsage(key_usage)
-    ext_key_usage = profile.get('extendedKeyUsage')
-    if ext_key_usage and ext_key_usage.get('value'):
-        kwargs['extended_key_usage'] = ExtendedKeyUsage(ext_key_usage)
-    tls_feature = profile.get('TLSFeature')
-    if tls_feature and tls_feature.get('value'):
-        kwargs['tls_feature'] = TLSFeature(tls_feature)
-
-    return kwargs
 
 
 if six.PY2:  # pragma: only py2

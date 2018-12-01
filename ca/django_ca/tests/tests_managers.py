@@ -19,8 +19,8 @@ from ..extensions import ExtendedKeyUsage
 from ..extensions import KeyUsage
 from ..models import Certificate
 from ..models import CertificateAuthority
+from ..profiles import get_cert_profile_kwargs
 from ..subject import Subject
-from ..utils import get_cert_profile_kwargs
 from .base import DjangoCAWithCSRTestCase
 from .base import override_settings
 

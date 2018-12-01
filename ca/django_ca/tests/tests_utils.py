@@ -41,11 +41,11 @@ from .. import utils
 from ..extensions import ExtendedKeyUsage
 from ..extensions import KeyUsage
 from ..extensions import TLSFeature
+from ..profiles import get_cert_profile_kwargs
 from ..utils import NAME_RE
 from ..utils import LazyEncoder
 from ..utils import format_name
 from ..utils import get_cert_builder
-from ..utils import get_cert_profile_kwargs
 from ..utils import is_power2
 from ..utils import multiline_url_validator
 from ..utils import parse_general_name

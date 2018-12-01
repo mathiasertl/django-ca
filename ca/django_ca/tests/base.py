@@ -43,12 +43,12 @@ from .. import ca_settings
 from ..extensions import Extension
 from ..models import Certificate
 from ..models import CertificateAuthority
+from ..profiles import get_cert_profile_kwargs
 from ..signals import post_create_ca
 from ..signals import post_issue_cert
 from ..signals import post_revoke_cert
 from ..subject import Subject
 from ..utils import OID_NAME_MAPPINGS
-from ..utils import get_cert_profile_kwargs
 from ..utils import x509_name
 
 if six.PY2:  # pragma: only py2

@@ -24,6 +24,8 @@ from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import ObjectIdentifier
 
+from .utils import add_colons
+
 
 @six.python_2_unicode_compatible
 class Extension(object):
@@ -137,13 +139,6 @@ class Extension(object):
         """A human readable name of this extension."""
         return self.oid._name
 
-    def add_colons(self, s):
-        """Add colons to a string.
-
-        TODO: duplicate from utils :-(
-        """
-        return ':'.join([s[i:i + 2] for i in range(0, len(s), 2)])
-
     @property
     def extension_type(self):
         """The extension_type for this value."""
@@ -227,7 +222,7 @@ class KeyIdExtension(Extension):
     """
 
     def as_text(self):
-        return self.add_colons(binascii.hexlify(self.value).upper().decode('utf-8'))
+        return add_colons(binascii.hexlify(self.value).upper().decode('utf-8'))
 
 
 class AuthorityKeyIdentifier(KeyIdExtension):

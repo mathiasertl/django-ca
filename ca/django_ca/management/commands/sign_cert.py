@@ -20,8 +20,8 @@ from ... import ca_settings
 from ...management.base import BaseSignCommand
 from ...models import Certificate
 from ...models import Watcher
+from ...profiles import get_cert_profile_kwargs
 from ...subject import Subject
-from ...utils import get_cert_profile_kwargs
 
 
 class Command(BaseSignCommand):
