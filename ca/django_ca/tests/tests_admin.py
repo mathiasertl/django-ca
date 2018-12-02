@@ -39,6 +39,7 @@ from django.utils.six.moves.urllib.parse import quote
 
 from django_webtest import WebTestMixin
 
+from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import KeyUsage
 from ..extensions import TLSFeature
@@ -356,12 +357,15 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(cert.subjectAltName(), (False, ['DNS:%s' % cn]))
-        self.assertEqual(cert.basicConstraints(), (True, 'CA:FALSE'))
+        self.assertEqual(cert.basic_constraints, BasicConstraints((True, (False, None, ))))
         self.assertEqual(cert.key_usage, KeyUsage('critical,digitalSignature,keyAgreement'))
         self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('clientAuth,serverAuth'))
         self.assertEqual(cert.tls_feature, TLSFeature('OCSPMustStaple,MultipleCertStatusRequest'))
         self.assertEqual(cert.ca, self.ca)
         self.assertEqual(cert.csr, self.csr_pem)
+
+        # Some extensions are not set
+        self.assertIsNone(cert.issuer_alternative_name)
 
         # Test that we can view the certificate
         response = self.client.get(self.change_url(cert.pk))
@@ -419,16 +423,17 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(cert.subjectAltName(), (False, ['DNS:%s' % cn, 'DNS:%s' % san]))
-        self.assertEqual(cert.basicConstraints(), (True, 'CA:FALSE'))
-        self.assertIsNone(cert.key_usage)  # not present
-        self.assertIsNone(cert.extended_key_usage)  # not present
+        self.assertEqual(cert.basic_constraints, BasicConstraints((True, (False, None, ))))
         self.assertEqual(cert.ca, self.ca)
         self.assertEqual(cert.csr, self.csr_pem)
 
-        # Test some more properties
-        self.assertIsNone(cert.tls_feature)
+        # Some extensions are not set
         self.assertIsNone(cert.certificatePolicies())
+        self.assertIsNone(cert.extended_key_usage)
+        self.assertIsNone(cert.issuer_alternative_name)
+        self.assertIsNone(cert.key_usage)
         self.assertIsNone(cert.signedCertificateTimestampList())
+        self.assertIsNone(cert.tls_feature)
 
         # Test that we can view the certificate
         response = self.client.get(self.change_url(cert.pk))
@@ -508,11 +513,17 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertIssuer(self.pwd_ca, cert)
         self.assertAuthorityKeyIdentifier(self.pwd_ca, cert)
         self.assertEqual(cert.subjectAltName(), (False, ['DNS:%s' % cn]))
-        self.assertEqual(cert.basicConstraints(), (True, 'CA:FALSE'))
+        self.assertEqual(cert.basic_constraints, BasicConstraints((True, (False, None, ))))
         self.assertEqual(cert.key_usage, KeyUsage('critical,digitalSignature,keyAgreement'))
         self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('clientAuth,serverAuth'))
         self.assertEqual(cert.ca, self.pwd_ca)
         self.assertEqual(cert.csr, self.csr_pem)
+
+        # Some extensions are not set
+        self.assertIsNone(cert.certificatePolicies())
+        self.assertIsNone(cert.issuer_alternative_name)
+        self.assertIsNone(cert.signedCertificateTimestampList())
+        self.assertIsNone(cert.tls_feature)
 
         # Test that we can view the certificate
         response = self.client.get(self.change_url(cert.pk))
