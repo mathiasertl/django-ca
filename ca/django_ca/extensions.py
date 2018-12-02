@@ -25,6 +25,9 @@ from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import ObjectIdentifier
 
 from .utils import add_colons
+from .utils import format_general_name
+from .utils import parse_general_name
+from .utils import shlex_split
 
 
 @six.python_2_unicode_compatible
@@ -205,9 +208,10 @@ class MultiValueExtension(Extension):
         return len(self.value)
 
     def _test_value(self):
-        diff = set(self.value) - self.KNOWN_VALUES
-        if diff:
-            raise ValueError('Unknown value(s): %s' % ', '.join(sorted(diff)))
+        if self.KNOWN_VALUES:
+            diff = set(self.value) - self.KNOWN_VALUES
+            if diff:
+                raise ValueError('Unknown value(s): %s' % ', '.join(sorted(diff)))
 
     def as_text(self):
         return '\n'.join(['* %s' % v for v in sorted(self.value)])
@@ -310,6 +314,37 @@ class BasicConstraints(Extension):
             val += ', pathlen:%s' % self.pathlen
 
         return val
+
+
+class IssuerAlternativeName(MultiValueExtension):
+    def __repr__(self):
+        val = ','.join([format_general_name(v) for v in self.value])
+        return '<%s: %r, critical=%r>' % (self.__class__.__name__, val, self.critical)
+
+    def __str__(self):
+        val = ','.join(sorted([format_general_name(v) for v in self.value]))
+        if self.critical:
+            return'%s/critical' % val
+        return val
+
+    @property
+    def extension_type(self):
+        return x509.IssuerAlternativeName(self.value)
+
+    def from_dict(self, value):
+        self.value = [parse_general_name(v) for v in value]
+
+    def from_extension(self, ext):
+        self.value = ext.value
+
+    def from_list(self, value):
+        self.value = [parse_general_name(n) for n in value]
+
+    def from_str(self, value):
+        self.value = [parse_general_name(n) for n in shlex_split(value, ', ')]
+
+    def as_text(self):
+        return '\n'.join(['* %s' % format_general_name(v) for v in sorted(self.value)])
 
 
 class KeyUsage(MultiValueExtension):
