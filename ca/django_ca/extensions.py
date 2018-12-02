@@ -274,6 +274,10 @@ class BasicConstraints(Extension):
     def __repr__(self):
         return '<%s: %r, critical=%r>' % (self.__class__.__name__, self.as_text(), self.critical)
 
+    @property
+    def value(self):
+        return self.ca, self.pathlen
+
     def from_extension(self, ext):
         self.ca = ext.value.ca
         self.pathlen = ext.value.path_length
