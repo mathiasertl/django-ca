@@ -262,6 +262,10 @@ class BasicConstraints(Extension):
         # Note that string parsing ignores case and whitespace and is quite forgiving
         >>> BasicConstraints('critical, ca=true    , pathlen: 3 ')
         <BasicConstraints: 'CA:TRUE, pathlen:3', critical=True>
+
+    .. seealso::
+
+        `RFC5280, section 4.2.1.9 <https://tools.ietf.org/html/rfc5280#section-4.2.1.9>`_
     """
 
     oid = ExtensionOID.BASIC_CONSTRAINTS
@@ -322,6 +326,17 @@ class BasicConstraints(Extension):
 
 
 class IssuerAlternativeName(MultiValueExtension):
+    """Class representing an Issuer Alternative Name extension.
+
+    This extension is usually marked as non-critical.
+
+    >>> IssuerAlternativeName('https://example.com')
+    <IssuerAlternativeName: 'URI:https://example.com', critical=False>
+
+    .. seealso::
+
+       `RFC5280, section 4.2.1.7 <https://tools.ietf.org/html/rfc5280#section-4.2.1.7>`_
+    """
     oid = ExtensionOID.ISSUER_ALTERNATIVE_NAME
 
     def __repr__(self):
@@ -355,7 +370,21 @@ class IssuerAlternativeName(MultiValueExtension):
 
 
 class KeyUsage(MultiValueExtension):
-    """Class representing a KeyUsage extension."""
+    """Class representing a KeyUsage extension, which defines the purpose of a certificate.
+
+    This extension is usually marked as critical and RFC5280 defines that confirming CAs SHOULD mark it as
+    critical. The value ``keyAgreement`` is always added if ``decipherOnly`` is present, since the value of
+    this extension is not meaningful otherwise.
+
+    >>> KeyUsage('critical,encipherOnly')
+    <KeyUsage: ['encipherOnly'], critical=True>
+    >>> KeyUsage('critical,decipherOnly')
+    <KeyUsage: ['decipherOnly', 'keyAgreement'], critical=True>
+
+    .. seealso::
+
+        `RFC5280, section 4.2.1.3 <https://tools.ietf.org/html/rfc5280#section-4.2.1.3>`_
+    """
 
     oid = ExtensionOID.KEY_USAGE
     CRYPTOGRAPHY_MAPPING = {
