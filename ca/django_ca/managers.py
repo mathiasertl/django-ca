@@ -34,6 +34,7 @@ from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 
 from . import ca_settings
+from .extensions import IssuerAlternativeName
 from .signals import post_create_ca
 from .signals import post_issue_cert
 from .signals import pre_create_ca
@@ -346,8 +347,8 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             builder = builder.add_extension(**tls_feature.for_builder())
 
         if ca.issuer_alt_name:
-            builder = builder.add_extension(x509.IssuerAlternativeName(
-                [parse_general_name(ca.issuer_alt_name)]), critical=False)
+            issuer_alt_name = IssuerAlternativeName(ca.issuer_alt_name)
+            builder = builder.add_extension(**issuer_alt_name.for_builder())
 
         return builder.sign(private_key=ca.key(password), algorithm=algorithm, backend=default_backend()), req
 
