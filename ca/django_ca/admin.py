@@ -58,6 +58,7 @@ from .models import Watcher
 from .signals import post_issue_cert
 from .signals import pre_issue_cert
 from .utils import OID_NAME_MAPPINGS
+from .utils import format_general_name
 
 
 @admin.register(Watcher)
@@ -161,6 +162,8 @@ class CertificateMixin(object):
             if isinstance(value, MultiValueExtension):
                 html += '<ul class="x509-extension-value">'
                 for val in value.value:
+                    if isinstance(val, x509.GeneralName):
+                        val = format_general_name(val)
                     html += '<li>%s</li>' % escape(val)
                 html += '</ul>'
             else:
