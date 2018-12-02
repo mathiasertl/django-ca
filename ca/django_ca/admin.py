@@ -183,9 +183,9 @@ class CertificateMixin(object):
 
         return mark_safe(html)
 
-    def basicConstraints(self, obj):
-        return self.output_extension(obj.basicConstraints())
-    basicConstraints.short_description = 'basicConstraints'
+    def basic_constraints(self, obj):
+        return self.output_extension(obj.basic_constraints)
+    basic_constraints.short_description = 'basicConstraints'
 
     def authorityInfoAccess(self, obj):
         return self.output_extension(obj.authorityInfoAccess())
@@ -207,9 +207,9 @@ class CertificateMixin(object):
         return self.output_extension(obj.subject_key_identifier)
     subject_key_identifier.short_description = _('subjectKeyIdentifier')
 
-    def issuerAltName(self, obj):
-        return self.output_extension(obj.issuerAltName())
-    issuerAltName.short_description = _('issuerAltName')
+    def issuer_alternative_name(self, obj):
+        return self.output_extension(obj.issuer_alternative_name)
+    issuer_alternative_name.short_description = _('issuerAltName')
 
     def authority_key_identifier(self, obj):
         return self.output_extension(obj.authority_key_identifier)
