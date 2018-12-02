@@ -203,7 +203,7 @@ class Subject(object):
     ####################
     @property
     def fields(self):
-        """This subject as a list of :py:class:`~cryptography:cryptography.x509.oid.NameOID` instances.
+        """This subject as a list of :py:class:`~cg:cryptography.x509.oid.NameOID` instances.
 
         >>> list(Subject('/C=AT/CN=example.com').fields)  # doctest: +NORMALIZE_WHITESPACE
         [(<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, 'AT'),
@@ -215,7 +215,7 @@ class Subject(object):
 
     @property
     def name(self):
-        """This subject as :py:class:`x509.Name <cryptography:cryptography.x509.Name>`.
+        """This subject as :py:class:`x509.Name <cg:cryptography.x509.Name>`.
 
         >>> Subject('/C=AT/CN=example.com').name  # doctest: +NORMALIZE_WHITESPACE
         <Name([<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, value='AT')>,

@@ -89,12 +89,12 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         expires : datetime, optional
             Datetime for when this certificate authority will expire, defaults to
             :ref:`CA_DEFAULT_EXPIRES <settings-ca-default-expires>`.
-        algorithm : str or :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
+        algorithm : str or :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
             Hash algorithm used when signing the certificate. If a string is passed, it must be the name of
-            one of the hashes in :py:mod:`~cryptography:cryptography.hazmat.primitives.hashes`, e.g.
+            one of the hashes in :py:mod:`~cg:cryptography.hazmat.primitives.hashes`, e.g.
             ``"SHA512"``. This method also accepts instances of
-            :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`, e.g.
-            :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.SHA512`. The default is the
+            :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, e.g.
+            :py:class:`~cg:cryptography.hazmat.primitives.hashes.SHA512`. The default is the
             ``CA_DIGEST_ALGORITHM`` setting.
         parent : :py:class:`~django_ca.models.CertificateAuthority`, optional
             Parent certificate authority for the new CA. This means that this CA will be an intermediate
@@ -260,12 +260,12 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             A valid CSR. The format is given by the ``csr_format`` parameter.
         expires : datetime, optional
             Datetime for when this certificate will expire, defaults to the ``CA_DEFAULT_EXPIRES`` setting.
-        algorithm : str or :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
+        algorithm : str or :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
             Hash algorithm used when signing the certificate. If a string is passed, it must be the name of
-            one of the hashes in :py:mod:`~cryptography:cryptography.hazmat.primitives.hashes`, e.g.
+            one of the hashes in :py:mod:`~cg:cryptography.hazmat.primitives.hashes`, e.g.
             ``"SHA512"``. This method also accepts instances of
-            :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`, e.g.
-            :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.SHA512`. The default is the
+            :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, e.g.
+            :py:class:`~cg:cryptography.hazmat.primitives.hashes.SHA512`. The default is the
             ``CA_DIGEST_ALGORITHM`` setting.
         subject : :py:class:`~django_ca.subject.Subject`, optional
             The Subject to use in the certificate. If this value is not passed or if the value does not
@@ -275,7 +275,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             ``True``, but the parameter is ignored if no CommonName is given. This is typically set
             to ``False`` when creating a client certificate, where the subjects CommonName has no
             meaningful value as subjectAltName.
-        csr_format : :py:class:`~cryptography:cryptography.hazmat.primitives.serialization.Encoding`, optional
+        csr_format : :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding`, optional
             The format of the CSR. The default is ``PEM``.
         subjectAltName : list of str, optional
             A list of values for the subjectAltName extension. Values are passed to

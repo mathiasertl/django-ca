@@ -58,7 +58,7 @@ class Extension(object):
         >>> KeyUsage({'critical': True, 'value': ['keyAgreement', 'keyEncipherment']})
         <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=True>
 
-    ... and finally it can also use a subclass of :py:class:`~cryptography:cryptography.x509.ExtensionType`
+    ... and finally it can also use a subclass of :py:class:`~cg:cryptography.x509.ExtensionType`
     from ``cryptography``::
 
         >>> from cryptography import x509
@@ -79,7 +79,7 @@ class Extension(object):
     Parameters
     ----------
 
-    value : list or tuple or dict or str or :py:class:`~cryptography:cryptography.x509.ExtensionType`
+    value : list or tuple or dict or str or :py:class:`~cg:cryptography.x509.ExtensionType`
         The value of the extension, the description provides further details.
     """
     default_critical = False
@@ -149,7 +149,7 @@ class Extension(object):
         raise NotImplementedError
 
     def as_extension(self):
-        """This extension as :py:class:`~cryptography:cryptography.x509.ExtensionType`."""
+        """This extension as :py:class:`~cg:cryptography.x509.ExtensionType`."""
         return x509.extensions.Extension(oid=self.oid, critical=self.critical, value=self.extension_type)
 
     def as_text(self):
@@ -157,7 +157,7 @@ class Extension(object):
         return self.value
 
     def for_builder(self):
-        """Return kwargs suitable for a :py:class:`~cryptography:cryptography.x509.CertificateBuilder`.
+        """Return kwargs suitable for a :py:class:`~cg:cryptography.x509.CertificateBuilder`.
 
         Example::
 

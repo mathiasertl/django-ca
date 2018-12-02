@@ -133,7 +133,7 @@ class X509CertMixin(models.Model):
 
     @property
     def x509(self):
-        """The underlying :py:class:`cryptography:cryptography.x509.Certificate`."""
+        """The underlying :py:class:`cg:cryptography.x509.Certificate`."""
         if self._x509 is None:
             backend = default_backend()
             self._x509 = x509.load_pem_x509_certificate(force_bytes(self.pub), backend)

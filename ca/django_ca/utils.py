@@ -267,7 +267,7 @@ def parse_name(name):
 
 
 def x509_name(name):
-    """Parses a subject into a :py:class:`x509.Name <cryptography:cryptography.x509.Name>`.
+    """Parses a subject into a :py:class:`x509.Name <cg:cryptography.x509.Name>`.
 
     If ``name`` is a string, :py:func:`parse_name` is used to parse it.
 
@@ -332,7 +332,7 @@ def parse_general_name(name):
     <DirectoryName(value=<Name([<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>,
                                                value='example.com')>])>)>
 
-    The default fallback is to assume a :py:class:`~cryptography:cryptography.x509.DNSName`. If this doesn't
+    The default fallback is to assume a :py:class:`~cg:cryptography.x509.DNSName`. If this doesn't
     work, an exception will be raised:
 
     >>> parse_general_name('foo..bar`*123')
@@ -467,11 +467,11 @@ def parse_hash_algorithm(value=None):
     """Parse a hash algorithm value.
 
     The most common use case is to pass a str naming a class in
-    :py:mod:`~cryptography:cryptography.hazmat.primitives.hashes`.
+    :py:mod:`~cg:cryptography.hazmat.primitives.hashes`.
 
     For convenience, passing ``None`` will return the value of :ref:`CA_DIGEST_ALGORITHM
     <settings-ca-digest-algorithm>`, and passing an
-    :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm` will return that
+    :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm` will return that
     instance unchanged.
 
     Example usage::
@@ -498,14 +498,14 @@ def parse_hash_algorithm(value=None):
     Parameters
     ----------
 
-    value : str or :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
+    value : str or :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
         The value to parse, the function description on how possible values are used.
 
     Returns
     -------
 
     algorithm
-        A :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm` instance.
+        A :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm` instance.
 
     Raises
     ------
@@ -532,14 +532,14 @@ def parse_key_curve(value=None):
     """Parse an elliptic curve value.
 
     This function uses a value identifying an elliptic curve to return an
-    :py:class:`~cryptography:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` instance. The name
-    must match a class name of one of the classes named under "Elliptic Curves" in
-    :any:`cryptography:hazmat/primitives/asymmetric/ec`.
+    :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` instance. The name must match a
+    class name of one of the classes named under "Elliptic Curves" in
+    :any:`cg:hazmat/primitives/asymmetric/ec`.
 
     For convenience, passing ``None`` will return the value of :ref:`CA_DEFAULT_ECC_CURVE
     <settings-ca-default-ecc-curve>`, and passing an
-    :py:class:`~cryptography:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` will return that
-    instance unchanged.
+    :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` will return that instance
+    unchanged.
 
     Example usage::
 
@@ -562,7 +562,7 @@ def parse_key_curve(value=None):
     -------
 
     curve
-        An :py:class:`~cryptography:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` instance.
+        An :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` instance.
 
     Raises
     ------

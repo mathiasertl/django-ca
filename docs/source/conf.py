@@ -311,7 +311,7 @@ texinfo_documents = [
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3.6', None),
-    'cryptography': ('https://cryptography.io/en/latest/', None),
+    'cg': ('https://cryptography.io/en/latest/', None),
     'django': ('https://docs.djangoproject.com/en/dev/', 'https://docs.djangoproject.com/en/dev/_objects/'),
 }
 
