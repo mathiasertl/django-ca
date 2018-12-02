@@ -83,8 +83,12 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         ----------
 
         name : str
-            The name of the CA. This can be a human-readable string and is used for administrative purposes
-            only.
+            The name of the CA. This is a human-readable string and is used for administrative purposes only.
+        subject : :py:class:`~django_ca.subject.Subject`
+            Subject string, e.g. ``Subject("/CN=example.com")``.
+        expires : datetime, optional
+            Datetime for when this certificate authority will expire, defaults to
+            :ref:`CA_DEFAULT_EXPIRES <settings-ca-default-expires>`.
         algorithm : str or :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
             Hash algorithm used when signing the certificate. If a string is passed, it must be the name of
             one of the hashes in :py:mod:`~cryptography:cryptography.hazmat.primitives.hashes`, e.g.
@@ -92,15 +96,28 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`, e.g.
             :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.SHA512`. The default is the
             ``CA_DIGEST_ALGORITHM`` setting.
-        subject : :py:class:`~django_ca.subject.Subject`
-            Subject string, e.g. ``Subject("/CN=example.com")``.
-        expires : datetime, optional
-            Datetime for when this certificate authority will expire, defaults to the ``CA_DEFAULT_EXPIRES``
-            setting.
         parent : :py:class:`~django_ca.models.CertificateAuthority`, optional
             Parent certificate authority for the new CA. This means that this CA will be an intermediate
             authority.
         pathlen : int, optional
+            Value of the path length attribute for the :py:class:`~django_ca.extensions.BasicConstraints`
+            extension.
+        issuer_url : str
+            URL for the DER/ASN1 formatted certificate that is signing certificates.
+        issuer_alt_name : str, optional
+            IssuerAlternativeName used when signing certificates. This currently has to be a URL.
+        crl_url : list of str, optional
+            CRL URLs used for certificates signed by this CA.
+        ocsp_url : str, optional
+            OCSP URL used for certificates signed by this CA.
+        ca_issuer_url : str, optional
+            URL for the DER/ASN1 formatted certificate that is signing this CA. For intermediate CAs, this
+            would usually be the ``issuer_url`` of the parent CA.
+        ca_crl_url : list of str, optional
+            CRL URLs used for this CA. This value is only meaningful for intermediate CAs.
+        ca_ocsp_url : str, optional
+            OCSP URL used for this CA. This value is only meaningful for intermediate CAs.
+        name_constraints
         password : bytes, optional
             Password to encrypt the private key with.
         parent_password : bytes, optional
