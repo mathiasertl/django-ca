@@ -90,14 +90,11 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             Datetime for when this certificate authority will expire, defaults to
             :ref:`CA_DEFAULT_EXPIRES <settings-ca-default-expires>`.
         algorithm : str or :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
-            Hash algorithm used when signing the certificate. If a string is passed, it must be the name of
-            one of the hashes in :py:mod:`~cg:cryptography.hazmat.primitives.hashes`, e.g.
-            ``"SHA512"``. This method also accepts instances of
-            :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, e.g.
-            :py:class:`~cg:cryptography.hazmat.primitives.hashes.SHA512`. The default is the
-            ``CA_DIGEST_ALGORITHM`` setting.
+            Hash algorithm used when signing the certificate, passed to
+            :py:func:`~django_ca.utils.parse_hash_algorithm`.  The default is the value of the
+            :ref:`CA_DIGEST_ALGORITHM <settings-ca-digest-algorithm>` setting.
         parent : :py:class:`~django_ca.models.CertificateAuthority`, optional
-            Parent certificate authority for the new CA. This means that this CA will be an intermediate
+            Parent certificate authority for the new CA. Passing this value makes the CA an intermediate
             authority.
         pathlen : int, optional
             Value of the path length attribute for the :py:class:`~django_ca.extensions.BasicConstraints`
@@ -261,12 +258,9 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         expires : datetime, optional
             Datetime for when this certificate will expire, defaults to the ``CA_DEFAULT_EXPIRES`` setting.
         algorithm : str or :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
-            Hash algorithm used when signing the certificate. If a string is passed, it must be the name of
-            one of the hashes in :py:mod:`~cg:cryptography.hazmat.primitives.hashes`, e.g.
-            ``"SHA512"``. This method also accepts instances of
-            :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, e.g.
-            :py:class:`~cg:cryptography.hazmat.primitives.hashes.SHA512`. The default is the
-            ``CA_DIGEST_ALGORITHM`` setting.
+            Hash algorithm used when signing the certificate, passed to
+            :py:func:`~django_ca.utils.parse_hash_algorithm`.  The default is the value of the
+            :ref:`CA_DIGEST_ALGORITHM <settings-ca-digest-algorithm>` setting.
         subject : :py:class:`~django_ca.subject.Subject`, optional
             The Subject to use in the certificate. If this value is not passed or if the value does not
             contain a CommonName, the first value of the ``subjectAltName`` parameter is used as CommonName.
