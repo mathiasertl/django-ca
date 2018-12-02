@@ -17,6 +17,7 @@
 
 import os
 import re
+import shlex
 from copy import deepcopy
 from datetime import datetime
 from datetime import timedelta
@@ -641,3 +642,23 @@ def write_private_file(path, data):
         raise
     except (IOError, OSError) as e:  # pragma: only py2
         raise PermissionError(e.errno)
+
+
+def shlex_split(s, sep):
+    """Split a character on the given set of characters.
+
+    Example::
+
+        >>> shlex_split('foo,bar', ', ')
+        ['foo', 'bar']
+        >>> shlex_split('foo\\\,bar1', ',')
+        ['foo,bar1']
+        >>> shlex_split('"foo,bar", bla', ', ')
+        ['foo,bar', 'bla']
+        >>> shlex_split('foo,"bar bla"', ',')
+        ['foo', 'bar bla']
+    """
+    lex = shlex.shlex(s, posix=True)
+    lex.whitespace = sep
+    lex.whitespace_split = False
+    return [l for l in lex]
