@@ -651,7 +651,7 @@ def shlex_split(s, sep):
 
         >>> shlex_split('foo,bar', ', ')
         ['foo', 'bar']
-        >>> shlex_split('foo\\\,bar1', ',')
+        >>> shlex_split("foo\\\,bar1", ',')  # escape a separator
         ['foo,bar1']
         >>> shlex_split('"foo,bar", bla', ', ')
         ['foo,bar', 'bla']
