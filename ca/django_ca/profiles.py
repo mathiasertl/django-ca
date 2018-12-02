@@ -16,10 +16,10 @@
 from copy import deepcopy
 
 from . import ca_settings
-from .utils import get_default_subject
 from .extensions import ExtendedKeyUsage
 from .extensions import KeyUsage
 from .extensions import TLSFeature
+from .utils import get_default_subject
 
 
 def get_cert_profile_kwargs(name=None):
