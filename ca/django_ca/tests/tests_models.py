@@ -23,7 +23,9 @@ from cryptography.x509.oid import ObjectIdentifier
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
+from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
+from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
 from ..models import Certificate
 from ..models import Watcher
@@ -163,16 +165,28 @@ class CertificateTests(DjangoCAWithCertTestCase):
             ]))
 
     def test_basicConstraints(self):
-        self.assertEqual(self.ca.basicConstraints(), (True, 'CA:TRUE, pathlen:1'))
-        self.assertEqual(self.cert.basicConstraints(), (True, 'CA:FALSE'))
-        self.assertEqual(self.cert2.basicConstraints(), (True, 'CA:FALSE'))
+        self.assertEqual(self.ca.basic_constraints, BasicConstraints((True, (True, 1))))
+        self.assertEqual(self.pwd_ca.basic_constraints, BasicConstraints((True, (True, None))))
+        self.assertEqual(self.ecc_ca.basic_constraints, BasicConstraints((True, (True, 0))))
+
+        self.assertEqual(self.cert.basic_constraints, BasicConstraints((True, (False, None))))
+        self.assertEqual(self.cert_all.basic_constraints, BasicConstraints((True, (False, None))))
+        self.assertIsNone(self.cert_no_ext.basic_constraints)
+        self.assertEqual(self.cert2.basic_constraints, BasicConstraints((True, (False, None))))
         # accidentally used cert2 in cn/san
-        self.assertEqual(self.cert3.basicConstraints(), (True, 'CA:FALSE'))
+        self.assertEqual(self.cert3.basic_constraints, BasicConstraints((True, (False, None))))
 
     def test_issuerAltName(self):
-        self.assertEqual(self.cert.issuerAltName(), certs['cert1']['issuerAltName'])
-        self.assertEqual(self.cert2.issuerAltName(), certs['cert2']['issuerAltName'])
-        self.assertEqual(self.cert3.issuerAltName(), certs['cert3']['issuerAltName'])
+        self.assertIsNone(self.ca.issuer_alternative_name)
+        self.assertIsNone(self.pwd_ca.issuer_alternative_name)
+        self.assertIsNone(self.ecc_ca.issuer_alternative_name)
+
+        self.assertEqual(self.cert.issuer_alternative_name,
+                         IssuerAlternativeName(certs['cert1']['issuer_alternative_name']))
+        self.assertEqual(self.cert2.issuer_alternative_name,
+                         IssuerAlternativeName(certs['cert2']['issuer_alternative_name']))
+        self.assertEqual(self.cert3.issuer_alternative_name,
+                         IssuerAlternativeName(certs['cert3']['issuer_alternative_name']))
 
     def test_keyUsage(self):
         self.assertEqual(self.ca.key_usage, KeyUsage('critical,cRLSign,keyCertSign'))
@@ -257,12 +271,12 @@ class CertificateTests(DjangoCAWithCertTestCase):
         _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
         cert = self.load_cert(self.ca, x509=pubkey)
         self.assertIsNone(cert.authorityInfoAccess())
-        self.assertIsNone(cert.basicConstraints())
+        self.assertIsNone(cert.basic_constraints)
         self.assertIsNone(cert.subjectAltName())
         self.assertIsNone(cert.key_usage)
         self.assertIsNone(cert.extended_key_usage)
         self.assertIsNone(cert.subject_key_identifier)
-        self.assertIsNone(cert.issuerAltName())
+        self.assertIsNone(cert.issuer_alternative_name)
         self.assertIsNone(cert.authority_key_identifier)
         self.assertIsNone(cert.tls_feature)
         self.assertIsNone(cert.certificatePolicies())

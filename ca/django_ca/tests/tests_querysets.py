@@ -19,6 +19,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 
 from .. import ca_settings
+from ..extensions import BasicConstraints
 from ..extensions import KeyUsage
 from ..models import CertificateAuthority
 from ..subject import Subject
@@ -47,13 +48,13 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         self.assertEqual(ca.subject, Subject({'CN': 'ca.example.com'}))
 
         # verify X509 properties
-        self.assertEqual(ca.basicConstraints(), (True, 'CA:TRUE, pathlen:0'))
+        self.assertEqual(ca.basic_constraints, BasicConstraints((True, (True, 0))))
         self.assertEqual(ca.key_usage, KeyUsage('critical,cRLSign,keyCertSign'))
         self.assertIsNone(ca.subjectAltName(), None)
 
         self.assertIsNone(ca.extended_key_usage)
         self.assertIsNone(ca.tls_feature)
-        self.assertIsNone(ca.issuerAltName())
+        self.assertIsNone(ca.issuer_alternative_name)
 
     @override_tmpcadir()
     def test_pathlen(self):
@@ -63,12 +64,12 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
             parent=None, subject=Subject([('CN', 'ca.example.com')]))
 
         ca = CertificateAuthority.objects.init(name='1', **kwargs)
-        self.assertEqual(ca.basicConstraints(), (True, 'CA:TRUE'))
+        self.assertEqual(ca.basic_constraints, BasicConstraints('critical,CA:TRUE'))
 
         ca = CertificateAuthority.objects.init(pathlen=0, name='2', **kwargs)
-        self.assertEqual(ca.basicConstraints(), (True, 'CA:TRUE, pathlen:0'))
+        self.assertEqual(ca.basic_constraints, BasicConstraints((True, (True, 0))))
         ca = CertificateAuthority.objects.init(pathlen=2, name='3', **kwargs)
-        self.assertEqual(ca.basicConstraints(), (True, 'CA:TRUE, pathlen:2'))
+        self.assertEqual(ca.basic_constraints, BasicConstraints((True, (True, 2))))
 
     @override_tmpcadir()
     def test_parent(self):

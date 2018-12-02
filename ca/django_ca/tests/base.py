@@ -183,7 +183,7 @@ certs = {
         'status': 'Valid',
         'subjectKeyIdentifier': 'D2:1B:D1:90:35:0E:44:58:F7:0A:21:BB:DC:BE:3D:7F:ED:83:E4:FA',
         'authKeyIdentifier': 'keyid:79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
-        'issuerAltName': (False, 'URI:https://ca.example.com'),
+        'issuer_alternative_name': 'URI:https://ca.example.com',
         'authInfoAccess': (False, ['OCSP - URI:http://ocsp.ca.example.com',
                                    'CA Issuers - URI:http://ca.example.com/ca.crt']),
         'crl': (False, ['Full Name: URI:http://ca.example.com/crl']),
@@ -193,7 +193,7 @@ certs = {
         'valid_from': datetime(2017, 4, 17, 11, 47),
     },
     'cert2': {
-        'issuerAltName': (False, 'URI:https://ca.example.com'),
+        'issuer_alternative_name': 'URI:https://ca.example.com',
         'md5': '4B:1C:B9:1E:34:B3:E0:7A:F9:95:E4:92:94:54:19:6B',
         'sha1': '3B:EB:92:1C:99:0D:E9:C6:57:2E:ED:A0:25:00:84:21:9E:37:25:87',
         'sha256': 'A2:18:2B:7E:5D:A3:A8:64:B4:9B:74:D5:4A:FB:46:60:DC:B7:A5:20:ED:0E:0E:EC:7A:2E:20:01:20:E9:3F:4C',  # NOQA
@@ -207,7 +207,7 @@ certs = {
         'valid_from': datetime(2017, 4, 17, 11, 47),
     },
     'cert3': {
-        'issuerAltName': (False, 'URI:https://ca.example.com'),
+        'issuer_alternative_name': 'URI:https://ca.example.com',
         'md5': '43:47:4B:6D:7C:7E:3A:BB:85:AF:0F:2E:70:2B:12:07',
         'sha1': '28:65:FB:33:4E:60:DD:44:22:5D:5F:61:FF:C0:6C:FB:3F:23:55:87',
         'sha256': '2A:18:6B:D9:B4:A9:B7:12:17:41:20:A6:6C:D4:AA:0D:D7:98:A0:5F:53:26:C7:47:AA:00:A4:2C:DF:7A:07:96',  # NOQA

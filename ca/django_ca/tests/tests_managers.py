@@ -15,7 +15,9 @@
 
 from cryptography.hazmat.primitives import hashes
 
+from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
+from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
 from ..models import Certificate
 from ..models import CertificateAuthority
@@ -28,7 +30,7 @@ from .base import override_settings
 @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class GetCertTestCase(DjangoCAWithCSRTestCase):
     def assertExtensions(self, cert, expected):
-        expected['basicConstraints'] = (True, 'CA:FALSE')
+        expected['BasicConstraints'] = BasicConstraints('critical,CA:FALSE')
         expected['AuthorityKeyIdentifier'] = self.ca.authority_key_identifier
 
         if self.ca.issuer_alt_name:
@@ -204,8 +206,8 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
             ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
 
-        self.assertEqual(self.get_extensions(cert.x509)['issuerAltName'],
-                         (False, 'URI:%s' % ca.issuer_alt_name))
+        self.assertEqual(self.get_extensions(cert.x509)['IssuerAlternativeName'],
+                         IssuerAlternativeName(ca.issuer_alt_name))
 
     def test_auth_info_access(self):
         ca = CertificateAuthority.objects.first()

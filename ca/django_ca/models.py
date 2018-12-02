@@ -245,7 +245,9 @@ class X509CertMixin(models.Model):
     ###################
     OID_MAPPING = {
         ExtensionOID.AUTHORITY_KEY_IDENTIFIER: 'authority_key_identifier',
+        ExtensionOID.BASIC_CONSTRAINTS: 'basic_constraints',
         ExtensionOID.EXTENDED_KEY_USAGE: 'extended_key_usage',
+        ExtensionOID.ISSUER_ALTERNATIVE_NAME: 'issuer_alternative_name',
         ExtensionOID.KEY_USAGE: 'key_usage',
         ExtensionOID.SUBJECT_KEY_IDENTIFIER: 'subject_key_identifier',
         ExtensionOID.TLS_FEATURE: 'tls_feature',
@@ -369,21 +371,6 @@ class X509CertMixin(models.Model):
 
         return ext.critical, output
 
-    def basicConstraints(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
-        except x509.ExtensionNotFound:
-            return None
-
-        if ext.value.ca is True:
-            value = 'CA:TRUE'
-        else:
-            value = 'CA:FALSE'
-        if ext.value.path_length is not None:
-            value = '%s, pathlen:%s' % (value, ext.value.path_length)
-
-        return ext.critical, value
-
     def certificatePolicies(self):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES)
@@ -419,14 +406,6 @@ class X509CertMixin(models.Model):
     def distinguishedName(self):
         return format_name(self.x509.subject)
     distinguishedName.short_description = 'Distinguished Name'
-
-    def issuerAltName(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.ISSUER_ALTERNATIVE_NAME)
-        except x509.ExtensionNotFound:
-            return None
-
-        return ext.critical, format_general_names(ext.value)
 
     def signedCertificateTimestampList(self):
         try:

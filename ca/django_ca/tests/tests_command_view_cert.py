@@ -56,6 +56,7 @@ class ViewCertTestCase(DjangoCAWithCertTestCase):
         }
 
     def test_basic(self):
+        self.maxDiff = None
         stdout, stderr = self.cmd('view_cert', self.cert.serial, stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stdout.decode('utf-8'), '''Common Name: %(cn)s
 Valid from: %(from)s
@@ -94,7 +95,7 @@ cRLDistributionPoints:
 extendedKeyUsage:
     * serverAuth
 issuerAltName:
-    %(issuerAltName)s
+    * %(issuer_alternative_name)s
 keyUsage (critical):
     * digitalSignature
     * keyAgreement

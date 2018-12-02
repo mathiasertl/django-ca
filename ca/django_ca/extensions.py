@@ -264,6 +264,7 @@ class BasicConstraints(Extension):
         <BasicConstraints: 'CA:TRUE, pathlen:3', critical=True>
     """
 
+    oid = ExtensionOID.BASIC_CONSTRAINTS
     default_critical = True
 
     def __init__(self, *args, **kwargs):
@@ -321,6 +322,8 @@ class BasicConstraints(Extension):
 
 
 class IssuerAlternativeName(MultiValueExtension):
+    oid = ExtensionOID.ISSUER_ALTERNATIVE_NAME
+
     def __repr__(self):
         val = ','.join([format_general_name(v) for v in self.value])
         return '<%s: %r, critical=%r>' % (self.__class__.__name__, val, self.critical)
