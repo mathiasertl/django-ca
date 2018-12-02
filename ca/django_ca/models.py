@@ -46,6 +46,7 @@ from . import ca_settings
 from .extensions import AuthorityKeyIdentifier
 from .extensions import BasicConstraints
 from .extensions import ExtendedKeyUsage
+from .extensions import IssuerAlternativeName
 from .extensions import KeyUsage
 from .extensions import SubjectKeyIdentifier
 from .extensions import TLSFeature
@@ -299,6 +300,15 @@ class X509CertMixin(models.Model):
         except x509.ExtensionNotFound:
             return None
         return BasicConstraints(ext)
+
+    @property
+    def issuer_alternative_name(self):
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.ISSUER_ALTERNATIVE_NAME)
+        except x509.ExtensionNotFound:
+            return None
+
+        return IssuerAlternativeName(ext)
 
     @property
     def key_usage(self):
