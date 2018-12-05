@@ -48,6 +48,7 @@ from .extensions import BasicConstraints
 from .extensions import ExtendedKeyUsage
 from .extensions import IssuerAlternativeName
 from .extensions import KeyUsage
+from .extensions import SubjectAlternativeName
 from .extensions import SubjectKeyIdentifier
 from .extensions import TLSFeature
 from .managers import CertificateAuthorityManager
@@ -249,6 +250,7 @@ class X509CertMixin(models.Model):
         ExtensionOID.EXTENDED_KEY_USAGE: 'extended_key_usage',
         ExtensionOID.ISSUER_ALTERNATIVE_NAME: 'issuer_alternative_name',
         ExtensionOID.KEY_USAGE: 'key_usage',
+        ExtensionOID.SUBJECT_ALTERNATIVE_NAME: 'subject_alternative_name',
         ExtensionOID.SUBJECT_KEY_IDENTIFIER: 'subject_key_identifier',
         ExtensionOID.TLS_FEATURE: 'tls_feature',
     }
@@ -330,6 +332,15 @@ class X509CertMixin(models.Model):
         except x509.ExtensionNotFound:
             return None
         return ExtendedKeyUsage(ext)
+
+    @property
+    def subject_alternative_name(self):
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
+        except x509.ExtensionNotFound:
+            return None
+
+        return SubjectAlternativeName(ext)
 
     @property
     def subject_key_identifier(self):
