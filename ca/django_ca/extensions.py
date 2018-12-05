@@ -217,7 +217,15 @@ class MultiValueExtension(Extension):
         return '\n'.join(['* %s' % v for v in sorted(self.value)])
 
 
-class MultiAltNameExtension(MultiValueExtension):
+class ListExtension(MultiValueExtension):
+    """Base class for extensions with multiple ordered values.
+
+    Subclasses behave more like a list:
+
+        >>> san = SubjectAlternativeName('example.com,example.net')
+        >>> san[0]
+        'DNS:example.com'
+    """
     def __getitem__(self, key):
         if isinstance(key, six.integer_types):
             return format_general_name(self.value[key])
@@ -230,6 +238,8 @@ class MultiAltNameExtension(MultiValueExtension):
     def __delitem__(self, key):
         pass  # TODO
 
+
+class AlternativeNameExtension(ListExtension):
     def __repr__(self):
         val = ','.join([format_general_name(v) for v in self.value])
         return '<%s: %r, critical=%r>' % (self.__class__.__name__, val, self.critical)
@@ -368,7 +378,7 @@ class BasicConstraints(Extension):
         return val
 
 
-class IssuerAlternativeName(MultiAltNameExtension):
+class IssuerAlternativeName(AlternativeNameExtension):
     """Class representing an Issuer Alternative Name extension.
 
     This extension is usually marked as non-critical.
@@ -488,7 +498,7 @@ class ExtendedKeyUsage(MultiValueExtension):
         return x509.ExtendedKeyUsage([self.CRYPTOGRAPHY_MAPPING[u] for u in self.value])
 
 
-class SubjectAlternativeName(MultiAltNameExtension):
+class SubjectAlternativeName(AlternativeNameExtension):
     """Class representing an Subject Alternative Name extension.
 
     This extension is usually marked as non-critical.
