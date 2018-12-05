@@ -218,6 +218,18 @@ class MultiValueExtension(Extension):
 
 
 class MultiAltNameExtension(MultiValueExtension):
+    def __getitem__(self, key):
+        if isinstance(key, six.integer_types):
+            return format_general_name(self.value[key])
+        else:
+            return [format_general_name(v) for v in self.value[key]]
+
+    def __setitem__(self, key):
+        pass  # TODO
+
+    def __delitem__(self, key):
+        pass  # TODO
+
     def __repr__(self):
         val = ','.join([format_general_name(v) for v in self.value])
         return '<%s: %r, critical=%r>' % (self.__class__.__name__, val, self.critical)
