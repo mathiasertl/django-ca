@@ -26,8 +26,8 @@ from django.utils import six
 from .. import ca_settings
 from ..extensions import ExtendedKeyUsage
 from ..extensions import KeyUsage
-from ..extensions import TLSFeature
 from ..extensions import SubjectAlternativeName
+from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..signals import post_issue_cert
