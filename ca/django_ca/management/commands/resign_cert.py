@@ -69,9 +69,7 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
             tls_feature = options['tls_feature']
 
         if not options['alt']:
-            san = cert.subjectAltName()
-            if san:
-                san = san[1]
+            san = cert.subject_alternative_name
         else:
             san = options['alt']
 

@@ -42,6 +42,7 @@ from django_webtest import WebTestMixin
 from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import KeyUsage
+from ..extensions import SubjectAlternativeName
 from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import CertificateAuthority
@@ -248,7 +249,7 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         response = self.client.get(self.change_url(cert.pk))
         self.assertChangeResponse(response)
         self.assertContains(response, text='''
-<div class="form-row field-subjectAltName">
+<div class="form-row field-subject_alternative_name">
     <div>
         <label>SubjectAltName:</label>
         <div class="readonly">&lt;none&gt;</div>
@@ -338,7 +339,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
-                'subjectAltName_1': True,
+                'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
                 'expires': self.ca.expires.strftime('%Y-%m-%d'),
                 'key_usage_0': ['digitalSignature', 'keyAgreement', ],
@@ -356,7 +357,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertSubject(cert.x509, [('C', 'US'), ('CN', cn)])
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
-        self.assertEqual(cert.subjectAltName(), (False, ['DNS:%s' % cn]))
+        self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:%s' % cn))
         self.assertEqual(cert.basic_constraints, BasicConstraints((True, (False, None, ))))
         self.assertEqual(cert.key_usage, KeyUsage('critical,digitalSignature,keyAgreement'))
         self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('clientAuth,serverAuth'))
@@ -378,7 +379,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'ca': self.ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
-                'subjectAltName_1': True,
+                'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
                 'expires': self.ca.expires.strftime('%Y-%m-%d'),
                 'key_usage_0': ['digitalSignature', 'keyAgreement', ],
@@ -405,8 +406,8 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
-                'subjectAltName_0': san,
-                'subjectAltName_1': True,
+                'subject_alternative_name_0': san,
+                'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
                 'expires': self.ca.expires.strftime('%Y-%m-%d'),
                 'key_usage_0': [],
@@ -422,7 +423,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertSubject(cert.x509, [('C', 'US'), ('CN', cn)])
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
-        self.assertEqual(cert.subjectAltName(), (False, ['DNS:%s' % cn, 'DNS:%s' % san]))
+        self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:%s,DNS:%s' % (cn, san)))
         self.assertEqual(cert.basic_constraints, BasicConstraints((True, (False, None, ))))
         self.assertEqual(cert.ca, self.ca)
         self.assertEqual(cert.csr, self.csr_pem)
@@ -450,7 +451,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
-                'subjectAltName_1': True,
+                'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
                 'expires': self.ca.expires.strftime('%Y-%m-%d'),
                 'key_usage_0': ['digitalSignature', 'keyAgreement', ],
@@ -472,7 +473,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
-                'subjectAltName_1': True,
+                'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
                 'expires': self.ca.expires.strftime('%Y-%m-%d'),
                 'key_usage_0': ['digitalSignature', 'keyAgreement', ],
@@ -495,7 +496,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
-                'subjectAltName_1': True,
+                'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
                 'expires': self.pwd_ca.expires.strftime('%Y-%m-%d'),
                 'key_usage_0': ['digitalSignature', 'keyAgreement', ],
@@ -512,7 +513,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertSubject(cert.x509, [('C', 'US'), ('CN', cn)])
         self.assertIssuer(self.pwd_ca, cert)
         self.assertAuthorityKeyIdentifier(self.pwd_ca, cert)
-        self.assertEqual(cert.subjectAltName(), (False, ['DNS:%s' % cn]))
+        self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:%s' % cn))
         self.assertEqual(cert.basic_constraints, BasicConstraints((True, (False, None, ))))
         self.assertEqual(cert.key_usage, KeyUsage('critical,digitalSignature,keyAgreement'))
         self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('clientAuth,serverAuth'))
@@ -538,7 +539,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
-                'subjectAltName_1': True,
+                'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
                 'expires': self.ca.expires.strftime('%Y-%m-%d'),
                 'key_usage_0': ['digitalSignature', 'keyAgreement', ],
@@ -566,7 +567,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
-                'subjectAltName_1': True,
+                'subject_alternative_name_1': True,
                 'algorithm': 'wrong algo',
                 'expires': self.ca.expires.strftime('%Y-%m-%d'),
                 'key_usage_0': ['digitalSignature', 'keyAgreement', ],
@@ -593,7 +594,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
-                'subjectAltName_1': True,
+                'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
                 'expires': expires.strftime('%Y-%m-%d'),
                 'key_usage_0': ['digitalSignature', 'keyAgreement', ],
@@ -625,7 +626,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
-                'subjectAltName_1': True,
+                'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
                 'expires': expires.strftime('%Y-%m-%d'),
                 'key_usage_0': ['digitalSignature', 'keyAgreement', ],
@@ -656,7 +657,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
-                'subjectAltName_1': True,
+                'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
                 'expires': '2018-04-12',
                 'key_usage_0': ['digitalSignature', 'keyAgreement', ],
@@ -688,7 +689,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
-                'subjectAltName_1': True,
+                'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
                 'expires': '2018-04-12',
                 'key_usage_0': ['digitalSignature', 'keyAgreement', ],
@@ -925,7 +926,7 @@ class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithCertTestCase)
         self.assertEqual(cert.distinguishedName(), resigned.distinguishedName())
         self.assertEqual(cert.extended_key_usage, resigned.extended_key_usage)
         self.assertEqual(cert.key_usage, resigned.key_usage)
-        self.assertEqual(cert.subjectAltName(), resigned.subjectAltName())
+        self.assertEqual(cert.subject_alternative_name, resigned.subject_alternative_name)
         self.assertEqual(cert.tls_feature, resigned.tls_feature)
 
         # Some properties are obviously *not* equal
@@ -946,7 +947,7 @@ class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithCertTestCase)
                 'ca': self.ca.pk,
                 'profile': 'webserver',
                 'subject_5': cn,
-                'subjectAltName_1': True,
+                'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
                 'expires': self.ca.expires.strftime('%Y-%m-%d'),
                 'key_usage_0': ['digitalSignature', 'keyAgreement', ],

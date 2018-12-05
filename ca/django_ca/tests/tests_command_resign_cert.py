@@ -22,6 +22,7 @@ from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import KeyUsage
 from ..extensions import TLSFeature
+from ..extensions import SubjectAlternativeName
 from ..models import Certificate
 from ..models import Watcher
 from ..signals import post_issue_cert
@@ -52,7 +53,7 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(old.authority_key_identifier, new.authority_key_identifier)
         self.assertEqual(old.extended_key_usage, new.extended_key_usage)
         self.assertEqual(old.key_usage, new.key_usage)
-        self.assertEqual(old.subjectAltName(), new.subjectAltName())
+        self.assertEqual(old.subject_alternative_name, new.subject_alternative_name)
         self.assertEqual(old.tls_feature, new.tls_feature)
 
         # Test extensions that don't come from the old cert but from the signing CA
@@ -101,7 +102,7 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
 
         # assert overwritten extensions
         self.assertEqual(new.subject, Subject(subject))
-        self.assertEqual(new.subjectAltName(), (False, ['DNS:%s' % alt]))
+        self.assertEqual(new.subject_alternative_name, SubjectAlternativeName('DNS:%s' % alt))
         self.assertEqual(new.key_usage, KeyUsage(key_usage))
         self.assertEqual(new.extended_key_usage, ExtendedKeyUsage(ext_key_usage))
         self.assertEqual(new.tls_feature, TLSFeature(tls_feature))

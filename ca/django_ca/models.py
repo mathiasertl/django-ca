@@ -448,14 +448,6 @@ class X509CertMixin(models.Model):
 
         return ext.critical, timestamps
 
-    def subjectAltName(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
-        except x509.ExtensionNotFound:
-            return None
-
-        return ext.critical, [format_general_name(name) for name in ext.value]
-
     def _parse_policy_qualifier(self, qualifier):
         if isinstance(qualifier, x509.extensions.UserNotice):
             # https://tools.ietf.org/html/rfc5280#section-4.2.1.4

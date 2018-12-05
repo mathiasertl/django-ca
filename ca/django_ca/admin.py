@@ -222,9 +222,9 @@ class CertificateMixin(object):
         return self.output_extension(obj.crlDistributionPoints())
     cRLDistributionPoints.short_description = _('CRL Distribution Points')
 
-    def subjectAltName(self, obj):
-        return self.output_extension(obj.subjectAltName())
-    subjectAltName.short_description = _('subjectAltName')
+    def subject_alternative_name(self, obj):
+        return self.output_extension(obj.subject_alternative_name)
+    subject_alternative_name.short_description = _('subjectAltName')
 
     def certificatePolicies(self, obj):
         return self.output_extension(obj.certificatePolicies())
@@ -285,7 +285,7 @@ class CertificateMixin(object):
         extensions = list(obj.get_extension_fields())
         if extensions:
             for field in extensions:
-                if field == 'subjectAltName':  # already displayed in main section
+                if field == 'subject_alternative_name':  # already displayed in main section
                     continue
 
                 # If we encounter an object of type x509.Extension, it means that we do not yet support this
@@ -401,13 +401,13 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
     list_filter = (StatusListFilter, 'ca')
     readonly_fields = [
         'expires', 'csr', 'pub', 'cn_display', 'serial', 'revoked', 'revoked_date', 'revoked_reason',
-        'distinguishedName', 'ca', 'hpkp_pin', 'subjectAltName']
+        'distinguishedName', 'ca', 'hpkp_pin', 'subject_alternative_name']
     search_fields = ['cn', 'serial', ]
 
     fieldsets = [
         (None, {
-            'fields': ['cn_display', 'subjectAltName', 'distinguishedName', 'serial', 'ca', 'expires',
-                       'watchers', 'hpkp_pin'],
+            'fields': ['cn_display', 'subject_alternative_name', 'distinguishedName', 'serial', 'ca',
+                       'expires', 'watchers', 'hpkp_pin'],
         }),
         (_('X.509 Extensions'), {
             'fields': [],
@@ -425,8 +425,8 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
     ]
     add_fieldsets = [
         (None, {
-            'fields': ['csr', ('ca', 'password'), 'profile', 'subject', 'subjectAltName', 'algorithm',
-                       'expires', 'watchers', ],
+            'fields': ['csr', ('ca', 'password'), 'profile', 'subject', 'subject_alternative_name',
+                       'algorithm', 'expires', 'watchers', ],
         }),
         (_('X.509 Extensions'), {
             'fields': ['key_usage', 'extended_key_usage', 'tls_feature', ]
@@ -436,7 +436,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
     # same as add_fieldsets but without the csr
     resign_fieldsets = [
         (None, {
-            'fields': [('ca', 'password'), 'profile', 'subject', 'subjectAltName', 'algorithm',
+            'fields': [('ca', 'password'), 'profile', 'subject', 'subject_alternative_name', 'algorithm',
                        'expires', 'watchers', ],
         }),
         (_('X.509 Extensions'), {
@@ -467,11 +467,11 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             # resign the cert, so we add initial data from the original cert
 
             resign_obj = getattr(request, '_resign_obj')
-            san = resign_obj.subjectAltName()
+            san = resign_obj.subject_alternative_name
             if san is None:
                 san = ('', False)
             else:
-                san = (','.join(san[1]), False)
+                san = (','.join(san), False)
             algo = resign_obj.algorithm.__class__.__name__
 
             data = {
@@ -481,7 +481,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                 'key_usage': resign_obj.key_usage,
                 'profile': '',
                 'subject': resign_obj.subject,
-                'subjectAltName': san,
+                'subject_alternative_name': san,
                 'tls_feature': resign_obj.tls_feature,
                 'watchers': resign_obj.watchers.all(),
             }
@@ -605,7 +605,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
 
         # If this is a new certificate, initialize it.
         if change is False:
-            san, cn_in_san = data['subjectAltName']
+            san, cn_in_san = data['subject_alternative_name']
             expires = datetime.combine(data['expires'], datetime.min.time())
             subjectAltName = [e.strip() for e in san.split(',') if e.strip()]
 
