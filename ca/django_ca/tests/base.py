@@ -41,6 +41,7 @@ from django.utils.six.moves import reload_module
 
 from .. import ca_settings
 from ..extensions import Extension
+from ..extensions import SubjectAlternativeName
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..profiles import get_cert_profile_kwargs
@@ -175,7 +176,7 @@ certs = {
         'sha1': '69:CA:37:7F:82:E5:6E:D9:7B:5A:72:60:F8:94:C6:2B:99:C1:2D:EA',
         'sha256': '88:99:CB:BE:D8:31:9F:76:08:4F:13:03:98:96:81:8D:35:92:E4:11:0D:72:62:F6:00:B9:1A:0F:CB:8B:60:1B',  # NOQA
         'sha512': '51:9E:A7:43:8D:9A:E4:E0:AA:94:C0:4E:60:7F:5E:42:CD:03:E1:E9:D3:93:CB:A6:70:C1:D8:F2:D4:31:F3:A2:F3:17:D6:73:90:DC:66:F3:0F:65:FD:46:BB:BB:FA:1E:AC:D9:FC:D4:80:9F:38:A3:47:71:28:CD:DD:C2:32:F1', # NOQA
-        'san': (False, ['DNS:host1.example.com']),
+        'san': SubjectAlternativeName('DNS:host1.example.com'),
         'cn': 'host1.example.com',
         'keyUsage': (True, ['digitalSignature', 'keyAgreement', 'keyEncipherment']),
         'from': '2017-04-17 11:47',
@@ -198,7 +199,7 @@ certs = {
         'sha1': '3B:EB:92:1C:99:0D:E9:C6:57:2E:ED:A0:25:00:84:21:9E:37:25:87',
         'sha256': 'A2:18:2B:7E:5D:A3:A8:64:B4:9B:74:D5:4A:FB:46:60:DC:B7:A5:20:ED:0E:0E:EC:7A:2E:20:01:20:E9:3F:4C',  # NOQA
         'sha512': '63:86:08:13:70:6E:A2:C3:95:2B:E6:33:16:D8:1C:6E:48:FA:7B:73:6D:51:D0:98:AD:7D:F3:9F:79:5C:03:A0:21:23:DA:88:5C:DD:BB:03:86:E0:A8:77:C3:36:46:06:E9:AA:0C:02:A5:56:81:2B:04:1A:37:11:2A:DE:A2:A5', # NOQA
-        'san': (False, ['DNS:host2.example.com']),
+        'san': SubjectAlternativeName('DNS:host2.example.com'),
         'authKeyIdentifier': 'keyid:79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
         'hpkp': 'i+ccTaizbK5r9luNHFW358cxzaORJ4rS3WYHlEnaQoI=',
         'crl': (False, ['Full Name: URI:http://ca.example.com/crl']),
@@ -212,7 +213,7 @@ certs = {
         'sha1': '28:65:FB:33:4E:60:DD:44:22:5D:5F:61:FF:C0:6C:FB:3F:23:55:87',
         'sha256': '2A:18:6B:D9:B4:A9:B7:12:17:41:20:A6:6C:D4:AA:0D:D7:98:A0:5F:53:26:C7:47:AA:00:A4:2C:DF:7A:07:96',  # NOQA
         'sha512': 'B2:E8:35:D7:56:37:DA:76:B7:F7:94:5C:A5:66:A7:6E:CC:A7:18:26:35:DC:1C:AD:AC:27:56:83:CA:4E:FD:66:4B:E9:89:6E:D5:A1:7D:94:94:0B:9B:35:E3:45:B5:78:AD:50:8F:CF:5C:9B:1E:16:70:54:B7:76:C4:86:30:66', # NOQA
-        'san': (False, ['DNS:host3.example.com']),
+        'san': SubjectAlternativeName('DNS:host3.example.com'),
         'authKeyIdentifier': 'keyid:79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
         'hpkp': 'ZuJoB0pw8rd2os1WFVe5f8Vky6eg3vHxCrnaZxupFQo=',
         'crl': (False, ['Full Name: URI:http://ca.example.com/crl']),

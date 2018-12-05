@@ -52,7 +52,7 @@ class ViewCertTestCase(DjangoCAWithCertTestCase):
             'subjectKeyIdentifier': cert.subject_key_identifier.as_text(),
             'authorityKeyIdentifier': cert.ca.subject_key_identifier.as_text(),
             'hpkp': cert.hpkp_pin,
-            'san': cert.subjectAltName(),
+            'san': cert.subject_alternative_name,
         }
 
     def test_basic(self):
@@ -363,6 +363,7 @@ HPKP pin: bkunFfRSda4Yhz7UlMUaalgj0Gcus/9uGVp19Hceczg=
         self.assertEqual(stdout.decode('utf-8'), expected)
 
     def test_contrib_godaddy_derstandardat(self):
+        self.maxDiff = None
         self.assertContrib('godaddy_derstandardat', '''Common Name: %(cn)s
 Valid from: %(valid_from)s
 Valid until: %(valid_until)s

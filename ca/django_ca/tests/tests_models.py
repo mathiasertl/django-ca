@@ -27,6 +27,7 @@ from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
+from ..extensions import SubjectAlternativeName
 from ..models import Certificate
 from ..models import Watcher
 from .base import DjangoCAWithCertTestCase
@@ -149,20 +150,20 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertEqual(self.ocsp.serial, certs['ocsp']['serial'])
 
     def test_subjectAltName(self):
-        self.assertEqual(self.ca.subjectAltName(), certs['root']['san'])
-        self.assertEqual(self.ca2.subjectAltName(), certs['child']['san'])
-        self.assertEqual(self.cert.subjectAltName(), certs['cert1']['san'])
-        self.assertEqual(self.cert2.subjectAltName(), certs['cert2']['san'])
-        self.assertEqual(self.cert3.subjectAltName(), certs['cert3']['san'])
+        self.assertEqual(self.ca.subject_alternative_name, certs['root']['san'])
+        self.assertEqual(self.ca2.subject_alternative_name, certs['child']['san'])
+        self.assertEqual(self.cert.subject_alternative_name, certs['cert1']['san'])
+        self.assertEqual(self.cert2.subject_alternative_name, certs['cert2']['san'])
+        self.assertEqual(self.cert3.subject_alternative_name, certs['cert3']['san'])
 
         self.assertEqual(
-            self.full.subjectAltName(),
-            (False, [
+            self.full.subject_alternative_name,
+            SubjectAlternativeName((False, [
                 'DNS:all.example.com',
                 'dirname:/C=AT/CN=example.com',
                 'email:user@example.com',
                 'IP:fd00::1',
-            ]))
+            ])))
 
     def test_basicConstraints(self):
         self.assertEqual(self.ca.basic_constraints, BasicConstraints((True, (True, 1))))
@@ -272,7 +273,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
         cert = self.load_cert(self.ca, x509=pubkey)
         self.assertIsNone(cert.authorityInfoAccess())
         self.assertIsNone(cert.basic_constraints)
-        self.assertIsNone(cert.subjectAltName())
+        self.assertIsNone(cert.subject_alternative_name)
         self.assertIsNone(cert.key_usage)
         self.assertIsNone(cert.extended_key_usage)
         self.assertIsNone(cert.subject_key_identifier)

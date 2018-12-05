@@ -50,7 +50,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         # verify X509 properties
         self.assertEqual(ca.basic_constraints, BasicConstraints((True, (True, 0))))
         self.assertEqual(ca.key_usage, KeyUsage('critical,cRLSign,keyCertSign'))
-        self.assertIsNone(ca.subjectAltName(), None)
+        self.assertIsNone(ca.subject_alternative_name, None)
 
         self.assertIsNone(ca.extended_key_usage)
         self.assertIsNone(ca.tls_feature)
