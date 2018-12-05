@@ -55,9 +55,9 @@ class Command(CertCommand):
         if options['extensions']:
             self.print_extensions(cert)
         else:
-            san = cert.subjectAltName()
+            san = cert.subject_alternative_name
             if san:
-                self.print_extension('subjectAltName', san)
+                self.print_extension(san)
 
         self.stdout.write('Watchers:')
         for watcher in cert.watchers.all():
