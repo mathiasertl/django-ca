@@ -245,7 +245,8 @@ class MultiAltNameExtension(MultiValueExtension):
         self.value = [parse_general_name(n) for n in shlex_split(value, ', ')]
 
     def as_text(self):
-        return '\n'.join(['* %s' % format_general_name(v) for v in sorted(self.value)])
+        values = sorted([format_general_name(v) for v in self.value])
+        return '\n'.join(['* %s' % v for v in values])
 
 
 class KeyIdExtension(Extension):
