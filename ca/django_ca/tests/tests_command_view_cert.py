@@ -56,62 +56,62 @@ class ViewCertTestCase(DjangoCAWithCertTestCase):
         }
 
     def test_basic(self):
-        self.maxDiff = None
         stdout, stderr = self.cmd('view_cert', self.cert.serial, stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stdout.decode('utf-8'), '''Common Name: %(cn)s
-Valid from: %(from)s
-Valid until: %(until)s
-Status: %(status)s
+        self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
+Valid from: {from}
+Valid until: {until}
+Status: {status}
 subjectAltName:
-    * %(san_0)s
+    * {san[0]}
 Watchers:
 Digest:
-    md5: %(md5)s
-    sha1: %(sha1)s
-    sha256: %(sha256)s
-    sha512: %(sha512)s
-HPKP pin: %(hpkp)s
+    md5: {md5}
+    sha1: {sha1}
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
 
-%(pem)s''' % self.get_cert_context('cert1'))
+{pem}'''.format(**self.get_cert_context('cert1')))
 
         self.assertEqual(stderr, b'')
 
         # test with no pem but with extensions
+        self.maxDiff = None
         stdout, stderr = self.cmd('view_cert', self.cert.serial, no_pem=True, extensions=True,
                                   stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stdout.decode('utf-8'), '''Common Name: %(cn)s
-Valid from: %(from)s
-Valid until: %(until)s
-Status: %(status)s
+        self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
+Valid from: {from}
+Valid until: {until}
+Status: {status}
 authorityInfoAccess:
-    * %(authInfoAccess_0)s
-    * %(authInfoAccess_1)s
+    * {authInfoAccess_0}
+    * {authInfoAccess_1}
 authorityKeyIdentifier:
-    %(authKeyIdentifier)s
+    {authKeyIdentifier}
 basicConstraints (critical):
     CA:FALSE
 cRLDistributionPoints:
-    * %(crl_0)s
+    * {crl_0}
 extendedKeyUsage:
     * serverAuth
 issuerAltName:
-    * %(issuer_alternative_name)s
+    * {issuer_alternative_name}
 keyUsage (critical):
     * digitalSignature
     * keyAgreement
     * keyEncipherment
 subjectAltName:
-    * %(san_0)s
+    * {san[0]}
 subjectKeyIdentifier:
-    %(subjectKeyIdentifier)s
+    {subjectKeyIdentifier}
 Watchers:
 Digest:
-    md5: %(md5)s
-    sha1: %(sha1)s
-    sha256: %(sha256)s
-    sha512: %(sha512)s
-HPKP pin: %(hpkp)s
-''' % self.get_cert_context('cert1'))
+    md5: {md5}
+    sha1: {sha1}
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
+'''.format(**self.get_cert_context('cert1')))
         self.assertEqual(stderr, b'')
 
     @override_settings(USE_TZ=True)
@@ -121,21 +121,21 @@ HPKP pin: %(hpkp)s
     def test_der(self):
         stdout, stderr = self.cmd('view_cert', self.cert.serial, format=Encoding.DER,
                                   stdout=BytesIO(), stderr=BytesIO())
-        expected = '''Common Name: %(cn)s
-Valid from: %(from)s
-Valid until: %(until)s
-Status: %(status)s
+        expected = '''Common Name: {cn}
+Valid from: {from}
+Valid until: {until}
+Status: {status}
 subjectAltName:
-    * %(san_0)s
+    * {san[0]}
 Watchers:
 Digest:
-    md5: %(md5)s
-    sha1: %(sha1)s
-    sha256: %(sha256)s
-    sha512: %(sha512)s
-HPKP pin: %(hpkp)s
+    md5: {md5}
+    sha1: {sha1}
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
 
-''' % self.get_cert_context('cert1')
+'''.format(**self.get_cert_context('cert1'))
         expected = force_bytes(expected) + certs['cert1']['der'] + b'\n'
 
         self.assertEqual(stdout, expected)
