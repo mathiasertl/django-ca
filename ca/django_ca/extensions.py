@@ -185,7 +185,7 @@ class MultiValueExtension(Extension):
 
     def __eq__(self, other):
         return isinstance(other, type(self)) and self.critical == other.critical \
-            and sorted(self.value) == sorted(other.value)
+            and set(self.value) == set(other.value)
 
     def __str__(self):
         val = ','.join(sorted(self.value))
@@ -236,7 +236,7 @@ class MultiAltNameExtension(MultiValueExtension):
         self.value = [parse_general_name(v) for v in value]
 
     def from_extension(self, ext):
-        self.value = ext.value
+        self.value = list(ext.value)
 
     def from_list(self, value):
         self.value = [parse_general_name(n) for n in value]
