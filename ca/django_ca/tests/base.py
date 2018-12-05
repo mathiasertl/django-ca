@@ -490,6 +490,7 @@ class DjangoCATestCase(TestCase):
 
     @classmethod
     def get_extensions(cls, cert):
+        # TODO: use cert.get_extensions() as soon as everything is moved to the new framework
         c = Certificate()
         c.x509 = cert
         exts = [e.oid._name for e in cert.extensions]
@@ -511,7 +512,17 @@ class DjangoCATestCase(TestCase):
 
     @classmethod
     def get_alt_names(cls, x509):
+        print('get_alt_names')
         return cls.get_extensions(x509)['subjectAltName'][1]
+
+    def assertHasExtension(self, cert, oid):
+        """Assert that the given cert has the passed extension."""
+
+        self.assertIn(oid, [e.oid for e in cert.x509.extensions])
+
+    def assertHasNotExtension(self, cert, oid):
+        """Assert that the given cert does *not* have the passed extension."""
+        self.assertNotIn(oid, [e.oid for e in cert.x509.extensions])
 
     def assertParserError(self, args, expected):
         """Assert that given args throw a parser error."""
