@@ -335,14 +335,10 @@ def parse_general_name(name):
     The default fallback is to assume a :py:class:`~cg:cryptography.x509.DNSName`. If this doesn't
     work, an exception will be raised:
 
-    >>> parse_general_name('foo..bar`*123')
+    >>> parse_general_name('foo..bar`*123')  # doctest: +ELLIPSIS
     Traceback (most recent call last):
         ...
-    idna.core.IDNAError: The label b'' is not a valid A-label
-    >>> parse_general_name('foo bar')
-    Traceback (most recent call last):
-        ...
-    idna.core.IDNAError: The label b'foo bar' is not a valid A-label
+    idna.core.IDNAError: ...
 
     If you want to override detection, you can prefix the name to match :py:const:`GENERAL_NAME_RE`:
 
