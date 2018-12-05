@@ -17,8 +17,6 @@ import base64
 import binascii
 import hashlib
 import re
-from datetime import datetime
-from datetime import timedelta
 
 import pytz
 
@@ -42,7 +40,6 @@ from django.utils.encoding import force_str
 from django.utils.text import slugify
 from django.utils.translation import ugettext_lazy as _
 
-from . import ca_settings
 from .extensions import AuthorityKeyIdentifier
 from .extensions import BasicConstraints
 from .extensions import ExtendedKeyUsage
@@ -590,36 +587,6 @@ class Certificate(X509CertMixin):
         """The complete certificate bundle. This includes all CAs as well as the certificates itself."""
 
         return [self] + self.ca.bundle
-
-    def resign(self, **kwargs):  # pragma: no cover - not used yet
-        kwargs.setdefault('algorithm', ca_settings.CA_DIGEST_ALGORITHM)
-        kwargs.setdefault('subject', self.subject)
-        kwargs.setdefault('cn_in_san', False)  # this should already be the case
-        kwargs.setdefault('subjectAltName', self.subjectAltName()[1])
-
-        now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-        expires = now + timedelta(days=ca_settings.CA_DEFAULT_EXPIRES)
-        kwargs.setdefault('expires', expires)
-
-        try:
-            ext_key_usage = self.x509.extensions.get_extension_for_oid(ExtensionOID.EXTENDED_KEY_USAGE)
-            kwargs.setdefault('extended_key_usage', (ext_key_usage.critical, ext_key_usage.value))
-        except x509.ExtensionNotFound:
-            pass
-
-        try:
-            key_usage = self.x509.extensions.get_extension_for_oid(ExtensionOID.KEY_USAGE)
-            kwargs.setdefault('key_usage', (key_usage.critical, key_usage.value))
-        except x509.ExtensionNotFound:
-            pass
-
-        try:
-            tls_feature = self.x509.extensions.get_extension_for_oid(ExtensionOID.TLS_FEATURE)
-            kwargs.setdefault('tls_feature', (tls_feature.critical, tls_feature.value))
-        except x509.ExtensionNotFound:
-            pass
-
-        return Certificate.objects.init(self.ca, self.csr, **kwargs)
 
     def __str__(self):
         return self.cn
