@@ -62,6 +62,7 @@ from .utils import format_general_names
 from .utils import format_name
 from .utils import int_to_hex
 from .utils import multiline_url_validator
+from . import ca_settings
 
 
 class Watcher(models.Model):
