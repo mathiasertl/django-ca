@@ -14,6 +14,7 @@
 # see <http://www.gnu.org/licenses/>.
 
 import binascii
+import re
 
 import six
 
@@ -22,6 +23,11 @@ from cryptography.x509 import TLSFeatureType
 from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import ObjectIdentifier
+
+from .utils import add_colons
+from .utils import format_general_name
+from .utils import parse_general_name
+from .utils import shlex_split
 
 
 @six.python_2_unicode_compatible
@@ -52,7 +58,7 @@ class Extension(object):
         >>> KeyUsage({'critical': True, 'value': ['keyAgreement', 'keyEncipherment']})
         <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=True>
 
-    ... and finally it can also use a subclass of :py:class:`~cryptography:cryptography.x509.ExtensionType`
+    ... and finally it can also use a subclass of :py:class:`~cg:cryptography.x509.ExtensionType`
     from ``cryptography``::
 
         >>> from cryptography import x509
@@ -73,9 +79,10 @@ class Extension(object):
     Parameters
     ----------
 
-    value : list or tuple or dict or str or :py:class:`~cryptography:cryptography.x509.ExtensionType`
+    value : list or tuple or dict or str or :py:class:`~cg:cryptography.x509.ExtensionType`
         The value of the extension, the description provides further details.
     """
+    default_critical = False
 
     def __init__(self, value):
         if isinstance(value, x509.extensions.Extension):  # e.g. from a cert object
@@ -86,7 +93,7 @@ class Extension(object):
             self.from_list(value)
             self._test_value()
         elif isinstance(value, dict):  # e.g. from settings
-            self.critical = value.get('critical', False)
+            self.critical = value.get('critical', self.default_critical)
             self.from_dict(value)
             self._test_value()
         elif isinstance(value, six.string_types):  # e.g. from commandline parser
@@ -135,13 +142,6 @@ class Extension(object):
         """A human readable name of this extension."""
         return self.oid._name
 
-    def add_colons(self, s):
-        """Add colons to a string.
-
-        TODO: duplicate from utils :-(
-        """
-        return ':'.join([s[i:i + 2] for i in range(0, len(s), 2)])
-
     @property
     def extension_type(self):
         """The extension_type for this value."""
@@ -149,7 +149,7 @@ class Extension(object):
         raise NotImplementedError
 
     def as_extension(self):
-        """This extension as :py:class:`~cryptography:cryptography.x509.ExtensionType`."""
+        """This extension as :py:class:`~cg:cryptography.x509.ExtensionType`."""
         return x509.extensions.Extension(oid=self.oid, critical=self.critical, value=self.extension_type)
 
     def as_text(self):
@@ -157,7 +157,7 @@ class Extension(object):
         return self.value
 
     def for_builder(self):
-        """Return kwargs suitable for a :py:class:`~cryptography:cryptography.x509.CertificateBuilder`.
+        """Return kwargs suitable for a :py:class:`~cg:cryptography.x509.CertificateBuilder`.
 
         Example::
 
@@ -185,7 +185,7 @@ class MultiValueExtension(Extension):
 
     def __eq__(self, other):
         return isinstance(other, type(self)) and self.critical == other.critical \
-            and sorted(self.value) == sorted(other.value)
+            and set(self.value) == set(other.value)
 
     def __str__(self):
         val = ','.join(sorted(self.value))
@@ -199,8 +199,7 @@ class MultiValueExtension(Extension):
             self.value = [self.value]
 
     def from_str(self, value):
-        super(MultiValueExtension, self).from_str(value)  # parses critical prefix
-        self.value = [v.strip() for v in self.value.split(',') if v.strip()]
+        self.value = [v.strip() for v in value.split(',') if v.strip()]
 
     def __contains__(self, value):
         return value in self.value
@@ -209,12 +208,66 @@ class MultiValueExtension(Extension):
         return len(self.value)
 
     def _test_value(self):
-        diff = set(self.value) - self.KNOWN_VALUES
-        if diff:
-            raise ValueError('Unknown value(s): %s' % ', '.join(sorted(diff)))
+        if self.KNOWN_VALUES:
+            diff = set(self.value) - self.KNOWN_VALUES
+            if diff:
+                raise ValueError('Unknown value(s): %s' % ', '.join(sorted(diff)))
 
     def as_text(self):
         return '\n'.join(['* %s' % v for v in sorted(self.value)])
+
+
+class ListExtension(MultiValueExtension):
+    """Base class for extensions with multiple ordered values.
+
+    Subclasses behave more like a list:
+
+        >>> san = SubjectAlternativeName('example.com,example.net')
+        >>> san[0]
+        'DNS:example.com'
+    """
+    def __getitem__(self, key):
+        if isinstance(key, six.integer_types):
+            return format_general_name(self.value[key])
+        else:
+            return [format_general_name(v) for v in self.value[key]]
+
+    def __setitem__(self, key):
+        pass  # TODO
+
+    def __delitem__(self, key):
+        pass  # TODO
+
+
+class AlternativeNameExtension(ListExtension):
+    def __repr__(self):
+        val = ','.join([format_general_name(v) for v in self.value])
+        return '<%s: %r, critical=%r>' % (self.__class__.__name__, val, self.critical)
+
+    def __str__(self):
+        val = ','.join(sorted([format_general_name(v) for v in self.value]))
+        if self.critical:
+            return'%s/critical' % val
+        return val
+
+    @property
+    def extension_type(self):
+        return x509.IssuerAlternativeName(self.value)
+
+    def from_dict(self, value):
+        self.value = [parse_general_name(v) for v in value]
+
+    def from_extension(self, ext):
+        self.value = list(ext.value)
+
+    def from_list(self, value):
+        self.value = [parse_general_name(n) for n in value]
+
+    def from_str(self, value):
+        self.value = [parse_general_name(n) for n in shlex_split(value, ', ')]
+
+    def as_text(self):
+        return '\n'.join(['* %s' % format_general_name(v) for v in self.value])
 
 
 class KeyIdExtension(Extension):
@@ -226,7 +279,7 @@ class KeyIdExtension(Extension):
     """
 
     def as_text(self):
-        return self.add_colons(binascii.hexlify(self.value).upper().decode('utf-8'))
+        return add_colons(binascii.hexlify(self.value).upper().decode('utf-8'))
 
 
 class AuthorityKeyIdentifier(KeyIdExtension):
@@ -247,8 +300,115 @@ class AuthorityKeyIdentifier(KeyIdExtension):
         return 'keyid:%s' % super(AuthorityKeyIdentifier, self).as_text()
 
 
+class BasicConstraints(Extension):
+    """Class representing a BasicConstraints extension.
+
+    This class has the boolean attributes ``ca`` and the attribute ``pathlen``, which is either ``None`` or an
+    ``int``. Note that this extension is marked as critical by default if you pass a dict to the constructor::
+
+        >>> BasicConstraints('critical,CA:TRUE, pathlen:3')
+        <BasicConstraints: 'CA:TRUE, pathlen:3', critical=True>
+        >>> bc = BasicConstraints({'ca': True, 'pathlen': 4})
+        >>> (bc.ca, bc.pathlen, bc.critical)
+        (True, 4, True)
+
+        # Note that string parsing ignores case and whitespace and is quite forgiving
+        >>> BasicConstraints('critical, ca=true    , pathlen: 3 ')
+        <BasicConstraints: 'CA:TRUE, pathlen:3', critical=True>
+
+    .. seealso::
+
+        `RFC5280, section 4.2.1.9 <https://tools.ietf.org/html/rfc5280#section-4.2.1.9>`_
+    """
+
+    oid = ExtensionOID.BASIC_CONSTRAINTS
+    default_critical = True
+
+    def __init__(self, *args, **kwargs):
+        super(BasicConstraints, self).__init__(*args, **kwargs)
+        if self.ca is False and self.pathlen is not None:
+            raise ValueError('pathlen must be None when ca is False')
+
+    def __repr__(self):
+        return '<%s: %r, critical=%r>' % (self.__class__.__name__, self.as_text(), self.critical)
+
+    @property
+    def value(self):
+        return self.ca, self.pathlen
+
+    def from_extension(self, ext):
+        self.ca = ext.value.ca
+        self.pathlen = ext.value.path_length
+
+    def from_dict(self, value):
+        self.ca = bool(value.get('ca', False))
+        self.pathlen = value.get('pathlen', None)
+
+    def from_list(self, value):
+        self.ca, self.pathlen = value
+
+    def from_str(self, value):
+        value = value.strip().lower()
+        pathlen = None
+
+        if ',' in value:
+            value, pathlen = value.split(',', 1)
+            pathlen_match = re.search(r'\s*(?:pathlen\s*[:=]\s*)?([0-9]+)', pathlen.strip(), re.I)
+            if pathlen_match is None:
+                raise ValueError('Could not parse pathlen: %s' % pathlen.lstrip())
+            else:
+                pathlen = int(pathlen_match.group(1))
+        self.pathlen = pathlen
+
+        value = re.search(r'(?:CA\s*[:=]\s*)?(.*)', value.strip(), re.I).group(1)
+        self.ca = value == 'true'
+
+    @property
+    def extension_type(self):
+        return x509.BasicConstraints(ca=self.ca, path_length=self.pathlen)
+
+    def as_text(self):
+        if self.ca is True:
+            val = 'CA:TRUE'
+        else:
+            val = 'CA:FALSE'
+        if self.pathlen is not None:
+            val += ', pathlen:%s' % self.pathlen
+
+        return val
+
+
+class IssuerAlternativeName(AlternativeNameExtension):
+    """Class representing an Issuer Alternative Name extension.
+
+    This extension is usually marked as non-critical.
+
+    >>> IssuerAlternativeName('https://example.com')
+    <IssuerAlternativeName: 'URI:https://example.com', critical=False>
+
+    .. seealso::
+
+       `RFC5280, section 4.2.1.7 <https://tools.ietf.org/html/rfc5280#section-4.2.1.7>`_
+    """
+    oid = ExtensionOID.ISSUER_ALTERNATIVE_NAME
+
+
 class KeyUsage(MultiValueExtension):
-    """Class representing a KeyUsage extension."""
+    """Class representing a KeyUsage extension, which defines the purpose of a certificate.
+
+    This extension is usually marked as critical and RFC5280 defines that confirming CAs SHOULD mark it as
+    critical. The value ``keyAgreement`` is always added if ``decipherOnly`` is present, since the value of
+    this extension is not meaningful otherwise.
+
+    >>> KeyUsage('critical,encipherOnly')
+    <KeyUsage: ['encipherOnly'], critical=True>
+    >>> KeyUsage('critical,decipherOnly')
+    <KeyUsage: ['decipherOnly', 'keyAgreement'], critical=True>
+
+    .. seealso::
+
+        `RFC5280, section 4.2.1.3 <https://tools.ietf.org/html/rfc5280#section-4.2.1.3>`_
+    """
 
     oid = ExtensionOID.KEY_USAGE
     CRYPTOGRAPHY_MAPPING = {
@@ -336,6 +496,21 @@ class ExtendedKeyUsage(MultiValueExtension):
     @property
     def extension_type(self):
         return x509.ExtendedKeyUsage([self.CRYPTOGRAPHY_MAPPING[u] for u in self.value])
+
+
+class SubjectAlternativeName(AlternativeNameExtension):
+    """Class representing an Subject Alternative Name extension.
+
+    This extension is usually marked as non-critical.
+
+    >>> SubjectAlternativeName('example.com')
+    <SubjectAlternativeName: 'DNS:example.com', critical=False>
+
+    .. seealso::
+
+       `RFC5280, section 4.2.1.6 <https://tools.ietf.org/html/rfc5280#section-4.2.1.6>`_
+    """
+    oid = ExtensionOID.SUBJECT_ALTERNATIVE_NAME
 
 
 class SubjectKeyIdentifier(KeyIdExtension):

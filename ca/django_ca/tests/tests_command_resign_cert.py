@@ -18,8 +18,10 @@ import os
 from django.utils import six
 
 from .. import ca_settings
+from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import KeyUsage
+from ..extensions import SubjectAlternativeName
 from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import Watcher
@@ -48,15 +50,17 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(old.subject, new.subject)
 
         # assert extensions that should be equal
-        self.assertEqual(old.key_usage, new.key_usage)
-        self.assertEqual(old.extended_key_usage, new.extended_key_usage)
-        self.assertEqual(old.tls_feature, new.tls_feature)
         self.assertEqual(old.authority_key_identifier, new.authority_key_identifier)
-        self.assertEqual(old.basicConstraints(), new.basicConstraints())
-        self.assertEqual(old.subjectAltName(), new.subjectAltName())
+        self.assertEqual(old.extended_key_usage, new.extended_key_usage)
+        self.assertEqual(old.key_usage, new.key_usage)
+        self.assertEqual(old.subject_alternative_name, new.subject_alternative_name)
+        self.assertEqual(old.tls_feature, new.tls_feature)
+
+        # Test extensions that don't come from the old cert but from the signing CA
+        self.assertEqual(new.basic_constraints, BasicConstraints('critical,false'))
+        self.assertIsNone(new.issuer_alternative_name)  # signing ca does not have this set
 
         # Some properties come from the ca
-        self.assertEqual(old.ca.issuer_alt_name, new.issuerAltName())
         self.assertEqual(old.ca.crl_url, new.crlDistributionPoints())
 
     def test_basic(self):
@@ -98,7 +102,7 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
 
         # assert overwritten extensions
         self.assertEqual(new.subject, Subject(subject))
-        self.assertEqual(new.subjectAltName(), (False, ['DNS:%s' % alt]))
+        self.assertEqual(new.subject_alternative_name, SubjectAlternativeName('DNS:%s' % alt))
         self.assertEqual(new.key_usage, KeyUsage(key_usage))
         self.assertEqual(new.extended_key_usage, ExtendedKeyUsage(ext_key_usage))
         self.assertEqual(new.tls_feature, TLSFeature(tls_feature))

@@ -23,8 +23,11 @@ from cryptography.x509.oid import ObjectIdentifier
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
+from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
+from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
+from ..extensions import SubjectAlternativeName
 from ..models import Certificate
 from ..models import Watcher
 from .base import DjangoCAWithCertTestCase
@@ -108,6 +111,21 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertEqual(self.ca.pathlen, 1)
         self.assertEqual(self.ca2.pathlen, 0)
 
+    def test_dates(self):
+        self.assertEqual(self.ca.expires, certs['root']['expires'])
+        self.assertEqual(self.ca2.expires, certs['child']['expires'])
+        self.assertEqual(self.cert.expires, certs['cert1']['expires'])
+        self.assertEqual(self.cert2.expires, certs['cert2']['expires'])
+        self.assertEqual(self.cert3.expires, certs['cert3']['expires'])
+        self.assertEqual(self.ocsp.expires, certs['ocsp']['expires'])
+
+        self.assertEqual(self.ca.valid_from, certs['root']['valid_from'])
+        self.assertEqual(self.ca2.valid_from, certs['child']['valid_from'])
+        self.assertEqual(self.cert.valid_from, certs['cert1']['valid_from'])
+        self.assertEqual(self.cert2.valid_from, certs['cert2']['valid_from'])
+        self.assertEqual(self.cert3.valid_from, certs['cert3']['valid_from'])
+        self.assertEqual(self.ocsp.valid_from, certs['ocsp']['valid_from'])
+
     def test_max_pathlen(self):
         self.assertEqual(self.ca.max_pathlen, 1)
         self.assertEqual(self.ca2.pathlen, 0)
@@ -132,32 +150,44 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertEqual(self.ocsp.serial, certs['ocsp']['serial'])
 
     def test_subjectAltName(self):
-        self.assertEqual(self.ca.subjectAltName(), certs['root']['san'])
-        self.assertEqual(self.ca2.subjectAltName(), certs['child']['san'])
-        self.assertEqual(self.cert.subjectAltName(), certs['cert1']['san'])
-        self.assertEqual(self.cert2.subjectAltName(), certs['cert2']['san'])
-        self.assertEqual(self.cert3.subjectAltName(), certs['cert3']['san'])
+        self.assertEqual(self.ca.subject_alternative_name, certs['root']['san'])
+        self.assertEqual(self.ca2.subject_alternative_name, certs['child']['san'])
+        self.assertEqual(self.cert.subject_alternative_name, certs['cert1']['san'])
+        self.assertEqual(self.cert2.subject_alternative_name, certs['cert2']['san'])
+        self.assertEqual(self.cert3.subject_alternative_name, certs['cert3']['san'])
 
         self.assertEqual(
-            self.full.subjectAltName(),
-            (False, [
+            self.full.subject_alternative_name,
+            SubjectAlternativeName((False, [
                 'DNS:all.example.com',
                 'dirname:/C=AT/CN=example.com',
                 'email:user@example.com',
                 'IP:fd00::1',
-            ]))
+            ])))
 
     def test_basicConstraints(self):
-        self.assertEqual(self.ca.basicConstraints(), (True, 'CA:TRUE, pathlen:1'))
-        self.assertEqual(self.cert.basicConstraints(), (True, 'CA:FALSE'))
-        self.assertEqual(self.cert2.basicConstraints(), (True, 'CA:FALSE'))
+        self.assertEqual(self.ca.basic_constraints, BasicConstraints((True, (True, 1))))
+        self.assertEqual(self.pwd_ca.basic_constraints, BasicConstraints((True, (True, None))))
+        self.assertEqual(self.ecc_ca.basic_constraints, BasicConstraints((True, (True, 0))))
+
+        self.assertEqual(self.cert.basic_constraints, BasicConstraints((True, (False, None))))
+        self.assertEqual(self.cert_all.basic_constraints, BasicConstraints((True, (False, None))))
+        self.assertIsNone(self.cert_no_ext.basic_constraints)
+        self.assertEqual(self.cert2.basic_constraints, BasicConstraints((True, (False, None))))
         # accidentally used cert2 in cn/san
-        self.assertEqual(self.cert3.basicConstraints(), (True, 'CA:FALSE'))
+        self.assertEqual(self.cert3.basic_constraints, BasicConstraints((True, (False, None))))
 
     def test_issuerAltName(self):
-        self.assertEqual(self.cert.issuerAltName(), certs['cert1']['issuerAltName'])
-        self.assertEqual(self.cert2.issuerAltName(), certs['cert2']['issuerAltName'])
-        self.assertEqual(self.cert3.issuerAltName(), certs['cert3']['issuerAltName'])
+        self.assertIsNone(self.ca.issuer_alternative_name)
+        self.assertIsNone(self.pwd_ca.issuer_alternative_name)
+        self.assertIsNone(self.ecc_ca.issuer_alternative_name)
+
+        self.assertEqual(self.cert.issuer_alternative_name,
+                         IssuerAlternativeName(certs['cert1']['issuer_alternative_name']))
+        self.assertEqual(self.cert2.issuer_alternative_name,
+                         IssuerAlternativeName(certs['cert2']['issuer_alternative_name']))
+        self.assertEqual(self.cert3.issuer_alternative_name,
+                         IssuerAlternativeName(certs['cert3']['issuer_alternative_name']))
 
     def test_keyUsage(self):
         self.assertEqual(self.ca.key_usage, KeyUsage('critical,cRLSign,keyCertSign'))
@@ -242,12 +272,12 @@ class CertificateTests(DjangoCAWithCertTestCase):
         _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
         cert = self.load_cert(self.ca, x509=pubkey)
         self.assertIsNone(cert.authorityInfoAccess())
-        self.assertIsNone(cert.basicConstraints())
-        self.assertIsNone(cert.subjectAltName())
+        self.assertIsNone(cert.basic_constraints)
+        self.assertIsNone(cert.subject_alternative_name)
         self.assertIsNone(cert.key_usage)
         self.assertIsNone(cert.extended_key_usage)
         self.assertIsNone(cert.subject_key_identifier)
-        self.assertIsNone(cert.issuerAltName())
+        self.assertIsNone(cert.issuer_alternative_name)
         self.assertIsNone(cert.authority_key_identifier)
         self.assertIsNone(cert.tls_feature)
         self.assertIsNone(cert.certificatePolicies())

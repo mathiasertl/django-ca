@@ -17,8 +17,6 @@ import base64
 import binascii
 import hashlib
 import re
-from datetime import datetime
-from datetime import timedelta
 
 import pytz
 
@@ -39,13 +37,16 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_str
+from django.utils.text import slugify
 from django.utils.translation import ugettext_lazy as _
 from django.core.files.storage import default_storage
 
-from . import ca_settings
 from .extensions import AuthorityKeyIdentifier
+from .extensions import BasicConstraints
 from .extensions import ExtendedKeyUsage
+from .extensions import IssuerAlternativeName
 from .extensions import KeyUsage
+from .extensions import SubjectAlternativeName
 from .extensions import SubjectKeyIdentifier
 from .extensions import TLSFeature
 from .managers import CertificateAuthorityManager
@@ -109,6 +110,8 @@ class X509CertMixin(models.Model):
     )
 
     created = models.DateTimeField(auto_now=True)
+
+    valid_from = models.DateTimeField(blank=False)
     expires = models.DateTimeField(null=False, blank=False)
 
     pub = models.TextField(verbose_name=_('Public key'))
@@ -129,7 +132,7 @@ class X509CertMixin(models.Model):
 
     @property
     def x509(self):
-        """The underlying :py:class:`cryptography:cryptography.x509.Certificate`."""
+        """The underlying :py:class:`cg:cryptography.x509.Certificate`."""
         if self._x509 is None:
             backend = default_backend()
             self._x509 = x509.load_pem_x509_certificate(force_bytes(self.pub), backend)
@@ -141,8 +144,10 @@ class X509CertMixin(models.Model):
         self.pub = force_str(self.dump_certificate(Encoding.PEM))
         self.cn = self.subject.get('CN', '')
         self.expires = self.not_after
+        self.valid_from = self.not_before
         if settings.USE_TZ:
             self.expires = timezone.make_aware(self.expires, timezone=pytz.utc)
+            self.valid_from = timezone.make_aware(self.valid_from, timezone=pytz.utc)
 
         self.serial = int_to_hex(value.serial_number)
 
@@ -165,6 +170,14 @@ class X509CertMixin(models.Model):
     def get_digest(self, algo):
         algo = getattr(hashes, algo.upper())()
         return add_colons(binascii.hexlify(self.x509.fingerprint(algo)).upper().decode('utf-8'))
+
+    def get_filename(self, ext, bundle=False):
+        slug = slugify(self.cn.replace('.', '_'))
+
+        if bundle is True:
+            return '%s_bundle.%s' % (slug, ext.lower())
+        else:
+            return '%s.%s' % (slug, ext.lower())
 
     def get_revocation(self):
         if self.revoked is False:
@@ -231,8 +244,11 @@ class X509CertMixin(models.Model):
     ###################
     OID_MAPPING = {
         ExtensionOID.AUTHORITY_KEY_IDENTIFIER: 'authority_key_identifier',
+        ExtensionOID.BASIC_CONSTRAINTS: 'basic_constraints',
         ExtensionOID.EXTENDED_KEY_USAGE: 'extended_key_usage',
+        ExtensionOID.ISSUER_ALTERNATIVE_NAME: 'issuer_alternative_name',
         ExtensionOID.KEY_USAGE: 'key_usage',
+        ExtensionOID.SUBJECT_ALTERNATIVE_NAME: 'subject_alternative_name',
         ExtensionOID.SUBJECT_KEY_IDENTIFIER: 'subject_key_identifier',
         ExtensionOID.TLS_FEATURE: 'tls_feature',
     }
@@ -280,6 +296,23 @@ class X509CertMixin(models.Model):
         return AuthorityKeyIdentifier(ext)
 
     @property
+    def basic_constraints(self):
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
+        except x509.ExtensionNotFound:
+            return None
+        return BasicConstraints(ext)
+
+    @property
+    def issuer_alternative_name(self):
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.ISSUER_ALTERNATIVE_NAME)
+        except x509.ExtensionNotFound:
+            return None
+
+        return IssuerAlternativeName(ext)
+
+    @property
     def key_usage(self):
         """The :py:class:`~django_ca.extensions.KeyUsage` extension, or ``None`` if it doesn't exist."""
         try:
@@ -297,6 +330,15 @@ class X509CertMixin(models.Model):
         except x509.ExtensionNotFound:
             return None
         return ExtendedKeyUsage(ext)
+
+    @property
+    def subject_alternative_name(self):
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
+        except x509.ExtensionNotFound:
+            return None
+
+        return SubjectAlternativeName(ext)
 
     @property
     def subject_key_identifier(self):
@@ -338,21 +380,6 @@ class X509CertMixin(models.Model):
 
         return ext.critical, output
 
-    def basicConstraints(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
-        except x509.ExtensionNotFound:
-            return None
-
-        if ext.value.ca is True:
-            value = 'CA:TRUE'
-        else:
-            value = 'CA:FALSE'
-        if ext.value.path_length is not None:
-            value = '%s, pathlen:%s' % (value, ext.value.path_length)
-
-        return ext.critical, value
-
     def certificatePolicies(self):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES)
@@ -389,14 +416,6 @@ class X509CertMixin(models.Model):
         return format_name(self.x509.subject)
     distinguishedName.short_description = 'Distinguished Name'
 
-    def issuerAltName(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.ISSUER_ALTERNATIVE_NAME)
-        except x509.ExtensionNotFound:
-            return None
-
-        return ext.critical, format_general_names(ext.value)
-
     def signedCertificateTimestampList(self):
         try:
             ext = self.x509.extensions.get_extension_for_oid(
@@ -426,14 +445,6 @@ class X509CertMixin(models.Model):
             ))
 
         return ext.critical, timestamps
-
-    def subjectAltName(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
-        except x509.ExtensionNotFound:
-            return None
-
-        return ext.critical, [format_general_name(name) for name in ext.value]
 
     def _parse_policy_qualifier(self, qualifier):
         if isinstance(qualifier, x509.extensions.UserNotice):
@@ -553,7 +564,7 @@ class CertificateAuthority(X509CertMixin):
         while ca.parent is not None:
             bundle.append(ca.parent)
             ca = ca.parent
-        return list(reversed(bundle))
+        return bundle
 
     class Meta:
         verbose_name = _('Certificate Authority')
@@ -576,37 +587,7 @@ class Certificate(X509CertMixin):
     def bundle(self):
         """The complete certificate bundle. This includes all CAs as well as the certificates itself."""
 
-        return self.ca.bundle + [self]
-
-    def resign(self, **kwargs):  # pragma: no cover - not used yet
-        kwargs.setdefault('algorithm', ca_settings.CA_DIGEST_ALGORITHM)
-        kwargs.setdefault('subject', self.subject)
-        kwargs.setdefault('cn_in_san', False)  # this should already be the case
-        kwargs.setdefault('subjectAltName', self.subjectAltName()[1])
-
-        now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-        expires = now + timedelta(days=ca_settings.CA_DEFAULT_EXPIRES)
-        kwargs.setdefault('expires', expires)
-
-        try:
-            ext_key_usage = self.x509.extensions.get_extension_for_oid(ExtensionOID.EXTENDED_KEY_USAGE)
-            kwargs.setdefault('extended_key_usage', (ext_key_usage.critical, ext_key_usage.value))
-        except x509.ExtensionNotFound:
-            pass
-
-        try:
-            key_usage = self.x509.extensions.get_extension_for_oid(ExtensionOID.KEY_USAGE)
-            kwargs.setdefault('key_usage', (key_usage.critical, key_usage.value))
-        except x509.ExtensionNotFound:
-            pass
-
-        try:
-            tls_feature = self.x509.extensions.get_extension_for_oid(ExtensionOID.TLS_FEATURE)
-            kwargs.setdefault('tls_feature', (tls_feature.critical, tls_feature.value))
-        except x509.ExtensionNotFound:
-            pass
-
-        return Certificate.objects.init(self.ca, self.csr, **kwargs)
+        return [self] + self.ca.bundle
 
     def __str__(self):
         return self.cn

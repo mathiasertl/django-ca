@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from django.utils import timezone
+from datetime import datetime
 
 from ..base import CertCommand
 
@@ -41,10 +41,13 @@ class Command(CertCommand):
         self.stdout.write('Valid until: %s' % cert.not_after.strftime('%Y-%m-%d %H:%M'))
 
         # self.stdout.write status
+        now = datetime.utcnow()
         if cert.revoked:
             self.stdout.write('Status: Revoked')
-        elif cert.expires < timezone.now():
+        elif cert.not_after < now:
             self.stdout.write('Status: Expired')
+        elif cert.not_before > now:
+            self.stdout.write('Status: Not yet valid')
         else:
             self.stdout.write('Status: Valid')
 
@@ -52,9 +55,9 @@ class Command(CertCommand):
         if options['extensions']:
             self.print_extensions(cert)
         else:
-            san = cert.subjectAltName()
+            san = cert.subject_alternative_name
             if san:
-                self.print_extension('subjectAltName', san)
+                self.print_extension(san)
 
         self.stdout.write('Watchers:')
         for watcher in cert.watchers.all():

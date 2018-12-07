@@ -1,6 +1,6 @@
 Fabric3==1.14.post1
-Sphinx==1.8.1
-coverage==4.5.1
+Sphinx==1.8.2
+coverage==4.5.2
 django-webtest==1.9.4
 flake8==3.6.0
 freezegun==0.3.11
@@ -15,4 +15,4 @@ setuptools>=40.4.3
 six==1.11.0
 sphinx-autobuild==0.7.1
 sphinx-rtd-theme==0.4.2
-wheel==0.32.2
+wheel==0.32.3

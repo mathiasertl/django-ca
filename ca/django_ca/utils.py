@@ -17,6 +17,7 @@
 
 import os
 import re
+import shlex
 from copy import deepcopy
 from datetime import datetime
 from datetime import timedelta
@@ -43,9 +44,6 @@ from django.utils.translation import ugettext_lazy as _
 from django.core.files.storage import default_storage
 
 from . import ca_settings
-from .extensions import ExtendedKeyUsage
-from .extensions import KeyUsage
-from .extensions import TLSFeature
 
 # List of possible subject fields, in order
 SUBJECT_FIELDS = ['C', 'ST', 'L', 'O', 'OU', 'CN', 'emailAddress', ]
@@ -270,7 +268,7 @@ def parse_name(name):
 
 
 def x509_name(name):
-    """Parses a subject into a :py:class:`x509.Name <cryptography:cryptography.x509.Name>`.
+    """Parses a subject into a :py:class:`x509.Name <cg:cryptography.x509.Name>`.
 
     If ``name`` is a string, :py:func:`parse_name` is used to parse it.
 
@@ -335,17 +333,13 @@ def parse_general_name(name):
     <DirectoryName(value=<Name([<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>,
                                                value='example.com')>])>)>
 
-    The default fallback is to assume a :py:class:`~cryptography:cryptography.x509.DNSName`. If this doesn't
+    The default fallback is to assume a :py:class:`~cg:cryptography.x509.DNSName`. If this doesn't
     work, an exception will be raised:
 
-    >>> parse_general_name('foo..bar`*123')
+    >>> parse_general_name('foo..bar`*123')  # doctest: +ELLIPSIS
     Traceback (most recent call last):
         ...
-    idna.core.IDNAError: The label b'' is not a valid A-label
-    >>> parse_general_name('foo bar')
-    Traceback (most recent call last):
-        ...
-    idna.core.IDNAError: The label b'foo bar' is not a valid A-label
+    idna.core.IDNAError: ...
 
     If you want to override detection, you can prefix the name to match :py:const:`GENERAL_NAME_RE`:
 
@@ -470,11 +464,11 @@ def parse_hash_algorithm(value=None):
     """Parse a hash algorithm value.
 
     The most common use case is to pass a str naming a class in
-    :py:mod:`~cryptography:cryptography.hazmat.primitives.hashes`.
+    :py:mod:`~cg:cryptography.hazmat.primitives.hashes`.
 
     For convenience, passing ``None`` will return the value of :ref:`CA_DIGEST_ALGORITHM
     <settings-ca-digest-algorithm>`, and passing an
-    :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm` will return that
+    :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm` will return that
     instance unchanged.
 
     Example usage::
@@ -501,14 +495,14 @@ def parse_hash_algorithm(value=None):
     Parameters
     ----------
 
-    value : str or :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
+    value : str or :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
         The value to parse, the function description on how possible values are used.
 
     Returns
     -------
 
     algorithm
-        A :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm` instance.
+        A :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm` instance.
 
     Raises
     ------
@@ -535,14 +529,14 @@ def parse_key_curve(value=None):
     """Parse an elliptic curve value.
 
     This function uses a value identifying an elliptic curve to return an
-    :py:class:`~cryptography:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` instance. The name
-    must match a class name of one of the classes named under "Elliptic Curves" in
-    :any:`cryptography:hazmat/primitives/asymmetric/ec`.
+    :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` instance. The name must match a
+    class name of one of the classes named under "Elliptic Curves" in
+    :any:`cg:hazmat/primitives/asymmetric/ec`.
 
     For convenience, passing ``None`` will return the value of :ref:`CA_DEFAULT_ECC_CURVE
     <settings-ca-default-ecc-curve>`, and passing an
-    :py:class:`~cryptography:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` will return that
-    instance unchanged.
+    :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` will return that instance
+    unchanged.
 
     Example usage::
 
@@ -565,7 +559,7 @@ def parse_key_curve(value=None):
     -------
 
     curve
-        An :py:class:`~cryptography:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` instance.
+        An :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` instance.
 
     Raises
     ------
@@ -628,31 +622,6 @@ def get_default_subject(name):
     return profile['subject']
 
 
-def get_cert_profile_kwargs(name=None):
-    """Get kwargs suitable for get_cert X509 keyword arguments from the given profile."""
-
-    if name is None:
-        name = ca_settings.CA_DEFAULT_PROFILE
-
-    profile = deepcopy(ca_settings.CA_PROFILES[name])
-    kwargs = {
-        'cn_in_san': profile['cn_in_san'],
-        'subject': get_default_subject(name=name),
-    }
-
-    key_usage = profile.get('keyUsage')
-    if key_usage and key_usage.get('value'):
-        kwargs['key_usage'] = KeyUsage(key_usage)
-    ext_key_usage = profile.get('extendedKeyUsage')
-    if ext_key_usage and ext_key_usage.get('value'):
-        kwargs['extended_key_usage'] = ExtendedKeyUsage(ext_key_usage)
-    tls_feature = profile.get('TLSFeature')
-    if tls_feature and tls_feature.get('value'):
-        kwargs['tls_feature'] = TLSFeature(tls_feature)
-
-    return kwargs
-
-
 if six.PY2:  # pragma: only py2
     class PermissionError(IOError, OSError):
         pass
@@ -676,3 +645,23 @@ def write_private_file(path, data):
         raise
     except (IOError, OSError) as e:  # pragma: only py2
         raise PermissionError(e.errno)
+
+
+def shlex_split(s, sep):
+    """Split a character on the given set of characters.
+
+    Example::
+
+        >>> shlex_split('foo,bar', ', ')
+        ['foo', 'bar']
+        >>> shlex_split("foo\\\,bar1", ',')  # escape a separator
+        ['foo,bar1']
+        >>> shlex_split('"foo,bar", bla', ', ')
+        ['foo,bar', 'bla']
+        >>> shlex_split('foo,"bar bla"', ',')
+        ['foo', 'bar bla']
+    """  # NOQA - flake8 complains about the backslash-escape in the doctest otherwise
+    lex = shlex.shlex(s, posix=True)
+    lex.whitespace = sep
+    lex.whitespace_split = True
+    return [l for l in lex]

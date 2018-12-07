@@ -34,6 +34,7 @@ from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 
 from . import ca_settings
+from .extensions import IssuerAlternativeName
 from .signals import post_create_ca
 from .signals import post_issue_cert
 from .signals import pre_create_ca
@@ -82,24 +83,38 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         ----------
 
         name : str
-            The name of the CA. This can be a human-readable string and is used for administrative purposes
-            only.
-        algorithm : str or :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
-            Hash algorithm used when signing the certificate. If a string is passed, it must be the name of
-            one of the hashes in :py:mod:`~cryptography:cryptography.hazmat.primitives.hashes`, e.g.
-            ``"SHA512"``. This method also accepts instances of
-            :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`, e.g.
-            :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.SHA512`. The default is the
-            ``CA_DIGEST_ALGORITHM`` setting.
+            The name of the CA. This is a human-readable string and is used for administrative purposes only.
         subject : :py:class:`~django_ca.subject.Subject`
             Subject string, e.g. ``Subject("/CN=example.com")``.
         expires : datetime, optional
-            Datetime for when this certificate authority will expire, defaults to the ``CA_DEFAULT_EXPIRES``
-            setting.
+            Datetime for when this certificate authority will expire, defaults to
+            :ref:`CA_DEFAULT_EXPIRES <settings-ca-default-expires>`.
+        algorithm : str or :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
+            Hash algorithm used when signing the certificate, passed to
+            :py:func:`~django_ca.utils.parse_hash_algorithm`.  The default is the value of the
+            :ref:`CA_DIGEST_ALGORITHM <settings-ca-digest-algorithm>` setting.
         parent : :py:class:`~django_ca.models.CertificateAuthority`, optional
-            Parent certificate authority for the new CA. This means that this CA will be an intermediate
+            Parent certificate authority for the new CA. Passing this value makes the CA an intermediate
             authority.
         pathlen : int, optional
+            Value of the path length attribute for the :py:class:`~django_ca.extensions.BasicConstraints`
+            extension.
+        issuer_url : str
+            URL for the DER/ASN1 formatted certificate that is signing certificates.
+        issuer_alt_name : str, optional
+            IssuerAlternativeName used when signing certificates. This currently has to be a URL.
+        crl_url : list of str, optional
+            CRL URLs used for certificates signed by this CA.
+        ocsp_url : str, optional
+            OCSP URL used for certificates signed by this CA.
+        ca_issuer_url : str, optional
+            URL for the DER/ASN1 formatted certificate that is signing this CA. For intermediate CAs, this
+            would usually be the ``issuer_url`` of the parent CA.
+        ca_crl_url : list of str, optional
+            CRL URLs used for this CA. This value is only meaningful for intermediate CAs.
+        ca_ocsp_url : str, optional
+            OCSP URL used for this CA. This value is only meaningful for intermediate CAs.
+        name_constraints
         password : bytes, optional
             Password to encrypt the private key with.
         parent_password : bytes, optional
@@ -207,9 +222,10 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
         if os.name == 'nt':
             # Window systems do not allow the use of colons in file names. Replace them by underscores.
-            ca.private_key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % ca.serial.replace(':', '_'))
+            ca.private_key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % ca.serial.replace(':', ''))
         else:
             ca.private_key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % ca.serial)
+
         ca.save()
 
         if password is None:
@@ -247,13 +263,10 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             A valid CSR. The format is given by the ``csr_format`` parameter.
         expires : datetime, optional
             Datetime for when this certificate will expire, defaults to the ``CA_DEFAULT_EXPIRES`` setting.
-        algorithm : str or :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
-            Hash algorithm used when signing the certificate. If a string is passed, it must be the name of
-            one of the hashes in :py:mod:`~cryptography:cryptography.hazmat.primitives.hashes`, e.g.
-            ``"SHA512"``. This method also accepts instances of
-            :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.HashAlgorithm`, e.g.
-            :py:class:`~cryptography:cryptography.hazmat.primitives.hashes.SHA512`. The default is the
-            ``CA_DIGEST_ALGORITHM`` setting.
+        algorithm : str or :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
+            Hash algorithm used when signing the certificate, passed to
+            :py:func:`~django_ca.utils.parse_hash_algorithm`.  The default is the value of the
+            :ref:`CA_DIGEST_ALGORITHM <settings-ca-digest-algorithm>` setting.
         subject : :py:class:`~django_ca.subject.Subject`, optional
             The Subject to use in the certificate. If this value is not passed or if the value does not
             contain a CommonName, the first value of the ``subjectAltName`` parameter is used as CommonName.
@@ -262,7 +275,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             ``True``, but the parameter is ignored if no CommonName is given. This is typically set
             to ``False`` when creating a client certificate, where the subjects CommonName has no
             meaningful value as subjectAltName.
-        csr_format : :py:class:`~cryptography:cryptography.hazmat.primitives.serialization.Encoding`, optional
+        csr_format : :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding`, optional
             The format of the CSR. The default is ``PEM``.
         subjectAltName : list of str, optional
             A list of values for the subjectAltName extension. Values are passed to
@@ -351,8 +364,8 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             builder = builder.add_extension(**tls_feature.for_builder())
 
         if ca.issuer_alt_name:
-            builder = builder.add_extension(x509.IssuerAlternativeName(
-                [parse_general_name(ca.issuer_alt_name)]), critical=False)
+            issuer_alt_name = IssuerAlternativeName(ca.issuer_alt_name)
+            builder = builder.add_extension(**issuer_alt_name.for_builder())
 
         return builder.sign(private_key=ca.key(password), algorithm=algorithm, backend=default_backend()), req
 

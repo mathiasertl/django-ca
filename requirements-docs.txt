@@ -3,8 +3,8 @@ asn1crypto==0.24.0
 cryptography>=2.1
 ocspbuilder==0.10.2
 oscrypto==0.19.1
-Sphinx==1.8.1
-coverage==4.5.1
+Sphinx==1.8.2
+coverage==4.5.2
 numpydoc==0.8.0
 six==1.11.0
 sphinx-autobuild==0.7.1

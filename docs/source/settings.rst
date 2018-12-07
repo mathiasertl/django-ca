@@ -32,6 +32,8 @@ CA_DEFAULT_ECC_CURVE
 
    The default elliptic curve used for generating CA private keys when ECC is used.
 
+.. _settings-ca-default-expires:
+
 CA_DEFAULT_EXPIRES
    Default: ``730``
 

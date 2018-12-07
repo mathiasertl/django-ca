@@ -40,7 +40,7 @@ class Subject(object):
     >>> Subject([('CN', 'example.com'), ])
     Subject("/CN=example.com")
 
-    In many respects, this class handles like a ``dict``:
+    In most respects, this class handles like a ``dict``:
 
     >>> s = Subject('/CN=example.com')
     >>> 'CN' in s
@@ -98,6 +98,12 @@ class Subject(object):
         except KeyError:
             raise KeyError(OID_NAME_MAPPINGS[key])
 
+    def __iter__(self):
+        #return (OID_NAME_MAPPINGS[t[0]] for t in self._iter)
+        for key, value in self._iter:
+            for val in value:
+                yield OID_NAME_MAPPINGS[key]
+
     def __len__(self):
         return len(self._data)
 
@@ -131,11 +137,31 @@ class Subject(object):
         data = ['%s=%s' % (k, v) for k, v in sort_name(data)]
         return '/%s' % '/'.join(data)
 
+    @property
+    def _iter(self):
+        return sorted(self._data.items(), key=lambda t: SUBJECT_FIELDS.index(OID_NAME_MAPPINGS[t[0]]))
+
+    def clear(self):
+        self._data.clear()
+
+    def copy(self):
+        return Subject(list(self.items()))
+
     def get(self, key, default=None):
         try:
             return self[key]
         except KeyError:
             return default
+
+    def items(self):
+        for key, value in self._iter:
+            key = OID_NAME_MAPPINGS[key]
+            for val in value:
+                yield key, val
+
+    def keys(self):
+        for key in self:
+            yield key
 
     def setdefault(self, oid, value):
         if isinstance(oid, six.string_types):
@@ -154,25 +180,42 @@ class Subject(object):
 
         self._data[oid] = value
 
+    def update(self, e, **f):
+        if isinstance(e, Subject):
+            self._data.update(e._data)
+        elif hasattr(e, 'keys'):
+            for k in e.keys():
+                self[k] = e[k]
+        else:
+            for k, v in e:
+                self[k] = v
+
+        for k in f:
+            self[k] = f[k]
+
+    def values(self):
+        for key, value in self._iter:
+            for val in value:
+                yield val
+
     ####################
     # Actual functions #
     ####################
     @property
     def fields(self):
-        """This subject as a list of :py:class:`~cryptography:cryptography.x509.oid.NameOID` instances.
+        """This subject as a list of :py:class:`~cg:cryptography.x509.oid.NameOID` instances.
 
         >>> list(Subject('/C=AT/CN=example.com').fields)  # doctest: +NORMALIZE_WHITESPACE
         [(<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, 'AT'),
          (<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, 'example.com')]
         """
-        _sort = sorted(self._data.items(), key=lambda t: SUBJECT_FIELDS.index(OID_NAME_MAPPINGS[t[0]]))
-        for oid, values in _sort:
+        for oid, values in self._iter:
             for val in values:
                 yield oid, force_text(val)
 
     @property
     def name(self):
-        """This subject as :py:class:`x509.Name <cryptography:cryptography.x509.Name>`.
+        """This subject as :py:class:`x509.Name <cg:cryptography.x509.Name>`.
 
         >>> Subject('/C=AT/CN=example.com').name  # doctest: +NORMALIZE_WHITESPACE
         <Name([<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, value='AT')>,

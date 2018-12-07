@@ -24,6 +24,7 @@ import unittest
 from datetime import datetime
 from datetime import timedelta
 
+import idna
 from freezegun import freeze_time
 from idna.core import IDNAError
 
@@ -41,11 +42,11 @@ from .. import utils
 from ..extensions import ExtendedKeyUsage
 from ..extensions import KeyUsage
 from ..extensions import TLSFeature
+from ..profiles import get_cert_profile_kwargs
 from ..utils import NAME_RE
 from ..utils import LazyEncoder
 from ..utils import format_name
 from ..utils import get_cert_builder
-from ..utils import get_cert_profile_kwargs
 from ..utils import is_power2
 from ..utils import multiline_url_validator
 from ..utils import parse_general_name
@@ -283,7 +284,11 @@ class ParseGeneralNameTest(DjangoCATestCase):
 
         # Wildcard subdomains are allowed in DNS entries, however RFC 2595 limits their use to a single
         # wildcard in the outermost level
-        msg = r'^The label b?\'?\*\'? is not a valid A-label$'
+        if idna.__version__ >= '2.8':
+            msg = r'^Codepoint U\+002A at position 1 of \'\*\' not allowed$'
+        else:
+            msg = r'^The label b?\'?\*\'? is not a valid A-label$'
+
         with self.assertRaisesRegex(IDNAError, msg):
             parse_general_name(u'test.*.example.com')
         with self.assertRaisesRegex(IDNAError, msg):
@@ -292,7 +297,9 @@ class ParseGeneralNameTest(DjangoCATestCase):
             parse_general_name(u'example.com.*')
 
     def test_wrong_email(self):
-        if six.PY2:
+        if idna.__version__ >= '2.8':
+            msg = r"^Codepoint U\+0040 at position 5 of 'user@' not allowed$"
+        elif six.PY2:
             msg = "The label user@ is not a valid A-label"
         else:
             msg = "The label b'user@' is not a valid A-label"

@@ -17,6 +17,8 @@ import os
 from datetime import timedelta
 from io import BytesIO
 
+from freezegun import freeze_time
+
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding
 
@@ -35,6 +37,7 @@ from .base import override_settings
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
+@freeze_time("2018-11-01")
 class ViewCertTestCase(DjangoCAWithCertTestCase):
     def _get_format(self, cert):
         return {
@@ -49,65 +52,66 @@ class ViewCertTestCase(DjangoCAWithCertTestCase):
             'subjectKeyIdentifier': cert.subject_key_identifier.as_text(),
             'authorityKeyIdentifier': cert.ca.subject_key_identifier.as_text(),
             'hpkp': cert.hpkp_pin,
-            'san': cert.subjectAltName(),
+            'san': cert.subject_alternative_name,
         }
 
     def test_basic(self):
         stdout, stderr = self.cmd('view_cert', self.cert.serial, stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stdout.decode('utf-8'), '''Common Name: %(cn)s
-Valid from: %(from)s
-Valid until: %(until)s
-Status: %(status)s
+        self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
+Valid from: {from}
+Valid until: {until}
+Status: {status}
 subjectAltName:
-    * %(san_0)s
+    * {san[0]}
 Watchers:
 Digest:
-    md5: %(md5)s
-    sha1: %(sha1)s
-    sha256: %(sha256)s
-    sha512: %(sha512)s
-HPKP pin: %(hpkp)s
+    md5: {md5}
+    sha1: {sha1}
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
 
-%(pem)s''' % self.get_cert_context('cert1'))
+{pem}'''.format(**self.get_cert_context('cert1')))
 
         self.assertEqual(stderr, b'')
 
         # test with no pem but with extensions
+        self.maxDiff = None
         stdout, stderr = self.cmd('view_cert', self.cert.serial, no_pem=True, extensions=True,
                                   stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stdout.decode('utf-8'), '''Common Name: %(cn)s
-Valid from: %(from)s
-Valid until: %(until)s
-Status: %(status)s
+        self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
+Valid from: {from}
+Valid until: {until}
+Status: {status}
 authorityInfoAccess:
-    * %(authInfoAccess_0)s
-    * %(authInfoAccess_1)s
+    * {authInfoAccess_0}
+    * {authInfoAccess_1}
 authorityKeyIdentifier:
-    %(authKeyIdentifier)s
+    {authKeyIdentifier}
 basicConstraints (critical):
     CA:FALSE
 cRLDistributionPoints:
-    * %(crl_0)s
+    * {crl_0}
 extendedKeyUsage:
     * serverAuth
 issuerAltName:
-    %(issuerAltName)s
+    * {issuer_alternative_name}
 keyUsage (critical):
     * digitalSignature
     * keyAgreement
     * keyEncipherment
 subjectAltName:
-    * %(san_0)s
+    * {san[0]}
 subjectKeyIdentifier:
-    %(subjectKeyIdentifier)s
+    {subjectKeyIdentifier}
 Watchers:
 Digest:
-    md5: %(md5)s
-    sha1: %(sha1)s
-    sha256: %(sha256)s
-    sha512: %(sha512)s
-HPKP pin: %(hpkp)s
-''' % self.get_cert_context('cert1'))
+    md5: {md5}
+    sha1: {sha1}
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
+'''.format(**self.get_cert_context('cert1')))
         self.assertEqual(stderr, b'')
 
     @override_settings(USE_TZ=True)
@@ -117,21 +121,21 @@ HPKP pin: %(hpkp)s
     def test_der(self):
         stdout, stderr = self.cmd('view_cert', self.cert.serial, format=Encoding.DER,
                                   stdout=BytesIO(), stderr=BytesIO())
-        expected = '''Common Name: %(cn)s
-Valid from: %(from)s
-Valid until: %(until)s
-Status: %(status)s
+        expected = '''Common Name: {cn}
+Valid from: {from}
+Valid until: {until}
+Status: {status}
 subjectAltName:
-    * %(san_0)s
+    * {san[0]}
 Watchers:
 Digest:
-    md5: %(md5)s
-    sha1: %(sha1)s
-    sha256: %(sha256)s
-    sha512: %(sha512)s
-HPKP pin: %(hpkp)s
+    md5: {md5}
+    sha1: {sha1}
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
 
-''' % self.get_cert_context('cert1')
+'''.format(**self.get_cert_context('cert1'))
         expected = force_bytes(expected) + certs['cert1']['der'] + b'\n'
 
         self.assertEqual(stdout, expected)
@@ -158,6 +162,7 @@ HPKP pin: %(hpkp)s
 ''' % certs['cert1'])
         self.assertEqual(stderr, b'')
 
+    @freeze_time("2020-11-10")
     def test_expired(self):
         cert = Certificate.objects.get(serial=self.cert.serial)
         cert.expires = timezone.now() - timedelta(days=30)
@@ -358,6 +363,7 @@ HPKP pin: bkunFfRSda4Yhz7UlMUaalgj0Gcus/9uGVp19Hceczg=
         self.assertEqual(stdout.decode('utf-8'), expected)
 
     def test_contrib_godaddy_derstandardat(self):
+        self.maxDiff = None
         self.assertContrib('godaddy_derstandardat', '''Common Name: %(cn)s
 Valid from: %(valid_from)s
 Valid until: %(valid_until)s
@@ -444,7 +450,7 @@ HPKP pin: %(hpkp)s
     'hpkp': '0f/TD6A+RCAbsOaPyJUsEzm3BPpoTZ8Btwru1WeSBdw=',
 })
 
-    def test_contrib_letsencrypt_jabber_at(self):
+    def test_contrib_letsencrypt_jabber_at(self, status='Valid'):
         if cryptography_version >= (2, 3):
             # Older versions of OpenSSL (and LibreSSL) cannot parse this extension
             # see https://github.com/pyca/cryptography/blob/master/tests/x509/test_x509_ext.py#L4455-L4459
@@ -472,7 +478,7 @@ UnknownOID:
         self.assertContrib('letsencrypt_jabber_at', '''Common Name: %(cn)s
 Valid from: %(valid_from)s
 Valid until: %(valid_until)s
-Status: Valid%(unknown)s
+Status: %(status)s%(unknown)s
 authorityInfoAccess:
     * OCSP - URI:http://ocsp.int-x3.letsencrypt.org
     * CA Issuers - URI:http://cert.int-x3.letsencrypt.org/
@@ -519,8 +525,17 @@ HPKP pin: %(hpkp)s
     'sha1': 'E9:A5:B4:49:BB:5F:88:51:01:72:D9:B3:CF:E3:8B:F4:A2:C8:E4:08',
     'sha256': 'AF:2D:CE:A3:CE:62:6A:17:E1:CE:BA:7B:A5:A5:F1:A4:3F:0D:80:77:F1:F8:C4:5F:64:27:9A:F9:76:E9:0D:8D',  # NOQA
     'sha512': 'C4:7D:2C:20:DB:C1:63:6D:3B:DC:AA:81:BD:33:18:68:E5:EB:91:0B:C7:85:6A:D6:4F:BB:3E:C0:45:28:FB:8F:6A:5D:86:1B:76:3D:90:A0:64:B3:CB:4E:F3:DC:69:AD:C7:C8:EA:E9:7D:48:1C:B5:D9:43:FE:89:57:32:39:1C',  # NOQA
+    'status': status,
     'hpkp': 'rPQ7/P8wLaKwgotVpQfrNo4MRy08pkziFB4Jpd7bnHk=',
 })
+
+    @freeze_time("2018-11-10")
+    def test_contrib_letsencrypt_jabber_at_expired(self):
+        self.test_contrib_letsencrypt_jabber_at('Expired')
+
+    @freeze_time("2017-11-10")  # a year earlier
+    def test_contrib_letsencrypt_jabber_at_not_yet_valid(self):
+        self.test_contrib_letsencrypt_jabber_at('Not yet valid')
 
     def test_unknown_cert(self):
         with self.assertRaises(CommandError):

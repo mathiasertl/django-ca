@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+from cryptography.hazmat.primitives.serialization import Encoding
+
 from django.core.management.base import CommandError
 
 from ..base import CertCommand
@@ -26,12 +28,21 @@ class Command(CertCommand):
     def add_arguments(self, parser):
         super(Command, self).add_arguments(parser)
         self.add_format(parser)
+        parser.add_argument('-b', '--bundle', default=False, action='store_true',
+                            help="Dump the whole certificate bundle.")
         parser.add_argument('path', nargs='?', default='-',
                             help='Path where to dump the certificate. Use "-" for stdout.')
 
     def handle(self, cert, path, **options):
-        # TODO: add bundle flag
-        data = cert.dump_certificate(options['format'])
+        if options['bundle'] and options['format'] == Encoding.DER:
+            raise CommandError('Cannot dump bundle when using DER format.')
+
+        if options['bundle']:
+            certs = cert.bundle
+        else:
+            certs = [cert]
+
+        data = b''.join([c.dump_certificate(options['format']) for c in certs])
         if path == '-':
             self.stdout.write(data, ending=b'')
         else:
