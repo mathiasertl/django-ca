@@ -204,7 +204,12 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         ca = self.model(name=name, issuer_url=issuer_url, issuer_alt_name=issuer_alt_name,
                         ocsp_url=ocsp_url, crl_url=crl_url, parent=parent)
         ca.x509 = certificate
-        ca.private_key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % ca.serial)
+
+        if os.name == 'nt':
+            # Window systems do not allow the use of colons in file names. Replace them by underscores.
+            ca.private_key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % ca.serial.replace(':', '_'))
+        else:
+            ca.private_key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % ca.serial)
         ca.save()
 
         if password is None:

@@ -40,6 +40,7 @@ from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 from django.utils.functional import Promise
 from django.utils.translation import ugettext_lazy as _
+from django.core.files.storage import default_storage
 
 from . import ca_settings
 from .extensions import ExtendedKeyUsage
@@ -661,8 +662,14 @@ def write_private_file(path, data):
     """Function to write binary data to a file that will only be readable to the user."""
 
     try:
-        with os.fdopen(os.open(path, os.O_CREAT | os.O_WRONLY, 0o400), 'wb') as fh:
+        with default_storage.open(path, 'wb') as fh:
+        #os.fdopen(os.open(path, os.O_CREAT | os.O_WRONLY, 0o400), 'wb') as fh:
             fh.write(data)
+        try:
+            os.chmod(default_storage.path(path), 0o400)
+        except NotImplementedError:
+            # If file is not stored in the filesystem, this will fail
+            pass
     except PermissionError:  # pragma: only py3
         # In py3, we want to raise Exception unchanged, so there would be no need for this block.
         # BUT (IOError, OSError) - see below - also matches, so we capture it here
