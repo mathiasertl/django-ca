@@ -274,10 +274,6 @@ class AlternativeNameExtension(ListExtension):
             return'%s/critical' % val
         return val
 
-    @property
-    def extension_type(self):
-        return x509.IssuerAlternativeName(self.value)
-
     def from_dict(self, value):
         self.value = [parse_general_name(v) for v in value]
 
@@ -416,6 +412,10 @@ class IssuerAlternativeName(AlternativeNameExtension):
     """
     oid = ExtensionOID.ISSUER_ALTERNATIVE_NAME
 
+    @property
+    def extension_type(self):
+        return x509.IssuerAlternativeName(self.value)
+
 
 class KeyUsage(MultiValueExtension):
     """Class representing a KeyUsage extension, which defines the purpose of a certificate.
@@ -535,6 +535,10 @@ class SubjectAlternativeName(AlternativeNameExtension):
        `RFC5280, section 4.2.1.6 <https://tools.ietf.org/html/rfc5280#section-4.2.1.6>`_
     """
     oid = ExtensionOID.SUBJECT_ALTERNATIVE_NAME
+
+    @property
+    def extension_type(self):
+        return x509.SubjectAlternativeName(self.value)
 
 
 class SubjectKeyIdentifier(KeyIdExtension):
