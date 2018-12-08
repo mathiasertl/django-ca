@@ -202,10 +202,10 @@ class MultipleURLAction(argparse.Action):
         getattr(namespace, self.dest).append(value)
 
 
-class MultiValueExtensionAction(argparse.Action):
+class ExtensionAction(argparse.Action):
     def __init__(self, *args, **kwargs):
         self.extension = kwargs.pop('extension')
-        super(MultiValueExtensionAction, self).__init__(*args, **kwargs)
+        super(ExtensionAction, self).__init__(*args, **kwargs)
 
     def __call__(self, parser, namespace, value, option_string=None):
         try:
@@ -373,14 +373,14 @@ class BaseSignCommand(BaseCommand):
     def add_extensions(self, parser):
         group = parser.add_argument_group('X509 v3 certificate extensions', self.add_extensions_help)
         group.add_argument(
-            '--key-usage', metavar='VALUES', action=MultiValueExtensionAction, extension=KeyUsage,
+            '--key-usage', metavar='VALUES', action=ExtensionAction, extension=KeyUsage,
             help='The keyUsage extension, e.g. "critical,keyCertSign".')
         group.add_argument(
-            '--ext-key-usage', metavar='VALUES', action=MultiValueExtensionAction,
+            '--ext-key-usage', metavar='VALUES', action=ExtensionAction,
             extension=ExtendedKeyUsage,
             help='The extendedKeyUsage extension, e.g. "serverAuth,clientAuth".')
         group.add_argument(
-            '--tls-feature', metavar='VALUES', action=MultiValueExtensionAction, extension=TLSFeature,
+            '--tls-feature', metavar='VALUES', action=ExtensionAction, extension=TLSFeature,
             help='TLS Feature extensions.')
 
     def test_options(self, *args, **options):

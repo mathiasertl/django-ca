@@ -69,11 +69,11 @@ class SubjectActionTestCase(DjangoCATestCase):
                                'setup.py: error: Unknown x509 name field: WRONG\n')
 
 
-class MultiValueExtensionAction(DjangoCATestCase):
+class ExtensionAction(DjangoCATestCase):
     def setUp(self):
-        super(MultiValueExtensionAction, self).setUp()
+        super(ExtensionAction, self).setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('-e', action=base.MultiValueExtensionAction, extension=KeyUsage)
+        self.parser.add_argument('-e', action=base.ExtensionAction, extension=KeyUsage)
 
     def test_basic(self):
         ns = self.parser.parse_args(['-e=critical,keyAgreement'])
