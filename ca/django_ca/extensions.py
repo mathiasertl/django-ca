@@ -148,6 +148,18 @@ class Extension(object):
 
         raise NotImplementedError
 
+    def serialize(self):
+        """Serialize this extension to a string in a way that it can be passed to a constructor again.
+
+        For example, this should always be True::
+
+            >>> ku = KeyUsage('keyAgreement,keyEncipherment')
+            >>> ku == KeyUsage(ku.serialize())
+            True
+        """
+
+        raise NotImplementedError
+
     def as_extension(self):
         """This extension as :py:class:`~cg:cryptography.x509.ExtensionType`."""
         return x509.extensions.Extension(oid=self.oid, critical=self.critical, value=self.extension_type)
@@ -213,6 +225,12 @@ class MultiValueExtension(Extension):
             if diff:
                 raise ValueError('Unknown value(s): %s' % ', '.join(sorted(diff)))
 
+    def serialize(self):
+        val = ','.join(self.value)
+        if self.critical:
+            return 'critical,%s' % val
+        return val
+
     def as_text(self):
         return '\n'.join(['* %s' % v for v in sorted(self.value)])
 
@@ -237,6 +255,12 @@ class ListExtension(MultiValueExtension):
 
     def __delitem__(self, key):
         pass  # TODO
+
+    def serialize(self):
+        val = ','.join([format_general_name(v) for v in self.value])
+        if self.critical:
+            return 'critical,%s' % val
+        return val
 
 
 class AlternativeNameExtension(ListExtension):
