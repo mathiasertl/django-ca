@@ -154,8 +154,8 @@ class CertificateAuthorityAction(argparse.Action):
             parser.error('%s: Multiple Certificate authorities match.' % value)
 
         # verify that the private key exists
-        if not default_storage.exists(value.private_key_path.path):
-            parser.error('%s: %s: Private key does not exist.' % (value, value.private_key_path.path))
+        if not default_storage.exists(value.private_key_path.name):
+            parser.error('%s: %s: Private key does not exist.' % (value, value.private_key_path.name))
 
         setattr(namespace, self.dest, value)
 

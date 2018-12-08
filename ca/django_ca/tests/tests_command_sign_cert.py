@@ -337,10 +337,10 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         ca = self.create_ca('test')
         ca = CertificateAuthority.objects.get(pk=ca.pk)
 
-        os.chmod(default_storage.path(ca.private_key_path.path), stat.S_IWUSR | stat.S_IRUSR)
-        with default_storage.open(ca.private_key_path.path, 'w') as stream:
+        os.chmod(ca.private_key_path.path, stat.S_IWUSR | stat.S_IRUSR)
+        with ca.private_key_path.open('w') as stream:
             stream.write('bogus')
-        os.chmod(default_storage.path(ca.private_key_path.path), stat.S_IRUSR)
+        os.chmod(ca.private_key_path.path, stat.S_IRUSR)
 
         # Giving no password raises a CommandError
         stdin = six.StringIO(self.csr_pem)

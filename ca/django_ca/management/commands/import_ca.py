@@ -116,9 +116,9 @@ Note that the private key will be copied to the directory configured by the CA_D
                                        encryption_algorithm=encryption)
 
         try:
-            write_private_file(ca.private_key_path.path, pem)
+            write_private_file(ca.private_key_path, pem)
         except PermissionError:
-            perm_denied = '%s: Permission denied: Could not open file for writing' % ca.private_key_path.path
+            perm_denied = '%s: Permission denied: Could not open file for writing' % ca.private_key_path.name
             raise CommandError(perm_denied)
 
         # Only save CA to database if we loaded all data and copied private key
