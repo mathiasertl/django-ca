@@ -483,8 +483,8 @@ class CertificateAuthority(X509CertMixin):
                                  help_text=_("URL to the certificate of this CA (in DER format)."))
     ocsp_url = models.URLField(blank=True, null=True, verbose_name=_('OCSP responder URL'),
                                help_text=_("URL of a OCSP responser for the CA."))
-    issuer_alt_name = models.URLField(blank=True, null=True, verbose_name=_('issuerAltName'),
-                                      help_text=_("URL for your CA."))
+    issuer_alt_name = models.CharField(blank=True, max_length=255, default='',
+                                       verbose_name=_('issuerAltName'), help_text=_("URL for your CA."))
 
     _key = None
 
