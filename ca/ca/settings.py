@@ -5,6 +5,9 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# Define the default storage
+DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+
 DEBUG = False
 
 ADMINS = (
@@ -109,6 +112,9 @@ INSTALLED_APPS = [
     'django_ca',
 ]
 CA_CUSTOM_APPS = []
+
+# The directory where your CA files are located (If using default file storage, is relative to MEDIA_ROOT)
+CA_DIR = 'files'
 
 TEMPLATES = [
     {
