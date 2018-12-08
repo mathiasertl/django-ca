@@ -34,7 +34,10 @@ from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 
 from . import ca_settings
+from .extensions import ExtendedKeyUsage
 from .extensions import IssuerAlternativeName
+from .extensions import KeyUsage
+from .extensions import TLSFeature
 from .signals import post_create_ca
 from .signals import post_issue_cert
 from .signals import pre_create_ca
@@ -101,7 +104,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             extension.
         issuer_url : str
             URL for the DER/ASN1 formatted certificate that is signing certificates.
-        issuer_alt_name : :py:class:`~django_ca.extensions.IssuerAlternativeName`, optional
+        issuer_alt_name : :py:class:`~django_ca.extensions.IssuerAlternativeName` or str, optional
             IssuerAlternativeName used when signing certificates. If the value is not an instance of
             :py:class:`~django_ca.extensions.IssuerAlternativeName`, it will be passed as argument to
             the constructor of the class.
@@ -151,7 +154,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         algorithm = parse_hash_algorithm(algorithm)
 
         # Normalize extensions to django_ca.extensions.Extension subclasses
-        if isinstance(issuer_alt_name, IssuerAlternativeName) is False:
+        if not isinstance(issuer_alt_name, IssuerAlternativeName):
             issuer_alt_name = IssuerAlternativeName(issuer_alt_name)
 
         pre_create_ca.send(
@@ -306,6 +309,14 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             raise ValueError("Must name at least a CN or a subjectAltName.")
 
         algorithm = parse_hash_algorithm(algorithm)
+
+        # Normalize extensions to django_ca.extensions.Extension subclasses
+        if key_usage and not isinstance(key_usage, KeyUsage):
+            key_usage = KeyUsage(key_usage)
+        if extended_key_usage and not isinstance(extended_key_usage, ExtendedKeyUsage):
+            extended_key_usage = ExtendedKeyUsage(extended_key_usage)
+        if tls_feature and not isinstance(tls_feature, TLSFeature):
+            tls_feature = TLSFeature(tls_feature)
 
         if subjectAltName:
             subjectAltName = [parse_general_name(san) for san in subjectAltName]
