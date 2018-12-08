@@ -32,8 +32,6 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509.oid import NameOID
 
-from distutils.version import LooseVersion
-
 import django
 from django.conf import settings
 from django.core.files.storage import default_storage
@@ -637,7 +635,7 @@ def write_private_file(path, data):
     try:
         if isinstance(path, FieldFile):
             # Backward Compatibility
-            if LooseVersion(django.__version__) < LooseVersion('2.0.0'):
+            if int(django.__version__.split('.')[0]) < 2:
                 with default_storage.open(path.name, 'wb') as fh:
                     fh.write(data)
             else:

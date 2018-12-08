@@ -28,6 +28,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 
+import django
 from django.conf import settings
 from django.contrib.messages import get_messages
 from django.core.files.storage import default_storage
@@ -392,8 +393,13 @@ class DjangoCATestCase(TestCase):
         self.assertIsNone(cert.revoked_reason)
 
     def assertPrivateKey(self, ca, password=None):
-        with ca.private_key_path.open('rb') as f:
-            key_data = f.read()
+        # Backward Compatibility
+        if int(django.__version__.split('.')[0]) < 2:
+            with default_storage.open(ca.private_key_path.name, 'rb') as f:
+                key_data = f.read()
+        else:
+            with ca.private_key_path.open('rb') as f:
+                key_data = f.read()
 
         key = serialization.load_pem_private_key(key_data, password, default_backend())
         self.assertIsNotNone(key)
