@@ -122,7 +122,7 @@ class ImportCATest(DjangoCATestCase):
         os.chmod(default_storage.path(settings.CA_DIR), 0o000)
 
         error = r'^%s/%s.key: Permission denied: Could not open file for writing$' % (
-            default_storage.path(settings.CA_DIR), certs['root']['serial']
+            settings.CA_DIR, certs['root']['serial']
         )
         with self.assertCommandError(error):
             self.cmd('import_ca', name, key_path, pem_path)
