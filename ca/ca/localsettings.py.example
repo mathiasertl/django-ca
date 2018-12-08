@@ -41,8 +41,8 @@ SECRET_KEY = ''
 ##################
 ### CA options ###
 ##################
-# The directory where your CA files are located
-#CA_DIR = os.path.join(BASE_DIR, 'files')
+# The directory where your CA files are located (If using default file storage, is relative to MEDIA_ROOT)
+#CA_DIR = 'files'
 
 # Do not provide a generic CRL view.
 #CA_PROVIDE_GENERIC_CRL = False
