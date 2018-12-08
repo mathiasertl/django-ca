@@ -20,6 +20,7 @@ https://skippylovesmalorie.wordpress.com/2010/02/12/how-to-generate-a-self-signe
 
 import os
 
+from django.core.files.storage import default_storage
 from django.core.management.base import CommandError
 
 from ... import ca_settings
@@ -107,9 +108,14 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         self.add_ca_args(parser)
 
     def handle(self, name, subject, **options):
-        if not os.path.exists(ca_settings.CA_DIR):  # pragma: no cover
-            # TODO: set permissions
-            os.makedirs(ca_settings.CA_DIR)
+        try:
+            local_path = default_storage.path(ca_settings.CA_DIR)
+            if not os.path.exists(local_path):  # pragma: no cover
+                # TODO: set permissions
+                os.makedirs(local_path)
+        except NotImplementedError:
+            # Using external storage. S3 and Minio manage path creation
+            pass
 
         # In case of CAs, we silently set the expiry date to that of the parent CA if the user specified a
         # number of days that would make the CA expire after the parent CA.

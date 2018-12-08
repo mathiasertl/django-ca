@@ -277,7 +277,8 @@ class override_tmpcadir(override_settings):
         return super(override_tmpcadir, self).__call__(test_func)
 
     def enable(self):
-        self.options['CA_DIR'] = tempfile.mkdtemp()
+        self.options['CA_DIR'] = os.path.join('tmp', os.path.basename(tempfile.mkdtemp()))
+        os.makedirs(self.options['CA_DIR'])
         super(override_tmpcadir, self).enable()
 
     def disable(self):

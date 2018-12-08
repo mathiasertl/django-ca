@@ -22,6 +22,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
 
+from django.core.files.storage import default_storage
 from django.core.management.base import CommandError
 from django.utils import six
 
@@ -60,8 +61,13 @@ Note that the private key will be copied to the directory configured by the CA_D
                             type=argparse.FileType('rb'))
 
     def handle(self, name, key, pem, **options):
-        if not os.path.exists(ca_settings.CA_DIR):  # pragma: no cover
-            os.makedirs(ca_settings.CA_DIR)
+        try:
+            local_path = default_storage.path(ca_settings.CA_DIR)
+            if not os.path.exists(local_path):  # pragma: no cover
+                os.makedirs(local_path)
+        except NotImplementedError:
+            # Using external storage. S3 and Minio manage path creation
+            pass
 
         password = options['password']
         import_password = options['import_password']
