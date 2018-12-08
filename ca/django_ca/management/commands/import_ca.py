@@ -94,7 +94,7 @@ Note that the private key will be copied to the directory configured by the CA_D
             except Exception:
                 raise CommandError('Unable to load public key.')
         ca.x509 = pem_loaded
-        ca.private_key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % ca.serial)
+        ca.private_key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % ca.serial.replace(':', ''))
 
         # load private key
         try:

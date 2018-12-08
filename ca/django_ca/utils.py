@@ -32,11 +32,11 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509.oid import NameOID
 
-from django.db.models.fields.files import FieldFile
 from django.conf import settings
 from django.core.files.storage import default_storage
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import URLValidator
+from django.db.models.fields.files import FieldFile
 from django.utils import six
 from django.utils import timezone
 from django.utils.encoding import force_bytes
