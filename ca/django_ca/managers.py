@@ -74,7 +74,7 @@ class CertificateManagerMixin(object):
 
 class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
     def init(self, name, subject, expires=None, algorithm=None, parent=None, pathlen=None,
-             issuer_url=None, issuer_alt_name=None, crl_url=None, ocsp_url=None,
+             issuer_url=None, issuer_alt_name='', crl_url=None, ocsp_url=None,
              ca_issuer_url=None, ca_crl_url=None, ca_ocsp_url=None, name_constraints=None,
              password=None, parent_password=None, ecc_curve=None, key_type='RSA', key_size=None):
         """Create a new certificate authority.
@@ -101,8 +101,10 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             extension.
         issuer_url : str
             URL for the DER/ASN1 formatted certificate that is signing certificates.
-        issuer_alt_name : str, optional
-            IssuerAlternativeName used when signing certificates. This currently has to be a URL.
+        issuer_alt_name : :py:class:`~django_ca.extensions.IssuerAlternativeName`, optional
+            IssuerAlternativeName used when signing certificates. If the value is not an instance of
+            :py:class:`~django_ca.extensions.IssuerAlternativeName`, it will be passed as argument to
+            the constructor of the class.
         crl_url : list of str, optional
             CRL URLs used for certificates signed by this CA.
         ocsp_url : str, optional
@@ -147,6 +149,10 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
                     key_size, ca_settings.CA_MIN_KEY_SIZE))
 
         algorithm = parse_hash_algorithm(algorithm)
+
+        # Normalize extensions to django_ca.extensions.Extension subclasses
+        if isinstance(issuer_alt_name, IssuerAlternativeName) is False:
+            issuer_alt_name = IssuerAlternativeName(issuer_alt_name)
 
         pre_create_ca.send(
             sender=self.model, name=name, key_size=key_size, key_type=key_type, algorithm=algorithm,
@@ -213,8 +219,10 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         certificate = builder.sign(private_key=private_sign_key, algorithm=algorithm,
                                    backend=default_backend())
 
+        # Normalize extensions for create()
         if crl_url is not None:
             crl_url = '\n'.join(crl_url)
+        issuer_alt_name = issuer_alt_name.serialize()
 
         ca = self.model(name=name, issuer_url=issuer_url, issuer_alt_name=issuer_alt_name,
                         ocsp_url=ocsp_url, crl_url=crl_url, parent=parent)

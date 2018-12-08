@@ -115,7 +115,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(ca.max_pathlen, 3)
         self.assertTrue(ca.allows_intermediate_ca)
         self.assertEqual(ca.issuer_url, 'http://issuer.ca.example.com')
-        self.assertEqual(ca.issuer_alt_name, 'http://ian.ca.example.com')
+        self.assertEqual(ca.issuer_alt_name, 'URI:http://ian.ca.example.com')
         self.assertEqual(ca.crl_url, 'http://crl.example.com')
         self.assertEqual(ca.ocsp_url, 'http://ocsp.example.com')
         self.assertIssuer(ca, ca)

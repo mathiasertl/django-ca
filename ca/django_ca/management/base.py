@@ -34,6 +34,7 @@ from django.utils.encoding import force_text
 from .. import ca_settings
 from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
+from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
 from ..extensions import TLSFeature
 from ..models import Certificate
@@ -414,8 +415,8 @@ class CertificateAuthorityDetailMixin(object):
         group.add_argument('--issuer-url', metavar='URL', action=URLAction,
                            help='URL to the certificate of your CA (in DER format).')
         group.add_argument(
-            '--issuer-alt-name', metavar='URL', action=URLAction,
-            help='URL to the homepage of your CA.'
+            '--issuer-alt-name', metavar='URL', action=ExtensionAction, extension=IssuerAlternativeName,
+            default=IssuerAlternativeName(''), help='URL to the homepage of your CA.'
         )
         group.add_argument(
             '--crl-url', metavar='URL', action=MultipleURLAction, default=[],
