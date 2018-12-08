@@ -285,7 +285,10 @@ class ParseGeneralNameTest(DjangoCATestCase):
         # Wildcard subdomains are allowed in DNS entries, however RFC 2595 limits their use to a single
         # wildcard in the outermost level
         if idna.__version__ >= '2.8':
-            msg = r'^Codepoint U\+002A at position 1 of \'\*\' not allowed$'
+            if six.PY2:
+                msg = r'^Codepoint U\+002A at position 1 of u\'\*\' not allowed$'
+            else:
+                msg = r'^Codepoint U\+002A at position 1 of \'\*\' not allowed$'
         else:
             msg = r'^The label b?\'?\*\'? is not a valid A-label$'
 
@@ -298,11 +301,15 @@ class ParseGeneralNameTest(DjangoCATestCase):
 
     def test_wrong_email(self):
         if idna.__version__ >= '2.8':
-            msg = r"^Codepoint U\+0040 at position 5 of 'user@' not allowed$"
-        elif six.PY2:
-            msg = "The label user@ is not a valid A-label"
+            if six.PY2:
+                msg = r"^Codepoint U\+0040 at position 5 of u'user@' not allowed$"
+            else:
+                msg = r"^Codepoint U\+0040 at position 5 of 'user@' not allowed$"
         else:
-            msg = "The label b'user@' is not a valid A-label"
+            if six.PY2:
+                msg = "The label user@ is not a valid A-label"
+            else:
+                msg = "The label b'user@' is not a valid A-label"
         with self.assertRaisesRegex(IDNAError, msg):
             parse_general_name('user@')
 
