@@ -315,11 +315,11 @@ setup.py: error: %s: Certificate authority not found.\n''' % ca.serial
 
     def test_pkey_doesnt_exists(self):
         ca = CertificateAuthority.objects.first()
-        ca.private_key_path = '/does-not-exist'
+        ca.private_key_path = 'does-not-exist'
         ca.save()
 
         expected = '''usage: setup.py [-h] ca
-setup.py: error: %s: %s: Private key does not exist.\n''' % (ca.name, ca.private_key_path)
+setup.py: error: %s: %s: Private key does not exist.\n''' % (ca.name, ca.private_key_path.path)
 
         self.assertParserError([ca.serial], expected)
 

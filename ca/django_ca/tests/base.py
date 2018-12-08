@@ -30,6 +30,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.conf import settings
 from django.contrib.messages import get_messages
+from django.core.files.storage import default_storage
 from django.core.management import ManagementUtility
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -278,12 +279,12 @@ class override_tmpcadir(override_settings):
 
     def enable(self):
         self.options['CA_DIR'] = os.path.join('tmp', os.path.basename(tempfile.mkdtemp()))
-        os.makedirs(self.options['CA_DIR'])
+        os.makedirs(default_storage.path(self.options['CA_DIR']))
         super(override_tmpcadir, self).enable()
 
     def disable(self):
         super(override_tmpcadir, self).disable()
-        shutil.rmtree(self.options['CA_DIR'])
+        shutil.rmtree(default_storage.path(self.options['CA_DIR']))
 
 
 class DjangoCATestCase(TestCase):
@@ -391,7 +392,7 @@ class DjangoCATestCase(TestCase):
         self.assertIsNone(cert.revoked_reason)
 
     def assertPrivateKey(self, ca, password=None):
-        with open(ca.private_key_path, 'rb') as f:
+        with default_storage.open(ca.private_key_path.path, 'rb') as f:
             key_data = f.read()
 
         key = serialization.load_pem_private_key(key_data, password, default_backend())

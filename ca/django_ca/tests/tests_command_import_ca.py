@@ -21,6 +21,7 @@ from six import BytesIO
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 
 from django.conf import settings
+from django.core.files.storage import default_storage
 
 from .. import ca_settings
 from ..models import CertificateAuthority
@@ -118,14 +119,14 @@ class ImportCATest(DjangoCATestCase):
         name = 'testname'
         pem_path = os.path.join(settings.FIXTURES_DIR, 'root.pem')
         key_path = os.path.join(settings.FIXTURES_DIR, 'root.key')
-        os.chmod(settings.CA_DIR, 0o000)
+        os.chmod(default_storage.path(settings.CA_DIR), 0o000)
 
         error = r'^%s/%s.key: Permission denied: Could not open file for writing$' % (
-            settings.CA_DIR, certs['root']['serial']
+            default_storage.path(settings.CA_DIR), certs['root']['serial']
         )
         with self.assertCommandError(error):
             self.cmd('import_ca', name, key_path, pem_path)
-        os.chmod(settings.CA_DIR, 0o644)
+        os.chmod(default_storage.path(settings.CA_DIR), 0o644)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_bogus_pub(self):
