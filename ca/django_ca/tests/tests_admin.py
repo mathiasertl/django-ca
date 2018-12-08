@@ -670,7 +670,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertFalse(post.called)
 
     def test_add_unusable_cas(self):
-        CertificateAuthority.objects.update(private_key_path='/does/not/exist')
+        CertificateAuthority.objects.update(private_key_path='does/not/exist')
 
         # check that we have some enabled CAs, just to make sure this test is really useful
         self.assertTrue(CertificateAuthority.objects.filter(enabled=True).exists())
