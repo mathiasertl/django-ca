@@ -160,7 +160,7 @@ X509 v3 certificate extensions for signed certificates:
         stdout, stderr = self.cmd('view_ca', ca.serial)
 
         context = {
-            'path': ca.private_key_path,
+            'path': ca.private_key_path.path,
             'serial': ca.serial,
             'dn': ca.distinguishedName(),
             'hpkp': ca.hpkp_pin,
