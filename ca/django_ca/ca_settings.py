@@ -22,7 +22,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import ugettext_lazy as _
 
-CA_DIR = getattr(settings, 'CA_DIR', os.path.join(settings.BASE_DIR, 'files'))
+CA_DIR = getattr(settings, 'CA_DIR', 'files')
 
 CA_PROFILES = {
     'client': {

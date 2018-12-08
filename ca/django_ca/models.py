@@ -32,6 +32,7 @@ from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
+from django.core.files.storage import default_storage
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -40,6 +41,7 @@ from django.utils.encoding import force_str
 from django.utils.text import slugify
 from django.utils.translation import ugettext_lazy as _
 
+from . import ca_settings
 from .extensions import AuthorityKeyIdentifier
 from .extensions import BasicConstraints
 from .extensions import ExtendedKeyUsage
@@ -473,7 +475,7 @@ class CertificateAuthority(X509CertMixin):
     enabled = models.BooleanField(default=True)
     parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True,
                                related_name='children')
-    private_key_path = models.CharField(max_length=256, help_text=_('Path to the private key.'))
+    private_key_path = models.FileField(upload_to=ca_settings.CA_DIR, help_text=_('Path to the private key.'))
 
     # various details used when signing certs
     crl_url = models.TextField(blank=True, null=True, validators=[multiline_url_validator],
@@ -490,7 +492,7 @@ class CertificateAuthority(X509CertMixin):
 
     def key(self, password):
         if self._key is None:
-            with open(self.private_key_path, 'rb') as f:
+            with default_storage.open(self.private_key_path, 'rb') as f:
                 key_data = f.read()
 
             self._key = load_pem_private_key(key_data, password, default_backend())

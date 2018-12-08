@@ -22,7 +22,7 @@ class TestDjangoCATestCase(DjangoCATestCase):
     @override_tmpcadir()
     def test_override_tmpcadir(self):
         ca_dir = ca_settings.CA_DIR
-        self.assertTrue(ca_dir.startswith(tempfile.gettempdir()))
+        self.assertTrue(ca_dir.startswith('tmp'))
 
     def test_tmpcadir(self):
         old_ca_dir = ca_settings.CA_DIR
@@ -30,7 +30,7 @@ class TestDjangoCATestCase(DjangoCATestCase):
         with self.tmpcadir():
             ca_dir = ca_settings.CA_DIR
             self.assertNotEqual(ca_dir, old_ca_dir)
-            self.assertTrue(ca_dir.startswith(tempfile.gettempdir()))
+            self.assertTrue(ca_dir.startswith('tmp'))
 
         self.assertEqual(ca_settings.CA_DIR, old_ca_dir)  # ensure that they're equal again
 
@@ -82,19 +82,19 @@ class OverrideCaDirForFuncTestCase(DjangoCATestCase):
     @override_tmpcadir()
     def test_a(self):
         # add three tests to make sure that every test case sees a different dir
-        self.assertTrue(ca_settings.CA_DIR.startswith(tempfile.gettempdir()), ca_settings.CA_DIR)
+        self.assertTrue(ca_settings.CA_DIR.startswith('tmp'), ca_settings.CA_DIR)
         self.assertNotIn(ca_settings.CA_DIR, self.seen_dirs)
         self.seen_dirs.add(ca_settings.CA_DIR)
 
     @override_tmpcadir()
     def test_b(self):
-        self.assertTrue(ca_settings.CA_DIR.startswith(tempfile.gettempdir()), ca_settings.CA_DIR)
+        self.assertTrue(ca_settings.CA_DIR.startswith('tmp'), ca_settings.CA_DIR)
         self.assertNotIn(ca_settings.CA_DIR, self.seen_dirs)
         self.seen_dirs.add(ca_settings.CA_DIR)
 
     @override_tmpcadir()
     def test_c(self):
-        self.assertTrue(ca_settings.CA_DIR.startswith(tempfile.gettempdir()), ca_settings.CA_DIR)
+        self.assertTrue(ca_settings.CA_DIR.startswith('tmp'), ca_settings.CA_DIR)
         self.assertNotIn(ca_settings.CA_DIR, self.seen_dirs)
         self.seen_dirs.add(ca_settings.CA_DIR)
 
