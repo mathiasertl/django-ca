@@ -91,7 +91,7 @@ class CreateCertificateBaseForm(forms.ModelForm):
         field.choices = [
             (field.prepare_value(ca), field.label_from_instance(ca))
             for ca in self.fields['ca'].queryset.filter(enabled=True)
-            if default_storage.exists(ca.private_key_path.path)
+            if default_storage.exists(ca.private_key_path.name)
         ]
 
     password = forms.CharField(widget=forms.PasswordInput, required=False, help_text=_(

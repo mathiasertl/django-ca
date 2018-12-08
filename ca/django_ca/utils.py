@@ -32,6 +32,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509.oid import NameOID
 
+from django.db.models import FileField
 from django.conf import settings
 from django.core.files.storage import default_storage
 from django.core.serializers.json import DjangoJSONEncoder
@@ -631,10 +632,17 @@ def write_private_file(path, data):
     """Function to write binary data to a file that will only be readable to the user."""
 
     try:
-        with default_storage.open(path, 'wb') as fh:
-            fh.write(data)
+        if isinstance(path, FileField):
+            with path.open('wb') as fh:
+                fh.write(data)
+        else:
+            with default_storage.open(path, 'wb') as fh:
+                fh.write(data)
         try:
-            os.chmod(default_storage.path(path), 0o400)
+            if isinstance(path, FileField):
+                os.chmod(path.path, 0o400)
+            else:
+                os.chmod(default_storage.path(path), 0o400)
         except NotImplementedError:
             # If file is not stored in the filesystem, this will fail. External systems like Amazon S3 and Minio
             # manage folder creation

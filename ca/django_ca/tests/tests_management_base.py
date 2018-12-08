@@ -319,7 +319,7 @@ setup.py: error: %s: Certificate authority not found.\n''' % ca.serial
         ca.save()
 
         expected = '''usage: setup.py [-h] ca
-setup.py: error: %s: %s: Private key does not exist.\n''' % (ca.name, ca.private_key_path.path)
+setup.py: error: %s: %s: Private key does not exist.\n''' % (ca.name, ca.private_key_path.name)
 
         self.assertParserError([ca.serial], expected)
 

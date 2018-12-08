@@ -392,7 +392,7 @@ class DjangoCATestCase(TestCase):
         self.assertIsNone(cert.revoked_reason)
 
     def assertPrivateKey(self, ca, password=None):
-        with default_storage.open(ca.private_key_path.path, 'rb') as f:
+        with ca.private_key_path.open('rb') as f:
             key_data = f.read()
 
         key = serialization.load_pem_private_key(key_data, password, default_backend())

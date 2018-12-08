@@ -448,7 +448,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
     def has_add_permission(self, request):
         # Only grant add permissions if there is at least one useable CA
         for ca in CertificateAuthority.objects.filter(enabled=True):
-            if default_storage.exists(ca.private_key_path.path):
+            if default_storage.exists(ca.private_key_path.name):
                 return True
         return False
 
