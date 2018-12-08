@@ -15,7 +15,6 @@
 
 import argparse
 import getpass
-import os
 import sys
 import textwrap
 

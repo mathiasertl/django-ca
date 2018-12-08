@@ -16,7 +16,6 @@
 import binascii
 import copy
 import json
-import os
 from datetime import datetime
 from functools import partial
 
