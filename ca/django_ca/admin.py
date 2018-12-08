@@ -31,6 +31,7 @@ from django.conf.urls import url
 from django.contrib import admin
 from django.contrib.messages import constants as messages
 from django.core.exceptions import PermissionDenied
+from django.core.files.storage import default_storage
 from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
@@ -448,7 +449,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
     def has_add_permission(self, request):
         # Only grant add permissions if there is at least one useable CA
         for ca in CertificateAuthority.objects.filter(enabled=True):
-            if os.path.exists(ca.private_key_path):
+            if default_storage.exists(ca.private_key_path.path):
                 return True
         return False
 

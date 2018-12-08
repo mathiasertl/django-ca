@@ -22,6 +22,7 @@ from cryptography.hazmat.primitives import hashes
 
 from django import forms
 from django.contrib.admin.widgets import AdminDateWidget
+from django.core.files.storage import default_storage
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
@@ -91,7 +92,7 @@ class CreateCertificateBaseForm(forms.ModelForm):
         field.choices = [
             (field.prepare_value(ca), field.label_from_instance(ca))
             for ca in self.fields['ca'].queryset.filter(enabled=True)
-            if os.path.exists(ca.private_key_path)
+            if default_storage.exists(ca.private_key_path.path)
         ]
 
     password = forms.CharField(widget=forms.PasswordInput, required=False, help_text=_(

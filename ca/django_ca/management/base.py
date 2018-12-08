@@ -21,6 +21,7 @@ import textwrap
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
+from django.core.files.storage import default_storage
 from django.core.management.base import BaseCommand as _BaseCommand
 from django.core.management.base import CommandError
 from django.core.management.base import OutputWrapper
@@ -154,8 +155,8 @@ class CertificateAuthorityAction(argparse.Action):
             parser.error('%s: Multiple Certificate authorities match.' % value)
 
         # verify that the private key exists
-        if not os.path.exists(value.private_key_path):
-            parser.error('%s: %s: Private key does not exist.' % (value, value.private_key_path))
+        if not default_storage.exists(value.private_key_path.path):
+            parser.error('%s: %s: Private key does not exist.' % (value, value.private_key_path.path))
 
         setattr(namespace, self.dest, value)
 
