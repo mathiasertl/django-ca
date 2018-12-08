@@ -232,7 +232,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
                                         encryption_algorithm=encryption)
 
         # write private key to file
-        write_private_file(ca.private_key_path, pem)
+        write_private_file(ca.private_key_path.path, pem)
 
         post_create_ca.send(sender=self.model, ca=ca)
         return ca
