@@ -20,6 +20,8 @@ from datetime import timedelta
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
+import django
+from django.core.files.storage import default_storage
 from django.core.management.base import CommandError
 from django.utils import six
 
@@ -337,8 +339,13 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         ca = CertificateAuthority.objects.get(pk=ca.pk)
 
         os.chmod(ca.private_key_path.path, stat.S_IWUSR | stat.S_IRUSR)
-        with ca.private_key_path.open('w') as stream:
-            stream.write('bogus')
+        # Backward Compatibility
+        if int(django.__version__.split('.')[0]) < 2:
+            with default_storage.open(ca.private_key_path.name, 'w') as stream:
+                stream.write('bogus')
+        else:
+            with ca.private_key_path.open('w') as stream:
+                stream.write('bogus')
         os.chmod(ca.private_key_path.path, stat.S_IRUSR)
 
         # Giving no password raises a CommandError
