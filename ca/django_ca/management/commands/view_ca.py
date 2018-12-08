@@ -25,7 +25,7 @@ class Command(BaseCommand):
     def handle(self, ca, **options):
         self.stdout.write('%s (%s):' % (ca.name, 'enabled' if ca.enabled else 'disabled'))
         self.stdout.write('* Serial: %s' % ca.serial)
-        self.stdout.write('* Path to private key:\n  %s' % ca.private_key_path)
+        self.stdout.write('* Path to private key:\n  %s' % ca.private_key_path.path)
         if ca.parent:
             self.stdout.write('* Parent: %s (%s)' % (ca.parent.name, ca.parent.serial))
         else:
