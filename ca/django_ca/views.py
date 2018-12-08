@@ -27,6 +27,7 @@ from oscrypto.asymmetric import load_certificate
 from oscrypto.asymmetric import load_private_key
 
 from django.core.cache import cache
+from django.core.files.storage import default_storage
 from django.http import HttpResponse
 from django.http import HttpResponseServerError
 from django.utils.decorators import method_decorator
@@ -149,8 +150,12 @@ class OCSPView(View):
                             content_type='application/ocsp-response')
 
     def get_responder_key(self):
-        with open(self.responder_key, 'rb') as stream:
-            responder_key = stream.read()
+        if os.path.exists(self.responder_key):
+            with open(self.responder_key, 'rb') as stream:
+                responder_key = stream.read()
+        else:
+            with default_storage.open(self.responder_key, 'rb') as stream:
+                responder_key = stream.read()
 
         # try to load responder key and cert with oscrypto, to make sure they are actually usable
         return load_private_key(responder_key)
@@ -158,6 +163,9 @@ class OCSPView(View):
     def get_responder_cert(self):
         if os.path.exists(self.responder_cert):
             with open(self.responder_cert, 'rb') as stream:
+                responder_cert = stream.read()
+        elif default_storage.exists(self.responder_cert):
+            with default_storage.open(self.responder_cert, 'rb') as stream:
                 responder_cert = stream.read()
         else:
             responder_cert = Certificate.objects.get(serial=self.responder_cert)
