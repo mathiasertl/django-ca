@@ -83,7 +83,7 @@ class BaseCommand(Command):
                                 message=msg)
         warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='markupsafe',
                                 message=msg)
-        warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='jinja2.utils',
+        warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='jinja2',
                                 message=msg)
 
         work_dir = os.path.join(_rootdir, 'ca')
