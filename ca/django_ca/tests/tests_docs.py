@@ -18,7 +18,6 @@ import doctest
 from .base import DjangoCAWithCertTestCase
 from .base import override_tmpcadir
 
-
 base = '../../../docs/source'
 
 

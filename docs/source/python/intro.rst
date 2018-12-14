@@ -63,7 +63,7 @@ Django model::
 	>>> cert.revoke()  # this already calls save()
 
 Much like with certificate authorities, creating a new certificate requires a manager method,
-:py:func:`Certificate.objects.init() <django_ca.managers.Certificate_manager.init>`::
+:py:func:`Certificate.objects.init() <django_ca.managers.CertificateManager.init>`::
 
    >>> Certificate.objects.init(ca, csr, subject=Subject('/CN=example.com'))
    <Certificate: example.com>
