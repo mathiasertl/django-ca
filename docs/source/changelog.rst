@@ -20,6 +20,7 @@ ChangeLog
   :py:class:`~django_ca.extensions.SubjectAlternativeName`.
 * Test for certificates that are not yet valid.
 * Freeze time in some test cases to avoid test failures when certificates eventually expire.
+* Test some documentation pages, to make sure they are actually correct.
 
 .. _changelog-1.10.0:
 
