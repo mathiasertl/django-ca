@@ -95,7 +95,7 @@ class Extension(object):
             self.from_str(value)
             self._test_value()
         else:
-            raise ValueError('Value is of unsupported type %s' % type(value).__name__)
+            self.from_other(value)
         if not isinstance(self.critical, bool):
             raise ValueError('%s: Invalid critical value passed' % self.critical)
 
@@ -118,6 +118,9 @@ class Extension(object):
 
     def from_dict(self, value):
         self.value = value['value']
+
+    def from_other(self, value):
+        raise ValueError('Value is of unsupported type %s' % type(value).__name__)
 
     def _test_value(self):
         pass
@@ -195,8 +198,18 @@ class MultiValueExtension(Extension):
         if isinstance(self.value, six.string_types):
             self.value = [self.value]
 
+    def from_list(self, value):
+        self.value = value
+
     def from_str(self, value):
         self.value = [v.strip() for v in value.split(',') if v.strip()]
+
+    def from_other(self, value):
+        if isinstance(value, (list, tuple)):
+            self.critical = self.default_critical
+            self.from_list(value)
+        else:
+            super(MultiValueExtension, self).from_other(value)
 
     def __contains__(self, value):
         return value in self.value
@@ -223,53 +236,72 @@ class MultiValueExtension(Extension):
 class ListExtension(MultiValueExtension):
     """Base class for extensions with multiple ordered values.
 
-    Subclasses behave more like a list:
+    Subclasses behave more like a list, and you can also pass a list of values to the constructor:
 
-        >>> san = SubjectAlternativeName('example.com,example.net')
+        >>> san = SubjectAlternativeName(['example.com', 'example.net'])
         >>> san[0]
         'DNS:example.com'
-    """
-    def __getitem__(self, key):
-        if isinstance(key, six.integer_types):
-            return format_general_name(self.value[key])
-        else:
-            return [format_general_name(v) for v in self.value[key]]
 
-    def __setitem__(self, key):
-        pass  # TODO
+    If the passed value is a list, the critical flag will be set according the the default value
+    for this extension.
+    """
 
     def __delitem__(self, key):
         pass  # TODO
 
-    def serialize(self):
-        val = ','.join([format_general_name(v) for v in self.value])
-        if self.critical:
-            return 'critical,%s' % val
-        return val
+    def __getitem__(self, key):
+        if isinstance(key, six.integer_types):
+            return self.serialize_value(self.value[key])
+        else:
+            return [self.serialize_value(v) for v in self.value[key]]
 
-
-class AlternativeNameExtension(ListExtension):
     def __repr__(self):
-        val = ','.join([format_general_name(v) for v in self.value])
+        val = ','.join([self.serialize_value(v) for v in self.value])
         return '<%s: %r, critical=%r>' % (self.__class__.__name__, val, self.critical)
 
+    def __setitem__(self, key):
+        pass  # TODO
+
     def __str__(self):
-        val = ','.join(sorted([format_general_name(v) for v in self.value]))
+        val = ','.join(sorted([self.serialize_value(v) for v in self.value]))
         if self.critical:
             return'%s/critical' % val
         return val
 
     def from_dict(self, value):
-        self.value = [parse_general_name(v) for v in value['value']]
+        self.value = [self.parse_value(v) for v in value['value']]
 
     def from_extension(self, ext):
         self.value = list(ext.value)
 
+    def from_list(self, value):
+        self.value = [self.parse_value(n) for n in value]
+
     def from_str(self, value):
-        self.value = [parse_general_name(n) for n in shlex_split(value, ', ')]
+        self.value = [self.parse_value(n) for n in shlex_split(value, ', ')]
+
+    def parse_value(self, v):
+        return v
+
+    def serialize(self):
+        val = ','.join([self.serialize_value(v) for v in self.value])
+        if self.critical:
+            return 'critical,%s' % val
+        return val
+
+    def serialize_value(self, v):
+        return v
 
     def as_text(self):
-        return '\n'.join(['* %s' % format_general_name(v) for v in self.value])
+        return '\n'.join(['* %s' % self.serialize_value(v) for v in self.value])
+
+
+class AlternativeNameExtension(ListExtension):
+    def parse_value(self, v):
+        return parse_general_name(v)
+
+    def serialize_value(self, v):
+        return format_general_name(v)
 
 
 class KeyIdExtension(Extension):
