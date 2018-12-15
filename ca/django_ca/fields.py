@@ -85,4 +85,7 @@ class MultiValueExtensionField(forms.MultiValueField):
             *args, **kwargs)
 
     def compress(self, values):
-        return self.extension((values[1], values[0], ))
+        return self.extension({
+            'critical': values[1],
+            'value': values[0],
+        })

@@ -43,14 +43,6 @@ class Extension(object):
         >>> KeyUsage('critical,keyAgreement,keyEncipherment')
         <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=True>
 
-    It also accepts a ``list``/``tuple`` of two elements, the first being the "critical" flag, the second
-    being a value (e.g. from a MultiValueField from a form)::
-
-        >>> KeyUsage((False, ['keyAgreement', 'keyEncipherment']))
-        <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=False>
-        >>> KeyUsage((True, ['keyAgreement', 'keyEncipherment']))
-        <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=True>
-
     Or it can be a ``dict`` as used by the :ref:`CA_PROFILES <settings-ca-profiles>` setting::
 
         >>> KeyUsage({'value': ['keyAgreement', 'keyEncipherment']})
@@ -88,10 +80,6 @@ class Extension(object):
         if isinstance(value, x509.extensions.Extension):  # e.g. from a cert object
             self.critical = value.critical
             self.from_extension(value)
-        elif isinstance(value, (list, tuple)):  # e.g. from a form
-            self.critical, value = value
-            self.from_list(value)
-            self._test_value()
         elif isinstance(value, dict):  # e.g. from settings
             self.critical = value.get('critical', self.default_critical)
             self.from_dict(value)
@@ -130,9 +118,6 @@ class Extension(object):
 
     def from_dict(self, value):
         self.value = value['value']
-
-    def from_list(self, value):
-        self.value = value
 
     def _test_value(self):
         pass
@@ -184,7 +169,7 @@ class MultiValueExtension(Extension):
 
     Instances of this class have a ``len()`` and can be used with the ``in`` operator::
 
-        >>> ku = KeyUsage((False, ['keyAgreement', 'keyEncipherment']))
+        >>> ku = KeyUsage({'value': ['keyAgreement', 'keyEncipherment']})
         >>> 'keyAgreement' in ku
         True
         >>> len(ku)
@@ -275,13 +260,10 @@ class AlternativeNameExtension(ListExtension):
         return val
 
     def from_dict(self, value):
-        self.value = [parse_general_name(v) for v in value]
+        self.value = [parse_general_name(v) for v in value['value']]
 
     def from_extension(self, ext):
         self.value = list(ext.value)
-
-    def from_list(self, value):
-        self.value = [parse_general_name(n) for n in value]
 
     def from_str(self, value):
         self.value = [parse_general_name(n) for n in shlex_split(value, ', ')]
@@ -363,9 +345,6 @@ class BasicConstraints(Extension):
     def from_dict(self, value):
         self.ca = bool(value.get('ca', False))
         self.pathlen = value.get('pathlen', None)
-
-    def from_list(self, value):
-        self.ca, self.pathlen = value
 
     def from_str(self, value):
         value = value.strip().lower()

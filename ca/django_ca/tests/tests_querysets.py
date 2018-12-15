@@ -48,7 +48,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         self.assertEqual(ca.subject, Subject({'CN': 'ca.example.com'}))
 
         # verify X509 properties
-        self.assertEqual(ca.basic_constraints, BasicConstraints((True, (True, 0))))
+        self.assertEqual(ca.basic_constraints, BasicConstraints('critical,CA:TRUE,pathlen=0'))
         self.assertEqual(ca.key_usage, KeyUsage('critical,cRLSign,keyCertSign'))
         self.assertIsNone(ca.subject_alternative_name, None)
 
@@ -67,9 +67,9 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         self.assertEqual(ca.basic_constraints, BasicConstraints('critical,CA:TRUE'))
 
         ca = CertificateAuthority.objects.init(pathlen=0, name='2', **kwargs)
-        self.assertEqual(ca.basic_constraints, BasicConstraints((True, (True, 0))))
+        self.assertEqual(ca.basic_constraints, BasicConstraints('critical,CA:TRUE,pathlen=0'))
         ca = CertificateAuthority.objects.init(pathlen=2, name='3', **kwargs)
-        self.assertEqual(ca.basic_constraints, BasicConstraints((True, (True, 2))))
+        self.assertEqual(ca.basic_constraints, BasicConstraints('critical,CA:TRUE,pathlen=2'))
 
     @override_tmpcadir()
     def test_parent(self):

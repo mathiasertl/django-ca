@@ -158,24 +158,24 @@ class CertificateTests(DjangoCAWithCertTestCase):
 
         self.assertEqual(
             self.full.subject_alternative_name,
-            SubjectAlternativeName((False, [
+            SubjectAlternativeName({'value': [
                 'DNS:all.example.com',
                 'dirname:/C=AT/CN=example.com',
                 'email:user@example.com',
                 'IP:fd00::1',
-            ])))
+            ]}))
 
     def test_basicConstraints(self):
-        self.assertEqual(self.ca.basic_constraints, BasicConstraints((True, (True, 1))))
-        self.assertEqual(self.pwd_ca.basic_constraints, BasicConstraints((True, (True, None))))
-        self.assertEqual(self.ecc_ca.basic_constraints, BasicConstraints((True, (True, 0))))
+        self.assertEqual(self.ca.basic_constraints, BasicConstraints('critical,CA:TRUE,pathlen=1'))
+        self.assertEqual(self.pwd_ca.basic_constraints, BasicConstraints('critical,CA:TRUE'))
+        self.assertEqual(self.ecc_ca.basic_constraints, BasicConstraints('critical,CA:TRUE,pathlen=0'))
 
-        self.assertEqual(self.cert.basic_constraints, BasicConstraints((True, (False, None))))
-        self.assertEqual(self.cert_all.basic_constraints, BasicConstraints((True, (False, None))))
+        self.assertEqual(self.cert.basic_constraints, BasicConstraints('critical,CA:FALSE'))
+        self.assertEqual(self.cert_all.basic_constraints, BasicConstraints('critical,CA:FALSE'))
         self.assertIsNone(self.cert_no_ext.basic_constraints)
-        self.assertEqual(self.cert2.basic_constraints, BasicConstraints((True, (False, None))))
+        self.assertEqual(self.cert2.basic_constraints, BasicConstraints('critical,CA:FALSE'))
         # accidentally used cert2 in cn/san
-        self.assertEqual(self.cert3.basic_constraints, BasicConstraints((True, (False, None))))
+        self.assertEqual(self.cert3.basic_constraints, BasicConstraints('critical,CA:FALSE'))
 
     def test_issuerAltName(self):
         self.assertIsNone(self.ca.issuer_alternative_name)
