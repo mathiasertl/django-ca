@@ -87,8 +87,10 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
         name : str
             The name of the CA. This is a human-readable string and is used for administrative purposes only.
-        subject : :py:class:`~django_ca.subject.Subject`
-            Subject string, e.g. ``Subject("/CN=example.com")``.
+        subject : dict or str or :py:class:`~django_ca.subject.Subject`
+            Subject string, e.g. ``"/CN=example.com"`` or ``Subject("/CN=example.com")``. The value is
+            actually passed to :py:class:`~django_ca.subject.Subject` if it is not already an instance of that
+            class.
         expires : datetime, optional
             Datetime for when this certificate authority will expire, defaults to
             :ref:`CA_DEFAULT_EXPIRES <settings-ca-default-expires>`.
@@ -157,6 +159,8 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         algorithm = parse_hash_algorithm(algorithm)
 
         # Normalize extensions to django_ca.extensions.Extension subclasses
+        if not isinstance(subject, Subject):
+            subject = Subject(subject)
         if not isinstance(issuer_alt_name, IssuerAlternativeName):
             issuer_alt_name = IssuerAlternativeName(issuer_alt_name)
 
@@ -275,9 +279,11 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             Hash algorithm used when signing the certificate, passed to
             :py:func:`~django_ca.utils.parse_hash_algorithm`.  The default is the value of the
             :ref:`CA_DIGEST_ALGORITHM <settings-ca-digest-algorithm>` setting.
-        subject : :py:class:`~django_ca.subject.Subject`, optional
-            The Subject to use in the certificate. If this value is not passed or if the value does not
-            contain a CommonName, the first value of the ``subjectAltName`` parameter is used as CommonName.
+        subject : dict or str or :py:class:`~django_ca.subject.Subject`
+            Subject string, e.g. ``"/CN=example.com"`` or ``Subject("/CN=example.com")``.
+            The value is actually passed to :py:class:`~django_ca.subject.Subject` if it is not already an
+            instance of that class. If this value is not passed or if the value does not contain a CommonName,
+            the first value of the ``subjectAltName`` parameter is used as CommonName.
         cn_in_san : bool, optional
             Wether the CommonName should also be included as subjectAlternativeName. The default is
             ``True``, but the parameter is ignored if no CommonName is given. This is typically set
@@ -306,7 +312,9 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             The signed certificate.
         """
         if subject is None:
-            subject = Subject()
+            subject = Subject()  # we need a subject instance so we can possibly add the CN
+        elif not isinstance(subject, Subject):
+            subject = Subject(subject)
 
         if 'CN' not in subject and not subjectAltName:
             raise ValueError("Must name at least a CN or a subjectAltName.")

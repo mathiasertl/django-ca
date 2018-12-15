@@ -35,9 +35,8 @@ authorities. The method has many options but is designed to provide defaults
 that work in most cases::
 
    >>> from django_ca.models import CertificateAuthority
-   >>> from django_ca.subject import Subject
    >>> ca = CertificateAuthority.objects.init(
-   ...   name='ca', subject=Subject('/CN=ca.example.com'),
+   ...   name='ca', subject='/CN=ca.example.com',
    ...   pathlen=1  # so we can create one level of intermediate CAs
    ... )
    >>> ca
@@ -47,7 +46,7 @@ This CA will contain all properties and X509 extensions to be a fully
 functioning CA. To create an intermediate CA, simply pass the parent::
 
    >>> child = CertificateAuthority.objects.init(
-   ...   name='child', subject=Subject('/CN=child.example.com'),
+   ...   name='child', subject='/CN=child.example.com',
    ...   parent=ca)
    >>> child.parent
    <CertificateAuthority: ca>
@@ -58,7 +57,7 @@ Or to create a CA with all extensions that live CAs have, you can pass many more
 parameters::
 
    >>> full = CertificateAuthority.objects.init(
-   ...   name='child', subject=Subject('/CN=full.example.com'),
+   ...   name='child', subject='/CN=full.example.com',
    ...   parent=ca,  # some extensions are only valid for intermediate CAs
    ...   issuer_url='http://full.example.com/full.der',
    ...   # this CA can only sign for *.com domains:
@@ -78,7 +77,7 @@ parameters::
 There are some more parameters to configure how the CA will be signed::
 
    >>> CertificateAuthority.objects.init(
-   ...   name='props', subject=Subject('/CN=child.example.com'),
+   ...   name='props', subject='/CN=child.example.com',
    ...   algorithm='SHA256',  # sha512 would be the default
    ...   pathlen=3,  # three levels of intermediate CAs allowed,
    ...   password=b'foobar',  # encrypt private key with this password
@@ -110,9 +109,7 @@ Manager methods
 using ``Certificate.objects``, e.g.::
 
    >>> from django_ca.models import Certificate
-   >>> Certificate.objects.init(
-   ...   csr=csr, ca=ca,
-   ...   subject=Subject('/CN=example.com'))
+   >>> Certificate.objects.init(csr=csr, ca=ca, subject='/CN=example.com')
    <Certificate: example.com>
 
 .. autoclass:: django_ca.managers.CertificateManager
