@@ -7,10 +7,10 @@
 # License, or (at your option) any later version.
 #
 # django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License along with django-ca.  If not,
+# You should have received a copy of the GNU General Public License along with django-ca. If not,
 # see <http://www.gnu.org/licenses/>.
 
 import os
@@ -96,7 +96,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             :ref:`CA_DEFAULT_EXPIRES <settings-ca-default-expires>`.
         algorithm : str or :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
             Hash algorithm used when signing the certificate, passed to
-            :py:func:`~django_ca.utils.parse_hash_algorithm`.  The default is the value of the
+            :py:func:`~django_ca.utils.parse_hash_algorithm`. The default is the value of the
             :ref:`CA_DIGEST_ALGORITHM <settings-ca-digest-algorithm>` setting.
         parent : :py:class:`~django_ca.models.CertificateAuthority`, optional
             Parent certificate authority for the new CA. Passing this value makes the CA an intermediate
@@ -277,7 +277,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             Datetime for when this certificate will expire, defaults to the ``CA_DEFAULT_EXPIRES`` setting.
         algorithm : str or :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
             Hash algorithm used when signing the certificate, passed to
-            :py:func:`~django_ca.utils.parse_hash_algorithm`.  The default is the value of the
+            :py:func:`~django_ca.utils.parse_hash_algorithm`. The default is the value of the
             :ref:`CA_DIGEST_ALGORITHM <settings-ca-digest-algorithm>` setting.
         subject : dict or str or :py:class:`~django_ca.subject.Subject`
             Subject string, e.g. ``"/CN=example.com"`` or ``Subject("/CN=example.com")``.

@@ -15,10 +15,10 @@
 
 import doctest
 
+from ..subject import Subject
 from .base import DjangoCAWithCertTestCase
 from .base import override_settings
 from .base import override_tmpcadir
-from ..subject import Subject
 
 base = '../../../docs/source'
 
