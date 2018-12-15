@@ -44,7 +44,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
             '--key-type', choices=['RSA', 'DSA', 'ECC'], default='RSA',
             help="Key type for the CA private key (default: %(default)s).")
         parser.add_argument(
-            '--key-size', type=int, action=KeySizeAction, default=4096,
+            '--key-size', type=int, action=KeySizeAction, default=ca_settings.CA_DEFAULT_KEY_SIZE,
             metavar='{2048,4096,8192,...}',
             help="Size of the key to generate (default: %(default)s).")
 

@@ -39,6 +39,14 @@ CA_DEFAULT_EXPIRES
 
    The default time, in days, that any signed certificate expires.
 
+
+.. _settings-ca-default-key-size:
+
+CA_DEFAULT_KEY_SIZE
+   Default: ``4096``
+
+   The default key size for newly created CAs (not used for CAs based on ECC).
+
 .. _settings-ca-default-profile:
 
 CA_DEFAULT_PROFILE

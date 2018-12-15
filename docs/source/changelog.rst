@@ -18,6 +18,8 @@ ChangeLog
 * Add the :py:class:`~django_ca.extensions.BasicConstraints`,
   :py:class:`~django_ca.extensions.IssuerAlternativeName` and
   :py:class:`~django_ca.extensions.SubjectAlternativeName`.
+* New setting :ref:`CA_DEFAULT_KEY_SIZE <settings-ca-default-key-size>` to configure the default key size
+  for new CAs.
 * Test for certificates that are not yet valid.
 * Freeze time in some test cases to avoid test failures when certificates eventually expire.
 * Test some documentation pages, to make sure they are actually correct.
@@ -50,7 +52,7 @@ Python API
   :py:class:`~django_ca.models.Certificate`, as well :py:class:`~django_ca.subject.Subject` and
   as all new Python code.
 * The parameters for functions in :py:class:`~django_ca.managers.CertificateManager` and
-  :py:class:`~django_ca.managers.CertificateAuthorityManager` were cleaned up for consistent naming and so
+  :py:func:`~django_ca.managers.CertificateAuthorityManager.init` were cleaned up for consistent naming and so
   that a user no longer needs to use classes from the cryptography libary. Parameters are now optional if
   default settings exist.
 * Variable names have been renamed to be more consistent to make the code more readable.

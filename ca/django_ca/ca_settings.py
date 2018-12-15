@@ -23,6 +23,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import ugettext_lazy as _
 
 CA_DIR = getattr(settings, 'CA_DIR', os.path.join(settings.BASE_DIR, 'files'))
+CA_DEFAULT_KEY_SIZE = getattr(settings, 'CA_DEFAULT_KEY_SIZE', 4096)
 
 CA_PROFILES = {
     'client': {
@@ -149,6 +150,9 @@ try:
     CA_DIGEST_ALGORITHM = getattr(hashes, CA_DIGEST_ALGORITHM)()
 except AttributeError:  # pragma: no cover
     raise ImproperlyConfigured('Unkown CA_DIGEST_ALGORITHM: %s' % settings.CA_DIGEST_ALGORITHM)
+
+if CA_MIN_KEY_SIZE > CA_DEFAULT_KEY_SIZE:
+    raise ImproperlyConfigured('CA_DEFAULT_KEY_SIZE cannot be lower then %s' % CA_MIN_KEY_SIZE)
 
 _CA_DEFAULT_ECC_CURVE = getattr(settings, 'CA_DEFAULT_ECC_CURVE', 'SECP256R1').strip()
 try:

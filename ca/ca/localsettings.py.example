@@ -44,6 +44,9 @@ SECRET_KEY = ''
 # The directory where your CA files are located
 #CA_DIR = os.path.join(BASE_DIR, 'files')
 
+# Default key size for new CAs
+#CA_DEFAULT_KEY_SIZE=4096
+
 # Do not provide a generic CRL view.
 #CA_PROVIDE_GENERIC_CRL = False
 
