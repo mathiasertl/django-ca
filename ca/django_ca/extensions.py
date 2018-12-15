@@ -297,8 +297,19 @@ class ListExtension(MultiValueExtension):
 
 
 class AlternativeNameExtension(ListExtension):
+    """Base class for extensions that contain a list of general names.
+
+    This class also allows you to pass :py:class:`~cg:cryptography.x509.GeneralName` instances::
+
+        >>> SubjectAlternativeName([x509.DNSName('example.com')])
+        <SubjectAlternativeName: 'DNS:example.com', critical=False>
+
+    """
     def parse_value(self, v):
-        return parse_general_name(v)
+        if isinstance(v, x509.GeneralName):
+            return v
+        else:
+            return parse_general_name(v)
 
     def serialize_value(self, v):
         return format_general_name(v)
