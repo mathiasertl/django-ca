@@ -295,12 +295,15 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             A list of values for the subjectAltName extension. Values are passed to
             :py:func:`~django_ca.utils.parse_general_name`, see function documentation for how this value is
             parsed.
-        key_usage : :py:class:`~django_ca.extensions.KeyUsage`, optional
-            Value for the ``keyUsage`` X509 extension.
-        extended_key_usage : :py:class:`~django_ca.extensions.ExtendedKeyUsage`, optional
-            Value for the ``extendedKeyUsage`` X509 extension.
-        tls_feature : :py:class:`~django_ca.extensions.TLSFeature`, optional
-            Value for the ``TLSFeature`` X509 extension.
+        key_usage : str or dict or :py:class:`~django_ca.extensions.KeyUsage`, optional
+            Value for the ``keyUsage`` X509 extension. The value is passed to
+            :py:class:`~django_ca.extensions.KeyUsage` if not already an instance of that class.
+        extended_key_usage : str or dict or :py:class:`~django_ca.extensions.ExtendedKeyUsage`, optional
+            Value for the ``extendedKeyUsage`` X509 extension. The value is passed to
+            :py:class:`~django_ca.extensions.ExtendedKeyUsage` if not already an instance of that class.
+        tls_feature : str or dict or :py:class:`~django_ca.extensions.TLSFeature`, optional
+            Value for the ``TLSFeature`` X509 extension. The value is passed to
+            :py:class:`~django_ca.extensions.TLSFeature` if not already an instance of that class.
         password : bytes, optional
             Password used to load the private key of the certificate authority. If not passed, the private key
             is assumed to be unencrypted.
