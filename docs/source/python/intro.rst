@@ -45,7 +45,7 @@ creates a minimal CA::
    >>> from django_ca.subject import Subject
    >>> from datetime import datetime
    >>> CertificateAuthority.objects.init(
-   ...     name='ca-two', subject=Subject('/CN=ca.example.com'), key_size=2048)
+   ...     name='ca-two', subject=Subject('/CN=ca.example.com'))
    <CertificateAuthority: ca-two>
 
 Please see :ref:`models-certificate-authority` for a more detailed description on how to handle CAs.

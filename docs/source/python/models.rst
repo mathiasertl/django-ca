@@ -36,8 +36,8 @@ that work in most cases::
 
    >>> from django_ca.models import CertificateAuthority
    >>> from django_ca.subject import Subject
-   >>> ca = CertificateAuthority.objects.init(name='ca', subject=Subject('/CN=ca.example.com'),
-   ...   key_size=2048, 
+   >>> ca = CertificateAuthority.objects.init(
+   ...   name='ca', subject=Subject('/CN=ca.example.com'),
    ...   pathlen=1  # so we can create one level of intermediate CAs
    ... )
    >>> ca
@@ -47,7 +47,7 @@ This CA will contain all properties and X509 extensions to be a fully
 functioning CA. To create an intermediate CA, simply pass the parent::
 
    >>> child = CertificateAuthority.objects.init(
-   ...   name='child', subject=Subject('/CN=child.example.com'), key_size=2048,
+   ...   name='child', subject=Subject('/CN=child.example.com'),
    ...   parent=ca)
    >>> child.parent
    <CertificateAuthority: ca>
@@ -58,7 +58,7 @@ Or to create a CA with all extensions that live CAs have, you can pass many more
 parameters::
 
    >>> full = CertificateAuthority.objects.init(
-   ...   name='child', subject=Subject('/CN=full.example.com'), key_size=2048,
+   ...   name='child', subject=Subject('/CN=full.example.com'),
    ...   parent=ca,  # some extensions are only valid for intermediate CAs
    ...   issuer_url='http://full.example.com/full.der',
    ...   # this CA can only sign for *.com domains:
@@ -82,6 +82,7 @@ There are some more parameters to configure how the CA will be signed::
    ...   algorithm='SHA256',  # sha512 would be the default
    ...   pathlen=3,  # three levels of intermediate CAs allowed,
    ...   password=b'foobar',  # encrypt private key with this password
+   ...   key_size=4096,  # key size for RSA keys - unused in this example
    ...   key_type='ECC',  # create an ECC private key
    ...   ecc_curve='SECP256R1'
    ... )

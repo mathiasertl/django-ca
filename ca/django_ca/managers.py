@@ -131,8 +131,8 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             The type of private key to generate, must be one of ``"RSA"``, ``"DSA"`` or ``"ECC"``, with
             ``"RSA"`` being the default.
         key_size : int, optional
-            Integer specifying the key size, must be a power of two (e.g. 2048, 4096, ...) unused if
-            ``key_type="ECC"`` but required otherwise.
+            Integer specifying the key size, must be a power of two (e.g. 2048, 4096, ...). Defaults to
+            the :ref:`CA_DEFAULT_KEY_SIZE <settings-ca-default-key-size>`, unused if ``key_type="ECC"``.
 
         Raises
         ------
@@ -145,6 +145,9 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         # NOTE: Already verified by KeySizeAction, so these checks are only for when the Python API is used
         #       directly.
         if key_type != 'ECC':
+            if key_size is None:
+                key_size = ca_settings.CA_DEFAULT_KEY_SIZE
+
             if not is_power2(key_size):
                 raise ValueError("%s: Key size must be a power of two" % key_size)
             elif key_size < ca_settings.CA_MIN_KEY_SIZE:

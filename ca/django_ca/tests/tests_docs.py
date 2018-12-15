@@ -16,12 +16,14 @@
 import doctest
 
 from .base import DjangoCAWithCertTestCase
+from .base import override_settings
 from .base import override_tmpcadir
 from ..subject import Subject
 
 base = '../../../docs/source'
 
 
+@override_settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=1024)
 class DocumentationTestCase(DjangoCAWithCertTestCase):
     def get_globs(self):
         return {
@@ -37,7 +39,7 @@ class DocumentationTestCase(DjangoCAWithCertTestCase):
         doctest.testfile('%s/python/intro.rst' % base, globs=self.get_globs())
 
     @override_tmpcadir()
-    def test_python_intro(self):
+    def test_python_models(self):
         globs = self.get_globs()
         globs['Subject'] = Subject
         doctest.testfile('%s/python/models.rst' % base, globs=globs)
