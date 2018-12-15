@@ -15,7 +15,6 @@
 
 import doctest
 
-from ..subject import Subject
 from .base import DjangoCAWithCertTestCase
 from .base import override_settings
 from .base import override_tmpcadir
@@ -40,6 +39,4 @@ class DocumentationTestCase(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_python_models(self):
-        globs = self.get_globs()
-        globs['Subject'] = Subject
-        doctest.testfile('%s/python/models.rst' % base, globs=globs)
+        doctest.testfile('%s/python/models.rst' % base, globs=self.get_globs())
