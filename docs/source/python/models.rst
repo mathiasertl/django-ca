@@ -89,7 +89,7 @@ There are some more parameters to configure how the CA will be signed::
 
 Here are all parameters for creating CAs:
 
-.. autofunction:: django_ca.managers.CertificateAuthorityManager.init
+.. automethod:: django_ca.managers.CertificateAuthorityManager.init
 
 .. _models-certificate:
 

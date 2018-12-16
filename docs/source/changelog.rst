@@ -52,7 +52,7 @@ Python API
   :py:class:`~django_ca.models.Certificate`, as well :py:class:`~django_ca.subject.Subject` and
   as all new Python code.
 * The parameters for functions in :py:class:`~django_ca.managers.CertificateManager` and
-  :py:func:`~django_ca.managers.CertificateAuthorityManager.init` were cleaned up for consistent naming and so
+  :py:meth:`~django_ca.managers.CertificateAuthorityManager.init` were cleaned up for consistent naming and so
   that a user no longer needs to use classes from the cryptography libary. Parameters are now optional if
   default settings exist.
 * Variable names have been renamed to be more consistent to make the code more readable.
