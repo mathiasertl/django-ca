@@ -183,9 +183,18 @@ class MultiValueExtension(Extension):
     """
     KNOWN_VALUES = set()
 
+    def __contains__(self, value):
+        return self.parse_value(value) in self.value
+
     def __eq__(self, other):
         return isinstance(other, type(self)) and self.critical == other.critical \
             and set(self.value) == set(other.value)
+
+    def __len__(self):
+        return len(self.value)
+
+    def __repr__(self):
+        return '<%s: %r, critical=%r>' % (self.__class__.__name__, sorted(self.value), self.critical)
 
     def __str__(self):
         val = ','.join(sorted(self.value))
@@ -213,12 +222,6 @@ class MultiValueExtension(Extension):
 
     def parse_value(self, v):
         return v
-
-    def __contains__(self, value):
-        return self.parse_value(value) in self.value
-
-    def __len__(self):
-        return len(self.value)
 
     def _test_value(self):
         if self.KNOWN_VALUES:
