@@ -29,9 +29,9 @@ from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
-from ..extensions import ListExtension
 from ..extensions import KeyUsage
 from ..extensions import KnownValuesExtension
+from ..extensions import ListExtension
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
 
