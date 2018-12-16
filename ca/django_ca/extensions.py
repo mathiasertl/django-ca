@@ -167,82 +167,7 @@ class Extension(object):
         return {'extension': self.extension_type, 'critical': self.critical}
 
 
-class MultiValueExtension(Extension):
-    """A generic base class for extensions that have multiple values.
-
-    Instances of this class have a ``len()`` and can be used with the ``in`` operator::
-
-        >>> ku = KeyUsage({'value': ['keyAgreement', 'keyEncipherment']})
-        >>> 'keyAgreement' in ku
-        True
-        >>> len(ku)
-        2
-
-    Known values are set in the ``KNOWN_VALUES`` attribute for each class. The constructor will raise
-    ``ValueError`` if an unknown value is passed.
-    """
-    KNOWN_VALUES = set()
-
-    def __contains__(self, value):
-        return self.parse_value(value) in self.value
-
-    def __eq__(self, other):
-        return isinstance(other, type(self)) and self.critical == other.critical \
-            and set(self.value) == set(other.value)
-
-    def __len__(self):
-        return len(self.value)
-
-    def __repr__(self):
-        return '<%s: %r, critical=%r>' % (self.__class__.__name__, sorted(self.value), self.critical)
-
-    def __str__(self):
-        val = ','.join(sorted(self.value))
-        if self.critical:
-            return'%s/critical' % val
-        return val
-
-    def from_dict(self, value):
-        self.value = value['value']
-        if isinstance(self.value, six.string_types):
-            self.value = [self.value]
-
-    def from_list(self, value):
-        self.value = value
-
-    def from_str(self, value):
-        self.value = [v.strip() for v in value.split(',') if v.strip()]
-
-    def from_other(self, value):
-        if isinstance(value, (list, tuple)):
-            self.critical = self.default_critical
-            self.from_list(value)
-        else:
-            super(MultiValueExtension, self).from_other(value)
-
-    def parse_value(self, v):
-        return v
-
-    def _test_value(self):
-        if self.KNOWN_VALUES:
-            diff = set(self.value) - self.KNOWN_VALUES
-            if diff:
-                raise ValueError('Unknown value(s): %s' % ', '.join(sorted(diff)))
-
-    def serialize(self):
-        val = ','.join(self.value)
-        if self.critical:
-            return 'critical,%s' % val
-        return val
-
-    def serialize_value(self, v):
-        return v
-
-    def as_text(self):
-        return '\n'.join(['* %s' % v for v in sorted(self.value)])
-
-
-class ListExtension(MultiValueExtension):
+class ListExtension(Extension):
     """Base class for extensions with multiple ordered values.
 
     Subclasses behave more like a list, and you can also pass a list of values to the constructor:
@@ -255,8 +180,14 @@ class ListExtension(MultiValueExtension):
     for this extension.
     """
 
+    def __contains__(self, value):
+        return self.parse_value(value) in self.value
+
     def __delitem__(self, key):
         pass  # TODO
+
+    def __eq__(self, other):
+        return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
 
     def __getitem__(self, key):
         if isinstance(key, six.integer_types):
@@ -264,21 +195,25 @@ class ListExtension(MultiValueExtension):
         else:
             return [self.serialize_value(v) for v in self.value[key]]
 
+    def __len__(self):
+        return len(self.value)
+
     def __repr__(self):
-        val = ','.join([self.serialize_value(v) for v in self.value])
+        val = [self.serialize_value(v) for v in self.value]
         return '<%s: %r, critical=%r>' % (self.__class__.__name__, val, self.critical)
 
     def __setitem__(self, key):
         pass  # TODO
 
     def __str__(self):
-        val = ','.join(sorted([self.serialize_value(v) for v in self.value]))
+        val = ','.join([self.serialize_value(v) for v in self.value])
         if self.critical:
             return'%s/critical' % val
         return val
 
     def append(self, value):
         self.value.append(self.parse_value(value))
+        self._test_value()
 
     def clear(self):
         self.value.clear()
@@ -287,7 +222,11 @@ class ListExtension(MultiValueExtension):
         self.value.count(self.parse_value(value))
 
     def from_dict(self, value):
-        self.value = [self.parse_value(v) for v in value['value']]
+        value = value['value']
+        if isinstance(value, six.string_types):
+            value = [value]
+
+        self.value = [self.parse_value(v) for v in value]
 
     def from_extension(self, ext):
         self.value = list(ext.value)
@@ -295,11 +234,22 @@ class ListExtension(MultiValueExtension):
     def from_list(self, value):
         self.value = [self.parse_value(n) for n in value]
 
+    def from_other(self, value):
+        if isinstance(value, (list, tuple)):
+            self.critical = self.default_critical
+            self.from_list(value)
+        else:
+            super(ListExtension, self).from_other(value)
+
     def from_str(self, value):
         self.value = [self.parse_value(n) for n in shlex_split(value, ', ')]
 
     def extend(self, iterable):
         self.value.extend([self.parse_value(n) for n in iterable])
+        self._test_value()
+
+    def parse_value(self, v):
+        return v
 
     def pop(self, index=-1):
         self.serialize_value(self.value.pop(index=index))
@@ -313,8 +263,32 @@ class ListExtension(MultiValueExtension):
             return 'critical,%s' % val
         return val
 
+    def serialize_value(self, v):
+        return v
+
     def as_text(self):
         return '\n'.join(['* %s' % self.serialize_value(v) for v in self.value])
+
+
+class KnownValuesExtension(ListExtension):
+    """A generic base class for extensions with multiple values with a set of pre-defined valid values.
+
+    This base class is for extensions where we *know* what potential values an extension can have. For
+    example, the :py:class:`~django_ca.extensions.KeyUsage` extension has only a certain set of valid values::
+
+        >>> ku = KeyUsage(['keyAgreement', 'keyEncipherment'])
+        >>> ku = KeyUsage(['wrong-value'])
+
+    Known values are set in the ``KNOWN_VALUES`` attribute for each class. The constructor will raise
+    ``ValueError`` if an unknown value is passed.
+    """
+    KNOWN_VALUES = set()
+
+    def _test_value(self):
+        if self.KNOWN_VALUES:
+            diff = set(self.value) - self.KNOWN_VALUES
+            if diff:
+                raise ValueError('Unknown value(s): %s' % ', '.join(sorted(diff)))
 
 
 class AlternativeNameExtension(ListExtension):
@@ -324,7 +298,7 @@ class AlternativeNameExtension(ListExtension):
 
         >>> san = SubjectAlternativeName([x509.DNSName('example.com')])
         >>> san
-        <SubjectAlternativeName: 'DNS:example.com', critical=False>
+        <SubjectAlternativeName: ['DNS:example.com'], critical=False>
         >>> 'example.com' in san, 'DNS:example.com' in san, x509.DNSName('example.com') in san
         (True, True, True)
 
@@ -450,7 +424,7 @@ class IssuerAlternativeName(AlternativeNameExtension):
     This extension is usually marked as non-critical.
 
     >>> IssuerAlternativeName('https://example.com')
-    <IssuerAlternativeName: 'URI:https://example.com', critical=False>
+    <IssuerAlternativeName: ['URI:https://example.com'], critical=False>
 
     .. seealso::
 
@@ -463,7 +437,7 @@ class IssuerAlternativeName(AlternativeNameExtension):
         return x509.IssuerAlternativeName(self.value)
 
 
-class KeyUsage(MultiValueExtension):
+class KeyUsage(KnownValuesExtension):
     """Class representing a KeyUsage extension, which defines the purpose of a certificate.
 
     This extension is usually marked as critical and RFC5280 defines that confirming CAs SHOULD mark it as
@@ -531,7 +505,7 @@ class KeyUsage(MultiValueExtension):
         return x509.KeyUsage(**kwargs)
 
 
-class ExtendedKeyUsage(MultiValueExtension):
+class ExtendedKeyUsage(KnownValuesExtension):
     """Class representing a ExtendedKeyUsage extension."""
 
     oid = ExtensionOID.EXTENDED_KEY_USAGE
@@ -574,7 +548,7 @@ class SubjectAlternativeName(AlternativeNameExtension):
     This extension is usually marked as non-critical.
 
     >>> SubjectAlternativeName('example.com')
-    <SubjectAlternativeName: 'DNS:example.com', critical=False>
+    <SubjectAlternativeName: ['DNS:example.com'], critical=False>
 
     .. seealso::
 
@@ -596,7 +570,7 @@ class SubjectKeyIdentifier(KeyIdExtension):
         self.value = ext.value.digest
 
 
-class TLSFeature(MultiValueExtension):
+class TLSFeature(KnownValuesExtension):
     """Class representing a TLSFeature extension."""
 
     oid = ExtensionOID.TLS_FEATURE

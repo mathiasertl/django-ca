@@ -30,7 +30,7 @@ from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
 from ..extensions import KeyUsage
-from ..extensions import MultiValueExtension
+from ..extensions import KnownValuesExtension
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
 
@@ -100,11 +100,11 @@ class ExtensionTestCase(TestCase):
             ext.name
 
 
-class MultiValueExtensionTestCase(TestCase):
+class KnownValuesExtensionTestCase(TestCase):
     def setUp(self):
         self.known = {'foo', 'bar', }
 
-        class TestExtension(MultiValueExtension):
+        class TestExtension(KnownValuesExtension):
             KNOWN_VALUES = self.known
 
         self.cls = TestExtension
@@ -147,18 +147,19 @@ class MultiValueExtensionTestCase(TestCase):
 
         # as_text
         self.assertEqual(ext.as_text(), '* foo')
-        self.assertEqual(self.cls('foo,bar').as_text(), '* bar\n* foo')
+        self.assertEqual(self.cls('foo,bar').as_text(), '* foo\n* bar')
         self.assertEqual(self.cls('bar,foo').as_text(), '* bar\n* foo')
         self.assertEqual(self.cls('bar').as_text(), '* bar')
         self.assertEqual(self.cls('critical,bar').as_text(), '* bar')
 
         # str()
         self.assertEqual(str(ext), 'foo')
-        self.assertEqual(str(self.cls('foo,bar')), 'bar,foo')
+        self.assertEqual(str(self.cls('foo,bar')), 'foo,bar')
         self.assertEqual(str(self.cls('bar,foo')), 'bar,foo')
         self.assertEqual(str(self.cls('bar')), 'bar')
         self.assertEqual(str(self.cls('critical,bar')), 'bar/critical')
-        self.assertEqual(str(self.cls('critical,foo,bar')), 'bar,foo/critical')
+        self.assertEqual(str(self.cls('critical,foo,bar')), 'foo,bar/critical')
+        self.assertEqual(str(self.cls('critical,bar,foo')), 'bar,foo/critical')
 
 
 class AuthorityKeyIdentifierTestCase(TestCase):

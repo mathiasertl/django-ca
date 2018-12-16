@@ -47,7 +47,7 @@ from django_object_actions import DjangoObjectActions
 
 from . import ca_settings
 from .extensions import Extension
-from .extensions import MultiValueExtension
+from .extensions import ListExtension
 from .forms import CreateCertificateForm
 from .forms import ResignCertificateForm
 from .forms import RevokeCertificateForm
@@ -159,7 +159,7 @@ class CertificateMixin(object):
                 text = _('Critical')
                 html = '<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text)
 
-            if isinstance(value, MultiValueExtension):
+            if isinstance(value, ListExtension):
                 html += '<ul class="x509-extension-value">'
                 for val in value.value:
                     if isinstance(val, x509.GeneralName):

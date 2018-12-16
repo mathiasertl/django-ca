@@ -9,11 +9,11 @@
    :show-inheritance:
    :members:
 
-.. autoclass:: django_ca.extensions.MultiValueExtension
+.. autoclass:: django_ca.extensions.ListExtension
    :show-inheritance:
    :members:
 
-.. autoclass:: django_ca.extensions.ListExtension
+.. autoclass:: django_ca.extensions.KnownValuesExtension
    :show-inheritance:
    :members:
 
@@ -28,4 +28,4 @@ Concrete extensions
 .. automodule:: django_ca.extensions
    :show-inheritance:
    :members:
-   :exclude-members: Extension, MultiValueExtension, ListExtension, AlternativeNameExtension, KeyIdExtension
+   :exclude-members: Extension, ListExtension, KnownValuesExtension, AlternativeNameExtension, KeyIdExtension
