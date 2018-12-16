@@ -29,6 +29,7 @@ from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
+from ..extensions import ListExtension
 from ..extensions import KeyUsage
 from ..extensions import KnownValuesExtension
 from ..extensions import SubjectKeyIdentifier
@@ -93,11 +94,75 @@ class ExtensionTestCase(TestCase):
         with self.assertRaises(NotImplementedError):
             ext.for_builder()
 
+        with self.assertRaises(NotImplementedError):
+            ext.serialize()
+
         # These do not work because base class does not define an OID
         with self.assertRaises(AttributeError):
             ext.as_extension()
         with self.assertRaises(AttributeError):
             ext.name
+
+
+class ListExtensionTestCase(TestCase):
+    def test_operators(self):
+        ext = ListExtension(['foo'])
+        self.assertIn('foo', ext)
+        self.assertNotIn('bar', ext)
+
+    def test_list_funcs(self):
+        ext = ListExtension(['foo'])
+        ext.append('bar')
+        self.assertEqual(ext.value, ['foo', 'bar'])
+        self.assertEqual(ext.count('foo'), 1)
+        self.assertEqual(ext.count('bar'), 1)
+        self.assertEqual(ext.count('bla'), 0)
+
+        ext.clear()
+        self.assertEqual(ext.value, [])
+        self.assertEqual(ext.count('foo'), 0)
+
+        ext.extend(['bar', 'bla'])
+        self.assertEqual(ext.value, ['bar', 'bla'])
+        ext.extend(['foo'])
+        self.assertEqual(ext.value, ['bar', 'bla', 'foo'])
+
+        self.assertEqual(ext.pop(), 'foo')
+        self.assertEqual(ext.value, ['bar', 'bla'])
+
+        self.assertIsNone(ext.remove('bar'))
+        self.assertEqual(ext.value, ['bla'])
+
+    def test_slices(self):
+        val = ['foo', 'bar', 'bla']
+        ext = ListExtension(val)
+        self.assertEqual(ext[0], val[0])
+        self.assertEqual(ext[1], val[1])
+        self.assertEqual(ext[0:], val[0:])
+        self.assertEqual(ext[1:], val[1:])
+        self.assertEqual(ext[:1], val[:1])
+        self.assertEqual(ext[1:2], val[1:2])
+
+        ext[0] = 'test'
+        val[0] = 'test'
+        self.assertEqual(ext.value, val)
+        ext[1:2] = ['x', 'y']
+        val[1:2] = ['x', 'y']
+        self.assertEqual(ext.value, val)
+        ext[1:] = ['a', 'b']
+        val[1:] = ['a', 'b']
+        self.assertEqual(ext.value, val)
+
+        del ext[0]
+        del val[0]
+        self.assertEqual(ext.value, val)
+
+    def test_serialization(self):
+        val = ['foo', 'bar', 'bla']
+        ext = ListExtension({'value': val, 'critical': False})
+        self.assertEqual(ext, ListExtension(ext.serialize()))
+        ext = ListExtension({'value': val, 'critical': True})
+        self.assertEqual(ext, ListExtension(ext.serialize()))
 
 
 class KnownValuesExtensionTestCase(TestCase):

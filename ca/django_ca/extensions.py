@@ -170,7 +170,7 @@ class Extension(object):
 class ListExtension(Extension):
     """Base class for extensions with multiple ordered values.
 
-    Subclasses behave more like a list, and you can also pass a list of values to the constructor:
+    Subclasses behave like a list, and you can also pass a list of values to the constructor:
 
         >>> san = SubjectAlternativeName(['example.com', 'example.net'])
         >>> san[0]
@@ -184,7 +184,7 @@ class ListExtension(Extension):
         return self.parse_value(value) in self.value
 
     def __delitem__(self, key):
-        pass  # TODO
+        del self.value[key]
 
     def __eq__(self, other):
         return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
@@ -202,8 +202,11 @@ class ListExtension(Extension):
         val = [self.serialize_value(v) for v in self.value]
         return '<%s: %r, critical=%r>' % (self.__class__.__name__, val, self.critical)
 
-    def __setitem__(self, key):
-        pass  # TODO
+    def __setitem__(self, key, value):
+        if isinstance(key, six.integer_types):
+            self.value[key] = self.serialize_value(value)
+        else:
+            self.value[key] = [self.serialize_value(v) for v in value]
 
     def __str__(self):
         val = ','.join([self.serialize_value(v) for v in self.value])
@@ -219,7 +222,11 @@ class ListExtension(Extension):
         self.value.clear()
 
     def count(self, value):
-        self.value.count(self.parse_value(value))
+        return self.value.count(self.parse_value(value))
+
+    def extend(self, iterable):
+        self.value.extend([self.parse_value(n) for n in iterable])
+        self._test_value()
 
     def from_dict(self, value):
         value = value['value']
@@ -238,21 +245,18 @@ class ListExtension(Extension):
         if isinstance(value, (list, tuple)):
             self.critical = self.default_critical
             self.from_list(value)
+            self._test_value()
         else:
             super(ListExtension, self).from_other(value)
 
     def from_str(self, value):
         self.value = [self.parse_value(n) for n in shlex_split(value, ', ')]
 
-    def extend(self, iterable):
-        self.value.extend([self.parse_value(n) for n in iterable])
-        self._test_value()
-
     def parse_value(self, v):
         return v
 
     def pop(self, index=-1):
-        self.serialize_value(self.value.pop(index=index))
+        return self.serialize_value(self.value.pop(index))
 
     def remove(self, v):
         self.value.remove(self.parse_value(v))
@@ -276,8 +280,12 @@ class KnownValuesExtension(ListExtension):
     This base class is for extensions where we *know* what potential values an extension can have. For
     example, the :py:class:`~django_ca.extensions.KeyUsage` extension has only a certain set of valid values::
 
-        >>> ku = KeyUsage(['keyAgreement', 'keyEncipherment'])
-        >>> ku = KeyUsage(['wrong-value'])
+        >>> KeyUsage(['keyAgreement', 'keyEncipherment'])
+        <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=False>
+        >>> KeyUsage(['wrong-value'])
+        Traceback (most recent call last):
+            ...
+        ValueError: Unknown value(s): wrong-value
 
     Known values are set in the ``KNOWN_VALUES`` attribute for each class. The constructor will raise
     ``ValueError`` if an unknown value is passed.
@@ -285,10 +293,9 @@ class KnownValuesExtension(ListExtension):
     KNOWN_VALUES = set()
 
     def _test_value(self):
-        if self.KNOWN_VALUES:
-            diff = set(self.value) - self.KNOWN_VALUES
-            if diff:
-                raise ValueError('Unknown value(s): %s' % ', '.join(sorted(diff)))
+        diff = set(self.value) - self.KNOWN_VALUES
+        if diff:
+            raise ValueError('Unknown value(s): %s' % ', '.join(sorted(diff)))
 
 
 class AlternativeNameExtension(ListExtension):
