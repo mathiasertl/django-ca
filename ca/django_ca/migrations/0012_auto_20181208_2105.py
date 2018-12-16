@@ -20,7 +20,6 @@ def migrate_data(apps, schema_editor):
         prefix = ca_settings.CA_DIR
 
     # Move keys from CAs
-    if CertificateAuthority.objects.count() > 0:
         # Move all files to the storage
         for ca in CertificateAuthority.objects.all():
             if len(ca.private_key_path.name) > 0:
