@@ -211,8 +211,11 @@ class MultiValueExtension(Extension):
         else:
             super(MultiValueExtension, self).from_other(value)
 
+    def parse_value(self, v):
+        return v
+
     def __contains__(self, value):
-        return value in self.value
+        return self.parse_value(value) in self.value
 
     def __len__(self):
         return len(self.value)
@@ -228,6 +231,9 @@ class MultiValueExtension(Extension):
         if self.critical:
             return 'critical,%s' % val
         return val
+
+    def serialize_value(self, v):
+        return v
 
     def as_text(self):
         return '\n'.join(['* %s' % v for v in sorted(self.value)])
@@ -268,6 +274,15 @@ class ListExtension(MultiValueExtension):
             return'%s/critical' % val
         return val
 
+    def append(self, value):
+        self.value.append(self.parse_value(value))
+
+    def clear(self):
+        self.value.clear()
+
+    def count(self, value):
+        self.value.count(self.parse_value(value))
+
     def from_dict(self, value):
         self.value = [self.parse_value(v) for v in value['value']]
 
@@ -280,17 +295,20 @@ class ListExtension(MultiValueExtension):
     def from_str(self, value):
         self.value = [self.parse_value(n) for n in shlex_split(value, ', ')]
 
-    def parse_value(self, v):
-        return v
+    def extend(self, iterable):
+        self.value.extend([self.parse_value(n) for n in iterable])
+
+    def pop(self, index=-1):
+        self.serialize_value(self.value.pop(index=index))
+
+    def remove(self, v):
+        self.value.remove(self.parse_value(v))
 
     def serialize(self):
         val = ','.join([self.serialize_value(v) for v in self.value])
         if self.critical:
             return 'critical,%s' % val
         return val
-
-    def serialize_value(self, v):
-        return v
 
     def as_text(self):
         return '\n'.join(['* %s' % self.serialize_value(v) for v in self.value])
@@ -301,8 +319,11 @@ class AlternativeNameExtension(ListExtension):
 
     This class also allows you to pass :py:class:`~cg:cryptography.x509.GeneralName` instances::
 
-        >>> SubjectAlternativeName([x509.DNSName('example.com')])
+        >>> san = SubjectAlternativeName([x509.DNSName('example.com')])
+        >>> san
         <SubjectAlternativeName: 'DNS:example.com', critical=False>
+        >>> 'example.com' in san, 'DNS:example.com' in san, x509.DNSName('example.com') in san
+        (True, True, True)
 
     """
     def parse_value(self, v):
