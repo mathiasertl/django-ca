@@ -394,7 +394,7 @@ class DjangoCATestCase(TestCase):
 
     def assertPrivateKey(self, ca, password=None):
         # Backward Compatibility
-        if int(django.__version__.split('.')[0]) < 2:
+        if django.VERSION[:2] < (2, ):  # pragma: no cover - <= Django 1.11
             with default_storage.open(ca.private_key_path.name, 'rb') as f:
                 key_data = f.read()
         else:
