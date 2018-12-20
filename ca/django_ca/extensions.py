@@ -252,6 +252,9 @@ class ListExtension(Extension):
     def from_str(self, value):
         self.value = [self.parse_value(n) for n in shlex_split(value, ', ')]
 
+    def insert(self, index, value):
+        self.value.insert(index, self.parse_value(value))
+
     def parse_value(self, v):
         return v
 
