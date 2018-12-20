@@ -578,6 +578,8 @@ class NameConstraints(Extension):
 
     def __bool__(self):
         return bool(self.permitted) or bool(self.excluded)
+    if six.PY2:
+        __nonzero__ = __bool__
 
     def __eq__(self, other):
         return self.permitted == other.permitted and self.excluded == other.excluded \
