@@ -500,7 +500,9 @@ class KeyUsage(KnownValuesExtension):
 
     def from_extension(self, ext):
         self.value = []
-        for k, v in self.CRYPTOGRAPHY_MAPPING.items():
+
+        # NOTE: we sort the items here to make sure that the order of self.value is deterministic.
+        for k, v in sorted(self.CRYPTOGRAPHY_MAPPING.items()):
             try:
                 if getattr(ext.value, v):
                     self.value.append(k)
