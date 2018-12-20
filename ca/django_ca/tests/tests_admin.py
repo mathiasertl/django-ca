@@ -53,7 +53,6 @@ from ..signals import pre_issue_cert
 from ..signals import pre_revoke_cert
 from ..utils import SUBJECT_FIELDS
 from .base import DjangoCAWithCertTestCase
-from .base import DjangoCAWithChildCATestCase
 from .base import DjangoCAWithCSRTestCase
 from .base import cryptography_version
 from .base import override_settings
@@ -855,44 +854,6 @@ class CertDownloadBundleTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
         self.assertEqual(force_text(response.content),
                          '%s\n%s' % (self.cert.pub.strip(), self.ca.pub.strip()))
-        self.assertEqual(self.ca, self.cert.ca)  # just to be sure we test the right thing
-
-    def test_invalid_format(self):
-        response = self.client.get('%s?format=INVALID' % self.url)
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content, b'')
-
-        # DER is not supported for bundles
-        response = self.client.get('%s?format=DER' % self.url)
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content, b'DER/ASN.1 certificates cannot be downloaded as a bundle.')
-
-
-class CADownloadBundleTestCase(AdminTestMixin, DjangoCAWithChildCATestCase):
-    def get_url(self, ca):
-        return reverse('admin:django_ca_certificateauthority_download_bundle', kwargs={'pk': ca.pk})
-
-    @property
-    def url(self):
-        return self.get_url(ca=self.ca)
-
-    def test_root(self):
-        filename = 'ca_example_com_bundle.pem'
-        response = self.client.get('%s?format=PEM' % self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response['Content-Type'], 'application/pkix-cert')
-        self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
-        self.assertEqual(force_text(response.content), self.ca.pub.strip())
-        self.assertEqual(self.ca, self.cert.ca)  # just to be sure we test the right thing
-
-    def test_child(self):
-        filename = 'sub_ca_example_com_bundle.pem'
-        response = self.client.get('%s?format=PEM' % self.get_url(self.child_ca))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response['Content-Type'], 'application/pkix-cert')
-        self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
-        self.assertEqual(force_text(response.content),
-                         '%s\n%s' % (self.child_ca.pub.strip(), self.ca.pub.strip()))
         self.assertEqual(self.ca, self.cert.ca)  # just to be sure we test the right thing
 
     def test_invalid_format(self):
