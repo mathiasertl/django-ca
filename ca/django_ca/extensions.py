@@ -219,7 +219,10 @@ class ListExtension(Extension):
         self._test_value()
 
     def clear(self):
-        self.value.clear()
+        if six.PY2:  # pragma: only py2
+            self.value = []
+        else:  # pragma: only py3
+            self.value.clear()
 
     def count(self, value):
         return self.value.count(self.parse_value(value))
