@@ -57,11 +57,11 @@ Or to create a CA with all extensions that live CAs have, you can pass many more
 parameters::
 
    >>> full = CertificateAuthority.objects.init(
-   ...   name='child', subject='/CN=full.example.com',
+   ...   name='full', subject='/CN=full.example.com',
    ...   parent=ca,  # some extensions are only valid for intermediate CAs
    ...   issuer_url='http://full.example.com/full.der',
    ...   # this CA can only sign for *.com domains:
-   ...   name_constraints=['permitted,.com'],  
+   ...   name_constraints=(['DNS:.com'], []),
    ...
    ...   # CRL/OCSP URLs for signed certificates. These can be changed later:
    ...   crl_url=['http://full.example.com/full.crl', ],

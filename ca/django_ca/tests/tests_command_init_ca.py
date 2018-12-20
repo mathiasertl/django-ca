@@ -84,7 +84,8 @@ class InitCATest(DjangoCATestCase):
                 crl_url=['http://crl.example.com'],
                 ocsp_url='http://ocsp.example.com',
                 ca_issuer_url='http://ca.issuer.ca.example.com',
-                name_constraint=['permitted,DNS:.com', 'excluded,DNS:.net'],
+                permit_name=['DNS:.com'],
+                exclude_name=['DNS:.net'],
             )
         self.assertTrue(pre.called)
         self.assertEqual(out, '')
@@ -95,6 +96,7 @@ class InitCATest(DjangoCATestCase):
         self.assertSerial(ca.serial)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
+        self.assertEqual(ca.nameConstraints(), (True, ['Permitted: DNS:.com', 'Excluded: DNS:.net']))
 
         # test the private key
         key = ca.key(None)
@@ -135,7 +137,8 @@ class InitCATest(DjangoCATestCase):
                 crl_url=['http://crl.example.com'],
                 ocsp_url='http://ocsp.example.com',
                 ca_issuer_url='http://ca.issuer.ca.example.com',
-                name_constraint=['permitted,DNS:.com', 'excluded,DNS:.net'],
+                permit_name=['DNS:.com'],
+                exclude_name=['DNS:.net'],
             )
         self.assertTrue(pre.called)
         self.assertEqual(out, '')
@@ -143,13 +146,14 @@ class InitCATest(DjangoCATestCase):
         ca = CertificateAuthority.objects.first()
         self.assertPostCreateCa(post, ca)
         self.assertIsInstance(ca.key(None), ec.EllipticCurvePrivateKey)
+        self.assertEqual(ca.nameConstraints(), (True, ['Permitted: DNS:.com', 'Excluded: DNS:.net']))
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_permitted(self):
         with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
             out, err = self.init_ca(
                 name='permitted',
-                name_constraint=['permitted,DNS:.com'],
+                permit_name=['DNS:.com'],
             )
         self.assertTrue(pre.called)
         self.assertEqual(out, '')
@@ -168,7 +172,7 @@ class InitCATest(DjangoCATestCase):
         with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
             out, err = self.init_ca(
                 name='excluded',
-                name_constraint=['excluded,DNS:.com'],
+                exclude_name=['DNS:.com'],
             )
         self.assertTrue(pre.called)
         self.assertEqual(out, '')

@@ -23,6 +23,7 @@ import os
 from django.core.management.base import CommandError
 
 from ... import ca_settings
+from ...extensions import NameConstraints
 from ...models import CertificateAuthority
 from ..base import BaseCommand
 from ..base import CertificateAuthorityDetailMixin
@@ -51,7 +52,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         curve_help = 'Elliptic Curve used for generating ECC keys (default: %(default)s).' % {
             'default': ca_settings.CA_DEFAULT_ECC_CURVE.__class__.__name__,
         }
-        parser.add_argument('--ecc-curve', type=str, action=KeyCurveAction,
+        parser.add_argument('--ecc-curve', metavar='CURVE', action=KeyCurveAction,
                             default=ca_settings.CA_DEFAULT_ECC_CURVE,
                             help=curve_help)
 
@@ -99,10 +100,19 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         )
         group.add_argument('--ca-issuer-url', metavar='URL', action=URLAction,
                            help='URL to the certificate of your CA (in DER format).')
-        group.add_argument(
-            '--name-constraint', default=[], action='append', metavar='CONSTRAINT',
-            help='''Name constraints for the certificate, can be given multiple times, e.g.
-                "permitted,email:.example.com" or "excluded,DNS:.com".''')
+
+        nc_group = parser.add_argument_group(
+            'Name Constraints',
+            "Add name constraints to the CA, limiting what certificates this CA can sign."
+        )
+        nc_group.add_argument(
+            '--permit-name', metavar='NAME', action='append', default=[],
+            help='Add the given name to the permitted-subtree.'
+        )
+        nc_group.add_argument(
+            '--exclude-name', metavar='NAME', action='append', default=[],
+            help='Add the given name to the excluded-subtree.'
+        )
 
         self.add_ca_args(parser)
 
@@ -134,6 +144,13 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         if 'CN' not in subject:
             subject['CN'] = name
 
+        name_constraints = NameConstraints({
+            'value': {
+                'permitted': options['permit_name'],
+                'excluded': options['exclude_name'],
+            }
+        })
+
         try:
             CertificateAuthority.objects.init(
                 key_size=options['key_size'], key_type=options['key_type'],
@@ -149,7 +166,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
                 ca_issuer_url=options['ca_issuer_url'],
                 ca_crl_url=options['ca_crl_url'],
                 ca_ocsp_url=options['ca_ocsp_url'],
-                name_constraints=options['name_constraint'],
+                name_constraints=name_constraints,
                 name=name, subject=subject, password=options['password'],
                 parent_password=options['parent_password']
             )

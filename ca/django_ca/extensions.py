@@ -306,9 +306,9 @@ class AlternativeNameExtension(ListExtension):
 
     This class also allows you to pass :py:class:`~cg:cryptography.x509.GeneralName` instances::
 
-        >>> san = SubjectAlternativeName([x509.DNSName('example.com')])
+        >>> san = SubjectAlternativeName([x509.DNSName('example.com'), 'example.net'])
         >>> san
-        <SubjectAlternativeName: ['DNS:example.com'], critical=False>
+        <SubjectAlternativeName: ['DNS:example.com', 'DNS:example.net'], critical=False>
         >>> 'example.com' in san, 'DNS:example.com' in san, x509.DNSName('example.com') in san
         (True, True, True)
 
@@ -550,6 +550,71 @@ class ExtendedKeyUsage(KnownValuesExtension):
     @property
     def extension_type(self):
         return x509.ExtendedKeyUsage([self.CRYPTOGRAPHY_MAPPING[u] for u in self.value])
+
+
+class NameConstraints(Extension):
+    """Class representing a NameConstraints extenion
+
+    Unlike most other extensions, this extension does not accept a string as value, but you can pass a list
+    containing the permitted/excluded subtrees as lists. Similar to
+    :py:class:`~django_ca.extensions.SubjectAlternativeName`, you can pass both strings or instances of
+    :py:class:`~cg:cryptography.x509.GeneralName`::
+
+        >>> NameConstraints([['DNS:.com', 'example.org'], [x509.DNSName('.net')]])
+        <NameConstraints: permitted=['DNS:.com', 'DNS:example.org'], excluded=['DNS:.net'], critical=True>
+
+    .. seealso::
+
+       `RFC5280, section 4.2.1.10 <https://tools.ietf.org/html/rfc5280#section-4.2.1.10>`_
+
+    """
+    default_critical = True
+    oid = ExtensionOID.NAME_CONSTRAINTS
+
+    def __bool__(self):
+        return bool(self.permitted) or bool(self.excluded)
+
+    def __repr__(self):
+        permitted = [self.serialize_value(v) for v in self.permitted]
+        excluded = [self.serialize_value(v) for v in self.excluded]
+        return '<%s: permitted=%r, excluded=%r, critical=%r>' % (
+            self.__class__.__name__, permitted, excluded, self.critical)
+
+    def __str__(self):
+        return 'NameConstraints(permitted=%s, excluded=%s, critical=%s)' % (
+            [self.serialize_value(v) for v in self.permitted],
+            [self.serialize_value(v) for v in self.excluded],
+            self.critical
+        )
+
+    @property
+    def extension_type(self):
+        return x509.NameConstraints(permitted_subtrees=self.permitted, excluded_subtrees=self.excluded)
+
+    def from_list(self, value):
+        self.permitted = [self.parse_value(v) for v in value[0]]
+        self.excluded = [self.parse_value(v) for v in value[1]]
+
+    def from_other(self, value):
+        if isinstance(value, (list, tuple)):
+            self.critical = self.default_critical
+            self.from_list(value)
+            self._test_value()
+        else:
+            super(Extension, self).from_other(value)
+
+    def from_dict(self, value):
+        self.permitted = [self.parse_value(v) for v in value['value'].get('permitted', [])]
+        self.excluded = [self.parse_value(v) for v in value['value'].get('excluded', [])]
+
+    def parse_value(self, v):
+        if isinstance(v, x509.GeneralName):
+            return v
+        else:
+            return parse_general_name(v)
+
+    def serialize_value(self, v):
+        return format_general_name(v)
 
 
 class SubjectAlternativeName(AlternativeNameExtension):

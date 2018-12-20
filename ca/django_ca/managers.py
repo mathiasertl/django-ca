@@ -37,6 +37,7 @@ from . import ca_settings
 from .extensions import ExtendedKeyUsage
 from .extensions import IssuerAlternativeName
 from .extensions import KeyUsage
+from .extensions import NameConstraints
 from .extensions import SubjectAlternativeName
 from .extensions import TLSFeature
 from .signals import post_create_ca
@@ -122,7 +123,10 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             CRL URLs used for this CA. This value is only meaningful for intermediate CAs.
         ca_ocsp_url : str, optional
             OCSP URL used for this CA. This value is only meaningful for intermediate CAs.
-        name_constraints
+        name_constraints : list of lists or :py:class:`~django_ca.extensions.NameConstraints`
+            List of names that this CA can sign and/or cannot sign. The value is passed to
+            :py:class:`~django_ca.extensions.NameConstraints` if the value is not already an instance of that
+            class.
         password : bytes, optional
             Password to encrypt the private key with.
         parent_password : bytes, optional
@@ -214,18 +218,10 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             builder = builder.add_extension(ext, critical=critical)
 
         if name_constraints:
-            excluded = []
-            permitted = []
-            for constraint in name_constraints:
-                typ, name = constraint.split(',', 1)
-                parsed = parse_general_name(name)
-                if typ == 'permitted':
-                    permitted.append(parsed)
-                else:
-                    excluded.append(parsed)
+            if not isinstance(name_constraints, NameConstraints):
+                name_constraints = NameConstraints(name_constraints)
 
-            builder = builder.add_extension(x509.NameConstraints(
-                permitted_subtrees=permitted, excluded_subtrees=excluded), critical=True)
+            builder = builder.add_extension(**name_constraints.for_builder())
 
         certificate = builder.sign(private_key=private_sign_key, algorithm=algorithm,
                                    backend=default_backend())
@@ -292,9 +288,9 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             meaningful value as subjectAltName.
         csr_format : :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding`, optional
             The format of the CSR. The default is ``PEM``.
-        subjectAltName : list of str or :py:`~django_ca.extensions.SubjectAlternativeName`, optional
+        subjectAltName : list of str or :py:class:`~django_ca.extensions.SubjectAlternativeName`, optional
             A list of alternative names for the certificate. The value is passed to
-            :py:`~django_ca.extensions.SubjectAlternativeName` if not already an instance of that class.
+            :py:class:`~django_ca.extensions.SubjectAlternativeName` if not already an instance of that class.
         key_usage : str or dict or :py:class:`~django_ca.extensions.KeyUsage`, optional
             Value for the ``keyUsage`` X509 extension. The value is passed to
             :py:class:`~django_ca.extensions.KeyUsage` if not already an instance of that class.
