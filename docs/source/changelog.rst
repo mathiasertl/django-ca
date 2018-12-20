@@ -21,11 +21,13 @@ ChangeLog
   :py:class:`~django_ca.extensions.NameConstraints` extensions.
 * New setting :ref:`CA_DEFAULT_KEY_SIZE <settings-ca-default-key-size>` to configure the default key size
   for new CAs.
+* Fix display of the NameConstraints extension in the admin interface.
 
 Testing
 =======
 
 * Test for certificates that are not yet valid.
+* The child CA used for testing now contains more extensions.
 * Freeze time in some test cases to avoid test failures when certificates eventually expire.
 * Test some documentation pages, to make sure they are actually correct.
 

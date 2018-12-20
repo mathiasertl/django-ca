@@ -226,6 +226,32 @@ class CertificateMixin(object):
         return self.output_extension(obj.subject_alternative_name)
     subject_alternative_name.short_description = _('subjectAltName')
 
+    def name_constraints(self, obj):
+        nc = obj.name_constraints
+        html = ''
+        if nc.critical is True:
+            text = _('Critical')
+            html = '<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text)
+
+        if nc.permitted:
+            html += '<div>Permitted:</div>'
+            html += '<ul class="x509-extension-value">'
+            for val in nc.permitted:
+                if isinstance(val, x509.GeneralName):
+                    val = format_general_name(val)
+                html += '<li>%s</li>' % escape(val)
+            html += '</ul>'
+        if nc.excluded:
+            html += '<div>Excluded:</div>'
+            html += '<ul class="x509-extension-value">'
+            for val in nc.excluded:
+                if isinstance(val, x509.GeneralName):
+                    val = format_general_name(val)
+                html += '<li>%s</li>' % escape(val)
+            html += '</ul>'
+        return mark_safe(html)
+    name_constraints.short_description = _('Name Constraints')
+
     def certificatePolicies(self, obj):
         return self.output_extension(obj.certificatePolicies())
     certificatePolicies.short_description = _('Certificate Policies')
