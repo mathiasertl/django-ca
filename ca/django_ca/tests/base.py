@@ -145,21 +145,21 @@ certs = {
     'child': {
         'name': 'child',
         'pem': force_text(child_pem),
-        'serial': '32:BE:A9:E8:7E:21:BF:3E:E9:A1:F3:F9:E4:06:14:B4:C4:9D:B2:6C',
+        'serial': '32:82:9C:62:71:0B:74:62:32:33:75:FF:CC:1C:42:2F:73:BE:61:37',
         'md5': '63:C1:A3:28:B4:01:80:A3:96:22:23:96:57:17:98:7D',
         'sha1': '98:10:30:97:99:DB:85:29:74:E6:D0:5E:EE:C8:C5:B7:06:BA:D1:19',
         'sha256': 'DA:0B:C6:6A:60:79:70:94:E1:D2:BE:68:F4:E8:FD:02:80:2A:A9:DF:85:52:49:5F:99:31:DA:15:D7:BF:BA:2E',  # NOQA
         'sha512': '12:33:63:35:91:95:69:58:B5:D0:44:1F:12:C4:40:FD:08:21:86:53:E5:05:9D:C5:49:EC:59:B5:27:63:21:AE:52:F5:BD:AA:B9:BB:F4:A1:42:BD:71:48:5B:7D:1D:0A:54:BD:2A:1F:C4:70:C5:F7:57:94:19:A8:C6:DB:B3:9D', # NOQA
         'san': None,
         'authKeyIdentifier': 'keyid:79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
-        'hpkp': '5Wpp4svwRWrKl3WeBIExoOl3a6/QK3WZAaIPRpgVrBA=',
-        'crl': None,  # TODO: add a CRL
+        'hpkp': '+6YcoRI+EBfxBOMXlsUBKg7DexUf0AOMS08O+P+1YjI=',
+        'crl': (False, ['Full Name: URI:http://parent.example.com/parent.crl']),
         'dn': '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=sub.ca.example.com',
-        'subjectKeyIdentifier': '4A:D5:57:27:D8:CC:01:B7:EF:AE:C1:FE:9A:9F:56:73:36:C3:0B:74',
+        'subjectKeyIdentifier': '8B:06:F1:9E:BC:A9:62:00:01:66:46:85:FA:90:FB:52:71:8F:66:EE',
         'keyUsage': (True, ['cRLSign', 'keyCertSign']),
         'basicConstraints': (True, 'CA:TRUE, pathlen:0'),
-        'expires': datetime(2027, 4, 16, 0, 0),
-        'valid_from': datetime(2017, 4, 17, 11, 47),
+        'expires': datetime(2020, 12, 20, 22, 11),
+        'valid_from': datetime(2018, 12, 20, 22, 11),
     },
     'ecc_ca': {
         'name': 'ecc_ca',

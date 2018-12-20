@@ -591,6 +591,19 @@ class NameConstraints(Extension):
             self.critical
         )
 
+    def as_text(self):
+        text = ''
+        if self.permitted:
+            text += 'Permitted:\n'
+            for name in self.permitted:
+                text += '  * %s\n' % self.serialize_value(name)
+        if self.excluded:
+            text += 'Excluded:\n'
+            for name in self.excluded:
+                text += '  * %s\n' % self.serialize_value(name)
+
+        return text
+
     @property
     def extension_type(self):
         return x509.NameConstraints(permitted_subtrees=self.permitted, excluded_subtrees=self.excluded)

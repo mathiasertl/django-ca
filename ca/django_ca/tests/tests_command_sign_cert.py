@@ -413,7 +413,7 @@ class SignCertChildCATestCase(DjangoCAWithCSRTestCase):
 
     def test_from_stdin(self):
         stdin = six.StringIO(self.csr_pem)
-        subject = Subject([('CN', 'example.com')])
+        subject = Subject([('CN', 'example.net')])
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd('sign_cert', ca=self.child_ca, subject=subject, stdin=stdin)
         self.assertEqual(pre.call_count, 1)
@@ -427,6 +427,6 @@ class SignCertChildCATestCase(DjangoCAWithCSRTestCase):
 
         self.assertEqual(cert.key_usage, KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'))
         self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('serverAuth'))
-        self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:example.com'))
+        self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:example.net'))
         self.assertIssuer(self.child_ca, cert)
         self.assertAuthorityKeyIdentifier(self.child_ca, cert)

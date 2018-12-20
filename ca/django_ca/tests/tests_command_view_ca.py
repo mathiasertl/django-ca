@@ -111,6 +111,7 @@ X509 v3 certificate extensions for signed certificates:
         data = self.get_cert_context('child')
         data['path'] = os.path.join(settings.FIXTURES_DIR, 'child.key')
         data['root_serial'] = certs['root']['serial']
+        data['crl'] = certs['child']['crl'][1][0]
         self.assertMultiLineEqual(stdout, '''child (enabled):
 * Serial: %(serial)s
 * Path to private key:
@@ -122,13 +123,23 @@ X509 v3 certificate extensions for signed certificates:
 * HPKP pin: %(hpkp)s
 
 X509 v3 certificate extensions for CA:
+authorityInfoAccess:
+    * OCSP - URI:http://parent.example.com/ocsp
+    * CA Issuers - URI:http://parent.example.com/parent.crt
 authorityKeyIdentifier:
     %(authKeyIdentifier)s
 basicConstraints (critical):
     %(basicConstraints)s
+cRLDistributionPoints:
+    * %(crl)s
 keyUsage (critical):
     * %(keyUsage_0)s
     * %(keyUsage_1)s
+nameConstraints (critical):
+    Permitted:
+      * DNS:.net
+    Excluded:
+      * DNS:.org
 subjectKeyIdentifier:
     %(subjectKeyIdentifier)s
 
@@ -143,6 +154,7 @@ X509 v3 certificate extensions for signed certificates:
 
     @override_settings(USE_TZ=True)
     def test_family_with_use_tz(self):
+        self.maxDiff = None
         self.test_family()
 
     @override_tmpcadir()
