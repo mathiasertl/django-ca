@@ -20,7 +20,6 @@ from datetime import timedelta
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
-from django.core.management.base import CommandError
 from django.utils import six
 
 from .. import ca_settings
@@ -156,10 +155,9 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         cn = 'foo bar'
         msg = r'^%s: Could not parse CommonName as subjectAltName\.$' % cn
 
-        with self.assertRaisesRegex(CommandError, msg), self.assertSignal(pre_issue_cert) as pre, \
+        with self.assertCommandError(msg), self.assertSignal(pre_issue_cert) as pre, \
                 self.assertSignal(post_issue_cert) as post:
-            stdout, stderr = self.cmd('sign_cert', subject=Subject([('CN', cn)]), cn_in_san=True,
-                                      stdin=stdin)
+            self.cmd('sign_cert', subject=Subject([('CN', cn)]), cn_in_san=True, stdin=stdin)
         self.assertEqual(pre.call_count, 1)
         self.assertFalse(post.called)
 
@@ -308,7 +306,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
 
         # Giving no password raises a CommandError
         stdin = six.StringIO(self.csr_pem)
-        with self.assertRaisesRegex(CommandError, '^Password was not given but private key is encrypted$'), \
+        with self.assertCommandError('^Password was not given but private key is encrypted$'), \
                 self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             self.cmd('sign_cert', ca=ca, alt=['example.com'], stdin=stdin)
         self.assertEqual(pre.call_count, 0)
@@ -318,14 +316,14 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         stdin = six.StringIO(self.csr_pem)
         ca = CertificateAuthority.objects.get(pk=ca.pk)
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
-            stdout, stderr = self.cmd('sign_cert', ca=ca, alt=['example.com'], stdin=stdin, password=password)
+            self.cmd('sign_cert', ca=ca, alt=['example.com'], stdin=stdin, password=password)
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(post.call_count, 1)
 
         # Pass the wrong password
         stdin = six.StringIO(self.csr_pem)
         ca = CertificateAuthority.objects.get(pk=ca.pk)
-        with self.assertRaisesRegex(CommandError, self.re_false_password), \
+        with self.assertCommandError(self.re_false_password), \
                 self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             self.cmd('sign_cert', ca=ca, alt=['example.com'], stdin=stdin, password=b'wrong')
         self.assertFalse(pre.called)
@@ -343,7 +341,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
 
         # Giving no password raises a CommandError
         stdin = six.StringIO(self.csr_pem)
-        with self.assertRaisesRegex(CommandError, '^Could not deserialize key data.$'), \
+        with self.assertCommandError('^Could not deserialize key data.$'), \
                 self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             self.cmd('sign_cert', ca=ca, alt=['example.com'], stdin=stdin)
         self.assertEqual(pre.call_count, 0)
@@ -380,8 +378,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         time_left = (self.ca.expires - datetime.now()).days
         stdin = six.StringIO(self.csr_pem)
 
-        with self.assertRaisesRegex(
-                CommandError,
+        with self.assertCommandError(
                 r'^Certificate would outlive CA, maximum expiry for this CA is {} days\.$'.format(time_left)
         ), self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             self.cmd('sign_cert', alt=['example.com'], expires=expires, stdin=stdin)
@@ -389,8 +386,8 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertFalse(post.called)
 
     def test_no_cn_or_san(self):
-        with self.assertRaisesRegex(
-                CommandError, r'^Must give at least a CN in --subject or one or more --alt arguments\.$'), \
+        with self.assertCommandError(
+                r'^Must give at least a CN in --subject or one or more --alt arguments\.$'), \
                 self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             self.cmd('sign_cert', subject=Subject([('C', 'AT')]))
         self.assertFalse(pre.called)
@@ -399,7 +396,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
     def test_wrong_format(self):
         stdin = six.StringIO(self.csr_pem)
 
-        with self.assertRaisesRegex(CommandError, 'Unknown CSR format passed: foo$'), \
+        with self.assertCommandError('Unknown CSR format passed: foo$'), \
                 self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             self.cmd('sign_cert', alt=['example.com'], csr_format='foo', stdin=stdin)
         self.assertEqual(pre.call_count, 1)
