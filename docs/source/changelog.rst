@@ -15,11 +15,16 @@ ChangeLog
 * Fix certificate bundle order (fixes `#55 <https://github.com/mathiasertl/django-ca/issues/55>`_).
 * Management commands ``dump_ca`` and ``dump_cert`` can now dump whole certificate bundles.
 * :py:class:`~django_ca.subject.Subject` now implements every ``dict`` method.
-* Add the :py:class:`~django_ca.extensions.BasicConstraints`,
-  :py:class:`~django_ca.extensions.IssuerAlternativeName` and
-  :py:class:`~django_ca.extensions.SubjectAlternativeName`.
+* Implement the :py:class:`~django_ca.extensions.BasicConstraints`,
+  :py:class:`~django_ca.extensions.IssuerAlternativeName`,
+  :py:class:`~django_ca.extensions.SubjectAlternativeName` and
+  :py:class:`~django_ca.extensions.NameConstraints` extensions.
 * New setting :ref:`CA_DEFAULT_KEY_SIZE <settings-ca-default-key-size>` to configure the default key size
   for new CAs.
+
+Testing
+=======
+
 * Test for certificates that are not yet valid.
 * Freeze time in some test cases to avoid test failures when certificates eventually expire.
 * Test some documentation pages, to make sure they are actually correct.

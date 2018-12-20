@@ -23,6 +23,7 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from django.core.management.base import CommandError
 
 from .. import ca_settings
+from ..extensions import NameConstraints
 from ..models import CertificateAuthority
 from ..signals import post_create_ca
 from ..signals import pre_create_ca
@@ -96,7 +97,7 @@ class InitCATest(DjangoCATestCase):
         self.assertSerial(ca.serial)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
-        self.assertEqual(ca.nameConstraints(), (True, ['Permitted: DNS:.com', 'Excluded: DNS:.net']))
+        self.assertEqual(ca.name_constraints, NameConstraints([['DNS:.com'], ['DNS:.net']]))
 
         # test the private key
         key = ca.key(None)
@@ -109,10 +110,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(ca.authorityInfoAccess(), (False, [
             'CA Issuers - URI:http://ca.issuer.ca.example.com'
         ]))
-        self.assertEqual(ca.nameConstraints(), (True, [
-            'Permitted: DNS:.com',
-            'Excluded: DNS:.net'
-        ]))
+        self.assertEqual(ca.name_constraints, NameConstraints([['DNS:.com'], ['DNS:.net']]))
         self.assertEqual(ca.pathlen, 3)
         self.assertEqual(ca.max_pathlen, 3)
         self.assertTrue(ca.allows_intermediate_ca)
@@ -146,7 +144,7 @@ class InitCATest(DjangoCATestCase):
         ca = CertificateAuthority.objects.first()
         self.assertPostCreateCa(post, ca)
         self.assertIsInstance(ca.key(None), ec.EllipticCurvePrivateKey)
-        self.assertEqual(ca.nameConstraints(), (True, ['Permitted: DNS:.com', 'Excluded: DNS:.net']))
+        self.assertEqual(ca.name_constraints, NameConstraints([['DNS:.com'], ['DNS:.net']]))
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_permitted(self):
@@ -165,7 +163,7 @@ class InitCATest(DjangoCATestCase):
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertPrivateKey(ca)
         self.assertSignature([ca], ca)
-        self.assertEqual(ca.nameConstraints(), (True, ['Permitted: DNS:.com']))
+        self.assertEqual(ca.name_constraints, NameConstraints([['DNS:.com'], []]))
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_excluded(self):
@@ -183,7 +181,7 @@ class InitCATest(DjangoCATestCase):
         self.assertSerial(ca.serial)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
-        self.assertEqual(ca.nameConstraints(), (True, ['Excluded: DNS:.com']))
+        self.assertEqual(ca.name_constraints, NameConstraints([[], ['DNS:.com']]))
 
     @override_settings(USE_TZ=True)
     def test_arguements_with_use_tz(self):

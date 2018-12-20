@@ -574,6 +574,10 @@ class NameConstraints(Extension):
     def __bool__(self):
         return bool(self.permitted) or bool(self.excluded)
 
+    def __eq__(self, other):
+        return self.permitted == other.permitted and self.excluded == other.excluded \
+            and self.excluded == other.excluded
+
     def __repr__(self):
         permitted = [self.serialize_value(v) for v in self.permitted]
         excluded = [self.serialize_value(v) for v in self.excluded]
@@ -590,6 +594,10 @@ class NameConstraints(Extension):
     @property
     def extension_type(self):
         return x509.NameConstraints(permitted_subtrees=self.permitted, excluded_subtrees=self.excluded)
+
+    def from_extension(self, value):
+        self.permitted = value.value.permitted_subtrees or []
+        self.excluded = value.value.excluded_subtrees or []
 
     def from_list(self, value):
         self.permitted = [self.parse_value(v) for v in value[0]]

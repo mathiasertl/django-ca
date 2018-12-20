@@ -45,6 +45,7 @@ from .extensions import BasicConstraints
 from .extensions import ExtendedKeyUsage
 from .extensions import IssuerAlternativeName
 from .extensions import KeyUsage
+from .extensions import NameConstraints
 from .extensions import SubjectAlternativeName
 from .extensions import SubjectKeyIdentifier
 from .extensions import TLSFeature
@@ -247,6 +248,7 @@ class X509CertMixin(models.Model):
         ExtensionOID.EXTENDED_KEY_USAGE: 'extended_key_usage',
         ExtensionOID.ISSUER_ALTERNATIVE_NAME: 'issuer_alternative_name',
         ExtensionOID.KEY_USAGE: 'key_usage',
+        ExtensionOID.NAME_CONSTRAINTS: 'name_constraints',
         ExtensionOID.SUBJECT_ALTERNATIVE_NAME: 'subject_alternative_name',
         ExtensionOID.SUBJECT_KEY_IDENTIFIER: 'subject_key_identifier',
         ExtensionOID.TLS_FEATURE: 'tls_feature',
@@ -329,6 +331,15 @@ class X509CertMixin(models.Model):
         except x509.ExtensionNotFound:
             return None
         return ExtendedKeyUsage(ext)
+
+    @property
+    def name_constraints(self):
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.NAME_CONSTRAINTS)
+        except x509.ExtensionNotFound:
+            return None
+
+        return NameConstraints(ext)
 
     @property
     def subject_alternative_name(self):
@@ -533,23 +544,6 @@ class CertificateAuthority(X509CertMixin):
 
         max_pathlen = self.max_pathlen
         return max_pathlen is None or max_pathlen > 0
-
-    def nameConstraints(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.NAME_CONSTRAINTS)
-        except x509.ExtensionNotFound:
-            return None
-
-        value = []
-        if ext.value.permitted_subtrees:
-            for general_name in ext.value.permitted_subtrees:
-                value.append('Permitted: %s' % format_general_name(general_name))
-
-        if ext.value.excluded_subtrees:
-            for general_name in ext.value.excluded_subtrees:
-                value.append('Excluded: %s' % format_general_name(general_name))
-
-        return ext.critical, value
 
     @property
     def bundle(self):
