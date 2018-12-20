@@ -37,6 +37,7 @@ from . import ca_settings
 from .extensions import ExtendedKeyUsage
 from .extensions import IssuerAlternativeName
 from .extensions import KeyUsage
+from .extensions import SubjectAlternativeName
 from .extensions import TLSFeature
 from .signals import post_create_ca
 from .signals import post_issue_cert
@@ -291,10 +292,9 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             meaningful value as subjectAltName.
         csr_format : :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding`, optional
             The format of the CSR. The default is ``PEM``.
-        subjectAltName : list of str, optional
-            A list of values for the subjectAltName extension. Values are passed to
-            :py:func:`~django_ca.utils.parse_general_name`, see function documentation for how this value is
-            parsed.
+        subjectAltName : list of str or :py:`~django_ca.extensions.SubjectAlternativeName`, optional
+            A list of alternative names for the certificate. The value is passed to
+            :py:`~django_ca.extensions.SubjectAlternativeName` if not already an instance of that class.
         key_usage : str or dict or :py:class:`~django_ca.extensions.KeyUsage`, optional
             Value for the ``keyUsage`` X509 extension. The value is passed to
             :py:class:`~django_ca.extensions.KeyUsage` if not already an instance of that class.
@@ -332,14 +332,14 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         if tls_feature and not isinstance(tls_feature, TLSFeature):
             tls_feature = TLSFeature(tls_feature)
 
-        if subjectAltName:
-            subjectAltName = [parse_general_name(san) for san in subjectAltName]
-        else:
-            subjectAltName = []  # so we can append the CN if requested
+        if not subjectAltName:
+            subjectAltName = SubjectAlternativeName([])
+        elif not isinstance(subjectAltName, SubjectAlternativeName):
+            subjectAltName = SubjectAlternativeName(subjectAltName)
 
         # use first SAN as CN if CN is not set
         if 'CN' not in subject:
-            subject['CN'] = subjectAltName[0].value
+            subject['CN'] = subjectAltName.value[0].value
         elif cn_in_san and 'CN' in subject:  # add CN to SAN if cn_in_san is True (default)
             try:
                 cn_name = parse_general_name(subject['CN'])
@@ -379,7 +379,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             builder = builder.add_extension(ext, critical=critical)
 
         if subjectAltName:
-            builder = builder.add_extension(x509.SubjectAlternativeName(subjectAltName), critical=False)
+            builder = builder.add_extension(**subjectAltName.for_builder())
 
         if key_usage:
             builder = builder.add_extension(**key_usage.for_builder())
