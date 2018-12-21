@@ -5,8 +5,8 @@ python:  # https://devguide.python.org/#status-of-python-branches
   - "3.4"
   - "3.5"
   - "3.6"
+  - "3.7"
   - "nightly"
-  # py3.7 currently not supported: https://github.com/travis-ci/travis-ci/issues/9815
 env:
   - DJANGO=2.1.3 CRYPTOGRAPHY=2.4.2
   - DJANGO=2.1.3 CRYPTOGRAPHY=2.3.1
