@@ -4,7 +4,6 @@ Fabric3==1.14.post1
 coverage==4.5.2
 ipython<6; python_version < '3.3'
 ipython>=6; python_version >= '3.3'
-mock==2.0.0; python_version < '3'
 pip>=9.0.1
 setuptools>=40.4.3
 six>=1.11.0
