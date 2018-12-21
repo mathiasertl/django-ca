@@ -1,0 +1,4 @@
+django-webtest==1.9.4
+freezegun==0.3.11
+flake8==3.6.0
+pyOpenSSL==18.0.0

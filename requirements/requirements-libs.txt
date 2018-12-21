@@ -1,0 +1,5 @@
+asn1crypto==0.24.0
+django-object-actions==1.0.0
+ipaddress==1.0.18 ; python_version < '3'
+ocspbuilder==0.10.2
+oscrypto==0.19.1
