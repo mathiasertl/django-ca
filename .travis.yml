@@ -23,7 +23,7 @@ env:
 install:
   # Build/test dependencies
  - pip install -U pip setuptools
- - pip install -r requirements/requirements-tox.txt
+ - pip install -r requirements/requirements-libs.txt -r requirements-dev.txt
  - pip install Django==$DJANGO cryptography==$CRYPTOGRAPHY
 #before_script:
 script:
