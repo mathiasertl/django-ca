@@ -9,6 +9,7 @@ RUN apk --no-cache add --update gcc linux-headers libc-dev libffi-dev libressl-d
 COPY requirements.txt requirements-dev.txt setup.py tox.ini ./
 COPY requirements/ requirements/
 COPY ca/ ca/
+COPY docs/ docs/
 
 # Additional utilities required for testing:
 RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt

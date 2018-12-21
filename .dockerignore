@@ -10,7 +10,7 @@
 /ca/ca/localsettings.py
 /ca/db.sqlite3
 /ca/files/
-/docs/
+/docs/build/
 /include/
 /lib/
 /py2/
