@@ -1,5 +1,5 @@
 language: python
-python:
+python:  # https://devguide.python.org/#status-of-python-branches
   - "2.7"
   - "3.4"
   - "3.5"
