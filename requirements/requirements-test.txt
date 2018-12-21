@@ -1,4 +1,5 @@
 django-webtest==1.9.4
-freezegun==0.3.11
 flake8==3.6.0
+freezegun==0.3.11
+isort==4.3.4
 pyOpenSSL==18.0.0
