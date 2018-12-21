@@ -62,6 +62,14 @@ matrix:
         - env: DJANGO=2.0.9 CRYPTOGRAPHY=2.1.4
           python: "2.7"
         - env: DJANGO=1.11.16 CRYPTOGRAPHY=2.4.2
+          python: "3.7"
+        - env: DJANGO=1.11.16 CRYPTOGRAPHY=2.3.1
+          python: "3.7"
+        - env: DJANGO=1.11.16 CRYPTOGRAPHY=2.2.2
+          python: "3.7"
+        - env: DJANGO=1.11.16 CRYPTOGRAPHY=2.1.4
+          python: "3.7"
+        - env: DJANGO=1.11.16 CRYPTOGRAPHY=2.4.2
           python: "nightly"
         - env: DJANGO=1.11.16 CRYPTOGRAPHY=2.3.1
           python: "nightly"
