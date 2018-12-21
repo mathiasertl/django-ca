@@ -1,11 +1,13 @@
+ARG IMAGE=python:3-alpine
 ####################
 # Test build stage #
 ####################
-FROM python:3-alpine as test
+FROM $IMAGE as test
 WORKDIR /usr/src/django-ca
 RUN apk --no-cache add --update gcc linux-headers libc-dev libffi-dev libressl-dev make
 
 COPY requirements.txt requirements-dev.txt setup.py tox.ini ./
+COPY requirements/ requirements/
 COPY ca/ ca/
 
 # Additional utilities required for testing:
