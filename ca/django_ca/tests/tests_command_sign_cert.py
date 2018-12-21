@@ -18,6 +18,8 @@ import stat
 from datetime import datetime
 from datetime import timedelta
 
+from freezegun import freeze_time
+
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.utils import six
@@ -411,6 +413,7 @@ class SignCertChildCATestCase(DjangoCAWithCSRTestCase):
 
         cls.child_ca = cls.load_ca(name='child', x509=child_pubkey)
 
+    @freeze_time("2018-11-10")
     def test_from_stdin(self):
         stdin = six.StringIO(self.csr_pem)
         subject = Subject([('CN', 'example.net')])
