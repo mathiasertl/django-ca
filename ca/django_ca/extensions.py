@@ -304,7 +304,18 @@ class KnownValuesExtension(ListExtension):
             raise ValueError('Unknown value(s): %s' % ', '.join(sorted(diff)))
 
 
-class AlternativeNameExtension(ListExtension):
+class GeneralNameMixin:
+    def parse_value(self, v):
+        if isinstance(v, x509.GeneralName):
+            return v
+        else:
+            return parse_general_name(v)
+
+    def serialize_value(self, v):
+        return format_general_name(v)
+
+
+class AlternativeNameExtension(GeneralNameMixin, ListExtension):
     """Base class for extensions that contain a list of general names.
 
     This class also allows you to pass :py:class:`~cg:cryptography.x509.GeneralName` instances::
@@ -316,14 +327,7 @@ class AlternativeNameExtension(ListExtension):
         (True, True, True)
 
     """
-    def parse_value(self, v):
-        if isinstance(v, x509.GeneralName):
-            return v
-        else:
-            return parse_general_name(v)
-
-    def serialize_value(self, v):
-        return format_general_name(v)
+    pass
 
 
 class KeyIdExtension(Extension):
@@ -557,7 +561,7 @@ class ExtendedKeyUsage(KnownValuesExtension):
         return x509.ExtendedKeyUsage([self.CRYPTOGRAPHY_MAPPING[u] for u in self.value])
 
 
-class NameConstraints(Extension):
+class NameConstraints(GeneralNameMixin, Extension):
     """Class representing a NameConstraints extenion
 
     Unlike most other extensions, this extension does not accept a string as value, but you can pass a list
@@ -634,15 +638,6 @@ class NameConstraints(Extension):
     def from_dict(self, value):
         self.permitted = [self.parse_value(v) for v in value['value'].get('permitted', [])]
         self.excluded = [self.parse_value(v) for v in value['value'].get('excluded', [])]
-
-    def parse_value(self, v):
-        if isinstance(v, x509.GeneralName):
-            return v
-        else:
-            return parse_general_name(v)
-
-    def serialize_value(self, v):
-        return format_general_name(v)
 
 
 class SubjectAlternativeName(AlternativeNameExtension):
