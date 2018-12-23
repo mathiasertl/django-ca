@@ -76,7 +76,6 @@ HPKP pin: {hpkp}
         self.assertEqual(stderr, b'')
 
         # test with no pem but with extensions
-        self.maxDiff = None
         stdout, stderr = self.cmd('view_cert', self.cert.serial, no_pem=True, extensions=True,
                                   stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
@@ -84,8 +83,10 @@ Valid from: {from}
 Valid until: {until}
 Status: {status}
 authorityInfoAccess:
-    * {authInfoAccess_0}
-    * {authInfoAccess_1}
+    CA Issuers:
+      * {authInfoAccess_0}
+    OCSP:
+      * {authInfoAccess_1}
 authorityKeyIdentifier:
     {authKeyIdentifier}
 basicConstraints (critical):
@@ -241,8 +242,10 @@ Status: Valid
 UnknownOID (critical):
     <ObjectIdentifier(oid=1.3.6.1.4.1.11129.2.4.3, name=Unknown OID)>
 authorityInfoAccess:
-    * CA Issuers - URI:http://crt.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crt
-    * OCSP - URI:http://ocsp.comodoca4.com
+    CA Issuers:
+      * URI:http://crt.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crt
+    OCSP:
+      * URI:http://ocsp.comodoca4.com
 authorityKeyIdentifier:
     keyid:40:09:61:67:F0:BC:83:71:4F:DE:12:08:2C:6F:D4:D4:2B:76:3D:96
 basicConstraints (critical):
@@ -368,8 +371,10 @@ Valid from: %(valid_from)s
 Valid until: %(valid_until)s
 Status: Valid
 authorityInfoAccess:
-    * OCSP - URI:http://ocsp.godaddy.com/
-    * CA Issuers - URI:http://certificates.godaddy.com/repository/gdig2.crt
+    CA Issuers:
+      * URI:http://certificates.godaddy.com/repository/gdig2.crt
+    OCSP:
+      * URI:http://ocsp.godaddy.com/
 authorityKeyIdentifier:
     keyid:40:C2:BD:27:8E:CC:34:83:30:A2:33:D7:FB:6C:B3:F0:B4:2C:80:CE
 basicConstraints (critical):
@@ -479,8 +484,10 @@ Valid from: %(valid_from)s
 Valid until: %(valid_until)s
 Status: %(status)s%(unknown)s
 authorityInfoAccess:
-    * OCSP - URI:http://ocsp.int-x3.letsencrypt.org
-    * CA Issuers - URI:http://cert.int-x3.letsencrypt.org/
+    CA Issuers:
+      * URI:http://cert.int-x3.letsencrypt.org/
+    OCSP:
+      * URI:http://ocsp.int-x3.letsencrypt.org
 authorityKeyIdentifier:
     keyid:A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1
 basicConstraints (critical):

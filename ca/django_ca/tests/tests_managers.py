@@ -16,6 +16,7 @@
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtensionOID
 
+from ..extensions import AuthorityInformationAccess
 from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import IssuerAlternativeName
@@ -223,8 +224,8 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
             ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
 
-        self.assertEqual(self.get_extensions(cert.x509)['authorityInfoAccess'],
-                         (False, ['OCSP - URI:%s' % ca.ocsp_url]))
+        self.assertEqual(self.get_extensions(cert.x509)['AuthorityInformationAccess'],
+                         AuthorityInformationAccess([[], [ca.ocsp_url]]))
 
         # test with both ocsp_url and issuer_url
         ca.issuer_url = 'http://ca.example.com/ca.crt'
@@ -232,8 +233,8 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
             ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
 
-        self.assertEqual(self.get_extensions(cert.x509)['authorityInfoAccess'],
-                         (False, ['OCSP - URI:%s' % ca.ocsp_url, 'CA Issuers - URI:%s' % ca.issuer_url]))
+        self.assertEqual(self.get_extensions(cert.x509)['AuthorityInformationAccess'],
+                         AuthorityInformationAccess([[ca.issuer_url], [ca.ocsp_url]]))
 
         # test only with issuer url
         ca.ocsp_url = None
@@ -241,5 +242,5 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
             ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subjectAltName=['example.com'], **kwargs)
 
-        self.assertEqual(self.get_extensions(cert.x509)['authorityInfoAccess'],
-                         (False, ['CA Issuers - URI:%s' % ca.issuer_url]))
+        self.assertEqual(self.get_extensions(cert.x509)['AuthorityInformationAccess'],
+                         AuthorityInformationAccess([[ca.issuer_url], []]))

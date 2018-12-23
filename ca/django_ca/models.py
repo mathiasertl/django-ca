@@ -28,7 +28,6 @@ from cryptography.hazmat.primitives.serialization import PublicFormat
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.x509.certificate_transparency import LogEntryType
 from cryptography.x509.extensions import UnrecognizedExtension
-from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
@@ -58,7 +57,6 @@ from .signals import post_revoke_cert
 from .signals import pre_revoke_cert
 from .subject import Subject
 from .utils import add_colons
-from .utils import format_general_name
 from .utils import format_general_names
 from .utils import format_name
 from .utils import int_to_hex
@@ -248,6 +246,7 @@ class X509CertMixin(models.Model):
     # X509 extensions #
     ###################
     OID_MAPPING = {
+        ExtensionOID.AUTHORITY_INFORMATION_ACCESS: 'authority_information_access',
         ExtensionOID.AUTHORITY_KEY_IDENTIFIER: 'authority_key_identifier',
         ExtensionOID.BASIC_CONSTRAINTS: 'basic_constraints',
         ExtensionOID.EXTENDED_KEY_USAGE: 'extended_key_usage',
@@ -385,23 +384,6 @@ class X509CertMixin(models.Model):
     #################################
     # Old-style extension accessors #
     #################################
-
-    def authorityInfoAccess(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS)
-        except x509.ExtensionNotFound:
-            return None
-
-        output = []
-        for desc in ext.value:
-            if desc.access_method == AuthorityInformationAccessOID.OCSP:
-                output.append('OCSP - %s' % format_general_name(desc.access_location))
-            elif desc.access_method == AuthorityInformationAccessOID.CA_ISSUERS:
-                output.append('CA Issuers - %s' % format_general_name(desc.access_location))
-            else:  # pragma: no cover - we don't know any other access methods
-                output.append('Unknown')
-
-        return ext.critical, output
 
     def certificatePolicies(self):
         try:

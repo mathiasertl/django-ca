@@ -15,7 +15,9 @@ ChangeLog
 * Fix certificate bundle order (fixes `#55 <https://github.com/mathiasertl/django-ca/issues/55>`_).
 * Management commands ``dump_ca`` and ``dump_cert`` can now dump whole certificate bundles.
 * :py:class:`~django_ca.subject.Subject` now implements every ``dict`` method.
-* Implement the :py:class:`~django_ca.extensions.BasicConstraints`,
+* Implement the 
+  :py:class:`~django_ca.extensions.AuthorityInformationAccess`,
+  :py:class:`~django_ca.extensions.BasicConstraints`,
   :py:class:`~django_ca.extensions.IssuerAlternativeName`,
   :py:class:`~django_ca.extensions.SubjectAlternativeName` and
   :py:class:`~django_ca.extensions.NameConstraints` extensions.

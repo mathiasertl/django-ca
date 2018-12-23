@@ -23,6 +23,7 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from django.core.management.base import CommandError
 
 from .. import ca_settings
+from ..extensions import AuthorityInformationAccess
 from ..extensions import NameConstraints
 from ..models import CertificateAuthority
 from ..signals import post_create_ca
@@ -107,9 +108,8 @@ class InitCATest(DjangoCATestCase):
         self.assertTrue(isinstance(ca.x509.signature_hash_algorithm, hashes.SHA1))
         self.assertTrue(isinstance(ca.x509.public_key(), dsa.DSAPublicKey))
         self.assertIsNone(ca.crlDistributionPoints())
-        self.assertEqual(ca.authorityInfoAccess(), (False, [
-            'CA Issuers - URI:http://ca.issuer.ca.example.com'
-        ]))
+        self.assertEqual(ca.authority_information_access, AuthorityInformationAccess(
+            [['URI:http://ca.issuer.ca.example.com'], []]))
         self.assertEqual(ca.name_constraints, NameConstraints([['DNS:.com'], ['DNS:.net']]))
         self.assertEqual(ca.pathlen, 3)
         self.assertEqual(ca.max_pathlen, 3)
@@ -284,9 +284,8 @@ class InitCATest(DjangoCATestCase):
         self.assertIssuer(parent, child)
         self.assertAuthorityKeyIdentifier(parent, child)
         self.assertEqual(child.crlDistributionPoints(), (False, ['Full Name: URI:http://ca.crl.example.com']))
-        self.assertEqual(child.authorityInfoAccess(), (False, [
-            'OCSP - URI:http://ca.ocsp.example.com',
-        ]))
+        self.assertEqual(child.authority_information_access,
+                         AuthorityInformationAccess([[], ['URI:http://ca.ocsp.example.com']]))
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_intermediate_check(self):

@@ -29,7 +29,6 @@ from .base import override_tmpcadir
 
 class ViewCATestCase(DjangoCAWithCATestCase):
     def test_basic(self):
-        self.maxDiff = None
         stdout, stderr = self.cmd('view_ca', self.ca.serial)
         path = os.path.join(settings.FIXTURES_DIR, 'root.key')
         data = self.get_cert_context('root')
@@ -124,8 +123,10 @@ X509 v3 certificate extensions for signed certificates:
 
 X509 v3 certificate extensions for CA:
 authorityInfoAccess:
-    * OCSP - URI:http://parent.example.com/ocsp
-    * CA Issuers - URI:http://parent.example.com/parent.crt
+    CA Issuers:
+      * %(authInfoAccess_0)s
+    OCSP:
+      * %(authInfoAccess_1)s
 authorityKeyIdentifier:
     %(authKeyIdentifier)s
 basicConstraints (critical):
@@ -154,7 +155,6 @@ X509 v3 certificate extensions for signed certificates:
 
     @override_settings(USE_TZ=True)
     def test_family_with_use_tz(self):
-        self.maxDiff = None
         self.test_family()
 
     @override_tmpcadir()

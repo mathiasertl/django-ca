@@ -21,6 +21,10 @@
    :show-inheritance:
    :members:
 
+.. autoclass:: django_ca.extensions.GeneralNameMixin
+   :show-inheritance:
+   :members:
+
 *******************
 Concrete extensions
 *******************
@@ -28,4 +32,4 @@ Concrete extensions
 .. automodule:: django_ca.extensions
    :show-inheritance:
    :members:
-   :exclude-members: Extension, ListExtension, KnownValuesExtension, AlternativeNameExtension, KeyIdExtension
+   :exclude-members: Extension, ListExtension, KnownValuesExtension, AlternativeNameExtension, KeyIdExtension, GeneralNameMixin

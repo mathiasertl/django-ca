@@ -306,6 +306,17 @@ class KnownValuesExtension(ListExtension):
 
 
 class GeneralNameMixin:
+    """Mixin to internally store values as ``GeneralName`` instances.
+
+    This mixin ensures that values passed as :py:class:`~cg:cryptography.x509.GeneralName` instances will
+    never get parsed. This is useful because there are some instances where names may not be parsed reliably.
+    This means that the DNS name here is never converted between the instantiation here and actually adding
+    the extension to the certificate::
+
+        >>> san = SubjectAlternativeName([x509.DNSName('example.com')])
+        >>> Certificate.objects.init(subjectAltName=...)  # doctest: +SKIP
+    """
+
     def parse_value(self, v):
         if isinstance(v, x509.GeneralName):
             return v
@@ -344,6 +355,12 @@ class KeyIdExtension(Extension):
 
 
 class AuthorityInformationAccess(GeneralNameMixin, Extension):
+    """Class representing a AuthorityInformationAccess extension.
+
+    .. seealso::
+
+        `RFC5280, section 4.2.2.1 <https://tools.ietf.org/html/rfc5280#section-4.2.2.1>`_
+    """
     oid = ExtensionOID.AUTHORITY_INFORMATION_ACCESS
 
     def __bool__(self):
@@ -370,7 +387,7 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
     def as_text(self):
         text = ''
         if self.issuers:
-            text += 'CA issuers:\n'
+            text += 'CA Issuers:\n'
             for name in self.issuers:
                 text += '  * %s\n' % self.serialize_value(name)
         if self.ocsp:

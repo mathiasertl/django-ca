@@ -271,7 +271,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
         name = 'multiple_ous_and_no_ext'
         _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
         cert = self.load_cert(self.ca, x509=pubkey)
-        self.assertIsNone(cert.authorityInfoAccess())
+        self.assertIsNone(cert.authority_information_access)
         self.assertIsNone(cert.basic_constraints)
         self.assertIsNone(cert.subject_alternative_name)
         self.assertIsNone(cert.key_usage)
