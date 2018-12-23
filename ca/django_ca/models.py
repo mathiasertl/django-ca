@@ -239,6 +239,10 @@ class X509CertMixin(models.Model):
         """The certificates subject as :py:class:`~django_ca.subject.Subject`."""
         return Subject([(s.oid, s.value) for s in self.x509.subject])
 
+    def distinguishedName(self):
+        return format_name(self.x509.subject)
+    distinguishedName.short_description = 'Distinguished Name'
+
     ###################
     # X509 extensions #
     ###################
@@ -421,10 +425,6 @@ class X509CertMixin(models.Model):
                 value.append('Relative Name: %s' % format_name(dp.relative_name.value))
 
         return ext.critical, value
-
-    def distinguishedName(self):
-        return format_name(self.x509.subject)
-    distinguishedName.short_description = 'Distinguished Name'
 
     def signedCertificateTimestampList(self):
         try:
