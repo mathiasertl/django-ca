@@ -40,6 +40,7 @@ from django.utils.encoding import force_str
 from django.utils.text import slugify
 from django.utils.translation import ugettext_lazy as _
 
+from .extensions import AuthorityInformationAccess
 from .extensions import AuthorityKeyIdentifier
 from .extensions import BasicConstraints
 from .extensions import ExtendedKeyUsage
@@ -289,6 +290,14 @@ class X509CertMixin(models.Model):
                     yield name, self.crlDistributionPoints()
                 else:  # pragma: no cover  - we have a function for everything we support
                     yield name, (ext.critical, ext.oid)
+
+    @property
+    def authority_information_access(self):
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS)
+        except x509.ExtensionNotFound:
+            return None
+        return AuthorityInformationAccess(ext)
 
     @property
     def authority_key_identifier(self):

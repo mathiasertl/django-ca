@@ -20,6 +20,7 @@ import six
 
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
+from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import ObjectIdentifier
@@ -342,6 +343,78 @@ class KeyIdExtension(Extension):
         return add_colons(binascii.hexlify(self.value).upper().decode('utf-8'))
 
 
+class AuthorityInformationAccess(GeneralNameMixin, Extension):
+    oid = ExtensionOID.AUTHORITY_INFORMATION_ACCESS
+
+    def __bool__(self):
+        return bool(self.ocsp) or bool(self.issuers)
+    if six.PY2:  # pragma: only py2
+        __nonzero__ = __bool__
+
+    def __eq__(self, other):
+        return self.issuers == other.issuers and self.ocsp == other.ocsp and self.critical == other.critical
+
+    def __repr__(self):
+        issuers = [self.serialize_value(v) for v in self.issuers]
+        ocsp = [self.serialize_value(v) for v in self.ocsp]
+        return '<%s: issuers=%r, ocsp=%r, critical=%r>' % (
+            self.__class__.__name__, issuers, ocsp, self.critical)
+
+    def __str__(self):
+        return 'AuthorityInformationAccess(issuers=%s, ocsp=%s, critical=%s)' % (
+            [self.serialize_value(v) for v in self.issuers],
+            [self.serialize_value(v) for v in self.ocsp],
+            self.critical
+        )
+
+    def as_text(self):
+        text = ''
+        if self.issuers:
+            text += 'CA issuers:\n'
+            for name in self.issuers:
+                text += '  * %s\n' % self.serialize_value(name)
+        if self.ocsp:
+            text += 'OCSP:\n'
+            for name in self.ocsp:
+                text += '  * %s\n' % self.serialize_value(name)
+
+        return text
+
+    @property
+    def extension_type(self):
+        descs = [x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, v) for v in self.issuers]
+        descs += [x509.AccessDescription(AuthorityInformationAccessOID.OCSP, v) for v in self.ocsp]
+        return x509.AuthorityInformationAccess(descriptions=descs)
+
+    def from_extension(self, value):
+        self.issuers = []
+        self.ocsp = []
+
+        for desc in value.value:
+            if desc.access_method == AuthorityInformationAccessOID.CA_ISSUERS:
+                self.issuers.append(desc.access_location)
+            elif desc.access_method == AuthorityInformationAccessOID.OCSP:
+                self.ocsp.append(desc.access_location)
+            else:
+                raise ValueError('Unkown access method: %s' % desc.access_method)
+
+    def from_dict(self, value):
+        self.issuers = [self.parse_value(v) for v in value.get('issuers', [])]
+        self.ocsp = [self.parse_value(v) for v in value.get('ocsp', [])]
+
+    def from_list(self, value):
+        self.issuers = [self.parse_value(v) for v in value[0]]
+        self.ocsp = [self.parse_value(v) for v in value[1]]
+
+    def from_other(self, value):
+        if isinstance(value, (list, tuple)):
+            self.critical = self.default_critical
+            self.from_list(value)
+            self._test_value()
+        else:
+            super(Extension, self).from_other(value)
+
+
 class AuthorityKeyIdentifier(KeyIdExtension):
     """Class representing a AuthorityKeyIdentifier extension.
 
@@ -582,12 +655,12 @@ class NameConstraints(GeneralNameMixin, Extension):
 
     def __bool__(self):
         return bool(self.permitted) or bool(self.excluded)
-    if six.PY2:
+    if six.PY2:  # pragma: only py2
         __nonzero__ = __bool__
 
     def __eq__(self, other):
         return self.permitted == other.permitted and self.excluded == other.excluded \
-            and self.excluded == other.excluded
+            and self.critical == other.critical
 
     def __repr__(self):
         permitted = [self.serialize_value(v) for v in self.permitted]
