@@ -661,69 +661,107 @@ class NameConstraintsTestCase(TestCase):
                                    excluded_subtrees=[dns('example.net')])
     )
 
-    def test_from_list(self):
-        ext = NameConstraints([[], []])
+    def assertEmpty(self, ext):
         self.assertEqual(ext.permitted, [])
         self.assertEqual(ext.excluded, [])
-        self.assertEqual(ext.as_extension(), self.ext_empty)
         self.assertEqual(ext, NameConstraints([[], []]))
-        self.assertTrue(ext.critical)
         self.assertFalse(bool(ext))
+        self.assertTrue(ext.critical)
+        self.assertEqual(ext.as_extension(), self.ext_empty)
 
-        ext = NameConstraints([['example.com'], []])
+    def assertPermitted(self, ext):
         self.assertEqual(ext.permitted, [dns('example.com')])
         self.assertEqual(ext.excluded, [])
-        self.assertEqual(ext.as_extension(), self.ext_permitted)
         self.assertEqual(ext, NameConstraints([['example.com'], []]))
-        self.assertTrue(ext.critical)
         self.assertTrue(bool(ext))
+        self.assertTrue(ext.critical)
+        self.assertEqual(ext.as_extension(), self.ext_permitted)
 
-        ext = NameConstraints([[], ['example.com']])
+    def assertExcluded(self, ext):
         self.assertEqual(ext.permitted, [])
         self.assertEqual(ext.excluded, [dns('example.com')])
-        self.assertEqual(ext.as_extension(), self.ext_excluded)
         self.assertEqual(ext, NameConstraints([[], ['example.com']]))
-        self.assertTrue(ext.critical)
         self.assertTrue(bool(ext))
+        self.assertTrue(ext.critical)
+        self.assertEqual(ext.as_extension(), self.ext_excluded)
 
-        ext = NameConstraints([['example.com'], ['example.net']])
+    def assertBoth(self, ext):
         self.assertEqual(ext.permitted, [dns('example.com')])
         self.assertEqual(ext.excluded, [dns('example.net')])
-        self.assertEqual(ext.as_extension(), self.ext_both)
         self.assertEqual(ext, NameConstraints([['example.com'], ['example.net']]))
-        self.assertTrue(ext.critical)
         self.assertTrue(bool(ext))
+        self.assertEqual(ext.as_extension(), self.ext_both)
+        self.assertTrue(ext.critical)
+
+    def test_from_list(self):
+        self.assertEmpty(NameConstraints([[], []]))
+        self.assertPermitted(NameConstraints([['example.com'], []]))
+        self.assertExcluded(NameConstraints([[], ['example.com']]))
+        self.assertBoth(NameConstraints([['example.com'], ['example.net']]))
 
         # same thing again but with GeneralName instances
-        ext = NameConstraints([[dns('example.com')], []])
-        self.assertEqual(ext.permitted, [dns('example.com')])
-        self.assertEqual(ext.excluded, [])
-        self.assertEqual(ext.as_extension(), self.ext_permitted)
-        self.assertEqual(ext, NameConstraints([[dns('example.com')], []]))
-        self.assertTrue(ext.critical)
-        self.assertTrue(bool(ext))
-
-        ext = NameConstraints([[], [dns('example.com')]])
-        self.assertEqual(ext.permitted, [])
-        self.assertEqual(ext.excluded, [dns('example.com')])
-        self.assertEqual(ext.as_extension(), self.ext_excluded)
-        self.assertEqual(ext, NameConstraints([[], [dns('example.com')]]))
-        self.assertTrue(ext.critical)
-        self.assertTrue(bool(ext))
-
-        ext = NameConstraints([[dns('example.com')], [dns('example.net')]])
-        self.assertEqual(ext.permitted, [dns('example.com')])
-        self.assertEqual(ext.excluded, [dns('example.net')])
-        self.assertEqual(ext.as_extension(), self.ext_both)
-        self.assertEqual(ext, NameConstraints([[dns('example.com')], [dns('example.net')]]))
-        self.assertTrue(ext.critical)
-        self.assertTrue(bool(ext))
+        self.assertPermitted(NameConstraints([[dns('example.com')], []]))
+        self.assertExcluded(NameConstraints([[], [dns('example.com')]]))
+        self.assertBoth(NameConstraints([[dns('example.com')], [dns('example.net')]]))
 
     def test_from_dict(self):
-        pass
+        self.assertEmpty(NameConstraints({}))
+        self.assertEmpty(NameConstraints({'value': {}}))
+        self.assertEmpty(NameConstraints({'value': {'permitted': [], 'excluded': []}}))
+
+        self.assertPermitted(NameConstraints({'value': {'permitted': ['example.com']}}))
+        self.assertPermitted(NameConstraints({'value': {'permitted': ['example.com'], 'excluded': []}}))
+        self.assertPermitted(NameConstraints({'value': {'permitted': [dns('example.com')]}}))
+        self.assertPermitted(NameConstraints({'value': {'permitted': [dns('example.com')], 'excluded': []}}))
+
+        self.assertExcluded(NameConstraints({'value': {'excluded': ['example.com']}}))
+        self.assertExcluded(NameConstraints({'value': {'excluded': ['example.com'], 'permitted': []}}))
+        self.assertExcluded(NameConstraints({'value': {'excluded': [dns('example.com')]}}))
+        self.assertExcluded(NameConstraints({'value': {'excluded': [dns('example.com')], 'permitted': []}}))
+
+        self.assertBoth(NameConstraints({'value': {'permitted': ['example.com'],
+                                                   'excluded': ['example.net']}}))
+        self.assertBoth(NameConstraints({'value': {'permitted': [dns('example.com')],
+                                                   'excluded': [dns('example.net')]}}))
 
     def test_from_extension(self):
-        pass
+        self.assertEmpty(NameConstraints(self.ext_empty))
+        self.assertPermitted(NameConstraints(self.ext_permitted))
+        self.assertExcluded(NameConstraints(self.ext_excluded))
+        self.assertBoth(NameConstraints(self.ext_both))
+
+    def test_as_str(self):  # test various string conversion methods
+        ext = NameConstraints(self.ext_empty)
+        self.assertEqual(str(ext), "NameConstraints(permitted=[], excluded=[], critical=True)")
+        self.assertEqual(repr(ext), "<NameConstraints: permitted=[], excluded=[], critical=True>")
+        self.assertEqual(ext.as_text(), "")
+
+        ext = NameConstraints(self.ext_permitted)
+        self.assertEqual(str(ext),
+                         "NameConstraints(permitted=['DNS:example.com'], excluded=[], critical=True)")
+        self.assertEqual(repr(ext),
+                         "<NameConstraints: permitted=['DNS:example.com'], excluded=[], critical=True>")
+        self.assertEqual(ext.as_text(), "Permitted:\n  * DNS:example.com\n")
+
+        ext = NameConstraints(self.ext_excluded)
+        self.assertEqual(str(ext),
+                         "NameConstraints(permitted=[], excluded=['DNS:example.com'], critical=True)")
+        self.assertEqual(repr(ext),
+                         "<NameConstraints: permitted=[], excluded=['DNS:example.com'], critical=True>")
+        self.assertEqual(ext.as_text(), "Excluded:\n  * DNS:example.com\n")
+
+        ext = NameConstraints(self.ext_both)
+        self.assertEqual(
+            str(ext),
+            "NameConstraints(permitted=['DNS:example.com'], excluded=['DNS:example.net'], critical=True)")
+        self.assertEqual(
+            repr(ext),
+            "<NameConstraints: permitted=['DNS:example.com'], excluded=['DNS:example.net'], critical=True>")
+        self.assertEqual(ext.as_text(), """Permitted:
+  * DNS:example.com
+Excluded:
+  * DNS:example.net
+""")
 
     def test_error(self):
         with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type NoneType$'):

@@ -744,8 +744,9 @@ class NameConstraints(GeneralNameMixin, Extension):
             super(NameConstraints, self).from_other(value)
 
     def from_dict(self, value):
-        self.permitted = [self.parse_value(v) for v in value['value'].get('permitted', [])]
-        self.excluded = [self.parse_value(v) for v in value['value'].get('excluded', [])]
+        value = value.get('value', {})
+        self.permitted = [self.parse_value(v) for v in value.get('permitted', [])]
+        self.excluded = [self.parse_value(v) for v in value.get('excluded', [])]
 
 
 class SubjectAlternativeName(AlternativeNameExtension):
