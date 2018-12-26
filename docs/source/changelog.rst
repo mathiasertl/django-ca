@@ -25,6 +25,17 @@ ChangeLog
   for new CAs.
 * Fix display of the NameConstraints extension in the admin interface.
 
+Deprecation Notices
+===================
+
+This release will be the last release to support some software versions:
+
+* This will be the last release that supports for Python 3.4
+  (see `Status of Python branches <https://devguide.python.org/#status-of-python-branches>`_).
+* This will be the last release that supports for Django 2.0
+  (see `Supported Versions <https://www.djangoproject.com/download/#supported-versions>`_).
+* This will be the last release that supports cryptography 2.1.
+
 Testing
 =======
 
