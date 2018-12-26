@@ -186,13 +186,32 @@ class CertificateMixin(object):
 
         return mark_safe(html)
 
+    def authority_information_access(self, obj):
+        aia = obj.authority_information_access
+
+        html = ''
+        if aia.critical is True:  # pragma: no cover
+            text = _('Critical')
+            html = '<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text)
+
+        if aia.issuers:  # pragma: no branch
+            html += '<div>CA Issuers:</div>'
+            html += '<ul class="x509-extension-value">'
+            for val in aia.issuers:
+                html += '<li>%s</li>' % escape(format_general_name(val))
+            html += '</ul>'
+        if aia.ocsp:  # pragma: no branch
+            html += '<div>OCSP:</div>'
+            html += '<ul class="x509-extension-value">'
+            for val in aia.ocsp:
+                html += '<li>%s</li>' % escape(format_general_name(val))
+            html += '</ul>'
+        return mark_safe(html)
+    authority_information_access.short_description = 'authorityInfoAccess'
+
     def basic_constraints(self, obj):
         return self.output_extension(obj.basic_constraints)
     basic_constraints.short_description = 'basicConstraints'
-
-    def authorityInfoAccess(self, obj):
-        return self.output_extension(obj.authorityInfoAccess())
-    authorityInfoAccess.short_description = 'authorityInfoAccess'
 
     def key_usage(self, obj):
         return self.output_extension(obj.key_usage)
