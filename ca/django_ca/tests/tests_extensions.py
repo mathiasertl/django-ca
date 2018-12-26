@@ -30,11 +30,18 @@ from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
+from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
 from ..extensions import KnownValuesExtension
 from ..extensions import ListExtension
+from ..extensions import NameConstraints
+from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
+
+
+def dns(d):  # just a shortcut
+    return x509.DNSName(d)
 
 
 def uri(u):  # just a shortcut
@@ -137,6 +144,9 @@ class ListExtensionTestCase(TestCase):
 
         self.assertIsNone(ext.remove('bar'))
         self.assertEqual(ext.value, ['bla'])
+
+        ext.insert(0, 'foo')
+        self.assertEqual(ext.value, ['foo', 'bla'])
 
     def test_slices(self):
         val = ['foo', 'bar', 'bla']
@@ -438,6 +448,7 @@ class BasicConstraintsTestCase(TestCase):
         self.assertEqual(bc.ca, ca)
         self.assertEqual(bc.pathlen, pathlen)
         self.assertEqual(bc.critical, critical)
+        self.assertEqual(bc.value, (ca, pathlen))
 
     def test_from_extension(self):
         self.assertBC(BasicConstraints(x509.Extension(
@@ -494,6 +505,17 @@ class BasicConstraintsTestCase(TestCase):
         bc = BasicConstraints('CA=false').extension_type
         self.assertFalse(bc.ca)
         self.assertEqual(bc.path_length, None)
+
+
+class IssuerAlternativeNameTestCase(TestCase):
+    # NOTE: this extension is almost identical to the SubjectAlternativeName extension, most is tested there
+    def test_as_extension(self):
+        ext = IssuerAlternativeName('https://example.com')
+        self.assertEqual(ext.as_extension(), x509.extensions.Extension(
+            oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME,
+            critical=False,
+            value=x509.IssuerAlternativeName([uri('https://example.com')])
+        ))
 
 
 class KeyUsageTestCase(TestCase):
@@ -616,6 +638,275 @@ class ExtendedKeyUsageTestCase(TestCase):
         # make sure whe haven't forgotton any keys anywhere
         self.assertEqual(set(ExtendedKeyUsage.CRYPTOGRAPHY_MAPPING.keys()),
                          set([e[0] for e in ExtendedKeyUsage.CHOICES]))
+
+
+class NameConstraintsTestCase(TestCase):
+    ext_empty = x509.extensions.Extension(
+        oid=ExtensionOID.NAME_CONSTRAINTS, critical=True,
+        value=x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[])
+    )
+    ext_permitted = x509.extensions.Extension(
+        oid=ExtensionOID.NAME_CONSTRAINTS, critical=True,
+        value=x509.NameConstraints(permitted_subtrees=[dns('example.com')], excluded_subtrees=[])
+    )
+    ext_excluded = x509.extensions.Extension(
+        oid=ExtensionOID.NAME_CONSTRAINTS, critical=True,
+        value=x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[dns('example.com')])
+    )
+    ext_both = x509.extensions.Extension(
+        oid=ExtensionOID.NAME_CONSTRAINTS, critical=True,
+        value=x509.NameConstraints(permitted_subtrees=[dns('example.com')],
+                                   excluded_subtrees=[dns('example.net')])
+    )
+
+    def test_from_list(self):
+        ext = NameConstraints([[], []])
+        self.assertEqual(ext.permitted, [])
+        self.assertEqual(ext.excluded, [])
+        self.assertEqual(ext.as_extension(), self.ext_empty)
+        self.assertEqual(ext, NameConstraints([[], []]))
+        self.assertTrue(ext.critical)
+        self.assertFalse(bool(ext))
+
+        ext = NameConstraints([['example.com'], []])
+        self.assertEqual(ext.permitted, [dns('example.com')])
+        self.assertEqual(ext.excluded, [])
+        self.assertEqual(ext.as_extension(), self.ext_permitted)
+        self.assertEqual(ext, NameConstraints([['example.com'], []]))
+        self.assertTrue(ext.critical)
+        self.assertTrue(bool(ext))
+
+        ext = NameConstraints([[], ['example.com']])
+        self.assertEqual(ext.permitted, [])
+        self.assertEqual(ext.excluded, [dns('example.com')])
+        self.assertEqual(ext.as_extension(), self.ext_excluded)
+        self.assertEqual(ext, NameConstraints([[], ['example.com']]))
+        self.assertTrue(ext.critical)
+        self.assertTrue(bool(ext))
+
+        ext = NameConstraints([['example.com'], ['example.net']])
+        self.assertEqual(ext.permitted, [dns('example.com')])
+        self.assertEqual(ext.excluded, [dns('example.net')])
+        self.assertEqual(ext.as_extension(), self.ext_both)
+        self.assertEqual(ext, NameConstraints([['example.com'], ['example.net']]))
+        self.assertTrue(ext.critical)
+        self.assertTrue(bool(ext))
+
+        # same thing again but with GeneralName instances
+        ext = NameConstraints([[dns('example.com')], []])
+        self.assertEqual(ext.permitted, [dns('example.com')])
+        self.assertEqual(ext.excluded, [])
+        self.assertEqual(ext.as_extension(), self.ext_permitted)
+        self.assertEqual(ext, NameConstraints([[dns('example.com')], []]))
+        self.assertTrue(ext.critical)
+        self.assertTrue(bool(ext))
+
+        ext = NameConstraints([[], [dns('example.com')]])
+        self.assertEqual(ext.permitted, [])
+        self.assertEqual(ext.excluded, [dns('example.com')])
+        self.assertEqual(ext.as_extension(), self.ext_excluded)
+        self.assertEqual(ext, NameConstraints([[], [dns('example.com')]]))
+        self.assertTrue(ext.critical)
+        self.assertTrue(bool(ext))
+
+        ext = NameConstraints([[dns('example.com')], [dns('example.net')]])
+        self.assertEqual(ext.permitted, [dns('example.com')])
+        self.assertEqual(ext.excluded, [dns('example.net')])
+        self.assertEqual(ext.as_extension(), self.ext_both)
+        self.assertEqual(ext, NameConstraints([[dns('example.com')], [dns('example.net')]]))
+        self.assertTrue(ext.critical)
+        self.assertTrue(bool(ext))
+
+    def test_from_dict(self):
+        pass
+
+    def test_from_extension(self):
+        pass
+
+    def test_error(self):
+        with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type NoneType$'):
+            NameConstraints(None)
+        with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type bool$'):
+            NameConstraints(False)
+
+
+class SubjectAlternativeNameTestCase(TestCase):
+    def test_operators(self):
+        ext = SubjectAlternativeName(['https://example.com'])
+        self.assertIn('https://example.com', ext)
+        self.assertIn(uri('https://example.com'), ext)
+        self.assertNotIn('https://example.net', ext)
+        self.assertNotIn(uri('https://example.net'), ext)
+
+        self.assertEqual(len(ext), 1)
+        self.assertEqual(bool(ext), True)
+
+    def test_from_extension(self):
+        x509_ext = x509.extensions.Extension(
+            oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME, critical=True,
+            value=x509.SubjectAlternativeName([dns('example.com')]))
+        ext = SubjectAlternativeName(x509_ext)
+        self.assertEqual(ext.as_extension(), x509_ext)
+
+    def test_from_dict(self):
+        ext = SubjectAlternativeName({})
+        self.assertEqual(ext.value, [])
+        self.assertFalse(ext.critical)
+        self.assertEqual(len(ext), 0)
+        self.assertEqual(bool(ext), False)
+
+        ext = SubjectAlternativeName({'value': None})
+        self.assertEqual(ext.value, [])
+        self.assertFalse(ext.critical)
+        self.assertEqual(len(ext), 0)
+        self.assertEqual(bool(ext), False)
+
+        ext = SubjectAlternativeName({'value': []})
+        self.assertEqual(ext.value, [])
+        self.assertFalse(ext.critical)
+        self.assertEqual(len(ext), 0)
+        self.assertEqual(bool(ext), False)
+
+        ext = SubjectAlternativeName({'value': 'example.com'})
+        self.assertEqual(ext.value, [dns('example.com')])
+        self.assertFalse(ext.critical)
+        self.assertEqual(len(ext), 1)
+        self.assertEqual(bool(ext), True)
+
+        ext = SubjectAlternativeName({'value': dns('example.com')})
+        self.assertEqual(ext.value, [dns('example.com')])
+        self.assertFalse(ext.critical)
+        self.assertEqual(len(ext), 1)
+        self.assertEqual(bool(ext), True)
+
+        ext = SubjectAlternativeName({'value': ['example.com']})
+        self.assertEqual(ext.value, [dns('example.com')])
+        self.assertFalse(ext.critical)
+        self.assertEqual(len(ext), 1)
+        self.assertEqual(bool(ext), True)
+
+        ext = SubjectAlternativeName({'value': ['example.com', dns('example.net')]})
+        self.assertEqual(ext.value, [dns('example.com'), dns('example.net')])
+        self.assertFalse(ext.critical)
+        self.assertEqual(len(ext), 2)
+        self.assertEqual(bool(ext), True)
+
+    def test_list_funcs(self):
+        ext = SubjectAlternativeName(['https://example.com'])
+        ext.append('https://example.net')
+        self.assertEqual(ext.value, [uri('https://example.com'), uri('https://example.net')])
+        self.assertEqual(ext.count('https://example.com'), 1)
+        self.assertEqual(ext.count(uri('https://example.com')), 1)
+        self.assertEqual(ext.count('https://example.net'), 1)
+        self.assertEqual(ext.count(uri('https://example.net')), 1)
+        self.assertEqual(ext.count('https://example.org'), 0)
+        self.assertEqual(ext.count(uri('https://example.org')), 0)
+
+        ext.clear()
+        self.assertEqual(ext.value, [])
+        self.assertEqual(ext.count('https://example.com'), 0)
+        self.assertEqual(ext.count(uri('https://example.com')), 0)
+
+        ext.extend(['https://example.com', 'https://example.net'])
+        self.assertEqual(ext.value, [uri('https://example.com'), uri('https://example.net')])
+        ext.extend(['https://example.org'])
+        self.assertEqual(ext.value, [uri('https://example.com'), uri('https://example.net'),
+                                     uri('https://example.org')])
+
+        ext.clear()
+        ext.extend([uri('https://example.com'), uri('https://example.net')])
+        self.assertEqual(ext.value, [uri('https://example.com'), uri('https://example.net')])
+        ext.extend([uri('https://example.org')])
+        self.assertEqual(ext.value, [uri('https://example.com'), uri('https://example.net'),
+                                     uri('https://example.org')])
+
+        self.assertEqual(ext.pop(), 'URI:https://example.org')
+        self.assertEqual(ext.value, [uri('https://example.com'), uri('https://example.net')])
+
+        self.assertIsNone(ext.remove('https://example.com'))
+        self.assertEqual(ext.value, [uri('https://example.net')])
+
+        self.assertIsNone(ext.remove(uri('https://example.net')))
+        self.assertEqual(ext.value, [])
+
+        ext.insert(0, 'https://example.com')
+        self.assertEqual(ext.value, [uri('https://example.com')])
+
+    def test_slices(self):
+        val = ['DNS:foo', 'DNS:bar', 'DNS:bla']
+        ext = SubjectAlternativeName(val)
+        self.assertEqual(ext[0], val[0])
+        self.assertEqual(ext[1], val[1])
+        self.assertEqual(ext[0:], val[0:])
+        self.assertEqual(ext[1:], val[1:])
+        self.assertEqual(ext[:1], val[:1])
+        self.assertEqual(ext[1:2], val[1:2])
+
+        ext[0] = 'test'
+        val = [dns('test'), dns('bar'), dns('bla')]
+        self.assertEqual(ext.value, val)
+        ext[1:2] = ['x', 'y']
+        val[1:2] = [dns('x'), dns('y')]
+        self.assertEqual(ext.value, val)
+        ext[1:] = ['a', 'b']
+        val[1:] = [dns('a'), dns('b')]
+        self.assertEqual(ext.value, val)
+
+        del ext[0]
+        del val[0]
+        self.assertEqual(ext.value, val)
+
+    def test_serialization(self):
+        val = ['foo', 'bar', 'bla']
+        ext = SubjectAlternativeName({'value': val, 'critical': False})
+        self.assertEqual(ext, SubjectAlternativeName(ext.serialize()))
+        ext = SubjectAlternativeName({'value': val, 'critical': True})
+        self.assertEqual(ext, SubjectAlternativeName(ext.serialize()))
+
+    def test_as_str(self):  # test various string conversion methods
+        san = SubjectAlternativeName([])
+        self.assertEqual(str(san), "")
+        self.assertEqual(repr(san), "<SubjectAlternativeName: [], critical=False>")
+        self.assertEqual(san.as_text(), "")
+        san.critical = True
+        self.assertEqual(str(san), "/critical")
+        self.assertEqual(repr(san), "<SubjectAlternativeName: [], critical=True>")
+        self.assertEqual(san.as_text(), "")
+
+        san = SubjectAlternativeName(['example.com'])
+        self.assertEqual(str(san), "DNS:example.com")
+        self.assertEqual(repr(san), "<SubjectAlternativeName: ['DNS:example.com'], critical=False>")
+        self.assertEqual(san.as_text(), "* DNS:example.com")
+        san.critical = True
+        self.assertEqual(str(san), "DNS:example.com/critical")
+        self.assertEqual(repr(san), "<SubjectAlternativeName: ['DNS:example.com'], critical=True>")
+        self.assertEqual(san.as_text(), "* DNS:example.com")
+
+        san = SubjectAlternativeName([dns('example.com')])
+        self.assertEqual(str(san), "DNS:example.com")
+        self.assertEqual(repr(san), "<SubjectAlternativeName: ['DNS:example.com'], critical=False>")
+        self.assertEqual(san.as_text(), "* DNS:example.com")
+        san.critical = True
+        self.assertEqual(str(san), "DNS:example.com/critical")
+        self.assertEqual(repr(san), "<SubjectAlternativeName: ['DNS:example.com'], critical=True>")
+        self.assertEqual(san.as_text(), "* DNS:example.com")
+
+        san = SubjectAlternativeName([dns('example.com'), dns('example.org')])
+        self.assertEqual(str(san), "DNS:example.com,DNS:example.org")
+        self.assertEqual(repr(san),
+                         "<SubjectAlternativeName: ['DNS:example.com', 'DNS:example.org'], critical=False>")
+        self.assertEqual(san.as_text(), "* DNS:example.com\n* DNS:example.org")
+        san.critical = True
+        self.assertEqual(str(san), "DNS:example.com,DNS:example.org/critical")
+        self.assertEqual(repr(san),
+                         "<SubjectAlternativeName: ['DNS:example.com', 'DNS:example.org'], critical=True>")
+        self.assertEqual(san.as_text(), "* DNS:example.com\n* DNS:example.org")
+
+    def test_error(self):
+        with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type NoneType$'):
+            SubjectAlternativeName(None)
+        with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type bool$'):
+            SubjectAlternativeName(False)
 
 
 class SubjectKeyIdentifierTestCase(TestCase):

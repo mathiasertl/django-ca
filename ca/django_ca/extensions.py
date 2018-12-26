@@ -205,14 +205,14 @@ class ListExtension(Extension):
 
     def __setitem__(self, key, value):
         if isinstance(key, six.integer_types):
-            self.value[key] = self.serialize_value(value)
+            self.value[key] = self.parse_value(value)
         else:
-            self.value[key] = [self.serialize_value(v) for v in value]
+            self.value[key] = [self.parse_value(v) for v in value]
 
     def __str__(self):
-        val = ','.join([self.serialize_value(v) for v in self.value])
+        val = "%s" % ','.join([self.serialize_value(v) for v in self.value])
         if self.critical:
-            return'%s/critical' % val
+            return '%s/critical' % val
         return val
 
     def append(self, value):
@@ -233,8 +233,11 @@ class ListExtension(Extension):
         self._test_value()
 
     def from_dict(self, value):
-        value = value['value']
-        if isinstance(value, six.string_types):
+        value = value.get('value')
+        if not value:
+            self.value = []
+            return
+        elif isinstance(value, x509.GeneralName) or isinstance(value, six.string_types):
             value = [value]
 
         self.value = [self.parse_value(v) for v in value]
@@ -266,7 +269,7 @@ class ListExtension(Extension):
         return self.serialize_value(self.value.pop(index))
 
     def remove(self, v):
-        self.value.remove(self.parse_value(v))
+        return self.value.remove(self.parse_value(v))
 
     def serialize(self):
         val = ','.join([self.serialize_value(v) for v in self.value])
