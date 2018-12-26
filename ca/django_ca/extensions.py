@@ -412,8 +412,8 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
                 self.issuers.append(desc.access_location)
             elif desc.access_method == AuthorityInformationAccessOID.OCSP:
                 self.ocsp.append(desc.access_location)
-            else:
-                raise ValueError('Unkown access method: %s' % desc.access_method)
+            else:  # pragma: no cover (cryptography only has the above two)
+                raise ValueError('Unknown access method: %s' % desc.access_method)
 
     def from_dict(self, value):
         self.issuers = [self.parse_value(v) for v in value.get('issuers', [])]
@@ -429,7 +429,10 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
             self.from_list(value)
             self._test_value()
         else:
-            super(Extension, self).from_other(value)
+            super(AuthorityInformationAccess, self).from_other(value)
+
+    def from_str(self, value):
+        raise NotImplementedError
 
 
 class AuthorityKeyIdentifier(KeyIdExtension):
@@ -723,7 +726,7 @@ class NameConstraints(GeneralNameMixin, Extension):
             self.from_list(value)
             self._test_value()
         else:
-            super(Extension, self).from_other(value)
+            super(NameConstraints, self).from_other(value)
 
     def from_dict(self, value):
         self.permitted = [self.parse_value(v) for v in value['value'].get('permitted', [])]
