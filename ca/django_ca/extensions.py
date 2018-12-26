@@ -700,15 +700,24 @@ class NameConstraints(GeneralNameMixin, Extension):
     def __repr__(self):
         permitted = [self.serialize_value(v) for v in self.permitted]
         excluded = [self.serialize_value(v) for v in self.excluded]
+
+        if six.PY2:  # pragma: only py2 - otherwise we have the u'' prefix in output
+            permitted = [str(v) for v in permitted]
+            excluded = [str(v) for v in excluded]
+
         return '<%s: permitted=%r, excluded=%r, critical=%r>' % (
             self.__class__.__name__, permitted, excluded, self.critical)
 
     def __str__(self):
+        permitted = [self.serialize_value(v) for v in self.permitted]
+        excluded = [self.serialize_value(v) for v in self.excluded]
+
+        if six.PY2:  # pragma: only py2 - otherwise we have the u'' prefix in output
+            permitted = [str(v) for v in permitted]
+            excluded = [str(v) for v in excluded]
+
         return 'NameConstraints(permitted=%s, excluded=%s, critical=%s)' % (
-            [self.serialize_value(v) for v in self.permitted],
-            [self.serialize_value(v) for v in self.excluded],
-            self.critical
-        )
+            permitted, excluded, self.critical)
 
     def as_text(self):
         text = ''
