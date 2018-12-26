@@ -35,10 +35,14 @@ class SettingsTestCase(TestCase):
 
 class ImproperlyConfiguredTestCase(TestCase):
     def test_default_ecc_curve(self):
-        with self.assertRaisesRegex(ImproperlyConfigured, '^Unkown CA_DEFAULT_ECC_CURVE: foo$'):
+        with self.assertRaisesRegex(ImproperlyConfigured, r'^Unkown CA_DEFAULT_ECC_CURVE: foo$'):
             with override_settings(CA_DEFAULT_ECC_CURVE='foo'):
                 pass
 
-        with self.assertRaisesRegex(ImproperlyConfigured, '^ECDH: Not an EllipticCurve.$'):
+        with self.assertRaisesRegex(ImproperlyConfigured, r'^ECDH: Not an EllipticCurve\.$'):
             with override_settings(CA_DEFAULT_ECC_CURVE='ECDH'):
+                pass
+
+        with self.assertRaisesRegex(ImproperlyConfigured, '^CA_DEFAULT_KEY_SIZE cannot be lower then 1024$'):
+            with override_settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=512):
                 pass

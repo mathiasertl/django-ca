@@ -17,13 +17,16 @@
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
+from freezegun import freeze_time
 
 from .. import ca_settings
 from ..extensions import BasicConstraints
 from ..extensions import KeyUsage
+from ..models import Certificate
 from ..models import CertificateAuthority
 from ..subject import Subject
 from .base import DjangoCATestCase
+from .base import DjangoCAWithCertTestCase
 from .base import override_settings
 from .base import override_tmpcadir
 
@@ -100,3 +103,31 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
             CertificateAuthority.objects.init(key_size=int(key_size / 2), **kwargs)
         with self.assertRaisesRegex(ValueError, r'^256: Key size must be least 1024 bits$'):
             CertificateAuthority.objects.init(key_size=int(key_size / 4), **kwargs)
+
+
+class CertificateQuerysetTestCase(DjangoCAWithCertTestCase):
+    def assertQuerySet(self, qs, *items):
+        self.assertCountEqual(list(qs), items)
+
+    def test_validity(self):
+        with freeze_time('2018-12-26'):
+            self.assertQuerySet(Certificate.objects.not_yet_valid())
+            self.assertQuerySet(Certificate.objects.valid(), self.cert, self.cert_all, self.cert_no_ext)
+            self.assertQuerySet(Certificate.objects.expired())
+
+        with freeze_time('2018-01-01'):
+            self.assertQuerySet(Certificate.objects.not_yet_valid(), self.cert_all, self.cert_no_ext)
+            self.assertQuerySet(Certificate.objects.valid(), self.cert)
+            self.assertQuerySet(Certificate.objects.expired())
+
+        with freeze_time('2017-01-01'):
+            self.assertQuerySet(Certificate.objects.not_yet_valid(),
+                                self.cert, self.cert_all, self.cert_no_ext)
+            self.assertQuerySet(Certificate.objects.valid())
+            self.assertQuerySet(Certificate.objects.expired())
+
+        with freeze_time('2099-01-01'):
+            self.assertQuerySet(Certificate.objects.not_yet_valid())
+            self.assertQuerySet(Certificate.objects.valid())
+            self.assertQuerySet(Certificate.objects.expired(),
+                                self.cert, self.cert_all, self.cert_no_ext)

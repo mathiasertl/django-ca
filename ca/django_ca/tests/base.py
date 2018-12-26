@@ -513,11 +513,6 @@ class DjangoCATestCase(TestCase):
 
         return exts
 
-    @classmethod
-    def get_alt_names(cls, x509):
-        print('get_alt_names')
-        return cls.get_extensions(x509)['subjectAltName'][1]
-
     def assertHasExtension(self, cert, oid):
         """Assert that the given cert has the passed extension."""
 

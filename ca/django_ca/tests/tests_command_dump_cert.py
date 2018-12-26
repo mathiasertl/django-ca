@@ -18,16 +18,14 @@ from io import BytesIO
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
-from django.core.management.base import CommandError
-
 from .. import ca_settings
-from .base import DjangoCAWithCertTestCase
+from .base import DjangoCAWithChildCATestCase
 from .base import override_settings
 from .base import override_tmpcadir
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
-class DumpCertTestCase(DjangoCAWithCertTestCase):
+class DumpCertTestCase(DjangoCAWithChildCATestCase):
     def test_basic(self):
         stdout, stderr = self.cmd('dump_cert', self.cert.serial,
                                   stdout=BytesIO(), stderr=BytesIO())
@@ -48,6 +46,12 @@ class DumpCertTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(stderr, b'')
         self.assertEqual(stdout, self.cert.pub.encode('utf-8'))
 
+    def test_bundle(self):
+        stdout, stderr = self.cmd('dump_cert', self.cert.serial, bundle=True,
+                                  stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stderr, b'')
+        self.assertEqual(stdout, self.cert.pub.encode('utf-8') + self.ca.pub.encode('utf-8'))
+
     @override_tmpcadir()
     def test_file_output(self):
         path = os.path.join(ca_settings.CA_DIR, 'test_cert.pem')
@@ -59,8 +63,12 @@ class DumpCertTestCase(DjangoCAWithCertTestCase):
         with open(path) as stream:
             self.assertEqual(stream.read(), self.cert.pub)
 
-    def test_wrong_path(self):
+    def test_errors(self):
         path = os.path.join(ca_settings.CA_DIR, 'does-not-exist', 'test_cert.pem')
-        with self.assertRaises(CommandError):
-            self.cmd('dump_cert', self.cert.serial, path, stdout=BytesIO(),
-                     stderr=BytesIO())
+        msg = r"^\[Errno 2\] No such file or directory: '/non/existent/does-not-exist/test_cert\.pem'$"
+        with self.assertCommandError(msg):
+            self.cmd('dump_cert', self.cert.serial, path, stdout=BytesIO(), stderr=BytesIO())
+
+        with self.assertCommandError(r"^Cannot dump bundle when using DER format\.$"):
+            self.cmd('dump_cert', self.cert.serial, format=Encoding.DER, bundle=True,
+                     stdout=BytesIO(), stderr=BytesIO())
