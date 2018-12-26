@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 import doctest
 
 import six
@@ -85,8 +87,8 @@ class ExtensionTestCase(TestCase):
         self.assertEqual(str(Extension(self.value)), self.value)
 
         self.assertEqual(repr(Extension('critical,%s' % self.value)),
-                         '<Extension: \'%s\', critical=True>' % self.value)
-        self.assertEqual(repr(Extension(self.value)), '<Extension: \'%s\', critical=False>' % self.value)
+                         '<Extension: %s, critical=True>' % self.value)
+        self.assertEqual(repr(Extension(self.value)), '<Extension: %s, critical=False>' % self.value)
 
     def test_error(self):
         with self.assertRaisesRegex(ValueError, r'^None: Invalid critical value passed$'):

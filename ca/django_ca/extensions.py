@@ -104,7 +104,7 @@ class Extension(object):
         return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
 
     def __repr__(self):
-        return '<%s: %r, critical=%r>' % (self.__class__.__name__, self.value, self.critical)
+        return '<%s: %s, critical=%r>' % (self.__class__.__name__, self.value, self.critical)
 
     def __str__(self):
         if self.critical:
@@ -201,6 +201,10 @@ class ListExtension(Extension):
 
     def __repr__(self):
         val = [self.serialize_value(v) for v in self.value]
+
+        if six.PY2:  # pragma: only py2 - otherwise we have the u'' prefix in output
+            val = [str(v) for v in val]
+
         return '<%s: %r, critical=%r>' % (self.__class__.__name__, val, self.critical)
 
     def __setitem__(self, key, value):
@@ -377,15 +381,23 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
     def __repr__(self):
         issuers = [self.serialize_value(v) for v in self.issuers]
         ocsp = [self.serialize_value(v) for v in self.ocsp]
-        return '<%s: issuers=%r, ocsp=%r, critical=%r>' % (
+
+        if six.PY2:  # pragma: only py2 - otherwise we have the u'' prefix in output
+            issuers = [str(v) for v in issuers]
+            ocsp = [str(v) for v in ocsp]
+
+        return '<%s: issuers=%s, ocsp=%s, critical=%r>' % (
             self.__class__.__name__, issuers, ocsp, self.critical)
 
     def __str__(self):
-        return 'AuthorityInformationAccess(issuers=%s, ocsp=%s, critical=%s)' % (
-            [self.serialize_value(v) for v in self.issuers],
-            [self.serialize_value(v) for v in self.ocsp],
-            self.critical
-        )
+        issuers = [self.serialize_value(v) for v in self.issuers]
+        ocsp = [self.serialize_value(v) for v in self.ocsp]
+
+        if six.PY2:  # pragma: only py2 - otherwise we have the u'' prefix in output
+            issuers = [str(v) for v in issuers]
+            ocsp = [str(v) for v in ocsp]
+
+        return 'AuthorityInformationAccess(issuers=%s, ocsp=%s, critical=%s)' % (issuers, ocsp, self.critical)
 
     def as_text(self):
         text = ''
