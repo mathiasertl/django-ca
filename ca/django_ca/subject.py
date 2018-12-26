@@ -180,7 +180,10 @@ class Subject(object):
 
         self._data[oid] = value
 
-    def update(self, e, **f):
+    def update(self, e=None, **f):
+        if e is None:
+            e = {}
+
         if isinstance(e, Subject):
             self._data.update(e._data)
         elif hasattr(e, 'keys'):

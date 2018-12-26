@@ -268,6 +268,18 @@ class TestSubject(TestCase):
         s.update([('C', 'AT'), ('CN', 'example.net')])
         self.assertEqual(s, merged)
 
+        s = Subject('/O=Org/CN=example.com')
+        s.update([('C', 'AT')], CN='example.net')
+        self.assertEqual(s, merged)
+
+        s = Subject('/O=Org/CN=example.com')
+        s.update(C='AT', CN='example.net')
+        self.assertEqual(s, merged)
+
+        s = Subject('/O=Org/CN=example.com')
+        s.update([('C', 'DE')], C='AT', CN='example.net')
+        self.assertEqual(s, merged)
+
     def test_fields(self):
         s = Subject('')
         self.assertEqual(list(s.fields), [])
