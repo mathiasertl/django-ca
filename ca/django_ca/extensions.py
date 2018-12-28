@@ -461,6 +461,10 @@ class AuthorityKeyIdentifier(KeyIdExtension):
 
     oid = ExtensionOID.AUTHORITY_KEY_IDENTIFIER
 
+    @property
+    def extension_type(self):
+        return x509.AuthorityKeyIdentifier(key_identifier=self.value)
+
     def from_subject_key_identifier(self, ext):
         self.value = ext.value
 
@@ -792,6 +796,10 @@ class SubjectKeyIdentifier(KeyIdExtension):
     """Class representing a SubjectKeyIdentifier extension."""
 
     oid = ExtensionOID.SUBJECT_KEY_IDENTIFIER
+
+    @property
+    def extension_type(self):
+        return x509.SubjectKeyIdentifier(digest=self.value)
 
     def from_extension(self, ext):
         self.value = ext.value.digest
