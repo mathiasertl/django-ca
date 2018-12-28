@@ -21,10 +21,9 @@ Features:
 * Optional web interface for certificate handling (e.g. issuing, revoking, ...).
 * Written in pure Python2.7/Python3.4+, using Django 1.11 or later.
 
-Installation/Configuration:
-
 .. toctree::
    :maxdepth: 1
+   :caption: Installation
 
    install
    docker
@@ -32,10 +31,9 @@ Installation/Configuration:
    changelog
    settings
 
-Usage:
-
 .. toctree::
    :maxdepth: 1
+   :caption: Usage
 
    cli/intro
    Command-line interface: certificate authority management <cli/cas>
@@ -44,10 +42,9 @@ Usage:
    crl
    ocsp
 
-Python API:
-
 .. toctree::
    :maxdepth: 1
+   :caption: Python API
 
    Introduction <python/intro>
    signals
@@ -57,10 +54,9 @@ Python API:
    python/utils
 
 
-Development documentation:
-
 .. toctree::
    :maxdepth: 1
+   :caption: Development
 
    development
    contribute
