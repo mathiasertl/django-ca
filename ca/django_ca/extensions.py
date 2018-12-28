@@ -100,7 +100,7 @@ class Extension(object):
         if not isinstance(self.critical, bool):
             raise ValueError('%s: Invalid critical value passed' % self.critical)
 
-    def __hash__(self):
+    def __hash__(self):  # pragma: only py2
         return hash(self.__class__, self.value, self.critical)
 
     def __eq__(self, other):
