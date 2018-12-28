@@ -4,6 +4,7 @@ Development
 
 .. autoclass:: django_ca.tests.base.DjangoCATestCase
    :members:
+   :exclude-members: assertRaisesRegex
 
 **********
 Setup demo
