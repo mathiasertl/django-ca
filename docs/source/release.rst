@@ -13,6 +13,8 @@ Before release
 * Update ``version`` parameter in ``setup.py``.
 * Update ``version`` and ``release`` in ``docs/source/conf.py``.
 * Make sure that ``docs/source/changelog.rst`` is up to date.
+* Make sure that tox runs through for all environments.
+* Make sure that ``python setup.py docker_test`` runs through.
 * Push the last commit and make sure that Travis and Read The Docs are updated.
 
 ************

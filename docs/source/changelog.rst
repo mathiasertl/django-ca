@@ -53,6 +53,7 @@ Testing
 =======
 
 * Add cryptography 2.4.2 to the test-suite.
+* Add the ``docker_test`` setup.py command to test the image using various alpine-based images.
 * Test for certificates that are not yet valid.
 * The child CA used for testing now contains more extensions.
 * Freeze time in some test cases to avoid test failures when certificates eventually expire.
