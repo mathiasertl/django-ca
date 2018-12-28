@@ -56,7 +56,6 @@ from .models import Certificate
 from .models import CertificateAuthority
 from .models import Watcher
 from .signals import post_issue_cert
-from .signals import pre_issue_cert
 from .utils import OID_NAME_MAPPINGS
 from .utils import format_general_name
 
