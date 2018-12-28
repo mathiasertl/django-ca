@@ -230,8 +230,9 @@ class DockerTest(Command):
             try:
                 subprocess.check_call([
                     'docker', 'build', '--no-cache', '-t', tag, '--build-arg', 'IMAGE=%s' % image, '.'])
-            finally:
+            except Exception:
                 print('### Failed image is %s' % image)
+            finally:
                 subprocess.call(['docker', 'image', 'rm', tag])
 
 
