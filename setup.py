@@ -203,18 +203,18 @@ class DockerTest(Command):
 
     def run(self):
         images = [
-            '2.7-alpine3.8',
-            '2.7-alpine3.7',
-            '2.7-alpine3.6',
-            '3.4-alpine3.8',
-            '3.4-alpine3.7',
-            '3.5-alpine3.8',
-            '3.5-alpine3.7',
-            '3.6-alpine3.8',
-            '3.6-alpine3.7',
-            '3.6-alpine3.6',
-            '3.7-alpine3.8',
-            '3.7-alpine3.7',
+            'python:2.7-alpine3.8',
+            'python:2.7-alpine3.7',
+            'python:2.7-alpine3.6',
+            'python:3.4-alpine3.8',
+            'python:3.4-alpine3.7',
+            'python:3.5-alpine3.8',
+            'python:3.5-alpine3.7',
+            'python:3.6-alpine3.8',
+            'python:3.6-alpine3.7',
+            'python:3.6-alpine3.6',
+            'python:3.7-alpine3.8',
+            'python:3.7-alpine3.7',
         ]
 
         for image in images:
