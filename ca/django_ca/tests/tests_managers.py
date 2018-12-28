@@ -13,21 +13,46 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtensionOID
 
 from ..extensions import AuthorityInformationAccess
+from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
+from ..extensions import NameConstraints
 from ..extensions import SubjectAlternativeName
+from ..extensions import SubjectKeyIdentifier
+from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..profiles import get_cert_profile_kwargs
 from ..subject import Subject
 from .base import DjangoCAWithCSRTestCase
+from .base import DjangoCATestCase
 from .base import override_settings
+from .base import override_tmpcadir
+
+
+@override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
+class CertificateAuthorityManagerTestCase(DjangoCATestCase):
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_extra_extensions(self):
+        subject = '/CN=example.com'
+        tlsf = TLSFeature('OCSPMustStaple')
+        ca = CertificateAuthority.objects.init('with-extra', '/CN=example.com', extra_extensions=[tlsf])
+
+        exts = [e for e in ca.get_extensions()
+                if not isinstance(e, (SubjectKeyIdentifier, AuthorityKeyIdentifier))]
+        self.assertEqual(ca.subject, Subject(subject))
+        self.assertCountEqual(exts, [
+            tlsf,
+            BasicConstraints('critical,CA:True'),
+            KeyUsage('critical,cRLSign,keyCertSign'),
+        ])
 
 
 @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
@@ -244,3 +269,48 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
         self.assertEqual(self.get_extensions(cert.x509)['AuthorityInformationAccess'],
                          AuthorityInformationAccess([[ca.issuer_url], []]))
+
+    def test_all_extensions(self):
+        ku = 'critical,encipherOnly,keyAgreement,nonRepudiation'
+        eku = 'serverAuth'
+        tlsf = 'OCSPMustStaple'
+        san = ['example.com']
+        nc = [['.com'], ['.net']]
+        ian = 'example.com'
+        subject = '/CN=example.net'
+
+        cert = Certificate.objects.init(
+            self.ca, self.csr_pem, expires=self.expires(720),
+            subject=subject,
+            subject_alternative_name=san,
+            key_usage=ku,
+            extended_key_usage=eku,
+            tls_feature=tlsf,
+            extra_extensions=[
+                NameConstraints(nc), IssuerAlternativeName(ian).as_extension(),
+            ]
+        )
+
+        aik = AuthorityKeyIdentifier(x509.Extension(
+            oid=AuthorityKeyIdentifier.oid, critical=False,
+            value=self.ca.get_authority_key_identifier()
+        ))
+
+        exts = [e for e in cert.get_extensions() if not isinstance(e, SubjectKeyIdentifier)]
+        self.assertEqual(cert.subject, Subject(subject))
+        self.assertCountEqual(exts, [
+            TLSFeature(tlsf),
+            aik,
+            BasicConstraints('critical,CA:False'),
+            ExtendedKeyUsage(eku),
+            SubjectAlternativeName(['example.net'] + san),  # prepend CN from subject
+            KeyUsage(ku),
+            NameConstraints(nc),
+            IssuerAlternativeName(ian),
+        ])
+
+    def test_extra_extensions_value(self):
+        with self.assertRaisesRegex(ValueError, r'^Cannot add extension of type bool$'):
+            Certificate.objects.init(
+                self.ca, self.csr_pem, expires=self.expires(720), subject_alternative_name=['example.com'],
+                extra_extensions=[False])
