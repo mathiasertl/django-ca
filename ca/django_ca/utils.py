@@ -15,6 +15,7 @@
 
 """Central functions to load CA key and cert as PKey/X509 objects."""
 
+import binascii
 import os
 import re
 import shlex
@@ -205,6 +206,26 @@ def int_to_hex(i):
         # NOTE: Do not convert to int earlier. int(<very-large-long>) is still long
         s = s[:-1]
     return add_colons(s)
+
+
+def bytes_to_hex(v):
+    """Convert a bytes array to hex.
+
+    >>> bytes_to_hex(b'test')
+    '74:65:73:74'
+    """
+    return add_colons(binascii.hexlify(v).upper().decode('utf-8'))
+
+
+def hex_to_bytes(v):
+    """Convert a hex number to bytes.
+
+    This should be the inverse of :py:func:`~django_ca.utils.bytes_to_hex`.
+
+    >>> hex_to_bytes('74:65:73:74')
+    b'test'
+    """
+    return binascii.unhexlify(v.replace(':', ''))
 
 
 def parse_name(name):
