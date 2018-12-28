@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-import binascii
 import re
 
 import six
@@ -25,8 +24,9 @@ from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import ObjectIdentifier
 
-from .utils import add_colons
+from .utils import bytes_to_hex
 from .utils import format_general_name
+from .utils import hex_to_bytes
 from .utils import parse_general_name
 from .utils import shlex_split
 
@@ -357,8 +357,22 @@ class KeyIdExtension(Extension):
         * All subclasses are only instantiated from a cryptography extension, so other values don't work.
     """
 
+    def from_bytes(self, value):
+        self.value = value
+
+    def from_other(self, value):
+        if isinstance(value, bytes):
+            self.critical = self.default_critical
+            self.from_bytes(value)
+            self._test_value()
+        else:
+            super(KeyIdExtension, self).from_other(value)
+
+    def from_str(self, value):
+        self.value = hex_to_bytes(value)
+
     def as_text(self):
-        return add_colons(binascii.hexlify(self.value).upper().decode('utf-8'))
+        return bytes_to_hex(self.value)
 
 
 class AuthorityInformationAccess(GeneralNameMixin, Extension):
@@ -463,7 +477,8 @@ class AuthorityKeyIdentifier(KeyIdExtension):
 
     @property
     def extension_type(self):
-        return x509.AuthorityKeyIdentifier(key_identifier=self.value)
+        return x509.AuthorityKeyIdentifier(key_identifier=self.value,
+                                           authority_cert_issuer=None, authority_cert_serial_number=None)
 
     def from_subject_key_identifier(self, ext):
         self.value = ext.value
@@ -477,7 +492,7 @@ class AuthorityKeyIdentifier(KeyIdExtension):
             self.from_subject_key_identifier(value)
             self._test_value()
         else:
-            super(AuthorityInformationAccess, self).from_other(value)
+            super(AuthorityKeyIdentifier, self).from_other(value)
 
     def as_text(self):
         return 'keyid:%s' % super(AuthorityKeyIdentifier, self).as_text()
