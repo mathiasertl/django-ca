@@ -132,6 +132,10 @@ certs = {
         'sha512': '12:33:63:35:91:95:69:58:B5:D0:44:1F:12:C4:40:FD:08:21:86:53:E5:05:9D:C5:49:EC:59:B5:27:63:21:AE:52:F5:BD:AA:B9:BB:F4:A1:42:BD:71:48:5B:7D:1D:0A:54:BD:2A:1F:C4:70:C5:F7:57:94:19:A8:C6:DB:B3:9D', # NOQA
         'san': None,
         'authKeyIdentifier': 'keyid:79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
+        'aki': x509.AuthorityKeyIdentifier(
+            key_identifier=b'y&\x89\xd2]\xd8\xe1,1q\xef\xad8\xb4\xb6)\xf17(G',
+            authority_cert_issuer=None, authority_cert_serial_number=None
+        ),
         'hpkp': 'MWvvGs9cF37mKmi2iXqBBqpkBT8zaWfT09DRSlpg8tQ=',
         'crl': None,
         'subjectKeyIdentifier': '79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
@@ -162,14 +166,26 @@ certs = {
         'valid_from': datetime(2018, 12, 20, 22, 11),
         'authInfoAccess': (False, ['URI:http://parent.example.com/parent.crt',
                                    'URI:http://parent.example.com/ocsp', ]),
+        'aki': x509.AuthorityKeyIdentifier(
+            key_identifier=b'\x8b\x06\xf1\x9e\xbc\xa9b\x00\x01fF\x85\xfa\x90\xfbRq\x8ff\xee',
+            authority_cert_issuer=None, authority_cert_serial_number=None
+        ),
     },
     'ecc_ca': {
         'name': 'ecc_ca',
         'serial': '52:F4:84:51:D7:38:D9:E6:83:43:7A:4A:1D:EB:ED:A0:7D:6A:7F:D9',
+        'aki': x509.AuthorityKeyIdentifier(
+            key_identifier=b")TaW\xa9\xcdu\xdd\x19\x0f]\x8bs\x13'/\xde\xc1\xf1\x04",
+            authority_cert_issuer=None, authority_cert_serial_number=None
+        ),
     },
     'pwd_ca': {
         'name': 'pwd_ca',
         'serial': '61:0A:D4:09:CE:18:6A:12:D6:69:F2:68:7D:4D:1A:7C:E9:89:02:62',
+        'aki': x509.AuthorityKeyIdentifier(
+            key_identifier=b'\x8a\x9a\r\xa7\xbc\xc7\x0bcY\xc8\xcb\r\x87Nvm\xc3\xe8H\x15',
+            authority_cert_issuer=None, authority_cert_serial_number=None
+        ),
     },
     'cert1': {
         'pem': force_text(cert1_pem),
