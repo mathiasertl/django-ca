@@ -31,8 +31,8 @@ from ..models import Certificate
 from ..models import CertificateAuthority
 from ..profiles import get_cert_profile_kwargs
 from ..subject import Subject
-from .base import DjangoCAWithCSRTestCase
 from .base import DjangoCATestCase
+from .base import DjangoCAWithCSRTestCase
 from .base import override_settings
 from .base import override_tmpcadir
 
