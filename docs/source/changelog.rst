@@ -4,9 +4,9 @@ ChangeLog
 
 .. _changelog-head:
 
-************
-1.1X.X (TBR)
-************
+*******************
+1.11.0 (2018-12-28)
+*******************
 
 * Remove colons from CA private keys (fixes `#29 <https://github.com/mathiasertl/django-ca/issues/28>`_).
 * Filenames for downloading certificates are based on the CommonName (fixes 
