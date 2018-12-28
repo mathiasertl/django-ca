@@ -202,11 +202,28 @@ class DockerTest(Command):
         pass
 
     def run(self):
-        tag = 'django-ca-test'
-        try:
-            subprocess.check_call(['docker', 'build', '--no-cache', '-t', tag, '.'])
-        finally:
-            subprocess.call(['docker', 'image', 'rm', tag])
+        images = [
+            '2.7-alpine3.8',
+            '2.7-alpine3.7',
+            '2.7-alpine3.6',
+            '3.4-alpine3.8',
+            '3.4-alpine3.7',
+            '3.5-alpine3.8',
+            '3.5-alpine3.7',
+            '3.6-alpine3.8',
+            '3.6-alpine3.7',
+            '3.6-alpine3.6',
+            '3.7-alpine3.8',
+            '3.7-alpine3.7',
+        ]
+
+        for image in images:
+            tag = 'django-ca-test'
+            try:
+                subprocess.check_call([
+                    'docker', 'build', '--no-cache', '-t', tag, '--build-arg', 'IMAGE=%s' % image, '.'])
+            finally:
+                subprocess.call(['docker', 'image', 'rm', tag])
 
 
 def find_package_data(dir):
