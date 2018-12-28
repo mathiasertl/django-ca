@@ -13,8 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
-from django.core.management.base import CommandError
-
 from ..models import Certificate
 from ..signals import post_revoke_cert
 from ..signals import pre_revoke_cert
@@ -66,7 +64,7 @@ class RevokeCertTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(pre.call_count, 1)
         self.assertPostRevoke(post, cert)
 
-        with self.assertRaises(CommandError), \
+        with self.assertCommandError(r'^Error: %s: Certificate not found\.$' % self.cert.serial), \
                 self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
             self.cmd('revoke_cert', self.cert.serial, reason='certificateHold')
         self.assertFalse(pre.called)

@@ -14,13 +14,13 @@
 # see <http://www.gnu.org/licenses/>
 
 import os
+import re
 from io import BytesIO
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 
-from django.core.management.base import CommandError
 from django.utils import six
 
 from .. import ca_settings
@@ -63,7 +63,8 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
 
         # test an output path that doesn't exist
         path = os.path.join(ca_settings.CA_DIR, 'test', 'crl-test.crl')
-        with self.assertRaises(CommandError):
+        msg = r"^\[Errno 2\] No such file or directory: '%s'$" % re.escape(path)
+        with self.assertCommandError(msg):
             self.cmd('dump_crl', path, stdout=BytesIO(), stderr=BytesIO())
 
     @override_tmpcadir()
@@ -75,14 +76,14 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
 
         # Giving no password raises a CommandError
         stdin = six.StringIO(self.csr_pem)
-        with self.assertRaisesRegex(CommandError, '^Password was not given but private key is encrypted$'):
+        with self.assertCommandError('^Password was not given but private key is encrypted$'):
             self.cmd('dump_crl', ca=ca, stdin=stdin)
 
         # False password
         stdin = six.StringIO(self.csr_pem)
         ca = CertificateAuthority.objects.get(pk=ca.pk)
         stdin = six.StringIO(self.csr_pem)
-        with self.assertRaisesRegex(CommandError, self.re_false_password):
+        with self.assertCommandError(self.re_false_password):
             self.cmd('dump_crl', ca=ca, stdin=stdin, password=b'wrong')
 
         stdout, stderr = self.cmd('dump_crl', ca=ca, stdout=BytesIO(), stderr=BytesIO(), password=password)

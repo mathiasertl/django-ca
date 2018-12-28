@@ -20,8 +20,6 @@ from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 
-from django.core.management.base import CommandError
-
 from .. import ca_settings
 from ..extensions import AuthorityInformationAccess
 from ..extensions import NameConstraints
@@ -329,8 +327,8 @@ class InitCATest(DjangoCATestCase):
         self.assertIsNone(pathlen_1_none.pathlen)
         self.assertEqual(pathlen_1_none.max_pathlen, 0)
         self.assertFalse(pathlen_1_none.allows_intermediate_ca)
-        with self.assertRaisesRegex(
-                CommandError, '^Parent CA cannot create intermediate CA due to pathlen restrictions.$'), \
+        with self.assertCommandError(
+                r'^Parent CA cannot create intermediate CA due to pathlen restrictions\.$'), \
                 self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
             out, err = self.init_ca(name='wrong', parent=pathlen_1_none)
         self.assertEqual(out, '')
@@ -350,8 +348,8 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(pathlen_1_three.pathlen, 3)
         self.assertEqual(pathlen_1_three.max_pathlen, 0)
         self.assertFalse(pathlen_1_three.allows_intermediate_ca)
-        with self.assertRaisesRegex(
-                CommandError, '^Parent CA cannot create intermediate CA due to pathlen restrictions.$'), \
+        with self.assertCommandError(
+                r'^Parent CA cannot create intermediate CA due to pathlen restrictions\.$'), \
                 self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
             out, _err = self.init_ca(name='wrong', parent=pathlen_1_none)
         self.assertEqual(out, '')
@@ -471,7 +469,7 @@ class InitCATest(DjangoCATestCase):
         child_password = b'childpassword'
         parent = CertificateAuthority.objects.get(name='Parent')  # Get again, key is cached
 
-        with self.assertRaisesRegex(CommandError, '^Password was not given but private key is encrypted$'), \
+        with self.assertCommandError(r'^Password was not given but private key is encrypted$'), \
                 self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
             out, err = self.init_ca(name='Child', parent=parent, password=child_password)
         self.assertEqual(out, '')
@@ -500,7 +498,7 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_root_ca_crl_url(self):
-        with self.assertRaisesRegex(CommandError, r'^CRLs cannot be used to revoke root CAs\.$'), \
+        with self.assertCommandError(r'^CRLs cannot be used to revoke root CAs\.$'), \
                 self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
             self.init_ca(name='foobar', ca_crl_url='https://example.com')
         self.assertFalse(pre.called)
@@ -508,7 +506,7 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_root_ca_ocsp_url(self):
-        with self.assertRaisesRegex(CommandError, r'^OCSP cannot be used to revoke root CAs\.$'), \
+        with self.assertCommandError(r'^OCSP cannot be used to revoke root CAs\.$'), \
                 self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
             self.init_ca(name='foobar', ca_ocsp_url='https://example.com')
         self.assertFalse(pre.called)
@@ -516,7 +514,7 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_small_key_size(self):
-        with self.assertRaises(CommandError), \
+        with self.assertCommandError(r'^256: Key size must be least 1024 bits$'), \
                 self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
             self.init_ca(key_size=256)
         self.assertFalse(pre.called)
@@ -524,7 +522,7 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_key_not_power_of_two(self):
-        with self.assertRaises(CommandError), \
+        with self.assertCommandError(r'^2049: Key size must be a power of two$'), \
                 self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
             self.init_ca(key_size=2049)
         self.assertFalse(pre.called)

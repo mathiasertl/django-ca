@@ -22,7 +22,6 @@ from freezegun import freeze_time
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding
 
-from django.core.management.base import CommandError
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 
@@ -544,5 +543,6 @@ HPKP pin: %(hpkp)s
         self.test_contrib_letsencrypt_jabber_at('Not yet valid')
 
     def test_unknown_cert(self):
-        with self.assertRaises(CommandError):
-            self.cmd('view_cert', 'fooobar', no_pem=True)
+        name = 'foobar'
+        with self.assertCommandError(r'^Error: %s: Certificate not found\.$' % name):
+            self.cmd('view_cert', name, no_pem=True)
