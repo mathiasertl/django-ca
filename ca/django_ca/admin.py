@@ -247,25 +247,21 @@ class CertificateMixin(object):
     def name_constraints(self, obj):
         nc = obj.name_constraints
         html = ''
-        if nc.critical is True:
+        if nc.critical is True:  # pragma: no branch
             text = _('Critical')
             html = '<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text)
 
-        if nc.permitted:
+        if nc.permitted:  # pragma: no branch
             html += '<div>Permitted:</div>'
             html += '<ul class="x509-extension-value">'
             for val in nc.permitted:
-                if isinstance(val, x509.GeneralName):
-                    val = format_general_name(val)
-                html += '<li>%s</li>' % escape(val)
+                html += '<li>%s</li>' % escape(format_general_name(val))
             html += '</ul>'
-        if nc.excluded:
+        if nc.excluded:  # pragma: no branch
             html += '<div>Excluded:</div>'
             html += '<ul class="x509-extension-value">'
             for val in nc.excluded:
-                if isinstance(val, x509.GeneralName):
-                    val = format_general_name(val)
-                html += '<li>%s</li>' % escape(val)
+                html += '<li>%s</li>' % escape(format_general_name(val))
             html += '</ul>'
         return mark_safe(html)
     name_constraints.short_description = _('Name Constraints')
