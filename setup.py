@@ -202,6 +202,13 @@ class DockerTest(Command):
         pass
 
     def run(self):
+        # first, run without any build-arg
+        tag = 'django-ca-test'
+        try:
+            subprocess.check_call(['docker', 'build', '--no-cache', '-t', tag, '.'])
+        finally:
+            subprocess.call(['docker', 'image', 'rm', tag])
+
         images = [
             'python:2.7-alpine3.8',
             'python:2.7-alpine3.7',
@@ -218,7 +225,6 @@ class DockerTest(Command):
         ]
 
         for image in images:
-            tag = 'django-ca-test'
             try:
                 subprocess.check_call([
                     'docker', 'build', '--no-cache', '-t', tag, '--build-arg', 'IMAGE=%s' % image, '.'])
