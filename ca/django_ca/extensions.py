@@ -364,7 +364,7 @@ class KeyIdExtension(Extension):
         self.value = value
 
     def from_other(self, value):
-        if isinstance(value, bytes):
+        if six.PY3 and isinstance(value, bytes):
             self.critical = self.default_critical
             self.from_bytes(value)
             self._test_value()

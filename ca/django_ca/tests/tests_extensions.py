@@ -16,6 +16,7 @@
 from __future__ import unicode_literals
 
 import doctest
+import unittest
 
 import six
 
@@ -440,22 +441,23 @@ class AuthorityInformationAccessTestCase(TestCase):
 class AuthorityKeyIdentifierTestCase(TestCase):
     ext = x509.Extension(
         oid=x509.ExtensionOID.AUTHORITY_KEY_IDENTIFIER, critical=False,
-        value=x509.AuthorityKeyIdentifier(b'33333', None, None))
+        value=x509.AuthorityKeyIdentifier(b'333333', None, None))
 
     def test_basic(self):
         ext = AuthorityKeyIdentifier(self.ext)
-        self.assertEqual(ext.as_text(), 'keyid:33:33:33:33:33')
+        self.assertEqual(ext.as_text(), 'keyid:33:33:33:33:33:33')
         self.assertEqual(ext.as_extension(), self.ext)
 
+    @unittest.skipUnless(six.PY3, 'bytes only work in python3')
     def test_from_bytes(self):
-        ext = AuthorityKeyIdentifier(b'33333')
-        self.assertEqual(ext.as_text(), 'keyid:33:33:33:33:33')
+        ext = AuthorityKeyIdentifier(b'333333')
+        self.assertEqual(ext.as_text(), 'keyid:33:33:33:33:33:33')
         self.assertEqual(ext.as_extension(), self.ext)
 
     def test_subject_key_identifier(self):
-        ski = SubjectKeyIdentifier('33:33:33:33:33')
+        ski = SubjectKeyIdentifier('33:33:33:33:33:33')
         ext = AuthorityKeyIdentifier(ski)
-        self.assertEqual(ext.as_text(), 'keyid:33:33:33:33:33')
+        self.assertEqual(ext.as_text(), 'keyid:33:33:33:33:33:33')
         self.assertEqual(ext.extension_type.key_identifier, self.ext.value.key_identifier)
 
     def test_error(self):
@@ -972,12 +974,12 @@ class SubjectAlternativeNameTestCase(TestCase):
 class SubjectKeyIdentifierTestCase(TestCase):
     ext = x509.Extension(
         oid=x509.ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False,
-        value=x509.SubjectKeyIdentifier(b'33333')
+        value=x509.SubjectKeyIdentifier(b'333333')
     )
 
     def test_basic(self):
         ext = SubjectKeyIdentifier(self.ext)
-        self.assertEqual(ext.as_text(), '33:33:33:33:33')
+        self.assertEqual(ext.as_text(), '33:33:33:33:33:33')
         self.assertEqual(ext.as_extension(), self.ext)
 
 
