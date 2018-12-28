@@ -330,10 +330,15 @@ class DjangoCATestCase(TestCase):
             reload_module(ca_settings)
 
     def settings(self, **kwargs):
+        """Decorator to temporarily override settings."""
         return override_settings(**kwargs)
 
     def tmpcadir(self, **kwargs):
+        """Context manager to use a temporary CA dir."""
         return override_tmpcadir(**kwargs)
+
+    def assertAuthorityKeyIdentifier(self, issuer, cert, critical=False):
+        self.assertEqual(cert.authority_key_identifier.value, issuer.subject_key_identifier.value)
 
     def assertBasic(self, cert, algo='SHA256'):
         """Assert some basic key properties."""
@@ -341,19 +346,54 @@ class DjangoCATestCase(TestCase):
         self.assertIsInstance(cert.public_key(), rsa.RSAPublicKey)
         self.assertIsInstance(cert.signature_hash_algorithm, getattr(hashes, algo.upper()))
 
-    def assertSerial(self, serial):
-        self.assertIsNotNone(re.match('^[0-9A-F:]*$', serial), serial)
-
     @contextmanager
-    def assertSignal(self, signal):
-        handler = Mock()
-        signal.connect(handler)
-        yield handler
-        signal.disconnect(handler)
+    def assertCommandError(self, msg):
+        """Context manager asserting that CommandError is raised.
+
+        Parameters
+        ----------
+
+        msg : str
+            The regex matching the exception message.
+        """
+        with self.assertRaisesRegex(CommandError, msg):
+            yield
+
+    def assertHasExtension(self, cert, oid):
+        """Assert that the given cert has the passed extension."""
+
+        self.assertIn(oid, [e.oid for e in cert.x509.extensions])
+
+    def assertHasNotExtension(self, cert, oid):
+        """Assert that the given cert does *not* have the passed extension."""
+        self.assertNotIn(oid, [e.oid for e in cert.x509.extensions])
+
+    def assertIssuer(self, issuer, cert):
+        self.assertEqual(cert.issuer, issuer.subject)
 
     def assertMessages(self, response, expected):
         messages = [str(m) for m in list(get_messages(response.wsgi_request))]
         self.assertEqual(messages, expected)
+
+    def assertNotRevoked(self, cert):
+        if isinstance(cert, CertificateAuthority):
+            cert = CertificateAuthority.objects.get(serial=cert.serial)
+        else:
+            cert = Certificate.objects.get(serial=cert.serial)
+
+        self.assertFalse(cert.revoked)
+        self.assertIsNone(cert.revoked_reason)
+
+    def assertParserError(self, args, expected):
+        """Assert that given args throw a parser error."""
+
+        buf = StringIO()
+        with self.assertRaises(SystemExit), patch('sys.stderr', buf):
+            self.parser.parse_args(args)
+
+        output = buf.getvalue()
+        self.assertEqual(output, expected)
+        return output
 
     def assertPostCreateCa(self, post, ca):
         post.assert_called_once_with(ca=ca, signal=post_create_ca, sender=CertificateAuthority)
@@ -364,26 +404,13 @@ class DjangoCATestCase(TestCase):
     def assertPostRevoke(self, post, cert):
         post.assert_called_once_with(cert=cert, signal=post_revoke_cert, sender=Certificate)
 
-    def assertSubject(self, cert, expected):
-        if not isinstance(expected, Subject):
-            expected = Subject(expected)
-        self.assertEqual(Subject([(s.oid, s.value) for s in cert.subject]), expected)
+    def assertPrivateKey(self, ca, password=None):
+        with open(ca.private_key_path, 'rb') as f:
+            key_data = f.read()
 
-    def assertIssuer(self, issuer, cert):
-        self.assertEqual(cert.issuer, issuer.subject)
-
-    def assertAuthorityKeyIdentifier(self, issuer, cert, critical=False):
-        self.assertEqual(cert.authority_key_identifier.value, issuer.subject_key_identifier.value)
-
-    def assertSignature(self, chain, cert):
-        # see: http://stackoverflow.com/questions/30700348
-        store = X509Store()
-        for elem in chain:
-            store.add_cert(load_certificate(FILETYPE_PEM, elem.dump_certificate()))
-
-        cert = load_certificate(FILETYPE_PEM, cert.dump_certificate())
-        store_ctx = X509StoreContext(store, cert)
-        self.assertIsNone(store_ctx.verify_certificate())
+        key = serialization.load_pem_private_key(key_data, password, default_backend())
+        self.assertIsNotNone(key)
+        self.assertTrue(key.key_size > 0)
 
     def assertRevoked(self, cert, reason=None):
         if isinstance(cert, CertificateAuthority):
@@ -398,27 +425,57 @@ class DjangoCATestCase(TestCase):
         else:
             self.assertEqual(cert.revoked_reason, reason)
 
-    def assertNotRevoked(self, cert):
-        if isinstance(cert, CertificateAuthority):
-            cert = CertificateAuthority.objects.get(serial=cert.serial)
-        else:
-            cert = Certificate.objects.get(serial=cert.serial)
-
-        self.assertFalse(cert.revoked)
-        self.assertIsNone(cert.revoked_reason)
-
-    def assertPrivateKey(self, ca, password=None):
-        with open(ca.private_key_path, 'rb') as f:
-            key_data = f.read()
-
-        key = serialization.load_pem_private_key(key_data, password, default_backend())
-        self.assertIsNotNone(key)
-        self.assertTrue(key.key_size > 0)
+    def assertSerial(self, serial):
+        """Assert that the serial matches a basic regex pattern."""
+        self.assertIsNotNone(re.match('^[0-9A-F:]*$', serial), serial)
 
     @contextmanager
-    def assertCommandError(self, msg):
-        with self.assertRaisesRegex(CommandError, msg):
-            yield
+    def assertSignal(self, signal):
+        handler = Mock()
+        signal.connect(handler)
+        yield handler
+        signal.disconnect(handler)
+
+    def assertSignature(self, chain, cert):
+        # see: http://stackoverflow.com/questions/30700348
+        store = X509Store()
+        for elem in chain:
+            store.add_cert(load_certificate(FILETYPE_PEM, elem.dump_certificate()))
+
+        cert = load_certificate(FILETYPE_PEM, cert.dump_certificate())
+        store_ctx = X509StoreContext(store, cert)
+        self.assertIsNone(store_ctx.verify_certificate())
+
+    def assertSubject(self, cert, expected):
+        if not isinstance(expected, Subject):
+            expected = Subject(expected)
+        self.assertEqual(Subject([(s.oid, s.value) for s in cert.subject]), expected)
+
+    def cmd(self, *args, **kwargs):
+        """Call to a manage.py command using call_command."""
+        kwargs.setdefault('stdout', StringIO())
+        kwargs.setdefault('stderr', StringIO())
+        stdin = kwargs.pop('stdin', StringIO())
+
+        with patch('sys.stdin', stdin):
+            call_command(*args, **kwargs)
+        return kwargs['stdout'].getvalue(), kwargs['stderr'].getvalue()
+
+    def cmd_e2e(self, cmd, stdin=None, stdout=None, stderr=None):
+        """Call a management command the way manage.py does.
+
+        Unlike call_command, this method also tests the argparse configuration of the called command.
+        """
+        stdout = stdout or StringIO()
+        stderr = stderr or StringIO()
+        if stdin is None:
+            stdin = StringIO()
+
+        with patch('sys.stdin', stdin), patch('sys.stdout', stdout), patch('sys.stderr', stderr):
+            util = ManagementUtility(['manage.py', ] + list(cmd))
+            util.execute()
+
+        return stdout.getvalue(), stderr.getvalue()
 
     def get_cert_context(self, name):
         # Get a dictionary suitable for testing output based on the dictionary in basic.certs
@@ -528,51 +585,6 @@ class DjangoCATestCase(TestCase):
                 exts[name] = value
 
         return exts
-
-    def assertHasExtension(self, cert, oid):
-        """Assert that the given cert has the passed extension."""
-
-        self.assertIn(oid, [e.oid for e in cert.x509.extensions])
-
-    def assertHasNotExtension(self, cert, oid):
-        """Assert that the given cert does *not* have the passed extension."""
-        self.assertNotIn(oid, [e.oid for e in cert.x509.extensions])
-
-    def assertParserError(self, args, expected):
-        """Assert that given args throw a parser error."""
-
-        buf = StringIO()
-        with self.assertRaises(SystemExit), patch('sys.stderr', buf):
-            self.parser.parse_args(args)
-
-        output = buf.getvalue()
-        self.assertEqual(output, expected)
-        return output
-
-    def cmd_e2e(self, cmd, stdin=None, stdout=None, stderr=None):
-        """Call a management command the way manage.py does.
-
-        Unlike call_command, this method also tests the argparse configuration of the called command.
-        """
-        stdout = stdout or StringIO()
-        stderr = stderr or StringIO()
-        if stdin is None:
-            stdin = StringIO()
-
-        with patch('sys.stdin', stdin), patch('sys.stdout', stdout), patch('sys.stderr', stderr):
-            util = ManagementUtility(['manage.py', ] + list(cmd))
-            util.execute()
-
-        return stdout.getvalue(), stderr.getvalue()
-
-    def cmd(self, *args, **kwargs):
-        kwargs.setdefault('stdout', StringIO())
-        kwargs.setdefault('stderr', StringIO())
-        stdin = kwargs.pop('stdin', StringIO())
-
-        with patch('sys.stdin', stdin):
-            call_command(*args, **kwargs)
-        return kwargs['stdout'].getvalue(), kwargs['stderr'].getvalue()
 
 
 @override_settings(CA_MIN_KEY_SIZE=512)

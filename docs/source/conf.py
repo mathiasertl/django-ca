@@ -24,13 +24,18 @@ import os
 _BASE_DIR = os.path.dirname(os.path.abspath(__name__))
 _ROOT_DIR = os.path.dirname(os.path.dirname(_BASE_DIR))
 _SRC_DIR = os.path.join(_ROOT_DIR, 'ca')
+_FIXTURES = os.path.join(_SRC_DIR, 'django_ca', 'tests', 'fixtures')
 sys.path.insert(0, _SRC_DIR)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ca.settings')
 
-
 import django  # NOQA
 from django.conf import settings  # NOQA
-settings.configure(SECRET_KEY='dummy', BASE_DIR=_SRC_DIR, INSTALLED_APPS=['django_ca'])
+settings.configure(
+    SECRET_KEY='dummy',
+    BASE_DIR=_SRC_DIR,
+    INSTALLED_APPS=['django_ca'],
+    FIXTURES_DIR=_FIXTURES,
+)
 django.setup()
 
 

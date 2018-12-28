@@ -2,6 +2,9 @@
 Development
 ###########
 
+.. autoclass:: django_ca.tests.base.DjangoCATestCase
+   :members:
+
 **********
 Setup demo
 **********
