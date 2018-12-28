@@ -77,14 +77,13 @@ class CertificateManagerMixin(object):
         return extensions
 
     def _extra_extensions(self, builder, extra_extensions):
-        if extra_extensions:
-            for ext in extra_extensions:
-                if isinstance(ext, x509.extensions.Extension):
-                    builder = builder.add_extension(ext.value, critical=ext.critical)
-                elif isinstance(ext, Extension):
-                    builder = builder.add_extension(**ext.for_builder())
-                else:
-                    raise ValueError('Cannot add extension of type %s' % type(ext).__name__)
+        for ext in extra_extensions:
+            if isinstance(ext, x509.extensions.Extension):
+                builder = builder.add_extension(ext.value, critical=ext.critical)
+            elif isinstance(ext, Extension):
+                builder = builder.add_extension(**ext.for_builder())
+            else:
+                raise ValueError('Cannot add extension of type %s' % type(ext).__name__)
         return builder
 
 
@@ -234,7 +233,8 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
             builder = builder.add_extension(**name_constraints.for_builder())
 
-        builder = self._extra_extensions(builder, extra_extensions)
+        if extra_extensions:
+            builder = self._extra_extensions(builder, extra_extensions)
 
         certificate = builder.sign(private_key=private_sign_key, algorithm=algorithm,
                                    backend=default_backend())
@@ -420,7 +420,8 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             issuer_alt_name = IssuerAlternativeName(ca.issuer_alt_name)
             builder = builder.add_extension(**issuer_alt_name.for_builder())
 
-        builder = self._extra_extensions(builder, extra_extensions)
+        if extra_extensions:
+            builder = self._extra_extensions(builder, extra_extensions)
 
         ###################
         # Sign public key #
