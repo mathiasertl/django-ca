@@ -666,7 +666,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                 'expires': expires,
                 'subject': data['subject'],
                 'algorithm': data['algorithm'],
-                'subjectAltName': subjectAltName,
+                'subject_alternative_name': subjectAltName,
                 'cn_in_san': cn_in_san,
                 'key_usage': data['key_usage'],
                 'extended_key_usage': data['extended_key_usage'],

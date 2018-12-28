@@ -472,8 +472,8 @@ class DjangoCATestCase(TestCase):
         cert_kwargs.update(kwargs)
         cert_kwargs['subject'] = Subject(subject)
         cert = Certificate.objects.init(
-            ca=ca, csr=csr, algorithm=hashes.SHA256(), expires=cls.expires(720), subjectAltName=san,
-            **cert_kwargs)
+            ca=ca, csr=csr, algorithm=hashes.SHA256(), expires=cls.expires(720),
+            subject_alternative_name=san, **cert_kwargs)
         cert.full_clean()
         return cert
 

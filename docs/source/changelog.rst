@@ -8,19 +8,11 @@ ChangeLog
 1.1X.X (TBR)
 ************
 
-* Add cryptography 2.4.2 to the test-suite.
 * Remove colons from CA private keys (fixes `#29 <https://github.com/mathiasertl/django-ca/issues/28>`_).
 * Filenames for downloading certificates are based on the CommonName (fixes 
   `#53 <https://github.com/mathiasertl/django-ca/issues/53>`_).
 * Fix certificate bundle order (fixes `#55 <https://github.com/mathiasertl/django-ca/issues/55>`_).
 * Management commands ``dump_ca`` and ``dump_cert`` can now dump whole certificate bundles.
-* :py:class:`~django_ca.subject.Subject` now implements every ``dict`` method.
-* Implement the 
-  :py:class:`~django_ca.extensions.AuthorityInformationAccess`,
-  :py:class:`~django_ca.extensions.BasicConstraints`,
-  :py:class:`~django_ca.extensions.IssuerAlternativeName`,
-  :py:class:`~django_ca.extensions.SubjectAlternativeName` and
-  :py:class:`~django_ca.extensions.NameConstraints` extensions.
 * New setting :ref:`CA_DEFAULT_KEY_SIZE <settings-ca-default-key-size>` to configure the default key size
   for new CAs.
 * Fix display of the NameConstraints extension in the admin interface.
@@ -36,9 +28,27 @@ This release will be the last release to support some software versions:
   (see `Supported Versions <https://www.djangoproject.com/download/#supported-versions>`_).
 * This will be the last release that supports cryptography 2.1.
 
+Python API
+==========
+
+* **BACKWARDS INCOMPATIBLE:** Renamed the ``subjectAltName`` parameter of 
+  :py:meth:`Certificate.objects.init() <django_ca.managers.CertificateManager.init>` to
+  ``subject_alternative_name`` to be consistent with other extensions.
+* Add ability to add any custom additional extension using the ``extra_extensions`` parameter.
+* :py:class:`~django_ca.subject.Subject` now implements every ``dict`` method.
+* The :py:func:`~django_ca.signals.pre_issue_cert` signal will now receive normalized values.
+* The :py:func:`~django_ca.signals.pre_issue_cert` signal is only invoked after all parameters are verified.
+* Implement the 
+  :py:class:`~django_ca.extensions.AuthorityInformationAccess`,
+  :py:class:`~django_ca.extensions.BasicConstraints`,
+  :py:class:`~django_ca.extensions.IssuerAlternativeName`,
+  :py:class:`~django_ca.extensions.SubjectAlternativeName` and
+  :py:class:`~django_ca.extensions.NameConstraints` extensions.
+
 Testing
 =======
 
+* Add cryptography 2.4.2 to the test-suite.
 * Test for certificates that are not yet valid.
 * The child CA used for testing now contains more extensions.
 * Freeze time in some test cases to avoid test failures when certificates eventually expire.

@@ -34,6 +34,7 @@ from django.utils.encoding import force_text
 
 from . import ca_settings
 from .extensions import ExtendedKeyUsage
+from .extensions import Extension
 from .extensions import IssuerAlternativeName
 from .extensions import KeyUsage
 from .extensions import NameConstraints
@@ -75,12 +76,24 @@ class CertificateManagerMixin(object):
             extensions.append((False, x509.AuthorityInformationAccess(auth_info_access)))
         return extensions
 
+    def _extra_extensions(self, builder, extra_extensions):
+        if extra_extensions:
+            for ext in extra_extensions:
+                if isinstance(ext, x509.extensions.Extension):
+                    builder = builder.add_extension(ext.value, critical=ext.critical)
+                elif isinstance(ext, Extension):
+                    builder = builder.add_extension(**ext.for_builder())
+                else:
+                    raise ValueError('Cannot add extension of type %s' % type(ext).__name__)
+        return builder
+
 
 class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
     def init(self, name, subject, expires=None, algorithm=None, parent=None, pathlen=None,
              issuer_url=None, issuer_alt_name='', crl_url=None, ocsp_url=None,
              ca_issuer_url=None, ca_crl_url=None, ca_ocsp_url=None, name_constraints=None,
-             password=None, parent_password=None, ecc_curve=None, key_type='RSA', key_size=None):
+             password=None, parent_password=None, ecc_curve=None, key_type='RSA', key_size=None,
+             extra_extensions=None):
         """Create a new certificate authority.
 
         Parameters
@@ -139,6 +152,9 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         key_size : int, optional
             Integer specifying the key size, must be a power of two (e.g. 2048, 4096, ...). Defaults to
             the :ref:`CA_DEFAULT_KEY_SIZE <settings-ca-default-key-size>`, unused if ``key_type="ECC"``.
+        extra_extensions : list of :py:class:`cg:cryptography.x509.Extension` or \
+                :py:class:`django_ca.extensions.Extension`, optional
+            An optional list of additional extensions to add to the certificate.
 
         Raises
         ------
@@ -173,7 +189,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             expires=expires, parent=parent, subject=subject, pathlen=pathlen, issuer_url=issuer_url,
             issuer_alt_name=issuer_alt_name, crl_url=crl_url, ocsp_url=ocsp_url, ca_issuer_url=ca_issuer_url,
             ca_crl_url=ca_crl_url, ca_ocsp_url=ca_ocsp_url, name_constraints=name_constraints,
-            password=password, parent_password=parent_password)
+            password=password, parent_password=parent_password, extra_extensions=extra_extensions)
 
         if key_type == 'DSA':
             private_key = dsa.generate_private_key(key_size=key_size, backend=default_backend())
@@ -218,6 +234,8 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
             builder = builder.add_extension(**name_constraints.for_builder())
 
+        builder = self._extra_extensions(builder, extra_extensions)
+
         certificate = builder.sign(private_key=private_sign_key, algorithm=algorithm,
                                    backend=default_backend())
 
@@ -250,8 +268,8 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
 class CertificateManager(CertificateManagerMixin, models.Manager):
     def sign_cert(self, ca, csr, expires=None, algorithm=None, subject=None, cn_in_san=True,
-                  csr_format=Encoding.PEM, subjectAltName=None, key_usage=None, extended_key_usage=None,
-                  tls_feature=None, password=None):
+                  csr_format=Encoding.PEM, subject_alternative_name=None, key_usage=None,
+                  extended_key_usage=None, tls_feature=None, extra_extensions=None, password=None):
         """Create a signed certificate from a CSR.
 
         **PLEASE NOTE:** This function creates the raw certificate and is usually not invoked directly. It is
@@ -275,16 +293,16 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             Subject string, e.g. ``"/CN=example.com"`` or ``Subject("/CN=example.com")``.
             The value is actually passed to :py:class:`~django_ca.subject.Subject` if it is not already an
             instance of that class. If this value is not passed or if the value does not contain a CommonName,
-            the first value of the ``subjectAltName`` parameter is used as CommonName.
+            the first value of the ``subject_alternative_name`` parameter is used as CommonName.
         cn_in_san : bool, optional
             Wether the CommonName should also be included as subjectAlternativeName. The default is
             ``True``, but the parameter is ignored if no CommonName is given. This is typically set
             to ``False`` when creating a client certificate, where the subjects CommonName has no
-            meaningful value as subjectAltName.
+            meaningful value as subjectAlternativeName.
         csr_format : :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding`, optional
             The format of the CSR. The default is ``PEM``.
-        subjectAltName : list of str or :py:class:`~django_ca.extensions.SubjectAlternativeName`, optional
-            A list of alternative names for the certificate. The value is passed to
+        subject_alternative_name : list of str or :py:class:`~django_ca.extensions.SubjectAlternativeName`,
+            optional A list of alternative names for the certificate. The value is passed to
             :py:class:`~django_ca.extensions.SubjectAlternativeName` if not already an instance of that class.
         key_usage : str or dict or :py:class:`~django_ca.extensions.KeyUsage`, optional
             Value for the ``keyUsage`` X509 extension. The value is passed to
@@ -295,6 +313,9 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         tls_feature : str or dict or :py:class:`~django_ca.extensions.TLSFeature`, optional
             Value for the ``TLSFeature`` X509 extension. The value is passed to
             :py:class:`~django_ca.extensions.TLSFeature` if not already an instance of that class.
+        extra_extensions : list of :py:class:`cg:cryptography.x509.Extension` or \
+                :py:class:`django_ca.extensions.Extension`, optional
+            An optional list of additional extensions to add to the certificate.
         password : bytes, optional
             Password used to load the private key of the certificate authority. If not passed, the private key
             is assumed to be unencrypted.
@@ -313,8 +334,8 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         elif not isinstance(subject, Subject):
             subject = Subject(subject)
 
-        if 'CN' not in subject and not subjectAltName:
-            raise ValueError("Must name at least a CN or a subjectAltName.")
+        if 'CN' not in subject and not subject_alternative_name:
+            raise ValueError("Must name at least a CN or a subjectAlternativeName.")
 
         algorithm = parse_hash_algorithm(algorithm)
 
@@ -326,22 +347,22 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         if tls_feature and not isinstance(tls_feature, TLSFeature):
             tls_feature = TLSFeature(tls_feature)
 
-        if not subjectAltName:
-            subjectAltName = SubjectAlternativeName([])
-        elif not isinstance(subjectAltName, SubjectAlternativeName):
-            subjectAltName = SubjectAlternativeName(subjectAltName)
+        if not subject_alternative_name:
+            subject_alternative_name = SubjectAlternativeName([])
+        elif not isinstance(subject_alternative_name, SubjectAlternativeName):
+            subject_alternative_name = SubjectAlternativeName(subject_alternative_name)
 
         # use first SAN as CN if CN is not set
         if 'CN' not in subject:
-            subject['CN'] = subjectAltName.value[0].value
+            subject['CN'] = subject_alternative_name.value[0].value
         elif cn_in_san and 'CN' in subject:  # add CN to SAN if cn_in_san is True (default)
             try:
                 cn_name = parse_general_name(subject['CN'])
             except idna.IDNAError:
-                raise ValueError('%s: Could not parse CommonName as subjectAltName.' % subject['CN'])
+                raise ValueError('%s: Could not parse CommonName as subjectAlternativeName.' % subject['CN'])
             else:
-                if cn_name not in subjectAltName:
-                    subjectAltName.insert(0, cn_name)
+                if cn_name not in subject_alternative_name:
+                    subject_alternative_name.insert(0, cn_name)
 
         ################
         # Read the CSR #
@@ -358,8 +379,9 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         #########################
         pre_issue_cert.send(sender=self.model, ca=ca, csr=csr, expires=expires, algorithm=algorithm,
                             subject=subject, cn_in_san=cn_in_san, csr_format=csr_format,
-                            subjectAltName=subjectAltName, key_usage=key_usage,
-                            extended_key_usage=extended_key_usage, tls_featur=tls_feature, password=password)
+                            subject_alternative_name=subject_alternative_name, key_usage=key_usage,
+                            extended_key_usage=extended_key_usage, tls_featur=tls_feature,
+                            extra_extensions=extra_extensions, password=password)
 
         #######################
         # Generate public key #
@@ -382,8 +404,8 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         for critical, ext in self.get_common_extensions(ca.issuer_url, ca.crl_url, ca.ocsp_url):
             builder = builder.add_extension(ext, critical=critical)
 
-        if subjectAltName:
-            builder = builder.add_extension(**subjectAltName.for_builder())
+        if subject_alternative_name:
+            builder = builder.add_extension(**subject_alternative_name.for_builder())
 
         if key_usage:
             builder = builder.add_extension(**key_usage.for_builder())
@@ -397,6 +419,8 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         if ca.issuer_alt_name:
             issuer_alt_name = IssuerAlternativeName(ca.issuer_alt_name)
             builder = builder.add_extension(**issuer_alt_name.for_builder())
+
+        builder = self._extra_extensions(builder, extra_extensions)
 
         ###################
         # Sign public key #

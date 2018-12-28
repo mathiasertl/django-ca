@@ -155,7 +155,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
 
         stdin = six.StringIO(self.csr_pem)
         cn = 'foo bar'
-        msg = r'^%s: Could not parse CommonName as subjectAltName\.$' % cn
+        msg = r'^%s: Could not parse CommonName as subjectAlternativeName\.$' % cn
 
         with self.assertCommandError(msg), self.assertSignal(pre_issue_cert) as pre, \
                 self.assertSignal(post_issue_cert) as post:

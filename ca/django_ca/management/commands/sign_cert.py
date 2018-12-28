@@ -115,7 +115,7 @@ the default values, options like --key-usage still override the profile.""")
         try:
             cert = Certificate.objects.init(
                 ca=ca, csr=csr, algorithm=options['algorithm'], expires=options['expires'],
-                subjectAltName=options['alt'], **kwargs)
+                subject_alternative_name=options['alt'], **kwargs)
         except Exception as e:
             raise CommandError(e)
 
