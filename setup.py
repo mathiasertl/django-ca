@@ -207,6 +207,7 @@ class DockerTest(Command):
         try:
             subprocess.check_call(['docker', 'build', '--no-cache', '-t', tag, '.'])
         finally:
+            print('### Failed image: default tag')
             subprocess.call(['docker', 'image', 'rm', tag])
 
         images = [
@@ -229,6 +230,7 @@ class DockerTest(Command):
                 subprocess.check_call([
                     'docker', 'build', '--no-cache', '-t', tag, '--build-arg', 'IMAGE=%s' % image, '.'])
             finally:
+                print('### Failed image is %s' % image)
                 subprocess.call(['docker', 'image', 'rm', tag])
 
 
