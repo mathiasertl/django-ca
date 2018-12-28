@@ -100,6 +100,9 @@ class Extension(object):
         if not isinstance(self.critical, bool):
             raise ValueError('%s: Invalid critical value passed' % self.critical)
 
+    def __hash__(self):
+        return hash(self.__class__, self.value, self.critical)
+
     def __eq__(self, other):
         return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
 
