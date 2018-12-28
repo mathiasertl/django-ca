@@ -160,7 +160,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         with self.assertCommandError(msg), self.assertSignal(pre_issue_cert) as pre, \
                 self.assertSignal(post_issue_cert) as post:
             self.cmd('sign_cert', subject=Subject([('CN', cn)]), cn_in_san=True, stdin=stdin)
-        self.assertEqual(pre.call_count, 1)
+        self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
     def test_cn_not_in_san(self):
@@ -401,7 +401,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         with self.assertCommandError('Unknown CSR format passed: foo$'), \
                 self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             self.cmd('sign_cert', alt=['example.com'], csr_format='foo', stdin=stdin)
-        self.assertEqual(pre.call_count, 1)
+        self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
 

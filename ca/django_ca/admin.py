@@ -675,8 +675,6 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                 'password': data['password'],
             }
 
-            pre_issue_cert.send(sender=self.model, **kwargs)
-
             obj.x509, req = self.model.objects.sign_cert(**kwargs)
             obj.save()
 

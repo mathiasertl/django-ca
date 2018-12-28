@@ -310,6 +310,9 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         cryptography.x509.Certificate
             The signed certificate.
         """
+        ########################
+        # Normalize parameters #
+        ########################
         if subject is None:
             subject = Subject()  # we need a subject instance so we can possibly add the CN
         elif not isinstance(subject, Subject):
@@ -345,6 +348,9 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
                 if cn_name not in subjectAltName:
                     subjectAltName.insert(0, cn_name)
 
+        ################
+        # Read the CSR #
+        ################
         if csr_format == Encoding.PEM:
             req = x509.load_pem_x509_csr(force_bytes(csr), default_backend())
         elif csr_format == Encoding.DER:
@@ -352,6 +358,17 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         else:
             raise ValueError('Unknown CSR format passed: %s' % csr_format)
 
+        #########################
+        # Send pre-issue signal #
+        #########################
+        pre_issue_cert.send(sender=self.model, ca=ca, csr=csr, expires=expires, algorithm=algorithm,
+                            subject=subject, cn_in_san=cn_in_san, csr_format=csr_format,
+                            subjectAltName=subjectAltName, key_usage=key_usage,
+                            extended_key_usage=extended_key_usage, tls_featur=tls_feature, password=password)
+
+        #######################
+        # Generate public key #
+        #######################
         public_key = req.public_key()
 
         builder = get_cert_builder(expires)
@@ -390,7 +407,12 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             issuer_alt_name = IssuerAlternativeName(ca.issuer_alt_name)
             builder = builder.add_extension(**issuer_alt_name.for_builder())
 
-        return builder.sign(private_key=ca.key(password), algorithm=algorithm, backend=default_backend()), req
+        ###################
+        # Sign public key #
+        ###################
+        cert = builder.sign(private_key=ca.key(password), algorithm=algorithm, backend=default_backend())
+
+        return cert, req
 
     def init(self, ca, csr, **kwargs):
         """Create a signed certificate from a CSR and store it to the database.
@@ -398,8 +420,6 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         All parameters are passed on to :py:func:`Certificate.objects.sign_cert()
         <django_ca.managers.CertificateManager.sign_cert>`.
         """
-
-        pre_issue_cert.send(sender=self.model, ca=ca, csr=csr, **kwargs)
 
         c = self.model(ca=ca)
         c.x509, csr = self.sign_cert(ca, csr, **kwargs)
