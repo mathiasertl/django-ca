@@ -1,5 +1,2 @@
-Django>=1.11,<2.0 ; python_version < '3'
-Django>=1.11,<2.1 ; python_version >= '3' and python_version < '3.5'
-Django>=2.1 ; python_version >= '3.5'
-cryptography>=2.1
+-rrequirements/requirements-core.txt
 -rrequirements/requirements-libs.txt
