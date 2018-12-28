@@ -25,24 +25,22 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         self.add_ca_args(parser)
 
         group = parser.add_mutually_exclusive_group()
-        group.add_argument('--enable', action='store_true',
+        group.add_argument('--enable', action='store_true', dest='enabled', default=None,
                            help='Enable the certificate authority.')
-        group.add_argument('--disable', action='store_false',
+        group.add_argument('--disable', action='store_false', dest='enabled',
                            help='Disable the certificate authority.')
 
     def handle(self, ca, **options):
         if options['issuer_url'] is not None:
             ca.issuer_url = options['issuer_url']
-        if options['issuer_alt_name'] is not None:
+        if options['issuer_alt_name']:
             ca.issuer_alt_name = options['issuer_alt_name']
         if options['ocsp_url'] is not None:
             ca.ocsp_url = options['ocsp_url']
         if options['crl_url'] is not None:
             ca.crl_url = '\n'.join(options['crl_url'])
 
-        if options.get('enable') is True:
-            ca.enabled = True
-        if options.get('disable') is False:
-            ca.enabled = False
+        if options['enabled'] is not None:
+            ca.enabled = options['enabled']
 
         ca.save()

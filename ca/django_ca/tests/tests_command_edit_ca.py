@@ -26,9 +26,12 @@ class SignCertTestCase(DjangoCAWithCATestCase):
         ocsp = 'http://ocsp-test.example.org'
         crl = ['http://example.org/crl-test']
 
+        self.ca.enabled = False
+        self.ca.save()
+
         stdout, stderr = self.cmd(
             'edit_ca', self.ca.serial, issuer_url=issuer, issuer_alt_name=ian,
-            ocsp_url=ocsp, crl_url=crl, disable=False)
+            ocsp_url=ocsp, crl_url=crl)
         self.assertEqual(stdout, '')
         self.assertEqual(stderr, '')
 
@@ -41,11 +44,11 @@ class SignCertTestCase(DjangoCAWithCATestCase):
 
     def test_enable(self):
         ca = CertificateAuthority.objects.get(serial=self.ca.serial)
-        ca.enable = False
+        ca.enabled = False
         ca.save()
 
         # we can also change nothing at all
-        stdout, stderr = self.cmd('edit_ca', self.ca.serial, enable=True, crl_url=None)
+        stdout, stderr = self.cmd('edit_ca', self.ca.serial, enabled=True, crl_url=None)
         self.assertEqual(stdout, '')
         self.assertEqual(stderr, '')
 
@@ -55,3 +58,10 @@ class SignCertTestCase(DjangoCAWithCATestCase):
         self.assertEqual(ca.ocsp_url, self.ca.ocsp_url)
         self.assertEqual(ca.crl_url, self.ca.crl_url)
         self.assertTrue(ca.enabled)
+
+        # disable it again
+        stdout, stderr = self.cmd('edit_ca', self.ca.serial, enabled=False)
+        self.assertEqual(stdout, '')
+        self.assertEqual(stderr, '')
+        ca = CertificateAuthority.objects.get(serial=self.ca.serial)
+        self.assertFalse(ca.enabled)
