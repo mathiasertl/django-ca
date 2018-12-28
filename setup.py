@@ -192,6 +192,23 @@ class QualityCommand(Command):
             sys.exit(status)
 
 
+class DockerTest(Command):
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        tag = 'django-ca-test'
+        try:
+            subprocess.check_call(['docker', 'build', '--no-cache', '-t', tag, '.'])
+        finally:
+            subprocess.call(['docker', 'image', 'rm', tag])
+
+
 def find_package_data(dir):
     data = []
     package_root = os.path.join('ca', 'django_ca')
@@ -226,6 +243,7 @@ setup(
         'coverage': CoverageCommand,
         'test': TestCommand,
         'code_quality': QualityCommand,
+        'docker_test': DockerTest,
     },
     classifiers=[
         'Development Status :: 4 - Beta',

@@ -36,6 +36,7 @@ FROM python:3-alpine
 WORKDIR /usr/src/django-ca
 
 COPY requirements.txt docker/start.sh ./
+COPY requirements/ requirements/
 RUN apk --no-cache add --update gcc linux-headers libc-dev libffi-dev libressl-dev pcre pcre-dev mailcap && \
     pip install --no-cache-dir -r requirements.txt uwsgi pyyaml
 RUN addgroup -g 9000 -S django-ca && \
