@@ -390,7 +390,9 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
         __nonzero__ = __bool__
 
     def __eq__(self, other):
-        return self.issuers == other.issuers and self.ocsp == other.ocsp and self.critical == other.critical
+        return isinstance(other, type(self)) \
+            and self.issuers == other.issuers and self.ocsp == other.ocsp \
+            and self.critical == other.critical
 
     def __repr__(self):
         issuers = [self.serialize_value(v) for v in self.issuers]
@@ -724,7 +726,8 @@ class NameConstraints(GeneralNameMixin, Extension):
         __nonzero__ = __bool__
 
     def __eq__(self, other):
-        return self.permitted == other.permitted and self.excluded == other.excluded \
+        return isinstance(other, type(self)) \
+            and self.permitted == other.permitted and self.excluded == other.excluded \
             and self.critical == other.critical
 
     def __repr__(self):
