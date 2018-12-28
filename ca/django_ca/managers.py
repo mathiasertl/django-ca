@@ -26,7 +26,6 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
 from cryptography.x509.oid import AuthorityInformationAccessOID
-from cryptography.x509.oid import ExtensionOID
 
 from django.db import models
 from django.utils import six
@@ -203,16 +202,12 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         if parent is None:
             builder = builder.issuer_name(subject)
             private_sign_key = private_key
-            auth_key_id = x509.AuthorityKeyIdentifier(
-                key_identifier=subject_key_id.digest, authority_cert_issuer=None,
-                authority_cert_serial_number=None)
+            aki = x509.AuthorityKeyIdentifier.from_issuer_public_key(public_key)
         else:
             builder = builder.issuer_name(parent.x509.subject)
             private_sign_key = parent.key(parent_password)
-            auth_key_id = parent.x509.extensions.get_extension_for_oid(
-                ExtensionOID.AUTHORITY_KEY_IDENTIFIER).value
-
-        builder = builder.add_extension(auth_key_id, critical=False)
+            aki = parent.get_authority_key_identifier()
+        builder = builder.add_extension(aki, critical=False)
 
         for critical, ext in self.get_common_extensions(ca_issuer_url, ca_crl_url, ca_ocsp_url):
             builder = builder.add_extension(ext, critical=critical)
@@ -382,14 +377,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             x509.SubjectKeyIdentifier.from_public_key(public_key), critical=False)
 
         # Get authorityKeyIdentifier from subjectKeyIdentifier from signing CA
-        ski = ca.subject_key_identifier
-        if ski is None:
-            builder = builder.add_extension(
-                x509.AuthorityKeyIdentifier.from_issuer_public_key(ca.x509.public_key()), critical=False)
-        else:
-            builder = builder.add_extension(
-                x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski.as_extension()),
-                critical=False)
+        builder = builder.add_extension(ca.get_authority_key_identifier(), critical=False)
 
         for critical, ext in self.get_common_extensions(ca.issuer_url, ca.crl_url, ca.ocsp_url):
             builder = builder.add_extension(ext, critical=critical)

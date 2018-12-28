@@ -498,6 +498,16 @@ class CertificateAuthority(X509CertMixin):
             self._key = load_pem_private_key(key_data, password, default_backend())
         return self._key
 
+    def get_authority_key_identifier(self):
+        """Return the AuthorityKeyIdentifier extension used in certificates signed by this CA."""
+
+        try:
+            ski = self.x509.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
+        except x509.ExtensionNotFound:
+            return x509.AuthorityKeyIdentifier.from_issuer_public_key(self.x509.public_key())
+        else:
+            return x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski)
+
     @property
     def pathlen(self):
         """The ``pathlen`` attribute of the ``BasicConstraints`` extension (either an ``int`` or ``None``)."""
