@@ -382,11 +382,8 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             x509.SubjectKeyIdentifier.from_public_key(public_key), critical=False)
 
         # Get authorityKeyIdentifier from subjectKeyIdentifier from signing CA
-        ca_subject_key_id = ca.x509.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_KEY_IDENTIFIER)
-        auth_key_id = x509.AuthorityKeyIdentifier(
-            key_identifier=ca_subject_key_id.value.digest, authority_cert_issuer=None,
-            authority_cert_serial_number=None)
-        builder = builder.add_extension(auth_key_id, critical=False)
+        builder = builder.add_extension(
+            x509.AuthorityKeyIdentifier.from_issuer_public_key(ca.x509.public_key()), critical=False)
 
         for critical, ext in self.get_common_extensions(ca.issuer_url, ca.crl_url, ca.ocsp_url):
             builder = builder.add_extension(ext, critical=critical)

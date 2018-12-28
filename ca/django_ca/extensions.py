@@ -461,8 +461,19 @@ class AuthorityKeyIdentifier(KeyIdExtension):
 
     oid = ExtensionOID.AUTHORITY_KEY_IDENTIFIER
 
+    def from_subject_key_identifier(self, ext):
+        self.value = ext.value
+
     def from_extension(self, ext):
         self.value = ext.value.key_identifier
+
+    def from_other(self, value):
+        if isinstance(value, SubjectKeyIdentifier):
+            self.critical = self.default_critical
+            self.from_subject_key_identifier(value)
+            self._test_value()
+        else:
+            super(AuthorityInformationAccess, self).from_other(value)
 
     def as_text(self):
         return 'keyid:%s' % super(AuthorityKeyIdentifier, self).as_text()
