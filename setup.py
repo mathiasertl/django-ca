@@ -206,8 +206,9 @@ class DockerTest(Command):
         tag = 'django-ca-test'
         try:
             subprocess.check_call(['docker', 'build', '--no-cache', '-t', tag, '.'])
-        finally:
+        except Exception:
             print('### Failed image: default tag')
+        finally:
             subprocess.call(['docker', 'image', 'rm', tag])
 
         images = [
