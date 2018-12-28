@@ -63,7 +63,10 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
 
         # test an output path that doesn't exist
         path = os.path.join(ca_settings.CA_DIR, 'test', 'crl-test.crl')
-        msg = r"^\[Errno 2\] No such file or directory: '%s'$" % re.escape(path)
+        if six.PY2:
+            msg = r"^\[Errno 2\] No such file or directory: u'%s'$" % re.escape(path)
+        else:
+            msg = r"^\[Errno 2\] No such file or directory: '%s'$" % re.escape(path)
         with self.assertCommandError(msg):
             self.cmd('dump_crl', path, stdout=BytesIO(), stderr=BytesIO())
 
