@@ -23,10 +23,10 @@ Docker image
 
 Create a docker image::
 
-   docker build --no-cache -t django-ca .
-   docker run -d --name=django-ca -p 8000:8000 django-ca
-   docker exec -it django-ca python ca/manage.py createsuperuser
-   docker exec -it django-ca python ca/manage.py init_ca \
+   docker build --no-cache -t django-ca-dev .
+   docker run --rm -d --name=django-ca-dev -p 8000:8000 django-ca-dev
+   docker exec -it django-ca-dev python ca/manage.py createsuperuser
+   docker exec -it django-ca-dev python ca/manage.py init_ca \
       example /C=AT/ST=Vienna/L=Vienna/O=Org/CN=ca.example.com
 
 ... and browse http://localhost:8000/admin.
@@ -41,7 +41,9 @@ Release process
 * Upload release to PyPI: ``python setup.py sdist bdist_wheel upload``.
 * Tag and upload the docker image  (note that we create a image revision by appending ``-1``)::
 
-      docker tag django-ca mathiasertl/django-ca
-      docker tag django-ca mathiasertl/django-ca:$version-1
+      docker tag django-ca-dev mathiasertl/django-ca
+      docker tag django-ca-dev mathiasertl/django-ca:$version
+      docker tag django-ca-dev mathiasertl/django-ca:$version-1
       docker push mathiasertl/django-ca
+      docker push mathiasertl/django-ca:$version
       docker push mathiasertl/django-ca:$version-1
