@@ -1,4 +1,4 @@
-ARG IMAGE=python:3-alpine
+ARG IMAGE=python:3.7-alpine3.8
 ####################
 # Test build stage #
 ####################
@@ -33,7 +33,7 @@ RUN rm -r ca/django_ca/tests/
 ######################
 # Actual build stage #
 ######################
-FROM python:3-alpine
+FROM python:3.7-alpine3.8
 WORKDIR /usr/src/django-ca
 
 COPY requirements.txt docker/start.sh ./
