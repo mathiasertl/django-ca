@@ -2,13 +2,19 @@
 
 DJANGO_CA_UWSGI_INI=${DJANGO_CA_UWSGI_INI:-/usr/src/django-ca/uwsgi/standalone.ini}
 DJANGO_CA_UWSGI_PARAMS=${DJANGO_CA_UWSGI_PARAMS:-}
+DJANGO_CA_LIB_DIR=${DJANGO_CA_LIB_DIR:-/var/lib/django-ca}
 
 if [ ! -e ${DJANGO_CA_UWSGI_INI} ]; then
     echo "${DJANGO_CA_UWSGI_INI}: No such file or directory."
     exit 1
 fi
 
-if [ ! -e /var/lib/django-ca/secret_key ]; then
+if [ ! -e ${DJANGO_CA_LIB_DIR} ]; then
+    mkdir -p ${DJANGO_CA_LIB_DIR}
+fi
+
+chmod go-rwx ${DJANGO_CA_LIB_DIR}
+if [ ! -e ${DJANGO_CA_LIB_DIR}/secret_key ]; then
     python <<EOF
 import random, string
 
@@ -17,6 +23,7 @@ with open('/var/lib/django-ca/secret_key', 'w') as stream:
     stream.write(key)
 EOF
 fi
+chmod go-rwx ${DJANGO_CA_LIB_DIR}/secret_key
 
 # copy localsettings
 cp -f docker/localsettings.py ca/ca/localsettings.py
