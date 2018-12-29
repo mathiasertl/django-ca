@@ -1,0 +1,4 @@
+uWSGI==2.0.17.1
+PyYAML==3.13
+-rrequirements-core.txt
+-rrequirements-libs.txt

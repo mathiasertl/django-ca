@@ -26,9 +26,13 @@ USER django-ca:django-ca
 RUN python setup.py code_quality
 RUN python setup.py test
 
-# cleanup some files so they are not included later
-USER root:root
-RUN rm -r ca/django_ca/tests/
+FROM 3.7-alpine3.8 as prepare
+
+RUN apk --no-cache add --update gcc linux-headers libc-dev libffi-dev libressl-dev pcre pcre-dev mailcap
+
+COPY requirements/ requirements/
+RUN pip install --no-cache-dir --install-option="--prefix=/install" -r requirements/requirements-docker.txt
+
 
 ######################
 # Actual build stage #
@@ -38,8 +42,8 @@ WORKDIR /usr/src/django-ca
 
 COPY requirements.txt ./
 COPY requirements/ requirements/
-RUN apk --no-cache add --update gcc linux-headers libc-dev libffi-dev libressl-dev pcre pcre-dev mailcap && \
-    pip install --no-cache-dir -r requirements.txt uwsgi pyyaml
+#RUN apk --no-cache add --update gcc linux-headers libc-dev libffi-dev libressl-dev pcre pcre-dev mailcap
+COPY --from=prepare /install /usr/local
 RUN addgroup -g 9000 -S django-ca && \
     adduser -S -u 9000 -G django-ca django-ca && \
     mkdir -p /usr/share/django-ca/ /var/lib/django-ca/ && \
