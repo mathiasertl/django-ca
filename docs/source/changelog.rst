@@ -4,6 +4,14 @@ ChangeLog
 
 .. _changelog-head:
 
+**********
+HEAD (TBR)
+**********
+
+* Fix traceback when a certificate that does not exist is viewed in the admin interface.
+
+.. _changelog-1.11.0:
+
 *******************
 1.11.0 (2018-12-29)
 *******************

@@ -603,7 +603,11 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
 
     def get_change_actions(self, request, object_id, form_url):
         actions = list(super(CertificateAdmin, self).get_change_actions(request, object_id, form_url))
-        obj = self.model.objects.get(pk=object_id)
+        try:
+            obj = self.model.objects.get(pk=object_id)
+        except self.model.DoesNotExist:
+            return []
+
         if obj.revoked:
             actions.remove('revoke_change')
         return actions
