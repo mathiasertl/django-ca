@@ -36,7 +36,7 @@ RUN rm -r ca/django_ca/tests/
 FROM python:3.7-alpine3.8
 WORKDIR /usr/src/django-ca
 
-COPY requirements.txt docker/start.sh ./
+COPY requirements.txt ./
 COPY requirements/ requirements/
 RUN apk --no-cache add --update gcc linux-headers libc-dev libffi-dev libressl-dev pcre pcre-dev mailcap && \
     pip install --no-cache-dir -r requirements.txt uwsgi pyyaml
@@ -46,9 +46,9 @@ RUN addgroup -g 9000 -S django-ca && \
     chown django-ca:django-ca /usr/share/django-ca/ /var/lib/django-ca/
 COPY --from=test /usr/src/django-ca/ca/ ca/
 COPY uwsgi/ uwsgi/
-COPY docker/localsettings.py ca/ca/
+COPY docker/ docker/
 
-CMD ./start.sh
+CMD docker/start.sh
 
 USER django-ca:django-ca
 EXPOSE 8000

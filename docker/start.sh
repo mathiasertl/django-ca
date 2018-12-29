@@ -18,6 +18,9 @@ with open('/var/lib/django-ca/secret_key', 'w') as stream:
 EOF
 fi
 
+# copy localsettings
+cp -f docker/localsettings.py ca/ca/localsettings.py
+
 python ca/manage.py collectstatic --noinput
 python ca/manage.py migrate --noinput
 uwsgi --ini ${DJANGO_CA_UWSGI_INI} ${DJANGO_CA_UWSGI_PARAMS}
