@@ -39,8 +39,8 @@ RUN pip install --no-cache-dir --prefix=/install -r requirements/requirements-do
 
 COPY ca/ ca/
 COPY docker/ docker/
-RUN cp docker/localsettings.py ca/ca/localsettings.py
-RUN rm -rf ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.example
+RUN mv docker/localsettings.py ca/ca/localsettings.py
+RUN rm -rf requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.example
 
 ######################
 # Actual build stage #
