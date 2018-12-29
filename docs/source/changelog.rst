@@ -16,6 +16,7 @@ ChangeLog
 * New setting :ref:`CA_DEFAULT_KEY_SIZE <settings-ca-default-key-size>` to configure the default key size
   for new CAs.
 * Fix display of the NameConstraints extension in the admin interface.
+* Further optimize the Docker image size (~235MB -> ~140MB).
 
 Deprecation Notices
 ===================
