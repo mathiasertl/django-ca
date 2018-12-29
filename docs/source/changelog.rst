@@ -5,7 +5,7 @@ ChangeLog
 .. _changelog-head:
 
 *******************
-1.11.0 (2018-12-28)
+1.11.0 (2018-12-29)
 *******************
 
 * Remove colons from CA private keys (fixes `#29 <https://github.com/mathiasertl/django-ca/issues/28>`_).
