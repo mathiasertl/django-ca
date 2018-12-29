@@ -44,6 +44,6 @@ Release process
       docker tag django-ca-dev mathiasertl/django-ca
       docker tag django-ca-dev mathiasertl/django-ca:$version
       docker tag django-ca-dev mathiasertl/django-ca:$version-1
-      docker push mathiasertl/django-ca
-      docker push mathiasertl/django-ca:$version
       docker push mathiasertl/django-ca:$version-1
+      docker push mathiasertl/django-ca:$version
+      docker push mathiasertl/django-ca
