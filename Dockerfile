@@ -39,6 +39,9 @@ COPY requirements/ requirements/
 RUN pip install --no-cache-dir --prefix=/install -r requirements/requirements-docker.txt
 
 COPY ca/ ca/
+COPY docker/ docker/
+RUN cp docker/localsettings.py ca/ca/localsettings.py
+RUN rm -rf ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.example
 
 ######################
 # Actual build stage #
@@ -54,9 +57,9 @@ RUN addgroup -g 9000 -S django-ca && \
 COPY --from=prepare /install /usr/local
 COPY --from=prepare /usr/src/django-ca/ca/ ca/
 COPY uwsgi/ uwsgi/
-COPY docker/ docker/
+COPY docker/start.sh .
 
-CMD docker/start.sh
+CMD ./start.sh
 
 USER django-ca:django-ca
 EXPOSE 8000

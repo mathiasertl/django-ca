@@ -25,9 +25,6 @@ EOF
 fi
 chmod go-rwx ${DJANGO_CA_LIB_DIR}/secret_key
 
-# copy localsettings
-cp -f docker/localsettings.py ca/ca/localsettings.py
-
 python ca/manage.py collectstatic --noinput
 python ca/manage.py migrate --noinput
 uwsgi --ini ${DJANGO_CA_UWSGI_INI} ${DJANGO_CA_UWSGI_PARAMS}
