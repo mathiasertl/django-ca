@@ -10,10 +10,10 @@ python:  # https://devguide.python.org/#status-of-python-branches
   # https://github.com/PyCQA/pyflakes/issues/367
   #- "nightly"
 env:
-  - DJANGO=2.1.4 CRYPTOGRAPHY=2.4.2
-  - DJANGO=2.1.4 CRYPTOGRAPHY=2.3.1
-  - DJANGO=2.1.4 CRYPTOGRAPHY=2.2.2
-  - DJANGO=2.1.4 CRYPTOGRAPHY=2.1.4
+  - DJANGO=2.1.5 CRYPTOGRAPHY=2.4.2
+  - DJANGO=2.1.5 CRYPTOGRAPHY=2.3.1
+  - DJANGO=2.1.5 CRYPTOGRAPHY=2.2.2
+  - DJANGO=2.1.5 CRYPTOGRAPHY=2.1.4
   - DJANGO=2.0.9 CRYPTOGRAPHY=2.4.2
   - DJANGO=2.0.9 CRYPTOGRAPHY=2.3.1
   - DJANGO=2.0.9 CRYPTOGRAPHY=2.2.2
@@ -39,21 +39,21 @@ matrix:
     exclude:
         # Django 2.0 no longer supports python2
         # Django 2.1 no longer supports python3.4
-        - env: DJANGO=2.1.4 CRYPTOGRAPHY=2.4.2
+        - env: DJANGO=2.1.5 CRYPTOGRAPHY=2.4.2
           python: "3.4"
-        - env: DJANGO=2.1.4 CRYPTOGRAPHY=2.4.2
+        - env: DJANGO=2.1.5 CRYPTOGRAPHY=2.4.2
           python: "2.7"
-        - env: DJANGO=2.1.4 CRYPTOGRAPHY=2.3.1
+        - env: DJANGO=2.1.5 CRYPTOGRAPHY=2.3.1
           python: "3.4"
-        - env: DJANGO=2.1.4 CRYPTOGRAPHY=2.3.1
+        - env: DJANGO=2.1.5 CRYPTOGRAPHY=2.3.1
           python: "2.7"
-        - env: DJANGO=2.1.4 CRYPTOGRAPHY=2.2.2
+        - env: DJANGO=2.1.5 CRYPTOGRAPHY=2.2.2
           python: "3.4"
-        - env: DJANGO=2.1.4 CRYPTOGRAPHY=2.2.2
+        - env: DJANGO=2.1.5 CRYPTOGRAPHY=2.2.2
           python: "2.7"
-        - env: DJANGO=2.1.4 CRYPTOGRAPHY=2.1.4
+        - env: DJANGO=2.1.5 CRYPTOGRAPHY=2.1.4
           python: "3.4"
-        - env: DJANGO=2.1.4 CRYPTOGRAPHY=2.1.4
+        - env: DJANGO=2.1.5 CRYPTOGRAPHY=2.1.4
           python: "2.7"
         - env: DJANGO=2.0.9 CRYPTOGRAPHY=2.4.2
           python: "2.7"
