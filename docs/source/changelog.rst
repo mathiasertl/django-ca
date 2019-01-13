@@ -9,6 +9,7 @@ HEAD (TBR)
 **********
 
 * Fix traceback when a certificate that does not exist is viewed in the admin interface.
+* Fix log output string interpolation issue in OCSP responder.
 
 .. _changelog-1.11.0:
 

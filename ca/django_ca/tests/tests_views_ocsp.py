@@ -225,6 +225,7 @@ class OCSPViewTestMixin(object):
             self.assertEqual(produced_at, this_update)
             next_update = response['next_update'].native
             self.assertAlmostEqualDate(this_update + timedelta(seconds=expires), next_update)
+            print(response['single_extensions'])
 
             single_extensions = {e['extn_id'].native: e for e in response['single_extensions']}
 
