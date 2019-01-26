@@ -220,8 +220,7 @@ class Subject(object):
     def name(self):
         """This subject as :py:class:`x509.Name <cg:cryptography.x509.Name>`.
 
-        >>> Subject('/C=AT/CN=example.com').name  # doctest: +NORMALIZE_WHITESPACE
-        <Name([<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, value='AT')>,
-               <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>])>
+        >>> Subject('/C=AT/CN=example.com').name
+        <Name(C=AT,CN=example.com)>
         """
         return x509.Name([x509.NameAttribute(k, v) for k, v in self.fields])

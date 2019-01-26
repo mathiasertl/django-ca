@@ -25,8 +25,9 @@ from ..subject import Subject
 
 
 def load_tests(loader, tests, ignore):
-    if six.PY3:  # pragma: only py3
+    if six.PY3 and cryptography_version >= (2, 5):  # pragma: only py3
         # unicode strings make this very hard to test doctests in both py2 and py3
+        # cryptography 2.5 changes output format of Distinguished Names.
         tests.addTests(doctest.DocTestSuite('django_ca.subject'))
     return tests
 
