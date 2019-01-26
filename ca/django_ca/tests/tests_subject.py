@@ -22,6 +22,7 @@ from cryptography.x509.oid import NameOID
 from django.test import TestCase
 
 from ..subject import Subject
+from .base import cryptography_version
 
 
 def load_tests(loader, tests, ignore):
