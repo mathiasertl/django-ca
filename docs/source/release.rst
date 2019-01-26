@@ -12,6 +12,8 @@ Before release
 * Check test coverage (``setup.py coverage``).
 * Update ``version`` parameter in ``setup.py``.
 * Update ``version`` and ``release`` in ``docs/source/conf.py``.
+* Update ``VERSION`` and ``__version__`` in ``ca/django_ca/__init__.py``
+  (see `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_).
 * Make sure that ``docs/source/changelog.rst`` is up to date.
 * Make sure that tox runs through for all environments.
 * Make sure that ``python setup.py docker_test`` runs through.
