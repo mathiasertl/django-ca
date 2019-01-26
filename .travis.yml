@@ -38,6 +38,10 @@ matrix:
     exclude:
         # Django 2.0 no longer supports python2
         # Django 2.1 no longer supports python3.4
+        - env: DJANGO=2.1.5 CRYPTOGRAPHY=2.5
+          python: "3.4"
+        - env: DJANGO=2.1.5 CRYPTOGRAPHY=2.5
+          python: "2.7"
         - env: DJANGO=2.1.5 CRYPTOGRAPHY=2.4.2
           python: "3.4"
         - env: DJANGO=2.1.5 CRYPTOGRAPHY=2.4.2
@@ -53,6 +57,8 @@ matrix:
         - env: DJANGO=2.1.5 CRYPTOGRAPHY=2.1.4
           python: "3.4"
         - env: DJANGO=2.1.5 CRYPTOGRAPHY=2.1.4
+          python: "2.7"
+        - env: DJANGO=2.0.9 CRYPTOGRAPHY=2.5
           python: "2.7"
         - env: DJANGO=2.0.9 CRYPTOGRAPHY=2.4.2
           python: "2.7"
@@ -78,12 +84,3 @@ matrix:
           python: "nightly"
         - env: DJANGO=1.11.16 CRYPTOGRAPHY=2.1.4
           python: "nightly"
-
-#notifications:
-#  irc:
-#    channels: "irc.freenode.org#fabric"
-#    template:
-#      - "%{repository}@%{branch}: %{message} (%{build_url})"
-#    on_success: change
-#    on_failure: change
-#  email: false
