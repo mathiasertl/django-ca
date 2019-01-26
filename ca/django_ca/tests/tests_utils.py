@@ -54,8 +54,8 @@ from ..utils import parse_key_curve
 from ..utils import parse_name
 from ..utils import validate_email
 from .base import DjangoCATestCase
-from .base import override_settings
 from .base import cryptography_version
+from .base import override_settings
 
 
 def load_tests(loader, tests, ignore):
