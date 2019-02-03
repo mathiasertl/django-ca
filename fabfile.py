@@ -188,7 +188,7 @@ def init_demo(fixture='n'):
     User = get_user_model()
 
     try:
-            from django.urls import reverse
+        from django.urls import reverse
     except ImportError:  # Django 1.8 import
         from django.core.urlresolvers import reverse
 
