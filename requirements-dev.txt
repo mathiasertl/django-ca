@@ -1,7 +1,6 @@
 -rrequirements/requirements-docs.txt
 -rrequirements/requirements-test.txt
 Fabric3==1.14.post1
-coverage==4.5.2
 ipython<6; python_version < '3.3'
 ipython>=6; python_version >= '3.3'
 pip>=9.0.1

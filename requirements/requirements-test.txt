@@ -4,3 +4,4 @@ freezegun==0.3.11
 isort==4.3.4
 mock==2.0.0; python_version < '3'
 pyOpenSSL==19.0.0
+coverage==4.5.2
