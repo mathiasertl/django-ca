@@ -58,7 +58,6 @@ def _load_req(req):
 
 req1 = _load_req('req1')
 req1_nonce = b'5ul\xc4\xb6\xccP\xe8\xd8\xbd\x16xA \r9'
-no_nonce_req = _load_req('req-no-nonce')
 unknown_req = _load_req('unknown-serial')
 multiple_req = _load_req('multiple-serial')
 
