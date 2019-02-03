@@ -155,7 +155,7 @@ class OCSPBaseView(View):
         return HttpResponse(data, status=status, content_type='application/ocsp-response')
 
 
-if ca_settings.CRYPTOGRAPHY_OCSP is True:
+if ca_settings.CRYPTOGRAPHY_OCSP is True:  # pragma: only cryptography>=2.4
     from cryptography.x509 import ocsp
     from cryptography.x509 import OCSPNonce
 
@@ -246,7 +246,7 @@ if ca_settings.CRYPTOGRAPHY_OCSP is True:
             response = builder.sign(responder_key, hashes.SHA256())
             return self.http_response(response.public_bytes(Encoding.DER))
 
-else:
+else:  # pragma: only cryptography<2.4
     class OCSPView(OCSPBaseView):
         def fail(self, reason=u'internal_error'):
             builder = OCSPResponseBuilder(response_status=reason)
