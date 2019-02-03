@@ -22,8 +22,11 @@ from datetime import timedelta
 from freezegun import freeze_time
 
 import asn1crypto
+import asn1crypto.x509
+import ocspbuilder
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.serialization import Encoding
 from oscrypto import asymmetric
 
 from django.conf import settings
@@ -314,9 +317,15 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         response = self.client.get(reverse('get', kwargs={'data': data.decode('utf-8')}))
         self.assertOCSP(response, requested=[self.cert], nonce=None)
 
-    @unittest.skipIf(ca_settings.CRYPTOGRAPHY_OCSP, 'Skip asn1crypto test for cryptography>=2.4')
     def test_no_nonce_old(self):
-        response = self.client.get(reverse('get', kwargs={'data': no_nonce_req.decode('utf-8')}))
+        builder = ocspbuilder.OCSPRequestBuilder(
+            certificate=asn1crypto.x509.Certificate.load(self.cert.x509.public_bytes(Encoding.DER)),
+            issuer=asn1crypto.x509.Certificate.load(self.cert.ca.x509.public_bytes(Encoding.DER))
+        )
+        builder.nonce = False
+        data = base64.b64encode(builder.build().dump()).decode('utf-8')
+
+        response = self.client.get(reverse('get', kwargs={'data': data}))
         self.assertEqual(response.status_code, 200)
         self.assertOCSP(response, requested=[self.cert], nonce=None)
 
