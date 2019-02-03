@@ -180,8 +180,6 @@ if ca_settings.CRYPTOGRAPHY_OCSP is True:  # pragma: only cryptography>=2.4
             else:
                 return Certificate.objects.get(serial=self.responder_cert).x509
 
-            return responder_cert
-
         def process_ocsp_request(self, data):
             try:
                 ocsp_req = ocsp.load_der_ocsp_request(data)  # NOQA
