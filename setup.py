@@ -185,6 +185,7 @@ class CoverageCommand(BaseCommand):
         if total_coverage < self.fail_under:
             print('Error: Coverage was only %.2f%% (should be above %.2f%%).' % (
                 total_coverage, self.fail_under))
+            sys.exit(2)  # coverage cli utility also exits with 2
 
 
 class QualityCommand(Command):
