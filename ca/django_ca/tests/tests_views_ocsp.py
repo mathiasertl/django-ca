@@ -317,7 +317,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         response = self.client.get(reverse('get', kwargs={'data': data.decode('utf-8')}))
         self.assertOCSP(response, requested=[self.cert], nonce=None)
 
-    def test_no_nonce_old(self):
+    def test_no_nonce_asn1crypto(self):
         builder = ocspbuilder.OCSPRequestBuilder(
             certificate=asn1crypto.x509.Certificate.load(self.cert.x509.public_bytes(Encoding.DER)),
             issuer=asn1crypto.x509.Certificate.load(self.cert.ca.x509.public_bytes(Encoding.DER))
