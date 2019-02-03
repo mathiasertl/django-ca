@@ -40,18 +40,13 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin
 
+from . import ca_settings
 from .crl import get_crl
 from .models import Certificate
 from .models import CertificateAuthority
 from .utils import int_to_hex
 
 log = logging.getLogger(__name__)
-
-try:
-    CRYPTOGRAPHY_OCSP = True
-    from cryptography.x509 import ocsp
-except ImportError:
-    CRYPTOGRAPHY_OCSP = False
 
 
 class CertificateRevocationListView(View, SingleObjectMixin):
@@ -160,7 +155,8 @@ class OCSPBaseView(View):
         return HttpResponse(data, status=status, content_type='application/ocsp-response')
 
 
-if CRYPTOGRAPHY_OCSP is True:
+if ca_settings.CRYPTOGRAPHY_OCSP is True:
+    from cryptography.x509 import ocsp
     from cryptography.x509 import OCSPNonce
 
     class OCSPView(OCSPBaseView):

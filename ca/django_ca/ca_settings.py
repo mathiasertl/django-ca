@@ -161,3 +161,10 @@ try:
         raise ImproperlyConfigured('%s: Not an EllipticCurve.' % _CA_DEFAULT_ECC_CURVE)
 except AttributeError:
     raise ImproperlyConfigured('Unkown CA_DEFAULT_ECC_CURVE: %s' % settings.CA_DEFAULT_ECC_CURVE)
+
+# Try to decide if we can use OCSP from cryptography or not
+try:
+    from cryptography.x509 import ocsp  # NOQA
+    CRYPTOGRAPHY_OCSP = True
+except ImportError:
+    CRYPTOGRAPHY_OCSP = False
