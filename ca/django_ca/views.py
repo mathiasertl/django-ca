@@ -189,7 +189,8 @@ if ca_settings.CRYPTOGRAPHY_OCSP is True:  # pragma: only cryptography>=2.4
 
             # Fail if there are any critical extensions that we do not understand
             for ext in ocsp_req.extensions:
-                if ext.critical and not isinstance(ext.value, OCSPNonce):
+                if ext.critical and not isinstance(ext.value, OCSPNonce):  # pragma: no cover
+                    # It seems impossible to get cryptography to create such a request, so it's not tested
                     return self.malformed_request()
 
             # Get CA and certificate
