@@ -129,6 +129,28 @@ class X509CertMixin(models.Model):
     class Meta:
         abstract = True
 
+    def get_revocation_reason(self):
+        if self.revoked is False:
+            return
+
+        # TODO: add test that all revocation reasons are supported
+        if self.revoked_reason == '' or self.revoked_reason is None:
+            return x509.ReasonFlags.unspecified
+        elif self.revoked_reason is not None:
+            return getattr(x509.ReasonFlags, self.revoked_reason)
+
+    def get_revocation_time(self):
+        """Get the revocation time as naive datetime.
+        """
+        if self.revoked is False:
+            return
+
+        if timezone.is_aware(self.revoked_date):
+            # convert datetime object to UTC and make it naive
+            return timezone.make_naive(pytz.utc.astimezone(self.revoked_date))
+
+        return self.revoked_date
+
     @property
     def x509(self):
         """The underlying :py:class:`cg:cryptography.x509.Certificate`."""

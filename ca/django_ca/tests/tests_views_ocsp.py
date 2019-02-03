@@ -226,15 +226,15 @@ class OCSPViewTestMixin(object):
             next_update = response['next_update'].native
             self.assertAlmostEqualDate(this_update + timedelta(seconds=expires), next_update)
 
-            single_extensions = {e['extn_id'].native: e for e in response['single_extensions']}
-
+            # TODO: cryptography does not support single response extensions
+            #single_extensions = {e['extn_id'].native: e for e in response['single_extensions']}
             # test certificate_issuer single extension
-            issuer_subject = single_extensions.pop('certificate_issuer')
-            self.assertFalse(issuer_subject['critical'].native)
+            #issuer_subject = single_extensions.pop('certificate_issuer')
+            #self.assertFalse(issuer_subject['critical'].native)
 
-            self.assertEqual(len(issuer_subject['extn_value'].native), 1)
-            self.assertOCSPSubject(issuer_subject['extn_value'].native[0], cert.ca.subject)
-            self.assertEqual(single_extensions, {})  # None are left
+            #self.assertEqual(len(issuer_subject['extn_value'].native), 1)
+            #self.assertOCSPSubject(issuer_subject['extn_value'].native[0], cert.ca.subject)
+            #self.assertEqual(single_extensions, {})  # None are left
 
             # TODO: verify issuer_name_hash and issuer_key_hash
             # cert_id = response['cert_id']

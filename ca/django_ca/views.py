@@ -24,6 +24,8 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import Encoding
+from cryptography.x509 import ExtensionNotFound
+from cryptography.x509 import load_pem_x509_certificate
 from ocspbuilder import OCSPResponseBuilder
 from oscrypto.asymmetric import load_certificate
 from oscrypto.asymmetric import load_private_key
@@ -135,7 +137,7 @@ class OCSPBaseView(View):
             return self.process_ocsp_request(base64.b64decode(data))
         except Exception as e:
             log.exception(e)
-            return self.malformed_request()
+            return self.fail()
 
     def post(self, request):
         return self.process_ocsp_request(request.body)
@@ -145,11 +147,22 @@ class OCSPBaseView(View):
             responder_key = stream.read()
         return responder_key
 
+    def get_ca(self):
+        return CertificateAuthority.objects.get_by_serial_or_cn(self.ca)
+
+    def get_cert(self, ca, serial):
+        if self.ca_ocsp is True:
+            return CertificateAuthority.objects.filter(parent=ca).get(serial=serial)
+        else:
+            return Certificate.objects.filter(ca=ca).get(serial=serial)
+
     def http_response(self, data, status=200):
         return HttpResponse(data, status=status, content_type='application/ocsp-response')
 
 
 if CRYPTOGRAPHY_OCSP is True:
+    from cryptography.x509 import OCSPNonce
+
     class OCSPView(OCSPBaseView):
         def fail(self, status=ocsp.OCSPResponseStatus.INTERNAL_ERROR):
             return self.http_response(
@@ -163,6 +176,16 @@ if CRYPTOGRAPHY_OCSP is True:
             key = super(OCSPView, self).get_responder_key()
             return serialization.load_pem_private_key(key, None, default_backend())
 
+        def get_responder_cert(self):
+            if os.path.exists(self.responder_cert):
+                with open(self.responder_cert, 'rb') as stream:
+                    responder_cert = stream.read()
+                return load_pem_x509_certificate(responder_cert, default_backend())
+            else:
+                return Certificate.objects.get(serial=self.responder_cert).x509
+
+            return responder_cert
+
         def process_ocsp_request(self, data):
             try:
                 ocsp_req = ocsp.load_der_ocsp_request(data)  # NOQA
@@ -170,24 +193,66 @@ if CRYPTOGRAPHY_OCSP is True:
                 log.exception(e)
                 return self.malformed_request()
 
-            responder_key = self.get_responder_key()
+            # Fail if there are any critical extensions that we do not understand
+            for ext in ocsp_req.extensions:
+                if ext.critical and not isinstance(ext.value, OCSPNonce):
+                    return self.malformed_request()
 
-            builder = ocsp.OCSPResponseBuilder(
-                cert=cert, issuer=issuer, algorithm=hashes.SHA1(),
-                cert_status=ocsp.OCSPCertStatus.GOOD,
-                this_update=datetime.datetime.now(),
-                next_update=datetime.datetime.now(),
-                revocation_time=None, revocation_reason=None
+            # Get CA and certificate
+            try:
+                ca = self.get_ca()
+            except CertificateAuthority.DoesNotExist:
+                log.error('%s: Certificate Authority could not be found.', self.ca)
+                return self.fail()
+
+            try:
+                cert = self.get_cert(ca, int_to_hex(ocsp_req.serial_number))
+            except Certificate.DoesNotExist:
+                log.warning('OCSP request for unknown cert received.')
+                return self.fail()
+            except CertificateAuthority.DoesNotExist:
+                log.warning('OCSP request for unknown CA received.')
+                return self.fail()
+
+            # get key/cert for OCSP responder
+            responder_key = self.get_responder_key()
+            responder_cert = self.get_responder_cert()
+
+            # get the certificate status
+            if cert.revoked:
+                status = ocsp.OCSPCertStatus.REVOKED
+            else:
+                status = ocsp.OCSPCertStatus.GOOD
+
+            builder = ocsp.OCSPResponseBuilder()
+            builder = builder.add_response(
+                cert=cert.x509, issuer=ca.x509, algorithm=hashes.SHA1(),
+                cert_status=status,
+                this_update=datetime.utcnow(),
+                next_update=datetime.utcnow() + timedelta(seconds=self.expires),
+                revocation_time=cert.get_revocation_time(),
+                revocation_reason=cert.get_revocation_reason()
             ).responder_id(
                 ocsp.OCSPResponderEncoding.HASH, responder_cert
             )
+
+            # Add the responder cert to the response, necessary because we (so far) always use delegate
+            # certificates
+            builder = builder.certificates([responder_cert])
+
+            # Add OCSP nonce if present
+            try:
+                nonce = ocsp_req.extensions.get_extension_for_class(OCSPNonce)
+                builder = builder.add_extension(nonce.value, critical=nonce.critical)
+            except ExtensionNotFound:
+                pass
 
             response = builder.sign(responder_key, hashes.SHA256())
             return self.http_response(response.public_bytes(Encoding.DER))
 
 else:
     class OCSPView(OCSPBaseView):
-        def fail(self, reason):
+        def fail(self, reason=u'internal_error'):
             builder = OCSPResponseBuilder(response_status=reason)
             return builder.build()
 
@@ -236,25 +301,20 @@ else:
                 log.exception('Error parsing OCSP request: %s', e)
                 return self.fail(u'malformed_request')
 
-            # Get CA and certificate
             try:
-                ca = CertificateAuthority.objects.get_by_serial_or_cn(self.ca)
+                ca = self.get_ca()
             except CertificateAuthority.DoesNotExist:
                 log.error('%s: Certificate Authority could not be found.', self.ca)
-                return self.fail(u'internal_error')
+                return self.fail()
 
-            if self.ca_ocsp is True:
-                try:
-                    cert = CertificateAuthority.objects.filter(parent=ca).get(serial=serial)
-                except CertificateAuthority.DoesNotExist:
-                    log.warning('OCSP request for unknown CA received.')
-                    return self.fail(u'internal_error')
-            else:
-                try:
-                    cert = Certificate.objects.filter(ca=ca).get(serial=serial)
-                except Certificate.DoesNotExist:
-                    log.warning('OCSP request for unknown cert received.')
-                    return self.fail(u'internal_error')
+            try:
+                cert = self.get_cert(ca, serial)
+            except Certificate.DoesNotExist:
+                log.warning('OCSP request for unknown cert received.')
+                return self.fail()
+            except CertificateAuthority.DoesNotExist:
+                log.warning('OCSP request for unknown CA received.')
+                return self.fail(u'internal_error')
 
             # load ca cert and responder key/cert
             try:
