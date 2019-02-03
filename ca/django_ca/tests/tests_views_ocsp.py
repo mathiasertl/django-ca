@@ -16,11 +16,14 @@
 import base64
 import logging
 import os
+import unittest
 from datetime import timedelta
 
 from freezegun import freeze_time
 
 import asn1crypto
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import serialization
 from oscrypto import asymmetric
 
 from django.conf import settings
@@ -29,6 +32,7 @@ from django.test import Client
 from django.urls import reverse
 from django.utils.encoding import force_text
 
+from .. import ca_settings
 from ..models import Certificate
 from ..subject import Subject
 from ..utils import int_to_hex
@@ -300,13 +304,21 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
     def test_post_with_use_tz(self):
         self.test_post()
 
+    @unittest.skipUnless(ca_settings.CRYPTOGRAPHY_OCSP, 'Skip cryptography test for cryptography<2.4')
     def test_no_nonce(self):
-        data = base64.b64encode(req1).decode('utf-8')
-        response = self.client.get(reverse('get', kwargs={'data': data}))
-        self.assertEqual(response.status_code, 200)
+        from cryptography.x509 import ocsp
+        builder = ocsp.OCSPRequestBuilder()
+        builder = builder.add_certificate(self.cert.x509, self.cert.ca.x509, hashes.SHA1())
+        data = base64.b64encode(builder.build().public_bytes(serialization.Encoding.DER))
 
-        # TODO: this should fail
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
+        response = self.client.get(reverse('get', kwargs={'data': data.decode('utf-8')}))
+        self.assertOCSP(response, requested=[self.cert], nonce=None)
+
+    @unittest.skipIf(ca_settings.CRYPTOGRAPHY_OCSP, 'Skip asn1crypto test for cryptography>=2.4')
+    def test_no_nonce_old(self):
+        response = self.client.get(reverse('get', kwargs={'data': no_nonce_req.decode('utf-8')}))
+        self.assertEqual(response.status_code, 200)
+        self.assertOCSP(response, requested=[self.cert], nonce=None)
 
     def test_revoked(self):
         cert = Certificate.objects.get(pk=self.cert.pk)
