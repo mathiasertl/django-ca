@@ -126,6 +126,18 @@ class CoverageCommand(BaseCommand):
         super(CoverageCommand, self).finalize_options()
         self.fail_under = float(self.fail_under)
 
+    def exclude_versions(self, cov, sw, this_version, version, version_str):
+        if version != this_version:
+            cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s==%s' % (sw, version_str))
+
+        if version > this_version:
+            cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s>%s' % (sw, version_str))
+            cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s>=%s' % (sw, version_str))
+
+        if version < this_version:
+            cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s<%s' % (sw, version_str))
+            cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s<=%s' % (sw, version_str))
+
     def run(self):
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.test_settings")
 
@@ -138,29 +150,29 @@ class CoverageCommand(BaseCommand):
         cov = coverage.Coverage(cover_pylib=False, branch=True, source=['django_ca'],
                                 omit=['*migrations/*', '*/tests/tests*', ])
 
-        # exclude version-specific code
+        # exclude python-version specific code
         if PY2:
             cov.exclude('only py3')
         else:
             cov.exclude('only py2')
 
+        # exclude django-version specific code
         from django import VERSION
         django_versions = [(1, 11), (2, 0), (2, 1), (2, 2), (2, 3)]
         this_version = VERSION[:2]
 
         for version in django_versions:
             version_str = '.'.join([str(v) for v in version])
+            self.exclude_versions(cov, 'django', this_version, version, version_str)
 
-            if version != this_version:
-                cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only django==%s' % version_str)
-
-            if version > this_version:
-                cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only django>%s' % version_str)
-                cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only django>=%s' % version_str)
-
-            if version < this_version:
-                cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only django<%s' % version_str)
-                cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only django<=%s' % version_str)
+        # exclude cryptography-version specific code
+        import cryptography
+        from packaging import version
+        this_version = version.parse(cryptography.__version__).release[:2]
+        cryptography_versions = [(2, 1), (2, 2), (2, 3), (2, 4), (2, 5), (2, 6)]
+        for ver in cryptography_versions:
+            version_str = '.'.join([str(v) for v in ver])
+            self.exclude_versions(cov, 'cryptography', this_version, ver, version_str)
 
         cov.start()
 
