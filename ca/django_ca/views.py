@@ -20,7 +20,9 @@ from datetime import datetime
 from datetime import timedelta
 
 import asn1crypto
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import Encoding
 from ocspbuilder import OCSPResponseBuilder
 from oscrypto.asymmetric import load_certificate
@@ -42,6 +44,12 @@ from .models import CertificateAuthority
 from .utils import int_to_hex
 
 log = logging.getLogger(__name__)
+
+try:
+    CRYPTOGRAPHY_OCSP = True
+    from cryptography.x509 import ocsp
+except ImportError:
+    CRYPTOGRAPHY_OCSP = False
 
 
 class CertificateRevocationListView(View, SingleObjectMixin):
@@ -97,7 +105,8 @@ class CertificateRevocationListView(View, SingleObjectMixin):
         return HttpResponse(crl, content_type=content_type)
 
 
-class OCSPView(View):
+@method_decorator(csrf_exempt, name='dispatch')
+class OCSPBaseView(View):
     """View to provide an OCSP responder.
 
     .. seealso::
@@ -121,135 +130,182 @@ class OCSPView(View):
     ca_ocsp = False
     """If set to ``True``, validate child CAs instead."""
 
-    @method_decorator(csrf_exempt)
-    def dispatch(self, *args, **kwargs):
-        return super(OCSPView, self).dispatch(*args, **kwargs)
-
     def get(self, request, data):
-        return self.process_ocsp_request(base64.b64decode(data))
+        try:
+            return self.process_ocsp_request(base64.b64decode(data))
+        except Exception as e:
+            log.exception(e)
+            return self.malformed_request()
 
     def post(self, request):
         return self.process_ocsp_request(request.body)
 
-    def fail(self, reason):
-        builder = OCSPResponseBuilder(response_status=reason)
-        return builder.build()
-
-    def process_ocsp_request(self, data):
-        status = 200
-        try:
-            response = self.get_ocsp_response(data)
-        except Exception as e:  # pragma: no cover
-            # all exceptions in the function should be covered.
-            log.exception(e)
-            response = self.fail(u'internal_error')
-            status = 500
-
-        return HttpResponse(response.dump(), status=status,
-                            content_type='application/ocsp-response')
-
     def get_responder_key(self):
         with open(self.responder_key, 'rb') as stream:
             responder_key = stream.read()
+        return responder_key
 
-        # try to load responder key and cert with oscrypto, to make sure they are actually usable
-        return load_private_key(responder_key)
+    def http_response(self, data, status=200):
+        return HttpResponse(data, status=status, content_type='application/ocsp-response')
 
-    def get_responder_cert(self):
-        if os.path.exists(self.responder_cert):
-            with open(self.responder_cert, 'rb') as stream:
-                responder_cert = stream.read()
-        else:
-            responder_cert = Certificate.objects.get(serial=self.responder_cert)
 
-        return load_certificate(responder_cert)
+if CRYPTOGRAPHY_OCSP is True:
+    class OCSPView(OCSPBaseView):
+        def fail(self, status=ocsp.OCSPResponseStatus.INTERNAL_ERROR):
+            return self.http_response(
+                ocsp.OCSPResponseBuilder.build_unsuccessful(status).public_bytes(Encoding.DER)
+            )
 
-    def get_ocsp_response(self, data):
-        try:
-            ocsp_request = asn1crypto.ocsp.OCSPRequest.load(data)
+        def malformed_request(self):
+            return self.fail(ocsp.OCSPResponseStatus.MALFORMED_REQUEST)
 
-            tbs_request = ocsp_request['tbs_request']
-            request_list = tbs_request['request_list']
-            if len(request_list) != 1:
-                log.error('Received OCSP request with multiple sub requests')
-                raise NotImplementedError('Combined requests not yet supported')
-            single_request = request_list[0]  # TODO: Support more than one request
-            req_cert = single_request['req_cert']
-            serial = int_to_hex(req_cert['serial_number'].native)
-        except Exception as e:
-            log.exception('Error parsing OCSP request: %s', e)
-            return self.fail(u'malformed_request')
+        def get_responder_key(self):
+            key = super(OCSPView, self).get_responder_key()
+            return serialization.load_pem_private_key(key, None, default_backend())
 
-        # Get CA and certificate
-        try:
-            ca = CertificateAuthority.objects.get_by_serial_or_cn(self.ca)
-        except CertificateAuthority.DoesNotExist:
-            log.error('%s: Certificate Authority could not be found.', self.ca)
-            return self.fail(u'internal_error')
-
-        if self.ca_ocsp is True:
+        def process_ocsp_request(self, data):
             try:
-                cert = CertificateAuthority.objects.filter(parent=ca).get(serial=serial)
-            except CertificateAuthority.DoesNotExist:
-                log.warning('OCSP request for unknown CA received.')
-                return self.fail(u'internal_error')
-        else:
-            try:
-                cert = Certificate.objects.filter(ca=ca).get(serial=serial)
-            except Certificate.DoesNotExist:
-                log.warning('OCSP request for unknown cert received.')
-                return self.fail(u'internal_error')
+                ocsp_req = ocsp.load_der_ocsp_request(data)  # NOQA
+            except Exception as e:
+                log.exception(e)
+                return self.malformed_request()
 
-        # load ca cert and responder key/cert
-        try:
-            ca_cert = load_certificate(force_bytes(ca.pub))
-        except Exception:
-            log.error('Could not load CA certificate.')
-            return self.fail(u'internal_error')
-
-        try:
             responder_key = self.get_responder_key()
-            responder_cert = self.get_responder_cert()
-        except Exception:
-            log.error('Could not read responder key/cert.')
-            return self.fail(u'internal_error')
 
-        builder = OCSPResponseBuilder(
-            response_status=u'successful',  # ResponseStatus.successful.value,
-            certificate=load_certificate(force_bytes(cert.pub)),
-            certificate_status=force_text(cert.ocsp_status),
-            revocation_date=cert.revoked_date,
-        )
+            builder = ocsp.OCSPResponseBuilder(
+                cert=cert, issuer=issuer, algorithm=hashes.SHA1(),
+                cert_status=ocsp.OCSPCertStatus.GOOD,
+                this_update=datetime.datetime.now(),
+                next_update=datetime.datetime.now(),
+                revocation_time=None, revocation_reason=None
+            ).responder_id(
+                ocsp.OCSPResponderEncoding.HASH, responder_cert
+            )
 
-        # Parse extensions
-        for extension in tbs_request['request_extensions']:
-            extn_id = extension['extn_id'].native
-            critical = extension['critical'].native
-            value = extension['extn_value'].parsed
+            response = builder.sign(responder_key, hashes.SHA256())
+            return self.http_response(response.public_bytes(Encoding.DER))
 
-            # This variable tracks whether any unknown extensions were encountered
-            unknown = False
+else:
+    class OCSPView(OCSPBaseView):
+        def fail(self, reason):
+            builder = OCSPResponseBuilder(response_status=reason)
+            return builder.build()
 
-            # Handle nonce extension
-            if extn_id == 'nonce':
-                builder.nonce = value.native
+        def malformed_request(self):
+            return self.http_response(self.fail(u'malformed_request').dump())
 
-            # That's all we know
-            else:  # pragma: no cover
-                unknown = True
+        def process_ocsp_request(self, data):
+            status = 200
+            try:
+                response = self.get_ocsp_response(data)
+            except Exception as e:  # pragma: no cover
+                # all exceptions in the function should be covered.
+                log.exception(e)
+                response = self.fail(u'internal_error')
+                status = 500
 
-            # If an unknown critical extension is encountered (which should not
-            # usually happen, according to RFC 6960 4.1.2), we should throw our
-            # hands up in despair and run.
-            if unknown is True and critical is True:  # pragma: no cover
-                log.warning('Could not parse unknown critical extension: %r',
-                            dict(extension.native))
-                return self._fail('internal_error')
+            return HttpResponse(response.dump(), status=status,
+                                content_type='application/ocsp-response')
 
-            # If it's an unknown non-critical extension, we can safely ignore it.
-            elif unknown is True:  # pragma: no cover
-                log.info('Ignored unknown non-critical extension: %r', dict(extension.native))
+        def get_responder_key(self):
+            key = super(OCSPView, self).get_responder_key()
+            return load_private_key(key)
 
-        builder.certificate_issuer = ca_cert
-        builder.next_update = datetime.utcnow() + timedelta(seconds=self.expires)
-        return builder.build(responder_key, responder_cert)
+        def get_responder_cert(self):
+            if os.path.exists(self.responder_cert):
+                with open(self.responder_cert, 'rb') as stream:
+                    responder_cert = stream.read()
+            else:
+                responder_cert = Certificate.objects.get(serial=self.responder_cert)
+
+            return load_certificate(responder_cert)
+
+        def get_ocsp_response(self, data):
+            try:
+                ocsp_request = asn1crypto.ocsp.OCSPRequest.load(data)
+
+                tbs_request = ocsp_request['tbs_request']
+                request_list = tbs_request['request_list']
+                if len(request_list) != 1:
+                    log.error('Received OCSP request with multiple sub requests')
+                    raise NotImplementedError('Combined requests not yet supported')
+                single_request = request_list[0]  # TODO: Support more than one request
+                req_cert = single_request['req_cert']
+                serial = int_to_hex(req_cert['serial_number'].native)
+            except Exception as e:
+                log.exception('Error parsing OCSP request: %s', e)
+                return self.fail(u'malformed_request')
+
+            # Get CA and certificate
+            try:
+                ca = CertificateAuthority.objects.get_by_serial_or_cn(self.ca)
+            except CertificateAuthority.DoesNotExist:
+                log.error('%s: Certificate Authority could not be found.', self.ca)
+                return self.fail(u'internal_error')
+
+            if self.ca_ocsp is True:
+                try:
+                    cert = CertificateAuthority.objects.filter(parent=ca).get(serial=serial)
+                except CertificateAuthority.DoesNotExist:
+                    log.warning('OCSP request for unknown CA received.')
+                    return self.fail(u'internal_error')
+            else:
+                try:
+                    cert = Certificate.objects.filter(ca=ca).get(serial=serial)
+                except Certificate.DoesNotExist:
+                    log.warning('OCSP request for unknown cert received.')
+                    return self.fail(u'internal_error')
+
+            # load ca cert and responder key/cert
+            try:
+                ca_cert = load_certificate(force_bytes(ca.pub))
+            except Exception:
+                log.error('Could not load CA certificate.')
+                return self.fail(u'internal_error')
+
+            try:
+                responder_key = self.get_responder_key()
+                responder_cert = self.get_responder_cert()
+            except Exception:
+                log.error('Could not read responder key/cert.')
+                return self.fail(u'internal_error')
+
+            builder = OCSPResponseBuilder(
+                response_status=u'successful',  # ResponseStatus.successful.value,
+                certificate=load_certificate(force_bytes(cert.pub)),
+                certificate_status=force_text(cert.ocsp_status),
+                revocation_date=cert.revoked_date,
+            )
+
+            # Parse extensions
+            for extension in tbs_request['request_extensions']:
+                extn_id = extension['extn_id'].native
+                critical = extension['critical'].native
+                value = extension['extn_value'].parsed
+
+                # This variable tracks whether any unknown extensions were encountered
+                unknown = False
+
+                # Handle nonce extension
+                if extn_id == 'nonce':
+                    builder.nonce = value.native
+
+                # That's all we know
+                else:  # pragma: no cover
+                    unknown = True
+
+                # If an unknown critical extension is encountered (which should not
+                # usually happen, according to RFC 6960 4.1.2), we should throw our
+                # hands up in despair and run.
+                if unknown is True and critical is True:  # pragma: no cover
+                    log.warning('Could not parse unknown critical extension: %r',
+                                dict(extension.native))
+                    return self._fail('internal_error')
+
+                # If it's an unknown non-critical extension, we can safely ignore it.
+                elif unknown is True:  # pragma: no cover
+                    log.info('Ignored unknown non-critical extension: %r', dict(extension.native))
+
+            builder.certificate_issuer = ca_cert
+            builder.next_update = datetime.utcnow() + timedelta(seconds=self.expires)
+            return builder.build(responder_key, responder_cert)
