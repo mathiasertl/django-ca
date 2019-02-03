@@ -114,6 +114,18 @@ class TestCommand(BaseCommand):
 class CoverageCommand(BaseCommand):
     description = 'Generate test-coverage for django-ca.'
 
+    user_options = [
+        ('fail-under=', None, 'Fail if coverage is below given percentage (default: 100%).', ),
+    ] + BaseCommand.user_options
+
+    def initialize_options(self):
+        super(CoverageCommand, self).initialize_options()
+        self.fail_under = 100
+
+    def finalize_options(self):
+        super(CoverageCommand, self).finalize_options()
+        self.fail_under = float(self.fail_under)
+
     def run(self):
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.test_settings")
 
@@ -157,7 +169,10 @@ class CoverageCommand(BaseCommand):
         cov.stop()
         cov.save()
 
-        cov.html_report(directory=report_dir)
+        total_coverage = cov.html_report(directory=report_dir)
+        if total_coverage < self.fail_under:
+            print('Error: Coverage was only %.2f%% (should be above %.2f%%).' % (
+                total_coverage, self.fail_under))
 
 
 class QualityCommand(Command):
