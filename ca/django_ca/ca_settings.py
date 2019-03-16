@@ -148,7 +148,7 @@ CA_PROVIDE_GENERIC_CRL = getattr(settings, 'CA_PROVIDE_GENERIC_CRL', True)
 CA_DIGEST_ALGORITHM = getattr(settings, 'CA_DIGEST_ALGORITHM', "sha512").strip().upper()
 try:
     CA_DIGEST_ALGORITHM = getattr(hashes, CA_DIGEST_ALGORITHM)()
-except AttributeError:  # pragma: no cover
+except AttributeError:
     raise ImproperlyConfigured('Unkown CA_DIGEST_ALGORITHM: %s' % settings.CA_DIGEST_ALGORITHM)
 
 if CA_MIN_KEY_SIZE > CA_DEFAULT_KEY_SIZE:
@@ -163,8 +163,8 @@ except AttributeError:
     raise ImproperlyConfigured('Unkown CA_DEFAULT_ECC_CURVE: %s' % settings.CA_DEFAULT_ECC_CURVE)
 
 # Try to decide if we can use OCSP from cryptography or not
-try:
+try:  # # pragma: only cryptography>=2.4
     from cryptography.x509 import ocsp  # NOQA
     CRYPTOGRAPHY_OCSP = True
-except ImportError:
+except ImportError:  # pragma: only cryptography<2.4
     CRYPTOGRAPHY_OCSP = False

@@ -127,15 +127,16 @@ class CoverageCommand(BaseCommand):
         self.fail_under = float(self.fail_under)
 
     def exclude_versions(self, cov, sw, this_version, version, version_str):
-        if version != this_version:
+        if version == this_version:
+            cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s>%s' % (sw, version_str))
+            cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s<%s' % (sw, version_str))
+        else:
             cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s==%s' % (sw, version_str))
 
         if version > this_version:
-            cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s>%s' % (sw, version_str))
             cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s>=%s' % (sw, version_str))
 
         if version < this_version:
-            cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s<%s' % (sw, version_str))
             cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s<=%s' % (sw, version_str))
 
     def run(self):
@@ -169,7 +170,7 @@ class CoverageCommand(BaseCommand):
         import cryptography
         from packaging import version
         this_version = version.parse(cryptography.__version__).release[:2]
-        cryptography_versions = [(2, 1), (2, 2), (2, 3), (2, 4), (2, 5), (2, 6)]
+        cryptography_versions = [(2, 2), (2, 3), (2, 4), (2, 5), (2, 6)]
         for ver in cryptography_versions:
             version_str = '.'.join([str(v) for v in ver])
             self.exclude_versions(cov, 'cryptography', this_version, ver, version_str)
