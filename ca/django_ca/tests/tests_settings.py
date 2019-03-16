@@ -46,3 +46,8 @@ class ImproperlyConfiguredTestCase(TestCase):
         with self.assertRaisesRegex(ImproperlyConfigured, '^CA_DEFAULT_KEY_SIZE cannot be lower then 1024$'):
             with override_settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=512):
                 pass
+
+    def test_digest_algorithm(self):
+        with self.assertRaisesRegex(ImproperlyConfigured, r'^Unkown CA_DIGEST_ALGORITHM: foo$'):
+            with override_settings(CA_DIGEST_ALGORITHM='foo'):
+                pass
