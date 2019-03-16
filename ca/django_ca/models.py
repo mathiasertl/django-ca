@@ -129,7 +129,7 @@ class X509CertMixin(models.Model):
     class Meta:
         abstract = True
 
-    def get_revocation_reason(self):
+    def get_revocation_reason(self):  # pragma: only cryptography>=2.4
         if self.revoked is False:
             return
 
@@ -139,7 +139,7 @@ class X509CertMixin(models.Model):
         elif self.revoked_reason is not None:
             return getattr(x509.ReasonFlags, self.revoked_reason)
 
-    def get_revocation_time(self):
+    def get_revocation_time(self):  # pragma: only cryptography>=2.4
         """Get the revocation time as naive datetime.
         """
         if self.revoked is False:
