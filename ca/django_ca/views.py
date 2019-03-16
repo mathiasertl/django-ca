@@ -264,8 +264,7 @@ else:  # pragma: only cryptography<2.4
                 response = self.fail(u'internal_error')
                 status = 500
 
-            return HttpResponse(response.dump(), status=status,
-                                content_type='application/ocsp-response')
+            return self.http_response(response.dump(), status=status)
 
         def get_responder_key(self):
             key = super(OCSPView, self).get_responder_key()
