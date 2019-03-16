@@ -29,7 +29,9 @@ from freezegun import freeze_time
 from idna.core import IDNAError
 
 from cryptography import x509
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.x509.oid import NameOID
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -45,11 +47,13 @@ from ..extensions import TLSFeature
 from ..profiles import get_cert_profile_kwargs
 from ..utils import NAME_RE
 from ..utils import LazyEncoder
+from ..utils import format_general_name
 from ..utils import format_name
 from ..utils import get_cert_builder
 from ..utils import is_power2
 from ..utils import multiline_url_validator
 from ..utils import parse_general_name
+from ..utils import parse_hash_algorithm
 from ..utils import parse_key_curve
 from ..utils import parse_name
 from ..utils import validate_email
@@ -253,7 +257,7 @@ class ValidateEmailTestCase(DjangoCATestCase):
             validate_email('example.com')
 
 
-class ParseGeneralNameTest(DjangoCATestCase):
+class ParseGeneralNameTest(TestCase):
     # some paths are not covered in doctests
 
     def test_ipv4(self):
@@ -280,6 +284,9 @@ class ParseGeneralNameTest(DjangoCATestCase):
         self.assertEqual(parse_general_name('DNS:example.com'), x509.DNSName('example.com'))
         self.assertEqual(parse_general_name('DNS:.example.com'), x509.DNSName('.example.com'))
 
+        self.assertEqual(parse_general_name('example.com'), x509.DNSName('example.com'))
+        self.assertEqual(parse_general_name('.example.com'), x509.DNSName('.example.com'))
+
     def test_wildcard_domain(self):
         self.assertEqual(parse_general_name('*.example.com'), x509.DNSName(u'*.example.com'))
         self.assertEqual(parse_general_name('DNS:*.example.com'), x509.DNSName(u'*.example.com'))
@@ -300,6 +307,31 @@ class ParseGeneralNameTest(DjangoCATestCase):
             parse_general_name(u'*.*.example.com')
         with self.assertRaisesRegex(IDNAError, msg):
             parse_general_name(u'example.com.*')
+
+    def test_dirname(self):
+        self.assertEqual(parse_general_name('/CN=example.com'), x509.DirectoryName(x509.Name([
+            x509.NameAttribute(NameOID.COMMON_NAME, 'example.com'),
+        ])))
+        self.assertEqual(parse_general_name('dirname:/CN=example.com'), x509.DirectoryName(x509.Name([
+            x509.NameAttribute(NameOID.COMMON_NAME, 'example.com'),
+        ])))
+        self.assertEqual(parse_general_name('dirname:/C=AT/CN=example.com'), x509.DirectoryName(x509.Name([
+            x509.NameAttribute(NameOID.COUNTRY_NAME, 'AT'),
+            x509.NameAttribute(NameOID.COMMON_NAME, 'example.com'),
+        ])))
+
+    def test_uri(self):
+        url = 'https://example.com'
+        self.assertEqual(parse_general_name(url), x509.UniformResourceIdentifier(url))
+        self.assertEqual(parse_general_name('uri:%s' % url), x509.UniformResourceIdentifier(url))
+
+    def test_rid(self):
+        self.assertEqual(parse_general_name('rid:2.5.4.3'), x509.RegisteredID(NameOID.COMMON_NAME))
+
+    def test_othername(self):
+        self.assertEqual(parse_general_name('otherName:2.5.4.3;UTF8:example.com'), x509.OtherName(
+            NameOID.COMMON_NAME, b'example.com'
+        ))
 
     def test_wrong_email(self):
         if idna.__version__ >= '2.8':
@@ -334,6 +366,36 @@ class ParseGeneralNameTest(DjangoCATestCase):
     def test_error(self):
         with self.assertRaisesRegex(ValueError, r'^Could not parse IP address\.$'):
             parse_general_name('ip:1.2.3.4/24')
+
+
+class FormatGeneralNameTest(TestCase):
+    def test_basic(self):
+        # duplication of doctests, but those are not run for every version
+        self.assertEqual(format_general_name(x509.DNSName('example.com')), 'DNS:example.com')
+        self.assertEqual(format_general_name(x509.IPAddress(ipaddress.IPv4Address('127.0.0.1'))),
+                         'IP:127.0.0.1')
+
+    def test_dirname(self):
+        name = x509.DirectoryName(x509.Name([
+            x509.NameAttribute(NameOID.COUNTRY_NAME, 'AT'),
+            x509.NameAttribute(NameOID.COMMON_NAME, 'example.com'),
+        ]))
+        self.assertEqual(format_general_name(name), 'dirname:/C=AT/CN=example.com')
+
+
+class ParseHashAlgorithm(TestCase):
+    def test_basic(self):
+        # duplication of doctests, but those are not run for every version
+        self.assertIsInstance(parse_hash_algorithm(), hashes.SHA512)
+        self.assertIsInstance(parse_hash_algorithm(hashes.SHA512), hashes.SHA512)
+        self.assertIsInstance(parse_hash_algorithm(hashes.SHA512()), hashes.SHA512)
+        self.assertIsInstance(parse_hash_algorithm('SHA512'), hashes.SHA512)
+
+        with self.assertRaisesRegex(ValueError, '^Unknown hash algorithm: foo$'):
+            parse_hash_algorithm('foo')
+
+        with self.assertRaisesRegex(ValueError, '^Unknown type passed: bool$'):
+            parse_hash_algorithm(False)
 
 
 class FormatNameTestCase(TestCase):
