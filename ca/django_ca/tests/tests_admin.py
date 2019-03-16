@@ -314,6 +314,10 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
             response = self.client.get(self.change_url(cert.pk))
             self.assertChangeResponse(response)
 
+    def test_unknown_object(self):
+        response = self.client.get(self.change_url(1234))
+        self.assertEqual(response.status_code, 302)
+
 
 class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
     def test_get(self):

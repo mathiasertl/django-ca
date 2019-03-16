@@ -15,6 +15,9 @@
 
 import os
 import unittest
+from datetime import datetime
+
+from freezegun import freeze_time
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -23,6 +26,7 @@ from cryptography.x509.oid import ObjectIdentifier
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.utils import timezone
 
 from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
@@ -38,6 +42,7 @@ from .base import cert3_pubkey
 from .base import certs
 from .base import cryptography_version
 from .base import ocsp_pubkey
+from .base import override_settings
 
 try:
     import unittest.mock as mock
@@ -163,6 +168,19 @@ class CertificateTests(DjangoCAWithChildCATestCase):
                 'email:user@example.com',
                 'IP:fd00::1',
             ]}))
+
+    @freeze_time("2019-02-03 15:43:12")
+    def test_get_revocation_time(self):
+        self.assertIsNone(self.cert.get_revocation_time())
+        self.cert.revoke()
+
+        with override_settings(USE_TZ=True):
+            self.cert.revoked_date = timezone.now()
+            self.assertEqual(self.cert.get_revocation_time(), datetime(2019, 2, 3, 15, 43, 12))
+
+        with override_settings(USE_TZ=False):
+            self.cert.revoked_date = timezone.now()
+            self.assertEqual(self.cert.get_revocation_time(), datetime(2019, 2, 3, 15, 43, 12))
 
     def test_basicConstraints(self):
         self.assertEqual(self.ca.basic_constraints, BasicConstraints('critical,CA:TRUE,pathlen=1'))

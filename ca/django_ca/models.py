@@ -130,6 +130,10 @@ class X509CertMixin(models.Model):
         abstract = True
 
     def get_revocation_reason(self):  # pragma: only cryptography>=2.4
+        """Get the revocation reason of this certificate.
+
+        Note that this method is only used by cryptography>=2.4.
+        """
         if self.revoked is False:
             return
 
@@ -139,15 +143,17 @@ class X509CertMixin(models.Model):
         elif self.revoked_reason is not None:
             return getattr(x509.ReasonFlags, self.revoked_reason)
 
-    def get_revocation_time(self):  # pragma: only cryptography>=2.4
+    def get_revocation_time(self):
         """Get the revocation time as naive datetime.
+
+        Note that this method is only used by cryptography>=2.4.
         """
         if self.revoked is False:
             return
 
         if timezone.is_aware(self.revoked_date):
             # convert datetime object to UTC and make it naive
-            return timezone.make_naive(pytz.utc.astimezone(self.revoked_date))
+            return timezone.make_naive(self.revoked_date, pytz.utc)
 
         return self.revoked_date
 
