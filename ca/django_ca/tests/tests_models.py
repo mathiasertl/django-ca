@@ -28,12 +28,14 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
 
+from ..extensions import AuthorityKeyIdentifier
 from ..extensions import AuthorityInformationAccess
 from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
 from ..extensions import SubjectAlternativeName
+from ..extensions import SubjectKeyIdentifier
 from ..models import Certificate
 from ..models import Watcher
 from .base import DjangoCAWithChildCATestCase
@@ -332,6 +334,22 @@ class CertificateTests(DjangoCAWithChildCATestCase):
                              'ocsp': ['URI:http://ocsp.int-x3.letsencrypt.org'],
                          }))
         self.assertEqual(cert.basic_constraints, BasicConstraints('critical,CA:FALSE'))
+        self.assertEqual(cert.key_usage, KeyUsage('critical,digitalSignature,keyEncipherment'))
+        self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('serverAuth,clientAuth'))
+        self.assertEqual(cert.subject_key_identifier,
+                         SubjectKeyIdentifier('97:AB:1D:D3:46:04:96:0F:45:DF:C3:FF:59:9D:B0:53:AC:73:79:2E'))
+        self.assertIsNone(cert.issuer_alternative_name)
+        self.assertEqual(
+            cert.authority_key_identifier,
+            AuthorityKeyIdentifier('A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1')
+        )
+        self.assertIsNone(cert.tls_feature)
+        self.assertEqual(cert.certificatePolicies(), (False, [
+            'OID 2.23.140.1.2.1: None',
+            'OID 1.3.6.1.4.1.44947.1.1.1: http://cps.letsencrypt.org, This Certificate '
+            'may only be relied upon by Relying Parties and only in accordance with the '
+            'Certificate Policy found at https://letsencrypt.org/repository/'
+        ]))
         self.assertEqual(cert.signedCertificateTimestampList(), (False, [
             'Precertificate (v1): 2018-08-09 10:15:21.724000\n'
             '\n'
@@ -340,50 +358,60 @@ class CertificateTests(DjangoCAWithChildCATestCase):
             '\n'
             'db74afeecb29ecb1feca3e716d2ce5b9aabb36f7847183c75d9d4f37b61fbf64'
         ]))
-        self.assertEqual(cert.key_usage, KeyUsage('critical,digitalSignature,keyEncipherment'))
-        return
-        self.assertEqual(cert.extended_key_usage)
-        self.assertEqual(cert.subject_key_identifier)
-        self.assertEqual(cert.issuer_alternative_name)
-        self.assertEqual(cert.authority_key_identifier)
-        self.assertEqual(cert.tls_feature)
-        self.assertEqual(cert.certificatePolicies())
 
     def test_contrib_godaddy(self):
         name = 'godaddy_derstandardat'
         _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
-        return  # TODO
 
         cert = self.load_cert(self.ca, x509=pubkey)
         self.assertEqual(cert.authority_information_access,
-                         AuthorityInformationAccess({'issuers': ['URI:http://cert.int-x3.letsencrypt.org/']}))
+                         AuthorityInformationAccess({
+                             'issuers': ['URI:http://certificates.godaddy.com/repository/gdig2.crt'],
+                             'ocsp': ['URI:http://ocsp.godaddy.com/'],
+                         }))
         self.assertEqual(cert.basic_constraints, BasicConstraints('critical,CA:FALSE'))
-        self.assertEqual(cert.subject_alternative_name)
-        self.assertEqual(cert.key_usage)
-        self.assertEqual(cert.extended_key_usage)
-        self.assertEqual(cert.issuer_alternative_name)
-        self.assertEqual(cert.authority_key_identifier)
-        self.assertEqual(cert.tls_feature)
-        self.assertEqual(cert.certificatePolicies())
-        self.assertEqual(cert.signedCertificateTimestampList())
+        self.assertEqual(cert.key_usage, KeyUsage('critical,digitalSignature,keyEncipherment'))
+        self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('serverAuth,clientAuth'))
+        self.assertEqual(cert.subject_key_identifier,
+                         SubjectKeyIdentifier('36:97:AB:24:CF:50:2B:05:71:B1:4E:0A:4F:18:94:C1:FC:F9:4F:69'))
+        self.assertIsNone(cert.issuer_alternative_name)
+        self.assertEqual(
+            cert.authority_key_identifier,
+            AuthorityKeyIdentifier(':40:C2:BD:27:8E:CC:34:83:30:A2:33:D7:FB:6C:B3:F0:B4:2C:80:CE'))
+        self.assertIsNone(cert.tls_feature)
+        self.assertEqual(cert.certificatePolicies(), (False, [
+            'OID 2.16.840.1.114413.1.7.23.1: http://certificates.godaddy.com/repository/',
+            'OID 2.23.140.1.2.1: None',
+        ]))
+        self.assertIsNone(cert.signedCertificateTimestampList())
 
     def test_contrib_cloudflare(self):
         name = 'cloudflare_1'
         _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
-        return  # TODO
 
         cert = self.load_cert(self.ca, x509=pubkey)
-        self.assertEqual(cert.authority_information_access,
-                         AuthorityInformationAccess({'issuers': ['URI:http://cert.int-x3.letsencrypt.org/']}))
+        self.assertEqual(
+            cert.authority_information_access,
+            AuthorityInformationAccess({
+                'issuers': ['URI:http://crt.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crt'],
+                'ocsp': ['URI:http://ocsp.comodoca4.com'],
+            }))
         self.assertEqual(cert.basic_constraints, BasicConstraints('critical,CA:FALSE'))
-        self.assertEqual(cert.subject_alternative_name)
-        self.assertEqual(cert.key_usage)
-        self.assertEqual(cert.extended_key_usage)
-        self.assertEqual(cert.issuer_alternative_name)
-        self.assertEqual(cert.authority_key_identifier)
-        self.assertEqual(cert.tls_feature)
-        self.assertEqual(cert.certificatePolicies())
-        self.assertEqual(cert.signedCertificateTimestampList())
+        self.assertEqual(cert.key_usage, KeyUsage('critical,digitalSignature'))
+        self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('serverAuth,clientAuth'))
+        self.assertEqual(cert.subject_key_identifier,
+                         SubjectKeyIdentifier('05:86:D8:B4:ED:A9:7E:23:EE:2E:E7:75:AA:3B:2C:06:08:2A:93:B2'))
+        self.assertIsNone(cert.issuer_alternative_name, '')
+        self.assertEqual(
+            cert.authority_key_identifier,
+            AuthorityKeyIdentifier('40:09:61:67:F0:BC:83:71:4F:DE:12:08:2C:6F:D4:D4:2B:76:3D:96')
+        )
+        self.assertIsNone(cert.tls_feature)
+        self.assertEqual(cert.certificatePolicies(), (False, [
+            'OID 1.3.6.1.4.1.6449.1.2.2.7: https://secure.comodo.com/CPS',
+            'OID 2.23.140.1.2.1: None',
+        ]))
+        self.assertIsNone(cert.signedCertificateTimestampList())
 
     @unittest.skipUnless(
         default_backend()._lib.CRYPTOGRAPHY_OPENSSL_110F_OR_GREATER,
