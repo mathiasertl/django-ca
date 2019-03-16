@@ -28,6 +28,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
 
+from ..extensions import AuthorityInformationAccess
 from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import IssuerAlternativeName
@@ -319,6 +320,70 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         self.assertIsNone(cert.tls_feature)
         self.assertIsNone(cert.certificatePolicies())
         self.assertIsNone(cert.signedCertificateTimestampList())
+
+    def test_contrib_le(self):
+        name = 'letsencrypt_jabber_at'
+        _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
+
+        cert = self.load_cert(self.ca, x509=pubkey)
+        self.assertEqual(cert.authority_information_access,
+                         AuthorityInformationAccess({
+                             'issuers': ['URI:http://cert.int-x3.letsencrypt.org/'],
+                             'ocsp': ['URI:http://ocsp.int-x3.letsencrypt.org'],
+                         }))
+        self.assertEqual(cert.basic_constraints, BasicConstraints('critical,CA:FALSE'))
+        self.assertEqual(cert.signedCertificateTimestampList(), (False, [
+            'Precertificate (v1): 2018-08-09 10:15:21.724000\n'
+            '\n'
+            '293c519654c83965baaa50fc5807d4b76fbf587a2972dca4c30cf4e54547f478',
+            'Precertificate (v1): 2018-08-09 10:15:21.749000\n'
+            '\n'
+            'db74afeecb29ecb1feca3e716d2ce5b9aabb36f7847183c75d9d4f37b61fbf64'
+        ]))
+        self.assertEqual(cert.key_usage, KeyUsage('critical,digitalSignature,keyEncipherment'))
+        return
+        self.assertEqual(cert.extended_key_usage)
+        self.assertEqual(cert.subject_key_identifier)
+        self.assertEqual(cert.issuer_alternative_name)
+        self.assertEqual(cert.authority_key_identifier)
+        self.assertEqual(cert.tls_feature)
+        self.assertEqual(cert.certificatePolicies())
+
+    def test_contrib_godaddy(self):
+        name = 'godaddy_derstandardat'
+        _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
+        return  # TODO
+
+        cert = self.load_cert(self.ca, x509=pubkey)
+        self.assertEqual(cert.authority_information_access,
+                         AuthorityInformationAccess({'issuers': ['URI:http://cert.int-x3.letsencrypt.org/']}))
+        self.assertEqual(cert.basic_constraints, BasicConstraints('critical,CA:FALSE'))
+        self.assertEqual(cert.subject_alternative_name)
+        self.assertEqual(cert.key_usage)
+        self.assertEqual(cert.extended_key_usage)
+        self.assertEqual(cert.issuer_alternative_name)
+        self.assertEqual(cert.authority_key_identifier)
+        self.assertEqual(cert.tls_feature)
+        self.assertEqual(cert.certificatePolicies())
+        self.assertEqual(cert.signedCertificateTimestampList())
+
+    def test_contrib_cloudflare(self):
+        name = 'cloudflare_1'
+        _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
+        return  # TODO
+
+        cert = self.load_cert(self.ca, x509=pubkey)
+        self.assertEqual(cert.authority_information_access,
+                         AuthorityInformationAccess({'issuers': ['URI:http://cert.int-x3.letsencrypt.org/']}))
+        self.assertEqual(cert.basic_constraints, BasicConstraints('critical,CA:FALSE'))
+        self.assertEqual(cert.subject_alternative_name)
+        self.assertEqual(cert.key_usage)
+        self.assertEqual(cert.extended_key_usage)
+        self.assertEqual(cert.issuer_alternative_name)
+        self.assertEqual(cert.authority_key_identifier)
+        self.assertEqual(cert.tls_feature)
+        self.assertEqual(cert.certificatePolicies())
+        self.assertEqual(cert.signedCertificateTimestampList())
 
     @unittest.skipUnless(
         default_backend()._lib.CRYPTOGRAPHY_OPENSSL_110F_OR_GREATER,
