@@ -270,7 +270,10 @@ class CertificateMixin(object):
         return self.output_extension(obj.certificatePolicies())
     certificatePolicies.short_description = _('Certificate Policies')
 
-    def signedCertificateTimestampList(self, obj):
+    def signedCertificateTimestampList(self, obj):  # pragma: only cryptography>=2.3
+        # Note that cryptography 2.2 returns an extension with an Unknown ID, so
+        # Certificate.get_extension_fields() returns an extension and get_fieldsets() never calls
+        # this accessor.
         try:
             ext = obj.x509.extensions.get_extension_for_oid(
                 ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
