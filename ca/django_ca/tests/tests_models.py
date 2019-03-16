@@ -182,6 +182,15 @@ class CertificateTests(DjangoCAWithChildCATestCase):
             self.cert.revoked_date = timezone.now()
             self.assertEqual(self.cert.get_revocation_time(), datetime(2019, 2, 3, 15, 43, 12))
 
+    @unittest.skipUnless(cryptography_version >= (2, 4), 'OCSP support was added in cryptography 2.4.')
+    def test_get_revocation_reason(self):
+        self.assertIsNone(self.cert.get_revocation_reason())
+
+        for reason, _text in self.cert.REVOCATION_REASONS:
+            self.cert.revoke(reason)
+            self.assertIsInstance(self.cert.get_revocation_reason(), x509.ReasonFlags)
+            #print(self.cert.revoked_reason, self.cert.get_revocation_reason())
+
     def test_basicConstraints(self):
         self.assertEqual(self.ca.basic_constraints, BasicConstraints('critical,CA:TRUE,pathlen=1'))
         self.assertEqual(self.pwd_ca.basic_constraints, BasicConstraints('critical,CA:TRUE'))

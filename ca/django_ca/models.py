@@ -137,10 +137,9 @@ class X509CertMixin(models.Model):
         if self.revoked is False:
             return
 
-        # TODO: add test that all revocation reasons are supported
         if self.revoked_reason == '' or self.revoked_reason is None:
             return x509.ReasonFlags.unspecified
-        elif self.revoked_reason is not None:
+        else:
             return getattr(x509.ReasonFlags, self.revoked_reason)
 
     def get_revocation_time(self):
