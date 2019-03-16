@@ -2,7 +2,6 @@ dist: xenial
 language: python
 python:  # https://devguide.python.org/#status-of-python-branches
   - "2.7"
-  - "3.4"
   - "3.5"
   - "3.6"
   - "3.7"
@@ -36,23 +35,13 @@ matrix:
         # Django 2.0 no longer supports python2
         # Django 2.1 no longer supports python3.4
         - env: DJANGO=2.1.7 CRYPTOGRAPHY=2.6.1
-          python: "3.4"
-        - env: DJANGO=2.1.7 CRYPTOGRAPHY=2.6.1
           python: "2.7"
-        - env: DJANGO=2.1.7 CRYPTOGRAPHY=2.5
-          python: "3.4"
         - env: DJANGO=2.1.7 CRYPTOGRAPHY=2.5
           python: "2.7"
         - env: DJANGO=2.1.7 CRYPTOGRAPHY=2.4.2
-          python: "3.4"
-        - env: DJANGO=2.1.7 CRYPTOGRAPHY=2.4.2
           python: "2.7"
         - env: DJANGO=2.1.7 CRYPTOGRAPHY=2.3.1
-          python: "3.4"
-        - env: DJANGO=2.1.7 CRYPTOGRAPHY=2.3.1
           python: "2.7"
-        - env: DJANGO=2.1.7 CRYPTOGRAPHY=2.2.2
-          python: "3.4"
         - env: DJANGO=2.1.7 CRYPTOGRAPHY=2.2.2
           python: "2.7"
         - env: DJANGO=1.11.20 CRYPTOGRAPHY=2.6.1
