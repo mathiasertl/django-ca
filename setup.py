@@ -119,11 +119,14 @@ class CoverageCommand(BaseCommand):
     ] + BaseCommand.user_options
 
     def initialize_options(self):
-        super(CoverageCommand, self).initialize_options()
+        # NOTE: super() doesn't work here in py2 for some reason.
+        #super(CoverageCommand, self).initialize_options()
+        self.suite = ''
+        self.count = '1'
         self.fail_under = 100
 
     def finalize_options(self):
-        super(CoverageCommand, self).finalize_options()
+        #super(CoverageCommand, self).finalize_options()
         self.fail_under = float(self.fail_under)
 
     def exclude_versions(self, cov, sw, this_version, version, version_str):
