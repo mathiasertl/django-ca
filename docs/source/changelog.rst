@@ -15,6 +15,7 @@ HEAD (TBR)
 * **BACKWARDS INCOMPATIBLE:** Drop support for Django 2.0.
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.1.
 * **DEPRECATION NOTICE:** This is the last release to support cryptography 2.2.
+* **DEPRECATION NOTICE:** This is the last release to support idna 2.6.
 
 .. _changelog-1.11.0:
 
