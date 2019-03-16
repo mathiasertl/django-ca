@@ -224,7 +224,7 @@ class OCSPViewTestMixin(object):
                 revocation_time = cert_status['revocation_time'].replace(tzinfo=None)
                 revocation_reason = cert_status['revocation_reason']
 
-                if cert.revoked_reason is None:
+                if not cert.revoked_reason:
                     self.assertEqual(revocation_reason, 'unspecified')
                 else:
                     self.assertEqual(revocation_reason, cert.ocsp_status)

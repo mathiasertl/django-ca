@@ -191,6 +191,16 @@ class CertificateTests(DjangoCAWithChildCATestCase):
             self.assertIsInstance(self.cert.get_revocation_reason(), x509.ReasonFlags)
             #print(self.cert.revoked_reason, self.cert.get_revocation_reason())
 
+    def test_ocsp_status(self):
+        self.assertEqual(self.cert.ocsp_status, 'good')
+
+        for reason, _text in self.cert.REVOCATION_REASONS:
+            self.cert.revoke(reason)
+            if reason == '':
+                self.assertEqual(self.cert.ocsp_status, 'revoked')
+            else:
+                self.assertEqual(self.cert.ocsp_status, reason)
+
     def test_basicConstraints(self):
         self.assertEqual(self.ca.basic_constraints, BasicConstraints('critical,CA:TRUE,pathlen=1'))
         self.assertEqual(self.pwd_ca.basic_constraints, BasicConstraints('critical,CA:TRUE'))
