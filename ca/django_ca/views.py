@@ -14,6 +14,7 @@
 # <http://www.gnu.org/licenses/>.
 
 import base64
+import binascii
 import logging
 import os
 from datetime import datetime
@@ -129,13 +130,22 @@ class OCSPBaseView(View):
 
     def get(self, request, data):
         try:
-            return self.process_ocsp_request(base64.b64decode(data))
+            data = base64.b64decode(data)
+        except binascii.Error:
+            return self.malformed_request()
+
+        try:
+            return self.process_ocsp_request(data)
         except Exception as e:
             log.exception(e)
             return self.fail()
 
     def post(self, request):
-        return self.process_ocsp_request(request.body)
+        try:
+            return self.process_ocsp_request(request.body)
+        except Exception as e:
+            log.exception(e)
+            return self.fail()
 
     def get_responder_key(self):
         with open(self.responder_key, 'rb') as stream:
@@ -249,22 +259,10 @@ else:  # pragma: only cryptography<2.4
     class OCSPView(OCSPBaseView):
         def fail(self, reason=u'internal_error'):
             builder = OCSPResponseBuilder(response_status=reason)
-            return builder.build()
+            return self.http_response(builder.build().dump())
 
         def malformed_request(self):
-            return self.http_response(self.fail(u'malformed_request').dump())
-
-        def process_ocsp_request(self, data):
-            status = 200
-            try:
-                response = self.get_ocsp_response(data)
-            except Exception as e:  # pragma: no cover
-                # all exceptions in the function should be covered.
-                log.exception(e)
-                response = self.fail(u'internal_error')
-                status = 500
-
-            return self.http_response(response.dump(), status=status)
+            return self.fail(u'malformed_request')
 
         def get_responder_key(self):
             key = super(OCSPView, self).get_responder_key()
@@ -279,7 +277,7 @@ else:  # pragma: only cryptography<2.4
 
             return load_certificate(responder_cert)
 
-        def get_ocsp_response(self, data):
+        def process_ocsp_request(self, data):
             try:
                 ocsp_request = asn1crypto.ocsp.OCSPRequest.load(data)
 
@@ -362,4 +360,6 @@ else:  # pragma: only cryptography<2.4
 
             builder.certificate_issuer = ca_cert
             builder.next_update = datetime.utcnow() + timedelta(seconds=self.expires)
-            return builder.build(responder_key, responder_cert)
+            response = builder.build(responder_key, responder_cert)
+
+            return self.http_response(response.dump())

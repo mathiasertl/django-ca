@@ -45,6 +45,11 @@ from .base import certs
 from .base import ocsp_pubkey
 from .base import override_settings
 
+try:
+    import unittest.mock as mock
+except ImportError:
+    import mock
+
 
 # openssl ocsp -issuer django_ca/tests/fixtures/root.pem -serial <serial> \
 #         -reqout django_ca/tests/fixtures/ocsp/unknown-serial -resp_text
@@ -296,6 +301,29 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
     @override_settings(USE_TZ=True)
     def test_get_with_use_tz(self):
         self.test_get()
+
+    def test_bad_query(self):
+        response = self.client.get(reverse('get', kwargs={'data': 'XXX'}))
+        self.assertEqual(response.status_code, 200)
+        ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
+        self.assertEqual(ocsp_response['response_status'].native, 'malformed_request')
+
+    def test_raises_exception(self):
+        def effect(data):
+            raise Exception('oh no!')
+
+        with mock.patch('django_ca.views.OCSPView.process_ocsp_request', side_effect=effect):
+            data = base64.b64encode(req1).decode('utf-8')
+            response = self.client.get(reverse('get', kwargs={'data': data}))
+            self.assertEqual(response.status_code, 200)
+            ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
+            self.assertEqual(ocsp_response['response_status'].native, 'internal_error')
+
+            # also do a post request
+            response = self.client.post(reverse('post'), req1, content_type='application/ocsp-request')
+            self.assertEqual(response.status_code, 200)
+            ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
+            self.assertEqual(ocsp_response['response_status'].native, 'internal_error')
 
     def test_post(self):
         response = self.client.post(reverse('post'), req1, content_type='application/ocsp-request')
