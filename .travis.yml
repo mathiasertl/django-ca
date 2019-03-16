@@ -8,16 +8,16 @@ python:  # https://devguide.python.org/#status-of-python-branches
   - "3.7"
   - "nightly"
 env:
+  - DJANGO=2.1.7 CRYPTOGRAPHY=2.6.1
   - DJANGO=2.1.7 CRYPTOGRAPHY=2.5
   - DJANGO=2.1.7 CRYPTOGRAPHY=2.4.2
   - DJANGO=2.1.7 CRYPTOGRAPHY=2.3.1
   - DJANGO=2.1.7 CRYPTOGRAPHY=2.2.2
-  - DJANGO=2.1.7 CRYPTOGRAPHY=2.1.4
+  - DJANGO=1.11.20 CRYPTOGRAPHY=2.6.1
   - DJANGO=1.11.20 CRYPTOGRAPHY=2.5
   - DJANGO=1.11.20 CRYPTOGRAPHY=2.4.2
   - DJANGO=1.11.20 CRYPTOGRAPHY=2.3.1
   - DJANGO=1.11.20 CRYPTOGRAPHY=2.2.2
-  - DJANGO=1.11.20 CRYPTOGRAPHY=2.1.4
 install:
   # Build/test dependencies
  - pip install -U pip setuptools
@@ -35,6 +35,10 @@ matrix:
     exclude:
         # Django 2.0 no longer supports python2
         # Django 2.1 no longer supports python3.4
+        - env: DJANGO=2.1.7 CRYPTOGRAPHY=2.6.1
+          python: "3.4"
+        - env: DJANGO=2.1.7 CRYPTOGRAPHY=2.6.1
+          python: "2.7"
         - env: DJANGO=2.1.7 CRYPTOGRAPHY=2.5
           python: "3.4"
         - env: DJANGO=2.1.7 CRYPTOGRAPHY=2.5
@@ -51,23 +55,19 @@ matrix:
           python: "3.4"
         - env: DJANGO=2.1.7 CRYPTOGRAPHY=2.2.2
           python: "2.7"
-        - env: DJANGO=2.1.7 CRYPTOGRAPHY=2.1.4
-          python: "3.4"
-        - env: DJANGO=2.1.7 CRYPTOGRAPHY=2.1.4
-          python: "2.7"
+        - env: DJANGO=1.11.20 CRYPTOGRAPHY=2.6.1
+          python: "3.7"
+        - env: DJANGO=1.11.20 CRYPTOGRAPHY=2.5
+          python: "3.7"
         - env: DJANGO=1.11.20 CRYPTOGRAPHY=2.4.2
           python: "3.7"
         - env: DJANGO=1.11.20 CRYPTOGRAPHY=2.3.1
           python: "3.7"
         - env: DJANGO=1.11.20 CRYPTOGRAPHY=2.2.2
           python: "3.7"
-        - env: DJANGO=1.11.20 CRYPTOGRAPHY=2.1.4
-          python: "3.7"
         - env: DJANGO=1.11.20 CRYPTOGRAPHY=2.4.2
           python: "nightly"
         - env: DJANGO=1.11.20 CRYPTOGRAPHY=2.3.1
           python: "nightly"
         - env: DJANGO=1.11.20 CRYPTOGRAPHY=2.2.2
-          python: "nightly"
-        - env: DJANGO=1.11.20 CRYPTOGRAPHY=2.1.4
           python: "nightly"
