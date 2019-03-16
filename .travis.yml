@@ -25,7 +25,7 @@ install:
 #before_script:
 script:
   - python setup.py code_quality
-  - python setup.py test
+  - python setup.py coverage
   - python setup.py install
   - fab init_demo
   - make -C docs html-check
