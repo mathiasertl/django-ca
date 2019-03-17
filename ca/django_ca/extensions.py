@@ -205,7 +205,7 @@ class ListExtension(Extension):
     def __repr__(self):
         val = [self.serialize_value(v) for v in self.value]
 
-        if six.PY2:  # pragma: only py2 - otherwise we have the u'' prefix in output
+        if six.PY2:  # pragma: no branch, pragma: only py2 - otherwise we have the u'' prefix in output
             val = [str(v) for v in val]
 
         return '<%s: %r, critical=%r>' % (self.__class__.__name__, val, self.critical)
@@ -360,11 +360,11 @@ class KeyIdExtension(Extension):
         * All subclasses are only instantiated from a cryptography extension, so other values don't work.
     """
 
-    def from_bytes(self, value):
+    def from_bytes(self, value):  # pragma: only py3
         self.value = value
 
     def from_other(self, value):
-        if six.PY3 and isinstance(value, bytes):
+        if six.PY3 and isinstance(value, bytes):  # pragma: only py3
             self.critical = self.default_critical
             self.from_bytes(value)
             self._test_value()
@@ -389,7 +389,7 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
 
     def __bool__(self):
         return bool(self.ocsp) or bool(self.issuers)
-    if six.PY2:  # pragma: only py2
+    if six.PY2:  # pragma: no branch, pragma: only py2
         __nonzero__ = __bool__
 
     def __eq__(self, other):
@@ -401,7 +401,7 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
         issuers = [self.serialize_value(v) for v in self.issuers]
         ocsp = [self.serialize_value(v) for v in self.ocsp]
 
-        if six.PY2:  # pragma: only py2 - otherwise we have the u'' prefix in output
+        if six.PY2:  # pragma: no branch, pragma: only py2 - otherwise we have the u'' prefix in output
             issuers = [str(v) for v in issuers]
             ocsp = [str(v) for v in ocsp]
 
@@ -412,7 +412,7 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
         issuers = [self.serialize_value(v) for v in self.issuers]
         ocsp = [self.serialize_value(v) for v in self.ocsp]
 
-        if six.PY2:  # pragma: only py2 - otherwise we have the u'' prefix in output
+        if six.PY2:  # pragma: no branch, pragma: only py2 - otherwise we have the u'' prefix in output
             issuers = [str(v) for v in issuers]
             ocsp = [str(v) for v in ocsp]
 
@@ -725,7 +725,7 @@ class NameConstraints(GeneralNameMixin, Extension):
 
     def __bool__(self):
         return bool(self.permitted) or bool(self.excluded)
-    if six.PY2:  # pragma: only py2
+    if six.PY2:  # pragma: no branch, pragma: only py2
         __nonzero__ = __bool__
 
     def __eq__(self, other):
@@ -737,7 +737,7 @@ class NameConstraints(GeneralNameMixin, Extension):
         permitted = [self.serialize_value(v) for v in self.permitted]
         excluded = [self.serialize_value(v) for v in self.excluded]
 
-        if six.PY2:  # pragma: only py2 - otherwise we have the u'' prefix in output
+        if six.PY2:  # pragma: no branch, pragma: only py2 - otherwise we have the u'' prefix in output
             permitted = [str(v) for v in permitted]
             excluded = [str(v) for v in excluded]
 
@@ -748,7 +748,7 @@ class NameConstraints(GeneralNameMixin, Extension):
         permitted = [self.serialize_value(v) for v in self.permitted]
         excluded = [self.serialize_value(v) for v in self.excluded]
 
-        if six.PY2:  # pragma: only py2 - otherwise we have the u'' prefix in output
+        if six.PY2:  # pragma: no branch, pragma: only py2 - otherwise we have the u'' prefix in output
             permitted = [str(v) for v in permitted]
             excluded = [str(v) for v in excluded]
 

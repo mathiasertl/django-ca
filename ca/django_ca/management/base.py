@@ -234,7 +234,7 @@ class BaseCommand(_BaseCommand):
     binary_output = False
 
     def __init__(self, stdout=None, stderr=None, no_color=False):
-        if self.binary_output is True and six.PY3 is True:
+        if self.binary_output is True and six.PY3 is True:  # pragma: only py3
             self.stdout = BinaryOutputWrapper(stdout or sys.stdout.buffer)
             self.stderr = BinaryOutputWrapper(stderr or sys.stderr.buffer)
             self.style = no_style()
@@ -300,7 +300,7 @@ class BaseCommand(_BaseCommand):
     def indent(self, s, prefix='    '):
         if isinstance(s, list):
             return ''.join(['%s* %s\n' % (prefix, l) for l in s])
-        elif six.PY3:
+        elif six.PY3:  # pragma: only py3
             return textwrap.indent(force_text(s), prefix)
         else:  # pragma: no cover
             # copied from py3.4 version of textwrap.indent

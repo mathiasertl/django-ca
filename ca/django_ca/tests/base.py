@@ -308,7 +308,7 @@ class DjangoCATestCase(TestCase):
 
     re_false_password = r'^(Bad decrypt\. Incorrect password\?|Could not deserialize key data\.)$'
 
-    if six.PY2:  # pragma: only py2
+    if six.PY2:  # pragma: no branch, pragma: only py2
         assertRaisesRegex = TestCase.assertRaisesRegexp
 
     @classmethod

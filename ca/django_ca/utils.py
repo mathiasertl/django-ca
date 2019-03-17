@@ -638,7 +638,7 @@ def get_default_subject(name):
     return profile['subject']
 
 
-if six.PY2:  # pragma: only py2
+if six.PY2:  # pragma: no branch, pragma: only py2
     class PermissionError(IOError, OSError):
         pass
 

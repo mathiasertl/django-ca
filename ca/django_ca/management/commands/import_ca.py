@@ -32,7 +32,7 @@ from ..base import BaseCommand
 from ..base import CertificateAuthorityDetailMixin
 from ..base import PasswordAction
 
-if six.PY2:  # pragma: only py2
+if six.PY2:  # pragma: no branch, pragma: only py2
     from ...utils import PermissionError
 
 
