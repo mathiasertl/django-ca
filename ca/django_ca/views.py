@@ -21,6 +21,7 @@ from datetime import datetime
 from datetime import timedelta
 
 import asn1crypto
+from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
@@ -28,6 +29,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509 import ExtensionNotFound
 from cryptography.x509 import load_pem_x509_certificate
 from ocspbuilder import OCSPResponseBuilder
+from oscrypto import asymmetric
 from oscrypto.asymmetric import load_certificate
 from oscrypto.asymmetric import load_private_key
 
@@ -45,6 +47,7 @@ from . import ca_settings
 from .crl import get_crl
 from .models import Certificate
 from .models import CertificateAuthority
+from .utils import SERIAL_RE
 from .utils import int_to_hex
 
 log = logging.getLogger(__name__)
@@ -119,8 +122,16 @@ class OCSPBaseView(View):
     """Absolute path to the private key used for signing OCSP responses."""
 
     responder_cert = None
-    """Absolute path to the public key used for signing OCSP responses. May also be a serial identifying a
-    certificate from the database."""
+    """Public key of the responder.
+
+    This may either be:
+
+    * A serial of a certificate as stored in the database
+    * The PEM of the certificate as string
+    * An absolute filesystem path to a PEM certificate
+    * A loaded certificate (either ``oscrypto.asymmetric.Certificate`` or
+      :py:class:`cg:cryptography.x509.Certificate`) depending on the backend used.
+    """
 
     expires = 600
     """Time in seconds that the responses remain valid. The default is 600 seconds or ten minutes."""
@@ -154,6 +165,19 @@ class OCSPBaseView(View):
             responder_key = stream.read()
         return responder_key
 
+    def get_responder_cert(self):
+        if SERIAL_RE.match(self.responder_cert):
+            return Certificate.objects.get(serial=self.responder_cert).pub.encode('utf-8')
+
+        if self.responder_cert.startswith('-----BEGIN CERTIFICATE-----\n'):
+            return self.responder_cert.encode('utf-8')
+
+        if os.path.exists(self.responder_cert):
+            with open(self.responder_cert, 'rb') as stream:
+                return stream.read()
+
+        return force_bytes(self.responder_cert)
+
     def get_ca(self):
         return CertificateAuthority.objects.get_by_serial_or_cn(self.ca)
 
@@ -185,12 +209,12 @@ if ca_settings.CRYPTOGRAPHY_OCSP is True:  # pragma: only cryptography>=2.4
             return serialization.load_pem_private_key(key, None, default_backend())
 
         def get_responder_cert(self):
-            if os.path.exists(self.responder_cert):
-                with open(self.responder_cert, 'rb') as stream:
-                    responder_cert = stream.read()
-                return load_pem_x509_certificate(responder_cert, default_backend())
-            else:
-                return Certificate.objects.get(serial=self.responder_cert).x509
+            # User configured a loaded certificate
+            if isinstance(self.responder_cert, x509.Certificate):
+                return self.responder_cert
+
+            responder_cert = super(OCSPView, self).get_responder_cert()
+            return load_pem_x509_certificate(responder_cert, default_backend())
 
         def process_ocsp_request(self, data):
             try:
@@ -271,12 +295,11 @@ else:  # pragma: only cryptography<2.4
             return load_private_key(key)
 
         def get_responder_cert(self):
-            if os.path.exists(self.responder_cert):
-                with open(self.responder_cert, 'rb') as stream:
-                    responder_cert = stream.read()
-            else:
-                responder_cert = Certificate.objects.get(serial=self.responder_cert)
+            # User configured a loaded certificate
+            if isinstance(self.responder_cert, asymmetric.Certificate):
+                return self.responder_cert
 
+            responder_cert = super(OCSPView, self).get_responder_cert()
             return load_certificate(responder_cert)
 
         def process_ocsp_request(self, data):

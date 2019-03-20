@@ -9,13 +9,21 @@ HEAD (TBR)
 **********
 
 * Fix traceback when a certificate that does not exist is viewed in the admin interface.
-* Fix log output string interpolation issue in OCSP responder.
 * Support cryptography 2.5 and 2.6.
 * **BACKWARDS INCOMPATIBLE:** Drop support for Python 3.4.
 * **BACKWARDS INCOMPATIBLE:** Drop support for Django 2.0.
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.1.
 * **DEPRECATION NOTICE:** This is the last release to support cryptography 2.2.
 * **DEPRECATION NOTICE:** This is the last release to support idna 2.6.
+
+OCSP
+====
+
+* Reimplement OCSP using cryptography, used only if cryptography>=2.4 is installed.
+* :py:class:`django_ca.views.OCSPBaseView.responder_cert` may now also be a pre-loaded certificate. If you
+  still use ``cryptography<2.4`` use a ``oscrypto.asymmetric.Certificate``, for newer versions you must
+  use a :py:class:`cg:cryptography.x509.Certificate`.
+* Fix log output string interpolation issue in OCSP responder.
 
 .. _changelog-1.11.0:
 

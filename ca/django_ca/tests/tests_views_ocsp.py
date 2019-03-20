@@ -24,6 +24,9 @@ from freezegun import freeze_time
 import asn1crypto
 import asn1crypto.x509
 import ocspbuilder
+import oscrypto
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -42,6 +45,7 @@ from ..utils import int_to_hex
 from ..views import OCSPView
 from .base import DjangoCAWithCertTestCase
 from .base import certs
+from .base import ocsp_pem
 from .base import ocsp_pubkey
 from .base import override_settings
 
@@ -73,6 +77,30 @@ urlpatterns = [
         responder_cert=settings.OCSP_PEM_PATH,
         expires=1200,
     ), name='post'),
+    url(r'^ocsp/serial/$', OCSPView.as_view(
+        ca=certs['root']['serial'],
+        responder_key=settings.OCSP_KEY_PATH,
+        responder_cert=certs['ocsp']['serial'],
+        expires=1300,
+    ), name='post-serial'),
+    url(r'^ocsp/full-pem/$', OCSPView.as_view(
+        ca=certs['root']['serial'],
+        responder_key=settings.OCSP_KEY_PATH,
+        responder_cert=ocsp_pem.decode('utf-8'),
+        expires=1400,
+    ), name='post-full-pem'),
+    url(r'^ocsp/loaded-oscrypto/$', OCSPView.as_view(
+        ca=certs['root']['serial'],
+        responder_key=settings.OCSP_KEY_PATH,
+        responder_cert=oscrypto.asymmetric.load_certificate(ocsp_pem),
+        expires=1500,
+    ), name='post-loaded-oscrypto'),
+    url(r'^ocsp/loaded-cryptography/$', OCSPView.as_view(
+        ca=certs['root']['serial'],
+        responder_key=settings.OCSP_KEY_PATH,
+        responder_cert=x509.load_pem_x509_certificate(ocsp_pem, default_backend()),
+        expires=1500,
+    ), name='post-loaded-cryptography'),
 
     url(r'^ocsp/cert/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca=certs['root']['serial'],
@@ -100,12 +128,22 @@ urlpatterns = [
         expires=1200,
     ), name='false-key'),
 
+    # set invalid responder_certs
     url(r'^ocsp/false-pem/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca=certs['root']['serial'],
         responder_key=settings.OCSP_KEY_PATH,
         responder_cert='/false/foobar/',
-        expires=1200,
     ), name='false-pem'),
+    url(r'^ocsp/false-pem-serial/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
+        ca=certs['root']['serial'],
+        responder_key=settings.OCSP_KEY_PATH,
+        responder_cert='AA:BB:CC',
+    ), name='false-pem-serial'),
+    url(r'^ocsp/false-pem-full/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
+        ca=certs['root']['serial'],
+        responder_key=settings.OCSP_KEY_PATH,
+        responder_cert='-----BEGIN CERTIFICATE-----\nvery-mean!',
+    ), name='false-pem-full'),
 ]
 
 
@@ -131,10 +169,9 @@ class OCSPViewTestMixin(object):
         self.ocsp_private_key = asymmetric.load_private_key(force_text(settings.OCSP_KEY_PATH))
 
     def assertAlmostEqualDate(self, got, expected):
-        # Sometimes next_update timestamps are of by a second or so, so we test
-        # if they are just close
+        # Sometimes next_update timestamps are off by a second or so, so we test
         delta = timedelta(seconds=3)
-        self.assertTrue(got < expected + delta and got > expected - delta)
+        self.assertTrue(got < expected + delta and got > expected - delta, (got, expected))
 
     def sign_func(self, tbs_request, algo):
         if algo['algorithm'].native == 'sha256_rsa':
@@ -330,9 +367,31 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1200)
 
+        response = self.client.post(reverse('post-serial'), req1, content_type='application/ocsp-request')
+        self.assertEqual(response.status_code, 200)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1300)
+
+        response = self.client.post(reverse('post-full-pem'), req1, content_type='application/ocsp-request')
+        self.assertEqual(response.status_code, 200)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1400)
+
     @override_settings(USE_TZ=True)
     def test_post_with_use_tz(self):
         self.test_post()
+
+    @unittest.skipUnless(ca_settings.CRYPTOGRAPHY_OCSP, 'Skip cryptography test for cryptography<2.4')
+    def test_loaded_cryptography_cert(self):
+        response = self.client.post(reverse('post-loaded-cryptography'), req1,
+                                    content_type='application/ocsp-request')
+        self.assertEqual(response.status_code, 200)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1500)
+
+    @unittest.skipIf(ca_settings.CRYPTOGRAPHY_OCSP, 'Skip cryptography test for cryptography>=2.4')
+    def test_loaded_oscrypto_cert(self):
+        response = self.client.post(reverse('post-loaded-oscrypto'), req1,
+                                    content_type='application/ocsp-request')
+        self.assertEqual(response.status_code, 200)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1500)
 
     @unittest.skipUnless(ca_settings.CRYPTOGRAPHY_OCSP, 'Skip cryptography test for cryptography<2.4')
     def test_no_nonce(self):
@@ -433,6 +492,16 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         data = base64.b64encode(req1).decode('utf-8')
 
         response = self.client.get(reverse('false-pem', kwargs={'data': data}))
+        self.assertEqual(response.status_code, 200)
+        ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
+        self.assertEqual(ocsp_response['response_status'].native, 'internal_error')
+
+        response = self.client.get(reverse('false-pem-serial', kwargs={'data': data}))
+        self.assertEqual(response.status_code, 200)
+        ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
+
+        self.assertEqual(ocsp_response['response_status'].native, 'internal_error')
+        response = self.client.get(reverse('false-pem-full', kwargs={'data': data}))
         self.assertEqual(response.status_code, 200)
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
         self.assertEqual(ocsp_response['response_status'].native, 'internal_error')

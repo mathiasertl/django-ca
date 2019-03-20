@@ -59,6 +59,9 @@ NAME_RE = re.compile(r'(?:/+|\A)\s*(?P<field>[^\s]*?)\s*'
 
 #: Regular expression to match general names.
 GENERAL_NAME_RE = re.compile('^(email|URI|IP|DNS|RID|dirName|otherName):(.*)', flags=re.I)
+
+#: Regular expression matching hexlified certificate serials
+SERIAL_RE = re.compile('^([0-9A-F][0-9A-F]:)+[0-9A-F][0-9A-F]?$')
 _datetime_format = '%Y%m%d%H%M%SZ'
 
 SAN_NAME_MAPPINGS = {

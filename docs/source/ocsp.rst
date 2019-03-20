@@ -81,6 +81,9 @@ This would mean that your OCSP responder would be located at ``/django_ca/ocsp/r
 domain you have configured your WSGI daemon. If you're using your own URL configuration, pass the
 same parameters to the ``as_view()`` method.
 
+.. autoclass:: django_ca.views.OCSPBaseView
+   :members:
+
 .. autoclass:: django_ca.views.OCSPView
    :members:
 
