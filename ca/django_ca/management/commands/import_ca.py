@@ -22,12 +22,13 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
 
+from django.core.files.base import ContentFile
 from django.core.management.base import CommandError
 from django.utils import six
 
 from ... import ca_settings
 from ...models import CertificateAuthority
-from ...utils import write_private_file
+from ...utils import ca_storage
 from ..base import BaseCommand
 from ..base import CertificateAuthorityDetailMixin
 from ..base import PasswordAction
@@ -88,7 +89,7 @@ Note that the private key will be copied to the directory configured by the CA_D
             except Exception:
                 raise CommandError('Unable to load public key.')
         ca.x509 = pem_loaded
-        ca.private_key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % ca.serial)
+        ca.private_key_path = ca_storage.generate_filename('%s.key' % ca.serial.replace(':', ''))
 
         # load private key
         try:
@@ -110,7 +111,7 @@ Note that the private key will be copied to the directory configured by the CA_D
                                        encryption_algorithm=encryption)
 
         try:
-            write_private_file(ca.private_key_path, pem)
+            ca_storage.save(ca.private_key_path, ContentFile(pem))
         except PermissionError:
             perm_denied = '%s: Permission denied: Could not open file for writing' % ca.private_key_path
             raise CommandError(perm_denied)

@@ -16,10 +16,12 @@
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
 from .base import override_settings
+from .base import override_tmpcadir
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class SignCertTestCase(DjangoCAWithCATestCase):
+    @override_tmpcadir()
     def test_basic(self):
         issuer = 'https://issuer-test.example.org'
         ian = 'http://ian-test.example.org'
@@ -42,6 +44,7 @@ class SignCertTestCase(DjangoCAWithCATestCase):
         self.assertEqual(ca.crl_url, '\n'.join(crl))
         self.assertFalse(ca.enabled)
 
+    @override_tmpcadir()
     def test_enable(self):
         ca = CertificateAuthority.objects.get(serial=self.ca.serial)
         ca.enabled = False

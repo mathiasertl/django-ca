@@ -15,7 +15,6 @@
 
 import argparse
 import getpass
-import os
 import sys
 import textwrap
 
@@ -155,7 +154,7 @@ class CertificateAuthorityAction(argparse.Action):
             parser.error('%s: Multiple Certificate authorities match.' % value)
 
         # verify that the private key exists
-        if not os.path.exists(value.private_key_path):
+        if not value.key_exists:
             parser.error('%s: %s: Private key does not exist.' % (value, value.private_key_path))
 
         setattr(namespace, self.dest, value)

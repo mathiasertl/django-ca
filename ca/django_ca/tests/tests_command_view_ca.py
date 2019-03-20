@@ -13,8 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
-import os
-
 from cryptography.hazmat.primitives import hashes
 
 from django.conf import settings
@@ -28,11 +26,11 @@ from .base import override_tmpcadir
 
 
 class ViewCATestCase(DjangoCAWithCATestCase):
+    @override_tmpcadir()
     def test_basic(self):
         stdout, stderr = self.cmd('view_ca', self.ca.serial)
-        path = os.path.join(settings.FIXTURES_DIR, 'root.key')
         data = self.get_cert_context('root')
-        data['path'] = path
+        data['path'] = 'root.key'
         self.assertMultiLineEqual(stdout, '''root (enabled):
 * Serial: %(serial)s
 * Path to private key:
@@ -67,13 +65,14 @@ X509 v3 certificate extensions for signed certificates:
     def test_basic_with_use_tz(self):
         self.test_basic()
 
+    @override_tmpcadir()
     def test_family(self):
         parent = CertificateAuthority.objects.get(name=self.ca.name)
         child = self.load_ca(name='child', x509=child_pubkey, parent=self.ca)
 
         stdout, stderr = self.cmd('view_ca', parent.serial)
         data = self.get_cert_context('root')
-        data['path'] = os.path.join(settings.FIXTURES_DIR, 'root.key')
+        data['path'] = 'root.key'
         data['child_serial'] = certs['child']['serial']
         self.assertMultiLineEqual(stdout, '''root (enabled):
 * Serial: %(serial)s
@@ -108,7 +107,7 @@ X509 v3 certificate extensions for signed certificates:
 
         stdout, stderr = self.cmd('view_ca', child.serial)
         data = self.get_cert_context('child')
-        data['path'] = os.path.join(settings.FIXTURES_DIR, 'child.key')
+        data['path'] = 'child.key'
         data['root_serial'] = certs['root']['serial']
         data['crl'] = certs['child']['crl'][1][0]
         self.assertMultiLineEqual(stdout, '''child (enabled):

@@ -63,6 +63,7 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
         # Some properties come from the ca
         self.assertEqual(old.ca.crl_url, new.crlDistributionPoints())
 
+    @override_tmpcadir()
     def test_basic(self):
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd('resign_cert', self.cert.serial)
@@ -74,6 +75,7 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
         self.assertResigned(self.cert, new)
         self.assertEqualExt(self.cert, new)
 
+    @override_tmpcadir()
     def test_overwrite(self):
         key_usage = 'cRLSign'
         ext_key_usage = 'critical,emailProtection'
@@ -125,6 +127,7 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
         self.assertResigned(self.cert, new)
         self.assertEqualExt(self.cert, new)
 
+    @override_tmpcadir()
     def test_no_cn(self):
         subject = '/C=AT'  # has no CN
 
@@ -137,6 +140,7 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(pre.call_count, 0)
         self.assertEqual(post.call_count, 0)
 
+    @override_tmpcadir()
     def test_error(self):
         msg = 'foobar'
         msg_re = r'^%s$' % msg

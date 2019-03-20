@@ -84,6 +84,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
         self.assertEqual(exts, expected)
 
+    @override_tmpcadir()
     def test_basic(self):
         kwargs = get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
@@ -110,6 +111,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
         self.assertExtensions(cert.x509, extensions)
 
+    @override_tmpcadir()
     def test_no_subject(self):
         kwargs = get_cert_profile_kwargs()
         del kwargs['subject']
@@ -139,6 +141,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
                 self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
                 subject_alternative_name=None, **kwargs)
 
+    @override_tmpcadir()
     def test_cn_in_san(self):
         kwargs = get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
@@ -157,6 +160,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         self.assertEqual(self.get_subject(cert.x509)['CN'], 'cn.example.com')
         self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:cn.example.com'))
 
+    @override_tmpcadir()
     def test_cn_not_in_san(self):
         kwargs = get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
@@ -169,6 +173,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         self.assertEqual(self.get_subject(cert.x509)['CN'], 'cn.example.com')
         self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:example.com'))
 
+    @override_tmpcadir()
     def test_no_san(self):
         kwargs = get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
@@ -180,6 +185,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         self.assertHasNotExtension(cert, ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
         self.assertNotIn('SubjectAlternativeName', cert.get_extensions())
 
+    @override_tmpcadir()
     def test_no_key_usage(self):
         kwargs = get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
@@ -190,6 +196,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         self.assertHasNotExtension(cert, ExtensionOID.KEY_USAGE)
         self.assertHasExtension(cert, ExtensionOID.EXTENDED_KEY_USAGE)
 
+    @override_tmpcadir()
     def test_no_ext_key_usage(self):
         kwargs = get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
@@ -200,6 +207,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         self.assertHasNotExtension(cert, ExtensionOID.EXTENDED_KEY_USAGE)
         self.assertHasExtension(cert, ExtensionOID.KEY_USAGE)
 
+    @override_tmpcadir()
     def test_crl(self):
         # get from the db to make sure that values do not influence other testcases
         ca = CertificateAuthority.objects.first()
@@ -225,6 +233,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         expected = ['Full Name: URI:%s' % url for url in ca.crl_url.splitlines()]
         self.assertEqual(self.get_extensions(cert.x509)['cRLDistributionPoints'], (False, expected))
 
+    @override_tmpcadir()
     def test_issuer_alt_name(self):
         ca = CertificateAuthority.objects.first()
         ca.issuer_alt_name = 'http://ian.example.com'
@@ -238,6 +247,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         self.assertEqual(self.get_extensions(cert.x509)['IssuerAlternativeName'],
                          IssuerAlternativeName(ca.issuer_alt_name))
 
+    @override_tmpcadir()
     def test_auth_info_access(self):
         ca = CertificateAuthority.objects.first()
         kwargs = get_cert_profile_kwargs()
@@ -270,6 +280,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         self.assertEqual(self.get_extensions(cert.x509)['AuthorityInformationAccess'],
                          AuthorityInformationAccess([[ca.issuer_url], []]))
 
+    @override_tmpcadir()
     def test_all_extensions(self):
         ku = 'critical,encipherOnly,keyAgreement,nonRepudiation'
         eku = 'serverAuth'

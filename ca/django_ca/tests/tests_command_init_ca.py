@@ -453,6 +453,7 @@ class InitCATest(DjangoCATestCase):
 
         # Assert that we cannot access this without a password
         msg = '^Password was not given but private key is encrypted$'
+        parent = CertificateAuthority.objects.get(name='Parent')
         with self.assertRaisesRegex(TypeError, msg):
             parent.key(None)
 

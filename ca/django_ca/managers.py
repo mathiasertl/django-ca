@@ -13,8 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not,
 # see <http://www.gnu.org/licenses/>.
 
-import os
-
 import idna
 
 from cryptography import x509
@@ -27,6 +25,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
 from cryptography.x509.oid import AuthorityInformationAccessOID
 
+from django.core.files.base import ContentFile
 from django.db import models
 from django.utils import six
 from django.utils.encoding import force_bytes
@@ -45,12 +44,12 @@ from .signals import post_issue_cert
 from .signals import pre_create_ca
 from .signals import pre_issue_cert
 from .subject import Subject
+from .utils import ca_storage
 from .utils import get_cert_builder
 from .utils import is_power2
 from .utils import parse_general_name
 from .utils import parse_hash_algorithm
 from .utils import parse_key_curve
-from .utils import write_private_file
 
 
 class CertificateManagerMixin(object):
@@ -247,7 +246,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         ca = self.model(name=name, issuer_url=issuer_url, issuer_alt_name=issuer_alt_name,
                         ocsp_url=ocsp_url, crl_url=crl_url, parent=parent)
         ca.x509 = certificate
-        ca.private_key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % ca.serial.replace(':', ''))
+        ca.private_key_path = ca_storage.generate_filename('%s.key' % ca.serial.replace(':', ''))
         ca.save()
 
         if password is None:
@@ -260,7 +259,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
                                         encryption_algorithm=encryption)
 
         # write private key to file
-        write_private_file(ca.private_key_path, pem)
+        ca_storage.save(ca.private_key_path, ContentFile(pem))
 
         post_create_ca.send(sender=self.model, ca=ca)
         return ca

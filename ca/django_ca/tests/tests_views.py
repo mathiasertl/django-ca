@@ -56,6 +56,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
     def tearDown(self):
         cache.clear()
 
+    @override_tmpcadir()
     def test_basic(self):
         # test the default view
         response = self.client.get(reverse('default', kwargs={'serial': self.ca.serial}))
@@ -125,6 +126,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
         self.assertEqual(len(list(crl)), 1)
         self.assertEqual(crl[0].serial_number, child.x509.serial_number)
 
+    @override_tmpcadir()
     def test_overwrite(self):
         response = self.client.get(reverse('advanced', kwargs={'serial': self.ca.serial}))
         self.assertEqual(response.status_code, 200)

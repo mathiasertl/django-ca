@@ -15,6 +15,7 @@
 
 import os
 import stat
+import unittest
 from datetime import datetime
 from datetime import timedelta
 
@@ -22,6 +23,7 @@ from freezegun import freeze_time
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
+from django.core.files.storage import FileSystemStorage
 from django.utils import six
 
 from .. import ca_settings
@@ -34,6 +36,7 @@ from ..models import CertificateAuthority
 from ..signals import post_issue_cert
 from ..signals import pre_issue_cert
 from ..subject import Subject
+from ..utils import ca_storage
 from .base import DjangoCAWithCSRTestCase
 from .base import child_pubkey
 from .base import override_settings
@@ -47,6 +50,7 @@ else:
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class SignCertTestCase(DjangoCAWithCSRTestCase):
+    @override_tmpcadir()
     def test_from_stdin(self):
         stdin = six.StringIO(self.csr_pem)
         subject = Subject([('CN', 'example.com')])
@@ -71,6 +75,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
     def test_from_stdin_with_use_tz(self):
         self.test_from_stdin()
 
+    @override_tmpcadir()
     def test_ecc_ca(self):
         stdin = six.StringIO(self.csr_pem)
         subject = Subject([('CN', 'ecc-signed.example.com')])
@@ -149,6 +154,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
             if os.path.exists(out_path):
                 os.remove(out_path)
 
+    @override_tmpcadir()
     def test_no_dns_cn(self):
         # Use a CommonName that is *not* a valid DNSName. By default, this is added as a subjectAltName, which
         # should fail.
@@ -163,6 +169,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
+    @override_tmpcadir()
     def test_cn_not_in_san(self):
         stdin = six.StringIO(self.csr_pem)
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
@@ -180,6 +187,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertEqual(stderr, '')
         self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:example.com'))
 
+    @override_tmpcadir()
     def test_no_san(self):
         # test with no subjectAltNames:
         stdin = six.StringIO(self.csr_pem)
@@ -198,7 +206,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertEqual(stderr, '')
         self.assertIsNone(cert.subject_alternative_name)
 
-    @override_settings(CA_DEFAULT_SUBJECT=[
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=[
         ('C', 'AT'),
         ('ST', 'Vienna'),
         ('L', 'Vienna'),
@@ -256,6 +264,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertPostIssueCert(post, cert)
         self.assertSubject(cert.x509, [('CN', 'empty')])
 
+    @override_tmpcadir()
     def test_extensions(self):
         stdin = six.StringIO(self.csr_pem)
         cmdline = [
@@ -282,7 +291,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
                          SubjectAlternativeName('DNS:example.com,URI:https://example.net'))
         self.assertEqual(cert.tls_feature, TLSFeature('OCSPMustStaple'))
 
-    @override_settings(CA_DEFAULT_SUBJECT={})
+    @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_no_subject(self):
         # test with no subjectAltNames:
         stdin = six.StringIO(self.csr_pem)
@@ -332,14 +341,18 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertFalse(post.called)
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
+    @unittest.skipUnless(isinstance(ca_storage, FileSystemStorage),
+                         'Test only makes sense with local filesystem storage.')
     def test_unparseable(self):
         ca = self.create_ca('test')
         ca = CertificateAuthority.objects.get(pk=ca.pk)
 
-        os.chmod(ca.private_key_path, stat.S_IWUSR | stat.S_IRUSR)
-        with open(ca.private_key_path, 'w') as stream:
+        key_path = os.path.join(ca_storage.location, ca.private_key_path)
+
+        os.chmod(key_path, stat.S_IWUSR | stat.S_IRUSR)
+        with open(key_path, 'w') as stream:
             stream.write('bogus')
-        os.chmod(ca.private_key_path, stat.S_IRUSR)
+        os.chmod(key_path, stat.S_IRUSR)
 
         # Giving no password raises a CommandError
         stdin = six.StringIO(self.csr_pem)
@@ -387,6 +400,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
+    @override_tmpcadir()
     def test_no_cn_or_san(self):
         with self.assertCommandError(
                 r'^Must give at least a CN in --subject or one or more --alt arguments\.$'), \
@@ -395,6 +409,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
+    @override_tmpcadir()
     def test_wrong_format(self):
         stdin = six.StringIO(self.csr_pem)
 
@@ -414,6 +429,7 @@ class SignCertChildCATestCase(DjangoCAWithCSRTestCase):
         cls.child_ca = cls.load_ca(name='child', x509=child_pubkey)
 
     @freeze_time("2018-11-10")
+    @override_tmpcadir()
     def test_from_stdin(self):
         stdin = six.StringIO(self.csr_pem)
         subject = Subject([('CN', 'example.net')])

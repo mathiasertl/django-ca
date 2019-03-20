@@ -33,6 +33,7 @@ from .base import cloudflare_1_pubkey
 from .base import cryptography_version
 from .base import multiple_ous_and_no_ext_pubkey
 from .base import override_settings
+from .base import override_tmpcadir
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
@@ -189,6 +190,7 @@ HPKP pin: %(hpkp)s
     def test_expired_with_use_tz(self):
         self.test_expired()
 
+    @override_tmpcadir()
     def test_no_san_with_watchers(self):
         # test a cert with no subjectAltNames but with watchers.
         cert = self.create_cert(self.ca, self.csr_pem, [('CN', 'example.com')], cn_in_san=False)

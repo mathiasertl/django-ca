@@ -28,12 +28,14 @@ from .base import override_tmpcadir
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class DumpCertTestCase(DjangoCAWithChildCATestCase):
+    @override_tmpcadir()
     def test_basic(self):
         stdout, stderr = self.cmd('dump_ca', self.ca.serial,
                                   stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
         self.assertEqual(stdout, self.ca.pub.encode('utf-8'))
 
+    @override_tmpcadir()
     def test_format(self):
         for option in ['PEM', 'DER']:
             encoding = getattr(Encoding, option)
@@ -42,12 +44,14 @@ class DumpCertTestCase(DjangoCAWithChildCATestCase):
             self.assertEqual(stderr, b'')
             self.assertEqual(stdout, self.ca.dump_certificate(encoding))
 
+    @override_tmpcadir()
     def test_explicit_stdout(self):
         stdout, stderr = self.cmd('dump_ca', self.ca.serial, '-',
                                   stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
         self.assertEqual(stdout, self.ca.pub.encode('utf-8'))
 
+    @override_tmpcadir()
     def test_bundle(self):
         self.maxDiff = None
         stdout, stderr = self.cmd('dump_ca', self.ca.serial, '-', bundle=True,
@@ -71,12 +75,15 @@ class DumpCertTestCase(DjangoCAWithChildCATestCase):
         with open(path) as stream:
             self.assertEqual(stream.read(), self.ca.pub)
 
+    @override_tmpcadir()
     def test_errors(self):
         path = os.path.join(ca_settings.CA_DIR, 'does-not-exist', 'test_ca.pem')
         if six.PY2:
-            msg = r"^\[Errno 2\] No such file or directory: u'/non/existent/does-not-exist/test_ca\.pem'$"
+            msg = r"^\[Errno 2\] No such file or directory: u'%s/does-not-exist/test_ca\.pem'$"
         else:
-            msg = r"^\[Errno 2\] No such file or directory: '/non/existent/does-not-exist/test_ca\.pem'$"
+            msg = r"^\[Errno 2\] No such file or directory: '%s/does-not-exist/test_ca\.pem'$"
+
+        msg = msg % ca_settings.CA_DIR
 
         with self.assertCommandError(msg):
             self.cmd('dump_ca', self.ca.serial, path, stdout=BytesIO(), stderr=BytesIO())

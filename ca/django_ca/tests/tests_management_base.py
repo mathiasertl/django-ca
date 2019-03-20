@@ -30,6 +30,7 @@ from .base import DjangoCAWithCATestCase
 from .base import DjangoCAWithCertTestCase
 from .base import child_pubkey
 from .base import override_settings
+from .base import override_tmpcadir
 
 try:
     import unittest.mock as mock
@@ -271,10 +272,12 @@ class CertificateAuthorityActionTestCase(DjangoCAWithCATestCase):
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument('ca', action=base.CertificateAuthorityAction)
 
+    @override_tmpcadir()
     def test_basic(self):
         ns = self.parser.parse_args([self.ca.serial])
         self.assertEqual(ns.ca, self.ca)
 
+    @override_tmpcadir()
     def test_abbreviation(self):
         ns = self.parser.parse_args([self.ca.serial[:4]])
         self.assertEqual(ns.ca, self.ca)
@@ -296,6 +299,7 @@ class CertificateAuthorityActionTestCase(DjangoCAWithCATestCase):
                                'setup.py: error: %s: Multiple Certificate authorities match.\n'
                                % serial)
 
+    @override_tmpcadir()
     def test_disabled(self):
         ca = CertificateAuthority.objects.first()
         ca.enabled = False
@@ -315,7 +319,7 @@ setup.py: error: %s: Certificate authority not found.\n''' % ca.serial
 
     def test_pkey_doesnt_exists(self):
         ca = CertificateAuthority.objects.first()
-        ca.private_key_path = '/does-not-exist'
+        ca.private_key_path = 'does-not-exist'
         ca.save()
 
         expected = '''usage: setup.py [-h] ca
@@ -323,6 +327,7 @@ setup.py: error: %s: %s: Private key does not exist.\n''' % (ca.name, ca.private
 
         self.assertParserError([ca.serial], expected)
 
+    @override_tmpcadir()
     def test_password(self):
         # Test that the action works with a password-encrypted ca
         ns = self.parser.parse_args([self.pwd_ca.serial])

@@ -298,8 +298,14 @@ class override_tmpcadir(override_settings):
     def enable(self):
         self.options['CA_DIR'] = tempfile.mkdtemp()
 
+        shutil.copy(os.path.join(settings.FIXTURES_DIR, 'root.key'), self.options['CA_DIR'])
+        shutil.copy(os.path.join(settings.FIXTURES_DIR, 'root-key.der'), self.options['CA_DIR'])
+        shutil.copy(os.path.join(settings.FIXTURES_DIR, 'root-pub.der'), self.options['CA_DIR'])
+        shutil.copy(os.path.join(settings.FIXTURES_DIR, 'child.key'), self.options['CA_DIR'])
         shutil.copy(os.path.join(settings.FIXTURES_DIR, 'ocsp.key'), self.options['CA_DIR'])
         shutil.copy(os.path.join(settings.FIXTURES_DIR, 'ocsp.pem'), self.options['CA_DIR'])
+        shutil.copy(os.path.join(settings.FIXTURES_DIR, 'pwd_ca.key'), self.options['CA_DIR'])
+        shutil.copy(os.path.join(settings.FIXTURES_DIR, 'ecc_ca.key'), self.options['CA_DIR'])
 
         self.mock = patch.object(ca_storage, 'location', self.options['CA_DIR'])
         self.mock_ = patch.object(ca_storage, '_location', self.options['CA_DIR'])
@@ -417,10 +423,7 @@ class DjangoCATestCase(TestCase):
         post.assert_called_once_with(cert=cert, signal=post_revoke_cert, sender=Certificate)
 
     def assertPrivateKey(self, ca, password=None):
-        with open(ca.private_key_path, 'rb') as f:
-            key_data = f.read()
-
-        key = serialization.load_pem_private_key(key_data, password, default_backend())
+        key = ca.key(password)
         self.assertIsNotNone(key)
         self.assertTrue(key.key_size > 0)
 
@@ -532,7 +535,7 @@ class DjangoCATestCase(TestCase):
     @classmethod
     def load_ca(cls, name, x509, enabled=True, parent=None, **kwargs):
         """Load a CA from one of the preloaded files."""
-        path = os.path.join(settings.FIXTURES_DIR, '%s.key' % name)
+        path = '%s.key' % name
         ca = CertificateAuthority(name=name, private_key_path=path, enabled=enabled, parent=parent,
                                   **kwargs)
         ca.x509 = x509  # calculates serial etc

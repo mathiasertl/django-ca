@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-import os
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
@@ -90,8 +89,7 @@ class CreateCertificateBaseForm(forms.ModelForm):
         field = self.fields['ca']
         field.choices = [
             (field.prepare_value(ca), field.label_from_instance(ca))
-            for ca in self.fields['ca'].queryset.filter(enabled=True)
-            if os.path.exists(ca.private_key_path)
+            for ca in self.fields['ca'].queryset.filter(enabled=True) if ca.key_exists
         ]
 
     password = forms.CharField(widget=forms.PasswordInput, required=False, help_text=_(

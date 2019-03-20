@@ -56,6 +56,7 @@ from .base import DjangoCAWithCertTestCase
 from .base import DjangoCAWithCSRTestCase
 from .base import cryptography_version
 from .base import override_settings
+from .base import override_tmpcadir
 from .base import pwd_ca_pwd
 
 try:
@@ -242,6 +243,7 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
                      <div class="readonly"><img src="/static/admin/img/icon-yes.svg" alt="True"></div>
                 </div> </div>''', html=True)
 
+    @override_tmpcadir()
     def test_no_san(self):
         # Test display of a certificate with no SAN
         cert = self.create_cert(self.ca, self.csr_pem, [('CN', 'example.com')], cn_in_san=False)
@@ -320,6 +322,7 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
 
 class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
+    @override_tmpcadir()
     def test_get(self):
         response = self.client.get(self.add_url)
         self.assertEqual(response.status_code, 200)
@@ -333,6 +336,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
     def test_get_dict(self):
         self.test_get()
 
+    @override_tmpcadir()
     def test_add(self):
         cn = 'test-add.example.com'
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
@@ -375,6 +379,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         response = self.client.get(self.change_url(cert.pk))
         self.assertEqual(response.status_code, 200)
 
+    @override_tmpcadir()
     def test_required_subject(self):
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.add_url, data={
@@ -399,6 +404,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertEqual(response.context['adminform'].form.errors,
                          {'subject': ['Enter a complete value.']})
 
+    @override_tmpcadir()
     def test_add_no_key_usage(self):
         cn = 'test-add2.example.com'
         san = 'test-san.example.com'
@@ -443,6 +449,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         response = self.client.get(self.change_url(cert.pk))
         self.assertEqual(response.status_code, 200)
 
+    @override_tmpcadir()
     def test_add_with_password(self):
         cn = 'example.com'
 
@@ -533,6 +540,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         response = self.client.get(self.change_url(cert.pk))
         self.assertEqual(response.status_code, 200)
 
+    @override_tmpcadir()
     def test_wrong_csr(self):
         cn = 'test-add-wrong-csr.example.com'
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
@@ -561,6 +569,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         with self.assertRaises(Certificate.DoesNotExist):
             Certificate.objects.get(cn=cn)
 
+    @override_tmpcadir()
     def test_wrong_algorithm(self):
         cn = 'test-add-wrong-algo.example.com'
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
@@ -587,6 +596,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
             response.context['adminform'].form.errors,
             {'algorithm': ['Select a valid choice. wrong algo is not one of the available choices.']})
 
+    @override_tmpcadir()
     def test_expires_in_the_past(self):
         cn = 'test-expires-in-the-past.example.com'
         expires = datetime.now() - timedelta(days=3)
@@ -616,6 +626,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         with self.assertRaises(Certificate.DoesNotExist):
             Certificate.objects.get(cn=cn)
 
+    @override_tmpcadir()
     def test_expires_too_late(self):
         cn = 'test-expires-in-the-past.example.com'
         expires = self.ca.expires + timedelta(days=3)
@@ -673,7 +684,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertFalse(post.called)
 
     def test_add_unusable_cas(self):
-        CertificateAuthority.objects.update(private_key_path='/does/not/exist')
+        CertificateAuthority.objects.update(private_key_path='not/exist')
 
         # check that we have some enabled CAs, just to make sure this test is really useful
         self.assertTrue(CertificateAuthority.objects.filter(enabled=True).exists())
@@ -898,6 +909,7 @@ class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithCertTestCase)
         self.assertNotEqual(cert.pub, resigned.pub)
         self.assertNotEqual(cert.serial, resigned.serial)
 
+    @override_tmpcadir()
     def test_get(self):
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.get(self.url)
@@ -905,6 +917,7 @@ class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithCertTestCase)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
+    @override_tmpcadir()
     def test_resign(self):
         cn = 'resigned.example.com'
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
@@ -938,18 +951,21 @@ class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithCertTestCase)
         self.assertFalse(post.called)
         self.assertMessages(response, ['Certificate has no CSR (most likely because it was imported).'])
 
+    @override_tmpcadir()
     def test_webtest_basic(self):
         # resign the basic cert
         form = self.app.get(self.url, user=self.user.username).form
         form.submit().follow()
         self.assertResigned(self.cert)
 
+    @override_tmpcadir()
     def test_webtest_all(self):
         # resign the basic cert
         form = self.app.get(self.get_url(self.cert_all), user=self.user.username).form
         form.submit().follow()
         self.assertResigned(self.cert_all)
 
+    @override_tmpcadir()
     def test_webtest_no_ext(self):
         form = self.app.get(self.get_url(self.cert_no_ext), user=self.user.username).form
         form.submit().follow()
@@ -964,6 +980,7 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     def url(self):
         return self.get_url(cert=self.cert)
 
+    @override_tmpcadir()
     def test_get(self):
         with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
             self.client.get(self.url)

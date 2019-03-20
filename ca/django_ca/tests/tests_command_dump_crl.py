@@ -37,6 +37,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(revokation.get_serial(),
                          cert.serial.replace(':', '').encode('utf-8'))
 
+    @override_tmpcadir()
     def test_basic(self):
         stdout, stderr = self.cmd('dump_crl', stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
@@ -110,6 +111,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
         self.assertEqual(list(crl), [])
 
+    @override_tmpcadir()
     def test_revoked(self):
         cert = Certificate.objects.get(serial=self.cert.serial)
         cert.revoke()

@@ -46,6 +46,7 @@ from .base import certs
 from .base import cryptography_version
 from .base import ocsp_pubkey
 from .base import override_settings
+from .base import override_tmpcadir
 
 try:
     import unittest.mock as mock
@@ -106,9 +107,6 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         super(CertificateTests, self).setUp()
         # A certificate with all extensions, can do everything, etc
         self.ca.crl_url = 'https://ca.example.com/crl.der'
-        self.full = self.create_cert(
-            self.ca, cert3_csr, [('CN', 'all.example.com')],
-            san=['dirname:/C=AT/CN=example.com', 'email:user@example.com', 'fd00::1'])
 
         self.cert2 = self.load_cert(self.ca, cert2_pubkey)
         self.cert3 = self.load_cert(self.ca, cert3_pubkey)
@@ -148,6 +146,7 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         with self.assertRaises(ValueError):
             c.get_revocation()
 
+    @override_tmpcadir()
     def test_serial(self):
         self.assertEqual(self.ca.serial, certs['root']['serial'])
         self.assertEqual(self.child_ca.serial, certs['child']['serial'])
@@ -156,6 +155,7 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         self.assertEqual(self.cert3.serial, certs['cert3']['serial'])
         self.assertEqual(self.ocsp.serial, certs['ocsp']['serial'])
 
+    @override_tmpcadir()
     def test_subjectAltName(self):
         self.assertEqual(self.ca.subject_alternative_name, certs['root']['san'])
         self.assertEqual(self.child_ca.subject_alternative_name, certs['child']['san'])
@@ -163,8 +163,12 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         self.assertEqual(self.cert2.subject_alternative_name, certs['cert2']['san'])
         self.assertEqual(self.cert3.subject_alternative_name, certs['cert3']['san'])
 
+        full = self.create_cert(
+            self.ca, cert3_csr, [('CN', 'all.example.com')],
+            san=['dirname:/C=AT/CN=example.com', 'email:user@example.com', 'fd00::1'])
+
         self.assertEqual(
-            self.full.subject_alternative_name,
+            full.subject_alternative_name,
             SubjectAlternativeName({'value': [
                 'DNS:all.example.com',
                 'dirname:/C=AT/CN=example.com',
@@ -255,8 +259,6 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         self.assertEqual(self.cert2.crlDistributionPoints(), certs['cert2']['crl'])
         self.assertEqual(self.cert3.crlDistributionPoints(), certs['cert3']['crl'])
         self.assertEqual(self.ocsp.crlDistributionPoints(), certs['ocsp']['crl'])
-        self.assertEqual(self.full.crlDistributionPoints(),
-                         (False, ['Full Name: URI:https://ca.example.com/crl.der']))
 
     def test_digest(self):
         self.assertEqual(self.ca.get_digest('md5'), certs['root']['md5'])
@@ -419,6 +421,7 @@ class CertificateTests(DjangoCAWithChildCATestCase):
     @unittest.skipUnless(
         default_backend()._lib.CRYPTOGRAPHY_OPENSSL_110F_OR_GREATER,
         'test only makes sense with older libreSSL/OpenSSL versions that don\'t support SCT.')
+    @override_tmpcadir()
     def test_unsupported(self):
         # Test return value for older versions of OpenSSL
 

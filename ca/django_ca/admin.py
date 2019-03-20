@@ -16,7 +16,7 @@
 import binascii
 import copy
 import json
-import os
+import logging
 from datetime import datetime
 from functools import partial
 
@@ -58,6 +58,8 @@ from .models import Watcher
 from .signals import post_issue_cert
 from .utils import OID_NAME_MAPPINGS
 from .utils import format_general_name
+
+log = logging.getLogger(__name__)
 
 
 @admin.register(Watcher)
@@ -491,7 +493,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
     def has_add_permission(self, request):
         # Only grant add permissions if there is at least one useable CA
         for ca in CertificateAuthority.objects.filter(enabled=True):
-            if os.path.exists(ca.private_key_path):
+            if ca.key_exists:
                 return True
         return False
 

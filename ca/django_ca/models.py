@@ -16,6 +16,8 @@
 import base64
 import binascii
 import hashlib
+import logging
+import os
 import re
 
 import pytz
@@ -57,10 +59,14 @@ from .signals import post_revoke_cert
 from .signals import pre_revoke_cert
 from .subject import Subject
 from .utils import add_colons
+from .utils import ca_storage
 from .utils import format_general_names
 from .utils import format_name
 from .utils import int_to_hex
 from .utils import multiline_url_validator
+from .utils import read_file
+
+log = logging.getLogger(__name__)
 
 
 class Watcher(models.Model):
@@ -519,11 +525,21 @@ class CertificateAuthority(X509CertMixin):
 
     def key(self, password):
         if self._key is None:
-            with open(self.private_key_path, 'rb') as f:
-                key_data = f.read()
+            if os.path.isabs(self.private_key_path):
+                log.warning('%s: CA uses absolute path. Use "manage.py migrate_ca" to update.', self.serial)
+
+            key_data = read_file(self.private_key_path)
 
             self._key = load_pem_private_key(key_data, password, default_backend())
         return self._key
+
+    @property
+    def key_exists(self):
+        if os.path.isabs(self.private_key_path):
+            log.warning('%s: CA uses absolute path. Use "manage.py migrate_ca" to update.', self.serial)
+            return os.path.exists(self.private_key_path)
+        else:
+            return ca_storage.exists(self.private_key_path)
 
     def get_authority_key_identifier(self):
         """Return the AuthorityKeyIdentifier extension used in certificates signed by this CA."""
