@@ -10,10 +10,11 @@ HEAD (TBR)
 
 * Fix traceback when a certificate that does not exist is viewed in the admin interface.
 * Add support cryptography 2.5 and 2.6.
-* New settings :ref:`CA_FILE_STORAGE <settings-ca-file-storage>` and :ref:`CA_FILE_STORAGE_KWARGS
-  <settings-ca-file-storage-kwargs>` to support a custom `Django storage backend
-  <https://docs.djangoproject.com/en/2.1/ref/files/storage/>`_ (e.g. one from `django-storages
-  <https://django-storages.readthedocs.io/en/latest/>`_). 
+* Start using `Django storage backends <https://docs.djangoproject.com/en/2.1/ref/files/storage/>`_ for files
+  used by django-ca. This allows you to store files on a shared storage system (e.g. one from `django-storages
+  <https://django-storages.readthedocs.io/>`_) to support a redundant setup.
+  See new settings :ref:`CA_FILE_STORAGE <settings-ca-file-storage>` and :ref:`CA_FILE_STORAGE_KWARGS
+  <settings-ca-file-storage-kwargs>` for configuration.
 * **BACKWARDS INCOMPATIBLE:** Drop support for Python 3.4.
 * **BACKWARDS INCOMPATIBLE:** Drop support for Django 2.0.
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.1.
