@@ -82,10 +82,29 @@ CA_DIGEST_ALGORITHM
 .. _settings-ca-dir:
 
 CA_DIR
-   Default: ``"ca/files"``
+   Default: ``"files/"``
 
    Where the root certificate is stored. The default is a ``files`` directory
    in the same location as your ``manage.py`` file.
+
+.. _settings-ca-file-storage:
+
+CA_FILE_STORAGE
+   Default: ``'django.core.files.storage.FileSystemStorage'``
+
+   Default storage backend for files created by django-ca. The default is the same as *the default* for 
+   ``DEFAULT_FILE_STORAGE``, so django-ca will still use local filesystem storage even if you configure a
+   different storage backend in ``DEFAULT_FILE_STORAGE``. The default uses :ref:`CA_FILE_STORAGE_KWARGS
+   <settings-ca-file-storage-kwargs>` to store files in a different location, since the default
+   (``MEDIA_ROOT``) is commonly used to upload user-generated files that are exposed to the web by the
+   webserver.
+
+.. _settings-ca-file-storage-kwargs:
+
+CA_FILE_STORAGE_KWARGS
+   Default: ``{'location': 'files/', 'file_permissions_mode': 0o600, 'directory_permissions_mode': 0o700}``
+
+   Add any arguments to the storage backend configured in :ref:`CA_FILE_STORAGE <settings-ca-file-storage>`.
 
 CA_NOTIFICATION_DAYS
    Default: ``[14, 7, 3, 1, ]``

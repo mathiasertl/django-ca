@@ -16,6 +16,7 @@
 """Central functions to load CA key and cert as PKey/X509 objects."""
 
 import binascii
+import errno
 import os
 import re
 import shlex
@@ -34,6 +35,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509.oid import NameOID
 
 from django.conf import settings
+from django.core.files.storage import get_storage_class
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import URLValidator
 from django.utils import six
@@ -645,6 +647,49 @@ if six.PY2:  # pragma: no branch, pragma: only py2
     class PermissionError(IOError, OSError):
         pass
 
+    class FileNotFoundError(OSError):
+        pass
+
+
+def read_file(path):
+    """Read the file from the given path.
+
+    If ``path`` is an absolute path, reads a file from the local filesystem. For relative paths, read the file
+    using the storage backend configured using :ref:`CA_FILE_STORAGE <settings-ca-file-storage>`.
+    """
+    if os.path.isabs(path):
+        try:
+            with open(path, 'rb') as stream:
+                return stream.read()
+        except (PermissionError, FileNotFoundError):  # pragma: only py3
+            # In py3, we want to raise Exception unchanged, so there would be no need for this block.
+            # BUT (IOError, OSError) - see below - also matches, so we capture it here
+            raise
+        except (IOError, OSError) as e:  # pragma: only py2
+            if e.errno == errno.EACCES:
+                raise PermissionError(str(e))
+            elif e.errno == errno.ENOENT:
+                raise FileNotFoundError(str(e))
+            raise  # pragma: no cover
+
+    try:
+        stream = ca_storage.open(path)
+    except (PermissionError, FileNotFoundError):  # pragma: only py3
+        # In py3, we want to raise Exception unchanged, so there would be no need for this block.
+        # BUT (IOError, OSError) - see below - also matches, so we capture it here
+        raise
+    except (IOError, OSError) as e:  # pragma: only py2
+        if e.errno == errno.EACCES:
+            raise PermissionError(str(e))
+        elif e.errno == errno.ENOENT:
+            raise FileNotFoundError(str(e))
+        raise  # pragma: no cover
+
+    try:
+        return stream.read()
+    finally:
+        stream.close()
+
 
 def write_private_file(path, data):
     """Function to write binary data to a file that will only be readable to the user."""
@@ -678,3 +723,6 @@ def shlex_split(s, sep):
     lex.whitespace = sep
     lex.whitespace_split = True
     return [l for l in lex]
+
+
+ca_storage = get_storage_class(ca_settings.CA_FILE_STORAGE)(**ca_settings.CA_FILE_STORAGE_KWARGS)

@@ -18,6 +18,7 @@ import os
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 
+from django.conf import global_settings
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import ugettext_lazy as _
@@ -161,6 +162,13 @@ try:
         raise ImproperlyConfigured('%s: Not an EllipticCurve.' % _CA_DEFAULT_ECC_CURVE)
 except AttributeError:
     raise ImproperlyConfigured('Unkown CA_DEFAULT_ECC_CURVE: %s' % settings.CA_DEFAULT_ECC_CURVE)
+
+CA_FILE_STORAGE = getattr(settings, 'CA_FILE_STORAGE', global_settings.DEFAULT_FILE_STORAGE)
+CA_FILE_STORAGE_KWARGS = getattr(settings, 'CA_FILE_STORAGE_KWARGS', {
+    'location': CA_DIR,
+    'file_permissions_mode': 0o600,
+    'directory_permissions_mode': 0o700,
+})
 
 # Try to decide if we can use OCSP from cryptography or not
 try:  # # pragma: only cryptography>=2.4

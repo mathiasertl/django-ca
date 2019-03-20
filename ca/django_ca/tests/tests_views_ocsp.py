@@ -48,6 +48,7 @@ from .base import certs
 from .base import ocsp_pem
 from .base import ocsp_pubkey
 from .base import override_settings
+from .base import override_tmpcadir
 
 try:
     import unittest.mock as mock
@@ -73,8 +74,8 @@ multiple_req = _load_req('multiple-serial')
 urlpatterns = [
     url(r'^ocsp/$', OCSPView.as_view(
         ca=certs['root']['serial'],
-        responder_key=settings.OCSP_KEY_PATH,
-        responder_cert=settings.OCSP_PEM_PATH,
+        responder_key='ocsp.key',
+        responder_cert='ocsp.pem',
         expires=1200,
     ), name='post'),
     url(r'^ocsp/serial/$', OCSPView.as_view(
@@ -101,6 +102,12 @@ urlpatterns = [
         responder_cert=x509.load_pem_x509_certificate(ocsp_pem, default_backend()),
         expires=1500,
     ), name='post-loaded-cryptography'),
+    url(r'^ocsp/abs-path/$', OCSPView.as_view(
+        ca=certs['root']['serial'],
+        responder_key=settings.OCSP_KEY_PATH,
+        responder_cert=settings.OCSP_PEM_PATH,
+        expires=1500,
+    ), name='post-abs-path'),
 
     url(r'^ocsp/cert/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca=certs['root']['serial'],
@@ -362,6 +369,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
             ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
             self.assertEqual(ocsp_response['response_status'].native, 'internal_error')
 
+    @override_tmpcadir()
     def test_post(self):
         response = self.client.post(reverse('post'), req1, content_type='application/ocsp-request')
         self.assertEqual(response.status_code, 200)
@@ -374,6 +382,10 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         response = self.client.post(reverse('post-full-pem'), req1, content_type='application/ocsp-request')
         self.assertEqual(response.status_code, 200)
         self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1400)
+
+        response = self.client.post(reverse('post-abs-path'), req1, content_type='application/ocsp-request')
+        self.assertEqual(response.status_code, 200)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1500)
 
     @override_settings(USE_TZ=True)
     def test_post_with_use_tz(self):
@@ -415,6 +427,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertOCSP(response, requested=[self.cert], nonce=None)
 
+    @override_tmpcadir()
     def test_revoked(self):
         cert = Certificate.objects.get(pk=self.cert.pk)
         cert.revoke()

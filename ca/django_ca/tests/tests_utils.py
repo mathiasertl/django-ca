@@ -20,6 +20,7 @@ from __future__ import unicode_literals
 import doctest
 import ipaddress
 import json
+import os
 import unittest
 from datetime import datetime
 from datetime import timedelta
@@ -56,10 +57,16 @@ from ..utils import parse_general_name
 from ..utils import parse_hash_algorithm
 from ..utils import parse_key_curve
 from ..utils import parse_name
+from ..utils import read_file
 from ..utils import validate_email
 from .base import DjangoCATestCase
 from .base import cryptography_version
 from .base import override_settings
+from .base import override_tmpcadir
+
+if six.PY2:  # pragma: only py2
+    from ..utils import PermissionError
+    from ..utils import FileNotFoundError
 
 
 def load_tests(loader, tests, ignore):
@@ -172,6 +179,50 @@ class LazyEncoderTestCase(TestCase):
         self.assertEqual('{"a": "b"}', json.dumps({'a': _('b')}, cls=LazyEncoder))
         self.assertEqual('{"a": "2016-03-26T00:00:00"}',
                          json.dumps({'a': datetime(2016, 3, 26)}, cls=LazyEncoder))
+
+
+class ReadFileTestCase(DjangoCATestCase):
+    @override_tmpcadir()
+    def test_basic(self):
+        name = 'test-data'
+        path = os.path.join(ca_settings.CA_DIR, name)
+        data = b'test data'
+        with open(path, 'wb') as stream:
+            stream.write(data)
+
+        self.assertEqual(read_file(name), data)
+        self.assertEqual(read_file(path), data)
+
+    @override_tmpcadir()
+    def test_file_not_found(self):
+        name = 'test-data'
+        path = os.path.join(ca_settings.CA_DIR, name)
+
+        msg = r"\[Errno 2\] No such file or directory: u?'%s'" % path
+        with self.assertRaisesRegex(FileNotFoundError, msg):
+            read_file(str(name))
+
+        with self.assertRaisesRegex(FileNotFoundError, msg):
+            read_file(str(path))
+
+    @override_tmpcadir()
+    def test_permission_denied(self):
+        name = 'test-data'
+        path = os.path.join(ca_settings.CA_DIR, name)
+        data = b'test data'
+        with open(path, 'wb') as stream:
+            stream.write(data)
+        os.chmod(path, 0o000)
+
+        try:
+            msg = r"\[Errno 13\] Permission denied: u?'%s'" % path
+            with self.assertRaisesRegex(PermissionError, msg):
+                read_file(str(name))
+
+            with self.assertRaisesRegex(PermissionError, msg):
+                read_file(str(path))
+        finally:
+            os.chmod(path, 0o600)  # make sure we can delete CA_DIR
 
 
 class ParseNameTestCase(DjangoCATestCase):

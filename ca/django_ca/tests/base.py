@@ -50,6 +50,7 @@ from ..signals import post_issue_cert
 from ..signals import post_revoke_cert
 from ..subject import Subject
 from ..utils import OID_NAME_MAPPINGS
+from ..utils import ca_storage
 from ..utils import x509_name
 
 if six.PY2:  # pragma: only py2
@@ -296,10 +297,21 @@ class override_tmpcadir(override_settings):
 
     def enable(self):
         self.options['CA_DIR'] = tempfile.mkdtemp()
+
+        shutil.copy(os.path.join(settings.FIXTURES_DIR, 'ocsp.key'), self.options['CA_DIR'])
+        shutil.copy(os.path.join(settings.FIXTURES_DIR, 'ocsp.pem'), self.options['CA_DIR'])
+
+        self.mock = patch.object(ca_storage, 'location', self.options['CA_DIR'])
+        self.mock_ = patch.object(ca_storage, '_location', self.options['CA_DIR'])
+        self.mock.start()
+        self.mock_.start()
+
         super(override_tmpcadir, self).enable()
 
     def disable(self):
         super(override_tmpcadir, self).disable()
+        self.mock.stop()
+        self.mock_.stop()
         shutil.rmtree(self.options['CA_DIR'])
 
 

@@ -16,7 +16,6 @@
 import base64
 import binascii
 import logging
-import os
 from datetime import datetime
 from datetime import timedelta
 
@@ -49,6 +48,7 @@ from .models import Certificate
 from .models import CertificateAuthority
 from .utils import SERIAL_RE
 from .utils import int_to_hex
+from .utils import read_file
 
 log = logging.getLogger(__name__)
 
@@ -110,25 +110,27 @@ class CertificateRevocationListView(View, SingleObjectMixin):
 class OCSPBaseView(View):
     """View to provide an OCSP responder.
 
-    .. seealso::
-
-        This is heavily inspired by
-        https://github.com/threema-ch/ocspresponder/blob/master/ocspresponder/__init__.py.
+    django-ca currently provides two OCSP implementations, one using cryptography>=2.4 and one using oscrypto
+    for older versions of cryptography that do not support OCSP. This is a base view that provides some
+    generic settings and common functions to both implementations.
     """
+
     ca = None
     """The name or serial of your Certificate Authority."""
 
     responder_key = None
-    """Absolute path to the private key used for signing OCSP responses."""
+    """Private key used for signing OCSP responses. Either a relative path used by :ref:`CA_FILE_STORAGE
+    <settings-ca-file-storage>` or an absolute path on the local filesystem."""
 
     responder_cert = None
     """Public key of the responder.
 
     This may either be:
 
+    * A relative path used by :ref:`CA_FILE_STORAGE <settings-ca-file-storage>`
+    * An absolute path on the local filesystem
     * A serial of a certificate as stored in the database
     * The PEM of the certificate as string
-    * An absolute filesystem path to a PEM certificate
     * A loaded certificate (either ``oscrypto.asymmetric.Certificate`` or
       :py:class:`cg:cryptography.x509.Certificate`) depending on the backend used.
     """
@@ -161,22 +163,16 @@ class OCSPBaseView(View):
             return self.fail()
 
     def get_responder_key(self):
-        with open(self.responder_key, 'rb') as stream:
-            responder_key = stream.read()
-        return responder_key
+        return read_file(self.responder_key)
 
     def get_responder_cert(self):
-        if SERIAL_RE.match(self.responder_cert):
-            return Certificate.objects.get(serial=self.responder_cert).pub.encode('utf-8')
-
         if self.responder_cert.startswith('-----BEGIN CERTIFICATE-----\n'):
             return self.responder_cert.encode('utf-8')
 
-        if os.path.exists(self.responder_cert):
-            with open(self.responder_cert, 'rb') as stream:
-                return stream.read()
+        if SERIAL_RE.match(self.responder_cert):
+            return Certificate.objects.get(serial=self.responder_cert).pub.encode('utf-8')
 
-        return force_bytes(self.responder_cert)
+        return read_file(self.responder_cert)
 
     def get_ca(self):
         return CertificateAuthority.objects.get_by_serial_or_cn(self.ca)
@@ -196,6 +192,10 @@ if ca_settings.CRYPTOGRAPHY_OCSP is True:  # pragma: only cryptography>=2.4
     from cryptography.x509 import OCSPNonce
 
     class OCSPView(OCSPBaseView):
+        """View providing OCSP functionality.
+
+        Depending on the cryptography version used, this view might use either cryptography or oscrypto."""
+
         def fail(self, status=ocsp.OCSPResponseStatus.INTERNAL_ERROR):
             return self.http_response(
                 ocsp.OCSPResponseBuilder.build_unsuccessful(status).public_bytes(Encoding.DER)
@@ -283,6 +283,12 @@ if ca_settings.CRYPTOGRAPHY_OCSP is True:  # pragma: only cryptography>=2.4
 
 else:  # pragma: only cryptography<2.4
     class OCSPView(OCSPBaseView):
+        """
+        .. seealso::
+
+            This is heavily inspired by
+            https://github.com/threema-ch/ocspresponder/blob/master/ocspresponder/__init__.py.
+        """
         def fail(self, reason=u'internal_error'):
             builder = OCSPResponseBuilder(response_status=reason)
             return self.http_response(builder.build().dump())

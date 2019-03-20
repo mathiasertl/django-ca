@@ -120,12 +120,15 @@ class ImportCATest(DjangoCATestCase):
         key_path = os.path.join(settings.FIXTURES_DIR, 'root.key')
         os.chmod(settings.CA_DIR, 0o000)
 
-        error = r'^%s/%s.key: Permission denied: Could not open file for writing$' % (
-            settings.CA_DIR, certs['root']['serial']
-        )
-        with self.assertCommandError(error):
-            self.cmd('import_ca', name, key_path, pem_path)
-        os.chmod(settings.CA_DIR, 0o644)
+        try:
+            error = r'^%s/%s.key: Permission denied: Could not open file for writing$' % (
+                settings.CA_DIR, certs['root']['serial']
+            )
+            with self.assertCommandError(error):
+                self.cmd('import_ca', name, key_path, pem_path)
+        finally:
+            # otherwise we might not be able to remove temporary CA_DIR
+            os.chmod(settings.CA_DIR, 0o755)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_bogus_pub(self):
