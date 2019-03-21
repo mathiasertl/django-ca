@@ -29,6 +29,7 @@ from django.utils import six
 from ... import ca_settings
 from ...models import CertificateAuthority
 from ...utils import ca_storage
+from ...utils import wrap_file_exceptions
 from ..base import BaseCommand
 from ..base import CertificateAuthorityDetailMixin
 from ..base import PasswordAction
@@ -61,8 +62,15 @@ Note that the private key will be copied to the directory configured by the CA_D
                             type=argparse.FileType('rb'))
 
     def handle(self, name, key, pem, **options):
-        if not os.path.exists(ca_settings.CA_DIR):  # pragma: no cover
-            os.makedirs(ca_settings.CA_DIR)
+        if not os.path.exists(ca_settings.CA_DIR):
+            try:
+                with wrap_file_exceptions():
+                    os.makedirs(ca_settings.CA_DIR)
+            except PermissionError:
+                pem.close()
+                key.close()
+                raise CommandError('%s: Could not create CA_DIR: Permission denied.' % ca_settings.CA_DIR)
+            # FileNotFoundError shouldn't happen, whole point of this block is to create it
 
         password = options['password']
         import_password = options['import_password']
@@ -71,11 +79,9 @@ Note that the private key will be copied to the directory configured by the CA_D
         key_data = key.read()
         crl_url = '\n'.join(options['crl_url'])
 
-        try:  # close reader objects (otherwise we get a ResourceWarning)
-            key.close()
-            pem.close()
-        except Exception:  # pragma: no cover
-            pass
+        # close reader objects (otherwise we get a ResourceWarning)
+        key.close()
+        pem.close()
 
         ca = CertificateAuthority(name=name, parent=parent, issuer_url=options['issuer_url'],
                                   issuer_alt_name=options['issuer_alt_name'], crl_url=crl_url)
@@ -110,10 +116,12 @@ Note that the private key will be copied to the directory configured by the CA_D
                                        format=PrivateFormat.TraditionalOpenSSL,
                                        encryption_algorithm=encryption)
 
+        perm_denied = '%s: Permission denied: Could not open file for writing' % ca.private_key_path
+
         try:
-            ca_storage.save(ca.private_key_path, ContentFile(pem))
+            with wrap_file_exceptions():
+                ca_storage.save(ca.private_key_path, ContentFile(pem))
         except PermissionError:
-            perm_denied = '%s: Permission denied: Could not open file for writing' % ca.private_key_path
             raise CommandError(perm_denied)
 
         # Only save CA to database if we loaded all data and copied private key
