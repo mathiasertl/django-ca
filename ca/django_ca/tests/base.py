@@ -286,6 +286,15 @@ class override_settings(_override_settings):
         reload_module(ca_settings)
 
 
+@contextmanager
+def mock_cadir(path):
+    """Contextmanager to set the CA_DIR to a given path without actually creating it."""
+    with override_settings(CA_DIR=path), \
+            patch.object(ca_storage, 'location', path), \
+            patch.object(ca_storage, '_location', path):
+        yield
+
+
 class override_tmpcadir(override_settings):
     """Sets the CA_DIR directory to a temporary directory.
 
@@ -339,6 +348,12 @@ class DjangoCATestCase(TestCase):
             attribute, not the "records" attribute."""
 
             class Py2LogOutput(object):
+                def __unicode__(self):
+                    return str(self.actual())
+
+                def __str__(self):
+                    return str(self.actual())
+
                 def __eq__(self, o):
                     messages = [p.split(':', 2) for p in o]
                     messages = tuple([(t[1], t[0], t[2]) for t in messages])
@@ -379,6 +394,9 @@ class DjangoCATestCase(TestCase):
     def tmpcadir(self, **kwargs):
         """Context manager to use a temporary CA dir."""
         return override_tmpcadir(**kwargs)
+
+    def mock_cadir(self, path):
+        return mock_cadir(path)
 
     def assertAuthorityKeyIdentifier(self, issuer, cert, critical=False):
         self.assertEqual(cert.authority_key_identifier.value, issuer.subject_key_identifier.value)
