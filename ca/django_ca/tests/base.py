@@ -56,6 +56,8 @@ from ..utils import x509_name
 if six.PY2:  # pragma: only py2
     from mock import Mock
     from mock import patch
+
+    from testfixtures import LogCapture  # for capturing logging
 else:  # pragma: only py3
     from unittest.mock import Mock
     from unittest.mock import patch
@@ -328,6 +330,29 @@ class DjangoCATestCase(TestCase):
 
     if six.PY2:  # pragma: no branch, pragma: only py2
         assertRaisesRegex = TestCase.assertRaisesRegexp
+
+        @contextmanager
+        def assertLogs(self, logger=None, level=None):
+            """Simulate assertLogs() from Python3 using the textfixtures module.
+
+            Note that this context manager only allows you to compare the ouput
+            attribute, not the "records" attribute."""
+
+            class Py2LogOutput(object):
+                def __eq__(self, o):
+                    messages = [p.split(':', 2) for p in o]
+                    messages = tuple([(t[1], t[0], t[2]) for t in messages])
+                    try:
+                        lc.check(*messages)
+                    except AssertionError:
+                        return False
+                    return True
+
+            class Py2LogCapture(object):
+                output = Py2LogOutput()
+
+            with LogCapture() as lc:
+                yield Py2LogCapture()
 
     @classmethod
     def setUpClass(cls):
