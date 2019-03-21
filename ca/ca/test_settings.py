@@ -145,6 +145,9 @@ LOGGING = {
         }
     },
     'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
@@ -156,6 +159,10 @@ LOGGING = {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': True,
+        },
+        'django_ca': {
+            'handlers': ['console'],
+            'level': 'INFO',
         },
     }
 }
