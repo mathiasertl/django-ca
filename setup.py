@@ -46,7 +46,7 @@ _rootdir = os.path.dirname(os.path.realpath(__file__))
 
 install_requires = [
     'asn1crypto>=0.24.0',
-    'cryptography>=2.1',
+    'cryptography>=2.2',
     'django-object-actions>=1.0',
     'ocspbuilder>=0.10.2',
     'oscrypto>=0.19.0',
@@ -313,7 +313,6 @@ setup(
     classifiers=[
         'Development Status :: 4 - Beta',
         'Framework :: Django :: 1.11',
-        'Framework :: Django :: 2.0',
         'Framework :: Django :: 2.1',
         'Framework :: Django',
         'Intended Audience :: Developers',
