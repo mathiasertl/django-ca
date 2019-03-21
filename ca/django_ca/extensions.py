@@ -24,6 +24,7 @@ from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import ObjectIdentifier
 
+from . import ca_settings
 from .utils import bytes_to_hex
 from .utils import format_general_name
 from .utils import hex_to_bytes
@@ -169,6 +170,62 @@ class Extension(object):
             >>> builder.add_extension(**kwargs)  # doctest: +SKIP
         """
         return {'extension': self.extension_type, 'critical': self.critical}
+
+
+class NullExtension(Extension):
+    """Base class for extensions that have a NULL value.
+
+    Extensions using this base class do not accept a ``str`` as value:
+
+        >>> OCSPNoCheck()
+        <OCSPNoCheck: critical=False>
+        >>> OCSPNoCheck({'critical': True})
+        <OCSPNoCheck: critical=True>
+        >>> OCSPNoCheck({'critical': True})
+        <OCSPNoCheck: critical=True>
+        >>> OCSPNoCheck(x509.extensions.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=True, value=None))
+        <OCSPNoCheck: critical=True>
+    """
+
+    def __init__(self, value=None):
+        if not value:
+            self.critical = self.default_critical
+        elif isinstance(value, x509.extensions.Extension):  # e.g. from a cert object
+            self.critical = value.critical
+            self.from_extension(value)
+        elif isinstance(value, dict):  # e.g. from settings
+            self.critical = value.get('critical', self.default_critical)
+            self.from_dict(value)
+            self._test_value()
+        else:
+            self.from_other(value)
+
+        if not isinstance(self.critical, bool):
+            raise ValueError('%s: Invalid critical value passed' % self.critical)
+
+    def __repr__(self):
+        return '<%s: critical=%r>' % (self.__class__.__name__, self.critical)
+
+    def __str__(self):
+        if self.critical:
+            return'%s/critical' % self.as_text()
+        return self.as_text()
+
+    def as_text(self):
+        return self.__class__.__name__
+
+    def from_extension(self, value):
+        pass
+
+    def from_dict(self, value):
+        pass
+
+    def from_str(self, value):
+        raise NotImplementedError
+
+    def as_extension(self):
+        """This extension as :py:class:`~cg:cryptography.x509.ExtensionType`."""
+        return x509.extensions.Extension(oid=self.oid, critical=self.critical, value=None)
 
 
 class ListExtension(Extension):
@@ -792,6 +849,23 @@ class NameConstraints(GeneralNameMixin, Extension):
         value = value.get('value', {})
         self.permitted = [self.parse_value(v) for v in value.get('permitted', [])]
         self.excluded = [self.parse_value(v) for v in value.get('excluded', [])]
+
+
+class OCSPNoCheck(NullExtension):
+    """Extension to indicate that an OCSP client should (blindly) trust the certificate for it's lifetime.
+
+    This extension is only meaningful in an OCSP responder certificate.
+
+    .. seealso::
+
+        `RFC 6990, section 4.2.2.2.1 <https://tools.ietf.org/html/rfc6960#section-4.2.2.2>`_
+    """
+    oid = ExtensionOID.OCSP_NO_CHECK
+
+
+if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
+    class PrecertPoison(NullExtension):
+        oid = ExtensionOID.PRECERT_POISON
 
 
 class SubjectAlternativeName(AlternativeNameExtension):
