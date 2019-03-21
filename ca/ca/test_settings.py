@@ -146,7 +146,7 @@ LOGGING = {
     },
     'handlers': {
         'console': {
-            'class': 'logging.StreamHandler',
+            'class': 'logging.NullHandler',
         },
         'mail_admins': {
             'level': 'ERROR',
