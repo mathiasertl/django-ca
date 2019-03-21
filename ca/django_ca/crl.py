@@ -68,5 +68,10 @@ def get_crl(ca, encoding, expires, algorithm, password, ca_crl=False):
     for cert in qs.revoked():
         builder = builder.add_revoked_certificate(cert.get_revocation())
 
+    # TODO: Add CRLNumber extension
+    #   https://cryptography.io/en/latest/x509/reference/#cryptography.x509.CRLNumber
+    # TODO: Add IssuingDistributionPoint extension
+    #   https://cryptography.io/en/latest/x509/reference/#cryptography.x509.IssuingDistributionPoint
+
     crl = builder.sign(private_key=ca.key(password), algorithm=algorithm, backend=default_backend())
     return crl.public_bytes(encoding)
