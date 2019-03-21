@@ -28,6 +28,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
 
+from .. import ca_settings
 from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
@@ -112,8 +113,38 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         self.cert3 = self.load_cert(self.ca, cert3_pubkey)
         self.ocsp = self.load_cert(self.ca, ocsp_pubkey)
 
+    @override_tmpcadir()
+    def test_key(self):
+        log_msg = 'WARNING:django_ca.models:%s: CA uses absolute path. Use "manage.py migrate_ca" to update.'
+        # NOTE: exclude pwd_ca for simplicity
+        for ca in [self.ca, self.ecc_ca, self.child_ca]:
+            self.assertTrue(ca.key_exists)
+            self.assertIsNotNone(ca.key(None))
+
+            # test a second tome to make sure we reload the key
+            with mock.patch('django_ca.utils.read_file') as patched:
+                self.assertIsNotNone(ca.key(None))
+            patched.assert_not_called()
+
+            ca._key = None  # so the key is reloaded
+            ca.private_key_path = os.path.join(ca_settings.CA_DIR, ca.private_key_path)
+
+            with self.assertLogs() as cm:
+                self.assertTrue(ca.key_exists)
+            self.assertEqual(cm.output, [log_msg % ca.serial, ])
+
+            with self.assertLogs() as cm:
+                self.assertIsNotNone(ca.key(None))
+            self.assertEqual(cm.output, [log_msg % ca.serial, ])
+
+            # Check again - here we have an already loaded key (also: no logging here anymore)
+            # NOTE: assertLogs() fails if there are *no* log messages, so we cannot test that
+            self.assertTrue(ca.key_exists)
+
     def test_pathlen(self):
         self.assertEqual(self.ca.pathlen, 1)
+        self.assertIsNone(self.pwd_ca.pathlen)
+        self.assertEqual(self.ecc_ca.pathlen, 0)
         self.assertEqual(self.child_ca.pathlen, 0)
 
     def test_dates(self):
