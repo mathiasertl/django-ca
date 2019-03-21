@@ -20,6 +20,7 @@ import errno
 import os
 import re
 import shlex
+from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime
 from datetime import timedelta
@@ -651,29 +652,14 @@ if six.PY2:  # pragma: no branch, pragma: only py2
         pass
 
 
-def read_file(path):
-    """Read the file from the given path.
+@contextmanager
+def wrap_file_exceptions():
+    """Contextmanager to wrap file exceptions into identicaly exceptions in py2 and py3.
 
-    If ``path`` is an absolute path, reads a file from the local filesystem. For relative paths, read the file
-    using the storage backend configured using :ref:`CA_FILE_STORAGE <settings-ca-file-storage>`.
+    This should be removed once py2 support is dropped.
     """
-    if os.path.isabs(path):
-        try:
-            with open(path, 'rb') as stream:
-                return stream.read()
-        except (PermissionError, FileNotFoundError):  # pragma: only py3
-            # In py3, we want to raise Exception unchanged, so there would be no need for this block.
-            # BUT (IOError, OSError) - see below - also matches, so we capture it here
-            raise
-        except (IOError, OSError) as e:  # pragma: only py2
-            if e.errno == errno.EACCES:
-                raise PermissionError(str(e))
-            elif e.errno == errno.ENOENT:
-                raise FileNotFoundError(str(e))
-            raise  # pragma: no cover
-
     try:
-        stream = ca_storage.open(path)
+        yield
     except (PermissionError, FileNotFoundError):  # pragma: only py3
         # In py3, we want to raise Exception unchanged, so there would be no need for this block.
         # BUT (IOError, OSError) - see below - also matches, so we capture it here
@@ -684,6 +670,21 @@ def read_file(path):
         elif e.errno == errno.ENOENT:
             raise FileNotFoundError(str(e))
         raise  # pragma: no cover
+
+
+def read_file(path):
+    """Read the file from the given path.
+
+    If ``path`` is an absolute path, reads a file from the local filesystem. For relative paths, read the file
+    using the storage backend configured using :ref:`CA_FILE_STORAGE <settings-ca-file-storage>`.
+    """
+    if os.path.isabs(path):
+        with wrap_file_exceptions():
+            with open(path, 'rb') as stream:
+                return stream.read()
+
+    with wrap_file_exceptions():
+        stream = ca_storage.open(path)
 
     try:
         return stream.read()
