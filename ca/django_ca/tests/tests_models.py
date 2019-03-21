@@ -116,6 +116,7 @@ class CertificateTests(DjangoCAWithChildCATestCase):
     @override_tmpcadir()
     def test_key(self):
         log_msg = 'WARNING:django_ca.models:%s: CA uses absolute path. Use "manage.py migrate_ca" to update.'
+
         # NOTE: exclude pwd_ca for simplicity
         for ca in [self.ca, self.ecc_ca, self.child_ca]:
             self.assertTrue(ca.key_exists)
