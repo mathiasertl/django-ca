@@ -347,24 +347,10 @@ class DjangoCATestCase(TestCase):
             Note that this context manager only allows you to compare the ouput
             attribute, not the "records" attribute."""
 
-            class Py2LogOutput(object):
-                def __unicode__(self):
-                    return str(self.actual())
-
-                def __str__(self):
-                    return str(self.actual())
-
-                def __eq__(self, o):
-                    messages = [p.split(':', 2) for p in o]
-                    messages = tuple([(t[1], t[0], t[2]) for t in messages])
-                    try:
-                        lc.check(*messages)
-                    except AssertionError:
-                        return False
-                    return True
-
             class Py2LogCapture(object):
-                output = Py2LogOutput()
+                @property
+                def output(self):
+                    return ['%s:%s:%s' % (r[1], r[0], r[2]) for r in lc.actual()]
 
             with LogCapture() as lc:
                 yield Py2LogCapture()
