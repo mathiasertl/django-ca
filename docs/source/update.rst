@@ -25,6 +25,38 @@ then upgrade with these commands::
 
       source bin/activate
 
+.. _update-file-storage:
+
+*************************
+Update to 1.12.0 or later
+*************************
+
+:ref:`Version 1.12.0 <changelog-1.12.0>` and later uses the `File storage API
+<https://docs.djangoproject.com/en/2.1/ref/files/storage/>`_ to store files.
+Before 1.12.0, django-ca stored absolute file paths in the database.
+
+The old way of accessing files works until version 1.14. In most cases, you will
+be able to migrate using a simple manage.py command:
+
+.. code-block:: console
+
+   $ python manage.py migrate_ca
+   <serial>: Updating <old path> to <new path>.
+
+If you have stored some private keys outside of the filesystem, you will need to
+force them being moved into the directory configured by :ref:`CA_DIR
+<settings-ca-dir>`:
+
+.. code-block:: console
+
+   $ python manage.py migrate_ca
+   <serial>: <old path> is not in a subdir of <CA dir>. Use --force to move files.
+   $ python manage.py migrate_ca --force
+   <serial>: Move <old path> to <CA dir>.
+
+Note that this command can safely be executed multiple times if some migrations didn't work (e.g. because of
+missing permissions) the first time.
+
 *******************
 Update from 1.0.0b2
 *******************

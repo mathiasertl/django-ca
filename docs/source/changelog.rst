@@ -4,6 +4,8 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.12.0:
+
 **********
 HEAD (TBR)
 **********
@@ -13,13 +15,30 @@ HEAD (TBR)
 * Start using `Django storage backends <https://docs.djangoproject.com/en/2.1/ref/files/storage/>`_ for files
   used by django-ca. This allows you to store files on a shared storage system (e.g. one from `django-storages
   <https://django-storages.readthedocs.io/>`_) to support a redundant setup.
-  See new settings :ref:`CA_FILE_STORAGE <settings-ca-file-storage>` and :ref:`CA_FILE_STORAGE_KWARGS
-  <settings-ca-file-storage-kwargs>` for configuration.
 * **BACKWARDS INCOMPATIBLE:** Drop support for Python 3.4.
 * **BACKWARDS INCOMPATIBLE:** Drop support for Django 2.0.
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.1.
 * **DEPRECATION NOTICE:** This is the last release to support cryptography 2.2.
 * **DEPRECATION NOTICE:** This is the last release to support idna 2.6.
+
+Django File storage API
+=======================
+
+**django-ca** now uses the `File storage API <https://docs.djangoproject.com/en/2.1/ref/files/storage/>`_ to
+store CA private keys as well as files configured for OCSP views. This allows you to use different storage
+backends (e.g. from `django-storages <https://django-storages.readthedocs.io/>`_) to store files on a
+filesystem shared between different servers, e.g. to provide a redundant setup.
+
+.. NOTE:: 
+   
+   The switch does require some manual intervention when upgrading. The old way of storing files is still
+   supported and will continue to work until version 1.14. Please see the :ref:`upgrade notes
+   <update-file-storage>` for information on how to upgrade.
+
+* Use file storage API for reading/writing private keys of CAs.
+* Use file storage API for reading the responder key and certificate for OCSP.
+* New settings :ref:`CA_FILE_STORAGE <settings-ca-file-storage>` and :ref:`CA_FILE_STORAGE_KWARGS
+  <settings-ca-file-storage-kwargs>` to configure file storage.
 
 OCSP
 ====
