@@ -35,7 +35,7 @@ class Command(BaseCommand):
         serials = options['serial']
 
         if not isinstance(ca_storage, FileSystemStorage):
-            raise CommandError('CA_FILE_STORAGE is not a subclass of FileSystemStorage')
+            raise CommandError('CA_FILE_STORAGE is not a subclass of FileSystemStorage.')
         dest = os.path.realpath(ca_storage.location)
 
         if not serials:
@@ -45,7 +45,7 @@ class Command(BaseCommand):
             try:
                 ca = CertificateAuthority.objects.get(serial=serial)
             except CertificateAuthority.DoesNotExist:
-                self.stderr.write(self.style.ERROR('%s: Unkown CA.' % serial))
+                self.stderr.write(self.style.ERROR('%s: Unknown CA.' % serial))
                 continue
 
             if not os.path.isabs(ca.private_key_path):
@@ -56,21 +56,26 @@ class Command(BaseCommand):
             if path.startswith(dest):
                 name = os.path.relpath(path, start=dest)
                 self.stdout.write(self.style.SUCCESS(
-                    '%s: Updating %s to %s' % (serial, ca.private_key_path, name)))
+                    '%s: Updating %s to %s.' % (serial, ca.private_key_path, name)))
                 ca.private_key_path = os.path.relpath(path, start=dest)
                 ca.save()
             elif options['force']:
                 if not os.path.exists(ca.private_key_path):
                     self.stderr.write(self.style.ERROR(
                         '%s: %s: File not found.' % (ca.serial, ca.private_key_path)))
+                    continue
 
                 name = ca_storage.get_available_name(os.path.basename(ca.private_key_path))
                 dest_path = ca_storage.path(name)
+                self.stdout.write(self.style.SUCCESS(
+                    '%s: Move %s to %s.' % (ca.serial, ca.private_key_path, name)
+                ))
+
                 shutil.move(ca.private_key_path, dest_path)
                 ca.private_key_path = name
                 ca.save()
             else:
                 self.stderr.write(self.style.WARNING(
-                    '%s: %s is not a subdir of %s. Use --force to move files.' % (
+                    '%s: %s is not in a subdir of %s. Use --force to move files.' % (
                         ca.serial, ca.private_key_path, dest))
                 )
