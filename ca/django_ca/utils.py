@@ -692,18 +692,19 @@ def read_file(path):
         stream.close()
 
 
-def write_private_file(path, data):
-    """Function to write binary data to a file that will only be readable to the user."""
-
-    try:
-        with os.fdopen(os.open(path, os.O_CREAT | os.O_WRONLY, 0o400), 'wb') as fh:
-            fh.write(data)
-    except PermissionError:  # pragma: only py3
-        # In py3, we want to raise Exception unchanged, so there would be no need for this block.
-        # BUT (IOError, OSError) - see below - also matches, so we capture it here
-        raise
-    except (IOError, OSError) as e:  # pragma: only py2
-        raise PermissionError(e.errno)
+# Note used currently, but left here for future reference
+#def write_private_file(path, data):
+#    """Function to write binary data to a file that will only be readable to the user."""
+#
+#    try:
+#        with os.fdopen(os.open(path, os.O_CREAT | os.O_WRONLY, 0o400), 'wb') as fh:
+#            fh.write(data)
+#    except PermissionError:  # pragma: only py3
+#        # In py3, we want to raise Exception unchanged, so there would be no need for this block.
+#        # BUT (IOError, OSError) - see below - also matches, so we capture it here
+#        raise
+#    except (IOError, OSError) as e:  # pragma: only py2
+#        raise PermissionError(e.errno)
 
 
 def shlex_split(s, sep):
