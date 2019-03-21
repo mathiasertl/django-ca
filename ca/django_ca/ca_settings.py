@@ -17,6 +17,7 @@ import os
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.x509.oid import ExtensionOID
 
 from django.conf import global_settings
 from django.conf import settings
@@ -171,8 +172,11 @@ CA_FILE_STORAGE_KWARGS = getattr(settings, 'CA_FILE_STORAGE_KWARGS', {
 })
 
 # Try to decide if we can use OCSP from cryptography or not
-try:  # # pragma: only cryptography>=2.4
+try:  # pragma: only cryptography>=2.4
     from cryptography.x509 import ocsp  # NOQA
     CRYPTOGRAPHY_OCSP = True
 except ImportError:  # pragma: only cryptography<2.4
     CRYPTOGRAPHY_OCSP = False
+
+# pragma: only cryptography<2.4 - Added in cryptography 2.4.
+CRYPTOGRAPHY_HAS_PRECERT_POISON = hasattr(ExtensionOID, 'PRECERT_POISON')
