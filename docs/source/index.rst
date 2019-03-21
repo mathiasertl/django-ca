@@ -19,7 +19,7 @@ Features:
 * Certificate validation via the included OCSP responder and Certificate Revocation Lists (CRLs).
 * Complete, consistent and powerful command line interface.
 * Optional web interface for certificate handling (e.g. issuing, revoking, ...).
-* Written in pure Python2.7/Python3.4+, using Django 1.11 or later.
+* Written in pure Python2.7/Python3.5+, using Django 1.11 or later.
 
 .. toctree::
    :maxdepth: 1
