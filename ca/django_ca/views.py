@@ -246,8 +246,12 @@ if ca_settings.CRYPTOGRAPHY_OCSP is True:  # pragma: only cryptography>=2.4
                 return self.fail()
 
             # get key/cert for OCSP responder
-            responder_key = self.get_responder_key()
-            responder_cert = self.get_responder_cert()
+            try:
+                responder_key = self.get_responder_key()
+                responder_cert = self.get_responder_cert()
+            except Exception:
+                log.error('Could not read responder key/cert.')
+                return self.fail()
 
             # get the certificate status
             if cert.revoked:
