@@ -535,7 +535,9 @@ class CertificateAuthority(X509CertMixin):
 
     @property
     def key_exists(self):
-        if os.path.isabs(self.private_key_path):
+        if self._key is not None:
+            return True
+        elif os.path.isabs(self.private_key_path):
             log.warning('%s: CA uses absolute path. Use "manage.py migrate_ca" to update.', self.serial)
             return os.path.exists(self.private_key_path)
         else:
