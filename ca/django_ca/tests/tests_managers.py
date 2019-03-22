@@ -46,6 +46,7 @@ from .base import override_tmpcadir
 from .base import root_crl_url
 from .base import root_issuer_alt
 from .base import root_issuer_url
+from .base import root_ocsp_domain
 from .base import root_ocsp_url
 
 if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
@@ -301,12 +302,13 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         # Create a typical OCSP responder certificate
         kwargs = get_cert_profile_kwargs('ocsp')
 
+        self.ca.issuer_url = root_issuer_url
         self.ca.crl_url = root_crl_url
         self.ca.save()
 
         cert = Certificate.objects.init(
             self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
-            subject_alternative_name=[root_ocsp_url],
+            subject_alternative_name=[root_ocsp_domain],
             extra_extensions=[IssuerAlternativeName(root_issuer_alt)],
             **kwargs)
 

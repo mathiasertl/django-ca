@@ -174,6 +174,8 @@ HPKP pin: {hpkp}
 
     @freeze_time("2018-11-10")
     def test_ocsp(self):
+        self.maxDiff = None
+
         stdout, stderr = self.cmd('view_cert', self.ocsp.serial, no_pem=True, extensions=True,
                                   stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
@@ -184,8 +186,6 @@ Status: {status}
 authorityInfoAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
-    OCSP:
-      * URI:{authority_information_access.ocsp[0].value}
 authorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
 basicConstraints{basic_constraints_critical}:
