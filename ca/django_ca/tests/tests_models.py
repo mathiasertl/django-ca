@@ -48,11 +48,18 @@ from .base import cryptography_version
 from .base import ocsp_pubkey
 from .base import override_settings
 from .base import override_tmpcadir
+from .base import multiple_ous_and_no_ext_pubkey
+from .base import cloudflare_1_pubkey
+from .base import letsencrypt_jabber_at_pubkey
+from .base import godaddy_derstandardat_pubkey
 
 try:
     import unittest.mock as mock
 except ImportError:
     import mock
+
+if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
+    from ..extensions import PrecertPoison
 
 
 class TestWatcher(TestCase):
@@ -111,7 +118,17 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         self.cert2 = self.load_cert(self.ca, cert2_pubkey)
         self.cert3 = self.load_cert(self.ca, cert3_pubkey)
         self.ocsp = self.load_cert(self.ca, ocsp_pubkey)
-        self.certs += [self.cert2, self.cert3, self.ocsp]
+
+        self.cert_multiple_ous_and_no_ext = self.load_cert(self.ca, multiple_ous_and_no_ext_pubkey)
+        self.cert_cloudflare_1 = self.load_cert(self.ca, cloudflare_1_pubkey)
+        self.cert_letsencrypt_jabber_at = self.load_cert(self.ca, letsencrypt_jabber_at_pubkey)
+        self.cert_godaddy_derstandardat = self.load_cert(self.ca, godaddy_derstandardat_pubkey)
+
+        self.certs += [
+            self.cert2, self.cert3, self.ocsp,
+            self.cert_multiple_ous_and_no_ext, self.cert_cloudflare_1,
+            self.cert_letsencrypt_jabber_at, self.cert_godaddy_derstandardat,
+        ]
 
     def assertExtension(self, name, expected):
         for cert in self.cas + self.certs:
@@ -336,19 +353,7 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         self.assertEqual(self.cert2.authority_key_identifier.as_text(), certs['cert2']['authKeyIdentifier'])
         self.assertEqual(self.cert3.authority_key_identifier.as_text(), certs['cert3']['authKeyIdentifier'])
 
-    def test_name_constraints(self):
-        self.assertExtension('name_constraints', {
-            self.child_ca: certs['child']['name_constraints'],
-        })
-
-    def test_ocsp_no_check(self):
-        self.assertExtension('ocsp_no_check', {})
-
-    def test_precert_poison(self):
-        self.assertExtension('precert_poison', {})
-
     def test_hpkp_pin(self):
-
         # get hpkp pins using
         #   openssl x509 -in cert1.pem -pubkey -noout \
         #       | openssl rsa -pubin -outform der \
@@ -360,28 +365,20 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         self.assertEqual(self.cert3.hpkp_pin, certs['cert3']['hpkp'])
 
     def test_contrib_multiple_ous_and_no_ext(self):
-        name = 'multiple_ous_and_no_ext'
-        _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
-        cert = self.load_cert(self.ca, x509=pubkey)
+        cert = self.cert_multiple_ous_and_no_ext
         self.assertIsNone(cert.authority_information_access)
         self.assertIsNone(cert.authority_key_identifier)
         self.assertIsNone(cert.basic_constraints)
         self.assertIsNone(cert.extended_key_usage)
         self.assertIsNone(cert.issuer_alternative_name)
         self.assertIsNone(cert.key_usage)
-        self.assertIsNone(cert.ocsp_no_check)
-        self.assertIsNone(cert.precert_poison)
         self.assertIsNone(cert.subject_alternative_name)
         self.assertIsNone(cert.subject_key_identifier)
-        self.assertIsNone(cert.tls_feature)
         self.assertIsNone(cert.certificatePolicies())
         self.assertIsNone(cert.signedCertificateTimestampList())
 
     def test_contrib_le(self):
-        name = 'letsencrypt_jabber_at'
-        _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
-
-        cert = self.load_cert(self.ca, x509=pubkey)
+        cert = self.cert_letsencrypt_jabber_at
         self.assertEqual(cert.authority_information_access,
                          AuthorityInformationAccess({
                              'issuers': ['URI:http://cert.int-x3.letsencrypt.org/'],
@@ -397,9 +394,6 @@ class CertificateTests(DjangoCAWithChildCATestCase):
             cert.authority_key_identifier,
             AuthorityKeyIdentifier('A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1')
         )
-        self.assertIsNone(cert.tls_feature)
-        self.assertIsNone(cert.ocsp_no_check)
-        self.assertIsNone(cert.precert_poison)
         self.assertEqual(cert.certificatePolicies(), (False, [
             'OID 2.23.140.1.2.1: None',
             'OID 1.3.6.1.4.1.44947.1.1.1: http://cps.letsencrypt.org, This Certificate '
@@ -416,10 +410,7 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         ]))
 
     def test_contrib_godaddy(self):
-        name = 'godaddy_derstandardat'
-        _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
-
-        cert = self.load_cert(self.ca, x509=pubkey)
+        cert = self.cert_godaddy_derstandardat
         self.assertEqual(cert.authority_information_access,
                          AuthorityInformationAccess({
                              'issuers': ['URI:http://certificates.godaddy.com/repository/gdig2.crt'],
@@ -434,9 +425,6 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         self.assertEqual(
             cert.authority_key_identifier,
             AuthorityKeyIdentifier(':40:C2:BD:27:8E:CC:34:83:30:A2:33:D7:FB:6C:B3:F0:B4:2C:80:CE'))
-        self.assertIsNone(cert.ocsp_no_check)
-        self.assertIsNone(cert.precert_poison)
-        self.assertIsNone(cert.tls_feature)
         self.assertEqual(cert.certificatePolicies(), (False, [
             'OID 2.16.840.1.114413.1.7.23.1: http://certificates.godaddy.com/repository/',
             'OID 2.23.140.1.2.1: None',
@@ -444,10 +432,7 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         self.assertIsNone(cert.signedCertificateTimestampList())
 
     def test_contrib_cloudflare(self):
-        name = 'cloudflare_1'
-        _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
-
-        cert = self.load_cert(self.ca, x509=pubkey)
+        cert = self.cert_cloudflare_1
         self.assertEqual(
             cert.authority_information_access,
             AuthorityInformationAccess({
@@ -464,8 +449,6 @@ class CertificateTests(DjangoCAWithChildCATestCase):
             cert.authority_key_identifier,
             AuthorityKeyIdentifier('40:09:61:67:F0:BC:83:71:4F:DE:12:08:2C:6F:D4:D4:2B:76:3D:96')
         )
-        self.assertIsNone(cert.ocsp_no_check)
-        self.assertIsNone(cert.tls_feature)
         self.assertEqual(cert.certificatePolicies(), (False, [
             'OID 1.3.6.1.4.1.6449.1.2.2.7: https://secure.comodo.com/CPS',
             'OID 2.23.140.1.2.1: None',
@@ -481,15 +464,10 @@ class CertificateTests(DjangoCAWithChildCATestCase):
     @override_tmpcadir()
     def test_unsupported(self):
         # Test return value for older versions of OpenSSL
-
-        name = 'letsencrypt_jabber_at'
-        _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
-        cert = self.load_cert(self.ca, x509=pubkey)
-
         value = UnrecognizedExtension(ObjectIdentifier('1.1.1.1'), b'foo')
 
         with mock.patch('cryptography.x509.extensions.Extension.value', value):
-            self.assertEqual(cert.signedCertificateTimestampList(),
+            self.assertEqual(self.cert_letsencrypt_jabber_at.signedCertificateTimestampList(),
                              (False, ['Parsing requires OpenSSL 1.1.0f+']))
 
     def test_get_authority_key_identifier(self):
@@ -505,3 +483,26 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         with mock.patch('cryptography.x509.extensions.Extensions.get_extension_for_class',
                         side_effect=side_effect):
             self.assertEqual(self.child_ca.get_authority_key_identifier(), certs['child']['aki'])
+
+    ###############################################
+    # Test extensions for all loaded certificates #
+    ###############################################
+    def test_name_constraints(self):
+        self.assertExtension('name_constraints', {
+            self.child_ca: certs['child']['name_constraints'],
+        })
+
+    def test_ocsp_no_check(self):
+        self.assertExtension('ocsp_no_check', {})
+
+    @unittest.skipUnless(ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON,
+                         "This version of cryptography does not support PrecertPoison extension.")
+    def test_precert_poison(self):
+        self.assertExtension('precert_poison', {
+            self.cert_cloudflare_1: PrecertPoison()
+        })
+
+    def test_tls_feature(self):
+        self.assertExtension('tls_feature', {
+            self.cert_all: certs['cert_all']['tls_feature'],
+        })

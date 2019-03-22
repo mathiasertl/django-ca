@@ -43,6 +43,7 @@ from .. import ca_settings
 from ..extensions import Extension
 from ..extensions import NameConstraints
 from ..extensions import SubjectAlternativeName
+from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..profiles import get_cert_profile_kwargs
@@ -124,6 +125,8 @@ no_ext_pem, no_ext_pubkey = _load_cert('cert_no_ext.pem')
 # Various contributed certs
 _, multiple_ous_and_no_ext_pubkey = _load_cert(os.path.join('contrib', 'multiple_ous_and_no_ext.pem'))
 _, cloudflare_1_pubkey = _load_cert(os.path.join('contrib', 'cloudflare_1.pem'))
+_, letsencrypt_jabber_at_pubkey = _load_cert(os.path.join('contrib', 'letsencrypt_jabber_at.pem'))
+_, godaddy_derstandardat_pubkey = _load_cert(os.path.join('contrib', 'godaddy_derstandardat.pem'))
 
 certs = {
     'root': {
@@ -243,6 +246,9 @@ certs = {
         'serial': '32:A7:B0:8E:88:A2:1A:EC:05:C8:BA:18:D7:8B:D9:35:45:9D:82:FA',
         'expires': datetime(2019, 4, 18, 0, 0),
         'valid_from': datetime(2017, 4, 17, 11, 47),
+    },
+    'cert_all': {
+        'tls_feature': TLSFeature('critical,OCSPMustStaple,MultipleCertStatusRequest'),
     },
     'ocsp': {
         'crl': (False, ['Full Name: URI:http://ca.example.com/crl']),
