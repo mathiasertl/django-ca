@@ -117,6 +117,48 @@ HPKP pin: {hpkp}
     def test_basic_with_use_tz(self):
         self.test_basic()
 
+    @freeze_time("2018-11-10")
+    def test_ocsp(self):
+        self.maxDiff = None
+        stdout, stderr = self.cmd('view_cert', self.ocsp.serial, no_pem=True, extensions=True,
+                                  stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stderr, b'')
+        self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
+Valid from: {from}
+Valid until: {until}
+Status: {status}
+authorityInfoAccess:
+    CA Issuers:
+      * URI:{authority_information_access.issuers[0].value}
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+authorityKeyIdentifier:
+    {authority_key_identifier_text}
+basicConstraints (critical):
+    {basic_constraints_text}
+cRLDistributionPoints:
+    * {crl_0}
+extendedKeyUsage:
+    * {extended_key_usage[0]}
+issuerAltName:
+    * {issuer_alternative_name[0]}
+keyUsage (critical):
+    * {key_usage[0]}
+    * {key_usage[1]}
+    * {key_usage[2]}
+subjectAltName:
+    * {subject_alternative_name[0]}
+subjectKeyIdentifier:
+    {subject_key_identifier_text}
+Watchers:
+Digest:
+    md5: {md5}
+    sha1: {sha1}
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
+'''.format(**self.get_cert_context('ocsp')))
+
     def test_der(self):
         stdout, stderr = self.cmd('view_cert', self.cert.serial, format=Encoding.DER,
                                   stdout=BytesIO(), stderr=BytesIO())
