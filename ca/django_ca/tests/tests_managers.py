@@ -309,7 +309,10 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         cert = Certificate.objects.init(
             self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
             subject_alternative_name=[root_ocsp_domain],
-            extra_extensions=[IssuerAlternativeName(root_issuer_alt)],
+            extra_extensions=[
+                IssuerAlternativeName(root_issuer_alt),
+                OCSPNoCheck(),
+            ],
             **kwargs)
 
         if os.environ.get('UPDATE_FIXTURES') == '1':
