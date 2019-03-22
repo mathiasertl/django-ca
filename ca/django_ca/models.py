@@ -405,7 +405,7 @@ class X509CertMixin(models.Model):
         return OCSPNoCheck(ext)
 
     @property
-    def precert_poison(self):
+    def precert_poison(self):  # pragma: only cryptography>=2.4
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.PRECERT_POISON)
         except x509.ExtensionNotFound:
