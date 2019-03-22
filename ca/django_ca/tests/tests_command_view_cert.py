@@ -118,8 +118,54 @@ HPKP pin: {hpkp}
         self.test_basic()
 
     @freeze_time("2018-11-10")
+    def test_cert_all(self):
+        stdout, stderr = self.cmd('view_cert', self.cert_all.serial, no_pem=True, extensions=True,
+                                  stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stderr, b'')
+        self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
+Valid from: {from}
+Valid until: {until}
+Status: {status}
+TLSFeature{tls_feature_critical}:
+    * {tls_feature[0]}
+    * {tls_feature[1]}
+authorityInfoAccess{authority_information_access_critical}:
+    CA Issuers:
+      * URI:{authority_information_access.issuers[0].value}
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+authorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+basicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+cRLDistributionPoints:
+    * {crl_0}
+extendedKeyUsage{extended_key_usage_critical}:
+    * {extended_key_usage[0]}
+    * {extended_key_usage[1]}
+    * {extended_key_usage[2]}
+    * {extended_key_usage[3]}
+issuerAltName{issuer_alternative_name_critical}:
+    * {issuer_alternative_name[0]}
+keyUsage{key_usage_critical}:
+    * {key_usage[0]}
+    * {key_usage[1]}
+    * {key_usage[2]}
+subjectAltName{subject_alternative_name_critical}:
+    * {subject_alternative_name[0]}
+subjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+Watchers:
+Digest:
+    md5: {md5}
+    sha1: {sha1}
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
+'''.format(**self.get_cert_context('cert_all')))
+
+    @freeze_time("2018-11-10")
     def test_ocsp(self):
-        self.maxDiff = None
         stdout, stderr = self.cmd('view_cert', self.ocsp.serial, no_pem=True, extensions=True,
                                   stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')

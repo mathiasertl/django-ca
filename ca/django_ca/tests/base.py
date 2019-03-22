@@ -257,6 +257,30 @@ certs = {
         'valid_from': datetime(2017, 4, 17, 11, 47),
     },
     'cert_all': {
+        'cn': 'all-extensions.example.com',
+        'crl': (False, ['Full Name: URI:http://localhost:8000/django_ca/crl/55:2E:BA:DE:07:A7:16:96:09:1B:19:16:5F:9D:E4:46:8C:F8:C1:D3/']),
+        'expires': datetime(2019, 4, 18, 0, 0),
+        'from': '2018-10-26 19:35',
+        'hpkp': 'y7MP7lTrd5tT5cf7dO/ikFaoj/YmJFke2MAIr5uJf74=',
+        'serial': '49:BC:F2:FE:FA:31:03:B6:E0:CC:3D:16:93:4E:2D:B0:8A:D2:C5:87',
+        'status': 'Valid',
+        'until': '2020-10-25 00:00',
+        'valid_from': datetime(2017, 4, 17, 11, 47),
+        'md5': '50:15:FE:55:0A:D4:92:96:D2:F8:29:2E:F6:59:E5:16',
+        'sha1': '9A:94:91:9E:63:AC:3A:FD:F3:FD:EF:E4:F5:88:48:80:CF:51:F6:57',
+        'sha256': '9A:E6:73:40:B2:60:B1:79:AE:CB:20:D1:F8:28:12:3A:5A:9D:E8:AF:F6:37:A4:24:4D:AC:6B:C0:E8:3E:1B:2B',  # NOQA
+        'sha512': 'BB:FD:47:7B:FB:96:A4:C8:D9:0A:BB:86:24:93:8A:79:8A:C6:BD:68:A4:B4:E3:0E:40:DF:89:7C:8E:D7:23:49:8B:47:CD:9B:F5:8C:50:E7:C1:14:36:27:91:7B:37:C8:40:DD:7E:CB:63:03:EA:FA:4F:93:C4:26:DD:2D:71:9C',  # NOQA
+        'authority_information_access': AuthorityInformationAccess({
+            'issuers': ['URI:http://ca.example.com/ca.crt'],
+            'ocsp': ['URI:http://localhost:8000/django_ca/ocsp/root/'],
+        }),
+        'authority_key_identifier': AuthorityKeyIdentifier('53:55:48:30:62:F9:0E:E3:63:05:A1:27:A3:F3:CF:ED:F9:43:C8:57'),  # NOQA
+        'basic_constraints': BasicConstraints('critical,CA:FALSE'),
+        'extended_key_usage': ExtendedKeyUsage('serverAuth,clientAuth,codeSigning,emailProtection'),
+        'issuer_alternative_name': IssuerAlternativeName('URI:https://ca.example.com'),
+        'key_usage': KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'),
+        'subject_alternative_name': SubjectAlternativeName('DNS:all-extensions.example.com'),
+        'subject_key_identifier': SubjectKeyIdentifier('DE:EA:38:FC:DA:39:92:33:45:A7:B9:F8:D2:DF:84:0E:CC:6F:3A:B9'),  # NOQA
         'tls_feature': TLSFeature('critical,OCSPMustStaple,MultipleCertStatusRequest'),
     },
     'ocsp': {
