@@ -28,6 +28,7 @@ from cryptography.x509.oid import ExtensionOID
 
 from django.test import TestCase
 
+from .. import ca_settings
 from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
@@ -42,6 +43,10 @@ from ..extensions import OCSPNoCheck
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
+
+
+if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
+    from ..extensions import PrecertPoison
 
 
 def dns(d):  # just a shortcut
@@ -838,6 +843,50 @@ class OCSPNoCheckTestCase(TestCase):
     def test_str(self):
         self.assertEqual(str(OCSPNoCheck({'critical': True})), 'OCSPNoCheck/critical')
         self.assertEqual(str(OCSPNoCheck({'critical': False})), 'OCSPNoCheck')
+
+
+@unittest.skipUnless(ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON,
+                     "This version of cryptography does not support the PrecertPoison extension.")
+class PrecertPoisonTestCase(TestCase):
+    def test_as_extension(self):
+        ext1 = x509.extensions.Extension(oid=ExtensionOID.PRECERT_POISON, critical=True, value=None)
+
+        self.assertEqual(PrecertPoison({}).as_extension(), PrecertPoison(ext1).as_extension())
+        self.assertEqual(PrecertPoison({'critical': True}).as_extension(), PrecertPoison(ext1).as_extension())
+
+    def test_equal(self):
+        ext1 = x509.extensions.Extension(oid=ExtensionOID.PRECERT_POISON, critical=True, value=None)
+
+        self.assertEqual(PrecertPoison(), PrecertPoison())
+        self.assertEqual(PrecertPoison(), PrecertPoison(ext1))
+        self.assertEqual(PrecertPoison(ext1), PrecertPoison(ext1))
+        self.assertEqual(PrecertPoison({'critical': True}), PrecertPoison({'critical': True}))
+        self.assertEqual(PrecertPoison(), PrecertPoison({'critical': True}))
+
+    def test_from_extension(self):
+        ext = PrecertPoison(x509.extensions.Extension(
+            oid=ExtensionOID.PRECERT_POISON, critical=True, value=None))
+        self.assertTrue(ext.critical)
+
+    def test_from_dict(self):
+        self.assertTrue(PrecertPoison({}).critical)
+        self.assertTrue(PrecertPoison({'critical': True}).critical)
+        self.assertTrue(PrecertPoison({'critical': True, 'foo': 'bar'}).critical)
+
+    def test_from_str(self):
+        with self.assertRaises(NotImplementedError):
+            PrecertPoison('foobar')
+
+    def test_str(self):
+        self.assertEqual(str(PrecertPoison({'critical': True})), 'PrecertPoison/critical')
+
+    def test_non_critical(self):
+        ext = x509.extensions.Extension(oid=ExtensionOID.PRECERT_POISON, critical=False, value=None)
+
+        with self.assertRaisesRegex(ValueError, '^PrecertPoison must always be marked as critical$'):
+            PrecertPoison(ext)
+        with self.assertRaisesRegex(ValueError, '^PrecertPoison must always be marked as critical$'):
+            PrecertPoison({'critical': False})
 
 
 class SubjectAlternativeNameTestCase(TestCase):

@@ -859,7 +859,7 @@ class OCSPNoCheck(NullExtension):
     oid = ExtensionOID.OCSP_NO_CHECK
 
 
-if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
+if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
     class PrecertPoison(NullExtension):
         """Extension to indicate that the certificate is a submission to a certificate transparency log.
 
