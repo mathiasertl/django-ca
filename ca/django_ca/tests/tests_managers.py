@@ -292,7 +292,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
     def test_all_extensions(self):
         ku = 'critical,encipherOnly,keyAgreement,nonRepudiation'
         eku = 'serverAuth'
-        tlsf = 'OCSPMustStaple,MultipleCertStatusRequest'
+        tlsf = 'critical,OCSPMustStaple,MultipleCertStatusRequest'
         san = ['example.com']
         nc = [['.com'], ['.net']]
         ian = 'example.com'
