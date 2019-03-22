@@ -879,6 +879,7 @@ if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.
         """
         default_critical = True
         oid = ExtensionOID.PRECERT_POISON
+        name = 'PrecertPoison'
 
         def __init__(self, value=None):
             super(PrecertPoison, self).__init__(value=value)
