@@ -275,7 +275,7 @@ class CertificateMixin(object):
         return self.output_extension(obj.ocsp_no_check)
     ocsp_no_check.short_description = _('OCSP No Check')
 
-    def precert_poison(self, obj):
+    def precert_poison(self, obj):  # pragma: only cryptography>=2.4
         return self.output_extension(obj.precert_poison)
     precert_poison.short_description = _('Precert Poison')
 
