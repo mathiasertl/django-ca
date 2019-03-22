@@ -70,7 +70,7 @@ from .utils import read_file
 
 log = logging.getLogger(__name__)
 
-if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
+if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
     from .extensions import PrecertPoison
 
 

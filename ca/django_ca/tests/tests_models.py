@@ -433,14 +433,19 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         ]))
         self.assertIsNone(cert.signedCertificateTimestampList())
 
-    # Test seems to run fine with cryptography 2.2.
-    #@unittest.skipUnless(cryptography_version >= (2, 3),
-    #                     'test requires cryptography >= 2.3')
-    @unittest.skipUnless(
-        default_backend()._lib.CRYPTOGRAPHY_OPENSSL_110F_OR_GREATER,
-        'test only makes sense with older libreSSL/OpenSSL versions that don\'t support SCT.')
+    @unittest.skipIf(
+        ca_settings.OPENSSL_SUPPORTS_SCT,
+        'If the OpenSSL version supports SCTs, we need to mock this.')
     @override_tmpcadir()
     def test_unsupported(self):
+        self.assertEqual(self.cert_letsencrypt_jabber_at.signedCertificateTimestampList(),
+                         (False, ['Parsing requires OpenSSL 1.1.0f+']))
+
+    @unittest.skipUnless(
+        ca_settings.OPENSSL_SUPPORTS_SCT,
+        'Older versions of OpenSSL/LibreSSL do not recognize this extension anyway.')
+    @override_tmpcadir()
+    def test_unsupported_mocked(self):
         # Test return value for older versions of OpenSSL
         value = UnrecognizedExtension(ObjectIdentifier('1.1.1.1'), b'foo')
 

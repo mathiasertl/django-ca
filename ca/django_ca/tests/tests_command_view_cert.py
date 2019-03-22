@@ -18,7 +18,6 @@ from io import BytesIO
 
 from freezegun import freeze_time
 
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.utils import timezone
@@ -556,9 +555,7 @@ HPKP pin: %(hpkp)s
 
     def test_contrib_letsencrypt_jabber_at(self, status='Valid'):
         if cryptography_version >= (2, 3):
-            # Older versions of OpenSSL (and LibreSSL) cannot parse this extension
-            # see https://github.com/pyca/cryptography/blob/master/tests/x509/test_x509_ext.py#L4455-L4459
-            if default_backend()._lib.CRYPTOGRAPHY_OPENSSL_110F_OR_GREATER:
+            if ca_settings.OPENSSL_SUPPORTS_SCT:
                 signedCertificateTimestampList = '''
 signedCertificateTimestampList:
     * Precertificate (v1): 2018-08-09 10:15:21.724000

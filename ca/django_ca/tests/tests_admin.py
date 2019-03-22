@@ -14,14 +14,12 @@
 # see <http://www.gnu.org/licenses/>
 
 import json
-import os
 import unittest
 from datetime import datetime
 from datetime import timedelta
 
 from freezegun import freeze_time
 
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.extensions import Extension
 from cryptography.x509.extensions import UnrecognizedExtension
@@ -39,6 +37,7 @@ from django.utils.six.moves.urllib.parse import quote
 
 from django_webtest import WebTestMixin
 
+from .. import ca_settings
 from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import KeyUsage
@@ -54,7 +53,6 @@ from ..signals import pre_revoke_cert
 from ..utils import SUBJECT_FIELDS
 from .base import DjangoCAWithCertTestCase
 from .base import DjangoCAWithCSRTestCase
-from .base import cryptography_version
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import pwd_ca_pwd
@@ -244,15 +242,10 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(list(cert.watchers.all()), [watcher])
 
     @unittest.skipUnless(
-        default_backend()._lib.CRYPTOGRAPHY_OPENSSL_110F_OR_GREATER,
-        'test only makes sense with older libreSSL/OpenSSL versions that don\'t support SCT.')
-    @unittest.skipUnless(cryptography_version >= (2, 3),
-                         'test requires cryptography >= 2.3')
+        ca_settings.OPENSSL_SUPPORTS_SCT,
+        'Older versions of OpenSSL/LibreSSL do not recognize this extension anyway.')
     def test_unsupported(self):
         # Test return value for older versions of OpenSSL
-
-        name = 'letsencrypt_jabber_at'
-        _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
         cert = self.cert_letsencrypt_jabber_at
 
         oid = ObjectIdentifier('1.1.1.1')
