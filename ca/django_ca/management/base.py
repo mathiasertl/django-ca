@@ -35,6 +35,7 @@ from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
 from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
+from ..extensions import NullExtension
 from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import CertificateAuthority
@@ -311,12 +312,18 @@ class BaseCommand(_BaseCommand):
 
     def print_extension(self, ext):
         if isinstance(ext, Extension):
-            if ext.critical:
-                self.stdout.write('%s (critical):' % ext.name)
+            if isinstance(ext, NullExtension):
+                if ext.critical:
+                    self.stdout.write('%s (critical): Yes' % ext.name)
+                else:
+                    self.stdout.write('%s: Yes' % ext.name)
             else:
-                self.stdout.write('%s:' % ext.name)
+                if ext.critical:
+                    self.stdout.write('%s (critical):' % ext.name)
+                else:
+                    self.stdout.write('%s:' % ext.name)
 
-            self.stdout.write(self.indent(ext.as_text()))
+                self.stdout.write(self.indent(ext.as_text()))
         else:
             # old extension framework
             name, value = ext

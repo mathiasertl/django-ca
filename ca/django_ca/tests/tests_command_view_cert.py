@@ -25,6 +25,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 
+from .. import ca_settings
 from ..models import Certificate
 from ..models import Watcher
 from .base import DjangoCAWithCertTestCase
@@ -236,12 +237,18 @@ HPKP pin: AjyBzOjnxk+pQtPBUEhwfTXZu1uH9PVExb8bxWQ68vo=
         stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, extensions=True,
                                   stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
+
+        if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
+            precert_poison = 'PrecertPoison (critical): Yes'
+        else:
+            precert_poison = '''UnknownOID (critical):
+    <ObjectIdentifier(oid=1.3.6.1.4.1.11129.2.4.3, name=Unknown OID)>'''
+
         self.assertEqual(stdout.decode('utf-8'), '''Common Name: sni24142.cloudflaressl.com
 Valid from: 2018-07-18 00:00
 Valid until: 2019-01-24 23:59
 Status: Valid
-UnknownOID (critical):
-    <ObjectIdentifier(oid=1.3.6.1.4.1.11129.2.4.3, name=Unknown OID)>
+%(precert_poison)s
 authorityInfoAccess:
     CA Issuers:
       * URI:http://crt.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crt
@@ -356,7 +363,9 @@ Digest:
     sha256: 1D:8E:D5:41:E5:FF:19:70:6F:65:86:A9:A3:6F:DF:DE:F8:A0:07:22:92:71:9E:F1:CD:F8:28:37:39:02:E0:A1
     sha512: FF:03:1B:8F:11:E8:A7:FF:91:4F:B9:97:E9:97:BC:77:37:C1:A7:69:86:F3:7C:E3:BB:BB:DF:A6:4F:0E:3C:C0:7F:B5:BC:CC:BD:0A:D5:EF:5F:94:55:E9:FF:48:41:34:B8:11:54:57:DD:90:85:41:2E:71:70:5E:FA:BA:E6:EA
 HPKP pin: bkunFfRSda4Yhz7UlMUaalgj0Gcus/9uGVp19Hceczg=
-''')  # NOQA
+''' % {  # NOQA
+    'precert_poison': precert_poison
+})
 
     def assertContrib(self, name, expected):
         _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
