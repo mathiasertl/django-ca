@@ -119,6 +119,7 @@ HPKP pin: {hpkp}
 
     @freeze_time("2018-11-10")
     def test_cert_all(self):
+        self.maxDiff = None
         stdout, stderr = self.cmd('view_cert', self.cert_all.serial, no_pem=True, extensions=True,
                                   stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
@@ -126,9 +127,11 @@ HPKP pin: {hpkp}
 Valid from: {from}
 Valid until: {until}
 Status: {status}
+OCSPNoCheck (critical): Yes
 TLSFeature{tls_feature_critical}:
     * {tls_feature[0]}
     * {tls_feature[1]}
+PrecertPoison (critical): Yes
 authorityInfoAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
@@ -151,8 +154,14 @@ keyUsage{key_usage_critical}:
     * {key_usage[0]}
     * {key_usage[1]}
     * {key_usage[2]}
+nameConstraints{name_constraints_critical}:
+    Permitted:
+      * DNS:{name_constraints.permitted[0].value}
+    Excluded:
+      * DNS:{name_constraints.excluded[0].value}
 subjectAltName{subject_alternative_name_critical}:
     * {subject_alternative_name[0]}
+    * {subject_alternative_name[1]}
 subjectKeyIdentifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:

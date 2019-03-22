@@ -40,18 +40,11 @@ from ..extensions import SubjectKeyIdentifier
 from ..models import Certificate
 from ..models import Watcher
 from .base import DjangoCAWithChildCATestCase
-from .base import cert2_pubkey
 from .base import cert3_csr
-from .base import cert3_pubkey
 from .base import certs
 from .base import cryptography_version
-from .base import ocsp_pubkey
 from .base import override_settings
 from .base import override_tmpcadir
-from .base import multiple_ous_and_no_ext_pubkey
-from .base import cloudflare_1_pubkey
-from .base import letsencrypt_jabber_at_pubkey
-from .base import godaddy_derstandardat_pubkey
 
 try:
     import unittest.mock as mock
@@ -474,16 +467,20 @@ class CertificateTests(DjangoCAWithChildCATestCase):
     ###############################################
     def test_name_constraints(self):
         self.assertExtension('name_constraints', {
+            self.cert_all: certs['cert_all']['name_constraints'],
             self.child_ca: certs['child']['name_constraints'],
         })
 
     def test_ocsp_no_check(self):
-        self.assertExtension('ocsp_no_check', {})
+        self.assertExtension('ocsp_no_check', {
+            self.cert_all: certs['cert_all']['ocsp_no_check'],
+        })
 
     @unittest.skipUnless(ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON,
                          "This version of cryptography does not support PrecertPoison extension.")
     def test_precert_poison(self):
         self.assertExtension('precert_poison', {
+            self.cert_all: PrecertPoison(),
             self.cert_cloudflare_1: PrecertPoison()
         })
 

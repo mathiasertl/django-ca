@@ -48,6 +48,7 @@ from ..extensions import Extension
 from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
 from ..extensions import NameConstraints
+from ..extensions import OCSPNoCheck
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
@@ -260,31 +261,33 @@ certs = {
         'expires': datetime(2019, 4, 18, 0, 0),
         'valid_from': datetime(2017, 4, 17, 11, 47),
     },
+
+    # created using django_ca.tests.tests_managers.GetCertTestCase.test_all_extensions
     'cert_all': {
         'cn': 'all-extensions.example.com',
-        'crl': (False, ['Full Name: URI:http://localhost:8000/django_ca/crl/55:2E:BA:DE:07:A7:16:96:09:1B:19:16:5F:9D:E4:46:8C:F8:C1:D3/']),  # NOQA
-        'expires': datetime(2019, 4, 18, 0, 0),
-        'from': '2018-10-26 19:35',
-        'hpkp': 'y7MP7lTrd5tT5cf7dO/ikFaoj/YmJFke2MAIr5uJf74=',
+        'crl': (False, ['Full Name: URI:%s' % root_crl_url]),
+        'from': '2018-10-26 00:00',
+        'hpkp': 'ZHsPuAAhLPHXbSjBW8/2/CylrtpcPlNUcLDMmuMtiWY=',
         'serial': '49:BC:F2:FE:FA:31:03:B6:E0:CC:3D:16:93:4E:2D:B0:8A:D2:C5:87',
         'status': 'Valid',
-        'until': '2020-10-25 00:00',
-        'valid_from': datetime(2017, 4, 17, 11, 47),
-        'md5': '50:15:FE:55:0A:D4:92:96:D2:F8:29:2E:F6:59:E5:16',
-        'sha1': '9A:94:91:9E:63:AC:3A:FD:F3:FD:EF:E4:F5:88:48:80:CF:51:F6:57',
-        'sha256': '9A:E6:73:40:B2:60:B1:79:AE:CB:20:D1:F8:28:12:3A:5A:9D:E8:AF:F6:37:A4:24:4D:AC:6B:C0:E8:3E:1B:2B',  # NOQA
-        'sha512': 'BB:FD:47:7B:FB:96:A4:C8:D9:0A:BB:86:24:93:8A:79:8A:C6:BD:68:A4:B4:E3:0E:40:DF:89:7C:8E:D7:23:49:8B:47:CD:9B:F5:8C:50:E7:C1:14:36:27:91:7B:37:C8:40:DD:7E:CB:63:03:EA:FA:4F:93:C4:26:DD:2D:71:9C',  # NOQA
+        'until': '2020-10-16 00:00',
+        'md5': '3C:26:12:30:7B:C0:A7:66:55:AA:D7:75:FD:97:65:84',
+        'sha1': 'E3:01:5A:B4:F4:6B:F7:07:9A:A6:CC:FD:92:3F:8A:D2:E1:D1:15:B6',
+        'sha256': '67:FD:0A:85:42:16:E5:64:C0:1C:2A:48:8A:1E:CF:06:E0:6B:D3:1B:0D:B0:CE:60:E1:99:B8:3A:79:9B:39:52',  # NOQA
+        'sha512': 'F6:26:5F:92:EB:71:2B:45:24:BB:37:5C:9B:FC:9C:BE:B7:CB:10:99:98:4F:36:CD:47:F7:42:3C:93:5C:84:44:4D:AD:AC:F2:FB:1C:22:8C:34:F6:96:A7:B1:8D:AD:5E:7A:DD:8C:45:D7:09:3E:B2:2A:D0:F6:48:21:AB:2A:B6',  # NOQA
         'authority_information_access': AuthorityInformationAccess({
-            'issuers': ['URI:http://ca.example.com/ca.crt'],
-            'ocsp': ['URI:http://localhost:8000/django_ca/ocsp/root/'],
+            'issuers': ['URI:%s' % root_issuer_url],
+            'ocsp': ['URI:%s' % root_ocsp_url],
         }),
-        'authority_key_identifier': AuthorityKeyIdentifier('53:55:48:30:62:F9:0E:E3:63:05:A1:27:A3:F3:CF:ED:F9:43:C8:57'),  # NOQA
+        'authority_key_identifier': AuthorityKeyIdentifier(root_keyid),
         'basic_constraints': BasicConstraints('critical,CA:FALSE'),
         'extended_key_usage': ExtendedKeyUsage('serverAuth,clientAuth,codeSigning,emailProtection'),
         'issuer_alternative_name': IssuerAlternativeName('URI:https://ca.example.com'),
-        'key_usage': KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'),
-        'subject_alternative_name': SubjectAlternativeName('DNS:all-extensions.example.com'),
-        'subject_key_identifier': SubjectKeyIdentifier('DE:EA:38:FC:DA:39:92:33:45:A7:B9:F8:D2:DF:84:0E:CC:6F:3A:B9'),  # NOQA
+        'key_usage': KeyUsage('critical,encipherOnly,keyAgreement,nonRepudiation'),
+        'name_constraints': NameConstraints([['DNS:.com'], ['DNS:.net']]),
+        'ocsp_no_check': OCSPNoCheck({'critical': True}),
+        'subject_alternative_name': SubjectAlternativeName('DNS:all-extensions.example.com,DNS:extra.example.com'),  # NOQA
+        'subject_key_identifier': SubjectKeyIdentifier('D2:1B:D1:90:35:0E:44:58:F7:0A:21:BB:DC:BE:3D:7F:ED:83:E4:FA'),  # NOQA
         'tls_feature': TLSFeature('critical,OCSPMustStaple,MultipleCertStatusRequest'),
     },
     'ocsp': {

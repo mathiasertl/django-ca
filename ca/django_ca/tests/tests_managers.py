@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+from freezegun import freeze_time
+
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtensionOID
@@ -289,14 +291,20 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
                          AuthorityInformationAccess([[ca.issuer_url], []]))
 
     @override_tmpcadir()
+    @freeze_time('2018-10-26')  # so recreating will yield the same cert
     def test_all_extensions(self):
+        # Create a certificate with all extensions enabled.
+        # Note that we just blindly add all extensions possible, even if they don't make sense for a
+        # end-user certificate. For example, NameConstraints only makes sense for CAs.
+
+        cn = 'all-extensions.example.com'
         ku = 'critical,encipherOnly,keyAgreement,nonRepudiation'
-        eku = 'serverAuth'
+        eku = 'serverAuth,clientAuth,codeSigning,emailProtection'
         tlsf = 'critical,OCSPMustStaple,MultipleCertStatusRequest'
-        san = ['example.com']
+        san = ['extra.example.com']
         nc = [['.com'], ['.net']]
-        ian = 'example.com'
-        subject = '/CN=example.net'
+        ian = 'https://ca.example.com'
+        subject = '/CN=%s' % cn
 
         self.ca.issuer_url = root_issuer_url
         self.ca.crl_url = root_crl_url
@@ -332,7 +340,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
             aik,
             BasicConstraints('critical,CA:False'),
             ExtendedKeyUsage(eku),
-            SubjectAlternativeName(['example.net'] + san),  # prepend CN from subject
+            SubjectAlternativeName([cn] + san),  # prepend CN from subject
             KeyUsage(ku),
             AuthorityInformationAccess({
                 'ocsp': [root_ocsp_url],
@@ -340,6 +348,10 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
             }),
             ('cRLDistributionPoints', (False, ['Full Name: URI:%s' % root_crl_url]))
         ] + extra_extensions)
+
+        # Uncomment to create a new cert for the fixture
+        with open('/tmp/out.pem', 'w') as stream:
+            stream.write(cert.pub)
 
     def test_extra_extensions_value(self):
         with self.assertRaisesRegex(ValueError, r'^Cannot add extension of type bool$'):
