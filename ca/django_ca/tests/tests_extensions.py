@@ -44,7 +44,6 @@ from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
 
-
 if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
     from ..extensions import PrecertPoison
 
