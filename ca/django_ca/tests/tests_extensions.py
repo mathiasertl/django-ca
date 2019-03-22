@@ -798,7 +798,7 @@ Excluded:
 
 
 class OCSPNoCheckTestCase(TestCase):
-    # PrecertPoison does not compare as equal:
+    # x509.OCSPNoCheck does not compare as equal:
     #   https://github.com/pyca/cryptography/issues/4818
     @unittest.skipUnless(x509.OCSPNoCheck() == x509.OCSPNoCheck(),
                          'Extensions compare as equal.')
@@ -859,7 +859,7 @@ class OCSPNoCheckTestCase(TestCase):
 class PrecertPoisonTestCase(TestCase):
     # PrecertPoison does not compare as equal:
     #   https://github.com/pyca/cryptography/issues/4818
-    @unittest.skipUnless(x509.PrecertPoison() == x509.PrecertPoison(),
+    @unittest.skipUnless(hasattr(x509, 'PrecertPoison') and x509.PrecertPoison() == x509.PrecertPoison(),
                          'Extensions compare as equal.')
     def test_as_extension(self):
         ext1 = x509.extensions.Extension(oid=ExtensionOID.PRECERT_POISON, critical=True, value=None)
