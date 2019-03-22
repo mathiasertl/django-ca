@@ -68,13 +68,9 @@ class ChangelistTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithChildCA
         self.assertCSS(response, 'django_ca/admin/css/certificateauthorityadmin.css')
         self.assertEqual(set(response.context['cl'].result_list), set(certs))
 
-    @property
-    def certs(self):
-        return [self.ca, self.pwd_ca, self.ecc_ca, self.child_ca]
-
     def test_get(self):
         response = self.client.get(self.changelist_url)
-        self.assertResponse(response, self.certs)
+        self.assertResponse(response, self.cas)
 
     def test_unauthorized(self):
         client = Client()

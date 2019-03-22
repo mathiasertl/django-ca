@@ -111,10 +111,6 @@ class ChangelistTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertCSS(response, 'django_ca/admin/css/certificateadmin.css')
         self.assertEqual(set(response.context['cl'].result_list), set(certs))
 
-    @property
-    def certs(self):
-        return [self.cert, self.cert_all, self.cert_no_ext]
-
     def assertContrib(self, name):
         _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
         cert = self.load_cert(self.ca, x509=pubkey)
