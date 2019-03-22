@@ -127,28 +127,28 @@ HPKP pin: {hpkp}
 Valid from: {from}
 Valid until: {until}
 Status: {status}
-authorityInfoAccess:
+authorityInfoAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-authorityKeyIdentifier:
+authorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-basicConstraints (critical):
+basicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
 cRLDistributionPoints:
     * {crl_0}
-extendedKeyUsage:
+extendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage[0]}
-issuerAltName:
+issuerAltName{issuer_alternative_name_critical}:
     * {issuer_alternative_name[0]}
-keyUsage (critical):
+keyUsage{key_usage_critical}:
     * {key_usage[0]}
     * {key_usage[1]}
     * {key_usage[2]}
-subjectAltName:
+subjectAltName{subject_alternative_name_critical}:
     * {subject_alternative_name[0]}
-subjectKeyIdentifier:
+subjectKeyIdentifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:

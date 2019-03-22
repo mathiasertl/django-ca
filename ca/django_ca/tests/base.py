@@ -574,6 +574,10 @@ class DjangoCATestCase(TestCase):
             elif isinstance(value, Extension):
                 ctx[key] = value
                 ctx['%s_text' % key] = value.as_text()
+                if value.critical:
+                    ctx['%s_critical' % key] = ' (critical)'
+                else:
+                    ctx['%s_critical' % key] = ''
             else:
                 ctx[key] = value
 
