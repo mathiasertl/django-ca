@@ -297,7 +297,7 @@ class X509CertMixin(models.Model):
         ExtensionOID.TLS_FEATURE: 'tls_feature',
     }
 
-    if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
+    if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
         OID_MAPPING[ExtensionOID.PRECERT_POISON] = 'precert_poison'
 
     def get_extension_fields(self):

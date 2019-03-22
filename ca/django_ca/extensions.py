@@ -225,7 +225,7 @@ class NullExtension(Extension):
 
     def as_extension(self):
         """This extension as :py:class:`~cg:cryptography.x509.ExtensionType`."""
-        return x509.extensions.Extension(oid=self.oid, critical=self.critical, value=None)
+        return x509.extensions.Extension(oid=self.oid, critical=self.critical, value=self.extension_type)
 
 
 class ListExtension(Extension):

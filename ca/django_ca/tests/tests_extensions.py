@@ -799,9 +799,19 @@ Excluded:
 
 
 class OCSPNoCheckTestCase(TestCase):
+    # PrecertPoison does not compare as equal:
+    #   https://github.com/pyca/cryptography/issues/4818
+    @unittest.skipUnless(x509.OCSPNoCheck() == x509.OCSPNoCheck(),
+                         'Extensions compare as equal.')
     def test_as_extension(self):
-        ext1 = x509.extensions.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=True, value=None)
-        ext2 = x509.extensions.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=False, value=None)
+        ext1 = x509.extensions.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=True,
+                                         value=x509.OCSPNoCheck())
+        ext2 = x509.extensions.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=False,
+                                         value=x509.OCSPNoCheck())
+
+        self.assertEqual(OCSPNoCheck({}).as_extension(), ext2)
+        self.assertEqual(OCSPNoCheck({'critical': False}).as_extension(), ext2)
+        self.assertEqual(OCSPNoCheck({'critical': True}).as_extension(), ext1)
 
         self.assertEqual(OCSPNoCheck({}).as_extension(), OCSPNoCheck(ext2).as_extension())
         self.assertEqual(OCSPNoCheck({'critical': False}).as_extension(), OCSPNoCheck(ext2).as_extension())
@@ -848,6 +858,10 @@ class OCSPNoCheckTestCase(TestCase):
 @unittest.skipUnless(ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON,
                      "This version of cryptography does not support the PrecertPoison extension.")
 class PrecertPoisonTestCase(TestCase):
+    # PrecertPoison does not compare as equal:
+    #   https://github.com/pyca/cryptography/issues/4818
+    @unittest.skipUnless(x509.PrecertPoison() == x509.PrecertPoison(),
+                         'Extensions compare as equal.')
     def test_as_extension(self):
         ext1 = x509.extensions.Extension(oid=ExtensionOID.PRECERT_POISON, critical=True, value=None)
 

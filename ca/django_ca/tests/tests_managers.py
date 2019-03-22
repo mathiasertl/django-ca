@@ -350,8 +350,56 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         ] + extra_extensions)
 
         # Uncomment to create a new cert for the fixture
-        with open('/tmp/out.pem', 'w') as stream:
-            stream.write(cert.pub)
+        #with open('/tmp/out.pem', 'w') as stream:
+        #    stream.write(cert.pub)
+
+    @override_tmpcadir()
+    @freeze_time('2018-10-26')  # so recreating will yield the same cert
+    def test_extra_extensions(self):
+        cn = 'all-extensions.example.com'
+        ku = 'critical,encipherOnly,keyAgreement,nonRepudiation'
+        eku = 'serverAuth,clientAuth,codeSigning,emailProtection'
+        tlsf = 'critical,OCSPMustStaple,MultipleCertStatusRequest'
+        san = ['extra.example.com']
+        nc = [['.com'], ['.net']]
+        ian = 'https://ca.example.com'
+        subject = '/CN=%s' % cn
+
+        self.maxDiff = None
+        extra_extensions = [
+            NameConstraints(nc).as_extension(),
+            IssuerAlternativeName(ian).as_extension(),
+            OCSPNoCheck({'critical': True}).as_extension(),
+        ]
+
+        cert = Certificate.objects.init(
+            self.ca, self.csr_pem, expires=self.expires(720),
+            subject=subject,
+            subject_alternative_name=san,
+            key_usage=ku,
+            extended_key_usage=eku,
+            tls_feature=tlsf,
+            extra_extensions=extra_extensions,
+        )
+
+        aik = AuthorityKeyIdentifier(x509.Extension(
+            oid=AuthorityKeyIdentifier.oid, critical=False,
+            value=self.ca.get_authority_key_identifier()
+        ))
+
+        exts = [e for e in cert.get_extensions() if not isinstance(e, SubjectKeyIdentifier)]
+        self.assertEqual(cert.subject, Subject(subject))
+        self.assertCountEqual(exts, [
+            TLSFeature(tlsf),
+            aik,
+            BasicConstraints('critical,CA:False'),
+            ExtendedKeyUsage(eku),
+            SubjectAlternativeName([cn] + san),  # prepend CN from subject
+            KeyUsage(ku),
+            NameConstraints(nc),
+            IssuerAlternativeName(ian),
+            OCSPNoCheck({'critical': True}),
+        ])
 
     def test_extra_extensions_value(self):
         with self.assertRaisesRegex(ValueError, r'^Cannot add extension of type bool$'):
