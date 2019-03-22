@@ -302,7 +302,7 @@ class BaseCommand(_BaseCommand):
             return ''.join(['%s* %s\n' % (prefix, l) for l in s])
         elif six.PY3:  # pragma: only py3
             return textwrap.indent(force_text(s), prefix)
-        else:  # pragma: no cover
+        else:  # pragma: only py2
             # copied from py3.4 version of textwrap.indent
             def prefixed_lines():
                 for line in force_text(s).splitlines(True):
@@ -328,7 +328,7 @@ class BaseCommand(_BaseCommand):
             # old extension framework
             name, value = ext
             critical, value = value
-            if critical:
+            if critical:  # pragma: no cover - all old extensions are typically non-critical
                 self.stdout.write('%s (critical):' % name)
             else:
                 self.stdout.write('%s:' % name)
