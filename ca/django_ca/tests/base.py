@@ -41,6 +41,7 @@ from django.utils.six.moves import reload_module
 
 from .. import ca_settings
 from ..extensions import Extension
+from ..extensions import NameConstraints
 from ..extensions import SubjectAlternativeName
 from ..models import Certificate
 from ..models import CertificateAuthority
@@ -173,6 +174,7 @@ certs = {
             key_identifier=b'\x8b\x06\xf1\x9e\xbc\xa9b\x00\x01fF\x85\xfa\x90\xfbRq\x8ff\xee',
             authority_cert_issuer=None, authority_cert_serial_number=None
         ),
+        'name_constraints': NameConstraints([['DNS:.net'], ['DNS:.org']]),
     },
     'ecc_ca': {
         'name': 'ecc_ca',
@@ -640,6 +642,7 @@ class DjangoCAWithCATestCase(DjangoCATestCase):
         self.ca = self.load_ca(name='root', x509=root_pubkey)
         self.pwd_ca = self.load_ca(name='pwd_ca', x509=pwd_ca_pubkey)
         self.ecc_ca = self.load_ca(name='ecc_ca', x509=ecc_ca_pubkey)
+        self.cas = [self.ca, self.pwd_ca, self.ecc_ca]
 
 
 class DjangoCAWithCSRTestCase(DjangoCAWithCATestCase):
@@ -657,9 +660,11 @@ class DjangoCAWithCertTestCase(DjangoCAWithCSRTestCase):
         self.cert = self.load_cert(self.ca, x509=cert1_pubkey, csr=cert1_csr)
         self.cert_all = self.load_cert(self.ca, x509=all_pubkey, csr=all_csr)
         self.cert_no_ext = self.load_cert(self.ca, x509=no_ext_pubkey, csr=no_ext_csr)
+        self.certs = [self.cert, self.cert_all, self.cert_no_ext]
 
 
 class DjangoCAWithChildCATestCase(DjangoCAWithCertTestCase):
     def setUp(self):
         super(DjangoCAWithChildCATestCase, self).setUp()
         self.child_ca = self.load_ca(name='child', x509=child_pubkey, parent=self.ca)
+        self.cas.append(self.child_ca)

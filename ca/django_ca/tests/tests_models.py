@@ -106,12 +106,22 @@ class TestWatcher(TestCase):
 class CertificateTests(DjangoCAWithChildCATestCase):
     def setUp(self):
         super(CertificateTests, self).setUp()
-        # A certificate with all extensions, can do everything, etc
         self.ca.crl_url = 'https://ca.example.com/crl.der'
 
         self.cert2 = self.load_cert(self.ca, cert2_pubkey)
         self.cert3 = self.load_cert(self.ca, cert3_pubkey)
         self.ocsp = self.load_cert(self.ca, ocsp_pubkey)
+        self.certs += [self.cert2, self.cert3, self.ocsp]
+
+    def assertExtension(self, name, expected):
+        for cert in self.cas + self.certs:
+            value = getattr(cert, name)
+            exp = expected.get(cert)
+
+            if exp is None:
+                self.assertIsNone(value, cert)
+            else:
+                self.assertEqual(value, exp, cert)
 
     @override_tmpcadir()
     def test_key(self):
@@ -326,8 +336,16 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         self.assertEqual(self.cert2.authority_key_identifier.as_text(), certs['cert2']['authKeyIdentifier'])
         self.assertEqual(self.cert3.authority_key_identifier.as_text(), certs['cert3']['authKeyIdentifier'])
 
-    def test_nameConstraints(self):
-        self.assertEqual(self.ca.name_constraints, None)
+    def test_name_constraints(self):
+        self.assertExtension('name_constraints', {
+            self.child_ca: certs['child']['name_constraints'],
+        })
+
+    def test_ocsp_no_check(self):
+        self.assertExtension('ocsp_no_check', {})
+
+    def test_precert_poison(self):
+        self.assertExtension('precert_poison', {})
 
     def test_hpkp_pin(self):
 
@@ -346,13 +364,15 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
         cert = self.load_cert(self.ca, x509=pubkey)
         self.assertIsNone(cert.authority_information_access)
-        self.assertIsNone(cert.basic_constraints)
-        self.assertIsNone(cert.subject_alternative_name)
-        self.assertIsNone(cert.key_usage)
-        self.assertIsNone(cert.extended_key_usage)
-        self.assertIsNone(cert.subject_key_identifier)
-        self.assertIsNone(cert.issuer_alternative_name)
         self.assertIsNone(cert.authority_key_identifier)
+        self.assertIsNone(cert.basic_constraints)
+        self.assertIsNone(cert.extended_key_usage)
+        self.assertIsNone(cert.issuer_alternative_name)
+        self.assertIsNone(cert.key_usage)
+        self.assertIsNone(cert.ocsp_no_check)
+        self.assertIsNone(cert.precert_poison)
+        self.assertIsNone(cert.subject_alternative_name)
+        self.assertIsNone(cert.subject_key_identifier)
         self.assertIsNone(cert.tls_feature)
         self.assertIsNone(cert.certificatePolicies())
         self.assertIsNone(cert.signedCertificateTimestampList())
@@ -378,6 +398,8 @@ class CertificateTests(DjangoCAWithChildCATestCase):
             AuthorityKeyIdentifier('A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1')
         )
         self.assertIsNone(cert.tls_feature)
+        self.assertIsNone(cert.ocsp_no_check)
+        self.assertIsNone(cert.precert_poison)
         self.assertEqual(cert.certificatePolicies(), (False, [
             'OID 2.23.140.1.2.1: None',
             'OID 1.3.6.1.4.1.44947.1.1.1: http://cps.letsencrypt.org, This Certificate '
@@ -412,6 +434,8 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         self.assertEqual(
             cert.authority_key_identifier,
             AuthorityKeyIdentifier(':40:C2:BD:27:8E:CC:34:83:30:A2:33:D7:FB:6C:B3:F0:B4:2C:80:CE'))
+        self.assertIsNone(cert.ocsp_no_check)
+        self.assertIsNone(cert.precert_poison)
         self.assertIsNone(cert.tls_feature)
         self.assertEqual(cert.certificatePolicies(), (False, [
             'OID 2.16.840.1.114413.1.7.23.1: http://certificates.godaddy.com/repository/',
@@ -440,6 +464,7 @@ class CertificateTests(DjangoCAWithChildCATestCase):
             cert.authority_key_identifier,
             AuthorityKeyIdentifier('40:09:61:67:F0:BC:83:71:4F:DE:12:08:2C:6F:D4:D4:2B:76:3D:96')
         )
+        self.assertIsNone(cert.ocsp_no_check)
         self.assertIsNone(cert.tls_feature)
         self.assertEqual(cert.certificatePolicies(), (False, [
             'OID 1.3.6.1.4.1.6449.1.2.2.7: https://secure.comodo.com/CPS',

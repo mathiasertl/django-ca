@@ -41,6 +41,7 @@ from django.utils.encoding import force_str
 from django.utils.text import slugify
 from django.utils.translation import ugettext_lazy as _
 
+from . import ca_settings
 from .extensions import AuthorityInformationAccess
 from .extensions import AuthorityKeyIdentifier
 from .extensions import BasicConstraints
@@ -48,6 +49,7 @@ from .extensions import ExtendedKeyUsage
 from .extensions import IssuerAlternativeName
 from .extensions import KeyUsage
 from .extensions import NameConstraints
+from .extensions import OCSPNoCheck
 from .extensions import SubjectAlternativeName
 from .extensions import SubjectKeyIdentifier
 from .extensions import TLSFeature
@@ -67,6 +69,9 @@ from .utils import multiline_url_validator
 from .utils import read_file
 
 log = logging.getLogger(__name__)
+
+if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
+    from .extensions import PrecertPoison
 
 
 class Watcher(models.Model):
@@ -286,10 +291,14 @@ class X509CertMixin(models.Model):
         ExtensionOID.ISSUER_ALTERNATIVE_NAME: 'issuer_alternative_name',
         ExtensionOID.KEY_USAGE: 'key_usage',
         ExtensionOID.NAME_CONSTRAINTS: 'name_constraints',
+        ExtensionOID.OCSP_NO_CHECK: 'ocsp_no_check',
         ExtensionOID.SUBJECT_ALTERNATIVE_NAME: 'subject_alternative_name',
         ExtensionOID.SUBJECT_KEY_IDENTIFIER: 'subject_key_identifier',
         ExtensionOID.TLS_FEATURE: 'tls_feature',
     }
+
+    if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
+        OID_MAPPING[ExtensionOID.PRECERT_POISON] = 'precert_poison'
 
     def get_extension_fields(self):
         for ext in sorted(self.x509.extensions, key=lambda e: e.oid._name.title()):
@@ -385,6 +394,24 @@ class X509CertMixin(models.Model):
             return None
 
         return NameConstraints(ext)
+
+    @property
+    def ocsp_no_check(self):
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.OCSP_NO_CHECK)
+        except x509.ExtensionNotFound:
+            return None
+
+        return OCSPNoCheck(ext)
+
+    @property
+    def precert_poison(self):
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.PRECERT_POISON)
+        except x509.ExtensionNotFound:
+            return None
+
+        return PrecertPoison(ext)
 
     @property
     def subject_alternative_name(self):
