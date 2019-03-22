@@ -38,6 +38,7 @@ from ..extensions import KeyUsage
 from ..extensions import KnownValuesExtension
 from ..extensions import ListExtension
 from ..extensions import NameConstraints
+from ..extensions import OCSPNoCheck
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
@@ -790,6 +791,53 @@ Excluded:
             NameConstraints(None)
         with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type bool$'):
             NameConstraints(False)
+
+
+class OCSPNoCheckTestCase(TestCase):
+    def test_as_extension(self):
+        ext1 = x509.extensions.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=True, value=None)
+        ext2 = x509.extensions.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=False, value=None)
+
+        self.assertEqual(OCSPNoCheck({}).as_extension(), OCSPNoCheck(ext2).as_extension())
+        self.assertEqual(OCSPNoCheck({'critical': False}).as_extension(), OCSPNoCheck(ext2).as_extension())
+        self.assertEqual(OCSPNoCheck({'critical': True}).as_extension(), OCSPNoCheck(ext1).as_extension())
+
+    def test_equal(self):
+        ext1 = x509.extensions.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=True, value=None)
+        ext2 = x509.extensions.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=False, value=None)
+
+        self.assertEqual(OCSPNoCheck(), OCSPNoCheck())
+        self.assertEqual(OCSPNoCheck(ext1), OCSPNoCheck(ext1))
+        self.assertNotEqual(OCSPNoCheck(ext1), OCSPNoCheck(ext2))
+        self.assertEqual(OCSPNoCheck({'critical': True}), OCSPNoCheck({'critical': True}))
+        self.assertNotEqual(OCSPNoCheck({'critical': True}), OCSPNoCheck({'critical': False}))
+
+        self.assertEqual(OCSPNoCheck(), OCSPNoCheck(ext2))
+        self.assertEqual(OCSPNoCheck(), OCSPNoCheck({'critical': False}))
+
+    def test_from_extension(self):
+        ext = OCSPNoCheck(x509.extensions.Extension(
+            oid=ExtensionOID.OCSP_NO_CHECK, critical=True, value=None))
+        self.assertTrue(ext.critical)
+
+        ext = OCSPNoCheck(x509.extensions.Extension(
+            oid=ExtensionOID.OCSP_NO_CHECK, critical=False, value=None))
+        self.assertFalse(ext.critical)
+
+    def test_from_dict(self):
+        self.assertFalse(OCSPNoCheck({}).critical)
+        self.assertTrue(OCSPNoCheck({'critical': True}).critical)
+        self.assertTrue(OCSPNoCheck({'critical': True, 'foo': 'bar'}).critical)
+        self.assertFalse(OCSPNoCheck({'critical': False}).critical)
+        self.assertFalse(OCSPNoCheck({'critical': False, 'foo': 'bar'}).critical)
+
+    def test_from_str(self):
+        with self.assertRaises(NotImplementedError):
+            OCSPNoCheck('foobar')
+
+    def test_str(self):
+        self.assertEqual(str(OCSPNoCheck({'critical': True})), 'OCSPNoCheck/critical')
+        self.assertEqual(str(OCSPNoCheck({'critical': False})), 'OCSPNoCheck')
 
 
 class SubjectAlternativeNameTestCase(TestCase):

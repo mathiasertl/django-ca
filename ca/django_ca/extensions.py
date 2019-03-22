@@ -190,18 +190,14 @@ class NullExtension(Extension):
     def __init__(self, value=None):
         if not value:
             self.critical = self.default_critical
-        elif isinstance(value, x509.extensions.Extension):  # e.g. from a cert object
-            self.critical = value.critical
-            self.from_extension(value)
-        elif isinstance(value, dict):  # e.g. from settings
-            self.critical = value.get('critical', self.default_critical)
-            self.from_dict(value)
-            self._test_value()
         else:
-            self.from_other(value)
+            super(NullExtension, self).__init__(value)
 
-        if not isinstance(self.critical, bool):
-            raise ValueError('%s: Invalid critical value passed' % self.critical)
+    def __hash__(self):  # pragma: only py2
+        return hash(self.__class__, self.critical)
+
+    def __eq__(self, other):
+        return isinstance(other, type(self)) and self.critical == other.critical
 
     def __repr__(self):
         return '<%s: critical=%r>' % (self.__class__.__name__, self.critical)
