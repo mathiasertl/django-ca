@@ -48,13 +48,9 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
             cert.distinguishedName(),
         )
 
-    @property
-    def all_certs(self):
-        return [self.cert, self.cert_all, self.cert_no_ext]
-
     def assertIndex(self, certs=None):
         if certs is None:
-            certs = self.all_certs
+            certs = self.certs
 
         stdout, stderr = self.cmd('dump_ocsp_index')
         self.assertEqual(stdout, ''.join(['%s\n' % self.line(c) for c in certs]))
@@ -72,7 +68,7 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(stderr, '')
 
         with open(path) as stream:
-            self.assertEqual(stream.read(), ''.join(['%s\n' % self.line(c) for c in self.all_certs]))
+            self.assertEqual(stream.read(), ''.join(['%s\n' % self.line(c) for c in self.certs]))
 
     def test_expired(self):
         self.cert.expires = timezone.now() - timedelta(days=3)
