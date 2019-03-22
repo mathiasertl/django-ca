@@ -210,6 +210,10 @@ class NullExtension(Extension):
     def as_text(self):
         return self.__class__.__name__
 
+    @property
+    def extension_type(self):
+        return self.ext_class()
+
     def from_extension(self, value):
         pass
 
@@ -857,6 +861,7 @@ class OCSPNoCheck(NullExtension):
         `RFC 6990, section 4.2.2.2.1 <https://tools.ietf.org/html/rfc6960#section-4.2.2.2>`_
     """
     oid = ExtensionOID.OCSP_NO_CHECK
+    ext_class = x509.OCSPNoCheck
 
 
 if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
@@ -880,6 +885,7 @@ if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: on
         default_critical = True
         oid = ExtensionOID.PRECERT_POISON
         name = 'PrecertPoison'
+        ext_class = x509.PrecertPoison
 
         def __init__(self, value=None):
             super(PrecertPoison, self).__init__(value=value)
