@@ -44,6 +44,7 @@ from .base import DjangoCAWithCSRTestCase
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import root_crl_url
+from .base import root_issuer_alt
 from .base import root_issuer_url
 from .base import root_ocsp_url
 
@@ -296,6 +297,26 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
 
     @override_tmpcadir()
     @freeze_time('2018-10-26')  # so recreating will yield the same cert
+    def test_ocsp(self):
+        # Create a typical OCSP responder certificate
+        kwargs = get_cert_profile_kwargs('ocsp')
+
+        self.ca.crl_url = root_crl_url
+        self.ca.save()
+
+        cert = Certificate.objects.init(
+            self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
+            subject_alternative_name=[root_ocsp_url],
+            extra_extensions=[IssuerAlternativeName(root_issuer_alt)],
+            **kwargs)
+
+        if os.environ.get('UPDATE_FIXTURES') == '1':
+            path = os.path.join(settings.FIXTURES_DIR, 'ocsp.pem')
+            with open(path, 'w') as stream:
+                stream.write(cert.pub)
+
+    @override_tmpcadir()
+    @freeze_time('2018-10-26')  # so recreating will yield the same cert
     def test_all_extensions(self):
         # Create a certificate with all extensions enabled.
         # Note that we just blindly add all extensions possible, even if they don't make sense for a
@@ -307,7 +328,6 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         tlsf = 'critical,OCSPMustStaple,MultipleCertStatusRequest'
         san = ['extra.example.com']
         nc = [['.com'], ['.net']]
-        ian = 'https://ca.example.com'
         subject = '/CN=%s' % cn
 
         self.ca.issuer_url = root_issuer_url
@@ -316,7 +336,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         self.ca.save()
 
         extra_extensions = [
-            NameConstraints(nc), IssuerAlternativeName(ian),
+            NameConstraints(nc), IssuerAlternativeName(root_issuer_alt),
             OCSPNoCheck({'critical': True}),
         ]
         if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
@@ -353,7 +373,6 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
             ('cRLDistributionPoints', (False, ['Full Name: URI:%s' % root_crl_url]))
         ] + extra_extensions)
 
-        # Uncomment to create a new cert for the fixture
         if os.environ.get('UPDATE_FIXTURES') == '1':
             path = os.path.join(settings.FIXTURES_DIR, 'all.pem')
             with open(path, 'w') as stream:

@@ -140,6 +140,7 @@ _, godaddy_derstandardat_pubkey = _load_cert(os.path.join('contrib', 'godaddy_de
 root_keyid = '79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47'
 root_crl_url = 'http://ca.example.com/crl'
 root_issuer_url = 'http://ca.example.com/ca.crt'
+root_issuer_alt = 'http://ca.example.com/'
 root_ocsp_url = 'http://ocsp.ca.example.com'
 
 certs = {
