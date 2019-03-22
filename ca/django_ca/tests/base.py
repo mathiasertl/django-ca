@@ -294,14 +294,14 @@ certs = {
     },
     'ocsp': {
         'cn': root_ocsp_domain,
-        'crl': (False, ['Full Name: URI:http://ca.example.com/crl']),
-        'expires': datetime(2020, 10, 26, 0, 0),
+        'crl': (False, ['Full Name: URI:%s' % root_crl_url]),
+        'expires': datetime(2020, 10, 16, 0, 0),
         'from': '2018-10-26 00:00',
         'hpkp': 'ZdNmzaYDup9ws7OGII3V0SGv0T0AlockXgnQz0GOEd4=',
         'serial': '4E:A5:A0:D1:19:21:2E:AB:3D:56:39:FA:BD:D0:A7:5B:CC:35:E4:D9',
         'status': 'Valid',
         'until': '2020-10-16 00:00',
-        'valid_from': datetime(2018, 10, 16, 0, 0),
+        'valid_from': datetime(2018, 10, 26, 0, 0),
         'md5': 'A6:C7:2C:8E:10:89:3D:CC:CB:D8:19:8A:46:10:8B:6F',
         'sha1': 'DC:EA:6B:E9:EB:A7:BA:AA:B2:1D:F9:4F:E2:A3:1C:6A:C2:A5:15:3A',
         'sha256': '9D:16:D6:7F:F1:CF:3C:59:4A:F0:19:CF:24:16:00:A0:34:9D:0C:03:17:37:7B:EC:AE:E3:67:4E:2B:80:49:D2',  # NOQA
