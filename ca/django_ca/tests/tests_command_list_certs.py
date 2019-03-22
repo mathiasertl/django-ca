@@ -15,6 +15,8 @@
 
 from datetime import timedelta
 
+from freezegun import freeze_time
+
 from django.utils import timezone
 
 from ..models import Certificate
@@ -37,43 +39,43 @@ class ListCertsTestCase(DjangoCAWithChildCATestCase):
 
     def assertCerts(self, *certs, **kwargs):
         stdout, stderr = self.cmd('list_certs', **kwargs)
+        certs = sorted(certs, key=lambda c: c.expires)
         self.assertEqual(stdout, ''.join(['%s\n' % self.line(c) for c in certs]))
         self.assertEqual(stderr, '')
 
+    @freeze_time('2019-03-22')
     def test_basic(self):
-        self.assertCerts(self.cert, self.cert_all, self.cert_no_ext)
+        self.assertCerts(*[c for c in self.certs if c.expires > timezone.now()])
 
     @override_settings(USE_TZ=True)
     def test_basic_with_use_tz(self):
-        # reload cert, otherwise self.cert is still the object created in setUp()
-        self.cert = Certificate.objects.get(serial=self.cert.serial)
-        self.cert_all = Certificate.objects.get(serial=self.cert_all.serial)
-        self.cert_no_ext = Certificate.objects.get(serial=self.cert_no_ext.serial)
+        # Refresh objects from db to add timezone to expires timestamp
+        [c.refresh_from_db() for c in self.certs]
         self.test_basic()
 
+    @freeze_time('2019-03-22')
     def test_expired(self):
-        self.cert_all = Certificate.objects.get(serial=self.cert_all.serial)
-        self.cert_no_ext = Certificate.objects.get(serial=self.cert_no_ext.serial)
-        self.cert = Certificate.objects.get(serial=self.cert.serial)
-        self.cert.expires = timezone.now() - timedelta(days=3)
-        self.cert.save()
-
-        self.assertCerts(self.cert_all, self.cert_no_ext)
-        self.assertCerts(self.cert, self.cert_all, self.cert_no_ext, expired=True)
+        self.assertCerts(*[c for c in self.certs if c.expires > timezone.now()])
+        self.assertCerts(*self.certs, expired=True)
 
     @override_settings(USE_TZ=True)
     def test_expired_with_use_tz(self):
+        # Refresh objects from db to add timezone to expires timestamp
+        [c.refresh_from_db() for c in self.certs]
         self.test_expired()
 
+    @freeze_time('2019-03-22')
     def test_revoked(self):
         self.cert.revoke()
         self.cert_all.revoke()
         self.cert_no_ext.revoke()
 
-        self.assertCerts()
-        self.assertCerts(self.cert, self.cert_all, self.cert_no_ext, revoked=True)
+        self.assertCerts(*[c for c in self.certs if c.expires > timezone.now() and c.revoked is False])
+        self.assertCerts(*[c for c in self.certs if c.expires > timezone.now()], revoked=True)
 
+    @freeze_time('2019-03-22')
     def test_ca(self):
-        self.assertCerts(self.cert, self.cert_all, self.cert_no_ext)
-        self.assertCerts(self.cert, self.cert_all, self.cert_no_ext, ca=self.ca)
-        self.assertCerts(ca=self.child_ca)
+        self.assertCerts(*[c for c in self.certs if c.expires > timezone.now()])
+        self.assertCerts(*[c for c in self.certs if c.expires > timezone.now() and c.ca == self.ca],
+                         ca=self.ca)
+        self.assertCerts(ca=self.child_ca)  # child ca has no certs
