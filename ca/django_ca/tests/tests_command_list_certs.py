@@ -13,13 +13,10 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
-from datetime import timedelta
-
 from freezegun import freeze_time
 
 from django.utils import timezone
 
-from ..models import Certificate
 from .base import DjangoCAWithChildCATestCase
 from .base import override_settings
 
