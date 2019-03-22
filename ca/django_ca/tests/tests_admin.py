@@ -241,10 +241,31 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertRedirects(response, self.changelist_url)
         self.assertEqual(list(cert.watchers.all()), [watcher])
 
+    def test_unsupported_extensions(self):
+        self.maxDiff = None
+        # Act as if no extensions is recognized, to see what happens if we'd encounter an unknown extension.
+        with mock.patch.object(Certificate, 'OID_MAPPING', {}), self.assertLogs() as logs:
+            response = self.client.get(self.change_url(self.cert_all.pk))
+            self.assertChangeResponse(response)
+        self.assertEqual(logs.output, [
+            'WARNING:django_ca.models:Unknown extension encountered: authorityInfoAccess',
+            'WARNING:django_ca.models:Unknown extension encountered: authorityKeyIdentifier',
+            'WARNING:django_ca.models:Unknown extension encountered: basicConstraints',
+            'WARNING:django_ca.models:Unknown extension encountered: extendedKeyUsage',
+            'WARNING:django_ca.models:Unknown extension encountered: issuerAltName',
+            'WARNING:django_ca.models:Unknown extension encountered: keyUsage',
+            'WARNING:django_ca.models:Unknown extension encountered: nameConstraints',
+            'WARNING:django_ca.models:Unknown extension encountered: OCSPNoCheck',
+            'WARNING:django_ca.models:Unknown extension encountered: subjectAltName',
+            'WARNING:django_ca.models:Unknown extension encountered: subjectKeyIdentifier',
+            'WARNING:django_ca.models:Unknown extension encountered: TLSFeature',
+            'WARNING:django_ca.models:Unknown extension encountered: Unknown OID',
+        ] * 4)
+
     @unittest.skipUnless(
         ca_settings.OPENSSL_SUPPORTS_SCT,
         'Older versions of OpenSSL/LibreSSL do not recognize this extension anyway.')
-    def test_unsupported(self):
+    def test_unsupported_sct(self):
         # Test return value for older versions of OpenSSL
         cert = self.cert_letsencrypt_jabber_at
 
