@@ -676,9 +676,6 @@ class DjangoCATestCase(TestCase):
         cert.save()
         return cert
 
-    def get_cert(self, path):
-        return _load_cert(path)
-
     @classmethod
     def get_subject(cls, cert):
         return {OID_NAME_MAPPINGS[s.oid]: s.value for s in cert.subject}
