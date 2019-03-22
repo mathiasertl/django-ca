@@ -40,9 +40,16 @@ from django.utils.six import StringIO
 from django.utils.six.moves import reload_module
 
 from .. import ca_settings
+from ..extensions import AuthorityInformationAccess
+from ..extensions import AuthorityKeyIdentifier
+from ..extensions import BasicConstraints
+from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
+from ..extensions import IssuerAlternativeName
+from ..extensions import KeyUsage
 from ..extensions import NameConstraints
 from ..extensions import SubjectAlternativeName
+from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import CertificateAuthority
@@ -128,6 +135,8 @@ _, cloudflare_1_pubkey = _load_cert(os.path.join('contrib', 'cloudflare_1.pem'))
 _, letsencrypt_jabber_at_pubkey = _load_cert(os.path.join('contrib', 'letsencrypt_jabber_at.pem'))
 _, godaddy_derstandardat_pubkey = _load_cert(os.path.join('contrib', 'godaddy_derstandardat.pem'))
 
+root_keyid = '79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47'
+
 certs = {
     'root': {
         'name': 'root',
@@ -138,14 +147,14 @@ certs = {
         'sha256': 'DA:0B:C6:6A:60:79:70:94:E1:D2:BE:68:F4:E8:FD:02:80:2A:A9:DF:85:52:49:5F:99:31:DA:15:D7:BF:BA:2E',  # NOQA
         'sha512': '12:33:63:35:91:95:69:58:B5:D0:44:1F:12:C4:40:FD:08:21:86:53:E5:05:9D:C5:49:EC:59:B5:27:63:21:AE:52:F5:BD:AA:B9:BB:F4:A1:42:BD:71:48:5B:7D:1D:0A:54:BD:2A:1F:C4:70:C5:F7:57:94:19:A8:C6:DB:B3:9D', # NOQA
         'san': None,
-        'authKeyIdentifier': 'keyid:79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
+        'authKeyIdentifier': 'keyid:%s' % root_keyid,
         'aki': x509.AuthorityKeyIdentifier(
             key_identifier=b'y&\x89\xd2]\xd8\xe1,1q\xef\xad8\xb4\xb6)\xf17(G',
             authority_cert_issuer=None, authority_cert_serial_number=None
         ),
         'hpkp': 'MWvvGs9cF37mKmi2iXqBBqpkBT8zaWfT09DRSlpg8tQ=',
         'crl': None,
-        'subjectKeyIdentifier': '79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
+        'subjectKeyIdentifier': root_keyid,
         'dn': '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=ca.example.com',
         'key_size': 4096,
         'basicConstraints': (True, 'CA:TRUE, pathlen:1'),
@@ -162,7 +171,7 @@ certs = {
         'sha256': 'DA:0B:C6:6A:60:79:70:94:E1:D2:BE:68:F4:E8:FD:02:80:2A:A9:DF:85:52:49:5F:99:31:DA:15:D7:BF:BA:2E',  # NOQA
         'sha512': '12:33:63:35:91:95:69:58:B5:D0:44:1F:12:C4:40:FD:08:21:86:53:E5:05:9D:C5:49:EC:59:B5:27:63:21:AE:52:F5:BD:AA:B9:BB:F4:A1:42:BD:71:48:5B:7D:1D:0A:54:BD:2A:1F:C4:70:C5:F7:57:94:19:A8:C6:DB:B3:9D', # NOQA
         'san': None,
-        'authKeyIdentifier': 'keyid:79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
+        'authKeyIdentifier': 'keyid:%s' % root_keyid,
         'hpkp': '+6YcoRI+EBfxBOMXlsUBKg7DexUf0AOMS08O+P+1YjI=',
         'crl': (False, ['Full Name: URI:http://parent.example.com/parent.crl']),
         'dn': '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=sub.ca.example.com',
@@ -209,7 +218,7 @@ certs = {
         'until': '2019-04-18 00:00',
         'status': 'Valid',
         'subjectKeyIdentifier': 'D2:1B:D1:90:35:0E:44:58:F7:0A:21:BB:DC:BE:3D:7F:ED:83:E4:FA',
-        'authKeyIdentifier': 'keyid:79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
+        'authKeyIdentifier': 'keyid:%s' % root_keyid,
         'issuer_alternative_name': 'URI:https://ca.example.com',
         'authInfoAccess': (False, ['URI:http://ca.example.com/ca.crt',
                                    'URI:http://ocsp.ca.example.com', ]),
@@ -226,7 +235,7 @@ certs = {
         'sha256': 'A2:18:2B:7E:5D:A3:A8:64:B4:9B:74:D5:4A:FB:46:60:DC:B7:A5:20:ED:0E:0E:EC:7A:2E:20:01:20:E9:3F:4C',  # NOQA
         'sha512': '63:86:08:13:70:6E:A2:C3:95:2B:E6:33:16:D8:1C:6E:48:FA:7B:73:6D:51:D0:98:AD:7D:F3:9F:79:5C:03:A0:21:23:DA:88:5C:DD:BB:03:86:E0:A8:77:C3:36:46:06:E9:AA:0C:02:A5:56:81:2B:04:1A:37:11:2A:DE:A2:A5', # NOQA
         'san': SubjectAlternativeName('DNS:host2.example.com'),
-        'authKeyIdentifier': 'keyid:79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
+        'authKeyIdentifier': 'keyid:%s' % root_keyid,
         'hpkp': 'i+ccTaizbK5r9luNHFW358cxzaORJ4rS3WYHlEnaQoI=',
         'crl': (False, ['Full Name: URI:http://ca.example.com/crl']),
         'serial': '4E:2B:01:C4:8B:CC:1F:71:94:12:88:64:68:0C:AA:04:D3:F8:BB:45',
@@ -240,7 +249,7 @@ certs = {
         'sha256': '2A:18:6B:D9:B4:A9:B7:12:17:41:20:A6:6C:D4:AA:0D:D7:98:A0:5F:53:26:C7:47:AA:00:A4:2C:DF:7A:07:96',  # NOQA
         'sha512': 'B2:E8:35:D7:56:37:DA:76:B7:F7:94:5C:A5:66:A7:6E:CC:A7:18:26:35:DC:1C:AD:AC:27:56:83:CA:4E:FD:66:4B:E9:89:6E:D5:A1:7D:94:94:0B:9B:35:E3:45:B5:78:AD:50:8F:CF:5C:9B:1E:16:70:54:B7:76:C4:86:30:66', # NOQA
         'san': SubjectAlternativeName('DNS:host3.example.com'),
-        'authKeyIdentifier': 'keyid:79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47',
+        'authKeyIdentifier': 'keyid:%s' % root_keyid,
         'hpkp': 'ZuJoB0pw8rd2os1WFVe5f8Vky6eg3vHxCrnaZxupFQo=',
         'crl': (False, ['Full Name: URI:http://ca.example.com/crl']),
         'serial': '32:A7:B0:8E:88:A2:1A:EC:05:C8:BA:18:D7:8B:D9:35:45:9D:82:FA',
@@ -251,10 +260,30 @@ certs = {
         'tls_feature': TLSFeature('critical,OCSPMustStaple,MultipleCertStatusRequest'),
     },
     'ocsp': {
+        'cn': 'localhost',
         'crl': (False, ['Full Name: URI:http://ca.example.com/crl']),
-        'serial': '49:BC:F2:FE:FA:31:03:B6:E0:CC:3D:16:93:4E:2D:B0:8A:D2:C5:87',
         'expires': datetime(2019, 4, 18, 0, 0),
+        'from': '2017-04-17 11:47',
+        'hpkp': 'ZdNmzaYDup9ws7OGII3V0SGv0T0AlockXgnQz0GOEd4=',
+        'serial': '49:BC:F2:FE:FA:31:03:B6:E0:CC:3D:16:93:4E:2D:B0:8A:D2:C5:87',
+        'status': 'Valid',
+        'until': '2019-04-18 00:00',
         'valid_from': datetime(2017, 4, 17, 11, 47),
+        'md5': 'C8:FC:5C:B8:CE:D6:DF:65:2F:03:A6:56:81:30:3E:72',
+        'sha1': '70:A7:7B:93:4C:CE:B3:4A:7F:8A:54:F6:F5:74:3E:3B:EA:30:52:80',
+        'sha256': '96:48:40:B7:B3:C1:F1:75:B3:77:FF:9B:6D:3F:88:1B:16:5F:E5:36:77:C0:E7:4D:88:F1:A5:6F:95:42:50:B3',  # NOQA
+        'sha512': 'E4:BB:9C:1B:D0:55:E8:E7:EF:FA:5C:F4:31:47:1B:5B:ED:56:D0:B4:86:CC:21:AC:FB:26:5B:58:16:09:13:ED:0E:48:3C:27:CD:3D:94:67:B9:9F:A7:A6:CE:CE:09:55:43:94:33:E6:57:29:E1:D5:56:86:C8:74:74:06:5B:6D',  # NOQA
+        'authority_information_access': AuthorityInformationAccess({
+            'issuers': ['URI:http://ca.example.com/ca.crt'],
+            'ocsp': ['URI:http://ocsp.ca.example.com'],
+        }),
+        'authority_key_identifier': AuthorityKeyIdentifier(root_keyid),
+        'basic_constraints': BasicConstraints('critical,CA:FALSE'),
+        'extended_key_usage': ExtendedKeyUsage('OCSPSigning'),
+        'issuer_alternative_name': IssuerAlternativeName('URI:https://ca.example.com'),
+        'key_usage': KeyUsage('critical,digitalSignature,keyEncipherment,nonRepudiation'),
+        'subject_alternative_name': SubjectAlternativeName('DNS:localhost'),
+        'subject_key_identifier': SubjectKeyIdentifier('31:CB:89:87:60:8D:AB:3B:92:93:A3:F1:4E:0F:D7:E5:07:62:35:CC'),  # NOQA
     },
 }
 
@@ -542,6 +571,9 @@ class DjangoCATestCase(TestCase):
                         ctx['%s_%s' % (key, i)] = val_i
                 else:
                     ctx[key] = val
+            elif isinstance(value, Extension):
+                ctx[key] = value
+                ctx['%s_text' % key] = value.as_text()
             else:
                 ctx[key] = value
 
