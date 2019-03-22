@@ -13,11 +13,15 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import os
+
 from freezegun import freeze_time
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtensionOID
+
+from django.conf import settings
 
 from .. import ca_settings
 from ..extensions import AuthorityInformationAccess
@@ -350,8 +354,10 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         ] + extra_extensions)
 
         # Uncomment to create a new cert for the fixture
-        #with open('/tmp/out.pem', 'w') as stream:
-        #    stream.write(cert.pub)
+        if os.environ.get('UPDATE_FIXTURES') == '1':
+            path = os.path.join(settings.FIXTURES_DIR, 'all.pem')
+            with open(path, 'w') as stream:
+                stream.write(cert.pub)
 
     @override_tmpcadir()
     @freeze_time('2018-10-26')  # so recreating will yield the same cert

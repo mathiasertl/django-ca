@@ -197,6 +197,15 @@ class CoverageCommand(BaseCommand):
             sys.exit(2)  # coverage cli utility also exits with 2
 
 
+class RecreateFixturesCommand(BaseCommand):
+    description = 'Recreate some certificate fixtures.'
+
+    def run(self):
+        os.environ['UPDATE_FIXTURES'] = '1'
+        self.suite = 'tests_managers'
+        self.run_tests()
+
+
 class QualityCommand(Command):
     user_options = []
 
@@ -309,6 +318,7 @@ setup(
         'test': TestCommand,
         'code_quality': QualityCommand,
         'docker_test': DockerTest,
+        'recreate_fixtures': RecreateFixturesCommand,
     },
     classifiers=[
         'Development Status :: 4 - Beta',
