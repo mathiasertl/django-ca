@@ -850,8 +850,13 @@ class OCSPNoCheckTestCase(TestCase):
             OCSPNoCheck('foobar')
 
     def test_str(self):
-        self.assertEqual(str(OCSPNoCheck({'critical': True})), 'OCSPNoCheck/critical')
-        self.assertEqual(str(OCSPNoCheck({'critical': False})), 'OCSPNoCheck')
+        ext1 = OCSPNoCheck({'critical': True})
+        ext2 = OCSPNoCheck({'critical': False})
+
+        self.assertEqual(str(ext1), 'OCSPNoCheck/critical')
+        self.assertEqual(str(ext2), 'OCSPNoCheck')
+        self.assertEqual(repr(ext1), '<OCSPNoCheck: critical=True>')
+        self.assertEqual(repr(ext2), '<OCSPNoCheck: critical=False>')
 
 
 @unittest.skipUnless(ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON,
@@ -892,6 +897,7 @@ class PrecertPoisonTestCase(TestCase):
 
     def test_str(self):
         self.assertEqual(str(PrecertPoison({'critical': True})), 'PrecertPoison/critical')
+        self.assertEqual(repr(PrecertPoison({'critical': True})), '<PrecertPoison: critical=True>')
 
     def test_non_critical(self):
         ext = x509.extensions.Extension(oid=ExtensionOID.PRECERT_POISON, critical=False, value=None)
