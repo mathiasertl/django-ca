@@ -861,7 +861,30 @@ class OCSPNoCheck(NullExtension):
 
 if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
     class PrecertPoison(NullExtension):
+        """Extension to indicate that the certificate is a submission to a certificate transparency log.
+
+        Note that creating this extension will raise ``ValueError`` if it is not marked as critical:
+
+            >>> PrecertPoison()
+            <PrecertPoison: critical=True>
+            >>> PrecertPoison({'critical': False})
+            Traceback (most recent call last):
+                ...
+            ValueError: PrecertPoison must always be marked as critical
+
+
+        .. seealso::
+
+           `RFC 6962 <https://tools.ietf.org/html/rfc6962>`_
+        """
+        default_critical = True
         oid = ExtensionOID.PRECERT_POISON
+
+        def __init__(self, value=None):
+            super(PrecertPoison, self).__init__(value=value)
+
+            if self.critical is not True:
+                raise ValueError('PrecertPoison must always be marked as critical')
 
 
 class SubjectAlternativeName(AlternativeNameExtension):
