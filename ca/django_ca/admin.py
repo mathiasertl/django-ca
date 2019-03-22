@@ -48,6 +48,7 @@ from django_object_actions import DjangoObjectActions
 from . import ca_settings
 from .extensions import Extension
 from .extensions import ListExtension
+from .extensions import NullExtension
 from .forms import CreateCertificateForm
 from .forms import ResignCertificateForm
 from .forms import RevokeCertificateForm
@@ -167,6 +168,8 @@ class CertificateMixin(object):
                         val = format_general_name(val)
                     html += '<li>%s</li>' % escape(val)
                 html += '</ul>'
+            elif isinstance(value, NullExtension):
+                html += '<p>Yes</p>'
             else:
                 html += '<p>%s<p>' % escape(value.as_text())
 
@@ -267,6 +270,14 @@ class CertificateMixin(object):
             html += '</ul>'
         return mark_safe(html)
     name_constraints.short_description = _('Name Constraints')
+
+    def ocsp_no_check(self, obj):
+        return self.output_extension(obj.ocsp_no_check)
+    ocsp_no_check.short_description = _('OCSP No Check')
+
+    def precert_poison(self, obj):
+        return self.output_extension(obj.precert_poison)
+    precert_poison.short_description = _('Precert Poison')
 
     def certificatePolicies(self, obj):
         return self.output_extension(obj.certificatePolicies())
