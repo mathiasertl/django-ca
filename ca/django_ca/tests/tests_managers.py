@@ -17,6 +17,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtensionOID
 
+from .. import ca_settings
 from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
@@ -24,6 +25,7 @@ from ..extensions import ExtendedKeyUsage
 from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
 from ..extensions import NameConstraints
+from ..extensions import OCSPNoCheck
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
@@ -35,6 +37,12 @@ from .base import DjangoCATestCase
 from .base import DjangoCAWithCSRTestCase
 from .base import override_settings
 from .base import override_tmpcadir
+from .base import root_crl_url
+from .base import root_issuer_url
+from .base import root_ocsp_url
+
+if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
+    from ..extensions import PrecertPoison
 
 
 @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
@@ -284,11 +292,23 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
     def test_all_extensions(self):
         ku = 'critical,encipherOnly,keyAgreement,nonRepudiation'
         eku = 'serverAuth'
-        tlsf = 'OCSPMustStaple'
+        tlsf = 'OCSPMustStaple,MultipleCertStatusRequest'
         san = ['example.com']
         nc = [['.com'], ['.net']]
         ian = 'example.com'
         subject = '/CN=example.net'
+
+        self.ca.issuer_url = root_issuer_url
+        self.ca.crl_url = root_crl_url
+        self.ca.ocsp_url = root_ocsp_url
+        self.ca.save()
+
+        extra_extensions = [
+            NameConstraints(nc), IssuerAlternativeName(ian),
+            OCSPNoCheck({'critical': True}),
+        ]
+        if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
+            extra_extensions.append(PrecertPoison())
 
         cert = Certificate.objects.init(
             self.ca, self.csr_pem, expires=self.expires(720),
@@ -297,9 +317,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
             key_usage=ku,
             extended_key_usage=eku,
             tls_feature=tlsf,
-            extra_extensions=[
-                NameConstraints(nc), IssuerAlternativeName(ian).as_extension(),
-            ]
+            extra_extensions=extra_extensions,
         )
 
         aik = AuthorityKeyIdentifier(x509.Extension(
@@ -316,9 +334,12 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
             ExtendedKeyUsage(eku),
             SubjectAlternativeName(['example.net'] + san),  # prepend CN from subject
             KeyUsage(ku),
-            NameConstraints(nc),
-            IssuerAlternativeName(ian),
-        ])
+            AuthorityInformationAccess({
+                'ocsp': [root_ocsp_url],
+                'issuers': [root_issuer_url],
+            }),
+            ('cRLDistributionPoints', (False, ['Full Name: URI:%s' % root_crl_url]))
+        ] + extra_extensions)
 
     def test_extra_extensions_value(self):
         with self.assertRaisesRegex(ValueError, r'^Cannot add extension of type bool$'):

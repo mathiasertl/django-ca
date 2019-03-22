@@ -135,7 +135,11 @@ _, cloudflare_1_pubkey = _load_cert(os.path.join('contrib', 'cloudflare_1.pem'))
 _, letsencrypt_jabber_at_pubkey = _load_cert(os.path.join('contrib', 'letsencrypt_jabber_at.pem'))
 _, godaddy_derstandardat_pubkey = _load_cert(os.path.join('contrib', 'godaddy_derstandardat.pem'))
 
+# some reused values
 root_keyid = '79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47'
+root_crl_url = 'http://ca.example.com/crl'
+root_issuer_url = 'http://ca.example.com/ca.crt'
+root_ocsp_url = 'http://ocsp.ca.example.com'
 
 certs = {
     'root': {
@@ -258,7 +262,7 @@ certs = {
     },
     'cert_all': {
         'cn': 'all-extensions.example.com',
-        'crl': (False, ['Full Name: URI:http://localhost:8000/django_ca/crl/55:2E:BA:DE:07:A7:16:96:09:1B:19:16:5F:9D:E4:46:8C:F8:C1:D3/']),
+        'crl': (False, ['Full Name: URI:http://localhost:8000/django_ca/crl/55:2E:BA:DE:07:A7:16:96:09:1B:19:16:5F:9D:E4:46:8C:F8:C1:D3/']),  # NOQA
         'expires': datetime(2019, 4, 18, 0, 0),
         'from': '2018-10-26 19:35',
         'hpkp': 'y7MP7lTrd5tT5cf7dO/ikFaoj/YmJFke2MAIr5uJf74=',
