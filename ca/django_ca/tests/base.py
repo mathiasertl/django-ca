@@ -664,9 +664,24 @@ class DjangoCAWithCertTestCase(DjangoCAWithCSRTestCase):
     def setUp(self):
         super(DjangoCAWithCertTestCase, self).setUp()
         self.cert = self.load_cert(self.ca, x509=cert1_pubkey, csr=cert1_csr)
+        self.cert2 = self.load_cert(self.ca, cert2_pubkey)
+        self.cert3 = self.load_cert(self.ca, cert3_pubkey)
+        self.ocsp = self.load_cert(self.ca, ocsp_pubkey)
         self.cert_all = self.load_cert(self.ca, x509=all_pubkey, csr=all_csr)
         self.cert_no_ext = self.load_cert(self.ca, x509=no_ext_pubkey, csr=no_ext_csr)
-        self.certs = [self.cert, self.cert_all, self.cert_no_ext]
+
+        # the one with no hostname:
+        self.cert_multiple_ous_and_no_ext = self.load_cert(self.ca, multiple_ous_and_no_ext_pubkey)
+
+        self.cert_cloudflare_1 = self.load_cert(self.ca, cloudflare_1_pubkey)
+        self.cert_letsencrypt_jabber_at = self.load_cert(self.ca, letsencrypt_jabber_at_pubkey)
+        self.cert_godaddy_derstandardat = self.load_cert(self.ca, godaddy_derstandardat_pubkey)
+
+        self.certs = [
+            self.cert, self.cert2, self.cert3, self.ocsp, self.cert_all, self.cert_no_ext,
+            self.cert_multiple_ous_and_no_ext, self.cert_cloudflare_1, self.cert_letsencrypt_jabber_at,
+            self.cert_godaddy_derstandardat,
+        ]
 
 
 class DjangoCAWithChildCATestCase(DjangoCAWithCertTestCase):

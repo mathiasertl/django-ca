@@ -45,7 +45,6 @@ from ..views import OCSPView
 from .base import DjangoCAWithCertTestCase
 from .base import certs
 from .base import ocsp_pem
-from .base import ocsp_pubkey
 from .base import override_settings
 from .base import override_tmpcadir
 
@@ -168,7 +167,6 @@ class OCSPViewTestMixin(object):
         super(OCSPViewTestMixin, self).setUp()
 
         self.client = Client()
-        self.ocsp_cert = self.load_cert(ca=self.ca, x509=ocsp_pubkey)
 
         # used for verifying signatures
         self.ocsp_private_key = asymmetric.load_private_key(force_text(settings.OCSP_KEY_PATH))
@@ -231,9 +229,9 @@ class OCSPViewTestMixin(object):
 
         # verify subjects of certificates
         self.assertOCSPSubject(certs[0]['tbs_certificate']['subject'].native,
-                               self.ocsp_cert.subject)
+                               self.ocsp.subject)
         self.assertOCSPSubject(certs[0]['tbs_certificate']['issuer'].native,
-                               self.ocsp_cert.ca.subject)
+                               self.ocsp.ca.subject)
 
         tbs_response_data = response['tbs_response_data']
         self.assertEqual(tbs_response_data['version'].native, 'v1')

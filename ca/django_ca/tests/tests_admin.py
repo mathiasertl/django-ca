@@ -111,12 +111,6 @@ class ChangelistTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertCSS(response, 'django_ca/admin/css/certificateadmin.css')
         self.assertEqual(set(response.context['cl'].result_list), set(certs))
 
-    def assertContrib(self, name):
-        _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
-        cert = self.load_cert(self.ca, x509=pubkey)
-        response = self.client.get(self.changelist_url)
-        self.assertResponse(response, self.certs + [cert])
-
     def test_get(self):
         response = self.client.get(self.changelist_url)
         self.assertResponse(response, self.certs)
@@ -141,18 +135,6 @@ class ChangelistTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         cert.revoke()
         response = self.client.get('%s?status=revoked' % self.changelist_url)
         self.assertResponse(response, [self.cert])
-
-    def test_contrib_multiple_ous_and_no_ext(self):
-        self.assertContrib('multiple_ous_and_no_ext')
-
-    def test_contrib_cloudflare_1(self):
-        self.assertContrib('cloudflare_1')
-
-    def test_contrib_godaddy_derstandardat(self):
-        self.assertContrib('godaddy_derstandardat')
-
-    def test_contrib_letsencrypt_jabber_at(self):
-        self.assertContrib('letsencrypt_jabber_at')
 
     def test_unauthorized(self):
         client = Client()
@@ -218,14 +200,9 @@ class RevokeActionTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
 class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     def test_basic(self):
-        response = self.client.get(self.change_url())
-        self.assertChangeResponse(response)
-
-        response = self.client.get(self.change_url(self.cert_all.pk))
-        self.assertChangeResponse(response)
-
-        response = self.client.get(self.change_url(self.cert_no_ext.pk))
-        self.assertChangeResponse(response)
+        for cert in self.certs:
+            response = self.client.get(self.change_url(cert.pk))
+            self.assertChangeResponse(response)
 
     def test_revoked(self):
         # view a revoked certificate (fieldsets are collapsed differently)
@@ -266,24 +243,6 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertRedirects(response, self.changelist_url)
         self.assertEqual(list(cert.watchers.all()), [watcher])
 
-    def assertContrib(self, name):
-        _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
-        cert = self.load_cert(self.ca, x509=pubkey)
-        response = self.client.get(self.change_url(cert.pk))
-        self.assertChangeResponse(response)
-
-    def test_contrib_multiple_ous_and_no_ext(self):
-        self.assertContrib('multiple_ous_and_no_ext')
-
-    def test_contrib_cloudflare_1(self):
-        self.assertContrib('cloudflare_1')
-
-    def test_contrib_godaddy_derstandardat(self):
-        self.assertContrib('godaddy_derstandardat')
-
-    def test_contrib_letsencrypt_jabber_at(self):
-        self.assertContrib('letsencrypt_jabber_at')
-
     @unittest.skipUnless(
         default_backend()._lib.CRYPTOGRAPHY_OPENSSL_110F_OR_GREATER,
         'test only makes sense with older libreSSL/OpenSSL versions that don\'t support SCT.')
@@ -294,7 +253,7 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
         name = 'letsencrypt_jabber_at'
         _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
-        cert = self.load_cert(self.ca, x509=pubkey)
+        cert = self.cert_letsencrypt_jabber_at
 
         oid = ObjectIdentifier('1.1.1.1')
         value = UnrecognizedExtension(oid, b'foo')

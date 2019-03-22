@@ -115,21 +115,6 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         super(CertificateTests, self).setUp()
         self.ca.crl_url = 'https://ca.example.com/crl.der'
 
-        self.cert2 = self.load_cert(self.ca, cert2_pubkey)
-        self.cert3 = self.load_cert(self.ca, cert3_pubkey)
-        self.ocsp = self.load_cert(self.ca, ocsp_pubkey)
-
-        self.cert_multiple_ous_and_no_ext = self.load_cert(self.ca, multiple_ous_and_no_ext_pubkey)
-        self.cert_cloudflare_1 = self.load_cert(self.ca, cloudflare_1_pubkey)
-        self.cert_letsencrypt_jabber_at = self.load_cert(self.ca, letsencrypt_jabber_at_pubkey)
-        self.cert_godaddy_derstandardat = self.load_cert(self.ca, godaddy_derstandardat_pubkey)
-
-        self.certs += [
-            self.cert2, self.cert3, self.ocsp,
-            self.cert_multiple_ous_and_no_ext, self.cert_cloudflare_1,
-            self.cert_letsencrypt_jabber_at, self.cert_godaddy_derstandardat,
-        ]
-
     def assertExtension(self, name, expected):
         for cert in self.cas + self.certs:
             value = getattr(cert, name)

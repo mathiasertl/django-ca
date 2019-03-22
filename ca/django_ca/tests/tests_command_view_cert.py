@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
-import os
 from datetime import timedelta
 from io import BytesIO
 
@@ -30,9 +29,7 @@ from ..models import Certificate
 from ..models import Watcher
 from .base import DjangoCAWithCertTestCase
 from .base import certs
-from .base import cloudflare_1_pubkey
 from .base import cryptography_version
-from .base import multiple_ous_and_no_ext_pubkey
 from .base import override_settings
 from .base import override_tmpcadir
 
@@ -215,9 +212,8 @@ HPKP pin: %(hpkp)s
         self.assertEqual(stderr, b'')
 
     def test_contrib_multiple_ous_and_no_ext(self):
-        cert = self.load_cert(self.ca, x509=multiple_ous_and_no_ext_pubkey)
-        stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, extensions=True,
-                                  stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = self.cmd('view_cert', self.cert_multiple_ous_and_no_ext.serial, no_pem=True,
+                                  extensions=True, stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
         self.assertEqual(stdout.decode('utf-8'), '''Common Name: %(cn)s
 Valid from: 1998-05-18 00:00
@@ -233,8 +229,7 @@ HPKP pin: AjyBzOjnxk+pQtPBUEhwfTXZu1uH9PVExb8bxWQ68vo=
 ''' % {'cn': ''})  # NOQA
 
     def test_contrib_cloudflare_1(self):
-        cert = self.load_cert(self.ca, x509=cloudflare_1_pubkey)
-        stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, extensions=True,
+        stdout, stderr = self.cmd('view_cert', self.cert_cloudflare_1.serial, no_pem=True, extensions=True,
                                   stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
 
@@ -367,16 +362,14 @@ HPKP pin: bkunFfRSda4Yhz7UlMUaalgj0Gcus/9uGVp19Hceczg=
     'precert_poison': precert_poison
 })
 
-    def assertContrib(self, name, expected):
-        _pem, pubkey = self.get_cert(os.path.join('contrib', '%s.pem' % name))
-        cert = self.load_cert(self.ca, x509=pubkey)
+    def assertContrib(self, cert, expected):
         stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, extensions=True,
                                   stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
         self.assertEqual(stdout.decode('utf-8'), expected)
 
     def test_contrib_godaddy_derstandardat(self):
-        self.assertContrib('godaddy_derstandardat', '''Common Name: %(cn)s
+        self.assertContrib(self.cert_godaddy_derstandardat, '''Common Name: %(cn)s
 Valid from: %(valid_from)s
 Valid until: %(valid_until)s
 Status: Valid
@@ -489,7 +482,7 @@ signedCertificateTimestampList:
 UnknownOID:
     <ObjectIdentifier(oid=1.3.6.1.4.1.11129.2.4.2, name=Unknown OID)>'''
 
-        self.assertContrib('letsencrypt_jabber_at', '''Common Name: %(cn)s
+        self.assertContrib(self.cert_letsencrypt_jabber_at, '''Common Name: %(cn)s
 Valid from: %(valid_from)s
 Valid until: %(valid_until)s
 Status: %(status)s%(unknown)s

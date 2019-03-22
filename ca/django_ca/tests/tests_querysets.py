@@ -112,23 +112,35 @@ class CertificateQuerysetTestCase(DjangoCAWithCertTestCase):
 
     def test_validity(self):
         with freeze_time('2018-12-26'):
+            certs = list(self.certs)
+            certs.remove(self.cert_letsencrypt_jabber_at)
             self.assertQuerySet(Certificate.objects.not_yet_valid())
-            self.assertQuerySet(Certificate.objects.valid(), self.cert, self.cert_all, self.cert_no_ext)
-            self.assertQuerySet(Certificate.objects.expired())
+            self.assertQuerySet(Certificate.objects.valid(), *certs)
+            self.assertQuerySet(Certificate.objects.expired(), self.cert_letsencrypt_jabber_at)
 
         with freeze_time('2018-01-01'):
-            self.assertQuerySet(Certificate.objects.not_yet_valid(), self.cert_all, self.cert_no_ext)
-            self.assertQuerySet(Certificate.objects.valid(), self.cert)
+            self.assertQuerySet(
+                Certificate.objects.not_yet_valid(),
+                self.cert_all, self.cert_no_ext,
+                self.cert_letsencrypt_jabber_at, self.cert_cloudflare_1
+            )
+            self.assertQuerySet(Certificate.objects.valid(),
+                                self.cert, self.cert2, self.cert3, self.ocsp,
+                                self.cert_multiple_ous_and_no_ext,
+                                self.cert_godaddy_derstandardat)
             self.assertQuerySet(Certificate.objects.expired())
 
         with freeze_time('2017-01-01'):
-            self.assertQuerySet(Certificate.objects.not_yet_valid(),
-                                self.cert, self.cert_all, self.cert_no_ext)
-            self.assertQuerySet(Certificate.objects.valid())
+            self.assertQuerySet(
+                Certificate.objects.not_yet_valid(),
+                self.cert, self.cert2, self.cert3, self.ocsp, self.cert_all, self.cert_no_ext,
+                self.cert_letsencrypt_jabber_at, self.cert_cloudflare_1, self.cert_godaddy_derstandardat
+            )
+            self.assertQuerySet(Certificate.objects.valid(), self.cert_multiple_ous_and_no_ext)
             self.assertQuerySet(Certificate.objects.expired())
 
+        # All certs are invalid
         with freeze_time('2099-01-01'):
             self.assertQuerySet(Certificate.objects.not_yet_valid())
             self.assertQuerySet(Certificate.objects.valid())
-            self.assertQuerySet(Certificate.objects.expired(),
-                                self.cert, self.cert_all, self.cert_no_ext)
+            self.assertQuerySet(Certificate.objects.expired(), *self.certs)
