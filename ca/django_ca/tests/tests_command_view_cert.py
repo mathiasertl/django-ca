@@ -183,6 +183,7 @@ HPKP pin: {hpkp}
 Valid from: {from}
 Valid until: {until}
 Status: {status}
+OCSPNoCheck: Yes
 authorityInfoAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}

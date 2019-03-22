@@ -121,11 +121,11 @@ class CertificateQuerysetTestCase(DjangoCAWithCertTestCase):
         with freeze_time('2018-01-01'):
             self.assertQuerySet(
                 Certificate.objects.not_yet_valid(),
-                self.cert_all, self.cert_no_ext,
+                self.cert_all, self.cert_no_ext, self.ocsp,
                 self.cert_letsencrypt_jabber_at, self.cert_cloudflare_1
             )
             self.assertQuerySet(Certificate.objects.valid(),
-                                self.cert, self.cert2, self.cert3, self.ocsp,
+                                self.cert, self.cert2, self.cert3,
                                 self.cert_multiple_ous_and_no_ext,
                                 self.cert_godaddy_derstandardat)
             self.assertQuerySet(Certificate.objects.expired())

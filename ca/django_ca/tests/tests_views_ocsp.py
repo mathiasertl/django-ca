@@ -222,15 +222,15 @@ class OCSPViewTestMixin(object):
         self.assertIsNone(signature_algo['parameters'].native)
 
         # verify the responder cert
-        certs = response['certs']
-        self.assertEqual(len(certs), 1)
-        serials = [int_to_hex(c['tbs_certificate']['serial_number'].native) for c in certs]
-        self.assertEqual(serials, [settings.OCSP_SERIAL])
+        resp_certs = response['certs']
+        self.assertEqual(len(resp_certs), 1)
+        serials = [int_to_hex(c['tbs_certificate']['serial_number'].native) for c in resp_certs]
+        self.assertEqual(serials, [certs['ocsp']['serial']])
 
         # verify subjects of certificates
-        self.assertOCSPSubject(certs[0]['tbs_certificate']['subject'].native,
+        self.assertOCSPSubject(resp_certs[0]['tbs_certificate']['subject'].native,
                                self.ocsp.subject)
-        self.assertOCSPSubject(certs[0]['tbs_certificate']['issuer'].native,
+        self.assertOCSPSubject(resp_certs[0]['tbs_certificate']['issuer'].native,
                                self.ocsp.ca.subject)
 
         tbs_response_data = response['tbs_response_data']

@@ -20,7 +20,6 @@ from datetime import datetime
 from freezegun import freeze_time
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 from cryptography.x509.extensions import UnrecognizedExtension
 from cryptography.x509.oid import ObjectIdentifier
 
@@ -478,6 +477,7 @@ class CertificateTests(DjangoCAWithChildCATestCase):
 
     def test_ocsp_no_check(self):
         self.assertExtension('ocsp_no_check', {
+            self.ocsp: certs['ocsp']['ocsp_no_check'],
             self.cert_all: certs['cert_all']['ocsp_no_check'],
         })
 

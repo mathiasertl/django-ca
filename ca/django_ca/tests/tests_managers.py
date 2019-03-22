@@ -41,6 +41,8 @@ from ..profiles import get_cert_profile_kwargs
 from ..subject import Subject
 from .base import DjangoCATestCase
 from .base import DjangoCAWithCSRTestCase
+from .base import all_csr
+from .base import ocsp_csr
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import root_crl_url
@@ -307,7 +309,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         self.ca.save()
 
         cert = Certificate.objects.init(
-            self.ca, self.csr_pem, expires=self.expires(720), algorithm=hashes.SHA256(),
+            self.ca, ocsp_csr, expires=self.expires(720), algorithm=hashes.SHA256(),
             subject_alternative_name=[root_ocsp_domain],
             extra_extensions=[
                 IssuerAlternativeName(root_issuer_alt),
@@ -348,7 +350,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
             extra_extensions.append(PrecertPoison())
 
         cert = Certificate.objects.init(
-            self.ca, self.csr_pem, expires=self.expires(720),
+            self.ca, all_csr, expires=self.expires(720),
             subject=subject,
             subject_alternative_name=san,
             key_usage=ku,
