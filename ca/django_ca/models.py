@@ -302,8 +302,12 @@ class X509CertMixin(models.Model):
     if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
         OID_MAPPING[ExtensionOID.PRECERT_POISON] = 'precert_poison'
 
+    @property
+    def _sorted_extensions(self):
+        return sorted(self.x509.extensions, key=lambda e: (get_extension_name(e), e.oid.dotted_string))
+
     def get_extension_fields(self):
-        for ext in sorted(self.x509.extensions, key=get_extension_name):
+        for ext in self._sorted_extensions:
             if ext.oid in self.OID_MAPPING:
                 yield self.OID_MAPPING[ext.oid]
 
@@ -320,7 +324,7 @@ class X509CertMixin(models.Model):
                     yield ext
 
     def get_extensions(self):
-        for ext in sorted(self.x509.extensions, key=get_extension_name):
+        for ext in self._sorted_extensions:
             if ext.oid in self.OID_MAPPING:
                 yield getattr(self, self.OID_MAPPING[ext.oid])
 
