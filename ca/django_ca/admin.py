@@ -288,11 +288,11 @@ class CertificateMixin(object):
                 'critical': scts.critical or True,
                 'entries': scts.value,
             })
-
-        template = 'django_ca/admin/extensions/precertificate_signed_certificate_timestamps.html'
-        return render_to_string(template, {
-            'extension': scts,
-        })
+        else:  # pragma: only SCT
+            template = 'django_ca/admin/extensions/precertificate_signed_certificate_timestamps.html'
+            return render_to_string(template, {
+                'extension': scts,
+            })
     precertificate_signed_certificate_timestamps.short_description = _('Signed Certificate Timestamps (SCTs)')
 
     def unknown_oid(self, oid, obj):

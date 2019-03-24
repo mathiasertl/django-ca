@@ -162,6 +162,11 @@ class CoverageCommand(BaseCommand):
         else:
             cov.exclude('only py2')
 
+        # exclude code that requires SCT
+        from cryptography.hazmat.backends import default_backend
+        if not default_backend()._lib.CRYPTOGRAPHY_OPENSSL_110F_OR_GREATER:
+            cov.exclude(r'pragma:\s*only SCT')
+
         # exclude django-version specific code
         from django import VERSION
         django_versions = [(1, 11), (2, 0), (2, 1), (2, 2), (2, 3)]

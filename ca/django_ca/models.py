@@ -435,8 +435,8 @@ class X509CertMixin(models.Model):
                 ext,
                 name=get_extension_name(ext),
                 error='Requires OpenSSL 1.1.0f or later')
-
-        return PrecertificateSignedCertificateTimestamps(ext)
+        else:  # pragma: only SCT
+            return PrecertificateSignedCertificateTimestamps(ext)
 
     @property
     def subject_alternative_name(self):

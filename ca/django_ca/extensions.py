@@ -925,7 +925,7 @@ if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: on
                 raise ValueError('PrecertPoison must always be marked as critical')
 
 
-class PrecertificateSignedCertificateTimestamps(ListExtension):
+class PrecertificateSignedCertificateTimestamps(ListExtension):  # pragma: only SCT
     """Class representing signed certificate timestamps.
 
     This extension can be used to verify that a certificate is included in a Certificate Transparency log.
