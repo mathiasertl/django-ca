@@ -1,4 +1,4 @@
-ARG IMAGE=python:3.7-alpine3.8
+ARG IMAGE=python:3.7-alpine3.9
 ####################
 # Test build stage #
 ####################
@@ -20,7 +20,7 @@ RUN addgroup -g 9000 -S django-ca && \
 USER django-ca:django-ca
 
 COPY setup.py tox.ini fabfile.py ./
-COPY ca/ ca/
+COPY --chown=django-ca:django-ca ca/ ca/
 COPY --chown=django-ca:django-ca docs/ docs/
 
 # copy this late so that changes do not trigger a cache miss during build
@@ -28,7 +28,7 @@ RUN python setup.py code_quality
 RUN python setup.py coverage
 RUN make -C docs html-check
 
-FROM python:3.7-alpine3.8 as prepare
+FROM $IMAGE as prepare
 WORKDIR /usr/src/django-ca
 
 RUN apk --no-cache add --update gcc linux-headers libc-dev libffi-dev libressl-dev pcre pcre-dev mailcap
@@ -40,12 +40,12 @@ RUN pip install --no-cache-dir --prefix=/install -r requirements/requirements-do
 COPY ca/ ca/
 COPY docker/ docker/
 RUN mv docker/localsettings.py ca/ca/localsettings.py
-RUN rm -rf requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.example
+RUN rm -rf requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.example ca/.coverage
 
 ######################
 # Actual build stage #
 ######################
-FROM python:3.7-alpine3.8
+FROM $IMAGE
 WORKDIR /usr/src/django-ca
 RUN apk --no-cache add --update pcre libressl-dev binutils
 

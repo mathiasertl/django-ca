@@ -20,6 +20,7 @@ ChangeLog
   currently can only be used for reading existing certificates.
 * Optimize PrecertificateSignedCertificateTimestamps in Django admin view.
 * Make sure that all extensions are always hashable.
+* Switch Docker image to `Alpine Linux 3.9 <https://www.alpinelinux.org/posts/Alpine-3.9.0-released.html>`_.
 * **BACKWARDS INCOMPATIBLE:** Drop support for Python 3.4.
 * **BACKWARDS INCOMPATIBLE:** Drop support for Django 2.0.
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.1.
