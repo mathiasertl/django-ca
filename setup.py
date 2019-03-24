@@ -30,7 +30,7 @@ webserver is needed, if you’re happy with the command-line.
 Features:
 
 * Set up a secure local certificate authority in just a few minutes.
-* Written in Python 2.7/Python3.4+, requires Django 1.11 or later.
+* Written in Python 2.7/Python3.5+, requires Django 1.11 or later.
 * Manage your entire certificate authority from the command line and/or via Djangos admin
   interface.
 * Get email notifications about certificates about to expire.
