@@ -860,7 +860,7 @@ class OCSPNoCheck(NullExtension):
 
     .. seealso::
 
-        `RFC 6990, section 4.2.2.2.1 <https://tools.ietf.org/html/rfc6960#section-4.2.2.2>`_
+       `RFC 6990, section 4.2.2.2.1 <https://tools.ietf.org/html/rfc6960#section-4.2.2.2>`_
     """
     oid = ExtensionOID.OCSP_NO_CHECK
     ext_class = x509.OCSPNoCheck
@@ -879,10 +879,9 @@ if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: on
                 ...
             ValueError: PrecertPoison must always be marked as critical
 
-
         .. seealso::
 
-           `RFC 6962 <https://tools.ietf.org/html/rfc6962>`_
+           `RFC 6962, section 3.1 <https://tools.ietf.org/html/rfc6962#section-3.1>`_
         """
         default_critical = True
         oid = ExtensionOID.PRECERT_POISON
@@ -908,7 +907,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
 
     .. seealso::
 
-       `RFC 6962 <https://tools.ietf.org/html/rfc6962.html>
+       `RFC 6962 <https://tools.ietf.org/html/rfc6962.html>`_
    """
     oid = ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS
 
