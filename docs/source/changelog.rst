@@ -20,6 +20,7 @@ ChangeLog
 * Implement the :py:class:`~django_ca.extensions.PrecertificateSignedCertificateTimestamps` extension,
   currently can only be used for reading existing certificates.
 * Optimize PrecertificateSignedCertificateTimestamps in Django admin view.
+* Make sure that all extensions are always hashable.
 * **BACKWARDS INCOMPATIBLE:** Drop support for Python 3.4.
 * **BACKWARDS INCOMPATIBLE:** Drop support for Django 2.0.
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.1.

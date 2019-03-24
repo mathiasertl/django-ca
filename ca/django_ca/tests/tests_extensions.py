@@ -80,6 +80,16 @@ class ExtensionTestCase(TestCase):
         self.assertExtension(Extension({'critical': False, 'value': self.value}), critical=False)
         self.assertExtension(Extension({'value': self.value}), critical=False)
 
+    def test_hash(self):
+        self.assertEqual(hash(Extension(self.value)), hash(Extension(self.value)))
+        self.assertEqual(hash(Extension({'critical': False, 'value': self.value})),
+                         hash(Extension({'critical': False, 'value': self.value})))
+
+        self.assertNotEqual(hash(Extension({'critical': True, 'value': self.value})),
+                            hash(Extension({'critical': False, 'value': self.value})))
+        self.assertNotEqual(hash(Extension({'critical': False, 'value': self.value[::-1]})),
+                            hash(Extension({'critical': False, 'value': self.value})))
+
     def test_eq(self):
         ext = Extension({'value': self.value, 'critical': True})
         self.assertEqual(ext, Extension('critical,%s' % self.value))
@@ -127,6 +137,13 @@ class ExtensionTestCase(TestCase):
 
 
 class ListExtensionTestCase(TestCase):
+    def test_hash(self):
+        self.assertEqual(hash(ListExtension(['foo'])), hash(ListExtension(['foo'])))
+        self.assertNotEqual(hash(ListExtension({'value': 'foo', 'critical': False})),
+                            hash(ListExtension({'value': 'bar', 'critical': False})))
+        self.assertNotEqual(hash(ListExtension({'value': 'foo', 'critical': False})),
+                            hash(ListExtension({'value': 'foo', 'critical': True})))
+
     def test_operators(self):
         ext = ListExtension(['foo'])
         self.assertIn('foo', ext)
@@ -282,6 +299,23 @@ class AuthorityInformationAccessTestCase(TestCase):
                                    uri('https://example.org')),
         ])
     )
+
+    def test_hash(self):
+        self.assertEqual(hash(AuthorityInformationAccess(self.ext_empty)),
+                         hash(AuthorityInformationAccess(self.ext_empty)))
+        self.assertEqual(hash(AuthorityInformationAccess(self.ext_issuer)),
+                         hash(AuthorityInformationAccess(self.ext_issuer)))
+        self.assertEqual(hash(AuthorityInformationAccess(self.ext_ocsp)),
+                         hash(AuthorityInformationAccess(self.ext_ocsp)))
+        self.assertEqual(hash(AuthorityInformationAccess(self.ext_both)),
+                         hash(AuthorityInformationAccess(self.ext_both)))
+
+        self.assertNotEqual(hash(AuthorityInformationAccess(self.ext_empty)),
+                            hash(AuthorityInformationAccess(self.ext_both)))
+        self.assertNotEqual(hash(AuthorityInformationAccess(self.ext_empty)),
+                            hash(AuthorityInformationAccess(self.ext_issuer)))
+        self.assertNotEqual(hash(AuthorityInformationAccess(self.ext_empty)),
+                            hash(AuthorityInformationAccess(self.ext_ocsp)))
 
     # test the constructor with some list values
     def test_from_list(self):
@@ -449,11 +483,20 @@ class AuthorityKeyIdentifierTestCase(TestCase):
     ext = x509.Extension(
         oid=x509.ExtensionOID.AUTHORITY_KEY_IDENTIFIER, critical=False,
         value=x509.AuthorityKeyIdentifier(b'333333', None, None))
+    ext2 = x509.Extension(
+        oid=x509.ExtensionOID.AUTHORITY_KEY_IDENTIFIER, critical=False,
+        value=x509.AuthorityKeyIdentifier(b'444444', None, None))
 
     def test_basic(self):
         ext = AuthorityKeyIdentifier(self.ext)
         self.assertEqual(ext.as_text(), 'keyid:33:33:33:33:33:33')
         self.assertEqual(ext.as_extension(), self.ext)
+
+    def test_hash(self):
+        ext1 = AuthorityKeyIdentifier(self.ext)
+        ext2 = AuthorityKeyIdentifier(self.ext2)
+        self.assertEqual(hash(ext1), hash(ext1))
+        self.assertNotEqual(hash(ext1), hash(ext2))
 
     @unittest.skipUnless(six.PY3, 'bytes only work in python3')
     def test_from_bytes(self):
@@ -513,6 +556,19 @@ class BasicConstraintsTestCase(TestCase):
 
         with self.assertRaisesRegex(ValueError, r'^Could not parse pathlen: foobar$'):
             BasicConstraints('CA:FALSE, foobar')
+
+    def test_hash(self):
+        ext1 = BasicConstraints('CA:FALSE')
+        ext2 = BasicConstraints('CA:TRUE')
+        ext3 = BasicConstraints('CA:TRUE,pathlen=1')
+
+        self.assertEqual(hash(ext1), hash(ext1))
+        self.assertEqual(hash(ext2), hash(ext2))
+        self.assertEqual(hash(ext3), hash(ext3))
+
+        self.assertNotEqual(hash(ext1), hash(ext2))
+        self.assertNotEqual(hash(ext1), hash(ext3))
+        self.assertNotEqual(hash(ext2), hash(ext3))
 
     def test_consistency(self):
         # pathlen must be None if CA=False
@@ -588,6 +644,19 @@ class KeyUsageTestCase(TestCase):
         ext2 = KeyUsage(ext.as_extension())
         self.assertEqual(ext, ext2)
 
+    def test_hash(self):
+        ext1 = KeyUsage('critical,cRLSign,keyCertSign')
+        ext2 = KeyUsage('cRLSign,keyCertSign')
+        ext3 = KeyUsage('cRLSign,keyCertSign,keyEncipherment')
+
+        self.assertEqual(hash(ext1), hash(ext1))
+        self.assertEqual(hash(ext2), hash(ext2))
+        self.assertEqual(hash(ext3), hash(ext3))
+
+        self.assertNotEqual(hash(ext1), hash(ext2))
+        self.assertNotEqual(hash(ext1), hash(ext3))
+        self.assertNotEqual(hash(ext2), hash(ext3))
+
     def test_sanity_checks(self):
         # there are some sanity checks
         self.assertEqual(KeyUsage('decipherOnly').value, ['decipherOnly', 'keyAgreement'])
@@ -653,6 +722,19 @@ class ExtendedKeyUsageTestCase(TestCase):
             critical=True,
             value=x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH])))
         )
+
+    def test_hash(self):
+        ext1 = ExtendedKeyUsage('critical,serverAuth')
+        ext2 = ExtendedKeyUsage('serverAuth')
+        ext3 = ExtendedKeyUsage('serverAuth,clientAuth')
+
+        self.assertEqual(hash(ext1), hash(ext1))
+        self.assertEqual(hash(ext2), hash(ext2))
+        self.assertEqual(hash(ext3), hash(ext3))
+
+        self.assertNotEqual(hash(ext1), hash(ext2))
+        self.assertNotEqual(hash(ext1), hash(ext3))
+        self.assertNotEqual(hash(ext2), hash(ext3))
 
     def test_not_critical(self):
         self.assertBasic(ExtendedKeyUsage('serverAuth,clientAuth'), critical=False)
@@ -759,6 +841,19 @@ class NameConstraintsTestCase(TestCase):
         self.assertExcluded(NameConstraints(self.ext_excluded))
         self.assertBoth(NameConstraints(self.ext_both))
 
+    def test_hash(self):
+        ext1 = NameConstraints([['example.com'], []])
+        ext2 = NameConstraints([['example.com'], ['example.net']])
+        ext3 = NameConstraints([[], ['example.net']])
+
+        self.assertEqual(hash(ext1), hash(ext1))
+        self.assertEqual(hash(ext2), hash(ext2))
+        self.assertEqual(hash(ext3), hash(ext3))
+
+        self.assertNotEqual(hash(ext1), hash(ext2))
+        self.assertNotEqual(hash(ext1), hash(ext3))
+        self.assertNotEqual(hash(ext2), hash(ext3))
+
     def test_as_str(self):  # test various string conversion methods
         ext = NameConstraints(self.ext_empty)
         self.assertEqual(str(ext), "NameConstraints(permitted=[], excluded=[], critical=True)")
@@ -830,6 +925,14 @@ class OCSPNoCheckTestCase(TestCase):
 
         self.assertEqual(OCSPNoCheck(), OCSPNoCheck(ext2))
         self.assertEqual(OCSPNoCheck(), OCSPNoCheck({'critical': False}))
+
+    def test_hash(self):
+        ext1 = OCSPNoCheck()
+        ext2 = OCSPNoCheck({'critical': True})
+
+        self.assertEqual(hash(ext1), hash(ext1))
+        self.assertEqual(hash(ext2), hash(ext2))
+        self.assertNotEqual(hash(ext1), hash(ext2))
 
     def test_from_extension(self):
         ext = OCSPNoCheck(x509.extensions.Extension(
@@ -1097,6 +1200,19 @@ class SubjectAlternativeNameTestCase(TestCase):
                          "<SubjectAlternativeName: ['DNS:example.com', 'DNS:example.org'], critical=True>")
         self.assertEqual(san.as_text(), "* DNS:example.com\n* DNS:example.org")
 
+    def test_hash(self):
+        ext1 = SubjectAlternativeName('example.com')
+        ext2 = SubjectAlternativeName('critical,example.com')
+        ext3 = SubjectAlternativeName('critical,example.com,example.net')
+
+        self.assertEqual(hash(ext1), hash(ext1))
+        self.assertEqual(hash(ext2), hash(ext2))
+        self.assertEqual(hash(ext3), hash(ext3))
+
+        self.assertNotEqual(hash(ext1), hash(ext2))
+        self.assertNotEqual(hash(ext1), hash(ext3))
+        self.assertNotEqual(hash(ext2), hash(ext3))
+
     def test_error(self):
         with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type NoneType$'):
             SubjectAlternativeName(None)
@@ -1143,3 +1259,16 @@ class TLSFeatureTestCase(TestCase):
         # make sure whe haven't forgotton any keys anywhere
         self.assertEqual(set(TLSFeature.CRYPTOGRAPHY_MAPPING.keys()),
                          set([e[0] for e in TLSFeature.CHOICES]))
+
+    def test_hash(self):
+        ext1 = TLSFeature('critical,OCSPMustStaple')
+        ext2 = TLSFeature('OCSPMustStaple')
+        ext3 = TLSFeature('OCSPMustStaple,MultipleCertStatusRequest')
+
+        self.assertEqual(hash(ext1), hash(ext1))
+        self.assertEqual(hash(ext2), hash(ext2))
+        self.assertEqual(hash(ext3), hash(ext3))
+
+        self.assertNotEqual(hash(ext1), hash(ext2))
+        self.assertNotEqual(hash(ext1), hash(ext3))
+        self.assertNotEqual(hash(ext2), hash(ext3))

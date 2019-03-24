@@ -104,8 +104,8 @@ class Extension(object):
         if not isinstance(self.critical, bool):
             raise ValueError('%s: Invalid critical value passed' % self.critical)
 
-    def __hash__(self):  # pragma: only py2
-        return hash(self.__class__, self.value, self.critical)
+    def __hash__(self):
+        return hash((self.__class__, self.value, self.critical, ))
 
     def __eq__(self, other):
         return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
@@ -196,8 +196,8 @@ class NullExtension(Extension):
         else:
             super(NullExtension, self).__init__(value)
 
-    def __hash__(self):  # pragma: only py2
-        return hash(self.__class__, self.critical)
+    def __hash__(self):
+        return hash((self.__class__, self.critical, ))
 
     def __eq__(self, other):
         return isinstance(other, type(self)) and self.critical == other.critical
@@ -258,6 +258,9 @@ class ListExtension(Extension):
             return self.serialize_value(self.value[key])
         else:
             return [self.serialize_value(v) for v in self.value[key]]
+
+    def __hash__(self):
+        return hash((self.__class__, tuple(self.value), self.critical, ))
 
     def __len__(self):
         return len(self.value)
@@ -456,6 +459,9 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
         return isinstance(other, type(self)) \
             and self.issuers == other.issuers and self.ocsp == other.ocsp \
             and self.critical == other.critical
+
+    def __hash__(self):
+        return hash((self.__class__, tuple(self.issuers), tuple(self.ocsp), self.critical, ))
 
     def __repr__(self):
         issuers = [self.serialize_value(v) for v in self.issuers]
@@ -792,6 +798,9 @@ class NameConstraints(GeneralNameMixin, Extension):
         return isinstance(other, type(self)) \
             and self.permitted == other.permitted and self.excluded == other.excluded \
             and self.critical == other.critical
+
+    def __hash__(self):
+        return hash((self.__class__, tuple(self.permitted), tuple(self.excluded), self.critical, ))
 
     def __repr__(self):
         permitted = [self.serialize_value(v) for v in self.permitted]
