@@ -185,3 +185,5 @@ CRYPTOGRAPHY_HAS_PRECERT_POISON = hasattr(ExtensionOID, 'PRECERT_POISON')
 # Older versions of OpenSSL (and LibreSSL) cannot parse SignedCertificateTimestamps
 # see: https://github.com/pyca/cryptography/blob/2.6.1/tests/x509/test_x509_ext.py#L4901-L4905
 OPENSSL_SUPPORTS_SCT = default_backend()._lib.CRYPTOGRAPHY_OPENSSL_110F_OR_GREATER
+
+CA_FILE_STORAGE_URL = 'https://django-ca.readthedocs.io/en/latest/update.html#update-to-1-12-0-or-later'

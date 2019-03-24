@@ -16,6 +16,7 @@
 import base64
 import binascii
 import logging
+import os
 from datetime import datetime
 from datetime import timedelta
 
@@ -163,6 +164,10 @@ class OCSPBaseView(View):
             return self.fail()
 
     def get_responder_key(self):
+        if os.path.isabs(self.responder_key):
+            log.warning('%s: OCSP responder uses absolute path to private key. Please see %s.',
+                        self.responder_key, ca_settings.CA_FILE_STORAGE_URL)
+
         return read_file(self.responder_key)
 
     def get_responder_cert(self):
@@ -171,6 +176,10 @@ class OCSPBaseView(View):
 
         if SERIAL_RE.match(self.responder_cert):
             return Certificate.objects.get(serial=self.responder_cert).pub.encode('utf-8')
+
+        if os.path.isabs(self.responder_cert):
+            log.warning('%s: OCSP responder uses absolute path to certificate. Please see %s.',
+                        self.responder_cert, ca_settings.CA_FILE_STORAGE_URL)
 
         return read_file(self.responder_cert)
 
