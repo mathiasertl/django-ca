@@ -910,10 +910,15 @@ class PrecertPoisonTestCase(TestCase):
             PrecertPoison({'critical': False})
 
 
-@unittest.skipIf(cryptography_version < (2, 4),
-                 'SCTs do not compare as equal in cryptography<2.4.')
 class PrecertificateSignedCertificateTimestamps(DjangoCAWithCertTestCase):  # pragma: only cryptography>=2.4
-    def test_basic(self):
+    def test_as_extension(self):
+        ext = self.cert_letsencrypt_jabber_at.precertificate_signed_certificate_timestamps.as_extension()
+        self.assertEqual(ext.oid, ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
+        self.assertIsInstance(ext.value, x509.PrecertificateSignedCertificateTimestamps)
+
+    @unittest.skipIf(cryptography_version < (2, 4),
+                     'SCTs do not compare as equal in cryptography<2.4.')
+    def test_basic(self):  # pragma: only cryptography>=2.4
         cert = self.cert_letsencrypt_jabber_at
         ext = cert.x509.extensions.get_extension_for_oid(ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
 
