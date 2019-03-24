@@ -700,6 +700,12 @@ def get_extension_name(ext):
     if ext.oid == ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS:
         return 'signedCertificateTimestampList'
 
+    # Until at least cryptography 2.6.1, PrecertPoison has no name
+    #   https://github.com/pyca/cryptography/issues/4817
+    elif ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
+        if ext.oid == ExtensionOID.PRECERT_POISON:
+            return 'PrecertPoison'
+
     return ext.oid._name
 
 
