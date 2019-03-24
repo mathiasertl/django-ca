@@ -22,7 +22,6 @@ from functools import partial
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509.extensions import UnrecognizedExtension
 
 from django.conf.urls import url
 from django.contrib import admin
@@ -46,6 +45,7 @@ from . import ca_settings
 from .extensions import Extension
 from .extensions import ListExtension
 from .extensions import NullExtension
+from .extensions import UnrecognizedExtension
 from .forms import CreateCertificateForm
 from .forms import ResignCertificateForm
 from .forms import RevokeCertificateForm
@@ -283,7 +283,7 @@ class CertificateMixin(object):
     def precertificate_signed_certificate_timestamps(self, obj):
         scts = obj.precertificate_signed_certificate_timestamps
 
-        if isinstance(scts.value, UnrecognizedExtension):
+        if isinstance(scts, UnrecognizedExtension):
             return render_to_string('django_ca/admin/unrecognizedextension.html', {
                 'critical': scts.critical or True,
                 'entries': scts.value,

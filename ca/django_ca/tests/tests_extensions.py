@@ -1289,4 +1289,3 @@ class TLSFeatureTestCase(TestCase):
         self.assertNotEqual(hash(ext1), hash(ext2))
         self.assertNotEqual(hash(ext1), hash(ext3))
         self.assertNotEqual(hash(ext2), hash(ext3))
-
