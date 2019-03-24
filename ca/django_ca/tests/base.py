@@ -621,7 +621,7 @@ class DjangoCATestCase(TestCase):
             elif isinstance(value, PrecertPoison):
                 if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
                     ctx['precert_poison'] = 'PrecertPoison (critical): Yes'
-                else:
+                else:  # pragma: no cover
                     oid = '<ObjectIdentifier(oid=1.3.6.1.4.1.11129.2.4.3, name=Unknown OID)>'
                     ctx['precert_poison'] = 'UnknownOID (critical):\n    %s' % oid
             elif isinstance(value, Extension):
