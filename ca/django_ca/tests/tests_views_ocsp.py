@@ -515,24 +515,40 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
     def test_bad_responder_pem(self):
         data = base64.b64encode(req1).decode('utf-8')
         msg = 'ERROR:django_ca.views:Could not read responder key/cert.'
+        prefix = 'WARNING:django_ca.views'
+
+        key_msg = '%s:%%s: OCSP responder uses absolute path to private key. Please see %s.' % (
+            prefix, ca_settings.CA_FILE_STORAGE_URL)
+        pem_msg = '%s:%%s: OCSP responder uses absolute path to certificate. Please see %s.' % (
+            prefix, ca_settings.CA_FILE_STORAGE_URL)
 
         with self.assertLogs() as cm:
             response = self.client.get(reverse('false-pem', kwargs={'data': data}))
-        self.assertEqual(cm.output, [msg])
+        self.assertEqual(cm.output, [
+            key_msg % settings.OCSP_KEY_PATH,
+            pem_msg % '/false/foobar/',
+            msg,
+        ])
         self.assertEqual(response.status_code, 200)
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
         self.assertEqual(ocsp_response['response_status'].native, 'internal_error')
 
         with self.assertLogs() as cm:
             response = self.client.get(reverse('false-pem-serial', kwargs={'data': data}))
-        self.assertEqual(cm.output, [msg])
+        self.assertEqual(cm.output, [
+            key_msg % settings.OCSP_KEY_PATH,
+            msg,
+        ])
         self.assertEqual(response.status_code, 200)
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
 
         self.assertEqual(ocsp_response['response_status'].native, 'internal_error')
         with self.assertLogs() as cm:
             response = self.client.get(reverse('false-pem-full', kwargs={'data': data}))
-        self.assertEqual(cm.output, [msg])
+        self.assertEqual(cm.output, [
+            key_msg % settings.OCSP_KEY_PATH,
+            msg,
+        ])
         self.assertEqual(response.status_code, 200)
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
         self.assertEqual(ocsp_response['response_status'].native, 'internal_error')
