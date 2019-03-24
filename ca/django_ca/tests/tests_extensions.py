@@ -1013,6 +1013,8 @@ class PrecertPoisonTestCase(TestCase):
             PrecertPoison({'critical': False})
 
 
+@unittest.skipUnless(ca_settings.OPENSSL_SUPPORTS_SCT,
+                     'This version of OpenSSL does not support SCTs')
 class PrecertificateSignedCertificateTimestamps(DjangoCAWithCertTestCase):  # pragma: only cryptography>=2.4
     def test_as_extension(self):
         ext = self.cert_letsencrypt_jabber_at.precertificate_signed_certificate_timestamps.as_extension()
