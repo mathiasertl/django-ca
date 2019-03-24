@@ -885,8 +885,10 @@ if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: on
         """
         default_critical = True
         oid = ExtensionOID.PRECERT_POISON
-        name = 'PrecertPoison'
         ext_class = x509.PrecertPoison
+
+        # https://github.com/pyca/cryptography/issues/4817
+        name = 'PrecertPoison'  # only cryptography<2.7 - 2.2 does not have a name
 
         def __init__(self, value=None):
             super(PrecertPoison, self).__init__(value=value)
@@ -910,6 +912,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
        `RFC 6962 <https://tools.ietf.org/html/rfc6962.html>`_
    """
     oid = ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS
+    name = 'signedCertificateTimestampList'  # only cryptography<2.3 - 2.2 does not have a name
 
     def human_readable_timestamps(self):
         for sct in self.value:
