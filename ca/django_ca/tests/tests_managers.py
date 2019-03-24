@@ -374,7 +374,7 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         )
 
         self.assertEqual(cert.subject, Subject(subject))
-        self.assertCountEqual(cert.get_extensions(), [
+        expected = [
             cert.subject_key_identifier,  # changes on every invocation
             certs['cert_all']['authority_information_access'],
             certs['cert_all']['authority_key_identifier'],
@@ -386,9 +386,11 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
             certs['cert_all']['issuer_alternative_name'],
             certs['cert_all']['tls_feature'],
             certs['cert_all']['name_constraints'],
-            certs['cert_all']['precert_poison'],
             ('cRLDistributionPoints', certs['cert_all']['crl']),
-        ])
+        ]
+        if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
+            expected.append(PrecertPoison())
+        self.assertCountEqual(cert.get_extensions(), expected)
 
         if os.environ.get('UPDATE_FIXTURES') == '1':
             path = os.path.join(settings.FIXTURES_DIR, 'all.pem')
