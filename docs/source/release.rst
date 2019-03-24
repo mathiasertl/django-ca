@@ -8,6 +8,8 @@ Before release
 
 * Update ``requirements*.txt`` (use ``pip list -o``).
 * Make sure that ``setup.py`` has proper requirements.
+* Make sure that ``setup.py`` has proper classifiers, if support for some Python or Django versions was
+  added/dropped.
 * Check ``.travis.yaml`` if the proper Django and cryptography versions are tested.
 * Check test coverage (``setup.py coverage``).
 * Update ``version`` parameter in ``setup.py``.
