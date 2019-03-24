@@ -114,6 +114,9 @@ class OCSPBaseView(View):
     django-ca currently provides two OCSP implementations, one using cryptography>=2.4 and one using oscrypto
     for older versions of cryptography that do not support OCSP. This is a base view that provides some
     generic settings and common functions to both implementations.
+
+    Note that providing the responder key or certificate using an absolute path is deprecated for the Django
+    file storage API. Please see :ref:`update-file-storage` for more information.
     """
 
     ca = None
@@ -121,7 +124,7 @@ class OCSPBaseView(View):
 
     responder_key = None
     """Private key used for signing OCSP responses. Either a relative path used by :ref:`CA_FILE_STORAGE
-    <settings-ca-file-storage>` or an absolute path on the local filesystem."""
+    <settings-ca-file-storage>` or (**deprecated**) an absolute path on the local filesystem."""
 
     responder_cert = None
     """Public key of the responder.
@@ -129,7 +132,7 @@ class OCSPBaseView(View):
     This may either be:
 
     * A relative path used by :ref:`CA_FILE_STORAGE <settings-ca-file-storage>`
-    * An absolute path on the local filesystem
+    * **Deprecated:** An absolute path on the local filesystem
     * A serial of a certificate as stored in the database
     * The PEM of the certificate as string
     * A loaded certificate (either ``oscrypto.asymmetric.Certificate`` or

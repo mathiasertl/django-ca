@@ -35,7 +35,17 @@ Update to 1.12.0 or later
 <https://docs.djangoproject.com/en/2.1/ref/files/storage/>`_ to store files.
 Before 1.12.0, django-ca stored absolute file paths in the database.
 
-The old way of accessing files works until version 1.14. In most cases, you will
+If you also want to switch to a different storage system (e.g. from `django-storages
+<https://django-storages.readthedocs.io/>`_), switch to relative paths everywhere first, then migrate to the
+new storage system by configuring :ref:`CA_FILE_STORAGE <settings-ca-file-storage>` and copying all files to
+the new location.
+
+The old way of accessing files works until (and including) version 1.14. 
+
+Migrate CAs
+===========
+
+In most cases, you will
 be able to migrate using a simple manage.py command:
 
 .. code-block:: console
@@ -43,9 +53,8 @@ be able to migrate using a simple manage.py command:
    $ python manage.py migrate_ca
    <serial>: Updating <old path> to <new path>.
 
-If you have stored some private keys outside of the filesystem, you will need to
-force them being moved into the directory configured by :ref:`CA_DIR
-<settings-ca-dir>`:
+If you have stored some private keys outside of the filesystem, you will need to force them being moved into
+the directory configured by :ref:`CA_DIR <settings-ca-dir>`:
 
 .. code-block:: console
 
@@ -56,6 +65,31 @@ force them being moved into the directory configured by :ref:`CA_DIR
 
 Note that this command can safely be executed multiple times if some migrations didn't work (e.g. because of
 missing permissions) the first time.
+
+Migrate OCSP responder
+======================
+
+If you have configured a manual OCSP responder, you have to move the files into the directory referenced by
+:ref:`CA_DIR <settings-ca-dir>` (if they're not there already) and update ``responder_key`` and
+``responder_cert`` to a relative path.
+
+You can test your configuration change invoking ``python manage.py shell`` and running:
+
+.. code-block:: pycon
+
+   >>> import os
+   >>> from django_ca import ca_settings
+   >>> from django_ca.utils import read_file
+   >>> ca_settings.CA_DIR
+   '/home/example/django-ca/ca/files'
+   >>> responder_key = 'responder/responder.key'  # this the same as "responder_key" in your OCSP view
+   >>> absolute_path = os.path.join(ca_settings.CA_DIR, responder_key)
+   >>> os.path.exists(absolute_path)  # test that <CA_DIR>/<responder_key> exists
+   True
+   >>> read_file(responder_key)
+   '-----BEGIN CERTIFICATE-----
+   ...'
+
 
 *******************
 Update from 1.0.0b2
