@@ -44,6 +44,7 @@ from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
 from .base import DjangoCAWithCertTestCase
+from .base import cryptography_version
 
 if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
     from ..extensions import PrecertPoison
@@ -909,7 +910,9 @@ class PrecertPoisonTestCase(TestCase):
             PrecertPoison({'critical': False})
 
 
-class PrecertificateSignedCertificateTimestamps(DjangoCAWithCertTestCase):
+@unittest.skipIf(cryptography_version < (2, 4),
+                 'SCTs do not compare as equal in cryptography<2.4.')
+class PrecertificateSignedCertificateTimestamps(DjangoCAWithCertTestCase):  # pragma: only cryptography>=2.4
     def test_basic(self):
         cert = self.cert_letsencrypt_jabber_at
         ext = cert.x509.extensions.get_extension_for_oid(ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
