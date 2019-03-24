@@ -64,6 +64,7 @@ from .utils import add_colons
 from .utils import ca_storage
 from .utils import format_general_names
 from .utils import format_name
+from .utils import get_extension_name
 from .utils import int_to_hex
 from .utils import multiline_url_validator
 from .utils import read_file
@@ -302,7 +303,7 @@ class X509CertMixin(models.Model):
         OID_MAPPING[ExtensionOID.PRECERT_POISON] = 'precert_poison'
 
     def get_extension_fields(self):
-        for ext in sorted(self.x509.extensions, key=lambda e: e.oid._name.title()):
+        for ext in sorted(self.x509.extensions, key=get_extension_name):
             if ext.oid in self.OID_MAPPING:
                 yield self.OID_MAPPING[ext.oid]
 
@@ -318,7 +319,7 @@ class X509CertMixin(models.Model):
                     yield ext
 
     def get_extensions(self):
-        for ext in sorted(self.x509.extensions, key=lambda e: e.oid._name):
+        for ext in sorted(self.x509.extensions, key=get_extension_name):
             if ext.oid in self.OID_MAPPING:
                 yield getattr(self, self.OID_MAPPING[ext.oid])
 

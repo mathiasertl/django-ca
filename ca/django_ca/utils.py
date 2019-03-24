@@ -33,6 +33,7 @@ from asn1crypto.core import OctetString
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import NameOID
 
 from django.conf import settings
@@ -690,6 +691,16 @@ def read_file(path):
         return stream.read()
     finally:
         stream.close()
+
+
+def get_extension_name(ext):
+    """Function to get the name of an extension."""
+
+    # In cryptography 2.2, SCTs return "Unknown OID"
+    if ext.oid == ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS:
+        return 'signedCertificateTimestampList'
+
+    return ext.oid._name
 
 
 # Note used currently, but left here for future reference

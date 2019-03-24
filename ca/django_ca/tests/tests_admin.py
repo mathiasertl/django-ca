@@ -248,6 +248,9 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
             response = self.client.get(self.change_url(self.cert_all.pk))
             self.assertChangeResponse(response)
         self.assertEqual(logs.output, [
+            'WARNING:django_ca.models:Unknown extension encountered: OCSPNoCheck',
+            'WARNING:django_ca.models:Unknown extension encountered: TLSFeature',
+            'WARNING:django_ca.models:Unknown extension encountered: Unknown OID',
             'WARNING:django_ca.models:Unknown extension encountered: authorityInfoAccess',
             'WARNING:django_ca.models:Unknown extension encountered: authorityKeyIdentifier',
             'WARNING:django_ca.models:Unknown extension encountered: basicConstraints',
@@ -255,11 +258,8 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
             'WARNING:django_ca.models:Unknown extension encountered: issuerAltName',
             'WARNING:django_ca.models:Unknown extension encountered: keyUsage',
             'WARNING:django_ca.models:Unknown extension encountered: nameConstraints',
-            'WARNING:django_ca.models:Unknown extension encountered: OCSPNoCheck',
             'WARNING:django_ca.models:Unknown extension encountered: subjectAltName',
             'WARNING:django_ca.models:Unknown extension encountered: subjectKeyIdentifier',
-            'WARNING:django_ca.models:Unknown extension encountered: TLSFeature',
-            'WARNING:django_ca.models:Unknown extension encountered: Unknown OID',
         ] * 4)
 
     @unittest.skipUnless(

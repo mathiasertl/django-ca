@@ -28,7 +28,6 @@ from ..models import Certificate
 from ..models import Watcher
 from .base import DjangoCAWithCertTestCase
 from .base import certs
-from .base import cryptography_version
 from .base import override_settings
 from .base import override_tmpcadir
 
@@ -548,32 +547,23 @@ HPKP pin: %(hpkp)s
     def test_contrib_letsencrypt_jabber_at(self, status='Valid'):
         self.maxDiff = None
 
-        if cryptography_version >= (2, 3):
-            if ca_settings.OPENSSL_SUPPORTS_SCT:
-                signedCertificateTimestampList = '''
-signedCertificateTimestampList:
+        if ca_settings.OPENSSL_SUPPORTS_SCT:
+            signedCertificateTimestampList = '''signedCertificateTimestampList:
     * Precertificate (v1):
         Timestamp: 2018-08-09 10:15:21.724000
         Log ID: 293c519654c83965baaa50fc5807d4b76fbf587a2972dca4c30cf4e54547f478
     * Precertificate (v1):
         Timestamp: 2018-08-09 10:15:21.749000
         Log ID: db74afeecb29ecb1feca3e716d2ce5b9aabb36f7847183c75d9d4f37b61fbf64'''
-            else:
-                signedCertificateTimestampList = '''
-signedCertificateTimestampList:
-    * Parsing requires OpenSSL 1.1.0f+'''
 
-            unknown = ''
         else:
-            signedCertificateTimestampList = ''
-            unknown = '''
-UnknownOID:
-    <ObjectIdentifier(oid=1.3.6.1.4.1.11129.2.4.2, name=Unknown OID)>'''
+            signedCertificateTimestampList = '''signedCertificateTimestampList:
+    * Parsing requires OpenSSL 1.1.0f+'''
 
         self.assertContrib(self.cert_letsencrypt_jabber_at, '''Common Name: %(cn)s
 Valid from: %(valid_from)s
 Valid until: %(valid_until)s
-Status: %(status)s%(unknown)s
+Status: %(status)s
 authorityInfoAccess:
     CA Issuers:
       * URI:http://cert.int-x3.letsencrypt.org/
@@ -591,7 +581,8 @@ extendedKeyUsage:
     * clientAuth
 keyUsage (critical):
     * digitalSignature
-    * keyEncipherment%(signedCertificateTimestampList)s
+    * keyEncipherment
+%(signedCertificateTimestampList)s
 subjectAltName:
     * DNS:jabber.at
     * DNS:jabber.fsinf.at
@@ -617,7 +608,6 @@ HPKP pin: %(hpkp)s
     'valid_from': '2018-08-09 09:15',
     'valid_until': '2018-11-07 09:15',
     'signedCertificateTimestampList': signedCertificateTimestampList,
-    'unknown': unknown,
     'md5': '90:32:2A:B8:6A:20:5D:A1:20:F3:D5:78:09:30:1F:B2',
     'sha1': 'E9:A5:B4:49:BB:5F:88:51:01:72:D9:B3:CF:E3:8B:F4:A2:C8:E4:08',
     'sha256': 'AF:2D:CE:A3:CE:62:6A:17:E1:CE:BA:7B:A5:A5:F1:A4:3F:0D:80:77:F1:F8:C4:5F:64:27:9A:F9:76:E9:0D:8D',  # NOQA

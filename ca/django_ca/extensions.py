@@ -29,6 +29,7 @@ from cryptography.x509.oid import ObjectIdentifier
 from . import ca_settings
 from .utils import bytes_to_hex
 from .utils import format_general_name
+from .utils import get_extension_name
 from .utils import hex_to_bytes
 from .utils import parse_general_name
 from .utils import shlex_split
@@ -135,7 +136,7 @@ class Extension(object):
     @property
     def name(self):
         """A human readable name of this extension."""
-        return self.oid._name
+        return get_extension_name(self)
 
     @property
     def extension_type(self):
