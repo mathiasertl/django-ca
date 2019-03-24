@@ -250,10 +250,12 @@ class DockerTest(Command):
     def run(self):
         # first, run without any build-arg
         tag = 'django-ca-test'
+        print('### Testing default version ###')
         try:
             subprocess.check_call(['docker', 'build', '--no-cache', '-t', tag, '.'])
         except Exception:
             print('### Failed image: default tag')
+            return
         finally:
             subprocess.call(['docker', 'image', 'rm', tag])
 
@@ -279,6 +281,7 @@ class DockerTest(Command):
                     'docker', 'build', '--no-cache', '-t', tag, '--build-arg', 'IMAGE=%s' % image, '.'])
             except Exception:
                 print('### Failed image is %s' % image)
+                break
             finally:
                 subprocess.call(['docker', 'image', 'rm', tag])
 

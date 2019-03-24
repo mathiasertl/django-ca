@@ -25,7 +25,7 @@ COPY --chown=django-ca:django-ca docs/ docs/
 
 # copy this late so that changes do not trigger a cache miss during build
 RUN python setup.py code_quality
-RUN python setup.py test
+RUN python setup.py coverage
 RUN make -C docs html-check
 
 FROM python:3.7-alpine3.8 as prepare
