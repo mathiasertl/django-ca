@@ -6,9 +6,9 @@ ChangeLog
 
 .. _changelog-1.12.0:
 
-**********
-HEAD (TBR)
-**********
+*******************
+1.12.0 (2019-03-24)
+*******************
 
 * Fix traceback when a certificate that does not exist is viewed in the admin interface.
 * Add support cryptography 2.5 and 2.6.
