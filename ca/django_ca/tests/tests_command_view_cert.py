@@ -125,11 +125,10 @@ HPKP pin: {hpkp}
 Valid from: {from}
 Valid until: {until}
 Status: {status}
-OCSPNoCheck (critical): Yes
+OCSPNoCheck (critical): Yes{precert_poison}
 TLSFeature{tls_feature_critical}:
     * {tls_feature[0]}
-    * {tls_feature[1]}
-{precert_poison}
+    * {tls_feature[1]}{precert_poison_unknown}
 authorityInfoAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
@@ -331,8 +330,7 @@ HPKP pin: AjyBzOjnxk+pQtPBUEhwfTXZu1uH9PVExb8bxWQ68vo=
         self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
 Valid from: 2018-07-18 00:00
 Valid until: 2019-01-24 23:59
-Status: Valid
-{precert_poison}
+Status: Valid{precert_poison_unknown}{precert_poison}
 authorityInfoAccess:
     CA Issuers:
       * URI:http://crt.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crt

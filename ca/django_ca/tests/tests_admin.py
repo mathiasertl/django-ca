@@ -247,10 +247,10 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         with mock.patch.object(Certificate, 'OID_MAPPING', {}), self.assertLogs() as logs:
             response = self.client.get(self.change_url(self.cert_all.pk))
             self.assertChangeResponse(response)
-        self.assertEqual(logs.output, [
+
+        expected = [
             'WARNING:django_ca.models:Unknown extension encountered: OCSPNoCheck',
             'WARNING:django_ca.models:Unknown extension encountered: TLSFeature',
-            'WARNING:django_ca.models:Unknown extension encountered: Unknown OID',
             'WARNING:django_ca.models:Unknown extension encountered: authorityInfoAccess',
             'WARNING:django_ca.models:Unknown extension encountered: authorityKeyIdentifier',
             'WARNING:django_ca.models:Unknown extension encountered: basicConstraints',
@@ -260,7 +260,14 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
             'WARNING:django_ca.models:Unknown extension encountered: nameConstraints',
             'WARNING:django_ca.models:Unknown extension encountered: subjectAltName',
             'WARNING:django_ca.models:Unknown extension encountered: subjectKeyIdentifier',
-        ] * 4)
+        ]
+
+        if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:
+            expected.append('WARNING:django_ca.models:Unknown extension encountered: PrecertPoison')
+        else:
+            expected.append('WARNING:django_ca.models:Unknown extension encountered: Unknown OID')
+
+        self.assertEqual(logs.output, sorted(expected) * 4)
 
     @unittest.skipUnless(
         ca_settings.OPENSSL_SUPPORTS_SCT,

@@ -625,11 +625,15 @@ class DjangoCATestCase(TestCase):
                 else:
                     ctx[key] = val
             elif key == 'precert_poison':
+                # NOTE: We use two keys here because if we don't have PrecertPoison, the name of the
+                #       extension is "Unknown OID", so the order is different.
                 if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
-                    ctx['precert_poison'] = 'PrecertPoison (critical): Yes'
+                    ctx['precert_poison'] = '\nPrecertPoison (critical): Yes'
+                    ctx['precert_poison_unknown'] = ''
                 else:  # pragma: no cover
+                    ctx['precert_poison'] = ''
                     oid = '<ObjectIdentifier(oid=1.3.6.1.4.1.11129.2.4.3, name=Unknown OID)>'
-                    ctx['precert_poison'] = 'UnknownOID (critical):\n    %s' % oid
+                    ctx['precert_poison_unknown'] = '\nUnknownOID (critical):\n    %s' % oid
             elif isinstance(value, Extension):
                 ctx[key] = value
                 ctx['%s_text' % key] = value.as_text()
