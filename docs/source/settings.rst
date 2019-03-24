@@ -170,6 +170,8 @@ CA_PROFILES
                             used.
      ``"cn_in_san"``        If to include the CommonName in the subjectAltName by default. The
                             default value is ``True``.
+     ``"ocsp_no_check"``    Set to ``True`` to include the ``OCSPNoCheck`` flag. Only makes sense
+                            for OCSP responder certificates.
      ====================== ======================================================================
 
    Here is a full example:

@@ -52,13 +52,6 @@ class ViewCertTestCase(DjangoCAWithCertTestCase):
             'san': cert.subject_alternative_name,
         }
 
-    def precert_poison(self, cert):
-        if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
-            return 'PrecertPoison (critical): Yes'
-        else:
-            return '''UnknownOID (critical):
-    <ObjectIdentifier(oid=1.3.6.1.4.1.11129.2.4.3, name=Unknown OID)>'''
-
     def test_basic(self):
         stdout, stderr = self.cmd('view_cert', self.cert.serial, stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
@@ -128,6 +121,7 @@ HPKP pin: {hpkp}
         stdout, stderr = self.cmd('view_cert', self.cert_all.serial, no_pem=True, extensions=True,
                                   stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
+        self.maxDiff = None
         self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
 Valid from: {from}
 Valid until: {until}
@@ -176,7 +170,7 @@ Digest:
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
-'''.format(precert_poison=self.precert_poison(self.cert_all), **self.get_cert_context('cert_all')))
+'''.format(**self.get_cert_context('cert_all')))
 
     @freeze_time("2018-11-10")
     def test_ocsp(self):
@@ -334,11 +328,12 @@ HPKP pin: AjyBzOjnxk+pQtPBUEhwfTXZu1uH9PVExb8bxWQ68vo=
                                   stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
 
-        self.assertEqual(stdout.decode('utf-8'), '''Common Name: sni24142.cloudflaressl.com
+        self.maxDiff = None
+        self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
 Valid from: 2018-07-18 00:00
 Valid until: 2019-01-24 23:59
 Status: Valid
-%(precert_poison)s
+{precert_poison}
 authorityInfoAccess:
     CA Issuers:
       * URI:http://crt.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crt
@@ -448,14 +443,12 @@ subjectKeyIdentifier:
     05:86:D8:B4:ED:A9:7E:23:EE:2E:E7:75:AA:3B:2C:06:08:2A:93:B2
 Watchers:
 Digest:
-    md5: D6:76:03:E9:4F:3B:B0:F1:F7:E3:A1:40:80:8E:F0:4A
-    sha1: 71:BD:B8:21:80:BD:86:E8:E5:F4:2B:6D:96:82:B2:EF:19:53:ED:D3
-    sha256: 1D:8E:D5:41:E5:FF:19:70:6F:65:86:A9:A3:6F:DF:DE:F8:A0:07:22:92:71:9E:F1:CD:F8:28:37:39:02:E0:A1
-    sha512: FF:03:1B:8F:11:E8:A7:FF:91:4F:B9:97:E9:97:BC:77:37:C1:A7:69:86:F3:7C:E3:BB:BB:DF:A6:4F:0E:3C:C0:7F:B5:BC:CC:BD:0A:D5:EF:5F:94:55:E9:FF:48:41:34:B8:11:54:57:DD:90:85:41:2E:71:70:5E:FA:BA:E6:EA
-HPKP pin: bkunFfRSda4Yhz7UlMUaalgj0Gcus/9uGVp19Hceczg=
-''' % {  # NOQA
-    'precert_poison': self.precert_poison(self.cert_cloudflare_1)
-})
+    md5: {md5}
+    sha1: {sha1}
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
+'''.format(**self.get_cert_context('cloudflare_1')))
 
     def assertContrib(self, cert, expected):
         stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, extensions=True,

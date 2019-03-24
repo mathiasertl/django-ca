@@ -321,6 +321,17 @@ certs = {
         'subject_alternative_name': SubjectAlternativeName('DNS:%s' % root_ocsp_domain),
         'subject_key_identifier': SubjectKeyIdentifier('31:CB:89:87:60:8D:AB:3B:92:93:A3:F1:4E:0F:D7:E5:07:62:35:CC'),  # NOQA
     },
+
+    # contrib certificates
+    'cloudflare_1': {
+        'cn': 'sni24142.cloudflaressl.com',
+        'precert_poison': PrecertPoison(),
+        'md5': 'D6:76:03:E9:4F:3B:B0:F1:F7:E3:A1:40:80:8E:F0:4A',
+        'sha1': '71:BD:B8:21:80:BD:86:E8:E5:F4:2B:6D:96:82:B2:EF:19:53:ED:D3',
+        'sha256': '1D:8E:D5:41:E5:FF:19:70:6F:65:86:A9:A3:6F:DF:DE:F8:A0:07:22:92:71:9E:F1:CD:F8:28:37:39:02:E0:A1',  # NOQA
+        'sha512': 'FF:03:1B:8F:11:E8:A7:FF:91:4F:B9:97:E9:97:BC:77:37:C1:A7:69:86:F3:7C:E3:BB:BB:DF:A6:4F:0E:3C:C0:7F:B5:BC:CC:BD:0A:D5:EF:5F:94:55:E9:FF:48:41:34:B8:11:54:57:DD:90:85:41:2E:71:70:5E:FA:BA:E6:EA',  # NOQA
+        'hpkp': 'bkunFfRSda4Yhz7UlMUaalgj0Gcus/9uGVp19Hceczg=',
+    },
 }
 
 
@@ -607,6 +618,12 @@ class DjangoCATestCase(TestCase):
                         ctx['%s_%s' % (key, i)] = val_i
                 else:
                     ctx[key] = val
+            elif isinstance(value, PrecertPoison):
+                if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
+                    ctx['precert_poison'] = 'PrecertPoison (critical): Yes'
+                else:
+                    oid = '<ObjectIdentifier(oid=1.3.6.1.4.1.11129.2.4.3, name=Unknown OID)>'
+                    ctx['precert_poison'] = 'UnknownOID (critical):\n    %s' % oid
             elif isinstance(value, Extension):
                 ctx[key] = value
                 ctx['%s_text' % key] = value.as_text()

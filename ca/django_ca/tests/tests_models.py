@@ -49,9 +49,6 @@ try:
 except ImportError:
     import mock
 
-if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
-    from ..extensions import PrecertPoison
-
 
 class TestWatcher(TestCase):
     def test_from_addr(self):
@@ -454,7 +451,7 @@ class CertificateTests(DjangoCAWithChildCATestCase):
     def test_precert_poison(self):
         self.assertExtension('precert_poison', {
             self.cert_all: certs['cert_all']['precert_poison'],
-            self.cert_cloudflare_1: PrecertPoison()
+            self.cert_cloudflare_1: certs['cloudflare_1']['precert_poison'],
         })
 
     @unittest.skip('Cannot currently instantiate extensions, so no sense in testing this.')
