@@ -319,7 +319,6 @@ class X509CertMixin(models.Model):
 
     def get_extensions(self):
         for ext in sorted(self.x509.extensions, key=lambda e: e.oid._name):
-            print(ext.oid._name)
             if ext.oid in self.OID_MAPPING:
                 yield getattr(self, self.OID_MAPPING[ext.oid])
 
