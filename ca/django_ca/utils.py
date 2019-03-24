@@ -698,7 +698,7 @@ def get_extension_name(ext):
 
     # In cryptography 2.2, SCTs return "Unknown OID"
     if ext.oid == ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS:
-        return 'signedCertificateTimestampList'
+        return 'SignedCertificateTimestampList'
 
     # Until at least cryptography 2.6.1, PrecertPoison has no name
     #   https://github.com/pyca/cryptography/issues/4817
@@ -706,7 +706,8 @@ def get_extension_name(ext):
         if ext.oid == ExtensionOID.PRECERT_POISON:
             return 'PrecertPoison'
 
-    return ext.oid._name
+    # uppercase the FIRST letter only ("keyUsage" -> "KeyUsage")
+    return re.sub('^([a-z])', lambda x: x.groups()[0].upper(), ext.oid._name)
 
 
 # Note used currently, but left here for future reference

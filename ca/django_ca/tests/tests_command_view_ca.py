@@ -42,14 +42,14 @@ class ViewCATestCase(DjangoCAWithCATestCase):
 * HPKP pin: %(hpkp)s
 
 X509 v3 certificate extensions for CA:
-authorityKeyIdentifier:
+AuthorityKeyIdentifier:
     %(authKeyIdentifier)s
-basicConstraints (critical):
+BasicConstraints (critical):
     %(basicConstraints)s
-keyUsage (critical):
+KeyUsage (critical):
     * %(keyUsage_0)s
     * %(keyUsage_1)s
-subjectKeyIdentifier:
+SubjectKeyIdentifier:
     %(subjectKeyIdentifier)s
 
 X509 v3 certificate extensions for signed certificates:
@@ -86,14 +86,14 @@ X509 v3 certificate extensions for signed certificates:
 * HPKP pin: %(hpkp)s
 
 X509 v3 certificate extensions for CA:
-authorityKeyIdentifier:
+AuthorityKeyIdentifier:
     %(authKeyIdentifier)s
-basicConstraints (critical):
+BasicConstraints (critical):
     %(basicConstraints)s
-keyUsage (critical):
+KeyUsage (critical):
     * %(keyUsage_0)s
     * %(keyUsage_1)s
-subjectKeyIdentifier:
+SubjectKeyIdentifier:
     %(subjectKeyIdentifier)s
 
 X509 v3 certificate extensions for signed certificates:
@@ -121,26 +121,26 @@ X509 v3 certificate extensions for signed certificates:
 * HPKP pin: %(hpkp)s
 
 X509 v3 certificate extensions for CA:
-authorityInfoAccess:
+AuthorityInfoAccess:
     CA Issuers:
       * %(authInfoAccess_0)s
     OCSP:
       * %(authInfoAccess_1)s
-authorityKeyIdentifier:
+AuthorityKeyIdentifier:
     %(authKeyIdentifier)s
-basicConstraints (critical):
+BasicConstraints (critical):
     %(basicConstraints)s
 cRLDistributionPoints:
     * %(crl)s
-keyUsage (critical):
+KeyUsage (critical):
     * %(keyUsage_0)s
     * %(keyUsage_1)s
-nameConstraints (critical):
+NameConstraints (critical):
     Permitted:
       * DNS:.net
     Excluded:
       * DNS:.org
-subjectKeyIdentifier:
+SubjectKeyIdentifier:
     %(subjectKeyIdentifier)s
 
 X509 v3 certificate extensions for signed certificates:
@@ -192,14 +192,14 @@ X509 v3 certificate extensions for signed certificates:
 * HPKP pin: %(hpkp)s
 
 X509 v3 certificate extensions for CA:
-authorityKeyIdentifier:
+AuthorityKeyIdentifier:
     %(authKeyIdentifier)s
-basicConstraints (critical):
+BasicConstraints (critical):
     %(basicConstraints)s
-keyUsage (critical):
+KeyUsage (critical):
     * cRLSign
     * keyCertSign
-subjectKeyIdentifier:
+SubjectKeyIdentifier:
     %(subjectKeyIdentifier)s
 
 X509 v3 certificate extensions for signed certificates:

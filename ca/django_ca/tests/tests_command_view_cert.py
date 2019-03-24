@@ -57,7 +57,7 @@ class ViewCertTestCase(DjangoCAWithCertTestCase):
 Valid from: {from}
 Valid until: {until}
 Status: {status}
-subjectAltName:
+SubjectAltName:
     * {san[0]}
 Watchers:
 Digest:
@@ -78,28 +78,28 @@ HPKP pin: {hpkp}
 Valid from: {from}
 Valid until: {until}
 Status: {status}
-authorityInfoAccess:
+AuthorityInfoAccess:
     CA Issuers:
       * {authInfoAccess_0}
     OCSP:
       * {authInfoAccess_1}
-authorityKeyIdentifier:
+AuthorityKeyIdentifier:
     {authKeyIdentifier}
-basicConstraints (critical):
+BasicConstraints (critical):
     CA:FALSE
 cRLDistributionPoints:
     * {crl_0}
-extendedKeyUsage:
+ExtendedKeyUsage:
     * serverAuth
-issuerAltName:
+IssuerAltName:
     * {issuer_alternative_name}
-keyUsage (critical):
+KeyUsage (critical):
     * digitalSignature
     * keyAgreement
     * keyEncipherment
-subjectAltName:
+SubjectAltName:
     * {san[0]}
-subjectKeyIdentifier:
+SubjectKeyIdentifier:
     {subjectKeyIdentifier}
 Watchers:
 Digest:
@@ -120,47 +120,46 @@ HPKP pin: {hpkp}
         stdout, stderr = self.cmd('view_cert', self.cert_all.serial, no_pem=True, extensions=True,
                                   stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
-        self.maxDiff = None
         self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
 Valid from: {from}
 Valid until: {until}
 Status: {status}
-OCSPNoCheck (critical): Yes{precert_poison}
-TLSFeature{tls_feature_critical}:
-    * {tls_feature[0]}
-    * {tls_feature[1]}{precert_poison_unknown}
-authorityInfoAccess{authority_information_access_critical}:
+AuthorityInfoAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-authorityKeyIdentifier{authority_key_identifier_critical}:
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-basicConstraints{basic_constraints_critical}:
+BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
 cRLDistributionPoints:
     * {crl_0}
-extendedKeyUsage{extended_key_usage_critical}:
+ExtendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage[0]}
     * {extended_key_usage[1]}
     * {extended_key_usage[2]}
     * {extended_key_usage[3]}
-issuerAltName{issuer_alternative_name_critical}:
+IssuerAltName{issuer_alternative_name_critical}:
     * {issuer_alternative_name[0]}
-keyUsage{key_usage_critical}:
+KeyUsage{key_usage_critical}:
     * {key_usage[0]}
     * {key_usage[1]}
     * {key_usage[2]}
-nameConstraints{name_constraints_critical}:
+NameConstraints{name_constraints_critical}:
     Permitted:
       * DNS:{name_constraints.permitted[0].value}
     Excluded:
       * DNS:{name_constraints.excluded[0].value}
-subjectAltName{subject_alternative_name_critical}:
+OCSPNoCheck (critical): Yes{precert_poison}
+SubjectAltName{subject_alternative_name_critical}:
     * {subject_alternative_name[0]}
     * {subject_alternative_name[1]}
-subjectKeyIdentifier{subject_key_identifier_critical}:
+SubjectKeyIdentifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
+TLSFeature{tls_feature_critical}:
+    * {tls_feature[0]}
+    * {tls_feature[1]}{precert_poison_unknown}
 Watchers:
 Digest:
     md5: {md5}
@@ -179,27 +178,27 @@ HPKP pin: {hpkp}
 Valid from: {from}
 Valid until: {until}
 Status: {status}
-OCSPNoCheck: Yes
-authorityInfoAccess{authority_information_access_critical}:
+AuthorityInfoAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
-authorityKeyIdentifier{authority_key_identifier_critical}:
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-basicConstraints{basic_constraints_critical}:
+BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
 cRLDistributionPoints:
     * {crl_0}
-extendedKeyUsage{extended_key_usage_critical}:
+ExtendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage[0]}
-issuerAltName{issuer_alternative_name_critical}:
+IssuerAltName{issuer_alternative_name_critical}:
     * {issuer_alternative_name[0]}
-keyUsage{key_usage_critical}:
+KeyUsage{key_usage_critical}:
     * {key_usage[0]}
     * {key_usage[1]}
     * {key_usage[2]}
-subjectAltName{subject_alternative_name_critical}:
+OCSPNoCheck: Yes
+SubjectAltName{subject_alternative_name_critical}:
     * {subject_alternative_name[0]}
-subjectKeyIdentifier{subject_key_identifier_critical}:
+SubjectKeyIdentifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
@@ -217,7 +216,7 @@ HPKP pin: {hpkp}
 Valid from: {from}
 Valid until: {until}
 Status: {status}
-subjectAltName:
+SubjectAltName:
     * {san[0]}
 Watchers:
 Digest:
@@ -242,7 +241,7 @@ HPKP pin: {hpkp}
 Valid from: %(from)s
 Valid until: %(until)s
 Status: Revoked
-subjectAltName:
+SubjectAltName:
     * DNS:%(cn)s
 Watchers:
 Digest:
@@ -265,7 +264,7 @@ HPKP pin: %(hpkp)s
 Valid from: %(from)s
 Valid until: %(until)s
 Status: Expired
-subjectAltName:
+SubjectAltName:
     * DNS:%(cn)s
 Watchers:
 Digest:
@@ -326,31 +325,30 @@ HPKP pin: AjyBzOjnxk+pQtPBUEhwfTXZu1uH9PVExb8bxWQ68vo=
                                   stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
 
-        self.maxDiff = None
         self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
 Valid from: 2018-07-18 00:00
 Valid until: 2019-01-24 23:59
-Status: Valid{precert_poison_unknown}{precert_poison}
-authorityInfoAccess:
+Status: Valid
+AuthorityInfoAccess:
     CA Issuers:
       * URI:http://crt.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crt
     OCSP:
       * URI:http://ocsp.comodoca4.com
-authorityKeyIdentifier:
+AuthorityKeyIdentifier:
     keyid:40:09:61:67:F0:BC:83:71:4F:DE:12:08:2C:6F:D4:D4:2B:76:3D:96
-basicConstraints (critical):
+BasicConstraints (critical):
     CA:FALSE
 cRLDistributionPoints:
     * Full Name: URI:http://crl.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crl
 certificatePolicies:
     * OID 1.3.6.1.4.1.6449.1.2.2.7: https://secure.comodo.com/CPS
     * OID 2.23.140.1.2.1: None
-extendedKeyUsage:
+ExtendedKeyUsage:
     * serverAuth
     * clientAuth
-keyUsage (critical):
-    * digitalSignature
-subjectAltName:
+KeyUsage (critical):
+    * digitalSignature{precert_poison}
+SubjectAltName:
     * DNS:sni24142.cloudflaressl.com
     * DNS:*.animereborn.com
     * DNS:*.beglideas.ga
@@ -436,8 +434,8 @@ subjectAltName:
     * DNS:timmutton.com.au
     * DNS:wyomingsexbook.com
     * DNS:ych.bid
-subjectKeyIdentifier:
-    05:86:D8:B4:ED:A9:7E:23:EE:2E:E7:75:AA:3B:2C:06:08:2A:93:B2
+SubjectKeyIdentifier:
+    05:86:D8:B4:ED:A9:7E:23:EE:2E:E7:75:AA:3B:2C:06:08:2A:93:B2{precert_poison_unknown}
 Watchers:
 Digest:
     md5: {md5}
@@ -458,27 +456,27 @@ HPKP pin: {hpkp}
 Valid from: %(valid_from)s
 Valid until: %(valid_until)s
 Status: Valid
-authorityInfoAccess:
+AuthorityInfoAccess:
     CA Issuers:
       * URI:http://certificates.godaddy.com/repository/gdig2.crt
     OCSP:
       * URI:http://ocsp.godaddy.com/
-authorityKeyIdentifier:
+AuthorityKeyIdentifier:
     keyid:40:C2:BD:27:8E:CC:34:83:30:A2:33:D7:FB:6C:B3:F0:B4:2C:80:CE
-basicConstraints (critical):
+BasicConstraints (critical):
     CA:FALSE
 cRLDistributionPoints:
     * Full Name: URI:http://crl.godaddy.com/gdig2s1-480.crl
 certificatePolicies:
     * OID 2.16.840.1.114413.1.7.23.1: http://certificates.godaddy.com/repository/
     * OID 2.23.140.1.2.1: None
-extendedKeyUsage:
+ExtendedKeyUsage:
     * serverAuth
     * clientAuth
-keyUsage (critical):
+KeyUsage (critical):
     * digitalSignature
     * keyEncipherment
-subjectAltName:
+SubjectAltName:
     * DNS:derstandard.at
     * DNS:www.derstandard.at
     * DNS:live.derstandard.at
@@ -522,7 +520,7 @@ subjectAltName:
     * DNS:images.derstandard.de
     * DNS:secure.derstandard.at
     * DNS:ipad.derstandard.de
-subjectKeyIdentifier:
+SubjectKeyIdentifier:
     36:97:AB:24:CF:50:2B:05:71:B1:4E:0A:4F:18:94:C1:FC:F9:4F:69
 Watchers:
 Digest:
@@ -543,10 +541,8 @@ HPKP pin: %(hpkp)s
 })
 
     def test_contrib_letsencrypt_jabber_at(self, status='Valid'):
-        self.maxDiff = None
-
         if ca_settings.OPENSSL_SUPPORTS_SCT:
-            signedCertificateTimestampList = '''signedCertificateTimestampList:
+            signedCertificateTimestampList = '''SignedCertificateTimestampList:
     * Precertificate (v1):
         Timestamp: 2018-08-09 10:15:21.724000
         Log ID: 293c519654c83965baaa50fc5807d4b76fbf587a2972dca4c30cf4e54547f478
@@ -555,33 +551,33 @@ HPKP pin: %(hpkp)s
         Log ID: db74afeecb29ecb1feca3e716d2ce5b9aabb36f7847183c75d9d4f37b61fbf64'''
 
         else:
-            signedCertificateTimestampList = '''signedCertificateTimestampList:
+            signedCertificateTimestampList = '''SignedCertificateTimestampList:
     * Parsing requires OpenSSL 1.1.0f+'''
 
         self.assertContrib(self.cert_letsencrypt_jabber_at, '''Common Name: %(cn)s
 Valid from: %(valid_from)s
 Valid until: %(valid_until)s
 Status: %(status)s
-authorityInfoAccess:
+AuthorityInfoAccess:
     CA Issuers:
       * URI:http://cert.int-x3.letsencrypt.org/
     OCSP:
       * URI:http://ocsp.int-x3.letsencrypt.org
-authorityKeyIdentifier:
+AuthorityKeyIdentifier:
     keyid:A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1
-basicConstraints (critical):
+BasicConstraints (critical):
     CA:FALSE
 certificatePolicies:
     * OID 2.23.140.1.2.1: None
     * OID 1.3.6.1.4.1.44947.1.1.1: http://cps.letsencrypt.org, This Certificate may only be relied upon by Relying Parties and only in accordance with the Certificate Policy found at https://letsencrypt.org/repository/
-extendedKeyUsage:
+ExtendedKeyUsage:
     * serverAuth
     * clientAuth
-keyUsage (critical):
+KeyUsage (critical):
     * digitalSignature
     * keyEncipherment
 %(signedCertificateTimestampList)s
-subjectAltName:
+SubjectAltName:
     * DNS:jabber.at
     * DNS:jabber.fsinf.at
     * DNS:jabber.wien
@@ -592,7 +588,7 @@ subjectAltName:
     * DNS:www.jabber.zone
     * DNS:www.xmpp.zone
     * DNS:xmpp.zone
-subjectKeyIdentifier:
+SubjectKeyIdentifier:
     97:AB:1D:D3:46:04:96:0F:45:DF:C3:FF:59:9D:B0:53:AC:73:79:2E
 Watchers:
 Digest:

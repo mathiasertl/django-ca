@@ -250,17 +250,17 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
         log_msg = 'WARNING:django_ca.models:Unknown extension encountered: %s'
         expected = [
+            log_msg % 'AuthorityInfoAccess (1.3.6.1.5.5.7.1.1)',
+            log_msg % 'AuthorityKeyIdentifier (2.5.29.35)',
+            log_msg % 'BasicConstraints (2.5.29.19)',
+            log_msg % 'ExtendedKeyUsage (2.5.29.37)',
+            log_msg % 'IssuerAltName (2.5.29.18)',
+            log_msg % 'KeyUsage (2.5.29.15)',
+            log_msg % 'NameConstraints (2.5.29.30)',
             log_msg % 'OCSPNoCheck (1.3.6.1.5.5.7.48.1.5)',
+            log_msg % 'SubjectAltName (2.5.29.17)',
+            log_msg % 'SubjectKeyIdentifier (2.5.29.14)',
             log_msg % 'TLSFeature (1.3.6.1.5.5.7.1.24)',
-            log_msg % 'authorityInfoAccess (1.3.6.1.5.5.7.1.1)',
-            log_msg % 'authorityKeyIdentifier (2.5.29.35)',
-            log_msg % 'basicConstraints (2.5.29.19)',
-            log_msg % 'extendedKeyUsage (2.5.29.37)',
-            log_msg % 'issuerAltName (2.5.29.18)',
-            log_msg % 'keyUsage (2.5.29.15)',
-            log_msg % 'nameConstraints (2.5.29.30)',
-            log_msg % 'subjectAltName (2.5.29.17)',
-            log_msg % 'subjectKeyIdentifier (2.5.29.14)',
         ]
 
         if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:
