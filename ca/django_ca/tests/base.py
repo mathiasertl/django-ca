@@ -49,7 +49,6 @@ from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
 from ..extensions import NameConstraints
 from ..extensions import OCSPNoCheck
-from ..extensions import PrecertPoison
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
@@ -72,6 +71,9 @@ if six.PY2:  # pragma: only py2
 else:  # pragma: only py3
     from unittest.mock import Mock
     from unittest.mock import patch
+
+if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
+    from ..extensions import PrecertPoison
 
 
 def _load_key(path, password=None):
@@ -289,7 +291,7 @@ certs = {
         'key_usage': KeyUsage('critical,encipherOnly,keyAgreement,nonRepudiation'),
         'name_constraints': NameConstraints([['DNS:.com'], ['DNS:.net']]),
         'ocsp_no_check': OCSPNoCheck({'critical': True}),
-        'precert_poison': PrecertPoison(),
+        'precert_poison': True,  # only set once we require cryptography>=2.4
         'subject_alternative_name': SubjectAlternativeName('DNS:all-extensions.example.com,DNS:extra.example.com'),  # NOQA
         'subject_key_identifier': SubjectKeyIdentifier('DE:EA:38:FC:DA:39:92:33:45:A7:B9:F8:D2:DF:84:0E:CC:6F:3A:B9'),  # NOQA
         'tls_feature': TLSFeature('critical,OCSPMustStaple,MultipleCertStatusRequest'),
@@ -325,7 +327,7 @@ certs = {
     # contrib certificates
     'cloudflare_1': {
         'cn': 'sni24142.cloudflaressl.com',
-        'precert_poison': PrecertPoison(),
+        'precert_poison': True,  # only set once we require cryptography>=2.4
         'md5': 'D6:76:03:E9:4F:3B:B0:F1:F7:E3:A1:40:80:8E:F0:4A',
         'sha1': '71:BD:B8:21:80:BD:86:E8:E5:F4:2B:6D:96:82:B2:EF:19:53:ED:D3',
         'sha256': '1D:8E:D5:41:E5:FF:19:70:6F:65:86:A9:A3:6F:DF:DE:F8:A0:07:22:92:71:9E:F1:CD:F8:28:37:39:02:E0:A1',  # NOQA
@@ -333,6 +335,10 @@ certs = {
         'hpkp': 'bkunFfRSda4Yhz7UlMUaalgj0Gcus/9uGVp19Hceczg=',
     },
 }
+
+if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
+    certs['cert_all']['precert_poison'] = PrecertPoison()
+    certs['cloudflare_1']['precert_poison'] = PrecertPoison()
 
 
 class override_settings(_override_settings):
@@ -618,7 +624,7 @@ class DjangoCATestCase(TestCase):
                         ctx['%s_%s' % (key, i)] = val_i
                 else:
                     ctx[key] = val
-            elif isinstance(value, PrecertPoison):
+            elif key == 'precert_poison':
                 if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
                     ctx['precert_poison'] = 'PrecertPoison (critical): Yes'
                 else:  # pragma: no cover
