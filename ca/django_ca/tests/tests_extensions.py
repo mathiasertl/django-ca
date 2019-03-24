@@ -43,6 +43,7 @@ from ..extensions import OCSPNoCheck
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
+from ..extensions import UnrecognizedExtension
 from .base import DjangoCAWithCertTestCase
 from .base import cryptography_version
 
@@ -1030,6 +1031,20 @@ class PrecertificateSignedCertificateTimestamps(DjangoCAWithCertTestCase):  # pr
         self.assertEqual(ext, cert.precertificate_signed_certificate_timestamps.as_extension())
 
 
+class UnknownExtensionTestCase(TestCase):
+    def test_basic(self):
+        unk = SubjectAlternativeName(['https://example.com']).as_extension()
+        ext = UnrecognizedExtension(unk)
+        self.assertEqual(ext.name, 'Unsupported extension (OID %s)' % unk.oid.dotted_string)
+        self.assertEqual(ext.as_text(), 'Could not parse extension')
+
+        name = 'my name'
+        error = 'my error'
+        ext = UnrecognizedExtension(unk, name=name, error=error)
+        self.assertEqual(ext.name, name)
+        self.assertEqual(ext.as_text(), 'Could not parse extension (%s)' % error)
+
+
 class SubjectAlternativeNameTestCase(TestCase):
     def test_operators(self):
         ext = SubjectAlternativeName(['https://example.com'])
@@ -1274,3 +1289,4 @@ class TLSFeatureTestCase(TestCase):
         self.assertNotEqual(hash(ext1), hash(ext2))
         self.assertNotEqual(hash(ext1), hash(ext3))
         self.assertNotEqual(hash(ext2), hash(ext3))
+

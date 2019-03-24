@@ -175,6 +175,27 @@ class Extension(object):
         return {'extension': self.extension_type, 'critical': self.critical}
 
 
+class UnrecognizedExtension(Extension):
+    def __init__(self, value, name='', error=''):
+        self._error = error
+        self._name = name
+        super(UnrecognizedExtension, self).__init__(value)
+
+    def from_extension(self, value):
+        self.value = value
+
+    @property
+    def name(self):
+        if self._name:
+            return self._name
+        return 'Unsupported extension (OID %s)' % (self.value.oid.dotted_string)
+
+    def as_text(self):
+        if self._error:
+            return 'Could not parse extension (%s)' % self._error
+        return 'Could not parse extension'
+
+
 class NullExtension(Extension):
     """Base class for extensions that have a NULL value.
 

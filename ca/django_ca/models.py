@@ -28,7 +28,6 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PublicFormat
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
-from cryptography.x509.extensions import UnrecognizedExtension
 from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
@@ -53,6 +52,7 @@ from .extensions import PrecertificateSignedCertificateTimestamps
 from .extensions import SubjectAlternativeName
 from .extensions import SubjectKeyIdentifier
 from .extensions import TLSFeature
+from .extensions import UnrecognizedExtension
 from .managers import CertificateAuthorityManager
 from .managers import CertificateManager
 from .querysets import CertificateAuthorityQuerySet
@@ -428,11 +428,13 @@ class X509CertMixin(models.Model):
         except x509.ExtensionNotFound:
             return None
 
-        if isinstance(ext.value, UnrecognizedExtension):
+        if isinstance(ext.value, x509.UnrecognizedExtension):
             # Older versions of OpenSSL (and LibreSSL) cannot parse this extension
             # see https://github.com/pyca/cryptography/blob/master/tests/x509/test_x509_ext.py#L4455-L4459
-            return ext
-            #return ext.critical, ['Parsing requires OpenSSL 1.1.0f+']
+            return UnrecognizedExtension(
+                ext,
+                name=get_extension_name(ext),
+                error='Requires OpenSSL 1.1.0f or later')
 
         return PrecertificateSignedCertificateTimestamps(ext)
 

@@ -541,6 +541,7 @@ HPKP pin: %(hpkp)s
 })
 
     def test_contrib_letsencrypt_jabber_at(self, status='Valid'):
+        self.maxDiff = None
         if ca_settings.OPENSSL_SUPPORTS_SCT:
             signedCertificateTimestampList = '''SignedCertificateTimestampList:
     * Precertificate (v1):
@@ -552,7 +553,7 @@ HPKP pin: %(hpkp)s
 
         else:
             signedCertificateTimestampList = '''SignedCertificateTimestampList:
-    * Parsing requires OpenSSL 1.1.0f+'''
+    Could not parse extension (Requires OpenSSL 1.1.0f or later)'''
 
         self.assertContrib(self.cert_letsencrypt_jabber_at, '''Common Name: %(cn)s
 Valid from: %(valid_from)s
