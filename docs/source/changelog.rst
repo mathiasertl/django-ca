@@ -15,8 +15,7 @@ ChangeLog
 * Start using `Django storage backends <https://docs.djangoproject.com/en/2.1/ref/files/storage/>`_ for files
   used by django-ca. This allows you to store files on a shared storage system (e.g. one from `django-storages
   <https://django-storages.readthedocs.io/>`_) to support a redundant setup.
-* Add support for :py:class:`~django_ca.extensions.PrecertPoison` and
-  :py:class:`~django_ca.extensions.OCSPNoCheck` extensions.
+* Add support for ``PrecertPoison`` and :py:class:`~django_ca.extensions.OCSPNoCheck` extensions.
 * Implement the :py:class:`~django_ca.extensions.PrecertificateSignedCertificateTimestamps` extension,
   currently can only be used for reading existing certificates.
 * Optimize PrecertificateSignedCertificateTimestamps in Django admin view.
