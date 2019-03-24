@@ -315,7 +315,8 @@ class X509CertMixin(models.Model):
                 elif name == 'cRLDistributionPoints':
                     yield 'cRLDistributionPoints'
                 else:
-                    log.warning('Unknown extension encountered: %s', get_extension_name(ext))
+                    log.warning('Unknown extension encountered: %s (%s)',
+                                get_extension_name(ext), ext.oid.dotted_string)
                     yield ext
 
     def get_extensions(self):

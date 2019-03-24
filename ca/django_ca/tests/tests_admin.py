@@ -248,24 +248,25 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
             response = self.client.get(self.change_url(self.cert_all.pk))
             self.assertChangeResponse(response)
 
+        log_msg = 'WARNING:django_ca.models:Unknown extension encountered: %s'
         expected = [
-            'WARNING:django_ca.models:Unknown extension encountered: OCSPNoCheck',
-            'WARNING:django_ca.models:Unknown extension encountered: TLSFeature',
-            'WARNING:django_ca.models:Unknown extension encountered: authorityInfoAccess',
-            'WARNING:django_ca.models:Unknown extension encountered: authorityKeyIdentifier',
-            'WARNING:django_ca.models:Unknown extension encountered: basicConstraints',
-            'WARNING:django_ca.models:Unknown extension encountered: extendedKeyUsage',
-            'WARNING:django_ca.models:Unknown extension encountered: issuerAltName',
-            'WARNING:django_ca.models:Unknown extension encountered: keyUsage',
-            'WARNING:django_ca.models:Unknown extension encountered: nameConstraints',
-            'WARNING:django_ca.models:Unknown extension encountered: subjectAltName',
-            'WARNING:django_ca.models:Unknown extension encountered: subjectKeyIdentifier',
+            log_msg % 'OCSPNoCheck (1.3.6.1.5.5.7.48.1.5)',
+            log_msg % 'TLSFeature (1.3.6.1.5.5.7.1.24)',
+            log_msg % 'authorityInfoAccess (1.3.6.1.5.5.7.1.1)',
+            log_msg % 'authorityKeyIdentifier (2.5.29.35)',
+            log_msg % 'basicConstraints (2.5.29.19)',
+            log_msg % 'extendedKeyUsage (2.5.29.37)',
+            log_msg % 'issuerAltName (2.5.29.18)',
+            log_msg % 'keyUsage (2.5.29.15)',
+            log_msg % 'nameConstraints (2.5.29.30)',
+            log_msg % 'subjectAltName (2.5.29.17)',
+            log_msg % 'subjectKeyIdentifier (2.5.29.14)',
         ]
 
         if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:
-            expected.append('WARNING:django_ca.models:Unknown extension encountered: PrecertPoison')
+            expected.append(log_msg % 'PrecertPoison (1.3.6.1.4.1.11129.2.4.3)')
         else:
-            expected.append('WARNING:django_ca.models:Unknown extension encountered: Unknown OID')
+            expected.append(log_msg % 'Unknown OID (1.3.6.1.4.1.11129.2.4.3)')
 
         self.assertEqual(logs.output, sorted(expected) * 4)
 
