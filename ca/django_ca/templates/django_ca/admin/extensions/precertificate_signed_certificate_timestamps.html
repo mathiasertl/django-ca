@@ -1,0 +1,25 @@
+{% extends "django_ca/admin/extensions/base.html" %}
+{% load i18n %}
+
+{% block content %}
+<table>
+  <thead>
+    <tr>
+      <th>{% trans "Timestamp" %}</th>
+      <th>{% trans "Log ID" %}</th>
+      <th>{% trans "Type" %}</th>
+      <th>{% trans "Version" %}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for entry in extension.human_readable_timestamps %}
+    <tr>
+      <td>{{ entry.timestamp }}</td>
+      <td>{{ entry.log_id }}</td>
+      <td>{{ entry.type }}</td>
+      <td>{{ entry.version }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock content %}

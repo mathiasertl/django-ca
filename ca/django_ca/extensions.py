@@ -13,12 +13,14 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import binascii
 import re
 
 import six
 
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
+from cryptography.x509.certificate_transparency import LogEntryType
 from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import ExtensionOID
@@ -892,6 +894,53 @@ if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: on
 
             if self.critical is not True:
                 raise ValueError('PrecertPoison must always be marked as critical')
+
+
+class PrecertificateSignedCertificateTimestamps(ListExtension):
+    """Class representing signed certificate timestamps.
+
+    This extension can be used to verify that a certificate is included in a Certificate Transparency log.
+
+    .. NOTE::
+
+        Cryptography currently does not provide a way to create instances of this extension without already
+        having a certificate that provides this extension.
+
+    .. seealso::
+
+       `RFC 6962 <https://tools.ietf.org/html/rfc6962.html>
+   """
+    oid = ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS
+
+    def human_readable_timestamps(self):
+        for sct in self.value:
+            if sct.entry_type == LogEntryType.PRE_CERTIFICATE:
+                entry_type = 'Precertificate'
+            elif sct.entry_type == LogEntryType.X509_CERTIFICATE:  # pragma: no cover - unseen in the wild
+                entry_type = 'x509 certificate'
+            else:  # pragma: no cover
+                # we support everything that has been specified so far
+                entry_type = 'unknown'
+
+            yield {
+                'log_id': binascii.hexlify(sct.log_id).decode('utf-8'),
+                'sct': sct,
+                'timestamp': sct.timestamp.isoformat(' '),
+                'type': entry_type,
+                'version': sct.version.name,
+            }
+
+    def as_text(self):
+        lines = []
+        for v in self.human_readable_timestamps():
+            line = '* {type} ({version}):\n    Timestamp: {timestamp}\n    Log ID: {log_id}'.format(**v)
+            lines.append(line)
+
+        return '\n'.join(lines)
+
+    @property
+    def extension_type(self):
+        return x509.PrecertificateSignedCertificateTimestamps(self.value)
 
 
 class SubjectAlternativeName(AlternativeNameExtension):

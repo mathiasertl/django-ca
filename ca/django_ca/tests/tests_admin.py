@@ -411,7 +411,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertIsNone(cert.extended_key_usage)
         self.assertIsNone(cert.issuer_alternative_name)
         self.assertIsNone(cert.key_usage)
-        self.assertIsNone(cert.signedCertificateTimestampList())
+        self.assertIsNone(cert.precertificate_signed_certificate_timestamps)
         self.assertIsNone(cert.tls_feature)
 
         # Test that we can view the certificate
@@ -502,7 +502,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         # Some extensions are not set
         self.assertIsNone(cert.certificatePolicies())
         self.assertIsNone(cert.issuer_alternative_name)
-        self.assertIsNone(cert.signedCertificateTimestampList())
+        self.assertIsNone(cert.precertificate_signed_certificate_timestamps)
         self.assertIsNone(cert.tls_feature)
 
         # Test that we can view the certificate

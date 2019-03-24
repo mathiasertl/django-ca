@@ -17,6 +17,9 @@ HEAD (TBR)
   <https://django-storages.readthedocs.io/>`_) to support a redundant setup.
 * Add support for :py:class:`~django_ca.extensions.PrecertPoison` and
   :py:class:`~django_ca.extensions.OCSPNoCheck` extensions.
+* Implement the :py:class:`~django_ca.extensions.PrecertificateSignedCertificateTimestamps` extension,
+  currently can only be used for reading existing certificates.
+* Optimize PrecertificateSignedCertificateTimestamps in Django admin view.
 * **BACKWARDS INCOMPATIBLE:** Drop support for Python 3.4.
 * **BACKWARDS INCOMPATIBLE:** Drop support for Django 2.0.
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.1.

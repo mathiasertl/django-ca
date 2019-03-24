@@ -28,7 +28,6 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PublicFormat
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
-from cryptography.x509.certificate_transparency import LogEntryType
 from cryptography.x509.extensions import UnrecognizedExtension
 from cryptography.x509.oid import ExtensionOID
 
@@ -50,6 +49,7 @@ from .extensions import IssuerAlternativeName
 from .extensions import KeyUsage
 from .extensions import NameConstraints
 from .extensions import OCSPNoCheck
+from .extensions import PrecertificateSignedCertificateTimestamps
 from .extensions import SubjectAlternativeName
 from .extensions import SubjectKeyIdentifier
 from .extensions import TLSFeature
@@ -292,6 +292,7 @@ class X509CertMixin(models.Model):
         ExtensionOID.KEY_USAGE: 'key_usage',
         ExtensionOID.NAME_CONSTRAINTS: 'name_constraints',
         ExtensionOID.OCSP_NO_CHECK: 'ocsp_no_check',
+        ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS: 'precertificate_signed_certificate_timestamps',
         ExtensionOID.SUBJECT_ALTERNATIVE_NAME: 'subject_alternative_name',
         ExtensionOID.SUBJECT_KEY_IDENTIFIER: 'subject_key_identifier',
         ExtensionOID.TLS_FEATURE: 'tls_feature',
@@ -414,6 +415,22 @@ class X509CertMixin(models.Model):
         return PrecertPoison(ext)
 
     @property
+    def precertificate_signed_certificate_timestamps(self):
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(
+                ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
+        except x509.ExtensionNotFound:
+            return None
+
+        if isinstance(ext.value, UnrecognizedExtension):
+            # Older versions of OpenSSL (and LibreSSL) cannot parse this extension
+            # see https://github.com/pyca/cryptography/blob/master/tests/x509/test_x509_ext.py#L4455-L4459
+            return ext
+            #return ext.critical, ['Parsing requires OpenSSL 1.1.0f+']
+
+        return PrecertificateSignedCertificateTimestamps(ext)
+
+    @property
     def subject_alternative_name(self):
         try:
             ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
@@ -476,36 +493,6 @@ class X509CertMixin(models.Model):
                 value.append('Relative Name: %s' % format_name(dp.relative_name.value))
 
         return ext.critical, value
-
-    def signedCertificateTimestampList(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(
-                ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
-        except x509.ExtensionNotFound:
-            return None
-
-        if isinstance(ext.value, UnrecognizedExtension):
-            # Older versions of OpenSSL (and LibreSSL) cannot parse this extension
-            # see https://github.com/pyca/cryptography/blob/master/tests/x509/test_x509_ext.py#L4455-L4459
-            return ext.critical, ['Parsing requires OpenSSL 1.1.0f+']
-
-        timestamps = []
-        for entry in ext.value:
-            if entry.entry_type == LogEntryType.PRE_CERTIFICATE:
-                entry_type = 'Precertificate'
-            elif entry.entry_type == LogEntryType.X509_CERTIFICATE:  # pragma: no cover - unseen in the wild
-                # NOTE: same pragma is also in django_ca.admin.CertificateMixin.signedCertificateTimestampList
-                entry_type = 'x509 certificate'
-            else:  # pragma: no cover - only the above two are part of the standard
-                # NOTE: same pragma is also in django_ca.admin.CertificateMixin.signedCertificateTimestampList
-                entry_type = 'unknown'
-
-            timestamps.append('%s (%s): %s\n%s' % (
-                entry_type, entry.version.name, entry.timestamp,
-                '\n%s' % binascii.hexlify(entry.log_id).decode('utf-8')
-            ))
-
-        return ext.critical, timestamps
 
     def _parse_policy_qualifier(self, qualifier):
         if isinstance(qualifier, x509.extensions.UserNotice):

@@ -553,16 +553,18 @@ HPKP pin: %(hpkp)s
 })
 
     def test_contrib_letsencrypt_jabber_at(self, status='Valid'):
+        self.maxDiff = None
+
         if cryptography_version >= (2, 3):
             if ca_settings.OPENSSL_SUPPORTS_SCT:
                 signedCertificateTimestampList = '''
 signedCertificateTimestampList:
-    * Precertificate (v1): 2018-08-09 10:15:21.724000
-
-293c519654c83965baaa50fc5807d4b76fbf587a2972dca4c30cf4e54547f478
-    * Precertificate (v1): 2018-08-09 10:15:21.749000
-
-db74afeecb29ecb1feca3e716d2ce5b9aabb36f7847183c75d9d4f37b61fbf64'''
+    * Precertificate (v1):
+        Timestamp: 2018-08-09 10:15:21.724000
+        Log ID: 293c519654c83965baaa50fc5807d4b76fbf587a2972dca4c30cf4e54547f478
+    * Precertificate (v1):
+        Timestamp: 2018-08-09 10:15:21.749000
+        Log ID: db74afeecb29ecb1feca3e716d2ce5b9aabb36f7847183c75d9d4f37b61fbf64'''
             else:
                 signedCertificateTimestampList = '''
 signedCertificateTimestampList:

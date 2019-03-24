@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-import binascii
 import copy
 import json
 import logging
@@ -23,9 +22,7 @@ from functools import partial
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509.certificate_transparency import LogEntryType
 from cryptography.x509.extensions import UnrecognizedExtension
-from cryptography.x509.oid import ExtensionOID
 
 from django.conf.urls import url
 from django.contrib import admin
@@ -283,45 +280,20 @@ class CertificateMixin(object):
         return self.output_extension(obj.certificatePolicies())
     certificatePolicies.short_description = _('Certificate Policies')
 
-    def signedCertificateTimestampList(self, obj):  # pragma: only cryptography>=2.3
-        # Note that cryptography 2.2 returns an extension with an Unknown ID, so
-        # Certificate.get_extension_fields() returns an extension and get_fieldsets() never calls
-        # this accessor.
-        try:
-            ext = obj.x509.extensions.get_extension_for_oid(
-                ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
-        except x509.ExtensionNotFound:  # pragma: no cover - method is only called when extension exists.
-            return ''
+    def precertificate_signed_certificate_timestamps(self, obj):
+        scts = obj.precertificate_signed_certificate_timestamps
 
-        if isinstance(ext.value, UnrecognizedExtension):
+        if isinstance(scts.value, UnrecognizedExtension):
             return render_to_string('django_ca/admin/unrecognizedextension.html', {
-                'critical': ext.critical or True,
-                'entries': ext.value,
+                'critical': scts.critical or True,
+                'entries': scts.value,
             })
 
-        entries = []
-        for entry in ext.value:
-            if entry.entry_type == LogEntryType.PRE_CERTIFICATE:
-                entry_type = 'Precertificate'
-            elif entry.entry_type == LogEntryType.X509_CERTIFICATE:  # pragma: no cover - unseen in the wild
-                # NOTE: same pragma is also in django_ca.models.X509CertMixin.signedCertificateTimestampList
-                entry_type = 'X.509 certificate'
-            else:  # pragma: no cover - only the above two are part of the standard
-                # NOTE: same pragma is also in django_ca.models.X509CertMixin.signedCertificateTimestampList
-                entry_type = _('Unknown type')
-
-            entries.append([
-                entry_type,
-                entry.version.name,
-                entry.timestamp,
-                binascii.hexlify(entry.log_id).decode('utf-8'),  # sha256 hash
-            ])
-
-        return render_to_string('django_ca/admin/signedCertificateTimestampList.html', {
-            'critical': ext.critical or True,
-            'entries': entries,
+        template = 'django_ca/admin/extensions/precertificate_signed_certificate_timestamps.html'
+        return render_to_string(template, {
+            'extension': scts,
         })
-    signedCertificateTimestampList.short_description = _('Signed Certificate Timestamps')
+    precertificate_signed_certificate_timestamps.short_description = _('Signed Certificate Timestamps (SCTs)')
 
     def unknown_oid(self, oid, obj):
         ext = obj.x509.extensions.get_extension_for_oid(oid)

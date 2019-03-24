@@ -1,0 +1,5 @@
+{% load i18n %}
+{% if extension.critical %}
+  <img src="/static/admin/img/icon-yes.svg" alt="{% trans 'Critical' %}"> {% trans 'Critical' %}
+{% endif %}
+{% block content %}{% endblock content %}

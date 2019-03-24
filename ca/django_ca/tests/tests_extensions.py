@@ -43,6 +43,7 @@ from ..extensions import OCSPNoCheck
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
+from .base import DjangoCAWithCertTestCase
 
 if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
     from ..extensions import PrecertPoison
@@ -906,6 +907,14 @@ class PrecertPoisonTestCase(TestCase):
             PrecertPoison(ext)
         with self.assertRaisesRegex(ValueError, '^PrecertPoison must always be marked as critical$'):
             PrecertPoison({'critical': False})
+
+
+class PrecertificateSignedCertificateTimestamps(DjangoCAWithCertTestCase):
+    def test_basic(self):
+        cert = self.cert_letsencrypt_jabber_at
+        ext = cert.x509.extensions.get_extension_for_oid(ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
+
+        self.assertEqual(ext, cert.precertificate_signed_certificate_timestamps.as_extension())
 
 
 class SubjectAlternativeNameTestCase(TestCase):

@@ -20,8 +20,6 @@ from datetime import datetime
 from freezegun import freeze_time
 
 from cryptography import x509
-from cryptography.x509.extensions import UnrecognizedExtension
-from cryptography.x509.oid import ObjectIdentifier
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -34,6 +32,7 @@ from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
+from ..extensions import PrecertificateSignedCertificateTimestamps
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..models import Certificate
@@ -352,7 +351,6 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         self.assertIsNone(cert.subject_alternative_name)
         self.assertIsNone(cert.subject_key_identifier)
         self.assertIsNone(cert.certificatePolicies())
-        self.assertIsNone(cert.signedCertificateTimestampList())
 
     def test_contrib_le(self):
         cert = self.cert_letsencrypt_jabber_at
@@ -377,14 +375,6 @@ class CertificateTests(DjangoCAWithChildCATestCase):
             'may only be relied upon by Relying Parties and only in accordance with the '
             'Certificate Policy found at https://letsencrypt.org/repository/'
         ]))
-        self.assertEqual(cert.signedCertificateTimestampList(), (False, [
-            'Precertificate (v1): 2018-08-09 10:15:21.724000\n'
-            '\n'
-            '293c519654c83965baaa50fc5807d4b76fbf587a2972dca4c30cf4e54547f478',
-            'Precertificate (v1): 2018-08-09 10:15:21.749000\n'
-            '\n'
-            'db74afeecb29ecb1feca3e716d2ce5b9aabb36f7847183c75d9d4f37b61fbf64'
-        ]))
 
     def test_contrib_godaddy(self):
         cert = self.cert_godaddy_derstandardat
@@ -406,7 +396,6 @@ class CertificateTests(DjangoCAWithChildCATestCase):
             'OID 2.16.840.1.114413.1.7.23.1: http://certificates.godaddy.com/repository/',
             'OID 2.23.140.1.2.1: None',
         ]))
-        self.assertIsNone(cert.signedCertificateTimestampList())
 
     def test_contrib_cloudflare(self):
         cert = self.cert_cloudflare_1
@@ -430,27 +419,6 @@ class CertificateTests(DjangoCAWithChildCATestCase):
             'OID 1.3.6.1.4.1.6449.1.2.2.7: https://secure.comodo.com/CPS',
             'OID 2.23.140.1.2.1: None',
         ]))
-        self.assertIsNone(cert.signedCertificateTimestampList())
-
-    @unittest.skipIf(
-        ca_settings.OPENSSL_SUPPORTS_SCT,
-        'If the OpenSSL version supports SCTs, we need to mock this.')
-    @override_tmpcadir()
-    def test_unsupported(self):
-        self.assertEqual(self.cert_letsencrypt_jabber_at.signedCertificateTimestampList(),
-                         (False, ['Parsing requires OpenSSL 1.1.0f+']))
-
-    @unittest.skipUnless(
-        ca_settings.OPENSSL_SUPPORTS_SCT,
-        'Older versions of OpenSSL/LibreSSL do not recognize this extension anyway.')
-    @override_tmpcadir()
-    def test_unsupported_mocked(self):
-        # Test return value for older versions of OpenSSL
-        value = UnrecognizedExtension(ObjectIdentifier('1.1.1.1'), b'foo')
-
-        with mock.patch('cryptography.x509.extensions.Extension.value', value):
-            self.assertEqual(self.cert_letsencrypt_jabber_at.signedCertificateTimestampList(),
-                             (False, ['Parsing requires OpenSSL 1.1.0f+']))
 
     def test_get_authority_key_identifier(self):
         self.assertEqual(self.ca.get_authority_key_identifier(), certs['root']['aki'])
@@ -487,6 +455,12 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         self.assertExtension('precert_poison', {
             self.cert_all: PrecertPoison(),
             self.cert_cloudflare_1: PrecertPoison()
+        })
+
+    @unittest.skip('Cannot currently instantiate extensions, so no sense in testing this.')
+    def test_precertificate_signed_certificate_timestamps(self):
+        self.assertExtension('precertificate_signed_certificate_timestamps', {
+            self.cert_letsencrypt_jabber_at: PrecertificateSignedCertificateTimestamps(),
         })
 
     def test_tls_feature(self):
