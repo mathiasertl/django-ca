@@ -42,6 +42,7 @@ from ..subject import Subject
 from .base import DjangoCATestCase
 from .base import DjangoCAWithCSRTestCase
 from .base import all_csr
+from .base import certs
 from .base import ocsp_csr
 from .base import override_settings
 from .base import override_tmpcadir
@@ -311,11 +312,24 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
         cert = Certificate.objects.init(
             self.ca, ocsp_csr, expires=self.expires(720), algorithm=hashes.SHA256(),
             subject_alternative_name=[root_ocsp_domain],
+            ocsp_no_check=True,
             extra_extensions=[
                 IssuerAlternativeName(root_issuer_alt),
-                OCSPNoCheck(),
             ],
             **kwargs)
+
+        self.assertCountEqual(cert.get_extensions(), [
+            cert.subject_key_identifier,  # changes on every invocation
+            certs['ocsp']['authority_information_access'],
+            certs['ocsp']['authority_key_identifier'],
+            certs['ocsp']['basic_constraints'],
+            certs['ocsp']['extended_key_usage'],
+            certs['ocsp']['key_usage'],
+            certs['ocsp']['ocsp_no_check'],
+            certs['ocsp']['subject_alternative_name'],
+            certs['ocsp']['issuer_alternative_name'],
+            ('cRLDistributionPoints', certs['ocsp']['crl']),
+        ])
 
         if os.environ.get('UPDATE_FIXTURES') == '1':
             path = os.path.join(settings.FIXTURES_DIR, 'ocsp.pem')
@@ -359,26 +373,22 @@ class GetCertTestCase(DjangoCAWithCSRTestCase):
             extra_extensions=extra_extensions,
         )
 
-        aik = AuthorityKeyIdentifier(x509.Extension(
-            oid=AuthorityKeyIdentifier.oid, critical=False,
-            value=self.ca.get_authority_key_identifier()
-        ))
-
-        exts = [e for e in cert.get_extensions() if not isinstance(e, SubjectKeyIdentifier)]
         self.assertEqual(cert.subject, Subject(subject))
-        self.assertCountEqual(exts, [
-            TLSFeature(tlsf),
-            aik,
-            BasicConstraints('critical,CA:False'),
-            ExtendedKeyUsage(eku),
-            SubjectAlternativeName([cn] + san),  # prepend CN from subject
-            KeyUsage(ku),
-            AuthorityInformationAccess({
-                'ocsp': [root_ocsp_url],
-                'issuers': [root_issuer_url],
-            }),
-            ('cRLDistributionPoints', (False, ['Full Name: URI:%s' % root_crl_url]))
-        ] + extra_extensions)
+        self.assertCountEqual(cert.get_extensions(), [
+            cert.subject_key_identifier,  # changes on every invocation
+            certs['cert_all']['authority_information_access'],
+            certs['cert_all']['authority_key_identifier'],
+            certs['cert_all']['basic_constraints'],
+            certs['cert_all']['extended_key_usage'],
+            certs['cert_all']['key_usage'],
+            certs['cert_all']['ocsp_no_check'],
+            certs['cert_all']['subject_alternative_name'],
+            certs['cert_all']['issuer_alternative_name'],
+            certs['cert_all']['tls_feature'],
+            certs['cert_all']['name_constraints'],
+            certs['cert_all']['precert_poison'],
+            ('cRLDistributionPoints', certs['cert_all']['crl']),
+        ])
 
         if os.environ.get('UPDATE_FIXTURES') == '1':
             path = os.path.join(settings.FIXTURES_DIR, 'all.pem')

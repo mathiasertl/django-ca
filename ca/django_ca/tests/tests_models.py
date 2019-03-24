@@ -453,7 +453,7 @@ class CertificateTests(DjangoCAWithChildCATestCase):
                          "This version of cryptography does not support PrecertPoison extension.")
     def test_precert_poison(self):
         self.assertExtension('precert_poison', {
-            self.cert_all: PrecertPoison(),
+            self.cert_all: certs['cert_all']['precert_poison'],
             self.cert_cloudflare_1: PrecertPoison()
         })
 

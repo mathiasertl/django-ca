@@ -37,6 +37,7 @@ from .extensions import Extension
 from .extensions import IssuerAlternativeName
 from .extensions import KeyUsage
 from .extensions import NameConstraints
+from .extensions import OCSPNoCheck
 from .extensions import SubjectAlternativeName
 from .extensions import TLSFeature
 from .signals import post_create_ca
@@ -268,7 +269,8 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 class CertificateManager(CertificateManagerMixin, models.Manager):
     def sign_cert(self, ca, csr, expires=None, algorithm=None, subject=None, cn_in_san=True,
                   csr_format=Encoding.PEM, subject_alternative_name=None, key_usage=None,
-                  extended_key_usage=None, tls_feature=None, extra_extensions=None, password=None):
+                  extended_key_usage=None, tls_feature=None, ocsp_no_check=False, extra_extensions=None,
+                  password=None):
         """Create a signed certificate from a CSR.
 
         **PLEASE NOTE:** This function creates the raw certificate and is usually not invoked directly. It is
@@ -312,6 +314,11 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         tls_feature : str or dict or :py:class:`~django_ca.extensions.TLSFeature`, optional
             Value for the ``TLSFeature`` X509 extension. The value is passed to
             :py:class:`~django_ca.extensions.TLSFeature` if not already an instance of that class.
+        ocsp_no_check : bool, optional
+            Add the OCSPNoCheck flag, indicating that an OCSP client should trust this certificate for it's
+            lifetime. This value only makes sense if you intend to use the certificate for an OCSP responder,
+            the default is ``False``. See `RFC 6990, section 4.2.2.2.1
+            <https://tools.ietf.org/html/rfc6960#section-4.2.2.2>`_ for more information.
         extra_extensions : list of :py:class:`cg:cryptography.x509.Extension` or \
                 :py:class:`django_ca.extensions.Extension`, optional
             An optional list of additional extensions to add to the certificate.
@@ -418,6 +425,9 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         if ca.issuer_alt_name:
             issuer_alt_name = IssuerAlternativeName(ca.issuer_alt_name)
             builder = builder.add_extension(**issuer_alt_name.for_builder())
+
+        if ocsp_no_check:
+            builder = builder.add_extension(**OCSPNoCheck().for_builder())
 
         if extra_extensions:
             builder = self._extra_extensions(builder, extra_extensions)

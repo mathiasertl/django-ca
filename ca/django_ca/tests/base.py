@@ -49,6 +49,7 @@ from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
 from ..extensions import NameConstraints
 from ..extensions import OCSPNoCheck
+from ..extensions import PrecertPoison
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
@@ -288,6 +289,7 @@ certs = {
         'key_usage': KeyUsage('critical,encipherOnly,keyAgreement,nonRepudiation'),
         'name_constraints': NameConstraints([['DNS:.com'], ['DNS:.net']]),
         'ocsp_no_check': OCSPNoCheck({'critical': True}),
+        'precert_poison': PrecertPoison(),
         'subject_alternative_name': SubjectAlternativeName('DNS:all-extensions.example.com,DNS:extra.example.com'),  # NOQA
         'subject_key_identifier': SubjectKeyIdentifier('DE:EA:38:FC:DA:39:92:33:45:A7:B9:F8:D2:DF:84:0E:CC:6F:3A:B9'),  # NOQA
         'tls_feature': TLSFeature('critical,OCSPMustStaple,MultipleCertStatusRequest'),

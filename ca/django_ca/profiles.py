@@ -43,5 +43,7 @@ def get_cert_profile_kwargs(name=None):
     tls_feature = profile.get('TLSFeature')
     if tls_feature and tls_feature.get('value'):
         kwargs['tls_feature'] = TLSFeature(tls_feature)
+    if profile.get('ocsp_no_check'):
+        kwargs['ocsp_no_check'] = profile['ocsp_no_check']
 
     return kwargs
