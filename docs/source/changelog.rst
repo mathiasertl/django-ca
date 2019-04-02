@@ -7,7 +7,7 @@ ChangeLog
 .. _changelog-1.12.0:
 
 *******************
-1.12.0 (2019-03-24)
+1.12.0 (2019-04-02)
 *******************
 
 * Fix traceback when a certificate that does not exist is viewed in the admin interface.
