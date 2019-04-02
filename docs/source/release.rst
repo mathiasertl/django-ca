@@ -57,3 +57,4 @@ After a release
 
 * Update ``VERSION`` and ``__version__`` in ``ca/django_ca/__init__.py`` to the next
   development release (see `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_).
+* Update version in ``setup.py``.
