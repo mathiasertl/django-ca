@@ -311,6 +311,7 @@ class TestImportsCommand(Command):
         import django
         django.setup()
 
+        from django.conf import settings  # useful when run in docker_test, where localsettings uses YAML
         from django_ca import utils, models, views, extensions, subject  # NOQA
 
 
