@@ -253,17 +253,26 @@ class DockerTest(Command):
     def finalize_options(self):
         pass
 
-    def run(self):
-        # first, run without any build-arg
-        tag = 'django-ca-test'
-        print('### Testing default version ###')
+    def run_image(self, image='default'):
+        print('### Testing %s ###' % image)
+        tag = 'django-ca-test-%s' % image
+
+        cmd = ['docker', 'build', '--no-cache', '-t', tag, ]
+        if image != 'default':
+            cmd += ['--build-arg', 'IMAGE=%s' % image, ]
+        cmd.append('.')
+
         try:
-            subprocess.check_call(['docker', 'build', '--no-cache', '-t', tag, '.'])
+            print(' '.join(cmd))
+            subprocess.check_call(cmd)
         except Exception:
-            print('### Failed image: default tag')
-            return
+            print('### Failed image is %s' % image)
         finally:
-            subprocess.call(['docker', 'image', 'rm', tag])
+            subprocess.call(['docker', 'image', 'rm', '--prune', tag])
+
+    def run(self):
+        self.run_image()
+        return
 
         images = [
             'python:2.7-alpine3.8',
@@ -281,15 +290,28 @@ class DockerTest(Command):
         ]
 
         for image in images:
-            print('### Testing %s ###' % image)
-            try:
-                subprocess.check_call([
-                    'docker', 'build', '--no-cache', '-t', tag, '--build-arg', 'IMAGE=%s' % image, '.'])
-            except Exception:
-                print('### Failed image is %s' % image)
-                break
-            finally:
-                subprocess.call(['docker', 'image', 'rm', tag])
+            self.run_image(image)
+
+
+class TestImportsCommand(Command):
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        work_dir = os.path.join(_rootdir, 'ca')
+        os.chdir(work_dir)
+        sys.path.insert(0, work_dir)
+
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.test_settings")
+        import django
+        django.setup()
+
+        from django_ca import utils, models, views, extensions, subject  # NOQA
 
 
 def find_package_data(dir):
@@ -328,6 +350,7 @@ setup(
         'code_quality': QualityCommand,
         'docker_test': DockerTest,
         'recreate_fixtures': RecreateFixturesCommand,
+        'test_imports': TestImportsCommand,
     },
     classifiers=[
         'Development Status :: 4 - Beta',
