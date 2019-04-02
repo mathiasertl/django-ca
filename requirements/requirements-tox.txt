@@ -1,3 +1,2 @@
 -rrequirements-libs.txt
 -rrequirements-test.txt
--rrequirements-docs.txt
