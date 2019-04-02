@@ -51,6 +51,7 @@ install_requires = [
     'idna>=2.6',
     'ocspbuilder>=0.10.2',
     'oscrypto>=0.19.0',
+    'packaging',
 ]
 
 if PY2:
