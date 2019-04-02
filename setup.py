@@ -48,6 +48,7 @@ install_requires = [
     'asn1crypto>=0.24.0',
     'cryptography>=2.2',
     'django-object-actions>=1.0',
+    'idna>=2.6',
     'ocspbuilder>=0.10.2',
     'oscrypto>=0.19.0',
 ]
