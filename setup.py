@@ -268,7 +268,7 @@ class DockerTest(Command):
         except Exception:
             print('### Failed image is %s' % image)
         finally:
-            subprocess.call(['docker', 'image', 'rm', '--prune', tag])
+            subprocess.call(['docker', 'image', 'rm', tag])
 
     def run(self):
         self.run_image()
