@@ -245,10 +245,12 @@ class QualityCommand(Command):
 
 
 class DockerTest(Command):
-    user_options = []
+    user_options = [
+        ('base=', None, 'Only build from specified base image.'),
+    ]
 
     def initialize_options(self):
-        pass
+        self.base = None
 
     def finalize_options(self):
         pass
@@ -271,23 +273,24 @@ class DockerTest(Command):
             subprocess.call(['docker', 'image', 'rm', tag])
 
     def run(self):
-        self.run_image()
-        return
-
-        images = [
-            'python:2.7-alpine3.8',
-            #'python:2.7-alpine3.7',
-            #'python:2.7-alpine3.6',
-            'python:3.4-alpine3.8',
-            #'python:3.4-alpine3.7',
-            'python:3.5-alpine3.8',
-            #'python:3.5-alpine3.7',
-            'python:3.6-alpine3.8',
-            #'python:3.6-alpine3.7',
-            #'python:3.6-alpine3.6',
-            'python:3.7-alpine3.8',
-            #'python:3.7-alpine3.7',
-        ]
+        if self.base:
+            images = [self.base]
+        else:
+            images = [
+                'default',
+                'python:2.7-alpine3.8',
+                #'python:2.7-alpine3.7',
+                #'python:2.7-alpine3.6',
+                'python:3.4-alpine3.8',
+                #'python:3.4-alpine3.7',
+                'python:3.5-alpine3.8',
+                #'python:3.5-alpine3.7',
+                'python:3.6-alpine3.8',
+                #'python:3.6-alpine3.7',
+                #'python:3.6-alpine3.6',
+                'python:3.7-alpine3.8',
+                #'python:3.7-alpine3.7',
+            ]
 
         for image in images:
             self.run_image(image)
