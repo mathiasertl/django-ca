@@ -294,6 +294,7 @@ class DockerTest(Command):
 
 
 class TestImportsCommand(Command):
+    description = 'Import some modules to make sure that all dependencies are installed.'
     user_options = []
 
     def initialize_options(self):
@@ -307,11 +308,14 @@ class TestImportsCommand(Command):
         os.chdir(work_dir)
         sys.path.insert(0, work_dir)
 
-        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.test_settings")
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.settings")
         import django
         django.setup()
 
-        from django.conf import settings  # useful when run in docker_test, where localsettings uses YAML
+        # useful when run in docker_test, where localsettings uses YAML
+        from django.conf import settings  # NOQA
+
+        # import some modules
         from django_ca import utils, models, views, extensions, subject  # NOQA
 
 

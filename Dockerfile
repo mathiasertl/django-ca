@@ -8,12 +8,12 @@ RUN apk --no-cache add --update gcc linux-headers libc-dev libffi-dev libressl-d
 
 COPY requirements.txt ./
 COPY requirements/ requirements/
+COPY docker/localsettings.py ca/ca/localsettings.py
 
 # Add user (some tests check if it's impossible to write a file)
 RUN addgroup -g 9000 -S django-ca && \
     adduser -S -u 9000 -G django-ca django-ca
 
-# Additional utilities required for testing:
 RUN pip install --no-cache-dir -r requirements/requirements-docker.txt
 
 COPY setup.py tox.ini fabfile.py ./
@@ -22,11 +22,13 @@ COPY --chown=django-ca:django-ca docs/ docs/
 
 RUN python setup.py test_imports
 
+# Install additional requirements for testing:
 RUN pip install --no-cache-dir \
     -r requirements/requirements-docs.txt \
     -r requirements/requirements-test.txt \
     -r requirements/requirements-lint.txt
 
+# From here on, we run as normal user
 USER django-ca:django-ca
 
 # copy this late so that changes do not trigger a cache miss during build
