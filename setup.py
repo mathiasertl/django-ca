@@ -281,8 +281,6 @@ class DockerTest(Command):
                 'python:2.7-alpine3.8',
                 #'python:2.7-alpine3.7',
                 #'python:2.7-alpine3.6',
-                'python:3.4-alpine3.8',
-                #'python:3.4-alpine3.7',
                 'python:3.5-alpine3.8',
                 #'python:3.5-alpine3.7',
                 'python:3.6-alpine3.8',
