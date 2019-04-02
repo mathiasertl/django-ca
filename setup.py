@@ -46,9 +46,9 @@ _rootdir = os.path.dirname(os.path.realpath(__file__))
 
 install_requires = [
     'asn1crypto>=0.24.0',
-    'cryptography>=2.2',
+    'cryptography>=2.3',
     'django-object-actions>=1.0',
-    'idna>=2.6',
+    'idna>=2.7',
     'ocspbuilder>=0.10.2',
     'oscrypto>=0.19.0',
     'packaging',
@@ -365,6 +365,7 @@ setup(
         'Development Status :: 4 - Beta',
         'Framework :: Django :: 1.11',
         'Framework :: Django :: 2.1',
+        'Framework :: Django :: 2.2',
         'Framework :: Django',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
@@ -372,7 +373,6 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',

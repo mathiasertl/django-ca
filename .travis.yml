@@ -11,17 +11,14 @@ env:  # https://www.djangoproject.com/download/
   - DJANGO=2.2 CRYPTOGRAPHY=2.5
   - DJANGO=2.2 CRYPTOGRAPHY=2.4.2
   - DJANGO=2.2 CRYPTOGRAPHY=2.3.1
-  - DJANGO=2.2 CRYPTOGRAPHY=2.2.2
   - DJANGO=2.1.8 CRYPTOGRAPHY=2.6.1
   - DJANGO=2.1.8 CRYPTOGRAPHY=2.5
   - DJANGO=2.1.8 CRYPTOGRAPHY=2.4.2
   - DJANGO=2.1.8 CRYPTOGRAPHY=2.3.1
-  - DJANGO=2.1.8 CRYPTOGRAPHY=2.2.2
   - DJANGO=1.11.20 CRYPTOGRAPHY=2.6.1
   - DJANGO=1.11.20 CRYPTOGRAPHY=2.5
   - DJANGO=1.11.20 CRYPTOGRAPHY=2.4.2
   - DJANGO=1.11.20 CRYPTOGRAPHY=2.3.1
-  - DJANGO=1.11.20 CRYPTOGRAPHY=2.2.2
 install:
   # Build/test dependencies
  - pip install -U pip setuptools
@@ -46,8 +43,6 @@ matrix:
           python: "2.7"
         - env: DJANGO=2.2 CRYPTOGRAPHY=2.3.1
           python: "2.7"
-        - env: DJANGO=2.2 CRYPTOGRAPHY=2.2.2
-          python: "2.7"
 
         # Django 2.1 no longer supports python2.7
         - env: DJANGO=2.1.8 CRYPTOGRAPHY=2.6.1
@@ -58,8 +53,6 @@ matrix:
           python: "2.7"
         - env: DJANGO=2.1.8 CRYPTOGRAPHY=2.3.1
           python: "2.7"
-        - env: DJANGO=2.1.8 CRYPTOGRAPHY=2.2.2
-          python: "2.7"
 
         # We do not test Django 1.11 with Python nightly
         - env: DJANGO=1.11.20 CRYPTOGRAPHY=2.6.1
@@ -69,6 +62,4 @@ matrix:
         - env: DJANGO=1.11.20 CRYPTOGRAPHY=2.4.2
           python: "nightly"
         - env: DJANGO=1.11.20 CRYPTOGRAPHY=2.3.1
-          python: "nightly"
-        - env: DJANGO=1.11.20 CRYPTOGRAPHY=2.2.2
           python: "nightly"
