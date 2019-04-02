@@ -5,7 +5,6 @@ Fabric3==1.14.post1
 ipython<6; python_version < '3.3'
 ipython>=6; python_version >= '3.3'
 pip>=9.0.1
-setuptools>=40.4.3
 six>=1.11.0
 sphinx-autobuild==0.7.1
 wheel==0.33.1
