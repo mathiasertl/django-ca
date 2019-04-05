@@ -25,8 +25,7 @@ urlpatterns = []
 
 if ca_settings.CA_PROVIDE_GENERIC_CRL is True:  # pragma: no branch
     urlpatterns.append(
-        url(r'^crl/(?P<serial>[0-9A-F:]+)/$', views.CertificateRevocationListView.as_view(),
-            name='crl'))
+        url(r'^crl/(?P<serial>[0-9A-F:]+)/$', views.CertificateRevocationListView.as_view(), name='crl'))
     urlpatterns.append(
         url(r'^crl/ca/(?P<serial>[0-9A-F:]+)/$', views.CertificateRevocationListView.as_view(ca_crl=True),
             name='ca-crl'))
@@ -34,8 +33,7 @@ if ca_settings.CA_PROVIDE_GENERIC_CRL is True:  # pragma: no branch
 for name, kwargs in getattr(settings, 'CA_OCSP_URLS', {}).items():
     kwargs.setdefault('ca', name)
     urlpatterns += [
-        url(r'ocsp/%s/$' % name, views.OCSPView.as_view(**kwargs),
-            name='ocsp-post-%s' % name),
+        url(r'ocsp/%s/$' % name, views.OCSPView.as_view(**kwargs), name='ocsp-post-%s' % name),
         url(r'ocsp/%s/(?P<data>[a-zA-Z0-9=+/]+)$' % name, views.OCSPView.as_view(**kwargs),
             name='ocsp-get-%s' % name)
     ]
