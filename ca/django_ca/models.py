@@ -31,6 +31,7 @@ from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -73,6 +74,11 @@ log = logging.getLogger(__name__)
 
 if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
     from .extensions import PrecertPoison
+
+
+def validate_past(value):
+    if value > timezone.now():
+        raise ValidationError(_('Date must be in the past!'))
 
 
 class Watcher(models.Model):
@@ -131,10 +137,14 @@ class X509CertMixin(models.Model):
 
     # revocation information
     revoked = models.BooleanField(default=False)
-    revoked_date = models.DateTimeField(null=True, blank=True, verbose_name=_('Revoked on'))
+    revoked_date = models.DateTimeField(null=True, blank=True, verbose_name=_('Revoked on'),
+                                        validators=[validate_past])
     revoked_reason = models.CharField(
         max_length=32, null=True, blank=True, verbose_name=_('Reason for revokation'),
         choices=REVOCATION_REASONS)
+    compromised = models.DateTimeField(
+        null=True, blank=True, verbose_name=_('Date of compromise'), validators=[validate_past],
+        help_text=_('Optional: When this certificate was compromised. You can change this date later.'))
 
     _x509 = None
 
@@ -153,6 +163,16 @@ class X509CertMixin(models.Model):
             return x509.ReasonFlags.unspecified
         else:
             return getattr(x509.ReasonFlags, self.revoked_reason)
+
+    def get_compromised_time(self):
+        if self.revoked is False or not self.compromised:
+            return
+
+        if timezone.is_aware(self.compromised):
+            # convert datetime object to UTC and make it naive
+            return timezone.make_naive(self.compromised, pytz.utc)
+
+        return self.compromised
 
     def get_revocation_time(self):
         """Get the revocation time as naive datetime.
@@ -228,6 +248,11 @@ class X509CertMixin(models.Model):
             reason_flag = getattr(x509.ReasonFlags, self.revoked_reason)
             revoked_cert = revoked_cert.add_extension(x509.CRLReason(reason_flag), critical=False)
 
+        compromised = self.get_compromised_time()
+        if compromised:
+            # RFC 5280, 5.3.2 says that this extension MUST be non-critical
+            revoked_cert = revoked_cert.add_extension(x509.InvalidityDate(compromised), critical=False)
+
         return revoked_cert.build(default_backend())
 
     @property
@@ -262,12 +287,13 @@ class X509CertMixin(models.Model):
 
         return self.revoked_reason or 'revoked'
 
-    def revoke(self, reason=None):
+    def revoke(self, reason=None, compromised=None):
         pre_revoke_cert.send(sender=self.__class__, cert=self, reason=reason)
 
         self.revoked = True
         self.revoked_date = timezone.now()
         self.revoked_reason = reason
+        self.compromised = compromised
         self.save()
 
         post_revoke_cert.send(sender=self.__class__, cert=self)

@@ -209,10 +209,9 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
         response = self.client.get(self.change_url())
         self.assertChangeResponse(response)
-        self.assertContains(response, text='''<div class="form-row field-revoked">
-                <div><label>Revoked:</label>
+        self.assertContains(response, text='''<div class="fieldBox field-revoked"><label>Revoked:</label>
                      <div class="readonly"><img src="/static/admin/img/icon-yes.svg" alt="True"></div>
-                </div> </div>''', html=True)
+                </div>''', html=True)
 
     @override_tmpcadir()
     def test_no_san(self):

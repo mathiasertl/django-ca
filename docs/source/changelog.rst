@@ -10,6 +10,9 @@ ChangeLog
 1.13.0 (TBR)
 ************
 
+* Add support for setting an Invalidity Date (see `RFC 5280, 5.3.2
+  <https://tools.ietf.org/html/rfc5280.html#section-5.3.2>`_) for CRLs, indicating when the certificate was
+  compromised.
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.2.
 * **BACKWARDS INCOMPATIBLE:** Drop support for idna 2.6.
 * **DEPRECATION NOTICE:** This is the last release to support cryptography 2.3.

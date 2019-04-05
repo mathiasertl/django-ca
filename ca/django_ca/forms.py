@@ -21,6 +21,7 @@ from cryptography.hazmat.primitives import hashes
 
 from django import forms
 from django.contrib.admin.widgets import AdminDateWidget
+from django.contrib.admin.widgets import AdminSplitDateTime
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
@@ -191,6 +192,20 @@ class ResignCertificateForm(CreateCertificateBaseForm):
 
 
 class RevokeCertificateForm(forms.ModelForm):
+    class Media:
+        js = (
+            # jquery/core.js for the datetime widgets:
+            'admin/js/vendor/jquery/jquery.js',
+            'admin/js/jquery.init.js',
+            'admin/js/core.js',
+        )
+
     class Meta:
         model = Certificate
-        fields = ['revoked_reason']
+        fields = ['revoked_reason', 'compromised']
+        field_classes = {
+            'compromised': forms.SplitDateTimeField,
+        }
+        widgets = {
+            'compromised': AdminSplitDateTime,
+        }

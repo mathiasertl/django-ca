@@ -30,6 +30,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.conf import settings
 from django.contrib.messages import get_messages
+from django.core.exceptions import ValidationError
 from django.core.management import ManagementUtility
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -584,6 +585,12 @@ class DjangoCATestCase(TestCase):
         if not isinstance(expected, Subject):
             expected = Subject(expected)
         self.assertEqual(Subject([(s.oid, s.value) for s in cert.subject]), expected)
+
+    @contextmanager
+    def assertValidationError(self, errors):
+        with self.assertRaises(ValidationError) as cm:
+            yield
+        self.assertEqual(cm.exception.message_dict, errors)
 
     def cmd(self, *args, **kwargs):
         """Call to a manage.py command using call_command."""

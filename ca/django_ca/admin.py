@@ -340,6 +340,10 @@ class CertificateMixin(object):
     def get_readonly_fields(self, request, obj=None):
         fields = super(CertificateMixin, self).get_readonly_fields(request, obj=obj)
 
+        if not obj.revoked:
+            # We can only change the date when the certificate was compromised if it's actually revoked.
+            fields.append('compromised')
+
         if obj is None:  # pragma: no cover
             # This is never True because CertificateAdmin (the only case where objects are added) doesn't call
             # the superclass in this case.
@@ -442,7 +446,8 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             'classes': ('collapse', ),
         }),
         (_('Revocation'), {
-            'fields': ('revoked', 'revoked_date', 'revoked_reason', ),
+            'fields': (('revoked', 'revoked_reason'),
+                       ('revoked_date', 'compromised', )),
         }),
         (_('Certificate'), {
             'fields': ['pub', 'csr', ],
@@ -574,7 +579,10 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
         if request.method == 'POST':
             form = RevokeCertificateForm(request.POST, instance=obj)
             if form.is_valid():
-                obj.revoke(reason=form.cleaned_data['revoked_reason'] or None)
+                obj.revoke(
+                    reason=form.cleaned_data['revoked_reason'] or None,
+                    compromised=form.cleaned_data['compromised'] or None
+                )
                 return HttpResponseRedirect(obj.admin_change_url)
         else:
             form = RevokeCertificateForm(instance=obj)

@@ -15,13 +15,16 @@
 
 import os
 import re
+from datetime import timedelta
 from io import BytesIO
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
+from cryptography.x509.oid import CRLEntryExtensionOID
 
 from django.utils import six
+from django.utils import timezone
 
 from .. import ca_settings
 from ..models import Certificate
@@ -135,6 +138,23 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
             self.assertEqual(len(list(crl)), 1)
             self.assertEqual(crl[0].serial_number, cert.x509.serial_number)
             self.assertEqual(crl[0].extensions[0].value.reason.name, reason)
+
+    @override_tmpcadir()
+    def test_compromised(self):
+        cert = Certificate.objects.get(serial=self.cert.serial)
+        stamp = timezone.now().replace(microsecond=0) - timedelta(10)
+        cert.revoke(compromised=stamp)
+
+        stdout, stderr = self.cmd('dump_crl', stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stderr, b'')
+
+        crl = x509.load_pem_x509_crl(stdout, default_backend())
+        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
+        self.assertEqual(len(list(crl)), 1)
+        self.assertEqual(crl[0].serial_number, cert.x509.serial_number)
+        self.assertEqual(len(crl[0].extensions), 1)
+        self.assertEqual(crl[0].extensions[0].oid, CRLEntryExtensionOID.INVALIDITY_DATE)
+        self.assertEqual(crl[0].extensions[0].value.invalidity_date, stamp)
 
     @override_tmpcadir()
     def test_ca_crl(self):

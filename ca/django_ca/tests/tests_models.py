@@ -16,6 +16,7 @@
 import os
 import unittest
 from datetime import datetime
+from datetime import timedelta
 
 from freezegun import freeze_time
 
@@ -221,6 +222,19 @@ class CertificateTests(DjangoCAWithChildCATestCase):
             self.cert.revoked_date = timezone.now()
             self.assertEqual(self.cert.get_revocation_time(), datetime(2019, 2, 3, 15, 43, 12))
 
+    @freeze_time("2019-02-03 15:43:12")
+    def test_get_compromised_time(self):
+        self.assertIsNone(self.cert.get_compromised_time())
+        self.cert.revoke(compromised=timezone.now())
+
+        with override_settings(USE_TZ=True):
+            self.cert.compromised = timezone.now()
+            self.assertEqual(self.cert.get_compromised_time(), datetime(2019, 2, 3, 15, 43, 12))
+
+        with override_settings(USE_TZ=False):
+            self.cert.compromised = timezone.now()
+            self.assertEqual(self.cert.get_compromised_time(), datetime(2019, 2, 3, 15, 43, 12))
+
     @unittest.skipUnless(cryptography_version >= (2, 4), 'OCSP support was added in cryptography 2.4.')
     def test_get_revocation_reason(self):
         self.assertIsNone(self.cert.get_revocation_reason())
@@ -228,7 +242,28 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         for reason, _text in self.cert.REVOCATION_REASONS:
             self.cert.revoke(reason)
             self.assertIsInstance(self.cert.get_revocation_reason(), x509.ReasonFlags)
-            #print(self.cert.revoked_reason, self.cert.get_revocation_reason())
+
+    def test_validate_past(self):
+        # Test that model validation does not allow us to set revoked_date or revoked_invalidity to the future
+        now = timezone.now()
+        future = now + timedelta(10)
+        past = now - timedelta(10)
+
+        # Validation works if we're not revoked
+        self.cert.full_clean()
+
+        # Validation works if date is in the past
+        self.cert.revoked_date = past
+        self.cert.compromised = past
+        self.cert.full_clean()
+
+        self.cert.revoked_date = future
+        self.cert.compromised = future
+        with self.assertValidationError({
+                'compromised': ['Date must be in the past!'],
+                'revoked_date': ['Date must be in the past!']
+        }):
+            self.cert.full_clean()
 
     def test_ocsp_status(self):
         self.assertEqual(self.cert.ocsp_status, 'good')

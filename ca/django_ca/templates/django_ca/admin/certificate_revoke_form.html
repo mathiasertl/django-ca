@@ -4,6 +4,9 @@
 {% block extrahead %}{{ block.super }}
 <script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
 {{ media }}
+<!-- form... -->
+{{ form.media }}
+<!-- form... -->
 {% endblock %}
 
 {% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}" />{% endblock %}
@@ -30,18 +33,20 @@
 
 <form action="" method="post">{% csrf_token %}
     <fieldset class="module aligned {{ fieldset.classes }}">
+        {% for field in form %}
         <div class="form-row{% if form.non_field_errors %} errors{% endif %} field-reason">
             {{ form.non_field_errors }}
 
-            <div class="field-box field-reason{% if form.reason.errors %} errors{% endif %}">
-                {{ form.revoked_reason.errors }}
-                {{ form.revoked_reason.label_tag }}
-                {{ form.revoked_reason }}
-                {% if form.revoked_reason.help_text %}
-                    <p class="help">{{ form.revoked_reason.help_text|safe }}</p>
+            <div class="fieldBox field-{{ field.name }} {% if field.errors %} errors{% endif %}">
+                {{ field.errors }}
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.help_text %}
+                    <p class="help">{{ field.help_text|safe }}</p>
                 {% endif %}
             </div>
         </div>
+        {% endfor %}
     </fieldset>
     <input type="submit" value="{% trans "Revoke" %}" />
 </form>
