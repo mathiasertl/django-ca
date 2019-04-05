@@ -4,6 +4,17 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.13.0:
+
+************
+1.13.0 (TBR)
+************
+
+* **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.2.
+* **BACKWARDS INCOMPATIBLE:** Drop support for idna 2.7.
+* **DEPRECATION NOTICE:** This is the last release to support cryptography 2.3.
+* **DEPRECATION NOTICE:** This is the last release to support cryptography 2.4.
+
 .. _changelog-1.12.0:
 
 *******************
