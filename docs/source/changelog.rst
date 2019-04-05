@@ -11,9 +11,10 @@ ChangeLog
 ************
 
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.2.
-* **BACKWARDS INCOMPATIBLE:** Drop support for idna 2.7.
+* **BACKWARDS INCOMPATIBLE:** Drop support for idna 2.6.
 * **DEPRECATION NOTICE:** This is the last release to support cryptography 2.3.
-* **DEPRECATION NOTICE:** This is the last release to support cryptography 2.4.
+* **DEPRECATION NOTICE:** This is the last release to support idna 2.7.
+* **DEPRECATION NOTICE:** This is the last release to support OCSP using ``oscrypto``/``ocspbuilder``.
 
 .. _changelog-1.12.0:
 
