@@ -34,6 +34,12 @@ fieldset.as-code .field-pub div.readonly,
     margin-top: 3px;
 }
 
+@media (min-width: 1025px) {
+    fieldset .field-revoked, fieldset .field-revoked_date {
+        min-width: 320px;
+    }
+}
+
 /**
  * Style lists for x509 extensions.
  */
