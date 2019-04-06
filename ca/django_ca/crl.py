@@ -62,7 +62,6 @@ def get_crl(ca, encoding, expires, algorithm, password, ca_crl=False):
     if ca_crl is True:
         qs = CertificateAuthority.objects.filter(parent=ca, expires__gt=timezone.now())
     else:
-        qs = CertificateAuthority.objects.filter(parent=ca, expires__gt=timezone.now())
         qs = Certificate.objects.filter(ca=ca, expires__gt=timezone.now())
 
     for cert in qs.revoked():
