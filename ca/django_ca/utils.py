@@ -732,13 +732,13 @@ def shlex_split(s, sep):
 
         >>> shlex_split('foo,bar', ', ')
         ['foo', 'bar']
-        >>> shlex_split("foo\\\,bar1", ',')  # escape a separator
+        >>> shlex_split('foo\\\\,bar1', ',')  # escape a separator
         ['foo,bar1']
         >>> shlex_split('"foo,bar", bla', ', ')
         ['foo,bar', 'bla']
-        >>> shlex_split('foo,"bar bla"', ',')
-        ['foo', 'bar bla']
-    """  # NOQA - flake8 complains about the backslash-escape in the doctest otherwise
+        >>> shlex_split('foo,"bar,bla"', ',')
+        ['foo', 'bar,bla']
+    """
     lex = shlex.shlex(s, posix=True)
     lex.whitespace = sep
     lex.whitespace_split = True
