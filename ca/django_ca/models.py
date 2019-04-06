@@ -19,6 +19,7 @@ import hashlib
 import logging
 import os
 import re
+from datetime import timedelta
 
 import pytz
 
@@ -68,6 +69,7 @@ from .utils import format_name
 from .utils import get_extension_name
 from .utils import int_to_hex
 from .utils import multiline_url_validator
+from .utils import parse_hash_algorithm
 from .utils import read_file
 
 log = logging.getLogger(__name__)
@@ -600,6 +602,87 @@ class CertificateAuthority(X509CertMixin):
             return x509.AuthorityKeyIdentifier.from_issuer_public_key(self.x509.public_key())
         else:
             return x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski)
+
+    def get_crl(self, encoding, expires, algorithm='SHA256', password=None, scope=None):
+        """Generate a Certificate Revocation List (CRL).
+
+        Parameters
+        ----------
+
+        encoding : :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding`
+            The encoding format for the CRL.
+        expires : int
+            The time in seconds when this CRL expires. Note that you should generate a new CRL until then.
+        algorithm : :py:class:`~cg:cryptography.hazmat.primitives.hashes.Hash` or str, optional
+            The hash algorithm to use, passed to :py:func:`~django_ca.utils.parse_hash_algorithm`. The default
+            is to use SHA-256.
+        password : bytes, optional
+            Password used to load the private key of the certificate authority. If not passed, the private key
+            is assumed to be unencrypted.
+        scope : {None, 'ca', 'user', 'attribute'}, optional
+            What to include in the CRL: Use ``"ca"`` to include only revoked certificate authorities and
+            ``"user"`` to include only certificates or ``None`` (the default) to include both.
+            ``"attribute"`` is reserved for future use and always produces an empty CRL.
+
+        Returns
+        -------
+
+        bytes
+            The CRL in the requested format.
+        """
+
+        if scope is not None and scope not in ['ca', 'user', 'attribute']:
+            raise ValueError('Scope must be either "ca", "user" or "attribute".')
+
+        now = now_builder = timezone.now()
+        algorithm = parse_hash_algorithm(algorithm)
+
+        if timezone.is_aware(now):
+            now_builder = timezone.make_naive(now, pytz.utc)
+
+        builder = x509.CertificateRevocationListBuilder()
+        builder = builder.issuer_name(self.x509.subject)
+        builder = builder.last_update(now_builder)
+        builder = builder.next_update(now_builder + timedelta(seconds=expires))
+
+        # Keyword arguments for the IssuingDistributionPoint extension
+        idp_kwargs = {
+            'only_contains_ca_certs': False,
+            'only_contains_user_certs': False,
+            'indirect_crl': False,
+            'only_contains_attribute_certs': False,
+            'only_some_reasons': None,
+            'full_name': None,
+            'relative_name': None,
+        }
+
+        ca_qs = self.children.filter(expires__gt=now).revoked()
+        cert_qs = self.certificate_set.filter(expires__gt=now).revoked()
+
+        if scope == 'ca':
+            certs = ca_qs
+            idp_kwargs['only_contains_ca_certs'] = True
+        elif scope == 'user':
+            certs = cert_qs
+            idp_kwargs['only_contains_user_certs'] = True
+        elif scope == 'attributes':
+            # sorry, nothing we support right now
+            certs = []
+            idp_kwargs['only_contains_attribute_certs'] = True
+        else:
+            certs = ca_qs + cert_qs
+
+        for cert in certs:
+            builder = builder.add_revoked_certificate(cert.get_revocation())
+
+        # TODO: Set full_name from CRL
+        builder.add_extension(x509.IssuingDistributionPoint(**idp_kwargs), critical=True)
+
+        # TODO: Add CRLNumber extension
+        #   https://cryptography.io/en/latest/x509/reference/#cryptography.x509.CRLNumber
+
+        crl = builder.sign(private_key=self.key(password), algorithm=algorithm, backend=default_backend())
+        return crl.public_bytes(encoding)
 
     @property
     def pathlen(self):

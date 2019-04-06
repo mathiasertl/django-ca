@@ -15,7 +15,6 @@
 
 from django.core.management.base import CommandError
 
-from ...crl import get_crl
 from ..base import BaseCommand
 
 
@@ -43,14 +42,15 @@ class Command(BaseCommand):
             'expires': options['expires'],
             'algorithm': options['algorithm'],
             'password': options['password'],
-            'ca_crl': options['ca_crl'],
+            'scope': 'ca' if options['ca_crl'] else 'user',
         }
 
         # See if we can work with the private key
-        self.test_private_key(options['ca'], options['password'])
+        ca = options['ca']
+        self.test_private_key(ca, options['password'])
 
         try:
-            crl = get_crl(ca=options['ca'], **kwargs)
+            crl = ca.get_crl(**kwargs)
         except Exception as e:  # pragma: no cover
             # Note: all parameters are already sanitized by parser actions
             raise CommandError(str(e))

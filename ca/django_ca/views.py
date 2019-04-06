@@ -44,7 +44,6 @@ from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin
 
 from . import ca_settings
-from .crl import get_crl
 from .models import Certificate
 from .models import CertificateAuthority
 from .utils import SERIAL_RE
@@ -90,8 +89,9 @@ class CertificateRevocationListView(View, SingleObjectMixin):
         crl = cache.get(cache_key)
         if crl is None:
             ca = self.get_object()
-            crl = get_crl(ca, encoding=self.type, expires=self.expires, algorithm=self.digest,
-                          password=self.password, ca_crl=self.ca_crl)
+            scope = 'ca' if self.ca_crl else 'user'
+            crl = ca.get_crl(encoding=self.type, expires=self.expires, algorithm=self.digest,
+                             password=self.password, scope=scope)
             cache.set(cache_key, crl, self.expires)
 
         content_type = self.content_type
