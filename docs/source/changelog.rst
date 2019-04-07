@@ -15,6 +15,8 @@ ChangeLog
 * **DEPRECATION NOTICE:** This is the last release to support cryptography 2.3.
 * **DEPRECATION NOTICE:** This is the last release to support idna 2.7.
 * **DEPRECATION NOTICE:** This is the last release to support OCSP using ``oscrypto``/``ocspbuilder``.
+* **DEPRECATION NOTICE:** ``CertificateRevocationListView.ca_crl`` is deprecated in favor of the ``scope``
+  parameter. If you have set ``ca_crl=True`` just set ``scope="ca"`` instead.
 
 CRLs
 ====
