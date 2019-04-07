@@ -28,8 +28,12 @@ class Command(BaseCommand):
             help="Seconds until a new CRL will be available (default: %(default)s).")
         parser.add_argument('path', nargs='?', default='-',
                             help='Path for the output file. Use "-" for stdout.')
-        parser.add_argument('--ca-crl', action='store_true', default=False,
-                            help="Generate the CRL for revoked child CAs.")
+        parser.add_argument(
+            '--ca-crl', action='store_true', default=False,
+            help="*DEPRECATED:* Use --scope=ca instead. Generate the CRL for revoked child CAs.")
+        parser.add_argument(
+            '-s', '--scope', choices=['ca', 'user', 'attribute'],
+            help='Limit the scope for the CRL (default: %(default)s).')
         self.add_algorithm(parser)
         self.add_format(parser)
         self.add_ca(parser, allow_disabled=True)
@@ -37,12 +41,16 @@ class Command(BaseCommand):
         super(Command, self).add_arguments(parser)
 
     def handle(self, path, **options):
+        if options['ca_crl']:
+            self.stderr.write(self.style.WARNING('WARNING: --ca-crl is deprecated, use --scope=ca instead.'))
+            options['scope'] = 'ca'
+
         kwargs = {
             'encoding': options['format'],
             'expires': options['expires'],
             'algorithm': options['algorithm'],
             'password': options['password'],
-            'scope': 'ca' if options['ca_crl'] else 'user',
+            'scope': options['scope'],
         }
 
         # See if we can work with the private key
