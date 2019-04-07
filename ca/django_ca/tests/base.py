@@ -9,6 +9,7 @@ import inspect
 import os
 import re
 import shutil
+import sys
 import tempfile
 from contextlib import contextmanager
 from datetime import datetime
@@ -522,8 +523,11 @@ class DjangoCATestCase(TestCase):
         self.assertFalse(cert.revoked)
         self.assertIsNone(cert.revoked_reason)
 
-    def assertParserError(self, args, expected):
+    def assertParserError(self, args, expected, **kwargs):
         """Assert that given args throw a parser error."""
+
+        kwargs['script'] = sys.argv[0]
+        expected = expected.format(**kwargs)
 
         buf = StringIO()
         with self.assertRaises(SystemExit), patch('sys.stderr', buf):
