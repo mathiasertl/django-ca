@@ -21,7 +21,7 @@ import order is checked with `isort <http://isort.readthedocs.io/en/latest/>`_.
 Before you submit a pull request, please make sure that all tests pass by
 executing::
 
-     python setup.py code_quality
+     python dev.py code-quality
 
 Naturally, I also expect the test suite to still pass. Please make sure you test
 in at least your local Python2 and Python3 environments::
@@ -43,7 +43,9 @@ there as well, if it affects handling a parameter or something.
 Code coverage
 *************
 
-Generate a coverage report and make sure that your code is covered by tests.
+Generate a coverage report and make sure that your code is covered by tests::
+
+     python setup.py coverage
 
 .. WARNING::
 

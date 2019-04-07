@@ -213,38 +213,6 @@ class RecreateFixturesCommand(BaseCommand):
         self.run_tests()
 
 
-class QualityCommand(Command):
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.test_settings")
-
-        print('isort --check-only --diff -rc ca/ fabfile.py setup.py')
-        status = subprocess.call(['isort', '--check-only', '--diff', '-rc',
-                                  'ca/', 'fabfile.py', 'setup.py'])
-        if status != 0:
-            sys.exit(status)
-
-        print('flake8 ca/ fabfile.py setup.py')
-        status = subprocess.call(['flake8', 'ca/', 'fabfile.py', 'setup.py'])
-        if status != 0:
-            sys.exit(status)
-
-        work_dir = os.path.join(_rootdir, 'ca')
-
-        os.chdir(work_dir)
-        print('python -Wd manage.py check')
-        status = subprocess.call(['python', '-Wd', 'manage.py', 'check'])
-        if status != 0:
-            sys.exit(status)
-
-
 class DockerTest(Command):
     user_options = [
         ('base=', None, 'Only build from specified base image.'),
@@ -356,7 +324,6 @@ setup(
     cmdclass={
         'coverage': CoverageCommand,
         'test': TestCommand,
-        'code_quality': QualityCommand,
         'docker_test': DockerTest,
         'recreate_fixtures': RecreateFixturesCommand,
         'test_imports': TestImportsCommand,

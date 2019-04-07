@@ -10,6 +10,8 @@ ChangeLog
 1.13.0 (TBR)
 ************
 
+* Development commands from ``setup.py`` are now moved to new ``dev.py`` script
+  to remove clutter.
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.2.
 * **BACKWARDS INCOMPATIBLE:** Drop support for idna 2.6.
 * **DEPRECATION NOTICE:** This is the last release to support cryptography 2.3.
