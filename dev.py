@@ -25,6 +25,11 @@ parser = argparse.ArgumentParser(
 commands = parser.add_subparsers(dest='command')
 cq_parser = commands.add_parser('code-quality', help='Run various checks for coding standards.')
 ti_parser = commands.add_parser('test-imports', help='Import django-ca modules to test dependencies.')
+dt_parser = commands.add_parser('docker-test', help='Build the Docker image using various base images.')
+dt_parser.add_argument('-i', '--image', action='append', dest='images',
+                       help='Base images to test on, may be given multiple times.')
+dt_parser.add_argument('-c', '--cache', dest='no_cache', default='True', action='store_false',
+                       help='Use Docker cache to speed up builds.')
 args = parser.parse_args()
 
 _rootdir = os.path.dirname(os.path.realpath(__file__))
@@ -57,10 +62,50 @@ if args.command == 'code-quality':
 elif args.command == 'test-imports':
     setup_django('ca.settings')
 
-    # useful when run in docker_test, where localsettings uses YAML
+    # useful when run in docker-test, where localsettings uses YAML
     from django.conf import settings  # NOQA
 
     # import some modules - if any dependency is not installed, this will fail
     from django_ca import utils, models, views, extensions, subject  # NOQA
+
+elif args.command == 'docker-test':
+    images = args.images or [
+        'default',
+
+        # alpine 3.9
+        'python:2.7-alpine3.9',
+        'python:3.5-alpine3.9',
+        'python:3.6-alpine3.9',
+        'python:3.7-alpine3.9',
+
+        # alpine 3.8
+        'python:2.7-alpine3.8',
+        'python:3.5-alpine3.8',
+        'python:3.6-alpine3.8',
+        'python:3.7-alpine3.8',
+    ]
+
+    for image in images:
+        print('### Testing %s ###' % image)
+        tag = 'django-ca-test-%s' % image
+
+        cmd = ['docker', 'build', ]
+
+        if args.no_cache:
+            cmd.append('--no-cache')
+        if image != 'default':
+            cmd += ['--build-arg', 'IMAGE=%s' % image, ]
+
+        cmd += ['-t', tag, ]
+        cmd.append('.')
+
+        print(' '.join(cmd))
+
+        try:
+            subprocess.check_call(cmd)
+        except Exception:
+            print('### Failed image is %s' % image)
+        finally:
+            subprocess.call(['docker', 'image', 'rm', tag])
 else:
     parser.print_help()

@@ -15,7 +15,6 @@
 # see <http://www.gnu.org/licenses/>.
 
 import os
-import subprocess
 import sys
 
 from setuptools import Command
@@ -213,58 +212,6 @@ class RecreateFixturesCommand(BaseCommand):
         self.run_tests()
 
 
-class DockerTest(Command):
-    user_options = [
-        ('base=', None, 'Only build from specified base image.'),
-    ]
-
-    def initialize_options(self):
-        self.base = None
-
-    def finalize_options(self):
-        pass
-
-    def run_image(self, image='default'):
-        print('### Testing %s ###' % image)
-        tag = 'django-ca-test-%s' % image
-
-        cmd = ['docker', 'build', '--no-cache', '-t', tag, ]
-        if image != 'default':
-            cmd += ['--build-arg', 'IMAGE=%s' % image, ]
-        cmd.append('.')
-
-        try:
-            print(' '.join(cmd))
-            subprocess.check_call(cmd)
-        except Exception:
-            print('### Failed image is %s' % image)
-        finally:
-            subprocess.call(['docker', 'image', 'rm', tag])
-
-    def run(self):
-        if self.base:
-            images = [self.base]
-        else:
-            images = [
-                'default',
-
-                # alpine 3.9
-                'python:2.7-alpine3.9',
-                'python:3.5-alpine3.9',
-                'python:3.6-alpine3.9',
-                'python:3.7-alpine3.9',
-
-                # alpine 3.8
-                'python:2.7-alpine3.8',
-                'python:3.5-alpine3.8',
-                'python:3.6-alpine3.8',
-                'python:3.7-alpine3.8',
-            ]
-
-        for image in images:
-            self.run_image(image)
-
-
 def find_package_data(dir):
     data = []
     package_root = os.path.join('ca', 'django_ca')
@@ -298,7 +245,6 @@ setup(
     cmdclass={
         'coverage': CoverageCommand,
         'test': TestCommand,
-        'docker_test': DockerTest,
         'recreate_fixtures': RecreateFixturesCommand,
     },
     classifiers=[

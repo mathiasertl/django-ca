@@ -17,7 +17,7 @@ Before release
   (see `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_).
 * Make sure that ``docs/source/changelog.rst`` is up to date.
 * Make sure that tox runs through for all environments.
-* Make sure that ``python setup.py docker_test`` runs through.
+* Make sure that ``python dev.py docker-test`` runs through.
 * Push the last commit and make sure that Travis and Read The Docs are updated.
 
 ************
