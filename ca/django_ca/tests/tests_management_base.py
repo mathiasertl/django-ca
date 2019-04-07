@@ -66,8 +66,8 @@ class SubjectActionTestCase(DjangoCATestCase):
 
     def test_error(self):
         self.assertParserError(['--subject=/WRONG=foobar'],
-                               'usage: setup.py [-h] [--subject SUBJECT]\n'
-                               'setup.py: error: Unknown x509 name field: WRONG\n')
+                               'usage: {script} [-h] [--subject SUBJECT]\n'
+                               '{script}: error: Unknown x509 name field: WRONG\n')
 
 
 class ExtensionAction(DjangoCATestCase):
@@ -90,8 +90,8 @@ class ExtensionAction(DjangoCATestCase):
 
     def test_error(self):
         self.assertParserError(['-e=foobar'],
-                               'usage: setup.py [-h] [-e E]\n'
-                               'setup.py: error: Invalid extension value: foobar: Unknown value(s): foobar\n')
+                               'usage: {script} [-h] [-e E]\n'
+                               '{script}: error: Invalid extension value: foobar: Unknown value(s): foobar\n')
 
 
 class FormatActionTestCase(DjangoCATestCase):
@@ -122,8 +122,8 @@ class FormatActionTestCase(DjangoCATestCase):
 
     def test_error(self):
         self.assertParserError(['--action=foo'],
-                               'usage: setup.py [-h] [--action ACTION]\n'
-                               'setup.py: error: Unknown format "FOO".\n')
+                               'usage: {script} [-h] [--action ACTION]\n'
+                               '{script}: error: Unknown format "FOO".\n')
 
 
 class CurveActionTestCase(DjangoCATestCase):
@@ -141,8 +141,8 @@ class CurveActionTestCase(DjangoCATestCase):
 
     def test_error(self):
         self.assertParserError(['--curve=foo'],
-                               'usage: setup.py [-h] [--curve CURVE]\n'
-                               'setup.py: error: foo: Not a known Eliptic Curve\n')
+                               'usage: {script} [-h] [--curve CURVE]\n'
+                               '{script}: error: foo: Not a known Eliptic Curve\n')
 
 
 class AlgorithmActionTestCase(DjangoCATestCase):
@@ -163,8 +163,8 @@ class AlgorithmActionTestCase(DjangoCATestCase):
 
     def test_error(self):
         self.assertParserError(['--algo=foo'],
-                               'usage: setup.py [-h] [--algo ALGO]\n'
-                               'setup.py: error: Unknown hash algorithm: foo\n')
+                               'usage: {script} [-h] [--algo ALGO]\n'
+                               '{script}: error: Unknown hash algorithm: foo\n')
 
 
 class KeySizeActionTestCase(DjangoCATestCase):
@@ -182,8 +182,8 @@ class KeySizeActionTestCase(DjangoCATestCase):
         self.assertEqual(ns.size, 4096)
 
     def test_no_power_two(self):
-        expected = '''usage: setup.py [-h] [--size SIZE]
-setup.py: error: --size must be a power of two (2048, 4096, ...)\n'''
+        expected = '''usage: {script} [-h] [--size SIZE]
+{script}: error: --size must be a power of two (2048, 4096, ...)\n'''
 
         self.assertParserError(['--size=2047'], expected)
         self.assertParserError(['--size=2049'], expected)
@@ -192,8 +192,8 @@ setup.py: error: --size must be a power of two (2048, 4096, ...)\n'''
 
     @override_settings(CA_MIN_KEY_SIZE=2048)
     def test_to_small(self):
-        expected = '''usage: setup.py [-h] [--size SIZE]
-setup.py: error: --size must be at least 2048 bits.\n'''
+        expected = '''usage: {script} [-h] [--size SIZE]
+{script}: error: --size must be at least 2048 bits.\n'''
 
         self.assertParserError(['--size=1024'], expected)
         self.assertParserError(['--size=512'], expected)
@@ -251,8 +251,8 @@ class CertificateActionTestCase(DjangoCAWithCertTestCase):
     def test_missing(self):
         serial = 'foo'
         self.assertParserError([serial],
-                               'usage: setup.py [-h] cert\n'
-                               'setup.py: error: %s: Certificate not found.\n' % serial)
+                               'usage: {script} [-h] cert\n'
+                               '{script}: error: {serial}: Certificate not found.\n', serial=serial)
 
     def test_multiple(self):
         # Manually set almost the same serial on second cert
@@ -261,9 +261,8 @@ class CertificateActionTestCase(DjangoCAWithCertTestCase):
 
         serial = self.cert_all.serial[:8]
         self.assertParserError([serial],
-                               'usage: setup.py [-h] cert\n'
-                               'setup.py: error: %s: Multiple certificates match.\n'
-                               % serial)
+                               'usage: {script} [-h] cert\n'
+                               '{script}: error: {serial}: Multiple certificates match.\n', serial=serial)
 
 
 class CertificateAuthorityActionTestCase(DjangoCAWithCATestCase):
@@ -284,8 +283,8 @@ class CertificateAuthorityActionTestCase(DjangoCAWithCATestCase):
 
     def test_missing(self):
         self.assertParserError(['foo'],
-                               '''usage: setup.py [-h] ca\n'''
-                               '''setup.py: error: foo: Certificate authority not found.\n''')
+                               '''usage: {script} [-h] ca\n'''
+                               '''{script}: error: foo: Certificate authority not found.\n''')
 
     def test_multiple(self):
         # Create a second CA and manually set (almost) the same serial
@@ -295,9 +294,9 @@ class CertificateAuthorityActionTestCase(DjangoCAWithCATestCase):
 
         serial = ca2.serial[:8]
         self.assertParserError([serial],
-                               'usage: setup.py [-h] ca\n'
-                               'setup.py: error: %s: Multiple Certificate authorities match.\n'
-                               % serial)
+                               'usage: {script} [-h] ca\n'
+                               '{script}: error: {serial}: Multiple Certificate authorities match.\n',
+                               serial=serial)
 
     @override_tmpcadir()
     def test_disabled(self):
@@ -305,10 +304,10 @@ class CertificateAuthorityActionTestCase(DjangoCAWithCATestCase):
         ca.enabled = False
         ca.save()
 
-        expected = '''usage: setup.py [-h] ca
-setup.py: error: %s: Certificate authority not found.\n''' % ca.serial
+        expected = '''usage: {script} [-h] ca
+{script}: error: {serial}: Certificate authority not found.\n'''
 
-        self.assertParserError([ca.serial], expected)
+        self.assertParserError([ca.serial], expected, serial=ca.serial)
 
         # test allow_disabled=True
         parser = argparse.ArgumentParser()
@@ -322,10 +321,10 @@ setup.py: error: %s: Certificate authority not found.\n''' % ca.serial
         ca.private_key_path = 'does-not-exist'
         ca.save()
 
-        expected = '''usage: setup.py [-h] ca
-setup.py: error: %s: %s: Private key does not exist.\n''' % (ca.name, ca.private_key_path)
-
-        self.assertParserError([ca.serial], expected)
+        self.assertParserError([ca.serial],
+                               'usage: {script} [-h] ca\n'
+                               '{script}: error: {name}: {path}: Private key does not exist.\n',
+                               name=ca.name, path=ca.private_key_path)
 
     @override_tmpcadir()
     def test_password(self):
@@ -346,8 +345,8 @@ class URLActionTestCase(DjangoCATestCase):
             self.assertEqual(ns.url, url)
 
     def test_error(self):
-        self.assertParserError(['--url=foo'], 'usage: setup.py [-h] [--url URL]\n'
-                                              'setup.py: error: foo: Not a valid URL.\n')
+        self.assertParserError(['--url=foo'], 'usage: {script} [-h] [--url URL]\n'
+                                              '{script}: error: foo: Not a valid URL.\n')
 
 
 class ExpiresActionTestCase(DjangoCATestCase):
@@ -386,8 +385,8 @@ class ExpiresActionTestCase(DjangoCATestCase):
         self.parser.add_argument('--expires', action=base.ExpiresAction, default=100, now=self.now)
 
         # this always is one day more, because N days jumps to the next midnight.
-        self.assertParserError(['--expires=-1'], 'usage: setup.py [-h] [--expires EXPIRES]\n'
-                               'setup.py: error: Expires must not be negative.\n')
+        self.assertParserError(['--expires=-1'], 'usage: {script} [-h] [--expires EXPIRES]\n'
+                               '{script}: error: Expires must not be negative.\n')
 
 
 class MultipleURLActionTestCase(DjangoCATestCase):
@@ -412,5 +411,5 @@ class MultipleURLActionTestCase(DjangoCATestCase):
         self.assertEqual(ns.url, urls)
 
     def test_error(self):
-        self.assertParserError(['--url=foo'], 'usage: setup.py [-h] [--url URL]\n'
-                                              'setup.py: error: foo: Not a valid URL.\n')
+        self.assertParserError(['--url=foo'], 'usage: {script} [-h] [--url URL]\n'
+                                              '{script}: error: foo: Not a valid URL.\n')
