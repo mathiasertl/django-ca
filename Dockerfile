@@ -4,7 +4,7 @@ ARG IMAGE=python:3.7-alpine3.9
 ####################
 FROM $IMAGE as test
 WORKDIR /usr/src/django-ca
-RUN apk --no-cache add --update gcc linux-headers libc-dev libffi-dev libressl-dev make
+RUN apk --no-cache add --update gcc linux-headers libc-dev libffi-dev openssl-dev make
 
 COPY requirements.txt ./
 COPY requirements/ requirements/
@@ -13,6 +13,7 @@ COPY requirements/ requirements/
 RUN addgroup -g 9000 -S django-ca && \
     adduser -S -u 9000 -G django-ca django-ca
 
+RUN pip install -U setuptools pip
 RUN pip install --no-cache-dir -r requirements/requirements-docker.txt
 
 COPY setup.py dev.py tox.ini fabfile.py ./
@@ -40,7 +41,7 @@ RUN make -C docs html-check
 FROM $IMAGE as prepare
 WORKDIR /usr/src/django-ca
 
-RUN apk --no-cache add --update gcc linux-headers libc-dev libffi-dev libressl-dev pcre pcre-dev mailcap
+RUN apk --no-cache add --update gcc linux-headers libc-dev libffi-dev openssl-dev pcre pcre-dev mailcap
 
 COPY requirements/ requirements/
 
@@ -56,7 +57,7 @@ RUN rm -rf requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localse
 ######################
 FROM $IMAGE
 WORKDIR /usr/src/django-ca
-RUN apk --no-cache add --update pcre libressl-dev binutils
+RUN apk --no-cache add --update pcre openssl-dev binutils
 
 RUN addgroup -g 9000 -S django-ca && \
     adduser -S -u 9000 -G django-ca django-ca && \

@@ -72,17 +72,21 @@ elif args.command == 'docker-test':
     images = args.images or [
         'default',
 
-        # alpine 3.9
+        # Currently supported Alpine releases:
+        #   https://wiki.alpinelinux.org/wiki/Alpine_Linux:Releases
+
         'python:2.7-alpine3.9',
         'python:3.5-alpine3.9',
         'python:3.6-alpine3.9',
         'python:3.7-alpine3.9',
-
-        # alpine 3.8
         'python:2.7-alpine3.8',
         'python:3.5-alpine3.8',
         'python:3.6-alpine3.8',
         'python:3.7-alpine3.8',
+        'python:2.7-alpine3.7',
+        'python:3.5-alpine3.7',
+        'python:3.6-alpine3.7',
+        'python:3.7-alpine3.7',
     ]
 
     for image in images:
