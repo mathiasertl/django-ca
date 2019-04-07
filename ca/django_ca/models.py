@@ -16,6 +16,7 @@
 import base64
 import binascii
 import hashlib
+import itertools
 import logging
 import os
 import re
@@ -603,8 +604,13 @@ class CertificateAuthority(X509CertMixin):
         else:
             return x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski)
 
-    def get_crl(self, encoding, expires, algorithm='SHA256', password=None, scope=None):
+    def get_crl(self, encoding, expires, algorithm='SHA256', password=None, scope=None, **kwargs):
         """Generate a Certificate Revocation List (CRL).
+
+        The ``full_name`` and ``relative_name`` parameters describe how to retrieve the CRL and are used in
+        the `Issuing Distribution Point extension <https://tools.ietf.org/html/rfc5280.html#section-5.2.5>`_.
+        The former defaults to the ``crl_url`` field, pass ``None`` to not include the value. At most one of
+        the two may be set.
 
         Parameters
         ----------
@@ -623,6 +629,11 @@ class CertificateAuthority(X509CertMixin):
             What to include in the CRL: Use ``"ca"`` to include only revoked certificate authorities and
             ``"user"`` to include only certificates or ``None`` (the default) to include both.
             ``"attribute"`` is reserved for future use and always produces an empty CRL.
+        full_name : list of :py:class:`~cg:cryptography.x509.GeneralName`, optional
+            List of general names to use in the Issuing Distribution Point extension. If not passed, use
+            ``crl_url`` if set.
+        relative_name : :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`, optional
+            Used in Issuing Distribution Point extension, retrieve the CRL relative to the issuer.
 
         Returns
         -------
@@ -645,6 +656,14 @@ class CertificateAuthority(X509CertMixin):
         builder = builder.last_update(now_builder)
         builder = builder.next_update(now_builder + timedelta(seconds=expires))
 
+        if 'full_name' in kwargs:
+            full_name = kwargs['full_name']
+        elif self.crl_url:
+            crl_url = [url.strip() for url in self.crl_url.split()]
+            full_name = [x509.UniformResourceIdentifier(c) for c in crl_url]
+        else:
+            full_name = None
+
         # Keyword arguments for the IssuingDistributionPoint extension
         idp_kwargs = {
             'only_contains_ca_certs': False,
@@ -652,8 +671,8 @@ class CertificateAuthority(X509CertMixin):
             'indirect_crl': False,
             'only_contains_attribute_certs': False,
             'only_some_reasons': None,
-            'full_name': None,
-            'relative_name': None,
+            'full_name': full_name,
+            'relative_name': kwargs.get('relative_name'),
         }
 
         ca_qs = self.children.filter(expires__gt=now).revoked()
@@ -670,7 +689,7 @@ class CertificateAuthority(X509CertMixin):
             certs = []
             idp_kwargs['only_contains_attribute_certs'] = True
         else:
-            certs = ca_qs + cert_qs
+            certs = itertools.chain(ca_qs, cert_qs)
 
         for cert in certs:
             builder = builder.add_revoked_certificate(cert.get_revocation())
