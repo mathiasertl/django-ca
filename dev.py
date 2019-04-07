@@ -24,10 +24,19 @@ parser = argparse.ArgumentParser(
 )
 commands = parser.add_subparsers(dest='command')
 cq_parser = commands.add_parser('code-quality', help='Run various checks for coding standards.')
+ti_parser = commands.add_parser('test-imports', help='Import django-ca modules to test dependencies.')
 args = parser.parse_args()
 
 _rootdir = os.path.dirname(os.path.realpath(__file__))
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.test_settings")
+
+
+def setup_django(settings_module="ca.test_settings"):
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings_module)
+    sys.path.insert(0, os.path.join(_rootdir, 'ca'))
+
+    import django
+    django.setup()
+
 
 if args.command == 'code-quality':
     print('isort --check-only --diff -rc ca/ fabfile.py setup.py')
@@ -45,5 +54,13 @@ if args.command == 'code-quality':
     status = subprocess.call(['python', '-Wd', 'manage.py', 'check'], cwd=os.path.join(_rootdir, 'ca'))
     if status != 0:
         sys.exit(status)
+elif args.command == 'test-imports':
+    setup_django('ca.settings')
+
+    # useful when run in docker_test, where localsettings uses YAML
+    from django.conf import settings  # NOQA
+
+    # import some modules - if any dependency is not installed, this will fail
+    from django_ca import utils, models, views, extensions, subject  # NOQA
 else:
     parser.print_help()

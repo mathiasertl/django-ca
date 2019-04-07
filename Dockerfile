@@ -21,7 +21,7 @@ COPY --chown=django-ca:django-ca ca/ ca/
 COPY --chown=django-ca:django-ca docker/localsettings.py ca/ca/localsettings.py
 
 # Make sure that requirements/requirements-docker.txt has installed all run-time dependencies
-RUN python setup.py test_imports
+RUN python dev.py test-imports
 
 # Install additional requirements for testing:
 RUN pip install --no-cache-dir \

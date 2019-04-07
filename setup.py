@@ -265,32 +265,6 @@ class DockerTest(Command):
             self.run_image(image)
 
 
-class TestImportsCommand(Command):
-    description = 'Import some modules to make sure that all dependencies are installed.'
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        work_dir = os.path.join(_rootdir, 'ca')
-        os.chdir(work_dir)
-        sys.path.insert(0, work_dir)
-
-        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.settings")
-        import django
-        django.setup()
-
-        # useful when run in docker_test, where localsettings uses YAML
-        from django.conf import settings  # NOQA
-
-        # import some modules
-        from django_ca import utils, models, views, extensions, subject  # NOQA
-
-
 def find_package_data(dir):
     data = []
     package_root = os.path.join('ca', 'django_ca')
@@ -326,7 +300,6 @@ setup(
         'test': TestCommand,
         'docker_test': DockerTest,
         'recreate_fixtures': RecreateFixturesCommand,
-        'test_imports': TestImportsCommand,
     },
     classifiers=[
         'Development Status :: 4 - Beta',
