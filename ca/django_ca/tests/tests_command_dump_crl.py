@@ -42,7 +42,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_basic(self):
-        stdout, stderr = self.cmd('dump_crl', stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = self.cmd('dump_crl', scope='user', stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
 
         crl = x509.load_pem_x509_crl(stdout, default_backend())
@@ -56,7 +56,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
     @override_tmpcadir()
     def test_file(self):
         path = os.path.join(ca_settings.CA_DIR, 'crl-test.crl')
-        stdout, stderr = self.cmd('dump_crl', path, stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = self.cmd('dump_crl', path, scope='user', stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stdout, b'')
         self.assertEqual(stderr, b'')
 
@@ -72,7 +72,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         else:
             msg = r"^\[Errno 2\] No such file or directory: '%s'$" % re.escape(path)
         with self.assertCommandError(msg):
-            self.cmd('dump_crl', path, stdout=BytesIO(), stderr=BytesIO())
+            self.cmd('dump_crl', path, scope='user', stdout=BytesIO(), stderr=BytesIO())
 
     @override_tmpcadir()
     def test_password(self):
@@ -84,16 +84,17 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         # Giving no password raises a CommandError
         stdin = six.StringIO(self.csr_pem)
         with self.assertCommandError('^Password was not given but private key is encrypted$'):
-            self.cmd('dump_crl', ca=ca, stdin=stdin)
+            self.cmd('dump_crl', ca=ca, scope='user', stdin=stdin)
 
         # False password
         stdin = six.StringIO(self.csr_pem)
         ca = CertificateAuthority.objects.get(pk=ca.pk)
         stdin = six.StringIO(self.csr_pem)
         with self.assertCommandError(self.re_false_password):
-            self.cmd('dump_crl', ca=ca, stdin=stdin, password=b'wrong')
+            self.cmd('dump_crl', ca=ca, scope='user', stdin=stdin, password=b'wrong')
 
-        stdout, stderr = self.cmd('dump_crl', ca=ca, stdout=BytesIO(), stderr=BytesIO(), password=password)
+        stdout, stderr = self.cmd('dump_crl', ca=ca, scope='user', password=password,
+                                  stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
 
         crl = x509.load_pem_x509_crl(stdout, default_backend())
@@ -107,7 +108,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         ca.enabled = False
         ca.save()
 
-        stdout, stderr = self.cmd('dump_crl', ca=ca, stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = self.cmd('dump_crl', ca=ca, scope='user', stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
 
         crl = x509.load_pem_x509_crl(stdout, default_backend())
@@ -118,7 +119,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
     def test_revoked(self):
         cert = Certificate.objects.get(serial=self.cert.serial)
         cert.revoke()
-        stdout, stderr = self.cmd('dump_crl', stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = self.cmd('dump_crl', scope='user', stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
 
         crl = x509.load_pem_x509_crl(stdout, default_backend())
@@ -132,7 +133,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
             cert.revoked_reason = reason
             cert.save()
 
-            stdout, stderr = self.cmd('dump_crl', stdout=BytesIO(), stderr=BytesIO())
+            stdout, stderr = self.cmd('dump_crl', scope='user', stdout=BytesIO(), stderr=BytesIO())
             crl = x509.load_pem_x509_crl(stdout, default_backend())
             self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
             self.assertEqual(len(list(crl)), 1)
@@ -145,7 +146,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         stamp = timezone.now().replace(microsecond=0) - timedelta(10)
         cert.revoke(compromised=stamp)
 
-        stdout, stderr = self.cmd('dump_crl', stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = self.cmd('dump_crl', scope='user', stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
 
         crl = x509.load_pem_x509_crl(stdout, default_backend())
@@ -163,7 +164,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         self.assertIsNotNone(child.key(password=None))
         self.assertNotRevoked(child)
 
-        stdout, stderr = self.cmd('dump_crl', ca=self.ca, ca_crl=True,
+        stdout, stderr = self.cmd('dump_crl', ca=self.ca, scope='ca',
                                   stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
 
@@ -174,7 +175,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         # revoke the CA and see if it's there
         child.revoke()
         self.assertRevoked(child)
-        stdout, stderr = self.cmd('dump_crl', ca=self.ca, ca_crl=True, stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = self.cmd('dump_crl', ca=self.ca, scope='ca', stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
 
         crl = x509.load_pem_x509_crl(stdout, default_backend())
