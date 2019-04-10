@@ -186,6 +186,7 @@ elif args.command == 'code-quality':
         sys.exit(status)
 
     print('python -Wd manage.py check')
+    setup_django('ca.settings')
     os.chdir(os.path.join(_rootdir, 'ca'))
     status = subprocess.call(['python', '-Wd', 'manage.py', 'check'])
     if status != 0:
