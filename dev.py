@@ -14,15 +14,19 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function
+
 import argparse
 import os
 import subprocess
 import sys
 import warnings
 
-import cryptography
-import django
 import packaging.version
+
+import cryptography
+
+import django
 
 PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
@@ -171,14 +175,13 @@ elif args.command == 'coverage':
         sys.exit(2)  # coverage cli utility also exits with 2
 
 elif args.command == 'code-quality':
-    print('isort --check-only --diff -rc ca/ fabfile.py setup.py')
-    status = subprocess.call(['isort', '--check-only', '--diff', '-rc',
-                              'ca/', 'fabfile.py', 'setup.py'])
+    print('isort --check-only --diff -rc ca/ setup.py dev.py')
+    status = subprocess.call(['isort', '--check-only', '--diff', '-rc', 'ca/', 'setup.py', 'dev.py'])
     if status != 0:
         sys.exit(status)
 
-    print('flake8 ca/ fabfile.py setup.py')
-    status = subprocess.call(['flake8', 'ca/', 'fabfile.py', 'setup.py'])
+    print('flake8 ca/ setup.py dev.py')
+    status = subprocess.call(['flake8', 'ca/', 'setup.py', 'dev.py'])
     if status != 0:
         sys.exit(status)
 
