@@ -15,6 +15,8 @@ ChangeLog
   documentation also `suggests <https://cryptography.io/en/stable/installation/#alpine>`_ OpenSSL.
 * All non setup-related functionality in ``setup.py`` has been moved to ``dev.py`` to minimize ``setup.py``
   and any chance for errors there.
+* The ``init_demo`` target of the Fabric file has been moved to ``dev.py init-demo``, the Fabric file has been
+  removed.
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.2.
 * **BACKWARDS INCOMPATIBLE:** Drop support for idna 2.6.
 * **DEPRECATION NOTICE:** This is the last release to support cryptography 2.3.

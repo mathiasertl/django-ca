@@ -22,14 +22,14 @@ env:  # https://www.djangoproject.com/download/
 install:
   # Build/test dependencies
  - pip install -U pip setuptools
- - pip install -r requirements/requirements-libs.txt -r requirements-dev.txt
+ - pip install -r requirements/requirements-travis.txt
  - pip install Django==$DJANGO cryptography==$CRYPTOGRAPHY
 #before_script:
 script:
   - python dev.py code-quality
   - python dev.py coverage
+  - python dev.py init-demo
   - python setup.py install
-  - fab init_demo
   - make -C docs html-check
 
 matrix:

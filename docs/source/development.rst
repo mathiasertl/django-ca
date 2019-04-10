@@ -10,13 +10,13 @@ Development
 Setup demo
 **********
 
-You can set up a demo using ``fab init_demo``. First create a minimal
+You can set up a demo using ``dev.py init-demo``. First create a minimal
 ``localsettings.py`` file (in ``ca/ca/localsettings.py``)::
 
    DEBUG = True
    SECRET_KEY = "whatever"
 
-And then simply run ``fab init_demo`` from the root directory of your project.
+And then simply run ``python dev.py init-demo`` from the root directory of your project.
 
 Development webserver via SSL
 =============================

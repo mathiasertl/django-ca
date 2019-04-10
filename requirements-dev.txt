@@ -1,10 +1,10 @@
 -rrequirements/requirements-docs.txt
 -rrequirements/requirements-test.txt
 -rrequirements/requirements-lint.txt
-Fabric3==1.14.post1
-ipython<6; python_version < '3.3'
-ipython>=6; python_version >= '3.3'
+ipython
+ipython
 pip>=9.0.1
 six>=1.11.0
 sphinx-autobuild==0.7.1
+termcolor==1.1.0
 wheel==0.33.1
