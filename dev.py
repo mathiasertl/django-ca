@@ -186,7 +186,8 @@ elif args.command == 'code-quality':
         sys.exit(status)
 
     print('python -Wd manage.py check')
-    status = subprocess.call(['python', '-Wd', 'manage.py', 'check'], cwd=os.path.join(_rootdir, 'ca'))
+    os.chdir(os.path.join(_rootdir, 'ca'))
+    status = subprocess.call(['python', '-Wd', 'manage.py', 'check'])
     if status != 0:
         sys.exit(status)
 elif args.command == 'test-imports':
