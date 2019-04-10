@@ -2,10 +2,10 @@
 **/*.sw[a-z]
 **/__pycache__
 /.git/
+/.coverage
 /.tox/
 /bin/
 /ca/*.egg-info
-/ca/.coverage
 /ca/ca/demosettings.py
 /ca/ca/localsettings.py
 /ca/db.sqlite3

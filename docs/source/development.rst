@@ -49,15 +49,15 @@ Run test-suite
 
 To run the test-suite, simply execute::
 
-   python setup.py test
+   python dev.py test
 
 ... or just run some of the tests::
 
-   python setup.py test --suite=tests_command_dump_crl
+   python dev.py test --suite=tests_command_dump_crl
 
 To generate a coverate report::
 
-   python setup.py coverage
+   python dev.py coverage
 
 ***********************
 Useful OpenSSL commands

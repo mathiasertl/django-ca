@@ -17,7 +17,6 @@
 import os
 import sys
 
-from setuptools import Command
 from setuptools import setup
 
 long_description = """django-ca is a tool to manage TLS certificate authorities and easily issue and revoke
@@ -44,6 +43,7 @@ PY3 = sys.version_info[0] == 3
 _rootdir = os.path.dirname(os.path.realpath(__file__))
 
 install_requires = [
+    'django>=1.11',
     'asn1crypto>=0.24.0',
     'cryptography>=2.3',
     'django-object-actions>=1.0',
@@ -55,161 +55,6 @@ install_requires = [
 
 if PY2:
     install_requires.append('ipaddress>=1.0.18')
-    install_requires.append('Django>=1.11,<2.0')
-else:
-    install_requires.append('Django>=1.11')
-
-
-class BaseCommand(Command):
-    user_options = [
-        ('suite=', None, 'Testsuite to run', ),
-        ('count=', None, 'Number of times to run the test-suite', ),
-    ]
-
-    def initialize_options(self):
-        self.suite = ''
-        self.count = '1'
-
-    def finalize_options(self):
-        pass
-
-    def run_tests(self):
-        import warnings
-        warnings.filterwarnings(action='always')
-        warnings.filterwarnings(action='error', module='django_ca')
-
-        # ignore this warning in some modules to get cleaner output
-        msg = "Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated"
-        warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='webtest.lint',
-                                message=msg)
-        warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='markupsafe',
-                                message=msg)
-        warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='jinja2',
-                                message=msg)
-
-        work_dir = os.path.join(_rootdir, 'ca')
-
-        os.chdir(work_dir)
-        sys.path.insert(0, work_dir)
-
-        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.test_settings")
-        import django
-        django.setup()
-
-        suite = 'django_ca'
-        if self.suite:
-            suite += '.tests.%s' % self.suite
-
-        from django.core.management import call_command
-        for i in range(0, int(self.count)):
-            call_command('test', suite)
-
-
-class TestCommand(BaseCommand):
-    description = 'Run the test-suite for django-ca.'
-
-    def run(self):
-        self.run_tests()
-
-
-class CoverageCommand(BaseCommand):
-    description = 'Generate test-coverage for django-ca.'
-
-    user_options = [
-        ('fail-under=', None, 'Fail if coverage is below given percentage (default: 100%).', ),
-    ] + BaseCommand.user_options
-
-    def initialize_options(self):
-        # NOTE: super() doesn't work here in py2 for some reason.
-        #super(CoverageCommand, self).initialize_options()
-        self.suite = ''
-        self.count = '1'
-        self.fail_under = 100
-
-    def finalize_options(self):
-        #super(CoverageCommand, self).finalize_options()
-        self.fail_under = float(self.fail_under)
-
-    def exclude_versions(self, cov, sw, this_version, version, version_str):
-        if version == this_version:
-            cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s>%s' % (sw, version_str))
-            cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s<%s' % (sw, version_str))
-        else:
-            cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s==%s' % (sw, version_str))
-
-            if version > this_version:
-                cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s>=%s' % (sw, version_str))
-                cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s>%s' % (sw, version_str))
-
-            if version < this_version:
-                cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s<=%s' % (sw, version_str))
-                cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s<%s' % (sw, version_str))
-
-    def run(self):
-        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.test_settings")
-
-        work_dir = os.path.join(_rootdir, 'ca')
-        report_dir = os.path.join(_rootdir, 'docs', 'build', 'coverage')
-        os.chdir(work_dir)
-
-        import coverage
-
-        cov = coverage.Coverage(cover_pylib=False, branch=True, source=['django_ca'],
-                                omit=['*migrations/*', '*/tests/tests*', ])
-
-        # exclude python-version specific code
-        if PY2:
-            cov.exclude('only py3')
-        else:
-            cov.exclude('only py2')
-
-        # exclude code that requires SCT
-        from cryptography.hazmat.backends import default_backend
-        if not default_backend()._lib.CRYPTOGRAPHY_OPENSSL_110F_OR_GREATER:
-            cov.exclude(r'pragma:\s*only SCT')
-
-        # exclude django-version specific code
-        from django import VERSION
-        django_versions = [(1, 11), (2, 0), (2, 1), (2, 2), (2, 3)]
-        this_version = VERSION[:2]
-
-        for version in django_versions:
-            version_str = '.'.join([str(v) for v in version])
-            self.exclude_versions(cov, 'django', this_version, version, version_str)
-
-        # exclude cryptography-version specific code
-        import cryptography
-        from packaging import version
-        this_version = version.parse(cryptography.__version__).release[:2]
-        cryptography_versions = [(2, 2), (2, 3), (2, 4), (2, 5), (2, 6)]
-        for ver in cryptography_versions:
-            version_str = '.'.join([str(v) for v in ver])
-            self.exclude_versions(cov, 'cryptography', this_version, ver, version_str)
-
-        cov.start()
-
-        self.run_tests()
-
-        cov.stop()
-        cov.save()
-
-        total_coverage = cov.html_report(directory=report_dir)
-        if total_coverage < self.fail_under:
-            if self.fail_under == 100.0:
-                print('Error: Coverage was only %.2f%% (should be 100%%).' % total_coverage)
-            else:
-                print('Error: Coverage was only %.2f%% (should be above %.2f%%).' % (
-                    total_coverage, self.fail_under))
-            sys.exit(2)  # coverage cli utility also exits with 2
-
-
-class RecreateFixturesCommand(BaseCommand):
-    description = 'Recreate some certificate fixtures.'
-
-    def run(self):
-        os.environ['UPDATE_FIXTURES'] = '1'
-        self.suite = 'tests_managers'
-        self.run_tests()
 
 
 def find_package_data(dir):
@@ -242,11 +87,6 @@ setup(
     package_data={'': package_data},
     zip_safe=False,  # because of the static files
     install_requires=install_requires,
-    cmdclass={
-        'coverage': CoverageCommand,
-        'test': TestCommand,
-        'recreate_fixtures': RecreateFixturesCommand,
-    },
     classifiers=[
         'Development Status :: 4 - Beta',
         'Framework :: Django :: 1.11',

@@ -7,7 +7,7 @@ localsettings.py
 /MANIFEST
 /bin/
 /build/
-/ca/.coverage
+/.coverage
 /ca/files/
 /dist
 /dj18/

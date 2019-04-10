@@ -35,7 +35,7 @@ USER django-ca:django-ca
 
 # copy this late so that changes do not trigger a cache miss during build
 RUN python dev.py code-quality
-RUN python setup.py coverage
+RUN python dev.py coverage
 RUN make -C docs html-check
 
 FROM $IMAGE as prepare
