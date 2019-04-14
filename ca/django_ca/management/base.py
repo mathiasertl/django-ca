@@ -43,6 +43,7 @@ from ..subject import Subject
 from ..utils import SUBJECT_FIELDS
 from ..utils import get_expires
 from ..utils import is_power2
+from ..utils import parse_encoding
 from ..utils import parse_hash_algorithm
 from ..utils import parse_key_curve
 
@@ -58,14 +59,10 @@ class SubjectAction(argparse.Action):
 
 class FormatAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
-        value = value.strip().upper()
-        if value == 'ASN1':
-            value = 'DER'
-
         try:
-            value = getattr(Encoding, value)
-        except AttributeError:
-            parser.error('Unknown format "%s".' % value)
+            value = parse_encoding(value)
+        except ValueError as e:
+            parser.error(str(e))
 
         setattr(namespace, self.dest, value)
 

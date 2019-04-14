@@ -110,20 +110,10 @@ class FormatActionTestCase(DjangoCATestCase):
         ns = self.parser.parse_args(['--action=PEM'])
         self.assertEqual(ns.action, Encoding.PEM)
 
-    def test_case(self):
-        ns = self.parser.parse_args(['--action=der'])
-        self.assertEqual(ns.action, Encoding.DER)
-
-        ns = self.parser.parse_args(['--action=asn1'])
-        self.assertEqual(ns.action, Encoding.DER)
-
-        ns = self.parser.parse_args(['--action= pEm'])
-        self.assertEqual(ns.action, Encoding.PEM)
-
     def test_error(self):
         self.assertParserError(['--action=foo'],
                                'usage: {script} [-h] [--action ACTION]\n'
-                               '{script}: error: Unknown format "FOO".\n')
+                               '{script}: error: Unknown encoding: foo\n')
 
 
 class CurveActionTestCase(DjangoCATestCase):
