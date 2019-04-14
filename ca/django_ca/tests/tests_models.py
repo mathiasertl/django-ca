@@ -21,8 +21,6 @@ from datetime import timedelta
 from freezegun import freeze_time
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
-from cryptography.x509.oid import ExtensionOID
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
