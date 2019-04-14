@@ -32,6 +32,7 @@ from idna.core import IDNAError
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
 
 from django.core.exceptions import ValidationError
@@ -53,6 +54,7 @@ from ..utils import format_name
 from ..utils import get_cert_builder
 from ..utils import is_power2
 from ..utils import multiline_url_validator
+from ..utils import parse_encoding
 from ..utils import parse_general_name
 from ..utils import parse_hash_algorithm
 from ..utils import parse_key_curve
@@ -486,6 +488,27 @@ class ParseKeyCurveTestCase(TestCase):
 
         with self.assertRaisesRegex(ValueError, '^ECDH: Not a known Eliptic Curve$'):
             parse_key_curve('ECDH')  # present in the module, but *not* an EllipticCurve
+
+
+class ParseEncodingTestCase(TestCase):
+    def test_basic(self):
+        self.assertEqual(parse_encoding(), Encoding.PEM)
+        self.assertEqual(parse_encoding('PEM'), Encoding.PEM)
+        self.assertEqual(parse_encoding(Encoding.PEM), Encoding.PEM)
+
+        self.assertEqual(parse_encoding('DER'), Encoding.DER)
+        self.assertEqual(parse_encoding('ASN1'), Encoding.DER)
+        self.assertEqual(parse_encoding(Encoding.DER), Encoding.DER)
+
+        self.assertEqual(parse_encoding('OpenSSH'), Encoding.OpenSSH)
+        self.assertEqual(parse_encoding(Encoding.OpenSSH), Encoding.OpenSSH)
+
+    def test_error(self):
+        with self.assertRaisesRegex(ValueError, '^Unknown encoding: foo$'):
+            parse_encoding('foo')
+
+        with self.assertRaisesRegex(ValueError, '^Unknown type passed: bool$'):
+            parse_encoding(True)
 
 
 class AddColonsTestCase(TestCase):

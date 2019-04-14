@@ -33,6 +33,7 @@ from asn1crypto.core import OctetString
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import NameOID
 
@@ -544,6 +545,37 @@ def parse_hash_algorithm(value=None):
             return getattr(hashes, value.strip())()
         except AttributeError:
             raise ValueError('Unknown hash algorithm: %s' % value)
+    else:
+        raise ValueError('Unknown type passed: %s' % type(value).__name__)
+
+
+def parse_encoding(value=None):
+    """Parse a value to a valid encoding.
+
+    This function accepts either a member of
+    :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding` or a string describing a member. If
+    no value is passed, it will assume ``PEM`` as a default value. Note that ``"ASN1"`` is treated as an alias
+    for ``"DER"``.
+
+        >>> parse_encoding()
+        <Encoding.PEM: 'PEM'>
+        >>> parse_encoding('DER')
+        <Encoding.DER: 'DER'>
+        >>> parse_encoding(Encoding.PEM)
+        <Encoding.PEM: 'PEM'>
+    """
+    if value is None:
+        return ca_settings.CA_DEFAULT_ENCODING
+    elif isinstance(value, Encoding):
+        return value
+    elif isinstance(value, six.string_types):
+        if value == 'ASN1':
+            value = 'DER'
+
+        try:
+            return getattr(Encoding, value)
+        except AttributeError:
+            raise ValueError('Unknown encoding: %s' % value)
     else:
         raise ValueError('Unknown type passed: %s' % type(value).__name__)
 

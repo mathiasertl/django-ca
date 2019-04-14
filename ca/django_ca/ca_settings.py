@@ -18,6 +18,7 @@ import os
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID
 
 from django.conf import global_settings
@@ -140,6 +141,7 @@ for name, profile in _CA_PROFILE_OVERRIDES.items():
         profile.setdefault('cn_in_san', True)
         CA_PROFILES[name] = profile
 
+CA_DEFAULT_ENCODING = getattr(settings, 'CA_DEFAULT_ENCODING', Encoding.PEM)
 CA_DEFAULT_EXPIRES = getattr(settings, 'CA_DEFAULT_EXPIRES', 730)
 CA_DEFAULT_PROFILE = getattr(settings, 'CA_DEFAULT_PROFILE', 'webserver')
 CA_NOTIFICATION_DAYS = getattr(settings, 'CA_NOTIFICATION_DAYS', [14, 7, 3, 1, ])
