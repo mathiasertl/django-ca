@@ -21,6 +21,8 @@ from datetime import timedelta
 from freezegun import freeze_time
 
 from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.x509.oid import ExtensionOID
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -99,20 +101,48 @@ class TestWatcher(TestCase):
         self.assertEqual(str(w), '%s <%s>' % (name, mail))
 
 
-class CertificateTests(DjangoCAWithChildCATestCase):
-    def setUp(self):
-        super(CertificateTests, self).setUp()
-        self.ca.crl_url = 'https://ca.example.com/crl.der'
+class CertificateAuthorityTests(DjangoCAWithChildCATestCase):
+    def assertCRL(self, crl, certs=None, signer=None, expires=None, algorithm=None, extensions=None):
+        if certs is None:
+            certs = []
+        if signer is None:
+            signer = self.ca
+        if algorithm is None:
+            algorithm = ca_settings.CA_DIGEST_ALGORITHM
+        if expires is None:
+            expires = datetime.utcnow() + timedelta(seconds=86400)
+        if extensions is None:
+            extensions = []
 
-    def assertExtension(self, name, expected):
-        for cert in self.cas + self.certs:
-            value = getattr(cert, name)
-            exp = expected.get(cert)
+        crl = x509.load_pem_x509_crl(crl, default_backend())
+        self.assertIsInstance(crl.signature_hash_algorithm, type(algorithm))
+        self.assertTrue(crl.is_signature_valid(signer.x509.public_key()))
+        self.assertEqual(crl.issuer, signer.x509.subject)
+        self.assertEqual(crl.last_update, datetime.utcnow())
+        self.assertEqual(crl.next_update, expires)
+        self.assertEqual(list(crl.extensions), extensions)
 
-            if exp is None:
-                self.assertIsNone(value, cert)
-            else:
-                self.assertEqual(value, exp, cert)
+        entries = {e.serial_number: e for e in crl}
+        expected = {c.x509.serial_number: c for c in certs}
+        self.assertCountEqual(entries, expected)
+        for serial, entry in entries.items():
+            self.assertEqual(entry.revocation_date, datetime.utcnow())
+            self.assertEqual(list(entry.extensions), [])
+
+    def get_idp(self, full_name=None, indirect_crl=False, only_contains_attribute_certs=False,
+                only_contains_ca_certs=False, only_contains_user_certs=False, only_some_reasons=None,
+                relative_name=None):
+        return x509.Extension(
+            oid=ExtensionOID.ISSUING_DISTRIBUTION_POINT,
+            value=x509.IssuingDistributionPoint(
+                full_name=full_name,
+                indirect_crl=indirect_crl,
+                only_contains_attribute_certs=only_contains_attribute_certs,
+                only_contains_ca_certs=only_contains_ca_certs,
+                only_contains_user_certs=only_contains_user_certs,
+                only_some_reasons=only_some_reasons,
+                relative_name=relative_name
+            ), critical=True)
 
     @override_tmpcadir()
     def test_key(self):
@@ -148,6 +178,75 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         self.assertIsNone(self.pwd_ca.pathlen)
         self.assertEqual(self.ecc_ca.pathlen, 0)
         self.assertEqual(self.child_ca.pathlen, 0)
+
+    @override_tmpcadir()
+    @freeze_time('2019-04-14 12:26:00')
+    def test_full_crl(self):
+        full_name = 'http://localhost/crl'
+        idp = self.get_idp(full_name=[x509.UniformResourceIdentifier(value=full_name)])
+
+        self.assertIsNone(self.ca.crl_url)
+        crl = self.ca.get_crl(full_name=[full_name])
+        self.assertCRL(crl, extensions=[idp])
+
+        self.ca.crl_url = full_name
+        self.ca.save()
+        crl = self.ca.get_crl()
+        self.assertCRL(crl, extensions=[idp])
+
+        # revoke a cert
+        self.cert.revoke()
+        crl = self.ca.get_crl()
+        self.assertCRL(crl, extensions=[idp], certs=[self.cert])
+
+        # also revoke a CA
+        self.child_ca.revoke()
+        crl = self.ca.get_crl()
+        self.assertCRL(crl, extensions=[idp], certs=[self.cert, self.child_ca])
+
+        # unrevoke cert (so we have all three combinations)
+        self.cert.revoked = False
+        self.cert.revoked_date = None
+        self.cert.revoked_reason = None
+        self.cert.save()
+
+        crl = self.ca.get_crl()
+        self.assertCRL(crl, extensions=[idp], certs=[self.child_ca])
+
+    @override_settings(USE_TZ=True)
+    def test_full_crl_tz(self):
+        # otherwise we get TZ warnings for preloaded objects
+        self.ca.refresh_from_db()
+        self.child_ca.refresh_from_db()
+        self.cert.refresh_from_db()
+
+        self.test_full_crl()
+
+    def test_full_crl_no_full_name(self):
+        # CRLs require a full name (or only_some_reasons) if it's a full CRL
+        self.assertIsNone(self.ca.crl_url)
+        with self.assertRaises(ValueError):
+            self.ca.get_crl()
+
+    def test_crl_invalid_scope(self):
+        with self.assertRaisesRegex(ValueError, r'^Scope must be either None, "ca", "user" or "attribute"$'):
+            self.ca.get_crl(scope='foobar')
+
+
+class CertificateTests(DjangoCAWithChildCATestCase):
+    def setUp(self):
+        super(CertificateTests, self).setUp()
+        self.ca.crl_url = 'https://ca.example.com/crl.der'
+
+    def assertExtension(self, name, expected):
+        for cert in self.cas + self.certs:
+            value = getattr(cert, name)
+            exp = expected.get(cert)
+
+            if exp is None:
+                self.assertIsNone(value, cert)
+            else:
+                self.assertEqual(value, exp, cert)
 
     def test_dates(self):
         self.assertEqual(self.ca.expires, certs['root']['expires'])

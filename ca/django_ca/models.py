@@ -70,6 +70,8 @@ from .utils import format_name
 from .utils import get_extension_name
 from .utils import int_to_hex
 from .utils import multiline_url_validator
+from .utils import parse_encoding
+from .utils import parse_general_name
 from .utils import parse_hash_algorithm
 from .utils import read_file
 
@@ -604,7 +606,7 @@ class CertificateAuthority(X509CertMixin):
         else:
             return x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski)
 
-    def get_crl(self, encoding, expires, algorithm='SHA256', password=None, scope=None, **kwargs):
+    def get_crl(self, expires=86400, encoding=None, algorithm=None, password=None, scope=None, **kwargs):
         """Generate a Certificate Revocation List (CRL).
 
         The ``full_name`` and ``relative_name`` parameters describe how to retrieve the CRL and are used in
@@ -615,13 +617,14 @@ class CertificateAuthority(X509CertMixin):
         Parameters
         ----------
 
-        encoding : :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding`
-            The encoding format for the CRL.
         expires : int
             The time in seconds when this CRL expires. Note that you should generate a new CRL until then.
+        encoding : :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding` or str, optional
+            The encoding format for the CRL, passed to :py:func:`~utils.parse_encoding`. The default value is
+            ``"PEM"``.
         algorithm : :py:class:`~cg:cryptography.hazmat.primitives.hashes.Hash` or str, optional
             The hash algorithm to use, passed to :py:func:`~django_ca.utils.parse_hash_algorithm`. The default
-            is to use SHA-256.
+            is to use :ref:`CA_DIGEST_ALGORITHM <settings-ca-digest-algorithm>`.
         password : bytes, optional
             Password used to load the private key of the certificate authority. If not passed, the private key
             is assumed to be unencrypted.
@@ -629,7 +632,7 @@ class CertificateAuthority(X509CertMixin):
             What to include in the CRL: Use ``"ca"`` to include only revoked certificate authorities and
             ``"user"`` to include only certificates or ``None`` (the default) to include both.
             ``"attribute"`` is reserved for future use and always produces an empty CRL.
-        full_name : list of :py:class:`~cg:cryptography.x509.GeneralName`, optional
+        full_name : list of str or :py:class:`~cg:cryptography.x509.GeneralName`, optional
             List of general names to use in the Issuing Distribution Point extension. If not passed, use
             ``crl_url`` if set.
         relative_name : :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`, optional
@@ -643,12 +646,13 @@ class CertificateAuthority(X509CertMixin):
         """
 
         if scope is not None and scope not in ['ca', 'user', 'attribute']:
-            raise ValueError('Scope must be either "ca", "user" or "attribute".')
+            raise ValueError('Scope must be either None, "ca", "user" or "attribute"')
+        encoding = parse_encoding(encoding)
 
         now = now_builder = timezone.now()
         algorithm = parse_hash_algorithm(algorithm)
 
-        if timezone.is_aware(now):
+        if timezone.is_aware(now_builder):
             now_builder = timezone.make_naive(now, pytz.utc)
 
         builder = x509.CertificateRevocationListBuilder()
@@ -658,6 +662,7 @@ class CertificateAuthority(X509CertMixin):
 
         if 'full_name' in kwargs:
             full_name = kwargs['full_name']
+            full_name = [parse_general_name(n) for n in full_name]
         elif self.crl_url:
             crl_url = [url.strip() for url in self.crl_url.split()]
             full_name = [x509.UniformResourceIdentifier(c) for c in crl_url]
@@ -694,8 +699,7 @@ class CertificateAuthority(X509CertMixin):
         for cert in certs:
             builder = builder.add_revoked_certificate(cert.get_revocation())
 
-        # TODO: Set full_name from CRL
-        builder.add_extension(x509.IssuingDistributionPoint(**idp_kwargs), critical=True)
+        builder = builder.add_extension(x509.IssuingDistributionPoint(**idp_kwargs), critical=True)
 
         # TODO: Add CRLNumber extension
         #   https://cryptography.io/en/latest/x509/reference/#cryptography.x509.CRLNumber
