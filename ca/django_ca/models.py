@@ -619,8 +619,8 @@ class CertificateAuthority(X509CertMixin):
         expires : int
             The time in seconds when this CRL expires. Note that you should generate a new CRL until then.
         encoding : :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding` or str, optional
-            The encoding format for the CRL, passed to :py:func:`~utils.parse_encoding`. The default value is
-            ``"PEM"``.
+            The encoding format for the CRL, passed to :py:func:`~django_ca.utils.parse_encoding`. The default
+            value is ``"PEM"``.
         algorithm : :py:class:`~cg:cryptography.hazmat.primitives.hashes.Hash` or str, optional
             The hash algorithm to use, passed to :py:func:`~django_ca.utils.parse_hash_algorithm`. The default
             is to use :ref:`CA_DIGEST_ALGORITHM <settings-ca-digest-algorithm>`.
