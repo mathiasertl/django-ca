@@ -494,7 +494,7 @@ class DjangoCATestCase(TestCase):
         extensions = extensions or []
         expires = datetime.utcnow() + timedelta(seconds=expires)
 
-        if idp is not None:
+        if idp is not None:  # pragma: no branch, pragma: only cryptography>=2.5
             extensions.append(idp)
 
         if encoding == Encoding.PEM:
@@ -691,20 +691,20 @@ class DjangoCATestCase(TestCase):
     def get_idp(self, full_name=None, indirect_crl=False, only_contains_attribute_certs=False,
                 only_contains_ca_certs=False, only_contains_user_certs=False, only_some_reasons=None,
                 relative_name=None):
-        if not ca_settings.CRYPTOGRAPHY_HAS_IDP:  # pragma: no branch, pragma: only cryptography<2.5
+        if not ca_settings.CRYPTOGRAPHY_HAS_IDP:  # pragma: only cryptography<2.5
             return
-
-        return x509.Extension(
-            oid=ExtensionOID.ISSUING_DISTRIBUTION_POINT,
-            value=x509.IssuingDistributionPoint(
-                full_name=full_name,
-                indirect_crl=indirect_crl,
-                only_contains_attribute_certs=only_contains_attribute_certs,
-                only_contains_ca_certs=only_contains_ca_certs,
-                only_contains_user_certs=only_contains_user_certs,
-                only_some_reasons=only_some_reasons,
-                relative_name=relative_name
-            ), critical=True)
+        else:  # pragma: only cryptography>=2.5
+            return x509.Extension(
+                oid=ExtensionOID.ISSUING_DISTRIBUTION_POINT,
+                value=x509.IssuingDistributionPoint(
+                    full_name=full_name,
+                    indirect_crl=indirect_crl,
+                    only_contains_attribute_certs=only_contains_attribute_certs,
+                    only_contains_ca_certs=only_contains_ca_certs,
+                    only_contains_user_certs=only_contains_user_certs,
+                    only_some_reasons=only_some_reasons,
+                    relative_name=relative_name
+                ), critical=True)
 
     @classmethod
     def expires(cls, days):

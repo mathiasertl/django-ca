@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 import os
 import unittest
 from datetime import datetime
@@ -41,7 +43,6 @@ from ..models import Watcher
 from .base import DjangoCAWithChildCATestCase
 from .base import cert3_csr
 from .base import certs
-from .base import cryptography_version
 from .base import override_settings
 from .base import override_tmpcadir
 
@@ -223,6 +224,7 @@ class CertificateAuthorityTests(DjangoCAWithChildCATestCase):
         crl = self.ca.get_crl(scope='attribute')
         self.assertCRL(crl, idp=idp)
 
+    @unittest.skipUnless(ca_settings.CRYPTOGRAPHY_HAS_IDP, "Test requires cryptography>=2.5")
     def test_full_crl_no_full_name(self):
         # CRLs require a full name (or only_some_reasons) if it's a full CRL
         self.assertIsNone(self.ca.crl_url)
@@ -335,7 +337,6 @@ class CertificateTests(DjangoCAWithChildCATestCase):
             self.cert.compromised = timezone.now()
             self.assertEqual(self.cert.get_compromised_time(), datetime(2019, 2, 3, 15, 43, 12))
 
-    @unittest.skipUnless(cryptography_version >= (2, 4), 'OCSP support was added in cryptography 2.4.')
     def test_get_revocation_reason(self):
         self.assertIsNone(self.cert.get_revocation_reason())
 
