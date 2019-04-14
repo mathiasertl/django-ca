@@ -91,6 +91,14 @@ def test(suites):
     warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='jinja2',
                             message=msg)
 
+    # filter some webtest warnings
+    msg2 = r'urllib.parse.splithost\(\) is deprecated as of 3.8, use urllib.parse.urlparse\(\) instead'
+    msg3 = r'urllib.parse.splittype\(\) is deprecated as of 3.8, use urllib.parse.urlparse\(\) instead'
+    warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='webtest.*',
+                            message=msg2)
+    warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='webtest.*',
+                            message=msg3)
+
     work_dir = os.path.join(_rootdir, 'ca')
 
     os.chdir(work_dir)
@@ -271,7 +279,13 @@ elif args.command == 'init-demo':
         kwargs.setdefault('subject', Subject())
         kwargs['subject'].setdefault('CN', name)
 
-        subprocess.call(['openssl', 'genrsa', '-out', key, '2048'], stderr=subprocess.DEVNULL)
+        if PY2:
+            # PY2 does not have subprocess.DEVNULL
+            with open(os.devnull, 'w') as devnull:
+                subprocess.call(['openssl', 'genrsa', '-out', key, '2048'], stderr=devnull)
+        else:
+            subprocess.call(['openssl', 'genrsa', '-out', key, '2048'], stderr=subprocess.DEVNULL)
+
         subprocess.call(['openssl', 'req', '-new', '-key', key, '-out', csr, '-utf8', '-batch'])
         manage('sign_cert', csr=csr, out=pem, **kwargs)
         return key, csr, pem
