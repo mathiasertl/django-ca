@@ -698,7 +698,8 @@ class CertificateAuthority(X509CertMixin):
         for cert in certs:
             builder = builder.add_revoked_certificate(cert.get_revocation())
 
-        builder = builder.add_extension(x509.IssuingDistributionPoint(**idp_kwargs), critical=True)
+        if ca_settings.CRYPTOGRAPHY_HAS_IDP:  # pragma: no branch, pragma: only cryptography>=2.5
+            builder = builder.add_extension(x509.IssuingDistributionPoint(**idp_kwargs), critical=True)
 
         # TODO: Add CRLNumber extension
         #   https://cryptography.io/en/latest/x509/reference/#cryptography.x509.CRLNumber
