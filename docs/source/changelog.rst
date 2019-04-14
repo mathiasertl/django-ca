@@ -13,10 +13,9 @@ ChangeLog
 * Development commands from ``setup.py`` are now moved to new ``dev.py`` script to remove clutter.
 * Use OpenSSL instead of LibreSSL in Dockerfile to enable testing for Alpine 3.7. The cryptography
   documentation also `suggests <https://cryptography.io/en/stable/installation/#alpine>`_ OpenSSL.
-* All non setup-related functionality in ``setup.py`` has been moved to ``dev.py`` to minimize ``setup.py``
-  and any chance for errors there.
-* The ``init_demo`` target of the Fabric file has been moved to ``dev.py init-demo``, the Fabric file has been
-  removed.
+* Moved extra ``setup.py`` commands ``dev.py`` to minimize ``setup.py``.
+* Move ``fab init_demo`` to ``dev.py init-demo``.
+* The Fabric file has been removed.
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.2.
 * **BACKWARDS INCOMPATIBLE:** Drop support for idna 2.6.
 * **DEPRECATION NOTICE:** This is the last release to support cryptography 2.3.
@@ -35,6 +34,8 @@ CRLs
 * Add support for setting an Invalidity Date (see `RFC 5280, 5.3.2
   <https://tools.ietf.org/html/rfc5280.html#section-5.3.2>`_) for CRLs, indicating when the certificate was
   compromised.
+* Add support for the `Issuing Distribution Point <https://tools.ietf.org/html/rfc5280.html#section-5.2.5>`_
+  extension. This extension requires that you use cryptography>=2.5.
 
 .. _changelog-1.12.0:
 
