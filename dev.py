@@ -32,7 +32,7 @@ PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
 
 suites_parser = argparse.ArgumentParser(add_help=False)
-suites_parser.add_argument('-s', '--suites', action='append', default=[], nargs='+',
+suites_parser.add_argument('-s', '--suites', default=[], nargs='+',
                            help="Modules to test (e.g. tests_modules).")
 
 parser = argparse.ArgumentParser(
