@@ -21,8 +21,6 @@ from datetime import timedelta
 from freezegun import freeze_time
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
-from cryptography.x509.oid import ExtensionOID
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -102,48 +100,6 @@ class TestWatcher(TestCase):
 
 
 class CertificateAuthorityTests(DjangoCAWithChildCATestCase):
-    def assertCRL(self, crl, certs=None, signer=None, expires=None, algorithm=None, extensions=None):
-        if certs is None:
-            certs = []
-        if signer is None:
-            signer = self.ca
-        if algorithm is None:
-            algorithm = ca_settings.CA_DIGEST_ALGORITHM
-        if expires is None:
-            expires = datetime.utcnow() + timedelta(seconds=86400)
-        if extensions is None:
-            extensions = []
-
-        crl = x509.load_pem_x509_crl(crl, default_backend())
-        self.assertIsInstance(crl.signature_hash_algorithm, type(algorithm))
-        self.assertTrue(crl.is_signature_valid(signer.x509.public_key()))
-        self.assertEqual(crl.issuer, signer.x509.subject)
-        self.assertEqual(crl.last_update, datetime.utcnow())
-        self.assertEqual(crl.next_update, expires)
-        self.assertEqual(list(crl.extensions), extensions)
-
-        entries = {e.serial_number: e for e in crl}
-        expected = {c.x509.serial_number: c for c in certs}
-        self.assertCountEqual(entries, expected)
-        for serial, entry in entries.items():
-            self.assertEqual(entry.revocation_date, datetime.utcnow())
-            self.assertEqual(list(entry.extensions), [])
-
-    def get_idp(self, full_name=None, indirect_crl=False, only_contains_attribute_certs=False,
-                only_contains_ca_certs=False, only_contains_user_certs=False, only_some_reasons=None,
-                relative_name=None):
-        return x509.Extension(
-            oid=ExtensionOID.ISSUING_DISTRIBUTION_POINT,
-            value=x509.IssuingDistributionPoint(
-                full_name=full_name,
-                indirect_crl=indirect_crl,
-                only_contains_attribute_certs=only_contains_attribute_certs,
-                only_contains_ca_certs=only_contains_ca_certs,
-                only_contains_user_certs=only_contains_user_certs,
-                only_some_reasons=only_some_reasons,
-                relative_name=relative_name
-            ), critical=True)
-
     @override_tmpcadir()
     def test_key(self):
         log_msg = 'WARNING:django_ca.models:%s: CA uses absolute path. Use "manage.py migrate_ca" to update.'

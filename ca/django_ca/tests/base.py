@@ -28,6 +28,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
+from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
 from django.contrib.messages import get_messages
@@ -485,6 +486,33 @@ class DjangoCATestCase(TestCase):
         self.assertIsInstance(cert.public_key(), rsa.RSAPublicKey)
         self.assertIsInstance(cert.signature_hash_algorithm, getattr(hashes, algo.upper()))
 
+    def assertCRL(self, crl, certs=None, signer=None, expires=None, algorithm=None, extensions=None):
+        if certs is None:
+            certs = []
+        if signer is None:
+            signer = self.ca
+        if algorithm is None:
+            algorithm = ca_settings.CA_DIGEST_ALGORITHM
+        if expires is None:
+            expires = datetime.utcnow() + timedelta(seconds=86400)
+        if extensions is None:
+            extensions = []
+
+        crl = x509.load_pem_x509_crl(crl, default_backend())
+        self.assertIsInstance(crl.signature_hash_algorithm, type(algorithm))
+        self.assertTrue(crl.is_signature_valid(signer.x509.public_key()))
+        self.assertEqual(crl.issuer, signer.x509.subject)
+        self.assertEqual(crl.last_update, datetime.utcnow())
+        self.assertEqual(crl.next_update, expires)
+        self.assertEqual(list(crl.extensions), extensions)
+
+        entries = {e.serial_number: e for e in crl}
+        expected = {c.x509.serial_number: c for c in certs}
+        self.assertCountEqual(entries, expected)
+        for serial, entry in entries.items():
+            self.assertEqual(entry.revocation_date, datetime.utcnow())
+            self.assertEqual(list(entry.extensions), [])
+
     @contextmanager
     def assertCommandError(self, msg):
         """Context manager asserting that CommandError is raised.
@@ -656,6 +684,21 @@ class DjangoCATestCase(TestCase):
                 ctx[key] = value
 
         return ctx
+
+    def get_idp(self, full_name=None, indirect_crl=False, only_contains_attribute_certs=False,
+                only_contains_ca_certs=False, only_contains_user_certs=False, only_some_reasons=None,
+                relative_name=None):
+        return x509.Extension(
+            oid=ExtensionOID.ISSUING_DISTRIBUTION_POINT,
+            value=x509.IssuingDistributionPoint(
+                full_name=full_name,
+                indirect_crl=indirect_crl,
+                only_contains_attribute_certs=only_contains_attribute_certs,
+                only_contains_ca_certs=only_contains_ca_certs,
+                only_contains_user_certs=only_contains_user_certs,
+                only_some_reasons=only_some_reasons,
+                relative_name=relative_name
+            ), critical=True)
 
     @classmethod
     def expires(cls, days):
