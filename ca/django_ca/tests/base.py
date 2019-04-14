@@ -486,19 +486,24 @@ class DjangoCATestCase(TestCase):
         self.assertIsInstance(cert.public_key(), rsa.RSAPublicKey)
         self.assertIsInstance(cert.signature_hash_algorithm, getattr(hashes, algo.upper()))
 
-    def assertCRL(self, crl, certs=None, signer=None, expires=None, algorithm=None, extensions=None):
+    def assertCRL(self, crl, certs=None, signer=None, expires=86400, algorithm=None, encoding=Encoding.PEM,
+                  extensions=None):
         if certs is None:
             certs = []
-        if signer is None:
+        if signer is None:  # pragma: no branch
             signer = self.ca
-        if algorithm is None:
+        if algorithm is None:  # pragma: no branch
             algorithm = ca_settings.CA_DIGEST_ALGORITHM
-        if expires is None:
-            expires = datetime.utcnow() + timedelta(seconds=86400)
-        if extensions is None:
+        if extensions is None:  # pragma: no cover
             extensions = []
 
-        crl = x509.load_pem_x509_crl(crl, default_backend())
+        expires = datetime.utcnow() + timedelta(seconds=expires)
+
+        if encoding == Encoding.PEM:
+            crl = x509.load_pem_x509_crl(crl, default_backend())
+        elif encoding == Encoding.DER:  # pragma: no branch
+            crl = x509.load_der_x509_crl(crl, default_backend())
+
         self.assertIsInstance(crl.signature_hash_algorithm, type(algorithm))
         self.assertTrue(crl.is_signature_valid(signer.x509.public_key()))
         self.assertEqual(crl.issuer, signer.x509.subject)
