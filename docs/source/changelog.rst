@@ -28,6 +28,8 @@ ChangeLog
 CRLs
 ====
 
+* CRL entries will no longer include a `Reason Code <https://tools.ietf.org/html/rfc5280#section-5.3.1>`_ if
+  the reason is unspecified.
 * Expose an API for creating CRLs via :py:func:`CertificateAuthority.get_crl()
   <django_ca.models.CertificateAuthority.get_crl>`.
 * Add support for setting an Invalidity Date (see `RFC 5280, 5.3.2

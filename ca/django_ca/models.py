@@ -156,11 +156,8 @@ class X509CertMixin(models.Model):
     class Meta:
         abstract = True
 
-    def get_revocation_reason(self):  # pragma: only cryptography>=2.4
-        """Get the revocation reason of this certificate.
-
-        Note that this method is only used by cryptography>=2.4.
-        """
+    def get_revocation_reason(self):
+        """Get the revocation reason of this certificate."""
         if self.revoked is False:
             return
 
@@ -249,9 +246,11 @@ class X509CertMixin(models.Model):
         revoked_cert = x509.RevokedCertificateBuilder().serial_number(
             self.x509.serial_number).revocation_date(self.revoked_date)
 
-        if self.revoked_reason:
-            reason_flag = getattr(x509.ReasonFlags, self.revoked_reason)
-            revoked_cert = revoked_cert.add_extension(x509.CRLReason(reason_flag), critical=False)
+        reason = self.get_revocation_reason()
+        if reason != x509.ReasonFlags.unspecified:
+            # RFC 5270, 5.3.1: "reason code CRL entry extension SHOULD be absent instead of using the
+            # unspecified (0) reasonCode value"
+            revoked_cert = revoked_cert.add_extension(x509.CRLReason(reason), critical=False)
 
         compromised = self.get_compromised_time()
         if compromised:
@@ -689,7 +688,7 @@ class CertificateAuthority(X509CertMixin):
         elif scope == 'user':
             certs = cert_qs
             idp_kwargs['only_contains_user_certs'] = True
-        elif scope == 'attributes':
+        elif scope == 'attribute':
             # sorry, nothing we support right now
             certs = []
             idp_kwargs['only_contains_attribute_certs'] = True

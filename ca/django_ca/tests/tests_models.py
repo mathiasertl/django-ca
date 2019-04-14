@@ -222,6 +222,53 @@ class CertificateAuthorityTests(DjangoCAWithChildCATestCase):
 
         self.test_full_crl()
 
+    @override_tmpcadir()
+    @freeze_time('2019-04-14 12:26:00')
+    def test_ca_crl(self):
+        idp = self.get_idp(only_contains_ca_certs=True)
+
+        self.assertIsNone(self.ca.crl_url)
+        crl = self.ca.get_crl(scope='ca')
+        self.assertCRL(crl, extensions=[idp])
+
+        # revoke ca and cert, CRL only contains CA
+        self.cert.revoke()
+        self.child_ca.revoke()
+        crl = self.ca.get_crl(scope='ca')
+        self.assertCRL(crl, extensions=[idp], certs=[self.child_ca])
+
+    @override_tmpcadir()
+    @freeze_time('2019-04-14 12:26:00')
+    def test_user_crl(self):
+        self.maxDiff = None
+        idp = self.get_idp(only_contains_user_certs=True)
+
+        self.assertIsNone(self.ca.crl_url)
+        crl = self.ca.get_crl(scope='user')
+        self.assertCRL(crl, extensions=[idp])
+
+        # revoke ca and cert, CRL only contains cert
+        self.cert.revoke()
+        self.child_ca.revoke()
+        crl = self.ca.get_crl(scope='user')
+        self.assertCRL(crl, extensions=[idp], certs=[self.cert])
+
+    @override_tmpcadir()
+    @freeze_time('2019-04-14 12:26:00')
+    def test_attr_crl(self):
+        self.maxDiff = None
+        idp = self.get_idp(only_contains_attribute_certs=True)
+
+        self.assertIsNone(self.ca.crl_url)
+        crl = self.ca.get_crl(scope='attribute')
+        self.assertCRL(crl, extensions=[idp])
+
+        # revoke ca and cert, CRL is empty (we don't know attribute certs)
+        self.cert.revoke()
+        self.child_ca.revoke()
+        crl = self.ca.get_crl(scope='attribute')
+        self.assertCRL(crl, extensions=[idp])
+
     def test_full_crl_no_full_name(self):
         # CRLs require a full name (or only_some_reasons) if it's a full CRL
         self.assertIsNone(self.ca.crl_url)
