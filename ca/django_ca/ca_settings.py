@@ -15,6 +15,7 @@
 
 import os
 
+from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -183,6 +184,10 @@ except ImportError:  # pragma: only cryptography<2.4
 
 # pragma: only cryptography<2.4 - Added in cryptography 2.4.
 CRYPTOGRAPHY_HAS_PRECERT_POISON = hasattr(ExtensionOID, 'PRECERT_POISON')
+
+# pragma: only cryptography<2.5 - Added in cryptography 2.5.
+# NOTE: OID was added in 2.4, extension only in 2.5
+CRYPTOGRAPHY_HAS_IDP = hasattr(x509, 'IssuingDistributionPoint')
 
 # Older versions of OpenSSL (and LibreSSL) cannot parse SignedCertificateTimestamps
 # see: https://github.com/pyca/cryptography/blob/2.6.1/tests/x509/test_x509_ext.py#L4901-L4905
