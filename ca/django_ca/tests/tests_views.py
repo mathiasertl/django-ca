@@ -122,9 +122,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
         response = self.client.get(reverse('ca_crl', kwargs={'serial': self.ca.serial}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'text/plain')
-        crl = x509.load_pem_x509_crl(response.content, default_backend())
-        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
-        self.assertEqual(list(crl), [])
+        self.assertCRL(response.content)
 
         child.revoke()
         child.save()
