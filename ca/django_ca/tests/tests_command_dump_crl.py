@@ -184,6 +184,20 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(crl[0].serial_number, child.x509.serial_number)
         self.assertEqual(len(crl[0].extensions), 0)
 
+    @override_tmpcadir()
+    def test_ca_crl_old_option(self):
+        # create a child CA
+        child = self.create_ca(name='Child', parent=self.ca)
+        self.assertIsNotNone(child.key(password=None))
+        self.assertNotRevoked(child)
+
+        stdout, stderr = self.cmd('dump_crl', ca=self.ca, ca_crl=True, stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stderr, b'WARNING: --ca-crl is deprecated, use --scope=ca instead.\n')
+
+        crl = x509.load_pem_x509_crl(stdout, default_backend())
+        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
+        self.assertEqual(list(crl), [])
+
     @override_settings(USE_TZ=True)
     def test_revoked_with_use_tz(self):
         self.test_revoked()
