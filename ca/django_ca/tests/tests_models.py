@@ -143,22 +143,22 @@ class CertificateAuthorityTests(DjangoCAWithChildCATestCase):
 
         self.assertIsNone(self.ca.crl_url)
         crl = self.ca.get_crl(full_name=[full_name])
-        self.assertCRL(crl, extensions=[idp])
+        self.assertCRL(crl, idp=idp)
 
         self.ca.crl_url = full_name
         self.ca.save()
         crl = self.ca.get_crl()
-        self.assertCRL(crl, extensions=[idp])
+        self.assertCRL(crl, idp=idp)
 
         # revoke a cert
         self.cert.revoke()
         crl = self.ca.get_crl()
-        self.assertCRL(crl, extensions=[idp], certs=[self.cert])
+        self.assertCRL(crl, idp=idp, certs=[self.cert])
 
         # also revoke a CA
         self.child_ca.revoke()
         crl = self.ca.get_crl()
-        self.assertCRL(crl, extensions=[idp], certs=[self.cert, self.child_ca])
+        self.assertCRL(crl, idp=idp, certs=[self.cert, self.child_ca])
 
         # unrevoke cert (so we have all three combinations)
         self.cert.revoked = False
@@ -167,7 +167,7 @@ class CertificateAuthorityTests(DjangoCAWithChildCATestCase):
         self.cert.save()
 
         crl = self.ca.get_crl()
-        self.assertCRL(crl, extensions=[idp], certs=[self.child_ca])
+        self.assertCRL(crl, idp=idp, certs=[self.child_ca])
 
     @override_settings(USE_TZ=True)
     def test_full_crl_tz(self):
@@ -185,45 +185,43 @@ class CertificateAuthorityTests(DjangoCAWithChildCATestCase):
 
         self.assertIsNone(self.ca.crl_url)
         crl = self.ca.get_crl(scope='ca')
-        self.assertCRL(crl, extensions=[idp])
+        self.assertCRL(crl, idp=idp)
 
         # revoke ca and cert, CRL only contains CA
         self.cert.revoke()
         self.child_ca.revoke()
         crl = self.ca.get_crl(scope='ca')
-        self.assertCRL(crl, extensions=[idp], certs=[self.child_ca])
+        self.assertCRL(crl, idp=idp, certs=[self.child_ca])
 
     @override_tmpcadir()
     @freeze_time('2019-04-14 12:26:00')
     def test_user_crl(self):
-        self.maxDiff = None
         idp = self.get_idp(only_contains_user_certs=True)
 
         self.assertIsNone(self.ca.crl_url)
         crl = self.ca.get_crl(scope='user')
-        self.assertCRL(crl, extensions=[idp])
+        self.assertCRL(crl, idp=idp)
 
         # revoke ca and cert, CRL only contains cert
         self.cert.revoke()
         self.child_ca.revoke()
         crl = self.ca.get_crl(scope='user')
-        self.assertCRL(crl, extensions=[idp], certs=[self.cert])
+        self.assertCRL(crl, idp=idp, certs=[self.cert])
 
     @override_tmpcadir()
     @freeze_time('2019-04-14 12:26:00')
     def test_attr_crl(self):
-        self.maxDiff = None
         idp = self.get_idp(only_contains_attribute_certs=True)
 
         self.assertIsNone(self.ca.crl_url)
         crl = self.ca.get_crl(scope='attribute')
-        self.assertCRL(crl, extensions=[idp])
+        self.assertCRL(crl, idp=idp)
 
         # revoke ca and cert, CRL is empty (we don't know attribute certs)
         self.cert.revoke()
         self.child_ca.revoke()
         crl = self.ca.get_crl(scope='attribute')
-        self.assertCRL(crl, extensions=[idp])
+        self.assertCRL(crl, idp=idp)
 
     def test_full_crl_no_full_name(self):
         # CRLs require a full name (or only_some_reasons) if it's a full CRL
