@@ -2,9 +2,7 @@
 -rrequirements/requirements-test.txt
 -rrequirements/requirements-lint.txt
 ipython
-ipython
 pip>=9.0.1
-six>=1.11.0
 sphinx-autobuild==0.7.1
 termcolor==1.1.0
 wheel==0.33.1
