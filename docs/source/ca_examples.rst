@@ -277,34 +277,12 @@ Only StartSSL sets this field in its signed certificates. It's a URI pointing to
 In CA certificates
 ==================
 
-================ =================================================================================
-CA               Value
-================ =================================================================================
-Let's Encrypt    (not present)
-StartSSL         (not present)
-StartSSL Class 2 (not present)
-StartSSL Class 3 (not present)
-GeoTrust Global  (not present)
-RapidSSL G3      (not present)
-Comodo           (not present)
-Comodo DV        (not present)
-GlobalSign       (not present)
-GlobalSign DV    (not present)
-================ =================================================================================
+.. include:: generated/ca_ian.rst
 
 In signed certificates
 ======================
 
-================ =================================================================================
-CA               Value
-================ =================================================================================
-Let's Encrypt    (not present)
-StartSSL Class 2 URI:http://www.startssl.com/
-StartSSL Class 3 URI:http://www.startssl.com/
-RapidSSL G3      (not present)
-Comodo DV        (not present)
-GlobalSign DV    (not present)
-================ =================================================================================
+.. include:: generated/cert_ian.rst
 
 ********
 keyUsage
