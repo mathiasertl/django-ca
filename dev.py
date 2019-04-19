@@ -553,6 +553,10 @@ elif args.command == 'update-ca-data':
             'name': 'RapidSSL G3',
             'last': '2016-04-23',
         },
+        'comodo_dv.pem': {
+            'name': 'Comodo DV',
+            'last': '2016-04-23',
+        },
     }
     cas = {
         'dst_root_x3.pem': {
@@ -614,6 +618,16 @@ elif args.command == 'update-ca-data':
             'name': 'RapidSSL G3',
             'last': '2016-04-23',
             'info': 'Signed by GeoTrust',
+        },
+        'comodo.pem': {
+            'name': 'Comodo',
+            'last': '2016-04-23',
+            'info': 'Signed by ???',
+        },
+        'comodo_dv.pem': {
+            'name': 'Comodo DV',
+            'last': '2016-04-23',
+            'info': 'Signed by ???',
         },
     }
 

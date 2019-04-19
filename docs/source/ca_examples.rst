@@ -30,10 +30,6 @@ old data
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Comodo           C=GB, ST=Greater Manchester, L=Salford, O=COMODO CA Limited, CN=COMODO RSA
-                 Certification Authority
-Comodo DV        C=GB, ST=Greater Manchester, L=Salford, O=COMODO CA Limited, CN=COMODO RSA Domain
-                 Validation Secure Server CA
 GlobalSign       C=BE, O=GlobalSign nv-sa, OU=Root CA, CN=GlobalSign Root CA
 GlobalSign DV    C=BE, O=GlobalSign nv-sa, CN=GlobalSign Domain Validation CA - SHA256 - G2
 ================ =================================================================================
@@ -154,10 +150,6 @@ In CA certificates
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-GeoTrust Global  keyid:C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E
-RapidSSL G3      keyid:C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E
-Comodo           keyid:AD:BD:98:7A:34:B4:26:F7:FA:C4:26:54:EF:03:BD:E0:24:CB:54:1A
-Comodo DV        keyid:BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4
 GlobalSign       (not present)
 GlobalSign DV    keyid:60:7B:66:1A:45:0D:97:CA:89:50:2F:7D:04:CD:34:A8:FF:FC:FD:4B
 ================ =================================================================================
@@ -173,7 +165,6 @@ CA               Value
 StartSSL Class 2 keyid:11:DB:23:45:FD:54:CC:6A:71:6F:84:8A:03:D7:BE:F7:01:2F:26:86
 StartSSL Class 3 keyid:B1:3F:1C:92:7B:92:B0:5A:25:B3:38:FB:9C:07:A4:26:50:32:E3:51
 RapidSSL G3      keyid:C3:9C:F3:FC:D3:46:08:34:BB:CE:46:7F:A0:7C:5B:F3:E2:08:CB:59
-Comodo DV        keyid:90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7
 GlobalSign DV    keyid:EA:4E:7C:D4:80:2D:E5:15:81:86:26:8C:82:6D:C0:98:A4:CF:97:0F
 ================ =================================================================================
 
@@ -196,8 +187,6 @@ In CA certificates
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Comodo           (critical) CA:TRUE
-Comodo DV        (critical) CA:TRUE, pathlen:0
 GlobalSign       (critical) CA:TRUE
 GlobalSign DV    (critical) CA:TRUE, pathlen:0
 ================ =================================================================================
@@ -212,7 +201,6 @@ CA               Value
 ================ =================================================================================
 StartSSL Class 2 (critical) CA:FALSE
 StartSSL Class 3 CA:FALSE
-Comodo DV        (critical) CA:FALSE
 GlobalSign DV    CA:FALSE
 ================ =================================================================================
 
@@ -446,8 +434,6 @@ In CA certificates
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Comodo           BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4
-Comodo DV        90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7
 GlobalSign       60:7B:66:1A:45:0D:97:CA:89:50:2F:7D:04:CD:34:A8:FF:FC:FD:4B
 GlobalSign DV    EA:4E:7C:D4:80:2D:E5:15:81:86:26:8C:82:6D:C0:98:A4:CF:97:0F
 ================ =================================================================================
@@ -462,7 +448,6 @@ CA               Value
 ================ =================================================================================
 StartSSL Class 2 C7:AA:D9:A4:F0:BC:D1:C1:1B:05:D2:19:71:0A:86:F8:58:0F:F0:99
 StartSSL Class 3 F0:72:65:5E:21:AA:16:76:2C:6F:D0:63:53:0C:68:D5:89:50:2A:73
-Comodo DV        F2:CB:1F:E9:6E:D5:43:E3:85:75:98:5F:97:7C:B0:59:7F:D5:C0:C0
 GlobalSign DV    52:5A:45:5B:D4:9D:AC:65:30:BD:67:80:6C:D1:A1:3E:09:F7:FD:92
 ================ =================================================================================
 

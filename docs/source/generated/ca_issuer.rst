@@ -1,6 +1,8 @@
 ========================  ===============================================================================================
 CA                        Issuer
 ========================  ===============================================================================================
+Comodo                    /C=SE/O=AddTrust AB/OU=AddTrust External TTP Network/CN=AddTrust External CA Root
+Comodo DV                 /C=GB/ST=Greater Manchester/L=Salford/O=COMODO CA Limited/CN=COMODO RSA Certification Authority
 DST X3                    /O=Digital Signature Trust Co./CN=DST Root CA X3
 GeoTrust                  /C=US/O=GeoTrust Inc./CN=GeoTrust Global CA
 GlobalSign R2             /OU=GlobalSign Root CA - R2/O=GlobalSign/CN=GlobalSign

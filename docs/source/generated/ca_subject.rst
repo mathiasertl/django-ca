@@ -1,6 +1,8 @@
 ========================  =======================================================================================================================================
 CA                        Subject
 ========================  =======================================================================================================================================
+Comodo                    /C=GB/ST=Greater Manchester/L=Salford/O=COMODO CA Limited/CN=COMODO RSA Certification Authority
+Comodo DV                 /C=GB/ST=Greater Manchester/L=Salford/O=COMODO CA Limited/CN=COMODO RSA Domain Validation Secure Server CA
 DST X3                    /O=Digital Signature Trust Co./CN=DST Root CA X3
 GeoTrust                  /C=US/O=GeoTrust Inc./CN=GeoTrust Global CA
 GlobalSign R2             /OU=GlobalSign Root CA - R2/O=GlobalSign/CN=GlobalSign

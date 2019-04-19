@@ -1,6 +1,8 @@
 ========================  ==========  ====  =============
 CA                        Critical    CA    Path length
 ========================  ==========  ====  =============
+Comodo                    ✓           True  None
+Comodo DV                 ✓           True  0
 DST X3                    ✓           True  None
 GeoTrust                  ✓           True  None
 GlobalSign R2             ✓           True  None
