@@ -6,5 +6,6 @@ GlobalSign R2             /OU=GlobalSign Root CA - R2/O=GlobalSign/CN=GlobalSign
 Go Daddy G2               /C=US/ST=Arizona/L=Scottsdale/O=GoDaddy.com, Inc./CN=Go Daddy Root Certificate Authority - G2
 Go Daddy G2 Intermediate  /C=US/ST=Arizona/L=Scottsdale/O=GoDaddy.com, Inc./CN=Go Daddy Root Certificate Authority - G2
 Google G3                 /OU=GlobalSign Root CA - R2/O=GlobalSign/CN=GlobalSign
+Let's Encrypt X1          /O=Digital Signature Trust Co./CN=DST Root CA X3
 Let's Encrypt X3          /O=Digital Signature Trust Co./CN=DST Root CA X3
 ========================  =============================================================================================

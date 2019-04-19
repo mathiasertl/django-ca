@@ -545,6 +545,11 @@ elif args.command == 'update-ca-data':
             'last': '2019-04-19',
             'info': 'Signed by Go Daddy G2',
         },
+        'letsencrypt_x1.pem': {
+            'name': 'Let\'s Encrypt X1',
+            'last': '2016-04-22',
+            'info': 'Signed by ???',
+        },
         'letsencrypt_x3.pem': {
             'name': 'Let\'s Encrypt X3',
             'last': '2019-04-19',

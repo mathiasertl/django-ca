@@ -30,8 +30,6 @@ old data
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Let's Encrypt X1 C=US, O=Let's Encrypt, CN=Let's Encrypt Authority X1
-Let's Encrypt X3 C=US, O=Let's Encrypt, CN=Let's Encrypt Authority X3
 StartSSL         C=IL, O=StartCom Ltd., OU=Secure Digital Certificate Signing, CN=StartCom
                  Certification Authority
 StartSSL Class 2 C=IL, O=StartCom Ltd., OU=Secure Digital Certificate Signing, CN=StartCom Class 2
