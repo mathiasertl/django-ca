@@ -9,11 +9,23 @@ Helpful descriptions of the meaning of various extensions can also be found in
 :manpage:`x509v3_config(5SSL)` (`online
 <https://www.openssl.org/docs/manmaster/apps/x509v3_config.html>`_).
 
-**********
-CommonName
-**********
+*******
+Subject
+*******
 
-Of course not an extension, but included here for completeness.
+In CA certificates
+==================
+
+.. include:: generated/ca_subject.rst
+
+In signed certificates
+======================
+
+.. include:: generated/cert_subject.rst
+
+
+old data
+========
 
 ================ =================================================================================
 CA               Value
@@ -35,6 +47,23 @@ Comodo DV        C=GB, ST=Greater Manchester, L=Salford, O=COMODO CA Limited, CN
 GlobalSign       C=BE, O=GlobalSign nv-sa, OU=Root CA, CN=GlobalSign Root CA
 GlobalSign DV    C=BE, O=GlobalSign nv-sa, CN=GlobalSign Domain Validation CA - SHA256 - G2
 ================ =================================================================================
+
+******
+Issuer
+******
+
+The issuer is an X509 Name naming who signed the certificate. For root CAs, the
+issuer has the same value as the subject.
+
+In CA certificates
+==================
+
+.. include:: generated/ca_issuer.rst
+
+In signed certificates
+======================
+
+.. include:: generated/cert_issuer.rst
 
 
 *******************
@@ -130,11 +159,12 @@ Client Cert     bla                  keyid:bar
 In CA certificates
 ==================
 
+.. include:: generated/ca_aki.rst
+
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
 Let's Encrypt X1 keyid:C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10
-Let's Encrypt X3 keyid:C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10  
 StartSSL         keyid:4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2
 StartSSL Class 2 keyid:4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2
 StartSSL Class 3 keyid:4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2
@@ -148,6 +178,8 @@ GlobalSign DV    keyid:60:7B:66:1A:45:0D:97:CA:89:50:2F:7D:04:CD:34:A8:FF:FC:FD:
 
 In signed certificates
 ======================
+
+.. include:: generated/cert_aki.rst
 
 ================ =================================================================================
 CA               Value

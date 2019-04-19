@@ -463,6 +463,111 @@ elif args.command == 'update-ca-data':
     if not os.path.exists(out_base):
         os.makedirs(out_base)
 
+    def _update_cert_data(prefix, cert_dir, certs, name_header):
+        cert_values = {
+            'subject': [(name_header, 'Subject', )],
+            'issuer': [(name_header, 'Issuer', )],
+            'aki': [(name_header, 'key_identifier', 'cert_issuer', 'cert_serial')],
+        }
+
+        for filename in sorted(os.listdir(cert_dir), key=lambda f: certs.get(f, {}).get('name', '')):
+            if filename not in certs:
+                warn('Unknown Cert: %s' % filename)
+                continue
+
+            cert_name = certs[filename]['name']
+
+            this_cert_values = {}
+            for key, headers in cert_values.items():
+                this_cert_values[key] = ['']
+
+            with open(os.path.join(cert_dir, filename), 'rb') as stream:
+                cert = x509.load_pem_x509_certificate(stream.read(), backend=default_backend())
+
+                this_cert_values['subject'] = [format_name(cert.subject)]
+                this_cert_values['issuer'] = [format_name(cert.issuer)]
+
+                for ext in cert.extensions:
+                    value = ext.value
+
+                    if isinstance(value, x509.AuthorityKeyIdentifier):
+                        aci = '✗'
+                        if value.authority_cert_issuer:
+                            aci = format_general_names(value.authority_cert_issuer)
+
+                        this_cert_values['aki'] = [
+                            bytes_to_hex(value.key_identifier),
+                            aci,
+                            value.authority_cert_serial_number if value.authority_cert_serial_number else '✗',
+                        ]
+                    else:
+                        warn('Unknown extension: %s' % ext.oid._name)
+
+            for key, row in this_cert_values.items():
+                cert_values[key].append([cert_name] + row)
+
+        for name, values in cert_values.items():
+            filename = os.path.join(out_base, '%s_%s.rst' % (prefix, name))
+            table = tabulate(values, headers='firstrow', tablefmt='rst')
+
+            with open(filename, 'w') as stream:
+                stream.write(table)
+
+    ######################
+    # Generate Cert data #
+    ######################
+    cert_dir = os.path.join(docs_base, '_files', 'cert')
+    ca_dir = os.path.join(docs_base, '_files', 'ca')
+    certs = {
+        'jabberat.pem': {
+            'name': 'Let\'s Encrypt X3',
+        },
+        'derstandardat.pem': {
+            'name': 'Go Daddy G2 Intermediate',
+        },
+        'googlecom.pem': {
+            'name': 'Google G3',
+        }
+    }
+    cas = {
+        'dst_root_x3.pem': {
+            'name': 'DST X3',
+            'last': '2019-04-19',
+            'info': 'Root CA',
+        },
+        'godaddy_g2_root.pem': {
+            'name': 'Go Daddy G2',
+            'last': '2019-04-19',
+            'info': 'Root CA',
+        },
+        'godaddy_g2_intermediate.pem': {
+            'name': 'Go Daddy G2 Intermediate',
+            'last': '2019-04-19',
+            'info': 'Signed by Go Daddy G2',
+        },
+        'letsencrypt_x3.pem': {
+            'name': 'Let\'s Encrypt X3',
+            'last': '2019-04-19',
+            'info': 'Signed by DST X3',
+        },
+        'google_g3.pem': {
+            'name': 'Google G3',
+            'last': '2019-04-19',
+            'info': 'Signed by GlobalSign R2',
+        },
+        'globalsign_r2_root.pem': {
+            'name': 'GlobalSign R2',
+            'last': '2019-04-19',
+            'info': 'Root CA',
+        },
+    }
+
+    _update_cert_data('cert', cert_dir, certs, 'Certificate')
+    _update_cert_data('ca', ca_dir, cas, 'CA')
+
+    #####################
+    # Generate CRL data #
+    #####################
     crls = {
         'gdig2s1-1015.crl': {
             'info': 'CRL in Go Daddy G2 end user certificates',
@@ -482,6 +587,24 @@ elif args.command == 'update-ca-data':
             'name': "Let's Encrypt Authority X3/ca",
             'url': 'http://crl.identrust.com/DSTROOTCAX3CRL.crl',
         },
+        'root-r2.crl': {
+            'info': 'CRL in GlobalSign R2',
+            'last': '2019-04-19',
+            'name': 'GlobalSign R2/ca',
+            'url': 'http://crl.globalsign.net/root-r2.crl',
+        },
+        'gsr2.crl': {
+            'info': 'CRL in Google G3 CA',
+            'last': '2019-04-19',
+            'name': 'Google G3/ca',
+            'url': 'http://crl.pki.goog/gsr2/gsr2.crl',
+        },
+        'GTSGIAG3.crl': {
+            'info': 'CRL in Google G3 end user certificates',
+            'last': '2019-04-19',
+            'name': 'Google G3/user',
+            'url': 'http://crl.pki.goog/GTSGIAG3.crl',
+        },
     }
 
     crl_dir = os.path.join(docs_base, '_files', 'crl')
@@ -498,7 +621,7 @@ elif args.command == 'update-ca-data':
                      'only user certs', 'reasons', 'indirect CRL', ), ]
     }
 
-    for filename in os.listdir(crl_dir):
+    for filename in sorted(os.listdir(crl_dir), key=lambda f: crls.get(f, {}).get('name', '')):
         if filename not in crls:
             warn('Unknown CRL: %s' % filename)
             continue
