@@ -565,6 +565,10 @@ elif args.command == 'update-ca-data':
             'name': 'StartSSL class 3',
             'last': '2016-04-22',
         },
+        'globalsign_dv.pem': {
+            'name': 'GlobalSign DV',
+            'last': '2016-04-23',
+        },
     }
     cas = {
         'dst_root_x3.pem': {
@@ -636,6 +640,16 @@ elif args.command == 'update-ca-data':
             'name': 'Comodo DV',
             'last': '2016-04-23',
             'info': 'Signed by ???',
+        },
+        'globalsign.pem': {
+            'name': 'GlobalSign',
+            'last': '2016-04-23',
+            'info': 'Root CA',
+        },
+        'globalsign_dv.pem': {
+            'name': 'GlobalSign DV',
+            'last': '2016-04-23',
+            'info': 'Signed by GlobalSign',
         },
     }
 

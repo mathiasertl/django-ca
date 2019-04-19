@@ -5,6 +5,8 @@ Comodo                    ✓           True  None
 Comodo DV                 ✓           True  0
 DST X3                    ✓           True  None
 GeoTrust                  ✓           True  None
+GlobalSign                ✓           True  None
+GlobalSign DV             ✓           True  0
 GlobalSign R2             ✓           True  None
 Go Daddy G2               ✓           True  None
 Go Daddy G2 Intermediate  ✓           True  None

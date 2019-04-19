@@ -5,6 +5,8 @@ Comodo                    ✗           AD:BD:98:7A:34:B4:26:F7:FA:C4:26:54:EF:0
 Comodo DV                 ✗           BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4  ✗         ✗
 DST X3
 GeoTrust                  ✗           C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E  ✗         ✗
+GlobalSign
+GlobalSign DV             ✗           60:7B:66:1A:45:0D:97:CA:89:50:2F:7D:04:CD:34:A8:FF:FC:FD:4B  ✗         ✗
 GlobalSign R2             ✗           9B:E2:07:57:67:1C:1E:C0:6A:06:DE:59:B4:9A:2D:DF:DC:19:86:2E  ✗         ✗
 Go Daddy G2
 Go Daddy G2 Intermediate  ✗           3A:9A:85:07:10:67:28:B6:EF:F6:BD:05:41:6E:20:C1:94:DA:0F:DE  ✗         ✗
