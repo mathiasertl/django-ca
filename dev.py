@@ -454,9 +454,10 @@ elif args.command == 'update-ca-data':
     from tabulate import tabulate
     from termcolor import colored
 
-    from django_ca.utils import format_name
     from django_ca.utils import bytes_to_hex
+    from django_ca.utils import format_general_name
     from django_ca.utils import format_general_names
+    from django_ca.utils import format_name
 
     docs_base = os.path.join(_rootdir, 'docs', 'source')
     out_base = os.path.join(docs_base, 'generated')
@@ -468,6 +469,7 @@ elif args.command == 'update-ca-data':
             'subject': [(name_header, 'Subject', )],
             'issuer': [(name_header, 'Issuer', )],
 
+            'aia': [(name_header, 'Critical', 'Values')],
             'aki': [(name_header, 'Critical', 'Key identifier', 'Issuer', 'Serial')],
             'basicconstraints': [(name_header, 'Critical', 'CA', 'Path length')],
             'eku': [(name_header, 'Critical', 'Usages')],
@@ -499,7 +501,13 @@ elif args.command == 'update-ca-data':
                     value = ext.value
                     critical = '✓' if ext.critical else '✗'
 
-                    if isinstance(value, x509.AuthorityKeyIdentifier):
+                    if isinstance(value, x509.AuthorityInformationAccess):
+                        this_cert_values['aia'] = [
+                            critical, '\n'.join(
+                                ['* %s: %s' % (v.access_method._name, format_general_name(v.access_location))
+                                 for v in value])
+                        ]
+                    elif isinstance(value, x509.AuthorityKeyIdentifier):
                         aci = '✗'
                         if value.authority_cert_issuer:
                             aci = format_general_names(value.authority_cert_issuer)

@@ -59,27 +59,7 @@ response returns a ``Content-Type: application/x-pkcs7-mime`` header.
 The certificate pointed to by the CA Issuers field is the root certificate (so the Comodo DV CA
 points to the AddTrust CA that signed the Comodo Root CA).
 
-================= =================================================================================
-CA                Value
-================= =================================================================================
-Let's Encrypt X1  * OCSP - URI:http://isrg.trustid.ocsp.identrust.com
-                  * CA Issuers - URI:http://apps.identrust.com/roots/dstrootcax3.p7c
-Let's Encrypt X3  * OCSP - URI:http://isrg.trustid.ocsp.identrust.com
-                  * CA Issuers - URI:http://apps.identrust.com/roots/dstrootcax3.p7c
-StartSSL          (not present)
-StartSSL Class 2  * OCSP - URI:http://ocsp.startssl.com/ca
-                  * CA Issuers - URI:http://aia.startssl.com/certs/ca.crt
-StartSSL Class 3  * OCSP - URI:http://ocsp.startssl.com
-                  * CA Issuers - URI:http://aia.startssl.com/certs/ca.crt
-GeoTrust Global   (not present)
-RapidSSL G3       OCSP - URI:http://g.symcd.com
-Comodo            OCSP - URI:http://ocsp.usertrust.com
-Comodo DV         * CA Issuers - URI:http://crt.comodoca.com/COMODORSAAddTrustCA.crt
-                  * OCSP - URI:http://ocsp.comodoca.com
-GlobalSign        (not present)
-GlobalSign DV     OCSP - URI:http://ocsp.globalsign.com/rootr1
-================= =================================================================================
-
+.. include:: generated/ca_aia.rst
 
 In signed certificates
 ======================
@@ -91,24 +71,7 @@ header (but at least it's in DER format like every other certificate). RapidSSL 
 The CA Issuers field sometimes points to the signing certificate (e.g. StartSSL) or to the root CA
 (e.g. Comodo DV, which points to the AddTrust Root CA)
 
-================ =================================================================================
-CA               Value
-================ =================================================================================
-Let's Encrypt X1 * OCSP - URI:http://ocsp.int-x1.letsencrypt.org/
-                 * CA Issuers - URI:http://cert.int-x1.letsencrypt.org
-Let's Encrypt X3 * OCSP - URI:http://ocsp.int-x3.letsencrypt.org/
-                 * CA Issuers - URI:http://cert.int-x3.letsencrypt.org/
-StartSSL Class 2 * OCSP - URI:http://ocsp.startssl.com/sub/class2/server/ca
-                 * CA Issuers - URI:http://aia.startssl.com/certs/sub.class2.server.ca.crt
-StartSSL Class 3 * OCSP - URI:http://ocsp.startssl.com
-                 * CA Issuers - URI:http://aia.startssl.com/certs/sca.server3.crt
-RapidSSL G3      * OCSP - URI:http://gv.symcd.com
-                 * CA Issuers - URI:http://gv.symcb.com/gv.crt
-Comodo DV        * CA Issuers - URI:http://crt.comodoca.com/COMODORSADomainValidationSecureServerCA.crt
-                 * OCSP - URI:http://ocsp.comodoca.com
-GlobalSign DV    * CA Issuers - URI:http://secure.globalsign.com/cacert/gsdomainvalsha2g2r1.crt
-                 * OCSP - URI:http://ocsp2.globalsign.com/gsdomainvalsha2g2
-================ =================================================================================
+.. include:: generated/cert_aia.rst
 
 .. _authorityKeyIdentifier:
 
