@@ -30,7 +30,6 @@ old data
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-GeoTrust Global  C=US, O=GeoTrust Inc., CN=GeoTrust Global CA
 RapidSSL G3      C=US, O=GeoTrust Inc., CN=RapidSSL SHA256 CA - G3
 Comodo           C=GB, ST=Greater Manchester, L=Salford, O=COMODO CA Limited, CN=COMODO RSA
                  Certification Authority
@@ -198,7 +197,6 @@ In CA certificates
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-GeoTrust Global  (critical) CA:TRUE
 RapidSSL G3      (critical) CA:TRUE, pathlen:0
 Comodo           (critical) CA:TRUE
 Comodo DV        (critical) CA:TRUE, pathlen:0
@@ -451,7 +449,6 @@ In CA certificates
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-GeoTrust Global  C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E
 RapidSSL G3      C3:9C:F3:FC:D3:46:08:34:BB:CE:46:7F:A0:7C:5B:F3:E2:08:CB:59
 Comodo           BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4
 Comodo DV        90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7

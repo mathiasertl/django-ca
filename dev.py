@@ -601,6 +601,11 @@ elif args.command == 'update-ca-data':
             'last': '2016-04-22',
             'info': 'Signed by StartSSL',
         },
+        'geotrust.pem': {
+            'name': 'GeoTrust',
+            'last': '2016-04-23',
+            'info': 'Root CA',
+        },
     }
 
     _update_cert_data('cert', cert_dir, certs, 'Certificate')

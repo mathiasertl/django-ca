@@ -2,6 +2,7 @@
 CA                        Critical    Key identifier                                               Issuer    Serial
 ========================  ==========  ===========================================================  ========  ========
 DST X3
+GeoTrust                  ✗           C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E  ✗         ✗
 GlobalSign R2             ✗           9B:E2:07:57:67:1C:1E:C0:6A:06:DE:59:B4:9A:2D:DF:DC:19:86:2E  ✗         ✗
 Go Daddy G2
 Go Daddy G2 Intermediate  ✗           3A:9A:85:07:10:67:28:B6:EF:F6:BD:05:41:6E:20:C1:94:DA:0F:DE  ✗         ✗

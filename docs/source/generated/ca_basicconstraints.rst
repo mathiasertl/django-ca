@@ -2,6 +2,7 @@
 CA                        Critical    CA    Path length
 ========================  ==========  ====  =============
 DST X3                    ✓           True  None
+GeoTrust                  ✓           True  None
 GlobalSign R2             ✓           True  None
 Go Daddy G2               ✓           True  None
 Go Daddy G2 Intermediate  ✓           True  None
