@@ -126,13 +126,16 @@ below) will reference themself, while signed certificates reference the signed C
 =============== ==================== ======================
 Name            subjectKeyIdentifier authorityKeyIdentifier
 =============== ==================== ======================
-Root CA         foo                  keyid:foo
-Intermediate CA bar                  keyid:foo
-Client Cert     bla                  keyid:bar
+Root CA         foo                  foo
+Intermediate CA bar                  foo
+Client Cert     bla                  bar
 =============== ==================== ======================
 
 In CA certificates
 ==================
+
+Root CAs usually have a value identical to the :ref:`subjectKeyIdentifier`, but
+some root CAs do not include this extension at all.
 
 .. include:: generated/ca_aki.rst
 
@@ -147,18 +150,22 @@ basicConstraints
 
 .. seealso:: https://tools.ietf.org/html/rfc5280#section-4.2.1.9
 
-The ``basicConstraints`` extension specifies if the certificate can be used as a certificate
-authority. It is always marked as critical. The ``pathlen`` attribute specifies the levels of
-possible intermediate CAs. If not present, the level of intermediate CAs is unlimited, a
-``pathlen:0`` means that the CA itself can not issue certificates with ``CA:TRUE`` itself.
+The ``basicConstraints`` extension specifies if the certificate can be used as a certificate authority. It is
+always marked as critical. The ``pathlen`` attribute specifies the levels of possible intermediate CAs. If not
+present, the level of intermediate CAs is unlimited, a ``pathlen:0`` means that the CA itself can not issue
+certificates with ``CA:TRUE`` itself.
 
 In CA certificates
 ==================
+
+Most root CAs do not set a Path Length, while most (but not all) intermediate CAs set a Path Length of 0.
 
 .. include:: generated/ca_basicconstraints.rst
 
 In signed certificates
 ======================
+
+Notable here that some end-user certificates do not mark this extension as critical.
 
 .. include:: generated/cert_basicconstraints.rst
 
@@ -382,7 +389,7 @@ mandatory extension for CA certificates. Currently only RapidSSL does not set th
 certificates.
 
 The value of the subjectKeyIdentifier extension reappears in the :ref:`authorityKeyIdentifier`
-extension (prefixed with ``keyid:``).
+extension.
 
 In CA certificates
 ==================
