@@ -9,6 +9,7 @@ Go Daddy G2 Intermediate  /C=US/ST=Arizona/L=Scottsdale/O=GoDaddy.com, Inc./CN=G
 Google G3                 /OU=GlobalSign Root CA - R2/O=GlobalSign/CN=GlobalSign
 Let's Encrypt X1          /O=Digital Signature Trust Co./CN=DST Root CA X3
 Let's Encrypt X3          /O=Digital Signature Trust Co./CN=DST Root CA X3
+RapidSSL G3               /C=US/O=GeoTrust Inc./CN=GeoTrust Global CA
 StartSSL                  /C=IL/O=StartCom Ltd./OU=Secure Digital Certificate Signing/CN=StartCom Certification Authority
 StartSSL class 2          /C=IL/O=StartCom Ltd./OU=Secure Digital Certificate Signing/CN=StartCom Certification Authority
 StartSSL class 2          /C=IL/O=StartCom Ltd./OU=Secure Digital Certificate Signing/CN=StartCom Certification Authority

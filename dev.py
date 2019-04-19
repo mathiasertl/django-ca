@@ -548,7 +548,11 @@ elif args.command == 'update-ca-data':
         'idertl.pem': {
             'name': 'Let\'s Encrypt X1',
             'last': '2016-04-22',
-        }
+        },
+        'rapidssl_g3.pem': {
+            'name': 'RapidSSL G3',
+            'last': '2016-04-23',
+        },
     }
     cas = {
         'dst_root_x3.pem': {
@@ -605,6 +609,11 @@ elif args.command == 'update-ca-data':
             'name': 'GeoTrust',
             'last': '2016-04-23',
             'info': 'Root CA',
+        },
+        'rapidssl_g3.pem': {
+            'name': 'RapidSSL G3',
+            'last': '2016-04-23',
+            'info': 'Signed by GeoTrust',
         },
     }
 

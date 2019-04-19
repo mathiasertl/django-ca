@@ -5,4 +5,5 @@ Go Daddy G2 Intermediate  ✗           2E:30:1A:46:41:F0:E8:1B:72:02:59:41:8A:C
 Google G3                 ✗           1F:0D:A6:EA:EA:2B:6E:96:1B:5C:99:B5:C3:3D:6F:5F:4B:0D:BE:9F
 Let's Encrypt X1          ✗           F4:F3:B8:F5:43:90:2E:A2:7F:DD:51:4A:5F:3E:AC:FB:F1:33:EE:95
 Let's Encrypt X3          ✗           10:0C:72:91:D6:5F:13:C8:CE:45:2D:53:51:11:A0:A4:8D:08:BC:8F
+RapidSSL G3
 ========================  ==========  ===========================================================

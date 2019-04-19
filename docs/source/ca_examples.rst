@@ -30,7 +30,6 @@ old data
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-RapidSSL G3      C=US, O=GeoTrust Inc., CN=RapidSSL SHA256 CA - G3
 Comodo           C=GB, ST=Greater Manchester, L=Salford, O=COMODO CA Limited, CN=COMODO RSA
                  Certification Authority
 Comodo DV        C=GB, ST=Greater Manchester, L=Salford, O=COMODO CA Limited, CN=COMODO RSA Domain
@@ -197,7 +196,6 @@ In CA certificates
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-RapidSSL G3      (critical) CA:TRUE, pathlen:0
 Comodo           (critical) CA:TRUE
 Comodo DV        (critical) CA:TRUE, pathlen:0
 GlobalSign       (critical) CA:TRUE
@@ -214,7 +212,6 @@ CA               Value
 ================ =================================================================================
 StartSSL Class 2 (critical) CA:FALSE
 StartSSL Class 3 CA:FALSE
-RapidSSL G3      (critical) CA:FALSE
 Comodo DV        (critical) CA:FALSE
 GlobalSign DV    CA:FALSE
 ================ =================================================================================
@@ -449,7 +446,6 @@ In CA certificates
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-RapidSSL G3      C3:9C:F3:FC:D3:46:08:34:BB:CE:46:7F:A0:7C:5B:F3:E2:08:CB:59
 Comodo           BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4
 Comodo DV        90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7
 GlobalSign       60:7B:66:1A:45:0D:97:CA:89:50:2F:7D:04:CD:34:A8:FF:FC:FD:4B
@@ -466,7 +462,6 @@ CA               Value
 ================ =================================================================================
 StartSSL Class 2 C7:AA:D9:A4:F0:BC:D1:C1:1B:05:D2:19:71:0A:86:F8:58:0F:F0:99
 StartSSL Class 3 F0:72:65:5E:21:AA:16:76:2C:6F:D0:63:53:0C:68:D5:89:50:2A:73
-RapidSSL G3      (not present)
 Comodo DV        F2:CB:1F:E9:6E:D5:43:E3:85:75:98:5F:97:7C:B0:59:7F:D5:C0:C0
 GlobalSign DV    52:5A:45:5B:D4:9D:AC:65:30:BD:67:80:6C:D1:A1:3E:09:F7:FD:92
 ================ =================================================================================

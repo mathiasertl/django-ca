@@ -9,6 +9,7 @@ Go Daddy G2 Intermediate  ✗           3A:9A:85:07:10:67:28:B6:EF:F6:BD:05:41:6
 Google G3                 ✗           9B:E2:07:57:67:1C:1E:C0:6A:06:DE:59:B4:9A:2D:DF:DC:19:86:2E  ✗         ✗
 Let's Encrypt X1          ✗           C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10  ✗         ✗
 Let's Encrypt X3          ✗           C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10  ✗         ✗
+RapidSSL G3               ✗           C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E  ✗         ✗
 StartSSL                  ✗           4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2  ✗         ✗
 StartSSL class 2          ✗           4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2  ✗         ✗
 StartSSL class 2          ✗           4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2  ✗         ✗
