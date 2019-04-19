@@ -503,3 +503,37 @@ RapidSSL G3      X509v3 Certificate Policies
 Comodo DV        X509v3 Certificate Policies
 GlobalSign DV    X509v3 Certificate Policies
 ================ =================================================================================
+
+
+**************
+CRL Extensions
+**************
+
+The values of extensions and values of CRLs found in the wild.
+
+.. include:: generated/crl_info.rst
+
+Data
+====
+
+.. include:: generated/crl_data.rst
+
+Issuer
+======
+
+.. include:: generated/crl_issuer.rst
+
+authorityKeyIdentifier
+======================
+
+.. include:: generated/crl_aki.rst
+
+cRLNumber
+=========
+
+.. include:: generated/crl_crlnumber.rst
+
+issuingDistributionPoint
+========================
+
+.. include:: generated/crl_idp.rst

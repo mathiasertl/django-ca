@@ -1,0 +1,7 @@
+=============================  =======================================================================================================================  ===============  ========================================
+CRL                            Source                                                                                                                   Last accessed    Info
+=============================  =======================================================================================================================  ===============  ========================================
+Let's Encrypt Authority X3/ca  :download:`DSTROOTCAX3CRL.crl </_files/crl/DSTROOTCAX3CRL.crl>` (`URL <http://crl.identrust.com/DSTROOTCAX3CRL.crl>`__)  2019-04-19       CRL in Let's Encrypt X3
+Go Daddy G2/user               :download:`gdig2s1-1015.crl </_files/crl/gdig2s1-1015.crl>` (`URL <http://crl.godaddy.com/gdig2s1-1015.crl>`__)          2019-04-19       CRL in Go Daddy G2 end user certificates
+Go Daddy G2/ca                 :download:`gdroot-g2.crl </_files/crl/gdroot-g2.crl>` (`URL <http://crl.godaddy.com/gdroot-g2.crl>`__)                   2019-04-19       CRL in Go Daddy G2 intermediate CA
+=============================  =======================================================================================================================  ===============  ========================================

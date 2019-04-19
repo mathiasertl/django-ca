@@ -57,9 +57,15 @@ cov_parser.add_argument('--fail-under', type=int, default=100, metavar='[0-100]'
 
 demo_parser = commands.add_parser('init-demo', help="Initialize the demo data.")
 
+data_parser = commands.add_parser('update-ca-data', help="Update tables for ca_examples.rst in docs.")
+
 args = parser.parse_args()
 
 _rootdir = os.path.dirname(os.path.realpath(__file__))
+
+
+def warn(msg, **kwargs):
+    print(colored(msg, 'yellow'), **kwargs)
 
 
 def ok():
@@ -440,5 +446,136 @@ elif args.command == 'init-demo':
     print(green('* Start webserver on %s (user: user, password: nopass) with:' % base_url))
     print('\tDJANGO_SETTINGS_MODULE=ca.demosettings python ca/manage.py runserver')
 
+elif args.command == 'update-ca-data':
+    setup_django('ca.settings')
+
+    from cryptography import x509
+    from cryptography.hazmat.backends import default_backend
+    from tabulate import tabulate
+    from termcolor import colored
+
+    from django_ca.utils import format_name
+    from django_ca.utils import bytes_to_hex
+    from django_ca.utils import format_general_names
+
+    docs_base = os.path.join(_rootdir, 'docs', 'source')
+    out_base = os.path.join(docs_base, 'generated')
+    if not os.path.exists(out_base):
+        os.makedirs(out_base)
+
+    crls = {
+        'gdig2s1-1015.crl': {
+            'info': 'CRL in Go Daddy G2 end user certificates',
+            'last': '2019-04-19',
+            'name': 'Go Daddy G2/user',
+            'url': 'http://crl.godaddy.com/gdig2s1-1015.crl',
+        },
+        'gdroot-g2.crl': {
+            'info': 'CRL in Go Daddy G2 intermediate CA',
+            'last': '2019-04-19',
+            'name': 'Go Daddy G2/ca',
+            'url': 'http://crl.godaddy.com/gdroot-g2.crl',
+        },
+        'DSTROOTCAX3CRL.crl': {
+            'info': 'CRL in Let\'s Encrypt X3',
+            'last': '2019-04-19',
+            'name': "Let's Encrypt Authority X3/ca",
+            'url': 'http://crl.identrust.com/DSTROOTCAX3CRL.crl',
+        },
+    }
+
+    crl_dir = os.path.join(docs_base, '_files', 'crl')
+    crl_values = {
+        # meta data
+        'crl_info': [('CRL', 'Source', 'Last accessed', 'Info')],
+        'crl_issuer': [('CRL', 'Issuer Name')],
+        'crl_data': [('CRL', 'Update freq.', 'hash')],
+
+        # extensions
+        'crl_aki': [('CRL', 'key_identifier', 'cert_issuer', 'cert_serial')],
+        'crl_crlnumber': [('CRL', 'number')],
+        'crl_idp': [('CRL', 'full name', 'relative name', 'only attr certs', 'only ca certs',
+                     'only user certs', 'reasons', 'indirect CRL', ), ]
+    }
+
+    for filename in os.listdir(crl_dir):
+        if filename not in crls:
+            warn('Unknown CRL: %s' % filename)
+            continue
+
+        crl_name = crls[filename]['name']
+
+        # set empty string as default value
+        not_present = ['']
+        this_crl_values = {}
+        for key, headers in crl_values.items():
+            this_crl_values[key] = not_present * (len(crl_values[key][0]) - 1)
+
+        with open(os.path.join(crl_dir, filename), 'rb') as stream:
+            crl = x509.load_der_x509_crl(stream.read(), backend=default_backend())
+
+            # add info
+            this_crl_values['crl_info'] = (
+                ':download:`%s </_files/crl/%s>` (`URL <%s>`__)' % (filename, filename,
+                                                                    crls[filename]['url']),
+                crls[filename]['last'],
+                crls[filename]['info'],
+            )
+
+            # add data row
+            this_crl_values['crl_data'] = (
+                crl.next_update - crl.last_update,
+                crl.signature_hash_algorithm.name,
+            )
+            this_crl_values['crl_issuer'] = (
+                format_name(crl.issuer),
+            )
+
+            # add extension values
+            for ext in crl.extensions:
+                value = ext.value
+
+                if isinstance(value, x509.CRLNumber):
+                    this_crl_values['crl_crlnumber'] = (ext.value.crl_number, )
+                elif isinstance(value, x509.IssuingDistributionPoint):
+                    full_name = rel_name = reasons = '✗'
+                    if value.full_name:
+                        full_name = format_general_names(value.full_name)
+                    if value.relative_name:
+                        rel_name = format_name(value.relative_name)
+                    if value.only_some_reasons:
+                        reasons = ', '.join([f.name for f in value.only_some_reasons])
+
+                    this_crl_values['crl_idp'] = (
+                        full_name,
+                        rel_name,
+                        '✓' if value.only_contains_attribute_certs else '✗',
+                        '✓' if value.only_contains_ca_certs else '✗',
+                        '✓' if value.only_contains_user_certs else '✗',
+                        reasons,
+                        '✓' if value.indirect_crl else '✗',
+                    )
+                elif isinstance(value, x509.AuthorityKeyIdentifier):
+                    aci = '✗'
+                    if value.authority_cert_issuer:
+                        aci = format_general_names(value.authority_cert_issuer)
+
+                    this_crl_values['crl_aki'] = (
+                        bytes_to_hex(value.key_identifier),
+                        aci,
+                        value.authority_cert_serial_number if value.authority_cert_serial_number else '✗',
+                    )
+                else:
+                    warn('Unknown extension: %s' % ext.oid._name)
+
+        for key, row in this_crl_values.items():
+            crl_values[key].append([crl_name] + list(row))
+
+    for name, values in crl_values.items():
+        filename = os.path.join(out_base, '%s.rst' % name)
+        table = tabulate(values, headers='firstrow', tablefmt='rst')
+
+        with open(filename, 'w') as stream:
+            stream.write(table)
 else:
     parser.print_help()
