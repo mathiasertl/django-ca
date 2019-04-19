@@ -521,12 +521,19 @@ elif args.command == 'update-ca-data':
     certs = {
         'jabberat.pem': {
             'name': 'Let\'s Encrypt X3',
+            'last': '2019-04-19',
         },
         'derstandardat.pem': {
             'name': 'Go Daddy G2 Intermediate',
+            'last': '2019-04-19',
         },
         'googlecom.pem': {
             'name': 'Google G3',
+            'last': '2019-04-19',
+        },
+        'idertl.pem': {
+            'name': 'Let\'s Encrypt X1',
+            'last': '2016-04-22',
         }
     }
     cas = {
@@ -564,6 +571,21 @@ elif args.command == 'update-ca-data':
             'name': 'GlobalSign R2',
             'last': '2019-04-19',
             'info': 'Root CA',
+        },
+        'startssl_root.pem': {
+            'name': 'StartSSL',
+            'last': '2016-04-22',
+            'info': 'Root CA',
+        },
+        'startssl_class2.pem': {
+            'name': 'StartSSL class 2',
+            'last': '2016-04-22',
+            'info': 'Signed by StartSSL',
+        },
+        'startssl_class3.pem': {
+            'name': 'StartSSL class 2',
+            'last': '2016-04-22',
+            'info': 'Signed by StartSSL',
         },
     }
 

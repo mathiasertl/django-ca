@@ -30,12 +30,6 @@ old data
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-StartSSL         C=IL, O=StartCom Ltd., OU=Secure Digital Certificate Signing, CN=StartCom
-                 Certification Authority
-StartSSL Class 2 C=IL, O=StartCom Ltd., OU=Secure Digital Certificate Signing, CN=StartCom Class 2
-                 Primary Intermediate Server CA
-StartSSL Class 3 C=IL, O=StartCom Ltd., OU=StartCom Certification Authority, CN=StartCom Class 3 OV
-                 Server CA
 GeoTrust Global  C=US, O=GeoTrust Inc., CN=GeoTrust Global CA
 RapidSSL G3      C=US, O=GeoTrust Inc., CN=RapidSSL SHA256 CA - G3
 Comodo           C=GB, ST=Greater Manchester, L=Salford, O=COMODO CA Limited, CN=COMODO RSA
@@ -162,10 +156,6 @@ In CA certificates
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Let's Encrypt X1 keyid:C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10
-StartSSL         keyid:4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2
-StartSSL Class 2 keyid:4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2
-StartSSL Class 3 keyid:4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2
 GeoTrust Global  keyid:C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E
 RapidSSL G3      keyid:C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E
 Comodo           keyid:AD:BD:98:7A:34:B4:26:F7:FA:C4:26:54:EF:03:BD:E0:24:CB:54:1A
@@ -182,8 +172,6 @@ In signed certificates
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Let's Encrypt X1 keyid:A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1
-Let's Encrypt X3 keyid:A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1
 StartSSL Class 2 keyid:11:DB:23:45:FD:54:CC:6A:71:6F:84:8A:03:D7:BE:F7:01:2F:26:86
 StartSSL Class 3 keyid:B1:3F:1C:92:7B:92:B0:5A:25:B3:38:FB:9C:07:A4:26:50:32:E3:51
 RapidSSL G3      keyid:C3:9C:F3:FC:D3:46:08:34:BB:CE:46:7F:A0:7C:5B:F3:E2:08:CB:59
