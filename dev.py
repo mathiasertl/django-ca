@@ -467,8 +467,12 @@ elif args.command == 'update-ca-data':
         cert_values = {
             'subject': [(name_header, 'Subject', )],
             'issuer': [(name_header, 'Issuer', )],
+
             'aki': [(name_header, 'Critical', 'Key identifier', 'Issuer', 'Serial')],
             'basicconstraints': [(name_header, 'Critical', 'CA', 'Path length')],
+            'key_usage': [[name_header, 'Critical', 'digital_signature', 'content_commitment', 'key_encipherment',
+                           'data_encipherment', 'key_agreement', 'key_cert_sign', 'crl_sign', 'encipher_only',
+                           'decipher_only', ]],
             'ski': [(name_header, 'Critical', 'Digest')],
         }
 
@@ -510,6 +514,17 @@ elif args.command == 'update-ca-data':
                             value.ca,
                             value.path_length if value.path_length is not None else 'None',
                         ]
+                    elif isinstance(value, x509.KeyUsage):
+                        key_usages = []
+                        for key in cert_values['key_usage'][0][2:]:
+                            try:
+                                key_usages.append('✓' if getattr(value, key) else '✗')
+                            except ValueError:
+                                key_usages.append('✗')
+
+                        this_cert_values['key_usage'] = [
+                            critical,
+                        ] + key_usages
                     elif isinstance(value, x509.SubjectKeyIdentifier):
                         this_cert_values['ski'] = [critical, bytes_to_hex(value.digest)]
                     elif isinstance(value, x509.SubjectAlternativeName):

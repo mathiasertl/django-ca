@@ -318,36 +318,12 @@ StartSSL.
 In CA certificates
 ==================
 
-================ =================================================================================
-CA               Value
-================ =================================================================================
-Let's Encrypt X1 (critical) Digital Signature, Certificate Sign, CRL Sign
-Let's Encrypt X3 (critical) Digital Signature, Certificate Sign, CRL Sign 
-StartSSL         (critical) Certificate Sign, CRL Sign
-StartSSL Class 2 (critical) Certificate Sign, CRL Sign
-StartSSL Class 3 (critical) Certificate Sign, CRL Sign
-GeoTrust Global  (critical) Certificate Sign, CRL Sign
-RapidSSL G3      (critical) Certificate Sign, CRL Sign
-Comodo           (critical) Digital Signature, Certificate Sign, CRL Sign
-Comodo DV        (critical) Digital Signature, Certificate Sign, CRL Sign
-GlobalSign       (critical) Certificate Sign, CRL Sign
-GlobalSign DV    (critical) Certificate Sign, CRL Sign
-================ =================================================================================
+.. include:: generated/ca_key_usage.rst
 
 In signed certificates
 ======================
 
-================ =================================================================================
-CA               Value
-================ =================================================================================
-Let's Encrypt X1 (critical) Digital Signature, Key Encipherment
-Let's Encrypt X3 (critical) Digital Signature, Key Encipherment 
-StartSSL Class 2 Digital Signature, Key Encipherment, Key Agreement
-StartSSL Class 3 Digital Signature, Key Encipherment
-RapidSSL G3      (critical) Digital Signature, Key Encipherment
-Comodo DV        (critical) Digital Signature, Key Encipherment
-GlobalSign DV    (critical) Digital Signature, Key Encipherment
-================ =================================================================================
+.. include:: generated/cert_key_usage.rst
 
 .. _subjectAltName:
 
