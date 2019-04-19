@@ -193,14 +193,11 @@ possible intermediate CAs. If not present, the level of intermediate CAs is unli
 In CA certificates
 ==================
 
+.. include:: generated/ca_basicconstraints.rst
+
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Let's Encrypt X1 (critical) CA:TRUE, pathlen:0
-Let's Encrypt X3 (critical) CA:TRUE, pathlen:0  
-StartSSL         (critical) CA:TRUE
-StartSSL Class 2 (critical) CA:TRUE, pathlen:0
-StartSSL Class 3 (critical) CA:TRUE, pathlen:0
 GeoTrust Global  (critical) CA:TRUE
 RapidSSL G3      (critical) CA:TRUE, pathlen:0
 Comodo           (critical) CA:TRUE
@@ -212,11 +209,11 @@ GlobalSign DV    (critical) CA:TRUE, pathlen:0
 In signed certificates
 ======================
 
+.. include:: generated/cert_basicconstraints.rst
+
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Let's Encrypt X1 (critical) CA:FALSE
-Let's Encrypt X3 (critical) CA:FALSE
 StartSSL Class 2 (critical) CA:FALSE
 StartSSL Class 3 CA:FALSE
 RapidSSL G3      (critical) CA:FALSE

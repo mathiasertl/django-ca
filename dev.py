@@ -467,7 +467,8 @@ elif args.command == 'update-ca-data':
         cert_values = {
             'subject': [(name_header, 'Subject', )],
             'issuer': [(name_header, 'Issuer', )],
-            'aki': [(name_header, 'key_identifier', 'cert_issuer', 'cert_serial')],
+            'aki': [(name_header, 'Critical', 'Key identifier', 'Issuer', 'Serial')],
+            'basicconstraints': [(name_header, 'Critical', 'CA', 'Path length')],
         }
 
         for filename in sorted(os.listdir(cert_dir), key=lambda f: certs.get(f, {}).get('name', '')):
@@ -489,6 +490,7 @@ elif args.command == 'update-ca-data':
 
                 for ext in cert.extensions:
                     value = ext.value
+                    critical = '✓' if ext.critical else '✗'
 
                     if isinstance(value, x509.AuthorityKeyIdentifier):
                         aci = '✗'
@@ -496,10 +498,19 @@ elif args.command == 'update-ca-data':
                             aci = format_general_names(value.authority_cert_issuer)
 
                         this_cert_values['aki'] = [
+                            critical,
                             bytes_to_hex(value.key_identifier),
                             aci,
                             value.authority_cert_serial_number if value.authority_cert_serial_number else '✗',
                         ]
+                    elif isinstance(value, x509.BasicConstraints):
+                        this_cert_values['basicconstraints'] = [
+                            critical,
+                            value.ca,
+                            value.path_length if value.path_length is not None else 'None',
+                        ]
+                    elif isinstance(value, x509.SubjectAlternativeName):
+                        continue  # not interesting here
                     else:
                         warn('Unknown extension: %s' % ext.oid._name)
 
