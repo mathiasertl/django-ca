@@ -557,6 +557,14 @@ elif args.command == 'update-ca-data':
             'name': 'Comodo DV',
             'last': '2016-04-23',
         },
+        'startssl_class2.pem': {
+            'name': 'StartSSL class 2',
+            'last': '2016-04-22',
+        },
+        'startssl_class3.pem': {
+            'name': 'StartSSL class 3',
+            'last': '2016-04-22',
+        },
     }
     cas = {
         'dst_root_x3.pem': {

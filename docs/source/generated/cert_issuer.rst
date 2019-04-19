@@ -7,4 +7,6 @@ Google G3                 /C=US/O=Google Trust Services/CN=Google Internet Autho
 Let's Encrypt X1          /C=US/O=Let's Encrypt/CN=Let's Encrypt Authority X1
 Let's Encrypt X3          /C=US/O=Let's Encrypt/CN=Let's Encrypt Authority X3
 RapidSSL G3               /C=US/O=GeoTrust Inc./CN=RapidSSL SHA256 CA - G3
+StartSSL class 2          /C=IL/O=StartCom Ltd./OU=Secure Digital Certificate Signing/CN=StartCom Class 2 Primary Intermediate Server CA
+StartSSL class 3          /C=IL/O=StartCom Ltd./OU=StartCom Certification Authority/CN=StartCom Class 3 OV Server CA
 ========================  =======================================================================================================================================
