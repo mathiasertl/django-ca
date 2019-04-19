@@ -446,14 +446,11 @@ extension (prefixed with ``keyid:``).
 In CA certificates
 ==================
 
+.. include:: generated/ca_ski.rst
+
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Let's Encrypt X1 A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1
-Let's Encrypt X3 A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1  
-StartSSL         4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2
-StartSSL Class 2 11:DB:23:45:FD:54:CC:6A:71:6F:84:8A:03:D7:BE:F7:01:2F:26:86
-StartSSL Class 3 B1:3F:1C:92:7B:92:B0:5A:25:B3:38:FB:9C:07:A4:26:50:32:E3:51
 GeoTrust Global  C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E
 RapidSSL G3      C3:9C:F3:FC:D3:46:08:34:BB:CE:46:7F:A0:7C:5B:F3:E2:08:CB:59
 Comodo           BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4
@@ -465,11 +462,11 @@ GlobalSign DV    EA:4E:7C:D4:80:2D:E5:15:81:86:26:8C:82:6D:C0:98:A4:CF:97:0F
 In signed certificates
 ======================
 
+.. include:: generated/cert_ski.rst
+
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Let's Encrypt X1 F4:F3:B8:F5:43:90:2E:A2:7F:DD:51:4A:5F:3E:AC:FB:F1:33:EE:95
-Let's Encrypt X3 71:57:F2:DC:D2:02:5C:00:5E:74:28:57:4C:7E:61:43:44:44:AF:84
 StartSSL Class 2 C7:AA:D9:A4:F0:BC:D1:C1:1B:05:D2:19:71:0A:86:F8:58:0F:F0:99
 StartSSL Class 3 F0:72:65:5E:21:AA:16:76:2C:6F:D0:63:53:0C:68:D5:89:50:2A:73
 RapidSSL G3      (not present)

@@ -469,6 +469,7 @@ elif args.command == 'update-ca-data':
             'issuer': [(name_header, 'Issuer', )],
             'aki': [(name_header, 'Critical', 'Key identifier', 'Issuer', 'Serial')],
             'basicconstraints': [(name_header, 'Critical', 'CA', 'Path length')],
+            'ski': [(name_header, 'Critical', 'Digest')],
         }
 
         for filename in sorted(os.listdir(cert_dir), key=lambda f: certs.get(f, {}).get('name', '')):
@@ -509,6 +510,8 @@ elif args.command == 'update-ca-data':
                             value.ca,
                             value.path_length if value.path_length is not None else 'None',
                         ]
+                    elif isinstance(value, x509.SubjectKeyIdentifier):
+                        this_cert_values['ski'] = [critical, bytes_to_hex(value.digest)]
                     elif isinstance(value, x509.SubjectAlternativeName):
                         continue  # not interesting here
                     else:
