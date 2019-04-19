@@ -235,36 +235,12 @@ this field.
 In CA certificates
 ==================
 
-================ =================================================================================
-CA               Value
-================ =================================================================================
-Let's Encrypt X1 (not present)
-Let's Encrypt X3 (not present)
-StartSSL         (not present)
-StartSSL Class 2 (not present)
-StartSSL Class 3 TLS Web Client Authentication, TLS Web Server Authentication
-GeoTrust Global  (not present)
-RapidSSL G3      (not present)
-Comodo           (not present)
-Comodo DV        TLS Web Server Authentication, TLS Web Client Authentication
-GlobalSign       (not present)
-GlobalSign DV    (not present)
-================ =================================================================================
+.. include:: generated/ca_eku.rst
 
 In signed certificates
 ======================
 
-================ =================================================================================
-CA               Value
-================ =================================================================================
-Let's Encrypt X1 TLS Web Server Authentication, TLS Web Client Authentication
-Let's Encrypt X3 TLS Web Server Authentication, TLS Web Client Authentication  
-StartSSL Class 2 TLS Web Client Authentication, TLS Web Server Authentication
-StartSSL Class 3 TLS Web Client Authentication, TLS Web Server Authentication
-RapidSSL G3      TLS Web Server Authentication, TLS Web Client Authentication
-Comodo DV        TLS Web Server Authentication, TLS Web Client Authentication
-GlobalSign DV    TLS Web Server Authentication, TLS Web Client Authentication
-================ =================================================================================
+.. include:: generated/cert_eku.rst
 
 *************
 issuerAltName

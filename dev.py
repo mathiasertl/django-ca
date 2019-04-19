@@ -470,6 +470,7 @@ elif args.command == 'update-ca-data':
 
             'aki': [(name_header, 'Critical', 'Key identifier', 'Issuer', 'Serial')],
             'basicconstraints': [(name_header, 'Critical', 'CA', 'Path length')],
+            'eku': [(name_header, 'Critical', 'Usages')],
             'key_usage': [[name_header, 'Critical', 'digital_signature', 'content_commitment',
                            'key_encipherment', 'data_encipherment', 'key_agreement', 'key_cert_sign',
                            'crl_sign', 'encipher_only', 'decipher_only', ]],
@@ -515,8 +516,12 @@ elif args.command == 'update-ca-data':
                             value.ca,
                             value.path_length if value.path_length is not None else 'None',
                         ]
+                    elif isinstance(value, x509.ExtendedKeyUsage):
+                        this_cert_values['eku'] = [
+                            critical,
+                            ', '.join([u._name for u in value]),
+                        ]
                     elif isinstance(value, x509.IssuerAlternativeName):
-                        print(value)
                         this_cert_values['ian'] = [
                             critical,
                             format_general_names(value),
