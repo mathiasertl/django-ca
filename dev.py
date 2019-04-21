@@ -672,7 +672,7 @@ elif args.command == 'update-ca-data':
         },
         'comodo_ev.pem': {
             'name': 'Comodo EV',
-            'last': '2016-04-23',
+            'last': '2019-04-21',
         },
         'comodo_dv.pem': {
             'name': 'Comodo DV',
