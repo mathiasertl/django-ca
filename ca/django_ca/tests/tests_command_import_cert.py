@@ -15,6 +15,8 @@
 
 import os
 
+from freezegun import freeze_time
+
 from django.conf import settings
 
 from ..models import Certificate
@@ -23,6 +25,7 @@ from .base import certs
 from .base import override_tmpcadir
 
 
+@freeze_time('2019-04-14 12:26:00')
 class ImportCertTest(DjangoCAWithCATestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_basic(self):
