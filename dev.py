@@ -23,6 +23,7 @@ import sys
 import warnings
 
 import packaging.version
+import six
 
 import cryptography
 
@@ -478,12 +479,14 @@ elif args.command == 'update-ca-data':
                            'crl_sign', 'encipher_only', 'decipher_only', ]],
             'ian': [(name_header, 'Critical', 'Names')],
             'ski': [(name_header, 'Critical', 'Digest')],
+            'certificatepolicies': [(name_header, 'Critical', 'Policies')],
         }
 
         for filename in sorted(os.listdir(cert_dir), key=lambda f: certs.get(f, {}).get('name', '')):
             if filename not in certs:
                 warn('Unknown Cert: %s' % filename)
                 continue
+            print('Parsing %s (%s)...' % (filename, prefix))
 
             cert_name = certs[filename]['name']
 
@@ -524,6 +527,42 @@ elif args.command == 'update-ca-data':
                             value.ca,
                             value.path_length if value.path_length is not None else 'None',
                         ]
+                    elif isinstance(value, x509.CertificatePolicies):
+                        policies = []
+
+                        def ref_as_str(r):
+                            numbers = [str(n) for n in r.notice_numbers]
+                            return '%s: %s' % (r.organization, ', '.join(numbers))
+
+                        def policy_as_str(p):
+                            if isinstance(p, six.string_types):
+                                return p
+                            elif p.explicit_text is None and p.notice_reference is None:
+                                return 'Empty UserNotice'
+                            elif p.notice_reference is None:
+                                return 'User Notice: %s' % p.explicit_text
+                            elif p.explicit_text is None:
+                                return 'User Notice: %s' % (ref_as_str(p.notice_reference))
+                            else:
+                                return 'User Notice: %s: %s' % (ref_as_str(p.notice_reference),
+                                                                p.explicit_text)
+
+                        for policy in value:
+                            policy_name = policy.policy_identifier.dotted_string
+                            if policy.policy_qualifiers is None:
+                                policies.append('* %s' % policy_name)
+                            elif len(policy.policy_qualifiers) == 1:
+                                policies.append('* %s: %s' % (
+                                    policy_name,
+                                    policy_as_str(policy.policy_qualifiers[0])
+                                ))
+                            else:
+                                qualifiers = '\n'.join(
+                                    ['  * %s' % policy_as_str(p) for p in policy.policy_qualifiers]
+                                )
+                                policies.append('* %s:\n\n%s\n' % (policy_name, qualifiers))
+
+                        this_cert_values['certificatepolicies'] = [critical, '\n'.join(policies)]
                     elif isinstance(value, x509.ExtendedKeyUsage):
                         this_cert_values['eku'] = [
                             critical,

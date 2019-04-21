@@ -132,6 +132,27 @@ Notable here that some end-user certificates do not mark this extension as criti
 
 .. include:: generated/cert_basicconstraints.rst
 
+.. _ca-example-certificatePolicies:
+
+*******************
+certificatePolicies
+*******************
+
+In CA certificates
+==================
+
+Most root CAs do not set a Path Length, while most (but not all) intermediate CAs set a Path Length of 0.
+
+.. include:: generated/ca_certificatepolicies.rst
+
+In signed certificates
+======================
+
+Notable here that some end-user certificates do not mark this extension as critical.
+
+.. include:: generated/cert_certificatepolicies.rst
+
+
 .. _ca-example-crlDistributionPoints:
 
 *********************
@@ -307,34 +328,29 @@ In CA certificates
 ================ =================================================================================
 CA               Value
 ================ =================================================================================
-Let's Encrypt X1 X509v3 Certificate Policies, X509v3 Name Constraints
-Let's Encrypt X3 X509v3 Certificate Policies  
-StartSSL         X509v3 Certificate Policies, Netscape Cert Type, Netscape Comment
-StartSSL Class 2 X509v3 Certificate Policies
-StartSSL Class 3 X509v3 Certificate Policies
+Let's Encrypt X1 X509v3 Name Constraints
+Let's Encrypt X3 (none)
+StartSSL         Netscape Cert Type, Netscape Comment
+StartSSL Class 2 (none)
+StartSSL Class 3 (none)
 GeoTrust Global  (none)
-RapidSSL G3      X509v3 Certificate Policies
-Comodo           X509v3 Certificate Policies
-Comodo DV        X509v3 Certificate Policies
+RapidSSL G3      (none)
+Comodo           (none)
+Comodo DV        (none)
 GlobalSign       (none)
-GlobalSign DV    X509v3 Certificate Policies
+GlobalSign DV    (none)
 ================ =================================================================================
 
 
 In signed certificates
 ======================
 
-================ =================================================================================
+========================== ==============================
 CA               Value
-================ =================================================================================
-Let's Encrypt X1 X509v3 Certificate Policies
-Let's Encrypt X3 X509v3 Certificate Policies
-StartSSL Class 2 X509v3 Certificate Policies
-StartSSL Class 3 X509v3 Certificate Policies
-RapidSSL G3      X509v3 Certificate Policies
-Comodo DV        X509v3 Certificate Policies
-GlobalSign DV    X509v3 Certificate Policies
-================ =================================================================================
+========================== ==============================
+Go Daddy G2 Intermediate   signedCertificateTimestampList
+Let’s Encrypt X3           signedCertificateTimestampList
+========================== ==============================
 
 
 **************
