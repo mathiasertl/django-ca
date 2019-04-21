@@ -10,4 +10,6 @@ Go Daddy G2/user               URI:http://crl.godaddy.com/gdig2s1-1015.crl      
 Google G3/ca
 Google G3/user
 Let's Encrypt Authority X3/ca
+TrustID Server A52/ca
+TrustID Server A52/user
 =============================  ==================================================  ===============  =================  ===============  =================  =========  ==============

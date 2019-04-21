@@ -18,4 +18,5 @@ Let's Encrypt X3          ✗           * Type: PRE_CERTIFICATE, version: v1
 RapidSSL G3
 StartSSL class 2
 StartSSL class 3
+TrustID Server A52
 ========================  ==========  ====================================

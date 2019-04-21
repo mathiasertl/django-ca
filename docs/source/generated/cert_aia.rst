@@ -23,4 +23,6 @@ StartSSL class 2          ✗           * OCSP: URI:http://ocsp.startssl.com/sub
                                       * caIssuers: URI:http://aia.startssl.com/certs/sub.class2.server.ca.crt
 StartSSL class 3          ✗           * OCSP: URI:http://ocsp.startssl.com
                                       * caIssuers: URI:http://aia.startssl.com/certs/sca.server3.crt
+TrustID Server A52        ✗           * OCSP: URI:http://commercial.ocsp.identrust.com
+                                      * caIssuers: URI:http://validation.identrust.com/certs/trustidcaa52.p7c
 ========================  ==========  ======================================================================================

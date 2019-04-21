@@ -10,4 +10,6 @@ Go Daddy G2/user               24
 Google G3/ca                   31
 Google G3/user                 672
 Let's Encrypt Authority X3/ca  197
+TrustID Server A52/ca          83
+TrustID Server A52/user        4193
 =============================  ========

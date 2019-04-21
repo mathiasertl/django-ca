@@ -694,6 +694,10 @@ elif args.command == 'update-ca-data':
             'name': 'DigiCert HA Intermediate',
             'last': '2019-04-21',
         },
+        'trustid_server_a52.pem': {
+            'name': 'TrustID Server A52',
+            'last': '2019-04-21',
+        },
     }
     cas = {
         'dst_root_x3.pem': {
@@ -791,6 +795,16 @@ elif args.command == 'update-ca-data':
             'last': '2019-04-21',
             'info': 'Signed by DigiCert EV Root',
         },
+        'identrust_root_1.pem': {
+            'name': 'IdenTrust',
+            'last': '2019-04-21',
+            'info': 'Root CA',
+        },
+        'trustid_server_a52.pem': {
+            'name': 'TrustID Server A52',
+            'last': '2019-04-21',
+            'info': 'Signed by IdenTrust',
+        },
     }
 
     _update_cert_data('cert', cert_dir, certs, 'Certificate')
@@ -853,6 +867,18 @@ elif args.command == 'update-ca-data':
             'last': '2019-04-21',
             'name': '%s/user' % certs['digicert_ha_intermediate.pem']['name'],
             'url': 'http://crl3.digicert.com/sha2-ha-server-g6.crl',
+        },
+        'trustid_server_a52_ca.crl': {
+            'info': 'CRL in %s' % cas['trustid_server_a52.pem']['name'],
+            'last': '2019-04-21',
+            'name': '%s/ca' % cas['trustid_server_a52.pem']['name'],
+            'url': 'http://validation.identrust.com/crl/commercialrootca1.crl',
+        },
+        'trustid_server_a52_user.crl': {
+            'info': 'CRL %s end user certificates' % cas['trustid_server_a52.pem']['name'],
+            'last': '2019-04-21',
+            'name': '%s/user' % certs['trustid_server_a52.pem']['name'],
+            'url': 'http://validation.identrust.com/crl/trustidcaa52.crl',
         },
     }
 

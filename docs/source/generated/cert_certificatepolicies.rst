@@ -28,4 +28,13 @@ StartSSL class 2          ✗           * 2.23.140.1.2.2
                                         * User Notice: StartCom Certification Authority: 1: This certificate was issued according to the Class 2 Validation requirements of the StartCom CA policy, reliance only for the intended purpose in compliance of the relying party obligations.
 StartSSL class 3          ✗           * 2.23.140.1.2.2
                                       * 1.3.6.1.4.1.23223.1.2.4: http://www.startssl.com/policy
+TrustID Server A52        ✗           * 2.16.840.1.113839.0.6.3:
+
+                                        * https://secure.identrust.com/certificates/policy/ts/
+                                        * User Notice: This TrustID Server Certificate has been issued in accordance with IdenTrust's TrustID Certificate Policy found at https://secure.identrust.com/certificates/policy/ts/
+
+                                      * 2.23.140.1.2.2:
+
+                                        * https://secure.identrust.com/certificates/policy/ts/
+                                        * User Notice: This TrustID Server Certificate has been issued in accordance with IdenTrust's TrustID Certificate Policy found at https://secure.identrust.com/certificates/policy/ts/
 ========================  ==========  ====================================================================================================================================================================================================================================================

@@ -12,4 +12,5 @@ Let's Encrypt X3          /CN=jabber.at
 RapidSSL G3               /OU=GT12798798/OU=See www.rapidssl.com/resources/cps (c)15/OU=Domain Control Validated - RapidSSL(R)/CN=*.jabber.de
 StartSSL class 2          /C=AT/ST=Wien/L=Wien/O=Mathias Ertl/CN=www.fsinf.at/emailAddress=hostmaster@fsinf.at
 StartSSL class 3          /C=AT/ST=Wien/L=Wien/O=Adspired Technologies GmbH/CN=adverity.com
+TrustID Server A52        /CN=identrust.com/O=IDENTRUST SERVICES LLC/L=Salt Lake City/ST=Utah/C=US
 ========================  ======================================================================================================================================================================================================================================================================================================

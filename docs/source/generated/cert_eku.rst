@@ -12,4 +12,5 @@ Let's Encrypt X3          ✗           serverAuth, clientAuth
 RapidSSL G3               ✗           serverAuth, clientAuth
 StartSSL class 2          ✗           clientAuth, serverAuth
 StartSSL class 3          ✗           clientAuth, serverAuth
+TrustID Server A52        ✗           serverAuth, clientAuth
 ========================  ==========  ======================

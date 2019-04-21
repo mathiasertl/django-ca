@@ -12,4 +12,5 @@ Let's Encrypt X3
 RapidSSL G3
 StartSSL class 2
 StartSSL class 3
+TrustID Server A52
 ========================  ==========

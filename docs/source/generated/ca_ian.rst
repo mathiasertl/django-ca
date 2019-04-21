@@ -14,10 +14,12 @@ GlobalSign R2
 Go Daddy G2
 Go Daddy G2 Intermediate
 Google G3
+IdenTrust
 Let's Encrypt X1
 Let's Encrypt X3
 RapidSSL G3
 StartSSL
 StartSSL class 2
 StartSSL class 2
+TrustID Server A52
 ========================  ==========

@@ -13,4 +13,5 @@ Let's Encrypt X3
 RapidSSL G3               ✗           URI:http://gv.symcb.com/gv.crl                                             ✗       ✗         ✗
 StartSSL class 2          ✗           URI:http://crl.startssl.com/crt2-crl.crl                                   ✗       ✗         ✗
 StartSSL class 3          ✗           URI:http://crl.startssl.com/sca-server3.crl                                ✗       ✗         ✗
+TrustID Server A52        ✗           URI:http://validation.identrust.com/crl/trustidcaa52.crl                   ✗       ✗         ✗
 ========================  ==========  =========================================================================  ======  ========  =========
