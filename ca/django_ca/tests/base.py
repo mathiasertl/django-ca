@@ -557,7 +557,7 @@ class DjangoCATestCase(TestCase):
     def assertParserError(self, args, expected, **kwargs):
         """Assert that given args throw a parser error."""
 
-        kwargs.setdefault('script', sys.argv[0])
+        kwargs.setdefault('script', os.path.basename(sys.argv[0]))
         expected = expected.format(**kwargs)
 
         buf = StringIO()
