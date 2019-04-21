@@ -609,6 +609,9 @@ class DjangoCATestCase(TestCase):
     def assertSignature(self, chain, cert):
         # see: http://stackoverflow.com/questions/30700348
         store = X509Store()
+
+        # set the time of the OpenSSL context - freezegun doesn't work, because timestamp comes from OpenSSL
+        store.set_time(datetime.utcnow())
         for elem in chain:
             store.add_cert(load_certificate(FILETYPE_PEM, elem.dump_certificate()))
 
