@@ -2,7 +2,8 @@
 Certificate               Critical    Names                                                                    RDNs    Issuer    Reasons
 ========================  ==========  =======================================================================  ======  ========  =========
 Comodo DV                 ✗           URI:http://crl.comodoca.com/COMODORSADomainValidationSecureServerCA.crl  ✗       ✗         ✗
-DigiCert HA Intermediate
+DigiCert HA Intermediate  ✗           URI:http://crl3.digicert.com/sha2-ha-server-g6.crl                       ✗       ✗         ✗
+..                                    URI:http://crl4.digicert.com/sha2-ha-server-g6.crl                       ✗       ✗         ✗
 GlobalSign DV             ✗           URI:http://crl.globalsign.com/gs/gsdomainvalsha2g2.crl                   ✗       ✗         ✗
 Go Daddy G2 Intermediate  ✗           URI:http://crl.godaddy.com/gdig2s1-1015.crl                              ✗       ✗         ✗
 Google G3                 ✗           URI:http://crl.pki.goog/GTSGIAG3.crl                                     ✗       ✗         ✗

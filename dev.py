@@ -531,8 +531,8 @@ elif args.command == 'update-ca-data':
                             value.path_length if value.path_length is not None else 'None',
                         ]
                     elif isinstance(value, x509.CRLDistributionPoints):
-                        if len(value) == 1:
-                            dp = value[0]
+                        this_cert_values['crldp'] = []
+                        for dp in value:
                             full_name = '* '.join(
                                 [format_general_name(name) for name in dp.full_name]
                             ) if dp.full_name else '✗'
@@ -540,14 +540,15 @@ elif args.command == 'update-ca-data':
                                 [format_general_name(name) for name in dp.crl_issuer]
                             ) if dp.crl_issuer else '✗'
                             reasons = ', '.join([r.name for r in dp.reasons]) if dp.reasons else '✗'
-                            this_cert_values['crldp'] = [
+                            this_cert_values['crldp'].append([
                                 critical,
                                 full_name,
                                 format_name(dp.relative_name) if dp.relative_name else '✗',
                                 issuer, reasons,
-                            ]
-                        else:
-                            warn('Multi-value CRLDistributionPoints extension found!')
+                            ])
+
+                        print(this_cert_values['crldp'])
+
                     elif isinstance(value, x509.CertificatePolicies):
                         policies = []
 
@@ -632,7 +633,12 @@ elif args.command == 'update-ca-data':
                         warn('Unknown extension: %s' % ext.oid._name)
 
             for key, row in this_cert_values.items():
-                cert_values[key].append([cert_name] + row)
+                if isinstance(row[0], list):
+                    cert_values[key].append([cert_name] + row[0])
+                    for mrow in row[1:]:
+                        cert_values[key].append(['', ''] + mrow[1:])
+                else:
+                    cert_values[key].append([cert_name] + row)
 
         for name, values in cert_values.items():
             filename = os.path.join(out_base, '%s_%s.rst' % (prefix, name))
