@@ -141,14 +141,10 @@ certificatePolicies
 In CA certificates
 ==================
 
-Most root CAs do not set a Path Length, while most (but not all) intermediate CAs set a Path Length of 0.
-
 .. include:: generated/ca_certificatepolicies.rst
 
 In signed certificates
 ======================
-
-Notable here that some end-user certificates do not mark this extension as critical.
 
 .. include:: generated/cert_certificatepolicies.rst
 
@@ -175,21 +171,7 @@ DER/ASN1 format.
 In CA certificates
 ==================
 
-================ =============================================================== =======================
-CA               Value                                                           Content-Type
-================ =============================================================== =======================
-Let's Encrypt X1 URI:http://crl.identrust.com/DSTROOTCAX3CRL.crl                 application/pkix-crl
-Let's Encrypt X3 URI:http://crl.identrust.com/DSTROOTCAX3CRL.crl                 application/pkix-crl  
-StartSSL         (not present)
-StartSSL Class 2 URI:http://crl.startssl.com/sfsca.crl                           application/pkix-crl
-StartSSL Class 3 URI:http://crl.startssl.com/sfsca.crl                           application/pkix-crl
-GeoTrust Global  (not present)
-RapidSSL G3      URI:http://g.symcb.com/crls/gtglobal.crl                        application/pkix-crl
-Comodo           URI:http://crl.usertrust.com/AddTrustExternalCARoot.crl         application/x-pkcs7-crl
-Comodo DV        URI:http://crl.comodoca.com/COMODORSACertificationAuthority.crl application/x-pkcs7-crl
-GlobalSign       (not present)
-GlobalSign DV    URI:http://crl.globalsign.net/root.crl                          application/pkix-crl
-================ =============================================================== =======================
+.. include:: generated/ca_crldp.rst
 
 In signed certificates
 ======================
@@ -198,16 +180,7 @@ Let's Encrypt is so far the only CA that does not maintain a CRL for signed cert
 usually don't fancy CRLs much because they are a large file (e.g. Comodos CRL is 1.5MB) containing
 all certificates and cause major traffic for CAs. OCSP is just better in every way.
 
-================ ======================================================================== =======================
-CA               Value                                                                    Content-Type
-================ ======================================================================== =======================
-Let's Encrypt    (not present)
-StartSSL Class 2 URI:http://crl.startssl.com/crt2-crl.crl                                 application/pkix-crl
-StartSSL Class 3 URI:http://crl.startssl.com/sca-server3.crl                              application/pkix-crl
-RapidSSL G3      URI:http://gv.symcb.com/gv.crl                                           application/pkix-crl
-Comodo DV        URI:http://crl.comodoca.com/COMODORSADomainValidationSecureServerCA.crl  application/x-pkcs7-crl
-GlobalSign DV    URI:http://crl.globalsign.com/gs/gsdomainvalsha2g2.crl                   application/pkix-crl
-================ ======================================================================== =======================
+.. include:: generated/cert_crldp.rst
 
 ****************
 extendedKeyUsage

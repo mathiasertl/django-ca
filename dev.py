@@ -480,6 +480,7 @@ elif args.command == 'update-ca-data':
             'ian': [(name_header, 'Critical', 'Names')],
             'ski': [(name_header, 'Critical', 'Digest')],
             'certificatepolicies': [(name_header, 'Critical', 'Policies')],
+            'crldp': [(name_header, 'Critical', 'Names', 'RDNs', 'Issuer', 'Reasons')],
         }
 
         for filename in sorted(os.listdir(cert_dir), key=lambda f: certs.get(f, {}).get('name', '')):
@@ -527,6 +528,24 @@ elif args.command == 'update-ca-data':
                             value.ca,
                             value.path_length if value.path_length is not None else 'None',
                         ]
+                    elif isinstance(value, x509.CRLDistributionPoints):
+                        if len(value) == 1:
+                            dp = value[0]
+                            full_name = '* '.join(
+                                [format_general_name(name) for name in dp.full_name]
+                            ) if dp.full_name else '✗'
+                            issuer = '* '.join(
+                                [format_general_name(name) for name in dp.crl_issuer]
+                            ) if dp.crl_issuer else '✗'
+                            reasons = ', '.join([r.name for r in dp.reasons]) if dp.reasons else '✗'
+                            this_cert_values['crldp'] = [
+                                critical,
+                                full_name,
+                                format_name(dp.relative_name) if dp.relative_name else '✗',
+                                issuer, reasons,
+                            ]
+                        else:
+                            warn('Multi-value CRLDistributionPoints extension found!')
                     elif isinstance(value, x509.CertificatePolicies):
                         policies = []
 
