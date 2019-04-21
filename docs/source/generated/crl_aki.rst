@@ -2,6 +2,7 @@
 CRL                            key_identifier                                               cert_issuer                                                                                            cert_serial
 =============================  ===========================================================  =====================================================================================================  =============
 DigiCert HA Intermediate/ca    B1:3E:C3:69:03:F8:BF:47:01:D4:98:26:1A:08:02:EF:63:64:2B:C3  ✗                                                                                                      ✗
+DigiCert HA Intermediate/user  51:68:FF:90:AF:02:07:75:3C:CC:D9:65:64:62:A2:12:B8:59:72:3B  ✗                                                                                                      ✗
 GlobalSign R2/ca               9B:E2:07:57:67:1C:1E:C0:6A:06:DE:59:B4:9A:2D:DF:DC:19:86:2E  ✗                                                                                                      ✗
 Go Daddy G2/ca
 Go Daddy G2/user               40:C2:BD:27:8E:CC:34:83:30:A2:33:D7:FB:6C:B3:F0:B4:2C:80:CE  dirname:/C=US/ST=Arizona/L=Scottsdale/O=GoDaddy.com, Inc./CN=Go Daddy Root Certificate Authority - G2  7

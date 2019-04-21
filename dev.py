@@ -836,6 +836,12 @@ elif args.command == 'update-ca-data':
             'name': '%s/ca' % cas['digicert_ha_intermediate.pem']['name'],
             'url': 'http://crl4.digicert.com/DigiCertHighAssuranceEVRootCA.crl',
         },
+        'digicert_ha_intermediate_user.crl': {
+            'info': 'CRL %s end user certificates' % cas['digicert_ha_intermediate.pem']['name'],
+            'last': '2019-04-21',
+            'name': '%s/user' % certs['digicert_ha_intermediate.pem']['name'],
+            'url': 'http://crl3.digicert.com/sha2-ha-server-g6.crl',
+        },
     }
 
     crl_dir = os.path.join(docs_base, '_files', 'crl')

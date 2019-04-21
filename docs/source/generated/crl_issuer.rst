@@ -2,6 +2,7 @@
 CRL                            Issuer Name
 =============================  =======================================================================================================================================
 DigiCert HA Intermediate/ca    /C=US/O=DigiCert Inc/OU=www.digicert.com/CN=DigiCert High Assurance EV Root CA
+DigiCert HA Intermediate/user  /C=US/O=DigiCert Inc/OU=www.digicert.com/CN=DigiCert SHA2 High Assurance Server CA
 GlobalSign R2/ca               /OU=GlobalSign Root CA - R2/O=GlobalSign/CN=GlobalSign
 Go Daddy G2/ca                 /C=US/ST=Arizona/L=Scottsdale/O=GoDaddy.com, Inc./CN=Go Daddy Root Certificate Authority - G2
 Go Daddy G2/user               /C=US/ST=Arizona/L=Scottsdale/O=GoDaddy.com, Inc./OU=http://certs.godaddy.com/repository//CN=Go Daddy Secure Certificate Authority - G2

@@ -2,6 +2,7 @@
 CRL                            Update freq.       hash
 =============================  =================  ======
 DigiCert HA Intermediate/ca    21 days, 0:00:00   sha256
+DigiCert HA Intermediate/user  7 days, 0:00:00    sha256
 GlobalSign R2/ca               197 days, 0:00:00  sha256
 Go Daddy G2/ca                 365 days, 0:00:00  sha256
 Go Daddy G2/user               7 days, 0:00:00    sha256
