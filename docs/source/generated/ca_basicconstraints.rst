@@ -3,6 +3,7 @@ CA                        Critical    CA    Path length
 ========================  ==========  ====  =============
 Comodo                    ✓           True  None
 Comodo DV                 ✓           True  0
+Comodo EV                 ✓           True  0
 DST X3                    ✓           True  None
 DigiCert EV Root          ✓           True  None
 DigiCert HA Intermediate  ✓           True  0

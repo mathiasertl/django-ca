@@ -1,6 +1,7 @@
 =============================  =================  ======
 CRL                            Update freq.       hash
 =============================  =================  ======
+Comodo EV/user                 4 days, 0:00:00    sha256
 DigiCert HA Intermediate/ca    21 days, 0:00:00   sha256
 DigiCert HA Intermediate/user  7 days, 0:00:00    sha256
 GlobalSign R2/ca               197 days, 0:00:00  sha256

@@ -88,6 +88,12 @@ OID_NAME_MAPPINGS = {
     NameOID.ORGANIZATIONAL_UNIT_NAME: 'OU',
     NameOID.COMMON_NAME: 'CN',
     NameOID.EMAIL_ADDRESS: 'emailAddress',
+    NameOID.SERIAL_NUMBER: 'serialNumber',
+    NameOID.JURISDICTION_COUNTRY_NAME: 'jurisdictionCountryName',
+    NameOID.JURISDICTION_STATE_OR_PROVINCE_NAME: 'jurisdictionStateOrProvinceName',
+    NameOID.BUSINESS_CATEGORY: "businessCategory",
+    NameOID.POSTAL_CODE: "postalCode",
+    NameOID.STREET_ADDRESS: "streetAddress",
 }
 
 # same, but reversed

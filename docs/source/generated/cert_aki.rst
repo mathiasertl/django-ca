@@ -2,6 +2,7 @@
 Certificate               Critical    Key identifier                                               Issuer    Serial
 ========================  ==========  ===========================================================  ========  ========
 Comodo DV                 ✗           90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7  ✗         ✗
+Comodo EV                 ✗           39:DA:FF:CA:28:14:8A:A8:74:13:08:B9:E4:0E:A9:D2:FA:7E:9D:69  ✗         ✗
 DigiCert HA Intermediate  ✗           51:68:FF:90:AF:02:07:75:3C:CC:D9:65:64:62:A2:12:B8:59:72:3B  ✗         ✗
 GlobalSign DV             ✗           EA:4E:7C:D4:80:2D:E5:15:81:86:26:8C:82:6D:C0:98:A4:CF:97:0F  ✗         ✗
 Go Daddy G2 Intermediate  ✗           40:C2:BD:27:8E:CC:34:83:30:A2:33:D7:FB:6C:B3:F0:B4:2C:80:CE  ✗         ✗

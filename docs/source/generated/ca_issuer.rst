@@ -1,8 +1,9 @@
 ========================  ===============================================================================================
 CA                        Issuer
 ========================  ===============================================================================================
-Comodo                    /C=SE/O=AddTrust AB/OU=AddTrust External TTP Network/CN=AddTrust External CA Root
+Comodo                    /C=GB/ST=Greater Manchester/L=Salford/O=COMODO CA Limited/CN=COMODO RSA Certification Authority
 Comodo DV                 /C=GB/ST=Greater Manchester/L=Salford/O=COMODO CA Limited/CN=COMODO RSA Certification Authority
+Comodo EV                 /C=GB/ST=Greater Manchester/L=Salford/O=COMODO CA Limited/CN=COMODO RSA Certification Authority
 DST X3                    /O=Digital Signature Trust Co./CN=DST Root CA X3
 DigiCert EV Root          /C=US/O=DigiCert Inc/OU=www.digicert.com/CN=DigiCert High Assurance EV Root CA
 DigiCert HA Intermediate  /C=US/O=DigiCert Inc/OU=www.digicert.com/CN=DigiCert High Assurance EV Root CA

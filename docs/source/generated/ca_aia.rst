@@ -1,8 +1,10 @@
 ========================  ==========  ================================================================
 CA                        Critical    Values
 ========================  ==========  ================================================================
-Comodo                    ✗           * OCSP: URI:http://ocsp.usertrust.com
+Comodo
 Comodo DV                 ✗           * caIssuers: URI:http://crt.comodoca.com/COMODORSAAddTrustCA.crt
+                                      * OCSP: URI:http://ocsp.comodoca.com
+Comodo EV                 ✗           * caIssuers: URI:http://crt.comodoca.com/COMODORSAAddTrustCA.crt
                                       * OCSP: URI:http://ocsp.comodoca.com
 DST X3
 DigiCert EV Root

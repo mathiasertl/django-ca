@@ -3,6 +3,7 @@ CA                        Critical
 ========================  ==========
 Comodo
 Comodo DV
+Comodo EV
 DST X3
 DigiCert EV Root
 DigiCert HA Intermediate

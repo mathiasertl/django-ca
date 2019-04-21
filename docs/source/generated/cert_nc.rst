@@ -2,6 +2,7 @@
 Certificate               Critical
 ========================  ==========
 Comodo DV
+Comodo EV
 DigiCert HA Intermediate
 GlobalSign DV
 Go Daddy G2 Intermediate

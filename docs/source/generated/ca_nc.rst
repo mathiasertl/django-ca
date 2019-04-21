@@ -3,6 +3,7 @@ CA                        Critical    Permitted    Excluded
 ========================  ==========  ===========  ==========
 Comodo
 Comodo DV
+Comodo EV
 DST X3
 DigiCert EV Root
 DigiCert HA Intermediate

@@ -1,8 +1,9 @@
 ========================  ==========  ===================  ====================  ==================  ===================  ===============  ===============  ==========  ===============  ===============
 CA                        Critical    digital_signature    content_commitment    key_encipherment    data_encipherment    key_agreement    key_cert_sign    crl_sign    encipher_only    decipher_only
 ========================  ==========  ===================  ====================  ==================  ===================  ===============  ===============  ==========  ===============  ===============
-Comodo                    ✓           ✓                    ✗                     ✗                   ✗                    ✗                ✓                ✓           ✗                ✗
+Comodo                    ✓           ✗                    ✗                     ✗                   ✗                    ✗                ✓                ✓           ✗                ✗
 Comodo DV                 ✓           ✓                    ✗                     ✗                   ✗                    ✗                ✓                ✓           ✗                ✗
+Comodo EV                 ✓           ✗                    ✗                     ✗                   ✗                    ✗                ✓                ✓           ✗                ✗
 DST X3                    ✓           ✗                    ✗                     ✗                   ✗                    ✗                ✓                ✓           ✗                ✗
 DigiCert EV Root          ✓           ✓                    ✗                     ✗                   ✗                    ✗                ✓                ✓           ✗                ✗
 DigiCert HA Intermediate  ✓           ✓                    ✗                     ✗                   ✗                    ✗                ✓                ✓           ✗                ✗

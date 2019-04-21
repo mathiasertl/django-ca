@@ -1,6 +1,7 @@
 =============================  =======================================================================================================================================
 CRL                            Issuer Name
 =============================  =======================================================================================================================================
+Comodo EV/user                 /C=GB/ST=Greater Manchester/L=Salford/O=COMODO CA Limited/CN=COMODO RSA Extended Validation Secure Server CA
 DigiCert HA Intermediate/ca    /C=US/O=DigiCert Inc/OU=www.digicert.com/CN=DigiCert High Assurance EV Root CA
 DigiCert HA Intermediate/user  /C=US/O=DigiCert Inc/OU=www.digicert.com/CN=DigiCert SHA2 High Assurance Server CA
 GlobalSign R2/ca               /OU=GlobalSign Root CA - R2/O=GlobalSign/CN=GlobalSign

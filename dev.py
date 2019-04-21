@@ -487,7 +487,7 @@ elif args.command == 'update-ca-data':
 
         for filename in sorted(os.listdir(cert_dir), key=lambda f: certs.get(f, {}).get('name', '')):
             if filename not in certs:
-                warn('Unknown Cert: %s' % filename)
+                warn('Unknown %s: %s' % (prefix, filename))
                 continue
             print('Parsing %s (%s)...' % (filename, prefix))
 
@@ -546,9 +546,6 @@ elif args.command == 'update-ca-data':
                                 format_name(dp.relative_name) if dp.relative_name else '✗',
                                 issuer, reasons,
                             ])
-
-                        print(this_cert_values['crldp'])
-
                     elif isinstance(value, x509.CertificatePolicies):
                         policies = []
 
@@ -673,6 +670,10 @@ elif args.command == 'update-ca-data':
             'name': 'RapidSSL G3',
             'last': '2016-04-23',
         },
+        'comodo_ev.pem': {
+            'name': 'Comodo EV',
+            'last': '2016-04-23',
+        },
         'comodo_dv.pem': {
             'name': 'Comodo DV',
             'last': '2016-04-23',
@@ -757,13 +758,18 @@ elif args.command == 'update-ca-data':
         },
         'comodo.pem': {
             'name': 'Comodo',
-            'last': '2016-04-23',
-            'info': 'Signed by ???',
+            'last': '2019-04-21',
+            'info': 'Root CA',
+        },
+        'comodo_ev.pem': {
+            'name': 'Comodo EV',
+            'last': '2019-04-21',
+            'info': 'Signed by Comodo',
         },
         'comodo_dv.pem': {
             'name': 'Comodo DV',
             'last': '2016-04-23',
-            'info': 'Signed by ???',
+            'info': 'Signed by Comodo',
         },
         'globalsign.pem': {
             'name': 'GlobalSign',
@@ -829,6 +835,12 @@ elif args.command == 'update-ca-data':
             'last': '2019-04-19',
             'name': 'Google G3/user',
             'url': 'http://crl.pki.goog/GTSGIAG3.crl',
+        },
+        'comodo_ev_user.pem': {
+            'info': 'CRL in %s end user certificates' % certs['comodo_ev.pem']['name'],
+            'last': '2019-04-21',
+            'name': '%s/user' % cas['comodo_ev.pem']['name'],
+            'url': 'http://crl.comodoca.com/COMODORSAExtendedValidationSecureServerCA.crl',
         },
         'digicert_ha_intermediate.crl': {
             'info': 'CRL in %s' % cas['digicert_ha_intermediate.pem']['name'],

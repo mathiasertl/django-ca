@@ -1,7 +1,9 @@
-========================  ==========  ====================================================================================
+========================  ==========  ======================================================================================
 Certificate               Critical    Values
-========================  ==========  ====================================================================================
+========================  ==========  ======================================================================================
 Comodo DV                 ✗           * caIssuers: URI:http://crt.comodoca.com/COMODORSADomainValidationSecureServerCA.crt
+                                      * OCSP: URI:http://ocsp.comodoca.com
+Comodo EV                 ✗           * caIssuers: URI:http://crt.comodoca.com/COMODORSAExtendedValidationSecureServerCA.crt
                                       * OCSP: URI:http://ocsp.comodoca.com
 DigiCert HA Intermediate  ✗           * OCSP: URI:http://ocsp.digicert.com
                                       * caIssuers: URI:http://cacerts.digicert.com/DigiCertSHA2HighAssuranceServerCA.crt
@@ -21,4 +23,4 @@ StartSSL class 2          ✗           * OCSP: URI:http://ocsp.startssl.com/sub
                                       * caIssuers: URI:http://aia.startssl.com/certs/sub.class2.server.ca.crt
 StartSSL class 3          ✗           * OCSP: URI:http://ocsp.startssl.com
                                       * caIssuers: URI:http://aia.startssl.com/certs/sca.server3.crt
-========================  ==========  ====================================================================================
+========================  ==========  ======================================================================================

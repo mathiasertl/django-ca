@@ -2,6 +2,9 @@
 Certificate               Critical    Value
 ========================  ==========  ====================================
 Comodo DV
+Comodo EV                 ✗           * Type: PRE_CERTIFICATE, version: v1
+                                      * Type: PRE_CERTIFICATE, version: v1
+                                      * Type: PRE_CERTIFICATE, version: v1
 DigiCert HA Intermediate  ✗           * Type: PRE_CERTIFICATE, version: v1
                                       * Type: PRE_CERTIFICATE, version: v1
 GlobalSign DV

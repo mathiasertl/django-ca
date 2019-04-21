@@ -2,6 +2,7 @@
 Certificate               Critical    Digest
 ========================  ==========  ===========================================================
 Comodo DV                 ✗           F2:CB:1F:E9:6E:D5:43:E3:85:75:98:5F:97:7C:B0:59:7F:D5:C0:C0
+Comodo EV                 ✗           44:3E:73:30:EB:0B:1B:A7:A7:9D:0F:DA:79:96:4D:1A:87:E9:9D:21
 DigiCert HA Intermediate  ✗           56:F7:45:D4:84:D1:3C:95:AD:58:14:2E:F4:D1:CC:2F:11:C0:73:F6
 GlobalSign DV             ✗           52:5A:45:5B:D4:9D:AC:65:30:BD:67:80:6C:D1:A1:3E:09:F7:FD:92
 Go Daddy G2 Intermediate  ✗           2E:30:1A:46:41:F0:E8:1B:72:02:59:41:8A:CF:9D:1B:FA:98:8D:9E

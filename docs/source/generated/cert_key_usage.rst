@@ -2,6 +2,7 @@
 Certificate               Critical    digital_signature    content_commitment    key_encipherment    data_encipherment    key_agreement    key_cert_sign    crl_sign    encipher_only    decipher_only
 ========================  ==========  ===================  ====================  ==================  ===================  ===============  ===============  ==========  ===============  ===============
 Comodo DV                 ✓           ✓                    ✗                     ✓                   ✗                    ✗                ✗                ✗           ✗                ✗
+Comodo EV                 ✓           ✓                    ✗                     ✓                   ✗                    ✗                ✗                ✗           ✗                ✗
 DigiCert HA Intermediate  ✓           ✓                    ✗                     ✓                   ✗                    ✗                ✗                ✗           ✗                ✗
 GlobalSign DV             ✓           ✓                    ✗                     ✓                   ✗                    ✗                ✗                ✗           ✗                ✗
 Go Daddy G2 Intermediate  ✓           ✓                    ✗                     ✓                   ✗                    ✗                ✗                ✗           ✗                ✗

@@ -1,8 +1,9 @@
 ========================  ==========  ===============================================================  ======  ========  =========
 CA                        Critical    Names                                                            RDNs    Issuer    Reasons
 ========================  ==========  ===============================================================  ======  ========  =========
-Comodo                    ✗           URI:http://crl.usertrust.com/AddTrustExternalCARoot.crl          ✗       ✗         ✗
+Comodo
 Comodo DV                 ✗           URI:http://crl.comodoca.com/COMODORSACertificationAuthority.crl  ✗       ✗         ✗
+Comodo EV                 ✗           URI:http://crl.comodoca.com/COMODORSACertificationAuthority.crl  ✗       ✗         ✗
 DST X3
 DigiCert EV Root
 DigiCert HA Intermediate  ✗           URI:http://crl4.digicert.com/DigiCertHighAssuranceEVRootCA.crl   ✗       ✗         ✗
