@@ -1,0 +1,16 @@
+========================  ==========  ====================================
+Certificate               Critical    Value
+========================  ==========  ====================================
+Comodo DV
+GlobalSign DV
+Go Daddy G2 Intermediate  ✗           * Type: PRE_CERTIFICATE, version: v1
+                                      * Type: PRE_CERTIFICATE, version: v1
+                                      * Type: PRE_CERTIFICATE, version: v1
+Google G3
+Let's Encrypt X1
+Let's Encrypt X3          ✗           * Type: PRE_CERTIFICATE, version: v1
+                                      * Type: PRE_CERTIFICATE, version: v1
+RapidSSL G3
+StartSSL class 2
+StartSSL class 3
+========================  ==========  ====================================

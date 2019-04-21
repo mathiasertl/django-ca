@@ -481,6 +481,8 @@ elif args.command == 'update-ca-data':
             'ski': [(name_header, 'Critical', 'Digest')],
             'certificatepolicies': [(name_header, 'Critical', 'Policies')],
             'crldp': [(name_header, 'Critical', 'Names', 'RDNs', 'Issuer', 'Reasons')],
+            'sct': [(name_header, 'Critical', 'Value')],
+            'nc': [(name_header, 'Critical', 'Permitted', 'Excluded')],
         }
 
         for filename in sorted(os.listdir(cert_dir), key=lambda f: certs.get(f, {}).get('name', '')):
@@ -603,10 +605,29 @@ elif args.command == 'update-ca-data':
                         this_cert_values['key_usage'] = [
                             critical,
                         ] + key_usages
+                    elif isinstance(value, x509.NameConstraints):
+                        permitted = '\n'.join(
+                            ['* %s' % format_general_name(n) for n in value.permitted_subtrees]
+                        ) if value.permitted_subtrees else '✗'
+                        excluded = '\n'.join(
+                            ['* %s' % format_general_name(n) for n in value.excluded_subtrees]
+                        ) if value.excluded_subtrees else '✗'
+                        this_cert_values['nc'] = [critical, permitted, excluded]
+                    elif isinstance(value, x509.PrecertificateSignedCertificateTimestamps):
+                        this_cert_values['sct'] = [
+                            critical,
+                            '\n'.join(['* Type: %s, version: %s' % (e.entry_type.name, e.version.name)
+                                       for e in value])
+                        ]
                     elif isinstance(value, x509.SubjectKeyIdentifier):
                         this_cert_values['ski'] = [critical, bytes_to_hex(value.digest)]
                     elif isinstance(value, x509.SubjectAlternativeName):
                         continue  # not interesting here
+                    elif ext.oid.dotted_string in ['2.16.840.1.113730.1.1', '2.16.840.1.113730.1.13']:
+                        # These are some OIDs identified by OpenSSL cli as "Netscape Cert Type" and
+                        # "Netscape Comment". They only occur in the old, discontinued StartSSL root
+                        # certificate.
+                        continue
                     else:
                         warn('Unknown extension: %s' % ext.oid._name)
 
