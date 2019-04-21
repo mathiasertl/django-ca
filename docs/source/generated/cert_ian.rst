@@ -2,6 +2,7 @@
 Certificate               Critical    Names
 ========================  ==========  ============================
 Comodo DV
+DigiCert HA Intermediate
 GlobalSign DV
 Go Daddy G2 Intermediate
 Google G3

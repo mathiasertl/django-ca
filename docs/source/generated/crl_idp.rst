@@ -1,6 +1,7 @@
 =============================  ===========================================  ===============  =================  ===============  =================  =========  ==============
 CRL                            full name                                    relative name    only attr certs    only ca certs    only user certs    reasons    indirect CRL
 =============================  ===========================================  ===============  =================  ===============  =================  =========  ==============
+DigiCert HA Intermediate/ca
 GlobalSign R2/ca
 Go Daddy G2/ca
 Go Daddy G2/user               URI:http://crl.godaddy.com/gdig2s1-1015.crl  ✗                ✗                  ✗                ✗                  ✗          ✗

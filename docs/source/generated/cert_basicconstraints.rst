@@ -2,6 +2,7 @@
 Certificate               Critical    CA     Path length
 ========================  ==========  =====  =============
 Comodo DV                 ✓           False  None
+DigiCert HA Intermediate  ✓           False  None
 GlobalSign DV             ✗           False  None
 Go Daddy G2 Intermediate  ✓           False  None
 Google G3                 ✓           False  None

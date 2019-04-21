@@ -2,6 +2,7 @@
 Certificate               Subject
 ========================  ===================================================================================================================
 Comodo DV                 /OU=Domain Control Validated/OU=PositiveSSL/CN=kode.im
+DigiCert HA Intermediate  /C=US/ST=California/L=Sunnyvale/O=Oath Inc/CN=*.www.yahoo.com
 GlobalSign DV             /OU=Domain Control Validated/CN=www.ajabber.me
 Go Daddy G2 Intermediate  /OU=Domain Control Validated/CN=derstandard.at
 Google G3                 /C=US/ST=California/L=Mountain View/O=Google LLC/CN=www.google.com

@@ -4,6 +4,8 @@ CA                        Critical    Usages
 Comodo
 Comodo DV                 ✗           serverAuth, clientAuth
 DST X3
+DigiCert EV Root
+DigiCert HA Intermediate  ✗           serverAuth, clientAuth
 GeoTrust
 GlobalSign
 GlobalSign DV

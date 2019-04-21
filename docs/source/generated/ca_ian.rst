@@ -4,6 +4,8 @@ CA                        Critical
 Comodo
 Comodo DV
 DST X3
+DigiCert EV Root
+DigiCert HA Intermediate
 GeoTrust
 GlobalSign
 GlobalSign DV

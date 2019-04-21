@@ -2,6 +2,8 @@
 Certificate               Critical    Value
 ========================  ==========  ====================================
 Comodo DV
+DigiCert HA Intermediate  ✗           * Type: PRE_CERTIFICATE, version: v1
+                                      * Type: PRE_CERTIFICATE, version: v1
 GlobalSign DV
 Go Daddy G2 Intermediate  ✗           * Type: PRE_CERTIFICATE, version: v1
                                       * Type: PRE_CERTIFICATE, version: v1

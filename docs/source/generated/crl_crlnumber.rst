@@ -1,6 +1,7 @@
 =============================  ========
 CRL                            number
 =============================  ========
+DigiCert HA Intermediate/ca    449
 GlobalSign R2/ca               31
 Go Daddy G2/ca
 Go Daddy G2/user               24

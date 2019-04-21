@@ -683,6 +683,10 @@ elif args.command == 'update-ca-data':
             'name': 'GlobalSign DV',
             'last': '2016-04-23',
         },
+        'digicert_ha_intermediate.pem': {
+            'name': 'DigiCert HA Intermediate',
+            'last': '2019-04-21',
+        },
     }
     cas = {
         'dst_root_x3.pem': {
@@ -765,6 +769,16 @@ elif args.command == 'update-ca-data':
             'last': '2016-04-23',
             'info': 'Signed by GlobalSign',
         },
+        'digicert_ev_root.pem': {
+            'name': 'DigiCert EV Root',
+            'last': '2019-04-21',
+            'info': 'Root CA',
+        },
+        'digicert_ha_intermediate.pem': {
+            'name': 'DigiCert HA Intermediate',
+            'last': '2019-04-21',
+            'info': 'Signed by DigiCert EV Root',
+        },
     }
 
     _update_cert_data('cert', cert_dir, certs, 'Certificate')
@@ -809,6 +823,12 @@ elif args.command == 'update-ca-data':
             'last': '2019-04-19',
             'name': 'Google G3/user',
             'url': 'http://crl.pki.goog/GTSGIAG3.crl',
+        },
+        'digicert_ha_intermediate.crl': {
+            'info': 'CRL in %s' % cas['digicert_ha_intermediate.pem']['name'],
+            'last': '2019-04-21',
+            'name': '%s/ca' % cas['digicert_ha_intermediate.pem']['name'],
+            'url': 'http://crl4.digicert.com/DigiCertHighAssuranceEVRootCA.crl',
         },
     }
 

@@ -4,6 +4,8 @@ CA                        Critical    Names                                     
 Comodo                    ✗           URI:http://crl.usertrust.com/AddTrustExternalCARoot.crl          ✗       ✗         ✗
 Comodo DV                 ✗           URI:http://crl.comodoca.com/COMODORSACertificationAuthority.crl  ✗       ✗         ✗
 DST X3
+DigiCert EV Root
+DigiCert HA Intermediate  ✗           URI:http://crl4.digicert.com/DigiCertHighAssuranceEVRootCA.crl   ✗       ✗         ✗
 GeoTrust
 GlobalSign
 GlobalSign DV             ✗           URI:http://crl.globalsign.net/root.crl                           ✗       ✗         ✗

@@ -5,6 +5,8 @@ Comodo                    ✗           * OCSP: URI:http://ocsp.usertrust.com
 Comodo DV                 ✗           * caIssuers: URI:http://crt.comodoca.com/COMODORSAAddTrustCA.crt
                                       * OCSP: URI:http://ocsp.comodoca.com
 DST X3
+DigiCert EV Root
+DigiCert HA Intermediate  ✗           * OCSP: URI:http://ocsp.digicert.com
 GeoTrust
 GlobalSign
 GlobalSign DV             ✗           * OCSP: URI:http://ocsp.globalsign.com/rootr1
