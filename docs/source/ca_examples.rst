@@ -236,6 +236,51 @@ In signed certificates
 
 .. include:: generated/cert_key_usage.rst
 
+.. _nameConstraints:
+
+***************
+nameConstraints
+***************
+
+.. seealso:: https://tools.ietf.org/html/rfc5280#section-4.2.1.10
+
+This extension is only valid in CAs and must be marked as critical, according to RFC 5280.
+
+Only the expired Let's Encrypt X1 sets this extension to exclude `.mil <https://en.wikipedia.org/wiki/.mil>`_,
+and does not set this extension as critical.
+
+In CA certificates
+==================
+
+.. include:: generated/ca_nc.rst
+
+In signed certificates
+======================
+
+.. include:: generated/cert_nc.rst
+
+.. _precertificatesignedcertificatetimestamps:
+
+*****************************************
+PrecertificateSignedCertificateTimestamps
+*****************************************
+
+.. seealso:: https://tools.ietf.org/html/rfc6962.html
+
+This extension is used for `Certificate Transparency
+<https://en.wikipedia.org/wiki/Certificate_Transparency>`_ and only makes sense in client certificates. It is
+usually not marked as critical (since many clients do not support Certificate Transparency).
+
+In CA certificates
+==================
+
+.. include:: generated/ca_sct.rst
+
+In signed certificates
+======================
+
+.. include:: generated/cert_sct.rst
+
 .. _subjectAltName:
 
 **************
