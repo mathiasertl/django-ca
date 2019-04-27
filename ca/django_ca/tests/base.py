@@ -487,7 +487,7 @@ class DjangoCATestCase(TestCase):
         self.assertIsInstance(cert.signature_hash_algorithm, getattr(hashes, algo.upper()))
 
     def assertCRL(self, crl, certs=None, signer=None, expires=86400, algorithm=None, encoding=Encoding.PEM,
-                  idp=None, extensions=None):
+                  idp=None, extensions=None, crl_number=0):
         certs = certs or []
         signer = signer or self.ca
         algorithm = algorithm or ca_settings.CA_DIGEST_ALGORITHM
@@ -496,6 +496,10 @@ class DjangoCATestCase(TestCase):
 
         if idp is not None:  # pragma: no branch, pragma: only cryptography>=2.5
             extensions.append(idp)
+        extensions.append(x509.Extension(
+            value=x509.CRLNumber(crl_number=crl_number),
+            critical=False, oid=ExtensionOID.CRL_NUMBER
+        ))
 
         if encoding == Encoding.PEM:
             crl = x509.load_pem_x509_crl(crl, default_backend())
