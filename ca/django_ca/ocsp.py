@@ -23,6 +23,7 @@ def get_index(ca):
     now = datetime.utcnow()
 
     # Write index file (required by "openssl ocsp")
+    # TODO: Expired certs should not be included after a certain time
     for cert in ca.certificate_set.all():
         revocation = ''
         if cert.expires < now:

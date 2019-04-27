@@ -14,50 +14,89 @@
 # see <http://www.gnu.org/licenses/>
 
 import os
-from datetime import timedelta
 
-from django.utils import timezone
+from freezegun import freeze_time
 
 from .. import ca_settings
-from ..ocsp import date_format
 from .base import DjangoCAWithCertTestCase
 from .base import override_settings
 from .base import override_tmpcadir
 
+basic = """V\t190418000000Z\t\t5A1BA263A1E4D8D14D826046D38FE0C3A5B3E489\tunknown\t/C=AT/ST=Vienna/L=Vienna/OU=Fachschaft Informatik/CN=host1.example.com
+V\t190418000000Z\t\t4E2B01C48BCC1F7194128864680CAA04D3F8BB45\tunknown\t/C=AT/ST=Vienna/L=Vienna/OU=Fachschaft Informatik/CN=host2.example.com
+V\t190418000000Z\t\t32A7B08E88A21AEC05C8BA18D78BD935459D82FA\tunknown\t/C=AT/ST=Vienna/L=Vienna/OU=Fachschaft Informatik/CN=host3.example.com
+V\t201016000000Z\t\t4EA5A0D119212EAB3D5639FABDD0A75BCC35E4D9\tunknown\t/CN=ocsp.ca.example.com
+V\t201016000000Z\t\t336163E1DDD7379B77891D949212B4177413E114\tunknown\t/CN=all-extensions.example.com
+V\t201025000000Z\t\t230BA643C4A7D749D5992DE350CAA64283EAE0B4\tunknown\t/C=AT/ST=Vienna/L=Vienna/OU=Fachschaft Informatik/CN=no-extensions.example.com
+V\t280801235959Z\t\t7DD9FE07CFA81EB7107967FBA78934C6\tunknown\t/C=US/O=VeriSign, Inc./OU=Class 3 Public Primary Certification Authority - G2/OU=(c) 1998 VeriSign, Inc. - For authorized use only/OU=VeriSign Trust Network
+V\t190124235959Z\t\t92529ABD85F0A6A4D6C53FD1C91011C1\tunknown\t/OU=Domain Control Validated/OU=PositiveSSL Multi-Domain/CN=sni24142.cloudflaressl.com
+E\t181107091521Z\t\t4F578979F4E1B041ABA5831469B100BCF65\tunknown\t/CN=jabber.at
+V\t190418100401Z\t\tC5D5BD0D2EE5FD65\tunknown\t/OU=Domain Control Validated/CN=derstandard.at
+"""  # NOQA
 
+file = """V\t190418000000Z\t\t5A1BA263A1E4D8D14D826046D38FE0C3A5B3E489\tunknown\t/C=AT/ST=Vienna/L=Vienna/OU=Fachschaft Informatik/CN=host1.example.com
+V\t190418000000Z\t\t4E2B01C48BCC1F7194128864680CAA04D3F8BB45\tunknown\t/C=AT/ST=Vienna/L=Vienna/OU=Fachschaft Informatik/CN=host2.example.com
+V\t190418000000Z\t\t32A7B08E88A21AEC05C8BA18D78BD935459D82FA\tunknown\t/C=AT/ST=Vienna/L=Vienna/OU=Fachschaft Informatik/CN=host3.example.com
+V\t201016000000Z\t\t4EA5A0D119212EAB3D5639FABDD0A75BCC35E4D9\tunknown\t/CN=ocsp.ca.example.com
+V\t201016000000Z\t\t336163E1DDD7379B77891D949212B4177413E114\tunknown\t/CN=all-extensions.example.com
+V\t201025000000Z\t\t230BA643C4A7D749D5992DE350CAA64283EAE0B4\tunknown\t/C=AT/ST=Vienna/L=Vienna/OU=Fachschaft Informatik/CN=no-extensions.example.com
+V\t280801235959Z\t\t7DD9FE07CFA81EB7107967FBA78934C6\tunknown\t/C=US/O=VeriSign, Inc./OU=Class 3 Public Primary Certification Authority - G2/OU=(c) 1998 VeriSign, Inc. - For authorized use only/OU=VeriSign Trust Network
+V\t190124235959Z\t\t92529ABD85F0A6A4D6C53FD1C91011C1\tunknown\t/OU=Domain Control Validated/OU=PositiveSSL Multi-Domain/CN=sni24142.cloudflaressl.com
+E\t181107091521Z\t\t4F578979F4E1B041ABA5831469B100BCF65\tunknown\t/CN=jabber.at
+V\t190418100401Z\t\tC5D5BD0D2EE5FD65\tunknown\t/OU=Domain Control Validated/CN=derstandard.at
+"""  # NOQA
+
+expired = """E\t190418000000Z\t\t5A1BA263A1E4D8D14D826046D38FE0C3A5B3E489\tunknown\t/C=AT/ST=Vienna/L=Vienna/OU=Fachschaft Informatik/CN=host1.example.com
+E\t190418000000Z\t\t4E2B01C48BCC1F7194128864680CAA04D3F8BB45\tunknown\t/C=AT/ST=Vienna/L=Vienna/OU=Fachschaft Informatik/CN=host2.example.com
+E\t190418000000Z\t\t32A7B08E88A21AEC05C8BA18D78BD935459D82FA\tunknown\t/C=AT/ST=Vienna/L=Vienna/OU=Fachschaft Informatik/CN=host3.example.com
+E\t201016000000Z\t\t4EA5A0D119212EAB3D5639FABDD0A75BCC35E4D9\tunknown\t/CN=ocsp.ca.example.com
+E\t201016000000Z\t\t336163E1DDD7379B77891D949212B4177413E114\tunknown\t/CN=all-extensions.example.com
+E\t201025000000Z\t\t230BA643C4A7D749D5992DE350CAA64283EAE0B4\tunknown\t/C=AT/ST=Vienna/L=Vienna/OU=Fachschaft Informatik/CN=no-extensions.example.com
+V\t280801235959Z\t\t7DD9FE07CFA81EB7107967FBA78934C6\tunknown\t/C=US/O=VeriSign, Inc./OU=Class 3 Public Primary Certification Authority - G2/OU=(c) 1998 VeriSign, Inc. - For authorized use only/OU=VeriSign Trust Network
+E\t190124235959Z\t\t92529ABD85F0A6A4D6C53FD1C91011C1\tunknown\t/OU=Domain Control Validated/OU=PositiveSSL Multi-Domain/CN=sni24142.cloudflaressl.com
+E\t181107091521Z\t\t4F578979F4E1B041ABA5831469B100BCF65\tunknown\t/CN=jabber.at
+E\t190418100401Z\t\tC5D5BD0D2EE5FD65\tunknown\t/OU=Domain Control Validated/CN=derstandard.at
+"""  # NOQA
+
+revoked_first = """R\t190418000000Z\t181220231300Z\t5A1BA263A1E4D8D14D826046D38FE0C3A5B3E489\tunknown\t/C=AT/ST=Vienna/L=Vienna/OU=Fachschaft Informatik/CN=host1.example.com
+V\t190418000000Z\t\t4E2B01C48BCC1F7194128864680CAA04D3F8BB45\tunknown\t/C=AT/ST=Vienna/L=Vienna/OU=Fachschaft Informatik/CN=host2.example.com
+V\t190418000000Z\t\t32A7B08E88A21AEC05C8BA18D78BD935459D82FA\tunknown\t/C=AT/ST=Vienna/L=Vienna/OU=Fachschaft Informatik/CN=host3.example.com
+V\t201016000000Z\t\t4EA5A0D119212EAB3D5639FABDD0A75BCC35E4D9\tunknown\t/CN=ocsp.ca.example.com
+V\t201016000000Z\t\t336163E1DDD7379B77891D949212B4177413E114\tunknown\t/CN=all-extensions.example.com
+V\t201025000000Z\t\t230BA643C4A7D749D5992DE350CAA64283EAE0B4\tunknown\t/C=AT/ST=Vienna/L=Vienna/OU=Fachschaft Informatik/CN=no-extensions.example.com
+V\t280801235959Z\t\t7DD9FE07CFA81EB7107967FBA78934C6\tunknown\t/C=US/O=VeriSign, Inc./OU=Class 3 Public Primary Certification Authority - G2/OU=(c) 1998 VeriSign, Inc. - For authorized use only/OU=VeriSign Trust Network
+V\t190124235959Z\t\t92529ABD85F0A6A4D6C53FD1C91011C1\tunknown\t/OU=Domain Control Validated/OU=PositiveSSL Multi-Domain/CN=sni24142.cloudflaressl.com
+E\t181107091521Z\t\t4F578979F4E1B041ABA5831469B100BCF65\tunknown\t/CN=jabber.at
+V\t190418100401Z\t\tC5D5BD0D2EE5FD65\tunknown\t/OU=Domain Control Validated/CN=derstandard.at
+"""  # NOQA
+
+revoked_second = """R\t190418000000Z\t181220231300Z,unspecified\t5A1BA263A1E4D8D14D826046D38FE0C3A5B3E489\tunknown\t/C=AT/ST=Vienna/L=Vienna/OU=Fachschaft Informatik/CN=host1.example.com
+V\t190418000000Z\t\t4E2B01C48BCC1F7194128864680CAA04D3F8BB45\tunknown\t/C=AT/ST=Vienna/L=Vienna/OU=Fachschaft Informatik/CN=host2.example.com
+V\t190418000000Z\t\t32A7B08E88A21AEC05C8BA18D78BD935459D82FA\tunknown\t/C=AT/ST=Vienna/L=Vienna/OU=Fachschaft Informatik/CN=host3.example.com
+V\t201016000000Z\t\t4EA5A0D119212EAB3D5639FABDD0A75BCC35E4D9\tunknown\t/CN=ocsp.ca.example.com
+V\t201016000000Z\t\t336163E1DDD7379B77891D949212B4177413E114\tunknown\t/CN=all-extensions.example.com
+V\t201025000000Z\t\t230BA643C4A7D749D5992DE350CAA64283EAE0B4\tunknown\t/C=AT/ST=Vienna/L=Vienna/OU=Fachschaft Informatik/CN=no-extensions.example.com
+V\t280801235959Z\t\t7DD9FE07CFA81EB7107967FBA78934C6\tunknown\t/C=US/O=VeriSign, Inc./OU=Class 3 Public Primary Certification Authority - G2/OU=(c) 1998 VeriSign, Inc. - For authorized use only/OU=VeriSign Trust Network
+V\t190124235959Z\t\t92529ABD85F0A6A4D6C53FD1C91011C1\tunknown\t/OU=Domain Control Validated/OU=PositiveSSL Multi-Domain/CN=sni24142.cloudflaressl.com
+E\t181107091521Z\t\t4F578979F4E1B041ABA5831469B100BCF65\tunknown\t/CN=jabber.at
+V\t190418100401Z\t\tC5D5BD0D2EE5FD65\tunknown\t/OU=Domain Control Validated/CN=derstandard.at
+"""  # NOQA
+
+
+@freeze_time("2018-12-20 23:13:00")
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class OCSPIndexTestCase(DjangoCAWithCertTestCase):
-    def line(self, cert):
-        revocation = ''
-        if cert.expires < timezone.now():
-            status = 'E'
-        elif cert.revoked is True:
-            status = 'R'
-            revocation = cert.revoked_date.strftime(date_format)
-
-            if cert.revoked_reason:
-                revocation += ',%s' % cert.revoked_reason
-        else:
-            status = 'V'
-
-        return '%s\t%s\t%s\t%s\tunknown\t%s' % (
-            status,
-            cert.x509.not_valid_after.strftime(date_format),
-            revocation,
-            cert.serial.replace(':', ''),
-            cert.distinguishedName(),
-        )
-
-    def assertIndex(self, certs=None):
+    def assertIndex(self, certs=None, expected=''):
         if certs is None:
             certs = self.certs
 
         stdout, stderr = self.cmd('dump_ocsp_index')
-        self.assertEqual(stdout, ''.join(['%s\n' % self.line(c) for c in certs]))
+        self.assertEqual(stdout, expected)
         self.assertEqual(stderr, '')
 
     def test_basic(self):
-        self.assertIndex()
+        self.maxDiff = None
+        self.assertIndex(expected=basic)
 
     @override_tmpcadir()
     def test_file(self):
@@ -68,20 +107,19 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(stderr, '')
 
         with open(path) as stream:
-            self.assertEqual(stream.read(), ''.join(['%s\n' % self.line(c) for c in self.certs]))
+            self.assertEqual(stream.read(), file)
 
+    @freeze_time("2020-12-20 23:13:00")
     def test_expired(self):
-        self.cert.expires = timezone.now() - timedelta(days=3)
-        self.cert.save()
-
-        self.assertIndex()
+        self.maxDiff = None
+        self.assertIndex(expected=expired)
 
     def test_revoked(self):
         self.maxDiff = None
         self.cert.revoke()
 
-        self.assertIndex()
+        self.assertIndex(expected=revoked_first)
 
         self.cert.revoke('unspecified')
 
-        self.assertIndex()
+        self.assertIndex(expected=revoked_second)
