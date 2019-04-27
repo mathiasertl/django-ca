@@ -17,6 +17,7 @@ import base64
 import binascii
 import hashlib
 import itertools
+import json
 import logging
 import os
 import re
@@ -84,6 +85,13 @@ if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: on
 def validate_past(value):
     if value > timezone.now():
         raise ValidationError(_('Date must be in the past!'))
+
+
+def json_validator(value):
+    try:
+        json.loads(value)
+    except Exception as e:
+        raise ValidationError(_('Must be valid JSON: %(message)s') % {'message': str(e)})
 
 
 class Watcher(models.Model):
@@ -566,6 +574,10 @@ class CertificateAuthority(X509CertMixin):
     crl_url = models.TextField(blank=True, null=True, validators=[multiline_url_validator],
                                verbose_name=_('CRL URLs'),
                                help_text=_("URLs, one per line, where you can retrieve the CRL."))
+    crl_number = models.TextField(
+        default='{"scope": {}}', blank=True, verbose_name=_('CRL Number'), validators=[json_validator],
+        help_text=_("Data structure to store the CRL number (see RFC 5280, 5.2.3) depending on the scope.")
+    )
     issuer_url = models.URLField(blank=True, null=True, verbose_name=_('Issuer URL'),
                                  help_text=_("URL to the certificate of this CA (in DER format)."))
     ocsp_url = models.URLField(blank=True, null=True, verbose_name=_('OCSP responder URL'),

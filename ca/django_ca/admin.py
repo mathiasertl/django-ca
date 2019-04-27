@@ -374,7 +374,7 @@ class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
         }),
         (_('Details'), {
             'description': _('Information to add to newly signed certificates.'),
-            'fields': ['crl_url', 'issuer_url', 'ocsp_url', 'issuer_alt_name', ],
+            'fields': ['crl_url', 'crl_number', 'issuer_url', 'ocsp_url', 'issuer_alt_name', ],
         }),
         (_('Certificate'), {
             'fields': ['serial', 'pub', 'expires'],
