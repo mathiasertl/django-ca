@@ -392,6 +392,11 @@ Issuer
 authorityKeyIdentifier
 ======================
 
+The value of this extension matches the subjectKeyIdentifier of the CA that signed the CRL.
+
+.. seealso:: https://tools.ietf.org/html/rfc5280.html#section-5.2.1
+
+
 .. include:: generated/crl_aki.rst
 
 cRLNumber

@@ -27,15 +27,20 @@ ChangeLog
 CRLs
 ====
 
-* CRL entries will no longer include a `Reason Code <https://tools.ietf.org/html/rfc5280#section-5.3.1>`_ if
-  the reason is unspecified.
-* Expose an API for creating CRLs via :py:func:`CertificateAuthority.get_crl()
-  <django_ca.models.CertificateAuthority.get_crl>`.
+* Issued CRLs now confirm to `RFC 5280 <https://tools.ietf.org/html/rfc5280.html>`_:
+
+  * Add the `CRL Number <https://tools.ietf.org/html/rfc5280.html#section-5.2.3>`_ extension.
+  * Add the `Authority Key Identifier <https://tools.ietf.org/html/rfc5280.html#section-5.2.1>`_ extension.
+
+* Add the `Issuing Distribution Point <https://tools.ietf.org/html/rfc5280.html#section-5.2.5>`_
+  extension. This extension requires that you use cryptography>=2.5.
 * Add support for setting an Invalidity Date (see `RFC 5280, 5.3.2
   <https://tools.ietf.org/html/rfc5280.html#section-5.3.2>`_) for CRLs, indicating when the certificate was
   compromised.
-* Add support for the `Issuing Distribution Point <https://tools.ietf.org/html/rfc5280.html#section-5.2.5>`_
-  extension. This extension requires that you use cryptography>=2.5.
+* CRL entries will no longer include a `Reason Code <https://tools.ietf.org/html/rfc5280#section-5.3.1>`_ if
+  the reason is unspecified (recommended in RFC 5280).
+* Expose an API for creating CRLs via :py:func:`CertificateAuthority.get_crl()
+  <django_ca.models.CertificateAuthority.get_crl>`.
 
 .. _changelog-1.12.0:
 

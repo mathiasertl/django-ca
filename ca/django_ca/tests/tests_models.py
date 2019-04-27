@@ -198,6 +198,7 @@ class CertificateAuthorityTests(DjangoCAWithChildCATestCase):
     @freeze_time('2019-04-14 12:26:00')
     @override_tmpcadir()
     def test_user_crl(self):
+        self.maxDiff = None
         idp = self.get_idp(only_contains_user_certs=True)
 
         self.assertIsNone(self.ca.crl_url)

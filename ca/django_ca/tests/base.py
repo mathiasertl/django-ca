@@ -500,6 +500,7 @@ class DjangoCATestCase(TestCase):
             value=x509.CRLNumber(crl_number=crl_number),
             critical=False, oid=ExtensionOID.CRL_NUMBER
         ))
+        extensions.append(signer.authority_key_identifier.as_extension())
 
         if encoding == Encoding.PEM:
             crl = x509.load_pem_x509_crl(crl, default_backend())
@@ -511,7 +512,7 @@ class DjangoCATestCase(TestCase):
         self.assertEqual(crl.issuer, signer.x509.subject)
         self.assertEqual(crl.last_update, datetime.utcnow())
         self.assertEqual(crl.next_update, expires)
-        self.assertEqual(list(crl.extensions), extensions)
+        self.assertCountEqual(list(crl.extensions), extensions)
 
         entries = {e.serial_number: e for e in crl}
         expected = {c.x509.serial_number: c for c in certs}
