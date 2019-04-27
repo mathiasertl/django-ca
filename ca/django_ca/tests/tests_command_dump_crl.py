@@ -18,6 +18,8 @@ import re
 from datetime import timedelta
 from io import BytesIO
 
+from freezegun import freeze_time
+
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -115,6 +117,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
         self.assertEqual(list(crl), [])
 
+    @freeze_time("2019-03-01")
     @override_tmpcadir()
     def test_revoked(self):
         cert = Certificate.objects.get(serial=self.cert.serial)
@@ -143,6 +146,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
             if reason != 'unspecified':
                 self.assertEqual(crl[0].extensions[0].value.reason.name, reason)
 
+    @freeze_time("2019-03-01")
     @override_tmpcadir()
     def test_compromised(self):
         cert = Certificate.objects.get(serial=self.cert.serial)
