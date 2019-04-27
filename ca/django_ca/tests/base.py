@@ -611,9 +611,16 @@ class DjangoCATestCase(TestCase):
         store = X509Store()
 
         # set the time of the OpenSSL context - freezegun doesn't work, because timestamp comes from OpenSSL
-        store.set_time(datetime.utcnow())
+        now = datetime.utcnow()
+        store.set_time(now)
+
         for elem in chain:
-            store.add_cert(load_certificate(FILETYPE_PEM, elem.dump_certificate()))
+            ca = load_certificate(FILETYPE_PEM, elem.dump_certificate())
+            store.add_cert(ca)
+
+            # Verify that the CA itself is valid
+            store_ctx = X509StoreContext(store, ca)
+            self.assertIsNone(store_ctx.verify_certificate())
 
         cert = load_certificate(FILETYPE_PEM, cert.dump_certificate())
         store_ctx = X509StoreContext(store, cert)
