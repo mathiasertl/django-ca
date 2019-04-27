@@ -224,12 +224,14 @@ class CertificateAuthorityTests(DjangoCAWithChildCATestCase):
         crl = self.ca.get_crl(scope='attribute')
         self.assertCRL(crl, idp=idp)
 
+    @override_tmpcadir()
+    @freeze_time('2019-04-14 12:26:00')
     @unittest.skipUnless(ca_settings.CRYPTOGRAPHY_HAS_IDP, "Test requires cryptography>=2.5")
-    def test_full_crl_no_full_name(self):
+    def test_no_idp(self):
         # CRLs require a full name (or only_some_reasons) if it's a full CRL
         self.assertIsNone(self.ca.crl_url)
-        with self.assertRaises(ValueError):
-            self.ca.get_crl()
+        crl = self.ca.get_crl()
+        self.assertCRL(crl, idp=None)
 
     def test_crl_invalid_scope(self):
         with self.assertRaisesRegex(ValueError, r'^Scope must be either None, "ca", "user" or "attribute"$'):

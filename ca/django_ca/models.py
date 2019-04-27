@@ -698,7 +698,11 @@ class CertificateAuthority(X509CertMixin):
         for cert in certs:
             builder = builder.add_revoked_certificate(cert.get_revocation())
 
-        if ca_settings.CRYPTOGRAPHY_HAS_IDP:  # pragma: no branch, pragma: only cryptography>=2.5
+        # We can only add the IDP extension if one of these properties is set, see RFC 5280, 5.2.5.
+        add_idp = idp_kwargs['only_contains_attribute_certs'] or idp_kwargs['only_contains_user_certs'] \
+            or idp_kwargs['only_contains_ca_certs'] or idp_kwargs['full_name'] or idp_kwargs['relative_name']
+
+        if add_idp and ca_settings.CRYPTOGRAPHY_HAS_IDP:  # pragma: no branch, pragma: only cryptography>=2.5
             builder = builder.add_extension(x509.IssuingDistributionPoint(**idp_kwargs), critical=True)
 
         # TODO: Add CRLNumber extension
