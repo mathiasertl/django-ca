@@ -617,7 +617,8 @@ class CertificateAuthority(X509CertMixin):
         else:
             return x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski)
 
-    def get_crl(self, expires=86400, encoding=None, algorithm=None, password=None, scope=None, **kwargs):
+    def get_crl(self, expires=86400, encoding=None, algorithm=None, password=None, scope=None, counter=None,
+                **kwargs):
         """Generate a Certificate Revocation List (CRL).
 
         The ``full_name`` and ``relative_name`` parameters describe how to retrieve the CRL and are used in
@@ -643,6 +644,10 @@ class CertificateAuthority(X509CertMixin):
             What to include in the CRL: Use ``"ca"`` to include only revoked certificate authorities and
             ``"user"`` to include only certificates or ``None`` (the default) to include both.
             ``"attribute"`` is reserved for future use and always produces an empty CRL.
+        counter : str, optional
+            Override the counter-variable for the CRL Number extension. Passing the same key to multiple
+            invocations will yield a different sequence then what would ordinarily be returned. The default is
+            to use the scope as the key.
         full_name : list of str or :py:class:`~cg:cryptography.x509.GeneralName`, optional
             List of general names to use in the Issuing Distribution Point extension. If not passed, use
             ``crl_url`` if set.
@@ -717,8 +722,17 @@ class CertificateAuthority(X509CertMixin):
         if add_idp and ca_settings.CRYPTOGRAPHY_HAS_IDP:  # pragma: no branch, pragma: only cryptography>=2.5
             builder = builder.add_extension(x509.IssuingDistributionPoint(**idp_kwargs), critical=True)
 
-        # TODO: Add CRLNumber extension
-        #   https://cryptography.io/en/latest/x509/reference/#cryptography.x509.CRLNumber
+        # Add the CRLNumber extension (RFC 5280, 5.2.3)
+        if counter is None:
+            counter = scope or 'all'
+        crl_number_data = json.loads(self.crl_number)
+        crl_number = int(crl_number_data['scope'].get(counter, 0))
+        builder = builder.add_extension(x509.CRLNumber(crl_number=crl_number), critical=False)
+
+        # increase crl_number for the given scope and save
+        crl_number_data['scope'][counter] = crl_number + 1
+        self.crl_number = json.dumps(crl_number_data)
+        self.save()
 
         crl = builder.sign(private_key=self.key(password), algorithm=algorithm, backend=default_backend())
         return crl.public_bytes(encoding)

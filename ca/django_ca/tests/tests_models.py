@@ -16,6 +16,7 @@
 from __future__ import unicode_literals
 
 import os
+import re
 import unittest
 from datetime import datetime
 from datetime import timedelta
@@ -136,8 +137,8 @@ class CertificateAuthorityTests(DjangoCAWithChildCATestCase):
         self.assertEqual(self.ecc_ca.pathlen, 0)
         self.assertEqual(self.child_ca.pathlen, 0)
 
-    @override_tmpcadir()
     @freeze_time('2019-04-14 12:26:00')
+    @override_tmpcadir()
     def test_full_crl(self):
         full_name = 'http://localhost/crl'
         idp = self.get_idp(full_name=[x509.UniformResourceIdentifier(value=full_name)])
@@ -149,17 +150,17 @@ class CertificateAuthorityTests(DjangoCAWithChildCATestCase):
         self.ca.crl_url = full_name
         self.ca.save()
         crl = self.ca.get_crl()
-        self.assertCRL(crl, idp=idp)
+        self.assertCRL(crl, idp=idp, crl_number=1)
 
         # revoke a cert
         self.cert.revoke()
         crl = self.ca.get_crl()
-        self.assertCRL(crl, idp=idp, certs=[self.cert])
+        self.assertCRL(crl, idp=idp, certs=[self.cert], crl_number=2)
 
         # also revoke a CA
         self.child_ca.revoke()
         crl = self.ca.get_crl()
-        self.assertCRL(crl, idp=idp, certs=[self.cert, self.child_ca])
+        self.assertCRL(crl, idp=idp, certs=[self.cert, self.child_ca], crl_number=3)
 
         # unrevoke cert (so we have all three combinations)
         self.cert.revoked = False
@@ -168,7 +169,7 @@ class CertificateAuthorityTests(DjangoCAWithChildCATestCase):
         self.cert.save()
 
         crl = self.ca.get_crl()
-        self.assertCRL(crl, idp=idp, certs=[self.child_ca])
+        self.assertCRL(crl, idp=idp, certs=[self.child_ca], crl_number=4)
 
     @override_settings(USE_TZ=True)
     def test_full_crl_tz(self):
@@ -192,10 +193,10 @@ class CertificateAuthorityTests(DjangoCAWithChildCATestCase):
         self.cert.revoke()
         self.child_ca.revoke()
         crl = self.ca.get_crl(scope='ca')
-        self.assertCRL(crl, idp=idp, certs=[self.child_ca])
+        self.assertCRL(crl, idp=idp, certs=[self.child_ca], crl_number=1)
 
-    @override_tmpcadir()
     @freeze_time('2019-04-14 12:26:00')
+    @override_tmpcadir()
     def test_user_crl(self):
         idp = self.get_idp(only_contains_user_certs=True)
 
@@ -207,10 +208,10 @@ class CertificateAuthorityTests(DjangoCAWithChildCATestCase):
         self.cert.revoke()
         self.child_ca.revoke()
         crl = self.ca.get_crl(scope='user')
-        self.assertCRL(crl, idp=idp, certs=[self.cert])
+        self.assertCRL(crl, idp=idp, certs=[self.cert], crl_number=1)
 
-    @override_tmpcadir()
     @freeze_time('2019-04-14 12:26:00')
+    @override_tmpcadir()
     def test_attr_crl(self):
         idp = self.get_idp(only_contains_attribute_certs=True)
 
@@ -222,7 +223,7 @@ class CertificateAuthorityTests(DjangoCAWithChildCATestCase):
         self.cert.revoke()
         self.child_ca.revoke()
         crl = self.ca.get_crl(scope='attribute')
-        self.assertCRL(crl, idp=idp)
+        self.assertCRL(crl, idp=idp, crl_number=1)
 
     @override_tmpcadir()
     @freeze_time('2019-04-14 12:26:00')
@@ -232,6 +233,27 @@ class CertificateAuthorityTests(DjangoCAWithChildCATestCase):
         self.assertIsNone(self.ca.crl_url)
         crl = self.ca.get_crl()
         self.assertCRL(crl, idp=None)
+
+    @override_tmpcadir()
+    @freeze_time('2019-04-14 12:26:00')
+    def test_counter(self):
+        crl = self.ca.get_crl(counter='test')
+        self.assertCRL(crl, idp=None, crl_number=0)
+        crl = self.ca.get_crl(counter='test')
+        self.assertCRL(crl, idp=None, crl_number=1)
+
+        crl = self.ca.get_crl()
+        self.assertCRL(crl, idp=None, crl_number=0)
+
+    def test_validate_json(self):
+        # Validation works if we're not revoked
+        self.ca.full_clean()
+
+        self.ca.crl_number = '{'
+        # Note: we do not use self.assertValidationError, b/c the JSON message might be system dependent
+        with self.assertRaises(ValidationError) as cm:
+            self.ca.full_clean()
+        self.assertTrue(re.match('Must be valid JSON: ', cm.exception.message_dict['crl_number'][0]))
 
     def test_crl_invalid_scope(self):
         with self.assertRaisesRegex(ValueError, r'^Scope must be either None, "ca", "user" or "attribute"$'):
@@ -364,7 +386,7 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         self.cert.compromised = future
         with self.assertValidationError({
                 'compromised': ['Date must be in the past!'],
-                'revoked_date': ['Date must be in the past!']
+                'revoked_date': ['Date must be in the past!'],
         }):
             self.cert.full_clean()
 
