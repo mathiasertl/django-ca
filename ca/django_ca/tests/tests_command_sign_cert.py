@@ -297,9 +297,10 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
         stdin = six.StringIO(self.csr_pem)
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd('sign_cert', alt=['example.com'], stdin=stdin)
-        self.assertEqual(pre.call_count, 1)
 
         cert = Certificate.objects.first()
+
+        self.assertEqual(pre.call_count, 1)
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
         self.assertSubject(cert.x509, [('CN', 'example.com')])
@@ -428,11 +429,14 @@ class SignCertChildCATestCase(DjangoCAWithCSRTestCase):
 
         cls.child_ca = cls.load_ca(name='child', x509=child_pubkey)
 
-    @freeze_time("2018-11-10")
+    # NOTE: This exact time is currently very important, because the Child CA was signed a minute before this
+    # time, and a day after the sign_cert command would fail because the root CA would expire to soon.
+    @freeze_time("2018-12-20 23:13:00")
     @override_tmpcadir()
     def test_from_stdin(self):
         stdin = six.StringIO(self.csr_pem)
         subject = Subject([('CN', 'example.net')])
+
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd('sign_cert', ca=self.child_ca, subject=subject, stdin=stdin)
         self.assertEqual(pre.call_count, 1)
