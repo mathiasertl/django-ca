@@ -982,10 +982,10 @@ elif args.command == 'update-ca-data':
 elif args.command == 'recreate-fixtures':
     setup_django('ca.test_settings')
 
-    from cryptography.hazmat.primitives.serialization import BestAvailableEncryption
-    from cryptography.hazmat.primitives.serialization import Encoding
-    from cryptography.hazmat.primitives.serialization import NoEncryption
-    from cryptography.hazmat.primitives.serialization import PrivateFormat
+    #from cryptography.hazmat.primitives.serialization import BestAvailableEncryption
+    #from cryptography.hazmat.primitives.serialization import Encoding
+    #from cryptography.hazmat.primitives.serialization import NoEncryption
+    #from cryptography.hazmat.primitives.serialization import PrivateFormat
 
     from django.conf import settings
     from django.core.management import call_command as manage
@@ -1000,25 +1000,25 @@ elif args.command == 'recreate-fixtures':
     def write_cert(cert, data, password=None):
         key_dest = os.path.join(settings.FIXTURES_DIR, data['key'])
         pub_dest = os.path.join(settings.FIXTURES_DIR, data['pub'])
-        key_der_dest = os.path.join(settings.FIXTURES_DIR, data['key-der'])
-        pub_der_dest = os.path.join(settings.FIXTURES_DIR, data['pub-der'])
+        #key_der_dest = os.path.join(settings.FIXTURES_DIR, data['key-der'])
+        #pub_der_dest = os.path.join(settings.FIXTURES_DIR, data['pub-der'])
 
         # write files to dest
         shutil.copy(ca_storage.path(cert.private_key_path), key_dest)
         with open(pub_dest, 'w') as stream:
             stream.write(cert.pub)
 
-        if password is None:
-            encryption = NoEncryption()
-        else:
-            encryption = BestAvailableEncryption(password)
+        #if password is None:
+        #    encryption = NoEncryption()
+        #else:
+        #    encryption = BestAvailableEncryption(password)
 
-        key_der = cert.key(password=password).private_bytes(encoding=Encoding.DER, format=PrivateFormat.PKCS8,
-                                                            encryption_algorithm=encryption)
-        with open(key_der_dest, 'wb') as stream:
-            stream.write(key_der)
-        with open(pub_der_dest, 'wb') as stream:
-            stream.write(cert.dump_certificate(Encoding.DER))
+        #key_der = cert.key(password=password).private_bytes(
+        #   encoding=Encoding.DER, format=PrivateFormat.PKCS8, encryption_algorithm=encryption)
+        #with open(key_der_dest, 'wb') as stream:
+        #    stream.write(key_der)
+        #with open(pub_der_dest, 'wb') as stream:
+        #    stream.write(cert.dump_certificate(Encoding.DER))
 
         data['serial'] = cert.serial
         data['hpkp'] = cert.hpkp_pin
