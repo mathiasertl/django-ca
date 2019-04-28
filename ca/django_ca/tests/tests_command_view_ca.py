@@ -93,7 +93,7 @@ X509 v3 certificate extensions for signed certificates:
 * Serial: {serial}
 * Path to private key:
   {key_path}
-* Parent: {parent[0]} ({parent[1]})
+* Parent: {parent_name} ({parent_serial})
 * Has no children.
 * Distinguished Name: {subject}
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}

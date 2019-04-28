@@ -617,6 +617,11 @@ class DjangoCATestCase(TestCase):
             else:
                 ctx[key] = value
 
+        if certs[name].get('parent'):
+            parent = certs[certs[name]['parent']]
+            ctx['parent_name'] = parent['name']
+            ctx['parent_serial'] = parent['serial']
+
         ctx['key_path'] = ca_storage.path(certs[name]['key'])
         return ctx
 
