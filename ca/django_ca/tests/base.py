@@ -6,6 +6,7 @@ Replace this with more appropriate tests for your application.
 """
 
 import inspect
+import json
 import os
 import re
 import shutil
@@ -50,6 +51,7 @@ from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
 from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
+from ..extensions import ListExtension
 from ..extensions import NameConstraints
 from ..extensions import OCSPNoCheck
 from ..extensions import SubjectAlternativeName
@@ -99,15 +101,6 @@ def _load_cert(path):
 
 
 cryptography_version = tuple([int(t) for t in cryptography.__version__.split('.')[:2]])
-root_key = _load_key('root.key')
-root_pem, root_pubkey = _load_cert('root.pem')
-child_key = _load_key('child.key')
-child_pem, child_pubkey = _load_cert('child.pem')
-pwd_ca_pwd = b'test_password'
-pwd_ca_key = _load_key('pwd_ca.key', password=pwd_ca_pwd)
-pwd_ca_pem, pwd_ca_pubkey = _load_cert('pwd_ca.pem')
-ecc_ca_key = _load_key('ecc_ca.key')
-ecc_ca_pem, ecc_ca_pubkey = _load_cert('ecc_ca.pem')
 
 ocsp_key = _load_key('ocsp.key')
 ocsp_csr = _load_csr('ocsp.csr')
@@ -153,7 +146,6 @@ root_ocsp_domain = 'ocsp.ca.example.com'
 certs = {
     'root': {
         'name': 'root',
-        'pem': force_text(root_pem),
         'serial': '4E:1E:2A:29:F9:4C:45:CF:12:2F:2B:17:9E:BF:D4:80:29:C6:37:C7',
         'md5': '63:C1:A3:28:B4:01:80:A3:96:22:23:96:57:17:98:7D',
         'sha1': '98:10:30:97:99:DB:85:29:74:E6:D0:5E:EE:C8:C5:B7:06:BA:D1:19',
@@ -177,7 +169,6 @@ certs = {
     },
     'child': {
         'name': 'child',
-        'pem': force_text(child_pem),
         'serial': '32:82:9C:62:71:0B:74:62:32:33:75:FF:CC:1C:42:2F:73:BE:61:37',
         'md5': '63:C1:A3:28:B4:01:80:A3:96:22:23:96:57:17:98:7D',
         'sha1': '98:10:30:97:99:DB:85:29:74:E6:D0:5E:EE:C8:C5:B7:06:BA:D1:19',
@@ -339,9 +330,47 @@ certs = {
     },
 }
 
-if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
-    certs['cert_all']['precert_poison'] = PrecertPoison()
-    certs['cloudflare_1']['precert_poison'] = PrecertPoison()
+with open(os.path.join(settings.FIXTURES_DIR, 'cert-data.json')) as stream:
+    _fixture_data = json.load(stream)
+
+certs = _fixture_data.get('certs')
+
+# Load CA keys
+root_key = _load_key(certs['root']['key'])
+root_pem, root_pubkey = _load_cert(certs['root']['pub'])
+child_key = _load_key(certs['child']['key'])
+child_pem, child_pubkey = _load_cert(certs['child']['pub'])
+pwd_ca_key = _load_key(certs['pwd']['key'], password=certs['pwd']['password'].encode('utf-8'))
+pwd_ca_pem, pwd_ca_pubkey = _load_cert(certs['pwd']['pub'])
+ecc_ca_key = _load_key(certs['ecc']['key'])
+ecc_ca_pem, ecc_ca_pubkey = _load_cert(certs['ecc']['pub'])
+dsa_ca_key = _load_key(certs['dsa']['key'])
+dsa_ca_pem, dsa_ca_pubkey = _load_cert(certs['dsa']['pub'])
+
+for cert_name, cert_data in certs.items():
+    if cert_data.get('authority_key_identifier'):
+        cert_data['authority_key_identifier'] = AuthorityKeyIdentifier(cert_data['authority_key_identifier'])
+    if cert_data.get('subject_key_identifier'):
+        cert_data['subject_key_identifier'] = SubjectKeyIdentifier(cert_data['subject_key_identifier'])
+    if cert_data.get('basic_constraints'):
+        cert_data['basic_constraints'] = BasicConstraints(cert_data['basic_constraints'])
+    if cert_data.get('key_usage'):
+        cert_data['key_usage'] = KeyUsage(cert_data['key_usage'])
+    if cert_data.get('authority_information_access'):
+        cert_data['authority_information_access'] = AuthorityInformationAccess(
+            cert_data['authority_information_access'])
+
+certs['root']['pem'] = force_text(root_pem)
+certs['child']['pem'] = force_text(child_pem)
+certs['ecc']['pem'] = force_text(ecc_ca_pem)
+certs['pwd']['pem'] = force_text(pwd_ca_pem)
+certs['dsa']['pem'] = force_text(dsa_ca_pem)
+
+
+if certs and ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
+    pass  # not there yet
+    #certs['cert_all']['precert_poison'] = PrecertPoison()
+    #certs['cloudflare_1']['precert_poison'] = PrecertPoison()
 
 
 class override_settings(_override_settings):
@@ -402,14 +431,16 @@ class override_tmpcadir(override_settings):
     def enable(self):
         self.options['CA_DIR'] = tempfile.mkdtemp()
 
-        shutil.copy(os.path.join(settings.FIXTURES_DIR, 'root.key'), self.options['CA_DIR'])
-        shutil.copy(os.path.join(settings.FIXTURES_DIR, 'root-key.der'), self.options['CA_DIR'])
-        shutil.copy(os.path.join(settings.FIXTURES_DIR, 'root-pub.der'), self.options['CA_DIR'])
-        shutil.copy(os.path.join(settings.FIXTURES_DIR, 'child.key'), self.options['CA_DIR'])
+        # copy CAs
+        shutil.copy(os.path.join(settings.FIXTURES_DIR, certs['root']['key']), self.options['CA_DIR'])
+        shutil.copy(os.path.join(settings.FIXTURES_DIR, certs['child']['key']), self.options['CA_DIR'])
+        shutil.copy(os.path.join(settings.FIXTURES_DIR, certs['pwd']['key']), self.options['CA_DIR'])
+        shutil.copy(os.path.join(settings.FIXTURES_DIR, certs['ecc']['key']), self.options['CA_DIR'])
+        shutil.copy(os.path.join(settings.FIXTURES_DIR, certs['dsa']['key']), self.options['CA_DIR'])
+        shutil.copy(os.path.join(settings.FIXTURES_DIR, certs['dsa']['key']), self.options['CA_DIR'])
+
         shutil.copy(os.path.join(settings.FIXTURES_DIR, 'ocsp.key'), self.options['CA_DIR'])
         shutil.copy(os.path.join(settings.FIXTURES_DIR, 'ocsp.pem'), self.options['CA_DIR'])
-        shutil.copy(os.path.join(settings.FIXTURES_DIR, 'pwd_ca.key'), self.options['CA_DIR'])
-        shutil.copy(os.path.join(settings.FIXTURES_DIR, 'ecc_ca.key'), self.options['CA_DIR'])
 
         self.mock = patch.object(ca_storage, 'location', self.options['CA_DIR'])
         self.mock_ = patch.object(ca_storage, '_location', self.options['CA_DIR'])
@@ -691,9 +722,19 @@ class DjangoCATestCase(TestCase):
                     ctx['precert_poison'] = ''
                     oid = '<ObjectIdentifier(oid=1.3.6.1.4.1.11129.2.4.3, name=Unknown OID)>'
                     ctx['precert_poison_unknown'] = '\nUnknownOID (critical):\n    %s' % oid
+            elif key == 'pathlen':
+                ctx[key] = value
+                ctx['%s_text' % key] = 'unlimited' if value is None else value
             elif isinstance(value, Extension):
                 ctx[key] = value
-                ctx['%s_text' % key] = value.as_text()
+
+                if isinstance(value, ListExtension):
+                    for i, val in enumerate(value):
+                        ctx['%s_%s' % (key, i)] = val
+
+                else:
+                    ctx['%s_text' % key] = value.as_text()
+
                 if value.critical:
                     ctx['%s_critical' % key] = ' (critical)'
                 else:
@@ -701,6 +742,7 @@ class DjangoCATestCase(TestCase):
             else:
                 ctx[key] = value
 
+        ctx['key_path'] = ca_storage.path(certs[name]['key'])
         return ctx
 
     def get_idp(self, full_name=None, indirect_crl=False, only_contains_attribute_certs=False,
@@ -816,10 +858,12 @@ class DjangoCAWithCATestCase(DjangoCATestCase):
 
     def setUp(self):
         super(DjangoCAWithCATestCase, self).setUp()
-        self.ca = self.load_ca(name='root', x509=root_pubkey)
-        self.pwd_ca = self.load_ca(name='pwd_ca', x509=pwd_ca_pubkey)
-        self.ecc_ca = self.load_ca(name='ecc_ca', x509=ecc_ca_pubkey)
-        self.cas = [self.ca, self.pwd_ca, self.ecc_ca]
+        self.ca = self.load_ca(name=certs['root']['name'], x509=root_pubkey)
+        self.child_ca = self.load_ca(name=certs['child']['name'], x509=child_pubkey, parent=self.ca)
+        self.pwd_ca = self.load_ca(name=certs['pwd']['name'], x509=pwd_ca_pubkey)
+        self.ecc_ca = self.load_ca(name=certs['ecc']['name'], x509=ecc_ca_pubkey)
+        self.dsa_ca = self.load_ca(name=certs['dsa']['name'], x509=dsa_ca_pubkey)
+        self.cas = [self.ca, self.pwd_ca, self.ecc_ca, self.child_ca, self.dsa_ca]
 
 
 class DjangoCAWithCSRTestCase(DjangoCAWithCATestCase):
@@ -856,7 +900,4 @@ class DjangoCAWithCertTestCase(DjangoCAWithCSRTestCase):
 
 
 class DjangoCAWithChildCATestCase(DjangoCAWithCertTestCase):
-    def setUp(self):
-        super(DjangoCAWithChildCATestCase, self).setUp()
-        self.child_ca = self.load_ca(name='child', x509=child_pubkey, parent=self.ca)
-        self.cas.append(self.child_ca)
+    pass  # TODO: remove
