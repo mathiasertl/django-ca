@@ -555,6 +555,13 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
     def from_str(self, value):
         raise NotImplementedError
 
+    def serialize(self):
+        return {
+            'critical': self.critical,
+            'issuers': [self.serialize_value(v) for v in self.issuers],
+            'ocsp': [self.serialize_value(v) for v in self.ocsp],
+        }
+
 
 class AuthorityKeyIdentifier(KeyIdExtension):
     """Class representing a AuthorityKeyIdentifier extension.
