@@ -17,7 +17,9 @@
 from __future__ import print_function
 
 import argparse
+import json
 import os
+import shutil
 import subprocess
 import sys
 import warnings
@@ -59,6 +61,8 @@ cov_parser.add_argument('--fail-under', type=int, default=100, metavar='[0-100]'
 demo_parser = commands.add_parser('init-demo', help="Initialize the demo data.")
 
 data_parser = commands.add_parser('update-ca-data', help="Update tables for ca_examples.rst in docs.")
+
+fix_parser = commands.add_parser('recreate-fixtures', help="Recreate test fixtures")
 
 args = parser.parse_args()
 
@@ -975,5 +979,151 @@ elif args.command == 'update-ca-data':
 
         with open(filename, 'w') as stream:
             stream.write(table)
+elif args.command == 'recreate-fixtures':
+    setup_django('ca.test_settings')
+
+    from cryptography.hazmat.primitives.serialization import BestAvailableEncryption
+    from cryptography.hazmat.primitives.serialization import Encoding
+    from cryptography.hazmat.primitives.serialization import NoEncryption
+    from cryptography.hazmat.primitives.serialization import PrivateFormat
+
+    from django.conf import settings
+    from django.core.management import call_command as manage
+    from django.urls import reverse
+    manage('migrate', verbosity=0)
+
+    from django_ca.models import CertificateAuthority
+    from django_ca.tests.base import override_tmpcadir
+    from django_ca.utils import ca_storage
+    from django_ca.utils import bytes_to_hex
+
+    def write_cert(cert, data, password=None):
+        key_dest = os.path.join(settings.FIXTURES_DIR, data['key'])
+        pub_dest = os.path.join(settings.FIXTURES_DIR, data['pub'])
+        key_der_dest = os.path.join(settings.FIXTURES_DIR, data['key-der'])
+        pub_der_dest = os.path.join(settings.FIXTURES_DIR, data['pub-der'])
+
+        # write files to dest
+        shutil.copy(ca_storage.path(cert.private_key_path), key_dest)
+        with open(pub_dest, 'w') as stream:
+            stream.write(cert.pub)
+
+        if password is None:
+            encryption = NoEncryption()
+        else:
+            encryption = BestAvailableEncryption(password)
+
+        key_der = cert.key(password=password).private_bytes(encoding=Encoding.DER, format=PrivateFormat.PKCS8,
+                                                            encryption_algorithm=encryption)
+        with open(key_der_dest, 'wb') as stream:
+            stream.write(key_der)
+        with open(pub_der_dest, 'wb') as stream:
+            stream.write(cert.dump_certificate(Encoding.DER))
+
+        data['serial'] = cert.serial
+        data['authority_key_identifier'] = bytes_to_hex(cert.authority_key_identifier.value)
+        data['subject_key_identifier'] = bytes_to_hex(cert.subject_key_identifier.value)
+        data['valid_from'] = cert.x509.not_valid_before.strftime('%Y-%m-%d %H:%M:%S')
+        data['valid_until'] = cert.x509.not_valid_after.strftime('%Y-%m-%d %H:%M:%S')
+
+    child_pathlen = ecc_pathlen = pwd_pathlen = dsa_pathlen = 0
+    testserver = 'http://testserver'
+
+    data = {
+        'root': {
+            'name': 'root',
+            'password': None,
+            'subject': '/C=AT/ST=Vienna/CN=ca.example.com',
+            'pathlen': None,
+
+            'basic_constraints': 'critical,CA:TRUE',
+            'key_usage': 'critical,cRLSign,keyCertSign',
+        },
+        'child': {
+            'name': 'child',
+            'password': None,
+            'subject': '/C=AT/ST=Vienna/CN=child.ca.example.org',
+
+            'basic_constraints': 'critical,CA:TRUE,pathlen=%s' % child_pathlen,
+            'pathlen': child_pathlen,
+            'name_constraints': [['DNS:.org'], ['DNS:.net']],
+        },
+        'ecc': {
+            'name': 'ecc',
+            'password': None,
+            'subject': '/C=AT/ST=Vienna/CN=ecc.ca.example.org',
+
+            'basic_constraints': 'critical,CA:TRUE,pathlen=%s' % ecc_pathlen,
+            'pathlen': ecc_pathlen,
+        },
+        'dsa': {
+            'name': 'dsa',
+            'password': None,
+            'subject': '/C=AT/ST=Vienna/CN=dsa.ca.example.org',
+
+            'basic_constraints': 'critical,CA:TRUE,pathlen=%s' % dsa_pathlen,
+            'pathlen': dsa_pathlen,
+        },
+        'pwd': {
+            'name': 'pwd',
+            'password': 'foobar',
+            'subject': '/C=AT/ST=Vienna/CN=pwd.ca.example.org',
+
+            'basic_constraints': 'critical,CA:TRUE,pathlen=%s' % pwd_pathlen,
+            'pathlen': pwd_pathlen,
+        },
+    }
+
+    data['root']['issuer'] = data['root']['subject']
+    data['root']['issuer_url'] = '%s/%s.der' % (testserver, data['root']['name'])
+    data['root']['ocsp_url'] = '%s/ocsp/%s/' % (testserver, data['root']['name'])
+    data['child']['issuer'] = data['root']['subject']
+    data['child']['crl'] = '%s/%s.crl' % (testserver, data['root']['name'])
+
+    for cert, cert_values in data.items():
+        cert_values['key'] = '%s.key' % cert_values['name']
+        cert_values['pub'] = '%s.pem' % cert_values['name']
+        cert_values['key-der'] = '%s-key.der' % cert_values['name']
+        cert_values['pub-der'] = '%s-pub.der' % cert_values['name']
+
+    with override_tmpcadir():
+        root = CertificateAuthority.objects.init(
+            name=data['root']['name'], subject=data['root']['subject'], key_size=1024,
+        )
+        root.crl_url = '%s%s' % (testserver, reverse('django_ca:crl', kwargs={'serial': root.serial}))
+        root_ca_crl = '%s%s' % (testserver, reverse('django_ca:ca-crl', kwargs={'serial': root.serial}))
+        root.save()
+        write_cert(root, data['root'])
+
+        child = CertificateAuthority.objects.init(
+            name=data['child']['name'], subject=data['child']['subject'], parent=root, key_size=1024,
+            pathlen=child_pathlen, ca_crl_url=root_ca_crl, ca_issuer_url=data['root']['issuer_url'],
+            ca_ocsp_url=data['root']['ocsp_url']
+        )
+        write_cert(child, data['child'])
+
+        ecc = CertificateAuthority.objects.init(
+            name=data['ecc']['name'], subject=data['ecc']['subject'], parent=root, key_size=1024,
+            pathlen=ecc_pathlen, ca_crl_url=root_ca_crl, ca_issuer_url=data['root']['issuer'],
+            ca_ocsp_url=data['root']['ocsp_url'], key_type='ECC'
+        )
+        write_cert(ecc, data['ecc'])
+        dsa = CertificateAuthority.objects.init(
+            name=data['dsa']['name'], subject=data['dsa']['subject'], parent=root, key_size=1024,
+            pathlen=dsa_pathlen, ca_crl_url=root_ca_crl, ca_issuer_url=data['root']['issuer'],
+            ca_ocsp_url=data['root']['ocsp_url'], key_type='DSA'
+        )
+        write_cert(dsa, data['dsa'])
+
+        pwd_password = data['pwd']['password'].encode('utf-8')
+        pwd = CertificateAuthority.objects.init(
+            name=data['pwd']['name'], subject=data['pwd']['subject'], parent=root, key_size=1024,
+            pathlen=pwd_pathlen, ca_crl_url=root_ca_crl, ca_issuer_url=data['root']['issuer'],
+            ca_ocsp_url=data['root']['ocsp_url'], password=pwd_password
+        )
+        write_cert(pwd, data['pwd'], password=pwd_password)
+
+    with open(os.path.join(settings.FIXTURES_DIR, 'cert-data.json'), 'w') as stream:
+        json.dump(data, stream, indent=4)
 else:
     parser.print_help()
