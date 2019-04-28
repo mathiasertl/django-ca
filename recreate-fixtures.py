@@ -55,6 +55,16 @@ else:
 
 manage('migrate', verbosity=0)
 
+# Some variables used in various places throughout the code
+key_size = 1024  # Size for private keys
+ca_base_cn = 'ca.example.com'
+child_pathlen = 0
+ecc_pathlen = 1
+pwd_pathlen = 2
+dsa_pathlen = 3
+dsa_algorithm = 'SHA1'
+testserver = 'http://testserver'
+
 
 class override_tmpcadir(override_settings):
     """Simplified copy of the same decorator in tests.base."""
@@ -137,17 +147,10 @@ def copy_cert(cert, data, key_path, csr_path):
     update_cert_data(cert, data)
 
 
-child_pathlen = 0
-ecc_pathlen = 1
-pwd_pathlen = 2
-dsa_pathlen = 3
-dsa_algorithm = 'SHA1'
-testserver = 'http://testserver'
-
 data = {
     'root': {
         'password': None,
-        'subject': '/C=AT/ST=Vienna/CN=ca.example.com',
+        'subject': '/C=AT/ST=Vienna/CN=%s' % ca_base_cn,
         'pathlen': None,
 
         'basic_constraints': 'critical,CA:TRUE',
@@ -155,7 +158,7 @@ data = {
     },
     'child': {
         'password': None,
-        'subject': '/C=AT/ST=Vienna/CN=child.ca.example.org',
+        'subject': '/C=AT/ST=Vienna/CN=child.%s' % ca_base_cn,
 
         'basic_constraints': 'critical,CA:TRUE,pathlen=%s' % child_pathlen,
         'pathlen': child_pathlen,
@@ -163,7 +166,7 @@ data = {
     },
     'ecc': {
         'password': None,
-        'subject': '/C=AT/ST=Vienna/CN=ecc.ca.example.org',
+        'subject': '/C=AT/ST=Vienna/CN=ecc.%s' % ca_base_cn,
 
         'basic_constraints': 'critical,CA:TRUE,pathlen=%s' % ecc_pathlen,
         'pathlen': ecc_pathlen,
@@ -171,14 +174,14 @@ data = {
     'dsa': {
         'algorithm': dsa_algorithm,
         'password': None,
-        'subject': '/C=AT/ST=Vienna/CN=dsa.ca.example.org',
+        'subject': '/C=AT/ST=Vienna/CN=dsa.%s' % ca_base_cn,
 
         'basic_constraints': 'critical,CA:TRUE,pathlen=%s' % dsa_pathlen,
         'pathlen': dsa_pathlen,
     },
     'pwd': {
         'password': 'testpassword',
-        'subject': '/C=AT/ST=Vienna/CN=pwd.ca.example.org',
+        'subject': '/C=AT/ST=Vienna/CN=pwd.%s' % ca_base_cn,
 
         'basic_constraints': 'critical,CA:TRUE,pathlen=%s' % pwd_pathlen,
         'pathlen': pwd_pathlen,
@@ -225,7 +228,7 @@ data['child']['crl'] = '%s/%s.crl' % (testserver, data['root']['name'])
 with override_tmpcadir():
     # Create CAs
     root = CertificateAuthority.objects.init(
-        name=data['root']['name'], subject=data['root']['subject'], key_size=1024,
+        name=data['root']['name'], subject=data['root']['subject'], key_size=key_size,
     )
     root.crl_url = '%s%s' % (testserver, reverse('django_ca:crl', kwargs={'serial': root.serial}))
     root_ca_crl = '%s%s' % (testserver, reverse('django_ca:ca-crl', kwargs={'serial': root.serial}))
@@ -233,7 +236,7 @@ with override_tmpcadir():
     write_ca(root, data['root'])
 
     child = CertificateAuthority.objects.init(
-        name=data['child']['name'], subject=data['child']['subject'], parent=root, key_size=1024,
+        name=data['child']['name'], subject=data['child']['subject'], parent=root, key_size=key_size,
         pathlen=child_pathlen, ca_crl_url=root_ca_crl, ca_issuer_url=data['root']['issuer_url'],
         ca_ocsp_url=data['root']['ocsp_url']
     )
@@ -241,20 +244,20 @@ with override_tmpcadir():
     write_ca(child, data['child'])
 
     dsa = CertificateAuthority.objects.init(
-        name=data['dsa']['name'], subject=data['dsa']['subject'], key_size=1024,
+        name=data['dsa']['name'], subject=data['dsa']['subject'], key_size=key_size,
         pathlen=dsa_pathlen, key_type='DSA', algorithm=data['dsa']['algorithm'],
     )
     write_ca(dsa, data['dsa'])
 
     ecc = CertificateAuthority.objects.init(
-        name=data['ecc']['name'], subject=data['ecc']['subject'], key_size=1024, key_type='ECC',
+        name=data['ecc']['name'], subject=data['ecc']['subject'], key_size=key_size, key_type='ECC',
         pathlen=ecc_pathlen
     )
     write_ca(ecc, data['ecc'])
 
     pwd_password = data['pwd']['password'].encode('utf-8')
     pwd = CertificateAuthority.objects.init(
-        name=data['pwd']['name'], subject=data['pwd']['subject'], key_size=1024, password=pwd_password,
+        name=data['pwd']['name'], subject=data['pwd']['subject'], key_size=key_size, password=pwd_password,
         pathlen=pwd_pathlen
     )
     write_ca(pwd, data['pwd'], password=pwd_password)
@@ -275,9 +278,9 @@ with override_tmpcadir():
         if PY2:
             # PY2 does not have subprocess.DEVNULL
             with open(os.devnull, 'w') as devnull:
-                subprocess.call(['openssl', 'genrsa', '-out', key_path, '1024'], stderr=devnull)
+                subprocess.call(['openssl', 'genrsa', '-out', key_path, str(key_size)], stderr=devnull)
         else:
-            subprocess.call(['openssl', 'genrsa', '-out', key_path, '1024'], stderr=subprocess.DEVNULL)
+            subprocess.call(['openssl', 'genrsa', '-out', key_path, str(key_size)], stderr=subprocess.DEVNULL)
 
         subprocess.call(['openssl', 'req', '-new', '-key', key_path, '-out', csr_path, '-utf8', '-batch'])
         kwargs = get_cert_profile_kwargs('server')
