@@ -16,6 +16,7 @@ ChangeLog
 * Moved extra ``setup.py`` commands ``dev.py`` to minimize ``setup.py``.
 * Move ``fab init_demo`` to ``dev.py init-demo``.
 * The Fabric file has been removed.
+* The ``view_ca`` management command will now display the full path to the private key, if possible.
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.2.
 * **BACKWARDS INCOMPATIBLE:** Drop support for idna 2.6.
 * **DEPRECATION NOTICE:** This is the last release to support cryptography 2.3.

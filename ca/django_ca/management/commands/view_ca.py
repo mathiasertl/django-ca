@@ -14,6 +14,7 @@
 # see <http://www.gnu.org/licenses/>.
 
 from ..base import BaseCommand
+from ...utils import ca_storage
 
 
 class Command(BaseCommand):
@@ -23,9 +24,14 @@ class Command(BaseCommand):
         self.add_ca(parser, arg='ca', allow_disabled=True)
 
     def handle(self, ca, **options):
+        try:
+            path = ca_storage.path(ca.private_key_path)
+        except NotImplementedError:
+            path = ca.private_key_path
+
         self.stdout.write('%s (%s):' % (ca.name, 'enabled' if ca.enabled else 'disabled'))
         self.stdout.write('* Serial: %s' % ca.serial)
-        self.stdout.write('* Path to private key:\n  %s' % ca.private_key_path)
+        self.stdout.write('* Path to private key:\n  %s' % path)
         if ca.parent:
             self.stdout.write('* Parent: %s (%s)' % (ca.parent.name, ca.parent.serial))
         else:
