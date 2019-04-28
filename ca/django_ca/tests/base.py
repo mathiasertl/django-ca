@@ -348,6 +348,9 @@ dsa_ca_key = _load_key(certs['dsa']['key'])
 dsa_ca_pem, dsa_ca_pubkey = _load_cert(certs['dsa']['pub'])
 
 for cert_name, cert_data in certs.items():
+    cert_data['valid_from'] = datetime.strptime(cert_data['valid_from'], '%Y-%m-%d %H:%M:%S')
+    cert_data['valid_until'] = datetime.strptime(cert_data['valid_until'], '%Y-%m-%d %H:%M:%S')
+
     if cert_data.get('authority_key_identifier'):
         cert_data['authority_key_identifier'] = AuthorityKeyIdentifier(cert_data['authority_key_identifier'])
     if cert_data.get('subject_key_identifier'):

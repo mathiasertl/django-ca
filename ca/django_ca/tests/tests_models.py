@@ -277,23 +277,27 @@ class CertificateTests(DjangoCAWithChildCATestCase):
                 self.assertEqual(value, exp, cert)
 
     def test_dates(self):
-        self.assertEqual(self.ca.expires, certs['root']['expires'])
-        self.assertEqual(self.child_ca.expires, certs['child']['expires'])
+        for ca in self.cas:
+            self.assertEqual(ca.valid_from, certs[ca.name]['valid_from'])
+            self.assertEqual(ca.expires, certs[ca.name]['valid_until'])
+
         self.assertEqual(self.cert.expires, certs['cert1']['expires'])
         self.assertEqual(self.cert2.expires, certs['cert2']['expires'])
         self.assertEqual(self.cert3.expires, certs['cert3']['expires'])
         self.assertEqual(self.ocsp.expires, certs['ocsp']['expires'])
 
-        self.assertEqual(self.ca.valid_from, certs['root']['valid_from'])
-        self.assertEqual(self.child_ca.valid_from, certs['child']['valid_from'])
         self.assertEqual(self.cert.valid_from, certs['cert1']['valid_from'])
         self.assertEqual(self.cert2.valid_from, certs['cert2']['valid_from'])
         self.assertEqual(self.cert3.valid_from, certs['cert3']['valid_from'])
         self.assertEqual(self.ocsp.valid_from, certs['ocsp']['valid_from'])
 
     def test_max_pathlen(self):
-        self.assertEqual(self.ca.max_pathlen, 1)
-        self.assertEqual(self.child_ca.pathlen, 0)
+        for ca in self.cas:
+            expected = certs[ca.name]['pathlen']
+            if expected is None:
+                self.assertIsNone(ca.pathlen)
+            else:
+                self.assertEqual(ca.pathlen, expected)
 
     def test_allows_intermediate(self):
         self.assertTrue(self.ca.allows_intermediate_ca, 1)
@@ -308,20 +312,18 @@ class CertificateTests(DjangoCAWithChildCATestCase):
 
     @override_tmpcadir()
     def test_serial(self):
-        self.assertEqual(self.ca.serial, certs['root']['serial'])
-        self.assertEqual(self.child_ca.serial, certs['child']['serial'])
+        for ca in self.cas:
+            self.assertEqual(ca.serial, certs[ca.name]['serial'])
+
         self.assertEqual(self.cert.serial, certs['cert1']['serial'])
         self.assertEqual(self.cert2.serial, certs['cert2']['serial'])
         self.assertEqual(self.cert3.serial, certs['cert3']['serial'])
         self.assertEqual(self.ocsp.serial, certs['ocsp']['serial'])
 
     @override_tmpcadir()
-    def test_subjectAltName(self):
-        self.assertEqual(self.ca.subject_alternative_name, certs['root']['san'])
-        self.assertEqual(self.child_ca.subject_alternative_name, certs['child']['san'])
-        self.assertEqual(self.cert.subject_alternative_name, certs['cert1']['san'])
-        self.assertEqual(self.cert2.subject_alternative_name, certs['cert2']['san'])
-        self.assertEqual(self.cert3.subject_alternative_name, certs['cert3']['san'])
+    def test_subject_alternative_name(self):
+        for ca in self.cas:
+            self.assertEqual(self.ca.subject_alternative_name, certs[ca.name].get('subject_alternative_name'))
 
         full = self.create_cert(
             self.ca, cert3_csr, [('CN', 'all.example.com')],
@@ -401,10 +403,9 @@ class CertificateTests(DjangoCAWithChildCATestCase):
             else:
                 self.assertEqual(self.cert.ocsp_status, reason)
 
-    def test_basicConstraints(self):
-        self.assertEqual(self.ca.basic_constraints, BasicConstraints('critical,CA:TRUE,pathlen=1'))
-        self.assertEqual(self.pwd_ca.basic_constraints, BasicConstraints('critical,CA:TRUE'))
-        self.assertEqual(self.ecc_ca.basic_constraints, BasicConstraints('critical,CA:TRUE,pathlen=0'))
+    def test_basic_constraints(self):
+        for ca in self.cas:
+            self.assertEqual(ca.basic_constraints, certs[ca.name]['basic_constraints'])
 
         self.assertEqual(self.cert.basic_constraints, BasicConstraints('critical,CA:FALSE'))
         self.assertEqual(self.cert_all.basic_constraints, BasicConstraints('critical,CA:FALSE'))
@@ -414,9 +415,8 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         self.assertEqual(self.cert3.basic_constraints, BasicConstraints('critical,CA:FALSE'))
 
     def test_issuerAltName(self):
-        self.assertIsNone(self.ca.issuer_alternative_name)
-        self.assertIsNone(self.pwd_ca.issuer_alternative_name)
-        self.assertIsNone(self.ecc_ca.issuer_alternative_name)
+        for ca in self.cas:
+            self.assertEqual(self.ca.issuer_alternative_name, certs[ca.name].get('issuer_alternative_name'))
 
         self.assertEqual(self.cert.issuer_alternative_name,
                          IssuerAlternativeName(certs['cert1']['issuer_alternative_name']))
@@ -426,8 +426,9 @@ class CertificateTests(DjangoCAWithChildCATestCase):
                          IssuerAlternativeName(certs['cert3']['issuer_alternative_name']))
 
     def test_keyUsage(self):
-        self.assertEqual(self.ca.key_usage, KeyUsage('critical,cRLSign,keyCertSign'))
-        self.assertEqual(self.child_ca.key_usage, KeyUsage('critical,cRLSign,keyCertSign'))
+        for ca in self.cas:
+            self.assertEqual(ca.key_usage, certs[ca.name].get('key_usage'))
+
         self.assertEqual(self.cert.key_usage,
                          KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'))
         self.assertEqual(self.cert2.key_usage,
@@ -438,31 +439,32 @@ class CertificateTests(DjangoCAWithChildCATestCase):
                          KeyUsage('critical,digitalSignature,keyEncipherment,nonRepudiation'))
 
     def test_extendedKeyUsage(self):
-        self.assertIsNone(self.ca.extended_key_usage)
-        self.assertIsNone(self.child_ca.extended_key_usage)
+        for ca in self.cas:
+            self.assertEqual(ca.extended_key_usage, certs[ca.name].get('extended_key_usage'))
+
         self.assertEqual(self.cert.extended_key_usage, ExtendedKeyUsage('serverAuth'))
         self.assertEqual(self.cert2.extended_key_usage, ExtendedKeyUsage('serverAuth'))
         self.assertEqual(self.cert3.extended_key_usage, ExtendedKeyUsage('serverAuth'))
         self.assertEqual(self.ocsp.extended_key_usage, ExtendedKeyUsage('OCSPSigning'))
 
-    def test_crlDistributionPoints(self):
-        self.assertEqual(self.ca.crlDistributionPoints(), certs['root']['crl'])  # None
-        self.assertEqual(self.child_ca.crlDistributionPoints(), certs['child']['crl'])  # None
+    def test_crl_distribution_points(self):
+        for ca in self.cas:
+            expected = certs[ca.name].get('crl')
+            if expected:
+                expected = (False, ['Full Name: URI:%s' % expected])
+            self.assertEqual(ca.crlDistributionPoints(), expected)
+
         self.assertEqual(self.cert.crlDistributionPoints(), certs['cert1']['crl'])
         self.assertEqual(self.cert2.crlDistributionPoints(), certs['cert2']['crl'])
         self.assertEqual(self.cert3.crlDistributionPoints(), certs['cert3']['crl'])
         self.assertEqual(self.ocsp.crlDistributionPoints(), certs['ocsp']['crl'])
 
     def test_digest(self):
-        self.assertEqual(self.ca.get_digest('md5'), certs['root']['md5'])
-        self.assertEqual(self.ca.get_digest('sha1'), certs['root']['sha1'])
-        self.assertEqual(self.ca.get_digest('sha256'), certs['root']['sha256'])
-        self.assertEqual(self.ca.get_digest('sha512'), certs['root']['sha512'])
-
-        self.assertEqual(self.ca.get_digest('md5'), certs['child']['md5'])
-        self.assertEqual(self.ca.get_digest('sha1'), certs['child']['sha1'])
-        self.assertEqual(self.ca.get_digest('sha256'), certs['child']['sha256'])
-        self.assertEqual(self.ca.get_digest('sha512'), certs['child']['sha512'])
+        for ca in self.cas:
+            self.assertEqual(ca.get_digest('md5'), certs[ca.name]['md5'])
+            self.assertEqual(ca.get_digest('sha1'), certs[ca.name]['sha1'])
+            self.assertEqual(ca.get_digest('sha256'), certs[ca.name]['sha256'])
+            self.assertEqual(ca.get_digest('sha512'), certs[ca.name]['sha512'])
 
         self.assertEqual(self.cert.get_digest('md5'), certs['cert1']['md5'])
         self.assertEqual(self.cert.get_digest('sha1'), certs['cert1']['sha1'])
@@ -479,10 +481,10 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         self.assertEqual(self.cert3.get_digest('sha256'), certs['cert3']['sha256'])
         self.assertEqual(self.cert3.get_digest('sha512'), certs['cert3']['sha512'])
 
-    def test_authorityKeyIdentifier(self):
-        self.assertEqual(self.ca.authority_key_identifier.as_text(), certs['root']['authKeyIdentifier'])
-        self.assertEqual(self.child_ca.authority_key_identifier.as_text(),
-                         certs['child']['authKeyIdentifier'])
+    def test_authority_key_identifier(self):
+        for ca in self.cas:
+            self.assertEqual(self.ca.authority_key_identifier, certs['root']['authority_key_identifier'])
+
         self.assertEqual(self.cert.authority_key_identifier.as_text(), certs['cert1']['authKeyIdentifier'])
         self.assertEqual(self.cert2.authority_key_identifier.as_text(), certs['cert2']['authKeyIdentifier'])
         self.assertEqual(self.cert3.authority_key_identifier.as_text(), certs['cert3']['authKeyIdentifier'])
@@ -492,8 +494,9 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         #   openssl x509 -in cert1.pem -pubkey -noout \
         #       | openssl rsa -pubin -outform der \
         #       | openssl dgst -sha256 -binary | base64
-        self.assertEqual(self.ca.hpkp_pin, certs['root']['hpkp'])
-        self.assertEqual(self.child_ca.hpkp_pin, certs['child']['hpkp'])
+        for ca in self.cas:
+            self.assertEqual(ca.hpkp_pin, certs[ca.name]['hpkp'])
+
         self.assertEqual(self.cert.hpkp_pin, certs['cert1']['hpkp'])
         self.assertEqual(self.cert2.hpkp_pin, certs['cert2']['hpkp'])
         self.assertEqual(self.cert3.hpkp_pin, certs['cert3']['hpkp'])
@@ -579,10 +582,9 @@ class CertificateTests(DjangoCAWithChildCATestCase):
         ]))
 
     def test_get_authority_key_identifier(self):
-        self.assertEqual(self.ca.get_authority_key_identifier(), certs['root']['aki'])
-        self.assertEqual(self.pwd_ca.get_authority_key_identifier(), certs['pwd_ca']['aki'])
-        self.assertEqual(self.ecc_ca.get_authority_key_identifier(), certs['ecc_ca']['aki'])
-        self.assertEqual(self.child_ca.get_authority_key_identifier(), certs['child']['aki'])
+        for ca in self.cas:
+            expected = AuthorityKeyIdentifier(certs[ca.name]['subject_key_identifier'].value)
+            self.assertEqual(ca.get_authority_key_identifier(), expected.extension_type)
 
         # All CAs have a subject key identifier, so we mock that this exception is not present
         def side_effect(cls):
@@ -590,7 +592,8 @@ class CertificateTests(DjangoCAWithChildCATestCase):
 
         with mock.patch('cryptography.x509.extensions.Extensions.get_extension_for_class',
                         side_effect=side_effect):
-            self.assertEqual(self.child_ca.get_authority_key_identifier(), certs['child']['aki'])
+            expected = AuthorityKeyIdentifier(certs[self.child_ca.name]['subject_key_identifier'].value)
+            self.assertEqual(self.child_ca.get_authority_key_identifier(), expected.extension_type)
 
     ###############################################
     # Test extensions for all loaded certificates #

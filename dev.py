@@ -17,6 +17,7 @@
 from __future__ import print_function
 
 import argparse
+import binascii
 import json
 import os
 import shutil
@@ -993,6 +994,7 @@ elif args.command == 'recreate-fixtures':
     #from cryptography.hazmat.primitives.serialization import Encoding
     #from cryptography.hazmat.primitives.serialization import NoEncryption
     #from cryptography.hazmat.primitives.serialization import PrivateFormat
+    from cryptography.hazmat.primitives import hashes
 
     from django.conf import settings
     from django.core.management import call_command as manage
@@ -1004,6 +1006,7 @@ elif args.command == 'recreate-fixtures':
     from django_ca.models import CertificateAuthority
     from django_ca.utils import ca_storage
     from django_ca.utils import bytes_to_hex
+    from django_ca.utils import add_colons
 
     class override_tmpcadir(override_settings):
         """Sets the CA_DIR directory to a temporary directory.
@@ -1057,6 +1060,11 @@ elif args.command == 'recreate-fixtures':
         data['subject_key_identifier'] = bytes_to_hex(cert.subject_key_identifier.value)
         data['valid_from'] = cert.x509.not_valid_before.strftime('%Y-%m-%d %H:%M:%S')
         data['valid_until'] = cert.x509.not_valid_after.strftime('%Y-%m-%d %H:%M:%S')
+
+        data['md5'] = cert.get_digest('md5')
+        data['sha1'] = cert.get_digest('sha1')
+        data['sha256'] = cert.get_digest('sha256')
+        data['sha512'] = cert.get_digest('sha512')
 
         ku = cert.key_usage
         if ku is not None:
