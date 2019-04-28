@@ -22,6 +22,10 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from datetime import datetime
+from datetime import timedelta
+
+from freezegun import freeze_time
 
 #from cryptography.hazmat.primitives.serialization import BestAvailableEncryption
 #from cryptography.hazmat.primitives.serialization import Encoding
@@ -46,6 +50,7 @@ from django_ca.profiles import get_cert_profile_kwargs
 from django_ca.utils import bytes_to_hex
 from django_ca.utils import ca_storage
 
+now = datetime.utcnow().replace(second=0, minute=0)
 PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
 if PY2:  # pragma: only py2
@@ -58,6 +63,7 @@ manage('migrate', verbosity=0)
 # Some variables used in various places throughout the code
 key_size = 1024  # Size for private keys
 ca_base_cn = 'ca.example.com'
+root_pathlen = None
 child_pathlen = 0
 ecc_pathlen = 1
 pwd_pathlen = 2
@@ -108,6 +114,18 @@ def update_cert_data(cert, data):
     if aia is not None:
         data['authority_information_access'] = aia.serialize()
 
+    san = cert.subject_alternative_name
+    if san is not None:
+        data['subject_alternative_name'] = san.serialize()
+
+    ian = cert.issuer_alternative_name
+    if ian is not None:
+        data['issuer_alternative_name'] = ian.serialize()
+
+    eku = cert.extended_key_usage
+    if eku is not None:
+        data['extended_key_usage'] = eku.serialize()
+
 
 def write_ca(cert, data, password=None):
     key_dest = os.path.join(settings.FIXTURES_DIR, data['key'])
@@ -133,6 +151,7 @@ def write_ca(cert, data, password=None):
     #    stream.write(cert.dump_certificate(Encoding.DER))
 
     # These keys are only present in CAs:
+    data['issuer_url'] = ca.issuer_url
     data['crl_url'] = ca.crl_url
     data['ca_crl_url'] = '%s%s' % (testserver, reverse('django_ca:ca-crl', kwargs={'serial': ca.serial}))
 
@@ -149,6 +168,8 @@ def copy_cert(cert, data, key_path, csr_path):
     with open(pub_dest, 'w') as stream:
         stream.write(cert.pub)
 
+    data['crl'] = cert.ca.crl_url
+
     update_cert_data(cert, data)
 
 
@@ -157,13 +178,14 @@ data = {
         'type': 'ca',
         'password': None,
         'subject': '/C=AT/ST=Vienna/CN=%s' % ca_base_cn,
-        'pathlen': None,
+        'pathlen': root_pathlen,
 
         'basic_constraints': 'critical,CA:TRUE',
         'key_usage': 'critical,cRLSign,keyCertSign',
     },
     'child': {
         'type': 'ca',
+        'delta': timedelta(days=3),
         'parent': 'root',
         'password': None,
         'subject': '/C=AT/ST=Vienna/CN=child.%s' % ca_base_cn,
@@ -200,24 +222,35 @@ data = {
 
     'root-cert': {
         'ca': 'root',
+        'delta': timedelta(days=5),
+        'pathlen': root_pathlen,
         'csr': True,
+        'basic_constraints': 'critical,CA:FALSE',
     },
     'child-cert': {
         'ca': 'child',
+        'delta': timedelta(days=5),
         'csr': True,
+        'basic_constraints': 'critical,CA:FALSE',
     },
     'ecc-cert': {
         'ca': 'ecc',
+        'delta': timedelta(days=5),
         'csr': True,
+        'basic_constraints': 'critical,CA:FALSE',
     },
     'pwd-cert': {
         'ca': 'pwd',
+        'delta': timedelta(days=5),
         'csr': True,
+        'basic_constraints': 'critical,CA:FALSE',
     },
     'dsa-cert': {
         'ca': 'dsa',
+        'delta': timedelta(days=5),
         'algorithm': dsa_algorithm,
         'csr': True,
+        'basic_constraints': 'critical,CA:FALSE',
     },
 }
 
@@ -229,17 +262,21 @@ for cert, cert_values in data.items():
     cert_values['pub'] = '%s.pem' % cert_values['name']
     cert_values.setdefault('key_size', key_size)
     cert_values.setdefault('key_type', 'RSA')
+    cert_values.setdefault('delta', timedelta())
     if cert_values.pop('csr', False):
         cert_values['csr'] = '%s.csr' % cert_values['name']
 
     if cert_values.get('type') == 'ca':
-        data[cert]['issuer_url'] = '%s/%s.der' % (testserver, data[cert]['name'])
-        data[cert]['ocsp_url'] = '%s/ocsp/%s/' % (testserver, data[cert]['name'])
         data[cert]['ca_ocsp_url'] = '%s/ca/ocsp/%s/' % (testserver, data[cert]['name'])
+    else:
+        data[cert]['cn'] = '%s.example.com' % cert
+
+ca_names = [v['name'] for k, v in data.items() if v.get('type') == 'ca']
+ca_instances = []
 
 with override_tmpcadir():
     # Create CAs
-    for name in ['root', 'child', 'ecc', 'pwd', 'dsa']:
+    for name in ca_names:
         kwargs = {}
 
         # Get some data from the parent, if present
@@ -253,14 +290,18 @@ with override_tmpcadir():
             # also update data
             data[name]['crl'] = data[parent]['ca_crl_url']
 
-        ca = CertificateAuthority.objects.init(
-            name=data[name]['name'], password=data[name]['password'], subject=data[name]['subject'],
-            key_type=data[name]['key_type'], key_size=data[name]['key_size'],
-            algorithm=data[name]['algorithm'],
-            pathlen=data[name]['pathlen'], **kwargs
-        )
+        with freeze_time(now + data[name]['delta']):
+            ca = CertificateAuthority.objects.init(
+                name=data[name]['name'], password=data[name]['password'], subject=data[name]['subject'],
+                key_type=data[name]['key_type'], key_size=data[name]['key_size'],
+                algorithm=data[name]['algorithm'],
+                pathlen=data[name]['pathlen'], **kwargs
+            )
         ca.crl_url = '%s%s' % (testserver, reverse('django_ca:crl', kwargs={'serial': ca.serial}))
+        ca.ocsp_url = '%s%s' % (testserver, reverse('django_ca:ocsp-post-%s' % name))
+        ca.issuer_url = '%s/%s.der' % (testserver, name)
         ca.save()
+        ca_instances.append(ca)
 
         write_ca(ca, data[name])
 
@@ -270,11 +311,10 @@ with override_tmpcadir():
     ]
 
     # let's create a standard certificate for every CA
-    for ca in CertificateAuthority.objects.all():
+    for ca in ca_instances:
         name = '%s-cert' % ca.name
         key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
         csr_path = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
-        common_name = '%s.example.com' % name
 
         if PY2:
             # PY2 does not have subprocess.DEVNULL
@@ -285,20 +325,25 @@ with override_tmpcadir():
 
         subprocess.call(['openssl', 'req', '-new', '-key', key_path, '-out', csr_path, '-utf8', '-batch'])
         kwargs = get_cert_profile_kwargs('server')
-        kwargs['subject'].append(('CN', common_name))
+        kwargs['subject'].append(('CN', data[name]['cn']))
         with open(csr_path) as stream:
             csr = stream.read()
 
         pwd = data[data[name]['ca']]['password']
-        cert = Certificate.objects.init(ca=ca, csr=csr, algorithm=data[name]['algorithm'],
-                                        password=pwd, **kwargs)
+
+        with freeze_time(now + data[name]['delta']):
+            cert = Certificate.objects.init(ca=ca, csr=csr, algorithm=data[name]['algorithm'],
+                                            password=pwd, **kwargs)
         copy_cert(cert, data[name], key_path, csr_path)
 
 for name, cert_data in data.items():
+    del cert_data['delta']
+
     if cert_data.get('password'):
         cert_data['password'] = cert_data['password'].decode('utf-8')
 
 fixture_data = {
+    'timestamp': now.strftime('%Y-%m-%d %H:%M:%S'),
     'certs': data,
 }
 

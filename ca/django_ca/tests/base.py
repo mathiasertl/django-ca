@@ -205,6 +205,13 @@ certs = {
 with open(os.path.join(settings.FIXTURES_DIR, 'cert-data.json')) as stream:
     _fixture_data = json.load(stream)
 
+timestamps = {
+    'base': datetime.strptime(_fixture_data['timestamp'], '%Y-%m-%d %H:%M:%S'),
+}
+timestamps['before_everything'] = timestamps['base'] - timedelta(days=0)
+timestamps['before_child'] = timestamps['base'] - timedelta(days=1)
+timestamps['everything_valid'] = timestamps['base'] + timedelta(days=10)
+timestamps['everything_expired'] = timestamps['base'] + timedelta(days=365 * 20)
 certs = _fixture_data.get('certs')
 
 # Load CA keys
@@ -219,9 +226,29 @@ ecc_ca_pem, ecc_ca_pubkey = _load_cert(certs['ecc']['pub'])
 dsa_ca_key = _load_key(certs['dsa']['key'])
 dsa_ca_pem, dsa_ca_pubkey = _load_cert(certs['dsa']['pub'])
 
+# Load certificates
+root_cert_key = _load_key(certs['root-cert']['key'])
+root_cert_csr = _load_csr(certs['root-cert']['csr'])
+root_cert_pem, root_cert_pubkey = _load_cert(certs['root-cert']['pub'])
+child_cert_key = _load_key(certs['child-cert']['key'])
+child_cert_csr = _load_csr(certs['child-cert']['csr'])
+child_cert_pem, child_cert_pubkey = _load_cert(certs['child-cert']['pub'])
+ecc_cert_key = _load_key(certs['ecc-cert']['key'])
+ecc_cert_csr = _load_csr(certs['ecc-cert']['csr'])
+ecc_cert_pem, ecc_cert_pubkey = _load_cert(certs['ecc-cert']['pub'])
+dsa_cert_key = _load_key(certs['dsa-cert']['key'])
+dsa_cert_csr = _load_csr(certs['dsa-cert']['csr'])
+dsa_cert_pem, dsa_cert_pubkey = _load_cert(certs['dsa-cert']['pub'])
+pwd_cert_key = _load_key(certs['pwd-cert']['key'])
+pwd_cert_csr = _load_csr(certs['pwd-cert']['csr'])
+pwd_cert_pem, pwd_cert_pubkey = _load_cert(certs['pwd-cert']['pub'])
+
 for cert_name, cert_data in certs.items():
     cert_data['valid_from'] = datetime.strptime(cert_data['valid_from'], '%Y-%m-%d %H:%M:%S')
     cert_data['valid_until'] = datetime.strptime(cert_data['valid_until'], '%Y-%m-%d %H:%M:%S')
+
+    cert_data['valid_from_short'] = cert_data['valid_from'].strftime('%Y-%m-%d %H:%M')
+    cert_data['valid_until_short'] = cert_data['valid_until'].strftime('%Y-%m-%d %H:%M')
 
     if cert_data.get('authority_key_identifier'):
         cert_data['authority_key_identifier'] = AuthorityKeyIdentifier(cert_data['authority_key_identifier'])
@@ -229,17 +256,26 @@ for cert_name, cert_data in certs.items():
         cert_data['subject_key_identifier'] = SubjectKeyIdentifier(cert_data['subject_key_identifier'])
     if cert_data.get('basic_constraints'):
         cert_data['basic_constraints'] = BasicConstraints(cert_data['basic_constraints'])
+    if cert_data.get('extended_key_usage'):
+        cert_data['extended_key_usage'] = ExtendedKeyUsage(cert_data['extended_key_usage'])
     if cert_data.get('key_usage'):
         cert_data['key_usage'] = KeyUsage(cert_data['key_usage'])
     if cert_data.get('authority_information_access'):
         cert_data['authority_information_access'] = AuthorityInformationAccess(
             cert_data['authority_information_access'])
+    if cert_data.get('subject_alternative_name'):
+        cert_data['subject_alternative_name'] = SubjectAlternativeName(cert_data['subject_alternative_name'])
 
 certs['root']['pem'] = force_text(root_pem)
 certs['child']['pem'] = force_text(child_pem)
 certs['ecc']['pem'] = force_text(ecc_ca_pem)
 certs['pwd']['pem'] = force_text(pwd_ca_pem)
 certs['dsa']['pem'] = force_text(dsa_ca_pem)
+certs['root-cert']['pem'] = force_text(root_cert_pem)
+certs['ecc-cert']['pem'] = force_text(ecc_cert_pem)
+certs['dsa-cert']['pem'] = force_text(dsa_cert_pem)
+certs['pwd-cert']['pem'] = force_text(pwd_cert_pem)
+certs['child-cert']['pem'] = force_text(child_cert_pem)
 
 
 if certs and ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
@@ -758,9 +794,21 @@ class DjangoCAWithCSRTestCase(DjangoCAWithCATestCase):
 class DjangoCAWithCertTestCase(DjangoCAWithCSRTestCase):
     def setUp(self):
         super(DjangoCAWithCertTestCase, self).setUp()
-        self.cert = self.load_cert(self.ca, x509=cert1_pubkey, csr=cert1_csr)
-        self.cert2 = self.load_cert(self.ca, cert2_pubkey)
-        self.cert3 = self.load_cert(self.ca, cert3_pubkey)
+        self.root_cert = self.load_cert(self.ca, x509=root_cert_pubkey, csr=root_cert_csr)
+        self.child_cert = self.load_cert(self.child_ca, x509=child_cert_pubkey, csr=child_cert_csr)
+        self.pwd_cert = self.load_cert(self.pwd_ca, x509=pwd_cert_pubkey, csr=pwd_cert_csr)
+        self.ecc_cert = self.load_cert(self.ecc_ca, x509=ecc_cert_pubkey, csr=ecc_cert_csr)
+        self.dsa_cert = self.load_cert(self.dsa_ca, x509=dsa_cert_pubkey, csr=dsa_cert_csr)
+
+        # These are the basic certificates loaded in a loop
+        self.basic_certs = {
+            'root-cert': self.root_cert,
+            'child-cert': self.child_cert,
+            'pwd-cert': self.pwd_cert,
+            'ecc-cert': self.ecc_cert,
+            'dsa-cert': self.dsa_cert,
+        }
+
         self.ocsp = self.load_cert(self.ca, ocsp_pubkey)
         self.cert_all = self.load_cert(self.ca, x509=all_pubkey, csr=all_csr)
         self.cert_no_ext = self.load_cert(self.ca, x509=no_ext_pubkey, csr=no_ext_csr)
@@ -773,7 +821,7 @@ class DjangoCAWithCertTestCase(DjangoCAWithCSRTestCase):
         self.cert_godaddy_derstandardat = self.load_cert(self.ca, godaddy_derstandardat_pubkey)
 
         self.certs = [
-            self.cert, self.cert2, self.cert3, self.ocsp, self.cert_all, self.cert_no_ext,
+            self.ocsp, self.cert_all, self.cert_no_ext,
             self.cert_multiple_ous_and_no_ext, self.cert_cloudflare_1, self.cert_letsencrypt_jabber_at,
             self.cert_godaddy_derstandardat,
         ]

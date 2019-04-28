@@ -190,9 +190,29 @@ CA_MIN_KEY_SIZE = 1024
 # should be something that doesn't exist, so make sure we use a decorator everywhere
 CA_DIR = '/non/existent'
 
-
+# TODO: get serial and paths from fixture data
 CA_OCSP_URLS = {
     'root': {
+        'ca': ROOT_SERIAL,
+        'responder_key': OCSP_KEY_PATH,
+        'responder_cert': OCSP_PEM_PATH,
+    },
+    'child': {
+        'ca': ROOT_SERIAL,
+        'responder_key': OCSP_KEY_PATH,
+        'responder_cert': OCSP_PEM_PATH,
+    },
+    'pwd': {
+        'ca': ROOT_SERIAL,
+        'responder_key': OCSP_KEY_PATH,
+        'responder_cert': OCSP_PEM_PATH,
+    },
+    'ecc': {
+        'ca': ROOT_SERIAL,
+        'responder_key': OCSP_KEY_PATH,
+        'responder_cert': OCSP_PEM_PATH,
+    },
+    'dsa': {
         'ca': ROOT_SERIAL,
         'responder_key': OCSP_KEY_PATH,
         'responder_cert': OCSP_PEM_PATH,

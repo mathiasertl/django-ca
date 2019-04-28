@@ -86,7 +86,6 @@ X509 v3 certificate extensions for signed certificates:
 
     @override_tmpcadir()
     def test_child(self):
-        self.maxDiff = None
         stdout, stderr = self.cmd('view_ca', self.child_ca.serial)
         data = self.get_cert_context('child')
         self.assertMultiLineEqual(stdout, '''{name} (enabled):
@@ -128,7 +127,6 @@ X509 v3 certificate extensions for signed certificates:
 
     @override_tmpcadir()
     def test_ecc(self):
-        self.maxDiff = None
         stdout, stderr = self.cmd('view_ca', self.ecc_ca.serial)
         data = self.get_cert_context('ecc')
         self.assertMultiLineEqual(stdout, root_expected.format(**data))
@@ -136,7 +134,6 @@ X509 v3 certificate extensions for signed certificates:
 
     @override_tmpcadir()
     def test_pwd(self):
-        self.maxDiff = None
         stdout, stderr = self.cmd('view_ca', self.pwd_ca.serial)
         data = self.get_cert_context('pwd')
         self.assertMultiLineEqual(stdout, root_expected.format(**data))
@@ -144,7 +141,6 @@ X509 v3 certificate extensions for signed certificates:
 
     @override_tmpcadir()
     def test_dsa(self):
-        self.maxDiff = None
         stdout, stderr = self.cmd('view_ca', self.dsa_ca.serial)
         data = self.get_cert_context('dsa')
         self.assertMultiLineEqual(stdout, root_expected.format(**data))

@@ -13,14 +13,12 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
-from datetime import timedelta
 from io import BytesIO
 
 from freezegun import freeze_time
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
-from django.utils import timezone
 from django.utils.encoding import force_bytes
 
 from .. import ca_settings
@@ -28,12 +26,12 @@ from ..models import Certificate
 from ..models import Watcher
 from .base import DjangoCAWithCertTestCase
 from .base import certs
+from .base import timestamps
 from .base import override_settings
 from .base import override_tmpcadir
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
-@freeze_time("2018-11-01")
 class ViewCertTestCase(DjangoCAWithCertTestCase):
     def _get_format(self, cert):
         return {
@@ -51,14 +49,15 @@ class ViewCertTestCase(DjangoCAWithCertTestCase):
             'san': cert.subject_alternative_name,
         }
 
-    def test_basic(self):
-        stdout, stderr = self.cmd('view_cert', self.cert.serial, stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
-Valid from: {from}
-Valid until: {until}
+    def assertBasic(self, status):
+        for key, cert in self.basic_certs.items():
+            stdout, stderr = self.cmd('view_cert', cert.serial, stdout=BytesIO(), stderr=BytesIO())
+            self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
+Valid from: {valid_from_short}
+Valid until: {valid_until_short}
 Status: {status}
 SubjectAltName:
-    * {san[0]}
+    * {subject_alternative_name}
 Watchers:
 Digest:
     md5: {md5}
@@ -67,40 +66,39 @@ Digest:
     sha512: {sha512}
 HPKP pin: {hpkp}
 
-{pem}'''.format(**self.get_cert_context('cert1')))
-
-        self.assertEqual(stderr, b'')
+{pem}'''.format(status=status, **self.get_cert_context(key)))
+            self.assertEqual(stderr, b'')
 
         # test with no pem but with extensions
-        stdout, stderr = self.cmd('view_cert', self.cert.serial, no_pem=True, extensions=True,
-                                  stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
-Valid from: {from}
-Valid until: {until}
+        for key, cert in self.basic_certs.items():
+            stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, extensions=True,
+                                      stdout=BytesIO(), stderr=BytesIO())
+            self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
+Valid from: {valid_from_short}
+Valid until: {valid_until_short}
 Status: {status}
-AuthorityInfoAccess:
+AuthorityInfoAccess{authority_information_access_critical}:
     CA Issuers:
-      * {authInfoAccess_0}
+      * URI:{authority_information_access.issuers[0].value}
     OCSP:
-      * {authInfoAccess_1}
-AuthorityKeyIdentifier:
-    {authKeyIdentifier}
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
 BasicConstraints (critical):
     CA:FALSE
 cRLDistributionPoints:
-    * {crl_0}
-ExtendedKeyUsage:
-    * serverAuth
-IssuerAltName:
-    * {issuer_alternative_name}
-KeyUsage (critical):
-    * digitalSignature
-    * keyAgreement
-    * keyEncipherment
-SubjectAltName:
-    * {san[0]}
-SubjectKeyIdentifier:
-    {subjectKeyIdentifier}
+    * Full Name: URI:{crl}
+ExtendedKeyUsage{extended_key_usage_critical}:
+    * {extended_key_usage[0]}
+    * {extended_key_usage[1]}
+KeyUsage{key_usage_critical}:
+    * {key_usage[0]}
+    * {key_usage[1]}
+    * {key_usage[2]}
+SubjectAltName{subject_alternative_name_critical}:
+    * {subject_alternative_name}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier}
 Watchers:
 Digest:
     md5: {md5}
@@ -108,12 +106,22 @@ Digest:
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
-'''.format(**self.get_cert_context('cert1')))
-        self.assertEqual(stderr, b'')
+'''.format(status=status, **self.get_cert_context(key)))
+            self.assertEqual(stderr, b'')
 
-    @override_settings(USE_TZ=True)
-    def test_basic_with_use_tz(self):
-        self.test_basic()
+    @freeze_time(timestamps['everything_valid'])
+    def test_basic(self):
+        self.assertBasic(status='Valid')
+
+    @freeze_time(timestamps['before_everything'])
+    def test_basic_not_yet_valid(self):
+        self.maxDiff = None
+        self.assertBasic(status='Not yet valid')
+
+    @freeze_time(timestamps['everything_expired'])
+    def test_basic_expired(self):
+        self.maxDiff = None
+        self.assertBasic(status='Not yet valid')
 
     @freeze_time("2018-11-10")
     def test_cert_all(self):
@@ -252,33 +260,6 @@ Digest:
 HPKP pin: %(hpkp)s
 ''' % certs['cert1'])
         self.assertEqual(stderr, b'')
-
-    @freeze_time("2020-11-10")
-    def test_expired(self):
-        cert = Certificate.objects.get(serial=self.cert.serial)
-        cert.expires = timezone.now() - timedelta(days=30)
-        cert.save()
-
-        stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stdout.decode('utf-8'), '''Common Name: %(cn)s
-Valid from: %(from)s
-Valid until: %(until)s
-Status: Expired
-SubjectAltName:
-    * DNS:%(cn)s
-Watchers:
-Digest:
-    md5: %(md5)s
-    sha1: %(sha1)s
-    sha256: %(sha256)s
-    sha512: %(sha512)s
-HPKP pin: %(hpkp)s
-''' % certs['cert1'])
-        self.assertEqual(stderr, b'')
-
-    @override_settings(USE_TZ=True)
-    def test_expired_with_use_tz(self):
-        self.test_expired()
 
     @override_tmpcadir()
     def test_no_san_with_watchers(self):
@@ -623,3 +604,8 @@ HPKP pin: %(hpkp)s
         name = 'foobar'
         with self.assertCommandError(r'^Error: %s: Certificate not found\.$' % name):
             self.cmd('view_cert', name, no_pem=True)
+
+
+@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={}, USE_TZ=True)
+class ViewCertWithTZTestCase(ViewCertTestCase):
+    pass
