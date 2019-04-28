@@ -144,136 +144,27 @@ root_ocsp_url = 'http://ocsp.ca.example.com'
 root_ocsp_domain = 'ocsp.ca.example.com'
 
 certs = {
-    'root': {
-        'name': 'root',
-        'serial': '4E:1E:2A:29:F9:4C:45:CF:12:2F:2B:17:9E:BF:D4:80:29:C6:37:C7',
-        'md5': '63:C1:A3:28:B4:01:80:A3:96:22:23:96:57:17:98:7D',
-        'sha1': '98:10:30:97:99:DB:85:29:74:E6:D0:5E:EE:C8:C5:B7:06:BA:D1:19',
-        'sha256': 'DA:0B:C6:6A:60:79:70:94:E1:D2:BE:68:F4:E8:FD:02:80:2A:A9:DF:85:52:49:5F:99:31:DA:15:D7:BF:BA:2E',  # NOQA
-        'sha512': '12:33:63:35:91:95:69:58:B5:D0:44:1F:12:C4:40:FD:08:21:86:53:E5:05:9D:C5:49:EC:59:B5:27:63:21:AE:52:F5:BD:AA:B9:BB:F4:A1:42:BD:71:48:5B:7D:1D:0A:54:BD:2A:1F:C4:70:C5:F7:57:94:19:A8:C6:DB:B3:9D', # NOQA
-        'san': None,
-        'authKeyIdentifier': 'keyid:%s' % root_keyid,
-        'aki': x509.AuthorityKeyIdentifier(
-            key_identifier=b'y&\x89\xd2]\xd8\xe1,1q\xef\xad8\xb4\xb6)\xf17(G',
-            authority_cert_issuer=None, authority_cert_serial_number=None
-        ),
-        'hpkp': 'MWvvGs9cF37mKmi2iXqBBqpkBT8zaWfT09DRSlpg8tQ=',
-        'crl': None,
-        'subjectKeyIdentifier': root_keyid,
-        'dn': '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=ca.example.com',
-        'key_size': 4096,
-        'basicConstraints': (True, 'CA:TRUE, pathlen:1'),
-        'keyUsage': (True, ['cRLSign', 'keyCertSign']),
-        'expires': datetime(2027, 4, 16, 0, 0),
-        'valid_from': datetime(2017, 4, 17, 11, 47),
-    },
-    'child': {
-        'name': 'child',
-        'serial': '32:82:9C:62:71:0B:74:62:32:33:75:FF:CC:1C:42:2F:73:BE:61:37',
-        'md5': '63:C1:A3:28:B4:01:80:A3:96:22:23:96:57:17:98:7D',
-        'sha1': '98:10:30:97:99:DB:85:29:74:E6:D0:5E:EE:C8:C5:B7:06:BA:D1:19',
-        'sha256': 'DA:0B:C6:6A:60:79:70:94:E1:D2:BE:68:F4:E8:FD:02:80:2A:A9:DF:85:52:49:5F:99:31:DA:15:D7:BF:BA:2E',  # NOQA
-        'sha512': '12:33:63:35:91:95:69:58:B5:D0:44:1F:12:C4:40:FD:08:21:86:53:E5:05:9D:C5:49:EC:59:B5:27:63:21:AE:52:F5:BD:AA:B9:BB:F4:A1:42:BD:71:48:5B:7D:1D:0A:54:BD:2A:1F:C4:70:C5:F7:57:94:19:A8:C6:DB:B3:9D', # NOQA
-        'san': None,
-        'authKeyIdentifier': 'keyid:%s' % root_keyid,
-        'hpkp': '+6YcoRI+EBfxBOMXlsUBKg7DexUf0AOMS08O+P+1YjI=',
-        'crl': (False, ['Full Name: URI:http://parent.example.com/parent.crl']),
-        'dn': '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=sub.ca.example.com',
-        'subjectKeyIdentifier': '8B:06:F1:9E:BC:A9:62:00:01:66:46:85:FA:90:FB:52:71:8F:66:EE',
-        'keyUsage': (True, ['cRLSign', 'keyCertSign']),
-        'basicConstraints': (True, 'CA:TRUE, pathlen:0'),
-        'expires': datetime(2020, 12, 20, 22, 11),
-        'valid_from': datetime(2018, 12, 20, 22, 11),
-        'authInfoAccess': (False, ['URI:http://parent.example.com/parent.crt',
-                                   'URI:http://parent.example.com/ocsp', ]),
-        'aki': x509.AuthorityKeyIdentifier(
-            key_identifier=b'\x8b\x06\xf1\x9e\xbc\xa9b\x00\x01fF\x85\xfa\x90\xfbRq\x8ff\xee',
-            authority_cert_issuer=None, authority_cert_serial_number=None
-        ),
-        'name_constraints': NameConstraints([['DNS:.net'], ['DNS:.org']]),
-    },
-    'ecc_ca': {
-        'name': 'ecc_ca',
-        'serial': '52:F4:84:51:D7:38:D9:E6:83:43:7A:4A:1D:EB:ED:A0:7D:6A:7F:D9',
-        'aki': x509.AuthorityKeyIdentifier(
-            key_identifier=b")TaW\xa9\xcdu\xdd\x19\x0f]\x8bs\x13'/\xde\xc1\xf1\x04",
-            authority_cert_issuer=None, authority_cert_serial_number=None
-        ),
-    },
-    'pwd_ca': {
-        'name': 'pwd_ca',
-        'serial': '61:0A:D4:09:CE:18:6A:12:D6:69:F2:68:7D:4D:1A:7C:E9:89:02:62',
-        'aki': x509.AuthorityKeyIdentifier(
-            key_identifier=b'\x8a\x9a\r\xa7\xbc\xc7\x0bcY\xc8\xcb\r\x87Nvm\xc3\xe8H\x15',
-            authority_cert_issuer=None, authority_cert_serial_number=None
-        ),
-    },
     'cert1': {
-        'pem': force_text(cert1_pem),
-        'hpkp': 'ZHsPuAAhLPHXbSjBW8/2/CylrtpcPlNUcLDMmuMtiWY=',
-        'md5': '7B:42:32:BB:7F:C1:E5:CE:3C:ED:1B:74:2F:36:4B:44',
-        'sha1': '69:CA:37:7F:82:E5:6E:D9:7B:5A:72:60:F8:94:C6:2B:99:C1:2D:EA',
-        'sha256': '88:99:CB:BE:D8:31:9F:76:08:4F:13:03:98:96:81:8D:35:92:E4:11:0D:72:62:F6:00:B9:1A:0F:CB:8B:60:1B',  # NOQA
-        'sha512': '51:9E:A7:43:8D:9A:E4:E0:AA:94:C0:4E:60:7F:5E:42:CD:03:E1:E9:D3:93:CB:A6:70:C1:D8:F2:D4:31:F3:A2:F3:17:D6:73:90:DC:66:F3:0F:65:FD:46:BB:BB:FA:1E:AC:D9:FC:D4:80:9F:38:A3:47:71:28:CD:DD:C2:32:F1', # NOQA
         'san': SubjectAlternativeName('DNS:host1.example.com'),
         'cn': 'host1.example.com',
         'keyUsage': (True, ['digitalSignature', 'keyAgreement', 'keyEncipherment']),
-        'from': '2017-04-17 11:47',
-        'until': '2019-04-18 00:00',
         'status': 'Valid',
-        'subjectKeyIdentifier': 'D2:1B:D1:90:35:0E:44:58:F7:0A:21:BB:DC:BE:3D:7F:ED:83:E4:FA',
-        'authKeyIdentifier': 'keyid:%s' % root_keyid,
         'issuer_alternative_name': 'URI:https://ca.example.com',
-        'authInfoAccess': (False, ['URI:http://ca.example.com/ca.crt',
-                                   'URI:http://ocsp.ca.example.com', ]),
-        'crl': (False, ['Full Name: URI:http://ca.example.com/crl']),
         'der': cert1_pubkey.public_bytes(encoding=Encoding.DER),
-        'serial': '5A:1B:A2:63:A1:E4:D8:D1:4D:82:60:46:D3:8F:E0:C3:A5:B3:E4:89',
-        'expires': datetime(2019, 4, 18, 0, 0),
-        'valid_from': datetime(2017, 4, 17, 11, 47),
     },
     'cert2': {
         'issuer_alternative_name': 'URI:https://ca.example.com',
-        'md5': '4B:1C:B9:1E:34:B3:E0:7A:F9:95:E4:92:94:54:19:6B',
-        'sha1': '3B:EB:92:1C:99:0D:E9:C6:57:2E:ED:A0:25:00:84:21:9E:37:25:87',
-        'sha256': 'A2:18:2B:7E:5D:A3:A8:64:B4:9B:74:D5:4A:FB:46:60:DC:B7:A5:20:ED:0E:0E:EC:7A:2E:20:01:20:E9:3F:4C',  # NOQA
-        'sha512': '63:86:08:13:70:6E:A2:C3:95:2B:E6:33:16:D8:1C:6E:48:FA:7B:73:6D:51:D0:98:AD:7D:F3:9F:79:5C:03:A0:21:23:DA:88:5C:DD:BB:03:86:E0:A8:77:C3:36:46:06:E9:AA:0C:02:A5:56:81:2B:04:1A:37:11:2A:DE:A2:A5', # NOQA
         'san': SubjectAlternativeName('DNS:host2.example.com'),
-        'authKeyIdentifier': 'keyid:%s' % root_keyid,
-        'hpkp': 'i+ccTaizbK5r9luNHFW358cxzaORJ4rS3WYHlEnaQoI=',
-        'crl': (False, ['Full Name: URI:http://ca.example.com/crl']),
-        'serial': '4E:2B:01:C4:8B:CC:1F:71:94:12:88:64:68:0C:AA:04:D3:F8:BB:45',
-        'expires': datetime(2019, 4, 18, 0, 0),
-        'valid_from': datetime(2017, 4, 17, 11, 47),
     },
     'cert3': {
         'issuer_alternative_name': 'URI:https://ca.example.com',
-        'md5': '43:47:4B:6D:7C:7E:3A:BB:85:AF:0F:2E:70:2B:12:07',
-        'sha1': '28:65:FB:33:4E:60:DD:44:22:5D:5F:61:FF:C0:6C:FB:3F:23:55:87',
-        'sha256': '2A:18:6B:D9:B4:A9:B7:12:17:41:20:A6:6C:D4:AA:0D:D7:98:A0:5F:53:26:C7:47:AA:00:A4:2C:DF:7A:07:96',  # NOQA
-        'sha512': 'B2:E8:35:D7:56:37:DA:76:B7:F7:94:5C:A5:66:A7:6E:CC:A7:18:26:35:DC:1C:AD:AC:27:56:83:CA:4E:FD:66:4B:E9:89:6E:D5:A1:7D:94:94:0B:9B:35:E3:45:B5:78:AD:50:8F:CF:5C:9B:1E:16:70:54:B7:76:C4:86:30:66', # NOQA
         'san': SubjectAlternativeName('DNS:host3.example.com'),
-        'authKeyIdentifier': 'keyid:%s' % root_keyid,
-        'hpkp': 'ZuJoB0pw8rd2os1WFVe5f8Vky6eg3vHxCrnaZxupFQo=',
-        'crl': (False, ['Full Name: URI:http://ca.example.com/crl']),
-        'serial': '32:A7:B0:8E:88:A2:1A:EC:05:C8:BA:18:D7:8B:D9:35:45:9D:82:FA',
-        'expires': datetime(2019, 4, 18, 0, 0),
-        'valid_from': datetime(2017, 4, 17, 11, 47),
     },
 
     # created using django_ca.tests.tests_managers.GetCertTestCase.test_all_extensions
     'cert_all': {
         'cn': 'all-extensions.example.com',
-        'crl': (False, ['Full Name: URI:%s' % root_crl_url]),
-        'from': '2018-10-26 00:00',
-        'hpkp': 'y7MP7lTrd5tT5cf7dO/ikFaoj/YmJFke2MAIr5uJf74=',
-        'serial': '49:BC:F2:FE:FA:31:03:B6:E0:CC:3D:16:93:4E:2D:B0:8A:D2:C5:87',
         'status': 'Valid',
-        'until': '2020-10-16 00:00',
-        'md5': '98:50:F0:6E:1F:AF:36:82:85:8C:06:04:65:27:B1:6F',
-        'sha1': 'CE:36:78:D4:1E:06:43:B2:F2:A1:F7:BA:1F:9C:A8:60:0B:F0:EB:57',
-        'sha256': '79:EA:A9:31:21:01:80:1C:0B:05:7E:BE:56:84:D8:E9:C9:0B:63:92:52:AE:1D:A8:78:20:55:52:CF:74:A7:9F',  # NOQA
-        'sha512': 'CE:FE:17:4F:0B:58:82:7C:50:21:BE:11:1E:15:F3:AA:94:A7:ED:D0:37:AC:8B:E3:95:13:BE:69:0D:EA:83:AD:B1:06:A6:6E:F0:05:CD:8B:BF:61:1A:DF:5A:03:7E:34:05:71:73:BC:94:0B:7F:6C:CA:1A:88:92:A5:60:94:8E',  # NOQA
         'authority_information_access': AuthorityInformationAccess({
             'issuers': ['URI:%s' % root_issuer_url],
             'ocsp': ['URI:%s' % root_ocsp_url],
@@ -287,24 +178,11 @@ certs = {
         'ocsp_no_check': OCSPNoCheck({'critical': True}),
         'precert_poison': True,  # only set once we require cryptography>=2.4
         'subject_alternative_name': SubjectAlternativeName('DNS:all-extensions.example.com,DNS:extra.example.com'),  # NOQA
-        'subject_key_identifier': SubjectKeyIdentifier('DE:EA:38:FC:DA:39:92:33:45:A7:B9:F8:D2:DF:84:0E:CC:6F:3A:B9'),  # NOQA
         'tls_feature': TLSFeature('critical,OCSPMustStaple,MultipleCertStatusRequest'),
     },
     'ocsp': {
         'cn': root_ocsp_domain,
-        'crl': (False, ['Full Name: URI:%s' % root_crl_url]),
-        'expires': datetime(2020, 10, 16, 0, 0),
-        'from': '2018-10-26 00:00',
-        'hpkp': 'ZdNmzaYDup9ws7OGII3V0SGv0T0AlockXgnQz0GOEd4=',
-        'serial': '4E:A5:A0:D1:19:21:2E:AB:3D:56:39:FA:BD:D0:A7:5B:CC:35:E4:D9',
         'status': 'Valid',
-        'until': '2020-10-16 00:00',
-        'valid_from': datetime(2018, 10, 26, 0, 0),
-        'md5': 'A6:C7:2C:8E:10:89:3D:CC:CB:D8:19:8A:46:10:8B:6F',
-        'sha1': 'DC:EA:6B:E9:EB:A7:BA:AA:B2:1D:F9:4F:E2:A3:1C:6A:C2:A5:15:3A',
-        'sha256': '9D:16:D6:7F:F1:CF:3C:59:4A:F0:19:CF:24:16:00:A0:34:9D:0C:03:17:37:7B:EC:AE:E3:67:4E:2B:80:49:D2',  # NOQA
-        'sha512': '0A:CE:5C:21:13:4C:CC:2F:0F:BF:CE:5F:0E:82:53:2F:8E:26:50:9E:24:28:AD:33:71:D7:83:08:0B:B4:1A:CE:9B:EF:0E:E0:0B:56:30:9F:75:AC:F7:FC:7B:BC:65:B4:AA:A5:42:4C:D3:0D:9F:ED:3E:76:34:AD:89:1A:56:1E',  # NOQA
-        'sha512': '0F:5D:47:AF:BD:36:8F:07:42:D3:45:8B:80:80:7C:B6:7A:95:83:36:34:6E:B5:EA:1D:86:40:98:B0:99:FF:CF:C7:ED:33:D7:F7:D4:FB:16:86:45:DB:42:FA:97:CA:16:F9:91:07:8D:2D:10:B2:81:AC:44:2D:D6:2F:56:1B:4A',  # NOQA
         'authority_information_access': AuthorityInformationAccess({
             'issuers': ['URI:http://ca.example.com/ca.crt'],
         }),
@@ -315,18 +193,12 @@ certs = {
         'key_usage': KeyUsage('critical,digitalSignature,keyEncipherment,nonRepudiation'),
         'ocsp_no_check': OCSPNoCheck(),
         'subject_alternative_name': SubjectAlternativeName('DNS:%s' % root_ocsp_domain),
-        'subject_key_identifier': SubjectKeyIdentifier('31:CB:89:87:60:8D:AB:3B:92:93:A3:F1:4E:0F:D7:E5:07:62:35:CC'),  # NOQA
     },
 
     # contrib certificates
     'cloudflare_1': {
         'cn': 'sni24142.cloudflaressl.com',
         'precert_poison': True,  # only set once we require cryptography>=2.4
-        'md5': 'D6:76:03:E9:4F:3B:B0:F1:F7:E3:A1:40:80:8E:F0:4A',
-        'sha1': '71:BD:B8:21:80:BD:86:E8:E5:F4:2B:6D:96:82:B2:EF:19:53:ED:D3',
-        'sha256': '1D:8E:D5:41:E5:FF:19:70:6F:65:86:A9:A3:6F:DF:DE:F8:A0:07:22:92:71:9E:F1:CD:F8:28:37:39:02:E0:A1',  # NOQA
-        'sha512': 'FF:03:1B:8F:11:E8:A7:FF:91:4F:B9:97:E9:97:BC:77:37:C1:A7:69:86:F3:7C:E3:BB:BB:DF:A6:4F:0E:3C:C0:7F:B5:BC:CC:BD:0A:D5:EF:5F:94:55:E9:FF:48:41:34:B8:11:54:57:DD:90:85:41:2E:71:70:5E:FA:BA:E6:EA',  # NOQA
-        'hpkp': 'bkunFfRSda4Yhz7UlMUaalgj0Gcus/9uGVp19Hceczg=',
     },
 }
 

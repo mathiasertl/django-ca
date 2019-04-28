@@ -994,7 +994,6 @@ elif args.command == 'recreate-fixtures':
     #from cryptography.hazmat.primitives.serialization import Encoding
     #from cryptography.hazmat.primitives.serialization import NoEncryption
     #from cryptography.hazmat.primitives.serialization import PrivateFormat
-    from cryptography.hazmat.primitives import hashes
 
     from django.conf import settings
     from django.core.management import call_command as manage
@@ -1006,7 +1005,6 @@ elif args.command == 'recreate-fixtures':
     from django_ca.models import CertificateAuthority
     from django_ca.utils import ca_storage
     from django_ca.utils import bytes_to_hex
-    from django_ca.utils import add_colons
 
     class override_tmpcadir(override_settings):
         """Sets the CA_DIR directory to a temporary directory.
