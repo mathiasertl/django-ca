@@ -132,6 +132,11 @@ def write_ca(cert, data, password=None):
     #with open(pub_der_dest, 'wb') as stream:
     #    stream.write(cert.dump_certificate(Encoding.DER))
 
+    # These keys are only present in CAs:
+    data['crl_url'] = ca.crl_url
+    data['ca_crl_url'] = '%s%s' % (testserver, reverse('django_ca:ca-crl', kwargs={'serial': ca.serial}))
+
+    # Update common data for CAs and certs
     update_cert_data(cert, data)
 
 
@@ -149,6 +154,7 @@ def copy_cert(cert, data, key_path, csr_path):
 
 data = {
     'root': {
+        'type': 'ca',
         'password': None,
         'subject': '/C=AT/ST=Vienna/CN=%s' % ca_base_cn,
         'pathlen': None,
@@ -157,6 +163,8 @@ data = {
         'key_usage': 'critical,cRLSign,keyCertSign',
     },
     'child': {
+        'type': 'ca',
+        'parent': 'root',
         'password': None,
         'subject': '/C=AT/ST=Vienna/CN=child.%s' % ca_base_cn,
 
@@ -165,6 +173,7 @@ data = {
         'name_constraints': [['DNS:.org'], ['DNS:.net']],
     },
     'ecc': {
+        'type': 'ca',
         'password': None,
         'subject': '/C=AT/ST=Vienna/CN=ecc.%s' % ca_base_cn,
 
@@ -172,6 +181,7 @@ data = {
         'pathlen': ecc_pathlen,
     },
     'dsa': {
+        'type': 'ca',
         'algorithm': dsa_algorithm,
         'password': None,
         'subject': '/C=AT/ST=Vienna/CN=dsa.%s' % ca_base_cn,
@@ -180,7 +190,8 @@ data = {
         'pathlen': dsa_pathlen,
     },
     'pwd': {
-        'password': 'testpassword',
+        'type': 'ca',
+        'password': b'testpassword',
         'subject': '/C=AT/ST=Vienna/CN=pwd.%s' % ca_base_cn,
 
         'basic_constraints': 'critical,CA:TRUE,pathlen=%s' % pwd_pathlen,
@@ -216,60 +227,50 @@ for cert, cert_values in data.items():
     cert_values.setdefault('algorithm', 'SHA256')
     cert_values['key'] = '%s.key' % cert_values['name']
     cert_values['pub'] = '%s.pem' % cert_values['name']
+    cert_values.setdefault('key_size', key_size)
+    cert_values.setdefault('key_type', 'RSA')
     if cert_values.pop('csr', False):
         cert_values['csr'] = '%s.csr' % cert_values['name']
 
-data['root']['issuer'] = data['root']['subject']
-data['root']['issuer_url'] = '%s/%s.der' % (testserver, data['root']['name'])
-data['root']['ocsp_url'] = '%s/ocsp/%s/' % (testserver, data['root']['name'])
-data['child']['issuer'] = data['root']['subject']
-data['child']['crl'] = '%s/%s.crl' % (testserver, data['root']['name'])
+    if cert_values.get('type') == 'ca':
+        data[cert]['issuer_url'] = '%s/%s.der' % (testserver, data[cert]['name'])
+        data[cert]['ocsp_url'] = '%s/ocsp/%s/' % (testserver, data[cert]['name'])
+        data[cert]['ca_ocsp_url'] = '%s/ca/ocsp/%s/' % (testserver, data[cert]['name'])
 
 with override_tmpcadir():
     # Create CAs
-    root = CertificateAuthority.objects.init(
-        name=data['root']['name'], subject=data['root']['subject'], key_size=key_size,
-    )
-    root.crl_url = '%s%s' % (testserver, reverse('django_ca:crl', kwargs={'serial': root.serial}))
-    root_ca_crl = '%s%s' % (testserver, reverse('django_ca:ca-crl', kwargs={'serial': root.serial}))
-    root.save()
-    write_ca(root, data['root'])
+    for name in ['root', 'child', 'ecc', 'pwd', 'dsa']:
+        kwargs = {}
 
-    child = CertificateAuthority.objects.init(
-        name=data['child']['name'], subject=data['child']['subject'], parent=root, key_size=key_size,
-        pathlen=child_pathlen, ca_crl_url=root_ca_crl, ca_issuer_url=data['root']['issuer_url'],
-        ca_ocsp_url=data['root']['ocsp_url']
-    )
-    data['child']['crl'] = root_ca_crl
-    write_ca(child, data['child'])
+        # Get some data from the parent, if present
+        parent = data[name].get('parent')
+        if parent:
+            kwargs['parent'] = CertificateAuthority.objects.get(name=parent)
+            kwargs['ca_crl_url'] = data[parent]['ca_crl_url']
+            kwargs['ca_issuer_url'] = data[parent]['issuer_url']
+            kwargs['ca_ocsp_url'] = data[parent]['ca_ocsp_url']
 
-    dsa = CertificateAuthority.objects.init(
-        name=data['dsa']['name'], subject=data['dsa']['subject'], key_size=key_size,
-        pathlen=dsa_pathlen, key_type='DSA', algorithm=data['dsa']['algorithm'],
-    )
-    write_ca(dsa, data['dsa'])
+            # also update data
+            data[name]['crl'] = data[parent]['ca_crl_url']
 
-    ecc = CertificateAuthority.objects.init(
-        name=data['ecc']['name'], subject=data['ecc']['subject'], key_size=key_size, key_type='ECC',
-        pathlen=ecc_pathlen
-    )
-    write_ca(ecc, data['ecc'])
+        ca = CertificateAuthority.objects.init(
+            name=data[name]['name'], password=data[name]['password'], subject=data[name]['subject'],
+            key_type=data[name]['key_type'], key_size=data[name]['key_size'],
+            algorithm=data[name]['algorithm'],
+            pathlen=data[name]['pathlen'], **kwargs
+        )
+        ca.crl_url = '%s%s' % (testserver, reverse('django_ca:crl', kwargs={'serial': ca.serial}))
+        ca.save()
 
-    pwd_password = data['pwd']['password'].encode('utf-8')
-    pwd = CertificateAuthority.objects.init(
-        name=data['pwd']['name'], subject=data['pwd']['subject'], key_size=key_size, password=pwd_password,
-        pathlen=pwd_pathlen
-    )
-    write_ca(pwd, data['pwd'], password=pwd_password)
+        write_ca(ca, data[name])
 
     # add parent/child relationships
     data['root']['children'] = [
         [data['child']['name'], data['child']['serial']],
     ]
-    data['child']['parent'] = [data['root']['name'], data['root']['serial']]
 
     # let's create a standard certificate for every CA
-    for ca in [root, child, dsa, ecc, pwd]:
+    for ca in CertificateAuthority.objects.all():
         name = '%s-cert' % ca.name
         key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
         csr_path = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
@@ -289,12 +290,13 @@ with override_tmpcadir():
             csr = stream.read()
 
         pwd = data[data[name]['ca']]['password']
-        if pwd is not None:
-            pwd = pwd.encode('utf-8')
-
         cert = Certificate.objects.init(ca=ca, csr=csr, algorithm=data[name]['algorithm'],
                                         password=pwd, **kwargs)
         copy_cert(cert, data[name], key_path, csr_path)
+
+for name, cert_data in data.items():
+    if cert_data.get('password'):
+        cert_data['password'] = cert_data['password'].decode('utf-8')
 
 fixture_data = {
     'certs': data,
