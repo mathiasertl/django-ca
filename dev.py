@@ -22,6 +22,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import warnings
 
 import packaging.version
@@ -30,9 +31,15 @@ import six
 import cryptography
 
 import django
+from django.utils.six.moves import reload_module
 
 PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
+
+if PY2:  # pragma: only py2
+    from mock import patch
+else:
+    from unittest.mock import patch
 
 suites_parser = argparse.ArgumentParser(add_help=False)
 suites_parser.add_argument('-s', '--suites', default=[], nargs='+',
@@ -989,13 +996,37 @@ elif args.command == 'recreate-fixtures':
 
     from django.conf import settings
     from django.core.management import call_command as manage
+    from django.test.utils import override_settings
     from django.urls import reverse
     manage('migrate', verbosity=0)
 
+    from django_ca import ca_settings
     from django_ca.models import CertificateAuthority
-    from django_ca.tests.base import override_tmpcadir
     from django_ca.utils import ca_storage
     from django_ca.utils import bytes_to_hex
+
+    class override_tmpcadir(override_settings):
+        """Sets the CA_DIR directory to a temporary directory.
+
+        .. NOTE: This also takes any additional settings.
+        """
+
+        def enable(self):
+            self.options['CA_DIR'] = tempfile.mkdtemp()
+            self.mock = patch.object(ca_storage, 'location', self.options['CA_DIR'])
+            self.mock_ = patch.object(ca_storage, '_location', self.options['CA_DIR'])
+            self.mock.start()
+            self.mock_.start()
+
+            super(override_tmpcadir, self).enable()
+            reload_module(ca_settings)
+
+        def disable(self):
+            super(override_tmpcadir, self).disable()
+            self.mock.stop()
+            self.mock_.stop()
+            shutil.rmtree(self.options['CA_DIR'])
+            reload_module(ca_settings)
 
     def write_cert(cert, data, password=None):
         key_dest = os.path.join(settings.FIXTURES_DIR, data['key'])

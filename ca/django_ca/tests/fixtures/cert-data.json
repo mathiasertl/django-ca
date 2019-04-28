@@ -1,0 +1,126 @@
+{
+    "certs": {
+        "root": {
+            "name": "root",
+            "password": null,
+            "subject": "/C=AT/ST=Vienna/CN=ca.example.com",
+            "pathlen": null,
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "issuer": "/C=AT/ST=Vienna/CN=ca.example.com",
+            "issuer_url": "http://testserver/root.der",
+            "ocsp_url": "http://testserver/ocsp/root/",
+            "key": "root.key",
+            "pub": "root.pem",
+            "key-der": "root-key.der",
+            "pub-der": "root-pub.der",
+            "serial": "33:1A:5C:0A:42:45:55:B6:C5:0A:4A:E7:9D:0D:E2:BE:82:4F:5E:53",
+            "hpkp": "41Uru5xb035jib/i5pHXIknMQZnB3mHpF1o/UVKtC0c=",
+            "authority_key_identifier": "8E:1A:90:C2:FF:EE:FA:35:30:48:40:42:6E:56:EC:2A:73:5A:98:77",
+            "subject_key_identifier": "8E:1A:90:C2:FF:EE:FA:35:30:48:40:42:6E:56:EC:2A:73:5A:98:77",
+            "valid_from": "2019-04-28 10:25:00",
+            "valid_until": "2021-04-28 10:25:00",
+            "children": [
+                [
+                    "child",
+                    "23:34:D6:37:15:21:DF:CC:86:6E:AC:72:39:FD:69:B0:92:EC:CF:25"
+                ]
+            ]
+        },
+        "child": {
+            "name": "child",
+            "password": null,
+            "subject": "/C=AT/ST=Vienna/CN=child.ca.example.org",
+            "basic_constraints": "critical,CA:TRUE,pathlen=0",
+            "pathlen": 0,
+            "name_constraints": [
+                [
+                    "DNS:.org"
+                ],
+                [
+                    "DNS:.net"
+                ]
+            ],
+            "issuer": "/C=AT/ST=Vienna/CN=ca.example.com",
+            "crl": "http://testserver/django_ca/crl/ca/33:1A:5C:0A:42:45:55:B6:C5:0A:4A:E7:9D:0D:E2:BE:82:4F:5E:53/",
+            "key": "child.key",
+            "pub": "child.pem",
+            "key-der": "child-key.der",
+            "pub-der": "child-pub.der",
+            "serial": "23:34:D6:37:15:21:DF:CC:86:6E:AC:72:39:FD:69:B0:92:EC:CF:25",
+            "hpkp": "jXVGKSzA3ehA5CAx8ZgG4aGCp94CHD6N+8AEKWvX8BE=",
+            "authority_key_identifier": "8E:1A:90:C2:FF:EE:FA:35:30:48:40:42:6E:56:EC:2A:73:5A:98:77",
+            "subject_key_identifier": "C4:70:9E:4C:7B:88:BD:D4:01:D3:5E:49:B4:B5:D8:1C:CF:1A:29:42",
+            "valid_from": "2019-04-28 10:25:00",
+            "valid_until": "2021-04-28 10:25:00",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "authority_information_access": {
+                "critical": false,
+                "issuers": [
+                    "URI:http://testserver/root.der"
+                ],
+                "ocsp": [
+                    "URI:http://testserver/ocsp/root/"
+                ]
+            },
+            "parent": [
+                "root",
+                "33:1A:5C:0A:42:45:55:B6:C5:0A:4A:E7:9D:0D:E2:BE:82:4F:5E:53"
+            ]
+        },
+        "ecc": {
+            "name": "ecc",
+            "password": null,
+            "subject": "/C=AT/ST=Vienna/CN=ecc.ca.example.org",
+            "basic_constraints": "critical,CA:TRUE,pathlen=1",
+            "pathlen": 1,
+            "key": "ecc.key",
+            "pub": "ecc.pem",
+            "key-der": "ecc-key.der",
+            "pub-der": "ecc-pub.der",
+            "serial": "17:80:91:14:29:58:8A:02:08:21:7C:F9:EC:68:74:4C:D9:61:F6:4",
+            "hpkp": "P42xZa8D98u7V4h4m36oC4D1Yuo/kj6tT3jyTbiXN5s=",
+            "authority_key_identifier": "CE:8B:A0:65:F3:CB:7D:DC:03:A3:26:5F:7A:08:74:F2:07:69:C0:DD",
+            "subject_key_identifier": "CE:8B:A0:65:F3:CB:7D:DC:03:A3:26:5F:7A:08:74:F2:07:69:C0:DD",
+            "valid_from": "2019-04-28 10:25:00",
+            "valid_until": "2021-04-28 10:25:00",
+            "key_usage": "critical,cRLSign,keyCertSign"
+        },
+        "dsa": {
+            "name": "dsa",
+            "password": null,
+            "subject": "/C=AT/ST=Vienna/CN=dsa.ca.example.org",
+            "basic_constraints": "critical,CA:TRUE,pathlen=3",
+            "pathlen": 3,
+            "key": "dsa.key",
+            "pub": "dsa.pem",
+            "key-der": "dsa-key.der",
+            "pub-der": "dsa-pub.der",
+            "serial": "20:54:F2:2E:36:16:6A:19:2F:EA:8C:5E:CC:D1:E1:B3:31:ED:CC:70",
+            "hpkp": "y14bPzFOvcniEEBuLu3YH5Uz73s1ob2/MDM67IKu+Fk=",
+            "authority_key_identifier": "5D:11:B5:52:8C:24:AE:32:48:C3:1F:4C:1E:B7:C2:6D:DF:8B:17:15",
+            "subject_key_identifier": "5D:11:B5:52:8C:24:AE:32:48:C3:1F:4C:1E:B7:C2:6D:DF:8B:17:15",
+            "valid_from": "2019-04-28 10:25:00",
+            "valid_until": "2021-04-28 10:25:00",
+            "key_usage": "critical,cRLSign,keyCertSign"
+        },
+        "pwd": {
+            "name": "pwd",
+            "password": "testpassword",
+            "subject": "/C=AT/ST=Vienna/CN=pwd.ca.example.org",
+            "basic_constraints": "critical,CA:TRUE,pathlen=2",
+            "pathlen": 2,
+            "key": "pwd.key",
+            "pub": "pwd.pem",
+            "key-der": "pwd-key.der",
+            "pub-der": "pwd-pub.der",
+            "serial": "67:2C:E4:CF:01:A9:B4:17:AB:A4:F4:FE:FF:6D:75:53:B0:7C:B3:A9",
+            "hpkp": "Fz5uLcolZpKYmJeAIc7czy5s5s/coQ/ExyOufdT4UzQ=",
+            "authority_key_identifier": "D2:43:27:08:B1:0F:11:7A:73:E8:2B:FD:EC:A3:FF:38:EA:D0:B4:34",
+            "subject_key_identifier": "D2:43:27:08:B1:0F:11:7A:73:E8:2B:FD:EC:A3:FF:38:EA:D0:B4:34",
+            "valid_from": "2019-04-28 10:25:00",
+            "valid_until": "2021-04-28 10:25:00",
+            "key_usage": "critical,cRLSign,keyCertSign"
+        }
+    }
+}
