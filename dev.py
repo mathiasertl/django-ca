@@ -1021,12 +1021,24 @@ elif args.command == 'recreate-fixtures':
             stream.write(cert.dump_certificate(Encoding.DER))
 
         data['serial'] = cert.serial
+        data['hpkp'] = cert.hpkp_pin
         data['authority_key_identifier'] = bytes_to_hex(cert.authority_key_identifier.value)
         data['subject_key_identifier'] = bytes_to_hex(cert.subject_key_identifier.value)
         data['valid_from'] = cert.x509.not_valid_before.strftime('%Y-%m-%d %H:%M:%S')
         data['valid_until'] = cert.x509.not_valid_after.strftime('%Y-%m-%d %H:%M:%S')
 
-    child_pathlen = ecc_pathlen = pwd_pathlen = dsa_pathlen = 0
+        ku = cert.key_usage
+        if ku is not None:
+            data['key_usage'] = ku.serialize()
+
+        aia = cert.authority_information_access
+        if aia is not None:
+            data['authority_information_access'] = aia.serialize()
+
+    child_pathlen = 0
+    ecc_pathlen = 1
+    pwd_pathlen = 2
+    dsa_pathlen = 3
     testserver = 'http://testserver'
 
     data = {
@@ -1066,7 +1078,7 @@ elif args.command == 'recreate-fixtures':
         },
         'pwd': {
             'name': 'pwd',
-            'password': 'foobar',
+            'password': 'testpassword',
             'subject': '/C=AT/ST=Vienna/CN=pwd.ca.example.org',
 
             'basic_constraints': 'critical,CA:TRUE,pathlen=%s' % pwd_pathlen,
@@ -1100,30 +1112,39 @@ elif args.command == 'recreate-fixtures':
             pathlen=child_pathlen, ca_crl_url=root_ca_crl, ca_issuer_url=data['root']['issuer_url'],
             ca_ocsp_url=data['root']['ocsp_url']
         )
+        data['child']['crl'] = root_ca_crl
         write_cert(child, data['child'])
 
-        ecc = CertificateAuthority.objects.init(
-            name=data['ecc']['name'], subject=data['ecc']['subject'], parent=root, key_size=1024,
-            pathlen=ecc_pathlen, ca_crl_url=root_ca_crl, ca_issuer_url=data['root']['issuer'],
-            ca_ocsp_url=data['root']['ocsp_url'], key_type='ECC'
-        )
-        write_cert(ecc, data['ecc'])
         dsa = CertificateAuthority.objects.init(
-            name=data['dsa']['name'], subject=data['dsa']['subject'], parent=root, key_size=1024,
-            pathlen=dsa_pathlen, ca_crl_url=root_ca_crl, ca_issuer_url=data['root']['issuer'],
-            ca_ocsp_url=data['root']['ocsp_url'], key_type='DSA'
+            name=data['dsa']['name'], subject=data['dsa']['subject'], key_size=1024,
+            pathlen=dsa_pathlen, key_type='DSA', algorithm='SHA1',
         )
         write_cert(dsa, data['dsa'])
 
+        ecc = CertificateAuthority.objects.init(
+            name=data['ecc']['name'], subject=data['ecc']['subject'], key_size=1024, key_type='ECC',
+            pathlen=ecc_pathlen
+        )
+        write_cert(ecc, data['ecc'])
+
         pwd_password = data['pwd']['password'].encode('utf-8')
         pwd = CertificateAuthority.objects.init(
-            name=data['pwd']['name'], subject=data['pwd']['subject'], parent=root, key_size=1024,
-            pathlen=pwd_pathlen, ca_crl_url=root_ca_crl, ca_issuer_url=data['root']['issuer'],
-            ca_ocsp_url=data['root']['ocsp_url'], password=pwd_password
+            name=data['pwd']['name'], subject=data['pwd']['subject'], key_size=1024, password=pwd_password,
+            pathlen=pwd_pathlen
         )
         write_cert(pwd, data['pwd'], password=pwd_password)
 
+        # add parent/child relationships
+        data['root']['children'] = [
+            [data['child']['name'], data['child']['serial']],
+        ]
+        data['child']['parent'] = [data['root']['name'], data['root']['serial']]
+
+    fixture_data = {
+        'certs': data,
+    }
+
     with open(os.path.join(settings.FIXTURES_DIR, 'cert-data.json'), 'w') as stream:
-        json.dump(data, stream, indent=4)
+        json.dump(fixture_data, stream, indent=4)
 else:
     parser.print_help()
