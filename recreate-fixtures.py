@@ -49,6 +49,7 @@ from django.utils.six.moves import reload_module
 from django.urls import reverse
 
 from django_ca import ca_settings
+from django_ca.extensions import Extension
 from django_ca.extensions import NameConstraints
 from django_ca.extensions import IssuerAlternativeName
 from django_ca.models import Certificate
@@ -513,6 +514,8 @@ for filename in os.listdir(os.path.join(_sphinx_dir, 'ca')):
         pem = stream.read()
 
     parsed = x509.load_pem_x509_certificate(pem, default_backend())
+    ca = CertificateAuthority(name=name)
+    ca.x509 = parsed
 
     cert_data = {
         'name': name,
@@ -523,7 +526,21 @@ for filename in os.listdir(os.path.join(_sphinx_dir, 'ca')):
         'csr_filename': False,
         'valid_from': parsed.not_valid_before.strftime(_timeformat),
         'valid_until': parsed.not_valid_after.strftime(_timeformat),
+        'serial': ca.serial,
+        'subject': ca.distinguishedName(),
+        'pathlen': ca.pathlen,
+        'hpkp': ca.hpkp_pin,
     }
+
+    for ext in ca.get_extensions():
+        if isinstance(ext, Extension):
+            key = CertificateAuthority.OID_MAPPING[ext.oid]
+            cert_data[key] = ext.serialize()
+        elif isinstance(ext, tuple):
+            key, value = ext
+            if key == 'cRLDistributionPoints':
+                cert_data['crl'] = value
+
     data[name] = cert_data
 
 for filename in os.listdir(os.path.join(_sphinx_dir, 'cert')):
@@ -533,6 +550,8 @@ for filename in os.listdir(os.path.join(_sphinx_dir, 'cert')):
         pem = stream.read()
 
     parsed = x509.load_pem_x509_certificate(pem, default_backend())
+    cert = Certificate()
+    cert.x509 = parsed
 
     cert_data = {
         'name': name,
@@ -543,6 +562,7 @@ for filename in os.listdir(os.path.join(_sphinx_dir, 'cert')):
         'csr_filename': False,
         'valid_from': parsed.not_valid_before.strftime(_timeformat),
         'valid_until': parsed.not_valid_after.strftime(_timeformat),
+        'serial': cert.serial,
     }
     data[name] = cert_data
 
