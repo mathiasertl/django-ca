@@ -780,6 +780,11 @@ class ExtendedKeyUsage(KnownValuesExtension):
         'OCSPSigning': ExtendedKeyUsageOID.OCSP_SIGNING,
         'smartcardLogon': ObjectIdentifier("1.3.6.1.4.1.311.20.2.2"),
         'msKDC': ObjectIdentifier("1.3.6.1.5.2.3.5"),
+
+        # Defined in RFC 3280, occurs in TrustID Server A52 CA
+        'ipsecEndSystem': ObjectIdentifier('1.3.6.1.5.5.7.3.5'),
+        'ipsecTunnel': ObjectIdentifier('1.3.6.1.5.5.7.3.6'),
+        'ipsecUser': ObjectIdentifier('1.3.6.1.5.5.7.3.7'),
     }
     _CRYPTOGRAPHY_MAPPING_REVERSED = {v: k for k, v in CRYPTOGRAPHY_MAPPING.items()}
     KNOWN_VALUES = set(CRYPTOGRAPHY_MAPPING)

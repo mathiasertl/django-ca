@@ -17,6 +17,8 @@ ChangeLog
 * Move ``fab init_demo`` to ``dev.py init-demo``.
 * The Fabric file has been removed.
 * The ``view_ca`` management command will now display the full path to the private key, if possible.
+* Add the ``ipsecEndSystem``, ``ipsecTunnel`` and ``ipsecUser`` extended key usage types. These are actually
+  very rare and only occur in the "TrustID Server A52" CA.
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.2.
 * **BACKWARDS INCOMPATIBLE:** Drop support for idna 2.6.
 * **DEPRECATION NOTICE:** This is the last release to support cryptography 2.3.
