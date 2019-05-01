@@ -39,7 +39,6 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
 from django.test.utils import override_settings as _override_settings
-from django.utils.encoding import force_text
 from django.utils.six import StringIO
 from django.utils.six.moves import reload_module
 
@@ -49,14 +48,10 @@ from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
-from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
 from ..extensions import ListExtension
-from ..extensions import NameConstraints
-from ..extensions import OCSPNoCheck
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
-from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..profiles import get_cert_profile_kwargs
@@ -77,179 +72,106 @@ else:  # pragma: only py3
     from unittest.mock import Mock
     from unittest.mock import patch
 
-if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
-    from ..extensions import PrecertPoison
+#if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
+#    from ..extensions import PrecertPoison
 
 
-def _load_key(path, password=None):
-    path = os.path.join(settings.FIXTURES_DIR, path)
+def _load_key(data):
+    basedir = data.get('basedir', settings.FIXTURES_DIR)
+    path = os.path.join(basedir, data['key_filename'])
+
     with open(path, 'rb') as stream:
-        return serialization.load_pem_private_key(stream.read(), password=password, backend=default_backend())
+        raw = stream.read()
+
+    parsed = serialization.load_pem_private_key(raw, password=data.get('password'), backend=default_backend())
+    return {
+        'pem': raw.decode('utf-8'),
+        'parsed': parsed,
+    }
 
 
-def _load_csr(path):
-    path = os.path.join(settings.FIXTURES_DIR, path)
+def _load_csr(data):
+    basedir = data.get('basedir', settings.FIXTURES_DIR)
+    path = os.path.join(basedir, data['csr_filename'])
+
     with open(path, 'r') as stream:
-        return stream.read().strip()
+        raw = stream.read().strip()
+
+    return {
+        'pem': raw,
+    }
 
 
-def _load_cert(path):
-    path = os.path.join(settings.FIXTURES_DIR, path)
+def _load_pub(data):
+    basedir = data.get('basedir', settings.FIXTURES_DIR)
+    path = os.path.join(basedir, data['pub_filename'])
+
     with open(path, 'rb') as stream:
         pem = stream.read()
-        return pem, x509.load_pem_x509_certificate(pem, default_backend())
+
+    return {
+        'pem': pem.decode('utf-8'),
+        'parsed': x509.load_pem_x509_certificate(pem, default_backend()),
+    }
 
 
 cryptography_version = tuple([int(t) for t in cryptography.__version__.split('.')[:2]])
 
-ocsp_key = _load_key('ocsp.key')
-ocsp_csr = _load_csr('ocsp.csr')
-ocsp_pem, ocsp_pubkey = _load_cert('ocsp.pem')
-cert1_key = _load_key('cert1.key')
-cert1_csr = _load_csr('cert1.csr')
-with open(os.path.join(settings.FIXTURES_DIR, 'cert1-der.csr'), 'rb') as stream:
-    cert1_csr_der = stream.read()
-
-cert1_pem, cert1_pubkey = _load_cert('cert1.pem')
-cert1_csr = _load_csr('cert1.csr')
-cert2_key = _load_key('cert2.key')
-cert2_csr = _load_csr('cert2.csr')
-cert2_pem, cert2_pubkey = _load_cert('cert2.pem')
-cert3_key = _load_key('cert3.key')
-cert3_csr = _load_csr('cert3.csr')
-cert3_pem, cert3_pubkey = _load_cert('cert3.pem')
-
-# this cert has (most) extensions we currently handle
-all_key = _load_key('all.key')
-all_csr = _load_csr('all.csr')
-all_pem, all_pubkey = _load_cert('all.pem')
-
-# this cert has *no* extensions
-no_ext_key = _load_key('cert_no_ext.key')
-no_ext_csr = _load_csr('cert_no_ext.csr')
-no_ext_pem, no_ext_pubkey = _load_cert('cert_no_ext.pem')
-
-# Various contributed certs
-_, multiple_ous_and_no_ext_pubkey = _load_cert(os.path.join('contrib', 'multiple_ous_and_no_ext.pem'))
-_, cloudflare_1_pubkey = _load_cert(os.path.join('contrib', 'cloudflare_1.pem'))
-_, letsencrypt_jabber_at_pubkey = _load_cert(os.path.join('contrib', 'letsencrypt_jabber_at.pem'))
-_, godaddy_derstandardat_pubkey = _load_cert(os.path.join('contrib', 'godaddy_derstandardat.pem'))
-
-# some reused values
-root_keyid = '79:26:89:D2:5D:D8:E1:2C:31:71:EF:AD:38:B4:B6:29:F1:37:28:47'
-root_crl_url = 'http://ca.example.com/crl'
-root_issuer_url = 'http://ca.example.com/ca.crt'
-root_issuer_alt = 'http://ca.example.com/'
-root_ocsp_url = 'http://ocsp.ca.example.com'
-root_ocsp_domain = 'ocsp.ca.example.com'
-
-certs = {
-    'cert1': {
-        'san': SubjectAlternativeName('DNS:host1.example.com'),
-        'cn': 'host1.example.com',
-        'keyUsage': (True, ['digitalSignature', 'keyAgreement', 'keyEncipherment']),
-        'status': 'Valid',
-        'issuer_alternative_name': 'URI:https://ca.example.com',
-        'der': cert1_pubkey.public_bytes(encoding=Encoding.DER),
-    },
-    'cert2': {
-        'issuer_alternative_name': 'URI:https://ca.example.com',
-        'san': SubjectAlternativeName('DNS:host2.example.com'),
-    },
-    'cert3': {
-        'issuer_alternative_name': 'URI:https://ca.example.com',
-        'san': SubjectAlternativeName('DNS:host3.example.com'),
-    },
-
-    # created using django_ca.tests.tests_managers.GetCertTestCase.test_all_extensions
-    'cert_all': {
-        'cn': 'all-extensions.example.com',
-        'status': 'Valid',
-        'authority_information_access': AuthorityInformationAccess({
-            'issuers': ['URI:%s' % root_issuer_url],
-            'ocsp': ['URI:%s' % root_ocsp_url],
-        }),
-        'authority_key_identifier': AuthorityKeyIdentifier(root_keyid),
-        'basic_constraints': BasicConstraints('critical,CA:FALSE'),
-        'extended_key_usage': ExtendedKeyUsage('serverAuth,clientAuth,codeSigning,emailProtection'),
-        'issuer_alternative_name': IssuerAlternativeName('URI:%s' % root_issuer_alt),
-        'key_usage': KeyUsage('critical,encipherOnly,keyAgreement,nonRepudiation'),
-        'name_constraints': NameConstraints([['DNS:.com'], ['DNS:.net']]),
-        'ocsp_no_check': OCSPNoCheck({'critical': True}),
-        'precert_poison': True,  # only set once we require cryptography>=2.4
-        'subject_alternative_name': SubjectAlternativeName('DNS:all-extensions.example.com,DNS:extra.example.com'),  # NOQA
-        'tls_feature': TLSFeature('critical,OCSPMustStaple,MultipleCertStatusRequest'),
-    },
-    'ocsp': {
-        'cn': root_ocsp_domain,
-        'status': 'Valid',
-        'authority_information_access': AuthorityInformationAccess({
-            'issuers': ['URI:http://ca.example.com/ca.crt'],
-        }),
-        'authority_key_identifier': AuthorityKeyIdentifier(root_keyid),
-        'basic_constraints': BasicConstraints('critical,CA:FALSE'),
-        'extended_key_usage': ExtendedKeyUsage('OCSPSigning'),
-        'issuer_alternative_name': IssuerAlternativeName('URI:%s' % root_issuer_alt),
-        'key_usage': KeyUsage('critical,digitalSignature,keyEncipherment,nonRepudiation'),
-        'ocsp_no_check': OCSPNoCheck(),
-        'subject_alternative_name': SubjectAlternativeName('DNS:%s' % root_ocsp_domain),
-    },
-
-    # contrib certificates
-    'cloudflare_1': {
-        'cn': 'sni24142.cloudflaressl.com',
-        'precert_poison': True,  # only set once we require cryptography>=2.4
-    },
-}
-
 with open(os.path.join(settings.FIXTURES_DIR, 'cert-data.json')) as stream:
     _fixture_data = json.load(stream)
+certs = _fixture_data.get('certs')
 
+# Update some data from contrib (data is not in cert-data.json, since we don't generate them)
+certs['multiple_ous'] = {
+    'name': 'multiple_ous',
+    'key_filename': False,
+    'csr_filename': False,
+    'pub_filename': os.path.join('contrib', 'multiple_ous_and_no_ext.pem'),
+    'cat': 'contrib',
+    'type': 'cert',
+    'valid_from': '1998-05-18 00:00:00',
+    'valid_until': '2028-08-01 23:59:59',
+}
+certs['cloudflare_1'] = {
+    'name': 'cloudflare_1',
+    'key_filename': False,
+    'csr_filename': False,
+    'pub_filename': os.path.join('contrib', 'cloudflare_1.pem'),
+    'cat': 'contrib',
+    'type': 'cert',
+    'valid_from': '2018-07-18 00:00:00',
+    'valid_until': '2019-01-24 23:59:59',
+}
+
+# Calculate some fixted timestamps that we reuse throughout the tests
 timestamps = {
     'base': datetime.strptime(_fixture_data['timestamp'], '%Y-%m-%d %H:%M:%S'),
 }
 timestamps['before_everything'] = timestamps['base'] - timedelta(days=0)
 timestamps['before_child'] = timestamps['base'] - timedelta(days=1)
-timestamps['everything_valid'] = timestamps['base'] + timedelta(days=10)
+timestamps['everything_valid'] = timestamps['base'] + timedelta(days=30)
 timestamps['everything_expired'] = timestamps['base'] + timedelta(days=365 * 20)
-certs = _fixture_data.get('certs')
-
-# Load CA keys
-root_key = _load_key(certs['root']['key'])
-root_pem, root_pubkey = _load_cert(certs['root']['pub'])
-child_key = _load_key(certs['child']['key'])
-child_pem, child_pubkey = _load_cert(certs['child']['pub'])
-pwd_ca_key = _load_key(certs['pwd']['key'], password=certs['pwd']['password'].encode('utf-8'))
-pwd_ca_pem, pwd_ca_pubkey = _load_cert(certs['pwd']['pub'])
-ecc_ca_key = _load_key(certs['ecc']['key'])
-ecc_ca_pem, ecc_ca_pubkey = _load_cert(certs['ecc']['pub'])
-dsa_ca_key = _load_key(certs['dsa']['key'])
-dsa_ca_pem, dsa_ca_pubkey = _load_cert(certs['dsa']['pub'])
-
-# Load certificates
-root_cert_key = _load_key(certs['root-cert']['key'])
-root_cert_csr = _load_csr(certs['root-cert']['csr'])
-root_cert_pem, root_cert_pubkey = _load_cert(certs['root-cert']['pub'])
-child_cert_key = _load_key(certs['child-cert']['key'])
-child_cert_csr = _load_csr(certs['child-cert']['csr'])
-child_cert_pem, child_cert_pubkey = _load_cert(certs['child-cert']['pub'])
-ecc_cert_key = _load_key(certs['ecc-cert']['key'])
-ecc_cert_csr = _load_csr(certs['ecc-cert']['csr'])
-ecc_cert_pem, ecc_cert_pubkey = _load_cert(certs['ecc-cert']['pub'])
-dsa_cert_key = _load_key(certs['dsa-cert']['key'])
-dsa_cert_csr = _load_csr(certs['dsa-cert']['csr'])
-dsa_cert_pem, dsa_cert_pubkey = _load_cert(certs['dsa-cert']['pub'])
-pwd_cert_key = _load_key(certs['pwd-cert']['key'])
-pwd_cert_csr = _load_csr(certs['pwd-cert']['csr'])
-pwd_cert_pem, pwd_cert_pubkey = _load_cert(certs['pwd-cert']['pub'])
 
 for cert_name, cert_data in certs.items():
+    if cert_data.get('password'):
+        cert_data['password'] = cert_data['password'].encode('utf-8')
+    if cert_data['cat'] == 'sphinx-contrib':
+        cert_data['basedir'] = os.path.join(settings.SPHINX_FIXTURES_DIR, cert_data['type'])
+
+    # Load data from files
+    if cert_data['key_filename'] is not False:
+        cert_data['key'] = _load_key(cert_data)
+    if cert_data['csr_filename'] is not False:
+        cert_data['csr'] = _load_csr(cert_data)
+    cert_data['pub'] = _load_pub(cert_data)
+
+    # parse some data from the dict
     cert_data['valid_from'] = datetime.strptime(cert_data['valid_from'], '%Y-%m-%d %H:%M:%S')
     cert_data['valid_until'] = datetime.strptime(cert_data['valid_until'], '%Y-%m-%d %H:%M:%S')
-
     cert_data['valid_from_short'] = cert_data['valid_from'].strftime('%Y-%m-%d %H:%M')
     cert_data['valid_until_short'] = cert_data['valid_until'].strftime('%Y-%m-%d %H:%M')
 
+    # parse extensions
     if cert_data.get('authority_key_identifier'):
         cert_data['authority_key_identifier'] = AuthorityKeyIdentifier(cert_data['authority_key_identifier'])
     if cert_data.get('subject_key_identifier'):
@@ -266,17 +188,7 @@ for cert_name, cert_data in certs.items():
     if cert_data.get('subject_alternative_name'):
         cert_data['subject_alternative_name'] = SubjectAlternativeName(cert_data['subject_alternative_name'])
 
-certs['root']['pem'] = force_text(root_pem)
-certs['child']['pem'] = force_text(child_pem)
-certs['ecc']['pem'] = force_text(ecc_ca_pem)
-certs['pwd']['pem'] = force_text(pwd_ca_pem)
-certs['dsa']['pem'] = force_text(dsa_ca_pem)
-certs['root-cert']['pem'] = force_text(root_cert_pem)
-certs['ecc-cert']['pem'] = force_text(ecc_cert_pem)
-certs['dsa-cert']['pem'] = force_text(dsa_cert_pem)
-certs['pwd-cert']['pem'] = force_text(pwd_cert_pem)
-certs['child-cert']['pem'] = force_text(child_cert_pem)
-
+print(certs['root'])
 
 if certs and ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
     pass  # not there yet
@@ -343,15 +255,8 @@ class override_tmpcadir(override_settings):
         self.options['CA_DIR'] = tempfile.mkdtemp()
 
         # copy CAs
-        shutil.copy(os.path.join(settings.FIXTURES_DIR, certs['root']['key']), self.options['CA_DIR'])
-        shutil.copy(os.path.join(settings.FIXTURES_DIR, certs['child']['key']), self.options['CA_DIR'])
-        shutil.copy(os.path.join(settings.FIXTURES_DIR, certs['pwd']['key']), self.options['CA_DIR'])
-        shutil.copy(os.path.join(settings.FIXTURES_DIR, certs['ecc']['key']), self.options['CA_DIR'])
-        shutil.copy(os.path.join(settings.FIXTURES_DIR, certs['dsa']['key']), self.options['CA_DIR'])
-        shutil.copy(os.path.join(settings.FIXTURES_DIR, certs['dsa']['key']), self.options['CA_DIR'])
-
-        shutil.copy(os.path.join(settings.FIXTURES_DIR, 'ocsp.key'), self.options['CA_DIR'])
-        shutil.copy(os.path.join(settings.FIXTURES_DIR, 'ocsp.pem'), self.options['CA_DIR'])
+        for filename in [v['key_filename'] for v in certs.values() if v['key_filename'] is not False]:
+            shutil.copy(os.path.join(settings.FIXTURES_DIR, filename), self.options['CA_DIR'])
 
         self.mock = patch.object(ca_storage, 'location', self.options['CA_DIR'])
         self.mock_ = patch.object(ca_storage, '_location', self.options['CA_DIR'])
@@ -774,54 +679,15 @@ class DjangoCAWithCATestCase(DjangoCATestCase):
 
     def setUp(self):
         super(DjangoCAWithCATestCase, self).setUp()
-        self.ca = self.load_ca(name=certs['root']['name'], x509=root_pubkey)
-        self.child_ca = self.load_ca(name=certs['child']['name'], x509=child_pubkey, parent=self.ca)
-        self.pwd_ca = self.load_ca(name=certs['pwd']['name'], x509=pwd_ca_pubkey)
-        self.ecc_ca = self.load_ca(name=certs['ecc']['name'], x509=ecc_ca_pubkey)
-        self.dsa_ca = self.load_ca(name=certs['dsa']['name'], x509=dsa_ca_pubkey)
-        self.cas = [self.ca, self.pwd_ca, self.ecc_ca, self.child_ca, self.dsa_ca]
+        self.cas = {k: self.load_ca(name=v['name'], x509=v['pub']['parsed']) for k, v in certs.items()
+                    if v.get('type') == 'ca'}
 
 
-class DjangoCAWithCSRTestCase(DjangoCAWithCATestCase):
-    def setUp(self):
-        super(DjangoCAWithCSRTestCase, self).setUp()
-
-        self.key = cert1_key
-        self.csr_pem = cert1_csr
-        self.csr_der = cert1_csr_der
-
-
-class DjangoCAWithCertTestCase(DjangoCAWithCSRTestCase):
+class DjangoCAWithCertTestCase(DjangoCAWithCATestCase):
     def setUp(self):
         super(DjangoCAWithCertTestCase, self).setUp()
-        self.root_cert = self.load_cert(self.ca, x509=root_cert_pubkey, csr=root_cert_csr)
-        self.child_cert = self.load_cert(self.child_ca, x509=child_cert_pubkey, csr=child_cert_csr)
-        self.pwd_cert = self.load_cert(self.pwd_ca, x509=pwd_cert_pubkey, csr=pwd_cert_csr)
-        self.ecc_cert = self.load_cert(self.ecc_ca, x509=ecc_cert_pubkey, csr=ecc_cert_csr)
-        self.dsa_cert = self.load_cert(self.dsa_ca, x509=dsa_cert_pubkey, csr=dsa_cert_csr)
 
-        # These are the basic certificates loaded in a loop
-        self.basic_certs = {
-            'root-cert': self.root_cert,
-            'child-cert': self.child_cert,
-            'pwd-cert': self.pwd_cert,
-            'ecc-cert': self.ecc_cert,
-            'dsa-cert': self.dsa_cert,
-        }
-
-        self.ocsp = self.load_cert(self.ca, ocsp_pubkey)
-        self.cert_all = self.load_cert(self.ca, x509=all_pubkey, csr=all_csr)
-        self.cert_no_ext = self.load_cert(self.ca, x509=no_ext_pubkey, csr=no_ext_csr)
-
-        # the one with no hostname:
-        self.cert_multiple_ous_and_no_ext = self.load_cert(self.ca, multiple_ous_and_no_ext_pubkey)
-
-        self.cert_cloudflare_1 = self.load_cert(self.ca, cloudflare_1_pubkey)
-        self.cert_letsencrypt_jabber_at = self.load_cert(self.ca, letsencrypt_jabber_at_pubkey)
-        self.cert_godaddy_derstandardat = self.load_cert(self.ca, godaddy_derstandardat_pubkey)
-
-        self.certs = [
-            self.ocsp, self.cert_all, self.cert_no_ext,
-            self.cert_multiple_ous_and_no_ext, self.cert_cloudflare_1, self.cert_letsencrypt_jabber_at,
-            self.cert_godaddy_derstandardat,
-        ]
+        self.certs = {}
+        for name, data in certs.items():
+            ca = self.cas[data['ca']]
+            self.certs[name] = self.load_cert(ca, x509=data['pub']['parsed'], csr=data['csr']['pem'])

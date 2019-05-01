@@ -4,6 +4,7 @@ import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT_DIR = os.path.dirname(BASE_DIR)
 
 DEBUG = False
 
@@ -169,6 +170,7 @@ LOGGING = {
 
 # Fixture data used by test cases
 FIXTURES_DIR = os.path.join(BASE_DIR, 'django_ca', 'tests', 'fixtures')
+SPHINX_FIXTURES_DIR = os.path.join(ROOT_DIR, 'docs', 'source', '_files')
 ROOT_SERIAL = '4E:1E:2A:29:F9:4C:45:CF:12:2F:2B:17:9E:BF:D4:80:29:C6:37:C7'
 ROOT_KEY_PATH = os.path.join(FIXTURES_DIR, 'root.key')
 ROOT_PEM_PATH = os.path.join(FIXTURES_DIR, 'root.pem')

@@ -36,6 +36,7 @@ from cryptography.x509.oid import NameOID
 #from cryptography.hazmat.primitives.serialization import NoEncryption
 #from cryptography.hazmat.primitives.serialization import PrivateFormat
 _rootdir = os.path.dirname(os.path.realpath(__file__))  # NOQA
+_sphinx_dir = os.path.join(_rootdir, 'docs', 'source', '_files')  # NOQA
 sys.path.insert(0, os.path.join(_rootdir, 'ca'))  # NOQA
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", 'ca.test_settings')  # NOQA
 import django  # NOQA
@@ -70,6 +71,7 @@ if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: on
 manage('migrate', verbosity=0)
 
 # Some variables used in various places throughout the code
+_timeformat = '%Y-%m-%d %H:%M:%S'
 key_size = 1024  # Size for private keys
 ca_base_cn = 'ca.example.com'
 root_pathlen = None
@@ -123,8 +125,8 @@ def create_csr(key_path, path):
 def update_cert_data(cert, data):
     data['serial'] = cert.serial
     data['hpkp'] = cert.hpkp_pin
-    data['valid_from'] = cert.x509.not_valid_before.strftime('%Y-%m-%d %H:%M:%S')
-    data['valid_until'] = cert.x509.not_valid_after.strftime('%Y-%m-%d %H:%M:%S')
+    data['valid_from'] = cert.x509.not_valid_before.strftime(_timeformat)
+    data['valid_until'] = cert.x509.not_valid_after.strftime(_timeformat)
 
     data['md5'] = cert.get_digest('md5')
     data['sha1'] = cert.get_digest('sha1')
@@ -161,8 +163,8 @@ def update_cert_data(cert, data):
 
 
 def write_ca(cert, data, password=None):
-    key_dest = os.path.join(settings.FIXTURES_DIR, data['key'])
-    pub_dest = os.path.join(settings.FIXTURES_DIR, data['pub'])
+    key_dest = os.path.join(settings.FIXTURES_DIR, data['key_filename'])
+    pub_dest = os.path.join(settings.FIXTURES_DIR, data['pub_filename'])
     #key_der_dest = os.path.join(settings.FIXTURES_DIR, data['key-der'])
     #pub_der_dest = os.path.join(settings.FIXTURES_DIR, data['pub-der'])
 
@@ -193,9 +195,9 @@ def write_ca(cert, data, password=None):
 
 
 def copy_cert(cert, data, key_path, csr_path):
-    key_dest = os.path.join(settings.FIXTURES_DIR, data['key'])
-    csr_dest = os.path.join(settings.FIXTURES_DIR, data['csr'])
-    pub_dest = os.path.join(settings.FIXTURES_DIR, data['pub'])
+    key_dest = os.path.join(settings.FIXTURES_DIR, data['key_filename'])
+    csr_dest = os.path.join(settings.FIXTURES_DIR, data['csr_filename'])
+    pub_dest = os.path.join(settings.FIXTURES_DIR, data['pub_filename'])
     shutil.copy(key_path, key_dest)
     shutil.copy(csr_path, csr_dest)
     with open(pub_dest, 'w') as stream:
@@ -341,14 +343,18 @@ data = {
 # Autocompute some values (name, filenames, ...) based on the dict key
 for cert, cert_values in data.items():
     cert_values['name'] = cert
+    cert_values.setdefault('type', 'cert')
+    cert_values.setdefault('cat', 'generated')
     cert_values.setdefault('algorithm', 'SHA256')
-    cert_values['key'] = '%s.key' % cert_values['name']
-    cert_values['pub'] = '%s.pem' % cert_values['name']
+    cert_values['key_filename'] = '%s.key' % cert_values['name']
+    cert_values['pub_filename'] = '%s.pem' % cert_values['name']
     cert_values.setdefault('key_size', key_size)
     cert_values.setdefault('key_type', 'RSA')
     cert_values.setdefault('delta', timedelta())
     if cert_values.pop('csr', False):
-        cert_values['csr'] = '%s.csr' % cert_values['name']
+        cert_values['csr_filename'] = '%s.csr' % cert_values['name']
+    else:
+        cert_values['csr_filename'] = False
 
     if cert_values.get('type') == 'ca':
         data[cert]['ca_ocsp_url'] = '%s/ca/ocsp/%s/' % (testserver, data[cert]['name'])
@@ -499,14 +505,56 @@ with override_tmpcadir():
                                         password=pwd, **kwargs)
     copy_cert(cert, data[name], key_path, csr_path)
 
+# Load data from Sphinx files
+for filename in os.listdir(os.path.join(_sphinx_dir, 'ca')):
+    name, _ext = os.path.splitext(filename)
+
+    with open(os.path.join(_sphinx_dir, 'ca', filename), 'rb') as stream:
+        pem = stream.read()
+
+    parsed = x509.load_pem_x509_certificate(pem, default_backend())
+
+    cert_data = {
+        'name': name,
+        'type': 'ca',
+        'cat': 'sphinx-contrib',
+        'pub_filename': filename,
+        'key_filename': False,
+        'csr_filename': False,
+        'valid_from': parsed.not_valid_before.strftime(_timeformat),
+        'valid_until': parsed.not_valid_after.strftime(_timeformat),
+    }
+    data[name] = cert_data
+
+for filename in os.listdir(os.path.join(_sphinx_dir, 'cert')):
+    name, _ext = os.path.splitext(filename)
+
+    with open(os.path.join(_sphinx_dir, 'cert', filename), 'rb') as stream:
+        pem = stream.read()
+
+    parsed = x509.load_pem_x509_certificate(pem, default_backend())
+
+    cert_data = {
+        'name': name,
+        'type': 'cert',
+        'cat': 'sphinx-contrib',
+        'pub_filename': filename,
+        'key_filename': False,
+        'csr_filename': False,
+        'valid_from': parsed.not_valid_before.strftime(_timeformat),
+        'valid_until': parsed.not_valid_after.strftime(_timeformat),
+    }
+    data[name] = cert_data
+
 for name, cert_data in data.items():
-    del cert_data['delta']
+    if 'delta' in cert_data:
+        del cert_data['delta']
 
     if cert_data.get('password'):
         cert_data['password'] = cert_data['password'].decode('utf-8')
 
 fixture_data = {
-    'timestamp': now.strftime('%Y-%m-%d %H:%M:%S'),
+    'timestamp': now.strftime(_timeformat),
     'certs': data,
 }
 
