@@ -47,52 +47,69 @@ class ImportCATest(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_basic(self):
-        name = 'testname'
-        pem_path = os.path.join(settings.FIXTURES_DIR, 'root.pem')
-        key_path = os.path.join(settings.FIXTURES_DIR, 'root.key')
-        out, err = self.cmd('import_ca', name, key_path, pem_path)
+        cas = {name: data for name, data in certs.items()
+               if data['type'] == 'ca' and data.get('key_filename')}
 
-        self.assertEqual(out, '')
-        self.assertEqual(err, '')
+        for name, data in cas.items():
+            if data.get('password'):
+                continue  # TODO: cmd can't parse this yet
 
-        ca = CertificateAuthority.objects.get(name=name)
-        self.assertSignature([ca], ca)
-        ca.full_clean()  # assert e.g. max_length in serials
-        self.assertBasic(ca.x509, algo='sha512')
+            key_path = os.path.join(settings.FIXTURES_DIR, data['key_filename'])
+            pem_path = os.path.join(settings.FIXTURES_DIR, data['pub_filename'])
+            out, err = self.cmd('import_ca', name, key_path, pem_path)
 
-        # test the private key
-        key = ca.key(None)
-        self.assertIsInstance(key, RSAPrivateKey)
-        self.assertEqual(key.key_size, certs['root']['key_size'])
-        self.assertEqual(ca.serial, certs['root']['serial'])
+            self.assertEqual(out, '')
+            self.assertEqual(err, '')
+
+            ca = CertificateAuthority.objects.get(name=name)
+            ca.full_clean()  # assert e.g. max_length in serials
+
+            if not data.get('parent'):
+                self.assertSignature([ca], ca)
+            self.assertBasic(ca.x509, algo=data['algorithm'])
+
+            # test the private key
+            key = ca.key(data['password'])
+            self.assertIsInstance(key, RSAPrivateKey)
+            self.assertEqual(key.key_size, data['key_size'])
+            self.assertEqual(ca.serial, data['serial'])
 
     @override_tmpcadir()
     def test_der(self):
-        name = 'testname'
-        pem_path = os.path.join(settings.FIXTURES_DIR, 'root-pub.der')
-        key_path = os.path.join(settings.FIXTURES_DIR, 'root-key.der')
-        out, err = self.cmd('import_ca', name, key_path, pem_path)
+        cas = {name: data for name, data in certs.items()
+               if data.get('key_der_filename')}
 
-        self.assertEqual(out, '')
-        self.assertEqual(err, '')
+        for name, data in cas.items():
+            if data.get('password'):
+                continue  # TODO: cmd can't parse this yet
 
-        ca = CertificateAuthority.objects.get(name=name)
-        self.assertSignature([ca], ca)
-        ca.full_clean()  # assert e.g. max_length in serials
-        self.assertBasic(ca.x509, algo='sha512')
+            key_path = os.path.join(settings.FIXTURES_DIR, data['key_der_filename'])
+            pem_path = os.path.join(settings.FIXTURES_DIR, data['pub_der_filename'])
+            out, err = self.cmd('import_ca', name, key_path, pem_path)
 
-        # test the private key
-        key = ca.key(None)
-        self.assertIsInstance(key, RSAPrivateKey)
-        self.assertEqual(key.key_size, certs['root']['key_size'])
-        self.assertEqual(ca.serial, certs['root']['serial'])
+            self.assertEqual(out, '')
+            self.assertEqual(err, '')
+
+            ca = CertificateAuthority.objects.get(name=name)
+            ca.full_clean()  # assert e.g. max_length in serials
+
+            if not data.get('parent'):
+                self.assertSignature([ca], ca)
+
+            self.assertBasic(ca.x509, algo=data['algorithm'])
+
+            # test the private key
+            key = ca.key(None)
+            self.assertIsInstance(key, RSAPrivateKey)
+            self.assertEqual(key.key_size, data['key_size'])
+            self.assertEqual(ca.serial, data['serial'])
 
     @override_tmpcadir()
     def test_password(self):
         name = 'testname'
         password = b'testpassword'
-        pem_path = os.path.join(settings.FIXTURES_DIR, 'root-pub.der')
-        key_path = os.path.join(settings.FIXTURES_DIR, 'root-key.der')
+        key_path = os.path.join(settings.FIXTURES_DIR, certs['root']['key_filename'])
+        pem_path = os.path.join(settings.FIXTURES_DIR, certs['root']['pub_filename'])
         out, err = self.cmd('import_ca', name, key_path, pem_path, password=password)
 
         self.assertEqual(out, '')
@@ -101,7 +118,7 @@ class ImportCATest(DjangoCATestCase):
         ca = CertificateAuthority.objects.get(name=name)
         self.assertSignature([ca], ca)
         ca.full_clean()  # assert e.g. max_length in serials
-        self.assertBasic(ca.x509, algo='sha512')
+        self.assertBasic(ca.x509, algo=certs['root']['algorithm'])
 
         # test the private key
         with self.assertRaisesRegex(TypeError, '^Password was not given but private key is encrypted$'):
@@ -160,11 +177,11 @@ class ImportCATest(DjangoCATestCase):
             os.chmod(tempdir, 0o755)
             shutil.rmtree(tempdir)
 
-    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    @override_tmpcadir()
     def test_bogus_pub(self):
         name = 'testname'
         pem_path = os.path.join(settings.FIXTURES_DIR, __file__)
-        key_path = os.path.join(settings.FIXTURES_DIR, 'root-key.der')
+        key_path = os.path.join(settings.FIXTURES_DIR, certs['root']['key_der_filename'])
         with self.assertCommandError(r'^Unable to load public key\.$'):
             self.cmd('import_ca', name, key_path, pem_path)
         self.assertEqual(CertificateAuthority.objects.count(), 0)
@@ -172,7 +189,7 @@ class ImportCATest(DjangoCATestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_bogus_priv(self):
         name = 'testname'
-        pem_path = os.path.join(settings.FIXTURES_DIR, 'root-pub.der')
+        pem_path = os.path.join(settings.FIXTURES_DIR, certs['root']['pub_der_filename'])
         key_path = os.path.join(settings.FIXTURES_DIR, __file__)
         with self.assertCommandError(r'^Unable to load private key\.$'):
             self.cmd('import_ca', name, key_path, pem_path)
