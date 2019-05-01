@@ -374,7 +374,7 @@ class X509CertMixin(models.Model):
                     yield name, value
                 elif name == 'cRLDistributionPoints':
                     yield name, self.crlDistributionPoints()
-                else:  # pragma: no cover  - we have a function for everything we support
+                else:
                     yield name, (ext.critical, ext.oid)
 
     @property
