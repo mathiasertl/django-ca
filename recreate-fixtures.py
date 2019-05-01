@@ -32,10 +32,11 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import NameOID
-#from cryptography.hazmat.primitives.serialization import BestAvailableEncryption
-#from cryptography.hazmat.primitives.serialization import Encoding
-#from cryptography.hazmat.primitives.serialization import NoEncryption
-#from cryptography.hazmat.primitives.serialization import PrivateFormat
+from cryptography.hazmat.primitives.serialization import BestAvailableEncryption
+from cryptography.hazmat.primitives.serialization import Encoding
+from cryptography.hazmat.primitives.serialization import NoEncryption
+from cryptography.hazmat.primitives.serialization import PrivateFormat
+
 _rootdir = os.path.dirname(os.path.realpath(__file__))  # NOQA
 _sphinx_dir = os.path.join(_rootdir, 'docs', 'source', '_files')  # NOQA
 sys.path.insert(0, os.path.join(_rootdir, 'ca'))  # NOQA
@@ -173,27 +174,29 @@ def update_cert_data(cert, data):
 def write_ca(cert, data, password=None):
     key_dest = os.path.join(settings.FIXTURES_DIR, data['key_filename'])
     pub_dest = os.path.join(settings.FIXTURES_DIR, data['pub_filename'])
-    #key_der_dest = os.path.join(settings.FIXTURES_DIR, data['key-der'])
-    #pub_der_dest = os.path.join(settings.FIXTURES_DIR, data['pub-der'])
+    key_der_dest = os.path.join(settings.FIXTURES_DIR, '%s.der' % data['key_filename'])
+    pub_der_dest = os.path.join(settings.FIXTURES_DIR, '%s.der' % data['pub_filename'])
 
     # write files to dest
     shutil.copy(ca_storage.path(cert.private_key_path), key_dest)
     with open(pub_dest, 'w') as stream:
         stream.write(cert.pub)
 
-    #if password is None:
-    #    encryption = NoEncryption()
-    #else:
-    #    encryption = BestAvailableEncryption(password)
+    if password is None:
+        encryption = NoEncryption()
+    else:
+        encryption = BestAvailableEncryption(password)
 
-    #key_der = cert.key(password=password).private_bytes(
-    #   encoding=Encoding.DER, format=PrivateFormat.PKCS8, encryption_algorithm=encryption)
-    #with open(key_der_dest, 'wb') as stream:
-    #    stream.write(key_der)
-    #with open(pub_der_dest, 'wb') as stream:
-    #    stream.write(cert.dump_certificate(Encoding.DER))
+    key_der = cert.key(password=password).private_bytes(
+        encoding=Encoding.DER, format=PrivateFormat.PKCS8, encryption_algorithm=encryption)
+    with open(key_der_dest, 'wb') as stream:
+        stream.write(key_der)
+    with open(pub_der_dest, 'wb') as stream:
+        stream.write(cert.dump_certificate(Encoding.DER))
 
     # These keys are only present in CAs:
+    data['key_der_filename'] = key_der_dest
+    data['pub_der_filename'] = pub_der_dest
     data['issuer_url'] = ca.issuer_url
     data['crl_url'] = ca.crl_url
     data['ca_crl_url'] = '%s%s' % (testserver, reverse('django_ca:ca-crl', kwargs={'serial': ca.serial}))
@@ -433,7 +436,7 @@ if not args.only_contrib:
             ca.save()
             ca_instances.append(ca)
 
-            write_ca(ca, data[name])
+            write_ca(ca, data[name], password=data[name]['password'])
 
         # add parent/child relationships
         data['root']['children'] = [
