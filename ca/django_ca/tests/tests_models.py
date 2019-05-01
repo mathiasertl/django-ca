@@ -41,7 +41,7 @@ from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..models import Certificate
 from ..models import Watcher
-from .base import DjangoCAWithChildCATestCase
+from .base import DjangoCAWithCertTestCase
 from .base import cert3_csr
 from .base import certs
 from .base import override_settings
@@ -101,7 +101,7 @@ class TestWatcher(TestCase):
         self.assertEqual(str(w), '%s <%s>' % (name, mail))
 
 
-class CertificateAuthorityTests(DjangoCAWithChildCATestCase):
+class CertificateAuthorityTests(DjangoCAWithCertTestCase):
     @override_tmpcadir()
     def test_key(self):
         log_msg = 'WARNING:django_ca.models:%s: CA uses absolute path. Use "manage.py migrate_ca" to update.'
@@ -261,7 +261,7 @@ class CertificateAuthorityTests(DjangoCAWithChildCATestCase):
             self.ca.get_crl(scope='foobar')
 
 
-class CertificateTests(DjangoCAWithChildCATestCase):
+class CertificateTests(DjangoCAWithCertTestCase):
     def setUp(self):
         super(CertificateTests, self).setUp()
         self.ca.crl_url = 'https://ca.example.com/crl.der'

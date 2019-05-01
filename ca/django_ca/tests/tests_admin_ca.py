@@ -20,7 +20,7 @@ from django.urls import reverse
 from django.utils.encoding import force_text
 from django.utils.six.moves.urllib.parse import quote
 
-from .base import DjangoCAWithChildCATestCase
+from .base import DjangoCAWithCertTestCase
 
 
 class CertificateAuthorityAdminTestMixin(object):
@@ -56,7 +56,7 @@ class CertificateAuthorityAdminTestMixin(object):
         self.assertRedirects(response, expected, **kwargs)
 
 
-class ChangelistTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithChildCATestCase):
+class ChangelistTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithCertTestCase):
     """Test the changelist view."""
 
     def assertResponse(self, response, certs=None):
@@ -78,7 +78,7 @@ class ChangelistTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithChildCA
         self.assertRequiresLogin(response)
 
 
-class ChangeTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithChildCATestCase):
+class ChangeTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithCertTestCase):
     def test_basic(self):
         response = self.client.get(self.change_url())
         self.assertChangeResponse(response)
@@ -93,7 +93,7 @@ class ChangeTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithChildCATest
         self.assertChangeResponse(response)
 
 
-class CADownloadBundleTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithChildCATestCase):
+class CADownloadBundleTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithCertTestCase):
     def get_url(self, ca):
         return reverse('admin:django_ca_certificateauthority_download_bundle', kwargs={'pk': ca.pk})
 

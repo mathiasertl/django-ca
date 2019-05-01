@@ -825,7 +825,3 @@ class DjangoCAWithCertTestCase(DjangoCAWithCSRTestCase):
             self.cert_multiple_ous_and_no_ext, self.cert_cloudflare_1, self.cert_letsencrypt_jabber_at,
             self.cert_godaddy_derstandardat,
         ]
-
-
-class DjangoCAWithChildCATestCase(DjangoCAWithCertTestCase):
-    pass  # TODO: remove

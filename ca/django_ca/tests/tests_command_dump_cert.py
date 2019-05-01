@@ -21,13 +21,13 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.utils import six
 
 from .. import ca_settings
-from .base import DjangoCAWithChildCATestCase
+from .base import DjangoCAWithCertTestCase
 from .base import override_settings
 from .base import override_tmpcadir
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
-class DumpCertTestCase(DjangoCAWithChildCATestCase):
+class DumpCertTestCase(DjangoCAWithCertTestCase):
     def test_basic(self):
         stdout, stderr = self.cmd('dump_cert', self.cert.serial,
                                   stdout=BytesIO(), stderr=BytesIO())

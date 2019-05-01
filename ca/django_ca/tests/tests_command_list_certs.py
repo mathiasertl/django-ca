@@ -17,12 +17,12 @@ from freezegun import freeze_time
 
 from django.utils import timezone
 
-from .base import DjangoCAWithChildCATestCase
+from .base import DjangoCAWithCertTestCase
 from .base import override_settings
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
-class ListCertsTestCase(DjangoCAWithChildCATestCase):
+class ListCertsTestCase(DjangoCAWithCertTestCase):
     def line(self, cert):
         if cert.revoked is True:
             info = 'revoked'
