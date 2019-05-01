@@ -242,7 +242,6 @@ def update_contrib(data, cert, name, filename):
                 # Currently just some old StartSSL extensions for Netscape (!)
                 continue
             else:
-                print(key, value[1], type(value[1]))
                 cert_data[key] = value
 
     data[name] = cert_data
@@ -567,6 +566,11 @@ for filename in os.listdir(os.path.join(_sphinx_dir, 'ca')):
 
 for filename in os.listdir(os.path.join(_sphinx_dir, 'cert')):
     name, _ext = os.path.splitext(filename)
+
+    contrib_ca = None
+    if name in data:
+        contrib_ca = name
+
     name = '%s-cert' % name
 
     with open(os.path.join(_sphinx_dir, 'cert', filename), 'rb') as stream:
@@ -577,6 +581,9 @@ for filename in os.listdir(os.path.join(_sphinx_dir, 'cert')):
     cert.x509 = parsed
     update_contrib(data, cert, name, filename)
     data[name]['type'] = 'cert'
+
+    if contrib_ca:
+        data[name]['ca'] = contrib_ca
 
 
 for name, cert_data in data.items():
