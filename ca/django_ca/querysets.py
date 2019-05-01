@@ -23,7 +23,13 @@ class DjangoCAMixin(object):
         identifier = identifier.strip()
         serial = identifier.upper()
 
-        return self.get(Q(serial__startswith=serial) | Q(cn=identifier))
+        try:
+            # Imported CAs might have a shorter serial and there is a chance that it might become impossible
+            # to select a CA by serial if its serial matches another CA with a longer serial. So we try to
+            # match by exact serial first.
+            return self.get(Q(serial=serial) | Q(cn=identifier))
+        except self.model.DoesNotExist:
+            return self.get(Q(serial__startswith=serial) | Q(cn=identifier))
 
     def revoked(self):
         """Return revoked certificates."""
