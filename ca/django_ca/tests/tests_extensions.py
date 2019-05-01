@@ -1017,17 +1017,9 @@ class PrecertPoisonTestCase(TestCase):
 @unittest.skipUnless(ca_settings.OPENSSL_SUPPORTS_SCT,
                      'This version of OpenSSL does not support SCTs')
 class PrecertificateSignedCertificateTimestamps(DjangoCAWithCertTestCase):  # pragma: only cryptography>=2.4
-    def test_as_extension(self):
-        ext = self.cert_letsencrypt_jabber_at.precertificate_signed_certificate_timestamps.as_extension()
-        self.assertEqual(ext.oid, ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
-        self.assertIsInstance(ext.value, x509.PrecertificateSignedCertificateTimestamps)
-
-    @unittest.skipIf(cryptography_version < (2, 4),
-                     'SCTs do not compare as equal in cryptography<2.4.')
-    def test_basic(self):  # pragma: only cryptography>=2.4
-        cert = self.cert_letsencrypt_jabber_at
+    def test_basic(self):
+        cert = self.certs['letsencrypt_x3-cert']
         ext = cert.x509.extensions.get_extension_for_oid(ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
-
         self.assertEqual(ext, cert.precertificate_signed_certificate_timestamps.as_extension())
 
 
