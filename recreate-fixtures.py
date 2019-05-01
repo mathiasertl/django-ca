@@ -27,6 +27,10 @@ from datetime import timedelta
 
 from freezegun import freeze_time
 
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.x509.oid import NameOID
 #from cryptography.hazmat.primitives.serialization import BestAvailableEncryption
 #from cryptography.hazmat.primitives.serialization import Encoding
 #from cryptography.hazmat.primitives.serialization import NoEncryption
@@ -114,8 +118,6 @@ def create_csr(key_path, path):
 def update_cert_data(cert, data):
     data['serial'] = cert.serial
     data['hpkp'] = cert.hpkp_pin
-    data['authority_key_identifier'] = bytes_to_hex(cert.authority_key_identifier.value)
-    data['subject_key_identifier'] = bytes_to_hex(cert.subject_key_identifier.value)
     data['valid_from'] = cert.x509.not_valid_before.strftime('%Y-%m-%d %H:%M:%S')
     data['valid_until'] = cert.x509.not_valid_after.strftime('%Y-%m-%d %H:%M:%S')
 
@@ -123,6 +125,14 @@ def update_cert_data(cert, data):
     data['sha1'] = cert.get_digest('sha1')
     data['sha256'] = cert.get_digest('sha256')
     data['sha512'] = cert.get_digest('sha512')
+
+    aki = cert.authority_key_identifier
+    if aki is not None:
+        data['authority_key_identifier'] = bytes_to_hex(aki.value)
+
+    ski = cert.subject_key_identifier
+    if ski is not None:
+        data['subject_key_identifier'] = bytes_to_hex(ski.value)
 
     ku = cert.key_usage
     if ku is not None:
@@ -300,6 +310,12 @@ data = {
         'csr': True,
         'basic_constraints': 'critical,CA:FALSE',
     },
+    'no-extensions': {
+        'ca': 'child',
+        'delta': timedelta(days=10),
+        'csr': True,
+        'basic_constraints': 'critical,CA:FALSE',
+    },
 }
 
 # Autocompute some values (name, filenames, ...) based on the dict key
@@ -375,9 +391,9 @@ with override_tmpcadir():
         copy_cert(cert, data[name], key_path, csr_path)
 
     # create a cert for every profile
-    child_ca = CertificateAuthority.objects.get(name=data['child']['name'])
     for profile in ca_settings.CA_PROFILES:
         name = 'profile-%s-cert' % profile
+        ca = CertificateAuthority.objects.get(name=data[name]['ca'])
 
         key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
         csr_path = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
@@ -386,14 +402,39 @@ with override_tmpcadir():
         kwargs = get_cert_profile_kwargs(profile)
         kwargs['subject'].append(('CN', data[name]['cn']))
 
-        pwd = data[data[name]['ca']]['password']
+        pwd = data[ca.name]['password']
         with freeze_time(now + data[name]['delta']):
-            cert = Certificate.objects.init(ca=child_ca, csr=csr, algorithm=data[name]['algorithm'],
+            cert = Certificate.objects.init(ca=ca, csr=csr, algorithm=data[name]['algorithm'],
                                             password=pwd, **kwargs)
 
         data[name]['profile'] = profile
         copy_cert(cert, data[name], key_path, csr_path)
 
+    # create a cert with absolutely no extensions
+    name = 'no-extensions'
+    key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
+    csr_path = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
+    csr = create_csr(key_path, csr_path)
+
+    with freeze_time(now + data[name]['delta']):
+        ca = CertificateAuthority.objects.get(name=data[name]['ca'])
+        now = datetime.utcnow()
+        pwd = data[ca.name]['password']
+        parsed_csr = x509.load_pem_x509_csr(csr.encode('utf-8'), default_backend())
+
+        builder = x509.CertificateBuilder()
+        builder = builder.not_valid_before(now)
+        builder = builder.not_valid_after(now + timedelta(days=365))
+        builder = builder.serial_number(x509.random_serial_number())
+        builder = builder.subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, data[name]['cn'])]))
+        builder = builder.issuer_name(ca.x509.subject)
+        builder = builder.public_key(parsed_csr.public_key())
+
+        x509_cert = builder.sign(private_key=ca.key(pwd), algorithm=hashes.SHA256(),
+                                 backend=default_backend())
+        cert = Certificate(ca=ca)
+        cert.x509 = x509_cert
+        copy_cert(cert, data[name], key_path, csr_path)
 
 for name, cert_data in data.items():
     del cert_data['delta']
