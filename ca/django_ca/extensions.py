@@ -802,6 +802,9 @@ class ExtendedKeyUsage(KnownValuesExtension):
         ('OCSPSigning', 'OCSP Signing'),
         ('smartcardLogon', 'Smart card logon'),
         ('msKDC', 'Kerberos Domain Controller'),
+        ('ipsecEndSystem', 'IPSec EndSystem'),
+        ('ipsecTunnel', 'IPSec Tunnel'),
+        ('ipsecUser', 'IPSec User'),
     )
 
     def from_extension(self, ext):
