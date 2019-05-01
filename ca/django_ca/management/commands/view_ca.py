@@ -21,7 +21,7 @@ class Command(BaseCommand):
     help = 'View details of a certificate authority.'
 
     def add_arguments(self, parser):
-        self.add_ca(parser, arg='ca', allow_disabled=True)
+        self.add_ca(parser, arg='ca', allow_disabled=True, allow_unusable=True)
 
     def handle(self, ca, **options):
         try:

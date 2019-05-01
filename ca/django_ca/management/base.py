@@ -135,9 +135,10 @@ class CertificateAction(argparse.Action):
 
 
 class CertificateAuthorityAction(argparse.Action):
-    def __init__(self, allow_disabled=False, **kwargs):
+    def __init__(self, allow_disabled=False, allow_unusable=False, **kwargs):
         super(CertificateAuthorityAction, self).__init__(**kwargs)
         self.allow_disabled = allow_disabled
+        self.allow_unusable = allow_unusable
 
     def __call__(self, parser, namespace, value, option_string=None):
         qs = CertificateAuthority.objects.all()
@@ -152,7 +153,7 @@ class CertificateAuthorityAction(argparse.Action):
             parser.error('%s: Multiple Certificate authorities match.' % value)
 
         # verify that the private key exists
-        if not value.key_exists:
+        if not self.allow_unusable and not value.key_exists:
             parser.error('%s: %s: Private key does not exist.' % (value, value.private_key_path))
 
         setattr(namespace, self.dest, value)
@@ -268,7 +269,7 @@ class BaseCommand(_BaseCommand):
 
     def add_ca(self, parser, arg='--ca',
                help='Certificate authority to use (default: %(default)s).',
-               allow_disabled=False, no_default=False):
+               allow_disabled=False, no_default=False, allow_unusable=False):
         if no_default is True:
             default = None
         else:
@@ -276,7 +277,8 @@ class BaseCommand(_BaseCommand):
 
         help = help % {'default': default.serial if default else None}
         parser.add_argument('%s' % arg, metavar='SERIAL', help=help, default=default,
-                            allow_disabled=allow_disabled, action=CertificateAuthorityAction)
+                            allow_disabled=allow_disabled, allow_unusable=allow_unusable,
+                            action=CertificateAuthorityAction)
 
     def add_format(self, parser, default=Encoding.PEM, help_text=None, opts=None):
         """Add the --format option."""
