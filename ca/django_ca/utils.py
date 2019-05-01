@@ -102,6 +102,7 @@ NAME_OID_MAPPINGS = {v: k for k, v in OID_NAME_MAPPINGS.items()}
 # Some OIDs can occur multiple times
 MULTIPLE_OIDS = (
     NameOID.ORGANIZATIONAL_UNIT_NAME,
+    NameOID.STREET_ADDRESS,
 )
 
 # uppercase values as keys for normalizing case
