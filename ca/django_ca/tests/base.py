@@ -107,7 +107,7 @@ def _load_pub(data):
     path = os.path.join(basedir, data['pub_filename'])
 
     with open(path, 'rb') as stream:
-        pem = stream.read()
+        pem = stream.read().replace(b'\r\n', b'\n')
 
     return {
         'pem': pem.decode('utf-8'),
@@ -157,6 +157,9 @@ for cert_name, cert_data in certs.items():
         cert_data['password'] = cert_data['password'].encode('utf-8')
     if cert_data['cat'] == 'sphinx-contrib':
         cert_data['basedir'] = os.path.join(settings.SPHINX_FIXTURES_DIR, cert_data['type'])
+
+    if cert_data['type'] == 'ca':
+        cert_data.setdefault('children', [])
 
     # Load data from files
     if cert_data['key_filename'] is not False:
