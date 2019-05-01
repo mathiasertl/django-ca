@@ -93,6 +93,24 @@ class override_tmpcadir(override_settings):
         reload_module(ca_settings)
 
 
+def create_key(path):
+    if PY2:
+        # PY2 does not have subprocess.DEVNULL
+        with open(os.devnull, 'w') as devnull:
+            subprocess.call(['openssl', 'genrsa', '-out', path, str(key_size)], stderr=devnull)
+    else:
+        subprocess.call(['openssl', 'genrsa', '-out', path, str(key_size)], stderr=subprocess.DEVNULL)
+
+
+def create_csr(key_path, path):
+    create_key(key_path)
+    subprocess.call(['openssl', 'req', '-new', '-key', key_path, '-out', path, '-utf8', '-batch'])
+
+    with open(path) as stream:
+        csr = stream.read()
+    return csr
+
+
 def update_cert_data(cert, data):
     data['serial'] = cert.serial
     data['hpkp'] = cert.hpkp_pin
@@ -252,6 +270,36 @@ data = {
         'csr': True,
         'basic_constraints': 'critical,CA:FALSE',
     },
+    'profile-client-cert': {
+        'ca': 'child',
+        'delta': timedelta(days=10),
+        'csr': True,
+        'basic_constraints': 'critical,CA:FALSE',
+    },
+    'profile-server-cert': {
+        'ca': 'child',
+        'delta': timedelta(days=10),
+        'csr': True,
+        'basic_constraints': 'critical,CA:FALSE',
+    },
+    'profile-webserver-cert': {
+        'ca': 'child',
+        'delta': timedelta(days=10),
+        'csr': True,
+        'basic_constraints': 'critical,CA:FALSE',
+    },
+    'profile-enduser-cert': {
+        'ca': 'child',
+        'delta': timedelta(days=10),
+        'csr': True,
+        'basic_constraints': 'critical,CA:FALSE',
+    },
+    'profile-ocsp-cert': {
+        'ca': 'child',
+        'delta': timedelta(days=10),
+        'csr': True,
+        'basic_constraints': 'critical,CA:FALSE',
+    },
 }
 
 # Autocompute some values (name, filenames, ...) based on the dict key
@@ -315,26 +363,37 @@ with override_tmpcadir():
         name = '%s-cert' % ca.name
         key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
         csr_path = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
+        csr = create_csr(key_path, csr_path)
 
-        if PY2:
-            # PY2 does not have subprocess.DEVNULL
-            with open(os.devnull, 'w') as devnull:
-                subprocess.call(['openssl', 'genrsa', '-out', key_path, str(key_size)], stderr=devnull)
-        else:
-            subprocess.call(['openssl', 'genrsa', '-out', key_path, str(key_size)], stderr=subprocess.DEVNULL)
-
-        subprocess.call(['openssl', 'req', '-new', '-key', key_path, '-out', csr_path, '-utf8', '-batch'])
         kwargs = get_cert_profile_kwargs('server')
         kwargs['subject'].append(('CN', data[name]['cn']))
-        with open(csr_path) as stream:
-            csr = stream.read()
-
         pwd = data[data[name]['ca']]['password']
 
         with freeze_time(now + data[name]['delta']):
             cert = Certificate.objects.init(ca=ca, csr=csr, algorithm=data[name]['algorithm'],
                                             password=pwd, **kwargs)
         copy_cert(cert, data[name], key_path, csr_path)
+
+    # create a cert for every profile
+    child_ca = CertificateAuthority.objects.get(name=data['child']['name'])
+    for profile in ca_settings.CA_PROFILES:
+        name = 'profile-%s-cert' % profile
+
+        key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
+        csr_path = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
+        csr = create_csr(key_path, csr_path)
+
+        kwargs = get_cert_profile_kwargs(profile)
+        kwargs['subject'].append(('CN', data[name]['cn']))
+
+        pwd = data[data[name]['ca']]['password']
+        with freeze_time(now + data[name]['delta']):
+            cert = Certificate.objects.init(ca=child_ca, csr=csr, algorithm=data[name]['algorithm'],
+                                            password=pwd, **kwargs)
+
+        data[name]['profile'] = profile
+        copy_cert(cert, data[name], key_path, csr_path)
+
 
 for name, cert_data in data.items():
     del cert_data['delta']
