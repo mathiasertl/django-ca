@@ -675,7 +675,10 @@ class BasicConstraints(Extension):
         return val
 
     def serialize(self):
-        return self.as_text()
+        value = self.as_text()
+        if self.critical:
+            value = 'critical,%s' % value
+        return value
 
 
 class IssuerAlternativeName(AlternativeNameExtension):
