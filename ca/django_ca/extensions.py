@@ -812,6 +812,7 @@ class ExtendedKeyUsage(KnownValuesExtension):
         return x509.ExtendedKeyUsage([self.CRYPTOGRAPHY_MAPPING[u] for u in self.value])
 
 
+# TODO: this extension is not in fact always critical, but constructor does not allow overriding this value
 class NameConstraints(GeneralNameMixin, Extension):
     """Class representing a NameConstraints extenion
 
@@ -905,10 +906,13 @@ class NameConstraints(GeneralNameMixin, Extension):
         self.excluded = [self.parse_value(v) for v in value.get('excluded', [])]
 
     def serialize(self):
-        return [
-            [self.serialize_value(v) for v in self.permitted],
-            [self.serialize_value(v) for v in self.excluded],
-        ]
+        return {
+            'critical': self.critical,
+            'value': {
+                'permitted': [self.serialize_value(v) for v in self.permitted],
+                'excluded': [self.serialize_value(v) for v in self.excluded],
+            },
+        }
 
 
 class OCSPNoCheck(NullExtension):

@@ -909,12 +909,15 @@
                 ]
             ],
             "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
-            "name_constraints": [
-                [],
-                [
-                    "DNS:.mil"
-                ]
-            ],
+            "name_constraints": {
+                "critical": false,
+                "value": {
+                    "permitted": [],
+                    "excluded": [
+                        "DNS:.mil"
+                    ]
+                }
+            },
             "subject_key_identifier": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1",
             "type": "ca",
             "pathlen": 0
