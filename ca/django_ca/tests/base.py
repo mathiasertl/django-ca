@@ -681,6 +681,8 @@ class DjangoCAWithCATestCase(DjangoCATestCase):
         super(DjangoCAWithCATestCase, self).setUp()
         self.cas = {k: self.load_ca(name=v['name'], x509=v['pub']['parsed']) for k, v in certs.items()
                     if v.get('type') == 'ca'}
+        self.usable_cas = {name: ca for name, ca in self.cas.items()
+                           if certs[name]['key_filename'] is not False}
 
 
 class DjangoCAWithCertTestCase(DjangoCAWithCATestCase):
