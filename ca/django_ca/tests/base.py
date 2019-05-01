@@ -50,6 +50,7 @@ from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
 from ..extensions import KeyUsage
 from ..extensions import ListExtension
+from ..extensions import NameConstraints
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..models import Certificate
@@ -190,6 +191,8 @@ for cert_name, cert_data in certs.items():
             cert_data['authority_information_access'])
     if cert_data.get('subject_alternative_name'):
         cert_data['subject_alternative_name'] = SubjectAlternativeName(cert_data['subject_alternative_name'])
+    if cert_data.get('name_constraints'):
+        cert_data['name_constraints'] = NameConstraints(cert_data['name_constraints'])
 
 if certs and ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
     pass  # not there yet
