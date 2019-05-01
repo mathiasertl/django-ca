@@ -238,6 +238,12 @@ def update_contrib(data, cert, name, filename):
             key, value = ext
             if key == 'cRLDistributionPoints':
                 cert_data['crl'] = value
+            elif isinstance(value[1], x509.ObjectIdentifier):
+                # Currently just some old StartSSL extensions for Netscape (!)
+                continue
+            else:
+                print(key, value[1], type(value[1]))
+                cert_data[key] = value
 
     data[name] = cert_data
 

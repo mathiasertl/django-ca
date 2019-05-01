@@ -666,6 +666,13 @@
                     "Full Name: URI:http://crl.comodoca.com/COMODORSACertificationAuthority.crl"
                 ]
             ],
+            "certificatePolicies": [
+                false,
+                [
+                    "OID 2.5.29.32.0: None",
+                    "OID 2.23.140.1.2.1: None"
+                ]
+            ],
             "extended_key_usage": "serverAuth,clientAuth",
             "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
             "subject_key_identifier": "90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7",
@@ -698,6 +705,12 @@
                 false,
                 [
                     "Full Name: URI:http://validation.identrust.com/crl/commercialrootca1.crl"
+                ]
+            ],
+            "certificatePolicies": [
+                false,
+                [
+                    "OID 2.5.29.32.0: None (Reference: https://secure.identrust.com/certificates/policy/ts/index.html), This TrustID Server Certificate has been issued in accordance with IdenTrust's TrustID Certificate Policy found at https://secure.identrust.com/certificates/policy/ts/index.html"
                 ]
             ],
             "extended_key_usage": "serverAuth,clientAuth,ipsecEndSystem,ipsecTunnel,ipsecUser",
@@ -795,6 +808,12 @@
             "hpkp": "5C8kvU039KouVrl52D0eZSGf4Onjo4Khs8tmyTlV3nU=",
             "authority_key_identifier": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2",
             "basic_constraints": "critical,CA:TRUE",
+            "certificatePolicies": [
+                false,
+                [
+                    "OID 1.3.6.1.4.1.23223.1.1.1: http://www.startssl.com/policy.pdf, http://www.startssl.com/intermediate.pdf, Limited Liability, read the section *Legal Limitations* of the StartCom Certification Authority Policy available at http://www.startssl.com/policy.pdf (Reference: Start Commercial (StartCom) Ltd., number 1)"
+                ]
+            ],
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2",
             "type": "ca",
@@ -824,6 +843,12 @@
                 false,
                 [
                     "Full Name: URI:http://g.symcb.com/crls/gtglobal.crl"
+                ]
+            ],
+            "certificatePolicies": [
+                false,
+                [
+                    "OID 2.16.840.1.113733.1.7.54: http://www.geotrust.com/resources/cps"
                 ]
             ],
             "key_usage": "critical,cRLSign,keyCertSign",
@@ -876,6 +901,13 @@
                     "Full Name: URI:http://crl.identrust.com/DSTROOTCAX3CRL.crl"
                 ]
             ],
+            "certificatePolicies": [
+                false,
+                [
+                    "OID 2.23.140.1.2.1: None",
+                    "OID 1.3.6.1.4.1.44947.1.1.1: http://cps.root-x1.letsencrypt.org"
+                ]
+            ],
             "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
             "name_constraints": [
                 [],
@@ -915,6 +947,12 @@
                     "Full Name: URI:http://crl.startssl.com/sfsca.crl"
                 ]
             ],
+            "certificatePolicies": [
+                false,
+                [
+                    "OID 2.5.29.32.0: http://www.startssl.com/policy"
+                ]
+            ],
             "extended_key_usage": "clientAuth,serverAuth",
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "B1:3F:1C:92:7B:92:B0:5A:25:B3:38:FB:9C:07:A4:26:50:32:E3:51",
@@ -945,6 +983,12 @@
                 false,
                 [
                     "Full Name: URI:http://crl4.digicert.com/DigiCertHighAssuranceEVRootCA.crl"
+                ]
+            ],
+            "certificatePolicies": [
+                false,
+                [
+                    "OID 2.5.29.32.0: https://www.digicert.com/CPS"
                 ]
             ],
             "extended_key_usage": "serverAuth,clientAuth",
@@ -979,6 +1023,12 @@
                 false,
                 [
                     "Full Name: URI:http://crl.startssl.com/sfsca.crl"
+                ]
+            ],
+            "certificatePolicies": [
+                false,
+                [
+                    "OID 2.5.29.32.0: http://www.startssl.com/policy.pdf"
                 ]
             ],
             "key_usage": "critical,cRLSign,keyCertSign",
@@ -1029,6 +1079,12 @@
                     "Full Name: URI:http://crl.godaddy.com/gdroot-g2.crl"
                 ]
             ],
+            "certificatePolicies": [
+                false,
+                [
+                    "OID 2.5.29.32.0: https://certs.godaddy.com/repository/"
+                ]
+            ],
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "40:C2:BD:27:8E:CC:34:83:30:A2:33:D7:FB:6C:B3:F0:B4:2C:80:CE",
             "type": "ca",
@@ -1058,6 +1114,12 @@
                 false,
                 [
                     "Full Name: URI:http://crl.pki.goog/gsr2/gsr2.crl"
+                ]
+            ],
+            "certificatePolicies": [
+                false,
+                [
+                    "OID 2.23.140.1.2.2: https://pki.goog/repository/"
                 ]
             ],
             "extended_key_usage": "serverAuth,clientAuth",
@@ -1090,6 +1152,12 @@
                 false,
                 [
                     "Full Name: URI:http://crl.globalsign.net/root.crl"
+                ]
+            ],
+            "certificatePolicies": [
+                false,
+                [
+                    "OID 2.5.29.32.0: https://www.globalsign.com/repository/"
                 ]
             ],
             "key_usage": "critical,cRLSign,keyCertSign",
@@ -1125,6 +1193,13 @@
                     "Full Name: URI:http://crl.identrust.com/DSTROOTCAX3CRL.crl"
                 ]
             ],
+            "certificatePolicies": [
+                false,
+                [
+                    "OID 2.23.140.1.2.1: None",
+                    "OID 1.3.6.1.4.1.44947.1.1.1: http://cps.root-x1.letsencrypt.org"
+                ]
+            ],
             "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
             "subject_key_identifier": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1",
             "type": "ca",
@@ -1156,6 +1231,12 @@
                 false,
                 [
                     "Full Name: URI:http://crl.comodoca.com/COMODORSACertificationAuthority.crl"
+                ]
+            ],
+            "certificatePolicies": [
+                false,
+                [
+                    "OID 2.5.29.32.0: https://secure.comodo.com/CPS"
                 ]
             ],
             "key_usage": "critical,cRLSign,keyCertSign",
