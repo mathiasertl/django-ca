@@ -280,31 +280,31 @@ data = {
         'csr': True,
         'basic_constraints': 'critical,CA:FALSE',
     },
-    'profile-client-cert': {
+    'profile-client': {
         'ca': 'child',
         'delta': timedelta(days=10),
         'csr': True,
         'basic_constraints': 'critical,CA:FALSE',
     },
-    'profile-server-cert': {
+    'profile-server': {
         'ca': 'child',
         'delta': timedelta(days=10),
         'csr': True,
         'basic_constraints': 'critical,CA:FALSE',
     },
-    'profile-webserver-cert': {
+    'profile-webserver': {
         'ca': 'child',
         'delta': timedelta(days=10),
         'csr': True,
         'basic_constraints': 'critical,CA:FALSE',
     },
-    'profile-enduser-cert': {
+    'profile-enduser': {
         'ca': 'child',
         'delta': timedelta(days=10),
         'csr': True,
         'basic_constraints': 'critical,CA:FALSE',
     },
-    'profile-ocsp-cert': {
+    'profile-ocsp': {
         'ca': 'child',
         'delta': timedelta(days=10),
         'csr': True,
@@ -392,7 +392,7 @@ with override_tmpcadir():
 
     # create a cert for every profile
     for profile in ca_settings.CA_PROFILES:
-        name = 'profile-%s-cert' % profile
+        name = 'profile-%s' % profile
         ca = CertificateAuthority.objects.get(name=data[name]['ca'])
 
         key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
