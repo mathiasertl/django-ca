@@ -16,6 +16,7 @@
 
 from __future__ import print_function
 
+import argparse
 import json
 import os
 import shutil
@@ -69,9 +70,15 @@ else:
 if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
     from django_ca.extensions import PrecertPoison
 
+parser = argparse.ArgumentParser(description='Regenerate fixtures for testing.')
+parser.add_argument('--only-contrib', default=False, action='store_true',
+                    help='Only update data from contrib certificates.')
+args = parser.parse_args()
+
 manage('migrate', verbosity=0)
 
 # Some variables used in various places throughout the code
+out_path = os.path.join(settings.FIXTURES_DIR, 'cert-data.json')
 _timeformat = '%Y-%m-%d %H:%M:%S'
 key_size = 1024  # Size for private keys
 ca_base_cn = 'ca.example.com'
@@ -207,6 +214,32 @@ def copy_cert(cert, data, key_path, csr_path):
     data['crl'] = cert.ca.crl_url
 
     update_cert_data(cert, data)
+
+
+def update_contrib(data, cert, name, filename):
+    cert_data = {
+        'name': name,
+        'cat': 'sphinx-contrib',
+        'pub_filename': filename,
+        'key_filename': False,
+        'csr_filename': False,
+        'valid_from': parsed.not_valid_before.strftime(_timeformat),
+        'valid_until': parsed.not_valid_after.strftime(_timeformat),
+        'serial': cert.serial,
+        'subject': cert.distinguishedName(),
+        'hpkp': cert.hpkp_pin,
+    }
+
+    for ext in ca.get_extensions():
+        if isinstance(ext, Extension):
+            key = CertificateAuthority.OID_MAPPING[ext.oid]
+            cert_data[key] = ext.serialize()
+        elif isinstance(ext, tuple):
+            key, value = ext
+            if key == 'cRLDistributionPoints':
+                cert_data['crl'] = value
+
+    data[name] = cert_data
 
 
 data = {
@@ -365,146 +398,151 @@ for cert, cert_values in data.items():
 ca_names = [v['name'] for k, v in data.items() if v.get('type') == 'ca']
 ca_instances = []
 
-with override_tmpcadir():
-    # Create CAs
-    for name in ca_names:
-        kwargs = {}
+if not args.only_contrib:
+    with override_tmpcadir():
+        # Create CAs
+        for name in ca_names:
+            kwargs = {}
 
-        # Get some data from the parent, if present
-        parent = data[name].get('parent')
-        if parent:
-            kwargs['parent'] = CertificateAuthority.objects.get(name=parent)
-            kwargs['ca_crl_url'] = data[parent]['ca_crl_url']
-            kwargs['ca_issuer_url'] = data[parent]['issuer_url']
-            kwargs['ca_ocsp_url'] = data[parent]['ca_ocsp_url']
+            # Get some data from the parent, if present
+            parent = data[name].get('parent')
+            if parent:
+                kwargs['parent'] = CertificateAuthority.objects.get(name=parent)
+                kwargs['ca_crl_url'] = data[parent]['ca_crl_url']
+                kwargs['ca_issuer_url'] = data[parent]['issuer_url']
+                kwargs['ca_ocsp_url'] = data[parent]['ca_ocsp_url']
 
-            # also update data
-            data[name]['crl'] = data[parent]['ca_crl_url']
+                # also update data
+                data[name]['crl'] = data[parent]['ca_crl_url']
 
-        with freeze_time(now + data[name]['delta']):
-            ca = CertificateAuthority.objects.init(
-                name=data[name]['name'], password=data[name]['password'], subject=data[name]['subject'],
-                key_type=data[name]['key_type'], key_size=data[name]['key_size'],
-                algorithm=data[name]['algorithm'],
-                pathlen=data[name]['pathlen'], **kwargs
-            )
-        ca.crl_url = '%s%s' % (testserver, reverse('django_ca:crl', kwargs={'serial': ca.serial}))
-        ca.ocsp_url = '%s%s' % (testserver, reverse('django_ca:ocsp-post-%s' % name))
-        ca.issuer_url = '%s/%s.der' % (testserver, name)
-        ca.save()
-        ca_instances.append(ca)
+            with freeze_time(now + data[name]['delta']):
+                ca = CertificateAuthority.objects.init(
+                    name=data[name]['name'], password=data[name]['password'], subject=data[name]['subject'],
+                    key_type=data[name]['key_type'], key_size=data[name]['key_size'],
+                    algorithm=data[name]['algorithm'],
+                    pathlen=data[name]['pathlen'], **kwargs
+                )
+            ca.crl_url = '%s%s' % (testserver, reverse('django_ca:crl', kwargs={'serial': ca.serial}))
+            ca.ocsp_url = '%s%s' % (testserver, reverse('django_ca:ocsp-post-%s' % name))
+            ca.issuer_url = '%s/%s.der' % (testserver, name)
+            ca.save()
+            ca_instances.append(ca)
 
-        write_ca(ca, data[name])
+            write_ca(ca, data[name])
 
-    # add parent/child relationships
-    data['root']['children'] = [
-        [data['child']['name'], data['child']['serial']],
-    ]
+        # add parent/child relationships
+        data['root']['children'] = [
+            [data['child']['name'], data['child']['serial']],
+        ]
 
-    # let's create a standard certificate for every CA
-    for ca in ca_instances:
-        name = '%s-cert' % ca.name
-        key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
-        csr_path = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
-        csr = create_csr(key_path, csr_path)
+        # let's create a standard certificate for every CA
+        for ca in ca_instances:
+            name = '%s-cert' % ca.name
+            key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
+            csr_path = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
+            csr = create_csr(key_path, csr_path)
 
-        kwargs = get_cert_profile_kwargs('server')
-        kwargs['subject'].append(('CN', data[name]['cn']))
-        pwd = data[data[name]['ca']]['password']
+            kwargs = get_cert_profile_kwargs('server')
+            kwargs['subject'].append(('CN', data[name]['cn']))
+            pwd = data[data[name]['ca']]['password']
 
-        with freeze_time(now + data[name]['delta']):
-            cert = Certificate.objects.init(ca=ca, csr=csr, algorithm=data[name]['algorithm'],
-                                            password=pwd, **kwargs)
-        copy_cert(cert, data[name], key_path, csr_path)
+            with freeze_time(now + data[name]['delta']):
+                cert = Certificate.objects.init(ca=ca, csr=csr, algorithm=data[name]['algorithm'],
+                                                password=pwd, **kwargs)
+            copy_cert(cert, data[name], key_path, csr_path)
 
-    # create a cert for every profile
-    for profile in ca_settings.CA_PROFILES:
-        name = 'profile-%s' % profile
+        # create a cert for every profile
+        for profile in ca_settings.CA_PROFILES:
+            name = 'profile-%s' % profile
+            ca = CertificateAuthority.objects.get(name=data[name]['ca'])
+
+            key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
+            csr_path = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
+            csr = create_csr(key_path, csr_path)
+
+            kwargs = get_cert_profile_kwargs(profile)
+            kwargs['subject'].append(('CN', data[name]['cn']))
+
+            pwd = data[ca.name]['password']
+            with freeze_time(now + data[name]['delta']):
+                cert = Certificate.objects.init(ca=ca, csr=csr, algorithm=data[name]['algorithm'],
+                                                password=pwd, **kwargs)
+
+            data[name]['profile'] = profile
+            copy_cert(cert, data[name], key_path, csr_path)
+
+        # create a cert with absolutely no extensions
+        name = 'no-extensions'
         ca = CertificateAuthority.objects.get(name=data[name]['ca'])
-
         key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
         csr_path = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
         csr = create_csr(key_path, csr_path)
 
-        kwargs = get_cert_profile_kwargs(profile)
-        kwargs['subject'].append(('CN', data[name]['cn']))
+        with freeze_time(now + data[name]['delta']):
+            now = datetime.utcnow()
+            pwd = data[ca.name]['password']
+            parsed_csr = x509.load_pem_x509_csr(csr.encode('utf-8'), default_backend())
+            subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, data[name]['cn'])])
 
+            builder = x509.CertificateBuilder()
+            builder = builder.not_valid_before(now)
+            builder = builder.not_valid_after(now + timedelta(days=365))
+            builder = builder.serial_number(x509.random_serial_number())
+            builder = builder.subject_name(subject)
+            builder = builder.issuer_name(ca.x509.subject)
+            builder = builder.public_key(parsed_csr.public_key())
+
+            x509_cert = builder.sign(private_key=ca.key(pwd), algorithm=hashes.SHA256(),
+                                     backend=default_backend())
+            cert = Certificate(ca=ca)
+            cert.x509 = x509_cert
+            copy_cert(cert, data[name], key_path, csr_path)
+
+        # create a cert with all extensions that we know
+        # NOTE: This certificate is not really a meaningful certificate:
+        #   * NameConstraints is only valid for CAs
+        #   * KeyUsage and ExtendedKeyUsage are not meaningful
+        # TODO: missing: unsupported extensions
+        #   * Certificate Policies
+        #   * Policy Constraints
+        #   * Inhibit anyPolicy
+        #   * Freshest CRL
+        #   * PrecertificateSignedCertificateTimestamps (cannot be generated by cryptography 2.6:
+        #       https://github.com/pyca/cryptography/issues/4531)
+        #   * Policy Mappings (not supported by cryptography 2.6:
+        #       https://github.com/pyca/cryptography/issues/1947)
+        name = 'all-extensions'
+        ca = CertificateAuthority.objects.get(name=data[name]['ca'])
         pwd = data[ca.name]['password']
+        key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
+        csr_path = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
+        csr = create_csr(key_path, csr_path)
+
+        kwargs = {}
+        extra_extensions = [
+            NameConstraints(data[name]['name_constraints']),
+            IssuerAlternativeName(data[name]['issuer_alternative_name']),
+        ]
+
+        if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
+            extra_extensions.append(PrecertPoison())
+
+        kwargs = {
+            'extra_extensions': extra_extensions,
+            'subject_alternative_name': data[name]['subject_alternative_name'],
+            'key_usage': data[name]['key_usage'],
+            'extended_key_usage': data[name]['extended_key_usage'],
+            'tls_feature': data[name]['tls_feature'],
+            'ocsp_no_check': True,
+        }
+
         with freeze_time(now + data[name]['delta']):
             cert = Certificate.objects.init(ca=ca, csr=csr, algorithm=data[name]['algorithm'],
                                             password=pwd, **kwargs)
-
-        data[name]['profile'] = profile
         copy_cert(cert, data[name], key_path, csr_path)
-
-    # create a cert with absolutely no extensions
-    name = 'no-extensions'
-    ca = CertificateAuthority.objects.get(name=data[name]['ca'])
-    key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
-    csr_path = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
-    csr = create_csr(key_path, csr_path)
-
-    with freeze_time(now + data[name]['delta']):
-        now = datetime.utcnow()
-        pwd = data[ca.name]['password']
-        parsed_csr = x509.load_pem_x509_csr(csr.encode('utf-8'), default_backend())
-
-        builder = x509.CertificateBuilder()
-        builder = builder.not_valid_before(now)
-        builder = builder.not_valid_after(now + timedelta(days=365))
-        builder = builder.serial_number(x509.random_serial_number())
-        builder = builder.subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, data[name]['cn'])]))
-        builder = builder.issuer_name(ca.x509.subject)
-        builder = builder.public_key(parsed_csr.public_key())
-
-        x509_cert = builder.sign(private_key=ca.key(pwd), algorithm=hashes.SHA256(),
-                                 backend=default_backend())
-        cert = Certificate(ca=ca)
-        cert.x509 = x509_cert
-        copy_cert(cert, data[name], key_path, csr_path)
-
-    # create a cert with all extensions that we know
-    # NOTE: This certificate is not really a meaningful certificate:
-    #   * NameConstraints is only valid for CAs
-    #   * KeyUsage and ExtendedKeyUsage are not meaningful
-    # TODO: missing: unsupported extensions
-    #   * Certificate Policies
-    #   * Policy Constraints
-    #   * Inhibit anyPolicy
-    #   * Freshest CRL
-    #   * PrecertificateSignedCertificateTimestamps (cannot be generated by cryptography 2.6:
-    #       https://github.com/pyca/cryptography/issues/4531)
-    #   * Policy Mappings (not supported by cryptography 2.6:
-    #       https://github.com/pyca/cryptography/issues/1947)
-    name = 'all-extensions'
-    ca = CertificateAuthority.objects.get(name=data[name]['ca'])
-    pwd = data[ca.name]['password']
-    key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
-    csr_path = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
-    csr = create_csr(key_path, csr_path)
-
-    kwargs = {}
-    extra_extensions = [
-        NameConstraints(data[name]['name_constraints']),
-        IssuerAlternativeName(data[name]['issuer_alternative_name']),
-    ]
-
-    if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
-        extra_extensions.append(PrecertPoison())
-
-    kwargs = {
-        'extra_extensions': extra_extensions,
-        'subject_alternative_name': data[name]['subject_alternative_name'],
-        'key_usage': data[name]['key_usage'],
-        'extended_key_usage': data[name]['extended_key_usage'],
-        'tls_feature': data[name]['tls_feature'],
-        'ocsp_no_check': True,
-    }
-
-    with freeze_time(now + data[name]['delta']):
-        cert = Certificate.objects.init(ca=ca, csr=csr, algorithm=data[name]['algorithm'],
-                                        password=pwd, **kwargs)
-    copy_cert(cert, data[name], key_path, csr_path)
+else:
+    # updating only contrib, so remove existing data
+    data = {}
 
 # Load data from Sphinx files
 for filename in os.listdir(os.path.join(_sphinx_dir, 'ca')):
@@ -517,34 +555,13 @@ for filename in os.listdir(os.path.join(_sphinx_dir, 'ca')):
     ca = CertificateAuthority(name=name)
     ca.x509 = parsed
 
-    cert_data = {
-        'name': name,
-        'type': 'ca',
-        'cat': 'sphinx-contrib',
-        'pub_filename': filename,
-        'key_filename': False,
-        'csr_filename': False,
-        'valid_from': parsed.not_valid_before.strftime(_timeformat),
-        'valid_until': parsed.not_valid_after.strftime(_timeformat),
-        'serial': ca.serial,
-        'subject': ca.distinguishedName(),
-        'pathlen': ca.pathlen,
-        'hpkp': ca.hpkp_pin,
-    }
-
-    for ext in ca.get_extensions():
-        if isinstance(ext, Extension):
-            key = CertificateAuthority.OID_MAPPING[ext.oid]
-            cert_data[key] = ext.serialize()
-        elif isinstance(ext, tuple):
-            key, value = ext
-            if key == 'cRLDistributionPoints':
-                cert_data['crl'] = value
-
-    data[name] = cert_data
+    update_contrib(data, ca, name, filename)
+    data[name]['type'] = 'ca'
+    data[name]['pathlen'] = ca.pathlen
 
 for filename in os.listdir(os.path.join(_sphinx_dir, 'cert')):
     name, _ext = os.path.splitext(filename)
+    name = '%s-cert' % name
 
     with open(os.path.join(_sphinx_dir, 'cert', filename), 'rb') as stream:
         pem = stream.read()
@@ -552,19 +569,9 @@ for filename in os.listdir(os.path.join(_sphinx_dir, 'cert')):
     parsed = x509.load_pem_x509_certificate(pem, default_backend())
     cert = Certificate()
     cert.x509 = parsed
+    update_contrib(data, cert, name, filename)
+    data[name]['type'] = 'cert'
 
-    cert_data = {
-        'name': name,
-        'type': 'cert',
-        'cat': 'sphinx-contrib',
-        'pub_filename': filename,
-        'key_filename': False,
-        'csr_filename': False,
-        'valid_from': parsed.not_valid_before.strftime(_timeformat),
-        'valid_until': parsed.not_valid_after.strftime(_timeformat),
-        'serial': cert.serial,
-    }
-    data[name] = cert_data
 
 for name, cert_data in data.items():
     if 'delta' in cert_data:
@@ -573,10 +580,15 @@ for name, cert_data in data.items():
     if cert_data.get('password'):
         cert_data['password'] = cert_data['password'].decode('utf-8')
 
-fixture_data = {
-    'timestamp': now.strftime(_timeformat),
-    'certs': data,
-}
+if args.only_contrib:
+    with open(out_path, 'r') as stream:
+        fixture_data = json.load(stream)
+    fixture_data['certs'].update(data)
+else:
+    fixture_data = {
+        'timestamp': now.strftime(_timeformat),
+        'certs': data,
+    }
 
-with open(os.path.join(settings.FIXTURES_DIR, 'cert-data.json'), 'w') as stream:
+with open(out_path, 'w') as stream:
     json.dump(fixture_data, stream, indent=4)
