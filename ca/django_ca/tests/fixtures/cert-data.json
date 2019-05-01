@@ -623,253 +623,754 @@
         },
         "globalsign": {
             "name": "globalsign",
-            "type": "ca",
             "cat": "sphinx-contrib",
             "pub_filename": "globalsign.pem",
             "key_filename": false,
             "csr_filename": false,
             "valid_from": "1998-09-01 12:00:00",
-            "valid_until": "2028-01-28 12:00:00"
+            "valid_until": "2028-01-28 12:00:00",
+            "serial": "40:00:00:00:00:11:54:B5:AC:39:4",
+            "subject": "/C=BE/O=GlobalSign nv-sa/OU=Root CA/CN=GlobalSign Root CA",
+            "hpkp": "K87oWBWM9UZfyddvDfoxL+8lpNyoUB2ptGtn0fv6G2Q=",
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "60:7B:66:1A:45:0D:97:CA:89:50:2F:7D:04:CD:34:A8:FF:FC:FD:4B",
+            "type": "ca",
+            "pathlen": null
         },
         "comodo_dv": {
             "name": "comodo_dv",
-            "type": "cert",
             "cat": "sphinx-contrib",
             "pub_filename": "comodo_dv.pem",
             "key_filename": false,
             "csr_filename": false,
-            "valid_from": "2015-12-06 00:00:00",
-            "valid_until": "2018-12-01 23:59:59"
+            "valid_from": "2014-02-12 00:00:00",
+            "valid_until": "2029-02-11 23:59:59",
+            "serial": "2B:2E:6E:EA:D9:75:36:6C:14:8A:6E:DB:A3:7C:8C:07",
+            "subject": "/C=GB/ST=Greater Manchester/L=Salford/O=COMODO CA Limited/CN=COMODO RSA Domain Validation Secure Server CA",
+            "hpkp": "klO23nT2ehFDXCfx3eHTDRESMz3asj1muO+4aIdjiuY=",
+            "authority_information_access": {
+                "critical": false,
+                "issuers": [
+                    "URI:http://crt.comodoca.com/COMODORSAAddTrustCA.crt"
+                ],
+                "ocsp": [
+                    "URI:http://ocsp.comodoca.com"
+                ]
+            },
+            "authority_key_identifier": "BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4",
+            "basic_constraints": "critical,CA:TRUE, pathlen:0",
+            "crl": [
+                false,
+                [
+                    "Full Name: URI:http://crl.comodoca.com/COMODORSACertificationAuthority.crl"
+                ]
+            ],
+            "extended_key_usage": "serverAuth,clientAuth",
+            "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
+            "subject_key_identifier": "90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7",
+            "type": "ca",
+            "pathlen": 0
         },
         "trustid_server_a52": {
             "name": "trustid_server_a52",
-            "type": "cert",
             "cat": "sphinx-contrib",
             "pub_filename": "trustid_server_a52.pem",
             "key_filename": false,
             "csr_filename": false,
-            "valid_from": "2017-09-14 23:36:54",
-            "valid_until": "2020-09-13 23:36:54"
+            "valid_from": "2014-03-20 18:05:38",
+            "valid_until": "2022-03-20 18:05:38",
+            "serial": "9B:FC:E2:40:FD:55:BE:D9:26:9E:0C:01:2C:1B:77",
+            "subject": "/C=US/O=IdenTrust/OU=TrustID Server/CN=TrustID Server CA A52",
+            "hpkp": "baHWPQeCjK/t6GB+okH73C13ZXVDr2QAVt6jQTsq2Ys=",
+            "authority_information_access": {
+                "critical": false,
+                "issuers": [
+                    "URI:http://validation.identrust.com/roots/commercialrootca1.p7c"
+                ],
+                "ocsp": [
+                    "URI:http://commercial.ocsp.identrust.com"
+                ]
+            },
+            "authority_key_identifier": "ED:44:19:C0:D3:F0:06:8B:EE:A4:7B:BE:42:E7:26:54:C8:8E:36:76",
+            "basic_constraints": "critical,CA:TRUE",
+            "crl": [
+                false,
+                [
+                    "Full Name: URI:http://validation.identrust.com/crl/commercialrootca1.crl"
+                ]
+            ],
+            "extended_key_usage": "serverAuth,clientAuth,ipsecEndSystem,ipsecTunnel,ipsecUser",
+            "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
+            "subject_key_identifier": "A2:56:24:3C:D0:D4:15:B9:E8:BF:78:A3:13:10:58:48:2E:16:54:E1",
+            "type": "ca",
+            "pathlen": null
         },
         "digicert_ev_root": {
             "name": "digicert_ev_root",
-            "type": "ca",
             "cat": "sphinx-contrib",
             "pub_filename": "digicert_ev_root.pem",
             "key_filename": false,
             "csr_filename": false,
             "valid_from": "2006-11-10 00:00:00",
-            "valid_until": "2031-11-10 00:00:00"
+            "valid_until": "2031-11-10 00:00:00",
+            "serial": "2A:C5:C2:66:A0:B4:09:B8:F0:B7:9F:2A:E4:62:57:7",
+            "subject": "/C=US/O=DigiCert Inc/OU=www.digicert.com/CN=DigiCert High Assurance EV Root CA",
+            "hpkp": "WoiWRyIOVNa9ihaBciRSC7XHjliYS9VwUGOIud4PB18=",
+            "authority_key_identifier": "B1:3E:C3:69:03:F8:BF:47:01:D4:98:26:1A:08:02:EF:63:64:2B:C3",
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
+            "subject_key_identifier": "B1:3E:C3:69:03:F8:BF:47:01:D4:98:26:1A:08:02:EF:63:64:2B:C3",
+            "type": "ca",
+            "pathlen": null
         },
         "comodo": {
             "name": "comodo",
-            "type": "ca",
             "cat": "sphinx-contrib",
             "pub_filename": "comodo.pem",
             "key_filename": false,
             "csr_filename": false,
             "valid_from": "2010-01-19 00:00:00",
-            "valid_until": "2038-01-18 23:59:59"
+            "valid_until": "2038-01-18 23:59:59",
+            "serial": "4C:AA:F9:CA:DB:63:6F:E0:1F:F7:4E:D8:5B:03:86:9D",
+            "subject": "/C=GB/ST=Greater Manchester/L=Salford/O=COMODO CA Limited/CN=COMODO RSA Certification Authority",
+            "hpkp": "grX4Ta9HpZx6tSHkmCrvpApTQGo67CYDnvprLg5yRME=",
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4",
+            "type": "ca",
+            "pathlen": null
         },
         "identrust_root_1": {
             "name": "identrust_root_1",
-            "type": "ca",
             "cat": "sphinx-contrib",
             "pub_filename": "identrust_root_1.pem",
             "key_filename": false,
             "csr_filename": false,
             "valid_from": "2014-01-16 18:12:23",
-            "valid_until": "2034-01-16 18:12:23"
+            "valid_until": "2034-01-16 18:12:23",
+            "serial": "A0:14:28:00:00:00:14:52:3C:84:4B:50:00:00:00:2",
+            "subject": "/C=US/O=IdenTrust/CN=IdenTrust Commercial Root CA 1",
+            "hpkp": "B+hU8mp8vTiZJ6oEG/7xts0h3RQ4GK2UfcZVqeWH/og=",
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "ED:44:19:C0:D3:F0:06:8B:EE:A4:7B:BE:42:E7:26:54:C8:8E:36:76",
+            "type": "ca",
+            "pathlen": null
         },
         "globalsign_r2_root": {
             "name": "globalsign_r2_root",
-            "type": "ca",
             "cat": "sphinx-contrib",
             "pub_filename": "globalsign_r2_root.pem",
             "key_filename": false,
             "csr_filename": false,
             "valid_from": "2006-12-15 08:00:00",
-            "valid_until": "2021-12-15 08:00:00"
+            "valid_until": "2021-12-15 08:00:00",
+            "serial": "40:00:00:00:00:10:F8:62:6E:60:D",
+            "subject": "/OU=GlobalSign Root CA - R2/O=GlobalSign/CN=GlobalSign",
+            "hpkp": "iie1VXtL7HzAMF+/PVPR9xzT80kQxdZeJ+zduCB3uj0=",
+            "authority_key_identifier": "9B:E2:07:57:67:1C:1E:C0:6A:06:DE:59:B4:9A:2D:DF:DC:19:86:2E",
+            "basic_constraints": "critical,CA:TRUE",
+            "crl": [
+                false,
+                [
+                    "Full Name: URI:http://crl.globalsign.net/root-r2.crl"
+                ]
+            ],
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "9B:E2:07:57:67:1C:1E:C0:6A:06:DE:59:B4:9A:2D:DF:DC:19:86:2E",
+            "type": "ca",
+            "pathlen": null
         },
         "startssl_root": {
             "name": "startssl_root",
-            "type": "ca",
             "cat": "sphinx-contrib",
             "pub_filename": "startssl_root.pem",
             "key_filename": false,
             "csr_filename": false,
             "valid_from": "2006-09-17 19:46:37",
-            "valid_until": "2036-09-17 19:46:36"
+            "valid_until": "2036-09-17 19:46:36",
+            "serial": "2D",
+            "subject": "/C=IL/O=StartCom Ltd./OU=Secure Digital Certificate Signing/CN=StartCom Certification Authority",
+            "hpkp": "5C8kvU039KouVrl52D0eZSGf4Onjo4Khs8tmyTlV3nU=",
+            "authority_key_identifier": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2",
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2",
+            "type": "ca",
+            "pathlen": null
         },
         "rapidssl_g3": {
             "name": "rapidssl_g3",
-            "type": "cert",
             "cat": "sphinx-contrib",
             "pub_filename": "rapidssl_g3.pem",
             "key_filename": false,
             "csr_filename": false,
-            "valid_from": "2015-01-22 15:22:02",
-            "valid_until": "2019-01-25 07:43:21"
+            "valid_from": "2014-08-29 21:39:32",
+            "valid_until": "2022-05-20 21:39:32",
+            "serial": "23:A7:7",
+            "subject": "/C=US/O=GeoTrust Inc./CN=RapidSSL SHA256 CA - G3",
+            "hpkp": "6X0iNAQtPIjXKEVcqZBwyMcRwq1yW60549axatu3oDE=",
+            "authority_information_access": {
+                "critical": false,
+                "issuers": [],
+                "ocsp": [
+                    "URI:http://g.symcd.com"
+                ]
+            },
+            "authority_key_identifier": "C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E",
+            "basic_constraints": "critical,CA:TRUE, pathlen:0",
+            "crl": [
+                false,
+                [
+                    "Full Name: URI:http://g.symcb.com/crls/gtglobal.crl"
+                ]
+            ],
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "C3:9C:F3:FC:D3:46:08:34:BB:CE:46:7F:A0:7C:5B:F3:E2:08:CB:59",
+            "type": "ca",
+            "pathlen": 0
         },
         "geotrust": {
             "name": "geotrust",
-            "type": "ca",
             "cat": "sphinx-contrib",
             "pub_filename": "geotrust.pem",
             "key_filename": false,
             "csr_filename": false,
             "valid_from": "2002-05-21 04:00:00",
-            "valid_until": "2022-05-21 04:00:00"
+            "valid_until": "2022-05-21 04:00:00",
+            "serial": "23:45:6",
+            "subject": "/C=US/O=GeoTrust Inc./CN=GeoTrust Global CA",
+            "hpkp": "h6801m+z8v3zbgkRHpq6L29Esgfzhj89C1SyUCOQmqU=",
+            "authority_key_identifier": "C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E",
+            "basic_constraints": "critical,CA:TRUE",
+            "subject_key_identifier": "C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E",
+            "type": "ca",
+            "pathlen": null
         },
         "letsencrypt_x1": {
             "name": "letsencrypt_x1",
-            "type": "ca",
             "cat": "sphinx-contrib",
             "pub_filename": "letsencrypt_x1.pem",
             "key_filename": false,
             "csr_filename": false,
             "valid_from": "2015-10-19 22:33:36",
-            "valid_until": "2020-10-19 22:33:36"
+            "valid_until": "2020-10-19 22:33:36",
+            "serial": "98:13:F4:75:13:E5:75:0B:43:E7:43:1E:97:1E:44:BD",
+            "subject": "/C=US/O=Let's Encrypt/CN=Let's Encrypt Authority X1",
+            "hpkp": "YLh1dUR9y6Kja30RrAn7JKnbQG/uEtLMkBgFF2Fuihg=",
+            "authority_information_access": {
+                "critical": false,
+                "issuers": [
+                    "URI:http://apps.identrust.com/roots/dstrootcax3.p7c"
+                ],
+                "ocsp": [
+                    "URI:http://isrg.trustid.ocsp.identrust.com"
+                ]
+            },
+            "authority_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
+            "basic_constraints": "critical,CA:TRUE, pathlen:0",
+            "crl": [
+                false,
+                [
+                    "Full Name: URI:http://crl.identrust.com/DSTROOTCAX3CRL.crl"
+                ]
+            ],
+            "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
+            "name_constraints": [
+                [],
+                [
+                    "DNS:.mil"
+                ]
+            ],
+            "subject_key_identifier": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1",
+            "type": "ca",
+            "pathlen": 0
         },
         "startssl_class3": {
             "name": "startssl_class3",
-            "type": "cert",
             "cat": "sphinx-contrib",
             "pub_filename": "startssl_class3.pem",
             "key_filename": false,
             "csr_filename": false,
-            "valid_from": "2016-02-02 11:33:36",
-            "valid_until": "2019-02-02 11:33:36"
+            "valid_from": "2015-12-16 01:00:05",
+            "valid_until": "2030-12-16 01:00:05",
+            "serial": "13:8B:FE:F3:32:94:F9:D8:16:F9:45:C2:71:95:29:98",
+            "subject": "/C=IL/O=StartCom Ltd./OU=StartCom Certification Authority/CN=StartCom Class 3 OV Server CA",
+            "hpkp": "12Xvsp/UARSvsegw28qNEoPpkIZhf/GLB61LpY57AWY=",
+            "authority_information_access": {
+                "critical": false,
+                "issuers": [
+                    "URI:http://aia.startssl.com/certs/ca.crt"
+                ],
+                "ocsp": [
+                    "URI:http://ocsp.startssl.com"
+                ]
+            },
+            "authority_key_identifier": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2",
+            "basic_constraints": "critical,CA:TRUE, pathlen:0",
+            "crl": [
+                false,
+                [
+                    "Full Name: URI:http://crl.startssl.com/sfsca.crl"
+                ]
+            ],
+            "extended_key_usage": "clientAuth,serverAuth",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "B1:3F:1C:92:7B:92:B0:5A:25:B3:38:FB:9C:07:A4:26:50:32:E3:51",
+            "type": "ca",
+            "pathlen": 0
         },
         "digicert_ha_intermediate": {
             "name": "digicert_ha_intermediate",
-            "type": "cert",
             "cat": "sphinx-contrib",
             "pub_filename": "digicert_ha_intermediate.pem",
             "key_filename": false,
             "csr_filename": false,
-            "valid_from": "2019-02-01 00:00:00",
-            "valid_until": "2019-07-31 12:00:00"
+            "valid_from": "2013-10-22 12:00:00",
+            "valid_until": "2028-10-22 12:00:00",
+            "serial": "4E:1E:7A:4D:C5:CF:2F:36:DC:02:B4:2B:85:D1:59:F",
+            "subject": "/C=US/O=DigiCert Inc/OU=www.digicert.com/CN=DigiCert SHA2 High Assurance Server CA",
+            "hpkp": "k2v657xBsOVe1PQRwOsHsw3bsGT2VzIqz5K+59sNQws=",
+            "authority_information_access": {
+                "critical": false,
+                "issuers": [],
+                "ocsp": [
+                    "URI:http://ocsp.digicert.com"
+                ]
+            },
+            "authority_key_identifier": "B1:3E:C3:69:03:F8:BF:47:01:D4:98:26:1A:08:02:EF:63:64:2B:C3",
+            "basic_constraints": "critical,CA:TRUE, pathlen:0",
+            "crl": [
+                false,
+                [
+                    "Full Name: URI:http://crl4.digicert.com/DigiCertHighAssuranceEVRootCA.crl"
+                ]
+            ],
+            "extended_key_usage": "serverAuth,clientAuth",
+            "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
+            "subject_key_identifier": "51:68:FF:90:AF:02:07:75:3C:CC:D9:65:64:62:A2:12:B8:59:72:3B",
+            "type": "ca",
+            "pathlen": 0
         },
         "startssl_class2": {
             "name": "startssl_class2",
-            "type": "cert",
             "cat": "sphinx-contrib",
             "pub_filename": "startssl_class2.pem",
             "key_filename": false,
             "csr_filename": false,
-            "valid_from": "2014-08-28 06:00:55",
-            "valid_until": "2016-08-28 03:19:19"
+            "valid_from": "2007-10-14 20:57:09",
+            "valid_until": "2022-10-14 20:57:09",
+            "serial": "1C:AB:36:47:2D:9C:51",
+            "subject": "/C=IL/O=StartCom Ltd./OU=Secure Digital Certificate Signing/CN=StartCom Class 2 Primary Intermediate Server CA",
+            "hpkp": "nwDSX8WPqNCwewH20Ii61odFmXsG26cfVtvaZtJMdQw=",
+            "authority_information_access": {
+                "critical": false,
+                "issuers": [
+                    "URI:http://aia.startssl.com/certs/ca.crt"
+                ],
+                "ocsp": [
+                    "URI:http://ocsp.startssl.com/ca"
+                ]
+            },
+            "authority_key_identifier": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2",
+            "basic_constraints": "critical,CA:TRUE, pathlen:0",
+            "crl": [
+                false,
+                [
+                    "Full Name: URI:http://crl.startssl.com/sfsca.crl"
+                ]
+            ],
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "11:DB:23:45:FD:54:CC:6A:71:6F:84:8A:03:D7:BE:F7:01:2F:26:86",
+            "type": "ca",
+            "pathlen": 0
         },
         "godaddy_g2_root": {
             "name": "godaddy_g2_root",
-            "type": "ca",
             "cat": "sphinx-contrib",
             "pub_filename": "godaddy_g2_root.pem",
             "key_filename": false,
             "csr_filename": false,
             "valid_from": "2009-09-01 00:00:00",
-            "valid_until": "2037-12-31 23:59:59"
+            "valid_until": "2037-12-31 23:59:59",
+            "serial": "0",
+            "subject": "/C=US/ST=Arizona/L=Scottsdale/O=GoDaddy.com, Inc./CN=Go Daddy Root Certificate Authority - G2",
+            "hpkp": "Ko8tivDrEjiY90yGasP6ZpBU4jwXvHqVvQI0GS3GNdA=",
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "3A:9A:85:07:10:67:28:B6:EF:F6:BD:05:41:6E:20:C1:94:DA:0F:DE",
+            "type": "ca",
+            "pathlen": null
         },
         "godaddy_g2_intermediate": {
             "name": "godaddy_g2_intermediate",
-            "type": "ca",
             "cat": "sphinx-contrib",
             "pub_filename": "godaddy_g2_intermediate.pem",
             "key_filename": false,
             "csr_filename": false,
             "valid_from": "2011-05-03 07:00:00",
-            "valid_until": "2031-05-03 07:00:00"
+            "valid_until": "2031-05-03 07:00:00",
+            "serial": "7",
+            "subject": "/C=US/ST=Arizona/L=Scottsdale/O=GoDaddy.com, Inc./OU=http://certs.godaddy.com/repository//CN=Go Daddy Secure Certificate Authority - G2",
+            "hpkp": "8Rw90Ej3Ttt8RRkrg+WYDS9n7IS03bk5bjP/UXPtaY8=",
+            "authority_information_access": {
+                "critical": false,
+                "issuers": [],
+                "ocsp": [
+                    "URI:http://ocsp.godaddy.com/"
+                ]
+            },
+            "authority_key_identifier": "3A:9A:85:07:10:67:28:B6:EF:F6:BD:05:41:6E:20:C1:94:DA:0F:DE",
+            "basic_constraints": "critical,CA:TRUE",
+            "crl": [
+                false,
+                [
+                    "Full Name: URI:http://crl.godaddy.com/gdroot-g2.crl"
+                ]
+            ],
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "40:C2:BD:27:8E:CC:34:83:30:A2:33:D7:FB:6C:B3:F0:B4:2C:80:CE",
+            "type": "ca",
+            "pathlen": null
         },
         "google_g3": {
             "name": "google_g3",
-            "type": "ca",
             "cat": "sphinx-contrib",
             "pub_filename": "google_g3.pem",
             "key_filename": false,
             "csr_filename": false,
             "valid_from": "2017-06-15 00:00:42",
-            "valid_until": "2021-12-15 00:00:42"
+            "valid_until": "2021-12-15 00:00:42",
+            "serial": "1E:3A:93:01:CF:C7:20:63:83:F9:A5:31:D",
+            "subject": "/C=US/O=Google Trust Services/CN=Google Internet Authority G3",
+            "hpkp": "f8NnEFZxQ4ExFOhSN7EiFWtiudZQVD2oY60uauV/n78=",
+            "authority_information_access": {
+                "critical": false,
+                "issuers": [],
+                "ocsp": [
+                    "URI:http://ocsp.pki.goog/gsr2"
+                ]
+            },
+            "authority_key_identifier": "9B:E2:07:57:67:1C:1E:C0:6A:06:DE:59:B4:9A:2D:DF:DC:19:86:2E",
+            "basic_constraints": "critical,CA:TRUE, pathlen:0",
+            "crl": [
+                false,
+                [
+                    "Full Name: URI:http://crl.pki.goog/gsr2/gsr2.crl"
+                ]
+            ],
+            "extended_key_usage": "serverAuth,clientAuth",
+            "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
+            "subject_key_identifier": "77:C2:B8:50:9A:67:76:76:B1:2D:C2:86:D0:83:A0:7E:A6:7E:BA:4B",
+            "type": "ca",
+            "pathlen": 0
         },
         "globalsign_dv": {
             "name": "globalsign_dv",
-            "type": "cert",
             "cat": "sphinx-contrib",
             "pub_filename": "globalsign_dv.pem",
             "key_filename": false,
             "csr_filename": false,
-            "valid_from": "2016-03-28 17:32:44",
-            "valid_until": "2017-03-29 17:32:44"
+            "valid_from": "2014-02-20 10:00:00",
+            "valid_until": "2024-02-20 10:00:00",
+            "serial": "40:00:00:00:00:14:44:EF:03:E2:0",
+            "subject": "/C=BE/O=GlobalSign nv-sa/CN=GlobalSign Domain Validation CA - SHA256 - G2",
+            "hpkp": "PL1/TTDEe9Cm2lb2X0tixyQC7zaPREm/V0IHJscTCmw=",
+            "authority_information_access": {
+                "critical": false,
+                "issuers": [],
+                "ocsp": [
+                    "URI:http://ocsp.globalsign.com/rootr1"
+                ]
+            },
+            "authority_key_identifier": "60:7B:66:1A:45:0D:97:CA:89:50:2F:7D:04:CD:34:A8:FF:FC:FD:4B",
+            "basic_constraints": "critical,CA:TRUE, pathlen:0",
+            "crl": [
+                false,
+                [
+                    "Full Name: URI:http://crl.globalsign.net/root.crl"
+                ]
+            ],
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "EA:4E:7C:D4:80:2D:E5:15:81:86:26:8C:82:6D:C0:98:A4:CF:97:0F",
+            "type": "ca",
+            "pathlen": 0
         },
         "letsencrypt_x3": {
             "name": "letsencrypt_x3",
-            "type": "ca",
             "cat": "sphinx-contrib",
             "pub_filename": "letsencrypt_x3.pem",
             "key_filename": false,
             "csr_filename": false,
             "valid_from": "2016-03-17 16:40:46",
-            "valid_until": "2021-03-17 16:40:46"
+            "valid_until": "2021-03-17 16:40:46",
+            "serial": "A0:14:14:20:00:00:15:38:57:36:A0:B8:5E:CA:70:8",
+            "subject": "/C=US/O=Let's Encrypt/CN=Let's Encrypt Authority X3",
+            "hpkp": "YLh1dUR9y6Kja30RrAn7JKnbQG/uEtLMkBgFF2Fuihg=",
+            "authority_information_access": {
+                "critical": false,
+                "issuers": [
+                    "URI:http://apps.identrust.com/roots/dstrootcax3.p7c"
+                ],
+                "ocsp": [
+                    "URI:http://isrg.trustid.ocsp.identrust.com"
+                ]
+            },
+            "authority_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
+            "basic_constraints": "critical,CA:TRUE, pathlen:0",
+            "crl": [
+                false,
+                [
+                    "Full Name: URI:http://crl.identrust.com/DSTROOTCAX3CRL.crl"
+                ]
+            ],
+            "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
+            "subject_key_identifier": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1",
+            "type": "ca",
+            "pathlen": 0
         },
         "comodo_ev": {
             "name": "comodo_ev",
-            "type": "cert",
             "cat": "sphinx-contrib",
             "pub_filename": "comodo_ev.pem",
             "key_filename": false,
             "csr_filename": false,
-            "valid_from": "2018-03-14 00:00:00",
-            "valid_until": "2020-03-13 23:59:59"
+            "valid_from": "2012-02-12 00:00:00",
+            "valid_until": "2027-02-11 23:59:59",
+            "serial": "6A:74:38:0D:4E:BF:ED:43:5B:5A:3F:7E:16:AB:DD:8",
+            "subject": "/C=GB/ST=Greater Manchester/L=Salford/O=COMODO CA Limited/CN=COMODO RSA Extended Validation Secure Server CA",
+            "hpkp": "Fbr/5aSOo4KRal8YE49t4lc76IOnK/oto9NWV1cSKWM=",
+            "authority_information_access": {
+                "critical": false,
+                "issuers": [
+                    "URI:http://crt.comodoca.com/COMODORSAAddTrustCA.crt"
+                ],
+                "ocsp": [
+                    "URI:http://ocsp.comodoca.com"
+                ]
+            },
+            "authority_key_identifier": "BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4",
+            "basic_constraints": "critical,CA:TRUE, pathlen:0",
+            "crl": [
+                false,
+                [
+                    "Full Name: URI:http://crl.comodoca.com/COMODORSACertificationAuthority.crl"
+                ]
+            ],
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "39:DA:FF:CA:28:14:8A:A8:74:13:08:B9:E4:0E:A9:D2:FA:7E:9D:69",
+            "type": "ca",
+            "pathlen": 0
         },
         "dst_root_x3": {
             "name": "dst_root_x3",
-            "type": "ca",
             "cat": "sphinx-contrib",
             "pub_filename": "dst_root_x3.pem",
             "key_filename": false,
             "csr_filename": false,
             "valid_from": "2000-09-30 21:12:19",
-            "valid_until": "2021-09-30 14:01:15"
+            "valid_until": "2021-09-30 14:01:15",
+            "serial": "44:AF:B0:80:D6:A3:27:BA:89:30:39:86:2E:F8:40:6B",
+            "subject": "/O=Digital Signature Trust Co./CN=DST Root CA X3",
+            "hpkp": "Vjs8r4z+80wjNcr1YKepWQboSIRi63WsWXhIMN+eWys=",
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
+            "type": "ca",
+            "pathlen": null
         },
-        "idertl": {
-            "name": "idertl",
-            "type": "cert",
+        "comodo_dv-cert": {
+            "name": "comodo_dv-cert",
+            "cat": "sphinx-contrib",
+            "pub_filename": "comodo_dv.pem",
+            "key_filename": false,
+            "csr_filename": false,
+            "valid_from": "2015-12-06 00:00:00",
+            "valid_until": "2018-12-01 23:59:59",
+            "serial": "32:84:43:93:DC:33:A7:CC:C0:33:01:3A:39:D4:03:2B",
+            "subject": "/OU=Domain Control Validated/OU=PositiveSSL/CN=kode.im",
+            "hpkp": "bTIDs2BP+exj0Br1kf1f4PZ476zQfCBCZTSqb25lqrU=",
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
+            "type": "cert"
+        },
+        "trustid_server_a52-cert": {
+            "name": "trustid_server_a52-cert",
+            "cat": "sphinx-contrib",
+            "pub_filename": "trustid_server_a52.pem",
+            "key_filename": false,
+            "csr_filename": false,
+            "valid_from": "2017-09-14 23:36:54",
+            "valid_until": "2020-09-13 23:36:54",
+            "serial": "40:01:5E:82:C0:9D:7D:A7:D2:50:71:4F:88:CE:B9:B9",
+            "subject": "/CN=identrust.com/O=IDENTRUST SERVICES LLC/L=Salt Lake City/ST=Utah/C=US",
+            "hpkp": "CVh3pDfinD9gWBwlE8skQUqcUBzNgOv3tMqcMotLXeY=",
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
+            "type": "cert"
+        },
+        "idertl-cert": {
+            "name": "idertl-cert",
             "cat": "sphinx-contrib",
             "pub_filename": "idertl.pem",
             "key_filename": false,
             "csr_filename": false,
             "valid_from": "2016-03-11 13:17:00",
-            "valid_until": "2016-06-09 13:17:00"
+            "valid_until": "2016-06-09 13:17:00",
+            "serial": "1E:81:24:E5:AA:46:DB:AC:18:7D:FF:1C:7C:00:62:79:51:0",
+            "subject": "/CN=id.er.tl",
+            "hpkp": "goD/MpIWQ3dPzw2F7t3Tv+5kbYcDWqIdzAX6VmmwT4Q=",
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
+            "type": "cert"
         },
-        "derstandardat": {
-            "name": "derstandardat",
-            "type": "cert",
+        "rapidssl_g3-cert": {
+            "name": "rapidssl_g3-cert",
+            "cat": "sphinx-contrib",
+            "pub_filename": "rapidssl_g3.pem",
+            "key_filename": false,
+            "csr_filename": false,
+            "valid_from": "2015-01-22 15:22:02",
+            "valid_until": "2019-01-25 07:43:21",
+            "serial": "1D:96:9",
+            "subject": "/OU=GT12798798/OU=See www.rapidssl.com/resources/cps (c)15/OU=Domain Control Validated - RapidSSL(R)/CN=*.jabber.de",
+            "hpkp": "GxWRn6n+DPxOg1MQ4NIuiifDeP6xAZmQj09sysVe3Kg=",
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
+            "type": "cert"
+        },
+        "derstandardat-cert": {
+            "name": "derstandardat-cert",
             "cat": "sphinx-contrib",
             "pub_filename": "derstandardat.pem",
             "key_filename": false,
             "csr_filename": false,
             "valid_from": "2019-03-27 09:13:53",
-            "valid_until": "2021-03-27 09:13:53"
+            "valid_until": "2021-03-27 09:13:53",
+            "serial": "88:2D:B4:17:3D:69:5F:5A",
+            "subject": "/OU=Domain Control Validated/CN=derstandard.at",
+            "hpkp": "bMn7LIWXVHhW2erMLLZu1IgAapzMB/Km8xsY5MG0Bvo=",
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
+            "type": "cert"
         },
-        "googlecom": {
-            "name": "googlecom",
-            "type": "cert",
+        "startssl_class3-cert": {
+            "name": "startssl_class3-cert",
+            "cat": "sphinx-contrib",
+            "pub_filename": "startssl_class3.pem",
+            "key_filename": false,
+            "csr_filename": false,
+            "valid_from": "2016-02-02 11:33:36",
+            "valid_until": "2019-02-02 11:33:36",
+            "serial": "1C:6F:FF:4A:F1:BE:21:81:38:10:75:95:16:7E:DF:47",
+            "subject": "/C=AT/ST=Wien/L=Wien/O=Adspired Technologies GmbH/CN=adverity.com",
+            "hpkp": "a4ZdugD6/djNUu/7ZVp1XwXT4roNa2nCqwZh8sQAiLI=",
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
+            "type": "cert"
+        },
+        "googlecom-cert": {
+            "name": "googlecom-cert",
             "cat": "sphinx-contrib",
             "pub_filename": "googlecom.pem",
             "key_filename": false,
             "csr_filename": false,
             "valid_from": "2019-03-26 13:38:23",
-            "valid_until": "2019-06-18 13:24:00"
+            "valid_until": "2019-06-18 13:24:00",
+            "serial": "6D:A4:B6:CA:D3:47:1E:1D:91:BA:40:34:59:F7:41:D",
+            "subject": "/C=US/ST=California/L=Mountain View/O=Google LLC/CN=www.google.com",
+            "hpkp": "apUC+pEOtmlitwjvZvGfdxT7TeI0TwBVSLyvmwcanOs=",
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
+            "type": "cert"
         },
-        "jabberat": {
-            "name": "jabberat",
-            "type": "cert",
+        "digicert_ha_intermediate-cert": {
+            "name": "digicert_ha_intermediate-cert",
+            "cat": "sphinx-contrib",
+            "pub_filename": "digicert_ha_intermediate.pem",
+            "key_filename": false,
+            "csr_filename": false,
+            "valid_from": "2019-02-01 00:00:00",
+            "valid_until": "2019-07-31 12:00:00",
+            "serial": "FD:C2:55:12:01:74:3C:7F:56:14:1E:C2:93:D6:6B:D",
+            "subject": "/C=US/ST=California/L=Sunnyvale/O=Oath Inc/CN=*.www.yahoo.com",
+            "hpkp": "Nxb4Nfj74p7Wely6CjIzuuWK+x1tYYSyLVKzY2+HZdQ=",
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
+            "type": "cert"
+        },
+        "startssl_class2-cert": {
+            "name": "startssl_class2-cert",
+            "cat": "sphinx-contrib",
+            "pub_filename": "startssl_class2.pem",
+            "key_filename": false,
+            "csr_filename": false,
+            "valid_from": "2014-08-28 06:00:55",
+            "valid_until": "2016-08-28 03:19:19",
+            "serial": "26:CB:B",
+            "subject": "/C=AT/ST=Wien/L=Wien/O=Mathias Ertl/CN=www.fsinf.at/emailAddress=hostmaster@fsinf.at",
+            "hpkp": "PPRuMZCWOEsxk0MRRVrLq+0LUc6Vr7ZNbLImo3j6Jbw=",
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
+            "type": "cert"
+        },
+        "globalsign_dv-cert": {
+            "name": "globalsign_dv-cert",
+            "cat": "sphinx-contrib",
+            "pub_filename": "globalsign_dv.pem",
+            "key_filename": false,
+            "csr_filename": false,
+            "valid_from": "2016-03-28 17:32:44",
+            "valid_until": "2017-03-29 17:32:44",
+            "serial": "11:21:11:F3:7D:E9:36:1C:88:51:2C:C1:27:F9:6B:F3:AE:00",
+            "subject": "/OU=Domain Control Validated/CN=www.ajabber.me",
+            "hpkp": "f/nWtFuX1vY2xz4pS1scSun2yQKfU+EcwPtjDf3RWnc=",
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
+            "type": "cert"
+        },
+        "jabberat-cert": {
+            "name": "jabberat-cert",
             "cat": "sphinx-contrib",
             "pub_filename": "jabberat.pem",
             "key_filename": false,
             "csr_filename": false,
             "valid_from": "2019-02-24 16:09:56",
-            "valid_until": "2019-05-25 16:09:56"
+            "valid_until": "2019-05-25 16:09:56",
+            "serial": "4B:31:E8:EA:00:0D:C7:E1:A9:53:5F:7E:AF:29:32:B3:55:B",
+            "subject": "/CN=jabber.at",
+            "hpkp": "8r1ryN9qhLpx2hGQVcJzqPgH2Xa8YlcvvOOPPW4QbSQ=",
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
+            "type": "cert"
+        },
+        "comodo_ev-cert": {
+            "name": "comodo_ev-cert",
+            "cat": "sphinx-contrib",
+            "pub_filename": "comodo_ev.pem",
+            "key_filename": false,
+            "csr_filename": false,
+            "valid_from": "2018-03-14 00:00:00",
+            "valid_until": "2020-03-13 23:59:59",
+            "serial": "74:3B:C3:D1:D6:75:70:E0:C9:AB:45:50:5E:F7:1F:07",
+            "subject": "/serialNumber=3910805/jurisdictionCountryName=US/jurisdictionStateOrProvinceName=Delaware/businessCategory=Private Organization/C=US/postalCode=07013/ST=New Jersey/L=Clifton/streetAddress=Suite 100/streetAddress=1255 Broad St/O=Comodo Security Solutions, Inc./OU=COMODO EV SSL/CN=www.comodo.com",
+            "hpkp": "ZRGoMzOoATnxPnQO7vjOu0ZBXa428XzyXnQY7lyzUGY=",
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
+            "type": "cert"
         }
     }
 }
