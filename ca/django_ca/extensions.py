@@ -461,6 +461,9 @@ class KeyIdExtension(Extension):
     def as_text(self):
         return bytes_to_hex(self.value)
 
+    def serialize(self):
+        return bytes_to_hex(self.value)
+
 
 class AuthorityInformationAccess(GeneralNameMixin, Extension):
     """Class representing a AuthorityInformationAccess extension.
@@ -670,6 +673,9 @@ class BasicConstraints(Extension):
             val += ', pathlen:%s' % self.pathlen
 
         return val
+
+    def serialize(self):
+        return self.as_text()
 
 
 class IssuerAlternativeName(AlternativeNameExtension):
