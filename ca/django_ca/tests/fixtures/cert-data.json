@@ -1278,7 +1278,8 @@
             "basic_constraints": "critical,CA:TRUE",
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
-            "type": "cert"
+            "type": "cert",
+            "ca": "comodo_dv"
         },
         "trustid_server_a52-cert": {
             "name": "trustid_server_a52-cert",
@@ -1294,23 +1295,8 @@
             "basic_constraints": "critical,CA:TRUE",
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
-            "type": "cert"
-        },
-        "idertl-cert": {
-            "name": "idertl-cert",
-            "cat": "sphinx-contrib",
-            "pub_filename": "idertl.pem",
-            "key_filename": false,
-            "csr_filename": false,
-            "valid_from": "2016-03-11 13:17:00",
-            "valid_until": "2016-06-09 13:17:00",
-            "serial": "1E:81:24:E5:AA:46:DB:AC:18:7D:FF:1C:7C:00:62:79:51:0",
-            "subject": "/CN=id.er.tl",
-            "hpkp": "goD/MpIWQ3dPzw2F7t3Tv+5kbYcDWqIdzAX6VmmwT4Q=",
-            "basic_constraints": "critical,CA:TRUE",
-            "key_usage": "critical,cRLSign,keyCertSign",
-            "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
-            "type": "cert"
+            "type": "cert",
+            "ca": "trustid_server_a52"
         },
         "rapidssl_g3-cert": {
             "name": "rapidssl_g3-cert",
@@ -1326,23 +1312,8 @@
             "basic_constraints": "critical,CA:TRUE",
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
-            "type": "cert"
-        },
-        "derstandardat-cert": {
-            "name": "derstandardat-cert",
-            "cat": "sphinx-contrib",
-            "pub_filename": "derstandardat.pem",
-            "key_filename": false,
-            "csr_filename": false,
-            "valid_from": "2019-03-27 09:13:53",
-            "valid_until": "2021-03-27 09:13:53",
-            "serial": "88:2D:B4:17:3D:69:5F:5A",
-            "subject": "/OU=Domain Control Validated/CN=derstandard.at",
-            "hpkp": "bMn7LIWXVHhW2erMLLZu1IgAapzMB/Km8xsY5MG0Bvo=",
-            "basic_constraints": "critical,CA:TRUE",
-            "key_usage": "critical,cRLSign,keyCertSign",
-            "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
-            "type": "cert"
+            "type": "cert",
+            "ca": "rapidssl_g3"
         },
         "startssl_class3-cert": {
             "name": "startssl_class3-cert",
@@ -1358,23 +1329,8 @@
             "basic_constraints": "critical,CA:TRUE",
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
-            "type": "cert"
-        },
-        "googlecom-cert": {
-            "name": "googlecom-cert",
-            "cat": "sphinx-contrib",
-            "pub_filename": "googlecom.pem",
-            "key_filename": false,
-            "csr_filename": false,
-            "valid_from": "2019-03-26 13:38:23",
-            "valid_until": "2019-06-18 13:24:00",
-            "serial": "6D:A4:B6:CA:D3:47:1E:1D:91:BA:40:34:59:F7:41:D",
-            "subject": "/C=US/ST=California/L=Mountain View/O=Google LLC/CN=www.google.com",
-            "hpkp": "apUC+pEOtmlitwjvZvGfdxT7TeI0TwBVSLyvmwcanOs=",
-            "basic_constraints": "critical,CA:TRUE",
-            "key_usage": "critical,cRLSign,keyCertSign",
-            "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
-            "type": "cert"
+            "type": "cert",
+            "ca": "startssl_class3"
         },
         "digicert_ha_intermediate-cert": {
             "name": "digicert_ha_intermediate-cert",
@@ -1390,7 +1346,8 @@
             "basic_constraints": "critical,CA:TRUE",
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
-            "type": "cert"
+            "type": "cert",
+            "ca": "digicert_ha_intermediate"
         },
         "startssl_class2-cert": {
             "name": "startssl_class2-cert",
@@ -1406,7 +1363,8 @@
             "basic_constraints": "critical,CA:TRUE",
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
-            "type": "cert"
+            "type": "cert",
+            "ca": "startssl_class2"
         },
         "globalsign_dv-cert": {
             "name": "globalsign_dv-cert",
@@ -1422,23 +1380,8 @@
             "basic_constraints": "critical,CA:TRUE",
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
-            "type": "cert"
-        },
-        "jabberat-cert": {
-            "name": "jabberat-cert",
-            "cat": "sphinx-contrib",
-            "pub_filename": "jabberat.pem",
-            "key_filename": false,
-            "csr_filename": false,
-            "valid_from": "2019-02-24 16:09:56",
-            "valid_until": "2019-05-25 16:09:56",
-            "serial": "4B:31:E8:EA:00:0D:C7:E1:A9:53:5F:7E:AF:29:32:B3:55:B",
-            "subject": "/CN=jabber.at",
-            "hpkp": "8r1ryN9qhLpx2hGQVcJzqPgH2Xa8YlcvvOOPPW4QbSQ=",
-            "basic_constraints": "critical,CA:TRUE",
-            "key_usage": "critical,cRLSign,keyCertSign",
-            "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
-            "type": "cert"
+            "type": "cert",
+            "ca": "globalsign_dv"
         },
         "comodo_ev-cert": {
             "name": "comodo_ev-cert",
@@ -1454,7 +1397,76 @@
             "basic_constraints": "critical,CA:TRUE",
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
-            "type": "cert"
+            "type": "cert",
+            "ca": "comodo_ev"
+        },
+        "letsencrypt_x1-cert": {
+            "name": "letsencrypt_x1-cert",
+            "cat": "sphinx-contrib",
+            "pub_filename": "letsencrypt_x1.pem",
+            "key_filename": false,
+            "csr_filename": false,
+            "valid_from": "2016-03-11 13:17:00",
+            "valid_until": "2016-06-09 13:17:00",
+            "serial": "1E:81:24:E5:AA:46:DB:AC:18:7D:FF:1C:7C:00:62:79:51:0",
+            "subject": "/CN=id.er.tl",
+            "hpkp": "goD/MpIWQ3dPzw2F7t3Tv+5kbYcDWqIdzAX6VmmwT4Q=",
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
+            "type": "cert",
+            "ca": "letsencrypt_x1"
+        },
+        "godaddy_g2_intermediate-cert": {
+            "name": "godaddy_g2_intermediate-cert",
+            "cat": "sphinx-contrib",
+            "pub_filename": "godaddy_g2_intermediate.pem",
+            "key_filename": false,
+            "csr_filename": false,
+            "valid_from": "2019-03-27 09:13:53",
+            "valid_until": "2021-03-27 09:13:53",
+            "serial": "88:2D:B4:17:3D:69:5F:5A",
+            "subject": "/OU=Domain Control Validated/CN=derstandard.at",
+            "hpkp": "bMn7LIWXVHhW2erMLLZu1IgAapzMB/Km8xsY5MG0Bvo=",
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
+            "type": "cert",
+            "ca": "godaddy_g2_intermediate"
+        },
+        "google_g3-cert": {
+            "name": "google_g3-cert",
+            "cat": "sphinx-contrib",
+            "pub_filename": "google_g3.pem",
+            "key_filename": false,
+            "csr_filename": false,
+            "valid_from": "2019-03-26 13:38:23",
+            "valid_until": "2019-06-18 13:24:00",
+            "serial": "6D:A4:B6:CA:D3:47:1E:1D:91:BA:40:34:59:F7:41:D",
+            "subject": "/C=US/ST=California/L=Mountain View/O=Google LLC/CN=www.google.com",
+            "hpkp": "apUC+pEOtmlitwjvZvGfdxT7TeI0TwBVSLyvmwcanOs=",
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
+            "type": "cert",
+            "ca": "google_g3"
+        },
+        "letsencrypt_x3-cert": {
+            "name": "letsencrypt_x3-cert",
+            "cat": "sphinx-contrib",
+            "pub_filename": "letsencrypt_x3.pem",
+            "key_filename": false,
+            "csr_filename": false,
+            "valid_from": "2019-02-24 16:09:56",
+            "valid_until": "2019-05-25 16:09:56",
+            "serial": "4B:31:E8:EA:00:0D:C7:E1:A9:53:5F:7E:AF:29:32:B3:55:B",
+            "subject": "/CN=jabber.at",
+            "hpkp": "8r1ryN9qhLpx2hGQVcJzqPgH2Xa8YlcvvOOPPW4QbSQ=",
+            "basic_constraints": "critical,CA:TRUE",
+            "key_usage": "critical,cRLSign,keyCertSign",
+            "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
+            "type": "cert",
+            "ca": "letsencrypt_x3"
         }
     }
 }
