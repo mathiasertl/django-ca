@@ -132,6 +132,7 @@ certs['multiple_ous'] = {
     'type': 'cert',
     'valid_from': '1998-05-18 00:00:00',
     'valid_until': '2028-08-01 23:59:59',
+    'ca': 'root',
 }
 certs['cloudflare_1'] = {
     'name': 'cloudflare_1',
@@ -142,6 +143,7 @@ certs['cloudflare_1'] = {
     'type': 'cert',
     'valid_from': '2018-07-18 00:00:00',
     'valid_until': '2019-01-24 23:59:59',
+    'ca': 'root',
 }
 
 # Calculate some fixted timestamps that we reuse throughout the tests
@@ -697,6 +699,7 @@ class DjangoCAWithCertTestCase(DjangoCAWithCATestCase):
         super(DjangoCAWithCertTestCase, self).setUp()
 
         self.certs = {}
-        for name, data in certs.items():
+        for name, data in [(k, v) for k, v in certs.items() if v['type'] == 'cert']:
             ca = self.cas[data['ca']]
-            self.certs[name] = self.load_cert(ca, x509=data['pub']['parsed'], csr=data['csr']['pem'])
+            csr = data.get('csr', {}).get('pem', '')
+            self.certs[name] = self.load_cert(ca, x509=data['pub']['parsed'], csr=csr)
