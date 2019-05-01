@@ -901,6 +901,12 @@ class NameConstraints(GeneralNameMixin, Extension):
         self.permitted = [self.parse_value(v) for v in value.get('permitted', [])]
         self.excluded = [self.parse_value(v) for v in value.get('excluded', [])]
 
+    def serialize(self):
+        return [
+            [self.serialize_value(v) for v in self.permitted],
+            [self.serialize_value(v) for v in self.excluded],
+        ]
+
 
 class OCSPNoCheck(NullExtension):
     """Extension to indicate that an OCSP client should (blindly) trust the certificate for it's lifetime.
