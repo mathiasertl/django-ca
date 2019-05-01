@@ -17,8 +17,8 @@ from .base import DjangoCAWithCATestCase
 from .base import override_settings
 from .base import override_tmpcadir
 
-# Root CAs with no children can always use the same template (since they all use the same extensions)
-root_expected = '''{name} (enabled):
+expected = {
+    'ecc': '''{name} (enabled):
 * Serial: {serial}
 * Path to private key:
   {key_path}
@@ -45,50 +45,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pem}'''
-
-
-class ViewCATestCase(DjangoCAWithCATestCase):
-    @override_tmpcadir()
-    def test_ca(self):
-        stdout, stderr = self.cmd('view_ca', self.ca.serial)
-        data = self.get_cert_context('root')
-        self.assertMultiLineEqual(stdout, '''{name} (enabled):
-* Serial: {serial}
-* Path to private key:
-  {key_path}
-* Is a root CA.
-* Children:
-  * {children[0][0]} ({children[0][1]})
-* Distinguished Name: {subject}
-* Maximum levels of sub-CAs (pathlen): {pathlen_text}
-* HPKP pin: {hpkp}
-
-X509 v3 certificate extensions for CA:
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
-    {basic_constraints_text}
-KeyUsage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
-
-X509 v3 certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
-* Issuer URL: None
-* OCSP URL: None
-* Issuer Alternative Name: None
-
-{pem}'''.format(**data))
-        self.assertEqual(stderr, '')
-
-    @override_tmpcadir()
-    def test_child(self):
-        stdout, stderr = self.cmd('view_ca', self.child_ca.serial)
-        data = self.get_cert_context('child')
-        self.assertMultiLineEqual(stdout, '''{name} (enabled):
+{pub[pem]}''',
+    'child': '''{name} (enabled):
 * Serial: {serial}
 * Path to private key:
   {key_path}
@@ -122,29 +80,763 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pem}'''.format(**data))
-        self.assertEqual(stderr, '')
+{pub[pem]}''',
+    'root': '''{name} (enabled):
+* Serial: {serial}
+* Path to private key:
+  {key_path}
+* Is a root CA.
+* Children:
+  * {children[0][0]} ({children[0][1]})
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
 
-    @override_tmpcadir()
-    def test_ecc(self):
-        stdout, stderr = self.cmd('view_ca', self.ecc_ca.serial)
-        data = self.get_cert_context('ecc')
-        self.assertMultiLineEqual(stdout, root_expected.format(**data))
-        self.assertEqual(stderr, '')
+X509 v3 certificate extensions for CA:
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
 
-    @override_tmpcadir()
-    def test_pwd(self):
-        stdout, stderr = self.cmd('view_ca', self.pwd_ca.serial)
-        data = self.get_cert_context('pwd')
-        self.assertMultiLineEqual(stdout, root_expected.format(**data))
-        self.assertEqual(stderr, '')
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
 
+{pub[pem]}''',
+
+    'globalsign': '''{name} (enabled):
+* Serial: {serial}
+* Private key not available locally.
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+X509 v3 certificate extensions for CA:
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+
+    'digicert_ev_root': '''{name} (enabled):
+* Serial: {serial}
+* Private key not available locally.
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+X509 v3 certificate extensions for CA:
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+    * {key_usage_2}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+
+    'comodo': '''{name} (enabled):
+* Serial: {serial}
+* Private key not available locally.
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+X509 v3 certificate extensions for CA:
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+
+    'identrust_root_1': '''{name} (enabled):
+* Serial: {serial}
+* Private key not available locally.
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+X509 v3 certificate extensions for CA:
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+
+    'globalsign_r2_root': '''{name} (enabled):
+* Serial: {serial}
+* Private key not available locally.
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+X509 v3 certificate extensions for CA:
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+cRLDistributionPoints:
+    * {crl[1][0]}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+
+    'comodo_dv': '''{name} (enabled):
+* Serial: {serial}
+* Private key not available locally.
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+X509 v3 certificate extensions for CA:
+AuthorityInfoAccess{authority_information_access_critical}:
+    CA Issuers:
+      * URI:{authority_information_access.issuers[0].value}
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+cRLDistributionPoints:
+    * {crl[1][0]}
+certificatePolicies:
+    * {certificatePolicies[1][0]}
+    * {certificatePolicies[1][1]}
+ExtendedKeyUsage{extended_key_usage_critical}:
+    * {extended_key_usage_0}
+    * {extended_key_usage_1}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+    * {key_usage_2}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+
+    'rapidssl_g3': '''{name} (enabled):
+* Serial: {serial}
+* Private key not available locally.
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+X509 v3 certificate extensions for CA:
+AuthorityInfoAccess{authority_information_access_critical}:
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+cRLDistributionPoints:
+    * {crl[1][0]}
+certificatePolicies:
+    * {certificatePolicies[1][0]}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+
+    'geotrust': '''{name} (enabled):
+* Serial: {serial}
+* Private key not available locally.
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+X509 v3 certificate extensions for CA:
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+
+    'comodo_ev': '''{name} (enabled):
+* Serial: {serial}
+* Private key not available locally.
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+X509 v3 certificate extensions for CA:
+AuthorityInfoAccess{authority_information_access_critical}:
+    CA Issuers:
+      * URI:{authority_information_access.issuers[0].value}
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+cRLDistributionPoints:
+    * {crl[1][0]}
+certificatePolicies:
+    * {certificatePolicies[1][0]}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+
+    'digicert_ha_intermediate': '''{name} (enabled):
+* Serial: {serial}
+* Private key not available locally.
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+X509 v3 certificate extensions for CA:
+AuthorityInfoAccess{authority_information_access_critical}:
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+cRLDistributionPoints:
+    * {crl[1][0]}
+certificatePolicies:
+    * {certificatePolicies[1][0]}
+ExtendedKeyUsage{extended_key_usage_critical}:
+    * {extended_key_usage_0}
+    * {extended_key_usage_1}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+    * {key_usage_2}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+
+    'dst_root_x3': '''{name} (enabled):
+* Serial: {serial}
+* Private key not available locally.
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+X509 v3 certificate extensions for CA:
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+
+    'globalsign_dv': '''{name} (enabled):
+* Serial: {serial}
+* Private key not available locally.
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+X509 v3 certificate extensions for CA:
+AuthorityInfoAccess{authority_information_access_critical}:
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+cRLDistributionPoints:
+    * {crl[1][0]}
+certificatePolicies:
+    * {certificatePolicies[1][0]}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+
+    'godaddy_g2_intermediate': '''{name} (enabled):
+* Serial: {serial}
+* Private key not available locally.
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+X509 v3 certificate extensions for CA:
+AuthorityInfoAccess{authority_information_access_critical}:
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+cRLDistributionPoints:
+    * {crl[1][0]}
+certificatePolicies:
+    * {certificatePolicies[1][0]}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+
+    'godaddy_g2_root': '''{name} (enabled):
+* Serial: {serial}
+* Private key not available locally.
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+X509 v3 certificate extensions for CA:
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+
+    'google_g3': '''{name} (enabled):
+* Serial: {serial}
+* Private key not available locally.
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+X509 v3 certificate extensions for CA:
+AuthorityInfoAccess{authority_information_access_critical}:
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+cRLDistributionPoints:
+    * {crl[1][0]}
+certificatePolicies:
+    * {certificatePolicies[1][0]}
+ExtendedKeyUsage{extended_key_usage_critical}:
+    * {extended_key_usage_0}
+    * {extended_key_usage_1}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+    * {key_usage_2}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+
+    'letsencrypt_x1': '''{name} (enabled):
+* Serial: {serial}
+* Private key not available locally.
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+X509 v3 certificate extensions for CA:
+AuthorityInfoAccess{authority_information_access_critical}:
+    CA Issuers:
+      * URI:{authority_information_access.issuers[0].value}
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+cRLDistributionPoints:
+    * {crl[1][0]}
+certificatePolicies:
+    * {certificatePolicies[1][0]}
+    * {certificatePolicies[1][1]}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+    * {key_usage_2}
+NameConstraints{name_constraints_critical}:
+    Excluded:
+      * DNS:{name_constraints.excluded[0].value}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+
+    'letsencrypt_x3': '''{name} (enabled):
+* Serial: {serial}
+* Private key not available locally.
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+X509 v3 certificate extensions for CA:
+AuthorityInfoAccess{authority_information_access_critical}:
+    CA Issuers:
+      * URI:{authority_information_access.issuers[0].value}
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+cRLDistributionPoints:
+    * {crl[1][0]}
+certificatePolicies:
+    * {certificatePolicies[1][0]}
+    * {certificatePolicies[1][1]}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+    * {key_usage_2}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+
+    'startssl_root': '''{name} (enabled):
+* Serial: {serial}
+* Private key not available locally.
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+X509 v3 certificate extensions for CA:
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+certificatePolicies:
+    * {certificatePolicies[1][0]}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+UnknownOID:
+    <ObjectIdentifier(oid=2.16.840.1.113730.1.1, name=Unknown OID)>
+UnknownOID:
+    <ObjectIdentifier(oid=2.16.840.1.113730.1.13, name=Unknown OID)>
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+    'startssl_class2': '''{name} (enabled):
+* Serial: {serial}
+* Private key not available locally.
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+X509 v3 certificate extensions for CA:
+AuthorityInfoAccess{authority_information_access_critical}:
+    CA Issuers:
+      * URI:{authority_information_access.issuers[0].value}
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+cRLDistributionPoints:
+    * {crl[1][0]}
+certificatePolicies:
+    * {certificatePolicies[1][0]}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+
+    'startssl_class3': '''{name} (enabled):
+* Serial: {serial}
+* Private key not available locally.
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+X509 v3 certificate extensions for CA:
+AuthorityInfoAccess{authority_information_access_critical}:
+    CA Issuers:
+      * URI:{authority_information_access.issuers[0].value}
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+cRLDistributionPoints:
+    * {crl[1][0]}
+certificatePolicies:
+    * {certificatePolicies[1][0]}
+ExtendedKeyUsage{extended_key_usage_critical}:
+    * {extended_key_usage_0}
+    * {extended_key_usage_1}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+
+    'trustid_server_a52': '''{name} (enabled):
+* Serial: {serial}
+* Private key not available locally.
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+X509 v3 certificate extensions for CA:
+AuthorityInfoAccess{authority_information_access_critical}:
+    CA Issuers:
+      * URI:{authority_information_access.issuers[0].value}
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+cRLDistributionPoints:
+    * {crl[1][0]}
+certificatePolicies:
+    * {certificatePolicies[1][0]}
+ExtendedKeyUsage{extended_key_usage_critical}:
+    * {extended_key_usage_0}
+    * {extended_key_usage_1}
+    * {extended_key_usage_2}
+    * {extended_key_usage_3}
+    * {extended_key_usage_4}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+    * {key_usage_2}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+
+}
+
+# Root CAs with no children can always use the same template (since they all use the same extensions)
+expected['dsa'] = expected['ecc']
+expected['pwd'] = expected['ecc']
+
+
+class ViewCATestCase(DjangoCAWithCATestCase):
     @override_tmpcadir()
-    def test_dsa(self):
-        stdout, stderr = self.cmd('view_ca', self.dsa_ca.serial)
-        data = self.get_cert_context('dsa')
-        self.assertMultiLineEqual(stdout, root_expected.format(**data))
-        self.assertEqual(stderr, '')
+    def test_all_cas(self):
+        for name, ca in sorted(self.cas.items(), key=lambda t: t[0]):
+            stdout, stderr = self.cmd('view_ca', ca.serial)
+            data = self.get_cert_context(name)
+            self.assertMultiLineEqual(stdout, expected[name].format(**data))
+            self.assertEqual(stderr, '')
 
 
 @override_settings(USE_TZ=True)
