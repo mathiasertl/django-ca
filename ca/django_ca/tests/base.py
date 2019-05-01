@@ -188,8 +188,6 @@ for cert_name, cert_data in certs.items():
     if cert_data.get('subject_alternative_name'):
         cert_data['subject_alternative_name'] = SubjectAlternativeName(cert_data['subject_alternative_name'])
 
-print(certs['root'])
-
 if certs and ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
     pass  # not there yet
     #certs['cert_all']['precert_poison'] = PrecertPoison()
@@ -563,7 +561,8 @@ class DjangoCATestCase(TestCase):
             ctx['parent_name'] = parent['name']
             ctx['parent_serial'] = parent['serial']
 
-        ctx['key_path'] = ca_storage.path(certs[name]['key'])
+        if certs[name]['key_filename'] is not False:
+            ctx['key_path'] = ca_storage.path(certs[name]['key_filename'])
         return ctx
 
     def get_idp(self, full_name=None, indirect_crl=False, only_contains_attribute_certs=False,
@@ -681,6 +680,8 @@ class DjangoCAWithCATestCase(DjangoCATestCase):
         super(DjangoCAWithCATestCase, self).setUp()
         self.cas = {k: self.load_ca(name=v['name'], x509=v['pub']['parsed']) for k, v in certs.items()
                     if v.get('type') == 'ca'}
+        self.cas['child'].parent = self.cas['root']
+        self.cas['child'].save()
         self.usable_cas = {name: ca for name, ca in self.cas.items()
                            if certs[name]['key_filename'] is not False}
 
