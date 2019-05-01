@@ -45,7 +45,7 @@ class ImportCATest(DjangoCATestCase):
         return self.cmd('init_ca', name, '/C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=%s' % name,
                         **kwargs)
 
-    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    @override_tmpcadir()
     def test_basic(self):
         name = 'testname'
         pem_path = os.path.join(settings.FIXTURES_DIR, 'root.pem')
@@ -66,7 +66,7 @@ class ImportCATest(DjangoCATestCase):
         self.assertEqual(key.key_size, certs['root']['key_size'])
         self.assertEqual(ca.serial, certs['root']['serial'])
 
-    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    @override_tmpcadir()
     def test_der(self):
         name = 'testname'
         pem_path = os.path.join(settings.FIXTURES_DIR, 'root-pub.der')
@@ -87,7 +87,7 @@ class ImportCATest(DjangoCATestCase):
         self.assertEqual(key.key_size, certs['root']['key_size'])
         self.assertEqual(ca.serial, certs['root']['serial'])
 
-    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    @override_tmpcadir()
     def test_password(self):
         name = 'testname'
         password = b'testpassword'
