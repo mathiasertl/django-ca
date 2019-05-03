@@ -133,6 +133,7 @@ certs['multiple_ous'] = {
     'valid_from': '1998-05-18 00:00:00',
     'valid_until': '2028-08-01 23:59:59',
     'ca': 'root',
+    'serial': '7D:D9:FE:07:CF:A8:1E:B7:10:79:67:FB:A7:89:34:C6',
 }
 certs['cloudflare_1'] = {
     'name': 'cloudflare_1',
@@ -144,6 +145,7 @@ certs['cloudflare_1'] = {
     'valid_from': '2018-07-18 00:00:00',
     'valid_until': '2019-01-24 23:59:59',
     'ca': 'root',
+    'serial': '7D:D9:FE:07:CF:A8:1E:B7:10:79:67:FB:A7:89:34:C6',
 }
 
 # Calculate some fixted timestamps that we reuse throughout the tests
@@ -170,6 +172,7 @@ for cert_name, cert_data in certs.items():
     if cert_data['csr_filename'] is not False:
         cert_data['csr'] = _load_csr(cert_data)
     cert_data['pub'] = _load_pub(cert_data)
+    cert_data['ocsp-serial'] = cert_data['serial'].replace(':', '')
 
     # parse some data from the dict
     cert_data['valid_from'] = datetime.strptime(cert_data['valid_from'], '%Y-%m-%d %H:%M:%S')

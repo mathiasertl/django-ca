@@ -215,6 +215,7 @@ def copy_cert(cert, data, key_path, csr_path):
         stream.write(cert.pub)
 
     data['crl'] = cert.ca.crl_url
+    data['subject'] = cert.distinguishedName()
 
     update_cert_data(cert, data)
 
