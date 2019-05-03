@@ -172,13 +172,15 @@ for cert_name, cert_data in certs.items():
     if cert_data['csr_filename'] is not False:
         cert_data['csr'] = _load_csr(cert_data)
     cert_data['pub'] = _load_pub(cert_data)
-    cert_data['ocsp-serial'] = cert_data['serial'].replace(':', '')
 
     # parse some data from the dict
     cert_data['valid_from'] = datetime.strptime(cert_data['valid_from'], '%Y-%m-%d %H:%M:%S')
     cert_data['valid_until'] = datetime.strptime(cert_data['valid_until'], '%Y-%m-%d %H:%M:%S')
     cert_data['valid_from_short'] = cert_data['valid_from'].strftime('%Y-%m-%d %H:%M')
     cert_data['valid_until_short'] = cert_data['valid_until'].strftime('%Y-%m-%d %H:%M')
+
+    cert_data['ocsp-serial'] = cert_data['serial'].replace(':', '')
+    cert_data['ocsp-expires'] = cert_data['valid_until'].strftime('%y%m%d%H%M%SZ')
 
     # parse extensions
     if cert_data.get('authority_key_identifier'):
