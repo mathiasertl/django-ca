@@ -111,7 +111,7 @@ def test(suites):
     os.chdir(work_dir)
     sys.path.insert(0, work_dir)
 
-    suites = ['django_ca.tests.%s' % s for s in suites]
+    suites = ['django_ca.tests.%s' % s.strip('.') for s in suites]
 
     from django.core.management import call_command
     call_command('test', *suites)
