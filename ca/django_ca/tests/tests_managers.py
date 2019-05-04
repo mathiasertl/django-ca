@@ -13,15 +13,9 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-import os
-
-from freezegun import freeze_time
-
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtensionOID
-
-from django.conf import settings
 
 from .. import ca_settings
 from ..extensions import AuthorityInformationAccess
@@ -293,7 +287,6 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
                          AuthorityInformationAccess([[ca.issuer_url], []]))
 
     @override_tmpcadir()
-    @freeze_time('2018-10-26')  # so recreating will yield the same cert
     def test_ocsp(self):
         # Create a typical OCSP responder certificate
         kwargs = get_cert_profile_kwargs('ocsp')
@@ -324,13 +317,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             ('cRLDistributionPoints', certs['ocsp']['crl']),
         ])
 
-        if os.environ.get('UPDATE_FIXTURES') == '1':
-            path = os.path.join(settings.FIXTURES_DIR, 'ocsp.pem')
-            with open(path, 'w') as stream:
-                stream.write(cert.pub)
-
     @override_tmpcadir()
-    @freeze_time('2018-10-26')  # so recreating will yield the same cert
     def test_all_extensions(self):
         # Create a certificate with all extensions enabled.
         # Note that we just blindly add all extensions possible, even if they don't make sense for a
@@ -385,13 +372,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             expected.append(PrecertPoison())
         self.assertCountEqual(cert.get_extensions(), expected)
 
-        if os.environ.get('UPDATE_FIXTURES') == '1':
-            path = os.path.join(settings.FIXTURES_DIR, 'all.pem')
-            with open(path, 'w') as stream:
-                stream.write(cert.pub)
-
     @override_tmpcadir()
-    @freeze_time('2018-10-26')  # so recreating will yield the same cert
     def test_extra_extensions(self):
         cn = 'all-extensions.example.com'
         ku = 'critical,encipherOnly,keyAgreement,nonRepudiation'

@@ -49,9 +49,6 @@ dt_parser.add_argument('-c', '--cache', dest='no_cache', default='True', action=
                        help='Use Docker cache to speed up builds.')
 
 test_parser = commands.add_parser('test', parents=[suites_parser])
-test_parser.add_argument('--recreate-fixtures', action='store_true', default=False,
-                         help="Recreate fixtures")
-
 cov_parser = commands.add_parser('coverage', parents=[suites_parser])
 cov_parser.add_argument('--fail-under', type=int, default=100, metavar='[0-100]',
                         help='Fail if coverage is below given percentage (default: %(default)s%%).')
@@ -135,11 +132,7 @@ def exclude_versions(cov, sw, this_version, version, version_str):
 
 if args.command == 'test':
     setup_django()
-    if args.recreate_fixtures:
-        os.environ['UPDATE_FIXTURES'] = '1'
-        test(['tests_managers'])
-    else:
-        test(args.suites)
+    test(args.suites)
 elif args.command == 'coverage':
     import coverage
 
