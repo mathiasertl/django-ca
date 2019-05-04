@@ -27,6 +27,12 @@ ChangeLog
 * **DEPRECATION NOTICE:** ``CertificateRevocationListView.ca_crl`` is deprecated in favor of the ``scope``
   parameter. If you have set ``ca_crl=True`` just set ``scope="ca"`` instead.
 
+OCSP
+====
+
+* The ``dump_ocsp_index`` management command now excludes certificates expired for more then a day or are not
+  yet valid.
+
 CRLs
 ====
 

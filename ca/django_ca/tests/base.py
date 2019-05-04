@@ -157,7 +157,11 @@ timestamps['before_cas'] = timestamps['base'] - timedelta(days=1)
 timestamps['before_child'] = timestamps['base'] + timedelta(days=1)
 timestamps['after_child'] = timestamps['base'] + timedelta(days=4)
 timestamps['ca_certs_valid'] = timestamps['base'] + timedelta(days=7)
+timestamps['profile_certs_valid'] = timestamps['base'] + timedelta(days=12)
 timestamps['everything_valid'] = timestamps['base'] + timedelta(days=60)
+timestamps['cas_expired'] = timestamps['base'] + timedelta(days=731, seconds=3600)
+timestamps['ca_certs_expired'] = timestamps['base'] + timedelta(days=736, seconds=3600)
+timestamps['profile_certs_expired'] = timestamps['base'] + timedelta(days=741, seconds=3600)
 timestamps['everything_expired'] = timestamps['base'] + timedelta(days=365 * 20)
 
 for cert_name, cert_data in certs.items():

@@ -33,7 +33,40 @@ V\t{profile-enduser[ocsp-expires]}\t\t{profile-enduser[ocsp-serial]}\tunknown\t{
 V\t{profile-ocsp[ocsp-expires]}\t\t{profile-ocsp[ocsp-serial]}\tunknown\t{profile-ocsp[subject]}
 V\t{no-extensions[ocsp-expires]}\t\t{no-extensions[ocsp-serial]}\tunknown\t{no-extensions[subject]}
 V\t{all-extensions[ocsp-expires]}\t\t{all-extensions[ocsp-serial]}\tunknown\t{all-extensions[subject]}
-""".format(**certs)  # NOQA
+"""
+
+ca_certs = "V\t{child-cert[ocsp-expires]}\t\t{child-cert[ocsp-serial]}\tunknown\t{child-cert[subject]}\n"
+profile_certs = """V\t{child-cert[ocsp-expires]}\t\t{child-cert[ocsp-serial]}\tunknown\t{child-cert[subject]}
+V\t{profile-client[ocsp-expires]}\t\t{profile-client[ocsp-serial]}\tunknown\t{profile-client[subject]}
+V\t{profile-server[ocsp-expires]}\t\t{profile-server[ocsp-serial]}\tunknown\t{profile-server[subject]}
+V\t{profile-webserver[ocsp-expires]}\t\t{profile-webserver[ocsp-serial]}\tunknown\t{profile-webserver[subject]}
+V\t{profile-enduser[ocsp-expires]}\t\t{profile-enduser[ocsp-serial]}\tunknown\t{profile-enduser[subject]}
+V\t{profile-ocsp[ocsp-expires]}\t\t{profile-ocsp[ocsp-serial]}\tunknown\t{profile-ocsp[subject]}
+"""
+
+ca_certs_expired = """E\t{child-cert[ocsp-expires]}\t\t{child-cert[ocsp-serial]}\tunknown\t{child-cert[subject]}
+V\t{profile-client[ocsp-expires]}\t\t{profile-client[ocsp-serial]}\tunknown\t{profile-client[subject]}
+V\t{profile-server[ocsp-expires]}\t\t{profile-server[ocsp-serial]}\tunknown\t{profile-server[subject]}
+V\t{profile-webserver[ocsp-expires]}\t\t{profile-webserver[ocsp-serial]}\tunknown\t{profile-webserver[subject]}
+V\t{profile-enduser[ocsp-expires]}\t\t{profile-enduser[ocsp-serial]}\tunknown\t{profile-enduser[subject]}
+V\t{profile-ocsp[ocsp-expires]}\t\t{profile-ocsp[ocsp-serial]}\tunknown\t{profile-ocsp[subject]}
+V\t{all-extensions[ocsp-expires]}\t\t{all-extensions[ocsp-serial]}\tunknown\t{all-extensions[subject]}
+"""
+ca_certs_gone = """V\t{profile-client[ocsp-expires]}\t\t{profile-client[ocsp-serial]}\tunknown\t{profile-client[subject]}
+V\t{profile-server[ocsp-expires]}\t\t{profile-server[ocsp-serial]}\tunknown\t{profile-server[subject]}
+V\t{profile-webserver[ocsp-expires]}\t\t{profile-webserver[ocsp-serial]}\tunknown\t{profile-webserver[subject]}
+V\t{profile-enduser[ocsp-expires]}\t\t{profile-enduser[ocsp-serial]}\tunknown\t{profile-enduser[subject]}
+V\t{profile-ocsp[ocsp-expires]}\t\t{profile-ocsp[ocsp-serial]}\tunknown\t{profile-ocsp[subject]}
+V\t{all-extensions[ocsp-expires]}\t\t{all-extensions[ocsp-serial]}\tunknown\t{all-extensions[subject]}
+"""
+profile_certs_expired = """E\t{profile-client[ocsp-expires]}\t\t{profile-client[ocsp-serial]}\tunknown\t{profile-client[subject]}
+E\t{profile-server[ocsp-expires]}\t\t{profile-server[ocsp-serial]}\tunknown\t{profile-server[subject]}
+E\t{profile-webserver[ocsp-expires]}\t\t{profile-webserver[ocsp-serial]}\tunknown\t{profile-webserver[subject]}
+E\t{profile-enduser[ocsp-expires]}\t\t{profile-enduser[ocsp-serial]}\tunknown\t{profile-enduser[subject]}
+E\t{profile-ocsp[ocsp-expires]}\t\t{profile-ocsp[ocsp-serial]}\tunknown\t{profile-ocsp[subject]}
+V\t{all-extensions[ocsp-expires]}\t\t{all-extensions[ocsp-serial]}\tunknown\t{all-extensions[subject]}
+"""
+profile_certs_gone = "V\t{all-extensions[ocsp-expires]}\t\t{all-extensions[ocsp-serial]}\tunknown\t{all-extensions[subject]}\n"  # NOQA
 
 all_expired = """E\t{child-cert[ocsp-expires]}\t\t{child-cert[ocsp-serial]}\tunknown\t{child-cert[subject]}
 E\t{profile-client[ocsp-expires]}\t\t{profile-client[ocsp-serial]}\tunknown\t{profile-client[subject]}
@@ -63,19 +96,45 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(stdout, expected.format(**context))
         self.assertEqual(stderr, '')
 
+    @freeze_time(timestamps['ca_certs_valid'])
+    def test_ca_certs_valid(self):
+        self.assertIndex(expected=ca_certs)
+
+    @freeze_time(timestamps['profile_certs_valid'])
+    def test_profile_certs_valid(self):
+        self.assertIndex(expected=profile_certs)
+
     @freeze_time(timestamps['everything_valid'])
-    def test_basic(self):
+    def test_all_certs_valid(self):
         self.assertIndex(expected=basic)
 
     @freeze_time(timestamps['everything_expired'])
     def test_all_expired(self):
-        # All certificates are expired by now
-        self.assertIndex(expected=all_expired)
+        # All certificates are expired by now, so no certs here
+        self.assertIndex()
 
     @freeze_time(timestamps['before_everything'])
     def test_before_everything(self):
-        # Certs are not yet valid
-        self.assertIndex(expected=basic)
+        # Certs are not yet valid, so we get no certs
+        self.assertIndex()
+
+    def test_ca_certs_expired(self):
+        # CA certs are the first to expire, since they just expired an hour ago, they still show up in index
+        with freeze_time(timestamps['ca_certs_expired']) as frozen_time:
+            self.assertIndex(expected=ca_certs_expired)
+
+            # a day later, they're gone
+            frozen_time.tick(timedelta(days=1))
+            self.assertIndex(expected=ca_certs_gone)
+
+    def test_profile_certs_expired(self):
+        # CA certs are the first to expire, since they just expired an hour ago, they still show up in index
+        with freeze_time(timestamps['profile_certs_expired']) as frozen_time:
+            self.assertIndex(expected=profile_certs_expired)
+
+            # a day later, they're gone
+            frozen_time.tick(timedelta(days=1))
+            self.assertIndex(expected=profile_certs_gone)
 
     @freeze_time(timestamps['everything_valid'])
     def test_ecc_ca(self):
@@ -95,12 +154,11 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
 
             with open(path) as stream:
                 data = stream.read()
-            self.assertEqual(data, basic)
+            self.assertEqual(data, basic.format(**certs))
         finally:
             shutil.rmtree(tmpdir)
 
     def test_revoked(self):
-        self.maxDiff = None
 
         with freeze_time(timestamps['everything_valid']) as frozen_timestamp:
             revoked_timestamp = datetime.utcnow().strftime(self.timeformat)

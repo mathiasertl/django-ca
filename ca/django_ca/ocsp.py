@@ -13,18 +13,21 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from datetime import datetime
+from datetime import timedelta
+
+from django.utils import timezone
 
 # We need a two-letter year, otherwise OCSP doesn't work
 date_format = '%y%m%d%H%M%SZ'
 
 
 def get_index(ca):
-    now = datetime.utcnow()
+    now = timezone.now()
+    yesterday = now - timedelta(seconds=86400)
 
     # Write index file (required by "openssl ocsp")
     # TODO: Expired certs should not be included after a certain time
-    for cert in ca.certificate_set.all():
+    for cert in ca.certificate_set.filter(expires__gt=yesterday, valid_from__lt=now):
         revocation = ''
         if cert.expires < now:
             status = 'E'
