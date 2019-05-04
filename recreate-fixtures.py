@@ -234,7 +234,7 @@ def update_contrib(data, cert, name, filename):
         'hpkp': cert.hpkp_pin,
     }
 
-    for ext in ca.get_extensions():
+    for ext in cert.get_extensions():
         if isinstance(ext, Extension):
             key = CertificateAuthority.OID_MAPPING[ext.oid]
             cert_data[key] = ext.serialize()
