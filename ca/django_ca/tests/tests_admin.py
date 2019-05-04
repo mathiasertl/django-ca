@@ -53,10 +53,9 @@ from ..signals import pre_issue_cert
 from ..signals import pre_revoke_cert
 from ..utils import SUBJECT_FIELDS
 from .base import DjangoCAWithCertTestCase
-from .base import DjangoCAWithCSRTestCase
+from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
-from .base import pwd_ca_pwd
 
 try:
     import unittest.mock as mock
@@ -304,7 +303,7 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 302)
 
 
-class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
+class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     @override_tmpcadir()
     def test_get(self):
         response = self.client.get(self.add_url)
@@ -496,7 +495,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
                 'key_usage_1': True,
                 'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
                 'extended_key_usage_1': False,
-                'password': pwd_ca_pwd.decode('utf-8'),
+                'password': certs['pwd']['password'].decode('utf-8'),
             })
         self.assertEqual(pre.call_count, 1)
         self.assertRedirects(response, self.changelist_url)
@@ -699,7 +698,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
         self.assertFalse(post.called)
 
 
-class CSRDetailTestCase(AdminTestMixin, DjangoCAWithCSRTestCase):
+class CSRDetailTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     def setUp(self):
         self.url = reverse('admin:django_ca_certificate_csr_details')
         super(CSRDetailTestCase, self).setUp()

@@ -44,7 +44,6 @@ from ..utils import int_to_hex
 from ..views import OCSPView
 from .base import DjangoCAWithCertTestCase
 from .base import certs
-from .base import ocsp_pem
 from .base import override_settings
 from .base import override_tmpcadir
 

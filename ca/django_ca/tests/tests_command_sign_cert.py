@@ -37,8 +37,7 @@ from ..signals import post_issue_cert
 from ..signals import pre_issue_cert
 from ..subject import Subject
 from ..utils import ca_storage
-from .base import DjangoCAWithCSRTestCase
-from .base import child_pubkey
+from .base import DjangoCAWithCertTestCase
 from .base import override_settings
 from .base import override_tmpcadir
 
@@ -49,7 +48,7 @@ else:
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
-class SignCertTestCase(DjangoCAWithCSRTestCase):
+class SignCertTestCase(DjangoCAWithCertTestCase):
     @override_tmpcadir()
     def test_from_stdin(self):
         stdin = six.StringIO(self.csr_pem)
@@ -422,13 +421,7 @@ class SignCertTestCase(DjangoCAWithCSRTestCase):
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
-class SignCertChildCATestCase(DjangoCAWithCSRTestCase):
-    @classmethod
-    def setUpClass(cls):
-        super(SignCertChildCATestCase, cls).setUpClass()
-
-        cls.child_ca = cls.load_ca(name='child', x509=child_pubkey)
-
+class SignCertChildCATestCase(DjangoCAWithCertTestCase):
     # NOTE: This exact time is currently very important, because the Child CA was signed a minute before this
     # time, and a day after the sign_cert command would fail because the root CA would expire to soon.
     @freeze_time("2018-12-20 23:13:00")

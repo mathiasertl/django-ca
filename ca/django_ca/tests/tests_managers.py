@@ -40,17 +40,10 @@ from ..models import CertificateAuthority
 from ..profiles import get_cert_profile_kwargs
 from ..subject import Subject
 from .base import DjangoCATestCase
-from .base import DjangoCAWithCSRTestCase
-from .base import all_csr
+from .base import DjangoCAWithCertTestCase
 from .base import certs
-from .base import ocsp_csr
 from .base import override_settings
 from .base import override_tmpcadir
-from .base import root_crl_url
-from .base import root_issuer_alt
-from .base import root_issuer_url
-from .base import root_ocsp_domain
-from .base import root_ocsp_url
 
 if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
     from ..extensions import PrecertPoison
@@ -75,7 +68,7 @@ class CertificateAuthorityManagerTestCase(DjangoCATestCase):
 
 
 @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
-class GetCertTestCase(DjangoCAWithCSRTestCase):
+class GetCertTestCase(DjangoCAWithCertTestCase):
     def assertExtensions(self, cert, expected):
         expected['BasicConstraints'] = BasicConstraints('critical,CA:FALSE')
         expected['AuthorityKeyIdentifier'] = self.ca.authority_key_identifier

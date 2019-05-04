@@ -28,7 +28,6 @@ from ..subject import Subject
 from .base import DjangoCATestCase
 from .base import DjangoCAWithCATestCase
 from .base import DjangoCAWithCertTestCase
-from .base import child_pubkey
 from .base import override_settings
 from .base import override_tmpcadir
 

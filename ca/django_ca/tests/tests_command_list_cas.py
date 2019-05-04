@@ -20,7 +20,6 @@ from django.utils import timezone
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
 from .base import certs
-from .base import child_pubkey
 from .base import override_settings
 
 
