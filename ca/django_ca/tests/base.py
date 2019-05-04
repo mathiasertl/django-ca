@@ -116,10 +116,19 @@ def _load_pub(data):
     with open(path, 'rb') as stream:
         pem = stream.read().replace(b'\r\n', b'\n')
 
-    return {
+    pub_data = {
         'pem': pem.decode('utf-8'),
         'parsed': x509.load_pem_x509_certificate(pem, default_backend()),
     }
+
+    if data.get('pub_der_filename'):
+        der_path = os.path.join(basedir, data['pub_der_filename'])
+        with open(der_path, 'rb') as stream:
+            der = stream.read().replace(b'\r\n', b'\n')
+        pub_data['der'] = der
+        pub_data['der_parsed'] = x509.load_der_x509_certificate(der, default_backend()),
+
+    return pub_data
 
 
 cryptography_version = tuple([int(t) for t in cryptography.__version__.split('.')[:2]])

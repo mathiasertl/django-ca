@@ -215,15 +215,17 @@ Digest:
 HPKP pin: {hpkp}
 '''.format(**self.get_cert_context('ocsp')))
 
+    @freeze_time(timestamps['everything_valid'])
     def test_der(self):
-        stdout, stderr = self.cmd('view_cert', self.cert.serial, format=Encoding.DER,
+        cert = self.certs['child-cert']
+        stdout, stderr = self.cmd('view_cert', cert.serial, format=Encoding.DER,
                                   stdout=BytesIO(), stderr=BytesIO())
         expected = '''Common Name: {cn}
-Valid from: {from}
-Valid until: {until}
-Status: {status}
+Valid from: {valid_from_short}
+Valid until: {valid_until_short}
+Status: Valid
 SubjectAltName:
-    * {san[0]}
+    * {subject_alternative_name[0]}
 Watchers:
 Digest:
     md5: {md5}
@@ -232,31 +234,31 @@ Digest:
     sha512: {sha512}
 HPKP pin: {hpkp}
 
-'''.format(**self.get_cert_context('cert1'))
-        expected = force_bytes(expected) + certs['cert1']['der'] + b'\n'
+'''.format(**self.get_cert_context('child-cert'))
+        expected = force_bytes(expected) + certs['child-cert']['pub']['der'] + b'\n'
 
         self.assertEqual(stdout, expected)
         self.assertEqual(stderr, b'')
 
     def test_revoked(self):
-        cert = Certificate.objects.get(serial=self.cert.serial)
+        cert = self.certs['child-cert']
         cert.revoked = True
         cert.save()
         stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stdout.decode('utf-8'), '''Common Name: %(cn)s
-Valid from: %(from)s
-Valid until: %(until)s
+        self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
+Valid from: {valid_from_short}
+Valid until: {valid_until_short}
 Status: Revoked
 SubjectAltName:
-    * DNS:%(cn)s
+    * DNS:{cn}
 Watchers:
 Digest:
-    md5: %(md5)s
-    sha1: %(sha1)s
-    sha256: %(sha256)s
-    sha512: %(sha512)s
-HPKP pin: %(hpkp)s
-''' % certs['cert1'])
+    md5: {md5}
+    sha1: {sha1}
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
+'''.format(**certs['child-cert']))
         self.assertEqual(stderr, b'')
 
     @override_tmpcadir()
