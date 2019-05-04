@@ -23,20 +23,38 @@ from .base import certs
 from .base import override_settings
 
 
-@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class ListCertsTestCase(DjangoCAWithCATestCase):
     def test_basic(self):
+        self.maxDiff = None
         stdout, stderr = self.cmd('list_cas')
-        self.assertEqual(stdout, '%s - %s\n%s - %s\n%s - %s\n' % (
-            certs['root']['serial'], certs['root']['name'],
-            certs['pwd_ca']['serial'], certs['pwd_ca']['name'],
-            certs['ecc_ca']['serial'], certs['ecc_ca']['name'],
-        ))
+        self.assertEqual(stdout, """{letsencrypt_x1[serial]} - {letsencrypt_x1[name]}
+{letsencrypt_x3[serial]} - {letsencrypt_x3[name]}
+{dsa[serial]} - {dsa[name]}
+{ecc[serial]} - {ecc[name]}
+{pwd[serial]} - {pwd[name]}
+{root[serial]} - {root[name]}
+{child[serial]} - {child[name]}
+{dst_root_x3[serial]} - {dst_root_x3[name]}
+{google_g3[serial]} - {google_g3[name]}
+{globalsign_r2_root[serial]} - {globalsign_r2_root[name]}
+{trustid_server_a52[serial]} - {trustid_server_a52[name]}
+{rapidssl_g3[serial]} - {rapidssl_g3[name]}
+{geotrust[serial]} - {geotrust[name]}
+{startssl_class2[serial]} - {startssl_class2[name]}
+{globalsign_dv[serial]} - {globalsign_dv[name]}
+{comodo_ev[serial]} - {comodo_ev[name]}
+{globalsign[serial]} - {globalsign[name]}
+{digicert_ha_intermediate[serial]} - {digicert_ha_intermediate[name]}
+{comodo_dv[serial]} - {comodo_dv[name]}
+{startssl_class3[serial]} - {startssl_class3[name]}
+{godaddy_g2_intermediate[serial]} - {godaddy_g2_intermediate[name]}
+{digicert_ev_root[serial]} - {digicert_ev_root[name]}
+{identrust_root_1[serial]} - {identrust_root_1[name]}
+{startssl_root[serial]} - {startssl_root[name]}
+{godaddy_g2_root[serial]} - {godaddy_g2_root[name]}
+{comodo[serial]} - {comodo[name]}
+""".format(**certs))
         self.assertEqual(stderr, '')
-
-    @override_settings(USE_TZ=True)
-    def test_basic_with_use_tz(self):
-        self.test_basic()
 
     def test_disabled(self):
         ca = CertificateAuthority.objects.get(serial=self.ca.serial)
@@ -49,10 +67,6 @@ class ListCertsTestCase(DjangoCAWithCATestCase):
             certs['pwd_ca']['serial'], certs['pwd_ca']['name'],
             certs['ecc_ca']['serial'], certs['ecc_ca']['name']))
         self.assertEqual(stderr, '')
-
-    @override_settings(USE_TZ=True)
-    def test_disabled_with_use_tz(self):
-        self.test_disabled()
 
     def test_tree(self):
         stdout, stderr = self.cmd('list_cas', tree=True)
@@ -92,3 +106,8 @@ class ListCertsTestCase(DjangoCAWithCATestCase):
             certs['ecc_ca']['serial'], certs['ecc_ca']['name'],
         ))
         self.assertEqual(stderr, '')
+
+
+@override_settings(USE_TZ=True)
+class ListCertsWithTZTestCase(ListCertsTestCase):
+    pass
