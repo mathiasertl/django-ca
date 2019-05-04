@@ -152,9 +152,12 @@ certs['cloudflare_1'] = {
 timestamps = {
     'base': datetime.strptime(_fixture_data['timestamp'], '%Y-%m-%d %H:%M:%S'),
 }
-timestamps['before_everything'] = timestamps['base'] - timedelta(days=0)
-timestamps['before_child'] = timestamps['base'] - timedelta(days=1)
-timestamps['everything_valid'] = timestamps['base'] + timedelta(days=30)
+timestamps['before_everything'] = datetime(1990, 1, 1)
+timestamps['before_cas'] = timestamps['base'] - timedelta(days=1)
+timestamps['before_child'] = timestamps['base'] + timedelta(days=1)
+timestamps['after_child'] = timestamps['base'] + timedelta(days=4)
+timestamps['ca_certs_valid'] = timestamps['base'] + timedelta(days=7)
+timestamps['everything_valid'] = timestamps['base'] + timedelta(days=60)
 timestamps['everything_expired'] = timestamps['base'] + timedelta(days=365 * 20)
 
 for cert_name, cert_data in certs.items():

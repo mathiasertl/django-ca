@@ -488,14 +488,14 @@ if not args.only_contrib:
         csr = create_csr(key_path, csr_path)
 
         with freeze_time(now + data[name]['delta']):
-            now = datetime.utcnow()
+            no_ext_now = datetime.utcnow()
             pwd = data[ca.name]['password']
             parsed_csr = x509.load_pem_x509_csr(csr.encode('utf-8'), default_backend())
             subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, data[name]['cn'])])
 
             builder = x509.CertificateBuilder()
-            builder = builder.not_valid_before(now)
-            builder = builder.not_valid_after(now + timedelta(days=365))
+            builder = builder.not_valid_before(no_ext_now)
+            builder = builder.not_valid_after(no_ext_now + timedelta(days=365))
             builder = builder.serial_number(x509.random_serial_number())
             builder = builder.subject_name(subject)
             builder = builder.issuer_name(ca.x509.subject)
