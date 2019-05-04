@@ -36,13 +36,16 @@ from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
+from ..extensions import NameConstraints
 from ..extensions import PrecertificateSignedCertificateTimestamps
+from ..extensions import PrecertPoison
+from ..extensions import OCSPNoCheck
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
+from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import Watcher
 from .base import DjangoCAWithCertTestCase
-from .base import cert3_csr
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
@@ -262,10 +265,6 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
 
 
 class CertificateTests(DjangoCAWithCertTestCase):
-    def setUp(self):
-        super(CertificateTests, self).setUp()
-        self.ca.crl_url = 'https://ca.example.com/crl.der'
-
     def assertExtension(self, name, expected):
         for cert in self.cas + self.certs:
             value = getattr(cert, name)
@@ -292,12 +291,9 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertEqual(self.ocsp.valid_from, certs['ocsp']['valid_from'])
 
     def test_max_pathlen(self):
-        for ca in self.cas:
-            expected = certs[ca.name]['pathlen']
-            if expected is None:
-                self.assertIsNone(ca.pathlen)
-            else:
-                self.assertEqual(ca.pathlen, expected)
+        for name, ca in self.usable_cas.items():
+            expected = certs[name].get('max_pathlen')
+            self.assertEqual(ca.max_pathlen, expected)
 
     def test_allows_intermediate(self):
         self.assertTrue(self.ca.allows_intermediate_ca, 1)
@@ -312,21 +308,23 @@ class CertificateTests(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_serial(self):
-        for ca in self.cas:
-            self.assertEqual(ca.serial, certs[ca.name]['serial'])
+        for name, ca in self.cas.items():
+            self.assertEqual(ca.serial, certs[ca.name].get('serial'))
 
-        self.assertEqual(self.cert.serial, certs['cert1']['serial'])
-        self.assertEqual(self.cert2.serial, certs['cert2']['serial'])
-        self.assertEqual(self.cert3.serial, certs['cert3']['serial'])
-        self.assertEqual(self.ocsp.serial, certs['ocsp']['serial'])
+        for name, cert in self.certs.items():
+            self.assertEqual(cert.serial, certs[name].get('serial'))
 
     @override_tmpcadir()
     def test_subject_alternative_name(self):
-        for ca in self.cas:
-            self.assertEqual(self.ca.subject_alternative_name, certs[ca.name].get('subject_alternative_name'))
+        for name, ca in self.cas.items():
+            self.assertEqual(ca.subject_alternative_name, certs[ca.name].get('subject_alternative_name'))
 
+        for name, cert in self.certs.items():
+            self.assertEqual(cert.subject_alternative_name, certs[name].get('subject_alternative_name'))
+
+        # Create a cert with some weirder SANs to test that too
         full = self.create_cert(
-            self.ca, cert3_csr, [('CN', 'all.example.com')],
+            self.cas['child'], certs['child-cert']['csr']['pem'], [('CN', 'all.example.com')],
             san=['dirname:/C=AT/CN=example.com', 'email:user@example.com', 'fd00::1'])
 
         self.assertEqual(
@@ -373,35 +371,37 @@ class CertificateTests(DjangoCAWithCertTestCase):
 
     def test_validate_past(self):
         # Test that model validation does not allow us to set revoked_date or revoked_invalidity to the future
+        cert = self.certs['child-cert']
         now = timezone.now()
         future = now + timedelta(10)
         past = now - timedelta(10)
 
         # Validation works if we're not revoked
-        self.cert.full_clean()
+        cert.full_clean()
 
         # Validation works if date is in the past
-        self.cert.revoked_date = past
-        self.cert.compromised = past
-        self.cert.full_clean()
+        cert.revoked_date = past
+        cert.compromised = past
+        cert.full_clean()
 
-        self.cert.revoked_date = future
-        self.cert.compromised = future
+        cert.revoked_date = future
+        cert.compromised = future
         with self.assertValidationError({
                 'compromised': ['Date must be in the past!'],
                 'revoked_date': ['Date must be in the past!'],
         }):
-            self.cert.full_clean()
+            cert.full_clean()
 
     def test_ocsp_status(self):
-        self.assertEqual(self.cert.ocsp_status, 'good')
+        cert = self.certs['child-cert']
+        self.assertEqual(cert.ocsp_status, 'good')
 
-        for reason, _text in self.cert.REVOCATION_REASONS:
-            self.cert.revoke(reason)
+        for reason, _text in cert.REVOCATION_REASONS:
+            cert.revoke(reason)
             if reason == '':
-                self.assertEqual(self.cert.ocsp_status, 'revoked')
+                self.assertEqual(cert.ocsp_status, 'revoked')
             else:
-                self.assertEqual(self.cert.ocsp_status, reason)
+                self.assertEqual(cert.ocsp_status, reason)
 
     def test_basic_constraints(self):
         for ca in self.cas:
@@ -494,12 +494,11 @@ class CertificateTests(DjangoCAWithCertTestCase):
         #   openssl x509 -in cert1.pem -pubkey -noout \
         #       | openssl rsa -pubin -outform der \
         #       | openssl dgst -sha256 -binary | base64
-        for ca in self.cas:
-            self.assertEqual(ca.hpkp_pin, certs[ca.name]['hpkp'])
+        for name, ca in self.cas.items():
+            self.assertEqual(ca.hpkp_pin, certs[name]['hpkp'])
 
-        self.assertEqual(self.cert.hpkp_pin, certs['cert1']['hpkp'])
-        self.assertEqual(self.cert2.hpkp_pin, certs['cert2']['hpkp'])
-        self.assertEqual(self.cert3.hpkp_pin, certs['cert3']['hpkp'])
+        for name, cert in self.certs.items():
+            self.assertEqual(cert.hpkp_pin, certs[name]['hpkp'])
 
     def test_contrib_multiple_ous_and_no_ext(self):
         cert = self.cert_multiple_ous_and_no_ext
@@ -599,24 +598,35 @@ class CertificateTests(DjangoCAWithCertTestCase):
     # Test extensions for all loaded certificates #
     ###############################################
     def test_name_constraints(self):
-        self.assertExtension('name_constraints', {
-            self.cert_all: certs['cert_all']['name_constraints'],
-            self.child_ca: certs['child']['name_constraints'],
-        })
+        for name, ca in self.cas.items():
+            self.assertEqual(ca.name_constraints, certs[name].get('name_constraints'))
+
+        for name, cert in self.certs.items():
+            self.assertEqual(cert.name_constraints, certs[name].get('name_constraints'))
+
+        # Make sure that some certs actually do have a value for this extension
+        self.assertIsInstance(self.cas['letsencrypt_x1'].name_constraints, NameConstraints)
+        self.assertIsInstance(self.certs['all-extensions'].name_constraints, NameConstraints)
 
     def test_ocsp_no_check(self):
-        self.assertExtension('ocsp_no_check', {
-            self.ocsp: certs['ocsp']['ocsp_no_check'],
-            self.cert_all: certs['cert_all']['ocsp_no_check'],
-        })
+        for name, ca in self.cas.items():
+            self.assertIsNone(ca.ocsp_no_check)  # Does not make sense in CAs, so check for None
+
+        for name, cert in self.certs.items():
+            self.assertEqual(cert.ocsp_no_check, certs[name].get('ocsp_no_check'))
+
+        # Make sure that some certs actually do have a value for this extension
+        self.assertIsInstance(self.certs['all-extensions'].ocsp_no_check, OCSPNoCheck)
 
     @unittest.skipUnless(ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON,
                          "This version of cryptography does not support PrecertPoison extension.")
     def test_precert_poison(self):
-        self.assertExtension('precert_poison', {
-            self.cert_all: certs['cert_all']['precert_poison'],
-            self.cert_cloudflare_1: certs['cloudflare_1']['precert_poison'],
-        })
+        for name, cert in self.certs.items():
+            self.assertEqual(cert.precert_poison, certs[name].get('precert_poison'))
+
+        # Make sure that some certs actually do have a value for this extension
+        self.assertIsInstance(self.certs['all-extensions'].precert_poison, PrecertPoison)
+        self.assertIsInstance(self.certs['cloudflare_1'].precert_poison, PrecertPoison)
 
     @unittest.skip('Cannot currently instantiate extensions, so no sense in testing this.')
     def test_precertificate_signed_certificate_timestamps(self):
@@ -625,6 +635,10 @@ class CertificateTests(DjangoCAWithCertTestCase):
         })
 
     def test_tls_feature(self):
-        self.assertExtension('tls_feature', {
-            self.cert_all: certs['cert_all']['tls_feature'],
-        })
+        for name, ca in self.cas.items():
+            self.assertEqual(ca.tls_feature, certs[ca.name].get('tls_feature'))
+
+        for name, cert in self.certs.items():
+            self.assertEqual(cert.tls_feature, certs[name].get('tls_feature'))
+
+        self.assertIsInstance(self.certs['all-extensions'].tls_feature, TLSFeature)

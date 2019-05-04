@@ -47,14 +47,6 @@
             "basic_constraints": "critical,CA:TRUE,pathlen=0",
             "pathlen": 0,
             "max_pathlen": 0,
-            "name_constraints": [
-                [
-                    "DNS:.org"
-                ],
-                [
-                    "DNS:.net"
-                ]
-            ],
             "name": "child",
             "cat": "generated",
             "algorithm": "SHA256",
@@ -638,6 +630,7 @@
             "authority_key_identifier": "3E:2F:4D:FB:36:2C:D6:C7:A2:D4:C1:0A:1F:A5:86:5C:2C:29:82:EC",
             "subject_key_identifier": "DD:CE:A1:14:FC:3E:35:C4:31:C4:91:CA:0B:0B:1D:88:F7:0C:AC:C7",
             "precert_poison": {"critical": true},
+            "ocsp_no_check": {"critical": false},
             "authority_information_access": {
                 "critical": false,
                 "issuers": [

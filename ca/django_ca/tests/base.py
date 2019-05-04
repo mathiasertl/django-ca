@@ -51,8 +51,10 @@ from ..extensions import Extension
 from ..extensions import KeyUsage
 from ..extensions import ListExtension
 from ..extensions import NameConstraints
+from ..extensions import OCSPNoCheck
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
+from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..profiles import get_cert_profile_kwargs
@@ -73,8 +75,10 @@ else:  # pragma: only py3
     from unittest.mock import Mock
     from unittest.mock import patch
 
-#if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
-#    from ..extensions import PrecertPoison
+_HAS_PRECERT_POISON = False
+if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
+    from ..extensions import PrecertPoison
+    _HAS_PRECERT_POISON = True
 
 
 def _load_key(data):
@@ -135,6 +139,7 @@ certs['multiple_ous'] = {
     'valid_until': '2028-08-01 23:59:59',
     'ca': 'root',
     'serial': '7D:D9:FE:07:CF:A8:1E:B7:10:79:67:FB:A7:89:34:C6',
+    'hpkp': 'AjyBzOjnxk+pQtPBUEhwfTXZu1uH9PVExb8bxWQ68vo=',
 }
 certs['cloudflare_1'] = {
     'name': 'cloudflare_1',
@@ -146,7 +151,9 @@ certs['cloudflare_1'] = {
     'valid_from': '2018-07-18 00:00:00',
     'valid_until': '2019-01-24 23:59:59',
     'ca': 'root',
-    'serial': '7D:D9:FE:07:CF:A8:1E:B7:10:79:67:FB:A7:89:34:C6',
+    'serial': '92:52:9A:BD:85:F0:A6:A4:D6:C5:3F:D1:C9:10:11:C1',
+    'hpkp': 'bkunFfRSda4Yhz7UlMUaalgj0Gcus/9uGVp19Hceczg=',
+    'precert_poison': {'critical': True},
     'subject_alternative_name': '''DNS:sni24142.cloudflaressl.com,DNS:*.animereborn.com,DNS:*.beglideas.ga,DNS:*.chroma.ink,DNS:*.chuckscleanings.ga,DNS:*.clipvuigiaitris.ga,DNS:*.cmvsjns.ga,DNS:*.competegraphs.ga,DNS:*.consoleprints.ga,DNS:*.copybreezes.ga,DNS:*.corphreyeds.ga,DNS:*.cyanigees.ga,DNS:*.dadpbears.ga,DNS:*.dahuleworldwides.ga,DNS:*.dailyopeningss.ga,DNS:*.daleylexs.ga,DNS:*.danajweinkles.ga,DNS:*.dancewthyogas.ga,DNS:*.darkmoosevpss.ga,DNS:*.daurat.com.ar,DNS:*.deltaberg.com,DNS:*.drjahanobgyns.ga,DNS:*.drunkgirliess.ga,DNS:*.duhiepkys.ga,DNS:*.dujuanjsqs.ga,DNS:*.dumbiseasys.ga,DNS:*.dumpsoftdrinkss.ga,DNS:*.dunhavenwoodss.ga,DNS:*.durabiliteas.ga,DNS:*.duxmangroups.ga,DNS:*.dvpdrivewayss.ga,DNS:*.dwellwizes.ga,DNS:*.dwwkouis.ga,DNS:*.entertastic.com,DNS:*.estudiogolber.com.ar,DNS:*.letsretro.team,DNS:*.maccuish.org.uk,DNS:*.madamsquiggles.com,DNS:*.sftw.ninja,DNS:*.spangenberg.io,DNS:*.timmutton.com.au,DNS:*.wyomingsexbook.com,DNS:*.ych.bid,DNS:animereborn.com,DNS:beglideas.ga,DNS:chroma.ink,DNS:chuckscleanings.ga,DNS:clipvuigiaitris.ga,DNS:cmvsjns.ga,DNS:competegraphs.ga,DNS:consoleprints.ga,DNS:copybreezes.ga,DNS:corphreyeds.ga,DNS:cyanigees.ga,DNS:dadpbears.ga,DNS:dahuleworldwides.ga,DNS:dailyopeningss.ga,DNS:daleylexs.ga,DNS:danajweinkles.ga,DNS:dancewthyogas.ga,DNS:darkmoosevpss.ga,DNS:daurat.com.ar,DNS:deltaberg.com,DNS:drjahanobgyns.ga,DNS:drunkgirliess.ga,DNS:duhiepkys.ga,DNS:dujuanjsqs.ga,DNS:dumbiseasys.ga,DNS:dumpsoftdrinkss.ga,DNS:dunhavenwoodss.ga,DNS:durabiliteas.ga,DNS:duxmangroups.ga,DNS:dvpdrivewayss.ga,DNS:dwellwizes.ga,DNS:dwwkouis.ga,DNS:entertastic.com,DNS:estudiogolber.com.ar,DNS:letsretro.team,DNS:maccuish.org.uk,DNS:madamsquiggles.com,DNS:sftw.ninja,DNS:spangenberg.io,DNS:timmutton.com.au,DNS:wyomingsexbook.com,DNS:ych.bid''',  # NOQA
 }
 
@@ -209,11 +216,14 @@ for cert_name, cert_data in certs.items():
         cert_data['subject_alternative_name'] = SubjectAlternativeName(cert_data['subject_alternative_name'])
     if cert_data.get('name_constraints'):
         cert_data['name_constraints'] = NameConstraints(cert_data['name_constraints'])
+    if cert_data.get('tls_feature'):
+        cert_data['tls_feature'] = TLSFeature(cert_data['tls_feature'])
+    if cert_data.get('ocsp_no_check'):
+        cert_data['ocsp_no_check'] = OCSPNoCheck(cert_data['ocsp_no_check'])
 
-if certs and ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
-    pass  # not there yet
-    #certs['cert_all']['precert_poison'] = PrecertPoison()
-    #certs['cloudflare_1']['precert_poison'] = PrecertPoison()
+    precert_poison = cert_data.get('precert_poison')
+    if _HAS_PRECERT_POISON and precert_poison:  # pragma: no branch, pragma: only cryptography>=2.4
+        cert_data['precert_poison'] = PrecertPoison(precert_poison)
 
 
 class override_settings(_override_settings):
@@ -551,7 +561,7 @@ class DjangoCATestCase(TestCase):
             elif key == 'precert_poison':
                 # NOTE: We use two keys here because if we don't have PrecertPoison, the name of the
                 #       extension is "Unknown OID", so the order is different.
-                if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
+                if _HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
                     ctx['precert_poison'] = '\nPrecertPoison (critical): Yes'
                     ctx['precert_poison_unknown'] = ''
                 else:  # pragma: no cover

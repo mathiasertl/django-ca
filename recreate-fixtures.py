@@ -271,7 +271,6 @@ data = {
         'basic_constraints': 'critical,CA:TRUE,pathlen=%s' % child_pathlen,
         'pathlen': child_pathlen,
         'max_pathlen': 0,
-        'name_constraints': [['DNS:.org'], ['DNS:.net']],
     },
     'ecc': {
         'type': 'ca',
@@ -384,6 +383,12 @@ data = {
             'san1.all-extensions.example.com',
             'san2.all-extensions.example.com',
         ],
+        'ocsp_no_check': {
+            'critical': False,
+        },
+        'precert_poison': {
+            'critical': True,
+        },
     },
 }
 
