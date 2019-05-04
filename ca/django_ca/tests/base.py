@@ -95,11 +95,12 @@ def _load_csr(data):
     basedir = data.get('basedir', settings.FIXTURES_DIR)
     path = os.path.join(basedir, data['csr_filename'])
 
-    with open(path, 'r') as stream:
+    with open(path, 'rb') as stream:
         raw = stream.read().strip()
 
     return {
-        'pem': raw,
+        'pem': raw.decode('utf-8'),
+        'parsed': x509.load_pem_x509_csr(raw, default_backend()),
     }
 
 
@@ -146,8 +147,7 @@ certs['cloudflare_1'] = {
     'valid_until': '2019-01-24 23:59:59',
     'ca': 'root',
     'serial': '7D:D9:FE:07:CF:A8:1E:B7:10:79:67:FB:A7:89:34:C6',
-    'subject_alternative_name': '''DNS:sni24142.cloudflaressl.com,DNS:*.animereborn.com,DNS:*.beglideas.ga,DNS:*.chroma.ink,DNS:*.chuckscleanings.ga,DNS:*.clipvuigiaitris.ga,DNS:*.cmvsjns.ga,DNS:*.competegraphs.ga,DNS:*.consoleprints.ga,DNS:*.copybreezes.ga,DNS:*.corphreyeds.ga,DNS:*.cyanigees.ga,DNS:*.dadpbears.ga,DNS:*.dahuleworldwides.ga,DNS:*.dailyopeningss.ga,DNS:*.daleylexs.ga,DNS:*.danajweinkles.ga,DNS:*.dancewthyogas.ga,DNS:*.darkmoosevpss.ga,DNS:*.daurat.com.ar,DNS:*.deltaberg.com,DNS:*.drjahanobgyns.ga,DNS:*.drunkgirliess.ga,DNS:*.duhiepkys.ga,DNS:*.dujuanjsqs.ga,DNS:*.dumbiseasys.ga,DNS:*.dumpsoftdrinkss.ga,DNS:*.dunhavenwoodss.ga,DNS:*.durabiliteas.ga,DNS:*.duxmangroups.ga,DNS:*.dvpdrivewayss.ga,DNS:*.dwellwizes.ga,DNS:*.dwwkouis.ga,DNS:*.entertastic.com,DNS:*.estudiogolber.com.ar,DNS:*.letsretro.team,DNS:*.maccuish.org.uk,DNS:*.madamsquiggles.com,DNS:*.sftw.ninja,DNS:*.spangenberg.io,DNS:*.timmutton.com.au,DNS:*.wyomingsexbook.com,DNS:*.ych.bid,DNS:animereborn.com,DNS:beglideas.ga,DNS:chroma.ink,DNS:chuckscleanings.ga,DNS:clipvuigiaitris.ga,DNS:cmvsjns.ga,DNS:competegraphs.ga,DNS:consoleprints.ga,DNS:copybreezes.ga,DNS:corphreyeds.ga,DNS:cyanigees.ga,DNS:dadpbears.ga,DNS:dahuleworldwides.ga,DNS:dailyopeningss.ga,DNS:daleylexs.ga,DNS:danajweinkles.ga,DNS:dancewthyogas.ga,DNS:darkmoosevpss.ga,DNS:daurat.com.ar,DNS:deltaberg.com,DNS:drjahanobgyns.ga,DNS:drunkgirliess.ga,DNS:duhiepkys.ga,DNS:dujuanjsqs.ga,DNS:dumbiseasys.ga,DNS:dumpsoftdrinkss.ga,DNS:dunhavenwoodss.ga,DNS:durabiliteas.ga,DNS:duxmangroups.ga,DNS:dvpdrivewayss.ga,DNS:dwellwizes.ga,DNS:dwwkouis.ga,DNS:entertastic.com,DNS:estudiogolber.com.ar,DNS:letsretro.team,DNS:maccuish.org.uk,DNS:madamsquiggles.com,DNS:sftw.ninja,DNS:spangenberg.io,DNS:timmutton.com.au,DNS:wyomingsexbook.com,DNS:ych.bid''',
-    # NOQA
+    'subject_alternative_name': '''DNS:sni24142.cloudflaressl.com,DNS:*.animereborn.com,DNS:*.beglideas.ga,DNS:*.chroma.ink,DNS:*.chuckscleanings.ga,DNS:*.clipvuigiaitris.ga,DNS:*.cmvsjns.ga,DNS:*.competegraphs.ga,DNS:*.consoleprints.ga,DNS:*.copybreezes.ga,DNS:*.corphreyeds.ga,DNS:*.cyanigees.ga,DNS:*.dadpbears.ga,DNS:*.dahuleworldwides.ga,DNS:*.dailyopeningss.ga,DNS:*.daleylexs.ga,DNS:*.danajweinkles.ga,DNS:*.dancewthyogas.ga,DNS:*.darkmoosevpss.ga,DNS:*.daurat.com.ar,DNS:*.deltaberg.com,DNS:*.drjahanobgyns.ga,DNS:*.drunkgirliess.ga,DNS:*.duhiepkys.ga,DNS:*.dujuanjsqs.ga,DNS:*.dumbiseasys.ga,DNS:*.dumpsoftdrinkss.ga,DNS:*.dunhavenwoodss.ga,DNS:*.durabiliteas.ga,DNS:*.duxmangroups.ga,DNS:*.dvpdrivewayss.ga,DNS:*.dwellwizes.ga,DNS:*.dwwkouis.ga,DNS:*.entertastic.com,DNS:*.estudiogolber.com.ar,DNS:*.letsretro.team,DNS:*.maccuish.org.uk,DNS:*.madamsquiggles.com,DNS:*.sftw.ninja,DNS:*.spangenberg.io,DNS:*.timmutton.com.au,DNS:*.wyomingsexbook.com,DNS:*.ych.bid,DNS:animereborn.com,DNS:beglideas.ga,DNS:chroma.ink,DNS:chuckscleanings.ga,DNS:clipvuigiaitris.ga,DNS:cmvsjns.ga,DNS:competegraphs.ga,DNS:consoleprints.ga,DNS:copybreezes.ga,DNS:corphreyeds.ga,DNS:cyanigees.ga,DNS:dadpbears.ga,DNS:dahuleworldwides.ga,DNS:dailyopeningss.ga,DNS:daleylexs.ga,DNS:danajweinkles.ga,DNS:dancewthyogas.ga,DNS:darkmoosevpss.ga,DNS:daurat.com.ar,DNS:deltaberg.com,DNS:drjahanobgyns.ga,DNS:drunkgirliess.ga,DNS:duhiepkys.ga,DNS:dujuanjsqs.ga,DNS:dumbiseasys.ga,DNS:dumpsoftdrinkss.ga,DNS:dunhavenwoodss.ga,DNS:durabiliteas.ga,DNS:duxmangroups.ga,DNS:dvpdrivewayss.ga,DNS:dwellwizes.ga,DNS:dwwkouis.ga,DNS:entertastic.com,DNS:estudiogolber.com.ar,DNS:letsretro.team,DNS:maccuish.org.uk,DNS:madamsquiggles.com,DNS:sftw.ninja,DNS:spangenberg.io,DNS:timmutton.com.au,DNS:wyomingsexbook.com,DNS:ych.bid''',  # NOQA
 }
 
 # Calculate some fixted timestamps that we reuse throughout the tests
