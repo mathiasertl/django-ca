@@ -109,10 +109,9 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
     def test_key(self):
         log_msg = 'WARNING:django_ca.models:%s: CA uses absolute path. Use "manage.py migrate_ca" to update.'
 
-        # NOTE: exclude pwd_ca for simplicity
-        for ca in [self.ca, self.ecc_ca, self.child_ca]:
+        for name, ca in self.usable_cas.items():
             self.assertTrue(ca.key_exists)
-            self.assertIsNotNone(ca.key(None))
+            self.assertIsNotNone(ca.key(certs[name]['password']))
 
             # test a second tome to make sure we reload the key
             with mock.patch('django_ca.utils.read_file') as patched:
@@ -127,7 +126,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
             self.assertEqual(cm.output, [log_msg % ca.serial, ])
 
             with self.assertLogs() as cm:
-                self.assertIsNotNone(ca.key(None))
+                self.assertIsNotNone(ca.key(certs[name]['password']))
             self.assertEqual(cm.output, [log_msg % ca.serial, ])
 
             # Check again - here we have an already loaded key (also: no logging here anymore)
@@ -135,132 +134,150 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
             self.assertTrue(ca.key_exists)
 
     def test_pathlen(self):
-        self.assertEqual(self.ca.pathlen, 1)
-        self.assertIsNone(self.pwd_ca.pathlen)
-        self.assertEqual(self.ecc_ca.pathlen, 0)
-        self.assertEqual(self.child_ca.pathlen, 0)
+        for name, ca in self.cas.items():
+            self.assertEqual(ca.pathlen, certs[name].get('pathlen'))
 
     @freeze_time('2019-04-14 12:26:00')
     @override_tmpcadir()
     def test_full_crl(self):
+        ca = self.cas['root']
+        child = self.cas['child']
+        cert = self.certs['root-cert']
         full_name = 'http://localhost/crl'
         idp = self.get_idp(full_name=[x509.UniformResourceIdentifier(value=full_name)])
 
-        self.assertIsNone(self.ca.crl_url)
-        crl = self.ca.get_crl(full_name=[full_name])
-        self.assertCRL(crl, idp=idp)
+        self.assertIsNone(ca.crl_url)
+        crl = ca.get_crl(full_name=[full_name])
+        self.assertCRL(crl, idp=idp, signer=ca)
 
-        self.ca.crl_url = full_name
-        self.ca.save()
-        crl = self.ca.get_crl()
-        self.assertCRL(crl, idp=idp, crl_number=1)
+        ca.crl_url = full_name
+        ca.save()
+        crl = ca.get_crl()
+        self.assertCRL(crl, idp=idp, crl_number=1, signer=ca)
 
         # revoke a cert
-        self.cert.revoke()
-        crl = self.ca.get_crl()
-        self.assertCRL(crl, idp=idp, certs=[self.cert], crl_number=2)
+        cert.revoke()
+        crl = ca.get_crl()
+        self.assertCRL(crl, idp=idp, certs=[cert], crl_number=2, signer=ca)
 
         # also revoke a CA
-        self.child_ca.revoke()
-        crl = self.ca.get_crl()
-        self.assertCRL(crl, idp=idp, certs=[self.cert, self.child_ca], crl_number=3)
+        child.revoke()
+        crl = ca.get_crl()
+        self.assertCRL(crl, idp=idp, certs=[cert, child], crl_number=3, signer=ca)
 
         # unrevoke cert (so we have all three combinations)
-        self.cert.revoked = False
-        self.cert.revoked_date = None
-        self.cert.revoked_reason = None
-        self.cert.save()
+        cert.revoked = False
+        cert.revoked_date = None
+        cert.revoked_reason = None
+        cert.save()
 
-        crl = self.ca.get_crl()
-        self.assertCRL(crl, idp=idp, certs=[self.child_ca], crl_number=4)
+        crl = ca.get_crl()
+        self.assertCRL(crl, idp=idp, certs=[child], crl_number=4, signer=ca)
 
     @override_settings(USE_TZ=True)
     def test_full_crl_tz(self):
         # otherwise we get TZ warnings for preloaded objects
-        self.ca.refresh_from_db()
-        self.child_ca.refresh_from_db()
-        self.cert.refresh_from_db()
+        ca = self.cas['root']
+        child = self.cas['child']
+        cert = self.certs['root-cert']
+
+        ca.refresh_from_db()
+        child.refresh_from_db()
+        cert.refresh_from_db()
 
         self.test_full_crl()
 
     @override_tmpcadir()
     @freeze_time('2019-04-14 12:26:00')
     def test_ca_crl(self):
+        ca = self.cas['root']
         idp = self.get_idp(only_contains_ca_certs=True)
 
-        self.assertIsNone(self.ca.crl_url)
-        crl = self.ca.get_crl(scope='ca')
-        self.assertCRL(crl, idp=idp)
+        self.assertIsNone(ca.crl_url)
+        crl = ca.get_crl(scope='ca')
+        self.assertCRL(crl, idp=idp, signer=ca)
 
         # revoke ca and cert, CRL only contains CA
-        self.cert.revoke()
-        self.child_ca.revoke()
-        crl = self.ca.get_crl(scope='ca')
-        self.assertCRL(crl, idp=idp, certs=[self.child_ca], crl_number=1)
+        child_ca = self.cas['child']
+        child_ca.revoke()
+        self.cas['ecc'].revoke()
+        self.certs['root-cert'].revoke()
+        self.certs['child-cert'].revoke()
+        crl = ca.get_crl(scope='ca')
+        self.assertCRL(crl, idp=idp, certs=[child_ca], crl_number=1, signer=ca)
 
     @freeze_time('2019-04-14 12:26:00')
     @override_tmpcadir()
     def test_user_crl(self):
+        ca = self.cas['root']
         idp = self.get_idp(only_contains_user_certs=True)
 
-        self.assertIsNone(self.ca.crl_url)
-        crl = self.ca.get_crl(scope='user')
-        self.assertCRL(crl, idp=idp)
+        self.assertIsNone(ca.crl_url)
+        crl = ca.get_crl(scope='user')
+        self.assertCRL(crl, idp=idp, signer=ca)
 
         # revoke ca and cert, CRL only contains cert
-        self.cert.revoke()
-        self.child_ca.revoke()
-        crl = self.ca.get_crl(scope='user')
-        self.assertCRL(crl, idp=idp, certs=[self.cert], crl_number=1)
+        cert = self.certs['root-cert']
+        cert.revoke()
+        self.certs['child-cert'].revoke()
+        self.cas['child'].revoke()
+        crl = ca.get_crl(scope='user')
+        self.assertCRL(crl, idp=idp, certs=[cert], crl_number=1, signer=ca)
 
     @freeze_time('2019-04-14 12:26:00')
     @override_tmpcadir()
     def test_attr_crl(self):
+        ca = self.cas['root']
         idp = self.get_idp(only_contains_attribute_certs=True)
 
-        self.assertIsNone(self.ca.crl_url)
-        crl = self.ca.get_crl(scope='attribute')
-        self.assertCRL(crl, idp=idp)
+        self.assertIsNone(ca.crl_url)
+        crl = ca.get_crl(scope='attribute')
+        self.assertCRL(crl, idp=idp, signer=ca)
 
         # revoke ca and cert, CRL is empty (we don't know attribute certs)
-        self.cert.revoke()
-        self.child_ca.revoke()
-        crl = self.ca.get_crl(scope='attribute')
-        self.assertCRL(crl, idp=idp, crl_number=1)
+        self.certs['root-cert'].revoke()
+        self.certs['child-cert'].revoke()
+        self.cas['child'].revoke()
+        crl = ca.get_crl(scope='attribute')
+        self.assertCRL(crl, idp=idp, crl_number=1, signer=ca)
 
     @override_tmpcadir()
     @freeze_time('2019-04-14 12:26:00')
     @unittest.skipUnless(ca_settings.CRYPTOGRAPHY_HAS_IDP, "Test requires cryptography>=2.5")
     def test_no_idp(self):
         # CRLs require a full name (or only_some_reasons) if it's a full CRL
-        self.assertIsNone(self.ca.crl_url)
-        crl = self.ca.get_crl()
+        ca = self.cas['child']
+        self.assertIsNone(ca.crl_url)
+        crl = ca.get_crl()
         self.assertCRL(crl, idp=None)
 
     @override_tmpcadir()
     @freeze_time('2019-04-14 12:26:00')
     def test_counter(self):
-        crl = self.ca.get_crl(counter='test')
+        ca = self.cas['child']
+        crl = ca.get_crl(counter='test')
         self.assertCRL(crl, idp=None, crl_number=0)
-        crl = self.ca.get_crl(counter='test')
+        crl = ca.get_crl(counter='test')
         self.assertCRL(crl, idp=None, crl_number=1)
 
-        crl = self.ca.get_crl()
+        crl = ca.get_crl()
         self.assertCRL(crl, idp=None, crl_number=0)
 
     def test_validate_json(self):
         # Validation works if we're not revoked
-        self.ca.full_clean()
+        ca = self.cas['child']
+        ca.full_clean()
 
-        self.ca.crl_number = '{'
+        ca.crl_number = '{'
         # Note: we do not use self.assertValidationError, b/c the JSON message might be system dependent
         with self.assertRaises(ValidationError) as cm:
-            self.ca.full_clean()
+            ca.full_clean()
         self.assertTrue(re.match('Must be valid JSON: ', cm.exception.message_dict['crl_number'][0]))
 
     def test_crl_invalid_scope(self):
+        ca = self.cas['child']
         with self.assertRaisesRegex(ValueError, r'^Scope must be either None, "ca", "user" or "attribute"$'):
-            self.ca.get_crl(scope='foobar')
+            ca.get_crl(scope='foobar')
 
 
 class CertificateTests(DjangoCAWithCertTestCase):

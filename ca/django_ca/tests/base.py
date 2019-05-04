@@ -384,7 +384,7 @@ class DjangoCATestCase(TestCase):
     def assertCRL(self, crl, certs=None, signer=None, expires=86400, algorithm=None, encoding=Encoding.PEM,
                   idp=None, extensions=None, crl_number=0):
         certs = certs or []
-        signer = signer or self.ca
+        signer = signer or self.cas['child']
         algorithm = algorithm or ca_settings.CA_DIGEST_ALGORITHM
         extensions = extensions or []
         expires = datetime.utcnow() + timedelta(seconds=expires)
