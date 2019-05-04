@@ -501,6 +501,22 @@ class CertificateTests(DjangoCAWithCertTestCase):
             self.assertEqual(cert.get_digest('sha256'), certs[name]['sha256'])
             self.assertEqual(cert.get_digest('sha512'), certs[name]['sha512'])
 
+    def test_authority_information_access(self):
+        for name, ca in self.cas.items():
+            self.assertEqual(ca.authority_information_access, certs[name].get('authority_information_access'))
+
+        for name, cert in self.certs.items():
+            self.assertEqual(cert.authority_information_access,
+                             certs[name].get('authority_information_access'))
+
+        # Make sure that some certs actually do have a value for this extension
+        self.assertIsInstance(self.certs['ecc-cert'].authority_information_access,
+                              AuthorityInformationAccess)
+        self.assertIsInstance(self.certs['all-extensions'].authority_information_access,
+                              AuthorityInformationAccess)
+        self.assertIsNone(self.certs['no-extensions'].authority_information_access)
+        self.assertIsNone(self.cas['identrust_root_1'].authority_information_access)
+
     def test_authority_key_identifier(self):
         for name, ca in self.cas.items():
             self.assertEqual(ca.authority_key_identifier, certs[name].get('authority_key_identifier'))
@@ -513,6 +529,18 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertIsInstance(self.certs['all-extensions'].authority_key_identifier, AuthorityKeyIdentifier)
         self.assertIsNone(self.certs['no-extensions'].authority_key_identifier)
         self.assertIsNone(self.cas['identrust_root_1'].authority_key_identifier)
+
+    def test_subject_key_identifier(self):
+        for name, ca in self.cas.items():
+            self.assertEqual(ca.subject_key_identifier, certs[name].get('subject_key_identifier'))
+
+        for name, cert in self.certs.items():
+            self.assertEqual(cert.subject_key_identifier, certs[name].get('subject_key_identifier'))
+
+        # Make sure that some certs actually do have a value for this extension
+        self.assertIsInstance(self.certs['ecc-cert'].subject_key_identifier, SubjectKeyIdentifier)
+        self.assertIsInstance(self.certs['all-extensions'].subject_key_identifier, SubjectKeyIdentifier)
+        self.assertIsNone(self.certs['no-extensions'].subject_key_identifier)
 
     def test_hpkp_pin(self):
         # get hpkp pins using

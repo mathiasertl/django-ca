@@ -162,6 +162,15 @@ certs['cloudflare_1'] = {
     'sha1': '71:BD:B8:21:80:BD:86:E8:E5:F4:2B:6D:96:82:B2:EF:19:53:ED:D3',
     'sha256': '1D:8E:D5:41:E5:FF:19:70:6F:65:86:A9:A3:6F:DF:DE:F8:A0:07:22:92:71:9E:F1:CD:F8:28:37:39:02:E0:A1',  # NOQA
     'sha512': 'FF:03:1B:8F:11:E8:A7:FF:91:4F:B9:97:E9:97:BC:77:37:C1:A7:69:86:F3:7C:E3:BB:BB:DF:A6:4F:0E:3C:C0:7F:B5:BC:CC:BD:0A:D5:EF:5F:94:55:E9:FF:48:41:34:B8:11:54:57:DD:90:85:41:2E:71:70:5E:FA:BA:E6:EA',  # NOQA
+    "authority_information_access": {
+        "critical": False,
+        "issuers": [
+            "URI:http://crt.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crt"
+        ],
+        "ocsp": [
+            "URI:http://ocsp.comodoca4.com"
+        ],
+    },
     'authority_key_identifier': '40:09:61:67:F0:BC:83:71:4F:DE:12:08:2C:6F:D4:D4:2B:76:3D:96',
     "basic_constraints": "critical,CA:FALSE",
     'crl_old': [False, [
@@ -171,6 +180,7 @@ certs['cloudflare_1'] = {
     "key_usage": "critical,digitalSignature",
     'precert_poison': {'critical': True},
     'subject_alternative_name': '''DNS:sni24142.cloudflaressl.com,DNS:*.animereborn.com,DNS:*.beglideas.ga,DNS:*.chroma.ink,DNS:*.chuckscleanings.ga,DNS:*.clipvuigiaitris.ga,DNS:*.cmvsjns.ga,DNS:*.competegraphs.ga,DNS:*.consoleprints.ga,DNS:*.copybreezes.ga,DNS:*.corphreyeds.ga,DNS:*.cyanigees.ga,DNS:*.dadpbears.ga,DNS:*.dahuleworldwides.ga,DNS:*.dailyopeningss.ga,DNS:*.daleylexs.ga,DNS:*.danajweinkles.ga,DNS:*.dancewthyogas.ga,DNS:*.darkmoosevpss.ga,DNS:*.daurat.com.ar,DNS:*.deltaberg.com,DNS:*.drjahanobgyns.ga,DNS:*.drunkgirliess.ga,DNS:*.duhiepkys.ga,DNS:*.dujuanjsqs.ga,DNS:*.dumbiseasys.ga,DNS:*.dumpsoftdrinkss.ga,DNS:*.dunhavenwoodss.ga,DNS:*.durabiliteas.ga,DNS:*.duxmangroups.ga,DNS:*.dvpdrivewayss.ga,DNS:*.dwellwizes.ga,DNS:*.dwwkouis.ga,DNS:*.entertastic.com,DNS:*.estudiogolber.com.ar,DNS:*.letsretro.team,DNS:*.maccuish.org.uk,DNS:*.madamsquiggles.com,DNS:*.sftw.ninja,DNS:*.spangenberg.io,DNS:*.timmutton.com.au,DNS:*.wyomingsexbook.com,DNS:*.ych.bid,DNS:animereborn.com,DNS:beglideas.ga,DNS:chroma.ink,DNS:chuckscleanings.ga,DNS:clipvuigiaitris.ga,DNS:cmvsjns.ga,DNS:competegraphs.ga,DNS:consoleprints.ga,DNS:copybreezes.ga,DNS:corphreyeds.ga,DNS:cyanigees.ga,DNS:dadpbears.ga,DNS:dahuleworldwides.ga,DNS:dailyopeningss.ga,DNS:daleylexs.ga,DNS:danajweinkles.ga,DNS:dancewthyogas.ga,DNS:darkmoosevpss.ga,DNS:daurat.com.ar,DNS:deltaberg.com,DNS:drjahanobgyns.ga,DNS:drunkgirliess.ga,DNS:duhiepkys.ga,DNS:dujuanjsqs.ga,DNS:dumbiseasys.ga,DNS:dumpsoftdrinkss.ga,DNS:dunhavenwoodss.ga,DNS:durabiliteas.ga,DNS:duxmangroups.ga,DNS:dvpdrivewayss.ga,DNS:dwellwizes.ga,DNS:dwwkouis.ga,DNS:entertastic.com,DNS:estudiogolber.com.ar,DNS:letsretro.team,DNS:maccuish.org.uk,DNS:madamsquiggles.com,DNS:sftw.ninja,DNS:spangenberg.io,DNS:timmutton.com.au,DNS:wyomingsexbook.com,DNS:ych.bid''',  # NOQA
+    'subject_key_identifier': '05:86:D8:B4:ED:A9:7E:23:EE:2E:E7:75:AA:3B:2C:06:08:2A:93:B2',
 }
 
 # Calculate some fixted timestamps that we reuse throughout the tests
