@@ -270,6 +270,7 @@ data = {
 
         'basic_constraints': 'critical,CA:TRUE,pathlen=%s' % child_pathlen,
         'pathlen': child_pathlen,
+        'max_pathlen': 0,
         'name_constraints': [['DNS:.org'], ['DNS:.net']],
     },
     'ecc': {
@@ -279,6 +280,7 @@ data = {
 
         'basic_constraints': 'critical,CA:TRUE,pathlen=%s' % ecc_pathlen,
         'pathlen': ecc_pathlen,
+        'max_pathlen': 1,
     },
     'dsa': {
         'type': 'ca',
@@ -288,6 +290,7 @@ data = {
 
         'basic_constraints': 'critical,CA:TRUE,pathlen=%s' % dsa_pathlen,
         'pathlen': dsa_pathlen,
+        'max_pathlen': 3,
     },
     'pwd': {
         'type': 'ca',
@@ -296,6 +299,7 @@ data = {
 
         'basic_constraints': 'critical,CA:TRUE,pathlen=%s' % pwd_pathlen,
         'pathlen': pwd_pathlen,
+        'max_pathlen': 2,
     },
 
     'root-cert': {

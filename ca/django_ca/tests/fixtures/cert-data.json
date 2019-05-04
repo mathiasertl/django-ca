@@ -46,6 +46,7 @@
             "subject": "/C=AT/ST=Vienna/CN=child.ca.example.com",
             "basic_constraints": "critical,CA:TRUE,pathlen=0",
             "pathlen": 0,
+            "max_pathlen": 0,
             "name_constraints": [
                 [
                     "DNS:.org"
@@ -96,6 +97,7 @@
             "subject": "/C=AT/ST=Vienna/CN=ecc.ca.example.com",
             "basic_constraints": "critical,CA:TRUE,pathlen=1",
             "pathlen": 1,
+            "max_pathlen": 1,
             "name": "ecc",
             "cat": "generated",
             "algorithm": "SHA256",
@@ -129,6 +131,7 @@
             "subject": "/C=AT/ST=Vienna/CN=dsa.ca.example.com",
             "basic_constraints": "critical,CA:TRUE,pathlen=3",
             "pathlen": 3,
+            "max_pathlen": 3,
             "name": "dsa",
             "cat": "generated",
             "key_filename": "dsa.key",
@@ -160,6 +163,7 @@
             "subject": "/C=AT/ST=Vienna/CN=pwd.ca.example.com",
             "basic_constraints": "critical,CA:TRUE,pathlen=2",
             "pathlen": 2,
+            "max_pathlen": 2,
             "name": "pwd",
             "cat": "generated",
             "algorithm": "SHA256",
