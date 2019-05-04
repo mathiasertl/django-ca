@@ -232,6 +232,10 @@ def update_contrib(data, cert, name, filename):
         'serial': cert.serial,
         'subject': cert.distinguishedName(),
         'hpkp': cert.hpkp_pin,
+        'md5': cert.get_digest('md5'),
+        'sha1': cert.get_digest('sha1'),
+        'sha256': cert.get_digest('sha256'),
+        'sha512': cert.get_digest('sha512'),
     }
 
     for ext in cert.get_extensions():
