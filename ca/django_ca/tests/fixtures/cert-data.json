@@ -686,7 +686,7 @@
             "key_size": 1024,
             "key_type": "RSA",
             "csr_filename": "all-extensions.csr",
-            "cn": "all-extensions.example.com",
+            "cn": "san1.all-extensions.example.com",
             "crl": "http://testserver/django_ca/crl/7B:0E:0E:2D:41:0D:50:7C:A7:21:4F:C0:AD:09:6A:65:86:87:77:5D/",
             "crl_old": [
                 false,
@@ -2025,6 +2025,7 @@
         },
         "godaddy_g2_intermediate-cert": {
             "name": "godaddy_g2_intermediate-cert",
+            "cn": "derstandard.at",
             "cat": "sphinx-contrib",
             "pub_filename": "godaddy_g2_intermediate.pem",
             "key_filename": false,
@@ -2151,6 +2152,7 @@
             "ca": "google_g3"
         },
         "letsencrypt_x3-cert": {
+            "cn": "jabber.at",
             "name": "letsencrypt_x3-cert",
             "cat": "sphinx-contrib",
             "pub_filename": "letsencrypt_x3.pem",

@@ -140,6 +140,7 @@ certs = _fixture_data.get('certs')
 # Update some data from contrib (data is not in cert-data.json, since we don't generate them)
 certs['multiple_ous'] = {
     'name': 'multiple_ous',
+    'cn': '',
     'key_filename': False,
     'csr_filename': False,
     'pub_filename': os.path.join('contrib', 'multiple_ous_and_no_ext.pem'),
@@ -157,6 +158,7 @@ certs['multiple_ous'] = {
 }
 certs['cloudflare_1'] = {
     'name': 'cloudflare_1',
+    'cn': 'sni24142.cloudflaressl.com',
     'key_filename': False,
     'csr_filename': False,
     'pub_filename': os.path.join('contrib', 'cloudflare_1.pem'),
@@ -764,3 +766,6 @@ class DjangoCAWithCertTestCase(DjangoCAWithCATestCase):
             ca = self.cas[data['ca']]
             csr = data.get('csr', {}).get('pem', '')
             self.certs[name] = self.load_cert(ca, x509=data['pub']['parsed'], csr=csr)
+
+        self.basic_certs = {k: v for k, v in self.certs.items()
+                            if k in ['root-cert', 'child-cert', 'ecc-cert', 'dsa-cert', 'pwd-cert']}
