@@ -637,6 +637,7 @@
             "sha512": "05:5B:D2:EE:D3:F2:FA:6A:BC:CC:20:2F:A2:9C:3F:7E:60:FA:3D:32:56:D8:D8:2E:2D:3D:80:AC:6F:2F:37:C8:DC:AB:15:63:27:2A:9D:E9:D7:CB:9A:46:6A:A6:B5:42:F9:E5:5D:1E:A4:09:93:05:8D:60:22:21:FD:D8:FD:BB",
             "authority_key_identifier": "3E:2F:4D:FB:36:2C:D6:C7:A2:D4:C1:0A:1F:A5:86:5C:2C:29:82:EC",
             "subject_key_identifier": "DD:CE:A1:14:FC:3E:35:C4:31:C4:91:CA:0B:0B:1D:88:F7:0C:AC:C7",
+            "precert_poison": {"critical": true},
             "authority_information_access": {
                 "critical": false,
                 "issuers": [
