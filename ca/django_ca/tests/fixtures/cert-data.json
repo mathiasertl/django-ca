@@ -201,6 +201,7 @@
             "csr_filename": "root-cert.csr",
             "cn": "root-cert.example.com",
             "crl": "http://testserver/django_ca/crl/68:EF:AD:C6:91:91:AD:2F:C1:EA:75:73:81:35:43:2E:3A:60:CE:F2/",
+            "subject": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=root-cert.example.com",
             "serial": "38:CC:5C:0B:62:E1:0D:FD:3F:65:F3:CE:F1:9E:AF:82:2C:30:9D:DB",
             "hpkp": "S8KL7OvEq6cl6/DfKmZRM7aJysmCNLLLaUh88mlsCqc=",
             "valid_from": "2019-05-06 13:00:00",
