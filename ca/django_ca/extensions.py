@@ -969,11 +969,18 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):  # pragma: only 
         Cryptography currently does not provide a way to create instances of this extension without already
         having a certificate that provides this extension.
 
+        https://github.com/pyca/cryptography/issues/4820
+
     .. seealso::
 
        `RFC 6962 <https://tools.ietf.org/html/rfc6962.html>`_
    """
     oid = ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS
+    _timeformat = '%Y-%m-%d %H:%M:%S'
+    LOG_ENTRY_TYPE_MAPPING = {
+        LogEntryType.PRE_CERTIFICATE: 'precertificate',
+        LogEntryType.X509_CERTIFICATE: 'x509_certificate'
+    }
 
     def human_readable_timestamps(self):
         for sct in self.value:
@@ -1004,6 +1011,20 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):  # pragma: only 
     @property
     def extension_type(self):
         return x509.PrecertificateSignedCertificateTimestamps(self.value)
+
+    def serialize(self):
+        return {
+            'critical': self.critical,
+            'values': [self.serialize_value(v) for v in self.value],
+        }
+
+    def serialize_value(self, v):
+        return {
+            'type': PrecertificateSignedCertificateTimestamps.LOG_ENTRY_TYPE_MAPPING[v.entry_type],
+            'timestamp': v.timestamp.strftime(self._timeformat),
+            'log_id': binascii.hexlify(v.log_id).decode('utf-8'),
+            'version': v.version.name,
+        }
 
 
 class SubjectAlternativeName(AlternativeNameExtension):
