@@ -57,6 +57,7 @@
             "key_size": 1024,
             "key_type": "RSA",
             "csr_filename": false,
+            "ocsp_url": "http://testserver/django_ca/ocsp/child/",
             "ca_ocsp_url": "http://testserver/ca/ocsp/child/",
             "crl": "http://testserver/django_ca/crl/ca/68:EF:AD:C6:91:91:AD:2F:C1:EA:75:73:81:35:43:2E:3A:60:CE:F2/",
             "issuer_url": "http://testserver/child.der",
