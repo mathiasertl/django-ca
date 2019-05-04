@@ -170,6 +170,10 @@ def update_cert_data(cert, data):
     if eku is not None:
         data['extended_key_usage'] = eku.serialize()
 
+    crl = cert.crlDistributionPoints()
+    if crl is not None:
+        data['crl_old'] = crl
+
 
 def write_ca(cert, data, password=None):
     key_dest = os.path.join(settings.FIXTURES_DIR, data['key_filename'])
@@ -245,7 +249,7 @@ def update_contrib(data, cert, name, filename):
         elif isinstance(ext, tuple):
             key, value = ext
             if key == 'cRLDistributionPoints':
-                cert_data['crl'] = value
+                cert_data['crl_old'] = value
             elif isinstance(value[1], x509.ObjectIdentifier):
                 # Currently just some old StartSSL extensions for Netscape (!)
                 continue

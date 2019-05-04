@@ -201,7 +201,6 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
     @freeze_time('2019-04-14 12:26:00')
     @override_tmpcadir()
     def test_user_crl(self):
-        self.maxDiff = None
         idp = self.get_idp(only_contains_user_certs=True)
 
         self.assertIsNone(self.ca.crl_url)
@@ -459,17 +458,18 @@ class CertificateTests(DjangoCAWithCertTestCase):
 
     def test_crl_distribution_points(self):
         for name, ca in self.cas.items():
-            expected = certs[name].get('crl')
-            print(name, expected)
-            if expected:
-                expected = (False, ['Full Name: URI:%s' % expected])
-            self.assertEqual(ca.crlDistributionPoints(), expected)
+            expected = certs[name].get('crl_old')
+            crl = ca.crlDistributionPoints()
+            if isinstance(crl, tuple):
+                crl = list(crl)
+            self.assertEqual(crl, expected)
 
         for name, cert in self.certs.items():
-            expected = certs[name].get('crl')
-            if expected:
-                expected = (False, ['Full Name: URI:%s' % expected])
-            self.assertEqual(cert.crlDistributionPoints(), expected)
+            expected = certs[name].get('crl_old')
+            crl = cert.crlDistributionPoints()
+            if isinstance(crl, tuple):
+                crl = list(crl)
+            self.assertEqual(crl, expected)
 
     def test_digest(self):
         for name, ca in self.cas.items():
@@ -486,7 +486,6 @@ class CertificateTests(DjangoCAWithCertTestCase):
 
     def test_authority_key_identifier(self):
         for name, ca in self.cas.items():
-            print(name, ca.authority_key_identifier)
             self.assertEqual(ca.authority_key_identifier, certs[name].get('authority_key_identifier'))
 
         for name, cert in self.certs.items():

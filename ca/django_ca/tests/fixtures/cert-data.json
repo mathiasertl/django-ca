@@ -73,6 +73,12 @@
             "authority_key_identifier": "0D:DE:F9:D8:53:64:29:01:19:DD:D5:8B:48:4F:27:06:AA:B5:27:6E",
             "subject_key_identifier": "3E:2F:4D:FB:36:2C:D6:C7:A2:D4:C1:0A:1F:A5:86:5C:2C:29:82:EC",
             "key_usage": "critical,cRLSign,keyCertSign",
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://testserver/django_ca/crl/ca/68:EF:AD:C6:91:91:AD:2F:C1:EA:75:73:81:35:43:2E:3A:60:CE:F2/"
+                ]
+            ],
             "authority_information_access": {
                 "critical": false,
                 "issuers": [
@@ -197,6 +203,12 @@
             "csr_filename": "root-cert.csr",
             "cn": "root-cert.example.com",
             "crl": "http://testserver/django_ca/crl/68:EF:AD:C6:91:91:AD:2F:C1:EA:75:73:81:35:43:2E:3A:60:CE:F2/",
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://testserver/django_ca/crl/68:EF:AD:C6:91:91:AD:2F:C1:EA:75:73:81:35:43:2E:3A:60:CE:F2/"
+                ]
+            ],
             "subject": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=root-cert.example.com",
             "serial": "38:CC:5C:0B:62:E1:0D:FD:3F:65:F3:CE:F1:9E:AF:82:2C:30:9D:DB",
             "hpkp": "S8KL7OvEq6cl6/DfKmZRM7aJysmCNLLLaUh88mlsCqc=",
@@ -235,6 +247,12 @@
             "csr_filename": "child-cert.csr",
             "cn": "child-cert.example.com",
             "crl": "http://testserver/django_ca/crl/7B:0E:0E:2D:41:0D:50:7C:A7:21:4F:C0:AD:09:6A:65:86:87:77:5D/",
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://testserver/django_ca/crl/7B:0E:0E:2D:41:0D:50:7C:A7:21:4F:C0:AD:09:6A:65:86:87:77:5D/"
+                ]
+            ],
             "subject": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=child-cert.example.com",
             "serial": "1B:9D:DB:DC:DA:92:15:5C:97:81:DF:8B:C9:3A:F2:E9:B4:EF:67:07",
             "hpkp": "DJkUgb95frizSbAi4xuQzC1p2nZ8jcQ4vK0MKdUusbU=",
@@ -273,6 +291,12 @@
             "csr_filename": "ecc-cert.csr",
             "cn": "ecc-cert.example.com",
             "crl": "http://testserver/django_ca/crl/17:CE:77:48:1D:6E:8C:83:3E:2D:F8:C8:8E:90:7F:B7:87:9A:79:71/",
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://testserver/django_ca/crl/17:CE:77:48:1D:6E:8C:83:3E:2D:F8:C8:8E:90:7F:B7:87:9A:79:71/"
+                ]
+            ],
             "subject": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=ecc-cert.example.com",
             "serial": "43:5D:93:CB:8B:DA:52:9A:B2:B6:51:2F:09:2D:00:1B:BE:8C:9A:EA",
             "hpkp": "lYNHL2x+hxh1DZAe7oCJ/gJeaijtIabKSE0/bcty/Bg=",
@@ -311,6 +335,12 @@
             "csr_filename": "pwd-cert.csr",
             "cn": "pwd-cert.example.com",
             "crl": "http://testserver/django_ca/crl/19:19:5A:FA:F6:5B:3C:27:1A:E4:EE:68:C6:BA:40:F7:96:92:4B:E2/",
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://testserver/django_ca/crl/19:19:5A:FA:F6:5B:3C:27:1A:E4:EE:68:C6:BA:40:F7:96:92:4B:E2/"
+                ]
+            ],
             "subject": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=pwd-cert.example.com",
             "serial": "7C:C1:BA:51:96:79:BF:A6:EE:05:48:BC:49:7E:D1:8B:22:5D:E2:3E",
             "hpkp": "/Ni6zmpgws5nnBLFHuTAlmzIyPlRR0FAjxgwC6qbKVY=",
@@ -350,6 +380,12 @@
             "csr_filename": "dsa-cert.csr",
             "cn": "dsa-cert.example.com",
             "crl": "http://testserver/django_ca/crl/18:E4:9F:B7:8E:2E:FE:03:2A:05:4D:A2:FD:83:5C:D5:9A:D9:93:40/",
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://testserver/django_ca/crl/18:E4:9F:B7:8E:2E:FE:03:2A:05:4D:A2:FD:83:5C:D5:9A:D9:93:40/"
+                ]
+            ],
             "serial": "76:F1:A6:11:E4:9F:A1:72:56:89:B5:72:CB:6B:9D:94:13:23:CD:6F",
             "hpkp": "cyPq0Tet7uQm9w3ApvCuftttUthxBY7kldk75bxSNfg=",
             "valid_from": "2019-05-06 13:00:00",
@@ -388,6 +424,12 @@
             "cn": "profile-client.example.com",
             "profile": "client",
             "crl": "http://testserver/django_ca/crl/7B:0E:0E:2D:41:0D:50:7C:A7:21:4F:C0:AD:09:6A:65:86:87:77:5D/",
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://testserver/django_ca/crl/7B:0E:0E:2D:41:0D:50:7C:A7:21:4F:C0:AD:09:6A:65:86:87:77:5D/"
+                ]
+            ],
             "subject": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=profile-client.example.com",
             "serial": "91:C7:CF:E7:C3:7C:AE:5C:3B:9F:A2:69:85:2D:0C:CD:DD:92:DA:8",
             "hpkp": "25igAQE7CFMNOd4Bwboq9JcuRbPWJVEeG2ifV+M0194=",
@@ -427,6 +469,12 @@
             "cn": "profile-server.example.com",
             "profile": "server",
             "crl": "http://testserver/django_ca/crl/7B:0E:0E:2D:41:0D:50:7C:A7:21:4F:C0:AD:09:6A:65:86:87:77:5D/",
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://testserver/django_ca/crl/7B:0E:0E:2D:41:0D:50:7C:A7:21:4F:C0:AD:09:6A:65:86:87:77:5D/"
+                ]
+            ],
             "subject": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=profile-server.example.com",
             "serial": "7B:43:CC:56:AE:1B:62:7E:4C:EC:3B:A7:00:60:14:A6:78:EA:97:2C",
             "hpkp": "fq8f3Ipjrnnk7/lEKs0R7d4atptrMUz5bHPH1ywRKSY=",
@@ -466,6 +514,12 @@
             "cn": "profile-webserver.example.com",
             "profile": "webserver",
             "crl": "http://testserver/django_ca/crl/7B:0E:0E:2D:41:0D:50:7C:A7:21:4F:C0:AD:09:6A:65:86:87:77:5D/",
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://testserver/django_ca/crl/7B:0E:0E:2D:41:0D:50:7C:A7:21:4F:C0:AD:09:6A:65:86:87:77:5D/"
+                ]
+            ],
             "subject": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=profile-webserver.example.com",
             "serial": "46:D3:B6:55:5F:45:87:51:7B:72:9B:37:95:15:90:15:9B:96:AC:08",
             "hpkp": "mcJRChhpb1OczVDylg4fRuFPenjTWkLXOA3WhaNAeTs=",
@@ -505,6 +559,12 @@
             "cn": "profile-enduser.example.com",
             "profile": "enduser",
             "crl": "http://testserver/django_ca/crl/7B:0E:0E:2D:41:0D:50:7C:A7:21:4F:C0:AD:09:6A:65:86:87:77:5D/",
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://testserver/django_ca/crl/7B:0E:0E:2D:41:0D:50:7C:A7:21:4F:C0:AD:09:6A:65:86:87:77:5D/"
+                ]
+            ],
             "subject": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=profile-enduser.example.com",
             "serial": "2A:A3:28:DA:76:2E:59:CD:8D:BD:01:F1:C3:FC:E6:92:E2:BD:75:11",
             "hpkp": "A1l69s/BMxjE1ea7PMioM9Jg0X1eDpHVvDQ8ZIxm/fg=",
@@ -543,6 +603,12 @@
             "cn": "profile-ocsp.example.com",
             "profile": "ocsp",
             "crl": "http://testserver/django_ca/crl/7B:0E:0E:2D:41:0D:50:7C:A7:21:4F:C0:AD:09:6A:65:86:87:77:5D/",
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://testserver/django_ca/crl/7B:0E:0E:2D:41:0D:50:7C:A7:21:4F:C0:AD:09:6A:65:86:87:77:5D/"
+                ]
+            ],
             "subject": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=profile-ocsp.example.com",
             "serial": "47:46:F6:03:37:C2:77:DF:A2:FB:B9:AF:AF:A7:0C:63:4D:71:09:69",
             "hpkp": "UOype7JPe+hYSFqAzahPsm4x284O9zU8Z+TSlg4elyI=",
@@ -617,6 +683,12 @@
             "csr_filename": "all-extensions.csr",
             "cn": "all-extensions.example.com",
             "crl": "http://testserver/django_ca/crl/7B:0E:0E:2D:41:0D:50:7C:A7:21:4F:C0:AD:09:6A:65:86:87:77:5D/",
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://testserver/django_ca/crl/7B:0E:0E:2D:41:0D:50:7C:A7:21:4F:C0:AD:09:6A:65:86:87:77:5D/"
+                ]
+            ],
             "subject": "/CN=san1.all-extensions.example.com",
             "serial": "DC:BF:BD:FA:0E:EC:2D:9B:90:EF:0F:2C:5C:D2:39:02:70:82:94:C",
             "hpkp": "VxYH+pKPE8K4n5dg7HmJm/KTHugKlRRlfZTz1NxElV4=",
@@ -689,6 +761,12 @@
                     "URI:http://ocsp.comodoca.com"
                 ]
             },
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://crl.comodoca.com/COMODORSACertificationAuthority.crl"
+                ]
+            ],
             "authority_key_identifier": "BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4",
             "basic_constraints": "critical,CA:TRUE, pathlen:0",
             "crl": [
@@ -737,6 +815,12 @@
             "authority_key_identifier": "ED:44:19:C0:D3:F0:06:8B:EE:A4:7B:BE:42:E7:26:54:C8:8E:36:76",
             "basic_constraints": "critical,CA:TRUE",
             "crl": [
+                false,
+                [
+                    "Full Name: URI:http://validation.identrust.com/crl/commercialrootca1.crl"
+                ]
+            ],
+            "crl_old": [
                 false,
                 [
                     "Full Name: URI:http://validation.identrust.com/crl/commercialrootca1.crl"
@@ -841,6 +925,12 @@
                     "Full Name: URI:http://crl.globalsign.net/root-r2.crl"
                 ]
             ],
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://crl.globalsign.net/root-r2.crl"
+                ]
+            ],
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "9B:E2:07:57:67:1C:1E:C0:6A:06:DE:59:B4:9A:2D:DF:DC:19:86:2E",
             "type": "ca",
@@ -899,6 +989,12 @@
             "authority_key_identifier": "C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E",
             "basic_constraints": "critical,CA:TRUE, pathlen:0",
             "crl": [
+                false,
+                [
+                    "Full Name: URI:http://g.symcb.com/crls/gtglobal.crl"
+                ]
+            ],
+            "crl_old": [
                 false,
                 [
                     "Full Name: URI:http://g.symcb.com/crls/gtglobal.crl"
@@ -968,6 +1064,12 @@
                     "Full Name: URI:http://crl.identrust.com/DSTROOTCAX3CRL.crl"
                 ]
             ],
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://crl.identrust.com/DSTROOTCAX3CRL.crl"
+                ]
+            ],
             "certificatePolicies": [
                 false,
                 [
@@ -1021,6 +1123,12 @@
                     "Full Name: URI:http://crl.startssl.com/sfsca.crl"
                 ]
             ],
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://crl.startssl.com/sfsca.crl"
+                ]
+            ],
             "certificatePolicies": [
                 false,
                 [
@@ -1058,6 +1166,12 @@
             "authority_key_identifier": "B1:3E:C3:69:03:F8:BF:47:01:D4:98:26:1A:08:02:EF:63:64:2B:C3",
             "basic_constraints": "critical,CA:TRUE, pathlen:0",
             "crl": [
+                false,
+                [
+                    "Full Name: URI:http://crl4.digicert.com/DigiCertHighAssuranceEVRootCA.crl"
+                ]
+            ],
+            "crl_old": [
                 false,
                 [
                     "Full Name: URI:http://crl4.digicert.com/DigiCertHighAssuranceEVRootCA.crl"
@@ -1102,6 +1216,12 @@
             "authority_key_identifier": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2",
             "basic_constraints": "critical,CA:TRUE, pathlen:0",
             "crl": [
+                false,
+                [
+                    "Full Name: URI:http://crl.startssl.com/sfsca.crl"
+                ]
+            ],
+            "crl_old": [
                 false,
                 [
                     "Full Name: URI:http://crl.startssl.com/sfsca.crl"
@@ -1169,6 +1289,12 @@
                     "Full Name: URI:http://crl.godaddy.com/gdroot-g2.crl"
                 ]
             ],
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://crl.godaddy.com/gdroot-g2.crl"
+                ]
+            ],
             "certificatePolicies": [
                 false,
                 [
@@ -1205,6 +1331,12 @@
             "authority_key_identifier": "9B:E2:07:57:67:1C:1E:C0:6A:06:DE:59:B4:9A:2D:DF:DC:19:86:2E",
             "basic_constraints": "critical,CA:TRUE, pathlen:0",
             "crl": [
+                false,
+                [
+                    "Full Name: URI:http://crl.pki.goog/gsr2/gsr2.crl"
+                ]
+            ],
+            "crl_old": [
                 false,
                 [
                     "Full Name: URI:http://crl.pki.goog/gsr2/gsr2.crl"
@@ -1247,6 +1379,12 @@
             "authority_key_identifier": "60:7B:66:1A:45:0D:97:CA:89:50:2F:7D:04:CD:34:A8:FF:FC:FD:4B",
             "basic_constraints": "critical,CA:TRUE, pathlen:0",
             "crl": [
+                false,
+                [
+                    "Full Name: URI:http://crl.globalsign.net/root.crl"
+                ]
+            ],
+            "crl_old": [
                 false,
                 [
                     "Full Name: URI:http://crl.globalsign.net/root.crl"
@@ -1295,6 +1433,12 @@
                     "Full Name: URI:http://crl.identrust.com/DSTROOTCAX3CRL.crl"
                 ]
             ],
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://crl.identrust.com/DSTROOTCAX3CRL.crl"
+                ]
+            ],
             "certificatePolicies": [
                 false,
                 [
@@ -1334,6 +1478,12 @@
             "authority_key_identifier": "BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4",
             "basic_constraints": "critical,CA:TRUE, pathlen:0",
             "crl": [
+                false,
+                [
+                    "Full Name: URI:http://crl.comodoca.com/COMODORSACertificationAuthority.crl"
+                ]
+            ],
+            "crl_old": [
                 false,
                 [
                     "Full Name: URI:http://crl.comodoca.com/COMODORSACertificationAuthority.crl"
@@ -1403,6 +1553,12 @@
                     "Full Name: URI:http://crl.comodoca.com/COMODORSADomainValidationSecureServerCA.crl"
                 ]
             ],
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://crl.comodoca.com/COMODORSADomainValidationSecureServerCA.crl"
+                ]
+            ],
             "certificatePolicies": [
                 false,
                 [
@@ -1443,6 +1599,12 @@
             },
             "authority_key_identifier": "A2:56:24:3C:D0:D4:15:B9:E8:BF:78:A3:13:10:58:48:2E:16:54:E1",
             "crl": [
+                false,
+                [
+                    "Full Name: URI:http://validation.identrust.com/crl/trustidcaa52.crl"
+                ]
+            ],
+            "crl_old": [
                 false,
                 [
                     "Full Name: URI:http://validation.identrust.com/crl/trustidcaa52.crl"
@@ -1494,6 +1656,12 @@
                     "Full Name: URI:http://gv.symcb.com/gv.crl"
                 ]
             ],
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://gv.symcb.com/gv.crl"
+                ]
+            ],
             "certificatePolicies": [
                 false,
                 [
@@ -1532,6 +1700,12 @@
             },
             "authority_key_identifier": "B1:3F:1C:92:7B:92:B0:5A:25:B3:38:FB:9C:07:A4:26:50:32:E3:51",
             "basic_constraints": "CA:FALSE",
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://crl.startssl.com/sca-server3.crl"
+                ]
+            ],
             "crl": [
                 false,
                 [
@@ -1579,6 +1753,13 @@
             },
             "authority_key_identifier": "51:68:FF:90:AF:02:07:75:3C:CC:D9:65:64:62:A2:12:B8:59:72:3B",
             "basic_constraints": "critical,CA:FALSE",
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://crl3.digicert.com/sha2-ha-server-g6.crl",
+                    "Full Name: URI:http://crl4.digicert.com/sha2-ha-server-g6.crl"
+                ]
+            ],
             "crl": [
                 false,
                 [
@@ -1643,6 +1824,12 @@
             },
             "authority_key_identifier": "11:DB:23:45:FD:54:CC:6A:71:6F:84:8A:03:D7:BE:F7:01:2F:26:86",
             "basic_constraints": "CA:FALSE",
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://crl.startssl.com/crt2-crl.crl"
+                ]
+            ],
             "crl": [
                 false,
                 [
@@ -1690,6 +1877,12 @@
             },
             "authority_key_identifier": "EA:4E:7C:D4:80:2D:E5:15:81:86:26:8C:82:6D:C0:98:A4:CF:97:0F",
             "basic_constraints": "CA:FALSE",
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://crl.globalsign.com/gs/gsdomainvalsha2g2.crl"
+                ]
+            ],
             "crl": [
                 false,
                 [
@@ -1736,6 +1929,12 @@
             },
             "authority_key_identifier": "39:DA:FF:CA:28:14:8A:A8:74:13:08:B9:E4:0E:A9:D2:FA:7E:9D:69",
             "basic_constraints": "critical,CA:FALSE",
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://crl.comodoca.com/COMODORSAExtendedValidationSecureServerCA.crl"
+                ]
+            ],
             "crl": [
                 false,
                 [
@@ -1851,6 +2050,12 @@
                     "Full Name: URI:http://crl.godaddy.com/gdig2s1-1015.crl"
                 ]
             ],
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://crl.godaddy.com/gdig2s1-1015.crl"
+                ]
+            ],
             "certificatePolicies": [
                 false,
                 [
@@ -1914,6 +2119,12 @@
             },
             "authority_key_identifier": "77:C2:B8:50:9A:67:76:76:B1:2D:C2:86:D0:83:A0:7E:A6:7E:BA:4B",
             "basic_constraints": "critical,CA:FALSE",
+            "crl_old": [
+                false,
+                [
+                    "Full Name: URI:http://crl.pki.goog/GTSGIAG3.crl"
+                ]
+            ],
             "crl": [
                 false,
                 [

@@ -164,6 +164,9 @@ certs['cloudflare_1'] = {
     'sha512': 'FF:03:1B:8F:11:E8:A7:FF:91:4F:B9:97:E9:97:BC:77:37:C1:A7:69:86:F3:7C:E3:BB:BB:DF:A6:4F:0E:3C:C0:7F:B5:BC:CC:BD:0A:D5:EF:5F:94:55:E9:FF:48:41:34:B8:11:54:57:DD:90:85:41:2E:71:70:5E:FA:BA:E6:EA',  # NOQA
     'authority_key_identifier': '40:09:61:67:F0:BC:83:71:4F:DE:12:08:2C:6F:D4:D4:2B:76:3D:96',
     "basic_constraints": "critical,CA:FALSE",
+    'crl_old': [False, [
+        'Full Name: URI:http://crl.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crl']
+    ],
     "extended_key_usage": "serverAuth,clientAuth",
     "key_usage": "critical,digitalSignature",
     'precert_poison': {'critical': True},
