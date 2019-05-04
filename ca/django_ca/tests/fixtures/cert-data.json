@@ -569,7 +569,6 @@
         },
         "no-extensions": {
             "ca": "child",
-            "basic_constraints": "critical,CA:FALSE",
             "name": "no-extensions",
             "type": "cert",
             "cat": "generated",

@@ -276,19 +276,13 @@ class CertificateTests(DjangoCAWithCertTestCase):
                 self.assertEqual(value, exp, cert)
 
     def test_dates(self):
-        for ca in self.cas:
-            self.assertEqual(ca.valid_from, certs[ca.name]['valid_from'])
-            self.assertEqual(ca.expires, certs[ca.name]['valid_until'])
+        for name, ca in self.cas.items():
+            self.assertEqual(ca.valid_from, certs[name]['valid_from'])
+            self.assertEqual(ca.expires, certs[name]['valid_until'])
 
-        self.assertEqual(self.cert.expires, certs['cert1']['expires'])
-        self.assertEqual(self.cert2.expires, certs['cert2']['expires'])
-        self.assertEqual(self.cert3.expires, certs['cert3']['expires'])
-        self.assertEqual(self.ocsp.expires, certs['ocsp']['expires'])
-
-        self.assertEqual(self.cert.valid_from, certs['cert1']['valid_from'])
-        self.assertEqual(self.cert2.valid_from, certs['cert2']['valid_from'])
-        self.assertEqual(self.cert3.valid_from, certs['cert3']['valid_from'])
-        self.assertEqual(self.ocsp.valid_from, certs['ocsp']['valid_from'])
+        for name, cert in self.certs.items():
+            self.assertEqual(cert.valid_from, certs[name]['valid_from'])
+            self.assertEqual(cert.expires, certs[name]['valid_until'])
 
     def test_max_pathlen(self):
         for name, ca in self.usable_cas.items():
@@ -296,8 +290,9 @@ class CertificateTests(DjangoCAWithCertTestCase):
             self.assertEqual(ca.max_pathlen, expected)
 
     def test_allows_intermediate(self):
-        self.assertTrue(self.ca.allows_intermediate_ca, 1)
-        self.assertFalse(self.child_ca.allows_intermediate_ca, 0)
+        self.assertTrue(self.cas['root'].allows_intermediate_ca)
+        self.assertTrue(self.cas['ecc'].allows_intermediate_ca)
+        self.assertFalse(self.cas['child'].allows_intermediate_ca)
 
     def test_revocation(self):
         # Never really happens in real life, but should still be checked
@@ -338,36 +333,39 @@ class CertificateTests(DjangoCAWithCertTestCase):
 
     @freeze_time("2019-02-03 15:43:12")
     def test_get_revocation_time(self):
-        self.assertIsNone(self.cert.get_revocation_time())
-        self.cert.revoke()
+        cert = self.certs['child-cert']
+        self.assertIsNone(cert.get_revocation_time())
+        cert.revoke()
 
         with override_settings(USE_TZ=True):
-            self.cert.revoked_date = timezone.now()
-            self.assertEqual(self.cert.get_revocation_time(), datetime(2019, 2, 3, 15, 43, 12))
+            cert.revoked_date = timezone.now()
+            self.assertEqual(cert.get_revocation_time(), datetime(2019, 2, 3, 15, 43, 12))
 
         with override_settings(USE_TZ=False):
-            self.cert.revoked_date = timezone.now()
-            self.assertEqual(self.cert.get_revocation_time(), datetime(2019, 2, 3, 15, 43, 12))
+            cert.revoked_date = timezone.now()
+            self.assertEqual(cert.get_revocation_time(), datetime(2019, 2, 3, 15, 43, 12))
 
     @freeze_time("2019-02-03 15:43:12")
     def test_get_compromised_time(self):
-        self.assertIsNone(self.cert.get_compromised_time())
-        self.cert.revoke(compromised=timezone.now())
+        cert = self.certs['child-cert']
+        self.assertIsNone(cert.get_compromised_time())
+        cert.revoke(compromised=timezone.now())
 
         with override_settings(USE_TZ=True):
-            self.cert.compromised = timezone.now()
-            self.assertEqual(self.cert.get_compromised_time(), datetime(2019, 2, 3, 15, 43, 12))
+            cert.compromised = timezone.now()
+            self.assertEqual(cert.get_compromised_time(), datetime(2019, 2, 3, 15, 43, 12))
 
         with override_settings(USE_TZ=False):
-            self.cert.compromised = timezone.now()
-            self.assertEqual(self.cert.get_compromised_time(), datetime(2019, 2, 3, 15, 43, 12))
+            cert.compromised = timezone.now()
+            self.assertEqual(cert.get_compromised_time(), datetime(2019, 2, 3, 15, 43, 12))
 
     def test_get_revocation_reason(self):
-        self.assertIsNone(self.cert.get_revocation_reason())
+        cert = self.certs['child-cert']
+        self.assertIsNone(cert.get_revocation_reason())
 
-        for reason, _text in self.cert.REVOCATION_REASONS:
-            self.cert.revoke(reason)
-            self.assertIsInstance(self.cert.get_revocation_reason(), x509.ReasonFlags)
+        for reason, _text in cert.REVOCATION_REASONS:
+            cert.revoke(reason)
+            self.assertIsInstance(cert.get_revocation_reason(), x509.ReasonFlags)
 
     def test_validate_past(self):
         # Test that model validation does not allow us to set revoked_date or revoked_invalidity to the future
@@ -404,90 +402,101 @@ class CertificateTests(DjangoCAWithCertTestCase):
                 self.assertEqual(cert.ocsp_status, reason)
 
     def test_basic_constraints(self):
-        for ca in self.cas:
-            self.assertEqual(ca.basic_constraints, certs[ca.name]['basic_constraints'])
+        for name, ca in self.cas.items():
+            self.assertEqual(ca.basic_constraints, certs[name]['basic_constraints'])
+            self.assertTrue(ca.basic_constraints.ca)
+            self.assertEqual(ca.basic_constraints.pathlen, certs[name]['pathlen'])
 
-        self.assertEqual(self.cert.basic_constraints, BasicConstraints('critical,CA:FALSE'))
-        self.assertEqual(self.cert_all.basic_constraints, BasicConstraints('critical,CA:FALSE'))
-        self.assertIsNone(self.cert_no_ext.basic_constraints)
-        self.assertEqual(self.cert2.basic_constraints, BasicConstraints('critical,CA:FALSE'))
-        # accidentally used cert2 in cn/san
-        self.assertEqual(self.cert3.basic_constraints, BasicConstraints('critical,CA:FALSE'))
+        for name, cert in self.certs.items():
+            bc = cert.basic_constraints
+            self.assertEqual(bc, certs[name].get('basic_constraints'))
 
-    def test_issuerAltName(self):
-        for ca in self.cas:
-            self.assertEqual(self.ca.issuer_alternative_name, certs[ca.name].get('issuer_alternative_name'))
+            if bc is not None:
+                self.assertFalse(cert.basic_constraints.ca)
+                self.assertIsNone(cert.basic_constraints.pathlen)
 
-        self.assertEqual(self.cert.issuer_alternative_name,
-                         IssuerAlternativeName(certs['cert1']['issuer_alternative_name']))
-        self.assertEqual(self.cert2.issuer_alternative_name,
-                         IssuerAlternativeName(certs['cert2']['issuer_alternative_name']))
-        self.assertEqual(self.cert3.issuer_alternative_name,
-                         IssuerAlternativeName(certs['cert3']['issuer_alternative_name']))
+        # Make sure that some certs actually do have a value for this extension
+        self.assertIsInstance(self.certs['all-extensions'].basic_constraints, BasicConstraints)
+        self.assertFalse(self.certs['all-extensions'].basic_constraints.ca)
+        self.assertIsNone(self.certs['no-extensions'].basic_constraints)
 
-    def test_keyUsage(self):
-        for ca in self.cas:
-            self.assertEqual(ca.key_usage, certs[ca.name].get('key_usage'))
+    def test_issuer_alternative_name(self):
+        for name, ca in self.cas.items():
+            self.assertIsNone(ca.issuer_alternative_name)
 
-        self.assertEqual(self.cert.key_usage,
-                         KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'))
-        self.assertEqual(self.cert2.key_usage,
-                         KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'))
-        self.assertEqual(self.cert3.key_usage,
-                         KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'))
-        self.assertEqual(self.ocsp.key_usage,
-                         KeyUsage('critical,digitalSignature,keyEncipherment,nonRepudiation'))
+        for name, cert in self.certs.items():
+            self.assertEqual(cert.issuer_alternative_name, certs[name].get('issuer_alternative_name'))
 
-    def test_extendedKeyUsage(self):
-        for ca in self.cas:
-            self.assertEqual(ca.extended_key_usage, certs[ca.name].get('extended_key_usage'))
+        # Make sure that some certs actually do have a value for this extension
+        self.assertIsInstance(self.certs['all-extensions'].issuer_alternative_name, IssuerAlternativeName)
+        self.assertIsNone(self.cas['child'].issuer_alternative_name)
+        self.assertIsNone(self.certs['no-extensions'].issuer_alternative_name)
 
-        self.assertEqual(self.cert.extended_key_usage, ExtendedKeyUsage('serverAuth'))
-        self.assertEqual(self.cert2.extended_key_usage, ExtendedKeyUsage('serverAuth'))
-        self.assertEqual(self.cert3.extended_key_usage, ExtendedKeyUsage('serverAuth'))
-        self.assertEqual(self.ocsp.extended_key_usage, ExtendedKeyUsage('OCSPSigning'))
+    def test_key_usage(self):
+        for name, ca in self.cas.items():
+            self.assertEqual(ca.key_usage, certs[name].get('key_usage'))
+
+        for name, cert in self.certs.items():
+            self.assertEqual(cert.key_usage, certs[name].get('key_usage'))
+
+        # Make sure that some certs actually do have a value for this extension
+        self.assertIsInstance(self.certs['all-extensions'].key_usage, KeyUsage)
+        self.assertIsInstance(self.cas['child'].key_usage, KeyUsage)
+        self.assertIsNone(self.certs['no-extensions'].key_usage, KeyUsage)
+
+    def test_extended_key_usage(self):
+        for name, ca in self.cas.items():
+            self.assertEqual(ca.extended_key_usage, certs[name].get('extended_key_usage'))
+
+        for name, cert in self.certs.items():
+            self.assertEqual(cert.extended_key_usage, certs[name].get('extended_key_usage'))
+
+        # Make sure that some certs actually do have a value for this extension
+        self.assertIsInstance(self.certs['all-extensions'].extended_key_usage, ExtendedKeyUsage)
+        self.assertIsInstance(self.cas['trustid_server_a52'].extended_key_usage, ExtendedKeyUsage)
+        self.assertIsNone(self.cas['child'].extended_key_usage)
+        self.assertIsNone(self.certs['no-extensions'].extended_key_usage)
 
     def test_crl_distribution_points(self):
-        for ca in self.cas:
-            expected = certs[ca.name].get('crl')
+        for name, ca in self.cas.items():
+            expected = certs[name].get('crl')
+            print(name, expected)
             if expected:
                 expected = (False, ['Full Name: URI:%s' % expected])
             self.assertEqual(ca.crlDistributionPoints(), expected)
 
-        self.assertEqual(self.cert.crlDistributionPoints(), certs['cert1']['crl'])
-        self.assertEqual(self.cert2.crlDistributionPoints(), certs['cert2']['crl'])
-        self.assertEqual(self.cert3.crlDistributionPoints(), certs['cert3']['crl'])
-        self.assertEqual(self.ocsp.crlDistributionPoints(), certs['ocsp']['crl'])
+        for name, cert in self.certs.items():
+            expected = certs[name].get('crl')
+            if expected:
+                expected = (False, ['Full Name: URI:%s' % expected])
+            self.assertEqual(cert.crlDistributionPoints(), expected)
 
     def test_digest(self):
-        for ca in self.cas:
-            self.assertEqual(ca.get_digest('md5'), certs[ca.name]['md5'])
-            self.assertEqual(ca.get_digest('sha1'), certs[ca.name]['sha1'])
-            self.assertEqual(ca.get_digest('sha256'), certs[ca.name]['sha256'])
-            self.assertEqual(ca.get_digest('sha512'), certs[ca.name]['sha512'])
+        for name, ca in self.cas.items():
+            self.assertEqual(ca.get_digest('md5'), certs[name]['md5'])
+            self.assertEqual(ca.get_digest('sha1'), certs[name]['sha1'])
+            self.assertEqual(ca.get_digest('sha256'), certs[name]['sha256'])
+            self.assertEqual(ca.get_digest('sha512'), certs[name]['sha512'])
 
-        self.assertEqual(self.cert.get_digest('md5'), certs['cert1']['md5'])
-        self.assertEqual(self.cert.get_digest('sha1'), certs['cert1']['sha1'])
-        self.assertEqual(self.cert.get_digest('sha256'), certs['cert1']['sha256'])
-        self.assertEqual(self.cert.get_digest('sha512'), certs['cert1']['sha512'])
-
-        self.assertEqual(self.cert2.get_digest('md5'), certs['cert2']['md5'])
-        self.assertEqual(self.cert2.get_digest('sha1'), certs['cert2']['sha1'])
-        self.assertEqual(self.cert2.get_digest('sha256'), certs['cert2']['sha256'])
-        self.assertEqual(self.cert2.get_digest('sha512'), certs['cert2']['sha512'])
-
-        self.assertEqual(self.cert3.get_digest('md5'), certs['cert3']['md5'])
-        self.assertEqual(self.cert3.get_digest('sha1'), certs['cert3']['sha1'])
-        self.assertEqual(self.cert3.get_digest('sha256'), certs['cert3']['sha256'])
-        self.assertEqual(self.cert3.get_digest('sha512'), certs['cert3']['sha512'])
+        for name, cert in self.certs.items():
+            self.assertEqual(cert.get_digest('md5'), certs[name]['md5'])
+            self.assertEqual(cert.get_digest('sha1'), certs[name]['sha1'])
+            self.assertEqual(cert.get_digest('sha256'), certs[name]['sha256'])
+            self.assertEqual(cert.get_digest('sha512'), certs[name]['sha512'])
 
     def test_authority_key_identifier(self):
-        for ca in self.cas:
-            self.assertEqual(self.ca.authority_key_identifier, certs['root']['authority_key_identifier'])
+        for name, ca in self.cas.items():
+            print(name, ca.authority_key_identifier)
+            self.assertEqual(ca.authority_key_identifier, certs[name].get('authority_key_identifier'))
 
-        self.assertEqual(self.cert.authority_key_identifier.as_text(), certs['cert1']['authKeyIdentifier'])
-        self.assertEqual(self.cert2.authority_key_identifier.as_text(), certs['cert2']['authKeyIdentifier'])
-        self.assertEqual(self.cert3.authority_key_identifier.as_text(), certs['cert3']['authKeyIdentifier'])
+        for name, cert in self.certs.items():
+            self.assertEqual(cert.authority_key_identifier, certs[name].get('authority_key_identifier'))
+
+        # Make sure that some certs actually do have a value for this extension
+        self.assertIsInstance(self.certs['ecc-cert'].authority_key_identifier, AuthorityKeyIdentifier)
+        self.assertIsInstance(self.certs['all-extensions'].authority_key_identifier, AuthorityKeyIdentifier)
+        self.assertIsNone(self.certs['no-extensions'].authority_key_identifier)
+        self.assertIsNone(self.cas['identrust_root_1'].authority_key_identifier)
 
     def test_hpkp_pin(self):
         # get hpkp pins using
@@ -496,103 +505,26 @@ class CertificateTests(DjangoCAWithCertTestCase):
         #       | openssl dgst -sha256 -binary | base64
         for name, ca in self.cas.items():
             self.assertEqual(ca.hpkp_pin, certs[name]['hpkp'])
+            self.assertIsInstance(ca.hpkp_pin, str)
 
         for name, cert in self.certs.items():
             self.assertEqual(cert.hpkp_pin, certs[name]['hpkp'])
-
-    def test_contrib_multiple_ous_and_no_ext(self):
-        cert = self.cert_multiple_ous_and_no_ext
-        self.assertIsNone(cert.authority_information_access)
-        self.assertIsNone(cert.authority_key_identifier)
-        self.assertIsNone(cert.basic_constraints)
-        self.assertIsNone(cert.extended_key_usage)
-        self.assertIsNone(cert.issuer_alternative_name)
-        self.assertIsNone(cert.key_usage)
-        self.assertIsNone(cert.subject_alternative_name)
-        self.assertIsNone(cert.subject_key_identifier)
-        self.assertIsNone(cert.certificatePolicies())
-
-    def test_contrib_le(self):
-        cert = self.cert_letsencrypt_jabber_at
-        self.assertEqual(cert.authority_information_access,
-                         AuthorityInformationAccess({
-                             'issuers': ['URI:http://cert.int-x3.letsencrypt.org/'],
-                             'ocsp': ['URI:http://ocsp.int-x3.letsencrypt.org'],
-                         }))
-        self.assertEqual(cert.basic_constraints, BasicConstraints('critical,CA:FALSE'))
-        self.assertEqual(cert.key_usage, KeyUsage('critical,digitalSignature,keyEncipherment'))
-        self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('serverAuth,clientAuth'))
-        self.assertEqual(cert.subject_key_identifier,
-                         SubjectKeyIdentifier('97:AB:1D:D3:46:04:96:0F:45:DF:C3:FF:59:9D:B0:53:AC:73:79:2E'))
-        self.assertIsNone(cert.issuer_alternative_name)
-        self.assertEqual(
-            cert.authority_key_identifier,
-            AuthorityKeyIdentifier('A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1')
-        )
-        self.assertEqual(cert.certificatePolicies(), (False, [
-            'OID 2.23.140.1.2.1: None',
-            'OID 1.3.6.1.4.1.44947.1.1.1: http://cps.letsencrypt.org, This Certificate '
-            'may only be relied upon by Relying Parties and only in accordance with the '
-            'Certificate Policy found at https://letsencrypt.org/repository/'
-        ]))
-
-    def test_contrib_godaddy(self):
-        cert = self.cert_godaddy_derstandardat
-        self.assertEqual(cert.authority_information_access,
-                         AuthorityInformationAccess({
-                             'issuers': ['URI:http://certificates.godaddy.com/repository/gdig2.crt'],
-                             'ocsp': ['URI:http://ocsp.godaddy.com/'],
-                         }))
-        self.assertEqual(cert.basic_constraints, BasicConstraints('critical,CA:FALSE'))
-        self.assertEqual(cert.key_usage, KeyUsage('critical,digitalSignature,keyEncipherment'))
-        self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('serverAuth,clientAuth'))
-        self.assertEqual(cert.subject_key_identifier,
-                         SubjectKeyIdentifier('36:97:AB:24:CF:50:2B:05:71:B1:4E:0A:4F:18:94:C1:FC:F9:4F:69'))
-        self.assertIsNone(cert.issuer_alternative_name)
-        self.assertEqual(
-            cert.authority_key_identifier,
-            AuthorityKeyIdentifier(':40:C2:BD:27:8E:CC:34:83:30:A2:33:D7:FB:6C:B3:F0:B4:2C:80:CE'))
-        self.assertEqual(cert.certificatePolicies(), (False, [
-            'OID 2.16.840.1.114413.1.7.23.1: http://certificates.godaddy.com/repository/',
-            'OID 2.23.140.1.2.1: None',
-        ]))
-
-    def test_contrib_cloudflare(self):
-        cert = self.cert_cloudflare_1
-        self.assertEqual(
-            cert.authority_information_access,
-            AuthorityInformationAccess({
-                'issuers': ['URI:http://crt.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crt'],
-                'ocsp': ['URI:http://ocsp.comodoca4.com'],
-            }))
-        self.assertEqual(cert.basic_constraints, BasicConstraints('critical,CA:FALSE'))
-        self.assertEqual(cert.key_usage, KeyUsage('critical,digitalSignature'))
-        self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('serverAuth,clientAuth'))
-        self.assertEqual(cert.subject_key_identifier,
-                         SubjectKeyIdentifier('05:86:D8:B4:ED:A9:7E:23:EE:2E:E7:75:AA:3B:2C:06:08:2A:93:B2'))
-        self.assertIsNone(cert.issuer_alternative_name, '')
-        self.assertEqual(
-            cert.authority_key_identifier,
-            AuthorityKeyIdentifier('40:09:61:67:F0:BC:83:71:4F:DE:12:08:2C:6F:D4:D4:2B:76:3D:96')
-        )
-        self.assertEqual(cert.certificatePolicies(), (False, [
-            'OID 1.3.6.1.4.1.6449.1.2.2.7: https://secure.comodo.com/CPS',
-            'OID 2.23.140.1.2.1: None',
-        ]))
+            self.assertIsInstance(cert.hpkp_pin, str)
 
     def test_get_authority_key_identifier(self):
-        for ca in self.cas:
-            expected = AuthorityKeyIdentifier(certs[ca.name]['subject_key_identifier'].value)
+        for name, ca in self.cas.items():
+            expected = AuthorityKeyIdentifier(certs[name]['subject_key_identifier'].value)
             self.assertEqual(ca.get_authority_key_identifier(), expected.extension_type)
 
         # All CAs have a subject key identifier, so we mock that this exception is not present
         def side_effect(cls):
             raise x509.ExtensionNotFound('mocked', x509.SubjectKeyIdentifier.oid)
 
+        ca = self.cas['child']
         with mock.patch('cryptography.x509.extensions.Extensions.get_extension_for_class',
                         side_effect=side_effect):
-            expected = AuthorityKeyIdentifier(certs[self.child_ca.name]['subject_key_identifier'].value)
-            self.assertEqual(self.child_ca.get_authority_key_identifier(), expected.extension_type)
+            expected = AuthorityKeyIdentifier(certs[ca.name]['subject_key_identifier'].value)
+            self.assertEqual(ca.get_authority_key_identifier(), expected.extension_type)
 
     ###############################################
     # Test extensions for all loaded certificates #
@@ -607,6 +539,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
         # Make sure that some certs actually do have a value for this extension
         self.assertIsInstance(self.cas['letsencrypt_x1'].name_constraints, NameConstraints)
         self.assertIsInstance(self.certs['all-extensions'].name_constraints, NameConstraints)
+        self.assertIsNone(self.certs['no-extensions'].name_constraints)
 
     def test_ocsp_no_check(self):
         for name, ca in self.cas.items():

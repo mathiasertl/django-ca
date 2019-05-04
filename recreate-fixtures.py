@@ -371,7 +371,6 @@ data = {
         'ca': 'child',
         'delta': timedelta(days=15),
         'csr': True,
-        'basic_constraints': 'critical,CA:FALSE',
     },
     'all-extensions': {
         'ca': 'child',
