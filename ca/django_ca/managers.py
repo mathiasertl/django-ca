@@ -332,6 +332,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         cryptography.x509.Certificate
             The signed certificate.
         """
+        # TODO: This function does not check the expiry of the parent CA yet (manage.py sign_cert does)
         ########################
         # Normalize parameters #
         ########################
