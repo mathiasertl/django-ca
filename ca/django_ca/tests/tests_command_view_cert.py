@@ -49,7 +49,7 @@ class ViewCertTestCase(DjangoCAWithCertTestCase):
         }
 
     def assertBasic(self, status):
-        for key, cert in self.basic_certs.items():
+        for key, cert in self.ca_certs.items():
             stdout, stderr = self.cmd('view_cert', cert.serial, stdout=BytesIO(), stderr=BytesIO())
             if cert.subject_alternative_name is None:
                 self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
@@ -86,7 +86,7 @@ HPKP pin: {hpkp}
             self.assertEqual(stderr, b'')
 
         # test with no pem but with extensions
-        for key, cert in self.basic_certs.items():
+        for key, cert in self.ca_certs.items():
             stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, extensions=True,
                                       stdout=BytesIO(), stderr=BytesIO())
             self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}

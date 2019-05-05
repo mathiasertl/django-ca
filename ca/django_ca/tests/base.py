@@ -772,8 +772,8 @@ class DjangoCATestCase(TestCase):
             csr = data.get('csr', {}).get('pem', '')
             self.certs[name] = self.load_cert(ca, x509=data['pub']['parsed'], csr=csr)
 
-        self.basic_certs = {k: v for k, v in self.certs.items()
-                            if k in ['root-cert', 'child-cert', 'ecc-cert', 'dsa-cert', 'pwd-cert']}
+        self.ca_certs = {k: v for k, v in self.certs.items()
+                         if k in ['root-cert', 'child-cert', 'ecc-cert', 'dsa-cert', 'pwd-cert']}
 
 
 @override_settings(CA_MIN_KEY_SIZE=512)
