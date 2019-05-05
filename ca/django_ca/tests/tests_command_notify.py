@@ -15,43 +15,40 @@
 
 from datetime import timedelta
 
+from freezegun import freeze_time
+
 from django.core import mail
-from django.utils import timezone
 
-from ..models import Certificate
 from ..models import Watcher
-from .base import DjangoCAWithCertTestCase
+from .base import DjangoCAWithGeneratedCertsTestCase
 from .base import override_settings
+from .base import timestamps
 
 
-@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={},
-                   CA_NOTIFICATION_DAYS=[14, 7, 3, 1])
-class ViewCertTestCase(DjangoCAWithCertTestCase):
+@override_settings(CA_NOTIFICATION_DAYS=[14, 7, 3, 1])
+class NotifyExpiringCertsTestCase(DjangoCAWithGeneratedCertsTestCase):
+    @freeze_time(timestamps['everything_valid'])
     def test_no_certs(self):
         stdout, stderr = self.cmd('notify_expiring_certs')
         self.assertEqual(stdout, '')
         self.assertEqual(stderr, '')
         self.assertEqual(len(mail.outbox), 0)
 
+    @freeze_time(timestamps['ca_certs_expiring'])
     def test_no_watchers(self):
-        cert = Certificate.objects.get(serial=self.cert.serial)
-        cert.expires = timezone.now() + timedelta(days=3)
-        cert.save()
-
+        # certs have no watchers by default, so we get no mails
         stdout, stderr = self.cmd('notify_expiring_certs')
         self.assertEqual(stdout, '')
         self.assertEqual(stderr, '')
         self.assertEqual(len(mail.outbox), 0)
 
+    @freeze_time(timestamps['ca_certs_expiring'])
     def test_one_watcher(self):
-        cert = Certificate.objects.get(serial=self.cert.serial)
-        cert.expires = timezone.now() + timedelta(days=3, minutes=1)
-        timestamp = cert.expires.strftime('%Y-%m-%d')
-        cert.save()
-
+        cert = self.certs['root-cert']
         email = 'user1@example.com'
         watcher = Watcher.from_addr('First Last <%s>' % email)
         cert.watchers.add(watcher)
+        timestamp = cert.expires.strftime('%Y-%m-%d')
 
         stdout, stderr = self.cmd('notify_expiring_certs')
         self.assertEqual(stdout, '')
@@ -62,20 +59,16 @@ class ViewCertTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(mail.outbox[0].to, [email])
 
     def test_notification_days(self):
-        now = timezone.now()
-
-        cert = Certificate.objects.get(serial=self.cert.serial)
+        cert = self.certs['root-cert']
         email = 'user1@example.com'
         watcher = Watcher.from_addr('First Last <%s>' % email)
         cert.watchers.add(watcher)
 
-        for i in reversed(range(0, 20)):
-            cert = Certificate.objects.get(serial=self.cert.serial)
-            cert.expires = now + timedelta(days=i)
-            cert.save()
-
-            stdout, stderr = self.cmd('notify_expiring_certs', days=14)
-            self.assertEqual(stdout, '')
-            self.assertEqual(stderr, '')
+        with freeze_time(cert.expires - timedelta(days=20)) as frozen_time:
+            for i in reversed(range(0, 20)):
+                stdout, stderr = self.cmd('notify_expiring_certs', days=14)
+                self.assertEqual(stdout, '')
+                self.assertEqual(stderr, '')
+                frozen_time.tick(timedelta(days=1))
 
         self.assertEqual(len(mail.outbox), 4)

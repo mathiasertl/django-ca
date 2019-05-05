@@ -39,7 +39,7 @@ class Command(BaseCommand):
         dest = os.path.realpath(ca_storage.location)
 
         if not serials:
-            serials = CertificateAuthority.objects.all().values_list('serial', flat=True)
+            serials = CertificateAuthority.objects.all().order_by('serial').values_list('serial', flat=True)
 
         for serial in serials:
             try:

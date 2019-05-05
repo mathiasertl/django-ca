@@ -32,6 +32,10 @@ else:  # pragma: only py3
 
 
 class MigrateCATestCase(DjangoCAWithCATestCase):
+    def setUp(self):
+        super(MigrateCATestCase, self).setUp()
+        self.ca = self.cas['root']
+
     @override_tmpcadir()
     def test_migrate(self):
         orig_path = self.ca.private_key_path
@@ -107,8 +111,8 @@ class MigrateCATestCase(DjangoCAWithCATestCase):
 
     @override_tmpcadir()
     def test_all_serials(self):
-        cas = [self.ca, self.ecc_ca, self.pwd_ca]
         stdout, stderr = self.cmd('migrate_ca', no_color=True)
+        cas = sorted(self.cas.values(), key=lambda ca: ca.serial)
         self.assertEqual(stdout, '\n'.join([
             '%s: Already migrated.' % ca.serial for ca in cas
         ]) + '\n')

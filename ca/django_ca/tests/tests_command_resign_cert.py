@@ -38,11 +38,14 @@ else:  # pragma: only py3
 
 
 class ResignCertTestCase(DjangoCAWithCertTestCase):
+    def setUp(self):
+        super(ResignCertTestCase, self).setUp()
+        self.cert = self.certs['root-cert']
+
     def assertResigned(self, old, new):
         self.assertNotEqual(old.pk, new.pk)  # make sure we're not comparing the same cert
 
         # assert various properties
-        self.assertEqual(old.algorithm, new.algorithm)
         self.assertEqual(old.issuer, new.issuer)
         self.assertEqual(old.hpkp_pin, new.hpkp_pin)
 
@@ -130,11 +133,12 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
     @override_tmpcadir()
     def test_no_cn(self):
         subject = '/C=AT'  # has no CN
+        cert = self.certs['no-extensions']
 
         msg = r'^Must give at least a CN in --subject or one or more --alt arguments\.'
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post, \
                 self.assertCommandError(msg):
-            self.cmd('resign_cert', self.cert_no_ext.serial, subject=Subject(subject))
+            self.cmd('resign_cert', cert, subject=Subject(subject))
 
         # signals not called
         self.assertEqual(pre.call_count, 0)

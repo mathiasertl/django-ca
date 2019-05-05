@@ -80,7 +80,7 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
             'key_usage': key_usage,
             'extended_key_usage': ext_key_usage,
             'tls_feature': tls_feature,
-            'algorithm': options.get('algorithm', cert.algorithm),
+            'algorithm': options['algorithm'],
             'expires': options['expires'],
             'subject_alternative_name': san,
             'cn_in_san': False,
