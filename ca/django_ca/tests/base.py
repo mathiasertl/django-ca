@@ -765,9 +765,18 @@ class DjangoCATestCase(TestCase):
         self.usable_cas = {name: ca for name, ca in self.cas.items()
                            if certs[name]['key_filename'] is not False}
 
+    def load_generated_certs(self):
+        for name, data in [(k, v) for k, v in certs.items()
+                           if v['type'] == 'cert' and v['cat'] == 'generated' and k not in self.certs]:
+            ca = self.cas[data['ca']]
+            csr = data.get('csr', {}).get('pem', '')
+            self.certs[name] = self.load_cert(ca, x509=data['pub']['parsed'], csr=csr)
+
+        self.ca_certs = {k: v for k, v in self.certs.items()
+                         if k in ['root-cert', 'child-cert', 'ecc-cert', 'dsa-cert', 'pwd-cert']}
+
     def load_all_certs(self):
-        self.certs = {}
-        for name, data in [(k, v) for k, v in certs.items() if v['type'] == 'cert']:
+        for name, data in [(k, v) for k, v in certs.items() if v['type'] == 'cert' and k not in self.certs]:
             ca = self.cas[data['ca']]
             csr = data.get('csr', {}).get('pem', '')
             self.certs[name] = self.load_cert(ca, x509=data['pub']['parsed'], csr=csr)
@@ -783,6 +792,12 @@ class DjangoCAWithCATestCase(DjangoCATestCase):
     def setUp(self):
         super(DjangoCAWithCATestCase, self).setUp()
         self.load_all_cas()
+
+
+class DjangoCAWithGeneratedCertsTestCase(DjangoCAWithCATestCase):
+    def setUp(self):
+        super(DjangoCAWithGeneratedCertsTestCase, self).setUp()
+        self.load_generated_certs()
 
 
 class DjangoCAWithCertTestCase(DjangoCAWithCATestCase):

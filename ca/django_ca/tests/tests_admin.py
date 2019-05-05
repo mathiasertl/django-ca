@@ -26,13 +26,11 @@ from cryptography.x509.extensions import UnrecognizedExtension
 from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import ObjectIdentifier
 
-import django
 from django.contrib.auth.models import Permission
 from django.contrib.auth.models import User
 from django.templatetags.static import static
 from django.test import Client
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.encoding import force_text
 from django.utils.six.moves.urllib.parse import quote
 
@@ -52,10 +50,13 @@ from ..signals import post_revoke_cert
 from ..signals import pre_issue_cert
 from ..signals import pre_revoke_cert
 from ..utils import SUBJECT_FIELDS
+from .base import DjangoCAWithGeneratedCertsTestCase
 from .base import DjangoCAWithCertTestCase
+from .base import DjangoCATestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
+from .base import timestamps
 
 try:
     import unittest.mock as mock
@@ -79,7 +80,7 @@ class AdminTestMixin(object):
 
     def change_url(self, pk=None):
         if pk is None:
-            pk = self.cert.pk
+            pk = self.certs['root-cert'].pk
 
         return reverse('admin:django_ca_certificate_change', args=(pk, ))
 
@@ -97,7 +98,7 @@ class AdminTestMixin(object):
         self.assertRedirects(response, expected, **kwargs)
 
 
-class ChangelistTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
+class ChangelistTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
     """Test the changelist view."""
 
     def assertResponse(self, response, certs=None):
@@ -110,29 +111,71 @@ class ChangelistTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(set(response.context['cl'].result_list), set(certs))
 
     def test_get(self):
+        # Just make sure that viewing the changelist doesn't yield an exception
+        self.load_all_certs()  # load all certs here
         response = self.client.get(self.changelist_url)
-        self.assertResponse(response, self.certs)
+        self.assertResponse(response, self.certs.values())
 
-    @freeze_time("2018-11-01")
-    def test_status(self):
+    @freeze_time(timestamps['everything_valid'])
+    def test_status_all_valid(self):
+        self.client.force_login(self.user)
+
         response = self.client.get('%s?status=valid' % self.changelist_url)
-        self.assertResponse(response, self.certs)
+        self.assertResponse(response, self.certs.values())
         response = self.client.get('%s?status=expired' % self.changelist_url)
         self.assertResponse(response, [])
         response = self.client.get('%s?status=revoked' % self.changelist_url)
         self.assertResponse(response, [])
 
-        # get the cert and manipulate it so that it shows up in the changelist:
-        cert = Certificate.objects.get(serial=self.cert.serial)
-        cert.expires = timezone.now() - timedelta(days=1)
-        cert.save()
+    @freeze_time(timestamps['ca_certs_expired'])
+    def test_status_ca_certs_expired(self):
+        self.client.force_login(self.user)
 
+        response = self.client.get('%s?status=valid' % self.changelist_url)
+        self.assertResponse(response, [
+            self.certs['profile-client'],
+            self.certs['profile-server'],
+            self.certs['profile-webserver'],
+            self.certs['profile-enduser'],
+            self.certs['profile-ocsp'],
+            self.certs['no-extensions'],
+            self.certs['all-extensions'],
+        ])
         response = self.client.get('%s?status=expired' % self.changelist_url)
-        self.assertResponse(response, [self.cert])
-
-        cert.revoke()
+        self.assertResponse(response, [
+            self.certs['root-cert'],
+            self.certs['pwd-cert'],
+            self.certs['ecc-cert'],
+            self.certs['dsa-cert'],
+            self.certs['child-cert'],
+        ])
         response = self.client.get('%s?status=revoked' % self.changelist_url)
-        self.assertResponse(response, [self.cert])
+        self.assertResponse(response, [])
+
+    @freeze_time(timestamps['everything_expired'])
+    def test_status_everything_expired(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get('%s?status=valid' % self.changelist_url)
+        self.assertResponse(response, [])
+        response = self.client.get('%s?status=expired' % self.changelist_url)
+        self.assertResponse(response, self.certs.values())
+        response = self.client.get('%s?status=revoked' % self.changelist_url)
+        self.assertResponse(response, [])
+
+    @freeze_time(timestamps['everything_valid'])
+    def test_status_revoked(self):
+        self.client.force_login(self.user)
+        self.certs['root-cert'].revoke()
+
+        valid = [c for c in self.certs.values() if c != self.certs['root-cert']]
+
+        response = self.client.get('%s?status=valid' % self.changelist_url)
+        self.assertResponse(response, valid)
+        response = self.client.get('%s?status=expired' % self.changelist_url)
+        self.assertResponse(response, [])
+        response = self.client.get('%s?status=revoked' % self.changelist_url)
+        self.assertResponse(response, [self.certs['root-cert']])
 
     def test_unauthorized(self):
         client = Client()
@@ -140,27 +183,33 @@ class ChangelistTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertRequiresLogin(response)
 
 
-class RevokeActionTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
+@override_settings(USE_TZ=True)
+class ChangelistWithTZTestCase(ChangelistTestCase):
+    pass
+
+
+class RevokeActionTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
     """Test the "revoke" action in the changelist."""
 
     def test_basic(self):
-        self.assertNotRevoked(self.cert)
+        self.assertNotRevoked(self.certs['root-cert'])
 
         data = {
-            'action': 'revoke', '_selected_action': [self.cert.pk],
+            'action': 'revoke', '_selected_action': [self.certs['root-cert'].pk],
         }
         response = self.client.post(self.changelist_url, data)
         self.assertRedirects(response, self.changelist_url)
-        self.assertRevoked(self.cert)
+        self.assertRevoked(self.certs['root-cert'])
 
         # revoking revoked certs does nothing:
         response = self.client.post(self.changelist_url, data)
         self.assertRedirects(response, self.changelist_url)
-        self.assertRevoked(self.cert)
+        self.assertRevoked(self.certs['root-cert'])
 
     def test_permissions(self):
+        cert = self.certs['root-cert']
         data = {
-            'action': 'revoke', '_selected_action': [self.cert.pk],
+            'action': 'revoke', '_selected_action': [cert.pk],
         }
 
         # make an anonymous request
@@ -169,7 +218,7 @@ class RevokeActionTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertRequiresLogin(response)
 
         # cert is not revoked
-        cert = Certificate.objects.get(serial=self.cert.serial)
+        cert = Certificate.objects.get(serial=cert.serial)
         self.assertFalse(cert.revoked)
         self.assertIsNone(cert.revoked_reason)
 
@@ -179,7 +228,7 @@ class RevokeActionTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
         response = client.post(self.changelist_url, data)
         self.assertRequiresLogin(response)
-        self.assertNotRevoked(self.cert)
+        self.assertNotRevoked(cert)
 
         # make the user "staff"
         user.is_staff = True
@@ -187,42 +236,35 @@ class RevokeActionTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertTrue(User.objects.get(username='staff').is_staff)  # really is staff, right?
         response = client.post(self.changelist_url, data)
         self.assertEqual(response.status_code, 403)
-        self.assertNotRevoked(self.cert)
+        self.assertNotRevoked(cert)
 
         # now give appropriate permission
         p = Permission.objects.get(codename='change_certificate')
         user.user_permissions.add(p)
         response = client.post(self.changelist_url, data)
-        self.assertRevoked(self.cert)
+        self.assertRevoked(cert)
 
 
 class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     def test_basic(self):
-        for cert in self.certs:
+        for name, cert in self.certs.items():
             response = self.client.get(self.change_url(cert.pk))
             self.assertChangeResponse(response)
 
     def test_revoked(self):
         # view a revoked certificate (fieldsets are collapsed differently)
-        cert = Certificate.objects.get(serial=self.cert.serial)
-        cert.revoke()
+        self.certs['root-cert'].revoke()
 
         response = self.client.get(self.change_url())
         self.assertChangeResponse(response)
 
-        if django.VERSION < (2, 0):  # pragma: django<2.0
-            cls = 'field-box'
-        else:
-            cls = 'fieldBox'
-
-        self.assertContains(response, text='''<div class="%s field-revoked"><label>Revoked:</label>
+        self.assertContains(response, text='''<div class="fieldBox field-revoked"><label>Revoked:</label>
                      <div class="readonly"><img src="/static/admin/img/icon-yes.svg" alt="True"></div>
-                </div>''' % cls, html=True)
+                </div>''', html=True)
 
-    @override_tmpcadir()
     def test_no_san(self):
         # Test display of a certificate with no SAN
-        cert = self.create_cert(self.ca, self.csr_pem, [('CN', 'example.com')], cn_in_san=False)
+        cert = self.certs['no-extensions']
         response = self.client.get(self.change_url(cert.pk))
         self.assertChangeResponse(response)
         self.assertContains(response, text='''
@@ -235,7 +277,8 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 ''', html=True)
 
     def test_change_watchers(self):
-        cert = Certificate.objects.get(serial=self.cert.serial)
+        cert = self.certs['root-cert']
+        cert = Certificate.objects.get(serial=cert.serial)
         watcher = Watcher.objects.create(name='User', mail='user@example.com')
 
         response = self.client.post(self.change_url(), data={
@@ -248,9 +291,10 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
     def test_unsupported_extensions(self):
         self.maxDiff = None
+        cert = self.certs['all-extensions']
         # Act as if no extensions is recognized, to see what happens if we'd encounter an unknown extension.
         with mock.patch.object(Certificate, 'OID_MAPPING', {}), self.assertLogs() as logs:
-            response = self.client.get(self.change_url(self.cert_all.pk))
+            response = self.client.get(self.change_url(cert.pk))
             self.assertChangeResponse(response)
 
         log_msg = 'WARNING:django_ca.models:Unknown extension encountered: %s'
@@ -280,7 +324,7 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         'Older versions of OpenSSL/LibreSSL do not recognize this extension anyway.')
     def test_unsupported_sct(self):
         # Test return value for older versions of OpenSSL
-        cert = self.cert_letsencrypt_jabber_at
+        cert = self.certs['letsencrypt_x3-cert']
 
         oid = ObjectIdentifier('1.1.1.1')
         value = UnrecognizedExtension(oid, b'foo')
@@ -303,6 +347,7 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 302)
 
 
+@freeze_time(timestamps['after_child'])
 class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     @override_tmpcadir()
     def test_get(self):
@@ -321,16 +366,19 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     @override_tmpcadir()
     def test_add(self):
         cn = 'test-add.example.com'
+        ca = self.cas['root']
+        csr = certs['root-cert']['csr']['pem']
+
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.add_url, data={
-                'csr': self.csr_pem,
-                'ca': self.ca.pk,
+                'csr': csr,
+                'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
                 'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
-                'expires': self.ca.expires.strftime('%Y-%m-%d'),
+                'expires': ca.expires.strftime('%Y-%m-%d'),
                 'key_usage_0': ['digitalSignature', 'keyAgreement', ],
                 'key_usage_1': True,
                 'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
@@ -344,15 +392,15 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         cert = Certificate.objects.get(cn=cn)
         self.assertPostIssueCert(post, cert)
         self.assertSubject(cert.x509, [('C', 'US'), ('CN', cn)])
-        self.assertIssuer(self.ca, cert)
-        self.assertAuthorityKeyIdentifier(self.ca, cert)
+        self.assertIssuer(ca, cert)
+        self.assertAuthorityKeyIdentifier(ca, cert)
         self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:%s' % cn))
         self.assertEqual(cert.basic_constraints, BasicConstraints('critical,CA:FALSE'))
         self.assertEqual(cert.key_usage, KeyUsage('critical,digitalSignature,keyAgreement'))
         self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('clientAuth,serverAuth'))
         self.assertEqual(cert.tls_feature, TLSFeature('OCSPMustStaple,MultipleCertStatusRequest'))
-        self.assertEqual(cert.ca, self.ca)
-        self.assertEqual(cert.csr, self.csr_pem)
+        self.assertEqual(cert.ca, ca)
+        self.assertEqual(cert.csr, csr)
 
         # Some extensions are not set
         self.assertIsNone(cert.issuer_alternative_name)
@@ -363,15 +411,18 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_required_subject(self):
+        ca = self.cas['root']
+        csr = certs['root-cert']['csr']['pem']
+
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.add_url, data={
-                'csr': self.csr_pem,
-                'ca': self.ca.pk,
+                'csr': csr,
+                'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
-                'expires': self.ca.expires.strftime('%Y-%m-%d'),
+                'expires': ca.expires.strftime('%Y-%m-%d'),
                 'key_usage_0': ['digitalSignature', 'keyAgreement', ],
                 'key_usage_1': True,
                 'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
@@ -388,19 +439,22 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_add_no_key_usage(self):
+        ca = self.cas['root']
+        csr = certs['root-cert']['csr']['pem']
         cn = 'test-add2.example.com'
         san = 'test-san.example.com'
+
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.add_url, data={
-                'csr': self.csr_pem,
-                'ca': self.ca.pk,
+                'csr': csr,
+                'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
                 'subject_alternative_name_0': san,
                 'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
-                'expires': self.ca.expires.strftime('%Y-%m-%d'),
+                'expires': ca.expires.strftime('%Y-%m-%d'),
                 'key_usage_0': [],
                 'key_usage_1': False,
                 'extended_key_usage_0': [],
@@ -412,12 +466,12 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         cert = Certificate.objects.get(cn=cn)
         self.assertPostIssueCert(post, cert)
         self.assertSubject(cert.x509, [('C', 'US'), ('CN', cn)])
-        self.assertIssuer(self.ca, cert)
-        self.assertAuthorityKeyIdentifier(self.ca, cert)
+        self.assertIssuer(ca, cert)
+        self.assertAuthorityKeyIdentifier(ca, cert)
         self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:%s,DNS:%s' % (cn, san)))
         self.assertEqual(cert.basic_constraints, BasicConstraints('critical,CA:FALSE'))
-        self.assertEqual(cert.ca, self.ca)
-        self.assertEqual(cert.csr, self.csr_pem)
+        self.assertEqual(cert.ca, ca)
+        self.assertEqual(cert.csr, csr)
 
         # Some extensions are not set
         self.assertIsNone(cert.certificatePolicies())
@@ -433,19 +487,21 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_add_with_password(self):
-        cn = 'example.com'
+        ca = self.cas['pwd']
+        csr = certs['pwd-cert']['csr']['pem']
+        cn = 'with-password.example.com'
 
         # first post without password
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.add_url, data={
-                'csr': self.csr_pem,
-                'ca': self.pwd_ca.pk,
+                'csr': csr,
+                'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
                 'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
-                'expires': self.ca.expires.strftime('%Y-%m-%d'),
+                'expires': ca.expires.strftime('%Y-%m-%d'),
                 'key_usage_0': ['digitalSignature', 'keyAgreement', ],
                 'key_usage_1': True,
                 'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
@@ -460,14 +516,14 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         # now post with a false password
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.add_url, data={
-                'csr': self.csr_pem,
-                'ca': self.pwd_ca.pk,
+                'csr': csr,
+                'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
                 'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
-                'expires': self.ca.expires.strftime('%Y-%m-%d'),
+                'expires': ca.expires.strftime('%Y-%m-%d'),
                 'key_usage_0': ['digitalSignature', 'keyAgreement', ],
                 'key_usage_1': True,
                 'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
@@ -483,14 +539,14 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         # post with correct password!
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.add_url, data={
-                'csr': self.csr_pem,
-                'ca': self.pwd_ca.pk,
+                'csr': csr,
+                'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
                 'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
-                'expires': self.pwd_ca.expires.strftime('%Y-%m-%d'),
+                'expires': ca.expires.strftime('%Y-%m-%d'),
                 'key_usage_0': ['digitalSignature', 'keyAgreement', ],
                 'key_usage_1': True,
                 'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
@@ -503,14 +559,14 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         cert = Certificate.objects.get(cn=cn)
         self.assertPostIssueCert(post, cert)
         self.assertSubject(cert.x509, [('C', 'US'), ('CN', cn)])
-        self.assertIssuer(self.pwd_ca, cert)
-        self.assertAuthorityKeyIdentifier(self.pwd_ca, cert)
+        self.assertIssuer(ca, cert)
+        self.assertAuthorityKeyIdentifier(ca, cert)
         self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:%s' % cn))
         self.assertEqual(cert.basic_constraints, BasicConstraints('critical,CA:FALSE'))
         self.assertEqual(cert.key_usage, KeyUsage('critical,digitalSignature,keyAgreement'))
         self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('clientAuth,serverAuth'))
-        self.assertEqual(cert.ca, self.pwd_ca)
-        self.assertEqual(cert.csr, self.csr_pem)
+        self.assertEqual(cert.ca, ca)
+        self.assertEqual(cert.csr, csr)
 
         # Some extensions are not set
         self.assertIsNone(cert.certificatePolicies())
@@ -524,17 +580,19 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_wrong_csr(self):
+        ca = self.cas['root']
         cn = 'test-add-wrong-csr.example.com'
+
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.add_url, data={
-                'csr': 'whatever\n%s' % self.csr_pem,
-                'ca': self.ca.pk,
+                'csr': 'whatever',
+                'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
                 'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
-                'expires': self.ca.expires.strftime('%Y-%m-%d'),
+                'expires': ca.expires.strftime('%Y-%m-%d'),
                 'key_usage_0': ['digitalSignature', 'keyAgreement', ],
                 'key_usage_1': True,
                 'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
@@ -553,17 +611,20 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_wrong_algorithm(self):
+        ca = self.cas['root']
+        csr = certs['pwd-cert']['csr']['pem']
         cn = 'test-add-wrong-algo.example.com'
+
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.add_url, data={
-                'csr': self.csr_pem,
-                'ca': self.ca.pk,
+                'csr': csr,
+                'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
                 'subject_alternative_name_1': True,
                 'algorithm': 'wrong algo',
-                'expires': self.ca.expires.strftime('%Y-%m-%d'),
+                'expires': ca.expires.strftime('%Y-%m-%d'),
                 'key_usage_0': ['digitalSignature', 'keyAgreement', ],
                 'key_usage_1': True,
                 'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
@@ -578,14 +639,20 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
             response.context['adminform'].form.errors,
             {'algorithm': ['Select a valid choice. wrong algo is not one of the available choices.']})
 
+        with self.assertRaises(Certificate.DoesNotExist):
+            Certificate.objects.get(cn=cn)
+
     @override_tmpcadir()
     def test_expires_in_the_past(self):
+        ca = self.cas['root']
+        csr = certs['pwd-cert']['csr']['pem']
         cn = 'test-expires-in-the-past.example.com'
         expires = datetime.now() - timedelta(days=3)
+
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.add_url, data={
-                'csr': self.csr_pem,
-                'ca': self.ca.pk,
+                'csr': csr,
+                'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
@@ -610,15 +677,17 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_expires_too_late(self):
-        cn = 'test-expires-in-the-past.example.com'
-        expires = self.ca.expires + timedelta(days=3)
-        correct_expires = self.ca.expires.strftime('%Y-%m-%d')
+        ca = self.cas['root']
+        csr = certs['pwd-cert']['csr']['pem']
+        cn = 'test-expires-too-late.example.com'
+        expires = ca.expires + timedelta(days=3)
+        correct_expires = ca.expires.strftime('%Y-%m-%d')
         error = 'CA expires on %s, certificate must not expire after that.' % correct_expires
 
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.add_url, data={
-                'csr': self.csr_pem,
-                'ca': self.ca.pk,
+                'csr': csr,
+                'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
@@ -641,21 +710,23 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
             Certificate.objects.get(cn=cn)
 
     def test_add_no_cas(self):
+        ca = self.cas['root']
+        csr = certs['pwd-cert']['csr']['pem']
         CertificateAuthority.objects.update(enabled=False)
         response = self.client.get(self.add_url)
         self.assertEqual(response.status_code, 403)
 
-        cn = 'test-add.example.com'
+        cn = 'test-add-no-cas.example.com'
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.add_url, data={
-                'csr': self.csr_pem,
-                'ca': self.ca.pk,
+                'csr': csr,
+                'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
                 'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
-                'expires': '2018-04-12',
+                'expires': ca.expires.strftime('%Y-%m-%d'),
                 'key_usage_0': ['digitalSignature', 'keyAgreement', ],
                 'key_usage_1': True,
                 'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
@@ -666,7 +737,9 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertFalse(post.called)
 
     def test_add_unusable_cas(self):
-        CertificateAuthority.objects.update(private_key_path='not/exist')
+        ca = self.cas['root']
+        csr = certs['pwd-cert']['csr']['pem']
+        CertificateAuthority.objects.update(private_key_path='not/exist/add-unusable-cas')
 
         # check that we have some enabled CAs, just to make sure this test is really useful
         self.assertTrue(CertificateAuthority.objects.filter(enabled=True).exists())
@@ -680,14 +753,14 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         cn = 'test-add.example.com'
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.add_url, data={
-                'csr': self.csr_pem,
-                'ca': self.ca.pk,
+                'csr': csr,
+                'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
                 'subject_5': cn,
                 'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
-                'expires': '2018-04-12',
+                'expires': ca.expires.strftime('%Y-%m-%d'),
                 'key_usage_0': ['digitalSignature', 'keyAgreement', ],
                 'key_usage_1': True,
                 'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
@@ -698,9 +771,10 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertFalse(post.called)
 
 
-class CSRDetailTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
+class CSRDetailTestCase(AdminTestMixin, DjangoCATestCase):
     def setUp(self):
         self.url = reverse('admin:django_ca_certificate_csr_details')
+        self.csr_pem = certs['root-cert']['csr']['pem']
         super(CSRDetailTestCase, self).setUp()
 
     def test_basic(self):
@@ -762,7 +836,11 @@ class CSRDetailTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertRequiresLogin(response)
 
 
-class CertDownloadTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
+class CertDownloadTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
+    def setUp(self):
+        super(CertDownloadTestCase, self).setUp()
+        self.cert = self.certs['root-cert']
+
     def get_url(self, cert):
         return reverse('admin:django_ca_certificate_download', kwargs={'pk': cert.pk})
 
@@ -771,7 +849,7 @@ class CertDownloadTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         return self.get_url(cert=self.cert)
 
     def test_basic(self):
-        filename = 'host1_example_com.pem'
+        filename = 'root-cert_example_com.pem'
         response = self.client.get('%s?format=PEM' % self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
@@ -779,7 +857,7 @@ class CertDownloadTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(force_text(response.content), self.cert.pub)
 
     def test_der(self):
-        filename = 'host1_example_com.der'
+        filename = 'root-cert_example_com.der'
         response = self.client.get('%s?format=DER' % self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
@@ -835,7 +913,11 @@ class CertDownloadTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertRequiresLogin(response)
 
 
-class CertDownloadBundleTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
+class CertDownloadBundleTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
+    def setUp(self):
+        super(CertDownloadBundleTestCase, self).setUp()
+        self.cert = self.certs['root-cert']
+
     def get_url(self, cert):
         return reverse('admin:django_ca_certificate_download_bundle', kwargs={'pk': cert.pk})
 
@@ -844,14 +926,14 @@ class CertDownloadBundleTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         return self.get_url(cert=self.cert)
 
     def test_cert(self):
-        filename = 'host1_example_com_bundle.pem'
+        filename = 'root-cert_example_com_bundle.pem'
         response = self.client.get('%s?format=PEM' % self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
         self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
         self.assertEqual(force_text(response.content),
-                         '%s\n%s' % (self.cert.pub.strip(), self.ca.pub.strip()))
-        self.assertEqual(self.ca, self.cert.ca)  # just to be sure we test the right thing
+                         '%s\n%s' % (self.cert.pub.strip(), self.cert.ca.pub.strip()))
+        self.assertEqual(self.cas['root'], self.cert.ca)  # just to be sure we test the right thing
 
     def test_invalid_format(self):
         response = self.client.get('%s?format=INVALID' % self.url)
@@ -864,7 +946,11 @@ class CertDownloadBundleTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.content, b'DER/ASN.1 certificates cannot be downloaded as a bundle.')
 
 
-class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithCertTestCase):
+class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithGeneratedCertsTestCase):
+    def setUp(self):
+        super(ResignCertTestCase, self).setUp()
+        self.cert = self.certs['root-cert']
+
     def get_url(self, cert):
         return reverse('admin:django_ca_certificate_actions', kwargs={'pk': cert.pk, 'tool': 'resign'})
 
@@ -904,12 +990,12 @@ class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithCertTestCase)
         cn = 'resigned.example.com'
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.url, data={
-                'ca': self.ca.pk,
+                'ca': self.cert.ca.pk,
                 'profile': 'webserver',
                 'subject_5': cn,
                 'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
-                'expires': self.ca.expires.strftime('%Y-%m-%d'),
+                'expires': self.cert.ca.expires.strftime('%Y-%m-%d'),
                 'key_usage_0': ['digitalSignature', 'keyAgreement', ],
                 'key_usage_1': True,
                 'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
@@ -943,15 +1029,17 @@ class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithCertTestCase)
     @override_tmpcadir()
     def test_webtest_all(self):
         # resign the basic cert
-        form = self.app.get(self.get_url(self.cert_all), user=self.user.username).form
+        cert = self.certs['all-extensions']
+        form = self.app.get(self.get_url(cert), user=self.user.username).form
         form.submit().follow()
-        self.assertResigned(self.cert_all)
+        self.assertResigned(cert)
 
     @override_tmpcadir()
     def test_webtest_no_ext(self):
-        form = self.app.get(self.get_url(self.cert_no_ext), user=self.user.username).form
+        cert = self.certs['no-extensions']
+        form = self.app.get(self.get_url(cert), user=self.user.username).form
         form.submit().follow()
-        self.assertResigned(self.cert_no_ext)
+        self.assertResigned(cert)
 
 
 class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
