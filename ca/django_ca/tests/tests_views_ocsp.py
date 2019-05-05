@@ -69,6 +69,7 @@ ocsp_pem_path = os.path.join(settings.FIXTURES_DIR, ocsp_profile['pub_filename']
 ocsp_pem = ocsp_profile['pub']['pem']
 req1 = _load_req(ocsp_data['nonce']['filename'])
 req1_nonce = hex_to_bytes(ocsp_data['nonce']['nonce'])
+req1_asn1_nonce = hex_to_bytes(ocsp_data['nonce']['asn1crypto_nonce'])
 req_no_nonce = _load_req(ocsp_data['no-nonce']['filename'])
 unknown_req = _load_req('unknown-serial')
 multiple_req = _load_req('multiple-serial')
@@ -81,38 +82,38 @@ urlpatterns = [
         expires=1200,
     ), name='post'),
     url(r'^ocsp/serial/$', OCSPView.as_view(
-        ca=certs['root']['serial'],
+        ca=certs['child']['serial'],
         responder_key=ocsp_profile['key_filename'],
         responder_cert=certs['profile-ocsp']['serial'],
         expires=1300,
     ), name='post-serial'),
     url(r'^ocsp/full-pem/$', OCSPView.as_view(
-        ca=certs['root']['serial'],
+        ca=certs['child']['serial'],
         responder_key=ocsp_profile['key_filename'],
         responder_cert=ocsp_pem,
         expires=1400,
     ), name='post-full-pem'),
     url(r'^ocsp/loaded-oscrypto/$', OCSPView.as_view(
-        ca=certs['root']['serial'],
+        ca=certs['child']['serial'],
         responder_key=ocsp_profile['key_filename'],
         responder_cert=oscrypto.asymmetric.load_certificate(ocsp_pem.encode('utf-8')),
         expires=1500,
     ), name='post-loaded-oscrypto'),
     url(r'^ocsp/loaded-cryptography/$', OCSPView.as_view(
-        ca=certs['root']['serial'],
+        ca=certs['child']['serial'],
         responder_key=ocsp_profile['key_filename'],
         responder_cert=certs['profile-ocsp']['pub']['parsed'],
         expires=1500,
     ), name='post-loaded-cryptography'),
     url(r'^ocsp/abs-path/$', OCSPView.as_view(
-        ca=certs['root']['serial'],
+        ca=certs['child']['serial'],
         responder_key=ocsp_profile['key_filename'],
-        responder_cert=settings.OCSP_PEM_PATH,
+        responder_cert=ocsp_pem_path,
         expires=1500,
     ), name='post-abs-path'),
 
     url(r'^ocsp/cert/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
-        ca=certs['root']['serial'],
+        ca=certs['child']['serial'],
         responder_key=ocsp_profile['key_filename'],
         responder_cert=settings.OCSP_PEM_PATH,
     ), name='get'),
@@ -210,6 +211,7 @@ class OCSPViewTestMixin(object):
 
     def assertOCSP(self, http_response, requested, status='successful', nonce=None,
                    expires=600):
+
         self.assertEqual(http_response['Content-Type'], 'application/ocsp-response')
 
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(http_response.content)
@@ -247,7 +249,7 @@ class OCSPViewTestMixin(object):
         if nonce is not None:
             nonce_ext = response_extensions.pop('nonce')
             self.assertFalse(nonce_ext['critical'].native)
-            self.assertEqual(nonce_ext['extn_value'].native, nonce)
+            self.assertEqual(nonce_ext['extn_value'].native, req1_asn1_nonce)
         self.assertEqual(response_extensions, {})  # no extensions are left
 
         # Verify responder id
