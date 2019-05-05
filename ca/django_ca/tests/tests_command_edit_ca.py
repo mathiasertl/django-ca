@@ -15,7 +15,6 @@
 
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
-from .base import override_settings
 from .base import override_tmpcadir
 
 

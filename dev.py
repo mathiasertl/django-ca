@@ -188,8 +188,8 @@ elif args.command == 'code-quality':
     if status != 0:
         sys.exit(status)
 
-    print('flake8 ca/ setup.py dev.py')
-    status = subprocess.call(['flake8', 'ca/', 'setup.py', 'dev.py'])
+    print('flake8 ca/ setup.py dev.py recreate-fixtures.py')
+    status = subprocess.call(['flake8', 'ca/', 'setup.py', 'dev.py', 'recreate-fixtures.py'])
     if status != 0:
         sys.exit(status)
 

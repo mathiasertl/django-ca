@@ -38,8 +38,8 @@ from django.utils.encoding import force_text
 from .. import ca_settings
 from ..models import Certificate
 from ..subject import Subject
-from ..utils import int_to_hex
 from ..utils import hex_to_bytes
+from ..utils import int_to_hex
 from ..views import OCSPView
 from .base import DjangoCAWithCertTestCase
 from .base import certs

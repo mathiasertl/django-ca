@@ -25,9 +25,9 @@ from .. import ca_settings
 from ..models import Watcher
 from .base import DjangoCAWithCertTestCase
 from .base import certs
-from .base import timestamps
 from .base import override_settings
 from .base import override_tmpcadir
+from .base import timestamps
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})

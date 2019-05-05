@@ -50,9 +50,9 @@ from ..signals import post_revoke_cert
 from ..signals import pre_issue_cert
 from ..signals import pre_revoke_cert
 from ..utils import SUBJECT_FIELDS
-from .base import DjangoCAWithGeneratedCertsTestCase
-from .base import DjangoCAWithCertTestCase
 from .base import DjangoCATestCase
+from .base import DjangoCAWithCertTestCase
+from .base import DjangoCAWithGeneratedCertsTestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir

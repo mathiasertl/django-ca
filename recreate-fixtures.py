@@ -31,31 +31,31 @@ from freezegun import freeze_time
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
-from cryptography.x509 import ocsp
-from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives.serialization import BestAvailableEncryption
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import NoEncryption
 from cryptography.hazmat.primitives.serialization import PrivateFormat
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
+from cryptography.x509 import ocsp
+from cryptography.x509.oid import NameOID
 
-_rootdir = os.path.dirname(os.path.realpath(__file__))  # NOQA
-_sphinx_dir = os.path.join(_rootdir, 'docs', 'source', '_files')  # NOQA
-sys.path.insert(0, os.path.join(_rootdir, 'ca'))  # NOQA
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", 'ca.test_settings')  # NOQA
-import django  # NOQA
-django.setup()  # NOQA
+_rootdir = os.path.dirname(os.path.realpath(__file__))  # NOQA: E402
+_sphinx_dir = os.path.join(_rootdir, 'docs', 'source', '_files')  # NOQA: E402
+sys.path.insert(0, os.path.join(_rootdir, 'ca'))  # NOQA: E402
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", 'ca.test_settings')  # NOQA: E402
+import django  # isort:skip
+django.setup()  # NOQA: E402
 
 from django.conf import settings
 from django.core.management import call_command as manage
 from django.test.utils import override_settings
-from django.utils.six.moves import reload_module
 from django.urls import reverse
+from django.utils.six.moves import reload_module
 
 from django_ca import ca_settings
 from django_ca.extensions import Extension
-from django_ca.extensions import NameConstraints
 from django_ca.extensions import IssuerAlternativeName
+from django_ca.extensions import NameConstraints
 from django_ca.models import Certificate
 from django_ca.models import CertificateAuthority
 from django_ca.profiles import get_cert_profile_kwargs
