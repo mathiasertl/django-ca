@@ -26,7 +26,6 @@ from django.core.cache import cache
 from django.test import Client
 from django.urls import reverse
 
-from ..models import Certificate
 from ..views import CertificateRevocationListView
 from .base import DjangoCAWithCertTestCase
 from .base import override_settings
@@ -58,8 +57,9 @@ urlpatterns = [
 @freeze_time('2019-04-14 12:26:00')
 class GenericCRLViewTests(DjangoCAWithCertTestCase):
     def setUp(self):
-        self.client = Client()
         super(GenericCRLViewTests, self).setUp()
+        self.ca = self.cas['child']
+        self.client = Client()
 
     def tearDown(self):
         cache.clear()
@@ -74,7 +74,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
         self.assertCRL(response.content, encoding=Encoding.DER, expires=600, idp=idp)
 
         # revoke a certificate
-        cert = Certificate.objects.get(serial=self.cert.serial)
+        cert = self.certs['child-cert']
         cert.revoke()
 
         # fetch again - we should see a cached response
@@ -88,12 +88,8 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
         response = self.client.get(reverse('default', kwargs={'serial': self.ca.serial}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-crl')
-        self.assertCRL(response.content, encoding=Encoding.DER, expires=600, idp=idp, certs=[self.cert],
+        self.assertCRL(response.content, encoding=Encoding.DER, expires=600, idp=idp, certs=[cert],
                        crl_number=1)
-
-    @override_settings(USE_TZ=True)
-    def test_basic_with_use_tz(self):
-        self.test_basic()
 
     @override_tmpcadir()
     def test_full_scope(self):
@@ -112,29 +108,30 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
     def test_ca_crl(self):
         idp = self.get_idp(only_contains_ca_certs=True)
 
-        child = self.create_ca(name='child', parent=self.ca)
-        self.assertIsNotNone(child.key(password=None))
+        root = self.cas['root']
+        child = self.cas['child']
+        self.assertIsNotNone(root.key(password=None))
 
-        response = self.client.get(reverse('ca_crl', kwargs={'serial': self.ca.serial}))
+        response = self.client.get(reverse('ca_crl', kwargs={'serial': root.serial}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'text/plain')
-        self.assertCRL(response.content, expires=600, idp=idp)
+        self.assertCRL(response.content, expires=600, idp=idp, signer=root)
 
         child.revoke()
         child.save()
 
         # fetch again - we should see a cached response
-        response = self.client.get(reverse('ca_crl', kwargs={'serial': self.ca.serial}))
+        response = self.client.get(reverse('ca_crl', kwargs={'serial': root.serial}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'text/plain')
-        self.assertCRL(response.content, expires=600, idp=idp)
+        self.assertCRL(response.content, expires=600, idp=idp, signer=root)
 
         # clear the cache and fetch again
         cache.clear()
-        response = self.client.get(reverse('ca_crl', kwargs={'serial': self.ca.serial}))
+        response = self.client.get(reverse('ca_crl', kwargs={'serial': root.serial}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'text/plain')
-        self.assertCRL(response.content, expires=600, idp=idp, certs=[child], crl_number=1)
+        self.assertCRL(response.content, expires=600, idp=idp, certs=[child], crl_number=1, signer=root)
 
     @override_tmpcadir()
     def test_overwrite(self):
@@ -143,10 +140,6 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'text/plain')
         self.assertCRL(response.content, expires=321, idp=idp, algorithm=hashes.MD5())
-
-    @override_settings(USE_TZ=True)
-    def test_overwrite_with_use_tz(self):
-        self.test_overwrite()
 
     @override_tmpcadir()
     def test_deprecated(self):
@@ -161,3 +154,8 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
         self.assertEqual(response['Content-Type'], 'application/pkix-crl')
         idp = self.get_idp(only_contains_user_certs=True)
         self.assertCRL(response.content, encoding=Encoding.DER, expires=600, idp=idp)
+
+
+@override_settings(USE_TZ=True)
+class GenericCRLWithTZViewTests(GenericCRLViewTests):
+    pass
