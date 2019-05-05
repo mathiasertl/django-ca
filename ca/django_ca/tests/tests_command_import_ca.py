@@ -77,7 +77,7 @@ class ImportCATest(DjangoCATestCase):
     @override_tmpcadir()
     def test_der(self):
         cas = {name: data for name, data in certs.items()
-               if data.get('key_der_filename')}
+               if data.get('key_der_filename') and data['type'] == 'ca'}
 
         for name, data in cas.items():
             if data.get('password'):
@@ -94,7 +94,7 @@ class ImportCATest(DjangoCATestCase):
             ca.full_clean()  # assert e.g. max_length in serials
 
             if not data.get('parent'):
-                self.assertSignature([ca], ca)
+                self.assertSignature(reversed(ca.bundle), ca)
 
             self.assertBasic(ca.x509, algo=data['algorithm'])
 
@@ -135,8 +135,10 @@ class ImportCATest(DjangoCATestCase):
     @override_tmpcadir()
     def test_permission_denied(self):
         name = 'testname'
-        pem_path = os.path.join(settings.FIXTURES_DIR, 'root.pem')
-        key_path = os.path.join(settings.FIXTURES_DIR, 'root.key')
+        pem_path = os.path.join(settings.FIXTURES_DIR, certs['root']['pub_filename'])
+        key_path = os.path.join(settings.FIXTURES_DIR, certs['root']['key_filename'])
+        self.assertTrue(os.path.exists(key_path))  # just make sure that file exists
+        self.assertTrue(os.path.exists(pem_path))  # just make sure that file exists
         os.chmod(settings.CA_DIR, 0o000)
 
         try:
@@ -150,8 +152,8 @@ class ImportCATest(DjangoCATestCase):
 
     def test_create_cadir(self):
         name = 'testname'
-        pem_path = os.path.join(settings.FIXTURES_DIR, 'root.pem')
-        key_path = os.path.join(settings.FIXTURES_DIR, 'root.key')
+        pem_path = os.path.join(settings.FIXTURES_DIR, certs['root']['pub_filename'])
+        key_path = os.path.join(settings.FIXTURES_DIR, certs['root']['key_filename'])
 
         tempdir = tempfile.mkdtemp()  # TODO: py3: do this with context manager
         try:
@@ -163,8 +165,8 @@ class ImportCATest(DjangoCATestCase):
 
     def test_create_cadir_permission_denied(self):
         name = 'testname'
-        pem_path = os.path.join(settings.FIXTURES_DIR, 'root.pem')
-        key_path = os.path.join(settings.FIXTURES_DIR, 'root.key')
+        pem_path = os.path.join(settings.FIXTURES_DIR, certs['root']['pub_filename'])
+        key_path = os.path.join(settings.FIXTURES_DIR, certs['root']['key_filename'])
 
         tempdir = tempfile.mkdtemp()  # TODO: py3: do this with context manager
         try:
