@@ -38,8 +38,10 @@ from ..signals import pre_issue_cert
 from ..subject import Subject
 from ..utils import ca_storage
 from .base import DjangoCAWithCertTestCase
+from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
+from .base import timestamps
 
 if six.PY2:
     import mock
@@ -48,7 +50,12 @@ else:
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
+@freeze_time(timestamps['everything_valid'])
 class SignCertTestCase(DjangoCAWithCertTestCase):
+    def setUp(self):
+        super(SignCertTestCase, self).setUp()
+        self.csr_pem = certs['child-cert']['csr']['pem']
+
     @override_tmpcadir()
     def test_from_stdin(self):
         stdin = six.StringIO(self.csr_pem)
