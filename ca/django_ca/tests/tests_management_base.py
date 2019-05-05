@@ -23,11 +23,13 @@ from cryptography.hazmat.primitives.serialization import Encoding
 
 from ..extensions import KeyUsage
 from ..management import base
+from ..models import Certificate
 from ..models import CertificateAuthority
 from ..subject import Subject
 from .base import DjangoCATestCase
 from .base import DjangoCAWithCATestCase
 from .base import DjangoCAWithCertTestCase
+from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
 
@@ -230,12 +232,13 @@ class CertificateActionTestCase(DjangoCAWithCertTestCase):
         self.parser.add_argument('cert', action=base.CertificateAction)
 
     def test_basic(self):
-        ns = self.parser.parse_args([self.cert.serial])
-        self.assertEqual(ns.cert, self.cert)
+        for name, cert in self.certs.items():
+            ns = self.parser.parse_args([certs[name]['serial']])
+            self.assertEqual(ns.cert, cert)
 
     def test_abbreviation(self):
-        ns = self.parser.parse_args([self.cert.serial[:4]])
-        self.assertEqual(ns.cert, self.cert)
+        ns = self.parser.parse_args([certs['root-cert']['serial'][:6]])
+        self.assertEqual(ns.cert, self.certs['root-cert'])
 
     def test_missing(self):
         serial = 'foo'
@@ -245,10 +248,12 @@ class CertificateActionTestCase(DjangoCAWithCertTestCase):
 
     def test_multiple(self):
         # Manually set almost the same serial on second cert
-        self.cert_all.serial = self.cert.serial[:-1] + 'X'
-        self.cert_all.save()
+        cert = Certificate(ca=self.cas['root'])
+        cert.x509 = certs['root-cert']['pub']['parsed']
+        cert.serial = cert.serial[:-1] + 'X'
+        cert.save()
 
-        serial = self.cert_all.serial[:8]
+        serial = cert.serial[:8]
         self.assertParserError([serial],
                                'usage: {script} [-h] cert\n'
                                '{script}: error: {serial}: Multiple certificates match.\n', serial=serial)
@@ -262,13 +267,14 @@ class CertificateAuthorityActionTestCase(DjangoCAWithCATestCase):
 
     @override_tmpcadir()
     def test_basic(self):
-        ns = self.parser.parse_args([self.ca.serial])
-        self.assertEqual(ns.ca, self.ca)
+        for name, ca in self.usable_cas.items():
+            ns = self.parser.parse_args([certs[name]['serial']])
+            self.assertEqual(ns.ca, ca)
 
     @override_tmpcadir()
     def test_abbreviation(self):
-        ns = self.parser.parse_args([self.ca.serial[:4]])
-        self.assertEqual(ns.ca, self.ca)
+        ns = self.parser.parse_args([certs['ecc']['serial'][:6]])
+        self.assertEqual(ns.ca, self.cas['ecc'])
 
     def test_missing(self):
         self.assertParserError(['foo'],
@@ -277,8 +283,9 @@ class CertificateAuthorityActionTestCase(DjangoCAWithCATestCase):
 
     def test_multiple(self):
         # Create a second CA and manually set (almost) the same serial
-        ca2 = self.load_ca(name='child', x509=child_pubkey)
-        ca2.serial = self.ca.serial[:-1] + 'X'
+        ca2 = CertificateAuthority(name='child-duplicate')
+        ca2.x509 = certs['child']['pub']['parsed']
+        ca2.serial = ca2.serial[:-1] + 'X'
         ca2.save()
 
         serial = ca2.serial[:8]
@@ -318,8 +325,8 @@ class CertificateAuthorityActionTestCase(DjangoCAWithCATestCase):
     @override_tmpcadir()
     def test_password(self):
         # Test that the action works with a password-encrypted ca
-        ns = self.parser.parse_args([self.pwd_ca.serial])
-        self.assertEqual(ns.ca, self.pwd_ca)
+        ns = self.parser.parse_args([certs['pwd']['serial']])
+        self.assertEqual(ns.ca, self.cas['pwd'])
 
 
 class URLActionTestCase(DjangoCATestCase):
