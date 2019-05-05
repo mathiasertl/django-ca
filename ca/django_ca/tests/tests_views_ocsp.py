@@ -115,7 +115,7 @@ urlpatterns = [
     url(r'^ocsp/cert/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca=certs['child']['serial'],
         responder_key=ocsp_profile['key_filename'],
-        responder_cert=settings.OCSP_PEM_PATH,
+        responder_cert=ocsp_profile['pub_filename'],
     ), name='get'),
 
     url(r'^ocsp/ca/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
@@ -140,17 +140,17 @@ urlpatterns = [
 
     # set invalid responder_certs
     url(r'^ocsp/false-pem/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
-        ca=certs['root']['serial'],
+        ca=certs['child']['serial'],
         responder_key=ocsp_profile['key_filename'],
         responder_cert='/false/foobar/',
     ), name='false-pem'),
     url(r'^ocsp/false-pem-serial/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
-        ca=certs['root']['serial'],
+        ca=certs['child']['serial'],
         responder_key=ocsp_profile['key_filename'],
         responder_cert='AA:BB:CC',
     ), name='false-pem-serial'),
     url(r'^ocsp/false-pem-full/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
-        ca=certs['root']['serial'],
+        ca=certs['child']['serial'],
         responder_key=ocsp_profile['key_filename'],
         responder_cert='-----BEGIN CERTIFICATE-----\nvery-mean!',
     ), name='false-pem-full'),
@@ -339,11 +339,13 @@ class OCSPTestGenericView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
 @override_settings(ROOT_URLCONF=__name__)
 @freeze_time("2019-02-03 15:43:12")
 class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
+    @override_tmpcadir()
     def test_get(self):
+        cert = self.certs['child-cert']
         data = base64.b64encode(req1).decode('utf-8')
         response = self.client.get(reverse('get', kwargs={'data': data}))
         self.assertEqual(response.status_code, 200)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
+        self.assertOCSP(response, requested=[cert], nonce=req1_nonce)
 
     @override_settings(USE_TZ=True)
     def test_get_with_use_tz(self):
@@ -396,11 +398,13 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.test_post()
 
     @unittest.skipUnless(ca_settings.CRYPTOGRAPHY_OCSP, 'Skip cryptography test for cryptography<2.4')
+    @override_tmpcadir()
     def test_loaded_cryptography_cert(self):
+        cert = self.certs['child-cert']
         response = self.client.post(reverse('post-loaded-cryptography'), req1,
                                     content_type='application/ocsp-request')
         self.assertEqual(response.status_code, 200)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1500)
+        self.assertOCSP(response, requested=[cert], nonce=req1_nonce, expires=1500)
 
     @unittest.skipIf(ca_settings.CRYPTOGRAPHY_OCSP, 'Skip cryptography test for cryptography>=2.4')
     def test_loaded_oscrypto_cert(self):
@@ -410,40 +414,44 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1500)
 
     @unittest.skipUnless(ca_settings.CRYPTOGRAPHY_OCSP, 'Skip cryptography test for cryptography<2.4')
+    @override_tmpcadir()
     def test_no_nonce(self):
         from cryptography.x509 import ocsp
+        cert = self.certs['child-cert']
         builder = ocsp.OCSPRequestBuilder()
-        builder = builder.add_certificate(self.cert.x509, self.cert.ca.x509, hashes.SHA1())
+        builder = builder.add_certificate(cert.x509, cert.ca.x509, hashes.SHA1())
         data = base64.b64encode(builder.build().public_bytes(serialization.Encoding.DER))
 
         response = self.client.get(reverse('get', kwargs={'data': data.decode('utf-8')}))
-        self.assertOCSP(response, requested=[self.cert], nonce=None)
+        self.assertOCSP(response, requested=[cert], nonce=None)
 
+    @override_tmpcadir()
     def test_no_nonce_asn1crypto(self):
+        cert = self.certs['child-cert']
         builder = ocspbuilder.OCSPRequestBuilder(
-            certificate=asn1crypto.x509.Certificate.load(self.cert.x509.public_bytes(Encoding.DER)),
-            issuer=asn1crypto.x509.Certificate.load(self.cert.ca.x509.public_bytes(Encoding.DER))
+            certificate=asn1crypto.x509.Certificate.load(cert.x509.public_bytes(Encoding.DER)),
+            issuer=asn1crypto.x509.Certificate.load(cert.ca.x509.public_bytes(Encoding.DER))
         )
         builder.nonce = False
         data = base64.b64encode(builder.build().dump()).decode('utf-8')
 
         response = self.client.get(reverse('get', kwargs={'data': data}))
         self.assertEqual(response.status_code, 200)
-        self.assertOCSP(response, requested=[self.cert], nonce=None)
+        self.assertOCSP(response, requested=[cert], nonce=None)
 
     @override_tmpcadir()
     def test_revoked(self):
-        cert = Certificate.objects.get(pk=self.cert.pk)
+        cert = self.certs['child-cert']
         cert.revoke()
 
         response = self.client.post(reverse('post'), req1, content_type='application/ocsp-request')
         self.assertEqual(response.status_code, 200)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1200)
+        self.assertOCSP(response, requested=[cert], nonce=req1_nonce, expires=1200)
 
         cert.revoke('affiliation_changed')
         response = self.client.post(reverse('post'), req1, content_type='application/ocsp-request')
         self.assertEqual(response.status_code, 200)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1200)
+        self.assertOCSP(response, requested=[cert], nonce=req1_nonce, expires=1200)
 
     def test_ca_ocsp(self):
         data = base64.b64encode(req1).decode('utf-8')
@@ -502,9 +510,11 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
         self.assertEqual(ocsp_response['response_status'].native, 'malformed_request')
 
+    @override_tmpcadir()
     def test_bad_ca_cert(self):
-        self.ca.pub = 'foobar'
-        self.ca.save()
+        ca = self.cas['child']
+        ca.pub = 'foobar'
+        ca.save()
 
         data = base64.b64encode(req1).decode('utf-8')
         response = self.client.get(reverse('get', kwargs={'data': data}))
@@ -520,20 +530,18 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
         self.assertEqual(ocsp_response['response_status'].native, 'internal_error')
 
+    @override_tmpcadir()
     def test_bad_responder_pem(self):
         data = base64.b64encode(req1).decode('utf-8')
         msg = 'ERROR:django_ca.views:Could not read responder key/cert.'
         prefix = 'WARNING:django_ca.views'
 
-        key_msg = '%s:%%s: OCSP responder uses absolute path to private key. Please see %s.' % (
-            prefix, ca_settings.CA_FILE_STORAGE_URL)
         pem_msg = '%s:%%s: OCSP responder uses absolute path to certificate. Please see %s.' % (
             prefix, ca_settings.CA_FILE_STORAGE_URL)
 
         with self.assertLogs() as cm:
             response = self.client.get(reverse('false-pem', kwargs={'data': data}))
         self.assertEqual(cm.output, [
-            key_msg % settings.OCSP_KEY_PATH,
             pem_msg % '/false/foobar/',
             msg,
         ])
@@ -544,7 +552,6 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         with self.assertLogs() as cm:
             response = self.client.get(reverse('false-pem-serial', kwargs={'data': data}))
         self.assertEqual(cm.output, [
-            key_msg % settings.OCSP_KEY_PATH,
             msg,
         ])
         self.assertEqual(response.status_code, 200)
@@ -554,7 +561,6 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         with self.assertLogs() as cm:
             response = self.client.get(reverse('false-pem-full', kwargs={'data': data}))
         self.assertEqual(cm.output, [
-            key_msg % settings.OCSP_KEY_PATH,
             msg,
         ])
         self.assertEqual(response.status_code, 200)
