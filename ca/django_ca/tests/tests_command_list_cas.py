@@ -44,13 +44,13 @@ class ListCertsTestCase(DjangoCATestCase):
     def test_all_cas(self):
         self.load_all_cas()
         stdout, stderr = self.cmd('list_cas')
-        self.assertEqual(stdout, """{letsencrypt_x1[serial]} - {letsencrypt_x1[name]}
-{letsencrypt_x3[serial]} - {letsencrypt_x3[name]}
-{dsa[serial]} - {dsa[name]}
+        self.assertEqual(stdout, """{dsa[serial]} - {dsa[name]}
 {ecc[serial]} - {ecc[name]}
 {pwd[serial]} - {pwd[name]}
 {root[serial]} - {root[name]}
 {child[serial]} - {child[name]}
+{letsencrypt_x1[serial]} - {letsencrypt_x1[name]}
+{letsencrypt_x3[serial]} - {letsencrypt_x3[name]}
 {dst_root_x3[serial]} - {dst_root_x3[name]}
 {google_g3[serial]} - {google_g3[name]}
 {globalsign_r2_root[serial]} - {globalsign_r2_root[name]}
