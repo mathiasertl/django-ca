@@ -1,5 +1,6 @@
 # Django settings for ca project.
 
+import json
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -171,6 +172,8 @@ LOGGING = {
 # Fixture data used by test cases
 FIXTURES_DIR = os.path.join(BASE_DIR, 'django_ca', 'tests', 'fixtures')
 SPHINX_FIXTURES_DIR = os.path.join(ROOT_DIR, 'docs', 'source', '_files')
+with open(os.path.join(FIXTURES_DIR, 'cert-data.json')) as stream:
+    _fixture_data = json.load(stream)
 ROOT_SERIAL = '4E:1E:2A:29:F9:4C:45:CF:12:2F:2B:17:9E:BF:D4:80:29:C6:37:C7'
 ROOT_KEY_PATH = os.path.join(FIXTURES_DIR, 'root.key')
 ROOT_PEM_PATH = os.path.join(FIXTURES_DIR, 'root.pem')
@@ -197,29 +200,9 @@ CA_DIR = '/non/existent'
 
 # TODO: get serial and paths from fixture data
 CA_OCSP_URLS = {
-    'root': {
-        'ca': ROOT_SERIAL,
-        'responder_key': OCSP_KEY_PATH,
-        'responder_cert': OCSP_PEM_PATH,
-    },
     'child': {
-        'ca': ROOT_SERIAL,
-        'responder_key': OCSP_KEY_PATH,
-        'responder_cert': OCSP_PEM_PATH,
-    },
-    'pwd': {
-        'ca': ROOT_SERIAL,
-        'responder_key': OCSP_KEY_PATH,
-        'responder_cert': OCSP_PEM_PATH,
-    },
-    'ecc': {
-        'ca': ROOT_SERIAL,
-        'responder_key': OCSP_KEY_PATH,
-        'responder_cert': OCSP_PEM_PATH,
-    },
-    'dsa': {
-        'ca': ROOT_SERIAL,
-        'responder_key': OCSP_KEY_PATH,
-        'responder_cert': OCSP_PEM_PATH,
+        'ca': _fixture_data['certs']['child']['serial'],
+        'responder_key': _fixture_data['certs']['profile-ocsp']['key_filename'],
+        'responder_cert': _fixture_data['certs']['profile-ocsp']['pub_filename'],
     },
 }

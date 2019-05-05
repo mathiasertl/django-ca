@@ -306,34 +306,28 @@ class OCSPViewTestMixin(object):
         self.assertEqual(signature.native, expected_signature)
 
 
-@override_settings(CA_OCSP_URLS={
-    'root': {
-        'ca': certs['root']['serial'],
-        'responder_key': os.path.join(settings.FIXTURES_DIR, 'profile-ocsp.key'),
-        'responder_cert': os.path.join(settings.FIXTURES_DIR, 'ocsp.pem'),
-    },
-})
 class OCSPTestGenericView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
+    @override_tmpcadir()
     def test_get(self):
+        cert = self.certs['child-cert']
         data = base64.b64encode(req1).decode('utf-8')
-        url = reverse('django_ca:ocsp-get-root', kwargs={'data': data})
+        url = reverse('django_ca:ocsp-get-child', kwargs={'data': data})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
+        self.assertOCSP(response, requested=[cert], nonce=req1_nonce)
 
-    @override_settings(USE_TZ=True)
-    def test_get_with_use_tz(self):
-        self.test_get()
-
+    @override_tmpcadir()
     def test_post(self):
-        response = self.client.post(reverse('django_ca:ocsp-post-root'), req1,
+        cert = self.certs['child-cert']
+        response = self.client.post(reverse('django_ca:ocsp-post-child'), req1,
                                     content_type='application/ocsp-request')
         self.assertEqual(response.status_code, 200)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
+        self.assertOCSP(response, requested=[cert], nonce=req1_nonce)
 
-    @override_settings(USE_TZ=True)
-    def test_post_with_use_tz(self):
-        self.test_post()
+
+@override_settings(USE_TZ=True)
+class OCSPTestGenericViewWithTZ(OCSPTestGenericView):
+    pass
 
 
 @override_settings(ROOT_URLCONF=__name__)
@@ -346,10 +340,6 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         response = self.client.get(reverse('get', kwargs={'data': data}))
         self.assertEqual(response.status_code, 200)
         self.assertOCSP(response, requested=[cert], nonce=req1_nonce)
-
-    @override_settings(USE_TZ=True)
-    def test_get_with_use_tz(self):
-        self.test_get()
 
     def test_bad_query(self):
         response = self.client.get(reverse('get', kwargs={'data': 'XXX'}))
@@ -392,10 +382,6 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         response = self.client.post(reverse('post-abs-path'), req1, content_type='application/ocsp-request')
         self.assertEqual(response.status_code, 200)
         self.assertOCSP(response, requested=[cert], nonce=req1_nonce, expires=1500)
-
-    @override_settings(USE_TZ=True)
-    def test_post_with_use_tz(self):
-        self.test_post()
 
     @unittest.skipUnless(ca_settings.CRYPTOGRAPHY_OCSP, 'Skip cryptography test for cryptography<2.4')
     @override_tmpcadir()
@@ -566,3 +552,8 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 200)
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
         self.assertEqual(ocsp_response['response_status'].native, 'internal_error')
+
+
+@override_settings(USE_TZ=True)
+class OCSPWithTZTestView(OCSPTestView):
+    pass
