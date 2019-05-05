@@ -394,6 +394,8 @@ class KnownValuesExtension(ListExtension):
     KNOWN_VALUES = set()
 
     def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return False
         this = list(sorted(self.value))
         that = list(sorted(other.value))
         return isinstance(other, type(self)) and self.critical == other.critical and this == that

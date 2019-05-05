@@ -682,6 +682,7 @@ class KeyUsageTestCase(TestCase):
     def test_ne(self):
         self.assertNotEqual(KeyUsage('cRLSign'), KeyUsage('keyCertSign'))
         self.assertNotEqual(KeyUsage('cRLSign'), KeyUsage('critical,cRLSign'))
+        self.assertNotEqual(KeyUsage('cRLSign'), 10)
 
     def test_sanity_checks(self):
         # there are some sanity checks
@@ -776,6 +777,7 @@ class ExtendedKeyUsageTestCase(TestCase):
     def test_ne(self):
         self.assertNotEqual(ExtendedKeyUsage('serverAuth'), ExtendedKeyUsage('clientAuth'))
         self.assertNotEqual(ExtendedKeyUsage('serverAuth'), ExtendedKeyUsage('critical,serverAuth'))
+        self.assertNotEqual(ExtendedKeyUsage('serverAuth'), 10)
 
     def test_not_critical(self):
         self.assertBasic(ExtendedKeyUsage('serverAuth,clientAuth'), critical=False)
@@ -1338,3 +1340,4 @@ class TLSFeatureTestCase(TestCase):
     def test_ne(self):
         self.assertNotEqual(TLSFeature('OCSPMustStaple'), TLSFeature('MultipleCertStatusRequest'))
         self.assertNotEqual(TLSFeature('OCSPMustStaple'), TLSFeature('critical,OCSPMustStaple'))
+        self.assertNotEqual(TLSFeature('OCSPMustStaple'), 10)
