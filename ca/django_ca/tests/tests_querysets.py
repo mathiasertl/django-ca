@@ -27,9 +27,10 @@ from ..models import Certificate
 from ..models import CertificateAuthority
 from ..subject import Subject
 from .base import DjangoCATestCase
-from .base import DjangoCAWithCertTestCase
+from .base import DjangoCAWithGeneratedCertsTestCase
 from .base import override_settings
 from .base import override_tmpcadir
+from .base import timestamps
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024)
@@ -106,41 +107,35 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
             CertificateAuthority.objects.init(key_size=int(key_size / 4), **kwargs)
 
 
-class CertificateQuerysetTestCase(DjangoCAWithCertTestCase):
+class CertificateQuerysetTestCase(DjangoCAWithGeneratedCertsTestCase):
     def assertQuerySet(self, qs, *items):
         self.assertCountEqual(list(qs), items)
 
     def test_validity(self):
-        with freeze_time('2018-12-26'):
-            certs = list(self.certs)
-            certs.remove(self.cert_letsencrypt_jabber_at)
+        with freeze_time(timestamps['everything_valid']):
+            self.assertQuerySet(Certificate.objects.expired())
             self.assertQuerySet(Certificate.objects.not_yet_valid())
-            self.assertQuerySet(Certificate.objects.valid(), *certs)
-            self.assertQuerySet(Certificate.objects.expired(), self.cert_letsencrypt_jabber_at)
+            self.assertQuerySet(Certificate.objects.valid(), *self.certs.values())
 
-        with freeze_time('2018-01-01'):
-            self.assertQuerySet(
-                Certificate.objects.not_yet_valid(),
-                self.cert_all, self.cert_no_ext, self.ocsp,
-                self.cert_letsencrypt_jabber_at, self.cert_cloudflare_1
-            )
-            self.assertQuerySet(Certificate.objects.valid(),
-                                self.cert, self.cert2, self.cert3,
-                                self.cert_multiple_ous_and_no_ext,
-                                self.cert_godaddy_derstandardat)
-            self.assertQuerySet(Certificate.objects.expired())
-
-        with freeze_time('2017-01-01'):
-            self.assertQuerySet(
-                Certificate.objects.not_yet_valid(),
-                self.cert, self.cert2, self.cert3, self.ocsp, self.cert_all, self.cert_no_ext,
-                self.cert_letsencrypt_jabber_at, self.cert_cloudflare_1, self.cert_godaddy_derstandardat
-            )
-            self.assertQuerySet(Certificate.objects.valid(), self.cert_multiple_ous_and_no_ext)
-            self.assertQuerySet(Certificate.objects.expired())
-
-        # All certs are invalid
-        with freeze_time('2099-01-01'):
+        with freeze_time(timestamps['everything_expired']):
+            self.assertQuerySet(Certificate.objects.expired(), *self.certs.values())
             self.assertQuerySet(Certificate.objects.not_yet_valid())
             self.assertQuerySet(Certificate.objects.valid())
-            self.assertQuerySet(Certificate.objects.expired(), *self.certs)
+
+        with freeze_time(timestamps['before_everything']):
+            self.assertQuerySet(Certificate.objects.expired())
+            self.assertQuerySet(Certificate.objects.not_yet_valid(), *self.certs.values())
+            self.assertQuerySet(Certificate.objects.valid())
+
+        expired = [
+            self.certs['root-cert'],
+            self.certs['child-cert'],
+            self.certs['ecc-cert'],
+            self.certs['dsa-cert'],
+            self.certs['pwd-cert'],
+        ]
+        valid = [c for c in self.certs.values() if c not in expired]
+        with freeze_time(timestamps['ca_certs_expired']):
+            self.assertQuerySet(Certificate.objects.expired(), *expired)
+            self.assertQuerySet(Certificate.objects.not_yet_valid())
+            self.assertQuerySet(Certificate.objects.valid(), *valid)
