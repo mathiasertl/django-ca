@@ -393,6 +393,14 @@ class KnownValuesExtension(ListExtension):
     """
     KNOWN_VALUES = set()
 
+    def __eq__(self, other):
+        this = list(sorted(self.value))
+        that = list(sorted(other.value))
+        return isinstance(other, type(self)) and self.critical == other.critical and this == that
+
+    def __hash__(self):
+        return hash((self.__class__, tuple(sorted(self.value)), self.critical, ))
+
     def _test_value(self):
         diff = set(self.value) - self.KNOWN_VALUES
         if diff:

@@ -45,7 +45,6 @@ from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
 from ..extensions import UnrecognizedExtension
 from .base import DjangoCAWithCertTestCase
-from .base import cryptography_version
 
 if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
     from ..extensions import PrecertPoison
@@ -238,6 +237,19 @@ class KnownValuesExtensionTestCase(TestCase):
 
         with self.assertRaisesRegex(ValueError, r'^Unknown value\(s\): bla, hugo$'):
             self.cls({'value': ['bla', 'hugo']})
+
+    def test_eq(self):
+        self.assertEqual(self.cls('foo'), self.cls('foo'))
+        self.assertEqual(self.cls('foo,bar'), self.cls('foo,bar'))
+        self.assertEqual(self.cls('foo,bar'), self.cls('bar,foo'))
+
+        self.assertEqual(self.cls('critical,foo'), self.cls('critical,foo'))
+        self.assertEqual(self.cls('critical,foo,bar'), self.cls('critical,foo,bar'))
+        self.assertEqual(self.cls('critical,foo,bar'), self.cls('critical,bar,foo'))
+
+    def test_ne(self):
+        self.assertNotEqual(self.cls('foo'), self.cls('bar'))
+        self.assertNotEqual(self.cls('foo'), self.cls('critical,foo'))
 
     def test_operators(self):
         ext = self.cls('foo')
@@ -658,6 +670,19 @@ class KeyUsageTestCase(TestCase):
         self.assertNotEqual(hash(ext1), hash(ext3))
         self.assertNotEqual(hash(ext2), hash(ext3))
 
+    def test_eq(self):
+        self.assertEqual(KeyUsage('cRLSign'), KeyUsage('cRLSign'))
+        self.assertEqual(KeyUsage('cRLSign,keyCertSign'), KeyUsage('cRLSign,keyCertSign'))
+        self.assertEqual(KeyUsage('cRLSign,keyCertSign'), KeyUsage('keyCertSign,cRLSign'))
+
+        self.assertEqual(KeyUsage('critical,cRLSign'), KeyUsage('critical,cRLSign'))
+        self.assertEqual(KeyUsage('critical,cRLSign,keyCertSign'), KeyUsage('critical,cRLSign,keyCertSign'))
+        self.assertEqual(KeyUsage('critical,cRLSign,keyCertSign'), KeyUsage('critical,keyCertSign,cRLSign'))
+
+    def test_ne(self):
+        self.assertNotEqual(KeyUsage('cRLSign'), KeyUsage('keyCertSign'))
+        self.assertNotEqual(KeyUsage('cRLSign'), KeyUsage('critical,cRLSign'))
+
     def test_sanity_checks(self):
         # there are some sanity checks
         self.assertEqual(KeyUsage('decipherOnly').value, ['decipherOnly', 'keyAgreement'])
@@ -736,6 +761,21 @@ class ExtendedKeyUsageTestCase(TestCase):
         self.assertNotEqual(hash(ext1), hash(ext2))
         self.assertNotEqual(hash(ext1), hash(ext3))
         self.assertNotEqual(hash(ext2), hash(ext3))
+
+    def test_eq(self):
+        self.assertEqual(ExtendedKeyUsage('serverAuth'), ExtendedKeyUsage('serverAuth'))
+        self.assertEqual(ExtendedKeyUsage('serverAuth,clientAuth'), ExtendedKeyUsage('serverAuth,clientAuth'))
+        self.assertEqual(ExtendedKeyUsage('serverAuth,clientAuth'), ExtendedKeyUsage('clientAuth,serverAuth'))
+
+        self.assertEqual(ExtendedKeyUsage('critical,serverAuth'), ExtendedKeyUsage('critical,serverAuth'))
+        self.assertEqual(ExtendedKeyUsage('critical,serverAuth,clientAuth'),
+                         ExtendedKeyUsage('critical,serverAuth,clientAuth'))
+        self.assertEqual(ExtendedKeyUsage('critical,serverAuth,clientAuth'),
+                         ExtendedKeyUsage('critical,clientAuth,serverAuth'))
+
+    def test_ne(self):
+        self.assertNotEqual(ExtendedKeyUsage('serverAuth'), ExtendedKeyUsage('clientAuth'))
+        self.assertNotEqual(ExtendedKeyUsage('serverAuth'), ExtendedKeyUsage('critical,serverAuth'))
 
     def test_not_critical(self):
         self.assertBasic(ExtendedKeyUsage('serverAuth,clientAuth'), critical=False)
@@ -1281,3 +1321,20 @@ class TLSFeatureTestCase(TestCase):
         self.assertNotEqual(hash(ext1), hash(ext2))
         self.assertNotEqual(hash(ext1), hash(ext3))
         self.assertNotEqual(hash(ext2), hash(ext3))
+
+    def test_eq(self):
+        self.assertEqual(TLSFeature('OCSPMustStaple'), TLSFeature('OCSPMustStaple'))
+        self.assertEqual(TLSFeature('OCSPMustStaple,MultipleCertStatusRequest'),
+                         TLSFeature('OCSPMustStaple,MultipleCertStatusRequest'))
+        self.assertEqual(TLSFeature('OCSPMustStaple,MultipleCertStatusRequest'),
+                         TLSFeature('MultipleCertStatusRequest,OCSPMustStaple'))
+
+        self.assertEqual(TLSFeature('critical,OCSPMustStaple'), TLSFeature('critical,OCSPMustStaple'))
+        self.assertEqual(TLSFeature('critical,OCSPMustStaple,MultipleCertStatusRequest'),
+                         TLSFeature('critical,OCSPMustStaple,MultipleCertStatusRequest'))
+        self.assertEqual(TLSFeature('critical,OCSPMustStaple,MultipleCertStatusRequest'),
+                         TLSFeature('critical,MultipleCertStatusRequest,OCSPMustStaple'))
+
+    def test_ne(self):
+        self.assertNotEqual(TLSFeature('OCSPMustStaple'), TLSFeature('MultipleCertStatusRequest'))
+        self.assertNotEqual(TLSFeature('OCSPMustStaple'), TLSFeature('critical,OCSPMustStaple'))
