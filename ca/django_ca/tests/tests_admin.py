@@ -1043,6 +1043,10 @@ class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithGeneratedCert
 
 
 class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
+    def setUp(self):
+        super(RevokeCertViewTestCase, self).setUp()
+        self.cert = self.certs['root-cert']
+
     def get_url(self, cert):
         return reverse('admin:django_ca_certificate_actions', kwargs={'pk': cert.pk, 'tool': 'revoke_change'})
 
