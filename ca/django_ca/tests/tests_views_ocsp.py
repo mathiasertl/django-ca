@@ -24,8 +24,6 @@ import asn1crypto
 import asn1crypto.x509
 import ocspbuilder
 import oscrypto
-from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -41,9 +39,11 @@ from .. import ca_settings
 from ..models import Certificate
 from ..subject import Subject
 from ..utils import int_to_hex
+from ..utils import hex_to_bytes
 from ..views import OCSPView
 from .base import DjangoCAWithCertTestCase
 from .base import certs
+from .base import ocsp_data
 from .base import override_settings
 from .base import override_tmpcadir
 
@@ -63,65 +63,70 @@ def _load_req(req):
         return stream.read()
 
 
-req1 = _load_req('req1')
-req1_nonce = b'5ul\xc4\xb6\xccP\xe8\xd8\xbd\x16xA \r9'
+ocsp_profile = certs['profile-ocsp']
+ocsp_key_path = os.path.join(settings.FIXTURES_DIR, ocsp_profile['key_filename'])
+ocsp_pem_path = os.path.join(settings.FIXTURES_DIR, ocsp_profile['pub_filename'])
+ocsp_pem = ocsp_profile['pub']['pem']
+req1 = _load_req(ocsp_data['nonce']['filename'])
+req1_nonce = hex_to_bytes(ocsp_data['nonce']['nonce'])
+req_no_nonce = _load_req(ocsp_data['no-nonce']['filename'])
 unknown_req = _load_req('unknown-serial')
 multiple_req = _load_req('multiple-serial')
 
 urlpatterns = [
     url(r'^ocsp/$', OCSPView.as_view(
-        ca=certs['root']['serial'],
-        responder_key='ocsp.key',
-        responder_cert='ocsp.pem',
+        ca=certs['child']['serial'],
+        responder_key=ocsp_profile['key_filename'],
+        responder_cert=ocsp_profile['pub_filename'],
         expires=1200,
     ), name='post'),
     url(r'^ocsp/serial/$', OCSPView.as_view(
         ca=certs['root']['serial'],
-        responder_key=settings.OCSP_KEY_PATH,
-        responder_cert=certs['ocsp']['serial'],
+        responder_key=ocsp_profile['key_filename'],
+        responder_cert=certs['profile-ocsp']['serial'],
         expires=1300,
     ), name='post-serial'),
     url(r'^ocsp/full-pem/$', OCSPView.as_view(
         ca=certs['root']['serial'],
-        responder_key=settings.OCSP_KEY_PATH,
-        responder_cert=ocsp_pem.decode('utf-8'),
+        responder_key=ocsp_profile['key_filename'],
+        responder_cert=ocsp_pem,
         expires=1400,
     ), name='post-full-pem'),
     url(r'^ocsp/loaded-oscrypto/$', OCSPView.as_view(
         ca=certs['root']['serial'],
-        responder_key=settings.OCSP_KEY_PATH,
-        responder_cert=oscrypto.asymmetric.load_certificate(ocsp_pem),
+        responder_key=ocsp_profile['key_filename'],
+        responder_cert=oscrypto.asymmetric.load_certificate(ocsp_pem.encode('utf-8')),
         expires=1500,
     ), name='post-loaded-oscrypto'),
     url(r'^ocsp/loaded-cryptography/$', OCSPView.as_view(
         ca=certs['root']['serial'],
-        responder_key=settings.OCSP_KEY_PATH,
-        responder_cert=x509.load_pem_x509_certificate(ocsp_pem, default_backend()),
+        responder_key=ocsp_profile['key_filename'],
+        responder_cert=certs['profile-ocsp']['pub']['parsed'],
         expires=1500,
     ), name='post-loaded-cryptography'),
     url(r'^ocsp/abs-path/$', OCSPView.as_view(
         ca=certs['root']['serial'],
-        responder_key=settings.OCSP_KEY_PATH,
+        responder_key=ocsp_profile['key_filename'],
         responder_cert=settings.OCSP_PEM_PATH,
         expires=1500,
     ), name='post-abs-path'),
 
     url(r'^ocsp/cert/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca=certs['root']['serial'],
-        responder_key=settings.OCSP_KEY_PATH,
+        responder_key=ocsp_profile['key_filename'],
         responder_cert=settings.OCSP_PEM_PATH,
     ), name='get'),
 
     url(r'^ocsp/ca/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca=certs['root']['serial'],
-        responder_key=settings.OCSP_KEY_PATH,
+        responder_key=ocsp_profile['key_filename'],
         responder_cert=settings.OCSP_PEM_PATH,
         ca_ocsp=True,
     ), name='get-ca'),
 
     url(r'^ocsp-unknown/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca='unknown',
-        responder_key=settings.OCSP_KEY_PATH,
+        responder_key=ocsp_profile['key_filename'],
         responder_cert=settings.OCSP_PEM_PATH,
     ), name='unknown'),
 
@@ -135,17 +140,17 @@ urlpatterns = [
     # set invalid responder_certs
     url(r'^ocsp/false-pem/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca=certs['root']['serial'],
-        responder_key=settings.OCSP_KEY_PATH,
+        responder_key=ocsp_profile['key_filename'],
         responder_cert='/false/foobar/',
     ), name='false-pem'),
     url(r'^ocsp/false-pem-serial/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca=certs['root']['serial'],
-        responder_key=settings.OCSP_KEY_PATH,
+        responder_key=ocsp_profile['key_filename'],
         responder_cert='AA:BB:CC',
     ), name='false-pem-serial'),
     url(r'^ocsp/false-pem-full/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca=certs['root']['serial'],
-        responder_key=settings.OCSP_KEY_PATH,
+        responder_key=ocsp_profile['key_filename'],
         responder_cert='-----BEGIN CERTIFICATE-----\nvery-mean!',
     ), name='false-pem-full'),
 ]
@@ -168,7 +173,8 @@ class OCSPViewTestMixin(object):
         self.client = Client()
 
         # used for verifying signatures
-        self.ocsp_private_key = asymmetric.load_private_key(force_text(settings.OCSP_KEY_PATH))
+        ocsp_key_path = os.path.join(settings.FIXTURES_DIR, ocsp_profile['key_filename'])
+        self.ocsp_private_key = asymmetric.load_private_key(force_text(ocsp_key_path))
 
     def assertAlmostEqualDate(self, got, expected):
         # Sometimes next_update timestamps are off by a second or so, so we test
@@ -224,13 +230,13 @@ class OCSPViewTestMixin(object):
         resp_certs = response['certs']
         self.assertEqual(len(resp_certs), 1)
         serials = [int_to_hex(c['tbs_certificate']['serial_number'].native) for c in resp_certs]
-        self.assertEqual(serials, [certs['ocsp']['serial']])
+        self.assertEqual(serials, [certs['profile-ocsp']['serial']])
 
         # verify subjects of certificates
         self.assertOCSPSubject(resp_certs[0]['tbs_certificate']['subject'].native,
-                               self.ocsp.subject)
+                               self.certs['profile-ocsp'].subject)
         self.assertOCSPSubject(resp_certs[0]['tbs_certificate']['issuer'].native,
-                               self.ocsp.ca.subject)
+                               self.certs['profile-ocsp'].ca.subject)
 
         tbs_response_data = response['tbs_response_data']
         self.assertEqual(tbs_response_data['version'].native, 'v1')
@@ -301,7 +307,7 @@ class OCSPViewTestMixin(object):
 @override_settings(CA_OCSP_URLS={
     'root': {
         'ca': certs['root']['serial'],
-        'responder_key': os.path.join(settings.FIXTURES_DIR, 'ocsp.key'),
+        'responder_key': os.path.join(settings.FIXTURES_DIR, 'profile-ocsp.key'),
         'responder_cert': os.path.join(settings.FIXTURES_DIR, 'ocsp.pem'),
     },
 })
@@ -366,21 +372,22 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_post(self):
+        cert = self.certs['child-cert']
         response = self.client.post(reverse('post'), req1, content_type='application/ocsp-request')
         self.assertEqual(response.status_code, 200)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1200)
+        self.assertOCSP(response, requested=[cert], nonce=req1_nonce, expires=1200)
 
         response = self.client.post(reverse('post-serial'), req1, content_type='application/ocsp-request')
         self.assertEqual(response.status_code, 200)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1300)
+        self.assertOCSP(response, requested=[cert], nonce=req1_nonce, expires=1300)
 
         response = self.client.post(reverse('post-full-pem'), req1, content_type='application/ocsp-request')
         self.assertEqual(response.status_code, 200)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1400)
+        self.assertOCSP(response, requested=[cert], nonce=req1_nonce, expires=1400)
 
         response = self.client.post(reverse('post-abs-path'), req1, content_type='application/ocsp-request')
         self.assertEqual(response.status_code, 200)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1500)
+        self.assertOCSP(response, requested=[cert], nonce=req1_nonce, expires=1500)
 
     @override_settings(USE_TZ=True)
     def test_post_with_use_tz(self):
