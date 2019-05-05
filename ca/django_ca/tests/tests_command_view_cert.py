@@ -49,7 +49,6 @@ class ViewCertTestCase(DjangoCAWithCertTestCase):
         }
 
     def assertBasic(self, status):
-        self.maxDiff = None
         for key, cert in self.basic_certs.items():
             stdout, stderr = self.cmd('view_cert', cert.serial, stdout=BytesIO(), stderr=BytesIO())
             if cert.subject_alternative_name is None:
@@ -179,6 +178,7 @@ OCSPNoCheck{ocsp_no_check_critical}: Yes{precert_poison}
 SubjectAltName{subject_alternative_name_critical}:
     * {subject_alternative_name[0]}
     * {subject_alternative_name[1]}
+    * {subject_alternative_name[2]}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 TLSFeature{tls_feature_critical}:
@@ -199,7 +199,6 @@ HPKP pin: {hpkp}
         stdout, stderr = self.cmd('view_cert', cert, no_pem=True, extensions=True,
                                   stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
-        self.maxDiff = None
         self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
@@ -419,7 +418,6 @@ HPKP pin: {hpkp}
 
     @freeze_time("2019-04-01")
     def test_contrib_letsencrypt_jabber_at(self):
-        self.maxDiff = None
         if ca_settings.OPENSSL_SUPPORTS_SCT:
             sct = '''SignedCertificateTimestampList:
     * Precertificate (v1):
@@ -480,7 +478,6 @@ HPKP pin: {hpkp}
 
     @freeze_time("2018-12-01")
     def test_contrib_cloudflare_1(self):
-        self.maxDiff = None
         self.assertContrib('cloudflare_1', '''Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
@@ -602,7 +599,6 @@ HPKP pin: {hpkp}
 '''.format(**self.get_cert_context('cloudflare_1')))
 
     def test_contrib_multiple_ous(self):
-        self.maxDiff = None
         self.assertContrib('multiple_ous', '''Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}

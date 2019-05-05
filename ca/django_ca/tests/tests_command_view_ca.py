@@ -233,7 +233,7 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
 cRLDistributionPoints:
-    * {crl[1][0]}
+    * {crl_old[1][0]}
 KeyUsage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
@@ -268,7 +268,7 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
 cRLDistributionPoints:
-    * {crl[1][0]}
+    * {crl_old[1][0]}
 certificatePolicies:
     * {certificatePolicies[1][0]}
     * {certificatePolicies[1][1]}
@@ -308,7 +308,7 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
 cRLDistributionPoints:
-    * {crl[1][0]}
+    * {crl_old[1][0]}
 certificatePolicies:
     * {certificatePolicies[1][0]}
 KeyUsage{key_usage_critical}:
@@ -370,7 +370,7 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
 cRLDistributionPoints:
-    * {crl[1][0]}
+    * {crl_old[1][0]}
 certificatePolicies:
     * {certificatePolicies[1][0]}
 KeyUsage{key_usage_critical}:
@@ -405,7 +405,7 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
 cRLDistributionPoints:
-    * {crl[1][0]}
+    * {crl_old[1][0]}
 certificatePolicies:
     * {certificatePolicies[1][0]}
 ExtendedKeyUsage{extended_key_usage_critical}:
@@ -470,7 +470,7 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
 cRLDistributionPoints:
-    * {crl[1][0]}
+    * {crl_old[1][0]}
 certificatePolicies:
     * {certificatePolicies[1][0]}
 KeyUsage{key_usage_critical}:
@@ -505,7 +505,7 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
 cRLDistributionPoints:
-    * {crl[1][0]}
+    * {crl_old[1][0]}
 certificatePolicies:
     * {certificatePolicies[1][0]}
 KeyUsage{key_usage_critical}:
@@ -566,7 +566,7 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
 cRLDistributionPoints:
-    * {crl[1][0]}
+    * {crl_old[1][0]}
 certificatePolicies:
     * {certificatePolicies[1][0]}
 ExtendedKeyUsage{extended_key_usage_critical}:
@@ -607,7 +607,7 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
 cRLDistributionPoints:
-    * {crl[1][0]}
+    * {crl_old[1][0]}
 certificatePolicies:
     * {certificatePolicies[1][0]}
     * {certificatePolicies[1][1]}
@@ -649,7 +649,7 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
 cRLDistributionPoints:
-    * {crl[1][0]}
+    * {crl_old[1][0]}
 certificatePolicies:
     * {certificatePolicies[1][0]}
     * {certificatePolicies[1][1]}
@@ -721,7 +721,7 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
 cRLDistributionPoints:
-    * {crl[1][0]}
+    * {crl_old[1][0]}
 certificatePolicies:
     * {certificatePolicies[1][0]}
 KeyUsage{key_usage_critical}:
@@ -758,7 +758,7 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
 cRLDistributionPoints:
-    * {crl[1][0]}
+    * {crl_old[1][0]}
 certificatePolicies:
     * {certificatePolicies[1][0]}
 ExtendedKeyUsage{extended_key_usage_critical}:
@@ -798,7 +798,7 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
 cRLDistributionPoints:
-    * {crl[1][0]}
+    * {crl_old[1][0]}
 certificatePolicies:
     * {certificatePolicies[1][0]}
 ExtendedKeyUsage{extended_key_usage_critical}:
@@ -832,6 +832,7 @@ expected['pwd'] = expected['ecc']
 class ViewCATestCase(DjangoCAWithCATestCase):
     @override_tmpcadir()
     def test_all_cas(self):
+        self.maxDiff = None
         for name, ca in sorted(self.cas.items(), key=lambda t: t[0]):
             stdout, stderr = self.cmd('view_ca', ca.serial)
             data = self.get_cert_context(name)

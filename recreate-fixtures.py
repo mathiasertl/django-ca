@@ -36,6 +36,7 @@ from cryptography.hazmat.primitives.serialization import BestAvailableEncryption
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import NoEncryption
 from cryptography.hazmat.primitives.serialization import PrivateFormat
+from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
 _rootdir = os.path.dirname(os.path.realpath(__file__))  # NOQA
 _sphinx_dir = os.path.join(_rootdir, 'docs', 'source', '_files')  # NOQA
@@ -178,8 +179,8 @@ def update_cert_data(cert, data):
 def write_ca(cert, data, password=None):
     key_dest = os.path.join(settings.FIXTURES_DIR, data['key_filename'])
     pub_dest = os.path.join(settings.FIXTURES_DIR, data['pub_filename'])
-    key_der_dest = os.path.join(settings.FIXTURES_DIR, '%s.der' % data['key_filename'])
-    pub_der_dest = os.path.join(settings.FIXTURES_DIR, '%s.der' % data['pub_filename'])
+    key_der_dest = os.path.join(settings.FIXTURES_DIR, data['key_der_filename'])
+    pub_der_dest = os.path.join(settings.FIXTURES_DIR, data['pub_der_filename'])
 
     # write files to dest
     shutil.copy(ca_storage.path(cert.private_key_path), key_dest)
@@ -199,8 +200,6 @@ def write_ca(cert, data, password=None):
         stream.write(cert.dump_certificate(Encoding.DER))
 
     # These keys are only present in CAs:
-    data['key_der_filename'] = key_der_dest
-    data['pub_der_filename'] = pub_der_dest
     data['issuer_url'] = ca.issuer_url
     data['crl_url'] = ca.crl_url
     data['ca_crl_url'] = '%s%s' % (testserver, reverse('django_ca:ca-crl', kwargs={'serial': ca.serial}))
@@ -213,10 +212,23 @@ def copy_cert(cert, data, key_path, csr_path):
     key_dest = os.path.join(settings.FIXTURES_DIR, data['key_filename'])
     csr_dest = os.path.join(settings.FIXTURES_DIR, data['csr_filename'])
     pub_dest = os.path.join(settings.FIXTURES_DIR, data['pub_filename'])
+    key_der_dest = os.path.join(settings.FIXTURES_DIR, data['key_der_filename'])
+    pub_der_dest = os.path.join(settings.FIXTURES_DIR, data['pub_der_filename'])
+
     shutil.copy(key_path, key_dest)
     shutil.copy(csr_path, csr_dest)
     with open(pub_dest, 'w') as stream:
         stream.write(cert.pub)
+
+    with open(key_dest, 'rb') as stream:
+        priv_key = stream.read()
+    priv_key = load_pem_private_key(priv_key, None, default_backend())
+    key_der = priv_key.private_bytes(
+        encoding=Encoding.DER, format=PrivateFormat.PKCS8, encryption_algorithm=NoEncryption())
+    with open(key_der_dest, 'wb') as stream:
+        stream.write(key_der)
+    with open(pub_der_dest, 'wb') as stream:
+        stream.write(cert.dump_certificate(Encoding.DER))
 
     data['crl'] = cert.ca.crl_url
     data['subject'] = cert.distinguishedName()
@@ -227,6 +239,7 @@ def copy_cert(cert, data, key_path, csr_path):
 def update_contrib(data, cert, name, filename):
     cert_data = {
         'name': name,
+        'cn': cert.cn,
         'cat': 'sphinx-contrib',
         'pub_filename': filename,
         'key_filename': False,
@@ -406,7 +419,9 @@ for cert, cert_values in data.items():
     cert_values.setdefault('cat', 'generated')
     cert_values.setdefault('algorithm', 'SHA256')
     cert_values['key_filename'] = '%s.key' % cert_values['name']
-    cert_values['pub_filename'] = '%s.pem' % cert_values['name']
+    cert_values['pub_filename'] = '%s.pub' % cert_values['name']
+    cert_values['key_der_filename'] = '%s.key.der' % cert_values['name']
+    cert_values['pub_der_filename'] = '%s.pub.der' % cert_values['name']
     cert_values.setdefault('key_size', key_size)
     cert_values.setdefault('key_type', 'RSA')
     cert_values.setdefault('delta', timedelta())
@@ -569,6 +584,7 @@ if not args.only_contrib:
             'extended_key_usage': data[name]['extended_key_usage'],
             'tls_feature': data[name]['tls_feature'],
             'ocsp_no_check': True,
+            'subject': [('CN', data[name]['cn'])]
         }
 
         with freeze_time(now + data[name]['delta']):
