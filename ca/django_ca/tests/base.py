@@ -198,22 +198,6 @@ certs['cloudflare_1'] = {
     'subject_key_identifier': '05:86:D8:B4:ED:A9:7E:23:EE:2E:E7:75:AA:3B:2C:06:08:2A:93:B2',
 }
 
-# Calculate some fixted timestamps that we reuse throughout the tests
-timestamps = {
-    'base': datetime.strptime(_fixture_data['timestamp'], '%Y-%m-%d %H:%M:%S'),
-}
-timestamps['before_everything'] = datetime(1990, 1, 1)
-timestamps['before_cas'] = timestamps['base'] - timedelta(days=1)
-timestamps['before_child'] = timestamps['base'] + timedelta(days=1)
-timestamps['after_child'] = timestamps['base'] + timedelta(days=4)
-timestamps['ca_certs_valid'] = timestamps['base'] + timedelta(days=7)
-timestamps['profile_certs_valid'] = timestamps['base'] + timedelta(days=12)
-timestamps['everything_valid'] = timestamps['base'] + timedelta(days=60)
-timestamps['cas_expired'] = timestamps['base'] + timedelta(days=731, seconds=3600)
-timestamps['ca_certs_expired'] = timestamps['base'] + timedelta(days=736, seconds=3600)
-timestamps['profile_certs_expired'] = timestamps['base'] + timedelta(days=741, seconds=3600)
-timestamps['everything_expired'] = timestamps['base'] + timedelta(days=365 * 20)
-
 for cert_name, cert_data in certs.items():
     if cert_data.get('password'):
         cert_data['password'] = cert_data['password'].encode('utf-8')
@@ -267,6 +251,22 @@ for cert_name, cert_data in certs.items():
     precert_poison = cert_data.get('precert_poison')
     if _HAS_PRECERT_POISON and precert_poison:  # pragma: no branch, pragma: only cryptography>=2.4
         cert_data['precert_poison'] = PrecertPoison(precert_poison)
+
+# Calculate some fixted timestamps that we reuse throughout the tests
+timestamps = {
+    'base': datetime.strptime(_fixture_data['timestamp'], '%Y-%m-%d %H:%M:%S'),
+}
+timestamps['before_everything'] = datetime(1990, 1, 1)
+timestamps['before_cas'] = timestamps['base'] - timedelta(days=1)
+timestamps['before_child'] = timestamps['base'] + timedelta(days=1)
+timestamps['after_child'] = timestamps['base'] + timedelta(days=4)
+timestamps['ca_certs_valid'] = timestamps['base'] + timedelta(days=7)
+timestamps['profile_certs_valid'] = timestamps['base'] + timedelta(days=12)
+timestamps['everything_valid'] = timestamps['base'] + timedelta(days=60)
+timestamps['cas_expired'] = timestamps['base'] + timedelta(days=731, seconds=3600)
+timestamps['ca_certs_expired'] = certs['root-cert']['valid_until'] + timedelta(seconds=3600)
+timestamps['profile_certs_expired'] = certs['profile-server']['valid_until'] + timedelta(seconds=3600)
+timestamps['everything_expired'] = timestamps['base'] + timedelta(days=365 * 20)
 
 
 class override_settings(_override_settings):
