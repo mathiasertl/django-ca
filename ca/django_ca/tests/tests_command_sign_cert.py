@@ -37,7 +37,7 @@ from ..signals import post_issue_cert
 from ..signals import pre_issue_cert
 from ..subject import Subject
 from ..utils import ca_storage
-from .base import DjangoCAWithCertTestCase
+from .base import DjangoCAWithCATestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
@@ -51,17 +51,18 @@ else:
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 @freeze_time(timestamps['everything_valid'])
-class SignCertTestCase(DjangoCAWithCertTestCase):
+class SignCertTestCase(DjangoCAWithCATestCase):
     def setUp(self):
         super(SignCertTestCase, self).setUp()
-        self.csr_pem = certs['child-cert']['csr']['pem']
+        self.ca = self.cas['root']
+        self.csr_pem = certs['root-cert']['csr']['pem']
 
     @override_tmpcadir()
     def test_from_stdin(self):
         stdin = six.StringIO(self.csr_pem)
         subject = Subject([('CN', 'example.com')])
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
-            stdout, stderr = self.cmd('sign_cert', subject=subject, stdin=stdin)
+            stdout, stderr = self.cmd('sign_cert', ca=self.ca, subject=subject, stdin=stdin)
         self.assertEqual(stderr, '')
         self.assertEqual(pre.call_count, 1)
 
@@ -77,30 +78,34 @@ class SignCertTestCase(DjangoCAWithCertTestCase):
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
 
-    @override_settings(USE_TZ=True)
-    def test_from_stdin_with_use_tz(self):
-        self.test_from_stdin()
-
     @override_tmpcadir()
-    def test_ecc_ca(self):
-        stdin = six.StringIO(self.csr_pem)
-        subject = Subject([('CN', 'ecc-signed.example.com')])
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
-            stdout, stderr = self.cmd('sign_cert', ca=self.ecc_ca, subject=subject, stdin=stdin)
-        self.assertEqual(stderr, '')
-        self.assertEqual(pre.call_count, 1)
+    def test_usable_cas(self):
+        # Create a signed cert for all usable CAs
+        for name, ca in self.usable_cas.items():
+            cn = '%s-signed.example.com' % name
+            stdin = six.StringIO(self.csr_pem)
+            subject = Subject([('CN', cn)])
 
-        cert = Certificate.objects.first()
-        self.assertPostIssueCert(post, cert)
-        self.assertSignature([self.ecc_ca], cert)
-        self.assertSubject(cert.x509, subject)
-        self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
+            with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+                stdout, stderr = self.cmd('sign_cert', ca=ca, subject=subject,
+                                          password=certs[name]['password'], stdin=stdin)
 
-        self.assertEqual(cert.key_usage, KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'))
-        self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('serverAuth'))
-        self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:ecc-signed.example.com'))
-        self.assertIssuer(self.ecc_ca, cert)
-        self.assertAuthorityKeyIdentifier(self.ecc_ca, cert)
+            self.assertEqual(stderr, '')
+            self.assertEqual(pre.call_count, 1)
+
+            cert = Certificate.objects.get(ca=ca, cn=cn)
+            self.assertPostIssueCert(post, cert)
+            self.assertSignature(reversed(ca.bundle), cert)
+            self.assertSubject(cert.x509, subject)
+            self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
+
+            self.assertEqual(cert.key_usage,
+                             KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'))
+            self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('serverAuth'))
+            self.assertEqual(cert.subject_alternative_name,
+                             SubjectAlternativeName('DNS:%s' % cn))
+            self.assertIssuer(ca, cert)
+            self.assertAuthorityKeyIdentifier(ca, cert)
 
     @override_tmpcadir()
     def test_from_file(self):
@@ -127,10 +132,6 @@ class SignCertTestCase(DjangoCAWithCertTestCase):
             self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:example.com'))
         finally:
             os.remove(csr_path)
-
-    @override_settings(USE_TZ=True)
-    def test_from_file_with_tz(self):
-        self.test_from_file()
 
     @override_tmpcadir()
     def test_to_file(self):
@@ -317,7 +318,7 @@ class SignCertTestCase(DjangoCAWithCertTestCase):
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_with_password(self):
         password = b'testpassword'
-        ca = self.create_ca('with password', password=password)
+        ca = self.cas['pwd']
         self.assertIsNotNone(ca.key(password=password))
 
         ca = CertificateAuthority.objects.get(pk=ca.pk)
@@ -351,10 +352,8 @@ class SignCertTestCase(DjangoCAWithCertTestCase):
     @unittest.skipUnless(isinstance(ca_storage, FileSystemStorage),
                          'Test only makes sense with local filesystem storage.')
     def test_unparseable(self):
-        ca = self.create_ca('test')
-        ca = CertificateAuthority.objects.get(pk=ca.pk)
-
-        key_path = os.path.join(ca_storage.location, ca.private_key_path)
+        # Private key contains bogus data
+        key_path = os.path.join(ca_storage.location, self.ca.private_key_path)
 
         os.chmod(key_path, stat.S_IWUSR | stat.S_IRUSR)
         with open(key_path, 'w') as stream:
@@ -365,7 +364,7 @@ class SignCertTestCase(DjangoCAWithCertTestCase):
         stdin = six.StringIO(self.csr_pem)
         with self.assertCommandError('^Could not deserialize key data.$'), \
                 self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
-            self.cmd('sign_cert', ca=ca, alt=['example.com'], stdin=stdin)
+            self.cmd('sign_cert', ca=self.ca, alt=['example.com'], stdin=stdin)
         self.assertEqual(pre.call_count, 0)
         self.assertEqual(post.call_count, 0)
 
@@ -373,7 +372,7 @@ class SignCertTestCase(DjangoCAWithCertTestCase):
     def test_der_csr(self):
         csr_path = os.path.join(ca_settings.CA_DIR, 'test.csr')
         with open(csr_path, 'wb') as csr_stream:
-            csr_stream.write(self.csr_der)
+            csr_stream.write(certs['child-cert']['csr']['der'])
 
         try:
             subject = Subject([('CN', 'example.com'), ('emailAddress', 'user@example.com')])
@@ -427,29 +426,6 @@ class SignCertTestCase(DjangoCAWithCertTestCase):
         self.assertFalse(post.called)
 
 
-@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
-class SignCertChildCATestCase(DjangoCAWithCertTestCase):
-    # NOTE: This exact time is currently very important, because the Child CA was signed a minute before this
-    # time, and a day after the sign_cert command would fail because the root CA would expire to soon.
-    @freeze_time("2018-12-20 23:13:00")
-    @override_tmpcadir()
-    def test_from_stdin(self):
-        stdin = six.StringIO(self.csr_pem)
-        subject = Subject([('CN', 'example.net')])
-
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
-            stdout, stderr = self.cmd('sign_cert', ca=self.child_ca, subject=subject, stdin=stdin)
-        self.assertEqual(pre.call_count, 1)
-        self.assertEqual(stderr, '')
-
-        cert = Certificate.objects.first()
-        self.assertPostIssueCert(post, cert)
-        self.assertSignature([self.ca, self.child_ca], cert)
-        self.assertSubject(cert.x509, subject)
-        self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
-
-        self.assertEqual(cert.key_usage, KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'))
-        self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('serverAuth'))
-        self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:example.net'))
-        self.assertIssuer(self.child_ca, cert)
-        self.assertAuthorityKeyIdentifier(self.child_ca, cert)
+@override_settings(USE_TZ=True)
+class SignCertWithTZTestCase(SignCertTestCase):
+    pass
