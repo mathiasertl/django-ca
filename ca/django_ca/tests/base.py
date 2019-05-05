@@ -103,10 +103,14 @@ def _load_csr(data):
     with open(path, 'rb') as stream:
         raw = stream.read().strip()
 
-    return {
+    csr_data = {
         'pem': raw.decode('utf-8'),
         'parsed': x509.load_pem_x509_csr(raw, default_backend()),
     }
+
+    csr_data['der'] = csr_data['parsed'].public_bytes(Encoding.DER)
+
+    return csr_data
 
 
 def _load_pub(data):
