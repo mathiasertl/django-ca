@@ -18,14 +18,31 @@ from datetime import timedelta
 from django.utils import timezone
 
 from ..models import CertificateAuthority
-from .base import DjangoCAWithCATestCase
+from .base import DjangoCATestCase
 from .base import certs
 from .base import override_settings
 
+expected = """{dsa[serial]} - {dsa[name]}{dsa_state}
+{ecc[serial]} - {ecc[name]}{ecc_state}
+{pwd[serial]} - {pwd[name]}{pwd_state}
+{root[serial]} - {root[name]}{root_state}
+{child[serial]} - {child[name]}{child_state}
+"""
 
-class ListCertsTestCase(DjangoCAWithCATestCase):
-    def test_basic(self):
-        self.maxDiff = None
+
+class ListCertsTestCase(DjangoCATestCase):
+    def setUp(self):
+        super(ListCertsTestCase, self).setUp()
+        self.load_usable_cas()
+
+    def assertOutput(self, output, expected, **context):
+        context.update(certs)
+        for ca_name in self.cas:
+            context.setdefault('%s_state' % ca_name, '')
+        self.assertEqual(output, expected.format(**context))
+
+    def test_all_cas(self):
+        self.load_all_cas()
         stdout, stderr = self.cmd('list_cas')
         self.assertEqual(stdout, """{letsencrypt_x1[serial]} - {letsencrypt_x1[name]}
 {letsencrypt_x3[serial]} - {letsencrypt_x3[name]}
@@ -56,56 +73,59 @@ class ListCertsTestCase(DjangoCAWithCATestCase):
 """.format(**certs))
         self.assertEqual(stderr, '')
 
+    def test_no_cas(self):
+        CertificateAuthority.objects.all().delete()
+        stdout, stderr = self.cmd('list_cas')
+        self.assertEqual(stdout, '')
+        self.assertEqual(stderr, '')
+
+    def test_basic(self):
+        stdout, stderr = self.cmd('list_cas')
+        self.assertOutput(stdout, expected)
+        self.assertEqual(stderr, '')
+
     def test_disabled(self):
-        ca = CertificateAuthority.objects.get(serial=self.ca.serial)
+        ca = self.cas['root']
         ca.enabled = False
         ca.save()
 
         stdout, stderr = self.cmd('list_cas')
-        self.assertEqual(stdout, '%s - %s (disabled)\n%s - %s\n%s - %s\n' % (
-            certs['root']['serial'], certs['root']['name'],
-            certs['pwd_ca']['serial'], certs['pwd_ca']['name'],
-            certs['ecc_ca']['serial'], certs['ecc_ca']['name']))
+        self.assertOutput(stdout, expected, root_state=' (disabled)')
         self.assertEqual(stderr, '')
 
     def test_tree(self):
         stdout, stderr = self.cmd('list_cas', tree=True)
-        self.assertEqual(stdout, '''%s - %s
-%s - %s
-%s - %s\n''' % (
-            certs['root']['serial'], certs['root']['name'],
-            certs['pwd_ca']['serial'], certs['pwd_ca']['name'],
-            certs['ecc_ca']['serial'], certs['ecc_ca']['name'],
-        ))
+        self.assertEqual(stdout, """{dsa[serial]} - {dsa[name]}
+{ecc[serial]} - {ecc[name]}
+{pwd[serial]} - {pwd[name]}
+{root[serial]} - {root[name]}
+└───{child[serial]} - {child[name]}
+""".format(**certs))
         self.assertEqual(stderr, '')
-
-        # load intermediate ca
-        self.child_ca = self.load_ca(name='child2', x509=child_pubkey, parent=self.ca)
 
         # manually create Certificate objects
         expires = timezone.now() + timedelta(days=3)
         valid_from = timezone.now() - timedelta(days=3)
+        root = self.cas['root']
         child3 = CertificateAuthority.objects.create(name='child3', serial='child3',
-                                                     parent=self.ca, expires=expires, valid_from=valid_from)
-        CertificateAuthority.objects.create(name='child4', serial='child4', parent=self.ca, expires=expires,
+                                                     parent=root, expires=expires, valid_from=valid_from)
+        CertificateAuthority.objects.create(name='child4', serial='child4', parent=root, expires=expires,
                                             valid_from=valid_from)
         CertificateAuthority.objects.create(name='child3.1', serial='child3.1', parent=child3,
                                             expires=expires, valid_from=valid_from)
 
         stdout, stderr = self.cmd('list_cas', tree=True)
-        self.assertEqual(stdout, '''%s - %s
+        context = {}
+        context.update(certs)
+        self.assertEqual(stdout, """{dsa[serial]} - {dsa[name]}
+{ecc[serial]} - {ecc[name]}
+{pwd[serial]} - {pwd[name]}
+{root[serial]} - {root[name]}
 │───child3 - child3
 │   └───child3.1 - child3.1
 │───child4 - child4
-└───%s - %s
-%s - %s
-%s - %s\n''' % (
-            certs['root']['serial'], certs['root']['name'],
-            certs['child']['serial'], 'child2',
-            certs['pwd_ca']['serial'], certs['pwd_ca']['name'],
-            certs['ecc_ca']['serial'], certs['ecc_ca']['name'],
-        ))
-        self.assertEqual(stderr, '')
+└───{child[serial]} - {child[name]}
+""".format(**context))
 
 
 @override_settings(USE_TZ=True)

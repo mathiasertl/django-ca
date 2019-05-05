@@ -382,6 +382,11 @@ class DjangoCATestCase(TestCase):
         if overridden is True:
             reload_module(ca_settings)
 
+    def setUp(self):
+        super(DjangoCATestCase, self).setUp()
+        self.cas = {}
+        self.certs = {}
+
     def settings(self, **kwargs):
         """Decorator to temporarily override settings."""
         return override_settings(**kwargs)
@@ -742,9 +747,15 @@ class DjangoCATestCase(TestCase):
 
         return exts
 
+    def load_usable_cas(self):
+        self.cas.update({k: self.load_ca(name=v['name'], x509=v['pub']['parsed']) for k, v in certs.items()
+                        if v.get('type') == 'ca' and k not in self.cas and v['key_filename'] is not False})
+        self.cas['child'].parent = self.cas['root']
+        self.cas['child'].save()
+
     def load_all_cas(self):
-        self.cas = {k: self.load_ca(name=v['name'], x509=v['pub']['parsed']) for k, v in certs.items()
-                    if v.get('type') == 'ca'}
+        self.cas.update({k: self.load_ca(name=v['name'], x509=v['pub']['parsed']) for k, v in certs.items()
+                        if v.get('type') == 'ca' and k not in self.cas})
         self.cas['child'].parent = self.cas['root']
         self.cas['child'].save()
         self.usable_cas = {name: ca for name, ca in self.cas.items()
