@@ -121,20 +121,20 @@ urlpatterns = [
     url(r'^ocsp/ca/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca=certs['root']['serial'],
         responder_key=ocsp_profile['key_filename'],
-        responder_cert=settings.OCSP_PEM_PATH,
+        responder_cert=ocsp_profile['pub_filename'],
         ca_ocsp=True,
     ), name='get-ca'),
 
     url(r'^ocsp-unknown/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca='unknown',
         responder_key=ocsp_profile['key_filename'],
-        responder_cert=settings.OCSP_PEM_PATH,
+        responder_cert=ocsp_profile['pub_filename'],
     ), name='unknown'),
 
     url(r'^ocsp/false-key/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca=certs['root']['serial'],
         responder_key='/false/foobar',
-        responder_cert=settings.OCSP_PEM_PATH,
+        responder_cert=ocsp_profile['pub_filename'],
         expires=1200,
     ), name='false-key'),
 

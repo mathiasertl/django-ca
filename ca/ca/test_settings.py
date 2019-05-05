@@ -174,13 +174,6 @@ FIXTURES_DIR = os.path.join(BASE_DIR, 'django_ca', 'tests', 'fixtures')
 SPHINX_FIXTURES_DIR = os.path.join(ROOT_DIR, 'docs', 'source', '_files')
 with open(os.path.join(FIXTURES_DIR, 'cert-data.json')) as stream:
     _fixture_data = json.load(stream)
-ROOT_SERIAL = '4E:1E:2A:29:F9:4C:45:CF:12:2F:2B:17:9E:BF:D4:80:29:C6:37:C7'
-ROOT_KEY_PATH = os.path.join(FIXTURES_DIR, 'root.key')
-ROOT_PEM_PATH = os.path.join(FIXTURES_DIR, 'root.pem')
-
-OCSP_SERIAL = '49:BC:F2:FE:FA:31:03:B6:E0:CC:3D:16:93:4E:2D:B0:8A:D2:C5:87'
-OCSP_KEY_PATH = os.path.join(FIXTURES_DIR, 'ocsp.key')
-OCSP_PEM_PATH = os.path.join(FIXTURES_DIR, 'ocsp.pem')
 
 # Custom settings
 CA_DEFAULT_SUBJECT = [
