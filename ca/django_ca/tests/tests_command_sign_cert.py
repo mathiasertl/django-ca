@@ -425,6 +425,18 @@ class SignCertTestCase(DjangoCAWithCATestCase):
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
+    @freeze_time(timestamps['everything_expired'])
+    def test_expired_ca(self):
+        stdin = six.StringIO(self.csr_pem)
+        subject = Subject([('CN', 'example.com')])
+
+        with self.assertCommandError(
+                r'^Certificate Authority has expired\.$'
+        ), self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            stdout, stderr = self.cmd('sign_cert', ca=self.ca, subject=subject, stdin=stdin)
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
+
 
 @override_settings(USE_TZ=True)
 class SignCertWithTZTestCase(SignCertTestCase):

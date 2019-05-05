@@ -15,6 +15,7 @@
 
 from django.core.management.base import CommandError
 from django.utils import six
+from django.utils import timezone
 
 from ... import ca_settings
 from ...management.base import BaseSignCommand
@@ -74,6 +75,10 @@ the default values, options like --key-usage still override the profile.""")
 
     def handle(self, *args, **options):
         ca = options['ca']
+        if ca.expires < timezone.now():
+            raise CommandError('Certificate Authority has expired.')
+        if ca.revoked:
+            raise CommandError('Certificate Authority is revoked.')
         self.test_options(*args, **options)
 
         # get list of watchers
