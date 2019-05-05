@@ -621,7 +621,7 @@ if not args.only_contrib:
         stream.write(no_nonce_req)
 
     ocsp_builder = ocsp_builder.add_extension(
-        x509.OCSPNonce(hex_to_bytes(ocsp_data['nonce']['nonce'])), critical=True
+        x509.OCSPNonce(hex_to_bytes(ocsp_data['nonce']['nonce'])), critical=False
     )
     nonce_req = ocsp_builder.build().public_bytes(Encoding.DER)
     with open(os.path.join(ocsp_base, ocsp_data['nonce']['filename']), 'wb') as stream:
