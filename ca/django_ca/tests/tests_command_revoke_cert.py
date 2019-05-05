@@ -16,12 +16,14 @@
 from ..models import Certificate
 from ..signals import post_revoke_cert
 from ..signals import pre_revoke_cert
-from .base import DjangoCAWithCertTestCase
-from .base import override_settings
+from .base import DjangoCAWithGeneratedCertsTestCase
 
 
-@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
-class RevokeCertTestCase(DjangoCAWithCertTestCase):
+class RevokeCertTestCase(DjangoCAWithGeneratedCertsTestCase):
+    def setUp(self):
+        super(RevokeCertTestCase, self).setUp()
+        self.cert = self.certs['root-cert']
+
     def test_no_reason(self):
         self.assertFalse(self.cert.revoked)
 
