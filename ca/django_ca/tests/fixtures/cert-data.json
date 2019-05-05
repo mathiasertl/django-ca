@@ -2125,5 +2125,16 @@
             "type": "cert",
             "ca": "comodo_ev"
         }
+    },
+    "ocsp": {
+        "nonce": {
+            "name": "nonce",
+            "filename": "nonce.req",
+            "nonce": "35:75:6C:C4:B6:CC:50:E8:D8:BD:16:78:41:20:0D:39"
+        },
+        "no-nonce": {
+            "name": "no-nonce",
+            "filename": "no-nonce.req"
+        }
     }
 }

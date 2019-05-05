@@ -31,6 +31,7 @@ from freezegun import freeze_time
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
+from cryptography.x509 import ocsp
 from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives.serialization import BestAvailableEncryption
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -60,6 +61,7 @@ from django_ca.models import CertificateAuthority
 from django_ca.profiles import get_cert_profile_kwargs
 from django_ca.utils import bytes_to_hex
 from django_ca.utils import ca_storage
+from django_ca.utils import hex_to_bytes
 
 now = datetime.utcnow().replace(second=0, minute=0)
 PY2 = sys.version_info[0] == 2
@@ -232,6 +234,7 @@ def copy_cert(cert, data, key_path, csr_path):
 
     data['crl'] = cert.ca.crl_url
     data['subject'] = cert.distinguishedName()
+    data['parsed_cert'] = cert
 
     update_cert_data(cert, data)
 
@@ -409,6 +412,17 @@ data = {
         'precert_poison': {
             'critical': True,
         },
+    },
+}
+ocsp_data = {
+    'nonce': {
+        'name': 'nonce',
+        'filename': 'nonce.req',
+        'nonce': '35:75:6C:C4:B6:CC:50:E8:D8:BD:16:78:41:20:0D:39',
+    },
+    'no-nonce': {
+        'name': 'no-nonce',
+        'filename': 'no-nonce.req',
     },
 }
 
@@ -592,6 +606,26 @@ if not args.only_contrib:
                                             expires=datetime.utcnow() + data[name]['expires'],
                                             password=pwd, **kwargs)
         copy_cert(cert, data[name], key_path, csr_path)
+
+    # Rebuild example OCSP requests
+    ocsp_base = os.path.join(settings.FIXTURES_DIR, 'ocsp')
+    ocsp_builder = ocsp.OCSPRequestBuilder()
+    ocsp_builder = ocsp_builder.add_certificate(
+        data['child-cert']['parsed_cert'].x509,
+        CertificateAuthority.objects.get(name=data['child-cert']['ca']).x509,
+        hashes.SHA1()
+    )
+
+    no_nonce_req = ocsp_builder.build().public_bytes(Encoding.DER)
+    with open(os.path.join(ocsp_base, ocsp_data['no-nonce']['filename']), 'wb') as stream:
+        stream.write(no_nonce_req)
+
+    ocsp_builder = ocsp_builder.add_extension(
+        x509.OCSPNonce(hex_to_bytes(ocsp_data['nonce']['nonce'])), critical=True
+    )
+    nonce_req = ocsp_builder.build().public_bytes(Encoding.DER)
+    with open(os.path.join(ocsp_base, ocsp_data['nonce']['filename']), 'wb') as stream:
+        stream.write(nonce_req)
 else:
     # updating only contrib, so remove existing data
     data = {}
@@ -638,6 +672,8 @@ for name, cert_data in data.items():
         del cert_data['delta']
     if 'expires' in cert_data:
         del cert_data['expires']
+    if 'parsed_cert' in cert_data:
+        del cert_data['parsed_cert']
 
     if cert_data.get('password'):
         cert_data['password'] = cert_data['password'].decode('utf-8')
@@ -650,6 +686,7 @@ else:
     fixture_data = {
         'timestamp': now.strftime(_timeformat),
         'certs': data,
+        'ocsp': ocsp_data,
     }
 
 with open(out_path, 'w') as stream:
