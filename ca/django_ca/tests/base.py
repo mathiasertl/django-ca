@@ -267,6 +267,7 @@ timestamps['cas_expired'] = timestamps['base'] + timedelta(days=731, seconds=360
 timestamps['ca_certs_expired'] = certs['root-cert']['valid_until'] + timedelta(seconds=3600)
 timestamps['profile_certs_expired'] = certs['profile-server']['valid_until'] + timedelta(seconds=3600)
 timestamps['everything_expired'] = timestamps['base'] + timedelta(days=365 * 20)
+ocsp_data = _fixture_data['ocsp']
 
 
 class override_settings(_override_settings):
@@ -330,6 +331,10 @@ class override_tmpcadir(override_settings):
         # copy CAs
         for filename in [v['key_filename'] for v in certs.values() if v['key_filename'] is not False]:
             shutil.copy(os.path.join(settings.FIXTURES_DIR, filename), self.options['CA_DIR'])
+
+        # Copy OCSP public key (required for OCSP tests)
+        shutil.copy(os.path.join(settings.FIXTURES_DIR, certs['profile-ocsp']['pub_filename']),
+                    self.options['CA_DIR'])
 
         self.mock = patch.object(ca_storage, 'location', self.options['CA_DIR'])
         self.mock_ = patch.object(ca_storage, '_location', self.options['CA_DIR'])
