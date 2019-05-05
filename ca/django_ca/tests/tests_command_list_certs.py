@@ -17,12 +17,13 @@ from freezegun import freeze_time
 
 from django.utils import timezone
 
-from .base import DjangoCAWithCertTestCase
+from .base import DjangoCAWithGeneratedCertsTestCase
 from .base import override_settings
+from .base import timestamps
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
-class ListCertsTestCase(DjangoCAWithCertTestCase):
+class ListCertsTestCase(DjangoCAWithGeneratedCertsTestCase):
     def line(self, cert):
         if cert.revoked is True:
             info = 'revoked'
@@ -40,39 +41,29 @@ class ListCertsTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(stdout, ''.join(['%s\n' % self.line(c) for c in certs]))
         self.assertEqual(stderr, '')
 
-    @freeze_time('2019-03-22')
+    @freeze_time(timestamps['everything_valid'])
     def test_basic(self):
-        self.assertCerts(*[c for c in self.certs if c.expires > timezone.now()])
+        self.assertCerts(*self.certs.values())
 
-    @override_settings(USE_TZ=True)
-    def test_basic_with_use_tz(self):
-        # Refresh objects from db to add timezone to expires timestamp
-        [c.refresh_from_db() for c in self.certs]
-        self.test_basic()
-
-    @freeze_time('2019-03-22')
+    @freeze_time(timestamps['everything_expired'])
     def test_expired(self):
-        self.assertCerts(*[c for c in self.certs if c.expires > timezone.now()])
-        self.assertCerts(*self.certs, expired=True)
+        self.assertCerts()
+        self.assertCerts(*self.certs.values(), expired=True)
 
-    @override_settings(USE_TZ=True)
-    def test_expired_with_use_tz(self):
-        # Refresh objects from db to add timezone to expires timestamp
-        [c.refresh_from_db() for c in self.certs]
-        self.test_expired()
-
-    @freeze_time('2019-03-22')
+    @freeze_time(timestamps['everything_valid'])
     def test_revoked(self):
-        self.cert.revoke()
-        self.cert_all.revoke()
-        self.cert_no_ext.revoke()
+        cert = self.certs['root-cert']
+        cert.revoke()
 
-        self.assertCerts(*[c for c in self.certs if c.expires > timezone.now() and c.revoked is False])
-        self.assertCerts(*[c for c in self.certs if c.expires > timezone.now()], revoked=True)
+        self.assertCerts(*[c for c in self.certs.values() if c != cert])
+        self.assertCerts(*self.certs.values(), revoked=True)
 
-    @freeze_time('2019-03-22')
+    @freeze_time(timestamps['everything_valid'])
     def test_ca(self):
-        self.assertCerts(*[c for c in self.certs if c.expires > timezone.now()])
-        self.assertCerts(*[c for c in self.certs if c.expires > timezone.now() and c.ca == self.ca],
-                         ca=self.ca)
-        self.assertCerts(ca=self.child_ca)  # child ca has no certs
+        for name, ca in self.cas.items():
+            self.assertCerts(*[c for c in self.certs.values() if c.ca == ca], ca=ca)
+
+
+@override_settings(USE_TZ=True)
+class ListCertsWithTZTestCase(ListCertsTestCase):
+    pass
