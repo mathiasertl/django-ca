@@ -23,38 +23,41 @@ from ..models import Certificate
 from .base import DjangoCAWithCATestCase
 from .base import certs
 from .base import override_tmpcadir
+from .base import timestamps
 
 
-@freeze_time('2019-04-14 12:26:00')
+@freeze_time(timestamps['everything_valid'])
 class ImportCertTest(DjangoCAWithCATestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_basic(self):
-        pem_path = os.path.join(settings.FIXTURES_DIR, 'cert1.pem')
-        out, err = self.cmd('import_cert', pem_path, ca=self.ca)
+        pem_path = os.path.join(settings.FIXTURES_DIR, certs['root-cert']['pub_filename'])
+        out, err = self.cmd('import_cert', pem_path, ca=self.cas['root'])
 
         self.assertEqual(out, '')
         self.assertEqual(err, '')
 
-        cert = Certificate.objects.get(serial=certs['cert1']['serial'])
-        self.assertSignature([self.ca], cert)
+        cert = Certificate.objects.get(serial=certs['root-cert']['serial'])
+        self.assertSignature([self.cas['root']], cert)
+        self.assertEqual(cert.ca, self.cas['root'])
         cert.full_clean()  # assert e.g. max_length in serials
-        self.assertBasic(cert.x509, algo='sha512')
+        self.assertBasic(cert.x509, algo=certs['root-cert']['algorithm'])
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_der(self):
-        pem_path = os.path.join(settings.FIXTURES_DIR, 'cert1-pub.der')
-        out, err = self.cmd('import_cert', pem_path, ca=self.ca)
+        pem_path = os.path.join(settings.FIXTURES_DIR, certs['root-cert']['pub_der_filename'])
+        out, err = self.cmd('import_cert', pem_path, ca=self.cas['root'])
 
         self.assertEqual(out, '')
         self.assertEqual(err, '')
 
-        cert = Certificate.objects.get(serial=certs['cert1']['serial'])
-        self.assertSignature([self.ca], cert)
+        cert = Certificate.objects.get(serial=certs['root-cert']['serial'])
+        self.assertSignature([self.cas['root']], cert)
+        self.assertEqual(cert.ca, self.cas['root'])
         cert.full_clean()  # assert e.g. max_length in serials
-        self.assertBasic(cert.x509, algo='sha512')
+        self.assertBasic(cert.x509, algo=certs['root-cert']['algorithm'])
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_bogus(self):
         with self.assertCommandError(r'^Unable to load public key\.$'):
-            self.cmd('import_cert', __file__, ca=self.ca)
+            self.cmd('import_cert', __file__, ca=self.cas['root'])
         self.assertEqual(Certificate.objects.count(), 0)

@@ -19,8 +19,11 @@ from .base import override_settings
 from .base import override_tmpcadir
 
 
-@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
-class SignCertTestCase(DjangoCAWithCATestCase):
+class EditCATestCase(DjangoCAWithCATestCase):
+    def setUp(self):
+        super(EditCATestCase, self).setUp()
+        self.ca = self.cas['root']
+
     @override_tmpcadir()
     def test_basic(self):
         issuer = 'https://issuer-test.example.org'
