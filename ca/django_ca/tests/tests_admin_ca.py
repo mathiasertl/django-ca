@@ -20,7 +20,8 @@ from django.urls import reverse
 from django.utils.encoding import force_text
 from django.utils.six.moves.urllib.parse import quote
 
-from .base import DjangoCAWithCertTestCase
+from .base import DjangoCAWithCATestCase
+from .base import certs
 
 
 class CertificateAuthorityAdminTestMixin(object):
@@ -39,7 +40,7 @@ class CertificateAuthorityAdminTestMixin(object):
 
     def change_url(self, pk=None):
         if pk is None:
-            pk = self.cert.pk
+            pk = self.cas['root'].pk
 
         return reverse('admin:django_ca_certificateauthority_change', args=(pk, ))
 
@@ -56,7 +57,7 @@ class CertificateAuthorityAdminTestMixin(object):
         self.assertRedirects(response, expected, **kwargs)
 
 
-class ChangelistTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithCertTestCase):
+class ChangelistTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithCATestCase):
     """Test the changelist view."""
 
     def assertResponse(self, response, certs=None):
@@ -70,7 +71,7 @@ class ChangelistTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithCertTes
 
     def test_get(self):
         response = self.client.get(self.changelist_url)
-        self.assertResponse(response, self.cas)
+        self.assertResponse(response, self.cas.values())
 
     def test_unauthorized(self):
         client = Client()
@@ -78,47 +79,39 @@ class ChangelistTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithCertTes
         self.assertRequiresLogin(response)
 
 
-class ChangeTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithCertTestCase):
+class ChangeTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithCATestCase):
     def test_basic(self):
-        response = self.client.get(self.change_url())
-        self.assertChangeResponse(response)
-
-        response = self.client.get(self.change_url(self.ca.pk))
-        self.assertChangeResponse(response)
-        response = self.client.get(self.change_url(self.pwd_ca.pk))
-        self.assertChangeResponse(response)
-        response = self.client.get(self.change_url(self.ecc_ca.pk))
-        self.assertChangeResponse(response)
-        response = self.client.get(self.change_url(self.child_ca.pk))
-        self.assertChangeResponse(response)
+        # Just test that we can view them all
+        for name, ca in self.cas.items():
+            response = self.client.get(self.change_url(ca.pk))
+            self.assertChangeResponse(response)
 
 
-class CADownloadBundleTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithCertTestCase):
+class CADownloadBundleTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithCATestCase):
     def get_url(self, ca):
         return reverse('admin:django_ca_certificateauthority_download_bundle', kwargs={'pk': ca.pk})
 
     @property
     def url(self):
-        return self.get_url(ca=self.ca)
+        return self.get_url(ca=self.cas['root'])
 
     def test_root(self):
+        self.maxDiff = None
         filename = 'ca_example_com_bundle.pem'
         response = self.client.get('%s?format=PEM' % self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
         self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
-        self.assertEqual(force_text(response.content), self.ca.pub.strip())
-        self.assertEqual(self.ca, self.cert.ca)  # just to be sure we test the right thing
+        self.assertEqual(force_text(response.content), certs['root']['pub']['pem'].strip())
 
     def test_child(self):
-        filename = 'sub_ca_example_com_bundle.pem'
-        response = self.client.get('%s?format=PEM' % self.get_url(self.child_ca))
+        filename = 'child_ca_example_com_bundle.pem'
+        response = self.client.get('%s?format=PEM' % self.get_url(self.cas['child']))
+        expected = '%s\n%s' % (certs['child']['pub']['pem'].strip(), certs['root']['pub']['pem'].strip())
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
         self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
-        self.assertEqual(force_text(response.content),
-                         '%s\n%s' % (self.child_ca.pub.strip(), self.ca.pub.strip()))
-        self.assertEqual(self.ca, self.cert.ca)  # just to be sure we test the right thing
+        self.assertEqual(force_text(response.content), expected)
 
     def test_invalid_format(self):
         response = self.client.get('%s?format=INVALID' % self.url)
