@@ -15,7 +15,8 @@
 
 import doctest
 
-from .base import DjangoCAWithCertTestCase
+from .base import DjangoCATestCase
+from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
 
@@ -23,14 +24,20 @@ base = '../../../docs/source'
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=1024)
-class DocumentationTestCase(DjangoCAWithCertTestCase):
+class DocumentationTestCase(DjangoCATestCase):
+    def setUp(self):
+        super(DocumentationTestCase, self).setUp()
+        self.ca = self.load_ca(name=certs['root']['name'], x509=certs['root']['pub']['parsed'])
+        self.cert = self.load_cert(self.ca, x509=certs['root-cert']['pub']['parsed'],
+                                   csr=certs['root-cert']['csr']['pem'])
+
     def get_globs(self):
         return {
             'ca': self.ca,
             'ca_serial': self.ca.serial,
             'cert': self.cert,
             'cert_serial': self.cert.serial,
-            'csr': self.csr_pem,
+            'csr': certs['root-cert']['csr']['pem'],
         }
 
     @override_tmpcadir()
