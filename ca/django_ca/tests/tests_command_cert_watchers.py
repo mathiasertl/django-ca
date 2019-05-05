@@ -13,29 +13,25 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
-from .base import DjangoCAWithCertTestCase
-from .base import override_settings
+from .base import DjangoCAWithGeneratedCertsTestCase
 
 
-@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
-class CertWatchersTestCase(DjangoCAWithCertTestCase):
+class CertWatchersTestCase(DjangoCAWithGeneratedCertsTestCase):
     def test_basic(self):
-        stdout, stderr = self.cmd('cert_watchers', self.cert.serial,
-                                  add=['user-added@example.com'])
+        cert = self.certs['root-cert']
+        stdout, stderr = self.cmd('cert_watchers', cert.serial, add=['user-added@example.com'])
         self.assertEqual(stdout, '')
         self.assertEqual(stderr, '')
-        self.assertTrue(self.cert.watchers.filter(mail='user-added@example.com').exists())
+        self.assertTrue(cert.watchers.filter(mail='user-added@example.com').exists())
 
         # remove user again
-        stdout, stderr = self.cmd('cert_watchers', self.cert.serial,
-                                  rm=['user-added@example.com'])
+        stdout, stderr = self.cmd('cert_watchers', cert.serial, rm=['user-added@example.com'])
         self.assertEqual(stdout, '')
         self.assertEqual(stderr, '')
-        self.assertFalse(self.cert.watchers.filter(mail='user-added@example.com').exists())
+        self.assertFalse(cert.watchers.filter(mail='user-added@example.com').exists())
 
         # removing again does nothing, but doesn't throw an error either
-        stdout, stderr = self.cmd('cert_watchers', self.cert.serial,
-                                  rm=['user-added@example.com'])
+        stdout, stderr = self.cmd('cert_watchers', cert.serial, rm=['user-added@example.com'])
         self.assertEqual(stdout, '')
         self.assertEqual(stderr, '')
-        self.assertFalse(self.cert.watchers.filter(mail='user-added@example.com').exists())
+        self.assertFalse(cert.watchers.filter(mail='user-added@example.com').exists())

@@ -21,13 +21,15 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.utils import six
 
 from .. import ca_settings
-from .base import DjangoCAWithCertTestCase
-from .base import override_settings
+from .base import DjangoCAWithGeneratedCertsTestCase
 from .base import override_tmpcadir
 
 
-@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
-class DumpCertTestCase(DjangoCAWithCertTestCase):
+class DumpCertTestCase(DjangoCAWithGeneratedCertsTestCase):
+    def setUp(self):
+        super(DumpCertTestCase, self).setUp()
+        self.cert = self.certs['root-cert']
+
     def test_basic(self):
         stdout, stderr = self.cmd('dump_cert', self.cert.serial,
                                   stdout=BytesIO(), stderr=BytesIO())
@@ -52,7 +54,7 @@ class DumpCertTestCase(DjangoCAWithCertTestCase):
         stdout, stderr = self.cmd('dump_cert', self.cert.serial, bundle=True,
                                   stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
-        self.assertEqual(stdout, self.cert.pub.encode('utf-8') + self.ca.pub.encode('utf-8'))
+        self.assertEqual(stdout, self.cert.pub.encode('utf-8') + self.cas['root'].pub.encode('utf-8'))
 
     @override_tmpcadir()
     def test_file_output(self):

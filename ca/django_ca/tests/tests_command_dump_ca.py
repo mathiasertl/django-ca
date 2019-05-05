@@ -21,13 +21,15 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.utils import six
 
 from .. import ca_settings
-from .base import DjangoCAWithCertTestCase
-from .base import override_settings
+from .base import DjangoCAWithCATestCase
 from .base import override_tmpcadir
 
 
-@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
-class DumpCertTestCase(DjangoCAWithCertTestCase):
+class DumpCertTestCase(DjangoCAWithCATestCase):
+    def setUp(self):
+        super(DumpCertTestCase, self).setUp()
+        self.ca = self.cas['root']
+
     @override_tmpcadir()
     def test_basic(self):
         stdout, stderr = self.cmd('dump_ca', self.ca.serial,
@@ -53,16 +55,16 @@ class DumpCertTestCase(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_bundle(self):
-        self.maxDiff = None
         stdout, stderr = self.cmd('dump_ca', self.ca.serial, '-', bundle=True,
                                   stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
         self.assertEqual(stdout, self.ca.pub.encode('utf-8'))
 
-        stdout, stderr = self.cmd('dump_ca', self.child_ca.serial, '-', bundle=True,
+        child = self.cas['child']
+        stdout, stderr = self.cmd('dump_ca', child.serial, '-', bundle=True,
                                   stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
-        self.assertEqual(stdout, self.child_ca.pub.encode('utf-8') + self.ca.pub.encode('utf-8'))
+        self.assertEqual(stdout, child.pub.encode('utf-8') + self.ca.pub.encode('utf-8'))
 
     @override_tmpcadir()
     def test_file_output(self):
