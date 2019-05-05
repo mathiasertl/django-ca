@@ -742,13 +742,7 @@ class DjangoCATestCase(TestCase):
 
         return exts
 
-
-@override_settings(CA_MIN_KEY_SIZE=512)
-class DjangoCAWithCATestCase(DjangoCATestCase):
-    """A test class that already has a CA predefined."""
-
-    def setUp(self):
-        super(DjangoCAWithCATestCase, self).setUp()
+    def load_all_cas(self):
         self.cas = {k: self.load_ca(name=v['name'], x509=v['pub']['parsed']) for k, v in certs.items()
                     if v.get('type') == 'ca'}
         self.cas['child'].parent = self.cas['root']
@@ -756,11 +750,7 @@ class DjangoCAWithCATestCase(DjangoCATestCase):
         self.usable_cas = {name: ca for name, ca in self.cas.items()
                            if certs[name]['key_filename'] is not False}
 
-
-class DjangoCAWithCertTestCase(DjangoCAWithCATestCase):
-    def setUp(self):
-        super(DjangoCAWithCertTestCase, self).setUp()
-
+    def load_all_certs(self):
         self.certs = {}
         for name, data in [(k, v) for k, v in certs.items() if v['type'] == 'cert']:
             ca = self.cas[data['ca']]
@@ -769,3 +759,18 @@ class DjangoCAWithCertTestCase(DjangoCAWithCATestCase):
 
         self.basic_certs = {k: v for k, v in self.certs.items()
                             if k in ['root-cert', 'child-cert', 'ecc-cert', 'dsa-cert', 'pwd-cert']}
+
+
+@override_settings(CA_MIN_KEY_SIZE=512)
+class DjangoCAWithCATestCase(DjangoCATestCase):
+    """A test class that already has a CA predefined."""
+
+    def setUp(self):
+        super(DjangoCAWithCATestCase, self).setUp()
+        self.load_all_cas()
+
+
+class DjangoCAWithCertTestCase(DjangoCAWithCATestCase):
+    def setUp(self):
+        super(DjangoCAWithCertTestCase, self).setUp()
+        self.load_all_certs()
