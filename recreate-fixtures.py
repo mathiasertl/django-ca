@@ -417,8 +417,12 @@ for cert, cert_values in data.items():
 
     if cert_values.get('type') == 'ca':
         data[cert]['ca_ocsp_url'] = '%s/ca/ocsp/%s/' % (testserver, data[cert]['name'])
+        data[cert].setdefault('issuer_url', '%s/%s.der' % (testserver, cert))
+        data[cert].setdefault('ocsp_url', '%s%s' % (testserver, reverse('django_ca:ocsp-post-%s' % cert)))
+        data[cert].setdefault('expires', timedelta(days=366))
     else:
         data[cert]['cn'] = '%s.example.com' % cert
+        data[cert].setdefault('expires', timedelta(days=183))
 
 ca_names = [v['name'] for k, v in data.items() if v.get('type') == 'ca']
 ca_instances = []
@@ -443,16 +447,20 @@ if not args.only_contrib:
             with freeze_time(now + data[name]['delta']):
                 ca = CertificateAuthority.objects.init(
                     name=data[name]['name'], password=data[name]['password'], subject=data[name]['subject'],
+                    expires=datetime.utcnow() + data[name]['expires'],
                     key_type=data[name]['key_type'], key_size=data[name]['key_size'],
                     algorithm=data[name]['algorithm'],
+                    ocsp_url=data[name]['ocsp_url'],
+                    issuer_url=data[name]['issuer_url'],
                     pathlen=data[name]['pathlen'], **kwargs
                 )
-            ca.crl_url = '%s%s' % (testserver, reverse('django_ca:crl', kwargs={'serial': ca.serial}))
-            ca.ocsp_url = '%s%s' % (testserver, reverse('django_ca:ocsp-post-%s' % name))
-            ca.issuer_url = '%s/%s.der' % (testserver, name)
-            ca.save()
-            ca_instances.append(ca)
 
+            # Same values can only be added here because they require data from the already created CA
+            crl_path = reverse('django_ca:crl', kwargs={'serial': ca.serial})
+            ca.crl_url = '%s%s' % (testserver, crl_path)
+            ca.save()
+
+            ca_instances.append(ca)
             write_ca(ca, data[name], password=data[name]['password'])
 
         # add parent/child relationships
@@ -473,6 +481,7 @@ if not args.only_contrib:
 
             with freeze_time(now + data[name]['delta']):
                 cert = Certificate.objects.init(ca=ca, csr=csr, algorithm=data[name]['algorithm'],
+                                                expires=datetime.utcnow() + data[name]['expires'],
                                                 password=pwd, **kwargs)
             copy_cert(cert, data[name], key_path, csr_path)
 
@@ -491,6 +500,7 @@ if not args.only_contrib:
             pwd = data[ca.name]['password']
             with freeze_time(now + data[name]['delta']):
                 cert = Certificate.objects.init(ca=ca, csr=csr, algorithm=data[name]['algorithm'],
+                                                expires=datetime.utcnow() + data[name]['expires'],
                                                 password=pwd, **kwargs)
 
             data[name]['profile'] = profile
@@ -511,7 +521,7 @@ if not args.only_contrib:
 
             builder = x509.CertificateBuilder()
             builder = builder.not_valid_before(no_ext_now)
-            builder = builder.not_valid_after(no_ext_now + timedelta(days=365))
+            builder = builder.not_valid_after(no_ext_now + data[name]['expires'])
             builder = builder.serial_number(x509.random_serial_number())
             builder = builder.subject_name(subject)
             builder = builder.issuer_name(ca.x509.subject)
@@ -563,6 +573,7 @@ if not args.only_contrib:
 
         with freeze_time(now + data[name]['delta']):
             cert = Certificate.objects.init(ca=ca, csr=csr, algorithm=data[name]['algorithm'],
+                                            expires=datetime.utcnow() + data[name]['expires'],
                                             password=pwd, **kwargs)
         copy_cert(cert, data[name], key_path, csr_path)
 else:
@@ -609,6 +620,8 @@ for filename in os.listdir(os.path.join(_sphinx_dir, 'cert')):
 for name, cert_data in data.items():
     if 'delta' in cert_data:
         del cert_data['delta']
+    if 'expires' in cert_data:
+        del cert_data['expires']
 
     if cert_data.get('password'):
         cert_data['password'] = cert_data['password'].decode('utf-8')
