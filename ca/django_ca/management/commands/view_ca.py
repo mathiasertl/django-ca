@@ -27,6 +27,9 @@ class Command(BaseCommand):
         try:
             path = ca_storage.path(ca.private_key_path)
         except NotImplementedError:
+            # Will raise NotImplementedError if storage backend does not support path(), in which case we use
+            # the relative path from the database.
+            # https://docs.djangoproject.com/en/dev/ref/files/storage/#django.core.files.storage.Storage.path
             path = ca.private_key_path
 
         self.stdout.write('%s (%s):' % (ca.name, 'enabled' if ca.enabled else 'disabled'))

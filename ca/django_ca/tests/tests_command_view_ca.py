@@ -832,12 +832,24 @@ expected['pwd'] = expected['ecc']
 class ViewCATestCase(DjangoCAWithCATestCase):
     @override_tmpcadir()
     def test_all_cas(self):
-        self.maxDiff = None
         for name, ca in sorted(self.cas.items(), key=lambda t: t[0]):
             stdout, stderr = self.cmd('view_ca', ca.serial)
             data = self.get_cert_context(name)
             self.assertMultiLineEqual(stdout, expected[name].format(**data))
             self.assertEqual(stderr, '')
+
+    @override_tmpcadir()
+    def test_no_implemented(self):
+        def side_effect(cls):
+            raise NotImplementedError
+
+        ca_storage = 'django_ca.management.commands.view_ca.ca_storage.%s'
+        with self.patch(ca_storage % 'path', side_effect=side_effect) as path_mock, \
+                self.patch(ca_storage % 'exists', return_value=True) as exists_mock:
+            stdout, stderr = self.cmd('view_ca', self.cas['root'].serial)
+
+        path_mock.assert_called_once_with(self.cas['root'].private_key_path)
+        exists_mock.assert_called_once_with(self.cas['root'].private_key_path)
 
 
 @override_settings(USE_TZ=True)
