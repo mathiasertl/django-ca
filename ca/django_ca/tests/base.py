@@ -790,6 +790,16 @@ class DjangoCATestCase(TestCase):
         self.ca_certs = {k: v for k, v in self.certs.items()
                          if k in ['root-cert', 'child-cert', 'ecc-cert', 'dsa-cert', 'pwd-cert']}
 
+    @contextmanager
+    def patch(self, *args, **kwargs):
+        with patch(*args, **kwargs) as mock:
+            yield mock
+
+    @contextmanager
+    def patch_object(self, *args, **kwargs):
+        with patch.object(*args, **kwargs) as mock:
+            yield mock
+
 
 @override_settings(CA_MIN_KEY_SIZE=512)
 class DjangoCAWithCATestCase(DjangoCATestCase):
