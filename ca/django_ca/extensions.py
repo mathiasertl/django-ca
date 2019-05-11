@@ -79,6 +79,7 @@ class Extension(object):
     value : list or tuple or dict or str or :py:class:`~cg:cryptography.x509.ExtensionType`
         The value of the extension, the description provides further details.
     """
+    oid = None  # must be overwritten by base class
     default_critical = False
 
     def __init__(self, value):
@@ -154,7 +155,9 @@ class Extension(object):
             True
         """
 
-        raise NotImplementedError
+        if self.critical:
+            return 'critical,%s' % self.value
+        return self.value
 
     def as_extension(self):
         """This extension as :py:class:`~cg:cryptography.x509.ExtensionType`."""
@@ -247,9 +250,8 @@ class NullExtension(Extension):
     def from_str(self, value):
         raise NotImplementedError
 
-    def as_extension(self):
-        """This extension as :py:class:`~cg:cryptography.x509.ExtensionType`."""
-        return x509.extensions.Extension(oid=self.oid, critical=self.critical, value=self.extension_type)
+    def serialize(self):
+        return {'critical': self.critical}
 
 
 class ListExtension(Extension):
