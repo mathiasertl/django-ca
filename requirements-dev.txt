@@ -6,4 +6,4 @@ pip>=9.0.1
 sphinx-autobuild==0.7.1
 tabulate==0.8.3
 termcolor==1.1.0
-wheel==0.33.1
+wheel==0.33.4
