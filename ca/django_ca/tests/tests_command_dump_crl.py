@@ -39,27 +39,28 @@ from .base import timestamps
 
 
 class DumpCRLTestCase(DjangoCAWithCertTestCase):
+    def setUp(self):
+        super(DumpCRLTestCase, self).setUp()
+        self.ca = self.cas['root']
+
     def assertSerial(self, revokation, cert):
         self.assertEqual(revokation.get_serial(),
                          cert.serial.replace(':', '').encode('utf-8'))
 
     @override_tmpcadir()
     def test_basic(self):
-        stdout, stderr = self.cmd('dump_crl', scope='user', stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = self.cmd('dump_crl', ca=self.ca, scope='user', stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
 
         crl = x509.load_pem_x509_crl(stdout, default_backend())
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
         self.assertEqual(list(crl), [])
 
-    @override_settings(USE_TZ=True)
-    def test_basic_with_use_tz(self):
-        self.test_basic()
-
     @override_tmpcadir()
     def test_file(self):
         path = os.path.join(ca_settings.CA_DIR, 'crl-test.crl')
-        stdout, stderr = self.cmd('dump_crl', path, scope='user', stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = self.cmd('dump_crl', path, ca=self.ca, scope='user',
+                                  stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stdout, b'')
         self.assertEqual(stderr, b'')
 
@@ -75,7 +76,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         else:
             msg = r"^\[Errno 2\] No such file or directory: '%s'$" % re.escape(path)
         with self.assertCommandError(msg):
-            self.cmd('dump_crl', path, scope='user', stdout=BytesIO(), stderr=BytesIO())
+            self.cmd('dump_crl', path, ca=self.ca, scope='user', stdout=BytesIO(), stderr=BytesIO())
 
     @override_tmpcadir()
     def test_password(self):
@@ -117,7 +118,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
     def test_revoked(self):
         cert = self.certs['root-cert']
         cert.revoke()
-        stdout, stderr = self.cmd('dump_crl', scope='user', stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = self.cmd('dump_crl', ca=self.ca, scope='user', stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
 
         crl = x509.load_pem_x509_crl(stdout, default_backend())
@@ -131,7 +132,8 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
             cert.revoked_reason = reason
             cert.save()
 
-            stdout, stderr = self.cmd('dump_crl', scope='user', stdout=BytesIO(), stderr=BytesIO())
+            stdout, stderr = self.cmd('dump_crl', ca=self.ca, scope='user',
+                                      stdout=BytesIO(), stderr=BytesIO())
             crl = x509.load_pem_x509_crl(stdout, default_backend())
             self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
             self.assertEqual(len(list(crl)), 1)
@@ -148,7 +150,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         stamp = timezone.now().replace(microsecond=0) - timedelta(10)
         cert.revoke(compromised=stamp)
 
-        stdout, stderr = self.cmd('dump_crl', scope='user', stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = self.cmd('dump_crl', ca=self.ca, scope='user', stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
 
         crl = x509.load_pem_x509_crl(stdout, default_backend())

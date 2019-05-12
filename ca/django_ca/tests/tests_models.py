@@ -21,6 +21,7 @@ import unittest
 from datetime import datetime
 from datetime import timedelta
 
+import six
 from freezegun import freeze_time
 
 from cryptography import x509
@@ -39,7 +40,6 @@ from ..extensions import KeyUsage
 from ..extensions import NameConstraints
 from ..extensions import OCSPNoCheck
 from ..extensions import PrecertificateSignedCertificateTimestamps
-from ..extensions import PrecertPoison
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
@@ -55,6 +55,9 @@ try:
     import unittest.mock as mock
 except ImportError:
     import mock
+
+if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
+    from ..extensions import PrecertPoison
 
 
 class TestWatcher(TestCase):
@@ -566,16 +569,16 @@ class CertificateTests(DjangoCAWithCertTestCase):
         #       | openssl dgst -sha256 -binary | base64
         for name, ca in self.cas.items():
             self.assertEqual(ca.hpkp_pin, certs[name]['hpkp'])
-            self.assertIsInstance(ca.hpkp_pin, str)
+            self.assertIsInstance(ca.hpkp_pin, six.text_type)
 
         for name, cert in self.certs.items():
             self.assertEqual(cert.hpkp_pin, certs[name]['hpkp'])
-            self.assertIsInstance(cert.hpkp_pin, str)
+            self.assertIsInstance(cert.hpkp_pin, six.text_type)
 
     def test_get_authority_key_identifier(self):
         for name, ca in self.cas.items():
-            expected = AuthorityKeyIdentifier(certs[name]['subject_key_identifier'].value)
-            self.assertEqual(ca.get_authority_key_identifier(), expected.extension_type)
+            self.assertEqual(ca.get_authority_key_identifier().key_identifier,
+                             certs[name]['subject_key_identifier'].value)
 
         # All CAs have a subject key identifier, so we mock that this exception is not present
         def side_effect(cls):
@@ -584,8 +587,8 @@ class CertificateTests(DjangoCAWithCertTestCase):
         ca = self.cas['child']
         with mock.patch('cryptography.x509.extensions.Extensions.get_extension_for_class',
                         side_effect=side_effect):
-            expected = AuthorityKeyIdentifier(certs[ca.name]['subject_key_identifier'].value)
-            self.assertEqual(ca.get_authority_key_identifier(), expected.extension_type)
+            self.assertEqual(ca.get_authority_key_identifier().key_identifier,
+                             certs['child']['subject_key_identifier'].value)
 
     ###############################################
     # Test extensions for all loaded certificates #

@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 import binascii
 import re
 
@@ -91,7 +93,7 @@ class Extension(object):
             self.from_dict(value)
             self._test_value()
         elif isinstance(value, six.string_types):  # e.g. from commandline parser
-            if value.startswith('critical,'):
+            if value.startswith(str('critical,')):
                 self.critical = True
                 value = value[9:]
             else:
@@ -662,7 +664,7 @@ class BasicConstraints(Extension):
             raise ValueError('pathlen must be None when ca is False')
 
     def __repr__(self):
-        return '<%s: %r, critical=%r>' % (self.__class__.__name__, self.as_text(), self.critical)
+        return '<%s: %r, critical=%r>' % (self.__class__.__name__, str(self.as_text()), self.critical)
 
     @property
     def value(self):
@@ -1022,6 +1024,15 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):  # pragma: only 
     def __delitem__(self, key):
         raise NotImplementedError
 
+    def __repr__(self):
+        # only py2: we only override this method because of u'' prefixes in output
+        val = [self.serialize_value(v) for v in self.value]
+
+        if six.PY2:  # pragma: no branch, pragma: only py2 - otherwise we have the u'' prefix in output
+            val = [{str(k): str(v) for k, v in e.items()} for e in val]
+
+        return '<%s: %r, critical=%r>' % (self.__class__.__name__, val, self.critical)
+
     def __setitem__(self, key, value):
         raise NotImplementedError
 
@@ -1044,7 +1055,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):  # pragma: only 
             yield {
                 'log_id': binascii.hexlify(sct.log_id).decode('utf-8'),
                 'sct': sct,
-                'timestamp': sct.timestamp.isoformat(' '),
+                'timestamp': sct.timestamp.isoformat(str(' ')),
                 'type': entry_type,
                 'version': sct.version.name,
             }
@@ -1083,7 +1094,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):  # pragma: only 
 
     def serialize(self):
         return {
-            'critical': self.critical,
+            u'critical': self.critical,
             'values': [self.serialize_value(v) for v in self.value],
         }
 

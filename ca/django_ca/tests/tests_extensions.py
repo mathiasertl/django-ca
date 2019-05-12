@@ -731,9 +731,14 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         ext2 = AuthorityKeyIdentifier(self.hex2)
         ext3 = AuthorityKeyIdentifier(self.ext)
 
-        self.assertEqual(repr(ext1), '<AuthorityKeyIdentifier: b\'333333\', critical=False>')
-        self.assertEqual(repr(ext2), '<AuthorityKeyIdentifier: b\'DDDDDD\', critical=False>')
-        self.assertEqual(repr(ext3), '<AuthorityKeyIdentifier: b\'333333\', critical=False>')
+        if six.PY2:  # pragma: only py2
+            self.assertEqual(repr(ext1), '<AuthorityKeyIdentifier: 333333, critical=False>')
+            self.assertEqual(repr(ext2), '<AuthorityKeyIdentifier: DDDDDD, critical=False>')
+            self.assertEqual(repr(ext3), '<AuthorityKeyIdentifier: 333333, critical=False>')
+        else:
+            self.assertEqual(repr(ext1), '<AuthorityKeyIdentifier: b\'333333\', critical=False>')
+            self.assertEqual(repr(ext2), '<AuthorityKeyIdentifier: b\'DDDDDD\', critical=False>')
+            self.assertEqual(repr(ext3), '<AuthorityKeyIdentifier: b\'333333\', critical=False>')
 
     def test_serialize(self):
         ext1 = AuthorityKeyIdentifier(self.hex1)
@@ -1425,6 +1430,7 @@ class PrecertificateSignedCertificateTimestampsTestCase(
         self.data1 = certs[self.name1]['precertificate_signed_certificate_timestamps']
         self.data2 = certs[self.name2]['precertificate_signed_certificate_timestamps']
 
+    @unittest.skipUnless(six.PY3, 'SCT instances are never equal in PY2')
     def test_as_extension(self):
         self.assertEqual(self.ext1.as_extension(), self.x1)
         self.assertEqual(self.ext2.as_extension(), self.x2)
@@ -1457,9 +1463,17 @@ class PrecertificateSignedCertificateTimestampsTestCase(
             self.ext2.extend([])
 
     def test_extension_type(self):
-        self.assertEqual(self.ext1.extension_type, self.x1.value)
-        self.assertEqual(self.ext2.extension_type, self.x2.value)
+        if six.PY2:  # pragma: only py2
+            # SCT instances don't compare as equal in py2
+            self.assertEqual([v.log_id for v in self.ext1.extension_type],
+                             [v.log_id for v in self.x1.value])
+            self.assertEqual([v.log_id for v in self.ext2.extension_type],
+                             [v.log_id for v in self.x2.value])
+        else:
+            self.assertEqual(self.ext1.extension_type, self.x1.value)
+            self.assertEqual(self.ext2.extension_type, self.x2.value)
 
+    @unittest.skipUnless(six.PY3, 'SCT instances are never equal in PY2')
     def test_for_builder(self):
         self.assertEqual(self.ext1.for_builder(), {'critical': False, 'extension': self.x1.value})
         self.assertEqual(self.ext2.for_builder(), {'critical': False, 'extension': self.x2.value})
@@ -1533,12 +1547,19 @@ class PrecertificateSignedCertificateTimestampsTestCase(
             self.ext2.remove(self.data2['values'][0])
 
     def test_repr(self):
+        if six.PY2:  # pragma: only py2
+            exp1 = [{str(k): str(v) for k, v in e.items()} for e in self.data1['values']]
+            exp2 = [{str(k): str(v) for k, v in e.items()} for e in self.data2['values']]
+        else:
+            exp1 = self.data1['values']
+            exp2 = self.data2['values']
+
         self.assertEqual(
             repr(self.ext1),
-            '<PrecertificateSignedCertificateTimestamps: %s, critical=False>' % repr(self.data1['values']))
+            '<PrecertificateSignedCertificateTimestamps: %s, critical=False>' % repr(exp1))
         self.assertEqual(
             repr(self.ext2),
-            '<PrecertificateSignedCertificateTimestamps: %s, critical=False>' % repr(self.data2['values']))
+            '<PrecertificateSignedCertificateTimestamps: %s, critical=False>' % repr(exp2))
 
     def test_serialize(self):
         self.assertEqual(self.ext1.serialize(), self.data1)
@@ -1853,9 +1874,14 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         ext2 = SubjectKeyIdentifier(self.hex2)
         ext3 = SubjectKeyIdentifier(self.ext)
 
-        self.assertEqual(repr(ext1), '<SubjectKeyIdentifier: b\'333333\', critical=False>')
-        self.assertEqual(repr(ext2), '<SubjectKeyIdentifier: b\'DDDDDD\', critical=False>')
-        self.assertEqual(repr(ext3), '<SubjectKeyIdentifier: b\'333333\', critical=False>')
+        if six.PY2:  # pragma: only py2
+            self.assertEqual(repr(ext1), '<SubjectKeyIdentifier: 333333, critical=False>')
+            self.assertEqual(repr(ext2), '<SubjectKeyIdentifier: DDDDDD, critical=False>')
+            self.assertEqual(repr(ext3), '<SubjectKeyIdentifier: 333333, critical=False>')
+        else:
+            self.assertEqual(repr(ext1), '<SubjectKeyIdentifier: b\'333333\', critical=False>')
+            self.assertEqual(repr(ext2), '<SubjectKeyIdentifier: b\'DDDDDD\', critical=False>')
+            self.assertEqual(repr(ext3), '<SubjectKeyIdentifier: b\'333333\', critical=False>')
 
     def test_serialize(self):
         ext1 = SubjectKeyIdentifier(self.hex1)
