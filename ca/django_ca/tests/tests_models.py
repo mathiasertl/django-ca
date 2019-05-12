@@ -49,6 +49,7 @@ from .base import DjangoCAWithCertTestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
+from .base import timestamps
 
 try:
     import unittest.mock as mock
@@ -262,6 +263,22 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
 
         crl = ca.get_crl()
         self.assertCRL(crl, idp=None, crl_number=0)
+
+    @override_tmpcadir()
+    @freeze_time(timestamps['everything_valid'])
+    def test_no_auth_key_identifier(self):
+        # All CAs have a authority key identifier, so we mock that this exception is not present
+        def side_effect(cls):
+            raise x509.ExtensionNotFound('mocked', x509.AuthorityKeyIdentifier.oid)
+
+        ca = self.cas['child']
+        full_name = 'http://localhost/crl'
+        idp = self.get_idp(full_name=[x509.UniformResourceIdentifier(value=full_name)])
+
+        with mock.patch('cryptography.x509.extensions.Extensions.get_extension_for_oid',
+                        side_effect=side_effect):
+            crl = ca.get_crl(full_name=[full_name])
+        self.assertCRL(crl, idp=idp, signer=ca, skip_authority_key_identifier=True)
 
     def test_validate_json(self):
         # Validation works if we're not revoked

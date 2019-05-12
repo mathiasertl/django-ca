@@ -418,7 +418,7 @@ class DjangoCATestCase(TestCase):
         self.assertIsInstance(cert.signature_hash_algorithm, getattr(hashes, algo.upper()))
 
     def assertCRL(self, crl, certs=None, signer=None, expires=86400, algorithm=None, encoding=Encoding.PEM,
-                  idp=None, extensions=None, crl_number=0):
+                  idp=None, extensions=None, crl_number=0, skip_authority_key_identifier=False):
         certs = certs or []
         signer = signer or self.cas['child']
         algorithm = algorithm or ca_settings.CA_DIGEST_ALGORITHM
@@ -431,7 +431,8 @@ class DjangoCATestCase(TestCase):
             value=x509.CRLNumber(crl_number=crl_number),
             critical=False, oid=ExtensionOID.CRL_NUMBER
         ))
-        extensions.append(signer.authority_key_identifier.as_extension())
+        if not skip_authority_key_identifier:
+            extensions.append(signer.authority_key_identifier.as_extension())
 
         if encoding == Encoding.PEM:
             crl = x509.load_pem_x509_crl(crl, default_backend())
@@ -603,16 +604,7 @@ class DjangoCATestCase(TestCase):
         # Get a dictionary suitable for testing output based on the dictionary in basic.certs
         ctx = {}
         for key, value in certs[name].items():
-            if isinstance(value, tuple):
-                crit, val = value
-                ctx['%s_critical' % key] = crit
-
-                if isinstance(val, list):
-                    for i, val_i in enumerate(val):
-                        ctx['%s_%s' % (key, i)] = val_i
-                else:
-                    ctx[key] = val
-            elif key == 'precert_poison':
+            if key == 'precert_poison':
                 # NOTE: We use two keys here because if we don't have PrecertPoison, the name of the
                 #       extension is "Unknown OID", so the order is different.
                 if _HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
@@ -673,23 +665,6 @@ class DjangoCATestCase(TestCase):
     def expires(cls, days):
         now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         return now + timedelta(days + 1)
-
-    @classmethod
-    def create_ca(cls, name, **kwargs):
-        """Create a new CA.
-
-        Sets sane defaults for all required kwargs, so you only have to pass the name.
-        """
-
-        kwargs.setdefault('key_size', settings.CA_MIN_KEY_SIZE)
-        kwargs.setdefault('key_type', 'RSA')
-        kwargs.setdefault('algorithm', hashes.SHA256())
-        kwargs.setdefault('expires', datetime.now() + timedelta(days=3560))
-        kwargs.setdefault('parent', None)
-        kwargs.setdefault('subject', Subject('/CN=generated.example.com'))
-
-        ca = CertificateAuthority.objects.init(name=name, **kwargs)
-        return ca
 
     @classmethod
     def load_ca(cls, name, x509, enabled=True, parent=None, **kwargs):

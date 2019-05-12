@@ -105,9 +105,11 @@ urlpatterns = [
         responder_cert=certs['profile-ocsp']['pub']['parsed'],
         expires=1500,
     ), name='post-loaded-cryptography'),
+
+    # Use absolute paths to trigger log warnings
     url(r'^ocsp/abs-path/$', OCSPView.as_view(
         ca=certs['child']['serial'],
-        responder_key=ocsp_profile['key_filename'],
+        responder_key=ocsp_key_path,
         responder_cert=ocsp_pem_path,
         expires=1500,
     ), name='post-abs-path'),
