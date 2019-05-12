@@ -312,7 +312,8 @@ class BaseCommand(_BaseCommand):
     def print_extension(self, ext):
         if isinstance(ext, Extension):
             if isinstance(ext, NullExtension):
-                if ext.critical:
+                if ext.critical:  # pragma: no branch, pragma: only cryptography>=2.4
+                    # NOTE: Only PrecertPoison is ever marked as critical
                     self.stdout.write('%s (critical): Yes' % ext.name)
                 else:
                     self.stdout.write('%s: Yes' % ext.name)
