@@ -448,6 +448,17 @@ class AuthorityInformationAccessTestCase(TestCase):
                                    uri('https://example.org')),
         ])
     )
+    ext_critical = x509.extensions.Extension(
+        oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS, critical=True,
+        value=x509.AuthorityInformationAccess(descriptions=[
+            x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS,
+                                   uri('https://example.com')),
+            x509.AccessDescription(AuthorityInformationAccessOID.OCSP,
+                                   uri('https://example.net')),
+            x509.AccessDescription(AuthorityInformationAccessOID.OCSP,
+                                   uri('https://example.org')),
+        ])
+    )
 
     def test_hash(self):
         self.assertEqual(hash(AuthorityInformationAccess(self.ext_empty)),
@@ -626,6 +637,17 @@ class AuthorityInformationAccessTestCase(TestCase):
         self.assertEqual(
             AuthorityInformationAccess(self.ext_both).as_text(),
             "CA Issuers:\n  * URI:https://example.com\nOCSP:\n  * URI:https://example.net\n  * URI:https://example.org\n")  # NOQA
+
+    def test_serialize(self):
+        extensions = [
+            AuthorityInformationAccess(self.ext_empty),
+            AuthorityInformationAccess(self.ext_issuer),
+            AuthorityInformationAccess(self.ext_ocsp),
+            AuthorityInformationAccess(self.ext_both),
+            AuthorityInformationAccess(self.ext_critical),
+        ]
+        for ext in extensions:
+            self.assertEqual(AuthorityInformationAccess(ext.serialize()), ext)
 
 
 class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
@@ -822,6 +844,17 @@ class BasicConstraintsTestCase(TestCase):
         bc = BasicConstraints('CA=false').extension_type
         self.assertFalse(bc.ca)
         self.assertEqual(bc.path_length, None)
+
+    def test_serialize(self):
+        exts = [
+            BasicConstraints({'ca': True}),
+            BasicConstraints({'ca': False}),
+            BasicConstraints({'ca': True, 'pathlen': 3}),
+            BasicConstraints({'ca': True, 'pathlen': None}),
+            BasicConstraints({'ca': True, 'critical': False}),
+        ]
+        for ext in exts:
+            self.assertEqual(BasicConstraints(ext.serialize()), ext)
 
 
 class IssuerAlternativeNameTestCase(TestCase):
@@ -1031,6 +1064,11 @@ class NameConstraintsTestCase(TestCase):
         value=x509.NameConstraints(permitted_subtrees=[dns('example.com')],
                                    excluded_subtrees=[dns('example.net')])
     )
+    ext_not_critical = x509.extensions.Extension(
+        oid=ExtensionOID.NAME_CONSTRAINTS, critical=False,
+        value=x509.NameConstraints(permitted_subtrees=[dns('example.com')],
+                                   excluded_subtrees=[dns('example.net')])
+    )
 
     def assertEmpty(self, ext):
         self.assertEqual(ext.permitted, [])
@@ -1152,6 +1190,19 @@ Excluded:
             NameConstraints(None)
         with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type bool$'):
             NameConstraints(False)
+
+    def test_serialize(self):
+        empty = NameConstraints(self.ext_empty)
+        permitted = NameConstraints(self.ext_permitted)
+        excluded = NameConstraints(self.ext_excluded)
+        both = NameConstraints(self.ext_both)
+        not_critical = NameConstraints(self.ext_not_critical)
+
+        self.assertEqual(NameConstraints(empty.serialize()), empty)
+        self.assertEqual(NameConstraints(permitted.serialize()), permitted)
+        self.assertEqual(NameConstraints(excluded.serialize()), excluded)
+        self.assertEqual(NameConstraints(both.serialize()), both)
+        self.assertEqual(NameConstraints(not_critical.serialize()), not_critical)
 
 
 class OCSPNoCheckTestCase(ExtensionTestMixin, TestCase):
