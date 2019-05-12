@@ -1071,14 +1071,17 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):  # pragma: only 
     def count(self, value):
         if isinstance(value, dict):
             return self.serialize()['values'].count(value)
-        return self.value.count(value)
+        return self.value._signed_certificate_timestamps.count(value)
 
     def extend(self, iterable):
         raise NotImplementedError
 
     @property
     def extension_type(self):
-        return x509.PrecertificateSignedCertificateTimestamps(self.value)
+        return self.value
+
+    def from_extension(self, value):
+        self.value = value.value
 
     def from_list(self, value):
         raise NotImplementedError

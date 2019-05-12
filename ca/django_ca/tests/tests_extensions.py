@@ -1430,7 +1430,6 @@ class PrecertificateSignedCertificateTimestampsTestCase(
         self.data1 = certs[self.name1]['precertificate_signed_certificate_timestamps']
         self.data2 = certs[self.name2]['precertificate_signed_certificate_timestamps']
 
-    @unittest.skipUnless(six.PY3, 'SCT instances are never equal in PY2')
     def test_as_extension(self):
         self.assertEqual(self.ext1.as_extension(), self.x1)
         self.assertEqual(self.ext2.as_extension(), self.x2)
@@ -1463,17 +1462,9 @@ class PrecertificateSignedCertificateTimestampsTestCase(
             self.ext2.extend([])
 
     def test_extension_type(self):
-        if six.PY2:  # pragma: only py2
-            # SCT instances don't compare as equal in py2
-            self.assertEqual([v.log_id for v in self.ext1.extension_type],
-                             [v.log_id for v in self.x1.value])
-            self.assertEqual([v.log_id for v in self.ext2.extension_type],
-                             [v.log_id for v in self.x2.value])
-        else:
-            self.assertEqual(self.ext1.extension_type, self.x1.value)
-            self.assertEqual(self.ext2.extension_type, self.x2.value)
+        self.assertEqual(self.ext1.extension_type, self.x1.value)
+        self.assertEqual(self.ext2.extension_type, self.x2.value)
 
-    @unittest.skipUnless(six.PY3, 'SCT instances are never equal in PY2')
     def test_for_builder(self):
         self.assertEqual(self.ext1.for_builder(), {'critical': False, 'extension': self.x1.value})
         self.assertEqual(self.ext2.for_builder(), {'critical': False, 'extension': self.x2.value})
