@@ -32,15 +32,17 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
     subject_help = 'TODO'
 
     def add_arguments(self, parser):
-        self.add_base_args(parser)
+        self.add_base_args(parser, no_default_ca=True)
         parser.add_argument('cert', action=CertificateAction, allow_revoked=True,
                             help='The certificate to resign.')
 
     def handle(self, *args, **options):
-        self.test_options(*args, **options)
-        ca = options['ca']
         cert = options['cert']
+        ca = options['ca']
+        if not ca:
+            ca = options['ca'] = cert.ca
         csr = cert.csr
+        self.test_options(*args, **options)
 
         # get list of watchers
         if options['watch']:

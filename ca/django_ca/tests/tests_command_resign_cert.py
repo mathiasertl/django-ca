@@ -18,6 +18,7 @@ import os
 from django.utils import six
 
 from .. import ca_settings
+from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import KeyUsage
@@ -42,18 +43,24 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
         super(ResignCertTestCase, self).setUp()
         self.cert = self.certs['root-cert']
 
-    def assertResigned(self, old, new):
+    def assertResigned(self, old, new, new_ca=None):
+        new_ca = new_ca or old.ca
+        issuer = new_ca.subject
+
         self.assertNotEqual(old.pk, new.pk)  # make sure we're not comparing the same cert
 
         # assert various properties
-        self.assertEqual(old.issuer, new.issuer)
+        self.assertEqual(new_ca, new.ca)
+        self.assertEqual(issuer, new.issuer)
         self.assertEqual(old.hpkp_pin, new.hpkp_pin)
 
-    def assertEqualExt(self, old, new):
+    def assertEqualExt(self, old, new, new_ca=None):
+        new_ca = new_ca or old.ca
         self.assertEqual(old.subject, new.subject)
 
         # assert extensions that should be equal
-        self.assertEqual(old.authority_key_identifier, new.authority_key_identifier)
+        aki = AuthorityKeyIdentifier(new_ca.subject_key_identifier)
+        self.assertEqual(aki, new.authority_key_identifier)
         self.assertEqual(old.extended_key_usage, new.extended_key_usage)
         self.assertEqual(old.key_usage, new.key_usage)
         self.assertEqual(old.subject_alternative_name, new.subject_alternative_name)
@@ -77,6 +84,19 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
         new = Certificate.objects.get(pub=stdout)
         self.assertResigned(self.cert, new)
         self.assertEqualExt(self.cert, new)
+
+    @override_tmpcadir()
+    def test_different_ca(self):
+        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            stdout, stderr = self.cmd('resign_cert', self.cert.serial, ca=self.cas['child'])
+
+        self.assertEqual(stderr, '')
+        self.assertEqual(pre.call_count, 1)
+        self.assertEqual(post.call_count, 1)
+
+        new = Certificate.objects.get(pub=stdout)
+        self.assertResigned(self.cert, new, new_ca=self.cas['child'])
+        self.assertEqualExt(self.cert, new, new_ca=self.cas['child'])
 
     @override_tmpcadir()
     def test_overwrite(self):

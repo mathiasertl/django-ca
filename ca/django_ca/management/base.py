@@ -346,10 +346,10 @@ class BaseCommand(_BaseCommand):
 
 
 class BaseSignCommand(BaseCommand):
-    def add_base_args(self, parser):
+    def add_base_args(self, parser, no_default_ca=False):
         self.add_subject_group(parser)
         self.add_algorithm(parser)
-        self.add_ca(parser)
+        self.add_ca(parser, no_default=no_default_ca)
         self.add_password(parser)
         self.add_extensions(parser)
 
