@@ -198,11 +198,12 @@ certs['cloudflare_1'] = {
     'subject_key_identifier': '05:86:D8:B4:ED:A9:7E:23:EE:2E:E7:75:AA:3B:2C:06:08:2A:93:B2',
 }
 
+SPHINX_FIXTURES_DIR = os.path.join(os.path.dirname(settings.BASE_DIR), 'docs', 'source', '_files')
 for cert_name, cert_data in certs.items():
     if cert_data.get('password'):
         cert_data['password'] = cert_data['password'].encode('utf-8')
     if cert_data['cat'] == 'sphinx-contrib':
-        cert_data['basedir'] = os.path.join(settings.SPHINX_FIXTURES_DIR, cert_data['type'])
+        cert_data['basedir'] = os.path.join(SPHINX_FIXTURES_DIR, cert_data['type'])
 
     if cert_data['type'] == 'ca':
         cert_data.setdefault('children', [])

@@ -171,7 +171,6 @@ LOGGING = {
 
 # Fixture data used by test cases
 FIXTURES_DIR = os.path.join(BASE_DIR, 'django_ca', 'tests', 'fixtures')
-SPHINX_FIXTURES_DIR = os.path.join(ROOT_DIR, 'docs', 'source', '_files')
 with open(os.path.join(FIXTURES_DIR, 'cert-data.json')) as stream:
     _fixture_data = json.load(stream)
 
