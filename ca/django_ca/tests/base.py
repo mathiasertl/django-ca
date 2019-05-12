@@ -737,6 +737,7 @@ class DjangoCATestCase(TestCase):
                         if v.get('type') == 'ca' and k not in self.cas and v['key_filename'] is not False})
         self.cas['child'].parent = self.cas['root']
         self.cas['child'].save()
+        self.usable_cas = self.cas
 
     def load_all_cas(self):
         self.cas.update({k: self.load_ca(name=v['name'], x509=v['pub']['parsed']) for k, v in certs.items()
@@ -783,6 +784,12 @@ class DjangoCAWithCATestCase(DjangoCATestCase):
     def setUp(self):
         super(DjangoCAWithCATestCase, self).setUp()
         self.load_all_cas()
+
+
+class DjangoCAWithGeneratedCAsTestCase(DjangoCATestCase):
+    def setUp(self):
+        super(DjangoCAWithGeneratedCAsTestCase, self).setUp()
+        self.load_usable_cas()
 
 
 class DjangoCAWithGeneratedCertsTestCase(DjangoCAWithCATestCase):

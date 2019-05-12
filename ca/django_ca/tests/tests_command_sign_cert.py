@@ -37,7 +37,7 @@ from ..signals import post_issue_cert
 from ..signals import pre_issue_cert
 from ..subject import Subject
 from ..utils import ca_storage
-from .base import DjangoCAWithCATestCase
+from .base import DjangoCAWithGeneratedCAsTestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
@@ -51,7 +51,7 @@ else:
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 @freeze_time(timestamps['everything_valid'])
-class SignCertTestCase(DjangoCAWithCATestCase):
+class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
     def setUp(self):
         super(SignCertTestCase, self).setUp()
         self.ca = self.cas['root']
@@ -394,6 +394,7 @@ class SignCertTestCase(DjangoCAWithCATestCase):
         finally:
             os.remove(csr_path)
 
+    @override_tmpcadir()
     def test_expiry_too_late(self):
         expires = self.ca.expires + timedelta(days=3)
         time_left = (self.ca.expires - datetime.now()).days
@@ -428,6 +429,19 @@ class SignCertTestCase(DjangoCAWithCATestCase):
     @freeze_time(timestamps['everything_valid'])
     def test_revoked_ca(self):
         self.ca.revoke()
+        stdin = six.StringIO(self.csr_pem)
+        subject = Subject([('CN', 'example.com')])
+
+        with self.assertCommandError(
+                r'^Certificate Authority is revoked\.$'
+        ), self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            stdout, stderr = self.cmd('sign_cert', ca=self.ca, subject=subject, stdin=stdin)
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
+
+    @freeze_time(timestamps['everything_valid'])
+    def test_unusable_ca(self):
+        print(ca_storage.path(self.ca.private_key_path))
         stdin = six.StringIO(self.csr_pem)
         subject = Subject([('CN', 'example.com')])
 
