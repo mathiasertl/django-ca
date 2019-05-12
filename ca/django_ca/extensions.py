@@ -405,6 +405,26 @@ class KnownValuesExtension(ListExtension):
     def __hash__(self):
         return hash((self.__class__, tuple(sorted(self.value)), self.critical, ))
 
+    def __repr__(self):
+        val = sorted([self.serialize_value(v) for v in self.value])
+
+        if six.PY2:  # pragma: no branch, pragma: only py2 - otherwise we have the u'' prefix in output
+            val = [str(v) for v in val]
+
+        return '<%s: %r, critical=%r>' % (self.__class__.__name__, val, self.critical)
+
+    def __str__(self):
+        val = "%s" % ','.join(sorted([self.serialize_value(v) for v in self.value]))
+        if self.critical:
+            return '%s/critical' % val
+        return val
+
+    def count(self, value):
+        value = self.parse_value(value)
+        if value not in self.KNOWN_VALUES:
+            raise ValueError('Unknown value: %s' % value)
+        return self.value.count(value)
+
     def _test_value(self):
         diff = set(self.value) - self.KNOWN_VALUES
         if diff:
@@ -994,6 +1014,23 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):  # pragma: only 
         LogEntryType.X509_CERTIFICATE: 'x509_certificate'
     }
 
+    def __contains__(self, value):
+        if isinstance(value, dict):
+            return value in self.serialize()['values']
+        return value in self.value
+
+    def __delitem__(self, key):
+        raise NotImplementedError
+
+    def __setitem__(self, key, value):
+        raise NotImplementedError
+
+    def __str__(self):
+        val = '<%s entry(s)>' % len(self)
+        if self.critical:
+            return '%s/critical' % val
+        return val
+
     def human_readable_timestamps(self):
         for sct in self.value:
             if sct.entry_type == LogEntryType.PRE_CERTIFICATE:
@@ -1020,9 +1057,29 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):  # pragma: only 
 
         return '\n'.join(lines)
 
+    def count(self, value):
+        if isinstance(value, dict):
+            return self.serialize()['values'].count(value)
+        return self.value.count(value)
+
+    def extend(self, iterable):
+        raise NotImplementedError
+
     @property
     def extension_type(self):
         return x509.PrecertificateSignedCertificateTimestamps(self.value)
+
+    def from_list(self, value):
+        raise NotImplementedError
+
+    def insert(self, index, value):
+        raise NotImplementedError
+
+    def pop(self, index=-1):
+        raise NotImplementedError
+
+    def remove(self, v):
+        raise NotImplementedError
 
     def serialize(self):
         return {
@@ -1094,4 +1151,10 @@ class TLSFeature(KnownValuesExtension):
 
     @property
     def extension_type(self):
-        return x509.TLSFeature([self.CRYPTOGRAPHY_MAPPING[f] for f in self.value])
+        values = [self.CRYPTOGRAPHY_MAPPING[f] for f in self.value]
+        return x509.TLSFeature(sorted(values, key=lambda t: t.value))
+
+    def parse_value(self, v):
+        if isinstance(v, TLSFeatureType):
+            return self._CRYPTOGRAPHY_MAPPING_REVERSED[v]
+        return v

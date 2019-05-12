@@ -40,11 +40,13 @@ from ..extensions import KnownValuesExtension
 from ..extensions import ListExtension
 from ..extensions import NameConstraints
 from ..extensions import OCSPNoCheck
+from ..extensions import PrecertificateSignedCertificateTimestamps
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
 from ..extensions import UnrecognizedExtension
 from .base import DjangoCAWithCertTestCase
+from .base import certs
 
 if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
     from ..extensions import PrecertPoison
@@ -92,6 +94,89 @@ class ExtensionTestMixin:
 
     def test_str(self):
         raise NotImplementedError
+
+
+class ListExtensionTestMixin(ExtensionTestMixin):
+    def test_count(self):
+        raise NotImplementedError
+
+    def test_del(self):
+        raise NotImplementedError
+
+    def test_extend(self):
+        raise NotImplementedError
+
+    def test_from_list(self):
+        raise NotImplementedError
+
+    def test_getitem(self):
+        raise NotImplementedError
+
+    def test_getitem_slices(self):
+        raise NotImplementedError
+
+    def test_in(self):
+        raise NotImplementedError
+
+    def test_insert(self):
+        raise NotImplementedError
+
+    def test_len(self):
+        raise NotImplementedError
+
+    def test_not_in(self):
+        raise NotImplementedError
+
+    def test_pop(self):
+        raise NotImplementedError
+
+    def test_remove(self):
+        raise NotImplementedError
+
+    def test_setitem(self):
+        raise NotImplementedError
+
+    def test_setitem_slices(self):
+        raise NotImplementedError
+
+
+class KnownValuesExtensionTestMixin(ListExtensionTestMixin):
+    def test_eq_order(self):
+        raise NotImplementedError
+
+    def test_hash_order(self):
+        raise NotImplementedError
+
+    def test_unknown_values(self):
+        raise NotImplementedError
+
+    # Currently overwritten b/c KnownValues should behave like a set, not like a list
+    def test_del(self):
+        pass
+
+    def test_extend(self):
+        pass
+
+    def test_getitem(self):
+        pass
+
+    def test_getitem_slices(self):
+        pass
+
+    def test_insert(self):
+        pass
+
+    def test_pop(self):
+        pass
+
+    def test_remove(self):
+        pass
+
+    def test_setitem(self):
+        pass
+
+    def test_setitem_slices(self):
+        pass
 
 
 class ExtensionTestCase(ExtensionTestMixin, TestCase):
@@ -325,11 +410,11 @@ class KnownValuesExtensionTestCase(TestCase):
 
         # str()
         self.assertEqual(str(ext), 'foo')
-        self.assertEqual(str(self.cls('foo,bar')), 'foo,bar')
+        self.assertEqual(str(self.cls('foo,bar')), 'bar,foo')
         self.assertEqual(str(self.cls('bar,foo')), 'bar,foo')
         self.assertEqual(str(self.cls('bar')), 'bar')
         self.assertEqual(str(self.cls('critical,bar')), 'bar/critical')
-        self.assertEqual(str(self.cls('critical,foo,bar')), 'foo,bar/critical')
+        self.assertEqual(str(self.cls('critical,foo,bar')), 'bar,foo/critical')
         self.assertEqual(str(self.cls('critical,bar,foo')), 'bar,foo/critical')
 
 
@@ -1270,11 +1355,162 @@ class PrecertPoisonTestCase(ExtensionTestMixin, TestCase):
 
 @unittest.skipUnless(ca_settings.OPENSSL_SUPPORTS_SCT,
                      'This version of OpenSSL does not support SCTs')
-class PrecertificateSignedCertificateTimestamps(DjangoCAWithCertTestCase):  # pragma: only cryptography>=2.4
-    def test_basic(self):
-        cert = self.certs['letsencrypt_x3-cert']
-        ext = cert.x509.extensions.get_extension_for_oid(ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
-        self.assertEqual(ext, cert.precertificate_signed_certificate_timestamps.as_extension())
+class PrecertificateSignedCertificateTimestampsTestCase(
+        DjangoCAWithCertTestCase):  # pragma: only cryptography>=2.4
+
+    def setUp(self):
+        super(PrecertificateSignedCertificateTimestampsTestCase, self).setUp()
+        self.name1 = 'letsencrypt_x3-cert'
+        self.name2 = 'comodo_ev-cert'
+        cert1 = self.certs[self.name1]
+        cert2 = self.certs[self.name2]
+
+        self.x1 = cert1.x509.extensions.get_extension_for_oid(
+            ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
+        self.x2 = cert2.x509.extensions.get_extension_for_oid(
+            ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
+        self.ext1 = PrecertificateSignedCertificateTimestamps(self.x1)
+        self.ext2 = PrecertificateSignedCertificateTimestamps(self.x2)
+        self.data1 = certs[self.name1]['precertificate_signed_certificate_timestamps']
+        self.data2 = certs[self.name2]['precertificate_signed_certificate_timestamps']
+
+    def test_as_extension(self):
+        self.assertEqual(self.ext1.as_extension(), self.x1)
+        self.assertEqual(self.ext2.as_extension(), self.x2)
+
+    def test_count(self):
+        self.assertEqual(self.ext1.count(self.data1['values'][0]), 1)
+        self.assertEqual(self.ext1.count(self.data2['values'][0]), 0)
+        self.assertEqual(self.ext1.count(self.x1.value[0]), 1)
+        self.assertEqual(self.ext1.count(self.x2.value[0]), 0)
+
+        self.assertEqual(self.ext2.count(self.data1['values'][0]), 0)
+        self.assertEqual(self.ext2.count(self.data2['values'][0]), 1)
+        self.assertEqual(self.ext2.count(self.x1.value[0]), 0)
+        self.assertEqual(self.ext2.count(self.x2.value[0]), 1)
+
+    def test_del(self):
+        with self.assertRaises(NotImplementedError):
+            del self.ext1[0]
+        with self.assertRaises(NotImplementedError):
+            del self.ext2[0]
+
+    def test_eq(self):
+        self.assertEqual(self.ext1, self.ext1)
+        self.assertEqual(self.ext2, self.ext2)
+
+    def test_extend(self):
+        with self.assertRaises(NotImplementedError):
+            self.ext1.extend([])
+        with self.assertRaises(NotImplementedError):
+            self.ext2.extend([])
+
+    def test_extension_type(self):
+        self.assertEqual(self.ext1.extension_type, self.x1.value)
+        self.assertEqual(self.ext2.extension_type, self.x2.value)
+
+    def test_for_builder(self):
+        self.assertEqual(self.ext1.for_builder(), {'critical': False, 'extension': self.x1.value})
+        self.assertEqual(self.ext2.for_builder(), {'critical': False, 'extension': self.x2.value})
+
+    def test_from_list(self):
+        with self.assertRaises(NotImplementedError):
+            PrecertificateSignedCertificateTimestamps([])
+
+    def test_getitem(self):
+        self.assertEqual(self.ext1[0], self.data1['values'][0])
+        self.assertEqual(self.ext1[1], self.data1['values'][1])
+        with self.assertRaises(IndexError):
+            self.ext1[2]
+
+        self.assertEqual(self.ext2[0], self.data2['values'][0])
+        self.assertEqual(self.ext2[1], self.data2['values'][1])
+        self.assertEqual(self.ext2[2], self.data2['values'][2])
+        with self.assertRaises(IndexError):
+            self.ext2[3]
+
+    def test_getitem_slices(self):
+        self.assertEqual(self.ext1[:1], self.data1['values'][:1])
+        self.assertEqual(self.ext2[:2], self.data2['values'][:2])
+        self.assertEqual(self.ext2[:], self.data2['values'][:])
+
+    def test_hash(self):
+        self.assertEqual(hash(self.ext1), hash(self.ext1))
+        self.assertEqual(hash(self.ext2), hash(self.ext2))
+        self.assertNotEqual(hash(self.ext1), hash(self.ext2))
+
+    def test_in(self):
+        for val in self.data1['values']:
+            self.assertIn(val, self.ext1)
+        for val in self.x1.value:
+            self.assertIn(val, self.ext1)
+        for val in self.data2['values']:
+            self.assertIn(val, self.ext2)
+        for val in self.x2.value:
+            self.assertIn(val, self.ext2)
+
+    def test_insert(self):
+        with self.assertRaises(NotImplementedError):
+            self.ext1.insert(0, self.data1['values'][0])
+        with self.assertRaises(NotImplementedError):
+            self.ext2.insert(0, self.data2['values'][0])
+
+    def test_len(self):
+        self.assertEqual(len(self.ext1), 2)
+        self.assertEqual(len(self.ext2), 3)
+
+    def test_ne(self):
+        self.assertNotEqual(self.ext1, self.ext2)
+
+    def test_not_in(self):
+        self.assertNotIn(self.data1['values'][0], self.ext2)
+        self.assertNotIn(self.data2['values'][0], self.ext1)
+
+        self.assertNotIn(self.x1.value[0], self.ext2)
+        self.assertNotIn(self.x2.value[0], self.ext1)
+
+    def test_pop(self):
+        with self.assertRaises(NotImplementedError):
+            self.ext1.pop(self.data1['values'][0])
+        with self.assertRaises(NotImplementedError):
+            self.ext2.pop(self.data2['values'][0])
+
+    def test_remove(self):
+        with self.assertRaises(NotImplementedError):
+            self.ext1.remove(self.data1['values'][0])
+        with self.assertRaises(NotImplementedError):
+            self.ext2.remove(self.data2['values'][0])
+
+    def test_repr(self):
+        self.assertEqual(
+            repr(self.ext1),
+            '<PrecertificateSignedCertificateTimestamps: %s, critical=False>' % repr(self.data1['values']))
+        self.assertEqual(
+            repr(self.ext2),
+            '<PrecertificateSignedCertificateTimestamps: %s, critical=False>' % repr(self.data2['values']))
+
+    def test_serialize(self):
+        self.assertEqual(self.ext1.serialize(), self.data1)
+        self.assertEqual(self.ext2.serialize(), self.data2)
+
+    def test_setitem(self):
+        with self.assertRaises(NotImplementedError):
+            self.ext1[0] = self.data2['values'][0]
+        with self.assertRaises(NotImplementedError):
+            self.ext2[0] = self.data1['values'][0]
+
+    def test_setitem_slices(self):
+        with self.assertRaises(NotImplementedError):
+            self.ext1[:] = self.data2
+        with self.assertRaises(NotImplementedError):
+            self.ext2[:] = self.data1
+
+    def test_str(self):
+        self.assertEqual(str(self.ext1), '<2 entry(s)>')
+        self.assertEqual(str(self.ext2), '<3 entry(s)>')
+
+        with self.patch_object(self.ext2, 'critical', True):
+            self.assertEqual(str(self.ext2), '<3 entry(s)>/critical')
 
 
 class UnknownExtensionTestCase(TestCase):
@@ -1587,6 +1823,11 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
 
 
 class TLSFeatureTestCase(TestCase):
+    ext1 = TLSFeature('critical,OCSPMustStaple')
+    ext2 = TLSFeature('OCSPMustStaple')
+    ext3 = TLSFeature('OCSPMustStaple,MultipleCertStatusRequest')
+    ext4 = TLSFeature('MultipleCertStatusRequest,OCSPMustStaple')  # reversed order
+
     def assertBasic(self, ext, critical=True):
         self.assertEqual(ext.critical, critical)
         self.assertEqual(ext.value, ['OCSPMustStaple'])
@@ -1602,45 +1843,172 @@ class TLSFeatureTestCase(TestCase):
         self.assertIn(TLSFeatureType.status_request, crypto.value)
         self.assertNotIn(TLSFeatureType.status_request_v2, crypto.value)
 
-    def test_basic(self):
-        self.assertBasic(TLSFeature('critical,OCSPMustStaple'))
-        self.assertBasic(TLSFeature(x509.Extension(
-            oid=x509.ExtensionOID.TLS_FEATURE, critical=True,
-            value=x509.TLSFeature(features=[x509.TLSFeatureType.status_request])))
-        )
-
     def test_completeness(self):
         # make sure whe haven't forgotton any keys anywhere
         self.assertEqual(set(TLSFeature.CRYPTOGRAPHY_MAPPING.keys()),
                          set([e[0] for e in TLSFeature.CHOICES]))
+        self.assertCountEqual(TLSFeature.CRYPTOGRAPHY_MAPPING.values(),
+                              x509.TLSFeatureType.__members__.values())
 
-    def test_hash(self):
-        ext1 = TLSFeature('critical,OCSPMustStaple')
-        ext2 = TLSFeature('OCSPMustStaple')
-        ext3 = TLSFeature('OCSPMustStaple,MultipleCertStatusRequest')
+    def test_as_extension(self):
+        self.assertEqual(self.ext1.as_extension(), x509.extensions.Extension(
+            oid=ExtensionOID.TLS_FEATURE,
+            critical=True,
+            value=x509.TLSFeature(features=[TLSFeatureType.status_request])
+        ))
+        self.assertEqual(self.ext2.as_extension(), x509.extensions.Extension(
+            oid=ExtensionOID.TLS_FEATURE,
+            critical=False,
+            value=x509.TLSFeature(features=[TLSFeatureType.status_request])
+        ))
 
-        self.assertEqual(hash(ext1), hash(ext1))
-        self.assertEqual(hash(ext2), hash(ext2))
-        self.assertEqual(hash(ext3), hash(ext3))
+    def test_count(self):
+        self.assertEqual(self.ext1.count('OCSPMustStaple'), 1)
+        self.assertEqual(self.ext2.count('OCSPMustStaple'), 1)
+        self.assertEqual(self.ext3.count('OCSPMustStaple'), 1)
+        self.assertEqual(self.ext4.count('OCSPMustStaple'), 1)
 
-        self.assertNotEqual(hash(ext1), hash(ext2))
-        self.assertNotEqual(hash(ext1), hash(ext3))
-        self.assertNotEqual(hash(ext2), hash(ext3))
+        self.assertEqual(self.ext1.count(TLSFeatureType.status_request), 1)
+        self.assertEqual(self.ext2.count(TLSFeatureType.status_request), 1)
+        self.assertEqual(self.ext3.count(TLSFeatureType.status_request), 1)
+        self.assertEqual(self.ext4.count(TLSFeatureType.status_request), 1)
+
+        self.assertEqual(self.ext1.count('MultipleCertStatusRequest'), 0)
+        self.assertEqual(self.ext2.count('MultipleCertStatusRequest'), 0)
+        self.assertEqual(self.ext3.count('MultipleCertStatusRequest'), 1)
+        self.assertEqual(self.ext4.count('MultipleCertStatusRequest'), 1)
+
+        self.assertEqual(self.ext1.count(TLSFeatureType.status_request_v2), 0)
+        self.assertEqual(self.ext2.count(TLSFeatureType.status_request_v2), 0)
+        self.assertEqual(self.ext3.count(TLSFeatureType.status_request_v2), 1)
+        self.assertEqual(self.ext4.count(TLSFeatureType.status_request_v2), 1)
+
+        with self.assertRaisesRegex(ValueError, r'^Unknown value: foo$'):
+            self.assertEqual(self.ext1.count('foo'), 0)
 
     def test_eq(self):
-        self.assertEqual(TLSFeature('OCSPMustStaple'), TLSFeature('OCSPMustStaple'))
-        self.assertEqual(TLSFeature('OCSPMustStaple,MultipleCertStatusRequest'),
-                         TLSFeature('OCSPMustStaple,MultipleCertStatusRequest'))
-        self.assertEqual(TLSFeature('OCSPMustStaple,MultipleCertStatusRequest'),
-                         TLSFeature('MultipleCertStatusRequest,OCSPMustStaple'))
+        self.assertEqual(self.ext1, TLSFeature('critical,OCSPMustStaple'))
+        self.assertEqual(self.ext2, TLSFeature('OCSPMustStaple'))
+        self.assertEqual(self.ext3, TLSFeature('OCSPMustStaple,MultipleCertStatusRequest'))
 
-        self.assertEqual(TLSFeature('critical,OCSPMustStaple'), TLSFeature('critical,OCSPMustStaple'))
-        self.assertEqual(TLSFeature('critical,OCSPMustStaple,MultipleCertStatusRequest'),
-                         TLSFeature('critical,OCSPMustStaple,MultipleCertStatusRequest'))
+    def test_eq_order(self):
+        self.assertEqual(self.ext3, self.ext4),
         self.assertEqual(TLSFeature('critical,OCSPMustStaple,MultipleCertStatusRequest'),
                          TLSFeature('critical,MultipleCertStatusRequest,OCSPMustStaple'))
 
+    def test_extension_type(self):
+        self.assertEqual(self.ext1.extension_type, x509.TLSFeature(features=[TLSFeatureType.status_request]))
+        self.assertEqual(self.ext3.extension_type, x509.TLSFeature(features=[
+            TLSFeatureType.status_request,
+            TLSFeatureType.status_request_v2,
+        ]))
+        self.assertEqual(self.ext4.extension_type, x509.TLSFeature(features=[
+            TLSFeatureType.status_request,
+            TLSFeatureType.status_request_v2,
+        ]))
+
+    def test_for_builder(self):
+        val1 = x509.TLSFeature(features=[TLSFeatureType.status_request])
+        val2 = x509.TLSFeature(features=[
+            TLSFeatureType.status_request,
+            TLSFeatureType.status_request_v2,
+        ])
+
+        self.assertEqual(self.ext1.for_builder(), {
+            'critical': True,
+            'extension': val1,
+        })
+        self.assertEqual(self.ext2.for_builder(), {
+            'critical': False,
+            'extension': val1,
+        })
+        self.assertEqual(self.ext3.for_builder(), {
+            'critical': False,
+            'extension': val2,
+        })
+        self.assertEqual(self.ext4.for_builder(), {
+            'critical': False,
+            'extension': val2,
+        })
+
+    def test_from_list(self):
+        self.assertEqual(TLSFeature(['OCSPMustStaple']), self.ext2)
+        self.assertEqual(TLSFeature(['OCSPMustStaple', 'MultipleCertStatusRequest']), self.ext3)
+        self.assertEqual(TLSFeature(['OCSPMustStaple', 'MultipleCertStatusRequest']), self.ext4)
+        self.assertEqual(TLSFeature(['MultipleCertStatusRequest', 'OCSPMustStaple']), self.ext4)
+
+    def test_hash(self):
+        self.assertEqual(hash(self.ext1), hash(self.ext1))
+        self.assertEqual(hash(self.ext2), hash(self.ext2))
+        self.assertEqual(hash(self.ext3), hash(self.ext3))
+
+        self.assertNotEqual(hash(self.ext1), hash(self.ext2))
+        self.assertNotEqual(hash(self.ext1), hash(self.ext3))
+        self.assertNotEqual(hash(self.ext2), hash(self.ext3))
+
+    def test_hash_order(self):
+        self.assertEqual(hash(self.ext3), hash(self.ext4))
+
+    def test_in(self):
+        self.assertIn('OCSPMustStaple', self.ext1)
+        self.assertIn('OCSPMustStaple', self.ext2)
+        self.assertIn('OCSPMustStaple', self.ext3)
+        self.assertIn('OCSPMustStaple', self.ext4)
+        self.assertIn('MultipleCertStatusRequest', self.ext3)
+        self.assertIn('MultipleCertStatusRequest', self.ext4)
+
+        self.assertIn(TLSFeatureType.status_request, self.ext1)
+        self.assertIn(TLSFeatureType.status_request, self.ext2)
+        self.assertIn(TLSFeatureType.status_request_v2, self.ext3)
+
+    def test_len(self):
+        self.assertEqual(len(self.ext1), 1)
+        self.assertEqual(len(self.ext2), 1)
+        self.assertEqual(len(self.ext3), 2)
+        self.assertEqual(len(self.ext4), 2)
+
     def test_ne(self):
-        self.assertNotEqual(TLSFeature('OCSPMustStaple'), TLSFeature('MultipleCertStatusRequest'))
-        self.assertNotEqual(TLSFeature('OCSPMustStaple'), TLSFeature('critical,OCSPMustStaple'))
-        self.assertNotEqual(TLSFeature('OCSPMustStaple'), 10)
+        self.assertNotEqual(self.ext1, self.ext2)
+        self.assertNotEqual(self.ext1, self.ext3)
+        self.assertNotEqual(self.ext2, self.ext3)
+        self.assertNotEqual(self.ext1, 10)
+
+    def test_not_in(self):
+        self.assertNotIn('MultipleCertStatusRequest', self.ext1)
+        self.assertNotIn('MultipleCertStatusRequest', self.ext2)
+        self.assertNotIn(TLSFeatureType.status_request_v2, self.ext1)
+        self.assertNotIn(TLSFeatureType.status_request_v2, self.ext2)
+
+    def test_repr(self):
+        self.assertEqual(repr(self.ext1), "<TLSFeature: ['OCSPMustStaple'], critical=True>")
+        self.assertEqual(repr(self.ext2), "<TLSFeature: ['OCSPMustStaple'], critical=False>")
+
+        # Make sure that different order results in the same output
+        self.assertEqual(repr(self.ext3),
+                         "<TLSFeature: ['MultipleCertStatusRequest', 'OCSPMustStaple'], critical=False>")
+        self.assertEqual(repr(self.ext4),
+                         "<TLSFeature: ['MultipleCertStatusRequest', 'OCSPMustStaple'], critical=False>")
+
+    def test_serialize(self):
+        self.assertEqual(self.ext1.serialize(), 'critical,OCSPMustStaple')
+        self.assertEqual(self.ext2.serialize(), 'OCSPMustStaple')
+        self.assertEqual(self.ext3.serialize(), 'OCSPMustStaple,MultipleCertStatusRequest')
+        self.assertEqual(TLSFeature(self.ext1.serialize()), self.ext1)
+        self.assertEqual(TLSFeature(self.ext2.serialize()), self.ext2)
+        self.assertEqual(TLSFeature(self.ext3.serialize()), self.ext3)
+        self.assertNotEqual(TLSFeature(self.ext1.serialize()), self.ext2)
+
+    def test_str(self):
+        exp_order = 'MultipleCertStatusRequest,OCSPMustStaple'
+        self.assertEqual(str(self.ext1), 'OCSPMustStaple/critical')
+        self.assertEqual(str(self.ext2), 'OCSPMustStaple')
+
+        # Make sure that different order results in the same output
+        self.assertEqual(str(self.ext3), exp_order)
+        self.assertEqual(str(self.ext4), exp_order)
+
+    def test_unknown_values(self):
+        with self.assertRaisesRegex(ValueError, r'^Unknown value\(s\): foo$'):
+            TLSFeature('foo')
+        with self.assertRaisesRegex(ValueError, r'^Unknown value\(s\): foo$'):
+            TLSFeature('critical,foo')
