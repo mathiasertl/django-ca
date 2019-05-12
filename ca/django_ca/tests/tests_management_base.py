@@ -27,8 +27,8 @@ from ..models import Certificate
 from ..models import CertificateAuthority
 from ..subject import Subject
 from .base import DjangoCATestCase
-from .base import DjangoCAWithCATestCase
 from .base import DjangoCAWithCertTestCase
+from .base import DjangoCAWithGeneratedCAsTestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
@@ -259,7 +259,7 @@ class CertificateActionTestCase(DjangoCAWithCertTestCase):
                                '{script}: error: {serial}: Multiple certificates match.\n', serial=serial)
 
 
-class CertificateAuthorityActionTestCase(DjangoCAWithCATestCase):
+class CertificateAuthorityActionTestCase(DjangoCAWithGeneratedCAsTestCase):
     def setUp(self):
         super(CertificateAuthorityActionTestCase, self).setUp()
         self.parser = argparse.ArgumentParser()

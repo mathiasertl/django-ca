@@ -395,11 +395,12 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertOCSP(response, requested=[cert], nonce=req1_nonce, expires=1500)
 
     @unittest.skipIf(ca_settings.CRYPTOGRAPHY_OCSP, 'Skip cryptography test for cryptography>=2.4')
+    @override_tmpcadir()
     def test_loaded_oscrypto_cert(self):
         response = self.client.post(reverse('post-loaded-oscrypto'), req1,
                                     content_type='application/ocsp-request')
         self.assertEqual(response.status_code, 200)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1500)
+        self.assertOCSP(response, requested=[self.certs['child-cert']], nonce=req1_nonce, expires=1500)
 
     @unittest.skipUnless(ca_settings.CRYPTOGRAPHY_OCSP, 'Skip cryptography test for cryptography<2.4')
     @override_tmpcadir()
