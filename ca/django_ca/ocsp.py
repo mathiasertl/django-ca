@@ -24,10 +24,10 @@ date_format = '%y%m%d%H%M%SZ'
 def get_index(ca):
     now = timezone.now()
     yesterday = now - timedelta(seconds=86400)
+    certs = ca.certificate_set.order_by('expires', 'cn', 'serial')
 
     # Write index file (required by "openssl ocsp")
-    # TODO: Expired certs should not be included after a certain time
-    for cert in ca.certificate_set.filter(expires__gt=yesterday, valid_from__lt=now):
+    for cert in certs.filter(expires__gt=yesterday, valid_from__lt=now):
         revocation = ''
         if cert.expires < now:
             status = 'E'

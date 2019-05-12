@@ -37,7 +37,7 @@ class ListCertsTestCase(DjangoCAWithGeneratedCertsTestCase):
 
     def assertCerts(self, *certs, **kwargs):
         stdout, stderr = self.cmd('list_certs', **kwargs)
-        certs = sorted(certs, key=lambda c: c.expires)
+        certs = sorted(certs, key=lambda c: (c.expires, c.cn, c.serial))
         self.assertEqual(stdout, ''.join(['%s\n' % self.line(c) for c in certs]))
         self.assertEqual(stderr, '')
 
