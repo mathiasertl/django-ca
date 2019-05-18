@@ -25,6 +25,7 @@ from cryptography.x509 import TLSFeatureType
 from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import ExtensionOID
+from cryptography.x509.oid import NameOID
 
 from django.test import TestCase
 
@@ -32,6 +33,8 @@ from .. import ca_settings
 from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
+from ..extensions import CRLDistributionPoints
+from ..extensions import DistributionPoint
 from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
 from ..extensions import IssuerAlternativeName
@@ -860,6 +863,343 @@ class BasicConstraintsTestCase(TestCase):
         ]
         for ext in exts:
             self.assertEqual(BasicConstraints(ext.serialize()), ext)
+
+
+class CRLDistributionPointsTestCase(ListExtensionTestMixin, TestCase):
+    dp1 = x509.DistributionPoint(
+        full_name=[
+            x509.UniformResourceIdentifier('http://ca.example.com/crl'),
+        ],
+        relative_name=None,
+        crl_issuer=None,
+        reasons=None
+    )
+    dp2 = x509.DistributionPoint(
+        full_name=[
+            x509.UniformResourceIdentifier('http://ca.example.com/crl'),
+            x509.DirectoryName(x509.Name([x509.NameAttribute(NameOID.COUNTRY_NAME, u"AT")])),
+        ],
+        relative_name=None,
+        crl_issuer=None,
+        reasons=None
+    )
+    dp3 = x509.DistributionPoint(
+        full_name=None,
+        relative_name=x509.RelativeDistinguishedName([
+            x509.NameAttribute(NameOID.COMMON_NAME, u'example.com'),
+        ]),
+        crl_issuer=None,
+        reasons=None
+    )
+    dp4 = x509.DistributionPoint(
+        full_name=[
+            x509.UniformResourceIdentifier('http://ca.example.com/crl'),
+        ],
+        relative_name=None,
+        crl_issuer=[
+            x509.UniformResourceIdentifier('http://ca.example.com/'),
+        ],
+        reasons=frozenset([x509.ReasonFlags.key_compromise, x509.ReasonFlags.ca_compromise])
+    )
+
+    # serialized versions of dps above
+    s1 = {'full_name': ['URI:http://ca.example.com/crl']}
+    s2 = {'full_name': ['URI:http://ca.example.com/crl', 'dirname:/C=AT']}
+    s3 = {'relative_name': '/CN=example.com'}
+    s4 = {
+        'full_name': ['URI:http://ca.example.com/crl'],
+        'crl_issuer': ['URI:http://ca.example.com/'],
+        'reasons': ['ca_compromise', 'key_compromise'],
+    }
+
+    # cryptography extensions
+    x1 = x509.Extension(oid=ExtensionOID.CRL_DISTRIBUTION_POINTS, critical=False,
+                        value=x509.CRLDistributionPoints([dp1]))
+    x2 = x509.Extension(oid=ExtensionOID.CRL_DISTRIBUTION_POINTS, critical=False,
+                        value=x509.CRLDistributionPoints([dp2]))
+    x3 = x509.Extension(oid=ExtensionOID.CRL_DISTRIBUTION_POINTS, critical=False,
+                        value=x509.CRLDistributionPoints([dp3]))
+    x4 = x509.Extension(oid=ExtensionOID.CRL_DISTRIBUTION_POINTS, critical=False,
+                        value=x509.CRLDistributionPoints([dp4]))
+    x5 = x509.Extension(oid=ExtensionOID.CRL_DISTRIBUTION_POINTS, critical=True,
+                        value=x509.CRLDistributionPoints([dp2, dp4]))
+
+    def setUp(self):
+        super(CRLDistributionPointsTestCase, self).setUp()
+        # django_ca extensions
+        self.ext1 = CRLDistributionPoints(self.x1)
+        self.ext2 = CRLDistributionPoints(self.x2)
+        self.ext3 = CRLDistributionPoints(self.x3)
+        self.ext4 = CRLDistributionPoints(self.x4)
+        self.ext5 = CRLDistributionPoints(self.x5)
+
+    def test_as_extension(self):
+        self.assertEqual(self.ext1.as_extension(), self.x1)
+        self.assertEqual(self.ext2.as_extension(), self.x2)
+        self.assertEqual(self.ext3.as_extension(), self.x3)
+        self.assertEqual(self.ext4.as_extension(), self.x4)
+        self.assertEqual(self.ext5.as_extension(), self.x5)
+
+    def test_count(self):
+        self.assertEqual(self.ext1.count(self.s1), 1)
+        self.assertEqual(self.ext1.count(self.dp1), 1)
+        self.assertEqual(self.ext1.count(DistributionPoint(self.s1)), 1)
+        self.assertEqual(self.ext1.count(self.s2), 0)
+        self.assertEqual(self.ext1.count(self.dp2), 0)
+        self.assertEqual(self.ext1.count(DistributionPoint(self.s2)), 0)
+        self.assertEqual(self.ext5.count(self.s2), 1)
+        self.assertEqual(self.ext5.count(self.dp2), 1)
+        self.assertEqual(self.ext5.count(DistributionPoint(self.s2)), 1)
+        self.assertEqual(self.ext5.count(self.s4), 1)
+        self.assertEqual(self.ext5.count(self.dp4), 1)
+        self.assertEqual(self.ext5.count(DistributionPoint(self.s4)), 1)
+        self.assertEqual(self.ext5.count(self.s3), 0)
+        self.assertEqual(self.ext5.count(self.dp3), 0)
+        self.assertEqual(self.ext5.count(DistributionPoint(self.s3)), 0)
+        self.assertEqual(self.ext5.count(None), 0)
+
+    def test_del(self):
+        self.assertIn(self.dp1, self.ext1)
+        del self.ext1[0]
+        self.assertNotIn(self.dp1, self.ext1)
+        self.assertEqual(len(self.ext1), 0)
+
+        self.assertIn(self.dp2, self.ext5)
+        self.assertIn(self.dp4, self.ext5)
+        del self.ext5[1]
+        self.assertIn(self.dp2, self.ext5)
+        self.assertNotIn(self.dp4, self.ext5)
+        self.assertEqual(len(self.ext5), 1)
+
+        self.assertEqual(len(self.ext4), 1)
+        with self.assertRaisesRegex(IndexError, '^list assignment index out of range$'):
+            del self.ext4[1]
+        self.assertEqual(len(self.ext4), 1)
+
+    def test_eq(self):
+        self.assertEqual(self.ext1, self.ext1)
+        self.assertEqual(self.ext2, self.ext2)
+        self.assertEqual(self.ext3, self.ext3)
+        self.assertEqual(self.ext4, self.ext4)
+        self.assertEqual(self.ext5, self.ext5)
+        self.assertEqual(self.ext1, CRLDistributionPoints(self.x1))
+        self.assertEqual(self.ext2, CRLDistributionPoints(self.x2))
+        self.assertEqual(self.ext3, CRLDistributionPoints(self.x3))
+        self.assertEqual(self.ext4, CRLDistributionPoints(self.x4))
+        self.assertEqual(self.ext5, CRLDistributionPoints(self.x5))
+        # ext5 has other critical value then default
+
+    def test_extension_type(self):
+        self.assertEqual(self.ext1.extension_type, x509.CRLDistributionPoints([self.dp1]))
+        self.assertEqual(self.ext2.extension_type, x509.CRLDistributionPoints([self.dp2]))
+        self.assertEqual(self.ext3.extension_type, x509.CRLDistributionPoints([self.dp3]))
+        self.assertEqual(self.ext4.extension_type, x509.CRLDistributionPoints([self.dp4]))
+        self.assertEqual(self.ext5.extension_type, x509.CRLDistributionPoints([self.dp2, self.dp4]))
+
+    def test_for_builder(self):
+        self.assertEqual(self.ext1.for_builder(), {'critical': False, 'extension': self.x1.value})
+        self.assertEqual(self.ext2.for_builder(), {'critical': False, 'extension': self.x2.value})
+        self.assertEqual(self.ext3.for_builder(), {'critical': False, 'extension': self.x3.value})
+        self.assertEqual(self.ext4.for_builder(), {'critical': False, 'extension': self.x4.value})
+        self.assertEqual(self.ext5.for_builder(), {'critical': True, 'extension': self.x5.value})
+
+    def test_from_list(self):
+        self.assertEqual(self.ext1, CRLDistributionPoints([DistributionPoint(self.dp1)]))
+        self.assertEqual(self.ext2, CRLDistributionPoints([DistributionPoint(self.dp2)]))
+        self.assertEqual(self.ext3, CRLDistributionPoints([DistributionPoint(self.dp3)]))
+        self.assertEqual(self.ext4, CRLDistributionPoints([DistributionPoint(self.dp4)]))
+
+    def test_getitem(self):
+        self.assertEqual(self.ext1[0], DistributionPoint(self.dp1))
+        self.assertEqual(self.ext2[0], DistributionPoint(self.dp2))
+        self.assertEqual(self.ext5[0], DistributionPoint(self.dp2))
+        self.assertEqual(self.ext5[1], DistributionPoint(self.dp4))
+
+        with self.assertRaisesRegex(IndexError, '^list index out of range$'):
+            self.ext5[2]
+
+    def test_getitem_slices(self):
+        self.assertEqual(self.ext1[0:], [DistributionPoint(self.dp1)])
+        self.assertEqual(self.ext1[1:], [])
+        self.assertEqual(self.ext1[2:], [])
+        self.assertEqual(self.ext5[0:], [DistributionPoint(self.dp2), DistributionPoint(self.dp4)])
+
+    def test_hash(self):
+        self.assertEqual(hash(self.ext1), hash(self.ext1))
+        self.assertEqual(hash(self.ext2), hash(self.ext2))
+        self.assertEqual(hash(self.ext3), hash(self.ext3))
+        self.assertEqual(hash(self.ext4), hash(self.ext4))
+        self.assertEqual(hash(self.ext5), hash(self.ext5))
+
+        self.assertEqual(hash(self.ext1), hash(CRLDistributionPoints(self.x1)))
+        self.assertEqual(hash(self.ext2), hash(CRLDistributionPoints(self.x2)))
+        self.assertEqual(hash(self.ext3), hash(CRLDistributionPoints(self.x3)))
+        self.assertEqual(hash(self.ext4), hash(CRLDistributionPoints(self.x4)))
+        self.assertEqual(hash(self.ext5), hash(CRLDistributionPoints(self.x5)))
+
+        self.assertNotEqual(hash(self.ext1), hash(self.ext2))
+        self.assertNotEqual(hash(self.ext1), hash(self.ext3))
+        self.assertNotEqual(hash(self.ext1), hash(self.ext4))
+        self.assertNotEqual(hash(self.ext1), hash(self.ext5))
+        self.assertNotEqual(hash(self.ext2), hash(self.ext3))
+        self.assertNotEqual(hash(self.ext2), hash(self.ext4))
+        self.assertNotEqual(hash(self.ext2), hash(self.ext5))
+        self.assertNotEqual(hash(self.ext3), hash(self.ext4))
+        self.assertNotEqual(hash(self.ext3), hash(self.ext5))
+
+    def test_in(self):
+        self.assertIn(self.s1, self.ext1)
+        self.assertIn(self.s2, self.ext2)
+        self.assertIn(self.s3, self.ext3)
+        self.assertIn(self.s4, self.ext4)
+        self.assertIn(self.s2, self.ext5)
+        self.assertIn(self.s4, self.ext5)
+
+        self.assertIn(self.dp1, self.ext1)
+        self.assertIn(self.dp2, self.ext2)
+        self.assertIn(self.dp3, self.ext3)
+        self.assertIn(self.dp4, self.ext4)
+        self.assertIn(self.dp2, self.ext5)
+        self.assertIn(self.dp4, self.ext5)
+
+    def test_insert(self):
+        self.ext1.insert(0, self.dp2)
+        self.assertEqual(self.ext1.serialize(), {'critical': False, 'value': [self.s2, self.s1]})
+        self.ext1.insert(1, self.s3)
+        self.assertEqual(self.ext1.serialize(), {'critical': False, 'value': [self.s2, self.s3, self.s1]})
+
+    def test_len(self):
+        self.assertEqual(len(self.ext1), 1)
+        self.assertEqual(len(self.ext2), 1)
+        self.assertEqual(len(self.ext3), 1)
+        self.assertEqual(len(self.ext4), 1)
+        self.assertEqual(len(self.ext5), 2)
+
+    def test_ne(self):
+        self.assertNotEqual(self.ext1, self.ext2)
+        self.assertNotEqual(self.ext2, self.ext3)
+        self.assertNotEqual(self.ext3, self.ext4)
+        self.assertNotEqual(self.ext4, self.ext5)
+        self.assertNotEqual(self.ext1, self.ext5)
+
+    def test_not_in(self):
+        self.assertNotIn(self.s2, self.ext1)
+        self.assertNotIn(self.s3, self.ext2)
+        self.assertNotIn(self.dp2, self.ext1)
+        self.assertNotIn(self.dp3, self.ext4)
+
+    def test_pop(self):
+        ext = CRLDistributionPoints({'value': [self.dp1, self.dp2, self.dp3]})
+        self.assertEqual(ext.pop(), DistributionPoint(self.dp3))
+        self.assertEqual(ext.serialize(), {'critical': False, 'value': [self.s1, self.s2]})
+
+        self.assertEqual(ext.pop(0), DistributionPoint(self.dp1))
+        self.assertEqual(ext.serialize(), {'critical': False, 'value': [self.s2]})
+
+        with self.assertRaisesRegex(IndexError, '^pop index out of range'):
+            ext.pop(3)
+
+    def test_remove(self):
+        ext = CRLDistributionPoints({'value': [self.dp1, self.dp2, self.dp3]})
+        self.assertEqual(ext.serialize(), {'critical': False, 'value': [self.s1, self.s2, self.s3]})
+
+        ext.remove(self.dp2)
+        self.assertEqual(ext.serialize(), {'critical': False, 'value': [self.s1, self.s3]})
+
+        ext.remove(self.s3)
+        self.assertEqual(ext.serialize(), {'critical': False, 'value': [self.s1]})
+
+    def test_repr(self):
+        self.assertEqual(
+            repr(self.ext1),
+            "<CRLDistributionPoints: [<DistributionPoint: full_name=['URI:http://ca.example.com/crl'], "
+            "relative_name=None, crl_issuer=None, reasons=None>], critical=False>"
+        )
+        self.assertEqual(
+            repr(self.ext2),
+            "<CRLDistributionPoints: [<DistributionPoint: full_name=['URI:http://ca.example.com/crl', "
+            "'dirname:/C=AT'], relative_name=None, crl_issuer=None, reasons=None>], critical=False>"
+        )
+        self.assertEqual(
+            repr(self.ext3),
+            "<CRLDistributionPoints: [<DistributionPoint: full_name=None, relative_name='/CN=example.com', "
+            "crl_issuer=None, reasons=None>], critical=False>"
+        )
+        self.assertEqual(
+            repr(self.ext4),
+            "<CRLDistributionPoints: [<DistributionPoint: full_name=['URI:http://ca.example.com/crl'], "
+            "relative_name=None, crl_issuer=['URI:http://ca.example.com/'], "
+            "reasons=['ca_compromise', 'key_compromise']>], critical=False>"
+        )
+        self.assertEqual(
+            repr(self.ext5),
+            "<CRLDistributionPoints: [<DistributionPoint: "
+            "full_name=['URI:http://ca.example.com/crl', 'dirname:/C=AT'], "
+            "relative_name=None, crl_issuer=None, reasons=None>, "
+            "<DistributionPoint: full_name=['URI:http://ca.example.com/crl'], relative_name=None, "
+            "crl_issuer=['URI:http://ca.example.com/'], reasons=['ca_compromise', 'key_compromise']>], "
+            "critical=True>"
+        )
+
+    def test_serialize(self):
+        self.assertEqual(self.ext1.serialize(), {'critical': False, 'value': [self.s1]})
+        self.assertEqual(self.ext2.serialize(), {'critical': False, 'value': [self.s2]})
+        self.assertEqual(self.ext3.serialize(), {'critical': False, 'value': [self.s3]})
+        self.assertEqual(self.ext4.serialize(), {'critical': False, 'value': [self.s4]})
+        self.assertEqual(self.ext5.serialize(), {'critical': True, 'value': [self.s2, self.s4]})
+
+    def test_setitem(self):
+        self.ext1[0] = self.s2
+        self.assertEqual(self.ext1, self.ext2)
+        self.ext1[0] = self.s3
+        self.assertEqual(self.ext1, self.ext3)
+        self.ext1[0] = self.dp4
+        self.assertEqual(self.ext1, self.ext4)
+
+        with self.assertRaisesRegex(IndexError, r'^list assignment index out of range$'):
+            self.ext1[1] = self.dp4
+
+    def test_setitem_slices(self):
+        expected = CRLDistributionPoints({'value': [self.dp1, self.dp2, self.dp3]})
+        self.ext1[1:] = [self.dp2, self.dp3]
+        self.assertEqual(self.ext1, expected)
+        self.ext1[1:] = [self.s2, self.s3]
+        self.assertEqual(self.ext1, expected)
+
+    def test_str(self):
+        self.assertEqual(
+            str(self.ext1),
+            "CRLDistributionPoints([DistributionPoint(full_name=['URI:http://ca.example.com/crl'], "
+            "relative_name=None, crl_issuer=None, reasons=None)], critical=False)"
+        )
+        self.assertEqual(
+            str(self.ext2),
+            "CRLDistributionPoints([DistributionPoint("
+            "full_name=['URI:http://ca.example.com/crl', 'dirname:/C=AT'], "
+            "relative_name=None, crl_issuer=None, reasons=None)], critical=False)"
+        )
+        self.assertEqual(
+            str(self.ext3),
+            "CRLDistributionPoints([DistributionPoint(full_name=None, "
+            "relative_name='/CN=example.com', crl_issuer=None, reasons=None)], critical=False)"
+        )
+        self.assertEqual(
+            str(self.ext4),
+            "CRLDistributionPoints([DistributionPoint(full_name=['URI:http://ca.example.com/crl'], "
+            "relative_name=None, "
+            "crl_issuer=['URI:http://ca.example.com/'], "
+            "reasons=['ca_compromise', 'key_compromise'])], critical=False)"
+        )
+        self.assertEqual(
+            str(self.ext5),
+            "CRLDistributionPoints([DistributionPoint("
+            "full_name=['URI:http://ca.example.com/crl', 'dirname:/C=AT'], "
+            "relative_name=None, crl_issuer=None, reasons=None), "
+            "DistributionPoint(full_name=['URI:http://ca.example.com/crl'], "
+            "relative_name=None, "
+            "crl_issuer=['URI:http://ca.example.com/'], "
+            "reasons=['ca_compromise', 'key_compromise'])], critical=True)"
+        )
 
 
 class IssuerAlternativeNameTestCase(TestCase):

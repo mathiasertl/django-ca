@@ -48,6 +48,7 @@ from .constants import ReasonFlags
 from .extensions import AuthorityInformationAccess
 from .extensions import AuthorityKeyIdentifier
 from .extensions import BasicConstraints
+from .extensions import CRLDistributionPoints
 from .extensions import ExtendedKeyUsage
 from .extensions import IssuerAlternativeName
 from .extensions import KeyUsage
@@ -410,6 +411,14 @@ class X509CertMixin(models.Model):
         except x509.ExtensionNotFound:
             return None
         return BasicConstraints(ext)
+
+    @property
+    def crl_distribution_points(self):
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.CRL_DISTRIBUTION_POINTS)
+        except x509.ExtensionNotFound:
+            return None
+        return CRLDistributionPoints(ext)
 
     @property
     def issuer_alternative_name(self):

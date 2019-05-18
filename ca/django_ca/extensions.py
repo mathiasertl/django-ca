@@ -31,12 +31,12 @@ from cryptography.x509.oid import ObjectIdentifier
 from . import ca_settings
 from .utils import bytes_to_hex
 from .utils import format_general_name
-from .utils import format_name
+from .utils import format_relative_name
 from .utils import get_extension_name
 from .utils import hex_to_bytes
 from .utils import parse_general_name
 from .utils import shlex_split
-from .utils import x509_name
+from .utils import x509_relative_name
 
 
 @six.python_2_unicode_compatible
@@ -525,16 +525,51 @@ class DistributionPoint(GeneralNameMixin):
             if self.full_name is not None:
                 self.full_name = [self.parse_value(v) for v in self.full_name]
             if self.relative_name is not None:
-                self.relative_name = x509_name(self.relative_name)
+                self.relative_name = x509_relative_name(self.relative_name)
             if self.crl_issuer is not None:
                 self.crl_issuer = [self.parse_value(v) for v in self.crl_issuer]
             if self.reasons is not None:
-                self.reasons = [x509.ReasonFlags[r] for r in self.reasons]
+                self.reasons = frozenset([x509.ReasonFlags[r] for r in self.reasons])
 
     def __eq__(self, other):
         return isinstance(other, DistributionPoint) and self.full_name == other.full_name \
             and self.relative_name == other.relative_name and self.crl_issuer == other.crl_issuer \
             and self.reasons == other.reasons
+
+    def __hash__(self):
+        full_name = tuple(self.full_name) if self.full_name else None
+        crl_issuer = tuple(self.crl_issuer) if self.crl_issuer else None
+        reasons = tuple(self.reasons) if self.reasons else None
+        return hash((self.__class__, full_name, self.relative_name, crl_issuer, reasons))
+
+    def __repr__(self):
+        relative_name = "None"
+        if self.relative_name:
+            relative_name = "'%s'" % format_relative_name(self.relative_name)
+
+        return '<DistributionPoint: full_name=%s, relative_name=%s, crl_issuer=%s, reasons=%s>' % (
+            [self.serialize_value(n) for n in self.full_name] if self.full_name is not None else None,
+            relative_name,
+            [self.serialize_value(n) for n in self.crl_issuer] if self.crl_issuer is not None else None,
+            sorted([r.name for r in self.reasons]) if self.reasons is not None else None,
+        )
+
+    def __str__(self):
+        relative_name = "None"
+        if self.relative_name:
+            relative_name = "'%s'" % format_relative_name(self.relative_name)
+
+        return 'DistributionPoint(full_name=%s, relative_name=%s, crl_issuer=%s, reasons=%s)' % (
+            [self.serialize_value(n) for n in self.full_name] if self.full_name is not None else None,
+            relative_name,
+            [self.serialize_value(n) for n in self.crl_issuer] if self.crl_issuer is not None else None,
+            sorted([r.name for r in self.reasons]) if self.reasons is not None else None,
+        )
+
+    @property
+    def for_extension_type(self):
+        return x509.DistributionPoint(full_name=self.full_name, relative_name=self.relative_name,
+                                      crl_issuer=self.crl_issuer, reasons=self.reasons)
 
     def serialize(self):
         s = {}
@@ -542,11 +577,11 @@ class DistributionPoint(GeneralNameMixin):
         if self.full_name is not None:
             s['full_name'] = [self.serialize_value(n) for n in self.full_name]
         if self.relative_name is not None:
-            s['relative_name'] = [format_name(n) for n in self.relative_name]
+            s['relative_name'] = format_relative_name(self.relative_name)
         if self.crl_issuer is not None:
             s['crl_issuer'] = [self.serialize_value(n) for n in self.crl_issuer]
         if self.reasons is not None:
-            s['reasons'] = [r.name for r in self.reasons]
+            s['reasons'] = list(sorted([r.name for r in self.reasons]))
         return s
 
 
@@ -769,6 +804,19 @@ class BasicConstraints(Extension):
 class CRLDistributionPoints(ListExtension):
     oid = ExtensionOID.CRL_DISTRIBUTION_POINTS
 
+    def __hash__(self):
+        return hash((self.__class__, tuple(self.value), self.critical, ))
+
+    def __repr__(self):
+        return '<CRLDistributionPoints: [%s], critical=%s>' % (
+            ', '.join([repr(v) for v in self.value]), self.critical
+        )
+
+    def __str__(self):
+        return 'CRLDistributionPoints([%s], critical=%s)' % (
+            ', '.join([str(v) for v in self.value]), self.critical
+        )
+
     @property
     def extension_type(self):
         return x509.CRLDistributionPoints(distribution_points=[dp.for_extension_type for dp in self.value])
@@ -777,7 +825,12 @@ class CRLDistributionPoints(ListExtension):
         self.value = [DistributionPoint(v) for v in value.value]
 
     def from_dict(self, value):
-        self.value = [DistributionPoint(v) for v in value.get('value')]
+        self.value = [self.parse_value(v) for v in value.get('value', [])]
+
+    def parse_value(self, v):
+        if isinstance(v, DistributionPoint):
+            return v
+        return DistributionPoint(v)
 
     def serialize(self):
         return {

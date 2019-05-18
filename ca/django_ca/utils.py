@@ -141,6 +141,13 @@ def format_name(subject):
     return '/%s' % ('/'.join(['%s=%s' % (force_text(k), force_text(v)) for k, v in subject]))
 
 
+def format_relative_name(name):
+    if isinstance(name, x509.RelativeDistinguishedName):
+        name = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in name]
+
+    return '/%s' % ('/'.join(['%s=%s' % (force_text(k), force_text(v)) for k, v in name]))
+
+
 def format_general_name(name):
     """Format a single general name.
 
@@ -316,6 +323,15 @@ def x509_name(name):
         name = parse_name(name)
 
     return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], force_text(value)) for typ, value in name])
+
+
+def x509_relative_name(name):
+    if isinstance(name, six.string_types):
+        name = parse_name(name)
+
+    return x509.RelativeDistinguishedName([
+        x509.NameAttribute(NAME_OID_MAPPINGS[typ], force_text(value)) for typ, value in name
+    ])
 
 
 def validate_email(addr):
