@@ -31,10 +31,12 @@ from cryptography.x509.oid import ObjectIdentifier
 from . import ca_settings
 from .utils import bytes_to_hex
 from .utils import format_general_name
+from .utils import format_name
 from .utils import get_extension_name
 from .utils import hex_to_bytes
 from .utils import parse_general_name
 from .utils import shlex_split
+from .utils import x509_name
 
 
 @six.python_2_unicode_compatible
@@ -499,6 +501,55 @@ class KeyIdExtension(Extension):
         return bytes_to_hex(self.value)
 
 
+class DistributionPoint(GeneralNameMixin):
+    full_name = None
+    relative_name = None
+    crl_issuer = None
+    reasons = None
+
+    def __init__(self, data=None):
+        if isinstance(data, x509.DistributionPoint):
+            self.full_name = data.full_name
+            self.relative_name = data.relative_name
+            self.crl_issuer = data.crl_issuer
+            self.reasons = data.reasons
+        elif isinstance(data, dict):
+            self.full_name = data.get('full_name')
+            self.relative_name = data.get('relative_name')
+            self.crl_issuer = data.get('crl_issuer')
+            self.reasons = data.get('reasons')
+
+            if self.full_name is not None and self.relative_name is not None:
+                raise ValueError('full_name and relative_name cannot both have a value.')
+
+            if self.full_name is not None:
+                self.full_name = [self.parse_value(v) for v in self.full_name]
+            if self.relative_name is not None:
+                self.relative_name = x509_name(self.relative_name)
+            if self.crl_issuer is not None:
+                self.crl_issuer = [self.parse_value(v) for v in self.crl_issuer]
+            if self.reasons is not None:
+                self.reasons = [x509.ReasonFlags[r] for r in self.reasons]
+
+    def __eq__(self, other):
+        return isinstance(other, DistributionPoint) and self.full_name == other.full_name \
+            and self.relative_name == other.relative_name and self.crl_issuer == other.crl_issuer \
+            and self.reasons == other.reasons
+
+    def serialize(self):
+        s = {}
+
+        if self.full_name is not None:
+            s['full_name'] = [self.serialize_value(n) for n in self.full_name]
+        if self.relative_name is not None:
+            s['relative_name'] = [format_name(n) for n in self.relative_name]
+        if self.crl_issuer is not None:
+            s['crl_issuer'] = [self.serialize_value(n) for n in self.crl_issuer]
+        if self.reasons is not None:
+            s['reasons'] = [r.name for r in self.reasons]
+        return s
+
+
 class AuthorityInformationAccess(GeneralNameMixin, Extension):
     """Class representing a AuthorityInformationAccess extension.
 
@@ -713,6 +764,26 @@ class BasicConstraints(Extension):
         if self.critical:
             value = 'critical,%s' % value
         return value
+
+
+class CRLDistributionPoints(ListExtension):
+    oid = ExtensionOID.CRL_DISTRIBUTION_POINTS
+
+    @property
+    def extension_type(self):
+        return x509.CRLDistributionPoints(distribution_points=[dp.for_extension_type for dp in self.value])
+
+    def from_extension(self, value):
+        self.value = [DistributionPoint(v) for v in value.value]
+
+    def from_dict(self, value):
+        self.value = [DistributionPoint(v) for v in value.get('value')]
+
+    def serialize(self):
+        return {
+            'value': [dp.serialize() for dp in self.value],
+            'critical': self.critical,
+        }
 
 
 class IssuerAlternativeName(AlternativeNameExtension):
