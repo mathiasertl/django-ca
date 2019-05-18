@@ -44,6 +44,7 @@ from django.utils.text import slugify
 from django.utils.translation import ugettext_lazy as _
 
 from . import ca_settings
+from .constants import ReasonFlags
 from .extensions import AuthorityInformationAccess
 from .extensions import AuthorityKeyIdentifier
 from .extensions import BasicConstraints
@@ -127,16 +128,16 @@ class X509CertMixin(models.Model):
     # reasons are defined in http://www.ietf.org/rfc/rfc3280.txt
     REVOCATION_REASONS = (
         ('', _('No reason')),
-        ('aa_compromise', _('Attribute Authority compromised')),
-        ('affiliation_changed', _('Affiliation changed')),
-        ('ca_compromise', _('CA compromised')),
-        ('certificate_hold', _('On Hold')),
-        ('cessation_of_operation', _('Cessation of operation')),
-        ('key_compromise', _('Key compromised')),
-        ('privilege_withdrawn', _('Privilege withdrawn')),
-        ('remove_from_crl', _('Removed from CRL')),
-        ('superseded', _('Superseded')),
-        ('unspecified', _('Unspecified')),
+        (ReasonFlags.aa_compromise.name, _('Attribute Authority compromised')),
+        (ReasonFlags.affiliation_changed.name, _('Affiliation changed')),
+        (ReasonFlags.ca_compromise.name, _('CA compromised')),
+        (ReasonFlags.certificate_hold.name, _('On Hold')),
+        (ReasonFlags.cessation_of_operation.name, _('Cessation of operation')),
+        (ReasonFlags.key_compromise.name, _('Key compromised')),
+        (ReasonFlags.privilege_withdrawn.name, _('Privilege withdrawn')),
+        (ReasonFlags.remove_from_crl.name, _('Removed from CRL')),
+        (ReasonFlags.superseded.name, _('Superseded')),
+        (ReasonFlags.unspecified.name, _('Unspecified')),
     )
 
     created = models.DateTimeField(auto_now=True)
