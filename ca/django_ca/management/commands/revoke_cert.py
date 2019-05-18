@@ -13,12 +13,15 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+from django.core.management.base import CommandError
+
 from django_ca.management.base import CertCommand
 
 from ..base import ReasonAction
 
 
 class Command(CertCommand):
+    allow_revoked = True
     help = "Revoke a certificate."
 
     def add_arguments(self, parser):
@@ -26,4 +29,7 @@ class Command(CertCommand):
         super(Command, self).add_arguments(parser)
 
     def handle(self, cert, **options):
+        if cert.revoked:
+            raise CommandError('%s: Certificate is already revoked.' % cert.serial)
+
         cert.revoke(reason=options.get('reason'))

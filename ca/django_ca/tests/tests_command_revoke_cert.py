@@ -75,7 +75,7 @@ class RevokeCertTestCase(DjangoCAWithGeneratedCertsTestCase):
         self.assertPostRevoke(post, cert)
         self.assertEqual(cert.revoked_reason, ReasonFlags.unspecified.name)
 
-        with self.assertCommandError(r'^Error: %s: Certificate not found\.$' % self.cert.serial), \
+        with self.assertCommandError(r'^%s: Certificate is already revoked\.$' % self.cert.serial), \
                 self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
             self.cmd('revoke_cert', self.cert.serial, reason=ReasonFlags.key_compromise)
         self.assertFalse(pre.called)
