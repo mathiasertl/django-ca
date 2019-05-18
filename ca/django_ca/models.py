@@ -127,7 +127,6 @@ class Watcher(models.Model):
 class X509CertMixin(models.Model):
     # reasons are defined in http://www.ietf.org/rfc/rfc3280.txt
     REVOCATION_REASONS = (
-        ('', _('No reason')),
         (ReasonFlags.aa_compromise.name, _('Attribute Authority compromised')),
         (ReasonFlags.affiliation_changed.name, _('Affiliation changed')),
         (ReasonFlags.ca_compromise.name, _('CA compromised')),
