@@ -43,6 +43,7 @@ from django.utils.six import StringIO
 from django.utils.six.moves import reload_module
 
 from .. import ca_settings
+from ..constants import ReasonFlags
 from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
@@ -529,7 +530,7 @@ class DjangoCATestCase(TestCase):
         self.assertTrue(cert.revoked)
 
         if reason is None:
-            self.assertIsNone(cert.revoked_reason)
+            self.assertEqual(cert.revoked_reason, ReasonFlags.unspecified.name)
         else:
             self.assertEqual(cert.revoked_reason, reason)
 

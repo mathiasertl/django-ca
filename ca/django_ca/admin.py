@@ -42,6 +42,7 @@ from django.utils.translation import ugettext_lazy as _
 from django_object_actions import DjangoObjectActions
 
 from . import ca_settings
+from .constants import ReasonFlags
 from .extensions import Extension
 from .extensions import ListExtension
 from .extensions import NullExtension
@@ -579,8 +580,12 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
         if request.method == 'POST':
             form = RevokeCertificateForm(request.POST, instance=obj)
             if form.is_valid():
+                reason = form.cleaned_data['revoked_reason']
+                if reason:
+                    reason = ReasonFlags[reason]
+
                 obj.revoke(
-                    reason=form.cleaned_data['revoked_reason'] or None,
+                    reason=reason,
                     compromised=form.cleaned_data['compromised'] or None
                 )
                 return HttpResponseRedirect(obj.admin_change_url)

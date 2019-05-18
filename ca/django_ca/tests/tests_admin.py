@@ -38,6 +38,7 @@ from django.utils.six.moves.urllib.parse import quote
 from django_webtest import WebTestMixin
 
 from .. import ca_settings
+from ..constants import ReasonFlags
 from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import KeyUsage
@@ -1077,14 +1078,14 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertRevoked(self.cert)
 
     def test_with_reason(self):
-        reason = 'certificate_hold'
+        reason = ReasonFlags.certificate_hold
         with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
-            response = self.client.post(self.url, data={'revoked_reason': reason})
+            response = self.client.post(self.url, data={'revoked_reason': reason.name})
         self.assertTrue(pre.called)
         self.assertPostRevoke(post, self.cert)
         self.assertRedirects(response, self.change_url())
         self.assertTemplateUsed('django_ca/admin/certificate_revoke_form.html')
-        self.assertRevoked(self.cert, reason=reason)
+        self.assertRevoked(self.cert, reason=reason.name)
 
     def test_with_bogus_reason(self):
         # so the form is not valid
@@ -1103,7 +1104,7 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
     def test_revoked(self):
         cert = Certificate.objects.get(serial=self.cert.serial)
-        cert.revoked = True
+        cert.revoke()
         cert.save()
 
         with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
@@ -1112,6 +1113,7 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertFalse(post.called)
         self.assertRedirects(response, self.change_url())
 
+        # Revoke a second time, does not update
         with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
             response = self.client.post(self.url, data={'revoked_reason': 'certificateHold'})
         self.assertFalse(pre.called)

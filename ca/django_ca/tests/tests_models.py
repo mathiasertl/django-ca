@@ -31,6 +31,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from .. import ca_settings
+from ..constants import ReasonFlags
 from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
@@ -399,9 +400,11 @@ class CertificateTests(DjangoCAWithCertTestCase):
         cert = self.certs['child-cert']
         self.assertIsNone(cert.get_revocation_reason())
 
-        for reason, _text in cert.REVOCATION_REASONS:
+        for reason in ReasonFlags:
             cert.revoke(reason)
-            self.assertIsInstance(cert.get_revocation_reason(), x509.ReasonFlags)
+            got = cert.get_revocation_reason()
+            self.assertIsInstance(got, x509.ReasonFlags)
+            self.assertEqual(got.name, reason.name)
 
     def test_validate_past(self):
         # Test that model validation does not allow us to set revoked_date or revoked_invalidity to the future
@@ -430,12 +433,12 @@ class CertificateTests(DjangoCAWithCertTestCase):
         cert = self.certs['child-cert']
         self.assertEqual(cert.ocsp_status, 'good')
 
-        for reason, _text in cert.REVOCATION_REASONS:
+        for reason in ReasonFlags:
             cert.revoke(reason)
-            if reason == '':
+            if reason == ReasonFlags.unspecified:
                 self.assertEqual(cert.ocsp_status, 'revoked')
             else:
-                self.assertEqual(cert.ocsp_status, reason)
+                self.assertEqual(cert.ocsp_status, reason.name)
 
     def test_basic_constraints(self):
         for name, ca in self.cas.items():

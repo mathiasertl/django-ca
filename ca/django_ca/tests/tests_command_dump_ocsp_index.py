@@ -21,6 +21,7 @@ from datetime import timedelta
 
 from freezegun import freeze_time
 
+from ..constants import ReasonFlags
 from .base import DjangoCAWithCertTestCase
 from .base import certs
 from .base import timestamps
@@ -85,7 +86,7 @@ E\t{all-extensions[ocsp-expires]}\t\t{all-extensions[ocsp-serial]}\tunknown\t{al
 ecc_ca = "V\t{ecc-cert[ocsp-expires]}\t\t{ecc-cert[ocsp-serial]}\tunknown\t{ecc-cert[subject]}\n"
 
 revoked_first = "R\t{ecc-cert[ocsp-expires]}\t{revoked}\t{ecc-cert[ocsp-serial]}\tunknown\t{ecc-cert[subject]}\n"  # NOQA
-revoked_second = "R\t{ecc-cert[ocsp-expires]}\t{revoked},unspecified\t{ecc-cert[ocsp-serial]}\tunknown\t{ecc-cert[subject]}\n"  # NOQA
+revoked_second = "R\t{ecc-cert[ocsp-expires]}\t{revoked},key_compromise\t{ecc-cert[ocsp-serial]}\tunknown\t{ecc-cert[subject]}\n"  # NOQA
 
 
 class OCSPIndexTestCase(DjangoCAWithCertTestCase):
@@ -176,5 +177,5 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
             frozen_timestamp.tick(timedelta(seconds=3600))
 
             revoked_timestamp = datetime.utcnow().strftime(self.timeformat)
-            cert.revoke('unspecified')
+            cert.revoke(ReasonFlags.key_compromise)
             self.assertIndex(expected=revoked_second, ca=self.cas['ecc'], revoked=revoked_timestamp)

@@ -36,6 +36,7 @@ from django.urls import reverse
 from django.utils.encoding import force_text
 
 from .. import ca_settings
+from ..constants import ReasonFlags
 from ..models import Certificate
 from ..subject import Subject
 from ..utils import hex_to_bytes
@@ -278,10 +279,7 @@ class OCSPViewTestMixin(object):
                 revocation_time = cert_status['revocation_time'].replace(tzinfo=None)
                 revocation_reason = cert_status['revocation_reason']
 
-                if not cert.revoked_reason:
-                    self.assertEqual(revocation_reason, 'unspecified')
-                else:
-                    self.assertEqual(revocation_reason, cert.ocsp_status)
+                self.assertEqual(revocation_reason, cert.revoked_reason)
                 self.assertEqual(revocation_time, cert.revoked_date.replace(microsecond=0))
 
             # test next_update
@@ -437,7 +435,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertOCSP(response, requested=[cert], nonce=req1_nonce, expires=1200)
 
-        cert.revoke('affiliation_changed')
+        cert.revoke(ReasonFlags.affiliation_changed)
         response = self.client.post(reverse('post'), req1, content_type='application/ocsp-request')
         self.assertEqual(response.status_code, 200)
         self.assertOCSP(response, requested=[cert], nonce=req1_nonce, expires=1200)

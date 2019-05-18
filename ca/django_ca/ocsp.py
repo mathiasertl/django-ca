@@ -17,6 +17,8 @@ from datetime import timedelta
 
 from django.utils import timezone
 
+from .constants import ReasonFlags
+
 # We need a two-letter year, otherwise OCSP doesn't work
 date_format = '%y%m%d%H%M%SZ'
 
@@ -35,7 +37,7 @@ def get_index(ca):
             status = 'R'
 
             revocation = cert.revoked_date.strftime(date_format)
-            if cert.revoked_reason:
+            if cert.revoked_reason != ReasonFlags.unspecified.name:
                 revocation += ',%s' % cert.revoked_reason
         else:
             status = 'V'

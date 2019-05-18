@@ -169,7 +169,7 @@ class X509CertMixin(models.Model):
         if self.revoked is False:
             return
 
-        if self.revoked_reason == '' or self.revoked_reason is None:
+        if not self.revoked_reason:
             return x509.ReasonFlags.unspecified
         else:
             return getattr(x509.ReasonFlags, self.revoked_reason)
@@ -292,12 +292,20 @@ class X509CertMixin(models.Model):
         return self.x509.not_valid_after
 
     @property
-    def ocsp_status(self):
-        # NOTE: The OCSP status 'good' does not say if the certificate has expired.
+    def ocsp_status(self):  # pragma: only cryptography<2.4
+        """Get the OCSP status. This version is only used by the oscrypto based OCSP responder.
+
+        The OCSP status 'good' does not say if the certificate has expired.
+
+        **Deprecated:** This function will be removed after 1.13.0.
+        """
+
         if self.revoked is False:
             return 'good'
+        if self.revoked_reason == ReasonFlags.unspecified.name:
+            return 'revoked'
 
-        return self.revoked_reason or 'revoked'
+        return self.revoked_reason
 
     def revoke(self, reason=None, compromised=None):
         if reason is None:
