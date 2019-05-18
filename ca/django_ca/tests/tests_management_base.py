@@ -400,8 +400,8 @@ class ReasonTestCase(DjangoCATestCase):
         self.maxDiff = None
         self.assertParserError(['foo'],
                                'usage: {script} [-h]\n'
-                               '              {{unspecified,key_compromise,ca_compromise,affiliation_changed,superseded,cessation_of_operation,certificate_hold,privilege_withdrawn,aa_compromise,remove_from_crl}}\n'  # NOQA
-                               "{script}: error: argument reason: invalid choice: 'foo' (choose from 'unspecified', 'key_compromise', 'ca_compromise', 'affiliation_changed', 'superseded', 'cessation_of_operation', 'certificate_hold', 'privilege_withdrawn', 'aa_compromise', 'remove_from_crl')\n")  # NOQA
+                               '              {{aa_compromise,affiliation_changed,ca_compromise,certificate_hold,cessation_of_operation,key_compromise,privilege_withdrawn,remove_from_crl,superseded,unspecified}}\n'  # NOQA
+                               "{script}: error: argument reason: invalid choice: 'foo' (choose from 'aa_compromise', 'affiliation_changed', 'ca_compromise', 'certificate_hold', 'cessation_of_operation', 'key_compromise', 'privilege_withdrawn', 'remove_from_crl', 'superseded', 'unspecified')\n")  # NOQA
 
 
 class MultipleURLActionTestCase(DjangoCATestCase):
