@@ -31,6 +31,7 @@ from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 
 from .. import ca_settings
+from ..constants import ReasonFlags
 from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
 from ..extensions import IssuerAlternativeName
@@ -211,6 +212,21 @@ class ExtensionAction(argparse.Action):
             value = self.extension(value)
         except ValueError as e:
             parser.error('Invalid extension value: %s: %s' % (value, e))
+
+        setattr(namespace, self.dest, value)
+
+
+class ReasonAction(argparse.Action):
+    def __init__(self, *args, **kwargs):
+        # Note: we remove 'unspecified' from the list to make the list at least a little bit shorter
+        kwargs.setdefault('choices', [r.name for r in ReasonFlags if r.name != 'unspecified'])
+        super(ReasonAction, self).__init__(*args, **kwargs)
+
+    def __call__(self, parser, namespace, value, option_string=None):
+        try:
+            value = ReasonFlags[value]
+        except KeyError:
+            parser.error('Invalid reason: %s' % value)
 
         setattr(namespace, self.dest, value)
 
