@@ -15,12 +15,14 @@
 
 from django_ca.management.base import CertCommand
 
+from ..base import ReasonAction
+
 
 class Command(CertCommand):
     help = "Revoke a certificate."
 
     def add_arguments(self, parser):
-        parser.add_argument('--reason', help="An optional reason for revokation.")
+        parser.add_argument('--reason', action=ReasonAction, help="An optional reason for revokation.")
         super(Command, self).add_arguments(parser)
 
     def handle(self, cert, **options):

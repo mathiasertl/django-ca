@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
+from ..constants import ReasonFlags
 from ..models import Certificate
 from ..signals import post_revoke_cert
 from ..signals import pre_revoke_cert
@@ -37,22 +38,29 @@ class RevokeCertTestCase(DjangoCAWithGeneratedCertsTestCase):
         self.assertPostRevoke(post, cert)
         self.assertTrue(cert.revoked)
         self.assertTrue(cert.revoked_date is not None)
-        self.assertIsNone(cert.revoked_reason)
+        self.assertEqual(cert.revoked_reason, ReasonFlags.unspecified.name)
 
     def test_with_reason(self):
         self.assertFalse(self.cert.revoked)
 
-        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
-            stdout, stderr = self.cmd('revoke_cert', self.cert.serial, reason='keyCompromise')
-        self.assertEqual(pre.call_count, 1)
-        self.assertEqual(stdout, '')
-        self.assertEqual(stderr, '')
+        for reason in ReasonFlags:
+            with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
+                stdout, stderr = self.cmd_e2e(['revoke_cert', self.cert.serial, '--reason', reason.name])
+            self.assertEqual(pre.call_count, 1)
+            self.assertEqual(stdout, '')
+            self.assertEqual(stderr, '')
 
-        cert = Certificate.objects.get(serial=self.cert.serial)
-        self.assertPostRevoke(post, cert)
-        self.assertTrue(cert.revoked)
-        self.assertTrue(cert.revoked_date is not None)
-        self.assertEqual(cert.revoked_reason, 'keyCompromise')
+            cert = Certificate.objects.get(serial=self.cert.serial)
+            self.assertPostRevoke(post, cert)
+            self.assertTrue(cert.revoked)
+            self.assertTrue(cert.revoked_date is not None)
+            self.assertEqual(cert.revoked_reason, reason.name)
+
+            # unrevoke for next iteration of loop
+            cert.revoked = False
+            cert.revoked_date = None
+            cert.revoked_reason = None
+            cert.save()
 
     def test_revoked(self):
         # you cannot revoke a revoked certificate (and not update the reason)
@@ -60,19 +68,20 @@ class RevokeCertTestCase(DjangoCAWithGeneratedCertsTestCase):
         self.assertFalse(self.cert.revoked)
 
         with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
-            self.cmd('revoke_cert', self.cert.serial, reason='keyCompromise')
+            self.cmd('revoke_cert', self.cert.serial)
 
         cert = Certificate.objects.get(serial=self.cert.serial)
         self.assertEqual(pre.call_count, 1)
         self.assertPostRevoke(post, cert)
+        self.assertEqual(cert.revoked_reason, ReasonFlags.unspecified.name)
 
         with self.assertCommandError(r'^Error: %s: Certificate not found\.$' % self.cert.serial), \
                 self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
-            self.cmd('revoke_cert', self.cert.serial, reason='certificateHold')
+            self.cmd('revoke_cert', self.cert.serial, reason=ReasonFlags.key_compromise)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
         cert = Certificate.objects.get(serial=self.cert.serial)
         self.assertTrue(cert.revoked)
         self.assertTrue(cert.revoked_date is not None)
-        self.assertEqual(cert.revoked_reason, 'keyCompromise')
+        self.assertEqual(cert.revoked_reason, ReasonFlags.unspecified.name)

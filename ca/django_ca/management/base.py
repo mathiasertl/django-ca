@@ -218,8 +218,7 @@ class ExtensionAction(argparse.Action):
 
 class ReasonAction(argparse.Action):
     def __init__(self, *args, **kwargs):
-        # Note: we remove 'unspecified' from the list to make the list at least a little bit shorter
-        kwargs.setdefault('choices', [r.name for r in ReasonFlags if r.name != 'unspecified'])
+        kwargs.setdefault('choices', [r.name for r in ReasonFlags])
         super(ReasonAction, self).__init__(*args, **kwargs)
 
     def __call__(self, parser, namespace, value, option_string=None):
