@@ -266,6 +266,7 @@ elif args.command == 'init-demo':
     from django.urls import reverse
     from django.utils.six.moves.urllib.parse import urljoin
     from django_ca import ca_settings
+    from django_ca.constants import ReasonFlags
     from django_ca.models import Certificate
     from django_ca.models import CertificateAuthority
     from django_ca.models import Watcher
@@ -389,7 +390,7 @@ elif args.command == 'init-demo':
     cert.save()
 
     cert = Certificate.objects.get(cn='host3.example.com')
-    cert.revoke('key_compromise')
+    cert.revoke(ReasonFlags.key_compromise)
     cert.save()
     ok()
 
