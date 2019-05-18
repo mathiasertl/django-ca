@@ -300,11 +300,14 @@ class X509CertMixin(models.Model):
         return self.revoked_reason or 'revoked'
 
     def revoke(self, reason=None, compromised=None):
+        if reason is None:
+            reason = ReasonFlags.unspecified
+
         pre_revoke_cert.send(sender=self.__class__, cert=self, reason=reason)
 
         self.revoked = True
         self.revoked_date = timezone.now()
-        self.revoked_reason = reason
+        self.revoked_reason = reason.name
         self.compromised = compromised
         self.save()
 
