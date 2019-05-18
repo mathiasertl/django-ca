@@ -169,10 +169,7 @@ class X509CertMixin(models.Model):
         if self.revoked is False:
             return
 
-        if not self.revoked_reason:
-            return x509.ReasonFlags.unspecified
-        else:
-            return getattr(x509.ReasonFlags, self.revoked_reason)
+        return x509.ReasonFlags[self.revoked_reason]
 
     def get_compromised_time(self):
         if self.revoked is False or not self.compromised:

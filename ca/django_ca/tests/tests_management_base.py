@@ -21,6 +21,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
 
+from ..constants import ReasonFlags
 from ..extensions import KeyUsage
 from ..management import base
 from ..models import Certificate
@@ -383,6 +384,24 @@ class ExpiresActionTestCase(DjangoCATestCase):
         # this always is one day more, because N days jumps to the next midnight.
         self.assertParserError(['--expires=-1'], 'usage: {script} [-h] [--expires EXPIRES]\n'
                                '{script}: error: Expires must not be negative.\n')
+
+
+class ReasonTestCase(DjangoCATestCase):
+    def setUp(self):
+        super(ReasonTestCase, self).setUp()
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument('reason', action=base.ReasonAction)
+
+    def test_reason(self):
+        ns = self.parser.parse_args([ReasonFlags.unspecified.name])
+        self.assertEqual(ns.reason, ReasonFlags.unspecified)
+
+    def test_wrong_reason(self):
+        self.maxDiff = None
+        self.assertParserError(['foo'],
+                               'usage: {script} [-h]\n'
+                               '              {{unspecified,key_compromise,ca_compromise,affiliation_changed,superseded,cessation_of_operation,certificate_hold,privilege_withdrawn,aa_compromise,remove_from_crl}}\n'  # NOQA
+                               "{script}: error: argument reason: invalid choice: 'foo' (choose from 'unspecified', 'key_compromise', 'ca_compromise', 'affiliation_changed', 'superseded', 'cessation_of_operation', 'certificate_hold', 'privilege_withdrawn', 'aa_compromise', 'remove_from_crl')\n")  # NOQA
 
 
 class MultipleURLActionTestCase(DjangoCATestCase):

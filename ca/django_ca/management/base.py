@@ -218,16 +218,12 @@ class ExtensionAction(argparse.Action):
 
 class ReasonAction(argparse.Action):
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault('choices', [r.name for r in ReasonFlags])
+        kwargs['choices'] = [r.name for r in ReasonFlags]
         super(ReasonAction, self).__init__(*args, **kwargs)
 
     def __call__(self, parser, namespace, value, option_string=None):
-        try:
-            value = ReasonFlags[value]
-        except KeyError:
-            parser.error('Invalid reason: %s' % value)
-
-        setattr(namespace, self.dest, value)
+        # NOTE: set of choices already assures that value is a valid ReasonFlag
+        setattr(namespace, self.dest, ReasonFlags[value])
 
 
 class BinaryOutputWrapper(OutputWrapper):
