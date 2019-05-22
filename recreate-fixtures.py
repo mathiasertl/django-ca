@@ -172,10 +172,9 @@ def update_cert_data(cert, data):
     eku = cert.extended_key_usage
     if eku is not None:
         data['extended_key_usage'] = eku.serialize()
-
-    crl = cert.crlDistributionPoints()
-    if crl is not None:
-        data['crl_old'] = crl
+    crldp = cert.crl_distribution_points
+    if crldp is not None:
+        data['crl_distribution_points'] = crldp
 
 
 def write_ca(cert, data, password=None):
