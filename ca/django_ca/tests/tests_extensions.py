@@ -933,6 +933,33 @@ class CRLDistributionPointsTestCase(ListExtensionTestMixin, TestCase):
         self.assertEqual(self.ext4.as_extension(), self.x4)
         self.assertEqual(self.ext5.as_extension(), self.x5)
 
+    def test_as_text(self):
+        self.assertEqual(self.ext1.as_text(), """* DistributionPoint:
+  * Full Name:
+    * URI:http://ca.example.com/crl""")
+        self.assertEqual(self.ext2.as_text(), """* DistributionPoint:
+  * Full Name:
+    * URI:http://ca.example.com/crl
+    * dirname:/C=AT""")
+        self.assertEqual(self.ext3.as_text(), """* DistributionPoint:
+  * Relative Name: /CN=example.com""")
+        self.assertEqual(self.ext4.as_text(), """* DistributionPoint:
+  * Full Name:
+    * URI:http://ca.example.com/crl
+  * CRL Issuer:
+    * URI:http://ca.example.com/
+  * Reasons: ca_compromise, key_compromise""")
+        self.assertEqual(self.ext5.as_text(), """* DistributionPoint:
+  * Full Name:
+    * URI:http://ca.example.com/crl
+    * dirname:/C=AT
+* DistributionPoint:
+  * Full Name:
+    * URI:http://ca.example.com/crl
+  * CRL Issuer:
+    * URI:http://ca.example.com/
+  * Reasons: ca_compromise, key_compromise""")
+
     def test_count(self):
         self.assertEqual(self.ext1.count(self.s1), 1)
         self.assertEqual(self.ext1.count(self.dp1), 1)

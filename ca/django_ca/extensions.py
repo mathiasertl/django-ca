@@ -34,6 +34,7 @@ from .utils import format_general_name
 from .utils import format_relative_name
 from .utils import get_extension_name
 from .utils import hex_to_bytes
+from .utils import indent
 from .utils import parse_general_name
 from .utils import shlex_split
 from .utils import x509_relative_name
@@ -571,6 +572,20 @@ class DistributionPoint(GeneralNameMixin):
             sorted([r.name for r in self.reasons]) if self.reasons is not None else None,
         )
 
+    def as_text(self):
+        if self.full_name:
+            names = [indent('* %s' % self.serialize_value(n), '  ') for n in self.full_name]
+            text = '* Full Name:\n%s' % '\n'.join(names)
+        else:
+            text = '* Relative Name: %s' % format_relative_name(self.relative_name)
+
+        if self.crl_issuer:
+            names = [indent('* %s' % self.serialize_value(n), '  ') for n in self.crl_issuer]
+            text += '\n* CRL Issuer:\n%s' % '\n'.join(names)
+        if self.reasons:
+            text += '\n* Reasons: %s' % ', '.join(sorted([r.name for r in self.reasons]))
+        return text
+
     @property
     def for_extension_type(self):
         return x509.DistributionPoint(full_name=self.full_name, relative_name=self.relative_name,
@@ -821,6 +836,9 @@ class CRLDistributionPoints(ListExtension):
         return 'CRLDistributionPoints([%s], critical=%s)' % (
             ', '.join([str(v) for v in self.value]), self.critical
         )
+
+    def as_text(self):
+        return '\n'.join('* DistributionPoint:\n%s' % indent(dp.as_text(), '  ') for dp in self.value)
 
     @property
     def extension_type(self):
