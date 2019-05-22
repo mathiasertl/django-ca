@@ -68,7 +68,6 @@ from .signals import pre_revoke_cert
 from .subject import Subject
 from .utils import add_colons
 from .utils import ca_storage
-from .utils import format_general_names
 from .utils import format_name
 from .utils import get_extension_name
 from .utils import int_to_hex
@@ -335,6 +334,7 @@ class X509CertMixin(models.Model):
         ExtensionOID.AUTHORITY_INFORMATION_ACCESS: 'authority_information_access',
         ExtensionOID.AUTHORITY_KEY_IDENTIFIER: 'authority_key_identifier',
         ExtensionOID.BASIC_CONSTRAINTS: 'basic_constraints',
+        ExtensionOID.CRL_DISTRIBUTION_POINTS: 'crl_distribution_points',
         ExtensionOID.EXTENDED_KEY_USAGE: 'extended_key_usage',
         ExtensionOID.ISSUER_ALTERNATIVE_NAME: 'issuer_alternative_name',
         ExtensionOID.KEY_USAGE: 'key_usage',
@@ -541,21 +541,6 @@ class X509CertMixin(models.Model):
             policies.append(output)
 
         return ext.critical, policies
-
-    def crlDistributionPoints(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.CRL_DISTRIBUTION_POINTS)
-        except x509.ExtensionNotFound:
-            return None
-
-        value = []
-        for dp in ext.value:
-            if dp.full_name:
-                value.append('Full Name: %s' % format_general_names(dp.full_name))
-            else:  # pragma: no cover - not really used in the wild
-                value.append('Relative Name: %s' % format_name(dp.relative_name.value))
-
-        return ext.critical, value
 
     def _parse_policy_qualifier(self, qualifier):
         if isinstance(qualifier, x509.extensions.UserNotice):
