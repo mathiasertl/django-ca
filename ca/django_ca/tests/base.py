@@ -190,9 +190,16 @@ certs['cloudflare_1'] = {
     },
     'authority_key_identifier': '40:09:61:67:F0:BC:83:71:4F:DE:12:08:2C:6F:D4:D4:2B:76:3D:96',
     "basic_constraints": "critical,CA:FALSE",
-    'crl_old': [False, [
-        'Full Name: URI:http://crl.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crl']
-    ],
+    "crl_distribution_points": {
+        "value": [
+            {
+                "full_name": [
+                    'URI:http://crl.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crl',
+                ],
+            }
+        ],
+        "critical": False,
+    },
     "extended_key_usage": "serverAuth,clientAuth",
     "key_usage": "critical,digitalSignature",
     'precert_poison': {'critical': True},

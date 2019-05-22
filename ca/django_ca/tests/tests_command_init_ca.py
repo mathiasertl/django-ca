@@ -22,6 +22,7 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 
 from .. import ca_settings
 from ..extensions import AuthorityInformationAccess
+from ..extensions import CRLDistributionPoints
 from ..extensions import NameConstraints
 from ..models import CertificateAuthority
 from ..signals import post_create_ca
@@ -105,7 +106,7 @@ class InitCATest(DjangoCATestCase):
 
         self.assertTrue(isinstance(ca.x509.signature_hash_algorithm, hashes.SHA1))
         self.assertTrue(isinstance(ca.x509.public_key(), dsa.DSAPublicKey))
-        self.assertIsNone(ca.crlDistributionPoints())
+        self.assertIsNone(ca.crl_distribution_points)
         self.assertEqual(ca.authority_information_access, AuthorityInformationAccess(
             [['URI:http://ca.issuer.ca.example.com'], []]))
         self.assertEqual(ca.name_constraints, NameConstraints([['DNS:.com'], ['DNS:.net']]))
@@ -260,10 +261,11 @@ class InitCATest(DjangoCATestCase):
         self.assertSignature([second], second)
         self.assertIsNone(second.parent)
 
+        ca_crl_url = 'http://ca.crl.example.com'
         with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
             out, err = self.init_ca(
                 name='Child', parent=parent,
-                ca_crl_url=['http://ca.crl.example.com'],
+                ca_crl_url=[ca_crl_url],
                 ca_ocsp_url='http://ca.ocsp.example.com',
             )
         self.assertEqual(out, '')
@@ -281,7 +283,9 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(list(parent.children.all()), [child])
         self.assertIssuer(parent, child)
         self.assertAuthorityKeyIdentifier(parent, child)
-        self.assertEqual(child.crlDistributionPoints(), (False, ['Full Name: URI:http://ca.crl.example.com']))
+        self.assertEqual(child.crl_distribution_points, CRLDistributionPoints([{
+            'full_name': [ca_crl_url],
+        }]))
         self.assertEqual(child.authority_information_access,
                          AuthorityInformationAccess([[], ['URI:http://ca.ocsp.example.com']]))
 

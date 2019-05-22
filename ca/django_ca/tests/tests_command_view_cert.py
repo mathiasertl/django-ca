@@ -102,8 +102,10 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
 BasicConstraints (critical):
     CA:FALSE
-cRLDistributionPoints:
-    * Full Name: URI:{crl}
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl}
 ExtendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage[0]}
     * {extended_key_usage[1]}
@@ -156,8 +158,10 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
-cRLDistributionPoints:
-    * Full Name: URI:{crl}
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl}
 ExtendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage[0]}
     * {extended_key_usage[1]}
@@ -212,8 +216,10 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
-cRLDistributionPoints:
-    * Full Name: URI:{crl}
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl}
 ExtendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage[0]}
 KeyUsage{key_usage_critical}:
@@ -343,8 +349,10 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
-cRLDistributionPoints:
-    * {crl_old[1][0]}
+CRLDistributionPoints:
+    * DistributionPoint:
+      * Full Name:
+        * URI:http://crl.godaddy.com/gdig2s1-1015.crl
 certificatePolicies:
     * OID 2.16.840.1.114413.1.7.23.1: http://certificates.godaddy.com/repository/
     * OID 2.23.140.1.2.1: None
@@ -491,8 +499,10 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
-cRLDistributionPoints:
-    * Full Name: URI:http://crl.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crl
+CRLDistributionPoints:
+    * DistributionPoint:
+      * Full Name:
+        * URI:http://crl.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crl
 certificatePolicies:
     * OID 1.3.6.1.4.1.6449.1.2.2.7: https://secure.comodo.com/CPS
     * OID 2.23.140.1.2.1: None

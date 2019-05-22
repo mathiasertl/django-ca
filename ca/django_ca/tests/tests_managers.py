@@ -21,6 +21,8 @@ from .. import ca_settings
 from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
+from ..extensions import CRLDistributionPoints
+from ..extensions import DistributionPoint
 from ..extensions import ExtendedKeyUsage
 from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
@@ -240,8 +242,8 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         cert = Certificate.objects.init(
             ca, csr, algorithm=hashes.SHA256(),
             subject_alternative_name=['example.com'], **kwargs)
-        self.assertEqual(self.get_extensions(cert.x509)['cRLDistributionPoints'],
-                         (False, ['Full Name: URI:%s' % ca .crl_url]))
+        self.assertEqual(self.get_extensions(cert.x509)['CRLDistributionPoints'],
+                         CRLDistributionPoints([DistributionPoint({'full_name': [ca.crl_url]})]))
 
         # test multiple URLs
         ca.crl_url = 'http://crl.example.com\nhttp://crl.example.org'
@@ -252,8 +254,11 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             subject_alternative_name=['example.com'], **kwargs)
 
         crl_a, crl_b = ca.crl_url.splitlines()
-        expected = ['Full Name: URI:%s' % url for url in ca.crl_url.splitlines()]
-        self.assertEqual(self.get_extensions(cert.x509)['cRLDistributionPoints'], (False, expected))
+        expected = CRLDistributionPoints([
+            DistributionPoint({'full_name': [crl_a]}),
+            DistributionPoint({'full_name': [crl_b]}),
+        ])
+        self.assertEqual(self.get_extensions(cert.x509)['CRLDistributionPoints'], expected)
 
     @override_tmpcadir()
     def test_issuer_alt_name(self):
@@ -333,7 +338,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             certs['profile-ocsp']['key_usage'],
             certs['profile-ocsp']['subject_alternative_name'],
             OCSPNoCheck(),
-            ('cRLDistributionPoints', tuple(certs['profile-ocsp']['crl_old'])),
+            certs['profile-ocsp']['crl_distribution_points'],
         ])
 
     @override_tmpcadir()
@@ -388,7 +393,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             IssuerAlternativeName(ian),
             certs['all-extensions']['tls_feature'],
             NameConstraints(nc),
-            ('cRLDistributionPoints', (False, ['Full Name: URI:%s' % certs['child']['crl_url']])),
+            certs['all-extensions']['crl_distribution_points'],
         ]
         if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
             expected.append(PrecertPoison())

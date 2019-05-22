@@ -498,17 +498,13 @@ class CertificateTests(DjangoCAWithCertTestCase):
 
     def test_crl_distribution_points(self):
         for name, ca in self.cas.items():
-            expected = certs[name].get('crl_old')
-            crl = ca.crlDistributionPoints()
-            if isinstance(crl, tuple):
-                crl = list(crl)
+            expected = certs[name].get('crl_distribution_points')
+            crl = ca.crl_distribution_points
             self.assertEqual(crl, expected)
 
         for name, cert in self.certs.items():
-            expected = certs[name].get('crl_old')
-            crl = cert.crlDistributionPoints()
-            if isinstance(crl, tuple):
-                crl = list(crl)
+            expected = certs[name].get('crl_distribution_points')
+            crl = cert.crl_distribution_points
             self.assertEqual(crl, expected)
 
     def test_digest(self):

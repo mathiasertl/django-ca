@@ -66,8 +66,10 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
-cRLDistributionPoints:
-    * Full Name: URI:{crl}
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl}
 KeyUsage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
@@ -232,8 +234,10 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
-cRLDistributionPoints:
-    * {crl_old[1][0]}
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl_distribution_points[0].full_name[0].value}
 KeyUsage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
@@ -267,8 +271,10 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
-cRLDistributionPoints:
-    * {crl_old[1][0]}
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl_distribution_points[0].full_name[0].value}
 certificatePolicies:
     * {certificatePolicies[1][0]}
     * {certificatePolicies[1][1]}
@@ -307,8 +313,10 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
-cRLDistributionPoints:
-    * {crl_old[1][0]}
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl_distribution_points[0].full_name[0].value}
 certificatePolicies:
     * {certificatePolicies[1][0]}
 KeyUsage{key_usage_critical}:
@@ -369,8 +377,10 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
-cRLDistributionPoints:
-    * {crl_old[1][0]}
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl_distribution_points[0].full_name[0].value}
 certificatePolicies:
     * {certificatePolicies[1][0]}
 KeyUsage{key_usage_critical}:
@@ -404,8 +414,10 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
-cRLDistributionPoints:
-    * {crl_old[1][0]}
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl_distribution_points[0].full_name[0].value}
 certificatePolicies:
     * {certificatePolicies[1][0]}
 ExtendedKeyUsage{extended_key_usage_critical}:
@@ -469,8 +481,10 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
-cRLDistributionPoints:
-    * {crl_old[1][0]}
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl_distribution_points[0].full_name[0].value}
 certificatePolicies:
     * {certificatePolicies[1][0]}
 KeyUsage{key_usage_critical}:
@@ -504,8 +518,10 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
-cRLDistributionPoints:
-    * {crl_old[1][0]}
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl_distribution_points[0].full_name[0].value}
 certificatePolicies:
     * {certificatePolicies[1][0]}
 KeyUsage{key_usage_critical}:
@@ -565,8 +581,10 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
-cRLDistributionPoints:
-    * {crl_old[1][0]}
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl_distribution_points[0].full_name[0].value}
 certificatePolicies:
     * {certificatePolicies[1][0]}
 ExtendedKeyUsage{extended_key_usage_critical}:
@@ -606,8 +624,10 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
-cRLDistributionPoints:
-    * {crl_old[1][0]}
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl_distribution_points[0].full_name[0].value}
 certificatePolicies:
     * {certificatePolicies[1][0]}
     * {certificatePolicies[1][1]}
@@ -648,8 +668,10 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
-cRLDistributionPoints:
-    * {crl_old[1][0]}
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl_distribution_points[0].full_name[0].value}
 certificatePolicies:
     * {certificatePolicies[1][0]}
     * {certificatePolicies[1][1]}
@@ -689,10 +711,8 @@ KeyUsage{key_usage_critical}:
     * {key_usage_1}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
-UnknownOID:
-    <ObjectIdentifier(oid=2.16.840.1.113730.1.1, name=Unknown OID)>
-UnknownOID:
-    <ObjectIdentifier(oid=2.16.840.1.113730.1.13, name=Unknown OID)>
+UnknownOID: 2.16.840.1.113730.1.1
+UnknownOID: 2.16.840.1.113730.1.13
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -720,8 +740,10 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
-cRLDistributionPoints:
-    * {crl_old[1][0]}
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl_distribution_points[0].full_name[0].value}
 certificatePolicies:
     * {certificatePolicies[1][0]}
 KeyUsage{key_usage_critical}:
@@ -757,8 +779,10 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
-cRLDistributionPoints:
-    * {crl_old[1][0]}
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl_distribution_points[0].full_name[0].value}
 certificatePolicies:
     * {certificatePolicies[1][0]}
 ExtendedKeyUsage{extended_key_usage_critical}:
@@ -797,8 +821,10 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
-cRLDistributionPoints:
-    * {crl_old[1][0]}
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl_distribution_points[0].full_name[0].value}
 certificatePolicies:
     * {certificatePolicies[1][0]}
 ExtendedKeyUsage{extended_key_usage_critical}:

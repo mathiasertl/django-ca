@@ -71,7 +71,7 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
         self.assertIsNone(new.issuer_alternative_name)  # signing ca does not have this set
 
         # Some properties come from the ca
-        self.assertEqual(old.ca.crl_url, new.crlDistributionPoints())
+        self.assertEqual(old.ca.crl_url, new.crl_distribution_points)
 
     @override_tmpcadir()
     def test_basic(self):
