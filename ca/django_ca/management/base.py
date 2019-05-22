@@ -16,8 +16,8 @@
 import argparse
 import getpass
 import sys
-import textwrap
 
+from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import BaseCommand as _BaseCommand
@@ -28,7 +28,6 @@ from django.core.validators import URLValidator
 from django.utils import six
 from django.utils import timezone
 from django.utils.encoding import force_bytes
-from django.utils.encoding import force_text
 
 from .. import ca_settings
 from ..constants import ReasonFlags
@@ -332,12 +331,19 @@ class BaseCommand(_BaseCommand):
             # old extension framework
             name, value = ext
             critical, value = value
-            if critical:  # pragma: no cover - all old extensions are typically non-critical
-                self.stdout.write('%s (critical):' % name)
-            else:
-                self.stdout.write('%s:' % name)
 
-            self.stdout.write(self.indent(value))
+            if isinstance(value, x509.ObjectIdentifier):
+                if critical:  # pragma: no cover - all old extensions are typically non-critical
+                    self.stdout.write('%s (critical): %s' % (name, value.dotted_string))
+                else:
+                    self.stdout.write('%s: %s' % (name, value.dotted_string))
+            else:
+                if critical:  # pragma: no cover - all old extensions are typically non-critical
+                    self.stdout.write('%s (critical):' % name)
+                else:
+                    self.stdout.write('%s:' % name)
+
+                self.stdout.write(self.indent(value))
 
     def print_extensions(self, cert):
         for ext in cert.get_extensions():
