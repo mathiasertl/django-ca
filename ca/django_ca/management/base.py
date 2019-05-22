@@ -43,6 +43,7 @@ from ..models import CertificateAuthority
 from ..subject import Subject
 from ..utils import SUBJECT_FIELDS
 from ..utils import get_expires
+from ..utils import indent
 from ..utils import is_power2
 from ..utils import parse_encoding
 from ..utils import parse_hash_algorithm
@@ -310,15 +311,7 @@ class BaseCommand(_BaseCommand):
     def indent(self, s, prefix='    '):
         if isinstance(s, list):
             return ''.join(['%s* %s\n' % (prefix, l) for l in s])
-        elif six.PY3:  # pragma: only py3
-            return textwrap.indent(force_text(s), prefix)
-        else:  # pragma: only py2
-            # copied from py3.4 version of textwrap.indent
-            def prefixed_lines():
-                for line in force_text(s).splitlines(True):
-                    yield prefix + line
-
-            return ''.join(prefixed_lines())
+        return indent(s, prefix)
 
     def print_extension(self, ext):
         if isinstance(ext, Extension):
