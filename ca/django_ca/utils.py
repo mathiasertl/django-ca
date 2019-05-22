@@ -166,24 +166,6 @@ def format_general_name(name):
     return '%s:%s' % (SAN_NAME_MAPPINGS[type(name)], value)
 
 
-def format_general_names(names):
-    """Format a list of general names.
-
-    >>> import ipaddress
-    >>> format_general_names([x509.DNSName('example.com')])
-    'DNS:example.com'
-    >>> format_general_names([x509.IPAddress(ipaddress.IPv4Address('127.0.0.1'))])
-    'IP:127.0.0.1'
-    >>> format_general_names([x509.DirectoryName(
-    ...     x509.Name([x509.NameAttribute(x509.oid.NameOID.COMMON_NAME, 'example.com')]))])
-    'dirname:/CN=example.com'
-    >>> format_general_names([x509.DNSName('example.com'), x509.DNSName('example.net')])
-    'DNS:example.com, DNS:example.net'
-    """
-
-    return ', '.join([format_general_name(n) for n in names])
-
-
 def is_power2(num):
     """Return True if num is a power of 2.
 
@@ -801,9 +783,9 @@ def shlex_split(s, sep):
     return [l for l in lex]
 
 
-if six.PY3:
+if six.PY3:  # pragma: only py3
     indent = textwrap.indent
-else:
+else:  # pragma: only py2
     def indent(s, prefix):
         def prefixed_lines():
             for line in force_text(s).splitlines(True):

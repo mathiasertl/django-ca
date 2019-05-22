@@ -486,6 +486,7 @@ HPKP pin: {hpkp}
 
     @freeze_time("2018-12-01")
     def test_contrib_cloudflare_1(self):
+        self.maxDiff = None
         self.assertContrib('cloudflare_1', '''Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
