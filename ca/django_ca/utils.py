@@ -20,6 +20,7 @@ import errno
 import os
 import re
 import shlex
+import textwrap
 from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime
@@ -798,6 +799,17 @@ def shlex_split(s, sep):
     lex.whitespace = sep
     lex.whitespace_split = True
     return [l for l in lex]
+
+
+if six.PY3:
+    indent = textwrap.indent
+else:
+    def indent(s, prefix):
+        def prefixed_lines():
+            for line in force_text(s).splitlines(True):
+                yield prefix + line
+
+        return ''.join(prefixed_lines())
 
 
 ca_storage = get_storage_class(ca_settings.CA_FILE_STORAGE)(**ca_settings.CA_FILE_STORAGE_KWARGS)
