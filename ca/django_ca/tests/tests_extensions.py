@@ -989,6 +989,20 @@ class CRLDistributionPointsTestCase(ListExtensionTestMixin, TestCase):
         self.assertEqual(self.ext5, CRLDistributionPoints(self.x5))
         # ext5 has other critical value then default
 
+    def test_extend(self):
+        self.ext1.extend([self.s2])
+        self.assertEqual(self.ext1, CRLDistributionPoints([
+            DistributionPoint(self.dp1), DistributionPoint(self.dp2)]))
+        self.ext1.extend([self.dp3])
+        self.assertEqual(self.ext1, CRLDistributionPoints([
+            DistributionPoint(self.dp1), DistributionPoint(self.dp2), DistributionPoint(self.dp3),
+        ]))
+        self.ext1.extend([DistributionPoint(self.dp4)])
+        self.assertEqual(self.ext1, CRLDistributionPoints([
+            DistributionPoint(self.dp1), DistributionPoint(self.dp2), DistributionPoint(self.dp3),
+            DistributionPoint(self.dp4),
+        ]))
+
     def test_extension_type(self):
         self.assertEqual(self.ext1.extension_type, x509.CRLDistributionPoints([self.dp1]))
         self.assertEqual(self.ext2.extension_type, x509.CRLDistributionPoints([self.dp2]))

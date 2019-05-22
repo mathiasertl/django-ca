@@ -323,7 +323,10 @@ class ListExtension(Extension):
             self.value.clear()
 
     def count(self, value):
-        return self.value.count(self.parse_value(value))
+        try:
+            return self.value.count(self.parse_value(value))
+        except ValueError:
+            return 0
 
     def extend(self, iterable):
         self.value.extend([self.parse_value(n) for n in iterable])
@@ -530,6 +533,8 @@ class DistributionPoint(GeneralNameMixin):
                 self.crl_issuer = [self.parse_value(v) for v in self.crl_issuer]
             if self.reasons is not None:
                 self.reasons = frozenset([x509.ReasonFlags[r] for r in self.reasons])
+        else:
+            raise ValueError('data must be x509.DistributionPoint or dict')
 
     def __eq__(self, other):
         return isinstance(other, DistributionPoint) and self.full_name == other.full_name \
