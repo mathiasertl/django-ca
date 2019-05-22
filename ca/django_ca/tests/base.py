@@ -47,6 +47,7 @@ from ..constants import ReasonFlags
 from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
+from ..extensions import CRLDistributionPoints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
 from ..extensions import IssuerAlternativeName
@@ -232,6 +233,8 @@ for cert_name, cert_data in certs.items():
         cert_data['subject_key_identifier'] = SubjectKeyIdentifier(cert_data['subject_key_identifier'])
     if cert_data.get('basic_constraints'):
         cert_data['basic_constraints'] = BasicConstraints(cert_data['basic_constraints'])
+    if cert_data.get('crl_distribution_points'):
+        cert_data['crl_distribution_points'] = CRLDistributionPoints(cert_data['crl_distribution_points'])
     if cert_data.get('extended_key_usage'):
         cert_data['extended_key_usage'] = ExtendedKeyUsage(cert_data['extended_key_usage'])
     if cert_data.get('key_usage'):
