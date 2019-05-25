@@ -303,7 +303,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
 
 class CertificateTests(DjangoCAWithCertTestCase):
     def assertExtension(self, name, expected):
-        for cert in self.cas + self.certs:
+        for name, cert in list(self.cas.items()) + list(self.certs.items()):
             value = getattr(cert, name)
             exp = expected.get(cert)
 
