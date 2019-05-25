@@ -1184,64 +1184,60 @@ class CRLDistributionPointsTestCase(ListExtensionTestMixin, TestCase):
         if six.PY3:
             self.assertEqual(
                 repr(self.ext1),
-                "<CRLDistributionPoints: [<DistributionPoint: full_name=['URI:http://ca.example.com/crl'], "
-                "relative_name=None, crl_issuer=None, reasons=None>], critical=False>"
+                "<CRLDistributionPoints: [<DistributionPoint: full_name=['URI:http://ca.example.com/crl']>], "
+                "critical=False>"
             )
             self.assertEqual(
                 repr(self.ext2),
                 "<CRLDistributionPoints: [<DistributionPoint: full_name=['URI:http://ca.example.com/crl', "
-                "'dirname:/C=AT'], relative_name=None, crl_issuer=None, reasons=None>], critical=False>"
+                "'dirname:/C=AT']>], critical=False>"
             )
             self.assertEqual(
                 repr(self.ext3),
-                "<CRLDistributionPoints: [<DistributionPoint: full_name=None, "
-                "relative_name='/CN=example.com', "
-                "crl_issuer=None, reasons=None>], critical=False>"
+                "<CRLDistributionPoints: [<DistributionPoint: relative_name='/CN=example.com'>], "
+                "critical=False>"
             )
             self.assertEqual(
                 repr(self.ext4),
                 "<CRLDistributionPoints: [<DistributionPoint: full_name=['URI:http://ca.example.com/crl'], "
-                "relative_name=None, crl_issuer=['URI:http://ca.example.com/'], "
-                "reasons=['ca_compromise', 'key_compromise']>], critical=False>"
+                "crl_issuer=['URI:http://ca.example.com/'], reasons=['ca_compromise', 'key_compromise']>], "
+                "critical=False>"
             )
             self.assertEqual(
                 repr(self.ext5),
-                "<CRLDistributionPoints: [<DistributionPoint: "
-                "full_name=['URI:http://ca.example.com/crl', 'dirname:/C=AT'], "
-                "relative_name=None, crl_issuer=None, reasons=None>, "
-                "<DistributionPoint: full_name=['URI:http://ca.example.com/crl'], relative_name=None, "
+                "<CRLDistributionPoints: ["
+                "<DistributionPoint: full_name=['URI:http://ca.example.com/crl', 'dirname:/C=AT']>, "
+                "<DistributionPoint: full_name=['URI:http://ca.example.com/crl'], "
                 "crl_issuer=['URI:http://ca.example.com/'], reasons=['ca_compromise', 'key_compromise']>], "
                 "critical=True>"
             )
         else:  # pragma: only py2
             self.assertEqual(
                 repr(self.ext1),
-                "<CRLDistributionPoints: [<DistributionPoint: full_name=[u'URI:http://ca.example.com/crl'], "
-                "relative_name=None, crl_issuer=None, reasons=None>], critical=False>"
+                "<CRLDistributionPoints: [<DistributionPoint: full_name=[u'URI:http://ca.example.com/crl']>],"
+                " critical=False>"
             )
             self.assertEqual(
                 repr(self.ext2),
                 "<CRLDistributionPoints: [<DistributionPoint: full_name=[u'URI:http://ca.example.com/crl', "
-                "u'dirname:/C=AT'], relative_name=None, crl_issuer=None, reasons=None>], critical=False>"
+                "u'dirname:/C=AT']>], critical=False>"
             )
             self.assertEqual(
                 repr(self.ext3),
-                "<CRLDistributionPoints: [<DistributionPoint: full_name=None, "
-                "relative_name='/CN=example.com', "
-                "crl_issuer=None, reasons=None>], critical=False>"
+                "<CRLDistributionPoints: [<DistributionPoint: relative_name='/CN=example.com'>], "
+                "critical=False>"
             )
             self.assertEqual(
                 repr(self.ext4),
                 "<CRLDistributionPoints: [<DistributionPoint: full_name=[u'URI:http://ca.example.com/crl'], "
-                "relative_name=None, crl_issuer=[u'URI:http://ca.example.com/'], "
+                "crl_issuer=[u'URI:http://ca.example.com/'], "
                 "reasons=['ca_compromise', 'key_compromise']>], critical=False>"
             )
             self.assertEqual(
                 repr(self.ext5),
                 "<CRLDistributionPoints: [<DistributionPoint: "
-                "full_name=[u'URI:http://ca.example.com/crl', u'dirname:/C=AT'], "
-                "relative_name=None, crl_issuer=None, reasons=None>, "
-                "<DistributionPoint: full_name=[u'URI:http://ca.example.com/crl'], relative_name=None, "
+                "full_name=[u'URI:http://ca.example.com/crl', u'dirname:/C=AT']>, "
+                "<DistributionPoint: full_name=[u'URI:http://ca.example.com/crl'], "
                 "crl_issuer=[u'URI:http://ca.example.com/'], reasons=['ca_compromise', 'key_compromise']>], "
                 "critical=True>"
             )
@@ -1275,68 +1271,58 @@ class CRLDistributionPointsTestCase(ListExtensionTestMixin, TestCase):
         if six.PY3:
             self.assertEqual(
                 str(self.ext1),
-                "CRLDistributionPoints([DistributionPoint(full_name=['URI:http://ca.example.com/crl'], "
-                "relative_name=None, crl_issuer=None, reasons=None)], critical=False)"
+                "CRLDistributionPoints([DistributionPoint(full_name=['URI:http://ca.example.com/crl'])], "
+                "critical=False)"
             )
             self.assertEqual(
                 str(self.ext2),
                 "CRLDistributionPoints([DistributionPoint("
-                "full_name=['URI:http://ca.example.com/crl', 'dirname:/C=AT'], "
-                "relative_name=None, crl_issuer=None, reasons=None)], critical=False)"
+                "full_name=['URI:http://ca.example.com/crl', 'dirname:/C=AT'])], critical=False)"
             )
             self.assertEqual(
                 str(self.ext3),
-                "CRLDistributionPoints([DistributionPoint(full_name=None, "
-                "relative_name='/CN=example.com', crl_issuer=None, reasons=None)], critical=False)"
+                "CRLDistributionPoints([DistributionPoint(relative_name='/CN=example.com')], critical=False)"
             )
             self.assertEqual(
                 str(self.ext4),
                 "CRLDistributionPoints([DistributionPoint(full_name=['URI:http://ca.example.com/crl'], "
-                "relative_name=None, "
-                "crl_issuer=['URI:http://ca.example.com/'], "
-                "reasons=['ca_compromise', 'key_compromise'])], critical=False)"
+                "crl_issuer=['URI:http://ca.example.com/'], reasons=['ca_compromise', 'key_compromise'])], "
+                "critical=False)"
             )
             self.assertEqual(
                 str(self.ext5),
                 "CRLDistributionPoints([DistributionPoint("
-                "full_name=['URI:http://ca.example.com/crl', 'dirname:/C=AT'], "
-                "relative_name=None, crl_issuer=None, reasons=None), "
+                "full_name=['URI:http://ca.example.com/crl', 'dirname:/C=AT']), "
                 "DistributionPoint(full_name=['URI:http://ca.example.com/crl'], "
-                "relative_name=None, "
                 "crl_issuer=['URI:http://ca.example.com/'], "
                 "reasons=['ca_compromise', 'key_compromise'])], critical=True)"
             )
         else:  # pragma: only py2
             self.assertEqual(
                 str(self.ext1),
-                "CRLDistributionPoints([DistributionPoint(full_name=[u'URI:http://ca.example.com/crl'], "
-                "relative_name=None, crl_issuer=None, reasons=None)], critical=False)"
+                "CRLDistributionPoints([DistributionPoint(full_name=[u'URI:http://ca.example.com/crl'])], "
+                "critical=False)"
             )
             self.assertEqual(
                 str(self.ext2),
                 "CRLDistributionPoints([DistributionPoint("
-                "full_name=[u'URI:http://ca.example.com/crl', u'dirname:/C=AT'], "
-                "relative_name=None, crl_issuer=None, reasons=None)], critical=False)"
+                "full_name=[u'URI:http://ca.example.com/crl', u'dirname:/C=AT'])], critical=False)"
             )
             self.assertEqual(
                 str(self.ext3),
-                "CRLDistributionPoints([DistributionPoint(full_name=None, "
-                "relative_name='/CN=example.com', crl_issuer=None, reasons=None)], critical=False)"
+                "CRLDistributionPoints([DistributionPoint(relative_name='/CN=example.com')], critical=False)"
             )
             self.assertEqual(
                 str(self.ext4),
                 "CRLDistributionPoints([DistributionPoint(full_name=[u'URI:http://ca.example.com/crl'], "
-                "relative_name=None, "
                 "crl_issuer=[u'URI:http://ca.example.com/'], "
                 "reasons=['ca_compromise', 'key_compromise'])], critical=False)"
             )
             self.assertEqual(
                 str(self.ext5),
                 "CRLDistributionPoints([DistributionPoint("
-                "full_name=[u'URI:http://ca.example.com/crl', u'dirname:/C=AT'], "
-                "relative_name=None, crl_issuer=None, reasons=None), "
+                "full_name=[u'URI:http://ca.example.com/crl', u'dirname:/C=AT']), "
                 "DistributionPoint(full_name=[u'URI:http://ca.example.com/crl'], "
-                "relative_name=None, "
                 "crl_issuer=[u'URI:http://ca.example.com/'], "
                 "reasons=['ca_compromise', 'key_compromise'])], critical=True)"
             )

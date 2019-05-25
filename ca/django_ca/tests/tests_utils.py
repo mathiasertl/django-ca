@@ -51,6 +51,7 @@ from ..utils import NAME_RE
 from ..utils import LazyEncoder
 from ..utils import format_general_name
 from ..utils import format_name
+from ..utils import format_relative_name
 from ..utils import get_cert_builder
 from ..utils import is_power2
 from ..utils import multiline_url_validator
@@ -60,6 +61,7 @@ from ..utils import parse_hash_algorithm
 from ..utils import parse_key_curve
 from ..utils import parse_name
 from ..utils import read_file
+from ..utils import x509_relative_name
 from ..utils import validate_email
 from .base import DjangoCATestCase
 from .base import cryptography_version
@@ -289,6 +291,18 @@ class ParseNameTestCase(DjangoCATestCase):
         with self.assertRaisesRegex(ValueError, '^Unknown x509 name field: ABC$') as e:
             parse_name('/%s=example.com' % field)
         self.assertEqual(e.exception.args, ('Unknown x509 name field: %s' % field, ))
+
+
+class RelativeNameTestCase(TestCase):
+    def test_format(self):
+        rdn = x509.RelativeDistinguishedName([x509.NameAttribute(NameOID.COMMON_NAME, u'example.com')])
+        self.assertEqual(format_relative_name([('C', 'AT'), ('CN', 'example.com')]), '/C=AT/CN=example.com')
+        self.assertEqual(format_relative_name(rdn), '/CN=example.com')
+
+    def test_parse(self):
+        expected = x509.RelativeDistinguishedName([x509.NameAttribute(NameOID.COMMON_NAME, u'example.com')])
+        self.assertEqual(x509_relative_name('/CN=example.com'), expected)
+        self.assertEqual(x509_relative_name([('CN', 'example.com')]), expected)
 
 
 class ValidateEmailTestCase(DjangoCATestCase):

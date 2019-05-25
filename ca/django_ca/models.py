@@ -381,8 +381,6 @@ class X509CertMixin(models.Model):
                 if hasattr(self, name):
                     value = getattr(self, name)()
                     yield name, value
-                elif name == 'cRLDistributionPoints':
-                    yield name, self.crlDistributionPoints()
                 else:
                     yield name, (ext.critical, ext.oid)
 

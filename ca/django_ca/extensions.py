@@ -516,22 +516,19 @@ class DistributionPoint(GeneralNameMixin):
         >>> DistributionPoint(x509.DistributionPoint(
         ...     full_name=[x509.UniformResourceIdentifier('http://ca.example.com/crl')],
         ...     relative_name=None, crl_issuer=None, reasons=None
-        ... ))  # doctest: +NORMALIZE_WHITESPACE
-        <DistributionPoint: full_name=['URI:http://ca.example.com/crl'], relative_name=None, crl_issuer=None,
-            reasons=None>
-        >>> DistributionPoint({'full_name': ['http://example.com']})  # doctest: +NORMALIZE_WHITESPACE
-        <DistributionPoint: full_name=['URI:http://example.com'], relative_name=None, crl_issuer=None,
-            reasons=None>
-        >>> DistributionPoint({'full_name': 'http://example.com'})  # doctest: +NORMALIZE_WHITESPACE
-        <DistributionPoint: full_name=['URI:http://example.com'], relative_name=None, crl_issuer=None,
-            reasons=None>
+        ... ))
+        <DistributionPoint: full_name=['URI:http://ca.example.com/crl']>
+        >>> DistributionPoint({'full_name': ['http://example.com']})
+        <DistributionPoint: full_name=['URI:http://example.com']>
+        >>> DistributionPoint({'full_name': 'http://example.com'})
+        <DistributionPoint: full_name=['URI:http://example.com']>
         >>> DistributionPoint({
         ...     'relative_name': '/CN=example.com',
         ...     'crl_issuer': 'http://example.com',
         ...     'reasons': ['key_compromise', 'ca_compromise'],
         ... })  # doctest: +NORMALIZE_WHITESPACE
-        <DistributionPoint: full_name=None, relative_name='/CN=example.com',
-            crl_issuer=['URI:http://example.com'], reasons=['ca_compromise', 'key_compromise']>
+        <DistributionPoint: relative_name='/CN=example.com', crl_issuer=['URI:http://example.com'],
+                            reasons=['ca_compromise', 'key_compromise']>
 
     .. seealso::
 
@@ -580,6 +577,18 @@ class DistributionPoint(GeneralNameMixin):
             and self.relative_name == other.relative_name and self.crl_issuer == other.crl_issuer \
             and self.reasons == other.reasons
 
+    def __get_values(self):
+        values = []
+        if self.full_name:
+            values.append('full_name=%s' % [self.serialize_value(n) for n in self.full_name])
+        if self.relative_name:
+            values.append("relative_name='%s'" % format_relative_name(self.relative_name))
+        if self.crl_issuer:
+            values.append('crl_issuer=%s' % [self.serialize_value(n) for n in self.crl_issuer])
+        if self.reasons:
+            values.append('reasons=%s' % sorted([r.name for r in self.reasons]))
+        return values
+
     def __hash__(self):
         full_name = tuple(self.full_name) if self.full_name else None
         crl_issuer = tuple(self.crl_issuer) if self.crl_issuer else None
@@ -587,28 +596,10 @@ class DistributionPoint(GeneralNameMixin):
         return hash((self.__class__, full_name, self.relative_name, crl_issuer, reasons))
 
     def __repr__(self):
-        relative_name = "None"
-        if self.relative_name:
-            relative_name = "'%s'" % format_relative_name(self.relative_name)
-
-        return '<DistributionPoint: full_name=%s, relative_name=%s, crl_issuer=%s, reasons=%s>' % (
-            [self.serialize_value(n) for n in self.full_name] if self.full_name is not None else None,
-            relative_name,
-            [self.serialize_value(n) for n in self.crl_issuer] if self.crl_issuer is not None else None,
-            sorted([r.name for r in self.reasons]) if self.reasons is not None else None,
-        )
+        return '<DistributionPoint: %s>' % ', '.join(self.__get_values())
 
     def __str__(self):
-        relative_name = "None"
-        if self.relative_name:
-            relative_name = "'%s'" % format_relative_name(self.relative_name)
-
-        return 'DistributionPoint(full_name=%s, relative_name=%s, crl_issuer=%s, reasons=%s)' % (
-            [self.serialize_value(n) for n in self.full_name] if self.full_name is not None else None,
-            relative_name,
-            [self.serialize_value(n) for n in self.crl_issuer] if self.crl_issuer is not None else None,
-            sorted([r.name for r in self.reasons]) if self.reasons is not None else None,
-        )
+        return 'DistributionPoint(%s)' % ', '.join(self.__get_values())
 
     def as_text(self):
         if self.full_name:
