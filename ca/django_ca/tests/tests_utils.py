@@ -61,8 +61,8 @@ from ..utils import parse_hash_algorithm
 from ..utils import parse_key_curve
 from ..utils import parse_name
 from ..utils import read_file
-from ..utils import x509_relative_name
 from ..utils import validate_email
+from ..utils import x509_relative_name
 from .base import DjangoCATestCase
 from .base import cryptography_version
 from .base import override_settings
