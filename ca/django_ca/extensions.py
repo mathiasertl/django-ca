@@ -506,6 +506,38 @@ class KeyIdExtension(Extension):
 
 
 class DistributionPoint(GeneralNameMixin):
+    """Class representing a Distribution Point.
+
+    This class is used internally by extensions that have a list of Distribution Points, e.g. the :
+    :py:class:`~django_ca.extensions.CRLDistributionPoints` extension. The class accepts either a
+    :py:class:`cg:cryptography.x509.DistributionPoint` or a ``dict``. Note that in the latter case, you can
+    also pass a ``str`` as ``full_name`` or ``crl_issuer`` if there is only one value::
+
+        >>> DistributionPoint(x509.DistributionPoint(
+        ...     full_name=[x509.UniformResourceIdentifier('http://ca.example.com/crl')],
+        ...     relative_name=None, crl_issuer=None, reasons=None
+        ... ))  # doctest: +NORMALIZE_WHITESPACE
+        <DistributionPoint: full_name=['URI:http://ca.example.com/crl'], relative_name=None, crl_issuer=None,
+            reasons=None>
+        >>> DistributionPoint({'full_name': ['http://example.com']})  # doctest: +NORMALIZE_WHITESPACE
+        <DistributionPoint: full_name=['URI:http://example.com'], relative_name=None, crl_issuer=None,
+            reasons=None>
+        >>> DistributionPoint({'full_name': 'http://example.com'})  # doctest: +NORMALIZE_WHITESPACE
+        <DistributionPoint: full_name=['URI:http://example.com'], relative_name=None, crl_issuer=None,
+            reasons=None>
+        >>> DistributionPoint({
+        ...     'relative_name': '/CN=example.com',
+        ...     'crl_issuer': 'http://example.com',
+        ...     'reasons': ['key_compromise', 'ca_compromise'],
+        ... })  # doctest: +NORMALIZE_WHITESPACE
+        <DistributionPoint: full_name=None, relative_name='/CN=example.com',
+            crl_issuer=['URI:http://example.com'], reasons=['ca_compromise', 'key_compromise']>
+
+    .. seealso::
+
+        `RFC5280, section 4.2.1.13 <https://tools.ietf.org/html/rfc5280#section-4.2.1.13>`_
+    """
+
     full_name = None
     relative_name = None
     crl_issuer = None
@@ -524,14 +556,20 @@ class DistributionPoint(GeneralNameMixin):
             self.reasons = data.get('reasons')
 
             if self.full_name is not None and self.relative_name is not None:
-                raise ValueError('full_name and relative_name cannot both have a value.')
+                raise ValueError('full_name and relative_name cannot both have a value')
 
             if self.full_name is not None:
-                self.full_name = [self.parse_value(v) for v in self.full_name]
+                if isinstance(self.full_name, six.string_types):
+                    self.full_name = [self.parse_value(self.full_name)]
+                else:
+                    self.full_name = [self.parse_value(v) for v in self.full_name]
             if self.relative_name is not None:
                 self.relative_name = x509_relative_name(self.relative_name)
             if self.crl_issuer is not None:
-                self.crl_issuer = [self.parse_value(v) for v in self.crl_issuer]
+                if isinstance(self.crl_issuer, six.string_types):
+                    self.crl_issuer = [self.parse_value(self.crl_issuer)]
+                else:
+                    self.crl_issuer = [self.parse_value(v) for v in self.crl_issuer]
             if self.reasons is not None:
                 self.reasons = frozenset([x509.ReasonFlags[r] for r in self.reasons])
         else:

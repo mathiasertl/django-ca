@@ -858,6 +858,43 @@ class BasicConstraintsTestCase(TestCase):
             self.assertEqual(BasicConstraints(ext.serialize()), ext)
 
 
+class DistributionPointTestCase(TestCase):
+    def test_init_basic(self):
+        dp = DistributionPoint({})
+        self.assertIsNone(dp.full_name)
+        self.assertIsNone(dp.relative_name)
+        self.assertIsNone(dp.crl_issuer)
+        self.assertIsNone(dp.reasons)
+
+        dp = DistributionPoint({
+            'full_name': ['http://example.com'],
+            'crl_issuer': ['http://example.net'],
+        })
+        self.assertEqual(dp.full_name, [uri('http://example.com')])
+        self.assertIsNone(dp.relative_name)
+        self.assertEqual(dp.crl_issuer, [uri('http://example.net')])
+        self.assertIsNone(dp.reasons)
+
+        dp = DistributionPoint({
+            'full_name': 'http://example.com',
+            'crl_issuer': 'http://example.net',
+        })
+        self.assertEqual(dp.full_name, [uri('http://example.com')])
+        self.assertIsNone(dp.relative_name)
+        self.assertEqual(dp.crl_issuer, [uri('http://example.net')])
+        self.assertIsNone(dp.reasons)
+
+    def test_init_errors(self):
+        with self.assertRaisesRegex(ValueError, r'^data must be x509.DistributionPoint or dict$'):
+            DistributionPoint('foobar')
+
+        with self.assertRaisesRegex(ValueError, r'^full_name and relative_name cannot both have a value$'):
+            DistributionPoint({
+                'full_name': ['http://example.com'],
+                'relative_name': '/CN=example.com',
+            })
+
+
 class CRLDistributionPointsTestCase(ListExtensionTestMixin, TestCase):
     dp1 = x509.DistributionPoint(
         full_name=[

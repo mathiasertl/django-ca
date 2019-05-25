@@ -143,6 +143,17 @@ def format_name(subject):
 
 
 def format_relative_name(name):
+    """Convert a relative name (RDN) into a canonical form.
+
+    Examples::
+
+        >>> format_relative_name([('C', 'AT'), ('CN', 'example.com')])
+        '/C=AT/CN=example.com'
+        >>> format_relative_name(x509.RelativeDistinguishedName([
+        ...     x509.NameAttribute(NameOID.COMMON_NAME, u'example.com')
+        ... ]))
+        '/CN=example.com'
+    """
     if isinstance(name, x509.RelativeDistinguishedName):
         name = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in name]
 
@@ -309,6 +320,13 @@ def x509_name(name):
 
 
 def x509_relative_name(name):
+    """Parse a relative name (RDN) into a :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`.
+
+    >>> x509_relative_name('/CN=example.com')
+    <RelativeDistinguishedName(CN=example.com)>
+    >>> x509_relative_name([('CN', 'example.com')])
+    <RelativeDistinguishedName(CN=example.com)>
+    """
     if isinstance(name, six.string_types):
         name = parse_name(name)
 
