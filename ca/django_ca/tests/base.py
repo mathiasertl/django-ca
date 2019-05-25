@@ -727,20 +727,10 @@ class DjangoCATestCase(TestCase):
         c = Certificate()
         c.x509 = cert
         exts = [e.oid._name for e in cert.extensions]
-        if 'cRLDistributionPoints' in exts:
-            exts.remove('cRLDistributionPoints')
-            exts.append('crlDistributionPoints')
 
         exts = {}
         for ext in c.get_extensions():
-            if isinstance(ext, Extension):
-                exts[ext.__class__.__name__] = ext
-
-            # old extension framework
-            else:
-                name, value = ext
-                exts[name] = value
-
+            exts[ext.__class__.__name__] = ext
         return exts
 
     def load_usable_cas(self):

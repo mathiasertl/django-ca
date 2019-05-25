@@ -851,6 +851,14 @@ class BasicConstraints(Extension):
 
 
 class CRLDistributionPoints(ListExtension):
+    """Class representing a CRLDistributionPoints extension.
+
+    This extension identifies where a client can retrieve a Certificate Revocation List (CRL).
+
+    .. seealso::
+
+        `RFC5280, section 4.2.1.13 <https://tools.ietf.org/html/rfc5280#section-4.2.1.13>`_
+    """
     oid = ExtensionOID.CRL_DISTRIBUTION_POINTS
 
     def __hash__(self):
