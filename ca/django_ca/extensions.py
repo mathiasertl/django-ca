@@ -28,6 +28,8 @@ from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import ObjectIdentifier
 
+from django.utils.encoding import force_text
+
 from . import ca_settings
 from .utils import bytes_to_hex
 from .utils import format_general_name
@@ -632,6 +634,198 @@ class DistributionPoint(GeneralNameMixin):
         if self.reasons is not None:
             s['reasons'] = list(sorted([r.name for r in self.reasons]))
         return s
+
+
+class PolicyInformation:
+    def __init__(self, data=None):
+        if isinstance(data, x509.PolicyInformation):
+            self.policy_identifier = data.policy_identifier
+            self.policy_qualifiers = data.policy_qualifiers
+        elif isinstance(data, dict):
+            self.policy_identifier = data['policy_identifier']
+            self.policy_qualifiers = self.parse_policy_qualifiers(data.get('policy_qualifiers'))
+        elif data is None:
+            self.policy_identifier = None
+            self.policy_qualifiers = None
+        else:
+            raise ValueError('PolicyInformation data must be either x509.PolicyInformation or dict')
+
+    def __contains__(self, value):
+        if self.policy_qualifiers is None:
+            return False
+        return self.parse_policy_qualifier(value) in self.policy_qualifiers
+
+    def __delitem__(self, key):
+        if self.policy_qualifiers is None:
+            raise IndexError('list assignment index out of range')
+        del self.policy_qualifiers[key]
+        if not self.policy_qualifiers:
+            self.policy_qualifiers = None
+
+    def __eq__(self, other):
+        return isinstance(other, PolicyInformation) and self.policy_identifier == other.policy_identifier \
+            and self.policy_qualifiers == other.policy_qualifiers
+
+    def __getitem__(self, key):
+        if self.policy_qualifiers is None:
+            raise IndexError('list index out of range')
+        elif isinstance(key, six.integer_types):
+            return self.serialize_policy_qualifier(self.policy_qualifiers[key])
+        else:
+            return [self.serialize_policy_qualifier(k) for k in self.policy_qualifiers[key]]
+
+    def __hash__(self):
+        if self.policy_qualifiers is None:
+            t = None
+        else:
+            t = tuple(self.policy_qualifiers)
+
+        return hash((self.__class__, self.policy_identifier, t))
+
+    def __len__(self):
+        if self.policy_qualifiers is None:
+            return 0
+        return len(self.policy_qualifiers)
+
+    def __str__(self):
+        length = len(self)
+        if length == 1:
+            qual = '1 qualifier'
+        else:
+            qual = '%s qualifiers' % length
+
+        if self.policy_identifier is None:
+            ident = 'None'
+        else:
+            ident = self.policy_identifier.dotted_string
+
+        return 'PolicyInformation(oid=%s, %s)' % (ident, qual)
+
+    def __repr__(self):
+        if self.policy_identifier is None:
+            ident = 'None'
+        else:
+            ident = self.policy_identifier.dotted_string
+
+        return '<PolicyInformation(oid=%s, qualifiers=%s)>' % (ident, self.serialize_policy_qualifiers())
+
+    def append(self, value):
+        if self.policy_qualifiers is None:
+            self.policy_qualifiers = []
+        self.policy_qualifiers.append(self.parse_policy_qualifier(value))
+
+    def clear(self):
+        self.policy_qualifiers = None
+
+    def count(self, value):
+        try:
+            return self.policy_qualifiers.count(self.parse_policy_qualifier(value))
+        except (ValueError, AttributeError):
+            return 0
+
+    def extend(self, value):
+        self.policy_qualifiers.extend([self.parse_policy_qualifier(v) for v in value])
+
+    @property
+    def for_extension_type(self):
+        return x509.PolicyInformation(policy_identifier=self.policy_identifier,
+                                      policy_qualifiers=self.policy_qualifiers)
+
+    def insert(self, index, value):
+        if self.policy_qualifiers is None:
+            self.policy_qualifiers = []
+        return self.policy_qualifiers.insert(index, self.parse_policy_qualifier(value))
+
+    def parse_policy_qualifier(self, qualifier):
+        if isinstance(qualifier, six.string_types):
+            return force_text(qualifier)
+        elif isinstance(qualifier, x509.UserNotice):
+            return qualifier
+        elif isinstance(qualifier, dict):
+            explicit_text = qualifier.get('explicit_text')
+
+            notice_reference = qualifier.get('notice_reference')
+            if isinstance(notice_reference, dict):
+                notice_reference = x509.NoticeReference(
+                    organization=force_text(notice_reference.get('organization', '')),
+                    notice_numbers=[int(i) for i in notice_reference.get('notice_numbers', [])]
+                )
+            elif notice_reference is None:
+                pass  # extra branch to ensure test coverage
+            elif isinstance(notice_reference, x509.NoticeReference):
+                pass  # extra branch to ensure test coverage
+            else:
+                raise ValueError('NoticeReference must be either None, a dict or an x509.NoticeReference')
+
+            return x509.UserNotice(explicit_text=explicit_text, notice_reference=notice_reference)
+        raise ValueError('PolicyQualifier must be string, dict or x509.UserNotice')
+
+    def parse_policy_qualifiers(self, qualifiers):
+        if qualifiers is None:
+            return None
+        return [self.parse_policy_qualifier(q) for q in qualifiers]
+
+    @property
+    def policy_identifier(self):
+        return self._policy_identifier
+
+    @policy_identifier.setter
+    def policy_identifier(self, value):
+        if isinstance(value, six.string_types):
+            value = ObjectIdentifier(value)
+        self._policy_identifier = value
+
+    def pop(self, index=-1):
+        if self.policy_qualifiers is None:
+            return [].pop()
+
+        val = self.serialize_policy_qualifier(self.policy_qualifiers.pop(index))
+
+        if not self.policy_qualifiers:  # if list is now empty, set to none
+            self.policy_qualifiers = None
+
+        return val
+
+    def remove(self, value):
+        if self.policy_qualifiers is None:
+            return [].remove(None)
+
+        val = self.policy_qualifiers.remove(self.parse_policy_qualifier(value))
+
+        if not self.policy_qualifiers:  # if list is now empty, set to none
+            self.policy_qualifiers = None
+
+        return val
+
+    def serialize_policy_qualifier(self, qualifier):
+        if isinstance(qualifier, six.string_types):
+            return qualifier
+        else:
+            value = {}
+            if qualifier.explicit_text:
+                value['explicit_text'] = qualifier.explicit_text
+            if qualifier.notice_reference:
+                value['notice_reference'] = {
+                    'notice_numbers': qualifier.notice_reference.notice_numbers,
+                    'organization': qualifier.notice_reference.organization,
+                }
+            return value
+
+    def serialize_policy_qualifiers(self):
+        if self.policy_qualifiers is None:
+            return None
+
+        return [self.serialize_policy_qualifier(q) for q in self.policy_qualifiers]
+
+    def serialize(self):
+        value = {
+            'policy_identifier': self.policy_identifier.dotted_string,
+        }
+        qualifier = self.serialize_policy_qualifiers()
+        if qualifier:
+            value['policy_qualifiers'] = qualifier
+
+        return value
 
 
 class AuthorityInformationAccess(GeneralNameMixin, Extension):
