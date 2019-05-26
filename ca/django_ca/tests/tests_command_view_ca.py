@@ -741,8 +741,8 @@ KeyUsage{key_usage_critical}:
     * {key_usage_1}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
-UnknownOID: 2.16.840.1.113730.1.1
-UnknownOID: 2.16.840.1.113730.1.13
+Unknown OID: 2.16.840.1.113730.1.1
+Unknown OID: 2.16.840.1.113730.1.13
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None

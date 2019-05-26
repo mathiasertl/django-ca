@@ -308,8 +308,6 @@ class BaseCommand(_BaseCommand):
         parser.add_argument('-p', '--password', nargs='?', action=PasswordAction, help=help)
 
     def indent(self, s, prefix='    '):
-        if isinstance(s, list):
-            return ''.join(['%s* %s\n' % (prefix, l) for l in s])
         return indent(s, prefix)
 
     def print_extension(self, ext):
@@ -327,23 +325,13 @@ class BaseCommand(_BaseCommand):
                     self.stdout.write('%s:' % ext.name)
 
                 self.stdout.write(self.indent(ext.as_text()))
-        else:
-            # old extension framework
-            name, value = ext
-            critical, value = value
-
-            if isinstance(value, x509.ObjectIdentifier):
-                if critical:  # pragma: no cover - all old extensions are typically non-critical
-                    self.stdout.write('%s (critical): %s' % (name, value.dotted_string))
-                else:
-                    self.stdout.write('%s: %s' % (name, value.dotted_string))
+        elif isinstance(ext, x509.Extension):
+            if ext.critical:  # pragma: no cover - all unrecognized extensions that we have are non-critical
+                self.stdout.write('%s (critical): %s' % (ext.oid._name, ext.oid.dotted_string))
             else:
-                if critical:  # pragma: no cover - all old extensions are typically non-critical
-                    self.stdout.write('%s (critical):' % name)
-                else:
-                    self.stdout.write('%s:' % name)
-
-                self.stdout.write(self.indent(value))
+                self.stdout.write('%s: %s' % (ext.oid._name, ext.oid.dotted_string))
+        else:  # pragma: no cover
+            raise ValueError('Received unknown extension type: %s' % type(ext))
 
     def print_extensions(self, cert):
         for ext in cert.get_extensions():

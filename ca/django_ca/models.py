@@ -362,15 +362,9 @@ class X509CertMixin(models.Model):
 
             # extension that does not support new extension framework
             else:
-                name = ext.oid._name.replace(' ', '')
-                if hasattr(self, name):
-                    yield name
-                elif name == 'cRLDistributionPoints':
-                    yield 'cRLDistributionPoints'
-                else:
-                    log.warning('Unknown extension encountered: %s (%s)',
-                                get_extension_name(ext), ext.oid.dotted_string)
-                    yield ext
+                log.warning('Unknown extension encountered: %s (%s)',
+                            get_extension_name(ext), ext.oid.dotted_string)
+                yield ext
 
     def get_extensions(self):
         for ext in self._sorted_extensions:
@@ -379,12 +373,7 @@ class X509CertMixin(models.Model):
 
             # extension that does not support new extension framework
             else:
-                name = ext.oid._name.replace(' ', '')
-                if hasattr(self, name):
-                    value = getattr(self, name)()
-                    yield name, value
-                else:
-                    yield name, (ext.critical, ext.oid)
+                yield ext
 
     @property
     def authority_information_access(self):

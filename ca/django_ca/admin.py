@@ -43,7 +43,6 @@ from django_object_actions import DjangoObjectActions
 
 from . import ca_settings
 from .constants import ReasonFlags
-from .extensions import Extension
 from .extensions import ListExtension
 from .extensions import NullExtension
 from .extensions import UnrecognizedExtension
@@ -149,42 +148,31 @@ class CertificateMixin(object):
     ##################################
 
     def output_extension(self, value):
-        # shared function for formatting extension values
+        """Generic function to ouptut an extension as HTML.
+
+        Note that this function is not called for extensions that require special handling (e.g.
+        authority_information_access).
+        """
+
         if not value:
             return '<none>'
 
         html = ''
-        if isinstance(value, Extension):
-            if value.critical is True:
-                text = _('Critical')
-                html = '<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text)
+        if value.critical is True:
+            text = _('Critical')
+            html = '<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text)
 
-            if isinstance(value, ListExtension):
-                html += '<ul class="x509-extension-value">'
-                for val in value.value:
-                    if isinstance(val, x509.GeneralName):
-                        val = format_general_name(val)
-                    html += '<li>%s</li>' % escape(val)
-                html += '</ul>'
-            elif isinstance(value, NullExtension):
-                html += '<p>Yes</p>'
-            else:
-                html += '<p>%s<p>' % escape(value.as_text())
-
-        # old-style extension objects
+        if isinstance(value, ListExtension):
+            html += '<ul class="x509-extension-value">'
+            for val in value.value:
+                if isinstance(val, x509.GeneralName):
+                    val = format_general_name(val)
+                html += '<li>%s</li>' % escape(val)
+            html += '</ul>'
+        elif isinstance(value, NullExtension):
+            html += '<p>Yes</p>'
         else:
-            critical, value = value
-            if critical is True:
-                text = _('Critical')
-                html = '<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text)
-
-            if isinstance(value, list):
-                html += '<ul class="x509-extension-value">'
-                for val in value:
-                    html += '<li>%s</li>' % escape(val)
-                html += '</ul>'
-            else:  # string or extension
-                html += '<p>%s<p>' % escape(value)
+            html += '<p>%s<p>' % escape(value.as_text())
 
         return mark_safe(html)
 
@@ -239,9 +227,9 @@ class CertificateMixin(object):
         return self.output_extension(obj.authority_key_identifier)
     authority_key_identifier.short_description = _('authorityKeyIdentifier')
 
-    def cRLDistributionPoints(self, obj):
-        return self.output_extension(obj.crlDistributionPoints())
-    cRLDistributionPoints.short_description = _('CRL Distribution Points')
+    def crl_distribution_points(self, obj):
+        return self.output_extension(obj.crl_distribution_points)
+    crl_distribution_points.short_description = _('CRL Distribution Points')
 
     def subject_alternative_name(self, obj):
         return self.output_extension(obj.subject_alternative_name)
@@ -277,9 +265,9 @@ class CertificateMixin(object):
         return self.output_extension(obj.precert_poison)
     precert_poison.short_description = _('Precert Poison')
 
-    def certificatePolicies(self, obj):
-        return self.output_extension(obj.certificatePolicies())
-    certificatePolicies.short_description = _('Certificate Policies')
+    def certificate_policies(self, obj):
+        return self.output_extension(obj.certificate_policies)
+    certificate_policies.short_description = _('Certificate Policies')
 
     def precertificate_signed_certificate_timestamps(self, obj):
         scts = obj.precertificate_signed_certificate_timestamps
@@ -298,7 +286,13 @@ class CertificateMixin(object):
 
     def unknown_oid(self, oid, obj):
         ext = obj.x509.extensions.get_extension_for_oid(oid)
-        return self.output_extension((ext.critical, ext.value))
+        html = ''
+        if ext.critical is True:
+            text = _('Critical')
+            html = '<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text)
+
+        html += '<p>%s<p>' % escape(ext.value)
+        return html
 
     def get_oid_name(self, oid):
         return oid.dotted_string.replace('.', '_')

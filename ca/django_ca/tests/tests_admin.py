@@ -309,6 +309,7 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
             log_msg % 'AuthorityInfoAccess (1.3.6.1.5.5.7.1.1)',
             log_msg % 'AuthorityKeyIdentifier (2.5.29.35)',
             log_msg % 'BasicConstraints (2.5.29.19)',
+            log_msg % 'CRLDistributionPoints (2.5.29.31)',
             log_msg % 'ExtendedKeyUsage (2.5.29.37)',
             log_msg % 'IssuerAltName (2.5.29.18)',
             log_msg % 'KeyUsage (2.5.29.15)',
