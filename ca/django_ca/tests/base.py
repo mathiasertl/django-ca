@@ -47,6 +47,7 @@ from ..constants import ReasonFlags
 from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
+from ..extensions import CertificatePolicies
 from ..extensions import CRLDistributionPoints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
@@ -211,7 +212,16 @@ Policy Qualifiers:
 * https://secure.comodo.com/CPS''',
         '''Policy Identifier: 2.23.140.1.2.1
 No Policy Qualifiers''',
-    ]
+    ],
+    'certificate_policies': {
+        'value': [{
+            'policy_identifier': '1.3.6.1.4.1.6449.1.2.2.7',
+            'policy_qualifiers': ['https://secure.comodo.com/CPS'],
+        }, {
+            'policy_identifier': '2.23.140.1.2.1'},
+        ],
+        'critical': False,
+    }
 }
 
 SPHINX_FIXTURES_DIR = os.path.join(os.path.dirname(settings.BASE_DIR), 'docs', 'source', '_files')
@@ -266,6 +276,8 @@ for cert_name, cert_data in certs.items():
         cert_data['ocsp_no_check'] = OCSPNoCheck(cert_data['ocsp_no_check'])
     if cert_data.get('issuer_alternative_name'):
         cert_data['issuer_alternative_name'] = IssuerAlternativeName(cert_data['issuer_alternative_name'])
+    if cert_data.get('certificate_policies'):
+        cert_data['certificate_policies'] = CertificatePolicies(cert_data['certificate_policies'])
 
     precert_poison = cert_data.get('precert_poison')
     if _HAS_PRECERT_POISON and precert_poison:  # pragma: no branch, pragma: only cryptography>=2.4

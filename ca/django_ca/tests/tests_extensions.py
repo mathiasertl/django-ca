@@ -1798,23 +1798,20 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, TestCase):
     def test_as_text(self):
         self.assertEqual(
             self.ext1.as_text(),
-            '* Policy:\n'
-            '  Policy Identifier: 2.5.29.32.0\n'
+            '* Policy Identifier: 2.5.29.32.0\n'
             '  Policy Qualifiers:\n'
             '  * text1'
         )
         self.assertEqual(
             self.ext2.as_text(),
-            '* Policy:\n'
-            '  Policy Identifier: 2.5.29.32.0\n'
+            '* Policy Identifier: 2.5.29.32.0\n'
             '  Policy Qualifiers:\n'
             '  * UserNotice:\n'
             '    * Explicit text: text2'
         )
         self.assertEqual(
             self.ext3.as_text(),
-            '* Policy:\n'
-            '  Policy Identifier: 2.5.29.32.0\n'
+            '* Policy Identifier: 2.5.29.32.0\n'
             '  Policy Qualifiers:\n'
             '  * UserNotice:\n'
             '    * Reference:\n'
@@ -1823,8 +1820,7 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, TestCase):
         )
         self.assertEqual(
             self.ext4.as_text(),
-            '* Policy:\n'
-            '  Policy Identifier: 2.5.29.32.0\n'
+            '* Policy Identifier: 2.5.29.32.0\n'
             '  Policy Qualifiers:\n'
             '  * text4\n'
             '  * UserNotice:\n'
@@ -1835,17 +1831,14 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, TestCase):
         )
         self.assertEqual(
             self.ext5.as_text(),
-            '* Policy:\n'
-            '  Policy Identifier: 2.5.29.32.0\n'
+            '* Policy Identifier: 2.5.29.32.0\n'
             '  Policy Qualifiers:\n'
             '  * text1\n'
-            '* Policy:\n'
-            '  Policy Identifier: 2.5.29.32.0\n'
+            '* Policy Identifier: 2.5.29.32.0\n'
             '  Policy Qualifiers:\n'
             '  * UserNotice:\n'
             '    * Explicit text: text2\n'
-            '* Policy:\n'
-            '  Policy Identifier: 2.5.29.32.0\n'
+            '* Policy Identifier: 2.5.29.32.0\n'
             '  Policy Qualifiers:\n'
             '  * text4\n'
             '  * UserNotice:\n'

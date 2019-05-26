@@ -481,7 +481,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(cert.csr, csr)
 
         # Some extensions are not set
-        self.assertIsNone(cert.certificatePolicies())
+        self.assertIsNone(cert.certificate_policies)
         self.assertIsNone(cert.extended_key_usage)
         self.assertIsNone(cert.issuer_alternative_name)
         self.assertIsNone(cert.key_usage)
@@ -576,7 +576,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(cert.csr, csr)
 
         # Some extensions are not set
-        self.assertIsNone(cert.certificatePolicies())
+        self.assertIsNone(cert.certificate_policies)
         self.assertIsNone(cert.issuer_alternative_name)
         self.assertIsNone(cert.precertificate_signed_certificate_timestamps)
         self.assertIsNone(cert.tls_feature)

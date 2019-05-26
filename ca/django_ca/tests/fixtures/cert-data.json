@@ -851,13 +851,17 @@
                 ],
                 "critical": false
             },
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 2.5.29.32.0: None",
-                    "OID 2.23.140.1.2.1: None"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "2.5.29.32.0"
+                    },
+                    {
+                        "policy_identifier": "2.23.140.1.2.1"
+                    }
+                ],
+                "critical": false
+            },
             "extended_key_usage": "serverAuth,clientAuth",
             "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
             "subject_key_identifier": "90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7",
@@ -905,17 +909,30 @@
                 ],
                 "critical": false
             },
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 2.5.29.32.0: None (Reference: https://secure.identrust.com/certificates/policy/ts/index.html), This TrustID Server Certificate has been issued in accordance with IdenTrust's TrustID Certificate Policy found at https://secure.identrust.com/certificates/policy/ts/index.html"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "2.5.29.32.0",
+                        "policy_qualifiers": [
+                            {
+                                "notice_reference": {
+                                    "notice_numbers": [],
+                                    "organization": "https://secure.identrust.com/certificates/policy/ts/index.html"
+                                }
+                            },
+                            {
+                                "explicit_text": "This TrustID Server Certificate has been issued in accordance with IdenTrust's TrustID Certificate Policy found at https://secure.identrust.com/certificates/policy/ts/index.html"
+                            }
+                        ]
+                    }
+                ],
+                "critical": false
+            },
             "extended_key_usage": "serverAuth,clientAuth,ipsecEndSystem,ipsecTunnel,ipsecUser",
             "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
             "subject_key_identifier": "A2:56:24:3C:D0:D4:15:B9:E8:BF:78:A3:13:10:58:48:2E:16:54:E1",
             "policy_texts": [
-                "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* UserNotice:\n  * Reference:\n    * Organiziation: https://secure.identrust.com/certificates/policy/ts/index.html\n    * Notice Numbers: []\n* UserNotice:\n  * Explicit text: This TrustID Server Certificate has been issued in accordance with IdenTrust's TrustID Certificate Policy found at https://secure.identrust.com/certificates/policy/ts/index.html"
+                "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* UserNotice:\n  * Reference:\n    * Organiziation: https://secure.identrust.com/certificates/policy/ts/index.html\n    * Notice Numbers: []\n* UserNotice:\n  * Explicit text: This TrustID Server Certificate has been issued in\n    accordance with IdenTrust's TrustID Certificate Policy found at\n    https://secure.identrust.com/certificates/policy/ts/index.html"
             ],
             "type": "ca",
             "pathlen": null
@@ -1038,16 +1055,31 @@
             "sha512": "C7:5F:96:18:C9:84:D7:6B:56:F3:D9:8A:0B:5C:EF:F5:1F:F0:80:84:FD:6B:1F:14:C2:E5:85:71:D7:09:5F:CC:55:ED:30:6A:4B:B3:AA:C1:7F:3F:B9:F4:BF:42:02:47:AE:41:D9:F8:B5:44:64:15:D9:20:F3:2B:5D:66:7E:1A",
             "authority_key_identifier": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2",
             "basic_constraints": "critical,CA:TRUE",
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 1.3.6.1.4.1.23223.1.1.1: http://www.startssl.com/policy.pdf, http://www.startssl.com/intermediate.pdf, Limited Liability, read the section *Legal Limitations* of the StartCom Certification Authority Policy available at http://www.startssl.com/policy.pdf (Reference: Start Commercial (StartCom) Ltd., number 1)"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "1.3.6.1.4.1.23223.1.1.1",
+                        "policy_qualifiers": [
+                            "http://www.startssl.com/policy.pdf",
+                            "http://www.startssl.com/intermediate.pdf",
+                            {
+                                "explicit_text": "Limited Liability, read the section *Legal Limitations* of the StartCom Certification Authority Policy available at http://www.startssl.com/policy.pdf",
+                                "notice_reference": {
+                                    "notice_numbers": [
+                                        1
+                                    ],
+                                    "organization": "Start Commercial (StartCom) Ltd."
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "critical": false
+            },
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2",
             "policy_texts": [
-                "Policy Identifier: 1.3.6.1.4.1.23223.1.1.1\nPolicy Qualifiers:\n* http://www.startssl.com/policy.pdf\n* http://www.startssl.com/intermediate.pdf\n* UserNotice:\n  * Explicit text: Limited Liability, read the section *Legal Limitations* of the StartCom Certification Authority Policy available at http://www.startssl.com/policy.pdf\n  * Reference:\n    * Organiziation: Start Commercial (StartCom) Ltd.\n    * Notice Numbers: [1]"
+                "Policy Identifier: 1.3.6.1.4.1.23223.1.1.1\nPolicy Qualifiers:\n* http://www.startssl.com/policy.pdf\n* http://www.startssl.com/intermediate.pdf\n* UserNotice:\n  * Explicit text: Limited Liability, read the section *Legal Limitations*\n    of the StartCom Certification Authority Policy available at\n    http://www.startssl.com/policy.pdf\n  * Reference:\n    * Organiziation: Start Commercial (StartCom) Ltd.\n    * Notice Numbers: [1]"
             ],
             "type": "ca",
             "pathlen": null
@@ -1087,12 +1119,17 @@
                 ],
                 "critical": false
             },
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 2.16.840.1.113733.1.7.54: http://www.geotrust.com/resources/cps"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "2.16.840.1.113733.1.7.54",
+                        "policy_qualifiers": [
+                            "http://www.geotrust.com/resources/cps"
+                        ]
+                    }
+                ],
+                "critical": false
+            },
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "C3:9C:F3:FC:D3:46:08:34:BB:CE:46:7F:A0:7C:5B:F3:E2:08:CB:59",
             "policy_texts": [
@@ -1160,13 +1197,20 @@
                 ],
                 "critical": false
             },
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 2.23.140.1.2.1: None",
-                    "OID 1.3.6.1.4.1.44947.1.1.1: http://cps.root-x1.letsencrypt.org"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "2.23.140.1.2.1"
+                    },
+                    {
+                        "policy_identifier": "1.3.6.1.4.1.44947.1.1.1",
+                        "policy_qualifiers": [
+                            "http://cps.root-x1.letsencrypt.org"
+                        ]
+                    }
+                ],
+                "critical": false
+            },
             "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
             "name_constraints": {
                 "critical": false,
@@ -1222,12 +1266,17 @@
                 ],
                 "critical": false
             },
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 2.5.29.32.0: http://www.startssl.com/policy"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "2.5.29.32.0",
+                        "policy_qualifiers": [
+                            "http://www.startssl.com/policy"
+                        ]
+                    }
+                ],
+                "critical": false
+            },
             "extended_key_usage": "clientAuth,serverAuth",
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "B1:3F:1C:92:7B:92:B0:5A:25:B3:38:FB:9C:07:A4:26:50:32:E3:51",
@@ -1272,12 +1321,17 @@
                 ],
                 "critical": false
             },
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 2.5.29.32.0: https://www.digicert.com/CPS"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "2.5.29.32.0",
+                        "policy_qualifiers": [
+                            "https://www.digicert.com/CPS"
+                        ]
+                    }
+                ],
+                "critical": false
+            },
             "extended_key_usage": "serverAuth,clientAuth",
             "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
             "subject_key_identifier": "51:68:FF:90:AF:02:07:75:3C:CC:D9:65:64:62:A2:12:B8:59:72:3B",
@@ -1324,12 +1378,17 @@
                 ],
                 "critical": false
             },
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 2.5.29.32.0: http://www.startssl.com/policy.pdf"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "2.5.29.32.0",
+                        "policy_qualifiers": [
+                            "http://www.startssl.com/policy.pdf"
+                        ]
+                    }
+                ],
+                "critical": false
+            },
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "11:DB:23:45:FD:54:CC:6A:71:6F:84:8A:03:D7:BE:F7:01:2F:26:86",
             "policy_texts": [
@@ -1395,12 +1454,17 @@
                 ],
                 "critical": false
             },
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 2.5.29.32.0: https://certs.godaddy.com/repository/"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "2.5.29.32.0",
+                        "policy_qualifiers": [
+                            "https://certs.godaddy.com/repository/"
+                        ]
+                    }
+                ],
+                "critical": false
+            },
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "40:C2:BD:27:8E:CC:34:83:30:A2:33:D7:FB:6C:B3:F0:B4:2C:80:CE",
             "policy_texts": [
@@ -1444,12 +1508,17 @@
                 ],
                 "critical": false
             },
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 2.23.140.1.2.2: https://pki.goog/repository/"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "2.23.140.1.2.2",
+                        "policy_qualifiers": [
+                            "https://pki.goog/repository/"
+                        ]
+                    }
+                ],
+                "critical": false
+            },
             "extended_key_usage": "serverAuth,clientAuth",
             "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
             "subject_key_identifier": "77:C2:B8:50:9A:67:76:76:B1:2D:C2:86:D0:83:A0:7E:A6:7E:BA:4B",
@@ -1494,12 +1563,17 @@
                 ],
                 "critical": false
             },
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 2.5.29.32.0: https://www.globalsign.com/repository/"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "2.5.29.32.0",
+                        "policy_qualifiers": [
+                            "https://www.globalsign.com/repository/"
+                        ]
+                    }
+                ],
+                "critical": false
+            },
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "EA:4E:7C:D4:80:2D:E5:15:81:86:26:8C:82:6D:C0:98:A4:CF:97:0F",
             "policy_texts": [
@@ -1545,13 +1619,20 @@
                 ],
                 "critical": false
             },
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 2.23.140.1.2.1: None",
-                    "OID 1.3.6.1.4.1.44947.1.1.1: http://cps.root-x1.letsencrypt.org"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "2.23.140.1.2.1"
+                    },
+                    {
+                        "policy_identifier": "1.3.6.1.4.1.44947.1.1.1",
+                        "policy_qualifiers": [
+                            "http://cps.root-x1.letsencrypt.org"
+                        ]
+                    }
+                ],
+                "critical": false
+            },
             "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
             "subject_key_identifier": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1",
             "policy_texts": [
@@ -1598,12 +1679,17 @@
                 ],
                 "critical": false
             },
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 2.5.29.32.0: https://secure.comodo.com/CPS"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "2.5.29.32.0",
+                        "policy_qualifiers": [
+                            "https://secure.comodo.com/CPS"
+                        ]
+                    }
+                ],
+                "critical": false
+            },
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "39:DA:FF:CA:28:14:8A:A8:74:13:08:B9:E4:0E:A9:D2:FA:7E:9D:69",
             "policy_texts": [
@@ -1671,13 +1757,20 @@
                 ],
                 "critical": false
             },
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 1.3.6.1.4.1.6449.1.2.2.7: https://secure.comodo.com/CPS",
-                    "OID 2.23.140.1.2.1: None"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "1.3.6.1.4.1.6449.1.2.2.7",
+                        "policy_qualifiers": [
+                            "https://secure.comodo.com/CPS"
+                        ]
+                    },
+                    {
+                        "policy_identifier": "2.23.140.1.2.1"
+                    }
+                ],
+                "critical": false
+            },
             "extended_key_usage": "serverAuth,clientAuth",
             "key_usage": "critical,digitalSignature,keyEncipherment",
             "subject_alternative_name": "DNS:kode.im,DNS:www.kode.im",
@@ -1725,20 +1818,36 @@
                 ],
                 "critical": false
             },
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 2.16.840.1.113839.0.6.3: https://secure.identrust.com/certificates/policy/ts/, This TrustID Server Certificate has been issued in accordance with IdenTrust's TrustID Certificate Policy found at https://secure.identrust.com/certificates/policy/ts/",
-                    "OID 2.23.140.1.2.2: https://secure.identrust.com/certificates/policy/ts/, This TrustID Server Certificate has been issued in accordance with IdenTrust's TrustID Certificate Policy found at https://secure.identrust.com/certificates/policy/ts/"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "2.16.840.1.113839.0.6.3",
+                        "policy_qualifiers": [
+                            "https://secure.identrust.com/certificates/policy/ts/",
+                            {
+                                "explicit_text": "This TrustID Server Certificate has been issued in accordance with IdenTrust's TrustID Certificate Policy found at https://secure.identrust.com/certificates/policy/ts/"
+                            }
+                        ]
+                    },
+                    {
+                        "policy_identifier": "2.23.140.1.2.2",
+                        "policy_qualifiers": [
+                            "https://secure.identrust.com/certificates/policy/ts/",
+                            {
+                                "explicit_text": "This TrustID Server Certificate has been issued in accordance with IdenTrust's TrustID Certificate Policy found at https://secure.identrust.com/certificates/policy/ts/"
+                            }
+                        ]
+                    }
+                ],
+                "critical": false
+            },
             "extended_key_usage": "serverAuth,clientAuth",
             "key_usage": "critical,digitalSignature,keyEncipherment",
             "subject_alternative_name": "DNS:identrust.co.uk,DNS:identrust.com,DNS:identrust.net,DNS:www.identrust.co.uk,DNS:www.identrust.com,DNS:www.identrust.net",
             "subject_key_identifier": "BE:59:F0:29:27:4B:FC:0A:81:52:7C:DF:CD:02:D8:8F:A8:E5:C2:24",
             "policy_texts": [
-                "Policy Identifier: 2.16.840.1.113839.0.6.3\nPolicy Qualifiers:\n* https://secure.identrust.com/certificates/policy/ts/\n* UserNotice:\n  * Explicit text: This TrustID Server Certificate has been issued in accordance with IdenTrust's TrustID Certificate Policy found at https://secure.identrust.com/certificates/policy/ts/",
-                "Policy Identifier: 2.23.140.1.2.2\nPolicy Qualifiers:\n* https://secure.identrust.com/certificates/policy/ts/\n* UserNotice:\n  * Explicit text: This TrustID Server Certificate has been issued in accordance with IdenTrust's TrustID Certificate Policy found at https://secure.identrust.com/certificates/policy/ts/"
+                "Policy Identifier: 2.16.840.1.113839.0.6.3\nPolicy Qualifiers:\n* https://secure.identrust.com/certificates/policy/ts/\n* UserNotice:\n  * Explicit text: This TrustID Server Certificate has been issued in\n    accordance with IdenTrust's TrustID Certificate Policy found at\n    https://secure.identrust.com/certificates/policy/ts/",
+                "Policy Identifier: 2.23.140.1.2.2\nPolicy Qualifiers:\n* https://secure.identrust.com/certificates/policy/ts/\n* UserNotice:\n  * Explicit text: This TrustID Server Certificate has been issued in\n    accordance with IdenTrust's TrustID Certificate Policy found at\n    https://secure.identrust.com/certificates/policy/ts/"
             ],
             "type": "cert",
             "ca": "trustid_server_a52"
@@ -1780,12 +1889,17 @@
                 ],
                 "critical": false
             },
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 2.16.840.1.113733.1.7.54: https://www.rapidssl.com/legal"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "2.16.840.1.113733.1.7.54",
+                        "policy_qualifiers": [
+                            "https://www.rapidssl.com/legal"
+                        ]
+                    }
+                ],
+                "critical": false
+            },
             "extended_key_usage": "serverAuth,clientAuth",
             "key_usage": "critical,digitalSignature,keyEncipherment",
             "subject_alternative_name": "DNS:*.jabber.de,DNS:jabber.de",
@@ -1822,20 +1936,30 @@
             },
             "authority_key_identifier": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1",
             "basic_constraints": "critical,CA:FALSE",
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 2.23.140.1.2.1: None",
-                    "OID 1.3.6.1.4.1.44947.1.1.1: http://cps.letsencrypt.org, This Certificate may only be relied upon by Relying Parties and only in accordance with the Certificate Policy found at https://letsencrypt.org/repository/"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "2.23.140.1.2.1"
+                    },
+                    {
+                        "policy_identifier": "1.3.6.1.4.1.44947.1.1.1",
+                        "policy_qualifiers": [
+                            "http://cps.letsencrypt.org",
+                            {
+                                "explicit_text": "This Certificate may only be relied upon by Relying Parties and only in accordance with the Certificate Policy found at https://letsencrypt.org/repository/"
+                            }
+                        ]
+                    }
+                ],
+                "critical": false
+            },
             "extended_key_usage": "serverAuth,clientAuth",
             "key_usage": "critical,digitalSignature,keyEncipherment",
             "subject_alternative_name": "DNS:id.er.tl",
             "subject_key_identifier": "F4:F3:B8:F5:43:90:2E:A2:7F:DD:51:4A:5F:3E:AC:FB:F1:33:EE:95",
             "policy_texts": [
                 "Policy Identifier: 2.23.140.1.2.1\nNo Policy Qualifiers",
-                "Policy Identifier: 1.3.6.1.4.1.44947.1.1.1\nPolicy Qualifiers:\n* http://cps.letsencrypt.org\n* UserNotice:\n  * Explicit text: This Certificate may only be relied upon by Relying Parties and only in accordance with the Certificate Policy found at https://letsencrypt.org/repository/"
+                "Policy Identifier: 1.3.6.1.4.1.44947.1.1.1\nPolicy Qualifiers:\n* http://cps.letsencrypt.org\n* UserNotice:\n  * Explicit text: This Certificate may only be relied upon by Relying\n    Parties and only in accordance with the Certificate Policy found at\n    https://letsencrypt.org/repository/"
             ],
             "type": "cert",
             "ca": "letsencrypt_x1"
@@ -1877,13 +2001,20 @@
                 ],
                 "critical": false
             },
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 2.23.140.1.2.2: None",
-                    "OID 1.3.6.1.4.1.23223.1.2.4: http://www.startssl.com/policy"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "2.23.140.1.2.2"
+                    },
+                    {
+                        "policy_identifier": "1.3.6.1.4.1.23223.1.2.4",
+                        "policy_qualifiers": [
+                            "http://www.startssl.com/policy"
+                        ]
+                    }
+                ],
+                "critical": false
+            },
             "extended_key_usage": "clientAuth,serverAuth",
             "issuer_alternative_name": "URI:http://www.startssl.com/",
             "key_usage": "digitalSignature,keyEncipherment",
@@ -1938,13 +2069,20 @@
                 ],
                 "critical": false
             },
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 2.16.840.1.114412.1.1: https://www.digicert.com/CPS",
-                    "OID 2.23.140.1.2.2: None"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "2.16.840.1.114412.1.1",
+                        "policy_qualifiers": [
+                            "https://www.digicert.com/CPS"
+                        ]
+                    },
+                    {
+                        "policy_identifier": "2.23.140.1.2.2"
+                    }
+                ],
+                "critical": false
+            },
             "extended_key_usage": "serverAuth,clientAuth",
             "key_usage": "critical,digitalSignature,keyEncipherment",
             "precertificate_signed_certificate_timestamps": {
@@ -2010,13 +2148,29 @@
                 ],
                 "critical": false
             },
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 2.23.140.1.2.2: None",
-                    "OID 1.3.6.1.4.1.23223.1.2.3: http://www.startssl.com/policy.pdf, This certificate was issued according to the Class 2 Validation requirements of the StartCom CA policy, reliance only for the intended purpose in compliance of the relying party obligations. (Reference: StartCom Certification Authority, number 1)"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "2.23.140.1.2.2"
+                    },
+                    {
+                        "policy_identifier": "1.3.6.1.4.1.23223.1.2.3",
+                        "policy_qualifiers": [
+                            "http://www.startssl.com/policy.pdf",
+                            {
+                                "explicit_text": "This certificate was issued according to the Class 2 Validation requirements of the StartCom CA policy, reliance only for the intended purpose in compliance of the relying party obligations.",
+                                "notice_reference": {
+                                    "notice_numbers": [
+                                        1
+                                    ],
+                                    "organization": "StartCom Certification Authority"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "critical": false
+            },
             "extended_key_usage": "clientAuth,serverAuth",
             "issuer_alternative_name": "URI:http://www.startssl.com/",
             "key_usage": "digitalSignature,keyAgreement,keyEncipherment",
@@ -2024,7 +2178,7 @@
             "subject_key_identifier": "C7:AA:D9:A4:F0:BC:D1:C1:1B:05:D2:19:71:0A:86:F8:58:0F:F0:99",
             "policy_texts": [
                 "Policy Identifier: 2.23.140.1.2.2\nNo Policy Qualifiers",
-                "Policy Identifier: 1.3.6.1.4.1.23223.1.2.3\nPolicy Qualifiers:\n* http://www.startssl.com/policy.pdf\n* UserNotice:\n  * Explicit text: This certificate was issued according to the Class 2 Validation requirements of the StartCom CA policy, reliance only for the intended purpose in compliance of the relying party obligations.\n  * Reference:\n    * Organiziation: StartCom Certification Authority\n    * Notice Numbers: [1]"
+                "Policy Identifier: 1.3.6.1.4.1.23223.1.2.3\nPolicy Qualifiers:\n* http://www.startssl.com/policy.pdf\n* UserNotice:\n  * Explicit text: This certificate was issued according to the Class 2\n    Validation requirements of the StartCom CA policy, reliance only for\n    the intended purpose in compliance of the relying party obligations.\n  * Reference:\n    * Organiziation: StartCom Certification Authority\n    * Notice Numbers: [1]"
             ],
             "type": "cert",
             "ca": "startssl_class2"
@@ -2066,13 +2220,20 @@
                 ],
                 "critical": false
             },
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 2.16.840.1.114413.1.7.23.1: http://certificates.godaddy.com/repository/",
-                    "OID 2.23.140.1.2.1: None"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "2.16.840.1.114413.1.7.23.1",
+                        "policy_qualifiers": [
+                            "http://certificates.godaddy.com/repository/"
+                        ]
+                    },
+                    {
+                        "policy_identifier": "2.23.140.1.2.1"
+                    }
+                ],
+                "critical": false
+            },
             "extended_key_usage": "serverAuth,clientAuth",
             "key_usage": "critical,digitalSignature,keyEncipherment",
             "precertificate_signed_certificate_timestamps": {
@@ -2144,13 +2305,17 @@
                 ],
                 "critical": false
             },
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 1.3.6.1.4.1.11129.2.5.3: None",
-                    "OID 2.23.140.1.2.2: None"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "1.3.6.1.4.1.11129.2.5.3"
+                    },
+                    {
+                        "policy_identifier": "2.23.140.1.2.2"
+                    }
+                ],
+                "critical": false
+            },
             "extended_key_usage": "serverAuth",
             "key_usage": "critical,digitalSignature",
             "subject_alternative_name": "DNS:www.google.com",
@@ -2199,13 +2364,20 @@
                 ],
                 "critical": false
             },
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 1.3.6.1.4.1.4146.1.10: https://www.globalsign.com/repository/",
-                    "OID 2.23.140.1.2.1: None"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "1.3.6.1.4.1.4146.1.10",
+                        "policy_qualifiers": [
+                            "https://www.globalsign.com/repository/"
+                        ]
+                    },
+                    {
+                        "policy_identifier": "2.23.140.1.2.1"
+                    }
+                ],
+                "critical": false
+            },
             "extended_key_usage": "serverAuth,clientAuth",
             "key_usage": "critical,digitalSignature,keyEncipherment",
             "subject_alternative_name": "DNS:www.ajabber.me,DNS:ajabber.me",
@@ -2244,13 +2416,20 @@
             },
             "authority_key_identifier": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1",
             "basic_constraints": "critical,CA:FALSE",
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 2.23.140.1.2.1: None",
-                    "OID 1.3.6.1.4.1.44947.1.1.1: http://cps.letsencrypt.org"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "2.23.140.1.2.1"
+                    },
+                    {
+                        "policy_identifier": "1.3.6.1.4.1.44947.1.1.1",
+                        "policy_qualifiers": [
+                            "http://cps.letsencrypt.org"
+                        ]
+                    }
+                ],
+                "critical": false
+            },
             "extended_key_usage": "serverAuth,clientAuth",
             "key_usage": "critical,digitalSignature,keyEncipherment",
             "precertificate_signed_certificate_timestamps": {
@@ -2316,13 +2495,20 @@
                 ],
                 "critical": false
             },
-            "certificatePolicies": [
-                false,
-                [
-                    "OID 1.3.6.1.4.1.6449.1.2.1.5.1: https://secure.comodo.com/CPS",
-                    "OID 2.23.140.1.1: None"
-                ]
-            ],
+            "certificate_policies": {
+                "value": [
+                    {
+                        "policy_identifier": "1.3.6.1.4.1.6449.1.2.1.5.1",
+                        "policy_qualifiers": [
+                            "https://secure.comodo.com/CPS"
+                        ]
+                    },
+                    {
+                        "policy_identifier": "2.23.140.1.1"
+                    }
+                ],
+                "critical": false
+            },
             "extended_key_usage": "serverAuth,clientAuth",
             "key_usage": "critical,digitalSignature,keyEncipherment",
             "precertificate_signed_certificate_timestamps": {

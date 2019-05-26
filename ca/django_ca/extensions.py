@@ -715,7 +715,7 @@ class PolicyInformation(object):
             self.policy_qualifiers = []
         self.policy_qualifiers.append(self.parse_policy_qualifier(value))
 
-    def as_text(self, width=70):
+    def as_text(self, width=76):
         if self.policy_identifier is None:
             text = 'Policy Identifier: %s\n' % None
         else:
@@ -730,7 +730,10 @@ class PolicyInformation(object):
                 else:
                     text += '* UserNotice:\n'
                     if qualifier.explicit_text:
-                        text += '  * Explicit text: %s\n' % qualifier.explicit_text
+                        text += '\n'.join(textwrap.wrap(
+                            'Explicit text: %s\n' % qualifier.explicit_text,
+                            initial_indent='  * ', subsequent_indent='    ', width=width - 2
+                        )) + '\n'
                     if qualifier.notice_reference:
                         text += '  * Reference:\n'
                         text += '    * Organiziation: %s\n' % qualifier.notice_reference.organization
@@ -1140,11 +1143,14 @@ class CertificatePolicies(ListExtension):
         return 'CertificatePolicies(%s, critical=%s)' % (policies, self.critical)
 
     def as_text(self):
-        return '\n'.join('* Policy:\n%s' % indent(p.as_text(), '  ') for p in self.value)
+        return '\n'.join('* %s' % indent(p.as_text(), '  ').strip() for p in self.value)
 
     @property
     def extension_type(self):
         return x509.CertificatePolicies(policies=[p.for_extension_type for p in self.value])
+
+    def from_extension(self, value):
+        self.value = [PolicyInformation(v) for v in value.value]
 
     def parse_value(self, v):
         if isinstance(v, PolicyInformation):

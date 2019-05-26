@@ -353,9 +353,12 @@ CRLDistributionPoints:
     * DistributionPoint:
       * Full Name:
         * URI:http://crl.godaddy.com/gdig2s1-1015.crl
-certificatePolicies:
-    * OID 2.16.840.1.114413.1.7.23.1: http://certificates.godaddy.com/repository/
-    * OID 2.23.140.1.2.1: None
+CertificatePolicies{certificate_policies_critical}:
+    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+      Policy Qualifiers:
+      * http://certificates.godaddy.com/repository/
+    * Policy Identifier: {certificate_policies_1.policy_identifier.dotted_string}
+      No Policy Qualifiers
 ExtendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage[0]}
     * {extended_key_usage[1]}
@@ -452,9 +455,12 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
-certificatePolicies:
-    * OID 2.23.140.1.2.1: None
-    * OID 1.3.6.1.4.1.44947.1.1.1: http://cps.letsencrypt.org
+CertificatePolicies{certificate_policies_critical}:
+    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+      No Policy Qualifiers
+    * Policy Identifier: {certificate_policies_1.policy_identifier.dotted_string}
+      Policy Qualifiers:
+      * http://cps.letsencrypt.org
 ExtendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage[0]}
     * {extended_key_usage[1]}
@@ -486,7 +492,6 @@ HPKP pin: {hpkp}
 
     @freeze_time("2018-12-01")
     def test_contrib_cloudflare_1(self):
-        self.maxDiff = None
         self.assertContrib('cloudflare_1', '''Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
@@ -504,9 +509,12 @@ CRLDistributionPoints:
     * DistributionPoint:
       * Full Name:
         * URI:http://crl.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crl
-certificatePolicies:
-    * OID 1.3.6.1.4.1.6449.1.2.2.7: https://secure.comodo.com/CPS
-    * OID 2.23.140.1.2.1: None
+CertificatePolicies{certificate_policies_critical}:
+    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+      Policy Qualifiers:
+      * https://secure.comodo.com/CPS
+    * Policy Identifier: {certificate_policies_1.policy_identifier.dotted_string}
+      No Policy Qualifiers
 ExtendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage[0]}
     * {extended_key_usage[1]}

@@ -48,6 +48,7 @@ from .constants import ReasonFlags
 from .extensions import AuthorityInformationAccess
 from .extensions import AuthorityKeyIdentifier
 from .extensions import BasicConstraints
+from .extensions import CertificatePolicies
 from .extensions import CRLDistributionPoints
 from .extensions import ExtendedKeyUsage
 from .extensions import IssuerAlternativeName
@@ -335,6 +336,7 @@ class X509CertMixin(models.Model):
         ExtensionOID.AUTHORITY_KEY_IDENTIFIER: 'authority_key_identifier',
         ExtensionOID.BASIC_CONSTRAINTS: 'basic_constraints',
         ExtensionOID.CRL_DISTRIBUTION_POINTS: 'crl_distribution_points',
+        ExtensionOID.CERTIFICATE_POLICIES: 'certificate_policies',
         ExtensionOID.EXTENDED_KEY_USAGE: 'extended_key_usage',
         ExtensionOID.ISSUER_ALTERNATIVE_NAME: 'issuer_alternative_name',
         ExtensionOID.KEY_USAGE: 'key_usage',
@@ -417,6 +419,14 @@ class X509CertMixin(models.Model):
         except x509.ExtensionNotFound:
             return None
         return CRLDistributionPoints(ext)
+
+    @property
+    def certificate_policies(self):
+        try:
+            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES)
+        except x509.ExtensionNotFound:
+            return None
+        return CertificatePolicies(ext)
 
     @property
     def issuer_alternative_name(self):
@@ -518,46 +528,6 @@ class X509CertMixin(models.Model):
         except x509.ExtensionNotFound:
             return None
         return TLSFeature(ext)
-
-    #################################
-    # Old-style extension accessors #
-    #################################
-
-    def certificatePolicies(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES)
-        except x509.ExtensionNotFound:
-            return None
-
-        policies = []
-        for value in ext.value:
-            output = 'OID %s: ' % value.policy_identifier.dotted_string
-            if value.policy_qualifiers is None:
-                output += "None"
-            else:
-                output += ', '.join([self._parse_policy_qualifier(p) for p in value.policy_qualifiers])
-            policies.append(output)
-
-        return ext.critical, policies
-
-    def _parse_policy_qualifier(self, qualifier):
-        if isinstance(qualifier, x509.extensions.UserNotice):
-            # https://tools.ietf.org/html/rfc5280#section-4.2.1.4
-            notice_ref = qualifier.notice_reference
-            text = qualifier.explicit_text
-            if notice_ref is None:
-                return text
-            else:  # pragma: no cover - unseen in the wild
-                org = notice_ref.organization
-                numbers = notice_ref.notice_numbers
-                if not numbers:
-                    return '%s (Reference: %s)' % (text, org)
-                elif len(numbers) == 1:
-                    return '%s (Reference: %s, number %s)' % (text, org, numbers[0])
-                else:
-                    return '%s (Reference: %s, numbers %s)' % (text, org, ', '.join(numbers))
-
-        return qualifier
 
 
 class CertificateAuthority(X509CertMixin):

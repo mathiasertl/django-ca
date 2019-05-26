@@ -275,9 +275,11 @@ CRLDistributionPoints{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-certificatePolicies:
-    * {certificatePolicies[1][0]}
-    * {certificatePolicies[1][1]}
+CertificatePolicies{certificate_policies_critical}:
+    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+      No Policy Qualifiers
+    * Policy Identifier: {certificate_policies_1.policy_identifier.dotted_string}
+      No Policy Qualifiers
 ExtendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
@@ -317,8 +319,10 @@ CRLDistributionPoints{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-certificatePolicies:
-    * {certificatePolicies[1][0]}
+CertificatePolicies{certificate_policies_critical}:
+    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+      Policy Qualifiers:
+      * http://www.geotrust.com/resources/cps
 KeyUsage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
@@ -381,8 +385,10 @@ CRLDistributionPoints{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-certificatePolicies:
-    * {certificatePolicies[1][0]}
+CertificatePolicies{certificate_policies_critical}:
+    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+      Policy Qualifiers:
+      * https://secure.comodo.com/CPS
 KeyUsage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
@@ -418,8 +424,10 @@ CRLDistributionPoints{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-certificatePolicies:
-    * {certificatePolicies[1][0]}
+CertificatePolicies{certificate_policies_critical}:
+    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+      Policy Qualifiers:
+      * https://www.digicert.com/CPS
 ExtendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
@@ -485,8 +493,10 @@ CRLDistributionPoints{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-certificatePolicies:
-    * {certificatePolicies[1][0]}
+CertificatePolicies{certificate_policies_critical}:
+    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+      Policy Qualifiers:
+      * https://www.globalsign.com/repository/
 KeyUsage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
@@ -522,8 +532,10 @@ CRLDistributionPoints{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-certificatePolicies:
-    * {certificatePolicies[1][0]}
+CertificatePolicies{certificate_policies_critical}:
+    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+      Policy Qualifiers:
+      * https://certs.godaddy.com/repository/
 KeyUsage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
@@ -585,8 +597,10 @@ CRLDistributionPoints{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-certificatePolicies:
-    * {certificatePolicies[1][0]}
+CertificatePolicies{certificate_policies_critical}:
+    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+      Policy Qualifiers:
+      * https://pki.goog/repository/
 ExtendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
@@ -628,9 +642,12 @@ CRLDistributionPoints{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-certificatePolicies:
-    * {certificatePolicies[1][0]}
-    * {certificatePolicies[1][1]}
+CertificatePolicies{certificate_policies_critical}:
+    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+      No Policy Qualifiers
+    * Policy Identifier: {certificate_policies_1.policy_identifier.dotted_string}
+      Policy Qualifiers:
+      * http://cps.root-x1.letsencrypt.org
 KeyUsage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
@@ -672,9 +689,12 @@ CRLDistributionPoints{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-certificatePolicies:
-    * {certificatePolicies[1][0]}
-    * {certificatePolicies[1][1]}
+CertificatePolicies{certificate_policies_critical}:
+    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+      No Policy Qualifiers
+    * Policy Identifier: {certificate_policies_1.policy_identifier.dotted_string}
+      Policy Qualifiers:
+      * http://cps.root-x1.letsencrypt.org
 KeyUsage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
@@ -704,8 +724,18 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
-certificatePolicies:
-    * {certificatePolicies[1][0]}
+CertificatePolicies{certificate_policies_critical}:
+    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+      Policy Qualifiers:
+      * http://www.startssl.com/policy.pdf
+      * http://www.startssl.com/intermediate.pdf
+      * UserNotice:
+        * Explicit text: Limited Liability, read the section *Legal Limitations*
+          of the StartCom Certification Authority Policy available at
+          http://www.startssl.com/policy.pdf
+        * Reference:
+          * Organiziation: Start Commercial (StartCom) Ltd.
+          * Notice Numbers: [1]
 KeyUsage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
@@ -744,8 +774,10 @@ CRLDistributionPoints{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-certificatePolicies:
-    * {certificatePolicies[1][0]}
+CertificatePolicies{certificate_policies_critical}:
+    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+      Policy Qualifiers:
+      * http://www.startssl.com/policy.pdf
 KeyUsage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
@@ -783,8 +815,10 @@ CRLDistributionPoints{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-certificatePolicies:
-    * {certificatePolicies[1][0]}
+CertificatePolicies{certificate_policies_critical}:
+    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+      Policy Qualifiers:
+      * http://www.startssl.com/policy
 ExtendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
@@ -825,8 +859,17 @@ CRLDistributionPoints{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-certificatePolicies:
-    * {certificatePolicies[1][0]}
+CertificatePolicies{certificate_policies_critical}:
+    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+      Policy Qualifiers:
+      * UserNotice:
+        * Reference:
+          * Organiziation: https://secure.identrust.com/certificates/policy/ts/index.html
+          * Notice Numbers: []
+      * UserNotice:
+        * Explicit text: This TrustID Server Certificate has been issued in
+          accordance with IdenTrust's TrustID Certificate Policy found at
+          https://secure.identrust.com/certificates/policy/ts/index.html
 ExtendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
