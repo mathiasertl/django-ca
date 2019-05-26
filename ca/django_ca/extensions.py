@@ -1119,6 +1119,45 @@ class CRLDistributionPoints(ListExtension):
         }
 
 
+class CertificatePolicies(ListExtension):
+    oid = ExtensionOID.CERTIFICATE_POLICIES
+
+    def __hash__(self):
+        return hash((self.__class__, tuple(self.value), self.critical, ))
+
+    def __repr__(self):
+        return '<CertificatePolicies: [%s], critical=%s>' % (
+            ', '.join([str(v) for v in self.value]), self.critical
+        )
+
+    def __str__(self):
+        count = len(self)
+        if count == 1:
+            policies = '1 Policy'
+        else:
+            policies = '%s Policies' % count
+
+        return 'CertificatePolicies(%s, critical=%s)' % (policies, self.critical)
+
+    def as_text(self):
+        return '\n'.join('* Policy:\n%s' % indent(p.as_text(), '  ') for p in self.value)
+
+    @property
+    def extension_type(self):
+        return x509.CertificatePolicies(policies=[p.for_extension_type for p in self.value])
+
+    def parse_value(self, v):
+        if isinstance(v, PolicyInformation):
+            return v
+        return PolicyInformation(v)
+
+    def serialize(self):
+        return {
+            'value': [p.serialize() for p in self.value],
+            'critical': self.critical,
+        }
+
+
 class IssuerAlternativeName(AlternativeNameExtension):
     """Class representing an Issuer Alternative Name extension.
 
