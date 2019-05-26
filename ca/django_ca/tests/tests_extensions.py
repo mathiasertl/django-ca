@@ -1622,6 +1622,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         value = '1.2.3'
         expected = ObjectIdentifier(value)
         pi = PolicyInformation({'policy_identifier': value})
+        pi.policy_identifier = value
         self.assertEqual(pi.policy_identifier, expected)
 
         pi = PolicyInformation({'policy_identifier': expected})
@@ -1667,19 +1668,30 @@ class PolicyInformationTestCase(DjangoCATestCase):
             self.pi_empty.remove(self.s3['policy_qualifiers'][0])
 
     def test_repr(self):
-        self.assertEqual(repr(self.pi1), "<PolicyInformation(oid=2.5.29.32.0, qualifiers=['text1'])>")
-        self.assertEqual(repr(self.pi2),
-                         "<PolicyInformation(oid=2.5.29.32.0, qualifiers=[{'explicit_text': 'text2'}])>")
-        self.assertEqual(
-            repr(self.pi3),
-            "<PolicyInformation(oid=2.5.29.32.0, "
-            "qualifiers=[{'notice_reference': {'notice_numbers': [1], 'organization': 'text3'}}])>")
-        self.assertEqual(
-            repr(self.pi4),
-            "<PolicyInformation(oid=2.5.29.32.0, qualifiers=['text4', "
-            "{'explicit_text': 'text5', 'notice_reference': {'notice_numbers': [1, 2, 3], 'organization': "
-            "'text6'}}])>")
-        self.assertEqual(repr(self.pi_empty), "<PolicyInformation(oid=None, qualifiers=None)>")
+        if six.PY2:  # pragma: only py2
+            self.assertEqual(repr(self.pi1), "<PolicyInformation(oid=2.5.29.32.0, qualifiers=[u'text1'])>")
+            self.assertEqual(
+                repr(self.pi2),
+                "<PolicyInformation(oid=2.5.29.32.0, qualifiers=[{u'explicit_text': u'text2'}])>")
+            # NOTE: order of dict is different here, so we do not test output, just make sure there's no
+            # exception
+            repr(self.pi3)
+            repr(self.pi4)
+            self.assertEqual(repr(self.pi_empty), "<PolicyInformation(oid=None, qualifiers=None)>")
+        else:
+            self.assertEqual(repr(self.pi1), "<PolicyInformation(oid=2.5.29.32.0, qualifiers=['text1'])>")
+            self.assertEqual(repr(self.pi2),
+                             "<PolicyInformation(oid=2.5.29.32.0, qualifiers=[{'explicit_text': 'text2'}])>")
+            self.assertEqual(
+                repr(self.pi3),
+                "<PolicyInformation(oid=2.5.29.32.0, "
+                "qualifiers=[{'notice_reference': {'notice_numbers': [1], 'organization': 'text3'}}])>")
+            self.assertEqual(
+                repr(self.pi4),
+                "<PolicyInformation(oid=2.5.29.32.0, qualifiers=['text4', "
+                "{'explicit_text': 'text5', 'notice_reference': {'notice_numbers': [1, 2, 3], "
+                "'organization': 'text6'}}])>")
+            self.assertEqual(repr(self.pi_empty), "<PolicyInformation(oid=None, qualifiers=None)>")
 
     def test_str(self):
         self.assertEqual(str(self.pi1), 'PolicyInformation(oid=2.5.29.32.0, 1 qualifier)')

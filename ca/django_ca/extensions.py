@@ -442,7 +442,7 @@ class KnownValuesExtension(ListExtension):
             raise ValueError('Unknown value(s): %s' % ', '.join(sorted(diff)))
 
 
-class GeneralNameMixin:
+class GeneralNameMixin(object):
     """Mixin to internally store values as ``GeneralName`` instances.
 
     This mixin ensures that values passed as :py:class:`~cg:cryptography.x509.GeneralName` instances will
@@ -637,7 +637,7 @@ class DistributionPoint(GeneralNameMixin):
         return s
 
 
-class PolicyInformation:
+class PolicyInformation(object):
     def __init__(self, data=None):
         if isinstance(data, x509.PolicyInformation):
             self.policy_identifier = data.policy_identifier
@@ -708,7 +708,7 @@ class PolicyInformation:
         else:
             ident = self.policy_identifier.dotted_string
 
-        return '<PolicyInformation(oid=%s, qualifiers=%s)>' % (ident, self.serialize_policy_qualifiers())
+        return '<PolicyInformation(oid=%s, qualifiers=%r)>' % (ident, self.serialize_policy_qualifiers())
 
     def append(self, value):
         if self.policy_qualifiers is None:
