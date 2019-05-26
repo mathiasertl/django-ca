@@ -643,7 +643,7 @@ class DjangoCATestCase(TestCase):
                     ctx['precert_poison_unknown'] = ''
                 else:  # pragma: no cover
                     ctx['precert_poison'] = ''
-                    ctx['precert_poison_unknown'] = '\nUnknownOID (critical): 1.3.6.1.4.1.11129.2.4.3'
+                    ctx['precert_poison_unknown'] = '\nUnknown OID (critical): 1.3.6.1.4.1.11129.2.4.3'
             elif key == 'pathlen':
                 ctx[key] = value
                 ctx['%s_text' % key] = 'unlimited' if value is None else value
