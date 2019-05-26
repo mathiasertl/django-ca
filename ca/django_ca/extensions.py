@@ -17,6 +17,7 @@ from __future__ import unicode_literals
 
 import binascii
 import re
+import textwrap
 
 import six
 
@@ -713,6 +714,31 @@ class PolicyInformation:
         if self.policy_qualifiers is None:
             self.policy_qualifiers = []
         self.policy_qualifiers.append(self.parse_policy_qualifier(value))
+
+    def as_text(self, width=70):
+        if self.policy_identifier is None:
+            text = 'Policy Identifier: %s\n' % None
+        else:
+            text = 'Policy Identifier: %s\n' % self.policy_identifier.dotted_string
+
+        if self.policy_qualifiers:
+            text += 'Policy Qualifiers:\n'
+            for qualifier in self.policy_qualifiers:
+                if isinstance(qualifier, six.string_types):
+                    lines = textwrap.wrap(qualifier, initial_indent='* ', subsequent_indent='  ', width=width)
+                    text += '%s\n' % '\n'.join(lines)
+                else:
+                    text += '* UserNotice:\n'
+                    if qualifier.explicit_text:
+                        text += '  * Explicit text: %s\n' % qualifier.explicit_text
+                    if qualifier.notice_reference:
+                        text += '  * Reference:\n'
+                        text += '    * Organiziation: %s\n' % qualifier.notice_reference.organization
+                        text += '    * Notice Numbers: %s\n' % qualifier.notice_reference.notice_numbers
+        else:
+            text += 'No Policy Qualifiers'
+
+        return text.strip()
 
     def clear(self):
         self.policy_qualifiers = None

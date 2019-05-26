@@ -37,6 +37,7 @@ from cryptography.hazmat.primitives.serialization import NoEncryption
 from cryptography.hazmat.primitives.serialization import PrivateFormat
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.x509 import ocsp
+from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import NameOID
 
 _rootdir = os.path.dirname(os.path.realpath(__file__))  # NOQA: E402
@@ -56,6 +57,7 @@ from django_ca import ca_settings
 from django_ca.extensions import Extension
 from django_ca.extensions import IssuerAlternativeName
 from django_ca.extensions import NameConstraints
+from django_ca.extensions import PolicyInformation
 from django_ca.models import Certificate
 from django_ca.models import CertificateAuthority
 from django_ca.profiles import get_cert_profile_kwargs
@@ -263,13 +265,17 @@ def update_contrib(data, cert, name, filename):
             cert_data[key] = ext.serialize()
         elif isinstance(ext, tuple):
             key, value = ext
-            if key == 'cRLDistributionPoints':
-                cert_data['crl_old'] = value
-            elif isinstance(value[1], x509.ObjectIdentifier):
+            if isinstance(value[1], x509.ObjectIdentifier):
                 # Currently just some old StartSSL extensions for Netscape (!)
                 continue
             else:
                 cert_data[key] = value
+
+    try:
+        ext = cert.x509.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES).value
+        cert_data['policy_texts'] = [PolicyInformation(p).as_text() for p in ext]
+    except x509.ExtensionNotFound:
+        pass
 
     data[name] = cert_data
 

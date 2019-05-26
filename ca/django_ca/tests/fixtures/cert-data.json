@@ -493,7 +493,7 @@
                 "value": [
                     {
                         "full_name": [
-                    		"http://testserver/django_ca/crl/28:74:F2:DA:94:96:3C:B3:D9:95:12:4C:21:A3:5B:57:9C:6A:3A:B2/"
+                            "http://testserver/django_ca/crl/28:74:F2:DA:94:96:3C:B3:D9:95:12:4C:21:A3:5B:57:9C:6A:3A:B2/"
                         ]
                     }
                 ]
@@ -861,6 +861,10 @@
             "extended_key_usage": "serverAuth,clientAuth",
             "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
             "subject_key_identifier": "90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7",
+            "policy_texts": [
+                "Policy Identifier: 2.5.29.32.0\nNo Policy Qualifiers",
+                "Policy Identifier: 2.23.140.1.2.1\nNo Policy Qualifiers"
+            ],
             "type": "ca",
             "pathlen": 0
         },
@@ -910,6 +914,9 @@
             "extended_key_usage": "serverAuth,clientAuth,ipsecEndSystem,ipsecTunnel,ipsecUser",
             "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
             "subject_key_identifier": "A2:56:24:3C:D0:D4:15:B9:E8:BF:78:A3:13:10:58:48:2E:16:54:E1",
+            "policy_texts": [
+                "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* UserNotice:\n  * Reference:\n    * Organiziation: https://secure.identrust.com/certificates/policy/ts/index.html\n    * Notice Numbers: []\n* UserNotice:\n  * Explicit text: This TrustID Server Certificate has been issued in accordance with IdenTrust's TrustID Certificate Policy found at https://secure.identrust.com/certificates/policy/ts/index.html"
+            ],
             "type": "ca",
             "pathlen": null
         },
@@ -1039,6 +1046,9 @@
             ],
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2",
+            "policy_texts": [
+                "Policy Identifier: 1.3.6.1.4.1.23223.1.1.1\nPolicy Qualifiers:\n* http://www.startssl.com/policy.pdf\n* http://www.startssl.com/intermediate.pdf\n* UserNotice:\n  * Explicit text: Limited Liability, read the section *Legal Limitations* of the StartCom Certification Authority Policy available at http://www.startssl.com/policy.pdf\n  * Reference:\n    * Organiziation: Start Commercial (StartCom) Ltd.\n    * Notice Numbers: [1]"
+            ],
             "type": "ca",
             "pathlen": null
         },
@@ -1085,6 +1095,9 @@
             ],
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "C3:9C:F3:FC:D3:46:08:34:BB:CE:46:7F:A0:7C:5B:F3:E2:08:CB:59",
+            "policy_texts": [
+                "Policy Identifier: 2.16.840.1.113733.1.7.54\nPolicy Qualifiers:\n* http://www.geotrust.com/resources/cps"
+            ],
             "type": "ca",
             "pathlen": 0
         },
@@ -1165,6 +1178,10 @@
                 }
             },
             "subject_key_identifier": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1",
+            "policy_texts": [
+                "Policy Identifier: 2.23.140.1.2.1\nNo Policy Qualifiers",
+                "Policy Identifier: 1.3.6.1.4.1.44947.1.1.1\nPolicy Qualifiers:\n* http://cps.root-x1.letsencrypt.org"
+            ],
             "type": "ca",
             "pathlen": 0
         },
@@ -1214,6 +1231,9 @@
             "extended_key_usage": "clientAuth,serverAuth",
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "B1:3F:1C:92:7B:92:B0:5A:25:B3:38:FB:9C:07:A4:26:50:32:E3:51",
+            "policy_texts": [
+                "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* http://www.startssl.com/policy"
+            ],
             "type": "ca",
             "pathlen": 0
         },
@@ -1261,6 +1281,9 @@
             "extended_key_usage": "serverAuth,clientAuth",
             "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
             "subject_key_identifier": "51:68:FF:90:AF:02:07:75:3C:CC:D9:65:64:62:A2:12:B8:59:72:3B",
+            "policy_texts": [
+                "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* https://www.digicert.com/CPS"
+            ],
             "type": "ca",
             "pathlen": 0
         },
@@ -1309,6 +1332,9 @@
             ],
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "11:DB:23:45:FD:54:CC:6A:71:6F:84:8A:03:D7:BE:F7:01:2F:26:86",
+            "policy_texts": [
+                "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* http://www.startssl.com/policy.pdf"
+            ],
             "type": "ca",
             "pathlen": 0
         },
@@ -1377,6 +1403,9 @@
             ],
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "40:C2:BD:27:8E:CC:34:83:30:A2:33:D7:FB:6C:B3:F0:B4:2C:80:CE",
+            "policy_texts": [
+                "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* https://certs.godaddy.com/repository/"
+            ],
             "type": "ca",
             "pathlen": null
         },
@@ -1424,6 +1453,9 @@
             "extended_key_usage": "serverAuth,clientAuth",
             "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
             "subject_key_identifier": "77:C2:B8:50:9A:67:76:76:B1:2D:C2:86:D0:83:A0:7E:A6:7E:BA:4B",
+            "policy_texts": [
+                "Policy Identifier: 2.23.140.1.2.2\nPolicy Qualifiers:\n* https://pki.goog/repository/"
+            ],
             "type": "ca",
             "pathlen": 0
         },
@@ -1470,6 +1502,9 @@
             ],
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "EA:4E:7C:D4:80:2D:E5:15:81:86:26:8C:82:6D:C0:98:A4:CF:97:0F",
+            "policy_texts": [
+                "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* https://www.globalsign.com/repository/"
+            ],
             "type": "ca",
             "pathlen": 0
         },
@@ -1519,6 +1554,10 @@
             ],
             "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
             "subject_key_identifier": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1",
+            "policy_texts": [
+                "Policy Identifier: 2.23.140.1.2.1\nNo Policy Qualifiers",
+                "Policy Identifier: 1.3.6.1.4.1.44947.1.1.1\nPolicy Qualifiers:\n* http://cps.root-x1.letsencrypt.org"
+            ],
             "type": "ca",
             "pathlen": 0
         },
@@ -1567,6 +1606,9 @@
             ],
             "key_usage": "critical,cRLSign,keyCertSign",
             "subject_key_identifier": "39:DA:FF:CA:28:14:8A:A8:74:13:08:B9:E4:0E:A9:D2:FA:7E:9D:69",
+            "policy_texts": [
+                "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* https://secure.comodo.com/CPS"
+            ],
             "type": "ca",
             "pathlen": 0
         },
@@ -1640,6 +1682,10 @@
             "key_usage": "critical,digitalSignature,keyEncipherment",
             "subject_alternative_name": "DNS:kode.im,DNS:www.kode.im",
             "subject_key_identifier": "F2:CB:1F:E9:6E:D5:43:E3:85:75:98:5F:97:7C:B0:59:7F:D5:C0:C0",
+            "policy_texts": [
+                "Policy Identifier: 1.3.6.1.4.1.6449.1.2.2.7\nPolicy Qualifiers:\n* https://secure.comodo.com/CPS",
+                "Policy Identifier: 2.23.140.1.2.1\nNo Policy Qualifiers"
+            ],
             "type": "cert",
             "ca": "comodo_dv"
         },
@@ -1690,6 +1736,10 @@
             "key_usage": "critical,digitalSignature,keyEncipherment",
             "subject_alternative_name": "DNS:identrust.co.uk,DNS:identrust.com,DNS:identrust.net,DNS:www.identrust.co.uk,DNS:www.identrust.com,DNS:www.identrust.net",
             "subject_key_identifier": "BE:59:F0:29:27:4B:FC:0A:81:52:7C:DF:CD:02:D8:8F:A8:E5:C2:24",
+            "policy_texts": [
+                "Policy Identifier: 2.16.840.1.113839.0.6.3\nPolicy Qualifiers:\n* https://secure.identrust.com/certificates/policy/ts/\n* UserNotice:\n  * Explicit text: This TrustID Server Certificate has been issued in accordance with IdenTrust's TrustID Certificate Policy found at https://secure.identrust.com/certificates/policy/ts/",
+                "Policy Identifier: 2.23.140.1.2.2\nPolicy Qualifiers:\n* https://secure.identrust.com/certificates/policy/ts/\n* UserNotice:\n  * Explicit text: This TrustID Server Certificate has been issued in accordance with IdenTrust's TrustID Certificate Policy found at https://secure.identrust.com/certificates/policy/ts/"
+            ],
             "type": "cert",
             "ca": "trustid_server_a52"
         },
@@ -1739,6 +1789,9 @@
             "extended_key_usage": "serverAuth,clientAuth",
             "key_usage": "critical,digitalSignature,keyEncipherment",
             "subject_alternative_name": "DNS:*.jabber.de,DNS:jabber.de",
+            "policy_texts": [
+                "Policy Identifier: 2.16.840.1.113733.1.7.54\nPolicy Qualifiers:\n* https://www.rapidssl.com/legal"
+            ],
             "type": "cert",
             "ca": "rapidssl_g3"
         },
@@ -1780,6 +1833,10 @@
             "key_usage": "critical,digitalSignature,keyEncipherment",
             "subject_alternative_name": "DNS:id.er.tl",
             "subject_key_identifier": "F4:F3:B8:F5:43:90:2E:A2:7F:DD:51:4A:5F:3E:AC:FB:F1:33:EE:95",
+            "policy_texts": [
+                "Policy Identifier: 2.23.140.1.2.1\nNo Policy Qualifiers",
+                "Policy Identifier: 1.3.6.1.4.1.44947.1.1.1\nPolicy Qualifiers:\n* http://cps.letsencrypt.org\n* UserNotice:\n  * Explicit text: This Certificate may only be relied upon by Relying Parties and only in accordance with the Certificate Policy found at https://letsencrypt.org/repository/"
+            ],
             "type": "cert",
             "ca": "letsencrypt_x1"
         },
@@ -1832,6 +1889,10 @@
             "key_usage": "digitalSignature,keyEncipherment",
             "subject_alternative_name": "DNS:adverity.com,DNS:*.adverity.com,DNS:www.adverity.com",
             "subject_key_identifier": "F0:72:65:5E:21:AA:16:76:2C:6F:D0:63:53:0C:68:D5:89:50:2A:73",
+            "policy_texts": [
+                "Policy Identifier: 2.23.140.1.2.2\nNo Policy Qualifiers",
+                "Policy Identifier: 1.3.6.1.4.1.23223.1.2.4\nPolicy Qualifiers:\n* http://www.startssl.com/policy"
+            ],
             "type": "cert",
             "ca": "startssl_class3"
         },
@@ -1905,6 +1966,10 @@
             },
             "subject_alternative_name": "DNS:*.www.yahoo.com,DNS:add.my.yahoo.com,DNS:*.amp.yimg.com,DNS:au.yahoo.com,DNS:be.yahoo.com,DNS:br.yahoo.com,DNS:ca.my.yahoo.com,DNS:ca.rogers.yahoo.com,DNS:ca.yahoo.com,DNS:ddl.fp.yahoo.com,DNS:de.yahoo.com,DNS:en-maktoob.yahoo.com,DNS:espanol.yahoo.com,DNS:es.yahoo.com,DNS:fr-be.yahoo.com,DNS:fr-ca.rogers.yahoo.com,DNS:frontier.yahoo.com,DNS:fr.yahoo.com,DNS:gr.yahoo.com,DNS:hk.yahoo.com,DNS:hsrd.yahoo.com,DNS:ideanetsetter.yahoo.com,DNS:id.yahoo.com,DNS:ie.yahoo.com,DNS:in.yahoo.com,DNS:it.yahoo.com,DNS:maktoob.yahoo.com,DNS:malaysia.yahoo.com,DNS:mbp.yimg.com,DNS:my.yahoo.com,DNS:nz.yahoo.com,DNS:ph.yahoo.com,DNS:qc.yahoo.com,DNS:ro.yahoo.com,DNS:se.yahoo.com,DNS:sg.yahoo.com,DNS:tw.yahoo.com,DNS:uk.yahoo.com,DNS:us.yahoo.com,DNS:verizon.yahoo.com,DNS:vn.yahoo.com,DNS:www.yahoo.com,DNS:yahoo.com,DNS:za.yahoo.com",
             "subject_key_identifier": "56:F7:45:D4:84:D1:3C:95:AD:58:14:2E:F4:D1:CC:2F:11:C0:73:F6",
+            "policy_texts": [
+                "Policy Identifier: 2.16.840.1.114412.1.1\nPolicy Qualifiers:\n* https://www.digicert.com/CPS",
+                "Policy Identifier: 2.23.140.1.2.2\nNo Policy Qualifiers"
+            ],
             "type": "cert",
             "ca": "digicert_ha_intermediate"
         },
@@ -1957,6 +2022,10 @@
             "key_usage": "digitalSignature,keyAgreement,keyEncipherment",
             "subject_alternative_name": "DNS:www.fsinf.at,DNS:fsinf.at",
             "subject_key_identifier": "C7:AA:D9:A4:F0:BC:D1:C1:1B:05:D2:19:71:0A:86:F8:58:0F:F0:99",
+            "policy_texts": [
+                "Policy Identifier: 2.23.140.1.2.2\nNo Policy Qualifiers",
+                "Policy Identifier: 1.3.6.1.4.1.23223.1.2.3\nPolicy Qualifiers:\n* http://www.startssl.com/policy.pdf\n* UserNotice:\n  * Explicit text: This certificate was issued according to the Class 2 Validation requirements of the StartCom CA policy, reliance only for the intended purpose in compliance of the relying party obligations.\n  * Reference:\n    * Organiziation: StartCom Certification Authority\n    * Notice Numbers: [1]"
+            ],
             "type": "cert",
             "ca": "startssl_class2"
         },
@@ -2031,6 +2100,10 @@
             },
             "subject_alternative_name": "DNS:derstandard.at,DNS:www.derstandard.at,DNS:api.derstandard.at,DNS:ipad.derstandard.de,DNS:text.derstandard.at,DNS:dst.at,DNS:cnct03.derstandard.at,DNS:images.derstandard.ch,DNS:static.derstandard.at,DNS:www.derstandard.de,DNS:next.derstandard.at,DNS:px.derstandard.at,DNS:de.staticfiles.at,DNS:static.derstandard.ch,DNS:derstandard.ch,DNS:ds.at,DNS:px.staticfiles.at,DNS:finden.at,DNS:live.derstandard.ch,DNS:i.finden.at,DNS:immobilien.derstandard.at,DNS:cnct01.derstandard.at,DNS:live.derstandard.de,DNS:cnct02.derstandard.at,DNS:dst.de,DNS:www.dst.de,DNS:apps.derstandard.de,DNS:derstandard.de,DNS:www.ds.at,DNS:mobil.derstandard.de,DNS:www.dst.at,DNS:www.finden.at,DNS:live.derstandard.at,DNS:images.derstandard.at,DNS:static.derstandard.de,DNS:mobil.derstandard.ch,DNS:secure.derstandard.at,DNS:jobs.derstandard.at,DNS:www.immopreise.at,DNS:apps.derstandard.at,DNS:images.derstandard.de,DNS:images.finden.at,DNS:ipad.derstandard.at,DNS:mobil.derstandard.at,DNS:ipad.derstandard.ch,DNS:at.staticfiles.at,DNS:immopreise.at,DNS:www.derstandard.ch,DNS:akamai.derstandard.at",
             "subject_key_identifier": "2E:30:1A:46:41:F0:E8:1B:72:02:59:41:8A:CF:9D:1B:FA:98:8D:9E",
+            "policy_texts": [
+                "Policy Identifier: 2.16.840.1.114413.1.7.23.1\nPolicy Qualifiers:\n* http://certificates.godaddy.com/repository/",
+                "Policy Identifier: 2.23.140.1.2.1\nNo Policy Qualifiers"
+            ],
             "type": "cert",
             "ca": "godaddy_g2_intermediate"
         },
@@ -2082,6 +2155,10 @@
             "key_usage": "critical,digitalSignature",
             "subject_alternative_name": "DNS:www.google.com",
             "subject_key_identifier": "1F:0D:A6:EA:EA:2B:6E:96:1B:5C:99:B5:C3:3D:6F:5F:4B:0D:BE:9F",
+            "policy_texts": [
+                "Policy Identifier: 1.3.6.1.4.1.11129.2.5.3\nNo Policy Qualifiers",
+                "Policy Identifier: 2.23.140.1.2.2\nNo Policy Qualifiers"
+            ],
             "type": "cert",
             "ca": "google_g3"
         },
@@ -2133,6 +2210,10 @@
             "key_usage": "critical,digitalSignature,keyEncipherment",
             "subject_alternative_name": "DNS:www.ajabber.me,DNS:ajabber.me",
             "subject_key_identifier": "52:5A:45:5B:D4:9D:AC:65:30:BD:67:80:6C:D1:A1:3E:09:F7:FD:92",
+            "policy_texts": [
+                "Policy Identifier: 1.3.6.1.4.1.4146.1.10\nPolicy Qualifiers:\n* https://www.globalsign.com/repository/",
+                "Policy Identifier: 2.23.140.1.2.1\nNo Policy Qualifiers"
+            ],
             "type": "cert",
             "ca": "globalsign_dv"
         },
@@ -2191,6 +2272,10 @@
             },
             "subject_alternative_name": "DNS:jabber.at,DNS:jabber.fsinf.at,DNS:jabber.wien,DNS:jabber.zone,DNS:webchat.jabber.at,DNS:www.jabber.at,DNS:www.jabber.wien,DNS:www.jabber.zone,DNS:www.xmpp.zone,DNS:xmpp.zone",
             "subject_key_identifier": "10:0C:72:91:D6:5F:13:C8:CE:45:2D:53:51:11:A0:A4:8D:08:BC:8F",
+            "policy_texts": [
+                "Policy Identifier: 2.23.140.1.2.1\nNo Policy Qualifiers",
+                "Policy Identifier: 1.3.6.1.4.1.44947.1.1.1\nPolicy Qualifiers:\n* http://cps.letsencrypt.org"
+            ],
             "type": "cert",
             "ca": "letsencrypt_x3"
         },
@@ -2265,6 +2350,10 @@
             },
             "subject_alternative_name": "DNS:www.comodo.com,DNS:comodo.com",
             "subject_key_identifier": "44:3E:73:30:EB:0B:1B:A7:A7:9D:0F:DA:79:96:4D:1A:87:E9:9D:21",
+            "policy_texts": [
+                "Policy Identifier: 1.3.6.1.4.1.6449.1.2.1.5.1\nPolicy Qualifiers:\n* https://secure.comodo.com/CPS",
+                "Policy Identifier: 2.23.140.1.1\nNo Policy Qualifiers"
+            ],
             "type": "cert",
             "ca": "comodo_ev"
         }

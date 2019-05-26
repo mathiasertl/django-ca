@@ -1417,6 +1417,43 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.pi_empty.append(self.q3)
         self.assertEqual(self.pi3, self.pi_empty)
 
+    def test_as_text(self):
+        self.assertEqual(self.pi1.as_text(), 'Policy Identifier: 2.5.29.32.0\n'
+                                             'Policy Qualifiers:\n* text1')
+        self.assertEqual(self.pi2.as_text(), 'Policy Identifier: 2.5.29.32.0\n'
+                                             'Policy Qualifiers:\n'
+                                             '* UserNotice:\n'
+                                             '  * Explicit text: text2')
+        self.assertEqual(self.pi3.as_text(),
+                         'Policy Identifier: 2.5.29.32.0\n'
+                         'Policy Qualifiers:\n'
+                         '* UserNotice:\n'
+                         '  * Reference:\n'
+                         '    * Organiziation: text3\n'
+                         '    * Notice Numbers: [1]')
+        self.assertEqual(self.pi4.as_text(),
+                         'Policy Identifier: 2.5.29.32.0\n'
+                         'Policy Qualifiers:\n'
+                         '* text4\n'
+                         '* UserNotice:\n'
+                         '  * Explicit text: text5\n'
+                         '  * Reference:\n'
+                         '    * Organiziation: text6\n'
+                         '    * Notice Numbers: [1, 2, 3]')
+        self.assertEqual(self.pi_empty.as_text(), 'Policy Identifier: None\nNo Policy Qualifiers')
+
+        self.load_all_cas()
+        self.load_all_certs()
+        for name, cert in list(self.cas.items()) + list(self.certs.items()):
+            try:
+                ext = cert.x509.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES).value
+            except x509.ExtensionNotFound:
+                continue
+
+            for index, policy in enumerate(ext):
+                pi = PolicyInformation(policy)
+                self.assertEqual(pi.as_text(), certs[name]['policy_texts'][index])
+
     def test_certs(self):
         self.load_all_cas()
         self.load_all_certs()
