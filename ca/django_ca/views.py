@@ -426,8 +426,11 @@ else:  # pragma: only cryptography<2.4
             return self.http_response(response.dump())
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class GenericOCSPView(OCSPView):
     def dispatch(self, request, serial, **kwargs):
+        if request.method == 'GET' and 'data' not in kwargs:
+            return self.http_method_not_allowed(request, serial, **kwargs)
         self.ca = CertificateAuthority.objects.get(serial=serial)
         return super(GenericOCSPView, self).dispatch(request, **kwargs)
 
