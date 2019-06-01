@@ -21,9 +21,14 @@ And then simply run ``python dev.py init-demo`` from the root directory of your 
 Development webserver via SSL
 =============================
 
-To test a certificate in your webserver, first install the root certificate
-authority in your browser, then run ``stunnel4`` and ``manage.py runserver`` in
-two separate shells:
+To test a certificate in your webserver, first install stunnel, in Debian/Ubuntu simply do:
+
+.. code-block:: console
+
+   sudo apt-get install stunnel4
+
+the root certificate authority in your browser, then
+run ``stunnel4`` and ``manage.py runserver`` in two separate shells:
 
 .. code-block:: console
 
@@ -76,6 +81,11 @@ intermediate CA)::
 If you have an intermediate CA::
    
    openssl verify -CAfile ca.crt -untrusted intermediate.crt cert.crt
+
+Verify that a certificate belongs to a certain private key by matching the checksum::
+
+   openssl x509 -noout -modulus -in cert.pem | openssl sha1
+   openssl rsa -noout -modulus -in cert.key | openssl sha1
 
 CRLs
 ====
