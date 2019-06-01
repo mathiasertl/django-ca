@@ -424,3 +424,18 @@ else:  # pragma: only cryptography<2.4
             response = builder.build(responder_key, responder_cert)
 
             return self.http_response(response.dump())
+
+
+class GenericOCSPView(OCSPView):
+    def dispatch(self, request, serial, **kwargs):
+        self.ca = CertificateAuthority.objects.get(serial=serial)
+        return super(GenericOCSPView, self).dispatch(request, **kwargs)
+
+    def get_ca(self):
+        return self.ca
+
+    def get_responder_key(self):
+        return read_file('ocsp/%s.key' % self.ca.serial)
+
+    def get_responder_cert(self):
+        return read_file('ocsp/%s.pem' % self.ca.serial)

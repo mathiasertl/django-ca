@@ -15,12 +15,28 @@
 
 from django.conf import settings
 from django.conf.urls import url
+from django.urls import path
+from django.urls import register_converter
 
 from . import ca_settings
+from . import converters
 from . import views
 
+
+register_converter(converters.HexConverter, 'hex')
+register_converter(converters.Base64Converter, 'base64')
+
+
 app_name = 'django_ca'
-urlpatterns = []
+urlpatterns = [
+    path('ocsp/<hex:serial>/cert/', views.GenericOCSPView.as_view(expires=3600), name='ocsp-cert-post'),
+    path('ocsp/<hex:serial>/cert/<base64:data>', views.GenericOCSPView.as_view(expires=3600),
+         name='ocsp-cert-get'),
+    path('ocsp/<hex:serial>/ca/', views.GenericOCSPView.as_view(ca_ocsp=True, expires=86400),
+         name='ocsp-ca-post'),
+    path('ocsp/<hex:serial>/ca/<base64:data>', views.GenericOCSPView.as_view(ca_ocsp=True, expires=86400),
+         name='ocsp-ca-get'),
+]
 
 
 if ca_settings.CA_PROVIDE_GENERIC_CRL is True:  # pragma: no branch
