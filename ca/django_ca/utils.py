@@ -671,7 +671,7 @@ def get_expires(value=None, now=None):
     return now + timedelta(days=value + 1)
 
 
-def get_cert_builder(expires):
+def get_cert_builder(expires, serial=None):
     """Get a basic X509 cert builder object.
 
     Parameters
@@ -679,9 +679,14 @@ def get_cert_builder(expires):
 
     expires : datetime
         When this certificate will expire.
+    serial : int, optional
+        Serial number to set for this certificate. Use :py:func:`~cg:cryptography.x509.random_serial_number`
+        to generate such a value. By default, a value will be generated.
     """
     now = datetime.utcnow().replace(second=0, microsecond=0)
 
+    if serial is None:
+        serial = x509.random_serial_number()
     if expires is None:
         expires = get_expires(expires, now=now)
     expires = expires.replace(second=0, microsecond=0)
@@ -689,7 +694,7 @@ def get_cert_builder(expires):
     builder = x509.CertificateBuilder()
     builder = builder.not_valid_before(now)
     builder = builder.not_valid_after(expires)
-    builder = builder.serial_number(x509.random_serial_number())
+    builder = builder.serial_number(serial)
 
     return builder
 
