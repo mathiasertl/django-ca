@@ -27,6 +27,7 @@ from cryptography.x509.oid import AuthorityInformationAccessOID
 
 from django.core.files.base import ContentFile
 from django.db import models
+from django.urls import reverse
 from django.utils import six
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
@@ -47,6 +48,7 @@ from .signals import pre_issue_cert
 from .subject import Subject
 from .utils import ca_storage
 from .utils import get_cert_builder
+from .utils import int_to_hex
 from .utils import is_power2
 from .utils import parse_general_name
 from .utils import parse_hash_algorithm
@@ -126,14 +128,16 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         crl_url : list of str, optional
             CRL URLs used for certificates signed by this CA.
         ocsp_url : str, optional
-            OCSP URL used for certificates signed by this CA.
+            OCSP URL used for certificates signed by this CA. The default is no value, unless
+            :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` is set.
         ca_issuer_url : str, optional
             URL for the DER/ASN1 formatted certificate that is signing this CA. For intermediate CAs, this
             would usually be the ``issuer_url`` of the parent CA.
         ca_crl_url : list of str, optional
             CRL URLs used for this CA. This value is only meaningful for intermediate CAs.
         ca_ocsp_url : str, optional
-            OCSP URL used for this CA. This value is only meaningful for intermediate CAs.
+            OCSP URL used for this CA. This value is only meaningful for intermediate CAs. The default is
+            no value, unless :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` is set.
         name_constraints : list of lists or :py:class:`~django_ca.extensions.NameConstraints`
             List of names that this CA can sign and/or cannot sign. The value is passed to
             :py:class:`~django_ca.extensions.NameConstraints` if the value is not already an instance of that
@@ -183,6 +187,18 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         if not isinstance(issuer_alt_name, IssuerAlternativeName):
             issuer_alt_name = IssuerAlternativeName(issuer_alt_name)
 
+        serial = x509.random_serial_number()
+        hex_serial = int_to_hex(serial)
+
+        if ca_settings.CA_DEFAULT_HOSTNAME:
+            if not ocsp_url:
+                ocsp_path = reverse('django_ca:ocsp-cert-post', kwargs={'serial': hex_serial})
+                ocsp_url = 'http://%s%s' % (ca_settings.CA_DEFAULT_HOSTNAME, ocsp_path)
+
+            if parent and not ca_ocsp_url:
+                ocsp_path = reverse('django_ca:ocsp-ca-post', kwargs={'serial': hex_serial})
+                ca_ocsp_url = 'http://%s%s' % (ca_settings.CA_DEFAULT_HOSTNAME, ocsp_path)
+
         pre_create_ca.send(
             sender=self.model, name=name, key_size=key_size, key_type=key_type, algorithm=algorithm,
             expires=expires, parent=parent, subject=subject, pathlen=pathlen, issuer_url=issuer_url,
@@ -200,7 +216,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
                                                    backend=default_backend())
         public_key = private_key.public_key()
 
-        builder = get_cert_builder(expires)
+        builder = get_cert_builder(expires, serial=serial)
         builder = builder.public_key(public_key)
         subject = subject.name
 

@@ -30,6 +30,8 @@ ChangeLog
 OCSP
 ====
 
+* The :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` setting is now used to set generic OCSP urls
+  by default.
 * The ``dump_ocsp_index`` management command now excludes certificates expired for more then a day or are not
   yet valid.
 

@@ -39,6 +39,16 @@ CA_DEFAULT_EXPIRES
 
    The default time, in days, that any signed certificate expires.
 
+.. _settings-ca-default-hostname:
+
+CA_DEFAULT_HOSTNAME
+   Default: ``None``
+
+   If set, the default hostname will be used to set generic URLs for the OCSP responder, assuming that
+   ``django_ca`` itself is used as OCSP responder. This setting *must not* include the protocol, as OCSP
+   always uses HTTP (not HTTPS) and this setting might be used for other values in the future.
+
+   Example value: ``"ca.example.com"``.
 
 .. _settings-ca-default-key-size:
 

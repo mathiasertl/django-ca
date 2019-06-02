@@ -151,6 +151,8 @@ CA_NOTIFICATION_DAYS = getattr(settings, 'CA_NOTIFICATION_DAYS', [14, 7, 3, 1, ]
 CA_MIN_KEY_SIZE = getattr(settings, 'CA_MIN_KEY_SIZE', 2048)
 CA_PROVIDE_GENERIC_CRL = getattr(settings, 'CA_PROVIDE_GENERIC_CRL', True)
 
+CA_DEFAULT_HOSTNAME = getattr(settings, 'CA_DEFAULT_HOSTNAME', None)
+
 CA_DIGEST_ALGORITHM = getattr(settings, 'CA_DIGEST_ALGORITHM', "sha512").strip().upper()
 try:
     CA_DIGEST_ALGORITHM = getattr(hashes, CA_DIGEST_ALGORITHM)()

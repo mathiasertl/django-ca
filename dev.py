@@ -303,7 +303,7 @@ elif args.command == 'init-demo':
 
     print('Creating Root CA', end='')
     manage('init_ca', 'Root CA', '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=ca.example.com',
-           pathlen=1, ocsp_url='http://ocsp.ca.example.com',
+           pathlen=1,
            issuer_url='http://ca.example.com/ca.crt', issuer_alt_name='https://ca.example.com'
            )
     root_ca = CertificateAuthority.objects.get(name='Root CA')
@@ -319,18 +319,16 @@ elif args.command == 'init-demo':
     # Compute and set CRL URL for the root CA
     root_crl_path = reverse('django_ca:crl', kwargs={'serial': root_ca.serial})
     root_ca.crl_url = urljoin(base_url, root_crl_path)
-    root_ca.ocsp_url = urljoin(base_url, reverse('django_ca:ocsp-post-root'))
     root_ca.save()
 
     # Get OCSP/CRL URL for child CAs
     root_ca_crl_path = reverse('django_ca:ca-crl', kwargs={'serial': root_ca.serial})
     root_ca_crl = urljoin(base_url, root_ca_crl_path)
-    root_ca_ocsp_ca_url = urljoin(base_url, reverse('django_ca:ocsp-post-root-ca'))
 
     print('Creating Intermediate CA...', end='')
     manage(
         'init_ca', 'Intermediate CA', '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=sub.ca.example.com',
-        parent=root_ca, ca_crl_url=root_ca_crl, ca_ocsp_url=root_ca_ocsp_ca_url,
+        parent=root_ca, ca_crl_url=root_ca_crl
     )
     child_ca = CertificateAuthority.objects.get(name='Intermediate CA')
     ok()
@@ -345,7 +343,6 @@ elif args.command == 'init-demo':
     # Compute and set CRL URL for the child CA
     child_crl_path = reverse('django_ca:crl', kwargs={'serial': child_ca.serial})
     child_ca.crl_url = urljoin(base_url, child_crl_path)
-    child_ca.ocsp_url = urljoin(base_url, reverse('django_ca:ocsp-post-intermediate'))
     child_ca.save()
 
     # Create some client certificates (always trust localhost to ease testing)
