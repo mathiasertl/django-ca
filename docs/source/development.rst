@@ -113,8 +113,8 @@ Run a OCSP responder::
 
 Verify a certificate using OCSP::
 
-  openssl ocsp -CAfile ca.pem -issuer ca.pem -cert cert.pem \
-      -url http://localhost:8888 -resp_text
+  openssl ocsp -CAfile {root-ca-serial}.pem -issuer {intermediate-ca-serial}.pem -cert host1.example.com.pem
+      -url http://localhost:8000/django_ca/ocsp/{intermediate-ca-serial}/cert/ -text
 
 Conversion
 ==========
