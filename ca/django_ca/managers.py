@@ -90,8 +90,8 @@ class CertificateManagerMixin(object):
 
 
 class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
-    def init(self, name, subject, expires=None, algorithm=None, parent=None, pathlen=None,
-             issuer_url=None, issuer_alt_name='', crl_url=None, ocsp_url=None,
+    def init(self, name, subject, expires=None, algorithm=None, parent=None, default_hostname=None,
+             pathlen=None, issuer_url=None, issuer_alt_name='', crl_url=None, ocsp_url=None,
              ca_issuer_url=None, ca_crl_url=None, ca_ocsp_url=None, name_constraints=None,
              password=None, parent_password=None, ecc_curve=None, key_type='RSA', key_size=None,
              extra_extensions=None):
@@ -116,6 +116,9 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         parent : :py:class:`~django_ca.models.CertificateAuthority`, optional
             Parent certificate authority for the new CA. Passing this value makes the CA an intermediate
             authority.
+        default_hostname : str, optional
+            Override the url configured with :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` with a
+            different hostname. Set to ``False`` to disable the hostname.
         pathlen : int, optional
             Value of the path length attribute for the :py:class:`~django_ca.extensions.BasicConstraints`
             extension.
@@ -190,14 +193,17 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         serial = x509.random_serial_number()
         hex_serial = int_to_hex(serial)
 
-        if ca_settings.CA_DEFAULT_HOSTNAME:
+        if default_hostname is None:
+            default_hostname = ca_settings.CA_DEFAULT_HOSTNAME
+
+        if default_hostname:
             if not ocsp_url:
                 ocsp_path = reverse('django_ca:ocsp-cert-post', kwargs={'serial': hex_serial})
-                ocsp_url = 'http://%s%s' % (ca_settings.CA_DEFAULT_HOSTNAME, ocsp_path)
+                ocsp_url = 'http://%s%s' % (default_hostname, ocsp_path)
 
             if parent and not ca_ocsp_url:
                 ocsp_path = reverse('django_ca:ocsp-ca-post', kwargs={'serial': hex_serial})
-                ca_ocsp_url = 'http://%s%s' % (ca_settings.CA_DEFAULT_HOSTNAME, ocsp_path)
+                ca_ocsp_url = 'http://%s%s' % (default_hostname, ocsp_path)
 
         pre_create_ca.send(
             sender=self.model, name=name, key_size=key_size, key_type=key_type, algorithm=algorithm,
