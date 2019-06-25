@@ -190,7 +190,8 @@ CA_DEFAULT_EXPIRES = 100
 # should be something that doesn't exist, so make sure we use a decorator everywhere
 CA_DIR = '/non/existent'
 
-#CA_DEFAULT_HOSTNAME = 'testserver'
+# WARNING: do not set to testserver, as URLValidator does not consider it a valid hostname
+CA_DEFAULT_HOSTNAME = 'localhost'
 
 # TODO: get serial and paths from fixture data
 CA_OCSP_URLS = {
