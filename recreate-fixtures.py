@@ -94,7 +94,7 @@ ecc_pathlen = 1
 pwd_pathlen = 2
 dsa_pathlen = 3
 dsa_algorithm = 'SHA1'
-testserver = 'http://testserver'
+testserver = 'http://%s' % ca_settings.CA_DEFAULT_HOSTNAME
 
 
 class override_tmpcadir(override_settings):
@@ -206,6 +206,8 @@ def write_ca(cert, data, password=None):
     data['issuer_url'] = ca.issuer_url
     data['crl_url'] = ca.crl_url
     data['ca_crl_url'] = '%s%s' % (testserver, reverse('django_ca:ca-crl', kwargs={'serial': ca.serial}))
+    data['ocsp_url'] = '%s%s' % (testserver, reverse('django_ca:ocsp-cert-post',
+                                                     kwargs={'serial': ca.serial}))
 
     # Update common data for CAs and certs
     update_cert_data(cert, data)
@@ -451,9 +453,7 @@ for cert, cert_values in data.items():
         cert_values['csr_filename'] = False
 
     if cert_values.get('type') == 'ca':
-        data[cert]['ca_ocsp_url'] = '%s/ca/ocsp/%s/' % (testserver, data[cert]['name'])
         data[cert].setdefault('issuer_url', '%s/%s.der' % (testserver, cert))
-        data[cert].setdefault('ocsp_url', '%s%s' % (testserver, reverse('django_ca:ocsp-post-%s' % cert)))
         data[cert].setdefault('expires', timedelta(days=366))
     else:
         data[cert]['cn'] = '%s.example.com' % cert
@@ -474,7 +474,6 @@ if not args.only_contrib:
                 kwargs['parent'] = CertificateAuthority.objects.get(name=parent)
                 kwargs['ca_crl_url'] = data[parent]['ca_crl_url']
                 kwargs['ca_issuer_url'] = data[parent]['issuer_url']
-                kwargs['ca_ocsp_url'] = data[parent]['ca_ocsp_url']
 
                 # also update data
                 data[name]['crl'] = data[parent]['ca_crl_url']
@@ -485,7 +484,6 @@ if not args.only_contrib:
                     expires=datetime.utcnow() + data[name]['expires'],
                     key_type=data[name]['key_type'], key_size=data[name]['key_size'],
                     algorithm=data[name]['algorithm'],
-                    ocsp_url=data[name]['ocsp_url'],
                     issuer_url=data[name]['issuer_url'],
                     pathlen=data[name]['pathlen'], **kwargs
                 )
