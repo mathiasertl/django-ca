@@ -574,7 +574,10 @@ class CertificateAuthority(X509CertMixin):
         except x509.ExtensionNotFound:
             return x509.AuthorityKeyIdentifier.from_issuer_public_key(self.x509.public_key())
         else:
-            return x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski)
+            if ca_settings.CRYPTOGRAPHY_AKI_REQUIRES_EXTENSION:  # pragma: only cryptography<2.7
+                return x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski)
+            else:  # pragma: only cryptography>=2.7
+                return x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski.value)
 
     def get_crl(self, expires=86400, encoding=None, algorithm=None, password=None, scope=None, counter=None,
                 **kwargs):

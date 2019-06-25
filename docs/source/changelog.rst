@@ -10,6 +10,7 @@ ChangeLog
 1.13.0 (TBR)
 ************
 
+* Add support for cryptography 2.7.
 * Development commands from ``setup.py`` are now moved to new ``dev.py`` script to remove clutter.
 * Use OpenSSL instead of LibreSSL in Dockerfile to enable testing for Alpine 3.7. The cryptography
   documentation also `suggests <https://cryptography.io/en/stable/installation/#alpine>`_ OpenSSL.
@@ -60,7 +61,7 @@ CRLs
 *******************
 
 * Fix traceback when a certificate that does not exist is viewed in the admin interface.
-* Add support cryptography 2.5 and 2.6.
+* Add support for cryptography 2.5 and 2.6.
 * Start using `Django storage backends <https://docs.djangoproject.com/en/2.1/ref/files/storage/>`_ for files
   used by django-ca. This allows you to store files on a shared storage system (e.g. one from `django-storages
   <https://django-storages.readthedocs.io/>`_) to support a redundant setup.
