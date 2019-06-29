@@ -442,3 +442,10 @@ class GenericOCSPView(OCSPView):
 
     def get_responder_cert(self):
         return read_file('ocsp/%s.pem' % self.ca.serial)
+
+
+class GenericCAIssuersView(View):
+    def get(self, request, serial):
+        ca = CertificateAuthority.objects.get(serial=serial)
+        data = ca.x509.public_bytes(encoding=Encoding.DER)
+        return HttpResponse(data, content_type='application/pkix-cert')

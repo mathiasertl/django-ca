@@ -29,6 +29,7 @@ register_converter(converters.Base64Converter, 'base64')
 
 app_name = 'django_ca'
 urlpatterns = [
+    path('issuer/<hex:serial>.der', views.GenericCAIssuersView.as_view(), name='issuer'),
     path('ocsp/<hex:serial>/cert/', views.GenericOCSPView.as_view(expires=3600), name='ocsp-cert-post'),
     path('ocsp/<hex:serial>/cert/<base64:data>', views.GenericOCSPView.as_view(expires=3600),
          name='ocsp-cert-get'),
