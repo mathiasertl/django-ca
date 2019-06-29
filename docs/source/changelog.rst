@@ -28,6 +28,11 @@ ChangeLog
 * **DEPRECATION NOTICE:** ``CertificateRevocationListView.ca_crl`` is deprecated in favor of the ``scope``
   parameter. If you have set ``ca_crl=True`` just set ``scope="ca"`` instead.
 
+Python API
+==========
+
+* Add the ``root`` property to CAs and certificates returning the root Certificate Authority.
+
 OCSP
 ====
 

@@ -758,6 +758,18 @@ class CertificateAuthority(X509CertMixin):
             ca = ca.parent
         return bundle
 
+    @property
+    def root(self):
+        """Get the root CA for this CA."""
+
+        if self.parent is None:
+            return self
+
+        ca = self
+        while ca.parent is not None:
+            ca = ca.parent
+        return ca
+
     class Meta:
         verbose_name = _('Certificate Authority')
         verbose_name_plural = _('Certificate Authorities')
@@ -780,6 +792,12 @@ class Certificate(X509CertMixin):
         """The complete certificate bundle. This includes all CAs as well as the certificates itself."""
 
         return [self] + self.ca.bundle
+
+    @property
+    def root(self):
+        """Get the root CA for this certificate."""
+
+        return self.ca.root
 
     def __str__(self):
         return self.cn
