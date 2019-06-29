@@ -453,7 +453,6 @@ for cert, cert_values in data.items():
         cert_values['csr_filename'] = False
 
     if cert_values.get('type') == 'ca':
-        data[cert].setdefault('issuer_url', '%s/%s.der' % (testserver, cert))
         data[cert].setdefault('expires', timedelta(days=366))
     else:
         data[cert]['cn'] = '%s.example.com' % cert
@@ -473,7 +472,6 @@ if not args.only_contrib:
             if parent:
                 kwargs['parent'] = CertificateAuthority.objects.get(name=parent)
                 kwargs['ca_crl_url'] = data[parent]['ca_crl_url']
-                kwargs['ca_issuer_url'] = data[parent]['issuer_url']
 
                 # also update data
                 data[name]['crl'] = data[parent]['ca_crl_url']
@@ -484,7 +482,6 @@ if not args.only_contrib:
                     expires=datetime.utcnow() + data[name]['expires'],
                     key_type=data[name]['key_type'], key_size=data[name]['key_size'],
                     algorithm=data[name]['algorithm'],
-                    issuer_url=data[name]['issuer_url'],
                     pathlen=data[name]['pathlen'], **kwargs
                 )
 
