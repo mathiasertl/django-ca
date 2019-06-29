@@ -205,6 +205,12 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
                 ocsp_path = reverse('django_ca:ocsp-ca-post', kwargs={'serial': hex_serial})
                 ca_ocsp_url = 'http://%s%s' % (default_hostname, ocsp_path)
 
+            issuer_path = reverse('django_ca:issuer', kwargs={'serial': hex_serial})
+            if parent and not ca_issuer_url:
+                ca_issuer_url = 'http://%s%s' % (default_hostname, issuer_path)
+            if not issuer_url:
+                issuer_url = 'http://%s%s' % (default_hostname, issuer_path)
+
         pre_create_ca.send(
             sender=self.model, name=name, key_size=key_size, key_type=key_type, algorithm=algorithm,
             expires=expires, parent=parent, subject=subject, pathlen=pathlen, issuer_url=issuer_url,
