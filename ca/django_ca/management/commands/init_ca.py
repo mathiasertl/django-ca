@@ -20,8 +20,6 @@ https://skippylovesmalorie.wordpress.com/2010/02/12/how-to-generate-a-self-signe
 
 import os
 
-import idna
-
 from django.core.management.base import CommandError
 
 from ... import ca_settings
