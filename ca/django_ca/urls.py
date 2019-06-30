@@ -22,7 +22,6 @@ from . import ca_settings
 from . import converters
 from . import views
 
-
 register_converter(converters.HexConverter, 'hex')
 register_converter(converters.Base64Converter, 'base64')
 

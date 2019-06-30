@@ -25,7 +25,6 @@ from django.conf.urls import url
 from django.core.cache import cache
 from django.test import Client
 from django.urls import reverse
-from django.utils.six.moves.urllib.parse import urlparse
 
 from ..views import CertificateRevocationListView
 from .base import DjangoCAWithCertTestCase

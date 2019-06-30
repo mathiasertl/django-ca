@@ -75,7 +75,6 @@ from .subject import Subject
 from .utils import add_colons
 from .utils import ca_storage
 from .utils import format_name
-from .utils import get_cert_builder
 from .utils import get_expires
 from .utils import get_extension_name
 from .utils import int_to_hex
