@@ -53,6 +53,7 @@ from .utils import is_power2
 from .utils import parse_general_name
 from .utils import parse_hash_algorithm
 from .utils import parse_key_curve
+from .utils import validate_hostname
 
 
 class CertificateManagerMixin(object):
@@ -197,6 +198,8 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             default_hostname = ca_settings.CA_DEFAULT_HOSTNAME
 
         if default_hostname:
+            default_hostname = validate_hostname(default_hostname)
+
             if not ocsp_url:
                 ocsp_path = reverse('django_ca:ocsp-cert-post', kwargs={'serial': hex_serial})
                 ocsp_url = 'http://%s%s' % (default_hostname, ocsp_path)
