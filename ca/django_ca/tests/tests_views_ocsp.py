@@ -39,6 +39,7 @@ from .. import ca_settings
 from ..constants import ReasonFlags
 from ..models import Certificate
 from ..subject import Subject
+from ..utils import ca_storage
 from ..utils import hex_to_bytes
 from ..utils import int_to_hex
 from ..views import OCSPView
@@ -47,6 +48,7 @@ from .base import certs
 from .base import ocsp_data
 from .base import override_settings
 from .base import override_tmpcadir
+from .base import timestamps
 
 try:
     import unittest.mock as mock
@@ -183,7 +185,7 @@ class OCSPViewTestMixin(object):
     def assertAlmostEqualDate(self, got, expected):
         # Sometimes next_update timestamps are off by a second or so, so we test
         delta = timedelta(seconds=3)
-        self.assertTrue(got < expected + delta and got > expected - delta, (got, expected))
+        self.assertTrue(got < expected + delta and got > expected - delta, (got, expected, got - expected))
 
     def sign_func(self, tbs_request, algo):
         if algo['algorithm'].native == 'sha256_rsa':
@@ -212,9 +214,10 @@ class OCSPViewTestMixin(object):
         self.assertEqual(got, {})
         self.assertEqual(Subject(translated), expected)
 
-    def assertOCSP(self, http_response, requested, status='successful', nonce=None,
-                   expires=600):
+    def assertOCSP(self, http_response, requested, status='successful', nonce=None, expires=600,
+                   ocsp_cert=None):
 
+        ocsp_cert = ocsp_cert or self.certs['profile-ocsp']
         self.assertEqual(http_response['Content-Type'], 'application/ocsp-response')
 
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(http_response.content)
@@ -235,13 +238,13 @@ class OCSPViewTestMixin(object):
         resp_certs = response['certs']
         self.assertEqual(len(resp_certs), 1)
         serials = [int_to_hex(c['tbs_certificate']['serial_number'].native) for c in resp_certs]
-        self.assertEqual(serials, [certs['profile-ocsp']['serial']])
+        self.assertEqual(serials, [ocsp_cert.serial])
 
         # verify subjects of certificates
         self.assertOCSPSubject(resp_certs[0]['tbs_certificate']['subject'].native,
-                               self.certs['profile-ocsp'].subject)
+                               ocsp_cert.subject)
         self.assertOCSPSubject(resp_certs[0]['tbs_certificate']['issuer'].native,
-                               self.certs['profile-ocsp'].ca.subject)
+                               ocsp_cert.ca.subject)
 
         tbs_response_data = response['tbs_response_data']
         self.assertEqual(tbs_response_data['version'].native, 'v1')
@@ -558,3 +561,48 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
 @override_settings(USE_TZ=True)
 class OCSPWithTZTestView(OCSPTestView):
     pass
+
+
+@freeze_time(timestamps['everything_valid'])
+@override_settings(CA_DEFAULT_KEY_SIZE=1024)
+class GenericOCSPViewTestCase(OCSPViewTestMixin, DjangoCAWithCertTestCase):
+    @override_tmpcadir()
+    def test_cert_get(self):
+        ca = self.cas['child']
+        cert = self.certs['child-cert']
+
+        priv_path, cert_path, ocsp_cert = ca.generate_ocsp_key()
+        self.ocsp_private_key = asymmetric.load_private_key(ca_storage.path(priv_path))
+
+        url = reverse('django_ca:ocsp-cert-get', kwargs={
+            'serial': self.cas['child'].serial,
+            'data': base64.b64encode(req1).decode('utf-8'),
+        })
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        # URL config sets expires to 3600
+        self.assertOCSP(response, requested=[cert], nonce=req1_nonce, ocsp_cert=ocsp_cert, expires=3600)
+
+        priv_path, cert_path, ocsp_cert = ca.generate_ocsp_key(key_size=1024)
+        self.ocsp_private_key = asymmetric.load_private_key(ca_storage.path(priv_path))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        # URL config sets expires to 3600
+        self.assertOCSP(response, requested=[cert], nonce=req1_nonce, ocsp_cert=ocsp_cert, expires=3600)
+
+    @override_tmpcadir()
+    def test_cert_method_not_allowed(self):
+        url = reverse('django_ca:ocsp-cert-post', kwargs={
+            'serial': self.cas['child'].serial,
+        })
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 405)
+
+        url = reverse('django_ca:ocsp-cert-get', kwargs={
+            'serial': self.cas['child'].serial,
+            'data': base64.b64encode(req1).decode('utf-8'),
+        })
+        response = self.client.post(url, req1, content_type='application/ocsp-request')
+        self.assertEqual(response.status_code, 405)

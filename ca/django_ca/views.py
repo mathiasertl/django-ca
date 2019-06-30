@@ -180,14 +180,14 @@ class OCSPBaseView(View):
             log.exception(e)
             return self.fail()
 
-    def get_responder_key(self):
+    def get_responder_key_data(self):
         if os.path.isabs(self.responder_key):
             log.warning('%s: OCSP responder uses absolute path to private key. Please see %s.',
                         self.responder_key, ca_settings.CA_FILE_STORAGE_URL)
 
         return read_file(self.responder_key)
 
-    def get_responder_cert(self):
+    def get_responder_cert_data(self):
         if self.responder_cert.startswith('-----BEGIN CERTIFICATE-----\n'):
             return self.responder_cert.encode('utf-8')
 
@@ -231,7 +231,7 @@ if ca_settings.CRYPTOGRAPHY_OCSP is True:  # pragma: only cryptography>=2.4
             return self.fail(ocsp.OCSPResponseStatus.MALFORMED_REQUEST)
 
         def get_responder_key(self):
-            key = super(OCSPView, self).get_responder_key()
+            key = self.get_responder_key_data()
             return serialization.load_pem_private_key(key, None, default_backend())
 
         def get_responder_cert(self):
@@ -239,7 +239,7 @@ if ca_settings.CRYPTOGRAPHY_OCSP is True:  # pragma: only cryptography>=2.4
             if isinstance(self.responder_cert, x509.Certificate):
                 return self.responder_cert
 
-            responder_cert = super(OCSPView, self).get_responder_cert()
+            responder_cert = self.get_responder_cert_data()
             return load_pem_x509_certificate(responder_cert, default_backend())
 
         def process_ocsp_request(self, data):
@@ -285,12 +285,14 @@ if ca_settings.CRYPTOGRAPHY_OCSP is True:  # pragma: only cryptography>=2.4
             else:
                 status = ocsp.OCSPCertStatus.GOOD
 
+            now = datetime.utcnow()
             builder = ocsp.OCSPResponseBuilder()
+            expires = datetime.utcnow() + timedelta(seconds=self.expires)
             builder = builder.add_response(
                 cert=cert.x509, issuer=ca.x509, algorithm=hashes.SHA1(),
                 cert_status=status,
-                this_update=datetime.utcnow(),
-                next_update=datetime.utcnow() + timedelta(seconds=self.expires),
+                this_update=now,
+                next_update=expires,
                 revocation_time=cert.get_revocation_time(),
                 revocation_reason=cert.get_revocation_reason()
             ).responder_id(
@@ -327,7 +329,7 @@ else:  # pragma: only cryptography<2.4
             return self.fail(u'malformed_request')
 
         def get_responder_key(self):
-            key = super(OCSPView, self).get_responder_key()
+            key = self.get_responder_key_data()
             return load_private_key(key)
 
         def get_responder_cert(self):
@@ -335,7 +337,7 @@ else:  # pragma: only cryptography<2.4
             if isinstance(self.responder_cert, asymmetric.Certificate):
                 return self.responder_cert
 
-            responder_cert = super(OCSPView, self).get_responder_cert()
+            responder_cert = self.get_responder_cert_data()
             return load_certificate(responder_cert)
 
         def process_ocsp_request(self, data):
@@ -431,16 +433,18 @@ class GenericOCSPView(OCSPView):
     def dispatch(self, request, serial, **kwargs):
         if request.method == 'GET' and 'data' not in kwargs:
             return self.http_method_not_allowed(request, serial, **kwargs)
+        elif request.method == 'POST' and 'data' in kwargs:
+            return self.http_method_not_allowed(request, serial, **kwargs)
         self.ca = CertificateAuthority.objects.get(serial=serial)
         return super(GenericOCSPView, self).dispatch(request, **kwargs)
 
     def get_ca(self):
         return self.ca
 
-    def get_responder_key(self):
+    def get_responder_key_data(self):
         return read_file('ocsp/%s.key' % self.ca.serial.replace(':', ''))
 
-    def get_responder_cert(self):
+    def get_responder_cert_data(self):
         return read_file('ocsp/%s.pem' % self.ca.serial.replace(':', ''))
 
 

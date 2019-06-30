@@ -28,13 +28,17 @@ import pytz
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
+from cryptography.hazmat.primitives.serialization import PrivateFormat
 from cryptography.hazmat.primitives.serialization import PublicFormat
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -62,6 +66,7 @@ from .extensions import TLSFeature
 from .extensions import UnrecognizedExtension
 from .managers import CertificateAuthorityManager
 from .managers import CertificateManager
+from .profiles import get_cert_profile_kwargs
 from .querysets import CertificateAuthorityQuerySet
 from .querysets import CertificateQuerySet
 from .signals import post_revoke_cert
@@ -70,6 +75,8 @@ from .subject import Subject
 from .utils import add_colons
 from .utils import ca_storage
 from .utils import format_name
+from .utils import get_cert_builder
+from .utils import get_expires
 from .utils import get_extension_name
 from .utils import int_to_hex
 from .utils import multiline_url_validator
@@ -565,6 +572,44 @@ class CertificateAuthority(X509CertMixin):
             return os.path.exists(self.private_key_path)
         else:
             return ca_storage.exists(self.private_key_path)
+
+    def generate_ocsp_key(self, expires=3, algorithm=None, key_size=None):
+        if key_size is None:
+            key_size = ca_settings.CA_DEFAULT_KEY_SIZE
+        expires = get_expires(expires)
+        algorithm = parse_hash_algorithm(algorithm)
+
+        # generate the private key
+        # TODO: use same algo as CA
+        priv_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size,
+                                            backend=default_backend())
+        priv_pem = priv_key.private_bytes(encoding=Encoding.PEM, format=PrivateFormat.PKCS8,
+                                          encryption_algorithm=serialization.NoEncryption())
+        priv_path = ca_storage.generate_filename('ocsp/%s.key' % self.serial.replace(':', ''))
+
+        csr = x509.CertificateSigningRequestBuilder().subject_name(self.x509.subject).sign(
+            priv_key, hashes.SHA256(), default_backend())
+
+        kwargs = get_cert_profile_kwargs('ocsp')
+        # TODO: This value is just a guess - see what public CAs do!?
+        kwargs['subject'] = self.subject
+        cert = Certificate.objects.init(
+            ca=self,
+            csr=csr,
+            expires=expires,
+            **kwargs
+        )
+
+        cert_path = ca_storage.generate_filename('ocsp/%s.pem' % self.serial.replace(':', ''))
+        cert_pem = cert.dump_certificate(encoding=Encoding.PEM)
+
+        for path, contents in [(priv_path, priv_pem), (cert_path, cert_pem)]:
+            if ca_storage.exists(path):
+                with ca_storage.open(path, 'wb') as stream:
+                    stream.write(contents)
+            else:
+                ca_storage.save(path, ContentFile(contents))
+        return priv_path, cert_path, cert
 
     def get_authority_key_identifier(self):
         """Return the AuthorityKeyIdentifier extension used in certificates signed by this CA."""
