@@ -182,7 +182,7 @@ class KeySizeActionTestCase(DjangoCATestCase):
         self.assertParserError(['--size=3084'], expected)
         self.assertParserError(['--size=4095'], expected)
 
-    @override_settings(CA_MIN_KEY_SIZE=2048)
+    @override_settings(CA_MIN_KEY_SIZE=2048, CA_DEFAULT_KEY_SIZE=4096)
     def test_to_small(self):
         expected = '''usage: {script} [-h] [--size SIZE]
 {script}: error: --size must be at least 2048 bits.\n'''
