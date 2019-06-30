@@ -201,3 +201,9 @@ if cryptography.__version__ < '2.7':  # pragma: no branch, pragma: only cryptogr
     CRYPTOGRAPHY_AKI_REQUIRES_EXTENSION = True
 
 CA_FILE_STORAGE_URL = 'https://django-ca.readthedocs.io/en/latest/update.html#update-to-1-12-0-or-later'
+
+CA_DJANGO_SUPPORTS_PATH = True
+try:
+    from django.urls import path  # NOQA
+except ImportError:  # pragma: only django<=1.11
+    CA_DJANGO_SUPPORTS_PATH = False

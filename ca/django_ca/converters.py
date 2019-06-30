@@ -14,7 +14,7 @@
 # see <http://www.gnu.org/licenses/>.
 
 
-class HexConverter:
+class HexConverter:  # pragma: only django>=2.1
     regex = '[0-9A-F:]+'
 
     def to_python(self, value):
@@ -24,7 +24,7 @@ class HexConverter:
         return value
 
 
-class Base64Converter:
+class Base64Converter:  # pragma: only django>=2.1
     regex = '[a-zA-Z0-9=+/]+'
 
     def to_python(self, value):
