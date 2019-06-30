@@ -506,6 +506,48 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(key.key_size, 1024)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_default_hostname(self):
+        # test manually passing a default hostname
+        self.load_usable_cas()
+
+        name = 'ca'
+        hostname = 'test-default-hostname.com'
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(name=name, parent=self.cas['root'], default_hostname=hostname)
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        self.assertTrue(pre.called)
+        ca = CertificateAuthority.objects.get(name=name)
+        self.assertPostCreateCa(post, ca)
+
+        self.assertEqual(ca.issuer_url,
+                         'http://%s/django_ca/issuer/%s.der' % (hostname, self.cas['root'].serial))
+        self.assertEqual(ca.ocsp_url,
+                         'http://%s/django_ca/ocsp/%s/cert/' % (hostname, ca.serial))
+        self.assertEqual(ca.authority_information_access,
+                         AuthorityInformationAccess([[
+                             'URI:http://%s/django_ca/issuer/%s.der' % (hostname, ca.root.serial)
+                         ], [
+                             'URI:http://%s/django_ca/ocsp/%s/ca/' % (hostname, ca.serial)
+                         ]]))
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_no_default_hostname(self):
+        # disable default hostname via the command line
+        name = 'ca'
+        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+            out, err = self.init_ca(name=name, default_hostname=False)
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        self.assertTrue(pre.called)
+        ca = CertificateAuthority.objects.get(name=name)
+        self.assertPostCreateCa(post, ca)
+
+        self.assertIsNone(ca.issuer_url)
+        self.assertIsNone(ca.ocsp_url)
+        self.assertIsNone(ca.authority_information_access)
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_root_ca_crl_url(self):
         with self.assertCommandError(r'^CRLs cannot be used to revoke root CAs\.$'), \
                 self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
