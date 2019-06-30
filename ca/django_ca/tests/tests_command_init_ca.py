@@ -287,7 +287,11 @@ class InitCATest(DjangoCATestCase):
             'full_name': [ca_crl_url],
         }]))
         self.assertEqual(child.authority_information_access,
-                         AuthorityInformationAccess([[], ['URI:http://ca.ocsp.example.com']]))
+                         AuthorityInformationAccess([[
+                             'URI:http://localhost/django_ca/issuer/%s.der' % parent.serial
+                         ], [
+                             'URI:http://ca.ocsp.example.com'
+                         ]]))
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_intermediate_check(self):

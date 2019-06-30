@@ -199,6 +199,10 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
         if default_hostname:
             default_hostname = validate_hostname(default_hostname)
+            if parent:
+                root_serial = parent.root.serial
+            else:
+                root_serial = hex_serial
 
             if not ocsp_url:
                 ocsp_path = reverse('django_ca:ocsp-cert-post', kwargs={'serial': hex_serial})
@@ -208,7 +212,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
                 ocsp_path = reverse('django_ca:ocsp-ca-post', kwargs={'serial': hex_serial})
                 ca_ocsp_url = 'http://%s%s' % (default_hostname, ocsp_path)
 
-            issuer_path = reverse('django_ca:issuer', kwargs={'serial': hex_serial})
+            issuer_path = reverse('django_ca:issuer', kwargs={'serial': root_serial})
             if parent and not ca_issuer_url:
                 ca_issuer_url = 'http://%s%s' % (default_hostname, issuer_path)
             if not issuer_url:
