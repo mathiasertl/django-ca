@@ -142,6 +142,10 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         for name, ca in self.cas.items():
             self.assertEqual(ca.pathlen, certs[name].get('pathlen'))
 
+    def test_root(self):
+        self.assertEqual(self.cas['root'].root, self.cas['root'])
+        self.assertEqual(self.cas['child'].root, self.cas['root'])
+
     @freeze_time('2019-04-14 12:26:00')
     @override_tmpcadir()
     def test_full_crl(self):
@@ -337,6 +341,10 @@ class CertificateTests(DjangoCAWithCertTestCase):
 
         with self.assertRaises(ValueError):
             c.get_revocation()
+
+    def test_root(self):
+        self.assertEqual(self.certs['root-cert'].root, self.cas['root'])
+        self.assertEqual(self.certs['child-cert'].root, self.cas['root'])
 
     @override_tmpcadir()
     def test_serial(self):
