@@ -438,10 +438,10 @@ class GenericOCSPView(OCSPView):
         return self.ca
 
     def get_responder_key(self):
-        return read_file('ocsp/%s.key' % self.ca.serial)
+        return read_file('ocsp/%s.key' % self.ca.serial.replace(':', ''))
 
     def get_responder_cert(self):
-        return read_file('ocsp/%s.pem' % self.ca.serial)
+        return read_file('ocsp/%s.pem' % self.ca.serial.replace(':', ''))
 
 
 class GenericCAIssuersView(View):
