@@ -62,6 +62,7 @@ from ..utils import parse_key_curve
 from ..utils import parse_name
 from ..utils import read_file
 from ..utils import validate_email
+from ..utils import validate_hostname
 from ..utils import x509_relative_name
 from .base import DjangoCATestCase
 from .base import cryptography_version
@@ -322,6 +323,46 @@ class ValidateEmailTestCase(DjangoCATestCase):
 
         with self.assertRaisesRegex(ValueError, '^Invalid email address: example.com$'):
             validate_email('example.com')
+
+
+class ValidateHostnameTestCase(TestCase):
+    def test_no_port(self):
+        self.assertEqual(validate_hostname('localhost'), 'localhost')
+        self.assertEqual(validate_hostname('testserver'), 'testserver')
+        self.assertEqual(validate_hostname('example.com'), 'example.com')
+        self.assertEqual(validate_hostname('test.example.com'), 'test.example.com')
+
+    def test_with_port(self):
+        self.assertEqual(validate_hostname('localhost:443', allow_port=True), 'localhost:443')
+        self.assertEqual(validate_hostname('testserver:443', allow_port=True), 'testserver:443')
+        self.assertEqual(validate_hostname('example.com:443', allow_port=True), 'example.com:443')
+        self.assertEqual(validate_hostname('test.example.com:443', allow_port=True), 'test.example.com:443')
+        self.assertEqual(validate_hostname('test.example.com:1', allow_port=True), 'test.example.com:1')
+        self.assertEqual(validate_hostname('example.com:65535', allow_port=True), 'example.com:65535')
+
+    def test_invalid_hostname(self):
+        with self.assertRaisesRegex(ValueError, 'example..com: Not a valid hostname'):
+            validate_hostname('example..com')
+
+    def test_no_allow_port(self):
+        with self.assertRaisesRegex(ValueError, '^localhost:443: Not a valid hostname$'):
+            validate_hostname('localhost:443')
+        with self.assertRaisesRegex(ValueError, '^test.example.com:443: Not a valid hostname$'):
+            validate_hostname('test.example.com:443')
+
+    def test_port_errors(self):
+        with self.assertRaisesRegex(ValueError, '^no-int: Port must be an integer$'):
+            validate_hostname('localhost:no-int', allow_port=True)
+        with self.assertRaisesRegex(ValueError, '^0: Port must be between 1 and 65535$'):
+            validate_hostname('localhost:0', allow_port=True)
+        with self.assertRaisesRegex(ValueError, '^-5: Port must be between 1 and 65535$'):
+            validate_hostname('localhost:-5', allow_port=True)
+        with self.assertRaisesRegex(ValueError, '^65536: Port must be between 1 and 65535$'):
+            validate_hostname('localhost:65536', allow_port=True)
+        with self.assertRaisesRegex(ValueError, '^100000: Port must be between 1 and 65535$'):
+            validate_hostname('localhost:100000', allow_port=True)
+        with self.assertRaisesRegex(ValueError, '^colon: Port must be an integer$'):
+            validate_hostname('localhost:double:colon', allow_port=True)
 
 
 class ParseGeneralNameTest(TestCase):

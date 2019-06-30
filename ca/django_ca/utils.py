@@ -360,6 +360,51 @@ def validate_email(addr):
     return '%s@%s' % (node, force_text(domain))
 
 
+def validate_hostname(hostname, allow_port=False):
+    """Validate a hostname, optionally with a given port.
+
+    >>> validate_hostname('example.com')
+    'example.com'
+    >>> validate_hostname('example.com:8000', allow_port=True)
+    'example.com:8000'
+
+    Parameters
+    ----------
+
+    hostname : str
+        The hostname to validate.
+    allow_port : bool, optional
+        If ``True``, the hostname can also contain an optional port number, e.g. "example.com:8000".
+
+    Raises
+    ------
+
+    ValueError
+        If hostname or port are not valid.
+
+    """
+    port = None
+    if allow_port is True and ':' in hostname:
+        hostname, port = hostname.rsplit(':', 1)
+
+        try:
+            port = int(port)
+        except ValueError:
+            raise ValueError('%s: Port must be an integer' % port)
+        else:
+            if port < 1 or port > 65535:
+                raise ValueError('%s: Port must be between 1 and 65535' % port)
+
+    try:
+        encoded = idna.encode(hostname).decode('utf-8')
+    except idna.IDNAError:
+        raise ValueError('%s: Not a valid hostname' % hostname)
+
+    if allow_port is True and port is not None:
+        return '%s:%s' % (encoded, port)
+    return encoded
+
+
 def parse_general_name(name):
     """Parse a general name from user input.
 
