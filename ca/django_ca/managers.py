@@ -198,7 +198,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             default_hostname = ca_settings.CA_DEFAULT_HOSTNAME
 
         if default_hostname:
-            default_hostname = validate_hostname(default_hostname)
+            default_hostname = validate_hostname(default_hostname, allow_port=True)
             if parent:
                 root_serial = parent.root.serial
             else:
