@@ -197,7 +197,7 @@ CRYPTOGRAPHY_HAS_IDP = hasattr(x509, 'IssuingDistributionPoint')
 OPENSSL_SUPPORTS_SCT = default_backend()._lib.CRYPTOGRAPHY_OPENSSL_110F_OR_GREATER
 
 CRYPTOGRAPHY_AKI_REQUIRES_EXTENSION = False
-if cryptography.__version__ < '2.7':  # pragma: only cryptography<2.7
+if cryptography.__version__ < '2.7':  # pragma: no branch, pragma: only cryptography<2.7
     CRYPTOGRAPHY_AKI_REQUIRES_EXTENSION = True
 
 CA_FILE_STORAGE_URL = 'https://django-ca.readthedocs.io/en/latest/update.html#update-to-1-12-0-or-later'
