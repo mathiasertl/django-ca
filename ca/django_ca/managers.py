@@ -317,8 +317,9 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
 
         ca : :py:class:`~django_ca.models.CertificateAuthority`
             The certificate authority to sign the certificate with.
-        csr : str
-            A valid CSR. The format is given by the ``csr_format`` parameter.
+        csr : str or :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
+            A valid CSR. If not already a :py:class:`~cg:cryptography.x509.CertificateSigningRequest`, the
+            format is given by the ``csr_format`` parameter.
         expires : datetime, optional
             Datetime for when this certificate will expire, defaults to the ``CA_DEFAULT_EXPIRES`` setting.
         algorithm : str or :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
@@ -409,7 +410,9 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         ################
         # Read the CSR #
         ################
-        if csr_format == Encoding.PEM:
+        if isinstance(csr, x509.CertificateSigningRequest):
+            req = csr
+        elif csr_format == Encoding.PEM:
             req = x509.load_pem_x509_csr(force_bytes(csr), default_backend())
         elif csr_format == Encoding.DER:
             req = x509.load_der_x509_csr(force_bytes(csr), default_backend())

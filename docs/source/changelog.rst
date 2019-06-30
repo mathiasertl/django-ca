@@ -32,6 +32,8 @@ Python API
 ==========
 
 * Add the ``root`` property to CAs and certificates returning the root Certificate Authority.
+* :py:func:`~django_ca.managers.CertificateManager.sign_cert` now also accepts a
+  :py:class:`~cg:cryptography.x509.CertificateSigningRequest` as ``csr`` value.
 
 OCSP
 ====
