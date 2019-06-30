@@ -25,9 +25,11 @@ from django.conf.urls import url
 from django.core.cache import cache
 from django.test import Client
 from django.urls import reverse
+from django.utils.six.moves.urllib.parse import urlparse
 
 from ..views import CertificateRevocationListView
 from .base import DjangoCAWithCertTestCase
+from .base import DjangoCAWithGeneratedCAsTestCase
 from .base import override_settings
 from .base import override_tmpcadir
 
@@ -159,3 +161,14 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
 @override_settings(USE_TZ=True)
 class GenericCRLWithTZViewTests(GenericCRLViewTests):
     pass
+
+
+class GenericCAIssuersViewTests(DjangoCAWithGeneratedCAsTestCase):
+    def test_view(self):
+        client = Client()
+
+        for name, ca in self.cas.items():
+            url = reverse('django_ca:issuer', kwargs={'serial': ca.root.serial})
+            resp = client.get(url)
+            self.assertEqual(resp['Content-Type'], 'application/pkix-cert')
+            self.assertEqual(resp.content, ca.root.x509.public_bytes(encoding=Encoding.DER))
