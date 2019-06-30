@@ -20,6 +20,8 @@ https://skippylovesmalorie.wordpress.com/2010/02/12/how-to-generate-a-self-signe
 
 import os
 
+import idna
+
 from django.core.management.base import CommandError
 
 from ... import ca_settings
@@ -74,6 +76,20 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         parser.add_argument('--parent-password', nargs='?', action=PasswordAction, metavar='PASSWORD',
                             prompt='Password for parent CA: ',
                             help='Password for the private key of any parent CA.')
+
+        group = parser.add_argument_group(
+            'Default hostname',
+            'The default hostname is used to compute default URLs for services like OCSP. The hostname is '
+            'usually configured in your settings (current setting: %s), but you can override that value '
+            'here. The value must be just the hostname and optionally a port, *without* a protocol, e.g. '
+            '"ca.example.com" or "ca.example.com:8000".'
+            % ca_settings.CA_DEFAULT_HOSTNAME
+        )
+        group = group.add_mutually_exclusive_group()
+        group.add_argument('--default-hostname', metavar='HOSTNAME',
+                           help='Override the the default hostname configured in your settings.')
+        group.add_argument('--no-default-hostname', dest='default_hostname', action='store_false',
+                           help='Disable any default hostname configured in your settings.')
 
         group = parser.add_argument_group(
             'pathlen attribute',
@@ -161,6 +177,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
                 pathlen=options['pathlen'],
                 issuer_url=options['issuer_url'],
                 issuer_alt_name=options['issuer_alt_name'],
+                default_hostname=options['default_hostname'],
                 crl_url=options['crl_url'],
                 ocsp_url=options['ocsp_url'],
                 ca_issuer_url=options['ca_issuer_url'],
