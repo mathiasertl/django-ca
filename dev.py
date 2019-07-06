@@ -305,7 +305,7 @@ Please create %(localsettings)s from %(example)s and try again.""" % {
     print('Saving fixture data to database.', end='')
     loaded_cas = {}
     certs = fixture_data['certs']
-    for cert_name, cert_data in certs.items():
+    for cert_name, cert_data in sorted(certs.items(), key=lambda t: (t[1]['type'], t[0])):
         if cert_data['type'] == 'ca':
             if not cert_data['key_filename']:
                 continue  # CA without private key (e.g. real-world CA)
