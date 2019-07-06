@@ -579,7 +579,10 @@ elif args.command == 'update-ca-data':
             if name in exclude_empty_lines:
                 values = [v for v in values if ''.join(v[1:])]
 
-            table = tabulate(values, headers='firstrow', tablefmt='rst')
+            if values:
+                table = tabulate(values, headers='firstrow', tablefmt='rst')
+            else:
+                table = ''
 
             with open(filename, 'w') as stream:
                 stream.write(table)

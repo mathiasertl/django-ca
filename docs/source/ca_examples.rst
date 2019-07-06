@@ -343,10 +343,14 @@ any way.
 In CA certificates
 ==================
 
+Currently only the old StartSSL root CA has any unknown extension.
+
 .. include:: generated/ca_unknown.rst
 
 In signed certificates
 ======================
+
+Currently no tested cert has any unknown extensions.
 
 .. include:: generated/cert_unknown.rst
 
