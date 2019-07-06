@@ -35,7 +35,7 @@
             "children": [
                 [
                     "child",
-                    "37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD"
+                    "370A08B9A9BE89CCB6F679B48A349CE45E1524CD"
                 ]
             ]
         },
@@ -58,11 +58,11 @@
             "key_type": "RSA",
             "csr_filename": false,
             "crl": "http://localhost/django_ca/crl/ca/66:4B:7C:BF:B4:87:92:63:AE:16:6F:3D:6E:C3:E0:8D:BD:FF:A4:0F/",
-            "issuer_url": "http://localhost/django_ca/issuer/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD.der",
-            "crl_url": "http://localhost/django_ca/crl/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/",
-            "ca_crl_url": "http://localhost/django_ca/crl/ca/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/",
-            "ocsp_url": "http://localhost/django_ca/ocsp/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/cert/",
-            "serial": "37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD",
+            "issuer_url": "http://localhost/django_ca/issuer/370A08B9A9BE89CCB6F679B48A349CE45E1524CD.der",
+            "crl_url": "http://localhost/django_ca/crl/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/",
+            "ca_crl_url": "http://localhost/django_ca/crl/ca/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/",
+            "ocsp_url": "http://localhost/django_ca/ocsp/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/cert/",
+            "serial": "370A08B9A9BE89CCB6F679B48A349CE45E1524CD",
             "hpkp": "BJ7Ub6prB+r4Uel6u/Tadyya4Cyko0DtmRJR5uL4/P8=",
             "valid_from": "2019-07-02 11:00:00",
             "valid_until": "2020-07-02 11:00:00",
@@ -76,10 +76,10 @@
             "authority_information_access": {
                 "critical": false,
                 "issuers": [
-                    "URI:http://localhost/django_ca/issuer/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD.der"
+                    "URI:http://localhost/django_ca/issuer/370A08B9A9BE89CCB6F679B48A349CE45E1524CD.der"
                 ],
                 "ocsp": [
-                    "URI:http://localhost/django_ca/ocsp/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/ca/"
+                    "URI:http://localhost/django_ca/ocsp/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/ca/"
                 ]
             },
             "crl_distribution_points": {
@@ -258,7 +258,7 @@
             "key_type": "RSA",
             "csr_filename": "child-cert.csr",
             "cn": "child-cert.example.com",
-            "crl": "http://localhost/django_ca/crl/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/",
+            "crl": "http://localhost/django_ca/crl/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/",
             "subject": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=child-cert.example.com",
             "serial": "47:EB:C1:CB:FA:19:BF:89:3B:A4:BE:04:D0:CC:AA:B5:86:F6:A5:F7",
             "hpkp": "I2U0hHPblb2y3XTJ/3qy4VWKZuMTdwsQDUgY+BrwH/U=",
@@ -274,10 +274,10 @@
             "authority_information_access": {
                 "critical": false,
                 "issuers": [
-                    "URI:http://localhost/django_ca/issuer/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD.der"
+                    "URI:http://localhost/django_ca/issuer/370A08B9A9BE89CCB6F679B48A349CE45E1524CD.der"
                 ],
                 "ocsp": [
-                    "URI:http://localhost/django_ca/ocsp/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/cert/"
+                    "URI:http://localhost/django_ca/ocsp/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/cert/"
                 ]
             },
             "subject_alternative_name": "DNS:child-cert.example.com",
@@ -286,7 +286,7 @@
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost/django_ca/crl/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/"
+                            "URI:http://localhost/django_ca/crl/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/"
                         ]
                     }
                 ],
@@ -459,7 +459,7 @@
             "csr_filename": "profile-client.csr",
             "cn": "profile-client.example.com",
             "profile": "client",
-            "crl": "http://localhost/django_ca/crl/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/",
+            "crl": "http://localhost/django_ca/crl/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/",
             "subject": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=profile-client.example.com",
             "serial": "20:38:4A:A8:E1:DD:9E:FA:6A:97:02:C5:A9:13:CF:C3:1D:5A:FE:4F",
             "hpkp": "Sv3asZHjsUHrtfBSzdWN+lSYO1A+NWCKr5qANf9nhZo=",
@@ -475,10 +475,10 @@
             "authority_information_access": {
                 "critical": false,
                 "issuers": [
-                    "URI:http://localhost/django_ca/issuer/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD.der"
+                    "URI:http://localhost/django_ca/issuer/370A08B9A9BE89CCB6F679B48A349CE45E1524CD.der"
                 ],
                 "ocsp": [
-                    "URI:http://localhost/django_ca/ocsp/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/cert/"
+                    "URI:http://localhost/django_ca/ocsp/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/cert/"
                 ]
             },
             "subject_alternative_name": "DNS:profile-client.example.com",
@@ -487,7 +487,7 @@
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost/django_ca/crl/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/"
+                            "URI:http://localhost/django_ca/crl/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/"
                         ]
                     }
                 ],
@@ -510,7 +510,7 @@
             "csr_filename": "profile-server.csr",
             "cn": "profile-server.example.com",
             "profile": "server",
-            "crl": "http://localhost/django_ca/crl/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/",
+            "crl": "http://localhost/django_ca/crl/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/",
             "subject": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=profile-server.example.com",
             "serial": "24:8E:E9:1D:D5:DA:AB:83:2A:60:84:18:BF:7A:01:9F:82:05:31:51",
             "hpkp": "XSZ9DzGSmvZgpTmkxDrqZr8EDTOWsSpvUBzZm5AHPnQ=",
@@ -526,10 +526,10 @@
             "authority_information_access": {
                 "critical": false,
                 "issuers": [
-                    "URI:http://localhost/django_ca/issuer/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD.der"
+                    "URI:http://localhost/django_ca/issuer/370A08B9A9BE89CCB6F679B48A349CE45E1524CD.der"
                 ],
                 "ocsp": [
-                    "URI:http://localhost/django_ca/ocsp/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/cert/"
+                    "URI:http://localhost/django_ca/ocsp/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/cert/"
                 ]
             },
             "subject_alternative_name": "DNS:profile-server.example.com",
@@ -538,7 +538,7 @@
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost/django_ca/crl/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/"
+                            "URI:http://localhost/django_ca/crl/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/"
                         ]
                     }
                 ],
@@ -561,7 +561,7 @@
             "csr_filename": "profile-webserver.csr",
             "cn": "profile-webserver.example.com",
             "profile": "webserver",
-            "crl": "http://localhost/django_ca/crl/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/",
+            "crl": "http://localhost/django_ca/crl/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/",
             "subject": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=profile-webserver.example.com",
             "serial": "50:DC:D6:67:F1:B0:E0:54:A1:C2:43:0C:39:E6:7B:3A:57:08:06:9C",
             "hpkp": "a/n5sCT/8qODG3pmdT/neHYSOY6pRmJaxvP9FC6jm4o=",
@@ -577,10 +577,10 @@
             "authority_information_access": {
                 "critical": false,
                 "issuers": [
-                    "URI:http://localhost/django_ca/issuer/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD.der"
+                    "URI:http://localhost/django_ca/issuer/370A08B9A9BE89CCB6F679B48A349CE45E1524CD.der"
                 ],
                 "ocsp": [
-                    "URI:http://localhost/django_ca/ocsp/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/cert/"
+                    "URI:http://localhost/django_ca/ocsp/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/cert/"
                 ]
             },
             "subject_alternative_name": "DNS:profile-webserver.example.com",
@@ -589,7 +589,7 @@
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost/django_ca/crl/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/"
+                            "URI:http://localhost/django_ca/crl/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/"
                         ]
                     }
                 ],
@@ -612,7 +612,7 @@
             "csr_filename": "profile-enduser.csr",
             "cn": "profile-enduser.example.com",
             "profile": "enduser",
-            "crl": "http://localhost/django_ca/crl/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/",
+            "crl": "http://localhost/django_ca/crl/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/",
             "subject": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=profile-enduser.example.com",
             "serial": "23:A4:FC:67:05:5C:26:F9:E1:93:7D:1C:2F:F9:69:98:CD:1B:A6:96",
             "hpkp": "VlAY1J34oJ/W511djxo8SjGSRzEK3JYPyE+WmZLUN5E=",
@@ -628,10 +628,10 @@
             "authority_information_access": {
                 "critical": false,
                 "issuers": [
-                    "URI:http://localhost/django_ca/issuer/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD.der"
+                    "URI:http://localhost/django_ca/issuer/370A08B9A9BE89CCB6F679B48A349CE45E1524CD.der"
                 ],
                 "ocsp": [
-                    "URI:http://localhost/django_ca/ocsp/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/cert/"
+                    "URI:http://localhost/django_ca/ocsp/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/cert/"
                 ]
             },
             "extended_key_usage": "clientAuth,codeSigning,emailProtection",
@@ -639,7 +639,7 @@
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost/django_ca/crl/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/"
+                            "URI:http://localhost/django_ca/crl/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/"
                         ]
                     }
                 ],
@@ -662,9 +662,9 @@
             "csr_filename": "profile-ocsp.csr",
             "cn": "profile-ocsp.example.com",
             "profile": "ocsp",
-            "crl": "http://localhost/django_ca/crl/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/",
+            "crl": "http://localhost/django_ca/crl/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/",
             "subject": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=profile-ocsp.example.com",
-            "serial": "3A:46:78:D7:48:8E:7C:A2:D2:40:55:BE:0A:F3:CB:05:AA:D4:47:22",
+            "serial": "3A4678D7488E7CA2D24055BE0AF3CB05AAD44722",
             "hpkp": "RaiabAR+MaJPtn+6qSBGYtuuDN4aXk5s1e8/LJchTzg=",
             "valid_from": "2019-07-09 11:00:00",
             "valid_until": "2020-01-08 11:00:00",
@@ -678,10 +678,10 @@
             "authority_information_access": {
                 "critical": false,
                 "issuers": [
-                    "URI:http://localhost/django_ca/issuer/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD.der"
+                    "URI:http://localhost/django_ca/issuer/370A08B9A9BE89CCB6F679B48A349CE45E1524CD.der"
                 ],
                 "ocsp": [
-                    "URI:http://localhost/django_ca/ocsp/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/cert/"
+                    "URI:http://localhost/django_ca/ocsp/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/cert/"
                 ]
             },
             "subject_alternative_name": "DNS:profile-ocsp.example.com",
@@ -690,7 +690,7 @@
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost/django_ca/crl/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/"
+                            "URI:http://localhost/django_ca/crl/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/"
                         ]
                     }
                 ],
@@ -711,7 +711,7 @@
             "key_type": "RSA",
             "csr_filename": "no-extensions.csr",
             "cn": "no-extensions.example.com",
-            "crl": "http://localhost/django_ca/crl/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/",
+            "crl": "http://localhost/django_ca/crl/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/",
             "subject": "/CN=no-extensions.example.com",
             "serial": "70:80:F5:BC:D7:90:8C:EC:3D:70:4F:CB:01:BA:0D:FF:3C:8E:9A:80",
             "hpkp": "83dr2rM7fLLfTtmk/7aNWdeICZiWJqhKtjK9Czo2DwA=",
@@ -756,7 +756,7 @@
             "key_type": "RSA",
             "csr_filename": "all-extensions.csr",
             "cn": "all-extensions.example.com",
-            "crl": "http://localhost/django_ca/crl/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/",
+            "crl": "http://localhost/django_ca/crl/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/",
             "subject": "/CN=all-extensions.example.com",
             "serial": "63:DE:1E:E8:14:63:85:D0:36:92:6E:33:74:22:69:1D:C9:4F:DD:1E",
             "hpkp": "McHYszmOkUNMaObG80KiAAcyWEFDrtuuLIULrQHFaoY=",
@@ -771,17 +771,17 @@
             "authority_information_access": {
                 "critical": false,
                 "issuers": [
-                    "URI:http://localhost/django_ca/issuer/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD.der"
+                    "URI:http://localhost/django_ca/issuer/370A08B9A9BE89CCB6F679B48A349CE45E1524CD.der"
                 ],
                 "ocsp": [
-                    "URI:http://localhost/django_ca/ocsp/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/cert/"
+                    "URI:http://localhost/django_ca/ocsp/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/cert/"
                 ]
             },
             "crl_distribution_points": {
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost/django_ca/crl/37:0A:08:B9:A9:BE:89:CC:B6:F6:79:B4:8A:34:9C:E4:5E:15:24:CD/"
+                            "URI:http://localhost/django_ca/crl/370A08B9A9BE89CCB6F679B48A349CE45E1524CD/"
                         ]
                     }
                 ],

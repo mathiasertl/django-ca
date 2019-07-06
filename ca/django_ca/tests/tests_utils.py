@@ -632,28 +632,28 @@ class IntToHexTestCase(TestCase):
         self.assertEqual(utils.int_to_hex(49), '31')
 
     def test_high(self):
-        self.assertEqual(utils.int_to_hex(1513282098), '5A:32:DA:32')
-        self.assertEqual(utils.int_to_hex(1513282099), '5A:32:DA:33')
-        self.assertEqual(utils.int_to_hex(1513282100), '5A:32:DA:34')
-        self.assertEqual(utils.int_to_hex(1513282101), '5A:32:DA:35')
-        self.assertEqual(utils.int_to_hex(1513282102), '5A:32:DA:36')
-        self.assertEqual(utils.int_to_hex(1513282103), '5A:32:DA:37')
-        self.assertEqual(utils.int_to_hex(1513282104), '5A:32:DA:38')
-        self.assertEqual(utils.int_to_hex(1513282105), '5A:32:DA:39')
-        self.assertEqual(utils.int_to_hex(1513282106), '5A:32:DA:3A')
-        self.assertEqual(utils.int_to_hex(1513282107), '5A:32:DA:3B')
-        self.assertEqual(utils.int_to_hex(1513282108), '5A:32:DA:3C')
-        self.assertEqual(utils.int_to_hex(1513282109), '5A:32:DA:3D')
-        self.assertEqual(utils.int_to_hex(1513282110), '5A:32:DA:3E')
-        self.assertEqual(utils.int_to_hex(1513282111), '5A:32:DA:3F')
-        self.assertEqual(utils.int_to_hex(1513282112), '5A:32:DA:40')
-        self.assertEqual(utils.int_to_hex(1513282113), '5A:32:DA:41')
+        self.assertEqual(utils.int_to_hex(1513282098), '5A32DA32')
+        self.assertEqual(utils.int_to_hex(1513282099), '5A32DA33')
+        self.assertEqual(utils.int_to_hex(1513282100), '5A32DA34')
+        self.assertEqual(utils.int_to_hex(1513282101), '5A32DA35')
+        self.assertEqual(utils.int_to_hex(1513282102), '5A32DA36')
+        self.assertEqual(utils.int_to_hex(1513282103), '5A32DA37')
+        self.assertEqual(utils.int_to_hex(1513282104), '5A32DA38')
+        self.assertEqual(utils.int_to_hex(1513282105), '5A32DA39')
+        self.assertEqual(utils.int_to_hex(1513282106), '5A32DA3A')
+        self.assertEqual(utils.int_to_hex(1513282107), '5A32DA3B')
+        self.assertEqual(utils.int_to_hex(1513282108), '5A32DA3C')
+        self.assertEqual(utils.int_to_hex(1513282109), '5A32DA3D')
+        self.assertEqual(utils.int_to_hex(1513282110), '5A32DA3E')
+        self.assertEqual(utils.int_to_hex(1513282111), '5A32DA3F')
+        self.assertEqual(utils.int_to_hex(1513282112), '5A32DA40')
+        self.assertEqual(utils.int_to_hex(1513282113), '5A32DA41')
 
     @unittest.skipUnless(six.PY2, 'long is only defined in py2')
     def test_long(self):
         self.assertEqual(utils.int_to_hex(long(0)), '0')  # NOQA
         self.assertEqual(utils.int_to_hex(long(43)), '2B')  # NOQA
-        self.assertEqual(utils.int_to_hex(long(1513282104)), '5A:32:DA:38')  # NOQA
+        self.assertEqual(utils.int_to_hex(long(1513282104)), '5A32DA38')  # NOQA
 
 
 class MultilineURLValidatorTestCase(TestCase):

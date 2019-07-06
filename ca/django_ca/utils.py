@@ -67,7 +67,7 @@ NAME_RE = re.compile(r'(?:/+|\A)\s*(?P<field>[^\s]*?)\s*'
 GENERAL_NAME_RE = re.compile('^(email|URI|IP|DNS|RID|dirName|otherName):(.*)', flags=re.I)
 
 #: Regular expression matching hexlified certificate serials
-SERIAL_RE = re.compile('^([0-9A-F][0-9A-F]:)+[0-9A-F][0-9A-F]?$')
+SERIAL_RE = re.compile('^([0-9A-F][0-9A-F]:?)+[0-9A-F][0-9A-F]?$')
 _datetime_format = '%Y%m%d%H%M%SZ'
 
 SAN_NAME_MAPPINGS = {
@@ -214,14 +214,14 @@ def int_to_hex(i):
     """Create a hex-representation of the given serial.
 
     >>> int_to_hex(12345678)
-    'BC:61:4E'
+    'BC614E'
     """
     s = hex(i)[2:].upper()
     if six.PY2 is True and isinstance(i, long):  # pragma: only py2  # NOQA
         # Strip the "L" suffix, since hex(1L) -> 0x1L.
         # NOTE: Do not convert to int earlier. int(<very-large-long>) is still long
         s = s[:-1]
-    return add_colons(s)
+    return s
 
 
 def bytes_to_hex(v):

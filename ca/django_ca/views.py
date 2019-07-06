@@ -192,7 +192,8 @@ class OCSPBaseView(View):
             return self.responder_cert.encode('utf-8')
 
         if SERIAL_RE.match(self.responder_cert):
-            return Certificate.objects.get(serial=self.responder_cert).pub.encode('utf-8')
+            serial = self.responder_cert.replace(':', '')
+            return Certificate.objects.get(serial=serial).pub.encode('utf-8')
 
         if os.path.isabs(self.responder_cert):
             log.warning('%s: OCSP responder uses absolute path to certificate. Please see %s.',
