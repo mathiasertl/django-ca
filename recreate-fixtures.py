@@ -43,7 +43,7 @@ from cryptography.x509.oid import NameOID
 _rootdir = os.path.dirname(os.path.realpath(__file__))  # NOQA: E402
 _sphinx_dir = os.path.join(_rootdir, 'docs', 'source', '_files')  # NOQA: E402
 sys.path.insert(0, os.path.join(_rootdir, 'ca'))  # NOQA: E402
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", 'ca.test_settings')  # NOQA: E402
+os.environ["DJANGO_SETTINGS_MODULE"] = 'ca.test_settings'  # NOQA: E402
 import django  # isort:skip
 django.setup()  # NOQA: E402
 
