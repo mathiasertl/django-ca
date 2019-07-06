@@ -36,7 +36,6 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import NoEncryption
 from cryptography.hazmat.primitives.serialization import PrivateFormat
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
-from cryptography.x509 import ocsp
 from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import NameOID
 
@@ -81,6 +80,8 @@ parser.add_argument('--only-contrib', default=False, action='store_true',
                     help='Only update data from contrib certificates.')
 parser.add_argument('--no-delay', dest='delay', action='store_false', default=True,
                     help='Do not delay validity into the future.')
+parser.add_argument('--no-ocsp', dest='ocsp', action='store_false', default=True,
+                    help='Do not generate OCSP requests.')
 parser.add_argument('--ca-validity', metavar='DAYS', type=int, default=366,
                     help='How long a CA should be valid (default: %(default)s)')
 parser.add_argument('--cert-validity', metavar='DAYS', type=int, default=183,
@@ -638,26 +639,28 @@ if not args.only_contrib:
         copy_cert(cert, data[name], key_path, csr_path)
 
     # Rebuild example OCSP requests
-    ocsp_base = os.path.join(args.dest, 'ocsp')
-    if not os.path.exists(ocsp_base):
-        os.makedirs(ocsp_base)
-    ocsp_builder = ocsp.OCSPRequestBuilder()
-    ocsp_builder = ocsp_builder.add_certificate(
-        data['child-cert']['parsed_cert'].x509,
-        CertificateAuthority.objects.get(name=data['child-cert']['ca']).x509,
-        hashes.SHA1()
-    )
+    if args.ocsp:
+        from cryptography.x509 import ocsp
+        ocsp_base = os.path.join(args.dest, 'ocsp')
+        if not os.path.exists(ocsp_base):
+            os.makedirs(ocsp_base)
+        ocsp_builder = ocsp.OCSPRequestBuilder()
+        ocsp_builder = ocsp_builder.add_certificate(
+            data['child-cert']['parsed_cert'].x509,
+            CertificateAuthority.objects.get(name=data['child-cert']['ca']).x509,
+            hashes.SHA1()
+        )
 
-    no_nonce_req = ocsp_builder.build().public_bytes(Encoding.DER)
-    with open(os.path.join(ocsp_base, ocsp_data['no-nonce']['filename']), 'wb') as stream:
-        stream.write(no_nonce_req)
+        no_nonce_req = ocsp_builder.build().public_bytes(Encoding.DER)
+        with open(os.path.join(ocsp_base, ocsp_data['no-nonce']['filename']), 'wb') as stream:
+            stream.write(no_nonce_req)
 
-    ocsp_builder = ocsp_builder.add_extension(
-        x509.OCSPNonce(hex_to_bytes(ocsp_data['nonce']['nonce'])), critical=False
-    )
-    nonce_req = ocsp_builder.build().public_bytes(Encoding.DER)
-    with open(os.path.join(ocsp_base, ocsp_data['nonce']['filename']), 'wb') as stream:
-        stream.write(nonce_req)
+        ocsp_builder = ocsp_builder.add_extension(
+            x509.OCSPNonce(hex_to_bytes(ocsp_data['nonce']['nonce'])), critical=False
+        )
+        nonce_req = ocsp_builder.build().public_bytes(Encoding.DER)
+        with open(os.path.join(ocsp_base, ocsp_data['nonce']['filename']), 'wb') as stream:
+            stream.write(nonce_req)
 else:
     # updating only contrib, so remove existing data
     data = {}
