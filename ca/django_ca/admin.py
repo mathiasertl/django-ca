@@ -16,6 +16,7 @@
 import copy
 import json
 import logging
+import re
 from datetime import datetime
 from functools import partial
 
@@ -55,6 +56,7 @@ from .models import CertificateAuthority
 from .models import Watcher
 from .signals import post_issue_cert
 from .utils import OID_NAME_MAPPINGS
+from .utils import SERIAL_RE
 from .utils import add_colons
 from .utils import format_general_name
 
@@ -143,6 +145,18 @@ class CertificateMixin(object):
             return obj.cn
         return _('<none>')
     cn_display.short_description = _('CommonName')
+
+    def serial_field(self, obj):
+        return add_colons(obj.serial)
+
+    def get_search_results(self, request, queryset, search_term):
+        # Replace ':' from any search term that looks like a serial
+        search_term = ' '.join([
+            t.replace(':', '').upper() if SERIAL_RE.match(t.upper().strip(':')) else t
+            for t in search_term.split()
+        ])
+
+        return super(CertificateMixin, self).get_search_results(request, queryset, search_term)
 
     ##################################
     # Properties for x509 extensions #
@@ -353,9 +367,6 @@ class CertificateMixin(object):
             fields.append(field)
 
         return fields
-
-    def serial_field(self, obj):
-        return add_colons(obj.serial)
 
     class Media:
         css = {
