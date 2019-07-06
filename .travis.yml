@@ -31,6 +31,7 @@ install:
 script:
   - python dev.py code-quality
   - python dev.py coverage
+  - echo -e "DEBUG = True\nSECRET_KEY = 'dummy'" > ca/ca/localsettings.py
   - python dev.py init-demo
   - python setup.py install
   - make -C docs html-check
