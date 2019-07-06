@@ -298,8 +298,6 @@ Please create %(localsettings)s from %(example)s and try again.""" % {
     print('Creating fixture data...', end='')
     subprocess.call(['./recreate-fixtures.py', '--no-delay', '--ca-validity=3650', '--cert-validity=732',
                      '--dest=%s' % ca_settings.CA_DIR])
-    import time
-    time.sleep(10)
     with open(os.path.join(ca_settings.CA_DIR, 'cert-data.json')) as stream:
         fixture_data = json.load(stream)
     ok()
@@ -361,11 +359,11 @@ Please create %(localsettings)s from %(example)s and try again.""" % {
 
     print("")
     print('* All certificates are in %s.' % bold(ca_settings.CA_DIR))
-    print('* Start webserver with the admin interface:')
+    ok('* Start webserver with the admin interface:')
     print('  * Run "%s"' % bold('python ca/manage.py runserver'))
     print('  * Visit %s' % bold('%sadmin/' % base_url))
     print('  * User/Password: %s / %s' % (bold('user'), bold('nopass')))
-    print('* Create CRLs with:')
+    ok('* Create CRLs with:')
     print('  * %s' % bold('python ca/manage.py dump_crl -f PEM --ca %s > root.crl' %
                           loaded_cas['root'].serial[:11]))
     print('  * %s' % bold('python ca/manage.py dump_crl -f PEM --ca %s > child.crl' %
