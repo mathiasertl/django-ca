@@ -17,17 +17,24 @@
 from __future__ import print_function
 
 import argparse
+import json
 import os
 import subprocess
 import sys
+import traceback
 import warnings
 
 import packaging.version
 import six
 
+from termcolor import colored
+
 import cryptography
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 
 import django
+from django.core.exceptions import ImproperlyConfigured
 
 PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
@@ -66,8 +73,12 @@ def warn(msg, **kwargs):
     print(colored(msg, 'yellow'), **kwargs)
 
 
-def ok():
-    print(colored(' OK.', 'green'))
+def ok(msg=' OK.', **kwargs):
+    print(colored(msg, 'green'), **kwargs)
+
+
+def bold(msg):
+    return colored(msg, attrs=['bold'])
 
 
 def abort(msg):
@@ -147,7 +158,6 @@ elif args.command == 'coverage':
         cov.exclude('only py2')
 
     # exclude code that requires SCT
-    from cryptography.hazmat.backends import default_backend
     if not default_backend()._lib.CRYPTOGRAPHY_OPENSSL_110F_OR_GREATER:
         cov.exclude(r'pragma:\s*only SCT')
 
@@ -252,199 +262,119 @@ elif args.command == 'docker-test':
             subprocess.call(['docker', 'image', 'rm', tag])
 
 elif args.command == 'init-demo':
-    from termcolor import colored
+    try:
+        setup_django('ca.settings')
+    except ImproperlyConfigured:
+        # Cannot import settings, probably because localsettings.py wasn't created.
+        traceback.print_exc()
+        localsettings = os.path.join(_rootdir, 'ca', 'ca', 'localsettings.py')
+        print("""
+Could not configure settings! Have you created localsettings.py?
 
-    def green(msg):
-        return colored(msg, 'green')
+Please create %(localsettings)s from %(example)s and try again.""" % {
+            'localsettings': localsettings,
+            'example': '%s.example' % localsettings,
+        })
+        sys.exit(1)
 
-    setup_django('ca.demosettings')
-    base_url = 'http://localhost:8000/'
-
-    from django.conf import settings
     from django.contrib.auth import get_user_model
+    from django.core.files.base import ContentFile
     from django.core.management import call_command as manage
     from django.urls import reverse
-    from django.utils.six.moves.urllib.parse import urljoin
+
     from django_ca import ca_settings
-    from django_ca.constants import ReasonFlags
     from django_ca.models import Certificate
     from django_ca.models import CertificateAuthority
-    from django_ca.models import Watcher
-    from django_ca.subject import Subject
+    from django_ca.utils import ca_storage
+
     User = get_user_model()
-
-    def create_cert(name, **kwargs):
-        key = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
-        csr = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
-        pem = os.path.join(ca_settings.CA_DIR, '%s.pem' % name)
-        kwargs.setdefault('subject', Subject())
-        kwargs['subject'].setdefault('CN', name)
-
-        if PY2:
-            # PY2 does not have subprocess.DEVNULL
-            with open(os.devnull, 'w') as devnull:
-                subprocess.call(['openssl', 'genrsa', '-out', key, '2048'], stderr=devnull)
-        else:
-            subprocess.call(['openssl', 'genrsa', '-out', key, '2048'], stderr=subprocess.DEVNULL)
-
-        subprocess.call(['openssl', 'req', '-new', '-key', key, '-out', csr, '-utf8', '-batch'])
-        manage('sign_cert', csr=csr, out=pem, **kwargs)
-        return key, csr, pem
-
-    if settings.DEBUG is not True:
-        abort(colored('Refusing to run if settings.DEBUG != True.', 'red'))
-
-    if os.path.exists(os.path.join('ca', 'db.sqlite3')):
-        abort(colored('CA already set up.', 'red'))
 
     print('Creating database...', end='')
     manage('migrate', verbosity=0)
     ok()
 
-    print('Creating Root CA', end='')
-    manage('init_ca', 'Root CA', '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=ca.example.com',
-           pathlen=1,
-           issuer_url='http://ca.example.com/ca.crt', issuer_alt_name='https://ca.example.com'
-           )
-    root_ca = CertificateAuthority.objects.get(name='Root CA')
+    print('Loading fixture data...', end='')
+    fixtures_dir = os.path.join(_rootdir, 'ca', 'django_ca', 'tests', 'fixtures')
+    with open(os.path.join(fixtures_dir, 'cert-data.json')) as stream:
+        fixture_data = json.load(stream)
     ok()
 
-    # generate OCSP certificate
-    print('Creating OCSP certificate...', end='')
-    ocsp_key, ocsp_csr, ocsp_pem = create_cert(
-        'root-ocsp', subject=Subject({'CN': 'localhost'}), profile='ocsp'
-    )
-    ok()
+    print('Saving fixture data to database.', end='')
+    loaded_cas = {}
+    certs = fixture_data['certs']
+    for cert_name, cert_data in certs.items():
+        if cert_data['type'] == 'ca':
+            if not cert_data['key_filename']:
+                continue  # CA without private key (e.g. real-world CA)
 
-    # Compute and set CRL URL for the root CA
-    root_crl_path = reverse('django_ca:crl', kwargs={'serial': root_ca.serial})
-    root_ca.crl_url = urljoin(base_url, root_crl_path)
-    root_ca.save()
+            name = cert_data['name']
+            path = '%s.key' % name
 
-    # Get OCSP/CRL URL for child CAs
-    root_ca_crl_path = reverse('django_ca:ca-crl', kwargs={'serial': root_ca.serial})
-    root_ca_crl = urljoin(base_url, root_ca_crl_path)
+            with open(os.path.join(fixtures_dir, cert_data['key_filename']), 'rb') as stream:
+                pkey = stream.read()
 
-    print('Creating Intermediate CA...', end='')
-    manage(
-        'init_ca', 'Intermediate CA', '/C=AT/ST=Vienna/L=Vienna/O=example/OU=example/CN=sub.ca.example.com',
-        parent=root_ca, ca_crl_url=root_ca_crl
-    )
-    child_ca = CertificateAuthority.objects.get(name='Intermediate CA')
-    ok()
+            ca_storage.save(path, ContentFile(pkey))
 
-    # generate OCSP certificate
-    print('Creating OCSP certificate for intermediate CA...', end='')
-    ocsp_key, ocsp_csr, ocsp_pem = create_cert(
-        'intermediate-ocsp', subject=Subject({'CN': 'localhost'}), profile='ocsp', ca=child_ca
-    )
-    ok()
+            c = CertificateAuthority(name=name, private_key_path=path)
+            loaded_cas[c.name] = c
+        else:
+            if cert_data['cat'] != 'generated':
+                continue  # Imported cert
 
-    # Compute and set CRL URL for the child CA
-    child_crl_path = reverse('django_ca:crl', kwargs={'serial': child_ca.serial})
-    child_ca.crl_url = urljoin(base_url, child_crl_path)
-    child_ca.save()
+            c = Certificate(ca=loaded_cas[cert_data['ca']])
 
-    # Create some client certificates (always trust localhost to ease testing)
-    for i in range(1, 10):
-        hostname = 'host%s.example.com' % i
-        print('Creating certificate for %s...' % hostname, end='')
-        create_cert(hostname, alt=['localhost'], ca=child_ca)
-        ok()
+        with open(os.path.join(fixtures_dir, cert_data['pub_filename']), 'rb') as stream:
+            pem = stream.read()
+        c.x509 = x509.load_pem_x509_certificate(pem, default_backend())
+        ca_storage.save('data/%s.pem' % cert_name, ContentFile(pem))
 
-    # create stunnel.pem
-    print('Creating combined certificates file for stunnel...', end='')
-    key_path = os.path.join(ca_settings.CA_DIR, 'host1.example.com.key')
-    pem_path = os.path.join(ca_settings.CA_DIR, 'host1.example.com.pem')
-    stunnel_path = os.path.join(ca_settings.CA_DIR, 'stunnel.pem')
-    with open(key_path) as key, open(pem_path) as pem, open(stunnel_path, 'w') as stunnel:
-        stunnel.write(key.read())
-        stunnel.write(pem.read())
-
-        # cert is signed by intermediate CA, so we need to attach it as well
-        stunnel.write(child_ca.pub)
-
-    key_path = os.path.join(ca_settings.CA_DIR, 'host2.example.com.key')
-    pem_path = os.path.join(ca_settings.CA_DIR, 'host2.example.com.pem')
-    stunnel_path = os.path.join(ca_settings.CA_DIR, 'stunnel-revoked.pem')
-    with open(key_path) as key, open(pem_path) as pem, open(stunnel_path, 'w') as stunnel:
-        stunnel.write(key.read())
-        stunnel.write(pem.read())
-
-        # cert is signed by intermediate CA, so we need to attach it as well
-        stunnel.write(child_ca.pub)
-    ok()
-
-    print('Create a client certificate...', end='')
-    create_cert('client', subject=Subject({'CN': 'First Last'}), cn_in_san=False, alt=['user@example.com'],
-                ca=child_ca)
-    ok()
-
-    # Revoke host1 and host2
-    print('Revoke host2.example.com and host3.example.com...', end='')
-    cert = Certificate.objects.get(cn='host2.example.com')
-    cert.revoke()
-    cert.save()
-
-    cert = Certificate.objects.get(cn='host3.example.com')
-    cert.revoke(ReasonFlags.key_compromise)
-    cert.save()
-    ok()
-
-    print('Create CRL and OCSP index...', end='')
-    crl_path = os.path.join(ca_settings.CA_DIR, 'crl.pem')
-    ocsp_index = os.path.join(ca_settings.CA_DIR, 'ocsp_index.txt')
-    manage('dump_crl', crl_path)
-    manage('dump_ocsp_index', ocsp_index, ca=root_ca)
-    ok()
-
-    ca_crl_path = os.path.join(ca_settings.CA_DIR, 'ca_crl.pem')
-
-    # Concat the CA certificate and the CRL, this is required by "openssl verify"
-    with open(crl_path) as crl, open(ca_crl_path, 'w') as ca_crl:
-        ca_crl.write(root_ca.pub)
-        ca_crl.write(crl.read())
-
-    # create a few watchers
-    Watcher.from_addr('First Last <user1@example.com>')
-    Watcher.from_addr('Second Last <user2@example.com>')
+        c.save()
 
     # create admin user for login
     User.objects.create_superuser('user', 'user@example.com', 'nopass')
 
-    # write public ca cert so it can be used by demo commands below
-    ca_crt = os.path.join(ca_settings.CA_DIR, '%s.pem' % root_ca.serial)
-    with open(ca_crt, 'w') as outstream:
-        outstream.write(root_ca.pub)
-    ca_crt = os.path.join(ca_settings.CA_DIR, '%s.pem' % child_ca.serial)
-    with open(ca_crt, 'w') as outstream:
-        outstream.write(child_ca.pub)
+    ok()
 
-    os.chdir('../')
+    # create a chain file for the child
+    chain = loaded_cas['child'].pub + loaded_cas['root'].pub
+    chain_path = ca_storage.path(ca_storage.save('data/child-chain.pem', ContentFile(chain)))
+
+    base_url = 'http://localhost:8000/'
     cwd = os.getcwd()
     rel = lambda p: os.path.relpath(p, cwd)  # NOQA
-    ca_crt = rel(ca_crt)
-    host1_pem = rel(os.path.join(ca_settings.CA_DIR, 'host1.example.com.pem'))
+    root_ca_path = ca_storage.path('data/root.pem')
+    child_ca_path = ca_storage.path('data/child.pem')
+
+    root_cert_path = ca_storage.path('data/root-cert.pem')
+    child_cert_path = ca_storage.path('data/child-cert.pem')
+
+    ocsp_url = '%s%s' % (base_url.rstrip('/'),
+                         reverse('django_ca:ocsp-cert-post', kwargs={'serial': certs['child']['serial']}))
+
     print("")
-    print(green('* All certificates are in %s' % rel(ca_settings.CA_DIR)))
-    print(green('* Verify with CRL:'))
-    print('\topenssl verify -CAfile %s -crl_check %s' % (rel(ca_crl_path), rel(host1_pem)))
-    print(green('* Run OCSP responder:'))
-    print('\topenssl ocsp -index %s -port 8888 -rsigner %s -rkey %s -CA %s -text' %
-          (rel(ocsp_index), rel(ocsp_pem), rel(ocsp_key), ca_crt))
-    print(green('* Verify certificate with OCSP:'))
-    print('\topenssl ocsp -CAfile %s -issuer %s -cert %s -url %s -resp_text' %
-          (ca_crt, ca_crt, host1_pem, base_url))
-    print(green('* Start webserver on %s (user: user, password: nopass) with:' % base_url))
-    print('\tDJANGO_SETTINGS_MODULE=ca.demosettings python ca/manage.py runserver')
+    print('* All certificates are in %s.' % bold(ca_settings.CA_DIR))
+    print('* Start webserver with the admin interface:')
+    print('  * Run "%s"' % bold('python ca/manage.py runserver'))
+    print('  * Visit %s' % bold('%sadmin/' % base_url))
+    print('  * User/Password: %s / %s' % (bold('user'), bold('nopass')))
+    print('* Create CRLs with:')
+    print('  * %s' % bold('python ca/manage.py dump_crl -f PEM --ca %s > root.crl' %
+                          loaded_cas['root'].serial[:11]))
+    print('  * %s' % bold('python ca/manage.py dump_crl -f PEM --ca %s > child.crl' %
+                          loaded_cas['child'].serial[:11]))
+    ok('* Verify with CRL:')
+    print('  * %s' % bold('openssl verify -CAfile %s -CRLfile root.crl -crl_check %s' % (
+                          rel(root_ca_path), rel(root_cert_path))))
+    print('  * %s' % bold('openssl verify -CAfile %s -crl_download -crl_check %s' % (
+                          rel(root_ca_path), rel(root_cert_path))))
+    ok('* Verify certificate with OCSP:')
+    print('    %s' % bold('openssl ocsp -CAfile %s -issuer %s -cert %s -url %s -resp_text' % (
+        rel(root_ca_path), rel(child_ca_path), rel(child_cert_path), ocsp_url)))
 
 elif args.command == 'update-ca-data':
     setup_django('ca.settings')
 
-    from cryptography import x509
-    from cryptography.hazmat.backends import default_backend
     from tabulate import tabulate
-    from termcolor import colored
 
     from django_ca.utils import bytes_to_hex
     from django_ca.utils import format_general_name
