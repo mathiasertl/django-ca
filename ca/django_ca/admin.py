@@ -16,7 +16,6 @@
 import copy
 import json
 import logging
-import re
 from datetime import datetime
 from functools import partial
 
@@ -148,6 +147,8 @@ class CertificateMixin(object):
 
     def serial_field(self, obj):
         return add_colons(obj.serial)
+    serial_field.short_description = _('Serial')
+    serial_field.admin_order_field = 'serial'
 
     def get_search_results(self, request, queryset, search_term):
         # Replace ':' from any search term that looks like a serial
