@@ -330,6 +330,12 @@ Please create %(localsettings)s from %(example)s and try again.""" % {
 
         c.save()
 
+        if cert_data['type'] == 'ca':
+            password = cert_data.get('password')
+            if password is not None:
+                password = password.encode('utf-8')
+            c.generate_ocsp_key(password=password)
+
     # create admin user for login
     User.objects.create_superuser('user', 'user@example.com', 'nopass')
 
