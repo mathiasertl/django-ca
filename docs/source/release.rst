@@ -20,6 +20,18 @@ Before release
 * Make sure that ``python dev.py docker-test`` runs through.
 * Push the last commit and make sure that Travis and Read The Docs are updated.
 
+*********
+Test demo
+*********
+
+Make sure that the demo works::
+
+   rm -rf ca/db.sqlite3 ca/files/
+   ./dev.py init-demo
+   
+   # test commands from the output:
+   openssl verify -CAfile... 
+
 ************
 Docker image
 ************
