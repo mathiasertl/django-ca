@@ -409,7 +409,9 @@ elif args.command == 'update-ca-data':
             'crldp': [(name_header, 'Critical', 'Names', 'RDNs', 'Issuer', 'Reasons')],
             'sct': [(name_header, 'Critical', 'Value')],
             'nc': [(name_header, 'Critical', 'Permitted', 'Excluded')],
+            'unknown': [(name_header, 'Extensions')],
         }
+        exclude_empty_lines = {'unknown', }
 
         for filename in sorted(os.listdir(cert_dir), key=lambda f: certs.get(f, {}).get('name', '')):
             if filename not in certs:
@@ -547,13 +549,21 @@ elif args.command == 'update-ca-data':
                         this_cert_values['ski'] = [critical, bytes_to_hex(value.digest)]
                     elif isinstance(value, x509.SubjectAlternativeName):
                         continue  # not interesting here
-                    elif ext.oid.dotted_string in ['2.16.840.1.113730.1.1', '2.16.840.1.113730.1.13']:
+                    else:
                         # These are some OIDs identified by OpenSSL cli as "Netscape Cert Type" and
                         # "Netscape Comment". They only occur in the old, discontinued StartSSL root
                         # certificate.
-                        continue
-                    else:
-                        warn('Unknown extension: %s' % ext.oid._name)
+                        if ext.oid.dotted_string == '2.16.840.1.113730.1.1':
+                            name = 'Netscape Cert Type'
+                        elif ext.oid.dotted_string == '2.16.840.1.113730.1.13':
+                            name = "Netscape Comment"
+                        else:
+                            name = ext.oid._name
+
+                        ext_str = '%s (Critical: %s, OID: %s)' % (name, ext.critical, ext.oid.dotted_string)
+                        this_cert_values['unknown'].append(ext_str)
+
+            this_cert_values['unknown'] = ['\n'.join(['* %s' % v for v in this_cert_values['unknown'][1:]])]
 
             for key, row in this_cert_values.items():
                 if isinstance(row[0], list):
@@ -565,6 +575,10 @@ elif args.command == 'update-ca-data':
 
         for name, values in cert_values.items():
             filename = os.path.join(out_base, '%s_%s.rst' % (prefix, name))
+
+            if name in exclude_empty_lines:
+                values = [v for v in values if ''.join(v[1:])]
+
             table = tabulate(values, headers='firstrow', tablefmt='rst')
 
             with open(filename, 'w') as stream:

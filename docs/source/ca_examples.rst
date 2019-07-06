@@ -343,33 +343,12 @@ any way.
 In CA certificates
 ==================
 
-================ =================================================================================
-CA               Value
-================ =================================================================================
-Let's Encrypt X1 X509v3 Name Constraints
-Let's Encrypt X3 (none)
-StartSSL         Netscape Cert Type, Netscape Comment
-StartSSL Class 2 (none)
-StartSSL Class 3 (none)
-GeoTrust Global  (none)
-RapidSSL G3      (none)
-Comodo           (none)
-Comodo DV        (none)
-GlobalSign       (none)
-GlobalSign DV    (none)
-================ =================================================================================
-
+.. include:: generated/ca_unknown.rst
 
 In signed certificates
 ======================
 
-========================== ==============================
-CA               Value
-========================== ==============================
-Go Daddy G2 Intermediate   signedCertificateTimestampList
-Let’s Encrypt X3           signedCertificateTimestampList
-========================== ==============================
-
+.. include:: generated/cert_unknown.rst
 
 **************
 CRL Extensions
