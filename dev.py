@@ -26,7 +26,6 @@ import warnings
 
 import packaging.version
 import six
-
 from termcolor import colored
 
 import cryptography
