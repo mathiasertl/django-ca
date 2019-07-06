@@ -573,7 +573,7 @@ class CertificateAuthority(X509CertMixin):
         else:
             return ca_storage.exists(self.private_key_path)
 
-    def generate_ocsp_key(self, expires=3, algorithm=None, key_size=None):
+    def generate_ocsp_key(self, expires=3, algorithm=None, key_size=None, password=None):
         if key_size is None:
             key_size = ca_settings.CA_DEFAULT_KEY_SIZE
         expires = get_expires(expires)
@@ -597,6 +597,7 @@ class CertificateAuthority(X509CertMixin):
             ca=self,
             csr=csr,
             expires=expires,
+            password=password,
             **kwargs
         )
 
