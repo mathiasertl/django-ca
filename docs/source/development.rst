@@ -80,7 +80,8 @@ intermediate CA)::
 
 If you have an intermediate CA::
    
-   openssl verify -CAfile ca.crt -untrusted intermediate.crt cert.crt
+   cat child.pem root.pem > cafile.pem
+   openssl verify -CAfile cafile.pem cert.crt
 
 Verify that a certificate belongs to a certain private key by matching the checksum::
 
