@@ -891,6 +891,77 @@ X509 v3 certificate extensions for signed certificates:
 
 {pub[pem]}''',
 
+    'digicert_global_root': '''{name} (enabled):
+* Serial: {serial}
+* Private key not available locally.
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+X509 v3 certificate extensions for CA:
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+    * {key_usage_2}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+
+    'digicert_sha2': '''{name} (enabled):
+* Serial: {serial}
+* Private key not available locally.
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+X509 v3 certificate extensions for CA:
+AuthorityInfoAccess{authority_information_access_critical}:
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl_distribution_points[0].full_name[0].value}
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl_distribution_points[1].full_name[0].value}
+CertificatePolicies{certificate_policies_critical}:
+    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+      Policy Qualifiers:
+      * https://www.digicert.com/CPS
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+    * {key_usage_2}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): None
+* Issuer URL: None
+* OCSP URL: None
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
 }
 
 # Root CAs with no children can always use the same template (since they all use the same extensions)
