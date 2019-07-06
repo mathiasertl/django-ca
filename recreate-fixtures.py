@@ -79,6 +79,8 @@ if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: on
 parser = argparse.ArgumentParser(description='Regenerate fixtures for testing.')
 parser.add_argument('--only-contrib', default=False, action='store_true',
                     help='Only update data from contrib certificates.')
+parser.add_argument('--no-delay', dest='delay', action='store_false', default=True,
+                    help='Do not delay validity into the future.')
 args = parser.parse_args()
 
 manage('migrate', verbosity=0)
@@ -476,7 +478,11 @@ if not args.only_contrib:
                 # also update data
                 data[name]['crl'] = data[parent]['ca_crl_url']
 
-            with freeze_time(now + data[name]['delta']):
+            freeze_now = now
+            if args.delay:
+                freeze_now += data[name]['delta']
+
+            with freeze_time(freeze_now):
                 ca = CertificateAuthority.objects.init(
                     name=data[name]['name'], password=data[name]['password'], subject=data[name]['subject'],
                     expires=datetime.utcnow() + data[name]['expires'],
@@ -509,7 +515,11 @@ if not args.only_contrib:
             kwargs['subject'].append(('CN', data[name]['cn']))
             pwd = data[data[name]['ca']]['password']
 
-            with freeze_time(now + data[name]['delta']):
+            freeze_now = now
+            if args.delay:
+                freeze_now += data[name]['delta']
+
+            with freeze_time(freeze_now):
                 cert = Certificate.objects.init(ca=ca, csr=csr, algorithm=data[name]['algorithm'],
                                                 expires=datetime.utcnow() + data[name]['expires'],
                                                 password=pwd, **kwargs)
@@ -527,8 +537,12 @@ if not args.only_contrib:
             kwargs = get_cert_profile_kwargs(profile)
             kwargs['subject'].append(('CN', data[name]['cn']))
 
+            freeze_now = now
+            if args.delay:
+                freeze_now += data[name]['delta']
+
             pwd = data[ca.name]['password']
-            with freeze_time(now + data[name]['delta']):
+            with freeze_time(freeze_now):
                 cert = Certificate.objects.init(ca=ca, csr=csr, algorithm=data[name]['algorithm'],
                                                 expires=datetime.utcnow() + data[name]['expires'],
                                                 password=pwd, **kwargs)
@@ -543,7 +557,10 @@ if not args.only_contrib:
         csr_path = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
         csr = create_csr(key_path, csr_path)
 
-        with freeze_time(now + data[name]['delta']):
+        freeze_now = now
+        if args.delay:
+            freeze_now += data[name]['delta']
+        with freeze_time(freeze_now):
             no_ext_now = datetime.utcnow()
             pwd = data[ca.name]['password']
             parsed_csr = x509.load_pem_x509_csr(csr.encode('utf-8'), default_backend())
