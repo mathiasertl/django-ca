@@ -288,7 +288,8 @@ class InitCATest(DjangoCATestCase):
         }]))
         self.assertEqual(child.authority_information_access,
                          AuthorityInformationAccess([[
-                             'URI:http://localhost/django_ca/issuer/%s.der' % parent.serial
+                             'URI:http://%s/django_ca/issuer/%s.der' % (ca_settings.CA_DEFAULT_HOSTNAME,
+                                                                        parent.serial)
                          ], [
                              'URI:http://ca.ocsp.example.com'
                          ]]))
