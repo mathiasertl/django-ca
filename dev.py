@@ -344,7 +344,7 @@ Please create %(localsettings)s from %(example)s and try again.""" % {
 
     # create a chain file for the child
     chain = loaded_cas['child'].pub + loaded_cas['root'].pub
-    chain_path = ca_storage.path(ca_storage.save('data/child-chain.pem', ContentFile(chain)))
+    chain_path = ca_storage.path(ca_storage.save('child-chain.pem', ContentFile(chain)))
 
     base_url = 'http://localhost:8000/'
     cwd = os.getcwd()
