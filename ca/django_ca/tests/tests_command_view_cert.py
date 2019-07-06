@@ -427,16 +427,18 @@ Digest:
 HPKP pin: {hpkp}
 ''', sct=sct)
 
-    @freeze_time("2019-04-01")
+    @freeze_time("2019-07-05")
     def test_contrib_letsencrypt_jabber_at(self):
+        name = 'letsencrypt_x3-cert'
         if ca_settings.OPENSSL_SUPPORTS_SCT:
-            sct = '''SignedCertificateTimestampList:
-    * Precertificate (v1):
-        Timestamp: 2019-02-24 17:09:56.060000
-        Log ID: 747eda8331ad331091219cce254f4270c2bffd5e422008c6373579e6107bcc56
-    * Precertificate (v1):
-        Timestamp: 2019-02-24 17:09:56.096000
-        Log ID: 293c519654c83965baaa50fc5807d4b76fbf587a2972dca4c30cf4e54547f478'''
+            context = self.get_cert_context(name)
+            sct = '''SignedCertificateTimestampList{sct_critical}:
+    * Precertificate ({sct_values[0][version]}):
+        Timestamp: {sct_values[0][timestamp]}
+        Log ID: {sct_values[0][log_id]}
+    * Precertificate ({sct_values[1][version]}):
+        Timestamp: {sct_values[1][timestamp]}
+        Log ID: {sct_values[1][log_id]}'''.format(**context)
 
         else:
             sct = '''SignedCertificateTimestampList:
