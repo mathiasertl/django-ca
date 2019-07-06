@@ -22,11 +22,11 @@ from .base import DjangoCATestCase
 from .base import certs
 from .base import override_settings
 
-expected = """{dsa[serial]} - {dsa[name]}{dsa_state}
-{ecc[serial]} - {ecc[name]}{ecc_state}
-{pwd[serial]} - {pwd[name]}{pwd_state}
-{root[serial]} - {root[name]}{root_state}
-{child[serial]} - {child[name]}{child_state}
+expected = """{dsa[serial_colons]} - {dsa[name]}{dsa_state}
+{ecc[serial_colons]} - {ecc[name]}{ecc_state}
+{pwd[serial_colons]} - {pwd[name]}{pwd_state}
+{root[serial_colons]} - {root[name]}{root_state}
+{child[serial_colons]} - {child[name]}{child_state}
 """
 
 
@@ -44,34 +44,34 @@ class ListCertsTestCase(DjangoCATestCase):
     def test_all_cas(self):
         self.load_all_cas()
         stdout, stderr = self.cmd('list_cas')
-        self.assertEqual(stdout, """{dsa[serial]} - {dsa[name]}
-{ecc[serial]} - {ecc[name]}
-{pwd[serial]} - {pwd[name]}
-{root[serial]} - {root[name]}
-{child[serial]} - {child[name]}
-{letsencrypt_x1[serial]} - {letsencrypt_x1[name]}
-{letsencrypt_x3[serial]} - {letsencrypt_x3[name]}
-{dst_root_x3[serial]} - {dst_root_x3[name]}
-{google_g3[serial]} - {google_g3[name]}
-{globalsign_r2_root[serial]} - {globalsign_r2_root[name]}
-{trustid_server_a52[serial]} - {trustid_server_a52[name]}
-{rapidssl_g3[serial]} - {rapidssl_g3[name]}
-{geotrust[serial]} - {geotrust[name]}
-{startssl_class2[serial]} - {startssl_class2[name]}
-{digicert_sha2[serial]} - {digicert_sha2[name]}
-{globalsign_dv[serial]} - {globalsign_dv[name]}
-{comodo_ev[serial]} - {comodo_ev[name]}
-{globalsign[serial]} - {globalsign[name]}
-{digicert_ha_intermediate[serial]} - {digicert_ha_intermediate[name]}
-{comodo_dv[serial]} - {comodo_dv[name]}
-{startssl_class3[serial]} - {startssl_class3[name]}
-{godaddy_g2_intermediate[serial]} - {godaddy_g2_intermediate[name]}
-{digicert_ev_root[serial]} - {digicert_ev_root[name]}
-{digicert_global_root[serial]} - {digicert_global_root[name]}
-{identrust_root_1[serial]} - {identrust_root_1[name]}
-{startssl_root[serial]} - {startssl_root[name]}
-{godaddy_g2_root[serial]} - {godaddy_g2_root[name]}
-{comodo[serial]} - {comodo[name]}
+        self.assertEqual(stdout, """{dsa[serial_colons]} - {dsa[name]}
+{ecc[serial_colons]} - {ecc[name]}
+{pwd[serial_colons]} - {pwd[name]}
+{root[serial_colons]} - {root[name]}
+{child[serial_colons]} - {child[name]}
+{letsencrypt_x1[serial_colons]} - {letsencrypt_x1[name]}
+{letsencrypt_x3[serial_colons]} - {letsencrypt_x3[name]}
+{dst_root_x3[serial_colons]} - {dst_root_x3[name]}
+{google_g3[serial_colons]} - {google_g3[name]}
+{globalsign_r2_root[serial_colons]} - {globalsign_r2_root[name]}
+{trustid_server_a52[serial_colons]} - {trustid_server_a52[name]}
+{rapidssl_g3[serial_colons]} - {rapidssl_g3[name]}
+{geotrust[serial_colons]} - {geotrust[name]}
+{startssl_class2[serial_colons]} - {startssl_class2[name]}
+{digicert_sha2[serial_colons]} - {digicert_sha2[name]}
+{globalsign_dv[serial_colons]} - {globalsign_dv[name]}
+{comodo_ev[serial_colons]} - {comodo_ev[name]}
+{globalsign[serial_colons]} - {globalsign[name]}
+{digicert_ha_intermediate[serial_colons]} - {digicert_ha_intermediate[name]}
+{comodo_dv[serial_colons]} - {comodo_dv[name]}
+{startssl_class3[serial_colons]} - {startssl_class3[name]}
+{godaddy_g2_intermediate[serial_colons]} - {godaddy_g2_intermediate[name]}
+{digicert_ev_root[serial_colons]} - {digicert_ev_root[name]}
+{digicert_global_root[serial_colons]} - {digicert_global_root[name]}
+{identrust_root_1[serial_colons]} - {identrust_root_1[name]}
+{startssl_root[serial_colons]} - {startssl_root[name]}
+{godaddy_g2_root[serial_colons]} - {godaddy_g2_root[name]}
+{comodo[serial_colons]} - {comodo[name]}
 """.format(**certs))
         self.assertEqual(stderr, '')
 
@@ -97,11 +97,11 @@ class ListCertsTestCase(DjangoCATestCase):
 
     def test_tree(self):
         stdout, stderr = self.cmd('list_cas', tree=True)
-        self.assertEqual(stdout, """{dsa[serial]} - {dsa[name]}
-{ecc[serial]} - {ecc[name]}
-{pwd[serial]} - {pwd[name]}
-{root[serial]} - {root[name]}
-└───{child[serial]} - {child[name]}
+        self.assertEqual(stdout, """{dsa[serial_colons]} - {dsa[name]}
+{ecc[serial_colons]} - {ecc[name]}
+{pwd[serial_colons]} - {pwd[name]}
+{root[serial_colons]} - {root[name]}
+└───{child[serial_colons]} - {child[name]}
 """.format(**certs))
         self.assertEqual(stderr, '')
 
@@ -119,14 +119,14 @@ class ListCertsTestCase(DjangoCATestCase):
         stdout, stderr = self.cmd('list_cas', tree=True)
         context = {}
         context.update(certs)
-        self.assertEqual(stdout, """{dsa[serial]} - {dsa[name]}
-{ecc[serial]} - {ecc[name]}
-{pwd[serial]} - {pwd[name]}
-{root[serial]} - {root[name]}
-│───child3 - child3
-│   └───child3.1 - child3.1
-│───child4 - child4
-└───{child[serial]} - {child[name]}
+        self.assertEqual(stdout, """{dsa[serial_colons]} - {dsa[name]}
+{ecc[serial_colons]} - {ecc[name]}
+{pwd[serial_colons]} - {pwd[name]}
+{root[serial_colons]} - {root[name]}
+│───ch:il:d3 - child3
+│   └───ch:il:d3:.1 - child3.1
+│───ch:il:d4 - child4
+└───{child[serial_colons]} - {child[name]}
 """.format(**context))
 
 

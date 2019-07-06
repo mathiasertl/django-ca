@@ -14,6 +14,7 @@
 # see <http://www.gnu.org/licenses/>.
 
 from ...utils import ca_storage
+from ...utils import add_colons
 from ..base import BaseCommand
 
 
@@ -33,7 +34,7 @@ class Command(BaseCommand):
             path = ca.private_key_path
 
         self.stdout.write('%s (%s):' % (ca.name, 'enabled' if ca.enabled else 'disabled'))
-        self.stdout.write('* Serial: %s' % ca.serial)
+        self.stdout.write('* Serial: %s' % add_colons(ca.serial))
 
         if ca_storage.exists(ca.private_key_path):
             self.stdout.write('* Path to private key:\n  %s' % path)

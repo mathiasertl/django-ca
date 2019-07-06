@@ -67,6 +67,7 @@ from ..signals import post_issue_cert
 from ..signals import post_revoke_cert
 from ..subject import Subject
 from ..utils import OID_NAME_MAPPINGS
+from ..utils import add_colons
 from ..utils import ca_storage
 from ..utils import x509_name
 
@@ -226,6 +227,7 @@ No Policy Qualifiers''',
 
 SPHINX_FIXTURES_DIR = os.path.join(os.path.dirname(settings.BASE_DIR), 'docs', 'source', '_files')
 for cert_name, cert_data in certs.items():
+    cert_data['serial_colons'] = add_colons(cert_data['serial'])
     if cert_data.get('password'):
         cert_data['password'] = cert_data['password'].encode('utf-8')
     if cert_data['cat'] == 'sphinx-contrib':

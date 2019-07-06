@@ -17,6 +17,7 @@ from freezegun import freeze_time
 
 from django.utils import timezone
 
+from ..utils import add_colons
 from .base import DjangoCAWithGeneratedCertsTestCase
 from .base import override_settings
 from .base import timestamps
@@ -33,7 +34,7 @@ class ListCertsTestCase(DjangoCAWithGeneratedCertsTestCase):
                 word = 'expired'
 
             info = '%s: %s' % (word, cert.expires.strftime('%Y-%m-%d'))
-        return '%s - %s (%s)' % (cert.serial, cert.cn, info)
+        return '%s - %s (%s)' % (add_colons(cert.serial), cert.cn, info)
 
     def assertCerts(self, *certs, **kwargs):
         stdout, stderr = self.cmd('list_certs', **kwargs)

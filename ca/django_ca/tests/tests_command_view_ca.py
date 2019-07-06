@@ -19,7 +19,7 @@ from .base import override_tmpcadir
 
 expected = {
     'ecc': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Path to private key:
   {key_path}
 * Is a root CA.
@@ -47,7 +47,7 @@ X509 v3 certificate extensions for signed certificates:
 
 {pub[pem]}''',
     'child': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Path to private key:
   {key_path}
 * Parent: {parent_name} ({parent_serial})
@@ -84,7 +84,7 @@ X509 v3 certificate extensions for signed certificates:
 
 {pub[pem]}''',
     'root': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Path to private key:
   {key_path}
 * Is a root CA.
@@ -114,7 +114,7 @@ X509 v3 certificate extensions for signed certificates:
 {pub[pem]}''',
 
     'globalsign': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
 * Has no children.
@@ -140,7 +140,7 @@ X509 v3 certificate extensions for signed certificates:
 {pub[pem]}''',
 
     'digicert_ev_root': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
 * Has no children.
@@ -169,7 +169,7 @@ X509 v3 certificate extensions for signed certificates:
 {pub[pem]}''',
 
     'comodo': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
 * Has no children.
@@ -195,7 +195,7 @@ X509 v3 certificate extensions for signed certificates:
 {pub[pem]}''',
 
     'identrust_root_1': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
 * Has no children.
@@ -221,7 +221,7 @@ X509 v3 certificate extensions for signed certificates:
 {pub[pem]}''',
 
     'globalsign_r2_root': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
 * Has no children.
@@ -253,7 +253,7 @@ X509 v3 certificate extensions for signed certificates:
 {pub[pem]}''',
 
     'comodo_dv': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
 * Has no children.
@@ -299,7 +299,7 @@ X509 v3 certificate extensions for signed certificates:
 {pub[pem]}''',
 
     'rapidssl_g3': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
 * Has no children.
@@ -338,7 +338,7 @@ X509 v3 certificate extensions for signed certificates:
 {pub[pem]}''',
 
     'geotrust': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
 * Has no children.
@@ -363,7 +363,7 @@ X509 v3 certificate extensions for signed certificates:
 {pub[pem]}''',
 
     'comodo_ev': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
 * Has no children.
@@ -404,7 +404,7 @@ X509 v3 certificate extensions for signed certificates:
 {pub[pem]}''',
 
     'digicert_ha_intermediate': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
 * Has no children.
@@ -447,7 +447,7 @@ X509 v3 certificate extensions for signed certificates:
 {pub[pem]}''',
 
     'dst_root_x3': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
 * Has no children.
@@ -473,7 +473,7 @@ X509 v3 certificate extensions for signed certificates:
 {pub[pem]}''',
 
     'globalsign_dv': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
 * Has no children.
@@ -512,7 +512,7 @@ X509 v3 certificate extensions for signed certificates:
 {pub[pem]}''',
 
     'godaddy_g2_intermediate': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
 * Has no children.
@@ -551,7 +551,7 @@ X509 v3 certificate extensions for signed certificates:
 {pub[pem]}''',
 
     'godaddy_g2_root': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
 * Has no children.
@@ -577,7 +577,7 @@ X509 v3 certificate extensions for signed certificates:
 {pub[pem]}''',
 
     'google_g3': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
 * Has no children.
@@ -620,7 +620,7 @@ X509 v3 certificate extensions for signed certificates:
 {pub[pem]}''',
 
     'letsencrypt_x1': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
 * Has no children.
@@ -667,7 +667,7 @@ X509 v3 certificate extensions for signed certificates:
 {pub[pem]}''',
 
     'letsencrypt_x3': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
 * Has no children.
@@ -711,7 +711,7 @@ X509 v3 certificate extensions for signed certificates:
 {pub[pem]}''',
 
     'startssl_root': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
 * Has no children.
@@ -752,7 +752,7 @@ X509 v3 certificate extensions for signed certificates:
 
 {pub[pem]}''',
     'startssl_class2': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
 * Has no children.
@@ -793,7 +793,7 @@ X509 v3 certificate extensions for signed certificates:
 {pub[pem]}''',
 
     'startssl_class3': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
 * Has no children.
@@ -837,7 +837,7 @@ X509 v3 certificate extensions for signed certificates:
 {pub[pem]}''',
 
     'trustid_server_a52': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
 * Has no children.
@@ -892,7 +892,7 @@ X509 v3 certificate extensions for signed certificates:
 {pub[pem]}''',
 
     'digicert_global_root': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
 * Has no children.
@@ -921,7 +921,7 @@ X509 v3 certificate extensions for signed certificates:
 {pub[pem]}''',
 
     'digicert_sha2': '''{name} (enabled):
-* Serial: {serial}
+* Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
 * Has no children.

@@ -16,6 +16,7 @@
 from django.utils import timezone
 
 from ...models import Certificate
+from ...utils import add_colons
 from ..base import BaseCommand
 
 
@@ -50,4 +51,4 @@ class Command(BaseCommand):
                     word = 'expired'
 
                 info = '%s: %s' % (word, cert.expires.strftime('%Y-%m-%d'))
-            self.stdout.write('%s - %s (%s)' % (cert.serial, cert.cn, info))
+            self.stdout.write('%s - %s (%s)' % (add_colons(cert.serial), cert.cn, info))

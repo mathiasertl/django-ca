@@ -16,6 +16,7 @@
 from __future__ import unicode_literals  # the tree indent is not ascii
 
 from ...models import CertificateAuthority
+from ...utils import add_colons
 from ..base import BaseCommand
 
 
@@ -30,7 +31,7 @@ class Command(BaseCommand):
         return qs.order_by('expires', 'name')
 
     def list_ca(self, ca, indent=''):
-        text = '%s%s - %s' % (indent, ca.serial, ca.name)
+        text = '%s%s - %s' % (indent, add_colons(ca.serial), ca.name)
         if ca.enabled is False:
             text += ' (disabled)'
 
