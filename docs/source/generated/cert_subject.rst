@@ -4,6 +4,7 @@ Certificate               Subject
 Comodo DV                 /OU=Domain Control Validated/OU=PositiveSSL/CN=kode.im
 Comodo EV                 /serialNumber=3910805/jurisdictionCountryName=US/jurisdictionStateOrProvinceName=Delaware/businessCategory=Private Organization/C=US/postalCode=07013/ST=New Jersey/L=Clifton/streetAddress=Suite 100/streetAddress=1255 Broad St/O=Comodo Security Solutions, Inc./OU=COMODO EV SSL/CN=www.comodo.com
 DigiCert HA Intermediate  /C=US/ST=California/L=Sunnyvale/O=Oath Inc/CN=*.www.yahoo.com
+DigiCert Secure Server    /C=AT/L=Vienna/O=Standard Verlagsgesellschaft m.b.H./OU=IT/CN=www.derstandard.at
 GlobalSign DV             /OU=Domain Control Validated/CN=www.ajabber.me
 Go Daddy G2 Intermediate  /OU=Domain Control Validated/CN=derstandard.at
 Google G3                 /C=US/ST=California/L=Mountain View/O=Google LLC/CN=www.google.com

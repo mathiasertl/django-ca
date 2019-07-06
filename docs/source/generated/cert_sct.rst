@@ -7,6 +7,8 @@ Comodo EV                 ✗           * Type: PRE_CERTIFICATE, version: v1
                                       * Type: PRE_CERTIFICATE, version: v1
 DigiCert HA Intermediate  ✗           * Type: PRE_CERTIFICATE, version: v1
                                       * Type: PRE_CERTIFICATE, version: v1
+DigiCert Secure Server    ✗           * Type: PRE_CERTIFICATE, version: v1
+                                      * Type: PRE_CERTIFICATE, version: v1
 GlobalSign DV
 Go Daddy G2 Intermediate  ✗           * Type: PRE_CERTIFICATE, version: v1
                                       * Type: PRE_CERTIFICATE, version: v1

@@ -6,7 +6,9 @@ Comodo DV
 Comodo EV
 DST X3
 DigiCert EV Root
+DigiCert Global Root
 DigiCert HA Intermediate
+DigiCert Secure Server
 GeoTrust
 GlobalSign
 GlobalSign DV

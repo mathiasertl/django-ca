@@ -4,6 +4,7 @@ Certificate               Issuer
 Comodo DV                 /C=GB/ST=Greater Manchester/L=Salford/O=COMODO CA Limited/CN=COMODO RSA Domain Validation Secure Server CA
 Comodo EV                 /C=GB/ST=Greater Manchester/L=Salford/O=COMODO CA Limited/CN=COMODO RSA Extended Validation Secure Server CA
 DigiCert HA Intermediate  /C=US/O=DigiCert Inc/OU=www.digicert.com/CN=DigiCert SHA2 High Assurance Server CA
+DigiCert Secure Server    /C=US/O=DigiCert Inc/CN=DigiCert SHA2 Secure Server CA
 GlobalSign DV             /C=BE/O=GlobalSign nv-sa/CN=GlobalSign Domain Validation CA - SHA256 - G2
 Go Daddy G2 Intermediate  /C=US/ST=Arizona/L=Scottsdale/O=GoDaddy.com, Inc./OU=http://certs.godaddy.com/repository//CN=Go Daddy Secure Certificate Authority - G2
 Google G3                 /C=US/O=Google Trust Services/CN=Google Internet Authority G3

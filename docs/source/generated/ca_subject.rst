@@ -6,7 +6,9 @@ Comodo DV                 /C=GB/ST=Greater Manchester/L=Salford/O=COMODO CA Limi
 Comodo EV                 /C=GB/ST=Greater Manchester/L=Salford/O=COMODO CA Limited/CN=COMODO RSA Extended Validation Secure Server CA
 DST X3                    /O=Digital Signature Trust Co./CN=DST Root CA X3
 DigiCert EV Root          /C=US/O=DigiCert Inc/OU=www.digicert.com/CN=DigiCert High Assurance EV Root CA
+DigiCert Global Root      /C=US/O=DigiCert Inc/OU=www.digicert.com/CN=DigiCert Global Root CA
 DigiCert HA Intermediate  /C=US/O=DigiCert Inc/OU=www.digicert.com/CN=DigiCert SHA2 High Assurance Server CA
+DigiCert Secure Server    /C=US/O=DigiCert Inc/CN=DigiCert SHA2 Secure Server CA
 GeoTrust                  /C=US/O=GeoTrust Inc./CN=GeoTrust Global CA
 GlobalSign                /C=BE/O=GlobalSign nv-sa/OU=Root CA/CN=GlobalSign Root CA
 GlobalSign DV             /C=BE/O=GlobalSign nv-sa/CN=GlobalSign Domain Validation CA - SHA256 - G2

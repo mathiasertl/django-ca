@@ -6,7 +6,9 @@ Comodo DV                 ✗           serverAuth, clientAuth
 Comodo EV
 DST X3
 DigiCert EV Root
+DigiCert Global Root
 DigiCert HA Intermediate  ✗           serverAuth, clientAuth
+DigiCert Secure Server
 GeoTrust
 GlobalSign
 GlobalSign DV

@@ -6,7 +6,9 @@ Comodo DV                 ✗           BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:3
 Comodo EV                 ✗           BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4  ✗         ✗
 DST X3
 DigiCert EV Root          ✗           B1:3E:C3:69:03:F8:BF:47:01:D4:98:26:1A:08:02:EF:63:64:2B:C3  ✗         ✗
+DigiCert Global Root      ✗           03:DE:50:35:56:D1:4C:BB:66:F0:A3:E2:1B:1B:C3:97:B2:3D:D1:55  ✗         ✗
 DigiCert HA Intermediate  ✗           B1:3E:C3:69:03:F8:BF:47:01:D4:98:26:1A:08:02:EF:63:64:2B:C3  ✗         ✗
+DigiCert Secure Server    ✗           03:DE:50:35:56:D1:4C:BB:66:F0:A3:E2:1B:1B:C3:97:B2:3D:D1:55  ✗         ✗
 GeoTrust                  ✗           C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E  ✗         ✗
 GlobalSign
 GlobalSign DV             ✗           60:7B:66:1A:45:0D:97:CA:89:50:2F:7D:04:CD:34:A8:FF:FC:FD:4B  ✗         ✗

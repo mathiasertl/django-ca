@@ -576,9 +576,13 @@ elif args.command == 'update-ca-data':
     cert_dir = os.path.join(docs_base, '_files', 'cert')
     ca_dir = os.path.join(docs_base, '_files', 'ca')
     certs = {
-        'letsencrypt_x3.pem': {
+        'digicert_sha2.pem': {  # derstandard.at
+            'name': 'DigiCert Secure Server',
+            'last': '2019-07-06',
+        },
+        'letsencrypt_x3.pem': {  # jabber.at
             'name': 'Let\'s Encrypt X3',
-            'last': '2019-04-19',
+            'last': '2019-07-06',
         },
         'godaddy_g2_intermediate.pem': {
             'name': 'Go Daddy G2 Intermediate',
@@ -626,6 +630,15 @@ elif args.command == 'update-ca-data':
         },
     }
     cas = {
+        'digicert_sha2.pem': {  # derstandard.at
+            'name': 'DigiCert Secure Server',
+            'last': '2019-07-06',
+            'info': 'Signed by DigiCert Global Root',
+        },
+        'digicert_global_root.pem': {  # derstandard.at
+            'name': 'DigiCert Global Root',
+            'last': '2019-07-06',
+        },
         'dst_root_x3.pem': {
             'name': 'DST X3',
             'last': '2019-04-19',

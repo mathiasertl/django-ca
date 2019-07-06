@@ -4,6 +4,7 @@ Certificate               Critical    digital_signature    content_commitment   
 Comodo DV                 ✓           ✓                    ✗                     ✓                   ✗                    ✗                ✗                ✗           ✗                ✗
 Comodo EV                 ✓           ✓                    ✗                     ✓                   ✗                    ✗                ✗                ✗           ✗                ✗
 DigiCert HA Intermediate  ✓           ✓                    ✗                     ✓                   ✗                    ✗                ✗                ✗           ✗                ✗
+DigiCert Secure Server    ✓           ✓                    ✗                     ✓                   ✗                    ✗                ✗                ✗           ✗                ✗
 GlobalSign DV             ✓           ✓                    ✗                     ✓                   ✗                    ✗                ✗                ✗           ✗                ✗
 Go Daddy G2 Intermediate  ✓           ✓                    ✗                     ✓                   ✗                    ✗                ✗                ✗           ✗                ✗
 Google G3                 ✓           ✓                    ✗                     ✗                   ✗                    ✗                ✗                ✗           ✗                ✗

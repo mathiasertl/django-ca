@@ -5,6 +5,8 @@ Comodo DV                 ✗           URI:http://crl.comodoca.com/COMODORSADom
 Comodo EV                 ✗           URI:http://crl.comodoca.com/COMODORSAExtendedValidationSecureServerCA.crl  ✗       ✗         ✗
 DigiCert HA Intermediate  ✗           URI:http://crl3.digicert.com/sha2-ha-server-g6.crl                         ✗       ✗         ✗
 ..                                    URI:http://crl4.digicert.com/sha2-ha-server-g6.crl                         ✗       ✗         ✗
+DigiCert Secure Server    ✗           URI:http://crl3.digicert.com/ssca-sha2-g6.crl                              ✗       ✗         ✗
+..                                    URI:http://crl4.digicert.com/ssca-sha2-g6.crl                              ✗       ✗         ✗
 GlobalSign DV             ✗           URI:http://crl.globalsign.com/gs/gsdomainvalsha2g2.crl                     ✗       ✗         ✗
 Go Daddy G2 Intermediate  ✗           URI:http://crl.godaddy.com/gdig2s1-1015.crl                                ✗       ✗         ✗
 Google G3                 ✗           URI:http://crl.pki.goog/GTSGIAG3.crl                                       ✗       ✗         ✗

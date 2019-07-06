@@ -6,7 +6,10 @@ Comodo DV                 ✗           URI:http://crl.comodoca.com/COMODORSACer
 Comodo EV                 ✗           URI:http://crl.comodoca.com/COMODORSACertificationAuthority.crl  ✗       ✗         ✗
 DST X3
 DigiCert EV Root
+DigiCert Global Root
 DigiCert HA Intermediate  ✗           URI:http://crl4.digicert.com/DigiCertHighAssuranceEVRootCA.crl   ✗       ✗         ✗
+DigiCert Secure Server    ✗           URI:http://crl3.digicert.com/DigiCertGlobalRootCA.crl            ✗       ✗         ✗
+..                                    URI:http://crl4.digicert.com/DigiCertGlobalRootCA.crl            ✗       ✗         ✗
 GeoTrust
 GlobalSign
 GlobalSign DV             ✗           URI:http://crl.globalsign.net/root.crl                           ✗       ✗         ✗

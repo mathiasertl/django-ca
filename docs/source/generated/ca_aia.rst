@@ -8,7 +8,9 @@ Comodo EV                 ✗           * caIssuers: URI:http://crt.comodoca.com
                                       * OCSP: URI:http://ocsp.comodoca.com
 DST X3
 DigiCert EV Root
+DigiCert Global Root
 DigiCert HA Intermediate  ✗           * OCSP: URI:http://ocsp.digicert.com
+DigiCert Secure Server    ✗           * OCSP: URI:http://ocsp.digicert.com
 GeoTrust
 GlobalSign
 GlobalSign DV             ✗           * OCSP: URI:http://ocsp.globalsign.com/rootr1

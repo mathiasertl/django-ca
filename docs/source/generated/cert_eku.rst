@@ -4,6 +4,7 @@ Certificate               Critical    Usages
 Comodo DV                 ✗           serverAuth, clientAuth
 Comodo EV                 ✗           serverAuth, clientAuth
 DigiCert HA Intermediate  ✗           serverAuth, clientAuth
+DigiCert Secure Server    ✗           serverAuth, clientAuth
 GlobalSign DV             ✗           serverAuth, clientAuth
 Go Daddy G2 Intermediate  ✗           serverAuth, clientAuth
 Google G3                 ✗           serverAuth

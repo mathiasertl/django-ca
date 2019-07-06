@@ -7,7 +7,9 @@ Comodo DV                 ✗           * 2.5.29.32.0
 Comodo EV                 ✗           * 2.5.29.32.0: https://secure.comodo.com/CPS
 DST X3
 DigiCert EV Root
+DigiCert Global Root
 DigiCert HA Intermediate  ✗           * 2.5.29.32.0: https://www.digicert.com/CPS
+DigiCert Secure Server    ✗           * 2.5.29.32.0: https://www.digicert.com/CPS
 GeoTrust
 GlobalSign
 GlobalSign DV             ✗           * 2.5.29.32.0: https://www.globalsign.com/repository/

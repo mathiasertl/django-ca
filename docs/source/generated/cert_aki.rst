@@ -4,6 +4,7 @@ Certificate               Critical    Key identifier                            
 Comodo DV                 ✗           90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7  ✗         ✗
 Comodo EV                 ✗           39:DA:FF:CA:28:14:8A:A8:74:13:08:B9:E4:0E:A9:D2:FA:7E:9D:69  ✗         ✗
 DigiCert HA Intermediate  ✗           51:68:FF:90:AF:02:07:75:3C:CC:D9:65:64:62:A2:12:B8:59:72:3B  ✗         ✗
+DigiCert Secure Server    ✗           0F:80:61:1C:82:31:61:D5:2F:28:E7:8D:46:38:B4:2C:E1:C6:D9:E2  ✗         ✗
 GlobalSign DV             ✗           EA:4E:7C:D4:80:2D:E5:15:81:86:26:8C:82:6D:C0:98:A4:CF:97:0F  ✗         ✗
 Go Daddy G2 Intermediate  ✗           40:C2:BD:27:8E:CC:34:83:30:A2:33:D7:FB:6C:B3:F0:B4:2C:80:CE  ✗         ✗
 Google G3                 ✗           77:C2:B8:50:9A:67:76:76:B1:2D:C2:86:D0:83:A0:7E:A6:7E:BA:4B  ✗         ✗

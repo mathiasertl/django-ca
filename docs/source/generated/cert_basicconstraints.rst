@@ -4,6 +4,7 @@ Certificate               Critical    CA     Path length
 Comodo DV                 ✓           False  None
 Comodo EV                 ✓           False  None
 DigiCert HA Intermediate  ✓           False  None
+DigiCert Secure Server    ✗           False  None
 GlobalSign DV             ✗           False  None
 Go Daddy G2 Intermediate  ✓           False  None
 Google G3                 ✓           False  None

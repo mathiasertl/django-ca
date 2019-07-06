@@ -7,6 +7,8 @@ Comodo EV                 ✗           * caIssuers: URI:http://crt.comodoca.com
                                       * OCSP: URI:http://ocsp.comodoca.com
 DigiCert HA Intermediate  ✗           * OCSP: URI:http://ocsp.digicert.com
                                       * caIssuers: URI:http://cacerts.digicert.com/DigiCertSHA2HighAssuranceServerCA.crt
+DigiCert Secure Server    ✗           * OCSP: URI:http://ocsp.digicert.com
+                                      * caIssuers: URI:http://cacerts.digicert.com/DigiCertSHA2SecureServerCA.crt
 GlobalSign DV             ✗           * caIssuers: URI:http://secure.globalsign.com/cacert/gsdomainvalsha2g2r1.crt
                                       * OCSP: URI:http://ocsp2.globalsign.com/gsdomainvalsha2g2
 Go Daddy G2 Intermediate  ✗           * OCSP: URI:http://ocsp.godaddy.com/

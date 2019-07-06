@@ -7,6 +7,8 @@ Comodo EV                 ✗           * 1.3.6.1.4.1.6449.1.2.1.5.1: https://se
                                       * 2.23.140.1.1
 DigiCert HA Intermediate  ✗           * 2.16.840.1.114412.1.1: https://www.digicert.com/CPS
                                       * 2.23.140.1.2.2
+DigiCert Secure Server    ✗           * 2.16.840.1.114412.1.1: https://www.digicert.com/CPS
+                                      * 2.23.140.1.2.2
 GlobalSign DV             ✗           * 1.3.6.1.4.1.4146.1.10: https://www.globalsign.com/repository/
                                       * 2.23.140.1.2.1
 Go Daddy G2 Intermediate  ✗           * 2.16.840.1.114413.1.7.23.1: http://certificates.godaddy.com/repository/
