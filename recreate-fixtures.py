@@ -81,12 +81,18 @@ parser.add_argument('--only-contrib', default=False, action='store_true',
                     help='Only update data from contrib certificates.')
 parser.add_argument('--no-delay', dest='delay', action='store_false', default=True,
                     help='Do not delay validity into the future.')
+parser.add_argument('--ca-validity', metavar='DAYS', type=int, default=366,
+                    help='How long a CA should be valid (default: %(default)s)')
+parser.add_argument('--cert-validity', metavar='DAYS', type=int, default=183,
+                    help='How long a CERT should be valid (default: %(default)s).')
+parser.add_argument('--dest', default=settings.FIXTURES_DIR,
+                    help='Where to store generated certificates (default: %(default)s).')
 args = parser.parse_args()
 
 manage('migrate', verbosity=0)
 
 # Some variables used in various places throughout the code
-out_path = os.path.join(settings.FIXTURES_DIR, 'cert-data.json')
+out_path = os.path.join(args.dest, 'cert-data.json')
 _timeformat = '%Y-%m-%d %H:%M:%S'
 key_size = 1024  # Size for private keys
 ca_base_cn = 'ca.example.com'
@@ -97,6 +103,9 @@ pwd_pathlen = 2
 dsa_pathlen = 3
 dsa_algorithm = 'SHA1'
 testserver = 'http://%s' % ca_settings.CA_DEFAULT_HOSTNAME
+
+if not os.path.exists(args.dest):
+    os.makedirs(args.dest)
 
 
 class override_tmpcadir(override_settings):
@@ -182,10 +191,10 @@ def update_cert_data(cert, data):
 
 
 def write_ca(cert, data, password=None):
-    key_dest = os.path.join(settings.FIXTURES_DIR, data['key_filename'])
-    pub_dest = os.path.join(settings.FIXTURES_DIR, data['pub_filename'])
-    key_der_dest = os.path.join(settings.FIXTURES_DIR, data['key_der_filename'])
-    pub_der_dest = os.path.join(settings.FIXTURES_DIR, data['pub_der_filename'])
+    key_dest = os.path.join(args.dest, data['key_filename'])
+    pub_dest = os.path.join(args.dest, data['pub_filename'])
+    key_der_dest = os.path.join(args.dest, data['key_der_filename'])
+    pub_der_dest = os.path.join(args.dest, data['pub_der_filename'])
 
     # write files to dest
     shutil.copy(ca_storage.path(cert.private_key_path), key_dest)
@@ -216,11 +225,11 @@ def write_ca(cert, data, password=None):
 
 
 def copy_cert(cert, data, key_path, csr_path):
-    key_dest = os.path.join(settings.FIXTURES_DIR, data['key_filename'])
-    csr_dest = os.path.join(settings.FIXTURES_DIR, data['csr_filename'])
-    pub_dest = os.path.join(settings.FIXTURES_DIR, data['pub_filename'])
-    key_der_dest = os.path.join(settings.FIXTURES_DIR, data['key_der_filename'])
-    pub_der_dest = os.path.join(settings.FIXTURES_DIR, data['pub_der_filename'])
+    key_dest = os.path.join(args.dest, data['key_filename'])
+    csr_dest = os.path.join(args.dest, data['csr_filename'])
+    pub_dest = os.path.join(args.dest, data['pub_filename'])
+    key_der_dest = os.path.join(args.dest, data['key_der_filename'])
+    pub_der_dest = os.path.join(args.dest, data['pub_der_filename'])
 
     shutil.copy(key_path, key_dest)
     shutil.copy(csr_path, csr_dest)
@@ -455,10 +464,10 @@ for cert, cert_values in data.items():
         cert_values['csr_filename'] = False
 
     if cert_values.get('type') == 'ca':
-        data[cert].setdefault('expires', timedelta(days=366))
+        data[cert].setdefault('expires', timedelta(days=args.ca_validity))
     else:
         data[cert]['cn'] = '%s.example.com' % cert
-        data[cert].setdefault('expires', timedelta(days=183))
+        data[cert].setdefault('expires', timedelta(days=args.cert_validity))
 
 ca_names = [v['name'] for k, v in data.items() if v.get('type') == 'ca']
 ca_instances = []
@@ -626,7 +635,9 @@ if not args.only_contrib:
         copy_cert(cert, data[name], key_path, csr_path)
 
     # Rebuild example OCSP requests
-    ocsp_base = os.path.join(settings.FIXTURES_DIR, 'ocsp')
+    ocsp_base = os.path.join(args.dest, 'ocsp')
+    if not os.path.exists(ocsp_base):
+        os.makedirs(ocsp_base)
     ocsp_builder = ocsp.OCSPRequestBuilder()
     ocsp_builder = ocsp_builder.add_certificate(
         data['child-cert']['parsed_cert'].x509,
