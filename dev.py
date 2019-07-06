@@ -292,9 +292,15 @@ Please create %(localsettings)s from %(example)s and try again.""" % {
     manage('migrate', verbosity=0)
     ok()
 
-    print('Loading fixture data...', end='')
-    fixtures_dir = os.path.join(_rootdir, 'ca', 'django_ca', 'tests', 'fixtures')
-    with open(os.path.join(fixtures_dir, 'cert-data.json')) as stream:
+    if not os.path.exists(ca_settings.CA_DIR):
+        os.makedirs(ca_settings.CA_DIR)
+
+    print('Creating fixture data...', end='')
+    subprocess.call(['./recreate-fixtures.py', '--no-delay', '--ca-validity=3650', '--cert-validity=732',
+                     '--dest=%s' % ca_settings.CA_DIR])
+    import time
+    time.sleep(10)
+    with open(os.path.join(ca_settings.CA_DIR, 'cert-data.json')) as stream:
         fixture_data = json.load(stream)
     ok()
 
@@ -309,10 +315,8 @@ Please create %(localsettings)s from %(example)s and try again.""" % {
             name = cert_data['name']
             path = '%s.key' % name
 
-            with open(os.path.join(fixtures_dir, cert_data['key_filename']), 'rb') as stream:
+            with open(os.path.join(ca_settings.CA_DIR, cert_data['key_filename']), 'rb') as stream:
                 pkey = stream.read()
-
-            ca_storage.save(path, ContentFile(pkey))
 
             c = CertificateAuthority(name=name, private_key_path=path)
             loaded_cas[c.name] = c
@@ -322,10 +326,9 @@ Please create %(localsettings)s from %(example)s and try again.""" % {
 
             c = Certificate(ca=loaded_cas[cert_data['ca']])
 
-        with open(os.path.join(fixtures_dir, cert_data['pub_filename']), 'rb') as stream:
+        with open(os.path.join(ca_settings.CA_DIR, cert_data['pub_filename']), 'rb') as stream:
             pem = stream.read()
         c.x509 = x509.load_pem_x509_certificate(pem, default_backend())
-        ca_storage.save('data/%s.pem' % cert_name, ContentFile(pem))
 
         c.save()
 
@@ -347,11 +350,11 @@ Please create %(localsettings)s from %(example)s and try again.""" % {
     base_url = 'http://localhost:8000/'
     cwd = os.getcwd()
     rel = lambda p: os.path.relpath(p, cwd)  # NOQA
-    root_ca_path = ca_storage.path('data/root.pem')
-    child_ca_path = ca_storage.path('data/child.pem')
+    root_ca_path = ca_storage.path(certs['root']['pub_filename'])
+    child_ca_path = ca_storage.path(certs['child']['pub_filename'])
 
-    root_cert_path = ca_storage.path('data/root-cert.pem')
-    child_cert_path = ca_storage.path('data/child-cert.pem')
+    root_cert_path = ca_storage.path(certs['root-cert']['pub_filename'])
+    child_cert_path = ca_storage.path(certs['child-cert']['pub_filename'])
 
     ocsp_url = '%s%s' % (base_url.rstrip('/'),
                          reverse('django_ca:ocsp-cert-post', kwargs={'serial': certs['child']['serial']}))
