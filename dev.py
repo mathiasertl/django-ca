@@ -384,7 +384,6 @@ elif args.command == 'update-ca-data':
 
     from django_ca.utils import bytes_to_hex
     from django_ca.utils import format_general_name
-    from django_ca.utils import format_general_names
     from django_ca.utils import format_name
 
     docs_base = os.path.join(_rootdir, 'docs', 'source')
@@ -443,7 +442,7 @@ elif args.command == 'update-ca-data':
                     elif isinstance(value, x509.AuthorityKeyIdentifier):
                         aci = '✗'
                         if value.authority_cert_issuer:
-                            aci = format_general_names(value.authority_cert_issuer)
+                            aci = format_general_name(value.authority_cert_issuer)
 
                         this_cert_values['aki'] = [
                             critical,
@@ -517,7 +516,7 @@ elif args.command == 'update-ca-data':
                     elif isinstance(value, x509.IssuerAlternativeName):
                         this_cert_values['ian'] = [
                             critical,
-                            format_general_names(value),
+                            '* '.join([format_general_name(v) for v in value]),
                         ]
                     elif isinstance(value, x509.KeyUsage):
                         key_usages = []
@@ -577,19 +576,19 @@ elif args.command == 'update-ca-data':
     cert_dir = os.path.join(docs_base, '_files', 'cert')
     ca_dir = os.path.join(docs_base, '_files', 'ca')
     certs = {
-        'jabberat.pem': {
+        'letsencrypt_x3.pem': {
             'name': 'Let\'s Encrypt X3',
             'last': '2019-04-19',
         },
-        'derstandardat.pem': {
+        'godaddy_g2_intermediate.pem': {
             'name': 'Go Daddy G2 Intermediate',
             'last': '2019-04-19',
         },
-        'googlecom.pem': {
+        'google_g3.pem': {
             'name': 'Google G3',
             'last': '2019-04-19',
         },
-        'idertl.pem': {
+        'letsencrypt_x1.pem': {
             'name': 'Let\'s Encrypt X1',
             'last': '2016-04-22',
         },
@@ -865,7 +864,7 @@ elif args.command == 'update-ca-data':
                 elif isinstance(value, x509.IssuingDistributionPoint):
                     full_name = rel_name = reasons = '✗'
                     if value.full_name:
-                        full_name = format_general_names(value.full_name)
+                        full_name = '* '.join([format_general_name(v) for v in value.full_name])
                     if value.relative_name:
                         rel_name = format_name(value.relative_name)
                     if value.only_some_reasons:
@@ -883,7 +882,7 @@ elif args.command == 'update-ca-data':
                 elif isinstance(value, x509.AuthorityKeyIdentifier):
                     aci = '✗'
                     if value.authority_cert_issuer:
-                        aci = format_general_names(value.authority_cert_issuer)
+                        aci = '* '.join([format_general_name(v) for v in value.authority_cert_issuer])
 
                     this_crl_values['crl_aki'] = (
                         bytes_to_hex(value.key_identifier),
