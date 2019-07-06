@@ -58,6 +58,7 @@ class ListCertsTestCase(DjangoCATestCase):
 {rapidssl_g3[serial]} - {rapidssl_g3[name]}
 {geotrust[serial]} - {geotrust[name]}
 {startssl_class2[serial]} - {startssl_class2[name]}
+{digicert_sha2[serial]} - {digicert_sha2[name]}
 {globalsign_dv[serial]} - {globalsign_dv[name]}
 {comodo_ev[serial]} - {comodo_ev[name]}
 {globalsign[serial]} - {globalsign[name]}
@@ -66,6 +67,7 @@ class ListCertsTestCase(DjangoCATestCase):
 {startssl_class3[serial]} - {startssl_class3[name]}
 {godaddy_g2_intermediate[serial]} - {godaddy_g2_intermediate[name]}
 {digicert_ev_root[serial]} - {digicert_ev_root[name]}
+{digicert_global_root[serial]} - {digicert_global_root[name]}
 {identrust_root_1[serial]} - {identrust_root_1[name]}
 {startssl_root[serial]} - {startssl_root[name]}
 {godaddy_g2_root[serial]} - {godaddy_g2_root[name]}
