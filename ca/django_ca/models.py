@@ -21,6 +21,7 @@ import json
 import logging
 import os
 import re
+from datetime import datetime
 from datetime import timedelta
 
 import pytz
@@ -676,6 +677,8 @@ class CertificateAuthority(X509CertMixin):
 
         if timezone.is_aware(now_builder):
             now_builder = timezone.make_naive(now, pytz.utc)
+        else:
+            now_builder = datetime.utcnow()
 
         builder = x509.CertificateRevocationListBuilder()
         builder = builder.issuer_name(self.x509.subject)
