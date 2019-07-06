@@ -530,7 +530,8 @@ class CertificateTests(DjangoCAWithCertTestCase):
 
     def test_authority_information_access(self):
         for name, ca in self.cas.items():
-            self.assertEqual(ca.authority_information_access, certs[name].get('authority_information_access'))
+            self.assertEqual(ca.authority_information_access,
+                             certs[name].get('authority_information_access'))
 
         for name, cert in self.certs.items():
             self.assertEqual(cert.authority_information_access,

@@ -55,6 +55,7 @@ from .models import CertificateAuthority
 from .models import Watcher
 from .signals import post_issue_cert
 from .utils import OID_NAME_MAPPINGS
+from .utils import add_colons
 from .utils import format_general_name
 
 log = logging.getLogger(__name__)
@@ -353,6 +354,9 @@ class CertificateMixin(object):
 
         return fields
 
+    def serial_field(self, obj):
+        return add_colons(obj.serial)
+
     class Media:
         css = {
             'all': (
@@ -372,7 +376,7 @@ class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
             'fields': ['crl_url', 'crl_number', 'issuer_url', 'ocsp_url', 'issuer_alt_name', ],
         }),
         (_('Certificate'), {
-            'fields': ['serial', 'pub', 'expires'],
+            'fields': ['serial_field', 'pub', 'expires'],
             # The "as-code" class is used so CSS can only match this section (and only in an
             # existing cert).
             'classes': ('as-code', ),
@@ -381,10 +385,10 @@ class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
             'fields': [],  # dynamically added by add_fieldsets
         }),
     )
-    list_display = ['enabled', 'name', 'serial', ]
+    list_display = ['enabled', 'name', 'serial_field', ]
     list_display_links = ['enabled', 'name', ]
-    search_fields = ['cn', 'name', 'serial', ]
-    readonly_fields = ['serial', 'pub', 'parent', 'cn_display', 'expires', 'hpkp_pin', ]
+    search_fields = ['cn', 'name', 'serial_field', ]
+    readonly_fields = ['serial_field', 'pub', 'parent', 'cn_display', 'expires', 'hpkp_pin', ]
     x509_fieldset_index = 3
 
     def has_add_permission(self, request):
@@ -424,16 +428,16 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
     actions = ['revoke', ]
     change_actions = ('revoke_change', 'resign', )
     change_form_template = 'django_ca/admin/change_form.html'
-    list_display = ('cn_display', 'serial', 'status', 'expires_date')
+    list_display = ('cn_display', 'serial_field', 'status', 'expires_date')
     list_filter = (StatusListFilter, 'ca')
     readonly_fields = [
-        'expires', 'csr', 'pub', 'cn_display', 'serial', 'revoked', 'revoked_date', 'revoked_reason',
+        'expires', 'csr', 'pub', 'cn_display', 'serial_field', 'revoked', 'revoked_date', 'revoked_reason',
         'distinguishedName', 'ca', 'hpkp_pin', 'subject_alternative_name']
     search_fields = ['cn', 'serial', ]
 
     fieldsets = [
         (None, {
-            'fields': ['cn_display', 'subject_alternative_name', 'distinguishedName', 'serial', 'ca',
+            'fields': ['cn_display', 'subject_alternative_name', 'distinguishedName', 'serial_field', 'ca',
                        'expires', 'watchers', 'hpkp_pin'],
         }),
         (_('X.509 Extensions'), {
