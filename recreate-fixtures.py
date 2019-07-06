@@ -470,6 +470,9 @@ for cert, cert_values in data.items():
         data[cert].setdefault('expires', timedelta(days=args.cert_validity))
 
 ca_names = [v['name'] for k, v in data.items() if v.get('type') == 'ca']
+
+# sort ca_names so that any children are created last
+ca_names = sorted(ca_names, key=lambda n: data[n].get('parent', ''))
 ca_instances = []
 
 if not args.only_contrib:
