@@ -51,6 +51,7 @@ from django.core.management import call_command as manage
 from django.test.utils import override_settings
 from django.urls import reverse
 from django.utils.six.moves import reload_module
+from django.utils.text import force_text
 
 from django_ca import ca_settings
 from django_ca.extensions import Extension
@@ -577,7 +578,8 @@ if not args.only_contrib:
             no_ext_now = datetime.utcnow()
             pwd = data[ca.name]['password']
             parsed_csr = x509.load_pem_x509_csr(csr.encode('utf-8'), default_backend())
-            subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, data[name]['cn'])])
+            subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME,
+                                                    force_text(data[name]['cn']))])
 
             builder = x509.CertificateBuilder()
             builder = builder.not_valid_before(no_ext_now)
