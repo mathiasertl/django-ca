@@ -1,3 +1,4 @@
 -rrequirements-libs.txt
 -rrequirements-test.txt
 packaging
+termcolor==1.1.0
