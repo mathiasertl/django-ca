@@ -51,7 +51,7 @@ from django.core.management import call_command as manage
 from django.test.utils import override_settings
 from django.urls import reverse
 from django.utils.six.moves import reload_module
-from django.utils.text import force_text
+from django.utils.encoding import force_text
 
 from django_ca import ca_settings
 from django_ca.extensions import Extension
