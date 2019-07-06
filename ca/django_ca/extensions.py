@@ -1459,7 +1459,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):  # pragma: only 
        `RFC 6962 <https://tools.ietf.org/html/rfc6962.html>`_
    """
     oid = ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS
-    _timeformat = '%Y-%m-%d %H:%M:%S'
+    _timeformat = '%Y-%m-%d %H:%M:%S.%f'
     LOG_ENTRY_TYPE_MAPPING = {
         LogEntryType.PRE_CERTIFICATE: 'precertificate',
         LogEntryType.X509_CERTIFICATE: 'x509_certificate'

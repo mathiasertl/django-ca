@@ -2086,13 +2086,13 @@
                 "values": [
                     {
                         "type": "precertificate",
-                        "timestamp": "2019-02-01 15:35:06",
+                        "timestamp": "2019-02-01 15:35:06.188000",
                         "log_id": "63f2dbcde83bcc2ccf0b728427576b33a48d61778fbd75a638b1c768544bd88d",
                         "version": "v1"
                     },
                     {
                         "type": "precertificate",
-                        "timestamp": "2019-02-01 15:35:06",
+                        "timestamp": "2019-02-01 15:35:06.526000",
                         "log_id": "6f5376ac31f03119d89900a45115ff77151c11d902c10029068db2089a37d913",
                         "version": "v1"
                     }
@@ -2237,19 +2237,19 @@
                 "values": [
                     {
                         "type": "precertificate",
-                        "timestamp": "2019-03-27 09:13:54",
+                        "timestamp": "2019-03-27 09:13:54.342000",
                         "log_id": "a4b90990b418581487bb13a2cc67700a3c359804f91bdfb8e377cd0ec80ddc10",
                         "version": "v1"
                     },
                     {
                         "type": "precertificate",
-                        "timestamp": "2019-03-27 09:13:55",
+                        "timestamp": "2019-03-27 09:13:55.237000",
                         "log_id": "ee4bbdb775ce60bae142691fabe19e66a30f7e5fb072d88300c47b897aa8fdcb",
                         "version": "v1"
                     },
                     {
                         "type": "precertificate",
-                        "timestamp": "2019-03-27 09:13:56",
+                        "timestamp": "2019-03-27 09:13:56.485000",
                         "log_id": "4494652eb0eeceafc44007d8a8fe28c0dae682bed8cb31b53fd33396b5b681a8",
                         "version": "v1"
                     }
@@ -2433,13 +2433,13 @@
                 "values": [
                     {
                         "type": "precertificate",
-                        "timestamp": "2019-06-25 03:40:03",
+                        "timestamp": "2019-06-25 03:40:03.920000",
                         "log_id": "6f5376ac31f03119d89900a45115ff77151c11d902c10029068db2089a37d913",
                         "version": "v1"
                     },
                     {
                         "type": "precertificate",
-                        "timestamp": "2019-06-25 03:40:03",
+                        "timestamp": "2019-06-25 03:40:03.862000",
                         "log_id": "293c519654c83965baaa50fc5807d4b76fbf587a2972dca4c30cf4e54547f478",
                         "version": "v1"
                     }
@@ -2512,19 +2512,19 @@
                 "values": [
                     {
                         "type": "precertificate",
-                        "timestamp": "2018-03-14 14:23:09",
+                        "timestamp": "2018-03-14 14:23:09.403000",
                         "log_id": "a4b90990b418581487bb13a2cc67700a3c359804f91bdfb8e377cd0ec80ddc10",
                         "version": "v1"
                     },
                     {
                         "type": "precertificate",
-                        "timestamp": "2018-03-14 14:23:08",
+                        "timestamp": "2018-03-14 14:23:08.912000",
                         "log_id": "5614069a2fd7c2ecd3f5e1bd44b23ec74676b9bc99115cc0ef949855d689d0dd",
                         "version": "v1"
                     },
                     {
                         "type": "precertificate",
-                        "timestamp": "2018-03-14 14:23:09",
+                        "timestamp": "2018-03-14 14:23:09.352000",
                         "log_id": "ee4bbdb775ce60bae142691fabe19e66a30f7e5fb072d88300c47b897aa8fdcb",
                         "version": "v1"
                     }
@@ -2684,13 +2684,13 @@
                 "values": [
                     {
                         "type": "precertificate",
-                        "timestamp": "2019-06-07 08:47:02",
+                        "timestamp": "2019-06-07 08:47:02.367000",
                         "log_id": "ee4bbdb775ce60bae142691fabe19e66a30f7e5fb072d88300c47b897aa8fdcb",
                         "version": "v1"
                     },
                     {
                         "type": "precertificate",
-                        "timestamp": "2019-06-07 08:47:02",
+                        "timestamp": "2019-06-07 08:47:02.566000",
                         "log_id": "8775bfe7597cf88c43995fbdf36eff568d475636ff4ab560c1b4eaff5ea0830f",
                         "version": "v1"
                     }
