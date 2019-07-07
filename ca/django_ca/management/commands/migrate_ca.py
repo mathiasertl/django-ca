@@ -33,12 +33,16 @@ the change does not require moving the private key. If you have stored private k
 pass the --force parameter."""
 
     def add_arguments(self, parser):
-        parser.add_argument('serial', nargs='*')
+        parser.add_argument('serial', nargs='*',
+                            help="Only migrate the given CAs. If not given, migrate all CAs.")
         parser.add_argument('--force', default=False, action='store_true',
                             help="Move private keys if they are outside the expected path.")
+        parser.add_argument('--dry', default=False, action='store_true',
+                            help="Do not take any action, only output expected actions.")
 
     def handle(self, **options):
         serials = options['serial']
+        dry = options['dry']
 
         if not isinstance(ca_storage, FileSystemStorage):
             raise CommandError('CA_FILE_STORAGE is not a subclass of FileSystemStorage.')
@@ -63,8 +67,9 @@ pass the --force parameter."""
                 name = os.path.relpath(path, start=dest)
                 self.stdout.write(self.style.SUCCESS(
                     '%s: Updating %s to %s.' % (serial, ca.private_key_path, name)))
-                ca.private_key_path = os.path.relpath(path, start=dest)
-                ca.save()
+                if dry is False:
+                    ca.private_key_path = os.path.relpath(path, start=dest)
+                    ca.save()
             elif options['force']:
                 if not os.path.exists(ca.private_key_path):
                     self.stderr.write(self.style.ERROR(
@@ -77,9 +82,10 @@ pass the --force parameter."""
                     '%s: Move %s to %s.' % (ca.serial, ca.private_key_path, name)
                 ))
 
-                shutil.move(ca.private_key_path, dest_path)
-                ca.private_key_path = name
-                ca.save()
+                if dry is False:
+                    shutil.move(ca.private_key_path, dest_path)
+                    ca.private_key_path = name
+                    ca.save()
             else:
                 self.stderr.write(self.style.WARNING(
                     '%s: %s is not in a subdir of %s. Use --force to move files.' % (

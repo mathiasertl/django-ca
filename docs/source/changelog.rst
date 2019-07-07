@@ -31,7 +31,7 @@ Command-line interface
 ======================
 
 * The ``view_ca`` command will now display the full path to the private key, if possible.
-* The ``migrate_ca`` has a correct help text.
+* The ``migrate_ca`` now has a ``--dry`` parameter and has a updated help texts.
 
 Python API
 ==========
