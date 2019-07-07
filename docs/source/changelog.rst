@@ -31,7 +31,9 @@ Command-line interface
 ======================
 
 * The ``view_ca`` command will now display the full path to the private key, if possible.
-* The ``migrate_ca`` now has a ``--dry`` parameter and has a updated help texts.
+* The ``migrate_ca`` command now has a ``--dry`` parameter and has a updated help texts.
+* The new ``regenerate_ocsp_keys`` command allows you to automatically generate OCSP keys that are used by the
+  new default OCSP views.
 
 Python API
 ==========
