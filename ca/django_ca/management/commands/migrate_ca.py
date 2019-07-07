@@ -25,11 +25,17 @@ from ..base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = "Create a certificate authority."
+    help = """Migrate CA paths to a relative path to enable new storage system. See
+https://django-ca.readthedocs.io/en/1.12.0/update.html#migrate-cas.
+
+By default, this command will only update the path to the private key in the database to a relative path if
+the change does not require moving the private key. If you have stored private keys outside of your CA_DIR,
+pass the --force parameter."""
 
     def add_arguments(self, parser):
         parser.add_argument('serial', nargs='*')
-        parser.add_argument('--force', default=False, action='store_true')
+        parser.add_argument('--force', default=False, action='store_true',
+                            help="Move private keys if they are outside the expected path.")
 
     def handle(self, **options):
         serials = options['serial']

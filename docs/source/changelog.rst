@@ -17,7 +17,6 @@ ChangeLog
 * Moved extra ``setup.py`` commands ``dev.py`` to minimize ``setup.py``.
 * Move ``fab init_demo`` to ``dev.py init-demo``.
 * The Fabric file has been removed.
-* The ``view_ca`` management command will now display the full path to the private key, if possible.
 * Add the ``ipsecEndSystem``, ``ipsecTunnel`` and ``ipsecUser`` extended key usage types. These are actually
   very rare and only occur in the "TrustID Server A52" CA.
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.2.
@@ -27,6 +26,12 @@ ChangeLog
 * **DEPRECATION NOTICE:** This is the last release to support OCSP using ``oscrypto``/``ocspbuilder``.
 * **DEPRECATION NOTICE:** ``CertificateRevocationListView.ca_crl`` is deprecated in favor of the ``scope``
   parameter. If you have set ``ca_crl=True`` just set ``scope="ca"`` instead.
+
+Command-line interface
+======================
+
+* The ``view_ca`` command will now display the full path to the private key, if possible.
+* The ``migrate_ca`` has a correct help text.
 
 Python API
 ==========
