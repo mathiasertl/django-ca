@@ -1,4 +1,3 @@
-termcolor==1.1.0
 -rrequirements-libs.txt
 -rrequirements-docs.txt
 -rrequirements-test.txt
