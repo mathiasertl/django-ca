@@ -60,6 +60,45 @@ class MigrateCATestCase(DjangoCAWithCATestCase):
         self.assertEqual(old_path, CertificateAuthority.objects.get(serial=self.ca.serial).private_key_path)
 
     @override_tmpcadir()
+    def test_dry(self):
+        orig_path = self.ca.private_key_path
+        self.assertTrue(self.ca.key_exists)
+        self.ca.private_key_path = abs_path = os.path.join(ca_storage.location, self.ca.private_key_path)
+        self.ca.save()
+
+        stdout, stderr = self.cmd('migrate_ca', self.ca.serial, dry=True, no_color=True)
+        self.assertEqual(stdout, '%s: Updating %s to %s.\n' % (
+            self.ca.serial, self.ca.private_key_path, orig_path))
+
+        # path hasn't changed
+        self.assertEqual(abs_path, CertificateAuthority.objects.get(serial=self.ca.serial).private_key_path)
+
+    @override_tmpcadir()
+    def test_force_dry(self):
+        orig_path = self.ca.private_key_path
+        self.assertTrue(self.ca.key_exists)
+        source_dir = tempfile.mkdtemp()
+
+        try:
+            # move private key outside of ca_storage
+            self.ca.private_key_path = abs_path = os.path.join(source_dir, self.ca.private_key_path)
+            self.ca.save()
+            shutil.move(ca_storage.path(orig_path), self.ca.private_key_path)
+            self.assertTrue(self.ca.key_exists)  # just make sure we did the correct thing above
+
+            stdout, stderr = self.cmd('migrate_ca', self.ca.serial, no_color=True, dry=True, force=True)
+            self.assertEqual(stdout, '%s: Move %s to %s.\n' % (
+                self.ca.serial, self.ca.private_key_path, orig_path
+            ))
+            self.assertEqual(stderr, '')
+
+            new_ca = CertificateAuthority.objects.get(serial=self.ca.serial)
+            self.assertEqual(abs_path, new_ca.private_key_path)
+            self.assertTrue(new_ca.key_exists)
+        finally:
+            shutil.rmtree(source_dir)
+
+    @override_tmpcadir()
     def test_outside_ca(self):
         orig_path = self.ca.private_key_path
         self.assertTrue(self.ca.key_exists)
