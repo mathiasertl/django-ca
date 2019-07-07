@@ -73,3 +73,13 @@ matrix:
           python: "nightly"
         - env: 1.11.22 CRYPTOGRAPHY=2.3.1
           python: "nightly"
+
+        # We do not test older cryptography with Python nightly
+        - env: DJANGO=2.1.10 CRYPTOGRAPHY=2.4.2
+          python: "nightly"
+        - env: DJANGO=2.1.10 CRYPTOGRAPHY=2.3.1
+          python: "nightly"
+        - env: DJANGO=2.2.3 CRYPTOGRAPHY=2.4.2
+          python: "nightly"
+        - env: DJANGO=2.2.3 CRYPTOGRAPHY=2.3.1
+          python: "nightly"
