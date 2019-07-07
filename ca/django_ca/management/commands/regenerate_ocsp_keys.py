@@ -50,7 +50,7 @@ class Command(BaseCommand):
         # existing profiles. The only case is when the user undefines the "ocsp" profile, which is the
         # default.
         if profile not in ca_settings.CA_PROFILES:
-            raise CommandError('%s: Undefined profile.')
+            raise CommandError('%s: Undefined profile.' % profile)
 
         if not serials:
             serials = CertificateAuthority.objects.all().order_by('serial').values_list('serial', flat=True)
