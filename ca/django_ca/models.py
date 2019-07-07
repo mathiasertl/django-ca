@@ -573,7 +573,7 @@ class CertificateAuthority(X509CertMixin):
         else:
             return ca_storage.exists(self.private_key_path)
 
-    def generate_ocsp_key(self, expires=3, algorithm=None, key_size=None, password=None):
+    def generate_ocsp_key(self, profile='ocsp', expires=3, algorithm=None, key_size=None, password=None):
         if key_size is None:
             key_size = ca_settings.CA_DEFAULT_KEY_SIZE
         expires = get_expires(expires)
@@ -590,7 +590,7 @@ class CertificateAuthority(X509CertMixin):
         csr = x509.CertificateSigningRequestBuilder().subject_name(self.x509.subject).sign(
             priv_key, hashes.SHA256(), default_backend())
 
-        kwargs = get_cert_profile_kwargs('ocsp')
+        kwargs = get_cert_profile_kwargs(profile)
         # TODO: This value is just a guess - see what public CAs do!?
         kwargs['subject'] = self.subject
         cert = Certificate.objects.init(
