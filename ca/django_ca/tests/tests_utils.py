@@ -63,6 +63,7 @@ from ..utils import parse_name
 from ..utils import read_file
 from ..utils import validate_email
 from ..utils import validate_hostname
+from ..utils import validate_key_parameters
 from ..utils import x509_relative_name
 from .base import DjangoCATestCase
 from .base import cryptography_version
@@ -814,3 +815,20 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
 
         with self.settings(CA_PROFILES=CA_PROFILES):
             self.assertEqual(get_cert_profile_kwargs('testprofile'), expected)
+
+
+class ValidateKeyParametersTest(TestCase):
+    def test_basic(self):
+        self.assertEqual(validate_key_parameters(), (ca_settings.CA_DEFAULT_KEY_SIZE, 'RSA', None))
+        self.assertEqual(validate_key_parameters(key_type=None),
+                         (ca_settings.CA_DEFAULT_KEY_SIZE, 'RSA', None))
+
+    def test_wrong_values(self):
+        with self.assertRaisesRegex(ValueError, '^FOOBAR: Unknown key type$'):
+            validate_key_parameters(4096, 'FOOBAR')
+
+        with self.assertRaisesRegex(ValueError, '^4000: Key size must be a power of two$'):
+            validate_key_parameters(4000, 'RSA')
+
+        with self.assertRaisesRegex(ValueError, '^16: Key size must be least 1024 bits$'):
+            validate_key_parameters(16, 'RSA')

@@ -408,24 +408,26 @@ def validate_hostname(hostname, allow_port=False):
     return encoded
 
 
-def validate_key_parameters(key_size, key_type, ecc_curve):
+def validate_key_parameters(key_size=None, key_type='RSA', ecc_curve=None):
     """Validate parameters for private key generation and return sanitized values.
 
     This function can be used to fail early if invalid parameters are passed, before the private key is
     generated.
 
-    >>> validate_key_parameters(4096, 'RSA', None)
-    (4096, 'RSA', None)
-    >>> validate_key_parameters(None, 'RSA', None)
+    >>> validate_key_parameters()  # defaults
     (1024, 'RSA', None)
-    >>> validate_key_parameters(None, 'ECC', None)  # doctest: +ELLIPSIS
+    >>> validate_key_parameters(4096, 'ECC', None)  # doctest: +ELLIPSIS
     (None, 'ECC', <cryptography.hazmat.primitives.asymmetric.ec.SECP256R1 object at ...>)
     >>> validate_key_parameters(4000, 'RSA', None)
     Traceback (most recent call last):
         ...
     ValueError: 4000: Key size must be a power of two
     """
+    if key_type is None:
+        key_type = 'RSA'
+
     if key_type == 'ECC':
+        key_size = None
         ecc_curve = parse_key_curve(ecc_curve)
     elif key_type in ['DSA', 'RSA']:
         if key_size is None:
@@ -437,7 +439,7 @@ def validate_key_parameters(key_size, key_type, ecc_curve):
             raise ValueError("%s: Key size must be least %s bits" % (
                 key_size, ca_settings.CA_MIN_KEY_SIZE))
     else:
-        raise ValueError('%s: Unknown key type.' % key_type)
+        raise ValueError('%s: Unknown key type' % key_type)
 
     return key_size, key_type, ecc_curve
 
