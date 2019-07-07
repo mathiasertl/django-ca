@@ -32,8 +32,11 @@ import idna
 
 from asn1crypto.core import OctetString
 from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import NameOID
@@ -403,6 +406,65 @@ def validate_hostname(hostname, allow_port=False):
     if allow_port is True and port is not None:
         return '%s:%s' % (encoded, port)
     return encoded
+
+
+def validate_key_parameters(key_size, key_type, ecc_curve):
+    """Validate parameters for private key generation and return sanitized values.
+
+    This function can be used to fail early if invalid parameters are passed, before the private key is
+    generated.
+
+    >>> validate_key_parameters(4096, 'RSA', None)
+    (4096, 'RSA', None)
+    >>> validate_key_parameters(None, 'RSA', None)
+    (1024, 'RSA', None)
+    >>> validate_key_parameters(None, 'ECC', None)  # doctest: +ELLIPSIS
+    (None, 'ECC', <cryptography.hazmat.primitives.asymmetric.ec.SECP256R1 object at ...>)
+    >>> validate_key_parameters(4000, 'RSA', None)
+    Traceback (most recent call last):
+        ...
+    ValueError: 4000: Key size must be a power of two
+    """
+    if key_type == 'ECC':
+        ecc_curve = parse_key_curve(ecc_curve)
+    else:
+        if key_size is None:
+            key_size = ca_settings.CA_DEFAULT_KEY_SIZE
+
+        if not is_power2(key_size):
+            raise ValueError("%s: Key size must be a power of two" % key_size)
+        elif key_size < ca_settings.CA_MIN_KEY_SIZE:
+            raise ValueError("%s: Key size must be least %s bits" % (
+                key_size, ca_settings.CA_MIN_KEY_SIZE))
+
+    return key_size, key_type, ecc_curve
+
+
+def generate_private_key(key_size, key_type, ecc_curve):
+    """Generate a private key.
+
+    This function assumes that you called :py:func:`~django_ca.utils.validate_key_parameters` on the input
+    values and does not do any sanity checks on its own.
+
+    Parameters
+    ----------
+
+    key_size : int
+        The size of the private key (not used for ECC keys).
+    key_type : {'RSA', 'DSA', 'ECC'}
+        The type of the private key.
+    ecc_curve : :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve`
+        The ECC curve to use for an ECC key.
+    """
+    if key_type == 'DSA':
+        private_key = dsa.generate_private_key(key_size=key_size, backend=default_backend())
+    elif key_type == 'ECC':
+        private_key = ec.generate_private_key(ecc_curve, default_backend())
+    else:
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size,
+                                               backend=default_backend())
+
+    return private_key
 
 
 def parse_general_name(name):
