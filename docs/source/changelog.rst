@@ -21,7 +21,7 @@ ChangeLog
   very rare and only occur in the "TrustID Server A52" CA.
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.2.
 * **BACKWARDS INCOMPATIBLE:** Drop support for idna 2.6.
-* **DEPRECATION NOTICE:** This is the last release to support cryptography 2.3, 2.4 and 2.5.
+* **DEPRECATION NOTICE:** This is the last release to support cryptography 2.3 and 2.4.
 * **DEPRECATION NOTICE:** This is the last release to support idna 2.7.
 * **DEPRECATION NOTICE:** This is the last release to support OCSP using ``oscrypto``/``ocspbuilder``.
 * **DEPRECATION NOTICE:** ``CertificateRevocationListView.ca_crl`` is deprecated in favor of the ``scope``
