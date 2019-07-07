@@ -437,7 +437,7 @@ def validate_key_parameters(key_size, key_type, ecc_curve):
             raise ValueError("%s: Key size must be least %s bits" % (
                 key_size, ca_settings.CA_MIN_KEY_SIZE))
     else:
-        raise ValueError('%s: Unkown key type.' % key_type)
+        raise ValueError('%s: Unknown key type.' % key_type)
 
     return key_size, key_type, ecc_curve
 
