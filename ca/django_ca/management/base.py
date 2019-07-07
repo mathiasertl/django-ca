@@ -292,6 +292,14 @@ class BaseCommand(_BaseCommand):
                             allow_disabled=allow_disabled, allow_unusable=allow_unusable,
                             action=CertificateAuthorityAction)
 
+    def add_ecc_curve(self, parser):
+        curve_help = 'Elliptic Curve used for ECC keys (default: %(default)s).' % {
+            'default': ca_settings.CA_DEFAULT_ECC_CURVE.__class__.__name__,
+        }
+        parser.add_argument('--ecc-curve', metavar='CURVE', action=KeyCurveAction,
+                            default=ca_settings.CA_DEFAULT_ECC_CURVE,
+                            help=curve_help)
+
     def add_format(self, parser, default=Encoding.PEM, help_text=None, opts=None):
         """Add the --format option."""
 
@@ -303,10 +311,28 @@ class BaseCommand(_BaseCommand):
         parser.add_argument(*opts, metavar='{PEM,ASN1,DER}', default=default,
                             action=FormatAction, help=help_text)
 
+    def add_key_size(self, parser):
+        parser.add_argument(
+            '--key-size', type=int, action=KeySizeAction, default=ca_settings.CA_DEFAULT_KEY_SIZE,
+            metavar='{2048,4096,8192,...}',
+            help="Key size for the private key (default: %(default)s).")
+
+    def add_key_type(self, parser):
+        parser.add_argument(
+            '--key-type', choices=['RSA', 'DSA', 'ECC'], default='RSA',
+            help="Key type for the private key (default: %(default)s).")
+
     def add_password(self, parser, help=None):
         if help is None:
             help = 'Password used for accessing the private key of the CA.'
         parser.add_argument('-p', '--password', nargs='?', action=PasswordAction, help=help)
+
+    def add_profile(self, parser, help_text):
+        group = parser.add_argument_group('profiles', help_text)
+        group = group.add_mutually_exclusive_group()
+        for name, profile in ca_settings.CA_PROFILES.items():
+            group.add_argument('--%s' % name, action='store_const', const=name, dest='profile',
+                               help=profile['desc'])
 
     def indent(self, s, prefix='    '):
         return indent(s, prefix)
