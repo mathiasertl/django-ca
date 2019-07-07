@@ -41,6 +41,7 @@ from ..models import Certificate
 from ..models import CertificateAuthority
 from ..subject import Subject
 from ..utils import SUBJECT_FIELDS
+from ..utils import add_colons
 from ..utils import get_expires
 from ..utils import indent
 from ..utils import is_power2
@@ -286,7 +287,7 @@ class BaseCommand(_BaseCommand):
         else:
             default = CertificateAuthority.objects.enabled().first()
 
-        help = help % {'default': default.serial if default else None}
+        help = help % {'default': add_colons(default.serial) if default else None}
         parser.add_argument('%s' % arg, metavar='SERIAL', help=help, default=default,
                             allow_disabled=allow_disabled, allow_unusable=allow_unusable,
                             action=CertificateAuthorityAction)
