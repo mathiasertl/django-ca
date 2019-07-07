@@ -15,8 +15,8 @@
 
 from django.core.management.base import CommandError
 
-from ...models import CertificateAuthority
 from ... import ca_settings
+from ...models import CertificateAuthority
 from ..base import BaseCommand
 from ..base import ExpiresAction
 
