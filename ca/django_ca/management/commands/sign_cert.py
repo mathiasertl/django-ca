@@ -65,13 +65,8 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         self.add_format(parser, opts=['--csr-format'],
                         help_text='Format of the CSR ("ASN1" is an alias for "DER", default: %(default)s)')
 
-        group = parser.add_argument_group(
-            'profiles', """Sign certificate based on the given profile. A profile only sets the
-the default values, options like --key-usage still override the profile.""")
-        group = group.add_mutually_exclusive_group()
-        for name, profile in ca_settings.CA_PROFILES.items():
-            group.add_argument('--%s' % name, action='store_const', const=name, dest='profile',
-                               help=profile['desc'])
+        self.add_profile(parser, """Sign certificate based on the given profile. A profile only sets the the
+                         default values, options like --key-usage still override the profile.""")
 
     def handle(self, *args, **options):
         ca = options['ca']

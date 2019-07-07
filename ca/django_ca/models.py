@@ -30,7 +30,6 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
 from cryptography.hazmat.primitives.serialization import PublicFormat
@@ -42,6 +41,7 @@ from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db import models
 from django.urls import reverse
+from django.utils import six
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_str
@@ -76,6 +76,7 @@ from .subject import Subject
 from .utils import add_colons
 from .utils import ca_storage
 from .utils import format_name
+from .utils import generate_private_key
 from .utils import get_expires
 from .utils import get_extension_name
 from .utils import int_to_hex
@@ -84,6 +85,7 @@ from .utils import parse_encoding
 from .utils import parse_general_name
 from .utils import parse_hash_algorithm
 from .utils import read_file
+from .utils import validate_key_parameters
 
 log = logging.getLogger(__name__)
 
@@ -573,22 +575,21 @@ class CertificateAuthority(X509CertMixin):
         else:
             return ca_storage.exists(self.private_key_path)
 
-    def generate_ocsp_key(self, profile='ocsp', expires=3, algorithm=None, key_size=None, password=None):
-        if key_size is None:
-            key_size = ca_settings.CA_DEFAULT_KEY_SIZE
-        expires = get_expires(expires)
+    def generate_ocsp_key(self, profile='ocsp', expires=3, algorithm=None, password=None,
+                          key_size=None, key_type=None, ecc_curve=None):
+        key_size, key_type, ecc_curve = validate_key_parameters(key_size, key_type, ecc_curve)
+        if isinstance(expires, six.integer_types):
+            expires = get_expires(expires)
         algorithm = parse_hash_algorithm(algorithm)
 
         # generate the private key
-        # TODO: use same algo as CA
-        priv_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size,
-                                            backend=default_backend())
-        priv_pem = priv_key.private_bytes(encoding=Encoding.PEM, format=PrivateFormat.PKCS8,
-                                          encryption_algorithm=serialization.NoEncryption())
-        priv_path = ca_storage.generate_filename('ocsp/%s.key' % self.serial.replace(':', ''))
+        private_key = generate_private_key(key_size, key_type, ecc_curve)
+        private_pem = private_key.private_bytes(encoding=Encoding.PEM, format=PrivateFormat.PKCS8,
+                                                encryption_algorithm=serialization.NoEncryption())
+        private_path = ca_storage.generate_filename('ocsp/%s.key' % self.serial.replace(':', ''))
 
         csr = x509.CertificateSigningRequestBuilder().subject_name(self.x509.subject).sign(
-            priv_key, hashes.SHA256(), default_backend())
+            private_key, hashes.SHA256(), default_backend())
 
         kwargs = get_cert_profile_kwargs(profile)
         # TODO: This value is just a guess - see what public CAs do!?
@@ -604,13 +605,13 @@ class CertificateAuthority(X509CertMixin):
         cert_path = ca_storage.generate_filename('ocsp/%s.pem' % self.serial.replace(':', ''))
         cert_pem = cert.dump_certificate(encoding=Encoding.PEM)
 
-        for path, contents in [(priv_path, priv_pem), (cert_path, cert_pem)]:
+        for path, contents in [(private_path, private_pem), (cert_path, cert_pem)]:
             if ca_storage.exists(path):
                 with ca_storage.open(path, 'wb') as stream:
                     stream.write(contents)
             else:
                 ca_storage.save(path, ContentFile(contents))
-        return priv_path, cert_path, cert
+        return private_path, cert_path, cert
 
     def get_authority_key_identifier(self):
         """Return the AuthorityKeyIdentifier extension used in certificates signed by this CA."""

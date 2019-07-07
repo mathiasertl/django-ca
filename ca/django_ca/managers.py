@@ -18,9 +18,6 @@ import idna
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import dsa
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
 from cryptography.x509.oid import AuthorityInformationAccessOID
@@ -47,13 +44,13 @@ from .signals import pre_create_ca
 from .signals import pre_issue_cert
 from .subject import Subject
 from .utils import ca_storage
+from .utils import generate_private_key
 from .utils import get_cert_builder
 from .utils import int_to_hex
-from .utils import is_power2
 from .utils import parse_general_name
 from .utils import parse_hash_algorithm
-from .utils import parse_key_curve
 from .utils import validate_hostname
+from .utils import validate_key_parameters
 
 
 class CertificateManagerMixin(object):
@@ -173,16 +170,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         """
         # NOTE: Already verified by KeySizeAction, so these checks are only for when the Python API is used
         #       directly.
-        if key_type != 'ECC':
-            if key_size is None:
-                key_size = ca_settings.CA_DEFAULT_KEY_SIZE
-
-            if not is_power2(key_size):
-                raise ValueError("%s: Key size must be a power of two" % key_size)
-            elif key_size < ca_settings.CA_MIN_KEY_SIZE:
-                raise ValueError("%s: Key size must be least %s bits" % (
-                    key_size, ca_settings.CA_MIN_KEY_SIZE))
-
+        key_size, key_type, ecc_curve = validate_key_parameters(key_size, key_type, ecc_curve)
         algorithm = parse_hash_algorithm(algorithm)
 
         # Normalize extensions to django_ca.extensions.Extension subclasses
@@ -225,14 +213,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             ca_crl_url=ca_crl_url, ca_ocsp_url=ca_ocsp_url, name_constraints=name_constraints,
             password=password, parent_password=parent_password, extra_extensions=extra_extensions)
 
-        if key_type == 'DSA':
-            private_key = dsa.generate_private_key(key_size=key_size, backend=default_backend())
-        elif key_type == 'ECC':
-            ecc_curve = parse_key_curve(ecc_curve)
-            private_key = ec.generate_private_key(ecc_curve, default_backend())
-        else:
-            private_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size,
-                                                   backend=default_backend())
+        private_key = generate_private_key(key_size, key_type, ecc_curve)
         public_key = private_key.public_key()
 
         builder = get_cert_builder(expires, serial=serial)

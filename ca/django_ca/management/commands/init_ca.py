@@ -28,8 +28,6 @@ from ...models import CertificateAuthority
 from ..base import BaseCommand
 from ..base import CertificateAuthorityDetailMixin
 from ..base import ExpiresAction
-from ..base import KeyCurveAction
-from ..base import KeySizeAction
 from ..base import MultipleURLAction
 from ..base import PasswordAction
 from ..base import URLAction
@@ -41,20 +39,9 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
     def add_arguments(self, parser):
         self.add_algorithm(parser)
 
-        parser.add_argument(
-            '--key-type', choices=['RSA', 'DSA', 'ECC'], default='RSA',
-            help="Key type for the CA private key (default: %(default)s).")
-        parser.add_argument(
-            '--key-size', type=int, action=KeySizeAction, default=ca_settings.CA_DEFAULT_KEY_SIZE,
-            metavar='{2048,4096,8192,...}',
-            help="Size of the key to generate (default: %(default)s).")
-
-        curve_help = 'Elliptic Curve used for generating ECC keys (default: %(default)s).' % {
-            'default': ca_settings.CA_DEFAULT_ECC_CURVE.__class__.__name__,
-        }
-        parser.add_argument('--ecc-curve', metavar='CURVE', action=KeyCurveAction,
-                            default=ca_settings.CA_DEFAULT_ECC_CURVE,
-                            help=curve_help)
+        self.add_key_type(parser)
+        self.add_key_size(parser)
+        self.add_ecc_curve(parser)
 
         parser.add_argument(
             '--expires', metavar='DAYS', action=ExpiresAction, default=365 * 10,
