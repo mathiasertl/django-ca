@@ -427,7 +427,7 @@ def validate_key_parameters(key_size, key_type, ecc_curve):
     """
     if key_type == 'ECC':
         ecc_curve = parse_key_curve(ecc_curve)
-    else:
+    elif key_type in ['DSA', 'RSA']:
         if key_size is None:
             key_size = ca_settings.CA_DEFAULT_KEY_SIZE
 
@@ -436,6 +436,8 @@ def validate_key_parameters(key_size, key_type, ecc_curve):
         elif key_size < ca_settings.CA_MIN_KEY_SIZE:
             raise ValueError("%s: Key size must be least %s bits" % (
                 key_size, ca_settings.CA_MIN_KEY_SIZE))
+    else:
+        raise ValueError('%s: Unkown key type.' % key_type)
 
     return key_size, key_type, ecc_curve
 
@@ -455,6 +457,12 @@ def generate_private_key(key_size, key_type, ecc_curve):
         The type of the private key.
     ecc_curve : :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve`
         The ECC curve to use for an ECC key.
+
+    Returns
+    -------
+
+    key
+        A private key of the appropriate type.
     """
     if key_type == 'DSA':
         private_key = dsa.generate_private_key(key_size=key_size, backend=default_backend())
