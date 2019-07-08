@@ -376,10 +376,10 @@ class ListExtension(Extension):
         return self.value.remove(self.parse_value(v))
 
     def serialize(self):
-        val = ','.join([self.serialize_value(v) for v in self.value])
-        if self.critical:
-            return 'critical,%s' % val
-        return val
+        return {
+            'critical': self.critical,
+            'value': [self.serialize_value(v) for v in self.value],
+        }
 
     def serialize_value(self, v):
         return v

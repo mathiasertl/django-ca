@@ -3320,9 +3320,18 @@ class TLSFeatureTestCase(TestCase):
                          "<TLSFeature: ['MultipleCertStatusRequest', 'OCSPMustStaple'], critical=False>")
 
     def test_serialize(self):
-        self.assertEqual(self.ext1.serialize(), 'critical,OCSPMustStaple')
-        self.assertEqual(self.ext2.serialize(), 'OCSPMustStaple')
-        self.assertEqual(self.ext3.serialize(), 'OCSPMustStaple,MultipleCertStatusRequest')
+        self.assertEqual(self.ext1.serialize(), {
+            'critical': True,
+            'value': ['OCSPMustStaple'],
+        })
+        self.assertEqual(self.ext2.serialize(), {
+            'critical': False,
+            'value': ['OCSPMustStaple'],
+        })
+        self.assertEqual(self.ext3.serialize(), {
+            'critical': False,
+            'value': ['OCSPMustStaple', 'MultipleCertStatusRequest'],
+        })
         self.assertEqual(TLSFeature(self.ext1.serialize()), self.ext1)
         self.assertEqual(TLSFeature(self.ext2.serialize()), self.ext2)
         self.assertEqual(TLSFeature(self.ext3.serialize()), self.ext3)
