@@ -1918,7 +1918,7 @@
             "key_usage": "critical,digitalSignature,keyEncipherment",
             "precertificate_signed_certificate_timestamps": {
                 "critical": false,
-                "values": [
+                "value": [
                     {
                         "type": "precertificate",
                         "timestamp": "2019-06-07 08:47:02.367000",
@@ -2247,7 +2247,7 @@
             "key_usage": "critical,digitalSignature,keyEncipherment",
             "precertificate_signed_certificate_timestamps": {
                 "critical": false,
-                "values": [
+                "value": [
                     {
                         "type": "precertificate",
                         "timestamp": "2019-02-01 15:35:06.188000",
@@ -2398,7 +2398,7 @@
             "key_usage": "critical,digitalSignature,keyEncipherment",
             "precertificate_signed_certificate_timestamps": {
                 "critical": false,
-                "values": [
+                "value": [
                     {
                         "type": "precertificate",
                         "timestamp": "2019-03-27 09:13:54.342000",
@@ -2594,7 +2594,7 @@
             "key_usage": "critical,digitalSignature,keyEncipherment",
             "precertificate_signed_certificate_timestamps": {
                 "critical": false,
-                "values": [
+                "value": [
                     {
                         "type": "precertificate",
                         "timestamp": "2019-06-25 03:40:03.920000",
@@ -2673,7 +2673,7 @@
             "key_usage": "critical,digitalSignature,keyEncipherment",
             "precertificate_signed_certificate_timestamps": {
                 "critical": false,
-                "values": [
+                "value": [
                     {
                         "type": "precertificate",
                         "timestamp": "2018-03-14 14:23:09.403000",

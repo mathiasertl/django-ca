@@ -1547,7 +1547,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):  # pragma: only 
     def serialize(self):
         return {
             u'critical': self.critical,
-            'values': [self.serialize_value(v) for v in self.value],
+            'value': [self.serialize_value(v) for v in self.value],
         }
 
     def serialize_value(self, v):
