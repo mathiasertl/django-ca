@@ -2692,13 +2692,13 @@ class PrecertificateSignedCertificateTimestampsTestCase(
         self.assertEqual(self.ext2.as_extension(), self.x2)
 
     def test_count(self):
-        self.assertEqual(self.ext1.count(self.data1['values'][0]), 1)
-        self.assertEqual(self.ext1.count(self.data2['values'][0]), 0)
+        self.assertEqual(self.ext1.count(self.data1['value'][0]), 1)
+        self.assertEqual(self.ext1.count(self.data2['value'][0]), 0)
         self.assertEqual(self.ext1.count(self.x1.value[0]), 1)
         self.assertEqual(self.ext1.count(self.x2.value[0]), 0)
 
-        self.assertEqual(self.ext2.count(self.data1['values'][0]), 0)
-        self.assertEqual(self.ext2.count(self.data2['values'][0]), 1)
+        self.assertEqual(self.ext2.count(self.data1['value'][0]), 0)
+        self.assertEqual(self.ext2.count(self.data2['value'][0]), 1)
         self.assertEqual(self.ext2.count(self.x1.value[0]), 0)
         self.assertEqual(self.ext2.count(self.x2.value[0]), 1)
 
@@ -2731,21 +2731,21 @@ class PrecertificateSignedCertificateTimestampsTestCase(
             PrecertificateSignedCertificateTimestamps([])
 
     def test_getitem(self):
-        self.assertEqual(self.ext1[0], self.data1['values'][0])
-        self.assertEqual(self.ext1[1], self.data1['values'][1])
+        self.assertEqual(self.ext1[0], self.data1['value'][0])
+        self.assertEqual(self.ext1[1], self.data1['value'][1])
         with self.assertRaises(IndexError):
             self.ext1[2]
 
-        self.assertEqual(self.ext2[0], self.data2['values'][0])
-        self.assertEqual(self.ext2[1], self.data2['values'][1])
-        self.assertEqual(self.ext2[2], self.data2['values'][2])
+        self.assertEqual(self.ext2[0], self.data2['value'][0])
+        self.assertEqual(self.ext2[1], self.data2['value'][1])
+        self.assertEqual(self.ext2[2], self.data2['value'][2])
         with self.assertRaises(IndexError):
             self.ext2[3]
 
     def test_getitem_slices(self):
-        self.assertEqual(self.ext1[:1], self.data1['values'][:1])
-        self.assertEqual(self.ext2[:2], self.data2['values'][:2])
-        self.assertEqual(self.ext2[:], self.data2['values'][:])
+        self.assertEqual(self.ext1[:1], self.data1['value'][:1])
+        self.assertEqual(self.ext2[:2], self.data2['value'][:2])
+        self.assertEqual(self.ext2[:], self.data2['value'][:])
 
     def test_hash(self):
         self.assertEqual(hash(self.ext1), hash(self.ext1))
@@ -2753,20 +2753,20 @@ class PrecertificateSignedCertificateTimestampsTestCase(
         self.assertNotEqual(hash(self.ext1), hash(self.ext2))
 
     def test_in(self):
-        for val in self.data1['values']:
+        for val in self.data1['value']:
             self.assertIn(val, self.ext1)
         for val in self.x1.value:
             self.assertIn(val, self.ext1)
-        for val in self.data2['values']:
+        for val in self.data2['value']:
             self.assertIn(val, self.ext2)
         for val in self.x2.value:
             self.assertIn(val, self.ext2)
 
     def test_insert(self):
         with self.assertRaises(NotImplementedError):
-            self.ext1.insert(0, self.data1['values'][0])
+            self.ext1.insert(0, self.data1['value'][0])
         with self.assertRaises(NotImplementedError):
-            self.ext2.insert(0, self.data2['values'][0])
+            self.ext2.insert(0, self.data2['value'][0])
 
     def test_len(self):
         self.assertEqual(len(self.ext1), 2)
@@ -2776,31 +2776,31 @@ class PrecertificateSignedCertificateTimestampsTestCase(
         self.assertNotEqual(self.ext1, self.ext2)
 
     def test_not_in(self):
-        self.assertNotIn(self.data1['values'][0], self.ext2)
-        self.assertNotIn(self.data2['values'][0], self.ext1)
+        self.assertNotIn(self.data1['value'][0], self.ext2)
+        self.assertNotIn(self.data2['value'][0], self.ext1)
 
         self.assertNotIn(self.x1.value[0], self.ext2)
         self.assertNotIn(self.x2.value[0], self.ext1)
 
     def test_pop(self):
         with self.assertRaises(NotImplementedError):
-            self.ext1.pop(self.data1['values'][0])
+            self.ext1.pop(self.data1['value'][0])
         with self.assertRaises(NotImplementedError):
-            self.ext2.pop(self.data2['values'][0])
+            self.ext2.pop(self.data2['value'][0])
 
     def test_remove(self):
         with self.assertRaises(NotImplementedError):
-            self.ext1.remove(self.data1['values'][0])
+            self.ext1.remove(self.data1['value'][0])
         with self.assertRaises(NotImplementedError):
-            self.ext2.remove(self.data2['values'][0])
+            self.ext2.remove(self.data2['value'][0])
 
     def test_repr(self):
         if six.PY2:  # pragma: only py2
-            exp1 = [{str(k): str(v) for k, v in e.items()} for e in self.data1['values']]
-            exp2 = [{str(k): str(v) for k, v in e.items()} for e in self.data2['values']]
+            exp1 = [{str(k): str(v) for k, v in e.items()} for e in self.data1['value']]
+            exp2 = [{str(k): str(v) for k, v in e.items()} for e in self.data2['value']]
         else:
-            exp1 = self.data1['values']
-            exp2 = self.data2['values']
+            exp1 = self.data1['value']
+            exp2 = self.data2['value']
 
         self.assertEqual(
             repr(self.ext1),
@@ -2815,9 +2815,9 @@ class PrecertificateSignedCertificateTimestampsTestCase(
 
     def test_setitem(self):
         with self.assertRaises(NotImplementedError):
-            self.ext1[0] = self.data2['values'][0]
+            self.ext1[0] = self.data2['value'][0]
         with self.assertRaises(NotImplementedError):
-            self.ext2[0] = self.data1['values'][0]
+            self.ext2[0] = self.data1['value'][0]
 
     def test_setitem_slices(self):
         with self.assertRaises(NotImplementedError):

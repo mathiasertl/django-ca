@@ -649,7 +649,7 @@ class DjangoCATestCase(TestCase):
             elif key == 'precertificate_signed_certificate_timestamps':
                 ctx['sct_critical'] = ' (critical)' if value['critical'] else ''
                 ctx['sct_values'] = []
-                for value in value['values']:
+                for value in value['value']:
                     ctx['sct_values'].append(value)
             elif key == 'pathlen':
                 ctx[key] = value

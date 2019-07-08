@@ -1467,7 +1467,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):  # pragma: only 
 
     def __contains__(self, value):
         if isinstance(value, dict):
-            return value in self.serialize()['values']
+            return value in self.serialize()['value']
         return value in self.value
 
     def __delitem__(self, key):
@@ -1519,7 +1519,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):  # pragma: only 
 
     def count(self, value):
         if isinstance(value, dict):
-            return self.serialize()['values'].count(value)
+            return self.serialize()['value'].count(value)
         return self.value._signed_certificate_timestamps.count(value)
 
     def extend(self, iterable):
