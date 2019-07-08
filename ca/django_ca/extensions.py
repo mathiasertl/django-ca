@@ -932,6 +932,7 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
                 raise ValueError('Unknown access method: %s' % desc.access_method)
 
     def from_dict(self, value):
+        value = value.get('value', {})
         self.issuers = [self.parse_value(v) for v in value.get('issuers', [])]
         self.ocsp = [self.parse_value(v) for v in value.get('ocsp', [])]
 
@@ -953,8 +954,10 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
     def serialize(self):
         return {
             'critical': self.critical,
-            'issuers': [self.serialize_value(v) for v in self.issuers],
-            'ocsp': [self.serialize_value(v) for v in self.ocsp],
+            'value': {
+                'issuers': [self.serialize_value(v) for v in self.issuers],
+                'ocsp': [self.serialize_value(v) for v in self.ocsp],
+            },
         }
 
 

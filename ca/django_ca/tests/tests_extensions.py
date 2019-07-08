@@ -521,34 +521,34 @@ class AuthorityInformationAccessTestCase(TestCase):
         self.assertEqual(ext.as_extension(), self.ext_both)
 
     def test_from_dict(self):
-        ext = AuthorityInformationAccess({'issuers': ['https://example.com']})
+        ext = AuthorityInformationAccess({'value': {'issuers': ['https://example.com']}})
         self.assertEqual(ext.issuers, [uri('https://example.com')])
         self.assertEqual(ext.ocsp, [])
         self.assertFalse(ext.critical)
         self.assertEqual(ext.as_extension(), self.ext_issuer)
 
-        ext = AuthorityInformationAccess({'ocsp': ['https://example.com']})
+        ext = AuthorityInformationAccess({'value': {'ocsp': ['https://example.com']}})
         self.assertEqual(ext.issuers, [])
         self.assertEqual(ext.ocsp, [uri('https://example.com')])
         self.assertFalse(ext.critical)
         self.assertEqual(ext.as_extension(), self.ext_ocsp)
 
-        ext = AuthorityInformationAccess({'issuers': [uri('https://example.com')]})
+        ext = AuthorityInformationAccess({'value': {'issuers': [uri('https://example.com')]}})
         self.assertEqual(ext.issuers, [uri('https://example.com')])
         self.assertEqual(ext.ocsp, [])
         self.assertFalse(ext.critical)
         self.assertEqual(ext.as_extension(), self.ext_issuer)
 
-        ext = AuthorityInformationAccess({'ocsp': [uri('https://example.com')]})
+        ext = AuthorityInformationAccess({'value': {'ocsp': [uri('https://example.com')]}})
         self.assertEqual(ext.ocsp, [uri('https://example.com')])
         self.assertEqual(ext.issuers, [])
         self.assertFalse(ext.critical)
         self.assertEqual(ext.as_extension(), self.ext_ocsp)
 
-        ext = AuthorityInformationAccess({
+        ext = AuthorityInformationAccess({'value': {
             'issuers': ['https://example.com'],
             'ocsp': ['https://example.net', 'https://example.org']
-        })
+        }})
         self.assertEqual(ext.issuers, [uri('https://example.com')])
         self.assertEqual(ext.ocsp, [uri('https://example.net'), uri('https://example.org')])
         self.assertFalse(ext.critical)

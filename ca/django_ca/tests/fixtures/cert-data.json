@@ -7,7 +7,10 @@
             "subject": "/C=AT/ST=Vienna/CN=ca.example.com",
             "pathlen": null,
             "basic_constraints": "critical,CA:TRUE",
-            "key_usage": "critical,cRLSign,keyCertSign",
+            "key_usage": {
+                "critical": true,
+                "value": ["cRLSign", "keyCertSign"]
+            },
             "name": "root",
             "cat": "generated",
             "algorithm": "SHA256",
@@ -72,15 +75,20 @@
             "sha512": "57:B2:DC:6A:44:88:F3:1C:20:AB:68:0D:4E:67:03:4A:58:63:EB:1C:2E:29:E1:F7:AE:6A:8F:CA:44:D2:C3:E6:83:A7:56:98:2F:0B:96:E4:07:67:EC:7E:42:42:AD:00:54:CF:D3:15:3C:81:75:6B:05:BF:30:8C:4C:08:F8:50",
             "authority_key_identifier": "8F:14:0B:5F:07:38:19:A4:13:05:FD:64:4B:95:2B:86:60:BE:49:D2",
             "subject_key_identifier": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26",
-            "key_usage": "critical,cRLSign,keyCertSign",
+            "key_usage": {
+                "critical": true,
+                "value": ["cRLSign", "keyCertSign"]
+            },
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://localhost:8000/django_ca/issuer/413194A2F7F84756D033234C452EB24DDCA3A90F.der"
-                ],
-                "ocsp": [
-                    "URI:http://localhost:8000/django_ca/ocsp/11A2131A2EDB357C2E458E6F017CA0F7506705C2/ca/"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://localhost:8000/django_ca/issuer/413194A2F7F84756D033234C452EB24DDCA3A90F.der"
+                    ],
+                    "ocsp": [
+                        "URI:http://localhost:8000/django_ca/ocsp/11A2131A2EDB357C2E458E6F017CA0F7506705C2/ca/"
+                    ]
+                }
             },
             "crl_distribution_points": {
                 "value": [
@@ -124,7 +132,10 @@
             "sha512": "4F:45:F5:F3:08:CF:17:F3:09:90:31:40:EB:47:C1:22:B9:3C:65:78:5D:2C:93:60:CB:E4:88:D9:BB:1E:0A:A2:BF:12:1A:E7:A0:CB:BC:C2:65:C6:8F:BC:E8:DB:62:21:DD:82:00:FF:CC:B3:74:FF:8B:DA:25:7E:48:00:4A:13",
             "authority_key_identifier": "6B:AE:B3:0A:01:BE:F8:F3:C8:7D:07:08:14:D0:40:23:ED:F9:E4:58",
             "subject_key_identifier": "6B:AE:B3:0A:01:BE:F8:F3:C8:7D:07:08:14:D0:40:23:ED:F9:E4:58",
-            "key_usage": "critical,cRLSign,keyCertSign"
+            "key_usage": {
+                "critical": true,
+                "value": ["cRLSign", "keyCertSign"]
+            }
         },
         "dsa": {
             "type": "ca",
@@ -157,7 +168,10 @@
             "sha512": "29:C4:0C:25:75:55:97:72:5C:B6:BB:65:B5:BF:0F:E8:2B:46:41:46:98:BE:83:C7:7C:D0:62:DE:14:BE:C2:29:AD:78:CE:ED:2C:8E:C1:0C:C4:F7:8A:B1:AE:96:D5:AB:59:80:43:70:D1:5D:37:EF:E3:7F:7F:D3:43:C7:0B:B1",
             "authority_key_identifier": "A5:CC:A2:B9:F2:46:AB:C6:6B:C6:79:73:03:DA:14:1C:DE:11:24:D0",
             "subject_key_identifier": "A5:CC:A2:B9:F2:46:AB:C6:6B:C6:79:73:03:DA:14:1C:DE:11:24:D0",
-            "key_usage": "critical,cRLSign,keyCertSign"
+            "key_usage": {
+                "critical": true,
+                "value": ["cRLSign", "keyCertSign"]
+            }
         },
         "pwd": {
             "type": "ca",
@@ -190,7 +204,10 @@
             "sha512": "0B:84:68:B3:F2:5A:B3:A6:39:08:04:1A:52:76:40:95:BD:BD:E4:94:2F:06:56:5A:F4:D1:B1:7D:5F:73:7E:B6:75:06:54:1C:A3:B5:B6:FC:1D:A2:6D:59:B4:A5:5D:B4:E6:23:31:B6:3B:7E:1B:23:3A:B4:95:4E:F4:3F:A3:73",
             "authority_key_identifier": "9D:CA:3D:8E:CE:45:7D:2C:C7:03:FB:A9:26:E9:34:EF:E1:35:02:49",
             "subject_key_identifier": "9D:CA:3D:8E:CE:45:7D:2C:C7:03:FB:A9:26:E9:34:EF:E1:35:02:49",
-            "key_usage": "critical,cRLSign,keyCertSign"
+            "key_usage": {
+                "critical": true,
+                "value": ["cRLSign", "keyCertSign"]
+            }
         },
         "root-cert": {
             "ca": "root",
@@ -220,15 +237,20 @@
             "sha512": "B3:5C:FE:DC:12:99:04:1A:24:B7:ED:85:DE:0C:C0:28:EA:2C:4B:8C:C6:11:76:A0:47:2C:14:A1:53:6A:99:DE:AF:E3:06:22:98:30:3C:7F:18:9D:96:C4:84:12:64:63:BC:90:BF:C1:07:13:9C:98:D6:F6:84:5B:E0:43:8C:29",
             "authority_key_identifier": "8F:14:0B:5F:07:38:19:A4:13:05:FD:64:4B:95:2B:86:60:BE:49:D2",
             "subject_key_identifier": "39:A7:AA:B5:74:F6:B9:FE:B9:67:ED:06:E5:BE:83:C0:8D:8E:E6:C0",
-            "key_usage": "critical,digitalSignature,keyAgreement,keyEncipherment",
+            "key_usage": {
+                "critical": true,
+                "value": ["digitalSignature", "keyAgreement", "keyEncipherment"]
+            },
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://localhost:8000/django_ca/issuer/413194A2F7F84756D033234C452EB24DDCA3A90F.der"
-                ],
-                "ocsp": [
-                    "URI:http://localhost:8000/django_ca/ocsp/413194A2F7F84756D033234C452EB24DDCA3A90F/cert/"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://localhost:8000/django_ca/issuer/413194A2F7F84756D033234C452EB24DDCA3A90F.der"
+                    ],
+                    "ocsp": [
+                        "URI:http://localhost:8000/django_ca/ocsp/413194A2F7F84756D033234C452EB24DDCA3A90F/cert/"
+                    ]
+                }
             },
             "subject_alternative_name": "DNS:root-cert.example.com",
             "extended_key_usage": "clientAuth,serverAuth",
@@ -270,15 +292,20 @@
             "sha512": "13:4B:40:D3:2E:76:59:6B:BD:D4:4F:48:F7:9B:3B:FF:51:4B:E7:B7:ED:B3:D7:82:DF:1A:BD:20:87:BE:D2:AC:AC:2D:CA:C0:43:AD:25:00:9F:D1:11:EC:47:A5:9D:9E:03:3B:45:E6:6F:F8:1A:13:52:FC:EF:37:3A:89:11:31",
             "authority_key_identifier": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26",
             "subject_key_identifier": "0A:56:C9:C9:D1:CF:22:96:D1:F4:67:10:68:B0:50:11:59:A3:4E:79",
-            "key_usage": "critical,digitalSignature,keyAgreement,keyEncipherment",
+            "key_usage": {
+                "critical": true,
+                "value": ["digitalSignature", "keyAgreement", "keyEncipherment"]
+            },
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://localhost:8000/django_ca/issuer/413194A2F7F84756D033234C452EB24DDCA3A90F.der"
-                ],
-                "ocsp": [
-                    "URI:http://localhost:8000/django_ca/ocsp/11A2131A2EDB357C2E458E6F017CA0F7506705C2/cert/"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://localhost:8000/django_ca/issuer/413194A2F7F84756D033234C452EB24DDCA3A90F.der"
+                    ],
+                    "ocsp": [
+                        "URI:http://localhost:8000/django_ca/ocsp/11A2131A2EDB357C2E458E6F017CA0F7506705C2/cert/"
+                    ]
+                }
             },
             "subject_alternative_name": "DNS:child-cert.example.com",
             "extended_key_usage": "clientAuth,serverAuth",
@@ -320,15 +347,20 @@
             "sha512": "67:26:07:4C:20:E2:8E:51:5C:60:A3:BB:B2:40:8F:80:58:6A:90:5D:29:1C:71:76:63:6F:D4:C2:C8:36:9F:3F:B5:0F:C5:96:38:FC:DF:37:2D:20:3C:59:E4:88:F3:B8:AD:27:D5:F7:23:2F:4E:13:BD:46:5B:3B:43:2A:7A:D4",
             "authority_key_identifier": "6B:AE:B3:0A:01:BE:F8:F3:C8:7D:07:08:14:D0:40:23:ED:F9:E4:58",
             "subject_key_identifier": "29:1F:4B:4C:3D:3A:5E:0C:C2:BD:F2:00:F1:3C:AB:F4:01:A6:D1:BD",
-            "key_usage": "critical,digitalSignature,keyAgreement,keyEncipherment",
+            "key_usage": {
+                "critical": true,
+                "value": ["digitalSignature", "keyAgreement", "keyEncipherment"]
+            },
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://localhost:8000/django_ca/issuer/10CC6793D82B001737DB5C83219C284273A0F801.der"
-                ],
-                "ocsp": [
-                    "URI:http://localhost:8000/django_ca/ocsp/10CC6793D82B001737DB5C83219C284273A0F801/cert/"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://localhost:8000/django_ca/issuer/10CC6793D82B001737DB5C83219C284273A0F801.der"
+                    ],
+                    "ocsp": [
+                        "URI:http://localhost:8000/django_ca/ocsp/10CC6793D82B001737DB5C83219C284273A0F801/cert/"
+                    ]
+                }
             },
             "subject_alternative_name": "DNS:ecc-cert.example.com",
             "extended_key_usage": "clientAuth,serverAuth",
@@ -370,15 +402,20 @@
             "sha512": "B2:31:76:9D:A6:6E:C3:5E:52:93:8D:8E:A8:A9:39:94:34:4E:87:CD:01:9B:E2:33:CC:B9:20:49:E3:F7:9E:56:99:73:66:32:CD:FC:DF:C6:77:31:0D:51:64:65:39:ED:8D:9F:32:78:31:D4:18:A5:1A:90:47:32:D6:E7:E6:CC",
             "authority_key_identifier": "9D:CA:3D:8E:CE:45:7D:2C:C7:03:FB:A9:26:E9:34:EF:E1:35:02:49",
             "subject_key_identifier": "E6:39:D7:CD:62:19:AA:3F:82:53:AA:A8:59:B8:21:3B:CE:D2:0F:84",
-            "key_usage": "critical,digitalSignature,keyAgreement,keyEncipherment",
+            "key_usage": {
+                "critical": true,
+                "value": ["digitalSignature", "keyAgreement", "keyEncipherment"]
+            },
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://localhost:8000/django_ca/issuer/68171660EEBEA621DC168B70A6942D12CC469FF5.der"
-                ],
-                "ocsp": [
-                    "URI:http://localhost:8000/django_ca/ocsp/68171660EEBEA621DC168B70A6942D12CC469FF5/cert/"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://localhost:8000/django_ca/issuer/68171660EEBEA621DC168B70A6942D12CC469FF5.der"
+                    ],
+                    "ocsp": [
+                        "URI:http://localhost:8000/django_ca/ocsp/68171660EEBEA621DC168B70A6942D12CC469FF5/cert/"
+                    ]
+                }
             },
             "subject_alternative_name": "DNS:pwd-cert.example.com",
             "extended_key_usage": "clientAuth,serverAuth",
@@ -420,15 +457,20 @@
             "sha512": "DC:83:D7:01:30:C9:CE:76:E3:D5:47:1C:D1:C1:25:58:C5:57:31:C9:A3:24:50:53:5F:32:28:53:80:77:0A:DF:FD:D7:31:8A:6A:58:A6:2C:D0:CB:E7:26:45:49:FD:13:9A:9F:16:16:BF:18:81:DA:8B:BB:22:5D:20:E4:F8:0B",
             "authority_key_identifier": "A5:CC:A2:B9:F2:46:AB:C6:6B:C6:79:73:03:DA:14:1C:DE:11:24:D0",
             "subject_key_identifier": "BA:FB:FE:04:B2:3B:D5:37:D8:DB:58:23:36:2A:ED:64:F7:33:A8:3C",
-            "key_usage": "critical,digitalSignature,keyAgreement,keyEncipherment",
+            "key_usage": {
+                "critical": true,
+                "value": ["digitalSignature", "keyAgreement", "keyEncipherment"]
+            },
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://localhost:8000/django_ca/issuer/3EF30F26A278CD81C7358047C5A89AA16EED052E.der"
-                ],
-                "ocsp": [
-                    "URI:http://localhost:8000/django_ca/ocsp/3EF30F26A278CD81C7358047C5A89AA16EED052E/cert/"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://localhost:8000/django_ca/issuer/3EF30F26A278CD81C7358047C5A89AA16EED052E.der"
+                    ],
+                    "ocsp": [
+                        "URI:http://localhost:8000/django_ca/ocsp/3EF30F26A278CD81C7358047C5A89AA16EED052E/cert/"
+                    ]
+                }
             },
             "subject_alternative_name": "DNS:dsa-cert.example.com",
             "extended_key_usage": "clientAuth,serverAuth",
@@ -471,15 +513,20 @@
             "sha512": "0D:E8:76:44:44:D6:C4:A5:A4:A6:AB:1F:65:BB:44:D8:D0:0E:DD:C0:DB:EF:1F:48:A6:52:7A:A6:93:CA:38:20:8E:4A:4E:E0:14:40:48:87:D0:B2:41:13:81:17:89:20:F3:7A:8C:50:69:06:A0:C0:BD:F0:06:42:BA:2B:0C:99",
             "authority_key_identifier": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26",
             "subject_key_identifier": "4C:B3:0B:05:84:53:DB:A9:4F:AC:21:30:CA:1B:4E:73:EB:E5:DF:12",
-            "key_usage": "critical,digitalSignature",
+            "key_usage": {
+                "critical": true,
+                "value": ["digitalSignature"]
+            },
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://localhost:8000/django_ca/issuer/413194A2F7F84756D033234C452EB24DDCA3A90F.der"
-                ],
-                "ocsp": [
-                    "URI:http://localhost:8000/django_ca/ocsp/11A2131A2EDB357C2E458E6F017CA0F7506705C2/cert/"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://localhost:8000/django_ca/issuer/413194A2F7F84756D033234C452EB24DDCA3A90F.der"
+                    ],
+                    "ocsp": [
+                        "URI:http://localhost:8000/django_ca/ocsp/11A2131A2EDB357C2E458E6F017CA0F7506705C2/cert/"
+                    ]
+                }
             },
             "subject_alternative_name": "DNS:profile-client.example.com",
             "extended_key_usage": "clientAuth",
@@ -522,15 +569,20 @@
             "sha512": "C8:6B:AD:6D:FD:7F:19:8E:DB:94:BC:F0:48:DB:7E:3F:C1:1B:2D:F7:98:93:94:98:6B:34:DE:F4:57:AC:E3:F4:5F:D8:A4:9C:BA:90:F1:8E:A0:5B:0E:7C:A0:15:8B:01:18:C4:19:63:1D:BB:BC:04:AC:62:79:CB:A3:59:40:6D",
             "authority_key_identifier": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26",
             "subject_key_identifier": "1B:66:96:68:3F:87:0B:03:F2:9C:B5:F8:B4:39:67:F5:E7:CC:31:62",
-            "key_usage": "critical,digitalSignature,keyAgreement,keyEncipherment",
+            "key_usage": {
+                "critical": true,
+                "value": ["digitalSignature", "keyAgreement", "keyEncipherment"]
+            },
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://localhost:8000/django_ca/issuer/413194A2F7F84756D033234C452EB24DDCA3A90F.der"
-                ],
-                "ocsp": [
-                    "URI:http://localhost:8000/django_ca/ocsp/11A2131A2EDB357C2E458E6F017CA0F7506705C2/cert/"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://localhost:8000/django_ca/issuer/413194A2F7F84756D033234C452EB24DDCA3A90F.der"
+                    ],
+                    "ocsp": [
+                        "URI:http://localhost:8000/django_ca/ocsp/11A2131A2EDB357C2E458E6F017CA0F7506705C2/cert/"
+                    ]
+                }
             },
             "subject_alternative_name": "DNS:profile-server.example.com",
             "extended_key_usage": "clientAuth,serverAuth",
@@ -573,15 +625,20 @@
             "sha512": "09:B0:89:54:B1:20:17:D3:03:54:AA:B5:15:87:08:37:8B:83:8C:8D:38:90:3C:80:7A:5C:50:BD:97:19:65:49:8F:C8:D0:E6:B7:CA:DA:23:3C:BA:FE:AC:4F:B2:60:B3:30:8E:6F:0E:DF:ED:87:4C:92:D9:60:0D:8D:FA:80:40",
             "authority_key_identifier": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26",
             "subject_key_identifier": "F8:1F:80:93:4D:7C:17:AD:7E:C7:CB:90:72:23:C9:BE:7C:91:93:AE",
-            "key_usage": "critical,digitalSignature,keyAgreement,keyEncipherment",
+            "key_usage": {
+                "critical": true,
+                "value": ["digitalSignature", "keyAgreement", "keyEncipherment"]
+            },
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://localhost:8000/django_ca/issuer/413194A2F7F84756D033234C452EB24DDCA3A90F.der"
-                ],
-                "ocsp": [
-                    "URI:http://localhost:8000/django_ca/ocsp/11A2131A2EDB357C2E458E6F017CA0F7506705C2/cert/"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://localhost:8000/django_ca/issuer/413194A2F7F84756D033234C452EB24DDCA3A90F.der"
+                    ],
+                    "ocsp": [
+                        "URI:http://localhost:8000/django_ca/ocsp/11A2131A2EDB357C2E458E6F017CA0F7506705C2/cert/"
+                    ]
+                }
             },
             "subject_alternative_name": "DNS:profile-webserver.example.com",
             "extended_key_usage": "serverAuth",
@@ -624,15 +681,20 @@
             "sha512": "EB:EE:2E:53:11:7A:E3:7A:0B:BF:E9:0F:79:F0:0B:11:BF:1A:E1:B4:EE:54:DC:B0:32:CA:7A:26:8A:14:24:5B:02:D8:B0:EF:B7:5E:F4:7A:EB:AA:31:E5:63:19:F7:50:28:96:C9:75:D6:A7:39:A9:EF:72:37:62:92:64:E3:8E",
             "authority_key_identifier": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26",
             "subject_key_identifier": "64:4F:D6:7D:F6:7F:FC:A7:48:69:A1:41:51:C6:6B:2D:46:60:02:61",
-            "key_usage": "critical,dataEncipherment,digitalSignature,keyEncipherment",
+            "key_usage": {
+                "critical": true,
+                "value": ["dataEncipherment", "digitalSignature", "keyEncipherment"]
+            },
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://localhost:8000/django_ca/issuer/413194A2F7F84756D033234C452EB24DDCA3A90F.der"
-                ],
-                "ocsp": [
-                    "URI:http://localhost:8000/django_ca/ocsp/11A2131A2EDB357C2E458E6F017CA0F7506705C2/cert/"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://localhost:8000/django_ca/issuer/413194A2F7F84756D033234C452EB24DDCA3A90F.der"
+                    ],
+                    "ocsp": [
+                        "URI:http://localhost:8000/django_ca/ocsp/11A2131A2EDB357C2E458E6F017CA0F7506705C2/cert/"
+                    ]
+                }
             },
             "extended_key_usage": "clientAuth,codeSigning,emailProtection",
             "crl_distribution_points": {
@@ -674,15 +736,20 @@
             "sha512": "FD:30:6E:E5:F4:CA:3D:E8:CE:A5:D2:EB:1D:01:3C:22:2A:A8:83:64:B2:F9:7A:2C:4D:30:DF:BE:28:54:5A:F6:CC:3D:50:F2:91:48:CF:5A:69:18:D3:EB:D1:D8:ED:73:B4:AA:49:54:34:32:28:88:3A:4B:1B:F1:C2:DB:00:6B",
             "authority_key_identifier": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26",
             "subject_key_identifier": "0C:3E:B7:2E:05:AD:B5:51:01:25:81:C6:86:3A:2E:5C:70:86:46:29",
-            "key_usage": "critical,digitalSignature,keyEncipherment,nonRepudiation",
+            "key_usage": {
+                "critical": true,
+                "value": ["digitalSignature", "keyEncipherment", "nonRepudiation"]
+            },
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://localhost:8000/django_ca/issuer/413194A2F7F84756D033234C452EB24DDCA3A90F.der"
-                ],
-                "ocsp": [
-                    "URI:http://localhost:8000/django_ca/ocsp/11A2131A2EDB357C2E458E6F017CA0F7506705C2/cert/"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://localhost:8000/django_ca/issuer/413194A2F7F84756D033234C452EB24DDCA3A90F.der"
+                    ],
+                    "ocsp": [
+                        "URI:http://localhost:8000/django_ca/ocsp/11A2131A2EDB357C2E458E6F017CA0F7506705C2/cert/"
+                    ]
+                }
             },
             "subject_alternative_name": "DNS:profile-ocsp.example.com",
             "extended_key_usage": "OCSPSigning",
@@ -727,13 +794,20 @@
             "basic_constraints": "critical,CA:FALSE",
             "name_constraints": {
                 "value": {
-                    "permitted": ["DNS:.org"],
-                    "excluded": ["DNS:.net"]
+                    "permitted": [
+                        "DNS:.org"
+                    ],
+                    "excluded": [
+                        "DNS:.net"
+                    ]
                 }
             },
             "issuer_alternative_name": "URI:http://ian.child.example.com/",
             "tls_feature": "critical,OCSPMustStaple,MultipleCertStatusRequest",
-            "key_usage": "critical,encipherOnly,keyAgreement,nonRepudiation",
+            "key_usage": {
+                "critical": true,
+                "value": ["encipherOnly", "keyAgreement", "nonRepudiation"]
+            },
             "extended_key_usage": "serverAuth,clientAuth,codeSigning,emailProtection",
             "subject_alternative_name": "DNS:all-extensions.example.com,DNS:san1.all-extensions.example.com,DNS:san2.all-extensions.example.com",
             "ocsp_no_check": {
@@ -768,12 +842,14 @@
             "subject_key_identifier": "41:7F:C1:09:EA:A1:C0:B7:52:A3:66:84:80:D7:C8:EC:C4:E1:28:D8",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://localhost:8000/django_ca/issuer/413194A2F7F84756D033234C452EB24DDCA3A90F.der"
-                ],
-                "ocsp": [
-                    "URI:http://localhost:8000/django_ca/ocsp/11A2131A2EDB357C2E458E6F017CA0F7506705C2/cert/"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://localhost:8000/django_ca/issuer/413194A2F7F84756D033234C452EB24DDCA3A90F.der"
+                    ],
+                    "ocsp": [
+                        "URI:http://localhost:8000/django_ca/ocsp/11A2131A2EDB357C2E458E6F017CA0F7506705C2/cert/"
+                    ]
+                }
             },
             "crl_distribution_points": {
                 "value": [
@@ -803,7 +879,13 @@
             "sha256": "EB:D4:10:40:E4:BB:3E:C7:42:C9:E3:81:D3:1E:F2:A4:1A:48:B6:68:5C:96:E7:CE:F3:C1:DF:6C:D4:33:1C:99",
             "sha512": "54:BA:00:4D:54:35:E8:B1:05:31:43:1C:39:2E:D9:97:76:12:0D:36:38:08:13:7D:E7:EB:59:03:04:63:F8:63:CA:DD:02:BD:F9:18:F5:96:B6:D2:09:64:B3:17:25:C2:36:3C:D7:60:17:99:CA:A9:36:0A:1C:36:FE:81:9F:BD",
             "basic_constraints": "critical,CA:TRUE",
-            "key_usage": "critical,cRLSign,keyCertSign",
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "cRLSign",
+                    "keyCertSign"
+                ]
+            },
             "subject_key_identifier": "60:7B:66:1A:45:0D:97:CA:89:50:2F:7D:04:CD:34:A8:FF:FC:FD:4B",
             "type": "ca",
             "pathlen": null
@@ -826,12 +908,14 @@
             "sha512": "A3:E6:46:0D:47:02:FA:41:09:65:8B:2B:ED:2D:83:47:FB:CD:73:20:24:C1:06:F3:38:3C:A1:05:3C:EE:7B:33:AF:F1:22:D8:92:6A:E6:80:15:D8:02:57:24:34:D5:F3:81:60:A9:9F:46:D8:2B:F0:5C:AF:4A:43:2B:E9:25:7E",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://crt.comodoca.com/COMODORSAAddTrustCA.crt"
-                ],
-                "ocsp": [
-                    "URI:http://ocsp.comodoca.com"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://crt.comodoca.com/COMODORSAAddTrustCA.crt"
+                    ],
+                    "ocsp": [
+                        "URI:http://ocsp.comodoca.com"
+                    ]
+                }
             },
             "authority_key_identifier": "BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4",
             "basic_constraints": "critical,CA:TRUE, pathlen:0",
@@ -856,8 +940,21 @@
                 ],
                 "critical": false
             },
-            "extended_key_usage": "serverAuth,clientAuth",
-            "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "serverAuth",
+                    "clientAuth"
+                ]
+            },
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "cRLSign",
+                    "digitalSignature",
+                    "keyCertSign"
+                ]
+            },
             "subject_key_identifier": "90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7",
             "policy_texts": [
                 "Policy Identifier: 2.5.29.32.0\nNo Policy Qualifiers",
@@ -884,10 +981,12 @@
             "sha512": "C2:28:77:F0:69:60:D0:81:45:93:CA:41:30:5C:4B:25:3D:A7:33:44:96:AF:FF:1A:8B:45:88:57:4E:1A:AB:30:86:EF:24:8E:F0:6F:28:AD:C3:CC:4F:49:23:C6:36:E3:8A:48:35:42:C1:85:F0:36:BC:2B:0C:99:E7:64:C9:EE",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [],
-                "ocsp": [
-                    "URI:http://ocsp.digicert.com"
-                ]
+                "value": {
+                    "issuers": [],
+                    "ocsp": [
+                        "URI:http://ocsp.digicert.com"
+                    ]
+                }
             },
             "authority_key_identifier": "03:DE:50:35:56:D1:4C:BB:66:F0:A3:E2:1B:1B:C3:97:B2:3D:D1:55",
             "basic_constraints": "critical,CA:TRUE, pathlen:0",
@@ -917,7 +1016,14 @@
                 ],
                 "critical": false
             },
-            "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "cRLSign",
+                    "digitalSignature",
+                    "keyCertSign"
+                ]
+            },
             "subject_key_identifier": "0F:80:61:1C:82:31:61:D5:2F:28:E7:8D:46:38:B4:2C:E1:C6:D9:E2",
             "policy_texts": [
                 "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* https://www.digicert.com/CPS"
@@ -943,12 +1049,14 @@
             "sha512": "2E:E1:35:83:26:BD:C5:3B:9F:32:AB:D6:31:DB:0F:6F:34:71:86:3A:21:A2:56:EB:DF:6A:26:93:4D:48:2C:BB:DF:B2:84:7D:93:0B:84:5B:8C:36:E4:52:AC:4C:1B:B0:35:33:D1:49:5C:05:26:CC:2C:6A:17:30:F2:32:34:DC",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://validation.identrust.com/roots/commercialrootca1.p7c"
-                ],
-                "ocsp": [
-                    "URI:http://commercial.ocsp.identrust.com"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://validation.identrust.com/roots/commercialrootca1.p7c"
+                    ],
+                    "ocsp": [
+                        "URI:http://commercial.ocsp.identrust.com"
+                    ]
+                }
             },
             "authority_key_identifier": "ED:44:19:C0:D3:F0:06:8B:EE:A4:7B:BE:42:E7:26:54:C8:8E:36:76",
             "basic_constraints": "critical,CA:TRUE",
@@ -981,8 +1089,24 @@
                 ],
                 "critical": false
             },
-            "extended_key_usage": "serverAuth,clientAuth,ipsecEndSystem,ipsecTunnel,ipsecUser",
-            "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "serverAuth",
+                    "clientAuth",
+                    "ipsecEndSystem",
+                    "ipsecTunnel",
+                    "ipsecUser"
+                ]
+            },
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "cRLSign",
+                    "digitalSignature",
+                    "keyCertSign"
+                ]
+            },
             "subject_key_identifier": "A2:56:24:3C:D0:D4:15:B9:E8:BF:78:A3:13:10:58:48:2E:16:54:E1",
             "policy_texts": [
                 "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* UserNotice:\n  * Reference:\n    * Organiziation: https://secure.identrust.com/certificates/policy/ts/index.html\n    * Notice Numbers: []\n* UserNotice:\n  * Explicit text: This TrustID Server Certificate has been issued in\n    accordance with IdenTrust's TrustID Certificate Policy found at\n    https://secure.identrust.com/certificates/policy/ts/index.html"
@@ -1008,7 +1132,14 @@
             "sha512": "7B:9C:F0:79:B9:76:9D:FA:9E:B2:E2:8C:F5:A4:DA:99:22:B0:F8:0E:41:50:97:D3:26:BF:20:54:75:05:A6:AB:1B:7A:C6:A8:38:46:D0:B8:25:3E:91:68:B1:F9:15:B8:97:4A:EC:84:4A:9B:31:C3:AD:CA:B3:AE:C8:9F:CD:07",
             "authority_key_identifier": "B1:3E:C3:69:03:F8:BF:47:01:D4:98:26:1A:08:02:EF:63:64:2B:C3",
             "basic_constraints": "critical,CA:TRUE",
-            "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "cRLSign",
+                    "digitalSignature",
+                    "keyCertSign"
+                ]
+            },
             "subject_key_identifier": "B1:3E:C3:69:03:F8:BF:47:01:D4:98:26:1A:08:02:EF:63:64:2B:C3",
             "type": "ca",
             "pathlen": null
@@ -1030,7 +1161,13 @@
             "sha256": "52:F0:E1:C4:E5:8E:C6:29:29:1B:60:31:7F:07:46:71:B8:5D:7E:A8:0D:5B:07:27:34:63:53:4B:32:B4:02:34",
             "sha512": "58:BB:C2:36:BF:9F:F6:95:AC:21:82:FF:A7:95:E3:69:F6:F1:82:79:85:1B:CC:F6:2E:5B:3E:AB:D2:B4:4E:9C:26:FA:B8:88:B8:ED:6C:78:C6:4B:C2:4B:10:1E:3B:00:3F:92:B1:D9:D9:A4:34:69:CB:90:91:56:4A:C2:B0:B0",
             "basic_constraints": "critical,CA:TRUE",
-            "key_usage": "critical,cRLSign,keyCertSign",
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "cRLSign",
+                    "keyCertSign"
+                ]
+            },
             "subject_key_identifier": "BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4",
             "type": "ca",
             "pathlen": null
@@ -1052,7 +1189,13 @@
             "sha256": "5D:56:49:9B:E4:D2:E0:8B:CF:CA:D0:8A:3E:38:72:3D:50:50:3B:DE:70:69:48:E4:2F:55:60:30:19:E5:28:AE",
             "sha512": "BD:D0:4F:04:2D:A0:10:28:4F:C5:A4:EE:8D:9F:35:60:D3:54:34:0F:1D:8B:8D:6C:BF:6B:0D:D8:85:0F:51:E9:D1:C0:47:DB:68:A4:1D:93:18:78:EB:90:3F:22:61:4D:4C:F5:8F:77:FB:27:A3:F0:D3:5C:99:BD:99:64:7C:BB",
             "basic_constraints": "critical,CA:TRUE",
-            "key_usage": "critical,cRLSign,keyCertSign",
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "cRLSign",
+                    "keyCertSign"
+                ]
+            },
             "subject_key_identifier": "ED:44:19:C0:D3:F0:06:8B:EE:A4:7B:BE:42:E7:26:54:C8:8E:36:76",
             "type": "ca",
             "pathlen": null
@@ -1085,7 +1228,13 @@
                 ],
                 "critical": false
             },
-            "key_usage": "critical,cRLSign,keyCertSign",
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "cRLSign",
+                    "keyCertSign"
+                ]
+            },
             "subject_key_identifier": "9B:E2:07:57:67:1C:1E:C0:6A:06:DE:59:B4:9A:2D:DF:DC:19:86:2E",
             "type": "ca",
             "pathlen": null
@@ -1129,7 +1278,13 @@
                 ],
                 "critical": false
             },
-            "key_usage": "critical,cRLSign,keyCertSign",
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "cRLSign",
+                    "keyCertSign"
+                ]
+            },
             "subject_key_identifier": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2",
             "policy_texts": [
                 "Policy Identifier: 1.3.6.1.4.1.23223.1.1.1\nPolicy Qualifiers:\n* http://www.startssl.com/policy.pdf\n* http://www.startssl.com/intermediate.pdf\n* UserNotice:\n  * Explicit text: Limited Liability, read the section *Legal Limitations*\n    of the StartCom Certification Authority Policy available at\n    http://www.startssl.com/policy.pdf\n  * Reference:\n    * Organiziation: Start Commercial (StartCom) Ltd.\n    * Notice Numbers: [1]"
@@ -1155,10 +1310,12 @@
             "sha512": "AD:FA:57:19:DF:2C:C6:B0:50:C1:C7:E2:AB:AD:AE:A8:64:85:9F:7C:A7:DB:B9:DC:76:3B:D8:35:56:2D:3B:9F:3A:A0:BB:C3:3F:96:77:09:A1:AF:07:5C:C7:86:78:48:D4:23:7A:20:7B:38:26:BD:BD:86:A9:ED:7D:0D:C3:5A",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [],
-                "ocsp": [
-                    "URI:http://g.symcd.com"
-                ]
+                "value": {
+                    "issuers": [],
+                    "ocsp": [
+                        "URI:http://g.symcd.com"
+                    ]
+                }
             },
             "authority_key_identifier": "C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E",
             "basic_constraints": "critical,CA:TRUE, pathlen:0",
@@ -1183,7 +1340,13 @@
                 ],
                 "critical": false
             },
-            "key_usage": "critical,cRLSign,keyCertSign",
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "cRLSign",
+                    "keyCertSign"
+                ]
+            },
             "subject_key_identifier": "C3:9C:F3:FC:D3:46:08:34:BB:CE:46:7F:A0:7C:5B:F3:E2:08:CB:59",
             "policy_texts": [
                 "Policy Identifier: 2.16.840.1.113733.1.7.54\nPolicy Qualifiers:\n* http://www.geotrust.com/resources/cps"
@@ -1209,7 +1372,14 @@
             "sha512": "53:B4:44:E5:65:18:32:01:A6:1E:EB:46:12:09:B2:DC:30:89:5E:EC:A4:87:23:8D:15:A0:26:73:5F:22:9A:81:9E:5B:19:CB:D7:E2:FA:27:68:AB:2A:64:F6:EB:CD:9D:1E:72:13:41:C9:ED:5D:D0:9F:C0:D5:E4:3D:68:BC:A7",
             "authority_key_identifier": "03:DE:50:35:56:D1:4C:BB:66:F0:A3:E2:1B:1B:C3:97:B2:3D:D1:55",
             "basic_constraints": "critical,CA:TRUE",
-            "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "cRLSign",
+                    "digitalSignature",
+                    "keyCertSign"
+                ]
+            },
             "subject_key_identifier": "03:DE:50:35:56:D1:4C:BB:66:F0:A3:E2:1B:1B:C3:97:B2:3D:D1:55",
             "type": "ca",
             "pathlen": null
@@ -1254,12 +1424,14 @@
             "sha512": "95:BE:D1:89:BF:57:5A:88:E7:93:5F:59:67:15:4F:74:90:8D:3C:32:66:2C:3F:0B:66:AF:85:22:A6:AF:22:65:3F:D6:93:A3:9E:FE:36:39:F5:13:44:66:C4:6A:16:EB:B7:E8:49:89:0F:DE:84:32:4D:E6:45:FF:E7:E8:92:B1",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://apps.identrust.com/roots/dstrootcax3.p7c"
-                ],
-                "ocsp": [
-                    "URI:http://isrg.trustid.ocsp.identrust.com"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://apps.identrust.com/roots/dstrootcax3.p7c"
+                    ],
+                    "ocsp": [
+                        "URI:http://isrg.trustid.ocsp.identrust.com"
+                    ]
+                }
             },
             "authority_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
             "basic_constraints": "critical,CA:TRUE, pathlen:0",
@@ -1287,7 +1459,14 @@
                 ],
                 "critical": false
             },
-            "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "cRLSign",
+                    "digitalSignature",
+                    "keyCertSign"
+                ]
+            },
             "name_constraints": {
                 "critical": false,
                 "value": {
@@ -1323,12 +1502,14 @@
             "sha512": "6A:4B:D3:83:B2:19:27:F4:4F:09:26:38:19:D2:91:7E:DB:D8:A8:EA:58:D9:7D:AC:48:C2:6A:1E:88:E5:C7:06:26:91:36:6F:79:30:07:05:DA:4B:68:B5:BF:91:53:47:72:41:F7:60:3F:AF:4A:C0:3D:1C:DE:69:AB:AE:F3:28",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://aia.startssl.com/certs/ca.crt"
-                ],
-                "ocsp": [
-                    "URI:http://ocsp.startssl.com"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://aia.startssl.com/certs/ca.crt"
+                    ],
+                    "ocsp": [
+                        "URI:http://ocsp.startssl.com"
+                    ]
+                }
             },
             "authority_key_identifier": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2",
             "basic_constraints": "critical,CA:TRUE, pathlen:0",
@@ -1353,8 +1534,20 @@
                 ],
                 "critical": false
             },
-            "extended_key_usage": "clientAuth,serverAuth",
-            "key_usage": "critical,cRLSign,keyCertSign",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "clientAuth",
+                    "serverAuth"
+                ]
+            },
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "cRLSign",
+                    "keyCertSign"
+                ]
+            },
             "subject_key_identifier": "B1:3F:1C:92:7B:92:B0:5A:25:B3:38:FB:9C:07:A4:26:50:32:E3:51",
             "policy_texts": [
                 "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* http://www.startssl.com/policy"
@@ -1380,10 +1573,12 @@
             "sha512": "C6:CD:75:20:2A:A3:50:77:2A:93:D6:DF:1C:CC:B0:47:38:41:E7:0B:9C:F2:14:9B:E3:46:84:8D:D1:95:38:6C:B7:E1:51:9D:AA:93:6B:CE:FD:7E:0C:2C:EE:39:CA:3F:B8:11:93:3B:9E:88:E0:22:A0:22:C5:B9:F2:B5:E9:2E",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [],
-                "ocsp": [
-                    "URI:http://ocsp.digicert.com"
-                ]
+                "value": {
+                    "issuers": [],
+                    "ocsp": [
+                        "URI:http://ocsp.digicert.com"
+                    ]
+                }
             },
             "authority_key_identifier": "B1:3E:C3:69:03:F8:BF:47:01:D4:98:26:1A:08:02:EF:63:64:2B:C3",
             "basic_constraints": "critical,CA:TRUE, pathlen:0",
@@ -1408,8 +1603,21 @@
                 ],
                 "critical": false
             },
-            "extended_key_usage": "serverAuth,clientAuth",
-            "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "serverAuth",
+                    "clientAuth"
+                ]
+            },
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "cRLSign",
+                    "digitalSignature",
+                    "keyCertSign"
+                ]
+            },
             "subject_key_identifier": "51:68:FF:90:AF:02:07:75:3C:CC:D9:65:64:62:A2:12:B8:59:72:3B",
             "policy_texts": [
                 "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* https://www.digicert.com/CPS"
@@ -1435,12 +1643,14 @@
             "sha512": "FF:37:9C:78:F0:C5:61:A6:20:8A:5C:55:85:AD:1C:19:5D:9F:25:B1:57:69:24:1F:F4:0B:F9:74:03:6D:C4:EE:31:39:B6:2C:92:72:14:2B:9E:87:55:95:F3:06:1A:A5:B9:A4:84:B1:50:39:31:26:D1:D1:A6:51:CC:72:1D:46",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://aia.startssl.com/certs/ca.crt"
-                ],
-                "ocsp": [
-                    "URI:http://ocsp.startssl.com/ca"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://aia.startssl.com/certs/ca.crt"
+                    ],
+                    "ocsp": [
+                        "URI:http://ocsp.startssl.com/ca"
+                    ]
+                }
             },
             "authority_key_identifier": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2",
             "basic_constraints": "critical,CA:TRUE, pathlen:0",
@@ -1465,7 +1675,13 @@
                 ],
                 "critical": false
             },
-            "key_usage": "critical,cRLSign,keyCertSign",
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "cRLSign",
+                    "keyCertSign"
+                ]
+            },
             "subject_key_identifier": "11:DB:23:45:FD:54:CC:6A:71:6F:84:8A:03:D7:BE:F7:01:2F:26:86",
             "policy_texts": [
                 "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* http://www.startssl.com/policy.pdf"
@@ -1490,7 +1706,13 @@
             "sha256": "45:14:0B:32:47:EB:9C:C8:C5:B4:F0:D7:B5:30:91:F7:32:92:08:9E:6E:5A:63:E2:74:9D:D3:AC:A9:19:8E:DA",
             "sha512": "C5:09:CD:54:52:65:9A:E9:4C:67:3A:47:B6:8E:2C:0A:A8:AD:17:78:04:C8:AE:29:49:30:6E:92:32:B7:0A:B5:B5:33:4D:1A:BE:53:A2:5E:CA:F0:C6:09:87:1B:33:84:97:73:B4:ED:F2:77:DD:34:60:69:03:8F:69:5D:76:FB",
             "basic_constraints": "critical,CA:TRUE",
-            "key_usage": "critical,cRLSign,keyCertSign",
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "cRLSign",
+                    "keyCertSign"
+                ]
+            },
             "subject_key_identifier": "3A:9A:85:07:10:67:28:B6:EF:F6:BD:05:41:6E:20:C1:94:DA:0F:DE",
             "type": "ca",
             "pathlen": null
@@ -1513,10 +1735,12 @@
             "sha512": "42:C5:B2:23:34:CD:08:C7:27:FD:EC:4A:CA:8D:F6:EC:64:5A:FA:8D:D7:FC:27:8D:26:A2:C8:00:C8:1D:7C:FF:86:FC:10:7E:6D:7F:28:F1:A8:E4:FA:F0:21:6F:D4:D2:A9:AF:22:D6:97:14:CA:90:99:E4:57:D1:B2:D5:18:8A",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [],
-                "ocsp": [
-                    "URI:http://ocsp.godaddy.com/"
-                ]
+                "value": {
+                    "issuers": [],
+                    "ocsp": [
+                        "URI:http://ocsp.godaddy.com/"
+                    ]
+                }
             },
             "authority_key_identifier": "3A:9A:85:07:10:67:28:B6:EF:F6:BD:05:41:6E:20:C1:94:DA:0F:DE",
             "basic_constraints": "critical,CA:TRUE",
@@ -1541,7 +1765,13 @@
                 ],
                 "critical": false
             },
-            "key_usage": "critical,cRLSign,keyCertSign",
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "cRLSign",
+                    "keyCertSign"
+                ]
+            },
             "subject_key_identifier": "40:C2:BD:27:8E:CC:34:83:30:A2:33:D7:FB:6C:B3:F0:B4:2C:80:CE",
             "policy_texts": [
                 "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* https://certs.godaddy.com/repository/"
@@ -1567,10 +1797,12 @@
             "sha512": "0C:9A:4F:B7:B2:D5:82:33:AC:86:18:8C:29:AA:B3:F1:83:1E:1A:B4:7C:72:B1:F0:98:CA:2B:EB:09:74:6D:B9:AF:1D:94:4A:8A:93:01:DC:FC:BE:1A:85:20:98:4B:E2:5B:00:64:7F:46:BD:32:03:C0:33:E2:4F:2D:82:2C:6E",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [],
-                "ocsp": [
-                    "URI:http://ocsp.pki.goog/gsr2"
-                ]
+                "value": {
+                    "issuers": [],
+                    "ocsp": [
+                        "URI:http://ocsp.pki.goog/gsr2"
+                    ]
+                }
             },
             "authority_key_identifier": "9B:E2:07:57:67:1C:1E:C0:6A:06:DE:59:B4:9A:2D:DF:DC:19:86:2E",
             "basic_constraints": "critical,CA:TRUE, pathlen:0",
@@ -1595,8 +1827,21 @@
                 ],
                 "critical": false
             },
-            "extended_key_usage": "serverAuth,clientAuth",
-            "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "serverAuth",
+                    "clientAuth"
+                ]
+            },
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "cRLSign",
+                    "digitalSignature",
+                    "keyCertSign"
+                ]
+            },
             "subject_key_identifier": "77:C2:B8:50:9A:67:76:76:B1:2D:C2:86:D0:83:A0:7E:A6:7E:BA:4B",
             "policy_texts": [
                 "Policy Identifier: 2.23.140.1.2.2\nPolicy Qualifiers:\n* https://pki.goog/repository/"
@@ -1622,10 +1867,12 @@
             "sha512": "04:18:E3:3F:ED:67:24:15:5D:2A:6C:70:2F:99:E2:E8:C9:B0:B7:FD:16:3D:9B:5C:7A:FC:E9:F0:1C:B1:51:24:2A:E7:A0:11:1D:BA:FE:E1:94:8C:5E:05:B9:28:10:6C:63:9A:C0:F3:66:3A:BE:A2:AB:CE:A8:3B:2E:3C:1A:0D",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [],
-                "ocsp": [
-                    "URI:http://ocsp.globalsign.com/rootr1"
-                ]
+                "value": {
+                    "issuers": [],
+                    "ocsp": [
+                        "URI:http://ocsp.globalsign.com/rootr1"
+                    ]
+                }
             },
             "authority_key_identifier": "60:7B:66:1A:45:0D:97:CA:89:50:2F:7D:04:CD:34:A8:FF:FC:FD:4B",
             "basic_constraints": "critical,CA:TRUE, pathlen:0",
@@ -1650,7 +1897,13 @@
                 ],
                 "critical": false
             },
-            "key_usage": "critical,cRLSign,keyCertSign",
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "cRLSign",
+                    "keyCertSign"
+                ]
+            },
             "subject_key_identifier": "EA:4E:7C:D4:80:2D:E5:15:81:86:26:8C:82:6D:C0:98:A4:CF:97:0F",
             "policy_texts": [
                 "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* https://www.globalsign.com/repository/"
@@ -1676,12 +1929,14 @@
             "sha512": "2E:1E:12:DA:CB:35:0E:69:31:7A:7F:37:D7:69:F4:6F:16:F4:37:CF:8D:39:23:19:27:9C:93:51:5E:56:00:BA:ED:3D:3A:CD:5D:C8:3B:67:3E:8C:60:CF:7F:BA:0D:CE:00:A4:D1:62:A3:B9:66:A3:EB:F7:24:87:C3:76:FC:A0",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://apps.identrust.com/roots/dstrootcax3.p7c"
-                ],
-                "ocsp": [
-                    "URI:http://isrg.trustid.ocsp.identrust.com"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://apps.identrust.com/roots/dstrootcax3.p7c"
+                    ],
+                    "ocsp": [
+                        "URI:http://isrg.trustid.ocsp.identrust.com"
+                    ]
+                }
             },
             "authority_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
             "basic_constraints": "critical,CA:TRUE, pathlen:0",
@@ -1709,7 +1964,14 @@
                 ],
                 "critical": false
             },
-            "key_usage": "critical,cRLSign,digitalSignature,keyCertSign",
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "cRLSign",
+                    "digitalSignature",
+                    "keyCertSign"
+                ]
+            },
             "subject_key_identifier": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1",
             "policy_texts": [
                 "Policy Identifier: 2.23.140.1.2.1\nNo Policy Qualifiers",
@@ -1736,12 +1998,14 @@
             "sha512": "AE:05:D4:D5:29:A2:A8:12:9F:C8:E2:22:E2:6B:12:C0:7F:59:12:AC:3A:06:2F:12:E7:0D:D3:18:59:E1:98:C5:F4:01:F5:69:1E:00:96:D3:11:A7:5D:8A:D7:CC:B3:0F:50:8D:6D:AA:5A:5B:04:5C:D4:B5:75:89:09:59:63:EA",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://crt.comodoca.com/COMODORSAAddTrustCA.crt"
-                ],
-                "ocsp": [
-                    "URI:http://ocsp.comodoca.com"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://crt.comodoca.com/COMODORSAAddTrustCA.crt"
+                    ],
+                    "ocsp": [
+                        "URI:http://ocsp.comodoca.com"
+                    ]
+                }
             },
             "authority_key_identifier": "BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4",
             "basic_constraints": "critical,CA:TRUE, pathlen:0",
@@ -1766,7 +2030,13 @@
                 ],
                 "critical": false
             },
-            "key_usage": "critical,cRLSign,keyCertSign",
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "cRLSign",
+                    "keyCertSign"
+                ]
+            },
             "subject_key_identifier": "39:DA:FF:CA:28:14:8A:A8:74:13:08:B9:E4:0E:A9:D2:FA:7E:9D:69",
             "policy_texts": [
                 "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* https://secure.comodo.com/CPS"
@@ -1791,7 +2061,13 @@
             "sha256": "06:87:26:03:31:A7:24:03:D9:09:F1:05:E6:9B:CF:0D:32:E1:BD:24:93:FF:C6:D9:20:6D:11:BC:D6:77:07:39",
             "sha512": "6A:BB:AC:E2:AC:9E:CA:4C:E6:68:7E:82:D2:D9:43:0B:CF:FE:12:F5:34:E6:60:D5:DD:B8:70:A0:10:EB:CB:98:EC:73:B6:82:A2:BA:A8:AD:5D:AA:87:8C:BA:D7:CE:63:3D:CA:BA:1A:0D:BC:98:5B:C3:73:96:78:18:4C:98:FF",
             "basic_constraints": "critical,CA:TRUE",
-            "key_usage": "critical,cRLSign,keyCertSign",
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "cRLSign",
+                    "keyCertSign"
+                ]
+            },
             "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
             "type": "ca",
             "pathlen": null
@@ -1814,12 +2090,14 @@
             "sha512": "1E:3D:13:53:CE:E4:03:86:E4:6D:DF:B3:EA:D1:53:99:40:5D:48:CA:3D:B8:95:CE:CE:8F:61:DE:A1:22:98:81:B1:F8:4E:08:C1:4C:C4:00:7C:3E:BD:BF:7F:44:F1:53:3E:C3:BF:2C:46:3A:D1:3C:3E:1B:60:AA:91:C9:6B:A6",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://crt.comodoca.com/COMODORSADomainValidationSecureServerCA.crt"
-                ],
-                "ocsp": [
-                    "URI:http://ocsp.comodoca.com"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://crt.comodoca.com/COMODORSADomainValidationSecureServerCA.crt"
+                    ],
+                    "ocsp": [
+                        "URI:http://ocsp.comodoca.com"
+                    ]
+                }
             },
             "authority_key_identifier": "90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7",
             "basic_constraints": "critical,CA:FALSE",
@@ -1847,9 +2125,27 @@
                 ],
                 "critical": false
             },
-            "extended_key_usage": "serverAuth,clientAuth",
-            "key_usage": "critical,digitalSignature,keyEncipherment",
-            "subject_alternative_name": "DNS:kode.im,DNS:www.kode.im",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "serverAuth",
+                    "clientAuth"
+                ]
+            },
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "digitalSignature",
+                    "keyEncipherment"
+                ]
+            },
+            "subject_alternative_name": {
+                "critical": false,
+                "value": [
+                    "DNS:kode.im",
+                    "DNS:www.kode.im"
+                ]
+            },
             "subject_key_identifier": "F2:CB:1F:E9:6E:D5:43:E3:85:75:98:5F:97:7C:B0:59:7F:D5:C0:C0",
             "policy_texts": [
                 "Policy Identifier: 1.3.6.1.4.1.6449.1.2.2.7\nPolicy Qualifiers:\n* https://secure.comodo.com/CPS",
@@ -1876,12 +2172,14 @@
             "sha512": "81:46:61:CF:EC:CC:FD:A4:C5:13:EA:4B:28:A4:E7:AF:9F:1C:DB:F4:C9:BF:14:15:78:03:4B:DA:0F:A0:EC:C5:B5:0D:C2:B0:96:BB:3E:2F:FC:D9:B8:C3:18:FB:12:9A:B1:85:47:A7:0B:9C:36:FA:8B:33:7D:A7:7E:6F:0C:A7",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://cacerts.digicert.com/DigiCertSHA2SecureServerCA.crt"
-                ],
-                "ocsp": [
-                    "URI:http://ocsp.digicert.com"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://cacerts.digicert.com/DigiCertSHA2SecureServerCA.crt"
+                    ],
+                    "ocsp": [
+                        "URI:http://ocsp.digicert.com"
+                    ]
+                }
             },
             "authority_key_identifier": "0F:80:61:1C:82:31:61:D5:2F:28:E7:8D:46:38:B4:2C:E1:C6:D9:E2",
             "basic_constraints": "CA:FALSE",
@@ -1914,8 +2212,20 @@
                 ],
                 "critical": false
             },
-            "extended_key_usage": "serverAuth,clientAuth",
-            "key_usage": "critical,digitalSignature,keyEncipherment",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "serverAuth",
+                    "clientAuth"
+                ]
+            },
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "digitalSignature",
+                    "keyEncipherment"
+                ]
+            },
             "precertificate_signed_certificate_timestamps": {
                 "critical": false,
                 "value": [
@@ -1933,7 +2243,22 @@
                     }
                 ]
             },
-            "subject_alternative_name": "DNS:www.derstandard.at,DNS:derstandard.at,DNS:akamai.derstandard.at,DNS:images.derstandard.at,DNS:www.derstandard.de,DNS:derstandard.de,DNS:b.staticfiles.at,DNS:at.staticfiles.at,DNS:px.staticfiles.at,DNS:de.staticfiles.at,DNS:next.derstandard.at",
+            "subject_alternative_name": {
+                "critical": false,
+                "value": [
+                    "DNS:www.derstandard.at",
+                    "DNS:derstandard.at",
+                    "DNS:akamai.derstandard.at",
+                    "DNS:images.derstandard.at",
+                    "DNS:www.derstandard.de",
+                    "DNS:derstandard.de",
+                    "DNS:b.staticfiles.at",
+                    "DNS:at.staticfiles.at",
+                    "DNS:px.staticfiles.at",
+                    "DNS:de.staticfiles.at",
+                    "DNS:next.derstandard.at"
+                ]
+            },
             "subject_key_identifier": "08:D7:53:9D:80:0B:FA:B0:39:7E:74:D8:55:DD:A7:EB:C8:BE:16:9C",
             "policy_texts": [
                 "Policy Identifier: 2.16.840.1.114412.1.1\nPolicy Qualifiers:\n* https://www.digicert.com/CPS",
@@ -1960,12 +2285,14 @@
             "sha512": "8B:FD:84:56:05:49:8B:72:6B:2E:3A:71:BE:9A:7C:2A:9C:78:16:93:0B:83:19:A6:2A:5D:51:B2:AC:65:30:F4:C5:1D:ED:F6:28:91:19:4F:09:07:C5:EF:B5:A4:73:2D:49:F6:3D:0C:3D:3C:5B:D5:31:E2:6C:2A:FB:9F:56:E4",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://validation.identrust.com/certs/trustidcaa52.p7c"
-                ],
-                "ocsp": [
-                    "URI:http://commercial.ocsp.identrust.com"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://validation.identrust.com/certs/trustidcaa52.p7c"
+                    ],
+                    "ocsp": [
+                        "URI:http://commercial.ocsp.identrust.com"
+                    ]
+                }
             },
             "authority_key_identifier": "A2:56:24:3C:D0:D4:15:B9:E8:BF:78:A3:13:10:58:48:2E:16:54:E1",
             "crl_distribution_points": {
@@ -2001,9 +2328,31 @@
                 ],
                 "critical": false
             },
-            "extended_key_usage": "serverAuth,clientAuth",
-            "key_usage": "critical,digitalSignature,keyEncipherment",
-            "subject_alternative_name": "DNS:identrust.co.uk,DNS:identrust.com,DNS:identrust.net,DNS:www.identrust.co.uk,DNS:www.identrust.com,DNS:www.identrust.net",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "serverAuth",
+                    "clientAuth"
+                ]
+            },
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "digitalSignature",
+                    "keyEncipherment"
+                ]
+            },
+            "subject_alternative_name": {
+                "critical": false,
+                "value": [
+                    "DNS:identrust.co.uk",
+                    "DNS:identrust.com",
+                    "DNS:identrust.net",
+                    "DNS:www.identrust.co.uk",
+                    "DNS:www.identrust.com",
+                    "DNS:www.identrust.net"
+                ]
+            },
             "subject_key_identifier": "BE:59:F0:29:27:4B:FC:0A:81:52:7C:DF:CD:02:D8:8F:A8:E5:C2:24",
             "policy_texts": [
                 "Policy Identifier: 2.16.840.1.113839.0.6.3\nPolicy Qualifiers:\n* https://secure.identrust.com/certificates/policy/ts/\n* UserNotice:\n  * Explicit text: This TrustID Server Certificate has been issued in\n    accordance with IdenTrust's TrustID Certificate Policy found at\n    https://secure.identrust.com/certificates/policy/ts/",
@@ -2030,12 +2379,14 @@
             "sha512": "1E:23:3E:F2:70:60:5F:F0:B9:39:76:0A:42:8F:CC:EC:D6:C4:C0:12:A9:DB:B0:E5:5B:6F:19:DB:A2:02:FA:93:6C:DC:1B:3D:8D:27:44:C7:BC:73:0D:32:0E:FE:4B:3A:0B:04:A5:B6:49:3C:90:EF:A6:E2:28:CE:8C:A3:C7:58",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://gv.symcb.com/gv.crt"
-                ],
-                "ocsp": [
-                    "URI:http://gv.symcd.com"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://gv.symcb.com/gv.crt"
+                    ],
+                    "ocsp": [
+                        "URI:http://gv.symcd.com"
+                    ]
+                }
             },
             "authority_key_identifier": "C3:9C:F3:FC:D3:46:08:34:BB:CE:46:7F:A0:7C:5B:F3:E2:08:CB:59",
             "basic_constraints": "critical,CA:FALSE",
@@ -2060,9 +2411,27 @@
                 ],
                 "critical": false
             },
-            "extended_key_usage": "serverAuth,clientAuth",
-            "key_usage": "critical,digitalSignature,keyEncipherment",
-            "subject_alternative_name": "DNS:*.jabber.de,DNS:jabber.de",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "serverAuth",
+                    "clientAuth"
+                ]
+            },
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "digitalSignature",
+                    "keyEncipherment"
+                ]
+            },
+            "subject_alternative_name": {
+                "critical": false,
+                "value": [
+                    "DNS:*.jabber.de",
+                    "DNS:jabber.de"
+                ]
+            },
             "policy_texts": [
                 "Policy Identifier: 2.16.840.1.113733.1.7.54\nPolicy Qualifiers:\n* https://www.rapidssl.com/legal"
             ],
@@ -2087,12 +2456,14 @@
             "sha512": "CC:F7:55:D2:B0:A3:02:AE:43:BE:CF:8D:87:4D:EF:41:61:87:24:47:81:8E:79:A8:78:57:35:2A:EE:51:58:26:A6:32:DB:21:F1:B1:BA:96:61:56:7D:B5:2F:7D:68:8D:A4:4D:2A:55:DB:2E:1E:DF:1E:5C:38:B8:6E:F5:D3:F5",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://cert.int-x1.letsencrypt.org/"
-                ],
-                "ocsp": [
-                    "URI:http://ocsp.int-x1.letsencrypt.org/"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://cert.int-x1.letsencrypt.org/"
+                    ],
+                    "ocsp": [
+                        "URI:http://ocsp.int-x1.letsencrypt.org/"
+                    ]
+                }
             },
             "authority_key_identifier": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1",
             "basic_constraints": "critical,CA:FALSE",
@@ -2113,9 +2484,26 @@
                 ],
                 "critical": false
             },
-            "extended_key_usage": "serverAuth,clientAuth",
-            "key_usage": "critical,digitalSignature,keyEncipherment",
-            "subject_alternative_name": "DNS:id.er.tl",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "serverAuth",
+                    "clientAuth"
+                ]
+            },
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "digitalSignature",
+                    "keyEncipherment"
+                ]
+            },
+            "subject_alternative_name": {
+                "critical": false,
+                "value": [
+                    "DNS:id.er.tl"
+                ]
+            },
             "subject_key_identifier": "F4:F3:B8:F5:43:90:2E:A2:7F:DD:51:4A:5F:3E:AC:FB:F1:33:EE:95",
             "policy_texts": [
                 "Policy Identifier: 2.23.140.1.2.1\nNo Policy Qualifiers",
@@ -2142,12 +2530,14 @@
             "sha512": "4E:53:2F:C4:CF:FB:14:5B:36:97:04:C8:DB:13:3D:F9:F8:53:47:35:38:19:F7:D3:84:D5:59:C8:61:1D:BF:9C:79:54:78:F1:F1:44:84:BA:9D:95:62:10:0F:16:6B:EA:AD:56:0E:64:82:FD:C6:B7:CF:C2:71:86:0F:15:F0:E6",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://aia.startssl.com/certs/sca.server3.crt"
-                ],
-                "ocsp": [
-                    "URI:http://ocsp.startssl.com"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://aia.startssl.com/certs/sca.server3.crt"
+                    ],
+                    "ocsp": [
+                        "URI:http://ocsp.startssl.com"
+                    ]
+                }
             },
             "authority_key_identifier": "B1:3F:1C:92:7B:92:B0:5A:25:B3:38:FB:9C:07:A4:26:50:32:E3:51",
             "basic_constraints": "CA:FALSE",
@@ -2175,10 +2565,34 @@
                 ],
                 "critical": false
             },
-            "extended_key_usage": "clientAuth,serverAuth",
-            "issuer_alternative_name": "URI:http://www.startssl.com/",
-            "key_usage": "digitalSignature,keyEncipherment",
-            "subject_alternative_name": "DNS:adverity.com,DNS:*.adverity.com,DNS:www.adverity.com",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "clientAuth",
+                    "serverAuth"
+                ]
+            },
+            "issuer_alternative_name": {
+                "critical": false,
+                "value": [
+                    "URI:http://www.startssl.com/"
+                ]
+            },
+            "key_usage": {
+                "critical": false,
+                "value": [
+                    "digitalSignature",
+                    "keyEncipherment"
+                ]
+            },
+            "subject_alternative_name": {
+                "critical": false,
+                "value": [
+                    "DNS:adverity.com",
+                    "DNS:*.adverity.com",
+                    "DNS:www.adverity.com"
+                ]
+            },
             "subject_key_identifier": "F0:72:65:5E:21:AA:16:76:2C:6F:D0:63:53:0C:68:D5:89:50:2A:73",
             "policy_texts": [
                 "Policy Identifier: 2.23.140.1.2.2\nNo Policy Qualifiers",
@@ -2205,12 +2619,14 @@
             "sha512": "9F:F9:DA:79:C0:61:0E:65:A1:04:96:13:58:02:07:B3:3B:9D:CE:55:EF:C3:64:E8:BC:D5:C0:69:96:CF:AF:07:B6:ED:0C:BA:A7:D4:53:F7:DA:02:A5:E6:7C:5E:86:17:7C:CB:1F:FC:53:60:14:D6:0F:FE:D8:5A:DE:A6:D5:4B",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://cacerts.digicert.com/DigiCertSHA2HighAssuranceServerCA.crt"
-                ],
-                "ocsp": [
-                    "URI:http://ocsp.digicert.com"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://cacerts.digicert.com/DigiCertSHA2HighAssuranceServerCA.crt"
+                    ],
+                    "ocsp": [
+                        "URI:http://ocsp.digicert.com"
+                    ]
+                }
             },
             "authority_key_identifier": "51:68:FF:90:AF:02:07:75:3C:CC:D9:65:64:62:A2:12:B8:59:72:3B",
             "basic_constraints": "critical,CA:FALSE",
@@ -2243,8 +2659,20 @@
                 ],
                 "critical": false
             },
-            "extended_key_usage": "serverAuth,clientAuth",
-            "key_usage": "critical,digitalSignature,keyEncipherment",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "serverAuth",
+                    "clientAuth"
+                ]
+            },
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "digitalSignature",
+                    "keyEncipherment"
+                ]
+            },
             "precertificate_signed_certificate_timestamps": {
                 "critical": false,
                 "value": [
@@ -2262,7 +2690,55 @@
                     }
                 ]
             },
-            "subject_alternative_name": "DNS:*.www.yahoo.com,DNS:add.my.yahoo.com,DNS:*.amp.yimg.com,DNS:au.yahoo.com,DNS:be.yahoo.com,DNS:br.yahoo.com,DNS:ca.my.yahoo.com,DNS:ca.rogers.yahoo.com,DNS:ca.yahoo.com,DNS:ddl.fp.yahoo.com,DNS:de.yahoo.com,DNS:en-maktoob.yahoo.com,DNS:espanol.yahoo.com,DNS:es.yahoo.com,DNS:fr-be.yahoo.com,DNS:fr-ca.rogers.yahoo.com,DNS:frontier.yahoo.com,DNS:fr.yahoo.com,DNS:gr.yahoo.com,DNS:hk.yahoo.com,DNS:hsrd.yahoo.com,DNS:ideanetsetter.yahoo.com,DNS:id.yahoo.com,DNS:ie.yahoo.com,DNS:in.yahoo.com,DNS:it.yahoo.com,DNS:maktoob.yahoo.com,DNS:malaysia.yahoo.com,DNS:mbp.yimg.com,DNS:my.yahoo.com,DNS:nz.yahoo.com,DNS:ph.yahoo.com,DNS:qc.yahoo.com,DNS:ro.yahoo.com,DNS:se.yahoo.com,DNS:sg.yahoo.com,DNS:tw.yahoo.com,DNS:uk.yahoo.com,DNS:us.yahoo.com,DNS:verizon.yahoo.com,DNS:vn.yahoo.com,DNS:www.yahoo.com,DNS:yahoo.com,DNS:za.yahoo.com",
+            "subject_alternative_name": {
+                "critical": false,
+                "value": [
+                    "DNS:*.www.yahoo.com",
+                    "DNS:add.my.yahoo.com",
+                    "DNS:*.amp.yimg.com",
+                    "DNS:au.yahoo.com",
+                    "DNS:be.yahoo.com",
+                    "DNS:br.yahoo.com",
+                    "DNS:ca.my.yahoo.com",
+                    "DNS:ca.rogers.yahoo.com",
+                    "DNS:ca.yahoo.com",
+                    "DNS:ddl.fp.yahoo.com",
+                    "DNS:de.yahoo.com",
+                    "DNS:en-maktoob.yahoo.com",
+                    "DNS:espanol.yahoo.com",
+                    "DNS:es.yahoo.com",
+                    "DNS:fr-be.yahoo.com",
+                    "DNS:fr-ca.rogers.yahoo.com",
+                    "DNS:frontier.yahoo.com",
+                    "DNS:fr.yahoo.com",
+                    "DNS:gr.yahoo.com",
+                    "DNS:hk.yahoo.com",
+                    "DNS:hsrd.yahoo.com",
+                    "DNS:ideanetsetter.yahoo.com",
+                    "DNS:id.yahoo.com",
+                    "DNS:ie.yahoo.com",
+                    "DNS:in.yahoo.com",
+                    "DNS:it.yahoo.com",
+                    "DNS:maktoob.yahoo.com",
+                    "DNS:malaysia.yahoo.com",
+                    "DNS:mbp.yimg.com",
+                    "DNS:my.yahoo.com",
+                    "DNS:nz.yahoo.com",
+                    "DNS:ph.yahoo.com",
+                    "DNS:qc.yahoo.com",
+                    "DNS:ro.yahoo.com",
+                    "DNS:se.yahoo.com",
+                    "DNS:sg.yahoo.com",
+                    "DNS:tw.yahoo.com",
+                    "DNS:uk.yahoo.com",
+                    "DNS:us.yahoo.com",
+                    "DNS:verizon.yahoo.com",
+                    "DNS:vn.yahoo.com",
+                    "DNS:www.yahoo.com",
+                    "DNS:yahoo.com",
+                    "DNS:za.yahoo.com"
+                ]
+            },
             "subject_key_identifier": "56:F7:45:D4:84:D1:3C:95:AD:58:14:2E:F4:D1:CC:2F:11:C0:73:F6",
             "policy_texts": [
                 "Policy Identifier: 2.16.840.1.114412.1.1\nPolicy Qualifiers:\n* https://www.digicert.com/CPS",
@@ -2289,12 +2765,14 @@
             "sha512": "90:77:9E:6C:7C:76:A9:46:3E:87:B4:A1:31:5B:AF:6F:BC:CB:BB:A6:5D:BA:69:59:3B:0E:FB:97:DC:85:C8:9A:D4:03:D5:A7:29:8C:8B:A2:7B:A4:AA:1E:B7:FE:A0:2D:01:1A:B1:A5:D7:B7:32:06:2F:FB:CB:23:91:0E:18:23",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://aia.startssl.com/certs/sub.class2.server.ca.crt"
-                ],
-                "ocsp": [
-                    "URI:http://ocsp.startssl.com/sub/class2/server/ca"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://aia.startssl.com/certs/sub.class2.server.ca.crt"
+                    ],
+                    "ocsp": [
+                        "URI:http://ocsp.startssl.com/sub/class2/server/ca"
+                    ]
+                }
             },
             "authority_key_identifier": "11:DB:23:45:FD:54:CC:6A:71:6F:84:8A:03:D7:BE:F7:01:2F:26:86",
             "basic_constraints": "CA:FALSE",
@@ -2331,10 +2809,34 @@
                 ],
                 "critical": false
             },
-            "extended_key_usage": "clientAuth,serverAuth",
-            "issuer_alternative_name": "URI:http://www.startssl.com/",
-            "key_usage": "digitalSignature,keyAgreement,keyEncipherment",
-            "subject_alternative_name": "DNS:www.fsinf.at,DNS:fsinf.at",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "clientAuth",
+                    "serverAuth"
+                ]
+            },
+            "issuer_alternative_name": {
+                "critical": false,
+                "value": [
+                    "URI:http://www.startssl.com/"
+                ]
+            },
+            "key_usage": {
+                "critical": false,
+                "value": [
+                    "digitalSignature",
+                    "keyAgreement",
+                    "keyEncipherment"
+                ]
+            },
+            "subject_alternative_name": {
+                "critical": false,
+                "value": [
+                    "DNS:www.fsinf.at",
+                    "DNS:fsinf.at"
+                ]
+            },
             "subject_key_identifier": "C7:AA:D9:A4:F0:BC:D1:C1:1B:05:D2:19:71:0A:86:F8:58:0F:F0:99",
             "policy_texts": [
                 "Policy Identifier: 2.23.140.1.2.2\nNo Policy Qualifiers",
@@ -2361,12 +2863,14 @@
             "sha512": "7D:24:F0:7A:4E:84:A8:E3:42:E4:28:1F:61:82:F4:63:F7:D1:63:E0:CF:53:E5:C3:AF:CF:05:92:A6:3D:FA:BD:B6:F8:9B:1E:00:61:DF:B7:EB:9B:95:80:BD:87:D2:B5:91:AB:E1:F7:E8:86:D9:F2:70:7B:CD:AB:92:13:53:2D",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://certificates.godaddy.com/repository/gdig2.crt"
-                ],
-                "ocsp": [
-                    "URI:http://ocsp.godaddy.com/"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://certificates.godaddy.com/repository/gdig2.crt"
+                    ],
+                    "ocsp": [
+                        "URI:http://ocsp.godaddy.com/"
+                    ]
+                }
             },
             "authority_key_identifier": "40:C2:BD:27:8E:CC:34:83:30:A2:33:D7:FB:6C:B3:F0:B4:2C:80:CE",
             "basic_constraints": "critical,CA:FALSE",
@@ -2394,8 +2898,20 @@
                 ],
                 "critical": false
             },
-            "extended_key_usage": "serverAuth,clientAuth",
-            "key_usage": "critical,digitalSignature,keyEncipherment",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "serverAuth",
+                    "clientAuth"
+                ]
+            },
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "digitalSignature",
+                    "keyEncipherment"
+                ]
+            },
             "precertificate_signed_certificate_timestamps": {
                 "critical": false,
                 "value": [
@@ -2419,7 +2935,60 @@
                     }
                 ]
             },
-            "subject_alternative_name": "DNS:derstandard.at,DNS:www.derstandard.at,DNS:api.derstandard.at,DNS:ipad.derstandard.de,DNS:text.derstandard.at,DNS:dst.at,DNS:cnct03.derstandard.at,DNS:images.derstandard.ch,DNS:static.derstandard.at,DNS:www.derstandard.de,DNS:next.derstandard.at,DNS:px.derstandard.at,DNS:de.staticfiles.at,DNS:static.derstandard.ch,DNS:derstandard.ch,DNS:ds.at,DNS:px.staticfiles.at,DNS:finden.at,DNS:live.derstandard.ch,DNS:i.finden.at,DNS:immobilien.derstandard.at,DNS:cnct01.derstandard.at,DNS:live.derstandard.de,DNS:cnct02.derstandard.at,DNS:dst.de,DNS:www.dst.de,DNS:apps.derstandard.de,DNS:derstandard.de,DNS:www.ds.at,DNS:mobil.derstandard.de,DNS:www.dst.at,DNS:www.finden.at,DNS:live.derstandard.at,DNS:images.derstandard.at,DNS:static.derstandard.de,DNS:mobil.derstandard.ch,DNS:secure.derstandard.at,DNS:jobs.derstandard.at,DNS:www.immopreise.at,DNS:apps.derstandard.at,DNS:images.derstandard.de,DNS:images.finden.at,DNS:ipad.derstandard.at,DNS:mobil.derstandard.at,DNS:ipad.derstandard.ch,DNS:at.staticfiles.at,DNS:immopreise.at,DNS:www.derstandard.ch,DNS:akamai.derstandard.at",
+            "subject_alternative_name": {
+                "critical": false,
+                "value": [
+                    "DNS:derstandard.at",
+                    "DNS:www.derstandard.at",
+                    "DNS:api.derstandard.at",
+                    "DNS:ipad.derstandard.de",
+                    "DNS:text.derstandard.at",
+                    "DNS:dst.at",
+                    "DNS:cnct03.derstandard.at",
+                    "DNS:images.derstandard.ch",
+                    "DNS:static.derstandard.at",
+                    "DNS:www.derstandard.de",
+                    "DNS:next.derstandard.at",
+                    "DNS:px.derstandard.at",
+                    "DNS:de.staticfiles.at",
+                    "DNS:static.derstandard.ch",
+                    "DNS:derstandard.ch",
+                    "DNS:ds.at",
+                    "DNS:px.staticfiles.at",
+                    "DNS:finden.at",
+                    "DNS:live.derstandard.ch",
+                    "DNS:i.finden.at",
+                    "DNS:immobilien.derstandard.at",
+                    "DNS:cnct01.derstandard.at",
+                    "DNS:live.derstandard.de",
+                    "DNS:cnct02.derstandard.at",
+                    "DNS:dst.de",
+                    "DNS:www.dst.de",
+                    "DNS:apps.derstandard.de",
+                    "DNS:derstandard.de",
+                    "DNS:www.ds.at",
+                    "DNS:mobil.derstandard.de",
+                    "DNS:www.dst.at",
+                    "DNS:www.finden.at",
+                    "DNS:live.derstandard.at",
+                    "DNS:images.derstandard.at",
+                    "DNS:static.derstandard.de",
+                    "DNS:mobil.derstandard.ch",
+                    "DNS:secure.derstandard.at",
+                    "DNS:jobs.derstandard.at",
+                    "DNS:www.immopreise.at",
+                    "DNS:apps.derstandard.at",
+                    "DNS:images.derstandard.de",
+                    "DNS:images.finden.at",
+                    "DNS:ipad.derstandard.at",
+                    "DNS:mobil.derstandard.at",
+                    "DNS:ipad.derstandard.ch",
+                    "DNS:at.staticfiles.at",
+                    "DNS:immopreise.at",
+                    "DNS:www.derstandard.ch",
+                    "DNS:akamai.derstandard.at"
+                ]
+            },
             "subject_key_identifier": "2E:30:1A:46:41:F0:E8:1B:72:02:59:41:8A:CF:9D:1B:FA:98:8D:9E",
             "policy_texts": [
                 "Policy Identifier: 2.16.840.1.114413.1.7.23.1\nPolicy Qualifiers:\n* http://certificates.godaddy.com/repository/",
@@ -2446,12 +3015,14 @@
             "sha512": "1C:3E:AC:11:FA:91:8D:E6:99:3C:1F:50:72:C1:51:56:63:0B:16:83:DB:63:FC:23:DA:7B:10:7F:76:E9:D0:C8:01:96:BF:26:9A:1D:17:57:45:C5:22:92:73:1E:02:C0:73:1A:E5:7B:2E:B4:D9:67:17:B1:F5:41:6F:E8:5E:35",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://pki.goog/gsr2/GTSGIAG3.crt"
-                ],
-                "ocsp": [
-                    "URI:http://ocsp.pki.goog/GTSGIAG3"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://pki.goog/gsr2/GTSGIAG3.crt"
+                    ],
+                    "ocsp": [
+                        "URI:http://ocsp.pki.goog/GTSGIAG3"
+                    ]
+                }
             },
             "authority_key_identifier": "77:C2:B8:50:9A:67:76:76:B1:2D:C2:86:D0:83:A0:7E:A6:7E:BA:4B",
             "basic_constraints": "critical,CA:FALSE",
@@ -2476,9 +3047,24 @@
                 ],
                 "critical": false
             },
-            "extended_key_usage": "serverAuth",
-            "key_usage": "critical,digitalSignature",
-            "subject_alternative_name": "DNS:www.google.com",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "serverAuth"
+                ]
+            },
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "digitalSignature"
+                ]
+            },
+            "subject_alternative_name": {
+                "critical": false,
+                "value": [
+                    "DNS:www.google.com"
+                ]
+            },
             "subject_key_identifier": "1F:0D:A6:EA:EA:2B:6E:96:1B:5C:99:B5:C3:3D:6F:5F:4B:0D:BE:9F",
             "policy_texts": [
                 "Policy Identifier: 1.3.6.1.4.1.11129.2.5.3\nNo Policy Qualifiers",
@@ -2505,12 +3091,14 @@
             "sha512": "D9:60:11:C8:B7:7A:05:35:D2:CA:D0:8E:CD:CC:A5:3B:CF:AB:28:59:2D:39:1F:0F:74:E2:35:3C:5F:26:17:89:27:7C:93:EA:22:38:C1:08:32:99:AA:1C:9F:29:57:A0:57:BE:C2:D3:9F:6B:BD:E0:31:5D:D1:F7:11:FC:B9:8B",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://secure.globalsign.com/cacert/gsdomainvalsha2g2r1.crt"
-                ],
-                "ocsp": [
-                    "URI:http://ocsp2.globalsign.com/gsdomainvalsha2g2"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://secure.globalsign.com/cacert/gsdomainvalsha2g2r1.crt"
+                    ],
+                    "ocsp": [
+                        "URI:http://ocsp2.globalsign.com/gsdomainvalsha2g2"
+                    ]
+                }
             },
             "authority_key_identifier": "EA:4E:7C:D4:80:2D:E5:15:81:86:26:8C:82:6D:C0:98:A4:CF:97:0F",
             "basic_constraints": "CA:FALSE",
@@ -2538,9 +3126,27 @@
                 ],
                 "critical": false
             },
-            "extended_key_usage": "serverAuth,clientAuth",
-            "key_usage": "critical,digitalSignature,keyEncipherment",
-            "subject_alternative_name": "DNS:www.ajabber.me,DNS:ajabber.me",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "serverAuth",
+                    "clientAuth"
+                ]
+            },
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "digitalSignature",
+                    "keyEncipherment"
+                ]
+            },
+            "subject_alternative_name": {
+                "critical": false,
+                "value": [
+                    "DNS:www.ajabber.me",
+                    "DNS:ajabber.me"
+                ]
+            },
             "subject_key_identifier": "52:5A:45:5B:D4:9D:AC:65:30:BD:67:80:6C:D1:A1:3E:09:F7:FD:92",
             "policy_texts": [
                 "Policy Identifier: 1.3.6.1.4.1.4146.1.10\nPolicy Qualifiers:\n* https://www.globalsign.com/repository/",
@@ -2567,12 +3173,14 @@
             "sha512": "AE:35:4C:A5:42:E5:38:EC:F4:58:38:4A:21:04:86:DF:20:58:B4:CC:36:A8:DA:EA:FC:FD:48:09:63:C0:8D:02:C9:56:61:6F:68:7D:89:53:1A:0F:3A:CB:C1:45:F0:35:9E:BC:03:58:C9:AC:72:49:FC:79:6C:83:81:D3:7E:E4",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://cert.int-x3.letsencrypt.org/"
-                ],
-                "ocsp": [
-                    "URI:http://ocsp.int-x3.letsencrypt.org"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://cert.int-x3.letsencrypt.org/"
+                    ],
+                    "ocsp": [
+                        "URI:http://ocsp.int-x3.letsencrypt.org"
+                    ]
+                }
             },
             "authority_key_identifier": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1",
             "basic_constraints": "critical,CA:FALSE",
@@ -2590,8 +3198,20 @@
                 ],
                 "critical": false
             },
-            "extended_key_usage": "serverAuth,clientAuth",
-            "key_usage": "critical,digitalSignature,keyEncipherment",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "serverAuth",
+                    "clientAuth"
+                ]
+            },
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "digitalSignature",
+                    "keyEncipherment"
+                ]
+            },
             "precertificate_signed_certificate_timestamps": {
                 "critical": false,
                 "value": [
@@ -2609,7 +3229,21 @@
                     }
                 ]
             },
-            "subject_alternative_name": "DNS:jabber.at,DNS:jabber.fsinf.at,DNS:jabber.wien,DNS:jabber.zone,DNS:webchat.jabber.at,DNS:www.jabber.at,DNS:www.jabber.wien,DNS:www.jabber.zone,DNS:www.xmpp.zone,DNS:xmpp.zone",
+            "subject_alternative_name": {
+                "critical": false,
+                "value": [
+                    "DNS:jabber.at",
+                    "DNS:jabber.fsinf.at",
+                    "DNS:jabber.wien",
+                    "DNS:jabber.zone",
+                    "DNS:webchat.jabber.at",
+                    "DNS:www.jabber.at",
+                    "DNS:www.jabber.wien",
+                    "DNS:www.jabber.zone",
+                    "DNS:www.xmpp.zone",
+                    "DNS:xmpp.zone"
+                ]
+            },
             "subject_key_identifier": "77:37:2D:FC:89:22:11:A0:61:E0:AC:6C:F4:1D:98:31:1B:B2:B3:88",
             "policy_texts": [
                 "Policy Identifier: 2.23.140.1.2.1\nNo Policy Qualifiers",
@@ -2636,12 +3270,14 @@
             "sha512": "00:5F:39:28:70:F3:1E:42:E1:52:A0:C0:7A:D9:A0:C1:F3:09:5B:D7:DA:8F:25:7D:69:3F:D8:A9:59:F7:A9:69:95:F3:25:B4:D6:E4:1E:A6:2D:FB:56:98:BE:C7:BD:92:DE:47:20:30:F7:17:3E:C7:AB:18:7D:AD:47:A7:26:4E",
             "authority_information_access": {
                 "critical": false,
-                "issuers": [
-                    "URI:http://crt.comodoca.com/COMODORSAExtendedValidationSecureServerCA.crt"
-                ],
-                "ocsp": [
-                    "URI:http://ocsp.comodoca.com"
-                ]
+                "value": {
+                    "issuers": [
+                        "URI:http://crt.comodoca.com/COMODORSAExtendedValidationSecureServerCA.crt"
+                    ],
+                    "ocsp": [
+                        "URI:http://ocsp.comodoca.com"
+                    ]
+                }
             },
             "authority_key_identifier": "39:DA:FF:CA:28:14:8A:A8:74:13:08:B9:E4:0E:A9:D2:FA:7E:9D:69",
             "basic_constraints": "critical,CA:FALSE",
@@ -2669,8 +3305,20 @@
                 ],
                 "critical": false
             },
-            "extended_key_usage": "serverAuth,clientAuth",
-            "key_usage": "critical,digitalSignature,keyEncipherment",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "serverAuth",
+                    "clientAuth"
+                ]
+            },
+            "key_usage": {
+                "critical": true,
+                "value": [
+                    "digitalSignature",
+                    "keyEncipherment"
+                ]
+            },
             "precertificate_signed_certificate_timestamps": {
                 "critical": false,
                 "value": [
@@ -2694,7 +3342,13 @@
                     }
                 ]
             },
-            "subject_alternative_name": "DNS:www.comodo.com,DNS:comodo.com",
+            "subject_alternative_name": {
+                "critical": false,
+                "value": [
+                    "DNS:www.comodo.com",
+                    "DNS:comodo.com"
+                ]
+            },
             "subject_key_identifier": "44:3E:73:30:EB:0B:1B:A7:A7:9D:0F:DA:79:96:4D:1A:87:E9:9D:21",
             "policy_texts": [
                 "Policy Identifier: 1.3.6.1.4.1.6449.1.2.1.5.1\nPolicy Qualifiers:\n* https://secure.comodo.com/CPS",
