@@ -417,7 +417,12 @@ data = {
         'delta': timedelta(days=20),
         'csr': True,
         'basic_constraints': 'critical,CA:FALSE',
-        'name_constraints': [['DNS:.org'], ['DNS:.net']],
+        'name_constraints': {
+            "value": {
+                "permitted": ["DNS:.org"],
+                "excluded": ["DNS:.net"]
+            }
+        },
         'issuer_alternative_name': 'http://ian.child.example.com/',
         'tls_feature': 'critical,OCSPMustStaple,MultipleCertStatusRequest',
         'key_usage': 'critical,encipherOnly,keyAgreement,nonRepudiation',
