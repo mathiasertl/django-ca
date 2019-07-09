@@ -236,12 +236,12 @@ class ExtensionTestCase(ExtensionTestMixin, TestCase):
     def test_serialize(self):
         value = self.value
         ext = Extension(value)
-        self.assertEqual(ext.serialize(), value)
+        self.assertEqual(ext.serialize(), {'critical': False, 'value': value})
         self.assertEqual(ext, Extension(ext.serialize()))
 
         value = 'critical,%s' % self.value
         ext = Extension(value)
-        self.assertEqual(ext.serialize(), value)
+        self.assertEqual(ext.serialize(), {'value': self.value, 'critical': True})
         self.assertEqual(ext, Extension(ext.serialize()))
 
     def test_str(self):

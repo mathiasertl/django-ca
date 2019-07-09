@@ -163,9 +163,10 @@ class Extension(object):
             True
         """
 
-        if self.critical:
-            return 'critical,%s' % self.value
-        return self.value
+        return {
+            'critical': self.critical,
+            'value': self.value,
+        }
 
     def as_extension(self):
         """This extension as :py:class:`~cg:cryptography.x509.ExtensionType`."""
