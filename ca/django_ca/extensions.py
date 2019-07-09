@@ -505,7 +505,10 @@ class KeyIdExtension(Extension):
         return bytes_to_hex(self.value)
 
     def serialize(self):
-        return bytes_to_hex(self.value)
+        return {
+            'critical': self.critical,
+            'value': bytes_to_hex(self.value),
+        }
 
 
 class DistributionPoint(GeneralNameMixin):

@@ -850,7 +850,10 @@
             "sha1": "2B:B7:D3:5C:91:F6:39:AB:51:11:ED:B6:10:60:9D:F5:0C:D5:EB:41",
             "sha256": "6F:FD:64:32:9C:61:08:8C:32:9E:8D:6C:A1:F2:2C:EF:E0:C1:72:AC:FD:B9:AD:4C:0F:1F:E2:B6:0C:C6:B3:D7",
             "sha512": "92:D8:52:A2:7A:74:6D:72:1C:59:06:00:FD:EA:D1:6A:4F:0D:12:F1:02:79:BF:F7:05:9C:AD:72:3B:E6:17:E9:DA:8E:09:A4:65:3D:68:B9:D6:FD:13:5D:31:CE:EF:0F:30:1B:91:3F:55:43:F9:BD:8B:F2:F5:19:CC:7B:52:F8",
-            "authority_key_identifier": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26"
+            },
             "subject_key_identifier": "41:7F:C1:09:EA:A1:C0:B7:52:A3:66:84:80:D7:C8:EC:C4:E1:28:D8",
             "authority_information_access": {
                 "critical": false,

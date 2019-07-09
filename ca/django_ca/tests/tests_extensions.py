@@ -745,9 +745,9 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
             self.assertEqual(repr(self.ext3), '<AuthorityKeyIdentifier: b\'UUUUUU\', critical=True>')
 
     def test_serialize(self):
-        self.assertEqual(self.ext1.serialize(), self.hex1)
-        self.assertEqual(self.ext2.serialize(), self.hex2)
-        self.assertEqual(self.ext3.serialize(), self.hex3)
+        self.assertEqual(self.ext1.serialize(), {'critical': False, 'value': self.hex1})
+        self.assertEqual(self.ext2.serialize(), {'critical': False, 'value': self.hex2})
+        self.assertEqual(self.ext3.serialize(), {'critical': True, 'value': self.hex3})
         self.assertEqual(self.ext1.serialize(), AuthorityKeyIdentifier(self.hex1).serialize())
         self.assertNotEqual(self.ext1.serialize(), self.ext2.serialize())
 
@@ -3141,9 +3141,9 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         ext2 = SubjectKeyIdentifier(self.hex2)
         ext3 = SubjectKeyIdentifier(self.ext)
 
-        self.assertEqual(ext1.serialize(), self.hex1)
-        self.assertEqual(ext2.serialize(), self.hex2)
-        self.assertEqual(ext3.serialize(), self.hex1)
+        self.assertEqual(ext1.serialize(), {'critical': False, 'value': self.hex1})
+        self.assertEqual(ext2.serialize(), {'critical': False, 'value': self.hex2})
+        self.assertEqual(ext3.serialize(), {'critical': False, 'value': self.hex1})
         self.assertEqual(ext1.serialize(), SubjectKeyIdentifier(self.hex1).serialize())
         self.assertNotEqual(ext1.serialize(), ext2.serialize())
 
