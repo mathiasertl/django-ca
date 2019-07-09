@@ -1038,7 +1038,10 @@ class BasicConstraints(Extension):
     def from_dict(self, value):
         value = value.get('value', {})
         self.ca = bool(value.get('ca', False))
-        self.pathlen = value.get('pathlen', None)
+        if self.ca:
+            self.pathlen = value.get('pathlen', None)
+        else:  # if ca is not True, we don't use the pathlen
+            self.pathlen = None
 
     def from_str(self, value):
         value = value.strip().lower()
