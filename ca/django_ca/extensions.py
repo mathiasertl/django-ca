@@ -1003,7 +1003,7 @@ class BasicConstraints(Extension):
 
         >>> BasicConstraints('critical,CA:TRUE, pathlen:3')
         <BasicConstraints: 'CA:TRUE, pathlen:3', critical=True>
-        >>> bc = BasicConstraints({'ca': True, 'pathlen': 4})
+        >>> bc = BasicConstraints({'value': {'ca': True, 'pathlen': 4}})
         >>> (bc.ca, bc.pathlen, bc.critical)
         (True, 4, True)
 
@@ -1036,6 +1036,7 @@ class BasicConstraints(Extension):
         self.pathlen = ext.value.path_length
 
     def from_dict(self, value):
+        value = value.get('value', {})
         self.ca = bool(value.get('ca', False))
         self.pathlen = value.get('pathlen', None)
 
@@ -1070,9 +1071,14 @@ class BasicConstraints(Extension):
         return val
 
     def serialize(self):
-        value = self.as_text()
-        if self.critical:
-            value = 'critical,%s' % value
+        value = {
+            'critical': self.critical,
+            'value': {
+                'ca': self.ca,
+            }
+        }
+        if self.ca:
+            value['value']['pathlen'] = self.pathlen
         return value
 
 

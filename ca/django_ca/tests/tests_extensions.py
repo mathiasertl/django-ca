@@ -787,11 +787,11 @@ class BasicConstraintsTestCase(TestCase):
             value=x509.BasicConstraints(ca=True, path_length=3))), True, 3, True)
 
     def test_dict(self):
-        self.assertBC(BasicConstraints({'ca': True}), True, None, True)
-        self.assertBC(BasicConstraints({'ca': False}), False, None, True)
-        self.assertBC(BasicConstraints({'ca': True, 'pathlen': 3}), True, 3, True)
-        self.assertBC(BasicConstraints({'ca': True, 'pathlen': None}), True, None, True)
-        self.assertBC(BasicConstraints({'ca': True, 'critical': False}), True, None, False)
+        self.assertBC(BasicConstraints({'value': {'ca': True}}), True, None, True)
+        self.assertBC(BasicConstraints({'value': {'ca': False}}), False, None, True)
+        self.assertBC(BasicConstraints({'value': {'ca': True, 'pathlen': 3}}), True, 3, True)
+        self.assertBC(BasicConstraints({'value': {'ca': True, 'pathlen': None}}), True, None, True)
+        self.assertBC(BasicConstraints({'value': {'ca': True}, 'critical': False}), True, None, False)
 
     def test_str(self):
         # test without pathlen
@@ -852,11 +852,11 @@ class BasicConstraintsTestCase(TestCase):
 
     def test_serialize(self):
         exts = [
-            BasicConstraints({'ca': True}),
-            BasicConstraints({'ca': False}),
-            BasicConstraints({'ca': True, 'pathlen': 3}),
-            BasicConstraints({'ca': True, 'pathlen': None}),
-            BasicConstraints({'ca': True, 'critical': False}),
+            BasicConstraints({'value': {'ca': True}}),
+            BasicConstraints({'value': {'ca': False}}),
+            BasicConstraints({'value': {'ca': True, 'pathlen': 3}}),
+            BasicConstraints({'value': {'ca': True, 'pathlen': None}}),
+            BasicConstraints({'value': {'ca': True}, 'critical': False}),
         ]
         for ext in exts:
             self.assertEqual(BasicConstraints(ext.serialize()), ext)
