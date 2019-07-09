@@ -301,7 +301,13 @@
                 }
             },
             "subject_alternative_name": "DNS:root-cert.example.com",
-            "extended_key_usage": "clientAuth,serverAuth",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "clientAuth",
+                    "serverAuth"
+                ]
+            },
             "crl_distribution_points": {
                 "value": [
                     {
@@ -362,7 +368,13 @@
                 }
             },
             "subject_alternative_name": "DNS:child-cert.example.com",
-            "extended_key_usage": "clientAuth,serverAuth",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "clientAuth",
+                    "serverAuth"
+                ]
+            },
             "crl_distribution_points": {
                 "value": [
                     {
@@ -423,7 +435,13 @@
                 }
             },
             "subject_alternative_name": "DNS:ecc-cert.example.com",
-            "extended_key_usage": "clientAuth,serverAuth",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "clientAuth",
+                    "serverAuth"
+                ]
+            },
             "crl_distribution_points": {
                 "value": [
                     {
@@ -484,7 +502,13 @@
                 }
             },
             "subject_alternative_name": "DNS:pwd-cert.example.com",
-            "extended_key_usage": "clientAuth,serverAuth",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "clientAuth",
+                    "serverAuth"
+                ]
+            },
             "crl_distribution_points": {
                 "value": [
                     {
@@ -545,7 +569,13 @@
                 }
             },
             "subject_alternative_name": "DNS:dsa-cert.example.com",
-            "extended_key_usage": "clientAuth,serverAuth",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "clientAuth",
+                    "serverAuth"
+                ]
+            },
             "crl_distribution_points": {
                 "value": [
                     {
@@ -607,7 +637,12 @@
                 }
             },
             "subject_alternative_name": "DNS:profile-client.example.com",
-            "extended_key_usage": "clientAuth",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "clientAuth"
+                ]
+            },
             "crl_distribution_points": {
                 "value": [
                     {
@@ -669,7 +704,13 @@
                 }
             },
             "subject_alternative_name": "DNS:profile-server.example.com",
-            "extended_key_usage": "clientAuth,serverAuth",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "clientAuth",
+                    "serverAuth"
+                ]
+            },
             "crl_distribution_points": {
                 "value": [
                     {
@@ -731,7 +772,12 @@
                 }
             },
             "subject_alternative_name": "DNS:profile-webserver.example.com",
-            "extended_key_usage": "serverAuth",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "serverAuth"
+                ]
+            },
             "crl_distribution_points": {
                 "value": [
                     {
@@ -792,7 +838,14 @@
                     ]
                 }
             },
-            "extended_key_usage": "clientAuth,codeSigning,emailProtection",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "clientAuth",
+                    "codeSigning",
+                    "emailProtection"
+                ]
+            },
             "crl_distribution_points": {
                 "value": [
                     {
@@ -854,7 +907,12 @@
                 }
             },
             "subject_alternative_name": "DNS:profile-ocsp.example.com",
-            "extended_key_usage": "OCSPSigning",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "OCSPSigning"
+                ]
+            },
             "crl_distribution_points": {
                 "value": [
                     {
@@ -918,7 +976,15 @@
                 "critical": true,
                 "value": ["encipherOnly", "keyAgreement", "nonRepudiation"]
             },
-            "extended_key_usage": "serverAuth,clientAuth,codeSigning,emailProtection",
+            "extended_key_usage": {
+                "critical": false,
+                "value": [
+                    "serverAuth",
+                    "clientAuth",
+                    "codeSigning",
+                    "emailProtection"
+                ]
+            },
             "subject_alternative_name": "DNS:all-extensions.example.com,DNS:san1.all-extensions.example.com,DNS:san2.all-extensions.example.com",
             "ocsp_no_check": {
                 "critical": false
