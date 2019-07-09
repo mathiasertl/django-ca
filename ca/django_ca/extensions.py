@@ -491,6 +491,9 @@ class KeyIdExtension(Extension):
     def from_bytes(self, value):  # pragma: only py3
         self.value = value
 
+    def from_dict(self, value):
+        self.value = hex_to_bytes(value['value'])
+
     def from_other(self, value):
         if six.PY3 and isinstance(value, bytes):  # pragma: only py3
             self.critical = self.default_critical

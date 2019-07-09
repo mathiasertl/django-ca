@@ -33,8 +33,14 @@
             "sha1": "0C:6A:9B:B4:71:40:97:25:EC:F8:34:9F:34:0C:D4:94:A2:91:0E:6E",
             "sha256": "92:15:9D:DF:87:AB:23:D7:53:32:1F:10:B7:D0:14:69:B9:B9:5B:4E:16:97:F3:17:C3:65:A2:66:5D:68:91:FF",
             "sha512": "FC:B2:5A:F9:8D:99:BF:58:2A:9B:48:33:84:72:8E:D2:70:4C:5C:DD:66:C9:8A:6C:3D:C5:5C:89:35:98:B6:94:FE:AB:9E:02:47:37:BC:13:C6:D9:5E:DF:46:93:F8:A3:4B:8F:06:8D:F4:36:52:00:F6:A8:F8:DB:DB:C4:75:9E",
-            "authority_key_identifier": "8F:14:0B:5F:07:38:19:A4:13:05:FD:64:4B:95:2B:86:60:BE:49:D2",
-            "subject_key_identifier": "8F:14:0B:5F:07:38:19:A4:13:05:FD:64:4B:95:2B:86:60:BE:49:D2",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "8F:14:0B:5F:07:38:19:A4:13:05:FD:64:4B:95:2B:86:60:BE:49:D2"
+            },
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "8F:14:0B:5F:07:38:19:A4:13:05:FD:64:4B:95:2B:86:60:BE:49:D2"
+            },
             "children": [
                 [
                     "child",
@@ -79,8 +85,14 @@
             "sha1": "84:BB:3A:65:AA:B8:5F:4D:80:49:D7:2B:9D:57:86:7D:EE:82:5B:48",
             "sha256": "88:5D:CA:B8:57:14:72:5B:80:D7:32:51:82:7D:3E:1A:BB:2B:56:85:78:06:43:A3:B7:BB:52:9B:AA:4E:1B:D0",
             "sha512": "57:B2:DC:6A:44:88:F3:1C:20:AB:68:0D:4E:67:03:4A:58:63:EB:1C:2E:29:E1:F7:AE:6A:8F:CA:44:D2:C3:E6:83:A7:56:98:2F:0B:96:E4:07:67:EC:7E:42:42:AD:00:54:CF:D3:15:3C:81:75:6B:05:BF:30:8C:4C:08:F8:50",
-            "authority_key_identifier": "8F:14:0B:5F:07:38:19:A4:13:05:FD:64:4B:95:2B:86:60:BE:49:D2",
-            "subject_key_identifier": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "8F:14:0B:5F:07:38:19:A4:13:05:FD:64:4B:95:2B:86:60:BE:49:D2"
+            },
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26"
+            },
             "key_usage": {
                 "critical": true,
                 "value": ["cRLSign", "keyCertSign"]
@@ -142,8 +154,14 @@
             "sha1": "A5:A2:B6:13:0F:1E:13:2D:DD:18:31:17:B9:FE:32:A4:97:D5:1F:7C",
             "sha256": "40:8F:A7:81:61:91:1F:D8:3D:93:2F:F7:D0:D2:8E:AA:59:14:3E:07:DE:1D:A4:64:B5:A9:BA:B7:AF:78:0E:AF",
             "sha512": "4F:45:F5:F3:08:CF:17:F3:09:90:31:40:EB:47:C1:22:B9:3C:65:78:5D:2C:93:60:CB:E4:88:D9:BB:1E:0A:A2:BF:12:1A:E7:A0:CB:BC:C2:65:C6:8F:BC:E8:DB:62:21:DD:82:00:FF:CC:B3:74:FF:8B:DA:25:7E:48:00:4A:13",
-            "authority_key_identifier": "6B:AE:B3:0A:01:BE:F8:F3:C8:7D:07:08:14:D0:40:23:ED:F9:E4:58",
-            "subject_key_identifier": "6B:AE:B3:0A:01:BE:F8:F3:C8:7D:07:08:14:D0:40:23:ED:F9:E4:58",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "6B:AE:B3:0A:01:BE:F8:F3:C8:7D:07:08:14:D0:40:23:ED:F9:E4:58"
+            },
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "6B:AE:B3:0A:01:BE:F8:F3:C8:7D:07:08:14:D0:40:23:ED:F9:E4:58"
+            },
             "key_usage": {
                 "critical": true,
                 "value": ["cRLSign", "keyCertSign"]
@@ -178,8 +196,14 @@
             "sha1": "15:7C:20:CD:80:8B:BC:F5:67:5D:10:24:FA:0D:31:CC:3C:92:F2:E2",
             "sha256": "3C:31:74:53:A8:10:98:2A:22:F7:03:44:58:B3:6D:E2:A8:E2:D3:0F:B9:20:12:83:BA:F7:14:FD:D4:F6:7E:E4",
             "sha512": "29:C4:0C:25:75:55:97:72:5C:B6:BB:65:B5:BF:0F:E8:2B:46:41:46:98:BE:83:C7:7C:D0:62:DE:14:BE:C2:29:AD:78:CE:ED:2C:8E:C1:0C:C4:F7:8A:B1:AE:96:D5:AB:59:80:43:70:D1:5D:37:EF:E3:7F:7F:D3:43:C7:0B:B1",
-            "authority_key_identifier": "A5:CC:A2:B9:F2:46:AB:C6:6B:C6:79:73:03:DA:14:1C:DE:11:24:D0",
-            "subject_key_identifier": "A5:CC:A2:B9:F2:46:AB:C6:6B:C6:79:73:03:DA:14:1C:DE:11:24:D0",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "A5:CC:A2:B9:F2:46:AB:C6:6B:C6:79:73:03:DA:14:1C:DE:11:24:D0"
+            },
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "A5:CC:A2:B9:F2:46:AB:C6:6B:C6:79:73:03:DA:14:1C:DE:11:24:D0"
+            },
             "key_usage": {
                 "critical": true,
                 "value": ["cRLSign", "keyCertSign"]
@@ -214,8 +238,14 @@
             "sha1": "89:D7:84:A5:D9:54:0A:19:72:BC:C3:B2:E2:0A:3B:B1:FF:AC:DE:E2",
             "sha256": "CB:FF:33:0C:F9:86:24:39:00:AB:A2:2F:97:45:3E:83:6F:E8:F7:63:D9:98:89:5E:E5:C8:3E:7A:2F:0A:E9:E3",
             "sha512": "0B:84:68:B3:F2:5A:B3:A6:39:08:04:1A:52:76:40:95:BD:BD:E4:94:2F:06:56:5A:F4:D1:B1:7D:5F:73:7E:B6:75:06:54:1C:A3:B5:B6:FC:1D:A2:6D:59:B4:A5:5D:B4:E6:23:31:B6:3B:7E:1B:23:3A:B4:95:4E:F4:3F:A3:73",
-            "authority_key_identifier": "9D:CA:3D:8E:CE:45:7D:2C:C7:03:FB:A9:26:E9:34:EF:E1:35:02:49",
-            "subject_key_identifier": "9D:CA:3D:8E:CE:45:7D:2C:C7:03:FB:A9:26:E9:34:EF:E1:35:02:49",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "9D:CA:3D:8E:CE:45:7D:2C:C7:03:FB:A9:26:E9:34:EF:E1:35:02:49"
+            },
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "9D:CA:3D:8E:CE:45:7D:2C:C7:03:FB:A9:26:E9:34:EF:E1:35:02:49"
+            },
             "key_usage": {
                 "critical": true,
                 "value": ["cRLSign", "keyCertSign"]
@@ -247,8 +277,14 @@
             "sha1": "AB:A5:07:47:35:8D:1D:7A:CA:AF:57:4F:5E:29:D1:C8:9C:D7:53:B1",
             "sha256": "68:5A:F2:79:46:BF:92:C2:27:91:22:4B:AD:86:0F:93:56:0C:DA:F9:B4:C4:8A:80:E6:29:5F:56:D6:10:88:A3",
             "sha512": "B3:5C:FE:DC:12:99:04:1A:24:B7:ED:85:DE:0C:C0:28:EA:2C:4B:8C:C6:11:76:A0:47:2C:14:A1:53:6A:99:DE:AF:E3:06:22:98:30:3C:7F:18:9D:96:C4:84:12:64:63:BC:90:BF:C1:07:13:9C:98:D6:F6:84:5B:E0:43:8C:29",
-            "authority_key_identifier": "8F:14:0B:5F:07:38:19:A4:13:05:FD:64:4B:95:2B:86:60:BE:49:D2",
-            "subject_key_identifier": "39:A7:AA:B5:74:F6:B9:FE:B9:67:ED:06:E5:BE:83:C0:8D:8E:E6:C0",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "8F:14:0B:5F:07:38:19:A4:13:05:FD:64:4B:95:2B:86:60:BE:49:D2"
+            },
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "39:A7:AA:B5:74:F6:B9:FE:B9:67:ED:06:E5:BE:83:C0:8D:8E:E6:C0"
+            },
             "key_usage": {
                 "critical": true,
                 "value": ["digitalSignature", "keyAgreement", "keyEncipherment"]
@@ -302,8 +338,14 @@
             "sha1": "B9:8A:06:31:6E:C6:6E:CF:80:E9:33:F1:13:6A:66:35:89:95:F6:2E",
             "sha256": "51:34:DB:56:F2:3A:E0:D8:DD:98:6C:07:AC:B0:E9:C7:46:0E:F1:2E:73:D2:C4:A9:44:57:AA:35:50:4D:B9:91",
             "sha512": "13:4B:40:D3:2E:76:59:6B:BD:D4:4F:48:F7:9B:3B:FF:51:4B:E7:B7:ED:B3:D7:82:DF:1A:BD:20:87:BE:D2:AC:AC:2D:CA:C0:43:AD:25:00:9F:D1:11:EC:47:A5:9D:9E:03:3B:45:E6:6F:F8:1A:13:52:FC:EF:37:3A:89:11:31",
-            "authority_key_identifier": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26",
-            "subject_key_identifier": "0A:56:C9:C9:D1:CF:22:96:D1:F4:67:10:68:B0:50:11:59:A3:4E:79",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26"
+            },
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "0A:56:C9:C9:D1:CF:22:96:D1:F4:67:10:68:B0:50:11:59:A3:4E:79"
+            },
             "key_usage": {
                 "critical": true,
                 "value": ["digitalSignature", "keyAgreement", "keyEncipherment"]
@@ -357,8 +399,14 @@
             "sha1": "BB:28:BC:5F:16:45:AC:84:5A:B0:3A:01:A4:AF:1B:94:46:0F:95:B3",
             "sha256": "B0:95:81:28:CF:AB:B9:00:3B:EA:92:D8:1C:E6:C0:74:BF:37:E7:1B:CC:D0:92:FE:8A:FC:38:76:21:F6:99:63",
             "sha512": "67:26:07:4C:20:E2:8E:51:5C:60:A3:BB:B2:40:8F:80:58:6A:90:5D:29:1C:71:76:63:6F:D4:C2:C8:36:9F:3F:B5:0F:C5:96:38:FC:DF:37:2D:20:3C:59:E4:88:F3:B8:AD:27:D5:F7:23:2F:4E:13:BD:46:5B:3B:43:2A:7A:D4",
-            "authority_key_identifier": "6B:AE:B3:0A:01:BE:F8:F3:C8:7D:07:08:14:D0:40:23:ED:F9:E4:58",
-            "subject_key_identifier": "29:1F:4B:4C:3D:3A:5E:0C:C2:BD:F2:00:F1:3C:AB:F4:01:A6:D1:BD",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "6B:AE:B3:0A:01:BE:F8:F3:C8:7D:07:08:14:D0:40:23:ED:F9:E4:58"
+            },
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "29:1F:4B:4C:3D:3A:5E:0C:C2:BD:F2:00:F1:3C:AB:F4:01:A6:D1:BD"
+            },
             "key_usage": {
                 "critical": true,
                 "value": ["digitalSignature", "keyAgreement", "keyEncipherment"]
@@ -412,8 +460,14 @@
             "sha1": "E4:0C:D0:CF:28:42:7F:43:04:57:59:E5:28:29:BE:0D:77:EB:1C:E1",
             "sha256": "88:75:C9:29:CA:4E:5B:5B:1D:59:4C:CC:AF:F9:54:98:36:64:6B:B7:8B:A3:66:5D:42:6D:ED:94:27:30:00:00",
             "sha512": "B2:31:76:9D:A6:6E:C3:5E:52:93:8D:8E:A8:A9:39:94:34:4E:87:CD:01:9B:E2:33:CC:B9:20:49:E3:F7:9E:56:99:73:66:32:CD:FC:DF:C6:77:31:0D:51:64:65:39:ED:8D:9F:32:78:31:D4:18:A5:1A:90:47:32:D6:E7:E6:CC",
-            "authority_key_identifier": "9D:CA:3D:8E:CE:45:7D:2C:C7:03:FB:A9:26:E9:34:EF:E1:35:02:49",
-            "subject_key_identifier": "E6:39:D7:CD:62:19:AA:3F:82:53:AA:A8:59:B8:21:3B:CE:D2:0F:84",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "9D:CA:3D:8E:CE:45:7D:2C:C7:03:FB:A9:26:E9:34:EF:E1:35:02:49"
+            },
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "E6:39:D7:CD:62:19:AA:3F:82:53:AA:A8:59:B8:21:3B:CE:D2:0F:84"
+            },
             "key_usage": {
                 "critical": true,
                 "value": ["digitalSignature", "keyAgreement", "keyEncipherment"]
@@ -467,8 +521,14 @@
             "sha1": "E8:AD:99:2A:19:F6:52:88:E0:AB:92:1D:21:B3:A4:43:E2:AB:42:D8",
             "sha256": "A0:22:E9:D4:82:26:04:30:28:A3:AE:2A:C4:5A:4E:C4:42:30:58:EC:57:DB:FE:E8:F1:1D:27:5A:9C:F9:10:E0",
             "sha512": "DC:83:D7:01:30:C9:CE:76:E3:D5:47:1C:D1:C1:25:58:C5:57:31:C9:A3:24:50:53:5F:32:28:53:80:77:0A:DF:FD:D7:31:8A:6A:58:A6:2C:D0:CB:E7:26:45:49:FD:13:9A:9F:16:16:BF:18:81:DA:8B:BB:22:5D:20:E4:F8:0B",
-            "authority_key_identifier": "A5:CC:A2:B9:F2:46:AB:C6:6B:C6:79:73:03:DA:14:1C:DE:11:24:D0",
-            "subject_key_identifier": "BA:FB:FE:04:B2:3B:D5:37:D8:DB:58:23:36:2A:ED:64:F7:33:A8:3C",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "A5:CC:A2:B9:F2:46:AB:C6:6B:C6:79:73:03:DA:14:1C:DE:11:24:D0"
+            },
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "BA:FB:FE:04:B2:3B:D5:37:D8:DB:58:23:36:2A:ED:64:F7:33:A8:3C"
+            },
             "key_usage": {
                 "critical": true,
                 "value": ["digitalSignature", "keyAgreement", "keyEncipherment"]
@@ -523,8 +583,14 @@
             "sha1": "3E:C1:56:F9:A5:49:06:C5:08:09:04:EC:3D:32:E4:76:23:C3:23:3C",
             "sha256": "2F:33:B4:5E:5E:B5:E9:13:FD:96:CD:1E:8E:8B:58:0D:28:94:12:63:9A:E8:75:9C:D7:A7:94:B7:3E:8A:85:94",
             "sha512": "0D:E8:76:44:44:D6:C4:A5:A4:A6:AB:1F:65:BB:44:D8:D0:0E:DD:C0:DB:EF:1F:48:A6:52:7A:A6:93:CA:38:20:8E:4A:4E:E0:14:40:48:87:D0:B2:41:13:81:17:89:20:F3:7A:8C:50:69:06:A0:C0:BD:F0:06:42:BA:2B:0C:99",
-            "authority_key_identifier": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26",
-            "subject_key_identifier": "4C:B3:0B:05:84:53:DB:A9:4F:AC:21:30:CA:1B:4E:73:EB:E5:DF:12",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26"
+            },
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "4C:B3:0B:05:84:53:DB:A9:4F:AC:21:30:CA:1B:4E:73:EB:E5:DF:12"
+            },
             "key_usage": {
                 "critical": true,
                 "value": ["digitalSignature"]
@@ -579,8 +645,14 @@
             "sha1": "C5:BE:C4:9D:13:18:A2:C1:54:AF:8F:B3:93:7E:3F:EA:CD:BE:8F:E3",
             "sha256": "04:AB:0F:E3:9E:37:4A:D3:82:89:B5:93:69:C9:21:EF:C8:AD:10:9E:9B:9B:CD:C1:94:71:02:CA:CA:F0:9E:63",
             "sha512": "C8:6B:AD:6D:FD:7F:19:8E:DB:94:BC:F0:48:DB:7E:3F:C1:1B:2D:F7:98:93:94:98:6B:34:DE:F4:57:AC:E3:F4:5F:D8:A4:9C:BA:90:F1:8E:A0:5B:0E:7C:A0:15:8B:01:18:C4:19:63:1D:BB:BC:04:AC:62:79:CB:A3:59:40:6D",
-            "authority_key_identifier": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26",
-            "subject_key_identifier": "1B:66:96:68:3F:87:0B:03:F2:9C:B5:F8:B4:39:67:F5:E7:CC:31:62",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26"
+            },
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "1B:66:96:68:3F:87:0B:03:F2:9C:B5:F8:B4:39:67:F5:E7:CC:31:62"
+            },
             "key_usage": {
                 "critical": true,
                 "value": ["digitalSignature", "keyAgreement", "keyEncipherment"]
@@ -635,8 +707,14 @@
             "sha1": "4C:76:AB:94:3D:2F:0E:3F:D6:6F:97:00:BC:65:F2:E7:FA:B4:44:11",
             "sha256": "20:14:46:CD:47:B8:23:38:85:BD:4E:22:72:7F:47:DA:02:B6:BB:F3:F0:78:99:CE:10:12:89:DD:4F:79:16:A1",
             "sha512": "09:B0:89:54:B1:20:17:D3:03:54:AA:B5:15:87:08:37:8B:83:8C:8D:38:90:3C:80:7A:5C:50:BD:97:19:65:49:8F:C8:D0:E6:B7:CA:DA:23:3C:BA:FE:AC:4F:B2:60:B3:30:8E:6F:0E:DF:ED:87:4C:92:D9:60:0D:8D:FA:80:40",
-            "authority_key_identifier": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26",
-            "subject_key_identifier": "F8:1F:80:93:4D:7C:17:AD:7E:C7:CB:90:72:23:C9:BE:7C:91:93:AE",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26"
+            },
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "F8:1F:80:93:4D:7C:17:AD:7E:C7:CB:90:72:23:C9:BE:7C:91:93:AE"
+            },
             "key_usage": {
                 "critical": true,
                 "value": ["digitalSignature", "keyAgreement", "keyEncipherment"]
@@ -691,8 +769,14 @@
             "sha1": "90:8D:09:BE:DD:11:2E:6E:4B:18:99:88:FB:FE:89:B0:FB:B7:BD:6A",
             "sha256": "33:D6:98:C9:7B:A9:53:C8:63:87:17:14:46:C9:C6:DF:71:9C:2C:EF:34:E9:B1:58:3F:D8:56:0F:2C:AD:18:BE",
             "sha512": "EB:EE:2E:53:11:7A:E3:7A:0B:BF:E9:0F:79:F0:0B:11:BF:1A:E1:B4:EE:54:DC:B0:32:CA:7A:26:8A:14:24:5B:02:D8:B0:EF:B7:5E:F4:7A:EB:AA:31:E5:63:19:F7:50:28:96:C9:75:D6:A7:39:A9:EF:72:37:62:92:64:E3:8E",
-            "authority_key_identifier": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26",
-            "subject_key_identifier": "64:4F:D6:7D:F6:7F:FC:A7:48:69:A1:41:51:C6:6B:2D:46:60:02:61",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26"
+            },
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "64:4F:D6:7D:F6:7F:FC:A7:48:69:A1:41:51:C6:6B:2D:46:60:02:61"
+            },
             "key_usage": {
                 "critical": true,
                 "value": ["dataEncipherment", "digitalSignature", "keyEncipherment"]
@@ -746,8 +830,14 @@
             "sha1": "4B:50:FC:04:B2:52:D0:6B:B3:D2:A7:57:3A:F6:F1:EF:09:11:5B:F8",
             "sha256": "CC:E2:C6:AF:35:3E:EE:C7:E8:2F:28:BE:EE:A3:28:FA:3C:28:CE:CD:29:B2:74:C6:5A:BC:0F:A7:33:A2:0F:37",
             "sha512": "FD:30:6E:E5:F4:CA:3D:E8:CE:A5:D2:EB:1D:01:3C:22:2A:A8:83:64:B2:F9:7A:2C:4D:30:DF:BE:28:54:5A:F6:CC:3D:50:F2:91:48:CF:5A:69:18:D3:EB:D1:D8:ED:73:B4:AA:49:54:34:32:28:88:3A:4B:1B:F1:C2:DB:00:6B",
-            "authority_key_identifier": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26",
-            "subject_key_identifier": "0C:3E:B7:2E:05:AD:B5:51:01:25:81:C6:86:3A:2E:5C:70:86:46:29",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26"
+            },
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "0C:3E:B7:2E:05:AD:B5:51:01:25:81:C6:86:3A:2E:5C:70:86:46:29"
+            },
             "key_usage": {
                 "critical": true,
                 "value": ["digitalSignature", "keyEncipherment", "nonRepudiation"]
@@ -814,8 +904,16 @@
                     ]
                 }
             },
-            "issuer_alternative_name": "URI:http://ian.child.example.com/",
-            "tls_feature": "critical,OCSPMustStaple,MultipleCertStatusRequest",
+            "issuer_alternative_name": {
+                "critical": false,
+                "value": [
+                    "URI:http://ian.child.example.com/"
+                ]
+            },
+            "tls_feature": {
+                "critical": true,
+                "value": ["OCSPMustStaple", "MultipleCertStatusRequest"]
+            },
             "key_usage": {
                 "critical": true,
                 "value": ["encipherOnly", "keyAgreement", "nonRepudiation"]
@@ -854,7 +952,10 @@
                 "critical": false,
                 "value": "48:3E:1B:D4:20:DA:B7:B4:B5:7C:7D:98:DA:4C:72:9B:76:55:C7:26"
             },
-            "subject_key_identifier": "41:7F:C1:09:EA:A1:C0:B7:52:A3:66:84:80:D7:C8:EC:C4:E1:28:D8",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "41:7F:C1:09:EA:A1:C0:B7:52:A3:66:84:80:D7:C8:EC:C4:E1:28:D8"
+            },
             "authority_information_access": {
                 "critical": false,
                 "value": {
@@ -901,7 +1002,10 @@
                     "keyCertSign"
                 ]
             },
-            "subject_key_identifier": "60:7B:66:1A:45:0D:97:CA:89:50:2F:7D:04:CD:34:A8:FF:FC:FD:4B",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "60:7B:66:1A:45:0D:97:CA:89:50:2F:7D:04:CD:34:A8:FF:FC:FD:4B"
+            },
             "type": "ca",
             "pathlen": null
         },
@@ -932,7 +1036,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": true, "pathlen": 0}},
             "crl_distribution_points": {
                 "value": [
@@ -970,7 +1077,10 @@
                     "keyCertSign"
                 ]
             },
-            "subject_key_identifier": "90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7"
+            },
             "policy_texts": [
                 "Policy Identifier: 2.5.29.32.0\nNo Policy Qualifiers",
                 "Policy Identifier: 2.23.140.1.2.1\nNo Policy Qualifiers"
@@ -1003,7 +1113,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "03:DE:50:35:56:D1:4C:BB:66:F0:A3:E2:1B:1B:C3:97:B2:3D:D1:55",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "03:DE:50:35:56:D1:4C:BB:66:F0:A3:E2:1B:1B:C3:97:B2:3D:D1:55"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": true, "pathlen": 0}},
             "crl_distribution_points": {
                 "value": [
@@ -1039,7 +1152,10 @@
                     "keyCertSign"
                 ]
             },
-            "subject_key_identifier": "0F:80:61:1C:82:31:61:D5:2F:28:E7:8D:46:38:B4:2C:E1:C6:D9:E2",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "0F:80:61:1C:82:31:61:D5:2F:28:E7:8D:46:38:B4:2C:E1:C6:D9:E2"
+            },
             "policy_texts": [
                 "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* https://www.digicert.com/CPS"
             ],
@@ -1073,7 +1189,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "ED:44:19:C0:D3:F0:06:8B:EE:A4:7B:BE:42:E7:26:54:C8:8E:36:76",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "ED:44:19:C0:D3:F0:06:8B:EE:A4:7B:BE:42:E7:26:54:C8:8E:36:76"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": true}},
             "crl_distribution_points": {
                 "value": [
@@ -1122,7 +1241,10 @@
                     "keyCertSign"
                 ]
             },
-            "subject_key_identifier": "A2:56:24:3C:D0:D4:15:B9:E8:BF:78:A3:13:10:58:48:2E:16:54:E1",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "A2:56:24:3C:D0:D4:15:B9:E8:BF:78:A3:13:10:58:48:2E:16:54:E1"
+            },
             "policy_texts": [
                 "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* UserNotice:\n  * Reference:\n    * Organiziation: https://secure.identrust.com/certificates/policy/ts/index.html\n    * Notice Numbers: []\n* UserNotice:\n  * Explicit text: This TrustID Server Certificate has been issued in\n    accordance with IdenTrust's TrustID Certificate Policy found at\n    https://secure.identrust.com/certificates/policy/ts/index.html"
             ],
@@ -1145,7 +1267,10 @@
             "sha1": "5F:B7:EE:06:33:E2:59:DB:AD:0C:4C:9A:E6:D3:8F:1A:61:C7:DC:25",
             "sha256": "74:31:E5:F4:C3:C1:CE:46:90:77:4F:0B:61:E0:54:40:88:3B:A9:A0:1E:D0:0B:A6:AB:D7:80:6E:D3:B1:18:CF",
             "sha512": "7B:9C:F0:79:B9:76:9D:FA:9E:B2:E2:8C:F5:A4:DA:99:22:B0:F8:0E:41:50:97:D3:26:BF:20:54:75:05:A6:AB:1B:7A:C6:A8:38:46:D0:B8:25:3E:91:68:B1:F9:15:B8:97:4A:EC:84:4A:9B:31:C3:AD:CA:B3:AE:C8:9F:CD:07",
-            "authority_key_identifier": "B1:3E:C3:69:03:F8:BF:47:01:D4:98:26:1A:08:02:EF:63:64:2B:C3",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "B1:3E:C3:69:03:F8:BF:47:01:D4:98:26:1A:08:02:EF:63:64:2B:C3"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": true}},
             "key_usage": {
                 "critical": true,
@@ -1155,7 +1280,10 @@
                     "keyCertSign"
                 ]
             },
-            "subject_key_identifier": "B1:3E:C3:69:03:F8:BF:47:01:D4:98:26:1A:08:02:EF:63:64:2B:C3",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "B1:3E:C3:69:03:F8:BF:47:01:D4:98:26:1A:08:02:EF:63:64:2B:C3"
+            },
             "type": "ca",
             "pathlen": null
         },
@@ -1183,7 +1311,10 @@
                     "keyCertSign"
                 ]
             },
-            "subject_key_identifier": "BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4"
+            },
             "type": "ca",
             "pathlen": null
         },
@@ -1211,7 +1342,10 @@
                     "keyCertSign"
                 ]
             },
-            "subject_key_identifier": "ED:44:19:C0:D3:F0:06:8B:EE:A4:7B:BE:42:E7:26:54:C8:8E:36:76",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "ED:44:19:C0:D3:F0:06:8B:EE:A4:7B:BE:42:E7:26:54:C8:8E:36:76"
+            },
             "type": "ca",
             "pathlen": null
         },
@@ -1231,7 +1365,10 @@
             "sha1": "75:E0:AB:B6:13:85:12:27:1C:04:F8:5F:DD:DE:38:E4:B7:24:2E:FE",
             "sha256": "CA:42:DD:41:74:5F:D0:B8:1E:B9:02:36:2C:F9:D8:BF:71:9D:A1:BD:1B:1E:FC:94:6F:5B:4C:99:F4:2C:1B:9E",
             "sha512": "DE:82:56:35:4E:EA:96:4A:DC:D0:28:5F:A6:A5:7B:4F:31:CF:7E:D8:6B:BF:29:2E:F0:E8:7B:6E:C4:31:D4:3E:5E:C2:F5:77:F0:72:09:88:15:EC:B6:D9:77:BE:C1:47:E0:75:48:62:FF:29:CD:CA:91:4D:65:AF:CE:EA:09:8F",
-            "authority_key_identifier": "9B:E2:07:57:67:1C:1E:C0:6A:06:DE:59:B4:9A:2D:DF:DC:19:86:2E",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "9B:E2:07:57:67:1C:1E:C0:6A:06:DE:59:B4:9A:2D:DF:DC:19:86:2E"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": true}},
             "crl_distribution_points": {
                 "value": [
@@ -1250,7 +1387,10 @@
                     "keyCertSign"
                 ]
             },
-            "subject_key_identifier": "9B:E2:07:57:67:1C:1E:C0:6A:06:DE:59:B4:9A:2D:DF:DC:19:86:2E",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "9B:E2:07:57:67:1C:1E:C0:6A:06:DE:59:B4:9A:2D:DF:DC:19:86:2E"
+            },
             "type": "ca",
             "pathlen": null
         },
@@ -1270,7 +1410,10 @@
             "sha1": "A3:F1:33:3F:E2:42:BF:CF:C5:D1:4E:8F:39:42:98:40:68:10:D1:A0",
             "sha256": "E1:78:90:EE:09:A3:FB:F4:F4:8B:9C:41:4A:17:D6:37:B7:A5:06:47:E9:BC:75:23:22:72:7F:CC:17:42:A9:11",
             "sha512": "C7:5F:96:18:C9:84:D7:6B:56:F3:D9:8A:0B:5C:EF:F5:1F:F0:80:84:FD:6B:1F:14:C2:E5:85:71:D7:09:5F:CC:55:ED:30:6A:4B:B3:AA:C1:7F:3F:B9:F4:BF:42:02:47:AE:41:D9:F8:B5:44:64:15:D9:20:F3:2B:5D:66:7E:1A",
-            "authority_key_identifier": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": true}},
             "certificate_policies": {
                 "value": [
@@ -1300,7 +1443,10 @@
                     "keyCertSign"
                 ]
             },
-            "subject_key_identifier": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2"
+            },
             "policy_texts": [
                 "Policy Identifier: 1.3.6.1.4.1.23223.1.1.1\nPolicy Qualifiers:\n* http://www.startssl.com/policy.pdf\n* http://www.startssl.com/intermediate.pdf\n* UserNotice:\n  * Explicit text: Limited Liability, read the section *Legal Limitations*\n    of the StartCom Certification Authority Policy available at\n    http://www.startssl.com/policy.pdf\n  * Reference:\n    * Organiziation: Start Commercial (StartCom) Ltd.\n    * Notice Numbers: [1]"
             ],
@@ -1332,7 +1478,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": true, "pathlen": 0}},
             "crl_distribution_points": {
                 "value": [
@@ -1362,7 +1511,10 @@
                     "keyCertSign"
                 ]
             },
-            "subject_key_identifier": "C3:9C:F3:FC:D3:46:08:34:BB:CE:46:7F:A0:7C:5B:F3:E2:08:CB:59",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "C3:9C:F3:FC:D3:46:08:34:BB:CE:46:7F:A0:7C:5B:F3:E2:08:CB:59"
+            },
             "policy_texts": [
                 "Policy Identifier: 2.16.840.1.113733.1.7.54\nPolicy Qualifiers:\n* http://www.geotrust.com/resources/cps"
             ],
@@ -1385,7 +1537,10 @@
             "sha1": "A8:98:5D:3A:65:E5:E5:C4:B2:D7:D6:6D:40:C6:DD:2F:B1:9C:54:36",
             "sha256": "43:48:A0:E9:44:4C:78:CB:26:5E:05:8D:5E:89:44:B4:D8:4F:96:62:BD:26:DB:25:7F:89:34:A4:43:C7:01:61",
             "sha512": "53:B4:44:E5:65:18:32:01:A6:1E:EB:46:12:09:B2:DC:30:89:5E:EC:A4:87:23:8D:15:A0:26:73:5F:22:9A:81:9E:5B:19:CB:D7:E2:FA:27:68:AB:2A:64:F6:EB:CD:9D:1E:72:13:41:C9:ED:5D:D0:9F:C0:D5:E4:3D:68:BC:A7",
-            "authority_key_identifier": "03:DE:50:35:56:D1:4C:BB:66:F0:A3:E2:1B:1B:C3:97:B2:3D:D1:55",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "03:DE:50:35:56:D1:4C:BB:66:F0:A3:E2:1B:1B:C3:97:B2:3D:D1:55"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": true}},
             "key_usage": {
                 "critical": true,
@@ -1395,7 +1550,10 @@
                     "keyCertSign"
                 ]
             },
-            "subject_key_identifier": "03:DE:50:35:56:D1:4C:BB:66:F0:A3:E2:1B:1B:C3:97:B2:3D:D1:55",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "03:DE:50:35:56:D1:4C:BB:66:F0:A3:E2:1B:1B:C3:97:B2:3D:D1:55"
+            },
             "type": "ca",
             "pathlen": null
         },
@@ -1415,9 +1573,15 @@
             "sha1": "DE:28:F4:A4:FF:E5:B9:2F:A3:C5:03:D1:A3:49:A7:F9:96:2A:82:12",
             "sha256": "FF:85:6A:2D:25:1D:CD:88:D3:66:56:F4:50:12:67:98:CF:AB:AA:DE:40:79:9C:72:2D:E4:D2:B5:DB:36:A7:3A",
             "sha512": "F7:55:01:0B:4C:FB:8F:9F:0B:7F:CB:15:4C:5B:FB:9C:4B:80:15:B5:D6:55:0A:2A:E4:9E:9F:E1:BE:27:17:4F:CD:B6:06:B0:E9:64:CC:CA:16:56:5A:AD:C4:81:DA:EC:1B:DD:8A:7A:92:E5:12:25:87:19:48:0B:EA:6A:60:49",
-            "authority_key_identifier": "C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": true}},
-            "subject_key_identifier": "C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E"
+            },
             "type": "ca",
             "pathlen": null
         },
@@ -1448,7 +1612,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": true, "pathlen": 0}},
             "crl_distribution_points": {
                 "value": [
@@ -1491,7 +1658,10 @@
                     ]
                 }
             },
-            "subject_key_identifier": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1"
+            },
             "policy_texts": [
                 "Policy Identifier: 2.23.140.1.2.1\nNo Policy Qualifiers",
                 "Policy Identifier: 1.3.6.1.4.1.44947.1.1.1\nPolicy Qualifiers:\n* http://cps.root-x1.letsencrypt.org"
@@ -1526,7 +1696,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": true, "pathlen": 0}},
             "crl_distribution_points": {
                 "value": [
@@ -1563,7 +1736,10 @@
                     "keyCertSign"
                 ]
             },
-            "subject_key_identifier": "B1:3F:1C:92:7B:92:B0:5A:25:B3:38:FB:9C:07:A4:26:50:32:E3:51",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "B1:3F:1C:92:7B:92:B0:5A:25:B3:38:FB:9C:07:A4:26:50:32:E3:51"
+            },
             "policy_texts": [
                 "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* http://www.startssl.com/policy"
             ],
@@ -1595,7 +1771,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "B1:3E:C3:69:03:F8:BF:47:01:D4:98:26:1A:08:02:EF:63:64:2B:C3",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "B1:3E:C3:69:03:F8:BF:47:01:D4:98:26:1A:08:02:EF:63:64:2B:C3"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": true, "pathlen": 0}},
             "crl_distribution_points": {
                 "value": [
@@ -1633,7 +1812,10 @@
                     "keyCertSign"
                 ]
             },
-            "subject_key_identifier": "51:68:FF:90:AF:02:07:75:3C:CC:D9:65:64:62:A2:12:B8:59:72:3B",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "51:68:FF:90:AF:02:07:75:3C:CC:D9:65:64:62:A2:12:B8:59:72:3B"
+            },
             "policy_texts": [
                 "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* https://www.digicert.com/CPS"
             ],
@@ -1667,7 +1849,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": true, "pathlen": 0}},
             "crl_distribution_points": {
                 "value": [
@@ -1697,7 +1882,10 @@
                     "keyCertSign"
                 ]
             },
-            "subject_key_identifier": "11:DB:23:45:FD:54:CC:6A:71:6F:84:8A:03:D7:BE:F7:01:2F:26:86",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "11:DB:23:45:FD:54:CC:6A:71:6F:84:8A:03:D7:BE:F7:01:2F:26:86"
+            },
             "policy_texts": [
                 "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* http://www.startssl.com/policy.pdf"
             ],
@@ -1728,7 +1916,10 @@
                     "keyCertSign"
                 ]
             },
-            "subject_key_identifier": "3A:9A:85:07:10:67:28:B6:EF:F6:BD:05:41:6E:20:C1:94:DA:0F:DE",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "3A:9A:85:07:10:67:28:B6:EF:F6:BD:05:41:6E:20:C1:94:DA:0F:DE"
+            },
             "type": "ca",
             "pathlen": null
         },
@@ -1757,7 +1948,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "3A:9A:85:07:10:67:28:B6:EF:F6:BD:05:41:6E:20:C1:94:DA:0F:DE",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "3A:9A:85:07:10:67:28:B6:EF:F6:BD:05:41:6E:20:C1:94:DA:0F:DE"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": true}},
             "crl_distribution_points": {
                 "value": [
@@ -1787,7 +1981,10 @@
                     "keyCertSign"
                 ]
             },
-            "subject_key_identifier": "40:C2:BD:27:8E:CC:34:83:30:A2:33:D7:FB:6C:B3:F0:B4:2C:80:CE",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "40:C2:BD:27:8E:CC:34:83:30:A2:33:D7:FB:6C:B3:F0:B4:2C:80:CE"
+            },
             "policy_texts": [
                 "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* https://certs.godaddy.com/repository/"
             ],
@@ -1819,7 +2016,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "9B:E2:07:57:67:1C:1E:C0:6A:06:DE:59:B4:9A:2D:DF:DC:19:86:2E",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "9B:E2:07:57:67:1C:1E:C0:6A:06:DE:59:B4:9A:2D:DF:DC:19:86:2E"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": true, "pathlen": 0}},
             "crl_distribution_points": {
                 "value": [
@@ -1857,7 +2057,10 @@
                     "keyCertSign"
                 ]
             },
-            "subject_key_identifier": "77:C2:B8:50:9A:67:76:76:B1:2D:C2:86:D0:83:A0:7E:A6:7E:BA:4B",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "77:C2:B8:50:9A:67:76:76:B1:2D:C2:86:D0:83:A0:7E:A6:7E:BA:4B"
+            },
             "policy_texts": [
                 "Policy Identifier: 2.23.140.1.2.2\nPolicy Qualifiers:\n* https://pki.goog/repository/"
             ],
@@ -1889,7 +2092,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "60:7B:66:1A:45:0D:97:CA:89:50:2F:7D:04:CD:34:A8:FF:FC:FD:4B",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "60:7B:66:1A:45:0D:97:CA:89:50:2F:7D:04:CD:34:A8:FF:FC:FD:4B"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": true, "pathlen": 0}},
             "crl_distribution_points": {
                 "value": [
@@ -1919,7 +2125,10 @@
                     "keyCertSign"
                 ]
             },
-            "subject_key_identifier": "EA:4E:7C:D4:80:2D:E5:15:81:86:26:8C:82:6D:C0:98:A4:CF:97:0F",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "EA:4E:7C:D4:80:2D:E5:15:81:86:26:8C:82:6D:C0:98:A4:CF:97:0F"
+            },
             "policy_texts": [
                 "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* https://www.globalsign.com/repository/"
             ],
@@ -1953,7 +2162,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": true, "pathlen": 0}},
             "crl_distribution_points": {
                 "value": [
@@ -1987,7 +2199,10 @@
                     "keyCertSign"
                 ]
             },
-            "subject_key_identifier": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1"
+            },
             "policy_texts": [
                 "Policy Identifier: 2.23.140.1.2.1\nNo Policy Qualifiers",
                 "Policy Identifier: 1.3.6.1.4.1.44947.1.1.1\nPolicy Qualifiers:\n* http://cps.root-x1.letsencrypt.org"
@@ -2022,7 +2237,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": true, "pathlen": 0}},
             "crl_distribution_points": {
                 "value": [
@@ -2052,7 +2270,10 @@
                     "keyCertSign"
                 ]
             },
-            "subject_key_identifier": "39:DA:FF:CA:28:14:8A:A8:74:13:08:B9:E4:0E:A9:D2:FA:7E:9D:69",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "39:DA:FF:CA:28:14:8A:A8:74:13:08:B9:E4:0E:A9:D2:FA:7E:9D:69"
+            },
             "policy_texts": [
                 "Policy Identifier: 2.5.29.32.0\nPolicy Qualifiers:\n* https://secure.comodo.com/CPS"
             ],
@@ -2083,7 +2304,10 @@
                     "keyCertSign"
                 ]
             },
-            "subject_key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10"
+            },
             "type": "ca",
             "pathlen": null
         },
@@ -2114,7 +2338,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": false}},
             "crl_distribution_points": {
                 "value": [
@@ -2161,7 +2388,10 @@
                     "DNS:www.kode.im"
                 ]
             },
-            "subject_key_identifier": "F2:CB:1F:E9:6E:D5:43:E3:85:75:98:5F:97:7C:B0:59:7F:D5:C0:C0",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "F2:CB:1F:E9:6E:D5:43:E3:85:75:98:5F:97:7C:B0:59:7F:D5:C0:C0"
+            },
             "policy_texts": [
                 "Policy Identifier: 1.3.6.1.4.1.6449.1.2.2.7\nPolicy Qualifiers:\n* https://secure.comodo.com/CPS",
                 "Policy Identifier: 2.23.140.1.2.1\nNo Policy Qualifiers"
@@ -2196,7 +2426,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "0F:80:61:1C:82:31:61:D5:2F:28:E7:8D:46:38:B4:2C:E1:C6:D9:E2",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "0F:80:61:1C:82:31:61:D5:2F:28:E7:8D:46:38:B4:2C:E1:C6:D9:E2"
+            },
             "basic_constraints": {"critical": false, "value": {"ca": false}},
             "crl_distribution_points": {
                 "value": [
@@ -2274,7 +2507,10 @@
                     "DNS:next.derstandard.at"
                 ]
             },
-            "subject_key_identifier": "08:D7:53:9D:80:0B:FA:B0:39:7E:74:D8:55:DD:A7:EB:C8:BE:16:9C",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "08:D7:53:9D:80:0B:FA:B0:39:7E:74:D8:55:DD:A7:EB:C8:BE:16:9C"
+            },
             "policy_texts": [
                 "Policy Identifier: 2.16.840.1.114412.1.1\nPolicy Qualifiers:\n* https://www.digicert.com/CPS",
                 "Policy Identifier: 2.23.140.1.2.2\nNo Policy Qualifiers"
@@ -2309,7 +2545,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "A2:56:24:3C:D0:D4:15:B9:E8:BF:78:A3:13:10:58:48:2E:16:54:E1",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "A2:56:24:3C:D0:D4:15:B9:E8:BF:78:A3:13:10:58:48:2E:16:54:E1"
+            },
             "crl_distribution_points": {
                 "value": [
                     {
@@ -2368,7 +2607,10 @@
                     "DNS:www.identrust.net"
                 ]
             },
-            "subject_key_identifier": "BE:59:F0:29:27:4B:FC:0A:81:52:7C:DF:CD:02:D8:8F:A8:E5:C2:24",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "BE:59:F0:29:27:4B:FC:0A:81:52:7C:DF:CD:02:D8:8F:A8:E5:C2:24"
+            },
             "policy_texts": [
                 "Policy Identifier: 2.16.840.1.113839.0.6.3\nPolicy Qualifiers:\n* https://secure.identrust.com/certificates/policy/ts/\n* UserNotice:\n  * Explicit text: This TrustID Server Certificate has been issued in\n    accordance with IdenTrust's TrustID Certificate Policy found at\n    https://secure.identrust.com/certificates/policy/ts/",
                 "Policy Identifier: 2.23.140.1.2.2\nPolicy Qualifiers:\n* https://secure.identrust.com/certificates/policy/ts/\n* UserNotice:\n  * Explicit text: This TrustID Server Certificate has been issued in\n    accordance with IdenTrust's TrustID Certificate Policy found at\n    https://secure.identrust.com/certificates/policy/ts/"
@@ -2403,7 +2645,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "C3:9C:F3:FC:D3:46:08:34:BB:CE:46:7F:A0:7C:5B:F3:E2:08:CB:59",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "C3:9C:F3:FC:D3:46:08:34:BB:CE:46:7F:A0:7C:5B:F3:E2:08:CB:59"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": false}},
             "crl_distribution_points": {
                 "value": [
@@ -2480,7 +2725,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": false}},
             "certificate_policies": {
                 "value": [
@@ -2519,7 +2767,10 @@
                     "DNS:id.er.tl"
                 ]
             },
-            "subject_key_identifier": "F4:F3:B8:F5:43:90:2E:A2:7F:DD:51:4A:5F:3E:AC:FB:F1:33:EE:95",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "F4:F3:B8:F5:43:90:2E:A2:7F:DD:51:4A:5F:3E:AC:FB:F1:33:EE:95"
+            },
             "policy_texts": [
                 "Policy Identifier: 2.23.140.1.2.1\nNo Policy Qualifiers",
                 "Policy Identifier: 1.3.6.1.4.1.44947.1.1.1\nPolicy Qualifiers:\n* http://cps.letsencrypt.org\n* UserNotice:\n  * Explicit text: This Certificate may only be relied upon by Relying\n    Parties and only in accordance with the Certificate Policy found at\n    https://letsencrypt.org/repository/"
@@ -2554,7 +2805,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "B1:3F:1C:92:7B:92:B0:5A:25:B3:38:FB:9C:07:A4:26:50:32:E3:51",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "B1:3F:1C:92:7B:92:B0:5A:25:B3:38:FB:9C:07:A4:26:50:32:E3:51"
+            },
             "basic_constraints": {"critical": false, "value": {"ca": false}},
             "crl_distribution_points": {
                 "value": [
@@ -2608,7 +2862,10 @@
                     "DNS:www.adverity.com"
                 ]
             },
-            "subject_key_identifier": "F0:72:65:5E:21:AA:16:76:2C:6F:D0:63:53:0C:68:D5:89:50:2A:73",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "F0:72:65:5E:21:AA:16:76:2C:6F:D0:63:53:0C:68:D5:89:50:2A:73"
+            },
             "policy_texts": [
                 "Policy Identifier: 2.23.140.1.2.2\nNo Policy Qualifiers",
                 "Policy Identifier: 1.3.6.1.4.1.23223.1.2.4\nPolicy Qualifiers:\n* http://www.startssl.com/policy"
@@ -2643,7 +2900,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "51:68:FF:90:AF:02:07:75:3C:CC:D9:65:64:62:A2:12:B8:59:72:3B",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "51:68:FF:90:AF:02:07:75:3C:CC:D9:65:64:62:A2:12:B8:59:72:3B"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": false}},
             "crl_distribution_points": {
                 "value": [
@@ -2754,7 +3014,10 @@
                     "DNS:za.yahoo.com"
                 ]
             },
-            "subject_key_identifier": "56:F7:45:D4:84:D1:3C:95:AD:58:14:2E:F4:D1:CC:2F:11:C0:73:F6",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "56:F7:45:D4:84:D1:3C:95:AD:58:14:2E:F4:D1:CC:2F:11:C0:73:F6"
+            },
             "policy_texts": [
                 "Policy Identifier: 2.16.840.1.114412.1.1\nPolicy Qualifiers:\n* https://www.digicert.com/CPS",
                 "Policy Identifier: 2.23.140.1.2.2\nNo Policy Qualifiers"
@@ -2789,7 +3052,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "11:DB:23:45:FD:54:CC:6A:71:6F:84:8A:03:D7:BE:F7:01:2F:26:86",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "11:DB:23:45:FD:54:CC:6A:71:6F:84:8A:03:D7:BE:F7:01:2F:26:86"
+            },
             "basic_constraints": {"critical": false, "value": {"ca": false}},
             "crl_distribution_points": {
                 "value": [
@@ -2852,7 +3118,10 @@
                     "DNS:fsinf.at"
                 ]
             },
-            "subject_key_identifier": "C7:AA:D9:A4:F0:BC:D1:C1:1B:05:D2:19:71:0A:86:F8:58:0F:F0:99",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "C7:AA:D9:A4:F0:BC:D1:C1:1B:05:D2:19:71:0A:86:F8:58:0F:F0:99"
+            },
             "policy_texts": [
                 "Policy Identifier: 2.23.140.1.2.2\nNo Policy Qualifiers",
                 "Policy Identifier: 1.3.6.1.4.1.23223.1.2.3\nPolicy Qualifiers:\n* http://www.startssl.com/policy.pdf\n* UserNotice:\n  * Explicit text: This certificate was issued according to the Class 2\n    Validation requirements of the StartCom CA policy, reliance only for\n    the intended purpose in compliance of the relying party obligations.\n  * Reference:\n    * Organiziation: StartCom Certification Authority\n    * Notice Numbers: [1]"
@@ -2887,7 +3156,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "40:C2:BD:27:8E:CC:34:83:30:A2:33:D7:FB:6C:B3:F0:B4:2C:80:CE",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "40:C2:BD:27:8E:CC:34:83:30:A2:33:D7:FB:6C:B3:F0:B4:2C:80:CE"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": false}},
             "crl_distribution_points": {
                 "value": [
@@ -3004,7 +3276,10 @@
                     "DNS:akamai.derstandard.at"
                 ]
             },
-            "subject_key_identifier": "2E:30:1A:46:41:F0:E8:1B:72:02:59:41:8A:CF:9D:1B:FA:98:8D:9E",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "2E:30:1A:46:41:F0:E8:1B:72:02:59:41:8A:CF:9D:1B:FA:98:8D:9E"
+            },
             "policy_texts": [
                 "Policy Identifier: 2.16.840.1.114413.1.7.23.1\nPolicy Qualifiers:\n* http://certificates.godaddy.com/repository/",
                 "Policy Identifier: 2.23.140.1.2.1\nNo Policy Qualifiers"
@@ -3039,7 +3314,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "77:C2:B8:50:9A:67:76:76:B1:2D:C2:86:D0:83:A0:7E:A6:7E:BA:4B",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "77:C2:B8:50:9A:67:76:76:B1:2D:C2:86:D0:83:A0:7E:A6:7E:BA:4B"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": false}},
             "crl_distribution_points": {
                 "value": [
@@ -3080,7 +3358,10 @@
                     "DNS:www.google.com"
                 ]
             },
-            "subject_key_identifier": "1F:0D:A6:EA:EA:2B:6E:96:1B:5C:99:B5:C3:3D:6F:5F:4B:0D:BE:9F",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "1F:0D:A6:EA:EA:2B:6E:96:1B:5C:99:B5:C3:3D:6F:5F:4B:0D:BE:9F"
+            },
             "policy_texts": [
                 "Policy Identifier: 1.3.6.1.4.1.11129.2.5.3\nNo Policy Qualifiers",
                 "Policy Identifier: 2.23.140.1.2.2\nNo Policy Qualifiers"
@@ -3115,7 +3396,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "EA:4E:7C:D4:80:2D:E5:15:81:86:26:8C:82:6D:C0:98:A4:CF:97:0F",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "EA:4E:7C:D4:80:2D:E5:15:81:86:26:8C:82:6D:C0:98:A4:CF:97:0F"
+            },
             "basic_constraints": {"critical": false, "value": {"ca": false}},
             "crl_distribution_points": {
                 "value": [
@@ -3162,7 +3446,10 @@
                     "DNS:ajabber.me"
                 ]
             },
-            "subject_key_identifier": "52:5A:45:5B:D4:9D:AC:65:30:BD:67:80:6C:D1:A1:3E:09:F7:FD:92",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "52:5A:45:5B:D4:9D:AC:65:30:BD:67:80:6C:D1:A1:3E:09:F7:FD:92"
+            },
             "policy_texts": [
                 "Policy Identifier: 1.3.6.1.4.1.4146.1.10\nPolicy Qualifiers:\n* https://www.globalsign.com/repository/",
                 "Policy Identifier: 2.23.140.1.2.1\nNo Policy Qualifiers"
@@ -3197,7 +3484,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": false}},
             "certificate_policies": {
                 "value": [
@@ -3259,7 +3549,10 @@
                     "DNS:xmpp.zone"
                 ]
             },
-            "subject_key_identifier": "77:37:2D:FC:89:22:11:A0:61:E0:AC:6C:F4:1D:98:31:1B:B2:B3:88",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "77:37:2D:FC:89:22:11:A0:61:E0:AC:6C:F4:1D:98:31:1B:B2:B3:88"
+            },
             "policy_texts": [
                 "Policy Identifier: 2.23.140.1.2.1\nNo Policy Qualifiers",
                 "Policy Identifier: 1.3.6.1.4.1.44947.1.1.1\nPolicy Qualifiers:\n* http://cps.letsencrypt.org"
@@ -3294,7 +3587,10 @@
                     ]
                 }
             },
-            "authority_key_identifier": "39:DA:FF:CA:28:14:8A:A8:74:13:08:B9:E4:0E:A9:D2:FA:7E:9D:69",
+            "authority_key_identifier": {
+                "critical": false,
+                "value": "39:DA:FF:CA:28:14:8A:A8:74:13:08:B9:E4:0E:A9:D2:FA:7E:9D:69"
+            },
             "basic_constraints": {"critical": true, "value": {"ca": false}},
             "crl_distribution_points": {
                 "value": [
@@ -3364,7 +3660,10 @@
                     "DNS:comodo.com"
                 ]
             },
-            "subject_key_identifier": "44:3E:73:30:EB:0B:1B:A7:A7:9D:0F:DA:79:96:4D:1A:87:E9:9D:21",
+            "subject_key_identifier": {
+                "critical": false,
+                "value": "44:3E:73:30:EB:0B:1B:A7:A7:9D:0F:DA:79:96:4D:1A:87:E9:9D:21"
+            },
             "policy_texts": [
                 "Policy Identifier: 1.3.6.1.4.1.6449.1.2.1.5.1\nPolicy Qualifiers:\n* https://secure.comodo.com/CPS",
                 "Policy Identifier: 2.23.140.1.1\nNo Policy Qualifiers"
