@@ -15,9 +15,8 @@
 
 from django import template
 from django.contrib.admin.templatetags.admin_modify import submit_row
-from django.utils import six
 
-from ..utils import format_general_name as _format_general_name
+from ..utils import format_general_name
 from ..utils import format_name
 from ..utils import format_relative_name
 
@@ -29,15 +28,12 @@ register.filter('format_relative_name', format_relative_name)
 
 
 @register.filter
-def format_general_name(value):
+def format_general_names(value):
     """A template tag to format general names.
 
-    ``value`` can be a str or a list, in the latter case this function will format each element of the list.
+    Note that currently general names always occur as list.
     """
-    if isinstance(value, six.string_types):
-        return _format_general_name(value)
-    else:
-        return [_format_general_name(v) for v in value]
+    return [format_general_name(v) for v in value]
 
 
 @register.inclusion_tag('django_ca/admin/submit_line.html', takes_context=True)
