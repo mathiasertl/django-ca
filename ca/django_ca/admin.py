@@ -192,6 +192,10 @@ class CertificateMixin(object):
 
         return mark_safe(html)
 
+    def output_template(self, extension, template):
+        template = 'django_ca/admin/extensions/%s' % template
+        return render_to_string(template, {'extension': extension, })
+
     def authority_information_access(self, obj):
         aia = obj.authority_information_access
 
@@ -244,7 +248,7 @@ class CertificateMixin(object):
     authority_key_identifier.short_description = _('authorityKeyIdentifier')
 
     def crl_distribution_points(self, obj):
-        return self.output_extension(obj.crl_distribution_points)
+        return self.output_template(obj.crl_distribution_points, 'crl_distribution_points.html')
     crl_distribution_points.short_description = _('CRL Distribution Points')
 
     def subject_alternative_name(self, obj):
