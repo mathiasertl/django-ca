@@ -30,6 +30,10 @@ RUN pip install --no-cache-dir \
     -r requirements/requirements-test.txt \
     -r requirements/requirements-lint.txt
 
+# Create some directories that we need later on
+RUN touch .coverage
+RUN chown django-ca:django-ca .coverage
+
 # From here on, we run as normal user
 USER django-ca:django-ca
 
@@ -37,6 +41,7 @@ USER django-ca:django-ca
 RUN python dev.py code-quality
 RUN python dev.py coverage
 RUN make -C docs html-check
+RUN python dev.py init-demo
 
 FROM $IMAGE as prepare
 WORKDIR /usr/src/django-ca
