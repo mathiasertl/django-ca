@@ -54,6 +54,7 @@ from django.utils.six.moves import reload_module
 from django.utils.encoding import force_text
 
 from django_ca import ca_settings
+from django_ca.extensions import CRLDistributionPoints
 from django_ca.extensions import Extension
 from django_ca.extensions import IssuerAlternativeName
 from django_ca.extensions import NameConstraints
@@ -61,7 +62,6 @@ from django_ca.extensions import PolicyInformation
 from django_ca.models import Certificate
 from django_ca.models import CertificateAuthority
 from django_ca.profiles import get_cert_profile_kwargs
-from django_ca.utils import bytes_to_hex
 from django_ca.utils import ca_storage
 from django_ca.utils import hex_to_bytes
 
@@ -162,11 +162,15 @@ def update_cert_data(cert, data):
 
     aki = cert.authority_key_identifier
     if aki is not None:
-        data['authority_key_identifier'] = bytes_to_hex(aki.value)
+        data['authority_key_identifier'] = aki.serialize()
+
+    basic_constraints = cert.basic_constraints
+    if basic_constraints:
+        data['basic_constraints'] = basic_constraints.serialize()
 
     ski = cert.subject_key_identifier
     if ski is not None:
-        data['subject_key_identifier'] = bytes_to_hex(ski.value)
+        data['subject_key_identifier'] = ski.serialize()
 
     ku = cert.key_usage
     if ku is not None:
@@ -302,7 +306,12 @@ data = {
         'subject': '/C=AT/ST=Vienna/CN=%s' % ca_base_cn,
         'pathlen': root_pathlen,
 
-        'basic_constraints': 'critical,CA:TRUE',
+        'basic_constraints': {
+            'critical': True,
+            'value': {
+                'ca': True
+            },
+        },
         'key_usage': 'critical,cRLSign,keyCertSign',
     },
     'child': {
@@ -312,7 +321,13 @@ data = {
         'password': None,
         'subject': '/C=AT/ST=Vienna/CN=child.%s' % ca_base_cn,
 
-        'basic_constraints': 'critical,CA:TRUE,pathlen=%s' % child_pathlen,
+        'basic_constraints': {
+            'critical': True,
+            'value': {
+                'ca': True,
+                'pathlen': child_pathlen,
+            },
+        },
         'pathlen': child_pathlen,
         'max_pathlen': 0,
     },
@@ -321,7 +336,13 @@ data = {
         'password': None,
         'subject': '/C=AT/ST=Vienna/CN=ecc.%s' % ca_base_cn,
 
-        'basic_constraints': 'critical,CA:TRUE,pathlen=%s' % ecc_pathlen,
+        'basic_constraints': {
+            'critical': True,
+            'value': {
+                'ca': True,
+                'pathlen': ecc_pathlen,
+            },
+        },
         'pathlen': ecc_pathlen,
         'max_pathlen': 1,
     },
@@ -331,7 +352,13 @@ data = {
         'password': None,
         'subject': '/C=AT/ST=Vienna/CN=dsa.%s' % ca_base_cn,
 
-        'basic_constraints': 'critical,CA:TRUE,pathlen=%s' % dsa_pathlen,
+        'basic_constraints': {
+            'critical': True,
+            'value': {
+                'ca': True,
+                'pathlen': dsa_pathlen,
+            },
+        },
         'pathlen': dsa_pathlen,
         'max_pathlen': 3,
     },
@@ -340,7 +367,13 @@ data = {
         'password': b'testpassword',
         'subject': '/C=AT/ST=Vienna/CN=pwd.%s' % ca_base_cn,
 
-        'basic_constraints': 'critical,CA:TRUE,pathlen=%s' % pwd_pathlen,
+        'basic_constraints': {
+            'critical': True,
+            'value': {
+                'ca': True,
+                'pathlen': pwd_pathlen,
+            },
+        },
         'pathlen': pwd_pathlen,
         'max_pathlen': 2,
     },
@@ -350,62 +383,112 @@ data = {
         'delta': timedelta(days=5),
         'pathlen': root_pathlen,
         'csr': True,
-        'basic_constraints': 'critical,CA:FALSE',
+        'basic_constraints': {
+            'critical': True,
+            'value': {
+                'ca': False,
+            },
+        },
     },
     'child-cert': {
         'ca': 'child',
         'delta': timedelta(days=5),
         'csr': True,
-        'basic_constraints': 'critical,CA:FALSE',
+        'basic_constraints': {
+            'critical': True,
+            'value': {
+                'ca': False,
+            },
+        },
     },
     'ecc-cert': {
         'ca': 'ecc',
         'delta': timedelta(days=5),
         'csr': True,
-        'basic_constraints': 'critical,CA:FALSE',
+        'basic_constraints': {
+            'critical': True,
+            'value': {
+                'ca': False,
+            },
+        },
     },
     'pwd-cert': {
         'ca': 'pwd',
         'delta': timedelta(days=5),
         'csr': True,
-        'basic_constraints': 'critical,CA:FALSE',
+        'basic_constraints': {
+            'critical': True,
+            'value': {
+                'ca': False,
+            },
+        },
     },
     'dsa-cert': {
         'ca': 'dsa',
         'delta': timedelta(days=5),
         'algorithm': dsa_algorithm,
         'csr': True,
-        'basic_constraints': 'critical,CA:FALSE',
+        'basic_constraints': {
+            'critical': True,
+            'value': {
+                'ca': False,
+            },
+        },
     },
     'profile-client': {
         'ca': 'child',
         'delta': timedelta(days=10),
         'csr': True,
-        'basic_constraints': 'critical,CA:FALSE',
+        'basic_constraints': {
+            'critical': True,
+            'value': {
+                'ca': False,
+            },
+        },
     },
     'profile-server': {
         'ca': 'child',
         'delta': timedelta(days=10),
         'csr': True,
-        'basic_constraints': 'critical,CA:FALSE',
+        'basic_constraints': {
+            'critical': True,
+            'value': {
+                'ca': False,
+            },
+        },
     },
     'profile-webserver': {
         'ca': 'child',
         'delta': timedelta(days=10),
         'csr': True,
-        'basic_constraints': 'critical,CA:FALSE',
+        'basic_constraints': {
+            'critical': True,
+            'value': {
+                'ca': False,
+            },
+        },
     },
     'profile-enduser': {
         'ca': 'child',
         'delta': timedelta(days=10),
         'csr': True,
-        'basic_constraints': 'critical,CA:FALSE',
+        'basic_constraints': {
+            'critical': True,
+            'value': {
+                'ca': False,
+            },
+        },
     },
     'profile-ocsp': {
         'ca': 'child',
         'delta': timedelta(days=10),
         'csr': True,
-        'basic_constraints': 'critical,CA:FALSE',
+        'basic_constraints': {
+            'critical': True,
+            'value': {
+                'ca': False
+            },
+        },
     },
     'no-extensions': {
         'ca': 'child',
@@ -416,26 +499,112 @@ data = {
         'ca': 'child',
         'delta': timedelta(days=20),
         'csr': True,
-        'basic_constraints': 'critical,CA:FALSE',
+        'basic_constraints': {
+            'critical': True,
+            'value': {
+                'ca': False
+            },
+        },
         'name_constraints': {
             "value": {
                 "permitted": ["DNS:.org"],
                 "excluded": ["DNS:.net"]
             }
         },
-        'issuer_alternative_name': 'http://ian.child.example.com/',
-        'tls_feature': 'critical,OCSPMustStaple,MultipleCertStatusRequest',
-        'key_usage': 'critical,encipherOnly,keyAgreement,nonRepudiation',
-        'extended_key_usage': 'serverAuth,clientAuth,codeSigning,emailProtection',
-        'subject_alternative_name': [
-            'san1.all-extensions.example.com',
-            'san2.all-extensions.example.com',
-        ],
+        'issuer_alternative_name': {
+            'value': [
+                'http://ian.child.example.com/',
+            ],
+        },
+        'tls_feature': {
+            'critical': True,
+            'value': [
+                'OCSPMustStaple', 'MultipleCertStatusRequest'
+            ],
+        },
+        'key_usage': {
+            'critical': True,
+            'value': [
+                'encipherOnly', 'keyAgreement', 'nonRepudiation'
+            ],
+        },
+        'extended_key_usage': {
+            'value': [
+                'serverAuth', 'clientAuth', 'codeSigning', 'emailProtection',
+            ],
+        },
+        'subject_alternative_name': {
+            'value': [
+                'san1.all-extensions.example.com',
+                'san2.all-extensions.example.com',
+            ]
+        },
         'ocsp_no_check': {
             'critical': False,
         },
         'precert_poison': {
             'critical': True,
+        },
+    },
+    'alt-extensions': {
+        'ca': 'child',
+        'delta': timedelta(days=20),
+        'csr': True,
+        'basic_constraints': {
+            'critical': False,  # usually critical
+            'value': {
+                'ca': False,
+            },
+        },
+        'crl_distribution_points': {
+            'critical': True,  # not usually critical
+            'value': [  # two distribution points
+                {
+                    'full_name': ['URI:https://example.com'],
+                },
+                {
+                    # values are otherwise not present in CRLs
+                    'relative_name': '/CN=rdn.ca.example.com',
+                    'crl_issuer': [
+                        'http://crl.ca.example.com',
+                        'http://crl.ca.example.net',
+                    ],
+                    'reasons': ['key_compromise', 'ca_compromise'],
+                },
+            ]
+        },
+        'extended_key_usage': {
+            'critical': True,  # not usually critical
+            'value': ['serverAuth', 'clientAuth', 'codeSigning', 'emailProtection'],
+        },
+        'issuer_alternative_name': {
+            'critical': True,  # not usually critical
+            'value': [  # usually just one value
+                'http://ian.example.com',
+                'http://ian.example.net',
+            ]
+        },
+        'key_usage': {
+            'critical': False,  # usually critical
+            'value': ['encipherOnly', 'keyAgreement', 'nonRepudiation'],
+        },
+        'name_constraints': {
+            'critical': True,  # not usually critical
+            "value": {
+                "permitted": ["DNS:.org"],  # just permitted, no excluded
+            }
+        },
+        'subject_alternative_name': {
+            'critical': True,  # not usually critical
+            'value': {
+                'san1.alt-extensions.example.com',
+                'san2.alt-extensions.example.com',
+                'san3.alt-extensions.example.com',
+            }
+        },
+        'tls_feature': {
+            'critical': False,  # critical in all-extensions
+            'value': ['OCSPMustStaple'],
         },
     },
 }
@@ -629,6 +798,38 @@ if not args.only_contrib:
         if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
             extra_extensions.append(PrecertPoison())
 
+        kwargs = {
+            'extra_extensions': extra_extensions,
+            'subject_alternative_name': data[name]['subject_alternative_name'],
+            'key_usage': data[name]['key_usage'],
+            'extended_key_usage': data[name]['extended_key_usage'],
+            'tls_feature': data[name]['tls_feature'],
+            'ocsp_no_check': True,
+            'subject': [('CN', data[name]['cn'])]
+        }
+
+        with freeze_time(now + data[name]['delta']):
+            cert = Certificate.objects.init(ca=ca, csr=csr, algorithm=data[name]['algorithm'],
+                                            expires=datetime.utcnow() + data[name]['expires'],
+                                            password=pwd, **kwargs)
+        copy_cert(cert, data[name], key_path, csr_path)
+
+        # Create a certificate with some alternative form of extension that might otherwise be untested:
+        # * CRL with relative_name (full_name and relative_name are mutually exclusive!)
+        name = 'alt-extensions'
+        ca = CertificateAuthority.objects.get(name=data[name]['ca'])
+        ca.crl_url = ''
+        pwd = data[ca.name]['password']
+        key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
+        csr_path = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
+        csr = create_csr(key_path, csr_path)
+
+        kwargs = {}
+        extra_extensions = [
+            NameConstraints(data[name]['name_constraints']),
+            CRLDistributionPoints(data[name]['crl_distribution_points']),
+            IssuerAlternativeName(data[name]['issuer_alternative_name']),
+        ]
         kwargs = {
             'extra_extensions': extra_extensions,
             'subject_alternative_name': data[name]['subject_alternative_name'],
