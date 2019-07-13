@@ -449,7 +449,7 @@ SubjectKeyIdentifier{subject_key_identifier_critical}:
     {subject_key_identifier}
 TLSFeature{tls_feature_critical}:
     * {tls_feature[0]}
-    * {tls_feature[1]}
+    * {tls_feature[1]}{precert_poison_unknown}
 Watchers:
 Digest:
     md5: {md5}
