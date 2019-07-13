@@ -170,6 +170,7 @@ class X509CertMixin(models.Model):
         help_text=_('Optional: When this certificate was compromised. You can change this date later.'))
 
     _x509 = None
+    _extensions = None
 
     class Meta:
         abstract = True
@@ -362,7 +363,11 @@ class X509CertMixin(models.Model):
 
     @property
     def _sorted_extensions(self):
-        return sorted(self.x509.extensions, key=lambda e: (get_extension_name(e), e.oid.dotted_string))
+        if self._extensions is None:
+            self._extensions = list(sorted(
+                self.x509.extensions, key=lambda e: (get_extension_name(e), e.oid.dotted_string)
+            ))
+        return self._extensions
 
     def get_extension_fields(self):
         for ext in self._sorted_extensions:
