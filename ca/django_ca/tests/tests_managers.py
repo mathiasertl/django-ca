@@ -400,6 +400,88 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         self.assertCountEqual(cert.get_extensions(), expected)
 
     @override_tmpcadir()
+    def test_override_ca_extensions(self):
+        ca = self.cas['child']
+        csr = certs['child-cert']['csr']['pem']
+        cn = 'override.example.com'
+        subject = '/CN=%s' % cn
+
+        issuer_url = 'http://issuer.override.example.com'
+        crl_url = 'http://crl.override.example.com'
+        ocsp_url = 'http://ocsp.override.example.com'
+        ian_url = 'http://ian.override.example.com'
+
+        ca.issuer_url = ''
+        ca.crl_url = ''
+        ca.ocsp_url = ''
+        ca.issuer_alt_name_url = ''
+        ca.save()
+
+        cert = Certificate.objects.init(
+            ca, csr, subject=subject,
+            issuer_url=issuer_url, crl_url=crl_url, ocsp_url=ocsp_url, issuer_alternative_name=ian_url
+        )
+        aki = AuthorityKeyIdentifier(x509.Extension(
+            oid=AuthorityKeyIdentifier.oid, critical=False,
+            value=ca.get_authority_key_identifier()
+        ))
+
+        self.maxDiff = None
+        expected = [
+            cert.subject_key_identifier,  # changes on every invocation
+            BasicConstraints({'value': {'ca': False}}),
+            aki,
+            CRLDistributionPoints({'value': [{'full_name': [crl_url]}]}),
+            SubjectAlternativeName({'value': [cn]}),
+            AuthorityInformationAccess({
+                'value': {
+                    'issuers': [issuer_url],
+                    'ocsp': [ocsp_url],
+                }
+            }),
+            IssuerAlternativeName({'value': [ian_url]}),
+        ]
+
+        self.assertCountEqual(cert.get_extensions(), expected)
+
+    @override_tmpcadir()
+    def test_clear_ca_extensions(self):
+        ca = self.cas['child']
+        csr = certs['child-cert']['csr']['pem']
+        cn = 'override.example.com'
+        subject = '/CN=%s' % cn
+
+        issuer_url = 'http://issuer.override.example.com'
+        crl_url = 'http://crl.override.example.com'
+        ocsp_url = 'http://ocsp.override.example.com'
+        ian_url = 'http://ian.override.example.com'
+
+        ca.issuer_url = issuer_url
+        ca.crl_url = crl_url
+        ca.ocsp_url = ocsp_url
+        ca.issuer_alt_name_url = ian_url
+        ca.save()
+
+        cert = Certificate.objects.init(
+            ca, csr, subject=subject,
+            issuer_url=False, crl_url=False, ocsp_url=False, issuer_alternative_name=False
+        )
+        aki = AuthorityKeyIdentifier(x509.Extension(
+            oid=AuthorityKeyIdentifier.oid, critical=False,
+            value=ca.get_authority_key_identifier()
+        ))
+
+        self.maxDiff = None
+        expected = [
+            cert.subject_key_identifier,  # changes on every invocation
+            BasicConstraints({'value': {'ca': False}}),
+            aki,
+            SubjectAlternativeName({'value': [cn]}),
+        ]
+
+        self.assertCountEqual(cert.get_extensions(), expected)
+
+    @override_tmpcadir()
     def test_extra_extensions(self):
         ca = self.cas['child']
         csr = certs['child-cert']['csr']['pem']

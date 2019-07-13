@@ -478,7 +478,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             builder = builder.add_extension(**tls_feature.for_builder())
 
         if issuer_alternative_name:
-            issuer_alt_name = IssuerAlternativeName(ca.issuer_alt_name)
+            issuer_alt_name = IssuerAlternativeName(issuer_alternative_name)
             builder = builder.add_extension(**issuer_alt_name.for_builder())
 
         if ocsp_no_check:
