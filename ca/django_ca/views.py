@@ -38,6 +38,7 @@ from django.http import HttpResponse
 from django.http import HttpResponseServerError
 from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes
+
 from django.utils.encoding import force_text
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View

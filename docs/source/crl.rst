@@ -16,13 +16,55 @@ also just keep a local copy of a CRL.
    you cannot verify the the certificate used when fetching the CRL
    anyway, since you would need the CRL for that.
 
-*******************************
-Add CRL URL to new certificates
-*******************************
 
-To include the URL to a CRL in newly issued certificates (you cannot add it to
-already issued certificates, obviously), either set it in the admin interface or
-via the command line:
+****************
+Use default CRLs
+****************
+
+If you have (correctly) configured a :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` and setup the
+webserver under that URL, you do not have to do anything to provide CRLs.
+
+**django-ca** provides the generic view :py:class:`~django_ca.views.CertificateRevocationListView`
+to provide CRLs via HTTP. Since CRLs are always signed directly be the CA, it is currently required that the
+private key of the CA is available to the webserver.
+
+Override default hostname
+=========================
+
+By default, **django-ca** will generate CRL URLs based on :ref:`CA_DEFAULT_HOSTNAME
+<settings-ca-default-hostname>`. If you want to generate a CA to use a different hostname (e.g. a CA for
+internal use only, where you can reach the CRL under a local domain), you can override the default hostname:
+
+.. code-block:: console
+
+   $ python manage.py init_ca \
+   >     --default-hostname=ca.local.tld
+   >     ...
+
+... or disable it altogether, in which case the CA will not contain any URLs:
+
+.. code-block:: console
+
+   $ python manage.py init_ca \
+   >     --no-default-hostname
+   >     ...
+
+Customize CRL URLs
+==================
+
+If you want to statically generate CRLs and copy them to a custom location (e.g. for performance reasons), you
+can customize the CRL URLs used for a CA when generating it (note that you cannot set a CRL URL in the CA
+certificate if it is a root CA):
+
+.. code-block:: console
+
+   $ python manage.py init_ca \
+   >     --parent=... \
+   >     --crl-url=http://custom.example.com/cert.crl \
+   >     --ca-crl-url=http://custom.example.com/ca.crl \
+   >     ...
+
+You can also change the CRL URL for newly issued certificates:
 
 .. code-block:: console
 
@@ -31,41 +73,27 @@ via the command line:
    $ python manage.py edit_ca --crl-url=http://ca.example.com/crl.pem \
    >     34:D6:02:B5:B8:27:4F:51:9A:16:0C:B8:56:B7:79:3F
 
+****************
+Host custom CRLs
+****************
 
-.. _crl-generic:
+**django-ca** hosts CRLs in a format that is usually understood by CRL clients, but you might want to host
+CRLs in a different format in your own URL configuration::
 
-******************************
-Use generic view to host a CRL
-******************************
-
-**django-ca** provides the generic view :py:class:`~django_ca.views.CertificateRevocationListView`
-to provide CRLs via HTTP.
-
-If you installed **django-ca** as a full project, a default CRL is already available for all CAs.
-If you installed django-ca on "ca.example.com", the CRL is available at
-``http://ca.example.com/django_ca/crl/<serial>/``. If you installed django-ca as an app, you only
-need to include ``django_ca.urls`` in your URL conf at the appropriate location.
-
-The default CRL is in the ASN1/DER format, signed with sha512 and refreshed every ten minutes.
-This is fine for TLS clients that use CRLs and is in fact similar to what public CAs use (see
-:ref:`ca-example-crlDistributionPoints`). If you want to change any of these settings, you can
-override them as parameters in a URL conf::
-
-   from OpenSSL import crypto
+   from cryptography.hazmat.primitives import hashes
+   from cryptography.hazmat.primitives.serialization import Encoding
    from django_ca.views import CertificateRevocationListView
 
    urlpatterns = [
-      # ... your other patterns
+      ...
 
-      # We need a CRL in PEM format with a sha256 digest
-      url(r'^crl/(?P<serial>[0-9A-F:]+)/$', 
-          CertificateRevocationListView.as_view(
-              type=crypto.FILETYPE_PEM,
-              digest='sha256',
-              content_type='text/plain',
-          ), 
-          name='sha256-crl')),
-   ]
+      # we need a PEM CRL signed with SHA256 for some reason:
+      path('<hex:serial>.pem', views.CertificateRevocationListView.as_view(
+         type=Encoding.PEM,
+         digest=hashes.SHA256()
+      ), name='custom-crl'),
+  ]
+
 
 .. autoclass:: django_ca.views.CertificateRevocationListView
    :members:
