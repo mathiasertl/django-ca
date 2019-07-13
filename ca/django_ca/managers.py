@@ -266,7 +266,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
                                    backend=default_backend())
 
         # Normalize extensions for create()
-        if crl_url is not None:
+        if crl_url:
             crl_url = '\n'.join(crl_url)
         issuer_alt_name = ','.join(issuer_alt_name.serialize()['value'])
 
