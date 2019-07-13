@@ -4,7 +4,7 @@ ARG IMAGE=python:3.7-alpine3.9
 ####################
 FROM $IMAGE as test
 WORKDIR /usr/src/django-ca
-RUN apk --no-cache add --update gcc linux-headers libc-dev libffi-dev openssl-dev make
+RUN apk --no-cache add --update gcc linux-headers libc-dev libffi-dev openssl openssl-dev make
 
 COPY requirements.txt ./
 COPY requirements/ requirements/
@@ -16,7 +16,7 @@ RUN addgroup -g 9000 -S django-ca && \
 RUN pip install -U setuptools pip
 RUN pip install --no-cache-dir -r requirements/requirements-docker.txt termcolor
 
-COPY setup.py dev.py tox.ini ./
+COPY setup.py dev.py tox.ini recreate-fixtures.py ./
 COPY --chown=django-ca:django-ca docs/ docs/
 COPY --chown=django-ca:django-ca ca/ ca/
 COPY --chown=django-ca:django-ca docker/localsettings.py ca/ca/localsettings.py
@@ -30,9 +30,10 @@ RUN pip install --no-cache-dir \
     -r requirements/requirements-test.txt \
     -r requirements/requirements-lint.txt
 
-# Create some directories that we need later on
+# Create some files/directories that we need later on
 RUN touch .coverage
-RUN chown django-ca:django-ca .coverage
+RUN mkdir -p /var/lib/django-ca/
+RUN chown django-ca:django-ca .coverage /var/lib/django-ca/
 
 # From here on, we run as normal user
 USER django-ca:django-ca
