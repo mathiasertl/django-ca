@@ -223,6 +223,10 @@ elif args.command == 'docker-test':
         # Currently supported Alpine releases:
         #   https://wiki.alpinelinux.org/wiki/Alpine_Linux:Releases
 
+        'python:2.7-alpine3.10',
+        'python:3.5-alpine3.10',
+        'python:3.6-alpine3.10',
+        'python:3.7-alpine3.10',
         'python:2.7-alpine3.9',
         'python:3.5-alpine3.9',
         'python:3.6-alpine3.9',
