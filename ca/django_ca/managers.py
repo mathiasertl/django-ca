@@ -185,6 +185,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         if default_hostname is None:
             default_hostname = ca_settings.CA_DEFAULT_HOSTNAME
 
+        # If there is a default hostname, use it to compute some URLs from that
         if default_hostname:
             default_hostname = validate_hostname(default_hostname, allow_port=True)
             if parent:
@@ -192,19 +193,28 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             else:
                 root_serial = hex_serial
 
+            # Set OCSP urls
             if not ocsp_url:
                 ocsp_path = reverse('django_ca:ocsp-cert-post', kwargs={'serial': hex_serial})
                 ocsp_url = 'http://%s%s' % (default_hostname, ocsp_path)
-
-            if parent and not ca_ocsp_url:
+            if parent and not ca_ocsp_url:  # OCSP for CA only makes sense in intermediate CAs
                 ocsp_path = reverse('django_ca:ocsp-ca-post', kwargs={'serial': hex_serial})
                 ca_ocsp_url = 'http://%s%s' % (default_hostname, ocsp_path)
 
+            # Set issuer path
             issuer_path = reverse('django_ca:issuer', kwargs={'serial': root_serial})
             if parent and not ca_issuer_url:
                 ca_issuer_url = 'http://%s%s' % (default_hostname, issuer_path)
             if not issuer_url:
                 issuer_url = 'http://%s%s' % (default_hostname, issuer_path)
+
+            # Set CRL URLs
+            if not crl_url:
+                crl_path = reverse('django_ca:crl', kwargs={'serial': hex_serial})
+                crl_url = ['http://%s%s' % (default_hostname, crl_path)]
+            if parent and not ca_crl_url:  # CRL for CA only makes sense in intermediate CAs
+                ca_crl_path = reverse('django_ca:ca-crl', kwargs={'serial': hex_serial})
+                ca_crl_url = ['http://%s%s' % (default_hostname, ca_crl_path)]
 
         pre_create_ca.send(
             sender=self.model, name=name, key_size=key_size, key_type=key_type, algorithm=algorithm,
