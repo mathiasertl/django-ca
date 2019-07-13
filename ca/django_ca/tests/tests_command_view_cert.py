@@ -29,7 +29,6 @@ from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
 
-
 output = {
     'root-cert': '''Common Name: {cn}
 Valid from: {valid_from_short}
