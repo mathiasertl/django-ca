@@ -142,6 +142,7 @@ class ChangelistTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
             self.certs['profile-ocsp'],
             self.certs['no-extensions'],
             self.certs['all-extensions'],
+            self.certs['alt-extensions'],
         ])
         response = self.client.get('%s?status=expired' % self.changelist_url)
         self.assertResponse(response, [
@@ -249,6 +250,7 @@ class RevokeActionTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
 
 class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     def test_basic(self):
+        # Just assert that viewing a certificate does not throw an exception
         for name, cert in self.certs.items():
             response = self.client.get(self.change_url(cert.pk))
             self.assertChangeResponse(response)

@@ -30,6 +30,495 @@ from .base import override_tmpcadir
 from .base import timestamps
 
 
+output = {
+    'root-cert': '''Common Name: {cn}
+Valid from: {valid_from_short}
+Valid until: {valid_until_short}
+Status: Valid
+AuthorityInfoAccess{authority_information_access_critical}:
+    CA Issuers:
+      * URI:{authority_information_access.issuers[0].value}
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints (critical):
+    CA:FALSE
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl}
+ExtendedKeyUsage{extended_key_usage_critical}:
+    * {extended_key_usage[0]}
+    * {extended_key_usage[1]}
+KeyUsage{key_usage_critical}:
+    * {key_usage[0]}
+    * {key_usage[1]}
+    * {key_usage[2]}
+SubjectAltName{subject_alternative_name_critical}:
+    * {subject_alternative_name}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier}
+Watchers:
+Digest:
+    md5: {md5}
+    sha1: {sha1}
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
+''',
+
+    'child-cert': '''Common Name: {cn}
+Valid from: {valid_from_short}
+Valid until: {valid_until_short}
+Status: Valid
+AuthorityInfoAccess{authority_information_access_critical}:
+    CA Issuers:
+      * URI:{authority_information_access.issuers[0].value}
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints (critical):
+    CA:FALSE
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl}
+ExtendedKeyUsage{extended_key_usage_critical}:
+    * {extended_key_usage[0]}
+    * {extended_key_usage[1]}
+KeyUsage{key_usage_critical}:
+    * {key_usage[0]}
+    * {key_usage[1]}
+    * {key_usage[2]}
+SubjectAltName{subject_alternative_name_critical}:
+    * {subject_alternative_name}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier}
+Watchers:
+Digest:
+    md5: {md5}
+    sha1: {sha1}
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
+''',
+
+    'ecc-cert': '''Common Name: {cn}
+Valid from: {valid_from_short}
+Valid until: {valid_until_short}
+Status: Valid
+AuthorityInfoAccess{authority_information_access_critical}:
+    CA Issuers:
+      * URI:{authority_information_access.issuers[0].value}
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints (critical):
+    CA:FALSE
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl}
+ExtendedKeyUsage{extended_key_usage_critical}:
+    * {extended_key_usage[0]}
+    * {extended_key_usage[1]}
+KeyUsage{key_usage_critical}:
+    * {key_usage[0]}
+    * {key_usage[1]}
+    * {key_usage[2]}
+SubjectAltName{subject_alternative_name_critical}:
+    * {subject_alternative_name}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier}
+Watchers:
+Digest:
+    md5: {md5}
+    sha1: {sha1}
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
+''',
+
+    'pwd-cert': '''Common Name: {cn}
+Valid from: {valid_from_short}
+Valid until: {valid_until_short}
+Status: Valid
+AuthorityInfoAccess{authority_information_access_critical}:
+    CA Issuers:
+      * URI:{authority_information_access.issuers[0].value}
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints (critical):
+    CA:FALSE
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl}
+ExtendedKeyUsage{extended_key_usage_critical}:
+    * {extended_key_usage[0]}
+    * {extended_key_usage[1]}
+KeyUsage{key_usage_critical}:
+    * {key_usage[0]}
+    * {key_usage[1]}
+    * {key_usage[2]}
+SubjectAltName{subject_alternative_name_critical}:
+    * {subject_alternative_name}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier}
+Watchers:
+Digest:
+    md5: {md5}
+    sha1: {sha1}
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
+''',
+
+    'dsa-cert': '''Common Name: {cn}
+Valid from: {valid_from_short}
+Valid until: {valid_until_short}
+Status: Valid
+AuthorityInfoAccess{authority_information_access_critical}:
+    CA Issuers:
+      * URI:{authority_information_access.issuers[0].value}
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints (critical):
+    CA:FALSE
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl}
+ExtendedKeyUsage{extended_key_usage_critical}:
+    * {extended_key_usage[0]}
+    * {extended_key_usage[1]}
+KeyUsage{key_usage_critical}:
+    * {key_usage[0]}
+    * {key_usage[1]}
+    * {key_usage[2]}
+SubjectAltName{subject_alternative_name_critical}:
+    * {subject_alternative_name}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier}
+Watchers:
+Digest:
+    md5: {md5}
+    sha1: {sha1}
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
+''',
+
+    'profile-client': '''Common Name: {cn}
+Valid from: {valid_from_short}
+Valid until: {valid_until_short}
+Status: Valid
+AuthorityInfoAccess{authority_information_access_critical}:
+    CA Issuers:
+      * URI:{authority_information_access.issuers[0].value}
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints (critical):
+    CA:FALSE
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl}
+ExtendedKeyUsage{extended_key_usage_critical}:
+    * {extended_key_usage[0]}
+KeyUsage{key_usage_critical}:
+    * {key_usage[0]}
+SubjectAltName{subject_alternative_name_critical}:
+    * {subject_alternative_name}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier}
+Watchers:
+Digest:
+    md5: {md5}
+    sha1: {sha1}
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
+''',
+
+    'profile-server': '''Common Name: {cn}
+Valid from: {valid_from_short}
+Valid until: {valid_until_short}
+Status: Valid
+AuthorityInfoAccess{authority_information_access_critical}:
+    CA Issuers:
+      * URI:{authority_information_access.issuers[0].value}
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints (critical):
+    CA:FALSE
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl}
+ExtendedKeyUsage{extended_key_usage_critical}:
+    * {extended_key_usage[0]}
+    * {extended_key_usage[1]}
+KeyUsage{key_usage_critical}:
+    * {key_usage[0]}
+    * {key_usage[1]}
+    * {key_usage[2]}
+SubjectAltName{subject_alternative_name_critical}:
+    * {subject_alternative_name}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier}
+Watchers:
+Digest:
+    md5: {md5}
+    sha1: {sha1}
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
+''',
+
+    'profile-webserver': '''Common Name: {cn}
+Valid from: {valid_from_short}
+Valid until: {valid_until_short}
+Status: Valid
+AuthorityInfoAccess{authority_information_access_critical}:
+    CA Issuers:
+      * URI:{authority_information_access.issuers[0].value}
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints (critical):
+    CA:FALSE
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl}
+ExtendedKeyUsage{extended_key_usage_critical}:
+    * {extended_key_usage[0]}
+KeyUsage{key_usage_critical}:
+    * {key_usage[0]}
+    * {key_usage[1]}
+    * {key_usage[2]}
+SubjectAltName{subject_alternative_name_critical}:
+    * {subject_alternative_name}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier}
+Watchers:
+Digest:
+    md5: {md5}
+    sha1: {sha1}
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
+''',
+
+    'profile-enduser': '''Common Name: {cn}
+Valid from: {valid_from_short}
+Valid until: {valid_until_short}
+Status: Valid
+AuthorityInfoAccess{authority_information_access_critical}:
+    CA Issuers:
+      * URI:{authority_information_access.issuers[0].value}
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints (critical):
+    CA:FALSE
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl}
+ExtendedKeyUsage{extended_key_usage_critical}:
+    * {extended_key_usage[0]}
+    * {extended_key_usage[1]}
+    * {extended_key_usage[2]}
+KeyUsage{key_usage_critical}:
+    * {key_usage[0]}
+    * {key_usage[1]}
+    * {key_usage[2]}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier}
+Watchers:
+Digest:
+    md5: {md5}
+    sha1: {sha1}
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
+''',
+
+    'profile-ocsp': '''Common Name: {cn}
+Valid from: {valid_from_short}
+Valid until: {valid_until_short}
+Status: Valid
+AuthorityInfoAccess{authority_information_access_critical}:
+    CA Issuers:
+      * URI:{authority_information_access.issuers[0].value}
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints (critical):
+    CA:FALSE
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl}
+ExtendedKeyUsage{extended_key_usage_critical}:
+    * {extended_key_usage[0]}
+KeyUsage{key_usage_critical}:
+    * {key_usage[0]}
+    * {key_usage[1]}
+    * {key_usage[2]}
+SubjectAltName{subject_alternative_name_critical}:
+    * {subject_alternative_name}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier}
+Watchers:
+Digest:
+    md5: {md5}
+    sha1: {sha1}
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
+''',
+
+    'no-extensions': '''Common Name: {cn}
+Valid from: {valid_from_short}
+Valid until: {valid_until_short}
+Status: Valid
+Watchers:
+Digest:
+    md5: {md5}
+    sha1: {sha1}
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
+''',
+
+    'all-extensions': '''Common Name: {cn}
+Valid from: {valid_from_short}
+Valid until: {valid_until_short}
+Status: Valid
+AuthorityInfoAccess{authority_information_access_critical}:
+    CA Issuers:
+      * URI:{authority_information_access.issuers[0].value}
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints (critical):
+    CA:FALSE
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl}
+ExtendedKeyUsage{extended_key_usage_critical}:
+    * {extended_key_usage[0]}
+    * {extended_key_usage[1]}
+    * {extended_key_usage[2]}
+    * {extended_key_usage[3]}
+IssuerAltName{issuer_alternative_name_critical}:
+    * {issuer_alternative_name[0]}
+KeyUsage{key_usage_critical}:
+    * {key_usage[0]}
+    * {key_usage[1]}
+    * {key_usage[2]}
+NameConstraints{name_constraints_critical}:
+    Permitted:
+      * DNS:{name_constraints.permitted[0].value}
+    Excluded:
+      * DNS:{name_constraints.excluded[0].value}
+OCSPNoCheck{ocsp_no_check_critical}: Yes{precert_poison}
+SubjectAltName{subject_alternative_name_critical}:
+    * {subject_alternative_name[0]}
+    * {subject_alternative_name[1]}
+    * {subject_alternative_name[2]}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier}
+TLSFeature{tls_feature_critical}:
+    * {tls_feature[0]}
+    * {tls_feature[1]}
+Watchers:
+Digest:
+    md5: {md5}
+    sha1: {sha1}
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
+''',
+
+    'alt-extensions': '''Common Name: {cn}
+Valid from: {valid_from_short}
+Valid until: {valid_until_short}
+Status: Valid
+AuthorityInfoAccess{authority_information_access_critical}:
+    CA Issuers:
+      * URI:{authority_information_access.issuers[0].value}
+    OCSP:
+      * URI:{authority_information_access.ocsp[0].value}
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints (critical):
+    CA:FALSE
+CRLDistributionPoints{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl_distribution_points[0].full_name[0].value}
+    * DistributionPoint:
+      * Relative Name: /CN=rdn.ca.example.com
+      * CRL Issuer:
+        * URI:{crl_distribution_points[1].crl_issuer[0].value}
+        * URI:{crl_distribution_points[1].crl_issuer[1].value}
+      * Reasons: ca_compromise, key_compromise
+ExtendedKeyUsage{extended_key_usage_critical}:
+    * {extended_key_usage[0]}
+    * {extended_key_usage[1]}
+    * {extended_key_usage[2]}
+    * {extended_key_usage[3]}
+IssuerAltName{issuer_alternative_name_critical}:
+    * {issuer_alternative_name[0]}
+    * {issuer_alternative_name[1]}
+KeyUsage{key_usage_critical}:
+    * {key_usage[0]}
+    * {key_usage[1]}
+    * {key_usage[2]}
+NameConstraints{name_constraints_critical}:
+    Permitted:
+      * DNS:{name_constraints.permitted[0].value}
+OCSPNoCheck{ocsp_no_check_critical}: Yes
+SubjectAltName{subject_alternative_name_critical}:
+    * {subject_alternative_name[0]}
+    * {subject_alternative_name[1]}
+    * {subject_alternative_name[2]}
+    * {subject_alternative_name[3]}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier}
+TLSFeature{tls_feature_critical}:
+    * {tls_feature[0]}
+Watchers:
+Digest:
+    md5: {md5}
+    sha1: {sha1}
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
+''',
+}
+
+
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class ViewCertTestCase(DjangoCAWithCertTestCase):
     def _get_format(self, cert):
@@ -127,10 +616,6 @@ HPKP pin: {hpkp}
 '''.format(status=status, **self.get_cert_context(key)))
             self.assertEqual(stderr, b'')
 
-    @freeze_time(timestamps['everything_valid'])
-    def test_basic(self):
-        self.assertBasic(status='Valid')
-
     @freeze_time(timestamps['before_everything'])
     def test_basic_not_yet_valid(self):
         self.assertBasic(status='Not yet valid')
@@ -140,104 +625,13 @@ HPKP pin: {hpkp}
         self.assertBasic(status='Expired')
 
     @freeze_time(timestamps['everything_valid'])
-    def test_cert_all(self):
-        cert = self.certs['all-extensions']
-        stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, extensions=True,
-                                  stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b'')
-        self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: Valid
-AuthorityInfoAccess{authority_information_access_critical}:
-    CA Issuers:
-      * URI:{authority_information_access.issuers[0].value}
-    OCSP:
-      * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
-    {basic_constraints_text}
-CRLDistributionPoints{crl_distribution_points_critical}:
-    * DistributionPoint:
-      * Full Name:
-        * URI:{crl}
-ExtendedKeyUsage{extended_key_usage_critical}:
-    * {extended_key_usage[0]}
-    * {extended_key_usage[1]}
-    * {extended_key_usage[2]}
-    * {extended_key_usage[3]}
-IssuerAltName{issuer_alternative_name_critical}:
-    * {issuer_alternative_name[0]}
-KeyUsage{key_usage_critical}:
-    * {key_usage[0]}
-    * {key_usage[1]}
-    * {key_usage[2]}
-NameConstraints{name_constraints_critical}:
-    Permitted:
-      * DNS:{name_constraints.permitted[0].value}
-    Excluded:
-      * DNS:{name_constraints.excluded[0].value}
-OCSPNoCheck{ocsp_no_check_critical}: Yes{precert_poison}
-SubjectAltName{subject_alternative_name_critical}:
-    * {subject_alternative_name[0]}
-    * {subject_alternative_name[1]}
-    * {subject_alternative_name[2]}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
-TLSFeature{tls_feature_critical}:
-    * {tls_feature[0]}
-    * {tls_feature[1]}{precert_poison_unknown}
-Watchers:
-Digest:
-    md5: {md5}
-    sha1: {sha1}
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
-'''.format(**self.get_cert_context('all-extensions')))
-
-    @freeze_time(timestamps['everything_valid'])
-    def test_ocsp(self):
-        cert = self.certs['profile-ocsp']
-        stdout, stderr = self.cmd('view_cert', cert, no_pem=True, extensions=True,
-                                  stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b'')
-        self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: Valid
-AuthorityInfoAccess{authority_information_access_critical}:
-    CA Issuers:
-      * URI:{authority_information_access.issuers[0].value}
-    OCSP:
-      * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
-    {basic_constraints_text}
-CRLDistributionPoints{crl_distribution_points_critical}:
-    * DistributionPoint:
-      * Full Name:
-        * URI:{crl}
-ExtendedKeyUsage{extended_key_usage_critical}:
-    * {extended_key_usage[0]}
-KeyUsage{key_usage_critical}:
-    * {key_usage[0]}
-    * {key_usage[1]}
-    * {key_usage[2]}
-SubjectAltName{subject_alternative_name_critical}:
-    * {subject_alternative_name[0]}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
-Watchers:
-Digest:
-    md5: {md5}
-    sha1: {sha1}
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
-'''.format(**self.get_cert_context('profile-ocsp')))
+    def test_certs(self):
+        for name, cert in self.generated_certs.items():
+            stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, extensions=True,
+                                      stdout=BytesIO(), stderr=BytesIO())
+            self.assertEqual(stderr, b'')
+            self.assertEqual(stdout.decode('utf-8'),
+                             output[name].format(**self.get_cert_context(name)))
 
     @freeze_time(timestamps['everything_valid'])
     def test_der(self):
