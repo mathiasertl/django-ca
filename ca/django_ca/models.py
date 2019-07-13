@@ -603,6 +603,7 @@ class CertificateAuthority(X509CertMixin):
             ca=self,
             csr=csr,
             expires=expires,
+            ocsp_url=False,
             password=password,
             **kwargs
         )

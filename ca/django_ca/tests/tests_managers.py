@@ -273,7 +273,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             ca, csr, algorithm=hashes.SHA256(),
             subject_alternative_name=['example.com'], **kwargs)
 
-        self.assertEqual(self.get_extensions(cert.x509)['IssuerAlternativeName'],
+        self.assertEqual(cert.issuer_alternative_name,
                          IssuerAlternativeName(ca.issuer_alt_name))
 
     @override_tmpcadir()

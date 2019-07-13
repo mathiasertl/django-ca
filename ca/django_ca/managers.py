@@ -295,8 +295,9 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 class CertificateManager(CertificateManagerMixin, models.Manager):
     def sign_cert(self, ca, csr, expires=None, algorithm=None, subject=None, cn_in_san=True,
                   csr_format=Encoding.PEM, subject_alternative_name=None, key_usage=None,
-                  extended_key_usage=None, tls_feature=None, ocsp_no_check=False, extra_extensions=None,
-                  password=None):
+                  extended_key_usage=None, tls_feature=None, ocsp_no_check=False,
+                  issuer_url=None, crl_url=None, ocsp_url=None, issuer_alternative_name=None,
+                  extra_extensions=None, password=None):
         """Create a signed certificate from a CSR.
 
         **PLEASE NOTE:** This function creates the raw certificate and is usually not invoked directly. It is
@@ -346,6 +347,19 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             lifetime. This value only makes sense if you intend to use the certificate for an OCSP responder,
             the default is ``False``. See `RFC 6990, section 4.2.2.2.1
             <https://tools.ietf.org/html/rfc6960#section-4.2.2.2>`_ for more information.
+        issuer_url : ``str`` or ``bool``, optional
+            Pass a custom issuer URL overriding the value configured in the CA or pass ``False`` to disable
+            getting any issuer_url from the CA (e.g. to pass a custom extension in ``extra_extensions``).
+        crl_url : ``str`` or ``bool``, optional
+            Pass a custom CRL URL overriding the value configured in the CA or pass ``False`` to disable
+            getting any issuer_url from the CA (e.g. to pass a custom extension in ``extra_extensions``).
+        ocsp_url : ``str`` or ``bool``, optional
+            Pass a custom OCSP URL overriding the value configured in the CA or pass ``False`` to disable
+            getting any issuer_url from the CA (e.g. to pass a custom extension in ``extra_extensions``).
+        issuer_alternative_name : ``str`` or ``bool``, optional
+            Pass a custom issuer alternative name URL overriding the value configured in the CA or pass
+            ``False`` to disable getting any issuer_url from the CA (e.g. to pass a custom extension in
+            ``extra_extensions``).
         extra_extensions : list of :py:class:`cg:cryptography.x509.Extension` or \
                 :py:class:`django_ca.extensions.Extension`, optional
             An optional list of additional extensions to add to the certificate.
@@ -398,6 +412,15 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
                 if cn_name not in subject_alternative_name:
                     subject_alternative_name.insert(0, cn_name)
 
+        if issuer_url is None:
+            issuer_url = ca.issuer_url
+        if crl_url is None:
+            crl_url = ca.crl_url
+        if ocsp_url is None:
+            ocsp_url = ca.ocsp_url
+        if issuer_alternative_name is None:
+            issuer_alternative_name = ca.issuer_alt_name
+
         ################
         # Read the CSR #
         ################
@@ -417,6 +440,8 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
                             subject=subject, cn_in_san=cn_in_san, csr_format=csr_format,
                             subject_alternative_name=subject_alternative_name, key_usage=key_usage,
                             extended_key_usage=extended_key_usage, tls_featur=tls_feature,
+                            issuer_url=issuer_url, crl_url=crl_url, ocsp_url=ocsp_url,
+                            issuer_alternative_name=issuer_alternative_name,
                             extra_extensions=extra_extensions, password=password)
 
         #######################
@@ -437,7 +462,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         # Get authorityKeyIdentifier from subjectKeyIdentifier from signing CA
         builder = builder.add_extension(ca.get_authority_key_identifier(), critical=False)
 
-        for critical, ext in self.get_common_extensions(ca.issuer_url, ca.crl_url, ca.ocsp_url):
+        for critical, ext in self.get_common_extensions(issuer_url, crl_url, ocsp_url):
             builder = builder.add_extension(ext, critical=critical)
 
         if subject_alternative_name:
@@ -452,7 +477,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         if tls_feature:
             builder = builder.add_extension(**tls_feature.for_builder())
 
-        if ca.issuer_alt_name:
+        if issuer_alternative_name:
             issuer_alt_name = IssuerAlternativeName(ca.issuer_alt_name)
             builder = builder.add_extension(**issuer_alt_name.for_builder())
 
