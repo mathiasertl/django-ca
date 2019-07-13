@@ -53,6 +53,10 @@ dt_parser.add_argument('-i', '--image', action='append', dest='images',
                        help='Base images to test on, may be given multiple times.')
 dt_parser.add_argument('-c', '--cache', dest='no_cache', default='True', action='store_false',
                        help='Use Docker cache to speed up builds.')
+dt_parser.add_argument('--fail-fast', action='store_true', default=False,
+                       help='Stop if any docker process fails.')
+dt_parser.add_argument('--keep-image', action='store_true', default=False,
+                       help='Do not remove images..')
 
 test_parser = commands.add_parser('test', parents=[suites_parser])
 cov_parser = commands.add_parser('coverage', parents=[suites_parser])
@@ -261,8 +265,11 @@ elif args.command == 'docker-test':
             subprocess.check_call(cmd)
         except Exception:
             print('### Failed image is %s' % image)
+            if args.fail_fast:
+                sys.exit(1)
         finally:
-            subprocess.call(['docker', 'image', 'rm', tag])
+            if not args.keep_image:
+                subprocess.call(['docker', 'image', 'rm', tag])
 
 elif args.command == 'init-demo':
     try:

@@ -1,4 +1,4 @@
-ARG IMAGE=python:3.7-alpine3.9
+ARG IMAGE=python:3.7-alpine3.10
 ####################
 # Test build stage #
 ####################

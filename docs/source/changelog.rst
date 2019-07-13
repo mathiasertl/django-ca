@@ -18,6 +18,7 @@ ChangeLog
   documentation also `suggests <https://cryptography.io/en/stable/installation/#alpine>`_ OpenSSL.
 * The Fabric file has been removed.
 * Remove the ``CA_PROVIDE_GENERIC_CRL`` setting, the default URL configuration now includes it.
+* The docker image is now based on Alpine Linux 3.10.
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.2.
 * **BACKWARDS INCOMPATIBLE:** Drop support for idna 2.6.
 
