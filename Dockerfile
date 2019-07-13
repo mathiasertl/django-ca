@@ -16,7 +16,7 @@ RUN addgroup -g 9000 -S django-ca && \
 RUN pip install -U setuptools pip
 RUN pip install --no-cache-dir -r requirements/requirements-docker.txt
 
-COPY setup.py dev.py tox.ini fabfile.py ./
+COPY setup.py dev.py tox.ini ./
 COPY --chown=django-ca:django-ca docs/ docs/
 COPY --chown=django-ca:django-ca ca/ ca/
 COPY --chown=django-ca:django-ca docker/localsettings.py ca/ca/localsettings.py
