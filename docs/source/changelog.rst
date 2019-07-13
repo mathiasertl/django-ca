@@ -519,7 +519,7 @@ Bugfixes
 * The admin interface now accounts for cases where some or all CAs are not useable because the
   private key is not accessable. Such a scenario might occur if the private keys are hosted on a
   different machine.
-* The app now provides a generic view to generate CRLs. See :ref:`crl-generic` for more information.
+* The app now provides a generic view to generate CRLs. See :doc:`crl` for more information.
 * Fix the display of the default value of the --ca args.
 * Move this ChangeLog from a top-level .md file to this location.
 * Fix shell example when issueing certificates.
