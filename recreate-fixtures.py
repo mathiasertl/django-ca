@@ -58,6 +58,7 @@ from django_ca.extensions import CRLDistributionPoints
 from django_ca.extensions import Extension
 from django_ca.extensions import IssuerAlternativeName
 from django_ca.extensions import NameConstraints
+from django_ca.extensions import OCSPNoCheck
 from django_ca.extensions import PolicyInformation
 from django_ca.models import Certificate
 from django_ca.models import CertificateAuthority
@@ -594,6 +595,9 @@ data = {
                 "permitted": ["DNS:.org"],  # just permitted, no excluded
             }
         },
+        'ocsp_no_check': {
+            'critical': True,  # not usually critical
+        },
         'subject_alternative_name': {
             'critical': True,  # not usually critical
             'value': {
@@ -829,6 +833,7 @@ if not args.only_contrib:
             NameConstraints(data[name]['name_constraints']),
             CRLDistributionPoints(data[name]['crl_distribution_points']),
             IssuerAlternativeName(data[name]['issuer_alternative_name']),
+            OCSPNoCheck(data[name]['ocsp_no_check']),
         ]
         kwargs = {
             'extra_extensions': extra_extensions,
@@ -836,7 +841,6 @@ if not args.only_contrib:
             'key_usage': data[name]['key_usage'],
             'extended_key_usage': data[name]['extended_key_usage'],
             'tls_feature': data[name]['tls_feature'],
-            'ocsp_no_check': True,
             'subject': [('CN', data[name]['cn'])]
         }
 
