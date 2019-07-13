@@ -19,11 +19,13 @@ from django.utils import six
 
 from ..utils import format_general_name as _format_general_name
 from ..utils import format_name
+from ..utils import format_relative_name
 
 register = template.Library()
 
 
 register.filter('format_name', format_name)
+register.filter('format_relative_name', format_relative_name)
 
 
 @register.filter
