@@ -11,22 +11,36 @@ ChangeLog
 ************
 
 * Add support for cryptography 2.7.
-* Development commands from ``setup.py`` are now moved to new ``dev.py`` script to remove clutter.
+* Moved ``setup.py recreate_fixtures`` to ``recreate-fixtures.py``.
+* Moved all other extra ``setup.py`` commands to ``dev.py`` to remove clutter.
+* Move ``fab init_demo`` to ``dev.py init-demo``.
 * Use OpenSSL instead of LibreSSL in Dockerfile to enable testing for Alpine 3.7. The cryptography
   documentation also `suggests <https://cryptography.io/en/stable/installation/#alpine>`_ OpenSSL.
-* Moved extra ``setup.py`` commands ``dev.py`` to minimize ``setup.py``.
-* Move ``fab init_demo`` to ``dev.py init-demo``.
 * The Fabric file has been removed.
-* Add the ``ipsecEndSystem``, ``ipsecTunnel`` and ``ipsecUser`` extended key usage types. These are actually
-  very rare and only occur in the "TrustID Server A52" CA.
 * Remove the ``CA_PROVIDE_GENERIC_CRL`` setting, the default URL configuration now includes it.
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.2.
 * **BACKWARDS INCOMPATIBLE:** Drop support for idna 2.6.
-* **DEPRECATION NOTICE:** This is the last release to support cryptography 2.3 and 2.4.
-* **DEPRECATION NOTICE:** This is the last release to support idna 2.7.
-* **DEPRECATION NOTICE:** This is the last release to support OCSP using ``oscrypto``/``ocspbuilder``.
-* **DEPRECATION NOTICE:** ``CertificateRevocationListView.ca_crl`` is deprecated in favor of the ``scope``
-  parameter. If you have set ``ca_crl=True`` just set ``scope="ca"`` instead.
+
+Deprecation Notices
+===================
+
+* This is the last release to support cryptography 2.3 and 2.4.
+* This is the last release to support idna 2.7.
+* This is the last release to support OCSP using ``oscrypto``/``ocspbuilder``.
+* ``CertificateRevocationListView.ca_crl`` is deprecated in favor of the ``scope`` parameter. If you have set
+  ``ca_crl=True`` just set ``scope="ca"`` instead.
+* A new more extendable format for the :ref:`CA_PROFILES <settings-ca-profiles>` setting will be introduced in
+  1.14.0. As a result, extensions will no longer support instantiation from lists or strings, so avoid usage
+  whereever you can.
+
+Extensions
+==========
+
+* Implement the :py:class:`~django_ca.extensions.CRLDistributionPoints` extension and 
+  :py:class:`~django_ca.extensions.CertificatePolicies` extension.
+* Add the ``ipsecEndSystem``, ``ipsecTunnel`` and ``ipsecUser`` extended key usage types. These are actually
+  very rare and only occur in the "TrustID Server A52" CA.
+* Extensions now consistently serialize to dictionaries.
 
 Command-line interface
 ======================
@@ -42,6 +56,15 @@ Python API
 * Add the ``root`` property to CAs and certificates returning the root Certificate Authority.
 * :py:func:`~django_ca.managers.CertificateManager.sign_cert` now also accepts a
   :py:class:`~cg:cryptography.x509.CertificateSigningRequest` as ``csr`` value.
+* Add the ``issuer_url``, ``crl_url``, ``ocsp_url`` and ``issuer_alternative_name`` parameter to 
+  :py:func:`~django_ca.managers.CertificateManager.sign_cert` to allow overriding or disabling the default
+  values from the CA. This can also be used to pass extensions that do not just contain the URL using the
+  ``extra_extensions`` parameter.
+* Add the :py:func:`~django_ca.models.CertificateAuthority.get_crl` function to get a CRL for the CA.
+* Add the :py:func:`~django_ca.models.CertificateAuthority.generate_ocsp_key` function to generate OCSP keys
+  that are automatically picked up by the generic OCSP views.
+* Both :py:class:`~django_ca.models.CertificateAuthority` and
+  :py:class:`~django_ca.models.Certificate` now have a ``root`` property pointing to the Root CA.
 
 OCSP
 ====

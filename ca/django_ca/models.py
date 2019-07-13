@@ -582,6 +582,31 @@ class CertificateAuthority(X509CertMixin):
 
     def generate_ocsp_key(self, profile='ocsp', expires=3, algorithm=None, password=None,
                           key_size=None, key_type=None, ecc_curve=None):
+        """Generate OCSP keys for this CA.
+
+        Parameters
+        ----------
+
+        profile : str, optional
+            The profile to use for generating the certificate. The default is ``"ocsp"``.
+        expires : int or datetime, optional
+            Number of days or datetime when this certificate expires. The default is ``3`` (OCSP certificates
+            are usually renewed frequently).
+        algorithm : str, optional
+            Passed to :py:func:`~django_ca.utils.parse_hash_algorithm` and defaults to
+            :ref:`CA_DIGEST_ALGORITHM <settings-ca-digest-algorithm>`.
+        password : bytes, optional
+            The password to the CA as bytes, if its private key is encrypted.
+        key_size : int, optional
+            The key size of the private key, defaults to :ref:`CA_DEFAULT_KEY_SIZE
+            <settings-ca-default-key-size>`.
+        key_type : {"RSA", "DSA", "ECC"}, optional
+            The private key type to use, the default is ``"RSA"``.
+        ecc_curve : str, optional
+            Passed to :py:func:`~django_ca.utils.parse_key_curve`, defaults to the :ref:`CA_DEFAULT_ECC_CURVE
+            <settings-ca-default-ecc-curve>`.
+
+        """
         key_size, key_type, ecc_curve = validate_key_parameters(key_size, key_type, ecc_curve)
         if isinstance(expires, six.integer_types):
             expires = get_expires(expires)

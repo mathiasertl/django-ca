@@ -542,7 +542,7 @@ class DistributionPoint(GeneralNameMixin):
 
     .. seealso::
 
-        `RFC5280, section 4.2.1.13 <https://tools.ietf.org/html/rfc5280#section-4.2.1.13>`_
+        `RFC 5280, section 4.2.1.13 <https://tools.ietf.org/html/rfc5280#section-4.2.1.13>`_
     """
 
     full_name = None
@@ -869,7 +869,7 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
 
     .. seealso::
 
-        `RFC5280, section 4.2.2.1 <https://tools.ietf.org/html/rfc5280#section-4.2.2.1>`_
+        `RFC 5280, section 4.2.2.1 <https://tools.ietf.org/html/rfc5280#section-4.2.2.1>`_
     """
     oid = ExtensionOID.AUTHORITY_INFORMATION_ACCESS
 
@@ -1020,7 +1020,7 @@ class BasicConstraints(Extension):
 
     .. seealso::
 
-        `RFC5280, section 4.2.1.9 <https://tools.ietf.org/html/rfc5280#section-4.2.1.9>`_
+        `RFC 5280, section 4.2.1.9 <https://tools.ietf.org/html/rfc5280#section-4.2.1.9>`_
     """
 
     oid = ExtensionOID.BASIC_CONSTRAINTS
@@ -1099,7 +1099,7 @@ class CRLDistributionPoints(ListExtension):
 
     .. seealso::
 
-        `RFC5280, section 4.2.1.13 <https://tools.ietf.org/html/rfc5280#section-4.2.1.13>`_
+        `RFC 5280, section 4.2.1.13 <https://tools.ietf.org/html/rfc5280#section-4.2.1.13>`_
     """
     oid = ExtensionOID.CRL_DISTRIBUTION_POINTS
 
@@ -1142,6 +1142,12 @@ class CRLDistributionPoints(ListExtension):
 
 
 class CertificatePolicies(ListExtension):
+    """Class representing a Certificate Policies extension.
+
+    .. seealso::
+
+        `RFC 5280, section 4.2.1.4 <https://tools.ietf.org/html/rfc5280#section-4.2.1.4>`_
+    """
     oid = ExtensionOID.CERTIFICATE_POLICIES
 
     def __hash__(self):
@@ -1193,7 +1199,7 @@ class IssuerAlternativeName(AlternativeNameExtension):
 
     .. seealso::
 
-       `RFC5280, section 4.2.1.7 <https://tools.ietf.org/html/rfc5280#section-4.2.1.7>`_
+       `RFC 5280, section 4.2.1.7 <https://tools.ietf.org/html/rfc5280#section-4.2.1.7>`_
     """
     oid = ExtensionOID.ISSUER_ALTERNATIVE_NAME
 
@@ -1205,7 +1211,7 @@ class IssuerAlternativeName(AlternativeNameExtension):
 class KeyUsage(KnownValuesExtension):
     """Class representing a KeyUsage extension, which defines the purpose of a certificate.
 
-    This extension is usually marked as critical and RFC5280 defines that confirming CAs SHOULD mark it as
+    This extension is usually marked as critical and RFC 5280 defines that confirming CAs SHOULD mark it as
     critical. The value ``keyAgreement`` is always added if ``decipherOnly`` is present, since the value of
     this extension is not meaningful otherwise.
 
@@ -1216,7 +1222,7 @@ class KeyUsage(KnownValuesExtension):
 
     .. seealso::
 
-        `RFC5280, section 4.2.1.3 <https://tools.ietf.org/html/rfc5280#section-4.2.1.3>`_
+        `RFC 5280, section 4.2.1.3 <https://tools.ietf.org/html/rfc5280#section-4.2.1.3>`_
     """
 
     oid = ExtensionOID.KEY_USAGE
@@ -1331,7 +1337,7 @@ class NameConstraints(GeneralNameMixin, Extension):
 
     .. seealso::
 
-       `RFC5280, section 4.2.1.10 <https://tools.ietf.org/html/rfc5280#section-4.2.1.10>`_
+       `RFC 5280, section 4.2.1.10 <https://tools.ietf.org/html/rfc5280#section-4.2.1.10>`_
 
     """
     default_critical = True
@@ -1588,7 +1594,7 @@ class SubjectAlternativeName(AlternativeNameExtension):
 
     .. seealso::
 
-       `RFC5280, section 4.2.1.6 <https://tools.ietf.org/html/rfc5280#section-4.2.1.6>`_
+       `RFC 5280, section 4.2.1.6 <https://tools.ietf.org/html/rfc5280#section-4.2.1.6>`_
     """
     oid = ExtensionOID.SUBJECT_ALTERNATIVE_NAME
 
