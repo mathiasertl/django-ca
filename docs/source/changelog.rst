@@ -19,6 +19,7 @@ ChangeLog
 * The Fabric file has been removed.
 * Add the ``ipsecEndSystem``, ``ipsecTunnel`` and ``ipsecUser`` extended key usage types. These are actually
   very rare and only occur in the "TrustID Server A52" CA.
+* Remove the ``CA_PROVIDE_GENERIC_CRL`` setting, the default URL configuration now includes it.
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.2.
 * **BACKWARDS INCOMPATIBLE:** Drop support for idna 2.6.
 * **DEPRECATION NOTICE:** This is the last release to support cryptography 2.3 and 2.4.

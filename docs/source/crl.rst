@@ -67,9 +67,6 @@ override them as parameters in a URL conf::
           name='sha256-crl')),
    ]
 
-If you do not want to include the automatically hosted CRL, please set ``CA_PROVIDE_GENERIC_CRL``
-to ``False`` in your settings.
-
 .. autoclass:: django_ca.views.CertificateRevocationListView
    :members:
 

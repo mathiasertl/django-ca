@@ -47,9 +47,6 @@ SECRET_KEY = ''
 # Default key size for new CAs
 #CA_DEFAULT_KEY_SIZE=4096
 
-# Do not provide a generic CRL view.
-#CA_PROVIDE_GENERIC_CRL = False
-
 # OCSP configuration, for more information please see:
 #   http://django-ca.readthedocs.io/en/latest/ocsp.html
 #CA_OCSP_URLS = {

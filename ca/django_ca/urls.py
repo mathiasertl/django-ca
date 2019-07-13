@@ -37,6 +37,8 @@ if ca_settings.CA_DJANGO_SUPPORTS_PATH:  # pragma: only django>=2.1
              name='ocsp-ca-post'),
         path('ocsp/<hex:serial>/ca/<base64:data>', views.GenericOCSPView.as_view(ca_ocsp=True, expires=86400),
              name='ocsp-ca-get'),
+        path('crl/<hex:serial>/', views.CertificateRevocationListView.as_view(), name='crl'),
+        path('crl/ca/<hex:serial>/', views.CertificateRevocationListView.as_view(scope='ca'), name='ca-crl'),
     ]
 else:  # pragma: only django<=1.11
     urlpatterns = [
@@ -51,15 +53,11 @@ else:  # pragma: only django<=1.11
             name='ocsp-ca-get'),
         url('ocsp/(?P<serial>[0-9A-F:]+)/ca/', views.GenericOCSPView.as_view(ca_ocsp=True, expires=86400),
             name='ocsp-ca-post'),
+        url(r'^crl/(?P<serial>[0-9A-F:]+)/$', views.CertificateRevocationListView.as_view(), name='crl'),
+        url(r'^crl/ca/(?P<serial>[0-9A-F:]+)/$', views.CertificateRevocationListView.as_view(scope='ca'),
+            name='ca-crl'),
     ]
 
-
-if ca_settings.CA_PROVIDE_GENERIC_CRL is True:  # pragma: no branch
-    urlpatterns.append(
-        url(r'^crl/(?P<serial>[0-9A-F:]+)/$', views.CertificateRevocationListView.as_view(), name='crl'))
-    urlpatterns.append(
-        url(r'^crl/ca/(?P<serial>[0-9A-F:]+)/$', views.CertificateRevocationListView.as_view(scope='ca'),
-            name='ca-crl'))
 
 for name, kwargs in getattr(settings, 'CA_OCSP_URLS', {}).items():
     kwargs.setdefault('ca', name)

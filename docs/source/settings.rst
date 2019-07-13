@@ -212,12 +212,3 @@ CA_PROFILES
               # We really don't like the "ocsp" profile, so we remove it.
               'ocsp': None,
          }
-
-CA_PROVIDE_GENERIC_CRL
-   Default: ``True``
-
-   If set to ``False``, ``django_ca.urls`` will not add a CRL view. See :ref:`crl-generic` for more
-   information.
-
-   This setting only has effect if you use django_ca as a full project or you include the
-   ``django_ca.urls`` module somewhere in your URL configuration.
