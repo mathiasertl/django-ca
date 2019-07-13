@@ -14,7 +14,7 @@ RUN addgroup -g 9000 -S django-ca && \
     adduser -S -u 9000 -G django-ca django-ca
 
 RUN pip install -U setuptools pip
-RUN pip install --no-cache-dir -r requirements/requirements-docker.txt
+RUN pip install --no-cache-dir -r requirements/requirements-docker.txt termcolor
 
 COPY setup.py dev.py tox.ini ./
 COPY --chown=django-ca:django-ca docs/ docs/
