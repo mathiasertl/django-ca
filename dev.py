@@ -285,20 +285,20 @@ elif args.command == 'docker-test':
                     else:
                         break
 
-                if p.returncode == 0:
-                    ok("\n%s passed.\n" % image)
-                    docker_runs.append({
-                        'image': image,
-                        'success': True,
-                        'error': '',
-                    })
-                else:
-                    error("\n%s failed: return code %s.\n" % (image, p.returncode))
-                    docker_runs.append({
-                        'image': image,
-                        'success': False,
-                        'error': 'return code: %s' % p.returncode,
-                    })
+            if p.returncode == 0:
+                ok("\n%s passed.\n" % image)
+                docker_runs.append({
+                    'image': image,
+                    'success': True,
+                    'error': '',
+                })
+            else:
+                error("\n%s failed: return code %s.\n" % (image, p.returncode))
+                docker_runs.append({
+                    'image': image,
+                    'success': False,
+                    'error': 'return code: %s' % p.returncode,
+                })
 
         except Exception as e:
             msg = '%s: %s: %s' % (image, type(e).__name__, e)
