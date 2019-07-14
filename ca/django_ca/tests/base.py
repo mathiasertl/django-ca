@@ -803,7 +803,7 @@ class DjangoCATestCase(TestCase):
             yield mock
 
     @contextmanager
-    def patch_object(self, *args, **kwargs):
+    def patch_object(self, *args, **kwargs):  # pragma: only SCT
         with patch.object(*args, **kwargs) as mock:
             yield mock
 
