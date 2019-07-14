@@ -143,7 +143,7 @@ def create_key(path):
 
 def create_csr(key_path, path):
     create_key(key_path)
-    subprocess.call(['openssl', 'req', '-new', '-key', key_path, '-out', path, '-utf8', '-batch'])
+    subprocess.check_call(['openssl', 'req', '-new', '-key', key_path, '-out', path, '-utf8', '-batch'])
 
     with open(path) as stream:
         csr = stream.read()
