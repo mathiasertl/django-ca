@@ -70,7 +70,7 @@ package_data = find_package_data('static') + find_package_data('templates')
 
 setup(
     name='django-ca',
-    version='1.12.1.dev1',
+    version='1.13.0',
     description='A Django app providing a SSL/TLS certificate authority.',
     long_description=long_description,
     author='Mathias Ertl',

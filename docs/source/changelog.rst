@@ -6,9 +6,9 @@ ChangeLog
 
 .. _changelog-1.13.0:
 
-************
-1.13.0 (TBR)
-************
+*******************
+1.13.0 (2019-07-14)
+*******************
 
 * Add support for cryptography 2.7.
 * Moved ``setup.py recreate_fixtures`` to ``recreate-fixtures.py``.
