@@ -84,6 +84,8 @@ parser.add_argument('--no-delay', dest='delay', action='store_false', default=Tr
                     help='Do not delay validity into the future.')
 parser.add_argument('--no-ocsp', dest='ocsp', action='store_false', default=True,
                     help='Do not generate OCSP requests.')
+parser.add_argument('--no-contrib', dest='generate_contrib', action='store_false', default=True,
+                    help='Do not update contrib data.')
 parser.add_argument('--ca-validity', metavar='DAYS', type=int, default=366,
                     help='How long a CA should be valid (default: %(default)s)')
 parser.add_argument('--cert-validity', metavar='DAYS', type=int, default=183,
@@ -136,14 +138,15 @@ def create_key(path):
     if PY2:
         # PY2 does not have subprocess.DEVNULL
         with open(os.devnull, 'w') as devnull:
-            subprocess.call(['openssl', 'genrsa', '-out', path, str(key_size)], stderr=devnull)
+            subprocess.check_call(['openssl', 'genrsa', '-out', path, str(key_size)], stderr=devnull)
     else:
-        subprocess.call(['openssl', 'genrsa', '-out', path, str(key_size)], stderr=subprocess.DEVNULL)
+        subprocess.check_call(['openssl', 'genrsa', '-out', path, str(key_size)], stderr=subprocess.DEVNULL)
 
 
 def create_csr(key_path, path):
     create_key(key_path)
-    subprocess.check_call(['openssl', 'req', '-new', '-key', key_path, '-out', path, '-utf8', '-batch'])
+    subprocess.check_call(['openssl', 'req', '-new', '-key', key_path, '-out', path, '-utf8', '-batch',
+                           '-subj', '/CN=ignored.example.com'])
 
     with open(path) as stream:
         csr = stream.read()
@@ -284,6 +287,7 @@ def update_contrib(data, cert, name, filename):
             key = CertificateAuthority.OID_MAPPING[ext.oid]
             cert_data[key] = ext.serialize()
         elif isinstance(ext, tuple):
+            print('### get extension tuple!!!')
             key, value = ext
             if isinstance(value[1], x509.ObjectIdentifier):
                 # Currently just some old StartSSL extensions for Netscape (!)
@@ -878,40 +882,41 @@ else:
     data = {}
 
 # Load data from Sphinx files
-for filename in os.listdir(os.path.join(_sphinx_dir, 'ca')):
-    name, _ext = os.path.splitext(filename)
+if args.generate_contrib:
+    for filename in os.listdir(os.path.join(_sphinx_dir, 'ca')):
+        name, _ext = os.path.splitext(filename)
 
-    with open(os.path.join(_sphinx_dir, 'ca', filename), 'rb') as stream:
-        pem = stream.read()
+        with open(os.path.join(_sphinx_dir, 'ca', filename), 'rb') as stream:
+            pem = stream.read()
 
-    parsed = x509.load_pem_x509_certificate(pem, default_backend())
-    ca = CertificateAuthority(name=name)
-    ca.x509 = parsed
+        parsed = x509.load_pem_x509_certificate(pem, default_backend())
+        ca = CertificateAuthority(name=name)
+        ca.x509 = parsed
 
-    update_contrib(data, ca, name, filename)
-    data[name]['type'] = 'ca'
-    data[name]['pathlen'] = ca.pathlen
+        update_contrib(data, ca, name, filename)
+        data[name]['type'] = 'ca'
+        data[name]['pathlen'] = ca.pathlen
 
-for filename in os.listdir(os.path.join(_sphinx_dir, 'cert')):
-    name, _ext = os.path.splitext(filename)
+    for filename in os.listdir(os.path.join(_sphinx_dir, 'cert')):
+        name, _ext = os.path.splitext(filename)
 
-    contrib_ca = None
-    if name in data:
-        contrib_ca = name
+        contrib_ca = None
+        if name in data:
+            contrib_ca = name
 
-    name = '%s-cert' % name
+        name = '%s-cert' % name
 
-    with open(os.path.join(_sphinx_dir, 'cert', filename), 'rb') as stream:
-        pem = stream.read()
+        with open(os.path.join(_sphinx_dir, 'cert', filename), 'rb') as stream:
+            pem = stream.read()
 
-    parsed = x509.load_pem_x509_certificate(pem, default_backend())
-    cert = Certificate()
-    cert.x509 = parsed
-    update_contrib(data, cert, name, filename)
-    data[name]['type'] = 'cert'
+        parsed = x509.load_pem_x509_certificate(pem, default_backend())
+        cert = Certificate()
+        cert.x509 = parsed
+        update_contrib(data, cert, name, filename)
+        data[name]['type'] = 'cert'
 
-    if contrib_ca:
-        data[name]['ca'] = contrib_ca
+        if contrib_ca:
+            data[name]['ca'] = contrib_ca
 
 
 for name, cert_data in data.items():

@@ -365,7 +365,7 @@ Please create %(localsettings)s from %(example)s and try again.""" % {
         os.makedirs(ca_settings.CA_DIR)
 
     print('Creating fixture data...', end='')
-    subprocess.check_call(['python', 'recreate-fixtures.py', '--no-delay', '--no-ocsp',
+    subprocess.check_call(['python', 'recreate-fixtures.py', '--no-delay', '--no-ocsp', '--no-contrib',
                            '--ca-validity=3650', '--cert-validity=732',
                            '--dest=%s' % ca_settings.CA_DIR])
     with open(os.path.join(ca_settings.CA_DIR, 'cert-data.json')) as stream:
