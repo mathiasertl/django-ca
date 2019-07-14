@@ -72,6 +72,10 @@ args = parser.parse_args()
 _rootdir = os.path.dirname(os.path.realpath(__file__))
 
 
+def error(msg, **kwargs):
+    print(colored(msg, 'red'), **kwargs)
+
+
 def warn(msg, **kwargs):
     print(colored(msg, 'yellow'), **kwargs)
 
@@ -245,6 +249,8 @@ elif args.command == 'docker-test':
         'python:3.7-alpine3.7',
     ]
 
+    docker_runs = []
+
     for image in images:
         print('### Testing %s ###' % image)
         tag = 'django-ca-test-%s' % image
@@ -261,15 +267,67 @@ elif args.command == 'docker-test':
 
         print(' '.join(cmd))
 
+        logdir = '.docker'
+        logpath = os.path.join(logdir, '%s.log' % image)
+        if not os.path.exists(logdir):
+            os.makedirs(logdir)
+
         try:
-            subprocess.check_call(cmd)
-        except Exception:
-            print('### Failed image is %s' % image)
+            with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as p, \
+                    open(logpath, 'bw') as stream:
+                while True:
+                    byte = p.stdout.read(1)
+                    if byte:
+                        sys.stdout.buffer.write(byte)
+                        sys.stdout.flush()
+                        stream.write(byte)
+                        # logfile.flush()
+                    else:
+                        break
+
+                if p.returncode == 0:
+                    ok("\n%s passed.\n" % image)
+                    docker_runs.append({
+                        'image': image,
+                        'success': True,
+                        'error': '',
+                    })
+                else:
+                    error("\n%s failed: return code %s.\n" % (image, p.returncode))
+                    docker_runs.append({
+                        'image': image,
+                        'success': False,
+                        'error': 'return code: %s' % p.returncode,
+                    })
+
+        except Exception as e:
+            msg = '%s: %s: %s' % (image, type(e).__name__, e)
+            docker_runs.append({
+                'image': image,
+                'success': False,
+                'error': msg,
+            })
+
+            error("\n%s\n" % msg)
             if args.fail_fast:
                 sys.exit(1)
         finally:
             if not args.keep_image:
                 subprocess.call(['docker', 'image', 'rm', tag])
+
+    print("\nSummary of test runs:")
+    success = True
+    for run in docker_runs:
+        if run['success']:
+            ok('  %s: passed.' % run['image'])
+        else:
+            error('  %s: %s' % (run['image'], run['error']))
+            success = False
+
+    if success:
+        ok("\nCongratulations :)")
+    else:
+        error("\nSome images failed.")
 
 elif args.command == 'init-demo':
     try:

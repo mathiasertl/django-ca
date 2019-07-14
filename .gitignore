@@ -8,6 +8,7 @@ localsettings.py
 /bin/
 /build/
 /.coverage
+/.docker/
 /ca/files/
 /dist
 /dj18/

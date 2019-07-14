@@ -3,6 +3,7 @@
 **/__pycache__
 /.git/
 /.coverage
+/.docker/
 /.tox/
 /bin/
 /ca/*.egg-info
