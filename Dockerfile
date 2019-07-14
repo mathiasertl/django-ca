@@ -14,7 +14,7 @@ COPY requirements/ requirements/
 RUN addgroup -g 9000 -S django-ca && \
     adduser -S -u 9000 -G django-ca django-ca
 
-RUN pip install -U setuptools pip
+RUN pip install -U setuptools pip wheel
 RUN pip install --no-cache-dir -r requirements/requirements-docker.txt termcolor
 
 COPY setup.py dev.py tox.ini recreate-fixtures.py ./
@@ -53,6 +53,7 @@ RUN apk --no-cache upgrade && \
 
 COPY requirements/ requirements/
 
+RUN pip install -U pip setuptools wheel
 RUN pip install --no-warn-script-location --no-cache-dir --prefix=/install -r requirements/requirements-docker.txt
 
 COPY ca/ ca/
