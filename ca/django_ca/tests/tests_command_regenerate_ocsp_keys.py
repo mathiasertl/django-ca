@@ -95,7 +95,7 @@ class RegenerateOCSPKeyTestCase(DjangoCATestCase):
         serial = 'ZZZZZ'
         stdout, stderr = self.cmd('regenerate_ocsp_keys', serial, no_color=True)
         self.assertEqual(stdout, '')
-        self.assertEqual(stderr, '%s: Unknown CA.\n' % serial)
+        self.assertEqual(stderr, 'ZZ:ZZ:Z: Unknown CA.\n' % serial)
         self.assertHasNoKey(serial)
 
     @override_tmpcadir(CA_PROFILES={'ocsp': None})
