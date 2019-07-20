@@ -18,7 +18,6 @@ Before release
 * Make sure that ``docs/source/changelog.rst`` is up to date.
 * Make sure that tox runs through for all environments.
 * Make sure that ``python dev.py docker-test`` runs through.
-* Make sure that the admin interface displays certificates correctly.
 * Push the last commit and make sure that Travis and Read The Docs are updated.
 
 *********
@@ -32,6 +31,13 @@ Make sure that the demo works::
    
    # test commands from the output:
    openssl verify -CAfile...
+
+********************
+Test admin interface
+********************
+
+* Check if the output of CAs and certs look okay.
+* Check if the profile selection when creating a certificate works.
 
 ************
 Docker image
