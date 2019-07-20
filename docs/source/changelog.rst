@@ -4,6 +4,16 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.14.0:
+
+************
+1.14.0 (TBR)
+************
+
+* **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.3 and 2.4.
+* **BACKWARDS INCOMPATIBLE:** Drop support for idna 2.7.
+* ``regenerate_ocsp_keys`` now has a quiet mode and only generates keys where the CA private key is available.
+
 .. _changelog-1.13.0:
 
 *******************

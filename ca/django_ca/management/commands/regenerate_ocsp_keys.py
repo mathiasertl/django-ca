@@ -17,6 +17,7 @@ from django.core.management.base import CommandError
 
 from ... import ca_settings
 from ...models import CertificateAuthority
+from ...utils import add_colons
 from ..base import BaseCommand
 from ..base import ExpiresAction
 
@@ -32,6 +33,8 @@ class Command(BaseCommand):
         parser.add_argument(
             '--expires', default=2, action=ExpiresAction,
             help='Sign the certificate for DAYS days (default: %(default)s)')
+        parser.add_argument(
+            '--quiet', action='store_true', default=False, help='Do not output warnings.')
 
         self.add_algorithm(parser)
         self.add_key_size(parser)
@@ -56,10 +59,17 @@ class Command(BaseCommand):
             serials = CertificateAuthority.objects.all().order_by('serial').values_list('serial', flat=True)
 
         for serial in serials:
+            serial = serial.replace(':', '').strip().upper()
+            hr_serial = add_colons(serial)
             try:
-                ca = CertificateAuthority.objects.get(serial=serial.replace(':', ''))
+                ca = CertificateAuthority.objects.get(serial=serial)
             except CertificateAuthority.DoesNotExist:
-                self.stderr.write(self.style.ERROR('%s: Unknown CA.' % serial))
+                self.stderr.write(self.style.ERROR('%s: Unknown CA.' % hr_serial))
+                continue
+
+            if not ca.key_exists:
+                if not options['quiet']:
+                    self.stderr.write(self.style.WARNING('%s: CA has no private key.' % hr_serial))
                 continue
 
             ca.generate_ocsp_key(
