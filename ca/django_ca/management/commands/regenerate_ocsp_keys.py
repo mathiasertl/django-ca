@@ -68,8 +68,10 @@ class Command(BaseCommand):
                 continue
 
             if not ca.key_exists:
-                if not options['quiet']:
+                if options['quiet'] is False:  # pragma: no branch
+                    # NOTE: coverage falsely identifies the above condition to always be false.
                     self.stderr.write(self.style.WARNING('%s: CA has no private key.' % hr_serial))
+
                 continue
 
             ca.generate_ocsp_key(

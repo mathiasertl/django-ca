@@ -18,6 +18,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
+from ..utils import add_colons
 from ..utils import ca_storage
 from .base import DjangoCATestCase
 from .base import certs
@@ -103,3 +104,18 @@ class RegenerateOCSPKeyTestCase(DjangoCATestCase):
         with self.assertCommandError(r'^ocsp: Undefined profile\.$'):
             self.cmd('regenerate_ocsp_keys', certs['root']['serial'])
         self.assertHasNoKey(certs['root']['serial'])
+
+    @override_tmpcadir()
+    def test_no_private_key(self):
+        ca = self.cas['root']
+        ca_storage.delete(ca.private_key_path)
+        stdout, stderr = self.cmd('regenerate_ocsp_keys', ca.serial, no_color=True)
+        self.assertEqual(stdout, '')
+        self.assertEqual(stderr, '%s: CA has no private key.\n' % add_colons(ca.serial))
+        self.assertHasNoKey(ca.serial)
+
+        # and in quiet mode
+        stdout, stderr = self.cmd('regenerate_ocsp_keys', ca.serial, quiet=True, no_color=True)
+        self.assertEqual(stdout, '')
+        self.assertEqual(stderr, '')
+        self.assertHasNoKey(ca.serial)
