@@ -636,8 +636,7 @@ class DjangoCATestCase(TestCase):
         ctx = {}
         for key, value in certs[name].items():
             if key == 'precert_poison':
-                ctx['precert_poison'] = '\nPrecertPoison (critical): Yes'
-                ctx['precert_poison_unknown'] = ''
+                ctx['precert_poison'] = 'PrecertPoison (critical): Yes'
             elif key == 'precertificate_signed_certificate_timestamps':
                 ctx['sct_critical'] = ' (critical)' if value['critical'] else ''
                 ctx['sct_values'] = []

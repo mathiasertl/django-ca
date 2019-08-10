@@ -440,7 +440,8 @@ NameConstraints{name_constraints_critical}:
       * DNS:{name_constraints.permitted[0].value}
     Excluded:
       * DNS:{name_constraints.excluded[0].value}
-OCSPNoCheck{ocsp_no_check_critical}: Yes{precert_poison}
+OCSPNoCheck{ocsp_no_check_critical}: Yes
+{precert_poison}
 SubjectAltName{subject_alternative_name_critical}:
     * {subject_alternative_name[0]}
     * {subject_alternative_name[1]}
@@ -449,7 +450,7 @@ SubjectKeyIdentifier{subject_key_identifier_critical}:
     {subject_key_identifier}
 TLSFeature{tls_feature_critical}:
     * {tls_feature[0]}
-    * {tls_feature[1]}{precert_poison_unknown}
+    * {tls_feature[1]}
 Watchers:
 Digest:
     md5: {md5}
@@ -914,7 +915,8 @@ ExtendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage[0]}
     * {extended_key_usage[1]}
 KeyUsage{key_usage_critical}:
-    * {key_usage[0]}{precert_poison}
+    * {key_usage[0]}
+{precert_poison}
 SubjectAltName{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
     * {subject_alternative_name_1}
@@ -1002,7 +1004,7 @@ SubjectAltName{subject_alternative_name_critical}:
     * {subject_alternative_name_83}
     * {subject_alternative_name_84}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}{precert_poison_unknown}
+    {subject_key_identifier_text}
 Watchers:
 Digest:
     md5: {md5}
