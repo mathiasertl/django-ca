@@ -317,15 +317,11 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
             log_msg % 'KeyUsage (2.5.29.15)',
             log_msg % 'NameConstraints (2.5.29.30)',
             log_msg % 'OCSPNoCheck (1.3.6.1.5.5.7.48.1.5)',
+            log_msg % 'PrecertPoison (1.3.6.1.4.1.11129.2.4.3)',
             log_msg % 'SubjectAltName (2.5.29.17)',
             log_msg % 'SubjectKeyIdentifier (2.5.29.14)',
             log_msg % 'TLSFeature (1.3.6.1.5.5.7.1.24)',
         ]
-
-        if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:
-            expected.append(log_msg % 'PrecertPoison (1.3.6.1.4.1.11129.2.4.3)')
-        else:
-            expected.append(log_msg % 'Unknown OID (1.3.6.1.4.1.11129.2.4.3)')
 
         self.assertEqual(logs.output, sorted(expected))
 

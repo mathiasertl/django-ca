@@ -56,6 +56,7 @@ from ..extensions import KeyUsage
 from ..extensions import ListExtension
 from ..extensions import NameConstraints
 from ..extensions import OCSPNoCheck
+from ..extensions import PrecertPoison
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
@@ -79,11 +80,6 @@ if six.PY2:  # pragma: only py2
 else:  # pragma: only py3
     from unittest.mock import Mock
     from unittest.mock import patch
-
-_HAS_PRECERT_POISON = False
-if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
-    from ..extensions import PrecertPoison
-    _HAS_PRECERT_POISON = True
 
 
 def _load_key(data):
@@ -284,7 +280,7 @@ for cert_name, cert_data in certs.items():
         cert_data['certificate_policies'] = CertificatePolicies(cert_data['certificate_policies'])
 
     precert_poison = cert_data.get('precert_poison')
-    if _HAS_PRECERT_POISON and precert_poison:  # pragma: no branch, pragma: only cryptography>=2.4
+    if precert_poison:
         cert_data['precert_poison'] = PrecertPoison(precert_poison)
 
 # Calculate some fixted timestamps that we reuse throughout the tests
@@ -640,14 +636,8 @@ class DjangoCATestCase(TestCase):
         ctx = {}
         for key, value in certs[name].items():
             if key == 'precert_poison':
-                # NOTE: We use two keys here because if we don't have PrecertPoison, the name of the
-                #       extension is "Unknown OID", so the order is different.
-                if _HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
-                    ctx['precert_poison'] = '\nPrecertPoison (critical): Yes'
-                    ctx['precert_poison_unknown'] = ''
-                else:  # pragma: no cover
-                    ctx['precert_poison'] = ''
-                    ctx['precert_poison_unknown'] = '\nUnknown OID (critical): 1.3.6.1.4.1.11129.2.4.3'
+                ctx['precert_poison'] = '\nPrecertPoison (critical): Yes'
+                ctx['precert_poison_unknown'] = ''
             elif key == 'precertificate_signed_certificate_timestamps':
                 ctx['sct_critical'] = ' (critical)' if value['critical'] else ''
                 ctx['sct_values'] = []

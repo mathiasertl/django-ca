@@ -40,6 +40,7 @@ from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
 from ..extensions import NameConstraints
 from ..extensions import OCSPNoCheck
+from ..extensions import PrecertPoison
 from ..extensions import PrecertificateSignedCertificateTimestamps
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
@@ -56,9 +57,6 @@ try:
     import unittest.mock as mock
 except ImportError:
     import mock
-
-if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
-    from ..extensions import PrecertPoison
 
 
 class TestWatcher(TestCase):
@@ -623,8 +621,6 @@ class CertificateTests(DjangoCAWithCertTestCase):
         # Make sure that some certs actually do have a value for this extension
         self.assertIsInstance(self.certs['all-extensions'].ocsp_no_check, OCSPNoCheck)
 
-    @unittest.skipUnless(ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON,
-                         "This version of cryptography does not support PrecertPoison extension.")
     def test_precert_poison(self):
         for name, cert in self.certs.items():
             self.assertEqual(cert.precert_poison, certs[name].get('precert_poison'))

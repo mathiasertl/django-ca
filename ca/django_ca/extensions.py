@@ -31,7 +31,6 @@ from cryptography.x509.oid import ObjectIdentifier
 
 from django.utils.encoding import force_text
 
-from . import ca_settings
 from .utils import bytes_to_hex
 from .utils import format_general_name
 from .utils import format_relative_name
@@ -1439,32 +1438,31 @@ class OCSPNoCheck(NullExtension):
     ext_class = x509.OCSPNoCheck
 
 
-if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
-    class PrecertPoison(NullExtension):
-        """Extension to indicate that the certificate is a submission to a certificate transparency log.
+class PrecertPoison(NullExtension):
+    """Extension to indicate that the certificate is a submission to a certificate transparency log.
 
-        Note that creating this extension will raise ``ValueError`` if it is not marked as critical:
+    Note that creating this extension will raise ``ValueError`` if it is not marked as critical:
 
-            >>> PrecertPoison()
-            <PrecertPoison: critical=True>
-            >>> PrecertPoison({'critical': False})
-            Traceback (most recent call last):
-                ...
-            ValueError: PrecertPoison must always be marked as critical
+        >>> PrecertPoison()
+        <PrecertPoison: critical=True>
+        >>> PrecertPoison({'critical': False})
+        Traceback (most recent call last):
+            ...
+        ValueError: PrecertPoison must always be marked as critical
 
-        .. seealso::
+    .. seealso::
 
-           `RFC 6962, section 3.1 <https://tools.ietf.org/html/rfc6962#section-3.1>`_
-        """
-        default_critical = True
-        oid = ExtensionOID.PRECERT_POISON
-        ext_class = x509.PrecertPoison
+       `RFC 6962, section 3.1 <https://tools.ietf.org/html/rfc6962#section-3.1>`_
+    """
+    default_critical = True
+    oid = ExtensionOID.PRECERT_POISON
+    ext_class = x509.PrecertPoison
 
-        def __init__(self, value=None):
-            super(PrecertPoison, self).__init__(value=value)
+    def __init__(self, value=None):
+        super(PrecertPoison, self).__init__(value=value)
 
-            if self.critical is not True:
-                raise ValueError('PrecertPoison must always be marked as critical')
+        if self.critical is not True:
+            raise ValueError('PrecertPoison must always be marked as critical')
 
 
 class PrecertificateSignedCertificateTimestamps(ListExtension):  # pragma: only SCT

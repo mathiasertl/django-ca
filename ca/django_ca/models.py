@@ -61,6 +61,7 @@ from .extensions import IssuerAlternativeName
 from .extensions import KeyUsage
 from .extensions import NameConstraints
 from .extensions import OCSPNoCheck
+from .extensions import PrecertPoison
 from .extensions import PrecertificateSignedCertificateTimestamps
 from .extensions import SubjectAlternativeName
 from .extensions import SubjectKeyIdentifier
@@ -89,9 +90,6 @@ from .utils import read_file
 from .utils import validate_key_parameters
 
 log = logging.getLogger(__name__)
-
-if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
-    from .extensions import PrecertPoison
 
 
 def validate_past(value):
@@ -352,14 +350,12 @@ class X509CertMixin(models.Model):
         ExtensionOID.KEY_USAGE: 'key_usage',
         ExtensionOID.NAME_CONSTRAINTS: 'name_constraints',
         ExtensionOID.OCSP_NO_CHECK: 'ocsp_no_check',
+        ExtensionOID.PRECERT_POISON: 'precert_poison',
         ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS: 'precertificate_signed_certificate_timestamps',
         ExtensionOID.SUBJECT_ALTERNATIVE_NAME: 'subject_alternative_name',
         ExtensionOID.SUBJECT_KEY_IDENTIFIER: 'subject_key_identifier',
         ExtensionOID.TLS_FEATURE: 'tls_feature',
     }
-
-    if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
-        OID_MAPPING[ExtensionOID.PRECERT_POISON] = 'precert_poison'
 
     @cached_property
     def _x509_extensions(self):

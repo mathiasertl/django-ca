@@ -46,6 +46,7 @@ from ..extensions import ListExtension
 from ..extensions import NameConstraints
 from ..extensions import OCSPNoCheck
 from ..extensions import PolicyInformation
+from ..extensions import PrecertPoison
 from ..extensions import PrecertificateSignedCertificateTimestamps
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
@@ -54,9 +55,6 @@ from ..extensions import UnrecognizedExtension
 from .base import DjangoCATestCase
 from .base import DjangoCAWithCertTestCase
 from .base import certs
-
-if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: only cryptography>=2.4
-    from ..extensions import PrecertPoison
 
 
 def dns(d):  # just a shortcut
@@ -2572,13 +2570,11 @@ class OCSPNoCheckTestCase(ExtensionTestMixin, TestCase):
         self.assertEqual(ext2, OCSPNoCheck(ext2.serialize()))
 
 
-@unittest.skipUnless(ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON,
-                     "This version of cryptography does not support the PrecertPoison extension.")
 class PrecertPoisonTestCase(ExtensionTestMixin, TestCase):
-    # PrecertPoison does not compare as equal:
+    # PrecertPoison does not compare as equal until cryptography 2.7:
     #   https://github.com/pyca/cryptography/issues/4818
     @unittest.skipUnless(hasattr(x509, 'PrecertPoison') and x509.PrecertPoison() == x509.PrecertPoison(),
-                         'Extensions compare as equal.')
+                         'Extensions compare as equal.')  # pragma: only cryptography<2.7
     def test_as_extension(self):
         ext1 = x509.extensions.Extension(oid=ExtensionOID.PRECERT_POISON, critical=True, value=None)
 

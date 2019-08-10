@@ -17,7 +17,6 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtensionOID
 
-from .. import ca_settings
 from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
@@ -28,6 +27,7 @@ from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
 from ..extensions import NameConstraints
 from ..extensions import OCSPNoCheck
+from ..extensions import PrecertPoison
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
@@ -40,9 +40,6 @@ from .base import DjangoCAWithCertTestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
-
-if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
-    from ..extensions import PrecertPoison
 
 
 @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
@@ -366,9 +363,8 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         extra_extensions = [
             NameConstraints(nc), IssuerAlternativeName(ian),
             OCSPNoCheck({'critical': True}),
+            PrecertPoison(),
         ]
-        if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
-            extra_extensions.append(PrecertPoison())
 
         cert = Certificate.objects.init(
             ca, csr,
@@ -394,9 +390,8 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             certs['all-extensions']['tls_feature'],
             NameConstraints(nc),
             certs['all-extensions']['crl_distribution_points'],
+            PrecertPoison(),
         ]
-        if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
-            expected.append(PrecertPoison())
         self.assertCountEqual(cert.extensions, expected)
 
     @override_tmpcadir()

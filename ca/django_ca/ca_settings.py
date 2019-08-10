@@ -21,7 +21,6 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509.oid import ExtensionOID
 
 from django.conf import global_settings
 from django.conf import settings
@@ -183,9 +182,6 @@ try:  # pragma: only cryptography>=2.4
     CRYPTOGRAPHY_OCSP = True
 except ImportError:  # pragma: only cryptography<2.4
     CRYPTOGRAPHY_OCSP = False
-
-# pragma: only cryptography<2.4 - Added in cryptography 2.4.
-CRYPTOGRAPHY_HAS_PRECERT_POISON = hasattr(ExtensionOID, 'PRECERT_POISON')
 
 # pragma: only cryptography<2.5 - Added in cryptography 2.5.
 # NOTE: OID was added in 2.4, extension only in 2.5
