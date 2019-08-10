@@ -171,7 +171,6 @@ class X509CertMixin(models.Model):
         help_text=_('Optional: When this certificate was compromised. You can change this date later.'))
 
     _x509 = None
-    _extensions = None
 
     class Meta:
         abstract = True
@@ -371,11 +370,9 @@ class X509CertMixin(models.Model):
 
     @cached_property
     def _sorted_extensions(self):
-        if self._extensions is None:
-            self._extensions = list(sorted(
-                self._x509_extensions.values(), key=lambda e: (get_extension_name(e), e.oid.dotted_string)
-            ))
-        return self._extensions
+        return list(sorted(
+            self._x509_extensions.values(), key=lambda e: (get_extension_name(e), e.oid.dotted_string)
+        ))
 
     @cached_property
     def extension_fields(self):
