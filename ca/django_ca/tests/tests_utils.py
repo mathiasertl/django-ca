@@ -570,13 +570,33 @@ class ParseEncodingTestCase(TestCase):
 class AddColonsTestCase(TestCase):
     def test_basic(self):
         self.assertEqual(utils.add_colons(''), '')
-        self.assertEqual(utils.add_colons('a'), 'a')
+        self.assertEqual(utils.add_colons('a'), '0a')
         self.assertEqual(utils.add_colons('ab'), 'ab')
-        self.assertEqual(utils.add_colons('abc'), 'ab:c')
+        self.assertEqual(utils.add_colons('abc'), '0a:bc')
         self.assertEqual(utils.add_colons('abcd'), 'ab:cd')
-        self.assertEqual(utils.add_colons('abcde'), 'ab:cd:e')
+        self.assertEqual(utils.add_colons('abcde'), '0a:bc:de')
         self.assertEqual(utils.add_colons('abcdef'), 'ab:cd:ef')
-        self.assertEqual(utils.add_colons('abcdefg'), 'ab:cd:ef:g')
+        self.assertEqual(utils.add_colons('abcdefg'), '0a:bc:de:fg')
+
+    def test_pad(self):
+        self.assertEqual(utils.add_colons('a', pad='z'), 'za')
+        self.assertEqual(utils.add_colons('ab', pad='z'), 'ab')
+        self.assertEqual(utils.add_colons('abc', pad='z'), 'za:bc')
+
+    def test_no_pad(self):
+        self.assertEqual(utils.add_colons('a', pad=None), 'a')
+        self.assertEqual(utils.add_colons('ab', pad=None), 'ab')
+        self.assertEqual(utils.add_colons('abc', pad=None), 'ab:c')
+
+    def test_zero_padding(self):
+        self.assertEqual(
+            utils.add_colons('F570A555BC5000FA301E8C75FFB31684FCF64436'),
+            'F5:70:A5:55:BC:50:00:FA:30:1E:8C:75:FF:B3:16:84:FC:F6:44:36'
+        )
+        self.assertEqual(
+            utils.add_colons('85BDA79A857379A4C9E910DAEA21C896D16394'),
+            '85:BD:A7:9A:85:73:79:A4:C9:E9:10:DA:EA:21:C8:96:D1:63:94'
+        )
 
 
 class IntToHexTestCase(TestCase):

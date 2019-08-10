@@ -13,6 +13,7 @@ ChangeLog
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.3 and 2.4.
 * **BACKWARDS INCOMPATIBLE:** Drop support for idna 2.7.
 * ``regenerate_ocsp_keys`` now has a quiet mode and only generates keys where the CA private key is available.
+* Serials are now zero-padded when output so that the last element always consists of two characters.
 
 .. _changelog-1.13.0:
 

@@ -202,14 +202,27 @@ def multiline_url_validator(value):
         validator(line)
 
 
-def add_colons(s):
+def add_colons(s, pad='0'):
     """Add colons after every second digit.
 
     This function is used in functions to prettify serials.
 
     >>> add_colons('teststring')
     'te:st:st:ri:ng'
+
+    Parameters
+    ----------
+
+    s : str
+        The string to add colons to
+    pad : str, default
+        If not None, pad the string so that the last element always has two characters. The default is
+        ``"0"``.
     """
+
+    if len(s) % 2 == 1 and pad is not None:
+        s = '%s%s' % (pad, s)
+
     return ':'.join([s[i:i + 2] for i in range(0, len(s), 2)])
 
 
@@ -224,6 +237,7 @@ def int_to_hex(i):
         # Strip the "L" suffix, since hex(1L) -> 0x1L.
         # NOTE: Do not convert to int earlier. int(<very-large-long>) is still long
         s = s[:-1]
+
     return s
 
 
