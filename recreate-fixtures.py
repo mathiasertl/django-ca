@@ -60,6 +60,7 @@ from django_ca.extensions import IssuerAlternativeName
 from django_ca.extensions import NameConstraints
 from django_ca.extensions import OCSPNoCheck
 from django_ca.extensions import PolicyInformation
+from django_ca.extensions import PrecertPoison
 from django_ca.models import Certificate
 from django_ca.models import CertificateAuthority
 from django_ca.profiles import get_cert_profile_kwargs
@@ -74,8 +75,6 @@ if PY2:  # pragma: only py2
 else:
     from unittest.mock import patch
 
-if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
-    from django_ca.extensions import PrecertPoison
 
 parser = argparse.ArgumentParser(description='Regenerate fixtures for testing.')
 parser.add_argument('--only-contrib', default=False, action='store_true',
@@ -801,10 +800,8 @@ if not args.only_contrib:
         extra_extensions = [
             NameConstraints(data[name]['name_constraints']),
             IssuerAlternativeName(data[name]['issuer_alternative_name']),
+            PrecertPoison(),
         ]
-
-        if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
-            extra_extensions.append(PrecertPoison())
 
         kwargs = {
             'extra_extensions': extra_extensions,
