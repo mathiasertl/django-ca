@@ -751,13 +751,13 @@ class DjangoCATestCase(TestCase):
 
     @classmethod
     def get_extensions(cls, cert):
-        # TODO: use cert.get_extensions() as soon as everything is moved to the new framework
+        # TODO: use cert.extensions as soon as everything is moved to the new framework
         c = Certificate()
         c.x509 = cert
         exts = [e.oid._name for e in cert.extensions]
 
         exts = {}
-        for ext in c.get_extensions():
+        for ext in c.extensions:
             exts[ext.__class__.__name__] = ext
         return exts
 

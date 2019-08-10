@@ -325,9 +325,8 @@ class CertificateMixin(object):
 
         fieldsets = copy.deepcopy(fieldsets)
 
-        extensions = list(obj.get_extension_fields())
-        if extensions:
-            for field in extensions:
+        if obj.extension_fields:
+            for field in obj.extension_fields:
                 if field == 'subject_alternative_name':  # already displayed in main section
                     continue
 
@@ -365,7 +364,7 @@ class CertificateMixin(object):
             return fields
 
         fields = list(fields)
-        for field in obj.get_extension_fields():
+        for field in obj.extension_fields:
             if isinstance(field, x509.Extension):
                 field = self.get_oid_name(field.oid)
 

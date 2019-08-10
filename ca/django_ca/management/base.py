@@ -361,7 +361,7 @@ class BaseCommand(_BaseCommand):
             raise ValueError('Received unknown extension type: %s' % type(ext))
 
     def print_extensions(self, cert):
-        for ext in cert.get_extensions():
+        for ext in cert.extensions:
             self.print_extension(ext)
 
     def test_private_key(self, ca, password):

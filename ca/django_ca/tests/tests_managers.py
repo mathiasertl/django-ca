@@ -53,7 +53,7 @@ class CertificateAuthorityManagerTestCase(DjangoCATestCase):
         tlsf = TLSFeature('OCSPMustStaple')
         ca = CertificateAuthority.objects.init('with-extra', '/CN=example.com', extra_extensions=[tlsf])
 
-        exts = [e for e in ca.get_extensions()
+        exts = [e for e in ca.extensions
                 if not isinstance(e, (SubjectKeyIdentifier, AuthorityKeyIdentifier))]
         self.assertEqual(ca.subject, Subject(subject))
         self.assertCountEqual(exts, [
@@ -201,7 +201,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             ca, csr, algorithm=hashes.SHA256(), **kwargs)
         self.assertEqual(self.get_subject(cert.x509)['CN'], 'cn.example.com')
         self.assertHasNotExtension(cert, ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
-        self.assertNotIn('SubjectAlternativeName', cert.get_extensions())
+        self.assertNotIn('SubjectAlternativeName', cert.extensions)
 
     @override_tmpcadir()
     def test_no_key_usage(self):
@@ -329,7 +329,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             ocsp_no_check=True,
             **kwargs)
 
-        self.assertCountEqual(cert.get_extensions(), [
+        self.assertCountEqual(cert.extensions, [
             cert.subject_key_identifier,  # changes on every invocation
             certs['profile-ocsp']['authority_information_access'],
             certs['profile-ocsp']['authority_key_identifier'],
@@ -397,7 +397,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         ]
         if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
             expected.append(PrecertPoison())
-        self.assertCountEqual(cert.get_extensions(), expected)
+        self.assertCountEqual(cert.extensions, expected)
 
     @override_tmpcadir()
     def test_override_ca_extensions(self):
@@ -442,7 +442,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             IssuerAlternativeName({'value': [ian_url]}),
         ]
 
-        self.assertCountEqual(cert.get_extensions(), expected)
+        self.assertCountEqual(cert.extensions, expected)
 
     @override_tmpcadir()
     def test_clear_ca_extensions(self):
@@ -479,7 +479,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             SubjectAlternativeName({'value': [cn]}),
         ]
 
-        self.assertCountEqual(cert.get_extensions(), expected)
+        self.assertCountEqual(cert.extensions, expected)
 
     @override_tmpcadir()
     def test_extra_extensions(self):
@@ -516,7 +516,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             value=ca.get_authority_key_identifier()
         ))
 
-        exts = [e for e in cert.get_extensions() if not isinstance(e, SubjectKeyIdentifier)]
+        exts = [e for e in cert.extensions if not isinstance(e, SubjectKeyIdentifier)]
         self.assertEqual(cert.subject, Subject(subject))
         self.assertCountEqual(exts, [
             TLSFeature(tlsf),

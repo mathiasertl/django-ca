@@ -327,7 +327,7 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         else:
             expected.append(log_msg % 'Unknown OID (1.3.6.1.4.1.11129.2.4.3)')
 
-        self.assertEqual(logs.output, sorted(expected) * 4)
+        self.assertEqual(logs.output, sorted(expected))
 
     @unittest.skipUnless(
         ca_settings.OPENSSL_SUPPORTS_SCT,

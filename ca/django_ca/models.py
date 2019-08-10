@@ -45,6 +45,7 @@ from django.utils import six
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_str
+from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import ugettext_lazy as _
 
@@ -369,25 +370,33 @@ class X509CertMixin(models.Model):
             ))
         return self._extensions
 
-    def get_extension_fields(self):
+    @cached_property
+    def extension_fields(self):
+        fields = []
+
         for ext in self._sorted_extensions:
             if ext.oid in self.OID_MAPPING:
-                yield self.OID_MAPPING[ext.oid]
+                fields.append(self.OID_MAPPING[ext.oid])
 
             # extension that does not support new extension framework
             else:
                 log.warning('Unknown extension encountered: %s (%s)',
                             get_extension_name(ext), ext.oid.dotted_string)
-                yield ext
+                fields.append(ext)
+        return fields
 
-    def get_extensions(self):
+    @cached_property
+    def extensions(self):
+        exts = []
+
         for ext in self._sorted_extensions:
             if ext.oid in self.OID_MAPPING:
-                yield getattr(self, self.OID_MAPPING[ext.oid])
+                exts.append(getattr(self, self.OID_MAPPING[ext.oid]))
 
             # extension that does not support new extension framework
             else:
-                yield ext
+                exts.append(ext)
+        return exts
 
     @property
     def authority_information_access(self):
