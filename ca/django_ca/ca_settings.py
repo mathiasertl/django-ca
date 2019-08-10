@@ -176,13 +176,6 @@ CA_FILE_STORAGE_KWARGS = getattr(settings, 'CA_FILE_STORAGE_KWARGS', {
     'directory_permissions_mode': 0o700,
 })
 
-# Try to decide if we can use OCSP from cryptography or not
-try:  # pragma: only cryptography>=2.4
-    from cryptography.x509 import ocsp  # NOQA
-    CRYPTOGRAPHY_OCSP = True
-except ImportError:  # pragma: only cryptography<2.4
-    CRYPTOGRAPHY_OCSP = False
-
 # pragma: only cryptography<2.5 - Added in cryptography 2.5.
 # NOTE: OID was added in 2.4, extension only in 2.5
 CRYPTOGRAPHY_HAS_IDP = hasattr(x509, 'IssuingDistributionPoint')

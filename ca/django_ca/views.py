@@ -20,25 +20,20 @@ import os
 from datetime import datetime
 from datetime import timedelta
 
-import asn1crypto
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509 import ExtensionNotFound
+from cryptography.x509 import OCSPNonce
 from cryptography.x509 import load_pem_x509_certificate
-from ocspbuilder import OCSPResponseBuilder
-from oscrypto import asymmetric
-from oscrypto.asymmetric import load_certificate
-from oscrypto.asymmetric import load_private_key
+from cryptography.x509 import ocsp
 
 from django.core.cache import cache
 from django.http import HttpResponse
 from django.http import HttpResponseServerError
 from django.utils.decorators import method_decorator
-from django.utils.encoding import force_bytes
-from django.utils.encoding import force_text
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin
@@ -149,8 +144,7 @@ class OCSPBaseView(View):
     * **Deprecated:** An absolute path on the local filesystem
     * A serial of a certificate as stored in the database
     * The PEM of the certificate as string
-    * A loaded certificate (either ``oscrypto.asymmetric.Certificate`` or
-      :py:class:`cg:cryptography.x509.Certificate`) depending on the backend used.
+    * A loaded :py:class:`~cg:cryptography.x509.Certificate`
     """
 
     expires = 600
@@ -214,219 +208,101 @@ class OCSPBaseView(View):
         return HttpResponse(data, status=status, content_type='application/ocsp-response')
 
 
-if ca_settings.CRYPTOGRAPHY_OCSP is True:  # pragma: only cryptography>=2.4
-    from cryptography.x509 import ocsp
-    from cryptography.x509 import OCSPNonce
+class OCSPView(OCSPBaseView):
+    """View providing OCSP functionality.
 
-    class OCSPView(OCSPBaseView):
-        """View providing OCSP functionality.
+    Depending on the cryptography version used, this view might use either cryptography or oscrypto."""
 
-        Depending on the cryptography version used, this view might use either cryptography or oscrypto."""
+    def fail(self, status=ocsp.OCSPResponseStatus.INTERNAL_ERROR):
+        return self.http_response(
+            ocsp.OCSPResponseBuilder.build_unsuccessful(status).public_bytes(Encoding.DER)
+        )
 
-        def fail(self, status=ocsp.OCSPResponseStatus.INTERNAL_ERROR):
-            return self.http_response(
-                ocsp.OCSPResponseBuilder.build_unsuccessful(status).public_bytes(Encoding.DER)
-            )
+    def malformed_request(self):
+        return self.fail(ocsp.OCSPResponseStatus.MALFORMED_REQUEST)
 
-        def malformed_request(self):
-            return self.fail(ocsp.OCSPResponseStatus.MALFORMED_REQUEST)
+    def get_responder_key(self):
+        key = self.get_responder_key_data()
+        return serialization.load_pem_private_key(key, None, default_backend())
 
-        def get_responder_key(self):
-            key = self.get_responder_key_data()
-            return serialization.load_pem_private_key(key, None, default_backend())
+    def get_responder_cert(self):
+        # User configured a loaded certificate
+        if isinstance(self.responder_cert, x509.Certificate):
+            return self.responder_cert
 
-        def get_responder_cert(self):
-            # User configured a loaded certificate
-            if isinstance(self.responder_cert, x509.Certificate):
-                return self.responder_cert
+        responder_cert = self.get_responder_cert_data()
+        return load_pem_x509_certificate(responder_cert, default_backend())
 
-            responder_cert = self.get_responder_cert_data()
-            return load_pem_x509_certificate(responder_cert, default_backend())
+    def process_ocsp_request(self, data):
+        try:
+            ocsp_req = ocsp.load_der_ocsp_request(data)  # NOQA
+        except Exception as e:
+            log.exception(e)
+            return self.malformed_request()
 
-        def process_ocsp_request(self, data):
-            try:
-                ocsp_req = ocsp.load_der_ocsp_request(data)  # NOQA
-            except Exception as e:
-                log.exception(e)
+        # Fail if there are any critical extensions that we do not understand
+        for ext in ocsp_req.extensions:
+            if ext.critical and not isinstance(ext.value, OCSPNonce):  # pragma: no cover
+                # It seems impossible to get cryptography to create such a request, so it's not tested
                 return self.malformed_request()
 
-            # Fail if there are any critical extensions that we do not understand
-            for ext in ocsp_req.extensions:
-                if ext.critical and not isinstance(ext.value, OCSPNonce):  # pragma: no cover
-                    # It seems impossible to get cryptography to create such a request, so it's not tested
-                    return self.malformed_request()
+        # Get CA and certificate
+        try:
+            ca = self.get_ca()
+        except CertificateAuthority.DoesNotExist:
+            log.error('%s: Certificate Authority could not be found.', self.ca)
+            return self.fail()
 
-            # Get CA and certificate
-            try:
-                ca = self.get_ca()
-            except CertificateAuthority.DoesNotExist:
-                log.error('%s: Certificate Authority could not be found.', self.ca)
-                return self.fail()
+        try:
+            cert = self.get_cert(ca, int_to_hex(ocsp_req.serial_number))
+        except Certificate.DoesNotExist:
+            log.warning('OCSP request for unknown cert received.')
+            return self.fail()
+        except CertificateAuthority.DoesNotExist:
+            log.warning('OCSP request for unknown CA received.')
+            return self.fail()
 
-            try:
-                cert = self.get_cert(ca, int_to_hex(ocsp_req.serial_number))
-            except Certificate.DoesNotExist:
-                log.warning('OCSP request for unknown cert received.')
-                return self.fail()
-            except CertificateAuthority.DoesNotExist:
-                log.warning('OCSP request for unknown CA received.')
-                return self.fail()
+        # get key/cert for OCSP responder
+        try:
+            responder_key = self.get_responder_key()
+            responder_cert = self.get_responder_cert()
+        except Exception:
+            log.error('Could not read responder key/cert.')
+            return self.fail()
 
-            # get key/cert for OCSP responder
-            try:
-                responder_key = self.get_responder_key()
-                responder_cert = self.get_responder_cert()
-            except Exception:
-                log.error('Could not read responder key/cert.')
-                return self.fail()
+        # get the certificate status
+        if cert.revoked:
+            status = ocsp.OCSPCertStatus.REVOKED
+        else:
+            status = ocsp.OCSPCertStatus.GOOD
 
-            # get the certificate status
-            if cert.revoked:
-                status = ocsp.OCSPCertStatus.REVOKED
-            else:
-                status = ocsp.OCSPCertStatus.GOOD
+        now = datetime.utcnow()
+        builder = ocsp.OCSPResponseBuilder()
+        expires = datetime.utcnow() + timedelta(seconds=self.expires)
+        builder = builder.add_response(
+            cert=cert.x509, issuer=ca.x509, algorithm=hashes.SHA1(),
+            cert_status=status,
+            this_update=now,
+            next_update=expires,
+            revocation_time=cert.get_revocation_time(),
+            revocation_reason=cert.get_revocation_reason()
+        ).responder_id(
+            ocsp.OCSPResponderEncoding.HASH, responder_cert
+        )
 
-            now = datetime.utcnow()
-            builder = ocsp.OCSPResponseBuilder()
-            expires = datetime.utcnow() + timedelta(seconds=self.expires)
-            builder = builder.add_response(
-                cert=cert.x509, issuer=ca.x509, algorithm=hashes.SHA1(),
-                cert_status=status,
-                this_update=now,
-                next_update=expires,
-                revocation_time=cert.get_revocation_time(),
-                revocation_reason=cert.get_revocation_reason()
-            ).responder_id(
-                ocsp.OCSPResponderEncoding.HASH, responder_cert
-            )
+        # Add the responder cert to the response, necessary because we (so far) always use delegate
+        # certificates
+        builder = builder.certificates([responder_cert])
 
-            # Add the responder cert to the response, necessary because we (so far) always use delegate
-            # certificates
-            builder = builder.certificates([responder_cert])
+        # Add OCSP nonce if present
+        try:
+            nonce = ocsp_req.extensions.get_extension_for_class(OCSPNonce)
+            builder = builder.add_extension(nonce.value, critical=nonce.critical)
+        except ExtensionNotFound:
+            pass
 
-            # Add OCSP nonce if present
-            try:
-                nonce = ocsp_req.extensions.get_extension_for_class(OCSPNonce)
-                builder = builder.add_extension(nonce.value, critical=nonce.critical)
-            except ExtensionNotFound:
-                pass
-
-            response = builder.sign(responder_key, hashes.SHA256())
-            return self.http_response(response.public_bytes(Encoding.DER))
-
-else:  # pragma: only cryptography<2.4
-    class OCSPView(OCSPBaseView):
-        """
-        .. seealso::
-
-            This is heavily inspired by
-            https://github.com/threema-ch/ocspresponder/blob/master/ocspresponder/__init__.py.
-        """
-        def fail(self, reason=u'internal_error'):
-            builder = OCSPResponseBuilder(response_status=reason)
-            return self.http_response(builder.build().dump())
-
-        def malformed_request(self):
-            return self.fail(u'malformed_request')
-
-        def get_responder_key(self):
-            key = self.get_responder_key_data()
-            return load_private_key(key)
-
-        def get_responder_cert(self):
-            # User configured a loaded certificate
-            if isinstance(self.responder_cert, asymmetric.Certificate):
-                return self.responder_cert
-
-            responder_cert = self.get_responder_cert_data()
-            return load_certificate(responder_cert)
-
-        def process_ocsp_request(self, data):
-            try:
-                ocsp_request = asn1crypto.ocsp.OCSPRequest.load(data)
-
-                tbs_request = ocsp_request['tbs_request']
-                request_list = tbs_request['request_list']
-                if len(request_list) != 1:
-                    log.error('Received OCSP request with multiple sub requests')
-                    raise NotImplementedError('Combined requests not yet supported')
-                single_request = request_list[0]  # TODO: Support more than one request
-                req_cert = single_request['req_cert']
-                serial = int_to_hex(req_cert['serial_number'].native)
-            except Exception as e:
-                log.exception('Error parsing OCSP request: %s', e)
-                return self.fail(u'malformed_request')
-
-            try:
-                ca = self.get_ca()
-            except CertificateAuthority.DoesNotExist:
-                log.error('%s: Certificate Authority could not be found.', self.ca)
-                return self.fail()
-
-            try:
-                cert = self.get_cert(ca, serial)
-            except Certificate.DoesNotExist:
-                log.warning('OCSP request for unknown cert received.')
-                return self.fail()
-            except CertificateAuthority.DoesNotExist:
-                log.warning('OCSP request for unknown CA received.')
-                return self.fail(u'internal_error')
-
-            # load ca cert and responder key/cert
-            try:
-                ca_cert = load_certificate(force_bytes(ca.pub))
-            except Exception:
-                log.error('Could not load CA certificate.')
-                return self.fail(u'internal_error')
-
-            try:
-                responder_key = self.get_responder_key()
-                responder_cert = self.get_responder_cert()
-            except Exception:
-                log.error('Could not read responder key/cert.')
-                return self.fail(u'internal_error')
-
-            builder = OCSPResponseBuilder(
-                response_status=u'successful',  # ResponseStatus.successful.value,
-                certificate=load_certificate(force_bytes(cert.pub)),
-                certificate_status=force_text(cert.ocsp_status),
-                revocation_date=cert.revoked_date,
-            )
-
-            # Parse extensions
-            for extension in tbs_request['request_extensions']:
-                extn_id = extension['extn_id'].native
-                critical = extension['critical'].native
-                value = extension['extn_value'].parsed
-
-                # This variable tracks whether any unknown extensions were encountered
-                unknown = False
-
-                # Handle nonce extension
-                if extn_id == 'nonce':
-                    builder.nonce = value.native
-
-                # That's all we know
-                else:  # pragma: no cover
-                    unknown = True
-
-                # If an unknown critical extension is encountered (which should not
-                # usually happen, according to RFC 6960 4.1.2), we should throw our
-                # hands up in despair and run.
-                if unknown is True and critical is True:  # pragma: no cover
-                    log.warning('Could not parse unknown critical extension: %r',
-                                dict(extension.native))
-                    return self._fail('internal_error')
-
-                # If it's an unknown non-critical extension, we can safely ignore it.
-                elif unknown is True:  # pragma: no cover
-                    log.info('Ignored unknown non-critical extension: %r', dict(extension.native))
-
-            builder.certificate_issuer = ca_cert
-            builder.next_update = datetime.utcnow() + timedelta(seconds=self.expires)
-            response = builder.build(responder_key, responder_cert)
-
-            return self.http_response(response.dump())
+        response = builder.sign(responder_key, hashes.SHA256())
+        return self.http_response(response.public_bytes(Encoding.DER))
 
 
 @method_decorator(csrf_exempt, name='dispatch')

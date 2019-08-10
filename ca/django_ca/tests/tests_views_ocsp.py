@@ -15,7 +15,6 @@
 
 import base64
 import os
-import unittest
 from datetime import timedelta
 
 from freezegun import freeze_time
@@ -23,7 +22,6 @@ from freezegun import freeze_time
 import asn1crypto
 import asn1crypto.x509
 import ocspbuilder
-import oscrypto
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -96,12 +94,6 @@ urlpatterns = [
         responder_cert=ocsp_pem,
         expires=1400,
     ), name='post-full-pem'),
-    url(r'^ocsp/loaded-oscrypto/$', OCSPView.as_view(
-        ca=certs['child']['serial'],
-        responder_key=ocsp_profile['key_filename'],
-        responder_cert=oscrypto.asymmetric.load_certificate(ocsp_pem.encode('utf-8')),
-        expires=1500,
-    ), name='post-loaded-oscrypto'),
     url(r'^ocsp/loaded-cryptography/$', OCSPView.as_view(
         ca=certs['child']['serial'],
         responder_key=ocsp_profile['key_filename'],
@@ -386,7 +378,6 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertOCSP(response, requested=[cert], nonce=req1_nonce, expires=1500)
 
-    @unittest.skipUnless(ca_settings.CRYPTOGRAPHY_OCSP, 'Skip cryptography test for cryptography<2.4')
     @override_tmpcadir()
     def test_loaded_cryptography_cert(self):
         cert = self.certs['child-cert']
@@ -395,15 +386,6 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertOCSP(response, requested=[cert], nonce=req1_nonce, expires=1500)
 
-    @unittest.skipIf(ca_settings.CRYPTOGRAPHY_OCSP, 'Skip cryptography test for cryptography>=2.4')
-    @override_tmpcadir()
-    def test_loaded_oscrypto_cert(self):
-        response = self.client.post(reverse('post-loaded-oscrypto'), req1,
-                                    content_type='application/ocsp-request')
-        self.assertEqual(response.status_code, 200)
-        self.assertOCSP(response, requested=[self.certs['child-cert']], nonce=req1_nonce, expires=1500)
-
-    @unittest.skipUnless(ca_settings.CRYPTOGRAPHY_OCSP, 'Skip cryptography test for cryptography<2.4')
     @override_tmpcadir()
     def test_no_nonce(self):
         from cryptography.x509 import ocsp
