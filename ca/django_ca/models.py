@@ -61,8 +61,8 @@ from .extensions import IssuerAlternativeName
 from .extensions import KeyUsage
 from .extensions import NameConstraints
 from .extensions import OCSPNoCheck
-from .extensions import PrecertPoison
 from .extensions import PrecertificateSignedCertificateTimestamps
+from .extensions import PrecertPoison
 from .extensions import SubjectAlternativeName
 from .extensions import SubjectKeyIdentifier
 from .extensions import TLSFeature

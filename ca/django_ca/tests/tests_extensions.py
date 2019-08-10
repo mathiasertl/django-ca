@@ -46,8 +46,8 @@ from ..extensions import ListExtension
 from ..extensions import NameConstraints
 from ..extensions import OCSPNoCheck
 from ..extensions import PolicyInformation
-from ..extensions import PrecertPoison
 from ..extensions import PrecertificateSignedCertificateTimestamps
+from ..extensions import PrecertPoison
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
