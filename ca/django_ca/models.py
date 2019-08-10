@@ -362,11 +362,18 @@ class X509CertMixin(models.Model):
     if ca_settings.CRYPTOGRAPHY_HAS_PRECERT_POISON:  # pragma: no branch, pragma: only cryptography>=2.4
         OID_MAPPING[ExtensionOID.PRECERT_POISON] = 'precert_poison'
 
-    @property
+    @cached_property
+    def _x509_extensions(self):
+        return {e.oid: e for e in self.x509.extensions}
+
+    def get_x509_extension(self, oid):
+        return self._x509_extensions.get(oid)
+
+    @cached_property
     def _sorted_extensions(self):
         if self._extensions is None:
             self._extensions = list(sorted(
-                self.x509.extensions, key=lambda e: (get_extension_name(e), e.oid.dotted_string)
+                self._x509_extensions.values(), key=lambda e: (get_extension_name(e), e.oid.dotted_string)
             ))
         return self._extensions
 
@@ -398,104 +405,78 @@ class X509CertMixin(models.Model):
                 exts.append(ext)
         return exts
 
-    @property
+    @cached_property
     def authority_information_access(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS)
-        except x509.ExtensionNotFound:
-            return None
-        return AuthorityInformationAccess(ext)
+        ext = self.get_x509_extension(ExtensionOID.AUTHORITY_INFORMATION_ACCESS)
+        if ext is not None:
+            return AuthorityInformationAccess(ext)
 
-    @property
+    @cached_property
     def authority_key_identifier(self):
         """The :py:class:`~django_ca.extensions.AuthorityKeyIdentifier` extension, or ``None`` if it doesn't
         exist."""
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_KEY_IDENTIFIER)
-        except x509.ExtensionNotFound:
-            return None
-        return AuthorityKeyIdentifier(ext)
+        ext = self.get_x509_extension(ExtensionOID.AUTHORITY_KEY_IDENTIFIER)
+        if ext is not None:
+            return AuthorityKeyIdentifier(ext)
 
-    @property
+    @cached_property
     def basic_constraints(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
-        except x509.ExtensionNotFound:
-            return None
-        return BasicConstraints(ext)
+        ext = self.get_x509_extension(ExtensionOID.BASIC_CONSTRAINTS)
+        if ext is not None:
+            return BasicConstraints(ext)
 
-    @property
+    @cached_property
     def crl_distribution_points(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.CRL_DISTRIBUTION_POINTS)
-        except x509.ExtensionNotFound:
-            return None
-        return CRLDistributionPoints(ext)
+        ext = self.get_x509_extension(ExtensionOID.CRL_DISTRIBUTION_POINTS)
+        if ext is not None:
+            return CRLDistributionPoints(ext)
 
-    @property
+    @cached_property
     def certificate_policies(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES)
-        except x509.ExtensionNotFound:
-            return None
-        return CertificatePolicies(ext)
+        ext = self.get_x509_extension(ExtensionOID.CERTIFICATE_POLICIES)
+        if ext is not None:
+            return CertificatePolicies(ext)
 
-    @property
+    @cached_property
     def issuer_alternative_name(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.ISSUER_ALTERNATIVE_NAME)
-        except x509.ExtensionNotFound:
-            return None
+        ext = self.get_x509_extension(ExtensionOID.ISSUER_ALTERNATIVE_NAME)
+        if ext is not None:
+            return IssuerAlternativeName(ext)
 
-        return IssuerAlternativeName(ext)
-
-    @property
+    @cached_property
     def key_usage(self):
         """The :py:class:`~django_ca.extensions.KeyUsage` extension, or ``None`` if it doesn't exist."""
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.KEY_USAGE)
-        except x509.ExtensionNotFound:
-            return None
-        return KeyUsage(ext)
+        ext = self.get_x509_extension(ExtensionOID.KEY_USAGE)
+        if ext is not None:
+            return KeyUsage(ext)
 
-    @property
+    @cached_property
     def extended_key_usage(self):
         """The :py:class:`~django_ca.extensions.ExtendedKeyUsage` extension, or ``None`` if it doesn't
         exist."""
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.EXTENDED_KEY_USAGE)
-        except x509.ExtensionNotFound:
-            return None
-        return ExtendedKeyUsage(ext)
+        ext = self.get_x509_extension(ExtensionOID.EXTENDED_KEY_USAGE)
+        if ext is not None:
+            return ExtendedKeyUsage(ext)
 
-    @property
+    @cached_property
     def name_constraints(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.NAME_CONSTRAINTS)
-        except x509.ExtensionNotFound:
-            return None
+        ext = self.get_x509_extension(ExtensionOID.NAME_CONSTRAINTS)
+        if ext is not None:
+            return NameConstraints(ext)
 
-        return NameConstraints(ext)
-
-    @property
+    @cached_property
     def ocsp_no_check(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.OCSP_NO_CHECK)
-        except x509.ExtensionNotFound:
-            return None
+        ext = self.get_x509_extension(ExtensionOID.OCSP_NO_CHECK)
+        if ext is not None:
+            return OCSPNoCheck(ext)
 
-        return OCSPNoCheck(ext)
-
-    @property
+    @cached_property
     def precert_poison(self):  # pragma: only cryptography>=2.4
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.PRECERT_POISON)
-        except x509.ExtensionNotFound:
-            return None
+        ext = self.get_x509_extension(ExtensionOID.PRECERT_POISON)
+        if ext is not None:
+            return PrecertPoison(ext)
 
-        return PrecertPoison(ext)
-
-    @property
+    @cached_property
     def precertificate_signed_certificate_timestamps(self):
         try:
             ext = self.x509.extensions.get_extension_for_oid(
@@ -513,33 +494,26 @@ class X509CertMixin(models.Model):
         else:  # pragma: only SCT
             return PrecertificateSignedCertificateTimestamps(ext)
 
-    @property
+    @cached_property
     def subject_alternative_name(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
-        except x509.ExtensionNotFound:
-            return None
+        ext = self.get_x509_extension(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
+        if ext is not None:
+            return SubjectAlternativeName(ext)
 
-        return SubjectAlternativeName(ext)
-
-    @property
+    @cached_property
     def subject_key_identifier(self):
         """The :py:class:`~django_ca.extensions.SubjectKeyIdentifier` extension, or ``None`` if it doesn't
         exist."""
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_KEY_IDENTIFIER)
-        except x509.ExtensionNotFound:
-            return None
-        return SubjectKeyIdentifier(ext)
+        ext = self.get_x509_extension(ExtensionOID.SUBJECT_KEY_IDENTIFIER)
+        if ext is not None:
+            return SubjectKeyIdentifier(ext)
 
-    @property
+    @cached_property
     def tls_feature(self):
         """The :py:class:`~django_ca.extensions.TLSFeature` extension, or ``None`` if it doesn't exist."""
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.TLS_FEATURE)
-        except x509.ExtensionNotFound:
-            return None
-        return TLSFeature(ext)
+        ext = self.get_x509_extension(ExtensionOID.TLS_FEATURE)
+        if ext is not None:
+            return TLSFeature(ext)
 
 
 class CertificateAuthority(X509CertMixin):
