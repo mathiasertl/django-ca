@@ -2,6 +2,7 @@
 *.sw[po]
 *.sqlite3
 *.egg-info
+geckodriver.log
 localsettings.py
 /.tox/
 /MANIFEST
@@ -10,6 +11,7 @@ localsettings.py
 /.coverage
 /.docker/
 /ca/files/
+/contrib/
 /dist
 /dj18/
 /docs/build/
