@@ -23,6 +23,11 @@ install:
  - pip install Django==$DJANGO cryptography==$CRYPTOGRAPHY
 #before_script:
 script:
+  # download selenium driver
+  - mkdir -p contrib/selenium 
+  - wget https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux64.tar.gz
+  - tar xf geckodriver-v0.24.0-linux64.tar.gz -C contrib/selenium
+
   - python dev.py code-quality
   - python dev.py coverage
   - echo -e "DEBUG = True\nSECRET_KEY = 'dummy'" > ca/ca/localsettings.py
