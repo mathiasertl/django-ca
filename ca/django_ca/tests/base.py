@@ -21,6 +21,8 @@ from OpenSSL.crypto import FILETYPE_PEM
 from OpenSSL.crypto import X509Store
 from OpenSSL.crypto import X509StoreContext
 from OpenSSL.crypto import load_certificate
+from pyvirtualdisplay import Display
+from selenium.webdriver.firefox.webdriver import WebDriver
 
 import cryptography
 from cryptography import x509
@@ -33,6 +35,7 @@ from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
 from django.contrib.messages import get_messages
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.core.exceptions import ValidationError
 from django.core.management import ManagementUtility
 from django.core.management import call_command
@@ -822,3 +825,24 @@ class DjangoCAWithCertTestCase(DjangoCAWithCATestCase):
     def setUp(self):
         super(DjangoCAWithCertTestCase, self).setUp()
         self.load_all_certs()
+
+
+class SeleniumTestCase(StaticLiveServerTestCase):
+    def setUp(self):
+        super(SeleniumTestCase, self).setUp()
+        print('starting...')
+
+        if settings.VIRTUAL_DISPLAY and False:
+            print('!>?')
+            self.vdisplay = Display(visible=0, size=(1024, 768))
+            self.vdisplay.start()
+
+        self.selenium = WebDriver(executable_path=settings.GECKODRIVER_PATH)
+        print('started')
+
+    def tearDown(self):
+        print('quitting')
+        self.selenium.quit()
+        if settings.VIRTUAL_DISPLAY:
+            self.vdisplay.stop()
+        super(SeleniumTestCase, self).tearDown()

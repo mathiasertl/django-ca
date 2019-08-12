@@ -222,3 +222,7 @@ CA_OCSP_URLS = {
         'responder_cert': _fixture_data['certs']['profile-ocsp']['pub_filename'],
     },
 }
+
+# For Selenium test cases
+VIRTUAL_DISPLAY = os.environ.get('VIRTUAL_DISPLAY', 'y').lower().strip() == 'y'
+GECKODRIVER_PATH = os.path.join(ROOT_DIR, 'contrib', 'selenium', 'geckodriver')

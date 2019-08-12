@@ -6,5 +6,7 @@ mock==2.0.0; python_version < '3'
 ocspbuilder==0.10.2
 oscrypto==0.19.1
 pyOpenSSL==19.0.0
+pyvirtualdisplay==0.2.4
+selenium==3.141.0
 termcolor==1.1.0
 testfixtures==6.6.1; python_version < '3'

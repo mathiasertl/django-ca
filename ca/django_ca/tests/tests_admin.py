@@ -55,6 +55,7 @@ from ..utils import SUBJECT_FIELDS
 from .base import DjangoCATestCase
 from .base import DjangoCAWithCertTestCase
 from .base import DjangoCAWithGeneratedCertsTestCase
+from .base import SeleniumTestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
@@ -1200,3 +1201,9 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertFalse(post.called)
         self.assertRequiresLogin(response)
         self.assertNotRevoked(self.cert)
+
+
+class ProfileSelectionTests(SeleniumTestCase):
+    def test_select(self):
+        #self.selenium.get('%s%s' % (self.live_server_url, reverse('admin:login')))
+        print('base')
