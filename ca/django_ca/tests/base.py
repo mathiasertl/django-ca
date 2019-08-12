@@ -839,7 +839,7 @@ class DjangoCAWithCertTestCase(DjangoCAWithCATestCase):
         self.load_all_certs()
 
 
-class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):
+class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # pragma: no cover
     @classmethod
     def setUpClass(cls):
         super(SeleniumTestCase, cls).setUpClass()
@@ -872,4 +872,3 @@ class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):
 
     def wait_for_page_load(self, wait=2):
         WebDriverWait(self.selenium, wait).until(lambda driver: driver.find_element_by_tag_name('body'))
-
