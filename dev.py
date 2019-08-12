@@ -38,9 +38,11 @@ from django.core.exceptions import ImproperlyConfigured
 PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
 
-suites_parser = argparse.ArgumentParser(add_help=False)
-suites_parser.add_argument('-s', '--suites', default=[], nargs='+',
-                           help="Modules to test (e.g. tests_modules).")
+test_base = argparse.ArgumentParser(add_help=False)
+test_base.add_argument('-s', '--suites', default=[], nargs='+',
+                       help="Modules to test (e.g. tests_modules).")
+test_base.add_argument('-p', '--no-virtual-display', dest='virtual_display', action='store_false',
+                       default=True, help="Do not run tests in virtual display.")
 
 parser = argparse.ArgumentParser(
     description='Helper-script for various tasks during development.'
@@ -58,8 +60,8 @@ dt_parser.add_argument('--fail-fast', action='store_true', default=False,
 dt_parser.add_argument('--keep-image', action='store_true', default=False,
                        help='Do not remove images..')
 
-test_parser = commands.add_parser('test', parents=[suites_parser])
-cov_parser = commands.add_parser('coverage', parents=[suites_parser])
+test_parser = commands.add_parser('test', parents=[test_base])
+cov_parser = commands.add_parser('coverage', parents=[test_base])
 cov_parser.add_argument('--fail-under', type=int, default=100, metavar='[0-100]',
                         help='Fail if coverage is below given percentage (default: %(default)s%%).')
 
@@ -149,6 +151,9 @@ def exclude_versions(cov, sw, this_version, version, version_str):
 
 
 if args.command == 'test':
+    if not args.virtual_display:
+        os.environ['VIRTUAL_DISPLAY'] = 'n'
+
     setup_django()
     test(args.suites)
 elif args.command == 'coverage':
@@ -183,6 +188,9 @@ elif args.command == 'coverage':
         exclude_versions(cov, 'cryptography', this_version, ver, version_str)
 
     cov.start()
+
+    if not args.virtual_display:
+        os.environ['VIRTUAL_DISPLAY'] = 'n'
 
     setup_django()
     test(args.suites)
