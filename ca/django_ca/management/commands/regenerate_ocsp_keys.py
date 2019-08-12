@@ -72,7 +72,9 @@ class Command(BaseCommand):
                     # NOTE: coverage falsely identifies the above condition to always be false.
                     self.stderr.write(self.style.WARNING('%s: CA has no private key.' % hr_serial))
 
-                continue
+                # Coverage on py2 for some reason believes that this line is never reached. But if we add a
+                # print() before continue, the line is marked as reached. So whatever.
+                continue  # pragma: only py3
 
             ca.generate_ocsp_key(
                 profile=profile,
