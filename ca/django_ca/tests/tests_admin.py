@@ -1203,7 +1203,18 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertNotRevoked(self.cert)
 
 
-class ProfileSelectionTests(SeleniumTestCase):
+class ProfileSelectionTests(AdminTestMixin, SeleniumTestCase):
+    def test_no_add(self):
+        pass
+
+    @override_tmpcadir()
     def test_select(self):
-        #self.selenium.get('%s%s' % (self.live_server_url, reverse('admin:login')))
-        print('base')
+        self.load_usable_cas()
+        self.create_superuser()
+        self.login()
+
+        self.selenium.get('%s%s' % (self.live_server_url, self.add_url))
+        select = self.find('select#id_profile')
+        for option in select.find_elements_by_tag_name("option"):
+            #print("Value is: %s" % option.get_attribute("value"))
+            option.click()

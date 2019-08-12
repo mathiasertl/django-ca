@@ -23,6 +23,7 @@ from OpenSSL.crypto import X509StoreContext
 from OpenSSL.crypto import load_certificate
 from pyvirtualdisplay import Display
 from selenium.webdriver.firefox.webdriver import WebDriver
+from selenium.webdriver.support.wait import WebDriverWait
 
 import cryptography
 from cryptography import x509
@@ -34,6 +35,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.core.exceptions import ValidationError
@@ -42,6 +44,7 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
 from django.test.utils import override_settings as _override_settings
+from django.urls import reverse
 from django.utils.six import StringIO
 from django.utils.six.moves import reload_module
 
@@ -83,6 +86,8 @@ if six.PY2:  # pragma: only py2
 else:  # pragma: only py3
     from unittest.mock import Mock
     from unittest.mock import patch
+
+User = get_user_model()
 
 
 def _load_key(data):
@@ -385,7 +390,7 @@ class override_tmpcadir(override_settings):
         shutil.rmtree(self.options['CA_DIR'])
 
 
-class DjangoCATestCase(TestCase):
+class DjangoCATestCaseMixin(object):
     """Base class for all testcases with some enhancements."""
 
     re_false_password = r'^(Bad decrypt\. Incorrect password\?|Could not deserialize key data\.)$'
@@ -410,7 +415,7 @@ class DjangoCATestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(DjangoCATestCase, cls).setUpClass()
+        super(DjangoCATestCaseMixin, cls).setUpClass()
 
         if cls._overridden_settings:
             reload_module(ca_settings)
@@ -421,13 +426,13 @@ class DjangoCATestCase(TestCase):
         if hasattr(cls, '_cls_overridden_context'):
             overridden = True
 
-        super(DjangoCATestCase, cls).tearDownClass()
+        super(DjangoCATestCaseMixin, cls).tearDownClass()
 
         if overridden is True:
             reload_module(ca_settings)
 
     def setUp(self):
-        super(DjangoCATestCase, self).setUp()
+        super(DjangoCATestCaseMixin, self).setUp()
         self.cas = {}
         self.certs = {}
 
@@ -741,6 +746,9 @@ class DjangoCATestCase(TestCase):
     def get_subject(cls, cert):
         return {OID_NAME_MAPPINGS[s.oid]: s.value for s in cert.subject}
 
+    def create_superuser(self, username='admin', password='admin', email='user@example.com'):
+        return User.objects.create_superuser(username=username, password=password, email=email)
+
     @classmethod
     def get_extensions(cls, cert):
         # TODO: use cert.extensions as soon as everything is moved to the new framework
@@ -800,6 +808,10 @@ class DjangoCATestCase(TestCase):
             yield mock
 
 
+class DjangoCATestCase(DjangoCATestCaseMixin, TestCase):
+    pass
+
+
 @override_settings(CA_MIN_KEY_SIZE=512)
 class DjangoCAWithCATestCase(DjangoCATestCase):
     """A test class that already has a CA predefined."""
@@ -827,7 +839,7 @@ class DjangoCAWithCertTestCase(DjangoCAWithCATestCase):
         self.load_all_certs()
 
 
-class SeleniumTestCase(StaticLiveServerTestCase):
+class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):
     @classmethod
     def setUpClass(cls):
         super(SeleniumTestCase, cls).setUpClass()
@@ -845,3 +857,19 @@ class SeleniumTestCase(StaticLiveServerTestCase):
         if settings.VIRTUAL_DISPLAY:
             cls.vdisplay.stop()
         super(SeleniumTestCase, cls).tearDownClass()
+
+    def find(self, selector):
+        """Find an element by CSS selector."""
+
+        return self.selenium.find_element_by_css_selector(selector)
+
+    def login(self, username='admin', password='admin'):
+        self.selenium.get('%s%s' % (self.live_server_url, reverse('admin:login')))
+        self.find('#id_username').send_keys(username)
+        self.find('#id_password').send_keys(password)
+        self.find('input[type="submit"]').click()
+        self.wait_for_page_load()
+
+    def wait_for_page_load(self, wait=2):
+        WebDriverWait(self.selenium, wait).until(lambda driver: driver.find_element_by_tag_name('body'))
+
