@@ -111,6 +111,7 @@ class ProfileWidget(widgets.Select):
 
     class Media:
         js = (
+            'admin/js/jquery.init.js',
             'django_ca/admin/js/profilewidget.js',
         )
 

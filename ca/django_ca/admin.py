@@ -704,5 +704,6 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             ),
         }
         js = (
+            'admin/js/jquery.init.js',
             'django_ca/admin/js/sign.js',
         )
