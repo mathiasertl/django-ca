@@ -33,7 +33,11 @@ from django.conf import settings  # NOQA
 settings.configure(
     SECRET_KEY='dummy',
     BASE_DIR=_SRC_DIR,
-    INSTALLED_APPS=['django_ca'],
+    INSTALLED_APPS=[
+        'django.contrib.auth',
+        'django.contrib.contenttypes',
+        'django_ca',
+    ],
     FIXTURES_DIR=_FIXTURES,
 )
 django.setup()
