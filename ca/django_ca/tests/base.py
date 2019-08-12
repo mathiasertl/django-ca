@@ -828,21 +828,20 @@ class DjangoCAWithCertTestCase(DjangoCAWithCATestCase):
 
 
 class SeleniumTestCase(StaticLiveServerTestCase):
-    def setUp(self):
-        super(SeleniumTestCase, self).setUp()
-        print('starting...')
+    @classmethod
+    def setUpClass(cls):
+        super(SeleniumTestCase, cls).setUpClass()
 
-        if settings.VIRTUAL_DISPLAY and False:
-            print('!>?')
-            self.vdisplay = Display(visible=0, size=(1024, 768))
-            self.vdisplay.start()
-
-        self.selenium = WebDriver(executable_path=settings.GECKODRIVER_PATH)
-        print('started')
-
-    def tearDown(self):
-        print('quitting')
-        self.selenium.quit()
         if settings.VIRTUAL_DISPLAY:
-            self.vdisplay.stop()
-        super(SeleniumTestCase, self).tearDown()
+            cls.vdisplay = Display(visible=0, size=(1024, 768))
+            cls.vdisplay.start()
+
+        cls.selenium = WebDriver(executable_path=settings.GECKODRIVER_PATH)
+        cls.selenium.implicitly_wait(10)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.selenium.quit()
+        if settings.VIRTUAL_DISPLAY:
+            cls.vdisplay.stop()
+        super(SeleniumTestCase, cls).tearDownClass()
