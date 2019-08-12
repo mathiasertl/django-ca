@@ -3,6 +3,8 @@
 import json
 import os
 
+from django.core.exceptions import ImproperlyConfigured
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROOT_DIR = os.path.dirname(BASE_DIR)
@@ -226,3 +228,8 @@ CA_OCSP_URLS = {
 # For Selenium test cases
 VIRTUAL_DISPLAY = os.environ.get('VIRTUAL_DISPLAY', 'y').lower().strip() == 'y'
 GECKODRIVER_PATH = os.path.join(ROOT_DIR, 'contrib', 'selenium', 'geckodriver')
+
+if not os.path.exists(GECKODRIVER_PATH):
+    raise ImproperlyConfigured(
+        'Please download geckodriver to %s: '
+        'https://selenium-python.readthedocs.io/installation.html#drivers' % GECKODRIVER_PATH)
