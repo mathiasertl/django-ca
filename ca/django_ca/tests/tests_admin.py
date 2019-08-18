@@ -92,7 +92,7 @@ class AdminTestMixin(object):
         self.assertEqual(response.status_code, 200)
 
         templates = [t.name for t in response.templates]
-        self.assertIn('django_ca/admin/change_form.html', templates)
+        self.assertIn('admin/django_ca/certificate/change_form.html', templates)
         self.assertIn('admin/change_form.html', templates)
         self.assertCSS(response, 'django_ca/admin/css/base.css')
         self.assertCSS(response, 'django_ca/admin/css/certificateadmin.css')
@@ -362,7 +362,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         response = self.client.get(self.add_url)
         self.assertEqual(response.status_code, 200)
         templates = [t.name for t in response.templates]
-        self.assertIn('django_ca/admin/change_form.html', templates)
+        self.assertIn('admin/django_ca/certificate/change_form.html', templates)
         self.assertIn('admin/change_form.html', templates)
         self.assertCSS(response, 'django_ca/admin/css/base.css')
         self.assertCSS(response, 'django_ca/admin/css/certificateadmin.css')
@@ -1075,7 +1075,7 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertTrue(pre.called)
         self.assertPostRevoke(post, self.cert)
         self.assertRedirects(response, self.change_url())
-        self.assertTemplateUsed('django_ca/admin/certificate_revoke_form.html')
+        self.assertTemplateUsed('admin/django_ca/certificate/revoke_form.html')
         self.assertRevoked(self.cert)
 
     def test_with_reason(self):
@@ -1085,7 +1085,7 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertTrue(pre.called)
         self.assertPostRevoke(post, self.cert)
         self.assertRedirects(response, self.change_url())
-        self.assertTemplateUsed('django_ca/admin/certificate_revoke_form.html')
+        self.assertTemplateUsed('admin/django_ca/certificate/revoke_form.html')
         self.assertRevoked(self.cert, reason=reason.name)
 
     def test_with_bogus_reason(self):
@@ -1098,7 +1098,7 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertFalse(post.called)
         self.assertNotRevoked(self.cert)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed('django_ca/admin/certificate_revoke_form.html')
+        self.assertTemplateUsed('admin/django_ca/certificate/revoke_form.html')
         self.assertEqual(
             response.context['form'].errors,
             {'revoked_reason': ['Select a valid choice. bogus is not one of the available choices.']})

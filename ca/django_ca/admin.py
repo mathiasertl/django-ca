@@ -444,8 +444,8 @@ class StatusListFilter(admin.SimpleListFilter):
 class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
     actions = ['revoke', ]
     change_actions = ('revoke_change', 'resign', )
-    add_form_template = 'django_ca/admin/certificate/add_form.html'
-    change_form_template = 'django_ca/admin/change_form.html'
+    add_form_template = 'admin/django_ca/certificate/add_form.html'
+    change_form_template = 'admin/django_ca/certificate/change_form.html'
     list_display = ('cn_display', 'serial_field', 'status', 'expires_date')
     list_filter = (StatusListFilter, 'ca')
     readonly_fields = [
@@ -631,7 +631,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             form = RevokeCertificateForm(instance=obj)
 
         context = dict(self.admin_site.each_context(request), form=form, object=obj, opts=obj._meta)
-        return TemplateResponse(request, "django_ca/admin/certificate_revoke_form.html", context)
+        return TemplateResponse(request, "admin/django_ca/certificate/revoke_form.html", context)
     revoke_change.label = _('Revoke')
     revoke_change.short_description = _('Revoke this certificate')
 
