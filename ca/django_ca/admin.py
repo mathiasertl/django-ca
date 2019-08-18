@@ -541,10 +541,14 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
         return data
 
     def add_view(self, request, form_url='', extra_context=None):
-        if extra_context is None:
-            extra_context = {}
-        extra_context['profile_url'] = reverse('admin:%s' % self.profiles_view_name)
+        extra_context = extra_context or {}
+        extra_context['profiles_url'] = reverse('admin:%s' % self.profiles_view_name)
+        extra_context['csr_details_url'] = reverse('admin:%s' % self.csr_details_view_name)
         return super(CertificateAdmin, self).add_view(request, form_url=form_url, extra_context=extra_context)
+
+    @property
+    def csr_details_view_name(self):
+        return '%s_%s_csr_details' % (self.model._meta.app_label, self.model._meta.verbose_name)
 
     def csr_details_view(self, request):
         """Returns details of a CSR request."""
@@ -582,12 +586,10 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
     def get_urls(self):
         # Remove the delete action from the URLs
         urls = super(CertificateAdmin, self).get_urls()
-        meta = self.model._meta
 
         # add csr-details and profiles
-        csr_name = '%s_%s_csr_details' % (meta.app_label, meta.verbose_name)
         urls.insert(0, url(r'^ajax/csr-details', self.admin_site.admin_view(self.csr_details_view),
-                           name=csr_name))
+                           name=self.csr_details_view_name))
         urls.insert(0, url(r'^ajax/profiles', self.admin_site.admin_view(self.profiles_view),
                            name=self.profiles_view_name))
 

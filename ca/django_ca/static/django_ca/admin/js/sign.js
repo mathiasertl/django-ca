@@ -33,6 +33,7 @@ var prev_email;
 var prev_cn;
 
 django.jQuery(document).ready(function() {
+    var csr_details_url = django.jQuery('meta[name="csr-details-url"]').attr('value');
     django.jQuery('.field-csr textarea').bind('input', function() {
         var value = django.jQuery(this).val();
 
@@ -48,7 +49,7 @@ django.jQuery(document).ready(function() {
             return;
         }
 
-        django.jQuery.post('/admin/django_ca/certificate/ajax/csr-details', {
+        django.jQuery.post(csr_details_url, {
             'csr': value,
         }).done(function(data) {
             // populate CN/E, if they are currently empty, or fields were not changed from
