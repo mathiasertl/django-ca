@@ -13,14 +13,11 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-import json
-
 from django.forms import widgets
 from django.utils.encoding import force_text
 from django.utils.translation import ugettext as _
 
 from . import ca_settings
-from .utils import LazyEncoder
 
 
 class LabeledCheckboxInput(widgets.CheckboxInput):
@@ -102,9 +99,6 @@ class SubjectTextInput(LabeledTextInput):
 class ProfileWidget(widgets.Select):
     def render(self, name, value, attrs=None, renderer=None):  # pragma: no cover - <= Django 1.11
         html = super(ProfileWidget, self).render(name, value, attrs=attrs, renderer=renderer)
-        html += '''<script type="text/javascript">
-            var ca_profiles = %s;
-        </script>''' % json.dumps(ca_settings.CA_PROFILES, cls=LazyEncoder)
         html += '<p class="help profile-desc">%s</p>' % force_text(
             ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]['desc'])
         return html

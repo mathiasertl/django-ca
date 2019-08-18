@@ -1,5 +1,15 @@
 django.jQuery(document).ready(function() {
+    var ca_profiles;
     var profile_selector = '.field-profile select'
+    var profile_url = django.jQuery('meta[name="get-profiles-url"]').attr('value');
+
+    django.jQuery.get(profile_url).done(function(data) {
+        ca_profiles = data;
+
+        // set the "fetched" property, this can be used by selenium tests to wait until this API has returned
+        django.jQuery('meta[name="get-profiles-url"]').attr('fetched', "true");
+    });
+
 
     // This should be set in the form via intial
     //var initial_profile = django.jQuery(profile_selector).val();

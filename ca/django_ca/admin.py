@@ -33,6 +33,7 @@ from django.http import HttpResponseBadRequest
 from django.http import HttpResponseRedirect
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.html import escape
@@ -443,6 +444,7 @@ class StatusListFilter(admin.SimpleListFilter):
 class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
     actions = ['revoke', ]
     change_actions = ('revoke_change', 'resign', )
+    add_form_template = 'django_ca/admin/certificate/add_form.html'
     change_form_template = 'django_ca/admin/change_form.html'
     list_display = ('cn_display', 'serial_field', 'status', 'expires_date')
     list_filter = (StatusListFilter, 'ca')
@@ -537,6 +539,12 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             data['subject'] = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get('subject', {})
 
         return data
+
+    def add_view(self, request, form_url='', extra_context=None):
+        if extra_context is None:
+            extra_context = {}
+        extra_context['profile_url'] = reverse('admin:%s' % self.profiles_view_name)
+        return super(CertificateAdmin, self).add_view(request, form_url=form_url, extra_context=extra_context)
 
     def csr_details_view(self, request):
         """Returns details of a CSR request."""
