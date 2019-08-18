@@ -54,6 +54,7 @@ from .models import Certificate
 from .models import CertificateAuthority
 from .models import Watcher
 from .signals import post_issue_cert
+from .utils import LazyEncoder
 from .utils import OID_NAME_MAPPINGS
 from .utils import SERIAL_RE
 from .utils import add_colons
@@ -556,15 +557,31 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             'subject': subject,
         }), content_type='application/json')
 
+    @property
+    def profiles_view_name(self):
+        return '%s_%s_profiles' % (self.model._meta.app_label, self.model._meta.verbose_name)
+
+    def profiles_view(self, request):
+        """Returns profiles."""
+
+        if not request.user.is_staff or not self.has_change_permission(request):
+            # NOTE: is_staff is already assured by ModelAdmin, but just to be sure
+            raise PermissionDenied
+
+        return HttpResponse(json.dumps(ca_settings.CA_PROFILES, cls=LazyEncoder),
+                            content_type='application/json')
+
     def get_urls(self):
         # Remove the delete action from the URLs
         urls = super(CertificateAdmin, self).get_urls()
         meta = self.model._meta
 
-        # add csr-details url
+        # add csr-details and profiles
         csr_name = '%s_%s_csr_details' % (meta.app_label, meta.verbose_name)
         urls.insert(0, url(r'^ajax/csr-details', self.admin_site.admin_view(self.csr_details_view),
-                    name=csr_name))
+                           name=csr_name))
+        urls.insert(0, url(r'^ajax/profiles', self.admin_site.admin_view(self.profiles_view),
+                           name=self.profiles_view_name))
 
         return urls
 
