@@ -34,18 +34,16 @@ django.jQuery(document).ready(function() {
         }
 
         // set wether to include the CommonName in the subjectAltName
-        cn_in_san = '.field-subjectAltName .critical-widget-wrapper input';
-        console.log(profile.cn_in_san);
+        cn_in_san = '.field-subject_alternative_name .critical-widget-wrapper input';
         if (typeof profile.cn_in_san === 'undefined' || profile.cn_in_san) {
-            console.log('set to true');
             django.jQuery(cn_in_san).prop('checked', true);
         } else {
-            console.log('set to false');
             django.jQuery(cn_in_san).prop('checked', false);
         }
 
         // update extensions
-        extensions = ['keyUsage', 'extendedKeyUsage']
+        extensions = ['key_usage', 'extended_key_usage'];
+        console.log(profile);
         extensions.map(function(ext) {
             var critical_selector = '.field-' + ext + ' .critical-widget-wrapper input';
             var value_selector = '.field-' + ext + ' select';
