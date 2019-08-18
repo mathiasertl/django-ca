@@ -19,6 +19,7 @@ from datetime import datetime
 from datetime import timedelta
 
 from freezegun import freeze_time
+from selenium.webdriver.support.select import Select
 
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.extensions import Extension
@@ -1214,7 +1215,16 @@ class ProfileSelectionTests(AdminTestMixin, SeleniumTestCase):
         self.login()
 
         self.selenium.get('%s%s' % (self.live_server_url, self.add_url))
-        select = self.find('select#id_profile')
-        for option in select.find_elements_by_tag_name("option"):
-            #print("Value is: %s" % option.get_attribute("value"))
+        select = Select(self.find('select#id_profile'))
+
+        # test that the default profile is preselected
+        self.assertEqual([ca_settings.CA_DEFAULT_PROFILE],
+                         [o.get_attribute('value') for o in select.all_selected_options])
+
+        # TODO: verify extensions selected
+        # TODO: check if cn_in_san is selected
+
+        for option in select.options:
+            print(option)
+            print("Value is: %s" % option.get_attribute("value"))
             option.click()
