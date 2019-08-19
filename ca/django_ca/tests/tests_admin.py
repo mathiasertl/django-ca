@@ -1216,6 +1216,9 @@ class ProfileSelectionTests(AdminTestMixin, SeleniumTestCase):
 
         self.selenium.get('%s%s' % (self.live_server_url, self.add_url))
         select = Select(self.find('select#id_profile'))
+        key_usage = Select(self.find('select#id_key_usage_0'))
+        ext_key_usage = Select(self.find('select#id_extended_key_usage_0'))
+        tls_feature = Select(self.find('select#id_tls_feature_0'))
 
         # test that the default profile is preselected
         self.assertEqual([ca_settings.CA_DEFAULT_PROFILE],
@@ -1225,6 +1228,23 @@ class ProfileSelectionTests(AdminTestMixin, SeleniumTestCase):
         # TODO: check if cn_in_san is selected
 
         for option in select.options:
-            print(option)
-            print("Value is: %s" % option.get_attribute("value"))
+            key_usage.deselect_all()
+            ext_key_usage.deselect_all()
+            tls_feature.deselect_all()
+
+            value = option.get_attribute("value")
+            if not value:
+                continue
             option.click()
+
+            ku_expected = ca_settings.CA_PROFILES[value].get('keyUsage', {})
+            ku_selected = [o.get_attribute('value') for o in key_usage.all_selected_options]
+            self.assertCountEqual(ku_expected.get('value'), ku_selected)
+
+            eku_selected = [o.get_attribute('value') for o in ext_key_usage.all_selected_options]
+            eku_expected = ca_settings.CA_PROFILES[value].get('extendedKeyUsage', {})
+            self.assertCountEqual(eku_expected.get('value', []), eku_selected)
+
+            tf_selected = [o.get_attribute('value') for o in tls_feature.all_selected_options]
+            tf_expected = ca_settings.CA_PROFILES[value].get('tls_feature', {})
+            self.assertCountEqual(tf_expected.get('value', []), tf_selected)

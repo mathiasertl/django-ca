@@ -53,7 +53,6 @@ django.jQuery(document).ready(function() {
 
         // update extensions
         extensions = ['key_usage', 'extended_key_usage'];
-        console.log(profile);
         extensions.map(function(ext) {
             var critical_selector = '.field-' + ext + ' .critical-widget-wrapper input';
             var value_selector = '.field-' + ext + ' select';
