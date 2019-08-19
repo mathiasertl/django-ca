@@ -580,15 +580,14 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             # NOTE: is_staff is already assured by ModelAdmin, but just to be sure
             raise PermissionDenied
 
-        data = ca_settings.CA_PROFILES
+        data = copy.deepcopy(ca_settings.CA_PROFILES)
         for name, profile in data.items():
             if 'keyUsage' in profile:
                 profile['key_usage'] = profile.pop('keyUsage')
             if 'extendedKeyUsage' in profile:
                 profile['extended_key_usage'] = profile.pop('extendedKeyUsage')
 
-        return HttpResponse(json.dumps(ca_settings.CA_PROFILES, cls=LazyEncoder),
-                            content_type='application/json')
+        return HttpResponse(json.dumps(data, cls=LazyEncoder), content_type='application/json')
 
     def get_urls(self):
         # Remove the delete action from the URLs
