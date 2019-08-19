@@ -1204,12 +1204,9 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertNotRevoked(self.cert)
 
 
-class ProfileSelectionTests(AdminTestMixin, SeleniumTestCase):
-    def test_no_add(self):
-        pass
-
+class AddCertificateSeleniumTests(AdminTestMixin, SeleniumTestCase):
     @override_tmpcadir()
-    def test_select(self):
+    def test_select_profile(self):
         self.load_usable_cas()
         self.create_superuser()
         self.login()
@@ -1228,6 +1225,8 @@ class ProfileSelectionTests(AdminTestMixin, SeleniumTestCase):
         # test that the default profile is preselected
         self.assertEqual([ca_settings.CA_DEFAULT_PROFILE],
                          [o.get_attribute('value') for o in select.all_selected_options])
+
+        # TODO: test values from default profile
 
         for option in select.options:
             ku_select.deselect_all()
