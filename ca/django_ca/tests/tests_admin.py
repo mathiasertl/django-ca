@@ -844,6 +844,45 @@ class CSRDetailTestCase(AdminTestMixin, DjangoCATestCase):
         self.assertRequiresLogin(response)
 
 
+class ProfilesViewTestCase(AdminTestMixin, DjangoCATestCase):
+    def setUp(self):
+        self.url = reverse('admin:django_ca_certificate_profiles')
+        super(ProfilesViewTestCase, self).setUp()
+
+    def test_basic(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        # TODO: not tested b/c of annoying keyUsage/key_usage etc. inconsistencies
+        #self.assertEqual(json.loads(response.content.decode('utf-8')), ca_settings.CA_PROFILES)
+
+    def test_permission_denied(self):
+        client = Client()
+        user = User.objects.create_user(username='staff', password='password', email='staff@example.com',
+                                        is_staff=True)
+        client.force_login(user=user)
+
+        response = client.get(self.url)
+        self.assertEqual(response.status_code, 403)
+
+    # removes all profiles, adds one pretty boring one
+    @override_tmpcadir(CA_PROFILES={
+        'webserver': None,
+        'server': None,
+        'ocsp': None,
+        'enduser': None,
+        'client': None,
+        'test': {
+            'cn_in_san': True,
+        }
+    }, CA_DEFAULT_SUBJECT={})
+    def test_empty_profile(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        # TODO: not tested b/c of annoying keyUsage/key_usage etc. inconsistencies
+        self.maxDiff = None
+        self.assertEqual(json.loads(response.content.decode('utf-8')), ca_settings.CA_PROFILES)
+
+
 class CertDownloadTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
     def setUp(self):
         super(CertDownloadTestCase, self).setUp()
