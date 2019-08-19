@@ -707,7 +707,7 @@ if not args.only_contrib:
             csr = create_csr(key_path, csr_path)
 
             kwargs = get_cert_profile_kwargs('server')
-            kwargs['subject'].append(('CN', data[name]['cn']))
+            kwargs['subject']['CN'] = data[name]['cn']
             pwd = data[data[name]['ca']]['password']
 
             freeze_now = now
@@ -730,7 +730,7 @@ if not args.only_contrib:
             csr = create_csr(key_path, csr_path)
 
             kwargs = get_cert_profile_kwargs(profile)
-            kwargs['subject'].append(('CN', data[name]['cn']))
+            kwargs['subject']['CN'] = data[name]['cn']
 
             freeze_now = now
             if args.delay:
