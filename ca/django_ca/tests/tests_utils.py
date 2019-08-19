@@ -739,13 +739,13 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
             'cn_in_san': True,
             'key_usage': KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'),
             'extended_key_usage': ExtendedKeyUsage('serverAuth'),
-            'subject': [
-                ('C', 'AT'),
-                ('ST', 'Vienna'),
-                ('L', 'Vienna'),
-                ('O', 'Django CA'),
-                ('OU', 'Django CA Testsuite'),
-            ],
+            'subject': {
+                'C': 'AT',
+                'ST': 'Vienna',
+                'L': 'Vienna',
+                'O': 'Django CA',
+                'OU': 'Django CA Testsuite',
+            },
         }
         self.assertEqual(get_cert_profile_kwargs(), expected)
         self.assertEqual(get_cert_profile_kwargs(ca_settings.CA_DEFAULT_PROFILE), expected)
@@ -762,13 +762,13 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
             'key_usage': KeyUsage('critical,nonRepudiation,digitalSignature,keyEncipherment'),
             'extended_key_usage': ExtendedKeyUsage('OCSPSigning'),
             'ocsp_no_check': True,
-            'subject': [
-                ('C', 'AT'),
-                ('ST', 'Vienna'),
-                ('L', 'Vienna'),
-                ('O', 'Django CA'),
-                ('OU', 'Django CA Testsuite'),
-            ],
+            'subject': {
+                'C': 'AT',
+                'ST': 'Vienna',
+                'L': 'Vienna',
+                'O': 'Django CA',
+                'OU': 'Django CA Testsuite',
+            },
         }
         self.assertEqual(get_cert_profile_kwargs('ocsp'), expected)
 
@@ -778,13 +778,13 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
             'key_usage': KeyUsage('digitalSignature'),
             'extended_key_usage': ExtendedKeyUsage('critical,msKDC'),
             'tls_feature': TLSFeature('critical,OCSPMustStaple'),
-            'subject': [
-                ('C', 'AT'),
-                ('ST', 'Vienna'),
-                ('L', 'Vienna'),
-                ('O', 'Django CA'),
-                ('OU', 'Django CA Testsuite'),
-            ],
+            'subject': {
+                'C': 'AT',
+                'ST': 'Vienna',
+                'L': 'Vienna',
+                'O': 'Django CA',
+                'OU': 'Django CA Testsuite',
+            },
         }
 
         CA_PROFILES = {
@@ -820,13 +820,13 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
         # Ok, no we have *no* extensions
         expected = {
             'cn_in_san': True,
-            'subject': [
-                ('C', 'AT'),
-                ('ST', 'Vienna'),
-                ('L', 'Vienna'),
-                ('O', 'Django CA'),
-                ('OU', 'Django CA Testsuite'),
-            ],
+            'subject': {
+                'C': 'AT',
+                'ST': 'Vienna',
+                'L': 'Vienna',
+                'O': 'Django CA',
+                'OU': 'Django CA Testsuite',
+            },
         }
 
         CA_PROFILES = {
