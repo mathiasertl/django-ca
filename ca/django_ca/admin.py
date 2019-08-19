@@ -55,9 +55,9 @@ from .models import Certificate
 from .models import CertificateAuthority
 from .models import Watcher
 from .signals import post_issue_cert
-from .utils import LazyEncoder
 from .utils import OID_NAME_MAPPINGS
 from .utils import SERIAL_RE
+from .utils import LazyEncoder
 from .utils import add_colons
 from .utils import format_general_name
 
