@@ -1216,21 +1216,23 @@ class ProfileSelectionTests(AdminTestMixin, SeleniumTestCase):
 
         self.selenium.get('%s%s' % (self.live_server_url, self.add_url))
         select = Select(self.find('select#id_profile'))
-        key_usage = Select(self.find('select#id_key_usage_0'))
-        ext_key_usage = Select(self.find('select#id_extended_key_usage_0'))
-        tls_feature = Select(self.find('select#id_tls_feature_0'))
+        ku_select = Select(self.find('select#id_key_usage_0'))
+        ku_critical = self.find('input#id_key_usage_1')
+        eku_select = Select(self.find('select#id_extended_key_usage_0'))
+        eku_critical = self.find('input#id_extended_key_usage_1')
+        tf_select = Select(self.find('select#id_tls_feature_0'))
+        tf_critical = self.find('input#id_tls_feature_1')
+
+        cn_in_san = self.find('input#id_subject_alternative_name_1')
 
         # test that the default profile is preselected
         self.assertEqual([ca_settings.CA_DEFAULT_PROFILE],
                          [o.get_attribute('value') for o in select.all_selected_options])
 
-        # TODO: verify extensions selected
-        # TODO: check if cn_in_san is selected
-
         for option in select.options:
-            key_usage.deselect_all()
-            ext_key_usage.deselect_all()
-            tls_feature.deselect_all()
+            ku_select.deselect_all()
+            eku_select.deselect_all()
+            tf_select.deselect_all()
 
             value = option.get_attribute("value")
             if not value:
@@ -1238,13 +1240,18 @@ class ProfileSelectionTests(AdminTestMixin, SeleniumTestCase):
             option.click()
 
             ku_expected = ca_settings.CA_PROFILES[value].get('keyUsage', {})
-            ku_selected = [o.get_attribute('value') for o in key_usage.all_selected_options]
+            ku_selected = [o.get_attribute('value') for o in ku_select.all_selected_options]
             self.assertCountEqual(ku_expected.get('value'), ku_selected)
+            self.assertEqual(ku_expected.get('critical', False), ku_critical.is_selected())
 
-            eku_selected = [o.get_attribute('value') for o in ext_key_usage.all_selected_options]
+            eku_selected = [o.get_attribute('value') for o in eku_select.all_selected_options]
             eku_expected = ca_settings.CA_PROFILES[value].get('extendedKeyUsage', {})
             self.assertCountEqual(eku_expected.get('value', []), eku_selected)
+            self.assertEqual(eku_expected.get('critical', False), eku_critical.is_selected())
 
-            tf_selected = [o.get_attribute('value') for o in tls_feature.all_selected_options]
+            tf_selected = [o.get_attribute('value') for o in tf_select.all_selected_options]
             tf_expected = ca_settings.CA_PROFILES[value].get('tls_feature', {})
             self.assertCountEqual(tf_expected.get('value', []), tf_selected)
+            self.assertEqual(tf_expected.get('critical', False), tf_critical.is_selected())
+
+            self.assertEqual(ca_settings.CA_PROFILES[value].get('cn_in_san', True), cn_in_san.is_selected())
