@@ -840,6 +840,8 @@ class DjangoCAWithCertTestCase(DjangoCAWithCATestCase):
 
 
 class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # pragma: no cover
+    # NOTE: coverage has weird issues all over this class
+
     @classmethod
     def setUpClass(cls):
         super(SeleniumTestCase, cls).setUpClass()
