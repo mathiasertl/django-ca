@@ -1244,6 +1244,33 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
 
 class AddCertificateSeleniumTests(AdminTestMixin, SeleniumTestCase):
+    def assertProfile(self, profile):
+        ku_select = Select(self.find('select#id_key_usage_0'))
+        ku_critical = self.find('input#id_key_usage_1')
+        eku_select = Select(self.find('select#id_extended_key_usage_0'))
+        eku_critical = self.find('input#id_extended_key_usage_1')
+        tf_select = Select(self.find('select#id_tls_feature_0'))
+        tf_critical = self.find('input#id_tls_feature_1')
+
+        cn_in_san = self.find('input#id_subject_alternative_name_1')
+
+        ku_expected = ca_settings.CA_PROFILES[profile].get('keyUsage', {})
+        ku_selected = [o.get_attribute('value') for o in ku_select.all_selected_options]
+        self.assertCountEqual(ku_expected.get('value'), ku_selected)
+        self.assertEqual(ku_expected.get('critical', False), ku_critical.is_selected())
+
+        eku_selected = [o.get_attribute('value') for o in eku_select.all_selected_options]
+        eku_expected = ca_settings.CA_PROFILES[profile].get('extendedKeyUsage', {})
+        self.assertCountEqual(eku_expected.get('value', []), eku_selected)
+        self.assertEqual(eku_expected.get('critical', False), eku_critical.is_selected())
+
+        tf_selected = [o.get_attribute('value') for o in tf_select.all_selected_options]
+        tf_expected = ca_settings.CA_PROFILES[profile].get('tls_feature', {})
+        self.assertCountEqual(tf_expected.get('value', []), tf_selected)
+        self.assertEqual(tf_expected.get('critical', False), tf_critical.is_selected())
+
+        self.assertEqual(ca_settings.CA_PROFILES[profile].get('cn_in_san', True), cn_in_san.is_selected())
+
     @override_tmpcadir()
     def test_select_profile(self):
         self.load_usable_cas()
@@ -1259,6 +1286,13 @@ class AddCertificateSeleniumTests(AdminTestMixin, SeleniumTestCase):
         tf_select = Select(self.find('select#id_tls_feature_0'))
         tf_critical = self.find('input#id_tls_feature_1')
 
+        subject_c = self.find('.field-subject #country input')
+        subject_st = self.find('.field-subject #state input')
+        subject_l = self.find('.field-subject #location input')
+        subject_o = self.find('.field-subject #organization input')
+        subject_ou = self.find('.field-subject #organizational-unit input')
+        subject_cn = self.find('.field-subject #commonname input')
+        subject_email = self.find('.field-subject #e-mail input')
         cn_in_san = self.find('input#id_subject_alternative_name_1')
 
         # test that the default profile is preselected
@@ -1268,28 +1302,65 @@ class AddCertificateSeleniumTests(AdminTestMixin, SeleniumTestCase):
         # TODO: test values from default profile
 
         for option in select.options:
+            # first, clear everything to make sure that the profile *sets* everything
             ku_select.deselect_all()
             eku_select.deselect_all()
             tf_select.deselect_all()
+
+            if ku_critical.is_selected():
+                ku_critical.click()
+            if eku_critical.is_selected():
+                eku_critical.click()
+            if tf_critical.is_selected():
+                tf_critical.click()
+            if cn_in_san.is_selected():
+                cn_in_san.click()
+            subject_c.clear()
+            subject_st.clear()
+            subject_l.clear()
+            subject_o.clear()
+            subject_ou.clear()
+            subject_cn.clear()
+            subject_email.clear()
 
             value = option.get_attribute("value")
             if not value:
                 continue
             option.click()
 
-            ku_expected = ca_settings.CA_PROFILES[value].get('keyUsage', {})
-            ku_selected = [o.get_attribute('value') for o in ku_select.all_selected_options]
-            self.assertCountEqual(ku_expected.get('value'), ku_selected)
-            self.assertEqual(ku_expected.get('critical', False), ku_critical.is_selected())
+            self.assertProfile(value)
 
-            eku_selected = [o.get_attribute('value') for o in eku_select.all_selected_options]
-            eku_expected = ca_settings.CA_PROFILES[value].get('extendedKeyUsage', {})
-            self.assertCountEqual(eku_expected.get('value', []), eku_selected)
-            self.assertEqual(eku_expected.get('critical', False), eku_critical.is_selected())
+            # now fill everything with dummy values to test the other way round
+            [ku_select.select_by_value(o.get_attribute('value')) for o in ku_select.options]
+            [eku_select.select_by_value(o.get_attribute('value')) for o in eku_select.options]
+            [tf_select.select_by_value(o.get_attribute('value')) for o in tf_select.options]
 
-            tf_selected = [o.get_attribute('value') for o in tf_select.all_selected_options]
-            tf_expected = ca_settings.CA_PROFILES[value].get('tls_feature', {})
-            self.assertCountEqual(tf_expected.get('value', []), tf_selected)
-            self.assertEqual(tf_expected.get('critical', False), tf_critical.is_selected())
+            if not ku_critical.is_selected():
+                ku_critical.click()
+            if not eku_critical.is_selected():
+                eku_critical.click()
+            if not tf_critical.is_selected():
+                tf_critical.click()
+            if not cn_in_san.is_selected():
+                cn_in_san.click()
+            subject_c.clear()
+            subject_c.send_keys('foo')
+            subject_st.clear()
+            subject_st.send_keys('foo')
+            subject_l.clear()
+            subject_l.send_keys('foo')
+            subject_o.clear()
+            subject_o.send_keys('foo')
+            subject_ou.clear()
+            subject_ou.send_keys('foo')
+            subject_cn.clear()
+            subject_cn.send_keys('foo')
+            subject_email.clear()
+            subject_email.send_keys('foo')
 
-            self.assertEqual(ca_settings.CA_PROFILES[value].get('cn_in_san', True), cn_in_san.is_selected())
+            # select empty element in profile select, then select profile again
+            select.select_by_value('')
+            option.click()
+
+            # see that all the right things are selected
+            self.assertProfile(value)
