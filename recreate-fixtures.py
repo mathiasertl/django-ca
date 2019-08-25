@@ -142,10 +142,10 @@ def create_key(path):
         subprocess.check_call(['openssl', 'genrsa', '-out', path, str(key_size)], stderr=subprocess.DEVNULL)
 
 
-def create_csr(key_path, path):
+def create_csr(key_path, path, subject='/CN=ignored.example.com'):
     create_key(key_path)
     subprocess.check_call(['openssl', 'req', '-new', '-key', key_path, '-out', path, '-utf8', '-batch',
-                           '-subj', '/CN=ignored.example.com'])
+                           '-subj', subject])
 
     with open(path) as stream:
         csr = stream.read()
@@ -503,6 +503,15 @@ data = {
         'ca': 'child',
         'delta': timedelta(days=20),
         'csr': True,
+        'subject': [
+            ('C', 'AT'),
+            ('ST', 'Vienna'),
+            ('L', 'Vienna'),
+            ('O', 'Example'),
+            ('OU', 'Example OU'),
+            ('CN', 'csr.all-extensions.example.com'),
+            ('emailAddress', 'user@example.com'),
+        ],
         'basic_constraints': {
             'critical': True,
             'value': {
@@ -794,8 +803,9 @@ if not args.only_contrib:
         pwd = data[ca.name]['password']
         key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
         csr_path = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
-        csr = create_csr(key_path, csr_path)
-
+        print('/%s' % ('/'.join(['%s=%s' % t for t in data[name]['subject']])))
+        csr = create_csr(key_path, csr_path,
+                         subject='/%s' % ('/'.join(['%s=%s' % t for t in data[name]['subject']])))
         kwargs = {}
         extra_extensions = [
             NameConstraints(data[name]['name_constraints']),
@@ -810,15 +820,7 @@ if not args.only_contrib:
             'extended_key_usage': data[name]['extended_key_usage'],
             'tls_feature': data[name]['tls_feature'],
             'ocsp_no_check': True,
-            'subject': [
-                ('C', 'AT'),
-                ('ST', 'Vienna'),
-                ('L', 'Vienna'),
-                ('O', 'Example'),
-                ('OU', 'Example OU'),
-                ('CN', data[name]['cn']),
-                ('emailAddress', 'user@example.com'),
-            ]
+            'subject': data[name]['subject'],
         }
 
         with freeze_time(now + data[name]['delta']):
