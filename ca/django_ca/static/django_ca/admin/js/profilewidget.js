@@ -45,7 +45,7 @@ django.jQuery(document).ready(function() {
         }
 
         // update extensions
-        extensions = ['key_usage', 'extended_key_usage'];
+        extensions = ['key_usage', 'extended_key_usage', 'tls_feature'];
         extensions.map(function(ext) {
             var critical_selector = '.field-' + ext + ' .critical-widget-wrapper input';
             var value_selector = '.field-' + ext + ' select';
