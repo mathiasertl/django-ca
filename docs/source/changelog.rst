@@ -15,6 +15,7 @@ ChangeLog
 * ``regenerate_ocsp_keys`` now has a quiet mode and only generates keys where the CA private key is available.
 * Serials are now zero-padded when output so that the last element always consists of two characters.
 * More consistently output serials with colons, use a monospace font in the admin interface.
+* ``dev.py coverage`` can now output a text summary using ``--format=text``.
 
 .. _changelog-1.13.0:
 

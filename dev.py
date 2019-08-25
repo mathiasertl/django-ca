@@ -62,6 +62,8 @@ dt_parser.add_argument('--keep-image', action='store_true', default=False,
 
 test_parser = commands.add_parser('test', parents=[test_base])
 cov_parser = commands.add_parser('coverage', parents=[test_base])
+cov_parser.add_argument('-f', '--format', choices=['html', 'text'], default='html',
+                        help='Write coverage report as text (default: %(default)s).')
 cov_parser.add_argument('--fail-under', type=int, default=100, metavar='[0-100]',
                         help='Fail if coverage is below given percentage (default: %(default)s%%).')
 
@@ -198,7 +200,10 @@ elif args.command == 'coverage':
     cov.stop()
     cov.save()
 
-    total_coverage = cov.html_report(directory=report_dir)
+    if args.format == 'text':
+        total_coverage = cov.report()
+    else:
+        total_coverage = cov.html_report(directory=report_dir)
     if total_coverage < args.fail_under:
         if args.fail_under == 100.0:
             print('Error: Coverage was only %.2f%% (should be 100%%).' % total_coverage)
