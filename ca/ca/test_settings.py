@@ -243,7 +243,6 @@ SKIP_SELENIUM_TESTS = os.environ.get(
     'n' if NEWEST_VERSIONS else 'y'
 ).lower().strip() == 'y'
 
-print('SKIPPING SELENIUM TESTS:', SKIP_SELENIUM_TESTS)
 VIRTUAL_DISPLAY = os.environ.get('VIRTUAL_DISPLAY', 'y').lower().strip() == 'y'
 GECKODRIVER_PATH = os.path.join(ROOT_DIR, 'contrib', 'selenium', 'geckodriver')
 
