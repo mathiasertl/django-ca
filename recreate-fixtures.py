@@ -281,7 +281,7 @@ def update_contrib(data, cert, name, filename):
         'sha512': cert.get_digest('sha512'),
     }
 
-    for ext in cert.get_extensions():
+    for ext in cert.extensions:
         if isinstance(ext, Extension):
             key = CertificateAuthority.OID_MAPPING[ext.oid]
             cert_data[key] = ext.serialize()
@@ -810,7 +810,15 @@ if not args.only_contrib:
             'extended_key_usage': data[name]['extended_key_usage'],
             'tls_feature': data[name]['tls_feature'],
             'ocsp_no_check': True,
-            'subject': [('CN', data[name]['cn'])]
+            'subject': [
+                ('C', 'AT'),
+                ('ST', 'Vienna'),
+                ('L', 'Vienna'),
+                ('O', 'Example'),
+                ('OU', 'Example OU'),
+                ('CN', data[name]['cn']),
+                ('emailAddress', 'user@example.com'),
+            ]
         }
 
         with freeze_time(now + data[name]['delta']):
