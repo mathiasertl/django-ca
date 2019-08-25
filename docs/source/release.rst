@@ -6,19 +6,30 @@ Release process
 Before release
 **************
 
+Check versions
+==============
+
 * Update ``requirements*.txt`` (use ``pip list -o``).
 * Make sure that ``setup.py`` has proper requirements.
-* Make sure that ``setup.py`` has proper classifiers, if support for some Python or Django versions was
-  added/dropped.
-* Check ``.travis.yaml`` if the proper Django and cryptography versions are tested.
-* Check test coverage (``setup.py coverage``).
-* Update ``version`` parameter in ``setup.py``.
+* Check ``.travis.yaml``.
+* Check ``tox.ini``.
+* Check ``NEWEST_PYTHON`` and ``NEWEST_CRYPTOGRAPHY`` in ``test_settings.py``.
 * Update ``VERSION`` and ``__version__`` in ``ca/django_ca/__init__.py``
   (see `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_).
+* Update ``version`` parameter in ``setup.py``.
+
+Other tasks
+===========
+
+* Make sure that ``setup.py`` has proper classifiers.
 * Make sure that ``docs/source/changelog.rst`` is up to date.
-* Make sure that tox runs through for all environments.
+
+Run testsuite
+=============
+
+* Check test coverage (``setup.py coverage``).
 * Make sure that ``python dev.py docker-test`` runs through.
-* Push the last commit and make sure that Travis and Read The Docs are updated.
+* Make sure that tox runs through for all environments.
 
 *********
 Test demo
@@ -57,6 +68,7 @@ Create a docker image::
 Release process
 ***************
 
+* Push the last commit and make sure that Travis and Read The Docs are updated.
 * Tag the release: ``git tag -s $version``
 * Push the tag: ``git push origin --tags``
 * Create a `release on GitHub <https://github.com/mathiasertl/django-ca/tags>`_.
