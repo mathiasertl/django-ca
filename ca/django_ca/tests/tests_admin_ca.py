@@ -96,8 +96,7 @@ class CADownloadBundleTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithC
         return self.get_url(ca=self.cas['root'])
 
     def test_root(self):
-        self.maxDiff = None
-        filename = 'ca_example_com_bundle.pem'
+        filename = 'root_example_com_bundle.pem'
         response = self.client.get('%s?format=PEM' % self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
@@ -105,7 +104,7 @@ class CADownloadBundleTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithC
         self.assertEqual(force_text(response.content), certs['root']['pub']['pem'].strip())
 
     def test_child(self):
-        filename = 'child_ca_example_com_bundle.pem'
+        filename = 'child_example_com_bundle.pem'
         response = self.client.get('%s?format=PEM' % self.get_url(self.cas['child']))
         expected = '%s\n%s' % (certs['child']['pub']['pem'].strip(), certs['root']['pub']['pem'].strip())
         self.assertEqual(response.status_code, 200)

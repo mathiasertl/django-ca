@@ -99,7 +99,6 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
     timeformat = '%y%m%d%H%M%SZ'
 
     def assertIndex(self, ca=None, expected='', **context):
-        self.maxDiff = None
         if ca is None:
             ca = self.cas['child']
 
@@ -155,7 +154,6 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
 
     @freeze_time(timestamps['everything_valid'])
     def test_file(self):
-        self.maxDiff = None
         tmpdir = tempfile.mkdtemp()
 
         try:

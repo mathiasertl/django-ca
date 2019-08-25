@@ -787,10 +787,12 @@ class CSRDetailTestCase(AdminTestMixin, DjangoCATestCase):
         super(CSRDetailTestCase, self).setUp()
 
     def test_basic(self):
-        response = self.client.post(self.url, data={'csr': self.csr_pem})
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(json.loads(response.content.decode('utf-8')),
-                         {'subject': {'C': 'AU', 'O': 'Internet Widgits Pty Ltd', 'ST': 'Some-State'}})
+        for name, cert_data in [(k, v) for k, v in certs.items()
+                                if v['type'] == 'cert' and v['cat'] == 'generated']:
+            response = self.client.post(self.url, data={'csr': cert_data['csr']['pem']})
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(json.loads(response.content.decode('utf-8')),
+                             {'subject': cert_data['csr_subject']})
 
     def test_fields(self):
         subject = [(f, 'AT' if f == 'C' else 'test-%s' % f) for f in SUBJECT_FIELDS]

@@ -64,6 +64,7 @@ from django_ca.extensions import PrecertPoison
 from django_ca.models import Certificate
 from django_ca.models import CertificateAuthority
 from django_ca.profiles import get_cert_profile_kwargs
+from django_ca.subject import Subject
 from django_ca.utils import ca_storage
 from django_ca.utils import hex_to_bytes
 
@@ -307,7 +308,6 @@ data = {
     'root': {
         'type': 'ca',
         'password': None,
-        'subject': '/C=AT/ST=Vienna/CN=%s' % ca_base_cn,
         'pathlen': root_pathlen,
 
         'basic_constraints': {
@@ -323,7 +323,6 @@ data = {
         'delta': timedelta(days=3),
         'parent': 'root',
         'password': None,
-        'subject': '/C=AT/ST=Vienna/CN=child.%s' % ca_base_cn,
 
         'basic_constraints': {
             'critical': True,
@@ -338,7 +337,6 @@ data = {
     'ecc': {
         'type': 'ca',
         'password': None,
-        'subject': '/C=AT/ST=Vienna/CN=ecc.%s' % ca_base_cn,
 
         'basic_constraints': {
             'critical': True,
@@ -354,7 +352,6 @@ data = {
         'type': 'ca',
         'algorithm': dsa_algorithm,
         'password': None,
-        'subject': '/C=AT/ST=Vienna/CN=dsa.%s' % ca_base_cn,
 
         'basic_constraints': {
             'critical': True,
@@ -369,7 +366,6 @@ data = {
     'pwd': {
         'type': 'ca',
         'password': b'testpassword',
-        'subject': '/C=AT/ST=Vienna/CN=pwd.%s' % ca_base_cn,
 
         'basic_constraints': {
             'critical': True,
@@ -503,15 +499,15 @@ data = {
         'ca': 'child',
         'delta': timedelta(days=20),
         'csr': True,
-        'subject': [
-            ('C', 'AT'),
-            ('ST', 'Vienna'),
-            ('L', 'Vienna'),
-            ('O', 'Example'),
-            ('OU', 'Example OU'),
-            ('CN', 'csr.all-extensions.example.com'),
-            ('emailAddress', 'user@example.com'),
-        ],
+        'subject': {
+            'C': 'AT',
+            'ST': 'Vienna',
+            'L': 'Vienna',
+            'O': 'Example',
+            'OU': 'Example OU',
+            'CN': 'all-extensions.example.com',
+            'emailAddress': 'user@example.com',
+        },
         'basic_constraints': {
             'critical': True,
             'value': {
@@ -643,6 +639,14 @@ for cert, cert_values in data.items():
     cert_values.setdefault('type', 'cert')
     cert_values.setdefault('cat', 'generated')
     cert_values.setdefault('algorithm', 'SHA256')
+    cert_values.setdefault('subject', {})
+    cert_values['subject'].setdefault('CN', '%s.example.com' % cert_values['name'])
+    cert_values['subject_str'] = str(Subject(cert_values['subject']))
+    cert_values['csr_subject'] = {
+        k: 'csr.%s' % v if k != 'C' else v
+        for k, v in cert_values['subject'].items()
+    }
+    cert_values['csr_subject_str'] = str(Subject(cert_values['csr_subject']))
     cert_values['key_filename'] = '%s.key' % cert_values['name']
     cert_values['pub_filename'] = '%s.pub' % cert_values['name']
     cert_values['key_der_filename'] = '%s.key.der' % cert_values['name']
@@ -713,7 +717,7 @@ if not args.only_contrib:
             name = '%s-cert' % ca.name
             key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
             csr_path = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
-            csr = create_csr(key_path, csr_path)
+            csr = create_csr(key_path, csr_path, subject=data[name]['csr_subject_str'])
 
             kwargs = get_cert_profile_kwargs('server')
             kwargs['subject']['CN'] = data[name]['cn']
@@ -736,7 +740,7 @@ if not args.only_contrib:
 
             key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
             csr_path = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
-            csr = create_csr(key_path, csr_path)
+            csr = create_csr(key_path, csr_path, subject=data[name]['csr_subject_str'])
 
             kwargs = get_cert_profile_kwargs(profile)
             kwargs['subject']['CN'] = data[name]['cn']
@@ -759,7 +763,7 @@ if not args.only_contrib:
         ca = CertificateAuthority.objects.get(name=data[name]['ca'])
         key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
         csr_path = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
-        csr = create_csr(key_path, csr_path)
+        csr = create_csr(key_path, csr_path, subject=data[name]['csr_subject_str'])
 
         freeze_now = now
         if args.delay:
@@ -803,9 +807,7 @@ if not args.only_contrib:
         pwd = data[ca.name]['password']
         key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
         csr_path = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
-        print('/%s' % ('/'.join(['%s=%s' % t for t in data[name]['subject']])))
-        csr = create_csr(key_path, csr_path,
-                         subject='/%s' % ('/'.join(['%s=%s' % t for t in data[name]['subject']])))
+        csr = create_csr(key_path, csr_path, subject=data[name]['csr_subject_str'])
         kwargs = {}
         extra_extensions = [
             NameConstraints(data[name]['name_constraints']),
@@ -837,7 +839,7 @@ if not args.only_contrib:
         pwd = data[ca.name]['password']
         key_path = os.path.join(ca_settings.CA_DIR, '%s.key' % name)
         csr_path = os.path.join(ca_settings.CA_DIR, '%s.csr' % name)
-        csr = create_csr(key_path, csr_path)
+        csr = create_csr(key_path, csr_path, subject=data[name]['csr_subject_str'])
 
         kwargs = {}
         extra_extensions = [

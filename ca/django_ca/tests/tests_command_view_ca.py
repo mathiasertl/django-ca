@@ -24,7 +24,7 @@ expected = {
   {key_path}
 * Is a root CA.
 * Has no children.
-* Distinguished Name: {subject}
+* Distinguished Name: {subject_str}
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
 
@@ -52,7 +52,7 @@ X509 v3 certificate extensions for signed certificates:
   {key_path}
 * Parent: {parent_name} ({parent_serial})
 * Has no children.
-* Distinguished Name: {subject}
+* Distinguished Name: {subject_str}
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
 
@@ -90,7 +90,7 @@ X509 v3 certificate extensions for signed certificates:
 * Is a root CA.
 * Children:
   * {children[0][0]} ({children[0][1]})
-* Distinguished Name: {subject}
+* Distinguished Name: {subject_str}
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
 
