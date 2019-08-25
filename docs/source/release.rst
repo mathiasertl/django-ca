@@ -21,6 +21,12 @@ Check versions
 Other tasks
 ===========
 
+* Check if any version of a dependency is no longer supported and we can depcreate support for it:
+
+  * `Python <https://devguide.python.org/#status-of-python-branches>`_
+  * `Django <https://www.djangoproject.com/download/>`_
+  * `Alpine Linux <https://wiki.alpinelinux.org/wiki/Alpine_Linux:Releases>`_
+
 * Make sure that ``setup.py`` has proper classifiers.
 * Make sure that ``docs/source/changelog.rst`` is up to date.
 
@@ -90,3 +96,4 @@ After a release
 * Update ``VERSION`` and ``__version__`` in ``ca/django_ca/__init__.py`` to the next
   development release (see `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_).
 * Update version in ``setup.py``.
+* Drop support for older software versions in ``.travis.yml``, ``tox.ini`` and ``dev.py docker-test``.
