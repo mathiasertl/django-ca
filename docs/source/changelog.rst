@@ -15,6 +15,10 @@ ChangeLog
 * ``regenerate_ocsp_keys`` now has a quiet mode and only generates keys where the CA private key is available.
 * Serials are now zero-padded when output so that the last element always consists of two characters.
 * More consistently output serials with colons, use a monospace font in the admin interface.
+* Fix profile selection in the admin interface.
+* Fix display of values from CSR in the admin interface.
+* Add a copy-button next to values from the CSR to enable easy copy/paste from the CSR.
+* Test suite now includes Selenium tests for all JavaScript functionality.
 * ``dev.py coverage`` can now output a text summary using ``--format=text``.
 
 .. _changelog-1.13.0:
