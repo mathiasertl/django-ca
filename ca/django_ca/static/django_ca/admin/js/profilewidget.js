@@ -20,28 +20,21 @@ django.jQuery(document).ready(function() {
             return;  // do nothing if we don't select a profile
         }
 
-        profile = ca_profiles[this.value];
-
-        // set subject
+        var profile = ca_profiles[this.value];
         var subject = profile.subject;
-        if (typeof subject.C !== 'undefined') {
-            django.jQuery('.field-subject #country input').val(subject.C);
-        }
-        if (typeof subject.ST !== 'undefined') {
-            django.jQuery('.field-subject #state input').val(subject.ST);
-        }
-        if (typeof subject.L !== 'undefined') {
-            django.jQuery('.field-subject #location input').val(subject.L);
-        }
-        if (typeof subject.O !== 'undefined') {
-            django.jQuery('.field-subject #organization input').val(subject.O);
-        }
-        if (typeof subject.OU !== 'undefined') {
-            django.jQuery('.field-subject #organizational-unit input').val(subject.OU);
-        }
-        if (typeof subject.CN !== 'undefined') {
-            django.jQuery('.field-subject #commonname input').val(subject.CN);
-        }
+
+        // update subject input field
+        django.jQuery.each({
+            "C": django.jQuery('.field-subject #country input'),
+            "ST": django.jQuery('.field-subject #state input'),
+            "L": django.jQuery('.field-subject #location input'),
+            "O": django.jQuery('.field-subject #organization input'),
+            "OU": django.jQuery('.field-subject #organizational-unit input'),
+            "CN": django.jQuery('.field-subject #commonname input'),
+            "emailAddress": django.jQuery('.field-subject #e-mail input'),
+        }, function(key, input) {
+            input.val('' ? typeof subject[key] === 'undefined' : subject[key]);
+        });
 
         // set wether to include the CommonName in the subjectAltName
         cn_in_san = '.field-subject_alternative_name .critical-widget-wrapper input';
