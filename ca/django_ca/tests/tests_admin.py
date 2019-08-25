@@ -1298,7 +1298,9 @@ class AddCertificateSeleniumTests(AdminTestMixin, SeleniumTestCase):
         self.assertEqual([ca_settings.CA_DEFAULT_PROFILE],
                          [o.get_attribute('value') for o in select.all_selected_options])
 
-        # TODO: test values from default profile
+        # assert that the values from the default profile are pre-loaded
+        self.assertProfile(ca_settings.CA_DEFAULT_PROFILE, ku_select, ku_critical, eku_select, eku_critical,
+                           tf_select, tf_critical, subject_fields, cn_in_san)
 
         for option in select.options:
             # first, clear everything to make sure that the profile *sets* everything
