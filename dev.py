@@ -123,10 +123,6 @@ def test(suites):
     warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='webtest.*',
                             message=msg3)
 
-    # Selenium tests client side code, so we only test on the newest Python version
-    if sys.version_info[0:2] != (3, 7):
-        os.environ.setdefault('SKIP_SELENIUM_TESTS', 'y')
-
     work_dir = os.path.join(_rootdir, 'ca')
 
     os.chdir(work_dir)

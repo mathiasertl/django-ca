@@ -2,6 +2,9 @@
 
 import json
 import os
+import sys
+import packaging.version
+import cryptography
 
 from django.core.exceptions import ImproperlyConfigured
 
@@ -225,8 +228,18 @@ CA_OCSP_URLS = {
     },
 }
 
+CRYPTOGRAPHY_VERSION = packaging.version.parse(cryptography.__version__).release[:2]
+NEWEST_PYTHON = sys.version_info[0:2] == (3, 7)
+NEWEST_CRYPTOGRAPHY = CRYPTOGRAPHY_VERSION == (2, 7)
+
+# We skip selenium tests if we are not on newest Python and Cryptography, since it tests client-side code
+DEFAULT_SKIP_SELENIUM_TESTS = not NEWEST_PYTHON and not NEWEST_CRYPTOGRAPHY
+
 # For Selenium test cases
-SKIP_SELENIUM_TESTS = os.environ.get('SKIP_SELENIUM_TESTS', 'y').lower().strip() == 'y'
+SKIP_SELENIUM_TESTS = os.environ.get(
+    'SKIP_SELENIUM_TESTS',
+    'y' if DEFAULT_SKIP_SELENIUM_TESTS else 'n'
+).lower().strip() == 'y'
 VIRTUAL_DISPLAY = os.environ.get('VIRTUAL_DISPLAY', 'y').lower().strip() == 'y'
 GECKODRIVER_PATH = os.path.join(ROOT_DIR, 'contrib', 'selenium', 'geckodriver')
 
