@@ -1,4 +1,4 @@
 <span id="{{ widget.cssid }}" class="labeled-text-multiwidget">
 {% include "django/forms/widgets/input.html" %}
-<label for="{{ widget.attrs.id }}"{% if widget.attrs.required %} class="required"{% endif %}>{{ widget.label }}</label>
+<label for="{{ widget.attrs.id }}"{% if widget.attrs.required %} class="required"{% endif %}>{{ widget.label }}</label>{% block labeledtextinput-after %}{% endblock %}
 </span>

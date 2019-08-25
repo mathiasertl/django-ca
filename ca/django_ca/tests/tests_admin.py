@@ -1273,6 +1273,39 @@ class AddCertificateSeleniumTests(AdminTestMixin, SeleniumTestCase):
             self.assertEqual(field.get_attribute('value'), profile['subject'].get(key, ''))
 
     @override_tmpcadir()
+    def test_paste_csr_test(self):
+        self.load_usable_cas()
+        self.create_superuser()
+        self.login()
+
+        self.selenium.get('%s%s' % (self.live_server_url, self.add_url))
+
+        cert = certs['all-extensions']
+        csr = self.find('textarea#id_csr')
+        csr.send_keys(cert['csr']['pem'])
+
+        subject_fields = {
+            'C': self.find('.field-subject #country'),
+            'ST': self.find('.field-subject #state'),
+            'L': self.find('.field-subject #location'),
+            'O': self.find('.field-subject #organization'),
+            'OU': self.find('.field-subject #organizational-unit'),
+            'CN': self.find('.field-subject #commonname'),
+            'emailAddress': self.find('.field-subject #e-mail'),
+        }
+
+        for key, elem in subject_fields.items():
+            input_elem = elem.find_element_by_css_selector('input')
+            csr_copy = elem.find_element_by_css_selector('.from-csr-copy')
+            from_csr = elem.find_element_by_css_selector('.from-csr-value')
+            self.assertEqual(from_csr.text, cert['csr_subject'][key])
+
+            # click the 'copy' button
+            csr_copy.click()
+
+            self.assertEqual(from_csr.text, input_elem.get_attribute('value'))
+
+    @override_tmpcadir()
     def test_select_profile(self):
         self.load_usable_cas()
         self.create_superuser()
