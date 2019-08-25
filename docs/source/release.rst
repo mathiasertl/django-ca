@@ -13,7 +13,7 @@ Check versions
 * Make sure that ``setup.py`` has proper requirements.
 * Check ``.travis.yaml``.
 * Check ``tox.ini``.
-* Check ``NEWEST_PYTHON`` and ``NEWEST_CRYPTOGRAPHY`` in ``test_settings.py``.
+* Check ``NEWEST_PYTHON``, ``NEWEST_DJANGO`` and ``NEWEST_CRYPTOGRAPHY`` in ``test_settings.py``.
 * Update ``VERSION`` and ``__version__`` in ``ca/django_ca/__init__.py``
   (see `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_).
 * Update ``version`` parameter in ``setup.py``.

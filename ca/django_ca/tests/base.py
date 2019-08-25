@@ -845,6 +845,8 @@ class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # prag
     @classmethod
     def setUpClass(cls):
         super(SeleniumTestCase, cls).setUpClass()
+        if settings.SKIP_SELENIUM_TESTS:
+            return
 
         if settings.VIRTUAL_DISPLAY:
             cls.vdisplay = Display(visible=0, size=(1024, 768))
@@ -855,6 +857,10 @@ class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # prag
 
     @classmethod
     def tearDownClass(cls):
+        if settings.SKIP_SELENIUM_TESTS:
+            super(SeleniumTestCase, cls).tearDownClass()
+            return
+
         cls.selenium.quit()
         if settings.VIRTUAL_DISPLAY:
             cls.vdisplay.stop()

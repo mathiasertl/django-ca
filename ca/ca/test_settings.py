@@ -8,6 +8,7 @@ import packaging.version
 
 import cryptography
 
+import django
 from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -233,15 +234,16 @@ CA_OCSP_URLS = {
 CRYPTOGRAPHY_VERSION = packaging.version.parse(cryptography.__version__).release[:2]
 NEWEST_PYTHON = sys.version_info[0:2] == (3, 7)
 NEWEST_CRYPTOGRAPHY = CRYPTOGRAPHY_VERSION == (2, 7)
-
-# We skip selenium tests if we are not on newest Python and Cryptography, since it tests client-side code
-DEFAULT_SKIP_SELENIUM_TESTS = not NEWEST_PYTHON and not NEWEST_CRYPTOGRAPHY
+NEWEST_DJANGO = django.VERSION[:2] == (2, 2)
+NEWEST_VERSIONS = NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY and NEWEST_DJANGO
 
 # For Selenium test cases
 SKIP_SELENIUM_TESTS = os.environ.get(
     'SKIP_SELENIUM_TESTS',
-    'y' if DEFAULT_SKIP_SELENIUM_TESTS else 'n'
+    'n' if NEWEST_VERSIONS else 'y'
 ).lower().strip() == 'y'
+
+print('SKIPPING SELENIUM TESTS:', SKIP_SELENIUM_TESTS)
 VIRTUAL_DISPLAY = os.environ.get('VIRTUAL_DISPLAY', 'y').lower().strip() == 'y'
 GECKODRIVER_PATH = os.path.join(ROOT_DIR, 'contrib', 'selenium', 'geckodriver')
 
