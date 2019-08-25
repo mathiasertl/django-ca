@@ -226,6 +226,7 @@ CA_OCSP_URLS = {
 }
 
 # For Selenium test cases
+SKIP_SELENIUM_TESTS = os.environ.get('SKIP_SELENIUM_TESTS', 'y').lower().strip() == 'y'
 VIRTUAL_DISPLAY = os.environ.get('VIRTUAL_DISPLAY', 'y').lower().strip() == 'y'
 GECKODRIVER_PATH = os.path.join(ROOT_DIR, 'contrib', 'selenium', 'geckodriver')
 

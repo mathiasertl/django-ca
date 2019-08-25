@@ -28,6 +28,7 @@ from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import ObjectIdentifier
 
 import django
+from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.contrib.auth.models import User
 from django.templatetags.static import static
@@ -1243,6 +1244,7 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertNotRevoked(self.cert)
 
 
+@unittest.skipIf(settings.SKIP_SELENIUM_TESTS, 'Selenium tests skipped.')
 class AddCertificateSeleniumTests(AdminTestMixin, SeleniumTestCase):
     def assertProfile(self, profile, ku_select, ku_critical, eku_select, eku_critical, tf_select, tf_critical,
                       subject, cn_in_san):
