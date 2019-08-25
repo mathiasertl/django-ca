@@ -746,7 +746,8 @@ class DjangoCATestCaseMixin(object):
     def get_subject(cls, cert):
         return {OID_NAME_MAPPINGS[s.oid]: s.value for s in cert.subject}
 
-    def create_superuser(self, username='admin', password='admin', email='user@example.com'):
+    def create_superuser(self, username='admin', password='admin',
+                         email='user@example.com'):  # pragma: no cover
         return User.objects.create_superuser(username=username, password=password, email=email)
 
     @classmethod
