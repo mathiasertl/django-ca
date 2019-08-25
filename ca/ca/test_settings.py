@@ -240,7 +240,7 @@ NEWEST_VERSIONS = NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY and NEWEST_DJANGO
 # For Selenium test cases
 SKIP_SELENIUM_TESTS = os.environ.get(
     'SKIP_SELENIUM_TESTS',
-    'n' if NEWEST_VERSIONS else 'y'
+    'n' if (NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY) else 'y'
 ).lower().strip() == 'y'
 
 print('Skipping selenium tests:', SKIP_SELENIUM_TESTS)
