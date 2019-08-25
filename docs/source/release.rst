@@ -27,7 +27,8 @@ Other tasks
 Run testsuite
 =============
 
-* Check test coverage (``setup.py coverage``).
+* Check code quality (``python dev.py code-quality``).
+* Check test coverage (``python dev.py coverage``).
 * Make sure that ``python dev.py docker-test`` runs through.
 * Make sure that tox runs through for all environments.
 

@@ -3,7 +3,9 @@
 import json
 import os
 import sys
+
 import packaging.version
+
 import cryptography
 
 from django.core.exceptions import ImproperlyConfigured
