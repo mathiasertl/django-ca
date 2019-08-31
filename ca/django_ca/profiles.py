@@ -22,7 +22,7 @@ from .extensions import TLSFeature
 from .utils import get_default_subject
 
 
-class Profile(object):
+class Profile(object):  # pragma: no cover
     def __init__(self, name, subject=None, cn_in_san=None, extensions=None):
         self.name = name
         self.subject = subject

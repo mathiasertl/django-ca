@@ -2870,6 +2870,10 @@ class PrecertificateSignedCertificateTimestampsTestCase(
         with self.assertRaises(NotImplementedError):
             self.ext2.extend([])
 
+    def test_extension_type(self):
+        self.assertEqual(self.ext1.extension_type, self.x1.value)
+        self.assertEqual(self.ext2.extension_type, self.x2.value)
+
     def test_from_list(self):
         with self.assertRaises(NotImplementedError):
             PrecertificateSignedCertificateTimestamps([])
