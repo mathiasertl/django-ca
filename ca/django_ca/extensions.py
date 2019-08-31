@@ -1025,6 +1025,7 @@ class BasicConstraints(Extension):
         `RFC 5280, section 4.2.1.9 <https://tools.ietf.org/html/rfc5280#section-4.2.1.9>`_
     """
 
+    key = 'basic_constraints'
     oid = ExtensionOID.BASIC_CONSTRAINTS
     default_critical = True
 
