@@ -737,7 +737,7 @@ class CertificateAuthority(X509CertMixin):
         add_idp = idp_kwargs['only_contains_attribute_certs'] or idp_kwargs['only_contains_user_certs'] \
             or idp_kwargs['only_contains_ca_certs'] or idp_kwargs['full_name'] or idp_kwargs['relative_name']
 
-        if add_idp and ca_settings.CRYPTOGRAPHY_HAS_IDP:  # pragma: no branch, pragma: only cryptography>=2.5
+        if add_idp:  # pragma: no branch
             builder = builder.add_extension(x509.IssuingDistributionPoint(**idp_kwargs), critical=True)
 
         # Add AuthorityKeyIdentifier from CA if present

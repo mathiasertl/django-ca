@@ -250,7 +250,6 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     @freeze_time('2019-04-14 12:26:00')
-    @unittest.skipUnless(ca_settings.CRYPTOGRAPHY_HAS_IDP, "Test requires cryptography>=2.5")
     def test_no_idp(self):
         # CRLs require a full name (or only_some_reasons) if it's a full CRL
         ca = self.cas['child']
