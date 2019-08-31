@@ -2840,8 +2840,7 @@ class PrecertPoisonTestCase(ExtensionTestMixin, TestCase):
 
 @unittest.skipUnless(ca_settings.OPENSSL_SUPPORTS_SCT,
                      'This version of OpenSSL does not support SCTs')
-class PrecertificateSignedCertificateTimestampsTestCase(
-        DjangoCAWithCertTestCase):  # pragma: only cryptography>=2.4
+class PrecertificateSignedCertificateTimestampsTestCase(DjangoCAWithCertTestCase):
 
     def setUp(self):
         super(PrecertificateSignedCertificateTimestampsTestCase, self).setUp()
