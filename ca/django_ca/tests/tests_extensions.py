@@ -2697,6 +2697,13 @@ class OCSPNoCheckTestCase(ExtensionTestMixin, TestCase):
     #   https://github.com/pyca/cryptography/issues/4818
     @unittest.skipUnless(x509.OCSPNoCheck() == x509.OCSPNoCheck(),
                          'Extensions compare as equal.')  # pragma: cryptography<2.7
+    def test_extension_type(self):
+        super(OCSPNoCheckTestCase, self).test_extension_type()
+
+    # OCSPNoCheck does not compare as equal until cryptography 2.7:
+    #   https://github.com/pyca/cryptography/issues/4818
+    @unittest.skipUnless(x509.OCSPNoCheck() == x509.OCSPNoCheck(),
+                         'Extensions compare as equal.')  # pragma: cryptography<2.7
     def test_for_builder(self):
         super(OCSPNoCheckTestCase, self).test_for_builder()
 
@@ -2765,6 +2772,13 @@ class PrecertPoisonTestCase(ExtensionTestMixin, TestCase):
 
     def test_as_text(self):
         self.assertEqual(PrecertPoison().as_text(), "PrecertPoison")
+
+    # PrecertPoison does not compare as equal until cryptography 2.7:
+    #   https://github.com/pyca/cryptography/issues/4818
+    @unittest.skipUnless(hasattr(x509, 'PrecertPoison') and x509.PrecertPoison() == x509.PrecertPoison(),
+                         'Extensions compare as equal.')  # pragma: only cryptography<2.7
+    def test_extension_type(self):
+        super(PrecertPoisonTestCase, self).test_extension_type()
 
     # PrecertPoison does not compare as equal until cryptography 2.7:
     #   https://github.com/pyca/cryptography/issues/4818
