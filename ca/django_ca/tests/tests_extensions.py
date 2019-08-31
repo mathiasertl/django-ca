@@ -32,7 +32,6 @@ from django.test import TestCase
 from django.utils.functional import cached_property
 
 from .. import ca_settings
-from ..models import X509CertMixin
 from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
@@ -54,6 +53,7 @@ from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
 from ..extensions import UnrecognizedExtension
+from ..models import X509CertMixin
 from .base import DjangoCATestCase
 from .base import DjangoCAWithCertTestCase
 from .base import certs
