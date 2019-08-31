@@ -86,7 +86,8 @@ class ExtensionTestMixin:
         self.assertIsInstance(getattr(X509CertMixin, self.ext_class.key), cached_property)
 
     def test_as_extension(self):
-        raise NotImplementedError
+        for e, x in zip(self.exts, self.xs):
+            self.assertEqual(e.as_extension(), x)
 
     def test_as_text(self):
         raise NotImplementedError
@@ -484,6 +485,7 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
                                    uri('https://example.org')),
         ])
     )
+    xs = [x1, x2, x3, x4, x5]
 
     def setUp(self):
         super(AuthorityInformationAccessTestCase, self).setUp()
@@ -492,13 +494,7 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
         self.ext3 = AuthorityInformationAccess(self.x3)
         self.ext4 = AuthorityInformationAccess(self.x4)
         self.ext5 = AuthorityInformationAccess(self.x5)
-
-    def test_as_extension(self):
-        self.assertEqual(self.ext1.as_extension(), self.x1)
-        self.assertEqual(self.ext2.as_extension(), self.x2)
-        self.assertEqual(self.ext3.as_extension(), self.x3)
-        self.assertEqual(self.ext4.as_extension(), self.x4)
-        self.assertEqual(self.ext5.as_extension(), self.x5)
+        self.exts = [self.ext1, self.ext2, self.ext3, self.ext4, self.ext5]
 
     def test_as_text(self):
         self.assertEqual(self.ext1.as_text(),
@@ -764,20 +760,14 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         oid=x509.ExtensionOID.AUTHORITY_KEY_IDENTIFIER, critical=True,
         value=x509.AuthorityKeyIdentifier(b3, None, None)
     )
+    xs = [x1, x2, x3]
 
     def setUp(self):
         super(AuthorityKeyIdentifierTestCase, self).setUp()
         self.ext1 = AuthorityKeyIdentifier(self.x1)
         self.ext2 = AuthorityKeyIdentifier(self.x2)
         self.ext3 = AuthorityKeyIdentifier(self.x3)
-
-    def test_as_extension(self):
-        self.assertEqual(AuthorityKeyIdentifier(self.hex1).as_extension(), self.x1)
-        self.assertEqual(AuthorityKeyIdentifier(self.hex2).as_extension(), self.x2)
-
-        self.assertEqual(self.ext1.as_extension(), self.x1)
-        self.assertEqual(self.ext2.as_extension(), self.x2)
-        self.assertEqual(self.ext3.as_extension(), self.x3)
+        self.exts = [self.ext1, self.ext2, self.ext3]
 
     def test_as_text(self):
         self.assertEqual(self.ext1.as_text(), 'keyid:%s' % self.hex1)
@@ -1044,6 +1034,7 @@ class CRLDistributionPointsTestCase(ListExtensionTestMixin, TestCase):
                         value=x509.CRLDistributionPoints([dp4]))
     x5 = x509.Extension(oid=ExtensionOID.CRL_DISTRIBUTION_POINTS, critical=True,
                         value=x509.CRLDistributionPoints([dp2, dp4]))
+    xs = [x1, x2, x3, x4, x5]
 
     def setUp(self):
         super(CRLDistributionPointsTestCase, self).setUp()
@@ -1053,13 +1044,7 @@ class CRLDistributionPointsTestCase(ListExtensionTestMixin, TestCase):
         self.ext3 = CRLDistributionPoints(self.x3)
         self.ext4 = CRLDistributionPoints(self.x4)
         self.ext5 = CRLDistributionPoints(self.x5)
-
-    def test_as_extension(self):
-        self.assertEqual(self.ext1.as_extension(), self.x1)
-        self.assertEqual(self.ext2.as_extension(), self.x2)
-        self.assertEqual(self.ext3.as_extension(), self.x3)
-        self.assertEqual(self.ext4.as_extension(), self.x4)
-        self.assertEqual(self.ext5.as_extension(), self.x5)
+        self.exts = [self.ext1, self.ext2, self.ext3, self.ext4, self.ext5]
 
     def test_as_text(self):
         self.assertEqual(self.ext1.as_text(), """* DistributionPoint:
@@ -1843,6 +1828,31 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, TestCase):
             }
         ],
     }
+    x1 = x509.Extension(
+        oid=ExtensionOID.CERTIFICATE_POLICIES, critical=False,
+        value=x509.CertificatePolicies(policies=[xpi1])
+    )
+    x2 = x509.Extension(
+        oid=ExtensionOID.CERTIFICATE_POLICIES, critical=False,
+        value=x509.CertificatePolicies(policies=[xpi2])
+    )
+    x3 = x509.Extension(
+        oid=ExtensionOID.CERTIFICATE_POLICIES, critical=False,
+        value=x509.CertificatePolicies(policies=[xpi3])
+    )
+    x4 = x509.Extension(
+        oid=ExtensionOID.CERTIFICATE_POLICIES, critical=False,
+        value=x509.CertificatePolicies(policies=[xpi4])
+    )
+    x5 = x509.Extension(
+        oid=ExtensionOID.CERTIFICATE_POLICIES, critical=False,
+        value=x509.CertificatePolicies(policies=[xpi1, xpi2, xpi4])
+    )
+    x6 = x509.Extension(
+        oid=ExtensionOID.CERTIFICATE_POLICIES, critical=True,
+        value=x509.CertificatePolicies(policies=[])
+    )
+    xs = [x1, x2, x3, x4, x5, x6]
 
     def setUp(self):
         super(CertificatePoliciesTestCase, self).setUp()
@@ -1856,32 +1866,7 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, TestCase):
         self.ext4 = CertificatePolicies([self.xpi4])
         self.ext5 = CertificatePolicies([self.xpi1, self.xpi2, self.xpi4])
         self.ext6 = CertificatePolicies({'critical': True})
-
-    def test_as_extension(self):
-        self.assertEqual(self.ext1.as_extension(), x509.Extension(
-            oid=ExtensionOID.CERTIFICATE_POLICIES, critical=False,
-            value=x509.CertificatePolicies(policies=[self.xpi1])
-        ))
-        self.assertEqual(self.ext2.as_extension(), x509.Extension(
-            oid=ExtensionOID.CERTIFICATE_POLICIES, critical=False,
-            value=x509.CertificatePolicies(policies=[self.xpi2])
-        ))
-        self.assertEqual(self.ext3.as_extension(), x509.Extension(
-            oid=ExtensionOID.CERTIFICATE_POLICIES, critical=False,
-            value=x509.CertificatePolicies(policies=[self.xpi3])
-        ))
-        self.assertEqual(self.ext4.as_extension(), x509.Extension(
-            oid=ExtensionOID.CERTIFICATE_POLICIES, critical=False,
-            value=x509.CertificatePolicies(policies=[self.xpi4])
-        ))
-        self.assertEqual(self.ext5.as_extension(), x509.Extension(
-            oid=ExtensionOID.CERTIFICATE_POLICIES, critical=False,
-            value=x509.CertificatePolicies(policies=[self.xpi1, self.xpi2, self.xpi4])
-        ))
-        self.assertEqual(self.ext6.as_extension(), x509.Extension(
-            oid=ExtensionOID.CERTIFICATE_POLICIES, critical=True,
-            value=x509.CertificatePolicies(policies=[])
-        ))
+        self.exts = [self.ext1, self.ext2, self.ext3, self.ext4, self.ext5, self.ext6]
 
     def test_as_text(self):
         self.assertEqual(
@@ -2549,23 +2534,24 @@ Excluded:
 class OCSPNoCheckTestCase(ExtensionTestMixin, TestCase):
     ext_class = OCSPNoCheck
 
-    # x509.OCSPNoCheck does not compare as equal:
+    x1 = x509.extensions.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=True,
+                                   value=x509.OCSPNoCheck())
+    x2 = x509.extensions.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=False,
+                                   value=x509.OCSPNoCheck())
+    xs = [x1, x2]
+
+    def setUp(self):
+        super(OCSPNoCheckTestCase, self).setUp()
+        self.ext1 = OCSPNoCheck({'critical': True})
+        self.ext2 = OCSPNoCheck({'critical': False})
+        self.exts = [self.ext1, self.ext2]
+
+    # OCSPNoCheck does not compare as equal until cryptography 2.7:
     #   https://github.com/pyca/cryptography/issues/4818
     @unittest.skipUnless(x509.OCSPNoCheck() == x509.OCSPNoCheck(),
-                         'Extensions compare as equal.')
+                         'Extensions compare as equal.')  # pragma: cryptography<2.7
     def test_as_extension(self):
-        ext1 = x509.extensions.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=True,
-                                         value=x509.OCSPNoCheck())
-        ext2 = x509.extensions.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=False,
-                                         value=x509.OCSPNoCheck())
-
-        self.assertEqual(OCSPNoCheck({}).as_extension(), ext2)
-        self.assertEqual(OCSPNoCheck({'critical': False}).as_extension(), ext2)
-        self.assertEqual(OCSPNoCheck({'critical': True}).as_extension(), ext1)
-
-        self.assertEqual(OCSPNoCheck({}).as_extension(), OCSPNoCheck(ext2).as_extension())
-        self.assertEqual(OCSPNoCheck({'critical': False}).as_extension(), OCSPNoCheck(ext2).as_extension())
-        self.assertEqual(OCSPNoCheck({'critical': True}).as_extension(), OCSPNoCheck(ext1).as_extension())
+        super(OCSPNoCheckTestCase, self).test_as_extension()
 
     def test_as_text(self):
         ext1 = OCSPNoCheck()
@@ -2663,17 +2649,23 @@ class OCSPNoCheckTestCase(ExtensionTestMixin, TestCase):
 
 
 class PrecertPoisonTestCase(ExtensionTestMixin, TestCase):
+    # NOTE: this extension is always critical and has no value, that's why there are fewer test instances here
     ext_class = PrecertPoison
+
+    x1 = x509.extensions.Extension(oid=ExtensionOID.PRECERT_POISON, critical=True, value=x509.PrecertPoison())
+    xs = [x1]
+
+    def setUp(self):
+        super(PrecertPoisonTestCase, self).setUp()
+        self.ext1 = PrecertPoison({})
+        self.exts = [self.ext1]
 
     # PrecertPoison does not compare as equal until cryptography 2.7:
     #   https://github.com/pyca/cryptography/issues/4818
     @unittest.skipUnless(hasattr(x509, 'PrecertPoison') and x509.PrecertPoison() == x509.PrecertPoison(),
                          'Extensions compare as equal.')  # pragma: only cryptography<2.7
     def test_as_extension(self):
-        ext1 = x509.extensions.Extension(oid=ExtensionOID.PRECERT_POISON, critical=True, value=None)
-
-        self.assertEqual(PrecertPoison({}).as_extension(), PrecertPoison(ext1).as_extension())
-        self.assertEqual(PrecertPoison({'critical': True}).as_extension(), PrecertPoison(ext1).as_extension())
+        super(PrecertPoisonTestCase, self).test_as_extension()
 
     def test_as_text(self):
         self.assertEqual(PrecertPoison().as_text(), "PrecertPoison")
@@ -2774,12 +2766,10 @@ class PrecertificateSignedCertificateTimestampsTestCase(
             ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
         self.ext1 = PrecertificateSignedCertificateTimestamps(self.x1)
         self.ext2 = PrecertificateSignedCertificateTimestamps(self.x2)
+        self.exts = [self.ext1, self.ext2]
+        self.xs = [self.x1, self.x2]
         self.data1 = certs[self.name1]['precertificate_signed_certificate_timestamps']
         self.data2 = certs[self.name2]['precertificate_signed_certificate_timestamps']
-
-    def test_as_extension(self):
-        self.assertEqual(self.ext1.as_extension(), self.x1)
-        self.assertEqual(self.ext2.as_extension(), self.x2)
 
     def test_count(self):
         self.assertEqual(self.ext1.count(self.data1['value'][0]), 1)
@@ -3134,42 +3124,45 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
 
     hex1 = '33:33:33:33:33:33'
     hex2 = '44:44:44:44:44:44'
-    ext = x509.Extension(
+    hex3 = '55:55:55:55:55:55'
+    b1 = b'333333'
+    b2 = b'DDDDDD'
+    b3 = b'UUUUUU'  # really unknown right now
+    x1 = x509.Extension(
         oid=x509.ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False,
-        value=x509.SubjectKeyIdentifier(b'333333')
+        value=x509.SubjectKeyIdentifier(b1)
     )
-    ext2 = x509.Extension(
+    x2 = x509.Extension(
         oid=x509.ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False,
-        value=x509.SubjectKeyIdentifier(b'DDDDDD')  # = hex2
+        value=x509.SubjectKeyIdentifier(b2)
     )
+    x3 = x509.Extension(
+        oid=x509.ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=True,
+        value=x509.SubjectKeyIdentifier(b3)
+    )
+    xs = [x1, x2, x3]
+
+    def setUp(self):
+        super(SubjectKeyIdentifierTestCase, self).setUp()
+        self.ext1 = SubjectKeyIdentifier(self.hex1)
+        self.ext2 = SubjectKeyIdentifier(self.hex2)
+        self.ext3 = SubjectKeyIdentifier({'value': self.hex3, 'critical': True})
+        self.exts = [self.ext1, self.ext2, self.ext3]
 
     def test_basic(self):
-        ext = SubjectKeyIdentifier(self.ext)
+        ext = SubjectKeyIdentifier(self.x1)
         self.assertEqual(ext.as_text(), '33:33:33:33:33:33')
-        self.assertEqual(ext.as_extension(), self.ext)
-
-    def test_as_extension(self):
-        critical_ext = x509.Extension(
-            oid=x509.ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=True,
-            value=x509.SubjectKeyIdentifier(b'333333')
-        )
-
-        ext1 = SubjectKeyIdentifier(self.hex1)
-        ext3 = SubjectKeyIdentifier(critical_ext)
-
-        self.assertEqual(ext1.as_extension(), self.ext)
-        self.assertEqual(ext3.as_extension(), critical_ext)
-        self.assertEqual(ext3.as_extension().critical, True)
+        self.assertEqual(ext.as_extension(), self.x1)
 
     def test_as_text(self):
         self.assertEqual(SubjectKeyIdentifier(self.hex1).as_text(), self.hex1)
         self.assertEqual(SubjectKeyIdentifier(self.hex2).as_text(), self.hex2)
-        self.assertEqual(SubjectKeyIdentifier(self.ext).as_text(), self.hex1)
+        self.assertEqual(SubjectKeyIdentifier(self.x1).as_text(), self.hex1)
 
     def test_eq(self):
         ext1 = SubjectKeyIdentifier(self.hex1)
         ext2 = SubjectKeyIdentifier(self.hex2)
-        ext3 = SubjectKeyIdentifier(self.ext)
+        ext3 = SubjectKeyIdentifier(self.x1)
 
         self.assertEqual(ext1, ext3)
         self.assertEqual(ext1, ext1)
@@ -3179,7 +3172,7 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
     def test_extension_type(self):
         ext1 = SubjectKeyIdentifier(self.hex1)
         ext2 = SubjectKeyIdentifier(self.hex2)
-        ext3 = SubjectKeyIdentifier(self.ext)
+        ext3 = SubjectKeyIdentifier(self.x1)
 
         self.assertEqual(ext1.extension_type, x509.SubjectKeyIdentifier(digest=b'333333'))
         self.assertEqual(ext2.extension_type, x509.SubjectKeyIdentifier(digest=b'DDDDDD'))
@@ -3188,9 +3181,9 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
     def test_for_builder(self):
         ext1 = SubjectKeyIdentifier(self.hex1)
         ext2 = SubjectKeyIdentifier(self.hex2)
-        ext3 = SubjectKeyIdentifier(self.ext)
-        exp1 = {'critical': False, 'extension': self.ext.value}
-        exp2 = {'critical': False, 'extension': self.ext2.value}
+        ext3 = SubjectKeyIdentifier(self.x1)
+        exp1 = {'critical': False, 'extension': self.x1.value}
+        exp2 = {'critical': False, 'extension': self.x2.value}
 
         self.assertEqual(ext1.for_builder(), exp1)
         self.assertEqual(ext2.for_builder(), exp2)
@@ -3199,7 +3192,7 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
     def test_hash(self):
         ext1 = SubjectKeyIdentifier(self.hex1)
         ext2 = SubjectKeyIdentifier(self.hex2)
-        ext3 = SubjectKeyIdentifier(self.ext)
+        ext3 = SubjectKeyIdentifier(self.x1)
 
         self.assertEqual(hash(ext1), hash(ext1))
         self.assertEqual(hash(ext1), hash(ext3))
@@ -3209,7 +3202,7 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
     def test_ne(self):
         ext1 = SubjectKeyIdentifier(self.hex1)
         ext2 = SubjectKeyIdentifier(self.hex2)
-        ext3 = SubjectKeyIdentifier(self.ext)
+        ext3 = SubjectKeyIdentifier(self.x1)
 
         self.assertNotEqual(ext1, ext2)
         self.assertNotEqual(ext2, ext3)
@@ -3217,7 +3210,7 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
     def test_repr(self):
         ext1 = SubjectKeyIdentifier(self.hex1)
         ext2 = SubjectKeyIdentifier(self.hex2)
-        ext3 = SubjectKeyIdentifier(self.ext)
+        ext3 = SubjectKeyIdentifier(self.x1)
 
         if six.PY2:  # pragma: only py2
             self.assertEqual(repr(ext1), '<SubjectKeyIdentifier: 333333, critical=False>')
@@ -3231,7 +3224,7 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
     def test_serialize(self):
         ext1 = SubjectKeyIdentifier(self.hex1)
         ext2 = SubjectKeyIdentifier(self.hex2)
-        ext3 = SubjectKeyIdentifier(self.ext)
+        ext3 = SubjectKeyIdentifier(self.x1)
 
         self.assertEqual(ext1.serialize(), {'critical': False, 'value': self.hex1})
         self.assertEqual(ext2.serialize(), {'critical': False, 'value': self.hex2})
@@ -3245,10 +3238,31 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
 
 
 class TLSFeatureTestCase(TestCase):
-    ext1 = TLSFeature('critical,OCSPMustStaple')
-    ext2 = TLSFeature('OCSPMustStaple')
-    ext3 = TLSFeature('OCSPMustStaple,MultipleCertStatusRequest')
-    ext4 = TLSFeature('MultipleCertStatusRequest,OCSPMustStaple')  # reversed order
+    x1 = x509.extensions.Extension(
+        oid=ExtensionOID.TLS_FEATURE, critical=True,
+        value=x509.TLSFeature(features=[TLSFeatureType.status_request])
+    )
+    x2 = x509.extensions.Extension(
+        oid=ExtensionOID.TLS_FEATURE, critical=False,
+        value=x509.TLSFeature(features=[TLSFeatureType.status_request])
+    )
+    x3 = x509.extensions.Extension(
+        oid=ExtensionOID.TLS_FEATURE, critical=False,
+        value=x509.TLSFeature(features=[TLSFeatureType.status_request, TLSFeatureType.status_request_v2])
+    )
+    x4 = x509.extensions.Extension(
+        oid=ExtensionOID.TLS_FEATURE, critical=False,
+        value=x509.TLSFeature(features=[TLSFeatureType.status_request_v2, TLSFeatureType.status_request])
+    )
+    xs = [x1, x2, x3, x4]
+
+    def setUp(self):
+        super(TLSFeatureTestCase, self).setUp()
+        self.ext1 = TLSFeature('critical,OCSPMustStaple')
+        self.ext2 = TLSFeature('OCSPMustStaple')
+        self.ext3 = TLSFeature('OCSPMustStaple,MultipleCertStatusRequest')
+        self.ext4 = TLSFeature('MultipleCertStatusRequest,OCSPMustStaple')  # reversed order
+        self.exts = [self.ext1, self.ext2, self.ext3, self.ext4]
 
     def assertBasic(self, ext, critical=True):
         self.assertEqual(ext.critical, critical)
@@ -3271,18 +3285,6 @@ class TLSFeatureTestCase(TestCase):
                          set([e[0] for e in TLSFeature.CHOICES]))
         self.assertCountEqual(TLSFeature.CRYPTOGRAPHY_MAPPING.values(),
                               x509.TLSFeatureType.__members__.values())
-
-    def test_as_extension(self):
-        self.assertEqual(self.ext1.as_extension(), x509.extensions.Extension(
-            oid=ExtensionOID.TLS_FEATURE,
-            critical=True,
-            value=x509.TLSFeature(features=[TLSFeatureType.status_request])
-        ))
-        self.assertEqual(self.ext2.as_extension(), x509.extensions.Extension(
-            oid=ExtensionOID.TLS_FEATURE,
-            critical=False,
-            value=x509.TLSFeature(features=[TLSFeatureType.status_request])
-        ))
 
     def test_count(self):
         self.assertEqual(self.ext1.count('OCSPMustStaple'), 1)
