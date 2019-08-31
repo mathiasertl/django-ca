@@ -29,8 +29,10 @@ from cryptography.x509.oid import NameOID
 from cryptography.x509.oid import ObjectIdentifier
 
 from django.test import TestCase
+from django.utils.functional import cached_property
 
 from .. import ca_settings
+from ..models import X509CertMixin
 from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
@@ -73,6 +75,16 @@ def load_tests(loader, tests, ignore):
 
 
 class ExtensionTestMixin:
+    def test_config(self):
+        self.assertTrue(issubclass(self.ext_class, Extension))
+        self.assertIsInstance(self.ext_class.key, six.string_types)
+        self.assertGreater(len(self.ext_class.key), 1)
+
+        # test that the model matches
+        self.assertEqual(X509CertMixin.OID_MAPPING[self.ext_class.oid], self.ext_class.key)
+        self.assertTrue(hasattr(X509CertMixin, self.ext_class.key))
+        self.assertIsInstance(getattr(X509CertMixin, self.ext_class.key), cached_property)
+
     def test_as_extension(self):
         raise NotImplementedError
 
@@ -189,6 +201,9 @@ class KnownValuesExtensionTestMixin(ListExtensionTestMixin):
 
 class ExtensionTestCase(ExtensionTestMixin, TestCase):
     value = 'foobar'
+
+    def test_config(self):
+        return  # not useful here
 
     def assertExtension(self, ext, critical=True):
         self.assertEqual(ext.value, self.value)
@@ -659,6 +674,8 @@ class AuthorityInformationAccessTestCase(TestCase):
 
 
 class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
+    ext_class = AuthorityKeyIdentifier
+
     hex1 = '33:33:33:33:33:33'
     hex2 = '44:44:44:44:44:44'
     hex3 = '55:55:55:55:55:55'
@@ -898,6 +915,8 @@ class DistributionPointTestCase(TestCase):
 
 
 class CRLDistributionPointsTestCase(ListExtensionTestMixin, TestCase):
+    ext_class = CRLDistributionPoints
+
     dp1 = x509.DistributionPoint(
         full_name=[
             x509.UniformResourceIdentifier('http://ca.example.com/crl'),
@@ -1691,6 +1710,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
 
 
 class CertificatePoliciesTestCase(ListExtensionTestMixin, TestCase):
+    ext_class = CertificatePolicies
     oid = '2.5.29.32.0'
 
     q1 = 'text1'
@@ -2457,6 +2477,8 @@ Excluded:
 
 
 class OCSPNoCheckTestCase(ExtensionTestMixin, TestCase):
+    ext_class = OCSPNoCheck
+
     # x509.OCSPNoCheck does not compare as equal:
     #   https://github.com/pyca/cryptography/issues/4818
     @unittest.skipUnless(x509.OCSPNoCheck() == x509.OCSPNoCheck(),
@@ -2571,6 +2593,8 @@ class OCSPNoCheckTestCase(ExtensionTestMixin, TestCase):
 
 
 class PrecertPoisonTestCase(ExtensionTestMixin, TestCase):
+    ext_class = PrecertPoison
+
     # PrecertPoison does not compare as equal until cryptography 2.7:
     #   https://github.com/pyca/cryptography/issues/4818
     @unittest.skipUnless(hasattr(x509, 'PrecertPoison') and x509.PrecertPoison() == x509.PrecertPoison(),
@@ -3036,6 +3060,8 @@ class SubjectAlternativeNameTestCase(TestCase):
 
 
 class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
+    ext_class = SubjectKeyIdentifier
+
     hex1 = '33:33:33:33:33:33'
     hex2 = '44:44:44:44:44:44'
     ext = x509.Extension(

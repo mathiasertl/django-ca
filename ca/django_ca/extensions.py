@@ -86,7 +86,8 @@ class Extension(object):
     value : list or tuple or dict or str or :py:class:`~cg:cryptography.x509.ExtensionType`
         The value of the extension, the description provides further details.
     """
-    oid = None  # must be overwritten by base class
+    key = None  # must be overwritten by actual classes
+    oid = None  # must be overwritten by actual classes
     default_critical = False
 
     def __init__(self, value):
@@ -976,6 +977,7 @@ class AuthorityKeyIdentifier(KeyIdExtension):
           authority_cert_serial_number (see underlying constructor).
     """
 
+    key = 'authority_key_identifier'
     oid = ExtensionOID.AUTHORITY_KEY_IDENTIFIER
 
     @property
@@ -1100,6 +1102,7 @@ class CRLDistributionPoints(ListExtension):
 
         `RFC 5280, section 4.2.1.13 <https://tools.ietf.org/html/rfc5280#section-4.2.1.13>`_
     """
+    key = 'crl_distribution_points'
     oid = ExtensionOID.CRL_DISTRIBUTION_POINTS
 
     def __hash__(self):
@@ -1147,6 +1150,7 @@ class CertificatePolicies(ListExtension):
 
         `RFC 5280, section 4.2.1.4 <https://tools.ietf.org/html/rfc5280#section-4.2.1.4>`_
     """
+    key = 'certificate_policies'
     oid = ExtensionOID.CERTIFICATE_POLICIES
 
     def __hash__(self):
@@ -1435,6 +1439,7 @@ class OCSPNoCheck(NullExtension):
        `RFC 6990, section 4.2.2.2.1 <https://tools.ietf.org/html/rfc6960#section-4.2.2.2>`_
     """
     oid = ExtensionOID.OCSP_NO_CHECK
+    key = 'ocsp_no_check'
     ext_class = x509.OCSPNoCheck
 
 
@@ -1455,6 +1460,7 @@ class PrecertPoison(NullExtension):
        `RFC 6962, section 3.1 <https://tools.ietf.org/html/rfc6962#section-3.1>`_
     """
     default_critical = True
+    key = 'precert_poison'
     oid = ExtensionOID.PRECERT_POISON
     ext_class = x509.PrecertPoison
 
@@ -1604,6 +1610,7 @@ class SubjectAlternativeName(AlternativeNameExtension):
 class SubjectKeyIdentifier(KeyIdExtension):
     """Class representing a SubjectKeyIdentifier extension."""
 
+    key = 'subject_key_identifier'
     oid = ExtensionOID.SUBJECT_KEY_IDENTIFIER
 
     @property
