@@ -1206,6 +1206,8 @@ class IssuerAlternativeName(AlternativeNameExtension):
 
        `RFC 5280, section 4.2.1.7 <https://tools.ietf.org/html/rfc5280#section-4.2.1.7>`_
     """
+
+    key = 'issuer_alternative_name'
     oid = ExtensionOID.ISSUER_ALTERNATIVE_NAME
 
     @property

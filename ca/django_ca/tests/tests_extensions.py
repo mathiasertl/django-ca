@@ -100,7 +100,8 @@ class ExtensionTestMixin:
             self.assertEqual(e, e)
 
     def test_extension_type(self):
-        raise NotImplementedError
+        for e, x in zip(self.exts, self.xs):
+            self.assertEqual(e.extension_type, x.value)
 
     def test_for_builder(self):
         for e, x in zip(self.exts, self.xs):
@@ -1959,7 +1960,6 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, TestCase):
                          x509.CertificatePolicies(policies=[self.xpi1, self.xpi2, self.xpi4]))
         self.assertEqual(self.ext6.extension_type, x509.CertificatePolicies(policies=[]))
 
-
     def test_from_list(self):
         self.assertEqual(CertificatePolicies([self.xpi1]), self.ext1)
 
@@ -2146,15 +2146,204 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, TestCase):
         self.assertEqual(str(self.ext6), 'CertificatePolicies(0 Policies, critical=True)')
 
 
-class IssuerAlternativeNameTestCase(TestCase):
-    # NOTE: this extension is almost identical to the SubjectAlternativeName extension, most is tested there
-    def test_as_extension(self):
-        ext = IssuerAlternativeName('https://example.com')
-        self.assertEqual(ext.as_extension(), x509.extensions.Extension(
-            oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME,
-            critical=False,
-            value=x509.IssuerAlternativeName([uri('https://example.com')])
-        ))
+class IssuerAlternativeNameTestCase(ListExtensionTestMixin, TestCase):
+    ext_class = IssuerAlternativeName
+    uri1 = 'https://example.com'
+    uri2 = 'https://example.net'
+    dns1 = 'example.com'
+    dns2 = 'example.net'
+
+    x1 = x509.extensions.Extension(
+        oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME, critical=False,
+        value=x509.IssuerAlternativeName([])
+    )
+    x2 = x509.extensions.Extension(
+        oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME, critical=False,
+        value=x509.IssuerAlternativeName([uri(uri1)])
+    )
+    x3 = x509.extensions.Extension(
+        oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME, critical=False,
+        value=x509.IssuerAlternativeName([uri(uri1), dns(dns1)])
+    )
+    x4 = x509.extensions.Extension(
+        oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME, critical=True,
+        value=x509.IssuerAlternativeName([])
+    )
+    x5 = x509.extensions.Extension(
+        oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME, critical=True,
+        value=x509.IssuerAlternativeName([uri(uri2), dns(dns2)])
+    )
+    xs = [x1, x2, x3, x4, x5]
+
+    def setUp(self):
+        super(IssuerAlternativeNameTestCase, self).setUp()
+
+        self.ext1 = IssuerAlternativeName({'critical': False})
+        self.ext2 = IssuerAlternativeName({'critical': False, 'value': [self.uri1]})
+        self.ext3 = IssuerAlternativeName({'critical': False, 'value': [self.uri1, self.dns1]})
+        self.ext4 = IssuerAlternativeName({'critical': True})
+        self.ext5 = IssuerAlternativeName({'critical': True, 'value': [self.uri2, self.dns2]})
+
+        self.exts = [self.ext1, self.ext2, self.ext3, self.ext4, self.ext5]
+
+    def test_as_text(self):
+        self.assertEqual(self.ext1.as_text(), "")
+        self.assertEqual(self.ext2.as_text(), "* URI:https://example.com")
+        self.assertEqual(self.ext3.as_text(), "* URI:https://example.com\n* DNS:example.com")
+        self.assertEqual(self.ext4.as_text(), "")
+        self.assertEqual(self.ext5.as_text(), "* URI:https://example.net\n* DNS:example.net")
+
+    def test_count(self):
+        self.assertEqual(self.ext1.count(self.uri1), 0)
+        self.assertEqual(self.ext1.count(uri(self.uri1)), 0)
+        self.assertEqual(self.ext2.count(self.uri1), 1)
+        self.assertEqual(self.ext2.count(uri(self.uri1)), 1)
+
+    def test_del(self):
+        del self.ext3[1]
+        self.assertEqual(self.ext3, self.ext2)
+        del self.ext3[0]
+        self.assertEqual(self.ext3, self.ext1)
+
+    def test_extend(self):
+        self.ext1.extend([self.uri1, dns(self.dns1)])
+        self.assertEqual(self.ext1, self.ext3)
+
+    def test_from_list(self):
+        self.assertEqual(IssuerAlternativeName([]), self.ext1)
+        self.assertEqual(IssuerAlternativeName([self.uri1]), self.ext2)
+        self.assertEqual(IssuerAlternativeName([self.uri1, self.dns1]), self.ext3)
+        self.assertEqual(IssuerAlternativeName([uri(self.uri1)]), self.ext2)
+        self.assertEqual(IssuerAlternativeName([uri(self.uri1), dns(self.dns1)]), self.ext3)
+
+    def test_getitem(self):
+        self.assertEqual(self.ext3[0], 'URI:%s' % self.uri1)
+        self.assertEqual(self.ext3[1], 'DNS:%s' % self.dns1)
+        self.assertEqual(self.ext5[0], 'URI:%s' % self.uri2)
+        self.assertEqual(self.ext5[1], 'DNS:%s' % self.dns2)
+
+    def test_getitem_slices(self):
+        self.assertEqual(self.ext3[0:], ['URI:%s' % self.uri1, 'DNS:%s' % self.dns1])
+        self.assertEqual(self.ext3[1:], ['DNS:%s' % self.dns1])
+        self.assertEqual(self.ext5[0:], ['URI:%s' % self.uri2, 'DNS:%s' % self.dns2])
+        self.assertEqual(self.ext5[1:], ['DNS:%s' % self.dns2])
+
+    def test_hash(self):
+        self.assertNotEqual(hash(self.ext1), hash(self.ext2))
+        self.assertNotEqual(hash(self.ext1), hash(self.ext3))
+        self.assertNotEqual(hash(self.ext1), hash(self.ext4))
+        self.assertNotEqual(hash(self.ext1), hash(self.ext5))
+        self.assertNotEqual(hash(self.ext2), hash(self.ext3))
+        self.assertNotEqual(hash(self.ext2), hash(self.ext4))
+        self.assertNotEqual(hash(self.ext2), hash(self.ext5))
+        self.assertNotEqual(hash(self.ext3), hash(self.ext4))
+        self.assertNotEqual(hash(self.ext3), hash(self.ext5))
+        self.assertNotEqual(hash(self.ext4), hash(self.ext5))
+
+    def test_in(self):
+        self.assertIn(self.uri1, self.ext2)
+        self.assertIn(self.uri1, self.ext3)
+        self.assertIn(uri(self.uri1), self.ext3)
+        self.assertIn(self.uri2, self.ext5)
+        self.assertIn(self.dns2, self.ext5)
+        self.assertIn(uri(self.uri2), self.ext5)
+        self.assertIn(dns(self.dns2), self.ext5)
+
+    def test_insert(self):
+        self.ext1.insert(0, self.uri1)
+        self.assertEqual(self.ext1, self.ext2)
+        self.ext1.insert(1, dns(self.dns1))
+        self.assertEqual(self.ext1, self.ext3)
+
+        self.ext1.insert(5, dns(self.dns2))
+        self.assertEqual(self.ext1, IssuerAlternativeName({
+            'critical': False,
+            'value': [self.uri1, self.dns1, self.dns2],
+        }))
+
+    def test_len(self):
+        self.assertEqual(len(self.ext1), 0)
+        self.assertEqual(len(self.ext2), 1)
+        self.assertEqual(len(self.ext3), 2)
+        self.assertEqual(len(self.ext4), 0)
+        self.assertEqual(len(self.ext5), 2)
+
+    def test_ne(self):
+        self.assertNotEqual(self.ext1, self.ext2)
+        self.assertNotEqual(self.ext1, self.ext3)
+        self.assertNotEqual(self.ext1, self.ext4)
+        self.assertNotEqual(self.ext1, self.ext5)
+        self.assertNotEqual(self.ext2, self.ext3)
+        self.assertNotEqual(self.ext2, self.ext4)
+        self.assertNotEqual(self.ext2, self.ext5)
+        self.assertNotEqual(self.ext3, self.ext4)
+        self.assertNotEqual(self.ext3, self.ext5)
+        self.assertNotEqual(self.ext4, self.ext5)
+
+    def test_not_in(self):
+        self.assertNotIn(self.dns2, self.ext2)
+        self.assertNotIn(self.dns2, self.ext3)
+        self.assertNotIn(dns(self.dns1), self.ext1)
+
+    def test_pop(self):
+        self.assertEqual(self.ext3.pop(1), 'DNS:%s' % self.dns1)
+        self.assertEqual(self.ext3, self.ext2)
+
+        with self.assertRaisesRegex(IndexError, '^pop index out of range$'):
+            self.ext3.pop(1)
+
+    def test_remove(self):
+        self.ext3.remove(self.dns1)
+        self.assertEqual(self.ext3, self.ext2)
+
+        self.ext3.remove(uri(self.uri1))
+        self.assertEqual(self.ext3, self.ext1)
+
+        with self.assertRaisesRegex(ValueError, r'^list\.remove\(x\): x not in list$'):
+            self.ext3.remove(uri(self.uri1))
+
+    def test_repr(self):
+        self.assertEqual(repr(self.ext1), "<IssuerAlternativeName: [], critical=False>")
+        self.assertEqual(repr(self.ext2),
+                         "<IssuerAlternativeName: ['URI:https://example.com'], critical=False>")
+        self.assertEqual(
+            repr(self.ext3),
+            "<IssuerAlternativeName: ['URI:https://example.com', 'DNS:example.com'], critical=False>")
+        self.assertEqual(repr(self.ext4), "<IssuerAlternativeName: [], critical=True>")
+        self.assertEqual(
+            repr(self.ext5),
+            "<IssuerAlternativeName: ['URI:https://example.net', 'DNS:example.net'], critical=True>")
+
+    def test_serialize(self):
+        self.assertEqual(self.ext1.serialize(), {'critical': False, 'value': []})
+        self.assertEqual(self.ext2.serialize(), {'critical': False, 'value': ['URI:https://example.com']})
+        self.assertEqual(self.ext3.serialize(),
+                         {'critical': False, 'value': ['URI:https://example.com', 'DNS:example.com']})
+        self.assertEqual(self.ext4.serialize(), {'critical': True, 'value': []})
+        self.assertEqual(self.ext5.serialize(),
+                         {'critical': True, 'value': ['URI:https://example.net', 'DNS:example.net']})
+
+    def test_setitem(self):
+        self.ext3[0] = self.uri2
+        self.ext3[1] = dns(self.dns2)
+        self.ext3.critical = True
+        self.assertEqual(self.ext3, self.ext5)
+
+        with self.assertRaisesRegex(IndexError, '^list assignment index out of range$'):
+            self.ext1[0] = self.uri1
+
+    def test_setitem_slices(self):
+        self.ext2[1:] = [self.dns1]
+        self.assertEqual(self.ext2, self.ext3)
+        self.ext4[0:] = [uri(self.uri2), dns(self.dns2)]
+        self.assertEqual(self.ext4, self.ext5)
+
+    def test_str(self):
+        self.assertEqual(str(self.ext1), "")
+        self.assertEqual(str(self.ext2), "URI:https://example.com")
+        self.assertEqual(str(self.ext3), "URI:https://example.com,DNS:example.com")
+        self.assertEqual(str(self.ext4), "/critical")
+        self.assertEqual(str(self.ext5), "URI:https://example.net,DNS:example.net/critical")
 
 
 class KeyUsageTestCase(TestCase):
