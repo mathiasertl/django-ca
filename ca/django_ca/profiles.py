@@ -22,6 +22,13 @@ from .extensions import TLSFeature
 from .utils import get_default_subject
 
 
+class Profile(object):
+    def __init__(self, name, subject=None, cn_in_san=None, extensions=None):
+        self.name = name
+        self.subject = subject
+        self.cn_in_san = None
+
+
 def get_cert_profile_kwargs(name=None):
     """Get kwargs suitable for get_cert X509 keyword arguments from the given profile."""
 

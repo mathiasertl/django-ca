@@ -871,6 +871,7 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
 
         `RFC 5280, section 4.2.2.1 <https://tools.ietf.org/html/rfc5280#section-4.2.2.1>`_
     """
+    key = 'authority_information_access'
     oid = ExtensionOID.AUTHORITY_INFORMATION_ACCESS
 
     def __bool__(self):
