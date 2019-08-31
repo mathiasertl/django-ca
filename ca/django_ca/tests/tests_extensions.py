@@ -2115,6 +2115,7 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, TestCase):
 
 class IssuerAlternativeNameTestCase(ListExtensionTestMixin, TestCase):
     ext_class = IssuerAlternativeName
+    ext_class_name = 'IssuerAlternativeName'
     uri1 = 'https://example.com'
     uri2 = 'https://example.net'
     dns1 = 'example.com'
@@ -2145,11 +2146,11 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, TestCase):
     def setUp(self):
         super(IssuerAlternativeNameTestCase, self).setUp()
 
-        self.ext1 = IssuerAlternativeName({'critical': False})
-        self.ext2 = IssuerAlternativeName({'critical': False, 'value': [self.uri1]})
-        self.ext3 = IssuerAlternativeName({'critical': False, 'value': [self.uri1, self.dns1]})
-        self.ext4 = IssuerAlternativeName({'critical': True})
-        self.ext5 = IssuerAlternativeName({'critical': True, 'value': [self.uri2, self.dns2]})
+        self.ext1 = self.ext_class({'critical': False})
+        self.ext2 = self.ext_class({'critical': False, 'value': [self.uri1]})
+        self.ext3 = self.ext_class({'critical': False, 'value': [self.uri1, self.dns1]})
+        self.ext4 = self.ext_class({'critical': True})
+        self.ext5 = self.ext_class({'critical': True, 'value': [self.uri2, self.dns2]})
 
         self.exts = [self.ext1, self.ext2, self.ext3, self.ext4, self.ext5]
 
@@ -2177,11 +2178,11 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, TestCase):
         self.assertEqual(self.ext1, self.ext3)
 
     def test_from_list(self):
-        self.assertEqual(IssuerAlternativeName([]), self.ext1)
-        self.assertEqual(IssuerAlternativeName([self.uri1]), self.ext2)
-        self.assertEqual(IssuerAlternativeName([self.uri1, self.dns1]), self.ext3)
-        self.assertEqual(IssuerAlternativeName([uri(self.uri1)]), self.ext2)
-        self.assertEqual(IssuerAlternativeName([uri(self.uri1), dns(self.dns1)]), self.ext3)
+        self.assertEqual(self.ext_class([]), self.ext1)
+        self.assertEqual(self.ext_class([self.uri1]), self.ext2)
+        self.assertEqual(self.ext_class([self.uri1, self.dns1]), self.ext3)
+        self.assertEqual(self.ext_class([uri(self.uri1)]), self.ext2)
+        self.assertEqual(self.ext_class([uri(self.uri1), dns(self.dns1)]), self.ext3)
 
     def test_getitem(self):
         self.assertEqual(self.ext3[0], 'URI:%s' % self.uri1)
@@ -2223,7 +2224,7 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, TestCase):
         self.assertEqual(self.ext1, self.ext3)
 
         self.ext1.insert(5, dns(self.dns2))
-        self.assertEqual(self.ext1, IssuerAlternativeName({
+        self.assertEqual(self.ext1, self.ext_class({
             'critical': False,
             'value': [self.uri1, self.dns1, self.dns2],
         }))
@@ -2270,16 +2271,16 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, TestCase):
             self.ext3.remove(uri(self.uri1))
 
     def test_repr(self):
-        self.assertEqual(repr(self.ext1), "<IssuerAlternativeName: [], critical=False>")
+        self.assertEqual(repr(self.ext1), "<%s: [], critical=False>" % self.ext_class_name)
         self.assertEqual(repr(self.ext2),
-                         "<IssuerAlternativeName: ['URI:https://example.com'], critical=False>")
+                         "<%s: ['URI:https://example.com'], critical=False>" % self.ext_class_name)
         self.assertEqual(
             repr(self.ext3),
-            "<IssuerAlternativeName: ['URI:https://example.com', 'DNS:example.com'], critical=False>")
-        self.assertEqual(repr(self.ext4), "<IssuerAlternativeName: [], critical=True>")
+            "<%s: ['URI:https://example.com', 'DNS:example.com'], critical=False>" % self.ext_class_name)
+        self.assertEqual(repr(self.ext4), "<%s: [], critical=True>" % self.ext_class_name)
         self.assertEqual(
             repr(self.ext5),
-            "<IssuerAlternativeName: ['URI:https://example.net', 'DNS:example.net'], critical=True>")
+            "<%s: ['URI:https://example.net', 'DNS:example.net'], critical=True>" % self.ext_class_name)
 
     def test_serialize(self):
         self.assertEqual(self.ext1.serialize(), {'critical': False, 'value': []})
@@ -3008,196 +3009,32 @@ class UnknownExtensionTestCase(TestCase):
         self.assertEqual(ext.as_text(), 'Could not parse extension (%s)' % error)
 
 
-class SubjectAlternativeNameTestCase(TestCase):
-    def test_operators(self):
-        ext = SubjectAlternativeName(['https://example.com'])
-        self.assertIn('https://example.com', ext)
-        self.assertIn(uri('https://example.com'), ext)
-        self.assertNotIn('https://example.net', ext)
-        self.assertNotIn(uri('https://example.net'), ext)
-
-        self.assertEqual(len(ext), 1)
-        self.assertEqual(bool(ext), True)
-
-    def test_from_extension(self):
-        x509_ext = x509.extensions.Extension(
-            oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME, critical=True,
-            value=x509.SubjectAlternativeName([dns('example.com')]))
-        ext = SubjectAlternativeName(x509_ext)
-        self.assertEqual(ext.as_extension(), x509_ext)
-
-    def test_from_dict(self):
-        ext = SubjectAlternativeName({})
-        self.assertEqual(ext.value, [])
-        self.assertFalse(ext.critical)
-        self.assertEqual(len(ext), 0)
-        self.assertEqual(bool(ext), False)
-
-        ext = SubjectAlternativeName({'value': None})
-        self.assertEqual(ext.value, [])
-        self.assertFalse(ext.critical)
-        self.assertEqual(len(ext), 0)
-        self.assertEqual(bool(ext), False)
-
-        ext = SubjectAlternativeName({'value': []})
-        self.assertEqual(ext.value, [])
-        self.assertFalse(ext.critical)
-        self.assertEqual(len(ext), 0)
-        self.assertEqual(bool(ext), False)
-
-        ext = SubjectAlternativeName({'value': 'example.com'})
-        self.assertEqual(ext.value, [dns('example.com')])
-        self.assertFalse(ext.critical)
-        self.assertEqual(len(ext), 1)
-        self.assertEqual(bool(ext), True)
-
-        ext = SubjectAlternativeName({'value': dns('example.com')})
-        self.assertEqual(ext.value, [dns('example.com')])
-        self.assertFalse(ext.critical)
-        self.assertEqual(len(ext), 1)
-        self.assertEqual(bool(ext), True)
-
-        ext = SubjectAlternativeName({'value': ['example.com']})
-        self.assertEqual(ext.value, [dns('example.com')])
-        self.assertFalse(ext.critical)
-        self.assertEqual(len(ext), 1)
-        self.assertEqual(bool(ext), True)
-
-        ext = SubjectAlternativeName({'value': ['example.com', dns('example.net')]})
-        self.assertEqual(ext.value, [dns('example.com'), dns('example.net')])
-        self.assertFalse(ext.critical)
-        self.assertEqual(len(ext), 2)
-        self.assertEqual(bool(ext), True)
-
-    def test_list_funcs(self):
-        ext = SubjectAlternativeName(['https://example.com'])
-        ext.append('https://example.net')
-        self.assertEqual(ext.value, [uri('https://example.com'), uri('https://example.net')])
-        self.assertEqual(ext.count('https://example.com'), 1)
-        self.assertEqual(ext.count(uri('https://example.com')), 1)
-        self.assertEqual(ext.count('https://example.net'), 1)
-        self.assertEqual(ext.count(uri('https://example.net')), 1)
-        self.assertEqual(ext.count('https://example.org'), 0)
-        self.assertEqual(ext.count(uri('https://example.org')), 0)
-
-        ext.clear()
-        self.assertEqual(ext.value, [])
-        self.assertEqual(ext.count('https://example.com'), 0)
-        self.assertEqual(ext.count(uri('https://example.com')), 0)
-
-        ext.extend(['https://example.com', 'https://example.net'])
-        self.assertEqual(ext.value, [uri('https://example.com'), uri('https://example.net')])
-        ext.extend(['https://example.org'])
-        self.assertEqual(ext.value, [uri('https://example.com'), uri('https://example.net'),
-                                     uri('https://example.org')])
-
-        ext.clear()
-        ext.extend([uri('https://example.com'), uri('https://example.net')])
-        self.assertEqual(ext.value, [uri('https://example.com'), uri('https://example.net')])
-        ext.extend([uri('https://example.org')])
-        self.assertEqual(ext.value, [uri('https://example.com'), uri('https://example.net'),
-                                     uri('https://example.org')])
-
-        self.assertEqual(ext.pop(), 'URI:https://example.org')
-        self.assertEqual(ext.value, [uri('https://example.com'), uri('https://example.net')])
-
-        self.assertIsNone(ext.remove('https://example.com'))
-        self.assertEqual(ext.value, [uri('https://example.net')])
-
-        self.assertIsNone(ext.remove(uri('https://example.net')))
-        self.assertEqual(ext.value, [])
-
-        ext.insert(0, 'https://example.com')
-        self.assertEqual(ext.value, [uri('https://example.com')])
-
-    def test_slices(self):
-        val = ['DNS:foo', 'DNS:bar', 'DNS:bla']
-        ext = SubjectAlternativeName(val)
-        self.assertEqual(ext[0], val[0])
-        self.assertEqual(ext[1], val[1])
-        self.assertEqual(ext[0:], val[0:])
-        self.assertEqual(ext[1:], val[1:])
-        self.assertEqual(ext[:1], val[:1])
-        self.assertEqual(ext[1:2], val[1:2])
-
-        ext[0] = 'test'
-        val = [dns('test'), dns('bar'), dns('bla')]
-        self.assertEqual(ext.value, val)
-        ext[1:2] = ['x', 'y']
-        val[1:2] = [dns('x'), dns('y')]
-        self.assertEqual(ext.value, val)
-        ext[1:] = ['a', 'b']
-        val[1:] = [dns('a'), dns('b')]
-        self.assertEqual(ext.value, val)
-
-        del ext[0]
-        del val[0]
-        self.assertEqual(ext.value, val)
-
-    def test_serialize(self):
-        val = ['foo', 'bar', 'bla']
-        ext = SubjectAlternativeName({'value': val, 'critical': False})
-        self.assertEqual(ext, SubjectAlternativeName(ext.serialize()))
-        ext = SubjectAlternativeName({'value': val, 'critical': True})
-        self.assertEqual(ext, SubjectAlternativeName(ext.serialize()))
-
-    def test_as_str(self):  # test various string conversion methods
-        san = SubjectAlternativeName([])
-        self.assertEqual(str(san), "")
-        self.assertEqual(repr(san), "<SubjectAlternativeName: [], critical=False>")
-        self.assertEqual(san.as_text(), "")
-        san.critical = True
-        self.assertEqual(str(san), "/critical")
-        self.assertEqual(repr(san), "<SubjectAlternativeName: [], critical=True>")
-        self.assertEqual(san.as_text(), "")
-
-        san = SubjectAlternativeName(['example.com'])
-        self.assertEqual(str(san), "DNS:example.com")
-        self.assertEqual(repr(san), "<SubjectAlternativeName: ['DNS:example.com'], critical=False>")
-        self.assertEqual(san.as_text(), "* DNS:example.com")
-        san.critical = True
-        self.assertEqual(str(san), "DNS:example.com/critical")
-        self.assertEqual(repr(san), "<SubjectAlternativeName: ['DNS:example.com'], critical=True>")
-        self.assertEqual(san.as_text(), "* DNS:example.com")
-
-        san = SubjectAlternativeName([dns('example.com')])
-        self.assertEqual(str(san), "DNS:example.com")
-        self.assertEqual(repr(san), "<SubjectAlternativeName: ['DNS:example.com'], critical=False>")
-        self.assertEqual(san.as_text(), "* DNS:example.com")
-        san.critical = True
-        self.assertEqual(str(san), "DNS:example.com/critical")
-        self.assertEqual(repr(san), "<SubjectAlternativeName: ['DNS:example.com'], critical=True>")
-        self.assertEqual(san.as_text(), "* DNS:example.com")
-
-        san = SubjectAlternativeName([dns('example.com'), dns('example.org')])
-        self.assertEqual(str(san), "DNS:example.com,DNS:example.org")
-        self.assertEqual(repr(san),
-                         "<SubjectAlternativeName: ['DNS:example.com', 'DNS:example.org'], critical=False>")
-        self.assertEqual(san.as_text(), "* DNS:example.com\n* DNS:example.org")
-        san.critical = True
-        self.assertEqual(str(san), "DNS:example.com,DNS:example.org/critical")
-        self.assertEqual(repr(san),
-                         "<SubjectAlternativeName: ['DNS:example.com', 'DNS:example.org'], critical=True>")
-        self.assertEqual(san.as_text(), "* DNS:example.com\n* DNS:example.org")
-
-    def test_hash(self):
-        ext1 = SubjectAlternativeName('example.com')
-        ext2 = SubjectAlternativeName('critical,example.com')
-        ext3 = SubjectAlternativeName('critical,example.com,example.net')
-
-        self.assertEqual(hash(ext1), hash(ext1))
-        self.assertEqual(hash(ext2), hash(ext2))
-        self.assertEqual(hash(ext3), hash(ext3))
-
-        self.assertNotEqual(hash(ext1), hash(ext2))
-        self.assertNotEqual(hash(ext1), hash(ext3))
-        self.assertNotEqual(hash(ext2), hash(ext3))
-
-    def test_error(self):
-        with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type NoneType$'):
-            SubjectAlternativeName(None)
-        with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type bool$'):
-            SubjectAlternativeName(False)
+class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
+    ext_class = SubjectAlternativeName
+    ext_class_name = 'SubjectAlternativeName'
+    x1 = x509.extensions.Extension(
+        oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME, critical=False,
+        value=x509.SubjectAlternativeName([])
+    )
+    x2 = x509.extensions.Extension(
+        oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME, critical=False,
+        value=x509.SubjectAlternativeName([uri(IssuerAlternativeNameTestCase.uri1)])
+    )
+    x3 = x509.extensions.Extension(
+        oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME, critical=False,
+        value=x509.SubjectAlternativeName([uri(IssuerAlternativeNameTestCase.uri1),
+                                           dns(IssuerAlternativeNameTestCase.dns1)])
+    )
+    x4 = x509.extensions.Extension(
+        oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME, critical=True,
+        value=x509.SubjectAlternativeName([])
+    )
+    x5 = x509.extensions.Extension(
+        oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME, critical=True,
+        value=x509.SubjectAlternativeName([uri(IssuerAlternativeNameTestCase.uri2),
+                                           dns(IssuerAlternativeNameTestCase.dns2)])
+    )
+    xs = [x1, x2, x3, x4, x5]
 
 
 class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):

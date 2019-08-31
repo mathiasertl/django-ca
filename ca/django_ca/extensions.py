@@ -1604,6 +1604,7 @@ class SubjectAlternativeName(AlternativeNameExtension):
 
        `RFC 5280, section 4.2.1.6 <https://tools.ietf.org/html/rfc5280#section-4.2.1.6>`_
     """
+    key = 'subject_alternative_name'
     oid = ExtensionOID.SUBJECT_ALTERNATIVE_NAME
 
     @property
