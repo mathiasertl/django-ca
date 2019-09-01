@@ -3142,7 +3142,11 @@ class TLSFeatureTestCase(TestCase):
         oid=ExtensionOID.TLS_FEATURE, critical=False,
         value=x509.TLSFeature(features=[TLSFeatureType.status_request_v2, TLSFeatureType.status_request])
     )
-    xs = [x1, x2, x3, x4]
+    x5 = x509.extensions.Extension(
+        oid=ExtensionOID.TLS_FEATURE, critical=True,
+        value=x509.TLSFeature(features=[TLSFeatureType.status_request_v2, TLSFeatureType.status_request])
+    )
+    xs = [x1, x2, x3, x4, x5]
 
     def setUp(self):
         super(TLSFeatureTestCase, self).setUp()
@@ -3150,22 +3154,8 @@ class TLSFeatureTestCase(TestCase):
         self.ext2 = TLSFeature('OCSPMustStaple')
         self.ext3 = TLSFeature('OCSPMustStaple,MultipleCertStatusRequest')
         self.ext4 = TLSFeature('MultipleCertStatusRequest,OCSPMustStaple')  # reversed order
-        self.exts = [self.ext1, self.ext2, self.ext3, self.ext4]
-
-    def assertBasic(self, ext, critical=True):
-        self.assertEqual(ext.critical, critical)
-        self.assertEqual(ext.value, ['OCSPMustStaple'])
-
-        typ = ext.extension_type
-        self.assertIsInstance(typ, x509.TLSFeature)
-        self.assertEqual(typ.oid, ExtensionOID.TLS_FEATURE)
-
-        crypto = ext.as_extension()
-        self.assertEqual(crypto.critical, critical)
-        self.assertEqual(crypto.oid, ExtensionOID.TLS_FEATURE)
-
-        self.assertIn(TLSFeatureType.status_request, crypto.value)
-        self.assertNotIn(TLSFeatureType.status_request_v2, crypto.value)
+        self.ext5 = TLSFeature('critical,MultipleCertStatusRequest,OCSPMustStaple')  # reversed order
+        self.exts = [self.ext1, self.ext2, self.ext3, self.ext4, self.ext5]
 
     def test_completeness(self):
         # make sure whe haven't forgotton any keys anywhere
@@ -3200,7 +3190,7 @@ class TLSFeatureTestCase(TestCase):
 
     def test_eq_order(self):
         # ext3 and ext4 are the same, only with different order
-        self.assertEqual(self.ext3, self.ext4),
+        self.assertEqual(self.ext3, self.ext4)
 
     def test_from_list(self):
         self.assertEqual(TLSFeature(['OCSPMustStaple']), self.ext2)
@@ -3237,6 +3227,7 @@ class TLSFeatureTestCase(TestCase):
         self.assertEqual(len(self.ext2), 1)
         self.assertEqual(len(self.ext3), 2)
         self.assertEqual(len(self.ext4), 2)
+        self.assertEqual(len(self.ext5), 2)
 
     def test_ne(self):
         self.assertNotEqual(self.ext1, self.ext2)

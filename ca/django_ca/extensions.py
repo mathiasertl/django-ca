@@ -263,7 +263,40 @@ class NullExtension(Extension):
         return {'critical': self.critical}
 
 
-class ListExtension(Extension):
+class IterableExtension(Extension):
+    def __contains__(self, value):
+        return self.parse_value(value) in self.value
+
+    def __eq__(self, other):
+        return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
+
+    def __hash__(self):
+        return hash((self.__class__, tuple(self.serialize_iterable()), self.critical, ))
+
+    def __len__(self):
+        return len(self.value)
+
+    def parse_value(self, v):
+        return v
+
+    def serialize(self):
+        return {
+            'critical': self.critical,
+            'value': self.serialize_iterable(),
+        }
+
+    def serialize_iterable(self):
+        """Serialize the whole iterable contained in this extension."""
+
+        return [self.serialize_value(v) for v in self.value]
+
+    def serialize_value(self, v):
+        """Serialize a single value from the iterable contained in this extension."""
+
+        return v
+
+
+class ListExtension(IterableExtension):
     """Base class for extensions with multiple ordered values.
 
     Subclasses behave like a list, and you can also pass a list of values to the constructor:
@@ -276,29 +309,17 @@ class ListExtension(Extension):
     for this extension.
     """
 
-    def __contains__(self, value):
-        return self.parse_value(value) in self.value
-
     def __delitem__(self, key):
         del self.value[key]
-
-    def __eq__(self, other):
-        return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
 
     def __getitem__(self, key):
         if isinstance(key, six.integer_types):
             return self.serialize_value(self.value[key])
-        else:
+        else:  # a slice (e.g. "e[1:]")
             return [self.serialize_value(v) for v in self.value[key]]
 
-    def __hash__(self):
-        return hash((self.__class__, tuple(self.value), self.critical, ))
-
-    def __len__(self):
-        return len(self.value)
-
     def __repr__(self):
-        val = [self.serialize_value(v) for v in self.value]
+        val = self.serialize_iterable()
 
         if six.PY2:  # pragma: no branch, pragma: only py2 - otherwise we have the u'' prefix in output
             val = [str(v) for v in val]
@@ -312,7 +333,7 @@ class ListExtension(Extension):
             self.value[key] = [self.parse_value(v) for v in value]
 
     def __str__(self):
-        val = "%s" % ','.join([self.serialize_value(v) for v in self.value])
+        val = "%s" % ','.join(self.serialize_iterable())
         if self.critical:
             return '%s/critical' % val
         return val
@@ -367,26 +388,19 @@ class ListExtension(Extension):
     def insert(self, index, value):
         self.value.insert(index, self.parse_value(value))
 
-    def parse_value(self, v):
-        return v
-
     def pop(self, index=-1):
         return self.serialize_value(self.value.pop(index))
 
     def remove(self, v):
         return self.value.remove(self.parse_value(v))
 
-    def serialize(self):
-        return {
-            'critical': self.critical,
-            'value': [self.serialize_value(v) for v in self.value],
-        }
-
-    def serialize_value(self, v):
-        return v
-
     def as_text(self):
         return '\n'.join(['* %s' % self.serialize_value(v) for v in self.value])
+
+
+class OrderedSetExtension(IterableExtension):
+    def serialize_iterable(self):
+        return list(sorted(self.serialize_value(v) for v in self.value))
 
 
 class KnownValuesExtension(ListExtension):
@@ -1506,6 +1520,10 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):  # pragma: only 
     def __delitem__(self, key):
         raise NotImplementedError
 
+    def __hash__(self):
+        # serialize_iterable returns a dict, which is unhashable
+        return hash((self.__class__, tuple(self.value), self.critical, ))
+
     def __repr__(self):
         # only py2: we only override this method because of u'' prefixes in output
         val = [self.serialize_value(v) for v in self.value]
@@ -1576,12 +1594,6 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):  # pragma: only 
 
     def remove(self, v):
         raise NotImplementedError
-
-    def serialize(self):
-        return {
-            u'critical': self.critical,
-            'value': [self.serialize_value(v) for v in self.value],
-        }
 
     def serialize_value(self, v):
         return {
