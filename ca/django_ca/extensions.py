@@ -276,6 +276,12 @@ class IterableExtension(Extension):
     def __len__(self):
         return len(self.value)
 
+    def __str__(self):
+        val = "%s" % ','.join(self.serialize_iterable())
+        if self.critical:
+            return '%s/critical' % val
+        return val
+
     def parse_value(self, v):
         return v
 
@@ -331,12 +337,6 @@ class ListExtension(IterableExtension):
             self.value[key] = self.parse_value(value)
         else:
             self.value[key] = [self.parse_value(v) for v in value]
-
-    def __str__(self):
-        val = "%s" % ','.join(self.serialize_iterable())
-        if self.critical:
-            return '%s/critical' % val
-        return val
 
     def append(self, value):
         self.value.append(self.parse_value(value))
@@ -399,8 +399,49 @@ class ListExtension(IterableExtension):
 
 
 class OrderedSetExtension(IterableExtension):
+    def __ior__(self, other):  # |= operator == update()
+        self.value |= set(self.parse_value(v) for v in other)
+        return self
+
+    def __ixor__(self, other):  # ^= operator == symmetric_difference_update()
+        self.value ^= set(self.parse_value(v) for v in other)
+
+    def __or__(self, other):  # | operator == union()
+        value = self.value.union(other)
+        return OrderedSetExtension({'critical': self.critical, 'value': value})
+
+    def __xor__(self, other):  # ^ operator == symmetric_difference()
+        value = self.value ^ set(self.parse_iterable(other))
+        return OrderedSetExtension({'critical': self.critical, 'value': value})
+
+    def from_dict(self, value):
+        self.value = set(value['value'])
+
+    def isdisjoint(self, o):
+        return self.value.isdisjoint(o)
+
+    def issubset(self, o):
+        return self.value.issubset(o)
+
+    def parse_iterable(self, iterable):
+        return [self.parse_value(i) for i in iterable]
+
     def serialize_iterable(self):
         return list(sorted(self.serialize_value(v) for v in self.value))
+
+    def symmetric_difference(self, other):  # equivalent to ^ operator
+        return self ^ other
+
+    def symmetric_difference_update(self, other):  # equivalent to ^= operator
+        self ^= other
+
+    def union(self, *others):
+        value = self.value.union(*[self.parse_iterable(o) for o in others])
+        return OrderedSetExtension({'critical': self.critical, 'value': value})
+
+    def update(self, *others):
+        for o in others:
+            self.value.update([self.parse_value(v) for v in o])
 
 
 class KnownValuesExtension(ListExtension):

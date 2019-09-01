@@ -17,6 +17,8 @@ from __future__ import unicode_literals
 
 import doctest
 import unittest
+import functools
+import operator
 
 import six
 
@@ -46,6 +48,7 @@ from ..extensions import KnownValuesExtension
 from ..extensions import ListExtension
 from ..extensions import NameConstraints
 from ..extensions import OCSPNoCheck
+from ..extensions import OrderedSetExtension
 from ..extensions import PolicyInformation
 from ..extensions import PrecertificateSignedCertificateTimestamps
 from ..extensions import PrecertPoison
@@ -124,7 +127,23 @@ class ExtensionTestMixin:
         raise NotImplementedError
 
 
-class ListExtensionTestMixin(ExtensionTestMixin):
+class AbstractExtensionTestMixin:
+    def test_config(self):
+        pass
+
+
+class IterableExtensionTestMixin(ExtensionTestMixin):
+    def test_in(self):
+        raise NotImplementedError
+
+    def test_len(self):
+        raise NotImplementedError
+
+    def test_not_in(self):
+        raise NotImplementedError
+
+
+class ListExtensionTestMixin(IterableExtensionTestMixin):
     def test_count(self):
         raise NotImplementedError
 
@@ -143,16 +162,7 @@ class ListExtensionTestMixin(ExtensionTestMixin):
     def test_getitem_slices(self):
         raise NotImplementedError
 
-    def test_in(self):
-        raise NotImplementedError
-
     def test_insert(self):
-        raise NotImplementedError
-
-    def test_len(self):
-        raise NotImplementedError
-
-    def test_not_in(self):
         raise NotImplementedError
 
     def test_pop(self):
@@ -166,6 +176,197 @@ class ListExtensionTestMixin(ExtensionTestMixin):
 
     def test_setitem_slices(self):
         raise NotImplementedError
+
+
+class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
+    def assertIsCopy(self, orig, new, expected_value=None):
+        """Assert that `new` is a different instance then `other` and has possibly updated values."""
+        if expected_value is None:
+            expected_value = orig.value.copy()  # copy just to be sure
+
+        self.assertEqual(new.value, expected_value)
+        self.assertEqual(orig.critical, new.critical)
+        self.assertIsNot(orig, new)  # assert that this is a different instance
+        self.assertIsNot(orig.value, new.value)  # value is also different instance
+
+    def assertSameInstance(self, orig_id, orig_value_id, new, expected_value):
+        """Assert that `new` is still the same instance and has the expected value."""
+
+        self.assertEqual(new.value, expected_value)
+        self.assertEqual(id(new), orig_id)  # assert that this is really the same instance
+        self.assertEqual(id(new.value), orig_value_id)
+
+    def assertEqualFunction(self, f, init, value, update=True, infix=True):
+        s, ext = set(init), self.ext_class({'value': init})
+        if update is True:
+            orig_id, orig_value_id = id(ext), id(ext.value)
+
+            # infix functions from the operator module (e.g. operator.ixor) return the updated value,
+            # while the function equivalent returns None. For example:
+            #   >>> s.symmetric_difference_update({'foo'}) is None
+            #
+            # which is equivalent to:
+            #   >>> s ^= {'foo'}
+            #
+            # but:
+            #   >>> operator.ixor(s, {'foo'}) == {'foo'}  # and not None, like above
+            if infix is True:
+                f(s, value)
+                f(ext, value)
+            else:
+                self.assertIsNone(f(s, value))  # apply to set
+                self.assertIsNone(f(ext, value))
+            self.assertSameInstance(orig_id, orig_value_id, ext, s)
+        else:
+            ext_updated = f(ext, value)
+            s_updated = f(s, value)  # apply to set
+            self.assertIsCopy(ext, ext_updated, s_updated)
+
+    def assertSingleValueOperator(self, f, update=True, infix=True):
+        """Test that an operator taking a single value works the same way with sets and this extension."""
+
+        for test_config in self.test_values.values():
+            # Apply function to an empty extension
+            self.assertEqualFunction(f, set(), test_config['expected'], update=update, infix=infix)
+
+            # Apply function to an extension with every "expected" value
+            for init_test_config in self.test_values.values():
+                self.assertEqualFunction(f, init_test_config['expected'], test_config['expected'],
+                                         update=update, infix=infix)
+
+            # Test that equivalent values work exactly the same way:
+            for test_value in test_config['values']:
+                # Again, apply function to the empty extension/set
+                self.assertEqualFunction(f, set(), test_value, update=update, infix=infix)
+
+                # Again, apply function to an extension with every "expected" value
+                for init_test_config in self.test_values.values():
+                    self.assertEqualFunction(f, init_test_config['expected'], test_value,
+                                             update=update, infix=infix)
+
+    def assertMultipleValuesOperator(self, f, update=True, infix=True):
+        """Test that an operator taking a multiple values works the same way with sets and this extension."""
+        for first_test_config in self.test_values.values():
+            for second_test_config in self.test_values.values():
+                expected = (set(first_test_config['expected']), set(second_test_config['expected']))
+
+                # Apply function to an empty extension
+                self.assertEqualFunction(f, set(), expected, update=update, infix=infix)
+
+                for init_test_config in self.test_values.values():
+                    expected = (
+                        set(init_test_config['expected']),
+                        set(first_test_config['expected']), set(second_test_config['expected']),
+                    )
+                    self.assertEqualFunction(f, init_test_config['expected'], expected,
+                                             update=update, infix=infix)
+
+    def test_add(self):
+        raise NotImplementedError
+
+    def test_clear(self):
+        raise NotImplementedError
+
+    def test_copy(self):
+        raise NotImplementedError
+
+    def test_difference(self):
+        raise NotImplementedError
+
+    def test_difference_operator(self):  # test - operator
+        raise NotImplementedError
+
+    def test_difference_update(self):
+        raise NotImplementedError
+
+    def test_difference_update_operator(self):  # test -= operator
+        raise NotImplementedError
+
+    def test_discard(self):
+        raise NotImplementedError
+
+    def test_greater_then_operator(self):  # test > operator
+        raise NotImplementedError
+
+    def test_intersection(self):
+        raise NotImplementedError
+
+    def test_intersection_operator(self):  # test & operator
+        raise NotImplementedError
+
+    def test_intersection_update(self):
+        raise NotImplementedError
+
+    def test_intersection_update_operator(self):  # test &= operator
+        raise NotImplementedError
+
+    def test_isdisjoint(self):
+        raise NotImplementedError
+
+    def test_issubset(self):
+        raise NotImplementedError
+
+    def test_issubset_operator(self):  # test <= operator
+        raise NotImplementedError
+
+    def test_issuperset_operator(self):  # test >= operator
+        raise NotImplementedError
+
+    def test_pop(self):
+        raise NotImplementedError
+
+    def test_remove(self):
+        raise NotImplementedError
+
+    def test_smaller_then_operator(self):  # test < operator
+        raise NotImplementedError
+
+    def test_str(self):
+        for config in self.test_values.values():
+            for value in config['values']:
+                ext = self.ext_class({'value': value})
+                if ext.default_critical:
+                    self.assertEqual(str(ext), config['expected_str'] + '/critical')
+                else:
+                    self.assertEqual(str(ext), config['expected_str'])
+
+                ext = self.ext_class({'value': value, 'critical': True})
+                self.assertEqual(str(ext), config['expected_str'] + '/critical')
+
+                ext = self.ext_class({'value': value, 'critical': False})
+                self.assertEqual(str(ext), config['expected_str'])
+
+    def test_symmetric_difference(self):  # equivalent to ^ operator
+        self.assertSingleValueOperator(lambda s, o: s.symmetric_difference(o), update=False, infix=False)
+
+    def test_symmetric_difference_operator(self):  # test ^ operator == symmetric_difference
+        self.assertSingleValueOperator(lambda s, o: operator.xor(s, o), update=False)
+
+    def _test_symmetric_difference_update(self, f, infix=True):
+        self.assertSingleValueOperator(f, update=True, infix=infix)
+
+    def test_symmetric_difference_update(self):
+        self.assertSingleValueOperator(lambda s, o: s.symmetric_difference_update(o), infix=False)
+
+    def test_symmetric_difference_update_operator(self):  # test ^= operator
+        self.assertSingleValueOperator(lambda s, o: operator.ixor(s, o))
+
+    def test_union(self):
+        self.assertSingleValueOperator(lambda s, o: s.union(o), infix=False, update=False)
+        self.assertMultipleValuesOperator(lambda s, o: s.union(*o), infix=False, update=False)
+
+    def test_union_operator(self):  # test | operator
+        self.assertSingleValueOperator(lambda s, o: s.union(o), update=False)
+        self.assertMultipleValuesOperator(lambda s, o: s.union(*o), update=False)
+
+    def test_update(self):
+        self.assertSingleValueOperator(lambda s, o: s.update(o), infix=False)
+        self.assertMultipleValuesOperator(lambda s, o: s.update(*o), infix=False)
+
+    def test_update_operator(self):  # test |= operator
+        self.assertSingleValueOperator(lambda s, o: operator.ior(s, o))
+        self.assertMultipleValuesOperator(
+            lambda s, o: operator.ior(s, functools.reduce(operator.ior, [s.copy() for s in o])))
 
 
 class KnownValuesExtensionTestMixin(ListExtensionTestMixin):
@@ -376,6 +577,33 @@ class ListExtensionTestCase(TestCase):
         self.assertEqual(ext, ListExtension(ext.serialize()))
         ext = ListExtension({'value': val, 'critical': True})
         self.assertEqual(ext, ListExtension(ext.serialize()))
+
+
+class OrderedSetExtensionTestCase(AbstractExtensionTestMixin, OrderedSetExtensionTestMixin, TestCase):
+    ext_class = OrderedSetExtension
+    test_values = {
+        'one': {
+            'values': [
+                {'one_value', }
+            ],
+            'expected': frozenset(['one_value']),
+            'expected_str': 'one_value'
+        },
+        'two': {
+            'values': [
+                {'one_value', 'two_value', }
+            ],
+            'expected': frozenset(['one_value', 'two_value', ]),
+            'expected_str': 'one_value,two_value',
+        },
+        'three': {
+            'values': [
+                {'three_value', }
+            ],
+            'expected': frozenset(['three_value']),
+            'expected_str': 'three_value',
+        },
+    }
 
 
 class KnownValuesExtensionTestCase(TestCase):
