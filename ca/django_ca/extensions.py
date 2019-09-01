@@ -276,6 +276,14 @@ class IterableExtension(Extension):
     def __len__(self):
         return len(self.value)
 
+    def __repr__(self):
+        val = self.serialize_iterable()
+
+        if six.PY2:  # pragma: no branch, pragma: only py2 - otherwise we have the u'' prefix in output
+            val = [str(v) for v in val]
+
+        return '<%s: %r, critical=%r>' % (self.__class__.__name__, val, self.critical)
+
     def __str__(self):
         val = "%s" % ','.join(self.serialize_iterable())
         if self.critical:
@@ -323,14 +331,6 @@ class ListExtension(IterableExtension):
             return self.serialize_value(self.value[key])
         else:  # a slice (e.g. "e[1:]")
             return [self.serialize_value(v) for v in self.value[key]]
-
-    def __repr__(self):
-        val = self.serialize_iterable()
-
-        if six.PY2:  # pragma: no branch, pragma: only py2 - otherwise we have the u'' prefix in output
-            val = [str(v) for v in val]
-
-        return '<%s: %r, critical=%r>' % (self.__class__.__name__, val, self.critical)
 
     def __setitem__(self, key, value):
         if isinstance(key, six.integer_types):
@@ -399,12 +399,35 @@ class ListExtension(IterableExtension):
 
 
 class OrderedSetExtension(IterableExtension):
+    def __and__(self, other):  # & operator == intersection()
+        value = self.value & set(self.parse_iterable(other))
+        return OrderedSetExtension({'critical': self.critical, 'value': value})
+
+    def __ge__(self, other):  # >= relation == issuperset()
+        return self.value >= set(self.parse_value(v) for v in other)
+
+    def __gt__(self, other):  # > relation
+        return self.value > set(self.parse_value(v) for v in other)
+
+    def __iand__(self, other):  # &= operator == intersection_update()
+        self.value &= set(self.parse_iterable(other))
+        return self
+
     def __ior__(self, other):  # |= operator == update()
         self.value |= set(self.parse_value(v) for v in other)
         return self
 
+    def __iter__(self):
+        return iter(self.value)
+
     def __ixor__(self, other):  # ^= operator == symmetric_difference_update()
         self.value ^= set(self.parse_value(v) for v in other)
+
+    def __le__(self, other):  # <= relation == issubset()
+        return self.value <= set(self.parse_value(v) for v in other)
+
+    def __lt__(self, other):  # < relation
+        return self.value < set(self.parse_value(v) for v in other)
 
     def __or__(self, other):  # | operator == union()
         value = self.value.union(other)
@@ -417,11 +440,21 @@ class OrderedSetExtension(IterableExtension):
     def from_dict(self, value):
         self.value = set(value['value'])
 
+    def intersection(self, *others):  # equivalent to & operator
+        value = self.value.intersection(*[self.parse_iterable(o) for o in others])
+        return OrderedSetExtension({'critical': self.critical, 'value': value})
+
+    def intersection_update(self, *others):  # equivalent to &= operator
+        self.value.intersection_update(*[self.parse_iterable(o) for o in others])
+
     def isdisjoint(self, o):
-        return self.value.isdisjoint(o)
+        return self.value.isdisjoint(self.parse_iterable(o))
 
     def issubset(self, o):
-        return self.value.issubset(o)
+        return self.value.issubset(self.parse_iterable(o))
+
+    def issuperset(self, o):
+        return self.value.issuperset(self.parse_iterable(o))
 
     def parse_iterable(self, iterable):
         return [self.parse_value(i) for i in iterable]

@@ -261,6 +261,70 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
                     self.assertEqualFunction(f, init_test_config['expected'], expected,
                                              update=update, infix=infix)
 
+    def assertRelation(self, f):
+        self.assertEqual(f(set(), set()), f(self.ext_class({'value': set()}), set()))
+        self.assertEqual(f(set(), set()), f(self.ext_class({'value': set()}),
+                                            self.ext_class({'value': set()})))
+
+        for test_config in self.test_values.values():
+            self.assertEqual(
+                f(test_config['expected'], test_config['expected']),
+                f(self.ext_class({'value': set(test_config['expected'])}), set(test_config['expected']))
+            )
+            self.assertEqual(
+                f(test_config['expected'], test_config['expected']),
+                f(self.ext_class({'value': set(test_config['expected'])}),
+                  self.ext_class({'value': set(test_config['expected'])}))
+            )
+
+            for second_test_config in self.test_values.values():
+                intersection_expected = test_config['expected'] & second_test_config['expected']
+                self.assertEqual(
+                    f(test_config['expected'], intersection_expected),
+                    f(self.ext_class({'value': set(test_config['expected'])}), intersection_expected)
+                )
+                self.assertEqual(
+                    f(test_config['expected'], intersection_expected),
+                    f(self.ext_class({'value': set(test_config['expected'])}),
+                      self.ext_class({'value': intersection_expected}))
+                )
+                self.assertEqual(
+                    f(test_config['expected'], intersection_expected),
+                    f(self.ext_class({'value': test_config['expected']}),
+                      self.ext_class({'value': set(intersection_expected)}))
+                )
+
+                union_expected = test_config['expected'] | second_test_config['expected']
+                self.assertEqual(
+                    f(test_config['expected'], set(union_expected)),
+                    f(self.ext_class({'value': set(test_config['expected'])}), union_expected)
+                )
+                self.assertEqual(
+                    f(test_config['expected'], set(union_expected)),
+                    f(self.ext_class({'value': set(test_config['expected'])}),
+                      self.ext_class({'value': set(union_expected)}))
+                )
+                self.assertEqual(
+                    f(test_config['expected'], set(union_expected)),
+                    f(self.ext_class({'value': test_config['expected']}), set(union_expected))
+                )
+
+                symmetric_diff_expected = test_config['expected'] ^ second_test_config['expected']
+                self.assertEqual(
+                    f(test_config['expected'], set(symmetric_diff_expected)),
+                    f(self.ext_class({'value': set(test_config['expected'])}), set(symmetric_diff_expected))
+                )
+                self.assertEqual(
+                    f(test_config['expected'], set(symmetric_diff_expected)),
+                    f(self.ext_class({'value': set(test_config['expected'])}),
+                      self.ext_class({'value': set(symmetric_diff_expected)}))
+                )
+                self.assertEqual(
+                    f(set(symmetric_diff_expected), test_config['expected']),
+                    f(self.ext_class({'value': set(symmetric_diff_expected)}),
+                      self.ext_class({'value': set(test_config['expected'])}))
+                )
+
     def test_add(self):
         raise NotImplementedError
 
@@ -285,32 +349,66 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
     def test_discard(self):
         raise NotImplementedError
 
-    def test_greater_then_operator(self):  # test > operator
-        raise NotImplementedError
+    def test_eq(self):
+        for values in self.test_values.values():
+            ext = self.ext_class({'value': values['expected']})
+            self.assertEqual(ext, ext)
+            ext_critical = self.ext_class({'value': values['expected'], 'critical': True})
+            self.assertEqual(ext_critical, ext_critical)
+            ext_not_critical = self.ext_class({'value': values['expected'], 'critical': False})
+            self.assertEqual(ext_not_critical, ext_not_critical)
+
+            for value in values['values']:
+                ext_1 = self.ext_class({'value': value})
+                self.assertEqual(ext, ext_1)
+                ext_2 = self.ext_class({'value': value, 'critical': True})
+                self.assertEqual(ext_critical, ext_2)
+                ext_3 = self.ext_class({'value': value, 'critical': False})
+                self.assertEqual(ext_not_critical, ext_3)
+
+    def test_greater_then_operator(self):  # test < relation
+        self.assertRelation(lambda s, o: operator.gt(s, o))
 
     def test_intersection(self):
-        raise NotImplementedError
+        self.assertSingleValueOperator(lambda s, o: s.intersection(o), infix=False, update=False)
+        self.assertMultipleValuesOperator(lambda s, o: s.intersection(*o), infix=False, update=False)
 
     def test_intersection_operator(self):  # test & operator
-        raise NotImplementedError
+        self.assertSingleValueOperator(lambda s, o: operator.and_(s, o), update=False)
+        self.assertMultipleValuesOperator(
+            lambda s, o: operator.and_(s, functools.reduce(operator.and_, [t.copy() for t in o])),
+            update=False)
 
     def test_intersection_update(self):
-        raise NotImplementedError
+        self.assertSingleValueOperator(lambda s, o: s.intersection_update(o), infix=False)
+        self.assertMultipleValuesOperator(lambda s, o: s.intersection_update(*o), infix=False)
 
     def test_intersection_update_operator(self):  # test &= operator
-        raise NotImplementedError
+        self.assertSingleValueOperator(lambda s, o: operator.iand(s, o))
+        self.assertMultipleValuesOperator(
+            lambda s, o: operator.iand(s, functools.reduce(operator.and_, [t.copy() for t in o])))
 
     def test_isdisjoint(self):
-        raise NotImplementedError
+        self.assertRelation(lambda s, o: s.isdisjoint(o))
 
     def test_issubset(self):
-        raise NotImplementedError
+        self.assertRelation(lambda s, o: s.issubset(o))
 
     def test_issubset_operator(self):  # test <= operator
-        raise NotImplementedError
+        self.assertRelation(lambda s, o: operator.le(s, o))
+
+    def test_issuperset(self):
+        self.assertRelation(lambda s, o: s.issuperset(o))
 
     def test_issuperset_operator(self):  # test >= operator
-        raise NotImplementedError
+        self.assertRelation(lambda s, o: operator.ge(s, o))
+
+    def test_len(self):  # len()
+        for values in self.test_values.values():
+            self.assertEqual(len(self.ext_class({'value': values['expected']})), len(values['expected']))
+
+    def test_lesser_then_operator(self):  # test < operator
+        self.assertRelation(lambda s, o: operator.lt(s, o))
 
     def test_pop(self):
         raise NotImplementedError
@@ -318,8 +416,20 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
     def test_remove(self):
         raise NotImplementedError
 
+    def test_repr(self):
+        for config in self.test_values.values():
+            for value in config['values']:
+                ext = self.ext_class({'value': value})
+                self.assertEqual(repr(ext), config['expected_repr'] % ext.default_critical)
+
+                ext = self.ext_class({'value': value, 'critical': True})
+                self.assertEqual(repr(ext), config['expected_repr'] % True)
+
+                ext = self.ext_class({'value': value, 'critical': False})
+                self.assertEqual(repr(ext), config['expected_repr'] % False)
+
     def test_smaller_then_operator(self):  # test < operator
-        raise NotImplementedError
+        self.assertRelation(lambda s, o: operator.lt(s, o))
 
     def test_str(self):
         for config in self.test_values.values():
@@ -356,8 +466,9 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
         self.assertMultipleValuesOperator(lambda s, o: s.union(*o), infix=False, update=False)
 
     def test_union_operator(self):  # test | operator
-        self.assertSingleValueOperator(lambda s, o: s.union(o), update=False)
-        self.assertMultipleValuesOperator(lambda s, o: s.union(*o), update=False)
+        self.assertSingleValueOperator(lambda s, o: operator.or_(s, o), update=False)
+        self.assertMultipleValuesOperator(
+            lambda s, o: operator.or_(s, functools.reduce(operator.or_, [t.copy() for t in o])), update=False)
 
     def test_update(self):
         self.assertSingleValueOperator(lambda s, o: s.update(o), infix=False)
@@ -366,7 +477,7 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
     def test_update_operator(self):  # test |= operator
         self.assertSingleValueOperator(lambda s, o: operator.ior(s, o))
         self.assertMultipleValuesOperator(
-            lambda s, o: operator.ior(s, functools.reduce(operator.ior, [s.copy() for s in o])))
+            lambda s, o: operator.ior(s, functools.reduce(operator.ior, [t.copy() for t in o])))
 
 
 class KnownValuesExtensionTestMixin(ListExtensionTestMixin):
@@ -587,6 +698,7 @@ class OrderedSetExtensionTestCase(AbstractExtensionTestMixin, OrderedSetExtensio
                 {'one_value', }
             ],
             'expected': frozenset(['one_value']),
+            'expected_repr': "<OrderedSetExtension: ['one_value'], critical=%s>",
             'expected_str': 'one_value'
         },
         'two': {
@@ -594,6 +706,7 @@ class OrderedSetExtensionTestCase(AbstractExtensionTestMixin, OrderedSetExtensio
                 {'one_value', 'two_value', }
             ],
             'expected': frozenset(['one_value', 'two_value', ]),
+            'expected_repr': "<OrderedSetExtension: ['one_value', 'two_value'], critical=%s>",
             'expected_str': 'one_value,two_value',
         },
         'three': {
@@ -601,6 +714,7 @@ class OrderedSetExtensionTestCase(AbstractExtensionTestMixin, OrderedSetExtensio
                 {'three_value', }
             ],
             'expected': frozenset(['three_value']),
+            'expected_repr': "<OrderedSetExtension: ['three_value'], critical=%s>",
             'expected_str': 'three_value',
         },
     }
