@@ -418,6 +418,8 @@ class ListExtension(IterableExtension):
 class OrderedSetExtension(IterableExtension):
     """Base class for extensions that contain a set of values.
 
+    For reproducibility, any serialization will always sort the values contained in this extension.
+
     Extensions derived from this class can be used like a normal set, for example:
 
         >>> e = OrderedSetExtension({'value': {'foo', }})
