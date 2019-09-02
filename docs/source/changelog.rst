@@ -12,6 +12,7 @@ ChangeLog
 
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.3 and 2.4.
 * **BACKWARDS INCOMPATIBLE:** Drop support for idna 2.7.
+* **DEPRECATION NOTICE:** This is the last release to support cryptography 2.5.
 * ``regenerate_ocsp_keys`` now has a quiet mode and only generates keys where the CA private key is available.
 * Serials are now zero-padded when output so that the last element always consists of two characters.
 * More consistently output serials with colons, use a monospace font in the admin interface.
