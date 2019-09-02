@@ -288,7 +288,7 @@ class IterableExtension(Extension):
         return hash((self.__class__, tuple(self.serialize_iterable()), self.critical, ))
 
     def __iter__(self):
-        return iter(self.value)
+        return iter(self.serialize_iterable())
 
     def __len__(self):
         return len(self.value)
