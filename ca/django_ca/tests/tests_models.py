@@ -434,17 +434,6 @@ class CertificateTests(DjangoCAWithCertTestCase):
         }):
             cert.full_clean()
 
-    def test_ocsp_status(self):
-        cert = self.certs['child-cert']
-        self.assertEqual(cert.ocsp_status, 'good')
-
-        for reason in ReasonFlags:
-            cert.revoke(reason)
-            if reason == ReasonFlags.unspecified:
-                self.assertEqual(cert.ocsp_status, 'revoked')
-            else:
-                self.assertEqual(cert.ocsp_status, reason.name)
-
     def test_basic_constraints(self):
         for name, ca in self.cas.items():
             self.assertEqual(ca.basic_constraints, certs[name]['basic_constraints'])
