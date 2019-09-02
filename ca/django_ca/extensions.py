@@ -264,6 +264,20 @@ class NullExtension(Extension):
 
 
 class IterableExtension(Extension):
+    """Base class for iterable extensions.
+
+    Extensions of this class can be used just like any other iterable, e.g.:
+
+        >>> e = IterableExtension({'value': ['foo', 'bar']})
+        >>> 'foo' in e
+        True
+        >>> len(e)
+        2
+        >>> for val in e:
+        ...     print(val)
+        foo
+        bar
+    """
     def __contains__(self, value):
         return self.parse_value(value) in self.value
 
@@ -272,6 +286,9 @@ class IterableExtension(Extension):
 
     def __hash__(self):
         return hash((self.__class__, tuple(self.serialize_iterable()), self.critical, ))
+
+    def __iter__(self):
+        return iter(self.value)
 
     def __len__(self):
         return len(self.value)
@@ -399,6 +416,18 @@ class ListExtension(IterableExtension):
 
 
 class OrderedSetExtension(IterableExtension):
+    """Base class for extensions that contain a set of values.
+
+    Extensions derived from this class can be used like a normal set, for example:
+
+        >>> e = OrderedSetExtension({'value': {'foo', }})
+        >>> e.add('bar')
+        >>> e
+        <OrderedSetExtension: ['bar', 'foo'], critical=False>
+        >>> e -= {'foo', }
+        >>> e
+        <OrderedSetExtension: ['bar'], critical=False>
+    """
     def __and__(self, other):  # & operator == intersection()
         value = self.value & set(self.parse_iterable(other))
         return OrderedSetExtension({'critical': self.critical, 'value': value})
@@ -416,9 +445,6 @@ class OrderedSetExtension(IterableExtension):
     def __ior__(self, other):  # |= operator == update()
         self.value |= set(self.parse_value(v) for v in other)
         return self
-
-    def __iter__(self):
-        return iter(self.value)
 
     def __isub__(self, other):
         self.value -= set(self.parse_value(v) for v in other)
