@@ -420,6 +420,10 @@ class OrderedSetExtension(IterableExtension):
     def __iter__(self):
         return iter(self.value)
 
+    def __isub__(self, other):
+        self.value -= set(self.parse_value(v) for v in other)
+        return self
+
     def __ixor__(self, other):  # ^= operator == symmetric_difference_update()
         self.value ^= set(self.parse_value(v) for v in other)
 
@@ -433,9 +437,33 @@ class OrderedSetExtension(IterableExtension):
         value = self.value.union(other)
         return OrderedSetExtension({'critical': self.critical, 'value': value})
 
+    def __sub__(self, other):
+        value = self.value - set(self.parse_value(v) for v in other)
+        return OrderedSetExtension({'critical': self.critical, 'value': value})
+
     def __xor__(self, other):  # ^ operator == symmetric_difference()
         value = self.value ^ set(self.parse_iterable(other))
         return OrderedSetExtension({'critical': self.critical, 'value': value})
+
+    def add(self, elem):
+        self.value.add(self.parse_value(elem))
+
+    def clear(self):
+        self.value.clear()
+
+    def copy(self):
+        value = self.value.copy()
+        return OrderedSetExtension({'critical': self.critical, 'value': value})
+
+    def difference(self, *others):  # equivalent to & operator
+        value = self.value.difference(*[self.parse_iterable(o) for o in others])
+        return OrderedSetExtension({'critical': self.critical, 'value': value})
+
+    def difference_update(self, *others):  # equivalent to &= operator
+        self.value.difference_update(*[self.parse_iterable(o) for o in others])
+
+    def discard(self, elem):
+        self.value.discard(self.parse_value(elem))
 
     def from_dict(self, value):
         self.value = set(value['value'])
@@ -458,6 +486,12 @@ class OrderedSetExtension(IterableExtension):
 
     def parse_iterable(self, iterable):
         return [self.parse_value(i) for i in iterable]
+
+    def pop(self):
+        return self.value.pop()
+
+    def remove(self, elem):
+        return self.value.remove(self.parse_value(elem))
 
     def serialize_iterable(self):
         return list(sorted(self.serialize_value(v) for v in self.value))

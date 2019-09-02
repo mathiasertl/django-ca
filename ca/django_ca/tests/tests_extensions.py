@@ -128,7 +128,25 @@ class ExtensionTestMixin:
 
 
 class AbstractExtensionTestMixin:
+    def test_as_text(self):
+        pass
+
+    def test_as_extension(self):
+        pass
+
     def test_config(self):
+        pass
+
+    def test_extension_type(self):
+        pass
+
+    def test_for_builder(self):
+        pass
+
+    def test_from_extension(self):
+        pass
+
+    def test_serialize(self):
         pass
 
 
@@ -185,7 +203,6 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
             expected_value = orig.value.copy()  # copy just to be sure
 
         self.assertEqual(new.value, expected_value)
-        self.assertEqual(orig.critical, new.critical)
         self.assertIsNot(orig, new)  # assert that this is a different instance
         self.assertIsNot(orig.value, new.value)  # value is also different instance
 
@@ -195,6 +212,10 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
         self.assertEqual(new.value, expected_value)
         self.assertEqual(id(new), orig_id)  # assert that this is really the same instance
         self.assertEqual(id(new.value), orig_value_id)
+
+    def assertExtensionEqual(self, first, second):
+        self.assertEqual(first.critical, second.critical)
+        self.assertEqual(first.value, second.value)
 
     def assertEqualFunction(self, f, init, value, update=True, infix=True):
         s, ext = set(init), self.ext_class({'value': init})
@@ -326,28 +347,70 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
                 )
 
     def test_add(self):
-        raise NotImplementedError
+        for config in self.test_values.values():
+            for values in config['values']:
+                ext = self.ext_class({'value': set()})
+                for i, value in enumerate(values, start=1):
+                    ext.add(value)
+                    self.assertIn(value, ext)
+                    self.assertEqual(len(ext), i)
+
+                self.assertEqual(ext, self.ext_class({'value': config['expected']}))
 
     def test_clear(self):
-        raise NotImplementedError
+        for values in self.test_values.values():
+            ext = self.ext_class({'value': values['expected']})
+            ext.clear()
+            self.assertEqual(ext.value, set())
+            self.assertEqual(len(ext.value), 0)
 
     def test_copy(self):
-        raise NotImplementedError
+        for config in self.test_values.values():
+            ext = self.ext_class({'value': config['expected']})
+            ext_copy = ext.copy()
+            self.assertIsCopy(ext, ext_copy, config['expected'])
+
+    def test_constructor_equivalence(self):
+        for config in self.test_values.values():
+            ext = self.ext_class({'value': config['expected']})
+            for values in config['values']:
+                ext_val = self.ext_class({'value': values})
+                self.assertExtensionEqual(ext, ext_val)
 
     def test_difference(self):
-        raise NotImplementedError
+        self.assertSingleValueOperator(lambda s, o: s.difference(o), infix=False, update=False)
+        self.assertMultipleValuesOperator(lambda s, o: s.difference(*o), infix=False, update=False)
 
     def test_difference_operator(self):  # test - operator
-        raise NotImplementedError
+        self.assertSingleValueOperator(lambda s, o: operator.sub(s, o), update=False)
+        self.assertMultipleValuesOperator(
+            lambda s, o: operator.sub(s, functools.reduce(operator.sub, [t.copy() for t in o])),
+            update=False)
 
     def test_difference_update(self):
-        raise NotImplementedError
+        self.assertSingleValueOperator(lambda s, o: s.difference_update(o), infix=False)
+        self.assertMultipleValuesOperator(lambda s, o: s.difference_update(*o), infix=False)
 
     def test_difference_update_operator(self):  # test -= operator
-        raise NotImplementedError
+        self.assertSingleValueOperator(lambda s, o: operator.isub(s, o))
+        self.assertMultipleValuesOperator(
+            lambda s, o: operator.isub(s, functools.reduce(operator.sub, [t.copy() for t in o])))
 
     def test_discard(self):
-        raise NotImplementedError
+        for config in self.test_values.values():
+            for values in config['values']:
+                ext = self.ext_class({'value': config['expected']})
+                ext_empty = self.ext_class({'value': set()})
+
+                for i, value in enumerate(values, start=1):
+                    self.assertIn(value, ext)
+                    ext.discard(value)
+                    self.assertNotIn(value, ext)
+                    self.assertEqual(len(ext) + i, len(config['expected']))
+
+                    self.assertEqual(len(ext_empty), 0)
+                    ext_empty.discard(value)
+                    self.assertEqual(len(ext_empty), 0)
 
     def test_eq(self):
         for values in self.test_values.values():
@@ -368,6 +431,44 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
 
     def test_greater_then_operator(self):  # test < relation
         self.assertRelation(lambda s, o: operator.gt(s, o))
+
+    def test_hash(self):
+        for config in self.test_values.values():
+            ext = self.ext_class({'value': config['expected']})
+            ext_critical = self.ext_class({'value': config['expected'], 'critical': True})
+            ext_not_critical = self.ext_class({'value': config['expected'], 'critical': False})
+
+            if self.ext_class.default_critical:
+                self.assertEqual(hash(ext), hash(ext_critical))
+                self.assertNotEqual(hash(ext), hash(ext_not_critical))
+            else:
+                self.assertEqual(hash(ext), hash(ext_not_critical))
+                self.assertNotEqual(hash(ext), hash(ext_critical))
+            self.assertNotEqual(hash(ext_critical), hash(ext_not_critical))
+
+            for other_config in self.test_values.values():
+                other_ext = self.ext_class({'value': other_config['expected']})
+                other_ext_critical = self.ext_class({'value': other_config['expected'], 'critical': True})
+                other_ext_not_critical = self.ext_class({
+                    'value': other_config['expected'],
+                    'critical': False
+                })
+
+                if config['expected'] == other_config['expected']:
+                    self.assertEqual(hash(ext), hash(other_ext))
+                    self.assertEqual(hash(ext_critical), hash(other_ext_critical))
+                    self.assertEqual(hash(ext_not_critical), hash(other_ext_not_critical))
+                else:
+                    self.assertNotEqual(hash(ext), hash(other_ext))
+                    self.assertNotEqual(hash(ext_critical), hash(other_ext_critical))
+                    self.assertNotEqual(hash(ext_not_critical), hash(other_ext_not_critical))
+
+    def test_in(self):
+        for values in self.test_values.values():
+            ext = self.ext_class({'value': values['expected']})
+            for values in values['values']:
+                for value in values:
+                    self.assertIn(value, ext)
 
     def test_intersection(self):
         self.assertSingleValueOperator(lambda s, o: s.intersection(o), infix=False, update=False)
@@ -410,11 +511,65 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
     def test_lesser_then_operator(self):  # test < operator
         self.assertRelation(lambda s, o: operator.lt(s, o))
 
+    def test_ne(self):
+        for config in self.test_values.values():
+            for other_config in self.test_values.values():
+                self.assertNotEqual(
+                    self.ext_class({'value': config['expected'], 'critical': True}),
+                    self.ext_class({'value': other_config['expected'], 'critical': False})
+                )
+                self.assertNotEqual(
+                    self.ext_class({'value': config['expected'], 'critical': False}),
+                    self.ext_class({'value': other_config['expected'], 'critical': True})
+                )
+
+                if config['expected'] != other_config['expected']:
+                    self.assertNotEqual(
+                        self.ext_class({'value': config['expected']}),
+                        self.ext_class({'value': other_config['expected']})
+                    )
+
+    def test_not_in(self):
+        for config in self.test_values.values():
+            for values in config['values']:
+                ext = self.ext_class({'value': set()})
+
+                for value in values:
+                    self.assertNotIn(value, ext)
+                    self.assertEqual(len(ext), 0)
+
     def test_pop(self):
-        raise NotImplementedError
+        for config in self.test_values.values():
+            for values in config['values']:
+                ext = self.ext_class({'value': set(config['expected'])})
+                self.assertEqual(len(ext), len(config['expected']))
+
+                while len(ext) > 0:
+                    # pop an element
+                    orig_length = len(ext)
+                    value = ext.pop()
+
+                    self.assertNotIn(value, ext)
+                    self.assertEqual(len(ext) + 1, orig_length)  # length shrunk by one
+
+        ext = self.ext_class({'value': set()})
+        with self.assertRaisesRegex(KeyError, "^'pop from an empty set'$"):
+            ext.pop()
 
     def test_remove(self):
-        raise NotImplementedError
+        for config in self.test_values.values():
+            for values in config['values']:
+                ext = self.ext_class({'value': set(config['expected'])})
+
+                for i, value in enumerate(values, start=1):
+                    self.assertIsNone(ext.remove(value))
+                    self.assertNotIn(value, ext)
+                    self.assertEqual(len(ext) + i, len(config['expected']))
+
+                    with self.assertRaisesRegex(KeyError, value):
+                        ext.remove(value)
+
+        ext = self.ext_class({'value': set(config['expected'])})
 
     def test_repr(self):
         for config in self.test_values.values():
