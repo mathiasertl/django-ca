@@ -16,9 +16,9 @@
 from __future__ import unicode_literals
 
 import doctest
-import unittest
 import functools
 import operator
+import unittest
 
 import six
 
