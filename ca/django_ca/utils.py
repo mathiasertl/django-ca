@@ -888,15 +888,10 @@ def read_file(path):
 def get_extension_name(ext):
     """Function to get the name of an extension."""
 
-    # In cryptography 2.2, SCTs return "Unknown OID"
-    # TODO: check if this branch is still needed
-    if ext.oid == ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS:  # pragma: only cryptography<2.3
-        return 'SignedCertificateTimestampList'
-
     # Until at least cryptography 2.6.1, PrecertPoison has no name
     #   https://github.com/pyca/cryptography/issues/4817
     # (pragma is here so we find it once we drop support for cryptography 2.6)
-    elif ext.oid == ExtensionOID.PRECERT_POISON:  # pragma: only cryptography<2.7
+    if ext.oid == ExtensionOID.PRECERT_POISON:  # pragma: only cryptography<2.7
         return 'PrecertPoison'
 
     # uppercase the FIRST letter only ("keyUsage" -> "KeyUsage")

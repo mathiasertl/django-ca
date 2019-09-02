@@ -464,7 +464,7 @@ class DjangoCATestCaseMixin(object):
         extensions = extensions or []
         expires = datetime.utcnow() + timedelta(seconds=expires)
 
-        if idp is not None:  # pragma: no branch, pragma: only cryptography>=2.5
+        if idp is not None:  # pragma: no branch
             extensions.append(idp)
         extensions.append(x509.Extension(
             value=x509.CRLNumber(crl_number=crl_number),
