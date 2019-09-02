@@ -297,22 +297,6 @@ class X509CertMixin(models.Model):
         """Date/Time this certificate expires."""
         return self.x509.not_valid_after
 
-    @property
-    def ocsp_status(self):  # pragma: only cryptography<2.4
-        """Get the OCSP status. This version is only used by the oscrypto based OCSP responder.
-
-        The OCSP status 'good' does not say if the certificate has expired.
-
-        **Deprecated:** This function will be removed after 1.13.0.
-        """
-
-        if self.revoked is False:
-            return 'good'
-        if self.revoked_reason == ReasonFlags.unspecified.name:
-            return 'revoked'
-
-        return self.revoked_reason
-
     def revoke(self, reason=None, compromised=None):
         if reason is None:
             reason = ReasonFlags.unspecified
@@ -464,7 +448,7 @@ class X509CertMixin(models.Model):
             return OCSPNoCheck(ext)
 
     @cached_property
-    def precert_poison(self):  # pragma: only cryptography>=2.4
+    def precert_poison(self):
         ext = self.get_x509_extension(ExtensionOID.PRECERT_POISON)
         if ext is not None:
             return PrecertPoison(ext)
