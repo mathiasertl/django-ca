@@ -196,8 +196,14 @@ certs['cloudflare_1'] = {
             ],
         }
     },
-    'authority_key_identifier': '40:09:61:67:F0:BC:83:71:4F:DE:12:08:2C:6F:D4:D4:2B:76:3D:96',
-    "basic_constraints": "critical,CA:FALSE",
+    'authority_key_identifier': {
+        'critical': False,
+        'value': '40:09:61:67:F0:BC:83:71:4F:DE:12:08:2C:6F:D4:D4:2B:76:3D:96',
+    },
+    "basic_constraints": {
+        'critical': True,
+        'value': {'ca': False},
+    },
     "crl_distribution_points": {
         "value": [
             {
@@ -208,11 +214,43 @@ certs['cloudflare_1'] = {
         ],
         "critical": False,
     },
-    "extended_key_usage": "serverAuth,clientAuth",
-    "key_usage": "critical,digitalSignature",
+    "extended_key_usage": {
+        'critical': False,
+        'value': ['serverAuth', 'clientAuth'],
+    },
+    "key_usage": {
+        'critical': True,
+        'value': ['digitalSignature'],
+    },
     'precert_poison': {'critical': True},
-    'subject_alternative_name': '''DNS:sni24142.cloudflaressl.com,DNS:*.animereborn.com,DNS:*.beglideas.ga,DNS:*.chroma.ink,DNS:*.chuckscleanings.ga,DNS:*.clipvuigiaitris.ga,DNS:*.cmvsjns.ga,DNS:*.competegraphs.ga,DNS:*.consoleprints.ga,DNS:*.copybreezes.ga,DNS:*.corphreyeds.ga,DNS:*.cyanigees.ga,DNS:*.dadpbears.ga,DNS:*.dahuleworldwides.ga,DNS:*.dailyopeningss.ga,DNS:*.daleylexs.ga,DNS:*.danajweinkles.ga,DNS:*.dancewthyogas.ga,DNS:*.darkmoosevpss.ga,DNS:*.daurat.com.ar,DNS:*.deltaberg.com,DNS:*.drjahanobgyns.ga,DNS:*.drunkgirliess.ga,DNS:*.duhiepkys.ga,DNS:*.dujuanjsqs.ga,DNS:*.dumbiseasys.ga,DNS:*.dumpsoftdrinkss.ga,DNS:*.dunhavenwoodss.ga,DNS:*.durabiliteas.ga,DNS:*.duxmangroups.ga,DNS:*.dvpdrivewayss.ga,DNS:*.dwellwizes.ga,DNS:*.dwwkouis.ga,DNS:*.entertastic.com,DNS:*.estudiogolber.com.ar,DNS:*.letsretro.team,DNS:*.maccuish.org.uk,DNS:*.madamsquiggles.com,DNS:*.sftw.ninja,DNS:*.spangenberg.io,DNS:*.timmutton.com.au,DNS:*.wyomingsexbook.com,DNS:*.ych.bid,DNS:animereborn.com,DNS:beglideas.ga,DNS:chroma.ink,DNS:chuckscleanings.ga,DNS:clipvuigiaitris.ga,DNS:cmvsjns.ga,DNS:competegraphs.ga,DNS:consoleprints.ga,DNS:copybreezes.ga,DNS:corphreyeds.ga,DNS:cyanigees.ga,DNS:dadpbears.ga,DNS:dahuleworldwides.ga,DNS:dailyopeningss.ga,DNS:daleylexs.ga,DNS:danajweinkles.ga,DNS:dancewthyogas.ga,DNS:darkmoosevpss.ga,DNS:daurat.com.ar,DNS:deltaberg.com,DNS:drjahanobgyns.ga,DNS:drunkgirliess.ga,DNS:duhiepkys.ga,DNS:dujuanjsqs.ga,DNS:dumbiseasys.ga,DNS:dumpsoftdrinkss.ga,DNS:dunhavenwoodss.ga,DNS:durabiliteas.ga,DNS:duxmangroups.ga,DNS:dvpdrivewayss.ga,DNS:dwellwizes.ga,DNS:dwwkouis.ga,DNS:entertastic.com,DNS:estudiogolber.com.ar,DNS:letsretro.team,DNS:maccuish.org.uk,DNS:madamsquiggles.com,DNS:sftw.ninja,DNS:spangenberg.io,DNS:timmutton.com.au,DNS:wyomingsexbook.com,DNS:ych.bid''',  # NOQA
-    'subject_key_identifier': '05:86:D8:B4:ED:A9:7E:23:EE:2E:E7:75:AA:3B:2C:06:08:2A:93:B2',
+    'subject_alternative_name': {'value': [
+        'DNS:sni24142.cloudflaressl.com', 'DNS:*.animereborn.com', 'DNS:*.beglideas.ga', 'DNS:*.chroma.ink',
+        'DNS:*.chuckscleanings.ga', 'DNS:*.clipvuigiaitris.ga', 'DNS:*.cmvsjns.ga', 'DNS:*.competegraphs.ga',
+        'DNS:*.consoleprints.ga', 'DNS:*.copybreezes.ga', 'DNS:*.corphreyeds.ga', 'DNS:*.cyanigees.ga',
+        'DNS:*.dadpbears.ga', 'DNS:*.dahuleworldwides.ga', 'DNS:*.dailyopeningss.ga', 'DNS:*.daleylexs.ga',
+        'DNS:*.danajweinkles.ga', 'DNS:*.dancewthyogas.ga', 'DNS:*.darkmoosevpss.ga', 'DNS:*.daurat.com.ar',
+        'DNS:*.deltaberg.com', 'DNS:*.drjahanobgyns.ga', 'DNS:*.drunkgirliess.ga', 'DNS:*.duhiepkys.ga',
+        'DNS:*.dujuanjsqs.ga', 'DNS:*.dumbiseasys.ga', 'DNS:*.dumpsoftdrinkss.ga', 'DNS:*.dunhavenwoodss.ga',
+        'DNS:*.durabiliteas.ga', 'DNS:*.duxmangroups.ga', 'DNS:*.dvpdrivewayss.ga', 'DNS:*.dwellwizes.ga',
+        'DNS:*.dwwkouis.ga', 'DNS:*.entertastic.com', 'DNS:*.estudiogolber.com.ar', 'DNS:*.letsretro.team',
+        'DNS:*.maccuish.org.uk', 'DNS:*.madamsquiggles.com', 'DNS:*.sftw.ninja', 'DNS:*.spangenberg.io',
+        'DNS:*.timmutton.com.au', 'DNS:*.wyomingsexbook.com', 'DNS:*.ych.bid', 'DNS:animereborn.com',
+        'DNS:beglideas.ga', 'DNS:chroma.ink', 'DNS:chuckscleanings.ga', 'DNS:clipvuigiaitris.ga',
+        'DNS:cmvsjns.ga', 'DNS:competegraphs.ga', 'DNS:consoleprints.ga', 'DNS:copybreezes.ga',
+        'DNS:corphreyeds.ga', 'DNS:cyanigees.ga', 'DNS:dadpbears.ga', 'DNS:dahuleworldwides.ga',
+        'DNS:dailyopeningss.ga', 'DNS:daleylexs.ga', 'DNS:danajweinkles.ga', 'DNS:dancewthyogas.ga',
+        'DNS:darkmoosevpss.ga', 'DNS:daurat.com.ar', 'DNS:deltaberg.com', 'DNS:drjahanobgyns.ga',
+        'DNS:drunkgirliess.ga', 'DNS:duhiepkys.ga', 'DNS:dujuanjsqs.ga', 'DNS:dumbiseasys.ga',
+        'DNS:dumpsoftdrinkss.ga', 'DNS:dunhavenwoodss.ga', 'DNS:durabiliteas.ga', 'DNS:duxmangroups.ga',
+        'DNS:dvpdrivewayss.ga', 'DNS:dwellwizes.ga', 'DNS:dwwkouis.ga', 'DNS:entertastic.com',
+        'DNS:estudiogolber.com.ar', 'DNS:letsretro.team', 'DNS:maccuish.org.uk', 'DNS:madamsquiggles.com',
+        'DNS:sftw.ninja', 'DNS:spangenberg.io', 'DNS:timmutton.com.au', 'DNS:wyomingsexbook.com',
+        'DNS:ych.bid',
+    ]},
+    'subject_key_identifier': {
+        'critical': False,
+        'value': '05:86:D8:B4:ED:A9:7E:23:EE:2E:E7:75:AA:3B:2C:06:08:2A:93:B2',
+    },
     'policy_texts': [
         '''Policy Identifier: 1.3.6.1.4.1.6449.1.2.2.7
 Policy Qualifiers:
