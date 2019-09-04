@@ -97,7 +97,10 @@ class InitCATest(DjangoCATestCase):
         self.assertSerial(ca.serial)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
-        self.assertEqual(ca.name_constraints, NameConstraints([['DNS:.com'], ['DNS:.net']]))
+        self.assertEqual(ca.name_constraints, NameConstraints({'value': {
+            'permitted': ['DNS:.com'],
+            'excluded': ['DNS:.net']
+        }}))
 
         # test the private key
         key = ca.key(None)
@@ -108,8 +111,11 @@ class InitCATest(DjangoCATestCase):
         self.assertTrue(isinstance(ca.x509.public_key(), dsa.DSAPublicKey))
         self.assertIsNone(ca.crl_distribution_points)
         self.assertEqual(ca.authority_information_access, AuthorityInformationAccess(
-            [['URI:http://ca.issuer.ca.example.com'], []]))
-        self.assertEqual(ca.name_constraints, NameConstraints([['DNS:.com'], ['DNS:.net']]))
+            {'value': {'issuers': ['URI:http://ca.issuer.ca.example.com']}}))
+        self.assertEqual(ca.name_constraints, NameConstraints({'value': {
+            'permitted': ['DNS:.com'],
+            'excluded': ['DNS:.net']
+        }}))
         self.assertEqual(ca.pathlen, 3)
         self.assertEqual(ca.max_pathlen, 3)
         self.assertTrue(ca.allows_intermediate_ca)
@@ -143,7 +149,10 @@ class InitCATest(DjangoCATestCase):
         ca = CertificateAuthority.objects.first()
         self.assertPostCreateCa(post, ca)
         self.assertIsInstance(ca.key(None), ec.EllipticCurvePrivateKey)
-        self.assertEqual(ca.name_constraints, NameConstraints([['DNS:.com'], ['DNS:.net']]))
+        self.assertEqual(ca.name_constraints, NameConstraints({'value': {
+            'permitted': ['DNS:.com'],
+            'excluded': ['DNS:.net'],
+        }}))
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_permitted(self):
@@ -162,7 +171,7 @@ class InitCATest(DjangoCATestCase):
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertPrivateKey(ca)
         self.assertSignature([ca], ca)
-        self.assertEqual(ca.name_constraints, NameConstraints([['DNS:.com'], []]))
+        self.assertEqual(ca.name_constraints, NameConstraints({'value': {'permitted': ['DNS:.com']}}))
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_excluded(self):
@@ -180,7 +189,7 @@ class InitCATest(DjangoCATestCase):
         self.assertSerial(ca.serial)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
-        self.assertEqual(ca.name_constraints, NameConstraints([[], ['DNS:.com']]))
+        self.assertEqual(ca.name_constraints, NameConstraints({'value': {'excluded': ['DNS:.com']}}))
 
     @override_settings(USE_TZ=True)
     def test_arguements_with_use_tz(self):
@@ -288,13 +297,14 @@ class InitCATest(DjangoCATestCase):
                 'full_name': [ca_crl_url],
             }]
         }))
-        self.assertEqual(child.authority_information_access,
-                         AuthorityInformationAccess([[
-                             'URI:http://%s/django_ca/issuer/%s.der' % (ca_settings.CA_DEFAULT_HOSTNAME,
-                                                                        parent.serial)
-                         ], [
-                             'URI:http://ca.ocsp.example.com'
-                         ]]))
+        self.assertEqual(
+            child.authority_information_access,
+            AuthorityInformationAccess({'value': {
+                'issuers': ['URI:http://%s/django_ca/issuer/%s.der' % (ca_settings.CA_DEFAULT_HOSTNAME,
+                                                                       parent.serial)],
+                'ocsp': ['URI:http://ca.ocsp.example.com'],
+            }})
+        )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_intermediate_check(self):
@@ -527,12 +537,13 @@ class InitCATest(DjangoCATestCase):
                          'http://%s/django_ca/issuer/%s.der' % (hostname, self.cas['root'].serial))
         self.assertEqual(ca.ocsp_url,
                          'http://%s/django_ca/ocsp/%s/cert/' % (hostname, ca.serial))
-        self.assertEqual(ca.authority_information_access,
-                         AuthorityInformationAccess([[
-                             'URI:http://%s/django_ca/issuer/%s.der' % (hostname, ca.root.serial)
-                         ], [
-                             'URI:http://%s/django_ca/ocsp/%s/ca/' % (hostname, ca.serial)
-                         ]]))
+        self.assertEqual(
+            ca.authority_information_access,
+            AuthorityInformationAccess({'value': {
+                'issuers': ['URI:http://%s/django_ca/issuer/%s.der' % (hostname, ca.root.serial)],
+                'ocsp': ['URI:http://%s/django_ca/ocsp/%s/ca/' % (hostname, ca.serial)],
+            }})
+        )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_no_default_hostname(self):

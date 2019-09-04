@@ -1073,18 +1073,6 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
         self.issuers = [self.parse_value(v) for v in value.get('issuers', [])]
         self.ocsp = [self.parse_value(v) for v in value.get('ocsp', [])]
 
-    def from_list(self, value):
-        self.issuers = [self.parse_value(v) for v in value[0]]
-        self.ocsp = [self.parse_value(v) for v in value[1]]
-
-    def from_other(self, value):
-        if isinstance(value, (list, tuple)):
-            self.critical = self.default_critical
-            self.from_list(value)
-            self._test_value()
-        else:
-            super(AuthorityInformationAccess, self).from_other(value)
-
     def from_str(self, value):
         raise NotImplementedError
 
@@ -1468,7 +1456,10 @@ class NameConstraints(GeneralNameMixin, Extension):
     :py:class:`~django_ca.extensions.SubjectAlternativeName`, you can pass both strings or instances of
     :py:class:`~cg:cryptography.x509.GeneralName`::
 
-        >>> NameConstraints([['DNS:.com', 'example.org'], [x509.DNSName('.net')]])
+        >>> NameConstraints({'value': {
+        ...     'permitted': ['DNS:.com', 'example.org'],
+        ...     'excluded': [x509.DNSName('.net')]
+        ... }})
         <NameConstraints: permitted=['DNS:.com', 'DNS:example.org'], excluded=['DNS:.net'], critical=True>
 
     .. seealso::
@@ -1534,18 +1525,6 @@ class NameConstraints(GeneralNameMixin, Extension):
     def from_extension(self, value):
         self.permitted = value.value.permitted_subtrees or []
         self.excluded = value.value.excluded_subtrees or []
-
-    def from_list(self, value):
-        self.permitted = [self.parse_value(v) for v in value[0]]
-        self.excluded = [self.parse_value(v) for v in value[1]]
-
-    def from_other(self, value):
-        if isinstance(value, (list, tuple)):
-            self.critical = self.default_critical
-            self.from_list(value)
-            self._test_value()
-        else:
-            super(NameConstraints, self).from_other(value)
 
     def from_dict(self, value):
         value = value.get('value', {})

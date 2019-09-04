@@ -61,7 +61,7 @@ parameters::
    ...   parent=ca,  # some extensions are only valid for intermediate CAs
    ...   issuer_url='http://full.example.com/full.der',
    ...   # this CA can only sign for *.com domains:
-   ...   name_constraints=(['DNS:.com'], []),
+   ...   name_constraints={'value': {'permitted': ['DNS:.com']}},
    ...
    ...   # CRL/OCSP URLs for signed certificates. These can be changed later:
    ...   crl_url=['http://full.example.com/full.crl', ],

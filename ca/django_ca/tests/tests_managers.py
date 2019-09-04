@@ -287,7 +287,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             subject_alternative_name={'value': ['example.com']}, **kwargs)
 
         self.assertEqual(self.get_extensions(cert.x509)['AuthorityInformationAccess'],
-                         AuthorityInformationAccess([[], [ca.ocsp_url]]))
+                         AuthorityInformationAccess({'value': {'ocsp': [ca.ocsp_url]}}))
 
         # test with both ocsp_url and issuer_url
         ca.issuer_url = 'http://ca.example.com/ca.crt'
@@ -296,7 +296,12 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             subject_alternative_name={'value': ['example.com']}, **kwargs)
 
         self.assertEqual(self.get_extensions(cert.x509)['AuthorityInformationAccess'],
-                         AuthorityInformationAccess([[ca.issuer_url], [ca.ocsp_url]]))
+                         AuthorityInformationAccess({
+                             'value': {
+                                 'issuers': [ca.issuer_url],
+                                 'ocsp': [ca.ocsp_url]
+                             }
+                         }))
 
         # test only with issuer url
         ca.ocsp_url = None
@@ -305,7 +310,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             subject_alternative_name={'value': ['example.com']}, **kwargs)
 
         self.assertEqual(self.get_extensions(cert.x509)['AuthorityInformationAccess'],
-                         AuthorityInformationAccess([[ca.issuer_url], []]))
+                         AuthorityInformationAccess({'value': {'issuers': [ca.issuer_url]}}))
 
     @override_tmpcadir()
     def test_ocsp(self):
@@ -351,7 +356,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         eku = {'value': ['serverAuth', 'clientAuth', 'codeSigning', 'emailProtection']}
         tlsf = {'critical': True, 'value': ['OCSPMustStaple', 'MultipleCertStatusRequest']}
         san = 'extra.example.com'
-        nc = [['.com'], ['.net']]
+        nc = {'value': {'permitted': ['.com'], 'excluded': ['.net']}}
         subject = '/CN=%s' % cn
 
         ian = 'http://ian.example.com'
@@ -485,7 +490,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         eku = {'value': ['serverAuth', 'clientAuth', 'codeSigning', 'emailProtection']}
         tlsf = {'critical': True, 'value': ['OCSPMustStaple', 'MultipleCertStatusRequest']}
         san = ['extra.example.com']
-        nc = [['.com'], ['.net']]
+        nc = {'value': {'permitted': ['.com'], 'excluded': ['.net']}}
         ian = 'https://ca.example.com'
         subject = '/CN=%s' % cn
 

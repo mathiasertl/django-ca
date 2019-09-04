@@ -1140,7 +1140,7 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
         self.assertEqual(ext.as_extension(), self.x4)
 
     def test_empty_value(self):
-        for val in [self.x1, [[], []], {}, {'issuers': [], 'ocsp': []}]:
+        for val in [self.x1, {}, {'issuers': [], 'ocsp': []}]:
             ext = AuthorityInformationAccess(val)
             self.assertEqual(ext.ocsp, [], val)
             self.assertEqual(ext.issuers, [], val)
@@ -1157,7 +1157,7 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
 
     def test_bool(self):
         self.assertEqual(bool(AuthorityInformationAccess(self.x1)), False)
-        self.assertEqual(bool(AuthorityInformationAccess([[], []])), False)
+        self.assertEqual(bool(AuthorityInformationAccess({})), False)
         self.assertEqual(bool(AuthorityInformationAccess(self.x1)), False)
 
         self.assertEqual(bool(AuthorityInformationAccess(self.x2)), True)
@@ -2967,7 +2967,7 @@ class NameConstraintsTestCase(TestCase):
     def assertEmpty(self, ext):
         self.assertEqual(ext.permitted, [])
         self.assertEqual(ext.excluded, [])
-        self.assertEqual(ext, NameConstraints([[], []]))
+        self.assertEqual(ext, NameConstraints({}))
         self.assertFalse(bool(ext))
         self.assertTrue(ext.critical)
         self.assertEqual(ext.as_extension(), self.ext_empty)
@@ -2975,7 +2975,7 @@ class NameConstraintsTestCase(TestCase):
     def assertPermitted(self, ext):
         self.assertEqual(ext.permitted, [dns('example.com')])
         self.assertEqual(ext.excluded, [])
-        self.assertEqual(ext, NameConstraints([['example.com'], []]))
+        self.assertEqual(ext, NameConstraints({'value': {'permitted': ['example.com']}}))
         self.assertTrue(bool(ext))
         self.assertTrue(ext.critical)
         self.assertEqual(ext.as_extension(), self.ext_permitted)
@@ -2983,7 +2983,7 @@ class NameConstraintsTestCase(TestCase):
     def assertExcluded(self, ext):
         self.assertEqual(ext.permitted, [])
         self.assertEqual(ext.excluded, [dns('example.com')])
-        self.assertEqual(ext, NameConstraints([[], ['example.com']]))
+        self.assertEqual(ext, NameConstraints({'value': {'excluded': ['example.com']}}))
         self.assertTrue(bool(ext))
         self.assertTrue(ext.critical)
         self.assertEqual(ext.as_extension(), self.ext_excluded)
@@ -2991,7 +2991,10 @@ class NameConstraintsTestCase(TestCase):
     def assertBoth(self, ext):
         self.assertEqual(ext.permitted, [dns('example.com')])
         self.assertEqual(ext.excluded, [dns('example.net')])
-        self.assertEqual(ext, NameConstraints([['example.com'], ['example.net']]))
+        self.assertEqual(ext, NameConstraints({'value': {
+            'permitted': ['example.com'],
+            'excluded': ['example.net']
+        }}))
         self.assertTrue(bool(ext))
         self.assertEqual(ext.as_extension(), self.ext_both)
         self.assertTrue(ext.critical)
@@ -3023,9 +3026,9 @@ class NameConstraintsTestCase(TestCase):
         self.assertBoth(NameConstraints(self.ext_both))
 
     def test_hash(self):
-        ext1 = NameConstraints([['example.com'], []])
-        ext2 = NameConstraints([['example.com'], ['example.net']])
-        ext3 = NameConstraints([[], ['example.net']])
+        ext1 = NameConstraints({'value': {'permitted': ['example.com']}})
+        ext2 = NameConstraints({'value': {'permitted': ['example.com'], 'excluded': ['example.net']}})
+        ext3 = NameConstraints({'value': {'excluded': ['example.net']}})
 
         self.assertEqual(hash(ext1), hash(ext1))
         self.assertEqual(hash(ext2), hash(ext2))
