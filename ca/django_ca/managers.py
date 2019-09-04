@@ -389,16 +389,10 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
 
         # Normalize extensions to django_ca.extensions.Extension subclasses
         if key_usage and not isinstance(key_usage, KeyUsage):
-            if not isinstance(key_usage, dict):
-                raise ValueError('key_usage is not a dict.')
             key_usage = KeyUsage(key_usage)
         if extended_key_usage and not isinstance(extended_key_usage, ExtendedKeyUsage):
-            if not isinstance(extended_key_usage, dict):
-                raise ValueError('extended_key_usage is not a dict.')
             extended_key_usage = ExtendedKeyUsage(extended_key_usage)
         if tls_feature and not isinstance(tls_feature, TLSFeature):
-            if not isinstance(tls_feature, dict):
-                raise ValueError('tls_feature is not a dict.')
             tls_feature = TLSFeature(tls_feature)
 
         if not subject_alternative_name:
