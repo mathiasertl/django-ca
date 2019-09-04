@@ -362,7 +362,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
         # Create a cert with some weirder SANs to test that too
         full = self.create_cert(
             self.cas['child'], certs['child-cert']['csr']['pem'], [('CN', 'all.example.com')],
-            san=['dirname:/C=AT/CN=example.com', 'email:user@example.com', 'fd00::1'])
+            san={'value': ['dirname:/C=AT/CN=example.com', 'email:user@example.com', 'fd00::1']})
 
         self.assertEqual(
             full.subject_alternative_name,

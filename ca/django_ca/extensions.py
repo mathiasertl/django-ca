@@ -328,17 +328,7 @@ class IterableExtension(Extension):
 
 
 class ListExtension(IterableExtension):
-    """Base class for extensions with multiple ordered values.
-
-    Subclasses behave like a list, and you can also pass a list of values to the constructor:
-
-        >>> san = SubjectAlternativeName(['example.com', 'example.net'])
-        >>> san[0]
-        'DNS:example.com'
-
-    If the passed value is a list, the critical flag will be set according the the default value
-    for this extension.
-    """
+    """Base class for extensions with multiple ordered values."""
 
     def __delitem__(self, key):
         del self.value[key]
@@ -387,17 +377,6 @@ class ListExtension(IterableExtension):
 
     def from_extension(self, ext):
         self.value = list(ext.value)
-
-    def from_list(self, value):
-        self.value = [self.parse_value(n) for n in value]
-
-    def from_other(self, value):
-        if isinstance(value, (list, tuple)):
-            self.critical = self.default_critical
-            self.from_list(value)
-            self._test_value()
-        else:
-            super(ListExtension, self).from_other(value)
 
     def from_str(self, value):
         self.value = [self.parse_value(n) for n in shlex_split(value, ', ')]
@@ -545,9 +524,9 @@ class KnownValuesExtension(ListExtension):
     This base class is for extensions where we *know* what potential values an extension can have. For
     example, the :py:class:`~django_ca.extensions.KeyUsage` extension has only a certain set of valid values::
 
-        >>> KeyUsage(['keyAgreement', 'keyEncipherment'])
+        >>> KeyUsage({'value': ['keyAgreement', 'keyEncipherment']})
         <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=False>
-        >>> KeyUsage(['wrong-value'])
+        >>> KeyUsage({'value': ['wrong-value']})
         Traceback (most recent call last):
             ...
         ValueError: Unknown value(s): wrong-value
@@ -601,7 +580,7 @@ class GeneralNameMixin(object):
     This means that the DNS name here is never converted between the instantiation here and actually adding
     the extension to the certificate::
 
-        >>> san = SubjectAlternativeName([x509.DNSName('example.com')])
+        >>> san = SubjectAlternativeName({'value': [x509.DNSName('example.com')]})
         >>> Certificate.objects.init(subjectAltName=...)  # doctest: +SKIP
     """
 
@@ -620,7 +599,7 @@ class AlternativeNameExtension(GeneralNameMixin, ListExtension):
 
     This class also allows you to pass :py:class:`~cg:cryptography.x509.GeneralName` instances::
 
-        >>> san = SubjectAlternativeName([x509.DNSName('example.com'), 'example.net'])
+        >>> san = SubjectAlternativeName({'value': [x509.DNSName('example.com'), 'example.net']})
         >>> san
         <SubjectAlternativeName: ['DNS:example.com', 'DNS:example.net'], critical=False>
         >>> 'example.com' in san, 'DNS:example.com' in san, x509.DNSName('example.com') in san

@@ -283,9 +283,11 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(list(parent.children.all()), [child])
         self.assertIssuer(parent, child)
         self.assertAuthorityKeyIdentifier(parent, child)
-        self.assertEqual(child.crl_distribution_points, CRLDistributionPoints([{
-            'full_name': [ca_crl_url],
-        }]))
+        self.assertEqual(child.crl_distribution_points, CRLDistributionPoints({
+            'value': [{
+                'full_name': [ca_crl_url],
+            }]
+        }))
         self.assertEqual(child.authority_information_access,
                          AuthorityInformationAccess([[
                              'URI:http://%s/django_ca/issuer/%s.der' % (ca_settings.CA_DEFAULT_HOSTNAME,

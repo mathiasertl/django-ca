@@ -181,7 +181,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         stdin = six.StringIO(self.csr_pem)
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd('sign_cert', ca=self.ca, subject=Subject([('CN', 'example.net')]),
-                                      cn_in_san=False, alt=['example.com'], stdin=stdin)
+                                      cn_in_san=False, alt={'value': ['example.com']}, stdin=stdin)
         self.assertEqual(pre.call_count, 1)
 
         cert = Certificate.objects.first()
@@ -231,8 +231,8 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         # first, we only pass an subjectAltName, meaning that even the CommonName is used.
         stdin = six.StringIO(self.csr_pem)
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
-            stdout, stderr = self.cmd('sign_cert', ca=self.ca, cn_in_san=False, alt=['example.net'],
-                                      stdin=stdin)
+            stdout, stderr = self.cmd('sign_cert', ca=self.ca, cn_in_san=False,
+                                      alt={'value': ['example.net']}, stdin=stdin)
         self.assertEqual(pre.call_count, 1)
 
         cert = Certificate.objects.first()
@@ -254,7 +254,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         ])
         stdin = six.StringIO(self.csr_pem)
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
-            self.cmd('sign_cert', ca=self.ca, cn_in_san=False, alt=['example.net'], stdin=stdin,
+            self.cmd('sign_cert', ca=self.ca, cn_in_san=False, alt={'value': ['example.net']}, stdin=stdin,
                      subject=subject)
         self.assertEqual(pre.call_count, 1)
 
@@ -267,7 +267,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             subject = Subject([('C', ''), ('ST', ''), ('L', ''), ('O', ''), ('OU', ''), ('emailAddress', ''),
                                ('CN', 'empty')])
-            self.cmd('sign_cert', ca=self.ca, cn_in_san=False, alt=['example.net'], stdin=stdin,
+            self.cmd('sign_cert', ca=self.ca, cn_in_san=False, alt={'value': ['example.net']}, stdin=stdin,
                      subject=subject)
         self.assertEqual(pre.call_count, 1)
 
@@ -277,6 +277,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
 
     @override_tmpcadir()
     def test_extensions(self):
+        self.maxDiff = None
         stdin = six.StringIO(self.csr_pem)
         cmdline = [
             'sign_cert', '--subject=%s' % Subject([('CN', 'example.com')]),
@@ -308,7 +309,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         # test with no subjectAltNames:
         stdin = six.StringIO(self.csr_pem)
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
-            stdout, stderr = self.cmd('sign_cert', ca=self.ca, alt=['example.com'], stdin=stdin)
+            stdout, stderr = self.cmd('sign_cert', ca=self.ca, alt={'value': ['example.com']}, stdin=stdin)
 
         cert = Certificate.objects.first()
 
@@ -340,7 +341,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         stdin = six.StringIO(self.csr_pem)
         ca = CertificateAuthority.objects.get(pk=ca.pk)
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
-            self.cmd('sign_cert', ca=ca, alt=['example.com'], stdin=stdin, password=password)
+            self.cmd('sign_cert', ca=ca, alt={'value': ['example.com']}, stdin=stdin, password=password)
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(post.call_count, 1)
 
@@ -428,7 +429,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
 
         with self.assertCommandError('Unknown CSR format passed: foo$'), \
                 self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
-            self.cmd('sign_cert', ca=self.ca, alt=['example.com'], csr_format='foo', stdin=stdin)
+            self.cmd('sign_cert', ca=self.ca, alt={'value': ['example.com']}, csr_format='foo', stdin=stdin)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 

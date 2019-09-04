@@ -698,7 +698,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
         if change is False:
             san, cn_in_san = data['subject_alternative_name']
             expires = datetime.combine(data['expires'], datetime.min.time())
-            subjectAltName = [e.strip() for e in san.split(',') if e.strip()]
+            subjectAltName = {'value': [e.strip() for e in san.split(',') if e.strip()]}
 
             if hasattr(request, '_resign_obj'):
                 csr = getattr(request, '_resign_obj').csr

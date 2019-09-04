@@ -330,17 +330,17 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             meaningful value as subjectAlternativeName.
         csr_format : :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding`, optional
             The format of the CSR. The default is ``PEM``.
-        subject_alternative_name : list of str or :py:class:`~django_ca.extensions.SubjectAlternativeName`,
-            optional A list of alternative names for the certificate. The value is passed to
-            :py:class:`~django_ca.extensions.SubjectAlternativeName` if not already an instance of that class.
-        key_usage : str or dict or :py:class:`~django_ca.extensions.KeyUsage`, optional
-            Value for the ``keyUsage`` X509 extension. The value is passed to
+        subject_alternative_name : dict or :py:class:`~django_ca.extensions.SubjectAlternativeName`, optional
+            A dict passed to :py:class:`~django_ca.extensions.SubjectAlternativeName` if not already an
+            instance of that class.
+        key_usage : dict or :py:class:`~django_ca.extensions.KeyUsage`, optional
+            Value for the ``keyUsage`` X509 extension. A dict passed to
             :py:class:`~django_ca.extensions.KeyUsage` if not already an instance of that class.
-        extended_key_usage : str or dict or :py:class:`~django_ca.extensions.ExtendedKeyUsage`, optional
-            Value for the ``extendedKeyUsage`` X509 extension. The value is passed to
+        extended_key_usage : dict or :py:class:`~django_ca.extensions.ExtendedKeyUsage`, optional
+            Value for the ``extendedKeyUsage`` X509 extension. A dict passed to
             :py:class:`~django_ca.extensions.ExtendedKeyUsage` if not already an instance of that class.
-        tls_feature : str or dict or :py:class:`~django_ca.extensions.TLSFeature`, optional
-            Value for the ``TLSFeature`` X509 extension. The value is passed to
+        tls_feature : dict or :py:class:`~django_ca.extensions.TLSFeature`, optional
+            Value for the ``TLSFeature`` X509 extension. The dict passed to
             :py:class:`~django_ca.extensions.TLSFeature` if not already an instance of that class.
         ocsp_no_check : bool, optional
             Add the OCSPNoCheck flag, indicating that an OCSP client should trust this certificate for it's
@@ -389,14 +389,20 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
 
         # Normalize extensions to django_ca.extensions.Extension subclasses
         if key_usage and not isinstance(key_usage, KeyUsage):
+            if not isinstance(key_usage, dict):
+                raise ValueError('key_usage is not a dict.')
             key_usage = KeyUsage(key_usage)
         if extended_key_usage and not isinstance(extended_key_usage, ExtendedKeyUsage):
+            if not isinstance(extended_key_usage, dict):
+                raise ValueError('extended_key_usage is not a dict.')
             extended_key_usage = ExtendedKeyUsage(extended_key_usage)
         if tls_feature and not isinstance(tls_feature, TLSFeature):
+            if not isinstance(tls_feature, dict):
+                raise ValueError('tls_feature is not a dict.')
             tls_feature = TLSFeature(tls_feature)
 
         if not subject_alternative_name:
-            subject_alternative_name = SubjectAlternativeName([])
+            subject_alternative_name = SubjectAlternativeName({})
         elif not isinstance(subject_alternative_name, SubjectAlternativeName):
             subject_alternative_name = SubjectAlternativeName(subject_alternative_name)
 

@@ -55,17 +55,17 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
         else:
             subject = cert.subject
 
-        if options['key_usage'] is None:
+        if not options['key_usage']:
             key_usage = cert.key_usage
         else:
             key_usage = options['key_usage']
 
-        if options['ext_key_usage'] is None:
+        if not options['ext_key_usage']:
             ext_key_usage = cert.extended_key_usage
         else:
             ext_key_usage = options['ext_key_usage']
 
-        if options['tls_feature'] is None:
+        if not options['tls_feature']:
             tls_feature = cert.tls_feature
         else:
             tls_feature = options['tls_feature']

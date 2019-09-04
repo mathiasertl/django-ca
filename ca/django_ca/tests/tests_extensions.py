@@ -171,9 +171,6 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
     def test_extend(self):
         raise NotImplementedError
 
-    def test_from_list(self):
-        raise NotImplementedError
-
     def test_getitem(self):
         raise NotImplementedError
 
@@ -776,19 +773,20 @@ class ExtensionTestCase(ExtensionTestMixin, TestCase):
 
 class ListExtensionTestCase(TestCase):
     def test_hash(self):
-        self.assertEqual(hash(ListExtension(['foo'])), hash(ListExtension(['foo'])))
+        self.assertEqual(hash(ListExtension({'value': ['foo']})),
+                         hash(ListExtension({'value': ['foo']})))
         self.assertNotEqual(hash(ListExtension({'value': 'foo', 'critical': False})),
                             hash(ListExtension({'value': 'bar', 'critical': False})))
         self.assertNotEqual(hash(ListExtension({'value': 'foo', 'critical': False})),
                             hash(ListExtension({'value': 'foo', 'critical': True})))
 
     def test_operators(self):
-        ext = ListExtension(['foo'])
+        ext = ListExtension({'value': ['foo']})
         self.assertIn('foo', ext)
         self.assertNotIn('bar', ext)
 
     def test_list_funcs(self):
-        ext = ListExtension(['foo'])
+        ext = ListExtension({'value': ['foo']})
         ext.append('bar')
         self.assertEqual(ext.value, ['foo', 'bar'])
         self.assertEqual(ext.count('foo'), 1)
@@ -815,7 +813,7 @@ class ListExtensionTestCase(TestCase):
 
     def test_slices(self):
         val = ['foo', 'bar', 'bla']
-        ext = ListExtension(val)
+        ext = ListExtension({'value': val})
         self.assertEqual(ext[0], val[0])
         self.assertEqual(ext[1], val[1])
         self.assertEqual(ext[0:], val[0:])
@@ -1087,39 +1085,6 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
     #################
     # Old functions #
     #################
-
-    # test the constructor with some list values
-    def test_from_list(self):
-        ext = AuthorityInformationAccess([['https://example.com'], []])
-        self.assertEqual(ext.issuers, [uri('https://example.com')])
-        self.assertEqual(ext.ocsp, [])
-        self.assertFalse(ext.critical)
-        self.assertEqual(ext.as_extension(), self.x2)
-
-        ext = AuthorityInformationAccess([[], ['https://example.com']])
-        self.assertEqual(ext.issuers, [])
-        self.assertEqual(ext.ocsp, [uri('https://example.com')])
-        self.assertFalse(ext.critical)
-        self.assertEqual(ext.as_extension(), self.x3)
-
-        ext = AuthorityInformationAccess([[uri('https://example.com')], []])
-        self.assertEqual(ext.issuers, [uri('https://example.com')])
-        self.assertEqual(ext.ocsp, [])
-        self.assertFalse(ext.critical)
-        self.assertEqual(ext.as_extension(), self.x2)
-
-        ext = AuthorityInformationAccess([[], [uri('https://example.com')]])
-        self.assertEqual(ext.ocsp, [uri('https://example.com')])
-        self.assertEqual(ext.issuers, [])
-        self.assertFalse(ext.critical)
-        self.assertEqual(ext.as_extension(), self.x3)
-
-        ext = AuthorityInformationAccess([['https://example.com'], ['https://example.net',
-                                                                    'https://example.org']])
-        self.assertEqual(ext.issuers, [uri('https://example.com')])
-        self.assertEqual(ext.ocsp, [uri('https://example.net'), uri('https://example.org')])
-        self.assertFalse(ext.critical)
-        self.assertEqual(ext.as_extension(), self.x4)
 
     def test_from_dict(self):
         ext = AuthorityInformationAccess({'value': {'issuers': ['https://example.com']}})
@@ -1624,23 +1589,17 @@ class CRLDistributionPointsTestCase(ListExtensionTestMixin, TestCase):
 
     def test_extend(self):
         self.ext1.extend([self.s2])
-        self.assertEqual(self.ext1, CRLDistributionPoints([
-            DistributionPoint(self.dp1), DistributionPoint(self.dp2)]))
+        self.assertEqual(self.ext1, CRLDistributionPoints({'value': [
+            DistributionPoint(self.dp1), DistributionPoint(self.dp2)]}))
         self.ext1.extend([self.dp3])
-        self.assertEqual(self.ext1, CRLDistributionPoints([
+        self.assertEqual(self.ext1, CRLDistributionPoints({'value': [
             DistributionPoint(self.dp1), DistributionPoint(self.dp2), DistributionPoint(self.dp3),
-        ]))
+        ]}))
         self.ext1.extend([DistributionPoint(self.dp4)])
-        self.assertEqual(self.ext1, CRLDistributionPoints([
+        self.assertEqual(self.ext1, CRLDistributionPoints({'value': [
             DistributionPoint(self.dp1), DistributionPoint(self.dp2), DistributionPoint(self.dp3),
             DistributionPoint(self.dp4),
-        ]))
-
-    def test_from_list(self):
-        self.assertEqual(self.ext1, CRLDistributionPoints([DistributionPoint(self.dp1)]))
-        self.assertEqual(self.ext2, CRLDistributionPoints([DistributionPoint(self.dp2)]))
-        self.assertEqual(self.ext3, CRLDistributionPoints([DistributionPoint(self.dp3)]))
-        self.assertEqual(self.ext4, CRLDistributionPoints([DistributionPoint(self.dp4)]))
+        ]}))
 
     def test_getitem(self):
         self.assertEqual(self.ext1[0], DistributionPoint(self.dp1))
@@ -2346,11 +2305,11 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, TestCase):
         self.pi2 = PolicyInformation(self.xpi2)
         self.pi3 = PolicyInformation(self.xpi3)
         self.pi4 = PolicyInformation(self.xpi4)
-        self.ext1 = CertificatePolicies([self.xpi1])
-        self.ext2 = CertificatePolicies([self.xpi2])
-        self.ext3 = CertificatePolicies([self.xpi3])
-        self.ext4 = CertificatePolicies([self.xpi4])
-        self.ext5 = CertificatePolicies([self.xpi1, self.xpi2, self.xpi4])
+        self.ext1 = CertificatePolicies({'value': [self.xpi1]})
+        self.ext2 = CertificatePolicies({'value': [self.xpi2]})
+        self.ext3 = CertificatePolicies({'value': [self.xpi3]})
+        self.ext4 = CertificatePolicies({'value': [self.xpi4]})
+        self.ext5 = CertificatePolicies({'value': [self.xpi1, self.xpi2, self.xpi4]})
         self.ext6 = CertificatePolicies({'critical': True})
         self.exts = [self.ext1, self.ext2, self.ext3, self.ext4, self.ext5, self.ext6]
 
@@ -2424,9 +2383,6 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, TestCase):
         self.ext1.extend([self.xpi2, self.pi4])
         self.assertEqual(self.ext1, self.ext5)
 
-    def test_from_list(self):
-        self.assertEqual(CertificatePolicies([self.xpi1]), self.ext1)
-
     def test_getitem(self):
         self.assertEqual(self.ext1[0], self.pi1)
         self.assertEqual(self.ext2[0], self.pi2)
@@ -2448,17 +2404,19 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, TestCase):
         self.assertEqual(hash(self.ext5), hash(self.ext5))
         self.assertEqual(hash(self.ext6), hash(self.ext6))
 
-        self.assertEqual(hash(self.ext1), hash(CertificatePolicies([self.xpi1])))
-        self.assertEqual(hash(self.ext2), hash(CertificatePolicies([self.xpi2])))
-        self.assertEqual(hash(self.ext3), hash(CertificatePolicies([self.xpi3])))
-        self.assertEqual(hash(self.ext4), hash(CertificatePolicies([self.xpi4])))
-        self.assertEqual(hash(self.ext5), hash(CertificatePolicies([self.xpi1, self.xpi2, self.xpi4])))
+        self.assertEqual(hash(self.ext1), hash(CertificatePolicies({'value': [self.xpi1]})))
+        self.assertEqual(hash(self.ext2), hash(CertificatePolicies({'value': [self.xpi2]})))
+        self.assertEqual(hash(self.ext3), hash(CertificatePolicies({'value': [self.xpi3]})))
+        self.assertEqual(hash(self.ext4), hash(CertificatePolicies({'value': [self.xpi4]})))
+        self.assertEqual(hash(self.ext5), hash(CertificatePolicies(
+            {'value': [self.xpi1, self.xpi2, self.xpi4]})))
 
-        self.assertEqual(hash(self.ext1), hash(CertificatePolicies([self.spi1])))
-        self.assertEqual(hash(self.ext2), hash(CertificatePolicies([self.spi2])))
-        self.assertEqual(hash(self.ext3), hash(CertificatePolicies([self.spi3])))
-        self.assertEqual(hash(self.ext4), hash(CertificatePolicies([self.spi4])))
-        self.assertEqual(hash(self.ext5), hash(CertificatePolicies([self.spi1, self.spi2, self.spi4])))
+        self.assertEqual(hash(self.ext1), hash(CertificatePolicies({'value': [self.spi1]})))
+        self.assertEqual(hash(self.ext2), hash(CertificatePolicies({'value': [self.spi2]})))
+        self.assertEqual(hash(self.ext3), hash(CertificatePolicies({'value': [self.spi3]})))
+        self.assertEqual(hash(self.ext4), hash(CertificatePolicies({'value': [self.spi4]})))
+        self.assertEqual(hash(self.ext5), hash(CertificatePolicies(
+            {'value': [self.spi1, self.spi2, self.spi4]})))
 
         self.assertNotEqual(hash(self.ext1), hash(self.ext2))
         self.assertNotEqual(hash(self.ext1), hash(self.ext3))
@@ -2673,13 +2631,6 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, TestCase):
     def test_extend(self):
         self.ext1.extend([self.uri1, dns(self.dns1)])
         self.assertEqual(self.ext1, self.ext3)
-
-    def test_from_list(self):
-        self.assertEqual(self.ext_class([]), self.ext1)
-        self.assertEqual(self.ext_class([self.uri1]), self.ext2)
-        self.assertEqual(self.ext_class([self.uri1, self.dns1]), self.ext3)
-        self.assertEqual(self.ext_class([uri(self.uri1)]), self.ext2)
-        self.assertEqual(self.ext_class([uri(self.uri1), dns(self.dns1)]), self.ext3)
 
     def test_getitem(self):
         self.assertEqual(self.ext3[0], 'URI:%s' % self.uri1)
@@ -3045,17 +2996,6 @@ class NameConstraintsTestCase(TestCase):
         self.assertEqual(ext.as_extension(), self.ext_both)
         self.assertTrue(ext.critical)
 
-    def test_from_list(self):
-        self.assertEmpty(NameConstraints([[], []]))
-        self.assertPermitted(NameConstraints([['example.com'], []]))
-        self.assertExcluded(NameConstraints([[], ['example.com']]))
-        self.assertBoth(NameConstraints([['example.com'], ['example.net']]))
-
-        # same thing again but with GeneralName instances
-        self.assertPermitted(NameConstraints([[dns('example.com')], []]))
-        self.assertExcluded(NameConstraints([[], [dns('example.com')]]))
-        self.assertBoth(NameConstraints([[dns('example.com')], [dns('example.net')]]))
-
     def test_from_dict(self):
         self.assertEmpty(NameConstraints({}))
         self.assertEmpty(NameConstraints({'value': {}}))
@@ -3385,10 +3325,6 @@ class PrecertificateSignedCertificateTimestampsTestCase(DjangoCAWithCertTestCase
         self.assertEqual(self.ext1.extension_type, self.x1.value)
         self.assertEqual(self.ext2.extension_type, self.x2.value)
 
-    def test_from_list(self):
-        with self.assertRaises(NotImplementedError):
-            PrecertificateSignedCertificateTimestamps([])
-
     def test_getitem(self):
         self.assertEqual(self.ext1[0], self.data1['value'][0])
         self.assertEqual(self.ext1[1], self.data1['value'][1])
@@ -3494,7 +3430,7 @@ class PrecertificateSignedCertificateTimestampsTestCase(DjangoCAWithCertTestCase
 
 class UnknownExtensionTestCase(TestCase):
     def test_basic(self):
-        unk = SubjectAlternativeName(['https://example.com']).as_extension()
+        unk = SubjectAlternativeName({'value': ['https://example.com']}).as_extension()
         ext = UnrecognizedExtension(unk)
         self.assertEqual(ext.name, 'Unsupported extension (OID %s)' % unk.oid.dotted_string)
         self.assertEqual(ext.as_text(), 'Could not parse extension')
@@ -3688,12 +3624,6 @@ class TLSFeatureTestCase(TestCase):
     def test_eq_order(self):
         # ext3 and ext4 are the same, only with different order
         self.assertEqual(self.ext3, self.ext4)
-
-    def test_from_list(self):
-        self.assertEqual(TLSFeature(['OCSPMustStaple']), self.ext2)
-        self.assertEqual(TLSFeature(['OCSPMustStaple', 'MultipleCertStatusRequest']), self.ext3)
-        self.assertEqual(TLSFeature(['OCSPMustStaple', 'MultipleCertStatusRequest']), self.ext4)
-        self.assertEqual(TLSFeature(['MultipleCertStatusRequest', 'OCSPMustStaple']), self.ext4)
 
     def test_hash(self):
         self.assertEqual(hash(self.ext1), hash(self.ext1))
