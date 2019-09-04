@@ -36,6 +36,7 @@ from ..extensions import Extension
 from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
 from ..extensions import NullExtension
+from ..extensions import SubjectAlternativeName
 from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import CertificateAuthority
@@ -206,6 +207,7 @@ class MultipleURLAction(argparse.Action):
 class ExtensionAction(argparse.Action):
     def __init__(self, *args, **kwargs):
         self.extension = kwargs.pop('extension')
+        kwargs.setdefault('default', self.extension({}))
         super(ExtensionAction, self).__init__(*args, **kwargs)
 
     def __call__(self, parser, namespace, value, option_string=None):
@@ -215,6 +217,11 @@ class ExtensionAction(argparse.Action):
             parser.error('Invalid extension value: %s: %s' % (value, e))
 
         setattr(namespace, self.dest, value)
+
+
+class AlternativeNameAction(ExtensionAction):
+    def __call__(self, parser, namespace, value, option_string=None):
+        getattr(namespace, self.dest).append(value)
 
 
 class ReasonAction(argparse.Action):
@@ -383,7 +390,7 @@ class BaseSignCommand(BaseCommand):
             '--expires', default=ca_settings.CA_DEFAULT_EXPIRES, action=ExpiresAction,
             help='Sign the certificate for DAYS days (default: %(default)s)')
         parser.add_argument(
-            '--alt', metavar='DOMAIN', action='append', default=[],
+            '--alt', metavar='DOMAIN', action=AlternativeNameAction, extension=SubjectAlternativeName,
             help='Add a subjectAltName to the certificate (may be given multiple times)')
         parser.add_argument(
             '--watch', metavar='EMAIL', action='append', default=[],
