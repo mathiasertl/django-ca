@@ -1698,9 +1698,6 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):  # pragma: only 
     def from_extension(self, value):
         self.value = value.value
 
-    def from_list(self, value):
-        raise NotImplementedError
-
     def insert(self, index, value):
         raise NotImplementedError
 
