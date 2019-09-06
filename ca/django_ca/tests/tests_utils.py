@@ -66,7 +66,6 @@ from ..utils import validate_hostname
 from ..utils import validate_key_parameters
 from ..utils import x509_relative_name
 from .base import DjangoCATestCase
-from .base import cryptography_version
 from .base import override_settings
 from .base import override_tmpcadir
 

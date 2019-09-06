@@ -16,7 +16,6 @@
 from __future__ import unicode_literals
 
 import binascii
-import re
 import textwrap
 
 import six
@@ -38,7 +37,6 @@ from .utils import get_extension_name
 from .utils import hex_to_bytes
 from .utils import indent
 from .utils import parse_general_name
-from .utils import shlex_split
 from .utils import x509_relative_name
 
 
