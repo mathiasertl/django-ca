@@ -683,26 +683,27 @@ class ExtensionTestCase(ExtensionTestMixin, TestCase):
 
     def test_as_extension(self):
         with self.assertRaises(NotImplementedError):
-            Extension(self.value).as_extension()
+            Extension({'value': self.value}).as_extension()
 
     def test_extension_type(self):
         with self.assertRaises(NotImplementedError):
-            Extension(self.value).extension_type
+            Extension({'value': self.value}).extension_type
 
     def test_eq(self):
         ext = Extension({'value': self.value, 'critical': True})
-        self.assertEqual(ext, Extension('critical,%s' % self.value))
+        self.assertEqual(ext, Extension({'critical': True, 'value': self.value}))
 
     def test_for_builder(self):
         with self.assertRaises(NotImplementedError):
-            Extension(self.value).for_builder()
+            Extension({'value': self.value}).for_builder()
 
     def test_from_extension(self):
         with self.assertRaises(NotImplementedError):
-            Extension(self.value).from_extension(None)
+            Extension({'value': self.value}).from_extension(None)
 
     def test_hash(self):
-        self.assertEqual(hash(Extension(self.value)), hash(Extension(self.value)))
+        self.assertEqual(hash(Extension({'value': self.value})),
+                         hash(Extension({'value': self.value})))
         self.assertEqual(hash(Extension({'critical': False, 'value': self.value})),
                          hash(Extension({'critical': False, 'value': self.value})))
 
@@ -713,40 +714,40 @@ class ExtensionTestCase(ExtensionTestMixin, TestCase):
 
     def test_ne(self):
         ext = Extension({'value': self.value, 'critical': True})
-        self.assertNotEqual(ext, Extension(self.value))
-        self.assertNotEqual(ext, Extension('critical,other'))
-        self.assertNotEqual(ext, Extension('other'))
+        self.assertNotEqual(ext, Extension({'value': self.value}))
+        self.assertNotEqual(ext, Extension({'critical': True, 'value': 'other'}))
+        self.assertNotEqual(ext, Extension({'value': 'other'}))
 
     def test_repr(self):
-        self.assertEqual(repr(Extension('critical,%s' % self.value)),
+        self.assertEqual(repr(Extension({'critical': True, 'value': self.value})),
                          '<Extension: %s, critical=True>' % self.value)
-        self.assertEqual(repr(Extension(self.value)), '<Extension: %s, critical=False>' % self.value)
+        self.assertEqual(repr(Extension({'value': self.value})),
+                         '<Extension: %s, critical=False>' % self.value)
 
     def test_serialize(self):
         value = self.value
-        ext = Extension(value)
+        ext = Extension({'value': value})
         self.assertEqual(ext.serialize(), {'critical': False, 'value': value})
         self.assertEqual(ext, Extension(ext.serialize()))
 
         value = 'critical,%s' % self.value
-        ext = Extension(value)
+        ext = Extension({'critical': True, 'value': self.value})
         self.assertEqual(ext.serialize(), {'value': self.value, 'critical': True})
         self.assertEqual(ext, Extension(ext.serialize()))
 
     def test_str(self):
-        self.assertEqual(str(Extension('critical,%s' % self.value)), '%s/critical' % self.value)
-        self.assertEqual(str(Extension(self.value)), self.value)
+        self.assertEqual(str(Extension({'critical': True, 'value': self.value})), '%s/critical' % self.value)
+        self.assertEqual(str(Extension({'value': self.value})), self.value)
 
     def test_basic(self):
-        self.assertExtension(Extension('critical,%s' % self.value))
         self.assertExtension(Extension({'critical': True, 'value': self.value}))
 
-        self.assertExtension(Extension(self.value), critical=False)
+        self.assertExtension(Extension({'value': self.value}), critical=False)
         self.assertExtension(Extension({'critical': False, 'value': self.value}), critical=False)
         self.assertExtension(Extension({'value': self.value}), critical=False)
 
     def test_as_text(self):
-        self.assertEqual(Extension('critical,%s' % self.value).as_text(), self.value)
+        self.assertEqual(Extension({'critical': True, 'value': self.value}).as_text(), self.value)
 
     def test_error(self):
         with self.assertRaisesRegex(ValueError, r'^None: Invalid critical value passed$'):
@@ -759,7 +760,7 @@ class ExtensionTestCase(ExtensionTestMixin, TestCase):
             Extension(x509.extensions.Extension(ExtensionOID.BASIC_CONSTRAINTS, True, b''))
 
         # Test that methods that should be implemented by sub-classes raise NotImplementedError
-        ext = Extension('critical,%s' % self.value)
+        ext = Extension({'critical': True, 'value': self.value})
         with self.assertRaises(NotImplementedError):
             ext.extension_type
 
@@ -890,10 +891,10 @@ class KnownValuesExtensionTestCase(TestCase):
             self.assertIn(v, ext)
 
     def test_basic(self):
-        self.assertExtension(self.cls('critical,'), [])
-        self.assertExtension(self.cls('critical,foo'), ['foo'])
-        self.assertExtension(self.cls('critical,bar'), ['bar'])
-        self.assertExtension(self.cls('critical,foo,bar'), ['foo', 'bar'])
+        self.assertExtension(self.cls({'critical': True, 'value': []}), [])
+        self.assertExtension(self.cls({'critical': True, 'value': ['foo']}), ['foo'])
+        self.assertExtension(self.cls({'critical': True, 'value': ['bar']}), ['bar'])
+        self.assertExtension(self.cls({'critical': True, 'value': ['foo', 'bar']}), ['foo', 'bar'])
 
         self.assertExtension(self.cls({'value': 'foo'}), ['foo'], critical=False)
         self.assertExtension(self.cls({'critical': True, 'value': ['foo']}), ['foo'])
@@ -905,20 +906,29 @@ class KnownValuesExtensionTestCase(TestCase):
             self.cls({'value': ['bla', 'hugo']})
 
     def test_eq(self):
-        self.assertEqual(self.cls('foo'), self.cls('foo'))
-        self.assertEqual(self.cls('foo,bar'), self.cls('foo,bar'))
-        self.assertEqual(self.cls('foo,bar'), self.cls('bar,foo'))
+        self.assertEqual(self.cls({'value': ['foo']}), self.cls({'value': ['foo']}))
+        self.assertEqual(self.cls({'value': ['foo', 'bar']}), self.cls({'value': ['foo', 'bar']}))
+        self.assertEqual(self.cls({'value': ['foo', 'bar']}), self.cls({'value': ['bar', 'foo']}))
 
-        self.assertEqual(self.cls('critical,foo'), self.cls('critical,foo'))
-        self.assertEqual(self.cls('critical,foo,bar'), self.cls('critical,foo,bar'))
-        self.assertEqual(self.cls('critical,foo,bar'), self.cls('critical,bar,foo'))
+        self.assertEqual(
+            self.cls({'critical': True, 'value': ['foo']}),
+            self.cls({'critical': True, 'value': ['foo']})
+        )
+        self.assertEqual(
+            self.cls({'critical': True, 'value': ['foo', 'bar']}),
+            self.cls({'critical': True, 'value': ['foo', 'bar']})
+        )
+        self.assertEqual(
+            self.cls({'critical': True, 'value': ['foo', 'bar']}),
+            self.cls({'critical': True, 'value': ['bar', 'foo']})
+        )
 
     def test_ne(self):
-        self.assertNotEqual(self.cls('foo'), self.cls('bar'))
-        self.assertNotEqual(self.cls('foo'), self.cls('critical,foo'))
+        self.assertNotEqual(self.cls({'value': ['foo']}), self.cls({'value': ['bar']}))
+        self.assertNotEqual(self.cls({'value': ['foo']}), self.cls({'critical': True, 'value': ['foo']}))
 
     def test_operators(self):
-        ext = self.cls('foo')
+        ext = self.cls({'value': ['foo']})
 
         # in operator
         self.assertIn('foo', ext)
@@ -926,26 +936,26 @@ class KnownValuesExtensionTestCase(TestCase):
         self.assertNotIn('something else', ext)
 
         # equality
-        self.assertEqual(ext, self.cls('foo'))
-        self.assertNotEqual(ext, self.cls('critical,foo'))
-        self.assertNotEqual(ext, self.cls('foo,bar'))
-        self.assertNotEqual(ext, self.cls('bar'))
+        self.assertEqual(ext, self.cls({'value': ['foo']}))
+        self.assertNotEqual(ext, self.cls({'critical': True, 'value': ['foo']}))
+        self.assertNotEqual(ext, self.cls({'value': ['foo', 'bar']}))
+        self.assertNotEqual(ext, self.cls({'value': ['bar']}))
 
         # as_text
         self.assertEqual(ext.as_text(), '* foo')
-        self.assertEqual(self.cls('foo,bar').as_text(), '* foo\n* bar')
-        self.assertEqual(self.cls('bar,foo').as_text(), '* bar\n* foo')
-        self.assertEqual(self.cls('bar').as_text(), '* bar')
-        self.assertEqual(self.cls('critical,bar').as_text(), '* bar')
+        self.assertEqual(self.cls({'value': ['foo', 'bar']}).as_text(), '* foo\n* bar')
+        self.assertEqual(self.cls({'value': ['bar', 'foo']}).as_text(), '* bar\n* foo')
+        self.assertEqual(self.cls({'value': ['bar']}).as_text(), '* bar')
+        self.assertEqual(self.cls({'critical': True, 'value': ['bar']}).as_text(), '* bar')
 
         # str()
         self.assertEqual(str(ext), 'foo')
-        self.assertEqual(str(self.cls('foo,bar')), 'bar,foo')
-        self.assertEqual(str(self.cls('bar,foo')), 'bar,foo')
-        self.assertEqual(str(self.cls('bar')), 'bar')
-        self.assertEqual(str(self.cls('critical,bar')), 'bar/critical')
-        self.assertEqual(str(self.cls('critical,foo,bar')), 'bar,foo/critical')
-        self.assertEqual(str(self.cls('critical,bar,foo')), 'bar,foo/critical')
+        self.assertEqual(str(self.cls({'value': ['foo', 'bar']})), 'bar,foo')
+        self.assertEqual(str(self.cls({'value': ['bar', 'foo']})), 'bar,foo')
+        self.assertEqual(str(self.cls({'value': ['bar']})), 'bar')
+        self.assertEqual(str(self.cls({'critical': True, 'value': ['bar']})), 'bar/critical')
+        self.assertEqual(str(self.cls({'critical': True, 'value': ['foo', 'bar']})), 'bar,foo/critical')
+        self.assertEqual(str(self.cls({'critical': True, 'value': ['bar', 'foo']})), 'bar,foo/critical')
 
 
 class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
@@ -1152,8 +1162,6 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
             AuthorityInformationAccess(None)
         with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type bool$'):
             AuthorityInformationAccess(False)
-        with self.assertRaises(NotImplementedError):
-            AuthorityInformationAccess('')
 
     def test_bool(self):
         self.assertEqual(bool(AuthorityInformationAccess(self.x1)), False)
@@ -1238,7 +1246,7 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         self.assertNotEqual(self.ext1, self.ext2)
         self.assertNotEqual(self.ext1, self.ext3)
         self.assertNotEqual(self.ext2, self.ext3)
-        self.assertNotEqual(self.ext3, AuthorityKeyIdentifier(self.hex3))  # ext3 is critical
+        self.assertNotEqual(self.ext3, AuthorityKeyIdentifier({'value': self.hex3}))  # ext3 is critical
 
     def test_repr(self):
         if six.PY2:  # pragma: only py2
@@ -1254,11 +1262,11 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         self.assertEqual(self.ext1.serialize(), {'critical': False, 'value': self.hex1})
         self.assertEqual(self.ext2.serialize(), {'critical': False, 'value': self.hex2})
         self.assertEqual(self.ext3.serialize(), {'critical': True, 'value': self.hex3})
-        self.assertEqual(self.ext1.serialize(), AuthorityKeyIdentifier(self.hex1).serialize())
+        self.assertEqual(self.ext1.serialize(), AuthorityKeyIdentifier({'value': self.hex1}).serialize())
         self.assertNotEqual(self.ext1.serialize(), self.ext2.serialize())
 
     def test_str(self):
-        ext = AuthorityKeyIdentifier(self.hex1)
+        ext = AuthorityKeyIdentifier({'value': self.hex1})
         self.assertEqual(str(ext), 'keyid:%s' % self.hex1)
 
     @unittest.skipUnless(six.PY3, 'bytes only work in python3')
@@ -1268,7 +1276,7 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         self.assertEqual(ext.as_extension(), self.x1)
 
     def test_subject_key_identifier(self):
-        ski = SubjectKeyIdentifier(self.hex1)
+        ski = SubjectKeyIdentifier({'value': self.hex1})
         ext = AuthorityKeyIdentifier(ski)
         self.assertEqual(ext.as_text(), 'keyid:%s' % self.hex1)
         self.assertEqual(ext.extension_type.key_identifier, self.x1.value.key_identifier)
@@ -1322,9 +1330,10 @@ class BasicConstraintsTestCase(ExtensionTestMixin, TestCase):
         self.assertEqual(bc.value, (ca, pathlen))
 
     def test_as_text(self):
-        self.assertEqual(BasicConstraints('CA=true').as_text(), 'CA:TRUE')
-        self.assertEqual(BasicConstraints('CA= true , pathlen = 3').as_text(), 'CA:TRUE, pathlen:3')
-        self.assertEqual(BasicConstraints('CA = FALSE').as_text(), 'CA:FALSE')
+        self.assertEqual(BasicConstraints({'value': {'ca': True}}).as_text(), 'CA:TRUE')
+        self.assertEqual(BasicConstraints({'value': {'ca': True, 'pathlen': 3}}).as_text(),
+                         'CA:TRUE, pathlen:3')
+        self.assertEqual(BasicConstraints({'value': {'ca': False}}).as_text(), 'CA:FALSE')
 
     def test_hash(self):
         self.assertEqual(hash(self.ext1), hash(self.ext1))
@@ -1377,31 +1386,25 @@ class BasicConstraintsTestCase(ExtensionTestMixin, TestCase):
         self.assertBC(BasicConstraints({'value': {'ca': True, 'pathlen': None}}), True, None, True)
         self.assertBC(BasicConstraints({'value': {'ca': True}, 'critical': False}), True, None, False)
 
-    def test_consistency(self):
-        # pathlen must be None if CA=False
-        with self.assertRaisesRegex(ValueError, r'^pathlen must be None when ca is False$'):
-            BasicConstraints('CA:FALSE, pathlen=3')
-
     def test_other(self):
         # test without pathlen
-        self.assertBC(BasicConstraints('CA:FALSE'), False, None, False)
-        self.assertBC(BasicConstraints('CA : FAlse '), False, None, False)
-        self.assertBC(BasicConstraints('CA: true'), True, None, False)
-        self.assertBC(BasicConstraints('CA=true'), True, None, False)
+        self.assertBC(BasicConstraints({'value': {'ca': False}}), False, None, True)
+        self.assertBC(BasicConstraints({'value': {'ca': True}}), True, None, True)
+        self.assertBC(BasicConstraints({'value': {'ca': True}}), True, None, True)
 
         # test adding a pathlen
-        self.assertBC(BasicConstraints('CA:TRUE,pathlen=0'), True, 0, False)
-        self.assertBC(BasicConstraints('CA:trUe,pathlen:1'), True, 1, False)
-        self.assertBC(BasicConstraints('CA: true , pathlen = 2 '), True, 2, False)
+        self.assertBC(BasicConstraints({'value': {'ca': True, 'pathlen': 0}}), True, 0, True)
+        self.assertBC(BasicConstraints({'value': {'ca': True, 'pathlen': 1}}), True, 1, True)
+        self.assertBC(BasicConstraints({'value': {'ca': True, 'pathlen': 2}}), True, 2, True)
 
-        with self.assertRaisesRegex(ValueError, r'^Could not parse pathlen: pathlen=foo$'):
-            BasicConstraints('CA:FALSE, pathlen=foo')
+        with self.assertRaisesRegex(ValueError, r'^Could not parse pathlen: "foo"$'):
+            BasicConstraints({'value': {'ca': True, 'pathlen': 'foo'}})
 
-        with self.assertRaisesRegex(ValueError, r'^Could not parse pathlen: pathlen=$'):
-            BasicConstraints('CA:FALSE, pathlen=')
+        with self.assertRaisesRegex(ValueError, r'^Could not parse pathlen: ""$'):
+            BasicConstraints({'value': {'ca': True, 'pathlen': ''}})
 
-        with self.assertRaisesRegex(ValueError, r'^Could not parse pathlen: foobar$'):
-            BasicConstraints('CA:FALSE, foobar')
+        with self.assertRaisesRegex(ValueError, r'^Could not parse pathlen: "foobar"$'):
+            BasicConstraints({'value': {'ca': True, 'pathlen': 'foobar'}})
 
     def test_serialize(self):
         exts = [
@@ -2779,7 +2782,7 @@ class KeyUsageTestCase(TestCase):
         self.assertEqual(crypto.oid, ExtensionOID.KEY_USAGE)
 
     def test_basic(self):
-        self.assertBasic(KeyUsage('critical,cRLSign,keyCertSign'))
+        self.assertBasic(KeyUsage({'critical': True, 'value': ['cRLSign', 'keyCertSign']}))
         self.assertBasic(KeyUsage({'critical': True, 'value': ['cRLSign', 'keyCertSign']}))
         self.assertBasic(KeyUsage(x509.extensions.Extension(
             oid=ExtensionOID.KEY_USAGE,
@@ -2797,14 +2800,14 @@ class KeyUsageTestCase(TestCase):
             )
         )))
 
-        ext = KeyUsage('critical,cRLSign,keyCertSign')
+        ext = KeyUsage({'critical': True, 'value': ['cRLSign', 'keyCertSign']})
         ext2 = KeyUsage(ext.as_extension())
         self.assertEqual(ext, ext2)
 
     def test_hash(self):
-        ext1 = KeyUsage('critical,cRLSign,keyCertSign')
-        ext2 = KeyUsage('cRLSign,keyCertSign')
-        ext3 = KeyUsage('cRLSign,keyCertSign,keyEncipherment')
+        ext1 = KeyUsage({'critical': True, 'value': ['cRLSign', 'keyCertSign']})
+        ext2 = KeyUsage({'value': ['cRLSign', 'keyCertSign']})
+        ext3 = KeyUsage({'value': ['cRLSign', 'keyCertSign', 'keyEncipherment']})
 
         self.assertEqual(hash(ext1), hash(ext1))
         self.assertEqual(hash(ext2), hash(ext2))
@@ -2815,32 +2818,41 @@ class KeyUsageTestCase(TestCase):
         self.assertNotEqual(hash(ext2), hash(ext3))
 
     def test_eq(self):
-        self.assertEqual(KeyUsage('cRLSign'), KeyUsage('cRLSign'))
-        self.assertEqual(KeyUsage('cRLSign,keyCertSign'), KeyUsage('cRLSign,keyCertSign'))
-        self.assertEqual(KeyUsage('cRLSign,keyCertSign'), KeyUsage('keyCertSign,cRLSign'))
+        self.assertEqual(KeyUsage({'value': ['cRLSign']}), KeyUsage({'value': ['cRLSign']}))
+        self.assertEqual(KeyUsage({'value': ['cRLSign', 'keyCertSign']}),
+                         KeyUsage({'value': ['cRLSign', 'keyCertSign']}))
+        self.assertEqual(KeyUsage({'value': ['cRLSign', 'keyCertSign']}),
+                         KeyUsage({'value': ['keyCertSign', 'cRLSign']}))
 
-        self.assertEqual(KeyUsage('critical,cRLSign'), KeyUsage('critical,cRLSign'))
-        self.assertEqual(KeyUsage('critical,cRLSign,keyCertSign'), KeyUsage('critical,cRLSign,keyCertSign'))
-        self.assertEqual(KeyUsage('critical,cRLSign,keyCertSign'), KeyUsage('critical,keyCertSign,cRLSign'))
+        self.assertEqual(
+            KeyUsage({'critical': True, 'value': ['cRLSign']}),
+            KeyUsage({'critical': True, 'value': ['cRLSign']}))
+        self.assertEqual(
+            KeyUsage({'critical': True, 'value': ['cRLSign', 'keyCertSign']}),
+            KeyUsage({'critical': True, 'value': ['cRLSign', 'keyCertSign']}))
+        self.assertEqual(
+            KeyUsage({'critical': True, 'value': ['cRLSign', 'keyCertSign']}),
+            KeyUsage({'critical': True, 'value': ['keyCertSign', 'cRLSign']}))
 
     def test_ne(self):
-        self.assertNotEqual(KeyUsage('cRLSign'), KeyUsage('keyCertSign'))
-        self.assertNotEqual(KeyUsage('cRLSign'), KeyUsage('critical,cRLSign'))
-        self.assertNotEqual(KeyUsage('cRLSign'), 10)
+        self.assertNotEqual(KeyUsage({'value': ['cRLSign']}), KeyUsage({'value': ['keyCertSign']}))
+        self.assertNotEqual(KeyUsage({'value': ['cRLSign']}),
+                            KeyUsage({'critical': True, 'value': ['cRLSign']}))
+        self.assertNotEqual(KeyUsage({'value': ['cRLSign']}), 10)
 
     def test_sanity_checks(self):
         # there are some sanity checks
-        self.assertEqual(KeyUsage('decipherOnly').value, ['decipherOnly', 'keyAgreement'])
+        self.assertEqual(KeyUsage({'value': ['decipherOnly']}).value, ['decipherOnly', 'keyAgreement'])
 
     def test_empty_str(self):
         # we want to accept an empty str as constructor
-        ku = KeyUsage('')
+        ku = KeyUsage({})
         self.assertEqual(len(ku), 0)
         self.assertFalse(bool(ku))
 
     def test_dunder(self):
         # test __contains__ and __len__
-        ku = KeyUsage('cRLSign')
+        ku = KeyUsage({'value': ['cRLSign']})
         self.assertIn('cRLSign', ku)
         self.assertNotIn('keyCertSign', ku)
         self.assertEqual(len(ku), 1)
@@ -2848,12 +2860,12 @@ class KeyUsageTestCase(TestCase):
 
     def test_error(self):
         with self.assertRaisesRegex(ValueError, r'^Unknown value\(s\): foo$'):
-            KeyUsage('foo')
+            KeyUsage({'value': 'foo'})
         with self.assertRaisesRegex(ValueError, r'^Unknown value\(s\): foobar$'):
-            KeyUsage('foobar')
+            KeyUsage({'value': 'foobar'})
 
         with self.assertRaisesRegex(ValueError, r'^Unknown value\(s\): foo$'):
-            KeyUsage('critical,foo')
+            KeyUsage({'value': 'foo', 'critical': True})
 
         with self.assertRaisesRegex(ValueError, r'^None: Invalid critical value passed$'):
             KeyUsage({'critical': None, 'value': ['cRLSign']})
@@ -2887,7 +2899,7 @@ class ExtendedKeyUsageTestCase(TestCase):
         self.assertNotIn(ExtendedKeyUsageOID.OCSP_SIGNING, crypto.value)
 
     def test_basic(self):
-        self.assertBasic(ExtendedKeyUsage('critical,serverAuth,clientAuth'))
+        self.assertBasic(ExtendedKeyUsage({'critical': True, 'value': ['serverAuth', 'clientAuth']}))
         self.assertBasic(ExtendedKeyUsage(x509.extensions.Extension(
             oid=ExtensionOID.EXTENDED_KEY_USAGE,
             critical=True,
@@ -2895,9 +2907,9 @@ class ExtendedKeyUsageTestCase(TestCase):
         )
 
     def test_hash(self):
-        ext1 = ExtendedKeyUsage('critical,serverAuth')
-        ext2 = ExtendedKeyUsage('serverAuth')
-        ext3 = ExtendedKeyUsage('serverAuth,clientAuth')
+        ext1 = ExtendedKeyUsage({'critical': True, 'value': ['serverAuth']})
+        ext2 = ExtendedKeyUsage({'value': ['serverAuth']})
+        ext3 = ExtendedKeyUsage({'value': ['serverAuth', 'clientAuth']})
 
         self.assertEqual(hash(ext1), hash(ext1))
         self.assertEqual(hash(ext2), hash(ext2))
@@ -2908,23 +2920,29 @@ class ExtendedKeyUsageTestCase(TestCase):
         self.assertNotEqual(hash(ext2), hash(ext3))
 
     def test_eq(self):
-        self.assertEqual(ExtendedKeyUsage('serverAuth'), ExtendedKeyUsage('serverAuth'))
-        self.assertEqual(ExtendedKeyUsage('serverAuth,clientAuth'), ExtendedKeyUsage('serverAuth,clientAuth'))
-        self.assertEqual(ExtendedKeyUsage('serverAuth,clientAuth'), ExtendedKeyUsage('clientAuth,serverAuth'))
+        self.assertEqual(ExtendedKeyUsage({'value': ['serverAuth']}),
+                         ExtendedKeyUsage({'value': ['serverAuth']}))
+        self.assertEqual(ExtendedKeyUsage({'value': ['serverAuth', 'clientAuth']}),
+                         ExtendedKeyUsage({'value': ['serverAuth', 'clientAuth']}))
+        self.assertEqual(ExtendedKeyUsage({'value': ['serverAuth', 'clientAuth']}),
+                         ExtendedKeyUsage({'value': ['clientAuth', 'serverAuth']}))
 
-        self.assertEqual(ExtendedKeyUsage('critical,serverAuth'), ExtendedKeyUsage('critical,serverAuth'))
-        self.assertEqual(ExtendedKeyUsage('critical,serverAuth,clientAuth'),
-                         ExtendedKeyUsage('critical,serverAuth,clientAuth'))
-        self.assertEqual(ExtendedKeyUsage('critical,serverAuth,clientAuth'),
-                         ExtendedKeyUsage('critical,clientAuth,serverAuth'))
+        self.assertEqual(ExtendedKeyUsage({'critical': True, 'value': ['serverAuth']}),
+                         ExtendedKeyUsage({'critical': True, 'value': ['serverAuth']}))
+        self.assertEqual(ExtendedKeyUsage({'critical': True, 'value': ['serverAuth', 'clientAuth']}),
+                         ExtendedKeyUsage({'critical': True, 'value': ['serverAuth', 'clientAuth']}))
+        self.assertEqual(ExtendedKeyUsage({'critical': True, 'value': ['serverAuth', 'clientAuth']}),
+                         ExtendedKeyUsage({'critical': True, 'value': ['clientAuth', 'serverAuth']}))
 
     def test_ne(self):
-        self.assertNotEqual(ExtendedKeyUsage('serverAuth'), ExtendedKeyUsage('clientAuth'))
-        self.assertNotEqual(ExtendedKeyUsage('serverAuth'), ExtendedKeyUsage('critical,serverAuth'))
-        self.assertNotEqual(ExtendedKeyUsage('serverAuth'), 10)
+        self.assertNotEqual(ExtendedKeyUsage({'value': ['serverAuth']}),
+                            ExtendedKeyUsage({'value': ['clientAuth']}))
+        self.assertNotEqual(ExtendedKeyUsage({'value': ['serverAuth']}),
+                            ExtendedKeyUsage({'critical': True, 'value': ['serverAuth']}))
+        self.assertNotEqual(ExtendedKeyUsage({'value': ['serverAuth']}), 10)
 
     def test_not_critical(self):
-        self.assertBasic(ExtendedKeyUsage('serverAuth,clientAuth'), critical=False)
+        self.assertBasic(ExtendedKeyUsage({'value': ['serverAuth', 'clientAuth']}), critical=False)
         ext_value = x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH])
         self.assertBasic(ExtendedKeyUsage(
             x509.extensions.Extension(
@@ -3164,10 +3182,6 @@ class OCSPNoCheckTestCase(ExtensionTestMixin, TestCase):
         self.assertFalse(OCSPNoCheck({'critical': False}).critical)
         self.assertFalse(OCSPNoCheck({'critical': False, 'foo': 'bar'}).critical)
 
-    def test_from_str(self):
-        with self.assertRaises(NotImplementedError):
-            OCSPNoCheck('foobar')
-
     def test_str(self):
         ext1 = OCSPNoCheck({'critical': True})
         ext2 = OCSPNoCheck({'critical': False})
@@ -3250,10 +3264,6 @@ class PrecertPoisonTestCase(ExtensionTestMixin, TestCase):
         self.assertTrue(PrecertPoison({}).critical)
         self.assertTrue(PrecertPoison({'critical': True}).critical)
         self.assertTrue(PrecertPoison({'critical': True, 'foo': 'bar'}).critical)
-
-    def test_from_str(self):
-        with self.assertRaises(NotImplementedError):
-            PrecertPoison('foobar')
 
     def test_str(self):
         self.assertEqual(str(PrecertPoison({'critical': True})), 'PrecertPoison/critical')
@@ -3498,8 +3508,8 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
 
     def setUp(self):
         super(SubjectKeyIdentifierTestCase, self).setUp()
-        self.ext1 = SubjectKeyIdentifier(self.hex1)
-        self.ext2 = SubjectKeyIdentifier(self.hex2)
+        self.ext1 = SubjectKeyIdentifier({'value': self.hex1})
+        self.ext2 = SubjectKeyIdentifier({'value': self.hex2})
         self.ext3 = SubjectKeyIdentifier({'value': self.hex3, 'critical': True})
         self.exts = [self.ext1, self.ext2, self.ext3]
 
@@ -3509,13 +3519,13 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         self.assertEqual(ext.as_extension(), self.x1)
 
     def test_as_text(self):
-        self.assertEqual(SubjectKeyIdentifier(self.hex1).as_text(), self.hex1)
-        self.assertEqual(SubjectKeyIdentifier(self.hex2).as_text(), self.hex2)
+        self.assertEqual(SubjectKeyIdentifier({'value': self.hex1}).as_text(), self.hex1)
+        self.assertEqual(SubjectKeyIdentifier({'value': self.hex2}).as_text(), self.hex2)
         self.assertEqual(SubjectKeyIdentifier(self.x1).as_text(), self.hex1)
 
     def test_hash(self):
-        ext1 = SubjectKeyIdentifier(self.hex1)
-        ext2 = SubjectKeyIdentifier(self.hex2)
+        ext1 = SubjectKeyIdentifier({'value': self.hex1})
+        ext2 = SubjectKeyIdentifier({'value': self.hex2})
         ext3 = SubjectKeyIdentifier(self.x1)
 
         self.assertEqual(hash(ext1), hash(ext1))
@@ -3524,16 +3534,16 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         self.assertNotEqual(hash(ext1), hash(ext2))
 
     def test_ne(self):
-        ext1 = SubjectKeyIdentifier(self.hex1)
-        ext2 = SubjectKeyIdentifier(self.hex2)
+        ext1 = SubjectKeyIdentifier({'value': self.hex1})
+        ext2 = SubjectKeyIdentifier({'value': self.hex2})
         ext3 = SubjectKeyIdentifier(self.x1)
 
         self.assertNotEqual(ext1, ext2)
         self.assertNotEqual(ext2, ext3)
 
     def test_repr(self):
-        ext1 = SubjectKeyIdentifier(self.hex1)
-        ext2 = SubjectKeyIdentifier(self.hex2)
+        ext1 = SubjectKeyIdentifier({'value': self.hex1})
+        ext2 = SubjectKeyIdentifier({'value': self.hex2})
         ext3 = SubjectKeyIdentifier(self.x1)
 
         if six.PY2:  # pragma: only py2
@@ -3546,18 +3556,18 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
             self.assertEqual(repr(ext3), '<SubjectKeyIdentifier: b\'333333\', critical=False>')
 
     def test_serialize(self):
-        ext1 = SubjectKeyIdentifier(self.hex1)
-        ext2 = SubjectKeyIdentifier(self.hex2)
+        ext1 = SubjectKeyIdentifier({'value': self.hex1})
+        ext2 = SubjectKeyIdentifier({'value': self.hex2})
         ext3 = SubjectKeyIdentifier(self.x1)
 
         self.assertEqual(ext1.serialize(), {'critical': False, 'value': self.hex1})
         self.assertEqual(ext2.serialize(), {'critical': False, 'value': self.hex2})
         self.assertEqual(ext3.serialize(), {'critical': False, 'value': self.hex1})
-        self.assertEqual(ext1.serialize(), SubjectKeyIdentifier(self.hex1).serialize())
+        self.assertEqual(ext1.serialize(), SubjectKeyIdentifier({'value': self.hex1}).serialize())
         self.assertNotEqual(ext1.serialize(), ext2.serialize())
 
     def test_str(self):
-        ext = SubjectKeyIdentifier(self.hex1)
+        ext = SubjectKeyIdentifier({'value': self.hex1})
         self.assertEqual(str(ext), self.hex1)
 
 
@@ -3586,11 +3596,11 @@ class TLSFeatureTestCase(TestCase):
 
     def setUp(self):
         super(TLSFeatureTestCase, self).setUp()
-        self.ext1 = TLSFeature('critical,OCSPMustStaple')
-        self.ext2 = TLSFeature('OCSPMustStaple')
-        self.ext3 = TLSFeature('OCSPMustStaple,MultipleCertStatusRequest')
-        self.ext4 = TLSFeature('MultipleCertStatusRequest,OCSPMustStaple')  # reversed order
-        self.ext5 = TLSFeature('critical,MultipleCertStatusRequest,OCSPMustStaple')  # reversed order
+        self.ext1 = TLSFeature({'critical': True, 'value': ['OCSPMustStaple']})
+        self.ext2 = TLSFeature({'value': ['OCSPMustStaple']})
+        self.ext3 = TLSFeature({'value': ['OCSPMustStaple', 'MultipleCertStatusRequest']})
+        self.ext4 = TLSFeature({'value': ['MultipleCertStatusRequest', 'OCSPMustStaple']})  # reversed order
+        self.ext5 = TLSFeature({'critical': True, 'value': ['MultipleCertStatusRequest', 'OCSPMustStaple']})
         self.exts = [self.ext1, self.ext2, self.ext3, self.ext4, self.ext5]
 
     def test_completeness(self):
@@ -3710,6 +3720,6 @@ class TLSFeatureTestCase(TestCase):
 
     def test_unknown_values(self):
         with self.assertRaisesRegex(ValueError, r'^Unknown value\(s\): foo$'):
-            TLSFeature('foo')
+            TLSFeature({'value': ['foo']})
         with self.assertRaisesRegex(ValueError, r'^Unknown value\(s\): foo$'):
-            TLSFeature('critical,foo')
+            TLSFeature({'critical': True, 'value': ['foo']})
