@@ -38,7 +38,6 @@ script:
 matrix:
     exclude:
         # Django 2.2 no longer supports python2.7
-          python: "2.7"
         - env: DJANGO=2.2.4 CRYPTOGRAPHY=2.7
           python: "2.7"
         - env: DJANGO=2.2.4 CRYPTOGRAPHY=2.6.1
@@ -47,7 +46,6 @@ matrix:
           python: "2.7"
 
         # Django 2.1 no longer supports python2.7
-          python: "2.7"
         - env: DJANGO=2.1.11 CRYPTOGRAPHY=2.7
           python: "2.7"
         - env: DJANGO=2.1.11 CRYPTOGRAPHY=2.6.1
@@ -56,7 +54,6 @@ matrix:
           python: "2.7"
 
         # We do not test Django 1.11 with Python nightly
-          python: "nightly"
         - env: DJANGO=1.11.23 CRYPTOGRAPHY=2.7
           python: "nightly"
         - env: DJANGO=1.11.23 CRYPTOGRAPHY=2.6.1
