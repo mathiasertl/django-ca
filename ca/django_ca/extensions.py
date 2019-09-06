@@ -74,7 +74,7 @@ class Extension(object):
         Raw value for this extension. The type various from subclass to subclass.
     critical : bool
         If this extension is marked as critical
-    oid : :py:class:`~cg:cryptography.x509.ExtensionOID`
+    oid : :py:class:`~cg:cryptography.x509.oid.ExtensionOID`
         The OID for this extension.
     key : str
         The key is a reusable ID used in various parts of the application.
