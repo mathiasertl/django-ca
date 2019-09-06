@@ -53,8 +53,9 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         self.assertEqual(ca.subject, Subject({'CN': 'ca.example.com'}))
 
         # verify X509 properties
-        self.assertEqual(ca.basic_constraints, BasicConstraints('critical,CA:TRUE,pathlen=0'))
-        self.assertEqual(ca.key_usage, KeyUsage('critical,cRLSign,keyCertSign'))
+        self.assertEqual(ca.basic_constraints,
+                         BasicConstraints({'critical': True, 'value': {'ca': True, 'pathlen': 0}}))
+        self.assertEqual(ca.key_usage, KeyUsage({'critical': True, 'value': ['cRLSign', 'keyCertSign']}))
         self.assertIsNone(ca.subject_alternative_name, None)
 
         self.assertIsNone(ca.extended_key_usage)
@@ -69,12 +70,15 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
             parent=None, subject=Subject([('CN', 'ca.example.com')]))
 
         ca = CertificateAuthority.objects.init(name='1', **kwargs)
-        self.assertEqual(ca.basic_constraints, BasicConstraints('critical,CA:TRUE'))
+        self.assertEqual(ca.basic_constraints, BasicConstraints({'critical': True, 'value': {'ca': True}}))
 
         ca = CertificateAuthority.objects.init(pathlen=0, name='2', **kwargs)
-        self.assertEqual(ca.basic_constraints, BasicConstraints('critical,CA:TRUE,pathlen=0'))
+        self.assertEqual(ca.basic_constraints,
+                         BasicConstraints({'critical': True, 'value': {'ca': True, 'pathlen': 0}}))
+
         ca = CertificateAuthority.objects.init(pathlen=2, name='3', **kwargs)
-        self.assertEqual(ca.basic_constraints, BasicConstraints('critical,CA:TRUE,pathlen=2'))
+        self.assertEqual(ca.basic_constraints,
+                         BasicConstraints({'critical': True, 'value': {'ca': True, 'pathlen': 2}}))
 
     @override_tmpcadir()
     def test_parent(self):

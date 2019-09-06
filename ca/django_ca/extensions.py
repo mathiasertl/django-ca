@@ -46,23 +46,14 @@ from .utils import x509_relative_name
 class Extension(object):
     """Convenience class to handle X509 Extensions.
 
-    The class is designed to take whatever format an extension might occur, essentially providing a
-    convertible format for extensions that is used in many places throughout the code. It accepts ``str`` if
-    e.g. the value was received from the commandline::
-
-        >>> KeyUsage('keyAgreement,keyEncipherment')
-        <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=False>
-        >>> KeyUsage('critical,keyAgreement,keyEncipherment')
-        <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=True>
-
-    Or it can be a ``dict`` as used by the :ref:`CA_PROFILES <settings-ca-profiles>` setting::
+    The value is a ``dict`` as used by the :ref:`CA_PROFILES <settings-ca-profiles>` setting::
 
         >>> KeyUsage({'value': ['keyAgreement', 'keyEncipherment']})
         <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=False>
         >>> KeyUsage({'critical': True, 'value': ['keyAgreement', 'keyEncipherment']})
         <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=True>
 
-    ... and finally it can also use a subclass of :py:class:`~cg:cryptography.x509.ExtensionType`
+    ... but can also use a subclass of :py:class:`~cg:cryptography.x509.ExtensionType`
     from ``cryptography``::
 
         >>> from cryptography import x509
@@ -98,16 +89,6 @@ class Extension(object):
             self.critical = value.get('critical', self.default_critical)
             self.from_dict(value)
             self._test_value()
-        elif isinstance(value, six.string_types):  # e.g. from commandline parser
-            if value.startswith(str('critical,')):
-                self.critical = True
-                value = value[9:]
-            else:
-                self.critical = False
-                value = value
-
-            self.from_str(value)
-            self._test_value()
         else:
             self.from_other(value)
         if not isinstance(self.critical, bool):
@@ -129,9 +110,6 @@ class Extension(object):
 
     def from_extension(self, value):
         raise NotImplementedError
-
-    def from_str(self, value):
-        self.value = value
 
     def from_dict(self, value):
         self.value = value['value']
@@ -158,7 +136,7 @@ class Extension(object):
 
         For example, this should always be True::
 
-            >>> ku = KeyUsage('keyAgreement,keyEncipherment')
+            >>> ku = KeyUsage({'value': ['keyAgreement', 'keyEncipherment']})
             >>> ku == KeyUsage(ku.serialize())
             True
         """
@@ -181,7 +159,7 @@ class Extension(object):
 
         Example::
 
-            >>> kwargs = KeyUsage('keyAgreement,keyEncipherment').for_builder()
+            >>> kwargs = KeyUsage({'value': ['keyAgreement', 'keyEncipherment']}).for_builder()
             >>> builder.add_extension(**kwargs)  # doctest: +SKIP
         """
         return {'extension': self.extension_type, 'critical': self.critical}
@@ -255,9 +233,6 @@ class NullExtension(Extension):
 
     def from_dict(self, value):
         pass
-
-    def from_str(self, value):
-        raise NotImplementedError
 
     def serialize(self):
         return {'critical': self.critical}
@@ -377,9 +352,6 @@ class ListExtension(IterableExtension):
 
     def from_extension(self, ext):
         self.value = list(ext.value)
-
-    def from_str(self, value):
-        self.value = [self.parse_value(n) for n in shlex_split(value, ', ')]
 
     def insert(self, index, value):
         self.value.insert(index, self.parse_value(value))
@@ -630,9 +602,6 @@ class KeyIdExtension(Extension):
             self._test_value()
         else:
             super(KeyIdExtension, self).from_other(value)
-
-    def from_str(self, value):
-        self.value = hex_to_bytes(value)
 
     def as_text(self):
         return bytes_to_hex(self.value)
@@ -1073,9 +1042,6 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
         self.issuers = [self.parse_value(v) for v in value.get('issuers', [])]
         self.ocsp = [self.parse_value(v) for v in value.get('ocsp', [])]
 
-    def from_str(self, value):
-        raise NotImplementedError
-
     def serialize(self):
         return {
             'critical': self.critical,
@@ -1127,15 +1093,9 @@ class BasicConstraints(Extension):
     This class has the boolean attributes ``ca`` and the attribute ``pathlen``, which is either ``None`` or an
     ``int``. Note that this extension is marked as critical by default if you pass a dict to the constructor::
 
-        >>> BasicConstraints('critical,CA:TRUE, pathlen:3')
-        <BasicConstraints: 'CA:TRUE, pathlen:3', critical=True>
         >>> bc = BasicConstraints({'value': {'ca': True, 'pathlen': 4}})
         >>> (bc.ca, bc.pathlen, bc.critical)
         (True, 4, True)
-
-        # Note that string parsing ignores case and whitespace and is quite forgiving
-        >>> BasicConstraints('critical, ca=true    , pathlen: 3 ')
-        <BasicConstraints: 'CA:TRUE, pathlen:3', critical=True>
 
     .. seealso::
 
@@ -1148,8 +1108,6 @@ class BasicConstraints(Extension):
 
     def __init__(self, *args, **kwargs):
         super(BasicConstraints, self).__init__(*args, **kwargs)
-        if self.ca is False and self.pathlen is not None:
-            raise ValueError('pathlen must be None when ca is False')
 
     def __repr__(self):
         return '<%s: %r, critical=%r>' % (self.__class__.__name__, str(self.as_text()), self.critical)
@@ -1167,24 +1125,13 @@ class BasicConstraints(Extension):
         self.ca = bool(value.get('ca', False))
         if self.ca:
             self.pathlen = value.get('pathlen', None)
+            if self.pathlen is not None:
+                try:
+                    self.pathlen = int(self.pathlen)
+                except ValueError:
+                    raise ValueError('Could not parse pathlen: "%s"' % self.pathlen)
         else:  # if ca is not True, we don't use the pathlen
             self.pathlen = None
-
-    def from_str(self, value):
-        value = value.strip().lower()
-        pathlen = None
-
-        if ',' in value:
-            value, pathlen = value.split(',', 1)
-            pathlen_match = re.search(r'\s*(?:pathlen\s*[:=]\s*)?([0-9]+)', pathlen.strip(), re.I)
-            if pathlen_match is None:
-                raise ValueError('Could not parse pathlen: %s' % pathlen.lstrip())
-            else:
-                pathlen = int(pathlen_match.group(1))
-        self.pathlen = pathlen
-
-        value = re.search(r'(?:CA\s*[:=]\s*)?(.*)', value.strip(), re.I).group(1)
-        self.ca = value == 'true'
 
     @property
     def extension_type(self):
@@ -1316,7 +1263,7 @@ class IssuerAlternativeName(AlternativeNameExtension):
 
     This extension is usually marked as non-critical.
 
-    >>> IssuerAlternativeName('https://example.com')
+    >>> IssuerAlternativeName({'value': 'https://example.com'})
     <IssuerAlternativeName: ['URI:https://example.com'], critical=False>
 
     .. seealso::
@@ -1339,9 +1286,9 @@ class KeyUsage(KnownValuesExtension):
     critical. The value ``keyAgreement`` is always added if ``decipherOnly`` is present, since the value of
     this extension is not meaningful otherwise.
 
-    >>> KeyUsage('critical,encipherOnly')
+    >>> KeyUsage({'value': ['encipherOnly'], 'critical': True})
     <KeyUsage: ['encipherOnly'], critical=True>
-    >>> KeyUsage('critical,decipherOnly')
+    >>> KeyUsage({'value': ['decipherOnly'], 'critical': True})
     <KeyUsage: ['decipherOnly', 'keyAgreement'], critical=True>
 
     .. seealso::
@@ -1700,7 +1647,7 @@ class SubjectAlternativeName(AlternativeNameExtension):
 
     This extension is usually marked as non-critical.
 
-    >>> SubjectAlternativeName('example.com')
+    >>> SubjectAlternativeName({'value': 'example.com'})
     <SubjectAlternativeName: ['DNS:example.com'], critical=False>
 
     .. seealso::

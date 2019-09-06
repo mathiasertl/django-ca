@@ -49,6 +49,7 @@ from .utils import get_cert_builder
 from .utils import int_to_hex
 from .utils import parse_general_name
 from .utils import parse_hash_algorithm
+from .utils import shlex_split
 from .utils import validate_hostname
 from .utils import validate_key_parameters
 
@@ -176,8 +177,9 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         # Normalize extensions to django_ca.extensions.Extension subclasses
         if not isinstance(subject, Subject):
             subject = Subject(subject)
-        if not isinstance(issuer_alt_name, IssuerAlternativeName):
+        if issuer_alt_name and not isinstance(issuer_alt_name, IssuerAlternativeName):
             issuer_alt_name = IssuerAlternativeName(issuer_alt_name)
+            issuer_alt_name = ','.join(issuer_alt_name.serialize()['value'])
 
         serial = x509.random_serial_number()
         hex_serial = int_to_hex(serial)
@@ -268,7 +270,6 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         # Normalize extensions for create()
         if crl_url:
             crl_url = '\n'.join(crl_url)
-        issuer_alt_name = ','.join(issuer_alt_name.serialize()['value'])
 
         ca = self.model(name=name, issuer_url=issuer_url, issuer_alt_name=issuer_alt_name,
                         ocsp_url=ocsp_url, crl_url=crl_url, parent=parent)
@@ -356,10 +357,10 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         ocsp_url : ``str`` or ``bool``, optional
             Pass a custom OCSP URL overriding the value configured in the CA or pass ``False`` to disable
             getting any issuer_url from the CA (e.g. to pass a custom extension in ``extra_extensions``).
-        issuer_alternative_name : ``str`` or ``bool``, optional
-            Pass a custom issuer alternative name URL overriding the value configured in the CA or pass
-            ``False`` to disable getting any issuer_url from the CA (e.g. to pass a custom extension in
-            ``extra_extensions``).
+        issuer_alternative_name : ``dict`` or :py:class:`~django_ca.extensions.IssuerAlternativeName`, \
+                optional
+            Pass a custom issuer alternative name URL overriding the value configured in the CA or pass an
+            empty dict to disable getting any issuer_url from the CA.
         extra_extensions : list of :py:class:`cg:cryptography.x509.Extension` or \
                 :py:class:`django_ca.extensions.Extension`, optional
             An optional list of additional extensions to add to the certificate.
@@ -419,7 +420,9 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         if ocsp_url is None:
             ocsp_url = ca.ocsp_url
         if issuer_alternative_name is None:
-            issuer_alternative_name = ca.issuer_alt_name
+            issuer_alternative_name = IssuerAlternativeName({
+                'value': shlex_split(ca.issuer_alt_name, ','),
+            })
 
         ################
         # Read the CSR #
@@ -478,8 +481,9 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             builder = builder.add_extension(**tls_feature.for_builder())
 
         if issuer_alternative_name:
-            issuer_alt_name = IssuerAlternativeName(issuer_alternative_name)
-            builder = builder.add_extension(**issuer_alt_name.for_builder())
+            if not isinstance(issuer_alternative_name, IssuerAlternativeName):
+                issuer_alternative_name = IssuerAlternativeName(issuer_alternative_name)
+            builder = builder.add_extension(**issuer_alternative_name.for_builder())
 
         if ocsp_no_check:
             builder = builder.add_extension(**OCSPNoCheck().for_builder())

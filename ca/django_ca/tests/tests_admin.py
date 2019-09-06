@@ -403,11 +403,16 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertSubject(cert.x509, [('C', 'US'), ('CN', cn)])
         self.assertIssuer(ca, cert)
         self.assertAuthorityKeyIdentifier(ca, cert)
-        self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:%s' % cn))
-        self.assertEqual(cert.basic_constraints, BasicConstraints('critical,CA:FALSE'))
-        self.assertEqual(cert.key_usage, KeyUsage('critical,digitalSignature,keyAgreement'))
-        self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('clientAuth,serverAuth'))
-        self.assertEqual(cert.tls_feature, TLSFeature('OCSPMustStaple,MultipleCertStatusRequest'))
+        self.assertEqual(cert.subject_alternative_name,
+                         SubjectAlternativeName({'value': ['DNS:%s' % cn]}))
+        self.assertEqual(cert.basic_constraints,
+                         BasicConstraints({'critical': True, 'value': {'ca': False}}))
+        self.assertEqual(cert.key_usage,
+                         KeyUsage({'critical': True, 'value': ['digitalSignature', 'keyAgreement']}))
+        self.assertEqual(cert.extended_key_usage,
+                         ExtendedKeyUsage({'value': ['clientAuth', 'serverAuth']}))
+        self.assertEqual(cert.tls_feature,
+                         TLSFeature({'value': ['OCSPMustStaple', 'MultipleCertStatusRequest']}))
         self.assertEqual(cert.ca, ca)
         self.assertEqual(cert.csr, csr)
 
@@ -477,8 +482,10 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertSubject(cert.x509, [('C', 'US'), ('CN', cn)])
         self.assertIssuer(ca, cert)
         self.assertAuthorityKeyIdentifier(ca, cert)
-        self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:%s,DNS:%s' % (cn, san)))
-        self.assertEqual(cert.basic_constraints, BasicConstraints('critical,CA:FALSE'))
+        self.assertEqual(cert.subject_alternative_name,
+                         SubjectAlternativeName({'value': ['DNS:%s' % cn, 'DNS:%s' % san]}))
+        self.assertEqual(cert.basic_constraints,
+                         BasicConstraints({'critical': True, 'value': {'ca': False}}))
         self.assertEqual(cert.ca, ca)
         self.assertEqual(cert.csr, csr)
 
@@ -570,10 +577,14 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertSubject(cert.x509, [('C', 'US'), ('CN', cn)])
         self.assertIssuer(ca, cert)
         self.assertAuthorityKeyIdentifier(ca, cert)
-        self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:%s' % cn))
-        self.assertEqual(cert.basic_constraints, BasicConstraints('critical,CA:FALSE'))
-        self.assertEqual(cert.key_usage, KeyUsage('critical,digitalSignature,keyAgreement'))
-        self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('clientAuth,serverAuth'))
+        self.assertEqual(cert.subject_alternative_name,
+                         SubjectAlternativeName({'value': ['DNS:%s' % cn]}))
+        self.assertEqual(cert.basic_constraints,
+                         BasicConstraints({'critical': True, 'value': {'ca': False}}))
+        self.assertEqual(cert.key_usage,
+                         KeyUsage({'critical': True, 'value': ['digitalSignature', 'keyAgreement']}))
+        self.assertEqual(cert.extended_key_usage,
+                         ExtendedKeyUsage({'value': ['clientAuth', 'serverAuth']}))
         self.assertEqual(cert.ca, ca)
         self.assertEqual(cert.csr, csr)
 

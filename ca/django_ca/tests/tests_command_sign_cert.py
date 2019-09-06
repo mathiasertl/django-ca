@@ -72,9 +72,11 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertSubject(cert.x509, subject)
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
 
-        self.assertEqual(cert.key_usage, KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'))
-        self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('serverAuth'))
-        self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:example.com'))
+        self.assertEqual(cert.key_usage, KeyUsage({
+            'critical': True, 'value': ['digitalSignature', 'keyAgreement', 'keyEncipherment']}))
+        self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({'value': ['serverAuth']}))
+        self.assertEqual(cert.subject_alternative_name,
+                         SubjectAlternativeName({'value': ['DNS:example.com']}))
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
 
@@ -100,10 +102,11 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
             self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
 
             self.assertEqual(cert.key_usage,
-                             KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'))
-            self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('serverAuth'))
+                             KeyUsage({'critical': True,
+                                       'value': ['digitalSignature', 'keyAgreement', 'keyEncipherment']}))
+            self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({'value': ['serverAuth']}))
             self.assertEqual(cert.subject_alternative_name,
-                             SubjectAlternativeName('DNS:%s' % cn))
+                             SubjectAlternativeName({'value': ['DNS:%s' % cn]}))
             self.assertIssuer(ca, cert)
             self.assertAuthorityKeyIdentifier(ca, cert)
 
@@ -127,9 +130,11 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
             self.assertSubject(cert.x509, subject)
             self.assertEqual(stdout, cert.pub)
             self.assertEqual(cert.key_usage,
-                             KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'))
-            self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('serverAuth'))
-            self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:example.com'))
+                             KeyUsage({'critical': True,
+                                       'value': ['digitalSignature', 'keyAgreement', 'keyEncipherment']}))
+            self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({'value': ['serverAuth']}))
+            self.assertEqual(cert.subject_alternative_name,
+                             SubjectAlternativeName({'value': ['DNS:example.com']}))
         finally:
             os.remove(csr_path)
 
@@ -192,7 +197,8 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertSubject(cert.x509, [('CN', 'example.net')])
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
         self.assertEqual(stderr, '')
-        self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:example.com'))
+        self.assertEqual(cert.subject_alternative_name,
+                         SubjectAlternativeName({'value': ['DNS:example.com']}))
 
     @override_tmpcadir()
     def test_no_san(self):
@@ -298,11 +304,11 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertSignature([self.ca], cert)
         self.assertSubject(cert.x509, [('CN', 'example.com')])
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
-        self.assertEqual(cert.key_usage, KeyUsage('critical,keyCertSign'))
-        self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('clientAuth'))
+        self.assertEqual(cert.key_usage, KeyUsage({'critical': True, 'value': ['keyCertSign']}))
+        self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({'value': ['clientAuth']}))
         self.assertEqual(cert.subject_alternative_name,
-                         SubjectAlternativeName('DNS:example.com,URI:https://example.net'))
-        self.assertEqual(cert.tls_feature, TLSFeature('OCSPMustStaple'))
+                         SubjectAlternativeName({'value': ['DNS:example.com', 'URI:https://example.net']}))
+        self.assertEqual(cert.tls_feature, TLSFeature({'value': 'OCSPMustStaple'}))
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_no_subject(self):
@@ -319,7 +325,8 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertSubject(cert.x509, [('CN', 'example.com')])
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
         self.assertEqual(stderr, '')
-        self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:example.com'))
+        self.assertEqual(cert.subject_alternative_name,
+                         SubjectAlternativeName({'value': ['DNS:example.com']}))
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_with_password(self):
@@ -395,9 +402,11 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
             self.assertSubject(cert.x509, subject)
             self.assertEqual(stdout, cert.pub)
             self.assertEqual(cert.key_usage,
-                             KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'))
-            self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage('serverAuth'))
-            self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:example.com'))
+                             KeyUsage({'critical': True,
+                                       'value': ['digitalSignature', 'keyAgreement', 'keyEncipherment']}))
+            self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({'value': ['serverAuth']}))
+            self.assertEqual(cert.subject_alternative_name,
+                             SubjectAlternativeName({'value': ['DNS:example.com']}))
         finally:
             os.remove(csr_path)
 

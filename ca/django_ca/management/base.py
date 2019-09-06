@@ -428,14 +428,14 @@ class BaseSignCommand(BaseCommand):
     def add_extensions(self, parser):
         group = parser.add_argument_group('X509 v3 certificate extensions', self.add_extensions_help)
         group.add_argument(
-            '--key-usage', metavar='VALUES', action=ExtensionAction, extension=KeyUsage,
+            '--key-usage', metavar='VALUES', action=KnownValuesExtensionAction, extension=KeyUsage,
             help='The keyUsage extension, e.g. "critical,keyCertSign".')
         group.add_argument(
-            '--ext-key-usage', metavar='VALUES', action=ExtensionAction,
+            '--ext-key-usage', metavar='VALUES', action=KnownValuesExtensionAction,
             extension=ExtendedKeyUsage,
             help='The extendedKeyUsage extension, e.g. "serverAuth,clientAuth".')
         group.add_argument(
-            '--tls-feature', metavar='VALUES', action=ExtensionAction, extension=TLSFeature,
+            '--tls-feature', metavar='VALUES', action=KnownValuesExtensionAction, extension=TLSFeature,
             help='TLS Feature extensions.')
 
     def test_options(self, *args, **options):
@@ -470,7 +470,7 @@ class CertificateAuthorityDetailMixin(object):
                            help='URL to the certificate of your CA (in DER format).')
         group.add_argument(
             '--issuer-alt-name', metavar='URL', action=ExtensionAction, extension=IssuerAlternativeName,
-            default=IssuerAlternativeName(''), help='URL to the homepage of your CA.'
+            help='URL to the homepage of your CA.'
         )
         group.add_argument(
             '--crl-url', metavar='URL', action=MultipleURLAction, default=[],

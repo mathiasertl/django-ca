@@ -67,7 +67,7 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(old.tls_feature, new.tls_feature)
 
         # Test extensions that don't come from the old cert but from the signing CA
-        self.assertEqual(new.basic_constraints, BasicConstraints('critical,false'))
+        self.assertEqual(new.basic_constraints, BasicConstraints({'critical': True, 'value': {'ca': False}}))
         self.assertIsNone(new.issuer_alternative_name)  # signing ca does not have this set
 
         # Some properties come from the ca
@@ -127,10 +127,13 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
 
         # assert overwritten extensions
         self.assertEqual(new.subject, Subject(subject))
-        self.assertEqual(new.subject_alternative_name, SubjectAlternativeName('DNS:%s' % alt))
-        self.assertEqual(new.key_usage, KeyUsage(key_usage))
-        self.assertEqual(new.extended_key_usage, ExtendedKeyUsage(ext_key_usage))
-        self.assertEqual(new.tls_feature, TLSFeature(tls_feature))
+        self.assertEqual(new.subject_alternative_name,
+                         SubjectAlternativeName({'value': ['DNS:%s' % alt]}))
+        self.assertEqual(new.key_usage, KeyUsage({'value': [key_usage]}))
+        self.assertEqual(new.extended_key_usage,
+                         ExtendedKeyUsage({'critical': True, 'value': ext_key_usage.split(',')[1:]}))
+        self.assertEqual(new.tls_feature,
+                         TLSFeature({'critical': True, 'value': tls_feature.split(',')[1:]}))
         self.assertEqual(list(new.watchers.all()), [Watcher.objects.get(mail=watcher)])
 
     @override_tmpcadir()

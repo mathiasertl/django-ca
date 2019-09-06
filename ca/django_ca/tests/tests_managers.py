@@ -47,7 +47,7 @@ class CertificateAuthorityManagerTestCase(DjangoCATestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_extra_extensions(self):
         subject = '/CN=example.com'
-        tlsf = TLSFeature('OCSPMustStaple')
+        tlsf = TLSFeature({'value': 'OCSPMustStaple'})
         ca = CertificateAuthority.objects.init('with-extra', '/CN=example.com', extra_extensions=[tlsf])
 
         exts = [e for e in ca.extensions
@@ -55,15 +55,15 @@ class CertificateAuthorityManagerTestCase(DjangoCATestCase):
         self.assertEqual(ca.subject, Subject(subject))
         self.assertCountEqual(exts, [
             tlsf,
-            BasicConstraints('critical,CA:True'),
-            KeyUsage('critical,cRLSign,keyCertSign'),
+            BasicConstraints({'critical': True, 'value': {'ca': True}}),
+            KeyUsage({'critical': True, 'value': ['cRLSign', 'keyCertSign']}),
         ])
 
 
 @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class GetCertTestCase(DjangoCAWithCertTestCase):
     def assertExtensions(self, cert, expected):
-        expected['BasicConstraints'] = BasicConstraints('critical,CA:FALSE')
+        expected['BasicConstraints'] = BasicConstraints({'critical': True, 'value': {'ca': False}})
         expected['AuthorityKeyIdentifier'] = AuthorityKeyIdentifier(cert.ca.subject_key_identifier)
 
         if cert.ca.issuer_alt_name:
@@ -111,9 +111,12 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
 
         # verify extensions
         extensions = {
-            'ExtendedKeyUsage': ExtendedKeyUsage('serverAuth'),
-            'KeyUsage': KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'),
-            'SubjectAlternativeName': SubjectAlternativeName('DNS:example.com'),
+            'ExtendedKeyUsage': ExtendedKeyUsage({'value': ['serverAuth']}),
+            'KeyUsage': KeyUsage({
+                'critical': True,
+                'value': ['digitalSignature', 'keyAgreement', 'keyEncipherment']
+            }),
+            'SubjectAlternativeName': SubjectAlternativeName({'value': ['DNS:example.com']}),
         }
 
         self.assertExtensions(cert, extensions)
@@ -133,9 +136,12 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
 
         # verify extensions
         self.assertExtensions(cert, {
-            'ExtendedKeyUsage': ExtendedKeyUsage('serverAuth'),
-            'KeyUsage': KeyUsage('critical,digitalSignature,keyAgreement,keyEncipherment'),
-            'SubjectAlternativeName': SubjectAlternativeName('DNS:example.com'),
+            'ExtendedKeyUsage': ExtendedKeyUsage({'value': ['serverAuth']}),
+            'KeyUsage': KeyUsage({
+                'critical': True,
+                'value': ['digitalSignature', 'keyAgreement', 'keyEncipherment'],
+            }),
+            'SubjectAlternativeName': SubjectAlternativeName({'value': ['DNS:example.com']}),
         })
 
     def test_no_names(self):
@@ -163,13 +169,14 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
 
         self.assertEqual(self.get_subject(cert.x509)['CN'], 'cn.example.com')
         self.assertEqual(cert.subject_alternative_name,
-                         SubjectAlternativeName('DNS:cn.example.com,DNS:example.com'))
+                         SubjectAlternativeName({'value': ['DNS:cn.example.com', 'DNS:example.com']}))
 
         # try the same with no SAN at all
         cert = Certificate.objects.init(
             ca, csr, algorithm=hashes.SHA256(), **kwargs)
         self.assertEqual(self.get_subject(cert.x509)['CN'], 'cn.example.com')
-        self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:cn.example.com'))
+        self.assertEqual(cert.subject_alternative_name,
+                         SubjectAlternativeName({'value': ['DNS:cn.example.com']}))
 
     @override_tmpcadir()
     def test_cn_not_in_san(self):
@@ -184,7 +191,8 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             subject_alternative_name={'value': ['example.com']}, **kwargs)
 
         self.assertEqual(self.get_subject(cert.x509)['CN'], 'cn.example.com')
-        self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName('DNS:example.com'))
+        self.assertEqual(cert.subject_alternative_name,
+                         SubjectAlternativeName({'value': ['DNS:example.com']}))
 
     @override_tmpcadir()
     def test_no_san(self):
@@ -271,7 +279,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             subject_alternative_name={'value': ['example.com']}, **kwargs)
 
         self.assertEqual(cert.issuer_alternative_name,
-                         IssuerAlternativeName(ca.issuer_alt_name))
+                         IssuerAlternativeName({'value': ca.issuer_alt_name}))
 
     @override_tmpcadir()
     def test_auth_info_access(self):
@@ -359,7 +367,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         nc = {'value': {'permitted': ['.com'], 'excluded': ['.net']}}
         subject = '/CN=%s' % cn
 
-        ian = 'http://ian.example.com'
+        ian = {'value': 'http://ian.example.com'}
         ca.ocsp_url = certs['child']['ocsp_url']
         ca.issuer_url = certs['child']['issuer_url']
         ca.crl_url = certs['child']['crl_url']
@@ -390,7 +398,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             certs['all-extensions']['extended_key_usage'],
             certs['all-extensions']['key_usage'],
             OCSPNoCheck({'critical': True}),
-            SubjectAlternativeName('%s,%s' % (cn, san)),
+            SubjectAlternativeName({'value': [cn, san]}),
             IssuerAlternativeName(ian),
             certs['all-extensions']['tls_feature'],
             NameConstraints(nc),
@@ -409,7 +417,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         issuer_url = 'http://issuer.override.example.com'
         crl_url = 'http://crl.override.example.com'
         ocsp_url = 'http://ocsp.override.example.com'
-        ian_url = 'http://ian.override.example.com'
+        ian_url = {'value': ['http://ian.override.example.com']}
 
         ca.issuer_url = ''
         ca.crl_url = ''
@@ -439,7 +447,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
                     'ocsp': [ocsp_url],
                 }
             }),
-            IssuerAlternativeName({'value': [ian_url]}),
+            IssuerAlternativeName(ian_url),
         ]
 
         self.assertCountEqual(cert.extensions, expected)
@@ -497,7 +505,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         self.maxDiff = None
         extra_extensions = [
             NameConstraints(nc).as_extension(),
-            IssuerAlternativeName(ian).as_extension(),
+            IssuerAlternativeName({'value': ian}).as_extension(),
             OCSPNoCheck({'critical': True}).as_extension(),
         ]
 
@@ -521,12 +529,12 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         self.assertCountEqual(exts, [
             TLSFeature(tlsf),
             aki,
-            BasicConstraints('critical,CA:False'),
+            BasicConstraints({'critical': True, 'value': {'ca': False}}),
             ExtendedKeyUsage(eku),
             SubjectAlternativeName({'value': [cn] + san}),  # prepend CN from subject
             KeyUsage(ku),
             NameConstraints(nc),
-            IssuerAlternativeName(ian),
+            IssuerAlternativeName({'value': ian}),
             OCSPNoCheck({'critical': True}),
         ])
 
