@@ -55,19 +55,31 @@ class Extension(object):
     from ``cryptography``::
 
         >>> from cryptography import x509
-        >>> ExtendedKeyUsage(x509.extensions.Extension(
+        >>> cg_ext = x509.extensions.Extension(
         ...    oid=ExtensionOID.EXTENDED_KEY_USAGE,
         ...    critical=False,
         ...    value=x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH])
-        ... ))
+        ... )
+        >>> ExtendedKeyUsage(cg_ext)
+        <ExtendedKeyUsage: ['serverAuth'], critical=False>
+        >>> ExtendedKeyUsage({'value': ['serverAuth']})
         <ExtendedKeyUsage: ['serverAuth'], critical=False>
 
     Attributes
     ----------
 
-    name
+    name : str
+        A human readable name of this extension
     value
         Raw value for this extension. The type various from subclass to subclass.
+    critical : bool
+        If this extension is marked as critical
+    oid : :py:class:`~cg:cryptography.x509.ExtensionOID`
+        The OID for this extension.
+    key : str
+        The key is a reusable ID used in various parts of the application.
+    default_critical : bool
+        The default critical value if you pass a dict without the ``"critical"`` key.
 
     Parameters
     ----------
@@ -187,7 +199,8 @@ class UnrecognizedExtension(Extension):
 class NullExtension(Extension):
     """Base class for extensions that have a NULL value.
 
-    Extensions using this base class do not accept a ``str`` as value:
+    Extensions using this base class will ignore any ``"value"`` key in their dict, only the ``"critical"``
+    key is relevant:
 
         >>> OCSPNoCheck()
         <OCSPNoCheck: critical=False>
@@ -582,16 +595,22 @@ class AlternativeNameExtension(GeneralNameMixin, ListExtension):
 class KeyIdExtension(Extension):
     """Base class for extensions that contain a KeyID as value.
 
-    .. TODO::
+    The value can be a hex str or bytes::
 
-        * All subclasses are only instantiated from a cryptography extension, so other values don't work.
+        >>> KeyIdExtension({'value': '33:33'})
+        <KeyIdExtension: b'33', critical=False>
+        >>> KeyIdExtension({'value': b'33'})
+        <KeyIdExtension: b'33', critical=False>
     """
 
     def from_bytes(self, value):  # pragma: only py3
         self.value = value
 
     def from_dict(self, value):
-        self.value = hex_to_bytes(value['value'])
+        self.value = value['value']
+
+        if isinstance(self.value, six.string_types):
+            self.value = hex_to_bytes(self.value)
 
     def from_other(self, value):
         if six.PY3 and isinstance(value, bytes):  # pragma: only py3
@@ -1280,7 +1299,7 @@ class IssuerAlternativeName(AlternativeNameExtension):
 class KeyUsage(KnownValuesExtension):
     """Class representing a KeyUsage extension, which defines the purpose of a certificate.
 
-    This extension is usually marked as critical and RFC 5280 defines that confirming CAs SHOULD mark it as
+    This extension is usually marked as critical and RFC 5280 defines that conforming CAs SHOULD mark it as
     critical. The value ``keyAgreement`` is always added if ``decipherOnly`` is present, since the value of
     this extension is not meaningful otherwise.
 
