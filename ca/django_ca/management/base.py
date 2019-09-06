@@ -211,14 +211,6 @@ class ExtensionAction(argparse.Action):
         kwargs.setdefault('default', self.extension({}))
         super(ExtensionAction, self).__init__(*args, **kwargs)
 
-    def __call__(self, parser, namespace, value, option_string=None):
-        try:
-            value = self.extension(value)
-        except ValueError as e:
-            parser.error('Invalid extension value: %s: %s' % (value, e))
-
-        setattr(namespace, self.dest, value)
-
 
 class KnownValuesExtensionAction(ExtensionAction):
     def __call__(self, parser, namespace, value, option_string=None):
