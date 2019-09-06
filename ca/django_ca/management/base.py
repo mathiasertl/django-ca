@@ -49,6 +49,7 @@ from ..utils import is_power2
 from ..utils import parse_encoding
 from ..utils import parse_hash_algorithm
 from ..utils import parse_key_curve
+from ..utils import shlex_split
 
 
 class SubjectAction(argparse.Action):
@@ -217,6 +218,21 @@ class ExtensionAction(argparse.Action):
             parser.error('Invalid extension value: %s: %s' % (value, e))
 
         setattr(namespace, self.dest, value)
+
+
+class KnownValuesExtensionAction(ExtensionAction):
+    def __call__(self, parser, namespace, value, option_string=None):
+        ext = getattr(namespace, self.dest)
+
+        values = shlex_split(value, ', ')
+        if values[0] == 'critical':
+            values = values[1:]
+            ext.critical = True
+
+        try:
+            ext.extend(values)
+        except ValueError as e:
+            parser.error('Invalid extension value: %s: %s' % (value, e))
 
 
 class AlternativeNameAction(ExtensionAction):

@@ -72,21 +72,23 @@ class SubjectActionTestCase(DjangoCATestCase):
                                '{script}: error: Unknown x509 name field: WRONG\n')
 
 
-class ExtensionAction(DjangoCATestCase):
+class KnownValuesExtensionActionTestCase(DjangoCATestCase):
     def setUp(self):
-        super(ExtensionAction, self).setUp()
+        super(KnownValuesExtensionActionTestCase, self).setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('-e', action=base.ExtensionAction, extension=KeyUsage)
+        self.parser.add_argument('-e', action=base.KnownValuesExtensionAction, extension=KeyUsage)
 
     def test_basic(self):
         ns = self.parser.parse_args(['-e=critical,keyAgreement'])
-        self.assertEqual(ns.e, KeyUsage('critical,keyAgreement'))
+        self.assertEqual(ns.e, KeyUsage({'critical': True, 'value': ['keyAgreement']}))
         self.assertTrue(ns.e.critical)
         self.assertEqual(ns.e.value, ['keyAgreement'])
 
         # test a non-critical value
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument('-e', action=base.KnownValuesExtensionAction, extension=KeyUsage)
         ns = self.parser.parse_args(['-e=keyAgreement'])
-        self.assertEqual(ns.e, KeyUsage('keyAgreement'))
+        self.assertEqual(ns.e, KeyUsage({'value': 'keyAgreement'}))
         self.assertFalse(ns.e.critical)
         self.assertEqual(ns.e.value, ['keyAgreement'])
 
