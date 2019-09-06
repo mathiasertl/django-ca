@@ -1269,12 +1269,6 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         ext = AuthorityKeyIdentifier({'value': self.hex1})
         self.assertEqual(str(ext), 'keyid:%s' % self.hex1)
 
-    @unittest.skipUnless(six.PY3, 'bytes only work in python3')
-    def test_from_bytes(self):
-        ext = AuthorityKeyIdentifier(self.b1)
-        self.assertEqual(ext.as_text(), 'keyid:%s' % self.hex1)
-        self.assertEqual(ext.as_extension(), self.x1)
-
     def test_subject_key_identifier(self):
         ski = SubjectKeyIdentifier({'value': self.hex1})
         ext = AuthorityKeyIdentifier(ski)

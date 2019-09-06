@@ -603,22 +603,11 @@ class KeyIdExtension(Extension):
         <KeyIdExtension: b'33', critical=False>
     """
 
-    def from_bytes(self, value):  # pragma: only py3
-        self.value = value
-
     def from_dict(self, value):
         self.value = value['value']
 
         if isinstance(self.value, six.string_types):
             self.value = hex_to_bytes(self.value)
-
-    def from_other(self, value):
-        if six.PY3 and isinstance(value, bytes):  # pragma: only py3
-            self.critical = self.default_critical
-            self.from_bytes(value)
-            self._test_value()
-        else:
-            super(KeyIdExtension, self).from_other(value)
 
     def as_text(self):
         return bytes_to_hex(self.value)
