@@ -1561,7 +1561,7 @@ class DistributionPointTestCase(TestCase):
             })
 
 
-class CRLDistributionPointsTestCase(ListExtensionTestMixin, TestCase):
+class CRLDistributionPointsTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):
     ext_class = CRLDistributionPoints
 
     dp1 = x509.DistributionPoint(
@@ -2318,7 +2318,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.assertEqual(str(self.pi_empty), 'PolicyInformation(oid=None, 0 qualifiers)')
 
 
-class CertificatePoliciesTestCase(ListExtensionTestMixin, TestCase):
+class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):
     ext_class = CertificatePolicies
     oid = '2.5.29.32.0'
 
@@ -2677,7 +2677,7 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, TestCase):
         self.assertEqual(str(self.ext6), 'CertificatePolicies(0 Policies, critical=True)')
 
 
-class IssuerAlternativeNameTestCase(ListExtensionTestMixin, TestCase):
+class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):
     ext_class = IssuerAlternativeName
     ext_class_name = 'IssuerAlternativeName'
     uri1 = 'https://example.com'
@@ -3724,3 +3724,10 @@ class TLSFeatureTestCase(OrderedSetExtensionTestMixin, NewExtensionTestMixin, Te
             'expected_text': '* MultipleCertStatusRequest',
         },
     }
+
+    def test_unknown_values(self):
+        with self.assertRaisesRegex(ValueError, r'^Unknown value: foo$'):
+            TLSFeature({'value': ['foo']})
+
+        with self.assertRaisesRegex(ValueError, r'^Unknown value: True$'):
+            TLSFeature({'value': [True]})
