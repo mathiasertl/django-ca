@@ -795,15 +795,15 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
             'testprofile': {
                 'keyUsage': {
                     'critical': False,
-                    'value': 'digitalSignature',
+                    'value': ['digitalSignature'],
                 },
                 'extendedKeyUsage': {
                     'critical': True,
-                    'value': 'msKDC',
+                    'value': ['msKDC'],
                 },
                 'TLSFeature': {
                     'critical': True,
-                    'value': 'OCSPMustStaple',
+                    'value': ['OCSPMustStaple'],
                 },
             },
         }

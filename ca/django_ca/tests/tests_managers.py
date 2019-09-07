@@ -47,7 +47,7 @@ class CertificateAuthorityManagerTestCase(DjangoCATestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_extra_extensions(self):
         subject = '/CN=example.com'
-        tlsf = TLSFeature({'value': 'OCSPMustStaple'})
+        tlsf = TLSFeature({'value': ['OCSPMustStaple']})
         ca = CertificateAuthority.objects.init('with-extra', '/CN=example.com', extra_extensions=[tlsf])
 
         exts = [e for e in ca.extensions
