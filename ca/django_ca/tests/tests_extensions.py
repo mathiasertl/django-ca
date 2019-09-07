@@ -77,7 +77,34 @@ def load_tests(loader, tests, ignore):
     return tests
 
 
-class ExtensionTestMixin:
+class AbstractExtensionTestMixin:
+    """TestCase mixin for tests that all extensions are expected to pass, including abstract base classes."""
+
+    def test_hash(self):
+        raise NotImplementedError
+
+    def test_eq(self):
+        for e in self.exts:
+            self.assertEqual(e, e)
+
+    def test_ne(self):
+        raise NotImplementedError
+
+    def test_repr(self):
+        raise NotImplementedError
+
+    def test_str(self):
+        raise NotImplementedError
+
+
+class ExtensionTestMixin(AbstractExtensionTestMixin):
+    def test_as_text(self):
+        raise NotImplementedError
+
+    def test_as_extension(self):
+        for e, x in zip(self.exts, self.xs):
+            self.assertEqual(e.as_extension(), x)
+
     def test_config(self):
         self.assertTrue(issubclass(self.ext_class, Extension))
         self.assertIsInstance(self.ext_class.key, six.string_types)
@@ -87,20 +114,6 @@ class ExtensionTestMixin:
         self.assertEqual(X509CertMixin.OID_MAPPING[self.ext_class.oid], self.ext_class.key)
         self.assertTrue(hasattr(X509CertMixin, self.ext_class.key))
         self.assertIsInstance(getattr(X509CertMixin, self.ext_class.key), cached_property)
-
-    def test_as_extension(self):
-        for e, x in zip(self.exts, self.xs):
-            self.assertEqual(e.as_extension(), x)
-
-    def test_as_text(self):
-        raise NotImplementedError
-
-    def test_hash(self):
-        raise NotImplementedError
-
-    def test_eq(self):
-        for e in self.exts:
-            self.assertEqual(e, e)
 
     def test_extension_type(self):
         for e, x in zip(self.exts, self.xs):
@@ -114,43 +127,11 @@ class ExtensionTestMixin:
         for e, x in zip(self.exts, self.xs):
             self.assertEqual(e, self.ext_class(x))
 
-    def test_ne(self):
-        raise NotImplementedError
-
-    def test_repr(self):
-        raise NotImplementedError
-
     def test_serialize(self):
         raise NotImplementedError
 
-    def test_str(self):
-        raise NotImplementedError
 
-
-class AbstractExtensionTestMixin:
-    def test_as_text(self):
-        pass
-
-    def test_as_extension(self):
-        pass
-
-    def test_config(self):
-        pass
-
-    def test_extension_type(self):
-        pass
-
-    def test_for_builder(self):
-        pass
-
-    def test_from_extension(self):
-        pass
-
-    def test_serialize(self):
-        pass
-
-
-class IterableExtensionTestMixin(ExtensionTestMixin):
+class IterableExtensionTestMixin:
     def test_in(self):
         raise NotImplementedError
 
@@ -844,7 +825,7 @@ class ListExtensionTestCase(TestCase):
         self.assertEqual(ext, ListExtension(ext.serialize()))
 
 
-class OrderedSetExtensionTestCase(AbstractExtensionTestMixin, OrderedSetExtensionTestMixin, TestCase):
+class OrderedSetExtensionTestCase(OrderedSetExtensionTestMixin, AbstractExtensionTestMixin, TestCase):
     ext_class = OrderedSetExtension
     test_values = {
         'one': {
