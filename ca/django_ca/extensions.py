@@ -600,7 +600,7 @@ class KeyIdExtension(Extension):
     def from_dict(self, value):
         self.value = value['value']
 
-        if isinstance(self.value, six.string_types):
+        if isinstance(self.value, six.string_types):  # pragma: no branch - no branch in py2
             self.value = hex_to_bytes(self.value)
 
     def as_text(self):
