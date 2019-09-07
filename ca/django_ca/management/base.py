@@ -213,6 +213,8 @@ class ExtensionAction(argparse.Action):
 
 
 class KnownValuesExtensionAction(ExtensionAction):
+    # TODO: Class can be removed once KeyUsage and ExtendedKeyUsage are switched to OrderedSetExtension
+
     def __call__(self, parser, namespace, value, option_string=None):
         ext = getattr(namespace, self.dest)
 
@@ -223,6 +225,23 @@ class KnownValuesExtensionAction(ExtensionAction):
 
         try:
             ext.extend(values)
+        except ValueError as e:
+            parser.error('Invalid extension value: %s: %s' % (value, e))
+
+
+class OrderedSetExtensionAction(ExtensionAction):
+    def __call__(self, parser, namespace, value, option_string=None):
+        ext = getattr(namespace, self.dest)
+
+        values = shlex_split(value, ', ')
+        if values[0] == 'critical':
+            values = values[1:]
+            ext.critical = True
+        else:
+            ext.critical = False
+
+        try:
+            ext |= values
         except ValueError as e:
             parser.error('Invalid extension value: %s: %s' % (value, e))
 
@@ -427,7 +446,7 @@ class BaseSignCommand(BaseCommand):
             extension=ExtendedKeyUsage,
             help='The extendedKeyUsage extension, e.g. "serverAuth,clientAuth".')
         group.add_argument(
-            '--tls-feature', metavar='VALUES', action=KnownValuesExtensionAction, extension=TLSFeature,
+            '--tls-feature', metavar='VALUES', action=OrderedSetExtensionAction, extension=TLSFeature,
             help='TLS Feature extensions.')
 
     def test_options(self, *args, **options):

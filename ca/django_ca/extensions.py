@@ -293,6 +293,9 @@ class IterableExtension(Extension):
             return '%s/critical' % val
         return val
 
+    def as_text(self):
+        return '\n'.join(['* %s' % v for v in self.serialize_iterable()])
+
     def parse_value(self, v):
         return v
 
@@ -373,9 +376,6 @@ class ListExtension(IterableExtension):
     def remove(self, v):
         return self.value.remove(self.parse_value(v))
 
-    def as_text(self):
-        return '\n'.join(['* %s' % self.serialize_value(v) for v in self.value])
-
 
 class OrderedSetExtension(IterableExtension):
     """Base class for extensions that contain a set of values.
@@ -424,7 +424,7 @@ class OrderedSetExtension(IterableExtension):
         return self.value < self.parse_iterable(other)
 
     def __or__(self, other):  # | operator == union()
-        value = self.value.union(other)
+        value = self.value.union(self.parse_iterable(other))
         return OrderedSetExtension({'critical': self.critical, 'value': value})
 
     def __sub__(self, other):
@@ -456,7 +456,7 @@ class OrderedSetExtension(IterableExtension):
         self.value.discard(self.parse_value(elem))
 
     def from_dict(self, value):
-        self.value = self.parse_iterable(value['value'])
+        self.value = self.parse_iterable(value.get('value', set()))
 
     def intersection(self, *others):  # equivalent to & operator
         value = self.value.intersection(*[self.parse_iterable(o) for o in others])
@@ -1682,9 +1682,8 @@ class SubjectKeyIdentifier(KeyIdExtension):
         self.value = ext.value.digest
 
 
-class TLSFeature(KnownValuesExtension):
-    """Class representing a TLSFeature extension."""
-
+class TLSFeature(OrderedSetExtension):
+    key = 'tls_feature'
     oid = ExtensionOID.TLS_FEATURE
     CHOICES = (
         ('OCSPMustStaple', 'OCSP Must-Staple'),
@@ -1701,14 +1700,22 @@ class TLSFeature(KnownValuesExtension):
     """Known values for this extension."""
 
     def from_extension(self, ext):
-        self.value = [self._CRYPTOGRAPHY_MAPPING_REVERSED[f] for f in ext.value]
+        self.value = set(ext.value)
 
     @property
     def extension_type(self):
-        values = [self.CRYPTOGRAPHY_MAPPING[f] for f in self.value]
-        return x509.TLSFeature(sorted(values, key=lambda t: t.value))
+        # call serialize_value() to ensure consistent sort order
+        return x509.TLSFeature(sorted(self.value, key=lambda v: self.serialize_value(v)))
+
+    def serialize_value(self, v):
+        return self._CRYPTOGRAPHY_MAPPING_REVERSED[v]
 
     def parse_value(self, v):
         if isinstance(v, TLSFeatureType):
-            return self._CRYPTOGRAPHY_MAPPING_REVERSED[v]
-        return v
+            return v
+        elif isinstance(v, six.string_types):
+            try:
+                return self.CRYPTOGRAPHY_MAPPING[v]
+            except KeyError:
+                raise ValueError('Unknown value: %s' % v)
+        raise ValueError('Unknown value: %s' % v)

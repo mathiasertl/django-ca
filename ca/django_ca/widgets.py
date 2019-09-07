@@ -180,5 +180,5 @@ class MultiValueExtensionWidget(CustomMultiWidget):
 
     def decompress(self, value):
         if value:
-            return value.value, value.critical
+            return value.serialize_iterable(), value.critical
         return ([], False)

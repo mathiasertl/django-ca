@@ -308,7 +308,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({'value': ['clientAuth']}))
         self.assertEqual(cert.subject_alternative_name,
                          SubjectAlternativeName({'value': ['DNS:example.com', 'URI:https://example.net']}))
-        self.assertEqual(cert.tls_feature, TLSFeature({'value': 'OCSPMustStaple'}))
+        self.assertEqual(cert.tls_feature, TLSFeature({'value': ['OCSPMustStaple']}))
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_no_subject(self):
