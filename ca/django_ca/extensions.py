@@ -543,12 +543,6 @@ class KnownValuesExtension(ListExtension):
             return '%s/critical' % val
         return val
 
-    def count(self, value):
-        value = self.parse_value(value)
-        if value not in self.KNOWN_VALUES:
-            raise ValueError('Unknown value: %s' % value)
-        return self.value.count(value)
-
     def _test_value(self):
         diff = set(self.value) - self.KNOWN_VALUES
         if diff:
@@ -1683,6 +1677,8 @@ class SubjectKeyIdentifier(KeyIdExtension):
 
 
 class TLSFeature(OrderedSetExtension):
+    """Class representing a TLSFeature extension."""
+
     key = 'tls_feature'
     oid = ExtensionOID.TLS_FEATURE
     CHOICES = (
