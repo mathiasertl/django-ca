@@ -393,46 +393,46 @@ class OrderedSetExtension(IterableExtension):
         <OrderedSetExtension: ['bar'], critical=False>
     """
     def __and__(self, other):  # & operator == intersection()
-        value = self.value & set(self.parse_iterable(other))
+        value = self.value & self.parse_iterable(other)
         return OrderedSetExtension({'critical': self.critical, 'value': value})
 
     def __ge__(self, other):  # >= relation == issuperset()
-        return self.value >= set(self.parse_value(v) for v in other)
+        return self.value >= self.parse_iterable(other)
 
     def __gt__(self, other):  # > relation
-        return self.value > set(self.parse_value(v) for v in other)
+        return self.value > self.parse_iterable(other)
 
     def __iand__(self, other):  # &= operator == intersection_update()
-        self.value &= set(self.parse_iterable(other))
+        self.value &= self.parse_iterable(other)
         return self
 
     def __ior__(self, other):  # |= operator == update()
-        self.value |= set(self.parse_value(v) for v in other)
+        self.value |= self.parse_iterable(other)
         return self
 
     def __isub__(self, other):
-        self.value -= set(self.parse_value(v) for v in other)
+        self.value -= self.parse_iterable(other)
         return self
 
     def __ixor__(self, other):  # ^= operator == symmetric_difference_update()
-        self.value ^= set(self.parse_value(v) for v in other)
+        self.value ^= self.parse_iterable(other)
 
     def __le__(self, other):  # <= relation == issubset()
-        return self.value <= set(self.parse_value(v) for v in other)
+        return self.value <= self.parse_iterable(other)
 
     def __lt__(self, other):  # < relation
-        return self.value < set(self.parse_value(v) for v in other)
+        return self.value < self.parse_iterable(other)
 
     def __or__(self, other):  # | operator == union()
         value = self.value.union(other)
         return OrderedSetExtension({'critical': self.critical, 'value': value})
 
     def __sub__(self, other):
-        value = self.value - set(self.parse_value(v) for v in other)
+        value = self.value - self.parse_iterable(other)
         return OrderedSetExtension({'critical': self.critical, 'value': value})
 
     def __xor__(self, other):  # ^ operator == symmetric_difference()
-        value = self.value ^ set(self.parse_iterable(other))
+        value = self.value ^ self.parse_iterable(other)
         return OrderedSetExtension({'critical': self.critical, 'value': value})
 
     def add(self, elem):
@@ -456,7 +456,7 @@ class OrderedSetExtension(IterableExtension):
         self.value.discard(self.parse_value(elem))
 
     def from_dict(self, value):
-        self.value = set(value['value'])
+        self.value = self.parse_iterable(value['value'])
 
     def intersection(self, *others):  # equivalent to & operator
         value = self.value.intersection(*[self.parse_iterable(o) for o in others])
@@ -475,7 +475,7 @@ class OrderedSetExtension(IterableExtension):
         return self.value.issuperset(self.parse_iterable(o))
 
     def parse_iterable(self, iterable):
-        return [self.parse_value(i) for i in iterable]
+        return set(self.parse_value(i) for i in iterable)
 
     def pop(self):
         return self.value.pop()
@@ -498,7 +498,7 @@ class OrderedSetExtension(IterableExtension):
 
     def update(self, *others):
         for o in others:
-            self.value.update([self.parse_value(v) for v in o])
+            self.value.update(self.parse_iterable(o))
 
 
 class KnownValuesExtension(ListExtension):
