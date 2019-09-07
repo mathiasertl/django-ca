@@ -58,6 +58,7 @@ from ..extensions import CRLDistributionPoints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
 from ..extensions import IssuerAlternativeName
+from ..extensions import IterableExtension
 from ..extensions import KeyUsage
 from ..extensions import ListExtension
 from ..extensions import NameConstraints
@@ -707,6 +708,10 @@ class DjangoCATestCaseMixin(object):
                     ctx['%s_critical' % key] = ''
             else:
                 ctx[key] = value
+
+            if isinstance(value, IterableExtension):
+                for i, ext_value in enumerate(value.serialize_iterable()):
+                    ctx['%s_%s' % (key, i)] = ext_value
 
         if certs[name].get('parent'):
             parent = certs[certs[name]['parent']]

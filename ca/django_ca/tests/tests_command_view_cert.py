@@ -48,12 +48,12 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl}
 ExtendedKeyUsage{extended_key_usage_critical}:
-    * {extended_key_usage[0]}
-    * {extended_key_usage[1]}
+    * {extended_key_usage_0}
+    * {extended_key_usage_1}
 KeyUsage{key_usage_critical}:
-    * {key_usage[0]}
-    * {key_usage[1]}
-    * {key_usage[2]}
+    * {key_usage_0}
+    * {key_usage_1}
+    * {key_usage_2}
 SubjectAltName{subject_alternative_name_critical}:
     * {subject_alternative_name}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
@@ -85,12 +85,12 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl}
 ExtendedKeyUsage{extended_key_usage_critical}:
-    * {extended_key_usage[0]}
-    * {extended_key_usage[1]}
+    * {extended_key_usage_0}
+    * {extended_key_usage_1}
 KeyUsage{key_usage_critical}:
-    * {key_usage[0]}
-    * {key_usage[1]}
-    * {key_usage[2]}
+    * {key_usage_0}
+    * {key_usage_1}
+    * {key_usage_2}
 SubjectAltName{subject_alternative_name_critical}:
     * {subject_alternative_name}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
@@ -122,12 +122,12 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl}
 ExtendedKeyUsage{extended_key_usage_critical}:
-    * {extended_key_usage[0]}
-    * {extended_key_usage[1]}
+    * {extended_key_usage_0}
+    * {extended_key_usage_1}
 KeyUsage{key_usage_critical}:
-    * {key_usage[0]}
-    * {key_usage[1]}
-    * {key_usage[2]}
+    * {key_usage_0}
+    * {key_usage_1}
+    * {key_usage_2}
 SubjectAltName{subject_alternative_name_critical}:
     * {subject_alternative_name}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
@@ -159,12 +159,12 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl}
 ExtendedKeyUsage{extended_key_usage_critical}:
-    * {extended_key_usage[0]}
-    * {extended_key_usage[1]}
+    * {extended_key_usage_0}
+    * {extended_key_usage_1}
 KeyUsage{key_usage_critical}:
-    * {key_usage[0]}
-    * {key_usage[1]}
-    * {key_usage[2]}
+    * {key_usage_0}
+    * {key_usage_1}
+    * {key_usage_2}
 SubjectAltName{subject_alternative_name_critical}:
     * {subject_alternative_name}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
@@ -196,12 +196,12 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl}
 ExtendedKeyUsage{extended_key_usage_critical}:
-    * {extended_key_usage[0]}
-    * {extended_key_usage[1]}
+    * {extended_key_usage_0}
+    * {extended_key_usage_1}
 KeyUsage{key_usage_critical}:
-    * {key_usage[0]}
-    * {key_usage[1]}
-    * {key_usage[2]}
+    * {key_usage_0}
+    * {key_usage_1}
+    * {key_usage_2}
 SubjectAltName{subject_alternative_name_critical}:
     * {subject_alternative_name}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
@@ -233,9 +233,9 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl}
 ExtendedKeyUsage{extended_key_usage_critical}:
-    * {extended_key_usage[0]}
+    * {extended_key_usage_0}
 KeyUsage{key_usage_critical}:
-    * {key_usage[0]}
+    * {key_usage_0}
 SubjectAltName{subject_alternative_name_critical}:
     * {subject_alternative_name}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
@@ -267,12 +267,12 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl}
 ExtendedKeyUsage{extended_key_usage_critical}:
-    * {extended_key_usage[0]}
-    * {extended_key_usage[1]}
+    * {extended_key_usage_0}
+    * {extended_key_usage_1}
 KeyUsage{key_usage_critical}:
-    * {key_usage[0]}
-    * {key_usage[1]}
-    * {key_usage[2]}
+    * {key_usage_0}
+    * {key_usage_1}
+    * {key_usage_2}
 SubjectAltName{subject_alternative_name_critical}:
     * {subject_alternative_name}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
@@ -304,11 +304,11 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl}
 ExtendedKeyUsage{extended_key_usage_critical}:
-    * {extended_key_usage[0]}
+    * {extended_key_usage_0}
 KeyUsage{key_usage_critical}:
-    * {key_usage[0]}
-    * {key_usage[1]}
-    * {key_usage[2]}
+    * {key_usage_0}
+    * {key_usage_1}
+    * {key_usage_2}
 SubjectAltName{subject_alternative_name_critical}:
     * {subject_alternative_name}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
@@ -340,13 +340,13 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl}
 ExtendedKeyUsage{extended_key_usage_critical}:
-    * {extended_key_usage[0]}
-    * {extended_key_usage[1]}
-    * {extended_key_usage[2]}
+    * {extended_key_usage_0}
+    * {extended_key_usage_1}
+    * {extended_key_usage_2}
 KeyUsage{key_usage_critical}:
-    * {key_usage[0]}
-    * {key_usage[1]}
-    * {key_usage[2]}
+    * {key_usage_0}
+    * {key_usage_1}
+    * {key_usage_2}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
     {subject_key_identifier}
 Watchers:
@@ -376,11 +376,11 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl}
 ExtendedKeyUsage{extended_key_usage_critical}:
-    * {extended_key_usage[0]}
+    * {extended_key_usage_0}
 KeyUsage{key_usage_critical}:
-    * {key_usage[0]}
-    * {key_usage[1]}
-    * {key_usage[2]}
+    * {key_usage_0}
+    * {key_usage_1}
+    * {key_usage_2}
 SubjectAltName{subject_alternative_name_critical}:
     * {subject_alternative_name}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
@@ -425,16 +425,16 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl}
 ExtendedKeyUsage{extended_key_usage_critical}:
-    * {extended_key_usage[0]}
-    * {extended_key_usage[1]}
-    * {extended_key_usage[2]}
-    * {extended_key_usage[3]}
+    * {extended_key_usage_0}
+    * {extended_key_usage_1}
+    * {extended_key_usage_2}
+    * {extended_key_usage_3}
 IssuerAltName{issuer_alternative_name_critical}:
     * {issuer_alternative_name[0]}
 KeyUsage{key_usage_critical}:
-    * {key_usage[0]}
-    * {key_usage[1]}
-    * {key_usage[2]}
+    * {key_usage_0}
+    * {key_usage_1}
+    * {key_usage_2}
 NameConstraints{name_constraints_critical}:
     Permitted:
       * DNS:{name_constraints.permitted[0].value}
@@ -449,8 +449,8 @@ SubjectAltName{subject_alternative_name_critical}:
 SubjectKeyIdentifier{subject_key_identifier_critical}:
     {subject_key_identifier}
 TLSFeature{tls_feature_critical}:
-    * {tls_feature[0]}
-    * {tls_feature[1]}
+    * {tls_feature_0}
+    * {tls_feature_1}
 Watchers:
 Digest:
     md5: {md5}
@@ -484,17 +484,17 @@ CRLDistributionPoints{crl_distribution_points_critical}:
         * URI:{crl_distribution_points[1].crl_issuer[1].value}
       * Reasons: ca_compromise, key_compromise
 ExtendedKeyUsage{extended_key_usage_critical}:
-    * {extended_key_usage[0]}
-    * {extended_key_usage[1]}
-    * {extended_key_usage[2]}
-    * {extended_key_usage[3]}
+    * {extended_key_usage_0}
+    * {extended_key_usage_1}
+    * {extended_key_usage_2}
+    * {extended_key_usage_3}
 IssuerAltName{issuer_alternative_name_critical}:
     * {issuer_alternative_name[0]}
     * {issuer_alternative_name[1]}
 KeyUsage{key_usage_critical}:
-    * {key_usage[0]}
-    * {key_usage[1]}
-    * {key_usage[2]}
+    * {key_usage_0}
+    * {key_usage_1}
+    * {key_usage_2}
 NameConstraints{name_constraints_critical}:
     Permitted:
       * DNS:{name_constraints.permitted[0].value}
@@ -507,7 +507,7 @@ SubjectAltName{subject_alternative_name_critical}:
 SubjectKeyIdentifier{subject_key_identifier_critical}:
     {subject_key_identifier}
 TLSFeature{tls_feature_critical}:
-    * {tls_feature[0]}
+    * {tls_feature_0}
 Watchers:
 Digest:
     md5: {md5}
@@ -596,12 +596,12 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl}
 ExtendedKeyUsage{extended_key_usage_critical}:
-    * {extended_key_usage[0]}
-    * {extended_key_usage[1]}
+    * {extended_key_usage_0}
+    * {extended_key_usage_1}
 KeyUsage{key_usage_critical}:
-    * {key_usage[0]}
-    * {key_usage[1]}
-    * {key_usage[2]}
+    * {key_usage_0}
+    * {key_usage_1}
+    * {key_usage_2}
 SubjectAltName{subject_alternative_name_critical}:
     * {subject_alternative_name}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
@@ -754,11 +754,11 @@ CertificatePolicies{certificate_policies_critical}:
     * Policy Identifier: {certificate_policies_1.policy_identifier.dotted_string}
       No Policy Qualifiers
 ExtendedKeyUsage{extended_key_usage_critical}:
-    * {extended_key_usage[0]}
-    * {extended_key_usage[1]}
+    * {extended_key_usage_0}
+    * {extended_key_usage_1}
 KeyUsage{key_usage_critical}:
-    * {key_usage[0]}
-    * {key_usage[1]}
+    * {key_usage_0}
+    * {key_usage_1}
 {sct}
 SubjectAltName{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
@@ -858,11 +858,11 @@ CertificatePolicies{certificate_policies_critical}:
       Policy Qualifiers:
       * http://cps.letsencrypt.org
 ExtendedKeyUsage{extended_key_usage_critical}:
-    * {extended_key_usage[0]}
-    * {extended_key_usage[1]}
+    * {extended_key_usage_0}
+    * {extended_key_usage_1}
 KeyUsage{key_usage_critical}:
-    * {key_usage[0]}
-    * {key_usage[1]}
+    * {key_usage_0}
+    * {key_usage_1}
 {sct}
 SubjectAltName{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
@@ -912,10 +912,10 @@ CertificatePolicies{certificate_policies_critical}:
     * Policy Identifier: {certificate_policies_1.policy_identifier.dotted_string}
       No Policy Qualifiers
 ExtendedKeyUsage{extended_key_usage_critical}:
-    * {extended_key_usage[0]}
-    * {extended_key_usage[1]}
+    * {extended_key_usage_0}
+    * {extended_key_usage_1}
 KeyUsage{key_usage_critical}:
-    * {key_usage[0]}
+    * {key_usage_0}
 {precert_poison}
 SubjectAltName{subject_alternative_name_critical}:
     * {subject_alternative_name_0}

@@ -98,6 +98,8 @@ class AbstractExtensionTestMixin:
 
 
 class ExtensionTestMixin(AbstractExtensionTestMixin):
+    """TestCase mixin for tests that only concrete extension classes are expected to pass."""
+
     def test_as_text(self):
         raise NotImplementedError
 
@@ -129,6 +131,68 @@ class ExtensionTestMixin(AbstractExtensionTestMixin):
 
     def test_serialize(self):
         raise NotImplementedError
+
+
+class NewExtensionTestMixin(ExtensionTestMixin):
+    """Override generic implementations to use test_value property."""
+
+    def test_as_extension(self):
+        for test_key, test_config in self.test_values.items():
+            ext = self.ext_class({'value': test_config['expected']})
+            cg = x509.extensions.Extension(
+                oid=self.ext_class.oid, critical=self.ext_class.default_critical,
+                value=test_config['extension_type']
+            )
+            self.assertEqual(ext.as_extension(), cg)
+
+            for critical in [True, False]:
+                ext = self.ext_class({'value': test_config['expected'], 'critical': critical})
+                self.assertEqual(ext.as_extension(), x509.extensions.Extension(
+                    oid=self.ext_class.oid, critical=critical, value=test_config['extension_type']
+                ))
+
+    def test_as_text(self):
+        for test_key, test_config in self.test_values.items():
+            ext = self.ext_class({'value': test_config['expected']})
+            self.assertEqual(ext.as_text(), test_config['expected_text'])
+
+    def test_extension_type(self):
+        for test_key, test_config in self.test_values.items():
+            ext = self.ext_class({'value': test_config['expected']})
+            self.assertEqual(ext.extension_type, test_config['extension_type'])
+
+    def test_for_builder(self):
+        for test_key, test_config in self.test_values.items():
+            ext = self.ext_class({'value': test_config['expected']})
+            self.assertEqual(
+                ext.for_builder(),
+                {'extension': test_config['extension_type'], 'critical': self.ext_class.default_critical}
+            )
+
+            for critical in [True, False]:
+                ext = self.ext_class({'value': test_config['expected'], 'critical': critical})
+                self.assertEqual(
+                    ext.for_builder(),
+                    {'extension': test_config['extension_type'], 'critical': critical}
+                )
+
+    def test_from_extension(self):
+        pass  # test_init already verifies equivalency
+
+    def test_serialize(self):
+        for test_key, test_config in self.test_values.items():
+            ext = self.ext_class({'value': test_config['expected']})
+            self.assertEqual(ext.serialize(), {
+                'value': test_config['expected_serialized'],
+                'critical': self.ext_class.default_critical,
+            })
+
+            for critical in [True, False]:
+                ext = self.ext_class({'value': test_config['expected'], 'critical': critical})
+                self.assertEqual(ext.serialize(), {
+                    'value': test_config['expected_serialized'],
+                    'critical': critical,
+                })
 
 
 class IterableExtensionTestMixin:
@@ -186,7 +250,6 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
 
     def assertSameInstance(self, orig_id, orig_value_id, new, expected_value):
         """Assert that `new` is still the same instance and has the expected value."""
-
         self.assertEqual(new.value, expected_value)
         self.assertEqual(id(new), orig_id)  # assert that this is really the same instance
         self.assertEqual(id(new.value), orig_value_id)
@@ -195,7 +258,44 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
         self.assertEqual(first.critical, second.critical)
         self.assertEqual(first.value, second.value)
 
-    def assertEqualFunction(self, f, init, value, update=True, infix=True):
+    def assertEqualFunction(self, f, init, value, update=True, infix=True, set_value=None):
+        """Assert that the given function f behaves the same way on a set and on the tested extension.
+
+        This example would test if ``set.update()`` and ``self.ext_class.update()`` would behave the same way,
+        given a particular initial value and a particular value::
+
+            >>> assertEqualFunction(lambda s, o: s.update(o), {'foo', }, {'bar', }, update=True, infix=False)
+
+        which effectively tests::
+
+            >>> s = {'foo, '}.update({'bar', })
+            >>> e = self.ext_class({'value': {'foo, '}}).update({'bar', })
+            >>> s == e.value
+
+        If the extension class internally maps the values to internal (e.g. cryptography-based) values, you
+        can override the ``set_value`` parameter to pass the equivalent mapped value instead.
+
+        Parameters
+        ----------
+
+        f : func
+            The function to test
+        init : set
+            The initial value for the extension and the set.
+        value
+            The value to apply the function to.
+        set_value
+            The value to apply to the set function, if different from the extension value. This is useful if
+            the extension internally maps to different values.
+        update : bool
+            If the function updates the extension in place. If ``True``, `assertEqualFunction`` will test that
+            ``f`` will return the same object instance.
+        infix : bool
+            If the function represents an infix operator (some checks are different in this case).
+        """
+        if set_value is None:
+            set_value = value
+
         s, ext = set(init), self.ext_class({'value': init})
         if update is True:
             orig_id, orig_value_id = id(ext), id(ext.value)
@@ -210,21 +310,21 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
             # but:
             #   >>> operator.ixor(s, {'foo'}) == {'foo'}  # and not None, like above
             if infix is True:
-                f(s, value)
+                f(s, set_value)
                 f(ext, value)
             else:
-                self.assertIsNone(f(s, value))  # apply to set
+                self.assertIsNone(f(s, set_value))  # apply to set
                 self.assertIsNone(f(ext, value))
             self.assertSameInstance(orig_id, orig_value_id, ext, s)
         else:
             ext_updated = f(ext, value)
-            s_updated = f(s, value)  # apply to set
+            s_updated = f(s, set_value)  # apply to set
             self.assertIsCopy(ext, ext_updated, s_updated)
 
     def assertSingleValueOperator(self, f, update=True, infix=True):
         """Test that an operator taking a single value works the same way with sets and this extension."""
+        for test_key, test_config in self.test_values.items():
 
-        for test_config in self.test_values.values():
             # Apply function to an empty extension
             self.assertEqualFunction(f, set(), test_config['expected'], update=update, infix=infix)
 
@@ -236,11 +336,14 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
             # Test that equivalent values work exactly the same way:
             for test_value in test_config['values']:
                 # Again, apply function to the empty extension/set
-                self.assertEqualFunction(f, set(), test_value, update=update, infix=infix)
+                self.assertEqualFunction(f, set(), test_value, set_value=test_config['expected'],
+                                         update=update, infix=infix)
 
                 # Again, apply function to an extension with every "expected" value
-                for init_test_config in self.test_values.values():
-                    self.assertEqualFunction(f, init_test_config['expected'], test_value,
+                for init_key, init_test_config in self.test_values.items():
+                    self.assertEqualFunction(f, init=init_test_config['expected'],
+                                             value=test_value,
+                                             set_value=test_config['expected'],
                                              update=update, infix=infix)
 
     def assertMultipleValuesOperator(self, f, update=True, infix=True):
@@ -348,13 +451,6 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
             ext_copy = ext.copy()
             self.assertIsCopy(ext, ext_copy, config['expected'])
 
-    def test_constructor_equivalence(self):
-        for config in self.test_values.values():
-            ext = self.ext_class({'value': config['expected']})
-            for values in config['values']:
-                ext_val = self.ext_class({'value': values})
-                self.assertExtensionEqual(ext, ext_val)
-
     def test_difference(self):
         self.assertSingleValueOperator(lambda s, o: s.difference(o), infix=False, update=False)
         self.assertMultipleValuesOperator(lambda s, o: s.difference(*o), infix=False, update=False)
@@ -447,6 +543,36 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
             for values in values['values']:
                 for value in values:
                     self.assertIn(value, ext)
+
+    def test_init(self):
+        # Test that the constructor behaves equal regardles of input value
+        for test_key, test_config in self.test_values.items():
+            expected = self.ext_class({'value': test_config['expected']})
+
+            for value in test_config['values']:
+                self.assertExtensionEqual(self.ext_class({'value': value}), expected)
+
+            if test_config.get('extension_type'):
+                cg = x509.extensions.Extension(
+                    oid=self.ext_class.oid, critical=self.ext_class.default_critical,
+                    value=test_config['extension_type']
+                )
+                self.assertEqual(expected, self.ext_class(cg))
+
+            # Now the same with explicit critical values
+            for critical in [True, False]:
+                expected = self.ext_class({'value': test_config['expected'], 'critical': critical})
+
+                for value in test_config['values']:
+                    self.assertExtensionEqual(
+                        self.ext_class({'value': value, 'critical': critical}), expected)
+
+                if test_config.get('extension_type'):
+                    cg = x509.extensions.Extension(
+                        oid=self.ext_class.oid, critical=critical,
+                        value=test_config['extension_type']
+                    )
+                    self.assertEqual(expected, self.ext_class(cg))
 
     def test_intersection(self):
         self.assertSingleValueOperator(lambda s, o: s.intersection(o), infix=False, update=False)
@@ -544,7 +670,8 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
                     self.assertNotIn(value, ext)
                     self.assertEqual(len(ext) + i, len(config['expected']))
 
-                    with self.assertRaisesRegex(KeyError, value):
+                    with self.assertRaises(KeyError):
+                        # NOTE: We cannot test the message here because it may be a mapped value
                         ext.remove(value)
 
         ext = self.ext_class({'value': set(config['expected'])})
@@ -706,12 +833,10 @@ class ExtensionTestCase(ExtensionTestMixin, TestCase):
                          '<Extension: %s, critical=False>' % self.value)
 
     def test_serialize(self):
-        value = self.value
-        ext = Extension({'value': value})
-        self.assertEqual(ext.serialize(), {'critical': False, 'value': value})
+        ext = Extension({'value': self.value})
+        self.assertEqual(ext.serialize(), {'critical': False, 'value': self.value})
         self.assertEqual(ext, Extension(ext.serialize()))
 
-        value = 'critical,%s' % self.value
         ext = Extension({'critical': True, 'value': self.value})
         self.assertEqual(ext.serialize(), {'value': self.value, 'critical': True})
         self.assertEqual(ext, Extension(ext.serialize()))
@@ -830,26 +955,32 @@ class OrderedSetExtensionTestCase(OrderedSetExtensionTestMixin, AbstractExtensio
     test_values = {
         'one': {
             'values': [
-                {'one_value', }
+                {'one_value', },
+                ['one_value', ],
             ],
             'expected': frozenset(['one_value']),
             'expected_repr': "<OrderedSetExtension: ['one_value'], critical=%s>",
+            'expected_serialized': ['one_value'],
             'expected_str': 'one_value'
         },
         'two': {
             'values': [
-                {'one_value', 'two_value', }
+                {'one_value', 'two_value', },
+                ['one_value', 'two_value', ],
+                ['two_value', 'one_value', ],
             ],
             'expected': frozenset(['one_value', 'two_value', ]),
             'expected_repr': "<OrderedSetExtension: ['one_value', 'two_value'], critical=%s>",
+            'expected_serialized': ['one_value', 'two_value'],
             'expected_str': 'one_value,two_value',
         },
         'three': {
             'values': [
-                {'three_value', }
+                {'three_value', },
             ],
             'expected': frozenset(['three_value']),
             'expected_repr': "<OrderedSetExtension: ['three_value'], critical=%s>",
+            'expected_serialized': ['three_value'],
             'expected_str': 'three_value',
         },
     }
@@ -3546,155 +3677,50 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         self.assertEqual(str(ext), self.hex1)
 
 
-class TLSFeatureTestCase(TestCase):
-    x1 = x509.extensions.Extension(
-        oid=ExtensionOID.TLS_FEATURE, critical=True,
-        value=x509.TLSFeature(features=[TLSFeatureType.status_request])
-    )
-    x2 = x509.extensions.Extension(
-        oid=ExtensionOID.TLS_FEATURE, critical=False,
-        value=x509.TLSFeature(features=[TLSFeatureType.status_request])
-    )
-    x3 = x509.extensions.Extension(
-        oid=ExtensionOID.TLS_FEATURE, critical=False,
-        value=x509.TLSFeature(features=[TLSFeatureType.status_request, TLSFeatureType.status_request_v2])
-    )
-    x4 = x509.extensions.Extension(
-        oid=ExtensionOID.TLS_FEATURE, critical=False,
-        value=x509.TLSFeature(features=[TLSFeatureType.status_request_v2, TLSFeatureType.status_request])
-    )
-    x5 = x509.extensions.Extension(
-        oid=ExtensionOID.TLS_FEATURE, critical=True,
-        value=x509.TLSFeature(features=[TLSFeatureType.status_request_v2, TLSFeatureType.status_request])
-    )
-    xs = [x1, x2, x3, x4, x5]
-
-    def setUp(self):
-        super(TLSFeatureTestCase, self).setUp()
-        self.ext1 = TLSFeature({'critical': True, 'value': ['OCSPMustStaple']})
-        self.ext2 = TLSFeature({'value': ['OCSPMustStaple']})
-        self.ext3 = TLSFeature({'value': ['OCSPMustStaple', 'MultipleCertStatusRequest']})
-        self.ext4 = TLSFeature({'value': ['MultipleCertStatusRequest', 'OCSPMustStaple']})  # reversed order
-        self.ext5 = TLSFeature({'critical': True, 'value': ['MultipleCertStatusRequest', 'OCSPMustStaple']})
-        self.exts = [self.ext1, self.ext2, self.ext3, self.ext4, self.ext5]
-
-    def test_completeness(self):
-        # make sure whe haven't forgotton any keys anywhere
-        self.assertEqual(set(TLSFeature.CRYPTOGRAPHY_MAPPING.keys()),
-                         set([e[0] for e in TLSFeature.CHOICES]))
-        self.assertCountEqual(TLSFeature.CRYPTOGRAPHY_MAPPING.values(),
-                              x509.TLSFeatureType.__members__.values())
-
-    def test_count(self):
-        self.assertEqual(self.ext1.count('OCSPMustStaple'), 1)
-        self.assertEqual(self.ext2.count('OCSPMustStaple'), 1)
-        self.assertEqual(self.ext3.count('OCSPMustStaple'), 1)
-        self.assertEqual(self.ext4.count('OCSPMustStaple'), 1)
-
-        self.assertEqual(self.ext1.count(TLSFeatureType.status_request), 1)
-        self.assertEqual(self.ext2.count(TLSFeatureType.status_request), 1)
-        self.assertEqual(self.ext3.count(TLSFeatureType.status_request), 1)
-        self.assertEqual(self.ext4.count(TLSFeatureType.status_request), 1)
-
-        self.assertEqual(self.ext1.count('MultipleCertStatusRequest'), 0)
-        self.assertEqual(self.ext2.count('MultipleCertStatusRequest'), 0)
-        self.assertEqual(self.ext3.count('MultipleCertStatusRequest'), 1)
-        self.assertEqual(self.ext4.count('MultipleCertStatusRequest'), 1)
-
-        self.assertEqual(self.ext1.count(TLSFeatureType.status_request_v2), 0)
-        self.assertEqual(self.ext2.count(TLSFeatureType.status_request_v2), 0)
-        self.assertEqual(self.ext3.count(TLSFeatureType.status_request_v2), 1)
-        self.assertEqual(self.ext4.count(TLSFeatureType.status_request_v2), 1)
-
-        with self.assertRaisesRegex(ValueError, r'^Unknown value: foo$'):
-            self.assertEqual(self.ext1.count('foo'), 0)
-
-    def test_eq_order(self):
-        # ext3 and ext4 are the same, only with different order
-        self.assertEqual(self.ext3, self.ext4)
-
-    def test_hash(self):
-        self.assertEqual(hash(self.ext1), hash(self.ext1))
-        self.assertEqual(hash(self.ext2), hash(self.ext2))
-        self.assertEqual(hash(self.ext3), hash(self.ext3))
-
-        self.assertNotEqual(hash(self.ext1), hash(self.ext2))
-        self.assertNotEqual(hash(self.ext1), hash(self.ext3))
-        self.assertNotEqual(hash(self.ext2), hash(self.ext3))
-
-    def test_hash_order(self):
-        self.assertEqual(hash(self.ext3), hash(self.ext4))
-
-    def test_in(self):
-        self.assertIn('OCSPMustStaple', self.ext1)
-        self.assertIn('OCSPMustStaple', self.ext2)
-        self.assertIn('OCSPMustStaple', self.ext3)
-        self.assertIn('OCSPMustStaple', self.ext4)
-        self.assertIn('MultipleCertStatusRequest', self.ext3)
-        self.assertIn('MultipleCertStatusRequest', self.ext4)
-
-        self.assertIn(TLSFeatureType.status_request, self.ext1)
-        self.assertIn(TLSFeatureType.status_request, self.ext2)
-        self.assertIn(TLSFeatureType.status_request_v2, self.ext3)
-
-    def test_len(self):
-        self.assertEqual(len(self.ext1), 1)
-        self.assertEqual(len(self.ext2), 1)
-        self.assertEqual(len(self.ext3), 2)
-        self.assertEqual(len(self.ext4), 2)
-        self.assertEqual(len(self.ext5), 2)
-
-    def test_ne(self):
-        self.assertNotEqual(self.ext1, self.ext2)
-        self.assertNotEqual(self.ext1, self.ext3)
-        self.assertNotEqual(self.ext2, self.ext3)
-        self.assertNotEqual(self.ext1, 10)
-
-    def test_not_in(self):
-        self.assertNotIn('MultipleCertStatusRequest', self.ext1)
-        self.assertNotIn('MultipleCertStatusRequest', self.ext2)
-        self.assertNotIn(TLSFeatureType.status_request_v2, self.ext1)
-        self.assertNotIn(TLSFeatureType.status_request_v2, self.ext2)
-
-    def test_repr(self):
-        self.assertEqual(repr(self.ext1), "<TLSFeature: ['OCSPMustStaple'], critical=True>")
-        self.assertEqual(repr(self.ext2), "<TLSFeature: ['OCSPMustStaple'], critical=False>")
-
-        # Make sure that different order results in the same output
-        self.assertEqual(repr(self.ext3),
-                         "<TLSFeature: ['MultipleCertStatusRequest', 'OCSPMustStaple'], critical=False>")
-        self.assertEqual(repr(self.ext4),
-                         "<TLSFeature: ['MultipleCertStatusRequest', 'OCSPMustStaple'], critical=False>")
-
-    def test_serialize(self):
-        self.assertEqual(self.ext1.serialize(), {
-            'critical': True,
-            'value': ['OCSPMustStaple'],
-        })
-        self.assertEqual(self.ext2.serialize(), {
-            'critical': False,
-            'value': ['OCSPMustStaple'],
-        })
-        self.assertEqual(self.ext3.serialize(), {
-            'critical': False,
-            'value': ['OCSPMustStaple', 'MultipleCertStatusRequest'],
-        })
-        self.assertEqual(TLSFeature(self.ext1.serialize()), self.ext1)
-        self.assertEqual(TLSFeature(self.ext2.serialize()), self.ext2)
-        self.assertEqual(TLSFeature(self.ext3.serialize()), self.ext3)
-        self.assertNotEqual(TLSFeature(self.ext1.serialize()), self.ext2)
-
-    def test_str(self):
-        exp_order = 'MultipleCertStatusRequest,OCSPMustStaple'
-        self.assertEqual(str(self.ext1), 'OCSPMustStaple/critical')
-        self.assertEqual(str(self.ext2), 'OCSPMustStaple')
-
-        # Make sure that different order results in the same output
-        self.assertEqual(str(self.ext3), exp_order)
-        self.assertEqual(str(self.ext4), exp_order)
-
-    def test_unknown_values(self):
-        with self.assertRaisesRegex(ValueError, r'^Unknown value\(s\): foo$'):
-            TLSFeature({'value': ['foo']})
-        with self.assertRaisesRegex(ValueError, r'^Unknown value\(s\): foo$'):
-            TLSFeature({'critical': True, 'value': ['foo']})
+class TLSFeatureTestCase(OrderedSetExtensionTestMixin, NewExtensionTestMixin, TestCase):
+    ext_class = TLSFeature
+    test_values = {
+        'one': {
+            'values': [
+                {TLSFeatureType.status_request, },
+                {'OCSPMustStaple', },
+            ],
+            'extension_type': x509.TLSFeature(features=[TLSFeatureType.status_request]),
+            'expected': frozenset([TLSFeatureType.status_request]),
+            'expected_repr': "<TLSFeature: ['OCSPMustStaple'], critical=%s>",
+            'expected_serialized': ['OCSPMustStaple'],
+            'expected_str': 'OCSPMustStaple',
+            'expected_text': '* OCSPMustStaple',
+        },
+        'two': {
+            'values': [
+                {TLSFeatureType.status_request, TLSFeatureType.status_request_v2},
+                {'OCSPMustStaple', 'MultipleCertStatusRequest'},
+                [TLSFeatureType.status_request, TLSFeatureType.status_request_v2],
+                [TLSFeatureType.status_request_v2, TLSFeatureType.status_request],
+                ['OCSPMustStaple', 'MultipleCertStatusRequest'],
+                ['MultipleCertStatusRequest', 'OCSPMustStaple'],
+            ],
+            'extension_type': x509.TLSFeature(features=[
+                TLSFeatureType.status_request_v2,
+                TLSFeatureType.status_request,
+            ]),
+            'expected': frozenset([TLSFeatureType.status_request, TLSFeatureType.status_request_v2]),
+            'expected_repr': "<TLSFeature: ['MultipleCertStatusRequest', 'OCSPMustStaple'], critical=%s>",
+            'expected_serialized': ['MultipleCertStatusRequest', 'OCSPMustStaple'],
+            'expected_str': 'MultipleCertStatusRequest,OCSPMustStaple',
+            'expected_text': '* MultipleCertStatusRequest\n* OCSPMustStaple',
+        },
+        'three': {
+            'values': [
+                {TLSFeatureType.status_request_v2},
+                {'MultipleCertStatusRequest'},
+            ],
+            'extension_type': x509.TLSFeature(features=[TLSFeatureType.status_request_v2]),
+            'expected': frozenset([TLSFeatureType.status_request_v2]),
+            'expected_repr': "<TLSFeature: ['MultipleCertStatusRequest'], critical=%s>",
+            'expected_serialized': ['MultipleCertStatusRequest'],
+            'expected_str': 'MultipleCertStatusRequest',
+            'expected_text': '* MultipleCertStatusRequest',
+        },
+    }
