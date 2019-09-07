@@ -23,6 +23,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 
 from ..constants import ReasonFlags
 from ..extensions import KeyUsage
+from ..extensions import TLSFeature
 from ..management import base
 from ..models import Certificate
 from ..models import CertificateAuthority
@@ -96,6 +97,31 @@ class KnownValuesExtensionActionTestCase(DjangoCATestCase):
         self.assertParserError(['-e=foobar'],
                                'usage: {script} [-h] [-e E]\n'
                                '{script}: error: Invalid extension value: foobar: Unknown value(s): foobar\n')
+
+
+class OrderedSetExtensionActionTestCase(DjangoCATestCase):
+    def setUp(self):
+        super(OrderedSetExtensionActionTestCase, self).setUp()
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument('-e', action=base.OrderedSetExtensionAction, extension=TLSFeature)
+
+    def test_basic(self):
+        ns = self.parser.parse_args(['-e=OCSPMustStaple'])
+        self.assertEqual(ns.e, TLSFeature({'critical': False, 'value': ['OCSPMustStaple']}))
+
+        ns = self.parser.parse_args(['-e=critical,OCSPMustStaple'])
+        self.assertEqual(ns.e, TLSFeature({'critical': True, 'value': ['OCSPMustStaple']}))
+
+        ns = self.parser.parse_args(['-e=critical,OCSPMustStaple,MultipleCertStatusRequest'])
+        self.assertEqual(ns.e, TLSFeature({
+            'critical': True,
+            'value': ['OCSPMustStaple', 'MultipleCertStatusRequest']
+        }))
+
+    def test_error(self):
+        self.assertParserError(['-e=foobar'],
+                               'usage: {script} [-h] [-e E]\n'
+                               '{script}: error: Invalid extension value: foobar: Unknown value: foobar\n')
 
 
 class FormatActionTestCase(DjangoCATestCase):
