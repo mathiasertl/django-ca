@@ -2823,6 +2823,13 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin, NewExtensionTestMixin, Test
         self.assertEqual(set(KeyUsage.CRYPTOGRAPHY_MAPPING.keys()),
                          set([e[0] for e in KeyUsage.CHOICES]))
 
+    def test_auto_add(self):
+        # decipher/encipher_only automatically add key_agreement
+        self.assertEqual(KeyUsage({'value': ['decipher_only']}),
+                         KeyUsage({'value': ['decipher_only', 'key_agreement']}))
+        self.assertEqual(KeyUsage({'value': ['encipher_only']}),
+                         KeyUsage({'value': ['encipher_only', 'key_agreement']}))
+
     def test_unknown_values(self):
         with self.assertRaisesRegex(ValueError, r'^Unknown value: foo$'):
             KeyUsage({'value': ['foo']})
