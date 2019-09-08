@@ -2911,9 +2911,10 @@ class NameConstraintsTestCase(NewExtensionTestMixin, TestCase):
     ext_class = NameConstraints
     test_values = {
         'empty': {
-            'values': {
+            'values': [
+                {'excluded': [], 'permitted': []},
                 x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[]),
-            },
+            ],
             'expected': x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[]),
             'expected_repr': '<NameConstraints: permitted=[], excluded=[], critical=%s>',
             'expected_serialized': {'excluded': [], 'permitted': []},
@@ -2922,9 +2923,13 @@ class NameConstraintsTestCase(NewExtensionTestMixin, TestCase):
             'extension_type': x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[]),
         },
         'permitted': {
-            'values': {
+            'values': [
+                {'permitted': [d1]},
+                {'permitted': ['DNS:%s' % d1]},
+                {'permitted': [dns(d1)]},
+                {'permitted': [dns(d1)], 'excluded': []},
                 x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[]),
-            },
+            ],
             'expected': x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[]),
             'expected_repr': "<NameConstraints: permitted=['DNS:%s'], excluded=[], critical=%%s>" % d1,
             'expected_serialized': {'excluded': [], 'permitted': ['DNS:%s' % d1]},
@@ -2935,9 +2940,13 @@ class NameConstraintsTestCase(NewExtensionTestMixin, TestCase):
                                                    excluded_subtrees=[]),
         },
         'excluded': {
-            'values': {
+            'values': [
+                {'excluded': [d1]},
+                {'excluded': ['DNS:%s' % d1]},
+                {'excluded': [dns(d1)]},
+                {'excluded': [dns(d1)], 'permitted': []},
                 x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[dns(d1)]),
-            },
+            ],
             'expected': x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[dns(d1)]),
             'expected_repr': "<NameConstraints: permitted=[], excluded=['DNS:%s'], critical=%%s>" % d1,
             'expected_serialized': {'excluded': ['DNS:%s' % d1], 'permitted': []},
@@ -2947,9 +2956,13 @@ class NameConstraintsTestCase(NewExtensionTestMixin, TestCase):
                                                    excluded_subtrees=[dns(d1)]),
         },
         'both': {
-            'values': {
+            'values': [
+                {'permitted': [d1], 'excluded': [d2]},
+                {'permitted': ['DNS:%s' % d1], 'excluded': ['DNS:%s' % d2]},
+                {'permitted': [dns(d1)], 'excluded': [dns(d2)]},
+                {'permitted': [dns(d1)], 'excluded': [d2]},
                 x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[dns(d2)])
-            },
+            ],
             'expected': x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[dns(d2)]),
             'expected_repr': "<NameConstraints: permitted=['DNS:%s'], excluded=['DNS:%s'], "
                              "critical=%%s>" % (d1, d2),
