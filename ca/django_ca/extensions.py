@@ -1371,9 +1371,8 @@ class ExtendedKeyUsage(OrderedSetExtension):
         'ipsecUser': ObjectIdentifier('1.3.6.1.5.5.7.3.7'),
     }
     _CRYPTOGRAPHY_MAPPING_REVERSED = {v: k for k, v in CRYPTOGRAPHY_MAPPING.items()}
-    KNOWN_VALUES = set(CRYPTOGRAPHY_MAPPING)
-    """Known values for this extension."""
 
+    # Used by the HTML form select field
     CHOICES = (
         ('serverAuth', 'SSL/TLS Web Server Authentication'),
         ('clientAuth', 'SSL/TLS Web Client Authentication'),
@@ -1706,8 +1705,6 @@ class TLSFeature(OrderedSetExtension):
         'MultipleCertStatusRequest': TLSFeatureType.status_request_v2,
     }
     _CRYPTOGRAPHY_MAPPING_REVERSED = {v: k for k, v in CRYPTOGRAPHY_MAPPING.items()}
-    KNOWN_VALUES = set(CRYPTOGRAPHY_MAPPING)
-    """Known values for this extension."""
 
     def from_extension(self, ext):
         self.value = set(ext.value)
