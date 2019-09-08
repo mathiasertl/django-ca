@@ -213,7 +213,7 @@ class ExtensionAction(argparse.Action):
 
 
 class KnownValuesExtensionAction(ExtensionAction):
-    # TODO: Class can be removed once KeyUsage and ExtendedKeyUsage are switched to OrderedSetExtension
+    # TODO: Class can be removed once KeyUsage is switched to OrderedSetExtension
 
     def __call__(self, parser, namespace, value, option_string=None):
         ext = getattr(namespace, self.dest)
@@ -442,8 +442,7 @@ class BaseSignCommand(BaseCommand):
             '--key-usage', metavar='VALUES', action=KnownValuesExtensionAction, extension=KeyUsage,
             help='The keyUsage extension, e.g. "critical,keyCertSign".')
         group.add_argument(
-            '--ext-key-usage', metavar='VALUES', action=KnownValuesExtensionAction,
-            extension=ExtendedKeyUsage,
+            '--ext-key-usage', metavar='VALUES', action=OrderedSetExtensionAction, extension=ExtendedKeyUsage,
             help='The extendedKeyUsage extension, e.g. "serverAuth,clientAuth".')
         group.add_argument(
             '--tls-feature', metavar='VALUES', action=OrderedSetExtensionAction, extension=TLSFeature,

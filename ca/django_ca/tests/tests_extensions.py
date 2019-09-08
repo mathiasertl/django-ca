@@ -2985,81 +2985,38 @@ class KeyUsageTestCase(TestCase):
                          set([e[0] for e in KeyUsage.CHOICES]))
 
 
-class ExtendedKeyUsageTestCase(TestCase):
-    def assertBasic(self, ext, critical=True):
-        self.assertEqual(ext.critical, critical)
-        self.assertIn('clientAuth', ext)
-        self.assertIn('serverAuth', ext)
-        self.assertNotIn('smartcardLogon', ext)
+class ExtendedKeyUsageTestCase(OrderedSetExtensionTestMixin, NewExtensionTestMixin, TestCase):
+    ext_class = ExtendedKeyUsage
+    test_values = {
+        'one': {
+            'values': [
+                {'serverAuth'},
+                {ExtendedKeyUsageOID.SERVER_AUTH},
+                [ExtendedKeyUsageOID.SERVER_AUTH],
+            ],
+            'extension_type': x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH]),
+            'expected': frozenset([ExtendedKeyUsageOID.SERVER_AUTH]),
+            'expected_repr': "<ExtendedKeyUsage: ['serverAuth'], critical=%s>",
+            'expected_serialized': ['serverAuth'],
+            'expected_str': 'serverAuth',
+            'expected_text': '* serverAuth',
+        },
+    }
 
-        typ = ext.extension_type
-        self.assertIsInstance(typ, x509.ExtendedKeyUsage)
-        self.assertEqual(typ.oid, ExtensionOID.EXTENDED_KEY_USAGE)
+    def test_unknown_values(self):
+        with self.assertRaisesRegex(ValueError, r'^Unknown value: foo$'):
+            ExtendedKeyUsage({'value': ['foo']})
 
-        crypto = ext.as_extension()
-        self.assertEqual(crypto.critical, critical)
-        self.assertEqual(crypto.oid, ExtensionOID.EXTENDED_KEY_USAGE)
-
-        self.assertIn(ExtendedKeyUsageOID.SERVER_AUTH, crypto.value)
-        self.assertIn(ExtendedKeyUsageOID.CLIENT_AUTH, crypto.value)
-        self.assertNotIn(ExtendedKeyUsageOID.OCSP_SIGNING, crypto.value)
-
-    def test_basic(self):
-        self.assertBasic(ExtendedKeyUsage({'critical': True, 'value': ['serverAuth', 'clientAuth']}))
-        self.assertBasic(ExtendedKeyUsage(x509.extensions.Extension(
-            oid=ExtensionOID.EXTENDED_KEY_USAGE,
-            critical=True,
-            value=x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH])))
-        )
-
-    def test_hash(self):
-        ext1 = ExtendedKeyUsage({'critical': True, 'value': ['serverAuth']})
-        ext2 = ExtendedKeyUsage({'value': ['serverAuth']})
-        ext3 = ExtendedKeyUsage({'value': ['serverAuth', 'clientAuth']})
-
-        self.assertEqual(hash(ext1), hash(ext1))
-        self.assertEqual(hash(ext2), hash(ext2))
-        self.assertEqual(hash(ext3), hash(ext3))
-
-        self.assertNotEqual(hash(ext1), hash(ext2))
-        self.assertNotEqual(hash(ext1), hash(ext3))
-        self.assertNotEqual(hash(ext2), hash(ext3))
-
-    def test_eq(self):
-        self.assertEqual(ExtendedKeyUsage({'value': ['serverAuth']}),
-                         ExtendedKeyUsage({'value': ['serverAuth']}))
-        self.assertEqual(ExtendedKeyUsage({'value': ['serverAuth', 'clientAuth']}),
-                         ExtendedKeyUsage({'value': ['serverAuth', 'clientAuth']}))
-        self.assertEqual(ExtendedKeyUsage({'value': ['serverAuth', 'clientAuth']}),
-                         ExtendedKeyUsage({'value': ['clientAuth', 'serverAuth']}))
-
-        self.assertEqual(ExtendedKeyUsage({'critical': True, 'value': ['serverAuth']}),
-                         ExtendedKeyUsage({'critical': True, 'value': ['serverAuth']}))
-        self.assertEqual(ExtendedKeyUsage({'critical': True, 'value': ['serverAuth', 'clientAuth']}),
-                         ExtendedKeyUsage({'critical': True, 'value': ['serverAuth', 'clientAuth']}))
-        self.assertEqual(ExtendedKeyUsage({'critical': True, 'value': ['serverAuth', 'clientAuth']}),
-                         ExtendedKeyUsage({'critical': True, 'value': ['clientAuth', 'serverAuth']}))
-
-    def test_ne(self):
-        self.assertNotEqual(ExtendedKeyUsage({'value': ['serverAuth']}),
-                            ExtendedKeyUsage({'value': ['clientAuth']}))
-        self.assertNotEqual(ExtendedKeyUsage({'value': ['serverAuth']}),
-                            ExtendedKeyUsage({'critical': True, 'value': ['serverAuth']}))
-        self.assertNotEqual(ExtendedKeyUsage({'value': ['serverAuth']}), 10)
-
-    def test_not_critical(self):
-        self.assertBasic(ExtendedKeyUsage({'value': ['serverAuth', 'clientAuth']}), critical=False)
-        ext_value = x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH])
-        self.assertBasic(ExtendedKeyUsage(
-            x509.extensions.Extension(
-                oid=ExtensionOID.EXTENDED_KEY_USAGE,
-                critical=False,
-                value=ext_value
-            ),
-        ), critical=False)
+        with self.assertRaisesRegex(ValueError, r'^Unknown value: True$'):
+            ExtendedKeyUsage({'value': [True]})
 
     def test_completeness(self):
-        # make sure whe haven't forgotton any keys anywhere
+        # make sure we support all ExtendedKeyUsageOIDs
+        for attr in [getattr(ExtendedKeyUsageOID, a) for a in dir(ExtendedKeyUsageOID) if a[0] != '_']:
+            if isinstance(attr, ObjectIdentifier):
+                self.assertIn(attr, ExtendedKeyUsage._CRYPTOGRAPHY_MAPPING_REVERSED)
+
+        # make sure we haven't forgotton any keys in the form selection
         self.assertEqual(set(ExtendedKeyUsage.CRYPTOGRAPHY_MAPPING.keys()),
                          set([e[0] for e in ExtendedKeyUsage.CHOICES]))
 

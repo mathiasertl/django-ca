@@ -739,7 +739,7 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
                 'critical': True,
                 'value': ['digitalSignature', 'keyAgreement', 'keyEncipherment'],
             }),
-            'extended_key_usage': ExtendedKeyUsage({'value': 'serverAuth'}),
+            'extended_key_usage': ExtendedKeyUsage({'value': ['serverAuth']}),
             'subject': {
                 'C': 'AT',
                 'ST': 'Vienna',

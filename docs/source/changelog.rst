@@ -12,8 +12,6 @@ ChangeLog
 
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.3 and 2.4.
 * **BACKWARDS INCOMPATIBLE:** Drop support for idna 2.7.
-* **BACKWARDS INCOMPATBILE:** Extensions now always expect a dict or a cryptography extension as a value.
-  Anything else was unused in practice.
 * **DEPRECATION NOTICE:** This is the last release to support cryptography 2.5.
 * ``regenerate_ocsp_keys`` now has a quiet mode and only generates keys where the CA private key is available.
 * Serials are now zero-padded when output so that the last element always consists of two characters.
@@ -23,6 +21,16 @@ ChangeLog
 * Add a copy-button next to values from the CSR to enable easy copy/paste from the CSR.
 * Test suite now includes Selenium tests for all JavaScript functionality.
 * ``dev.py coverage`` can now output a text summary using ``--format=text``.
+
+Extensions
+==========
+
+* **BACKWARDS INCOMPATBILE:** Extensions now always expect a dict or a cryptography extension as a value.
+  Anything else was unused in practice.
+* **BACKWARDS INCOMPATBILE:** :py:class:`~django_ca.extensions.ExtendedKeyUsage` and
+  :py:class:`~django_ca.extensions.TLSFeature` now behave like an ordered set and support all operators that a
+  set does.
+* :py:class:`~django_ca.extensions.ExtendedKeyUsage` now supports the ``anyExtendedKeyUsage`` OID.
 
 .. _changelog-1.13.0:
 

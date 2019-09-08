@@ -1349,9 +1349,10 @@ class KeyUsage(KnownValuesExtension):
         return x509.KeyUsage(**kwargs)
 
 
-class ExtendedKeyUsage(KnownValuesExtension):
+class ExtendedKeyUsage(OrderedSetExtension):
     """Class representing a ExtendedKeyUsage extension."""
 
+    key = 'extended_key_usage'
     oid = ExtensionOID.EXTENDED_KEY_USAGE
     CRYPTOGRAPHY_MAPPING = {
         'serverAuth': ExtendedKeyUsageOID.SERVER_AUTH,
@@ -1360,6 +1361,7 @@ class ExtendedKeyUsage(KnownValuesExtension):
         'emailProtection': ExtendedKeyUsageOID.EMAIL_PROTECTION,
         'timeStamping': ExtendedKeyUsageOID.TIME_STAMPING,
         'OCSPSigning': ExtendedKeyUsageOID.OCSP_SIGNING,
+        'anyExtendedKeyUsage': ExtendedKeyUsageOID.ANY_EXTENDED_KEY_USAGE,
         'smartcardLogon': ObjectIdentifier("1.3.6.1.4.1.311.20.2.2"),
         'msKDC': ObjectIdentifier("1.3.6.1.5.2.3.5"),
 
@@ -1384,14 +1386,26 @@ class ExtendedKeyUsage(KnownValuesExtension):
         ('ipsecEndSystem', 'IPSec EndSystem'),
         ('ipsecTunnel', 'IPSec Tunnel'),
         ('ipsecUser', 'IPSec User'),
+        ('anyExtendedKeyUsage', 'Any Extended Key Usage'),
     )
 
     def from_extension(self, ext):
-        self.value = [self._CRYPTOGRAPHY_MAPPING_REVERSED[u] for u in ext.value]
+        self.value = set(ext.value)
 
     @property
     def extension_type(self):
-        return x509.ExtendedKeyUsage([self.CRYPTOGRAPHY_MAPPING[u] for u in self.value])
+        # call serialize_value() to ensure consistent sort order
+        return x509.ExtendedKeyUsage(sorted(self.value, key=lambda v: self.serialize_value(v)))
+
+    def serialize_value(self, v):
+        return self._CRYPTOGRAPHY_MAPPING_REVERSED[v]
+
+    def parse_value(self, v):
+        if isinstance(v, ObjectIdentifier) and v in self._CRYPTOGRAPHY_MAPPING_REVERSED:
+            return v
+        elif isinstance(v, six.string_types) and v in self.CRYPTOGRAPHY_MAPPING:
+            return self.CRYPTOGRAPHY_MAPPING[v]
+        raise ValueError('Unknown value: %s' % v)
 
 
 # TODO: this extension is not in fact always critical, but constructor does not allow overriding this value
@@ -1709,9 +1723,6 @@ class TLSFeature(OrderedSetExtension):
     def parse_value(self, v):
         if isinstance(v, TLSFeatureType):
             return v
-        elif isinstance(v, six.string_types):
-            try:
-                return self.CRYPTOGRAPHY_MAPPING[v]
-            except KeyError:
-                raise ValueError('Unknown value: %s' % v)
+        elif isinstance(v, six.string_types) and v in self.CRYPTOGRAPHY_MAPPING:
+            return self.CRYPTOGRAPHY_MAPPING[v]
         raise ValueError('Unknown value: %s' % v)
