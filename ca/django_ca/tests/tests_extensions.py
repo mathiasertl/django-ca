@@ -132,7 +132,39 @@ class ExtensionTestMixin(AbstractExtensionTestMixin):
         raise NotImplementedError
 
 
-class NewExtensionTestMixin(ExtensionTestMixin):
+class NewAbstractExtensionTestMixin:
+    """TestCase mixin for tests that all extensions are expected to pass, including abstract base classes."""
+
+    def test_hash(self):
+        raise NotImplementedError
+
+    def test_eq(self):
+        for e in self.exts:
+            self.assertEqual(e, e)
+
+    def test_ne(self):
+        raise NotImplementedError
+
+    def test_repr(self):
+        raise NotImplementedError
+
+    def test_str(self):
+        for config in self.test_values.values():
+            for value in config['values']:
+                ext = self.ext_class({'value': value})
+                if ext.default_critical:
+                    self.assertEqual(str(ext), config['expected_str'] + '/critical')
+                else:
+                    self.assertEqual(str(ext), config['expected_str'])
+
+                ext = self.ext_class({'value': value, 'critical': True})
+                self.assertEqual(str(ext), config['expected_str'] + '/critical')
+
+                ext = self.ext_class({'value': value, 'critical': False})
+                self.assertEqual(str(ext), config['expected_str'])
+
+
+class NewExtensionTestMixin(NewAbstractExtensionTestMixin):
     """Override generic implementations to use test_value property."""
 
     def test_as_extension(self):
@@ -690,21 +722,6 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
     def test_smaller_then_operator(self):  # test < operator
         self.assertRelation(lambda s, o: operator.lt(s, o))
 
-    def test_str(self):
-        for config in self.test_values.values():
-            for value in config['values']:
-                ext = self.ext_class({'value': value})
-                if ext.default_critical:
-                    self.assertEqual(str(ext), config['expected_str'] + '/critical')
-                else:
-                    self.assertEqual(str(ext), config['expected_str'])
-
-                ext = self.ext_class({'value': value, 'critical': True})
-                self.assertEqual(str(ext), config['expected_str'] + '/critical')
-
-                ext = self.ext_class({'value': value, 'critical': False})
-                self.assertEqual(str(ext), config['expected_str'])
-
     def test_symmetric_difference(self):  # equivalent to ^ operator
         self.assertSingleValueOperator(lambda s, o: s.symmetric_difference(o), update=False, infix=False)
 
@@ -910,7 +927,7 @@ class ListExtensionTestCase(TestCase):
         self.assertEqual(ext, ListExtension(ext.serialize()))
 
 
-class OrderedSetExtensionTestCase(OrderedSetExtensionTestMixin, AbstractExtensionTestMixin, TestCase):
+class OrderedSetExtensionTestCase(OrderedSetExtensionTestMixin, NewAbstractExtensionTestMixin, TestCase):
     ext_class = OrderedSetExtension
     test_values = {
         'one': {
@@ -2889,6 +2906,7 @@ class ExtendedKeyUsageTestCase(OrderedSetExtensionTestMixin, NewExtensionTestMix
                          set([e[0] for e in ExtendedKeyUsage.CHOICES]))
 
 
+#class NameConstraintsTestCase(NewExtensionTestMixin, TestCase):
 class NameConstraintsTestCase(TestCase):
     ext_empty = x509.extensions.Extension(
         oid=ExtensionOID.NAME_CONSTRAINTS, critical=True,
