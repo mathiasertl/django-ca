@@ -135,32 +135,111 @@ class ExtensionTestMixin(AbstractExtensionTestMixin):
 class NewAbstractExtensionTestMixin:
     """TestCase mixin for tests that all extensions are expected to pass, including abstract base classes."""
 
+    def ext(self, value, critical=None):
+        if isinstance(value, x509.extensions.ExtensionType):
+            if critical is None:
+                critical = self.ext_class.default_critical
+            ext = x509.extensions.Extension(oid=self.ext_class.oid, critical=critical, value=value)
+            return self.ext_class(ext)
+        else:
+            d = {'value': value}
+            if critical is not None:
+                d['critical'] = critical
+            return self.ext_class(d)
+
     def test_hash(self):
-        raise NotImplementedError
+        for config in self.test_values.values():
+            ext = self.ext(config['expected'])
+            ext_critical = self.ext(config['expected'], critical=True)
+            ext_not_critical = self.ext(config['expected'], critical=False)
+
+            if self.ext_class.default_critical:
+                self.assertEqual(hash(ext), hash(ext_critical))
+                self.assertNotEqual(hash(ext), hash(ext_not_critical))
+            else:
+                self.assertEqual(hash(ext), hash(ext_not_critical))
+                self.assertNotEqual(hash(ext), hash(ext_critical))
+            self.assertNotEqual(hash(ext_critical), hash(ext_not_critical))
+
+            for other_config in self.test_values.values():
+                other_ext = self.ext(other_config['expected'])
+                other_ext_critical = self.ext(other_config['expected'], critical=True)
+                other_ext_not_critical = self.ext(other_config['expected'], critical=False)
+
+                if config['expected'] == other_config['expected']:
+                    self.assertEqual(hash(ext), hash(other_ext))
+                    self.assertEqual(hash(ext_critical), hash(other_ext_critical))
+                    self.assertEqual(hash(ext_not_critical), hash(other_ext_not_critical))
+                else:
+                    self.assertNotEqual(hash(ext), hash(other_ext))
+                    self.assertNotEqual(hash(ext_critical), hash(other_ext_critical))
+                    self.assertNotEqual(hash(ext_not_critical), hash(other_ext_not_critical))
 
     def test_eq(self):
-        for e in self.exts:
-            self.assertEqual(e, e)
+        for values in self.test_values.values():
+            ext = self.ext(values['expected'])
+            self.assertEqual(ext, ext)
+            ext_critical = self.ext(values['expected'], critical=True)
+            self.assertEqual(ext_critical, ext_critical)
+            ext_not_critical = self.ext(values['expected'], critical=False)
+            self.assertEqual(ext_not_critical, ext_not_critical)
+
+            for value in values['values']:
+                ext_1 = self.ext(value)
+                self.assertEqual(ext, ext_1)
+                ext_2 = self.ext(value, critical=True)
+                self.assertEqual(ext_critical, ext_2)
+                ext_3 = self.ext(value, critical=False)
+                self.assertEqual(ext_not_critical, ext_3)
 
     def test_ne(self):
-        raise NotImplementedError
+        for config in self.test_values.values():
+            self.assertNotEqual(
+                self.ext(config['expected'], critical=True),
+                self.ext(config['expected'], critical=False)
+            )
+
+            for other_config in self.test_values.values():
+                self.assertNotEqual(
+                    self.ext(config['expected'], critical=True),
+                    self.ext(other_config['expected'], critical=False)
+                )
+                self.assertNotEqual(
+                    self.ext(config['expected'], critical=False),
+                    self.ext(other_config['expected'], critical=True)
+                )
+
+                if config['expected'] != other_config['expected']:
+                    self.assertNotEqual(
+                        self.ext(config['expected']),
+                        self.ext(other_config['expected'])
+                    )
 
     def test_repr(self):
-        raise NotImplementedError
+        for config in self.test_values.values():
+            for value in config['values']:
+                ext = self.ext(value)
+                self.assertEqual(repr(ext), config['expected_repr'] % ext.default_critical)
+
+                ext = self.ext(value, critical=True)
+                self.assertEqual(repr(ext), config['expected_repr'] % True)
+
+                ext = self.ext(value, critical=False)
+                self.assertEqual(repr(ext), config['expected_repr'] % False)
 
     def test_str(self):
         for config in self.test_values.values():
             for value in config['values']:
-                ext = self.ext_class({'value': value})
+                ext = self.ext(value)
                 if ext.default_critical:
                     self.assertEqual(str(ext), config['expected_str'] + '/critical')
                 else:
                     self.assertEqual(str(ext), config['expected_str'])
 
-                ext = self.ext_class({'value': value, 'critical': True})
+                ext = self.ext(value, critical=True)
                 self.assertEqual(str(ext), config['expected_str'] + '/critical')
 
-                ext = self.ext_class({'value': value, 'critical': False})
+                ext = self.ext(value, critical=False)
                 self.assertEqual(str(ext), config['expected_str'])
 
 
@@ -169,7 +248,7 @@ class NewExtensionTestMixin(NewAbstractExtensionTestMixin):
 
     def test_as_extension(self):
         for test_key, test_config in self.test_values.items():
-            ext = self.ext_class({'value': test_config['expected']})
+            ext = self.ext(test_config['expected'])
             cg = x509.extensions.Extension(
                 oid=self.ext_class.oid, critical=self.ext_class.default_critical,
                 value=test_config['extension_type']
@@ -177,49 +256,46 @@ class NewExtensionTestMixin(NewAbstractExtensionTestMixin):
             self.assertEqual(ext.as_extension(), cg)
 
             for critical in [True, False]:
-                ext = self.ext_class({'value': test_config['expected'], 'critical': critical})
+                ext = self.ext(test_config['expected'], critical=critical)
                 self.assertEqual(ext.as_extension(), x509.extensions.Extension(
                     oid=self.ext_class.oid, critical=critical, value=test_config['extension_type']
                 ))
 
     def test_as_text(self):
         for test_key, test_config in self.test_values.items():
-            ext = self.ext_class({'value': test_config['expected']})
+            ext = self.ext(test_config['expected'])
             self.assertEqual(ext.as_text(), test_config['expected_text'])
 
     def test_extension_type(self):
         for test_key, test_config in self.test_values.items():
-            ext = self.ext_class({'value': test_config['expected']})
+            ext = self.ext(test_config['expected'])
             self.assertEqual(ext.extension_type, test_config['extension_type'])
 
     def test_for_builder(self):
         for test_key, test_config in self.test_values.items():
-            ext = self.ext_class({'value': test_config['expected']})
+            ext = self.ext(test_config['expected'])
             self.assertEqual(
                 ext.for_builder(),
                 {'extension': test_config['extension_type'], 'critical': self.ext_class.default_critical}
             )
 
             for critical in [True, False]:
-                ext = self.ext_class({'value': test_config['expected'], 'critical': critical})
+                ext = self.ext(test_config['expected'], critical=critical)
                 self.assertEqual(
                     ext.for_builder(),
                     {'extension': test_config['extension_type'], 'critical': critical}
                 )
 
-    def test_from_extension(self):
-        pass  # test_init already verifies equivalency
-
     def test_serialize(self):
         for test_key, test_config in self.test_values.items():
-            ext = self.ext_class({'value': test_config['expected']})
+            ext = self.ext(test_config['expected'])
             self.assertEqual(ext.serialize(), {
                 'value': test_config['expected_serialized'],
                 'critical': self.ext_class.default_critical,
             })
 
             for critical in [True, False]:
-                ext = self.ext_class({'value': test_config['expected'], 'critical': critical})
+                ext = self.ext(test_config['expected'], critical=critical)
                 self.assertEqual(ext.serialize(), {
                     'value': test_config['expected_serialized'],
                     'critical': critical,
@@ -517,56 +593,8 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
                     ext_empty.discard(value)
                     self.assertEqual(len(ext_empty), 0)
 
-    def test_eq(self):
-        for values in self.test_values.values():
-            ext = self.ext_class({'value': values['expected']})
-            self.assertEqual(ext, ext)
-            ext_critical = self.ext_class({'value': values['expected'], 'critical': True})
-            self.assertEqual(ext_critical, ext_critical)
-            ext_not_critical = self.ext_class({'value': values['expected'], 'critical': False})
-            self.assertEqual(ext_not_critical, ext_not_critical)
-
-            for value in values['values']:
-                ext_1 = self.ext_class({'value': value})
-                self.assertEqual(ext, ext_1)
-                ext_2 = self.ext_class({'value': value, 'critical': True})
-                self.assertEqual(ext_critical, ext_2)
-                ext_3 = self.ext_class({'value': value, 'critical': False})
-                self.assertEqual(ext_not_critical, ext_3)
-
     def test_greater_then_operator(self):  # test < relation
         self.assertRelation(lambda s, o: operator.gt(s, o))
-
-    def test_hash(self):
-        for config in self.test_values.values():
-            ext = self.ext_class({'value': config['expected']})
-            ext_critical = self.ext_class({'value': config['expected'], 'critical': True})
-            ext_not_critical = self.ext_class({'value': config['expected'], 'critical': False})
-
-            if self.ext_class.default_critical:
-                self.assertEqual(hash(ext), hash(ext_critical))
-                self.assertNotEqual(hash(ext), hash(ext_not_critical))
-            else:
-                self.assertEqual(hash(ext), hash(ext_not_critical))
-                self.assertNotEqual(hash(ext), hash(ext_critical))
-            self.assertNotEqual(hash(ext_critical), hash(ext_not_critical))
-
-            for other_config in self.test_values.values():
-                other_ext = self.ext_class({'value': other_config['expected']})
-                other_ext_critical = self.ext_class({'value': other_config['expected'], 'critical': True})
-                other_ext_not_critical = self.ext_class({
-                    'value': other_config['expected'],
-                    'critical': False
-                })
-
-                if config['expected'] == other_config['expected']:
-                    self.assertEqual(hash(ext), hash(other_ext))
-                    self.assertEqual(hash(ext_critical), hash(other_ext_critical))
-                    self.assertEqual(hash(ext_not_critical), hash(other_ext_not_critical))
-                else:
-                    self.assertNotEqual(hash(ext), hash(other_ext))
-                    self.assertNotEqual(hash(ext_critical), hash(other_ext_critical))
-                    self.assertNotEqual(hash(ext_not_critical), hash(other_ext_not_critical))
 
     def test_in(self):
         for values in self.test_values.values():
@@ -646,24 +674,6 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
     def test_lesser_then_operator(self):  # test < operator
         self.assertRelation(lambda s, o: operator.lt(s, o))
 
-    def test_ne(self):
-        for config in self.test_values.values():
-            for other_config in self.test_values.values():
-                self.assertNotEqual(
-                    self.ext_class({'value': config['expected'], 'critical': True}),
-                    self.ext_class({'value': other_config['expected'], 'critical': False})
-                )
-                self.assertNotEqual(
-                    self.ext_class({'value': config['expected'], 'critical': False}),
-                    self.ext_class({'value': other_config['expected'], 'critical': True})
-                )
-
-                if config['expected'] != other_config['expected']:
-                    self.assertNotEqual(
-                        self.ext_class({'value': config['expected']}),
-                        self.ext_class({'value': other_config['expected']})
-                    )
-
     def test_not_in(self):
         for config in self.test_values.values():
             for values in config['values']:
@@ -706,18 +716,6 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
                         ext.remove(value)
 
         ext = self.ext_class({'value': set(config['expected'])})
-
-    def test_repr(self):
-        for config in self.test_values.values():
-            for value in config['values']:
-                ext = self.ext_class({'value': value})
-                self.assertEqual(repr(ext), config['expected_repr'] % ext.default_critical)
-
-                ext = self.ext_class({'value': value, 'critical': True})
-                self.assertEqual(repr(ext), config['expected_repr'] % True)
-
-                ext = self.ext_class({'value': value, 'critical': False})
-                self.assertEqual(repr(ext), config['expected_repr'] % False)
 
     def test_smaller_then_operator(self):  # test < operator
         self.assertRelation(lambda s, o: operator.lt(s, o))
@@ -2906,156 +2904,80 @@ class ExtendedKeyUsageTestCase(OrderedSetExtensionTestMixin, NewExtensionTestMix
                          set([e[0] for e in ExtendedKeyUsage.CHOICES]))
 
 
-#class NameConstraintsTestCase(NewExtensionTestMixin, TestCase):
-class NameConstraintsTestCase(TestCase):
-    ext_empty = x509.extensions.Extension(
-        oid=ExtensionOID.NAME_CONSTRAINTS, critical=True,
-        value=x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[])
-    )
-    ext_permitted = x509.extensions.Extension(
-        oid=ExtensionOID.NAME_CONSTRAINTS, critical=True,
-        value=x509.NameConstraints(permitted_subtrees=[dns('example.com')], excluded_subtrees=[])
-    )
-    ext_excluded = x509.extensions.Extension(
-        oid=ExtensionOID.NAME_CONSTRAINTS, critical=True,
-        value=x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[dns('example.com')])
-    )
-    ext_both = x509.extensions.Extension(
-        oid=ExtensionOID.NAME_CONSTRAINTS, critical=True,
-        value=x509.NameConstraints(permitted_subtrees=[dns('example.com')],
-                                   excluded_subtrees=[dns('example.net')])
-    )
-    ext_not_critical = x509.extensions.Extension(
-        oid=ExtensionOID.NAME_CONSTRAINTS, critical=False,
-        value=x509.NameConstraints(permitted_subtrees=[dns('example.com')],
-                                   excluded_subtrees=[dns('example.net')])
-    )
+class NameConstraintsTestCase(NewExtensionTestMixin, TestCase):
+    d1 = 'example.com'
+    d2 = 'example.net'
 
-    def assertEmpty(self, ext):
-        self.assertEqual(ext.permitted, [])
-        self.assertEqual(ext.excluded, [])
-        self.assertEqual(ext, NameConstraints({}))
-        self.assertFalse(bool(ext))
-        self.assertTrue(ext.critical)
-        self.assertEqual(ext.as_extension(), self.ext_empty)
+    ext_class = NameConstraints
+    test_values = {
+        'empty': {
+            'values': {
+                x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[]),
+            },
+            'expected': x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[]),
+            'expected_repr': '<NameConstraints: permitted=[], excluded=[], critical=%s>',
+            'expected_serialized': {'excluded': [], 'permitted': []},
+            'expected_str': 'NameConstraints(permitted=[], excluded=[], critical={critical})',
+            'expected_text': "",
+            'extension_type': x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[]),
+        },
+        'permitted': {
+            'values': {
+                x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[]),
+            },
+            'expected': x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[]),
+            'expected_repr': "<NameConstraints: permitted=['DNS:%s'], excluded=[], critical=%%s>" % d1,
+            'expected_serialized': {'excluded': [], 'permitted': ['DNS:%s' % d1]},
+            'expected_str': "NameConstraints(permitted=['DNS:%s'], excluded=[], "
+                            "critical={critical})" % d1,
+            'expected_text': "Permitted:\n  * DNS:%s\n" % d1,
+            'extension_type': x509.NameConstraints(permitted_subtrees=[dns(d1)],
+                                                   excluded_subtrees=[]),
+        },
+        'excluded': {
+            'values': {
+                x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[dns(d1)]),
+            },
+            'expected': x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[dns(d1)]),
+            'expected_repr': "<NameConstraints: permitted=[], excluded=['DNS:%s'], critical=%%s>" % d1,
+            'expected_serialized': {'excluded': ['DNS:%s' % d1], 'permitted': []},
+            'expected_str': "NameConstraints(permitted=[], excluded=['DNS:%s'], critical={critical})" % d1,
+            'expected_text': "Excluded:\n  * DNS:%s\n" % d1,
+            'extension_type': x509.NameConstraints(permitted_subtrees=[],
+                                                   excluded_subtrees=[dns(d1)]),
+        },
+        'both': {
+            'values': {
+                x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[dns(d2)])
+            },
+            'expected': x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[dns(d2)]),
+            'expected_repr': "<NameConstraints: permitted=['DNS:%s'], excluded=['DNS:%s'], "
+                             "critical=%%s>" % (d1, d2),
+            'expected_serialized': {'excluded': ['DNS:%s' % d2], 'permitted': ['DNS:%s' % d1]},
+            'expected_str': "NameConstraints(permitted=['DNS:%s'], excluded=['DNS:%s'], "
+                            "critical={critical})" % (d1, d2),
+            'expected_text': "Permitted:\n  * DNS:%s\nExcluded:\n  * DNS:%s\n" % (d1, d2),
+            'extension_type': x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[dns(d2)]),
+        },
+    }
 
-    def assertPermitted(self, ext):
-        self.assertEqual(ext.permitted, [dns('example.com')])
-        self.assertEqual(ext.excluded, [])
-        self.assertEqual(ext, NameConstraints({'value': {'permitted': ['example.com']}}))
-        self.assertTrue(bool(ext))
-        self.assertTrue(ext.critical)
-        self.assertEqual(ext.as_extension(), self.ext_permitted)
+    def test_bool(self):
+        self.assertFalse(bool(NameConstraints({})))
+        self.assertTrue(bool(NameConstraints({'value': {'permitted': ['example.com']}})))
+        self.assertTrue(bool(NameConstraints({'value': {'excluded': ['example.com']}})))
 
-    def assertExcluded(self, ext):
-        self.assertEqual(ext.permitted, [])
-        self.assertEqual(ext.excluded, [dns('example.com')])
-        self.assertEqual(ext, NameConstraints({'value': {'excluded': ['example.com']}}))
-        self.assertTrue(bool(ext))
-        self.assertTrue(ext.critical)
-        self.assertEqual(ext.as_extension(), self.ext_excluded)
+    def test_str(self):
+        # overwritten for now because str() does not append "/critical".
+        for config in self.test_values.values():
+            for value in config['values']:
+                ext = self.ext(value)
+                self.assertEqual(str(ext), config['expected_str'].format(critical=ext.default_critical))
 
-    def assertBoth(self, ext):
-        self.assertEqual(ext.permitted, [dns('example.com')])
-        self.assertEqual(ext.excluded, [dns('example.net')])
-        self.assertEqual(ext, NameConstraints({'value': {
-            'permitted': ['example.com'],
-            'excluded': ['example.net']
-        }}))
-        self.assertTrue(bool(ext))
-        self.assertEqual(ext.as_extension(), self.ext_both)
-        self.assertTrue(ext.critical)
+                ext = self.ext(value, critical=True)
+                self.assertEqual(str(ext), config['expected_str'].format(critical=True))
 
-    def test_from_dict(self):
-        self.assertEmpty(NameConstraints({}))
-        self.assertEmpty(NameConstraints({'value': {}}))
-        self.assertEmpty(NameConstraints({'value': {'permitted': [], 'excluded': []}}))
-
-        self.assertPermitted(NameConstraints({'value': {'permitted': ['example.com']}}))
-        self.assertPermitted(NameConstraints({'value': {'permitted': ['example.com'], 'excluded': []}}))
-        self.assertPermitted(NameConstraints({'value': {'permitted': [dns('example.com')]}}))
-        self.assertPermitted(NameConstraints({'value': {'permitted': [dns('example.com')], 'excluded': []}}))
-
-        self.assertExcluded(NameConstraints({'value': {'excluded': ['example.com']}}))
-        self.assertExcluded(NameConstraints({'value': {'excluded': ['example.com'], 'permitted': []}}))
-        self.assertExcluded(NameConstraints({'value': {'excluded': [dns('example.com')]}}))
-        self.assertExcluded(NameConstraints({'value': {'excluded': [dns('example.com')], 'permitted': []}}))
-
-        self.assertBoth(NameConstraints({'value': {'permitted': ['example.com'],
-                                                   'excluded': ['example.net']}}))
-        self.assertBoth(NameConstraints({'value': {'permitted': [dns('example.com')],
-                                                   'excluded': [dns('example.net')]}}))
-
-    def test_from_extension(self):
-        self.assertEmpty(NameConstraints(self.ext_empty))
-        self.assertPermitted(NameConstraints(self.ext_permitted))
-        self.assertExcluded(NameConstraints(self.ext_excluded))
-        self.assertBoth(NameConstraints(self.ext_both))
-
-    def test_hash(self):
-        ext1 = NameConstraints({'value': {'permitted': ['example.com']}})
-        ext2 = NameConstraints({'value': {'permitted': ['example.com'], 'excluded': ['example.net']}})
-        ext3 = NameConstraints({'value': {'excluded': ['example.net']}})
-
-        self.assertEqual(hash(ext1), hash(ext1))
-        self.assertEqual(hash(ext2), hash(ext2))
-        self.assertEqual(hash(ext3), hash(ext3))
-
-        self.assertNotEqual(hash(ext1), hash(ext2))
-        self.assertNotEqual(hash(ext1), hash(ext3))
-        self.assertNotEqual(hash(ext2), hash(ext3))
-
-    def test_as_str(self):  # test various string conversion methods
-        ext = NameConstraints(self.ext_empty)
-        self.assertEqual(str(ext), "NameConstraints(permitted=[], excluded=[], critical=True)")
-        self.assertEqual(repr(ext), "<NameConstraints: permitted=[], excluded=[], critical=True>")
-        self.assertEqual(ext.as_text(), "")
-
-        ext = NameConstraints(self.ext_permitted)
-        self.assertEqual(str(ext),
-                         "NameConstraints(permitted=['DNS:example.com'], excluded=[], critical=True)")
-        self.assertEqual(repr(ext),
-                         "<NameConstraints: permitted=['DNS:example.com'], excluded=[], critical=True>")
-        self.assertEqual(ext.as_text(), "Permitted:\n  * DNS:example.com\n")
-
-        ext = NameConstraints(self.ext_excluded)
-        self.assertEqual(str(ext),
-                         "NameConstraints(permitted=[], excluded=['DNS:example.com'], critical=True)")
-        self.assertEqual(repr(ext),
-                         "<NameConstraints: permitted=[], excluded=['DNS:example.com'], critical=True>")
-        self.assertEqual(ext.as_text(), "Excluded:\n  * DNS:example.com\n")
-
-        ext = NameConstraints(self.ext_both)
-        self.assertEqual(
-            str(ext),
-            "NameConstraints(permitted=['DNS:example.com'], excluded=['DNS:example.net'], critical=True)")
-        self.assertEqual(
-            repr(ext),
-            "<NameConstraints: permitted=['DNS:example.com'], excluded=['DNS:example.net'], critical=True>")
-        self.assertEqual(ext.as_text(), """Permitted:
-  * DNS:example.com
-Excluded:
-  * DNS:example.net
-""")
-
-    def test_error(self):
-        with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type NoneType$'):
-            NameConstraints(None)
-        with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type bool$'):
-            NameConstraints(False)
-
-    def test_serialize(self):
-        empty = NameConstraints(self.ext_empty)
-        permitted = NameConstraints(self.ext_permitted)
-        excluded = NameConstraints(self.ext_excluded)
-        both = NameConstraints(self.ext_both)
-        not_critical = NameConstraints(self.ext_not_critical)
-
-        self.assertEqual(NameConstraints(empty.serialize()), empty)
-        self.assertEqual(NameConstraints(permitted.serialize()), permitted)
-        self.assertEqual(NameConstraints(excluded.serialize()), excluded)
-        self.assertEqual(NameConstraints(both.serialize()), both)
-        self.assertEqual(NameConstraints(not_critical.serialize()), not_critical)
+                ext = self.ext(value, critical=False)
+                self.assertEqual(str(ext), config['expected_str'].format(critical=False))
 
 
 class OCSPNoCheckTestCase(ExtensionTestMixin, TestCase):
