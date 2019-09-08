@@ -565,6 +565,7 @@ class KeyIdExtension(Extension):
         }
 
 
+# NOT AN EXTENSION
 class DistributionPoint(GeneralNameMixin):
     """Class representing a Distribution Point.
 
@@ -694,6 +695,7 @@ class DistributionPoint(GeneralNameMixin):
         return s
 
 
+# NOT AN EXTENSION
 class PolicyInformation(object):
     def __init__(self, data=None):
         if isinstance(data, x509.PolicyInformation):
@@ -1392,6 +1394,7 @@ class NameConstraints(GeneralNameMixin, Extension):
        `RFC 5280, section 4.2.1.10 <https://tools.ietf.org/html/rfc5280#section-4.2.1.10>`_
 
     """
+    key = 'name_constraints'
     default_critical = True
     oid = ExtensionOID.NAME_CONSTRAINTS
 

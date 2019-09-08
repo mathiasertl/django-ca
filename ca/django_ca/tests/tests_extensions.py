@@ -106,16 +106,6 @@ class ExtensionTestMixin(AbstractExtensionTestMixin):
         for e, x in zip(self.exts, self.xs):
             self.assertEqual(e.as_extension(), x)
 
-    def test_config(self):
-        self.assertTrue(issubclass(self.ext_class, Extension))
-        self.assertIsInstance(self.ext_class.key, six.string_types)
-        self.assertGreater(len(self.ext_class.key), 1)
-
-        # test that the model matches
-        self.assertEqual(X509CertMixin.OID_MAPPING[self.ext_class.oid], self.ext_class.key)
-        self.assertTrue(hasattr(X509CertMixin, self.ext_class.key))
-        self.assertIsInstance(getattr(X509CertMixin, self.ext_class.key), cached_property)
-
     def test_extension_type(self):
         for e, x in zip(self.exts, self.xs):
             self.assertEqual(e.extension_type, x.value)
@@ -265,6 +255,16 @@ class NewExtensionTestMixin(NewAbstractExtensionTestMixin):
         for test_key, test_config in self.test_values.items():
             ext = self.ext(test_config['expected'])
             self.assertEqual(ext.as_text(), test_config['expected_text'])
+
+    def test_config(self):
+        self.assertTrue(issubclass(self.ext_class, Extension))
+        self.assertIsInstance(self.ext_class.key, six.string_types)
+        self.assertGreater(len(self.ext_class.key), 1)
+
+        # test that the model matches
+        self.assertEqual(X509CertMixin.OID_MAPPING[self.ext_class.oid], self.ext_class.key)
+        self.assertTrue(hasattr(X509CertMixin, self.ext_class.key))
+        self.assertIsInstance(getattr(X509CertMixin, self.ext_class.key), cached_property)
 
     def test_extension_type(self):
         for test_key, test_config in self.test_values.items():
