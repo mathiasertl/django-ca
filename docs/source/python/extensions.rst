@@ -21,10 +21,6 @@
    :show-inheritance:
    :members:
 
-.. autoclass:: django_ca.extensions.KnownValuesExtension
-   :show-inheritance:
-   :members:
-
 .. autoclass:: django_ca.extensions.AlternativeNameExtension
    :show-inheritance:
    :members:
@@ -44,4 +40,4 @@ Concrete extensions
 .. automodule:: django_ca.extensions
    :show-inheritance:
    :members:
-   :exclude-members: Extension, IterableExtension, ListExtension, OrderedSetExtension, KnownValuesExtension, AlternativeNameExtension, KeyIdExtension, GeneralNameMixin, NullExtension
+   :exclude-members: Extension, IterableExtension, ListExtension, OrderedSetExtension, AlternativeNameExtension, KeyIdExtension, GeneralNameMixin, NullExtension
