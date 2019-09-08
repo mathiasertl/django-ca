@@ -44,7 +44,6 @@ from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
 from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
-from ..extensions import KnownValuesExtension
 from ..extensions import ListExtension
 from ..extensions import NameConstraints
 from ..extensions import OCSPNoCheck
@@ -428,15 +427,15 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
                 )
 
     def test_add(self):
-        for config in self.test_values.values():
-            for values in config['values']:
+        for test_key, test_config in self.test_values.items():
+            for values in test_config['values']:
                 ext = self.ext_class({'value': set()})
-                for i, value in enumerate(values, start=1):
+                for value in values:
                     ext.add(value)
                     self.assertIn(value, ext)
-                    self.assertEqual(len(ext), i)
+                    # Note: we cannot assert the length, because values might include alias values
 
-                self.assertEqual(ext, self.ext_class({'value': config['expected']}))
+                self.assertEqual(ext, self.ext_class({'value': test_config['expected']}))
 
     def test_clear(self):
         for values in self.test_values.values():
@@ -740,45 +739,6 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
             lambda s, o: operator.ior(s, functools.reduce(operator.ior, [t.copy() for t in o])))
 
 
-class KnownValuesExtensionTestMixin(ListExtensionTestMixin):
-    def test_eq_order(self):
-        raise NotImplementedError
-
-    def test_hash_order(self):
-        raise NotImplementedError
-
-    def test_unknown_values(self):
-        raise NotImplementedError
-
-    # Currently overwritten b/c KnownValues should behave like a set, not like a list
-    def test_del(self):
-        pass
-
-    def test_extend(self):
-        pass
-
-    def test_getitem(self):
-        pass
-
-    def test_getitem_slices(self):
-        pass
-
-    def test_insert(self):
-        pass
-
-    def test_pop(self):
-        pass
-
-    def test_remove(self):
-        pass
-
-    def test_setitem(self):
-        pass
-
-    def test_setitem_slices(self):
-        pass
-
-
 class ExtensionTestCase(ExtensionTestMixin, TestCase):
     value = 'foobar'
 
@@ -984,90 +944,6 @@ class OrderedSetExtensionTestCase(OrderedSetExtensionTestMixin, AbstractExtensio
             'expected_str': 'three_value',
         },
     }
-
-
-class KnownValuesExtensionTestCase(TestCase):
-    def setUp(self):
-        self.known = {'foo', 'bar', }
-
-        class TestExtension(KnownValuesExtension):
-            KNOWN_VALUES = self.known
-
-        self.cls = TestExtension
-
-    def assertExtension(self, ext, value, critical=True):
-        self.assertEqual(ext.critical, critical)
-        self.assertCountEqual(ext.value, value)
-        self.assertEqual(len(ext), len(value))
-        for v in value:
-            self.assertIn(v, ext)
-
-    def test_basic(self):
-        self.assertExtension(self.cls({'critical': True, 'value': []}), [])
-        self.assertExtension(self.cls({'critical': True, 'value': ['foo']}), ['foo'])
-        self.assertExtension(self.cls({'critical': True, 'value': ['bar']}), ['bar'])
-        self.assertExtension(self.cls({'critical': True, 'value': ['foo', 'bar']}), ['foo', 'bar'])
-
-        self.assertExtension(self.cls({'value': 'foo'}), ['foo'], critical=False)
-        self.assertExtension(self.cls({'critical': True, 'value': ['foo']}), ['foo'])
-
-        with self.assertRaisesRegex(ValueError, r'^Unknown value\(s\): hugo$'):
-            self.cls({'value': 'hugo'})
-
-        with self.assertRaisesRegex(ValueError, r'^Unknown value\(s\): bla, hugo$'):
-            self.cls({'value': ['bla', 'hugo']})
-
-    def test_eq(self):
-        self.assertEqual(self.cls({'value': ['foo']}), self.cls({'value': ['foo']}))
-        self.assertEqual(self.cls({'value': ['foo', 'bar']}), self.cls({'value': ['foo', 'bar']}))
-        self.assertEqual(self.cls({'value': ['foo', 'bar']}), self.cls({'value': ['bar', 'foo']}))
-
-        self.assertEqual(
-            self.cls({'critical': True, 'value': ['foo']}),
-            self.cls({'critical': True, 'value': ['foo']})
-        )
-        self.assertEqual(
-            self.cls({'critical': True, 'value': ['foo', 'bar']}),
-            self.cls({'critical': True, 'value': ['foo', 'bar']})
-        )
-        self.assertEqual(
-            self.cls({'critical': True, 'value': ['foo', 'bar']}),
-            self.cls({'critical': True, 'value': ['bar', 'foo']})
-        )
-
-    def test_ne(self):
-        self.assertNotEqual(self.cls({'value': ['foo']}), self.cls({'value': ['bar']}))
-        self.assertNotEqual(self.cls({'value': ['foo']}), self.cls({'critical': True, 'value': ['foo']}))
-
-    def test_operators(self):
-        ext = self.cls({'value': ['foo']})
-
-        # in operator
-        self.assertIn('foo', ext)
-        self.assertNotIn('bar', ext)
-        self.assertNotIn('something else', ext)
-
-        # equality
-        self.assertEqual(ext, self.cls({'value': ['foo']}))
-        self.assertNotEqual(ext, self.cls({'critical': True, 'value': ['foo']}))
-        self.assertNotEqual(ext, self.cls({'value': ['foo', 'bar']}))
-        self.assertNotEqual(ext, self.cls({'value': ['bar']}))
-
-        # as_text
-        self.assertEqual(ext.as_text(), '* foo')
-        self.assertEqual(self.cls({'value': ['foo', 'bar']}).as_text(), '* foo\n* bar')
-        self.assertEqual(self.cls({'value': ['bar', 'foo']}).as_text(), '* bar\n* foo')
-        self.assertEqual(self.cls({'value': ['bar']}).as_text(), '* bar')
-        self.assertEqual(self.cls({'critical': True, 'value': ['bar']}).as_text(), '* bar')
-
-        # str()
-        self.assertEqual(str(ext), 'foo')
-        self.assertEqual(str(self.cls({'value': ['foo', 'bar']})), 'bar,foo')
-        self.assertEqual(str(self.cls({'value': ['bar', 'foo']})), 'bar,foo')
-        self.assertEqual(str(self.cls({'value': ['bar']})), 'bar')
-        self.assertEqual(str(self.cls({'critical': True, 'value': ['bar']})), 'bar/critical')
-        self.assertEqual(str(self.cls({'critical': True, 'value': ['foo', 'bar']})), 'bar,foo/critical')
-        self.assertEqual(str(self.cls({'critical': True, 'value': ['bar', 'foo']})), 'bar,foo/critical')
 
 
 class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
@@ -2871,118 +2747,73 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
         self.assertEqual(str(self.ext5), "URI:https://example.net,DNS:example.net/critical")
 
 
-class KeyUsageTestCase(TestCase):
-    def assertBasic(self, ext):
-        self.assertTrue(ext.critical)
-        self.assertIn('cRLSign', ext)
-        self.assertIn('keyCertSign', ext)
-        self.assertNotIn('keyEncipherment', ext)
-
-        typ = ext.extension_type
-        self.assertIsInstance(typ, x509.KeyUsage)
-        self.assertTrue(typ.crl_sign)
-        self.assertTrue(typ.key_cert_sign)
-        self.assertFalse(typ.key_encipherment)
-
-        crypto = ext.as_extension()
-        self.assertEqual(crypto.oid, ExtensionOID.KEY_USAGE)
-
-    def test_basic(self):
-        self.assertBasic(KeyUsage({'critical': True, 'value': ['cRLSign', 'keyCertSign']}))
-        self.assertBasic(KeyUsage({'critical': True, 'value': ['cRLSign', 'keyCertSign']}))
-        self.assertBasic(KeyUsage(x509.extensions.Extension(
-            oid=ExtensionOID.KEY_USAGE,
-            critical=True,
-            value=x509.KeyUsage(
-                content_commitment=False,
-                crl_sign=True,
-                data_encipherment=True,
-                decipher_only=False,
-                digital_signature=False,
-                encipher_only=False,
-                key_agreement=True,
-                key_cert_sign=True,
-                key_encipherment=False,
-            )
-        )))
-
-        ext = KeyUsage({'critical': True, 'value': ['cRLSign', 'keyCertSign']})
-        ext2 = KeyUsage(ext.as_extension())
-        self.assertEqual(ext, ext2)
-
-    def test_hash(self):
-        ext1 = KeyUsage({'critical': True, 'value': ['cRLSign', 'keyCertSign']})
-        ext2 = KeyUsage({'value': ['cRLSign', 'keyCertSign']})
-        ext3 = KeyUsage({'value': ['cRLSign', 'keyCertSign', 'keyEncipherment']})
-
-        self.assertEqual(hash(ext1), hash(ext1))
-        self.assertEqual(hash(ext2), hash(ext2))
-        self.assertEqual(hash(ext3), hash(ext3))
-
-        self.assertNotEqual(hash(ext1), hash(ext2))
-        self.assertNotEqual(hash(ext1), hash(ext3))
-        self.assertNotEqual(hash(ext2), hash(ext3))
-
-    def test_eq(self):
-        self.assertEqual(KeyUsage({'value': ['cRLSign']}), KeyUsage({'value': ['cRLSign']}))
-        self.assertEqual(KeyUsage({'value': ['cRLSign', 'keyCertSign']}),
-                         KeyUsage({'value': ['cRLSign', 'keyCertSign']}))
-        self.assertEqual(KeyUsage({'value': ['cRLSign', 'keyCertSign']}),
-                         KeyUsage({'value': ['keyCertSign', 'cRLSign']}))
-
-        self.assertEqual(
-            KeyUsage({'critical': True, 'value': ['cRLSign']}),
-            KeyUsage({'critical': True, 'value': ['cRLSign']}))
-        self.assertEqual(
-            KeyUsage({'critical': True, 'value': ['cRLSign', 'keyCertSign']}),
-            KeyUsage({'critical': True, 'value': ['cRLSign', 'keyCertSign']}))
-        self.assertEqual(
-            KeyUsage({'critical': True, 'value': ['cRLSign', 'keyCertSign']}),
-            KeyUsage({'critical': True, 'value': ['keyCertSign', 'cRLSign']}))
-
-    def test_ne(self):
-        self.assertNotEqual(KeyUsage({'value': ['cRLSign']}), KeyUsage({'value': ['keyCertSign']}))
-        self.assertNotEqual(KeyUsage({'value': ['cRLSign']}),
-                            KeyUsage({'critical': True, 'value': ['cRLSign']}))
-        self.assertNotEqual(KeyUsage({'value': ['cRLSign']}), 10)
-
-    def test_sanity_checks(self):
-        # there are some sanity checks
-        self.assertEqual(KeyUsage({'value': ['decipherOnly']}).value, ['decipherOnly', 'keyAgreement'])
-
-    def test_empty_str(self):
-        # we want to accept an empty str as constructor
-        ku = KeyUsage({})
-        self.assertEqual(len(ku), 0)
-        self.assertFalse(bool(ku))
-
-    def test_dunder(self):
-        # test __contains__ and __len__
-        ku = KeyUsage({'value': ['cRLSign']})
-        self.assertIn('cRLSign', ku)
-        self.assertNotIn('keyCertSign', ku)
-        self.assertEqual(len(ku), 1)
-        self.assertTrue(bool(ku))
-
-    def test_error(self):
-        with self.assertRaisesRegex(ValueError, r'^Unknown value\(s\): foo$'):
-            KeyUsage({'value': 'foo'})
-        with self.assertRaisesRegex(ValueError, r'^Unknown value\(s\): foobar$'):
-            KeyUsage({'value': 'foobar'})
-
-        with self.assertRaisesRegex(ValueError, r'^Unknown value\(s\): foo$'):
-            KeyUsage({'value': 'foo', 'critical': True})
-
-        with self.assertRaisesRegex(ValueError, r'^None: Invalid critical value passed$'):
-            KeyUsage({'critical': None, 'value': ['cRLSign']})
-
-        with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type object$'):
-            KeyUsage(object())
+class KeyUsageTestCase(OrderedSetExtensionTestMixin, NewExtensionTestMixin, TestCase):
+    ext_class = KeyUsage
+    test_values = {
+        'one': {
+            'values': [
+                {'key_agreement', },
+                ['keyAgreement', ],
+            ],
+            'expected': frozenset(['key_agreement']),
+            'expected_str': 'keyAgreement',
+            'expected_repr': "<KeyUsage: ['keyAgreement'], critical=%s>",
+            'expected_text': '* keyAgreement',
+            'expected_serialized': ['keyAgreement'],
+            'extension_type': x509.KeyUsage(
+                digital_signature=False, content_commitment=False, key_encipherment=False,
+                data_encipherment=False, key_agreement=True, key_cert_sign=False, crl_sign=False,
+                encipher_only=False, decipher_only=False),
+        },
+        'two': {
+            'values': [
+                {'key_agreement', 'key_encipherment', },
+                ['keyAgreement', 'keyEncipherment'],
+                ['keyEncipherment', 'keyAgreement'],
+                ['keyEncipherment', 'key_agreement'],
+            ],
+            'expected': frozenset(['key_agreement', 'key_encipherment']),
+            'expected_str': 'keyAgreement,keyEncipherment',
+            'expected_repr': "<KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=%s>",
+            'expected_text': '* keyAgreement\n* keyEncipherment',
+            'expected_serialized': ['keyAgreement', 'keyEncipherment'],
+            'extension_type': x509.KeyUsage(
+                digital_signature=False, content_commitment=False, key_encipherment=True,
+                data_encipherment=False, key_agreement=True, key_cert_sign=False, crl_sign=False,
+                encipher_only=False, decipher_only=False),
+        },
+        'three': {
+            'values': [
+                {'key_agreement', 'key_encipherment', 'content_commitment', },
+                ['keyAgreement', 'keyEncipherment', 'nonRepudiation', ],
+                ['nonRepudiation', 'keyAgreement', 'keyEncipherment', ],
+                ['nonRepudiation', 'keyAgreement', 'keyEncipherment', ],
+                ['content_commitment', 'key_agreement', 'key_encipherment', ],
+            ],
+            'expected': frozenset(['key_agreement', 'key_encipherment', 'content_commitment', ]),
+            'expected_str': 'keyAgreement,keyEncipherment,nonRepudiation',
+            'expected_repr': "<KeyUsage: ['keyAgreement', 'keyEncipherment', 'nonRepudiation'], "
+                             "critical=%s>",
+            'expected_text': '* keyAgreement\n* keyEncipherment\n* nonRepudiation',
+            'expected_serialized': ['keyAgreement', 'keyEncipherment', 'nonRepudiation'],
+            'extension_type': x509.KeyUsage(
+                digital_signature=False, content_commitment=True, key_encipherment=True,
+                data_encipherment=False, key_agreement=True, key_cert_sign=False, crl_sign=False,
+                encipher_only=False, decipher_only=False),
+        },
+    }
 
     def test_completeness(self):
         # make sure whe haven't forgotton any keys anywhere
         self.assertEqual(set(KeyUsage.CRYPTOGRAPHY_MAPPING.keys()),
                          set([e[0] for e in KeyUsage.CHOICES]))
+
+    def test_unknown_values(self):
+        with self.assertRaisesRegex(ValueError, r'^Unknown value: foo$'):
+            KeyUsage({'value': ['foo']})
+
+        with self.assertRaisesRegex(ValueError, r'^Unknown value: True$'):
+            KeyUsage({'value': [True]})
 
 
 class ExtendedKeyUsageTestCase(OrderedSetExtensionTestMixin, NewExtensionTestMixin, TestCase):
@@ -3000,6 +2831,43 @@ class ExtendedKeyUsageTestCase(OrderedSetExtensionTestMixin, NewExtensionTestMix
             'expected_serialized': ['serverAuth'],
             'expected_str': 'serverAuth',
             'expected_text': '* serverAuth',
+        },
+        'two': {
+            'values': [
+                {'serverAuth', 'clientAuth', },
+                {ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH},
+                [ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH],
+                [ExtendedKeyUsageOID.SERVER_AUTH, 'clientAuth'],
+            ],
+            'extension_type': x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH,
+                                                     ExtendedKeyUsageOID.SERVER_AUTH]),
+            'expected': frozenset([ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH]),
+            'expected_repr': "<ExtendedKeyUsage: ['clientAuth', 'serverAuth'], critical=%s>",
+            'expected_serialized': ['clientAuth', 'serverAuth'],
+            'expected_str': 'clientAuth,serverAuth',
+            'expected_text': '* clientAuth\n* serverAuth',
+        },
+        'three': {
+            'values': [
+                {'serverAuth', 'clientAuth', 'timeStamping', },
+                {ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH,
+                 ExtendedKeyUsageOID.TIME_STAMPING, },
+                {ExtendedKeyUsageOID.CLIENT_AUTH, 'serverAuth',
+                 ExtendedKeyUsageOID.TIME_STAMPING, },
+                [ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH,
+                 ExtendedKeyUsageOID.TIME_STAMPING],
+                [ExtendedKeyUsageOID.TIME_STAMPING, ExtendedKeyUsageOID.SERVER_AUTH,
+                 ExtendedKeyUsageOID.CLIENT_AUTH],
+            ],
+            'extension_type': x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH,
+                                                     ExtendedKeyUsageOID.SERVER_AUTH,
+                                                     ExtendedKeyUsageOID.TIME_STAMPING]),
+            'expected': frozenset([ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH,
+                                   ExtendedKeyUsageOID.TIME_STAMPING]),
+            'expected_repr': "<ExtendedKeyUsage: ['clientAuth', 'serverAuth', 'timeStamping'], critical=%s>",
+            'expected_serialized': ['clientAuth', 'serverAuth', 'timeStamping'],
+            'expected_str': 'clientAuth,serverAuth,timeStamping',
+            'expected_text': '* clientAuth\n* serverAuth\n* timeStamping',
         },
     }
 

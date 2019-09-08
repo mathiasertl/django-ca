@@ -811,12 +811,12 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
         with self.settings(CA_PROFILES=CA_PROFILES):
             self.assertEqual(get_cert_profile_kwargs('testprofile'), expected)
 
-        CA_PROFILES['testprofile']['keyUsage']['value'] = 'encipherOnly'
-        expected['key_usage'] = KeyUsage({'value': 'encipherOnly'})
+        CA_PROFILES['testprofile']['keyUsage']['value'] = ['encipherOnly']
+        expected['key_usage'] = KeyUsage({'value': ['encipherOnly']})
         with self.settings(CA_PROFILES=CA_PROFILES):
             self.assertEqual(get_cert_profile_kwargs('testprofile'), expected)
 
-        CA_PROFILES['testprofile']['keyUsage']['value'] = b''
+        CA_PROFILES['testprofile']['keyUsage']['value'] = []
         del expected['key_usage']
         with self.settings(CA_PROFILES=CA_PROFILES):
             self.assertEqual(get_cert_profile_kwargs('testprofile'), expected)

@@ -22,7 +22,6 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from ..constants import ReasonFlags
-from ..extensions import KeyUsage
 from ..extensions import TLSFeature
 from ..management import base
 from ..models import Certificate
@@ -71,32 +70,6 @@ class SubjectActionTestCase(DjangoCATestCase):
         self.assertParserError(['--subject=/WRONG=foobar'],
                                'usage: {script} [-h] [--subject SUBJECT]\n'
                                '{script}: error: Unknown x509 name field: WRONG\n')
-
-
-class KnownValuesExtensionActionTestCase(DjangoCATestCase):
-    def setUp(self):
-        super(KnownValuesExtensionActionTestCase, self).setUp()
-        self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('-e', action=base.KnownValuesExtensionAction, extension=KeyUsage)
-
-    def test_basic(self):
-        ns = self.parser.parse_args(['-e=critical,keyAgreement'])
-        self.assertEqual(ns.e, KeyUsage({'critical': True, 'value': ['keyAgreement']}))
-        self.assertTrue(ns.e.critical)
-        self.assertEqual(ns.e.value, ['keyAgreement'])
-
-        # test a non-critical value
-        self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('-e', action=base.KnownValuesExtensionAction, extension=KeyUsage)
-        ns = self.parser.parse_args(['-e=keyAgreement'])
-        self.assertEqual(ns.e, KeyUsage({'value': 'keyAgreement'}))
-        self.assertFalse(ns.e.critical)
-        self.assertEqual(ns.e.value, ['keyAgreement'])
-
-    def test_error(self):
-        self.assertParserError(['-e=foobar'],
-                               'usage: {script} [-h] [-e E]\n'
-                               '{script}: error: Invalid extension value: foobar: Unknown value(s): foobar\n')
 
 
 class OrderedSetExtensionActionTestCase(DjangoCATestCase):

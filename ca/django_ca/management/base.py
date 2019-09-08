@@ -212,23 +212,6 @@ class ExtensionAction(argparse.Action):
         super(ExtensionAction, self).__init__(*args, **kwargs)
 
 
-class KnownValuesExtensionAction(ExtensionAction):
-    # TODO: Class can be removed once KeyUsage is switched to OrderedSetExtension
-
-    def __call__(self, parser, namespace, value, option_string=None):
-        ext = getattr(namespace, self.dest)
-
-        values = shlex_split(value, ', ')
-        if values[0] == 'critical':
-            values = values[1:]
-            ext.critical = True
-
-        try:
-            ext.extend(values)
-        except ValueError as e:
-            parser.error('Invalid extension value: %s: %s' % (value, e))
-
-
 class OrderedSetExtensionAction(ExtensionAction):
     def __call__(self, parser, namespace, value, option_string=None):
         ext = getattr(namespace, self.dest)
@@ -439,7 +422,7 @@ class BaseSignCommand(BaseCommand):
     def add_extensions(self, parser):
         group = parser.add_argument_group('X509 v3 certificate extensions', self.add_extensions_help)
         group.add_argument(
-            '--key-usage', metavar='VALUES', action=KnownValuesExtensionAction, extension=KeyUsage,
+            '--key-usage', metavar='VALUES', action=OrderedSetExtensionAction, extension=KeyUsage,
             help='The keyUsage extension, e.g. "critical,keyCertSign".')
         group.add_argument(
             '--ext-key-usage', metavar='VALUES', action=OrderedSetExtensionAction, extension=ExtendedKeyUsage,

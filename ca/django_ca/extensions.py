@@ -48,7 +48,7 @@ class Extension(object):
 
         >>> KeyUsage({'value': ['keyAgreement', 'keyEncipherment']})
         <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=False>
-        >>> KeyUsage({'critical': True, 'value': ['keyAgreement', 'keyEncipherment']})
+        >>> KeyUsage({'critical': True, 'value': ['key_agreement', 'key_encipherment']})
         <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=True>
 
     ... but can also use a subclass of :py:class:`~cg:cryptography.x509.ExtensionType`
@@ -499,54 +499,6 @@ class OrderedSetExtension(IterableExtension):
     def update(self, *others):
         for o in others:
             self.value.update(self.parse_iterable(o))
-
-
-class KnownValuesExtension(ListExtension):
-    """A generic base class for extensions with multiple values with a set of pre-defined valid values.
-
-    This base class is for extensions where we *know* what potential values an extension can have. For
-    example, the :py:class:`~django_ca.extensions.KeyUsage` extension has only a certain set of valid values::
-
-        >>> KeyUsage({'value': ['keyAgreement', 'keyEncipherment']})
-        <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=False>
-        >>> KeyUsage({'value': ['wrong-value']})
-        Traceback (most recent call last):
-            ...
-        ValueError: Unknown value(s): wrong-value
-
-    Known values are set in the ``KNOWN_VALUES`` attribute for each class. The constructor will raise
-    ``ValueError`` if an unknown value is passed.
-    """
-    KNOWN_VALUES = set()
-
-    def __eq__(self, other):
-        if not isinstance(other, type(self)):
-            return False
-        this = list(sorted(self.value))
-        that = list(sorted(other.value))
-        return isinstance(other, type(self)) and self.critical == other.critical and this == that
-
-    def __hash__(self):
-        return hash((self.__class__, tuple(sorted(self.value)), self.critical, ))
-
-    def __repr__(self):
-        val = sorted([self.serialize_value(v) for v in self.value])
-
-        if six.PY2:  # pragma: no branch, pragma: only py2 - otherwise we have the u'' prefix in output
-            val = [str(v) for v in val]
-
-        return '<%s: %r, critical=%r>' % (self.__class__.__name__, val, self.critical)
-
-    def __str__(self):
-        val = "%s" % ','.join(sorted([self.serialize_value(v) for v in self.value]))
-        if self.critical:
-            return '%s/critical' % val
-        return val
-
-    def _test_value(self):
-        diff = set(self.value) - self.KNOWN_VALUES
-        if diff:
-            raise ValueError('Unknown value(s): %s' % ', '.join(sorted(diff)))
 
 
 class GeneralNameMixin(object):
@@ -1279,15 +1231,15 @@ class IssuerAlternativeName(AlternativeNameExtension):
         return x509.IssuerAlternativeName(self.value)
 
 
-class KeyUsage(KnownValuesExtension):
+class KeyUsage(OrderedSetExtension):
     """Class representing a KeyUsage extension, which defines the purpose of a certificate.
 
     This extension is usually marked as critical and RFC 5280 defines that conforming CAs SHOULD mark it as
-    critical. The value ``keyAgreement`` is always added if ``decipherOnly`` is present, since the value of
-    this extension is not meaningful otherwise.
+    critical. The value ``keyAgreement`` is always added if ``encipherOnly`` or ``decipherOnly`` is present,
+    since the value of this extension is not meaningful otherwise.
 
     >>> KeyUsage({'value': ['encipherOnly'], 'critical': True})
-    <KeyUsage: ['encipherOnly'], critical=True>
+    <KeyUsage: ['encipherOnly', 'keyAgreement'], critical=True>
     >>> KeyUsage({'value': ['decipherOnly'], 'critical': True})
     <KeyUsage: ['decipherOnly', 'keyAgreement'], critical=True>
 
@@ -1296,6 +1248,7 @@ class KeyUsage(KnownValuesExtension):
         `RFC 5280, section 4.2.1.3 <https://tools.ietf.org/html/rfc5280#section-4.2.1.3>`_
     """
 
+    key = 'key_usage'
     oid = ExtensionOID.KEY_USAGE
     CRYPTOGRAPHY_MAPPING = {
         'cRLSign': 'crl_sign',
@@ -1308,9 +1261,8 @@ class KeyUsage(KnownValuesExtension):
         'keyEncipherment': 'key_encipherment',
         'nonRepudiation': 'content_commitment',  # http://marc.info/?t=107176106300005&r=1&w=2
     }
-    KNOWN_VALUES = set(CRYPTOGRAPHY_MAPPING)
-    """Known values for this extension."""
-
+    _CRYPTOGRAPHY_MAPPING_REVERSED = {v: k for k, v in CRYPTOGRAPHY_MAPPING.items()}
+    KNOWN_VALUES = set(CRYPTOGRAPHY_MAPPING.values())
     CHOICES = (
         ('cRLSign', 'CRL Sign'),
         ('dataEncipherment', 'dataEncipherment'),
@@ -1327,17 +1279,18 @@ class KeyUsage(KnownValuesExtension):
         super(KeyUsage, self).__init__(*args, **kwargs)
 
         # decipherOnly only makes sense if keyAgreement is True
-        if 'decipherOnly' in self.value and 'keyAgreement' not in self.value:
-            self.value.append('keyAgreement')
+        if 'decipher_only' in self.value and 'key_agreement' not in self.value:
+            self.value.add('key_agreement')
+        if 'encipher_only' in self.value and 'key_agreement' not in self.value:
+            self.value.add('key_agreement')
 
     def from_extension(self, ext):
-        self.value = []
+        self.value = set()
 
-        # NOTE: we sort the items here to make sure that the order of self.value is deterministic.
-        for k, v in sorted(self.CRYPTOGRAPHY_MAPPING.items()):
+        for v in self.KNOWN_VALUES:
             try:
                 if getattr(ext.value, v):
-                    self.value.append(k)
+                    self.value.add(v)
             except ValueError:
                 # cryptography throws a ValueError if encipher_only/decipher_only is accessed and
                 # key_agreement is not set.
@@ -1345,8 +1298,20 @@ class KeyUsage(KnownValuesExtension):
 
     @property
     def extension_type(self):
-        kwargs = {v: (k in self.value) for k, v in self.CRYPTOGRAPHY_MAPPING.items()}
+        kwargs = {v: (v in self.value) for v in self.KNOWN_VALUES}
         return x509.KeyUsage(**kwargs)
+
+    def parse_value(self, v):
+        if v in self.KNOWN_VALUES:
+            return v
+        try:
+            return self.CRYPTOGRAPHY_MAPPING[v]
+        except KeyError:
+            raise ValueError('Unknown value: %s' % v)
+        raise ValueError('Unknown value: %s' % v)  # pragma: no cover - function returns/raises before
+
+    def serialize_value(self, v):
+        return self._CRYPTOGRAPHY_MAPPING_REVERSED[v]
 
 
 class ExtendedKeyUsage(OrderedSetExtension):
