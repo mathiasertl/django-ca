@@ -210,6 +210,27 @@ class NewAbstractExtensionTestMixin:
                 ext_3 = self.ext(value, critical=False)
                 self.assertEqual(ext_not_critical, ext_3)
 
+    def test_init(self):
+        # Test that the constructor behaves equal regardles of input value
+        for test_key, test_config in self.test_values.items():
+            expected = self.ext(test_config['expected'])
+
+            for value in test_config['values']:
+                self.assertExtensionEqual(self.ext(value), expected)
+
+            if test_config.get('extension_type'):
+                self.assertExtensionEqual(self.ext(test_config['extension_type']), expected)
+
+            # Now the same with explicit critical values
+            for critical in [True, False]:
+                expected = self.ext(test_config['expected'], critical=critical)
+
+                for value in test_config['values']:
+                    self.assertExtensionEqual(self.ext(value, critical=critical), expected)
+
+                if test_config.get('extension_type'):
+                    self.assertEqual(self.ext(test_config['extension_type'], critical=critical), expected)
+
     def test_init_no_bool_critical(self):
         class_name = 'example_class'
 
@@ -652,36 +673,6 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
             for values in values['values']:
                 for value in values:
                     self.assertIn(value, ext)
-
-    def test_init(self):
-        # Test that the constructor behaves equal regardles of input value
-        for test_key, test_config in self.test_values.items():
-            expected = self.ext_class({'value': test_config['expected']})
-
-            for value in test_config['values']:
-                self.assertExtensionEqual(self.ext_class({'value': value}), expected)
-
-            if test_config.get('extension_type'):
-                cg = x509.extensions.Extension(
-                    oid=self.ext_class.oid, critical=self.ext_class.default_critical,
-                    value=test_config['extension_type']
-                )
-                self.assertEqual(expected, self.ext_class(cg))
-
-            # Now the same with explicit critical values
-            for critical in [True, False]:
-                expected = self.ext_class({'value': test_config['expected'], 'critical': critical})
-
-                for value in test_config['values']:
-                    self.assertExtensionEqual(
-                        self.ext_class({'value': value, 'critical': critical}), expected)
-
-                if test_config.get('extension_type'):
-                    cg = x509.extensions.Extension(
-                        oid=self.ext_class.oid, critical=critical,
-                        value=test_config['extension_type']
-                    )
-                    self.assertEqual(expected, self.ext_class(cg))
 
     def test_intersection(self):
         self.assertSingleValueOperator(lambda s, o: s.intersection(o), infix=False, update=False)
@@ -1263,7 +1254,6 @@ class BasicConstraintsTestCase(NewExtensionTestMixin, TestCase):
                 {'ca': False},
                 {'ca': False, 'pathlen': 3},  # ignored b/c ca=False
                 {'ca': False, 'pathlen': None},  # ignored b/c ca=False
-                x509.BasicConstraints(ca=False, path_length=None),
             ],
             'expected': {'ca': False, 'pathlen': None},
             'expected_str': 'CA:FALSE',
@@ -1276,7 +1266,6 @@ class BasicConstraintsTestCase(NewExtensionTestMixin, TestCase):
             'values': [
                 {'ca': True},
                 {'ca': True, 'pathlen': None},
-                x509.BasicConstraints(ca=True, path_length=None),
             ],
             'expected': {'ca': True, 'pathlen': None},
             'expected_str': 'CA:TRUE',
@@ -1288,7 +1277,6 @@ class BasicConstraintsTestCase(NewExtensionTestMixin, TestCase):
         'pathlen_zero': {
             'values': [
                 {'ca': True, 'pathlen': 0},
-                x509.BasicConstraints(ca=True, path_length=0),
             ],
             'expected': {'ca': True, 'pathlen': 0},
             'expected_str': 'CA:TRUE, pathlen:0',
@@ -1300,7 +1288,6 @@ class BasicConstraintsTestCase(NewExtensionTestMixin, TestCase):
         'pathlen_three': {
             'values': [
                 {'ca': True, 'pathlen': 3},
-                x509.BasicConstraints(ca=True, path_length=3),
             ],
             'expected': {'ca': True, 'pathlen': 3},
             'expected_str': 'CA:TRUE, pathlen:3',
@@ -2827,7 +2814,6 @@ class NameConstraintsTestCase(NewExtensionTestMixin, TestCase):
         'empty': {
             'values': [
                 {'excluded': [], 'permitted': []},
-                x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[]),
             ],
             'expected': x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[]),
             'expected_repr': '<NameConstraints: permitted=[], excluded=[], critical=%s>',
@@ -2842,7 +2828,6 @@ class NameConstraintsTestCase(NewExtensionTestMixin, TestCase):
                 {'permitted': ['DNS:%s' % d1]},
                 {'permitted': [dns(d1)]},
                 {'permitted': [dns(d1)], 'excluded': []},
-                x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[]),
             ],
             'expected': x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[]),
             'expected_repr': "<NameConstraints: permitted=['DNS:%s'], excluded=[], critical=%%s>" % d1,
@@ -2859,7 +2844,6 @@ class NameConstraintsTestCase(NewExtensionTestMixin, TestCase):
                 {'excluded': ['DNS:%s' % d1]},
                 {'excluded': [dns(d1)]},
                 {'excluded': [dns(d1)], 'permitted': []},
-                x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[dns(d1)]),
             ],
             'expected': x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[dns(d1)]),
             'expected_repr': "<NameConstraints: permitted=[], excluded=['DNS:%s'], critical=%%s>" % d1,
@@ -2875,7 +2859,6 @@ class NameConstraintsTestCase(NewExtensionTestMixin, TestCase):
                 {'permitted': ['DNS:%s' % d1], 'excluded': ['DNS:%s' % d2]},
                 {'permitted': [dns(d1)], 'excluded': [dns(d2)]},
                 {'permitted': [dns(d1)], 'excluded': [d2]},
-                x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[dns(d2)])
             ],
             'expected': x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[dns(d2)]),
             'expected_repr': "<NameConstraints: permitted=['DNS:%s'], excluded=['DNS:%s'], "
@@ -2887,6 +2870,16 @@ class NameConstraintsTestCase(NewExtensionTestMixin, TestCase):
             'extension_type': x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[dns(d2)]),
         },
     }
+
+    def assertExtensionEqual(self, first, second):
+        """Function to test if an extension is really really equal.
+
+        This function should compare extension internals directly not via the __eq__ function.
+        """
+        self.assertEqual(first.__class__, second.__class__)
+        self.assertEqual(first.critical, second.critical)
+        self.assertEqual(first.permitted, second.permitted)
+        self.assertEqual(first.excluded, second.excluded)
 
     def test_bool(self):
         self.assertFalse(bool(NameConstraints({})))
