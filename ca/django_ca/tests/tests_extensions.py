@@ -1255,115 +1255,63 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
             AuthorityKeyIdentifier(False)
 
 
-class BasicConstraintsTestCase(ExtensionTestMixin, TestCase):
+class BasicConstraintsTestCase(NewExtensionTestMixin, TestCase):
     ext_class = BasicConstraints
+    test_values = {
+        'no_ca': {
+            'values': [
+                {'ca': False},
+                {'ca': False, 'pathlen': 3},  # ignored b/c ca=False
+                {'ca': False, 'pathlen': None},  # ignored b/c ca=False
+                x509.BasicConstraints(ca=False, path_length=None),
+            ],
+            'expected': {'ca': False, 'pathlen': None},
+            'expected_str': 'CA:FALSE',
+            'expected_text': 'CA:FALSE',
+            'expected_repr': "<BasicConstraints: 'CA:FALSE', critical=%s>",
+            'expected_serialized': {'ca': False},
+            'extension_type': x509.BasicConstraints(ca=False, path_length=None),
+        },
+        'no_pathlen': {
+            'values': [
+                {'ca': True},
+                {'ca': True, 'pathlen': None},
+                x509.BasicConstraints(ca=True, path_length=None),
+            ],
+            'expected': {'ca': True, 'pathlen': None},
+            'expected_str': 'CA:TRUE',
+            'expected_text': 'CA:TRUE',
+            'expected_repr': "<BasicConstraints: 'CA:TRUE', critical=%s>",
+            'expected_serialized': {'ca': True, 'pathlen': None},
+            'extension_type': x509.BasicConstraints(ca=True, path_length=None),
+        },
+        'pathlen_zero': {
+            'values': [
+                {'ca': True, 'pathlen': 0},
+                x509.BasicConstraints(ca=True, path_length=0),
+            ],
+            'expected': {'ca': True, 'pathlen': 0},
+            'expected_str': 'CA:TRUE, pathlen:0',
+            'expected_text': 'CA:TRUE, pathlen:0',
+            'expected_repr': "<BasicConstraints: 'CA:TRUE, pathlen:0', critical=%s>",
+            'expected_serialized': {'ca': True, 'pathlen': 0},
+            'extension_type': x509.BasicConstraints(ca=True, path_length=0),
+        },
+        'pathlen_three': {
+            'values': [
+                {'ca': True, 'pathlen': 3},
+                x509.BasicConstraints(ca=True, path_length=3),
+            ],
+            'expected': {'ca': True, 'pathlen': 3},
+            'expected_str': 'CA:TRUE, pathlen:3',
+            'expected_text': 'CA:TRUE, pathlen:3',
+            'expected_repr': "<BasicConstraints: 'CA:TRUE, pathlen:3', critical=%s>",
+            'expected_serialized': {'ca': True, 'pathlen': 3},
+            'extension_type': x509.BasicConstraints(ca=True, path_length=3),
+        },
+    }
 
-    x1 = x509.Extension(
-        oid=x509.ExtensionOID.BASIC_CONSTRAINTS, critical=True,
-        value=x509.BasicConstraints(ca=False, path_length=None)
-    )
-    x2 = x509.Extension(
-        oid=x509.ExtensionOID.BASIC_CONSTRAINTS, critical=True,
-        value=x509.BasicConstraints(ca=True, path_length=None)
-    )
-    x3 = x509.Extension(
-        oid=x509.ExtensionOID.BASIC_CONSTRAINTS, critical=True,
-        value=x509.BasicConstraints(ca=True, path_length=0)
-    )
-    x4 = x509.Extension(
-        oid=x509.ExtensionOID.BASIC_CONSTRAINTS, critical=True,
-        value=x509.BasicConstraints(ca=True, path_length=3)
-    )
-    # NOTE: Very unusual, BC is normally marked as critical
-    x5 = x509.Extension(
-        oid=x509.ExtensionOID.BASIC_CONSTRAINTS, critical=False,
-        value=x509.BasicConstraints(ca=False, path_length=None)
-    )
-    xs = [x1, x2, x3, x4, x5]
-
-    def setUp(self):
-        super(BasicConstraintsTestCase, self).setUp()
-        self.ext1 = BasicConstraints({'value': {'ca': False}})
-        self.ext2 = BasicConstraints({'value': {'ca': True}})
-        self.ext3 = BasicConstraints({'value': {'ca': True, 'pathlen': 0}})
-        self.ext4 = BasicConstraints({'value': {'ca': True, 'pathlen': 3}})
-        self.ext5 = BasicConstraints({'value': {'ca': False}, 'critical': False})
-        self.exts = [self.ext1, self.ext2, self.ext3, self.ext4, self.ext5]
-
-    def assertBC(self, bc, ca, pathlen, critical=True):
-        self.assertEqual(bc.ca, ca)
-        self.assertEqual(bc.pathlen, pathlen)
-        self.assertEqual(bc.critical, critical)
-        self.assertEqual(bc.value, (ca, pathlen))
-
-    def test_as_text(self):
-        self.assertEqual(BasicConstraints({'value': {'ca': True}}).as_text(), 'CA:TRUE')
-        self.assertEqual(BasicConstraints({'value': {'ca': True, 'pathlen': 3}}).as_text(),
-                         'CA:TRUE, pathlen:3')
-        self.assertEqual(BasicConstraints({'value': {'ca': False}}).as_text(), 'CA:FALSE')
-
-    def test_hash(self):
-        self.assertEqual(hash(self.ext1), hash(self.ext1))
-        self.assertEqual(hash(self.ext2), hash(self.ext2))
-        self.assertEqual(hash(self.ext3), hash(self.ext3))
-        self.assertEqual(hash(self.ext4), hash(self.ext4))
-        self.assertEqual(hash(self.ext5), hash(self.ext5))
-
-        self.assertNotEqual(hash(self.ext1), hash(self.ext2))
-        self.assertNotEqual(hash(self.ext1), hash(self.ext3))
-        self.assertNotEqual(hash(self.ext2), hash(self.ext3))
-
-    def test_ne(self):
-        self.assertNotEqual(self.ext1, self.ext2)
-        self.assertNotEqual(self.ext1, self.ext3)
-        self.assertNotEqual(self.ext1, self.ext4)
-        self.assertNotEqual(self.ext1, self.ext5)
-        self.assertNotEqual(self.ext2, self.ext3)
-        self.assertNotEqual(self.ext2, self.ext4)
-        self.assertNotEqual(self.ext2, self.ext5)
-        self.assertNotEqual(self.ext3, self.ext4)
-        self.assertNotEqual(self.ext3, self.ext5)
-        self.assertNotEqual(self.ext4, self.ext5)
-
-    def test_repr(self):
-        self.assertEqual(repr(self.ext1), "<BasicConstraints: 'CA:FALSE', critical=True>")
-        self.assertEqual(repr(self.ext2), "<BasicConstraints: 'CA:TRUE', critical=True>")
-        self.assertEqual(repr(self.ext3), "<BasicConstraints: 'CA:TRUE, pathlen:0', critical=True>")
-        self.assertEqual(repr(self.ext4), "<BasicConstraints: 'CA:TRUE, pathlen:3', critical=True>")
-        self.assertEqual(repr(self.ext5), "<BasicConstraints: 'CA:FALSE', critical=False>")
-
-    def test_str(self):
-        self.assertEqual(str(self.ext1), "CA:FALSE/critical")
-        self.assertEqual(str(self.ext2), "CA:TRUE/critical")
-        self.assertEqual(str(self.ext3), "CA:TRUE, pathlen:0/critical")
-        self.assertEqual(str(self.ext4), "CA:TRUE, pathlen:3/critical")
-        self.assertEqual(str(self.ext5), "CA:FALSE")
-
-    # Old functions
-
-    def test_from_extension(self):
-        self.assertBC(BasicConstraints(x509.Extension(
-            oid=x509.ExtensionOID.BASIC_CONSTRAINTS, critical=True,
-            value=x509.BasicConstraints(ca=True, path_length=3))), True, 3, True)
-
-    def test_dict(self):
-        self.assertBC(BasicConstraints({'value': {'ca': True}}), True, None, True)
-        self.assertBC(BasicConstraints({'value': {'ca': False}}), False, None, True)
-        self.assertBC(BasicConstraints({'value': {'ca': True, 'pathlen': 3}}), True, 3, True)
-        self.assertBC(BasicConstraints({'value': {'ca': True, 'pathlen': None}}), True, None, True)
-        self.assertBC(BasicConstraints({'value': {'ca': True}, 'critical': False}), True, None, False)
-
-    def test_other(self):
-        # test without pathlen
-        self.assertBC(BasicConstraints({'value': {'ca': False}}), False, None, True)
-        self.assertBC(BasicConstraints({'value': {'ca': True}}), True, None, True)
-        self.assertBC(BasicConstraints({'value': {'ca': True}}), True, None, True)
-
-        # test adding a pathlen
-        self.assertBC(BasicConstraints({'value': {'ca': True, 'pathlen': 0}}), True, 0, True)
-        self.assertBC(BasicConstraints({'value': {'ca': True, 'pathlen': 1}}), True, 1, True)
-        self.assertBC(BasicConstraints({'value': {'ca': True, 'pathlen': 2}}), True, 2, True)
-
+    def test_invalid_pathlen(self):
         with self.assertRaisesRegex(ValueError, r'^Could not parse pathlen: "foo"$'):
             BasicConstraints({'value': {'ca': True, 'pathlen': 'foo'}})
 
@@ -1372,17 +1320,6 @@ class BasicConstraintsTestCase(ExtensionTestMixin, TestCase):
 
         with self.assertRaisesRegex(ValueError, r'^Could not parse pathlen: "foobar"$'):
             BasicConstraints({'value': {'ca': True, 'pathlen': 'foobar'}})
-
-    def test_serialize(self):
-        exts = [
-            BasicConstraints({'value': {'ca': True}}),
-            BasicConstraints({'value': {'ca': False}}),
-            BasicConstraints({'value': {'ca': True, 'pathlen': 3}}),
-            BasicConstraints({'value': {'ca': True, 'pathlen': None}}),
-            BasicConstraints({'value': {'ca': True}, 'critical': False}),
-        ]
-        for ext in exts:
-            self.assertEqual(BasicConstraints(ext.serialize()), ext)
 
 
 class DistributionPointTestCase(TestCase):

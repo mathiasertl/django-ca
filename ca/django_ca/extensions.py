@@ -1060,15 +1060,18 @@ class BasicConstraints(Extension):
     oid = ExtensionOID.BASIC_CONSTRAINTS
     default_critical = True
 
-    def __init__(self, *args, **kwargs):
-        super(BasicConstraints, self).__init__(*args, **kwargs)
+    def __hash__(self):
+        return hash((self.__class__, self.ca, self.pathlen, self.critical, ))
 
     def __repr__(self):
         return '<%s: %r, critical=%r>' % (self.__class__.__name__, str(self.as_text()), self.critical)
 
     @property
     def value(self):
-        return self.ca, self.pathlen
+        return {
+            'ca': self.ca,
+            'pathlen': self.pathlen,
+        }
 
     def from_extension(self, ext):
         self.ca = ext.value.ca
