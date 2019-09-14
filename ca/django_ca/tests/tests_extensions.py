@@ -1171,87 +1171,56 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
             "CA Issuers:\n  * URI:https://example.com\nOCSP:\n  * URI:https://example.net\n  * URI:https://example.org\n")  # NOQA
 
 
-class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
-    ext_class = AuthorityKeyIdentifier
-
+class AuthorityKeyIdentifierTestCase(NewExtensionTestMixin, TestCase):
+    b1 = b'333333'
+    b2 = b'DDDDDD'
+    b3 = b'UUUUUU'
     hex1 = '33:33:33:33:33:33'
     hex2 = '44:44:44:44:44:44'
     hex3 = '55:55:55:55:55:55'
 
-    b1 = b'333333'
-    b2 = b'DDDDDD'
-    b3 = b'UUUUUU'
+    ext_class = AuthorityKeyIdentifier
+    test_values = {
+        'one': {
+            'values': [
+                hex1,
+            ],
+            'expected': b1,
+            'expected_str': 'keyid:%s' % hex1,
+            'expected_repr': '<AuthorityKeyIdentifier: %s, critical=%%s>' % b1,
+            'expected_serialized': hex1,
+            'expected_text': 'keyid:%s' % hex1,
+            'extension_type': x509.AuthorityKeyIdentifier(b1, None, None),
+        },
+        'two': {
+            'values': [
+                hex2,
+            ],
+            'expected': b2,
+            'expected_str': 'keyid:%s' % hex2,
+            'expected_repr': '<AuthorityKeyIdentifier: %s, critical=%%s>' % b2,
+            'expected_serialized': hex2,
+            'expected_text': 'keyid:%s' % hex2,
+            'extension_type': x509.AuthorityKeyIdentifier(b2, None, None),
+        },
+        'three': {
+            'values': [
+                hex3,
+            ],
+            'expected': b3,
+            'expected_str': 'keyid:%s' % hex3,
+            'expected_repr': '<AuthorityKeyIdentifier: %s, critical=%%s>' % b3,
+            'expected_serialized': hex3,
+            'expected_text': 'keyid:%s' % hex3,
+            'extension_type': x509.AuthorityKeyIdentifier(b3, None, None),
+        },
+    }
 
-    x1 = x509.Extension(
-        oid=x509.ExtensionOID.AUTHORITY_KEY_IDENTIFIER, critical=False,
-        value=x509.AuthorityKeyIdentifier(b1, None, None))
-    x2 = x509.Extension(
-        oid=x509.ExtensionOID.AUTHORITY_KEY_IDENTIFIER, critical=False,
-        value=x509.AuthorityKeyIdentifier(b2, None, None))
-    x3 = x509.Extension(
-        oid=x509.ExtensionOID.AUTHORITY_KEY_IDENTIFIER, critical=True,
-        value=x509.AuthorityKeyIdentifier(b3, None, None)
-    )
-    xs = [x1, x2, x3]
-
-    def setUp(self):
-        super(AuthorityKeyIdentifierTestCase, self).setUp()
-        self.ext1 = AuthorityKeyIdentifier(self.x1)
-        self.ext2 = AuthorityKeyIdentifier(self.x2)
-        self.ext3 = AuthorityKeyIdentifier(self.x3)
-        self.exts = [self.ext1, self.ext2, self.ext3]
-
-    def test_as_text(self):
-        self.assertEqual(self.ext1.as_text(), 'keyid:%s' % self.hex1)
-        self.assertEqual(self.ext2.as_text(), 'keyid:%s' % self.hex2)
-        self.assertEqual(self.ext3.as_text(), 'keyid:%s' % self.hex3)
-
-    def test_hash(self):
-        self.assertEqual(hash(self.ext1), hash(self.ext1))
-        self.assertEqual(hash(self.ext2), hash(self.ext2))
-        self.assertEqual(hash(self.ext3), hash(self.ext3))
-        self.assertNotEqual(hash(self.ext1), hash(self.ext2))
-        self.assertNotEqual(hash(self.ext1), hash(self.ext3))
-        self.assertNotEqual(hash(self.ext2), hash(self.ext3))
-
-    def test_ne(self):
-        self.assertNotEqual(self.ext1, self.ext2)
-        self.assertNotEqual(self.ext1, self.ext3)
-        self.assertNotEqual(self.ext2, self.ext3)
-        self.assertNotEqual(self.ext3, AuthorityKeyIdentifier({'value': self.hex3}))  # ext3 is critical
-
-    def test_repr(self):
-        if six.PY2:  # pragma: only py2
-            self.assertEqual(repr(self.ext1), '<AuthorityKeyIdentifier: 333333, critical=False>')
-            self.assertEqual(repr(self.ext2), '<AuthorityKeyIdentifier: DDDDDD, critical=False>')
-            self.assertEqual(repr(self.ext3), '<AuthorityKeyIdentifier: UUUUUU, critical=True>')
-        else:
-            self.assertEqual(repr(self.ext1), '<AuthorityKeyIdentifier: b\'333333\', critical=False>')
-            self.assertEqual(repr(self.ext2), '<AuthorityKeyIdentifier: b\'DDDDDD\', critical=False>')
-            self.assertEqual(repr(self.ext3), '<AuthorityKeyIdentifier: b\'UUUUUU\', critical=True>')
-
-    def test_serialize(self):
-        self.assertEqual(self.ext1.serialize(), {'critical': False, 'value': self.hex1})
-        self.assertEqual(self.ext2.serialize(), {'critical': False, 'value': self.hex2})
-        self.assertEqual(self.ext3.serialize(), {'critical': True, 'value': self.hex3})
-        self.assertEqual(self.ext1.serialize(), AuthorityKeyIdentifier({'value': self.hex1}).serialize())
-        self.assertNotEqual(self.ext1.serialize(), self.ext2.serialize())
-
-    def test_str(self):
-        ext = AuthorityKeyIdentifier({'value': self.hex1})
-        self.assertEqual(str(ext), 'keyid:%s' % self.hex1)
-
-    def test_subject_key_identifier(self):
-        ski = SubjectKeyIdentifier({'value': self.hex1})
-        ext = AuthorityKeyIdentifier(ski)
-        self.assertEqual(ext.as_text(), 'keyid:%s' % self.hex1)
-        self.assertEqual(ext.extension_type.key_identifier, self.x1.value.key_identifier)
-
-    def test_error(self):
-        with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type NoneType$'):
-            AuthorityKeyIdentifier(None)
-        with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type bool$'):
-            AuthorityKeyIdentifier(False)
+    def test_from_subject_key_identifier(self):
+        for test_key, test_config in self.test_values.items():
+            ski = SubjectKeyIdentifier({'value': test_config['expected']})
+            ext = self.ext_class(ski)
+            self.assertExtensionEqual(ext, self.ext_class({'value': test_config['expected']}))
 
 
 class BasicConstraintsTestCase(NewExtensionTestMixin, TestCase):
