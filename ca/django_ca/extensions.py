@@ -1377,7 +1377,6 @@ class ExtendedKeyUsage(OrderedSetExtension):
         raise ValueError('Unknown value: %s' % v)
 
 
-# TODO: this extension is not in fact always critical, but constructor does not allow overriding this value
 class NameConstraints(GeneralNameMixin, Extension):
     """Class representing a NameConstraints extenion
 
@@ -1392,6 +1391,32 @@ class NameConstraints(GeneralNameMixin, Extension):
         ... }})
         <NameConstraints: permitted=['DNS:.com', 'DNS:example.org'], excluded=['DNS:.net'], critical=True>
 
+
+    We also have permitted/excluded getters/setters to easily configure this extension::
+
+        >>> nc = NameConstraints({})
+        >>> nc.permitted = ['example.com']
+        >>> nc.excluded = ['example.net']
+        >>> nc
+        <NameConstraints: permitted=['DNS:example.com'], excluded=['DNS:example.net'], critical=True>
+        >>> nc.permitted, nc.excluded
+        ([<DNSName(value='example.com')>], [<DNSName(value='example.net')>])
+
+    But note that getters return a normal list, so you need to pass
+    :py:class:`~cg:cryptography.x509.GeneralName` if you want to use list functions::
+
+        >>> nc = NameConstraints({})
+        >>> nc.permitted.append(x509.DNSName('example.net'))  # that's okay
+        >>> nc.extension_type
+        <NameConstraints(permitted_subtrees=[<DNSName(value='example.net')>], excluded_subtrees=[])>
+        >>> nc.permitted.append('example.com')  # sorry, doesn't work!
+        >>> nc.permitted  # it's actually broken, elements should all be DNSName!
+        [<DNSName(value='example.net')>, 'example.com']
+        >>> nc.extension_type
+        Traceback (most recent call last):
+            ...
+        TypeError: permitted_subtrees must be a list of GeneralName objects or None
+
     .. seealso::
 
        `RFC 5280, section 4.2.1.10 <https://tools.ietf.org/html/rfc5280#section-4.2.1.10>`_
@@ -1402,21 +1427,16 @@ class NameConstraints(GeneralNameMixin, Extension):
     oid = ExtensionOID.NAME_CONSTRAINTS
 
     def __bool__(self):
-        return bool(self.permitted) or bool(self.excluded)
+        return bool(self.value['permitted']) or bool(self.value['excluded'])
     if six.PY2:  # pragma: no branch, pragma: only py2
         __nonzero__ = __bool__
 
-    def __eq__(self, other):
-        return isinstance(other, type(self)) \
-            and self.permitted == other.permitted and self.excluded == other.excluded \
-            and self.critical == other.critical
-
     def __hash__(self):
-        return hash((self.__class__, tuple(self.permitted), tuple(self.excluded), self.critical, ))
+        return hash((tuple(self.value['permitted']), tuple(self.value['excluded']), self.critical, ))
 
     def __repr__(self):
-        permitted = [self.serialize_value(v) for v in self.permitted]
-        excluded = [self.serialize_value(v) for v in self.excluded]
+        permitted = [self.serialize_value(v) for v in self.value['permitted']]
+        excluded = [self.serialize_value(v) for v in self.value['excluded']]
 
         if six.PY2:  # pragma: no branch, pragma: only py2 - otherwise we have the u'' prefix in output
             permitted = [str(v) for v in permitted]
@@ -1426,8 +1446,8 @@ class NameConstraints(GeneralNameMixin, Extension):
             self.__class__.__name__, permitted, excluded, self.critical)
 
     def __str__(self):
-        permitted = [self.serialize_value(v) for v in self.permitted]
-        excluded = [self.serialize_value(v) for v in self.excluded]
+        permitted = [self.serialize_value(v) for v in self.value['permitted']]
+        excluded = [self.serialize_value(v) for v in self.value['excluded']]
 
         if six.PY2:  # pragma: no branch, pragma: only py2 - otherwise we have the u'' prefix in output
             permitted = [str(v) for v in permitted]
@@ -1438,36 +1458,57 @@ class NameConstraints(GeneralNameMixin, Extension):
 
     def as_text(self):
         text = ''
-        if self.permitted:
+        if self.value['permitted']:
             text += 'Permitted:\n'
-            for name in self.permitted:
+            for name in self.value['permitted']:
                 text += '  * %s\n' % self.serialize_value(name)
-        if self.excluded:
+        if self.value['excluded']:
             text += 'Excluded:\n'
-            for name in self.excluded:
+            for name in self.value['excluded']:
                 text += '  * %s\n' % self.serialize_value(name)
 
         return text
 
     @property
+    def excluded(self):
+        return self.value['excluded']
+
+    @excluded.setter
+    def excluded(self, value):
+        self.value['excluded'] = [self.parse_value(v) for v in value]
+
+    @property
     def extension_type(self):
-        return x509.NameConstraints(permitted_subtrees=self.permitted, excluded_subtrees=self.excluded)
+        return x509.NameConstraints(permitted_subtrees=self.value['permitted'],
+                                    excluded_subtrees=self.value['excluded'])
 
     def from_extension(self, value):
-        self.permitted = value.value.permitted_subtrees or []
-        self.excluded = value.value.excluded_subtrees or []
+        self.value = {
+            'permitted': value.value.permitted_subtrees or [],
+            'excluded': value.value.excluded_subtrees or [],
+        }
 
     def from_dict(self, value):
         value = value.get('value', {})
-        self.permitted = [self.parse_value(v) for v in value.get('permitted', [])]
-        self.excluded = [self.parse_value(v) for v in value.get('excluded', [])]
+        self.value = {
+            'permitted': [self.parse_value(v) for v in value.get('permitted', [])],
+            'excluded': [self.parse_value(v) for v in value.get('excluded', [])],
+        }
+
+    @property
+    def permitted(self):
+        return self.value['permitted']
+
+    @permitted.setter
+    def permitted(self, value):
+        self.value['permitted'] = [self.parse_value(v) for v in value]
 
     def serialize(self):
         return {
             'critical': self.critical,
             'value': {
-                'permitted': [self.serialize_value(v) for v in self.permitted],
-                'excluded': [self.serialize_value(v) for v in self.excluded],
+                'permitted': [self.serialize_value(v) for v in self.value['permitted']],
+                'excluded': [self.serialize_value(v) for v in self.value['excluded']],
             },
         }
 

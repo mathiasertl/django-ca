@@ -322,6 +322,12 @@ class NewAbstractExtensionTestMixin:
                 ext = self.ext(value, critical=False)
                 self.assertEqual(str(ext), config['expected_str'])
 
+    def test_value(self):
+        # test that value property can be used for the constructor
+        for config in self.test_values.values():
+            ext = self.ext(value=config['expected'])
+            self.assertExtensionEqual(ext, self.ext(ext.value))
+
 
 class NewExtensionTestMixin(NewAbstractExtensionTestMixin):
     """Override generic implementations to use test_value property."""
@@ -2870,16 +2876,6 @@ class NameConstraintsTestCase(NewExtensionTestMixin, TestCase):
             'extension_type': x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[dns(d2)]),
         },
     }
-
-    def assertExtensionEqual(self, first, second):
-        """Function to test if an extension is really really equal.
-
-        This function should compare extension internals directly not via the __eq__ function.
-        """
-        self.assertEqual(first.__class__, second.__class__)
-        self.assertEqual(first.critical, second.critical)
-        self.assertEqual(first.permitted, second.permitted)
-        self.assertEqual(first.excluded, second.excluded)
 
     def test_bool(self):
         self.assertFalse(bool(NameConstraints({})))
