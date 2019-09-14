@@ -105,7 +105,7 @@ class Extension(object):
             raise ValueError('%s: Invalid critical value passed' % self.critical)
 
     def __hash__(self):
-        return hash((self.__class__, self.value, self.critical, ))
+        return hash((self.value, self.critical, ))
 
     def __eq__(self, other):
         return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
@@ -219,7 +219,7 @@ class NullExtension(Extension):
             super(NullExtension, self).__init__(value)
 
     def __hash__(self):
-        return hash((self.__class__, self.critical, ))
+        return hash((self.critical, ))
 
     def __eq__(self, other):
         return isinstance(other, type(self)) and self.critical == other.critical
@@ -271,7 +271,7 @@ class IterableExtension(Extension):
         return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
 
     def __hash__(self):
-        return hash((self.__class__, tuple(self.serialize_iterable()), self.critical, ))
+        return hash((tuple(self.serialize_iterable()), self.critical, ))
 
     def __iter__(self):
         return iter(self.serialize_iterable())
@@ -654,7 +654,7 @@ class DistributionPoint(GeneralNameMixin):
         full_name = tuple(self.full_name) if self.full_name else None
         crl_issuer = tuple(self.crl_issuer) if self.crl_issuer else None
         reasons = tuple(self.reasons) if self.reasons else None
-        return hash((self.__class__, full_name, self.relative_name, crl_issuer, reasons))
+        return hash((full_name, self.relative_name, crl_issuer, reasons))
 
     def __repr__(self):
         return '<DistributionPoint: %s>' % ', '.join(self.__get_values())
@@ -740,7 +740,7 @@ class PolicyInformation(object):
         else:
             t = tuple(self.policy_qualifiers)
 
-        return hash((self.__class__, self.policy_identifier, t))
+        return hash((self.policy_identifier, t))
 
     def __len__(self):
         if self.policy_qualifiers is None:
@@ -937,7 +937,7 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
             and self.critical == other.critical
 
     def __hash__(self):
-        return hash((self.__class__, tuple(self.issuers), tuple(self.ocsp), self.critical, ))
+        return hash((tuple(self.issuers), tuple(self.ocsp), self.critical, ))
 
     def __repr__(self):
         issuers = [self.serialize_value(v) for v in self.issuers]
@@ -1061,7 +1061,7 @@ class BasicConstraints(Extension):
     default_critical = True
 
     def __hash__(self):
-        return hash((self.__class__, self.ca, self.pathlen, self.critical, ))
+        return hash((self.ca, self.pathlen, self.critical, ))
 
     def __repr__(self):
         return '<%s: %r, critical=%r>' % (self.__class__.__name__, str(self.as_text()), self.critical)
@@ -1129,7 +1129,7 @@ class CRLDistributionPoints(ListExtension):
     oid = ExtensionOID.CRL_DISTRIBUTION_POINTS
 
     def __hash__(self):
-        return hash((self.__class__, tuple(self.value), self.critical, ))
+        return hash((tuple(self.value), self.critical, ))
 
     def __repr__(self):
         return '<CRLDistributionPoints: [%s], critical=%s>' % (
@@ -1177,7 +1177,7 @@ class CertificatePolicies(ListExtension):
     oid = ExtensionOID.CERTIFICATE_POLICIES
 
     def __hash__(self):
-        return hash((self.__class__, tuple(self.value), self.critical, ))
+        return hash((tuple(self.value), self.critical, ))
 
     def __repr__(self):
         return '<CertificatePolicies: [%s], critical=%s>' % (
@@ -1589,7 +1589,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):  # pragma: only 
 
     def __hash__(self):
         # serialize_iterable returns a dict, which is unhashable
-        return hash((self.__class__, tuple(self.value), self.critical, ))
+        return hash((tuple(self.value), self.critical, ))
 
     def __repr__(self):
         # only py2: we only override this method because of u'' prefixes in output
