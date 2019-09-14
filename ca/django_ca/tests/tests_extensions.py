@@ -1182,9 +1182,7 @@ class AuthorityKeyIdentifierTestCase(NewExtensionTestMixin, TestCase):
     ext_class = AuthorityKeyIdentifier
     test_values = {
         'one': {
-            'values': [
-                hex1,
-            ],
+            'values': [hex1, ],
             'expected': b1,
             'expected_str': 'keyid:%s' % hex1,
             'expected_repr': '<AuthorityKeyIdentifier: %s, critical=%%s>' % b1,
@@ -1193,9 +1191,7 @@ class AuthorityKeyIdentifierTestCase(NewExtensionTestMixin, TestCase):
             'extension_type': x509.AuthorityKeyIdentifier(b1, None, None),
         },
         'two': {
-            'values': [
-                hex2,
-            ],
+            'values': [hex2, ],
             'expected': b2,
             'expected_str': 'keyid:%s' % hex2,
             'expected_repr': '<AuthorityKeyIdentifier: %s, critical=%%s>' % b2,
@@ -1204,9 +1200,7 @@ class AuthorityKeyIdentifierTestCase(NewExtensionTestMixin, TestCase):
             'extension_type': x509.AuthorityKeyIdentifier(b2, None, None),
         },
         'three': {
-            'values': [
-                hex3,
-            ],
+            'values': [hex3, ],
             'expected': b3,
             'expected_str': 'keyid:%s' % hex3,
             'expected_repr': '<AuthorityKeyIdentifier: %s, critical=%%s>' % b3,
