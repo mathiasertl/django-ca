@@ -23,7 +23,7 @@ from django import forms
 from django.contrib.admin.widgets import AdminDateWidget
 from django.contrib.admin.widgets import AdminSplitDateTime
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
 from .extensions import ExtendedKeyUsage

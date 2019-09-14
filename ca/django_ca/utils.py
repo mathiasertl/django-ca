@@ -50,7 +50,7 @@ from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 from django.utils.functional import Promise
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
 
@@ -114,7 +114,7 @@ NAME_CASE_MAPPINGS = {v.upper(): v for v in OID_NAME_MAPPINGS.values()}
 
 
 class LazyEncoder(DjangoJSONEncoder):
-    """Encoder that also encodes strings translated with ugettext_lazy."""
+    """Encoder that also encodes strings translated with gettext_lazy."""
 
     def default(self, obj):
         if isinstance(obj, Promise):

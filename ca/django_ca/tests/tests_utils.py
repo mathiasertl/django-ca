@@ -38,8 +38,8 @@ from cryptography.x509.oid import NameOID
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy as _l
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _l
 
 from .. import ca_settings
 from .. import utils

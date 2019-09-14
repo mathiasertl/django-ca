@@ -38,7 +38,7 @@ from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.html import escape
 from django.utils.html import mark_safe
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from django_object_actions import DjangoObjectActions
 
