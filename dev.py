@@ -110,20 +110,20 @@ def test(suites):
 
     # ignore this warning in some modules to get cleaner output
     msg = "Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated"
-    warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='webtest.lint',
-                            message=msg)
-    warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='markupsafe',
-                            message=msg)
-    warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='jinja2',
-                            message=msg)
+    warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='webtest.lint', message=msg)
+    warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='markupsafe', message=msg)
+    warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='jinja2', message=msg)
 
     # filter some webtest warnings
     msg2 = r'urllib.parse.splithost\(\) is deprecated as of 3.8, use urllib.parse.urlparse\(\) instead'
     msg3 = r'urllib.parse.splittype\(\) is deprecated as of 3.8, use urllib.parse.urlparse\(\) instead'
-    warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='webtest.*',
-                            message=msg2)
-    warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='webtest.*',
-                            message=msg3)
+    warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='webtest.*', message=msg2)
+    warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='webtest.*', message=msg3)
+
+    # force_text() is deprecated in Django 3.0, but should still be used as long as we support py2.
+    # pragma: django<=1.11
+    warnings.filterwarnings(action='ignore', category=DeprecationWarning,
+                            message=r'force_text\(\) is deprecated in favor of force_str\(\)\.$')
 
     work_dir = os.path.join(_rootdir, 'ca')
 
