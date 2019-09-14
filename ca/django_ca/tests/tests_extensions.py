@@ -1306,6 +1306,16 @@ class BasicConstraintsTestCase(NewExtensionTestMixin, TestCase):
         },
     }
 
+    def test_setters(self):
+        ext = BasicConstraints({'value': {'ca': False, 'pathlen': None}})
+        self.assertFalse(ext.ca)
+        self.assertIsNone(ext.pathlen)
+
+        ext.ca = True
+        ext.pathlen = 3
+        self.assertTrue(ext.ca)
+        self.assertEqual(ext.pathlen, 3)
+
     def test_invalid_pathlen(self):
         with self.assertRaisesRegex(ValueError, r'^Could not parse pathlen: "foo"$'):
             BasicConstraints({'value': {'ca': True, 'pathlen': 'foo'}})

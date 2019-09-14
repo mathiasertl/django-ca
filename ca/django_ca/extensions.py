@@ -1061,58 +1061,74 @@ class BasicConstraints(Extension):
     default_critical = True
 
     def __hash__(self):
-        return hash((self.ca, self.pathlen, self.critical, ))
+        return hash((self.value['ca'], self.value['pathlen'], self.critical, ))
 
     def __repr__(self):
         return '<%s: %r, critical=%r>' % (self.__class__.__name__, str(self.as_text()), self.critical)
 
     @property
-    def value(self):
-        return {
-            'ca': self.ca,
-            'pathlen': self.pathlen,
-        }
+    def ca(self):
+        return self.value['ca']
+
+    @ca.setter
+    def ca(self, value):
+        self.value['ca'] = bool(value)
 
     def from_extension(self, ext):
-        self.ca = ext.value.ca
-        self.pathlen = ext.value.path_length
+        self.value = {
+            'ca': ext.value.ca,
+            'pathlen': ext.value.path_length,
+        }
 
     def from_dict(self, value):
         value = value.get('value', {})
-        self.ca = bool(value.get('ca', False))
-        if self.ca:
-            self.pathlen = value.get('pathlen', None)
-            if self.pathlen is not None:
-                try:
-                    self.pathlen = int(self.pathlen)
-                except ValueError:
-                    raise ValueError('Could not parse pathlen: "%s"' % self.pathlen)
+        ca = bool(value.get('ca', False))
+        if ca:
+            pathlen = self.parse_pathlen(value.get('pathlen', None))
         else:  # if ca is not True, we don't use the pathlen
-            self.pathlen = None
+            pathlen = None
+
+        self.value = {'ca': ca, 'pathlen': pathlen, }
 
     @property
     def extension_type(self):
-        return x509.BasicConstraints(ca=self.ca, path_length=self.pathlen)
+        return x509.BasicConstraints(ca=self.value['ca'], path_length=self.value['pathlen'])
 
     def as_text(self):
-        if self.ca is True:
+        if self.value['ca'] is True:
             val = 'CA:TRUE'
         else:
             val = 'CA:FALSE'
-        if self.pathlen is not None:
-            val += ', pathlen:%s' % self.pathlen
+        if self.value['pathlen'] is not None:
+            val += ', pathlen:%s' % self.value['pathlen']
 
         return val
+
+    def parse_pathlen(self, value):
+        if value is not None:
+            try:
+                return int(value)
+            except ValueError:
+                raise ValueError('Could not parse pathlen: "%s"' % value)
+        return value
+
+    @property
+    def pathlen(self):
+        return self.value['pathlen']
+
+    @pathlen.setter
+    def pathlen(self, value):
+        self.value['pathlen'] = self.parse_pathlen(value)
 
     def serialize(self):
         value = {
             'critical': self.critical,
             'value': {
-                'ca': self.ca,
+                'ca': self.value['ca'],
             }
         }
-        if self.ca:
-            value['value']['pathlen'] = self.pathlen
+        if self.value['ca']:
+            value['value']['pathlen'] = self.value['pathlen']
         return value
 
 
