@@ -20,11 +20,12 @@ from datetime import datetime
 from datetime import timedelta
 
 import six
-from freezegun import freeze_time
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.files.storage import FileSystemStorage
+
+from freezegun import freeze_time
 
 from .. import ca_settings
 from ..extensions import ExtendedKeyUsage

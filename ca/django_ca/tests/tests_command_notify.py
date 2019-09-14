@@ -15,9 +15,9 @@
 
 from datetime import timedelta
 
-from freezegun import freeze_time
-
 from django.core import mail
+
+from freezegun import freeze_time
 
 from ..models import Watcher
 from .base import DjangoCAWithGeneratedCertsTestCase

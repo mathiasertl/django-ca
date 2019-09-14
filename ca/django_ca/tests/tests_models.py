@@ -22,13 +22,14 @@ from datetime import datetime
 from datetime import timedelta
 
 import six
-from freezegun import freeze_time
 
 from cryptography import x509
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
+
+from freezegun import freeze_time
 
 from .. import ca_settings
 from ..constants import ReasonFlags

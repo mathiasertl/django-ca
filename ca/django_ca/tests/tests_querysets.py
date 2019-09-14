@@ -15,10 +15,10 @@
 
 """Test querysets."""
 
-from freezegun import freeze_time
-
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
+
+from freezegun import freeze_time
 
 from .. import ca_settings
 from ..extensions import BasicConstraints

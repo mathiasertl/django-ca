@@ -18,8 +18,6 @@ import unittest
 from datetime import datetime
 from datetime import timedelta
 
-from freezegun import freeze_time
-from selenium.webdriver.support.select import Select
 from six.moves.urllib.parse import quote
 
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -38,6 +36,8 @@ from django.urls import reverse
 from django.utils.encoding import force_text
 
 from django_webtest import WebTestMixin
+from freezegun import freeze_time
+from selenium.webdriver.support.select import Select
 
 from .. import ca_settings
 from ..constants import ReasonFlags

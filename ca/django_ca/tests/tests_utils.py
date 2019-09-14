@@ -27,7 +27,6 @@ from datetime import timedelta
 
 import idna
 import six
-from freezegun import freeze_time
 from idna.core import IDNAError
 
 from cryptography import x509
@@ -40,6 +39,8 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy as _l
+
+from freezegun import freeze_time
 
 from .. import ca_settings
 from .. import utils

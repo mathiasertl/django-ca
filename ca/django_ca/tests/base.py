@@ -21,9 +21,6 @@ from OpenSSL.crypto import FILETYPE_PEM
 from OpenSSL.crypto import X509Store
 from OpenSSL.crypto import X509StoreContext
 from OpenSSL.crypto import load_certificate
-from pyvirtualdisplay import Display
-from selenium.webdriver.firefox.webdriver import WebDriver
-from selenium.webdriver.support.wait import WebDriverWait
 from six import StringIO
 from six.moves import reload_module
 
@@ -47,6 +44,10 @@ from django.core.management.base import CommandError
 from django.test import TestCase
 from django.test.utils import override_settings as _override_settings
 from django.urls import reverse
+
+from pyvirtualdisplay import Display
+from selenium.webdriver.firefox.webdriver import WebDriver
+from selenium.webdriver.support.wait import WebDriverWait
 
 from .. import ca_settings
 from ..constants import ReasonFlags

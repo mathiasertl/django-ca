@@ -247,14 +247,16 @@ class NewAbstractExtensionTestMixin:
                     self.ext(value, critical=example())
 
     def test_init_unknown_type(self):
-        class_name = 'example_class'
+        if six.PY2:
+            class_name = 'instance'
+        else:
+            class_name = 'example'
 
         class example:
-            def __str__(self):
-                return class_name
+            pass
 
         for test_key, test_config in self.test_values.items():
-            with self.assertRaisesRegex(ValueError, '^Value is of unsupported type example$'):
+            with self.assertRaisesRegex(ValueError, '^Value is of unsupported type %s$' % class_name):
                 self.ext_class(example())
 
     def test_ne(self):

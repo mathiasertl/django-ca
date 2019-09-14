@@ -15,11 +15,11 @@
 
 from io import BytesIO
 
-from freezegun import freeze_time
-
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.utils.encoding import force_bytes
+
+from freezegun import freeze_time
 
 from .. import ca_settings
 from ..models import Watcher

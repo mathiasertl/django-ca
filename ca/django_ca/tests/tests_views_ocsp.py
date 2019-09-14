@@ -17,8 +17,6 @@ import base64
 import os
 from datetime import timedelta
 
-from freezegun import freeze_time
-
 import asn1crypto
 import asn1crypto.x509
 import ocspbuilder
@@ -32,6 +30,8 @@ from django.conf.urls import url
 from django.test import Client
 from django.urls import reverse
 from django.utils.encoding import force_text
+
+from freezegun import freeze_time
 
 from .. import ca_settings
 from ..constants import ReasonFlags

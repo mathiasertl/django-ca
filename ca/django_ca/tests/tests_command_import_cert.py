@@ -15,9 +15,9 @@
 
 import os
 
-from freezegun import freeze_time
-
 from django.conf import settings
+
+from freezegun import freeze_time
 
 from ..models import Certificate
 from .base import DjangoCAWithCATestCase

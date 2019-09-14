@@ -15,8 +15,6 @@
 
 from __future__ import unicode_literals
 
-from freezegun import freeze_time
-
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -25,6 +23,8 @@ from django.conf.urls import url
 from django.core.cache import cache
 from django.test import Client
 from django.urls import reverse
+
+from freezegun import freeze_time
 
 from ..views import CertificateRevocationListView
 from .base import DjangoCAWithCertTestCase
