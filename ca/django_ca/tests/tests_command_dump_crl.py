@@ -18,6 +18,7 @@ import re
 from datetime import timedelta
 from io import BytesIO
 
+import six
 from freezegun import freeze_time
 
 from cryptography import x509
@@ -25,7 +26,6 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import CRLEntryExtensionOID
 
-from django.utils import six
 from django.utils import timezone
 
 from .. import ca_settings

@@ -29,6 +29,7 @@ from ipaddress import ip_address
 from ipaddress import ip_network
 
 import idna
+import six
 
 from asn1crypto.core import OctetString
 from cryptography import x509
@@ -45,7 +46,6 @@ from django.conf import settings
 from django.core.files.storage import get_storage_class
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import URLValidator
-from django.utils import six
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text

@@ -16,6 +16,8 @@
 import argparse
 import os
 
+import six
+
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -24,7 +26,6 @@ from cryptography.hazmat.primitives.serialization import PrivateFormat
 
 from django.core.files.base import ContentFile
 from django.core.management.base import CommandError
-from django.utils import six
 
 from ... import ca_settings
 from ...models import CertificateAuthority

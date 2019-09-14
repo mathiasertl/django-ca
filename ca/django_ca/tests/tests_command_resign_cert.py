@@ -15,7 +15,7 @@
 
 import os
 
-from django.utils import six
+import six
 
 from .. import ca_settings
 from ..extensions import AuthorityKeyIdentifier

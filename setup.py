@@ -47,6 +47,7 @@ install_requires = [
     'cryptography>=2.5',
     'django-object-actions>=1.0',
     'idna>=2.8',
+    'six>=1.12.0',
     'packaging',
 ]
 

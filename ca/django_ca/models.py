@@ -25,6 +25,7 @@ from datetime import datetime
 from datetime import timedelta
 
 import pytz
+import six
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -41,7 +42,6 @@ from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db import models
 from django.urls import reverse
-from django.utils import six
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_str

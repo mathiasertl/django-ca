@@ -16,9 +16,9 @@
 import os
 from io import BytesIO
 
-from cryptography.hazmat.primitives.serialization import Encoding
+import six
 
-from django.utils import six
+from cryptography.hazmat.primitives.serialization import Encoding
 
 from .. import ca_settings
 from .base import DjangoCAWithGeneratedCertsTestCase

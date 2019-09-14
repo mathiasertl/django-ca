@@ -17,6 +17,8 @@ import argparse
 import getpass
 import sys
 
+import six
+
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
 
@@ -25,7 +27,6 @@ from django.core.management.base import CommandError
 from django.core.management.base import OutputWrapper
 from django.core.management.color import no_style
 from django.core.validators import URLValidator
-from django.utils import six
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 

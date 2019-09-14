@@ -26,6 +26,7 @@ from datetime import datetime
 from datetime import timedelta
 
 import idna
+import six
 from freezegun import freeze_time
 from idna.core import IDNAError
 
@@ -37,7 +38,6 @@ from cryptography.x509.oid import NameOID
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
-from django.utils import six
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy as _l
 

@@ -14,6 +14,7 @@
 # see <http://www.gnu.org/licenses/>.
 
 import idna
+import six
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -25,7 +26,6 @@ from cryptography.x509.oid import AuthorityInformationAccessOID
 from django.core.files.base import ContentFile
 from django.db import models
 from django.urls import reverse
-from django.utils import six
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 

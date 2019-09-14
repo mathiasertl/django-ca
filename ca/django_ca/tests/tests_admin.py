@@ -20,6 +20,7 @@ from datetime import timedelta
 
 from freezegun import freeze_time
 from selenium.webdriver.support.select import Select
+from six.moves.urllib.parse import quote
 
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.extensions import Extension
@@ -35,7 +36,6 @@ from django.templatetags.static import static
 from django.test import Client
 from django.urls import reverse
 from django.utils.encoding import force_text
-from django.utils.six.moves.urllib.parse import quote
 
 from django_webtest import WebTestMixin
 
