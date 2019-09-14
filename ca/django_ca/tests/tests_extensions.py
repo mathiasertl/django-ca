@@ -2897,6 +2897,16 @@ class NameConstraintsTestCase(NewExtensionTestMixin, TestCase):
                 ext = self.ext(value, critical=False)
                 self.assertEqual(str(ext), config['expected_str'].format(critical=False))
 
+    def test_setters(self):
+        ext = NameConstraints({})
+        ext.permitted += ['example.com']
+        ext.excluded += ['example.net']
+
+        self.assertExtensionEqual(ext, NameConstraints({'value': {
+            'permitted': ['example.com'],
+            'excluded': ['example.net']
+        }}))
+
 
 class OCSPNoCheckTestCase(ExtensionTestMixin, TestCase):
     ext_class = OCSPNoCheck
