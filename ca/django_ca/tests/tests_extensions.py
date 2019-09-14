@@ -125,6 +125,15 @@ class ExtensionTestMixin(AbstractExtensionTestMixin):
 class NewAbstractExtensionTestMixin:
     """TestCase mixin for tests that all extensions are expected to pass, including abstract base classes."""
 
+    def assertExtensionEqual(self, first, second):
+        """Function to test if an extension is really really equal.
+
+        This function should compare extension internals directly not via the __eq__ function.
+        """
+        self.assertEqual(first.__class__, second.__class__)
+        self.assertEqual(first.critical, second.critical)
+        self.assertEqual(first.value, second.value)
+
     def ext(self, value, critical=None):
         if isinstance(value, x509.extensions.ExtensionType):
             if critical is None:
@@ -136,6 +145,25 @@ class NewAbstractExtensionTestMixin:
             if critical is not None:
                 d['critical'] = critical
             return self.ext_class(d)
+
+    def test_as_extension(self):
+        for config in self.test_values.values():
+            with self.assertRaises(NotImplementedError):
+                Extension({'value': config['expected']}).as_extension()
+
+    def test_extension_type(self):
+        for config in self.test_values.values():
+            with self.assertRaises(NotImplementedError):
+                Extension({'value': config['expected']}).extension_type
+
+    def test_for_builder(self):
+        for config in self.test_values.values():
+            with self.assertRaises(NotImplementedError):
+                Extension({'value': config['expected']}).for_builder()
+
+    def test_config(self):
+        self.assertIsNone(self.ext_class.key)
+        self.assertIsNone(self.ext_class.oid)
 
     def test_hash(self):
         for config in self.test_values.values():
@@ -182,6 +210,32 @@ class NewAbstractExtensionTestMixin:
                 ext_3 = self.ext(value, critical=False)
                 self.assertEqual(ext_not_critical, ext_3)
 
+    def test_init_no_bool_critical(self):
+        class_name = 'example_class'
+
+        class example:
+            def __str__(self):
+                return class_name
+
+        for test_key, test_config in self.test_values.items():
+            for value in test_config['values']:
+                if isinstance(value, x509.extensions.ExtensionType):
+                    continue  # self.ext() would construct an x509.Extension and the constructor would fail
+
+                with self.assertRaisesRegex(ValueError, '^%s: Invalid critical value passed$' % class_name):
+                    self.ext(value, critical=example())
+
+    def test_init_unknown_type(self):
+        class_name = 'example_class'
+
+        class example:
+            def __str__(self):
+                return class_name
+
+        for test_key, test_config in self.test_values.items():
+            with self.assertRaisesRegex(ValueError, '^Value is of unsupported type example$'):
+                self.ext_class(example())
+
     def test_ne(self):
         for config in self.test_values.values():
             self.assertNotEqual(
@@ -216,6 +270,21 @@ class NewAbstractExtensionTestMixin:
 
                 ext = self.ext(value, critical=False)
                 self.assertEqual(repr(ext), config['expected_repr'] % False)
+
+    def test_serialize(self):
+        for test_key, test_config in self.test_values.items():
+            ext = self.ext(test_config['expected'])
+            self.assertEqual(ext.serialize(), {
+                'value': test_config['expected_serialized'],
+                'critical': self.ext_class.default_critical,
+            })
+
+            for critical in [True, False]:
+                ext = self.ext(test_config['expected'], critical=critical)
+                self.assertEqual(ext.serialize(), {
+                    'value': test_config['expected_serialized'],
+                    'critical': critical,
+                })
 
     def test_str(self):
         for config in self.test_values.values():
@@ -286,21 +355,6 @@ class NewExtensionTestMixin(NewAbstractExtensionTestMixin):
                     {'extension': test_config['extension_type'], 'critical': critical}
                 )
 
-    def test_serialize(self):
-        for test_key, test_config in self.test_values.items():
-            ext = self.ext(test_config['expected'])
-            self.assertEqual(ext.serialize(), {
-                'value': test_config['expected_serialized'],
-                'critical': self.ext_class.default_critical,
-            })
-
-            for critical in [True, False]:
-                ext = self.ext(test_config['expected'], critical=critical)
-                self.assertEqual(ext.serialize(), {
-                    'value': test_config['expected_serialized'],
-                    'critical': critical,
-                })
-
 
 class IterableExtensionTestMixin:
     def test_in(self):
@@ -360,10 +414,6 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
         self.assertEqual(new.value, expected_value)
         self.assertEqual(id(new), orig_id)  # assert that this is really the same instance
         self.assertEqual(id(new.value), orig_value_id)
-
-    def assertExtensionEqual(self, first, second):
-        self.assertEqual(first.critical, second.critical)
-        self.assertEqual(first.value, second.value)
 
     def assertEqualFunction(self, f, init, value, update=True, infix=True, set_value=None):
         """Assert that the given function f behaves the same way on a set and on the tested extension.
@@ -754,103 +804,23 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
             lambda s, o: operator.ior(s, functools.reduce(operator.ior, [t.copy() for t in o])))
 
 
-class ExtensionTestCase(ExtensionTestMixin, TestCase):
-    value = 'foobar'
-
-    def test_config(self):
-        return  # not useful here
-
-    def assertExtension(self, ext, critical=True):
-        self.assertEqual(ext.value, self.value)
-        self.assertEqual(ext.critical, critical)
-
-    def test_as_extension(self):
-        with self.assertRaises(NotImplementedError):
-            Extension({'value': self.value}).as_extension()
-
-    def test_extension_type(self):
-        with self.assertRaises(NotImplementedError):
-            Extension({'value': self.value}).extension_type
-
-    def test_eq(self):
-        ext = Extension({'value': self.value, 'critical': True})
-        self.assertEqual(ext, Extension({'critical': True, 'value': self.value}))
-
-    def test_for_builder(self):
-        with self.assertRaises(NotImplementedError):
-            Extension({'value': self.value}).for_builder()
+class ExtensionTestCase(NewAbstractExtensionTestMixin, TestCase):
+    ext_class = Extension
+    test_values = {
+        'one': {
+            'values': ['foobar', ],
+            'expected': 'foobar',
+            'expected_repr': "<Extension: foobar, critical=%s>",
+            'expected_serialized': 'foobar',
+            'expected_str': 'foobar',
+        },
+    }
 
     def test_from_extension(self):
+        ext = x509.Extension(oid=x509.ExtensionOID.BASIC_CONSTRAINTS, critical=True,
+                             value=x509.BasicConstraints(ca=True, path_length=3))
         with self.assertRaises(NotImplementedError):
-            Extension({'value': self.value}).from_extension(None)
-
-    def test_hash(self):
-        self.assertEqual(hash(Extension({'value': self.value})),
-                         hash(Extension({'value': self.value})))
-        self.assertEqual(hash(Extension({'critical': False, 'value': self.value})),
-                         hash(Extension({'critical': False, 'value': self.value})))
-
-        self.assertNotEqual(hash(Extension({'critical': True, 'value': self.value})),
-                            hash(Extension({'critical': False, 'value': self.value})))
-        self.assertNotEqual(hash(Extension({'critical': False, 'value': self.value[::-1]})),
-                            hash(Extension({'critical': False, 'value': self.value})))
-
-    def test_ne(self):
-        ext = Extension({'value': self.value, 'critical': True})
-        self.assertNotEqual(ext, Extension({'value': self.value}))
-        self.assertNotEqual(ext, Extension({'critical': True, 'value': 'other'}))
-        self.assertNotEqual(ext, Extension({'value': 'other'}))
-
-    def test_repr(self):
-        self.assertEqual(repr(Extension({'critical': True, 'value': self.value})),
-                         '<Extension: %s, critical=True>' % self.value)
-        self.assertEqual(repr(Extension({'value': self.value})),
-                         '<Extension: %s, critical=False>' % self.value)
-
-    def test_serialize(self):
-        ext = Extension({'value': self.value})
-        self.assertEqual(ext.serialize(), {'critical': False, 'value': self.value})
-        self.assertEqual(ext, Extension(ext.serialize()))
-
-        ext = Extension({'critical': True, 'value': self.value})
-        self.assertEqual(ext.serialize(), {'value': self.value, 'critical': True})
-        self.assertEqual(ext, Extension(ext.serialize()))
-
-    def test_str(self):
-        self.assertEqual(str(Extension({'critical': True, 'value': self.value})), '%s/critical' % self.value)
-        self.assertEqual(str(Extension({'value': self.value})), self.value)
-
-    def test_basic(self):
-        self.assertExtension(Extension({'critical': True, 'value': self.value}))
-
-        self.assertExtension(Extension({'value': self.value}), critical=False)
-        self.assertExtension(Extension({'critical': False, 'value': self.value}), critical=False)
-        self.assertExtension(Extension({'value': self.value}), critical=False)
-
-    def test_as_text(self):
-        self.assertEqual(Extension({'critical': True, 'value': self.value}).as_text(), self.value)
-
-    def test_error(self):
-        with self.assertRaisesRegex(ValueError, r'^None: Invalid critical value passed$'):
-            Extension({'critical': None, 'value': ['cRLSign']})
-
-        with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type object$'):
-            Extension(object())
-
-        with self.assertRaises(NotImplementedError):
-            Extension(x509.extensions.Extension(ExtensionOID.BASIC_CONSTRAINTS, True, b''))
-
-        # Test that methods that should be implemented by sub-classes raise NotImplementedError
-        ext = Extension({'critical': True, 'value': self.value})
-        with self.assertRaises(NotImplementedError):
-            ext.extension_type
-
-        with self.assertRaises(NotImplementedError):
-            ext.for_builder()
-
-        # These do not work because base class does not define an OID
-        with self.assertRaises(AttributeError):
-            ext.name
+            Extension(ext)
 
 
 class ListExtensionTestCase(TestCase):
