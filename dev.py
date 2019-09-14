@@ -121,9 +121,11 @@ def test(suites):
     warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='webtest.*', message=msg3)
 
     # force_text() is deprecated in Django 3.0, but should still be used as long as we support py2.
-    # pragma: django<=1.11
-    warnings.filterwarnings(action='ignore', category=DeprecationWarning,
-                            message=r'force_text\(\) is deprecated in favor of force_str\(\)\.$')
+    from django.utils import deprecation
+    if hasattr(deprecation, 'RemovedInDjango40Warning'):  # pragma: django<=1.11
+        warnings.filterwarnings(action='ignore', category=deprecation.RemovedInDjango40Warning,
+                                module='django_ca',
+                                message=r'^force_text\(\) is deprecated in favor of force_str\(\)\.$')
 
     work_dir = os.path.join(_rootdir, 'ca')
 
@@ -176,7 +178,7 @@ elif args.command == 'coverage':
         cov.exclude(r'pragma:\s*only SCT')
 
     # exclude django-version specific code
-    django_versions = [(1, 11), (2, 1), (2, 2), (2, 3), (2, 4)]
+    django_versions = [(1, 11), (2, 1), (2, 2), (3, 0), (3, 1)]
 
     for version in django_versions:
         version_str = '.'.join([str(v) for v in version])
