@@ -2942,7 +2942,6 @@ class OCSPNoCheckTestCase(NullExtensionTestMixin, TestCase):
 
 
 class PrecertPoisonTestCase(NullExtensionTestMixin, TestCase):
-    # NOTE: this extension is always critical and has no value, that's why there are fewer test instances here
     ext_class = PrecertPoison
     force_critical = True
     test_values = {
@@ -3194,7 +3193,7 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
     xs = [x1, x2, x3, x4, x5]
 
 
-class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
+class SubjectKeyIdentifierTestCase(NewExtensionTestMixin, TestCase):
     ext_class = SubjectKeyIdentifier
 
     hex1 = '33:33:33:33:33:33'
@@ -3202,84 +3201,37 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
     hex3 = '55:55:55:55:55:55'
     b1 = b'333333'
     b2 = b'DDDDDD'
-    b3 = b'UUUUUU'  # really unknown right now
-    x1 = x509.Extension(
-        oid=x509.ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False,
-        value=x509.SubjectKeyIdentifier(b1)
-    )
-    x2 = x509.Extension(
-        oid=x509.ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False,
-        value=x509.SubjectKeyIdentifier(b2)
-    )
-    x3 = x509.Extension(
-        oid=x509.ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=True,
-        value=x509.SubjectKeyIdentifier(b3)
-    )
-    xs = [x1, x2, x3]
+    b3 = b'UUUUUU'
 
-    def setUp(self):
-        super(SubjectKeyIdentifierTestCase, self).setUp()
-        self.ext1 = SubjectKeyIdentifier({'value': self.hex1})
-        self.ext2 = SubjectKeyIdentifier({'value': self.hex2})
-        self.ext3 = SubjectKeyIdentifier({'value': self.hex3, 'critical': True})
-        self.exts = [self.ext1, self.ext2, self.ext3]
-
-    def test_basic(self):
-        ext = SubjectKeyIdentifier(self.x1)
-        self.assertEqual(ext.as_text(), '33:33:33:33:33:33')
-        self.assertEqual(ext.as_extension(), self.x1)
-
-    def test_as_text(self):
-        self.assertEqual(SubjectKeyIdentifier({'value': self.hex1}).as_text(), self.hex1)
-        self.assertEqual(SubjectKeyIdentifier({'value': self.hex2}).as_text(), self.hex2)
-        self.assertEqual(SubjectKeyIdentifier(self.x1).as_text(), self.hex1)
-
-    def test_hash(self):
-        ext1 = SubjectKeyIdentifier({'value': self.hex1})
-        ext2 = SubjectKeyIdentifier({'value': self.hex2})
-        ext3 = SubjectKeyIdentifier(self.x1)
-
-        self.assertEqual(hash(ext1), hash(ext1))
-        self.assertEqual(hash(ext1), hash(ext3))
-        self.assertEqual(hash(ext2), hash(ext2))
-        self.assertNotEqual(hash(ext1), hash(ext2))
-
-    def test_ne(self):
-        ext1 = SubjectKeyIdentifier({'value': self.hex1})
-        ext2 = SubjectKeyIdentifier({'value': self.hex2})
-        ext3 = SubjectKeyIdentifier(self.x1)
-
-        self.assertNotEqual(ext1, ext2)
-        self.assertNotEqual(ext2, ext3)
-
-    def test_repr(self):
-        ext1 = SubjectKeyIdentifier({'value': self.hex1})
-        ext2 = SubjectKeyIdentifier({'value': self.hex2})
-        ext3 = SubjectKeyIdentifier(self.x1)
-
-        if six.PY2:  # pragma: only py2
-            self.assertEqual(repr(ext1), '<SubjectKeyIdentifier: 333333, critical=False>')
-            self.assertEqual(repr(ext2), '<SubjectKeyIdentifier: DDDDDD, critical=False>')
-            self.assertEqual(repr(ext3), '<SubjectKeyIdentifier: 333333, critical=False>')
-        else:
-            self.assertEqual(repr(ext1), '<SubjectKeyIdentifier: b\'333333\', critical=False>')
-            self.assertEqual(repr(ext2), '<SubjectKeyIdentifier: b\'DDDDDD\', critical=False>')
-            self.assertEqual(repr(ext3), '<SubjectKeyIdentifier: b\'333333\', critical=False>')
-
-    def test_serialize(self):
-        ext1 = SubjectKeyIdentifier({'value': self.hex1})
-        ext2 = SubjectKeyIdentifier({'value': self.hex2})
-        ext3 = SubjectKeyIdentifier(self.x1)
-
-        self.assertEqual(ext1.serialize(), {'critical': False, 'value': self.hex1})
-        self.assertEqual(ext2.serialize(), {'critical': False, 'value': self.hex2})
-        self.assertEqual(ext3.serialize(), {'critical': False, 'value': self.hex1})
-        self.assertEqual(ext1.serialize(), SubjectKeyIdentifier({'value': self.hex1}).serialize())
-        self.assertNotEqual(ext1.serialize(), ext2.serialize())
-
-    def test_str(self):
-        ext = SubjectKeyIdentifier({'value': self.hex1})
-        self.assertEqual(str(ext), self.hex1)
+    test_values = {
+        'one': {
+            'values': [hex1, ],
+            'expected': b1,
+            'expected_str': hex1,
+            'expected_repr': '<SubjectKeyIdentifier: %s, critical=%%s>' % b1,
+            'expected_serialized': hex1,
+            'expected_text': hex1,
+            'extension_type': x509.SubjectKeyIdentifier(b1),
+        },
+        'two': {
+            'values': [hex2, ],
+            'expected': b2,
+            'expected_str': hex2,
+            'expected_repr': '<SubjectKeyIdentifier: %s, critical=%%s>' % b2,
+            'expected_serialized': hex2,
+            'expected_text': hex2,
+            'extension_type': x509.SubjectKeyIdentifier(b2),
+        },
+        'three': {
+            'values': [hex3, ],
+            'expected': b3,
+            'expected_str': hex3,
+            'expected_repr': '<SubjectKeyIdentifier: %s, critical=%%s>' % b3,
+            'expected_serialized': hex3,
+            'expected_text': hex3,
+            'extension_type': x509.SubjectKeyIdentifier(b3),
+        },
+    }
 
 
 class TLSFeatureTestCase(OrderedSetExtensionTestMixin, NewExtensionTestMixin, TestCase):
