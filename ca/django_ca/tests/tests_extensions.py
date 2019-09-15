@@ -419,57 +419,7 @@ class NullExtensionTestMixin(NewExtensionTestMixin):
 
 
 class IterableExtensionTestMixin:
-    def test_in(self):
-        raise NotImplementedError
-
-    def test_len(self):
-        raise NotImplementedError
-
-    def test_not_in(self):
-        raise NotImplementedError
-
-
-class ListExtensionTestMixin(IterableExtensionTestMixin):
-    def test_count(self):
-        raise NotImplementedError
-
-    def test_del(self):
-        raise NotImplementedError
-
-    def test_extend(self):
-        raise NotImplementedError
-
-    def test_getitem(self):
-        raise NotImplementedError
-
-    def test_getitem_slices(self):
-        raise NotImplementedError
-
-    def test_insert(self):
-        raise NotImplementedError
-
-    def test_pop(self):
-        raise NotImplementedError
-
-    def test_remove(self):
-        raise NotImplementedError
-
-    def test_setitem(self):
-        raise NotImplementedError
-
-    def test_setitem_slices(self):
-        raise NotImplementedError
-
-
-class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
-    def assertIsCopy(self, orig, new, expected_value=None):
-        """Assert that `new` is a different instance then `other` and has possibly updated values."""
-        if expected_value is None:
-            expected_value = orig.value.copy()  # copy just to be sure
-
-        self.assertEqual(new.value, expected_value)
-        self.assertIsNot(orig, new)  # assert that this is a different instance
-        self.assertIsNot(orig.value, new.value)  # value is also different instance
+    container_type = None  # extension emulates a given container type
 
     def assertSameInstance(self, orig_id, orig_value_id, new, expected_value):
         """Assert that `new` is still the same instance and has the expected value."""
@@ -515,7 +465,7 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
         if set_value is None:
             set_value = value
 
-        s, ext = set(init), self.ext_class({'value': init})
+        s, ext = self.container_type(init), self.ext_class({'value': init})
         if update is True:
             orig_id, orig_value_id = id(ext), id(ext.value)
 
@@ -539,6 +489,102 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
             ext_updated = f(ext, value)
             s_updated = f(s, set_value)  # apply to set
             self.assertIsCopy(ext, ext_updated, s_updated)
+
+    def test_in(self):
+        for values in self.test_values.values():
+            ext = self.ext_class({'value': values['expected']})
+            for values in values['values']:
+                for value in values:
+                    self.assertIn(value, ext)
+
+    def test_len(self):  # len()
+        for values in self.test_values.values():
+            self.assertEqual(len(self.ext_class({'value': values['expected']})), len(values['expected']))
+
+    def test_not_in(self):
+        for config in self.test_values.values():
+            for values in config['values']:
+                ext = self.ext_class({'value': set()})
+
+                for value in values:
+                    self.assertNotIn(value, ext)
+                    self.assertEqual(len(ext), 0)
+
+
+class ListExtensionTestMixin(IterableExtensionTestMixin):
+    container_type = list
+
+    def test_count(self):
+        for key, config in self.test_values.items():
+            ext = self.ext(config['expected'])
+            for values in config['values']:
+                for expected_elem, other_elem in zip(config['expected'], values):
+                    self.assertEqual(config['expected'].count(expected_elem), ext.count(expected_elem))
+                    self.assertEqual(config['expected'].count(expected_elem), ext.count(other_elem))
+
+    def test_del(self):
+        raise NotImplementedError
+
+    def test_extend(self):
+        raise NotImplementedError
+
+    def test_getitem(self):
+        raise NotImplementedError
+
+    def test_getitem_slices(self):
+        raise NotImplementedError
+
+    def test_insert(self):
+        for key, config in self.test_values.items():
+            for values in config['values']:
+                for expected_value, value in zip(config['expected'], values):
+                    kwargs = {'infix': False, 'set_value': expected_value}
+                    self.assertEqualFunction(lambda c, e: c.insert(0, e), [], value, **kwargs)
+                    self.assertEqualFunction(lambda c, e: c.insert(0, e), config['expected'], value, **kwargs)
+                    self.assertEqualFunction(lambda c, e: c.insert(1, e), config['expected'], value, **kwargs)
+                    self.assertEqualFunction(lambda c, e: c.insert(9, e), config['expected'], value, **kwargs)
+
+    def test_pop(self):
+        for key, config in self.test_values.items():
+            for values in config['values']:
+                ext = self.ext(config['expected'])
+
+                if config['expected']:
+                    with self.assertRaisesRegex(IndexError, '^pop index out of range$'):
+                        ext.pop(len(config['expected']))
+
+                for expected, value in zip(reversed(config['expected_serialized']), config['values']):
+                    self.assertEqual(expected, ext.pop())
+                self.assertEqual(len(ext), 0)
+
+        with self.assertRaisesRegex(IndexError, '^pop from empty list$'):
+            self.ext([]).pop()
+
+    def test_remove(self):
+        for key, config in self.test_values.items():
+            for values in config['values']:
+                for expected_value, value in zip(config['expected'], values):
+                    kwargs = {'infix': False, 'set_value': expected_value}
+                    self.assertEqualFunction(lambda c, e: c.remove(e), config['expected'], value, **kwargs)
+
+    def test_setitem(self):
+        raise NotImplementedError
+
+    def test_setitem_slices(self):
+        raise NotImplementedError
+
+
+class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
+    container_type = set()
+
+    def assertIsCopy(self, orig, new, expected_value=None):
+        """Assert that `new` is a different instance then `other` and has possibly updated values."""
+        if expected_value is None:
+            expected_value = orig.value.copy()  # copy just to be sure
+
+        self.assertEqual(new.value, expected_value)
+        self.assertIsNot(orig, new)  # assert that this is a different instance
+        self.assertIsNot(orig.value, new.value)  # value is also different instance
 
     def assertSingleValueOperator(self, f, update=True, infix=True):
         """Test that an operator taking a single value works the same way with sets and this extension."""
@@ -708,13 +754,6 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
     def test_greater_then_operator(self):  # test < relation
         self.assertRelation(lambda s, o: operator.gt(s, o))
 
-    def test_in(self):
-        for values in self.test_values.values():
-            ext = self.ext_class({'value': values['expected']})
-            for values in values['values']:
-                for value in values:
-                    self.assertIn(value, ext)
-
     def test_intersection(self):
         self.assertSingleValueOperator(lambda s, o: s.intersection(o), infix=False, update=False)
         self.assertMultipleValuesOperator(lambda s, o: s.intersection(*o), infix=False, update=False)
@@ -749,21 +788,8 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
     def test_issuperset_operator(self):  # test >= operator
         self.assertRelation(lambda s, o: operator.ge(s, o))
 
-    def test_len(self):  # len()
-        for values in self.test_values.values():
-            self.assertEqual(len(self.ext_class({'value': values['expected']})), len(values['expected']))
-
     def test_lesser_then_operator(self):  # test < operator
         self.assertRelation(lambda s, o: operator.lt(s, o))
-
-    def test_not_in(self):
-        for config in self.test_values.values():
-            for values in config['values']:
-                ext = self.ext_class({'value': set()})
-
-                for value in values:
-                    self.assertNotIn(value, ext)
-                    self.assertEqual(len(ext), 0)
 
     def test_pop(self):
         for config in self.test_values.values():
@@ -2476,13 +2502,83 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin, Te
         self.assertEqual(str(self.ext6), 'CertificatePolicies(0 Policies, critical=True)')
 
 
-class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):
+class IssuerAlternativeNameTestCase(ListExtensionTestMixin, NewExtensionTestMixin, TestCase):
     ext_class = IssuerAlternativeName
+    ext_class_type = x509.IssuerAlternativeName
     ext_class_name = 'IssuerAlternativeName'
     uri1 = 'https://example.com'
     uri2 = 'https://example.net'
     dns1 = 'example.com'
     dns2 = 'example.net'
+
+    test_values = {
+        'empty': {
+            'values': [[]],
+            'expected': [],
+            'expected_repr': '<IssuerAlternativeName: [], critical=%s>',
+            'expected_serialized': [],
+            'expected_str': '',
+            'expected_text': '',
+            'extension_type': ext_class_type([]),
+        },
+        'uri': {
+            'values': [[uri1], [uri(uri1)]],
+            'expected': [uri(uri1)],
+            'expected_repr': "<IssuerAlternativeName: ['URI:%s'], critical=%%s>" % uri1,
+            'expected_serialized': ['URI:%s' % uri1],
+            'expected_str': 'URI:%s' % uri1,
+            'expected_text': '* URI:%s' % uri1,
+            'extension_type': ext_class_type([uri(uri1)]),
+        },
+        'dns': {
+            'values': [[dns1], [dns(dns1)]],
+            'expected': [dns(dns1)],
+            'expected_repr': "<IssuerAlternativeName: ['DNS:%s'], critical=%%s>" % dns1,
+            'expected_serialized': ['DNS:%s' % dns1],
+            'expected_str': 'DNS:%s' % dns1,
+            'expected_text': '* DNS:%s' % dns1,
+            'extension_type': ext_class_type([dns(dns1)]),
+        },
+        'both': {
+            'values': [[uri1, dns1], [uri(uri1), dns(dns1)], [uri1, dns(dns1)], [uri(uri1), dns1]],
+            'expected': [uri(uri1), dns(dns1)],
+            'expected_repr': "<IssuerAlternativeName: ['URI:%s', 'DNS:%s'], critical=%%s>" % (uri1, dns1),
+            'expected_serialized': ['URI:%s' % uri1, 'DNS:%s' % dns1],
+            'expected_str': 'URI:%s,DNS:%s' % (uri1, dns1),
+            'expected_text': '* URI:%s\n* DNS:%s' % (uri1, dns1),
+            'extension_type': ext_class_type([uri(uri1), dns(dns1)]),
+        },
+        'all': {
+            'values': [
+                [uri1, uri2, dns1, dns2],
+                [uri(uri1), uri(uri2), dns1, dns2],
+                [uri1, uri2, dns(dns1), dns(dns2)],
+                [uri(uri1), uri(uri2), dns(dns1), dns(dns2)],
+            ],
+            'expected': [uri(uri1), uri(uri2), dns(dns1), dns(dns2)],
+            'expected_repr': "<IssuerAlternativeName: ['URI:%s', 'URI:%s', 'DNS:%s', 'DNS:%s'], "
+                             "critical=%%s>" % (uri1, uri2, dns1, dns2),
+            'expected_serialized': ['URI:%s' % uri1, 'URI:%s' % uri2, 'DNS:%s' % dns1, 'DNS:%s' % dns2],
+            'expected_str': 'URI:%s,URI:%s,DNS:%s,DNS:%s' % (uri1, uri2, dns1, dns2),
+            'expected_text': '* URI:%s\n* URI:%s\n* DNS:%s\n* DNS:%s' % (uri1, uri2, dns1, dns2),
+            'extension_type': ext_class_type([uri(uri1), uri(uri2), dns(dns1), dns(dns2)]),
+        },
+        'order': {  # same as "all" above but other order
+            'values': [
+                [dns2, dns1, uri2, uri1],
+                [dns(dns2), dns(dns1), uri2, uri1],
+                [dns2, dns1, uri(uri2), uri(uri1)],
+                [dns(dns2), dns(dns1), uri(uri2), uri(uri1)],
+            ],
+            'expected': [dns(dns2), dns(dns1), uri(uri2), uri(uri1)],
+            'expected_repr': "<IssuerAlternativeName: ['DNS:%s', 'DNS:%s', 'URI:%s', 'URI:%s'], "
+                             "critical=%%s>" % (dns2, dns1, uri2, uri1),
+            'expected_serialized': ['DNS:%s' % dns2, 'DNS:%s' % dns1, 'URI:%s' % uri2, 'URI:%s' % uri1],
+            'expected_str': 'DNS:%s,DNS:%s,URI:%s,URI:%s' % (dns2, dns1, uri2, uri1),
+            'expected_text': '* DNS:%s\n* DNS:%s\n* URI:%s\n* URI:%s' % (dns2, dns1, uri2, uri1),
+            'extension_type': ext_class_type([dns(dns2), dns(dns1), uri(uri2), uri(uri1)]),
+        },
+    }
 
     x1 = x509.extensions.Extension(
         oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME, critical=False,
@@ -2517,106 +2613,29 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
 
         self.exts = [self.ext1, self.ext2, self.ext3, self.ext4, self.ext5]
 
-    def test_as_text(self):
-        self.assertEqual(self.ext1.as_text(), "")
-        self.assertEqual(self.ext2.as_text(), "* URI:https://example.com")
-        self.assertEqual(self.ext3.as_text(), "* URI:https://example.com\n* DNS:example.com")
-        self.assertEqual(self.ext4.as_text(), "")
-        self.assertEqual(self.ext5.as_text(), "* URI:https://example.net\n* DNS:example.net")
-
-    def test_count(self):
-        self.assertEqual(self.ext1.count(self.uri1), 0)
-        self.assertEqual(self.ext1.count(uri(self.uri1)), 0)
-        self.assertEqual(self.ext2.count(self.uri1), 1)
-        self.assertEqual(self.ext2.count(uri(self.uri1)), 1)
-
-    def test_del(self):
+    def ex_test_del(self):
         del self.ext3[1]
         self.assertEqual(self.ext3, self.ext2)
         del self.ext3[0]
         self.assertEqual(self.ext3, self.ext1)
 
-    def test_extend(self):
+    def ex_test_extend(self):
         self.ext1.extend([self.uri1, dns(self.dns1)])
         self.assertEqual(self.ext1, self.ext3)
 
-    def test_getitem(self):
+    def ex_test_getitem(self):
         self.assertEqual(self.ext3[0], 'URI:%s' % self.uri1)
         self.assertEqual(self.ext3[1], 'DNS:%s' % self.dns1)
         self.assertEqual(self.ext5[0], 'URI:%s' % self.uri2)
         self.assertEqual(self.ext5[1], 'DNS:%s' % self.dns2)
 
-    def test_getitem_slices(self):
+    def ex_test_getitem_slices(self):
         self.assertEqual(self.ext3[0:], ['URI:%s' % self.uri1, 'DNS:%s' % self.dns1])
         self.assertEqual(self.ext3[1:], ['DNS:%s' % self.dns1])
         self.assertEqual(self.ext5[0:], ['URI:%s' % self.uri2, 'DNS:%s' % self.dns2])
         self.assertEqual(self.ext5[1:], ['DNS:%s' % self.dns2])
 
-    def test_hash(self):
-        self.assertNotEqual(hash(self.ext1), hash(self.ext2))
-        self.assertNotEqual(hash(self.ext1), hash(self.ext3))
-        self.assertNotEqual(hash(self.ext1), hash(self.ext4))
-        self.assertNotEqual(hash(self.ext1), hash(self.ext5))
-        self.assertNotEqual(hash(self.ext2), hash(self.ext3))
-        self.assertNotEqual(hash(self.ext2), hash(self.ext4))
-        self.assertNotEqual(hash(self.ext2), hash(self.ext5))
-        self.assertNotEqual(hash(self.ext3), hash(self.ext4))
-        self.assertNotEqual(hash(self.ext3), hash(self.ext5))
-        self.assertNotEqual(hash(self.ext4), hash(self.ext5))
-
-    def test_in(self):
-        self.assertIn(self.uri1, self.ext2)
-        self.assertIn(self.uri1, self.ext3)
-        self.assertIn(uri(self.uri1), self.ext3)
-        self.assertIn(self.uri2, self.ext5)
-        self.assertIn(self.dns2, self.ext5)
-        self.assertIn(uri(self.uri2), self.ext5)
-        self.assertIn(dns(self.dns2), self.ext5)
-
-    def test_insert(self):
-        self.ext1.insert(0, self.uri1)
-        self.assertEqual(self.ext1, self.ext2)
-        self.ext1.insert(1, dns(self.dns1))
-        self.assertEqual(self.ext1, self.ext3)
-
-        self.ext1.insert(5, dns(self.dns2))
-        self.assertEqual(self.ext1, self.ext_class({
-            'critical': False,
-            'value': [self.uri1, self.dns1, self.dns2],
-        }))
-
-    def test_len(self):
-        self.assertEqual(len(self.ext1), 0)
-        self.assertEqual(len(self.ext2), 1)
-        self.assertEqual(len(self.ext3), 2)
-        self.assertEqual(len(self.ext4), 0)
-        self.assertEqual(len(self.ext5), 2)
-
-    def test_ne(self):
-        self.assertNotEqual(self.ext1, self.ext2)
-        self.assertNotEqual(self.ext1, self.ext3)
-        self.assertNotEqual(self.ext1, self.ext4)
-        self.assertNotEqual(self.ext1, self.ext5)
-        self.assertNotEqual(self.ext2, self.ext3)
-        self.assertNotEqual(self.ext2, self.ext4)
-        self.assertNotEqual(self.ext2, self.ext5)
-        self.assertNotEqual(self.ext3, self.ext4)
-        self.assertNotEqual(self.ext3, self.ext5)
-        self.assertNotEqual(self.ext4, self.ext5)
-
-    def test_not_in(self):
-        self.assertNotIn(self.dns2, self.ext2)
-        self.assertNotIn(self.dns2, self.ext3)
-        self.assertNotIn(dns(self.dns1), self.ext1)
-
-    def test_pop(self):
-        self.assertEqual(self.ext3.pop(1), 'DNS:%s' % self.dns1)
-        self.assertEqual(self.ext3, self.ext2)
-
-        with self.assertRaisesRegex(IndexError, '^pop index out of range$'):
-            self.ext3.pop(1)
-
-    def test_remove(self):
+    def ex_test_remove(self):
         self.ext3.remove(self.dns1)
         self.assertEqual(self.ext3, self.ext2)
 
@@ -2626,28 +2645,7 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
         with self.assertRaisesRegex(ValueError, r'^list\.remove\(x\): x not in list$'):
             self.ext3.remove(uri(self.uri1))
 
-    def test_repr(self):
-        self.assertEqual(repr(self.ext1), "<%s: [], critical=False>" % self.ext_class_name)
-        self.assertEqual(repr(self.ext2),
-                         "<%s: ['URI:https://example.com'], critical=False>" % self.ext_class_name)
-        self.assertEqual(
-            repr(self.ext3),
-            "<%s: ['URI:https://example.com', 'DNS:example.com'], critical=False>" % self.ext_class_name)
-        self.assertEqual(repr(self.ext4), "<%s: [], critical=True>" % self.ext_class_name)
-        self.assertEqual(
-            repr(self.ext5),
-            "<%s: ['URI:https://example.net', 'DNS:example.net'], critical=True>" % self.ext_class_name)
-
-    def test_serialize(self):
-        self.assertEqual(self.ext1.serialize(), {'critical': False, 'value': []})
-        self.assertEqual(self.ext2.serialize(), {'critical': False, 'value': ['URI:https://example.com']})
-        self.assertEqual(self.ext3.serialize(),
-                         {'critical': False, 'value': ['URI:https://example.com', 'DNS:example.com']})
-        self.assertEqual(self.ext4.serialize(), {'critical': True, 'value': []})
-        self.assertEqual(self.ext5.serialize(),
-                         {'critical': True, 'value': ['URI:https://example.net', 'DNS:example.net']})
-
-    def test_setitem(self):
+    def ex_test_setitem(self):
         self.ext3[0] = self.uri2
         self.ext3[1] = dns(self.dns2)
         self.ext3.critical = True
@@ -2656,18 +2654,11 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
         with self.assertRaisesRegex(IndexError, '^list assignment index out of range$'):
             self.ext1[0] = self.uri1
 
-    def test_setitem_slices(self):
+    def ex_test_setitem_slices(self):
         self.ext2[1:] = [self.dns1]
         self.assertEqual(self.ext2, self.ext3)
         self.ext4[0:] = [uri(self.uri2), dns(self.dns2)]
         self.assertEqual(self.ext4, self.ext5)
-
-    def test_str(self):
-        self.assertEqual(str(self.ext1), "")
-        self.assertEqual(str(self.ext2), "URI:https://example.com")
-        self.assertEqual(str(self.ext3), "URI:https://example.com,DNS:example.com")
-        self.assertEqual(str(self.ext4), "/critical")
-        self.assertEqual(str(self.ext5), "URI:https://example.net,DNS:example.net/critical")
 
 
 class KeyUsageTestCase(OrderedSetExtensionTestMixin, NewExtensionTestMixin, TestCase):
