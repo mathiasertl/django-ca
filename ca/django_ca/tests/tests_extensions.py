@@ -30,6 +30,7 @@ from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import NameOID
 from cryptography.x509.oid import ObjectIdentifier
 
+from django.conf import settings
 from django.test import TestCase
 from django.utils.functional import cached_property
 
@@ -125,6 +126,8 @@ class ExtensionTestMixin(AbstractExtensionTestMixin):
 class NewAbstractExtensionTestMixin:
     """TestCase mixin for tests that all extensions are expected to pass, including abstract base classes."""
 
+    force_critical = None
+
     def assertExtensionEqual(self, first, second):
         """Function to test if an extension is really really equal.
 
@@ -133,6 +136,22 @@ class NewAbstractExtensionTestMixin:
         self.assertEqual(first.__class__, second.__class__)
         self.assertEqual(first.critical, second.critical)
         self.assertEqual(first.value, second.value)
+
+    def assertSerialized(self, ext, config, critical=None):
+        if critical is None:
+            critical = self.ext_class.default_critical
+
+        self.assertEqual(ext.serialize(), {
+            'value': config['expected_serialized'],
+            'critical': critical,
+        })
+
+    @property
+    def critical_values(self):
+        if self.force_critical is not False:
+            yield True
+        if self.force_critical is not True:
+            yield False
 
     def ext(self, value, critical=None):
         if isinstance(value, x509.extensions.ExtensionType):
@@ -222,7 +241,7 @@ class NewAbstractExtensionTestMixin:
                 self.assertExtensionEqual(self.ext(test_config['extension_type']), expected)
 
             # Now the same with explicit critical values
-            for critical in [True, False]:
+            for critical in self.critical_values:
                 expected = self.ext(test_config['expected'], critical=critical)
 
                 for value in test_config['values']:
@@ -261,20 +280,23 @@ class NewAbstractExtensionTestMixin:
 
     def test_ne(self):
         for config in self.test_values.values():
-            self.assertNotEqual(
-                self.ext(config['expected'], critical=True),
-                self.ext(config['expected'], critical=False)
-            )
-
-            for other_config in self.test_values.values():
+            if self.force_critical is None:
                 self.assertNotEqual(
                     self.ext(config['expected'], critical=True),
-                    self.ext(other_config['expected'], critical=False)
+                    self.ext(config['expected'], critical=False)
                 )
-                self.assertNotEqual(
-                    self.ext(config['expected'], critical=False),
-                    self.ext(other_config['expected'], critical=True)
-                )
+
+            for other_config in self.test_values.values():
+                if self.force_critical is None:
+                    self.assertNotEqual(
+                        self.ext(config['expected'], critical=True),
+                        self.ext(other_config['expected'], critical=False)
+                    )
+                if self.force_critical is None:
+                    self.assertNotEqual(
+                        self.ext(config['expected'], critical=False),
+                        self.ext(other_config['expected'], critical=True)
+                    )
 
                 if config['expected'] != other_config['expected']:
                     self.assertNotEqual(
@@ -288,26 +310,18 @@ class NewAbstractExtensionTestMixin:
                 ext = self.ext(value)
                 self.assertEqual(repr(ext), config['expected_repr'] % ext.default_critical)
 
-                ext = self.ext(value, critical=True)
-                self.assertEqual(repr(ext), config['expected_repr'] % True)
-
-                ext = self.ext(value, critical=False)
-                self.assertEqual(repr(ext), config['expected_repr'] % False)
+                for critical in self.critical_values:
+                    ext = self.ext(value, critical=critical)
+                    self.assertEqual(repr(ext), config['expected_repr'] % critical)
 
     def test_serialize(self):
         for test_key, test_config in self.test_values.items():
             ext = self.ext(test_config['expected'])
-            self.assertEqual(ext.serialize(), {
-                'value': test_config['expected_serialized'],
-                'critical': self.ext_class.default_critical,
-            })
+            self.assertSerialized(ext, test_config)
 
-            for critical in [True, False]:
+            for critical in self.critical_values:
                 ext = self.ext(test_config['expected'], critical=critical)
-                self.assertEqual(ext.serialize(), {
-                    'value': test_config['expected_serialized'],
-                    'critical': critical,
-                })
+                self.assertSerialized(ext, test_config, critical=critical)
 
     def test_str(self):
         for config in self.test_values.values():
@@ -318,11 +332,13 @@ class NewAbstractExtensionTestMixin:
                 else:
                     self.assertEqual(str(ext), config['expected_str'])
 
-                ext = self.ext(value, critical=True)
-                self.assertEqual(str(ext), config['expected_str'] + '/critical')
+                if self.force_critical is not False:
+                    ext = self.ext(value, critical=True)
+                    self.assertEqual(str(ext), config['expected_str'] + '/critical')
 
-                ext = self.ext(value, critical=False)
-                self.assertEqual(str(ext), config['expected_str'])
+                if self.force_critical is not True:
+                    ext = self.ext(value, critical=False)
+                    self.assertEqual(str(ext), config['expected_str'])
 
     def test_value(self):
         # test that value property can be used for the constructor
@@ -343,7 +359,7 @@ class NewExtensionTestMixin(NewAbstractExtensionTestMixin):
             )
             self.assertEqual(ext.as_extension(), cg)
 
-            for critical in [True, False]:
+            for critical in self.critical_values:
                 ext = self.ext(test_config['expected'], critical=critical)
                 self.assertEqual(ext.as_extension(), x509.extensions.Extension(
                     oid=self.ext_class.oid, critical=critical, value=test_config['extension_type']
@@ -377,12 +393,29 @@ class NewExtensionTestMixin(NewAbstractExtensionTestMixin):
                 {'extension': test_config['extension_type'], 'critical': self.ext_class.default_critical}
             )
 
-            for critical in [True, False]:
+            for critical in self.critical_values:
                 ext = self.ext(test_config['expected'], critical=critical)
                 self.assertEqual(
                     ext.for_builder(),
                     {'extension': test_config['extension_type'], 'critical': critical}
                 )
+
+
+class NullExtensionTestMixin(NewExtensionTestMixin):
+    """TestCase mixin for tests that all extensions are expected to pass, including abstract base classes."""
+
+    def assertExtensionEqual(self, first, second):
+        """Function to test if an extension is really really equal.
+
+        This function should compare extension internals directly not via the __eq__ function.
+        """
+        self.assertEqual(first.__class__, second.__class__)
+        self.assertEqual(first.critical, second.critical)
+
+    def assertSerialized(self, ext, config, critical=None):
+        if critical is None:
+            critical = self.ext_class.default_critical
+        self.assertEqual(ext.serialize(), {'critical': critical})
 
 
 class IterableExtensionTestMixin:
@@ -2881,184 +2914,90 @@ class NameConstraintsTestCase(NewExtensionTestMixin, TestCase):
         }}))
 
 
-class OCSPNoCheckTestCase(ExtensionTestMixin, TestCase):
+class OCSPNoCheckTestCase(NullExtensionTestMixin, TestCase):
     ext_class = OCSPNoCheck
+    test_values = {
+        'empty': {
+            'values': [{}, None],
+            'expected': None,
+            'expected_repr': '<OCSPNoCheck: critical=%s>',
+            'expected_serialized': None,
+            'expected_str': 'OCSPNoCheck',
+            'expected_text': "OCSPNoCheck",
+            'extension_type': x509.OCSPNoCheck(),
+        },
+    }
 
-    x1 = x509.extensions.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=True,
-                                   value=x509.OCSPNoCheck())
-    x2 = x509.extensions.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=False,
-                                   value=x509.OCSPNoCheck())
-    xs = [x1, x2]
-
-    def setUp(self):
-        super(OCSPNoCheckTestCase, self).setUp()
-        self.ext1 = OCSPNoCheck({'critical': True})
-        self.ext2 = OCSPNoCheck({'critical': False})
-        self.exts = [self.ext1, self.ext2]
-
-    # OCSPNoCheck does not compare as equal until cryptography 2.7:
-    #   https://github.com/pyca/cryptography/issues/4818
-    @unittest.skipUnless(x509.OCSPNoCheck() == x509.OCSPNoCheck(),
-                         'Extensions compare as equal.')  # pragma: cryptography<2.7
+    @unittest.skipIf(settings.SKIP_OCSP_NOCHECK, "OCSPNoCheck not supported with cryptography<2.7")
     def test_as_extension(self):
         super(OCSPNoCheckTestCase, self).test_as_extension()
 
-    def test_as_text(self):
-        ext1 = OCSPNoCheck()
-        ext2 = OCSPNoCheck({'critical': True})
-        self.assertEqual(ext1.as_text(), "OCSPNoCheck")
-        self.assertEqual(ext2.as_text(), "OCSPNoCheck")
-
-    def test_ne(self):
-        ext1 = x509.extensions.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=True, value=None)
-        ext2 = x509.extensions.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=False, value=None)
-
-        self.assertNotEqual(OCSPNoCheck(ext1), OCSPNoCheck(ext2))
-        self.assertNotEqual(OCSPNoCheck({'critical': True}), OCSPNoCheck({'critical': False}))
-
-    def test_hash(self):
-        ext1 = OCSPNoCheck()
-        ext2 = OCSPNoCheck({'critical': True})
-
-        self.assertEqual(hash(ext1), hash(ext1))
-        self.assertEqual(hash(ext2), hash(ext2))
-        self.assertNotEqual(hash(ext1), hash(ext2))
-
-    # OCSPNoCheck does not compare as equal until cryptography 2.7:
-    #   https://github.com/pyca/cryptography/issues/4818
-    @unittest.skipUnless(x509.OCSPNoCheck() == x509.OCSPNoCheck(),
-                         'Extensions compare as equal.')  # pragma: cryptography<2.7
+    @unittest.skipIf(settings.SKIP_OCSP_NOCHECK, "OCSPNoCheck not supported with cryptography<2.7")
     def test_extension_type(self):
         super(OCSPNoCheckTestCase, self).test_extension_type()
 
-    # OCSPNoCheck does not compare as equal until cryptography 2.7:
-    #   https://github.com/pyca/cryptography/issues/4818
-    @unittest.skipUnless(x509.OCSPNoCheck() == x509.OCSPNoCheck(),
-                         'Extensions compare as equal.')  # pragma: cryptography<2.7
+    @unittest.skipIf(settings.SKIP_OCSP_NOCHECK, "OCSPNoCheck not supported with cryptography<2.7")
     def test_for_builder(self):
         super(OCSPNoCheckTestCase, self).test_for_builder()
 
-    def test_from_extension(self):
-        ext = OCSPNoCheck(x509.extensions.Extension(
-            oid=ExtensionOID.OCSP_NO_CHECK, critical=True, value=None))
-        self.assertTrue(ext.critical)
 
-        ext = OCSPNoCheck(x509.extensions.Extension(
-            oid=ExtensionOID.OCSP_NO_CHECK, critical=False, value=None))
-        self.assertFalse(ext.critical)
-
-    def test_from_dict(self):
-        self.assertFalse(OCSPNoCheck({}).critical)
-        self.assertTrue(OCSPNoCheck({'critical': True}).critical)
-        self.assertTrue(OCSPNoCheck({'critical': True, 'foo': 'bar'}).critical)
-        self.assertFalse(OCSPNoCheck({'critical': False}).critical)
-        self.assertFalse(OCSPNoCheck({'critical': False, 'foo': 'bar'}).critical)
-
-    def test_str(self):
-        ext1 = OCSPNoCheck({'critical': True})
-        ext2 = OCSPNoCheck({'critical': False})
-
-        self.assertEqual(str(ext1), 'OCSPNoCheck/critical')
-        self.assertEqual(str(ext2), 'OCSPNoCheck')
-
-    def test_repr(self):
-        ext1 = OCSPNoCheck({'critical': True})
-        ext2 = OCSPNoCheck({'critical': False})
-
-        self.assertEqual(repr(ext1), '<OCSPNoCheck: critical=True>')
-        self.assertEqual(repr(ext2), '<OCSPNoCheck: critical=False>')
-
-    def test_serialize(self):
-        ext1 = OCSPNoCheck({'critical': True})
-        ext2 = OCSPNoCheck({'critical': False})
-
-        self.assertEqual(ext1.serialize(), ext1.serialize())
-        self.assertNotEqual(ext1.serialize(), ext2.serialize())
-        self.assertEqual(ext1, OCSPNoCheck(ext1.serialize()))
-        self.assertEqual(ext2, OCSPNoCheck(ext2.serialize()))
-
-
-class PrecertPoisonTestCase(ExtensionTestMixin, TestCase):
+class PrecertPoisonTestCase(NullExtensionTestMixin, TestCase):
     # NOTE: this extension is always critical and has no value, that's why there are fewer test instances here
     ext_class = PrecertPoison
+    force_critical = True
+    test_values = {
+        'empty': {
+            'values': [{}, None],
+            'expected': None,
+            'expected_repr': '<PrecertPoison: critical=%s>',
+            'expected_serialized': None,
+            'expected_str': 'PrecertPoison',
+            'expected_text': "PrecertPoison",
+            'extension_type': x509.PrecertPoison(),
+        },
+    }
 
-    x1 = x509.extensions.Extension(oid=ExtensionOID.PRECERT_POISON, critical=True, value=x509.PrecertPoison())
-    xs = [x1]
-
-    def setUp(self):
-        super(PrecertPoisonTestCase, self).setUp()
-        self.ext1 = PrecertPoison({})
-        self.exts = [self.ext1]
-
-    # PrecertPoison does not compare as equal until cryptography 2.7:
-    #   https://github.com/pyca/cryptography/issues/4818
-    @unittest.skipUnless(hasattr(x509, 'PrecertPoison') and x509.PrecertPoison() == x509.PrecertPoison(),
-                         'Extensions compare as equal.')  # pragma: only cryptography<2.7
+    @unittest.skipIf(settings.SKIP_PRECERT_POISON, "PrecertPoison not supported with cryptography<2.7")
     def test_as_extension(self):
         super(PrecertPoisonTestCase, self).test_as_extension()
 
-    def test_as_text(self):
-        self.assertEqual(PrecertPoison().as_text(), "PrecertPoison")
+    def test_eq(self):
+        for values in self.test_values.values():
+            ext = self.ext(values['expected'])
+            self.assertEqual(ext, ext)
+            ext_critical = self.ext(values['expected'], critical=True)
+            self.assertEqual(ext_critical, ext_critical)
 
-    # PrecertPoison does not compare as equal until cryptography 2.7:
-    #   https://github.com/pyca/cryptography/issues/4818
-    @unittest.skipUnless(hasattr(x509, 'PrecertPoison') and x509.PrecertPoison() == x509.PrecertPoison(),
-                         'Extensions compare as equal.')  # pragma: only cryptography<2.7
+            for value in values['values']:
+                ext_1 = self.ext(value)
+                self.assertEqual(ext, ext_1)
+                ext_2 = self.ext(value, critical=True)
+                self.assertEqual(ext_critical, ext_2)
+
+    @unittest.skipIf(settings.SKIP_PRECERT_POISON, "PrecertPoison not supported with cryptography<2.7")
     def test_extension_type(self):
         super(PrecertPoisonTestCase, self).test_extension_type()
 
-    # PrecertPoison does not compare as equal until cryptography 2.7:
-    #   https://github.com/pyca/cryptography/issues/4818
-    @unittest.skipUnless(hasattr(x509, 'PrecertPoison') and x509.PrecertPoison() == x509.PrecertPoison(),
-                         'Extensions compare as equal.')  # pragma: only cryptography<2.7
+    @unittest.skipIf(settings.SKIP_PRECERT_POISON, "PrecertPoison not supported with cryptography<2.7")
     def test_for_builder(self):
         super(PrecertPoisonTestCase, self).test_for_builder()
 
     def test_hash(self):
-        ext1 = PrecertPoison()
-        ext2 = PrecertPoison({'critical': True})
+        for config in self.test_values.values():
+            ext = self.ext(config['expected'])
+            ext_critical = self.ext(config['expected'], critical=True)
+            self.assertEqual(hash(ext), hash(ext_critical))
 
-        self.assertEqual(hash(ext1), hash(ext1))
-        self.assertEqual(hash(ext2), hash(ext2))
-        self.assertEqual(hash(ext1), hash(ext2))
+            for other_config in self.test_values.values():
+                other_ext = self.ext(other_config['expected'])
+                other_ext_critical = self.ext(other_config['expected'], critical=True)
 
-    def test_ne(self):
-        # PrecertPoison is always critical and has no value, thus all instances compare as equal (and there
-        # is nothing we could test)
-        pass
-
-    def test_from_extension(self):
-        ext = PrecertPoison(x509.extensions.Extension(
-            oid=ExtensionOID.PRECERT_POISON, critical=True, value=None))
-        self.assertTrue(ext.critical)
-
-    def test_from_dict(self):
-        self.assertTrue(PrecertPoison({}).critical)
-        self.assertTrue(PrecertPoison({'critical': True}).critical)
-        self.assertTrue(PrecertPoison({'critical': True, 'foo': 'bar'}).critical)
-
-    def test_str(self):
-        self.assertEqual(str(PrecertPoison({'critical': True})), 'PrecertPoison/critical')
-
-    def test_repr(self):
-        self.assertEqual(repr(PrecertPoison({'critical': True})), '<PrecertPoison: critical=True>')
-
-    def test_serialize(self):
-        ext1 = PrecertPoison()
-        ext2 = PrecertPoison({'critical': True})
-
-        self.assertEqual(ext1.serialize(), ext1.serialize())
-        self.assertEqual(ext1.serialize(), ext2.serialize())
-        self.assertEqual(ext1, PrecertPoison(ext1.serialize()))
-        self.assertEqual(ext2, PrecertPoison(ext2.serialize()))
-
-    def test_non_critical(self):
-        ext = x509.extensions.Extension(oid=ExtensionOID.PRECERT_POISON, critical=False, value=None)
-
-        with self.assertRaisesRegex(ValueError, '^PrecertPoison must always be marked as critical$'):
-            PrecertPoison(ext)
-        with self.assertRaisesRegex(ValueError, '^PrecertPoison must always be marked as critical$'):
-            PrecertPoison({'critical': False})
+                if config['expected'] == other_config['expected']:
+                    self.assertEqual(hash(ext), hash(other_ext))
+                    self.assertEqual(hash(ext_critical), hash(other_ext_critical))
+                else:
+                    self.assertNotEqual(hash(ext), hash(other_ext))
+                    self.assertNotEqual(hash(ext_critical), hash(other_ext_critical))
 
 
 @unittest.skipUnless(ca_settings.OPENSSL_SUPPORTS_SCT,

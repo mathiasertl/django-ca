@@ -7,6 +7,7 @@ import sys
 import packaging.version
 
 import cryptography
+from cryptography import x509
 
 import django
 from django.core.exceptions import ImproperlyConfigured
@@ -236,6 +237,16 @@ NEWEST_PYTHON = sys.version_info[0:2] == (3, 7)
 NEWEST_CRYPTOGRAPHY = CRYPTOGRAPHY_VERSION == (2, 7)
 NEWEST_DJANGO = django.VERSION[:2] == (2, 2)
 NEWEST_VERSIONS = NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY and NEWEST_DJANGO
+
+# PrecertPoison does not compare as equal until cryptography 2.7:
+#   https://github.com/pyca/cryptography/issues/4818
+SKIP_PRECERT_POISON = not (
+    hasattr(x509, 'PrecertPoison') and x509.PrecertPoison() == x509.PrecertPoison()
+)  # pragma: only cryptography<2.7
+
+# OCSPNoCheck does not compare as equal until cryptography 2.7:
+#   https://github.com/pyca/cryptography/issues/4818
+SKIP_OCSP_NOCHECK = x509.OCSPNoCheck() != x509.OCSPNoCheck()  # pragma: only cryptography<2.7
 
 # For Selenium test cases
 SKIP_SELENIUM_TESTS = os.environ.get(

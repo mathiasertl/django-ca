@@ -213,6 +213,7 @@ class NullExtension(Extension):
     """
 
     def __init__(self, value=None):
+        self.value = {}
         if not value:
             self.critical = self.default_critical
         else:
