@@ -1234,7 +1234,7 @@ class IssuerAlternativeName(AlternativeNameExtension):
 
     This extension is usually marked as non-critical.
 
-    >>> IssuerAlternativeName({'value': 'https://example.com'})
+    >>> IssuerAlternativeName({'value': ['https://example.com']})
     <IssuerAlternativeName: ['URI:https://example.com'], critical=False>
 
     .. seealso::
@@ -1687,7 +1687,7 @@ class SubjectAlternativeName(AlternativeNameExtension):
 
     This extension is usually marked as non-critical.
 
-    >>> SubjectAlternativeName({'value': 'example.com'})
+    >>> SubjectAlternativeName({'value': ['example.com']})
     <SubjectAlternativeName: ['DNS:example.com'], critical=False>
 
     .. seealso::

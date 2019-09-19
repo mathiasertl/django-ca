@@ -1508,6 +1508,15 @@ class CRLDistributionPointsTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
                         value=x509.CRLDistributionPoints([dp2, dp4]))
     xs = [x1, x2, x3, x4, x5]
 
+    def test_append(self):
+        pass
+
+    def test_clear(self):
+        pass
+
+    def test_del_slices(self):
+        pass
+
     def setUp(self):
         super(CRLDistributionPointsTestCase, self).setUp()
         # django_ca extensions
@@ -2292,6 +2301,15 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin, Te
         value=x509.CertificatePolicies(policies=[])
     )
     xs = [x1, x2, x3, x4, x5, x6]
+
+    def test_append(self):
+        pass
+
+    def test_clear(self):
+        pass
+
+    def test_del_slices(self):
+        pass
 
     def setUp(self):
         super(CertificatePoliciesTestCase, self).setUp()
@@ -3139,29 +3157,80 @@ class UnknownExtensionTestCase(TestCase):
 class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
     ext_class = SubjectAlternativeName
     ext_class_name = 'SubjectAlternativeName'
-    x1 = x509.extensions.Extension(
-        oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME, critical=False,
-        value=x509.SubjectAlternativeName([])
-    )
-    x2 = x509.extensions.Extension(
-        oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME, critical=False,
-        value=x509.SubjectAlternativeName([uri(IssuerAlternativeNameTestCase.uri1)])
-    )
-    x3 = x509.extensions.Extension(
-        oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME, critical=False,
-        value=x509.SubjectAlternativeName([uri(IssuerAlternativeNameTestCase.uri1),
-                                           dns(IssuerAlternativeNameTestCase.dns1)])
-    )
-    x4 = x509.extensions.Extension(
-        oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME, critical=True,
-        value=x509.SubjectAlternativeName([])
-    )
-    x5 = x509.extensions.Extension(
-        oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME, critical=True,
-        value=x509.SubjectAlternativeName([uri(IssuerAlternativeNameTestCase.uri2),
-                                           dns(IssuerAlternativeNameTestCase.dns2)])
-    )
-    xs = [x1, x2, x3, x4, x5]
+    ext_class_type = x509.SubjectAlternativeName
+    uri1 = 'https://example.com'
+    uri2 = 'https://example.net'
+    dns1 = 'example.com'
+    dns2 = 'example.net'
+
+    test_values = {
+        'empty': {
+            'values': [[]],
+            'expected': [],
+            'expected_repr': '<SubjectAlternativeName: [], critical=%s>',
+            'expected_serialized': [],
+            'expected_str': '',
+            'expected_text': '',
+            'extension_type': ext_class_type([]),
+        },
+        'uri': {
+            'values': [[uri1], [uri(uri1)]],
+            'expected': [uri(uri1)],
+            'expected_repr': "<SubjectAlternativeName: ['URI:%s'], critical=%%s>" % uri1,
+            'expected_serialized': ['URI:%s' % uri1],
+            'expected_str': 'URI:%s' % uri1,
+            'expected_text': '* URI:%s' % uri1,
+            'extension_type': ext_class_type([uri(uri1)]),
+        },
+        'dns': {
+            'values': [[dns1], [dns(dns1)]],
+            'expected': [dns(dns1)],
+            'expected_repr': "<SubjectAlternativeName: ['DNS:%s'], critical=%%s>" % dns1,
+            'expected_serialized': ['DNS:%s' % dns1],
+            'expected_str': 'DNS:%s' % dns1,
+            'expected_text': '* DNS:%s' % dns1,
+            'extension_type': ext_class_type([dns(dns1)]),
+        },
+        'both': {
+            'values': [[uri1, dns1], [uri(uri1), dns(dns1)], [uri1, dns(dns1)], [uri(uri1), dns1]],
+            'expected': [uri(uri1), dns(dns1)],
+            'expected_repr': "<SubjectAlternativeName: ['URI:%s', 'DNS:%s'], critical=%%s>" % (uri1, dns1),
+            'expected_serialized': ['URI:%s' % uri1, 'DNS:%s' % dns1],
+            'expected_str': 'URI:%s,DNS:%s' % (uri1, dns1),
+            'expected_text': '* URI:%s\n* DNS:%s' % (uri1, dns1),
+            'extension_type': ext_class_type([uri(uri1), dns(dns1)]),
+        },
+        'all': {
+            'values': [
+                [uri1, uri2, dns1, dns2],
+                [uri(uri1), uri(uri2), dns1, dns2],
+                [uri1, uri2, dns(dns1), dns(dns2)],
+                [uri(uri1), uri(uri2), dns(dns1), dns(dns2)],
+            ],
+            'expected': [uri(uri1), uri(uri2), dns(dns1), dns(dns2)],
+            'expected_repr': "<SubjectAlternativeName: ['URI:%s', 'URI:%s', 'DNS:%s', 'DNS:%s'], "
+                             "critical=%%s>" % (uri1, uri2, dns1, dns2),
+            'expected_serialized': ['URI:%s' % uri1, 'URI:%s' % uri2, 'DNS:%s' % dns1, 'DNS:%s' % dns2],
+            'expected_str': 'URI:%s,URI:%s,DNS:%s,DNS:%s' % (uri1, uri2, dns1, dns2),
+            'expected_text': '* URI:%s\n* URI:%s\n* DNS:%s\n* DNS:%s' % (uri1, uri2, dns1, dns2),
+            'extension_type': ext_class_type([uri(uri1), uri(uri2), dns(dns1), dns(dns2)]),
+        },
+        'order': {  # same as "all" above but other order
+            'values': [
+                [dns2, dns1, uri2, uri1],
+                [dns(dns2), dns(dns1), uri2, uri1],
+                [dns2, dns1, uri(uri2), uri(uri1)],
+                [dns(dns2), dns(dns1), uri(uri2), uri(uri1)],
+            ],
+            'expected': [dns(dns2), dns(dns1), uri(uri2), uri(uri1)],
+            'expected_repr': "<SubjectAlternativeName: ['DNS:%s', 'DNS:%s', 'URI:%s', 'URI:%s'], "
+                             "critical=%%s>" % (dns2, dns1, uri2, uri1),
+            'expected_serialized': ['DNS:%s' % dns2, 'DNS:%s' % dns1, 'URI:%s' % uri2, 'URI:%s' % uri1],
+            'expected_str': 'DNS:%s,DNS:%s,URI:%s,URI:%s' % (dns2, dns1, uri2, uri1),
+            'expected_text': '* DNS:%s\n* DNS:%s\n* URI:%s\n* URI:%s' % (dns2, dns1, uri2, uri1),
+            'extension_type': ext_class_type([dns(dns2), dns(dns1), uri(uri2), uri(uri1)]),
+        },
+    }
 
 
 class SubjectKeyIdentifierTestCase(NewExtensionTestMixin, TestCase):
