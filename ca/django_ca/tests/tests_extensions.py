@@ -2987,6 +2987,10 @@ class PrecertPoisonTestCase(NullExtensionTestMixin, TestCase):
                     self.assertNotEqual(hash(ext), hash(other_ext))
                     self.assertNotEqual(hash(ext_critical), hash(other_ext_critical))
 
+    def test_critical(self):
+        with self.assertRaisesRegex(ValueError, r'^PrecertPoison must always be marked as critical$'):
+            PrecertPoison({'critical': False})
+
 
 @unittest.skipUnless(ca_settings.OPENSSL_SUPPORTS_SCT,
                      'This version of OpenSSL does not support SCTs')
