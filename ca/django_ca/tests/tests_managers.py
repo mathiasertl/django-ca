@@ -279,7 +279,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             subject_alternative_name={'value': ['example.com']}, **kwargs)
 
         self.assertEqual(cert.issuer_alternative_name,
-                         IssuerAlternativeName({'value': ca.issuer_alt_name}))
+                         IssuerAlternativeName({'value': [ca.issuer_alt_name]}))
 
     @override_tmpcadir()
     def test_auth_info_access(self):
@@ -367,7 +367,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         nc = {'value': {'permitted': ['.com'], 'excluded': ['.net']}}
         subject = '/CN=%s' % cn
 
-        ian = {'value': 'http://ian.example.com'}
+        ian = {'value': ['http://ian.example.com']}
         ca.ocsp_url = certs['child']['ocsp_url']
         ca.issuer_url = certs['child']['issuer_url']
         ca.crl_url = certs['child']['crl_url']
@@ -505,7 +505,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         self.maxDiff = None
         extra_extensions = [
             NameConstraints(nc).as_extension(),
-            IssuerAlternativeName({'value': ian}).as_extension(),
+            IssuerAlternativeName({'value': [ian]}).as_extension(),
             OCSPNoCheck({'critical': True}).as_extension(),
         ]
 
@@ -534,7 +534,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             SubjectAlternativeName({'value': [cn] + san}),  # prepend CN from subject
             KeyUsage(ku),
             NameConstraints(nc),
-            IssuerAlternativeName({'value': ian}),
+            IssuerAlternativeName({'value': [ian]}),
             OCSPNoCheck({'critical': True}),
         ])
 

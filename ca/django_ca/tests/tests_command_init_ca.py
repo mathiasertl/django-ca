@@ -81,7 +81,7 @@ class InitCATest(DjangoCATestCase):
                 expires=self.expires(720),
                 pathlen=3,
                 issuer_url='http://issuer.ca.example.com',
-                issuer_alt_name={'value': 'http://ian.ca.example.com'},
+                issuer_alt_name={'value': ['http://ian.ca.example.com']},
                 crl_url=['http://crl.example.com'],
                 ocsp_url='http://ocsp.example.com',
                 ca_issuer_url='http://ca.issuer.ca.example.com',
