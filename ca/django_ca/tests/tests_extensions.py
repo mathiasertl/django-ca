@@ -642,7 +642,7 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
 
 
 class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
-    container_type = set()
+    container_type = set
 
     def assertIsCopy(self, orig, new, expected_value=None):
         """Assert that `new` is a different instance then `other` and has possibly updated values."""
