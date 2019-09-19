@@ -359,11 +359,8 @@ class ListExtension(IterableExtension):
         value = value.get('value')
         if not value:
             self.value = []
-            return
-        elif isinstance(value, x509.GeneralName) or isinstance(value, six.string_types):
-            value = [value]
-
-        self.value = [self.parse_value(v) for v in value]
+        else:
+            self.value = [self.parse_value(v) for v in value]
 
     def from_extension(self, ext):
         self.value = list(ext.value)

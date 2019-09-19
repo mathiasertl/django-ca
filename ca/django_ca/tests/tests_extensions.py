@@ -427,7 +427,7 @@ class IterableExtensionTestMixin:
         self.assertEqual(id(new), orig_id)  # assert that this is really the same instance
         self.assertEqual(id(new.value), orig_value_id)
 
-    def assertEqualFunction(self, f, init, value, update=True, infix=True, set_value=None):
+    def assertEqualFunction(self, f, init, value, update=True, infix=True, set_value=None, raises=None):
         """Assert that the given function f behaves the same way on a set and on the tested extension.
 
         This example would test if ``set.update()`` and ``self.ext_class.update()`` would behave the same way,
@@ -469,16 +469,21 @@ class IterableExtensionTestMixin:
         if update is True:
             orig_id, orig_value_id = id(ext), id(ext.value)
 
-            # infix functions from the operator module (e.g. operator.ixor) return the updated value,
-            # while the function equivalent returns None. For example:
-            #   >>> s.symmetric_difference_update({'foo'}) is None
-            #
-            # which is equivalent to:
-            #   >>> s ^= {'foo'}
-            #
-            # but:
-            #   >>> operator.ixor(s, {'foo'}) == {'foo'}  # and not None, like above
-            if infix is True:
+            if raises:
+                with self.assertRaisesRegex(*raises):
+                    f(s, set_value)
+                with self.assertRaisesRegex(*raises):
+                    f(ext, value)
+            elif infix is True:
+                # infix functions from the operator module (e.g. operator.ixor) return the updated value,
+                # while the function equivalent returns None. For example:
+                #   >>> s.symmetric_difference_update({'foo'}) is None
+                #
+                # which is equivalent to:
+                #   >>> s ^= {'foo'}
+                #
+                # but:
+                #   >>> operator.ixor(s, {'foo'}) == {'foo'}  # and not None, like above
                 f(s, set_value)
                 f(ext, value)
             else:
@@ -489,6 +494,12 @@ class IterableExtensionTestMixin:
             ext_updated = f(ext, value)
             s_updated = f(s, set_value)  # apply to set
             self.assertIsCopy(ext, ext_updated, s_updated)
+
+    def test_clear(self):
+        for values in self.test_values.values():
+            ext = self.ext(values['expected'])
+            ext.clear()
+            self.assertEqual(len(ext.value), 0)
 
     def test_in(self):
         for values in self.test_values.values():
@@ -514,6 +525,17 @@ class IterableExtensionTestMixin:
 class ListExtensionTestMixin(IterableExtensionTestMixin):
     container_type = list
 
+    def test_append(self):
+        for key, config in self.test_values.items():
+            if not config['expected']:
+                continue  # we don't have values to append
+
+            for values in config['values']:
+                expected = self.ext(config['expected'])
+                ext = self.ext(config['expected'][:-1])  # all but the last item
+                ext.append(config['expected'][-1])
+                self.assertExtensionEqual(ext, expected)
+
     def test_count(self):
         for key, config in self.test_values.items():
             ext = self.ext(config['expected'])
@@ -523,16 +545,50 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
                     self.assertEqual(config['expected'].count(expected_elem), ext.count(other_elem))
 
     def test_del(self):
-        raise NotImplementedError
+        for key, config in self.test_values.items():
+            ext = self.ext(config['expected'])
+            self.assertEqual(len(ext), len(config['expected']))
+
+            for i, val in enumerate(config['expected']):
+                del ext[0]
+            self.assertEqual(len(ext), 0)
+
+            with self.assertRaisesRegex(IndexError, r'^list assignment index out of range$'):
+                del ext[0]
+
+    def test_del_slices(self):
+        for key, config in self.test_values.items():
+            ext = self.ext(config['expected'])
+            del ext[0:]
+            self.assertEqual(len(ext), 0)
 
     def test_extend(self):
-        raise NotImplementedError
+        func = lambda c, j: c.extend(j)  # noqa
+        for key, config in self.test_values.items():
+            self.assertEqualFunction(func, config['expected'], config['expected'])
+            self.assertEqualFunction(func, config['expected'], config['expected'][0:])
+            self.assertEqualFunction(func, config['expected'], config['expected'][1:])
+            self.assertEqualFunction(func, config['expected'], config['expected'][:2])
 
     def test_getitem(self):
-        raise NotImplementedError
+        func = lambda c, j: operator.getitem(c, j)  # noqa
+        for key, config in self.test_values.items():
+            for values in config['values']:
+                for value in values:
+                    for i in range(0, len(values)):
+                        self.assertEqualFunction(func, config['expected'], i)
+
+                self.assertEqualFunction(func, config['expected'], len(config['expected']),
+                                         raises=(IndexError, r'^list index out of range$'))
 
     def test_getitem_slices(self):
-        raise NotImplementedError
+        func = lambda c, j: operator.getitem(c, j)  # noqa
+        for key, config in self.test_values.items():
+            for values in config['values']:
+                self.assertEqualFunction(func, config['expected'], slice(1))
+                self.assertEqualFunction(func, config['expected'], slice(0, 1))
+                self.assertEqualFunction(func, config['expected'], slice(0, 2))
+                self.assertEqualFunction(func, config['expected'], slice(0, 2, 2))
 
     def test_insert(self):
         for key, config in self.test_values.items():
@@ -568,10 +624,21 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
                     self.assertEqualFunction(lambda c, e: c.remove(e), config['expected'], value, **kwargs)
 
     def test_setitem(self):
-        raise NotImplementedError
+        func = lambda c, j: operator.setitem(c, j[0], j[1])  # noqa
+        for key, config in self.test_values.items():
+            for values in config['values']:
+                for i in range(0, len(values)):
+                    self.assertEqualFunction(func, list(config['expected']), (i, values[i], ),
+                                             set_value=(i, config['expected'][i]))
 
     def test_setitem_slices(self):
-        raise NotImplementedError
+        func = lambda c, j: operator.setitem(c, j[0], j[1])  # noqa
+        for key, config in self.test_values.items():
+            for values in config['values']:
+                for i in range(0, len(values)):
+                    s = slice(0, 1)
+                    self.assertEqualFunction(func, list(config['expected']), (s, values[s], ),
+                                             set_value=(s, config['expected'][s]))
 
 
 class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
@@ -702,13 +769,6 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
                     # Note: we cannot assert the length, because values might include alias values
 
                 self.assertEqual(ext, self.ext_class({'value': test_config['expected']}))
-
-    def test_clear(self):
-        for values in self.test_values.values():
-            ext = self.ext_class({'value': values['expected']})
-            ext.clear()
-            self.assertEqual(ext.value, set())
-            self.assertEqual(len(ext.value), 0)
 
     def test_copy(self):
         for config in self.test_values.values():
@@ -2579,86 +2639,6 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, NewExtensionTestMixi
             'extension_type': ext_class_type([dns(dns2), dns(dns1), uri(uri2), uri(uri1)]),
         },
     }
-
-    x1 = x509.extensions.Extension(
-        oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME, critical=False,
-        value=x509.IssuerAlternativeName([])
-    )
-    x2 = x509.extensions.Extension(
-        oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME, critical=False,
-        value=x509.IssuerAlternativeName([uri(uri1)])
-    )
-    x3 = x509.extensions.Extension(
-        oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME, critical=False,
-        value=x509.IssuerAlternativeName([uri(uri1), dns(dns1)])
-    )
-    x4 = x509.extensions.Extension(
-        oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME, critical=True,
-        value=x509.IssuerAlternativeName([])
-    )
-    x5 = x509.extensions.Extension(
-        oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME, critical=True,
-        value=x509.IssuerAlternativeName([uri(uri2), dns(dns2)])
-    )
-    xs = [x1, x2, x3, x4, x5]
-
-    def setUp(self):
-        super(IssuerAlternativeNameTestCase, self).setUp()
-
-        self.ext1 = self.ext_class({'critical': False})
-        self.ext2 = self.ext_class({'critical': False, 'value': [self.uri1]})
-        self.ext3 = self.ext_class({'critical': False, 'value': [self.uri1, self.dns1]})
-        self.ext4 = self.ext_class({'critical': True})
-        self.ext5 = self.ext_class({'critical': True, 'value': [self.uri2, self.dns2]})
-
-        self.exts = [self.ext1, self.ext2, self.ext3, self.ext4, self.ext5]
-
-    def ex_test_del(self):
-        del self.ext3[1]
-        self.assertEqual(self.ext3, self.ext2)
-        del self.ext3[0]
-        self.assertEqual(self.ext3, self.ext1)
-
-    def ex_test_extend(self):
-        self.ext1.extend([self.uri1, dns(self.dns1)])
-        self.assertEqual(self.ext1, self.ext3)
-
-    def ex_test_getitem(self):
-        self.assertEqual(self.ext3[0], 'URI:%s' % self.uri1)
-        self.assertEqual(self.ext3[1], 'DNS:%s' % self.dns1)
-        self.assertEqual(self.ext5[0], 'URI:%s' % self.uri2)
-        self.assertEqual(self.ext5[1], 'DNS:%s' % self.dns2)
-
-    def ex_test_getitem_slices(self):
-        self.assertEqual(self.ext3[0:], ['URI:%s' % self.uri1, 'DNS:%s' % self.dns1])
-        self.assertEqual(self.ext3[1:], ['DNS:%s' % self.dns1])
-        self.assertEqual(self.ext5[0:], ['URI:%s' % self.uri2, 'DNS:%s' % self.dns2])
-        self.assertEqual(self.ext5[1:], ['DNS:%s' % self.dns2])
-
-    def ex_test_remove(self):
-        self.ext3.remove(self.dns1)
-        self.assertEqual(self.ext3, self.ext2)
-
-        self.ext3.remove(uri(self.uri1))
-        self.assertEqual(self.ext3, self.ext1)
-
-        with self.assertRaisesRegex(ValueError, r'^list\.remove\(x\): x not in list$'):
-            self.ext3.remove(uri(self.uri1))
-
-    def ex_test_setitem(self):
-        self.ext3[0] = self.uri2
-        self.ext3[1] = dns(self.dns2)
-        self.ext3.critical = True
-        self.assertEqual(self.ext3, self.ext5)
-
-        with self.assertRaisesRegex(IndexError, '^list assignment index out of range$'):
-            self.ext1[0] = self.uri1
-
-    def ex_test_setitem_slices(self):
-        self.ext2[1:] = [self.dns1]
-        self.assertEqual(self.ext2, self.ext3)
-        self.ext4[0:] = [uri(self.uri2), dns(self.dns2)]
-        self.assertEqual(self.ext4, self.ext5)
 
 
 class KeyUsageTestCase(OrderedSetExtensionTestMixin, NewExtensionTestMixin, TestCase):
