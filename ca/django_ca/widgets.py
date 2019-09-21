@@ -36,12 +36,6 @@ class LabeledCheckboxInput(widgets.CheckboxInput):
         ctx['widget']['label'] = self.label
         return ctx
 
-    def render(self, name, value, attrs=None, renderer=None):  # pragma: no cover - <= Django 1.11
-        html = super(LabeledCheckboxInput, self).render(name, value, attrs=attrs, renderer=renderer)
-        label = '<label for="%s">%s</label>' % (attrs.get('id'), self.label)
-        html = '<span class="critical-widget-wrapper">%s%s</span>' % (html, label)
-        return html
-
     class Media:
         css = {
             'all': ('django_ca/admin/css/labeledcheckboxinput.css', ),
@@ -65,22 +59,6 @@ class LabeledTextInput(widgets.TextInput):
         ctx['widget']['cssid'] = self.label.lower().replace(' ', '-')
         return ctx
 
-    def render_wrapped(self, name, value, attrs, renderer):  # pragma: no cover - <= Django 1.11
-        html = super(LabeledTextInput, self).render(name, value, attrs=attrs, renderer=renderer)
-        required = ''
-        if self.attrs.get('required', False):
-            required = 'class="required" '
-
-        html += '<label %sfor="%s">%s</label>' % (required, attrs.get('id'), self.label)
-
-        return html
-
-    def render(self, name, value, attrs=None, renderer=None):  # pragma: no cover - <= Django 1.11
-        html = self.render_wrapped(name, value, attrs, renderer=renderer)
-        cssid = self.label.lower().replace(' ', '-')
-        html = '<span id="%s" class="labeled-text-multiwidget">%s</span>' % (cssid, html)
-        return html
-
     class Media:
         css = {
             'all': ('django_ca/admin/css/labeledtextinput.css', ),
@@ -90,14 +68,9 @@ class LabeledTextInput(widgets.TextInput):
 class SubjectTextInput(LabeledTextInput):
     template_name = 'django_ca/forms/widgets/subjecttextinput.html'
 
-    def render_wrapped(self, name, value, attrs, renderer):  # pragma: no cover - <= Django 1.11
-        html = super(SubjectTextInput, self).render_wrapped(name, value, attrs, renderer=renderer)
-        html += '<span class="from-csr">%s <span></span></span>' % _('from CSR:')
-        return html
-
 
 class ProfileWidget(widgets.Select):
-    def render(self, name, value, attrs=None, renderer=None):  # pragma: no cover - <= Django 1.11
+    def render(self, name, value, attrs=None, renderer=None):  # pragma: only django<=1.11
         html = super(ProfileWidget, self).render(name, value, attrs=attrs, renderer=renderer)
         html += '<p class="help profile-desc">%s</p>' % force_text(
             ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]['desc'])
@@ -114,12 +87,6 @@ class CustomMultiWidget(widgets.MultiWidget):
     """Wraps the multi widget into a <p> element."""
 
     template_name = 'django_ca/forms/widgets/custommultiwidget.html'
-
-    def format_output(self, rendered_widgets):  # pragma: no cover - <= Django 1.11
-        # NOTE: We use a <p> because djangos stock forms.css takes care of indent this way.
-        rendered_widgets.insert(0, '<p class="multi-widget">')
-        rendered_widgets.append('</p>')
-        return ''.join(rendered_widgets)
 
 
 class SubjectWidget(CustomMultiWidget):
