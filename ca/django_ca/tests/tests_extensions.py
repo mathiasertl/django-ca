@@ -85,6 +85,7 @@ class AbstractExtensionTestMixin:
     """TestCase mixin for tests that all extensions are expected to pass, including abstract base classes."""
 
     force_critical = None
+    repr_tmpl = '<{name}: {value}, critical={critical}>'
 
     def assertExtensionEqual(self, first, second):
         """Function to test if an extension is really really equal.
@@ -262,20 +263,6 @@ class AbstractExtensionTestMixin:
                         self.ext(other_config['expected'])
                     )
 
-    def test_repr(self):
-        for config in self.test_values.values():
-            for value in config['values']:
-                ext = self.ext(value)
-                expected = config['expected_repr']
-                if six.PY2 and 'expected_repr_py2' in config:
-                    expected = config['expected_repr_py2']
-
-                self.assertEqual(repr(ext), expected % ext.default_critical)
-
-                for critical in self.critical_values:
-                    ext = self.ext(value, critical=critical)
-                    self.assertEqual(repr(ext), expected % critical)
-
     def test_serialize(self):
         for key, config in self.test_values.items():
             ext = self.ext(config['expected'])
@@ -358,9 +345,28 @@ class ExtensionTestMixin(AbstractExtensionTestMixin):
                 self.assertEqual(ext.for_builder(),
                                  {'extension': config['extension_type'], 'critical': critical})
 
+    def test_repr(self):
+        for config in self.test_values.values():
+            for value in config['values']:
+                ext = self.ext(value)
+                exp = config['expected_repr']
+                if six.PY2 and 'expected_repr_py2' in config:
+                    exp = config['expected_repr_py2']
+
+                expected = self.repr_tmpl.format(name=self.ext_class_name, value=exp,
+                                                 critical=ext.default_critical)
+                self.assertEqual(repr(ext), expected)
+
+                for critical in self.critical_values:
+                    ext = self.ext(value, critical=critical)
+                    expected = self.repr_tmpl.format(name=self.ext_class_name, value=exp, critical=critical)
+                    self.assertEqual(repr(ext), expected)
+
 
 class NullExtensionTestMixin(ExtensionTestMixin):
     """TestCase mixin for tests that all extensions are expected to pass, including abstract base classes."""
+
+    repr_tmpl = '<{name}: critical={critical}>'
 
     def assertExtensionEqual(self, first, second):
         """Function to test if an extension is really really equal.
@@ -1068,7 +1074,7 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
             'values': [{}],
             'expected': {'issuers': [], 'ocsp': []},
             'expected_bool': False,
-            'expected_repr': '<AuthorityInformationAccess: issuers=[], ocsp=[], critical=%s>',
+            'expected_repr': 'issuers=[], ocsp=[]',
             'expected_serialized': {},
             'expected_str': 'AuthorityInformationAccess(issuers=[], ocsp=[], critical={critical})',
             'expected_text': '',
@@ -1077,7 +1083,7 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
         'issuer': {
             'values': [{'issuers': [uri1]}, {'issuers': [uri(uri1)]}, ],
             'expected': {'issuers': [uri(uri1)], 'ocsp': []},
-            'expected_repr': "<AuthorityInformationAccess: issuers=['URI:%s'], ocsp=[], critical=%%s>" % uri1,
+            'expected_repr': "issuers=['URI:%s'], ocsp=[]" % uri1,
             'expected_serialized': {'issuers': ['URI:%s' % uri1]},
             'expected_str': "AuthorityInformationAccess(issuers=['URI:%s'], ocsp=[], "
                             'critical={critical})' % uri1,
@@ -1089,7 +1095,7 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
         'ocsp': {
             'values': [{'ocsp': [uri2]}, {'ocsp': [uri(uri2)]}, ],
             'expected': {'ocsp': [uri(uri2)], 'issuers': []},
-            'expected_repr': "<AuthorityInformationAccess: issuers=[], ocsp=['URI:%s'], critical=%%s>" % uri2,
+            'expected_repr': "issuers=[], ocsp=['URI:%s']" % uri2,
             'expected_serialized': {'ocsp': ['URI:%s' % uri2]},
             'expected_str': "AuthorityInformationAccess(issuers=[], ocsp=['URI:%s'], "
                             'critical={critical})' % uri2,
@@ -1101,8 +1107,7 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
         'both': {
             'values': [{'ocsp': [uri1], 'issuers': [uri2]}, {'ocsp': [uri(uri1)], 'issuers': [uri(uri2)]}, ],
             'expected': {'ocsp': [uri(uri1)], 'issuers': [uri(uri2)]},
-            'expected_repr': "<AuthorityInformationAccess: issuers=['URI:%s'], ocsp=['URI:%s'], "
-                             'critical=%%s>' % (uri2, uri1),
+            'expected_repr': "issuers=['URI:%s'], ocsp=['URI:%s']" % (uri2, uri1),
             'expected_serialized': {'ocsp': ['URI:%s' % uri1], 'issuers': ['URI:%s' % uri2]},
             'expected_str': "AuthorityInformationAccess(issuers=['URI:%s'], ocsp=['URI:%s'], "
                             'critical={critical})' % (uri2, uri1),
@@ -1119,9 +1124,8 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
                 {'ocsp': [uri(uri1), uri(uri2)], 'issuers': [uri(uri3), uri(uri4)]},
             ],
             'expected': {'ocsp': [uri(uri1), uri(uri2)], 'issuers': [uri(uri3), uri(uri4)]},
-            'expected_repr': "<AuthorityInformationAccess: "
-                             "issuers=['URI:%s', 'URI:%s'], ocsp=['URI:%s', 'URI:%s'], "
-                             'critical=%%s>' % (uri3, uri4, uri1, uri2),
+            'expected_repr': "issuers=['URI:%s', 'URI:%s'], ocsp=['URI:%s', 'URI:%s']" % (
+                uri3, uri4, uri1, uri2),
             'expected_serialized': {'ocsp': ['URI:%s' % uri1, 'URI:%s' % uri2],
                                     'issuers': ['URI:%s' % uri3, 'URI:%s' % uri4]},
             'expected_str': "AuthorityInformationAccess(issuers=['URI:%s', 'URI:%s'], "
@@ -1189,7 +1193,7 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
             'values': [hex1, ],
             'expected': b1,
             'expected_str': 'keyid:%s' % hex1,
-            'expected_repr': '<AuthorityKeyIdentifier: %s, critical=%%s>' % b1,
+            'expected_repr': b1,
             'expected_serialized': hex1,
             'expected_text': 'keyid:%s' % hex1,
             'extension_type': x509.AuthorityKeyIdentifier(b1, None, None),
@@ -1198,7 +1202,7 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
             'values': [hex2, ],
             'expected': b2,
             'expected_str': 'keyid:%s' % hex2,
-            'expected_repr': '<AuthorityKeyIdentifier: %s, critical=%%s>' % b2,
+            'expected_repr': b2,
             'expected_serialized': hex2,
             'expected_text': 'keyid:%s' % hex2,
             'extension_type': x509.AuthorityKeyIdentifier(b2, None, None),
@@ -1207,7 +1211,7 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
             'values': [hex3, ],
             'expected': b3,
             'expected_str': 'keyid:%s' % hex3,
-            'expected_repr': '<AuthorityKeyIdentifier: %s, critical=%%s>' % b3,
+            'expected_repr': b3,
             'expected_serialized': hex3,
             'expected_text': 'keyid:%s' % hex3,
             'extension_type': x509.AuthorityKeyIdentifier(b3, None, None),
@@ -1236,7 +1240,7 @@ class BasicConstraintsTestCase(ExtensionTestMixin, TestCase):
             'expected': {'ca': False, 'pathlen': None},
             'expected_str': 'CA:FALSE',
             'expected_text': 'CA:FALSE',
-            'expected_repr': "<BasicConstraints: 'CA:FALSE', critical=%s>",
+            'expected_repr': "'CA:FALSE'",
             'expected_serialized': {'ca': False},
             'extension_type': x509.BasicConstraints(ca=False, path_length=None),
         },
@@ -1248,7 +1252,7 @@ class BasicConstraintsTestCase(ExtensionTestMixin, TestCase):
             'expected': {'ca': True, 'pathlen': None},
             'expected_str': 'CA:TRUE',
             'expected_text': 'CA:TRUE',
-            'expected_repr': "<BasicConstraints: 'CA:TRUE', critical=%s>",
+            'expected_repr': "'CA:TRUE'",
             'expected_serialized': {'ca': True, 'pathlen': None},
             'extension_type': x509.BasicConstraints(ca=True, path_length=None),
         },
@@ -1259,7 +1263,7 @@ class BasicConstraintsTestCase(ExtensionTestMixin, TestCase):
             'expected': {'ca': True, 'pathlen': 0},
             'expected_str': 'CA:TRUE, pathlen:0',
             'expected_text': 'CA:TRUE, pathlen:0',
-            'expected_repr': "<BasicConstraints: 'CA:TRUE, pathlen:0', critical=%s>",
+            'expected_repr': "'CA:TRUE, pathlen:0'",
             'expected_serialized': {'ca': True, 'pathlen': 0},
             'extension_type': x509.BasicConstraints(ca=True, path_length=0),
         },
@@ -1270,7 +1274,7 @@ class BasicConstraintsTestCase(ExtensionTestMixin, TestCase):
             'expected': {'ca': True, 'pathlen': 3},
             'expected_str': 'CA:TRUE, pathlen:3',
             'expected_text': 'CA:TRUE, pathlen:3',
-            'expected_repr': "<BasicConstraints: 'CA:TRUE, pathlen:3', critical=%s>",
+            'expected_repr': "'CA:TRUE, pathlen:3'",
             'expected_serialized': {'ca': True, 'pathlen': 3},
             'extension_type': x509.BasicConstraints(ca=True, path_length=3),
         },
@@ -1383,10 +1387,8 @@ class CRLDistributionPointsTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
                             "critical={critical})" % uri1,
             'expected_str_py2': "CRLDistributionPoints([DistributionPoint(full_name=[u'URI:%s'])], "
                                 "critical={critical})" % uri1,
-            'expected_repr': '<CRLDistributionPoints: [<DistributionPoint: '
-                             "full_name=['URI:http://ca.example.com/crl']>], critical=%s>",
-            'expected_repr_py2': '<CRLDistributionPoints: [<DistributionPoint: '
-                                 "full_name=[u'URI:http://ca.example.com/crl']>], critical=%s>",
+            'expected_repr': "[<DistributionPoint: full_name=['URI:%s']>]" % uri1,
+            'expected_repr_py2': "[<DistributionPoint: full_name=[u'URI:%s']>]" % uri1,
             'expected_serialized': [s1],
             'expected_text': '* DistributionPoint:\n  * Full Name:\n    * URI:%s' % uri1,
             'extension_type': cg_dps1,
@@ -1396,10 +1398,8 @@ class CRLDistributionPointsTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
                        [{'full_name': [uri(uri1), dns(dns1)]}]],
             'expected': [s2],
             'expected_djca': [dp2],
-            'expected_repr': "<CRLDistributionPoints: [<DistributionPoint: "
-                             "full_name=['URI:%s', 'DNS:%s']>], critical=%%s>" % (uri1, dns1),
-            'expected_repr_py2': "<CRLDistributionPoints: [<DistributionPoint: "
-                                 "full_name=[u'URI:%s', u'DNS:%s']>], critical=%%s>" % (uri1, dns1),
+            'expected_repr': "[<DistributionPoint: full_name=['URI:%s', 'DNS:%s']>]" % (uri1, dns1),
+            'expected_repr_py2': "[<DistributionPoint: full_name=[u'URI:%s', u'DNS:%s']>]" % (uri1, dns1),
             'expected_serialized': [s2],
             'expected_str': "CRLDistributionPoints([DistributionPoint(full_name=['URI:%s', 'DNS:%s'])], "
                             "critical={critical})" % (uri1, dns1),
@@ -1414,8 +1414,7 @@ class CRLDistributionPointsTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
             'values': [[s3], [dp3], [cg_dp3], [{'relative_name': cg_rdn1}]],
             'expected': [s3],
             'expected_djca': [dp3],
-            'expected_repr': "<CRLDistributionPoints: [<DistributionPoint: "
-                             "relative_name='%s'>], critical=%%s>" % rdn1,
+            'expected_repr': "[<DistributionPoint: relative_name='%s'>]" % rdn1,
             'expected_serialized': [s3],
             'expected_str': "CRLDistributionPoints([DistributionPoint(relative_name='%s')], "
                             "critical={critical})" % (rdn1),
@@ -1428,13 +1427,10 @@ class CRLDistributionPointsTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
             'values': [[s4], [dp4], [cg_dp4]],
             'expected': [s4],
             'expected_djca': [dp4],
-            'expected_repr': '<CRLDistributionPoints: ['
-                             "<DistributionPoint: full_name=['URI:%s'], crl_issuer=['URI:%s'], "
-                             "reasons=['ca_compromise', 'key_compromise']>], critical=%%s>" % (uri2, uri3),
-            'expected_repr_py2': '<CRLDistributionPoints: ['
-                                 "<DistributionPoint: full_name=[u'URI:%s'], crl_issuer=[u'URI:%s'], "
-                                 "reasons=['ca_compromise', 'key_compromise']>], critical=%%s>" % (
-                                     uri2, uri3),
+            'expected_repr': "[<DistributionPoint: full_name=['URI:%s'], crl_issuer=['URI:%s'], "
+                             "reasons=['ca_compromise', 'key_compromise']>]" % (uri2, uri3),
+            'expected_repr_py2': "[<DistributionPoint: full_name=[u'URI:%s'], crl_issuer=[u'URI:%s'], "
+                                 "reasons=['ca_compromise', 'key_compromise']>]" % (uri2, uri3),
             'expected_str': "CRLDistributionPoints(["
                             "DistributionPoint(full_name=['URI:%s'], "
                             "crl_issuer=['URI:%s'], "
@@ -1904,8 +1900,7 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin, Te
             'values': [[un1], [xpi1]],
             'expected': [p1],
             'expected_djca': [p1],
-            'expected_repr': '<CertificatePolicies: '
-                             '[PolicyInformation(oid=%s, 1 qualifier)], critical=%%s>' % oid,
+            'expected_repr': '[PolicyInformation(oid=%s, 1 qualifier)]' % oid,
             'expected_serialized': [un1],
             'expected_str': 'CertificatePolicies(1 Policy, critical={critical})',
             'expected_text': '* Policy Identifier: %s\n  Policy Qualifiers:\n  * %s' % (oid, text1),
@@ -1915,8 +1910,7 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin, Te
             'values': [[un2], [xpi2]],
             'expected': [p2],
             'expected_djca': [p2],
-            'expected_repr': '<CertificatePolicies: '
-                             '[PolicyInformation(oid=%s, 1 qualifier)], critical=%%s>' % oid,
+            'expected_repr': '[PolicyInformation(oid=%s, 1 qualifier)]' % oid,
             'expected_serialized': [un2],
             'expected_str': 'CertificatePolicies(1 Policy, critical={critical})',
             'expected_text': '* Policy Identifier: %s\n  Policy Qualifiers:\n  * UserNotice:\n'
@@ -1927,8 +1921,7 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin, Te
             'values': [[un3], [xpi3]],
             'expected': [p3],
             'expected_djca': [p3],
-            'expected_repr': '<CertificatePolicies: '
-                             '[PolicyInformation(oid=%s, 1 qualifier)], critical=%%s>' % oid,
+            'expected_repr': '[PolicyInformation(oid=%s, 1 qualifier)]' % oid,
             'expected_serialized': [un3],
             'expected_str': 'CertificatePolicies(1 Policy, critical={critical})',
             'expected_text': '* Policy Identifier: %s\n  Policy Qualifiers:\n  * UserNotice:\n'
@@ -1940,8 +1933,7 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin, Te
             'values': [[un4], [xpi4]],
             'expected': [p4],
             'expected_djca': [p4],
-            'expected_repr': '<CertificatePolicies: '
-                             '[PolicyInformation(oid=%s, 2 qualifiers)], critical=%%s>' % oid,
+            'expected_repr': '[PolicyInformation(oid=%s, 2 qualifiers)]' % oid,
             'expected_serialized': [un4],
             'expected_str': 'CertificatePolicies(1 Policy, critical={critical})',
             'expected_text': '* Policy Identifier: %s\n  Policy Qualifiers:\n  * %s\n  * UserNotice:\n'
@@ -1953,10 +1945,9 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin, Te
             'values': [[un1, un2, un4], [xpi1, xpi2, xpi4], [un1, xpi2, un4]],
             'expected': [p1, p2, p4],
             'expected_djca': [p1, p2, p4],
-            'expected_repr': '<CertificatePolicies: ['
+            'expected_repr': '[PolicyInformation(oid=%s, 1 qualifier), '
                              'PolicyInformation(oid=%s, 1 qualifier), '
-                             'PolicyInformation(oid=%s, 1 qualifier), '
-                             'PolicyInformation(oid=%s, 2 qualifiers)], critical=%%s>' % (oid, oid, oid),
+                             'PolicyInformation(oid=%s, 2 qualifiers)]' % (oid, oid, oid),
             'expected_serialized': [un1, un2, un4],
             'expected_str': 'CertificatePolicies(3 Policies, critical={critical})',
             'expected_text': '* Policy Identifier: %s\n  Policy Qualifiers:\n  * %s\n'
@@ -2006,7 +1997,7 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
         'empty': {
             'values': [[]],
             'expected': [],
-            'expected_repr': '<IssuerAlternativeName: [], critical=%s>',
+            'expected_repr': '[]',
             'expected_serialized': [],
             'expected_str': '',
             'expected_text': '',
@@ -2015,7 +2006,7 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
         'uri': {
             'values': [[uri1], [uri(uri1)]],
             'expected': [uri(uri1)],
-            'expected_repr': "<IssuerAlternativeName: ['URI:%s'], critical=%%s>" % uri1,
+            'expected_repr': "['URI:%s']" % uri1,
             'expected_serialized': ['URI:%s' % uri1],
             'expected_str': 'URI:%s' % uri1,
             'expected_text': '* URI:%s' % uri1,
@@ -2024,7 +2015,7 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
         'dns': {
             'values': [[dns1], [dns(dns1)]],
             'expected': [dns(dns1)],
-            'expected_repr': "<IssuerAlternativeName: ['DNS:%s'], critical=%%s>" % dns1,
+            'expected_repr': "['DNS:%s']" % dns1,
             'expected_serialized': ['DNS:%s' % dns1],
             'expected_str': 'DNS:%s' % dns1,
             'expected_text': '* DNS:%s' % dns1,
@@ -2033,7 +2024,7 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
         'both': {
             'values': [[uri1, dns1], [uri(uri1), dns(dns1)], [uri1, dns(dns1)], [uri(uri1), dns1]],
             'expected': [uri(uri1), dns(dns1)],
-            'expected_repr': "<IssuerAlternativeName: ['URI:%s', 'DNS:%s'], critical=%%s>" % (uri1, dns1),
+            'expected_repr': "['URI:%s', 'DNS:%s']" % (uri1, dns1),
             'expected_serialized': ['URI:%s' % uri1, 'DNS:%s' % dns1],
             'expected_str': 'URI:%s,DNS:%s' % (uri1, dns1),
             'expected_text': '* URI:%s\n* DNS:%s' % (uri1, dns1),
@@ -2047,8 +2038,7 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
                 [uri(uri1), uri(uri2), dns(dns1), dns(dns2)],
             ],
             'expected': [uri(uri1), uri(uri2), dns(dns1), dns(dns2)],
-            'expected_repr': "<IssuerAlternativeName: ['URI:%s', 'URI:%s', 'DNS:%s', 'DNS:%s'], "
-                             "critical=%%s>" % (uri1, uri2, dns1, dns2),
+            'expected_repr': "['URI:%s', 'URI:%s', 'DNS:%s', 'DNS:%s']" % (uri1, uri2, dns1, dns2),
             'expected_serialized': ['URI:%s' % uri1, 'URI:%s' % uri2, 'DNS:%s' % dns1, 'DNS:%s' % dns2],
             'expected_str': 'URI:%s,URI:%s,DNS:%s,DNS:%s' % (uri1, uri2, dns1, dns2),
             'expected_text': '* URI:%s\n* URI:%s\n* DNS:%s\n* DNS:%s' % (uri1, uri2, dns1, dns2),
@@ -2062,8 +2052,7 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
                 [dns(dns2), dns(dns1), uri(uri2), uri(uri1)],
             ],
             'expected': [dns(dns2), dns(dns1), uri(uri2), uri(uri1)],
-            'expected_repr': "<IssuerAlternativeName: ['DNS:%s', 'DNS:%s', 'URI:%s', 'URI:%s'], "
-                             "critical=%%s>" % (dns2, dns1, uri2, uri1),
+            'expected_repr': "['DNS:%s', 'DNS:%s', 'URI:%s', 'URI:%s']" % (dns2, dns1, uri2, uri1),
             'expected_serialized': ['DNS:%s' % dns2, 'DNS:%s' % dns1, 'URI:%s' % uri2, 'URI:%s' % uri1],
             'expected_str': 'DNS:%s,DNS:%s,URI:%s,URI:%s' % (dns2, dns1, uri2, uri1),
             'expected_text': '* DNS:%s\n* DNS:%s\n* URI:%s\n* URI:%s' % (dns2, dns1, uri2, uri1),
@@ -2085,7 +2074,7 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestCas
             ],
             'expected': frozenset(['key_agreement']),
             'expected_str': 'keyAgreement',
-            'expected_repr': "<KeyUsage: ['keyAgreement'], critical=%s>",
+            'expected_repr': "['keyAgreement']",
             'expected_text': '* keyAgreement',
             'expected_serialized': ['keyAgreement'],
             'extension_type': x509.KeyUsage(
@@ -2102,7 +2091,7 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestCas
             ],
             'expected': frozenset(['key_agreement', 'key_encipherment']),
             'expected_str': 'keyAgreement,keyEncipherment',
-            'expected_repr': "<KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=%s>",
+            'expected_repr': "['keyAgreement', 'keyEncipherment']",
             'expected_text': '* keyAgreement\n* keyEncipherment',
             'expected_serialized': ['keyAgreement', 'keyEncipherment'],
             'extension_type': x509.KeyUsage(
@@ -2120,8 +2109,7 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestCas
             ],
             'expected': frozenset(['key_agreement', 'key_encipherment', 'content_commitment', ]),
             'expected_str': 'keyAgreement,keyEncipherment,nonRepudiation',
-            'expected_repr': "<KeyUsage: ['keyAgreement', 'keyEncipherment', 'nonRepudiation'], "
-                             "critical=%s>",
+            'expected_repr': "['keyAgreement', 'keyEncipherment', 'nonRepudiation']",
             'expected_text': '* keyAgreement\n* keyEncipherment\n* nonRepudiation',
             'expected_serialized': ['keyAgreement', 'keyEncipherment', 'nonRepudiation'],
             'extension_type': x509.KeyUsage(
@@ -2165,7 +2153,7 @@ class ExtendedKeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin,
             ],
             'extension_type': x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH]),
             'expected': frozenset([ExtendedKeyUsageOID.SERVER_AUTH]),
-            'expected_repr': "<ExtendedKeyUsage: ['serverAuth'], critical=%s>",
+            'expected_repr': "['serverAuth']",
             'expected_serialized': ['serverAuth'],
             'expected_str': 'serverAuth',
             'expected_text': '* serverAuth',
@@ -2180,7 +2168,7 @@ class ExtendedKeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin,
             'extension_type': x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH,
                                                      ExtendedKeyUsageOID.SERVER_AUTH]),
             'expected': frozenset([ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH]),
-            'expected_repr': "<ExtendedKeyUsage: ['clientAuth', 'serverAuth'], critical=%s>",
+            'expected_repr': "['clientAuth', 'serverAuth']",
             'expected_serialized': ['clientAuth', 'serverAuth'],
             'expected_str': 'clientAuth,serverAuth',
             'expected_text': '* clientAuth\n* serverAuth',
@@ -2202,7 +2190,7 @@ class ExtendedKeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin,
                                                      ExtendedKeyUsageOID.TIME_STAMPING]),
             'expected': frozenset([ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH,
                                    ExtendedKeyUsageOID.TIME_STAMPING]),
-            'expected_repr': "<ExtendedKeyUsage: ['clientAuth', 'serverAuth', 'timeStamping'], critical=%s>",
+            'expected_repr': "['clientAuth', 'serverAuth', 'timeStamping']",
             'expected_serialized': ['clientAuth', 'serverAuth', 'timeStamping'],
             'expected_str': 'clientAuth,serverAuth,timeStamping',
             'expected_text': '* clientAuth\n* serverAuth\n* timeStamping',
@@ -2241,7 +2229,7 @@ class NameConstraintsTestCase(ExtensionTestMixin, TestCase):
                 {'excluded': [], 'permitted': []},
             ],
             'expected': x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[]),
-            'expected_repr': '<NameConstraints: permitted=[], excluded=[], critical=%s>',
+            'expected_repr': 'permitted=[], excluded=[]',
             'expected_serialized': {'excluded': [], 'permitted': []},
             'expected_str': 'NameConstraints(permitted=[], excluded=[], critical={critical})',
             'expected_text': "",
@@ -2255,7 +2243,7 @@ class NameConstraintsTestCase(ExtensionTestMixin, TestCase):
                 {'permitted': [dns(d1)], 'excluded': []},
             ],
             'expected': x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[]),
-            'expected_repr': "<NameConstraints: permitted=['DNS:%s'], excluded=[], critical=%%s>" % d1,
+            'expected_repr': "permitted=['DNS:%s'], excluded=[]" % d1,
             'expected_serialized': {'excluded': [], 'permitted': ['DNS:%s' % d1]},
             'expected_str': "NameConstraints(permitted=['DNS:%s'], excluded=[], "
                             "critical={critical})" % d1,
@@ -2271,7 +2259,7 @@ class NameConstraintsTestCase(ExtensionTestMixin, TestCase):
                 {'excluded': [dns(d1)], 'permitted': []},
             ],
             'expected': x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[dns(d1)]),
-            'expected_repr': "<NameConstraints: permitted=[], excluded=['DNS:%s'], critical=%%s>" % d1,
+            'expected_repr': "permitted=[], excluded=['DNS:%s']" % d1,
             'expected_serialized': {'excluded': ['DNS:%s' % d1], 'permitted': []},
             'expected_str': "NameConstraints(permitted=[], excluded=['DNS:%s'], critical={critical})" % d1,
             'expected_text': "Excluded:\n  * DNS:%s\n" % d1,
@@ -2286,8 +2274,7 @@ class NameConstraintsTestCase(ExtensionTestMixin, TestCase):
                 {'permitted': [dns(d1)], 'excluded': [d2]},
             ],
             'expected': x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[dns(d2)]),
-            'expected_repr': "<NameConstraints: permitted=['DNS:%s'], excluded=['DNS:%s'], "
-                             "critical=%%s>" % (d1, d2),
+            'expected_repr': "permitted=['DNS:%s'], excluded=['DNS:%s']" % (d1, d2),
             'expected_serialized': {'excluded': ['DNS:%s' % d2], 'permitted': ['DNS:%s' % d1]},
             'expected_str': "NameConstraints(permitted=['DNS:%s'], excluded=['DNS:%s'], "
                             "critical={critical})" % (d1, d2),
@@ -2334,7 +2321,7 @@ class OCSPNoCheckTestCase(NullExtensionTestMixin, TestCase):
         'empty': {
             'values': [{}, None],
             'expected': None,
-            'expected_repr': '<OCSPNoCheck: critical=%s>',
+            'expected_repr': '',
             'expected_serialized': None,
             'expected_str': 'OCSPNoCheck',
             'expected_text': "OCSPNoCheck",
@@ -2364,7 +2351,7 @@ class PrecertPoisonTestCase(NullExtensionTestMixin, TestCase):
         'empty': {
             'values': [{}, None],
             'expected': None,
-            'expected_repr': '<PrecertPoison: critical=%s>',
+            'expected_repr': '',
             'expected_serialized': None,
             'expected_str': 'PrecertPoison',
             'expected_text': "PrecertPoison",
@@ -2605,7 +2592,7 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
         'empty': {
             'values': [[]],
             'expected': [],
-            'expected_repr': '<SubjectAlternativeName: [], critical=%s>',
+            'expected_repr': '[]',
             'expected_serialized': [],
             'expected_str': '',
             'expected_text': '',
@@ -2614,7 +2601,7 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
         'uri': {
             'values': [[uri1], [uri(uri1)]],
             'expected': [uri(uri1)],
-            'expected_repr': "<SubjectAlternativeName: ['URI:%s'], critical=%%s>" % uri1,
+            'expected_repr': "['URI:%s']" % uri1,
             'expected_serialized': ['URI:%s' % uri1],
             'expected_str': 'URI:%s' % uri1,
             'expected_text': '* URI:%s' % uri1,
@@ -2623,7 +2610,7 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
         'dns': {
             'values': [[dns1], [dns(dns1)]],
             'expected': [dns(dns1)],
-            'expected_repr': "<SubjectAlternativeName: ['DNS:%s'], critical=%%s>" % dns1,
+            'expected_repr': "['DNS:%s']" % dns1,
             'expected_serialized': ['DNS:%s' % dns1],
             'expected_str': 'DNS:%s' % dns1,
             'expected_text': '* DNS:%s' % dns1,
@@ -2632,7 +2619,7 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
         'both': {
             'values': [[uri1, dns1], [uri(uri1), dns(dns1)], [uri1, dns(dns1)], [uri(uri1), dns1]],
             'expected': [uri(uri1), dns(dns1)],
-            'expected_repr': "<SubjectAlternativeName: ['URI:%s', 'DNS:%s'], critical=%%s>" % (uri1, dns1),
+            'expected_repr': "['URI:%s', 'DNS:%s']" % (uri1, dns1),
             'expected_serialized': ['URI:%s' % uri1, 'DNS:%s' % dns1],
             'expected_str': 'URI:%s,DNS:%s' % (uri1, dns1),
             'expected_text': '* URI:%s\n* DNS:%s' % (uri1, dns1),
@@ -2646,8 +2633,7 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
                 [uri(uri1), uri(uri2), dns(dns1), dns(dns2)],
             ],
             'expected': [uri(uri1), uri(uri2), dns(dns1), dns(dns2)],
-            'expected_repr': "<SubjectAlternativeName: ['URI:%s', 'URI:%s', 'DNS:%s', 'DNS:%s'], "
-                             "critical=%%s>" % (uri1, uri2, dns1, dns2),
+            'expected_repr': "['URI:%s', 'URI:%s', 'DNS:%s', 'DNS:%s']" % (uri1, uri2, dns1, dns2),
             'expected_serialized': ['URI:%s' % uri1, 'URI:%s' % uri2, 'DNS:%s' % dns1, 'DNS:%s' % dns2],
             'expected_str': 'URI:%s,URI:%s,DNS:%s,DNS:%s' % (uri1, uri2, dns1, dns2),
             'expected_text': '* URI:%s\n* URI:%s\n* DNS:%s\n* DNS:%s' % (uri1, uri2, dns1, dns2),
@@ -2661,8 +2647,7 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
                 [dns(dns2), dns(dns1), uri(uri2), uri(uri1)],
             ],
             'expected': [dns(dns2), dns(dns1), uri(uri2), uri(uri1)],
-            'expected_repr': "<SubjectAlternativeName: ['DNS:%s', 'DNS:%s', 'URI:%s', 'URI:%s'], "
-                             "critical=%%s>" % (dns2, dns1, uri2, uri1),
+            'expected_repr': "['DNS:%s', 'DNS:%s', 'URI:%s', 'URI:%s']" % (dns2, dns1, uri2, uri1),
             'expected_serialized': ['DNS:%s' % dns2, 'DNS:%s' % dns1, 'URI:%s' % uri2, 'URI:%s' % uri1],
             'expected_str': 'DNS:%s,DNS:%s,URI:%s,URI:%s' % (dns2, dns1, uri2, uri1),
             'expected_text': '* DNS:%s\n* DNS:%s\n* URI:%s\n* URI:%s' % (dns2, dns1, uri2, uri1),
@@ -2688,7 +2673,7 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
             'values': [hex1, ],
             'expected': b1,
             'expected_str': hex1,
-            'expected_repr': '<SubjectKeyIdentifier: %s, critical=%%s>' % b1,
+            'expected_repr': b1,
             'expected_serialized': hex1,
             'expected_text': hex1,
             'extension_type': x509.SubjectKeyIdentifier(b1),
@@ -2697,7 +2682,7 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
             'values': [hex2, ],
             'expected': b2,
             'expected_str': hex2,
-            'expected_repr': '<SubjectKeyIdentifier: %s, critical=%%s>' % b2,
+            'expected_repr': b2,
             'expected_serialized': hex2,
             'expected_text': hex2,
             'extension_type': x509.SubjectKeyIdentifier(b2),
@@ -2706,7 +2691,7 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
             'values': [hex3, ],
             'expected': b3,
             'expected_str': hex3,
-            'expected_repr': '<SubjectKeyIdentifier: %s, critical=%%s>' % b3,
+            'expected_repr': b3,
             'expected_serialized': hex3,
             'expected_text': hex3,
             'extension_type': x509.SubjectKeyIdentifier(b3),
@@ -2727,7 +2712,7 @@ class TLSFeatureTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestC
             ],
             'extension_type': x509.TLSFeature(features=[TLSFeatureType.status_request]),
             'expected': frozenset([TLSFeatureType.status_request]),
-            'expected_repr': "<TLSFeature: ['OCSPMustStaple'], critical=%s>",
+            'expected_repr': "['OCSPMustStaple']",
             'expected_serialized': ['OCSPMustStaple'],
             'expected_str': 'OCSPMustStaple',
             'expected_text': '* OCSPMustStaple',
@@ -2746,7 +2731,7 @@ class TLSFeatureTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestC
                 TLSFeatureType.status_request,
             ]),
             'expected': frozenset([TLSFeatureType.status_request, TLSFeatureType.status_request_v2]),
-            'expected_repr': "<TLSFeature: ['MultipleCertStatusRequest', 'OCSPMustStaple'], critical=%s>",
+            'expected_repr': "['MultipleCertStatusRequest', 'OCSPMustStaple']",
             'expected_serialized': ['MultipleCertStatusRequest', 'OCSPMustStaple'],
             'expected_str': 'MultipleCertStatusRequest,OCSPMustStaple',
             'expected_text': '* MultipleCertStatusRequest\n* OCSPMustStaple',
@@ -2758,7 +2743,7 @@ class TLSFeatureTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestC
             ],
             'extension_type': x509.TLSFeature(features=[TLSFeatureType.status_request_v2]),
             'expected': frozenset([TLSFeatureType.status_request_v2]),
-            'expected_repr': "<TLSFeature: ['MultipleCertStatusRequest'], critical=%s>",
+            'expected_repr': "['MultipleCertStatusRequest']",
             'expected_serialized': ['MultipleCertStatusRequest'],
             'expected_str': 'MultipleCertStatusRequest',
             'expected_text': '* MultipleCertStatusRequest',

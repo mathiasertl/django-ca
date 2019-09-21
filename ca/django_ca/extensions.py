@@ -87,6 +87,7 @@ class Extension(object):
         The value of the extension, the description provides further details.
     """
     key = None  # must be overwritten by actual classes
+    name = 'Extension'
     oid = None  # must be overwritten by actual classes
     default_critical = False
 
@@ -110,11 +111,11 @@ class Extension(object):
         return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
 
     def __repr__(self):
-        return '<%s: %s, critical=%r>' % (self.__class__.__name__, self.value, self.critical)
+        return '<%s: %s, critical=%r>' % (self.name, self.value, self.critical)
 
     def __str__(self):
         if self.critical:
-            return'%s/critical' % self.as_text()
+            return '%s/critical' % self.as_text()
         return self.as_text()
 
     def from_extension(self, value):
@@ -540,6 +541,7 @@ class KeyIdExtension(Extension):
         >>> KeyIdExtension({'value': b'33'})
         <KeyIdExtension: b'33', critical=False>
     """
+    name = 'KeyIdExtension'
 
     def from_dict(self, value):
         self.value = value['value']
