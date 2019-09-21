@@ -33,7 +33,6 @@ from django.utils.encoding import force_text
 from .utils import bytes_to_hex
 from .utils import format_general_name
 from .utils import format_relative_name
-from .utils import get_extension_name
 from .utils import hex_to_bytes
 from .utils import indent
 from .utils import parse_general_name
@@ -129,11 +128,6 @@ class Extension(object):
 
     def _test_value(self):
         pass
-
-    @property
-    def name(self):
-        """A human readable name of this extension."""
-        return get_extension_name(self)
 
     @property
     def extension_type(self):
@@ -922,6 +916,7 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
         `RFC 5280, section 4.2.2.1 <https://tools.ietf.org/html/rfc5280#section-4.2.2.1>`_
     """
     key = 'authority_information_access'
+    name = 'AuthorityInformationAccess'
     oid = ExtensionOID.AUTHORITY_INFORMATION_ACCESS
 
     def __bool__(self):
@@ -1038,6 +1033,7 @@ class AuthorityKeyIdentifier(KeyIdExtension):
     """
 
     key = 'authority_key_identifier'
+    name = 'AuthorityKeyIdentifier'
     oid = ExtensionOID.AUTHORITY_KEY_IDENTIFIER
 
     @property
@@ -1079,6 +1075,7 @@ class BasicConstraints(Extension):
     """
 
     key = 'basic_constraints'
+    name = 'BasicConstraints'
     oid = ExtensionOID.BASIC_CONSTRAINTS
     default_critical = True
 
@@ -1164,6 +1161,7 @@ class CRLDistributionPoints(ListExtension):
         `RFC 5280, section 4.2.1.13 <https://tools.ietf.org/html/rfc5280#section-4.2.1.13>`_
     """
     key = 'crl_distribution_points'
+    name = 'CRLDistributionPoints'
     oid = ExtensionOID.CRL_DISTRIBUTION_POINTS
 
     def __hash__(self):
@@ -1212,6 +1210,7 @@ class CertificatePolicies(ListExtension):
         `RFC 5280, section 4.2.1.4 <https://tools.ietf.org/html/rfc5280#section-4.2.1.4>`_
     """
     key = 'certificate_policies'
+    name = 'CertificatePolicies'
     oid = ExtensionOID.CERTIFICATE_POLICIES
 
     def __hash__(self):
@@ -1267,6 +1266,7 @@ class IssuerAlternativeName(AlternativeNameExtension):
     """
 
     key = 'issuer_alternative_name'
+    name = 'IssuerAlternativeName'
     oid = ExtensionOID.ISSUER_ALTERNATIVE_NAME
 
     @property
@@ -1292,6 +1292,7 @@ class KeyUsage(OrderedSetExtension):
     """
 
     key = 'key_usage'
+    name = 'KeyUsage'
     oid = ExtensionOID.KEY_USAGE
     CRYPTOGRAPHY_MAPPING = {
         'cRLSign': 'crl_sign',
@@ -1361,6 +1362,7 @@ class ExtendedKeyUsage(OrderedSetExtension):
     """Class representing a ExtendedKeyUsage extension."""
 
     key = 'extended_key_usage'
+    name = 'ExtendedKeyUsage'
     oid = ExtensionOID.EXTENDED_KEY_USAGE
     CRYPTOGRAPHY_MAPPING = {
         'serverAuth': ExtendedKeyUsageOID.SERVER_AUTH,
@@ -1461,6 +1463,7 @@ class NameConstraints(GeneralNameMixin, Extension):
 
     """
     key = 'name_constraints'
+    name = 'NameConstraints'
     default_critical = True
     oid = ExtensionOID.NAME_CONSTRAINTS
 
@@ -1560,9 +1563,10 @@ class OCSPNoCheck(NullExtension):
 
        `RFC 6990, section 4.2.2.2.1 <https://tools.ietf.org/html/rfc6960#section-4.2.2.2>`_
     """
-    oid = ExtensionOID.OCSP_NO_CHECK
-    key = 'ocsp_no_check'
     ext_class = x509.OCSPNoCheck
+    key = 'ocsp_no_check'
+    name = 'OCSPNoCheck'
+    oid = ExtensionOID.OCSP_NO_CHECK
 
 
 class PrecertPoison(NullExtension):
@@ -1583,6 +1587,7 @@ class PrecertPoison(NullExtension):
     """
     default_critical = True
     key = 'precert_poison'
+    name = 'PrecertPoison'
     oid = ExtensionOID.PRECERT_POISON
     ext_class = x509.PrecertPoison
 
@@ -1610,6 +1615,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):  # pragma: only 
        `RFC 6962 <https://tools.ietf.org/html/rfc6962.html>`_
     """
     key = 'precertificate_signed_certificate_timestamps'
+    name = 'PrecertificateSignedCertificateTimestamps'
     oid = ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS
     _timeformat = '%Y-%m-%d %H:%M:%S.%f'
     LOG_ENTRY_TYPE_MAPPING = {
@@ -1719,6 +1725,7 @@ class SubjectAlternativeName(AlternativeNameExtension):
        `RFC 5280, section 4.2.1.6 <https://tools.ietf.org/html/rfc5280#section-4.2.1.6>`_
     """
     key = 'subject_alternative_name'
+    name = 'SubjectAlternativeName'
     oid = ExtensionOID.SUBJECT_ALTERNATIVE_NAME
 
     @property
@@ -1730,6 +1737,7 @@ class SubjectKeyIdentifier(KeyIdExtension):
     """Class representing a SubjectKeyIdentifier extension."""
 
     key = 'subject_key_identifier'
+    name = 'SubjectKeyIdentifier'
     oid = ExtensionOID.SUBJECT_KEY_IDENTIFIER
 
     @property
@@ -1744,6 +1752,7 @@ class TLSFeature(OrderedSetExtension):
     """Class representing a TLSFeature extension."""
 
     key = 'tls_feature'
+    name = 'TLSFeature'
     oid = ExtensionOID.TLS_FEATURE
     CHOICES = (
         ('OCSPMustStaple', 'OCSP Must-Staple'),

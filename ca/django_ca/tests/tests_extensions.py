@@ -332,8 +332,8 @@ class ExtensionTestMixin(AbstractExtensionTestMixin):
 
     def test_config(self):
         self.assertTrue(issubclass(self.ext_class, Extension))
-        self.assertIsInstance(self.ext_class.key, six.string_types)
-        self.assertGreater(len(self.ext_class.key), 1)
+        self.assertEqual(self.ext_class.key, self.ext_class_key)
+        self.assertEqual(self.ext_class.name, self.ext_class_name)
 
         # test that the model matches
         self.assertEqual(X509CertMixin.OID_MAPPING[self.ext_class.oid], self.ext_class.key)
@@ -1055,6 +1055,8 @@ class OrderedSetExtensionTestCase(OrderedSetExtensionTestMixin, AbstractExtensio
 
 class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
     ext_class = AuthorityInformationAccess
+    ext_class_key = 'authority_information_access'
+    ext_class_name = 'AuthorityInformationAccess'
 
     uri1 = 'https://example1.com'
     uri2 = 'https://example2.net'
@@ -1171,6 +1173,10 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
 
 
 class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
+    ext_class = AuthorityKeyIdentifier
+    ext_class_key = 'authority_key_identifier'
+    ext_class_name = 'AuthorityKeyIdentifier'
+
     b1 = b'333333'
     b2 = b'DDDDDD'
     b3 = b'UUUUUU'
@@ -1178,7 +1184,6 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
     hex2 = '44:44:44:44:44:44'
     hex3 = '55:55:55:55:55:55'
 
-    ext_class = AuthorityKeyIdentifier
     test_values = {
         'one': {
             'values': [hex1, ],
@@ -1218,6 +1223,9 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
 
 class BasicConstraintsTestCase(ExtensionTestMixin, TestCase):
     ext_class = BasicConstraints
+    ext_class_key = 'basic_constraints'
+    ext_class_name = 'BasicConstraints'
+
     test_values = {
         'no_ca': {
             'values': [
@@ -1327,6 +1335,10 @@ class DistributionPointTestCase(TestCase):
 
 
 class CRLDistributionPointsTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):
+    ext_class = CRLDistributionPoints
+    ext_class_key = 'crl_distribution_points'
+    ext_class_name = 'CRLDistributionPoints'
+
     uri1 = 'http://ca.example.com/crl'
     uri2 = 'http://ca.example.net/crl'
     uri3 = 'http://ca.example.com/'
@@ -1361,7 +1373,6 @@ class CRLDistributionPointsTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
     cg_dps3 = x509.CRLDistributionPoints([cg_dp3])
     cg_dps4 = x509.CRLDistributionPoints([cg_dp4])
 
-    ext_class = CRLDistributionPoints
     invalid_values = [True, None]
     test_values = {
         'one': {
@@ -1822,6 +1833,9 @@ class PolicyInformationTestCase(DjangoCATestCase):
 
 class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):
     ext_class = CertificatePolicies
+    ext_class_name = 'CertificatePolicies'
+    ext_class_key = 'certificate_policies'
+
     oid = '2.5.29.32.0'
 
     text1, text2, text3, text4, text5, text6 = ['text%s' % i for i in range(1, 7)]
@@ -1978,8 +1992,10 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin, Te
 
 class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):
     ext_class = IssuerAlternativeName
-    ext_class_type = x509.IssuerAlternativeName
+    ext_class_key = 'issuer_alternative_name'
     ext_class_name = 'IssuerAlternativeName'
+    ext_class_type = x509.IssuerAlternativeName
+
     uri1 = 'https://example.com'
     uri2 = 'https://example.net'
     dns1 = 'example.com'
@@ -2058,6 +2074,9 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
 
 class KeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestCase):
     ext_class = KeyUsage
+    ext_class_key = 'key_usage'
+    ext_class_name = 'KeyUsage'
+
     test_values = {
         'one': {
             'values': [
@@ -2134,6 +2153,9 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestCas
 
 class ExtendedKeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestCase):
     ext_class = ExtendedKeyUsage
+    ext_class_key = 'extended_key_usage'
+    ext_class_name = 'ExtendedKeyUsage'
+
     test_values = {
         'one': {
             'values': [
@@ -2206,10 +2228,13 @@ class ExtendedKeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin,
 
 
 class NameConstraintsTestCase(ExtensionTestMixin, TestCase):
+    ext_class = NameConstraints
+    ext_class_key = 'name_constraints'
+    ext_class_name = 'NameConstraints'
+
     d1 = 'example.com'
     d2 = 'example.net'
 
-    ext_class = NameConstraints
     test_values = {
         'empty': {
             'values': [
@@ -2302,6 +2327,9 @@ class NameConstraintsTestCase(ExtensionTestMixin, TestCase):
 
 class OCSPNoCheckTestCase(NullExtensionTestMixin, TestCase):
     ext_class = OCSPNoCheck
+    ext_class_key = 'ocsp_no_check'
+    ext_class_name = 'OCSPNoCheck'
+
     test_values = {
         'empty': {
             'values': [{}, None],
@@ -2329,6 +2357,8 @@ class OCSPNoCheckTestCase(NullExtensionTestMixin, TestCase):
 
 class PrecertPoisonTestCase(NullExtensionTestMixin, TestCase):
     ext_class = PrecertPoison
+    ext_class_key = 'precert_poison'
+    ext_class_name = 'PrecertPoison'
     force_critical = True
     test_values = {
         'empty': {
@@ -2392,6 +2422,9 @@ class PrecertPoisonTestCase(NullExtensionTestMixin, TestCase):
 @unittest.skipUnless(ca_settings.OPENSSL_SUPPORTS_SCT,
                      'This version of OpenSSL does not support SCTs')
 class PrecertificateSignedCertificateTimestampsTestCase(DjangoCAWithCertTestCase):
+    ext_class = PrecertificateSignedCertificateTimestamps
+    ext_class_key = 'precertificate_signed_certificate_timestamps'
+    ext_class_name = 'PrecertificateSignedCertificateTimestamps'
 
     def setUp(self):
         super(PrecertificateSignedCertificateTimestampsTestCase, self).setUp()
@@ -2410,6 +2443,8 @@ class PrecertificateSignedCertificateTimestampsTestCase(DjangoCAWithCertTestCase
         self.xs = [self.x1, self.x2]
         self.data1 = certs[self.name1]['precertificate_signed_certificate_timestamps']
         self.data2 = certs[self.name2]['precertificate_signed_certificate_timestamps']
+
+    test_config = ExtensionTestMixin.test_config
 
     def test_count(self):
         self.assertEqual(self.ext1.count(self.data1['value'][0]), 1)
@@ -2557,8 +2592,10 @@ class UnknownExtensionTestCase(TestCase):
 
 class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
     ext_class = SubjectAlternativeName
+    ext_class_key = 'subject_alternative_name'
     ext_class_name = 'SubjectAlternativeName'
     ext_class_type = x509.SubjectAlternativeName
+
     uri1 = 'https://example.com'
     uri2 = 'https://example.net'
     dns1 = 'example.com'
@@ -2636,6 +2673,8 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
 
 class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
     ext_class = SubjectKeyIdentifier
+    ext_class_key = 'subject_key_identifier'
+    ext_class_name = 'SubjectKeyIdentifier'
 
     hex1 = '33:33:33:33:33:33'
     hex2 = '44:44:44:44:44:44'
@@ -2677,6 +2716,9 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
 
 class TLSFeatureTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestCase):
     ext_class = TLSFeature
+    ext_class_key = 'tls_feature'
+    ext_class_name = 'TLSFeature'
+
     test_values = {
         'one': {
             'values': [
