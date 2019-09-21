@@ -129,6 +129,11 @@ class AbstractExtensionTestMixin:
             with self.assertRaises(NotImplementedError):
                 Extension({'value': config['expected']}).as_extension()
 
+    def test_as_text(self):
+        for key, config in self.test_values.items():
+            ext = self.ext(config['expected'])
+            self.assertEqual(ext.as_text(), config['expected_text'])
+
     def test_extension_type(self):
         for config in self.test_values.values():
             with self.assertRaises(NotImplementedError):
@@ -328,11 +333,6 @@ class ExtensionTestMixin(AbstractExtensionTestMixin):
                 ext = self.ext(config['expected'], critical=critical)
                 self.assertEqual(ext.as_extension(), x509.extensions.Extension(
                     oid=self.ext_class.oid, critical=critical, value=config['extension_type']))
-
-    def test_as_text(self):
-        for key, config in self.test_values.items():
-            ext = self.ext(config['expected'])
-            self.assertEqual(ext.as_text(), config['expected_text'])
 
     def test_config(self):
         self.assertTrue(issubclass(self.ext_class, Extension))
@@ -942,6 +942,7 @@ class ExtensionTestCase(AbstractExtensionTestMixin, TestCase):
             'expected': 'foobar',
             'expected_repr': "foobar",
             'expected_serialized': 'foobar',
+            'expected_text': 'foobar',
         },
     }
 
@@ -1035,6 +1036,7 @@ class OrderedSetExtensionTestCase(OrderedSetExtensionTestMixin, AbstractExtensio
             'expected': frozenset(['one_value']),
             'expected_repr': "['one_value']",
             'expected_serialized': ['one_value'],
+            'expected_text': '* one_value',
         },
         'two': {
             'values': [
@@ -1045,6 +1047,7 @@ class OrderedSetExtensionTestCase(OrderedSetExtensionTestMixin, AbstractExtensio
             'expected': frozenset(['one_value', 'two_value', ]),
             'expected_repr': "['one_value', 'two_value']",
             'expected_serialized': ['one_value', 'two_value'],
+            'expected_text': '* one_value\n* two_value',
         },
         'three': {
             'values': [
@@ -1053,6 +1056,7 @@ class OrderedSetExtensionTestCase(OrderedSetExtensionTestMixin, AbstractExtensio
             'expected': frozenset(['three_value']),
             'expected_repr': "['three_value']",
             'expected_serialized': ['three_value'],
+            'expected_text': '* three_value',
         },
     }
 
