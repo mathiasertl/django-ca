@@ -11,11 +11,16 @@ ADMINS = (
     # ('Your Name', 'your_email@example.com'),
 )
 
+if 'TOX_ENV_DIR' in os.environ:
+    db_file = os.path.join(os.environ['TOX_ENV_DIR'], 'db.sqlite3')
+else:
+    db_file = os.path.join(BASE_DIR, 'db.sqlite3')
+
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': db_file,
     }
 }
 

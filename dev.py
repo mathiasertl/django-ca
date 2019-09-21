@@ -163,8 +163,14 @@ if args.command == 'test':
 elif args.command == 'coverage':
     import coverage
 
-    report_dir = os.path.join(_rootdir, 'docs', 'build', 'coverage')
-    cov = coverage.Coverage(cover_pylib=False, branch=True, source=['django_ca'],
+    if 'TOX_ENV_DIR' in os.environ:
+        report_dir = os.path.join(os.environ['TOX_ENV_DIR'], 'coverage')
+        data_file = os.path.join(os.environ['TOX_ENV_DIR'], '.coverage')
+    else:
+        report_dir = os.path.join(_rootdir, 'docs', 'build', 'coverage')
+        data_file = None
+
+    cov = coverage.Coverage(data_file=data_file, cover_pylib=False, branch=True, source=['django_ca'],
                             omit=['*migrations/*', '*/tests/tests*', ])
 
     # exclude python-version specific code
@@ -345,6 +351,9 @@ elif args.command == 'docker-test':
         error("\nSome images failed.")
 
 elif args.command == 'init-demo':
+    if 'TOX_ENV_DIR' in os.environ:
+        os.environ['CA_DIR'] = os.environ['TOX_ENV_DIR']
+
     try:
         setup_django('ca.settings')
     except ImproperlyConfigured:

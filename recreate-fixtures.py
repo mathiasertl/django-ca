@@ -124,12 +124,15 @@ class override_tmpcadir(override_settings):
         self.mock_.start()
 
         super(override_tmpcadir, self).enable()
-        reload_module(ca_settings)
+
+        self.mockc = patch.object(ca_settings, 'CA_DIR', self.options['CA_DIR'])
+        self.mockc.start()
 
     def disable(self):
         super(override_tmpcadir, self).disable()
         self.mock.stop()
         self.mock_.stop()
+        self.mockc.stop()
         shutil.rmtree(self.options['CA_DIR'])
         reload_module(ca_settings)
 

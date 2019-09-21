@@ -70,9 +70,11 @@ class DumpCertTestCase(DjangoCAWithGeneratedCertsTestCase):
     def test_errors(self):
         path = os.path.join(ca_settings.CA_DIR, 'does-not-exist', 'test_cert.pem')
         if six.PY2:
-            msg = r"^\[Errno 2\] No such file or directory: u'/non/existent/does-not-exist/test_cert\.pem'$"
+            msg = r"^\[Errno 2\] No such file or directory: u'%s/does-not-exist/test_cert\.pem'$" % (
+                ca_settings.CA_DIR)
         else:
-            msg = r"^\[Errno 2\] No such file or directory: '/non/existent/does-not-exist/test_cert\.pem'$"
+            msg = r"^\[Errno 2\] No such file or directory: '%s/does-not-exist/test_cert\.pem'$" % (
+                ca_settings.CA_DIR)
         with self.assertCommandError(msg):
             self.cmd('dump_cert', self.cert.serial, path, stdout=BytesIO(), stderr=BytesIO())
 
