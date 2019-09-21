@@ -428,6 +428,7 @@ class NullExtensionTestMixin(NewExtensionTestMixin):
 
 class IterableExtensionTestMixin:
     container_type = None  # extension emulates a given container type
+    invalid_values = []
 
     def assertSameInstance(self, orig_id, orig_value_id, new, expected_value):
         """Assert that `new` is still the same instance and has the expected value."""
@@ -558,6 +559,11 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
                 for expected_elem, other_elem in zip(config['expected'], values):
                     self.assertEqual(config['expected'].count(expected_elem), ext.count(expected_elem))
                     self.assertEqual(config['expected'].count(expected_elem), ext.count(other_elem))
+
+        for value in self.invalid_values:
+            for key, config in self.test_values.items():
+                ext = self.ext(config['expected'])
+                self.assertEqual(ext.count(value), 0)
 
     def test_del(self):
         for key, config in self.test_values.items():
@@ -1533,6 +1539,7 @@ class CRLDistributionPointsTestCase(ListExtensionTestMixin, NewExtensionTestMixi
     cg_dps4 = x509.CRLDistributionPoints([cg_dp4])
 
     ext_class = CRLDistributionPoints
+    invalid_values = [True, None]
     test_values = {
         'one': {
             'values': [[s1], [dp1], [cg_dp1], [{'full_name': [uri1]}], [{'full_name': [uri(uri1)]}]],
@@ -2367,6 +2374,7 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, NewExtensionTestMixi
     dns1 = 'example.com'
     dns2 = 'example.net'
 
+    invalid_values = ['DNS:https://example.com', True, None]
     test_values = {
         'empty': {
             'values': [[]],
