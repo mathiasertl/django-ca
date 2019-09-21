@@ -81,7 +81,7 @@ def load_tests(loader, tests, ignore):
     return tests
 
 
-class NewAbstractExtensionTestMixin:
+class AbstractExtensionTestMixin:
     """TestCase mixin for tests that all extensions are expected to pass, including abstract base classes."""
 
     force_critical = None
@@ -310,7 +310,7 @@ class NewAbstractExtensionTestMixin:
             self.assertExtensionEqual(ext, self.ext(ext.value))
 
 
-class NewExtensionTestMixin(NewAbstractExtensionTestMixin):
+class ExtensionTestMixin(AbstractExtensionTestMixin):
     """Override generic implementations to use test_value property."""
 
     def test_as_extension(self):
@@ -364,7 +364,7 @@ class NewExtensionTestMixin(NewAbstractExtensionTestMixin):
                 )
 
 
-class NullExtensionTestMixin(NewExtensionTestMixin):
+class NullExtensionTestMixin(ExtensionTestMixin):
     """TestCase mixin for tests that all extensions are expected to pass, including abstract base classes."""
 
     def assertExtensionEqual(self, first, second):
@@ -934,7 +934,7 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
             lambda s, o: operator.ior(s, functools.reduce(operator.ior, [t.copy() for t in o])))
 
 
-class ExtensionTestCase(NewAbstractExtensionTestMixin, TestCase):
+class ExtensionTestCase(AbstractExtensionTestMixin, TestCase):
     ext_class = Extension
     test_values = {
         'one': {
@@ -1025,7 +1025,7 @@ class ListExtensionTestCase(TestCase):
         self.assertEqual(ext, ListExtension(ext.serialize()))
 
 
-class OrderedSetExtensionTestCase(OrderedSetExtensionTestMixin, NewAbstractExtensionTestMixin, TestCase):
+class OrderedSetExtensionTestCase(OrderedSetExtensionTestMixin, AbstractExtensionTestMixin, TestCase):
     ext_class = OrderedSetExtension
     test_values = {
         'one': {
@@ -1061,7 +1061,7 @@ class OrderedSetExtensionTestCase(OrderedSetExtensionTestMixin, NewAbstractExten
     }
 
 
-class AuthorityInformationAccessTestCase(NewExtensionTestMixin, TestCase):
+class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
     ext_class = AuthorityInformationAccess
 
     uri1 = 'https://example1.com'
@@ -1176,7 +1176,7 @@ class AuthorityInformationAccessTestCase(NewExtensionTestMixin, TestCase):
         self.assertEqual(ext.ocsp, [uri(self.uri1)])
 
 
-class AuthorityKeyIdentifierTestCase(NewExtensionTestMixin, TestCase):
+class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
     b1 = b'333333'
     b2 = b'DDDDDD'
     b3 = b'UUUUUU'
@@ -1222,7 +1222,7 @@ class AuthorityKeyIdentifierTestCase(NewExtensionTestMixin, TestCase):
             self.assertExtensionEqual(ext, self.ext_class({'value': test_config['expected']}))
 
 
-class BasicConstraintsTestCase(NewExtensionTestMixin, TestCase):
+class BasicConstraintsTestCase(ExtensionTestMixin, TestCase):
     ext_class = BasicConstraints
     test_values = {
         'no_ca': {
@@ -1332,7 +1332,7 @@ class DistributionPointTestCase(TestCase):
             })
 
 
-class CRLDistributionPointsTestCase(ListExtensionTestMixin, NewExtensionTestMixin, TestCase):
+class CRLDistributionPointsTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):
     uri1 = 'http://ca.example.com/crl'
     uri2 = 'http://ca.example.net/crl'
     uri3 = 'http://ca.example.com/'
@@ -1826,7 +1826,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.assertEqual(str(self.pi_empty), 'PolicyInformation(oid=None, 0 qualifiers)')
 
 
-class CertificatePoliciesTestCase(ListExtensionTestMixin, NewExtensionTestMixin, TestCase):
+class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):
     ext_class = CertificatePolicies
     oid = '2.5.29.32.0'
 
@@ -1980,7 +1980,7 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, NewExtensionTestMixin,
                     self.assertEqual(str(ext), expected.format(critical=False))
 
 
-class IssuerAlternativeNameTestCase(ListExtensionTestMixin, NewExtensionTestMixin, TestCase):
+class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):
     ext_class = IssuerAlternativeName
     ext_class_type = x509.IssuerAlternativeName
     ext_class_name = 'IssuerAlternativeName'
@@ -2060,7 +2060,7 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, NewExtensionTestMixi
     }
 
 
-class KeyUsageTestCase(OrderedSetExtensionTestMixin, NewExtensionTestMixin, TestCase):
+class KeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestCase):
     ext_class = KeyUsage
     test_values = {
         'one': {
@@ -2136,7 +2136,7 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin, NewExtensionTestMixin, Test
             KeyUsage({'value': [True]})
 
 
-class ExtendedKeyUsageTestCase(OrderedSetExtensionTestMixin, NewExtensionTestMixin, TestCase):
+class ExtendedKeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestCase):
     ext_class = ExtendedKeyUsage
     test_values = {
         'one': {
@@ -2209,7 +2209,7 @@ class ExtendedKeyUsageTestCase(OrderedSetExtensionTestMixin, NewExtensionTestMix
                          set([e[0] for e in ExtendedKeyUsage.CHOICES]))
 
 
-class NameConstraintsTestCase(NewExtensionTestMixin, TestCase):
+class NameConstraintsTestCase(ExtensionTestMixin, TestCase):
     d1 = 'example.com'
     d2 = 'example.net'
 
@@ -2638,7 +2638,7 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
     }
 
 
-class SubjectKeyIdentifierTestCase(NewExtensionTestMixin, TestCase):
+class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
     ext_class = SubjectKeyIdentifier
 
     hex1 = '33:33:33:33:33:33'
@@ -2679,7 +2679,7 @@ class SubjectKeyIdentifierTestCase(NewExtensionTestMixin, TestCase):
     }
 
 
-class TLSFeatureTestCase(OrderedSetExtensionTestMixin, NewExtensionTestMixin, TestCase):
+class TLSFeatureTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestCase):
     ext_class = TLSFeature
     test_values = {
         'one': {
