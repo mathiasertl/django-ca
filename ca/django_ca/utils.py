@@ -344,7 +344,9 @@ def x509_relative_name(name):
     >>> x509_relative_name([('CN', 'example.com')])
     <RelativeDistinguishedName(CN=example.com)>
     """
-    if isinstance(name, six.string_types):
+    if isinstance(name, x509.RelativeDistinguishedName):
+        return name
+    elif isinstance(name, six.string_types):
         name = parse_name(name)
 
     return x509.RelativeDistinguishedName([

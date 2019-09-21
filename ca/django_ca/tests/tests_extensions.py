@@ -70,6 +70,10 @@ def uri(u):  # just a shortcut
     return x509.UniformResourceIdentifier(u)
 
 
+def rdn(r):  # just a shortcut
+    return x509.RelativeDistinguishedName([x509.NameAttribute(*t) for t in r])
+
+
 def load_tests(loader, tests, ignore):
     if six.PY3:  # pragma: only py3
         # unicode strings make this very hard to test doctests in both py2 and py3
@@ -308,11 +312,15 @@ class NewAbstractExtensionTestMixin:
         for config in self.test_values.values():
             for value in config['values']:
                 ext = self.ext(value)
-                self.assertEqual(repr(ext), config['expected_repr'] % ext.default_critical)
+                expected = config['expected_repr']
+                if six.PY2 and 'expected_repr_py2' in config:
+                    expected = config['expected_repr_py2']
+
+                self.assertEqual(repr(ext), expected % ext.default_critical)
 
                 for critical in self.critical_values:
                     ext = self.ext(value, critical=critical)
-                    self.assertEqual(repr(ext), config['expected_repr'] % critical)
+                    self.assertEqual(repr(ext), expected % critical)
 
     def test_serialize(self):
         for test_key, test_config in self.test_values.items():
@@ -427,7 +435,8 @@ class IterableExtensionTestMixin:
         self.assertEqual(id(new), orig_id)  # assert that this is really the same instance
         self.assertEqual(id(new.value), orig_value_id)
 
-    def assertEqualFunction(self, f, init, value, update=True, infix=True, set_value=None, raises=None):
+    def assertEqualFunction(self, f, init, value, update=True, infix=True, set_init=None, set_value=None,
+                            raises=None):
         """Assert that the given function f behaves the same way on a set and on the tested extension.
 
         This example would test if ``set.update()`` and ``self.ext_class.update()`` would behave the same way,
@@ -453,6 +462,8 @@ class IterableExtensionTestMixin:
             The initial value for the extension and the set.
         value
             The value to apply the function to.
+        set_init
+            The initial value for the initial set, if different from the extension value.
         set_value
             The value to apply to the set function, if different from the extension value. This is useful if
             the extension internally maps to different values.
@@ -464,8 +475,10 @@ class IterableExtensionTestMixin:
         """
         if set_value is None:
             set_value = value
+        if set_init is None:
+            set_init = init
 
-        s, ext = self.container_type(init), self.ext_class({'value': init})
+        s, ext = self.container_type(set_init), self.ext_class({'value': init})
         if update is True:
             orig_id, orig_value_id = id(ext), id(ext.value)
 
@@ -489,7 +502,9 @@ class IterableExtensionTestMixin:
             else:
                 self.assertIsNone(f(s, set_value))  # apply to set
                 self.assertIsNone(f(ext, value))
-            self.assertSameInstance(orig_id, orig_value_id, ext, s)
+
+            # Note: Also checked when exception is raised, to make sure that it hasn't changed
+            self.assertSameInstance(orig_id, orig_value_id, ext, expected_value=s)
         else:
             ext_updated = f(ext, value)
             s_updated = f(s, set_value)  # apply to set
@@ -565,40 +580,64 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
     def test_extend(self):
         func = lambda c, j: c.extend(j)  # noqa
         for key, config in self.test_values.items():
-            self.assertEqualFunction(func, config['expected'], config['expected'])
-            self.assertEqualFunction(func, config['expected'], config['expected'][0:])
-            self.assertEqualFunction(func, config['expected'], config['expected'][1:])
-            self.assertEqualFunction(func, config['expected'], config['expected'][:2])
+            set_value = config['expected']
+            if 'expected_djca' in config:
+                set_value = config['expected_djca']
+
+            self.assertEqualFunction(func, init=config['expected'], value=config['expected'],
+                                     set_init=set_value, set_value=set_value)
+            self.assertEqualFunction(func, init=config['expected'], value=config['expected'][0:],
+                                     set_init=set_value, set_value=set_value[0:])
+            self.assertEqualFunction(func, config['expected'], config['expected'][1:],
+                                     set_init=set_value, set_value=set_value[1:])
+            self.assertEqualFunction(func, config['expected'], config['expected'][:2],
+                                     set_init=set_value, set_value=set_value[:2])
 
     def test_getitem(self):
         func = lambda c, j: operator.getitem(c, j)  # noqa
         for key, config in self.test_values.items():
+            ct_expected = config['expected']
+            if 'expected_djca' in config:
+                ct_expected = config['expected_djca']
+
             for values in config['values']:
                 for value in values:
                     for i in range(0, len(values)):
-                        self.assertEqualFunction(func, config['expected'], i)
+                        self.assertEqualFunction(func, config['expected'], i, set_init=ct_expected)
 
                 self.assertEqualFunction(func, config['expected'], len(config['expected']),
+                                         set_init=ct_expected,
                                          raises=(IndexError, r'^list index out of range$'))
 
     def test_getitem_slices(self):
         func = lambda c, j: operator.getitem(c, j)  # noqa
         for key, config in self.test_values.items():
+            ct_expected = config['expected']
+            if 'expected_djca' in config:
+                ct_expected = config['expected_djca']
+
             for values in config['values']:
-                self.assertEqualFunction(func, config['expected'], slice(1))
-                self.assertEqualFunction(func, config['expected'], slice(0, 1))
-                self.assertEqualFunction(func, config['expected'], slice(0, 2))
-                self.assertEqualFunction(func, config['expected'], slice(0, 2, 2))
+                self.assertEqualFunction(func, config['expected'], slice(1), set_init=ct_expected)
+                self.assertEqualFunction(func, config['expected'], slice(0, 1), set_init=ct_expected)
+                self.assertEqualFunction(func, config['expected'], slice(0, 2), set_init=ct_expected)
+                self.assertEqualFunction(func, config['expected'], slice(0, 2, 2), set_init=ct_expected)
 
     def test_insert(self):
         for key, config in self.test_values.items():
+            ct_expected = config['expected']
+            if 'expected_djca' in config:
+                ct_expected = config['expected_djca']
+
             for values in config['values']:
-                for expected_value, value in zip(config['expected'], values):
+                for expected_value, value in zip(ct_expected, values):
                     kwargs = {'infix': False, 'set_value': expected_value}
                     self.assertEqualFunction(lambda c, e: c.insert(0, e), [], value, **kwargs)
-                    self.assertEqualFunction(lambda c, e: c.insert(0, e), config['expected'], value, **kwargs)
-                    self.assertEqualFunction(lambda c, e: c.insert(1, e), config['expected'], value, **kwargs)
-                    self.assertEqualFunction(lambda c, e: c.insert(9, e), config['expected'], value, **kwargs)
+                    self.assertEqualFunction(lambda c, e: c.insert(0, e), config['expected'], value,
+                                             set_init=ct_expected, **kwargs)
+                    self.assertEqualFunction(lambda c, e: c.insert(1, e), config['expected'], value,
+                                             set_init=ct_expected, **kwargs)
+                    self.assertEqualFunction(lambda c, e: c.insert(9, e), config['expected'], value,
+                                             set_init=ct_expected, **kwargs)
 
     def test_pop(self):
         for key, config in self.test_values.items():
@@ -609,7 +648,11 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
                     with self.assertRaisesRegex(IndexError, '^pop index out of range$'):
                         ext.pop(len(config['expected']))
 
-                for expected, value in zip(reversed(config['expected_serialized']), config['values']):
+                exp = reversed(config['expected_serialized'])
+                if 'expected_djca' in config:
+                    exp = reversed(config['expected_djca'])
+
+                for expected, value in zip(exp, config['values']):
                     self.assertEqual(expected, ext.pop())
                 self.assertEqual(len(ext), 0)
 
@@ -626,19 +669,27 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
     def test_setitem(self):
         func = lambda c, j: operator.setitem(c, j[0], j[1])  # noqa
         for key, config in self.test_values.items():
+            ct_expected = config['expected']
+            if 'expected_djca' in config:
+                ct_expected = config['expected_djca']
+
             for values in config['values']:
                 for i in range(0, len(values)):
                     self.assertEqualFunction(func, list(config['expected']), (i, values[i], ),
-                                             set_value=(i, config['expected'][i]))
+                                             set_init=ct_expected, set_value=(i, ct_expected[i]))
 
     def test_setitem_slices(self):
         func = lambda c, j: operator.setitem(c, j[0], j[1])  # noqa
         for key, config in self.test_values.items():
+            ct_expected = config['expected']
+            if 'expected_djca' in config:
+                ct_expected = config['expected_djca']
+
             for values in config['values']:
                 for i in range(0, len(values)):
                     s = slice(0, 1)
                     self.assertEqualFunction(func, list(config['expected']), (s, values[s], ),
-                                             set_value=(s, config['expected'][s]))
+                                             set_init=ct_expected, set_value=(s, ct_expected[s]))
 
 
 class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
@@ -1446,410 +1497,137 @@ class DistributionPointTestCase(TestCase):
             })
 
 
-class CRLDistributionPointsTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):
-    ext_class = CRLDistributionPoints
+class CRLDistributionPointsTestCase(ListExtensionTestMixin, NewExtensionTestMixin, TestCase):
+    uri1 = 'http://ca.example.com/crl'
+    uri2 = 'http://ca.example.net/crl'
+    uri3 = 'http://ca.example.com/'
+    dns1 = 'example.org'
+    rdn1 = '/CN=example.com'
 
-    dp1 = x509.DistributionPoint(
-        full_name=[
-            x509.UniformResourceIdentifier('http://ca.example.com/crl'),
-        ],
-        relative_name=None,
-        crl_issuer=None,
-        reasons=None
-    )
-    dp2 = x509.DistributionPoint(
-        full_name=[
-            x509.UniformResourceIdentifier('http://ca.example.com/crl'),
-            x509.DirectoryName(x509.Name([x509.NameAttribute(NameOID.COUNTRY_NAME, u"AT")])),
-        ],
-        relative_name=None,
-        crl_issuer=None,
-        reasons=None
-    )
-    dp3 = x509.DistributionPoint(
-        full_name=None,
-        relative_name=x509.RelativeDistinguishedName([
-            x509.NameAttribute(NameOID.COMMON_NAME, u'example.com'),
-        ]),
-        crl_issuer=None,
-        reasons=None
-    )
-    dp4 = x509.DistributionPoint(
-        full_name=[
-            x509.UniformResourceIdentifier('http://ca.example.com/crl'),
-        ],
-        relative_name=None,
-        crl_issuer=[
-            x509.UniformResourceIdentifier('http://ca.example.com/'),
-        ],
-        reasons=frozenset([x509.ReasonFlags.key_compromise, x509.ReasonFlags.ca_compromise])
-    )
-
-    # serialized versions of dps above
-    s1 = {'full_name': ['URI:http://ca.example.com/crl']}
-    s2 = {'full_name': ['URI:http://ca.example.com/crl', 'dirname:/C=AT']}
-    s3 = {'relative_name': '/CN=example.com'}
+    s1 = {'full_name': ['URI:%s' % uri1]}
+    s2 = {'full_name': ['URI:%s' % uri1, 'DNS:%s' % dns1]}
+    s3 = {'relative_name': rdn1}
     s4 = {
-        'full_name': ['URI:http://ca.example.com/crl'],
-        'crl_issuer': ['URI:http://ca.example.com/'],
+        'full_name': ['URI:%s' % uri2],
+        'crl_issuer': ['URI:%s' % uri3],
         'reasons': ['ca_compromise', 'key_compromise'],
     }
+    dp1 = DistributionPoint(s1)
+    dp2 = DistributionPoint(s2)
+    dp3 = DistributionPoint(s3)
+    dp4 = DistributionPoint(s4)
 
-    # cryptography extensions
-    x1 = x509.Extension(oid=ExtensionOID.CRL_DISTRIBUTION_POINTS, critical=False,
-                        value=x509.CRLDistributionPoints([dp1]))
-    x2 = x509.Extension(oid=ExtensionOID.CRL_DISTRIBUTION_POINTS, critical=False,
-                        value=x509.CRLDistributionPoints([dp2]))
-    x3 = x509.Extension(oid=ExtensionOID.CRL_DISTRIBUTION_POINTS, critical=False,
-                        value=x509.CRLDistributionPoints([dp3]))
-    x4 = x509.Extension(oid=ExtensionOID.CRL_DISTRIBUTION_POINTS, critical=False,
-                        value=x509.CRLDistributionPoints([dp4]))
-    x5 = x509.Extension(oid=ExtensionOID.CRL_DISTRIBUTION_POINTS, critical=True,
-                        value=x509.CRLDistributionPoints([dp2, dp4]))
-    xs = [x1, x2, x3, x4, x5]
+    cg_rdn1 = rdn([(NameOID.COMMON_NAME, u'example.com')])
 
-    def test_append(self):
-        pass
+    cg_dp1 = x509.DistributionPoint(full_name=[uri(uri1)], relative_name=None, crl_issuer=None, reasons=None)
+    cg_dp2 = x509.DistributionPoint(full_name=[uri(uri1), dns(dns1)], relative_name=None, crl_issuer=None,
+                                    reasons=None)
+    cg_dp3 = x509.DistributionPoint(full_name=None, relative_name=cg_rdn1, crl_issuer=None, reasons=None)
+    cg_dp4 = x509.DistributionPoint(full_name=[uri(uri2)], relative_name=None, crl_issuer=[uri(uri3)],
+                                    reasons=frozenset([x509.ReasonFlags.key_compromise,
+                                                       x509.ReasonFlags.ca_compromise]))
 
-    def test_clear(self):
-        pass
+    cg_dps1 = x509.CRLDistributionPoints([cg_dp1])
+    cg_dps2 = x509.CRLDistributionPoints([cg_dp2])
+    cg_dps3 = x509.CRLDistributionPoints([cg_dp3])
+    cg_dps4 = x509.CRLDistributionPoints([cg_dp4])
 
-    def test_del_slices(self):
-        pass
-
-    def setUp(self):
-        super(CRLDistributionPointsTestCase, self).setUp()
-        # django_ca extensions
-        self.ext1 = CRLDistributionPoints(self.x1)
-        self.ext2 = CRLDistributionPoints(self.x2)
-        self.ext3 = CRLDistributionPoints(self.x3)
-        self.ext4 = CRLDistributionPoints(self.x4)
-        self.ext5 = CRLDistributionPoints(self.x5)
-        self.exts = [self.ext1, self.ext2, self.ext3, self.ext4, self.ext5]
-
-    def test_as_text(self):
-        self.assertEqual(self.ext1.as_text(), """* DistributionPoint:
-  * Full Name:
-    * URI:http://ca.example.com/crl""")
-        self.assertEqual(self.ext2.as_text(), """* DistributionPoint:
-  * Full Name:
-    * URI:http://ca.example.com/crl
-    * dirname:/C=AT""")
-        self.assertEqual(self.ext3.as_text(), """* DistributionPoint:
-  * Relative Name: /CN=example.com""")
-        self.assertEqual(self.ext4.as_text(), """* DistributionPoint:
-  * Full Name:
-    * URI:http://ca.example.com/crl
-  * CRL Issuer:
-    * URI:http://ca.example.com/
-  * Reasons: ca_compromise, key_compromise""")
-        self.assertEqual(self.ext5.as_text(), """* DistributionPoint:
-  * Full Name:
-    * URI:http://ca.example.com/crl
-    * dirname:/C=AT
-* DistributionPoint:
-  * Full Name:
-    * URI:http://ca.example.com/crl
-  * CRL Issuer:
-    * URI:http://ca.example.com/
-  * Reasons: ca_compromise, key_compromise""")
-
-    def test_count(self):
-        self.assertEqual(self.ext1.count(self.s1), 1)
-        self.assertEqual(self.ext1.count(self.dp1), 1)
-        self.assertEqual(self.ext1.count(DistributionPoint(self.s1)), 1)
-        self.assertEqual(self.ext1.count(self.s2), 0)
-        self.assertEqual(self.ext1.count(self.dp2), 0)
-        self.assertEqual(self.ext1.count(DistributionPoint(self.s2)), 0)
-        self.assertEqual(self.ext5.count(self.s2), 1)
-        self.assertEqual(self.ext5.count(self.dp2), 1)
-        self.assertEqual(self.ext5.count(DistributionPoint(self.s2)), 1)
-        self.assertEqual(self.ext5.count(self.s4), 1)
-        self.assertEqual(self.ext5.count(self.dp4), 1)
-        self.assertEqual(self.ext5.count(DistributionPoint(self.s4)), 1)
-        self.assertEqual(self.ext5.count(self.s3), 0)
-        self.assertEqual(self.ext5.count(self.dp3), 0)
-        self.assertEqual(self.ext5.count(DistributionPoint(self.s3)), 0)
-        self.assertEqual(self.ext5.count(None), 0)
-
-    def test_del(self):
-        self.assertIn(self.dp1, self.ext1)
-        del self.ext1[0]
-        self.assertNotIn(self.dp1, self.ext1)
-        self.assertEqual(len(self.ext1), 0)
-
-        self.assertIn(self.dp2, self.ext5)
-        self.assertIn(self.dp4, self.ext5)
-        del self.ext5[1]
-        self.assertIn(self.dp2, self.ext5)
-        self.assertNotIn(self.dp4, self.ext5)
-        self.assertEqual(len(self.ext5), 1)
-
-        self.assertEqual(len(self.ext4), 1)
-        with self.assertRaisesRegex(IndexError, '^list assignment index out of range$'):
-            del self.ext4[1]
-        self.assertEqual(len(self.ext4), 1)
-
-    def test_extend(self):
-        self.ext1.extend([self.s2])
-        self.assertEqual(self.ext1, CRLDistributionPoints({'value': [
-            DistributionPoint(self.dp1), DistributionPoint(self.dp2)]}))
-        self.ext1.extend([self.dp3])
-        self.assertEqual(self.ext1, CRLDistributionPoints({'value': [
-            DistributionPoint(self.dp1), DistributionPoint(self.dp2), DistributionPoint(self.dp3),
-        ]}))
-        self.ext1.extend([DistributionPoint(self.dp4)])
-        self.assertEqual(self.ext1, CRLDistributionPoints({'value': [
-            DistributionPoint(self.dp1), DistributionPoint(self.dp2), DistributionPoint(self.dp3),
-            DistributionPoint(self.dp4),
-        ]}))
-
-    def test_getitem(self):
-        self.assertEqual(self.ext1[0], DistributionPoint(self.dp1))
-        self.assertEqual(self.ext2[0], DistributionPoint(self.dp2))
-        self.assertEqual(self.ext5[0], DistributionPoint(self.dp2))
-        self.assertEqual(self.ext5[1], DistributionPoint(self.dp4))
-
-        with self.assertRaisesRegex(IndexError, '^list index out of range$'):
-            self.ext5[2]
-
-    def test_getitem_slices(self):
-        self.assertEqual(self.ext1[0:], [DistributionPoint(self.dp1)])
-        self.assertEqual(self.ext1[1:], [])
-        self.assertEqual(self.ext1[2:], [])
-        self.assertEqual(self.ext5[0:], [DistributionPoint(self.dp2), DistributionPoint(self.dp4)])
-
-    def test_hash(self):
-        self.assertEqual(hash(self.ext1), hash(self.ext1))
-        self.assertEqual(hash(self.ext2), hash(self.ext2))
-        self.assertEqual(hash(self.ext3), hash(self.ext3))
-        self.assertEqual(hash(self.ext4), hash(self.ext4))
-        self.assertEqual(hash(self.ext5), hash(self.ext5))
-
-        self.assertEqual(hash(self.ext1), hash(CRLDistributionPoints(self.x1)))
-        self.assertEqual(hash(self.ext2), hash(CRLDistributionPoints(self.x2)))
-        self.assertEqual(hash(self.ext3), hash(CRLDistributionPoints(self.x3)))
-        self.assertEqual(hash(self.ext4), hash(CRLDistributionPoints(self.x4)))
-        self.assertEqual(hash(self.ext5), hash(CRLDistributionPoints(self.x5)))
-
-        self.assertNotEqual(hash(self.ext1), hash(self.ext2))
-        self.assertNotEqual(hash(self.ext1), hash(self.ext3))
-        self.assertNotEqual(hash(self.ext1), hash(self.ext4))
-        self.assertNotEqual(hash(self.ext1), hash(self.ext5))
-        self.assertNotEqual(hash(self.ext2), hash(self.ext3))
-        self.assertNotEqual(hash(self.ext2), hash(self.ext4))
-        self.assertNotEqual(hash(self.ext2), hash(self.ext5))
-        self.assertNotEqual(hash(self.ext3), hash(self.ext4))
-        self.assertNotEqual(hash(self.ext3), hash(self.ext5))
-
-    def test_in(self):
-        self.assertIn(self.s1, self.ext1)
-        self.assertIn(self.s2, self.ext2)
-        self.assertIn(self.s3, self.ext3)
-        self.assertIn(self.s4, self.ext4)
-        self.assertIn(self.s2, self.ext5)
-        self.assertIn(self.s4, self.ext5)
-
-        self.assertIn(self.dp1, self.ext1)
-        self.assertIn(self.dp2, self.ext2)
-        self.assertIn(self.dp3, self.ext3)
-        self.assertIn(self.dp4, self.ext4)
-        self.assertIn(self.dp2, self.ext5)
-        self.assertIn(self.dp4, self.ext5)
-
-    def test_insert(self):
-        self.ext1.insert(0, self.dp2)
-        self.assertEqual(self.ext1.serialize(), {'critical': False, 'value': [self.s2, self.s1]})
-        self.ext1.insert(1, self.s3)
-        self.assertEqual(self.ext1.serialize(), {'critical': False, 'value': [self.s2, self.s3, self.s1]})
-
-    def test_len(self):
-        self.assertEqual(len(self.ext1), 1)
-        self.assertEqual(len(self.ext2), 1)
-        self.assertEqual(len(self.ext3), 1)
-        self.assertEqual(len(self.ext4), 1)
-        self.assertEqual(len(self.ext5), 2)
-
-    def test_ne(self):
-        self.assertNotEqual(self.ext1, self.ext2)
-        self.assertNotEqual(self.ext2, self.ext3)
-        self.assertNotEqual(self.ext3, self.ext4)
-        self.assertNotEqual(self.ext4, self.ext5)
-        self.assertNotEqual(self.ext1, self.ext5)
-
-    def test_not_in(self):
-        self.assertNotIn(self.s2, self.ext1)
-        self.assertNotIn(self.s3, self.ext2)
-        self.assertNotIn(self.dp2, self.ext1)
-        self.assertNotIn(self.dp3, self.ext4)
-
-    def test_pop(self):
-        ext = CRLDistributionPoints({'value': [self.dp1, self.dp2, self.dp3]})
-        self.assertEqual(ext.pop(), DistributionPoint(self.dp3))
-        self.assertEqual(ext.serialize(), {'critical': False, 'value': [self.s1, self.s2]})
-
-        self.assertEqual(ext.pop(0), DistributionPoint(self.dp1))
-        self.assertEqual(ext.serialize(), {'critical': False, 'value': [self.s2]})
-
-        with self.assertRaisesRegex(IndexError, '^pop index out of range'):
-            ext.pop(3)
-
-    def test_remove(self):
-        ext = CRLDistributionPoints({'value': [self.dp1, self.dp2, self.dp3]})
-        self.assertEqual(ext.serialize(), {'critical': False, 'value': [self.s1, self.s2, self.s3]})
-
-        ext.remove(self.dp2)
-        self.assertEqual(ext.serialize(), {'critical': False, 'value': [self.s1, self.s3]})
-
-        ext.remove(self.s3)
-        self.assertEqual(ext.serialize(), {'critical': False, 'value': [self.s1]})
-
-    def test_repr(self):
-        if six.PY3:
-            self.assertEqual(
-                repr(self.ext1),
-                "<CRLDistributionPoints: [<DistributionPoint: full_name=['URI:http://ca.example.com/crl']>], "
-                "critical=False>"
-            )
-            self.assertEqual(
-                repr(self.ext2),
-                "<CRLDistributionPoints: [<DistributionPoint: full_name=['URI:http://ca.example.com/crl', "
-                "'dirname:/C=AT']>], critical=False>"
-            )
-            self.assertEqual(
-                repr(self.ext3),
-                "<CRLDistributionPoints: [<DistributionPoint: relative_name='/CN=example.com'>], "
-                "critical=False>"
-            )
-            self.assertEqual(
-                repr(self.ext4),
-                "<CRLDistributionPoints: [<DistributionPoint: full_name=['URI:http://ca.example.com/crl'], "
-                "crl_issuer=['URI:http://ca.example.com/'], reasons=['ca_compromise', 'key_compromise']>], "
-                "critical=False>"
-            )
-            self.assertEqual(
-                repr(self.ext5),
-                "<CRLDistributionPoints: ["
-                "<DistributionPoint: full_name=['URI:http://ca.example.com/crl', 'dirname:/C=AT']>, "
-                "<DistributionPoint: full_name=['URI:http://ca.example.com/crl'], "
-                "crl_issuer=['URI:http://ca.example.com/'], reasons=['ca_compromise', 'key_compromise']>], "
-                "critical=True>"
-            )
-        else:  # pragma: only py2
-            self.assertEqual(
-                repr(self.ext1),
-                "<CRLDistributionPoints: [<DistributionPoint: full_name=[u'URI:http://ca.example.com/crl']>],"
-                " critical=False>"
-            )
-            self.assertEqual(
-                repr(self.ext2),
-                "<CRLDistributionPoints: [<DistributionPoint: full_name=[u'URI:http://ca.example.com/crl', "
-                "u'dirname:/C=AT']>], critical=False>"
-            )
-            self.assertEqual(
-                repr(self.ext3),
-                "<CRLDistributionPoints: [<DistributionPoint: relative_name='/CN=example.com'>], "
-                "critical=False>"
-            )
-            self.assertEqual(
-                repr(self.ext4),
-                "<CRLDistributionPoints: [<DistributionPoint: full_name=[u'URI:http://ca.example.com/crl'], "
-                "crl_issuer=[u'URI:http://ca.example.com/'], "
-                "reasons=['ca_compromise', 'key_compromise']>], critical=False>"
-            )
-            self.assertEqual(
-                repr(self.ext5),
-                "<CRLDistributionPoints: [<DistributionPoint: "
-                "full_name=[u'URI:http://ca.example.com/crl', u'dirname:/C=AT']>, "
-                "<DistributionPoint: full_name=[u'URI:http://ca.example.com/crl'], "
-                "crl_issuer=[u'URI:http://ca.example.com/'], reasons=['ca_compromise', 'key_compromise']>], "
-                "critical=True>"
-            )
-
-    def test_serialize(self):
-        self.assertEqual(self.ext1.serialize(), {'critical': False, 'value': [self.s1]})
-        self.assertEqual(self.ext2.serialize(), {'critical': False, 'value': [self.s2]})
-        self.assertEqual(self.ext3.serialize(), {'critical': False, 'value': [self.s3]})
-        self.assertEqual(self.ext4.serialize(), {'critical': False, 'value': [self.s4]})
-        self.assertEqual(self.ext5.serialize(), {'critical': True, 'value': [self.s2, self.s4]})
-
-    def test_setitem(self):
-        self.ext1[0] = self.s2
-        self.assertEqual(self.ext1, self.ext2)
-        self.ext1[0] = self.s3
-        self.assertEqual(self.ext1, self.ext3)
-        self.ext1[0] = self.dp4
-        self.assertEqual(self.ext1, self.ext4)
-
-        with self.assertRaisesRegex(IndexError, r'^list assignment index out of range$'):
-            self.ext1[1] = self.dp4
-
-    def test_setitem_slices(self):
-        expected = CRLDistributionPoints({'value': [self.dp1, self.dp2, self.dp3]})
-        self.ext1[1:] = [self.dp2, self.dp3]
-        self.assertEqual(self.ext1, expected)
-        self.ext1[1:] = [self.s2, self.s3]
-        self.assertEqual(self.ext1, expected)
+    ext_class = CRLDistributionPoints
+    test_values = {
+        'one': {
+            'values': [[s1], [dp1], [cg_dp1], [{'full_name': [uri1]}], [{'full_name': [uri(uri1)]}]],
+            'expected': [s1],
+            'expected_djca': [dp1],
+            'expected_str': "CRLDistributionPoints([DistributionPoint(full_name=['URI:%s'])], "
+                            "critical={critical})" % uri1,
+            'expected_str_py2': "CRLDistributionPoints([DistributionPoint(full_name=[u'URI:%s'])], "
+                                "critical={critical})" % uri1,
+            'expected_repr': '<CRLDistributionPoints: [<DistributionPoint: '
+                             "full_name=['URI:http://ca.example.com/crl']>], critical=%s>",
+            'expected_repr_py2': '<CRLDistributionPoints: [<DistributionPoint: '
+                                 "full_name=[u'URI:http://ca.example.com/crl']>], critical=%s>",
+            'expected_serialized': [s1],
+            'expected_text': '* DistributionPoint:\n  * Full Name:\n    * URI:%s' % uri1,
+            'extension_type': cg_dps1,
+        },
+        'two': {
+            'values': [[s2], [dp2], [cg_dp2], [{'full_name': [uri1, dns1]}],
+                       [{'full_name': [uri(uri1), dns(dns1)]}]],
+            'expected': [s2],
+            'expected_djca': [dp2],
+            'expected_repr': "<CRLDistributionPoints: [<DistributionPoint: "
+                             "full_name=['URI:%s', 'DNS:%s']>], critical=%%s>" % (uri1, dns1),
+            'expected_repr_py2': "<CRLDistributionPoints: [<DistributionPoint: "
+                                 "full_name=[u'URI:%s', u'DNS:%s']>], critical=%%s>" % (uri1, dns1),
+            'expected_serialized': [s2],
+            'expected_str': "CRLDistributionPoints([DistributionPoint(full_name=['URI:%s', 'DNS:%s'])], "
+                            "critical={critical})" % (uri1, dns1),
+            'expected_str_py2': "CRLDistributionPoints([DistributionPoint("
+                                "full_name=[u'URI:%s', u'DNS:%s'])], "
+                                "critical={critical})" % (uri1, dns1),
+            'expected_text': '* DistributionPoint:\n  * Full Name:\n    * URI:%s\n    '
+                             '* DNS:%s' % (uri1, dns1),
+            'extension_type': cg_dps2,
+        },
+        'rdn': {
+            'values': [[s3], [dp3], [cg_dp3], [{'relative_name': cg_rdn1}]],
+            'expected': [s3],
+            'expected_djca': [dp3],
+            'expected_repr': "<CRLDistributionPoints: [<DistributionPoint: "
+                             "relative_name='%s'>], critical=%%s>" % rdn1,
+            'expected_serialized': [s3],
+            'expected_str': "CRLDistributionPoints([DistributionPoint(relative_name='%s')], "
+                            "critical={critical})" % (rdn1),
+            'expected_str_py2': "CRLDistributionPoints([DistributionPoint(relative_name='%s')], "
+                            "critical={critical})" % (rdn1),
+            'expected_text': '* DistributionPoint:\n  * Relative Name: %s' % rdn1,
+            'extension_type': cg_dps3,
+        },
+        'adv': {
+            'values': [[s4], [dp4], [cg_dp4]],
+            'expected': [s4],
+            'expected_djca': [dp4],
+            'expected_repr': '<CRLDistributionPoints: ['
+                             "<DistributionPoint: full_name=['URI:%s'], crl_issuer=['URI:%s'], "
+                             "reasons=['ca_compromise', 'key_compromise']>], critical=%%s>" % (uri2, uri3),
+            'expected_repr_py2': '<CRLDistributionPoints: ['
+                                 "<DistributionPoint: full_name=[u'URI:%s'], crl_issuer=[u'URI:%s'], "
+                                 "reasons=['ca_compromise', 'key_compromise']>], critical=%%s>" % (
+                                     uri2, uri3),
+            'expected_str': "CRLDistributionPoints(["
+                            "DistributionPoint(full_name=['URI:%s'], "
+                            "crl_issuer=['URI:%s'], "
+                            "reasons=['ca_compromise', 'key_compromise'])], "
+                            "critical={critical})" % (uri2, uri3),
+            'expected_str_py2': "CRLDistributionPoints(["
+                                "DistributionPoint(full_name=[u'URI:%s'], "
+                                "crl_issuer=[u'URI:%s'], "
+                                "reasons=['ca_compromise', 'key_compromise'])], "
+                                "critical={critical})" % (uri2, uri3),
+            'expected_serialized': [s4],
+            'expected_text': '* DistributionPoint:\n  * Full Name:\n    * URI:%s\n'
+                             '  * CRL Issuer:\n    * URI:%s\n'
+                             '  * Reasons: ca_compromise, key_compromise' % (uri2, uri3),
+            'extension_type': cg_dps4,
+        },
+    }
 
     def test_str(self):
-        if six.PY3:
-            self.assertEqual(
-                str(self.ext1),
-                "CRLDistributionPoints([DistributionPoint(full_name=['URI:http://ca.example.com/crl'])], "
-                "critical=False)"
-            )
-            self.assertEqual(
-                str(self.ext2),
-                "CRLDistributionPoints([DistributionPoint("
-                "full_name=['URI:http://ca.example.com/crl', 'dirname:/C=AT'])], critical=False)"
-            )
-            self.assertEqual(
-                str(self.ext3),
-                "CRLDistributionPoints([DistributionPoint(relative_name='/CN=example.com')], critical=False)"
-            )
-            self.assertEqual(
-                str(self.ext4),
-                "CRLDistributionPoints([DistributionPoint(full_name=['URI:http://ca.example.com/crl'], "
-                "crl_issuer=['URI:http://ca.example.com/'], reasons=['ca_compromise', 'key_compromise'])], "
-                "critical=False)"
-            )
-            self.assertEqual(
-                str(self.ext5),
-                "CRLDistributionPoints([DistributionPoint("
-                "full_name=['URI:http://ca.example.com/crl', 'dirname:/C=AT']), "
-                "DistributionPoint(full_name=['URI:http://ca.example.com/crl'], "
-                "crl_issuer=['URI:http://ca.example.com/'], "
-                "reasons=['ca_compromise', 'key_compromise'])], critical=True)"
-            )
-        else:  # pragma: only py2
-            self.assertEqual(
-                str(self.ext1),
-                "CRLDistributionPoints([DistributionPoint(full_name=[u'URI:http://ca.example.com/crl'])], "
-                "critical=False)"
-            )
-            self.assertEqual(
-                str(self.ext2),
-                "CRLDistributionPoints([DistributionPoint("
-                "full_name=[u'URI:http://ca.example.com/crl', u'dirname:/C=AT'])], critical=False)"
-            )
-            self.assertEqual(
-                str(self.ext3),
-                "CRLDistributionPoints([DistributionPoint(relative_name='/CN=example.com')], critical=False)"
-            )
-            self.assertEqual(
-                str(self.ext4),
-                "CRLDistributionPoints([DistributionPoint(full_name=[u'URI:http://ca.example.com/crl'], "
-                "crl_issuer=[u'URI:http://ca.example.com/'], "
-                "reasons=['ca_compromise', 'key_compromise'])], critical=False)"
-            )
-            self.assertEqual(
-                str(self.ext5),
-                "CRLDistributionPoints([DistributionPoint("
-                "full_name=[u'URI:http://ca.example.com/crl', u'dirname:/C=AT']), "
-                "DistributionPoint(full_name=[u'URI:http://ca.example.com/crl'], "
-                "crl_issuer=[u'URI:http://ca.example.com/'], "
-                "reasons=['ca_compromise', 'key_compromise'])], critical=True)"
-            )
+        # overwritten for now because str() does not append "/critical".
+        for config in self.test_values.values():
+            for value in config['values']:
+                ext = self.ext(value)
+                expected = config['expected_str'] if six.PY3 else config['expected_str_py2']
+
+                self.assertEqual(str(ext), expected.format(critical=ext.default_critical))
+
+                if self.force_critical is not False:
+                    ext = self.ext(value, critical=True)
+                    self.assertEqual(str(ext), expected.format(critical=True))
+
+                if self.force_critical is not True:
+                    ext = self.ext(value, critical=False)
+                    self.assertEqual(str(ext), expected.format(critical=False))
 
 
 class PolicyInformationTestCase(DjangoCATestCase):
