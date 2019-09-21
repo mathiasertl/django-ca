@@ -225,7 +225,7 @@ class NullExtension(Extension):
         return '<%s: critical=%r>' % (self.__class__.__name__, self.critical)
 
     def as_text(self):
-        return self.__class__.__name__
+        return self.name
 
     @property
     def extension_type(self):
