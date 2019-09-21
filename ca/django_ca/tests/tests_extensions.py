@@ -233,9 +233,8 @@ class AbstractExtensionTestMixin:
         class example:
             pass
 
-        for test_key, test_config in self.test_values.items():
-            with self.assertRaisesRegex(ValueError, '^Value is of unsupported type %s$' % class_name):
-                self.ext_class(example())
+        with self.assertRaisesRegex(ValueError, '^Value is of unsupported type %s$' % class_name):
+            self.ext_class(example())
 
     def test_ne(self):
         for config in self.test_values.values():
@@ -278,13 +277,13 @@ class AbstractExtensionTestMixin:
                     self.assertEqual(repr(ext), expected % critical)
 
     def test_serialize(self):
-        for test_key, test_config in self.test_values.items():
-            ext = self.ext(test_config['expected'])
-            self.assertSerialized(ext, test_config)
+        for key, config in self.test_values.items():
+            ext = self.ext(config['expected'])
+            self.assertSerialized(ext, config)
 
             for critical in self.critical_values:
-                ext = self.ext(test_config['expected'], critical=critical)
-                self.assertSerialized(ext, test_config, critical=critical)
+                ext = self.ext(config['expected'], critical=critical)
+                self.assertSerialized(ext, config, critical=critical)
 
     def test_str(self):
         for config in self.test_values.values():
@@ -314,24 +313,22 @@ class ExtensionTestMixin(AbstractExtensionTestMixin):
     """Override generic implementations to use test_value property."""
 
     def test_as_extension(self):
-        for test_key, test_config in self.test_values.items():
-            ext = self.ext(test_config['expected'])
+        for key, config in self.test_values.items():
+            ext = self.ext(config['expected'])
             cg = x509.extensions.Extension(
                 oid=self.ext_class.oid, critical=self.ext_class.default_critical,
-                value=test_config['extension_type']
-            )
+                value=config['extension_type'])
             self.assertEqual(ext.as_extension(), cg)
 
             for critical in self.critical_values:
-                ext = self.ext(test_config['expected'], critical=critical)
+                ext = self.ext(config['expected'], critical=critical)
                 self.assertEqual(ext.as_extension(), x509.extensions.Extension(
-                    oid=self.ext_class.oid, critical=critical, value=test_config['extension_type']
-                ))
+                    oid=self.ext_class.oid, critical=critical, value=config['extension_type']))
 
     def test_as_text(self):
-        for test_key, test_config in self.test_values.items():
-            ext = self.ext(test_config['expected'])
-            self.assertEqual(ext.as_text(), test_config['expected_text'])
+        for key, config in self.test_values.items():
+            ext = self.ext(config['expected'])
+            self.assertEqual(ext.as_text(), config['expected_text'])
 
     def test_config(self):
         self.assertTrue(issubclass(self.ext_class, Extension))
@@ -344,24 +341,22 @@ class ExtensionTestMixin(AbstractExtensionTestMixin):
         self.assertIsInstance(getattr(X509CertMixin, self.ext_class.key), cached_property)
 
     def test_extension_type(self):
-        for test_key, test_config in self.test_values.items():
-            ext = self.ext(test_config['expected'])
-            self.assertEqual(ext.extension_type, test_config['extension_type'])
+        for key, config in self.test_values.items():
+            ext = self.ext(config['expected'])
+            self.assertEqual(ext.extension_type, config['extension_type'])
 
     def test_for_builder(self):
-        for test_key, test_config in self.test_values.items():
-            ext = self.ext(test_config['expected'])
+        for key, config in self.test_values.items():
+            ext = self.ext(config['expected'])
             self.assertEqual(
                 ext.for_builder(),
-                {'extension': test_config['extension_type'], 'critical': self.ext_class.default_critical}
+                {'extension': config['extension_type'], 'critical': self.ext_class.default_critical}
             )
 
             for critical in self.critical_values:
-                ext = self.ext(test_config['expected'], critical=critical)
-                self.assertEqual(
-                    ext.for_builder(),
-                    {'extension': test_config['extension_type'], 'critical': critical}
-                )
+                ext = self.ext(config['expected'], critical=critical)
+                self.assertEqual(ext.for_builder(),
+                                 {'extension': config['extension_type'], 'critical': critical})
 
 
 class NullExtensionTestMixin(ExtensionTestMixin):
@@ -667,120 +662,117 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
 
     def assertSingleValueOperator(self, f, update=True, infix=True):
         """Test that an operator taking a single value works the same way with sets and this extension."""
-        for test_key, test_config in self.test_values.items():
+        for key, config in self.test_values.items():
 
             # Apply function to an empty extension
-            self.assertEqualFunction(f, set(), test_config['expected'], update=update, infix=infix)
+            self.assertEqualFunction(f, set(), config['expected'], update=update, infix=infix)
 
             # Apply function to an extension with every "expected" value
-            for init_test_config in self.test_values.values():
-                self.assertEqualFunction(f, init_test_config['expected'], test_config['expected'],
-                                         update=update, infix=infix)
+            for init_config in self.test_values.values():
+                self.assertEqualFunction(f, init_config['expected'], config['expected'], update=update,
+                                         infix=infix)
 
             # Test that equivalent values work exactly the same way:
-            for test_value in test_config['values']:
+            for test_value in config['values']:
                 # Again, apply function to the empty extension/set
-                self.assertEqualFunction(f, set(), test_value, set_value=test_config['expected'],
+                self.assertEqualFunction(f, set(), test_value, set_value=config['expected'],
                                          update=update, infix=infix)
 
                 # Again, apply function to an extension with every "expected" value
-                for init_key, init_test_config in self.test_values.items():
-                    self.assertEqualFunction(f, init=init_test_config['expected'],
-                                             value=test_value,
-                                             set_value=test_config['expected'],
-                                             update=update, infix=infix)
+                for init_key, init_config in self.test_values.items():
+                    self.assertEqualFunction(f, init=init_config['expected'], value=test_value,
+                                             set_value=config['expected'], update=update, infix=infix)
 
     def assertMultipleValuesOperator(self, f, update=True, infix=True):
         """Test that an operator taking a multiple values works the same way with sets and this extension."""
-        for first_test_config in self.test_values.values():
-            for second_test_config in self.test_values.values():
-                expected = (set(first_test_config['expected']), set(second_test_config['expected']))
+        for first_config in self.test_values.values():
+            for second_config in self.test_values.values():
+                expected = (set(first_config['expected']), set(second_config['expected']))
 
                 # Apply function to an empty extension
                 self.assertEqualFunction(f, set(), expected, update=update, infix=infix)
 
-                for init_test_config in self.test_values.values():
+                for init_config in self.test_values.values():
                     expected = (
-                        set(init_test_config['expected']),
-                        set(first_test_config['expected']), set(second_test_config['expected']),
+                        set(init_config['expected']),
+                        set(first_config['expected']), set(second_config['expected']),
                     )
-                    self.assertEqualFunction(f, init_test_config['expected'], expected,
-                                             update=update, infix=infix)
+                    self.assertEqualFunction(f, init_config['expected'], expected, update=update, infix=infix)
 
     def assertRelation(self, f):
         self.assertEqual(f(set(), set()), f(self.ext_class({'value': set()}), set()))
         self.assertEqual(f(set(), set()), f(self.ext_class({'value': set()}),
                                             self.ext_class({'value': set()})))
 
-        for test_config in self.test_values.values():
+        for key, config in self.test_values.items():
             self.assertEqual(
-                f(test_config['expected'], test_config['expected']),
-                f(self.ext_class({'value': set(test_config['expected'])}), set(test_config['expected']))
+                f(config['expected'], config['expected']),
+                f(self.ext_class({'value': set(config['expected'])}), set(config['expected']))
             )
             self.assertEqual(
-                f(test_config['expected'], test_config['expected']),
-                f(self.ext_class({'value': set(test_config['expected'])}),
-                  self.ext_class({'value': set(test_config['expected'])}))
+                f(config['expected'], config['expected']),
+                f(self.ext_class({'value': set(config['expected'])}),
+                  self.ext_class({'value': set(config['expected'])}))
             )
 
-            for second_test_config in self.test_values.values():
-                intersection_expected = test_config['expected'] & second_test_config['expected']
+            for second_key, second_config in self.test_values.items():
+                intersection_expected = config['expected'] & second_config['expected']
                 self.assertEqual(
-                    f(test_config['expected'], intersection_expected),
-                    f(self.ext_class({'value': set(test_config['expected'])}), intersection_expected)
+                    f(config['expected'], intersection_expected),
+                    f(self.ext_class({'value': set(config['expected'])}), intersection_expected)
                 )
                 self.assertEqual(
-                    f(test_config['expected'], intersection_expected),
-                    f(self.ext_class({'value': set(test_config['expected'])}),
+                    f(config['expected'], intersection_expected),
+                    f(self.ext_class({'value': set(config['expected'])}),
                       self.ext_class({'value': intersection_expected}))
                 )
                 self.assertEqual(
-                    f(test_config['expected'], intersection_expected),
-                    f(self.ext_class({'value': test_config['expected']}),
+                    f(config['expected'], intersection_expected),
+                    f(self.ext_class({'value': config['expected']}),
                       self.ext_class({'value': set(intersection_expected)}))
                 )
 
-                union_expected = test_config['expected'] | second_test_config['expected']
+                union_expected = config['expected'] | second_config['expected']
                 self.assertEqual(
-                    f(test_config['expected'], set(union_expected)),
-                    f(self.ext_class({'value': set(test_config['expected'])}), union_expected)
+                    f(config['expected'], set(union_expected)),
+                    f(self.ext_class({'value': set(config['expected'])}), union_expected)
                 )
                 self.assertEqual(
-                    f(test_config['expected'], set(union_expected)),
-                    f(self.ext_class({'value': set(test_config['expected'])}),
+                    f(config['expected'], set(union_expected)),
+                    f(self.ext_class({'value': set(config['expected'])}),
                       self.ext_class({'value': set(union_expected)}))
                 )
                 self.assertEqual(
-                    f(test_config['expected'], set(union_expected)),
-                    f(self.ext_class({'value': test_config['expected']}), set(union_expected))
+                    f(config['expected'], set(union_expected)),
+                    f(self.ext_class({'value': config['expected']}), set(union_expected))
                 )
 
-                symmetric_diff_expected = test_config['expected'] ^ second_test_config['expected']
+                symmetric_diff_expected = config['expected'] ^ second_config['expected']
                 self.assertEqual(
-                    f(test_config['expected'], set(symmetric_diff_expected)),
-                    f(self.ext_class({'value': set(test_config['expected'])}), set(symmetric_diff_expected))
+                    f(config['expected'], set(symmetric_diff_expected)),
+                    f(self.ext_class({'value': set(config['expected'])}), set(symmetric_diff_expected))
                 )
                 self.assertEqual(
-                    f(test_config['expected'], set(symmetric_diff_expected)),
-                    f(self.ext_class({'value': set(test_config['expected'])}),
+                    f(config['expected'], set(symmetric_diff_expected)),
+                    f(self.ext_class({'value': set(config['expected'])}),
                       self.ext_class({'value': set(symmetric_diff_expected)}))
                 )
                 self.assertEqual(
-                    f(set(symmetric_diff_expected), test_config['expected']),
+                    f(set(symmetric_diff_expected), config['expected']),
                     f(self.ext_class({'value': set(symmetric_diff_expected)}),
-                      self.ext_class({'value': set(test_config['expected'])}))
+                      self.ext_class({'value': set(config['expected'])}))
                 )
 
     def test_add(self):
-        for test_key, test_config in self.test_values.items():
-            for values in test_config['values']:
+        for key, config in self.test_values.items():
+            for values in config['values']:
                 ext = self.ext_class({'value': set()})
                 for value in values:
                     ext.add(value)
                     self.assertIn(value, ext)
                     # Note: we cannot assert the length, because values might include alias values
 
-                self.assertEqual(ext, self.ext_class({'value': test_config['expected']}))
+                self.assertEqual(ext, self.ext_class({'value': config['expected']}))
 
     def test_copy(self):
         for config in self.test_values.values():
@@ -1218,10 +1210,10 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
     }
 
     def test_from_subject_key_identifier(self):
-        for test_key, test_config in self.test_values.items():
-            ski = SubjectKeyIdentifier({'value': test_config['expected']})
+        for key, config in self.test_values.items():
+            ski = SubjectKeyIdentifier({'value': config['expected']})
             ext = self.ext_class(ski)
-            self.assertExtensionEqual(ext, self.ext_class({'value': test_config['expected']}))
+            self.assertExtensionEqual(ext, self.ext_class({'value': config['expected']}))
 
 
 class BasicConstraintsTestCase(ExtensionTestMixin, TestCase):
