@@ -1997,372 +1997,158 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.assertEqual(str(self.pi_empty), 'PolicyInformation(oid=None, 0 qualifiers)')
 
 
-class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):
+class CertificatePoliciesTestCase(ListExtensionTestMixin, NewExtensionTestMixin, TestCase):
     ext_class = CertificatePolicies
     oid = '2.5.29.32.0'
 
-    q1 = 'text1'
-    q2 = x509.UserNotice(explicit_text='text2', notice_reference=None)
-    q3 = x509.UserNotice(
-        explicit_text=None,
-        notice_reference=x509.NoticeReference(organization='text3', notice_numbers=[1])
-    )
-    q4 = 'text4'
-    q5 = x509.UserNotice(
-        explicit_text='text5',
-        notice_reference=x509.NoticeReference(organization='text6', notice_numbers=[1, 2, 3])
-    )
+    text1, text2, text3, text4, text5, text6 = ['text%s' % i for i in range(1, 7)]
 
-    xpi1 = x509.PolicyInformation(policy_identifier=ObjectIdentifier(oid),
-                                  policy_qualifiers=[q1])
-    xpi2 = x509.PolicyInformation(
-        policy_identifier=ObjectIdentifier(oid),
-        policy_qualifiers=[q2],
-    )
-    xpi3 = x509.PolicyInformation(
-        policy_identifier=ObjectIdentifier(oid),
-        policy_qualifiers=[q3],
-    )
-    xpi4 = x509.PolicyInformation(
-        policy_identifier=ObjectIdentifier(oid),
-        policy_qualifiers=[q4, q5],
-    )
-    spi1 = {
+    un1 = {
         'policy_identifier': oid,
-        'policy_qualifiers': ['text1'],
+        'policy_qualifiers': [text1],
     }
-    spi2 = {
+    un2 = {
         'policy_identifier': oid,
         'policy_qualifiers': [
-            {'explicit_text': 'text2', }
+            {'explicit_text': text2, }
         ],
     }
-    spi3 = {
+    un3 = {
         'policy_identifier': oid,
         'policy_qualifiers': [
             {
                 'notice_reference': {
-                    'organization': 'text3',
+                    'organization': text3,
                     'notice_numbers': [1, ],
                 }
             }
         ],
     }
-    spi4 = {
+    un4 = {
         'policy_identifier': oid,
         'policy_qualifiers': [
-            'text4',
+            text4,
             {
-                'explicit_text': 'text5',
+                'explicit_text': text5,
                 'notice_reference': {
-                    'organization': 'text6',
+                    'organization': text6,
                     'notice_numbers': [1, 2, 3],
                 }
             }
         ],
     }
-    x1 = x509.Extension(
-        oid=ExtensionOID.CERTIFICATE_POLICIES, critical=False,
-        value=x509.CertificatePolicies(policies=[xpi1])
+    p1 = PolicyInformation(un1)
+    p2 = PolicyInformation(un2)
+    p3 = PolicyInformation(un3)
+    p4 = PolicyInformation(un4)
+
+    xun1 = text1
+    xun2 = x509.UserNotice(explicit_text=text2, notice_reference=None)
+    xun3 = x509.UserNotice(
+        explicit_text=None, notice_reference=x509.NoticeReference(organization=text3, notice_numbers=[1]))
+    xun4_1 = text4
+    xun4_2 = x509.UserNotice(
+        explicit_text=text5,
+        notice_reference=x509.NoticeReference(organization=text6, notice_numbers=[1, 2, 3])
     )
-    x2 = x509.Extension(
-        oid=ExtensionOID.CERTIFICATE_POLICIES, critical=False,
-        value=x509.CertificatePolicies(policies=[xpi2])
-    )
-    x3 = x509.Extension(
-        oid=ExtensionOID.CERTIFICATE_POLICIES, critical=False,
-        value=x509.CertificatePolicies(policies=[xpi3])
-    )
-    x4 = x509.Extension(
-        oid=ExtensionOID.CERTIFICATE_POLICIES, critical=False,
-        value=x509.CertificatePolicies(policies=[xpi4])
-    )
-    x5 = x509.Extension(
-        oid=ExtensionOID.CERTIFICATE_POLICIES, critical=False,
-        value=x509.CertificatePolicies(policies=[xpi1, xpi2, xpi4])
-    )
-    x6 = x509.Extension(
-        oid=ExtensionOID.CERTIFICATE_POLICIES, critical=True,
-        value=x509.CertificatePolicies(policies=[])
-    )
-    xs = [x1, x2, x3, x4, x5, x6]
+    xpi1 = x509.PolicyInformation(policy_identifier=ObjectIdentifier(oid), policy_qualifiers=[xun1])
+    xpi2 = x509.PolicyInformation(policy_identifier=ObjectIdentifier(oid), policy_qualifiers=[xun2])
+    xpi3 = x509.PolicyInformation(policy_identifier=ObjectIdentifier(oid), policy_qualifiers=[xun3])
+    xpi4 = x509.PolicyInformation(policy_identifier=ObjectIdentifier(oid), policy_qualifiers=[xun4_1, xun4_2])
 
-    def test_append(self):
-        pass
+    xcp1 = x509.CertificatePolicies(policies=[xpi1])
+    xcp2 = x509.CertificatePolicies(policies=[xpi2])
+    xcp3 = x509.CertificatePolicies(policies=[xpi3])
+    xcp4 = x509.CertificatePolicies(policies=[xpi4])
+    xcp5 = x509.CertificatePolicies(policies=[xpi1, xpi2, xpi4])
 
-    def test_clear(self):
-        pass
-
-    def test_del_slices(self):
-        pass
-
-    def setUp(self):
-        super(CertificatePoliciesTestCase, self).setUp()
-        self.pi1 = PolicyInformation(self.xpi1)
-        self.pi2 = PolicyInformation(self.xpi2)
-        self.pi3 = PolicyInformation(self.xpi3)
-        self.pi4 = PolicyInformation(self.xpi4)
-        self.ext1 = CertificatePolicies({'value': [self.xpi1]})
-        self.ext2 = CertificatePolicies({'value': [self.xpi2]})
-        self.ext3 = CertificatePolicies({'value': [self.xpi3]})
-        self.ext4 = CertificatePolicies({'value': [self.xpi4]})
-        self.ext5 = CertificatePolicies({'value': [self.xpi1, self.xpi2, self.xpi4]})
-        self.ext6 = CertificatePolicies({'critical': True})
-        self.exts = [self.ext1, self.ext2, self.ext3, self.ext4, self.ext5, self.ext6]
-
-    def test_as_text(self):
-        self.assertEqual(
-            self.ext1.as_text(),
-            '* Policy Identifier: 2.5.29.32.0\n'
-            '  Policy Qualifiers:\n'
-            '  * text1'
-        )
-        self.assertEqual(
-            self.ext2.as_text(),
-            '* Policy Identifier: 2.5.29.32.0\n'
-            '  Policy Qualifiers:\n'
-            '  * UserNotice:\n'
-            '    * Explicit text: text2'
-        )
-        self.assertEqual(
-            self.ext3.as_text(),
-            '* Policy Identifier: 2.5.29.32.0\n'
-            '  Policy Qualifiers:\n'
-            '  * UserNotice:\n'
-            '    * Reference:\n'
-            '      * Organiziation: text3\n'
-            '      * Notice Numbers: [1]'
-        )
-        self.assertEqual(
-            self.ext4.as_text(),
-            '* Policy Identifier: 2.5.29.32.0\n'
-            '  Policy Qualifiers:\n'
-            '  * text4\n'
-            '  * UserNotice:\n'
-            '    * Explicit text: text5\n'
-            '    * Reference:\n'
-            '      * Organiziation: text6\n'
-            '      * Notice Numbers: [1, 2, 3]'
-        )
-        self.assertEqual(
-            self.ext5.as_text(),
-            '* Policy Identifier: 2.5.29.32.0\n'
-            '  Policy Qualifiers:\n'
-            '  * text1\n'
-            '* Policy Identifier: 2.5.29.32.0\n'
-            '  Policy Qualifiers:\n'
-            '  * UserNotice:\n'
-            '    * Explicit text: text2\n'
-            '* Policy Identifier: 2.5.29.32.0\n'
-            '  Policy Qualifiers:\n'
-            '  * text4\n'
-            '  * UserNotice:\n'
-            '    * Explicit text: text5\n'
-            '    * Reference:\n'
-            '      * Organiziation: text6\n'
-            '      * Notice Numbers: [1, 2, 3]'
-        )
-        self.assertEqual(self.ext6.as_text(), '')
-
-    def test_count(self):
-        self.assertEqual(self.ext1.count(self.xpi1), 1)
-        self.assertEqual(self.ext1.count(self.spi1), 1)
-        self.assertEqual(self.ext1.count(self.pi1), 1)
-        self.assertEqual(self.ext1.count(self.xpi2), 0)
-        self.assertEqual(self.ext1.count(self.spi2), 0)
-        self.assertEqual(self.ext1.count(self.pi2), 0)
-
-    def test_del(self):
-        del self.ext1[0]
-        self.assertEqual(len(self.ext1), 0)
-
-    def test_extend(self):
-        self.ext1.extend([self.xpi2, self.pi4])
-        self.assertEqual(self.ext1, self.ext5)
-
-    def test_getitem(self):
-        self.assertEqual(self.ext1[0], self.pi1)
-        self.assertEqual(self.ext2[0], self.pi2)
-        self.assertEqual(self.ext3[0], self.pi3)
-        self.assertEqual(self.ext5[0], self.pi1)
-        self.assertEqual(self.ext5[1], self.pi2)
-        self.assertEqual(self.ext5[2], self.pi4)
-
-    def test_getitem_slices(self):
-        self.assertEqual(self.ext5[0:], [self.pi1, self.pi2, self.pi4])
-        self.assertEqual(self.ext5[1:], [self.pi2, self.pi4])
-        self.assertEqual(self.ext5[2:], [self.pi4])
-
-    def test_hash(self):
-        self.assertEqual(hash(self.ext1), hash(self.ext1))
-        self.assertEqual(hash(self.ext2), hash(self.ext2))
-        self.assertEqual(hash(self.ext3), hash(self.ext3))
-        self.assertEqual(hash(self.ext4), hash(self.ext4))
-        self.assertEqual(hash(self.ext5), hash(self.ext5))
-        self.assertEqual(hash(self.ext6), hash(self.ext6))
-
-        self.assertEqual(hash(self.ext1), hash(CertificatePolicies({'value': [self.xpi1]})))
-        self.assertEqual(hash(self.ext2), hash(CertificatePolicies({'value': [self.xpi2]})))
-        self.assertEqual(hash(self.ext3), hash(CertificatePolicies({'value': [self.xpi3]})))
-        self.assertEqual(hash(self.ext4), hash(CertificatePolicies({'value': [self.xpi4]})))
-        self.assertEqual(hash(self.ext5), hash(CertificatePolicies(
-            {'value': [self.xpi1, self.xpi2, self.xpi4]})))
-
-        self.assertEqual(hash(self.ext1), hash(CertificatePolicies({'value': [self.spi1]})))
-        self.assertEqual(hash(self.ext2), hash(CertificatePolicies({'value': [self.spi2]})))
-        self.assertEqual(hash(self.ext3), hash(CertificatePolicies({'value': [self.spi3]})))
-        self.assertEqual(hash(self.ext4), hash(CertificatePolicies({'value': [self.spi4]})))
-        self.assertEqual(hash(self.ext5), hash(CertificatePolicies(
-            {'value': [self.spi1, self.spi2, self.spi4]})))
-
-        self.assertNotEqual(hash(self.ext1), hash(self.ext2))
-        self.assertNotEqual(hash(self.ext1), hash(self.ext3))
-        self.assertNotEqual(hash(self.ext1), hash(self.ext4))
-        self.assertNotEqual(hash(self.ext1), hash(self.ext5))
-        self.assertNotEqual(hash(self.ext1), hash(self.ext6))
-        self.assertNotEqual(hash(self.ext2), hash(self.ext3))
-        self.assertNotEqual(hash(self.ext2), hash(self.ext4))
-        self.assertNotEqual(hash(self.ext2), hash(self.ext5))
-        self.assertNotEqual(hash(self.ext2), hash(self.ext6))
-        self.assertNotEqual(hash(self.ext3), hash(self.ext4))
-        self.assertNotEqual(hash(self.ext3), hash(self.ext5))
-        self.assertNotEqual(hash(self.ext3), hash(self.ext6))
-
-        self.assertNotEqual(hash(self.ext3), hash(self.ext6))
-        self.assertNotEqual(hash(self.ext4), hash(CertificatePolicies({'critical': False})))
-
-    def test_in(self):
-        self.assertIn(self.xpi1, self.ext1)
-        self.assertIn(self.spi1, self.ext1)
-        self.assertIn(self.pi1, self.ext1)
-
-        self.assertIn(self.xpi2, self.ext2)
-        self.assertIn(self.spi2, self.ext2)
-        self.assertIn(self.pi2, self.ext2)
-
-        self.assertIn(self.xpi1, self.ext5)
-        self.assertIn(self.xpi2, self.ext5)
-        self.assertIn(self.xpi4, self.ext5)
-
-    def test_insert(self):
-        self.assertEqual(self.ext1.serialize(), {'critical': False, 'value': [self.spi1]})
-        self.ext1.insert(0, self.xpi2)
-        self.assertEqual(self.ext1.serialize(), {'critical': False, 'value': [self.spi2, self.spi1]})
-        self.ext1.insert(1, self.spi3)
-        self.assertEqual(self.ext1.serialize(),
-                         {'critical': False, 'value': [self.spi2, self.spi3, self.spi1]})
-        self.ext1.insert(0, self.pi4)
-        self.assertEqual(self.ext1.serialize(),
-                         {'critical': False, 'value': [self.spi4, self.spi2, self.spi3, self.spi1]})
-
-    def test_len(self):
-        self.assertEqual(len(self.ext1), 1)
-        self.assertEqual(len(self.ext2), 1)
-        self.assertEqual(len(self.ext3), 1)
-        self.assertEqual(len(self.ext4), 1)
-        self.assertEqual(len(self.ext5), 3)
-        self.assertEqual(len(self.ext6), 0)
-
-    def test_ne(self):
-        self.assertNotEqual(self.ext1, self.ext2)
-        self.assertNotEqual(self.ext1, self.ext3)
-        self.assertNotEqual(self.ext1, self.ext4)
-        self.assertNotEqual(self.ext1, self.ext5)
-        self.assertNotEqual(self.ext1, self.ext6)
-
-        self.assertNotEqual(self.ext2, self.ext3)
-        self.assertNotEqual(self.ext2, self.ext4)
-        self.assertNotEqual(self.ext2, self.ext5)
-        self.assertNotEqual(self.ext2, self.ext6)
-
-        self.assertNotEqual(self.ext3, self.ext4)
-        self.assertNotEqual(self.ext3, self.ext5)
-        self.assertNotEqual(self.ext3, self.ext6)
-
-        self.assertNotEqual(self.ext6, CertificatePolicies({'critical': False}))
-
-    def test_not_in(self):
-        self.assertNotIn(self.xpi2, self.ext1)
-        self.assertNotIn(self.spi2, self.ext1)
-        self.assertNotIn(self.pi2, self.ext1)
-
-        self.assertNotIn(self.xpi2, self.ext6)
-        self.assertNotIn(self.spi2, self.ext6)
-        self.assertNotIn(self.pi2, self.ext6)
-
-    def test_pop(self):
-        self.assertEqual(self.ext1.pop(), self.pi1)
-        self.assertEqual(len(self.ext1), 0)
-        self.assertEqual(self.ext5.pop(1), self.pi2)
-        self.assertEqual(len(self.ext5), 2)
-
-    def test_remove(self):
-        self.ext1.remove(self.xpi1)
-        self.assertEqual(len(self.ext1), 0)
-        self.ext2.remove(self.spi2)
-        self.assertEqual(len(self.ext2), 0)
-        self.ext3.remove(self.pi3)
-        self.assertEqual(len(self.ext3), 0)
-
-    def test_repr(self):
-        self.assertEqual(
-            repr(self.ext1),
-            '<CertificatePolicies: [PolicyInformation(oid=2.5.29.32.0, 1 qualifier)], critical=False>')
-        self.assertEqual(
-            repr(self.ext2),
-            '<CertificatePolicies: [PolicyInformation(oid=2.5.29.32.0, 1 qualifier)], critical=False>')
-        self.assertEqual(
-            repr(self.ext3),
-            '<CertificatePolicies: [PolicyInformation(oid=2.5.29.32.0, 1 qualifier)], critical=False>')
-        self.assertEqual(
-            repr(self.ext4),
-            '<CertificatePolicies: [PolicyInformation(oid=2.5.29.32.0, 2 qualifiers)], critical=False>')
-        self.assertEqual(
-            repr(self.ext5),
-            '<CertificatePolicies: [PolicyInformation(oid=2.5.29.32.0, 1 qualifier), '
-            'PolicyInformation(oid=2.5.29.32.0, 1 qualifier), PolicyInformation(oid=2.5.29.32.0, 2 '
-            'qualifiers)], critical=False>'
-        )
-        self.assertEqual(
-            repr(self.ext6),
-            '<CertificatePolicies: [], critical=True>'
-        )
-
-    def test_serialize(self):
-        self.assertEqual(self.ext1.serialize(), {'critical': False, 'value': [self.spi1]})
-        self.assertEqual(self.ext2.serialize(), {'critical': False, 'value': [self.spi2]})
-        self.assertEqual(self.ext3.serialize(), {'critical': False, 'value': [self.spi3]})
-        self.assertEqual(self.ext4.serialize(), {'critical': False, 'value': [self.spi4]})
-        self.assertEqual(self.ext5.serialize(),
-                         {'critical': False, 'value': [self.spi1, self.spi2, self.spi4]})
-        self.assertEqual(self.ext6.serialize(), {'critical': True, 'value': []})
-
-        self.assertEqual(self.ext1, CertificatePolicies(self.ext1.serialize()))
-        self.assertEqual(self.ext2, CertificatePolicies(self.ext2.serialize()))
-        self.assertEqual(self.ext3, CertificatePolicies(self.ext3.serialize()))
-        self.assertEqual(self.ext4, CertificatePolicies(self.ext4.serialize()))
-        self.assertEqual(self.ext5, CertificatePolicies(self.ext5.serialize()))
-        self.assertEqual(self.ext6, CertificatePolicies(self.ext6.serialize()))
-
-    def test_setitem(self):
-        self.ext1[0] = self.xpi2
-        self.assertEqual(self.ext1, self.ext2)
-        self.ext1[0] = self.spi3
-        self.assertEqual(self.ext1, self.ext3)
-        self.ext1[0] = self.pi4
-        self.assertEqual(self.ext1, self.ext4)
-
-    def test_setitem_slices(self):
-        self.ext1[0:] = [self.xpi2]
-        self.assertEqual(self.ext1, self.ext2)
+    test_values = {
+        'one': {
+            'values': [[un1], [xpi1]],
+            'expected': [p1],
+            'expected_djca': [p1],
+            'expected_repr': '<CertificatePolicies: '
+                             '[PolicyInformation(oid=%s, 1 qualifier)], critical=%%s>' % oid,
+            'expected_serialized': [un1],
+            'expected_str': 'CertificatePolicies(1 Policy, critical={critical})',
+            'expected_text': '* Policy Identifier: %s\n  Policy Qualifiers:\n  * %s' % (oid, text1),
+            'extension_type': xcp1,
+        },
+        'two': {
+            'values': [[un2], [xpi2]],
+            'expected': [p2],
+            'expected_djca': [p2],
+            'expected_repr': '<CertificatePolicies: '
+                             '[PolicyInformation(oid=%s, 1 qualifier)], critical=%%s>' % oid,
+            'expected_serialized': [un2],
+            'expected_str': 'CertificatePolicies(1 Policy, critical={critical})',
+            'expected_text': '* Policy Identifier: %s\n  Policy Qualifiers:\n  * UserNotice:\n'
+                             '    * Explicit text: %s' % (oid, text2),
+            'extension_type': xcp2,
+        },
+        'three': {
+            'values': [[un3], [xpi3]],
+            'expected': [p3],
+            'expected_djca': [p3],
+            'expected_repr': '<CertificatePolicies: '
+                             '[PolicyInformation(oid=%s, 1 qualifier)], critical=%%s>' % oid,
+            'expected_serialized': [un3],
+            'expected_str': 'CertificatePolicies(1 Policy, critical={critical})',
+            'expected_text': '* Policy Identifier: %s\n  Policy Qualifiers:\n  * UserNotice:\n'
+                             '    * Reference:\n      * Organiziation: %s\n'
+                             '      * Notice Numbers: [1]' % (oid, text3),
+            'extension_type': xcp3,
+        },
+        'four': {
+            'values': [[un4], [xpi4]],
+            'expected': [p4],
+            'expected_djca': [p4],
+            'expected_repr': '<CertificatePolicies: '
+                             '[PolicyInformation(oid=%s, 2 qualifiers)], critical=%%s>' % oid,
+            'expected_serialized': [un4],
+            'expected_str': 'CertificatePolicies(1 Policy, critical={critical})',
+            'expected_text': '* Policy Identifier: %s\n  Policy Qualifiers:\n  * %s\n  * UserNotice:\n'
+                             '    * Explicit text: %s\n    * Reference:\n      * Organiziation: %s\n'
+                             '      * Notice Numbers: [1, 2, 3]' % (oid, text4, text5, text6),
+            'extension_type': xcp4,
+        },
+        'five': {
+            'values': [[un1, un2, un4], [xpi1, xpi2, xpi4], [un1, xpi2, un4]],
+            'expected': [p1, p2, p4],
+            'expected_djca': [p1, p2, p4],
+            'expected_repr': '<CertificatePolicies: ['
+                             'PolicyInformation(oid=%s, 1 qualifier), '
+                             'PolicyInformation(oid=%s, 1 qualifier), '
+                             'PolicyInformation(oid=%s, 2 qualifiers)], critical=%%s>' % (oid, oid, oid),
+            'expected_serialized': [un1, un2, un4],
+            'expected_str': 'CertificatePolicies(3 Policies, critical={critical})',
+            'expected_text': '* Policy Identifier: %s\n  Policy Qualifiers:\n  * %s\n'
+                             '* Policy Identifier: %s\n  Policy Qualifiers:\n  * UserNotice:\n'
+                             '    * Explicit text: %s\n'
+                             '* Policy Identifier: %s\n  Policy Qualifiers:\n  * %s\n  * UserNotice:\n'
+                             '    * Explicit text: %s\n    * Reference:\n      * Organiziation: %s\n'
+                             '      * Notice Numbers: [1, 2, 3]' % (oid, text1, oid, text2, oid, text4,
+                                                                    text5, text6),
+            'extension_type': xcp5,
+        },
+    }
 
     def test_str(self):
-        self.assertEqual(str(self.ext1), 'CertificatePolicies(1 Policy, critical=False)')
-        self.assertEqual(str(self.ext2), 'CertificatePolicies(1 Policy, critical=False)')
-        self.assertEqual(str(self.ext3), 'CertificatePolicies(1 Policy, critical=False)')
-        self.assertEqual(str(self.ext4), 'CertificatePolicies(1 Policy, critical=False)')
-        self.assertEqual(str(self.ext5), 'CertificatePolicies(3 Policies, critical=False)')
-        self.assertEqual(str(self.ext6), 'CertificatePolicies(0 Policies, critical=True)')
+        # overwritten for now because str() does not append "/critical".
+        for config in self.test_values.values():
+            for value in config['values']:
+                ext = self.ext(value)
+                expected = config['expected_str'] if six.PY3 else config['expected_str_py2']
+
+                self.assertEqual(str(ext), expected.format(critical=ext.default_critical))
+
+                if self.force_critical is not False:
+                    ext = self.ext(value, critical=True)
+                    self.assertEqual(str(ext), expected.format(critical=True))
+
+                if self.force_critical is not True:
+                    ext = self.ext(value, critical=False)
+                    self.assertEqual(str(ext), expected.format(critical=False))
 
 
 class IssuerAlternativeNameTestCase(ListExtensionTestMixin, NewExtensionTestMixin, TestCase):
