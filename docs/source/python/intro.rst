@@ -81,7 +81,7 @@ Both certificate authorities and certificates have many common extensions availa
    >>> ca.key_usage
    <KeyUsage: ['cRLSign', 'keyCertSign'], critical=True>
    >>> ca.basic_constraints
-   <BasicConstraints: 'CA:TRUE', critical=True>
+   <BasicConstraints: ca=True, pathlen=None, critical=True>
 
 *******
 Signals

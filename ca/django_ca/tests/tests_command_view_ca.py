@@ -57,7 +57,7 @@ X509 v3 certificate extensions for signed certificates:
 * HPKP pin: {hpkp}
 
 X509 v3 certificate extensions for CA:
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -262,7 +262,7 @@ X509 v3 certificate extensions for signed certificates:
 * HPKP pin: {hpkp}
 
 X509 v3 certificate extensions for CA:
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -308,7 +308,7 @@ X509 v3 certificate extensions for signed certificates:
 * HPKP pin: {hpkp}
 
 X509 v3 certificate extensions for CA:
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 AuthorityKeyIdentifier{authority_key_identifier_critical}:
@@ -372,7 +372,7 @@ X509 v3 certificate extensions for signed certificates:
 * HPKP pin: {hpkp}
 
 X509 v3 certificate extensions for CA:
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -413,7 +413,7 @@ X509 v3 certificate extensions for signed certificates:
 * HPKP pin: {hpkp}
 
 X509 v3 certificate extensions for CA:
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 AuthorityKeyIdentifier{authority_key_identifier_critical}:
@@ -482,7 +482,7 @@ X509 v3 certificate extensions for signed certificates:
 * HPKP pin: {hpkp}
 
 X509 v3 certificate extensions for CA:
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 AuthorityKeyIdentifier{authority_key_identifier_critical}:
@@ -521,7 +521,7 @@ X509 v3 certificate extensions for signed certificates:
 * HPKP pin: {hpkp}
 
 X509 v3 certificate extensions for CA:
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 AuthorityKeyIdentifier{authority_key_identifier_critical}:
@@ -586,7 +586,7 @@ X509 v3 certificate extensions for signed certificates:
 * HPKP pin: {hpkp}
 
 X509 v3 certificate extensions for CA:
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 AuthorityKeyIdentifier{authority_key_identifier_critical}:
@@ -629,7 +629,7 @@ X509 v3 certificate extensions for signed certificates:
 * HPKP pin: {hpkp}
 
 X509 v3 certificate extensions for CA:
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -676,7 +676,7 @@ X509 v3 certificate extensions for signed certificates:
 * HPKP pin: {hpkp}
 
 X509 v3 certificate extensions for CA:
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -761,7 +761,7 @@ X509 v3 certificate extensions for signed certificates:
 * HPKP pin: {hpkp}
 
 X509 v3 certificate extensions for CA:
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -802,7 +802,7 @@ X509 v3 certificate extensions for signed certificates:
 * HPKP pin: {hpkp}
 
 X509 v3 certificate extensions for CA:
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -846,7 +846,7 @@ X509 v3 certificate extensions for signed certificates:
 * HPKP pin: {hpkp}
 
 X509 v3 certificate extensions for CA:
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -930,7 +930,7 @@ X509 v3 certificate extensions for signed certificates:
 * HPKP pin: {hpkp}
 
 X509 v3 certificate extensions for CA:
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 AuthorityKeyIdentifier{authority_key_identifier_critical}:

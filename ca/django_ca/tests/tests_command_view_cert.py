@@ -34,7 +34,7 @@ output = {
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -54,10 +54,10 @@ KeyUsage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectAltName{subject_alternative_name_critical}:
-    * {subject_alternative_name}
+SubjectAlternativeName{subject_alternative_name_critical}:
+    * {subject_alternative_name_0}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
-    {subject_key_identifier}
+    {subject_key_identifier_text}
 Watchers:
 Digest:
     md5: {md5}
@@ -71,7 +71,7 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -91,10 +91,10 @@ KeyUsage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectAltName{subject_alternative_name_critical}:
-    * {subject_alternative_name}
+SubjectAlternativeName{subject_alternative_name_critical}:
+    * {subject_alternative_name_0}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
-    {subject_key_identifier}
+    {subject_key_identifier_text}
 Watchers:
 Digest:
     md5: {md5}
@@ -108,7 +108,7 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -128,10 +128,10 @@ KeyUsage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectAltName{subject_alternative_name_critical}:
-    * {subject_alternative_name}
+SubjectAlternativeName{subject_alternative_name_critical}:
+    * {subject_alternative_name_0}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
-    {subject_key_identifier}
+    {subject_key_identifier_text}
 Watchers:
 Digest:
     md5: {md5}
@@ -145,7 +145,7 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -165,10 +165,10 @@ KeyUsage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectAltName{subject_alternative_name_critical}:
-    * {subject_alternative_name}
+SubjectAlternativeName{subject_alternative_name_critical}:
+    * {subject_alternative_name_0}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
-    {subject_key_identifier}
+    {subject_key_identifier_text}
 Watchers:
 Digest:
     md5: {md5}
@@ -182,7 +182,7 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -202,10 +202,10 @@ KeyUsage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectAltName{subject_alternative_name_critical}:
-    * {subject_alternative_name}
+SubjectAlternativeName{subject_alternative_name_critical}:
+    * {subject_alternative_name_0}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
-    {subject_key_identifier}
+    {subject_key_identifier_text}
 Watchers:
 Digest:
     md5: {md5}
@@ -219,7 +219,7 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -236,10 +236,10 @@ ExtendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage_0}
 KeyUsage{key_usage_critical}:
     * {key_usage_0}
-SubjectAltName{subject_alternative_name_critical}:
-    * {subject_alternative_name}
+SubjectAlternativeName{subject_alternative_name_critical}:
+    * {subject_alternative_name_0}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
-    {subject_key_identifier}
+    {subject_key_identifier_text}
 Watchers:
 Digest:
     md5: {md5}
@@ -253,7 +253,7 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -273,10 +273,10 @@ KeyUsage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectAltName{subject_alternative_name_critical}:
-    * {subject_alternative_name}
+SubjectAlternativeName{subject_alternative_name_critical}:
+    * {subject_alternative_name_0}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
-    {subject_key_identifier}
+    {subject_key_identifier_text}
 Watchers:
 Digest:
     md5: {md5}
@@ -290,7 +290,7 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -309,10 +309,10 @@ KeyUsage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectAltName{subject_alternative_name_critical}:
-    * {subject_alternative_name}
+SubjectAlternativeName{subject_alternative_name_critical}:
+    * {subject_alternative_name_0}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
-    {subject_key_identifier}
+    {subject_key_identifier_text}
 Watchers:
 Digest:
     md5: {md5}
@@ -326,7 +326,7 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -348,7 +348,7 @@ KeyUsage{key_usage_critical}:
     * {key_usage_1}
     * {key_usage_2}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
-    {subject_key_identifier}
+    {subject_key_identifier_text}
 Watchers:
 Digest:
     md5: {md5}
@@ -362,7 +362,7 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -381,10 +381,10 @@ KeyUsage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectAltName{subject_alternative_name_critical}:
-    * {subject_alternative_name}
+SubjectAlternativeName{subject_alternative_name_critical}:
+    * {subject_alternative_name_0}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
-    {subject_key_identifier}
+    {subject_key_identifier_text}
 Watchers:
 Digest:
     md5: {md5}
@@ -411,7 +411,7 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -429,7 +429,7 @@ ExtendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage_1}
     * {extended_key_usage_2}
     * {extended_key_usage_3}
-IssuerAltName{issuer_alternative_name_critical}:
+IssuerAlternativeName{issuer_alternative_name_critical}:
     * {issuer_alternative_name[0]}
 KeyUsage{key_usage_critical}:
     * {key_usage_0}
@@ -442,12 +442,12 @@ NameConstraints{name_constraints_critical}:
       * DNS:{name_constraints.excluded[0].value}
 OCSPNoCheck{ocsp_no_check_critical}: Yes
 {precert_poison}
-SubjectAltName{subject_alternative_name_critical}:
-    * {subject_alternative_name[0]}
-    * {subject_alternative_name[1]}
-    * {subject_alternative_name[2]}
+SubjectAlternativeName{subject_alternative_name_critical}:
+    * {subject_alternative_name_0}
+    * {subject_alternative_name_1}
+    * {subject_alternative_name_2}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
-    {subject_key_identifier}
+    {subject_key_identifier_text}
 TLSFeature{tls_feature_critical}:
     * {tls_feature_0}
     * {tls_feature_1}
@@ -464,7 +464,7 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -488,7 +488,7 @@ ExtendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage_1}
     * {extended_key_usage_2}
     * {extended_key_usage_3}
-IssuerAltName{issuer_alternative_name_critical}:
+IssuerAlternativeName{issuer_alternative_name_critical}:
     * {issuer_alternative_name[0]}
     * {issuer_alternative_name[1]}
 KeyUsage{key_usage_critical}:
@@ -499,13 +499,13 @@ NameConstraints{name_constraints_critical}:
     Permitted:
       * DNS:{name_constraints.permitted[0].value}
 OCSPNoCheck{ocsp_no_check_critical}: Yes
-SubjectAltName{subject_alternative_name_critical}:
+SubjectAlternativeName{subject_alternative_name_critical}:
     * {subject_alternative_name[0]}
     * {subject_alternative_name[1]}
     * {subject_alternative_name[2]}
     * {subject_alternative_name[3]}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
-    {subject_key_identifier}
+    {subject_key_identifier_text}
 TLSFeature{tls_feature_critical}:
     * {tls_feature_0}
 Watchers:
@@ -561,7 +561,7 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: {status}
-SubjectAltName:
+SubjectAlternativeName:
     * {subject_alternative_name_0}
 Watchers:
 Digest:
@@ -582,7 +582,7 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: {status}
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -602,10 +602,10 @@ KeyUsage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectAltName{subject_alternative_name_critical}:
-    * {subject_alternative_name}
+SubjectAlternativeName{subject_alternative_name_critical}:
+    * {subject_alternative_name_0}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
-    {subject_key_identifier}
+    {subject_key_identifier_text}
 Watchers:
 Digest:
     md5: {md5}
@@ -635,6 +635,7 @@ HPKP pin: {hpkp}
 
     @freeze_time(timestamps['everything_valid'])
     def test_der(self):
+        self.maxDiff = None
         cert = self.certs['child-cert']
         stdout, stderr = self.cmd('view_cert', cert.serial, format=Encoding.DER,
                                   stdout=BytesIO(), stderr=BytesIO())
@@ -642,7 +643,7 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-SubjectAltName:
+SubjectAlternativeName{subject_alternative_name_critical}:
     * {subject_alternative_name[0]}
 Watchers:
 Digest:
@@ -667,7 +668,7 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Revoked
-SubjectAltName:
+SubjectAlternativeName:
     * DNS:{cn}
 Watchers:
 Digest:
@@ -714,8 +715,9 @@ HPKP pin: %(hpkp)s
 
     @freeze_time("2019-04-01")
     def test_contrib_godaddy_derstandardat(self):
+        self.maxDiff = None
         if ca_settings.OPENSSL_SUPPORTS_SCT:
-            sct = """SignedCertificateTimestampList:
+            sct = """PrecertificateSignedCertificateTimestamps:
     * Precertificate (v1):
         Timestamp: 2019-03-27 09:13:54.342000
         Log ID: a4b90990b418581487bb13a2cc67700a3c359804f91bdfb8e377cd0ec80ddc10
@@ -727,14 +729,14 @@ HPKP pin: %(hpkp)s
         Log ID: 4494652eb0eeceafc44007d8a8fe28c0dae682bed8cb31b53fd33396b5b681a8"""
 
         else:
-            sct = '''SignedCertificateTimestampList:
+            sct = '''PrecertificateSignedCertificateTimestamps:
     Could not parse extension (Requires OpenSSL 1.1.0f or later)'''
 
         self.assertContrib('godaddy_g2_intermediate-cert', '''Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -760,7 +762,7 @@ KeyUsage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
 {sct}
-SubjectAltName{subject_alternative_name_critical}:
+SubjectAlternativeName{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
     * {subject_alternative_name_1}
     * {subject_alternative_name_2}
@@ -826,7 +828,7 @@ HPKP pin: {hpkp}
         name = 'letsencrypt_x3-cert'
         if ca_settings.OPENSSL_SUPPORTS_SCT:
             context = self.get_cert_context(name)
-            sct = '''SignedCertificateTimestampList{sct_critical}:
+            sct = '''PrecertificateSignedCertificateTimestamps{sct_critical}:
     * Precertificate ({sct_values[0][version]}):
         Timestamp: {sct_values[0][timestamp]}
         Log ID: {sct_values[0][log_id]}
@@ -835,14 +837,14 @@ HPKP pin: {hpkp}
         Log ID: {sct_values[1][log_id]}'''.format(**context)
 
         else:
-            sct = '''SignedCertificateTimestampList:
+            sct = '''PrecertificateSignedCertificateTimestamps:
     Could not parse extension (Requires OpenSSL 1.1.0f or later)'''
 
         self.assertContrib('letsencrypt_x3-cert', '''Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -864,7 +866,7 @@ KeyUsage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
 {sct}
-SubjectAltName{subject_alternative_name_critical}:
+SubjectAlternativeName{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
     * {subject_alternative_name_1}
     * {subject_alternative_name_2}
@@ -892,7 +894,7 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInfoAccess{authority_information_access_critical}:
+AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
@@ -917,7 +919,7 @@ ExtendedKeyUsage{extended_key_usage_critical}:
 KeyUsage{key_usage_critical}:
     * {key_usage_0}
 {precert_poison}
-SubjectAltName{subject_alternative_name_critical}:
+SubjectAlternativeName{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
     * {subject_alternative_name_1}
     * {subject_alternative_name_2}

@@ -111,12 +111,13 @@ class Extension(object):
         return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
 
     def __repr__(self):
-        return '<%s: %s, critical=%r>' % (self.name, self.value, self.critical)
+        return '<%s: %s, critical=%r>' % (self.name, self._repr_value(), self.critical)
 
     def __str__(self):
-        if self.critical:
-            return '%s/critical' % self.as_text()
-        return self.as_text()
+        return repr(self)
+
+    def _repr_value(self):
+        return self.value
 
     def from_extension(self, value):
         raise NotImplementedError
@@ -223,11 +224,6 @@ class NullExtension(Extension):
     def __repr__(self):
         return '<%s: critical=%r>' % (self.__class__.__name__, self.critical)
 
-    def __str__(self):
-        if self.critical:
-            return'%s/critical' % self.as_text()
-        return self.as_text()
-
     def as_text(self):
         return self.__class__.__name__
 
@@ -275,19 +271,12 @@ class IterableExtension(Extension):
     def __len__(self):
         return len(self.value)
 
-    def __repr__(self):
+    def _repr_value(self):
         val = self.serialize_iterable()
 
         if six.PY2:  # pragma: no branch, pragma: only py2 - otherwise we have the u'' prefix in output
             val = [str(v) for v in val]
-
-        return '<%s: %r, critical=%r>' % (self.__class__.__name__, val, self.critical)
-
-    def __str__(self):
-        val = "%s" % ','.join(self.serialize_iterable())
-        if self.critical:
-            return '%s/critical' % val
-        return val
+        return repr(val)
 
     def as_text(self):
         return '\n'.join(['* %s' % v for v in self.serialize_iterable()])
@@ -385,6 +374,9 @@ class OrderedSetExtension(IterableExtension):
         >>> e
         <OrderedSetExtension: ['bar'], critical=False>
     """
+
+    name = 'OrderedSetExtension'
+
     def __and__(self, other):  # & operator == intersection()
         value = self.value & self.parse_iterable(other)
         return OrderedSetExtension({'critical': self.critical, 'value': value})
@@ -654,7 +646,7 @@ class DistributionPoint(GeneralNameMixin):
         return '<DistributionPoint: %s>' % ', '.join(self.__get_values())
 
     def __str__(self):
-        return 'DistributionPoint(%s)' % ', '.join(self.__get_values())
+        return repr(self)
 
     def as_text(self):
         if self.full_name:
@@ -741,20 +733,6 @@ class PolicyInformation(object):
             return 0
         return len(self.policy_qualifiers)
 
-    def __str__(self):
-        length = len(self)
-        if length == 1:
-            qual = '1 qualifier'
-        else:
-            qual = '%s qualifiers' % length
-
-        if self.policy_identifier is None:
-            ident = 'None'
-        else:
-            ident = self.policy_identifier.dotted_string
-
-        return 'PolicyInformation(oid=%s, %s)' % (ident, qual)
-
     def __repr__(self):
         if self.policy_identifier is None:
             ident = 'None'
@@ -762,6 +740,9 @@ class PolicyInformation(object):
             ident = self.policy_identifier.dotted_string
 
         return '<PolicyInformation(oid=%s, qualifiers=%r)>' % (ident, self.serialize_policy_qualifiers())
+
+    def __str__(self):
+        return repr(self)
 
     def append(self, value):
         if self.policy_qualifiers is None:
@@ -935,7 +916,7 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
     def __hash__(self):
         return hash((tuple(self.value['issuers']), tuple(self.value['ocsp']), self.critical, ))
 
-    def __repr__(self):
+    def _repr_value(self):
         issuers = [self.serialize_value(v) for v in self.value['issuers']]
         ocsp = [self.serialize_value(v) for v in self.value['ocsp']]
 
@@ -943,18 +924,7 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
             issuers = [str(v) for v in issuers]
             ocsp = [str(v) for v in ocsp]
 
-        return '<%s: issuers=%s, ocsp=%s, critical=%r>' % (
-            self.__class__.__name__, issuers, ocsp, self.critical)
-
-    def __str__(self):
-        issuers = [self.serialize_value(v) for v in self.value['issuers']]
-        ocsp = [self.serialize_value(v) for v in self.value['ocsp']]
-
-        if six.PY2:  # pragma: no branch, pragma: only py2 - otherwise we have the u'' prefix in output
-            issuers = [str(v) for v in issuers]
-            ocsp = [str(v) for v in ocsp]
-
-        return 'AuthorityInformationAccess(issuers=%s, ocsp=%s, critical=%s)' % (issuers, ocsp, self.critical)
+        return 'issuers=%r, ocsp=%r' % (issuers, ocsp)
 
     def as_text(self):
         text = ''
@@ -1084,8 +1054,11 @@ class BasicConstraints(Extension):
     def __hash__(self):
         return hash((self.value['ca'], self.value['pathlen'], self.critical, ))
 
-    def __repr__(self):
-        return '<%s: %r, critical=%r>' % (self.__class__.__name__, str(self.as_text()), self.critical)
+    def _repr_value(self):
+        val = 'ca=%s' % self.value['ca']
+        if self.value['ca']:
+            val += ', pathlen=%s' % self.value['pathlen']
+        return val
 
     @property
     def ca(self):
@@ -1169,16 +1142,6 @@ class CRLDistributionPoints(ListExtension):
     def __hash__(self):
         return hash((tuple(self.value), self.critical, ))
 
-    def __repr__(self):
-        return '<CRLDistributionPoints: [%s], critical=%s>' % (
-            ', '.join([repr(v) for v in self.value]), self.critical
-        )
-
-    def __str__(self):
-        return 'CRLDistributionPoints([%s], critical=%s)' % (
-            ', '.join([str(v) for v in self.value]), self.critical
-        )
-
     def as_text(self):
         return '\n'.join('* DistributionPoint:\n%s' % indent(dp.as_text(), '  ') for dp in self.value)
 
@@ -1218,19 +1181,10 @@ class CertificatePolicies(ListExtension):
     def __hash__(self):
         return hash((tuple(self.value), self.critical, ))
 
-    def __repr__(self):
-        return '<CertificatePolicies: [%s], critical=%s>' % (
-            ', '.join([str(v) for v in self.value]), self.critical
-        )
-
-    def __str__(self):
-        count = len(self)
-        if count == 1:
-            policies = '1 Policy'
-        else:
-            policies = '%s Policies' % count
-
-        return 'CertificatePolicies(%s, critical=%s)' % (policies, self.critical)
+    def _repr_value(self):
+        if len(self.value) == 1:
+            return '1 policy'
+        return '%s policies' % len(self.value)
 
     def as_text(self):
         return '\n'.join('* %s' % indent(p.as_text(), '  ').strip() for p in self.value)
@@ -1477,7 +1431,7 @@ class NameConstraints(GeneralNameMixin, Extension):
     def __hash__(self):
         return hash((tuple(self.value['permitted']), tuple(self.value['excluded']), self.critical, ))
 
-    def __repr__(self):
+    def _repr_value(self):
         permitted = [self.serialize_value(v) for v in self.value['permitted']]
         excluded = [self.serialize_value(v) for v in self.value['excluded']]
 
@@ -1485,19 +1439,7 @@ class NameConstraints(GeneralNameMixin, Extension):
             permitted = [str(v) for v in permitted]
             excluded = [str(v) for v in excluded]
 
-        return '<%s: permitted=%r, excluded=%r, critical=%r>' % (
-            self.__class__.__name__, permitted, excluded, self.critical)
-
-    def __str__(self):
-        permitted = [self.serialize_value(v) for v in self.value['permitted']]
-        excluded = [self.serialize_value(v) for v in self.value['excluded']]
-
-        if six.PY2:  # pragma: no branch, pragma: only py2 - otherwise we have the u'' prefix in output
-            permitted = [str(v) for v in permitted]
-            excluded = [str(v) for v in excluded]
-
-        return 'NameConstraints(permitted=%s, excluded=%s, critical=%s)' % (
-            permitted, excluded, self.critical)
+        return 'permitted=%r, excluded=%r' % (permitted, excluded)
 
     def as_text(self):
         text = ''
@@ -1637,23 +1579,13 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):  # pragma: only 
         # serialize_iterable returns a dict, which is unhashable
         return hash((tuple(self.value), self.critical, ))
 
-    def __repr__(self):
-        # only py2: we only override this method because of u'' prefixes in output
-        val = [self.serialize_value(v) for v in self.value]
-
-        if six.PY2:  # pragma: no branch, pragma: only py2 - otherwise we have the u'' prefix in output
-            val = [{str(k): str(v) for k, v in e.items()} for e in val]
-
-        return '<%s: %r, critical=%r>' % (self.__class__.__name__, val, self.critical)
+    def _repr_value(self):
+        if len(self.value) == 1:  # pragma: no cover - we cannot currently create such an extension
+            return '1 timestamp'
+        return '%s timestamps' % len(self.value)
 
     def __setitem__(self, key, value):
         raise NotImplementedError
-
-    def __str__(self):
-        val = '<%s entry(s)>' % len(self)
-        if self.critical:
-            return '%s/critical' % val
-        return val
 
     def human_readable_timestamps(self):
         for sct in self.value:
