@@ -1149,7 +1149,9 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
         for config in self.test_values.values():
             for value in config['values']:
                 ext = self.ext(value)
-                expected = config['expected_str'] if six.PY3 else config['expected_str_py2']
+                expected = config['expected_str']
+                if six.PY2 and 'expected_str_py2' in config:
+                    expected = config['expected_str_py2']
 
                 self.assertEqual(str(ext), expected.format(critical=ext.default_critical))
 
@@ -1967,7 +1969,9 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin, Te
         for config in self.test_values.values():
             for value in config['values']:
                 ext = self.ext(value)
-                expected = config['expected_str'] if six.PY3 else config['expected_str_py2']
+                expected = config['expected_str']
+                if six.PY2 and 'expected_str_py2' in config:
+                    expected = config['expected_str_py2']
 
                 self.assertEqual(str(ext), expected.format(critical=ext.default_critical))
 
