@@ -272,11 +272,7 @@ class IterableExtension(Extension):
         return len(self.value)
 
     def _repr_value(self):
-        val = self.serialize_iterable()
-
-        if six.PY2:  # pragma: no branch, pragma: only py2 - otherwise we have the u'' prefix in output
-            val = [str(v) for v in val]
-        return repr(val)
+        return self.serialize_iterable()
 
     def as_text(self):
         return '\n'.join(['* %s' % v for v in self.serialize_iterable()])
@@ -419,6 +415,9 @@ class OrderedSetExtension(IterableExtension):
     def __xor__(self, other):  # ^ operator == symmetric_difference()
         value = self.value ^ self.parse_iterable(other)
         return OrderedSetExtension({'critical': self.critical, 'value': value})
+
+    def _repr_value(self):
+        return [str(v) for v in super(OrderedSetExtension, self)._repr_value()]
 
     def add(self, elem):
         self.value.add(self.parse_value(elem))
