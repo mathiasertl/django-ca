@@ -81,52 +81,6 @@ def load_tests(loader, tests, ignore):
     return tests
 
 
-class AbstractExtensionTestMixin:
-    """TestCase mixin for tests that all extensions are expected to pass, including abstract base classes."""
-
-    def test_hash(self):
-        raise NotImplementedError
-
-    def test_eq(self):
-        for e in self.exts:
-            self.assertEqual(e, e)
-
-    def test_ne(self):
-        raise NotImplementedError
-
-    def test_repr(self):
-        raise NotImplementedError
-
-    def test_str(self):
-        raise NotImplementedError
-
-
-class ExtensionTestMixin(AbstractExtensionTestMixin):
-    """TestCase mixin for tests that only concrete extension classes are expected to pass."""
-
-    def test_as_text(self):
-        raise NotImplementedError
-
-    def test_as_extension(self):
-        for e, x in zip(self.exts, self.xs):
-            self.assertEqual(e.as_extension(), x)
-
-    def test_extension_type(self):
-        for e, x in zip(self.exts, self.xs):
-            self.assertEqual(e.extension_type, x.value)
-
-    def test_for_builder(self):
-        for e, x in zip(self.exts, self.xs):
-            self.assertEqual(e.for_builder(), {'critical': x.critical, 'extension': x.value})
-
-    def test_from_extension(self):
-        for e, x in zip(self.exts, self.xs):
-            self.assertEqual(e, self.ext_class(x))
-
-    def test_serialize(self):
-        raise NotImplementedError
-
-
 class NewAbstractExtensionTestMixin:
     """TestCase mixin for tests that all extensions are expected to pass, including abstract base classes."""
 
@@ -234,25 +188,26 @@ class NewAbstractExtensionTestMixin:
                 self.assertEqual(ext_not_critical, ext_3)
 
     def test_init(self):
+        self.maxDiff = None
         # Test that the constructor behaves equal regardles of input value
-        for test_key, test_config in self.test_values.items():
-            expected = self.ext(test_config['expected'])
+        for key, config in self.test_values.items():
+            expected = self.ext(config['expected'])
 
-            for value in test_config['values']:
+            for value in config['values']:
                 self.assertExtensionEqual(self.ext(value), expected)
 
-            if test_config.get('extension_type'):
-                self.assertExtensionEqual(self.ext(test_config['extension_type']), expected)
+            if config.get('extension_type'):
+                self.assertExtensionEqual(self.ext(config['extension_type']), expected)
 
             # Now the same with explicit critical values
             for critical in self.critical_values:
-                expected = self.ext(test_config['expected'], critical=critical)
+                expected = self.ext(config['expected'], critical=critical)
 
-                for value in test_config['values']:
+                for value in config['values']:
                     self.assertExtensionEqual(self.ext(value, critical=critical), expected)
 
-                if test_config.get('extension_type'):
-                    self.assertEqual(self.ext(test_config['extension_type'], critical=critical), expected)
+                if config.get('extension_type'):
+                    self.assertEqual(self.ext(config['extension_type'], critical=critical), expected)
 
     def test_init_no_bool_critical(self):
         class_name = 'example_class'
@@ -261,8 +216,8 @@ class NewAbstractExtensionTestMixin:
             def __str__(self):
                 return class_name
 
-        for test_key, test_config in self.test_values.items():
-            for value in test_config['values']:
+        for key, config in self.test_values.items():
+            for value in config['values']:
                 if isinstance(value, x509.extensions.ExtensionType):
                     continue  # self.ext() would construct an x509.Extension and the constructor would fail
 
@@ -1106,245 +1061,119 @@ class OrderedSetExtensionTestCase(OrderedSetExtensionTestMixin, NewAbstractExten
     }
 
 
-class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
+class AuthorityInformationAccessTestCase(NewExtensionTestMixin, TestCase):
     ext_class = AuthorityInformationAccess
 
-    x1 = x509.extensions.Extension(
-        oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS, critical=False,
-        value=x509.AuthorityInformationAccess(descriptions=[])
-    )
-    x2 = x509.extensions.Extension(
-        oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS, critical=False,
-        value=x509.AuthorityInformationAccess(descriptions=[
-            x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS,
-                                   uri('https://example.com')),
-        ])
-    )
-    x3 = x509.extensions.Extension(
-        oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS, critical=False,
-        value=x509.AuthorityInformationAccess(descriptions=[
-            x509.AccessDescription(AuthorityInformationAccessOID.OCSP,
-                                   uri('https://example.com')),
-        ])
-    )
-    x4 = x509.extensions.Extension(
-        oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS, critical=False,
-        value=x509.AuthorityInformationAccess(descriptions=[
-            x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS,
-                                   uri('https://example.com')),
-            x509.AccessDescription(AuthorityInformationAccessOID.OCSP,
-                                   uri('https://example.net')),
-            x509.AccessDescription(AuthorityInformationAccessOID.OCSP,
-                                   uri('https://example.org')),
-        ])
-    )
-    x5 = x509.extensions.Extension(
-        oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS, critical=True,
-        value=x509.AuthorityInformationAccess(descriptions=[
-            x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS,
-                                   uri('https://example.com')),
-            x509.AccessDescription(AuthorityInformationAccessOID.OCSP,
-                                   uri('https://example.net')),
-            x509.AccessDescription(AuthorityInformationAccessOID.OCSP,
-                                   uri('https://example.org')),
-        ])
-    )
-    xs = [x1, x2, x3, x4, x5]
+    uri1 = 'https://example1.com'
+    uri2 = 'https://example2.net'
+    uri3 = 'https://example3.org'
+    uri4 = 'https://example4.at'
 
-    def setUp(self):
-        super(AuthorityInformationAccessTestCase, self).setUp()
-        self.ext1 = AuthorityInformationAccess(self.x1)
-        self.ext2 = AuthorityInformationAccess(self.x2)
-        self.ext3 = AuthorityInformationAccess(self.x3)
-        self.ext4 = AuthorityInformationAccess(self.x4)
-        self.ext5 = AuthorityInformationAccess(self.x5)
-        self.exts = [self.ext1, self.ext2, self.ext3, self.ext4, self.ext5]
+    test_values = {
+        'empty': {
+            'values': [{}],
+            'expected': {'issuers': [], 'ocsp': []},
+            'expected_bool': False,
+            'expected_repr': '<AuthorityInformationAccess: issuers=[], ocsp=[], critical=%s>',
+            'expected_serialized': {},
+            'expected_str': 'AuthorityInformationAccess(issuers=[], ocsp=[], critical={critical})',
+            'expected_text': '',
+            'extension_type': x509.AuthorityInformationAccess(descriptions=[]),
+        },
+        'issuer': {
+            'values': [{'issuers': [uri1]}, {'issuers': [uri(uri1)]}, ],
+            'expected': {'issuers': [uri(uri1)], 'ocsp': []},
+            'expected_repr': "<AuthorityInformationAccess: issuers=['URI:%s'], ocsp=[], critical=%%s>" % uri1,
+            'expected_serialized': {'issuers': ['URI:%s' % uri1]},
+            'expected_str': "AuthorityInformationAccess(issuers=['URI:%s'], ocsp=[], "
+                            'critical={critical})' % uri1,
+            'expected_text': 'CA Issuers:\n  * URI:%s' % uri1,
+            'extension_type': x509.AuthorityInformationAccess(descriptions=[
+                x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri1))
+            ]),
+        },
+        'ocsp': {
+            'values': [{'ocsp': [uri2]}, {'ocsp': [uri(uri2)]}, ],
+            'expected': {'ocsp': [uri(uri2)], 'issuers': []},
+            'expected_repr': "<AuthorityInformationAccess: issuers=[], ocsp=['URI:%s'], critical=%%s>" % uri2,
+            'expected_serialized': {'ocsp': ['URI:%s' % uri2]},
+            'expected_str': "AuthorityInformationAccess(issuers=[], ocsp=['URI:%s'], "
+                            'critical={critical})' % uri2,
+            'expected_text': 'OCSP:\n  * URI:%s' % uri2,
+            'extension_type': x509.AuthorityInformationAccess(descriptions=[
+                x509.AccessDescription(AuthorityInformationAccessOID.OCSP, uri(uri2))
+            ]),
+        },
+        'both': {
+            'values': [{'ocsp': [uri1], 'issuers': [uri2]}, {'ocsp': [uri(uri1)], 'issuers': [uri(uri2)]}, ],
+            'expected': {'ocsp': [uri(uri1)], 'issuers': [uri(uri2)]},
+            'expected_repr': "<AuthorityInformationAccess: issuers=['URI:%s'], ocsp=['URI:%s'], "
+                             'critical=%%s>' % (uri2, uri1),
+            'expected_serialized': {'ocsp': ['URI:%s' % uri1], 'issuers': ['URI:%s' % uri2]},
+            'expected_str': "AuthorityInformationAccess(issuers=['URI:%s'], ocsp=['URI:%s'], "
+                            'critical={critical})' % (uri2, uri1),
+            'expected_text': 'CA Issuers:\n  * URI:%s\nOCSP:\n  * URI:%s' % (uri2, uri1),
+            'extension_type': x509.AuthorityInformationAccess(descriptions=[
+                x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri2)),
+                x509.AccessDescription(AuthorityInformationAccessOID.OCSP, uri(uri1)),
+            ]),
+        },
+        'multiple': {
+            'values': [
+                {'ocsp': [uri1, uri2], 'issuers': [uri3, uri4]},
+                {'ocsp': [uri1, uri(uri2)], 'issuers': [uri3, uri(uri4)]},
+                {'ocsp': [uri(uri1), uri(uri2)], 'issuers': [uri(uri3), uri(uri4)]},
+            ],
+            'expected': {'ocsp': [uri(uri1), uri(uri2)], 'issuers': [uri(uri3), uri(uri4)]},
+            'expected_repr': "<AuthorityInformationAccess: "
+                             "issuers=['URI:%s', 'URI:%s'], ocsp=['URI:%s', 'URI:%s'], "
+                             'critical=%%s>' % (uri3, uri4, uri1, uri2),
+            'expected_serialized': {'ocsp': ['URI:%s' % uri1, 'URI:%s' % uri2],
+                                    'issuers': ['URI:%s' % uri3, 'URI:%s' % uri4]},
+            'expected_str': "AuthorityInformationAccess(issuers=['URI:%s', 'URI:%s'], "
+                            "ocsp=['URI:%s', 'URI:%s'], "
+                            'critical={critical})' % (uri3, uri4, uri1, uri2),
+            'expected_text': 'CA Issuers:\n  * URI:%s\n  * URI:%s\n'
+                             'OCSP:\n  * URI:%s\n  * URI:%s' % (uri3, uri4, uri1, uri2),
+            'extension_type': x509.AuthorityInformationAccess(descriptions=[
+                x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri3)),
+                x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri4)),
+                x509.AccessDescription(AuthorityInformationAccessOID.OCSP, uri(uri1)),
+                x509.AccessDescription(AuthorityInformationAccessOID.OCSP, uri(uri2)),
+            ]),
+        },
+    }
 
-    def test_as_text(self):
-        self.assertEqual(self.ext1.as_text(),
-                         '')
-        self.assertEqual(self.ext2.as_text(),
-                         'CA Issuers:\n  * URI:https://example.com\n')
-        self.assertEqual(self.ext3.as_text(),
-                         'OCSP:\n  * URI:https://example.com\n')
-        self.assertEqual(self.ext4.as_text(),
-                         'CA Issuers:\n'
-                         '  * URI:https://example.com\n'
-                         'OCSP:\n'
-                         '  * URI:https://example.net\n'
-                         '  * URI:https://example.org\n')
-        self.assertEqual(self.ext5.as_text(),
-                         'CA Issuers:\n'
-                         '  * URI:https://example.com\n'
-                         'OCSP:\n'
-                         '  * URI:https://example.net\n'
-                         '  * URI:https://example.org\n')
+    def test_str(self):
+        # overwritten for now because str() does not append "/critical".
+        for config in self.test_values.values():
+            for value in config['values']:
+                ext = self.ext(value)
+                expected = config['expected_str'] if six.PY3 else config['expected_str_py2']
 
-    def test_hash(self):
-        self.assertEqual(hash(self.ext1), hash(self.ext1))
-        self.assertEqual(hash(self.ext2), hash(self.ext2))
-        self.assertEqual(hash(self.ext3), hash(self.ext3))
-        self.assertEqual(hash(self.ext4), hash(self.ext4))
-        self.assertEqual(hash(self.ext5), hash(self.ext5))
+                self.assertEqual(str(ext), expected.format(critical=ext.default_critical))
 
-        self.assertNotEqual(hash(self.ext1), hash(self.ext2))
-        self.assertNotEqual(hash(self.ext1), hash(self.ext3))
-        self.assertNotEqual(hash(self.ext1), hash(self.ext4))
-        self.assertNotEqual(hash(self.ext1), hash(self.ext5))
-        self.assertNotEqual(hash(self.ext2), hash(self.ext3))
-        self.assertNotEqual(hash(self.ext2), hash(self.ext4))
-        self.assertNotEqual(hash(self.ext2), hash(self.ext5))
-        self.assertNotEqual(hash(self.ext3), hash(self.ext4))
-        self.assertNotEqual(hash(self.ext3), hash(self.ext5))
-        self.assertNotEqual(hash(self.ext4), hash(self.ext5))
+                if self.force_critical is not False:
+                    ext = self.ext(value, critical=True)
+                    self.assertEqual(str(ext), expected.format(critical=True))
 
-    def test_ne(self):
-        self.assertNotEqual(self.ext1, self.ext2)
-        self.assertNotEqual(self.ext1, self.ext3)
-        self.assertNotEqual(self.ext1, self.ext4)
-        self.assertNotEqual(self.ext1, self.ext5)
-        self.assertNotEqual(self.ext2, self.ext3)
-        self.assertNotEqual(self.ext2, self.ext4)
-        self.assertNotEqual(self.ext2, self.ext5)
-        self.assertNotEqual(self.ext3, self.ext4)
-        self.assertNotEqual(self.ext3, self.ext5)
-        self.assertNotEqual(self.ext4, self.ext5)
-
-    def test_repr(self):
-        self.assertEqual(
-            repr(self.ext1),
-            '<AuthorityInformationAccess: issuers=[], ocsp=[], critical=False>')
-        self.assertEqual(
-            repr(self.ext2),
-            '<AuthorityInformationAccess: issuers=[\'URI:https://example.com\'], ocsp=[], critical=False>')
-        self.assertEqual(
-            repr(self.ext3),
-            "<AuthorityInformationAccess: issuers=[], ocsp=['URI:https://example.com'], critical=False>")
-        self.assertEqual(
-            repr(self.ext4),
-            "<AuthorityInformationAccess: issuers=['URI:https://example.com'], "
-            "ocsp=['URI:https://example.net', 'URI:https://example.org'], critical=False>")
-        self.assertEqual(
-            repr(self.ext5),
-            "<AuthorityInformationAccess: issuers=['URI:https://example.com'], "
-            "ocsp=['URI:https://example.net', 'URI:https://example.org'], critical=True>")
-
-    def test_serialize(self):
-        extensions = [
-            AuthorityInformationAccess(self.x1),
-            AuthorityInformationAccess(self.x2),
-            AuthorityInformationAccess(self.x3),
-            AuthorityInformationAccess(self.x4),
-            AuthorityInformationAccess(self.x5),
-        ]
-        for ext in extensions:
-            self.assertEqual(AuthorityInformationAccess(ext.serialize()), ext)
-
-    #################
-    # Old functions #
-    #################
-
-    def test_from_dict(self):
-        ext = AuthorityInformationAccess({'value': {'issuers': ['https://example.com']}})
-        self.assertEqual(ext.issuers, [uri('https://example.com')])
-        self.assertEqual(ext.ocsp, [])
-        self.assertFalse(ext.critical)
-        self.assertEqual(ext.as_extension(), self.x2)
-
-        ext = AuthorityInformationAccess({'value': {'ocsp': ['https://example.com']}})
-        self.assertEqual(ext.issuers, [])
-        self.assertEqual(ext.ocsp, [uri('https://example.com')])
-        self.assertFalse(ext.critical)
-        self.assertEqual(ext.as_extension(), self.x3)
-
-        ext = AuthorityInformationAccess({'value': {'issuers': [uri('https://example.com')]}})
-        self.assertEqual(ext.issuers, [uri('https://example.com')])
-        self.assertEqual(ext.ocsp, [])
-        self.assertFalse(ext.critical)
-        self.assertEqual(ext.as_extension(), self.x2)
-
-        ext = AuthorityInformationAccess({'value': {'ocsp': [uri('https://example.com')]}})
-        self.assertEqual(ext.ocsp, [uri('https://example.com')])
-        self.assertEqual(ext.issuers, [])
-        self.assertFalse(ext.critical)
-        self.assertEqual(ext.as_extension(), self.x3)
-
-        ext = AuthorityInformationAccess({'value': {
-            'issuers': ['https://example.com'],
-            'ocsp': ['https://example.net', 'https://example.org']
-        }})
-        self.assertEqual(ext.issuers, [uri('https://example.com')])
-        self.assertEqual(ext.ocsp, [uri('https://example.net'), uri('https://example.org')])
-        self.assertFalse(ext.critical)
-        self.assertEqual(ext.as_extension(), self.x4)
-
-    def test_from_extension(self):
-        ext = AuthorityInformationAccess(self.x2)
-        self.assertEqual(ext.issuers, [uri('https://example.com')])
-        self.assertEqual(ext.ocsp, [])
-        self.assertFalse(ext.critical)
-        self.assertEqual(ext.as_extension(), self.x2)
-
-        ext = AuthorityInformationAccess(self.x3)
-        self.assertEqual(ext.issuers, [])
-        self.assertEqual(ext.ocsp, [uri('https://example.com')])
-        self.assertFalse(ext.critical)
-        self.assertEqual(ext.as_extension(), self.x3)
-
-        ext = AuthorityInformationAccess(self.x4)
-        self.assertEqual(ext.issuers, [uri('https://example.com')])
-        self.assertEqual(ext.ocsp, [uri('https://example.net'), uri('https://example.org')])
-        self.assertFalse(ext.critical)
-        self.assertEqual(ext.as_extension(), self.x4)
-
-    def test_empty_value(self):
-        for val in [self.x1, {}, {'issuers': [], 'ocsp': []}]:
-            ext = AuthorityInformationAccess(val)
-            self.assertEqual(ext.ocsp, [], val)
-            self.assertEqual(ext.issuers, [], val)
-            self.assertFalse(ext.critical)
-            self.assertEqual(ext.as_extension(), self.x1)
-
-    def test_unsupported(self):
-        with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type NoneType$'):
-            AuthorityInformationAccess(None)
-        with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type bool$'):
-            AuthorityInformationAccess(False)
+                if self.force_critical is not True:
+                    ext = self.ext(value, critical=False)
+                    self.assertEqual(str(ext), expected.format(critical=False))
 
     def test_bool(self):
-        self.assertEqual(bool(AuthorityInformationAccess(self.x1)), False)
-        self.assertEqual(bool(AuthorityInformationAccess({})), False)
-        self.assertEqual(bool(AuthorityInformationAccess(self.x1)), False)
+        for key, config in self.test_values.items():
+            ext = self.ext(config['expected'])
+            self.assertEqual(bool(ext), config.get('expected_bool', True))
 
-        self.assertEqual(bool(AuthorityInformationAccess(self.x2)), True)
-        self.assertEqual(bool(AuthorityInformationAccess(self.x3)), True)
-        self.assertEqual(bool(AuthorityInformationAccess(self.x4)), True)
-
-    def test_str(self):  # various methods converting to str
-        self.assertEqual(repr(AuthorityInformationAccess(self.x1)),
-                         '<AuthorityInformationAccess: issuers=[], ocsp=[], critical=False>')
-        self.assertEqual(str(AuthorityInformationAccess(self.x1)),
-                         'AuthorityInformationAccess(issuers=[], ocsp=[], critical=False)')
-        self.assertEqual(
-            str(AuthorityInformationAccess(self.x2)),
-            "AuthorityInformationAccess(issuers=['URI:https://example.com'], ocsp=[], critical=False)")
-        self.assertEqual(
-            str(AuthorityInformationAccess(self.x3)),
-            "AuthorityInformationAccess(issuers=[], ocsp=['URI:https://example.com'], critical=False)")
-        self.assertEqual(
-            str(AuthorityInformationAccess(self.x4)),
-            "AuthorityInformationAccess(issuers=['URI:https://example.com'], ocsp=['URI:https://example.net', 'URI:https://example.org'], critical=False)") # NOQA
-
-        self.assertEqual(AuthorityInformationAccess(self.x1).as_text(), "")
-        self.assertEqual(
-            AuthorityInformationAccess(self.x2).as_text(),
-            "CA Issuers:\n  * URI:https://example.com\n")
-        self.assertEqual(
-            AuthorityInformationAccess(self.x3).as_text(),
-            "OCSP:\n  * URI:https://example.com\n")
-        self.assertEqual(
-            AuthorityInformationAccess(self.x4).as_text(),
-            "CA Issuers:\n  * URI:https://example.com\nOCSP:\n  * URI:https://example.net\n  * URI:https://example.org\n")  # NOQA
+    def test_shortcuts(self):
+        ext = self.ext({})
+        self.assertEqual(ext.issuers, [])
+        self.assertEqual(ext.ocsp, [])
+        ext.ocsp = [self.uri1]
+        ext.issuers = [self.uri2]
+        self.assertEqual(ext.issuers, [uri(self.uri2)])
+        self.assertEqual(ext.ocsp, [uri(self.uri1)])
 
 
 class AuthorityKeyIdentifierTestCase(NewExtensionTestMixin, TestCase):

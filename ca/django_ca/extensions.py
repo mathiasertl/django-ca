@@ -925,21 +925,22 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
     oid = ExtensionOID.AUTHORITY_INFORMATION_ACCESS
 
     def __bool__(self):
-        return bool(self.ocsp) or bool(self.issuers)
+        return bool(self.value['ocsp']) or bool(self.value['issuers'])
     if six.PY2:  # pragma: no branch, pragma: only py2
         __nonzero__ = __bool__
 
     def __eq__(self, other):
         return isinstance(other, type(self)) \
-            and self.issuers == other.issuers and self.ocsp == other.ocsp \
+            and self.value['issuers'] == other.value['issuers'] \
+            and self.value['ocsp'] == other.value['ocsp'] \
             and self.critical == other.critical
 
     def __hash__(self):
-        return hash((tuple(self.issuers), tuple(self.ocsp), self.critical, ))
+        return hash((tuple(self.value['issuers']), tuple(self.value['ocsp']), self.critical, ))
 
     def __repr__(self):
-        issuers = [self.serialize_value(v) for v in self.issuers]
-        ocsp = [self.serialize_value(v) for v in self.ocsp]
+        issuers = [self.serialize_value(v) for v in self.value['issuers']]
+        ocsp = [self.serialize_value(v) for v in self.value['ocsp']]
 
         if six.PY2:  # pragma: no branch, pragma: only py2 - otherwise we have the u'' prefix in output
             issuers = [str(v) for v in issuers]
@@ -949,8 +950,8 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
             self.__class__.__name__, issuers, ocsp, self.critical)
 
     def __str__(self):
-        issuers = [self.serialize_value(v) for v in self.issuers]
-        ocsp = [self.serialize_value(v) for v in self.ocsp]
+        issuers = [self.serialize_value(v) for v in self.value['issuers']]
+        ocsp = [self.serialize_value(v) for v in self.value['ocsp']]
 
         if six.PY2:  # pragma: no branch, pragma: only py2 - otherwise we have the u'' prefix in output
             issuers = [str(v) for v in issuers]
@@ -960,48 +961,71 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
 
     def as_text(self):
         text = ''
-        if self.issuers:
+        if self.value['issuers']:
             text += 'CA Issuers:\n'
-            for name in self.issuers:
+            for name in self.value['issuers']:
                 text += '  * %s\n' % self.serialize_value(name)
-        if self.ocsp:
+        if self.value['ocsp']:
             text += 'OCSP:\n'
-            for name in self.ocsp:
+            for name in self.value['ocsp']:
                 text += '  * %s\n' % self.serialize_value(name)
 
-        return text
+        return text.strip()
 
     @property
     def extension_type(self):
-        descs = [x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, v) for v in self.issuers]
-        descs += [x509.AccessDescription(AuthorityInformationAccessOID.OCSP, v) for v in self.ocsp]
+        descs = [x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, v)
+                 for v in self.value['issuers']]
+        descs += [x509.AccessDescription(AuthorityInformationAccessOID.OCSP, v)
+                  for v in self.value['ocsp']]
         return x509.AuthorityInformationAccess(descriptions=descs)
 
     def from_extension(self, value):
-        self.issuers = []
-        self.ocsp = []
+        issuers = []
+        ocsp = []
 
         for desc in value.value:
             if desc.access_method == AuthorityInformationAccessOID.CA_ISSUERS:
-                self.issuers.append(desc.access_location)
+                issuers.append(desc.access_location)
             elif desc.access_method == AuthorityInformationAccessOID.OCSP:
-                self.ocsp.append(desc.access_location)
+                ocsp.append(desc.access_location)
             else:  # pragma: no cover (cryptography only has the above two)
                 raise ValueError('Unknown access method: %s' % desc.access_method)
+        self.value = {'issuers': issuers, 'ocsp': ocsp}
 
     def from_dict(self, value):
         value = value.get('value', {})
-        self.issuers = [self.parse_value(v) for v in value.get('issuers', [])]
-        self.ocsp = [self.parse_value(v) for v in value.get('ocsp', [])]
+        self.value = {
+            'issuers': [self.parse_value(v) for v in value.get('issuers', [])],
+            'ocsp': [self.parse_value(v) for v in value.get('ocsp', [])],
+        }
+
+    @property
+    def issuers(self):
+        return self.value['issuers']
+
+    @issuers.setter
+    def issuers(self, value):
+        self.value['issuers'] = [self.parse_value(v) for v in value]
+
+    @property
+    def ocsp(self):
+        return self.value['ocsp']
+
+    @ocsp.setter
+    def ocsp(self, value):
+        self.value['ocsp'] = [self.parse_value(v) for v in value]
 
     def serialize(self):
-        return {
+        s = {
             'critical': self.critical,
-            'value': {
-                'issuers': [self.serialize_value(v) for v in self.issuers],
-                'ocsp': [self.serialize_value(v) for v in self.ocsp],
-            },
+            'value': {}
         }
+        if self.value['issuers']:
+            s['value']['issuers'] = [self.serialize_value(v) for v in self.value['issuers']]
+        if self.value['ocsp']:
+            s['value']['ocsp'] = [self.serialize_value(v) for v in self.value['ocsp']]
+        return s
 
 
 class AuthorityKeyIdentifier(KeyIdExtension):
