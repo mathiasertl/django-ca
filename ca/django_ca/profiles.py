@@ -21,6 +21,8 @@ from .extensions import ExtendedKeyUsage
 from .extensions import KeyUsage
 from .extensions import OCSPNoCheck
 from .extensions import TLSFeature
+from .subject import Subject
+from .subject import default_subject
 from .utils import get_default_subject
 from .utils import parse_hash_algorithm
 
@@ -49,7 +51,12 @@ class Profile(object):  # pragma: no cover
                  # paramaters for compatability with <1.14 profiles:
                  keyUsage=None, extendedKeyUsage=None, TLSFeature=None, desc=None, ocsp_no_check=None):
         self.name = name
-        self.subject = subject
+        if isinstance(subject, Subject):
+            self.subject = subject
+        else:
+            self.subject = Subject(subject)  # NOTE: also accepts None
+        self.subject.update(default_subject)  # update default subject
+
         self.algorithm = parse_hash_algorithm(algorithm)
         self.extensions = extensions or {}
         self.cn_in_san = cn_in_san
