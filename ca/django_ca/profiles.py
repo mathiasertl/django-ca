@@ -13,20 +13,72 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import warnings
 from copy import deepcopy
 
 from . import ca_settings
 from .extensions import ExtendedKeyUsage
 from .extensions import KeyUsage
+from .extensions import OCSPNoCheck
 from .extensions import TLSFeature
 from .utils import get_default_subject
+from .utils import parse_hash_algorithm
 
 
 class Profile(object):  # pragma: no cover
-    def __init__(self, name, subject=None, cn_in_san=None, extensions=None):
+    """
+
+    What should a profile have
+
+    * name (= id)
+    * subject (e.g. with missing CN)
+    * hash algorithm
+    * list of extensions
+    * settings:
+        * cn_in_san by default?
+        * when cert expires
+        * add crl url?
+        * add ocsp url?
+    * description (for UI)
+
+    """
+
+    def __init__(self, name, subject=None, algorithm=None, extensions=None, cn_in_san=True, expires=None,
+                 add_crl_url=True, add_ocsp_url=True, description='',
+
+                 # paramaters for compatability with <1.14 profiles:
+                 keyUsage=None, extendedKeyUsage=None, TLSFeature=None, desc=None, ocsp_no_check=None):
         self.name = name
         self.subject = subject
-        self.cn_in_san = None
+        self.algorithm = parse_hash_algorithm(algorithm)
+        self.extensions = extensions or {}
+        self.cn_in_san = cn_in_san
+        self.expires = expires or ca_settings.CA_DEFAULT_EXPIRES  # a timedelta  # TODO: is currently an int
+        self.add_crl_url = add_ocsp_url
+        self.add_ocsp_url = add_crl_url
+        self.description = description
+
+        if keyUsage is not None:
+            warnings.warn('keyUsage in profile is deprecated, use extensions -> %s instead.' % KeyUsage.key,
+                          DeprecationWarning)
+            self.extensions[KeyUsage.key] = keyUsage
+        if extendedKeyUsage is not None:
+            warnings.warn(
+                'extendedKeyUsage in profile is deprecated, use extensions -> %s instead.'
+                % ExtendedKeyUsage.key, DeprecationWarning)
+            self.extensions[ExtendedKeyUsage.key] = extendedKeyUsage
+        if TLSFeature is not None:
+            warnings.warn(
+                'TLSFeature in profile is deprecated, use extensions -> %s instead.' % TLSFeature.key,
+                DeprecationWarning)
+            self.extensions[TLSFeature.key] = TLSFeature
+        if desc is not None:
+            warnings.warn('desc in profile is deprecated, use description instead.', DeprecationWarning)
+            self.description = desc
+        if ocsp_no_check is not None:
+            warnings.warn('ocsp_no_check in profile is deprecated, use extensions -> %s instead.' %
+                          OCSPNoCheck.key, DeprecationWarning)
+            self.extensions[OCSPNoCheck.key] = {}
 
 
 def get_cert_profile_kwargs(name=None):

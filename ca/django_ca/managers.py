@@ -294,6 +294,23 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
 
 class CertificateManager(CertificateManagerMixin, models.Manager):
+    def create_cert_from_csr(self, ca, csr):  # pragma: no cover
+        """Create a certificate from a given csr."""
+        pass
+
+    def create_cert(self, ca, csr, profile=None):  # pragma: no cover
+        # should allow you to just pass ca, csr and subject and/or SAN
+        #
+        # 1. Get Profile object
+        # 2. Update with data from CA
+        #    * issuer_url
+        #    * ocsp_url
+        #    * crl_url
+        #    * authority_key_identifier
+        #    * issuer name
+        # 3. Update with data from user parameters
+        pass
+
     def sign_cert(self, ca, csr, expires=None, algorithm=None, subject=None, cn_in_san=True,
                   csr_format=Encoding.PEM, subject_alternative_name=None, key_usage=None,
                   extended_key_usage=None, tls_feature=None, ocsp_no_check=False,
