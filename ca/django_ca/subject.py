@@ -17,8 +17,10 @@ import six
 
 from cryptography import x509
 
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.encoding import force_text
 
+from . import ca_settings
 from .utils import MULTIPLE_OIDS
 from .utils import NAME_OID_MAPPINGS
 from .utils import OID_NAME_MAPPINGS
@@ -63,11 +65,14 @@ class Subject(object):
         elif isinstance(subject, dict):
             subject = subject.items()
         elif not isinstance(subject, (list, tuple)):
-            raise ValueError('subject: not a list/tuple.')
+            raise ValueError('Invalid subject: %s' % subject)
 
         for oid, value in subject:
             if isinstance(oid, six.string_types):
-                oid = NAME_OID_MAPPINGS[oid]
+                try:
+                    oid = NAME_OID_MAPPINGS[oid]
+                except KeyError:
+                    raise ValueError('Invalid OID: %s' % oid)
 
             if not value:
                 continue
@@ -224,3 +229,13 @@ class Subject(object):
         <Name(C=AT,CN=example.com)>
         """
         return x509.Name([x509.NameAttribute(k, v) for k, v in self.fields])
+
+
+def get_default_subject():
+    try:
+        return Subject(ca_settings.CA_DEFAULT_SUBJECT)
+    except (ValueError, KeyError) as e:
+        raise ImproperlyConfigured('CA_DEFAULT_SUBJECT: %s' % e)
+
+
+default_subject = get_default_subject()

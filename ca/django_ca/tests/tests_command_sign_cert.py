@@ -232,8 +232,8 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
     ])
     def test_profile_subject(self):
         # just to make sure we actually have defaults
-        self.assertEqual(next(t[1] for t in ca_settings._CA_DEFAULT_SUBJECT if t[0] == 'O'), 'MyOrg')
-        self.assertEqual(next(t[1] for t in ca_settings._CA_DEFAULT_SUBJECT if t[0] == 'OU'), 'MyOrgUnit')
+        self.assertEqual(next(t[1] for t in ca_settings.CA_DEFAULT_SUBJECT if t[0] == 'O'), 'MyOrg')
+        self.assertEqual(next(t[1] for t in ca_settings.CA_DEFAULT_SUBJECT if t[0] == 'OU'), 'MyOrgUnit')
 
         # first, we only pass an subjectAltName, meaning that even the CommonName is used.
         stdin = six.StringIO(self.csr_pem)
@@ -245,7 +245,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         cert = Certificate.objects.first()
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
-        self.assertSubject(cert.x509, ca_settings._CA_DEFAULT_SUBJECT)
+        self.assertSubject(cert.x509, ca_settings.CA_DEFAULT_SUBJECT)
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
 

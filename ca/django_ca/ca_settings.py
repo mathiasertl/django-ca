@@ -127,9 +127,9 @@ CA_PROFILES = {
     },
 }
 
-_CA_DEFAULT_SUBJECT = getattr(settings, 'CA_DEFAULT_SUBJECT', {})
+CA_DEFAULT_SUBJECT = getattr(settings, 'CA_DEFAULT_SUBJECT', {})
 for name, profile in CA_PROFILES.items():
-    profile['subject'] = _CA_DEFAULT_SUBJECT
+    profile['subject'] = CA_DEFAULT_SUBJECT
     profile.setdefault('cn_in_san', True)
 
 # Add ability just override/add some profiles
@@ -141,7 +141,7 @@ for name, profile in _CA_PROFILE_OVERRIDES.items():
     elif name in CA_PROFILES:
         CA_PROFILES[name].update(profile)
     else:
-        profile.setdefault('subject', _CA_DEFAULT_SUBJECT)
+        profile.setdefault('subject', CA_DEFAULT_SUBJECT)
         profile.setdefault('cn_in_san', True)
         CA_PROFILES[name] = profile
 

@@ -20,3 +20,7 @@ from django.utils.translation import gettext_lazy as _
 class DjangoCAConfig(AppConfig):
     name = 'django_ca'
     verbose_name = _('Certificate Authority')
+
+    def ready(self):
+        # just make sure that these global variables are actually accessed on startup
+        from .subject import default_subject  # NOQA

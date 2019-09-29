@@ -19,9 +19,12 @@ import six
 
 from cryptography.x509.oid import NameOID
 
+from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 
+from .base import override_settings
 from ..subject import Subject
+from ..subject import get_default_subject
 
 
 def load_tests(loader, tests, ignore):
@@ -83,11 +86,11 @@ class TestSubject(TestCase):
         ])), '/C=AT/L=Vienna/OU=foo/OU=bar/CN=example.com')
 
         # C should not occur multiple times
-        with self.assertRaisesRegex(ValueError, '^C: Must not occur multiple times$'):
+        with self.assertRaisesRegex(ValueError, r'^C: Must not occur multiple times$'):
             Subject([('C', 'AT'), ('C', 'US')])
 
     def test_init_type(self):
-        with self.assertRaisesRegex(ValueError, '^subject: not a list/tuple.$'):
+        with self.assertRaisesRegex(ValueError, r'^Invalid subject: 33$'):
             Subject(33)
 
     def test_contains(self):
@@ -113,10 +116,10 @@ class TestSubject(TestCase):
         self.assertEqual(Subject('/C=AT/OU=foo/OU=bar/CN=example.com')['OU'], ['foo', 'bar'])
 
         # test keyerror
-        with self.assertRaisesRegex(KeyError, "^'L'$"):
+        with self.assertRaisesRegex(KeyError, r"^'L'$"):
             Subject('/C=AT/OU=foo/CN=example.com')['L']
 
-        with self.assertRaisesRegex(KeyError, "^'L'$"):
+        with self.assertRaisesRegex(KeyError, r"^'L'$"):
             Subject('/C=AT/OU=foo/CN=example.com')[NameOID.LOCALITY_NAME]
 
     def test_eq(self):
@@ -157,7 +160,7 @@ class TestSubject(TestCase):
         s['OU'] = ['foo', 'bar']
         self.assertEqual(s, Subject('/C=AT/OU=foo/OU=bar/CN=example.com'))
 
-        with self.assertRaisesRegex(ValueError, 'L: Must not occur multiple times'):
+        with self.assertRaisesRegex(ValueError, r'L: Must not occur multiple times'):
             s['L'] = ['foo', 'bar']
         self.assertEqual(s, Subject('/C=AT/OU=foo/OU=bar/CN=example.com'))
 
@@ -174,7 +177,7 @@ class TestSubject(TestCase):
         s['C'] = []
         self.assertEqual(s, Subject('/CN=example.com'))
 
-        with self.assertRaisesRegex(ValueError, '^Value must be str or list$'):
+        with self.assertRaisesRegex(ValueError, r'^Value must be str or list$'):
             s['C'] = 33
 
     def test_get(self):
@@ -238,12 +241,12 @@ class TestSubject(TestCase):
         self.assertEqual(s, Subject('/C=AT/OU=foo/OU=bar/CN=example.com'))
 
         # We can't set multiple C's
-        with self.assertRaisesRegex(ValueError, 'L: Must not occur multiple times'):
+        with self.assertRaisesRegex(ValueError, r'L: Must not occur multiple times'):
             s.setdefault('L', ['AT', 'DE'])
         self.assertEqual(s, Subject('/C=AT/OU=foo/OU=bar/CN=example.com'))
 
         s = Subject()
-        with self.assertRaisesRegex(ValueError, '^Value must be str or list$'):
+        with self.assertRaisesRegex(ValueError, r'^Value must be str or list$'):
             s.setdefault('C', 33)
 
     def test_clear_copy(self):
@@ -306,3 +309,12 @@ class TestSubject(TestCase):
                                           (NameOID.ORGANIZATIONAL_UNIT_NAME, 'foo'),
                                           (NameOID.ORGANIZATIONAL_UNIT_NAME, 'bar'),
                                           (NameOID.COMMON_NAME, 'example.com')])
+
+    def test_default_subject(self):
+        with self.assertRaisesRegex(ImproperlyConfigured, r'^CA_DEFAULT_SUBJECT: Invalid subject: True$'):
+            with override_settings(CA_DEFAULT_SUBJECT=True):
+                get_default_subject()
+
+        with self.assertRaisesRegex(ImproperlyConfigured, r'^CA_DEFAULT_SUBJECT: Invalid OID: XYZ$'):
+            with override_settings(CA_DEFAULT_SUBJECT={'XYZ': 'error'}):
+                get_default_subject()
