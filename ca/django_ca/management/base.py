@@ -249,8 +249,8 @@ class ReasonAction(argparse.Action):
 
 
 class BinaryOutputWrapper(OutputWrapper):
-    def __init__(self, out, style_func=None, ending=b'\n'):
-        super(BinaryOutputWrapper, self).__init__(out, style_func=None, ending=ending)
+    def __init__(self, out, ending=b'\n'):
+        super(BinaryOutputWrapper, self).__init__(out, ending=ending)
 
     def write(self, msg, style_func=None, ending=None):
         ending = self.ending if ending is None else ending
