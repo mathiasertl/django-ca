@@ -15,7 +15,6 @@
 
 from datetime import date
 from datetime import datetime
-from datetime import timedelta
 
 from cryptography.hazmat.primitives import hashes
 
@@ -39,7 +38,7 @@ from .widgets import ProfileWidget
 
 
 def _initial_expires():
-    return datetime.today() + timedelta(days=ca_settings.CA_DEFAULT_EXPIRES)
+    return datetime.today() + ca_settings.CA_DEFAULT_EXPIRES
 
 
 def _profile_choices():

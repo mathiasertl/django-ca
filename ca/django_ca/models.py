@@ -79,7 +79,6 @@ from .utils import add_colons
 from .utils import ca_storage
 from .utils import format_name
 from .utils import generate_private_key
-from .utils import get_expires
 from .utils import get_extension_name
 from .utils import int_to_hex
 from .utils import multiline_url_validator
@@ -569,7 +568,7 @@ class CertificateAuthority(X509CertMixin):
         """
         key_size, key_type, ecc_curve = validate_key_parameters(key_size, key_type, ecc_curve)
         if isinstance(expires, six.integer_types):
-            expires = get_expires(expires)
+            expires = timedelta(days=expires)
         algorithm = parse_hash_algorithm(algorithm)
 
         # generate the private key

@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
+from datetime import timedelta
+
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 
@@ -50,4 +52,15 @@ class ImproperlyConfiguredTestCase(TestCase):
     def test_digest_algorithm(self):
         with self.assertRaisesRegex(ImproperlyConfigured, r'^Unkown CA_DIGEST_ALGORITHM: foo$'):
             with override_settings(CA_DIGEST_ALGORITHM='foo'):
+                pass
+
+    def test_default_expires(self):
+        with self.assertRaisesRegex(ImproperlyConfigured,
+                                    r'^CA_DEFAULT_EXPIRES: foo: Must be int or timedelta$'):
+            with override_settings(CA_DEFAULT_EXPIRES='foo'):
+                pass
+
+        with self.assertRaisesRegex(ImproperlyConfigured,
+                                    r'^CA_DEFAULT_EXPIRES: -3 days, 0:00:00: Must have positive value$'):
+            with override_settings(CA_DEFAULT_EXPIRES=timedelta(days=-3)):
                 pass

@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+from datetime import timedelta
+
 from django.core.management.base import CommandError
 
 from ... import ca_settings
@@ -31,7 +33,7 @@ class Command(BaseCommand):
             help="Generate OCSP keys only for the given CA. If omitted, generate keys for all CAs.")
 
         parser.add_argument(
-            '--expires', default=2, action=ExpiresAction,
+            '--expires', default=timedelta(days=2), action=ExpiresAction,
             help='Sign the certificate for DAYS days (default: %(default)s)')
         parser.add_argument(
             '--quiet', action='store_true', default=False, help='Do not output warnings.')

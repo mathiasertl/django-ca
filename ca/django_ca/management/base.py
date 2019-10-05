@@ -16,6 +16,7 @@
 import argparse
 import getpass
 import sys
+from datetime import timedelta
 
 import six
 
@@ -44,7 +45,6 @@ from ..models import CertificateAuthority
 from ..subject import Subject
 from ..utils import SUBJECT_FIELDS
 from ..utils import add_colons
-from ..utils import get_expires
 from ..utils import indent
 from ..utils import is_power2
 from ..utils import parse_encoding
@@ -174,22 +174,25 @@ class URLAction(argparse.Action):
         setattr(namespace, self.dest, value)
 
 
+def parse_timedelta(value):
+    try:
+        value = int(value)
+    except Exception:
+        raise argparse.ArgumentTypeError('Value must be an integer: "%s"' % value)
+    if value <= 0:
+        raise argparse.ArgumentTypeError('Value must not be negative.')
+
+    return timedelta(days=value)
+
+
 class ExpiresAction(argparse.Action):
     def __init__(self, *args, **kwargs):
-        kwargs['type'] = int  # force int
-        self.now = kwargs.pop('now', None)  # for testing
-
-        default = kwargs.get('default')  # default may either be int or datetime
-        if isinstance(default, int):
-            kwargs['default'] = get_expires(kwargs['default'], now=self.now)
-
+        kwargs['type'] = parse_timedelta
+        kwargs.setdefault('default', ca_settings.CA_DEFAULT_EXPIRES)
         super(ExpiresAction, self).__init__(*args, **kwargs)
 
     def __call__(self, parser, namespace, value, option_string=None):
-        if value < 0:
-            raise parser.error("Expires must not be negative.")
-
-        setattr(namespace, self.dest, get_expires(value, now=self.now))
+        setattr(namespace, self.dest, value)
 
 
 class MultipleURLAction(argparse.Action):
@@ -434,7 +437,7 @@ class BaseSignCommand(BaseCommand):
 
     def test_options(self, *args, **options):
         ca = options['ca']
-        if ca.expires < options['expires']:
+        if ca.expires < timezone.now() + options['expires']:
             max_days = (ca.expires - timezone.now()).days
             raise CommandError(
                 'Certificate would outlive CA, maximum expiry for this CA is %s days.' % max_days)

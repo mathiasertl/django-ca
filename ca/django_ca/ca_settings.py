@@ -14,6 +14,7 @@
 # see <http://www.gnu.org/licenses/>.
 
 import os
+from datetime import timedelta
 
 import cryptography
 from cryptography.hazmat.backends import default_backend
@@ -160,6 +161,13 @@ try:
     CA_DIGEST_ALGORITHM = getattr(hashes, CA_DIGEST_ALGORITHM)()
 except AttributeError:
     raise ImproperlyConfigured('Unkown CA_DIGEST_ALGORITHM: %s' % settings.CA_DIGEST_ALGORITHM)
+
+if isinstance(CA_DEFAULT_EXPIRES, int):
+    CA_DEFAULT_EXPIRES = timedelta(days=CA_DEFAULT_EXPIRES)
+elif not isinstance(CA_DEFAULT_EXPIRES, timedelta):
+    raise ImproperlyConfigured('CA_DEFAULT_EXPIRES: %s: Must be int or timedelta' % CA_DEFAULT_EXPIRES)
+if CA_DEFAULT_EXPIRES <= timedelta():
+    raise ImproperlyConfigured('CA_DEFAULT_EXPIRES: %s: Must have positive value' % CA_DEFAULT_EXPIRES)
 
 if CA_MIN_KEY_SIZE > CA_DEFAULT_KEY_SIZE:
     raise ImproperlyConfigured('CA_DEFAULT_KEY_SIZE cannot be lower then %s' % CA_MIN_KEY_SIZE)

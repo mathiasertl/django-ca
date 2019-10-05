@@ -20,6 +20,8 @@ from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 
+from django.utils import timezone
+
 from .. import ca_settings
 from ..extensions import AuthorityInformationAccess
 from ..extensions import CRLDistributionPoints
@@ -440,8 +442,9 @@ class InitCATest(DjangoCATestCase):
         self.assertIsNone(second.parent)
         self.assertSignature([second], second)
 
+        expires = parent.expires - timezone.now() + timedelta(days=10)
         with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
-            out, err = self.init_ca(name='Child', parent=parent, expires=parent.expires + timedelta(days=10))
+            out, err = self.init_ca(name='Child', parent=parent, expires=expires)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
         self.assertTrue(pre.called)

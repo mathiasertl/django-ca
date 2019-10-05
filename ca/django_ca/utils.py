@@ -42,11 +42,9 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import NameOID
 
-from django.conf import settings
 from django.core.files.storage import get_storage_class
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import URLValidator
-from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 from django.utils.functional import Promise
@@ -790,27 +788,15 @@ def parse_key_curve(value=None):
     return curve()
 
 
-def get_expires(value=None, now=None):
-    if now is None:
-        now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-
-    if value is None:
-        value = ca_settings.CA_DEFAULT_EXPIRES
-
-    # If USE_TZ is True, we make the object timezone aware, otherwise comparing goes wrong.
-    if settings.USE_TZ:
-        now = timezone.make_aware(now)
-
-    return now + timedelta(days=value + 1)
-
-
 def get_cert_builder(expires, serial=None):
     """Get a basic X509 cert builder object.
+
+    .. TODO:: deprecate support for passing datetime as expires
 
     Parameters
     ----------
 
-    expires : datetime
+    expires : datetime or timedelta
         When this certificate will expire.
     serial : int, optional
         Serial number to set for this certificate. Use :py:func:`~cg:cryptography.x509.random_serial_number`
@@ -821,8 +807,11 @@ def get_cert_builder(expires, serial=None):
     if serial is None:
         serial = x509.random_serial_number()
     if expires is None:
-        expires = get_expires(expires, now=now)
-    expires = expires.replace(second=0, microsecond=0)
+        expires = now + ca_settings.CA_DEFAULT_EXPIRES
+    elif isinstance(expires, timedelta):
+        expires = now + expires
+    else:
+        expires = expires.replace(second=0, microsecond=0)
 
     builder = x509.CertificateBuilder()
     builder = builder.not_valid_before(now)

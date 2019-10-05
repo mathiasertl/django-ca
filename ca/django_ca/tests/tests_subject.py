@@ -22,9 +22,9 @@ from cryptography.x509.oid import NameOID
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 
-from .base import override_settings
 from ..subject import Subject
 from ..subject import get_default_subject
+from .base import override_settings
 
 
 def load_tests(loader, tests, ignore):

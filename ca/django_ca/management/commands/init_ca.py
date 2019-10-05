@@ -19,8 +19,10 @@ https://skippylovesmalorie.wordpress.com/2010/02/12/how-to-generate-a-self-signe
 """
 
 import os
+from datetime import timedelta
 
 from django.core.management.base import CommandError
+from django.utils import timezone
 
 from ... import ca_settings
 from ...extensions import NameConstraints
@@ -44,7 +46,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         self.add_ecc_curve(parser)
 
         parser.add_argument(
-            '--expires', metavar='DAYS', action=ExpiresAction, default=365 * 10,
+            '--expires', metavar='DAYS', action=ExpiresAction, default=timedelta(365 * 10),
             help='CA certificate expires in DAYS days (default: %(default)s).'
         )
         self.add_ca(
@@ -128,7 +130,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         # The reasoning is simple: When issuing the child CA, the default is automatically after that of the
         # parent if it wasn't issued on the same day.
         parent = options['parent']
-        if parent and options['expires'] > parent.expires:
+        if parent and timezone.now() + options['expires'] > parent.expires:
             options['expires'] = parent.expires
         if parent and not parent.allows_intermediate_ca:
             raise CommandError("Parent CA cannot create intermediate CA due to pathlen restrictions.")

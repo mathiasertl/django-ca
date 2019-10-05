@@ -413,14 +413,14 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
 
     @override_tmpcadir()
     def test_expiry_too_late(self):
-        expires = self.ca.expires + timedelta(days=3)
         time_left = (self.ca.expires - datetime.now()).days
+        expires = timedelta(days=time_left + 3)
         stdin = six.StringIO(self.csr_pem)
 
         with self.assertCommandError(
                 r'^Certificate would outlive CA, maximum expiry for this CA is {} days\.$'.format(time_left)
         ), self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
-            self.cmd('sign_cert', ca=self.ca, alt=['example.com'], expires=expires, stdin=stdin)
+            self.cmd('sign_cert', ca=self.ca, alt={'value': ['example.com']}, expires=expires, stdin=stdin)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
