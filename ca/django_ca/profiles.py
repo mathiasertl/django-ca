@@ -46,10 +46,7 @@ class Profile(object):  # pragma: no cover
     """
 
     def __init__(self, name, subject=None, algorithm=None, extensions=None, cn_in_san=True, expires=None,
-                 add_crl_url=True, add_ocsp_url=True, description='',
-
-                 # paramaters for compatability with <1.14 profiles:
-                 keyUsage=None, extendedKeyUsage=None, TLSFeature=None, desc=None, ocsp_no_check=None):
+                 add_crl_url=True, add_ocsp_url=True, description='', **kwargs):
         self.name = name
         if isinstance(subject, Subject):
             self.subject = subject
@@ -60,29 +57,29 @@ class Profile(object):  # pragma: no cover
         self.algorithm = parse_hash_algorithm(algorithm)
         self.extensions = extensions or {}
         self.cn_in_san = cn_in_san
-        self.expires = expires or ca_settings.CA_DEFAULT_EXPIRES  # a timedelta  # TODO: is currently an int
+        self.expires = expires or ca_settings.CA_DEFAULT_EXPIRES
         self.add_crl_url = add_ocsp_url
         self.add_ocsp_url = add_crl_url
         self.description = description
 
-        if keyUsage is not None:
+        if 'keyUsage' in kwargs:
             warnings.warn('keyUsage in profile is deprecated, use extensions -> %s instead.' % KeyUsage.key,
                           DeprecationWarning)
-            self.extensions[KeyUsage.key] = keyUsage
-        if extendedKeyUsage is not None:
+            self.extensions[KeyUsage.key] = KeyUsage(kwargs.pop('keyUsage'))
+        if 'extendedKeyUsage' in kwargs:
             warnings.warn(
                 'extendedKeyUsage in profile is deprecated, use extensions -> %s instead.'
                 % ExtendedKeyUsage.key, DeprecationWarning)
-            self.extensions[ExtendedKeyUsage.key] = extendedKeyUsage
-        if TLSFeature is not None:
+            self.extensions[ExtendedKeyUsage.key] = ExtendedKeyUsage(kwargs.pop('extendedKeyUsage'))
+        if 'TLSFeature' in kwargs:
             warnings.warn(
                 'TLSFeature in profile is deprecated, use extensions -> %s instead.' % TLSFeature.key,
                 DeprecationWarning)
-            self.extensions[TLSFeature.key] = TLSFeature
-        if desc is not None:
+            self.extensions[TLSFeature.key] = TLSFeature(kwargs.pop('TLSFeature'))
+        if 'desc' in kwargs:
             warnings.warn('desc in profile is deprecated, use description instead.', DeprecationWarning)
-            self.description = desc
-        if ocsp_no_check is not None:
+            self.description = kwargs.pop('desc')
+        if 'ocsp_no_check' in kwargs:
             warnings.warn('ocsp_no_check in profile is deprecated, use extensions -> %s instead.' %
                           OCSPNoCheck.key, DeprecationWarning)
             self.extensions[OCSPNoCheck.key] = {}
