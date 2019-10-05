@@ -84,6 +84,11 @@ class Profile(object):  # pragma: no cover
                           OCSPNoCheck.key, DeprecationWarning)
             self.extensions[OCSPNoCheck.key] = {}
 
+    def copy(self):
+        """Create a deep copy of this profile."""
+
+        return deepcopy(self)
+
 
 def get_cert_profile_kwargs(name=None):
     """Get kwargs suitable for get_cert X509 keyword arguments from the given profile."""
