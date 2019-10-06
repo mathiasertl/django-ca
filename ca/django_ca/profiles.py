@@ -17,6 +17,9 @@ import warnings
 from copy import deepcopy
 
 from . import ca_settings
+from .extensions import AuthorityKeyIdentifier
+from .extensions import AuthorityInformationAccess
+from .extensions import CRLDistributionPoints
 from .extensions import ExtendedKeyUsage
 from .extensions import KeyUsage
 from .extensions import OCSPNoCheck
@@ -29,6 +32,11 @@ from .utils import parse_hash_algorithm
 
 class Profile(object):  # pragma: no cover
     """
+
+    Precedence of parameters:
+    * CLI parameter
+    * Profile value
+    * CA value
 
     What should a profile have
 
@@ -48,11 +56,12 @@ class Profile(object):  # pragma: no cover
     def __init__(self, name, subject=None, algorithm=None, extensions=None, cn_in_san=True, expires=None,
                  add_crl_url=True, add_ocsp_url=True, description='', **kwargs):
         self.name = name
-        if isinstance(subject, Subject):
-            self.subject = subject
-        else:
-            self.subject = Subject(subject)  # NOTE: also accepts None
-        self.subject.update(default_subject)  # update default subject
+
+        # self.subject is default subject with updates from subject argument
+        self.subject = default_subject.copy()
+        if not isinstance(subject, Subject):
+            subject = Subject(subject)  # NOTE: also accepts None
+        self.subject.update(subject)
 
         self.algorithm = parse_hash_algorithm(algorithm)
         self.extensions = extensions or {}
@@ -88,6 +97,17 @@ class Profile(object):  # pragma: no cover
         """Create a deep copy of this profile."""
 
         return deepcopy(self)
+
+    def update_from_ca(self, ca):
+        self.extensions.setdefault(AuthorityKeyIdentifier.key, ca.get_authority_key_identifier_extension())
+
+        if self.add_crl_url and ca.crl_url:
+            self.extensions.setdefault(CRLDistributionPoints.key, CRLDistributionPoints({}))
+            self.extensions[CRLDistributionPoints.key].add_full_name(ca.crl_url)
+
+        if self.add_ocsp_url and ca.ocsp_url:
+            self.extensions.setdefault(AuthorityInformationAccess.key, AuthorityInformationAccess({}))
+            self.extensions[AuthorityInformationAccess.key].add_ocsp_url(ca.ocsp_url)
 
 
 def get_cert_profile_kwargs(name=None):

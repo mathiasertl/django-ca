@@ -616,6 +616,13 @@ class CertificateAuthority(X509CertMixin):
             else:  # pragma: only cryptography>=2.7
                 return x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski.value)
 
+    def get_authority_key_identifier_extension(self):
+        return AuthorityKeyIdentifier(x509.Extension(
+            critical=AuthorityKeyIdentifier.default_critical,
+            oid=AuthorityKeyIdentifier.oid,
+            value=self.get_authority_key_identifier()
+        ))
+
     def get_crl(self, expires=86400, encoding=None, algorithm=None, password=None, scope=None, counter=None,
                 **kwargs):
         """Generate a Certificate Revocation List (CRL).
