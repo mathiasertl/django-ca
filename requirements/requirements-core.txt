@@ -1,5 +1,6 @@
 Django>=1.11,<2.0 ; python_version < '3'
 Django>=2.1 ; python_version >= '3.5'
+asn1crypto>=1.0.1
 cryptography>=2.5
 six>=1.11.0
 idna>=2.8

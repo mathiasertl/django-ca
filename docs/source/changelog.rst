@@ -16,6 +16,8 @@ ChangeLog
 * ``regenerate_ocsp_keys`` now has a quiet mode and only generates keys where the CA private key is available.
 * Minor changes to make the release compatible with Django 3.0a1.
 * New dependency: `six <https://pypi.org/project/six/>`_, since Django 3.0 no longer includes it.
+* New dependency: `asn1crypto <https://pypi.org/project/asn1crypto/>`_, since cryptography no longer depends
+  on it.
 * Serials are now zero-padded when output so that the last element always consists of two characters.
 * More consistently output serials with colons, use a monospace font in the admin interface.
 * Fix profile selection in the admin interface.
