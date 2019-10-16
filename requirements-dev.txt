@@ -2,8 +2,8 @@
 -rrequirements/requirements-test.txt
 -rrequirements/requirements-lint.txt
 ipython
-pip>=19.2.1
+pip>=19.3
 sphinx-autobuild==0.7.1
-tabulate==0.8.3
+tabulate==0.8.5
 termcolor==1.1.0
-wheel==0.33.4
+wheel==0.33.6
