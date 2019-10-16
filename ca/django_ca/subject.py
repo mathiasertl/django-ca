@@ -64,6 +64,8 @@ class Subject(object):
             subject = parse_name(subject)
         elif isinstance(subject, dict):
             subject = subject.items()
+        elif isinstance(subject, x509.Name):
+            subject = [(n.oid, n.value) for n in subject]
         elif not isinstance(subject, (list, tuple)):
             raise ValueError('Invalid subject: %s' % subject)
 
