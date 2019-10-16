@@ -16,17 +16,23 @@
 import warnings
 from copy import deepcopy
 
+import idna
+
 from . import ca_settings
 from .extensions import AuthorityKeyIdentifier
 from .extensions import AuthorityInformationAccess
+from .extensions import BasicConstraints
 from .extensions import CRLDistributionPoints
+from .extensions import DistributionPoint
 from .extensions import ExtendedKeyUsage
 from .extensions import KeyUsage
 from .extensions import OCSPNoCheck
+from .extensions import SubjectAlternativeName
 from .extensions import TLSFeature
 from .subject import Subject
 from .subject import default_subject
 from .utils import get_default_subject
+from .utils import parse_general_name
 from .utils import parse_hash_algorithm
 
 
@@ -54,7 +60,8 @@ class Profile(object):  # pragma: no cover
     """
 
     def __init__(self, name, subject=None, algorithm=None, extensions=None, cn_in_san=True, expires=None,
-                 add_crl_url=True, add_ocsp_url=True, description='', **kwargs):
+                 issuer_name=None, add_crl_url=True, add_ocsp_url=True, add_issuer_url=True, description='',
+                 **kwargs):
         self.name = name
 
         # self.subject is default subject with updates from subject argument
@@ -67,9 +74,14 @@ class Profile(object):  # pragma: no cover
         self.extensions = extensions or {}
         self.cn_in_san = cn_in_san
         self.expires = expires or ca_settings.CA_DEFAULT_EXPIRES
+        self.issuer_name = issuer_name
         self.add_crl_url = add_ocsp_url
+        self.add_issuer_url = add_issuer_url
         self.add_ocsp_url = add_crl_url
         self.description = description
+
+        # set some sane extension defaults
+        self.extensions.setdefault(BasicConstraints.key, BasicConstraints({}))
 
         if 'keyUsage' in kwargs:
             warnings.warn('keyUsage in profile is deprecated, use extensions -> %s instead.' % KeyUsage.key,
@@ -93,21 +105,87 @@ class Profile(object):  # pragma: no cover
                           OCSPNoCheck.key, DeprecationWarning)
             self.extensions[OCSPNoCheck.key] = {}
 
+    def __repr__(self):
+        return '<Profile: %r>' % self.name
+
+    def __str__(self):
+        return repr(self)
+
     def copy(self):
         """Create a deep copy of this profile."""
 
         return deepcopy(self)
 
     def update_from_ca(self, ca):
+        """Update data from the given CA.
+
+        * Sets the AuthorityKeyIdentifier extension
+        * Sets the OCSP url if add_ocsp_url is True
+        * Sets a CRL URL if add_crl_url is True
+
+        """
         self.extensions.setdefault(AuthorityKeyIdentifier.key, ca.get_authority_key_identifier_extension())
+        if not self.issuer_name:
+            self.issuer_name = Subject(ca.x509.subject)
 
         if self.add_crl_url and ca.crl_url:
             self.extensions.setdefault(CRLDistributionPoints.key, CRLDistributionPoints({}))
-            self.extensions[CRLDistributionPoints.key].add_full_name(ca.crl_url)
+            self.extensions[CRLDistributionPoints.key].value.append(DistributionPoint({
+                'full_name': [url.strip() for url in ca.crl_url.split()],
+            }))
 
         if self.add_ocsp_url and ca.ocsp_url:
             self.extensions.setdefault(AuthorityInformationAccess.key, AuthorityInformationAccess({}))
-            self.extensions[AuthorityInformationAccess.key].add_ocsp_url(ca.ocsp_url)
+            self.extensions[AuthorityInformationAccess.key].value['ocsp'].append(
+                parse_general_name(ca.ocsp_url)
+            )
+
+        if self.add_issuer_url and ca.issuer_url:
+            self.extensions.setdefault(AuthorityInformationAccess.key, AuthorityInformationAccess({}))
+            self.extensions[AuthorityInformationAccess.key].value['issuers'].append(
+                parse_general_name(ca.issuer_url)
+            )
+
+    def update_from_parameters(self, subject=None, expires=None, algorithm=None, extensions=None):
+        if not isinstance(subject, Subject):
+            subject = Subject(subject)  # NOTE: also accepts None
+        self.subject.update(subject)
+
+        if expires is not None:
+            self.expires = expires
+        if algorithm is not None:
+            self.algorithm = parse_hash_algorithm(algorithm)
+        if extensions is not None:
+            self.extensions.update(extensions)
+
+    def update_ca_overrides(self, cn_in_san=None, add_crl_url=None, add_ocsp_url=None, add_issuer_url=None):
+        if cn_in_san is not None:
+            self.cn_in_san = cn_in_san
+        if add_crl_url is not None:
+            self.add_crl_url = add_crl_url
+        if add_ocsp_url is not None:
+            self.add_ocsp_url = add_ocsp_url
+        if add_issuer_url is not None:
+            self.add_issuer_url = add_issuer_url
+
+    def update_san_from_cn(self):
+        if self.cn_in_san is False or not self.subject.get('CN'):
+            return
+
+        try:
+            cn = parse_general_name(self.subject['CN'])
+        except idna.IDNAError:
+            raise ValueError('%s: Could not parse CommonName as subjectAlternativeName.' % self.subject['CN'])
+
+        self.extensions.setdefault(SubjectAlternativeName.key, SubjectAlternativeName({}))
+        if cn not in self.extensions[SubjectAlternativeName.key]:
+            self.extensions[SubjectAlternativeName.key].append(cn)
+
+
+def get_profile(name=None):
+    if name is None:
+        name = ca_settings.CA_DEFAULT_PROFILE
+    return Profile(name, **ca_settings.CA_PROFILES[name])
 
 
 def get_cert_profile_kwargs(name=None):
