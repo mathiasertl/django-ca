@@ -19,8 +19,8 @@ from copy import deepcopy
 import idna
 
 from . import ca_settings
-from .extensions import AuthorityKeyIdentifier
 from .extensions import AuthorityInformationAccess
+from .extensions import AuthorityKeyIdentifier
 from .extensions import BasicConstraints
 from .extensions import CRLDistributionPoints
 from .extensions import DistributionPoint
