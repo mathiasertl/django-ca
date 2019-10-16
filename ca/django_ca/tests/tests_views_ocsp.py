@@ -269,7 +269,7 @@ class OCSPViewTestMixin(object):
             # test cert_status
             cert_status = response['cert_status'].native
             if cert.revoked is False:
-                self.assertIsNone(cert_status)
+                self.assertEqual(cert_status, 'good')
             else:
                 revocation_time = cert_status['revocation_time'].replace(tzinfo=None)
                 revocation_reason = cert_status['revocation_reason']

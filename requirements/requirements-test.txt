@@ -3,7 +3,7 @@ django-webtest==1.9.7
 freezegun==0.3.12
 mock==2.0.0; python_version < '3'
 ocspbuilder==0.10.2
-oscrypto==0.19.1
+oscrypto==1.1.0
 pyOpenSSL==19.0.0
 pyvirtualdisplay==0.2.4
 selenium==3.141.0
