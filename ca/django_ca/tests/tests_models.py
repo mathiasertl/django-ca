@@ -585,6 +585,11 @@ class CertificateTests(DjangoCAWithCertTestCase):
             self.assertEqual(ca.get_authority_key_identifier().key_identifier,
                              certs['child']['subject_key_identifier'].value)
 
+    def test_get_authority_key_identifier_extension(self):
+        for name, ca in self.cas.items():
+            self.assertEqual(ca.get_authority_key_identifier_extension().value,
+                             certs[name]['subject_key_identifier'].value)
+
     ###############################################
     # Test extensions for all loaded certificates #
     ###############################################

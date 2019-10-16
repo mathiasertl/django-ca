@@ -17,6 +17,7 @@ import doctest
 
 import six
 
+from cryptography import x509
 from cryptography.x509.oid import NameOID
 
 from django.core.exceptions import ImproperlyConfigured
@@ -66,6 +67,14 @@ class TestSubject(TestCase):
         self.assertEqual(str(Subject([])), '/')
         self.assertEqual(str(Subject({})), '/')
         self.assertEqual(str(Subject('')), '/')
+        self.assertEqual(str(Subject(x509.Name(attributes=[]))), '/')
+
+    def test_init_name(self):
+        name = x509.Name(attributes=[
+            x509.NameAttribute(oid=NameOID.COUNTRY_NAME, value='AT'),
+            x509.NameAttribute(oid=NameOID.COMMON_NAME, value='example.com'),
+        ])
+        self.assertEqual(str(Subject(name)), '/C=AT/CN=example.com')
 
     def test_init_order(self):
         self.assertEqual(str(Subject([

@@ -182,7 +182,7 @@ class Profile(object):  # pragma: no cover
             self.extensions[SubjectAlternativeName.key].append(cn)
 
 
-def get_profile(name=None):
+def get_profile(name=None):  # pragma: no cover
     if name is None:
         name = ca_settings.CA_DEFAULT_PROFILE
     return Profile(name, **ca_settings.CA_PROFILES[name])
