@@ -12,7 +12,7 @@ ChangeLog
 
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.3 and 2.4.
 * **BACKWARDS INCOMPATIBLE:** Drop support for idna 2.7.
-* **DEPRECATION NOTICE:** This is the last release to support cryptography 2.5.
+* **DEPRECATION NOTICE:** This is the last release to support cryptography 2.5 and 2.6.
 * ``regenerate_ocsp_keys`` now has a quiet mode and only generates keys where the CA private key is available.
 * Minor changes to make the release compatible with Django 3.0a1.
 * New dependency: `six <https://pypi.org/project/six/>`_, since Django 3.0 no longer includes it.
