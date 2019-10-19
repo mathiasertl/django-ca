@@ -42,6 +42,8 @@ script:
 matrix:
     exclude:
         # Django 2.2 no longer supports python2.7
+        - env: DJANGO=2.2.6 CRYPTOGRAPHY=2.8
+          python: "2.7"
         - env: DJANGO=2.2.6 CRYPTOGRAPHY=2.7
           python: "2.7"
         - env: DJANGO=2.2.6 CRYPTOGRAPHY=2.6.1
