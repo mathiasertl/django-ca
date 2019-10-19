@@ -284,8 +284,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         else:
             encryption = serialization.BestAvailableEncryption(password)
 
-        pem = private_key.private_bytes(encoding=Encoding.PEM,
-                                        format=PrivateFormat.PKCS8,
+        pem = private_key.private_bytes(encoding=Encoding.PEM, format=PrivateFormat.PKCS8,
                                         encryption_algorithm=encryption)
 
         # write private key to file
@@ -306,21 +305,21 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
 
         raise ValueError('Unknown CSR format passed: %s' % csr_format)
 
-    def create_cert(self, ca, csr, csr_format=Encoding.PEM, profile=None,
-                    subject=None, expires=None, algorithm=None, extensions=None,
-                    cn_in_san=None, add_crl_url=None, add_ocsp_url=None, add_issuer_url=None,
-                    add_issuer_alternative_name=None):  # pragma: no cover
+    def create_cert(self, ca, csr, csr_format=Encoding.PEM, profile=None, **kwargs):  # pragma: no cover
         # Get Profile object
         if not isinstance(profile, Profile):
             profile = get_profile(profile)
 
-        profile.update_ca_overrides(cn_in_san, add_crl_url, add_ocsp_url, add_issuer_url,
-                                    add_issuer_alternative_name)
-        profile.update_from_ca(ca)
-        profile.update_from_parameters(subject, expires, algorithm, extensions)
-        profile.update_san_from_cn()
-
         csr = self.parse_csr(csr, csr_format=csr_format)
+        cert = profile.create_cert(ca, csr, **kwargs)
+
+        c = self.model(ca=ca, csr=csr.public_bytes(Encoding.PEM).decode('utf-8'))
+        c.x509 = cert
+        c.save()
+
+        post_issue_cert.send(sender=self.model, cert=c)
+
+        return c
 
     def sign_cert(self, ca, csr, expires=None, algorithm=None, subject=None, cn_in_san=True,
                   csr_format=Encoding.PEM, subject_alternative_name=None, key_usage=None,
