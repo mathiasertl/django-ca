@@ -25,6 +25,7 @@ from .extensions import BasicConstraints
 from .extensions import CRLDistributionPoints
 from .extensions import DistributionPoint
 from .extensions import ExtendedKeyUsage
+from .extensions import IssuerAlternativeName
 from .extensions import KeyUsage
 from .extensions import OCSPNoCheck
 from .extensions import SubjectAlternativeName
@@ -34,6 +35,7 @@ from .subject import default_subject
 from .utils import get_default_subject
 from .utils import parse_general_name
 from .utils import parse_hash_algorithm
+from .utils import shlex_split
 
 
 class Profile(object):  # pragma: no cover
@@ -60,7 +62,8 @@ class Profile(object):  # pragma: no cover
     """
 
     def __init__(self, name, subject=None, algorithm=None, extensions=None, cn_in_san=True, expires=None,
-                 issuer_name=None, add_crl_url=True, add_ocsp_url=True, add_issuer_url=True, description='',
+                 issuer_name=None, description='',
+                 add_crl_url=True, add_ocsp_url=True, add_issuer_url=True, add_issuer_alternative_name=True,
                  **kwargs):
         self.name = name
 
@@ -78,6 +81,7 @@ class Profile(object):  # pragma: no cover
         self.add_crl_url = add_ocsp_url
         self.add_issuer_url = add_issuer_url
         self.add_ocsp_url = add_crl_url
+        self.add_issuer_alternative_name = add_issuer_alternative_name
         self.description = description
 
         # set some sane extension defaults
@@ -122,6 +126,7 @@ class Profile(object):  # pragma: no cover
         * Sets the AuthorityKeyIdentifier extension
         * Sets the OCSP url if add_ocsp_url is True
         * Sets a CRL URL if add_crl_url is True
+        * Adds an IssuerAlternativeName if add_issuer_alternative_name is True
 
         """
         self.extensions.setdefault(AuthorityKeyIdentifier.key, ca.get_authority_key_identifier_extension())
@@ -145,6 +150,9 @@ class Profile(object):  # pragma: no cover
             self.extensions[AuthorityInformationAccess.key].value['issuers'].append(
                 parse_general_name(ca.issuer_url)
             )
+        if self.add_issuer_alternative_name and ca.issuer_alt_name:
+            self.extensions[IssuerAlternativeName.key] = IssuerAlternativeName({})
+            self.extensions.extend(shlex_split(ca.issuer_alt_name, ','))
 
     def update_from_parameters(self, subject=None, expires=None, algorithm=None, extensions=None):
         if not isinstance(subject, Subject):
@@ -158,7 +166,8 @@ class Profile(object):  # pragma: no cover
         if extensions is not None:
             self.extensions.update(extensions)
 
-    def update_ca_overrides(self, cn_in_san=None, add_crl_url=None, add_ocsp_url=None, add_issuer_url=None):
+    def update_ca_overrides(self, cn_in_san=None, add_crl_url=None, add_ocsp_url=None, add_issuer_url=None,
+                            add_issuer_alternative_name=None):
         if cn_in_san is not None:
             self.cn_in_san = cn_in_san
         if add_crl_url is not None:
@@ -167,6 +176,8 @@ class Profile(object):  # pragma: no cover
             self.add_ocsp_url = add_ocsp_url
         if add_issuer_url is not None:
             self.add_issuer_url = add_issuer_url
+        if add_issuer_alternative_name is not None:
+            self.add_issuer_alternative_name = add_issuer_alternative_name
 
     def update_san_from_cn(self):
         if self.cn_in_san is False or not self.subject.get('CN'):

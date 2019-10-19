@@ -308,13 +308,14 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
 
     def create_cert(self, ca, csr, csr_format=Encoding.PEM, profile=None,
                     subject=None, expires=None, algorithm=None, extensions=None,
-                    cn_in_san=None, add_crl_url=None, add_ocsp_url=None, add_issuer_url=None
-                    ):  # pragma: no cover
+                    cn_in_san=None, add_crl_url=None, add_ocsp_url=None, add_issuer_url=None,
+                    add_issuer_alternative_name=None):  # pragma: no cover
         # Get Profile object
         if not isinstance(profile, Profile):
             profile = get_profile(profile)
 
-        profile.update_ca_overrides(cn_in_san, add_crl_url, add_ocsp_url, add_issuer_url)
+        profile.update_ca_overrides(cn_in_san, add_crl_url, add_ocsp_url, add_issuer_url,
+                                    add_issuer_alternative_name)
         profile.update_from_ca(ca)
         profile.update_from_parameters(subject, expires, algorithm, extensions)
         profile.update_san_from_cn()
