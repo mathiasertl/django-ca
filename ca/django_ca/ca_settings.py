@@ -110,21 +110,21 @@ CA_PROFILES = {
         'cn_in_san': False,
     },
     'ocsp': {
-        'desc': _('A certificate for an OCSP responder.'),
-        'keyUsage': {
-            'critical': True,
-            'value': [
-                'nonRepudiation',
-                'digitalSignature',
-                'keyEncipherment',
-            ],
-        },
-        'extendedKeyUsage': {
-            'critical': False,
-            'value': [
-                'OCSPSigning',
-            ],
-        },
+        'description': _('A certificate for an OCSP responder.'),
+        'extensions': {
+            'key_usage': {
+                'value': [
+                    'nonRepudiation',
+                    'digitalSignature',
+                    'keyEncipherment',
+                ],
+            },
+            'extended_key_usage': {
+                'value': [
+                    'OCSPSigning',
+                ],
+            },
+        }
     },
 }
 
