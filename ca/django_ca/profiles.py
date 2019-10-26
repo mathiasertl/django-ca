@@ -80,7 +80,7 @@ class Profile(object):  # pragma: no cover
         self.subject.update(subject)
 
         self.algorithm = parse_hash_algorithm(algorithm)
-        self.extensions = extensions or {}
+        self.extensions = deepcopy(extensions) or {}
         self.cn_in_san = cn_in_san
         self.expires = expires or ca_settings.CA_DEFAULT_EXPIRES
         self.issuer_name = issuer_name
