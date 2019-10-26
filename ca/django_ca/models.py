@@ -580,17 +580,8 @@ class CertificateAuthority(X509CertMixin):
         csr = x509.CertificateSigningRequestBuilder().subject_name(self.x509.subject).sign(
             private_key, hashes.SHA256(), default_backend())
 
-        kwargs = get_cert_profile_kwargs(profile)
-        # TODO: This value is just a guess - see what public CAs do!?
-        kwargs['subject'] = self.subject
-        cert = Certificate.objects.init(
-            ca=self,
-            csr=csr,
-            expires=expires,
-            ocsp_url=False,
-            password=password,
-            **kwargs
-        )
+        # TODO: The subject we pass is just a guess - see what public CAs do!?
+        cert = Certificate.objects.create_cert(ca=self, csr=csr, profile=profile, subject=self.subject)
 
         cert_path = ca_storage.generate_filename('ocsp/%s.pem' % self.serial.replace(':', ''))
         cert_pem = cert.dump_certificate(encoding=Encoding.PEM)
