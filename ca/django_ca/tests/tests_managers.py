@@ -69,20 +69,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         if cert.ca.issuer_alt_name:
             expected['issuerAltName'] = 'URI:%s' % self.ca.issuer_alt_name
 
-        # TODO: Does not account for multiple CRLs yet
-        if cert.ca.crl_url:
-            expected['crlDistributionPoints'] = '\nFull Name:\n  URI:%s\n' % cert.ca.crl_url
-
-        auth_info_access = ''
-        if cert.ca.ocsp_url:
-            auth_info_access += 'OCSP - URI:%s\n' % cert.ca.ocsp_url
-        if cert.ca.issuer_url:
-            auth_info_access += 'CA Issuers - URI:%s\n' % cert.ca.issuer_url
-        if auth_info_access:
-            expected['authorityInfoAccess'] = auth_info_access
-
         exts = self.get_extensions(cert.x509)
-
         key_id = exts.pop('SubjectKeyIdentifier')
         self.assertFalse(key_id.critical)
         self.assertEqual(len(key_id.as_text()), 59)
@@ -111,6 +98,13 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
 
         # verify extensions
         extensions = {
+            'AuthorityInformationAccess': AuthorityInformationAccess({'value': {
+                'issuers': [ca.issuer_url],
+                'ocsp': [ca.ocsp_url],
+            }}),
+            'CRLDistributionPoints': CRLDistributionPoints({'value': [
+                {'full_name': ca.crl_url},
+            ]}),
             'ExtendedKeyUsage': ExtendedKeyUsage({'value': ['serverAuth']}),
             'KeyUsage': KeyUsage({
                 'critical': True,
@@ -136,9 +130,15 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
 
         # verify extensions
         self.assertExtensions(cert, {
+            'AuthorityInformationAccess': AuthorityInformationAccess({'value': {
+                'ocsp': [ca.ocsp_url],
+                'issuers': [ca.issuer_url],
+            }}),
+            'CRLDistributionPoints': CRLDistributionPoints({'value': [
+                {'full_name': [ca.crl_url]},
+            ]}),
             'ExtendedKeyUsage': ExtendedKeyUsage({'value': ['serverAuth']}),
             'KeyUsage': KeyUsage({
-                'critical': True,
                 'value': ['digitalSignature', 'keyAgreement', 'keyEncipherment'],
             }),
             'SubjectAlternativeName': SubjectAlternativeName({'value': ['DNS:example.com']}),
@@ -295,7 +295,10 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             subject_alternative_name={'value': ['example.com']}, **kwargs)
 
         self.assertEqual(self.get_extensions(cert.x509)['AuthorityInformationAccess'],
-                         AuthorityInformationAccess({'value': {'ocsp': [ca.ocsp_url]}}))
+                         AuthorityInformationAccess({'value': {
+                             'ocsp': [ca.ocsp_url],
+                             'issuers': [ca.issuer_url]
+                         }}))
 
         # test with both ocsp_url and issuer_url
         ca.issuer_url = 'http://ca.example.com/ca.crt'
@@ -434,7 +437,6 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             value=ca.get_authority_key_identifier()
         ))
 
-        self.maxDiff = None
         expected = [
             cert.subject_key_identifier,  # changes on every invocation
             BasicConstraints({'value': {'ca': False}}),
@@ -479,7 +481,6 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             value=ca.get_authority_key_identifier()
         ))
 
-        self.maxDiff = None
         expected = [
             cert.subject_key_identifier,  # changes on every invocation
             BasicConstraints({'value': {'ca': False}}),
@@ -502,7 +503,6 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         ian = 'https://ca.example.com'
         subject = '/CN=%s' % cn
 
-        self.maxDiff = None
         extra_extensions = [
             NameConstraints(nc).as_extension(),
             IssuerAlternativeName({'value': [ian]}).as_extension(),
@@ -536,6 +536,13 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             NameConstraints(nc),
             IssuerAlternativeName({'value': [ian]}),
             OCSPNoCheck({'critical': True}),
+            AuthorityInformationAccess({'value': {
+                'issuers': [ca.issuer_url],
+                'ocsp': [ca.ocsp_url],
+            }}),
+            CRLDistributionPoints({'value': [
+                {'full_name': ca.crl_url},
+            ]}),
         ])
 
     def test_extra_extensions_value(self):

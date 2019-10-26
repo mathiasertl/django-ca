@@ -20,6 +20,7 @@ import six
 from .. import ca_settings
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
+from ..extensions import CRLDistributionPoints
 from ..extensions import ExtendedKeyUsage
 from ..extensions import KeyUsage
 from ..extensions import SubjectAlternativeName
@@ -71,7 +72,12 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
         self.assertIsNone(new.issuer_alternative_name)  # signing ca does not have this set
 
         # Some properties come from the ca
-        self.assertEqual(old.ca.crl_url, new.crl_distribution_points)
+        if new_ca.crl_url:
+            self.assertEqual(CRLDistributionPoints({'value': [{
+                'full_name': [new_ca.crl_url]
+            }]}), new.crl_distribution_points)
+        else:
+            self.assertIsNone(new.crl_distribution_points)
 
     @override_tmpcadir()
     def test_basic(self):

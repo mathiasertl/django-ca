@@ -154,7 +154,6 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         full_name = 'http://localhost/crl'
         idp = self.get_idp(full_name=[x509.UniformResourceIdentifier(value=full_name)])
 
-        self.assertIsNone(ca.crl_url)
         crl = ca.get_crl(full_name=[full_name])
         self.assertCRL(crl, idp=idp, signer=ca)
 
@@ -199,9 +198,8 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
     @freeze_time('2019-04-14 12:26:00')
     def test_ca_crl(self):
         ca = self.cas['root']
-        idp = self.get_idp(only_contains_ca_certs=True)
+        idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_ca_certs=True)
 
-        self.assertIsNone(ca.crl_url)
         crl = ca.get_crl(scope='ca')
         self.assertCRL(crl, idp=idp, signer=ca)
 
@@ -218,9 +216,8 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
     @override_tmpcadir()
     def test_user_crl(self):
         ca = self.cas['root']
-        idp = self.get_idp(only_contains_user_certs=True)
+        idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_user_certs=True)
 
-        self.assertIsNone(ca.crl_url)
         crl = ca.get_crl(scope='user')
         self.assertCRL(crl, idp=idp, signer=ca)
 
@@ -236,9 +233,8 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
     @override_tmpcadir()
     def test_attr_crl(self):
         ca = self.cas['root']
-        idp = self.get_idp(only_contains_attribute_certs=True)
+        idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_attribute_certs=True)
 
-        self.assertIsNone(ca.crl_url)
         crl = ca.get_crl(scope='attribute')
         self.assertCRL(crl, idp=idp, signer=ca)
 
@@ -254,21 +250,24 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
     def test_no_idp(self):
         # CRLs require a full name (or only_some_reasons) if it's a full CRL
         ca = self.cas['child']
-        self.assertIsNone(ca.crl_url)
+        ca.crl_url = None
+        ca.save()
         crl = ca.get_crl()
         self.assertCRL(crl, idp=None)
 
     @override_tmpcadir()
     @freeze_time('2019-04-14 12:26:00')
     def test_counter(self):
+        self.maxDiff = None
         ca = self.cas['child']
+        idp = self.get_idp(full_name=self.get_idp_full_name(ca))
         crl = ca.get_crl(counter='test')
-        self.assertCRL(crl, idp=None, crl_number=0)
+        self.assertCRL(crl, idp=idp, crl_number=0)
         crl = ca.get_crl(counter='test')
-        self.assertCRL(crl, idp=None, crl_number=1)
+        self.assertCRL(crl, idp=idp, crl_number=1)
 
-        crl = ca.get_crl()
-        self.assertCRL(crl, idp=None, crl_number=0)
+        crl = ca.get_crl()  # test with no counter
+        self.assertCRL(crl, idp=idp, crl_number=0)
 
     @override_tmpcadir()
     @freeze_time(timestamps['everything_valid'])

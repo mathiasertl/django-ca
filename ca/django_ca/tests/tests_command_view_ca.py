@@ -40,9 +40,9 @@ SubjectKeyIdentifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
-* Issuer URL: None
-* OCSP URL: None
+* Certificate Revokation List (CRL): {crl_url}
+* Issuer URL: {issuer_url}
+* OCSP URL: {ocsp_url}
 * Issuer Alternative Name: None
 
 {pub[pem]}''',
@@ -77,9 +77,9 @@ SubjectKeyIdentifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
-* Issuer URL: None
-* OCSP URL: None
+* Certificate Revokation List (CRL): {crl_url}
+* Issuer URL: {issuer_url}
+* OCSP URL: {ocsp_url}
 * Issuer Alternative Name: None
 
 {pub[pem]}''',
@@ -106,9 +106,9 @@ SubjectKeyIdentifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
-* Issuer URL: None
-* OCSP URL: None
+* Certificate Revokation List (CRL): {crl_url}
+* Issuer URL: {issuer_url}
+* OCSP URL: {ocsp_url}
 * Issuer Alternative Name: None
 
 {pub[pem]}''',

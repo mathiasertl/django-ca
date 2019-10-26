@@ -68,7 +68,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
     @override_tmpcadir()
     def test_basic(self):
         # test the default view
-        idp = self.get_idp(only_contains_user_certs=True)
+        idp = self.get_idp(full_name=self.get_idp_full_name(self.ca), only_contains_user_certs=True)
         response = self.client.get(reverse('default', kwargs={'serial': self.ca.serial}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-crl')
@@ -107,10 +107,9 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_ca_crl(self):
-        idp = self.get_idp(only_contains_ca_certs=True)
-
         root = self.cas['root']
         child = self.cas['child']
+        idp = self.get_idp(full_name=self.get_idp_full_name(root), only_contains_ca_certs=True)
         self.assertIsNotNone(root.key(password=None))
 
         response = self.client.get(reverse('ca_crl', kwargs={'serial': root.serial}))
@@ -136,7 +135,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_overwrite(self):
-        idp = self.get_idp(only_contains_user_certs=True)
+        idp = self.get_idp(full_name=self.get_idp_full_name(self.ca), only_contains_user_certs=True)
         response = self.client.get(reverse('advanced', kwargs={'serial': self.ca.serial}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'text/plain')
@@ -147,13 +146,13 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
         response = self.client.get(reverse('deprecated-ca', kwargs={'serial': self.ca.serial}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-crl')
-        idp = self.get_idp(only_contains_ca_certs=True)
+        idp = self.get_idp(full_name=self.get_idp_full_name(self.ca), only_contains_ca_certs=True)
         self.assertCRL(response.content, encoding=Encoding.DER, expires=600, idp=idp)
 
         response = self.client.get(reverse('deprecated-user', kwargs={'serial': self.ca.serial}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-crl')
-        idp = self.get_idp(only_contains_user_certs=True)
+        idp = self.get_idp(full_name=self.get_idp_full_name(self.ca), only_contains_user_certs=True)
         self.assertCRL(response.content, encoding=Encoding.DER, expires=600, idp=idp)
 
 

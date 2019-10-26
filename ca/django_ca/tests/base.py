@@ -723,6 +723,10 @@ class DjangoCATestCaseMixin(object):
             ctx['key_path'] = ca_storage.path(certs[name]['key_filename'])
         return ctx
 
+    def get_idp_full_name(self, ca):
+        crl_url = [url.strip() for url in ca.crl_url.split()]
+        return [x509.UniformResourceIdentifier(c) for c in crl_url] or None
+
     def get_idp(self, full_name=None, indirect_crl=False, only_contains_attribute_certs=False,
                 only_contains_ca_certs=False, only_contains_user_certs=False, only_some_reasons=None,
                 relative_name=None):
@@ -747,8 +751,14 @@ class DjangoCATestCaseMixin(object):
     def load_ca(cls, name, x509, enabled=True, parent=None, **kwargs):
         """Load a CA from one of the preloaded files."""
         path = '%s.key' % name
-        ca = CertificateAuthority(name=name, private_key_path=path, enabled=enabled, parent=parent,
-                                  **kwargs)
+
+        # set some default values
+        kwargs.setdefault('issuer_alt_name', certs[name].get('issuer_alternative_name', ''))
+        kwargs.setdefault('crl_url', certs[name].get('crl_url', ''))
+        kwargs.setdefault('ocsp_url', certs[name].get('ocsp_url', ''))
+        kwargs.setdefault('issuer_url', certs[name].get('issuer_url', ''))
+
+        ca = CertificateAuthority(name=name, private_key_path=path, enabled=enabled, parent=parent, **kwargs)
         ca.x509 = x509  # calculates serial etc
         ca.save()
         return ca
