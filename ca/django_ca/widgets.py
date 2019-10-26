@@ -70,10 +70,17 @@ class SubjectTextInput(LabeledTextInput):
 
 
 class ProfileWidget(widgets.Select):
-    def render(self, name, value, attrs=None, renderer=None):  # pragma: only django<=1.11
+    # TODO: shouldn't we set a template_name here? Perhaps that's why render() is still called
+
+    def render(self, name, value, attrs=None, renderer=None):
         html = super(ProfileWidget, self).render(name, value, attrs=attrs, renderer=renderer)
-        html += '<p class="help profile-desc">%s</p>' % force_text(
-            ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]['desc'])
+
+        # add the description of the default selected profile as help text (will be updated by JS when
+        # different profile is selected)
+        desc = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get(
+            'description', ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get('desc', ''))
+        html += '<p class="help profile-desc">%s</p>' % force_text(desc)
+
         return html
 
     class Media:
