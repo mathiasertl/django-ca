@@ -39,7 +39,7 @@ from .extensions import OCSPNoCheck
 from .extensions import SubjectAlternativeName
 from .extensions import TLSFeature
 from .profiles import Profile
-from .profiles import get_profile
+from .profiles import profiles
 from .signals import post_create_ca
 from .signals import post_issue_cert
 from .signals import pre_create_ca
@@ -308,7 +308,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
     def create_cert(self, ca, csr, csr_format=Encoding.PEM, profile=None, **kwargs):  # pragma: no cover
         # Get Profile object
         if not isinstance(profile, Profile):
-            profile = get_profile(profile)
+            profile = profiles[profile]
 
         csr = self.parse_csr(csr, csr_format=csr_format)
         cert = profile.create_cert(ca, csr, **kwargs)

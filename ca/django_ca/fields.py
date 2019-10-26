@@ -16,7 +16,6 @@
 
 from django import forms
 
-from . import ca_settings
 from .profiles import profile
 from .subject import Subject
 from .utils import SUBJECT_FIELDS
