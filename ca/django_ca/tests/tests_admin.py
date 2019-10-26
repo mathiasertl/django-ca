@@ -49,11 +49,14 @@ from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..models import Watcher
+from ..profiles import profiles
 from ..signals import post_issue_cert
 from ..signals import post_revoke_cert
 from ..signals import pre_issue_cert
 from ..signals import pre_revoke_cert
 from ..subject import Subject
+from ..utils import MULTIPLE_OIDS
+from ..utils import NAME_OID_MAPPINGS
 from ..utils import SUBJECT_FIELDS
 from .base import DjangoCATestCase
 from .base import DjangoCAWithCertTestCase
@@ -1367,29 +1370,42 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
 @unittest.skipIf(settings.SKIP_SELENIUM_TESTS, 'Selenium tests skipped.')
 class AddCertificateSeleniumTests(AdminTestMixin, SeleniumTestCase):
+    def get_expected(self, profile, extension_class, default=None):
+        if extension_class.key in profile.extensions:
+            return profile.extensions[extension_class.key].serialize()
+        else:
+            return {'value': default, 'critical': extension_class.default_critical}
+
     def assertProfile(self, profile, ku_select, ku_critical, eku_select, eku_critical, tf_select, tf_critical,
                       subject, cn_in_san):
-        profile = ca_settings.CA_PROFILES[profile]
+        profile = profiles[profile]
+        print('profile', profile)
 
-        ku_expected = profile.get('keyUsage', {})
+        ku_expected = self.get_expected(profile, KeyUsage, [])
         ku_selected = [o.get_attribute('value') for o in ku_select.all_selected_options]
-        self.assertCountEqual(ku_expected.get('value'), ku_selected)
-        self.assertEqual(ku_expected.get('critical', False), ku_critical.is_selected())
+        self.assertCountEqual(ku_expected['value'], ku_selected)
+        self.assertEqual(ku_expected['critical'], ku_critical.is_selected())
 
+        eku_expected = self.get_expected(profile, ExtendedKeyUsage, [])
         eku_selected = [o.get_attribute('value') for o in eku_select.all_selected_options]
-        eku_expected = profile.get('extendedKeyUsage', {})
-        self.assertCountEqual(eku_expected.get('value', []), eku_selected)
-        self.assertEqual(eku_expected.get('critical', False), eku_critical.is_selected())
+        self.assertCountEqual(eku_expected['value'], eku_selected)
+        self.assertEqual(eku_expected['critical'], eku_critical.is_selected())
 
         tf_selected = [o.get_attribute('value') for o in tf_select.all_selected_options]
-        tf_expected = profile.get('tls_feature', {})
+        tf_expected = self.get_expected(profile, TLSFeature, [])
         self.assertCountEqual(tf_expected.get('value', []), tf_selected)
         self.assertEqual(tf_expected.get('critical', False), tf_critical.is_selected())
 
-        self.assertEqual(profile.get('cn_in_san', True), cn_in_san.is_selected())
+        self.assertEqual(profile.cn_in_san, cn_in_san.is_selected())
 
         for key, field in subject.items():
-            self.assertEqual(field.get_attribute('value'), profile['subject'].get(key, ''))
+            value = field.get_attribute('value')
+
+            # OIDs that can occur multiple times are stored as list in subject, so we wrap it
+            if NAME_OID_MAPPINGS[key] in MULTIPLE_OIDS:
+                value = [value]
+
+            self.assertEqual(value, profile.subject.get(key, ''))
 
     @override_tmpcadir()
     def test_paste_csr_test(self):
