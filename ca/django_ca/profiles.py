@@ -318,21 +318,24 @@ def get_cert_profile_kwargs(name=None):
         name = ca_settings.CA_DEFAULT_PROFILE
 
     profile = deepcopy(ca_settings.CA_PROFILES[name])
+    profile.setdefault('extensions', {})
     kwargs = {
         'cn_in_san': profile['cn_in_san'],
         'subject': get_default_subject(name=name),
     }
 
-    key_usage = profile.get('keyUsage')
+    key_usage = profile.get('keyUsage', profile['extensions'].get(KeyUsage.key))
     if key_usage and key_usage.get('value'):
         kwargs['key_usage'] = KeyUsage(key_usage)
-    ext_key_usage = profile.get('extendedKeyUsage')
+    ext_key_usage = profile.get('extendedKeyUsage', profile['extensions'].get(ExtendedKeyUsage.key))
     if ext_key_usage and ext_key_usage.get('value'):
         kwargs['extended_key_usage'] = ExtendedKeyUsage(ext_key_usage)
     tls_feature = profile.get('TLSFeature')
-    if tls_feature and tls_feature.get('value'):
+    if tls_feature and tls_feature.get('value', profile['extensions'].get(TLSFeature.key)):
         kwargs['tls_feature'] = TLSFeature(tls_feature)
     if profile.get('ocsp_no_check'):
         kwargs['ocsp_no_check'] = profile['ocsp_no_check']
+    elif profile['extensions'].get(OCSPNoCheck.key):
+        kwargs['ocsp_no_check'] = True
 
     return kwargs
