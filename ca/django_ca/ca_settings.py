@@ -39,13 +39,13 @@ CA_PROFILES = {
         # see: http://security.stackexchange.com/questions/68491/
         'description': _('A certificate for a client.'),
         'extensions': {
-            'keyUsage': {
+            'key_usage': {
                 'critical': True,
                 'value': [
                     'digitalSignature',
                 ],
             },
-            'extendedKeyUsage': {
+            'extended_key_usage': {
                 'critical': False,
                 'value': [
                     'clientAuth',
