@@ -46,9 +46,9 @@ class Extension(object):
     The value is a ``dict`` as used by the :ref:`CA_PROFILES <settings-ca-profiles>` setting::
 
         >>> KeyUsage({'value': ['keyAgreement', 'keyEncipherment']})
-        <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=False>
-        >>> KeyUsage({'critical': True, 'value': ['key_agreement', 'key_encipherment']})
         <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=True>
+        >>> KeyUsage({'critical': False, 'value': ['key_agreement', 'key_encipherment']})
+        <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=False>
 
     ... but can also use a subclass of :py:class:`~cg:cryptography.x509.ExtensionType`
     from ``cryptography``::
@@ -1246,6 +1246,7 @@ class KeyUsage(OrderedSetExtension):
         `RFC 5280, section 4.2.1.3 <https://tools.ietf.org/html/rfc5280#section-4.2.1.3>`_
     """
 
+    default_critical = True
     key = 'key_usage'
     name = 'KeyUsage'
     oid = ExtensionOID.KEY_USAGE

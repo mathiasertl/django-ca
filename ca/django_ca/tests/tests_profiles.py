@@ -73,7 +73,7 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
     def test_types(self):
         expected = {
             'cn_in_san': True,
-            'key_usage': KeyUsage({'value': ['digitalSignature']}),
+            'key_usage': KeyUsage({'value': ['digitalSignature'], 'critical': True}),
             'extended_key_usage': ExtendedKeyUsage({'critical': True, 'value': ['msKDC']}),
             'tls_feature': TLSFeature({'critical': True, 'value': ['OCSPMustStaple']}),
             'subject': {
@@ -88,7 +88,7 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
         CA_PROFILES = {
             'testprofile': {
                 'keyUsage': {
-                    'critical': False,
+                    'critical': True,
                     'value': ['digitalSignature'],
                 },
                 'extendedKeyUsage': {

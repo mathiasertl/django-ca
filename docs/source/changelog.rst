@@ -34,6 +34,7 @@ Extensions
 * **BACKWARDS INCOMPATBILE:** :py:class:`~django_ca.extensions.KeyUsage`,
   :py:class:`~django_ca.extensions.ExtendedKeyUsage` and :py:class:`~django_ca.extensions.TLSFeature` now
   behave like an ordered set and support all operators that a set does.
+* :py:class:`~django_ca.extensions.KeyUsage` is now marked as critical by default.
 * :py:class:`~django_ca.extensions.ExtendedKeyUsage` now supports the ``anyExtendedKeyUsage`` OID.
 
 .. _changelog-1.13.0:

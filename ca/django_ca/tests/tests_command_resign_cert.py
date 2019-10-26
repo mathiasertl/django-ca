@@ -129,7 +129,7 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(new.subject, Subject(subject))
         self.assertEqual(new.subject_alternative_name,
                          SubjectAlternativeName({'value': ['DNS:%s' % alt]}))
-        self.assertEqual(new.key_usage, KeyUsage({'value': [key_usage]}))
+        self.assertEqual(new.key_usage, KeyUsage({'value': [key_usage], 'critical': False}))
         self.assertEqual(new.extended_key_usage,
                          ExtendedKeyUsage({'critical': True, 'value': ext_key_usage.split(',')[1:]}))
         self.assertEqual(new.tls_feature,
