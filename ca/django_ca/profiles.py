@@ -306,6 +306,17 @@ class Profile(object):  # pragma: no cover
 
 
 def get_profile(name=None):  # pragma: no cover
+    """Get profile by the given name.
+
+    Raises ``KeyError`` if the profile is not defined.
+
+    Parameters
+    ----------
+
+    name : str, optional
+        The name of the profile. If ``None``, the profile configured by
+        :ref:`CA_DEFAULT_PROFILE <settings-ca-default-profile>` is used.
+    """
     if name is None:
         name = ca_settings.CA_DEFAULT_PROFILE
     return Profile(name, **ca_settings.CA_PROFILES[name])
