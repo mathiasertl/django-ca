@@ -1379,7 +1379,6 @@ class AddCertificateSeleniumTests(AdminTestMixin, SeleniumTestCase):
     def assertProfile(self, profile, ku_select, ku_critical, eku_select, eku_critical, tf_select, tf_critical,
                       subject, cn_in_san):
         profile = profiles[profile]
-        print('profile', profile)
 
         ku_expected = self.get_expected(profile, KeyUsage, [])
         ku_selected = [o.get_attribute('value') for o in ku_select.all_selected_options]
