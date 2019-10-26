@@ -53,6 +53,7 @@ from ..signals import post_issue_cert
 from ..signals import post_revoke_cert
 from ..signals import pre_issue_cert
 from ..signals import pre_revoke_cert
+from ..subject import Subject
 from ..utils import SUBJECT_FIELDS
 from .base import DjangoCATestCase
 from .base import DjangoCAWithCertTestCase
@@ -863,10 +864,107 @@ class ProfilesViewTestCase(AdminTestMixin, DjangoCATestCase):
         super(ProfilesViewTestCase, self).setUp()
 
     def test_basic(self):
+        self.maxDiff = None
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        # TODO: not tested b/c of annoying keyUsage/key_usage etc. inconsistencies
-        #self.assertEqual(json.loads(response.content.decode('utf-8')), ca_settings.CA_PROFILES)
+        self.assertEqual(json.loads(response.content.decode('utf-8')), {
+            'client': {
+                'cn_in_san': True,
+                'description': 'A certificate for a client.',
+                'extensions': {
+                    'basic_constraints': {
+                        'critical': True,
+                        'value': {'ca': False},
+                    },
+                    'key_usage': {
+                        'critical': True,
+                        'value': ['digitalSignature'],
+                    },
+                    'extended_key_usage': {
+                        'critical': False,
+                        'value': ['clientAuth'],
+                    },
+                },
+                'subject': dict(Subject(ca_settings.CA_DEFAULT_SUBJECT)),
+            },
+            'enduser': {
+                'cn_in_san': False,
+                'description':
+                    'A certificate for an enduser, allows client authentication, code and email signing.',
+                'extensions': {
+                    'basic_constraints': {
+                        'critical': True,
+                        'value': {'ca': False},
+                    },
+                    'key_usage': {
+                        'critical': True,
+                        'value': ['dataEncipherment', 'digitalSignature', 'keyEncipherment', ],
+                    },
+                    'extended_key_usage': {
+                        'critical': False,
+                        'value': ['clientAuth', 'codeSigning', 'emailProtection'],
+                    },
+                },
+                'subject': dict(Subject(ca_settings.CA_DEFAULT_SUBJECT)),
+            },
+            'ocsp': {
+                'cn_in_san': True,
+                'description': 'A certificate for an OCSP responder.',
+                'extensions': {
+                    'basic_constraints': {
+                        'critical': True,
+                        'value': {'ca': False},
+                    },
+                    'key_usage': {
+                        'critical': True,
+                        'value': ['digitalSignature', 'keyEncipherment', 'nonRepudiation'],
+                    },
+                    'extended_key_usage': {
+                        'critical': False,
+                        'value': ['OCSPSigning'],
+                    },
+                },
+                'subject': dict(Subject(ca_settings.CA_DEFAULT_SUBJECT)),
+            },
+            'server': {
+                'cn_in_san': True,
+                'description': 'A certificate for a server, allows client and server authentication.',
+                'extensions': {
+                    'basic_constraints': {
+                        'critical': True,
+                        'value': {'ca': False},
+                    },
+                    'key_usage': {
+                        'critical': True,
+                        'value': ['digitalSignature', 'keyAgreement', 'keyEncipherment', ],
+                    },
+                    'extended_key_usage': {
+                        'critical': False,
+                        'value': ['clientAuth', 'serverAuth'],
+                    },
+                },
+                'subject': dict(Subject(ca_settings.CA_DEFAULT_SUBJECT)),
+            },
+            'webserver': {
+                'cn_in_san': True,
+                'description': 'A certificate for a webserver.',
+                'extensions': {
+                    'basic_constraints': {
+                        'critical': True,
+                        'value': {'ca': False},
+                    },
+                    'key_usage': {
+                        'critical': True,
+                        'value': ['digitalSignature', 'keyAgreement', 'keyEncipherment', ],
+                    },
+                    'extended_key_usage': {
+                        'critical': False,
+                        'value': ['serverAuth'],
+                    },
+                },
+                'subject': dict(Subject(ca_settings.CA_DEFAULT_SUBJECT)),
+            },
+        })
 
     def test_permission_denied(self):
         client = Client()
@@ -887,12 +985,24 @@ class ProfilesViewTestCase(AdminTestMixin, DjangoCATestCase):
         'test': {
             'cn_in_san': True,
         }
-    }, CA_DEFAULT_SUBJECT={})
+    })
     def test_empty_profile(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        # TODO: not tested b/c of annoying keyUsage/key_usage etc. inconsistencies
-        self.assertEqual(json.loads(response.content.decode('utf-8')), ca_settings.CA_PROFILES)
+        self.maxDiff = None
+        self.assertEqual(json.loads(response.content.decode('utf-8')), {
+            'test': {
+                'cn_in_san': True,
+                'description': '',
+                'extensions': {
+                    'basic_constraints': {
+                        'critical': True,
+                        'value': {'ca': False},
+                    },
+                },
+                'subject': dict(Subject(ca_settings.CA_DEFAULT_SUBJECT)),
+            },
+        })
 
 
 class CertDownloadTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
