@@ -1716,3 +1716,40 @@ class TLSFeature(OrderedSetExtension):
         elif isinstance(v, six.string_types) and v in self.CRYPTOGRAPHY_MAPPING:
             return self.CRYPTOGRAPHY_MAPPING[v]
         raise ValueError('Unknown value: %s' % v)
+
+
+KEY_TO_EXTENSION = {
+    AuthorityInformationAccess.key: AuthorityInformationAccess,
+    AuthorityKeyIdentifier.key: AuthorityKeyIdentifier,
+    BasicConstraints.key: BasicConstraints,
+    CRLDistributionPoints.key: CRLDistributionPoints,
+    CertificatePolicies.key: CertificatePolicies,
+    ExtendedKeyUsage.key: ExtendedKeyUsage,
+    IssuerAlternativeName.key: IssuerAlternativeName,
+    KeyUsage.key: KeyUsage,
+    NameConstraints.key: NameConstraints,
+    OCSPNoCheck.key: OCSPNoCheck,
+    PrecertPoison.key: PrecertPoison,
+    PrecertificateSignedCertificateTimestamps.key: PrecertificateSignedCertificateTimestamps,
+    SubjectAlternativeName.key: SubjectAlternativeName,
+    SubjectKeyIdentifier.key: SubjectKeyIdentifier,
+    TLSFeature.key: TLSFeature,
+}
+
+OID_TO_EXTENSION = {
+    AuthorityInformationAccess.oid: AuthorityInformationAccess,
+    AuthorityKeyIdentifier.oid: AuthorityKeyIdentifier,
+    BasicConstraints.oid: BasicConstraints,
+    CRLDistributionPoints.oid: CRLDistributionPoints,
+    CertificatePolicies.oid: CertificatePolicies,
+    ExtendedKeyUsage.oid: ExtendedKeyUsage,
+    IssuerAlternativeName.oid: IssuerAlternativeName,
+    KeyUsage.oid: KeyUsage,
+    NameConstraints.oid: NameConstraints,
+    OCSPNoCheck.oid: OCSPNoCheck,
+    PrecertPoison.oid: PrecertPoison,
+    PrecertificateSignedCertificateTimestamps.oid: PrecertificateSignedCertificateTimestamps,
+    SubjectAlternativeName.oid: SubjectAlternativeName,
+    SubjectKeyIdentifier.oid: SubjectKeyIdentifier,
+    TLSFeature.oid: TLSFeature,
+}

@@ -38,20 +38,22 @@ from .. import ca_settings
 from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
-from ..extensions import CertificatePolicies
 from ..extensions import CRLDistributionPoints
+from ..extensions import CertificatePolicies
 from ..extensions import DistributionPoint
 from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
 from ..extensions import IssuerAlternativeName
+from ..extensions import KEY_TO_EXTENSION
 from ..extensions import KeyUsage
 from ..extensions import ListExtension
 from ..extensions import NameConstraints
 from ..extensions import OCSPNoCheck
+from ..extensions import OID_TO_EXTENSION
 from ..extensions import OrderedSetExtension
 from ..extensions import PolicyInformation
-from ..extensions import PrecertificateSignedCertificateTimestamps
 from ..extensions import PrecertPoison
+from ..extensions import PrecertificateSignedCertificateTimestamps
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
@@ -338,6 +340,17 @@ class ExtensionTestMixin(AbstractExtensionTestMixin):
         self.assertTrue(issubclass(self.ext_class, Extension))
         self.assertEqual(self.ext_class.key, self.ext_class_key)
         self.assertEqual(self.ext_class.name, self.ext_class_name)
+
+        # Test some basic properties (just to be sure)
+        self.assertIsInstance(self.ext_class.oid, ObjectIdentifier)
+        self.assertIsInstance(self.ext_class.key, six.string_types)
+        self.assertGreater(len(self.ext_class.key), 0)
+        self.assertIsInstance(self.ext_class.name, six.string_types)
+        self.assertGreater(len(self.ext_class.name), 0)
+
+        # Test mapping dicts
+        self.assertEqual(KEY_TO_EXTENSION[self.ext_class.key], self.ext_class)
+        self.assertEqual(OID_TO_EXTENSION[self.ext_class.oid], self.ext_class)
 
         # test that the model matches
         self.assertEqual(X509CertMixin.OID_MAPPING[self.ext_class.oid], self.ext_class.key)
@@ -2314,6 +2327,10 @@ class PrecertificateSignedCertificateTimestampsTestCase(DjangoCAWithCertTestCase
         self.assertTrue(issubclass(self.ext_class, Extension))
         self.assertEqual(self.ext_class.key, self.ext_class_key)
         self.assertEqual(self.ext_class.name, self.ext_class_name)
+
+        # Test mapping dicts
+        self.assertEqual(KEY_TO_EXTENSION[self.ext_class.key], self.ext_class)
+        self.assertEqual(OID_TO_EXTENSION[self.ext_class.oid], self.ext_class)
 
         # test that the model matches
         self.assertEqual(X509CertMixin.OID_MAPPING[self.ext_class.oid], self.ext_class.key)
