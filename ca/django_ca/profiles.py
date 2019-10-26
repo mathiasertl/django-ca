@@ -21,12 +21,14 @@ import idna
 from cryptography.hazmat.backends import default_backend
 
 from . import ca_settings
+from .extensions import KEY_TO_EXTENSION
 from .extensions import AuthorityInformationAccess
 from .extensions import AuthorityKeyIdentifier
 from .extensions import BasicConstraints
 from .extensions import CRLDistributionPoints
 from .extensions import DistributionPoint
 from .extensions import ExtendedKeyUsage
+from .extensions import Extension
 from .extensions import IssuerAlternativeName
 from .extensions import KeyUsage
 from .extensions import OCSPNoCheck
@@ -245,7 +247,9 @@ class Profile(object):  # pragma: no cover
         builder = builder.subject_name(subject.name)
 
         for key, extension in cert_extensions.items():
-            print('Adding %s extension' % key)
+            if not isinstance(extension, Extension):
+                extension = KEY_TO_EXTENSION[key](extension)
+
             builder = builder.add_extension(**extension.for_builder())
 
         cert = builder.sign(private_key=ca.key(ca_password), algorithm=algorithm, backend=default_backend())
