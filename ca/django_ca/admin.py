@@ -54,6 +54,7 @@ from .forms import X509CertMixinAdminForm
 from .models import Certificate
 from .models import CertificateAuthority
 from .models import Watcher
+from .profiles import get_profile
 from .signals import post_issue_cert
 from .utils import OID_NAME_MAPPINGS
 from .utils import SERIAL_RE
@@ -580,13 +581,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             # NOTE: is_staff is already assured by ModelAdmin, but just to be sure
             raise PermissionDenied
 
-        data = copy.deepcopy(ca_settings.CA_PROFILES)
-        for name, profile in data.items():
-            if 'keyUsage' in profile:
-                profile['key_usage'] = profile.pop('keyUsage')
-            if 'extendedKeyUsage' in profile:
-                profile['extended_key_usage'] = profile.pop('extendedKeyUsage')
-
+        data = {name: get_profile(name).serialize() for name in ca_settings.CA_PROFILES}
         return HttpResponse(json.dumps(data, cls=LazyEncoder), content_type='application/json')
 
     def get_urls(self):
