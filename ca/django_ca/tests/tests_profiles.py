@@ -46,19 +46,19 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
         self.assertEqual(get_cert_profile_kwargs(ca_settings.CA_DEFAULT_PROFILE), expected)
 
     @override_settings(CA_PROFILES={
-        'ocsp': {
+        'ocsp-old': {
             'ocsp_no_check': True,
+        },
+        'ocsp-new': {
+            'extensions': {
+                'ocsp_no_check': {},
+            },
         },
     })
     def test_ocsp_no_check(self):
         self.maxDiff = None
         expected = {
             'cn_in_san': True,
-            'key_usage': KeyUsage({
-                'critical': True,
-                'value': ['nonRepudiation', 'digitalSignature', 'keyEncipherment']
-            }),
-            'extended_key_usage': ExtendedKeyUsage({'value': ['OCSPSigning']}),
             'ocsp_no_check': True,
             'subject': {
                 'C': 'AT',
@@ -68,7 +68,8 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
                 'OU': 'Django CA Testsuite',
             },
         }
-        self.assertEqual(get_cert_profile_kwargs('ocsp'), expected)
+        self.assertEqual(get_cert_profile_kwargs('ocsp-old'), expected)
+        self.assertEqual(get_cert_profile_kwargs('ocsp-new'), expected)
 
     def test_types(self):
         expected = {

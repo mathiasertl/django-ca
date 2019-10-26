@@ -335,7 +335,7 @@ def get_cert_profile_kwargs(name=None):
         kwargs['tls_feature'] = TLSFeature(tls_feature)
     if profile.get('ocsp_no_check'):
         kwargs['ocsp_no_check'] = profile['ocsp_no_check']
-    elif profile['extensions'].get(OCSPNoCheck.key):
+    elif OCSPNoCheck.key in profile['extensions'] and profile['extensions'].get(OCSPNoCheck.key) is not False:
         kwargs['ocsp_no_check'] = True
 
     return kwargs
