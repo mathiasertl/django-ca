@@ -302,7 +302,6 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(list(cert.watchers.all()), [watcher])
 
     def test_unsupported_extensions(self):
-        self.maxDiff = None
         cert = self.certs['all-extensions']
         # Act as if no extensions is recognized, to see what happens if we'd encounter an unknown extension.
         with mock.patch.object(Certificate, 'OID_MAPPING', {}), self.assertLogs() as logs:
@@ -893,7 +892,6 @@ class ProfilesViewTestCase(AdminTestMixin, DjangoCATestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         # TODO: not tested b/c of annoying keyUsage/key_usage etc. inconsistencies
-        self.maxDiff = None
         self.assertEqual(json.loads(response.content.decode('utf-8')), ca_settings.CA_PROFILES)
 
 

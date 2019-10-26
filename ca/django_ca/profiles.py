@@ -305,7 +305,7 @@ class Profile(object):  # pragma: no cover
             extensions[SubjectAlternativeName.key].append(cn)
 
 
-def get_profile(name=None):  # pragma: no cover
+def get_profile(name=None):
     """Get profile by the given name.
 
     Raises ``KeyError`` if the profile is not defined.

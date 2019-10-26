@@ -18,8 +18,19 @@ from ..extensions import ExtendedKeyUsage
 from ..extensions import KeyUsage
 from ..extensions import TLSFeature
 from ..profiles import get_cert_profile_kwargs
+from ..profiles import get_profile
 from .base import DjangoCATestCase
 from .base import override_settings
+
+
+class GetProfileTestCase(DjangoCATestCase):
+    def test_basic(self):
+        for name in ca_settings.CA_PROFILES:
+            profile = get_profile(name)
+            self.assertEqual(name, profile.name)
+
+        profile = get_profile()
+        self.assertEqual(profile.name, ca_settings.CA_DEFAULT_PROFILE)
 
 
 class GetCertProfileKwargsTestCase(DjangoCATestCase):

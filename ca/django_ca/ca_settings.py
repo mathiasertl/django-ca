@@ -37,77 +37,85 @@ CA_DEFAULT_KEY_SIZE = getattr(settings, 'CA_DEFAULT_KEY_SIZE', 4096)
 CA_PROFILES = {
     'client': {
         # see: http://security.stackexchange.com/questions/68491/
-        'desc': _('A certificate for a client.'),
-        'keyUsage': {
-            'critical': True,
-            'value': [
-                'digitalSignature',
-            ],
-        },
-        'extendedKeyUsage': {
-            'critical': False,
-            'value': [
-                'clientAuth',
-            ],
+        'description': _('A certificate for a client.'),
+        'extensions': {
+            'keyUsage': {
+                'critical': True,
+                'value': [
+                    'digitalSignature',
+                ],
+            },
+            'extendedKeyUsage': {
+                'critical': False,
+                'value': [
+                    'clientAuth',
+                ],
+            },
         },
     },
     'server': {
-        'desc': _('A certificate for a server, allows client and server authentication.'),
-        'keyUsage': {
-            'critical': True,
-            'value': [
-                'digitalSignature',
-                'keyAgreement',
-                'keyEncipherment',
-            ],
-        },
-        'extendedKeyUsage': {
-            'critical': False,
-            'value': [
-                'clientAuth',
-                'serverAuth',
-            ],
-        },
+        'description': _('A certificate for a server, allows client and server authentication.'),
+        'extensions': {
+            'key_usage': {
+                'critical': True,
+                'value': [
+                    'digitalSignature',
+                    'keyAgreement',
+                    'keyEncipherment',
+                ],
+            },
+            'extended_key_usage': {
+                'critical': False,
+                'value': [
+                    'clientAuth',
+                    'serverAuth',
+                ],
+            },
+        }
     },
     'webserver': {
         # see http://security.stackexchange.com/questions/24106/
-        'desc': _('A certificate for a webserver.'),
-        'keyUsage': {
-            'critical': True,
-            'value': [
-                'digitalSignature',
-                'keyAgreement',
-                'keyEncipherment',
-            ],
-        },
-        'extendedKeyUsage': {
-            'critical': False,
-            'value': [
-                'serverAuth',
-            ],
-        },
+        'description': _('A certificate for a webserver.'),
+        'extensions': {
+            'key_usage': {
+                'critical': True,
+                'value': [
+                    'digitalSignature',
+                    'keyAgreement',
+                    'keyEncipherment',
+                ],
+            },
+            'extended_key_usage': {
+                'critical': False,
+                'value': [
+                    'serverAuth',
+                ],
+            },
+        }
     },
     'enduser': {
         # see: http://security.stackexchange.com/questions/30066/
-        'desc': _(
+        'description': _(
             'A certificate for an enduser, allows client authentication, code and email signing.'),
-        'keyUsage': {
-            'critical': True,
-            'value': [
-                'dataEncipherment',
-                'digitalSignature',
-                'keyEncipherment',
-            ],
-        },
-        'extendedKeyUsage': {
-            'critical': False,
-            'value': [
-                'clientAuth',
-                'codeSigning',
-                'emailProtection',
-            ],
-        },
         'cn_in_san': False,
+        'extensions': {
+            'key_usage': {
+                'critical': True,
+                'value': [
+                    'dataEncipherment',
+                    'digitalSignature',
+                    'keyEncipherment',
+                ],
+            },
+            'extended_key_usage': {
+                'critical': False,
+                'value': [
+                    'clientAuth',
+                    'codeSigning',
+                    'emailProtection',
+                ],
+            },
+        },
     },
     'ocsp': {
         'description': _('A certificate for an OCSP responder.'),
