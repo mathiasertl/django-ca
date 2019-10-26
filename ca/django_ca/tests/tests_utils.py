@@ -44,10 +44,6 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from .. import utils
-from ..extensions import ExtendedKeyUsage
-from ..extensions import KeyUsage
-from ..extensions import TLSFeature
-from ..profiles import get_cert_profile_kwargs
 from ..utils import NAME_RE
 from ..utils import LazyEncoder
 from ..utils import format_general_name
@@ -726,119 +722,6 @@ class GetCertBuilderTestCase(DjangoCATestCase):
         with self.assertRaisesRegex(ValueError,
                                     r'^The not valid after date must be after the not valid before date\.$'):
             get_cert_builder(datetime(2017, 12, 12))
-
-
-class GetCertProfileKwargsTestCase(DjangoCATestCase):
-    # NOTE: These test-cases will start failing if you change the default profiles.
-
-    @override_settings(CA_PROFILES={})
-    def test_default(self):
-        expected = {
-            'cn_in_san': True,
-            'key_usage': KeyUsage({
-                'critical': True,
-                'value': ['digitalSignature', 'keyAgreement', 'keyEncipherment'],
-            }),
-            'extended_key_usage': ExtendedKeyUsage({'value': ['serverAuth']}),
-            'subject': {
-                'C': 'AT',
-                'ST': 'Vienna',
-                'L': 'Vienna',
-                'O': 'Django CA',
-                'OU': 'Django CA Testsuite',
-            },
-        }
-        self.assertEqual(get_cert_profile_kwargs(), expected)
-        self.assertEqual(get_cert_profile_kwargs(ca_settings.CA_DEFAULT_PROFILE), expected)
-
-    @override_settings(CA_PROFILES={
-        'ocsp': {
-            'ocsp_no_check': True,
-        },
-    })
-    def test_ocsp_no_check(self):
-        self.maxDiff = None
-        expected = {
-            'cn_in_san': True,
-            'key_usage': KeyUsage({
-                'critical': True,
-                'value': ['nonRepudiation', 'digitalSignature', 'keyEncipherment']
-            }),
-            'extended_key_usage': ExtendedKeyUsage({'value': ['OCSPSigning']}),
-            'ocsp_no_check': True,
-            'subject': {
-                'C': 'AT',
-                'ST': 'Vienna',
-                'L': 'Vienna',
-                'O': 'Django CA',
-                'OU': 'Django CA Testsuite',
-            },
-        }
-        self.assertEqual(get_cert_profile_kwargs('ocsp'), expected)
-
-    def test_types(self):
-        expected = {
-            'cn_in_san': True,
-            'key_usage': KeyUsage({'value': ['digitalSignature']}),
-            'extended_key_usage': ExtendedKeyUsage({'critical': True, 'value': ['msKDC']}),
-            'tls_feature': TLSFeature({'critical': True, 'value': ['OCSPMustStaple']}),
-            'subject': {
-                'C': 'AT',
-                'ST': 'Vienna',
-                'L': 'Vienna',
-                'O': 'Django CA',
-                'OU': 'Django CA Testsuite',
-            },
-        }
-
-        CA_PROFILES = {
-            'testprofile': {
-                'keyUsage': {
-                    'critical': False,
-                    'value': ['digitalSignature'],
-                },
-                'extendedKeyUsage': {
-                    'critical': True,
-                    'value': ['msKDC'],
-                },
-                'TLSFeature': {
-                    'critical': True,
-                    'value': ['OCSPMustStaple'],
-                },
-            },
-        }
-
-        with self.settings(CA_PROFILES=CA_PROFILES):
-            self.assertEqual(get_cert_profile_kwargs('testprofile'), expected)
-
-        CA_PROFILES['testprofile']['keyUsage']['value'] = ['encipherOnly']
-        expected['key_usage'] = KeyUsage({'value': ['encipherOnly']})
-        with self.settings(CA_PROFILES=CA_PROFILES):
-            self.assertEqual(get_cert_profile_kwargs('testprofile'), expected)
-
-        CA_PROFILES['testprofile']['keyUsage']['value'] = []
-        del expected['key_usage']
-        with self.settings(CA_PROFILES=CA_PROFILES):
-            self.assertEqual(get_cert_profile_kwargs('testprofile'), expected)
-
-        # Ok, no we have *no* extensions
-        expected = {
-            'cn_in_san': True,
-            'subject': {
-                'C': 'AT',
-                'ST': 'Vienna',
-                'L': 'Vienna',
-                'O': 'Django CA',
-                'OU': 'Django CA Testsuite',
-            },
-        }
-
-        CA_PROFILES = {
-            'testprofile': {},
-        }
-
-        with self.settings(CA_PROFILES=CA_PROFILES):
-            self.assertEqual(get_cert_profile_kwargs('testprofile'), expected)
 
 
 class ValidateKeyParametersTest(TestCase):
