@@ -255,6 +255,20 @@ class Profile(object):  # pragma: no cover
         cert = builder.sign(private_key=ca.key(ca_password), algorithm=algorithm, backend=default_backend())
         return cert
 
+    def serialize(self):
+        data = {
+            'cn_in_san': self.cn_in_san,
+            'description': self.description,
+            'subject': dict(self.subject),
+            'extensions': {},
+        }
+
+        for key, extension in self.extensions.items():
+            if not isinstance(extension, Extension):
+                extension = KEY_TO_EXTENSION[key](extension)
+            data['extensions'][extension.key] = extension.serialize()
+        return data
+
     def update_from_ca(self, ca, extensions, add_crl_url=None, add_ocsp_url=None, add_issuer_url=None,
                        add_issuer_alternative_name=None):
         """Update data from the given CA.
