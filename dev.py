@@ -113,6 +113,8 @@ def test(suites):
     warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='webtest.lint', message=msg)
     warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='markupsafe', message=msg)
     warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='jinja2', message=msg)
+    # in bs4==4.8.1
+    warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='bs4', message=msg)
 
     # filter some webtest warnings
     msg2 = r'urllib.parse.splithost\(\) is deprecated as of 3.8, use urllib.parse.urlparse\(\) instead'
