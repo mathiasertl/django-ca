@@ -15,6 +15,7 @@
 
 import warnings
 from copy import deepcopy
+from threading import local
 
 import idna
 
@@ -88,6 +89,11 @@ class Profile(object):  # pragma: no cover
         self.add_ocsp_url = add_crl_url
         self.add_issuer_alternative_name = add_issuer_alternative_name
         self.description = description
+
+        # cast extensions to their respective classes
+        for key, extension in self.extensions.items():
+            if not isinstance(extension, Extension):
+                self.extensions[key] = KEY_TO_EXTENSION[key](extension)
 
         # set some sane extension defaults
         self.extensions.setdefault(BasicConstraints.key, BasicConstraints({}))
@@ -334,6 +340,26 @@ def get_profile(name=None):
     if name is None:
         name = ca_settings.CA_DEFAULT_PROFILE
     return Profile(name, **ca_settings.CA_PROFILES[name])
+
+
+class Profiles:
+    def __init__(self):
+        self._profiles = local()
+
+    def __getitem__(self, name):
+        try:
+            return self._profiles.profiles[name]
+        except AttributeError:
+            self._profiles.profiles = {}
+        except KeyError:
+            pass
+
+        self._profiles.profiles[name] = get_profile(name)
+        return self._profiles.profiles[name]
+
+
+profiles = Profiles()
+profile = profiles[ca_settings.CA_DEFAULT_PROFILE]
 
 
 def get_cert_profile_kwargs(name=None):
