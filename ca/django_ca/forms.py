@@ -115,10 +115,10 @@ class CreateCertificateBaseForm(forms.ModelForm):
             'Algorithm used for signing the certificate. SHA-512 should be fine in most cases.'
         ),
     )
-    key_usage = MultiValueExtensionField(label='keyUsage', help_text=KEY_USAGE_DESC, extension=KeyUsage)
+    key_usage = MultiValueExtensionField(help_text=KEY_USAGE_DESC, extension=KeyUsage)
     extended_key_usage = MultiValueExtensionField(
-        label='extendedKeyUsage', help_text=EXTENDED_KEY_USAGE_DESC, extension=ExtendedKeyUsage)
-    tls_feature = MultiValueExtensionField(label='TLS Features', extension=TLSFeature)
+        help_text=EXTENDED_KEY_USAGE_DESC, extension=ExtendedKeyUsage)
+    tls_feature = MultiValueExtensionField(extension=TLSFeature)
 
     def clean_algorithm(self):
         algo = self.cleaned_data['algorithm']

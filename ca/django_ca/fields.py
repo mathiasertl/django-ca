@@ -17,6 +17,7 @@
 from django import forms
 
 from . import ca_settings
+from .profiles import profile
 from .subject import Subject
 from .utils import SUBJECT_FIELDS
 from .widgets import MultiValueExtensionWidget
@@ -54,8 +55,7 @@ class SubjectAltNameField(forms.MultiValueField):
             forms.BooleanField(required=False),
         )
         kwargs.setdefault('widget', SubjectAltNameWidget)
-        initial = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get('cn_in_san', True)
-        kwargs.setdefault('initial', ['', initial])
+        kwargs.setdefault('initial', ['', profile.cn_in_san])
         super(SubjectAltNameField, self).__init__(
             fields=fields, require_all_fields=False, *args, **kwargs)
 
@@ -66,13 +66,11 @@ class SubjectAltNameField(forms.MultiValueField):
 class MultiValueExtensionField(forms.MultiValueField):
     def __init__(self, extension, *args, **kwargs):
         self.extension = extension
-
-        label = kwargs['label']
-        initial = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get(label, {})
-        kwargs.setdefault('initial', [
-            initial.get('value', []),
-            initial.get('critical', False),
-        ])
+        kwargs.setdefault('label', extension.name)
+        ext = profile.extensions.get(self.extension.key)
+        if ext:
+            ext = ext.serialize()
+            kwargs.setdefault('initial', [ext['value'], ext['critical']])
 
         fields = (
             forms.MultipleChoiceField(required=False, choices=extension.CHOICES),
