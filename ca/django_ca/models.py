@@ -69,7 +69,6 @@ from .extensions import TLSFeature
 from .extensions import UnrecognizedExtension
 from .managers import CertificateAuthorityManager
 from .managers import CertificateManager
-from .profiles import get_cert_profile_kwargs
 from .querysets import CertificateAuthorityQuerySet
 from .querysets import CertificateQuerySet
 from .signals import post_revoke_cert
