@@ -19,7 +19,6 @@ from django.core.management.base import CommandError
 from django.utils import timezone
 
 from ... import ca_settings
-from ...extensions import SubjectAlternativeName
 from ...management.base import BaseSignCommand
 from ...models import Certificate
 from ...models import Watcher
@@ -91,9 +90,6 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
             'password': options['password'],
             'subject': options['subject'] or Subject(),
         }
-
-        if not isinstance(options['alt'], SubjectAlternativeName):
-            raise Exception('test case does not pass SAN instance')
 
         if options['alt'].value:
             kwargs['extensions'].append(options['alt'])
