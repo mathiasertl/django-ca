@@ -85,9 +85,9 @@ class Profile(object):
         self.cn_in_san = cn_in_san
         self.expires = expires or ca_settings.CA_DEFAULT_EXPIRES
         self.issuer_name = issuer_name
-        self.add_crl_url = add_ocsp_url
+        self.add_crl_url = add_crl_url
         self.add_issuer_url = add_issuer_url
-        self.add_ocsp_url = add_crl_url
+        self.add_ocsp_url = add_ocsp_url
         self.add_issuer_alternative_name = add_issuer_alternative_name
         self.description = description
 
@@ -132,7 +132,7 @@ class Profile(object):
             self.algorithm == o.algorithm and self.extensions == o.extensions and \
             self.cn_in_san == o.cn_in_san and self.expires == o.expires and \
             self.issuer_name == o.issuer_name and self.add_crl_url == o.add_crl_url and \
-            self.add_issuer_url == o.add_issuer_url and self.add_ocsp_url == o.add_crl_url and \
+            self.add_issuer_url == o.add_issuer_url and self.add_ocsp_url == o.add_ocsp_url and \
             self.add_issuer_alternative_name == o.add_issuer_alternative_name and \
             self.description == o.description
 
@@ -279,7 +279,7 @@ class Profile(object):
         return data
 
     def _update_from_ca(self, ca, extensions, add_crl_url=None, add_ocsp_url=None, add_issuer_url=None,
-                       add_issuer_alternative_name=None):
+                        add_issuer_alternative_name=None):
         """Update data from the given CA.
 
         * Sets the AuthorityKeyIdentifier extension
