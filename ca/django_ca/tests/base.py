@@ -50,6 +50,7 @@ from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.webdriver.support.wait import WebDriverWait
 
 from .. import ca_settings
+from .. import profiles
 from ..constants import ReasonFlags
 from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
@@ -363,9 +364,13 @@ class override_settings(_override_settings):
         inner = super(override_settings, self).__call__(test_func)
         return inner
 
+    def reload(self):
+        reload_module(ca_settings)
+        reload_module(profiles)
+
     def save_options(self, test_func):
         super(override_settings, self).save_options(test_func)
-        reload_module(ca_settings)
+        self.reload()
 
     def enable(self):
         super(override_settings, self).enable()
@@ -377,12 +382,12 @@ class override_settings(_override_settings):
             # Otherwise an exception in ca_settings will cause overwritten settings to persist
             # to the next tests.
             super(override_settings, self).disable()
-            reload_module(ca_settings)
+            self.reload()
             raise
 
     def disable(self):
         super(override_settings, self).disable()
-        reload_module(ca_settings)
+        self.reload()
 
 
 @contextmanager
