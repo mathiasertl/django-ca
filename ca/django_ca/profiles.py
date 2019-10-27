@@ -38,7 +38,6 @@ from .extensions import TLSFeature
 from .signals import pre_issue_cert
 from .subject import Subject
 from .utils import get_cert_builder
-from .utils import get_default_subject
 from .utils import parse_general_name
 from .utils import parse_hash_algorithm
 from .utils import shlex_split
@@ -404,7 +403,7 @@ def get_cert_profile_kwargs(name=None):
     profile.setdefault('extensions', {})
     kwargs = {
         'cn_in_san': profile['cn_in_san'],
-        'subject': get_default_subject(name=name),
+        'subject': profile['subject'],
     }
 
     key_usage = profile.get('keyUsage', profile['extensions'].get(KeyUsage.key))

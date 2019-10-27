@@ -821,13 +821,6 @@ def get_cert_builder(expires, serial=None):
     return builder
 
 
-def get_default_subject(name):
-    """Get the default subject for the given profile."""
-
-    profile = deepcopy(ca_settings.CA_PROFILES[name])
-    return profile['subject']
-
-
 if six.PY2:  # pragma: no branch, pragma: only py2
     class PermissionError(IOError, OSError):
         pass
