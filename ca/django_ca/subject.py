@@ -238,6 +238,3 @@ def get_default_subject():
         return Subject(ca_settings.CA_DEFAULT_SUBJECT)
     except (ValueError, KeyError) as e:
         raise ImproperlyConfigured('CA_DEFAULT_SUBJECT: %s' % e)
-
-
-default_subject = get_default_subject()

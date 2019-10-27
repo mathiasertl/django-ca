@@ -146,6 +146,16 @@ def _load_pub(data):
     return pub_data
 
 
+def _reload():
+    reload_module(ca_settings)
+    # WARNING:
+    # * Do NOT reload any other modules here, as isinstance() no longer returns True for instances from
+    #   reloaded modules
+    # * Do NOT set module level attributes, as other modules will not see the new instance
+
+    profiles.profiles._reset()
+
+
 cryptography_version = tuple([int(t) for t in cryptography.__version__.split('.')[:2]])
 
 with open(os.path.join(settings.FIXTURES_DIR, 'cert-data.json')) as stream:
@@ -365,13 +375,7 @@ class override_settings(_override_settings):
         return inner
 
     def reload(self):
-        reload_module(ca_settings)
-        # WARNING:
-        # * Do NOT reload any other modules here, as isinstance() no longer returns True for instances from
-        #   reloaded modules
-        # * Do NOT set module level attributes, as other modules will not see the new instance
-
-        profiles.profiles._reset()
+        _reload()
 
     def save_options(self, test_func):
         super(override_settings, self).save_options(test_func)
@@ -468,8 +472,7 @@ class DjangoCATestCaseMixin(object):
         super(DjangoCATestCaseMixin, cls).setUpClass()
 
         if cls._overridden_settings:
-            reload_module(ca_settings)
-            profiles.profiles._reset()
+            _reload()
 
     @classmethod
     def tearDownClass(cls):
@@ -480,8 +483,7 @@ class DjangoCATestCaseMixin(object):
         super(DjangoCATestCaseMixin, cls).tearDownClass()
 
         if overridden is True:
-            reload_module(ca_settings)
-            profiles.profiles._reset()
+            _reload()
 
     def setUp(self):
         super(DjangoCATestCaseMixin, self).setUp()
