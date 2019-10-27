@@ -230,7 +230,7 @@ class Profile(object):
         cert_extensions.update(extensions)
         cert_subject = deepcopy(self.subject)
 
-        issuer_name = self.update_from_ca(
+        issuer_name = self._update_from_ca(
             ca, cert_extensions, add_crl_url=add_crl_url, add_ocsp_url=add_ocsp_url,
             add_issuer_url=add_issuer_url, add_issuer_alternative_name=add_issuer_alternative_name)
 
@@ -246,7 +246,7 @@ class Profile(object):
             algorithm = parse_hash_algorithm(self.algorithm)
 
         # Finally, update SAN with the current CN, if set and requested
-        self.update_san_from_cn(cn_in_san, subject=cert_subject, extensions=cert_extensions)
+        self._update_san_from_cn(cn_in_san, subject=cert_subject, extensions=cert_extensions)
         # TODO: fail if there is no CN and no SAN
 
         pre_issue_cert.send(sender=self.__class__, ca=ca, csr=csr, expires=expires, algorithm=algorithm,
@@ -278,7 +278,7 @@ class Profile(object):
 
         return data
 
-    def update_from_ca(self, ca, extensions, add_crl_url=None, add_ocsp_url=None, add_issuer_url=None,
+    def _update_from_ca(self, ca, extensions, add_crl_url=None, add_ocsp_url=None, add_issuer_url=None,
                        add_issuer_alternative_name=None):
         """Update data from the given CA.
 
@@ -314,7 +314,7 @@ class Profile(object):
         else:
             return ca.x509.subject
 
-    def update_san_from_cn(self, cn_in_san, subject, extensions):
+    def _update_san_from_cn(self, cn_in_san, subject, extensions):
         if subject.get('CN') and cn_in_san is True:
             try:
                 cn = parse_general_name(subject['CN'])
