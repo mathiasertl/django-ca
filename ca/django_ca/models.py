@@ -581,7 +581,7 @@ class CertificateAuthority(X509CertMixin):
 
         # TODO: The subject we pass is just a guess - see what public CAs do!?
         cert = Certificate.objects.create_cert(ca=self, csr=csr, profile=profile, subject=self.subject,
-                                               ca_password=password)
+                                               password=password)
 
         cert_path = ca_storage.generate_filename('ocsp/%s.pem' % self.serial.replace(':', ''))
         cert_pem = cert.dump_certificate(encoding=Encoding.PEM)

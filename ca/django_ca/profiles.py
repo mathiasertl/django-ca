@@ -35,6 +35,7 @@ from .extensions import KeyUsage
 from .extensions import OCSPNoCheck
 from .extensions import SubjectAlternativeName
 from .extensions import TLSFeature
+from .signals import pre_issue_cert
 from .subject import Subject
 from .subject import default_subject
 from .utils import get_cert_builder
@@ -44,7 +45,7 @@ from .utils import parse_hash_algorithm
 from .utils import shlex_split
 
 
-class Profile(object):  # pragma: no cover
+class Profile(object):
     """
 
     Precedence of parameters:
@@ -100,28 +101,40 @@ class Profile(object):  # pragma: no cover
 
         if 'keyUsage' in kwargs:
             warnings.warn('keyUsage in profile is deprecated, use extensions -> %s instead.' % KeyUsage.key,
-                          DeprecationWarning)
+                          DeprecationWarning, stacklevel=2)
             self.extensions[KeyUsage.key] = KeyUsage(kwargs.pop('keyUsage'))
         if 'extendedKeyUsage' in kwargs:
             warnings.warn(
                 'extendedKeyUsage in profile is deprecated, use extensions -> %s instead.'
-                % ExtendedKeyUsage.key, DeprecationWarning)
+                % ExtendedKeyUsage.key, DeprecationWarning, stacklevel=2)
             self.extensions[ExtendedKeyUsage.key] = ExtendedKeyUsage(kwargs.pop('extendedKeyUsage'))
         if 'TLSFeature' in kwargs:
             warnings.warn(
                 'TLSFeature in profile is deprecated, use extensions -> %s instead.' % TLSFeature.key,
-                DeprecationWarning)
+                DeprecationWarning, stacklevel=2)
             self.extensions[TLSFeature.key] = TLSFeature(kwargs.pop('TLSFeature'))
         if 'desc' in kwargs:
-            warnings.warn('desc in profile is deprecated, use description instead.', DeprecationWarning)
+            warnings.warn('desc in profile is deprecated, use description instead.', DeprecationWarning,
+                          stacklevel=2)
             self.description = kwargs.pop('desc')
         if 'ocsp_no_check' in kwargs:
             warnings.warn('ocsp_no_check in profile is deprecated, use extensions -> %s instead.' %
-                          OCSPNoCheck.key, DeprecationWarning)
-            self.extensions[OCSPNoCheck.key] = {}
+                          OCSPNoCheck.key, DeprecationWarning, stacklevel=2)
+            self.extensions[OCSPNoCheck.key] = OCSPNoCheck({})
 
         # set some defaults
         self.extensions.setdefault(BasicConstraints.key, BasicConstraints({'value': {'ca': False}}))
+
+    def __eq__(self, o):
+        if isinstance(o, (Profile, DefaultProfileProxy)) is False:
+            return False
+        return self.name == o.name and self.subject == o.subject and \
+            self.algorithm == o.algorithm and self.extensions == o.extensions and \
+            self.cn_in_san == o.cn_in_san and self.expires == o.expires and \
+            self.issuer_name == o.issuer_name and self.add_crl_url == o.add_crl_url and \
+            self.add_issuer_url == o.add_issuer_url and self.add_ocsp_url == o.add_crl_url and \
+            self.add_issuer_alternative_name == o.add_issuer_alternative_name and \
+            self.description == o.description
 
     def __repr__(self):
         return '<Profile: %r>' % self.name
@@ -129,14 +142,9 @@ class Profile(object):  # pragma: no cover
     def __str__(self):
         return repr(self)
 
-    def copy(self):
-        """Create a deep copy of this profile."""
-
-        return deepcopy(self)
-
     def create_cert(self, ca, csr, subject=None, expires=None, algorithm=None, extensions=None,
                     cn_in_san=None, add_crl_url=None, add_ocsp_url=None, add_issuer_url=None,
-                    add_issuer_alternative_name=None, ca_password=None):
+                    add_issuer_alternative_name=None, password=None):
         """Create a x509 certificate based on this profile, the passed CA and input parameters.
 
         This function is the core function used to create x509 certificates. In it's simplest form, you only
@@ -190,7 +198,7 @@ class Profile(object):  # pragma: no cover
         add_issuer_alternative_name : bool, optional
             Override if any IssuerAlternativeNames from the CA should be added to the CA. If not passed, the
             value set in the profile is used.
-        ca_password: bytes or str, optional
+        password: bytes or str, optional
             The password to the private key of the CA.
 
         Returns
@@ -240,39 +248,36 @@ class Profile(object):  # pragma: no cover
             algorithm = parse_hash_algorithm(self.algorithm)
 
         # Finally, update SAN with the current CN, if set and requested
-        self.update_san_from_cn(cn_in_san, subject, extensions)
+        self.update_san_from_cn(cn_in_san, subject=subject, extensions=cert_extensions)
         # TODO: fail if there is no CN and no SAN
 
-        # TODO: send pre_sign signal
+        pre_issue_cert.send(sender=self.__class__, ca=ca, csr=csr, expires=expires, algorithm=algorithm,
+                            subject=subject, extensions=cert_extensions, password=password)
 
         public_key = csr.public_key()
-
         builder = get_cert_builder(expires)
         builder = builder.public_key(public_key)
         builder = builder.issuer_name(issuer_name)
         builder = builder.subject_name(subject.name)
 
         for key, extension in cert_extensions.items():
-            if not isinstance(extension, Extension):
-                extension = KEY_TO_EXTENSION[key](extension)
-
             builder = builder.add_extension(**extension.for_builder())
 
-        cert = builder.sign(private_key=ca.key(ca_password), algorithm=algorithm, backend=default_backend())
-        return cert
+        return builder.sign(private_key=ca.key(password), algorithm=algorithm, backend=default_backend())
 
     def serialize(self):
+        """Function to serialize a profile.
+
+        This is function is called by the admin interface to retrieve profile information to the browser, so
+        the value returned by this function should always be JSON serializable.
+        """
         data = {
             'cn_in_san': self.cn_in_san,
             'description': self.description,
             'subject': dict(self.subject),
-            'extensions': {},
+            'extensions': {k: e.serialize() for k, e in self.extensions.items()},
         }
 
-        for key, extension in self.extensions.items():
-            if not isinstance(extension, Extension):
-                extension = KEY_TO_EXTENSION[key](extension)
-            data['extensions'][extension.key] = extension.serialize()
         return data
 
     def update_from_ca(self, ca, extensions, add_crl_url=None, add_ocsp_url=None, add_issuer_url=None,
@@ -359,7 +364,28 @@ class Profiles:
 
 
 profiles = Profiles()
-profile = profiles[ca_settings.CA_DEFAULT_PROFILE]
+
+
+class DefaultProfileProxy:
+    """Default profile proxy, similar to Djangos DefaultCacheProxy.
+
+    .. NOTE:: We don't implement setattr/delattr, because Profiles are supposed to be read-only anyway.
+    """
+
+    def __getattr__(self, name):
+        return getattr(profiles[ca_settings.CA_DEFAULT_PROFILE], name)
+
+    def __eq__(self, other):
+        return profiles[ca_settings.CA_DEFAULT_PROFILE] == other
+
+    def __repr__(self):
+        return '<DefaultProfile: %r>' % self.name
+
+    def __str__(self):
+        return repr(self)
+
+
+profile = DefaultProfileProxy()
 
 
 def get_cert_profile_kwargs(name=None):
