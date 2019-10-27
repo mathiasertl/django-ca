@@ -19,10 +19,10 @@ from django.core.management.base import CommandError
 from django.utils import timezone
 
 from ... import ca_settings
+from ...extensions import SubjectAlternativeName
 from ...management.base import BaseSignCommand
 from ...models import Certificate
 from ...models import Watcher
-from ...profiles import get_cert_profile_kwargs
 from ...subject import Subject
 
 
@@ -81,23 +81,28 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         watchers = [Watcher.from_addr(addr) for addr in options['watch']]
 
         # get extensions based on profiles
-        kwargs = get_cert_profile_kwargs(options['profile'])
-        kwargs['subject'] = Subject(kwargs.get('subject'))
-        kwargs['password'] = options['password']
-        kwargs['csr_format'] = options['csr_format']
-        if options['cn_in_san'] is not None:
-            kwargs['cn_in_san'] = options['cn_in_san']
-        if options['key_usage']:
-            kwargs['key_usage'] = options['key_usage']
-        if options['ext_key_usage']:
-            kwargs['extended_key_usage'] = options['ext_key_usage']
-        if options['tls_feature']:
-            kwargs['tls_feature'] = options['tls_feature']
+        kwargs = {
+            'cn_in_san': options['cn_in_san'],
+            'csr_format': options['csr_format'],
 
-        # update subject with arguments from the command line
-        if options.get('subject'):
-            # TODO: Update value
-            kwargs['subject'] = options['subject']  # update from command line
+            # TODO: since expires option has a default, it currently overrides profile values
+            'expires': options['expires'],
+            'extensions': [],
+            'password': options['password'],
+            'subject': options['subject'] or Subject(),
+        }
+
+        if not isinstance(options['alt'], SubjectAlternativeName):
+            raise Exception('test case does not pass SAN instance')
+
+        if options['alt'].value:
+            kwargs['extensions'].append(options['alt'])
+        if options['key_usage'].value:
+            kwargs['extensions'].append(options['key_usage'])
+        if options['ext_key_usage'].value:
+            kwargs['extensions'].append(options['ext_key_usage'])
+        if options['tls_feature']:
+            kwargs['extensions'].append(options['tls_feature'])
 
         if 'CN' not in kwargs['subject'] and not options['alt']:
             raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")
@@ -114,9 +119,12 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                 csr = stream.read()
 
         try:
-            cert = Certificate.objects.init(
-                ca=ca, csr=csr, algorithm=options['algorithm'], expires=options['expires'],
-                subject_alternative_name=options['alt'], **kwargs)
+            #cert = Certificate.objects.init(
+            #    ca=ca, csr=csr, algorithm=options['algorithm'], expires=options['expires'],
+            #    subject_alternative_name=options['alt'], **kwargs)
+
+            #print('kwargs', kwargs)
+            cert = Certificate.objects.create_cert(ca, csr, profile=options['profile'], **kwargs)
         except Exception as e:
             raise CommandError(e)
 

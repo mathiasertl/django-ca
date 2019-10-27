@@ -366,7 +366,12 @@ class override_settings(_override_settings):
 
     def reload(self):
         reload_module(ca_settings)
-        reload_module(profiles)
+        # WARNING:
+        # * Do NOT reload any other modules here, as isinstance() no longer returns True for instances from
+        #   reloaded modules
+        # * Do NOT set module level attributes, as other modules will not see the new instance
+
+        profiles.profiles._reset()
 
     def save_options(self, test_func):
         super(override_settings, self).save_options(test_func)
@@ -376,7 +381,7 @@ class override_settings(_override_settings):
         super(override_settings, self).enable()
 
         try:
-            reload_module(ca_settings)
+            self.reload()
         except Exception:  # pragma: no cover
             # If an exception is thrown reloading ca_settings, we disable everything again.
             # Otherwise an exception in ca_settings will cause overwritten settings to persist
@@ -464,6 +469,7 @@ class DjangoCATestCaseMixin(object):
 
         if cls._overridden_settings:
             reload_module(ca_settings)
+            profiles.profiles._reset()
 
     @classmethod
     def tearDownClass(cls):
@@ -475,6 +481,7 @@ class DjangoCATestCaseMixin(object):
 
         if overridden is True:
             reload_module(ca_settings)
+            profiles.profiles._reset()
 
     def setUp(self):
         super(DjangoCATestCaseMixin, self).setUp()
