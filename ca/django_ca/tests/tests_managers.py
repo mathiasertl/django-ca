@@ -17,6 +17,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtensionOID
 
+from .. import ca_settings
 from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
@@ -33,10 +34,12 @@ from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import CertificateAuthority
+from ..profiles import profiles
 from ..profiles import get_cert_profile_kwargs
 from ..subject import Subject
 from .base import DjangoCATestCase
 from .base import DjangoCAWithCertTestCase
+from .base import DjangoCAWithGeneratedCAsTestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
@@ -58,6 +61,50 @@ class CertificateAuthorityManagerTestCase(DjangoCATestCase):
             BasicConstraints({'critical': True, 'value': {'ca': True}}),
             KeyUsage({'critical': True, 'value': ['cRLSign', 'keyCertSign']}),
         ])
+
+
+@override_settings(CA_DEFAULT_SUBJECT={})
+class CreateCertTestCase(DjangoCAWithGeneratedCAsTestCase):
+    @override_tmpcadir(CA_PROFILES={ca_settings.CA_DEFAULT_PROFILE: {'extensions': {}}})
+    def test_basic(self):
+        ca = self.cas['root']
+        csr = certs['root-cert']['csr']['pem']
+        subject = '/CN=example.com'
+
+        cert = Certificate.objects.create_cert(ca, csr, subject=subject, add_crl_url=False,
+                                               add_ocsp_url=False, add_issuer_url=False)
+        self.assertEqual(cert.subject, Subject(subject))
+        self.assertEqual(cert.extensions, [
+            ca.get_authority_key_identifier_extension(),
+            BasicConstraints({'value': {'ca': False}}),
+            SubjectAlternativeName({'value': ['DNS:example.com']})
+        ])
+
+    @override_tmpcadir(CA_PROFILES={ca_settings.CA_DEFAULT_PROFILE: {'extensions': {}}})
+    def test_explicit_profile(self):
+        ca = self.cas['root']
+        csr = certs['root-cert']['csr']['pem']
+        subject = '/CN=example.com'
+
+        cert = Certificate.objects.create_cert(
+            ca, csr, subject=subject, profile=profiles[ca_settings.CA_DEFAULT_PROFILE],
+            add_crl_url=False, add_ocsp_url=False, add_issuer_url=False)
+        self.assertEqual(cert.subject, Subject(subject))
+        self.assertEqual(cert.extensions, [
+            ca.get_authority_key_identifier_extension(),
+            BasicConstraints({'value': {'ca': False}}),
+            SubjectAlternativeName({'value': ['DNS:example.com']})
+        ])
+
+    @override_tmpcadir(CA_PROFILES={k: None for k in ca_settings.CA_PROFILES})
+    def test_no_profile(self):
+        ca = self.cas['root']
+        csr = certs['root-cert']['csr']['pem']
+        subject = '/CN=example.com'
+
+        with self.assertRaisesRegex(KeyError, r"^'webserver'$"):
+            Certificate.objects.create_cert(ca, csr, subject=subject, add_crl_url=False, add_ocsp_url=False,
+                                            add_issuer_url=False)
 
 
 @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
@@ -552,3 +599,10 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             Certificate.objects.init(
                 ca, csr, subject_alternative_name={'value': ['example.com']},
                 extra_extensions=[False])
+
+    def test_invalid_name(self):
+        cn = 'foo bar'
+        msg = r'^%s: Could not parse CommonName as subjectAlternativeName\.$' % cn
+        with self.assertRaisesRegex(ValueError, msg):
+            Certificate.objects.init(self.cas['child'], certs['child-cert']['csr']['pem'],
+                                     subject=Subject('/CN=%s' % cn))
