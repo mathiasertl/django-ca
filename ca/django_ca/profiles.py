@@ -37,7 +37,6 @@ from .extensions import SubjectAlternativeName
 from .extensions import TLSFeature
 from .signals import pre_issue_cert
 from .subject import Subject
-from .subject import default_subject
 from .utils import get_cert_builder
 from .utils import get_default_subject
 from .utils import parse_general_name
@@ -75,10 +74,12 @@ class Profile(object):
         self.name = name
 
         # self.subject is default subject with updates from subject argument
-        self.subject = default_subject.copy()
-        if not isinstance(subject, Subject):
-            subject = Subject(subject)  # NOTE: also accepts None
-        self.subject.update(subject)
+        if subject is not None:
+            if not isinstance(subject, Subject):
+                subject = Subject(subject)  # NOTE: also accepts None
+            self.subject = subject
+        else:
+            self.subject = Subject(ca_settings.CA_DEFAULT_SUBJECT)
 
         self.algorithm = parse_hash_algorithm(algorithm)
         self.extensions = deepcopy(extensions) or {}
@@ -215,22 +216,20 @@ class Profile(object):
             extensions = {e.key: e for e in extensions}
 
         # Get overrides values from profile if not passed as parameter
-        if cn_in_san is not None:
+        if cn_in_san is None:
             cn_in_san = self.cn_in_san
-        if add_crl_url is not None:
+        if add_crl_url is None:
             add_crl_url = self.add_crl_url
-        if add_ocsp_url is not None:
+        if add_ocsp_url is None:
             add_ocsp_url = self.add_ocsp_url
-        if add_issuer_url is not None:
+        if add_issuer_url is None:
             add_issuer_url = self.add_issuer_url
-        if add_issuer_alternative_name is not None:
+        if add_issuer_alternative_name is None:
             add_issuer_alternative_name = self.add_issuer_alternative_name
 
         cert_extensions = deepcopy(self.extensions)
+        cert_extensions.update(extensions)
         cert_subject = deepcopy(self.subject)
-
-        for extension in extensions:
-            cert_extensions[extension.key] = extension
 
         issuer_name = self.update_from_ca(
             ca, cert_extensions, add_crl_url=add_crl_url, add_ocsp_url=add_ocsp_url,
@@ -248,17 +247,17 @@ class Profile(object):
             algorithm = parse_hash_algorithm(self.algorithm)
 
         # Finally, update SAN with the current CN, if set and requested
-        self.update_san_from_cn(cn_in_san, subject=subject, extensions=cert_extensions)
+        self.update_san_from_cn(cn_in_san, subject=cert_subject, extensions=cert_extensions)
         # TODO: fail if there is no CN and no SAN
 
         pre_issue_cert.send(sender=self.__class__, ca=ca, csr=csr, expires=expires, algorithm=algorithm,
-                            subject=subject, extensions=cert_extensions, password=password)
+                            subject=cert_subject, extensions=cert_extensions, password=password)
 
         public_key = csr.public_key()
         builder = get_cert_builder(expires)
         builder = builder.public_key(public_key)
         builder = builder.issuer_name(issuer_name)
-        builder = builder.subject_name(subject.name)
+        builder = builder.subject_name(cert_subject.name)
 
         for key, extension in cert_extensions.items():
             builder = builder.add_extension(**extension.for_builder())
@@ -317,17 +316,18 @@ class Profile(object):
             return ca.x509.subject
 
     def update_san_from_cn(self, cn_in_san, subject, extensions):
-        if cn_in_san is False or not subject.get('CN'):
-            return
+        if subject.get('CN') and cn_in_san is True:
+            try:
+                cn = parse_general_name(subject['CN'])
+            except idna.IDNAError:
+                raise ValueError('%s: Could not parse CommonName as subjectAlternativeName.' % subject['CN'])
 
-        try:
-            cn = parse_general_name(subject['CN'])
-        except idna.IDNAError:
-            raise ValueError('%s: Could not parse CommonName as subjectAlternativeName.' % subject['CN'])
-
-        extensions.setdefault(SubjectAlternativeName.key, SubjectAlternativeName({}))
-        if cn not in extensions[SubjectAlternativeName.key]:
-            extensions[SubjectAlternativeName.key].append(cn)
+            extensions.setdefault(SubjectAlternativeName.key, SubjectAlternativeName({}))
+            if cn not in extensions[SubjectAlternativeName.key]:
+                extensions[SubjectAlternativeName.key].append(cn)
+        elif not subject.get('CN') and SubjectAlternativeName.key in extensions:
+            if extensions[SubjectAlternativeName.key].value:
+                subject['CN'] = parse_general_name(extensions[SubjectAlternativeName.key][0]).value
 
 
 def get_profile(name=None):
@@ -352,6 +352,9 @@ class Profiles:
         self._profiles = local()
 
     def __getitem__(self, name):
+        if name is None:
+            name = ca_settings.CA_DEFAULT_PROFILE
+
         try:
             return self._profiles.profiles[name]
         except AttributeError:
@@ -361,6 +364,9 @@ class Profiles:
 
         self._profiles.profiles[name] = get_profile(name)
         return self._profiles.profiles[name]
+
+    def _reset(self):
+        self._profiles = local()
 
 
 profiles = Profiles()
