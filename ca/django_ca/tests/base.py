@@ -561,6 +561,28 @@ class DjangoCATestCaseMixin(object):
         messages = [str(m) for m in list(get_messages(response.wsgi_request))]
         self.assertEqual(messages, expected)
 
+    @contextmanager
+    def assertMultipleWarnings(self, warnings, msg=None):
+        arg = tuple([w['category'] for w in warnings if w.get('category')])
+        with self.assertWarns(arg, msg=msg) as cm:
+            yield cm
+
+        self.assertEqual(len(warnings), len(cm.warnings))
+
+        for data, msg in zip(warnings, cm.warnings):
+            self.assertEqual(msg.category, data['category'])
+
+            error = '"%s" does not match "%s"' % (msg.message, data['msg'])
+            self.assertIsNotNone(re.match(data['msg'], str(msg.message)), error)
+
+            if data.get('filename'):  # pragma: no cover - so far this is always None
+                self.assertEqual(data['filename'], msg.filename)
+            if data.get('lineno'):  # pragma: no cover - so far this is always None
+                self.assertEqual(data['lineno'], msg.lineno)
+            self.assertEqual(data.get('file'), msg.file)
+            self.assertEqual(data.get('line'), msg.line)
+            self.assertEqual(data.get('source'), msg.source)
+
     def assertNotRevoked(self, cert):
         if isinstance(cert, CertificateAuthority):
             cert = CertificateAuthority.objects.get(serial=cert.serial)
