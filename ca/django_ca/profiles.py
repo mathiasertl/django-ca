@@ -243,7 +243,7 @@ class Profile(object):
         if algorithm is None:
             algorithm = self.algorithm
         else:
-            algorithm = parse_hash_algorithm(self.algorithm)
+            algorithm = parse_hash_algorithm(algorithm)
 
         # Finally, update SAN with the current CN, if set and requested
         self._update_san_from_cn(cn_in_san, subject=cert_subject, extensions=cert_extensions)
