@@ -305,7 +305,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
 
         raise ValueError('Unknown CSR format passed: %s' % csr_format)
 
-    def create_cert(self, ca, csr, csr_format=Encoding.PEM, profile=None, **kwargs):  # pragma: no cover
+    def create_cert(self, ca, csr, csr_format=Encoding.PEM, profile=None, **kwargs):
         # Get Profile object
         if not isinstance(profile, Profile):
             profile = profiles[profile]
@@ -462,7 +462,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         pre_issue_cert.send(sender=self.model, ca=ca, csr=csr, expires=expires, algorithm=algorithm,
                             subject=subject, cn_in_san=cn_in_san, csr_format=csr_format,
                             subject_alternative_name=subject_alternative_name, key_usage=key_usage,
-                            extended_key_usage=extended_key_usage, tls_featur=tls_feature,
+                            extended_key_usage=extended_key_usage, tls_feature=tls_feature,
                             issuer_url=issuer_url, crl_url=crl_url, ocsp_url=ocsp_url,
                             issuer_alternative_name=issuer_alternative_name,
                             extra_extensions=extra_extensions, password=password)
