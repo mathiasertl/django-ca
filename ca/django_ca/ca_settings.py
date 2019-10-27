@@ -119,6 +119,7 @@ CA_PROFILES = {
     },
     'ocsp': {
         'description': _('A certificate for an OCSP responder.'),
+        'add_ocsp_url': False,
         'extensions': {
             'key_usage': {
                 'value': [

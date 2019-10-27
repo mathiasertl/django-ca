@@ -18,6 +18,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
+from ..models import Certificate
 from ..utils import add_colons
 from ..utils import ca_storage
 from .base import DjangoCATestCase
@@ -29,6 +30,7 @@ class RegenerateOCSPKeyTestCase(DjangoCATestCase):
     def setUp(self):
         super(RegenerateOCSPKeyTestCase, self).setUp()
         self.load_usable_cas()
+        self.existing_certs = list(Certificate.objects.values_list('pk', flat=True))
 
     def assertKey(self, ca, key_type=RSAPrivateKey, password=None):
         priv_path = 'ocsp/%s.key' % ca.serial
@@ -46,6 +48,9 @@ class RegenerateOCSPKeyTestCase(DjangoCATestCase):
             cert = stream.read()
         cert = x509.load_pem_x509_certificate(cert, default_backend())
         self.assertIsInstance(cert, x509.Certificate)
+
+        db_cert = Certificate.objects.exclude(pk__in=self.existing_certs).first()
+        self.assertEqual(db_cert.authority_information_access.ocsp, [])
 
         return priv, cert
 
