@@ -185,9 +185,14 @@ elif args.command == 'coverage':
     if not default_backend()._lib.CRYPTOGRAPHY_OPENSSL_110F_OR_GREATER:
         cov.exclude(r'pragma:\s*only SCT')
 
+    # exclude python version specific code
+    py_versions = [(2, 7), (3, 4), (3, 5), (3, 6), (3, 7), (3, 8), (3, 9)]
+    for version in py_versions:
+        version_str = '.'.join([str(v) for v in version])
+        exclude_versions(cov, 'py', sys.version_info[:2], version, version_str)
+
     # exclude django-version specific code
     django_versions = [(1, 11), (2, 1), (2, 2), (3, 0), (3, 1)]
-
     for version in django_versions:
         version_str = '.'.join([str(v) for v in version])
         exclude_versions(cov, 'django', django.VERSION[:2], version, version_str)
