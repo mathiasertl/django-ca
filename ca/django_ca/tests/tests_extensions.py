@@ -2574,6 +2574,22 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
         },
     }
 
+    def test_get_common_name(self):
+        cn = 'example.com'
+        dn = 'dirname:/CN=example.net'
+
+        san = SubjectAlternativeName({'value': [cn]})
+        self.assertEqual(san.get_common_name(), cn)
+
+        san = SubjectAlternativeName({'value': [cn, dn]})
+        self.assertEqual(san.get_common_name(), cn)
+
+        san = SubjectAlternativeName({'value': [dn, cn]})
+        self.assertEqual(san.get_common_name(), 'example.com')
+
+        san = SubjectAlternativeName({'value': [dn]})
+        self.assertIsNone(san.get_common_name())
+
 
 class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
     ext_class = SubjectKeyIdentifier
