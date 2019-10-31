@@ -23,6 +23,7 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from ..models import Watcher
+from ..subject import Subject
 from .base import DjangoCAWithCertTestCase
 from .base import certs
 from .base import override_settings
@@ -685,7 +686,7 @@ HPKP pin: {hpkp}
         # test a cert with no subjectAltNames but with watchers.
         ca = self.cas['root']
         csr = certs['root-cert']['csr']['pem']
-        cert = self.create_cert(ca, csr, [('CN', 'example.com')], cn_in_san=False)
+        cert = self.create_cert(ca, csr, subject=Subject({'CN': 'example.com'}), cn_in_san=False)
         watcher = Watcher.from_addr('user@example.com')
         cert.watchers.add(watcher)
 

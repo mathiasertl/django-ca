@@ -71,7 +71,6 @@ from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import CertificateAuthority
-from ..profiles import get_cert_profile_kwargs
 from ..signals import post_create_ca
 from ..signals import post_issue_cert
 from ..signals import post_revoke_cert
@@ -812,13 +811,8 @@ class DjangoCATestCaseMixin(object):
         return private_key, request
 
     @classmethod
-    def create_cert(cls, ca, csr, subject, san=None, **kwargs):
-        cert_kwargs = get_cert_profile_kwargs()
-        cert_kwargs.update(kwargs)
-        cert_kwargs['subject'] = Subject(subject)
-        cert = Certificate.objects.init(
-            ca=ca, csr=csr, algorithm=hashes.SHA256(), expires=cls.expires(720),
-            subject_alternative_name=san, **cert_kwargs)
+    def create_cert(cls, ca, csr, subject, **kwargs):
+        cert = Certificate.objects.create_cert(ca, csr, subject=subject, **kwargs)
         cert.full_clean()
         return cert
 

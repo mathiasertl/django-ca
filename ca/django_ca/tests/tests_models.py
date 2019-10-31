@@ -48,6 +48,7 @@ from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import Watcher
+from ..subject import Subject
 from .base import DjangoCAWithCertTestCase
 from .base import certs
 from .base import override_settings
@@ -361,17 +362,16 @@ class CertificateTests(DjangoCAWithCertTestCase):
 
         # Create a cert with some weirder SANs to test that too
         full = self.create_cert(
-            self.cas['child'], certs['child-cert']['csr']['pem'], [('CN', 'all.example.com')],
-            san={'value': ['dirname:/C=AT/CN=example.com', 'email:user@example.com', 'fd00::1']})
+            self.cas['child'], certs['child-cert']['csr']['pem'], subject=Subject({'CN': 'all.example.com'}),
+            extensions=[SubjectAlternativeName({
+                'value': ['dirname:/C=AT/CN=example.com', 'email:user@example.com', 'fd00::1'],
+            })]
+        )
 
-        self.assertEqual(
-            full.subject_alternative_name,
-            SubjectAlternativeName({'value': [
-                'DNS:all.example.com',
-                'dirname:/C=AT/CN=example.com',
-                'email:user@example.com',
-                'IP:fd00::1',
-            ]}))
+        expected = SubjectAlternativeName({'value': [
+            'dirname:/C=AT/CN=example.com', 'email:user@example.com', 'IP:fd00::1', 'DNS:all.example.com',
+        ]})
+        self.assertEqual(full.subject_alternative_name, expected)
 
     @freeze_time("2019-02-03 15:43:12")
     def test_get_revocation_time(self):
