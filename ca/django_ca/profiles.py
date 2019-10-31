@@ -18,7 +18,6 @@ from copy import deepcopy
 from threading import local
 
 import idna
-import six
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend

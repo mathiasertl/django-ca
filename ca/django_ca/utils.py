@@ -22,7 +22,6 @@ import re
 import shlex
 import textwrap
 from contextlib import contextmanager
-from copy import deepcopy
 from datetime import datetime
 from datetime import timedelta
 from ipaddress import ip_address
