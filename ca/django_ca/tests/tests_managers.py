@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtensionOID
 
@@ -140,9 +139,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         self.assertBasic(cert.x509)
 
         # verify subject
-        expected_subject = [
-            ('CN', 'example.com'),
-        ]
+        expected_subject = [('CN', 'example.com'), ]
         self.assertSubject(cert.x509, expected_subject)
 
         # verify extensions
@@ -391,16 +388,16 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             ocsp_no_check=True,
             **kwargs)
 
-        self.assertCountEqual(cert.extensions, [
-            cert.subject_key_identifier,  # changes on every invocation
+        self.assertEqual(cert.extensions, [
             certs['profile-ocsp']['authority_information_access'],
             certs['profile-ocsp']['authority_key_identifier'],
             certs['profile-ocsp']['basic_constraints'],
+            certs['profile-ocsp']['crl_distribution_points'],
             certs['profile-ocsp']['extended_key_usage'],
             certs['profile-ocsp']['key_usage'],
-            certs['profile-ocsp']['subject_alternative_name'],
             OCSPNoCheck(),
-            certs['profile-ocsp']['crl_distribution_points'],
+            certs['profile-ocsp']['subject_alternative_name'],
+            certs['profile-ocsp']['subject_key_identifier'],
         ])
 
     @override_tmpcadir()
@@ -442,22 +439,21 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         )
 
         self.assertEqual(cert.subject, Subject(subject))
-        expected = [
-            cert.subject_key_identifier,  # changes on every invocation
+        self.assertEqual(cert.extensions, [
             certs['all-extensions']['authority_information_access'],
             certs['all-extensions']['authority_key_identifier'],
             certs['all-extensions']['basic_constraints'],
-            certs['all-extensions']['extended_key_usage'],
-            certs['all-extensions']['key_usage'],
-            OCSPNoCheck({'critical': True}),
-            SubjectAlternativeName({'value': [cn, san]}),
-            IssuerAlternativeName(ian),
-            certs['all-extensions']['tls_feature'],
-            NameConstraints(nc),
             certs['all-extensions']['crl_distribution_points'],
+            certs['all-extensions']['extended_key_usage'],
+            IssuerAlternativeName(ian),
+            certs['all-extensions']['key_usage'],
+            NameConstraints(nc),
+            OCSPNoCheck({'critical': True}),
             PrecertPoison(),
-        ]
-        self.assertCountEqual(cert.extensions, expected)
+            SubjectAlternativeName({'value': [cn, san]}),
+            certs['child-cert']['subject_key_identifier'],  # -> where the CSR/public key comes from
+            certs['all-extensions']['tls_feature'],
+        ])
 
     @override_tmpcadir()
     def test_override_ca_extensions(self):
@@ -481,27 +477,16 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             ca, csr, subject=subject,
             issuer_url=issuer_url, crl_url=crl_url, ocsp_url=ocsp_url, issuer_alternative_name=ian_url
         )
-        aki = AuthorityKeyIdentifier(x509.Extension(
-            oid=AuthorityKeyIdentifier.oid, critical=False,
-            value=ca.get_authority_key_identifier()
-        ))
 
-        expected = [
-            cert.subject_key_identifier,  # changes on every invocation
+        self.assertEqual(cert.extensions, [
+            AuthorityInformationAccess({'value': {'issuers': [issuer_url], 'ocsp': [ocsp_url]}}),
+            certs['child-cert']['authority_key_identifier'],
             BasicConstraints({'value': {'ca': False}}),
-            aki,
             CRLDistributionPoints({'value': [{'full_name': [crl_url]}]}),
-            SubjectAlternativeName({'value': [cn]}),
-            AuthorityInformationAccess({
-                'value': {
-                    'issuers': [issuer_url],
-                    'ocsp': [ocsp_url],
-                }
-            }),
             IssuerAlternativeName(ian_url),
-        ]
-
-        self.assertCountEqual(cert.extensions, expected)
+            SubjectAlternativeName({'value': [cn]}),
+            certs['child-cert']['subject_key_identifier'],
+        ])
 
     @override_tmpcadir()
     def test_clear_ca_extensions(self):
@@ -525,19 +510,13 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             ca, csr, subject=subject,
             issuer_url=False, crl_url=False, ocsp_url=False, issuer_alternative_name=False
         )
-        aki = AuthorityKeyIdentifier(x509.Extension(
-            oid=AuthorityKeyIdentifier.oid, critical=False,
-            value=ca.get_authority_key_identifier()
-        ))
 
-        expected = [
-            cert.subject_key_identifier,  # changes on every invocation
+        self.assertEqual(cert.extensions, [
+            certs['child-cert']['authority_key_identifier'],
             BasicConstraints({'value': {'ca': False}}),
-            aki,
             SubjectAlternativeName({'value': [cn]}),
-        ]
-
-        self.assertCountEqual(cert.extensions, expected)
+            certs['child-cert']['subject_key_identifier'],
+        ])
 
     @override_tmpcadir()
     def test_extra_extensions(self):
@@ -568,30 +547,20 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             extra_extensions=extra_extensions,
         )
 
-        aki = AuthorityKeyIdentifier(x509.Extension(
-            oid=AuthorityKeyIdentifier.oid, critical=False,
-            value=ca.get_authority_key_identifier()
-        ))
-
-        exts = [e for e in cert.extensions if not isinstance(e, SubjectKeyIdentifier)]
         self.assertEqual(cert.subject, Subject(subject))
-        self.assertCountEqual(exts, [
-            TLSFeature(tlsf),
-            aki,
+        self.assertEqual(cert.extensions, [
+            AuthorityInformationAccess({'value': {'issuers': [ca.issuer_url], 'ocsp': [ca.ocsp_url], }}),
+            certs['child-cert']['authority_key_identifier'],
             BasicConstraints({'critical': True, 'value': {'ca': False}}),
+            CRLDistributionPoints({'value': [{'full_name': ca.crl_url}, ]}),
             ExtendedKeyUsage(eku),
-            SubjectAlternativeName({'value': [cn] + san}),  # prepend CN from subject
+            IssuerAlternativeName({'value': [ian]}),
             KeyUsage(ku),
             NameConstraints(nc),
-            IssuerAlternativeName({'value': [ian]}),
             OCSPNoCheck({'critical': True}),
-            AuthorityInformationAccess({'value': {
-                'issuers': [ca.issuer_url],
-                'ocsp': [ca.ocsp_url],
-            }}),
-            CRLDistributionPoints({'value': [
-                {'full_name': ca.crl_url},
-            ]}),
+            SubjectAlternativeName({'value': [cn] + san}),  # prepend CN from subject
+            certs['child-cert']['subject_key_identifier'],
+            TLSFeature(tlsf),
         ])
 
     def test_extra_extensions_value(self):
