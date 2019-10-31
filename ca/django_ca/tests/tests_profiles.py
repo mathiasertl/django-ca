@@ -29,8 +29,8 @@ from ..models import Certificate
 from ..profiles import Profile
 from ..profiles import get_cert_profile_kwargs
 from ..profiles import get_profile
-from ..profiles import profiles
 from ..profiles import profile
+from ..profiles import profiles
 from ..signals import pre_issue_cert
 from ..subject import Subject
 from .base import DjangoCATestCase

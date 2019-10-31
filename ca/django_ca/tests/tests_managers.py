@@ -34,8 +34,8 @@ from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import CertificateAuthority
-from ..profiles import profiles
 from ..profiles import get_cert_profile_kwargs
+from ..profiles import profiles
 from ..subject import Subject
 from .base import DjangoCATestCase
 from .base import DjangoCAWithCertTestCase
