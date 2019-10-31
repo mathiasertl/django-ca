@@ -497,6 +497,18 @@ class GeneralNameMixin(object):
         >>> Certificate.objects.init(subjectAltName=...)  # doctest: +SKIP
     """
 
+    def get_common_name(self):
+        """Get a value suitable for use as CommonName in a subject, or None if no such value is found.
+
+        This function returns a string representation of the first value that is not a DirectoryName,
+        RegisteredID or OtherName.
+        """
+
+        for name in self.value:
+            if isinstance(name, (x509.DirectoryName, x509.RegisteredID, x509.OtherName)):
+                continue
+            return name.value
+
     def parse_value(self, v):
         if isinstance(v, x509.GeneralName):
             return v

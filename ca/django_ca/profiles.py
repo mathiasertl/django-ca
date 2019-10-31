@@ -337,10 +337,9 @@ class Profile(object):
             if cn not in extensions[SubjectAlternativeName.key]:
                 extensions[SubjectAlternativeName.key].append(cn)
         elif not subject.get('CN') and SubjectAlternativeName.key in extensions:
-            if extensions[SubjectAlternativeName.key].value:
-                value = parse_general_name(extensions[SubjectAlternativeName.key][0]).value
-                if isinstance(value, six.string_types):  # e.g. dirname returns a x509.Name
-                    subject['CN'] = value
+            cn = extensions[SubjectAlternativeName.key].get_common_name()
+            if cn is not None:
+                subject['CN'] = cn
 
 
 def get_profile(name=None):
