@@ -18,7 +18,9 @@ from copy import deepcopy
 from threading import local
 
 import idna
+import six
 
+from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
 from . import ca_settings
@@ -34,6 +36,7 @@ from .extensions import IssuerAlternativeName
 from .extensions import KeyUsage
 from .extensions import OCSPNoCheck
 from .extensions import SubjectAlternativeName
+from .extensions import SubjectKeyIdentifier
 from .extensions import TLSFeature
 from .signals import pre_issue_cert
 from .subject import Subject
@@ -265,6 +268,11 @@ class Profile(object):
         for key, extension in cert_extensions.items():
             builder = builder.add_extension(**extension.for_builder())
 
+        # Add the SubjectKeyIdentifier
+        if SubjectKeyIdentifier.key not in cert_extensions:
+            builder = builder.add_extension(x509.SubjectKeyIdentifier.from_public_key(public_key),
+                                            critical=False)
+
         return builder.sign(private_key=ca.key(password), algorithm=algorithm, backend=default_backend())
 
     def serialize(self):
@@ -330,7 +338,9 @@ class Profile(object):
                 extensions[SubjectAlternativeName.key].append(cn)
         elif not subject.get('CN') and SubjectAlternativeName.key in extensions:
             if extensions[SubjectAlternativeName.key].value:
-                subject['CN'] = parse_general_name(extensions[SubjectAlternativeName.key][0]).value
+                value = parse_general_name(extensions[SubjectAlternativeName.key][0]).value
+                if isinstance(value, six.string_types):  # e.g. dirname returns a x509.Name
+                    subject['CN'] = value
 
 
 def get_profile(name=None):
@@ -355,6 +365,9 @@ class Profiles:
         self._profiles = local()
 
     def __getitem__(self, name):
+        if name is None:
+            name = ca_settings.CA_DEFAULT_PROFILE
+
         try:
             return self._profiles.profiles[name]
         except AttributeError:

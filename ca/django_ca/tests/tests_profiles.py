@@ -145,7 +145,8 @@ class ProfileTestCase(DjangoCATestCase):
         self.assertEqual(cert.extensions, [
             ca.get_authority_key_identifier_extension(),
             BasicConstraints({'value': {'ca': False}}),
-            SubjectAlternativeName({'value': ['DNS:example.com']})
+            SubjectAlternativeName({'value': ['DNS:example.com']}),
+            certs['child-cert']['subject_key_identifier'],
         ])
 
     @override_tmpcadir()
@@ -175,6 +176,7 @@ class ProfileTestCase(DjangoCATestCase):
             CRLDistributionPoints({'value': [{'full_name': [ca.crl_url]}]}),
             IssuerAlternativeName({'value': [ca.issuer_alt_name]}),
             SubjectAlternativeName({'value': ['DNS:example.com']}),
+            certs['child-cert']['subject_key_identifier'],
         ])
 
     @override_tmpcadir()
@@ -193,7 +195,8 @@ class ProfileTestCase(DjangoCATestCase):
         self.assertEqual(cert.extensions, [
             ca.get_authority_key_identifier_extension(),
             BasicConstraints({'value': {'ca': False}}),
-            SubjectAlternativeName({'value': ['DNS:example.com']})
+            SubjectAlternativeName({'value': ['DNS:example.com']}),
+            certs['child-cert']['subject_key_identifier'],
         ])
 
         with self.assertSignal(pre_issue_cert) as pre:
@@ -209,7 +212,8 @@ class ProfileTestCase(DjangoCATestCase):
             ca.get_authority_key_identifier_extension(),
             BasicConstraints({'value': {'ca': False}}),
             CRLDistributionPoints({'value': [{'full_name': [ca.crl_url]}]}),
-            SubjectAlternativeName({'value': ['DNS:example.com']})
+            SubjectAlternativeName({'value': ['DNS:example.com']}),
+            certs['child-cert']['subject_key_identifier'],
         ])
 
     @override_tmpcadir()
@@ -228,6 +232,7 @@ class ProfileTestCase(DjangoCATestCase):
         self.assertEqual(cert.extensions, [
             ca.get_authority_key_identifier_extension(),
             BasicConstraints({'value': {'ca': False}}),
+            certs['child-cert']['subject_key_identifier'],
         ])
 
         # Create the same cert, but pass cn_in_san=True to create_cert
@@ -238,7 +243,8 @@ class ProfileTestCase(DjangoCATestCase):
         self.assertEqual(cert.extensions, [
             ca.get_authority_key_identifier_extension(),
             BasicConstraints({'value': {'ca': False}}),
-            SubjectAlternativeName({'value': ['DNS:example.com']})
+            SubjectAlternativeName({'value': ['DNS:example.com']}),
+            certs['child-cert']['subject_key_identifier'],
         ])
 
         # test that cn_in_san=True with a SAN that already contains the CN does not lead to a duplicate
@@ -253,7 +259,8 @@ class ProfileTestCase(DjangoCATestCase):
         self.assertEqual(cert.extensions, [
             ca.get_authority_key_identifier_extension(),
             BasicConstraints({'value': {'ca': False}}),
-            SubjectAlternativeName({'value': ['DNS:example.com']})
+            SubjectAlternativeName({'value': ['DNS:example.com']}),
+            certs['child-cert']['subject_key_identifier'],
         ])
 
         # test that the first SAN is added as CN if we don't have A CN
@@ -268,7 +275,8 @@ class ProfileTestCase(DjangoCATestCase):
         self.assertEqual(cert.extensions, [
             ca.get_authority_key_identifier_extension(),
             BasicConstraints({'value': {'ca': False}}),
-            SubjectAlternativeName({'value': ['DNS:example.com']})
+            SubjectAlternativeName({'value': ['DNS:example.com']}),
+            certs['child-cert']['subject_key_identifier'],
         ])
 
     @override_tmpcadir()
