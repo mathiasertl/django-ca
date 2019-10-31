@@ -247,7 +247,11 @@ class Profile(object):
 
         # Finally, update SAN with the current CN, if set and requested
         self._update_san_from_cn(cn_in_san, subject=cert_subject, extensions=cert_extensions)
-        # TODO: fail if there is no CN and no SAN
+        # TODO: fail if there is no CN and no SANa
+
+        if not subject.get('CN') and (SubjectAlternativeName.key not in extensions or not
+                                      extensions[SubjectAlternativeName.key].value):
+            raise ValueError("Must name at least a CN or a subjectAlternativeName.")
 
         pre_issue_cert.send(sender=self.__class__, ca=ca, csr=csr, expires=expires, algorithm=algorithm,
                             subject=cert_subject, extensions=cert_extensions, password=password)
@@ -306,7 +310,7 @@ class Profile(object):
                 parse_general_name(ca.issuer_url)
             )
         if add_issuer_alternative_name is not False and ca.issuer_alt_name:
-            extensions.set_default(IssuerAlternativeName.key, IssuerAlternativeName({}))
+            extensions.setdefault(IssuerAlternativeName.key, IssuerAlternativeName({}))
             extensions[IssuerAlternativeName.key].extend(shlex_split(ca.issuer_alt_name, ','))
 
         if self.issuer_name:
@@ -351,9 +355,6 @@ class Profiles:
         self._profiles = local()
 
     def __getitem__(self, name):
-        if name is None:
-            name = ca_settings.CA_DEFAULT_PROFILE
-
         try:
             return self._profiles.profiles[name]
         except AttributeError:
