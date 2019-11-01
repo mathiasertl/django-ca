@@ -494,7 +494,7 @@ class GeneralNameMixin(object):
     the extension to the certificate::
 
         >>> san = SubjectAlternativeName({'value': [x509.DNSName('example.com')]})
-        >>> Certificate.objects.init(subjectAltName=...)  # doctest: +SKIP
+        >>> Certificate.objects.create_cert(ca, csr, extensions=[san], ...)  # doctest: +SKIP
     """
 
     def parse_value(self, v):
