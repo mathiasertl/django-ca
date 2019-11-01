@@ -53,6 +53,8 @@ class ProfileTestCase(DjangoCATestCase):
             self.assertNotEqual(p, profiles[name])
             p = profiles[name]
             self.assertEqual(p, p)
+            self.assertNotEqual(p, None)
+            self.assertNotEqual(p, -1)
 
     def test_init_django_ca_values(self):
         p1 = Profile('test', subject=Subject('/C=AT/CN=example.com'), extensions={
