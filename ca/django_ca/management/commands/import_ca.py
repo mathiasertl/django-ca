@@ -86,7 +86,7 @@ Note that the private key will be copied to the directory configured by the CA_D
         pem.close()
 
         issuer_alternative_name = options[IssuerAlternativeName.key]
-        if issuer_alternative_name is None:
+        if issuer_alternative_name is None:  # pragma: no branch - no CA sets this
             issuer_alternative_name = ''
 
         ca = CertificateAuthority(name=name, parent=parent, issuer_url=options['issuer_url'],

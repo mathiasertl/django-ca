@@ -215,15 +215,10 @@ class ExtensionAction(argparse.Action):
         kwargs['dest'] = self.extension.key
         super(ExtensionAction, self).__init__(*args, **kwargs)
 
-    def get_extension(self, namespace):
-        if not hasattr(namespace, self.dest) or getattr(namespace, self.dest) is None:
-            setattr(namespace, self.dest, self.extension({}))
-        return getattr(namespace, self.dest)
-
 
 class OrderedSetExtensionAction(ExtensionAction):
     def __call__(self, parser, namespace, value, option_string=None):
-        ext = self.get_extension(namespace)
+        ext = self.extension({})
 
         values = shlex_split(value, ', ')
         if values[0] == 'critical':
@@ -237,10 +232,12 @@ class OrderedSetExtensionAction(ExtensionAction):
         except ValueError as e:
             parser.error('Invalid extension value: %s: %s' % (value, e))
 
+        setattr(namespace, self.dest, ext)
+
 
 class AlternativeNameAction(ExtensionAction):
     def __call__(self, parser, namespace, value, option_string=None):
-        self.get_extension(namespace).append(value)
+        setattr(namespace, self.dest, self.extension({'value': [value]}))
 
 
 class ReasonAction(argparse.Action):

@@ -190,6 +190,43 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             'SubjectAlternativeName': SubjectAlternativeName({'value': ['DNS:example.com']}),
         })
 
+    @override_tmpcadir()
+    def test_san_extension(self):
+        # subject_alternative_name as an extension
+        kwargs = get_cert_profile_kwargs()
+
+        ca = self.cas['child']
+        csr = certs['child-cert']['csr']['pem']
+        cert = Certificate.objects.init(
+            ca, csr, algorithm='SHA256',
+            subject_alternative_name=SubjectAlternativeName({'value': ['example.com']}), **kwargs)
+        cert.full_clean()
+
+        self.assertBasic(cert.x509)
+
+        # verify subject
+        expected_subject = [('CN', 'example.com'), ]
+        self.assertSubject(cert.x509, expected_subject)
+
+        # verify extensions
+        extensions = {
+            'AuthorityInformationAccess': AuthorityInformationAccess({'value': {
+                'issuers': [ca.issuer_url],
+                'ocsp': [ca.ocsp_url],
+            }}),
+            'CRLDistributionPoints': CRLDistributionPoints({'value': [
+                {'full_name': ca.crl_url},
+            ]}),
+            'ExtendedKeyUsage': ExtendedKeyUsage({'value': ['serverAuth']}),
+            'KeyUsage': KeyUsage({
+                'critical': True,
+                'value': ['digitalSignature', 'keyAgreement', 'keyEncipherment']
+            }),
+            'SubjectAlternativeName': SubjectAlternativeName({'value': ['DNS:example.com']}),
+        }
+
+        self.assertExtensions(cert, extensions)
+
     def test_no_names(self):
         ca = self.cas['child']
         csr = certs['child-cert']['csr']['pem']
