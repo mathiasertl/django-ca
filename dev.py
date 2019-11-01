@@ -142,18 +142,18 @@ def test(suites):
 
 def exclude_versions(cov, sw, this_version, version, version_str):
     if version == this_version:
-        cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s>%s' % (sw, version_str))
-        cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s<%s' % (sw, version_str))
+        cov.exclude(r'pragma: only %s>%s' % (sw, version_str))
+        cov.exclude(r'pragma: only %s<%s' % (sw, version_str))
     else:
-        cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s==%s' % (sw, version_str))
+        cov.exclude(r'pragma: only %s==%s' % (sw, version_str))
 
         if version > this_version:
-            cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s>=%s' % (sw, version_str))
-            cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s>%s' % (sw, version_str))
+            cov.exclude(r'pragma: only %s>=%s' % (sw, version_str))
+            cov.exclude(r'pragma: only %s>%s' % (sw, version_str))
 
         if version < this_version:
-            cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s<=%s' % (sw, version_str))
-            cov.exclude(r'(pragma|PRAGMA)[:\s]?\s*only %s<%s' % (sw, version_str))
+            cov.exclude(r'pragma: only %s<=%s' % (sw, version_str))
+            cov.exclude(r'pragma: only %s<%s' % (sw, version_str))
 
 
 if args.command == 'test':
