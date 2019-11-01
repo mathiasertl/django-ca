@@ -10,9 +10,6 @@ ChangeLog
 1.14.0 (TBR)
 ************
 
-* **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.3 and 2.4.
-* **BACKWARDS INCOMPATIBLE:** Drop support for idna 2.7.
-* **DEPRECATION NOTICE:** This is the last release to support cryptography 2.5 and 2.6.
 * ``regenerate_ocsp_keys`` now has a quiet mode and only generates keys where the CA private key is available.
 * Minor changes to make the release compatible with Django 3.0a1.
 * New dependency: `six <https://pypi.org/project/six/>`_, since Django 3.0 no longer includes it.
@@ -26,16 +23,28 @@ ChangeLog
 * Test suite now includes Selenium tests for all JavaScript functionality.
 * ``dev.py coverage`` can now output a text summary using ``--format=text``.
 
+Backwards incompatible changes
+==============================
+
+* Drop support for cryptography 2.3 and 2.4.
+* Drop support for idna 2.7.
+* Extensions now always expect a dict or a cryptography extension as a value.  Anything else was unused in
+  practice.
+* :py:class:`~django_ca.extensions.KeyUsage`, :py:class:`~django_ca.extensions.ExtendedKeyUsage` and
+  :py:class:`~django_ca.extensions.TLSFeature` now behave like an ordered set and support all operators that a
+  set does.
+
 Extensions
 ==========
 
-* **BACKWARDS INCOMPATBILE:** Extensions now always expect a dict or a cryptography extension as a value.
-  Anything else was unused in practice.
-* **BACKWARDS INCOMPATBILE:** :py:class:`~django_ca.extensions.KeyUsage`,
-  :py:class:`~django_ca.extensions.ExtendedKeyUsage` and :py:class:`~django_ca.extensions.TLSFeature` now
-  behave like an ordered set and support all operators that a set does.
 * :py:class:`~django_ca.extensions.KeyUsage` is now marked as critical by default.
 * :py:class:`~django_ca.extensions.ExtendedKeyUsage` now supports the ``anyExtendedKeyUsage`` OID.
+
+Deprecation notices
+===================
+
+* This is the last release to support Python 2.7.
+* This is the last release to support cryptography 2.5 and 2.6.
 
 .. _changelog-1.13.0:
 
