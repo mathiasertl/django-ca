@@ -18,6 +18,10 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.core.management.base import CommandError
 
 from ... import ca_settings
+from ...extensions import ExtendedKeyUsage
+from ...extensions import KeyUsage
+from ...extensions import SubjectAlternativeName
+from ...extensions import TLSFeature
 from ...management.base import BaseSignCommand
 from ...management.base import CertificateAction
 from ...models import Certificate
@@ -55,25 +59,25 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
         else:
             subject = cert.subject
 
-        if not options['key_usage']:
+        if not options[KeyUsage.key]:
             key_usage = cert.key_usage
         else:
-            key_usage = options['key_usage']
+            key_usage = options[KeyUsage.key]
 
-        if not options['ext_key_usage']:
+        if not options[ExtendedKeyUsage.key]:
             ext_key_usage = cert.extended_key_usage
         else:
-            ext_key_usage = options['ext_key_usage']
+            ext_key_usage = options[ExtendedKeyUsage.key]
 
-        if not options['tls_feature']:
+        if not options[TLSFeature.key]:
             tls_feature = cert.tls_feature
         else:
-            tls_feature = options['tls_feature']
+            tls_feature = options[TLSFeature.key]
 
-        if not options['alt']:
+        if not options[SubjectAlternativeName.key]:
             san = cert.subject_alternative_name
         else:
-            san = options['alt']
+            san = options[SubjectAlternativeName.key]
 
         kwargs = {
             'subject': subject,
@@ -101,7 +105,7 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
             if ext is not None:
                 kwargs['extensions'].append(ext)
 
-        if 'CN' not in kwargs['subject'] and not options['alt']:
+        if 'CN' not in kwargs['subject'] and not san:
             raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")
 
         try:

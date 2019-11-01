@@ -28,6 +28,7 @@ from django.core.files.base import ContentFile
 from django.core.management.base import CommandError
 
 from ... import ca_settings
+from ...extensions import IssuerAlternativeName
 from ...models import CertificateAuthority
 from ...utils import ca_storage
 from ...utils import wrap_file_exceptions
@@ -85,7 +86,7 @@ Note that the private key will be copied to the directory configured by the CA_D
         pem.close()
 
         ca = CertificateAuthority(name=name, parent=parent, issuer_url=options['issuer_url'],
-                                  issuer_alt_name=options['issuer_alt_name'], crl_url=crl_url)
+                                  issuer_alt_name=options[IssuerAlternativeName.key], crl_url=crl_url)
 
         # load public key
         try:

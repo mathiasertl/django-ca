@@ -79,20 +79,20 @@ class OrderedSetExtensionActionTestCase(DjangoCATestCase):
 
     def test_basic(self):
         ns = self.parser.parse_args(['-e=OCSPMustStaple'])
-        self.assertEqual(ns.e, TLSFeature({'critical': False, 'value': ['OCSPMustStaple']}))
+        self.assertEqual(ns.tls_feature, TLSFeature({'critical': False, 'value': ['OCSPMustStaple']}))
 
         ns = self.parser.parse_args(['-e=critical,OCSPMustStaple'])
-        self.assertEqual(ns.e, TLSFeature({'critical': True, 'value': ['OCSPMustStaple']}))
+        self.assertEqual(ns.tls_feature, TLSFeature({'critical': True, 'value': ['OCSPMustStaple']}))
 
         ns = self.parser.parse_args(['-e=critical,OCSPMustStaple,MultipleCertStatusRequest'])
-        self.assertEqual(ns.e, TLSFeature({
+        self.assertEqual(ns.tls_feature, TLSFeature({
             'critical': True,
             'value': ['OCSPMustStaple', 'MultipleCertStatusRequest']
         }))
 
     def test_error(self):
         self.assertParserError(['-e=foobar'],
-                               'usage: {script} [-h] [-e E]\n'
+                               'usage: {script} [-h] [-e TLS_FEATURE]\n'
                                '{script}: error: Invalid extension value: foobar: Unknown value: foobar\n')
 
 

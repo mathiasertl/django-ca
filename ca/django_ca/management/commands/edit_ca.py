@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+from ...extensions import IssuerAlternativeName
 from ..base import BaseCommand
 from ..base import CertificateAuthorityDetailMixin
 
@@ -33,8 +34,8 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
     def handle(self, ca, **options):
         if options['issuer_url'] is not None:
             ca.issuer_url = options['issuer_url']
-        if options['issuer_alt_name']:
-            ca.issuer_alt_name = options['issuer_alt_name']
+        if options[IssuerAlternativeName.key]:
+            ca.issuer_alt_name = options[IssuerAlternativeName.key]
         if options['ocsp_url'] is not None:
             ca.ocsp_url = options['ocsp_url']
         if options['crl_url'] is not None:

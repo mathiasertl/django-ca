@@ -19,6 +19,10 @@ from django.core.management.base import CommandError
 from django.utils import timezone
 
 from ... import ca_settings
+from ...extensions import ExtendedKeyUsage
+from ...extensions import KeyUsage
+from ...extensions import SubjectAlternativeName
+from ...extensions import TLSFeature
 from ...management.base import BaseSignCommand
 from ...models import Certificate
 from ...models import Watcher
@@ -91,16 +95,16 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
             'subject': options['subject'] or Subject(),
         }
 
-        if options['alt'].value:
-            kwargs['extensions'].append(options['alt'])
-        if options['key_usage'].value:
-            kwargs['extensions'].append(options['key_usage'])
-        if options['ext_key_usage'].value:
-            kwargs['extensions'].append(options['ext_key_usage'])
-        if options['tls_feature']:
-            kwargs['extensions'].append(options['tls_feature'])
+        if options[SubjectAlternativeName.key].value:
+            kwargs['extensions'].append(options[SubjectAlternativeName.key])
+        if options[KeyUsage.key].value:
+            kwargs['extensions'].append(options[KeyUsage.key])
+        if options[ExtendedKeyUsage.key].value:
+            kwargs['extensions'].append(options[ExtendedKeyUsage.key])
+        if options[TLSFeature.key]:
+            kwargs['extensions'].append(options[TLSFeature.key])
 
-        if 'CN' not in kwargs['subject'] and not options['alt']:
+        if 'CN' not in kwargs['subject'] and not options[SubjectAlternativeName.key]:
             raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")
 
         # Read the CSR

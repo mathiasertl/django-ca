@@ -25,6 +25,7 @@ from django.core.management.base import CommandError
 from django.utils import timezone
 
 from ... import ca_settings
+from ...extensions import IssuerAlternativeName
 from ...extensions import NameConstraints
 from ...models import CertificateAuthority
 from ..base import BaseCommand
@@ -163,7 +164,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
                 parent=parent,
                 pathlen=options['pathlen'],
                 issuer_url=options['issuer_url'],
-                issuer_alt_name=options['issuer_alt_name'],
+                issuer_alt_name=options[IssuerAlternativeName.key],
                 default_hostname=options['default_hostname'],
                 crl_url=options['crl_url'],
                 ocsp_url=options['ocsp_url'],

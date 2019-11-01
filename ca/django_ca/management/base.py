@@ -212,6 +212,7 @@ class MultipleURLAction(argparse.Action):
 class ExtensionAction(argparse.Action):
     def __init__(self, *args, **kwargs):
         self.extension = kwargs.pop('extension')
+        kwargs['dest'] = self.extension.key
         kwargs.setdefault('default', self.extension({}))
         super(ExtensionAction, self).__init__(*args, **kwargs)
 
