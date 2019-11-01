@@ -12,6 +12,7 @@ import re
 import shutil
 import sys
 import tempfile
+import warnings
 from contextlib import contextmanager
 from datetime import datetime
 from datetime import timedelta
@@ -574,29 +575,50 @@ class DjangoCATestCaseMixin(object):
         messages = [str(m) for m in list(get_messages(response.wsgi_request))]
         self.assertEqual(messages, expected)
 
-    @contextmanager
-    def assertMultipleWarnings(self, warnings, msg=None):
-        arg = tuple([w['category'] for w in warnings if w.get('category')])
-        with self.assertWarns(arg, msg=msg) as cm:
-            yield cm
+    if six.PY3:  # pragma: only py3
+        @contextmanager
+        def assertMultipleWarnings(self, warnings, msg=None):
+            arg = tuple([w['category'] for w in warnings if w.get('category')])
+            with self.assertWarns(arg, msg=msg) as cm:
+                yield cm
 
-        self.assertEqual(len(warnings), len(cm.warnings))
+            self.assertEqual(len(warnings), len(cm.warnings))
 
-        for data, msg in zip(warnings, cm.warnings):
-            self.assertEqual(msg.category, data['category'])
+            for data, msg in zip(warnings, cm.warnings):
+                self.assertEqual(msg.category, data['category'])
 
-            error = '"%s" does not match "%s"' % (msg.message, data['msg'])
-            self.assertIsNotNone(re.match(data['msg'], str(msg.message)), error)
+                error = '"%s" does not match "%s"' % (msg.message, data['msg'])
+                self.assertIsNotNone(re.match(data['msg'], str(msg.message)), error)
 
-            if data.get('filename'):  # pragma: no cover - so far this is always None
-                self.assertEqual(data['filename'], msg.filename)
-            if data.get('lineno'):  # pragma: no cover - so far this is always None
-                self.assertEqual(data['lineno'], msg.lineno)
-            self.assertEqual(data.get('file'), msg.file)
-            self.assertEqual(data.get('line'), msg.line)
+                if data.get('filename'):  # pragma: no cover - so far this is always None
+                    self.assertEqual(data['filename'], msg.filename)
+                if data.get('lineno'):  # pragma: no cover - so far this is always None
+                    self.assertEqual(data['lineno'], msg.lineno)
+                self.assertEqual(data.get('file'), msg.file)
+                self.assertEqual(data.get('line'), msg.line)
 
-            if hasattr(msg, 'source'):  # pragma: no branch, pragma: only py>=3.6, not present in py3.5
-                self.assertEqual(data.get('source'), msg.source)
+                if hasattr(msg, 'source'):  # pragma: no branch, pragma: only py>=3.6, not present in py3.5
+                    self.assertEqual(data.get('source'), msg.source)
+
+    else:  # pragma: only py2
+        @contextmanager
+        def assertMultipleWarnings(self, messages, msg=None):
+            with warnings.catch_warnings(record=True) as cm:
+                warnings.simplefilter("always")  # automatically restored according to docs
+                yield cm
+
+            self.assertEqual(len(cm), len(messages))
+            for data, warning in zip(messages, cm):
+                self.assertEqual(warning.category, data['category'])
+
+                error = '"%s" does not match "%s"' % (warning.message, data['msg'])
+                self.assertIsNotNone(re.match(data['msg'], str(warning.message)), error)
+
+                self.assertEqual(data['filename'], warning.filename + 'c')
+                if data.get('lineno'):  # pragma: no cover - so far this is always None
+                    self.assertEqual(data['lineno'], warning.lineno)
+                self.assertEqual(data.get('file'), warning.file)
+                self.assertEqual(data.get('line'), warning.line)
 
     def assertNotRevoked(self, cert):
         if isinstance(cert, CertificateAuthority):
