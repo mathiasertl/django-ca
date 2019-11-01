@@ -115,11 +115,6 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                 csr = stream.read()
 
         try:
-            #cert = Certificate.objects.init(
-            #    ca=ca, csr=csr, algorithm=options['algorithm'], expires=options['expires'],
-            #    subject_alternative_name=options['alt'], **kwargs)
-
-            #print('kwargs', kwargs)
             cert = Certificate.objects.create_cert(ca, csr, profile=options['profile'], **kwargs)
         except Exception as e:
             raise CommandError(e)
