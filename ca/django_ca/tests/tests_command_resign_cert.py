@@ -104,7 +104,7 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
         self.assertResigned(self.cert, new, new_ca=self.cas['child'])
         self.assertEqualExt(self.cert, new, new_ca=self.cas['child'])
 
-    @override_tmpcadir()
+    @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_overwrite(self):
         key_usage = 'cRLSign'
         ext_key_usage = 'critical,emailProtection'
@@ -178,7 +178,7 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
         msg = 'foobar'
         msg_re = r'^%s$' % msg
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post, \
-                patch('django_ca.managers.CertificateManager.init', side_effect=Exception(msg)), \
+                patch('django_ca.managers.CertificateManager.create_cert', side_effect=Exception(msg)), \
                 self.assertCommandError(msg_re):
 
             self.cmd('resign_cert', self.cert.serial)

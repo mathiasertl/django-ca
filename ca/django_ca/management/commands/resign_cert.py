@@ -87,12 +87,25 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
             'subject_alternative_name': san,
             'cn_in_san': False,
         }
+        kwargs = {
+            'algorithm': options['algorithm'],
+            'csr_format': Encoding.PEM,
+            'expires': options['expires'],
+            'extensions': [],
+            'password': options['password'],
+            'subject': subject,
+            'cn_in_san': False,  # we already copy the SAN/CN from the original cert
+        }
+
+        for ext in [key_usage, ext_key_usage, tls_feature, san]:
+            if ext is not None:
+                kwargs['extensions'].append(ext)
 
         if 'CN' not in kwargs['subject'] and not options['alt']:
             raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")
 
         try:
-            cert = Certificate.objects.init(ca=ca, csr=csr, **kwargs)
+            cert = Certificate.objects.create_cert(ca=ca, csr=csr, **kwargs)
         except Exception as e:
             raise CommandError(e)
 
