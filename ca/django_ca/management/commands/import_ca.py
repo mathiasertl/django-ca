@@ -85,8 +85,12 @@ Note that the private key will be copied to the directory configured by the CA_D
         key.close()
         pem.close()
 
+        issuer_alternative_name = options[IssuerAlternativeName.key]
+        if issuer_alternative_name is None:
+            issuer_alternative_name = ''
+
         ca = CertificateAuthority(name=name, parent=parent, issuer_url=options['issuer_url'],
-                                  issuer_alt_name=options[IssuerAlternativeName.key], crl_url=crl_url)
+                                  issuer_alt_name=issuer_alternative_name, crl_url=crl_url)
 
         # load public key
         try:

@@ -155,6 +155,10 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
             }
         })
 
+        issuer_alternative_name = options[IssuerAlternativeName.key]
+        if issuer_alternative_name is None:
+            issuer_alternative_name = ''
+
         try:
             CertificateAuthority.objects.init(
                 key_size=options['key_size'], key_type=options['key_type'],
@@ -164,7 +168,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
                 parent=parent,
                 pathlen=options['pathlen'],
                 issuer_url=options['issuer_url'],
-                issuer_alt_name=options[IssuerAlternativeName.key],
+                issuer_alt_name=issuer_alternative_name,
                 default_hostname=options['default_hostname'],
                 crl_url=options['crl_url'],
                 ocsp_url=options['ocsp_url'],

@@ -213,13 +213,17 @@ class ExtensionAction(argparse.Action):
     def __init__(self, *args, **kwargs):
         self.extension = kwargs.pop('extension')
         kwargs['dest'] = self.extension.key
-        kwargs.setdefault('default', self.extension({}))
         super(ExtensionAction, self).__init__(*args, **kwargs)
+
+    def get_extension(self, namespace):
+        if not hasattr(namespace, self.dest) or getattr(namespace, self.dest) is None:
+            setattr(namespace, self.dest, self.extension({}))
+        return getattr(namespace, self.dest)
 
 
 class OrderedSetExtensionAction(ExtensionAction):
     def __call__(self, parser, namespace, value, option_string=None):
-        ext = getattr(namespace, self.dest)
+        ext = self.get_extension(namespace)
 
         values = shlex_split(value, ', ')
         if values[0] == 'critical':
@@ -236,7 +240,7 @@ class OrderedSetExtensionAction(ExtensionAction):
 
 class AlternativeNameAction(ExtensionAction):
     def __call__(self, parser, namespace, value, option_string=None):
-        getattr(namespace, self.dest).append(value)
+        self.get_extension(namespace).append(value)
 
 
 class ReasonAction(argparse.Action):
@@ -394,6 +398,13 @@ class BaseCommand(_BaseCommand):
 
 
 class BaseSignCommand(BaseCommand):
+    sign_extensions = {
+        SubjectAlternativeName,
+        KeyUsage,
+        ExtendedKeyUsage,
+        TLSFeature,
+    }
+
     def add_base_args(self, parser, no_default_ca=False):
         self.add_subject_group(parser)
         self.add_algorithm(parser)
