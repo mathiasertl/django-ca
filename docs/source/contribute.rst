@@ -26,7 +26,7 @@ executing::
 Naturally, I also expect the test suite to still pass. Please make sure you test
 in at least your local Python2 and Python3 environments::
 
-     python setup.py test
+     python dev.py test
 
 ***********
 Write tests
@@ -45,10 +45,46 @@ Code coverage
 
 Generate a coverage report and make sure that your code is covered by tests::
 
-     python setup.py coverage
+     python dev.py coverage
 
 .. WARNING::
 
    Code coverage is not a catch all tool for "yes, this code is well-tested".
    It's a tool to catch missed spots, but you must still think for yourself
    about what and how to test.
+
+Exclude code
+============
+
+The test suite fails if the code coverage is not 100%. But sometimes code is
+specific to a particular Python/Django/cryptography version and the code just
+never executed when using a different version.
+
+You can exclude code that is just for Python2 or Python3 using comments::
+   
+   import six
+
+   if six.PY3:  # pragma: only py3
+      print('will only be executed on Python 3!')
+   else:  # pragma: only py2
+      print('will only be executed on Python 2!')
+
+More fine grained pragmas for Python, Django and cryptography versions are also
+available::
+
+   if hasattr(ExtensionOID, 'PRECERT_POISON'):  # pragma: cryptography>=2.7
+      print('PrecertPoison extension was added in cryptography 2.7')
+   else:  # pragma: cryptography<2.7
+      print('sorry, no precert poison!')
+
+Sometimes you have code to check for the availability of a feature, but there is
+no "else" branch in case the feature doesn't exist. In this case you want to
+*exclude* the code if the feature is not available, but want to mark it as *no
+branch* if the feature is availalable. For example, the ``source`` attribute was
+added to warning messages in Python 3.6::
+
+   if hasattr(msg, 'source'):  # pragma: no branch, pragma: only py>=3.6
+      self.assertEqual(data.get('source'), msg.source) 
+
+   if hasattr(msg, 'source'):  # pragma: no branch, pragma: only py>3.5
+      print('equivalent to the above.')
