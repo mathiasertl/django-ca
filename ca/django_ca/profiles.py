@@ -15,6 +15,7 @@
 
 import warnings
 from copy import deepcopy
+from datetime import timedelta
 from threading import local
 
 import idna
@@ -92,6 +93,9 @@ class Profile(object):
         self.add_ocsp_url = add_ocsp_url
         self.add_issuer_alternative_name = add_issuer_alternative_name
         self.description = description
+
+        if isinstance(self.expires, int):
+            self.expires = timedelta(days=self.expires)
 
         # cast extensions to their respective classes
         for key, extension in self.extensions.items():
