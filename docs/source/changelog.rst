@@ -48,6 +48,7 @@ Deprecation notices
 
 * This is the last release to support Python 2.7.
 * This is the last release to support cryptography 2.5 and 2.6.
+* This is the last release to be tested with Alpine 3.7.
 * :py:func:`Certificate.objects.init() <django_ca.managers.CertificateManager.init>` has been deprecated in
   favor of :py:func:`Certificate.objects.create_cert() <django_ca.managers.CertificateManager.create_cert>`.
   The old method will be removed in ``django-ca==1.16``.
