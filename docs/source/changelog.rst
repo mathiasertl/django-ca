@@ -60,8 +60,8 @@ Deprecation notices
 * :py:func:`~django_ca.profiles.get_cert_profile_kwargs` was only used by
   :py:func:`~django_ca.managers.CertificateManager.init` and will  thus also be removed in
   ``django-ca==1.16``.
-* The old format for ``CA_PROFILES`` will be supported until ``django-ca==1.16``.
-  Please see :ref:`profiles-pre-114-migration` for migration instructions.
+* The old format for ``CA_PROFILES`` will be supported until ``django-ca==1.16``. Please see
+  :ref:`profiles-pre-114-migration` for migration instructions.
 
 .. _changelog-1.13.0:
 
