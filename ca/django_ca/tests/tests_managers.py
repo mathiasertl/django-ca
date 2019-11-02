@@ -17,6 +17,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtensionOID
 
 from .. import ca_settings
+from ..deprecation import RemovedInDjangoCA16Warning
 from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
@@ -123,6 +124,13 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
 
         self.assertEqual(exts, expected)
 
+    def cert_init(self, *args, **kwargs):
+        with self.assertMultipleWarnings([{
+            'category': RemovedInDjangoCA16Warning, 'filename': __file__,
+            'msg': r'^Function will be removed in django-ca 1.16$',
+        }]):
+            return Certificate.objects.init(*args, **kwargs)
+
     @override_tmpcadir()
     def test_basic(self):
         kwargs = self.get_cert_profile_kwargs()
@@ -130,9 +138,8 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
 
         ca = self.cas['child']
         csr = certs['child-cert']['csr']['pem']
-        cert = Certificate.objects.init(
-            ca, csr, algorithm='SHA256',
-            subject_alternative_name={'value': ['example.com']}, **kwargs)
+        cert = self.cert_init(ca, csr, algorithm='SHA256',
+                              subject_alternative_name={'value': ['example.com']}, **kwargs)
         cert.full_clean()
 
         self.assertBasic(cert.x509)
@@ -166,9 +173,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         csr = certs['child-cert']['csr']['pem']
         kwargs = self.get_cert_profile_kwargs()
         del kwargs['subject']
-        cert = Certificate.objects.init(
-            ca, csr,
-            subject_alternative_name={'value': ['example.com']}, **kwargs)
+        cert = self.cert_init(ca, csr, subject_alternative_name={'value': ['example.com']}, **kwargs)
         cert.full_clean()
 
         self.assertSubject(cert.x509, [('CN', 'example.com')])
@@ -196,9 +201,9 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
 
         ca = self.cas['child']
         csr = certs['child-cert']['csr']['pem']
-        cert = Certificate.objects.init(
-            ca, csr, algorithm='SHA256',
-            subject_alternative_name=SubjectAlternativeName({'value': ['example.com']}), **kwargs)
+        cert = self.cert_init(ca, csr, algorithm='SHA256',
+                              subject_alternative_name=SubjectAlternativeName({'value': ['example.com']}),
+                              **kwargs)
         cert.full_clean()
 
         self.assertBasic(cert.x509)
@@ -233,10 +238,10 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         del kwargs['subject']
 
         with self.assertRaisesRegex(ValueError, r'^Must name at least a CN or a subjectAlternativeName\.$'):
-            Certificate.objects.init(ca, csr, subject_alternative_name=[], **kwargs)
+            self.cert_init(ca, csr, subject_alternative_name=[], **kwargs)
 
         with self.assertRaisesRegex(ValueError, r'^Must name at least a CN or a subjectAlternativeName\.$'):
-            Certificate.objects.init(ca, csr, subject_alternative_name=None, **kwargs)
+            self.cert_init(ca, csr, subject_alternative_name=None, **kwargs)
 
     @override_tmpcadir()
     def test_cn_in_san(self):
@@ -245,17 +250,15 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         kwargs = self.get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
         kwargs['subject']['CN'] = 'cn.example.com'
-        cert = Certificate.objects.init(
-            ca, csr, algorithm=hashes.SHA256(),
-            subject_alternative_name={'value': ['example.com']}, **kwargs)
+        cert = self.cert_init(ca, csr, algorithm=hashes.SHA256(),
+                              subject_alternative_name={'value': ['example.com']}, **kwargs)
 
         self.assertEqual(self.get_subject(cert.x509)['CN'], 'cn.example.com')
         self.assertEqual(cert.subject_alternative_name,
                          SubjectAlternativeName({'value': ['DNS:cn.example.com', 'DNS:example.com']}))
 
         # try the same with no SAN at all
-        cert = Certificate.objects.init(
-            ca, csr, algorithm=hashes.SHA256(), **kwargs)
+        cert = self.cert_init(ca, csr, algorithm=hashes.SHA256(), **kwargs)
         self.assertEqual(self.get_subject(cert.x509)['CN'], 'cn.example.com')
         self.assertEqual(cert.subject_alternative_name,
                          SubjectAlternativeName({'value': ['DNS:cn.example.com']}))
@@ -268,9 +271,8 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         kwargs['subject'] = Subject(kwargs['subject'])
         kwargs['subject']['CN'] = 'cn.example.com'
         kwargs['cn_in_san'] = False
-        cert = Certificate.objects.init(
-            ca, csr, algorithm=hashes.SHA256(),
-            subject_alternative_name={'value': ['example.com']}, **kwargs)
+        cert = self.cert_init(ca, csr, algorithm=hashes.SHA256(),
+                              subject_alternative_name={'value': ['example.com']}, **kwargs)
 
         self.assertEqual(self.get_subject(cert.x509)['CN'], 'cn.example.com')
         self.assertEqual(cert.subject_alternative_name,
@@ -284,8 +286,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         kwargs['subject'] = Subject(kwargs['subject'])
         kwargs['subject']['CN'] = 'cn.example.com'
         kwargs['cn_in_san'] = False
-        cert = Certificate.objects.init(
-            ca, csr, algorithm=hashes.SHA256(), **kwargs)
+        cert = self.cert_init(ca, csr, algorithm=hashes.SHA256(), **kwargs)
         self.assertEqual(self.get_subject(cert.x509)['CN'], 'cn.example.com')
         self.assertHasNotExtension(cert, ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
         self.assertNotIn('SubjectAlternativeName', cert.extensions)
@@ -297,9 +298,8 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         kwargs = self.get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
         del kwargs['key_usage']
-        cert = Certificate.objects.init(
-            ca, csr, algorithm=hashes.SHA256(),
-            subject_alternative_name={'value': ['example.com']}, **kwargs)
+        cert = self.cert_init(ca, csr, algorithm=hashes.SHA256(),
+                              subject_alternative_name={'value': ['example.com']}, **kwargs)
         self.assertHasNotExtension(cert, ExtensionOID.KEY_USAGE)
         self.assertHasExtension(cert, ExtensionOID.EXTENDED_KEY_USAGE)
 
@@ -310,9 +310,8 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         kwargs = self.get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
         del kwargs['extended_key_usage']
-        cert = Certificate.objects.init(
-            ca, csr, algorithm=hashes.SHA256(),
-            subject_alternative_name={'value': ['example.com']}, **kwargs)
+        cert = self.cert_init(ca, csr, algorithm=hashes.SHA256(),
+                              subject_alternative_name={'value': ['example.com']}, **kwargs)
         self.assertHasNotExtension(cert, ExtensionOID.EXTENDED_KEY_USAGE)
         self.assertHasExtension(cert, ExtensionOID.KEY_USAGE)
 
@@ -326,9 +325,8 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
 
         kwargs = self.get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
-        cert = Certificate.objects.init(
-            ca, csr, algorithm=hashes.SHA256(),
-            subject_alternative_name={'value': ['example.com']}, **kwargs)
+        cert = self.cert_init(ca, csr, algorithm=hashes.SHA256(),
+                              subject_alternative_name={'value': ['example.com']}, **kwargs)
         self.assertEqual(self.get_extensions(cert.x509)['CRLDistributionPoints'],
                          CRLDistributionPoints({'value': [DistributionPoint({'full_name': [ca.crl_url]})]}))
 
@@ -336,7 +334,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         ca.crl_url = 'http://crl.example.com\nhttp://crl.example.org'
         kwargs = self.get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
-        cert = Certificate.objects.init(
+        cert = self.cert_init(
             ca, csr, algorithm=hashes.SHA256(),
             subject_alternative_name={'value': ['example.com']}, **kwargs)
 
@@ -356,7 +354,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
 
         kwargs = self.get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
-        cert = Certificate.objects.init(
+        cert = self.cert_init(
             ca, csr, algorithm=hashes.SHA256(),
             subject_alternative_name={'value': ['example.com']}, **kwargs)
 
@@ -372,7 +370,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
 
         # test only with ocsp url
         ca.ocsp_url = 'http://ocsp.ca.example.com'
-        cert = Certificate.objects.init(
+        cert = self.cert_init(
             ca, csr, algorithm=hashes.SHA256(),
             subject_alternative_name={'value': ['example.com']}, **kwargs)
 
@@ -384,7 +382,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
 
         # test with both ocsp_url and issuer_url
         ca.issuer_url = 'http://ca.example.com/ca.crt'
-        cert = Certificate.objects.init(
+        cert = self.cert_init(
             ca, csr, algorithm=hashes.SHA256(),
             subject_alternative_name={'value': ['example.com']}, **kwargs)
 
@@ -398,7 +396,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
 
         # test only with issuer url
         ca.ocsp_url = None
-        cert = Certificate.objects.init(
+        cert = self.cert_init(
             ca, csr, algorithm=hashes.SHA256(),
             subject_alternative_name={'value': ['example.com']}, **kwargs)
 
@@ -418,7 +416,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         ca.crl_url = certs['child']['crl_url']
         ca.save()
 
-        cert = Certificate.objects.init(
+        cert = self.cert_init(
             ca, csr, algorithm=hashes.SHA256(),
             subject_alternative_name={'value': [san]},
             ocsp_no_check=True,
@@ -464,7 +462,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             PrecertPoison(),
         ]
 
-        cert = Certificate.objects.init(
+        cert = self.cert_init(
             ca, csr,
             subject=subject,
             subject_alternative_name={'value': [san]},
@@ -509,7 +507,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         ca.issuer_alt_name_url = ''
         ca.save()
 
-        cert = Certificate.objects.init(
+        cert = self.cert_init(
             ca, csr, subject=subject,
             issuer_url=issuer_url, crl_url=crl_url, ocsp_url=ocsp_url, issuer_alternative_name=ian_url
         )
@@ -542,7 +540,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         ca.issuer_alt_name_url = ian_url
         ca.save()
 
-        cert = Certificate.objects.init(
+        cert = self.cert_init(
             ca, csr, subject=subject,
             issuer_url=False, crl_url=False, ocsp_url=False, issuer_alternative_name=False
         )
@@ -573,7 +571,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             OCSPNoCheck({'critical': True}).as_extension(),
         ]
 
-        cert = Certificate.objects.init(
+        cert = self.cert_init(
             ca, csr,
             subject=subject,
             subject_alternative_name={'value': san},
@@ -603,7 +601,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         ca = self.cas['child']
         csr = certs['child-cert']['csr']['pem']
         with self.assertRaisesRegex(ValueError, r'^Cannot add extension of type bool$'):
-            Certificate.objects.init(
+            self.cert_init(
                 ca, csr, subject_alternative_name={'value': ['example.com']},
                 extra_extensions=[False])
 
@@ -611,5 +609,5 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         cn = 'foo bar'
         msg = r'^%s: Could not parse CommonName as subjectAlternativeName\.$' % cn
         with self.assertRaisesRegex(ValueError, msg):
-            Certificate.objects.init(self.cas['child'], certs['child-cert']['csr']['pem'],
-                                     subject=Subject('/CN=%s' % cn))
+            self.cert_init(self.cas['child'], certs['child-cert']['csr']['pem'],
+                           subject=Subject('/CN=%s' % cn))

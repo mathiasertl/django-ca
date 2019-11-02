@@ -15,6 +15,7 @@
 
 import idna
 import six
+import warnings
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -30,6 +31,7 @@ from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 
 from . import ca_settings
+from .deprecation import RemovedInDjangoCA16Warning
 from .extensions import ExtendedKeyUsage
 from .extensions import Extension
 from .extensions import IssuerAlternativeName
@@ -550,6 +552,8 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         All parameters are passed on to :py:func:`Certificate.objects.sign_cert()
         <django_ca.managers.CertificateManager.sign_cert>`.
         """
+
+        warnings.warn('Function will be removed in django-ca 1.16', RemovedInDjangoCA16Warning, stacklevel=2)
 
         c = self.model(ca=ca)
         c.x509, csr = self.sign_cert(ca, csr, **kwargs)
