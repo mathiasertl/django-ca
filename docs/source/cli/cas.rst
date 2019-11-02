@@ -47,6 +47,13 @@ public keys to all clients, which is usually a lot of work.
 Please think carefully about how you want to run your CA: Do you want intermediate CAs? Do you want to use
 CRLs and/or run an OCSP responder?
 
+Hostname
+========
+
+Running a CA with an OCSP responder or CRLs for certificate validation requires a webserver providing HTTP.
+Please configure :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` accordingly. You can always
+override that setting by passing manual URLs when creating a new CA.
+
 ``pathlen`` attribute
 =====================
 
@@ -65,44 +72,30 @@ not.
 
 The default value for the ``pathlen`` attribute is ``0``, meaning that any CA cannot have any intermediate
 CAs. You can use the ``--pathlen`` parameter to set a different value or the ``--no-pathlen`` parameter if you
-don't want to set the attribute::
+don't want to set the attribute:
+
+.. code-block:: console
 
    # Two sublevels of intermediate CAs:
-   python manage.py init_ca --pathlen=2 ...
+   $ python manage.py init_ca --pathlen=2 ...
 
    # unlimited number of intermediate CAs:
-   python manage.py init_ca --no-pathlen ... 
+   $ python manage.py init_ca --no-pathlen ... 
 
 CRL URLs
 ========
 
 Certificate Revocation Lists (CRLs) are signed files that contain a list of all revoked certificates.
 Certificates (including those for CAs) can contain pointers to CRLs, usually a single URL, in the
-``crlDistributionPoints`` extension. Clients that support this extension can query the URL and refuse to
-establish a connection if the certificate is revoked.
+:py:class:`~django_ca.extensions.CRLDistributionPoints` extension. Clients that support this extension can
+query the URL and refuse to establish a connection if the certificate is revoked.
 
 Since a CRL has to be signed by the issuing CA, root CAs cannot sensibly contain a CRL: You could only revoke
 the root CA with it, and it would have to be signed by the (compromised) root CA.
 
-**django-ca** supports adding CRLs to (intermediate) CAs as well as end-user certificates. The former cannot
-be changed later, while the latter can be changed at any time for future certificates using the ``edit_ca``
-subcommand or via the web interface. 
-
-.. WARNING:: 
-
-   If you decide to add a CRL to CAs/certificates, you must also provide the CRLs at the given URL.
-   **django-ca** provides everything you need, please see :doc:`/crl` for more information.
-
-For certificates to be signed by this CA, use the ``--crl-url`` option::
-
-   python manage.py init_ca --ca-url http://ca.example.com/example.crl ...
-
-To add a CRL url for an intermediate CA, use the ``--ca-crl-url`` option::
-
-   python manage.py init_ca \
-      --parent root
-      --ca-url http://ca.example.com/root.crl
-      ...
+If you have correctly configured :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>`, you can use CRL
+URLs out of the box. You can also embed custom URLs in certificates, please see :doc:`/crl` for more
+information.
 
 OCSP responder
 ==============
@@ -114,18 +107,15 @@ quite big.
 
 The same restrictions as for CRLs apply: You cannot add a OCSP URL to a root CA, it runs via HTTP (not HTTPS)
 and if you decide to add such URLs, you also have to actually run that service, or clients will refuse to
-connect. **django-ca** includes a somewhat tested OCSP responder, see :doc:`/ocsp` for more information.
+connect. 
 
-To add a OCSP URL to certificates to be signed by this CA, use the ``--ocsp-url`` option::
+If you have correctly configured :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>`, you can use an
+OCSP responder *almost* out of the box, the only thing you have to do is *regularly* create OCSP responder
+keys:
 
-   python manage.py --ocsp-url http://ocsp.ca.example.com/example ...
+.. code-block:: console
 
-To add a OCSP URL to intermediate CAs, use the ``--ca-ocsp-url`` option::
-
-   python manage.py init_ca \
-      --parent root \
-      --ca-ocsp-url http://ocsp.ca.example.com/root \
-      ...
+   $ python manage.py regenerate_ocsp_keys
 
 .. _name_constraints:
 
@@ -146,9 +136,11 @@ a good explanation.
 
 To add name constraints to a CA, use the ``--name-constraint`` option, which can be given multiple times.
 Values are any valid name, see :ref:`names_on_cli` for detailed documentation.  Prefix the value with either
-``permitted,`` or ``excluded,`` to add them to the Permitted or Excluded subtree::
+``permitted,`` or ``excluded,`` to add them to the Permitted or Excluded subtree:
 
-   python manage.py init_ca \
+.. code-block:: console
+
+   $ python manage.py init_ca \
       --name-constraint permitted,DNS:com
       --name-constraint permitted,DNS:net
       --name-constraint excluded,DNS:evil.com

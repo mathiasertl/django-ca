@@ -219,9 +219,8 @@ Some ``manage.py`` commands are intended to be run as cronjobs::
 
    # m h  dom mon dow      user  command
 
-   # notify watchers about certificates about to expire
+   # Notify watchers about certificates about to expire
    * 8    * * *            root  python ca/manage.py notify_expiring_certs
 
-   # recreate the CRL and the OCSP index
-   12 *    * * *           root  python ca/manage.py dump_crl
-   14 *    * * *           root  python ca/manage.py dump_ocsp_index
+   # Create OCSP responder keys
+   12 *    * * *           root  python ca/manage.py regenerate_ocsp_keys

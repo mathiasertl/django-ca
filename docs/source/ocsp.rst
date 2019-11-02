@@ -75,7 +75,7 @@ configure the ``CA_OCSP_URLS`` setting. It's a dictionary configuring instances 
 dictionary for the arguments of the view. For example::
 
    CA_OCSP_URLS = {
-       'Root CA': {
+       'root-ca': {
            'responder_key': '/usr/share/django-ca/ocsp.key',
            'responder_cert': '/usr/share/django-ca/ocsp.pem',
            
@@ -88,7 +88,7 @@ dictionary for the arguments of the view. For example::
        },
 
        # This URL can be added to any intermediate CA using the --ca-ocsp-url parameter
-       'Root CA - intermediate': {
+       'intermediate-ca': {
            # Dictionary key is not the name of the root CA, so we pass a serial instead:
            'ca': '34:D6:02:B5:B8:27:4F:51:9A:16:0C:B8:56:B7:79:3F',
            'responder_key': '/usr/share/django-ca/ocsp.key',
@@ -99,7 +99,7 @@ dictionary for the arguments of the view. For example::
        }
    }
 
-This would mean that your OCSP responder would be located at ``/django_ca/ocsp/root/`` at whatever
+This would mean that your OCSP responder would be located at ``/django_ca/ocsp/root-ca/`` at whatever
 domain you have configured your WSGI daemon. If you're using your own URL configuration, pass the
 same parameters to the ``as_view()`` method.
 
@@ -114,15 +114,14 @@ same parameters to the ``as_view()`` method.
 Add OCSP URL to new certificates
 ================================
 
-To include the URL to an OCSP service to newly issued certificates (you cannot
-add it to already issued certificates, obviously), either set it in the admin
-interface or via the command line:
+To include the URL to an OCSP service to newly issued certificates (you cannot add it to already issued
+certificates, obviously), either set it in the admin interface or via the command line:
 
 .. code-block:: console
 
    $ python manage.py list_cas
    34:D6:02:B5:B8:27:4F:51:9A:16:0C:B8:56:B7:79:3F - Root CA
-   $ python manage.py edit_ca --ocsp-url=http://ocsp.example.com/ \
+   $ python manage.py edit_ca --ocsp-url=http://ocsp.example.com/django_ca/ocsp/root-ca/ \
    >     34:D6:02:B5:B8:27:4F:51:9A:16:0C:B8:56:B7:79:3F
 
 *******************************************
