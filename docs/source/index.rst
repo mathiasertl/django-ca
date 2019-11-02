@@ -50,6 +50,7 @@ Features:
    Introduction <python/intro>
    signals
    python/extensions
+   python/profiles
    python/models
    python/subject
    python/utils
