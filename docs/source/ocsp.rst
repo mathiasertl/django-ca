@@ -11,15 +11,37 @@ certificate has been revoked.
 Configure OCSP with django-ca
 *****************************
 
-**django-ca** provides generic HTTP endpoints for an OCSP service for your certificate authorities.
-The setup involves:
+If you have (correctly) configured a :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` and setup the
+webserver under that URL, you do not have to configure anything to run an OCSP responder.
+
+To run the responder you only need to create OCSP responder keys/certificates using a manage.py command:
+
+.. code-block:: console
+
+   $ python manage.py regenerate_ocsp_keys
+
+Note that you need to pass a password if you have a CA where the private key is encrypted. If you have only
+some CAs with a password, or you use different passwords, you'll have to generate keys individually:
+
+.. code-block:: console
+
+   $ python manage.py list_cas
+   11:22:33 - CA with password foo
+   44:55:66 - CA with password bar
+   $ python manage.py regenerate_ocsp_keys --password foo 11:22:33
+   $ python manage.py regenerate_ocsp_keys --password bar 44:55:66
+
+
+************
+Manual setup
+************
+
+**django-ca** provides the generic view :py:class:`~django_ca.views.OCSPView` for an OCSP service for your
+certificate authorities. The setup involves:
 
 #. :ref:`Creating a responder certificate <create-ocsp-cert>`
 #. :ref:`Configure generic views <ocsp-generic-views>`
 #. :ref:`Add a OCSP URL to the new certificate <add-ocsp-url>`
-
-.. versionadded:: 1.2
-   Before version 1.2, django-ca was not able to host its own OCSP responder.
 
 .. _create-ocsp-cert:
 
