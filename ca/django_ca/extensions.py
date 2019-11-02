@@ -705,16 +705,15 @@ class PolicyInformation(object):
         ... })
         <PolicyInformation(oid=2.5.29.32.0, qualifiers=[{'explicit_text': 'text2'}])>
         >>> PolicyInformation({
-        ...     'policy_identifier': '2.5.29.32.0',
+        ...     'policy_identifier': '2.5',
         ...     'policy_qualifiers': [{
         ...         'notice_reference': {
-        ...             'organization': 'text3',
+        ...             'organization': 't3',
         ...             'notice_numbers': [1, ],
         ...         }
         ...     }],
-        ... })  # doctest: +NORMALIZE_WHITESPACE
-        <PolicyInformation(oid=2.5.29.32.0, qualifiers=[{'notice_reference': {'notice_numbers': [1],
-                                                                              'organization': 'text3'}}])>
+        ... })  # doctest: +ELLIPSIS
+        <PolicyInformation(oid=2.5, qualifiers=[{'notice_reference': {...}}])>
     """
     def __init__(self, data=None):
         if isinstance(data, x509.PolicyInformation):
