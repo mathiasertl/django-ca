@@ -33,7 +33,6 @@ from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import CertificateAuthority
-from ..profiles import get_cert_profile_kwargs
 from ..profiles import profiles
 from ..subject import Subject
 from .base import DjangoCATestCase
@@ -126,7 +125,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_basic(self):
-        kwargs = get_cert_profile_kwargs()
+        kwargs = self.get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
 
         ca = self.cas['child']
@@ -165,7 +164,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
     def test_no_subject(self):
         ca = self.cas['child']
         csr = certs['child-cert']['csr']['pem']
-        kwargs = get_cert_profile_kwargs()
+        kwargs = self.get_cert_profile_kwargs()
         del kwargs['subject']
         cert = Certificate.objects.init(
             ca, csr,
@@ -193,7 +192,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
     @override_tmpcadir()
     def test_san_extension(self):
         # subject_alternative_name as an extension
-        kwargs = get_cert_profile_kwargs()
+        kwargs = self.get_cert_profile_kwargs()
 
         ca = self.cas['child']
         csr = certs['child-cert']['csr']['pem']
@@ -230,7 +229,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
     def test_no_names(self):
         ca = self.cas['child']
         csr = certs['child-cert']['csr']['pem']
-        kwargs = get_cert_profile_kwargs()
+        kwargs = self.get_cert_profile_kwargs()
         del kwargs['subject']
 
         with self.assertRaisesRegex(ValueError, r'^Must name at least a CN or a subjectAlternativeName\.$'):
@@ -243,7 +242,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
     def test_cn_in_san(self):
         ca = self.cas['child']
         csr = certs['child-cert']['csr']['pem']
-        kwargs = get_cert_profile_kwargs()
+        kwargs = self.get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
         kwargs['subject']['CN'] = 'cn.example.com'
         cert = Certificate.objects.init(
@@ -265,7 +264,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
     def test_cn_not_in_san(self):
         ca = self.cas['child']
         csr = certs['child-cert']['csr']['pem']
-        kwargs = get_cert_profile_kwargs()
+        kwargs = self.get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
         kwargs['subject']['CN'] = 'cn.example.com'
         kwargs['cn_in_san'] = False
@@ -281,7 +280,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
     def test_no_san(self):
         ca = self.cas['child']
         csr = certs['child-cert']['csr']['pem']
-        kwargs = get_cert_profile_kwargs()
+        kwargs = self.get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
         kwargs['subject']['CN'] = 'cn.example.com'
         kwargs['cn_in_san'] = False
@@ -295,7 +294,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
     def test_no_key_usage(self):
         ca = self.cas['child']
         csr = certs['child-cert']['csr']['pem']
-        kwargs = get_cert_profile_kwargs()
+        kwargs = self.get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
         del kwargs['key_usage']
         cert = Certificate.objects.init(
@@ -308,7 +307,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
     def test_no_ext_key_usage(self):
         ca = self.cas['child']
         csr = certs['child-cert']['csr']['pem']
-        kwargs = get_cert_profile_kwargs()
+        kwargs = self.get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
         del kwargs['extended_key_usage']
         cert = Certificate.objects.init(
@@ -325,7 +324,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         ca.save()
         csr = certs['child-cert']['csr']['pem']
 
-        kwargs = get_cert_profile_kwargs()
+        kwargs = self.get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
         cert = Certificate.objects.init(
             ca, csr, algorithm=hashes.SHA256(),
@@ -335,7 +334,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
 
         # test multiple URLs
         ca.crl_url = 'http://crl.example.com\nhttp://crl.example.org'
-        kwargs = get_cert_profile_kwargs()
+        kwargs = self.get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
         cert = Certificate.objects.init(
             ca, csr, algorithm=hashes.SHA256(),
@@ -355,7 +354,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         ca.save()
         csr = certs['child-cert']['csr']['pem']
 
-        kwargs = get_cert_profile_kwargs()
+        kwargs = self.get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
         cert = Certificate.objects.init(
             ca, csr, algorithm=hashes.SHA256(),
@@ -368,7 +367,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
     def test_auth_info_access(self):
         ca = self.cas['child']
         csr = certs['child-cert']['csr']['pem']
-        kwargs = get_cert_profile_kwargs()
+        kwargs = self.get_cert_profile_kwargs()
         kwargs['subject'] = Subject(kwargs['subject'])
 
         # test only with ocsp url
@@ -412,7 +411,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         ca = self.cas['child']
         csr = certs['profile-ocsp']['csr']['pem']
         san = certs['profile-ocsp']['cn']
-        kwargs = get_cert_profile_kwargs('ocsp')
+        kwargs = self.get_cert_profile_kwargs('ocsp')
 
         ca.ocsp_url = certs['child']['ocsp_url']
         ca.issuer_url = certs['child']['issuer_url']

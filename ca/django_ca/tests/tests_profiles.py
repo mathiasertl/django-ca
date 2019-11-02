@@ -32,7 +32,6 @@ from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
 from ..models import Certificate
 from ..profiles import Profile
-from ..profiles import get_cert_profile_kwargs
 from ..profiles import get_profile
 from ..profiles import profile
 from ..profiles import profiles
@@ -449,8 +448,9 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
                 'OU': 'Django CA Testsuite',
             },
         }
-        self.assertEqual(get_cert_profile_kwargs(), expected)
-        self.assertEqual(get_cert_profile_kwargs(ca_settings.CA_DEFAULT_PROFILE), expected)
+
+        self.assertEqual(self.get_cert_profile_kwargs(), expected)
+        self.assertEqual(self.get_cert_profile_kwargs(ca_settings.CA_DEFAULT_PROFILE), expected)
 
     @override_settings(CA_PROFILES={
         'ocsp-old': {
@@ -474,8 +474,8 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
                 'OU': 'Django CA Testsuite',
             },
         }
-        self.assertEqual(get_cert_profile_kwargs('ocsp-old'), expected)
-        self.assertEqual(get_cert_profile_kwargs('ocsp-new'), expected)
+        self.assertEqual(self.get_cert_profile_kwargs('ocsp-old'), expected)
+        self.assertEqual(self.get_cert_profile_kwargs('ocsp-new'), expected)
 
     def test_types(self):
         expected = {
@@ -510,17 +510,17 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
         }
 
         with self.settings(CA_PROFILES=CA_PROFILES):
-            self.assertEqual(get_cert_profile_kwargs('testprofile'), expected)
+            self.assertEqual(self.get_cert_profile_kwargs('testprofile'), expected)
 
         CA_PROFILES['testprofile']['keyUsage']['value'] = ['encipherOnly']
         expected['key_usage'] = KeyUsage({'value': ['encipherOnly']})
         with self.settings(CA_PROFILES=CA_PROFILES):
-            self.assertEqual(get_cert_profile_kwargs('testprofile'), expected)
+            self.assertEqual(self.get_cert_profile_kwargs('testprofile'), expected)
 
         CA_PROFILES['testprofile']['keyUsage']['value'] = []
         del expected['key_usage']
         with self.settings(CA_PROFILES=CA_PROFILES):
-            self.assertEqual(get_cert_profile_kwargs('testprofile'), expected)
+            self.assertEqual(self.get_cert_profile_kwargs('testprofile'), expected)
 
         # Ok, no we have *no* extensions
         expected = {
@@ -539,4 +539,4 @@ class GetCertProfileKwargsTestCase(DjangoCATestCase):
         }
 
         with self.settings(CA_PROFILES=CA_PROFILES):
-            self.assertEqual(get_cert_profile_kwargs('testprofile'), expected)
+            self.assertEqual(self.get_cert_profile_kwargs('testprofile'), expected)

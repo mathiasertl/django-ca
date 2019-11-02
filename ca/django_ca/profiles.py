@@ -24,6 +24,7 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
 from . import ca_settings
+from .deprecation import RemovedInDjangoCA16Warning
 from .extensions import KEY_TO_EXTENSION
 from .extensions import AuthorityInformationAccess
 from .extensions import AuthorityKeyIdentifier
@@ -408,6 +409,8 @@ def get_cert_profile_kwargs(name=None):
     .. WARNING:: **This function is deprecated** and will be removed in django-ca==1.16, together with
                  :py:func:`~django_ca.managers.CertificateManager.init`.
     """
+
+    warnings.warn('Function will be removed in django-ca 1.16', RemovedInDjangoCA16Warning, stacklevel=2)
 
     if name is None:
         name = ca_settings.CA_DEFAULT_PROFILE

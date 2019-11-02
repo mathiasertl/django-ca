@@ -53,6 +53,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from .. import ca_settings
 from .. import profiles
 from ..constants import ReasonFlags
+from ..deprecation import RemovedInDjangoCA16Warning
 from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
@@ -72,6 +73,7 @@ from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import CertificateAuthority
+from ..profiles import get_cert_profile_kwargs
 from ..signals import post_create_ca
 from ..signals import post_issue_cert
 from ..signals import post_revoke_cert
@@ -620,6 +622,13 @@ class DjangoCATestCaseMixin(object):
                     self.assertEqual(data['lineno'], warning.lineno)
                 self.assertEqual(data.get('file'), warning.file)
                 self.assertEqual(data.get('line'), warning.line)
+
+    def get_cert_profile_kwargs(self, name=None):
+        with self.assertMultipleWarnings([{
+            'category': RemovedInDjangoCA16Warning, 'filename': __file__,
+            'msg': r'^Function will be removed in django-ca 1.16$',
+        }]):
+            return get_cert_profile_kwargs(name=name)
 
     def assertNotRevoked(self, cert):
         if isinstance(cert, CertificateAuthority):
