@@ -176,3 +176,60 @@ You can remove a pre-defined profile by just setting the value to ``None``::
    CA_PROFILES = {
        'client': None  # we really don't need this one
    }
+
+.. _profiles-pre-114-migration:
+
+***************************
+Update from django-ca<=1.13
+***************************
+
+The format of ``CA_PROFILES`` changed in 1.14. The old format will be supported until and including
+django-ca 1.16, so you'll have to update any custom ``CA_PROFILES`` setting before then:
+
+* Rename "desc" to "description".
+* Move "key_usage" to "extensions -> key_usage".
+* Move "extended_key_usage" to "extensions -> extended_key_usage".
+* Move "TLSFeature" to "extensions -> tls_feature".
+* Move "ocsp_no_check" to "extensions -> ocsp_no_check".
+
+Here's an example of a changed profile defining all the new values::
+
+   CA_PROFILES = {
+       # django-ca before 1.14, do *not* use anymore! 
+       #'example': {  # NOTE: Not a necessarily useful profile, just an example for migration
+       #    'desc': _('A certificate for a client.'),
+       #    'keyUsage': {
+       #        'critical': True,
+       #        'value': ['digitalSignature'],
+       #    },
+       #    'extendedKeyUsage': {
+       #        'critical': False,
+       #        'value': ['clientAuth'],
+       #    },
+       #    'TLSFeature': {
+       #        'critical': True,
+       #        'value': ['OCSPMustStaple'],
+       #    },
+       #    'ocsp_no_check': True,
+       #},
+
+       # Same as above, but in new format:
+       'example': {  # NOTE: Not a necessarily useful profile, just an example for migration
+           'description': _('A certificate for a client.'),
+           'extensions': {
+               'key_usage': {
+                   'critical': True,
+                   'value': ['digitalSignature'],
+               },
+               'extended_key_usage': {
+                   'critical': False,
+                   'value': ['clientAuth'],
+               },
+               'tls_feature': {
+                   'critical': True,
+                   'value': ['OCSPMustStaple'],
+               },
+               'ocsp_no_check': {},
+           },
+       },
+   }

@@ -12,6 +12,9 @@ ChangeLog
 
 * ``regenerate_ocsp_keys`` now has a quiet mode and only generates keys where the CA private key is available.
 * Minor changes to make the release compatible with Django 3.0a1.
+* Introduce a new, more flexible format for the The format of the :ref:`CA_PROFILES <settings-ca-profiles>`
+  setting. The new :doc:`/profiles` page provides more information and :ref:`migration instructions
+  <profiles-pre-114-migration>`.
 * New dependency: `six <https://pypi.org/project/six/>`_, since Django 3.0 no longer includes it.
 * New dependency: `asn1crypto <https://pypi.org/project/asn1crypto/>`_, since cryptography no longer depends
   on it.
@@ -45,6 +48,8 @@ Deprecation notices
 
 * This is the last release to support Python 2.7.
 * This is the last release to support cryptography 2.5 and 2.6.
+* The old format for ``CA_PROFILES`` will be supported until ``django-ca==1.16``.
+  Please see :ref:`profiles-pre-114-migration` for migration instructions.
 
 .. _changelog-1.13.0:
 
