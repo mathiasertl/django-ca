@@ -114,7 +114,10 @@ class AbstractExtensionTestMixin:
         if self.force_critical is not True:
             yield False
 
-    def ext(self, value, critical=None):
+    def ext(self, value=None, critical=None):
+        if value is None:
+            value = {}
+
         if isinstance(value, x509.extensions.ExtensionType):
             if critical is None:
                 critical = self.ext_class.default_critical
@@ -1153,7 +1156,7 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
             self.assertEqual(bool(ext), config.get('expected_bool', True))
 
     def test_shortcuts(self):
-        ext = self.ext({})
+        ext = self.ext()
         self.assertEqual(ext.issuers, [])
         self.assertEqual(ext.ocsp, [])
         ext.ocsp = [self.uri1]
@@ -1282,7 +1285,7 @@ class BasicConstraintsTestCase(ExtensionTestMixin, TestCase):
 
 class DistributionPointTestCase(TestCase):
     def test_init_basic(self):
-        dp = DistributionPoint({})
+        dp = DistributionPoint()
         self.assertIsNone(dp.full_name)
         self.assertIsNone(dp.relative_name)
         self.assertIsNone(dp.crl_issuer)
@@ -2191,12 +2194,12 @@ class NameConstraintsTestCase(ExtensionTestMixin, TestCase):
     }
 
     def test_bool(self):
-        self.assertFalse(bool(NameConstraints({})))
+        self.assertFalse(bool(NameConstraints()))
         self.assertTrue(bool(NameConstraints({'value': {'permitted': ['example.com']}})))
         self.assertTrue(bool(NameConstraints({'value': {'excluded': ['example.com']}})))
 
     def test_setters(self):
-        ext = NameConstraints({})
+        ext = NameConstraints()
         ext.permitted += ['example.com']
         ext.excluded += ['example.net']
 

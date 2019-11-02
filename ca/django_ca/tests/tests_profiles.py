@@ -61,7 +61,7 @@ class ProfileTestCase(DjangoCATestCase):
             OCSPNoCheck.key: {},
         })
         p2 = Profile('test', subject='/C=AT/CN=example.com', extensions={
-            OCSPNoCheck.key: OCSPNoCheck({}),
+            OCSPNoCheck.key: OCSPNoCheck(),
         })
         self.assertEqual(p1, p2)
 
@@ -317,7 +317,7 @@ class ProfileTestCase(DjangoCATestCase):
         # pass an empty SAN
         with self.assertSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
             self.create_cert(
-                profile, ca, csr, cn_in_san=True, extensions=[SubjectAlternativeName({})]
+                profile, ca, csr, cn_in_san=True, extensions=[SubjectAlternativeName()]
             )
         self.assertEqual(pre.call_count, 0)
 

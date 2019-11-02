@@ -209,7 +209,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         subject = Subject([('CN', 'example.net')])
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd('sign_cert', ca=self.ca, subject=subject, cn_in_san=False,
-                                      alt=SubjectAlternativeName({}), stdin=stdin)
+                                      alt=SubjectAlternativeName(), stdin=stdin)
         self.assertEqual(pre.call_count, 1)
 
         cert = Certificate.objects.first()

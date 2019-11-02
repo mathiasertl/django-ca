@@ -424,7 +424,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             tls_feature = TLSFeature(tls_feature)
 
         if not subject_alternative_name:
-            subject_alternative_name = SubjectAlternativeName({})
+            subject_alternative_name = SubjectAlternativeName()
         elif not isinstance(subject_alternative_name, SubjectAlternativeName):
             subject_alternative_name = SubjectAlternativeName(subject_alternative_name)
 

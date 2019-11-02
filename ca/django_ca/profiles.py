@@ -99,7 +99,7 @@ class Profile(object):
                 self.extensions[key] = KEY_TO_EXTENSION[key](extension)
 
         # set some sane extension defaults
-        self.extensions.setdefault(BasicConstraints.key, BasicConstraints({}))
+        self.extensions.setdefault(BasicConstraints.key, BasicConstraints())
 
         if 'keyUsage' in kwargs:
             warnings.warn('keyUsage in profile is deprecated, use extensions -> %s instead.' % KeyUsage.key,
@@ -122,7 +122,7 @@ class Profile(object):
         if 'ocsp_no_check' in kwargs:
             warnings.warn('ocsp_no_check in profile is deprecated, use extensions -> %s instead.' %
                           OCSPNoCheck.key, DeprecationWarning, stacklevel=2)
-            self.extensions[OCSPNoCheck.key] = OCSPNoCheck({})
+            self.extensions[OCSPNoCheck.key] = OCSPNoCheck()
 
         # set some defaults
         self.extensions.setdefault(BasicConstraints.key, BasicConstraints({'value': {'ca': False}}))
@@ -302,22 +302,22 @@ class Profile(object):
         extensions.setdefault(AuthorityKeyIdentifier.key, ca.get_authority_key_identifier_extension())
 
         if add_crl_url is not False and ca.crl_url:
-            extensions.setdefault(CRLDistributionPoints.key, CRLDistributionPoints({}))
+            extensions.setdefault(CRLDistributionPoints.key, CRLDistributionPoints())
             extensions[CRLDistributionPoints.key].value.append(DistributionPoint({
                 'full_name': [url.strip() for url in ca.crl_url.split()],
             }))
 
         if add_ocsp_url is not False and ca.ocsp_url:
-            extensions.setdefault(AuthorityInformationAccess.key, AuthorityInformationAccess({}))
+            extensions.setdefault(AuthorityInformationAccess.key, AuthorityInformationAccess())
             extensions[AuthorityInformationAccess.key].value['ocsp'].append(parse_general_name(ca.ocsp_url))
 
         if add_issuer_url is not False and ca.issuer_url:
-            extensions.setdefault(AuthorityInformationAccess.key, AuthorityInformationAccess({}))
+            extensions.setdefault(AuthorityInformationAccess.key, AuthorityInformationAccess())
             extensions[AuthorityInformationAccess.key].value['issuers'].append(
                 parse_general_name(ca.issuer_url)
             )
         if add_issuer_alternative_name is not False and ca.issuer_alt_name:
-            extensions.setdefault(IssuerAlternativeName.key, IssuerAlternativeName({}))
+            extensions.setdefault(IssuerAlternativeName.key, IssuerAlternativeName())
             extensions[IssuerAlternativeName.key].extend(shlex_split(ca.issuer_alt_name, ','))
 
         if self.issuer_name:
@@ -332,7 +332,7 @@ class Profile(object):
             except idna.IDNAError:
                 raise ValueError('%s: Could not parse CommonName as subjectAlternativeName.' % subject['CN'])
 
-            extensions.setdefault(SubjectAlternativeName.key, SubjectAlternativeName({}))
+            extensions.setdefault(SubjectAlternativeName.key, SubjectAlternativeName())
             if cn not in extensions[SubjectAlternativeName.key]:
                 extensions[SubjectAlternativeName.key].append(cn)
         elif not subject.get('CN') and SubjectAlternativeName.key in extensions:

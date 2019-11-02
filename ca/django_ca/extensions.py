@@ -91,7 +91,10 @@ class Extension(object):
     oid = None  # must be overwritten by actual classes
     default_critical = False
 
-    def __init__(self, value):
+    def __init__(self, value=None):
+        if value is None:
+            value = {}
+
         if isinstance(value, x509.extensions.Extension):  # e.g. from a cert object
             self.critical = value.critical
             self.from_extension(value)
@@ -587,6 +590,9 @@ class DistributionPoint(GeneralNameMixin):
     reasons = None
 
     def __init__(self, data=None):
+        if data is None:
+            data = {}
+
         if isinstance(data, x509.DistributionPoint):
             self.full_name = data.full_name
             self.relative_name = data.relative_name
@@ -1390,7 +1396,7 @@ class NameConstraints(GeneralNameMixin, Extension):
 
     We also have permitted/excluded getters/setters to easily configure this extension::
 
-        >>> nc = NameConstraints({})
+        >>> nc = NameConstraints()
         >>> nc.permitted = ['example.com']
         >>> nc.excluded = ['example.net']
         >>> nc
@@ -1401,7 +1407,7 @@ class NameConstraints(GeneralNameMixin, Extension):
     But note that getters return a normal list, so you need to pass
     :py:class:`~cg:cryptography.x509.GeneralName` if you want to use list functions::
 
-        >>> nc = NameConstraints({})
+        >>> nc = NameConstraints()
         >>> nc.permitted.append(x509.DNSName('example.net'))  # that's okay
         >>> nc.extension_type
         <NameConstraints(permitted_subtrees=[<DNSName(value='example.net')>], excluded_subtrees=[])>

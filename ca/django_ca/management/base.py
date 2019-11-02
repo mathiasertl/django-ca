@@ -218,7 +218,7 @@ class ExtensionAction(argparse.Action):
 
 class OrderedSetExtensionAction(ExtensionAction):
     def __call__(self, parser, namespace, value, option_string=None):
-        ext = self.extension({})
+        ext = self.extension()
 
         values = shlex_split(value, ', ')
         if values[0] == 'critical':
