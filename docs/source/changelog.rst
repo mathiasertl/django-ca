@@ -36,6 +36,7 @@ Backwards incompatible changes
 * :py:class:`~django_ca.extensions.KeyUsage`, :py:class:`~django_ca.extensions.ExtendedKeyUsage` and
   :py:class:`~django_ca.extensions.TLSFeature` now behave like an ordered set and support all operators that a
   set does.
+* Running an OCSP responder using ``oscrypto``/``ocspbuilder`` is no longer supported.
 
 Extensions
 ==========
@@ -49,6 +50,10 @@ Deprecation notices
 * This is the last release to support Python 2.7.
 * This is the last release to support cryptography 2.5 and 2.6.
 * This is the last release to be tested with Alpine 3.7.
+* This is the last release to support :ref:`updating CA private keys to the Filestorage API
+  <update-file-storage>`. ``python manage.py migrate_ca`` will be removed in the next release.
+* This will be the last release to support the ``ca_crl`` setting in
+  :py:class:`~django_ca.views.CertificateRevocationListView`.
 * :py:func:`Certificate.objects.init() <django_ca.managers.CertificateManager.init>` has been deprecated in
   favor of :py:func:`Certificate.objects.create_cert() <django_ca.managers.CertificateManager.create_cert>`.
   The old method will be removed in ``django-ca==1.16``.
