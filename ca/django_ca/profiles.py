@@ -53,12 +53,8 @@ class Profile(object):
     but you can also create your own profile to create a different type of certificate. An instance of this
     class can be used to create a signed certificate based on the given CA::
 
-        # Note: "csr" is a predefined variable, see https://cryptography.io/en/latest/x509/tutorial/
-        >>> from django_ca.models import CertificateAuthority
-        >>> profile = Profile('example', subject='/C=AT', extensions={'ocsp_no_check': {}})
-        >>> ca = CertificateAuthority.objects.first()
-        >>> profile.create_cert(ca, csr, subject='/CN=example.com')
-        <Certificate(subject=<Name(C=AT,CN=example.com)>, ...)>
+        >>> Profile('example', subject='/C=AT', extensions={'ocsp_no_check': {}})
+        <Profile: 'example'>
     """
 
     def __init__(self, name, subject=None, algorithm=None, extensions=None, cn_in_san=True, expires=None,
@@ -269,6 +265,9 @@ class Profile(object):
                                             critical=False)
 
         return builder.sign(private_key=ca.key(password), algorithm=algorithm, backend=default_backend())
+
+    def copy(self):
+        return deepcopy(self)
 
     def serialize(self):
         """Function to serialize a profile.

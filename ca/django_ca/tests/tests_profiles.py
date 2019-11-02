@@ -61,6 +61,10 @@ class DocumentationTestCase(DjangoCATestCase):
         from .. import profiles  # NOQA
         doctest.testmod(profiles, globs=self.get_globs())
 
+    @override_tmpcadir()
+    def test_python_intro(self):
+        doctest.testfile('../../../docs/source/python/profiles.rst', globs=self.get_globs())
+
 
 class ProfileTestCase(DjangoCATestCase):
     def create_cert(self, profile, *args, **kwargs):
