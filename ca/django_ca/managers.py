@@ -306,7 +306,27 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         raise ValueError('Unknown CSR format passed: %s' % csr_format)
 
     def create_cert(self, ca, csr, csr_format=Encoding.PEM, profile=None, **kwargs):
-        # Get Profile object
+        """Create and sign a new certificate based on the given profile.
+
+        Parameters
+        ----------
+
+        ca : :py:class:`~django_ca.models.CertificateAuthority`
+            The certificate authority to sign the certificate with.
+        csr : str or :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
+            A valid CSR. If not already a :py:class:`~cg:cryptography.x509.CertificateSigningRequest`, the
+            format is given by the ``csr_format`` parameter.
+        csr_format : :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding`, optional
+            The format of the CSR. The default is ``PEM``.
+        profile : str or :py:class:`~django_ca.profiles.Profile`, optional
+            The name of a profile or a manually created :py:class:`~django_ca.profiles.Profile` instance. If
+            not given, the profile configured by :ref:`CA_DEFAULT_PROFILE <settings-ca-default-profile>` is
+            used.
+        **kwargs
+            All other keyword arguments are passed to :py:func:`Profiles.create_cert()
+            <django_ca.profiles.Profile.create_cert>`.
+        """
+
         if not isinstance(profile, Profile):
             profile = profiles[profile]
 
@@ -327,6 +347,9 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
                   issuer_url=None, crl_url=None, ocsp_url=None, issuer_alternative_name=None,
                   extra_extensions=None, password=None):
         """Create a signed certificate from a CSR.
+
+        .. WARNING:: **This function is deprecated** and will be removed in django-ca==1.16. Please use
+                     :py:func:`~django_ca.managers.CertificateManager.create_cert` instead.
 
         **PLEASE NOTE:** This function creates the raw certificate and is usually not invoked directly. It is
         called by :py:func:`Certificate.objects.init() <django_ca.managers.CertificateManager.init>`, which
@@ -520,6 +543,9 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
 
     def init(self, ca, csr, **kwargs):
         """Create a signed certificate from a CSR and store it to the database.
+
+        .. WARNING:: **This function is deprecated** and will be removed in django-ca==1.16. Please use
+                     :py:func:`~django_ca.managers.CertificateManager.create_cert` instead.
 
         All parameters are passed on to :py:func:`Certificate.objects.sign_cert()
         <django_ca.managers.CertificateManager.sign_cert>`.

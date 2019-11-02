@@ -109,7 +109,7 @@ Manager methods
 using ``Certificate.objects``, e.g.::
 
    >>> from django_ca.models import Certificate
-   >>> Certificate.objects.init(csr=csr, ca=ca, subject='/CN=example.com')
+   >>> Certificate.objects.create_cert(csr=csr, ca=ca, subject='/CN=example.com')
    <Certificate: example.com>
 
 .. autoclass:: django_ca.managers.CertificateManager
