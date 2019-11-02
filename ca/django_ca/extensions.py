@@ -87,6 +87,8 @@ class Extension(object):
         The value of the extension, the description provides further details.
     """
     key = None  # must be overwritten by actual classes
+    """Key used in CA_PROFILES."""
+
     name = 'Extension'
     oid = None  # must be overwritten by actual classes
     default_critical = False
@@ -688,6 +690,32 @@ class DistributionPoint(GeneralNameMixin):
 
 # NOT AN EXTENSION
 class PolicyInformation(object):
+    """Class representing a PolicyInformation object.
+
+    This class is internally used by the :py:class:`~django_ca.extensions.CertificatePolicies` extension.
+
+    You can pass a :py:class:`~cg:cryptography.x509.PolicyInformation` instance or a dictionary representing
+    that instance::
+
+        >>> PolicyInformation({'policy_identifier': '2.5.29.32.0', 'policy_qualifiers': ['text1']})
+        <PolicyInformation(oid=2.5.29.32.0, qualifiers=['text1'])>
+        >>> PolicyInformation({
+        ...     'policy_identifier': '2.5.29.32.0',
+        ...     'policy_qualifiers': [{'explicit_text': 'text2', }],
+        ... })
+        <PolicyInformation(oid=2.5.29.32.0, qualifiers=[{'explicit_text': 'text2'}])>
+        >>> PolicyInformation({
+        ...     'policy_identifier': '2.5.29.32.0',
+        ...     'policy_qualifiers': [{
+        ...         'notice_reference': {
+        ...             'organization': 'text3',
+        ...             'notice_numbers': [1, ],
+        ...         }
+        ...     }],
+        ... })  # doctest: +NORMALIZE_WHITESPACE
+        <PolicyInformation(oid=2.5.29.32.0, qualifiers=[{'notice_reference': {'notice_numbers': [1],
+                                                                              'organization': 'text3'}}])>
+    """
     def __init__(self, data=None):
         if isinstance(data, x509.PolicyInformation):
             self.policy_identifier = data.policy_identifier
@@ -902,8 +930,30 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
     .. seealso::
 
         `RFC 5280, section 4.2.2.1 <https://tools.ietf.org/html/rfc5280#section-4.2.2.1>`_
+
+    The value passed to this extension should be a ``dict`` with an ``ocsp`` and ``issuers`` key, both are
+    optional::
+
+        >>> AuthorityInformationAccess({'value': {
+        ...     'ocsp': ['http://ocsp.example.com'],
+        ...     'issuers': ['http://issuer.example.com'],
+        ... }})  # doctest: +NORMALIZE_WHITESPACE
+        <AuthorityInformationAccess: issuers=['URI:http://issuer.example.com'],
+        ocsp=['URI:http://ocsp.example.com'], critical=False>
+
+    You can set/get the OCSP/issuers at runtime and dynamically use either strings or
+    :py:class:`~cryptography.x509.GeneralName` as values::
+
+        >>> aia = AuthorityInformationAccess()
+        >>> aia.issuers = ['http://issuer.example.com']
+        >>> aia.ocsp = [x509.UniformResourceIdentifier('http://ocsp.example.com/')]
+        >>> aia  # doctest: +NORMALIZE_WHITESPACE
+        <AuthorityInformationAccess: issuers=['URI:http://issuer.example.com'],
+        ocsp=['URI:http://ocsp.example.com/'], critical=False>
     """
     key = 'authority_information_access'
+    """Key used in CA_PROFILES."""
+
     name = 'AuthorityInformationAccess'
     oid = ExtensionOID.AUTHORITY_INFORMATION_ACCESS
 
@@ -974,6 +1024,7 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
 
     @property
     def issuers(self):
+        """The issuers in this extension."""
         return self.value['issuers']
 
     @issuers.setter
@@ -982,6 +1033,7 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
 
     @property
     def ocsp(self):
+        """The OCSP responders in this extension."""
         return self.value['ocsp']
 
     @ocsp.setter
@@ -1003,6 +1055,15 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
 class AuthorityKeyIdentifier(KeyIdExtension):
     """Class representing a AuthorityKeyIdentifier extension.
 
+    This extension identifies the signing CA, so it is not usually defined in a profile or instantiated by a
+    user. This extension will automatically be added by django-ca. If it is, the value must be a str or
+    bytes::
+
+        >>> AuthorityKeyIdentifier({'value': '33:33:33:33:33:33'})
+        <AuthorityKeyIdentifier: b'333333', critical=False>
+        >>> AuthorityKeyIdentifier({'value': b'333333'})
+        <AuthorityKeyIdentifier: b'333333', critical=False>
+
     .. TODO::
 
         * This class only supports key_identifier, should also support authority_cert_issuer and
@@ -1010,6 +1071,8 @@ class AuthorityKeyIdentifier(KeyIdExtension):
     """
 
     key = 'authority_key_identifier'
+    """Key used in CA_PROFILES."""
+
     name = 'AuthorityKeyIdentifier'
     oid = ExtensionOID.AUTHORITY_KEY_IDENTIFIER
 
@@ -1052,9 +1115,12 @@ class BasicConstraints(Extension):
     """
 
     key = 'basic_constraints'
+    """Key used in CA_PROFILES."""
+
     name = 'BasicConstraints'
     oid = ExtensionOID.BASIC_CONSTRAINTS
     default_critical = True
+    """This extension is marked as critical by default."""
 
     def __hash__(self):
         return hash((self.value['ca'], self.value['pathlen'], self.critical, ))
@@ -1067,6 +1133,7 @@ class BasicConstraints(Extension):
 
     @property
     def ca(self):
+        """The ``ca`` property of this extension."""
         return self.value['ca']
 
     @ca.setter
@@ -1136,11 +1203,23 @@ class CRLDistributionPoints(ListExtension):
 
     This extension identifies where a client can retrieve a Certificate Revocation List (CRL).
 
+    The value passed to this extension should be a ``list`` of
+    :py:class:`~django_ca.extensions.DistributionPoint` instances. Naturally, you can also pass those in
+    serialized form::
+
+        >>> CRLDistributionPoints({'value': [
+        ...     {'full_name': ['http://crl.example.com']}
+        ... ]})  # doctest: +NORMALIZE_WHITESPACE
+        <CRLDistributionPoints: [<DistributionPoint: full_name=['URI:http://crl.example.com']>],
+        critical=False>
+
     .. seealso::
 
         `RFC 5280, section 4.2.1.13 <https://tools.ietf.org/html/rfc5280#section-4.2.1.13>`_
     """
     key = 'crl_distribution_points'
+    """Key used in CA_PROFILES."""
+
     name = 'CRLDistributionPoints'
     oid = ExtensionOID.CRL_DISTRIBUTION_POINTS
 
@@ -1175,11 +1254,23 @@ class CRLDistributionPoints(ListExtension):
 class CertificatePolicies(ListExtension):
     """Class representing a Certificate Policies extension.
 
+    The value passed to this extension should be a ``list`` of
+    :py:class:`~django_ca.extensions.PolicyInformation` instances. Naturally, you can also pass those in
+    serialized form::
+
+        >>> CertificatePolicies({'value': [{
+        ...     'policy_identifier': '2.5.29.32.0',
+        ...     'policy_qualifier': ['policy1'],
+        ... }]})
+        <CertificatePolicies: 1 policy, critical=False>
+
     .. seealso::
 
         `RFC 5280, section 4.2.1.4 <https://tools.ietf.org/html/rfc5280#section-4.2.1.4>`_
     """
     key = 'certificate_policies'
+    """Key used in CA_PROFILES."""
+
     name = 'CertificatePolicies'
     oid = ExtensionOID.CERTIFICATE_POLICIES
 
@@ -1227,6 +1318,8 @@ class IssuerAlternativeName(AlternativeNameExtension):
     """
 
     key = 'issuer_alternative_name'
+    """Key used in CA_PROFILES."""
+
     name = 'IssuerAlternativeName'
     oid = ExtensionOID.ISSUER_ALTERNATIVE_NAME
 
@@ -1253,7 +1346,11 @@ class KeyUsage(OrderedSetExtension):
     """
 
     default_critical = True
+    """This extension is marked as critical by default."""
+
     key = 'key_usage'
+    """Key used in CA_PROFILES."""
+
     name = 'KeyUsage'
     oid = ExtensionOID.KEY_USAGE
     CRYPTOGRAPHY_MAPPING = {
@@ -1269,6 +1366,10 @@ class KeyUsage(OrderedSetExtension):
     }
     _CRYPTOGRAPHY_MAPPING_REVERSED = {v: k for k, v in CRYPTOGRAPHY_MAPPING.items()}
     KNOWN_VALUES = set(CRYPTOGRAPHY_MAPPING.values())
+
+    KNOWN_PARAMETERS = sorted(CRYPTOGRAPHY_MAPPING)
+    """Known values that can be passed to this extension."""
+
     CHOICES = (
         ('cRLSign', 'CRL Sign'),
         ('dataEncipherment', 'dataEncipherment'),
@@ -1324,6 +1425,8 @@ class ExtendedKeyUsage(OrderedSetExtension):
     """Class representing a ExtendedKeyUsage extension."""
 
     key = 'extended_key_usage'
+    """Key used in CA_PROFILES."""
+
     name = 'ExtendedKeyUsage'
     oid = ExtensionOID.EXTENDED_KEY_USAGE
     CRYPTOGRAPHY_MAPPING = {
@@ -1343,6 +1446,9 @@ class ExtendedKeyUsage(OrderedSetExtension):
         'ipsecUser': ObjectIdentifier('1.3.6.1.5.5.7.3.7'),
     }
     _CRYPTOGRAPHY_MAPPING_REVERSED = {v: k for k, v in CRYPTOGRAPHY_MAPPING.items()}
+
+    KNOWN_PARAMETERS = sorted(CRYPTOGRAPHY_MAPPING)
+    """Known values that can be passed to this extension."""
 
     # Used by the HTML form select field
     CHOICES = (
@@ -1425,8 +1531,12 @@ class NameConstraints(GeneralNameMixin, Extension):
 
     """
     key = 'name_constraints'
+    """Key used in CA_PROFILES."""
+
     name = 'NameConstraints'
     default_critical = True
+    """This extension is marked as critical by default."""
+
     oid = ExtensionOID.NAME_CONSTRAINTS
 
     def __bool__(self):
@@ -1507,6 +1617,14 @@ class NameConstraints(GeneralNameMixin, Extension):
 class OCSPNoCheck(NullExtension):
     """Extension to indicate that an OCSP client should (blindly) trust the certificate for it's lifetime.
 
+    Ass a NullExtension, any value is ignored and you can pass a simple empty ``dict`` (or nothing at all) to
+    the extension::
+
+        >>> OCSPNoCheck()
+        <OCSPNoCheck: critical=False>
+        >>> OCSPNoCheck({'critical': True})  # unlike PrecertPoison, you can still mark it as critical
+        <OCSPNoCheck: critical=True>
+
     This extension is only meaningful in an OCSP responder certificate.
 
     .. seealso::
@@ -1515,6 +1633,8 @@ class OCSPNoCheck(NullExtension):
     """
     ext_class = x509.OCSPNoCheck
     key = 'ocsp_no_check'
+    """Key used in CA_PROFILES."""
+
     name = 'OCSPNoCheck'
     oid = ExtensionOID.OCSP_NO_CHECK
 
@@ -1536,7 +1656,11 @@ class PrecertPoison(NullExtension):
        `RFC 6962, section 3.1 <https://tools.ietf.org/html/rfc6962#section-3.1>`_
     """
     default_critical = True
+    """This extension is marked as critical by default."""
+
     key = 'precert_poison'
+    """Key used in CA_PROFILES."""
+
     name = 'PrecertPoison'
     oid = ExtensionOID.PRECERT_POISON
     ext_class = x509.PrecertPoison
@@ -1565,6 +1689,8 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):  # pragma: only 
        `RFC 6962 <https://tools.ietf.org/html/rfc6962.html>`_
     """
     key = 'precertificate_signed_certificate_timestamps'
+    """Key used in CA_PROFILES."""
+
     name = 'PrecertificateSignedCertificateTimestamps'
     oid = ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS
     _timeformat = '%Y-%m-%d %H:%M:%S.%f'
@@ -1665,6 +1791,8 @@ class SubjectAlternativeName(AlternativeNameExtension):
        `RFC 5280, section 4.2.1.6 <https://tools.ietf.org/html/rfc5280#section-4.2.1.6>`_
     """
     key = 'subject_alternative_name'
+    """Key used in CA_PROFILES."""
+
     name = 'SubjectAlternativeName'
     oid = ExtensionOID.SUBJECT_ALTERNATIVE_NAME
 
@@ -1686,9 +1814,21 @@ class SubjectAlternativeName(AlternativeNameExtension):
 
 
 class SubjectKeyIdentifier(KeyIdExtension):
-    """Class representing a SubjectKeyIdentifier extension."""
+    """Class representing a SubjectKeyIdentifier extension.
+
+    This extension identifies the certificate, so it is not usually defined in a profile or instantiated by a
+    user. This extension will automatically be added by django-ca. If you ever handle this extension directly,
+    the value must be a str or bytes::
+
+        >>> SubjectKeyIdentifier({'value': '33:33:33:33:33:33'})
+        <SubjectKeyIdentifier: b'333333', critical=False>
+        >>> SubjectKeyIdentifier({'value': b'333333'})
+        <SubjectKeyIdentifier: b'333333', critical=False>
+    """
 
     key = 'subject_key_identifier'
+    """Key used in CA_PROFILES."""
+
     name = 'SubjectKeyIdentifier'
     oid = ExtensionOID.SUBJECT_KEY_IDENTIFIER
 
@@ -1701,9 +1841,22 @@ class SubjectKeyIdentifier(KeyIdExtension):
 
 
 class TLSFeature(OrderedSetExtension):
-    """Class representing a TLSFeature extension."""
+    """Class representing a TLSFeature extension.
+
+    As a :py:class:`~django_ca.extensions.OrderedSetExtension`, this extension handles much like it's other
+    sister extensions:::
+
+        >>> TLSFeature({'value': ['OCSPMustStaple']})
+        <TLSFeature: ['OCSPMustStaple'], critical=False>
+        >>> tf = TLSFeature({'value': ['OCSPMustStaple']})
+        >>> tf.add('MultipleCertStatusRequest')
+        >>> tf
+        <TLSFeature: ['MultipleCertStatusRequest', 'OCSPMustStaple'], critical=False>
+    """
 
     key = 'tls_feature'
+    """Key used in CA_PROFILES."""
+
     name = 'TLSFeature'
     oid = ExtensionOID.TLS_FEATURE
     CHOICES = (
@@ -1717,6 +1870,8 @@ class TLSFeature(OrderedSetExtension):
         'MultipleCertStatusRequest': TLSFeatureType.status_request_v2,
     }
     _CRYPTOGRAPHY_MAPPING_REVERSED = {v: k for k, v in CRYPTOGRAPHY_MAPPING.items()}
+    KNOWN_PARAMETERS = sorted(CRYPTOGRAPHY_MAPPING)
+    """Known values that can be passed to this extension."""
 
     def from_extension(self, ext):
         self.value = set(ext.value)

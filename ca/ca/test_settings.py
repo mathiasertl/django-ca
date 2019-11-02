@@ -15,6 +15,8 @@ from django.core.exceptions import ImproperlyConfigured
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROOT_DIR = os.path.dirname(BASE_DIR)
+DOC_DIR = os.path.join(ROOT_DIR, 'docs', 'source')
+FIXTURES_DIR = os.path.join(BASE_DIR, 'django_ca', 'tests', 'fixtures')
 
 DEBUG = False
 
@@ -179,7 +181,6 @@ LOGGING = {
 }
 
 # Fixture data used by test cases
-FIXTURES_DIR = os.path.join(BASE_DIR, 'django_ca', 'tests', 'fixtures')
 with open(os.path.join(FIXTURES_DIR, 'cert-data.json')) as stream:
     _fixture_data = json.load(stream)
 
