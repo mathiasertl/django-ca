@@ -47,26 +47,18 @@ from .utils import shlex_split
 
 
 class Profile(object):
-    """
+    """A certificate profile defining properties and extensions of a certificate.
 
-    Precedence of parameters:
-    * CLI parameter
-    * Profile value
-    * CA value
+    Instances of this class usually represent profiles defined in :ref:`CA_PROFILES <settings-ca-profiles>`,
+    but you can also create your own profile to create a different type of certificate. An instance of this
+    class can be used to create a signed certificate based on the given CA::
 
-    What should a profile have
-
-    * name (= id)
-    * subject (e.g. with missing CN)
-    * hash algorithm
-    * list of extensions
-    * settings:
-        * cn_in_san by default?
-        * when cert expires
-        * add crl url?
-        * add ocsp url?
-    * description (for UI)
-
+        # Note: "csr" is a predefined variable, see https://cryptography.io/en/latest/x509/tutorial/
+        >>> from django_ca.models import CertificateAuthority
+        >>> profile = Profile('example', subject='/C=AT', extensions={'ocsp_no_check': {}})
+        >>> ca = CertificateAuthority.objects.first()
+        >>> profile.create_cert(ca, csr, subject='/CN=example.com')
+        <Certificate(subject=<Name(C=AT,CN=example.com)>, ...)>
     """
 
     def __init__(self, name, subject=None, algorithm=None, extensions=None, cn_in_san=True, expires=None,
@@ -157,8 +149,8 @@ class Profile(object):
         need to pass a ca, a csr and a subject to get a valid certificate::
 
             >>> profile = get_profile('webserver')
-            >>> cert = profile.create_cert(ca, csr, '/CN=example.com')
-            <Certificate(subject=<Name(CN=example.com)>, ...)>
+            >>> profile.create_cert(ca, csr, subject='/CN=example.com')  # doctest: +ELLIPSIS
+            <Certificate(subject=<Name(...,CN=example.com)>, ...)>
 
         The function will add CRL, OCSP, Issuer and IssuerAlternativeName URLs based on the CA if the profile
         has the *add_crl_url*, *add_ocsp_url* and *add_issuer_url* and *add_issuer_alternative_name* values

@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+import doctest
 from datetime import timedelta
 
 from .. import ca_settings
@@ -38,6 +39,27 @@ from .base import DjangoCATestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
+
+
+@override_settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=1024)
+class DocumentationTestCase(DjangoCATestCase):
+    def setUp(self):
+        super(DocumentationTestCase, self).setUp()
+        self.ca = self.load_ca(name=certs['root']['name'], x509=certs['root']['pub']['parsed'])
+
+    def get_globs(self):
+        return {
+            'Profile': Profile,
+            'get_profile': get_profile,
+            'ca': self.ca,
+            'ca_serial': self.ca.serial,
+            'csr': certs['root-cert']['csr']['parsed'],
+        }
+
+    @override_tmpcadir()
+    def test_module(self):
+        from .. import profiles  # NOQA
+        doctest.testmod(profiles, globs=self.get_globs())
 
 
 class ProfileTestCase(DjangoCATestCase):
