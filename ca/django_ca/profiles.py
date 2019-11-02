@@ -410,7 +410,11 @@ profile = DefaultProfileProxy()
 
 
 def get_cert_profile_kwargs(name=None):
-    """Get kwargs suitable for get_cert X509 keyword arguments from the given profile."""
+    """Get kwargs suitable for get_cert X509 keyword arguments from the given profile.
+
+    .. WARNING:: **This function is deprecated** and will be removed in django-ca==1.16, together with
+                 :py:func:`~django_ca.managers.CertificateManager.init`.
+    """
 
     if name is None:
         name = ca_settings.CA_DEFAULT_PROFILE
