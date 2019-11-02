@@ -15,10 +15,12 @@
 
 import os
 import shutil
+import warnings
 
 from django.core.files.storage import FileSystemStorage
 from django.core.management.base import CommandError
 
+from ...deprecation import RemovedInDjangoCA15Warning
 from ...models import CertificateAuthority
 from ...utils import ca_storage
 from ..base import BaseCommand
@@ -41,6 +43,8 @@ pass the --force parameter."""
                             help="Do not take any action, only output expected actions.")
 
     def handle(self, **options):
+        warnings.warn('This command will be removed in django-ca 1.15.', RemovedInDjangoCA15Warning)
+
         serials = options['serial']
         dry = options['dry']
 

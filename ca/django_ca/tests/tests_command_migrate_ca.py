@@ -19,6 +19,7 @@ import tempfile
 
 import six
 
+from ..deprecation import RemovedInDjangoCA15Warning
 from ..models import CertificateAuthority
 from ..utils import ca_storage
 from .base import DjangoCAWithCATestCase
@@ -36,13 +37,20 @@ class MigrateCATestCase(DjangoCAWithCATestCase):
         super(MigrateCATestCase, self).setUp()
         self.ca = self.cas['root']
 
+    def migrate_ca(self, *args, **kwargs):
+        with self.assertMultipleWarnings([{
+            'category': RemovedInDjangoCA15Warning,
+            'msg': r'^This command will be removed in django-ca 1.15\.$',
+        }]):
+            return self.cmd('migrate_ca', *args, **kwargs)
+
     @override_tmpcadir()
     def test_migrate(self):
         orig_path = self.ca.private_key_path
         self.assertTrue(self.ca.key_exists)
         self.ca.private_key_path = os.path.join(ca_storage.location, self.ca.private_key_path)
         self.ca.save()
-        stdout, stderr = self.cmd('migrate_ca', self.ca.serial, no_color=True)
+        stdout, stderr = self.migrate_ca(self.ca.serial, no_color=True)
         self.assertEqual(stdout, '%s: Updating %s to %s.\n' % (
             self.ca.serial, self.ca.private_key_path, orig_path))
         self.assertEqual(stderr, '')
@@ -54,7 +62,7 @@ class MigrateCATestCase(DjangoCAWithCATestCase):
     @override_tmpcadir()
     def test_already_migrated(self):
         old_path = self.ca.private_key_path
-        stdout, stderr = self.cmd('migrate_ca', self.ca.serial, no_color=True)
+        stdout, stderr = self.migrate_ca(self.ca.serial, no_color=True)
         self.assertEqual(stdout, '%s: Already migrated.\n' % self.ca.serial)
         self.assertEqual(stderr, '')
         self.assertEqual(old_path, CertificateAuthority.objects.get(serial=self.ca.serial).private_key_path)
@@ -66,7 +74,7 @@ class MigrateCATestCase(DjangoCAWithCATestCase):
         self.ca.private_key_path = abs_path = os.path.join(ca_storage.location, self.ca.private_key_path)
         self.ca.save()
 
-        stdout, stderr = self.cmd('migrate_ca', self.ca.serial, dry=True, no_color=True)
+        stdout, stderr = self.migrate_ca(self.ca.serial, dry=True, no_color=True)
         self.assertEqual(stdout, '%s: Updating %s to %s.\n' % (
             self.ca.serial, self.ca.private_key_path, orig_path))
 
@@ -86,7 +94,7 @@ class MigrateCATestCase(DjangoCAWithCATestCase):
             shutil.move(ca_storage.path(orig_path), self.ca.private_key_path)
             self.assertTrue(self.ca.key_exists)  # just make sure we did the correct thing above
 
-            stdout, stderr = self.cmd('migrate_ca', self.ca.serial, no_color=True, dry=True, force=True)
+            stdout, stderr = self.migrate_ca(self.ca.serial, no_color=True, dry=True, force=True)
             self.assertEqual(stdout, '%s: Move %s to %s.\n' % (
                 self.ca.serial, self.ca.private_key_path, orig_path
             ))
@@ -111,7 +119,7 @@ class MigrateCATestCase(DjangoCAWithCATestCase):
             shutil.move(ca_storage.path(orig_path), self.ca.private_key_path)
             self.assertTrue(self.ca.key_exists)  # just make sure we did the correct thing above
 
-            stdout, stderr = self.cmd('migrate_ca', self.ca.serial, no_color=True)
+            stdout, stderr = self.migrate_ca(self.ca.serial, no_color=True)
             self.assertEqual(stdout, '')
             self.assertEqual(stderr, '%s: %s is not in a subdir of %s. Use --force to move files.\n' % (
                 self.ca.serial, self.ca.private_key_path, ca_storage.location
@@ -136,7 +144,7 @@ class MigrateCATestCase(DjangoCAWithCATestCase):
             shutil.move(ca_storage.path(orig_path), self.ca.private_key_path)
             self.assertTrue(self.ca.key_exists)  # just make sure we did the correct thing above
 
-            stdout, stderr = self.cmd('migrate_ca', self.ca.serial, no_color=True, force=True)
+            stdout, stderr = self.migrate_ca(self.ca.serial, no_color=True, force=True)
             self.assertEqual(stdout, '%s: Move %s to %s.\n' % (
                 self.ca.serial, self.ca.private_key_path, orig_path
             ))
@@ -150,7 +158,7 @@ class MigrateCATestCase(DjangoCAWithCATestCase):
 
     @override_tmpcadir()
     def test_all_serials(self):
-        stdout, stderr = self.cmd('migrate_ca', no_color=True)
+        stdout, stderr = self.migrate_ca(no_color=True)
         cas = sorted(self.cas.values(), key=lambda ca: ca.serial)
         self.assertEqual(stdout, '\n'.join([
             '%s: Already migrated.' % ca.serial for ca in cas
@@ -160,7 +168,7 @@ class MigrateCATestCase(DjangoCAWithCATestCase):
     @override_tmpcadir()
     def test_unknown_serial(self):
         serial = 'AA:BB:CC'
-        stdout, stderr = self.cmd('migrate_ca', serial, no_color=True)
+        stdout, stderr = self.migrate_ca(serial, no_color=True)
         self.assertEqual(stdout, '')
         self.assertEqual(stderr, '%s: Unknown CA.\n' % serial)
 
@@ -169,7 +177,7 @@ class MigrateCATestCase(DjangoCAWithCATestCase):
         self.ca.private_key_path = '/non/existent/gone.pem'
         self.ca.save()
 
-        stdout, stderr = self.cmd('migrate_ca', self.ca.serial, force=True, no_color=True)
+        stdout, stderr = self.migrate_ca(self.ca.serial, force=True, no_color=True)
         self.assertEqual(stdout, '')
         self.assertEqual(stderr, '%s: %s: File not found.\n' % (self.ca.serial, self.ca.private_key_path))
 
@@ -177,4 +185,4 @@ class MigrateCATestCase(DjangoCAWithCATestCase):
     def test_unsupported_storage(self):
         with patch('django_ca.management.commands.migrate_ca.ca_storage'):
             with self.assertCommandError(r'^CA_FILE_STORAGE is not a subclass of FileSystemStorage\.$'):
-                stdout, stderr = self.cmd('migrate_ca', self.ca.serial, no_color=True)
+                stdout, stderr = self.migrate_ca(self.ca.serial, no_color=True)
