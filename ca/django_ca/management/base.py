@@ -355,7 +355,7 @@ class BaseCommand(_BaseCommand):
         group = group.add_mutually_exclusive_group()
         for name, profile in ca_settings.CA_PROFILES.items():
             group.add_argument('--%s' % name, action='store_const', const=name, dest='profile',
-                               help=profile.get('desc', ''))
+                               help=profile.get('description', ''))
 
     def indent(self, s, prefix='    '):
         return indent(s, prefix)
