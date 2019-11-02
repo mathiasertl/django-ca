@@ -13,9 +13,10 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not,
 # see <http://www.gnu.org/licenses/>.
 
+import warnings
+
 import idna
 import six
-import warnings
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
