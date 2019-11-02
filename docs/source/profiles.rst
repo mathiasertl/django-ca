@@ -1,0 +1,178 @@
+########
+Profiles
+########
+
+A profile defines default properties, including certificate extensions, for TLS certificates. These
+properties define who can use the certificate for what purpose, how a peer can validate it and what clients
+are compatible with the certificates.
+
+**django-ca** defines a set of default profiles that should be sufficient for most use cases:
+
+========== ===========================================================================================
+Name       Purpose
+========== ===========================================================================================
+client     Certificate can be used for TLS client authentication.
+enduser    Certificate can be used for TLS client authentication and code and email signing.
+ocsp       Certificate can be used for a OCSP responder.
+server     Certificate can be used for both a TLS server and a TLS client.
+webserver  **(default)** Certificate can be used for a TLS server but not for TLS client
+           authentication.
+========== ===========================================================================================
+
+You can configure the default profile to use using the :ref:`CA_DEFAULT_PROFILE <settings-ca-default-profile>`
+setting. You can also add new profiles or modify existing ones using the :ref:`CA_PROFILES
+<settings-ca-profiles>` setting.
+
+**************
+Using profiles
+**************
+
+You can use a profile when signing certificates:
+
+* When you use the :doc:`command line </cli/certs>`:
+
+   .. code-block:: console
+
+      $ python manage.py sign_cert --client ...
+
+* In the :doc:`web_interface` you can select a profile when adding a certificate.
+* In the :doc:`Python API </python/intro>`::
+
+      >>> from django_ca.models import Certificate
+      >>> Certificate.objects.create_cert(ca, csr, profile='client')
+
+  or by even defining a temporary profile just for this certificate::
+
+      >>> from django_ca.profiles import Profile
+      >>> prof = Profile(...)
+      >>> Certificate.objects.create_cert(ca, csr, profile=prof)
+
+
+******************
+Configure profiles
+******************
+
+You can add new profiles with the :ref:`CA_PROFILES <settings-ca-profiles>` setting. The setting a dictionary
+with the key identifying the certificate and the values configuring various aspects of certificates signed
+using this profile. A simple profile might look like this::
+
+   CA_PROFILES = {
+       'example': {  # actually a duplicate of the pre-defined "client" profile
+           'description': _('An example profile.'),
+           'extensions': {
+               'key_usage': {'value': ['digitalSignature']},
+               'extended_key_usage': {'value': ['clientAuth']},
+           },
+       },
+   }
+
+After defining a profile, it can be immediately used with the Python API, the Admin web interface (WSGI
+servers typically need to reload the code to see the new profile) or the command line:
+
+.. code-block:: console
+
+   $ python manage.py sign_cert -h
+   ...
+   profiles:
+     Sign certificate based on the given profile. A profile only sets the the default values, options like --key-
+     usage still override the profile.
+
+     --client              A certificate for a client.
+     --server              A certificate for a server, allows client and server authentication.
+     --webserver           A certificate for a webserver.
+     --enduser             A certificate for an enduser, allows client authentication, code and email signing.
+     --ocsp                A certificate for an OCSP responder.
+     --example             An example profile.
+
+
+Available options
+=================
+
+There are many available options for a profile, of course all of them are optional:
+
+=========================== ======== =========================================================================
+Option                      Default  Description
+=========================== ======== =========================================================================
+add_crl_url                 ``True`` Set to ``False`` if you don't want the CAs CRL URL added.
+add_issuer_alternative_name ``True`` Set to ``False`` if you don't want the CAs Issuer Alternative Name added.
+add_issuer_url              ``True`` Set to ``False`` if you don't want the CAs Issuer URL added.
+add_ocsp_url                ``True`` Set to ``False`` if you don't want the CAs OCSP URLs added.
+algorithm                            The algorithm used for signing, defaults to :ref:`CA_DIGEST_ALGORITHM
+                                     <settings-ca-digest-algorithm>`.
+cn_in_san                   ``True`` If the CommonName should be added as Subject Alternative Name.
+description                 ``''``   Informal text explaining what the profile is.
+expires                              A timedelta of when a certificate will expire, if you set an integer it
+                                     will be interpreted as a number of days. This defaults to
+                                     :ref:`CA_DEFAULT_EXPIRES <settings-ca-default-expires>`.
+extensions                  ``{}``   A dictionary of extensions to add. Please see below for more details.
+issuer_name                 ``None`` Set an alternative issuer name from the CA. Note that this will usually
+                                     break any certificate validation, so this is definetly for experts only.
+subject                              The default subject to use, overrides :ref:`CA_DEFAULT_SUBJECT
+                                     <settings-ca-default-subject>`.
+=========================== ======== =========================================================================
+
+Configure extensions
+====================
+
+Many extensions (such as :py:class:`~django_ca.extensions.AuthorityKeyIdentifier` and
+:py:class:`~django_ca.extensions.BasicConstraints`) are added by default since they are required to create a
+useful certificate. Further extensions (such as the :py:class:`~django_ca.extensions.CRLDistributionPoints`
+and :py:class:`~django_ca.extensions.AuthorityInformationAccess`) are added depending on the values for the CA
+you are using and the ``add_{...}_url`` settings described below.
+
+You can define any extension defined in :ref:`the documentation <extensions>` in a profile. Use the ``key``
+as a dictionary key and a dictionary as a value describing the extension. All extensions use a ``value`` key
+to describe the extension value and an optional ``critical`` value to describe if the extension is marked as
+critical. For example, for the :py:class:`~django_ca.extensions.KeyUsage` extension, use::
+
+   CA_PROFILES = {
+       'example': { 
+           # ...
+           'extensions': {
+               'key_usage': {
+                  'critical': False,  # usually critical, but not here for some reason
+                  'value': ['digitalSignature']
+               },
+           },
+       },
+   }
+
+
+The add\_..._url settings
+=========================
+
+By default, certificates will include some extensions based on the CA used to sign it. The CA usually defines
+CRL and OCSP urls that can be used to retrieve information if the certificate is still valid. This is usually
+what you want, but there are some exceptions. For example, a certificate for an OCSP responder should not
+include the OCSP URL, as it makes no sense to validate the OCSP responder certificate using the OCSP responder
+itself. The ``ocsp`` profile thus already sets ``add_ocsp_url`` to ``False``.
+
+If your profile defines a :py:class:`~django_ca.extensions.CRLDistributionPoints` or
+:py:class:`~django_ca.extensions.AuthorityInformationAccess`, CRL/OCSP/Issuer URLs from the CA will be
+appended if the ``add_..._url`` setting is ``True``.
+
+***********************
+Update existing profile
+***********************
+
+You can update an existing profile the same way as configuring a new profile. Any values will replace existing
+values. To update the default subject for the (pre-defined) "enduser" profile::
+
+   CA_PROFILES = {
+       'enduser': { 
+           'subject': '/C=AT/L=Vienna/',  # base for the subject when creating a new cert
+       },
+   }
+
+Note that django-ca also replaces the while ``extensions`` value. That means you cannot update one extension
+from the profile, you'll have to specify all extensions.
+
+****************
+Remove a profile
+****************
+
+You can remove a pre-defined profile by just setting the value to ``None``::
+
+   CA_PROFILES = {
+       'client': None  # we really don't need this one
+   }

@@ -64,6 +64,8 @@ CA_DEFAULT_PROFILE
 
    The default profile to use.
 
+.. _settings-ca-default-subject:
+
 CA_DEFAULT_SUBJECT
    Default: ``{}``
 
@@ -134,81 +136,4 @@ CA_OCSP_URLS
 CA_PROFILES
    Default: ``{}``
 
-   Profiles determine the default values for the ``keyUsage``, ``extendedKeyUsage`` x509
-   extensions. In short, they determine how your certificate can be used, be it for server and/or
-   client authentication, e-mail signing or anything else. By default, **django-ca** provides these
-   profiles:
-
-   =========== ======================================== =======================
-   Profile     keyUsage                                 extendedKeyUsage
-   =========== ======================================== =======================
-   client      digitalSignature                         clientAuth
-   server      digitalSignature, keyAgreement           clientAuth, serverAuth
-               keyEncipherment
-   webserver   digitalSignature, keyAgreement           serverAuth
-               keyEncipherment
-   enduser     dataEncipherment, digitalSignature,      clientAuth,
-               keyEncipherment                          emailProtection,
-                                                        codeSigning
-   ocsp        nonRepudiation, talSignature,            OCSPSigning
-               keyEncipherment
-   =========== ======================================== =======================
-
-   Further more,
-
-   * The ``keyUsage`` attribute is marked as critical.
-   * The ``extendedKeyUsage`` attribute is marked as non-critical.
-
-   This should be fine for most usecases. But you can use the ``CA_PROFILES``
-   setting to either update or disable existing profiles or add new profiles
-   that you like. For that, set ``CA_PROFILES`` to a dictionary with the keys
-   defining the profile name and the value being either:
-
-   * ``None`` to disable an existing profile.
-   * A dictionary defining the profile. If the name of the profile is an
-     existing profile, the dictionary is updated, so you can ommit a value to
-     leave it as the default. The possible keys are:
-
-     ====================== ======================================================================
-     key                    Description
-     ====================== ======================================================================
-     ``"keyUsage"``         The ``keyUsage`` X509 extension.
-     ``"extendedKeyUsage"`` The ``extendedKeyUsage`` X509 extension.
-     ``"desc"``             A human-readable description, shows up with "sing_cert -h" and in the
-                            webinterface profile selection.
-     ``"subject"``          The default subject to use. If ommited, ``CA_DEFAULT_SUBJECT`` is
-                            used.
-     ``"cn_in_san"``        If to include the CommonName in the subjectAltName by default. The
-                            default value is ``True``.
-     ``"ocsp_no_check"``    Set to ``True`` to include the ``OCSPNoCheck`` flag. Only makes sense
-                            for OCSP responder certificates.
-     ====================== ======================================================================
-
-   Here is a full example:
-
-     .. code-block:: python
-
-         CA_PROFILES = {
-             'client': {
-                 'desc': _('Nice description.'),
-                 'keyUsage': {
-                     'critical': True,
-                     'value': [
-                        'digitalSignature',
-                     ],
-                 },
-                 'extendedKeyUsage': {
-                     'critical': False,
-                     'value': [
-                        'clientAuth',
-                     ],
-                  },
-                  'subject': {
-                     'C': 'AT',
-                     'L': 'Vienna',
-                  }
-              },
-
-              # We really don't like the "ocsp" profile, so we remove it.
-              'ocsp': None,
-         }
+   Add new profiles or change exising ones.  Please see :doc:`profiles` for more information on profiles.

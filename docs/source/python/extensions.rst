@@ -33,6 +33,8 @@
    :show-inheritance:
    :members:
 
+.. _extensions:
+
 *******************
 Concrete extensions
 *******************

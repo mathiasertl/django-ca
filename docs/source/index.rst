@@ -39,6 +39,7 @@ Features:
    Command-line interface: certificate authority management <cli/cas>
    Command-line interface: certificate management <cli/certs>
    web_interface
+   profiles
    crl
    ocsp
 

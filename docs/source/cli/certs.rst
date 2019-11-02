@@ -61,6 +61,19 @@ If you have defined multiple CAs, you also have to name the CA:
    32:BE:A9:E8:7E:21:BF:3E:E9:A1:F3:F9:E4:06:14:B4:C4:9D:B2:6C - Child CA
    $ python manage.py sign_cert --ca 32:BE:A9 --alt example.com --csr example.csr --out example.pub
 
+Profiles
+========
+
+Use :doc:`profiles </profiles>` to configure how your certificates can be used. You can set a profile by
+simply passing it via the command line. For example, to use the **client** profile:
+
+.. code-block:: console
+
+   $ python manage.py sign_cert --alt example.com --csr example.csr --out example.pub --client
+
+Please see :doc:`the documentation </profiles>` the documentation on what profiles are available and how you
+can update existing profiles and even add new ones.
+
 Subject and subjectAltName
 ==========================
 
