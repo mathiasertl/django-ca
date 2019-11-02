@@ -38,6 +38,7 @@ from ..profiles import profile
 from ..profiles import profiles
 from ..signals import pre_issue_cert
 from ..subject import Subject
+from ..utils import parse_hash_algorithm
 from .base import DjangoCATestCase
 from .base import certs
 from .base import override_settings
@@ -76,6 +77,21 @@ class ProfileTestCase(DjangoCATestCase):
         cert = profile.create_cert(*args, **kwargs)
         c.x509 = cert
         return c
+
+    def test_copy(self):
+        p1 = Profile('example')
+        p2 = p1.copy()
+        self.assertIsNot(p1, p2)
+        self.assertEqual(p1, p2)
+        p2.extensions[SubjectAlternativeName.key] = SubjectAlternativeName({'value': ['example.com']})
+        self.assertNotEqual(p1, p2)
+        self.assertNotIn(SubjectAlternativeName.key, p1.extensions)
+        self.assertIn(SubjectAlternativeName.key, p2.extensions)
+
+        # test algorithm b/c cryptography does not compare this properly
+        p2 = p1.copy()
+        p2.algorithm = parse_hash_algorithm('MD5')
+        self.assertNotEqual(p1, p2)
 
     def test_eq(self):
         p = None

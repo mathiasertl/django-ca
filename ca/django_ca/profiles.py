@@ -122,8 +122,10 @@ class Profile(object):
     def __eq__(self, o):
         if isinstance(o, (Profile, DefaultProfileProxy)) is False:  # pragma: only py3
             return False
+        algo = isinstance(o.algorithm, type(self.algorithm))
+
         return self.name == o.name and self.subject == o.subject and \
-            self.algorithm == o.algorithm and self.extensions == o.extensions and \
+            algo and self.extensions == o.extensions and \
             self.cn_in_san == o.cn_in_san and self.expires == o.expires and \
             self.issuer_name == o.issuer_name and self.add_crl_url == o.add_crl_url and \
             self.add_issuer_url == o.add_issuer_url and self.add_ocsp_url == o.add_ocsp_url and \
