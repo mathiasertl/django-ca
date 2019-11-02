@@ -110,6 +110,14 @@ class ProfileTestCase(DjangoCATestCase):
 
         self.assertEqual(p1, p2)
 
+    def test_init_expires(self):
+        p = Profile('example', expires=30)
+        self.assertEqual(p.expires, timedelta(days=30))
+
+        exp = timedelta(hours=3)
+        p = Profile('example', expires=exp)
+        self.assertEqual(p.expires, exp)
+
     def test_serialize(self):
         desc = 'foo bar'
         ku = ['digitalSignature']
