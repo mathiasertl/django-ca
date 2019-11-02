@@ -25,7 +25,7 @@ If you have (correctly) configured a :ref:`CA_DEFAULT_HOSTNAME <settings-ca-defa
 webserver under that URL, you do not have to do anything to provide CRLs.
 
 **django-ca** provides the generic view :py:class:`~django_ca.views.CertificateRevocationListView`
-to provide CRLs via HTTP. Since CRLs are always signed directly be the CA, it is currently required that the
+to provide CRLs via HTTP. Since CRLs are always signed directly by the CA, it is currently required that the
 private key of the CA is available to the webserver.
 
 Override default hostname
