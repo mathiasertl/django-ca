@@ -96,25 +96,25 @@ class Profile(object):
 
         if 'keyUsage' in kwargs:
             warnings.warn('keyUsage in profile is deprecated, use extensions -> %s instead.' % KeyUsage.key,
-                          DeprecationWarning, stacklevel=2)
+                          RemovedInDjangoCA16Warning, stacklevel=2)
             self.extensions[KeyUsage.key] = KeyUsage(kwargs.pop('keyUsage'))
         if 'extendedKeyUsage' in kwargs:
             warnings.warn(
                 'extendedKeyUsage in profile is deprecated, use extensions -> %s instead.'
-                % ExtendedKeyUsage.key, DeprecationWarning, stacklevel=2)
+                % ExtendedKeyUsage.key, RemovedInDjangoCA16Warning, stacklevel=2)
             self.extensions[ExtendedKeyUsage.key] = ExtendedKeyUsage(kwargs.pop('extendedKeyUsage'))
         if 'TLSFeature' in kwargs:
             warnings.warn(
                 'TLSFeature in profile is deprecated, use extensions -> %s instead.' % TLSFeature.key,
-                DeprecationWarning, stacklevel=2)
+                RemovedInDjangoCA16Warning, stacklevel=2)
             self.extensions[TLSFeature.key] = TLSFeature(kwargs.pop('TLSFeature'))
         if 'desc' in kwargs:
-            warnings.warn('desc in profile is deprecated, use description instead.', DeprecationWarning,
-                          stacklevel=2)
+            warnings.warn('desc in profile is deprecated, use description instead.',
+                          RemovedInDjangoCA16Warning, stacklevel=2)
             self.description = kwargs.pop('desc')
         if 'ocsp_no_check' in kwargs:
             warnings.warn('ocsp_no_check in profile is deprecated, use extensions -> %s instead.' %
-                          OCSPNoCheck.key, DeprecationWarning, stacklevel=2)
+                          OCSPNoCheck.key, RemovedInDjangoCA16Warning, stacklevel=2)
             self.extensions[OCSPNoCheck.key] = OCSPNoCheck()
 
         # set some defaults

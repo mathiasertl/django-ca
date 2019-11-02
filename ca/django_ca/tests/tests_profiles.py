@@ -20,6 +20,7 @@ from datetime import timedelta
 import six
 
 from .. import ca_settings
+from ..deprecation import RemovedInDjangoCA16Warning
 from ..extensions import AuthorityInformationAccess
 from ..extensions import BasicConstraints
 from ..extensions import CRLDistributionPoints
@@ -134,19 +135,19 @@ class ProfileTestCase(DjangoCATestCase):
             OCSPNoCheck.key: {},
         })
         with self.assertMultipleWarnings([
-            {'category': DeprecationWarning, 'filename': __file__,
+            {'category': RemovedInDjangoCA16Warning, 'filename': __file__,
              'msg': r'^keyUsage in profile is deprecated, use extensions -> key_usage instead\.$',
             },
-            {'category': DeprecationWarning, 'filename': __file__,
+            {'category': RemovedInDjangoCA16Warning, 'filename': __file__,
              'msg': r'^extendedKeyUsage in profile is deprecated, use extensions -> extended_key_usage instead\.$',   # NOQA
             },
-            {'category': DeprecationWarning, 'filename': __file__,
+            {'category': RemovedInDjangoCA16Warning, 'filename': __file__,
              'msg': r'^TLSFeature in profile is deprecated, use extensions -> tls_feature instead\.$',
             },
-            {'category': DeprecationWarning, 'filename': __file__,
+            {'category': RemovedInDjangoCA16Warning, 'filename': __file__,
              'msg': r'^desc in profile is deprecated, use description instead\.$',
             },
-            {'category': DeprecationWarning, 'filename': __file__,
+            {'category': RemovedInDjangoCA16Warning, 'filename': __file__,
              'msg': r'^ocsp_no_check in profile is deprecated, use extensions -> ocsp_no_check instead\.$',
             },
         ]):
