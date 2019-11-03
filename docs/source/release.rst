@@ -79,7 +79,8 @@ Release process
 * Tag the release: ``git tag -s $version``
 * Push the tag: ``git push origin --tags``
 * Create a `release on GitHub <https://github.com/mathiasertl/django-ca/tags>`_.
-* Upload release to PyPI: ``python setup.py sdist bdist_wheel upload``.
+* Create package for PyPi: ``python setup.py sdist bdist_wheel``.
+* Upload package to PyPi: ``twine upload dist/*``
 * Tag and upload the docker image  (note that we create a image revision by appending ``-1``)::
 
       docker tag django-ca-dev mathiasertl/django-ca
@@ -97,3 +98,4 @@ After a release
   development release (see `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_).
 * Update version in ``setup.py``.
 * Drop support for older software versions in ``.travis.yml``, ``tox.ini`` and ``dev.py docker-test``.
+* Remove files in dist: ``rm -rf dist/*``
