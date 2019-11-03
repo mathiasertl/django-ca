@@ -25,7 +25,6 @@ from datetime import datetime
 from datetime import timedelta
 
 import pytz
-import six
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -566,7 +565,7 @@ class CertificateAuthority(X509CertMixin):
 
         """
         key_size, key_type, ecc_curve = validate_key_parameters(key_size, key_type, ecc_curve)
-        if isinstance(expires, six.integer_types):
+        if isinstance(expires, int):
             expires = timedelta(days=expires)
         algorithm = parse_hash_algorithm(algorithm)
 

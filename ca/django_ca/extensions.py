@@ -18,8 +18,6 @@ from __future__ import unicode_literals
 import binascii
 import textwrap
 
-import six
-
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
 from cryptography.x509.certificate_transparency import LogEntryType
@@ -38,7 +36,6 @@ from .utils import parse_general_name
 from .utils import x509_relative_name
 
 
-@six.python_2_unicode_compatible
 class Extension(object):
     """Convenience class to handle X509 Extensions.
 
@@ -308,13 +305,13 @@ class ListExtension(IterableExtension):
         del self.value[key]
 
     def __getitem__(self, key):
-        if isinstance(key, six.integer_types):
+        if isinstance(key, int):
             return self.serialize_value(self.value[key])
         else:  # a slice (e.g. "e[1:]")
             return [self.serialize_value(v) for v in self.value[key]]
 
     def __setitem__(self, key, value):
-        if isinstance(key, six.integer_types):
+        if isinstance(key, int):
             self.value[key] = self.parse_value(value)
         else:
             self.value[key] = [self.parse_value(v) for v in value]
@@ -538,7 +535,7 @@ class KeyIdExtension(Extension):
     def from_dict(self, value):
         self.value = value['value']
 
-        if isinstance(self.value, six.string_types) and ':' in self.value:
+        if isinstance(self.value, str) and ':' in self.value:
             self.value = hex_to_bytes(self.value)
 
     def as_text(self):
@@ -606,14 +603,14 @@ class DistributionPoint(GeneralNameMixin):
                 raise ValueError('full_name and relative_name cannot both have a value')
 
             if self.full_name is not None:
-                if isinstance(self.full_name, six.string_types):
+                if isinstance(self.full_name, str):
                     self.full_name = [self.parse_value(self.full_name)]
                 else:
                     self.full_name = [self.parse_value(v) for v in self.full_name]
             if self.relative_name is not None:
                 self.relative_name = x509_relative_name(self.relative_name)
             if self.crl_issuer is not None:
-                if isinstance(self.crl_issuer, six.string_types):
+                if isinstance(self.crl_issuer, str):
                     self.crl_issuer = [self.parse_value(self.crl_issuer)]
                 else:
                     self.crl_issuer = [self.parse_value(v) for v in self.crl_issuer]
@@ -743,7 +740,7 @@ class PolicyInformation(object):
     def __getitem__(self, key):
         if self.policy_qualifiers is None:
             raise IndexError('list index out of range')
-        elif isinstance(key, six.integer_types):
+        elif isinstance(key, int):
             return self.serialize_policy_qualifier(self.policy_qualifiers[key])
         else:
             return [self.serialize_policy_qualifier(k) for k in self.policy_qualifiers[key]]
@@ -786,7 +783,7 @@ class PolicyInformation(object):
         if self.policy_qualifiers:
             text += 'Policy Qualifiers:\n'
             for qualifier in self.policy_qualifiers:
-                if isinstance(qualifier, six.string_types):
+                if isinstance(qualifier, str):
                     lines = textwrap.wrap(qualifier, initial_indent='* ', subsequent_indent='  ', width=width)
                     text += '%s\n' % '\n'.join(lines)
                 else:
@@ -828,7 +825,7 @@ class PolicyInformation(object):
         return self.policy_qualifiers.insert(index, self.parse_policy_qualifier(value))
 
     def parse_policy_qualifier(self, qualifier):
-        if isinstance(qualifier, six.string_types):
+        if isinstance(qualifier, str):
             return force_text(qualifier)
         elif isinstance(qualifier, x509.UserNotice):
             return qualifier
@@ -862,7 +859,7 @@ class PolicyInformation(object):
 
     @policy_identifier.setter
     def policy_identifier(self, value):
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             value = ObjectIdentifier(value)
         self._policy_identifier = value
 
@@ -889,7 +886,7 @@ class PolicyInformation(object):
         return val
 
     def serialize_policy_qualifier(self, qualifier):
-        if isinstance(qualifier, six.string_types):
+        if isinstance(qualifier, str):
             return qualifier
         else:
             value = {}
@@ -1470,7 +1467,7 @@ class ExtendedKeyUsage(OrderedSetExtension):
     def parse_value(self, v):
         if isinstance(v, ObjectIdentifier) and v in self._CRYPTOGRAPHY_MAPPING_REVERSED:
             return v
-        elif isinstance(v, six.string_types) and v in self.CRYPTOGRAPHY_MAPPING:
+        elif isinstance(v, str) and v in self.CRYPTOGRAPHY_MAPPING:
             return self.CRYPTOGRAPHY_MAPPING[v]
         raise ValueError('Unknown value: %s' % v)
 
@@ -1871,7 +1868,7 @@ class TLSFeature(OrderedSetExtension):
     def parse_value(self, v):
         if isinstance(v, TLSFeatureType):
             return v
-        elif isinstance(v, six.string_types) and v in self.CRYPTOGRAPHY_MAPPING:
+        elif isinstance(v, str) and v in self.CRYPTOGRAPHY_MAPPING:
             return self.CRYPTOGRAPHY_MAPPING[v]
         raise ValueError('Unknown value: %s' % v)
 

@@ -13,8 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-import six
-
 from cryptography import x509
 
 from django.core.exceptions import ImproperlyConfigured
@@ -29,7 +27,6 @@ from .utils import parse_name
 from .utils import sort_name
 
 
-@six.python_2_unicode_compatible
 class Subject(object):
     """Convenience class to handle X509 Subjects.
 
@@ -60,7 +57,7 @@ class Subject(object):
         # Normalize input data to a list
         if subject is None:
             subject = []
-        elif isinstance(subject, six.string_types):
+        elif isinstance(subject, str):
             subject = parse_name(subject)
         elif isinstance(subject, dict):
             subject = subject.items()
@@ -70,7 +67,7 @@ class Subject(object):
             raise ValueError('Invalid subject: %s' % subject)
 
         for oid, value in subject:
-            if isinstance(oid, six.string_types):
+            if isinstance(oid, str):
                 try:
                     oid = NAME_OID_MAPPINGS[oid]
                 except KeyError:
@@ -87,7 +84,7 @@ class Subject(object):
                 self._data[oid].append(value)
 
     def __contains__(self, oid):
-        if isinstance(oid, six.string_types):
+        if isinstance(oid, str):
             oid = NAME_OID_MAPPINGS[oid]
         return oid in self._data
 
@@ -95,7 +92,7 @@ class Subject(object):
         return isinstance(other, Subject) and self._data == other._data
 
     def __getitem__(self, key):
-        if isinstance(key, six.string_types):
+        if isinstance(key, str):
             key = NAME_OID_MAPPINGS[key]
 
         try:
@@ -115,13 +112,13 @@ class Subject(object):
         return len(self._data)
 
     def __setitem__(self, key, value):
-        if isinstance(key, six.string_types):
+        if isinstance(key, str):
             key = NAME_OID_MAPPINGS[key]
 
         if not value and key in self._data:
             del self._data[key]
             return
-        elif isinstance(value, six.string_types):
+        elif isinstance(value, str):
             value = [value]
 
         elif not isinstance(value, list):
@@ -171,13 +168,13 @@ class Subject(object):
             yield key
 
     def setdefault(self, oid, value):
-        if isinstance(oid, six.string_types):
+        if isinstance(oid, str):
             oid = NAME_OID_MAPPINGS[oid]
 
         if oid in self._data:  # already set
             return
 
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             value = [value]
         elif not isinstance(value, list):
             raise ValueError('Value must be str or list')

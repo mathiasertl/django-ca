@@ -25,7 +25,6 @@ from ipaddress import ip_address
 from ipaddress import ip_network
 
 import idna
-import six
 
 from asn1crypto.core import OctetString
 from cryptography import x509
@@ -318,7 +317,7 @@ def x509_name(name):
     >>> x509_name([('C', 'AT'), ('CN', 'example.com')])
     <Name(C=AT,CN=example.com)>
     """
-    if isinstance(name, six.string_types):
+    if isinstance(name, str):
         name = parse_name(name)
 
     return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], force_text(value)) for typ, value in name])
@@ -334,7 +333,7 @@ def x509_relative_name(name):
     """
     if isinstance(name, x509.RelativeDistinguishedName):
         return name
-    elif isinstance(name, six.string_types):
+    elif isinstance(name, str):
         name = parse_name(name)
 
     return x509.RelativeDistinguishedName([
@@ -685,7 +684,7 @@ def parse_hash_algorithm(value=None):
         return value()
     elif isinstance(value, hashes.HashAlgorithm):
         return value
-    elif isinstance(value, six.string_types):
+    elif isinstance(value, str):
         try:
             return getattr(hashes, value.strip())()
         except AttributeError:
@@ -713,7 +712,7 @@ def parse_encoding(value=None):
         return ca_settings.CA_DEFAULT_ENCODING
     elif isinstance(value, Encoding):
         return value
-    elif isinstance(value, six.string_types):
+    elif isinstance(value, str):
         if value == 'ASN1':
             value = 'DER'
 

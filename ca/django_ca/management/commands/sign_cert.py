@@ -13,8 +13,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-import six
-
 from django.core.management.base import CommandError
 from django.utils import timezone
 
@@ -104,7 +102,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
             self.stdout.write('Please paste the CSR:')
             csr = ''
             while not csr.endswith('-----END CERTIFICATE REQUEST-----\n'):
-                csr += '%s\n' % six.moves.input()
+                csr += '%s\n' % input()
             csr = csr.strip()
         else:
             with open(options['csr'], 'rb') as stream:
