@@ -19,8 +19,6 @@ import sys
 from datetime import timedelta
 from textwrap import indent
 
-import six
-
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
 
@@ -267,7 +265,7 @@ class BaseCommand(_BaseCommand):
     binary_output = False
 
     def __init__(self, stdout=None, stderr=None, no_color=False):
-        if self.binary_output is True and six.PY3 is True:  # pragma: only py3
+        if self.binary_output is True:
             self.stdout = BinaryOutputWrapper(stdout or sys.stdout.buffer)
             self.stderr = BinaryOutputWrapper(stderr or sys.stderr.buffer)
             self.style = no_style()

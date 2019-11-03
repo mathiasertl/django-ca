@@ -121,7 +121,7 @@ class Profile(object):
         self.extensions.setdefault(BasicConstraints.key, BasicConstraints({'value': {'ca': False}}))
 
     def __eq__(self, o):
-        if isinstance(o, (Profile, DefaultProfileProxy)) is False:  # pragma: only py3
+        if isinstance(o, (Profile, DefaultProfileProxy)) is False:
             return False
         algo = isinstance(o.algorithm, type(self.algorithm))
 

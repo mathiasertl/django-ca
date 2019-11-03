@@ -79,10 +79,8 @@ def rdn(r):  # just a shortcut
 
 def load_tests(loader, tests, ignore):
     docs_path = os.path.join(settings.DOC_DIR, 'python', 'extensions.rst')
-    if six.PY3:  # pragma: only py3
-        # unicode strings make this very hard to test doctests in both py2 and py3
-        tests.addTests(doctest.DocTestSuite('django_ca.extensions'))
-        tests.addTests(doctest.DocFileSuite(docs_path, module_relative=False))
+    tests.addTests(doctest.DocTestSuite('django_ca.extensions'))
+    tests.addTests(doctest.DocFileSuite(docs_path, module_relative=False))
     return tests
 
 

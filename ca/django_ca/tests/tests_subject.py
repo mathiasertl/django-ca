@@ -15,8 +15,6 @@
 
 import doctest
 
-import six
-
 from cryptography import x509
 from cryptography.x509.oid import NameOID
 
@@ -29,9 +27,7 @@ from .base import override_settings
 
 
 def load_tests(loader, tests, ignore):
-    if six.PY3:  # pragma: only py3
-        # unicode strings make this very hard to test doctests in both py2 and py3
-        tests.addTests(doctest.DocTestSuite('django_ca.subject'))
+    tests.addTests(doctest.DocTestSuite('django_ca.subject'))
     return tests
 
 
