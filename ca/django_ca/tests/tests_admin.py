@@ -286,7 +286,7 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertContains(response, text='''
 <div class="form-row field-subject_alternative_name">
     <div>
-        <label>SubjectAltName:</label>
+        <label>SubjectAlternativeName:</label>
         <div class="readonly">&lt;none&gt;</div>
     </div>
 </div>

@@ -249,7 +249,7 @@ class CertificateMixin(object):
     extended_key_usage.short_description = ExtendedKeyUsage.name
 
     def tls_feature(self, obj):
-        return self.output_extension(obj.tls_feature)
+        return self.output_template(obj.tls_feature)
     tls_feature.short_description = TLSFeature.name
 
     def subject_key_identifier(self, obj):
