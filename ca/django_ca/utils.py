@@ -877,6 +877,9 @@ def get_extension_name(ext):
     if ext.oid == ExtensionOID.PRECERT_POISON:  # pragma: only cryptography<2.7
         return 'PrecertPoison'
 
+    elif ext.oid == ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS:  # pragma: no SCT
+        return 'PrecertificateSignedCertificateTimestamps'
+
     # uppercase the FIRST letter only ("keyUsage" -> "KeyUsage")
     return re.sub('^([a-z])', lambda x: x.groups()[0].upper(), ext.oid._name)
 
