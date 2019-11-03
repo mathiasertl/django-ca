@@ -28,12 +28,10 @@ webserver is needed, if you’re happy with the command-line.
 Features:
 
 * Set up a secure local certificate authority in just a few minutes.
-* Written in Python 2.7/Python3.5+, requires Django 1.11 or later.
-* Manage your entire certificate authority from the command line and/or via Djangos admin
-  interface.
+* Written in Python Python3.5+, requires Django 1.11 or later.
+* Manage your entire certificate authority from the command line and/or via Djangos admin interface.
 * Get email notifications about certificates about to expire.
-* Certificate validation using Certificate Revocation Lists (CRLs) and via an included OCSP
-  responder.
+* Certificate validation using Certificate Revocation Lists (CRLs) and via an included OCSP responder.
 
 Please see https://django-ca.readthedocs.org for more extensive documentation.
 """
@@ -95,8 +93,6 @@ setup(
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',

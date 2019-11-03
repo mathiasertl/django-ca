@@ -6,6 +6,17 @@ ChangeLog
 
 .. _changelog-1.14.0:
 
+************
+1.15.0 (TBR)
+************
+
+Backwards incompatible changes
+==============================
+
+* Drop support for Python 2.7.
+
+.. _changelog-1.14.0:
+
 *******************
 1.14.0 (2019-11-03)
 *******************
