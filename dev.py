@@ -183,7 +183,9 @@ elif args.command == 'coverage':
 
     # exclude code that requires SCT
     if not default_backend()._lib.CRYPTOGRAPHY_OPENSSL_110F_OR_GREATER:
-        cov.exclude(r'pragma:\s*only SCT')
+        cov.exclude(r'pragma: only SCT')
+    else:
+        cov.exclude(r'pragma: no SCT')
 
     # exclude python version specific code
     py_versions = [(2, 7), (3, 4), (3, 5), (3, 6), (3, 7), (3, 8), (3, 9)]
