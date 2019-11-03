@@ -15,13 +15,12 @@
 
 
 class RemovedInDjangoCA15Warning(DeprecationWarning):
-    """If this warning is emitted, a feature will be removed in the next django-ca version."""
+    """Warning if a feature will be removed in the next django-ca version."""
     pass
 
 
 class RemovedInDjangoCA16Warning(PendingDeprecationWarning):
-    """If this warning is emitted, a feature will be removed in the version
-    after the next django-ca version."""
+    """Warning if a feature will be removed in the version after the next django-ca version."""
     pass
 
 
