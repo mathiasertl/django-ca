@@ -4,7 +4,7 @@ ChangeLog
 
 .. _changelog-head:
 
-.. _changelog-1.14.0:
+.. _changelog-1.15.0:
 
 ************
 1.15.0 (TBR)
