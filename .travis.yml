@@ -9,16 +9,10 @@ python:  # https://devguide.python.org/#status-of-python-branches
 env:  # https://www.djangoproject.com/download/
   - DJANGO=2.2.6 CRYPTOGRAPHY=2.8
   - DJANGO=2.2.6 CRYPTOGRAPHY=2.7
-  - DJANGO=2.2.6 CRYPTOGRAPHY=2.6.1
-  - DJANGO=2.2.6 CRYPTOGRAPHY=2.5
   - DJANGO=2.1.13 CRYPTOGRAPHY=2.8
   - DJANGO=2.1.13 CRYPTOGRAPHY=2.7
-  - DJANGO=2.1.13 CRYPTOGRAPHY=2.6.1
-  - DJANGO=2.1.13 CRYPTOGRAPHY=2.5
   - DJANGO=1.11.25 CRYPTOGRAPHY=2.8
   - DJANGO=1.11.25 CRYPTOGRAPHY=2.7
-  - DJANGO=1.11.25 CRYPTOGRAPHY=2.6.1
-  - DJANGO=1.11.25 CRYPTOGRAPHY=2.5
 install:
   # Build/test dependencies
  - pip install -U pip setuptools
@@ -45,8 +39,4 @@ matrix:
         - env: DJANGO=1.11.25 CRYPTOGRAPHY=2.8
           python: "nightly"
         - env: DJANGO=1.11.25 CRYPTOGRAPHY=2.7
-          python: "nightly"
-        - env: DJANGO=1.11.25 CRYPTOGRAPHY=2.6.1
-          python: "nightly"
-        - env: DJANGO=1.11.25 CRYPTOGRAPHY=2.5
           python: "nightly"

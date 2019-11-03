@@ -14,6 +14,7 @@ Backwards incompatible changes
 ==============================
 
 * Drop support for Python 2.7.
+* Drop support for cryptography 2.5 and 2.6.
 
 .. _changelog-1.14.0:
 
