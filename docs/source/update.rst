@@ -25,6 +25,17 @@ then upgrade with these commands::
 
       source bin/activate
 
+.. _update_114:
+
+*************************
+Update to 1.14.0 or later
+*************************
+
+**django-ca** has changed the layout of the :ref:`CA_PROFILES <settings-ca-profiles>`, you have to update any
+any custom setting according to the :ref:`migration instructions <profiles-pre-114-migration>`. 
+
+The old profile settings will be supported until (and including) version 1.16.
+
 .. _update-file-storage:
 
 *************************

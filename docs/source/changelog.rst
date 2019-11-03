@@ -6,9 +6,9 @@ ChangeLog
 
 .. _changelog-1.14.0:
 
-************
-1.14.0 (TBR)
-************
+*******************
+1.14.0 (2019-11-03)
+*******************
 
 * ``regenerate_ocsp_keys`` now has a quiet mode and only generates keys where the CA private key is available.
 * Minor changes to make the release compatible with Django 3.0a1.
