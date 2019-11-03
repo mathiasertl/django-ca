@@ -6,32 +6,29 @@ FROM $IMAGE as test
 WORKDIR /usr/src/django-ca
 
 ENV SKIP_SELENIUM_TESTS=y
+
 RUN apk --no-cache upgrade && \
     apk --no-cache add --update gcc linux-headers libc-dev libffi-dev openssl openssl-dev make
+RUN pip install -U setuptools pip wheel
 
-COPY requirements.txt ./
-COPY requirements/ requirements/
 
 # Add user (some tests check if it's impossible to write a file)
 RUN addgroup -g 9000 -S django-ca && \
     adduser -S -u 9000 -G django-ca django-ca
 
-RUN pip install -U setuptools pip wheel
-RUN pip install --no-cache-dir -r requirements/requirements-docker.txt termcolor
+# Install additional requirements for testing:
+COPY requirements.txt ./
+COPY requirements/ requirements/
+RUN pip install --no-cache-dir \
+    -r requirements/requirements-docker.txt \
+    -r requirements/requirements-docs.txt \
+    -r requirements/requirements-test.txt \
+    -r requirements/requirements-lint.txt
 
 COPY setup.py dev.py tox.ini recreate-fixtures.py ./
 COPY --chown=django-ca:django-ca docs/ docs/
 COPY --chown=django-ca:django-ca ca/ ca/
 COPY --chown=django-ca:django-ca docker/localsettings.py ca/ca/localsettings.py
-
-# Make sure that requirements/requirements-docker.txt has installed all run-time dependencies
-RUN python dev.py test-imports
-
-# Install additional requirements for testing:
-RUN pip install --no-cache-dir \
-    -r requirements/requirements-docs.txt \
-    -r requirements/requirements-test.txt \
-    -r requirements/requirements-lint.txt
 
 # Create some files/directories that we need later on
 RUN touch .coverage
@@ -48,6 +45,7 @@ RUN make -C docs html-check
 RUN python dev.py init-demo
 
 FROM $IMAGE as prepare
+
 WORKDIR /usr/src/django-ca
 
 RUN apk --no-cache upgrade && \
@@ -62,6 +60,14 @@ COPY ca/ ca/
 COPY docker/ docker/
 RUN mv docker/localsettings.py ca/ca/localsettings.py
 RUN rm -rf requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.example ca/.coverage
+
+# Test that imports are working
+RUN cp -a /install/* /usr/local/
+ENV DJANGO_SETTINGS_MODULE=ca.settings
+RUN cd ca && python -c "import django; \
+django.setup(); \
+from django.conf import settings; \
+from django_ca import utils, models, views, extensions, subject"
 
 ######################
 # Actual build stage #
@@ -81,6 +87,7 @@ COPY --from=prepare /usr/src/django-ca/ ./
 COPY uwsgi/ uwsgi/
 
 CMD docker/start.sh
+
 
 USER django-ca:django-ca
 EXPOSE 8000
