@@ -16,8 +16,6 @@
 import argparse
 import os
 
-import six
-
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -31,13 +29,9 @@ from ... import ca_settings
 from ...extensions import IssuerAlternativeName
 from ...models import CertificateAuthority
 from ...utils import ca_storage
-from ...utils import wrap_file_exceptions
 from ..base import BaseCommand
 from ..base import CertificateAuthorityDetailMixin
 from ..base import PasswordAction
-
-if six.PY2:  # pragma: no branch, pragma: only py2
-    from ...utils import PermissionError
 
 
 class Command(BaseCommand, CertificateAuthorityDetailMixin):
@@ -66,8 +60,7 @@ Note that the private key will be copied to the directory configured by the CA_D
     def handle(self, name, key, pem, **options):
         if not os.path.exists(ca_settings.CA_DIR):
             try:
-                with wrap_file_exceptions():
-                    os.makedirs(ca_settings.CA_DIR)
+                os.makedirs(ca_settings.CA_DIR)
             except PermissionError:
                 pem.close()
                 key.close()
@@ -125,8 +118,7 @@ Note that the private key will be copied to the directory configured by the CA_D
         perm_denied = '%s: Permission denied: Could not open file for writing' % ca.private_key_path
 
         try:
-            with wrap_file_exceptions():
-                ca_storage.save(ca.private_key_path, ContentFile(pem))
+            ca_storage.save(ca.private_key_path, ContentFile(pem))
         except PermissionError:
             raise CommandError(perm_denied)
 

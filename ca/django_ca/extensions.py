@@ -34,7 +34,6 @@ from .utils import bytes_to_hex
 from .utils import format_general_name
 from .utils import format_relative_name
 from .utils import hex_to_bytes
-from .utils import indent
 from .utils import parse_general_name
 from .utils import x509_relative_name
 
@@ -325,10 +324,7 @@ class ListExtension(IterableExtension):
         self._test_value()
 
     def clear(self):
-        if six.PY2:  # pragma: only py2
-            self.value = []
-        else:  # pragma: only py3
-            self.value.clear()
+        self.value.clear()
 
     def count(self, value):
         try:
@@ -657,13 +653,13 @@ class DistributionPoint(GeneralNameMixin):
 
     def as_text(self):
         if self.full_name:
-            names = [indent('* %s' % self.serialize_value(n), '  ') for n in self.full_name]
+            names = [textwrap.indent('* %s' % self.serialize_value(n), '  ') for n in self.full_name]
             text = '* Full Name:\n%s' % '\n'.join(names)
         else:
             text = '* Relative Name: %s' % format_relative_name(self.relative_name)
 
         if self.crl_issuer:
-            names = [indent('* %s' % self.serialize_value(n), '  ') for n in self.crl_issuer]
+            names = [textwrap.indent('* %s' % self.serialize_value(n), '  ') for n in self.crl_issuer]
             text += '\n* CRL Issuer:\n%s' % '\n'.join(names)
         if self.reasons:
             text += '\n* Reasons: %s' % ', '.join(sorted([r.name for r in self.reasons]))
@@ -958,8 +954,6 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
 
     def __bool__(self):
         return bool(self.value['ocsp']) or bool(self.value['issuers'])
-    if six.PY2:  # pragma: no branch, pragma: only py2
-        __nonzero__ = __bool__
 
     def __eq__(self, other):
         return isinstance(other, type(self)) \
@@ -973,10 +967,6 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
     def _repr_value(self):
         issuers = [self.serialize_value(v) for v in self.value['issuers']]
         ocsp = [self.serialize_value(v) for v in self.value['ocsp']]
-
-        if six.PY2:  # pragma: no branch, pragma: only py2 - otherwise we have the u'' prefix in output
-            issuers = [str(v) for v in issuers]
-            ocsp = [str(v) for v in ocsp]
 
         return 'issuers=%r, ocsp=%r' % (issuers, ocsp)
 
@@ -1226,7 +1216,8 @@ class CRLDistributionPoints(ListExtension):
         return hash((tuple(self.value), self.critical, ))
 
     def as_text(self):
-        return '\n'.join('* DistributionPoint:\n%s' % indent(dp.as_text(), '  ') for dp in self.value)
+        return '\n'.join('* DistributionPoint:\n%s' % textwrap.indent(dp.as_text(), '  ')
+                         for dp in self.value)
 
     @property
     def extension_type(self):
@@ -1282,7 +1273,7 @@ class CertificatePolicies(ListExtension):
         return '%s policies' % len(self.value)
 
     def as_text(self):
-        return '\n'.join('* %s' % indent(p.as_text(), '  ').strip() for p in self.value)
+        return '\n'.join('* %s' % textwrap.indent(p.as_text(), '  ').strip() for p in self.value)
 
     @property
     def extension_type(self):
@@ -1540,8 +1531,6 @@ class NameConstraints(GeneralNameMixin, Extension):
 
     def __bool__(self):
         return bool(self.value['permitted']) or bool(self.value['excluded'])
-    if six.PY2:  # pragma: no branch, pragma: only py2
-        __nonzero__ = __bool__
 
     def __hash__(self):
         return hash((tuple(self.value['permitted']), tuple(self.value['excluded']), self.critical, ))
@@ -1549,10 +1538,6 @@ class NameConstraints(GeneralNameMixin, Extension):
     def _repr_value(self):
         permitted = [self.serialize_value(v) for v in self.value['permitted']]
         excluded = [self.serialize_value(v) for v in self.value['excluded']]
-
-        if six.PY2:  # pragma: no branch, pragma: only py2 - otherwise we have the u'' prefix in output
-            permitted = [str(v) for v in permitted]
-            excluded = [str(v) for v in excluded]
 
         return 'permitted=%r, excluded=%r' % (permitted, excluded)
 

@@ -16,12 +16,9 @@
 """Central functions to load CA key and cert as PKey/X509 objects."""
 
 import binascii
-import errno
 import os
 import re
 import shlex
-import textwrap
-from contextlib import contextmanager
 from datetime import datetime
 from datetime import timedelta
 from ipaddress import ip_address
@@ -229,13 +226,7 @@ def int_to_hex(i):
     >>> int_to_hex(12345678)
     'BC614E'
     """
-    s = hex(i)[2:].upper()
-    if six.PY2 is True and isinstance(i, long):  # pragma: only py2  # NOQA
-        # Strip the "L" suffix, since hex(1L) -> 0x1L.
-        # NOTE: Do not convert to int earlier. int(<very-large-long>) is still long
-        s = s[:-1]
-
-    return s
+    return hex(i)[2:].upper()
 
 
 def bytes_to_hex(v):
@@ -820,34 +811,6 @@ def get_cert_builder(expires, serial=None):
     return builder
 
 
-if six.PY2:  # pragma: no branch, pragma: only py2
-    class PermissionError(IOError, OSError):
-        pass
-
-    class FileNotFoundError(OSError):
-        pass
-
-
-@contextmanager
-def wrap_file_exceptions():
-    """Contextmanager to wrap file exceptions into identicaly exceptions in py2 and py3.
-
-    This should be removed once py2 support is dropped.
-    """
-    try:
-        yield
-    except (PermissionError, FileNotFoundError):  # pragma: only py3
-        # In py3, we want to raise Exception unchanged, so there would be no need for this block.
-        # BUT (IOError, OSError) - see below - also matches, so we capture it here
-        raise
-    except (IOError, OSError) as e:  # pragma: only py2
-        if e.errno == errno.EACCES:
-            raise PermissionError(str(e))
-        elif e.errno == errno.ENOENT:
-            raise FileNotFoundError(str(e))
-        raise  # pragma: no cover
-
-
 def read_file(path):
     """Read the file from the given path.
 
@@ -855,12 +818,10 @@ def read_file(path):
     using the storage backend configured using :ref:`CA_FILE_STORAGE <settings-ca-file-storage>`.
     """
     if os.path.isabs(path):
-        with wrap_file_exceptions():
-            with open(path, 'rb') as stream:
-                return stream.read()
+        with open(path, 'rb') as stream:
+            return stream.read()
 
-    with wrap_file_exceptions():
-        stream = ca_storage.open(path)
+    stream = ca_storage.open(path)
 
     try:
         return stream.read()
@@ -891,12 +852,10 @@ def get_extension_name(ext):
 #    try:
 #        with os.fdopen(os.open(path, os.O_CREAT | os.O_WRONLY, 0o400), 'wb') as fh:
 #            fh.write(data)
-#    except PermissionError:  # pragma: only py3
+#    except PermissionError:
 #        # In py3, we want to raise Exception unchanged, so there would be no need for this block.
 #        # BUT (IOError, OSError) - see below - also matches, so we capture it here
 #        raise
-#    except (IOError, OSError) as e:  # pragma: only py2
-#        raise PermissionError(e.errno)
 
 
 def shlex_split(s, sep):
@@ -917,17 +876,6 @@ def shlex_split(s, sep):
     lex.whitespace = sep
     lex.whitespace_split = True
     return [l for l in lex]
-
-
-if six.PY3:  # pragma: only py3
-    indent = textwrap.indent
-else:  # pragma: only py2
-    def indent(s, prefix):
-        def prefixed_lines():
-            for line in force_text(s).splitlines(True):
-                yield prefix + line
-
-        return ''.join(prefixed_lines())
 
 
 ca_storage = get_storage_class(ca_settings.CA_FILE_STORAGE)(**ca_settings.CA_FILE_STORAGE_KWARGS)

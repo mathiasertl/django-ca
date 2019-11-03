@@ -16,20 +16,13 @@
 import os
 import shutil
 import tempfile
-
-import six
+from unittest.mock import patch
 
 from ..deprecation import RemovedInDjangoCA15Warning
 from ..models import CertificateAuthority
 from ..utils import ca_storage
 from .base import DjangoCAWithCATestCase
 from .base import override_tmpcadir
-
-if six.PY2:  # pragma: only py2
-    from mock import patch
-
-else:  # pragma: only py3
-    from unittest.mock import patch
 
 
 class MigrateCATestCase(DjangoCAWithCATestCase):

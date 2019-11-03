@@ -156,9 +156,7 @@ class OCSPBaseView(View):
     def get(self, request, data):
         try:
             data = base64.b64decode(data)
-        except TypeError:  # pragma: only py2
-            return self.malformed_request()
-        except binascii.Error:  # pragma: only py3
+        except binascii.Error:
             return self.malformed_request()
 
         try:

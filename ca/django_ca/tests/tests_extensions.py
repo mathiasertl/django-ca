@@ -1755,18 +1755,10 @@ class PolicyInformationTestCase(DjangoCATestCase):
             self.pi_empty.remove(self.s3['policy_qualifiers'][0])
 
     def _test_repr(self, func):
-
-        if six.PY2:  # pragma: only py2
-            self.assertEqual(func(self.pi1), "<PolicyInformation(oid=2.5.29.32.0, qualifiers=[u'text1'])>")
-            self.assertEqual(
-                func(self.pi2),
-                "<PolicyInformation(oid=2.5.29.32.0, qualifiers=[{u'explicit_text': u'text2'}])>")
-            self.assertEqual(func(self.pi_empty), "<PolicyInformation(oid=None, qualifiers=None)>")
-        else:
-            self.assertEqual(func(self.pi1), "<PolicyInformation(oid=2.5.29.32.0, qualifiers=['text1'])>")
-            self.assertEqual(func(self.pi2),
-                             "<PolicyInformation(oid=2.5.29.32.0, qualifiers=[{'explicit_text': 'text2'}])>")
-            self.assertEqual(func(self.pi_empty), "<PolicyInformation(oid=None, qualifiers=None)>")
+        self.assertEqual(func(self.pi1), "<PolicyInformation(oid=2.5.29.32.0, qualifiers=['text1'])>")
+        self.assertEqual(func(self.pi2),
+                         "<PolicyInformation(oid=2.5.29.32.0, qualifiers=[{'explicit_text': 'text2'}])>")
+        self.assertEqual(func(self.pi_empty), "<PolicyInformation(oid=None, qualifiers=None)>")
 
         # NOTE: order of dict is different here, so we do not test output, just make sure there's no exception
         func(self.pi3)

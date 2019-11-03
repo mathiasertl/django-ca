@@ -12,12 +12,12 @@ import re
 import shutil
 import sys
 import tempfile
-import warnings
 from contextlib import contextmanager
 from datetime import datetime
 from datetime import timedelta
+from unittest.mock import Mock
+from unittest.mock import patch
 
-import six
 from OpenSSL.crypto import FILETYPE_PEM
 from OpenSSL.crypto import X509Store
 from OpenSSL.crypto import X509StoreContext
@@ -82,15 +82,6 @@ from ..utils import OID_NAME_MAPPINGS
 from ..utils import add_colons
 from ..utils import ca_storage
 from ..utils import x509_name
-
-if six.PY2:  # pragma: only py2
-    from mock import Mock
-    from mock import patch
-
-    from testfixtures import LogCapture  # for capturing logging
-else:  # pragma: only py3
-    from unittest.mock import Mock
-    from unittest.mock import patch
 
 User = get_user_model()
 
@@ -451,24 +442,6 @@ class DjangoCATestCaseMixin(object):
 
     re_false_password = r'^(Bad decrypt\. Incorrect password\?|Could not deserialize key data\.)$'
 
-    if six.PY2:  # pragma: no branch, pragma: only py2
-        assertRaisesRegex = TestCase.assertRaisesRegexp
-
-        @contextmanager
-        def assertLogs(self, logger=None, level=None):
-            """Simulate assertLogs() from Python3 using the textfixtures module.
-
-            Note that this context manager only allows you to compare the ouput
-            attribute, not the "records" attribute."""
-
-            class Py2LogCapture(object):
-                @property
-                def output(self):
-                    return ['%s:%s:%s' % (r[1], r[0], r[2]) for r in lc.actual()]
-
-            with LogCapture() as lc:
-                yield Py2LogCapture()
-
     @classmethod
     def setUpClass(cls):
         super(DjangoCATestCaseMixin, cls).setUpClass()
@@ -577,51 +550,29 @@ class DjangoCATestCaseMixin(object):
         messages = [str(m) for m in list(get_messages(response.wsgi_request))]
         self.assertEqual(messages, expected)
 
-    if six.PY3:  # pragma: only py3
-        @contextmanager
-        def assertMultipleWarnings(self, warnings, msg=None):
-            arg = tuple([w['category'] for w in warnings if w.get('category')])
-            with self.assertWarns(arg, msg=msg) as cm:
-                yield cm
+    @contextmanager
+    def assertMultipleWarnings(self, warnings, msg=None):
+        arg = tuple([w['category'] for w in warnings if w.get('category')])
+        with self.assertWarns(arg, msg=msg) as cm:
+            yield cm
 
-            self.assertEqual(len(warnings), len(cm.warnings))
+        self.assertEqual(len(warnings), len(cm.warnings))
 
-            for data, msg in zip(warnings, cm.warnings):
-                self.assertEqual(msg.category, data['category'])
+        for data, msg in zip(warnings, cm.warnings):
+            self.assertEqual(msg.category, data['category'])
 
-                error = '"%s" does not match "%s"' % (msg.message, data['msg'])
-                self.assertIsNotNone(re.match(data['msg'], str(msg.message)), error)
+            error = '"%s" does not match "%s"' % (msg.message, data['msg'])
+            self.assertIsNotNone(re.match(data['msg'], str(msg.message)), error)
 
-                if data.get('filename'):  # pragma: no cover - so far this is always None
-                    self.assertEqual(data['filename'], msg.filename)
-                if data.get('lineno'):  # pragma: no cover - so far this is always None
-                    self.assertEqual(data['lineno'], msg.lineno)
-                self.assertEqual(data.get('file'), msg.file)
-                self.assertEqual(data.get('line'), msg.line)
+            if data.get('filename'):  # pragma: no cover - so far this is always None
+                self.assertEqual(data['filename'], msg.filename)
+            if data.get('lineno'):  # pragma: no cover - so far this is always None
+                self.assertEqual(data['lineno'], msg.lineno)
+            self.assertEqual(data.get('file'), msg.file)
+            self.assertEqual(data.get('line'), msg.line)
 
-                if hasattr(msg, 'source'):  # pragma: no branch, pragma: only py>=3.6, not present in py3.5
-                    self.assertEqual(data.get('source'), msg.source)
-
-    else:  # pragma: only py2
-        @contextmanager
-        def assertMultipleWarnings(self, messages, msg=None):
-            with warnings.catch_warnings(record=True) as cm:
-                warnings.simplefilter("always")  # automatically restored according to docs
-                yield cm
-
-            self.assertEqual(len(cm), len(messages))
-            for data, warning in zip(messages, cm):
-                self.assertEqual(warning.category, data['category'])
-
-                error = '"%s" does not match "%s"' % (warning.message, data['msg'])
-                self.assertIsNotNone(re.match(data['msg'], str(warning.message)), error)
-
-                # note: value seems to sometimes have .pyc and sometimes .py as extension
-                #self.assertEqual(data['filename'], warning.filename)
-                if data.get('lineno'):  # pragma: no cover - so far this is always None
-                    self.assertEqual(data['lineno'], warning.lineno)
-                self.assertEqual(data.get('file'), warning.file)
-                self.assertEqual(data.get('line'), warning.line)
+            if hasattr(msg, 'source'):  # pragma: no branch, pragma: only py>=3.6, not present in py3.5
+                self.assertEqual(data.get('source'), msg.source)
 
     def get_cert_profile_kwargs(self, name=None):
         with self.assertMultipleWarnings([{

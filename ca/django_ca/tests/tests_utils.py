@@ -21,11 +21,9 @@ import doctest
 import ipaddress
 import json
 import os
-import unittest
 from datetime import datetime
 from datetime import timedelta
 
-import idna
 import six
 from idna.core import IDNAError
 
@@ -66,15 +64,9 @@ from .base import DjangoCATestCase
 from .base import override_settings
 from .base import override_tmpcadir
 
-if six.PY2:  # pragma: only py2
-    from ..utils import PermissionError
-    from ..utils import FileNotFoundError
-
 
 def load_tests(loader, tests, ignore):
-    if six.PY3:  # pragma: only py3
-        # unicode strings make this very hard to test doctests in both py2 and py3
-        tests.addTests(doctest.DocTestSuite(utils))
+    tests.addTests(doctest.DocTestSuite(utils))
     return tests
 
 
@@ -397,13 +389,7 @@ class ParseGeneralNameTest(TestCase):
 
         # Wildcard subdomains are allowed in DNS entries, however RFC 2595 limits their use to a single
         # wildcard in the outermost level
-        if idna.__version__ >= '2.8':
-            if six.PY2:
-                msg = r'^Codepoint U\+002A at position 1 of u\'\*\' not allowed$'
-            else:
-                msg = r'^Codepoint U\+002A at position 1 of \'\*\' not allowed$'
-        else:
-            msg = r'^The label b?\'?\*\'? is not a valid A-label$'
+        msg = r'^Codepoint U\+002A at position 1 of \'\*\' not allowed$'
 
         with self.assertRaisesRegex(IDNAError, msg):
             parse_general_name(u'test.*.example.com')
@@ -438,16 +424,8 @@ class ParseGeneralNameTest(TestCase):
         ))
 
     def test_wrong_email(self):
-        if idna.__version__ >= '2.8':
-            if six.PY2:
-                msg = r"^Codepoint U\+0040 at position 5 of u'user@' not allowed$"
-            else:
-                msg = r"^Codepoint U\+0040 at position 5 of 'user@' not allowed$"
-        else:
-            if six.PY2:
-                msg = "The label user@ is not a valid A-label"
-            else:
-                msg = "The label b'user@' is not a valid A-label"
+        msg = r"^Codepoint U\+0040 at position 5 of 'user@' not allowed$"
+
         with self.assertRaisesRegex(IDNAError, msg):
             parse_general_name('user@')
 
@@ -664,12 +642,6 @@ class IntToHexTestCase(TestCase):
         self.assertEqual(utils.int_to_hex(1513282111), '5A32DA3F')
         self.assertEqual(utils.int_to_hex(1513282112), '5A32DA40')
         self.assertEqual(utils.int_to_hex(1513282113), '5A32DA41')
-
-    @unittest.skipUnless(six.PY2, 'long is only defined in py2')
-    def test_long(self):
-        self.assertEqual(utils.int_to_hex(long(0)), '0')  # NOQA
-        self.assertEqual(utils.int_to_hex(long(43)), '2B')  # NOQA
-        self.assertEqual(utils.int_to_hex(long(1513282104)), '5A32DA38')  # NOQA
 
 
 class MultilineURLValidatorTestCase(TestCase):

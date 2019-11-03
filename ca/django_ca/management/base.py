@@ -17,6 +17,7 @@ import argparse
 import getpass
 import sys
 from datetime import timedelta
+from textwrap import indent
 
 import six
 
@@ -45,7 +46,6 @@ from ..models import CertificateAuthority
 from ..subject import Subject
 from ..utils import SUBJECT_FIELDS
 from ..utils import add_colons
-from ..utils import indent
 from ..utils import is_power2
 from ..utils import parse_encoding
 from ..utils import parse_hash_algorithm

@@ -14,8 +14,7 @@
 # see <http://www.gnu.org/licenses/>
 
 import os
-
-import six
+from unittest.mock import patch
 
 from .. import ca_settings
 from ..extensions import AuthorityKeyIdentifier
@@ -32,11 +31,6 @@ from ..signals import pre_issue_cert
 from ..subject import Subject
 from .base import DjangoCAWithCertTestCase
 from .base import override_tmpcadir
-
-if six.PY2:  # pragma: only py2
-    from mock import patch
-else:  # pragma: only py3
-    from unittest.mock import patch
 
 
 class ResignCertTestCase(DjangoCAWithCertTestCase):
