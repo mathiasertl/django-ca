@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
-from six.moves.urllib.parse import quote
+from urllib.parse import quote
 
 from django.contrib.auth.models import User
 from django.templatetags.static import static

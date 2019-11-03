@@ -17,8 +17,7 @@ import json
 import unittest
 from datetime import datetime
 from datetime import timedelta
-
-from six.moves.urllib.parse import quote
+from urllib.parse import quote
 
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.extensions import Extension

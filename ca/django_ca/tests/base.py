@@ -5,6 +5,7 @@ when you run "manage.py test".
 Replace this with more appropriate tests for your application.
 """
 
+import importlib
 import inspect
 import json
 import os
@@ -15,6 +16,7 @@ import tempfile
 from contextlib import contextmanager
 from datetime import datetime
 from datetime import timedelta
+from io import StringIO
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -22,8 +24,6 @@ from OpenSSL.crypto import FILETYPE_PEM
 from OpenSSL.crypto import X509Store
 from OpenSSL.crypto import X509StoreContext
 from OpenSSL.crypto import load_certificate
-from six import StringIO
-from six.moves import reload_module
 
 import cryptography
 from cryptography import x509
@@ -140,7 +140,7 @@ def _load_pub(data):
 
 
 def _reload():
-    reload_module(ca_settings)
+    importlib.reload(ca_settings)
     # WARNING:
     # * Do NOT reload any other modules here, as isinstance() no longer returns True for instances from
     #   reloaded modules

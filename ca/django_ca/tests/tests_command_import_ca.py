@@ -17,8 +17,7 @@ import os
 import shutil
 import tempfile
 from io import BufferedReader
-
-from six import BytesIO
+from io import BytesIO
 
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 

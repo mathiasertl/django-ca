@@ -14,10 +14,7 @@
 # see <http://www.gnu.org/licenses/>.
 
 import doctest
-import unittest
 from datetime import timedelta
-
-import six
 
 from .. import ca_settings
 from ..deprecation import RemovedInDjangoCA16Warning
@@ -45,7 +42,6 @@ from .base import override_settings
 from .base import override_tmpcadir
 
 
-@unittest.skipIf(six.PY2, 'Docstrings are only tested in Python3.')
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=1024)
 class DocumentationTestCase(DjangoCATestCase):
     def setUp(self):

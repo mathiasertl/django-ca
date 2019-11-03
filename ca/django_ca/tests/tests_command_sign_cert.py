@@ -18,8 +18,7 @@ import stat
 import unittest
 from datetime import datetime
 from datetime import timedelta
-
-import six
+from io import StringIO
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
@@ -44,11 +43,6 @@ from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
 
-if six.PY2:
-    import mock
-else:
-    from unittest import mock  # NOQA
-
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 @freeze_time(timestamps['everything_valid'])
@@ -60,7 +54,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
 
     @override_tmpcadir()
     def test_from_stdin(self):
-        stdin = six.StringIO(self.csr_pem)
+        stdin = StringIO(self.csr_pem)
         subject = Subject([('CN', 'example.com')])
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd('sign_cert', ca=self.ca, subject=subject, stdin=stdin)
@@ -86,7 +80,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         # Create a signed cert for all usable CAs
         for name, ca in self.usable_cas.items():
             cn = '%s-signed.example.com' % name
-            stdin = six.StringIO(self.csr_pem)
+            stdin = StringIO(self.csr_pem)
             subject = Subject([('CN', cn)])
 
             with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
@@ -142,7 +136,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
     @override_tmpcadir()
     def test_to_file(self):
         out_path = os.path.join(ca_settings.CA_DIR, 'test.pem')
-        stdin = six.StringIO(self.csr_pem)
+        stdin = StringIO(self.csr_pem)
 
         try:
             with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
@@ -172,7 +166,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         # Use a CommonName that is *not* a valid DNSName. By default, this is added as a subjectAltName, which
         # should fail.
 
-        stdin = six.StringIO(self.csr_pem)
+        stdin = StringIO(self.csr_pem)
         cn = 'foo bar'
         msg = r'^%s: Could not parse CommonName as subjectAlternativeName\.$' % cn
 
@@ -184,7 +178,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
 
     @override_tmpcadir()
     def test_cn_not_in_san(self):
-        stdin = six.StringIO(self.csr_pem)
+        stdin = StringIO(self.csr_pem)
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd('sign_cert', ca=self.ca, subject=Subject([('CN', 'example.net')]),
                                       cn_in_san=False, alt=SubjectAlternativeName({'value': ['example.com']}),
@@ -205,7 +199,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
     @override_tmpcadir()
     def test_no_san(self):
         # test with no subjectAltNames:
-        stdin = six.StringIO(self.csr_pem)
+        stdin = StringIO(self.csr_pem)
         subject = Subject([('CN', 'example.net')])
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd('sign_cert', ca=self.ca, subject=subject, cn_in_san=False,
@@ -237,7 +231,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertEqual(next(t[1] for t in ca_settings.CA_DEFAULT_SUBJECT if t[0] == 'OU'), 'MyOrgUnit')
 
         # first, we only pass an subjectAltName, meaning that even the CommonName is used.
-        stdin = six.StringIO(self.csr_pem)
+        stdin = StringIO(self.csr_pem)
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd('sign_cert', ca=self.ca, cn_in_san=False,
                                       alt=SubjectAlternativeName({'value': ['example.net']}), stdin=stdin)
@@ -260,7 +254,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
             ('CN', 'CommonName2'),
             ('emailAddress', 'user@example.net'),
         ])
-        stdin = six.StringIO(self.csr_pem)
+        stdin = StringIO(self.csr_pem)
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             self.cmd('sign_cert', ca=self.ca, cn_in_san=False,
                      alt=SubjectAlternativeName({'value': ['example.net']}), stdin=stdin, subject=subject)
@@ -272,7 +266,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
 
     @override_tmpcadir()
     def test_extensions(self):
-        stdin = six.StringIO(self.csr_pem)
+        stdin = StringIO(self.csr_pem)
         cmdline = [
             'sign_cert', '--subject=%s' % Subject([('CN', 'example.com')]),
             '--ca=%s' % self.ca.serial,
@@ -301,7 +295,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_no_subject(self):
         # test with no subjectAltNames:
-        stdin = six.StringIO(self.csr_pem)
+        stdin = StringIO(self.csr_pem)
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd('sign_cert', ca=self.ca,
                                       alt=SubjectAlternativeName({'value': ['example.com']}), stdin=stdin)
@@ -326,7 +320,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         ca = CertificateAuthority.objects.get(pk=ca.pk)
 
         # Giving no password raises a CommandError
-        stdin = six.StringIO(self.csr_pem)
+        stdin = StringIO(self.csr_pem)
         with self.assertCommandError('^Password was not given but private key is encrypted$'), \
                 self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             self.cmd('sign_cert', ca=ca, alt=SubjectAlternativeName({'value': ['example.com']}), stdin=stdin)
@@ -334,7 +328,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertEqual(post.call_count, 0)
 
         # Pass a password
-        stdin = six.StringIO(self.csr_pem)
+        stdin = StringIO(self.csr_pem)
         ca = CertificateAuthority.objects.get(pk=ca.pk)
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             self.cmd('sign_cert', ca=ca, alt=SubjectAlternativeName({'value': ['example.com']}),
@@ -343,7 +337,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertEqual(post.call_count, 1)
 
         # Pass the wrong password
-        stdin = six.StringIO(self.csr_pem)
+        stdin = StringIO(self.csr_pem)
         ca = CertificateAuthority.objects.get(pk=ca.pk)
         with self.assertCommandError(self.re_false_password), \
                 self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
@@ -365,7 +359,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         os.chmod(key_path, stat.S_IRUSR)
 
         # Giving no password raises a CommandError
-        stdin = six.StringIO(self.csr_pem)
+        stdin = StringIO(self.csr_pem)
         with self.assertCommandError('^Could not deserialize key data.$'), \
                 self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             self.cmd('sign_cert', ca=self.ca, alt=['example.com'], stdin=stdin)
@@ -405,7 +399,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
     def test_expiry_too_late(self):
         time_left = (self.ca.expires - datetime.now()).days
         expires = timedelta(days=time_left + 3)
-        stdin = six.StringIO(self.csr_pem)
+        stdin = StringIO(self.csr_pem)
 
         with self.assertCommandError(
                 r'^Certificate would outlive CA, maximum expiry for this CA is {} days\.$'.format(time_left)
@@ -425,7 +419,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
 
     @override_tmpcadir()
     def test_wrong_format(self):
-        stdin = six.StringIO(self.csr_pem)
+        stdin = StringIO(self.csr_pem)
 
         with self.assertCommandError('Unknown CSR format passed: foo$'), \
                 self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
@@ -438,7 +432,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
     @freeze_time(timestamps['everything_valid'])
     def test_revoked_ca(self):
         self.ca.revoke()
-        stdin = six.StringIO(self.csr_pem)
+        stdin = StringIO(self.csr_pem)
         subject = Subject([('CN', 'example.com')])
 
         with self.assertCommandError(
@@ -454,7 +448,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         path = ca_storage.path(self.ca.private_key_path)
         os.remove(path)
         msg = r"^\[Errno 2\] No such file or directory: u?'%s'" % path
-        stdin = six.StringIO(self.csr_pem)
+        stdin = StringIO(self.csr_pem)
         subject = Subject([('CN', 'example.com')])
 
         with self.assertCommandError(msg), \
@@ -466,7 +460,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
     @override_tmpcadir()
     @freeze_time(timestamps['everything_expired'])
     def test_expired_ca(self):
-        stdin = six.StringIO(self.csr_pem)
+        stdin = StringIO(self.csr_pem)
         subject = Subject([('CN', 'example.com')])
 
         with self.assertCommandError(

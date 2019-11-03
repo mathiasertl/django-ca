@@ -16,8 +16,6 @@
 import os
 from io import BytesIO
 
-import six
-
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from .. import ca_settings
@@ -69,12 +67,8 @@ class DumpCertTestCase(DjangoCAWithGeneratedCertsTestCase):
 
     def test_errors(self):
         path = os.path.join(ca_settings.CA_DIR, 'does-not-exist', 'test_cert.pem')
-        if six.PY2:
-            msg = r"^\[Errno 2\] No such file or directory: u'%s/does-not-exist/test_cert\.pem'$" % (
-                ca_settings.CA_DIR)
-        else:
-            msg = r"^\[Errno 2\] No such file or directory: '%s/does-not-exist/test_cert\.pem'$" % (
-                ca_settings.CA_DIR)
+        msg = r"^\[Errno 2\] No such file or directory: '%s/does-not-exist/test_cert\.pem'$" % (
+            ca_settings.CA_DIR)
         with self.assertCommandError(msg):
             self.cmd('dump_cert', self.cert.serial, path, stdout=BytesIO(), stderr=BytesIO())
 

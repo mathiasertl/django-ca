@@ -21,8 +21,6 @@ import operator
 import os
 import unittest
 
-import six
-
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
 from cryptography.x509.oid import AuthorityInformationAccessOID
@@ -237,15 +235,10 @@ class AbstractExtensionTestMixin:
                     self.ext(value, critical=example())
 
     def test_init_unknown_type(self):
-        if six.PY2:
-            class_name = 'instance'
-        else:
-            class_name = 'example'
-
         class example:
             pass
 
-        with self.assertRaisesRegex(ValueError, '^Value is of unsupported type %s$' % class_name):
+        with self.assertRaisesRegex(ValueError, '^Value is of unsupported type example$'):
             self.ext_class(example())
 
     def test_ne(self):
@@ -279,9 +272,6 @@ class AbstractExtensionTestMixin:
             for value in config['values']:
                 ext = self.ext(value)
                 exp = config['expected_repr']
-                if six.PY2 and 'expected_repr_py2' in config:
-                    exp = config['expected_repr_py2']
-
                 expected = self.repr_tmpl.format(name=self.ext_class_name, value=exp,
                                                  critical=ext.default_critical)
                 self.assertEqual(repr(ext), expected)
@@ -305,8 +295,6 @@ class AbstractExtensionTestMixin:
             for value in config['values']:
                 ext = self.ext(value)
                 exp = config['expected_repr']
-                if six.PY2 and 'expected_repr_py2' in config:
-                    exp = config['expected_repr_py2']
 
                 expected = self.repr_tmpl.format(name=self.ext_class_name, value=exp,
                                                  critical=ext.default_critical)
@@ -347,9 +335,9 @@ class ExtensionTestMixin(AbstractExtensionTestMixin):
 
         # Test some basic properties (just to be sure)
         self.assertIsInstance(self.ext_class.oid, ObjectIdentifier)
-        self.assertIsInstance(self.ext_class.key, six.string_types)
+        self.assertIsInstance(self.ext_class.key, str)
         self.assertGreater(len(self.ext_class.key), 0)
-        self.assertIsInstance(self.ext_class.name, six.string_types)
+        self.assertIsInstance(self.ext_class.name, str)
         self.assertGreater(len(self.ext_class.name), 0)
 
         # Test mapping dicts
@@ -1322,10 +1310,7 @@ class DistributionPointTestCase(TestCase):
 
     def test_str(self):
         dp = DistributionPoint({'full_name': 'http://example.com'})
-        if six.PY2:
-            self.assertEqual(str(dp), "<DistributionPoint: full_name=[u'URI:http://example.com']>")
-        else:
-            self.assertEqual(str(dp), "<DistributionPoint: full_name=['URI:http://example.com']>")
+        self.assertEqual(str(dp), "<DistributionPoint: full_name=['URI:http://example.com']>")
 
 
 class CRLDistributionPointsTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):

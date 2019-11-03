@@ -18,8 +18,6 @@ import re
 from datetime import timedelta
 from io import BytesIO
 
-import six
-
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -72,10 +70,8 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
 
         # test an output path that doesn't exist
         path = os.path.join(ca_settings.CA_DIR, 'test', 'crl-test.crl')
-        if six.PY2:
-            msg = r"^\[Errno 2\] No such file or directory: u'%s'$" % re.escape(path)
-        else:
-            msg = r"^\[Errno 2\] No such file or directory: '%s'$" % re.escape(path)
+        msg = r"^\[Errno 2\] No such file or directory: '%s'$" % re.escape(path)
+
         with self.assertCommandError(msg):
             self.cmd('dump_crl', path, ca=self.ca, scope='user', stdout=BytesIO(), stderr=BytesIO())
 

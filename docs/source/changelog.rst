@@ -10,6 +10,8 @@ ChangeLog
 1.15.0 (TBR)
 ************
 
+* Drop dependency ``six``.
+
 Backwards incompatible changes
 ==============================
 

@@ -16,8 +16,6 @@
 import os
 from io import BytesIO
 
-import six
-
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from .. import ca_settings
@@ -80,12 +78,8 @@ class DumpCertTestCase(DjangoCAWithCATestCase):
     @override_tmpcadir()
     def test_errors(self):
         path = os.path.join(ca_settings.CA_DIR, 'does-not-exist', 'test_ca.pem')
-        if six.PY2:
-            msg = r"^\[Errno 2\] No such file or directory: u'%s/does-not-exist/test_ca\.pem'$"
-        else:
-            msg = r"^\[Errno 2\] No such file or directory: '%s/does-not-exist/test_ca\.pem'$"
-
-        msg = msg % ca_settings.CA_DIR
+        msg = r"^\[Errno 2\] No such file or directory: '%s/does-not-exist/test_ca\.pem'$" % (
+            ca_settings.CA_DIR)
 
         with self.assertCommandError(msg):
             self.cmd('dump_ca', self.ca.serial, path, stdout=BytesIO(), stderr=BytesIO())

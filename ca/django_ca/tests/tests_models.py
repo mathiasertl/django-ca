@@ -21,8 +21,6 @@ import unittest
 from datetime import datetime
 from datetime import timedelta
 
-import six
-
 from cryptography import x509
 
 from django.core.exceptions import ValidationError
@@ -563,11 +561,11 @@ class CertificateTests(DjangoCAWithCertTestCase):
         #       | openssl dgst -sha256 -binary | base64
         for name, ca in self.cas.items():
             self.assertEqual(ca.hpkp_pin, certs[name]['hpkp'])
-            self.assertIsInstance(ca.hpkp_pin, six.text_type)
+            self.assertIsInstance(ca.hpkp_pin, str)
 
         for name, cert in self.certs.items():
             self.assertEqual(cert.hpkp_pin, certs[name]['hpkp'])
-            self.assertIsInstance(cert.hpkp_pin, six.text_type)
+            self.assertIsInstance(cert.hpkp_pin, str)
 
     def test_get_authority_key_identifier(self):
         for name, ca in self.cas.items():
