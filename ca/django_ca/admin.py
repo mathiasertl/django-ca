@@ -44,7 +44,7 @@ from django_object_actions import DjangoObjectActions
 
 from . import ca_settings
 from .constants import ReasonFlags
-from .extensions import ListExtension
+from .extensions import IterableExtension
 from .extensions import NullExtension
 from .extensions import UnrecognizedExtension
 from .forms import CreateCertificateForm
@@ -181,7 +181,7 @@ class CertificateMixin(object):
             text = _('Critical')
             html = '<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text)
 
-        if isinstance(value, ListExtension):
+        if isinstance(value, IterableExtension):
             html += '<ul class="x509-extension-value">'
             for val in value.value:
                 if isinstance(val, x509.GeneralName):
@@ -195,8 +195,8 @@ class CertificateMixin(object):
 
         return mark_safe(html)
 
-    def output_template(self, extension, template):
-        template = 'django_ca/admin/extensions/%s' % template
+    def output_template(self, extension):
+        template = 'django_ca/admin/extensions/%s.html' % extension.key
         return render_to_string(template, {'extension': extension, })
 
     def authority_information_access(self, obj):
@@ -227,11 +227,11 @@ class CertificateMixin(object):
     basic_constraints.short_description = 'basicConstraints'
 
     def key_usage(self, obj):
-        return self.output_extension(obj.key_usage)
+        return self.output_template(obj.key_usage)
     key_usage.short_description = 'keyUsage'
 
     def extended_key_usage(self, obj):
-        return self.output_extension(obj.extended_key_usage)
+        return self.output_template(obj.extended_key_usage)
     extended_key_usage.short_description = 'extendedKeyUsage'
 
     def tls_feature(self, obj):
@@ -251,7 +251,7 @@ class CertificateMixin(object):
     authority_key_identifier.short_description = _('authorityKeyIdentifier')
 
     def crl_distribution_points(self, obj):
-        return self.output_template(obj.crl_distribution_points, 'crl_distribution_points.html')
+        return self.output_template(obj.crl_distribution_points)
     crl_distribution_points.short_description = _('CRL Distribution Points')
 
     def subject_alternative_name(self, obj):
