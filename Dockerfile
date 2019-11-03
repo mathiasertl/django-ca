@@ -7,8 +7,9 @@ WORKDIR /usr/src/django-ca
 
 ENV SKIP_SELENIUM_TESTS=y
 
+# NOTE: busybox installs /bin/sh
 RUN apk --no-cache upgrade && \
-    apk --no-cache add --update gcc linux-headers libc-dev libffi-dev openssl openssl-dev make
+    apk --no-cache add --update gcc linux-headers libc-dev libffi-dev openssl openssl-dev make busybox
 RUN pip install -U setuptools pip wheel
 
 
@@ -48,8 +49,9 @@ FROM $IMAGE as prepare
 
 WORKDIR /usr/src/django-ca
 
+# NOTE: busybox installs /bin/sh
 RUN apk --no-cache upgrade && \
-    apk --no-cache add --update gcc linux-headers libc-dev libffi-dev openssl-dev pcre pcre-dev mailcap
+    apk --no-cache add --update gcc linux-headers libc-dev libffi-dev openssl-dev pcre pcre-dev mailcap busybox
 
 COPY requirements/ requirements/
 
@@ -75,7 +77,7 @@ from django_ca import utils, models, views, extensions, subject"
 FROM $IMAGE
 WORKDIR /usr/src/django-ca
 RUN apk --no-cache upgrade && \
-    apk --no-cache add --update pcre openssl-dev binutils
+    apk --no-cache add --update pcre openssl-dev binutils busybox
 
 RUN addgroup -g 9000 -S django-ca && \
     adduser -S -u 9000 -G django-ca django-ca && \
