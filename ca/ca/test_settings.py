@@ -258,7 +258,7 @@ SKIP_SELENIUM_TESTS = os.environ.get(
 VIRTUAL_DISPLAY = os.environ.get('VIRTUAL_DISPLAY', 'y').lower().strip() == 'y'
 GECKODRIVER_PATH = os.path.join(ROOT_DIR, 'contrib', 'selenium', 'geckodriver')
 
-if not os.path.exists(GECKODRIVER_PATH):
+if not os.path.exists(GECKODRIVER_PATH) and not SKIP_SELENIUM_TESTS:
     raise ImproperlyConfigured(
         'Please download geckodriver to %s: '
         'https://selenium-python.readthedocs.io/installation.html#drivers' % GECKODRIVER_PATH)
