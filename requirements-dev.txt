@@ -6,4 +6,5 @@ pip>=19.3
 sphinx-autobuild==0.7.1
 tabulate==0.8.5
 termcolor==1.1.0
+twine==2.0.0
 wheel==0.33.6
