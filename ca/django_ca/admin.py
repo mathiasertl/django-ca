@@ -44,8 +44,22 @@ from django_object_actions import DjangoObjectActions
 
 from . import ca_settings
 from .constants import ReasonFlags
+from .extensions import AuthorityInformationAccess
+from .extensions import AuthorityKeyIdentifier
+from .extensions import BasicConstraints
+from .extensions import CertificatePolicies
+from .extensions import CRLDistributionPoints
+from .extensions import ExtendedKeyUsage
+from .extensions import IssuerAlternativeName
 from .extensions import IterableExtension
+from .extensions import KeyUsage
+from .extensions import NameConstraints
 from .extensions import NullExtension
+from .extensions import OCSPNoCheck
+from .extensions import PrecertPoison
+from .extensions import SubjectAlternativeName
+from .extensions import SubjectKeyIdentifier
+from .extensions import TLSFeature
 from .extensions import UnrecognizedExtension
 from .forms import CreateCertificateForm
 from .forms import ResignCertificateForm
@@ -220,43 +234,43 @@ class CertificateMixin(object):
                 html += '<li>%s</li>' % escape(format_general_name(val))
             html += '</ul>'
         return mark_safe(html)
-    authority_information_access.short_description = 'authorityInfoAccess'
+    authority_information_access.short_description = AuthorityInformationAccess.name
 
     def basic_constraints(self, obj):
         return self.output_extension(obj.basic_constraints)
-    basic_constraints.short_description = 'basicConstraints'
+    basic_constraints.short_description = BasicConstraints.name
 
     def key_usage(self, obj):
         return self.output_template(obj.key_usage)
-    key_usage.short_description = 'keyUsage'
+    key_usage.short_description = KeyUsage.name
 
     def extended_key_usage(self, obj):
         return self.output_template(obj.extended_key_usage)
-    extended_key_usage.short_description = 'extendedKeyUsage'
+    extended_key_usage.short_description = ExtendedKeyUsage.name
 
     def tls_feature(self, obj):
         return self.output_extension(obj.tls_feature)
-    tls_feature.short_description = _('TLS Feature')
+    tls_feature.short_description = TLSFeature.name
 
     def subject_key_identifier(self, obj):
         return self.output_extension(obj.subject_key_identifier)
-    subject_key_identifier.short_description = _('subjectKeyIdentifier')
+    subject_key_identifier.short_description = SubjectKeyIdentifier.name
 
     def issuer_alternative_name(self, obj):
         return self.output_extension(obj.issuer_alternative_name)
-    issuer_alternative_name.short_description = _('issuerAltName')
+    issuer_alternative_name.short_description = IssuerAlternativeName.name
 
     def authority_key_identifier(self, obj):
         return self.output_extension(obj.authority_key_identifier)
-    authority_key_identifier.short_description = _('authorityKeyIdentifier')
+    authority_key_identifier.short_description = AuthorityKeyIdentifier.name
 
     def crl_distribution_points(self, obj):
         return self.output_template(obj.crl_distribution_points)
-    crl_distribution_points.short_description = _('CRL Distribution Points')
+    crl_distribution_points.short_description = CRLDistributionPoints.name
 
     def subject_alternative_name(self, obj):
         return self.output_extension(obj.subject_alternative_name)
-    subject_alternative_name.short_description = _('subjectAltName')
+    subject_alternative_name.short_description = SubjectAlternativeName.name
 
     def name_constraints(self, obj):
         nc = obj.name_constraints
@@ -278,19 +292,19 @@ class CertificateMixin(object):
                 html += '<li>%s</li>' % escape(format_general_name(val))
             html += '</ul>'
         return mark_safe(html)
-    name_constraints.short_description = _('Name Constraints')
+    name_constraints.short_description = NameConstraints.name
 
     def ocsp_no_check(self, obj):
         return self.output_extension(obj.ocsp_no_check)
-    ocsp_no_check.short_description = _('OCSP No Check')
+    ocsp_no_check.short_description = OCSPNoCheck.name
 
     def precert_poison(self, obj):
         return self.output_extension(obj.precert_poison)
-    precert_poison.short_description = _('Precert Poison')
+    precert_poison.short_description = PrecertPoison.name
 
     def certificate_policies(self, obj):
         return self.output_extension(obj.certificate_policies)
-    certificate_policies.short_description = _('Certificate Policies')
+    certificate_policies.short_description = CertificatePolicies.name
 
     def precertificate_signed_certificate_timestamps(self, obj):
         scts = obj.precertificate_signed_certificate_timestamps
