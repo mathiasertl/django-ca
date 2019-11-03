@@ -4,6 +4,8 @@ ARG IMAGE=python:3.8-alpine3.10
 ####################
 FROM $IMAGE as test
 WORKDIR /usr/src/django-ca
+
+ENV SKIP_SELENIUM_TESTS=y
 RUN apk --no-cache upgrade && \
     apk --no-cache add --update gcc linux-headers libc-dev libffi-dev openssl openssl-dev make
 
