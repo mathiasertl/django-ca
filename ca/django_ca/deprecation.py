@@ -14,14 +14,14 @@
 # see <http://www.gnu.org/licenses/>.
 
 
-class RemovedInDjangoCA15Warning(DeprecationWarning):
+class RemovedInDjangoCA16Warning(DeprecationWarning):
     """Warning if a feature will be removed in the next django-ca version."""
     pass
 
 
-class RemovedInDjangoCA16Warning(PendingDeprecationWarning):
+class RemovedInDjangoCA17Warning(PendingDeprecationWarning):
     """Warning if a feature will be removed in the version after the next django-ca version."""
     pass
 
 
-RemovedInNextVersionWarning = RemovedInDjangoCA15Warning
+RemovedInNextVersionWarning = RemovedInDjangoCA16Warning
