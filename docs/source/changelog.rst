@@ -11,6 +11,7 @@ ChangeLog
 ************
 
 * Drop dependency ``six``.
+* Consistently style serials in a monospace font.
 
 Backwards incompatible changes
 ==============================

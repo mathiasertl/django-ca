@@ -41,6 +41,18 @@ fieldset.as-code .field-pub div.readonly,
 }
 
 /**
+ * serial numbers use a monospace font
+ */
+table#result_list td.field-serial_field,
+div.field-serial_field div.readonly,
+div.field-hpkp_pin div.readonly,
+div.field-authority_key_identifier div.readonly p,
+div.field-subject_key_identifier div.readonly p
+{
+    font-family: mono;
+}
+
+/**
  * Style lists for x509 extensions.
  */
 form .aligned ul.x509-extension-value {

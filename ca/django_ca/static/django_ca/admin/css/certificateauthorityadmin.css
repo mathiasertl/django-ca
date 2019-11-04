@@ -1,12 +1,3 @@
 .column-enabled {
     width: 30px;
 }
-
-table#result_list td.field-serial_field,
-form#certificateauthority_form div.field-hpkp_pin div.readonly,
-form#certificateauthority_form div.field-serial_field div.readonly,
-form#certificateauthority_form div.field-authority_key_identifier div.readonly,
-form#certificateauthority_form div.field-subject_key_identifier div.readonly
-{
-    font-family: mono;
-}
