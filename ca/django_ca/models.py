@@ -19,7 +19,6 @@ import hashlib
 import itertools
 import json
 import logging
-import os
 import re
 from datetime import datetime
 from datetime import timedelta
@@ -519,9 +518,6 @@ class CertificateAuthority(X509CertMixin):
 
     def key(self, password):
         if self._key is None:
-            if os.path.isabs(self.private_key_path):
-                log.warning('%s: CA uses absolute path. Use "manage.py migrate_ca" to update.', self.serial)
-
             key_data = read_file(self.private_key_path)
 
             self._key = load_pem_private_key(key_data, password, default_backend())
@@ -531,9 +527,6 @@ class CertificateAuthority(X509CertMixin):
     def key_exists(self):
         if self._key is not None:
             return True
-        elif os.path.isabs(self.private_key_path):
-            log.warning('%s: CA uses absolute path. Use "manage.py migrate_ca" to update.', self.serial)
-            return os.path.exists(self.private_key_path)
         else:
             return ca_storage.exists(self.private_key_path)
 

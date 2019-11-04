@@ -42,6 +42,11 @@ The old profile settings will be supported until (and including) version 1.16.
 Update to 1.12.0 or later
 *************************
 
+.. NOTE:: 
+
+   The ``migrate_ca`` command has been removed in django-ca 1.15.0. If you update to version 1.15.0 or later,
+   you first have to upgrade to 1.14.0 and run ``manage.py migrate_ca``.
+
 :ref:`Version 1.12.0 <changelog-1.12.0>` and later uses the `File storage API
 <https://docs.djangoproject.com/en/2.1/ref/files/storage/>`_ to store files.
 Before 1.12.0, django-ca stored absolute file paths in the database.

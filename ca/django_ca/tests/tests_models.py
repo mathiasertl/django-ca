@@ -110,8 +110,6 @@ class TestWatcher(TestCase):
 class CertificateAuthorityTests(DjangoCAWithCertTestCase):
     @override_tmpcadir()
     def test_key(self):
-        log_msg = 'WARNING:django_ca.models:%s: CA uses absolute path. Use "manage.py migrate_ca" to update.'
-
         for name, ca in self.usable_cas.items():
             self.assertTrue(ca.key_exists)
             self.assertIsNotNone(ca.key(certs[name]['password']))
@@ -123,14 +121,9 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
 
             ca._key = None  # so the key is reloaded
             ca.private_key_path = os.path.join(ca_settings.CA_DIR, ca.private_key_path)
+            self.assertTrue(ca.key_exists)
 
-            with self.assertLogs() as cm:
-                self.assertTrue(ca.key_exists)
-            self.assertEqual(cm.output, [log_msg % ca.serial, ])
-
-            with self.assertLogs() as cm:
-                self.assertIsNotNone(ca.key(certs[name]['password']))
-            self.assertEqual(cm.output, [log_msg % ca.serial, ])
+            self.assertIsNotNone(ca.key(certs[name]['password']))
 
             # Check again - here we have an already loaded key (also: no logging here anymore)
             # NOTE: assertLogs() fails if there are *no* log messages, so we cannot test that
