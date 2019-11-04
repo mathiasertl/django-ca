@@ -18,6 +18,17 @@ Backwards incompatible changes
 * Drop support for Python 2.7.
 * Drop support for cryptography 2.5 and 2.6.
 
+Deprecation notices
+===================
+
+* :py:func:`Certificate.objects.init() <django_ca.managers.CertificateManager.init>` and
+  :py:func:`~django_ca.profiles.get_cert_profile_kwargs` were deprecated in :ref:`1.14.0 <changelog-1.14.0>`
+  and will be removed in ``django-ca==1.16.0``. Use
+  :py:func:`Certificate.objects.create_cert() <django_ca.managers.CertificateManager.create_cert>` instead.
+* The format for the ``CA_PROFILES`` setting has changed in :ref:`1.14.0 <changelog-1.14.0>`. Support for the
+  old format will be removed in ``django-ca==1.17.0``. Please see the :ref:`migration instructions
+  <profiles-pre-114-migration>` for what to change.
+
 .. _changelog-1.14.0:
 
 *******************
