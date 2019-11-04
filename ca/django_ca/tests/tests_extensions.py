@@ -1165,39 +1165,86 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
     hex1 = '33:33:33:33:33:33'
     hex2 = '44:44:44:44:44:44'
     hex3 = '55:55:55:55:55:55'
+    uri1 = 'http://ca.example.com/crl'
+    dns1 = 'example.org'
+    s1 = 0
+    s2 = 1
 
     test_values = {
         'one': {
             'values': [hex1, ],
             'expected': b1,
-            'expected_repr': b1,
-            'expected_serialized': hex1,
-            'expected_text': 'keyid:%s' % hex1,
+            'expected_repr': 'keyid: %s' % hex1,
+            'expected_serialized': {'key_identifier': hex1},
+            'expected_text': '* KeyID: %s' % hex1,
             'extension_type': x509.AuthorityKeyIdentifier(b1, None, None),
         },
         'two': {
             'values': [hex2, ],
             'expected': b2,
-            'expected_repr': b2,
-            'expected_serialized': hex2,
-            'expected_text': 'keyid:%s' % hex2,
+            'expected_repr': 'keyid: %s' % hex2,
+            'expected_serialized': {'key_identifier': hex2},
+            'expected_text': '* KeyID: %s' % hex2,
             'extension_type': x509.AuthorityKeyIdentifier(b2, None, None),
         },
         'three': {
             'values': [hex3, ],
             'expected': b3,
-            'expected_repr': b3,
-            'expected_serialized': hex3,
-            'expected_text': 'keyid:%s' % hex3,
+            'expected_repr': 'keyid: %s' % hex3,
+            'expected_serialized': {'key_identifier': hex3},
+            'expected_text': '* KeyID: %s' % hex3,
             'extension_type': x509.AuthorityKeyIdentifier(b3, None, None),
         },
+        'issuer/serial': {
+            'expected': {'authority_cert_issuer': [dns1], 'authority_cert_serial_number': s1},
+            'values': [{'authority_cert_issuer': [dns1], 'authority_cert_serial_number': s1}],
+            'expected_repr': 'issuer: [DNS:%s], serial: %s' % (dns1, s1),
+            'expected_serialized': {'authority_cert_issuer': ['DNS:%s' % dns1],
+                                    'authority_cert_serial_number': s1},
+            'expected_text': '* Issuer: [DNS:%s]\n* Serial: %s' % (dns1, s1),
+            'extension_type': x509.AuthorityKeyIdentifier(None, [dns(dns1)], s1),
+        }
     }
 
     def test_from_subject_key_identifier(self):
         for key, config in self.test_values.items():
+            if not isinstance(config['expected'], bytes):
+                continue
+
             ski = SubjectKeyIdentifier({'value': config['expected']})
             ext = self.ext_class(ski)
             self.assertExtensionEqual(ext, self.ext_class({'value': config['expected']}))
+
+    def test_shortcuts(self):
+        expected = self.ext_class({'value': {
+            'key_identifier': self.b1,
+            'authority_cert_issuer': [dns(self.dns1)],
+            'authority_cert_serial_number': 0,
+        }})
+
+        ext = self.ext_class()
+        ext.key_identifier = self.b1
+        ext.authority_cert_issuer = [dns(self.dns1)]
+        ext.authority_cert_serial_number = 0
+        self.assertExtensionEqual(ext, expected)
+        self.assertEqual(ext.key_identifier, self.b1)
+        self.assertEqual(ext.authority_cert_issuer, [dns(self.dns1)])
+        self.assertEqual(ext.authority_cert_serial_number, 0)
+
+        ext = self.ext_class()
+        ext.key_identifier = self.hex1
+        ext.authority_cert_issuer = [self.dns1]
+        ext.authority_cert_serial_number = 0
+        self.assertExtensionEqual(ext, expected)
+        self.assertEqual(ext.key_identifier, self.b1)
+        self.assertEqual(ext.authority_cert_issuer, [dns(self.dns1)])
+        self.assertEqual(ext.authority_cert_serial_number, 0)
+
+        # test that we can always set None
+        expected.key_identifier = None
+        expected.authority_cert_issuer = None
+        expected.authority_cert_serial_number = None
+        self.assertEqual(expected, self.ext_class())
 
 
 class BasicConstraintsTestCase(ExtensionTestMixin, TestCase):

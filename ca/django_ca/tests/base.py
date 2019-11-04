@@ -477,7 +477,7 @@ class DjangoCATestCaseMixin(object):
         return mock_cadir(path)
 
     def assertAuthorityKeyIdentifier(self, issuer, cert, critical=False):
-        self.assertEqual(cert.authority_key_identifier.value, issuer.subject_key_identifier.value)
+        self.assertEqual(cert.authority_key_identifier.key_identifier, issuer.subject_key_identifier.value)
 
     def assertBasic(self, cert, algo='SHA256'):
         """Assert some basic key properties."""

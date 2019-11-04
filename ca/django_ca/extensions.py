@@ -1038,7 +1038,7 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
         return s
 
 
-class AuthorityKeyIdentifier(KeyIdExtension):
+class AuthorityKeyIdentifier(GeneralNameMixin, Extension):
     """Class representing a AuthorityKeyIdentifier extension.
 
     This extension identifies the signing CA, so it is not usually defined in a profile or instantiated by a
@@ -1046,14 +1046,23 @@ class AuthorityKeyIdentifier(KeyIdExtension):
     bytes::
 
         >>> AuthorityKeyIdentifier({'value': '33:33:33:33:33:33'})
-        <AuthorityKeyIdentifier: b'333333', critical=False>
+        <AuthorityKeyIdentifier: keyid: 33:33:33:33:33:33, critical=False>
         >>> AuthorityKeyIdentifier({'value': b'333333'})
-        <AuthorityKeyIdentifier: b'333333', critical=False>
+        <AuthorityKeyIdentifier: keyid: 33:33:33:33:33:33, critical=False>
 
-    .. TODO::
+    If you want to set an ``authorityCertIssuer`` and ``authorityCertIssuer``, you can also pass a ``dict``
+    instead::
 
-        * This class only supports key_identifier, should also support authority_cert_issuer and
-          authority_cert_serial_number (see underlying constructor).
+        >>> AuthorityKeyIdentifier({'value': {
+        ...     'key_identifier': b'0',
+        ...     'authority_cert_issuer': ['example.com'],
+        ...     'authority_cert_serial_number': 1,
+        ... }})
+        <AuthorityKeyIdentifier: keyid: 30, issuer: [DNS:example.com], serial: 1, critical=False>
+
+    .. seealso::
+
+        `RFC 5280, section 4.2.1.1 <https://tools.ietf.org/html/rfc5280#section-4.2.1.1>`_
     """
 
     key = 'authority_key_identifier'
@@ -1062,16 +1071,81 @@ class AuthorityKeyIdentifier(KeyIdExtension):
     name = 'AuthorityKeyIdentifier'
     oid = ExtensionOID.AUTHORITY_KEY_IDENTIFIER
 
+    def __hash__(self):
+        issuer = self.value['authority_cert_issuer']
+        if issuer is not None:
+            issuer = tuple(sorted(issuer))
+
+        return hash((self.value['key_identifier'], issuer, self.value['authority_cert_serial_number'],
+                     self.critical))
+
+    def _repr_value(self):
+        values = []
+        if self.value['key_identifier'] is not None:
+            values.append('keyid: %s' % bytes_to_hex(self.value['key_identifier']))
+        if self.value['authority_cert_issuer'] is not None:
+            values.append('issuer: [%s]' % ', '.join(self.serialize_issuer()))
+        if self.value['authority_cert_serial_number'] is not None:
+            values.append('serial: %s' % self.value['authority_cert_serial_number'])
+
+        return ', '.join(values)
+
+    def as_text(self):
+        values = []
+        if self.value['key_identifier'] is not None:
+            values.append('* KeyID: %s' % bytes_to_hex(self.value['key_identifier']))
+        if self.value['authority_cert_issuer'] is not None:
+            values.append('* Issuer: [%s]' % ', '.join(self.serialize_issuer()))
+        if self.value['authority_cert_serial_number'] is not None:
+            values.append('* Serial: %s' % self.value['authority_cert_serial_number'])
+
+        return '\n'.join(values)
+
+    @property
+    def authority_cert_issuer(self):
+        return self.value['authority_cert_issuer']
+
+    @authority_cert_issuer.setter
+    def authority_cert_issuer(self, value):
+        self.value['authority_cert_issuer'] = self.parse_issuer(value)
+
+    @property
+    def authority_cert_serial_number(self):
+        return self.value['authority_cert_serial_number']
+
+    @authority_cert_serial_number.setter
+    def authority_cert_serial_number(self, value):
+        self.value['authority_cert_serial_number'] = value
+
     @property
     def extension_type(self):
-        return x509.AuthorityKeyIdentifier(key_identifier=self.value,
-                                           authority_cert_issuer=None, authority_cert_serial_number=None)
+        return x509.AuthorityKeyIdentifier(
+            key_identifier=self.value.get('key_identifier'),
+            authority_cert_issuer=self.value.get('authority_cert_issuer'),
+            authority_cert_serial_number=self.value.get('authority_cert_serial_number'))
 
-    def from_subject_key_identifier(self, ext):
-        self.value = ext.value
+    def from_dict(self, value):
+        value = value.get('value', {})
+
+        if isinstance(value, (bytes, str)) is True:
+            self.value = {
+                'key_identifier': self.parse_keyid(value),
+                'authority_cert_issuer': None,
+                'authority_cert_serial_number': None,
+            }
+        else:
+            self.value = {
+                'key_identifier': self.parse_keyid(value.get('key_identifier')),
+                'authority_cert_issuer': self.parse_issuer(value.get('authority_cert_issuer')),
+                'authority_cert_serial_number': value.get('authority_cert_serial_number'),
+            }
 
     def from_extension(self, ext):
-        self.value = ext.value.key_identifier
+        self.value = {
+            'key_identifier': ext.value.key_identifier,
+            'authority_cert_issuer': ext.value.authority_cert_issuer,
+            'authority_cert_serial_number': ext.value.authority_cert_serial_number,
+        }
 
     def from_other(self, value):
         if isinstance(value, SubjectKeyIdentifier):
@@ -1081,8 +1155,49 @@ class AuthorityKeyIdentifier(KeyIdExtension):
         else:
             super(AuthorityKeyIdentifier, self).from_other(value)
 
-    def as_text(self):
-        return 'keyid:%s' % super(AuthorityKeyIdentifier, self).as_text()
+    def from_subject_key_identifier(self, ext):
+        self.value = {
+            'key_identifier': ext.value,
+            'authority_cert_issuer': None,
+            'authority_cert_serial_number': None,
+        }
+
+    @property
+    def key_identifier(self):
+        return self.value['key_identifier']
+
+    @key_identifier.setter
+    def key_identifier(self, value):
+        self.value['key_identifier'] = self.parse_keyid(value)
+
+    def parse_issuer(self, value):
+        if value is not None:
+            return [parse_general_name(v) if not isinstance(v, x509.GeneralName) else v
+                    for v in value]
+
+    def parse_keyid(self, value):
+        if isinstance(value, str) and ':' in value:
+            return hex_to_bytes(value)
+        elif isinstance(value, bytes):
+            return value
+
+    def serialize(self):
+        s = {
+            'critical': self.critical,
+            'value': {},
+        }
+
+        if self.value['key_identifier'] is not None:
+            s['value']['key_identifier'] = bytes_to_hex(self.value['key_identifier'])
+        if self.value['authority_cert_issuer'] is not None:
+            s['value']['authority_cert_issuer'] = self.serialize_issuer()
+        if self.value['authority_cert_serial_number'] is not None:
+            s['value']['authority_cert_serial_number'] = self.value['authority_cert_serial_number']
+
+        return s
+
+    def serialize_issuer(self):
+        return sorted([format_general_name(v) for v in self.value['authority_cert_issuer']])
 
 
 class BasicConstraints(Extension):

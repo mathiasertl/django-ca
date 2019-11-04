@@ -91,7 +91,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         parent = CertificateAuthority.objects.init(name='Root', parent=None, pathlen=1, **kwargs)
         child = CertificateAuthority.objects.init(name='Child', parent=parent, pathlen=0, **kwargs)
 
-        self.assertEqual(child.authority_key_identifier.value, parent.subject_key_identifier.value)
+        self.assertAuthorityKeyIdentifier(parent, child)
 
     @override_tmpcadir()
     def test_key_size(self):

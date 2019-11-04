@@ -12,6 +12,7 @@ ChangeLog
 
 * Drop dependency ``six``.
 * Consistently style serials in a monospace font.
+* :py:class:`~django_ca.extensions.AuthorityKeyIdentifier` now also supports issuers and serials.
 
 Backwards incompatible changes
 ==============================
