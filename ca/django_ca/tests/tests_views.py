@@ -46,10 +46,6 @@ urlpatterns = [
     url(r'^crl/ca/(?P<serial>[0-9A-F:]+)/$', CertificateRevocationListView.as_view(
         scope='ca', type=Encoding.PEM
     ), name='ca_crl'),
-    url(r'^crl/dep-ca/(?P<serial>[0-9A-F:]+)/$', CertificateRevocationListView.as_view(ca_crl=True),
-        name='deprecated-ca'),
-    url(r'^crl/dep-user/(?P<serial>[0-9A-F:]+)/$', CertificateRevocationListView.as_view(ca_crl=False),
-        name='deprecated-user'),
 ]
 
 
@@ -140,20 +136,6 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'text/plain')
         self.assertCRL(response.content, expires=321, idp=idp, algorithm=hashes.MD5())
-
-    @override_tmpcadir()
-    def test_deprecated(self):
-        response = self.client.get(reverse('deprecated-ca', kwargs={'serial': self.ca.serial}))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response['Content-Type'], 'application/pkix-crl')
-        idp = self.get_idp(full_name=self.get_idp_full_name(self.ca), only_contains_ca_certs=True)
-        self.assertCRL(response.content, encoding=Encoding.DER, expires=600, idp=idp)
-
-        response = self.client.get(reverse('deprecated-user', kwargs={'serial': self.ca.serial}))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response['Content-Type'], 'application/pkix-crl')
-        idp = self.get_idp(full_name=self.get_idp_full_name(self.ca), only_contains_user_certs=True)
-        self.assertCRL(response.content, encoding=Encoding.DER, expires=600, idp=idp)
 
 
 @override_settings(USE_TZ=True)

@@ -63,9 +63,6 @@ class CertificateRevocationListView(View, SingleObjectMixin):
     type = Encoding.DER
     """Filetype for CRL."""
 
-    ca_crl = None
-    """**DEPRECATED:** Use ``scope`` parameter instead!"""
-
     scope = 'user'
     """Set to ``"user"`` to limit CRL to certificates or ``"ca"`` to certificate authorities or ``None`` to
     include both."""
@@ -82,25 +79,14 @@ class CertificateRevocationListView(View, SingleObjectMixin):
 
     def get(self, request, serial):
         cache_key = 'crl_%s_%s_%s' % (serial, self.type, self.digest.name)
-
-        if self.ca_crl is not None:
-            log.warning('CertificateRevocationListView.ca_crl is depcrecated, use scope instead.')
-
-            if self.ca_crl is True:
-                scope = 'ca'
-            else:
-                scope = 'user'
-        else:
-            scope = self.scope
-
-        if scope is not None:
-            cache_key = '%s_%s' % (cache_key, scope)
+        if self.scope is not None:
+            cache_key = '%s_%s' % (cache_key, self.scope)
 
         crl = cache.get(cache_key)
         if crl is None:
             ca = self.get_object()
             crl = ca.get_crl(encoding=self.type, expires=self.expires, algorithm=self.digest,
-                             password=self.password, scope=scope)
+                             password=self.password, scope=self.scope)
             cache.set(cache_key, crl, self.expires)
 
         content_type = self.content_type

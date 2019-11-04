@@ -17,7 +17,10 @@ Backwards incompatible changes
 
 * Drop support for Python 2.7.
 * Drop support for cryptography 2.5 and 2.6.
-* Removed the ``manage.py migrate_ca`` command.
+* Removed the ``manage.py migrate_ca`` command. If you upgrade from before :ref:`1.12.0 <changelog-1.12.0>`,
+  upgrade to :ref:`1.14.0 <changelog-1.14.0>` first and :ref:`update file storage <update-file-storage>`.
+* Removed the ``ca_crl`` setting in :py:class:`~django_ca.views.CertificateRevocationListView`, use ``scope``
+  instead.
 
 Deprecation notices
 ===================
