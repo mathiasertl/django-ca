@@ -853,13 +853,8 @@ def get_extension_name(ext):
 #def write_private_file(path, data):
 #    """Function to write binary data to a file that will only be readable to the user."""
 #
-#    try:
-#        with os.fdopen(os.open(path, os.O_CREAT | os.O_WRONLY, 0o400), 'wb') as fh:
-#            fh.write(data)
-#    except PermissionError:
-#        # In py3, we want to raise Exception unchanged, so there would be no need for this block.
-#        # BUT (IOError, OSError) - see below - also matches, so we capture it here
-#        raise
+#    with os.fdopen(os.open(path, os.O_CREAT | os.O_WRONLY, 0o400), 'wb') as fh:
+#        fh.write(data)
 
 
 def shlex_split(s, sep):
