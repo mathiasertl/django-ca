@@ -53,7 +53,7 @@ override the ``default_critical`` attribute.
 .. automodule:: django_ca.extensions
    :show-inheritance:
    :members:
-   :exclude-members: Extension, IterableExtension, ListExtension, OrderedSetExtension, AlternativeNameExtension, KeyIdExtension, GeneralNameMixin, NullExtension, DistributionPoint, PolicyInformation
+   :exclude-members: Extension, IterableExtension, ListExtension, OrderedSetExtension, AlternativeNameExtension, KeyIdExtension, NullExtension, DistributionPoint, PolicyInformation
 
 *****************
 Attribute classes
@@ -93,9 +93,5 @@ Base classes
    :members:
 
 .. autoclass:: django_ca.extensions.NullExtension
-   :show-inheritance:
-   :members:
-
-.. autoclass:: django_ca.extensions.GeneralNameMixin
    :show-inheritance:
    :members:

@@ -33,13 +33,12 @@ from .utils import bytes_to_hex
 from .utils import format_general_name
 from .utils import format_relative_name
 from .utils import hex_to_bytes
-from .utils import parse_general_name
 from .utils import x509_relative_name
 
 
-def _gnl_or_none(value):
+def _gnl_or_empty(value, default=None):
     if value is None:
-        return None
+        return default
     if isinstance(value, GeneralNameList) is True:
         return value
     return GeneralNameList(value)
@@ -488,28 +487,6 @@ class OrderedSetExtension(IterableExtension):
             self.value.update(self.parse_iterable(o))
 
 
-class GeneralNameMixin(object):
-    """Mixin to internally store values as ``GeneralName`` instances.
-
-    This mixin ensures that values passed as :py:class:`~cg:cryptography.x509.GeneralName` instances will
-    never get parsed. This is useful because there are some instances where names may not be parsed reliably.
-    This means that the DNS name here is never converted between the instantiation here and actually adding
-    the extension to the certificate::
-
-        >>> san = SubjectAlternativeName({'value': [x509.DNSName('example.com')]})
-        >>> Certificate.objects.create_cert(ca, csr, extensions=[san], ...)  # doctest: +SKIP
-    """
-
-    def parse_value(self, v):
-        if isinstance(v, x509.GeneralName):
-            return v
-        else:
-            return parse_general_name(v)
-
-    def serialize_value(self, v):
-        return format_general_name(v)
-
-
 class AlternativeNameExtension(ListExtension):
     """Base class for extensions that contain a list of general names.
 
@@ -607,14 +584,14 @@ class DistributionPoint:
             data = {}
 
         if isinstance(data, x509.DistributionPoint):
-            self.full_name = _gnl_or_none(data.full_name)
+            self.full_name = _gnl_or_empty(data.full_name)
             self.relative_name = data.relative_name
-            self.crl_issuer = _gnl_or_none(data.crl_issuer)
+            self.crl_issuer = _gnl_or_empty(data.crl_issuer)
             self.reasons = data.reasons
         elif isinstance(data, dict):
-            self.full_name = _gnl_or_none(data.get('full_name'))
+            self.full_name = _gnl_or_empty(data.get('full_name'))
             self.relative_name = data.get('relative_name')
-            self.crl_issuer = _gnl_or_none(data.get('crl_issuer'))
+            self.crl_issuer = _gnl_or_empty(data.get('crl_issuer'))
             self.reasons = data.get('reasons')
 
             if self.full_name is not None and self.relative_name is not None:
@@ -1018,7 +995,7 @@ class AuthorityInformationAccess(Extension):
 
     @issuers.setter
     def issuers(self, value):
-        self.value['issuers'] = _gnl_or_none(value)
+        self.value['issuers'] = _gnl_or_empty(value)
 
     @property
     def ocsp(self):
@@ -1027,7 +1004,7 @@ class AuthorityInformationAccess(Extension):
 
     @ocsp.setter
     def ocsp(self, value):
-        self.value['ocsp'] = _gnl_or_none(value)
+        self.value['ocsp'] = _gnl_or_empty(value)
 
     def serialize(self):
         s = {
@@ -1110,7 +1087,7 @@ class AuthorityKeyIdentifier(Extension):
 
     @authority_cert_issuer.setter
     def authority_cert_issuer(self, value):
-        self.value['authority_cert_issuer'] = _gnl_or_none(value)
+        self.value['authority_cert_issuer'] = _gnl_or_empty(value)
 
     @property
     def authority_cert_serial_number(self):
@@ -1139,14 +1116,14 @@ class AuthorityKeyIdentifier(Extension):
         else:
             self.value = {
                 'key_identifier': self.parse_keyid(value.get('key_identifier')),
-                'authority_cert_issuer': _gnl_or_none(value.get('authority_cert_issuer')),
+                'authority_cert_issuer': _gnl_or_empty(value.get('authority_cert_issuer')),
                 'authority_cert_serial_number': value.get('authority_cert_serial_number'),
             }
 
     def from_extension(self, ext):
         self.value = {
             'key_identifier': ext.value.key_identifier,
-            'authority_cert_issuer': _gnl_or_none(ext.value.authority_cert_issuer),
+            'authority_cert_issuer': _gnl_or_empty(ext.value.authority_cert_issuer),
             'authority_cert_serial_number': ext.value.authority_cert_serial_number,
         }
 
@@ -1573,7 +1550,7 @@ class ExtendedKeyUsage(OrderedSetExtension):
         raise ValueError('Unknown value: %s' % v)
 
 
-class NameConstraints(GeneralNameMixin, Extension):
+class NameConstraints(Extension):
     """Class representing a NameConstraints extenion
 
     Unlike most other extensions, this extension does not accept a string as value, but you can pass a list
@@ -1596,22 +1573,7 @@ class NameConstraints(GeneralNameMixin, Extension):
         >>> nc
         <NameConstraints: permitted=['DNS:example.com'], excluded=['DNS:example.net'], critical=True>
         >>> nc.permitted, nc.excluded
-        ([<DNSName(value='example.com')>], [<DNSName(value='example.net')>])
-
-    But note that getters return a normal list, so you need to pass
-    :py:class:`~cg:cryptography.x509.GeneralName` if you want to use list functions::
-
-        >>> nc = NameConstraints()
-        >>> nc.permitted.append(x509.DNSName('example.net'))  # that's okay
-        >>> nc.extension_type
-        <NameConstraints(permitted_subtrees=[<DNSName(value='example.net')>], excluded_subtrees=[])>
-        >>> nc.permitted.append('example.com')  # sorry, doesn't work!
-        >>> nc.permitted  # it's actually broken, elements should all be DNSName!
-        [<DNSName(value='example.net')>, 'example.com']
-        >>> nc.extension_type
-        Traceback (most recent call last):
-            ...
-        TypeError: permitted_subtrees must be a list of GeneralName objects or None
+        (<GeneralNameList: ['DNS:example.com']>, <GeneralNameList: ['DNS:example.net']>)
 
     .. seealso::
 
@@ -1634,8 +1596,8 @@ class NameConstraints(GeneralNameMixin, Extension):
         return hash((tuple(self.value['permitted']), tuple(self.value['excluded']), self.critical, ))
 
     def _repr_value(self):
-        permitted = [self.serialize_value(v) for v in self.value['permitted']]
-        excluded = [self.serialize_value(v) for v in self.value['excluded']]
+        permitted = list(self.value['permitted'].serialize())
+        excluded = list(self.value['excluded'].serialize())
 
         return 'permitted=%r, excluded=%r' % (permitted, excluded)
 
@@ -1643,12 +1605,12 @@ class NameConstraints(GeneralNameMixin, Extension):
         text = ''
         if self.value['permitted']:
             text += 'Permitted:\n'
-            for name in self.value['permitted']:
-                text += '  * %s\n' % self.serialize_value(name)
+            for name in self.value['permitted'].serialize():
+                text += '  * %s\n' % name
         if self.value['excluded']:
             text += 'Excluded:\n'
-            for name in self.value['excluded']:
-                text += '  * %s\n' % self.serialize_value(name)
+            for name in self.value['excluded'].serialize():
+                text += '  * %s\n' % name
 
         return text
 
@@ -1658,7 +1620,7 @@ class NameConstraints(GeneralNameMixin, Extension):
 
     @excluded.setter
     def excluded(self, value):
-        self.value['excluded'] = [self.parse_value(v) for v in value]
+        self.value['excluded'] = _gnl_or_empty(value, GeneralNameList())
 
     @property
     def extension_type(self):
@@ -1667,15 +1629,15 @@ class NameConstraints(GeneralNameMixin, Extension):
 
     def from_extension(self, value):
         self.value = {
-            'permitted': value.value.permitted_subtrees or [],
-            'excluded': value.value.excluded_subtrees or [],
+            'permitted': _gnl_or_empty(value.value.permitted_subtrees, GeneralNameList()),
+            'excluded': _gnl_or_empty(value.value.excluded_subtrees, GeneralNameList()),
         }
 
     def from_dict(self, value):
         value = value.get('value', {})
         self.value = {
-            'permitted': [self.parse_value(v) for v in value.get('permitted', [])],
-            'excluded': [self.parse_value(v) for v in value.get('excluded', [])],
+            'permitted': _gnl_or_empty(value.get('permitted', []), GeneralNameList()),
+            'excluded': _gnl_or_empty(value.get('excluded', []), GeneralNameList()),
         }
 
     @property
@@ -1684,14 +1646,14 @@ class NameConstraints(GeneralNameMixin, Extension):
 
     @permitted.setter
     def permitted(self, value):
-        self.value['permitted'] = [self.parse_value(v) for v in value]
+        self.value['permitted'] = _gnl_or_empty(value, GeneralNameList())
 
     def serialize(self):
         return {
             'critical': self.critical,
             'value': {
-                'permitted': [self.serialize_value(v) for v in self.value['permitted']],
-                'excluded': [self.serialize_value(v) for v in self.value['excluded']],
+                'permitted': list(self.value['permitted'].serialize()),
+                'excluded': list(self.value['excluded'].serialize()),
             },
         }
 
