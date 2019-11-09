@@ -42,8 +42,8 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from .. import utils
-from ..utils import GeneralNameList
 from ..utils import NAME_RE
+from ..utils import GeneralNameList
 from ..utils import LazyEncoder
 from ..utils import format_general_name
 from ..utils import format_name
@@ -733,6 +733,10 @@ class GeneralNameListTestCase(DjangoCATestCase):
         self.assertEqual(GeneralNameList([dns(self.dns1)]), [dns(self.dns1)])
         self.assertEqual(GeneralNameList([dns(self.dns1), self.dns2]),
                          [dns(self.dns1), dns(self.dns2)])
+
+        # we also accept a str or generalName
+        self.assertEqual(GeneralNameList(self.dns1), [dns(self.dns1)])
+        self.assertEqual(GeneralNameList(dns(self.dns1)), [dns(self.dns1)])
 
         with self.assertTrue():
             GeneralNameList([True])

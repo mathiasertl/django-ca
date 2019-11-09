@@ -903,6 +903,9 @@ class GeneralNameList(list):
 
     """
     def __init__(self, iterable=tuple()):
+        if isinstance(iterable, (str, x509.GeneralName)):
+            iterable = [iterable]
+
         super().__init__(parse_general_name(v) for v in iterable)
 
     def serialize(self):
