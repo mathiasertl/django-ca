@@ -61,18 +61,9 @@ from ..models import X509CertMixin
 from .base import DjangoCATestCase
 from .base import DjangoCAWithCertTestCase
 from .base import certs
-
-
-def dns(d):  # just a shortcut
-    return x509.DNSName(d)
-
-
-def uri(u):  # just a shortcut
-    return x509.UniformResourceIdentifier(u)
-
-
-def rdn(r):  # just a shortcut
-    return x509.RelativeDistinguishedName([x509.NameAttribute(*t) for t in r])
+from .base import dns
+from .base import rdn
+from .base import uri
 
 
 def load_tests(loader, tests, ignore):

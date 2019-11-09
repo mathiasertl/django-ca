@@ -354,6 +354,18 @@ timestamps['everything_expired'] = timestamps['base'] + timedelta(days=365 * 20)
 ocsp_data = _fixture_data['ocsp']
 
 
+def dns(d):  # just a shortcut
+    return x509.DNSName(d)
+
+
+def uri(u):  # just a shortcut
+    return x509.UniformResourceIdentifier(u)
+
+
+def rdn(r):  # just a shortcut
+    return x509.RelativeDistinguishedName([x509.NameAttribute(*t) for t in r])
+
+
 class override_settings(_override_settings):
     """Enhance override_settings to also reload django_ca.ca_settings.
 
