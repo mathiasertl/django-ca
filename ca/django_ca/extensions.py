@@ -2181,23 +2181,4 @@ KEY_TO_EXTENSION = {
     TLSFeature.key: TLSFeature,
 }
 
-OID_TO_EXTENSION = {
-    AuthorityInformationAccess.oid: AuthorityInformationAccess,
-    AuthorityKeyIdentifier.oid: AuthorityKeyIdentifier,
-    BasicConstraints.oid: BasicConstraints,
-    CRLDistributionPoints.oid: CRLDistributionPoints,
-    CertificatePolicies.oid: CertificatePolicies,
-    ExtendedKeyUsage.oid: ExtendedKeyUsage,
-    FreshestCRL.oid: FreshestCRL,
-    InhibitAnyPolicy.oid: InhibitAnyPolicy,
-    IssuerAlternativeName.oid: IssuerAlternativeName,
-    KeyUsage.oid: KeyUsage,
-    NameConstraints.oid: NameConstraints,
-    OCSPNoCheck.oid: OCSPNoCheck,
-    PolicyConstraints.oid: PolicyConstraints,
-    PrecertPoison.oid: PrecertPoison,
-    PrecertificateSignedCertificateTimestamps.oid: PrecertificateSignedCertificateTimestamps,
-    SubjectAlternativeName.oid: SubjectAlternativeName,
-    SubjectKeyIdentifier.oid: SubjectKeyIdentifier,
-    TLSFeature.oid: TLSFeature,
-}
+OID_TO_EXTENSION = {e.oid: e for e in KEY_TO_EXTENSION.values()}

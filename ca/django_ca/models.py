@@ -49,6 +49,7 @@ from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
 from .constants import ReasonFlags
+from .extensions import OID_TO_EXTENSION
 from .extensions import AuthorityInformationAccess
 from .extensions import AuthorityKeyIdentifier
 from .extensions import BasicConstraints
@@ -322,26 +323,6 @@ class X509CertMixin(models.Model):
     ###################
     # X509 extensions #
     ###################
-    OID_MAPPING = {
-        ExtensionOID.AUTHORITY_INFORMATION_ACCESS: 'authority_information_access',
-        ExtensionOID.AUTHORITY_KEY_IDENTIFIER: 'authority_key_identifier',
-        ExtensionOID.BASIC_CONSTRAINTS: 'basic_constraints',
-        ExtensionOID.CRL_DISTRIBUTION_POINTS: 'crl_distribution_points',
-        ExtensionOID.CERTIFICATE_POLICIES: 'certificate_policies',
-        ExtensionOID.EXTENDED_KEY_USAGE: 'extended_key_usage',
-        ExtensionOID.FRESHEST_CRL: 'freshest_crl',
-        ExtensionOID.INHIBIT_ANY_POLICY: 'inhibit_any_policy',
-        ExtensionOID.ISSUER_ALTERNATIVE_NAME: 'issuer_alternative_name',
-        ExtensionOID.KEY_USAGE: 'key_usage',
-        ExtensionOID.NAME_CONSTRAINTS: 'name_constraints',
-        ExtensionOID.OCSP_NO_CHECK: 'ocsp_no_check',
-        ExtensionOID.POLICY_CONSTRAINTS: 'policy_constraints',
-        ExtensionOID.PRECERT_POISON: 'precert_poison',
-        ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS: 'precertificate_signed_certificate_timestamps',
-        ExtensionOID.SUBJECT_ALTERNATIVE_NAME: 'subject_alternative_name',
-        ExtensionOID.SUBJECT_KEY_IDENTIFIER: 'subject_key_identifier',
-        ExtensionOID.TLS_FEATURE: 'tls_feature',
-    }
 
     @cached_property
     def _x509_extensions(self):
@@ -361,8 +342,8 @@ class X509CertMixin(models.Model):
         fields = []
 
         for ext in self._sorted_extensions:
-            if ext.oid in self.OID_MAPPING:
-                fields.append(self.OID_MAPPING[ext.oid])
+            if ext.oid in OID_TO_EXTENSION:
+                fields.append(OID_TO_EXTENSION[ext.oid].key)
 
             # extension that does not support new extension framework
             else:
@@ -376,8 +357,8 @@ class X509CertMixin(models.Model):
         exts = []
 
         for ext in self._sorted_extensions:
-            if ext.oid in self.OID_MAPPING:
-                exts.append(getattr(self, self.OID_MAPPING[ext.oid]))
+            if ext.oid in OID_TO_EXTENSION:
+                exts.append(getattr(self, OID_TO_EXTENSION[ext.oid].key))
 
             # extension that does not support new extension framework
             else:

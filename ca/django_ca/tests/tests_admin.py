@@ -39,6 +39,7 @@ from freezegun import freeze_time
 from selenium.webdriver.support.select import Select
 
 from .. import ca_settings
+from .. import models
 from ..constants import ReasonFlags
 from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
@@ -307,7 +308,7 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     def test_unsupported_extensions(self):
         cert = self.certs['all-extensions']
         # Act as if no extensions is recognized, to see what happens if we'd encounter an unknown extension.
-        with mock.patch.object(Certificate, 'OID_MAPPING', {}), self.assertLogs() as logs:
+        with mock.patch.object(models, 'OID_TO_EXTENSION', {}), self.assertLogs() as logs:
             response = self.client.get(self.change_url(cert.pk))
             self.assertChangeResponse(response)
 

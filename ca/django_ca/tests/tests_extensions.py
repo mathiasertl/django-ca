@@ -342,7 +342,6 @@ class ExtensionTestMixin(AbstractExtensionTestMixin):
         self.assertEqual(OID_TO_EXTENSION[self.ext_class.oid], self.ext_class)
 
         # test that the model matches
-        self.assertEqual(X509CertMixin.OID_MAPPING[self.ext_class.oid], self.ext_class.key)
         self.assertTrue(hasattr(X509CertMixin, self.ext_class.key))
         self.assertIsInstance(getattr(X509CertMixin, self.ext_class.key), cached_property)
 
@@ -2558,7 +2557,6 @@ class PrecertificateSignedCertificateTimestampsTestCase(DjangoCAWithCertTestCase
         self.assertEqual(OID_TO_EXTENSION[self.ext_class.oid], self.ext_class)
 
         # test that the model matches
-        self.assertEqual(X509CertMixin.OID_MAPPING[self.ext_class.oid], self.ext_class.key)
         self.assertTrue(hasattr(X509CertMixin, self.ext_class.key))
         self.assertIsInstance(getattr(X509CertMixin, self.ext_class.key), cached_property)
 
