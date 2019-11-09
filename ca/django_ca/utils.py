@@ -535,7 +535,12 @@ def parse_general_name(name):
     ValueError: Invalid domain: bar com
 
     """
-    name = force_text(name)
+    if isinstance(name, x509.GeneralName):
+        return name
+    elif not isinstance(name, str):
+        raise ValueError('Cannot parse general name %s: Must be of type str (was: %s).' %
+                         (name, type(name).__name__))
+
     typ = None
     match = GENERAL_NAME_RE.match(name)
     if match is not None:
@@ -875,6 +880,84 @@ def shlex_split(s, sep):
     lex.whitespace = sep
     lex.whitespace_split = True
     return [l for l in lex]
+
+
+class GeneralNameList(list):
+    """List that holds :py:class:`~cg:cryptography.x509.GeneralName` instances and parses ``str`` when added.
+
+    A ``GeneralNameList`` is a ``list`` subclass that will always only hold
+    :py:class:`~cg:cryptography.x509.GeneralName` instances, but any ``str`` passed to it will be passed to
+    :py:func:`~django_ca.utils.parse_general_name`::
+
+        >>> from cryptography import x509
+        >>> l = GeneralNameList(['example.com'])
+        >>> l += ['DNS:example.net', x509.DNSName('example.org')]
+        >>> print(l)
+        <GeneralNameList: ['DNS:example.com', 'DNS:example.net', 'DNS:example.org']>
+        >>> 'example.com' in l, 'DNS:example.com' in l, x509.DNSName('example.com') in l
+        (True, True, True)
+        >>> l == ['example.com', 'example.net', 'example.org']
+        True
+        >>> l == [x509.DNSName('example.com'), 'example.net', 'DNS:example.org']
+        True
+
+    """
+    def __init__(self, iterable=tuple()):
+        super().__init__(parse_general_name(v) for v in iterable)
+
+    def serialize(self):
+        for v in self:
+            yield format_general_name(v)
+
+    def __add__(self, value):  # self + other_list
+        if isinstance(value, GeneralNameList) is False:
+            value = GeneralNameList(value)
+        return GeneralNameList(list(self) + list(value))
+
+    def __contains__(self, value):  # value in self
+        try:
+            value = parse_general_name(value)
+        except ValueError:
+            return False
+
+        return list.__contains__(self, value)
+
+    def __eq__(self, other):  # value == other
+        if isinstance(other, GeneralNameList) is False and isinstance(other, list) is True:
+            other = GeneralNameList(other)
+        return list.__eq__(self, other)
+
+    def __iadd__(self, value):  # self += value
+        return list.__iadd__(self, (parse_general_name(v) for v in value))
+
+    def __repr__(self):
+        return '<GeneralNameList: %r>' % [format_general_name(v) for v in self]
+
+    def __setitem__(self, key, value):  # l[0] = 'example.com'
+        list.__setitem__(self, key, parse_general_name(value))
+
+    def append(self, object):
+        list.append(self, parse_general_name(object))
+
+    def count(self, value):
+        try:
+            value = parse_general_name(value)
+        except ValueError:
+            return 0
+
+        return list.count(self, value)
+
+    def extend(self, iterable):
+        list.extend(self, (parse_general_name(i) for i in iterable))
+
+    def index(self, value, *args):
+        return list.index(self, parse_general_name(value), *args)
+
+    def insert(self, index, object):
+        list.insert(self, index, parse_general_name(object))
+
+    def remove(self, value):
+        list.remove(self, parse_general_name(value))
 
 
 ca_storage = get_storage_class(ca_settings.CA_FILE_STORAGE)(**ca_settings.CA_FILE_STORAGE_KWARGS)

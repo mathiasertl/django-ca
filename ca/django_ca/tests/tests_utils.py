@@ -21,6 +21,7 @@ import doctest
 import ipaddress
 import json
 import os
+from contextlib import contextmanager
 from datetime import datetime
 from datetime import timedelta
 
@@ -41,6 +42,7 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from .. import utils
+from ..utils import GeneralNameList
 from ..utils import NAME_RE
 from ..utils import LazyEncoder
 from ..utils import format_general_name
@@ -60,6 +62,7 @@ from ..utils import validate_hostname
 from ..utils import validate_key_parameters
 from ..utils import x509_relative_name
 from .base import DjangoCATestCase
+from .base import dns
 from .base import override_settings
 from .base import override_tmpcadir
 
@@ -710,3 +713,202 @@ class ValidateKeyParametersTest(TestCase):
 
         with self.assertRaisesRegex(ValueError, '^16: Key size must be least 1024 bits$'):
             validate_key_parameters(16, 'RSA')
+
+
+class GeneralNameListTestCase(DjangoCATestCase):
+    dns1 = 'example.com'
+    dns2 = 'example.net'
+
+    @contextmanager
+    def assertTrue(self):
+        # just a shortcut when we somehow add True
+
+        msg = r'^Cannot parse general name True: Must be of type str \(was: bool\)\.$'
+        with self.assertRaisesRegex(ValueError, msg):
+            yield
+
+    def test_init(self):
+        self.assertEqual(GeneralNameList(), [])
+        self.assertEqual(GeneralNameList([self.dns1]), [dns(self.dns1)])
+        self.assertEqual(GeneralNameList([dns(self.dns1)]), [dns(self.dns1)])
+        self.assertEqual(GeneralNameList([dns(self.dns1), self.dns2]),
+                         [dns(self.dns1), dns(self.dns2)])
+
+        with self.assertTrue():
+            GeneralNameList([True])
+
+    def test_add(self):
+        values = [
+            (GeneralNameList(), GeneralNameList([self.dns1]), GeneralNameList([self.dns1])),
+            (GeneralNameList(), GeneralNameList([dns(self.dns1)]), GeneralNameList([self.dns1])),
+            (GeneralNameList(), [self.dns1], GeneralNameList([self.dns1])),
+            (GeneralNameList(), [dns(self.dns1)], GeneralNameList([self.dns1])),
+            (GeneralNameList([self.dns1]), [dns(self.dns1)], GeneralNameList([self.dns1, self.dns1])),
+            (GeneralNameList([dns(self.dns1)]), [dns(self.dns1)], GeneralNameList([self.dns1, self.dns1])),
+            (GeneralNameList([dns(self.dns2)]), [dns(self.dns1)], GeneralNameList([self.dns2, self.dns1])),
+        ]
+
+        for l1, l2, exp in values:
+            got = l1 + l2
+            self.assertEqual(got, exp)
+            self.assertIsNot(l1, got)
+            self.assertIsNot(l2, got)
+
+        empty = GeneralNameList()
+        with self.assertTrue():
+            empty + [True]
+
+    def test_append(self):
+        l1 = GeneralNameList()
+        self.assertIsNone(l1.append(self.dns1))
+        self.assertEqual(l1, GeneralNameList([self.dns1]))
+        self.assertIsNone(l1.append(dns(self.dns2)))
+        self.assertEqual(l1, GeneralNameList([self.dns1, self.dns2]))
+
+        with self.assertTrue():
+            l1.append(True)
+        self.assertEqual(l1, GeneralNameList([self.dns1, self.dns2]))
+
+    def test_contains(self):
+        self.assertNotIn(self.dns1, GeneralNameList())
+        self.assertNotIn(dns(self.dns1), GeneralNameList())
+
+        self.assertIn(self.dns1, GeneralNameList([self.dns1]))
+        self.assertIn(dns(self.dns1), GeneralNameList([self.dns1]))
+        self.assertNotIn(self.dns1, GeneralNameList([self.dns2]))
+        self.assertNotIn(dns(self.dns1), GeneralNameList([self.dns2]))
+        self.assertNotIn(self.dns1, GeneralNameList([dns(self.dns2)]))
+        self.assertNotIn(dns(self.dns1), GeneralNameList([dns(self.dns2)]))
+
+        # Should not raise an error - it's just False
+        self.assertNotIn(True, GeneralNameList([dns(self.dns2)]))
+
+    def test_count(self):
+        l1 = GeneralNameList()
+        self.assertEqual(l1.count(self.dns1), 0)
+        self.assertEqual(l1.count(dns(self.dns2)), 0)
+        self.assertEqual(l1.count(True), 0)
+
+        l1 = GeneralNameList([self.dns1])
+        self.assertEqual(l1.count(self.dns1), 1)
+        self.assertEqual(l1.count(dns(self.dns1)), 1)
+        self.assertEqual(l1.count(dns(self.dns2)), 0)
+        self.assertEqual(l1.count(self.dns2), 0)
+        self.assertEqual(l1.count(True), 0)
+
+    def test_eq(self):
+        self.assertEqual(GeneralNameList(), [])
+        self.assertEqual(GeneralNameList(), GeneralNameList())
+        self.assertEqual(GeneralNameList([self.dns1]), GeneralNameList([self.dns1]))
+        self.assertEqual(GeneralNameList([self.dns1]), GeneralNameList([dns(self.dns1)]))
+        self.assertEqual(GeneralNameList([self.dns1]), [self.dns1])
+        self.assertEqual(GeneralNameList([self.dns1]), [dns(self.dns1)])
+
+        self.assertNotEqual(GeneralNameList([self.dns1]), GeneralNameList([self.dns2]))
+        self.assertNotEqual(GeneralNameList([self.dns1]), GeneralNameList([dns(self.dns2)]))
+        self.assertNotEqual(GeneralNameList([self.dns1]), [self.dns2])
+        self.assertNotEqual(GeneralNameList([self.dns1]), [dns(self.dns2)])
+
+        # Should not raise an error - it's just False
+        self.assertNotEqual(GeneralNameList([self.dns1]), [True])
+
+    def test_extend(self):
+
+        l1 = GeneralNameList()
+        self.assertIsNone(l1.extend([self.dns1]))
+        self.assertEqual(l1, GeneralNameList([self.dns1]))
+
+        l2 = GeneralNameList()
+        self.assertIsNone(l2.extend([dns(self.dns1)]))
+        self.assertEqual(l2, GeneralNameList([self.dns1]))
+
+        l3 = GeneralNameList([self.dns1])
+        self.assertIsNone(l3.extend([dns(self.dns1), self.dns2]))
+        self.assertEqual(l3, GeneralNameList([self.dns1, self.dns1, self.dns2]))
+
+    def test_iadd(self):  # test self += value
+        values = [
+            (GeneralNameList(), GeneralNameList([self.dns1]), GeneralNameList([self.dns1])),
+            (GeneralNameList(), GeneralNameList([dns(self.dns1)]), GeneralNameList([self.dns1])),
+            (GeneralNameList(), [self.dns1], GeneralNameList([self.dns1])),
+            (GeneralNameList(), [dns(self.dns1)], GeneralNameList([self.dns1])),
+            (GeneralNameList([self.dns1]), [dns(self.dns1)], GeneralNameList([self.dns1, self.dns1])),
+            (GeneralNameList([dns(self.dns1)]), [dns(self.dns1)], GeneralNameList([self.dns1, self.dns1])),
+            (GeneralNameList([dns(self.dns2)]), [dns(self.dns1)], GeneralNameList([self.dns2, self.dns1])),
+        ]
+
+        for l1, l2, exp in values:
+            l1 += l2
+            self.assertEqual(l1, exp)
+
+        empty = GeneralNameList()
+        with self.assertTrue():
+            empty += [True]
+
+    def test_index(self):
+        l1 = GeneralNameList()
+        with self.assertRaises(ValueError):
+            l1.index(self.dns1)
+        with self.assertRaises(ValueError):
+            l1.index(dns(self.dns1))
+
+        l2 = GeneralNameList([self.dns1])
+        self.assertEqual(l2.index(self.dns1), 0)
+        self.assertEqual(l2.index(dns(self.dns1)), 0)
+        with self.assertRaises(ValueError):
+            l1.index(self.dns2)
+        with self.assertRaises(ValueError):
+            l1.index(dns(self.dns2))
+
+    def test_insert(self):
+        l1 = GeneralNameList()
+        l1.insert(0, self.dns1)
+        self.assertEqual(l1, [self.dns1])
+
+        l1.insert(0, dns(self.dns2))
+        self.assertEqual(l1, [self.dns2, self.dns1])
+
+        with self.assertTrue():
+            l1.insert(0, True)
+        self.assertEqual(l1, [self.dns2, self.dns1])
+
+    def test_remove(self):
+        l1 = GeneralNameList([self.dns1, self.dns2])
+        self.assertIsNone(l1.remove(self.dns1))
+        self.assertEqual(l1, [self.dns2])
+        self.assertIsNone(l1.remove(dns(self.dns2)))
+        self.assertEqual(l1, [])
+
+    def test_repr(self):
+        self.assertEqual(repr(GeneralNameList()), '<GeneralNameList: []>')
+        self.assertEqual(repr(GeneralNameList([self.dns1])),
+                         "<GeneralNameList: ['DNS:%s']>" % self.dns1)
+        self.assertEqual(repr(GeneralNameList([dns(self.dns1)])),
+                         "<GeneralNameList: ['DNS:%s']>" % self.dns1)
+
+    def test_serialize(self):
+        l1 = GeneralNameList([self.dns1, dns(self.dns2), self.dns1])
+        self.assertEqual(list(l1.serialize()),
+                         ['DNS:%s' % self.dns1, 'DNS:%s' % self.dns2, 'DNS:%s' % self.dns1])
+
+    def test_setitem(self):
+        l1 = GeneralNameList()
+
+        with self.assertRaisesRegex(IndexError, r'^list assignment index out of range$'):
+            l1[0] = dns(self.dns1)
+        with self.assertRaisesRegex(IndexError, r'^list assignment index out of range$'):
+            l1[0] = self.dns1
+        self.assertEqual(len(l1), 0)
+
+        l2 = GeneralNameList([self.dns1])
+        l2[0] = self.dns2
+        self.assertEqual(l2, GeneralNameList([self.dns2]))
+
+        l3 = GeneralNameList([self.dns1])
+        l3[0] = dns(self.dns2)
+        self.assertEqual(l3, GeneralNameList([self.dns2]))
+
+        # but we can only add parseable stuff
+        l4 = GeneralNameList([self.dns1])
+        with self.assertTrue():
+            l4[0] = True

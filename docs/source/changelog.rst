@@ -13,6 +13,8 @@ ChangeLog
 * Drop dependency ``six``.
 * Consistently style serials in a monospace font.
 * :py:class:`~django_ca.extensions.AuthorityKeyIdentifier` now also supports issuers and serials.
+* :py:func:`~django_ca.utils.parse_general_name` now returns a :py:class:`~cg:cryptography.x509.GeneralName`
+  unchanged, but throws an error if the name isn't a ``str`` otherwise.
 
 Backwards incompatible changes
 ==============================
