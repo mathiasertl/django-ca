@@ -912,7 +912,7 @@ class PolicyInformation(object):
         return value
 
 
-class AuthorityInformationAccess(GeneralNameMixin, Extension):
+class AuthorityInformationAccess(Extension):
     """Class representing a AuthorityInformationAccess extension.
 
     .. seealso::
@@ -958,8 +958,8 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
         return hash((tuple(self.value['issuers']), tuple(self.value['ocsp']), self.critical, ))
 
     def _repr_value(self):
-        issuers = [self.serialize_value(v) for v in self.value['issuers']]
-        ocsp = [self.serialize_value(v) for v in self.value['ocsp']]
+        issuers = list(self.value['issuers'].serialize())
+        ocsp = list(self.value['ocsp'].serialize())
 
         return 'issuers=%r, ocsp=%r' % (issuers, ocsp)
 
@@ -967,12 +967,12 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
         text = ''
         if self.value['issuers']:
             text += 'CA Issuers:\n'
-            for name in self.value['issuers']:
-                text += '  * %s\n' % self.serialize_value(name)
+            for name in self.value['issuers'].serialize():
+                text += '  * %s\n' % name
         if self.value['ocsp']:
             text += 'OCSP:\n'
-            for name in self.value['ocsp']:
-                text += '  * %s\n' % self.serialize_value(name)
+            for name in self.value['ocsp'].serialize():
+                text += '  * %s\n' % name
 
         return text.strip()
 
@@ -985,23 +985,18 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
         return x509.AuthorityInformationAccess(descriptions=descs)
 
     def from_extension(self, value):
-        issuers = []
-        ocsp = []
+        issuers = [v.access_location for v in value.value
+                   if v.access_method == AuthorityInformationAccessOID.CA_ISSUERS]
+        ocsp = [v.access_location for v in value.value
+                if v.access_method == AuthorityInformationAccessOID.OCSP]
 
-        for desc in value.value:
-            if desc.access_method == AuthorityInformationAccessOID.CA_ISSUERS:
-                issuers.append(desc.access_location)
-            elif desc.access_method == AuthorityInformationAccessOID.OCSP:
-                ocsp.append(desc.access_location)
-            else:  # pragma: no cover (cryptography only has the above two)
-                raise ValueError('Unknown access method: %s' % desc.access_method)
-        self.value = {'issuers': issuers, 'ocsp': ocsp}
+        self.value = {'issuers': GeneralNameList(issuers), 'ocsp': GeneralNameList(ocsp)}
 
     def from_dict(self, value):
         value = value.get('value', {})
         self.value = {
-            'issuers': [self.parse_value(v) for v in value.get('issuers', [])],
-            'ocsp': [self.parse_value(v) for v in value.get('ocsp', [])],
+            'issuers': GeneralNameList(value.get('issuers', [])),
+            'ocsp': GeneralNameList(value.get('ocsp', [])),
         }
 
     @property
@@ -1011,7 +1006,7 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
 
     @issuers.setter
     def issuers(self, value):
-        self.value['issuers'] = [self.parse_value(v) for v in value]
+        self.value['issuers'] = GeneralNameList(value)
 
     @property
     def ocsp(self):
@@ -1020,7 +1015,7 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
 
     @ocsp.setter
     def ocsp(self, value):
-        self.value['ocsp'] = [self.parse_value(v) for v in value]
+        self.value['ocsp'] = GeneralNameList(value)
 
     def serialize(self):
         s = {
@@ -1028,9 +1023,9 @@ class AuthorityInformationAccess(GeneralNameMixin, Extension):
             'value': {}
         }
         if self.value['issuers']:
-            s['value']['issuers'] = [self.serialize_value(v) for v in self.value['issuers']]
+            s['value']['issuers'] = list(self.value['issuers'].serialize())
         if self.value['ocsp']:
-            s['value']['ocsp'] = [self.serialize_value(v) for v in self.value['ocsp']]
+            s['value']['ocsp'] = list(self.value['ocsp'].serialize())
         return s
 
 
