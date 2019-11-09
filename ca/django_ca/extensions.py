@@ -28,6 +28,7 @@ from cryptography.x509.oid import ObjectIdentifier
 
 from django.utils.encoding import force_text
 
+from .utils import GeneralNameList
 from .utils import bytes_to_hex
 from .utils import format_general_name
 from .utils import format_relative_name
@@ -549,7 +550,7 @@ class KeyIdExtension(Extension):
 
 
 # NOT AN EXTENSION
-class DistributionPoint(GeneralNameMixin):
+class DistributionPoint:
     """Class representing a Distribution Point.
 
     This class is used internally by extensions that have a list of Distribution Points, e.g. the :
@@ -602,22 +603,17 @@ class DistributionPoint(GeneralNameMixin):
             if self.full_name is not None and self.relative_name is not None:
                 raise ValueError('full_name and relative_name cannot both have a value')
 
-            if self.full_name is not None:
-                if isinstance(self.full_name, str):
-                    self.full_name = [self.parse_value(self.full_name)]
-                else:
-                    self.full_name = [self.parse_value(v) for v in self.full_name]
             if self.relative_name is not None:
                 self.relative_name = x509_relative_name(self.relative_name)
-            if self.crl_issuer is not None:
-                if isinstance(self.crl_issuer, str):
-                    self.crl_issuer = [self.parse_value(self.crl_issuer)]
-                else:
-                    self.crl_issuer = [self.parse_value(v) for v in self.crl_issuer]
             if self.reasons is not None:
                 self.reasons = frozenset([x509.ReasonFlags[r] for r in self.reasons])
         else:
             raise ValueError('data must be x509.DistributionPoint or dict')
+
+        if self.full_name is not None:
+            self.full_name = GeneralNameList(self.full_name)
+        if self.crl_issuer is not None:
+            self.crl_issuer = GeneralNameList(self.crl_issuer)
 
     def __eq__(self, other):
         return isinstance(other, DistributionPoint) and self.full_name == other.full_name \
@@ -626,19 +622,19 @@ class DistributionPoint(GeneralNameMixin):
 
     def __get_values(self):
         values = []
-        if self.full_name:
-            values.append('full_name=%s' % [self.serialize_value(n) for n in self.full_name])
+        if self.full_name is not None:
+            values.append('full_name=%r' % list(self.full_name.serialize()))
         if self.relative_name:
             values.append("relative_name='%s'" % format_relative_name(self.relative_name))
-        if self.crl_issuer:
-            values.append('crl_issuer=%s' % [self.serialize_value(n) for n in self.crl_issuer])
+        if self.crl_issuer is not None:
+            values.append('crl_issuer=%r' % list(self.crl_issuer.serialize()))
         if self.reasons:
             values.append('reasons=%s' % sorted([r.name for r in self.reasons]))
         return values
 
     def __hash__(self):
-        full_name = tuple(self.full_name) if self.full_name else None
-        crl_issuer = tuple(self.crl_issuer) if self.crl_issuer else None
+        full_name = tuple(self.full_name) if self.full_name is not None else None
+        crl_issuer = tuple(self.crl_issuer) if self.crl_issuer is not None else None
         reasons = tuple(self.reasons) if self.reasons else None
         return hash((full_name, self.relative_name, crl_issuer, reasons))
 
@@ -649,14 +645,14 @@ class DistributionPoint(GeneralNameMixin):
         return repr(self)
 
     def as_text(self):
-        if self.full_name:
-            names = [textwrap.indent('* %s' % self.serialize_value(n), '  ') for n in self.full_name]
+        if self.full_name is not None:
+            names = [textwrap.indent('* %s' % s, '  ') for s in self.full_name.serialize()]
             text = '* Full Name:\n%s' % '\n'.join(names)
         else:
             text = '* Relative Name: %s' % format_relative_name(self.relative_name)
 
-        if self.crl_issuer:
-            names = [textwrap.indent('* %s' % self.serialize_value(n), '  ') for n in self.crl_issuer]
+        if self.crl_issuer is not None:
+            names = [textwrap.indent('* %s' % s, '  ') for s in self.crl_issuer.serialize()]
             text += '\n* CRL Issuer:\n%s' % '\n'.join(names)
         if self.reasons:
             text += '\n* Reasons: %s' % ', '.join(sorted([r.name for r in self.reasons]))
@@ -671,11 +667,11 @@ class DistributionPoint(GeneralNameMixin):
         s = {}
 
         if self.full_name is not None:
-            s['full_name'] = [self.serialize_value(n) for n in self.full_name]
+            s['full_name'] = list(self.full_name.serialize())
         if self.relative_name is not None:
             s['relative_name'] = format_relative_name(self.relative_name)
         if self.crl_issuer is not None:
-            s['crl_issuer'] = [self.serialize_value(n) for n in self.crl_issuer]
+            s['crl_issuer'] = list(self.crl_issuer.serialize())
         if self.reasons is not None:
             s['reasons'] = list(sorted([r.name for r in self.reasons]))
         return s
