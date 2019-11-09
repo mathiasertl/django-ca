@@ -1189,10 +1189,10 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         'issuer/serial': {
             'expected': {'authority_cert_issuer': [dns1], 'authority_cert_serial_number': s1},
             'values': [{'authority_cert_issuer': [dns1], 'authority_cert_serial_number': s1}],
-            'expected_repr': 'issuer: [DNS:%s], serial: %s' % (dns1, s1),
+            'expected_repr': "issuer: ['DNS:%s'], serial: %s" % (dns1, s1),
             'expected_serialized': {'authority_cert_issuer': ['DNS:%s' % dns1],
                                     'authority_cert_serial_number': s1},
-            'expected_text': '* Issuer: [DNS:%s]\n* Serial: %s' % (dns1, s1),
+            'expected_text': "* Issuer: ['DNS:%s']\n* Serial: %s" % (dns1, s1),
             'extension_type': x509.AuthorityKeyIdentifier(None, [dns(dns1)], s1),
         }
     }

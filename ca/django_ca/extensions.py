@@ -37,6 +37,14 @@ from .utils import parse_general_name
 from .utils import x509_relative_name
 
 
+def _gnl_or_none(value):
+    if value is None:
+        return None
+    if isinstance(value, GeneralNameList) is True:
+        return value
+    return GeneralNameList(value)
+
+
 class Extension(object):
     """Convenience class to handle X509 Extensions.
 
@@ -590,14 +598,14 @@ class DistributionPoint:
             data = {}
 
         if isinstance(data, x509.DistributionPoint):
-            self.full_name = data.full_name
+            self.full_name = _gnl_or_none(data.full_name)
             self.relative_name = data.relative_name
-            self.crl_issuer = data.crl_issuer
+            self.crl_issuer = _gnl_or_none(data.crl_issuer)
             self.reasons = data.reasons
         elif isinstance(data, dict):
-            self.full_name = data.get('full_name')
+            self.full_name = _gnl_or_none(data.get('full_name'))
             self.relative_name = data.get('relative_name')
-            self.crl_issuer = data.get('crl_issuer')
+            self.crl_issuer = _gnl_or_none(data.get('crl_issuer'))
             self.reasons = data.get('reasons')
 
             if self.full_name is not None and self.relative_name is not None:
@@ -609,11 +617,6 @@ class DistributionPoint:
                 self.reasons = frozenset([x509.ReasonFlags[r] for r in self.reasons])
         else:
             raise ValueError('data must be x509.DistributionPoint or dict')
-
-        if self.full_name is not None:
-            self.full_name = GeneralNameList(self.full_name)
-        if self.crl_issuer is not None:
-            self.crl_issuer = GeneralNameList(self.crl_issuer)
 
     def __eq__(self, other):
         return isinstance(other, DistributionPoint) and self.full_name == other.full_name \
@@ -1006,7 +1009,7 @@ class AuthorityInformationAccess(Extension):
 
     @issuers.setter
     def issuers(self, value):
-        self.value['issuers'] = GeneralNameList(value)
+        self.value['issuers'] = _gnl_or_none(value)
 
     @property
     def ocsp(self):
@@ -1015,7 +1018,7 @@ class AuthorityInformationAccess(Extension):
 
     @ocsp.setter
     def ocsp(self, value):
-        self.value['ocsp'] = GeneralNameList(value)
+        self.value['ocsp'] = _gnl_or_none(value)
 
     def serialize(self):
         s = {
@@ -1029,7 +1032,7 @@ class AuthorityInformationAccess(Extension):
         return s
 
 
-class AuthorityKeyIdentifier(GeneralNameMixin, Extension):
+class AuthorityKeyIdentifier(Extension):
     """Class representing a AuthorityKeyIdentifier extension.
 
     This extension identifies the signing CA, so it is not usually defined in a profile or instantiated by a
@@ -1049,7 +1052,7 @@ class AuthorityKeyIdentifier(GeneralNameMixin, Extension):
         ...     'authority_cert_issuer': ['example.com'],
         ...     'authority_cert_serial_number': 1,
         ... }})
-        <AuthorityKeyIdentifier: keyid: 30, issuer: [DNS:example.com], serial: 1, critical=False>
+        <AuthorityKeyIdentifier: keyid: 30, issuer: ['DNS:example.com'], serial: 1, critical=False>
 
     .. seealso::
 
@@ -1065,7 +1068,7 @@ class AuthorityKeyIdentifier(GeneralNameMixin, Extension):
     def __hash__(self):
         issuer = self.value['authority_cert_issuer']
         if issuer is not None:
-            issuer = tuple(sorted(issuer))
+            issuer = tuple(issuer)
 
         return hash((self.value['key_identifier'], issuer, self.value['authority_cert_serial_number'],
                      self.critical))
@@ -1075,7 +1078,7 @@ class AuthorityKeyIdentifier(GeneralNameMixin, Extension):
         if self.value['key_identifier'] is not None:
             values.append('keyid: %s' % bytes_to_hex(self.value['key_identifier']))
         if self.value['authority_cert_issuer'] is not None:
-            values.append('issuer: [%s]' % ', '.join(self.serialize_issuer()))
+            values.append('issuer: %r' % list(self.value['authority_cert_issuer'].serialize()))
         if self.value['authority_cert_serial_number'] is not None:
             values.append('serial: %s' % self.value['authority_cert_serial_number'])
 
@@ -1086,7 +1089,7 @@ class AuthorityKeyIdentifier(GeneralNameMixin, Extension):
         if self.value['key_identifier'] is not None:
             values.append('* KeyID: %s' % bytes_to_hex(self.value['key_identifier']))
         if self.value['authority_cert_issuer'] is not None:
-            values.append('* Issuer: [%s]' % ', '.join(self.serialize_issuer()))
+            values.append('* Issuer: %r' % list(self.value['authority_cert_issuer'].serialize()))
         if self.value['authority_cert_serial_number'] is not None:
             values.append('* Serial: %s' % self.value['authority_cert_serial_number'])
 
@@ -1098,7 +1101,7 @@ class AuthorityKeyIdentifier(GeneralNameMixin, Extension):
 
     @authority_cert_issuer.setter
     def authority_cert_issuer(self, value):
-        self.value['authority_cert_issuer'] = self.parse_issuer(value)
+        self.value['authority_cert_issuer'] = _gnl_or_none(value)
 
     @property
     def authority_cert_serial_number(self):
@@ -1127,14 +1130,14 @@ class AuthorityKeyIdentifier(GeneralNameMixin, Extension):
         else:
             self.value = {
                 'key_identifier': self.parse_keyid(value.get('key_identifier')),
-                'authority_cert_issuer': self.parse_issuer(value.get('authority_cert_issuer')),
+                'authority_cert_issuer': _gnl_or_none(value.get('authority_cert_issuer')),
                 'authority_cert_serial_number': value.get('authority_cert_serial_number'),
             }
 
     def from_extension(self, ext):
         self.value = {
             'key_identifier': ext.value.key_identifier,
-            'authority_cert_issuer': ext.value.authority_cert_issuer,
+            'authority_cert_issuer': _gnl_or_none(ext.value.authority_cert_issuer),
             'authority_cert_serial_number': ext.value.authority_cert_serial_number,
         }
 
@@ -1161,11 +1164,6 @@ class AuthorityKeyIdentifier(GeneralNameMixin, Extension):
     def key_identifier(self, value):
         self.value['key_identifier'] = self.parse_keyid(value)
 
-    def parse_issuer(self, value):
-        if value is not None:
-            return [parse_general_name(v) if not isinstance(v, x509.GeneralName) else v
-                    for v in value]
-
     def parse_keyid(self, value):
         if isinstance(value, str) and ':' in value:
             return hex_to_bytes(value)
@@ -1181,14 +1179,11 @@ class AuthorityKeyIdentifier(GeneralNameMixin, Extension):
         if self.value['key_identifier'] is not None:
             s['value']['key_identifier'] = bytes_to_hex(self.value['key_identifier'])
         if self.value['authority_cert_issuer'] is not None:
-            s['value']['authority_cert_issuer'] = self.serialize_issuer()
+            s['value']['authority_cert_issuer'] = list(self.value['authority_cert_issuer'].serialize())
         if self.value['authority_cert_serial_number'] is not None:
             s['value']['authority_cert_serial_number'] = self.value['authority_cert_serial_number']
 
         return s
-
-    def serialize_issuer(self):
-        return sorted([format_general_name(v) for v in self.value['authority_cert_issuer']])
 
 
 class BasicConstraints(Extension):
