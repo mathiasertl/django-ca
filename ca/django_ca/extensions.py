@@ -1578,8 +1578,204 @@ class ExtendedKeyUsage(OrderedSetExtension):
         raise ValueError('Unknown value: %s' % v)
 
 
+class InhibitAnyPolicy(Extension):
+    """Class representing a InhibitAnyPolicy extension.
+
+    Example::
+
+        >>> InhibitAnyPolicy({'value': 1})  # normal value dict is supported
+        <InhibitAnyPolicy: 1, critical=True>
+        >>> ext = InhibitAnyPolicy(3)  # a simple int is also okay
+        >>> ext
+        <InhibitAnyPolicy: 3, critical=True>
+        >>> ext.skip_certs = 5
+        >>> ext.skip_certs
+        5
+
+    .. seealso::
+
+       `RFC 5280, section 4.2.1.14 <https://tools.ietf.org/html/rfc5280#section-4.2.1.14>`_
+
+    """
+
+    key = 'inhibit_any_policy'
+    """Key used in CA_PROFILES."""
+
+    name = 'InhibitAnyPolicy'
+    oid = ExtensionOID.INHIBIT_ANY_POLICY
+
+    default_critical = True
+    """This extension is marked as critical by default (RFC 5280 requires this extension to be marked as
+    critical)."""
+
+    def _test_value(self):
+        if not isinstance(self.value, int):
+            raise ValueError('%s: must be an int' % self.value)
+        if self.value < 0:
+            raise ValueError('%s: must be a positive int' % self.value)
+
+    def as_text(self):
+        return str(self.value)
+
+    @property
+    def extension_type(self):
+        return x509.InhibitAnyPolicy(skip_certs=self.value)
+
+    def from_dict(self, value):
+        self.value = value.get('value')
+
+    def from_extension(self, value):
+        self.value = value.value.skip_certs
+
+    def from_int(self, value):
+        self.value = value
+
+    def from_other(self, value):
+        if isinstance(value, int):
+            self.critical = self.default_critical
+            self.from_int(value)
+            self._test_value()
+        else:
+            super().from_other(value)
+
+    @property
+    def skip_certs(self):
+        return self.value
+
+    @skip_certs.setter
+    def skip_certs(self, value):
+        if not isinstance(value, int):
+            raise ValueError('%s: must be an int' % value)
+        if value < 0:
+            raise ValueError('%s: must be a positive int' % value)
+        self.value = value
+
+
+class PolicyConstraints(Extension):
+    """Class representing a PolicyConstraints extension.
+
+    Example::
+
+        >>> ext = PolicyConstraints({'value': {'require_explicit_policy': 1, 'inhibit_policy_mapping': 2}})
+        >>> ext
+        <PolicyConstraints: inhibit_policy_mapping=2, require_explicit_policy=1, critical=True>
+        >>> ext.require_explicit_policy
+        1
+        >>> ext.inhibit_policy_mapping = 5
+        >>> ext.inhibit_policy_mapping
+        5
+
+    .. seealso::
+
+       `RFC 5280, section 4.2.1.11 <https://tools.ietf.org/html/rfc5280#section-4.2.1.11>`_
+
+    """
+
+    key = 'policy_constraints'
+    """Key used in CA_PROFILES."""
+
+    name = 'PolicyConstraints'
+    oid = ExtensionOID.POLICY_CONSTRAINTS
+
+    default_critical = True
+    """This extension is marked as critical by default (RFC 5280 requires this extension to be marked as
+    critical)."""
+
+    def __hash__(self):
+        return hash((self.value['require_explicit_policy'], self.value['inhibit_policy_mapping'],
+                     self.critical, ))
+
+    def _repr_value(self):
+        if self.value['require_explicit_policy'] is None and self.value['inhibit_policy_mapping'] is None:
+            return '-'
+        values = []
+        if self.value['inhibit_policy_mapping'] is not None:
+            values.append('inhibit_policy_mapping=%s' % self.value['inhibit_policy_mapping'])
+        if self.value['require_explicit_policy'] is not None:
+            values.append('require_explicit_policy=%s' % self.value['require_explicit_policy'])
+        return ', '.join(values)
+
+    def _test_value(self):
+        rep = self.value['require_explicit_policy']
+        ipm = self.value['inhibit_policy_mapping']
+        if rep is not None:
+            if not isinstance(rep, int):
+                raise ValueError("%s: require_explicit_policy must be int or None" % rep)
+            if rep < 0:
+                raise ValueError('%s: require_explicit_policy must be a positive int' % rep)
+        if ipm is not None:
+            if not isinstance(ipm, int):
+                raise ValueError("%s: inhibit_policy_mapping must be int or None" % ipm)
+            if ipm < 0:
+                raise ValueError('%s: inhibit_policy_mapping must be a positive int' % ipm)
+
+    def as_text(self):
+        lines = []
+        if self.value['inhibit_policy_mapping'] is not None:
+            lines.append('* InhibitAnyPolicy: %s' % self.value['inhibit_policy_mapping'])
+        if self.value['require_explicit_policy'] is not None:
+            lines.append('* RequireAnyPolicy: %s' % self.value['require_explicit_policy'])
+
+        return '\n'.join(lines)
+
+    @property
+    def extension_type(self):
+        return x509.PolicyConstraints(require_explicit_policy=self.value['require_explicit_policy'],
+                                      inhibit_policy_mapping=self.value['inhibit_policy_mapping'])
+
+    def from_dict(self, value):
+        v = value.get('value', {})
+        self.value = {
+            'require_explicit_policy': v.get('require_explicit_policy'),
+            'inhibit_policy_mapping': v.get('inhibit_policy_mapping'),
+        }
+
+    def from_extension(self, value):
+        self.value = {
+            'require_explicit_policy': value.value.require_explicit_policy,
+            'inhibit_policy_mapping': value.value.inhibit_policy_mapping,
+        }
+
+    @property
+    def inhibit_policy_mapping(self):
+        return self.value['inhibit_policy_mapping']
+
+    @inhibit_policy_mapping.setter
+    def inhibit_policy_mapping(self, value):
+        if value is not None:
+            if not isinstance(value, int):
+                raise ValueError("%s: inhibit_policy_mapping must be int or None" % value)
+            if value < 0:
+                raise ValueError('%s: inhibit_policy_mapping must be a positive int' % value)
+        self.value['inhibit_policy_mapping'] = value
+
+    @property
+    def require_explicit_policy(self):
+        return self.value['require_explicit_policy']
+
+    @require_explicit_policy.setter
+    def require_explicit_policy(self, value):
+        if value is not None:
+            if not isinstance(value, int):
+                raise ValueError("%s: require_explicit_policy must be int or None" % value)
+            if value < 0:
+                raise ValueError('%s: require_explicit_policy must be a positive int' % value)
+        self.value['require_explicit_policy'] = value
+
+    def serialize(self):
+        value = {}
+        if self.value['inhibit_policy_mapping'] is not None:
+            value['inhibit_policy_mapping'] = self.value['inhibit_policy_mapping']
+        if self.value['require_explicit_policy'] is not None:
+            value['require_explicit_policy'] = self.value['require_explicit_policy']
+        return {
+            'critical': self.critical,
+            'value': value,
+        }
+
+
 class NameConstraints(Extension):
-    """Class representing a NameConstraints extenion
+    """Class representing a NameConstraints extension.
 
     Unlike most other extensions, this extension does not accept a string as value, but you can pass a list
     containing the permitted/excluded subtrees as lists. Similar to
@@ -1972,10 +2168,12 @@ KEY_TO_EXTENSION = {
     CertificatePolicies.key: CertificatePolicies,
     ExtendedKeyUsage.key: ExtendedKeyUsage,
     FreshestCRL.key: FreshestCRL,
+    InhibitAnyPolicy.key: InhibitAnyPolicy,
     IssuerAlternativeName.key: IssuerAlternativeName,
     KeyUsage.key: KeyUsage,
     NameConstraints.key: NameConstraints,
     OCSPNoCheck.key: OCSPNoCheck,
+    PolicyConstraints.key: PolicyConstraints,
     PrecertPoison.key: PrecertPoison,
     PrecertificateSignedCertificateTimestamps.key: PrecertificateSignedCertificateTimestamps,
     SubjectAlternativeName.key: SubjectAlternativeName,
@@ -1991,10 +2189,12 @@ OID_TO_EXTENSION = {
     CertificatePolicies.oid: CertificatePolicies,
     ExtendedKeyUsage.oid: ExtendedKeyUsage,
     FreshestCRL.oid: FreshestCRL,
+    InhibitAnyPolicy.oid: InhibitAnyPolicy,
     IssuerAlternativeName.oid: IssuerAlternativeName,
     KeyUsage.oid: KeyUsage,
     NameConstraints.oid: NameConstraints,
     OCSPNoCheck.oid: OCSPNoCheck,
+    PolicyConstraints.oid: PolicyConstraints,
     PrecertPoison.oid: PrecertPoison,
     PrecertificateSignedCertificateTimestamps.oid: PrecertificateSignedCertificateTimestamps,
     SubjectAlternativeName.oid: SubjectAlternativeName,

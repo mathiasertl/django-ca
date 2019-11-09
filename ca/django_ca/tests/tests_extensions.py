@@ -45,12 +45,14 @@ from ..extensions import DistributionPoint
 from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
 from ..extensions import FreshestCRL
+from ..extensions import InhibitAnyPolicy
 from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
 from ..extensions import ListExtension
 from ..extensions import NameConstraints
 from ..extensions import OCSPNoCheck
 from ..extensions import OrderedSetExtension
+from ..extensions import PolicyConstraints
 from ..extensions import PolicyInformation
 from ..extensions import PrecertificateSignedCertificateTimestamps
 from ..extensions import PrecertPoison
@@ -309,6 +311,9 @@ class ExtensionTestMixin(AbstractExtensionTestMixin):
 
     def test_as_extension(self):
         for key, config in self.test_values.items():
+            if config['extension_type'] is None:
+                continue  # test case is not a valid extension
+
             ext = self.ext(config['expected'])
             cg = x509.extensions.Extension(
                 oid=self.ext_class.oid, critical=self.ext_class.default_critical,
@@ -343,11 +348,17 @@ class ExtensionTestMixin(AbstractExtensionTestMixin):
 
     def test_extension_type(self):
         for key, config in self.test_values.items():
+            if config['extension_type'] is None:
+                continue  # test case is not a valid extension
+
             ext = self.ext(config['expected'])
             self.assertEqual(ext.extension_type, config['extension_type'])
 
     def test_for_builder(self):
         for key, config in self.test_values.items():
+            if config['extension_type'] is None:
+                continue  # test case is not a valid extension
+
             ext = self.ext(config['expected'])
             self.assertEqual(
                 ext.for_builder(),
@@ -1927,6 +1938,67 @@ class FreshestCRLTestCase(CRLDistributionPointsTestCase):
     ext_class_name = 'FreshestCRL'
 
 
+class InhibitAnyPolicyTestCase(ExtensionTestMixin, TestCase):
+    ext_class = InhibitAnyPolicy
+    ext_class_key = 'inhibit_any_policy'
+    ext_class_name = 'InhibitAnyPolicy'
+
+    test_values = {
+        'zero': {
+            'values': [
+                0,
+            ],
+            'expected': 0,
+            'expected_repr': '0',
+            'expected_serialized': 0,
+            'expected_text': '0',
+            'extension_type': x509.InhibitAnyPolicy(0),
+        },
+        'one': {
+            'values': [
+                1,
+            ],
+            'expected': 1,
+            'expected_repr': '1',
+            'expected_serialized': 1,
+            'expected_text': '1',
+            'extension_type': x509.InhibitAnyPolicy(1),
+        },
+    }
+
+    def test_int(self):
+        ext = InhibitAnyPolicy(0)
+        self.assertEqual(ext.value, 0)
+        ext = InhibitAnyPolicy(1)
+        self.assertEqual(ext.value, 1)
+
+        with self.assertRaisesRegex(ValueError, r'-1: must be a positive int$'):
+            InhibitAnyPolicy(-1)
+        with self.assertRaisesRegex(ValueError, r'-1: must be a positive int$'):
+            InhibitAnyPolicy({'value': -1})
+
+    def test_no_int(self):
+        with self.assertRaisesRegex(ValueError, r'^None: must be an int$'):
+            InhibitAnyPolicy(None)
+        with self.assertRaisesRegex(ValueError, r'^abc: must be an int$'):
+            InhibitAnyPolicy({'value': 'abc'})
+        with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type str$'):
+            InhibitAnyPolicy('abc')
+
+    def test_skip_certs(self):
+        ext = InhibitAnyPolicy(0)
+        self.assertEqual(ext.skip_certs, 0)
+        ext.skip_certs = 3
+        self.assertEqual(ext.skip_certs, 3)
+
+        with self.assertRaisesRegex(ValueError, r'^abc: must be an int$'):
+            ext.skip_certs = 'abc'
+        self.assertEqual(ext.skip_certs, 3)
+        with self.assertRaisesRegex(ValueError, r'-1: must be a positive int$'):
+            ext.skip_certs = -1
+        self.assertEqual(ext.skip_certs, 3)
+
+
 class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):
     ext_class = IssuerAlternativeName
     ext_class_key = 'issuer_alternative_name'
@@ -2004,6 +2076,133 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
             'extension_type': ext_class_type([dns(dns2), dns(dns1), uri(uri2), uri(uri1)]),
         },
     }
+
+
+class PolicyConstraintsTestCase(ExtensionTestMixin, TestCase):
+    ext_class = PolicyConstraints
+    ext_class_key = 'policy_constraints'
+    ext_class_name = 'PolicyConstraints'
+
+    test_values = {
+        'rep_zero': {
+            'values': [
+                {'require_explicit_policy': 0},
+            ],
+            'expected': {'require_explicit_policy': 0},
+            'expected_repr': 'require_explicit_policy=0',
+            'expected_serialized': {'require_explicit_policy': 0},
+            'expected_text': '* RequireAnyPolicy: 0',
+            'extension_type': x509.PolicyConstraints(require_explicit_policy=0, inhibit_policy_mapping=None),
+        },
+        'rep_one': {
+            'values': [
+                {'require_explicit_policy': 1},
+            ],
+            'expected': {'require_explicit_policy': 1},
+            'expected_repr': 'require_explicit_policy=1',
+            'expected_serialized': {'require_explicit_policy': 1},
+            'expected_text': '* RequireAnyPolicy: 1',
+            'extension_type': x509.PolicyConstraints(require_explicit_policy=1, inhibit_policy_mapping=None),
+        },
+        'rep_none': {
+            'values': [
+                {'require_explicit_policy': None},
+            ],
+            'expected': {},
+            'expected_repr': '-',
+            'expected_serialized': {},
+            'expected_text': '',
+            'extension_type': None,
+        },
+        'iap_zero': {
+            'values': [
+                {'inhibit_policy_mapping': 0},
+            ],
+            'expected': {'inhibit_policy_mapping': 0},
+            'expected_repr': 'inhibit_policy_mapping=0',
+            'expected_serialized': {'inhibit_policy_mapping': 0},
+            'expected_text': '* InhibitAnyPolicy: 0',
+            'extension_type': x509.PolicyConstraints(require_explicit_policy=None, inhibit_policy_mapping=0),
+        },
+        'iap_one': {
+            'values': [
+                {'inhibit_policy_mapping': 1},
+            ],
+            'expected': {'inhibit_policy_mapping': 1},
+            'expected_repr': 'inhibit_policy_mapping=1',
+            'expected_serialized': {'inhibit_policy_mapping': 1},
+            'expected_text': '* InhibitAnyPolicy: 1',
+            'extension_type': x509.PolicyConstraints(require_explicit_policy=None, inhibit_policy_mapping=1),
+        },
+        'iap_none': {
+            'values': [
+                {'inhibit_policy_mapping': None},
+            ],
+            'expected': {},
+            'expected_repr': '-',
+            'expected_serialized': {},
+            'expected_text': '',
+            'extension_type': None,
+        },
+        'both': {
+            'values': [
+                {'inhibit_policy_mapping': 2, 'require_explicit_policy': 3},
+            ],
+            'expected': {'inhibit_policy_mapping': 2, 'require_explicit_policy': 3},
+            'expected_repr': 'inhibit_policy_mapping=2, require_explicit_policy=3',
+            'expected_serialized': {'inhibit_policy_mapping': 2, 'require_explicit_policy': 3},
+            'expected_text': '* InhibitAnyPolicy: 2\n* RequireAnyPolicy: 3',
+            'extension_type': x509.PolicyConstraints(require_explicit_policy=3, inhibit_policy_mapping=2),
+        },
+    }
+
+    def test_init_error(self):
+        with self.assertRaisesRegex(ValueError, r'^abc: inhibit_policy_mapping must be int or None$'):
+            PolicyConstraints({'value': {'inhibit_policy_mapping': 'abc'}})
+        with self.assertRaisesRegex(ValueError, r'^-1: inhibit_policy_mapping must be a positive int$'):
+            PolicyConstraints({'value': {'inhibit_policy_mapping': -1}})
+        with self.assertRaisesRegex(ValueError, r'^abc: require_explicit_policy must be int or None$'):
+            PolicyConstraints({'value': {'require_explicit_policy': 'abc'}})
+        with self.assertRaisesRegex(ValueError, r'^-1: require_explicit_policy must be a positive int$'):
+            PolicyConstraints({'value': {'require_explicit_policy': -1}})
+
+    def test_properties(self):
+        p = PolicyConstraints()
+        self.assertIsNone(p.inhibit_policy_mapping)
+        self.assertIsNone(p.require_explicit_policy)
+
+        p = PolicyConstraints({'value': {'inhibit_policy_mapping': 1, 'require_explicit_policy': 2}})
+        self.assertEqual(p.inhibit_policy_mapping, 1)
+        self.assertEqual(p.require_explicit_policy, 2)
+
+        p.inhibit_policy_mapping = 3
+        p.require_explicit_policy = 4
+        self.assertEqual(p.inhibit_policy_mapping, 3)
+        self.assertEqual(p.require_explicit_policy, 4)
+
+        p.inhibit_policy_mapping = None
+        p.require_explicit_policy = None
+        self.assertIsNone(p.inhibit_policy_mapping)
+        self.assertIsNone(p.require_explicit_policy)
+
+    def test_property_errors(self):
+        p = PolicyConstraints({'value': {'inhibit_policy_mapping': 1, 'require_explicit_policy': 2}})
+        self.assertEqual(p.inhibit_policy_mapping, 1)
+        self.assertEqual(p.require_explicit_policy, 2)
+
+        with self.assertRaisesRegex(ValueError, r'^abc: inhibit_policy_mapping must be int or None$'):
+            p.inhibit_policy_mapping = 'abc'
+        with self.assertRaisesRegex(ValueError, r'^def: require_explicit_policy must be int or None$'):
+            p.require_explicit_policy = 'def'
+        self.assertEqual(p.inhibit_policy_mapping, 1)
+        self.assertEqual(p.require_explicit_policy, 2)
+
+        with self.assertRaisesRegex(ValueError, r'^-1: inhibit_policy_mapping must be a positive int$'):
+            p.inhibit_policy_mapping = -1
+        with self.assertRaisesRegex(ValueError, r'^-1: require_explicit_policy must be a positive int$'):
+            p.require_explicit_policy = -1
+        self.assertEqual(p.inhibit_policy_mapping, 1)
+        self.assertEqual(p.require_explicit_policy, 2)
 
 
 class KeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestCase):

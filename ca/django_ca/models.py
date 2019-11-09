@@ -56,10 +56,12 @@ from .extensions import CertificatePolicies
 from .extensions import CRLDistributionPoints
 from .extensions import ExtendedKeyUsage
 from .extensions import FreshestCRL
+from .extensions import InhibitAnyPolicy
 from .extensions import IssuerAlternativeName
 from .extensions import KeyUsage
 from .extensions import NameConstraints
 from .extensions import OCSPNoCheck
+from .extensions import PolicyConstraints
 from .extensions import PrecertificateSignedCertificateTimestamps
 from .extensions import PrecertPoison
 from .extensions import SubjectAlternativeName
@@ -328,10 +330,12 @@ class X509CertMixin(models.Model):
         ExtensionOID.CERTIFICATE_POLICIES: 'certificate_policies',
         ExtensionOID.EXTENDED_KEY_USAGE: 'extended_key_usage',
         ExtensionOID.FRESHEST_CRL: 'freshest_crl',
+        ExtensionOID.INHIBIT_ANY_POLICY: 'inhibit_any_policy',
         ExtensionOID.ISSUER_ALTERNATIVE_NAME: 'issuer_alternative_name',
         ExtensionOID.KEY_USAGE: 'key_usage',
         ExtensionOID.NAME_CONSTRAINTS: 'name_constraints',
         ExtensionOID.OCSP_NO_CHECK: 'ocsp_no_check',
+        ExtensionOID.POLICY_CONSTRAINTS: 'policy_constraints',
         ExtensionOID.PRECERT_POISON: 'precert_poison',
         ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS: 'precertificate_signed_certificate_timestamps',
         ExtensionOID.SUBJECT_ALTERNATIVE_NAME: 'subject_alternative_name',
@@ -419,10 +423,22 @@ class X509CertMixin(models.Model):
             return FreshestCRL(ext)
 
     @cached_property
+    def inhibit_any_policy(self):
+        ext = self.get_x509_extension(ExtensionOID.INHIBIT_ANY_POLICY)
+        if ext is not None:
+            return InhibitAnyPolicy(ext)
+
+    @cached_property
     def issuer_alternative_name(self):
         ext = self.get_x509_extension(ExtensionOID.ISSUER_ALTERNATIVE_NAME)
         if ext is not None:
             return IssuerAlternativeName(ext)
+
+    @cached_property
+    def policy_constraints(self):
+        ext = self.get_x509_extension(ExtensionOID.POLICY_CONSTRAINTS)
+        if ext is not None:
+            return PolicyConstraints(ext)
 
     @cached_property
     def key_usage(self):
