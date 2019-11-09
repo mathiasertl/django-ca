@@ -16,6 +16,7 @@ ChangeLog
 * :py:func:`~django_ca.utils.parse_general_name` now returns a :py:class:`~cg:cryptography.x509.GeneralName`
   unchanged, but throws an error if the name isn't a ``str`` otherwise.
 * New class :py:class:`~django_ca.utils.GeneralNameList` for extensions that store a list of general names.
+* Add support for the :py:class:`~django_ca.extensions.FreshestCRL` extension.
 
 Backwards incompatible changes
 ==============================

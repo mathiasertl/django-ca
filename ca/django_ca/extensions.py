@@ -543,6 +543,33 @@ class KeyIdExtension(Extension):
         }
 
 
+class CRLDistributionPointsBase(ListExtension):
+    """Base class for :py:class:`~django_ca.extensions.CRLDistributionPoints` and
+    :py:class:`~django_ca.extensions.FreshestCRL`.
+    """
+    def __hash__(self):
+        return hash((tuple(self.value), self.critical, ))
+
+    def as_text(self):
+        return '\n'.join('* DistributionPoint:\n%s' % textwrap.indent(dp.as_text(), '  ')
+                         for dp in self.value)
+
+    @property
+    def extension_type(self):
+        return x509.CRLDistributionPoints(distribution_points=[dp.for_extension_type for dp in self.value])
+
+    def parse_value(self, v):
+        if isinstance(v, DistributionPoint):
+            return v
+        return DistributionPoint(v)
+
+    def serialize(self):
+        return {
+            'value': [dp.serialize() for dp in self.value],
+            'critical': self.critical,
+        }
+
+
 # NOT AN EXTENSION
 class DistributionPoint:
     """Class representing a Distribution Point.
@@ -1271,7 +1298,7 @@ class BasicConstraints(Extension):
         return value
 
 
-class CRLDistributionPoints(ListExtension):
+class CRLDistributionPoints(CRLDistributionPointsBase):
     """Class representing a CRLDistributionPoints extension.
 
     This extension identifies where a client can retrieve a Certificate Revocation List (CRL).
@@ -1295,28 +1322,6 @@ class CRLDistributionPoints(ListExtension):
 
     name = 'CRLDistributionPoints'
     oid = ExtensionOID.CRL_DISTRIBUTION_POINTS
-
-    def __hash__(self):
-        return hash((tuple(self.value), self.critical, ))
-
-    def as_text(self):
-        return '\n'.join('* DistributionPoint:\n%s' % textwrap.indent(dp.as_text(), '  ')
-                         for dp in self.value)
-
-    @property
-    def extension_type(self):
-        return x509.CRLDistributionPoints(distribution_points=[dp.for_extension_type for dp in self.value])
-
-    def parse_value(self, v):
-        if isinstance(v, DistributionPoint):
-            return v
-        return DistributionPoint(v)
-
-    def serialize(self):
-        return {
-            'value': [dp.serialize() for dp in self.value],
-            'critical': self.critical,
-        }
 
 
 class CertificatePolicies(ListExtension):
@@ -1367,6 +1372,29 @@ class CertificatePolicies(ListExtension):
             'value': [p.serialize() for p in self.value],
             'critical': self.critical,
         }
+
+
+class FreshestCRL(CRLDistributionPointsBase):
+    """Class representing a FreshestCRL extension.
+
+    This extension handles identically to the :py:class:`~django_ca.extensions.CRLDistributionPoints`
+    extension::
+
+        >>> FreshestCRL({'value': [
+        ...     {'full_name': ['http://crl.example.com']}
+        ... ]})  # doctest: +NORMALIZE_WHITESPACE
+        <FreshestCRL: [<DistributionPoint: full_name=['URI:http://crl.example.com']>],
+        critical=False>
+
+    .. seealso::
+
+        `RFC 5280, section 4.2.1.15 <https://tools.ietf.org/html/rfc5280#section-4.2.1.15>`_
+    """
+    key = 'freshest_crl'
+    """Key used in CA_PROFILES."""
+
+    name = 'FreshestCRL'
+    oid = ExtensionOID.FRESHEST_CRL
 
 
 class IssuerAlternativeName(AlternativeNameExtension):
@@ -1943,6 +1971,7 @@ KEY_TO_EXTENSION = {
     CRLDistributionPoints.key: CRLDistributionPoints,
     CertificatePolicies.key: CertificatePolicies,
     ExtendedKeyUsage.key: ExtendedKeyUsage,
+    FreshestCRL.key: FreshestCRL,
     IssuerAlternativeName.key: IssuerAlternativeName,
     KeyUsage.key: KeyUsage,
     NameConstraints.key: NameConstraints,
@@ -1961,6 +1990,7 @@ OID_TO_EXTENSION = {
     CRLDistributionPoints.oid: CRLDistributionPoints,
     CertificatePolicies.oid: CertificatePolicies,
     ExtendedKeyUsage.oid: ExtendedKeyUsage,
+    FreshestCRL.oid: FreshestCRL,
     IssuerAlternativeName.oid: IssuerAlternativeName,
     KeyUsage.oid: KeyUsage,
     NameConstraints.oid: NameConstraints,

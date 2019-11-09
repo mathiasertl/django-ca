@@ -44,6 +44,7 @@ from ..extensions import CRLDistributionPoints
 from ..extensions import DistributionPoint
 from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
+from ..extensions import FreshestCRL
 from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
 from ..extensions import ListExtension
@@ -1918,6 +1919,12 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin, Te
             'extension_type': xcp5,
         },
     }
+
+
+class FreshestCRLTestCase(CRLDistributionPointsTestCase):
+    ext_class = FreshestCRL
+    ext_class_key = 'freshest_crl'
+    ext_class_name = 'FreshestCRL'
 
 
 class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):

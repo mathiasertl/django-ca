@@ -50,6 +50,7 @@ from .extensions import BasicConstraints
 from .extensions import CertificatePolicies
 from .extensions import CRLDistributionPoints
 from .extensions import ExtendedKeyUsage
+from .extensions import FreshestCRL
 from .extensions import IssuerAlternativeName
 from .extensions import IterableExtension
 from .extensions import KeyUsage
@@ -267,6 +268,10 @@ class CertificateMixin(object):
     def crl_distribution_points(self, obj):
         return self.output_template(obj.crl_distribution_points)
     crl_distribution_points.short_description = CRLDistributionPoints.name
+
+    def freshest_crl(self, obj):
+        return self.output_template(obj.freshest_crl)
+    freshest_crl.short_description = FreshestCRL.name
 
     def subject_alternative_name(self, obj):
         return self.output_extension(obj.subject_alternative_name)

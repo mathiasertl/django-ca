@@ -55,6 +55,7 @@ from .extensions import BasicConstraints
 from .extensions import CertificatePolicies
 from .extensions import CRLDistributionPoints
 from .extensions import ExtendedKeyUsage
+from .extensions import FreshestCRL
 from .extensions import IssuerAlternativeName
 from .extensions import KeyUsage
 from .extensions import NameConstraints
@@ -326,6 +327,7 @@ class X509CertMixin(models.Model):
         ExtensionOID.CRL_DISTRIBUTION_POINTS: 'crl_distribution_points',
         ExtensionOID.CERTIFICATE_POLICIES: 'certificate_policies',
         ExtensionOID.EXTENDED_KEY_USAGE: 'extended_key_usage',
+        ExtensionOID.FRESHEST_CRL: 'freshest_crl',
         ExtensionOID.ISSUER_ALTERNATIVE_NAME: 'issuer_alternative_name',
         ExtensionOID.KEY_USAGE: 'key_usage',
         ExtensionOID.NAME_CONSTRAINTS: 'name_constraints',
@@ -409,6 +411,12 @@ class X509CertMixin(models.Model):
         ext = self.get_x509_extension(ExtensionOID.CERTIFICATE_POLICIES)
         if ext is not None:
             return CertificatePolicies(ext)
+
+    @cached_property
+    def freshest_crl(self):
+        ext = self.get_x509_extension(ExtensionOID.FRESHEST_CRL)
+        if ext is not None:
+            return FreshestCRL(ext)
 
     @cached_property
     def issuer_alternative_name(self):
