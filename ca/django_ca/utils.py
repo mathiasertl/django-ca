@@ -937,7 +937,10 @@ class GeneralNameList(list):
         return '<GeneralNameList: %r>' % [format_general_name(v) for v in self]
 
     def __setitem__(self, key, value):  # l[0] = 'example.com'
-        list.__setitem__(self, key, parse_general_name(value))
+        if isinstance(key, slice):  # l[0:1] = ['example.com']
+            list.__setitem__(self, key, (parse_general_name(v) for v in value))
+        else:
+            list.__setitem__(self, key, parse_general_name(value))
 
     def append(self, object):
         list.append(self, parse_general_name(object))

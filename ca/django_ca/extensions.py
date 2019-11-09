@@ -343,14 +343,10 @@ class ListExtension(IterableExtension):
         self._test_value()
 
     def from_dict(self, value):
-        value = value.get('value')
-        if not value:
-            self.value = []
-        else:
-            self.value = [self.parse_value(v) for v in value]
+        self.value = [self.parse_value(v) for v in value.get('value', [])]
 
     def from_extension(self, ext):
-        self.value = list(ext.value)
+        self.value = [self.parse_value(v) for v in ext.value]
 
     def insert(self, index, value):
         self.value.insert(index, self.parse_value(value))
@@ -514,7 +510,7 @@ class GeneralNameMixin(object):
         return format_general_name(v)
 
 
-class AlternativeNameExtension(GeneralNameMixin, ListExtension):
+class AlternativeNameExtension(ListExtension):
     """Base class for extensions that contain a list of general names.
 
     This class also allows you to pass :py:class:`~cg:cryptography.x509.GeneralName` instances::
@@ -526,7 +522,20 @@ class AlternativeNameExtension(GeneralNameMixin, ListExtension):
         (True, True, True)
 
     """
-    pass
+    def from_dict(self, value):
+        value = value.get('value')
+        if isinstance(value, GeneralNameList):
+            self.value = value
+        elif value is None:
+            self.value = GeneralNameList()
+        else:
+            self.value = GeneralNameList(value)
+
+    def from_extension(self, ext):
+        self.value = GeneralNameList(ext.value)
+
+    def serialize_value(self, v):
+        return format_general_name(v)
 
 
 class KeyIdExtension(Extension):
@@ -1321,12 +1330,6 @@ class CRLDistributionPoints(ListExtension):
     def extension_type(self):
         return x509.CRLDistributionPoints(distribution_points=[dp.for_extension_type for dp in self.value])
 
-    def from_extension(self, value):
-        self.value = [DistributionPoint(v) for v in value.value]
-
-    def from_dict(self, value):
-        self.value = [self.parse_value(v) for v in value.get('value', [])]
-
     def parse_value(self, v):
         if isinstance(v, DistributionPoint):
             return v
@@ -1376,9 +1379,6 @@ class CertificatePolicies(ListExtension):
     @property
     def extension_type(self):
         return x509.CertificatePolicies(policies=[p.for_extension_type for p in self.value])
-
-    def from_extension(self, value):
-        self.value = [PolicyInformation(v) for v in value.value]
 
     def parse_value(self, v):
         if isinstance(v, PolicyInformation):
