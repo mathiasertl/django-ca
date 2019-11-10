@@ -2,4 +2,7 @@
 {% if extension.critical %}
   <img src="/static/admin/img/icon-yes.svg" alt="{% trans 'Critical' %}"> {% trans 'Critical' %}
 {% endif %}
+{% if extension is not None %}
 {% block content %}{% endblock content %}
+{% else %}{# Extension could be None for SubjectAltName, which is always displayed even if not present #}
+{% trans "&lt;Not present&gt;" %}{% endif %}

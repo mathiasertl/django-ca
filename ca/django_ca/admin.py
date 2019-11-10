@@ -46,17 +46,17 @@ from django_object_actions import DjangoObjectActions
 from . import ca_settings
 from .constants import ReasonFlags
 from .extensions import KEY_TO_EXTENSION
+from .extensions import AlternativeNameExtension
 from .extensions import AuthorityInformationAccess
 from .extensions import AuthorityKeyIdentifier
 from .extensions import BasicConstraints
 from .extensions import CertificatePolicies
-from .extensions import IssuerAlternativeName
 from .extensions import IterableExtension
 from .extensions import NameConstraints
 from .extensions import NullExtension
 from .extensions import OrderedSetExtension
-from .extensions import SubjectAlternativeName
 from .extensions import SubjectKeyIdentifier
+from .extensions import SubjectAlternativeName
 from .extensions import UnrecognizedExtension
 from .forms import CreateCertificateForm
 from .forms import ResignCertificateForm
@@ -184,9 +184,6 @@ class CertificateMixin(object):
         authority_information_access).
         """
 
-        if not value:
-            return '<none>'
-
         html = ''
         if value.critical is True:
             text = _('Critical')
@@ -195,8 +192,6 @@ class CertificateMixin(object):
         if isinstance(value, IterableExtension):
             html += '<ul class="x509-extension-value">'
             for val in value.value:
-                if isinstance(val, x509.GeneralName):
-                    val = format_general_name(val)
                 html += '<li>%s</li>' % escape(val)
             html += '</ul>'
         else:
@@ -209,11 +204,13 @@ class CertificateMixin(object):
         templates = ['django_ca/admin/extensions/%s.html' % key]
 
         if isinstance(extension, OrderedSetExtension):
-            templates.append('django_ca/admin/extensions/ordered_set_extension.html')
+            templates.append('django_ca/admin/extensions/base/ordered_set_extension.html')
         if isinstance(extension, NullExtension):
-            templates.append('django_ca/admin/extensions/null_extension.html')
+            templates.append('django_ca/admin/extensions/base/null_extension.html')
+        if isinstance(extension, AlternativeNameExtension):
+            templates.append('django_ca/admin/extensions/base/alternative_name_extension.html')
 
-        templates.append('django_ca/admin/extensions/unrecognized_extension.html')
+        templates.append('django_ca/admin/extensions/base/unrecognized_extension.html')
         return render_to_string(templates, {'obj': obj, 'extension': extension})
 
     def authority_information_access(self, obj):
@@ -247,17 +244,9 @@ class CertificateMixin(object):
         return self.output_extension(obj.subject_key_identifier)
     subject_key_identifier.short_description = SubjectKeyIdentifier.name
 
-    def issuer_alternative_name(self, obj):
-        return self.output_extension(obj.issuer_alternative_name)
-    issuer_alternative_name.short_description = IssuerAlternativeName.name
-
     def authority_key_identifier(self, obj):
         return self.output_extension(obj.authority_key_identifier)
     authority_key_identifier.short_description = AuthorityKeyIdentifier.name
-
-    def subject_alternative_name(self, obj):
-        return self.output_extension(obj.subject_alternative_name)
-    subject_alternative_name.short_description = SubjectAlternativeName.name
 
     def name_constraints(self, obj):
         nc = obj.name_constraints
@@ -289,9 +278,9 @@ class CertificateMixin(object):
         scts = obj.precertificate_signed_certificate_timestamps
 
         if isinstance(scts, UnrecognizedExtension):
-            return render_to_string('django_ca/admin/unrecognizedextension.html', {
-                'critical': scts.critical or True,
-                'entries': scts.value,
+            return render_to_string('django_ca/admin/extensions/base/unrecognized_extension.html', {
+                'extension': scts,
+                'obj': obj
             })
         else:  # pragma: only SCT
             template = 'django_ca/admin/extensions/precertificate_signed_certificate_timestamps.html'
@@ -323,7 +312,7 @@ class CertificateMixin(object):
 
         if obj.extension_fields:
             for field in obj.extension_fields:
-                if field == 'subject_alternative_name':  # already displayed in main section
+                if field == SubjectAlternativeName.key:  # already displayed in main section
                     continue
 
                 # If we encounter an object of type x509.Extension, it means that we do not yet support this
