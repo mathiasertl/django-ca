@@ -55,7 +55,6 @@ from .extensions import IterableExtension
 from .extensions import NameConstraints
 from .extensions import NullExtension
 from .extensions import OrderedSetExtension
-from .extensions import SubjectKeyIdentifier
 from .extensions import SubjectAlternativeName
 from .extensions import UnrecognizedExtension
 from .forms import CreateCertificateForm
@@ -209,8 +208,10 @@ class CertificateMixin(object):
             templates.append('django_ca/admin/extensions/base/null_extension.html')
         if isinstance(extension, AlternativeNameExtension):
             templates.append('django_ca/admin/extensions/base/alternative_name_extension.html')
-
-        templates.append('django_ca/admin/extensions/base/unrecognized_extension.html')
+        if isinstance(extension, UnrecognizedExtension) or isinstance(extension, x509.UnrecognizedExtension):
+            templates.append('django_ca/admin/extensions/base/unrecognized_extension.html')
+        else:
+            templates.append('django_ca/admin/extensions/base/base.html')
         return render_to_string(templates, {'obj': obj, 'extension': extension})
 
     def authority_information_access(self, obj):
@@ -239,10 +240,6 @@ class CertificateMixin(object):
     def basic_constraints(self, obj):
         return self.output_extension(obj.basic_constraints)
     basic_constraints.short_description = BasicConstraints.name
-
-    def subject_key_identifier(self, obj):
-        return self.output_extension(obj.subject_key_identifier)
-    subject_key_identifier.short_description = SubjectKeyIdentifier.name
 
     def authority_key_identifier(self, obj):
         return self.output_extension(obj.authority_key_identifier)
@@ -370,6 +367,7 @@ class CertificateMixin(object):
 # rendering as a template based on the extension key.
 for key, ext in KEY_TO_EXTENSION.items():
     if hasattr(CertificateMixin, key):
+        print('-', key)
         continue
 
     f = partial(CertificateMixin.output_template, key=key)
