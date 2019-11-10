@@ -1,0 +1,16 @@
+{% extends "django_ca/admin/extensions/base/base.html" %}
+{% load i18n %}
+
+{% block content %}
+{% if extension.permitted %}{% trans "Permitted:" %}
+<ul>
+  {% for name in extension.permitted.serialize %}<li>{{ name }}</li>{% endfor %}
+</ul>
+{% endif %}
+
+{% if extension.excluded %}{% trans "Excluded:" %}
+<ul>
+  {% for name in extension.excluded.serialize %}<li>{{ name }}</li>{% endfor %}
+</ul>
+{% endif %}
+{% endblock content %}

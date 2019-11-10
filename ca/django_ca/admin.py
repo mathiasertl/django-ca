@@ -38,7 +38,6 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.html import escape
-from django.utils.html import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from django_object_actions import DjangoObjectActions
@@ -47,10 +46,7 @@ from . import ca_settings
 from .constants import ReasonFlags
 from .extensions import KEY_TO_EXTENSION
 from .extensions import AlternativeNameExtension
-from .extensions import AuthorityInformationAccess
 from .extensions import CRLDistributionPointsBase
-from .extensions import IterableExtension
-from .extensions import NameConstraints
 from .extensions import NullExtension
 from .extensions import OrderedSetExtension
 from .extensions import SubjectAlternativeName
@@ -68,7 +64,6 @@ from .utils import OID_NAME_MAPPINGS
 from .utils import SERIAL_RE
 from .utils import LazyEncoder
 from .utils import add_colons
-from .utils import format_general_name
 
 log = logging.getLogger(__name__)
 
@@ -191,66 +186,6 @@ class CertificateMixin(object):
         else:
             templates.append('django_ca/admin/extensions/base/base.html')
         return render_to_string(templates, {'obj': obj, 'extension': extension})
-
-    def authority_information_access(self, obj):
-        aia = obj.authority_information_access
-
-        html = ''
-        if aia.critical is True:  # pragma: no cover
-            text = _('Critical')
-            html = '<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text)
-
-        if aia.issuers:  # pragma: no branch
-            html += '<div>CA Issuers:</div>'
-            html += '<ul class="x509-extension-value">'
-            for val in aia.issuers:
-                html += '<li>%s</li>' % escape(format_general_name(val))
-            html += '</ul>'
-        if aia.ocsp:  # pragma: no branch
-            html += '<div>OCSP:</div>'
-            html += '<ul class="x509-extension-value">'
-            for val in aia.ocsp:
-                html += '<li>%s</li>' % escape(format_general_name(val))
-            html += '</ul>'
-        return mark_safe(html)
-    authority_information_access.short_description = AuthorityInformationAccess.name
-
-    def name_constraints(self, obj):
-        nc = obj.name_constraints
-        html = ''
-        if nc.critical is True:  # pragma: no branch
-            text = _('Critical')
-            html = '<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text)
-
-        if nc.permitted:  # pragma: no branch
-            html += '<div>Permitted:</div>'
-            html += '<ul class="x509-extension-value">'
-            for val in nc.permitted:
-                html += '<li>%s</li>' % escape(format_general_name(val))
-            html += '</ul>'
-        if nc.excluded:  # pragma: no branch
-            html += '<div>Excluded:</div>'
-            html += '<ul class="x509-extension-value">'
-            for val in nc.excluded:
-                html += '<li>%s</li>' % escape(format_general_name(val))
-            html += '</ul>'
-        return mark_safe(html)
-    name_constraints.short_description = NameConstraints.name
-
-    def precertificate_signed_certificate_timestamps(self, obj):
-        scts = obj.precertificate_signed_certificate_timestamps
-
-        if isinstance(scts, UnrecognizedExtension):
-            return render_to_string('django_ca/admin/extensions/base/unrecognized_extension.html', {
-                'extension': scts,
-                'obj': obj
-            })
-        else:  # pragma: only SCT
-            template = 'django_ca/admin/extensions/precertificate_signed_certificate_timestamps.html'
-            return render_to_string(template, {
-                'extension': scts,
-            })
-    precertificate_signed_certificate_timestamps.short_description = _('Signed Certificate Timestamps (SCTs)')
 
     def unknown_oid(self, oid, obj):
         ext = obj.x509.extensions.get_extension_for_oid(oid)

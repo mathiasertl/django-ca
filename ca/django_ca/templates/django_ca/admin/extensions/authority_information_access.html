@@ -1,0 +1,16 @@
+{% extends "django_ca/admin/extensions/base/base.html" %}
+{% load i18n %}
+
+{% block content %}
+{% if extension.issuers %}{% trans "CA Issuers:" %}
+<ul>
+  {% for name in extension.issuers.serialize %}<li>{{ name }}</li>{% endfor %}
+</ul>
+{% endif %}
+
+{% if extension.ocsp %}{% trans "OCSP:" %}
+<ul>
+  {% for name in extension.ocsp.serialize %}<li>{{ name }}</li>{% endfor %}
+</ul>
+{% endif %}
+{% endblock content %}
