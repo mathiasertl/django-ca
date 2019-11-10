@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+from cryptography import x509
+
 from django import template
 from django.contrib.admin.templatetags.admin_modify import submit_row
 
@@ -47,6 +49,16 @@ def as_hex(value):
         return add_colons(int_to_hex(value))
     elif isinstance(value, bytes):
         return bytes_to_hex(value)
+
+
+@register.filter
+def oid_name(value):
+    return value._name
+
+
+@register.filter
+def is_user_notice(value):
+    return isinstance(value, x509.UserNotice)
 
 
 @register.inclusion_tag('django_ca/admin/submit_line.html', takes_context=True)

@@ -1,0 +1,33 @@
+{% extends "django_ca/admin/extensions/base/base.html" %}
+{% load i18n django_ca %}
+
+{% block content %}<ul>
+  {% for info in extension %}
+  <li>{{ info.policy_identifier|oid_name }} ({{ info.policy_identifier.dotted_string }}){% if info.policy_qualifiers %}:{% endif %}
+    <ul>
+    {% for qualifier in info.policy_qualifiers %}
+      <li>
+        {% if qualifier|is_user_notice %}
+          {% trans "User Notice:" %}
+          <ul>
+            {% if qualifier.explicit_text %}
+            <li>{% trans "Explicit Text:" %} {{ qualifier.explicit_text }}</li>
+            {% endif %}
+            {% if qualifier.notice_reference %}
+            <li>{% trans "Notice Reference:" %}
+              <ul>
+                <li>{{ qualifier.notice_reference.organiziation }}</li>
+                <li>{{ qualifier.notice_reference.notice_numbers }}</li>
+              </ul>
+            </li>
+            {% endif %}
+          </ul>
+        {% else %}
+          {{ qualifier }}
+        {% endif %}
+      </li>
+    {% endfor %}
+    </ul>
+  </li>
+  {% endfor %}
+</ul>{% endblock content %}

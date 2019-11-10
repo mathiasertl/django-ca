@@ -48,10 +48,7 @@ from .constants import ReasonFlags
 from .extensions import KEY_TO_EXTENSION
 from .extensions import AlternativeNameExtension
 from .extensions import AuthorityInformationAccess
-from .extensions import AuthorityKeyIdentifier
-from .extensions import BasicConstraints
 from .extensions import CRLDistributionPointsBase
-from .extensions import CertificatePolicies
 from .extensions import IterableExtension
 from .extensions import NameConstraints
 from .extensions import NullExtension
@@ -177,28 +174,6 @@ class CertificateMixin(object):
     # Properties for x509 extensions #
     ##################################
 
-    def output_extension(self, value):
-        """Generic function to ouptut an extension as HTML.
-
-        Note that this function is not called for extensions that require special handling (e.g.
-        authority_information_access).
-        """
-
-        html = ''
-        if value.critical is True:
-            text = _('Critical')
-            html = '<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text)
-
-        if isinstance(value, IterableExtension):
-            html += '<ul class="x509-extension-value">'
-            for val in value.value:
-                html += '<li>%s</li>' % escape(val)
-            html += '</ul>'
-        else:
-            html += '<p>%s<p>' % escape(value.as_text())
-
-        return mark_safe(html)
-
     def output_template(self, obj, key):
         extension = getattr(obj, key)
         templates = ['django_ca/admin/extensions/%s.html' % key]
@@ -261,10 +236,6 @@ class CertificateMixin(object):
             html += '</ul>'
         return mark_safe(html)
     name_constraints.short_description = NameConstraints.name
-
-    def certificate_policies(self, obj):
-        return self.output_extension(obj.certificate_policies)
-    certificate_policies.short_description = CertificatePolicies.name
 
     def precertificate_signed_certificate_timestamps(self, obj):
         scts = obj.precertificate_signed_certificate_timestamps
