@@ -18,6 +18,7 @@ import json
 import logging
 from datetime import datetime
 from functools import partial
+from types import MethodType
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -44,23 +45,20 @@ from django_object_actions import DjangoObjectActions
 
 from . import ca_settings
 from .constants import ReasonFlags
+from .extensions import KEY_TO_EXTENSION
 from .extensions import AuthorityInformationAccess
 from .extensions import AuthorityKeyIdentifier
 from .extensions import BasicConstraints
 from .extensions import CertificatePolicies
-from .extensions import CRLDistributionPoints
-from .extensions import ExtendedKeyUsage
-from .extensions import FreshestCRL
 from .extensions import IssuerAlternativeName
 from .extensions import IterableExtension
-from .extensions import KeyUsage
 from .extensions import NameConstraints
 from .extensions import NullExtension
 from .extensions import OCSPNoCheck
+from .extensions import OrderedSetExtension
 from .extensions import PrecertPoison
 from .extensions import SubjectAlternativeName
 from .extensions import SubjectKeyIdentifier
-from .extensions import TLSFeature
 from .extensions import UnrecognizedExtension
 from .forms import CreateCertificateForm
 from .forms import ResignCertificateForm
@@ -210,9 +208,15 @@ class CertificateMixin(object):
 
         return mark_safe(html)
 
-    def output_template(self, extension):
-        template = 'django_ca/admin/extensions/%s.html' % extension.key
-        return render_to_string(template, {'extension': extension, })
+    def output_template(self, obj, key):
+        extension = getattr(obj, key)
+        templates = ['django_ca/admin/extensions/%s.html' % key]
+
+        if isinstance(extension, OrderedSetExtension):
+            templates.append('django_ca/admin/extensions/ordered_set_extension.html')
+
+        templates.append('django_ca/admin/extensions/unrecognized_extension.html')
+        return render_to_string(templates, {'obj': obj, 'extension': extension})
 
     def authority_information_access(self, obj):
         aia = obj.authority_information_access
@@ -241,18 +245,6 @@ class CertificateMixin(object):
         return self.output_extension(obj.basic_constraints)
     basic_constraints.short_description = BasicConstraints.name
 
-    def key_usage(self, obj):
-        return self.output_template(obj.key_usage)
-    key_usage.short_description = KeyUsage.name
-
-    def extended_key_usage(self, obj):
-        return self.output_template(obj.extended_key_usage)
-    extended_key_usage.short_description = ExtendedKeyUsage.name
-
-    def tls_feature(self, obj):
-        return self.output_template(obj.tls_feature)
-    tls_feature.short_description = TLSFeature.name
-
     def subject_key_identifier(self, obj):
         return self.output_extension(obj.subject_key_identifier)
     subject_key_identifier.short_description = SubjectKeyIdentifier.name
@@ -264,14 +256,6 @@ class CertificateMixin(object):
     def authority_key_identifier(self, obj):
         return self.output_extension(obj.authority_key_identifier)
     authority_key_identifier.short_description = AuthorityKeyIdentifier.name
-
-    def crl_distribution_points(self, obj):
-        return self.output_template(obj.crl_distribution_points)
-    crl_distribution_points.short_description = CRLDistributionPoints.name
-
-    def freshest_crl(self, obj):
-        return self.output_template(obj.freshest_crl)
-    freshest_crl.short_description = FreshestCRL.name
 
     def subject_alternative_name(self, obj):
         return self.output_extension(obj.subject_alternative_name)
@@ -400,6 +384,20 @@ class CertificateMixin(object):
                 'django_ca/admin/css/base.css',
             ),
         }
+
+
+# Attach extension properties to admin if they are not already present.
+# This makes ModelAdmin have a property for every extension that we currently support,
+# rendering as a template based on the extension key.
+for key, ext in KEY_TO_EXTENSION.items():
+    if hasattr(CertificateMixin, key):
+        continue
+
+    f = partial(CertificateMixin.output_template, key=key)
+    f.short_description = ext.name
+    f = MethodType(f, CertificateMixin)
+
+    setattr(CertificateMixin, key, f)
 
 
 @admin.register(CertificateAuthority)
