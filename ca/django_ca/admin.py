@@ -240,14 +240,6 @@ class CertificateMixin(object):
         return mark_safe(html)
     authority_information_access.short_description = AuthorityInformationAccess.name
 
-    def basic_constraints(self, obj):
-        return self.output_extension(obj.basic_constraints)
-    basic_constraints.short_description = BasicConstraints.name
-
-    def authority_key_identifier(self, obj):
-        return self.output_extension(obj.authority_key_identifier)
-    authority_key_identifier.short_description = AuthorityKeyIdentifier.name
-
     def name_constraints(self, obj):
         nc = obj.name_constraints
         html = ''
