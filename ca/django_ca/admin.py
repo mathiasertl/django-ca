@@ -54,9 +54,7 @@ from .extensions import IssuerAlternativeName
 from .extensions import IterableExtension
 from .extensions import NameConstraints
 from .extensions import NullExtension
-from .extensions import OCSPNoCheck
 from .extensions import OrderedSetExtension
-from .extensions import PrecertPoison
 from .extensions import SubjectAlternativeName
 from .extensions import SubjectKeyIdentifier
 from .extensions import UnrecognizedExtension
@@ -201,8 +199,6 @@ class CertificateMixin(object):
                     val = format_general_name(val)
                 html += '<li>%s</li>' % escape(val)
             html += '</ul>'
-        elif isinstance(value, NullExtension):
-            html += '<p>Yes</p>'
         else:
             html += '<p>%s<p>' % escape(value.as_text())
 
@@ -214,6 +210,8 @@ class CertificateMixin(object):
 
         if isinstance(extension, OrderedSetExtension):
             templates.append('django_ca/admin/extensions/ordered_set_extension.html')
+        if isinstance(extension, NullExtension):
+            templates.append('django_ca/admin/extensions/null_extension.html')
 
         templates.append('django_ca/admin/extensions/unrecognized_extension.html')
         return render_to_string(templates, {'obj': obj, 'extension': extension})
@@ -282,14 +280,6 @@ class CertificateMixin(object):
             html += '</ul>'
         return mark_safe(html)
     name_constraints.short_description = NameConstraints.name
-
-    def ocsp_no_check(self, obj):
-        return self.output_extension(obj.ocsp_no_check)
-    ocsp_no_check.short_description = OCSPNoCheck.name
-
-    def precert_poison(self, obj):
-        return self.output_extension(obj.precert_poison)
-    precert_poison.short_description = PrecertPoison.name
 
     def certificate_policies(self, obj):
         return self.output_extension(obj.certificate_policies)
