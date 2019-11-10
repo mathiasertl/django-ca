@@ -4,7 +4,7 @@
 {% block content %}
 {% for entry in extension %}
   Distribution Point:
-  <ul class="x509-extension-value">
+  <ul>
     {% if entry.full_name %}
     <li>Full Name: {{ entry.full_name|format_general_names|join:", " }}</li>
     {% endif %}

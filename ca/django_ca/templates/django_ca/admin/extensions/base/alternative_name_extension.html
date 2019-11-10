@@ -1,6 +1,6 @@
 {% extends "django_ca/admin/extensions/base/base.html" %}
 {% load i18n %}
 
-{% block content %}<ul class="x509-extension-value">
+{% block content %}<ul>
   {% for name in extension %}<li>{{ name }}</li>{% endfor %}
 </ul>{% endblock %}
