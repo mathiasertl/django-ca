@@ -50,6 +50,7 @@ from .extensions import AlternativeNameExtension
 from .extensions import AuthorityInformationAccess
 from .extensions import AuthorityKeyIdentifier
 from .extensions import BasicConstraints
+from .extensions import CRLDistributionPointsBase
 from .extensions import CertificatePolicies
 from .extensions import IterableExtension
 from .extensions import NameConstraints
@@ -202,12 +203,14 @@ class CertificateMixin(object):
         extension = getattr(obj, key)
         templates = ['django_ca/admin/extensions/%s.html' % key]
 
-        if isinstance(extension, OrderedSetExtension):
-            templates.append('django_ca/admin/extensions/base/ordered_set_extension.html')
         if isinstance(extension, NullExtension):
             templates.append('django_ca/admin/extensions/base/null_extension.html')
         if isinstance(extension, AlternativeNameExtension):
             templates.append('django_ca/admin/extensions/base/alternative_name_extension.html')
+        if isinstance(extension, CRLDistributionPointsBase):
+            templates.append('django_ca/admin/extensions/base/crl_distribution_points_base.html')
+        if isinstance(extension, OrderedSetExtension):
+            templates.append('django_ca/admin/extensions/base/ordered_set_extension.html')
         if isinstance(extension, UnrecognizedExtension) or isinstance(extension, x509.UnrecognizedExtension):
             templates.append('django_ca/admin/extensions/base/unrecognized_extension.html')
         else:
