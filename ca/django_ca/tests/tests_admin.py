@@ -287,7 +287,13 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 <div class="form-row field-subject_alternative_name">
     <div>
         <label>SubjectAlternativeName:</label>
-        <div class="readonly">&lt;Not present&gt;</div>
+        <div class="readonly">
+            <span class="django-ca-extension">
+                <div class="django-ca-extension-value">
+                    &lt;Not present&gt;
+                </div>
+            </span>
+        </div>
     </div>
 </div>
 ''', html=True)

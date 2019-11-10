@@ -267,9 +267,9 @@ class CertificateMixin(object):
 # This makes ModelAdmin have a property for every extension that we currently support,
 # rendering as a template based on the extension key.
 for key, ext in KEY_TO_EXTENSION.items():
-    if hasattr(CertificateMixin, key):
-        print('-', key)
-        continue
+    # Give Mixin opportunity to override method - not needed right now
+    #if hasattr(CertificateMixin, key):
+    #    continue
 
     f = partial(CertificateMixin.output_template, key=key)
     f.short_description = ext.name
