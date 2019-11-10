@@ -16,9 +16,12 @@
 from django import template
 from django.contrib.admin.templatetags.admin_modify import submit_row
 
+from ..utils import add_colons
+from ..utils import bytes_to_hex
 from ..utils import format_general_name
 from ..utils import format_name
 from ..utils import format_relative_name
+from ..utils import int_to_hex
 
 register = template.Library()
 
@@ -34,6 +37,16 @@ def format_general_names(value):
     Note that currently general names always occur as list.
     """
     return [format_general_name(v) for v in value]
+
+
+@register.filter
+def as_hex(value):
+    """Takes a bytes value and returns its hex representation."""
+
+    if isinstance(value, int):
+        return add_colons(int_to_hex(value))
+    elif isinstance(value, bytes):
+        return bytes_to_hex(value)
 
 
 @register.inclusion_tag('django_ca/admin/submit_line.html', takes_context=True)

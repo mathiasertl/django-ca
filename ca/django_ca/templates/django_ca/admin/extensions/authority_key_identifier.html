@@ -1,0 +1,23 @@
+{% extends "django_ca/admin/extensions/base/base.html" %}
+{% load i18n django_ca %}
+
+{% block content %}<ul>
+  {% if extension.key_identifier %}
+  <li>{% trans "Key ID:" %} <span class="django-ca-serial">{{ extension.key_identifier|as_hex }}</span></li>
+  {% endif %}
+  {% if extension.authority_cert_issuer %}
+  <li>{% trans "Authority certificate issuer:" %}
+    <ul>
+      {% for name in extension.authority_cert_issuer.serialize %}
+        <li>{{ name }}</li>
+      {% endfor %}
+    </ul>
+  </li>
+  {% endif %}
+
+  {% if extension.authority_cert_serial_number %}
+  <li>{% trans "Authority certificate issuer:" %} 
+    <span class="django-ca-serial">{{ extension.authority_cert_serial_number|as_hex }}</span>
+  </li>
+  {% endif %}
+</ul>{% endblock content %}
