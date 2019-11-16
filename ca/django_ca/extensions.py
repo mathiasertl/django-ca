@@ -1394,6 +1394,10 @@ class FreshestCRL(CRLDistributionPointsBase):
     name = 'FreshestCRL'
     oid = ExtensionOID.FRESHEST_CRL
 
+    @property
+    def extension_type(self):
+        return x509.FreshestCRL(distribution_points=[dp.for_extension_type for dp in self.value])
+
 
 class IssuerAlternativeName(AlternativeNameExtension):
     """Class representing an Issuer Alternative Name extension.

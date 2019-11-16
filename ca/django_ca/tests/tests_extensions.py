@@ -1932,6 +1932,17 @@ class FreshestCRLTestCase(CRLDistributionPointsTestCase):
     ext_class_key = 'freshest_crl'
     ext_class_name = 'FreshestCRL'
 
+    cg_dps1 = x509.FreshestCRL([CRLDistributionPointsTestCase.cg_dp1])
+    cg_dps2 = x509.FreshestCRL([CRLDistributionPointsTestCase.cg_dp2])
+    cg_dps3 = x509.FreshestCRL([CRLDistributionPointsTestCase.cg_dp3])
+    cg_dps4 = x509.FreshestCRL([CRLDistributionPointsTestCase.cg_dp4])
+
+    def setUp(self):
+        self.test_values['one']['extension_type'] = self.cg_dps1
+        self.test_values['two']['extension_type'] = self.cg_dps2
+        self.test_values['rdn']['extension_type'] = self.cg_dps3
+        self.test_values['adv']['extension_type'] = self.cg_dps4
+
 
 class InhibitAnyPolicyTestCase(ExtensionTestMixin, TestCase):
     ext_class = InhibitAnyPolicy
