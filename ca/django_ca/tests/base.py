@@ -54,23 +54,10 @@ from .. import ca_settings
 from .. import profiles
 from ..constants import ReasonFlags
 from ..deprecation import RemovedInDjangoCA16Warning
-from ..extensions import AuthorityInformationAccess
-from ..extensions import AuthorityKeyIdentifier
-from ..extensions import BasicConstraints
-from ..extensions import CertificatePolicies
-from ..extensions import CRLDistributionPoints
-from ..extensions import ExtendedKeyUsage
+from ..extensions import KEY_TO_EXTENSION
 from ..extensions import Extension
-from ..extensions import IssuerAlternativeName
 from ..extensions import IterableExtension
-from ..extensions import KeyUsage
 from ..extensions import ListExtension
-from ..extensions import NameConstraints
-from ..extensions import OCSPNoCheck
-from ..extensions import PrecertPoison
-from ..extensions import SubjectAlternativeName
-from ..extensions import SubjectKeyIdentifier
-from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..profiles import get_cert_profile_kwargs
@@ -303,37 +290,10 @@ for cert_name, cert_data in certs.items():
     cert_data['ocsp-expires'] = cert_data['valid_until'].strftime('%y%m%d%H%M%SZ')
 
     # parse extensions
-    if cert_data.get('authority_key_identifier'):
-        cert_data['authority_key_identifier'] = AuthorityKeyIdentifier(cert_data['authority_key_identifier'])
-    if cert_data.get('subject_key_identifier'):
-        cert_data['subject_key_identifier'] = SubjectKeyIdentifier(cert_data['subject_key_identifier'])
-    if cert_data.get('basic_constraints'):
-        cert_data['basic_constraints'] = BasicConstraints(cert_data['basic_constraints'])
-    if cert_data.get('crl_distribution_points'):
-        cert_data['crl_distribution_points'] = CRLDistributionPoints(cert_data['crl_distribution_points'])
-    if cert_data.get('extended_key_usage'):
-        cert_data['extended_key_usage'] = ExtendedKeyUsage(cert_data['extended_key_usage'])
-    if cert_data.get('key_usage'):
-        cert_data['key_usage'] = KeyUsage(cert_data['key_usage'])
-    if cert_data.get('authority_information_access'):
-        cert_data['authority_information_access'] = AuthorityInformationAccess(
-            cert_data['authority_information_access'])
-    if cert_data.get('subject_alternative_name'):
-        cert_data['subject_alternative_name'] = SubjectAlternativeName(cert_data['subject_alternative_name'])
-    if cert_data.get('name_constraints'):
-        cert_data['name_constraints'] = NameConstraints(cert_data['name_constraints'])
-    if cert_data.get('tls_feature'):
-        cert_data['tls_feature'] = TLSFeature(cert_data['tls_feature'])
-    if cert_data.get('ocsp_no_check'):
-        cert_data['ocsp_no_check'] = OCSPNoCheck(cert_data['ocsp_no_check'])
-    if cert_data.get('issuer_alternative_name'):
-        cert_data['issuer_alternative_name'] = IssuerAlternativeName(cert_data['issuer_alternative_name'])
-    if cert_data.get('certificate_policies'):
-        cert_data['certificate_policies'] = CertificatePolicies(cert_data['certificate_policies'])
-
-    precert_poison = cert_data.get('precert_poison')
-    if precert_poison:
-        cert_data['precert_poison'] = PrecertPoison(precert_poison)
+    for key, cls in KEY_TO_EXTENSION.items():
+        if cert_data.get(key):
+            cert_data['%s_serialized' % key] = cert_data[key]
+            cert_data[key] = cls(cert_data[key])
 
 # Calculate some fixted timestamps that we reuse throughout the tests
 timestamps = {

@@ -2546,8 +2546,8 @@ class PrecertificateSignedCertificateTimestampsTestCase(DjangoCAWithCertTestCase
         self.ext2 = PrecertificateSignedCertificateTimestamps(self.x2)
         self.exts = [self.ext1, self.ext2]
         self.xs = [self.x1, self.x2]
-        self.data1 = certs[self.name1]['precertificate_signed_certificate_timestamps']
-        self.data2 = certs[self.name2]['precertificate_signed_certificate_timestamps']
+        self.data1 = certs[self.name1]['precertificate_signed_certificate_timestamps_serialized']
+        self.data2 = certs[self.name2]['precertificate_signed_certificate_timestamps_serialized']
 
     def test_config(self):
         self.assertTrue(issubclass(self.ext_class, Extension))
