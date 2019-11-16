@@ -366,8 +366,6 @@ Status: Valid
 AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
-    OCSP:
-      * URI:{authority_information_access.ocsp[0].value}
 AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
 BasicConstraints (critical):
@@ -472,7 +470,7 @@ AuthorityInformationAccess{authority_information_access_critical}:
       * URI:{authority_information_access.ocsp[0].value}
 AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints (critical):
+BasicConstraints{basic_constraints_critical}:
     CA:FALSE
 CRLDistributionPoints{crl_distribution_points_critical}:
     * DistributionPoint:
@@ -631,12 +629,11 @@ HPKP pin: {hpkp}
             stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, extensions=True,
                                       stdout=BytesIO(), stderr=BytesIO())
             self.assertEqual(stderr, b'')
-            self.assertEqual(stdout.decode('utf-8'),
-                             output[name].format(**self.get_cert_context(name)))
+
+            self.assertEqual(stdout.decode('utf-8'), output[name].format(**self.get_cert_context(name)))
 
     @freeze_time(timestamps['everything_valid'])
     def test_der(self):
-        self.maxDiff = None
         cert = self.certs['child-cert']
         stdout, stderr = self.cmd('view_cert', cert.serial, format=Encoding.DER,
                                   stdout=BytesIO(), stderr=BytesIO())
@@ -716,7 +713,6 @@ HPKP pin: %(hpkp)s
 
     @freeze_time("2019-04-01")
     def test_contrib_godaddy_derstandardat(self):
-        self.maxDiff = None
         if ca_settings.OPENSSL_SUPPORTS_SCT:
             sct = """PrecertificateSignedCertificateTimestamps:
     * Precertificate (v1):

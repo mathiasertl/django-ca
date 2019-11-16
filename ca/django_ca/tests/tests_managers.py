@@ -411,9 +411,9 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
         san = certs['profile-ocsp']['cn']
         kwargs = self.get_cert_profile_kwargs('ocsp')
 
-        ca.ocsp_url = certs['child']['ocsp_url']
-        ca.issuer_url = certs['child']['issuer_url']
-        ca.crl_url = certs['child']['crl_url']
+        # NOTE: ocsp_url is cleared here, b/c the OCSP profile now disables the OCSP url. But the old
+        # function we test here always sets it.
+        ca.ocsp_url = ''
         ca.save()
 
         cert = self.cert_init(
@@ -421,6 +421,7 @@ class GetCertTestCase(DjangoCAWithCertTestCase):
             subject_alternative_name={'value': [san]},
             ocsp_no_check=True,
             **kwargs)
+        self.maxDiff = None
 
         self.assertEqual(cert.extensions, [
             certs['profile-ocsp']['authority_information_access'],
