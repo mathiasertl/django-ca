@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function
-
 import argparse
 import json
 import os
@@ -167,7 +165,6 @@ def update_cert_data(cert, data):
         data['authority_key_identifier'] = aki.serialize()
 
     basic_constraints = cert.basic_constraints
-    print(name, basic_constraints)
     if basic_constraints:
         data['basic_constraints'] = basic_constraints.serialize()
 
