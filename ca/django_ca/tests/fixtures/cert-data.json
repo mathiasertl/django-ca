@@ -1,5 +1,5 @@
 {
-    "timestamp": "2019-08-25 13:00:00",
+    "timestamp": "2019-11-16 20:00:00",
     "certs": {
         "root": {
             "type": "ca",
@@ -37,30 +37,32 @@
             "key_size": 1024,
             "key_type": "RSA",
             "csr_filename": false,
-            "issuer_url": "http://localhost:8000/django_ca/issuer/76120AB177E93DA5B355BE8E9A299441598C4134.der",
-            "crl_url": "http://localhost:8000/django_ca/crl/76120AB177E93DA5B355BE8E9A299441598C4134/",
-            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/76120AB177E93DA5B355BE8E9A299441598C4134/",
-            "ocsp_url": "http://localhost:8000/django_ca/ocsp/76120AB177E93DA5B355BE8E9A299441598C4134/cert/",
-            "serial": "76120AB177E93DA5B355BE8E9A299441598C4134",
-            "hpkp": "xS1Cpyp75+DeMnkLYGMcLLwSPYN/t1UMC0OJpP5HkHU=",
-            "valid_from": "2019-08-25 13:00:00",
-            "valid_until": "2020-08-25 13:00:00",
-            "md5": "3D:19:4A:B9:A0:DF:D7:DF:E3:1E:D1:D3:03:09:FD:FE",
-            "sha1": "B8:B0:36:E1:08:EA:FA:71:1C:B5:3B:56:A0:E7:62:61:7B:EB:73:0A",
-            "sha256": "68:C0:39:B6:17:88:C2:63:8F:EB:80:EA:76:9C:50:63:BE:83:1B:E6:08:32:D7:EF:23:97:EE:C4:3E:3F:F0:73",
-            "sha512": "33:C0:BE:A2:2B:9F:AD:02:DD:D2:62:4F:BF:AD:43:1F:F2:2D:FB:A0:23:8E:86:7E:C9:38:3D:1F:9F:46:1C:EB:79:93:57:79:04:6F:8D:EB:25:77:14:EB:98:DA:AA:FC:F6:4C:C7:09:8D:F6:0A:EA:4F:30:12:95:C5:EB:3E:FF",
+            "issuer_url": "http://localhost:8000/django_ca/issuer/47B589C4D8EFB85CA6B173934B358EA6C64A298A.der",
+            "crl_url": "http://localhost:8000/django_ca/crl/47B589C4D8EFB85CA6B173934B358EA6C64A298A/",
+            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/47B589C4D8EFB85CA6B173934B358EA6C64A298A/",
+            "ocsp_url": "http://localhost:8000/django_ca/ocsp/47B589C4D8EFB85CA6B173934B358EA6C64A298A/cert/",
+            "serial": "47B589C4D8EFB85CA6B173934B358EA6C64A298A",
+            "hpkp": "kzCYymddTUjC6+02j3hnPEtB3JYc7asVIZkrDJDzvPs=",
+            "valid_from": "2019-11-16 20:00:00",
+            "valid_until": "2020-11-16 20:00:00",
+            "md5": "F3:29:26:0D:58:0C:F1:26:4B:42:E9:4D:88:C5:FE:C4",
+            "sha1": "CF:8F:25:BA:24:53:D7:85:9D:7A:BB:1F:F5:D2:2D:CA:CE:3D:ED:B5",
+            "sha256": "19:82:AD:A4:16:F8:98:48:0E:80:0B:68:43:0B:DC:6F:6E:A8:45:BC:4D:FC:48:A0:7B:B4:89:04:DB:D6:51:12",
+            "sha512": "4B:0D:9C:04:F4:18:8D:48:09:76:6F:B0:82:3B:28:02:42:63:82:DA:16:94:5B:10:DB:22:2A:4C:87:39:67:F2:05:77:80:7E:79:B2:C2:AA:11:88:7E:41:95:02:1F:07:0C:20:0F:D9:BB:63:65:D6:76:2F:52:F8:DA:14:F6:36",
             "authority_key_identifier": {
                 "critical": false,
-                "value": "0D:D6:43:BA:7B:B4:33:8C:73:E6:6E:2F:D7:C7:20:81:ED:E5:57:5E"
+                "value": {
+                    "key_identifier": "32:7E:F7:B8:8E:56:97:B4:50:A1:24:6E:D0:C7:E7:9A:AE:56:FB:34"
+                }
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "0D:D6:43:BA:7B:B4:33:8C:73:E6:6E:2F:D7:C7:20:81:ED:E5:57:5E"
+                "value": "32:7E:F7:B8:8E:56:97:B4:50:A1:24:6E:D0:C7:E7:9A:AE:56:FB:34"
             },
             "children": [
                 [
                     "child",
-                    "6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5"
+                    "3503199563DC55705208A8B41BC7BB0325EC8F44"
                 ]
             ]
         },
@@ -95,26 +97,28 @@
             "key_size": 1024,
             "key_type": "RSA",
             "csr_filename": false,
-            "crl": "http://localhost:8000/django_ca/crl/ca/76120AB177E93DA5B355BE8E9A299441598C4134/",
-            "issuer_url": "http://localhost:8000/django_ca/issuer/76120AB177E93DA5B355BE8E9A299441598C4134.der",
-            "crl_url": "http://localhost:8000/django_ca/crl/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/",
-            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/",
-            "ocsp_url": "http://localhost:8000/django_ca/ocsp/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/cert/",
-            "serial": "6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5",
-            "hpkp": "6nUcZGd1OC64p+lbRa5QwmcE5fvJn1pLCcslHz4Aiwo=",
-            "valid_from": "2019-08-28 13:00:00",
-            "valid_until": "2020-08-28 13:00:00",
-            "md5": "99:D2:0E:7D:34:34:21:08:57:AF:C0:B2:55:5D:34:B3",
-            "sha1": "93:0D:19:6B:26:2E:08:6A:B3:20:95:AA:21:55:53:25:5A:C0:A1:0C",
-            "sha256": "72:C5:78:9D:4A:A5:85:50:55:D8:92:F5:5B:9F:D2:94:6D:41:60:67:11:22:10:DF:38:50:41:7E:8B:38:37:B9",
-            "sha512": "30:B5:2B:EB:B6:4C:A4:93:41:31:3F:17:7C:28:E6:85:48:BB:35:3A:28:16:E7:CD:91:1C:7E:85:78:FF:81:2B:4D:7E:0A:AA:02:DD:DB:59:D9:0A:DF:21:60:F7:D1:DD:3A:B2:2E:4C:78:86:BC:84:2F:02:E1:B5:A0:69:D1:01",
+            "crl": "http://localhost:8000/django_ca/crl/ca/47B589C4D8EFB85CA6B173934B358EA6C64A298A/",
+            "issuer_url": "http://localhost:8000/django_ca/issuer/47B589C4D8EFB85CA6B173934B358EA6C64A298A.der",
+            "crl_url": "http://localhost:8000/django_ca/crl/3503199563DC55705208A8B41BC7BB0325EC8F44/",
+            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/3503199563DC55705208A8B41BC7BB0325EC8F44/",
+            "ocsp_url": "http://localhost:8000/django_ca/ocsp/3503199563DC55705208A8B41BC7BB0325EC8F44/cert/",
+            "serial": "3503199563DC55705208A8B41BC7BB0325EC8F44",
+            "hpkp": "sDyvJv953sdnK0liSGYF0OLnEbcLT35J5Ie4QKYphG0=",
+            "valid_from": "2019-11-19 20:00:00",
+            "valid_until": "2020-11-19 20:00:00",
+            "md5": "16:A9:D6:C1:26:9B:F5:E8:51:AF:96:32:89:B1:C8:28",
+            "sha1": "49:7A:02:05:C6:EF:C6:05:0A:56:F7:5D:87:AE:D4:D7:64:32:43:0E",
+            "sha256": "AA:AB:86:F7:A9:50:A5:79:4D:15:B7:FB:50:99:03:8C:9E:B5:5E:C8:A3:44:82:59:D3:B8:85:94:3F:21:CB:66",
+            "sha512": "BC:B9:E9:95:64:DB:C4:33:59:63:A9:46:34:31:6D:20:07:DD:29:99:C4:DB:EA:CB:E1:97:F6:2A:3B:81:2D:12:57:DD:09:E5:0E:48:EE:D8:2A:97:78:36:15:8D:1F:26:F4:57:B8:7B:C1:9C:6A:33:5D:17:2D:88:2D:B1:EB:AC",
             "authority_key_identifier": {
                 "critical": false,
-                "value": "0D:D6:43:BA:7B:B4:33:8C:73:E6:6E:2F:D7:C7:20:81:ED:E5:57:5E"
+                "value": {
+                    "key_identifier": "32:7E:F7:B8:8E:56:97:B4:50:A1:24:6E:D0:C7:E7:9A:AE:56:FB:34"
+                }
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "BD:76:DB:EC:5F:B9:49:A0:C8:B0:12:25:F4:73:03:C2:24:FB:85:AD"
+                "value": "1B:B8:83:4A:0C:DE:63:9B:C1:5C:03:0F:7F:8C:D6:88:18:DC:8B:48"
             },
             "key_usage": {
                 "critical": true,
@@ -127,10 +131,10 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/76120AB177E93DA5B355BE8E9A299441598C4134.der"
+                        "URI:http://localhost:8000/django_ca/issuer/47B589C4D8EFB85CA6B173934B358EA6C64A298A.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/ca/"
+                        "URI:http://localhost:8000/django_ca/ocsp/3503199563DC55705208A8B41BC7BB0325EC8F44/ca/"
                     ]
                 }
             },
@@ -138,7 +142,7 @@
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/ca/76120AB177E93DA5B355BE8E9A299441598C4134/"
+                            "URI:http://localhost:8000/django_ca/crl/ca/47B589C4D8EFB85CA6B173934B358EA6C64A298A/"
                         ]
                     }
                 ],
@@ -175,25 +179,27 @@
             "key_size": 1024,
             "key_type": "RSA",
             "csr_filename": false,
-            "issuer_url": "http://localhost:8000/django_ca/issuer/7BA57F46C39088ECBBF0E01825718C45F539D816.der",
-            "crl_url": "http://localhost:8000/django_ca/crl/7BA57F46C39088ECBBF0E01825718C45F539D816/",
-            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/7BA57F46C39088ECBBF0E01825718C45F539D816/",
-            "ocsp_url": "http://localhost:8000/django_ca/ocsp/7BA57F46C39088ECBBF0E01825718C45F539D816/cert/",
-            "serial": "7BA57F46C39088ECBBF0E01825718C45F539D816",
-            "hpkp": "U+J2VGP2M+GoTS76T+EgBn6FpNSB7ZKfChYPnNTOY8g=",
-            "valid_from": "2019-08-25 13:00:00",
-            "valid_until": "2020-08-25 13:00:00",
-            "md5": "8E:C5:F3:65:DA:B0:C9:47:A7:8A:83:FE:24:50:EF:D9",
-            "sha1": "7C:E6:14:8D:4F:B2:68:8F:97:F6:4C:1C:49:EC:C8:C5:32:E7:EC:31",
-            "sha256": "27:3A:7B:4E:CA:35:A6:B4:2B:81:4B:08:93:F8:22:32:C0:5B:F5:2A:63:C2:F7:61:97:25:96:68:D6:79:14:40",
-            "sha512": "F7:85:D2:69:0E:A8:30:B8:7B:E4:8D:E0:4A:55:6A:86:07:2C:E1:17:D7:41:07:66:0D:4C:35:84:D8:37:E4:FB:BA:5C:F3:10:8F:7E:98:C5:7A:F3:BE:3B:B6:E7:C8:09:0F:AE:51:99:A4:5D:6E:33:D1:CF:32:29:9E:E2:2D:78",
+            "issuer_url": "http://localhost:8000/django_ca/issuer/12809B7FE733E16CC7017BC4BB44ACD47E71B407.der",
+            "crl_url": "http://localhost:8000/django_ca/crl/12809B7FE733E16CC7017BC4BB44ACD47E71B407/",
+            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/12809B7FE733E16CC7017BC4BB44ACD47E71B407/",
+            "ocsp_url": "http://localhost:8000/django_ca/ocsp/12809B7FE733E16CC7017BC4BB44ACD47E71B407/cert/",
+            "serial": "12809B7FE733E16CC7017BC4BB44ACD47E71B407",
+            "hpkp": "/yh/C/cCEvCqP2BneqKeEgr2Wky+D/D2vEp97TKSLms=",
+            "valid_from": "2019-11-16 20:00:00",
+            "valid_until": "2020-11-16 20:00:00",
+            "md5": "58:51:83:C8:A4:4D:E6:99:85:F4:28:80:6D:C3:F8:E8",
+            "sha1": "0A:20:25:EB:20:7F:A4:A6:39:08:24:38:9E:AD:10:E9:B5:19:12:24",
+            "sha256": "A3:78:9A:BA:AD:C3:4E:7A:85:87:21:BC:62:88:0C:18:CC:43:F7:C4:32:11:1B:F3:E7:61:AC:2B:AC:7A:CA:56",
+            "sha512": "98:55:A9:06:01:36:B7:82:0C:5F:A6:07:D2:00:D9:AA:DF:51:60:CD:D6:6D:84:BA:F7:DA:7E:7B:6E:EE:92:7A:4A:A9:4C:6B:E6:EE:8D:AD:B0:BF:81:7F:F5:E5:69:52:EC:6C:FD:49:D6:E3:91:12:74:0E:2D:D6:67:18:17:2E",
             "authority_key_identifier": {
                 "critical": false,
-                "value": "08:8A:F8:5B:FD:A3:EA:3D:0C:36:83:03:52:F9:B9:68:0D:62:02:23"
+                "value": {
+                    "key_identifier": "52:03:2F:8D:D0:60:FC:0F:D2:66:91:82:66:49:40:37:4A:64:D5:66"
+                }
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "08:8A:F8:5B:FD:A3:EA:3D:0C:36:83:03:52:F9:B9:68:0D:62:02:23"
+                "value": "52:03:2F:8D:D0:60:FC:0F:D2:66:91:82:66:49:40:37:4A:64:D5:66"
             },
             "key_usage": {
                 "critical": true,
@@ -233,25 +239,27 @@
             "key_size": 1024,
             "key_type": "RSA",
             "csr_filename": false,
-            "issuer_url": "http://localhost:8000/django_ca/issuer/6B0957967E957461566406C24E8686F19B9E7331.der",
-            "crl_url": "http://localhost:8000/django_ca/crl/6B0957967E957461566406C24E8686F19B9E7331/",
-            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/6B0957967E957461566406C24E8686F19B9E7331/",
-            "ocsp_url": "http://localhost:8000/django_ca/ocsp/6B0957967E957461566406C24E8686F19B9E7331/cert/",
-            "serial": "6B0957967E957461566406C24E8686F19B9E7331",
-            "hpkp": "hq9p+hN67G3U0mRZTit4FHR5lRr1iOsOJ3EQowaea2g=",
-            "valid_from": "2019-08-25 13:00:00",
-            "valid_until": "2020-08-25 13:00:00",
-            "md5": "6B:0B:57:BB:D2:E8:A1:92:84:D4:F9:64:7A:8E:1E:88",
-            "sha1": "65:3C:75:F1:B0:63:64:20:4A:C8:86:1E:59:34:A1:F2:4B:21:8A:D0",
-            "sha256": "BF:22:92:48:BD:1A:C2:D2:EC:A1:ED:FF:E7:76:54:25:AF:64:39:C0:E7:A1:18:0E:15:9C:CB:4D:0F:26:87:D6",
-            "sha512": "98:97:FA:69:B8:C2:43:C4:80:00:D8:A7:A3:C4:8A:4C:A1:77:3A:AB:06:89:6B:E1:6B:F0:BC:FF:F1:8C:1E:C4:00:91:A9:C0:DC:37:4A:8E:A2:34:CF:60:9B:61:CA:2B:F2:EF:BD:1B:54:DB:5F:68:EE:ED:86:FB:BC:69:5B:10",
+            "issuer_url": "http://localhost:8000/django_ca/issuer/56D2F50DE4D8067AB1CD7F11F4191C2D56FB33BF.der",
+            "crl_url": "http://localhost:8000/django_ca/crl/56D2F50DE4D8067AB1CD7F11F4191C2D56FB33BF/",
+            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/56D2F50DE4D8067AB1CD7F11F4191C2D56FB33BF/",
+            "ocsp_url": "http://localhost:8000/django_ca/ocsp/56D2F50DE4D8067AB1CD7F11F4191C2D56FB33BF/cert/",
+            "serial": "56D2F50DE4D8067AB1CD7F11F4191C2D56FB33BF",
+            "hpkp": "3+mkTSrrTrVW7ObQ70JEeWBDWolxxPu9pDNUC5gJjgY=",
+            "valid_from": "2019-11-16 20:00:00",
+            "valid_until": "2020-11-16 20:00:00",
+            "md5": "05:DB:B4:32:07:B0:F3:61:57:91:61:57:25:59:3F:0E",
+            "sha1": "38:61:C4:83:C8:1B:3F:26:21:8C:93:6D:42:44:AA:D5:DE:A8:BF:78",
+            "sha256": "CB:41:BF:AE:DB:0E:5F:DA:45:3D:BC:78:D7:2D:8E:2F:17:B2:8C:6D:26:F0:B3:A2:F5:C9:A1:A0:47:8D:14:68",
+            "sha512": "19:C6:B1:74:59:99:CC:F0:EF:83:4F:0F:B8:EF:43:F6:4C:79:41:FF:B7:11:69:A5:23:5C:79:3A:D5:92:65:A8:B8:82:AF:CB:FF:06:A2:FA:0B:BE:99:76:73:F3:7A:E4:96:40:3F:A7:85:FD:1F:DA:94:8A:2F:79:22:9A:88:73",
             "authority_key_identifier": {
                 "critical": false,
-                "value": "3D:F8:DD:14:D8:12:F1:FE:E6:0F:06:CB:9A:57:9B:7A:6D:96:49:06"
+                "value": {
+                    "key_identifier": "12:3D:39:0C:DA:5E:47:07:0B:08:64:67:72:0C:3D:46:BB:DC:B6:84"
+                }
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "3D:F8:DD:14:D8:12:F1:FE:E6:0F:06:CB:9A:57:9B:7A:6D:96:49:06"
+                "value": "12:3D:39:0C:DA:5E:47:07:0B:08:64:67:72:0C:3D:46:BB:DC:B6:84"
             },
             "key_usage": {
                 "critical": true,
@@ -291,25 +299,27 @@
             "key_size": 1024,
             "key_type": "RSA",
             "csr_filename": false,
-            "issuer_url": "http://localhost:8000/django_ca/issuer/55B3907175D6570CCAB86DCD95C94132AB3D0132.der",
-            "crl_url": "http://localhost:8000/django_ca/crl/55B3907175D6570CCAB86DCD95C94132AB3D0132/",
-            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/55B3907175D6570CCAB86DCD95C94132AB3D0132/",
-            "ocsp_url": "http://localhost:8000/django_ca/ocsp/55B3907175D6570CCAB86DCD95C94132AB3D0132/cert/",
-            "serial": "55B3907175D6570CCAB86DCD95C94132AB3D0132",
-            "hpkp": "DjzBsCzoG89glK8JSzPF9mxFJdWxqDVBMv30MeaPst0=",
-            "valid_from": "2019-08-25 13:00:00",
-            "valid_until": "2020-08-25 13:00:00",
-            "md5": "12:C6:B1:9A:BB:3A:87:1A:AB:17:4A:C4:7E:DD:07:FF",
-            "sha1": "67:AE:A2:A9:EA:BF:7C:61:EF:1F:BA:85:9F:39:C9:B9:C6:9E:B8:FC",
-            "sha256": "81:A0:31:E9:30:27:95:D2:DB:6A:DA:AE:2D:9E:B7:48:CA:C9:37:48:76:2B:9E:45:9C:98:97:4D:56:86:82:46",
-            "sha512": "FB:8A:C2:B7:BB:1A:D6:01:87:07:7F:23:41:61:5E:4D:24:5D:DD:92:97:9E:0A:E3:49:77:4B:E5:4A:22:60:DC:ED:AA:94:57:FC:D0:DE:1B:1A:90:56:18:C3:E2:04:92:0B:A4:21:D0:D2:91:1C:AE:A3:35:58:55:7A:60:50:A8",
+            "issuer_url": "http://localhost:8000/django_ca/issuer/33B10B0D6E75F41E5EE8539638DA33AAC2A3945D.der",
+            "crl_url": "http://localhost:8000/django_ca/crl/33B10B0D6E75F41E5EE8539638DA33AAC2A3945D/",
+            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/33B10B0D6E75F41E5EE8539638DA33AAC2A3945D/",
+            "ocsp_url": "http://localhost:8000/django_ca/ocsp/33B10B0D6E75F41E5EE8539638DA33AAC2A3945D/cert/",
+            "serial": "33B10B0D6E75F41E5EE8539638DA33AAC2A3945D",
+            "hpkp": "Umf7jpWoUQ9HMByX2QdwoXI/Q6DwlF2DWYLvFmZNe6w=",
+            "valid_from": "2019-11-16 20:00:00",
+            "valid_until": "2020-11-16 20:00:00",
+            "md5": "E7:8F:47:52:E8:97:FE:41:3B:41:E9:CC:62:F1:DD:AE",
+            "sha1": "5D:15:DE:DB:3A:C0:9A:66:CE:B2:1C:0B:E8:EA:90:90:69:77:11:39",
+            "sha256": "25:90:B8:7B:60:74:55:B5:14:28:54:16:56:E8:38:E6:3A:9F:D6:38:4B:4E:8C:25:93:1E:81:04:6E:6E:01:C1",
+            "sha512": "4A:87:31:8C:01:24:F5:ED:28:5E:EF:D2:73:57:81:A0:73:2F:C7:69:75:EA:76:23:B5:09:46:78:0F:65:3E:FE:B7:D5:50:7A:EC:2E:AB:81:04:51:68:3E:24:BF:5D:C4:9B:72:F5:74:73:CD:1F:B6:21:9C:36:BB:F8:28:0B:39",
             "authority_key_identifier": {
                 "critical": false,
-                "value": "BF:6F:14:48:92:B1:47:11:2A:EB:87:79:3F:44:0C:99:0B:F1:4E:7D"
+                "value": {
+                    "key_identifier": "AA:39:CD:F1:19:B3:9E:EB:61:F0:97:A0:40:E0:36:2F:97:AF:4C:33"
+                }
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "BF:6F:14:48:92:B1:47:11:2A:EB:87:79:3F:44:0C:99:0B:F1:4E:7D"
+                "value": "AA:39:CD:F1:19:B3:9E:EB:61:F0:97:A0:40:E0:36:2F:97:AF:4C:33"
             },
             "key_usage": {
                 "critical": true,
@@ -322,12 +332,6 @@
         "root-cert": {
             "ca": "root",
             "pathlen": null,
-            "basic_constraints": {
-                "critical": true,
-                "value": {
-                    "ca": false
-                }
-            },
             "name": "root-cert",
             "type": "cert",
             "cat": "generated",
@@ -346,22 +350,30 @@
             "key_type": "RSA",
             "csr_filename": "root-cert.csr",
             "cn": "root-cert.example.com",
-            "crl": "http://localhost:8000/django_ca/crl/76120AB177E93DA5B355BE8E9A299441598C4134/",
-            "serial": "54C1A638B8BA48E7B655F968A7E63875C2A507F3",
-            "hpkp": "IVaSrAQisK+4nl8ciKmxZB04G2z56bbwcyZIUJ3s53c=",
-            "valid_from": "2019-08-30 13:00:00",
-            "valid_until": "2020-02-29 13:00:00",
-            "md5": "DA:40:B5:FB:30:63:9C:C6:34:A8:B4:63:01:0C:A5:53",
-            "sha1": "CB:21:1E:D3:86:8F:7D:61:FD:B1:C1:C9:D0:12:97:23:1A:6A:B0:83",
-            "sha256": "5E:FE:2C:15:70:A0:4F:F0:9C:87:DE:F0:FE:48:51:33:C7:7B:26:1B:76:5B:FF:E0:9A:00:40:8A:E0:75:F4:05",
-            "sha512": "E9:EC:B5:91:98:F4:7B:88:2D:72:3B:A8:BF:39:A5:6E:20:D9:D7:43:42:F2:A8:29:03:57:10:1E:4E:C5:64:A9:82:F1:ED:BC:01:81:A1:CF:F8:24:0F:22:FC:18:50:E1:10:C7:D3:6F:D2:FC:E7:34:3A:D9:E6:88:86:BE:DD:88",
+            "crl": "http://localhost:8000/django_ca/crl/47B589C4D8EFB85CA6B173934B358EA6C64A298A/",
+            "serial": "3FFA3D58A89C962FEA7AF9145720742D18C3377D",
+            "hpkp": "JahSPZE1VTEISFavbIIVl9ds+PSbTKIeFBWt+wjYEzo=",
+            "valid_from": "2019-11-21 20:00:00",
+            "valid_until": "2020-05-22 20:00:00",
+            "md5": "99:1A:EB:42:29:C7:B0:6D:BE:4E:2A:12:D8:EF:9D:C5",
+            "sha1": "F8:56:37:2E:E7:3B:27:40:B7:BD:C7:D5:52:8B:83:90:49:14:49:2E",
+            "sha256": "F0:48:16:FF:97:F6:CC:3A:AA:EF:C1:4C:A3:09:26:32:1C:29:46:98:5D:F7:D8:A2:62:B8:BB:3B:27:C8:F4:B8",
+            "sha512": "45:EA:08:78:6F:55:65:CC:55:7A:E1:CF:D2:42:9F:A1:42:19:8A:27:14:89:39:D4:DF:65:99:E6:12:95:49:4F:76:F3:CA:24:68:F3:E9:59:AA:8A:5B:00:D4:2F:F1:09:72:33:11:DA:CA:97:4D:3A:B2:B7:D5:76:49:42:28:CF",
             "authority_key_identifier": {
                 "critical": false,
-                "value": "0D:D6:43:BA:7B:B4:33:8C:73:E6:6E:2F:D7:C7:20:81:ED:E5:57:5E"
+                "value": {
+                    "key_identifier": "32:7E:F7:B8:8E:56:97:B4:50:A1:24:6E:D0:C7:E7:9A:AE:56:FB:34"
+                }
+            },
+            "basic_constraints": {
+                "critical": true,
+                "value": {
+                    "ca": false
+                }
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "B7:9D:14:13:A0:1B:7E:5D:4D:AC:42:4F:81:F7:70:D7:EC:89:9C:AB"
+                "value": "0E:AC:08:F4:35:0A:B3:81:FF:D8:BE:98:66:8B:5A:F8:E0:16:FF:30"
             },
             "key_usage": {
                 "critical": true,
@@ -375,10 +387,10 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/76120AB177E93DA5B355BE8E9A299441598C4134.der"
+                        "URI:http://localhost:8000/django_ca/issuer/47B589C4D8EFB85CA6B173934B358EA6C64A298A.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/76120AB177E93DA5B355BE8E9A299441598C4134/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/47B589C4D8EFB85CA6B173934B358EA6C64A298A/cert/"
                     ]
                 }
             },
@@ -399,7 +411,7 @@
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/76120AB177E93DA5B355BE8E9A299441598C4134/"
+                            "URI:http://localhost:8000/django_ca/crl/47B589C4D8EFB85CA6B173934B358EA6C64A298A/"
                         ]
                     }
                 ],
@@ -408,12 +420,6 @@
         },
         "child-cert": {
             "ca": "child",
-            "basic_constraints": {
-                "critical": true,
-                "value": {
-                    "ca": false
-                }
-            },
             "name": "child-cert",
             "type": "cert",
             "cat": "generated",
@@ -432,22 +438,30 @@
             "key_type": "RSA",
             "csr_filename": "child-cert.csr",
             "cn": "child-cert.example.com",
-            "crl": "http://localhost:8000/django_ca/crl/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/",
-            "serial": "38815858C40D8E599151D89517D274BDEE27FA82",
-            "hpkp": "jKgLnqJ8kNI7UrGa9xVEVW+URwJvgFUOUh5Zi/0NN0g=",
-            "valid_from": "2019-08-30 13:00:00",
-            "valid_until": "2020-02-29 13:00:00",
-            "md5": "9F:32:1C:E2:A3:DE:A7:81:9D:AC:4F:0F:60:95:51:E6",
-            "sha1": "BB:B3:6C:38:6B:07:3B:40:8C:4B:C8:7A:6F:98:56:30:8F:5D:99:68",
-            "sha256": "CA:55:60:FF:64:11:9E:60:0B:2B:47:D2:9F:94:17:D3:F7:7A:13:F8:D3:3B:6A:20:58:7A:6C:D3:6A:54:0D:4A",
-            "sha512": "54:42:88:AA:07:A5:D5:E6:03:87:72:BA:48:3C:12:C1:0B:6E:2F:6A:2C:2B:CC:99:2F:D6:E2:0D:9B:87:23:D3:DB:12:A4:FC:11:57:CA:EB:AA:11:D0:73:A2:D5:2E:F2:AD:5F:15:94:A5:82:28:78:51:0B:78:3E:68:D5:E9:6D",
+            "crl": "http://localhost:8000/django_ca/crl/3503199563DC55705208A8B41BC7BB0325EC8F44/",
+            "serial": "5C074C24867CAE209E92EFF9E005CC560BF1911D",
+            "hpkp": "vp2vGrL7U0+NxyZIccOPHJI8gvSnVi6UMXSLQ6W3+6Q=",
+            "valid_from": "2019-11-21 20:00:00",
+            "valid_until": "2020-05-22 20:00:00",
+            "md5": "28:D7:E0:82:A0:D6:5D:D9:12:2B:B1:9B:FC:B5:E3:9B",
+            "sha1": "A4:97:D5:17:FA:D7:54:02:3E:5C:1F:7D:8B:85:FA:D3:90:60:49:F5",
+            "sha256": "92:20:CA:7E:75:F9:F8:62:00:54:22:49:43:EA:E3:2B:B7:F4:AD:09:41:CE:95:CB:DD:13:C2:1C:DA:E0:46:54",
+            "sha512": "55:14:E1:EA:88:4F:70:B7:E1:11:70:BF:FD:E6:C8:5F:93:A9:88:6D:21:63:CA:E0:8F:94:EB:4B:E9:3D:A1:AD:7A:93:77:16:02:68:99:05:3B:AE:5F:F0:65:EF:4F:4B:19:22:99:B7:50:4B:34:A7:1D:23:B8:46:2F:F2:47:A6",
             "authority_key_identifier": {
                 "critical": false,
-                "value": "BD:76:DB:EC:5F:B9:49:A0:C8:B0:12:25:F4:73:03:C2:24:FB:85:AD"
+                "value": {
+                    "key_identifier": "1B:B8:83:4A:0C:DE:63:9B:C1:5C:03:0F:7F:8C:D6:88:18:DC:8B:48"
+                }
+            },
+            "basic_constraints": {
+                "critical": true,
+                "value": {
+                    "ca": false
+                }
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "01:44:DC:6E:FE:EC:7F:9C:F5:95:FA:7C:D2:AE:BF:25:0A:6C:C5:44"
+                "value": "75:56:11:D4:64:A3:FB:50:87:25:48:D0:BD:82:D9:AB:F4:FA:9A:68"
             },
             "key_usage": {
                 "critical": true,
@@ -461,10 +475,10 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/76120AB177E93DA5B355BE8E9A299441598C4134.der"
+                        "URI:http://localhost:8000/django_ca/issuer/47B589C4D8EFB85CA6B173934B358EA6C64A298A.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/3503199563DC55705208A8B41BC7BB0325EC8F44/cert/"
                     ]
                 }
             },
@@ -485,7 +499,7 @@
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/"
+                            "URI:http://localhost:8000/django_ca/crl/3503199563DC55705208A8B41BC7BB0325EC8F44/"
                         ]
                     }
                 ],
@@ -494,12 +508,6 @@
         },
         "ecc-cert": {
             "ca": "ecc",
-            "basic_constraints": {
-                "critical": true,
-                "value": {
-                    "ca": false
-                }
-            },
             "name": "ecc-cert",
             "type": "cert",
             "cat": "generated",
@@ -518,22 +526,30 @@
             "key_type": "RSA",
             "csr_filename": "ecc-cert.csr",
             "cn": "ecc-cert.example.com",
-            "crl": "http://localhost:8000/django_ca/crl/7BA57F46C39088ECBBF0E01825718C45F539D816/",
-            "serial": "3F3D65BAA3A6BC37FA4E56D93A3BDB0DE2F73E8E",
-            "hpkp": "8eTOtYl1nWNtO9rcpSxwp/JcEUAWMSHzIPrDWHS1yO4=",
-            "valid_from": "2019-08-30 13:00:00",
-            "valid_until": "2020-02-29 13:00:00",
-            "md5": "18:8E:7D:B1:28:BB:04:5F:D8:1D:A0:C3:F2:ED:D7:0B",
-            "sha1": "BA:46:A9:2B:16:24:5E:6D:FB:61:8C:2D:48:BE:1E:AF:CF:AD:8F:91",
-            "sha256": "25:86:F8:72:27:DD:DF:F4:50:9A:8A:16:87:C3:9E:0E:52:7D:1A:2C:54:BE:35:E8:1E:DE:E2:B4:67:5C:CD:E5",
-            "sha512": "C2:8C:B4:BE:9E:84:AF:41:FE:FA:69:BF:A4:76:01:D6:82:9C:A8:D2:7F:A3:53:FD:C4:39:CA:C1:12:68:BB:4D:DD:ED:14:AA:35:7F:1A:85:B5:8F:93:DF:31:D2:5E:0E:21:06:F1:F7:1F:63:E2:C9:C6:14:03:54:E2:C4:DC:31",
+            "crl": "http://localhost:8000/django_ca/crl/12809B7FE733E16CC7017BC4BB44ACD47E71B407/",
+            "serial": "151F1DC6623534A0B81A64CBD2B39BBF5080DD53",
+            "hpkp": "gWx0sZfQaBQDFeaTtnj2Xn+BroYxdaM/kqEqeMODWAQ=",
+            "valid_from": "2019-11-21 20:00:00",
+            "valid_until": "2020-05-22 20:00:00",
+            "md5": "79:BE:C7:50:0B:D2:54:33:6C:26:D9:4E:2D:AA:0F:54",
+            "sha1": "28:84:F3:22:26:C0:7B:0C:C1:F7:26:6E:38:6F:36:E5:18:FD:6B:47",
+            "sha256": "F0:18:56:7F:A3:53:B8:B6:BD:7C:CB:72:E7:A1:DA:F8:3F:67:66:28:C7:36:E9:48:0B:D0:49:0D:74:77:36:5B",
+            "sha512": "46:30:00:10:D3:B8:EB:61:85:9E:94:85:2D:A1:7A:23:C1:E6:2D:1E:83:BB:D3:B3:4D:6C:69:E1:74:C1:D6:57:10:9F:B2:17:93:E3:81:AA:06:85:9F:2A:09:3F:0C:BB:73:56:F0:3A:8B:E2:5A:AC:F5:EB:E1:E3:A8:DE:59:00",
             "authority_key_identifier": {
                 "critical": false,
-                "value": "08:8A:F8:5B:FD:A3:EA:3D:0C:36:83:03:52:F9:B9:68:0D:62:02:23"
+                "value": {
+                    "key_identifier": "52:03:2F:8D:D0:60:FC:0F:D2:66:91:82:66:49:40:37:4A:64:D5:66"
+                }
+            },
+            "basic_constraints": {
+                "critical": true,
+                "value": {
+                    "ca": false
+                }
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "EB:32:A1:3A:F8:C7:D1:4D:C4:92:57:7B:45:FA:56:26:A0:80:A9:A1"
+                "value": "C1:43:26:52:4E:5C:F6:C5:F3:DB:73:9F:C2:A1:62:61:46:A7:A4:3B"
             },
             "key_usage": {
                 "critical": true,
@@ -547,10 +563,10 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/7BA57F46C39088ECBBF0E01825718C45F539D816.der"
+                        "URI:http://localhost:8000/django_ca/issuer/12809B7FE733E16CC7017BC4BB44ACD47E71B407.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/7BA57F46C39088ECBBF0E01825718C45F539D816/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/12809B7FE733E16CC7017BC4BB44ACD47E71B407/cert/"
                     ]
                 }
             },
@@ -571,7 +587,7 @@
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/7BA57F46C39088ECBBF0E01825718C45F539D816/"
+                            "URI:http://localhost:8000/django_ca/crl/12809B7FE733E16CC7017BC4BB44ACD47E71B407/"
                         ]
                     }
                 ],
@@ -580,12 +596,6 @@
         },
         "pwd-cert": {
             "ca": "pwd",
-            "basic_constraints": {
-                "critical": true,
-                "value": {
-                    "ca": false
-                }
-            },
             "name": "pwd-cert",
             "type": "cert",
             "cat": "generated",
@@ -604,22 +614,30 @@
             "key_type": "RSA",
             "csr_filename": "pwd-cert.csr",
             "cn": "pwd-cert.example.com",
-            "crl": "http://localhost:8000/django_ca/crl/55B3907175D6570CCAB86DCD95C94132AB3D0132/",
-            "serial": "110386CC672BE532C9932EA403E468F59520FDFB",
-            "hpkp": "kis7vZBuj75mKO0TwONTxpur2pyX9kYfoIXxsPz5zbs=",
-            "valid_from": "2019-08-30 13:00:00",
-            "valid_until": "2020-02-29 13:00:00",
-            "md5": "CE:90:58:3D:57:4E:82:E7:C2:1E:CE:23:7B:C3:72:20",
-            "sha1": "9A:00:27:6A:1A:40:F6:B8:49:0A:B0:AE:0B:32:2F:30:40:12:51:45",
-            "sha256": "06:DE:AF:41:1C:2F:FE:C3:65:2F:C7:5E:25:92:B7:72:D2:FF:AD:0B:F4:FA:31:D7:90:ED:61:D6:66:6F:EB:1E",
-            "sha512": "D7:15:4A:96:B6:98:7E:F0:B2:CA:7F:07:1D:AF:A4:29:FE:AC:01:F5:D8:F5:05:22:D9:62:D7:AB:AF:EF:99:FA:5B:96:34:49:36:F8:A7:CA:63:89:E6:47:C1:B7:5D:65:01:BC:72:AE:0C:24:86:5C:EB:DD:78:96:9D:83:F8:60",
+            "crl": "http://localhost:8000/django_ca/crl/33B10B0D6E75F41E5EE8539638DA33AAC2A3945D/",
+            "serial": "D41DF4C9ACBF676F2BF12BE6F99ABBF84612A01",
+            "hpkp": "RGsqSgxPobCFhmbXl6auJmxWyk7IhlLhOXu4uBwcq/4=",
+            "valid_from": "2019-11-21 20:00:00",
+            "valid_until": "2020-05-22 20:00:00",
+            "md5": "B5:3C:63:2B:3C:FC:9B:DE:C0:64:8E:BB:EA:B6:1B:0C",
+            "sha1": "53:DE:7F:AB:E0:F8:98:5F:44:86:65:C9:08:26:8A:8A:85:9C:88:3F",
+            "sha256": "33:29:E2:28:18:B2:79:6F:D9:1A:FA:37:E9:6B:F2:E9:34:A6:2A:88:75:04:C3:D6:CD:F4:0D:AB:3E:59:AA:5D",
+            "sha512": "F5:25:BA:AB:B1:1F:68:0D:7F:9C:CC:4E:AE:D5:33:3F:7B:4A:13:33:92:6A:84:A8:80:33:E9:40:B1:91:2C:DE:15:76:E7:4C:7F:3E:ED:C8:4F:3C:8D:5B:2C:64:4B:F9:74:2D:4C:49:8C:C9:6C:8D:CF:40:F5:9D:74:FA:42:26",
             "authority_key_identifier": {
                 "critical": false,
-                "value": "BF:6F:14:48:92:B1:47:11:2A:EB:87:79:3F:44:0C:99:0B:F1:4E:7D"
+                "value": {
+                    "key_identifier": "AA:39:CD:F1:19:B3:9E:EB:61:F0:97:A0:40:E0:36:2F:97:AF:4C:33"
+                }
+            },
+            "basic_constraints": {
+                "critical": true,
+                "value": {
+                    "ca": false
+                }
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "CF:9D:AB:1B:DA:08:B3:AB:9B:BC:09:07:50:5B:BA:A4:C4:76:9A:A0"
+                "value": "99:7A:27:EA:DB:1C:10:85:A8:B2:65:3E:F3:BD:98:AE:5E:02:72:9C"
             },
             "key_usage": {
                 "critical": true,
@@ -633,10 +651,10 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/55B3907175D6570CCAB86DCD95C94132AB3D0132.der"
+                        "URI:http://localhost:8000/django_ca/issuer/33B10B0D6E75F41E5EE8539638DA33AAC2A3945D.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/55B3907175D6570CCAB86DCD95C94132AB3D0132/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/33B10B0D6E75F41E5EE8539638DA33AAC2A3945D/cert/"
                     ]
                 }
             },
@@ -657,7 +675,7 @@
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/55B3907175D6570CCAB86DCD95C94132AB3D0132/"
+                            "URI:http://localhost:8000/django_ca/crl/33B10B0D6E75F41E5EE8539638DA33AAC2A3945D/"
                         ]
                     }
                 ],
@@ -667,12 +685,6 @@
         "dsa-cert": {
             "ca": "dsa",
             "algorithm": "SHA1",
-            "basic_constraints": {
-                "critical": true,
-                "value": {
-                    "ca": false
-                }
-            },
             "name": "dsa-cert",
             "type": "cert",
             "cat": "generated",
@@ -690,22 +702,30 @@
             "key_type": "RSA",
             "csr_filename": "dsa-cert.csr",
             "cn": "dsa-cert.example.com",
-            "crl": "http://localhost:8000/django_ca/crl/6B0957967E957461566406C24E8686F19B9E7331/",
-            "serial": "53DFAB329250AA2ED38A76FCC8B8D38CC157CAF7",
-            "hpkp": "oSgr2bTpA9koqtvcvNvr7RZxRRFCL7TEYuxiFN+NJhg=",
-            "valid_from": "2019-08-30 13:00:00",
-            "valid_until": "2020-02-29 13:00:00",
-            "md5": "60:3D:91:31:24:A4:29:86:CC:D7:20:43:B7:41:3D:53",
-            "sha1": "94:8F:BD:9F:43:4D:80:11:F9:F9:09:11:06:DE:B0:88:0B:E8:56:1C",
-            "sha256": "D3:06:5E:DA:58:9E:83:4D:2C:91:46:EE:08:47:66:9B:47:6C:98:02:06:1C:0F:BB:84:37:8E:BB:66:A0:7B:2B",
-            "sha512": "4A:81:82:28:3E:83:C8:D5:B4:8A:C4:41:FE:9A:85:C7:7B:28:3F:A3:83:10:0D:65:57:12:B2:BA:ED:67:06:FB:78:2E:4F:C7:A9:52:50:7C:E0:CC:65:88:51:F6:C2:26:06:D5:95:77:B7:EB:8F:4C:05:6F:7C:DE:D4:E4:B2:04",
+            "crl": "http://localhost:8000/django_ca/crl/56D2F50DE4D8067AB1CD7F11F4191C2D56FB33BF/",
+            "serial": "4022D45DF0A8E4D81DB72C156089B61514279E44",
+            "hpkp": "u/Sggp2sKtomaHGiqCJ9SokJgoqi8cJWO17vSHuC1Eo=",
+            "valid_from": "2019-11-21 20:00:00",
+            "valid_until": "2020-05-22 20:00:00",
+            "md5": "CD:43:75:25:CA:DC:E2:81:E7:78:C5:0B:AD:A0:18:62",
+            "sha1": "B4:C8:C8:09:EB:E7:CE:9F:55:41:DC:BC:20:2F:50:A7:5D:BC:B0:F6",
+            "sha256": "87:5E:1E:03:99:F9:14:92:03:57:CD:D8:82:CE:61:40:4D:C1:2C:31:87:8D:7A:A2:F9:6E:80:E2:EE:AB:F8:FF",
+            "sha512": "F4:44:6A:5E:05:D0:9A:FB:1A:E9:8C:CB:54:95:AB:A9:E2:5C:47:32:B9:75:29:EC:FA:5E:38:3E:C5:7F:AA:98:99:FA:2D:DB:C5:6A:EF:00:AC:B2:AD:0A:E1:13:91:AD:73:12:C1:76:D9:50:25:3A:26:82:9C:B3:DD:ED:E3:78",
             "authority_key_identifier": {
                 "critical": false,
-                "value": "3D:F8:DD:14:D8:12:F1:FE:E6:0F:06:CB:9A:57:9B:7A:6D:96:49:06"
+                "value": {
+                    "key_identifier": "12:3D:39:0C:DA:5E:47:07:0B:08:64:67:72:0C:3D:46:BB:DC:B6:84"
+                }
+            },
+            "basic_constraints": {
+                "critical": true,
+                "value": {
+                    "ca": false
+                }
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "9D:B3:84:6F:31:DE:95:8F:5B:03:3A:FA:3D:FE:2D:36:48:93:1A:1F"
+                "value": "78:93:D8:68:7E:30:EB:D8:0C:6E:39:0D:BD:47:6D:07:B5:E2:13:F0"
             },
             "key_usage": {
                 "critical": true,
@@ -719,10 +739,10 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/6B0957967E957461566406C24E8686F19B9E7331.der"
+                        "URI:http://localhost:8000/django_ca/issuer/56D2F50DE4D8067AB1CD7F11F4191C2D56FB33BF.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/6B0957967E957461566406C24E8686F19B9E7331/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/56D2F50DE4D8067AB1CD7F11F4191C2D56FB33BF/cert/"
                     ]
                 }
             },
@@ -743,7 +763,7 @@
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/6B0957967E957461566406C24E8686F19B9E7331/"
+                            "URI:http://localhost:8000/django_ca/crl/56D2F50DE4D8067AB1CD7F11F4191C2D56FB33BF/"
                         ]
                     }
                 ],
@@ -752,12 +772,6 @@
         },
         "profile-client": {
             "ca": "child",
-            "basic_constraints": {
-                "critical": true,
-                "value": {
-                    "ca": false
-                }
-            },
             "name": "profile-client",
             "type": "cert",
             "cat": "generated",
@@ -777,22 +791,30 @@
             "csr_filename": "profile-client.csr",
             "cn": "profile-client.example.com",
             "profile": "client",
-            "crl": "http://localhost:8000/django_ca/crl/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/",
-            "serial": "2E8BBF976FEE5231723FC029D295E2745FC19227",
-            "hpkp": "Y5p0dLSRaXE+hvVeI5SJyUCdy3Hprg7I7QMfyGS43C0=",
-            "valid_from": "2019-09-04 13:00:00",
-            "valid_until": "2020-03-05 13:00:00",
-            "md5": "F9:57:50:97:3B:B1:5E:5D:FB:BB:E7:19:30:37:FB:B5",
-            "sha1": "7E:6C:41:25:6A:8B:89:DD:A6:C9:04:E1:03:D4:84:CD:8F:D9:F4:D4",
-            "sha256": "6A:36:02:31:21:48:73:52:1D:C1:F8:7D:C0:99:F9:07:06:83:3B:30:B3:BC:FA:04:62:E7:19:7D:1B:F5:AD:0E",
-            "sha512": "A9:8C:65:8D:B9:DE:4E:9D:49:1A:A4:94:BF:FA:19:50:86:9C:A4:04:89:46:2E:64:35:0F:A0:99:01:22:B0:26:9A:22:B0:D3:07:14:A9:6A:48:18:2B:4F:9C:26:A5:CE:B1:94:64:8B:51:D3:FE:5A:5B:87:2C:31:70:46:1D:D6",
+            "crl": "http://localhost:8000/django_ca/crl/3503199563DC55705208A8B41BC7BB0325EC8F44/",
+            "serial": "79D9AC03231F60B49863625B093F39B8A489589D",
+            "hpkp": "CjaHRR9/pRKeCV9DlSj+jrvW+tm9YtOXIxEfxBnqncE=",
+            "valid_from": "2019-11-26 20:00:00",
+            "valid_until": "2020-05-27 20:00:00",
+            "md5": "BF:C7:13:26:2A:54:43:33:0E:D6:B2:9B:F1:11:A8:D0",
+            "sha1": "81:98:50:7E:1E:CD:56:4D:9D:2E:0E:56:82:BF:06:5C:F1:07:41:2C",
+            "sha256": "79:31:53:2E:43:CB:A8:6A:A4:0D:92:DC:6C:3C:A7:79:88:D9:67:E1:3C:66:2A:B1:B0:06:97:E1:F0:B9:B7:8C",
+            "sha512": "85:02:D1:8C:5A:A2:D1:47:28:9F:AE:AA:0D:8A:45:BF:6D:BA:7B:D0:B0:95:A9:C1:47:AF:79:53:41:B2:3E:1C:A1:05:8C:6B:CC:1D:08:13:8E:F5:C8:F4:D3:48:0F:1E:BD:75:6F:25:D8:18:7B:6F:75:67:9A:47:CC:76:3D:6B",
             "authority_key_identifier": {
                 "critical": false,
-                "value": "BD:76:DB:EC:5F:B9:49:A0:C8:B0:12:25:F4:73:03:C2:24:FB:85:AD"
+                "value": {
+                    "key_identifier": "1B:B8:83:4A:0C:DE:63:9B:C1:5C:03:0F:7F:8C:D6:88:18:DC:8B:48"
+                }
+            },
+            "basic_constraints": {
+                "critical": true,
+                "value": {
+                    "ca": false
+                }
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "E0:17:E5:1E:1E:3F:95:B9:C5:00:7F:B6:0A:C0:D2:C3:95:6C:A8:51"
+                "value": "54:3B:45:6B:FF:88:F4:6F:F8:26:39:17:41:6C:DA:3C:3E:FF:3C:80"
             },
             "key_usage": {
                 "critical": true,
@@ -804,10 +826,10 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/76120AB177E93DA5B355BE8E9A299441598C4134.der"
+                        "URI:http://localhost:8000/django_ca/issuer/47B589C4D8EFB85CA6B173934B358EA6C64A298A.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/3503199563DC55705208A8B41BC7BB0325EC8F44/cert/"
                     ]
                 }
             },
@@ -827,7 +849,7 @@
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/"
+                            "URI:http://localhost:8000/django_ca/crl/3503199563DC55705208A8B41BC7BB0325EC8F44/"
                         ]
                     }
                 ],
@@ -836,12 +858,6 @@
         },
         "profile-server": {
             "ca": "child",
-            "basic_constraints": {
-                "critical": true,
-                "value": {
-                    "ca": false
-                }
-            },
             "name": "profile-server",
             "type": "cert",
             "cat": "generated",
@@ -861,22 +877,30 @@
             "csr_filename": "profile-server.csr",
             "cn": "profile-server.example.com",
             "profile": "server",
-            "crl": "http://localhost:8000/django_ca/crl/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/",
-            "serial": "D05F34EDAC0316E20D959F407949B342D1B3578",
-            "hpkp": "rTdLmF6K1LDe2Y8L4OEFhn8o5kvlps/2N0gKvNlh/wo=",
-            "valid_from": "2019-09-04 13:00:00",
-            "valid_until": "2020-03-05 13:00:00",
-            "md5": "2A:F2:B4:CB:80:9E:11:D3:1E:B9:3B:C0:EA:DB:9C:A5",
-            "sha1": "44:03:28:F0:64:E7:7C:67:B3:24:31:E4:6F:84:F2:B5:DF:A7:B9:76",
-            "sha256": "DF:86:01:66:C7:BB:0D:14:30:7F:D4:62:B1:6B:47:86:5A:1A:FA:A6:E7:9C:40:43:9D:26:88:3D:15:C2:1C:83",
-            "sha512": "FD:95:F7:52:58:E6:88:01:1E:38:DE:E9:29:ED:E4:9C:BD:D9:81:04:34:76:86:A0:F5:86:3E:7E:DA:EF:84:7C:5B:40:D4:F8:A6:0E:69:96:C5:98:BD:38:6C:15:7A:A8:99:8E:5E:D9:E2:8B:22:6A:F3:A6:44:36:26:85:B8:FA",
+            "crl": "http://localhost:8000/django_ca/crl/3503199563DC55705208A8B41BC7BB0325EC8F44/",
+            "serial": "3011BEA44F2ABD752277F5FE570B2701A8510DAF",
+            "hpkp": "QLyVGI4XqGhDNRwGjbNgVug+wC3+gB2lb5BcBGVA+Mw=",
+            "valid_from": "2019-11-26 20:00:00",
+            "valid_until": "2020-05-27 20:00:00",
+            "md5": "42:C8:2C:68:69:D4:5A:C4:4C:5D:89:FF:83:C6:D9:F7",
+            "sha1": "E1:69:21:9C:A5:53:3F:60:01:A7:64:E9:83:13:CD:91:5D:CB:04:55",
+            "sha256": "2E:F2:F4:1F:4B:E0:37:7F:7A:2B:8A:47:7E:21:87:E6:9A:19:E4:9C:CA:1B:5C:E0:9D:48:BD:9A:BF:36:50:78",
+            "sha512": "D2:25:A6:D5:4A:1C:7C:D8:68:09:30:E1:99:2C:DA:8E:64:6F:04:D7:AB:57:AC:79:1B:C5:DE:EE:4B:C5:4B:36:B1:1C:DA:6A:60:93:E7:A5:9F:12:F8:07:B8:29:BD:B0:59:00:CE:8D:4C:A0:21:84:7D:A0:F8:08:F6:92:12:EB",
             "authority_key_identifier": {
                 "critical": false,
-                "value": "BD:76:DB:EC:5F:B9:49:A0:C8:B0:12:25:F4:73:03:C2:24:FB:85:AD"
+                "value": {
+                    "key_identifier": "1B:B8:83:4A:0C:DE:63:9B:C1:5C:03:0F:7F:8C:D6:88:18:DC:8B:48"
+                }
+            },
+            "basic_constraints": {
+                "critical": true,
+                "value": {
+                    "ca": false
+                }
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "F2:2B:DC:B2:20:83:0B:04:A0:23:12:7B:AA:89:6B:7C:3C:10:27:74"
+                "value": "06:23:B7:77:89:DF:3A:E6:C5:A6:8A:78:BE:E2:68:24:DA:92:C8:32"
             },
             "key_usage": {
                 "critical": true,
@@ -890,10 +914,10 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/76120AB177E93DA5B355BE8E9A299441598C4134.der"
+                        "URI:http://localhost:8000/django_ca/issuer/47B589C4D8EFB85CA6B173934B358EA6C64A298A.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/3503199563DC55705208A8B41BC7BB0325EC8F44/cert/"
                     ]
                 }
             },
@@ -914,7 +938,7 @@
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/"
+                            "URI:http://localhost:8000/django_ca/crl/3503199563DC55705208A8B41BC7BB0325EC8F44/"
                         ]
                     }
                 ],
@@ -923,12 +947,6 @@
         },
         "profile-webserver": {
             "ca": "child",
-            "basic_constraints": {
-                "critical": true,
-                "value": {
-                    "ca": false
-                }
-            },
             "name": "profile-webserver",
             "type": "cert",
             "cat": "generated",
@@ -948,22 +966,30 @@
             "csr_filename": "profile-webserver.csr",
             "cn": "profile-webserver.example.com",
             "profile": "webserver",
-            "crl": "http://localhost:8000/django_ca/crl/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/",
-            "serial": "72ABE78B14F5A4A45C324FEDDAA692949D4CC579",
-            "hpkp": "Tw/sYC4Ch78iTUn0XI902UmT6UbWx4RKGhAZtUAFldw=",
-            "valid_from": "2019-09-04 13:00:00",
-            "valid_until": "2020-03-05 13:00:00",
-            "md5": "98:01:6C:A8:D4:04:87:DB:1E:8F:1D:12:25:15:52:91",
-            "sha1": "9C:5A:39:82:A1:3E:5D:BC:6A:DB:C2:CB:83:98:4E:12:44:45:4C:C6",
-            "sha256": "39:43:EC:75:FC:F0:66:62:C3:D1:7B:D9:C1:9E:A3:E1:64:0F:70:4B:1D:4A:D7:E3:C6:75:B7:71:3E:6A:B9:87",
-            "sha512": "52:9E:2B:D7:5E:56:5D:42:19:F1:30:12:FD:F3:B9:89:78:5F:0F:E7:BA:B5:D2:B1:E2:03:ED:E6:C2:14:36:1C:17:AA:38:AA:6B:9A:11:40:7A:82:F2:5F:90:C5:10:10:75:94:80:6B:F7:A7:ED:8E:C0:02:DD:C3:3F:0B:25:29",
+            "crl": "http://localhost:8000/django_ca/crl/3503199563DC55705208A8B41BC7BB0325EC8F44/",
+            "serial": "3BB915D9603F636EF96F8F5B137FE087BB7C8A9D",
+            "hpkp": "4aD+PvRGGO9ckijweVLb/ynwx7lkrZyd5iVskzEvry4=",
+            "valid_from": "2019-11-26 20:00:00",
+            "valid_until": "2020-05-27 20:00:00",
+            "md5": "AA:86:12:A9:D9:6B:7C:C2:37:85:BD:B1:26:42:2A:D5",
+            "sha1": "EF:4B:0B:86:D1:E6:5F:43:D6:CD:26:74:73:99:74:2F:37:54:8C:1D",
+            "sha256": "D0:23:42:CD:B2:54:3D:97:F4:5B:16:07:36:86:A7:56:38:E1:67:74:4A:C4:AE:B4:B1:92:60:71:13:73:5F:C1",
+            "sha512": "26:59:1C:E1:79:2D:CC:BB:8D:C1:1D:CB:B1:12:C3:83:92:17:5F:3A:30:E7:6A:C5:8A:87:ED:79:4A:48:24:DA:51:0D:65:9A:09:45:C8:9C:1B:8D:15:7C:AF:97:36:2E:D3:84:EA:72:A3:68:3F:20:72:B9:1A:F3:AD:B1:2C:67",
             "authority_key_identifier": {
                 "critical": false,
-                "value": "BD:76:DB:EC:5F:B9:49:A0:C8:B0:12:25:F4:73:03:C2:24:FB:85:AD"
+                "value": {
+                    "key_identifier": "1B:B8:83:4A:0C:DE:63:9B:C1:5C:03:0F:7F:8C:D6:88:18:DC:8B:48"
+                }
+            },
+            "basic_constraints": {
+                "critical": true,
+                "value": {
+                    "ca": false
+                }
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "05:D1:E1:B3:51:21:47:D5:B7:51:F0:4A:A6:CE:97:D0:72:44:73:44"
+                "value": "D0:93:3F:4C:46:12:B0:E7:3A:97:AA:D2:F8:03:66:A2:B6:4A:05:06"
             },
             "key_usage": {
                 "critical": true,
@@ -977,10 +1003,10 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/76120AB177E93DA5B355BE8E9A299441598C4134.der"
+                        "URI:http://localhost:8000/django_ca/issuer/47B589C4D8EFB85CA6B173934B358EA6C64A298A.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/3503199563DC55705208A8B41BC7BB0325EC8F44/cert/"
                     ]
                 }
             },
@@ -1000,7 +1026,7 @@
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/"
+                            "URI:http://localhost:8000/django_ca/crl/3503199563DC55705208A8B41BC7BB0325EC8F44/"
                         ]
                     }
                 ],
@@ -1009,12 +1035,6 @@
         },
         "profile-enduser": {
             "ca": "child",
-            "basic_constraints": {
-                "critical": true,
-                "value": {
-                    "ca": false
-                }
-            },
             "name": "profile-enduser",
             "type": "cert",
             "cat": "generated",
@@ -1034,22 +1054,30 @@
             "csr_filename": "profile-enduser.csr",
             "cn": "profile-enduser.example.com",
             "profile": "enduser",
-            "crl": "http://localhost:8000/django_ca/crl/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/",
-            "serial": "53E7DEC84F47ED87D203664EE9DDFFB988894C61",
-            "hpkp": "trWPHCn7S791BgMxB8tvnJeqegLdvNfIB5BEGBbfCJY=",
-            "valid_from": "2019-09-04 13:00:00",
-            "valid_until": "2020-03-05 13:00:00",
-            "md5": "2E:0C:1B:9F:DD:D0:FA:02:A0:59:C9:74:C6:47:1C:D9",
-            "sha1": "61:53:98:A0:47:A1:BF:FE:26:2D:9A:D5:79:E0:14:5E:4C:A0:83:A7",
-            "sha256": "ED:AB:90:1A:AE:2C:FD:41:72:5C:75:96:26:44:77:53:98:F5:0E:5D:A2:70:A1:C3:74:29:57:F2:24:F2:C2:42",
-            "sha512": "1B:C2:96:E2:7E:C2:92:DD:6D:97:1D:94:10:8C:66:13:8B:F1:09:E9:9B:71:A6:D5:94:D9:20:58:A2:D4:6A:E0:80:5B:64:7B:7D:CE:44:1C:17:3A:29:E6:98:AB:E0:72:AD:1F:D0:C4:6B:B9:9B:F9:68:E3:73:24:91:58:E6:EA",
+            "crl": "http://localhost:8000/django_ca/crl/3503199563DC55705208A8B41BC7BB0325EC8F44/",
+            "serial": "3D91223DDF58591A2EFBD822B063B41BEE3FB74F",
+            "hpkp": "qz9QZcardnEgX4ZqyUFBXcvnh5P/GFtI0/ng0MnCcOY=",
+            "valid_from": "2019-11-26 20:00:00",
+            "valid_until": "2020-05-27 20:00:00",
+            "md5": "19:1F:6E:7F:81:5C:C3:BC:33:A0:60:C6:BA:FB:87:10",
+            "sha1": "38:F5:7C:8E:1C:3F:A1:3C:EC:F5:90:88:07:C3:D6:FC:EE:BE:46:A1",
+            "sha256": "E1:29:AE:94:70:D0:23:49:22:02:ED:D1:82:92:0D:56:D9:BE:1D:B2:31:62:EA:BD:33:73:4C:A1:20:6C:5B:C2",
+            "sha512": "97:0E:92:4F:DD:83:74:E2:09:16:AF:92:B9:51:22:3D:E8:7C:F2:06:ED:30:23:D4:D0:31:93:B6:94:0A:B4:D7:0C:86:94:EE:9C:37:03:4F:B1:9A:2B:A5:AB:F5:E8:15:00:EF:48:E2:AA:CB:57:2A:D1:BD:A6:36:0A:EA:27:E7",
             "authority_key_identifier": {
                 "critical": false,
-                "value": "BD:76:DB:EC:5F:B9:49:A0:C8:B0:12:25:F4:73:03:C2:24:FB:85:AD"
+                "value": {
+                    "key_identifier": "1B:B8:83:4A:0C:DE:63:9B:C1:5C:03:0F:7F:8C:D6:88:18:DC:8B:48"
+                }
+            },
+            "basic_constraints": {
+                "critical": true,
+                "value": {
+                    "ca": false
+                }
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "83:0D:54:35:B1:D9:6D:2E:33:42:65:43:04:FE:16:4F:FE:11:BC:D0"
+                "value": "0B:20:3D:17:64:1A:B3:6A:C8:D0:60:D2:F6:C9:11:4E:51:28:91:F0"
             },
             "key_usage": {
                 "critical": true,
@@ -1063,10 +1091,10 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/76120AB177E93DA5B355BE8E9A299441598C4134.der"
+                        "URI:http://localhost:8000/django_ca/issuer/47B589C4D8EFB85CA6B173934B358EA6C64A298A.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/3503199563DC55705208A8B41BC7BB0325EC8F44/cert/"
                     ]
                 }
             },
@@ -1082,7 +1110,7 @@
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/"
+                            "URI:http://localhost:8000/django_ca/crl/3503199563DC55705208A8B41BC7BB0325EC8F44/"
                         ]
                     }
                 ],
@@ -1091,12 +1119,6 @@
         },
         "profile-ocsp": {
             "ca": "child",
-            "basic_constraints": {
-                "critical": true,
-                "value": {
-                    "ca": false
-                }
-            },
             "name": "profile-ocsp",
             "type": "cert",
             "cat": "generated",
@@ -1116,22 +1138,30 @@
             "csr_filename": "profile-ocsp.csr",
             "cn": "profile-ocsp.example.com",
             "profile": "ocsp",
-            "crl": "http://localhost:8000/django_ca/crl/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/",
-            "serial": "289D0BC23C73032A0630401D00CB0A80C79F6375",
-            "hpkp": "O2iZdcZHMbki/jOHx3UP8UKph6CDBAbQFmySqk+mI5s=",
-            "valid_from": "2019-09-04 13:00:00",
-            "valid_until": "2020-03-05 13:00:00",
-            "md5": "2F:8C:60:65:3C:2E:71:DD:BA:10:8C:20:5D:72:C3:3D",
-            "sha1": "BB:F8:69:8A:52:FC:E3:09:03:A6:1C:B2:85:30:B9:0C:C2:24:A2:58",
-            "sha256": "FB:35:BB:3F:B0:B9:00:EC:DA:F5:13:DD:3E:5F:7B:D4:21:9F:91:30:3A:69:A6:29:EE:B1:B5:B5:ED:69:14:FA",
-            "sha512": "40:4B:52:72:FD:C2:46:8C:3F:89:FC:E6:1C:32:63:5D:5F:B8:E3:C7:2B:3E:40:B1:6E:4A:99:4D:88:CB:59:9E:92:07:FD:AF:83:4D:27:4D:EA:A8:4D:04:0F:51:1D:E8:A2:9F:3E:E2:5A:BF:B1:7B:33:E7:8B:F7:8D:2D:39:AD",
+            "crl": "http://localhost:8000/django_ca/crl/3503199563DC55705208A8B41BC7BB0325EC8F44/",
+            "serial": "7BABE11A7DFB9AF63AC77C6BDD1399920D26EA65",
+            "hpkp": "matqmMGFgS86tLR7TvNGchyIWMgTNDerzF3OVzPP78U=",
+            "valid_from": "2019-11-26 20:00:00",
+            "valid_until": "2020-05-27 20:00:00",
+            "md5": "65:CD:5B:40:B7:C8:8F:45:C5:21:B7:04:7D:B8:04:FB",
+            "sha1": "F8:92:72:9A:AC:A2:4F:2E:32:A0:F2:16:E3:11:F1:81:3C:6C:C7:C0",
+            "sha256": "11:1F:D6:48:FC:94:93:DF:18:66:68:B9:37:C7:78:1B:C4:BF:F3:CF:31:5F:91:2B:BA:94:FC:64:D1:8B:14:45",
+            "sha512": "87:B3:76:C5:35:FC:3F:E1:07:20:67:20:04:2F:7F:66:A0:FE:F1:17:1E:B9:76:07:20:0C:6A:BD:B7:FE:4A:EA:AD:0E:77:7F:89:6D:76:CB:7D:FE:82:85:74:F5:35:63:7C:9F:10:27:85:E5:CB:75:B2:57:8A:AD:28:E4:95:BE",
             "authority_key_identifier": {
                 "critical": false,
-                "value": "BD:76:DB:EC:5F:B9:49:A0:C8:B0:12:25:F4:73:03:C2:24:FB:85:AD"
+                "value": {
+                    "key_identifier": "1B:B8:83:4A:0C:DE:63:9B:C1:5C:03:0F:7F:8C:D6:88:18:DC:8B:48"
+                }
+            },
+            "basic_constraints": {
+                "critical": true,
+                "value": {
+                    "ca": false
+                }
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "16:15:5F:FA:EE:10:B4:42:6C:6A:73:23:A6:C9:DE:70:D6:47:7B:F4"
+                "value": "EB:DC:77:D4:6F:7F:C1:8B:10:06:84:2F:08:F0:70:52:7B:7C:B4:C7"
             },
             "key_usage": {
                 "critical": true,
@@ -1145,10 +1175,7 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/76120AB177E93DA5B355BE8E9A299441598C4134.der"
-                    ],
-                    "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/cert/"
+                        "URI:http://localhost:8000/django_ca/issuer/47B589C4D8EFB85CA6B173934B358EA6C64A298A.der"
                     ]
                 }
             },
@@ -1168,7 +1195,7 @@
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/"
+                            "URI:http://localhost:8000/django_ca/crl/3503199563DC55705208A8B41BC7BB0325EC8F44/"
                         ]
                     }
                 ],
@@ -1195,25 +1222,42 @@
             "key_type": "RSA",
             "csr_filename": "no-extensions.csr",
             "cn": "no-extensions.example.com",
-            "crl": "http://localhost:8000/django_ca/crl/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/",
-            "serial": "6AE2A330EFBBC4F4FB9AD54D8B4FA8997965B5D1",
-            "hpkp": "mYqv/q18rUd+eY0QcJgECQaDvzOHGRukjy7W7ePmpEw=",
-            "valid_from": "2019-09-09 13:00:00",
-            "valid_until": "2020-03-10 13:00:00",
-            "md5": "2A:84:B2:D4:1F:83:8F:D8:FC:C8:BD:97:45:FB:2B:93",
-            "sha1": "D4:40:FF:6E:E3:E1:62:17:70:0B:7C:D4:F4:A8:5B:71:85:51:D8:C3",
-            "sha256": "B6:62:12:33:79:2E:36:15:F5:4D:F1:38:A7:0A:47:5E:C1:F8:3F:9F:2F:77:EF:93:23:53:5A:64:74:2E:1F:9A",
-            "sha512": "C2:E1:8B:01:13:BC:3B:AF:38:81:D0:3B:25:50:59:2E:12:46:9D:40:6D:BA:BD:07:6E:0E:BE:56:02:4D:35:FC:82:C8:00:B4:B7:5E:E6:3A:D4:A7:7D:28:05:EC:1B:04:D1:7F:D9:CF:7E:6A:DE:B6:98:A2:FE:84:C7:C4:83:EA"
+            "crl": "http://localhost:8000/django_ca/crl/3503199563DC55705208A8B41BC7BB0325EC8F44/",
+            "serial": "66AD92F5F088B12C7B52585E58D65F4A91B4FC95",
+            "hpkp": "/RJKGCI00JHHc3mHAsrhAvjxNVTgfBjmHVNv8qZ2hfk=",
+            "valid_from": "2019-12-01 20:00:00",
+            "valid_until": "2020-06-01 20:00:00",
+            "md5": "58:91:28:53:C2:35:90:06:39:6C:D6:5A:BC:A5:64:61",
+            "sha1": "33:57:48:C7:E4:15:AF:DE:87:7E:67:5E:85:C5:A5:FE:45:8C:3E:88",
+            "sha256": "1D:02:65:31:62:2A:5D:10:DA:EC:36:4C:52:7E:CB:04:FD:92:37:74:1C:23:A0:29:84:1B:DA:3B:E9:FE:9C:30",
+            "sha512": "F3:12:8E:0C:B2:74:02:1B:A7:A7:8A:CB:AB:78:FE:C0:80:9A:7F:32:C5:5A:9F:0E:53:D4:2B:C1:47:DA:77:47:94:B9:62:3D:B8:15:88:50:22:7E:B5:B8:E0:D4:D1:0B:63:0D:AB:13:2D:66:C2:D6:9B:7F:BA:25:1B:5D:71:CE"
         },
         "all-extensions": {
             "ca": "child",
             "subject": "/C=AT/ST=Vienna/L=Vienna/O=Example/OU=Example OU/CN=all-extensions.example.com/emailAddress=user@example.com",
-            "basic_constraints": {
-                "critical": true,
-                "value": {
-                    "ca": false
-                }
+            "name": "all-extensions",
+            "type": "cert",
+            "cat": "generated",
+            "algorithm": "SHA256",
+            "subject_str": "/C=AT/ST=Vienna/L=Vienna/O=Example/OU=Example OU/CN=all-extensions.example.com/emailAddress=user@example.com",
+            "csr_subject": {
+                "C": "AT",
+                "ST": "csr.Vienna",
+                "L": "csr.Vienna",
+                "O": "csr.Example",
+                "OU": "csr.Example OU",
+                "CN": "csr.all-extensions.example.com",
+                "emailAddress": "csr.user@example.com"
             },
+            "csr_subject_str": "/C=AT/ST=csr.Vienna/L=csr.Vienna/O=csr.Example/OU=csr.Example OU/CN=csr.all-extensions.example.com/emailAddress=csr.user@example.com",
+            "key_filename": "all-extensions.key",
+            "pub_filename": "all-extensions.pub",
+            "key_der_filename": "all-extensions.key.der",
+            "pub_der_filename": "all-extensions.pub.der",
+            "key_size": 1024,
+            "key_type": "RSA",
+            "csr_filename": "all-extensions.csr",
+            "cn": "all-extensions.example.com",
             "name_constraints": {
                 "value": {
                     "permitted": [
@@ -1248,18 +1292,18 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "serverAuth",
                     "clientAuth",
                     "codeSigning",
-                    "emailProtection"
+                    "emailProtection",
+                    "serverAuth"
                 ]
             },
             "subject_alternative_name": {
                 "critical": false,
                 "value": [
-                    "DNS:all-extensions.example.com",
                     "DNS:san1.all-extensions.example.com",
-                    "DNS:san2.all-extensions.example.com"
+                    "DNS:san2.all-extensions.example.com",
+                    "DNS:all-extensions.example.com"
                 ]
             },
             "ocsp_no_check": {
@@ -1268,54 +1312,57 @@
             "precert_poison": {
                 "critical": true
             },
-            "name": "all-extensions",
-            "type": "cert",
-            "cat": "generated",
-            "algorithm": "SHA256",
-            "subject_str": "/C=AT/ST=Vienna/L=Vienna/O=Example/OU=Example OU/CN=all-extensions.example.com/emailAddress=user@example.com",
-            "csr_subject": {
-                "C": "AT",
-                "ST": "csr.Vienna",
-                "L": "csr.Vienna",
-                "O": "csr.Example",
-                "OU": "csr.Example OU",
-                "CN": "csr.all-extensions.example.com",
-                "emailAddress": "csr.user@example.com"
+            "freshest_crl": {
+                "value": [
+                    {
+                        "full_name": [
+                            "URI:https://example.com"
+                        ]
+                    }
+                ]
             },
-            "csr_subject_str": "/C=AT/ST=csr.Vienna/L=csr.Vienna/O=csr.Example/OU=csr.Example OU/CN=csr.all-extensions.example.com/emailAddress=csr.user@example.com",
-            "key_filename": "all-extensions.key",
-            "pub_filename": "all-extensions.pub",
-            "key_der_filename": "all-extensions.key.der",
-            "pub_der_filename": "all-extensions.pub.der",
-            "key_size": 1024,
-            "key_type": "RSA",
-            "csr_filename": "all-extensions.csr",
-            "cn": "all-extensions.example.com",
-            "crl": "http://localhost:8000/django_ca/crl/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/",
-            "serial": "22C5942EBAAC2BAD8F3F75C9B2283D31772B211B",
-            "hpkp": "hkR1igw2+i0KtfRiNCbZ4dAOBAwoxy/heZGVl7CZjX4=",
-            "valid_from": "2019-09-14 13:00:00",
-            "valid_until": "2020-03-15 13:00:00",
-            "md5": "59:62:5D:44:4E:E8:2C:7A:91:3E:EC:EA:AA:35:F8:9F",
-            "sha1": "A8:BA:ED:D8:54:A9:51:ED:BF:2B:FE:EA:49:78:E7:D3:56:96:B0:4A",
-            "sha256": "32:9D:17:04:C0:15:08:42:50:C0:BB:FA:89:1F:AB:D4:DB:BC:30:8F:53:0A:E0:F5:8A:1C:1A:0B:BF:79:B1:35",
-            "sha512": "A5:DD:5D:70:5F:70:4C:CE:E3:11:9E:8D:9D:2D:46:8F:24:26:FE:7C:5A:F7:B0:B6:4D:FF:2C:BA:3C:FC:83:D6:34:91:68:4B:8C:8A:C7:24:1B:70:09:47:5A:6B:0F:5A:47:86:21:88:2B:7F:5D:72:40:D7:2C:37:74:59:23:8C",
+            "inhibit_any_policy": {
+                "value": 1
+            },
+            "policy_constraints": {
+                "value": {
+                    "require_explicit_policy": 1,
+                    "inhibit_policy_mapping": 2
+                }
+            },
+            "crl": "http://localhost:8000/django_ca/crl/3503199563DC55705208A8B41BC7BB0325EC8F44/",
+            "serial": "1D0998DE6C1FE1F9598D1BF65AE06512C2BDC91E",
+            "hpkp": "h6Gmn7s14T/PXQRpcpir/nFlKAOjv5Xb6hgbI6xByic=",
+            "valid_from": "2019-12-06 20:00:00",
+            "valid_until": "2020-06-06 20:00:00",
+            "md5": "E4:DF:91:8B:79:9B:D7:13:27:6F:41:34:A8:19:B9:7B",
+            "sha1": "8D:C7:D4:59:11:6B:8A:FC:05:B4:47:D3:D2:07:46:0D:29:8F:93:40",
+            "sha256": "34:DD:AB:B2:62:09:C9:C1:72:5C:61:17:3D:CA:BA:E5:4E:0C:34:7C:76:33:72:33:75:AB:99:0B:33:53:74:32",
+            "sha512": "57:B1:58:5B:17:31:4F:69:CA:F9:99:84:2E:D9:F8:C9:B6:AC:CB:52:C7:DD:42:D8:70:96:62:34:E3:D1:43:74:4A:3F:95:18:DE:0E:E7:91:6B:C4:3C:62:6C:E2:7B:37:8C:C2:F0:AB:3E:8A:D0:21:6A:2B:AB:D2:24:58:E3:42",
             "authority_key_identifier": {
                 "critical": false,
-                "value": "BD:76:DB:EC:5F:B9:49:A0:C8:B0:12:25:F4:73:03:C2:24:FB:85:AD"
+                "value": {
+                    "key_identifier": "1B:B8:83:4A:0C:DE:63:9B:C1:5C:03:0F:7F:8C:D6:88:18:DC:8B:48"
+                }
+            },
+            "basic_constraints": {
+                "critical": true,
+                "value": {
+                    "ca": false
+                }
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "BE:F3:E5:02:B3:31:D4:69:3B:8B:05:E3:54:F6:04:F3:16:BB:94:D8"
+                "value": "6D:EC:53:82:E2:8E:DA:1C:A9:33:D4:CC:C1:14:F3:EE:7B:6F:FC:A2"
             },
             "authority_information_access": {
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/76120AB177E93DA5B355BE8E9A299441598C4134.der"
+                        "URI:http://localhost:8000/django_ca/issuer/47B589C4D8EFB85CA6B173934B358EA6C64A298A.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/3503199563DC55705208A8B41BC7BB0325EC8F44/cert/"
                     ]
                 }
             },
@@ -1323,7 +1370,7 @@
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/"
+                            "URI:http://localhost:8000/django_ca/crl/3503199563DC55705208A8B41BC7BB0325EC8F44/"
                         ]
                     }
                 ],
@@ -1332,8 +1379,26 @@
         },
         "alt-extensions": {
             "ca": "child",
+            "name": "alt-extensions",
+            "type": "cert",
+            "cat": "generated",
+            "algorithm": "SHA256",
+            "subject": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=alt-extensions.example.com",
+            "subject_str": "/CN=alt-extensions.example.com",
+            "csr_subject": {
+                "CN": "csr.alt-extensions.example.com"
+            },
+            "csr_subject_str": "/CN=csr.alt-extensions.example.com",
+            "key_filename": "alt-extensions.key",
+            "pub_filename": "alt-extensions.pub",
+            "key_der_filename": "alt-extensions.key.der",
+            "pub_der_filename": "alt-extensions.pub.der",
+            "key_size": 1024,
+            "key_type": "RSA",
+            "csr_filename": "alt-extensions.csr",
+            "cn": "alt-extensions.example.com",
             "basic_constraints": {
-                "critical": true,
+                "critical": false,
                 "value": {
                     "ca": false
                 }
@@ -1362,10 +1427,10 @@
             "extended_key_usage": {
                 "critical": true,
                 "value": [
-                    "serverAuth",
                     "clientAuth",
                     "codeSigning",
-                    "emailProtection"
+                    "emailProtection",
+                    "serverAuth"
                 ]
             },
             "issuer_alternative_name": {
@@ -1397,10 +1462,10 @@
             "subject_alternative_name": {
                 "critical": true,
                 "value": [
-                    "DNS:alt-extensions.example.com",
                     "DNS:san2.alt-extensions.example.com",
+                    "DNS:san3.alt-extensions.example.com",
                     "DNS:san1.alt-extensions.example.com",
-                    "DNS:san3.alt-extensions.example.com"
+                    "DNS:alt-extensions.example.com"
                 ]
             },
             "tls_feature": {
@@ -1409,49 +1474,33 @@
                     "OCSPMustStaple"
                 ]
             },
-            "name": "alt-extensions",
-            "type": "cert",
-            "cat": "generated",
-            "algorithm": "SHA256",
-            "subject": "/CN=alt-extensions.example.com",
-            "subject_str": "/CN=alt-extensions.example.com",
-            "csr_subject": {
-                "CN": "csr.alt-extensions.example.com"
-            },
-            "csr_subject_str": "/CN=csr.alt-extensions.example.com",
-            "key_filename": "alt-extensions.key",
-            "pub_filename": "alt-extensions.pub",
-            "key_der_filename": "alt-extensions.key.der",
-            "pub_der_filename": "alt-extensions.pub.der",
-            "key_size": 1024,
-            "key_type": "RSA",
-            "csr_filename": "alt-extensions.csr",
-            "cn": "alt-extensions.example.com",
             "crl": "",
-            "serial": "5FDA623E67D002F06276EC1A5E061A839D3F22BB",
-            "hpkp": "gUrtn8mvM4lNmM5byy0vXaYhw5OIyLcRWQ3tWIgybEI=",
-            "valid_from": "2019-09-14 13:00:00",
-            "valid_until": "2020-03-15 13:00:00",
-            "md5": "17:57:E2:7B:9D:F6:BE:30:67:EE:BE:EF:7C:FA:D3:2B",
-            "sha1": "59:B4:F3:DE:89:48:40:07:52:70:A3:89:BE:5D:F1:41:30:AB:3D:E9",
-            "sha256": "94:75:7A:1E:52:C5:DA:5B:6A:81:DA:94:DC:D1:B2:9B:5C:9C:A0:2D:45:6A:3D:7F:9C:AB:5B:3B:B1:37:06:D6",
-            "sha512": "9C:D8:D8:C3:88:44:3E:04:DF:3A:D2:D4:51:8B:B9:84:D7:9B:6C:82:10:D0:16:EF:53:D0:C8:AF:98:22:B0:BD:2C:B0:15:DB:AC:D1:E1:7A:6F:41:E9:98:6B:59:AB:B1:CC:B3:76:59:9B:FA:3D:43:8A:78:08:70:83:54:DC:4C",
+            "serial": "425D05B96E6794D3AFF75FB97C211F124165D0C2",
+            "hpkp": "v1vLl43j5DO1GGtAk1+ENeZGEq67/2RLXyXtPNtVpdc=",
+            "valid_from": "2019-12-06 20:00:00",
+            "valid_until": "2020-06-06 20:00:00",
+            "md5": "9C:97:BF:8B:E1:C8:DF:67:32:CD:70:B5:5F:E4:6B:E5",
+            "sha1": "35:39:6C:D5:3F:12:1A:C8:0F:CC:F2:E7:77:D1:7C:08:A5:55:E3:FD",
+            "sha256": "98:72:CC:E3:D2:86:E3:16:3F:53:29:22:39:96:EB:F6:6C:BB:83:55:A1:C9:DE:28:0A:1C:91:A4:5E:E3:A8:7E",
+            "sha512": "10:F7:71:01:1A:41:41:E3:04:55:DF:53:88:F3:D7:F8:6B:66:C2:BB:96:F2:BE:C1:57:17:32:70:CE:DE:53:33:34:D0:00:76:2E:B5:50:22:D2:54:33:F2:AC:AD:50:73:56:6E:B7:7E:16:CA:D3:45:9C:B2:DD:BE:51:87:18:75",
             "authority_key_identifier": {
                 "critical": false,
-                "value": "BD:76:DB:EC:5F:B9:49:A0:C8:B0:12:25:F4:73:03:C2:24:FB:85:AD"
+                "value": {
+                    "key_identifier": "1B:B8:83:4A:0C:DE:63:9B:C1:5C:03:0F:7F:8C:D6:88:18:DC:8B:48"
+                }
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "B6:82:A7:8C:DC:92:4C:79:0F:73:CF:50:E1:15:EB:03:18:00:E8:A6"
+                "value": "CA:72:E9:39:66:CF:B3:57:30:8D:D4:EC:F8:25:0C:5C:3F:A7:C7:1F"
             },
             "authority_information_access": {
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/76120AB177E93DA5B355BE8E9A299441598C4134.der"
+                        "URI:http://localhost:8000/django_ca/issuer/47B589C4D8EFB85CA6B173934B358EA6C64A298A.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/6628561AB47EFDCEC4E7CEF70BA139F9EFD7EED5/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/3503199563DC55705208A8B41BC7BB0325EC8F44/cert/"
                     ]
                 }
             }
@@ -1522,7 +1571,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4"
+                "value": {
+                    "key_identifier": "BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -1555,8 +1606,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "serverAuth",
-                    "clientAuth"
+                    "clientAuth",
+                    "serverAuth"
                 ]
             },
             "key_usage": {
@@ -1597,7 +1648,6 @@
             "authority_information_access": {
                 "critical": false,
                 "value": {
-                    "issuers": [],
                     "ocsp": [
                         "URI:http://ocsp.digicert.com"
                     ]
@@ -1605,7 +1655,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "03:DE:50:35:56:D1:4C:BB:66:F0:A3:E2:1B:1B:C3:97:B2:3D:D1:55"
+                "value": {
+                    "key_identifier": "03:DE:50:35:56:D1:4C:BB:66:F0:A3:E2:1B:1B:C3:97:B2:3D:D1:55"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -1687,7 +1739,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "ED:44:19:C0:D3:F0:06:8B:EE:A4:7B:BE:42:E7:26:54:C8:8E:36:76"
+                "value": {
+                    "key_identifier": "ED:44:19:C0:D3:F0:06:8B:EE:A4:7B:BE:42:E7:26:54:C8:8E:36:76"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -1728,11 +1782,11 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "serverAuth",
                     "clientAuth",
                     "ipsecEndSystem",
                     "ipsecTunnel",
-                    "ipsecUser"
+                    "ipsecUser",
+                    "serverAuth"
                 ]
             },
             "key_usage": {
@@ -1771,7 +1825,9 @@
             "sha512": "7B:9C:F0:79:B9:76:9D:FA:9E:B2:E2:8C:F5:A4:DA:99:22:B0:F8:0E:41:50:97:D3:26:BF:20:54:75:05:A6:AB:1B:7A:C6:A8:38:46:D0:B8:25:3E:91:68:B1:F9:15:B8:97:4A:EC:84:4A:9B:31:C3:AD:CA:B3:AE:C8:9F:CD:07",
             "authority_key_identifier": {
                 "critical": false,
-                "value": "B1:3E:C3:69:03:F8:BF:47:01:D4:98:26:1A:08:02:EF:63:64:2B:C3"
+                "value": {
+                    "key_identifier": "B1:3E:C3:69:03:F8:BF:47:01:D4:98:26:1A:08:02:EF:63:64:2B:C3"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -1887,7 +1943,9 @@
             "sha512": "DE:82:56:35:4E:EA:96:4A:DC:D0:28:5F:A6:A5:7B:4F:31:CF:7E:D8:6B:BF:29:2E:F0:E8:7B:6E:C4:31:D4:3E:5E:C2:F5:77:F0:72:09:88:15:EC:B6:D9:77:BE:C1:47:E0:75:48:62:FF:29:CD:CA:91:4D:65:AF:CE:EA:09:8F",
             "authority_key_identifier": {
                 "critical": false,
-                "value": "9B:E2:07:57:67:1C:1E:C0:6A:06:DE:59:B4:9A:2D:DF:DC:19:86:2E"
+                "value": {
+                    "key_identifier": "9B:E2:07:57:67:1C:1E:C0:6A:06:DE:59:B4:9A:2D:DF:DC:19:86:2E"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -1938,7 +1996,9 @@
             "sha512": "C7:5F:96:18:C9:84:D7:6B:56:F3:D9:8A:0B:5C:EF:F5:1F:F0:80:84:FD:6B:1F:14:C2:E5:85:71:D7:09:5F:CC:55:ED:30:6A:4B:B3:AA:C1:7F:3F:B9:F4:BF:42:02:47:AE:41:D9:F8:B5:44:64:15:D9:20:F3:2B:5D:66:7E:1A",
             "authority_key_identifier": {
                 "critical": false,
-                "value": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2"
+                "value": {
+                    "key_identifier": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -2004,7 +2064,6 @@
             "authority_information_access": {
                 "critical": false,
                 "value": {
-                    "issuers": [],
                     "ocsp": [
                         "URI:http://g.symcd.com"
                     ]
@@ -2012,7 +2071,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E"
+                "value": {
+                    "key_identifier": "C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -2077,7 +2138,9 @@
             "sha512": "53:B4:44:E5:65:18:32:01:A6:1E:EB:46:12:09:B2:DC:30:89:5E:EC:A4:87:23:8D:15:A0:26:73:5F:22:9A:81:9E:5B:19:CB:D7:E2:FA:27:68:AB:2A:64:F6:EB:CD:9D:1E:72:13:41:C9:ED:5D:D0:9F:C0:D5:E4:3D:68:BC:A7",
             "authority_key_identifier": {
                 "critical": false,
-                "value": "03:DE:50:35:56:D1:4C:BB:66:F0:A3:E2:1B:1B:C3:97:B2:3D:D1:55"
+                "value": {
+                    "key_identifier": "03:DE:50:35:56:D1:4C:BB:66:F0:A3:E2:1B:1B:C3:97:B2:3D:D1:55"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -2119,7 +2182,9 @@
             "sha512": "F7:55:01:0B:4C:FB:8F:9F:0B:7F:CB:15:4C:5B:FB:9C:4B:80:15:B5:D6:55:0A:2A:E4:9E:9F:E1:BE:27:17:4F:CD:B6:06:B0:E9:64:CC:CA:16:56:5A:AD:C4:81:DA:EC:1B:DD:8A:7A:92:E5:12:25:87:19:48:0B:EA:6A:60:49",
             "authority_key_identifier": {
                 "critical": false,
-                "value": "C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E"
+                "value": {
+                    "key_identifier": "C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -2164,7 +2229,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10"
+                "value": {
+                    "key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -2254,7 +2321,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2"
+                "value": {
+                    "key_identifier": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -2327,7 +2396,6 @@
             "authority_information_access": {
                 "critical": false,
                 "value": {
-                    "issuers": [],
                     "ocsp": [
                         "URI:http://ocsp.digicert.com"
                     ]
@@ -2335,7 +2403,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "B1:3E:C3:69:03:F8:BF:47:01:D4:98:26:1A:08:02:EF:63:64:2B:C3"
+                "value": {
+                    "key_identifier": "B1:3E:C3:69:03:F8:BF:47:01:D4:98:26:1A:08:02:EF:63:64:2B:C3"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -2368,8 +2438,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "serverAuth",
-                    "clientAuth"
+                    "clientAuth",
+                    "serverAuth"
                 ]
             },
             "key_usage": {
@@ -2419,7 +2489,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2"
+                "value": {
+                    "key_identifier": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -2522,7 +2594,6 @@
             "authority_information_access": {
                 "critical": false,
                 "value": {
-                    "issuers": [],
                     "ocsp": [
                         "URI:http://ocsp.godaddy.com/"
                     ]
@@ -2530,7 +2601,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "3A:9A:85:07:10:67:28:B6:EF:F6:BD:05:41:6E:20:C1:94:DA:0F:DE"
+                "value": {
+                    "key_identifier": "3A:9A:85:07:10:67:28:B6:EF:F6:BD:05:41:6E:20:C1:94:DA:0F:DE"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -2596,7 +2669,6 @@
             "authority_information_access": {
                 "critical": false,
                 "value": {
-                    "issuers": [],
                     "ocsp": [
                         "URI:http://ocsp.pki.goog/gsr2"
                     ]
@@ -2604,7 +2676,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "9B:E2:07:57:67:1C:1E:C0:6A:06:DE:59:B4:9A:2D:DF:DC:19:86:2E"
+                "value": {
+                    "key_identifier": "9B:E2:07:57:67:1C:1E:C0:6A:06:DE:59:B4:9A:2D:DF:DC:19:86:2E"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -2637,8 +2711,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "serverAuth",
-                    "clientAuth"
+                    "clientAuth",
+                    "serverAuth"
                 ]
             },
             "key_usage": {
@@ -2678,7 +2752,6 @@
             "authority_information_access": {
                 "critical": false,
                 "value": {
-                    "issuers": [],
                     "ocsp": [
                         "URI:http://ocsp.globalsign.com/rootr1"
                     ]
@@ -2686,7 +2759,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "60:7B:66:1A:45:0D:97:CA:89:50:2F:7D:04:CD:34:A8:FF:FC:FD:4B"
+                "value": {
+                    "key_identifier": "60:7B:66:1A:45:0D:97:CA:89:50:2F:7D:04:CD:34:A8:FF:FC:FD:4B"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -2762,7 +2837,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10"
+                "value": {
+                    "key_identifier": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -2843,7 +2920,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4"
+                "value": {
+                    "key_identifier": "BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -2956,7 +3035,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7"
+                "value": {
+                    "key_identifier": "90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -2991,8 +3072,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "serverAuth",
-                    "clientAuth"
+                    "clientAuth",
+                    "serverAuth"
                 ]
             },
             "key_usage": {
@@ -3049,7 +3130,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "0F:80:61:1C:82:31:61:D5:2F:28:E7:8D:46:38:B4:2C:E1:C6:D9:E2"
+                "value": {
+                    "key_identifier": "0F:80:61:1C:82:31:61:D5:2F:28:E7:8D:46:38:B4:2C:E1:C6:D9:E2"
+                }
             },
             "basic_constraints": {
                 "critical": false,
@@ -3089,8 +3172,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "serverAuth",
-                    "clientAuth"
+                    "clientAuth",
+                    "serverAuth"
                 ]
             },
             "key_usage": {
@@ -3173,7 +3256,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "A2:56:24:3C:D0:D4:15:B9:E8:BF:78:A3:13:10:58:48:2E:16:54:E1"
+                "value": {
+                    "key_identifier": "A2:56:24:3C:D0:D4:15:B9:E8:BF:78:A3:13:10:58:48:2E:16:54:E1"
+                }
             },
             "crl_distribution_points": {
                 "value": [
@@ -3211,8 +3296,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "serverAuth",
-                    "clientAuth"
+                    "clientAuth",
+                    "serverAuth"
                 ]
             },
             "key_usage": {
@@ -3273,7 +3358,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "C3:9C:F3:FC:D3:46:08:34:BB:CE:46:7F:A0:7C:5B:F3:E2:08:CB:59"
+                "value": {
+                    "key_identifier": "C3:9C:F3:FC:D3:46:08:34:BB:CE:46:7F:A0:7C:5B:F3:E2:08:CB:59"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -3305,8 +3392,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "serverAuth",
-                    "clientAuth"
+                    "clientAuth",
+                    "serverAuth"
                 ]
             },
             "key_usage": {
@@ -3358,7 +3445,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1"
+                "value": {
+                    "key_identifier": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -3386,8 +3475,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "serverAuth",
-                    "clientAuth"
+                    "clientAuth",
+                    "serverAuth"
                 ]
             },
             "key_usage": {
@@ -3443,7 +3532,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "B1:3F:1C:92:7B:92:B0:5A:25:B3:38:FB:9C:07:A4:26:50:32:E3:51"
+                "value": {
+                    "key_identifier": "B1:3F:1C:92:7B:92:B0:5A:25:B3:38:FB:9C:07:A4:26:50:32:E3:51"
+                }
             },
             "basic_constraints": {
                 "critical": false,
@@ -3543,7 +3634,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "51:68:FF:90:AF:02:07:75:3C:CC:D9:65:64:62:A2:12:B8:59:72:3B"
+                "value": {
+                    "key_identifier": "51:68:FF:90:AF:02:07:75:3C:CC:D9:65:64:62:A2:12:B8:59:72:3B"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -3583,8 +3676,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "serverAuth",
-                    "clientAuth"
+                    "clientAuth",
+                    "serverAuth"
                 ]
             },
             "key_usage": {
@@ -3700,7 +3793,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "11:DB:23:45:FD:54:CC:6A:71:6F:84:8A:03:D7:BE:F7:01:2F:26:86"
+                "value": {
+                    "key_identifier": "11:DB:23:45:FD:54:CC:6A:71:6F:84:8A:03:D7:BE:F7:01:2F:26:86"
+                }
             },
             "basic_constraints": {
                 "critical": false,
@@ -3809,7 +3904,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "40:C2:BD:27:8E:CC:34:83:30:A2:33:D7:FB:6C:B3:F0:B4:2C:80:CE"
+                "value": {
+                    "key_identifier": "40:C2:BD:27:8E:CC:34:83:30:A2:33:D7:FB:6C:B3:F0:B4:2C:80:CE"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -3844,8 +3941,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "serverAuth",
-                    "clientAuth"
+                    "clientAuth",
+                    "serverAuth"
                 ]
             },
             "key_usage": {
@@ -3972,7 +4069,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "77:C2:B8:50:9A:67:76:76:B1:2D:C2:86:D0:83:A0:7E:A6:7E:BA:4B"
+                "value": {
+                    "key_identifier": "77:C2:B8:50:9A:67:76:76:B1:2D:C2:86:D0:83:A0:7E:A6:7E:BA:4B"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -4059,7 +4158,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "EA:4E:7C:D4:80:2D:E5:15:81:86:26:8C:82:6D:C0:98:A4:CF:97:0F"
+                "value": {
+                    "key_identifier": "EA:4E:7C:D4:80:2D:E5:15:81:86:26:8C:82:6D:C0:98:A4:CF:97:0F"
+                }
             },
             "basic_constraints": {
                 "critical": false,
@@ -4094,8 +4195,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "serverAuth",
-                    "clientAuth"
+                    "clientAuth",
+                    "serverAuth"
                 ]
             },
             "key_usage": {
@@ -4152,7 +4253,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1"
+                "value": {
+                    "key_identifier": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -4177,8 +4280,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "serverAuth",
-                    "clientAuth"
+                    "clientAuth",
+                    "serverAuth"
                 ]
             },
             "key_usage": {
@@ -4260,7 +4363,9 @@
             },
             "authority_key_identifier": {
                 "critical": false,
-                "value": "39:DA:FF:CA:28:14:8A:A8:74:13:08:B9:E4:0E:A9:D2:FA:7E:9D:69"
+                "value": {
+                    "key_identifier": "39:DA:FF:CA:28:14:8A:A8:74:13:08:B9:E4:0E:A9:D2:FA:7E:9D:69"
+                }
             },
             "basic_constraints": {
                 "critical": true,
@@ -4295,8 +4400,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "serverAuth",
-                    "clientAuth"
+                    "clientAuth",
+                    "serverAuth"
                 ]
             },
             "key_usage": {

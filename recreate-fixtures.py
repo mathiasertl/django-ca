@@ -483,6 +483,19 @@ data = {
             'precert_poison': {
                 'critical': True,
             },
+            'freshest_crl': {
+                'value': [  # two distribution points
+                    {
+                        'full_name': ['URI:https://example.com'],
+                    },
+                ]
+            },
+            'inhibit_any_policy': {
+                'value': 1,
+            },
+            'policy_constraints': {
+                'value': {'require_explicit_policy': 1, 'inhibit_policy_mapping': 2},
+            }
         }
     },
     'alt-extensions': {
