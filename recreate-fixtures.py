@@ -509,6 +509,14 @@ data = {
                     'ca': False,
                 },
             },
+            'authority_key_identifier': {
+                'critical': True,  # not usually critical
+                'value': {
+                    'key_identifier': b'0',
+                    'authority_cert_issuer': ['example.com'],
+                    'authority_cert_serial_number': 1,
+                }
+            },
             'crl_distribution_points': {
                 'critical': True,  # not usually critical
                 'value': [  # two distribution points
