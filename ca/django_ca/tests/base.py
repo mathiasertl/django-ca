@@ -677,11 +677,13 @@ class DjangoCATestCaseMixin(object):
         for key, value in certs[name].items():
             if key == 'precert_poison':
                 ctx['precert_poison'] = 'PrecertPoison (critical): Yes'
-            elif key == 'precertificate_signed_certificate_timestamps':
+            elif key == 'precertificate_signed_certificate_timestamps_serialized':
                 ctx['sct_critical'] = ' (critical)' if value['critical'] else ''
                 ctx['sct_values'] = []
                 for value in value['value']:
                     ctx['sct_values'].append(value)
+            elif key == 'precertificate_signed_certificate_timestamps':
+                continue  # special extension b/c it cannot be created
             elif key == 'pathlen':
                 ctx[key] = value
                 ctx['%s_text' % key] = 'unlimited' if value is None else value

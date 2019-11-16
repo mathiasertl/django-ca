@@ -428,6 +428,12 @@ ExtendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage_1}
     * {extended_key_usage_2}
     * {extended_key_usage_3}
+FreshestCRL{freshest_crl_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{freshest_crl_0.full_name[0].value}
+InhibitAnyPolicy{inhibit_any_policy_critical}:
+    1
 IssuerAlternativeName{issuer_alternative_name_critical}:
     * {issuer_alternative_name[0]}
 KeyUsage{key_usage_critical}:
@@ -440,6 +446,9 @@ NameConstraints{name_constraints_critical}:
     Excluded:
       * DNS:{name_constraints.excluded[0].value}
 OCSPNoCheck{ocsp_no_check_critical}: Yes
+PolicyConstraints{policy_constraints_critical}:
+    * InhibitPolicyMapping: {policy_constraints.inhibit_policy_mapping}
+    * RequireExplicitPolicy: {policy_constraints.require_explicit_policy}
 {precert_poison}
 SubjectAlternativeName{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
