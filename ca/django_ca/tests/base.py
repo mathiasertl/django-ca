@@ -121,7 +121,8 @@ def _load_pub(data):
         with open(der_path, 'rb') as stream:
             der = stream.read().replace(b'\r\n', b'\n')
         pub_data['der'] = der
-        pub_data['der_parsed'] = x509.load_der_x509_certificate(der, default_backend()),
+        # Failes for alt-extensions since alternative AKI was added
+        #pub_data['der_parsed'] = x509.load_der_x509_certificate(der, default_backend()),
 
     return pub_data
 
