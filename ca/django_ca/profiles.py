@@ -174,7 +174,7 @@ class Profile(object):
         algorithm : str or :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
             Override the hash algorithm used when signing the certificate, passed to
             :py:func:`~django_ca.utils.parse_hash_algorithm`.
-        extensions : list of :py:class:`~django_ca.extensions.Extension`
+        extensions : list or dict of :py:class:`~django_ca.extensions.Extension`
             List of additional extensions to set for the certificate. Note that values from the CA might
             update the passed extensions: For example, if you pass an
             :py:class:`~django_ca.extensions.IssuerAlternativeName` extension, *add_issuer_alternative_name*
@@ -208,6 +208,9 @@ class Profile(object):
         # Compute default values
         if extensions is None:
             extensions = {}
+        elif isinstance(extensions, dict):
+            extensions = {k: v if isinstance(v, Extension) else KEY_TO_EXTENSION[k](v)
+                          for k, v in extensions.items()}
         else:
             extensions = {e.key: e for e in extensions}
 
