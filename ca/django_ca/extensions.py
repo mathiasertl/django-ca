@@ -1177,10 +1177,10 @@ class AuthorityKeyIdentifier(Extension):
         self.value['key_identifier'] = self.parse_keyid(value)
 
     def parse_keyid(self, value):
-        if isinstance(value, str) and ':' in value:
-            return hex_to_bytes(value)
-        elif isinstance(value, bytes):
+        if isinstance(value, bytes):
             return value
+        elif value is not None:
+            return hex_to_bytes(value)
 
     def serialize(self):
         s = {

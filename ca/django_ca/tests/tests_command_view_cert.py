@@ -478,7 +478,10 @@ AuthorityInformationAccess{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 AuthorityKeyIdentifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+    * KeyID: 30
+    * Issuer:
+      * DNS:{authority_key_identifier.authority_cert_issuer[0].value}
+    * Serial: 1
 BasicConstraints{basic_constraints_critical}:
     CA:FALSE
 CRLDistributionPoints{crl_distribution_points_critical}:
