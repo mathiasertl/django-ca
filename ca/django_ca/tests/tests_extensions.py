@@ -2092,7 +2092,7 @@ class PolicyConstraintsTestCase(ExtensionTestMixin, TestCase):
             'expected': {'require_explicit_policy': 0},
             'expected_repr': 'require_explicit_policy=0',
             'expected_serialized': {'require_explicit_policy': 0},
-            'expected_text': '* RequireAnyPolicy: 0',
+            'expected_text': '* RequireExplicitPolicy: 0',
             'extension_type': x509.PolicyConstraints(require_explicit_policy=0, inhibit_policy_mapping=None),
         },
         'rep_one': {
@@ -2102,7 +2102,7 @@ class PolicyConstraintsTestCase(ExtensionTestMixin, TestCase):
             'expected': {'require_explicit_policy': 1},
             'expected_repr': 'require_explicit_policy=1',
             'expected_serialized': {'require_explicit_policy': 1},
-            'expected_text': '* RequireAnyPolicy: 1',
+            'expected_text': '* RequireExplicitPolicy: 1',
             'extension_type': x509.PolicyConstraints(require_explicit_policy=1, inhibit_policy_mapping=None),
         },
         'rep_none': {
@@ -2122,7 +2122,7 @@ class PolicyConstraintsTestCase(ExtensionTestMixin, TestCase):
             'expected': {'inhibit_policy_mapping': 0},
             'expected_repr': 'inhibit_policy_mapping=0',
             'expected_serialized': {'inhibit_policy_mapping': 0},
-            'expected_text': '* InhibitAnyPolicy: 0',
+            'expected_text': '* InhibitPolicyMapping: 0',
             'extension_type': x509.PolicyConstraints(require_explicit_policy=None, inhibit_policy_mapping=0),
         },
         'iap_one': {
@@ -2132,7 +2132,7 @@ class PolicyConstraintsTestCase(ExtensionTestMixin, TestCase):
             'expected': {'inhibit_policy_mapping': 1},
             'expected_repr': 'inhibit_policy_mapping=1',
             'expected_serialized': {'inhibit_policy_mapping': 1},
-            'expected_text': '* InhibitAnyPolicy: 1',
+            'expected_text': '* InhibitPolicyMapping: 1',
             'extension_type': x509.PolicyConstraints(require_explicit_policy=None, inhibit_policy_mapping=1),
         },
         'iap_none': {
@@ -2152,7 +2152,7 @@ class PolicyConstraintsTestCase(ExtensionTestMixin, TestCase):
             'expected': {'inhibit_policy_mapping': 2, 'require_explicit_policy': 3},
             'expected_repr': 'inhibit_policy_mapping=2, require_explicit_policy=3',
             'expected_serialized': {'inhibit_policy_mapping': 2, 'require_explicit_policy': 3},
-            'expected_text': '* InhibitAnyPolicy: 2\n* RequireAnyPolicy: 3',
+            'expected_text': '* InhibitPolicyMapping: 2\n* RequireExplicitPolicy: 3',
             'extension_type': x509.PolicyConstraints(require_explicit_policy=3, inhibit_policy_mapping=2),
         },
     }

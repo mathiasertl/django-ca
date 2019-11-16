@@ -1714,9 +1714,9 @@ class PolicyConstraints(Extension):
     def as_text(self):
         lines = []
         if self.value['inhibit_policy_mapping'] is not None:
-            lines.append('* InhibitAnyPolicy: %s' % self.value['inhibit_policy_mapping'])
+            lines.append('* InhibitPolicyMapping: %s' % self.value['inhibit_policy_mapping'])
         if self.value['require_explicit_policy'] is not None:
-            lines.append('* RequireAnyPolicy: %s' % self.value['require_explicit_policy'])
+            lines.append('* RequireExplicitPolicy: %s' % self.value['require_explicit_policy'])
 
         return '\n'.join(lines)
 
