@@ -45,7 +45,7 @@ def as_hex(value):
 
     if isinstance(value, int):
         return add_colons(int_to_hex(value))
-    elif isinstance(value, bytes):
+    else:
         return bytes_to_hex(value)
 
 

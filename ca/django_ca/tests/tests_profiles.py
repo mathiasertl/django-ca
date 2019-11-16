@@ -354,6 +354,27 @@ class ProfileTestCase(DjangoCATestCase):
         ])
 
     @override_tmpcadir()
+    def test_extensions_dict(self):
+        ca = self.load_ca(name='root', x509=certs['root']['pub']['parsed'])
+        csr = certs['child-cert']['csr']['parsed']
+        subject = Subject({'CN': 'example.com'})
+        ski = SubjectKeyIdentifier({'value': b'333333'})
+
+        profile = Profile('example', subject=Subject())
+        with self.assertSignal(pre_issue_cert) as pre:
+            cert = self.create_cert(profile, ca, csr, subject=subject, add_crl_url=False, add_ocsp_url=False,
+                                    add_issuer_url=False, add_issuer_alternative_name=False,
+                                    extensions={ski.key: ski})
+        self.assertEqual(pre.call_count, 1)
+        self.assertEqual(cert.subject, subject)
+        self.assertEqual(cert.extensions, [
+            ca.get_authority_key_identifier_extension(),
+            BasicConstraints({'value': {'ca': False}}),
+            SubjectAlternativeName({'value': ['DNS:example.com']}),
+            ski,
+        ])
+
+    @override_tmpcadir()
     def test_no_cn_no_san(self):
         ca = self.load_ca(name='root', x509=certs['root']['pub']['parsed'])
         csr = certs['child-cert']['csr']['parsed']

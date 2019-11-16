@@ -17,7 +17,6 @@ from __future__ import unicode_literals
 
 import os
 import re
-import unittest
 from datetime import datetime
 from datetime import timedelta
 
@@ -31,19 +30,9 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from ..constants import ReasonFlags
-from ..extensions import AuthorityInformationAccess
-from ..extensions import AuthorityKeyIdentifier
-from ..extensions import BasicConstraints
-from ..extensions import ExtendedKeyUsage
-from ..extensions import IssuerAlternativeName
-from ..extensions import KeyUsage
-from ..extensions import NameConstraints
-from ..extensions import OCSPNoCheck
+from ..extensions import KEY_TO_EXTENSION
 from ..extensions import PrecertificateSignedCertificateTimestamps
-from ..extensions import PrecertPoison
 from ..extensions import SubjectAlternativeName
-from ..extensions import SubjectKeyIdentifier
-from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import Watcher
 from ..subject import Subject
@@ -295,15 +284,14 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
 
 
 class CertificateTests(DjangoCAWithCertTestCase):
-    def assertExtension(self, name, expected):
-        for name, cert in list(self.cas.items()) + list(self.certs.items()):
-            value = getattr(cert, name)
-            exp = expected.get(cert)
+    def assertExtension(self, cert, name, key, cls):
+        ext = getattr(cert, key)
 
-            if exp is None:
-                self.assertIsNone(value, cert)
-            else:
-                self.assertEqual(value, exp, cert)
+        if ext is None:
+            self.assertNotIn(key, certs[name])
+        else:
+            self.assertIsInstance(ext, cls)
+            self.assertEqual(ext, certs[name].get(key))
 
     def test_dates(self):
         for name, ca in self.cas.items():
@@ -425,73 +413,6 @@ class CertificateTests(DjangoCAWithCertTestCase):
         }):
             cert.full_clean()
 
-    def test_basic_constraints(self):
-        for name, ca in self.cas.items():
-            self.assertEqual(ca.basic_constraints, certs[name]['basic_constraints'])
-            self.assertTrue(ca.basic_constraints.ca)
-            self.assertEqual(ca.basic_constraints.pathlen, certs[name]['pathlen'])
-
-        for name, cert in self.certs.items():
-            bc = cert.basic_constraints
-            self.assertEqual(bc, certs[name].get('basic_constraints'))
-
-            if bc is not None:
-                self.assertFalse(cert.basic_constraints.ca)
-                self.assertIsNone(cert.basic_constraints.pathlen)
-
-        # Make sure that some certs actually do have a value for this extension
-        self.assertIsInstance(self.certs['all-extensions'].basic_constraints, BasicConstraints)
-        self.assertFalse(self.certs['all-extensions'].basic_constraints.ca)
-        self.assertIsNone(self.certs['no-extensions'].basic_constraints)
-
-    def test_issuer_alternative_name(self):
-        for name, ca in self.cas.items():
-            self.assertIsNone(ca.issuer_alternative_name)
-
-        for name, cert in self.certs.items():
-            self.assertEqual(cert.issuer_alternative_name, certs[name].get('issuer_alternative_name'))
-
-        # Make sure that some certs actually do have a value for this extension
-        self.assertIsInstance(self.certs['all-extensions'].issuer_alternative_name, IssuerAlternativeName)
-        self.assertIsNone(self.cas['child'].issuer_alternative_name)
-        self.assertIsNone(self.certs['no-extensions'].issuer_alternative_name)
-
-    def test_key_usage(self):
-        for name, ca in self.cas.items():
-            self.assertEqual(ca.key_usage, certs[name].get('key_usage'))
-
-        for name, cert in self.certs.items():
-            self.assertEqual(cert.key_usage, certs[name].get('key_usage'))
-
-        # Make sure that some certs actually do have a value for this extension
-        self.assertIsInstance(self.certs['all-extensions'].key_usage, KeyUsage)
-        self.assertIsInstance(self.cas['child'].key_usage, KeyUsage)
-        self.assertIsNone(self.certs['no-extensions'].key_usage, KeyUsage)
-
-    def test_extended_key_usage(self):
-        for name, ca in self.cas.items():
-            self.assertEqual(ca.extended_key_usage, certs[name].get('extended_key_usage'))
-
-        for name, cert in self.certs.items():
-            self.assertEqual(cert.extended_key_usage, certs[name].get('extended_key_usage'))
-
-        # Make sure that some certs actually do have a value for this extension
-        self.assertIsInstance(self.certs['all-extensions'].extended_key_usage, ExtendedKeyUsage)
-        self.assertIsInstance(self.cas['trustid_server_a52'].extended_key_usage, ExtendedKeyUsage)
-        self.assertIsNone(self.cas['child'].extended_key_usage)
-        self.assertIsNone(self.certs['no-extensions'].extended_key_usage)
-
-    def test_crl_distribution_points(self):
-        for name, ca in self.cas.items():
-            expected = certs[name].get('crl_distribution_points')
-            crl = ca.crl_distribution_points
-            self.assertEqual(crl, expected)
-
-        for name, cert in self.certs.items():
-            expected = certs[name].get('crl_distribution_points')
-            crl = cert.crl_distribution_points
-            self.assertEqual(crl, expected)
-
     def test_digest(self):
         for name, ca in self.cas.items():
             self.assertEqual(ca.get_digest('md5'), certs[name]['md5'])
@@ -504,48 +425,6 @@ class CertificateTests(DjangoCAWithCertTestCase):
             self.assertEqual(cert.get_digest('sha1'), certs[name]['sha1'])
             self.assertEqual(cert.get_digest('sha256'), certs[name]['sha256'])
             self.assertEqual(cert.get_digest('sha512'), certs[name]['sha512'])
-
-    def test_authority_information_access(self):
-        for name, ca in self.cas.items():
-            self.assertEqual(ca.authority_information_access,
-                             certs[name].get('authority_information_access'))
-
-        for name, cert in self.certs.items():
-            self.assertEqual(cert.authority_information_access,
-                             certs[name].get('authority_information_access'))
-
-        # Make sure that some certs actually do have a value for this extension
-        self.assertIsInstance(self.certs['ecc-cert'].authority_information_access,
-                              AuthorityInformationAccess)
-        self.assertIsInstance(self.certs['all-extensions'].authority_information_access,
-                              AuthorityInformationAccess)
-        self.assertIsNone(self.certs['no-extensions'].authority_information_access)
-        self.assertIsNone(self.cas['identrust_root_1'].authority_information_access)
-
-    def test_authority_key_identifier(self):
-        for name, ca in self.cas.items():
-            self.assertEqual(ca.authority_key_identifier, certs[name].get('authority_key_identifier'))
-
-        for name, cert in self.certs.items():
-            self.assertEqual(cert.authority_key_identifier, certs[name].get('authority_key_identifier'))
-
-        # Make sure that some certs actually do have a value for this extension
-        self.assertIsInstance(self.certs['ecc-cert'].authority_key_identifier, AuthorityKeyIdentifier)
-        self.assertIsInstance(self.certs['all-extensions'].authority_key_identifier, AuthorityKeyIdentifier)
-        self.assertIsNone(self.certs['no-extensions'].authority_key_identifier)
-        self.assertIsNone(self.cas['identrust_root_1'].authority_key_identifier)
-
-    def test_subject_key_identifier(self):
-        for name, ca in self.cas.items():
-            self.assertEqual(ca.subject_key_identifier, certs[name].get('subject_key_identifier'))
-
-        for name, cert in self.certs.items():
-            self.assertEqual(cert.subject_key_identifier, certs[name].get('subject_key_identifier'))
-
-        # Make sure that some certs actually do have a value for this extension
-        self.assertIsInstance(self.certs['ecc-cert'].subject_key_identifier, SubjectKeyIdentifier)
-        self.assertIsInstance(self.certs['all-extensions'].subject_key_identifier, SubjectKeyIdentifier)
-        self.assertIsNone(self.certs['no-extensions'].subject_key_identifier)
 
     def test_hpkp_pin(self):
         # get hpkp pins using
@@ -583,47 +462,27 @@ class CertificateTests(DjangoCAWithCertTestCase):
     ###############################################
     # Test extensions for all loaded certificates #
     ###############################################
-    def test_name_constraints(self):
-        for name, ca in self.cas.items():
-            self.assertEqual(ca.name_constraints, certs[name].get('name_constraints'))
+    def test_extensions(self):
+        for key, cls in KEY_TO_EXTENSION.items():
+            if key == PrecertificateSignedCertificateTimestamps.key:
+                # These extensions are never equal:
+                # Since we cannot instantiate this extension, the value is stored internally as cryptography
+                # object if it comes from the extension (or there would be no way back), but as serialized
+                # data if instantiated from dict (b/c we cannot create the cryptography objects).
+                continue
 
-        for name, cert in self.certs.items():
-            self.assertEqual(cert.name_constraints, certs[name].get('name_constraints'))
+            for name, ca in self.cas.items():
+                self.assertExtension(ca, name, key, cls)
 
-        # Make sure that some certs actually do have a value for this extension
-        self.assertIsInstance(self.cas['letsencrypt_x1'].name_constraints, NameConstraints)
-        self.assertIsInstance(self.certs['all-extensions'].name_constraints, NameConstraints)
-        self.assertIsNone(self.certs['no-extensions'].name_constraints)
+            for name, cert in self.certs.items():
+                self.assertExtension(cert, name, key, cls)
 
-    def test_ocsp_no_check(self):
-        for name, ca in self.cas.items():
-            self.assertIsNone(ca.ocsp_no_check)  # Does not make sense in CAs, so check for None
-
-        for name, cert in self.certs.items():
-            self.assertEqual(cert.ocsp_no_check, certs[name].get('ocsp_no_check'))
-
-        # Make sure that some certs actually do have a value for this extension
-        self.assertIsInstance(self.certs['all-extensions'].ocsp_no_check, OCSPNoCheck)
-
-    def test_precert_poison(self):
-        for name, cert in self.certs.items():
-            self.assertEqual(cert.precert_poison, certs[name].get('precert_poison'))
-
-        # Make sure that some certs actually do have a value for this extension
-        self.assertIsInstance(self.certs['all-extensions'].precert_poison, PrecertPoison)
-        self.assertIsInstance(self.certs['cloudflare_1'].precert_poison, PrecertPoison)
-
-    @unittest.skip('Cannot currently instantiate extensions, so no sense in testing this.')
+    #@unittest.skip('Cannot currently instantiate extensions, so no sense in testing this.')
     def test_precertificate_signed_certificate_timestamps(self):
-        self.assertExtension('precertificate_signed_certificate_timestamps', {
-            self.cert_letsencrypt_jabber_at: PrecertificateSignedCertificateTimestamps(),
-        })
-
-    def test_tls_feature(self):
-        for name, ca in self.cas.items():
-            self.assertEqual(ca.tls_feature, certs[ca.name].get('tls_feature'))
-
         for name, cert in self.certs.items():
-            self.assertEqual(cert.tls_feature, certs[name].get('tls_feature'))
+            ext = getattr(cert, PrecertificateSignedCertificateTimestamps.key)
 
-        self.assertIsInstance(self.certs['all-extensions'].tls_feature, TLSFeature)
+            if PrecertificateSignedCertificateTimestamps.key in certs[name]:
+                self.assertIsInstance(ext, PrecertificateSignedCertificateTimestamps)
+            else:
+                self.assertIsNone(ext)
