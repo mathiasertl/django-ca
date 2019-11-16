@@ -1100,7 +1100,8 @@ class AuthorityKeyIdentifier(Extension):
         if self.value['key_identifier'] is not None:
             values.append('* KeyID: %s' % bytes_to_hex(self.value['key_identifier']))
         if self.value['authority_cert_issuer'] is not None:
-            values.append('* Issuer: %r' % list(self.value['authority_cert_issuer'].serialize()))
+            values.append('* Issuer:')
+            values += [textwrap.indent(v, '  * ') for v in self.value['authority_cert_issuer'].serialize()]
         if self.value['authority_cert_serial_number'] is not None:
             values.append('* Serial: %s' % self.value['authority_cert_serial_number'])
 
