@@ -11,7 +11,7 @@ Another easy way of running **django-ca** is as a :doc:`Docker container
 Requirements
 ____________
 
-* Python 2.7 or Python 3.5+
+* Python 3.5+
 * Django 1.11, 2.1 or later
 * Any database supported by Django (sqlite3/MySQL/PostgreSQL/...)
 * Python, OpenSSL and libffi development headers
