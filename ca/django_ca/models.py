@@ -66,6 +66,7 @@ from .extensions import SubjectAlternativeName
 from .extensions import SubjectKeyIdentifier
 from .extensions import TLSFeature
 from .extensions import UnrecognizedExtension
+from .extensions import get_extension_name
 from .managers import CertificateAuthorityManager
 from .managers import CertificateManager
 from .querysets import CertificateAuthorityQuerySet
@@ -77,7 +78,6 @@ from .utils import add_colons
 from .utils import ca_storage
 from .utils import format_name
 from .utils import generate_private_key
-from .utils import get_extension_name
 from .utils import int_to_hex
 from .utils import multiline_url_validator
 from .utils import parse_encoding
@@ -330,9 +330,7 @@ class X509CertMixin(models.Model):
 
     @cached_property
     def _sorted_extensions(self):
-        return list(sorted(
-            self._x509_extensions.values(), key=lambda e: (get_extension_name(e), e.oid.dotted_string)
-        ))
+        return list(sorted(self._x509_extensions.values(), key=lambda e: get_extension_name(e)))
 
     @cached_property
     def extension_fields(self):

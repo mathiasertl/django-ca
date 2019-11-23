@@ -14,6 +14,7 @@
 from __future__ import unicode_literals
 
 import binascii
+import re
 import textwrap
 
 from cryptography import x509
@@ -2185,3 +2186,10 @@ KEY_TO_EXTENSION = {
 }
 
 OID_TO_EXTENSION = {e.oid: e for e in KEY_TO_EXTENSION.values()}
+
+
+def get_extension_name(ext):
+    if ext.oid in OID_TO_EXTENSION:
+        return OID_TO_EXTENSION[ext.oid].name
+
+    return re.sub('^([a-z])', lambda x: x.groups()[0].upper(), ext.oid._name)

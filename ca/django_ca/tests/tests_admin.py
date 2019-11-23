@@ -39,6 +39,7 @@ from freezegun import freeze_time
 from selenium.webdriver.support.select import Select
 
 from .. import ca_settings
+from .. import extensions
 from .. import models
 from ..constants import ReasonFlags
 from ..extensions import BasicConstraints
@@ -313,8 +314,11 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
     def test_unsupported_extensions(self):
         cert = self.certs['all-extensions']
+        self.maxDiff = None
         # Act as if no extensions is recognized, to see what happens if we'd encounter an unknown extension.
-        with mock.patch.object(models, 'OID_TO_EXTENSION', {}), self.assertLogs() as logs:
+        with mock.patch.object(models, 'OID_TO_EXTENSION', {}), \
+                mock.patch.object(extensions, 'OID_TO_EXTENSION', {}), \
+                self.assertLogs() as logs:
             response = self.client.get(self.change_url(cert.pk))
             self.assertChangeResponse(response)
 
@@ -324,6 +328,7 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
             log_msg % 'AuthorityKeyIdentifier (2.5.29.35)',
             log_msg % 'BasicConstraints (2.5.29.19)',
             log_msg % 'CRLDistributionPoints (2.5.29.31)',
+            log_msg % 'CtPoison (1.3.6.1.4.1.11129.2.4.3)',
             log_msg % 'ExtendedKeyUsage (2.5.29.37)',
             log_msg % 'FreshestCRL (2.5.29.46)',
             log_msg % 'InhibitAnyPolicy (2.5.29.54)',
@@ -332,7 +337,6 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
             log_msg % 'NameConstraints (2.5.29.30)',
             log_msg % 'OCSPNoCheck (1.3.6.1.5.5.7.48.1.5)',
             log_msg % 'PolicyConstraints (2.5.29.36)',
-            log_msg % 'PrecertPoison (1.3.6.1.4.1.11129.2.4.3)',
             log_msg % 'SubjectAltName (2.5.29.17)',
             log_msg % 'SubjectKeyIdentifier (2.5.29.14)',
             log_msg % 'TLSFeature (1.3.6.1.5.5.7.1.24)',

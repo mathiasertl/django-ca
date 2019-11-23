@@ -831,16 +831,6 @@ def read_file(path):
         stream.close()
 
 
-def get_extension_name(ext):
-    """Function to get the name of an extension."""
-
-    if ext.oid == ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS:  # pragma: no SCT
-        return 'PrecertificateSignedCertificateTimestamps'
-
-    # uppercase the FIRST letter only ("keyUsage" -> "KeyUsage")
-    return re.sub('^([a-z])', lambda x: x.groups()[0].upper(), ext.oid._name)
-
-
 # Note used currently, but left here for future reference
 #def write_private_file(path, data):
 #    """Function to write binary data to a file that will only be readable to the user."""
