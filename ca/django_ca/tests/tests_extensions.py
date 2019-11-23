@@ -2465,10 +2465,6 @@ class PrecertPoisonTestCase(NullExtensionTestMixin, TestCase):
         },
     }
 
-    @unittest.skipIf(settings.SKIP_PRECERT_POISON, "PrecertPoison not supported with cryptography<2.7")
-    def test_as_extension(self):
-        super(PrecertPoisonTestCase, self).test_as_extension()
-
     def test_eq(self):
         for values in self.test_values.values():
             ext = self.ext(values['expected'])
@@ -2481,14 +2477,6 @@ class PrecertPoisonTestCase(NullExtensionTestMixin, TestCase):
                 self.assertEqual(ext, ext_1)
                 ext_2 = self.ext(value, critical=True)
                 self.assertEqual(ext_critical, ext_2)
-
-    @unittest.skipIf(settings.SKIP_PRECERT_POISON, "PrecertPoison not supported with cryptography<2.7")
-    def test_extension_type(self):
-        super(PrecertPoisonTestCase, self).test_extension_type()
-
-    @unittest.skipIf(settings.SKIP_PRECERT_POISON, "PrecertPoison not supported with cryptography<2.7")
-    def test_for_builder(self):
-        super(PrecertPoisonTestCase, self).test_for_builder()
 
     def test_hash(self):
         for config in self.test_values.values():
