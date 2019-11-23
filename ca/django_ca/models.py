@@ -330,7 +330,10 @@ class X509CertMixin(models.Model):
 
     @cached_property
     def _sorted_extensions(self):
-        return list(sorted(self._x509_extensions.values(), key=lambda e: get_extension_name(e)))
+        # NOTE: We need the dotted_string in the sort key if we have multiple unknown extensions, which then
+        #       show up as "Unknown OID" and have to be sorted by oid
+        return list(sorted(self._x509_extensions.values(),
+                           key=lambda e: (get_extension_name(e), e.oid.dotted_string)))
 
     @cached_property
     def extension_fields(self):
