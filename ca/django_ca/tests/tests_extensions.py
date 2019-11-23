@@ -2448,18 +2448,6 @@ class OCSPNoCheckTestCase(NullExtensionTestMixin, TestCase):
         },
     }
 
-    @unittest.skipIf(settings.SKIP_OCSP_NOCHECK, "OCSPNoCheck not supported with cryptography<2.7")
-    def test_as_extension(self):
-        super(OCSPNoCheckTestCase, self).test_as_extension()
-
-    @unittest.skipIf(settings.SKIP_OCSP_NOCHECK, "OCSPNoCheck not supported with cryptography<2.7")
-    def test_extension_type(self):
-        super(OCSPNoCheckTestCase, self).test_extension_type()
-
-    @unittest.skipIf(settings.SKIP_OCSP_NOCHECK, "OCSPNoCheck not supported with cryptography<2.7")
-    def test_for_builder(self):
-        super(OCSPNoCheckTestCase, self).test_for_builder()
-
 
 class PrecertPoisonTestCase(NullExtensionTestMixin, TestCase):
     ext_class = PrecertPoison

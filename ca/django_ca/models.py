@@ -45,7 +45,6 @@ from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
-from . import ca_settings
 from .constants import ReasonFlags
 from .extensions import OID_TO_EXTENSION
 from .extensions import AuthorityInformationAccess
@@ -597,10 +596,7 @@ class CertificateAuthority(X509CertMixin):
         except x509.ExtensionNotFound:
             return x509.AuthorityKeyIdentifier.from_issuer_public_key(self.x509.public_key())
         else:
-            if ca_settings.CRYPTOGRAPHY_AKI_REQUIRES_EXTENSION:  # pragma: only cryptography<2.7
-                return x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski)
-            else:  # pragma: only cryptography>=2.7
-                return x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski.value)
+            return x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski.value)
 
     def get_authority_key_identifier_extension(self):
         return AuthorityKeyIdentifier(x509.Extension(

@@ -245,10 +245,6 @@ SKIP_PRECERT_POISON = not (
     hasattr(x509, 'PrecertPoison') and x509.PrecertPoison() == x509.PrecertPoison()
 )  # pragma: only cryptography<2.7
 
-# OCSPNoCheck does not compare as equal until cryptography 2.7:
-#   https://github.com/pyca/cryptography/issues/4818
-SKIP_OCSP_NOCHECK = x509.OCSPNoCheck() != x509.OCSPNoCheck()  # pragma: only cryptography<2.7
-
 # For Selenium test cases
 SKIP_SELENIUM_TESTS = os.environ.get(
     'SKIP_SELENIUM_TESTS',
