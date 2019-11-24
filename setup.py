@@ -78,7 +78,7 @@ setup(
     zip_safe=False,  # because of the static files
     install_requires=install_requires,
     extras_require={
-        'redis': ['hiredis>=1.0', 'redis>=3.2'],
+        'redis': ['hiredis>=1.0', 'redis>=3.2', 'django-redis-cache>=1.8.0'],
         'celery': ['celery>=4'],
     },
     classifiers=[
