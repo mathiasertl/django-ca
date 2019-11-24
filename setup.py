@@ -14,7 +14,6 @@
 # see <http://www.gnu.org/licenses/>.
 
 import os
-import sys
 
 from setuptools import setup
 
@@ -35,8 +34,6 @@ Features:
 Please see https://django-ca.readthedocs.org for more extensive documentation.
 """
 
-PY2 = sys.version_info[0] == 2
-PY3 = sys.version_info[0] == 3
 _rootdir = os.path.dirname(os.path.realpath(__file__))
 
 install_requires = [
@@ -47,9 +44,6 @@ install_requires = [
     'idna>=2.8',
     'packaging',
 ]
-
-if PY2:
-    install_requires.append('ipaddress>=1.0.18')
 
 
 def find_package_data(dir):

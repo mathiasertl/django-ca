@@ -2189,6 +2189,8 @@ OID_TO_EXTENSION = {e.oid: e for e in KEY_TO_EXTENSION.values()}
 
 
 def get_extension_name(ext):
+    """Function to get the name of an extension."""
+
     if ext.oid in OID_TO_EXTENSION:
         return OID_TO_EXTENSION[ext.oid].name
 
