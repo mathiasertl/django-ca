@@ -6,7 +6,7 @@ pip>=19.3
 
 # >=24.2.0: python_requires argument to setuptools.setup()
 #           https://packaging.python.org/guides/distributing-packages-using-setuptools/#python-requires
-setuptols>=24.2.0
+setuptools>=24.2.0
 
 sphinx-autobuild==0.7.1
 tabulate==0.8.5

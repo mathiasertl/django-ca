@@ -1,5 +1,5 @@
-Django>=2.1 ; python_version >= '3.5'
+Django>=1.11
 asn1crypto>=1.0.1
-cryptography>=2.5
+cryptography>=2.7
 idna>=2.8
 packaging

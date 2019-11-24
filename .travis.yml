@@ -7,12 +7,12 @@ python:  # https://devguide.python.org/#status-of-python-branches
   - "3.8"
   - "nightly"
 env:  # https://www.djangoproject.com/download/
-  - DJANGO=2.2.6 CRYPTOGRAPHY=2.8
-  - DJANGO=2.2.6 CRYPTOGRAPHY=2.7
-  - DJANGO=2.1.13 CRYPTOGRAPHY=2.8
-  - DJANGO=2.1.13 CRYPTOGRAPHY=2.7
-  - DJANGO=1.11.25 CRYPTOGRAPHY=2.8
-  - DJANGO=1.11.25 CRYPTOGRAPHY=2.7
+  - DJANGO=2.2.7 CRYPTOGRAPHY=2.8
+  - DJANGO=2.2.7 CRYPTOGRAPHY=2.7
+  - DJANGO=2.1.14 CRYPTOGRAPHY=2.8
+  - DJANGO=2.1.14 CRYPTOGRAPHY=2.7
+  - DJANGO=1.11.26 CRYPTOGRAPHY=2.8
+  - DJANGO=1.11.26 CRYPTOGRAPHY=2.7
 install:
   # Build/test dependencies
  - pip install -U pip setuptools
@@ -36,7 +36,7 @@ matrix:
     exclude:
 
         # We do not test Django 1.11 with Python nightly
-        - env: DJANGO=1.11.25 CRYPTOGRAPHY=2.8
+        - env: DJANGO=1.11.26 CRYPTOGRAPHY=2.8
           python: "nightly"
-        - env: DJANGO=1.11.25 CRYPTOGRAPHY=2.7
+        - env: DJANGO=1.11.26 CRYPTOGRAPHY=2.7
           python: "nightly"
