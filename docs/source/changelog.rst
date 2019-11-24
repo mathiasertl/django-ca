@@ -10,7 +10,10 @@ ChangeLog
 1.15.0 (TBR)
 ************
 
-* Drop dependency ``six``.
+* Drop dependency ``six`` (since we no longer support Python 2.7).
+* There now are `setuptools extras
+  <https://packaging.python.org/tutorials/installing-packages/#installing-setuptools-extras>`_ for ``redis``
+  and ``celery``, so you can install all required dependencies at once.
 * Consistently style serials in a monospace font in admin interface.
 * :py:class:`~django_ca.extensions.AuthorityKeyIdentifier` now also supports issuers and serials.
 * :py:func:`~django_ca.utils.parse_general_name` now returns a :py:class:`~cg:cryptography.x509.GeneralName`

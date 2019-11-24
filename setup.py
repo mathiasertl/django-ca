@@ -77,6 +77,10 @@ setup(
     python_requires='>=3.5',
     zip_safe=False,  # because of the static files
     install_requires=install_requires,
+    extras_require={
+        'redis': ['hiredis>=1.0', 'redis>=3.2'],
+        'celery': ['celery>=4'],
+    },
     classifiers=[
         'Development Status :: 4 - Beta',
         'Framework :: Django :: 1.11',
