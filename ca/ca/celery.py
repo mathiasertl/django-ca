@@ -11,8 +11,13 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-# This will make sure the app is always imported when
-# Django starts so that shared_task will use this app.
-from .celery import app as celery_app
+import os
 
-__all__ = ('celery_app',)
+from celery import Celery
+
+# set the default Django settings module for the 'celery' program.
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ca.settings')
+
+app = Celery('ca')
+app.config_from_object('django.conf:settings', namespace='CELERY')
+app.autodiscover_tasks()
