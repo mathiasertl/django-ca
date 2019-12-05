@@ -14,6 +14,6 @@
 from celery import shared_task
 
 
-@shared_task
+@shared_task  # pragma: no cover
 def test():
     print('test!')
