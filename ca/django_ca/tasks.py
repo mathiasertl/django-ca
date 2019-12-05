@@ -11,7 +11,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from celery import shared_task
+from celery import shared_task  # pragma: no cover
 
 
 @shared_task  # pragma: no cover
