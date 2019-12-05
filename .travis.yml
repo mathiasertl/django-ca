@@ -7,10 +7,10 @@ python:  # https://devguide.python.org/#status-of-python-branches
   - "3.8"
   - "nightly"
 env:  # https://www.djangoproject.com/download/
-  - DJANGO=2.2.7 CRYPTOGRAPHY=2.8
-  - DJANGO=2.2.7 CRYPTOGRAPHY=2.7
-  - DJANGO=2.1.14 CRYPTOGRAPHY=2.8
-  - DJANGO=2.1.14 CRYPTOGRAPHY=2.7
+  - DJANGO=2.2.8 CRYPTOGRAPHY=2.8
+  - DJANGO=2.2.8 CRYPTOGRAPHY=2.7
+  - DJANGO=2.1.15 CRYPTOGRAPHY=2.8
+  - DJANGO=2.1.15 CRYPTOGRAPHY=2.7
   - DJANGO=1.11.26 CRYPTOGRAPHY=2.8
   - DJANGO=1.11.26 CRYPTOGRAPHY=2.7
 install:
