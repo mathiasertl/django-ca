@@ -1,1 +1,2 @@
+Celery>=4.1
 django-object-actions==2.0.0
