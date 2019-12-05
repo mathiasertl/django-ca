@@ -10,6 +10,7 @@ ChangeLog
 1.15.0 (TBR)
 ************
 
+* Add support for Django 3.0.
 * Drop dependency ``six`` (since we no longer support Python 2.7).
 * There now are `setuptools extras
   <https://packaging.python.org/tutorials/installing-packages/#installing-setuptools-extras>`_ for ``redis``
