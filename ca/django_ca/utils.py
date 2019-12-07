@@ -942,4 +942,8 @@ class GeneralNameList(list):
         list.remove(self, parse_general_name(value))
 
 
+def get_crl_cache_key(serial, algorithm=hashes.SHA512, encoding=Encoding.DER, scope=None):
+    return 'crl_%s_%s_%s_%s' % (serial, algorithm.name, encoding.name, scope)
+
+
 ca_storage = get_storage_class(ca_settings.CA_FILE_STORAGE)(**ca_settings.CA_FILE_STORAGE_KWARGS)

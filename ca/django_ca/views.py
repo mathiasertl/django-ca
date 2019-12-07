@@ -40,6 +40,7 @@ from . import ca_settings
 from .models import Certificate
 from .models import CertificateAuthority
 from .utils import SERIAL_RE
+from .utils import get_crl_cache_key
 from .utils import int_to_hex
 from .utils import read_file
 
@@ -76,9 +77,7 @@ class CertificateRevocationListView(View, SingleObjectMixin):
     """Value of the Content-Type header used in the response. For CRLs in PEM format, use ``text/plain``."""
 
     def get(self, request, serial):
-        cache_key = 'crl_%s_%s_%s' % (serial, self.type, self.digest.name)
-        if self.scope is not None:
-            cache_key = '%s_%s' % (cache_key, self.scope)
+        cache_key = get_crl_cache_key(serial, algorithm=self.digest, encoding=self.type, scope=self.scope)
 
         crl = cache.get(cache_key)
         if crl is None:
