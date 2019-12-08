@@ -21,6 +21,7 @@ from datetime import datetime
 from datetime import timedelta
 
 from cryptography import x509
+from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -135,22 +136,22 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         full_name = 'http://localhost/crl'
         idp = self.get_idp(full_name=[x509.UniformResourceIdentifier(value=full_name)])
 
-        crl = ca.get_crl(full_name=[full_name])
+        crl = ca.get_crl(full_name=[full_name]).public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=ca)
 
         ca.crl_url = full_name
         ca.save()
-        crl = ca.get_crl()
+        crl = ca.get_crl().public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, crl_number=1, signer=ca)
 
         # revoke a cert
         cert.revoke()
-        crl = ca.get_crl()
+        crl = ca.get_crl().public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, certs=[cert], crl_number=2, signer=ca)
 
         # also revoke a CA
         child.revoke()
-        crl = ca.get_crl()
+        crl = ca.get_crl().public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, certs=[cert, child], crl_number=3, signer=ca)
 
         # unrevoke cert (so we have all three combinations)
@@ -159,7 +160,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         cert.revoked_reason = None
         cert.save()
 
-        crl = ca.get_crl()
+        crl = ca.get_crl().public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, certs=[child], crl_number=4, signer=ca)
 
     @override_settings(USE_TZ=True)
@@ -181,7 +182,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         ca = self.cas['root']
         idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_ca_certs=True)
 
-        crl = ca.get_crl(scope='ca')
+        crl = ca.get_crl(scope='ca').public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=ca)
 
         # revoke ca and cert, CRL only contains CA
@@ -190,7 +191,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         self.cas['ecc'].revoke()
         self.certs['root-cert'].revoke()
         self.certs['child-cert'].revoke()
-        crl = ca.get_crl(scope='ca')
+        crl = ca.get_crl(scope='ca').public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, certs=[child_ca], crl_number=1, signer=ca)
 
     @freeze_time('2019-04-14 12:26:00')
@@ -199,7 +200,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         ca = self.cas['root']
         idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_user_certs=True)
 
-        crl = ca.get_crl(scope='user')
+        crl = ca.get_crl(scope='user').public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=ca)
 
         # revoke ca and cert, CRL only contains cert
@@ -207,7 +208,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         cert.revoke()
         self.certs['child-cert'].revoke()
         self.cas['child'].revoke()
-        crl = ca.get_crl(scope='user')
+        crl = ca.get_crl(scope='user').public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, certs=[cert], crl_number=1, signer=ca)
 
     @freeze_time('2019-04-14 12:26:00')
@@ -216,14 +217,14 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         ca = self.cas['root']
         idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_attribute_certs=True)
 
-        crl = ca.get_crl(scope='attribute')
+        crl = ca.get_crl(scope='attribute').public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=ca)
 
         # revoke ca and cert, CRL is empty (we don't know attribute certs)
         self.certs['root-cert'].revoke()
         self.certs['child-cert'].revoke()
         self.cas['child'].revoke()
-        crl = ca.get_crl(scope='attribute')
+        crl = ca.get_crl(scope='attribute').public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, crl_number=1, signer=ca)
 
     @override_tmpcadir()
@@ -233,7 +234,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         ca = self.cas['child']
         ca.crl_url = None
         ca.save()
-        crl = ca.get_crl()
+        crl = ca.get_crl().public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=None)
 
     @override_tmpcadir()
@@ -242,12 +243,12 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         self.maxDiff = None
         ca = self.cas['child']
         idp = self.get_idp(full_name=self.get_idp_full_name(ca))
-        crl = ca.get_crl(counter='test')
+        crl = ca.get_crl(counter='test').public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, crl_number=0)
-        crl = ca.get_crl(counter='test')
+        crl = ca.get_crl(counter='test').public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, crl_number=1)
 
-        crl = ca.get_crl()  # test with no counter
+        crl = ca.get_crl().public_bytes(Encoding.PEM)  # test with no counter
         self.assertCRL(crl, idp=idp, crl_number=0)
 
     @override_tmpcadir()
@@ -263,7 +264,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
 
         with mock.patch('cryptography.x509.extensions.Extensions.get_extension_for_oid',
                         side_effect=side_effect):
-            crl = ca.get_crl(full_name=[full_name])
+            crl = ca.get_crl(full_name=[full_name]).public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=ca, skip_authority_key_identifier=True)
 
     def test_validate_json(self):
@@ -280,7 +281,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
     def test_crl_invalid_scope(self):
         ca = self.cas['child']
         with self.assertRaisesRegex(ValueError, r'^Scope must be either None, "ca", "user" or "attribute"$'):
-            ca.get_crl(scope='foobar')
+            ca.get_crl(scope='foobar').public_bytes(Encoding.PEM)
 
 
 class CertificateTests(DjangoCAWithCertTestCase):

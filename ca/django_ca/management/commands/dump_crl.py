@@ -44,7 +44,6 @@ class Command(BaseCommand):
             options['scope'] = 'ca'
 
         kwargs = {
-            'encoding': options['format'],
             'expires': options['expires'],
             'algorithm': options['algorithm'],
             'password': options['password'],
@@ -56,7 +55,7 @@ class Command(BaseCommand):
         self.test_private_key(ca, options['password'])
 
         try:
-            crl = ca.get_crl(**kwargs)
+            crl = ca.get_crl(**kwargs).public_bytes(options['format'])
         except Exception as e:  # pragma: no cover
             # Note: all parameters are already sanitized by parser actions
             raise CommandError(str(e))

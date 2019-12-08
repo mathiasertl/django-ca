@@ -80,7 +80,6 @@ from .utils import format_name
 from .utils import generate_private_key
 from .utils import int_to_hex
 from .utils import multiline_url_validator
-from .utils import parse_encoding
 from .utils import parse_general_name
 from .utils import parse_hash_algorithm
 from .utils import read_file
@@ -606,8 +605,7 @@ class CertificateAuthority(X509CertMixin):
             value=self.get_authority_key_identifier()
         ))
 
-    def get_crl(self, expires=86400, encoding=None, algorithm=None, password=None, scope=None, counter=None,
-                **kwargs):
+    def get_crl(self, expires=86400, algorithm=None, password=None, scope=None, counter=None, **kwargs):
         """Generate a Certificate Revocation List (CRL).
 
         The ``full_name`` and ``relative_name`` parameters describe how to retrieve the CRL and are used in
@@ -620,9 +618,6 @@ class CertificateAuthority(X509CertMixin):
 
         expires : int
             The time in seconds when this CRL expires. Note that you should generate a new CRL until then.
-        encoding : :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding` or str, optional
-            The encoding format for the CRL, passed to :py:func:`~django_ca.utils.parse_encoding`. The default
-            value is ``"PEM"``.
         algorithm : :py:class:`~cg:cryptography.hazmat.primitives.hashes.Hash` or str, optional
             The hash algorithm to use, passed to :py:func:`~django_ca.utils.parse_hash_algorithm`. The default
             is to use :ref:`CA_DIGEST_ALGORITHM <settings-ca-digest-algorithm>`.
@@ -652,7 +647,6 @@ class CertificateAuthority(X509CertMixin):
 
         if scope is not None and scope not in ['ca', 'user', 'attribute']:
             raise ValueError('Scope must be either None, "ca", "user" or "attribute"')
-        encoding = parse_encoding(encoding)
 
         now = now_builder = timezone.now()
         algorithm = parse_hash_algorithm(algorithm)
@@ -732,8 +726,7 @@ class CertificateAuthority(X509CertMixin):
         self.crl_number = json.dumps(crl_number_data)
         self.save()
 
-        crl = builder.sign(private_key=self.key(password), algorithm=algorithm, backend=default_backend())
-        return crl.public_bytes(encoding)
+        return builder.sign(private_key=self.key(password), algorithm=algorithm, backend=default_backend())
 
     @property
     def pathlen(self):

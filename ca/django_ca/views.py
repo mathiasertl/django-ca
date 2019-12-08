@@ -42,6 +42,7 @@ from .models import CertificateAuthority
 from .utils import SERIAL_RE
 from .utils import get_crl_cache_key
 from .utils import int_to_hex
+from .utils import parse_encoding
 from .utils import read_file
 
 log = logging.getLogger(__name__)
@@ -82,8 +83,10 @@ class CertificateRevocationListView(View, SingleObjectMixin):
         crl = cache.get(cache_key)
         if crl is None:
             ca = self.get_object()
-            crl = ca.get_crl(encoding=self.type, expires=self.expires, algorithm=self.digest,
-                             password=self.password, scope=self.scope)
+            encoding = parse_encoding(self.type)
+            crl = ca.get_crl(expires=self.expires, algorithm=self.digest, password=self.password,
+                             scope=self.scope)
+            crl = crl.public_bytes(encoding)
             cache.set(cache_key, crl, self.expires)
 
         content_type = self.content_type
