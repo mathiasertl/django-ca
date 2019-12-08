@@ -37,7 +37,7 @@ class DjangoCAMixin(object):
 
 class CertificateAuthorityQuerySet(models.QuerySet, DjangoCAMixin):
     def disabled(self):
-        return self.filter(enabled=True)
+        return self.filter(enabled=False)
 
     def enabled(self):
         return self.filter(enabled=True)
@@ -45,6 +45,10 @@ class CertificateAuthorityQuerySet(models.QuerySet, DjangoCAMixin):
     def valid(self):
         now = timezone.now()
         return self.filter(expires__gt=now, valid_from__lt=now)
+
+    def invalid(self):
+        now = timezone.now()
+        return self.filter(expires__lt=now, valid_from__gt=now)
 
     def usable(self):
         return self.enabled().valid()
