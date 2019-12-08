@@ -17,6 +17,7 @@ import hashlib
 import itertools
 import json
 import logging
+import random
 import re
 from datetime import datetime
 from datetime import timedelta
@@ -34,6 +35,7 @@ from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db import models
@@ -45,6 +47,7 @@ from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
+from . import ca_settings
 from .constants import ReasonFlags
 from .extensions import OID_TO_EXTENSION
 from .extensions import AuthorityInformationAccess
@@ -78,8 +81,10 @@ from .utils import add_colons
 from .utils import ca_storage
 from .utils import format_name
 from .utils import generate_private_key
+from .utils import get_crl_cache_key
 from .utils import int_to_hex
 from .utils import multiline_url_validator
+from .utils import parse_encoding
 from .utils import parse_general_name
 from .utils import parse_hash_algorithm
 from .utils import read_file
@@ -532,6 +537,39 @@ class CertificateAuthority(X509CertMixin):
         else:
             return ca_storage.exists(self.private_key_path)
 
+    def cache_crls(self):
+        for name, config in ca_settings.CA_CRL_PROFILES.items():
+            overrides = config.get('OVERRIDES', {}).get(self.serial, {})
+
+            if overrides.get('skip'):
+                continue
+
+            algorithm = parse_hash_algorithm(overrides.get('algorithm', config.get('algorithm')))
+            expires = overrides.get('expires', config.get('expires', 86400))
+            password = overrides.get('password', config.get('password'))
+            scope = overrides.get('scope', config.get('scope'))
+            full_name = overrides.get('full_name', config.get('full_name'))
+            relative_name = overrides.get('relative_name', config.get('relative_name'))
+            encodings = overrides.get('encodings', config.get('encodings', ['DER', ]))
+            crl = None  # only compute crl when it is actually needed
+
+            for encoding in encodings:
+                encoding = parse_encoding(encoding)
+                cache_key = get_crl_cache_key(self.serial, algorithm, encoding, scope=scope)
+
+                if expires >= 600:  # pragma: no branch
+                    # for longer expiries we substract a random value so that regular CRL regeneration is
+                    # distributed a bit
+                    cache_expires = expires - random.randint(1, 5) * 60
+
+                if cache.get(cache_key) is None:
+                    if crl is None:
+                        crl = self.get_crl(expires=expires, algorithm=algorithm, password=password,
+                                           scope=scope, full_name=full_name, relative_name=relative_name)
+
+                    encoded_crl = crl.public_bytes(encoding)
+                    cache.set(cache_key, encoded_crl, cache_expires)
+
     def generate_ocsp_key(self, profile='ocsp', expires=3, algorithm=None, password=None,
                           key_size=None, key_type=None, ecc_curve=None):
         """Generate OCSP keys for this CA.
@@ -661,7 +699,7 @@ class CertificateAuthority(X509CertMixin):
         builder = builder.last_update(now_builder)
         builder = builder.next_update(now_builder + timedelta(seconds=expires))
 
-        if 'full_name' in kwargs:
+        if kwargs.get('full_name'):
             full_name = kwargs['full_name']
             full_name = [parse_general_name(n) for n in full_name]
         elif self.crl_url:

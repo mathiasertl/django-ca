@@ -11,7 +11,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from __future__ import unicode_literals
+import copy
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -24,9 +24,11 @@ from django.urls import reverse
 
 from freezegun import freeze_time
 
+from .. import ca_settings
 from ..views import CertificateRevocationListView
 from .base import DjangoCAWithCertTestCase
 from .base import DjangoCAWithGeneratedCAsTestCase
+from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
 
@@ -126,6 +128,29 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'text/plain')
         self.assertCRL(response.content, expires=600, idp=idp, certs=[child], crl_number=1, signer=root)
+
+    @override_tmpcadir()
+    def test_password(self):
+        ca = self.cas['pwd']
+
+        # getting CRL from view directly doesn't work
+        with self.assertRaisesRegex(TypeError, r'^Password was not given but private key is encrypted$'):
+            self.client.get(reverse('default', kwargs={'serial': ca.serial}))
+
+        profiles = copy.deepcopy(ca_settings.CA_CRL_PROFILES)
+        for name, config in profiles.items():
+            config.setdefault('OVERRIDES', {})
+            config['OVERRIDES'].setdefault(ca.serial, {})
+            config['OVERRIDES'][ca.serial]['password'] = certs['pwd']['password']
+
+        with override_settings(CA_CRL_PROFILES=profiles):
+            ca.cache_crls()  # cache CRLs for this CA
+
+        idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_user_certs=True)
+        response = self.client.get(reverse('default', kwargs={'serial': ca.serial}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pkix-crl')
+        self.assertCRL(response.content, encoding=Encoding.DER, idp=idp, signer=ca)
 
     @override_tmpcadir()
     def test_overwrite(self):

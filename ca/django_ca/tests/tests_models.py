@@ -21,8 +21,10 @@ from datetime import datetime
 from datetime import timedelta
 
 from cryptography import x509
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
@@ -37,6 +39,7 @@ from ..extensions import SubjectAlternativeName
 from ..models import Certificate
 from ..models import Watcher
 from ..subject import Subject
+from ..utils import get_crl_cache_key
 from .base import DjangoCAWithCertTestCase
 from .base import certs
 from .base import override_settings
@@ -282,6 +285,72 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         ca = self.cas['child']
         with self.assertRaisesRegex(ValueError, r'^Scope must be either None, "ca", "user" or "attribute"$'):
             ca.get_crl(scope='foobar').public_bytes(Encoding.PEM)
+
+    @override_tmpcadir()
+    def test_cache_crls(self):
+        crl_profiles = self.crl_profiles
+        for config in crl_profiles.values():
+            config['encodings'] = ['DER', 'PEM', ]
+
+        try:
+            for name, ca in self.usable_cas.items():
+                der_user_key = get_crl_cache_key(ca.serial, hashes.SHA512, Encoding.DER, 'user')
+                pem_user_key = get_crl_cache_key(ca.serial, hashes.SHA512, Encoding.PEM, 'user')
+                der_ca_key = get_crl_cache_key(ca.serial, hashes.SHA512, Encoding.DER, 'ca')
+                pem_ca_key = get_crl_cache_key(ca.serial, hashes.SHA512, Encoding.PEM, 'ca')
+
+                self.assertIsNone(cache.get(der_ca_key))
+                self.assertIsNone(cache.get(pem_ca_key))
+                self.assertIsNone(cache.get(der_user_key))
+                self.assertIsNone(cache.get(pem_user_key))
+
+                with self.settings(CA_CRL_PROFILES=crl_profiles):
+                    ca.cache_crls()
+
+                der_user_crl = cache.get(der_user_key)
+                pem_user_crl = cache.get(pem_user_key)
+                self.assertIsInstance(der_user_crl, bytes)
+                self.assertIsInstance(pem_user_crl, bytes)
+
+                der_ca_crl = cache.get(der_ca_key)
+                pem_ca_crl = cache.get(pem_ca_key)
+                self.assertIsInstance(der_ca_crl, bytes)
+                self.assertIsInstance(pem_ca_crl, bytes)
+
+                # cache again - which should not trigger a new computation
+                with self.settings(CA_CRL_PROFILES=crl_profiles):
+                    ca.cache_crls()
+
+                new_der_user_crl = cache.get(der_user_key)
+                new_pem_user_crl = cache.get(pem_user_key)
+                self.assertIsInstance(der_user_crl, bytes)
+                self.assertIsInstance(pem_user_crl, bytes)
+                self.assertEqual(new_der_user_crl, der_user_crl)
+                self.assertEqual(new_pem_user_crl, pem_user_crl)
+
+                new_der_ca_crl = cache.get(der_ca_key)
+                new_pem_ca_crl = cache.get(pem_ca_key)
+                self.assertEqual(new_der_ca_crl, der_ca_crl)
+                self.assertEqual(new_pem_ca_crl, pem_ca_crl)
+
+                # clear caches and skip generation
+                cache.clear()
+                crl_profiles['ca']['OVERRIDES'][ca.serial]['skip'] = True
+                crl_profiles['user']['OVERRIDES'][ca.serial]['skip'] = True
+
+                # set a wrong password, ensuring that any CRL generation would *never* work
+                crl_profiles['ca']['OVERRIDES'][ca.serial]['password'] = b'wrong'
+                crl_profiles['user']['OVERRIDES'][ca.serial]['password'] = b'wrong'
+
+                with self.settings(CA_CRL_PROFILES=crl_profiles):
+                    ca.cache_crls()
+
+                self.assertIsNone(cache.get(der_ca_key))
+                self.assertIsNone(cache.get(pem_ca_key))
+                self.assertIsNone(cache.get(der_user_key))
+                self.assertIsNone(cache.get(pem_user_key))
+        finally:
+            cache.clear()
 
 
 class CertificateTests(DjangoCAWithCertTestCase):

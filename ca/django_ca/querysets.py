@@ -48,7 +48,7 @@ class CertificateAuthorityQuerySet(models.QuerySet, DjangoCAMixin):
 
     def invalid(self):
         now = timezone.now()
-        return self.filter(expires__lt=now, valid_from__gt=now)
+        return self.exclude(expires__gt=now, valid_from__lt=now)
 
     def usable(self):
         return self.enabled().valid()

@@ -134,6 +134,21 @@ CA_PROFILES = {
     },
 }
 
+_CA_CRL_PROFILES = {
+    'user': {
+        'algorithm': 'SHA512',
+        'expires': 86400,
+        'scope': 'user',
+        'encodings': ['DER', ],
+    },
+    'ca': {
+        'algorithm': 'SHA512',
+        'expires': 86400,
+        'scope': 'ca',
+        'encodings': ['DER', ],
+    }
+}
+
 CA_DEFAULT_SUBJECT = getattr(settings, 'CA_DEFAULT_SUBJECT', {})
 
 # Add ability just override/add some profiles
@@ -155,6 +170,7 @@ CA_DEFAULT_ENCODING = getattr(settings, 'CA_DEFAULT_ENCODING', Encoding.PEM)
 CA_DEFAULT_EXPIRES = getattr(settings, 'CA_DEFAULT_EXPIRES', 730)
 CA_DEFAULT_PROFILE = getattr(settings, 'CA_DEFAULT_PROFILE', 'webserver')
 CA_NOTIFICATION_DAYS = getattr(settings, 'CA_NOTIFICATION_DAYS', [14, 7, 3, 1, ])
+CA_CRL_PROFILES = getattr(settings, 'CA_CRL_PROFILES', _CA_CRL_PROFILES)
 
 # Undocumented options, e.g. to share values between different parts of code
 CA_MIN_KEY_SIZE = getattr(settings, 'CA_MIN_KEY_SIZE', 2048)

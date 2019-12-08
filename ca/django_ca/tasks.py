@@ -13,7 +13,16 @@
 
 from celery import shared_task  # pragma: no cover
 
+from .models import CertificateAuthority  # pragma: no cover
+
 
 @shared_task  # pragma: no cover
-def test():
-    print('test!')
+def generate_crl(serial):
+    ca = CertificateAuthority.objects.get(serial)
+    ca.cache_crls()
+
+
+@shared_task  # pragma: no cover
+def generate_crls():
+    for serial in CertificateAuthority.objects.usable().values_list('serial', flat=True):
+        generate_crl.delay(serial)

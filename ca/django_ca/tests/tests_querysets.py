@@ -110,6 +110,43 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         with self.assertRaisesRegex(ValueError, r'^256: Key size must be least 1024 bits$'):
             CertificateAuthority.objects.init(key_size=int(key_size / 4), **kwargs)
 
+    def test_enabled_disabled(self):
+        self.load_usable_cas()
+        name = 'root'
+        self.assertCountEqual(CertificateAuthority.objects.enabled(), self.cas.values())
+        self.assertCountEqual(CertificateAuthority.objects.disabled(), [])
+
+        self.cas[name].enabled = False
+        self.cas[name].save()
+
+        self.assertCountEqual(CertificateAuthority.objects.enabled(),
+                              [c for c in self.cas.values() if c.name != name])
+        self.assertCountEqual(CertificateAuthority.objects.disabled(), [self.cas['root']])
+
+    def test_valid(self):
+        self.load_usable_cas()
+
+        with freeze_time(timestamps['before_cas']):
+            self.assertCountEqual(CertificateAuthority.objects.valid(), [])
+            self.assertCountEqual(CertificateAuthority.objects.usable(), [])
+            self.assertCountEqual(CertificateAuthority.objects.invalid(), self.cas.values())
+
+        with freeze_time(timestamps['before_child']):
+            valid = [c for c in self.cas.values() if c.name != 'child']
+            self.assertCountEqual(CertificateAuthority.objects.valid(), valid)
+            self.assertCountEqual(CertificateAuthority.objects.usable(), valid)
+            self.assertCountEqual(CertificateAuthority.objects.invalid(), [self.cas['child']])
+
+        with freeze_time(timestamps['after_child']):
+            self.assertCountEqual(CertificateAuthority.objects.valid(), self.cas.values())
+            self.assertCountEqual(CertificateAuthority.objects.usable(), self.cas.values())
+            self.assertCountEqual(CertificateAuthority.objects.invalid(), [])
+
+        with freeze_time(timestamps['cas_expired']):
+            self.assertCountEqual(CertificateAuthority.objects.valid(), [])
+            self.assertCountEqual(CertificateAuthority.objects.usable(), [])
+            self.assertCountEqual(CertificateAuthority.objects.invalid(), self.cas.values())
+
 
 class CertificateQuerysetTestCase(DjangoCAWithGeneratedCertsTestCase):
     def assertQuerySet(self, qs, *items):

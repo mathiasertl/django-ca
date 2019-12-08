@@ -5,6 +5,7 @@ when you run "manage.py test".
 Replace this with more appropriate tests for your application.
 """
 
+import copy
 import importlib
 import inspect
 import json
@@ -671,6 +672,19 @@ class DjangoCATestCaseMixin(object):
             util.execute()
 
         return stdout.getvalue(), stderr.getvalue()
+
+    @property
+    def crl_profiles(self):
+        profiles = copy.deepcopy(ca_settings.CA_CRL_PROFILES)
+        for name, config in profiles.items():
+            config.setdefault('OVERRIDES', {})
+
+            for data in [d for d in certs.values() if d.get('type') == 'ca']:
+                config['OVERRIDES'][data['serial']] = {}
+                if data.get('password'):
+                    config['OVERRIDES'][data['serial']]['password'] = data['password']
+
+        return profiles
 
     def get_cert_context(self, name):
         # Get a dictionary suitable for testing output based on the dictionary in basic.certs
