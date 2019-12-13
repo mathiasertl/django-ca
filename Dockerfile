@@ -9,7 +9,8 @@ ENV SKIP_SELENIUM_TESTS=y
 
 # NOTE: busybox installs /bin/sh
 RUN apk --no-cache upgrade && \
-    apk --no-cache add --update gcc linux-headers libc-dev libffi-dev openssl openssl-dev make busybox
+    apk --no-cache add --update gcc linux-headers libc-dev libffi-dev openssl \
+        openssl-dev make busybox
 RUN pip install -U setuptools pip wheel
 
 
@@ -51,12 +52,18 @@ WORKDIR /usr/src/django-ca
 
 # NOTE: busybox installs /bin/sh
 RUN apk --no-cache upgrade && \
-    apk --no-cache add --update gcc linux-headers libc-dev libffi-dev openssl-dev pcre pcre-dev mailcap busybox
+    apk --no-cache add --update gcc linux-headers libc-dev libffi-dev \
+        openssl-dev pcre pcre-dev mailcap busybox mariadb-connector-c-dev \
+        postgresql-dev
 
 COPY requirements/ requirements/
 
 RUN pip install -U pip setuptools wheel
-RUN pip install --no-warn-script-location --no-cache-dir --prefix=/install -r requirements/requirements-docker.txt
+RUN pip install --no-warn-script-location --no-cache-dir --prefix=/install \
+    -r requirements/requirements-docker.txt \
+    -r requirements/requirements-redis.txt \
+    -r requirements/requirements-mysql.txt \
+    -r requirements/requirements-postgres.txt
 
 COPY ca/ ca/
 COPY docker/ docker/

@@ -11,6 +11,7 @@ ChangeLog
 ************
 
 * Add support for Django 3.0.
+* The Docker image now supports MySQL, PostgreSQL and Redis by default.
 * Drop dependency ``six`` (since we no longer support Python 2.7).
 * There now are `setuptools extras
   <https://packaging.python.org/tutorials/installing-packages/#installing-setuptools-extras>`_ for ``redis``
