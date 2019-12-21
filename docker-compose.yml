@@ -1,0 +1,42 @@
+version: "3.7"
+services:
+    redis:
+        image: redis:5-alpine
+        ports:
+            - "6379"
+        networks:
+            - backend
+        restart: unless-stopped
+        deploy:
+            restart_policy:
+                condition: unless-stopped
+    postgres:
+        image: postgres:12-alpine
+        ports:
+            - 5432:5432
+        networks:
+            - backend
+        restart: unless-stopped
+        deploy:
+            restart_policy:
+                condition: unless-stopped
+    frontend:
+        image: mathiasertl/django-ca:latest
+        ports:
+            - 8000:8000
+        networks:
+            - backend
+            - frontend
+        volumes:
+            - ${PWD}/${DJANGO_CA_SETTINGS:-/docker/settings.yaml}:/usr/src/django-ca/settings.yaml
+        environment:
+            DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-/usr/src/django-ca/settings.yaml}
+        restart: unless-stopped
+        deploy:
+            restart_policy:
+                condition: unless-stopped
+
+networks:
+    frontend:
+    backend:
+        internal: true
