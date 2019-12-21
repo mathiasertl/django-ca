@@ -4,6 +4,11 @@ import yaml
 
 from django.utils.crypto import get_random_string
 
+try:
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Loader
+
 DEBUG = False
 LOGIN_URL = '/admin/login/'
 
@@ -33,7 +38,7 @@ CA_DIR = '/var/lib/django-ca/certs'
 _CA_SETTINGS_FILE = os.environ.get('DJANGO_CA_SETTINGS')
 if _CA_SETTINGS_FILE:
     with open(_CA_SETTINGS_FILE) as stream:
-        data = yaml.load(stream)
+        data = yaml.load(stream, Loader=Loader)
     for key, value in data.items():
         globals()[key] = value
 
