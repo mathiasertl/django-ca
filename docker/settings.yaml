@@ -14,3 +14,5 @@ DATABASES:
         PASSWORD: postgres
         HOST: postgres
         PORT: 5432
+
+CELERY_BROKER_URL: redis://redis:6379/0
