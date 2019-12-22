@@ -79,8 +79,8 @@ from django_ca import utils, models, views, extensions, subject"
 FROM base
 COPY --from=build /install /usr/local
 
-RUN mkdir -p /usr/share/django-ca/ /var/lib/django-ca/ && \
-    chown django-ca:django-ca /usr/share/django-ca/ /var/lib/django-ca/
+RUN mkdir -p /usr/share/django-ca/static /usr/share/django-ca/media /var/lib/django-ca/ && \
+    chown -R django-ca:django-ca /usr/share/django-ca/ /var/lib/django-ca/
 
 COPY --from=prepare /usr/src/django-ca/ ./
 COPY uwsgi/ uwsgi/
