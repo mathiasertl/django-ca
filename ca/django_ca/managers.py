@@ -276,7 +276,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         ca = self.model(name=name, issuer_url=issuer_url, issuer_alt_name=issuer_alt_name,
                         ocsp_url=ocsp_url, crl_url=crl_url, parent=parent)
         ca.x509 = certificate
-        ca.private_key_path = ca_storage.generate_filename('%s.key' % ca.serial.replace(':', ''))
+        ca.private_key_path = ca_storage.generate_filename('ca/%s.key' % ca.serial.replace(':', ''))
         ca.save()
 
         if password is None:

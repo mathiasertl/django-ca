@@ -15,13 +15,14 @@ ChangeLog
 * Drop dependency ``six`` (since we no longer support Python 2.7).
 * There now are `setuptools extras
   <https://packaging.python.org/tutorials/installing-packages/#installing-setuptools-extras>`_ for ``redis``
-  and ``celery``, so you can install all required dependencies at oncep.
+  and ``celery``, so you can install all required dependencies at once.
 * Consistently style serials in a monospace font in admin interface.
 * :py:class:`~django_ca.extensions.AuthorityKeyIdentifier` now also supports issuers and serials.
 * :py:func:`~django_ca.utils.parse_general_name` now returns a :py:class:`~cg:cryptography.x509.GeneralName`
   unchanged, but throws an error if the name isn't a ``str`` otherwise.
 * New class :py:class:`~django_ca.utils.GeneralNameList` for extensions that store a list of general names.
 * Add support for the :py:class:`~django_ca.extensions.FreshestCRL` extension.
+* Store CA private keys in the ``ca/`` subdirectory by default.
 
 Backwards incompatible changes
 ==============================
