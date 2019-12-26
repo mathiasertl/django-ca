@@ -11,6 +11,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not,
 # see <http://www.gnu.org/licenses/>.
 
+import pathlib
 import warnings
 
 import idna
@@ -95,7 +96,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
              pathlen=None, issuer_url=None, issuer_alt_name='', crl_url=None, ocsp_url=None,
              ca_issuer_url=None, ca_crl_url=None, ca_ocsp_url=None, name_constraints=None,
              password=None, parent_password=None, ecc_curve=None, key_type='RSA', key_size=None,
-             extra_extensions=None):
+             extra_extensions=None, path='ca'):
         """Create a new certificate authority.
 
         Parameters
@@ -162,6 +163,8 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         extra_extensions : list of :py:class:`cg:cryptography.x509.Extension` or \
                 :py:class:`django_ca.extensions.Extension`, optional
             An optional list of additional extensions to add to the certificate.
+        path : str or pathlib.PurePath, optional
+            Where to store the CA private key (default ``ca``).
 
         Raises
         ------
@@ -276,8 +279,6 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         ca = self.model(name=name, issuer_url=issuer_url, issuer_alt_name=issuer_alt_name,
                         ocsp_url=ocsp_url, crl_url=crl_url, parent=parent)
         ca.x509 = certificate
-        ca.private_key_path = ca_storage.generate_filename('ca/%s.key' % ca.serial.replace(':', ''))
-        ca.save()
 
         if password is None:
             encryption = serialization.NoEncryption()
@@ -288,7 +289,9 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
                                         encryption_algorithm=encryption)
 
         # write private key to file
-        ca_storage.save(ca.private_key_path, ContentFile(pem))
+        path = path / pathlib.PurePath('%s.key' % ca.serial.replace(':', ''))
+        ca.private_key_path = ca_storage.save(str(path), ContentFile(pem))
+        ca.save()
 
         post_create_ca.send(sender=self.model, ca=ca)
         return ca
