@@ -219,3 +219,17 @@ try:
     from django.urls import path  # NOQA
 except ImportError:  # pragma: only django<=1.11
     CA_DJANGO_SUPPORTS_PATH = False
+
+# Decide if we should use Celery or not
+CA_USE_CELERY = getattr(settings, 'CA_USE_CELERY', None)
+if CA_USE_CELERY is None:
+    try:
+        from celery import shared_task  # NOQA
+        CA_USE_CELERY = True
+    except ImportError:
+        CA_USE_CELERY = False
+elif CA_USE_CELERY is True:
+    try:
+        from celery import shared_task  # NOQA
+    except ImportError:
+        raise ImproperlyConfigured('CA_USE_CELERY set to True, but Celery is not installed')

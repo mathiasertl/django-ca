@@ -14,6 +14,7 @@
 # see <http://www.gnu.org/licenses/>
 
 from datetime import timedelta
+from unittest import mock
 
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
@@ -63,4 +64,24 @@ class ImproperlyConfiguredTestCase(TestCase):
         with self.assertRaisesRegex(ImproperlyConfigured,
                                     r'^CA_DEFAULT_EXPIRES: -3 days, 0:00:00: Must have positive value$'):
             with override_settings(CA_DEFAULT_EXPIRES=timedelta(days=-3)):
+                pass
+
+    def test_use_celery(self):
+        # test CA_USE_CELERY setting
+        with override_settings(CA_USE_CELERY=False):
+            self.assertFalse(ca_settings.CA_USE_CELERY)
+        with override_settings(CA_USE_CELERY=True):
+            self.assertTrue(ca_settings.CA_USE_CELERY)
+
+        # Setting sys.modules['celery'] (modules cache) to None will cause the next import of that module
+        # to trigger an import error:
+        #   https://medium.com/python-pandemonium/how-to-test-your-imports-1461c1113be1
+        #   https://docs.python.org/3.8/reference/import.html#the-module-cache
+        with mock.patch.dict('sys.modules', celery=None):
+            msg = r'^CA_USE_CELERY set to True, but Celery is not installed$'
+
+            # NOTE: This construct will cause ca_settings to be loaded with `True` upon entering the context
+            #       manager, but will also load ith with `None` when exiting due to the exception. This is
+            #       used in assuring code-coverage for the ca_settings module.
+            with self.assertRaisesRegex(ImproperlyConfigured, msg), override_settings(CA_USE_CELERY=True):
                 pass

@@ -137,3 +137,11 @@ CA_PROFILES
    Default: ``{}``
 
    Add new profiles or change exising ones.  Please see :doc:`profiles` for more information on profiles.
+
+.. _settings-ca-use-celery:
+
+CA_USE_CELERY
+   Default: ``None``
+
+   Set to ``True`` to force django-ca to use `Celery <https://docs.celeryproject.org>`_ or to ``False`` to
+   force not using it. The default is to use Celery if it is installed.
