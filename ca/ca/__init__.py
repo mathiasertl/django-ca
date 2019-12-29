@@ -11,8 +11,13 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-# This will make sure the app is always imported when
-# Django starts so that shared_task will use this app.
-from .celery import app as celery_app
+try:
+    # This will make sure the app is always imported when
+    # Django starts so that shared_task will use this app.
+    from .celery import app as celery_app
 
-__all__ = ('celery_app',)
+    __all__ = ('celery_app',)
+
+    # Do nothing if celery is not installed
+except ImportError:
+    pass
