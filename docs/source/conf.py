@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 #
 # django-ca documentation build configuration file, created by
 # sphinx-quickstart on Mon Jan  4 18:57:14 2016.
