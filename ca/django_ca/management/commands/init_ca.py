@@ -161,8 +161,9 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
             issuer_alternative_name = ''
 
         kwargs = {}
-        if options['path']:
-            kwargs['path'] = options['path']
+        for opt in ['path', 'parent', 'default_hostname']:
+            if options[opt] is not None:
+                kwargs[opt] = options[opt]
 
         try:
             CertificateAuthority.objects.init(
@@ -170,11 +171,9 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
                 ecc_curve=options['ecc_curve'],
                 algorithm=options['algorithm'],
                 expires=options['expires'],
-                parent=parent,
                 pathlen=options['pathlen'],
                 issuer_url=options['issuer_url'],
                 issuer_alt_name=issuer_alternative_name,
-                default_hostname=options['default_hostname'],
                 crl_url=options['crl_url'],
                 ocsp_url=options['ocsp_url'],
                 ca_issuer_url=options['ca_issuer_url'],
