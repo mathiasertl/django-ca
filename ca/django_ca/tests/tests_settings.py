@@ -70,6 +70,8 @@ class ImproperlyConfiguredTestCase(TestCase):
             self.assertFalse(ca_settings.CA_USE_CELERY)
         with override_settings(CA_USE_CELERY=True):
             self.assertTrue(ca_settings.CA_USE_CELERY)
+        with override_settings(CA_USE_CELERY=None):
+            self.assertTrue(ca_settings.CA_USE_CELERY)
 
         # Setting sys.modules['celery'] (modules cache) to None will cause the next import of that module
         # to trigger an import error:
@@ -78,8 +80,8 @@ class ImproperlyConfiguredTestCase(TestCase):
         with mock.patch.dict('sys.modules', celery=None):
             msg = r'^CA_USE_CELERY set to True, but Celery is not installed$'
 
-            # NOTE: This construct will cause ca_settings to be loaded with `True` upon entering the context
-            #       manager, but will also load ith with `None` when exiting due to the exception. This is
-            #       used in assuring code-coverage for the ca_settings module.
             with self.assertRaisesRegex(ImproperlyConfigured, msg), override_settings(CA_USE_CELERY=True):
                 pass
+
+        with mock.patch.dict('sys.modules', celery=None), override_settings(CA_USE_CELERY=None):
+            self.assertFalse(ca_settings.CA_USE_CELERY)
