@@ -11,18 +11,34 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from celery import shared_task  # pragma: no cover
+from . import ca_settings
+from .models import CertificateAuthority
 
-from .models import CertificateAuthority  # pragma: no cover
+
+def run_task(name, *args, **kwargs):
+    eager = kwargs.pop('eager', False)
+    func = globals()[name]
+
+    if ca_settings.CA_USE_CELERY is True and eager is False:
+        return func.delay(*args, **kwargs)
+    else:
+        return func(*args, **kwargs)
 
 
-@shared_task  # pragma: no cover
-def generate_crl(serial):
-    ca = CertificateAuthority.objects.get(serial)
+def cache_crl(serial):
+    ca = CertificateAuthority.objects.get(serial=serial)
     ca.cache_crls()
 
 
-@shared_task  # pragma: no cover
-def generate_crls():
+def cache_crls():
     for serial in CertificateAuthority.objects.usable().values_list('serial', flat=True):
-        generate_crl.delay(serial)
+        run_task('cache_crl', serial)
+
+
+try:
+    from celery import shared_task
+except ImportError:
+    pass
+else:
+    cache_crl = shared_task(cache_crl)
+    cache_crls = shared_task(cache_crls)

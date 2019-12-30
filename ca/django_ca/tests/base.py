@@ -875,14 +875,6 @@ class DjangoCATestCaseMixin(object):
             yield mock
 
     @contextmanager
-    def mock_celery(self):
-        def run(self, args, kwargs):
-            return self.run(*args, **kwargs)
-
-        with patch('celery.app.task.Task.apply_async', side_effect=run, autospec=True) as mock:
-            yield mock
-
-    @contextmanager
     def mute_celery(self):
         with patch('celery.app.task.Task.apply_async') as mock:
             yield mock
