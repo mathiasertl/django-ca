@@ -51,7 +51,8 @@ from django.core.management import ManagementUtility
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
-from django.test.utils import override_settings as _override_settings
+from django.test.signals import setting_changed
+from django.test.utils import override_settings
 from django.urls import reverse
 
 from pyvirtualdisplay import Display
@@ -135,14 +136,17 @@ def _load_pub(data):
     return pub_data
 
 
-def _reload():
-    importlib.reload(ca_settings)
+def reload_ca_settings(sender, setting, **kwargs):
     # WARNING:
     # * Do NOT reload any other modules here, as isinstance() no longer returns True for instances from
     #   reloaded modules
     # * Do NOT set module level attributes, as other modules will not see the new instance
 
+    importlib.reload(ca_settings)
     profiles.profiles._reset()
+
+
+setting_changed.connect(reload_ca_settings)
 
 
 cryptography_version = tuple([int(t) for t in cryptography.__version__.split('.')[:2]])
@@ -335,44 +339,6 @@ def rdn(r):  # just a shortcut
     return x509.RelativeDistinguishedName([x509.NameAttribute(*t) for t in r])
 
 
-class override_settings(_override_settings):
-    """Enhance override_settings to also reload django_ca.ca_settings.
-
-    .. WARNING:: When using this class as a class decorator, the decorated class must inherit from
-       :py:class:`~django_ca.tests.base.DjangoCATestCase`.
-    """
-
-    def __call__(self, test_func):
-        if inspect.isclass(test_func) and not issubclass(test_func, DjangoCATestCase):
-            raise ValueError("Only subclasses of DjangoCATestCase can use override_settings")
-        inner = super(override_settings, self).__call__(test_func)
-        return inner
-
-    def reload(self):
-        _reload()
-
-    def save_options(self, test_func):
-        super(override_settings, self).save_options(test_func)
-        self.reload()
-
-    def enable(self):
-        super(override_settings, self).enable()
-
-        try:
-            self.reload()
-        except Exception:  # pragma: no cover
-            # If an exception is thrown reloading ca_settings, we disable everything again.
-            # Otherwise an exception in ca_settings will cause overwritten settings to persist
-            # to the next tests.
-            super(override_settings, self).disable()
-            self.reload()
-            raise
-
-    def disable(self):
-        super(override_settings, self).disable()
-        self.reload()
-
-
 @contextmanager
 def mock_cadir(path):
     """Contextmanager to set the CA_DIR to a given path without actually creating it."""
@@ -423,24 +389,6 @@ class DjangoCATestCaseMixin(object):
 
     re_false_password = r'^(Bad decrypt\. Incorrect password\?|Could not deserialize key data\.)$'
 
-    @classmethod
-    def setUpClass(cls):
-        super(DjangoCATestCaseMixin, cls).setUpClass()
-
-        if cls._overridden_settings:
-            _reload()
-
-    @classmethod
-    def tearDownClass(cls):
-        overridden = False
-        if hasattr(cls, '_cls_overridden_context'):
-            overridden = True
-
-        super(DjangoCATestCaseMixin, cls).tearDownClass()
-
-        if overridden is True:
-            _reload()
-
     def setUp(self):
         super(DjangoCATestCaseMixin, self).setUp()
         self.cas = {}
@@ -449,10 +397,6 @@ class DjangoCATestCaseMixin(object):
     def tearDown(self):
         super().tearDown()
         cache.clear()
-
-    def settings(self, **kwargs):
-        """Decorator to temporarily override settings."""
-        return override_settings(**kwargs)
 
     def tmpcadir(self, **kwargs):
         """Context manager to use a temporary CA dir."""

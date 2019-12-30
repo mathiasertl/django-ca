@@ -65,18 +65,8 @@ class OverrideSettingsClassTestCase(DjangoCATestCase):
     def test_double(self):
         self.assertEqual(ca_settings.CA_MIN_KEY_SIZE, 256)
 
-    def test_wrong_base(self):
-        msg = r'^Only subclasses of DjangoCATestCase can use override_settings$'
-        with self.assertRaisesRegex(ValueError, msg):
-            @override_settings(CA_MIN_KEY_SIZE=256)
-            class DummyTest(TestCase):
-                pass
-
-        msg = r'^Only subclasses of DjangoCATestCase can use override_settings$'
-        with self.assertRaisesRegex(ValueError, msg):
-            @override_settings(CA_MIN_KEY_SIZE=256)
-            class DummyTestTwo:
-                pass
+        with self.settings(CA_MIN_KEY_SIZE=512):
+            self.assertEqual(ca_settings.CA_MIN_KEY_SIZE, 512)
 
 
 class OverrideCaDirForFuncTestCase(DjangoCATestCase):
