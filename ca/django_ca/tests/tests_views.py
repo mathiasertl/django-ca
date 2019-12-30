@@ -58,9 +58,6 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
         self.ca = self.cas['child']
         self.client = Client()
 
-    def tearDown(self):
-        cache.clear()
-
     @override_tmpcadir()
     def test_basic(self):
         # test the default view

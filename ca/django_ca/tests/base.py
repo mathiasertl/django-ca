@@ -45,6 +45,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.management import ManagementUtility
 from django.core.management import call_command
@@ -444,6 +445,10 @@ class DjangoCATestCaseMixin(object):
         super(DjangoCATestCaseMixin, self).setUp()
         self.cas = {}
         self.certs = {}
+
+    def tearDown(self):
+        super().tearDown()
+        cache.clear()
 
     def settings(self, **kwargs):
         """Decorator to temporarily override settings."""
@@ -867,6 +872,19 @@ class DjangoCATestCaseMixin(object):
     @contextmanager
     def patch_object(self, *args, **kwargs):  # pragma: only SCT
         with patch.object(*args, **kwargs) as mock:
+            yield mock
+
+    @contextmanager
+    def mock_celery(self):
+        def run(self, args, kwargs):
+            return self.run(*args, **kwargs)
+
+        with patch('celery.app.task.Task.apply_async', side_effect=run, autospec=True) as mock:
+            yield mock
+
+    @contextmanager
+    def mute_celery(self):
+        with patch('celery.app.task.Task.apply_async') as mock:
             yield mock
 
 
