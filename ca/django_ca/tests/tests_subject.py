@@ -16,12 +16,9 @@ import doctest
 from cryptography import x509
 from cryptography.x509.oid import NameOID
 
-from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 
 from ..subject import Subject
-from ..subject import get_default_subject
-from .base import override_settings
 
 
 def load_tests(loader, tests, ignore):
@@ -312,12 +309,3 @@ class TestSubject(TestCase):
                                           (NameOID.ORGANIZATIONAL_UNIT_NAME, 'foo'),
                                           (NameOID.ORGANIZATIONAL_UNIT_NAME, 'bar'),
                                           (NameOID.COMMON_NAME, 'example.com')])
-
-    def test_default_subject(self):
-        with self.assertRaisesRegex(ImproperlyConfigured, r'^CA_DEFAULT_SUBJECT: Invalid subject: True$'):
-            with override_settings(CA_DEFAULT_SUBJECT=True):
-                get_default_subject()
-
-        with self.assertRaisesRegex(ImproperlyConfigured, r'^CA_DEFAULT_SUBJECT: Invalid OID: XYZ$'):
-            with override_settings(CA_DEFAULT_SUBJECT={'XYZ': 'error'}):
-                get_default_subject()
