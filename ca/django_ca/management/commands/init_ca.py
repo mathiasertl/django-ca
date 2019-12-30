@@ -17,6 +17,7 @@ https://skippylovesmalorie.wordpress.com/2010/02/12/how-to-generate-a-self-signe
 """
 
 import os
+import pathlib
 from datetime import timedelta
 
 from django.core.management.base import CommandError
@@ -59,6 +60,8 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         self.add_password(
             parser, help='Optional password used to encrypt the private key. If no argument is passed, you '
                          'will be prompted.')
+        parser.add_argument('--path', type=pathlib.PurePath,
+                            help="Path where to store Certificate Authorities (relative to CA_DIR).")
         parser.add_argument('--parent-password', nargs='?', action=PasswordAction, metavar='PASSWORD',
                             prompt='Password for parent CA: ',
                             help='Password for the private key of any parent CA.')
@@ -157,6 +160,10 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         if issuer_alternative_name is None:
             issuer_alternative_name = ''
 
+        kwargs = {}
+        if options['path']:
+            kwargs['path'] = options['path']
+
         try:
             CertificateAuthority.objects.init(
                 key_size=options['key_size'], key_type=options['key_type'],
@@ -175,7 +182,8 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
                 ca_ocsp_url=options['ca_ocsp_url'],
                 name_constraints=name_constraints,
                 name=name, subject=subject, password=options['password'],
-                parent_password=options['parent_password']
+                parent_password=options['parent_password'],
+                **kwargs
             )
         except Exception as e:
             raise CommandError(e)

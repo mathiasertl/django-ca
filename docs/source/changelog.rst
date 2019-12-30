@@ -22,7 +22,8 @@ ChangeLog
   unchanged, but throws an error if the name isn't a ``str`` otherwise.
 * New class :py:class:`~django_ca.utils.GeneralNameList` for extensions that store a list of general names.
 * Add support for the :py:class:`~django_ca.extensions.FreshestCRL` extension.
-* Store CA private keys in the ``ca/`` subdirectory by default.
+* Store CA private keys in the ``ca/`` subdirectory by default, the directory can be configured using
+  ``manage.py init_ca --path=...``.
 
 Backwards incompatible changes
 ==============================
