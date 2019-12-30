@@ -329,7 +329,8 @@ class override_settings(_override_settings):  # pragma: only django<2.2
     """Enhance override_settings to also reload django_ca.ca_settings.
 
     **DEPRECATED:** This custom implementation is only necessary in Django 2.1 and earlier. Since 2.2, this
-    could be more elegantly solved using signals (see tests/init.py).
+    could be more elegantly solved using signals (see tests/init.py). See
+    https://code.djangoproject.com/ticket/29467
 
     .. WARNING:: When using this class as a class decorator, the decorated class must inherit from
        :py:class:`~django_ca.tests.base.DjangoCATestCase`.
@@ -383,7 +384,7 @@ class override_tmpcadir(override_settings):
     """
 
     def __call__(self, test_func):
-        if not inspect.isfunction(test_func):
+        if not inspect.isfunction(test_func):  # pragma: no cover
             raise ValueError("Only functions can use override_tmpcadir()")
         return super(override_tmpcadir, self).__call__(test_func)
 

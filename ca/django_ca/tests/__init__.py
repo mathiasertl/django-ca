@@ -22,7 +22,10 @@ from .. import ca_settings
 from .. import profiles
 
 
-def reload_ca_settings(sender, setting, **kwargs):
+def reload_ca_settings(sender, setting, **kwargs):  # pragma: no cover
+    # This method will be enabled once support for django<2.2 support is dropped, see notes in
+    # django_ca.tests.base.override_settings.
+
     # WARNING:
     # * Do NOT reload any other modules here, as isinstance() no longer returns True for instances from
     #   reloaded modules
