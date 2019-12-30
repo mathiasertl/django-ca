@@ -251,3 +251,29 @@ if not os.path.exists(GECKODRIVER_PATH) and not SKIP_SELENIUM_TESTS:
     raise ImproperlyConfigured(
         'Please download geckodriver to %s: '
         'https://selenium-python.readthedocs.io/installation.html#drivers' % GECKODRIVER_PATH)
+
+CA_USE_CELERY = False
+CA_CRL_PROFILES = {
+    'user': {
+        'algorithm': 'SHA512',
+        'expires': 86400,
+        'scope': 'user',
+        'encodings': ['DER', ],
+        'OVERRIDES': {
+            _fixture_data['certs']['pwd']['serial']: {
+                'password': _fixture_data['certs']['pwd']['password'].encode('utf-8'),
+            },
+        },
+    },
+    'ca': {
+        'algorithm': 'SHA512',
+        'expires': 86400,
+        'scope': 'ca',
+        'encodings': ['DER', ],
+        'OVERRIDES': {
+            _fixture_data['certs']['pwd']['serial']: {
+                'password': _fixture_data['certs']['pwd']['password'].encode('utf-8'),
+            },
+        },
+    }
+}
