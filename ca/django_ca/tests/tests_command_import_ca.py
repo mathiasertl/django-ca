@@ -168,6 +168,9 @@ class ImportCATest(DjangoCATestCase):
             with self.mock_cadir(ca_dir), self.assertCommandError(msg):
                 self.cmd('import_ca', name, key_path, pem_path)
 
+            # removing tempdir with these permissions throws an error before python 3.8.
+            os.chmod(tempdir, 0o755)  # pragma: only py<3.8
+
     @override_tmpcadir()
     def test_bogus_pub(self):
         name = 'testname'
