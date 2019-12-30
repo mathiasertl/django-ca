@@ -22,6 +22,7 @@ import sys
 import tempfile
 from datetime import datetime
 from datetime import timedelta
+from unittest.mock import patch
 
 from freezegun import freeze_time
 from six.moves import reload_module
@@ -61,13 +62,6 @@ from django_ca.utils import ca_storage
 from django_ca.utils import hex_to_bytes
 
 now = datetime.utcnow().replace(second=0, minute=0)
-PY2 = sys.version_info[0] == 2
-PY3 = sys.version_info[0] == 3
-if PY2:  # pragma: only py2
-    from mock import patch
-else:
-    from unittest.mock import patch
-
 
 parser = argparse.ArgumentParser(description='Regenerate fixtures for testing.')
 parser.add_argument('--only-contrib', default=False, action='store_true',
@@ -130,12 +124,7 @@ class override_tmpcadir(override_settings):
 
 
 def create_key(path):
-    if PY2:
-        # PY2 does not have subprocess.DEVNULL
-        with open(os.devnull, 'w') as devnull:
-            subprocess.check_call(['openssl', 'genrsa', '-out', path, str(key_size)], stderr=devnull)
-    else:
-        subprocess.check_call(['openssl', 'genrsa', '-out', path, str(key_size)], stderr=subprocess.DEVNULL)
+    subprocess.check_call(['openssl', 'genrsa', '-out', path, str(key_size)], stderr=subprocess.DEVNULL)
 
 
 def create_csr(key_path, path, subject='/CN=ignored.example.com'):

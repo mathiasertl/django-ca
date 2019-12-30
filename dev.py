@@ -34,9 +34,6 @@ from cryptography.hazmat.backends import default_backend
 import django
 from django.core.exceptions import ImproperlyConfigured
 
-PY2 = sys.version_info[0] == 2
-PY3 = sys.version_info[0] == 3
-
 test_base = argparse.ArgumentParser(add_help=False)
 test_base.add_argument('-s', '--suites', default=[], nargs='+',
                        help="Modules to test (e.g. tests_modules).")
@@ -173,12 +170,6 @@ elif args.command == 'coverage':
 
     cov = coverage.Coverage(data_file=data_file, cover_pylib=False, branch=True, source=['django_ca'],
                             omit=['*migrations/*', '*/tests/tests*', ])
-
-    # exclude python-version specific code
-    if PY2:
-        cov.exclude('only py3')
-    else:
-        cov.exclude('only py2')
 
     # exclude code that requires SCT
     if not default_backend()._lib.CRYPTOGRAPHY_OPENSSL_110F_OR_GREATER:

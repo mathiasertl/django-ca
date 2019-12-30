@@ -12,7 +12,6 @@
 # see <http://www.gnu.org/licenses/>.
 
 import os
-import shutil
 import tempfile
 from io import BufferedReader
 from io import BytesIO
@@ -152,29 +151,22 @@ class ImportCATest(DjangoCATestCase):
         pem_path = os.path.join(settings.FIXTURES_DIR, certs['root']['pub_filename'])
         key_path = os.path.join(settings.FIXTURES_DIR, certs['root']['key_filename'])
 
-        tempdir = tempfile.mkdtemp()  # TODO: py3: do this with context manager
-        try:
+        with tempfile.TemporaryDirectory() as tempdir:
             ca_dir = os.path.join(tempdir, 'foo', 'bar')
             with self.mock_cadir(ca_dir):
                 self.cmd('import_ca', name, key_path, pem_path)
-        finally:
-            shutil.rmtree(tempdir)
 
     def test_create_cadir_permission_denied(self):
         name = 'testname'
         pem_path = os.path.join(settings.FIXTURES_DIR, certs['root']['pub_filename'])
         key_path = os.path.join(settings.FIXTURES_DIR, certs['root']['key_filename'])
 
-        tempdir = tempfile.mkdtemp()  # TODO: py3: do this with context manager
-        try:
+        with tempfile.TemporaryDirectory() as tempdir:
             os.chmod(tempdir, 0o000)
             ca_dir = os.path.join(tempdir, 'foo', 'bar')
             msg = r'^%s: Could not create CA_DIR: Permission denied.$' % ca_dir
             with self.mock_cadir(ca_dir), self.assertCommandError(msg):
                 self.cmd('import_ca', name, key_path, pem_path)
-        finally:
-            os.chmod(tempdir, 0o755)
-            shutil.rmtree(tempdir)
 
     @override_tmpcadir()
     def test_bogus_pub(self):
