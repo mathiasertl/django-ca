@@ -12,7 +12,6 @@
 # see <http://www.gnu.org/licenses/>.
 
 import copy
-import importlib
 import inspect
 import json
 import os
@@ -51,7 +50,6 @@ from django.core.management import ManagementUtility
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
-from django.test.signals import setting_changed
 from django.test.utils import override_settings
 from django.urls import reverse
 
@@ -60,7 +58,6 @@ from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.webdriver.support.wait import WebDriverWait
 
 from .. import ca_settings
-from .. import profiles
 from ..constants import ReasonFlags
 from ..deprecation import RemovedInDjangoCA16Warning
 from ..extensions import KEY_TO_EXTENSION
@@ -134,19 +131,6 @@ def _load_pub(data):
         #pub_data['der_parsed'] = x509.load_der_x509_certificate(der, default_backend()),
 
     return pub_data
-
-
-def reload_ca_settings(sender, setting, **kwargs):
-    # WARNING:
-    # * Do NOT reload any other modules here, as isinstance() no longer returns True for instances from
-    #   reloaded modules
-    # * Do NOT set module level attributes, as other modules will not see the new instance
-
-    importlib.reload(ca_settings)
-    profiles.profiles._reset()
-
-
-setting_changed.connect(reload_ca_settings)
 
 
 cryptography_version = tuple([int(t) for t in cryptography.__version__.split('.')[:2]])
