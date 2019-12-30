@@ -33,6 +33,10 @@ class SettingsTestCase(TestCase):
         with override_settings(CA_PROFILES={'client': {'desc': desc}}):
             self.assertEqual(ca_settings.CA_PROFILES['client']['desc'], desc)
 
+    def test_missing_celery(self):
+        with mock.patch.dict('sys.modules', celery=None), override_settings(CA_USE_CELERY=None):
+            self.assertFalse(ca_settings.CA_USE_CELERY)
+
 
 class ImproperlyConfiguredTestCase(TestCase):
     def test_default_ecc_curve(self):
@@ -82,6 +86,3 @@ class ImproperlyConfiguredTestCase(TestCase):
 
             with self.assertRaisesRegex(ImproperlyConfigured, msg), override_settings(CA_USE_CELERY=True):
                 pass
-
-        with mock.patch.dict('sys.modules', celery=None), override_settings(CA_USE_CELERY=None):
-            self.assertFalse(ca_settings.CA_USE_CELERY)
