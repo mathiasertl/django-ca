@@ -337,7 +337,7 @@ class override_settings(_override_settings):  # pragma: only django<2.2
     """
 
     def __call__(self, test_func):
-        if inspect.isclass(test_func) and not issubclass(test_func, DjangoCATestCase):
+        if inspect.isclass(test_func) and not issubclass(test_func, DjangoCATestCase):  # pragma: no cover
             raise ValueError("Only subclasses of DjangoCATestCase can use override_settings")
         inner = super(override_settings, self).__call__(test_func)
         return inner
@@ -384,7 +384,7 @@ class override_tmpcadir(override_settings):
     """
 
     def __call__(self, test_func):
-        if not inspect.isfunction(test_func):  # pragma: no cover
+        if not inspect.isfunction(test_func):
             raise ValueError("Only functions can use override_tmpcadir()")
         return super(override_tmpcadir, self).__call__(test_func)
 
