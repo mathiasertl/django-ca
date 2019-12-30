@@ -15,13 +15,13 @@ from datetime import timedelta
 from unittest import mock
 
 from django.core.exceptions import ImproperlyConfigured
-from django.test import TestCase
 
 from .. import ca_settings
 from ..subject import get_default_subject
+from .base import DjangoCATestCase
 
 
-class SettingsTestCase(TestCase):
+class SettingsTestCase(DjangoCATestCase):
     def test_none_profiles(self):
         self.assertIn('client', ca_settings.CA_PROFILES)
 
@@ -38,7 +38,7 @@ class SettingsTestCase(TestCase):
             self.assertFalse(ca_settings.CA_USE_CELERY)
 
 
-class ImproperlyConfiguredTestCase(TestCase):
+class ImproperlyConfiguredTestCase(DjangoCATestCase):
     def assertImproperlyConfigured(self, msg):
         return self.assertRaisesRegex(ImproperlyConfigured, msg)
 

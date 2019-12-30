@@ -12,6 +12,7 @@
 # see <http://www.gnu.org/licenses/>.
 
 import copy
+import importlib
 import inspect
 import json
 import os
@@ -50,7 +51,7 @@ from django.core.management import ManagementUtility
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
-from django.test.utils import override_settings
+from django.test.utils import override_settings as _override_settings
 from django.urls import reverse
 
 from pyvirtualdisplay import Display
@@ -58,6 +59,7 @@ from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.webdriver.support.wait import WebDriverWait
 
 from .. import ca_settings
+from .. import profiles
 from ..constants import ReasonFlags
 from ..deprecation import RemovedInDjangoCA16Warning
 from ..extensions import KEY_TO_EXTENSION
@@ -323,6 +325,48 @@ def rdn(r):  # just a shortcut
     return x509.RelativeDistinguishedName([x509.NameAttribute(*t) for t in r])
 
 
+class override_settings(_override_settings):  # pragma: only django<2.2
+    """Enhance override_settings to also reload django_ca.ca_settings.
+
+    **DEPRECATED:** This custom implementation is only necessary in Django 2.1 and earlier. Since 2.2, this
+    could be more elegantly solved using signals (see tests/init.py).
+
+    .. WARNING:: When using this class as a class decorator, the decorated class must inherit from
+       :py:class:`~django_ca.tests.base.DjangoCATestCase`.
+    """
+
+    def __call__(self, test_func):
+        if inspect.isclass(test_func) and not issubclass(test_func, DjangoCATestCase):
+            raise ValueError("Only subclasses of DjangoCATestCase can use override_settings")
+        inner = super(override_settings, self).__call__(test_func)
+        return inner
+
+    def reload(self):
+        importlib.reload(ca_settings)
+        profiles.profiles._reset()
+
+    def save_options(self, test_func):
+        super(override_settings, self).save_options(test_func)
+        self.reload()
+
+    def enable(self):
+        super(override_settings, self).enable()
+
+        try:
+            self.reload()
+        except Exception:  # pragma: no cover
+            # If an exception is thrown reloading ca_settings, we disable everything again.
+            # Otherwise an exception in ca_settings will cause overwritten settings to persist
+            # to the next tests.
+            super(override_settings, self).disable()
+            self.reload()
+            raise
+
+    def disable(self):
+        super(override_settings, self).disable()
+        self.reload()
+
+
 @contextmanager
 def mock_cadir(path):
     """Contextmanager to set the CA_DIR to a given path without actually creating it."""
@@ -368,10 +412,32 @@ class override_tmpcadir(override_settings):
         shutil.rmtree(self.options['CA_DIR'])
 
 
-class DjangoCATestCaseMixin(object):
+class DjangoCATestCaseMixin:
     """Base class for all testcases with some enhancements."""
 
     re_false_password = r'^(Bad decrypt\. Incorrect password\?|Could not deserialize key data\.)$'
+
+    @classmethod
+    def setUpClass(cls):  # pragma: only django<2.2
+        # custom override_settings implementation is only necessary in django<=2.2
+        super().setUpClass()
+
+        if cls._overridden_settings:
+            importlib.reload(ca_settings)
+            profiles.profiles._reset()
+
+    @classmethod
+    def tearDownClass(cls):  # pragma: only django<2.
+        # custom override_settings implementation is only necessary in django<=2.2
+        overridden = False
+        if hasattr(cls, '_cls_overridden_context'):
+            overridden = True
+
+        super().tearDownClass()
+
+        if overridden is True:
+            importlib.reload(ca_settings)
+            profiles.profiles._reset()
 
     def setUp(self):
         super(DjangoCATestCaseMixin, self).setUp()
@@ -381,6 +447,10 @@ class DjangoCATestCaseMixin(object):
     def tearDown(self):
         super().tearDown()
         cache.clear()
+
+    def settings(self, **kwargs):  # pragma: only django<2.2
+        # custom override_settings implementation is only necessary in django<=2.2
+        return override_settings(**kwargs)
 
     def tmpcadir(self, **kwargs):
         """Context manager to use a temporary CA dir."""
