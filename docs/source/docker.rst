@@ -11,8 +11,8 @@ Assuming you have Docker installed, simply start the docker container with::
 You still need the shell to create one or more root CAs. For the admin
 interface, we also create a superuser::
 
-   docker exec -it django-ca python ca/manage.py createsuperuser
-   docker exec -it django-ca python ca/manage.py init_ca \
+   docker exec -it django-ca python manage.py createsuperuser
+   docker exec -it django-ca python manage.py init_ca \
       example /C=AT/ST=Vienna/L=Vienna/O=Org/CN=ca.example.com
 
 ... and visit http://localhost:8000/admin/.

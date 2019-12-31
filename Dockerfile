@@ -79,15 +79,15 @@ from django_ca import utils, models, views, extensions, subject"
 FROM base
 COPY --from=build /install /usr/local
 
-RUN mkdir -p /usr/share/django-ca/static /usr/share/django-ca/media /var/lib/django-ca/ && \
+RUN mkdir -p /usr/share/django-ca/static /usr/share/django-ca/media /var/lib/django-ca/ \
+             /var/lib/django-ca/certs/ca/shared /var/lib/django-ca/certs/ocsp && \
     chown -R django-ca:django-ca /usr/share/django-ca/ /var/lib/django-ca/
 
 COPY --from=prepare /usr/src/django-ca/ ./
 COPY uwsgi/ uwsgi/
 
-CMD docker/start.sh
-
-
 USER django-ca:django-ca
 EXPOSE 8000
 VOLUME ["/var/lib/django-ca/", "/usr/share/django-ca/"]
+WORKDIR /usr/src/django-ca/ca/
+CMD ../docker/start.sh
