@@ -25,6 +25,6 @@ EOF
 fi
 chmod go-rwx ${DJANGO_CA_LIB_DIR}/secret_key
 
-python ca/manage.py collectstatic --noinput
-python ca/manage.py migrate --noinput
+python manage.py collectstatic --noinput
+python manage.py migrate --noinput
 uwsgi --ini ${DJANGO_CA_UWSGI_INI} ${DJANGO_CA_UWSGI_PARAMS}
