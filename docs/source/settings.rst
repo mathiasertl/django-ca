@@ -14,6 +14,28 @@ also documented at :file:`ca/ca/localsettings.py.example`
 <https://github.com/mathiasertl/django-ca/blob/master/ca/ca/localsettings.py.example>`_).
 
 
+.. _settings-ca-crl-profiles:
+
+CA_CRL_PROFILES
+   Default::
+      
+      {
+          'user': {
+              'algorithm': 'SHA512',
+              'expires': 86400,
+              'scope': 'user',
+              'encodings': ['DER', ],
+          },
+          'ca': {
+              'algorithm': 'SHA512',
+              'expires': 86400,
+              'scope': 'ca',
+              'encodings': ['DER', ],
+          },
+      }
+
+   A set of CRLs to create using automated tasks.
+
 .. _settings-ca-custom-apps:
 
 CA_CUSTOM_APPS
@@ -130,6 +152,14 @@ CA_OCSP_URLS
    Default: ``{}``
 
    Configuration for OCSP responders. See :doc:`ocsp` for more information.
+
+.. _settings-ca-passwords:
+
+CA_PASSWORDS
+   Default: ``{}``
+
+   A dictonary configuring passwords for the private keys of CAs. This setting is required if you create a CA
+   with an encrypted private key and want to automatically create CRLs and OCSP keys.
 
 .. _settings-ca-profiles:
 

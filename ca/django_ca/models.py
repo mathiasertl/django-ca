@@ -537,7 +537,7 @@ class CertificateAuthority(X509CertMixin):
         else:
             return ca_storage.exists(self.private_key_path)
 
-    def cache_crls(self):
+    def cache_crls(self, password=None):
         for name, config in ca_settings.CA_CRL_PROFILES.items():
             overrides = config.get('OVERRIDES', {}).get(self.serial, {})
 
@@ -546,7 +546,7 @@ class CertificateAuthority(X509CertMixin):
 
             algorithm = parse_hash_algorithm(overrides.get('algorithm', config.get('algorithm')))
             expires = overrides.get('expires', config.get('expires', 86400))
-            password = overrides.get('password', config.get('password'))
+            password = password or self.get_password()
             scope = overrides.get('scope', config.get('scope'))
             full_name = overrides.get('full_name', config.get('full_name'))
             relative_name = overrides.get('relative_name', config.get('relative_name'))
@@ -601,6 +601,7 @@ class CertificateAuthority(X509CertMixin):
         if isinstance(expires, int):
             expires = timedelta(days=expires)
         algorithm = parse_hash_algorithm(algorithm)
+        password = password or self.get_password()
 
         # generate the private key
         private_key = generate_private_key(key_size, key_type, ecc_curve)
@@ -765,6 +766,9 @@ class CertificateAuthority(X509CertMixin):
         self.save()
 
         return builder.sign(private_key=self.key(password), algorithm=algorithm, backend=default_backend())
+
+    def get_password(self):
+        return ca_settings.CA_PASSWORDS.get(self.serial)
 
     @property
     def pathlen(self):

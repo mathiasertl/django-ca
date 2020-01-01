@@ -18,19 +18,21 @@ try:
     from celery import shared_task
 except ImportError:
     def shared_task(func):
-        func.delay = lambda *a, **kw: func(*a, **kw)
-        func.apply_async = lambda *a, **kw: func(*a, **kw)
+        # Dummy decorator so that we can use the decorator wether celery is installed or not
+
+        # We do not yet need this, but might come in handy in the future:
+        #func.delay = lambda *a, **kw: func(*a, **kw)
+        #func.apply_async = lambda *a, **kw: func(*a, **kw)
         return func
 
 
-def run_task(name, *args, **kwargs):
+def run_task(task, *args, **kwargs):
     eager = kwargs.pop('eager', False)
-    func = globals()[name]
 
     if ca_settings.CA_USE_CELERY is True and eager is False:
-        return func.delay(*args, **kwargs)
+        return task.delay(*args, **kwargs)
     else:
-        return func(*args, **kwargs)
+        return task(*args, **kwargs)
 
 
 @shared_task
@@ -42,16 +44,19 @@ def cache_crl(serial):
 @shared_task
 def cache_crls():
     for serial in CertificateAuthority.objects.usable().values_list('serial', flat=True):
-        cache_crl.delay(serial)
+        run_task(cache_crl, serial)
 
 
 @shared_task
 def generate_ocsp_key(serial, **kwargs):
     ca = CertificateAuthority.objects.get(serial=serial)
-    ca.generate_ocsp_key(**kwargs)
+    private_path, cert_path, cert = ca.generate_ocsp_key(**kwargs)
+    return private_path, cert_path, cert.pk
 
 
 @shared_task
 def generate_ocsp_keys(**kwargs):
+    keys = []
     for serial in CertificateAuthority.objects.usable().values_list('serial', flat=True):
-        generate_ocsp_key.delay(serial, **kwargs)
+        keys.append(generate_ocsp_key(serial, **kwargs))
+    return keys

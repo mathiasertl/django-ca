@@ -11,7 +11,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-import copy
 import importlib
 import types
 from unittest import mock
@@ -23,8 +22,8 @@ from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.cache import cache
 
-from .. import ca_settings
 from .. import tasks
+from ..utils import ca_storage
 from ..utils import get_crl_cache_key
 from .base import DjangoCAWithGeneratedCAsTestCase
 from .base import override_tmpcadir
@@ -43,6 +42,17 @@ class TestBasic(DjangoCAWithGeneratedCAsTestCase):
             # Make sure that module is reloaded, or any failed test in the try block will cause *all other
             # tests* to fail, because the celery import would be cached to *not* work
             importlib.reload(tasks)
+
+    def test_run_task(self):
+        # run_task() without celery
+        with self.settings(CA_USE_CELERY=False), self.patch('django_ca.tasks.cache_crls') as mock:
+            tasks.run_task(tasks.cache_crls)
+            self.assertEqual(mock.call_count, 1)
+
+        # finally, run_task() with celery
+        with self.settings(CA_USE_CELERY=True), self.mute_celery() as mock:
+            tasks.run_task(tasks.cache_crls)
+            self.assertEqual(mock.call_count, 1)
 
 
 class TestCacheCRLs(DjangoCAWithGeneratedCAsTestCase):
@@ -77,15 +87,28 @@ class TestCacheCRLs(DjangoCAWithGeneratedCAsTestCase):
 
     @override_tmpcadir()
     def test_no_password(self):
-        profiles = copy.deepcopy(ca_settings.CA_CRL_PROFILES)
-        for v in profiles.values():
-            if 'OVERRIDES' in v:
-                del v['OVERRIDES']
-
         msg = r'^Password was not given but private key is encrypted$'
-        with self.settings(CA_CRL_PROFILES=profiles), self.assertRaisesRegex(TypeError, msg):
+        with self.settings(CA_PASSWORDS={}), self.assertRaisesRegex(TypeError, msg):
             tasks.cache_crl(self.cas['pwd'].serial)
 
     def test_no_private_key(self):
         with self.assertRaises(FileNotFoundError):
             tasks.cache_crl(self.cas['pwd'].serial)
+
+
+class GenerateOCSPKeysTestCase(DjangoCAWithGeneratedCAsTestCase):
+    @override_tmpcadir()
+    def test_single(self):
+        for name, ca in self.cas.items():
+            tasks.generate_ocsp_key(ca.serial)
+            self.assertTrue(ca_storage.exists('ocsp/%s.key' % ca.serial))
+            self.assertTrue(ca_storage.exists('ocsp/%s.pem' % ca.serial))
+
+    @override_tmpcadir()
+    def test_all(self):
+        tasks.generate_ocsp_keys()
+
+        for name, ca in self.cas.items():
+            tasks.generate_ocsp_key(ca.serial)
+            self.assertTrue(ca_storage.exists('ocsp/%s.key' % ca.serial))
+            self.assertTrue(ca_storage.exists('ocsp/%s.pem' % ca.serial))
