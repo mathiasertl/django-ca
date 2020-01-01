@@ -24,7 +24,7 @@ services:
 
     backend:
         image: mathiasertl/django-ca:latest
-        command: celery worker -l warning -A ca
+        command: celery worker -l ${CELERY_LOG_LEVEL:-warning} -A ca -B -s /var/lib/django-ca/celerybeat-schedule
         networks:
             - cache
             - database
