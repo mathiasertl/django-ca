@@ -44,21 +44,6 @@ class TestBasic(DjangoCAWithGeneratedCAsTestCase):
             # tests* to fail, because the celery import would be cached to *not* work
             importlib.reload(tasks)
 
-    def test_run_task(self):
-        # first, unknown task raises KeyError
-        with self.assertRaises(KeyError):
-            tasks.run_task('unknown_task')
-
-        # run_task() without celery
-        with self.settings(CA_USE_CELERY=False), self.patch('django_ca.tasks.cache_crls') as mock:
-            tasks.run_task('cache_crls')
-            self.assertTrue(mock.called)
-
-        # finally, run_task() with celery
-        with self.settings(CA_USE_CELERY=True), self.mute_celery() as mock:
-            tasks.run_task('cache_crls')
-            self.assertEqual(mock.call_count, 1)
-
 
 class TestCacheCRLs(DjangoCAWithGeneratedCAsTestCase):
     @override_tmpcadir()

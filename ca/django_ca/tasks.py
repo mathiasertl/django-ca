@@ -14,6 +14,14 @@
 from . import ca_settings
 from .models import CertificateAuthority
 
+try:
+    from celery import shared_task
+except ImportError:
+    def shared_task(func):
+        func.delay = lambda *a, **kw: func(*a, **kw)
+        func.apply_async = lambda *a, **kw: func(*a, **kw)
+        return func
+
 
 def run_task(name, *args, **kwargs):
     eager = kwargs.pop('eager', False)
@@ -25,20 +33,25 @@ def run_task(name, *args, **kwargs):
         return func(*args, **kwargs)
 
 
+@shared_task
 def cache_crl(serial):
     ca = CertificateAuthority.objects.get(serial=serial)
     ca.cache_crls()
 
 
+@shared_task
 def cache_crls():
     for serial in CertificateAuthority.objects.usable().values_list('serial', flat=True):
-        run_task('cache_crl', serial)
+        cache_crl.delay(serial)
 
 
-try:
-    from celery import shared_task
-except ImportError:
-    pass
-else:
-    cache_crl = shared_task(cache_crl)
-    cache_crls = shared_task(cache_crls)
+@shared_task
+def generate_ocsp_key(serial, **kwargs):
+    ca = CertificateAuthority.objects.get(serial=serial)
+    ca.generate_ocsp_key(**kwargs)
+
+
+@shared_task
+def generate_ocsp_keys(**kwargs):
+    for serial in CertificateAuthority.objects.usable().values_list('serial', flat=True):
+        generate_ocsp_key.delay(serial, **kwargs)
