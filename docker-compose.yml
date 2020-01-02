@@ -7,9 +7,6 @@ services:
         networks:
             - cache
         restart: unless-stopped
-        deploy:
-            restart_policy:
-                condition: unless-stopped
 
     postgres:
         image: postgres:12-alpine
@@ -18,9 +15,6 @@ services:
         networks:
             - database
         restart: unless-stopped
-        deploy:
-            restart_policy:
-                condition: unless-stopped
 
     backend:
         image: mathiasertl/django-ca:latest
@@ -33,11 +27,9 @@ services:
             - shared_ca_dir:/var/lib/django-ca/certs/ca/shared/
             - ocsp_key_dir:/var/lib/django-ca/certs/ocsp/
         environment:
-            DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-/usr/src/django-ca/settings.yaml}
+            DJANGO_CA_HOSTNAME: ${DJANGO_CA_HOSTNAME:-localhost}
+            DJANGO_CA_SETTINGS: /usr/src/django-ca/settings.yaml
         restart: unless-stopped
-        deploy:
-            restart_policy:
-                condition: unless-stopped
 
     frontend:
         image: mathiasertl/django-ca:latest
@@ -53,15 +45,15 @@ services:
             - shared_ca_dir:/var/lib/django-ca/certs/ca/shared/
             - ocsp_key_dir:/var/lib/django-ca/certs/ocsp/
         environment:
-            DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-/usr/src/django-ca/settings.yaml}
+            DJANGO_CA_HOSTNAME: ${DJANGO_CA_HOSTNAME:-localhost}
+            DJANGO_CA_SETTINGS: /usr/src/django-ca/settings.yaml
             DJANGO_CA_UWSGI_INI: /usr/src/django-ca/uwsgi/uwsgi.ini
         restart: unless-stopped
-        deploy:
-            restart_policy:
-                condition: unless-stopped
 
     webserver:
         image: nginx:1.17-alpine
+        environment:
+            DJANGO_CA_HOSTNAME: ${DJANGO_CA_HOSTNAME:-localhost}
         ports:
             - 80:80
         networks:

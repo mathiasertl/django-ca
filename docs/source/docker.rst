@@ -2,6 +2,32 @@
 Docker
 ######
 
+There is a Docker container available for **django-ca**. A docker-compose file is available to deploy the full
+stack including all dependencies 
+
+******************
+Use docker-compose
+******************
+
+If you just want to run **django-ca** in a quick and efficient way, using `docker-compose
+<https://docs.docker.com/compose/>`_ is the fastest and most efficient option.
+
+You can fetch the current development version of ``docker-compose.yml`` `from GitHub
+https://github.com/mathiasertl/django-ca/`_. You also need to fetch ``docker/settings.yml`` and
+``docker/conf.d/default.conf``. Note that the compose configuration assumes that the latter two files are in
+the named subdirectories.
+
+Once you have these three files available, you only need to start the stack with the ``DJANGO_CA_HOSTNAME``
+environment variable naming the domain where your CA should be available::
+
+   DJANGO_CA_HOSTNAME=ca.local.example.com docker-compose up
+
+All configuration options listed below are of course also available here by patching ``docker-compose.yml``.
+
+**********
+Use Docker
+**********
+
 There is a **django-ca** Docker container available.
 
 Assuming you have Docker installed, simply start the docker container with::
@@ -17,9 +43,8 @@ interface, we also create a superuser::
 
 ... and visit http://localhost:8000/admin/.
 
-*************
 Configuration
-*************
+=============
 
 Every environment variable passed to the container that starts with ``DJANGO_CA_`` is loaded as a normal
 setting::
