@@ -1,6 +1,8 @@
 **/*.py[co]
 **/*.sw[a-z]
+**/*.log
 **/__pycache__
+**/*.sqlite3
 /.git/
 /.coverage
 /.docker/
