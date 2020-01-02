@@ -96,4 +96,5 @@ USER django-ca:django-ca
 EXPOSE 8000
 VOLUME ["/var/lib/django-ca/", "/usr/share/django-ca/"]
 WORKDIR /usr/src/django-ca/ca/
-CMD uwsgi.sh
+ENV DJANGO_CA_SETTINGS=settings.yaml
+CMD ./uwsgi.sh
