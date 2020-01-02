@@ -66,8 +66,8 @@ Create a docker image::
    export DOCKER_BUILDKIT=1
    docker build --no-cache -t django-ca-dev .
    docker run --rm -d --name=django-ca-dev -p 8000:8000 django-ca-dev
-   docker exec -it django-ca-dev python ca/manage.py createsuperuser
-   docker exec -it django-ca-dev python ca/manage.py init_ca \
+   docker exec -it django-ca-dev python manage.py createsuperuser
+   docker exec -it django-ca-dev python manage.py init_ca \
       example /C=AT/ST=Vienna/L=Vienna/O=Org/CN=ca.example.com
 
 ... and browse http://localhost:8000/admin.
