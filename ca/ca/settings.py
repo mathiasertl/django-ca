@@ -177,10 +177,11 @@ except ImportError:
 
 _CA_SETTINGS_FILE = os.environ.get('DJANGO_CA_SETTINGS', '')
 if _CA_SETTINGS_FILE:
-    with open(_CA_SETTINGS_FILE) as stream:
-        data = yaml.load(stream, Loader=Loader)
-    for key, value in data.items():
-        globals()[key] = value
+    for filename in _CA_SETTINGS_FILE.split(':'):
+        with open(filename) as stream:
+            data = yaml.load(stream, Loader=Loader)
+        for key, value in data.items():
+            globals()[key] = value
 
 # Also use DJANGO_CA_ environment variables
 for key, value in {k[10:]: v for k, v in os.environ.items() if k.startswith('DJANGO_CA_')}.items():
