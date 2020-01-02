@@ -2,8 +2,6 @@ import os
 
 import yaml
 
-from django.utils.crypto import get_random_string
-
 try:
     from yaml import CLoader as Loader
 except ImportError:
@@ -34,16 +32,3 @@ if os.path.exists(_secret_key_path):
         SECRET_KEY = stream.read()
 
 CA_DIR = '/var/lib/django-ca/certs'
-
-_CA_SETTINGS_FILE = os.environ.get('DJANGO_CA_SETTINGS')
-if _CA_SETTINGS_FILE:
-    with open(_CA_SETTINGS_FILE) as stream:
-        data = yaml.load(stream, Loader=Loader)
-    for key, value in data.items():
-        globals()[key] = value
-
-# Also use DJANGO_CA_ environment variables
-for key, value in {k[10:]: v for k, v in os.environ.items() if k.startswith('DJANGO_CA_')}.items():
-    if key == 'SETTINGS':
-        continue
-    globals()[key] = value

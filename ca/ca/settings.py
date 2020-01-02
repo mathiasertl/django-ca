@@ -2,6 +2,13 @@
 
 import os
 
+import yaml
+
+try:
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Loader
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -168,5 +175,23 @@ try:
 except ImportError:
     pass
 
+_CA_SETTINGS_FILE = os.environ.get('DJANGO_CA_SETTINGS', '')
+if _CA_SETTINGS_FILE:
+    with open(_CA_SETTINGS_FILE) as stream:
+        data = yaml.load(stream, Loader=Loader)
+    for key, value in data.items():
+        globals()[key] = value
+
+# Also use DJANGO_CA_ environment variables
+for key, value in {k[10:]: v for k, v in os.environ.items() if k.startswith('DJANGO_CA_')}.items():
+    if key == 'SETTINGS':
+        continue
+    globals()[key] = value
+
+# We generate SECRET_KEY on first invocation
+_secret_key_path = '/var/lib/django-ca/secret_key'
+if os.path.exists(_secret_key_path):
+    with open(_secret_key_path) as stream:
+        SECRET_KEY = stream.read()
 
 INSTALLED_APPS = INSTALLED_APPS + CA_CUSTOM_APPS
