@@ -1,8 +1,10 @@
+# syntax = docker/dockerfile:experimental
 ARG IMAGE=python:3.8-alpine3.10
 
 FROM $IMAGE as base
 WORKDIR /usr/src/django-ca
-RUN apk --no-cache upgrade && \
+RUN --mount=type=cache,target=/var/cache/apk \
+    apk --no-cache upgrade && \
     apk --no-cache add --update pcre openssl binutils busybox libpq postgresql-client
 
 # Add user (some tests check if it's impossible to write a file)
@@ -10,13 +12,17 @@ RUN addgroup -g 9000 -S django-ca && \
     adduser -S -u 9000 -G django-ca django-ca
 
 FROM base as build
-RUN apk --no-cache add --update build-base linux-headers libffi-dev openssl-dev \
+RUN --mount=type=cache,target=/var/cache/apk apk add --update \
+        build-base linux-headers libffi-dev openssl-dev \
         pcre-dev mailcap mariadb-connector-c-dev postgresql-dev
-RUN pip install -U setuptools pip wheel
+RUN --mount=type=cache,target=/root/.cache/pip pip install -U setuptools pip wheel
 
+COPY ca/ ca/
+COPY docker/* ca/
+RUN ls ca/
 COPY requirements.txt ./
 COPY requirements/ requirements/
-RUN pip install --no-warn-script-location --no-cache-dir --prefix=/install \
+RUN --mount=type=cache,target=/root/.cache/pip pip install --no-warn-script-location --prefix=/install \
     -r requirements/requirements-docker.txt \
     -r requirements/requirements-redis.txt \
     -r requirements/requirements-mysql.txt \
@@ -62,8 +68,7 @@ FROM build as prepare
 COPY --from=build /install /usr/local
 
 COPY ca/ ca/
-COPY docker/ docker/
-RUN mv docker/localsettings.py ca/ca/localsettings.py
+COPY docker/* ca/
 RUN rm -rf requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.example ca/.coverage
 
 # Test that imports are working
@@ -90,4 +95,4 @@ USER django-ca:django-ca
 EXPOSE 8000
 VOLUME ["/var/lib/django-ca/", "/usr/share/django-ca/"]
 WORKDIR /usr/src/django-ca/ca/
-CMD ../docker/start.sh
+CMD uwsgi.sh

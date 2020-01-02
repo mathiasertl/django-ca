@@ -1,27 +1,14 @@
-CACHES:
-    default:
-        BACKEND: redis_cache.RedisCache
-        LOCATION: redis://redis:6379
-        OPTIONS:
-            DB: 1
-            PARSER_CLASS: redis.connection.HiredisParser
-
+# standard django settings
+ALLOWED_HOSTS:
+    - "*"
 DATABASES:
     default:
-        ENGINE: django.db.backends.postgresql_psycopg2
-        NAME: postgres
-        USER: postgres
-        PASSWORD: postgres
-        HOST: postgres
-        PORT: 5432
+        ENGINE: django.db.backends.sqlite3
+        NAME: /var/lib/django-ca/db.sqlite3,
+DEBUG: False
+LOGIN_URL: /admin/login/
+MEDIA_ROOT: /usr/share/django-ca/media/
+STATIC_ROOT: /usr/share/django-ca/static/
 
-CELERY_BROKER_URL: redis://redis:6379/0
-CELERY_BEAT_SCHEDULE:
-    cache-crls:
-        task: django_ca.tasks.cache_crls
-        schedule: 86100
-    generate-ocsp-keys:
-        # schedule is three days minus five minutes, since keys expire after
-        # three days by default.
-        task: django_ca.tasks.generate_ocsp_keys
-        schedule: 258900
+# custom settings
+CA_DIR: /var/lib/django-ca/certs
