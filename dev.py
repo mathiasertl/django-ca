@@ -49,7 +49,7 @@ ti_parser = commands.add_parser('test-imports', help='Import django-ca modules t
 dt_parser = commands.add_parser('docker-test', help='Build the Docker image using various base images.')
 dt_parser.add_argument('-i', '--image', action='append', dest='images',
                        help='Base images to test on, may be given multiple times.')
-dt_parser.add_argument('-c', '--cache', dest='no_cache', default='True', action='store_false',
+dt_parser.add_argument('--no-cache', default=False, action='store_true',
                        help='Use Docker cache to speed up builds.')
 dt_parser.add_argument('--fail-fast', action='store_true', default=False,
                        help='Stop if any docker process fails.')
@@ -286,8 +286,10 @@ elif args.command == 'docker-test':
         if not os.path.exists(logdir):
             os.makedirs(logdir)
 
+        env = dict(os.environ, DOCKER_BUILDKIT='1')
+
         try:
-            with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as p, \
+            with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env) as p, \
                     open(logpath, 'bw') as stream:
                 while True:
                     byte = p.stdout.read(1)

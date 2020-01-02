@@ -63,6 +63,7 @@ Docker image
 
 Create a docker image::
 
+   export DOCKER_BUILDKIT=1
    docker build --no-cache -t django-ca-dev .
    docker run --rm -d --name=django-ca-dev -p 8000:8000 django-ca-dev
    docker exec -it django-ca-dev python ca/manage.py createsuperuser

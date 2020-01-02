@@ -3,23 +3,24 @@ ARG IMAGE=python:3.8-alpine3.10
 
 FROM $IMAGE as base
 WORKDIR /usr/src/django-ca
-RUN --mount=type=cache,target=/var/cache/apk \
-    apk --no-cache upgrade && \
-    apk --no-cache add --update pcre openssl binutils busybox libpq postgresql-client
+
+RUN --mount=type=cache,target=/etc/apk/cache ls /etc/apk/cache && echo 6 > /dev/null
+RUN --mount=type=cache,target=/etc/apk/cache apk -v upgrade
+RUN --mount=type=cache,target=/etc/apk/cache apk -v add --update \
+        pcre openssl binutils busybox libpq postgresql-client
 
 # Add user (some tests check if it's impossible to write a file)
 RUN addgroup -g 9000 -S django-ca && \
     adduser -S -u 9000 -G django-ca django-ca
 
 FROM base as build
-RUN --mount=type=cache,target=/var/cache/apk apk add --update \
+RUN --mount=type=cache,target=/etc/apk/cache apk add \
         build-base linux-headers libffi-dev openssl-dev \
         pcre-dev mailcap mariadb-connector-c-dev postgresql-dev
 RUN --mount=type=cache,target=/root/.cache/pip pip install -U setuptools pip wheel
 
 COPY ca/ ca/
 COPY docker/* ca/
-RUN ls ca/
 COPY requirements.txt ./
 COPY requirements/ requirements/
 RUN --mount=type=cache,target=/root/.cache/pip pip install --no-warn-script-location --prefix=/install \
@@ -36,8 +37,7 @@ COPY --from=build /install /usr/local
 ENV SKIP_SELENIUM_TESTS=y
 
 # Install additional requirements for testing:
-RUN pip install --no-cache-dir \
-    -r requirements/requirements-docker.txt \
+RUN --mount=type=cache,target=/root/.cache/pip pip install \
     -r requirements/requirements-docs.txt \
     -r requirements/requirements-test.txt \
     -r requirements/requirements-lint.txt
@@ -68,14 +68,15 @@ FROM build as prepare
 COPY --from=build /install /usr/local
 
 COPY ca/ ca/
-COPY docker/* ca/
 RUN rm -rf requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.example ca/.coverage
 
 # Test that imports are working
 ENV DJANGO_SETTINGS_MODULE=ca.settings
 RUN cd ca && python -c "import django; \
-django.setup(); \
 from django.conf import settings; \
+settings.configure(SECRET_KEY='dummy', BASE_DIR='/usr/src/django-ca/ca',\
+                   INSTALLED_APPS=['django_ca']); \
+django.setup(); \
 from django_ca import utils, models, views, extensions, subject"
 
 ###############
