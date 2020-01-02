@@ -13,7 +13,7 @@ If you just want to run **django-ca** in a quick and efficient way, using `docke
 <https://docs.docker.com/compose/>`_ is the fastest and most efficient option.
 
 You can fetch the current development version of ``docker-compose.yml`` `from GitHub
-https://github.com/mathiasertl/django-ca/`_. You also need to fetch ``docker/settings.yml`` and
+<https://github.com/mathiasertl/django-ca/>`_. You also need to fetch ``docker/settings.yml`` and
 ``docker/conf.d/default.conf``. Note that the compose configuration assumes that the latter two files are in
 the named subdirectories.
 
