@@ -167,6 +167,8 @@ LOGGING = {
     }
 }
 
+SECRET_KEY_FILE = ''
+
 try:
     try:
         from .localsettings import *  # NOQA
@@ -185,14 +187,17 @@ if _CA_SETTINGS_FILE:
 
 # Also use DJANGO_CA_ environment variables
 for key, value in {k[10:]: v for k, v in os.environ.items() if k.startswith('DJANGO_CA_')}.items():
-    if key == 'SETTINGS':
+    if key == 'SETTINGS':  # points to yaml files loaded above
         continue
     globals()[key] = value
 
-# We generate SECRET_KEY on first invocation
-_secret_key_path = '/var/lib/django-ca/secret_key'
-if os.path.exists(_secret_key_path):
-    with open(_secret_key_path) as stream:
-        SECRET_KEY = stream.read()
+if not SECRET_KEY:
+    # We generate SECRET_KEY on first invocation
+    if not SECRET_KEY_FILE:
+        SECRET_KEY_FILE = os.environ.get('SECRET_KEY_FILE', '/var/lib/django-ca/secret_key')
+
+    if SECRET_KEY_FILE and os.path.exists(SECRET_KEY_FILE):
+        with open(SECRET_KEY_FILE) as stream:
+            SECRET_KEY = stream.read()
 
 INSTALLED_APPS = INSTALLED_APPS + CA_CUSTOM_APPS
