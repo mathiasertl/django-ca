@@ -95,14 +95,15 @@ COPY --from=prepare /install /usr/local
 COPY --from=prepare /usr/share/django-ca/static /usr/share/django-ca/static
 
 RUN mkdir -p /usr/share/django-ca/static /usr/share/django-ca/media /var/lib/django-ca/ \
-             /var/lib/django-ca/certs/ca/shared /var/lib/django-ca/certs/ocsp && \
+             /var/lib/django-ca/certs/ca/shared /var/lib/django-ca/certs/ocsp \
+             /var/lib/django-ca/shared && \
     chown -R django-ca:django-ca /usr/share/django-ca/ /var/lib/django-ca/
 
 COPY --from=prepare /usr/src/django-ca/ ./
 
 USER django-ca:django-ca
 EXPOSE 8000
-VOLUME ["/var/lib/django-ca/", "/usr/share/django-ca/"]
+VOLUME ["/var/lib/django-ca/", "/usr/share/django-ca/media/"]
 WORKDIR /usr/src/django-ca/ca/
 ENV DJANGO_CA_SETTINGS=settings.yaml
 CMD ./uwsgi.sh
