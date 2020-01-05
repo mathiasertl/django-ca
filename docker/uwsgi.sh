@@ -32,5 +32,6 @@ EOF
     chmod go-rwx ${DJANGO_CA_SECRET_KEY_FILE}
 fi
 
-python manage.py migrate --noinput &
+set -x
+python manage.py migrate --noinput &>/dev/null &
 exec uwsgi --ini ${DJANGO_CA_UWSGI_INI} ${DJANGO_CA_UWSGI_PARAMS} "$@"

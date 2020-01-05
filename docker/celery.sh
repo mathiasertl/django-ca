@@ -33,4 +33,5 @@ EOF
     chmod go-rwx ${DJANGO_CA_SECRET_KEY_FILE}
 fi
 
+set -x
 exec celery worker -A ca -B -s /var/lib/django-ca/celerybeat-schedule "$@"
