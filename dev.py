@@ -18,14 +18,17 @@ from __future__ import print_function
 import argparse
 import json
 import os
+import shutil
 import subprocess
 import sys
 import traceback
 import warnings
 
+if os.environ.get('SCRIPT_LOCATION'):  # NOQA
+    pyver = 'python{v.major}.{v.minor}'.format(v=sys.version_info)
+    sys.path.insert(0, os.path.join(os.environ['SCRIPT_LOCATION'], 'lib', pyver, 'site-packages'))
+
 import packaging.version
-import six
-from termcolor import colored
 
 import cryptography
 from cryptography import x509
@@ -66,10 +69,19 @@ cov_parser.add_argument('--fail-under', type=int, default=100, metavar='[0-100]'
 demo_parser = commands.add_parser('init-demo', help="Initialize the demo data.")
 
 data_parser = commands.add_parser('update-ca-data', help="Update tables for ca_examples.rst in docs.")
+collectstatic_parser = commands.add_parser('collectstatic', help="Collect and remove static files.")
+collectstatic_parser.add_argument('--install-dir', metavar='PATH',
+                                  help="Assume modules were installed to PATH.")
 
 args = parser.parse_args()
 
 _rootdir = os.path.dirname(os.path.realpath(__file__))
+
+try:
+    from termcolor import colored
+except ImportError:
+    def colored(msg, *args, **kwargs):
+        return msg
 
 
 def error(msg, **kwargs):
@@ -242,7 +254,7 @@ elif args.command == 'test-imports':
     from django.conf import settings  # NOQA
 
     # import some modules - if any dependency is not installed, this will fail
-    from django_ca import utils, models, views, extensions, subject  # NOQA
+    from django_ca import utils, models, views, extensions, subject, tasks  # NOQA
 
 elif args.command == 'docker-test':
     images = args.images or [
@@ -571,7 +583,7 @@ elif args.command == 'update-ca-data':
                             return '%s: %s' % (r.organization, ', '.join(numbers))
 
                         def policy_as_str(p):
-                            if isinstance(p, six.string_types):
+                            if isinstance(p, str):
                                 return p
                             elif p.explicit_text is None and p.notice_reference is None:
                                 return 'Empty UserNotice'
@@ -1020,5 +1032,25 @@ elif args.command == 'update-ca-data':
 
         with open(filename, 'w') as stream:
             stream.write(table)
+elif args.command == 'collectstatic':
+    if args.install_dir:
+        pyver = 'python{v.major}{v.minor}'.format(v=sys.version_info)
+        sys.path.insert(0, os.path.join(args.install_dir, 'lib', pyver, 'site-packages'))
+        print('###', sys.path[0])
+
+    setup_django('ca.settings')
+
+    from django.core.management import call_command
+    from django.contrib.staticfiles.finders import get_finders
+    call_command('collectstatic', interactive=False)
+
+    locations = set()
+    for finder in get_finders():
+        for path, storage in finder.list([]):
+            locations.add(storage.location)
+
+    for location in locations:
+        print('rm -r "%s"' % location)
+        shutil.rmtree(location)
 else:
     parser.print_help()

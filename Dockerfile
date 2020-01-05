@@ -65,25 +65,31 @@ RUN python dev.py init-demo
 # Build stage #
 ###############
 FROM build as prepare
-COPY --from=build /install /usr/local
+COPY --from=build /install /install
 
 COPY ca/ ca/
 RUN rm -rf requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.example ca/.coverage
 
-# Test that imports are working
+# Collect static files and remove source files
+COPY dev.py .
 ENV DJANGO_SETTINGS_MODULE=ca.settings
-RUN cd ca && python -c "import django; \
-from django.conf import settings; \
-settings.configure(SECRET_KEY='dummy', BASE_DIR='/usr/src/django-ca/ca',\
-                   INSTALLED_APPS=['django_ca']); \
-django.setup(); \
-from django_ca import utils, models, views, extensions, subject"
+ENV DJANGO_CA_SETTINGS=ca/settings.yaml
+ENV DJANGO_CA_SECRET_KEY=dummy
+RUN SCRIPT_LOCATION=/install ./dev.py collectstatic
+
+# Test that imports are working
+RUN cp -a /install/* /usr/local/
+RUN ./dev.py test-imports
+
+# Remove files from working directory
+RUN rm dev.py
 
 ###############
 # final stage #
 ###############
 FROM base
-COPY --from=build /install /usr/local
+COPY --from=prepare /install /usr/local
+COPY --from=prepare /usr/share/django-ca/static /usr/share/django-ca/static
 
 RUN mkdir -p /usr/share/django-ca/static /usr/share/django-ca/media /var/lib/django-ca/ \
              /var/lib/django-ca/certs/ca/shared /var/lib/django-ca/certs/ocsp && \
