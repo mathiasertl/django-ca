@@ -9,21 +9,28 @@ if [ ! -e ${DJANGO_CA_UWSGI_INI} ]; then
     exit 1
 fi
 
-if [ ! -e ${DJANGO_CA_LIB_DIR} ]; then
-    mkdir -p ${DJANGO_CA_LIB_DIR}
-fi
+DJANGO_CA_SECRET_KEY=${DJANGO_CA_SECRET_KEY:-}
+DJANGO_CA_SECRET_KEY_FILE=${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/secret_key}
 
-chmod go-rwx ${DJANGO_CA_LIB_DIR}
-if [ ! -e ${DJANGO_CA_LIB_DIR}/secret_key ]; then
-    python <<EOF
+if [ -z "${DJANGO_CA_SECRET_KEY}" ]; then
+    KEY_DIR=`dirname $DJANGO_CA_SECRET_KEY_FILE`
+    if [ ! -e "${KEY_DIR}" ]; then
+        mkdir -p ${KEY_DIR}
+        chmod go-rwx ${KEY_DIR}
+    fi
+
+    if [ ! -e "${DJANGO_CA_SECRET_KEY_FILE}" ]; then
+        echo "Create secret key at ${DJANGO_CA_SECRET_KEY_FILE}..."
+        python <<EOF
 import random, string
 
-key = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(32))
-with open('/var/lib/django-ca/secret_key', 'w') as stream:
+key = ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(32))
+with open('${DJANGO_CA_SECRET_KEY_FILE}', 'w') as stream:
     stream.write(key)
 EOF
+    fi
+    chmod go-rwx ${DJANGO_CA_SECRET_KEY_FILE}
 fi
-chmod go-rwx ${DJANGO_CA_LIB_DIR}/secret_key
 
 python manage.py migrate --noinput &
 uwsgi --ini ${DJANGO_CA_UWSGI_INI} ${DJANGO_CA_UWSGI_PARAMS}
