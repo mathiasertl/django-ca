@@ -19,8 +19,6 @@ RUN --mount=type=cache,target=/etc/apk/cache apk add \
         pcre-dev mailcap mariadb-connector-c-dev postgresql-dev
 RUN --mount=type=cache,target=/root/.cache/pip pip install -U setuptools pip wheel
 
-COPY ca/ ca/
-COPY docker/* ca/
 COPY requirements.txt ./
 COPY requirements/ requirements/
 RUN --mount=type=cache,target=/root/.cache/pip pip install --no-warn-script-location --prefix=/install \
@@ -28,6 +26,9 @@ RUN --mount=type=cache,target=/root/.cache/pip pip install --no-warn-script-loca
     -r requirements/requirements-redis.txt \
     -r requirements/requirements-mysql.txt \
     -r requirements/requirements-postgres.txt
+
+# Finally, copy sources
+COPY ca/ ca/
 
 ##############
 # Test stage #
@@ -68,6 +69,8 @@ FROM build as prepare
 COPY --from=build /install /install
 
 COPY ca/ ca/
+COPY docker/* ca/
+COPY uwsgi/ uwsgi/
 RUN rm -rf requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.example ca/.coverage
 
 # Collect static files and remove source files
@@ -96,7 +99,6 @@ RUN mkdir -p /usr/share/django-ca/static /usr/share/django-ca/media /var/lib/dja
     chown -R django-ca:django-ca /usr/share/django-ca/ /var/lib/django-ca/
 
 COPY --from=prepare /usr/src/django-ca/ ./
-COPY uwsgi/ uwsgi/
 
 USER django-ca:django-ca
 EXPOSE 8000
