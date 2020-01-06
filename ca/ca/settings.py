@@ -169,17 +169,20 @@ LOGGING = {
 
 SECRET_KEY_FILE = ''
 
+_skip_local_config = os.environ.get('DJANGO_CA_SKIP_LOCAL_CONFIG') == '1'
+
 try:
-    try:
-        from .localsettings import *  # NOQA
-    except ImportError:
-        from localsettings import *  # NOQA
+    if not _skip_local_config:
+        try:
+            from .localsettings import *  # NOQA
+        except ImportError:
+            from localsettings import *  # NOQA
 except ImportError:
     pass
 
 _default_settings = 'settings.yaml'
 _CA_SETTINGS_FILE = os.environ.get('DJANGO_CA_SETTINGS', _default_settings)
-if _CA_SETTINGS_FILE:
+if _CA_SETTINGS_FILE and not _skip_local_config:
     for _filename in _CA_SETTINGS_FILE.split(':'):
         _full_path = os.path.join(BASE_DIR, _filename)
         if _filename == _default_settings and not os.path.exists(_full_path):
