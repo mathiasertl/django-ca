@@ -200,6 +200,9 @@ if not SECRET_KEY:
         with open(SECRET_KEY_FILE) as stream:
             SECRET_KEY = stream.read()
 
+if not ALLOWED_HOSTS and os.environ.get('DJANGO_CA_HOSTNAME'):
+    ALLOWED_HOSTS = [os.environ['DJANGO_CA_HOSTNAME']]
+
 INSTALLED_APPS = INSTALLED_APPS + CA_CUSTOM_APPS
 
 
