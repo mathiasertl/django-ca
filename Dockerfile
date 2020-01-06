@@ -45,7 +45,6 @@ RUN --mount=type=cache,target=/root/.cache/pip pip install \
 COPY setup.py dev.py tox.ini recreate-fixtures.py ./
 COPY --chown=django-ca:django-ca docs/ docs/
 COPY --chown=django-ca:django-ca ca/ ca/
-COPY --chown=django-ca:django-ca docker/localsettings.py ca/ca/localsettings.py
 
 # Create some files/directories that we need later on
 RUN touch .coverage
@@ -86,6 +85,9 @@ RUN ./dev.py test-imports
 
 # Remove files from working directory
 RUN rm dev.py
+
+# Seems like with BuildKit, the test stage is never executed unless we somehow depend on it
+COPY --from=test .coverage /tmp
 
 ###############
 # final stage #
