@@ -73,6 +73,7 @@ Deprecation notices
 ===================
 
 * This is the last release to support Django 1.11 and 2.1.
+* This is the last release to support Alpine Linux 3.8.
 * :py:func:`Certificate.objects.init() <django_ca.managers.CertificateManager.init>` and
   :py:func:`~django_ca.profiles.get_cert_profile_kwargs` were deprecated in :ref:`1.14.0 <changelog-1.14.0>`
   and will be removed in ``django-ca==1.16.0``. Use
