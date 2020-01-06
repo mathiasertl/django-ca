@@ -36,9 +36,9 @@ def run_task(task, *args, **kwargs):
 
 
 @shared_task
-def cache_crl(serial):
+def cache_crl(serial, **kwargs):
     ca = CertificateAuthority.objects.get(serial=serial)
-    ca.cache_crls()
+    ca.cache_crls(**kwargs)
 
 
 @shared_task
