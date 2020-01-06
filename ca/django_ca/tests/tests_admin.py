@@ -922,7 +922,7 @@ class ProfilesViewTestCase(AdminTestMixin, DjangoCATestCase):
                 'subject': dict(Subject(ca_settings.CA_DEFAULT_SUBJECT)),
             },
             'ocsp': {
-                'cn_in_san': True,
+                'cn_in_san': False,
                 'description': 'A certificate for an OCSP responder.',
                 'extensions': {
                     'basic_constraints': {
