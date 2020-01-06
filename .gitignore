@@ -4,6 +4,7 @@
 *.egg-info
 geckodriver.log
 localsettings.py
+/.env
 /.tox/
 /MANIFEST
 /bin/
