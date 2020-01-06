@@ -28,14 +28,14 @@ if os.environ.get('SCRIPT_LOCATION'):  # NOQA
     pyver = 'python{v.major}.{v.minor}'.format(v=sys.version_info)
     sys.path.insert(0, os.path.join(os.environ['SCRIPT_LOCATION'], 'lib', pyver, 'site-packages'))
 
-import packaging.version
+import packaging.version  # isort:skip
 
-import cryptography
-from cryptography import x509
-from cryptography.hazmat.backends import default_backend
+import cryptography  # isort:skip
+from cryptography import x509  # isort:skip
+from cryptography.hazmat.backends import default_backend  # isort:skip
 
-import django
-from django.core.exceptions import ImproperlyConfigured
+import django  # isort:skip
+from django.core.exceptions import ImproperlyConfigured  # isort:skip
 
 test_base = argparse.ArgumentParser(add_help=False)
 test_base.add_argument('-s', '--suites', default=[], nargs='+',
