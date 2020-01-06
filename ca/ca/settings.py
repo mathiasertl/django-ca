@@ -189,7 +189,10 @@ if _CA_SETTINGS_FILE:
 for key, value in {k[10:]: v for k, v in os.environ.items() if k.startswith('DJANGO_CA_')}.items():
     if key == 'SETTINGS':  # points to yaml files loaded above
         continue
-    globals()[key] = value
+    elif key == 'ALLOWED_HOSTS':
+        globals()[key] = value.split()
+    else:
+        globals()[key] = value
 
 if not SECRET_KEY:
     # We generate SECRET_KEY on first invocation
@@ -199,9 +202,6 @@ if not SECRET_KEY:
     if SECRET_KEY_FILE and os.path.exists(SECRET_KEY_FILE):
         with open(SECRET_KEY_FILE) as stream:
             SECRET_KEY = stream.read()
-
-if not ALLOWED_HOSTS and os.environ.get('DJANGO_CA_HOSTNAME'):
-    ALLOWED_HOSTS = [os.environ['DJANGO_CA_HOSTNAME']]
 
 INSTALLED_APPS = INSTALLED_APPS + CA_CUSTOM_APPS
 

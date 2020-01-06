@@ -34,6 +34,7 @@ services:
             - ocsp_key_dir:/var/lib/django-ca/certs/ocsp/
             - shared:/var/lib/django-ca/shared/
         environment:
+            DJANGO_CA_ALLOWED_HOSTS: ${DJANGO_CA_HOSTNAME:-localhost}
             DJANGO_CA_SECRET_KEY: ${DJANGO_CA_SECRET_KEY:-}
             DJANGO_CA_SECRET_KEY_FILE: ${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/shared/secret-key}
             DJANGO_CA_HOSTNAME: ${DJANGO_CA_HOSTNAME:-localhost}
@@ -62,6 +63,7 @@ services:
             - shared:/var/lib/django-ca/shared/
             - nginx_config:/usr/src/django-ca/nginx/
         environment:
+            DJANGO_CA_ALLOWED_HOSTS: ${DJANGO_CA_HOSTNAME:-localhost}
             DJANGO_CA_HOSTNAME: ${DJANGO_CA_HOSTNAME:-localhost}
             DJANGO_CA_SETTINGS: settings.yaml:compose.yaml
             DJANGO_CA_SECRET_KEY: ${DJANGO_CA_SECRET_KEY:-}
@@ -75,10 +77,12 @@ services:
 
     webserver:
         image: nginx:1.17-alpine
+        command: /bin/sh -c "envsubst < /etc/nginx/conf.d/default.template > /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"
         depends_on:
             - frontend
         environment:
-            DJANGO_CA_HOSTNAME: ${DJANGO_CA_HOSTNAME:-localhost}
+            NGINX_HOST: ${DJANGO_CA_HOSTNAME:-localhost}
+            NGINX_PORT: ${NGINX_PORT:-80}
         ports:
             - 80:80
         networks:
