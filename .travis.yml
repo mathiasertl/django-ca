@@ -7,14 +7,14 @@ python:  # https://devguide.python.org/#status-of-python-branches
   - "3.8"
   - "nightly"
 env:  # https://www.djangoproject.com/download/
-  - DJANGO=3.0.1 CRYPTOGRAPHY=2.8
-  - DJANGO=3.0.1 CRYPTOGRAPHY=2.8
-  - DJANGO=2.2.8 CRYPTOGRAPHY=2.8
-  - DJANGO=2.2.8 CRYPTOGRAPHY=2.7
+  - DJANGO=3.0.2 CRYPTOGRAPHY=2.8
+  - DJANGO=3.0.2 CRYPTOGRAPHY=2.8
+  - DJANGO=2.2.9 CRYPTOGRAPHY=2.8
+  - DJANGO=2.2.9 CRYPTOGRAPHY=2.7
   - DJANGO=2.1.15 CRYPTOGRAPHY=2.8
   - DJANGO=2.1.15 CRYPTOGRAPHY=2.7
-  - DJANGO=1.11.26 CRYPTOGRAPHY=2.8
-  - DJANGO=1.11.26 CRYPTOGRAPHY=2.7
+  - DJANGO=1.11.27 CRYPTOGRAPHY=2.8
+  - DJANGO=1.11.27 CRYPTOGRAPHY=2.7
 install:
   # Build/test dependencies
  - pip install -U pip setuptools
@@ -37,13 +37,13 @@ script:
 matrix:
     exclude:
         # Django 3.0 doesn't support Python 3.5
-        - env: DJANGO=3.0.1 CRYPTOGRAPHY=2.7
+        - env: DJANGO=3.0.2 CRYPTOGRAPHY=2.7
           python: "3.5"
-        - env: DJANGO=3.0.1 CRYPTOGRAPHY=2.8
+        - env: DJANGO=3.0.2 CRYPTOGRAPHY=2.8
           python: "3.5"
 
         # We do not test Django 1.11 with Python nightly
-        - env: DJANGO=1.11.26 CRYPTOGRAPHY=2.8
+        - env: DJANGO=1.11.27 CRYPTOGRAPHY=2.8
           python: "nightly"
-        - env: DJANGO=1.11.26 CRYPTOGRAPHY=2.7
+        - env: DJANGO=1.11.27 CRYPTOGRAPHY=2.7
           python: "nightly"
