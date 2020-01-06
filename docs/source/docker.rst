@@ -28,6 +28,26 @@ configuring the domain where your CA should be available::
 
    DJANGO_CA_HOSTNAME=ca.local.example.com docker-compose up
 
+... and visit http://ca.local.example.com (assuming you set up your DNS correctly). If you want SSL for the
+admin interface (you probably should) you have to :ref:`configure nginx <docker-compose-nginx>`.
+
+All you need now is to create a user for the web interface as well as CAs to create certificates. You have to
+create the CAs in the *backend* service to be able to automatically generate CRLs and OCSP keys. You can pass
+``--path=ca/shared/`` when to make its private key available to the *frontend* (= the webserver) to be able to
+create keys for the intermediate CA using the web interface:
+
+.. code-block:: console
+
+   $ docker-compose exec backend python manage.py createsuperuser
+   $ docker-compose exec backend python manage.py init_ca --pathlen=1 \
+   >   root /C=AT/ST=Vienna/L=Vienna/O=Org/CN=ca.example.com
+   $ docker-compose exec backend python manage.py list_cas
+   6F:C8:37:15:2A:21:08:AD:BB:A8:89:4A:6A:19:03:56:37:0B:F5:1A - root
+   $ docker-compose exec backend python manage.py init_ca \
+   >   --path=ca/shared/ \
+   >   --parent=6F:C8:37:15:2A:21:08:AD:BB:A8:89:4A:6A:19:03:56:37:0B:F5:1A \
+   >   child /C=AT/ST=Vienna/L=Vienna/O=Org/CN=child.ca.example.com
+
 You can configure django-ca using all the mechanisms described in :ref:`docker-configuration`. For more
 complex configuration changes, you might want to consider `extending docker-compose.yml
 <https://docs.docker.com/compose/extends/>`_. For example, to add additional YAML configuration to django-ca
@@ -57,12 +77,66 @@ database out of the box::
 
    POSTGRES_PASSWORD=password123 ... docker-compose up
 
+.. _docker-compose-nginx:
+
+Configure nginx
+===============
+
+If you want to change the nginx configuration (for example, to add TLS to your setup), you can override
+``/etc/nginx/conf.d/default.template`` as a custom volume.
+
+.. NOTE::
+
+   Please note that various services (like OCSP and CRL lists) typically *have to* be available via HTTP and
+   not HTTPS. You cannot completely disable HTTP via port 80 unless you do not need any certificate revocation
+   services.
+
+.. code-block:: yaml
+   :caption: docker-compose.override.yml
+
+   version: "3.7"
+   services:
+       ports:
+           - 443:443
+       webserver:
+           volumes: ${PWD}/default.template:/etc/nginx/conf.d/default.template
+
+... where ``${PWD}/default.template`` would be the custom site configuration configuration. Note that via
+``envsubst``, this file can use environment variables for configuration as described in the `Docker image
+documentation <https://hub.docker.com/_/nginx>`_:
+
+.. code-block:: nginx
+   :caption: default.template
+
+   upstream django_ca_frontend {
+      server frontend:8000;
+   }
+   
+   server {
+      listen       ${NGINX_PORT} default_server;
+      server_name  ${NGINX_HOST};
+
+      # other directives...
+   }
+
+   server {
+      listen       443 default_server;
+      server_name  ${NGINX_HOST};
+
+      # TLS configuration:
+      ssl_certificate ...;
+      ssl_certificate_key ...;
+
+      # other directives...
+   }
+
 
 **********
 Use Docker
 **********
 
-There is a **django-ca** Docker container available.
+You may want to use the Docker image verbatim for a sleeker setup that uses SQLite3 as a database and no
+cache, no message broker and no other fancy stuff.
 
 Assuming you have Docker installed, simply start the docker container with::
 
@@ -84,9 +158,9 @@ Configuration
 *************
 
 You can configure django-ca using either environment variables or additional configuration files. The included
-uWSGI server can also be configured by using different ``.ini`` configuration files. 
-You can reuse the environment variables used by the PostgreSQL and MySQL/MariaDB Docker containers to set up
-database access. You can also use Docker Secrets to configure Djangos "Secret Key".
+uWSGI server can also be configured by using different ``.ini`` configuration files.  You can reuse the
+environment variables used by the PostgreSQL and MySQL/MariaDB Docker containers to set up database access.
+You can also use Docker Secrets to configure Djangos "Secret Key".
 
 If you use a plain Docker container, you can pass configuration as described below. If you :ref:`use
 docker-compose <docker-compose>`, you probably need to extend the default configuration as described above.
