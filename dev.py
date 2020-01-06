@@ -360,9 +360,10 @@ elif args.command == 'docker-test':
         error("\nSome images failed.")
 
 elif args.command == 'init-demo':
+    os.environ['DJANGO_CA_SECRET_KEY'] = 'dummy'
+
     if 'TOX_ENV_DIR' in os.environ:
         os.environ['DJANGO_CA_SKIP_LOCAL_CONFIG'] = '1'
-        os.environ['DJANGO_CA_SECRET_KEY'] = 'dummy'
         os.environ['CA_DIR'] = os.environ['TOX_ENV_DIR']
 
     try:
