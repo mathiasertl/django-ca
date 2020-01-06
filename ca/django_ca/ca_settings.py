@@ -116,6 +116,7 @@ CA_PROFILES = {
     },
     'ocsp': {
         'description': _('A certificate for an OCSP responder.'),
+        'cn_in_san': False,  # CAs frequently use human readable name as CN
         'add_ocsp_url': False,
         'extensions': {
             'key_usage': {
