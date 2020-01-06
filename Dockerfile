@@ -49,7 +49,7 @@ COPY --chown=django-ca:django-ca ca/ ca/
 # Create some files/directories that we need later on
 RUN touch .coverage
 RUN mkdir -p /var/lib/django-ca/
-RUN chown django-ca:django-ca .coverage /var/lib/django-ca/
+RUN chown django-ca:django-ca .coverage /var/lib/django-ca/ /usr/src/django-ca/ca
 
 # From here on, we run as normal user
 USER django-ca:django-ca
@@ -87,7 +87,7 @@ RUN ./dev.py test-imports
 RUN rm dev.py
 
 # Seems like with BuildKit, the test stage is never executed unless we somehow depend on it
-COPY --from=test .coverage /tmp
+COPY --from=test /usr/src/django-ca/.coverage /tmp
 
 ###############
 # final stage #
