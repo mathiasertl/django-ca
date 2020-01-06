@@ -23,10 +23,10 @@ message broker.
 You can fetch tagged versions or the current development version of ``docker-compose.yml`` `from GitHub
 <https://github.com/mathiasertl/django-ca/>`_.
 
-The only environment variable you need to pass is ``DJANGO_CA_HOSTNAME`` (as it defaults to localhost),
+The only environment variable you need to pass is ``DJANGO_CA_CA_DEFAULT_HOSTNAME`` (as it defaults to localhost),
 configuring the domain where your CA should be available::
 
-   DJANGO_CA_HOSTNAME=ca.local.example.com docker-compose up
+   DJANGO_CA_CA_DEFAULT_HOSTNAME=ca.local.example.com docker-compose up
 
 ... and visit http://ca.local.example.com (assuming you set up your DNS correctly). If you want SSL for the
 admin interface (you probably should) you have to :ref:`configure nginx <docker-compose-nginx>`.
@@ -41,11 +41,8 @@ create keys for the intermediate CA using the web interface:
    $ docker-compose exec backend python manage.py createsuperuser
    $ docker-compose exec backend python manage.py init_ca --pathlen=1 \
    >   root /C=AT/ST=Vienna/L=Vienna/O=Org/CN=ca.example.com
-   $ docker-compose exec backend python manage.py list_cas
-   6F:C8:37:15:2A:21:08:AD:BB:A8:89:4A:6A:19:03:56:37:0B:F5:1A - root
    $ docker-compose exec backend python manage.py init_ca \
-   >   --path=ca/shared/ \
-   >   --parent=6F:C8:37:15:2A:21:08:AD:BB:A8:89:4A:6A:19:03:56:37:0B:F5:1A \
+   >   --path=ca/shared/ --parent=ca.example.com \
    >   child /C=AT/ST=Vienna/L=Vienna/O=Org/CN=child.ca.example.com
 
 You can configure django-ca using all the mechanisms described in :ref:`docker-configuration`. For more
