@@ -36,6 +36,15 @@ django-ca   Python            Django               cryptography      idna
 1.4         2.7/3.4 - 3.6     1.8 - 1.10           1.7
 =========== ================= ==================== ================= =========
 
+******************
+Use docker-compose
+******************
+
+The fastest and by far easiest way to run django-ca with :ref:`docker-compose <docker-compose>`. 
+
+The docker-compose file includes everything you need for a sophisticated setup: a PostgreSQL database, an
+NGINX webserver, a uWSGI application server a distibuted Redis cache and a Celery task worker.
+
 ***********************************************
 As Django app (in your existing Django project)
 ***********************************************
@@ -191,10 +200,6 @@ located in ``ca/ca/wsgi.py``. Django itself provides some info for using `Apache
 and nginx <http://uwsgi-docs.readthedocs.org/en/latest/tutorials/Django_and_nginx.html>`_, or any of the many
 other options available.
 
-*******************
-Apache and mod_wsgi
-*******************
-
 Github user `Raoul Thill <https://github.com/rthill>`_ notes that you need some special configuration variable
 if you use Apache together with mod_wsgi (see `here
 <https://github.com/mathiasertl/django-ca/issues/12#issuecomment-247282915>`_)::
@@ -203,6 +208,77 @@ if you use Apache together with mod_wsgi (see `here
         WSGIProcessGroup django_ca
         WSGIApplicationGroup %{GLOBAL}
         WSGIScriptAlias / /opt/django-ca/ca/ca/wsgi.py
+
+***************
+Configure cache
+***************
+
+It's recommended you set up a faster in-memory cache, which will be used e.g. to cache CRLs. In general, the
+`CACHES <https://docs.djangoproject.com/en/3.0/ref/settings/#std:setting-CACHES>`__ setting configures the
+cache. 
+
+If you want to use Redis as a cache, you can install `django-redis-cache
+<https://django-redis-cache.readthedocs.io/en/latest/index.html>`__. If you run django-ca as a standalone
+project, install django-ca with the ``redis`` extra, otherwise manually install dependencies using pip:
+
+.. code-block:: console
+
+   $ pip install django-ca[redis]  # install redis extra or...
+   $ pip install redis hiredis django-redis-cache  # or install deps manually
+
+Configuration for a Redis cache would e.g. look like this:
+
+.. code-block:: yaml
+   :caption: settings.yaml
+
+   CACHES:
+       default:
+           BACKEND: redis_cache.RedisCache
+           LOCATION: redis://127.0.0.1:6379
+           OPTIONS:
+               DB: 1
+               PARSER_CLASS: redis.connection.HiredisParser
+
+***********************
+Configure Celery worker
+***********************
+
+django-ca also supports the `Celery distributed task queue <http://www.celeryproject.org/>`_. 
+
+This is especially useful if you want to have e.g. the private keys for a CA on one server and the web
+interface including CRLs and OCSP on a separate server: Celery tasks can run on regular intervals to generate
+OCSP keys and CRLs on one server and store them to a distributed cache or to a distributed storage system such
+as NFS, where they are then accessed by the other server.
+
+Simply install celery with the required broker configuration (see the excellent Celery homepage):
+
+.. code-block:: console
+
+   $ pip install celery[redis]
+
+And add a bit configuration:
+
+.. code-block:: yaml
+   :caption: settings.yaml
+
+   CELERY_BROKER_URL: redis://127.0.0.1:6379/0
+   CELERY_BEAT_SCHEDULE:
+       cache-crls:
+           task: django_ca.tasks.cache_crls
+           schedule: 86100
+       generate-ocsp-keys:
+           # schedule is three days minus five minutes, since keys expire after
+           # three days by default.
+           task: django_ca.tasks.generate_ocsp_keys
+           schedule: 258900
+
+Note that the above Celery Beat schedule replaces the cron jobs below.
+
+Now all you have to do is to run Celery:
+
+.. code-block:: console
+
+   $ celery worker -A ca -B -s /var/lib/django-ca/celerybeat-schedule
 
 ****************
 Regular cronjobs
