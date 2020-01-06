@@ -34,8 +34,6 @@ Features:
 Please see https://django-ca.readthedocs.org for more extensive documentation.
 """
 
-_rootdir = os.path.dirname(os.path.realpath(__file__))
-
 install_requires = [
     'django>=1.11',
     'asn1crypto>=1.0.1',
