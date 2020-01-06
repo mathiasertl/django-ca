@@ -28,6 +28,7 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
 from cryptography.hazmat.primitives.serialization import PublicFormat
@@ -537,16 +538,20 @@ class CertificateAuthority(X509CertMixin):
         else:
             return ca_storage.exists(self.private_key_path)
 
-    def cache_crls(self, password=None):
+    def cache_crls(self, password=None, algorithm=None):
+        password = password or self.get_password()
+        ca_key = self.key(password)
+        if isinstance(ca_key, dsa.DSAPrivateKey):
+            algorithm = hashes.SHA1()
+
         for name, config in ca_settings.CA_CRL_PROFILES.items():
             overrides = config.get('OVERRIDES', {}).get(self.serial, {})
 
             if overrides.get('skip'):
                 continue
 
-            algorithm = parse_hash_algorithm(overrides.get('algorithm', config.get('algorithm')))
+            algorithm = algorithm or parse_hash_algorithm(overrides.get('algorithm', config.get('algorithm')))
             expires = overrides.get('expires', config.get('expires', 86400))
-            password = password or self.get_password()
             scope = overrides.get('scope', config.get('scope'))
             full_name = overrides.get('full_name', config.get('full_name'))
             relative_name = overrides.get('relative_name', config.get('relative_name'))
@@ -597,11 +602,17 @@ class CertificateAuthority(X509CertMixin):
             <settings-ca-default-ecc-curve>`.
 
         """
+        password = password or self.get_password()
+        if key_type is None:
+            ca_key = self.key(password)
+            if isinstance(ca_key, dsa.DSAPrivateKey):
+                key_type = 'DSA'
+                algorithm = 'SHA1'
+
         key_size, key_type, ecc_curve = validate_key_parameters(key_size, key_type, ecc_curve)
         if isinstance(expires, int):
             expires = timedelta(days=expires)
         algorithm = parse_hash_algorithm(algorithm)
-        password = password or self.get_password()
 
         # generate the private key
         private_key = generate_private_key(key_size, key_type, ecc_curve)
@@ -614,6 +625,7 @@ class CertificateAuthority(X509CertMixin):
 
         # TODO: The subject we pass is just a guess - see what public CAs do!?
         cert = Certificate.objects.create_cert(ca=self, csr=csr, profile=profile, subject=self.subject,
+                                               algorithm=algorithm,
                                                password=password, add_ocsp_url=False)
 
         cert_path = ca_storage.generate_filename('ocsp/%s.pem' % self.serial.replace(':', ''))
