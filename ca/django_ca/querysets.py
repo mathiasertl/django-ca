@@ -19,7 +19,10 @@ from django.utils import timezone
 class DjangoCAMixin(object):
     def get_by_serial_or_cn(self, identifier):
         identifier = identifier.strip()
-        serial = identifier.upper()
+
+        # NOTE: serials are stored without leading zeros, but will be shown in the CLI and web interface with
+        #       leading zeros for padding so we strip it here.
+        serial = identifier.upper().lstrip('0')
 
         try:
             # Imported CAs might have a shorter serial and there is a chance that it might become impossible
