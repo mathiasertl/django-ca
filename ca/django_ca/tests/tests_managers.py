@@ -42,13 +42,42 @@ from .base import override_settings
 from .base import override_tmpcadir
 
 
-@override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
+@override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={}, )
 class CertificateAuthorityManagerTestCase(DjangoCATestCase):
+    def assertBasic(self, ca, name, subject):
+        base_url = 'http://%s/django_ca/' % ca_settings.CA_DEFAULT_HOSTNAME
+        self.assertEqual(ca.name, name)
+        self.assertEqual(ca.subject, Subject(subject))
+        self.assertTrue(ca.enabled)
+        self.assertIsNone(ca.parent)
+        self.assertEqual(ca.crl_url, '%scrl/%s/' % (base_url, ca.serial))
+        self.assertEqual(ca.crl_number, '{"scope": {}}')
+        self.assertEqual(ca.issuer_url, '%sissuer/%s.der' % (base_url, ca.serial))
+        self.assertEqual(ca.ocsp_url, '%socsp/%s/cert/' % (base_url, ca.serial))
+        self.assertEqual(ca.issuer_alt_name, '')
+
+    @override_tmpcadir()
+    def test_basic(self):
+        name = 'basic'
+        subject = '/CN=example.com'
+        self.assertBasic(CertificateAuthority.objects.init(name, subject), name, subject)
+
+    @override_tmpcadir()
+    def test_no_default_hostname(self):
+        name = 'ndh'
+        subject = '/CN=ndh.example.com'
+        ca = CertificateAuthority.objects.init(name, subject, default_hostname=False)
+        self.assertIsNone(ca.crl_url)
+        self.assertEqual(ca.crl_number, '{"scope": {}}')
+        self.assertIsNone(ca.issuer_url)
+        self.assertIsNone(ca.ocsp_url)
+        self.assertEqual(ca.issuer_alt_name, '')
+
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_extra_extensions(self):
         subject = '/CN=example.com'
         tlsf = TLSFeature({'value': ['OCSPMustStaple']})
-        ca = CertificateAuthority.objects.init('with-extra', '/CN=example.com', extra_extensions=[tlsf])
+        ca = CertificateAuthority.objects.init('with-extra', subject, extra_extensions=[tlsf])
 
         exts = [e for e in ca.extensions
                 if not isinstance(e, (SubjectKeyIdentifier, AuthorityKeyIdentifier))]
