@@ -4,9 +4,8 @@ ARG IMAGE=python:3.8-alpine3.10
 FROM $IMAGE as base
 WORKDIR /usr/src/django-ca
 
-RUN --mount=type=cache,target=/etc/apk/cache ls /etc/apk/cache && echo 6 > /dev/null
-RUN --mount=type=cache,target=/etc/apk/cache apk -v upgrade
-RUN --mount=type=cache,target=/etc/apk/cache apk -v add --update \
+RUN --mount=type=cache,target=/etc/apk/cache apk upgrade
+RUN --mount=type=cache,target=/etc/apk/cache apk add --update \
         pcre openssl binutils busybox libpq postgresql-client
 
 # Add user (some tests check if it's impossible to write a file)
