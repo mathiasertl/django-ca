@@ -27,6 +27,9 @@ from ... import ca_settings
 from ...extensions import IssuerAlternativeName
 from ...extensions import NameConstraints
 from ...models import CertificateAuthority
+from ...tasks import cache_crl
+from ...tasks import generate_ocsp_key
+from ...tasks import run_task
 from ..base import BaseCommand
 from ..base import CertificateAuthorityDetailMixin
 from ..base import ExpiresAction
@@ -166,7 +169,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
                 kwargs[opt] = options[opt]
 
         try:
-            CertificateAuthority.objects.init(
+            ca = CertificateAuthority.objects.init(
                 key_size=options['key_size'], key_type=options['key_type'],
                 ecc_curve=options['ecc_curve'],
                 algorithm=options['algorithm'],
@@ -186,3 +189,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
             )
         except Exception as e:
             raise CommandError(e)
+
+        # Generate OCSP keys and cache CRLs
+        run_task(generate_ocsp_key, serial=ca.serial, password=options['password'])
+        run_task(cache_crl, serial=ca.serial, password=options['password'])
