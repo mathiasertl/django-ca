@@ -3,24 +3,60 @@ Docker
 ######
 
 There is a Docker container available for **django-ca**. A docker-compose file is available to deploy the full
-stack including all dependencies 
+stack including all dependencies. 
+
+.. _docker-compose:
 
 ******************
 Use docker-compose
 ******************
 
+.. versionadded:: 1.15.0
+
+   The docker-compose.yml file was added in django-ca 1.15.0.
+
 If you just want to run **django-ca** in a quick and efficient way, using `docker-compose
-<https://docs.docker.com/compose/>`_ is the fastest and most efficient option.
+<https://docs.docker.com/compose/>`_ is the fastest and most efficient option. The stack uses nginx for
+serving static files, uWSGI as WSGI application server, PostgreSQL as a database and Redis as cache and
+message broker.
 
-You can fetch the current development version of ``docker-compose.yml`` `from GitHub
-<https://github.com/mathiasertl/django-ca/>`_. You also need to fetch ``nginx.conf``.
+You can fetch tagged versions or the current development version of ``docker-compose.yml`` `from GitHub
+<https://github.com/mathiasertl/django-ca/>`_.
 
-Once you have these three files available, you only need to start the stack with the ``DJANGO_CA_HOSTNAME``
-environment variable naming the domain where your CA should be available::
+The only environment variable you need to pass is ``DJANGO_CA_HOSTNAME`` (as it defaults to localhost),
+configuring the domain where your CA should be available::
 
    DJANGO_CA_HOSTNAME=ca.local.example.com docker-compose up
 
-All configuration options listed below are of course also available here by patching ``docker-compose.yml``.
+You can configure django-ca using all the mechanisms described in :ref:`docker-configuration`. For more
+complex configuration changes, you might want to consider `extending docker-compose.yml
+<https://docs.docker.com/compose/extends/>`_. For example, to add additional YAML configuration to django-ca
+itself, create an override file:
+
+.. code-block:: yaml
+   :caption: docker-compose.override.yml
+
+   version: "3.7"
+   services:
+       backend:
+           volumes:
+               # local.yml is your additional configuration file
+               - ${PWD}/local.yml:/usr/src/django-ca/ca/local.yml
+           environment:
+               - DJANGO_CA_SETTINGS: settings.yaml:compose.yaml:local.yml
+       frontend:
+           volumes:
+               - ${PWD}/local.yml:/usr/src/django-ca/ca/local.yml
+           environment:
+               - DJANGO_CA_SETTINGS: settings.yaml:compose.yaml:local.yml
+
+
+The stack uses a PostgreSQL database and the ``POSTGRES_{DB,PASSWORD,USER}`` environment variables (as well as
+the variant using the ``_FILE`` suffix) are passed through, so you can configure access credentials to the
+database out of the box::
+
+   POSTGRES_PASSWORD=password123 ... docker-compose up
+
 
 **********
 Use Docker
@@ -41,18 +77,36 @@ interface, we also create a superuser::
 
 ... and visit http://localhost:8000/admin/.
 
+.. _docker-configuration:
+
+*************
 Configuration
-=============
+*************
+
+You can configure django-ca using either environment variables or additional configuration files. The included
+uWSGI server can also be configured by using different ``.ini`` configuration files. 
+You can reuse the environment variables used by the PostgreSQL and MySQL/MariaDB Docker containers to set up
+database access. You can also use Docker Secrets to configure Djangos "Secret Key".
+
+If you use a plain Docker container, you can pass configuration as described below. If you :ref:`use
+docker-compose <docker-compose>`, you probably need to extend the default configuration as described above.
+
+Use environment variables
+=========================
 
 Every environment variable passed to the container that starts with ``DJANGO_CA_`` is loaded as a normal
 setting::
 
    docker run -e DJANGO_CA_CA_DIGEST_ALGORITHM=sha256 ...
 
-This however only works for settings that are supposed to be a string. For more complex settings, you can pass
-a YAML configuration file. For example, if you create a file ``/etc/django-ca/settings.yaml``:
+Use configuration files
+=======================
+
+The Docker image is able to load additional YAML configuration files for more complex (and reproducible)
+configuration changes. For example, if you create a file ``/etc/django-ca/settings.yaml``:
 
 .. code-block:: YAML
+   :caption: /etc/django-ca/settings.yaml
 
    # Certificates expire after ten years, default profile is "server":
    CA_DEFAULT_EXPIRES: 3650
@@ -64,12 +118,10 @@ a YAML configuration file. For example, if you create a file ``/etc/django-ca/se
          ENGINE: ...
 
 
-And then start the container with::
+For django-ca to use the new configuration file, you need to extend the ``DJANGO_CA_SETTINGS`` environment
+variable::
 
-   docker run -v /etc/django-ca/:/etc/django-ca \
-      -e DJANGO_CA_SETTINGS=/etc/django-ca/settings.yaml ...
-
-... the container will load your settings file.
+   docker run -v /etc/django-ca/:/etc/django-ca -e DJANGO_CA_SETTINGS=settings.yaml:/etc/django-ca/settings.yaml ...
 
 uWSGI
 =====
@@ -99,7 +151,7 @@ variable. For example, to start six worker processes, simply use::
       -e DJANGO_CA_UWSGI_PARAMS="--processes=6" ...
 
 Use NGINX or Apache
-===================
+-------------------
 
 In more professional setups, uWSGI will not serve HTTP directly, but a webserver like Apache or NGINX will
 be a proxy to uWSGI communicating via a dedicated protocol. Usually, the webserver serves static files
@@ -144,6 +196,32 @@ ini file (note that this file is included in the container, see above)::
 Note that ``/usr/share/django-ca`` on the host will now contain the static files served by your webserver. If
 you configured NGINX on port 80, you can now visit e.g. http://localhost/admin/ for the admin interface.
 
+Database configuration
+======================
+ 
+You can use the environment variables used by the `PostgreSQL <https://hub.docker.com/_/postgres>`_ and `MySQL
+<https://hub.docker.com/_/mysql>`_/`MariaDB <https://hub.docker.com/_/mariadb>`_ images to set up database
+access. This also works for the variables using the ``_FILE`` suffix (e.g. for Docker Secrets)::
+
+   docker run -e POSTGRES_PASSWORD=password123 ...
+
+Note that as described above, the default ``docker-compose.yml`` also supports these variables::
+
+   POSTGRES_PASSWORD=password123 ... docker-compose up
+
+Djangos SECRET_KEY
+==================
+
+Django uses a `SECRET_KEY <https://docs.djangoproject.com/en/3.0/ref/settings/#secret-key>` used in some
+signing operations. Note that this key is *never* used by **django-ca** itself.
+
+By default, a random key will be generated on startup, so you do not have to do anything if you're happy with
+that. If you want to pass a custom key, you can use the ``DJANGO_CA_SECRET_KEY`` environment variable (as
+described above).
+
+You can also use `Docker Secrets <https://docs.docker.com/engine/swarm/secrets/>`_ and pass the
+``DJANGO_CA_SECRET_KEY_FILE`` to read the secret from the file. 
+
 Run as different user
 =====================
 
@@ -178,7 +256,6 @@ Now you can run the container with the different uid/gid::
 Build your own container
 ************************
 
-If you want to build the container by yourself, simply clone the repository and
-execute::
+If you want to build the container by yourself, simply clone the repository and execute::
 
-   docker build -t django-ca .
+   DOCKER_BUILDKIT=1 docker build -t django-ca .

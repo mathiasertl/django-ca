@@ -7,13 +7,15 @@ services:
         networks:
             - cache
         restart: unless-stopped
-
     db:
         image: postgres:12-alpine
         environment:
             POSTGRES_DB:
+            POSTGRES_DB_FILE:
             POSTGRES_PASSWORD:
+            POSTGRES_PASSWORD_FILE:
             POSTGRES_USER:
+            POSTGRES_USER_FILE:
         ports:
             - 5432:5432
         networks:
@@ -38,10 +40,13 @@ services:
             DJANGO_CA_SECRET_KEY: ${DJANGO_CA_SECRET_KEY:-}
             DJANGO_CA_SECRET_KEY_FILE: ${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/shared/secret-key}
             DJANGO_CA_HOSTNAME: ${DJANGO_CA_HOSTNAME:-localhost}
-            DJANGO_CA_SETTINGS: settings.yaml:compose.yaml
+            DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-settings.yaml:compose.yaml}
             POSTGRES_DB:
+            POSTGRES_DB_FILE:
             POSTGRES_PASSWORD:
+            POSTGRES_PASSWORD_FILE:
             POSTGRES_USER:
+            POSTGRES_USER_FILE:
         restart: unless-stopped
         stop_grace_period: 30s
 
@@ -65,13 +70,16 @@ services:
         environment:
             DJANGO_CA_ALLOWED_HOSTS: ${DJANGO_CA_HOSTNAME:-localhost}
             DJANGO_CA_HOSTNAME: ${DJANGO_CA_HOSTNAME:-localhost}
-            DJANGO_CA_SETTINGS: settings.yaml:compose.yaml
+            DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-settings.yaml:compose.yaml}
             DJANGO_CA_SECRET_KEY: ${DJANGO_CA_SECRET_KEY:-}
             DJANGO_CA_SECRET_KEY_FILE: ${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/shared/secret-key}
             DJANGO_CA_UWSGI_INI: /usr/src/django-ca/uwsgi/uwsgi.ini
             POSTGRES_DB:
+            POSTGRES_DB_FILE:
             POSTGRES_PASSWORD:
+            POSTGRES_PASSWORD_FILE:
             POSTGRES_USER:
+            POSTGRES_USER_FILE:
         restart: unless-stopped
         stop_signal: SIGINT
 
