@@ -201,3 +201,21 @@ if not SECRET_KEY:
             SECRET_KEY = stream.read()
 
 INSTALLED_APPS = INSTALLED_APPS + CA_CUSTOM_APPS
+
+# use POSTGRES_* environment variables from the postgres Docker image
+if DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql_psycopg2':
+    def _set_postgres_setting(name, postgres_name, default=None):
+        if DATABASES['default'].get(name):
+            return
+
+        if os.environ.get('POSTGRES_%s' % postgres_name):
+            DATABASES['default'][name] = os.environ['POSTGRES_%s' % postgres_name]
+        elif os.environ.get('POSTGRES_%s_FILE' % postgres_name):
+            with open(os.environ['POSTGRES_%s_FILE' % postgres_name]) as stream:
+                DATABASES['default'][name] = stream.read()
+        elif default is not None:
+            DATABASES['default'][name] = default
+
+    _set_postgres_setting('PASSWORD', 'PASSWORD', 'postgres')
+    _set_postgres_setting('USER', 'USER', 'postgres')
+    _set_postgres_setting('NAME', 'DB', default=DATABASES['default'].get('USER'))

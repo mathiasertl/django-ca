@@ -10,6 +10,10 @@ services:
 
     postgres:
         image: postgres:12-alpine
+        environment:
+            POSTGRES_DB:
+            POSTGRES_PASSWORD:
+            POSTGRES_USER:
         ports:
             - 5432:5432
         networks:
@@ -33,6 +37,9 @@ services:
             DJANGO_CA_SECRET_KEY_FILE: ${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/shared/secret-key}
             DJANGO_CA_HOSTNAME: ${DJANGO_CA_HOSTNAME:-localhost}
             DJANGO_CA_SETTINGS: settings.yaml:compose.yaml
+            POSTGRES_DB:
+            POSTGRES_PASSWORD:
+            POSTGRES_USER:
         restart: unless-stopped
         stop_grace_period: 30s
 
@@ -58,6 +65,9 @@ services:
             DJANGO_CA_SECRET_KEY: ${DJANGO_CA_SECRET_KEY:-}
             DJANGO_CA_SECRET_KEY_FILE: ${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/shared/secret-key}
             DJANGO_CA_UWSGI_INI: /usr/src/django-ca/uwsgi/uwsgi.ini
+            POSTGRES_DB:
+            POSTGRES_PASSWORD:
+            POSTGRES_USER:
         restart: unless-stopped
         stop_signal: SIGINT
 
