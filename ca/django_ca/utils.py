@@ -825,7 +825,8 @@ def read_file(path):
     stream = ca_storage.open(path)
 
     try:
-        return stream.read()
+        # NOTE: In the python:3.9-rc-alpine3.10 Docker image, this is marked as a missed branch :-(
+        return stream.read()  # pragma: no branch
     finally:
         stream.close()
 
