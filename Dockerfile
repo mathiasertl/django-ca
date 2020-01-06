@@ -77,7 +77,7 @@ RUN rm -rf requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localse
 # Collect static files and remove source files
 COPY dev.py .
 ENV DJANGO_SETTINGS_MODULE=ca.settings
-ENV DJANGO_CA_SETTINGS=ca/settings.yaml
+ENV DJANGO_CA_SETTINGS=settings.yaml
 ENV DJANGO_CA_SECRET_KEY=dummy
 RUN SCRIPT_LOCATION=/install ./dev.py collectstatic
 
