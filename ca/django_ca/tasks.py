@@ -43,7 +43,7 @@ def cache_crl(serial, **kwargs):
 
 @shared_task
 def cache_crls(serials=None):
-    if serials is None:
+    if not serials:
         serials = CertificateAuthority.objects.usable().values_list('serial', flat=True)
 
     for serial in serials:
