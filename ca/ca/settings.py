@@ -180,12 +180,13 @@ except ImportError:
 _default_settings = 'settings.yaml'
 _CA_SETTINGS_FILE = os.environ.get('DJANGO_CA_SETTINGS', _default_settings)
 if _CA_SETTINGS_FILE:
-    for filename in _CA_SETTINGS_FILE.split(':'):
-        if filename == _default_settings and not os.path.exists(_default_settings):
+    for _filename in _CA_SETTINGS_FILE.split(':'):
+        _full_path = os.path.join(BASE_DIR, _filename)
+        if _filename == _default_settings and not os.path.exists(_full_path):
             # it's okay if the default settings file does not exists (--> fresh installation?)
             continue
 
-        with open(filename) as stream:
+        with open(_full_path) as stream:
             data = yaml.load(stream, Loader=Loader)
         for key, value in data.items():
             globals()[key] = value
