@@ -16,7 +16,7 @@ Use docker-compose
    The docker-compose.yml file was added in django-ca 1.15.0.
 
 If you just want to run **django-ca** in a quick and efficient way, using `docker-compose
-<https://docs.docker.com/compose/>`_ is the fastest and most efficient option. The stack uses nginx for
+<https://docs.docker.com/compose/>`__ is the fastest and most efficient option. The stack uses nginx for
 serving static files, uWSGI as WSGI application server, PostgreSQL as a database and Redis as cache and
 message broker.
 
