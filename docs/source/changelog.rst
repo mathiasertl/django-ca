@@ -17,6 +17,8 @@ ChangeLog
 * Drop dependency ``six`` (since we no longer support Python 2.7).
 * Allow caching of CRLs via ``manage.py cache_crls``.
 * The ``manage.py init_ca`` command will now automatically cache CRLs and generate OCSP keys for the new CA.
+* Support ``POSTGRES_*`` and ``MYSQL_*`` environment variables to configure database access credentials in the
+  same way as the Docker images for PostgreSQL and MySQL do.
 * There now are `setuptools extras
   <https://packaging.python.org/tutorials/installing-packages/#installing-setuptools-extras>`_ for ``redis``
   and ``celery``, so you can install all required dependencies at once.
@@ -31,6 +33,7 @@ ChangeLog
 * Add support for the :py:class:`~django_ca.extensions.FreshestCRL` extension.
 * Store CA private keys in the ``ca/`` subdirectory by default, the directory can be configured using
   ``manage.py init_ca --path=...``.
+* The default project now supports configuring django-ca using YAML configuration files.
 
 Backwards incompatible changes
 ==============================
