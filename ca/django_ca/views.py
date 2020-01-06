@@ -78,7 +78,8 @@ class CertificateRevocationListView(View, SingleObjectMixin):
     """Value of the Content-Type header used in the response. For CRLs in PEM format, use ``text/plain``."""
 
     def get(self, request, serial):
-        cache_key = get_crl_cache_key(serial, algorithm=self.digest, encoding=self.type, scope=self.scope)
+        encoding = parse_encoding(request.GET.get('encoding', self.type))
+        cache_key = get_crl_cache_key(serial, algorithm=self.digest, encoding=encoding, scope=self.scope)
 
         crl = cache.get(cache_key)
         if crl is None:
