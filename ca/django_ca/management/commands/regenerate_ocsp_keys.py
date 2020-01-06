@@ -17,6 +17,8 @@ from django.core.management.base import CommandError
 
 from ... import ca_settings
 from ...models import CertificateAuthority
+from ...tasks import generate_ocsp_key
+from ...tasks import run_task
 from ...utils import add_colons
 from ..base import BaseCommand
 from ..base import ExpiresAction
@@ -74,7 +76,9 @@ class Command(BaseCommand):
 
                 continue
 
-            ca.generate_ocsp_key(
+            run_task(
+                generate_ocsp_key,
+                ca.serial,
                 profile=profile,
                 expires=options['expires'],
                 algorithm=options['algorithm'],
