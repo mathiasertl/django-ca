@@ -71,6 +71,7 @@ COPY --from=build /install /install
 COPY ca/ ca/
 COPY docker/* ca/
 COPY uwsgi/ uwsgi/
+COPY nginx/ nginx/
 RUN rm -rf requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.example ca/.coverage
 
 # Collect static files and remove source files
