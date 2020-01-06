@@ -139,13 +139,13 @@ _CA_CRL_PROFILES = {
         'algorithm': 'SHA512',
         'expires': 86400,
         'scope': 'user',
-        'encodings': ['DER', ],
+        'encodings': ['PEM', 'DER', ],
     },
     'ca': {
         'algorithm': 'SHA512',
         'expires': 86400,
         'scope': 'ca',
-        'encodings': ['DER', ],
+        'encodings': ['PEM', 'DER', ],
     }
 }
 
