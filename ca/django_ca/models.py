@@ -541,7 +541,7 @@ class CertificateAuthority(X509CertMixin):
     def cache_crls(self, password=None, algorithm=None):
         password = password or self.get_password()
         ca_key = self.key(password)
-        if isinstance(ca_key, dsa.DSAPrivateKey):
+        if isinstance(ca_key, dsa.DSAPrivateKey) and algorithm is None:
             algorithm = hashes.SHA1()
 
         for name, config in ca_settings.CA_CRL_PROFILES.items():
