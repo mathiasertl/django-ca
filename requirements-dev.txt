@@ -2,6 +2,7 @@
 -rrequirements/requirements-test.txt
 -rrequirements/requirements-lint.txt
 ipython
+docker-compose
 pip>=19.3
 
 # >=24.2.0: python_requires argument to setuptools.setup()
