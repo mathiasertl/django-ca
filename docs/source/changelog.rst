@@ -11,12 +11,19 @@ ChangeLog
 ************
 
 * Add support for Django 3.0.
-* The Docker image now supports MySQL, PostgreSQL and Redis by default.
+* Start supporting Celery tasks to allow running tasks in a distributed, asynchronous task queue. Some tasks
+  will automatically be run with Celery if it is enabled. Celery is used automatically if installed, but can
+  always be disabled by setting ``CA_USE_CELERY=False``.
 * Drop dependency ``six`` (since we no longer support Python 2.7).
+* Allow caching of CRLs via ``manage.py cache_crls``.
+* The ``manage.py init_ca`` command will now automatically cache CRLs and generate OCSP keys for the new CA.
 * There now are `setuptools extras
   <https://packaging.python.org/tutorials/installing-packages/#installing-setuptools-extras>`_ for ``redis``
   and ``celery``, so you can install all required dependencies at once.
-* Consistently style serials in a monospace font in admin interface.
+* Add ``CA_PASSWORDS`` setting to allow you to set the passwords for CAs with encrypted private keys. This
+  is required for automated tasks where the private key is required.
+* Add ``CA_CRL_PROFILES`` setting to configure automatically generated CRLs. Note that this setting will
+  likely be moved to a more general setting for automatic tasks in future releases.
 * :py:class:`~django_ca.extensions.AuthorityKeyIdentifier` now also supports issuers and serials.
 * :py:func:`~django_ca.utils.parse_general_name` now returns a :py:class:`~cg:cryptography.x509.GeneralName`
   unchanged, but throws an error if the name isn't a ``str`` otherwise.
@@ -34,6 +41,30 @@ Backwards incompatible changes
   upgrade to :ref:`1.14.0 <changelog-1.14.0>` first and :ref:`update file storage <update-file-storage>`.
 * Removed the ``ca_crl`` setting in :py:class:`~django_ca.views.CertificateRevocationListView`, use ``scope``
   instead.
+
+Docker
+======
+
+* Add a :ref:`docker-compose.yml <docker-compose>` file to quickly launch a complete service stack.
+* Add support for Celery, MySQL, PostgreSQL and Redis.
+* Change the working directory to ``/usr/src/django-ca/ca``, so manage.py can now be invoked using ``python
+  manage.py`` instead of ``python ca/manage.py``.
+* Add a Celery startup script (``./celery.sh``).
+* Add a nginx configuration template at ``nginx/default.template``.
+* Static files are now included in a "collected" form, so they don't have to collected on startup.
+* Generate OCSP keys and cache CRLs on startup.
+* Use `BuildKit <https://docs.docker.com/develop/develop-images/build_enhancements/>`__ to massively speed up
+  the Docker image build.
+
+Bugfixes
+========
+
+* Fix generation of CRLs and OCSP keys for CAs with a DSA private key.
+* Fix storing an empty list of CRL URLs in some corner cases (when the function receives an empty list).
+* Fix naming CAs via serial on the command line if the serial starts with a zero.
+* Consistently style serials in a monospace font in admin interface.
+* The ``ocsp`` profile used for OCSP keys no longer copies the CommonName (which is the same as in the CA) to
+  to the SubjectAlternativeName extension. The CommonName is frequently a human-readable name in CAs.
 
 Deprecation notices
 ===================
