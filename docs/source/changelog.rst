@@ -11,6 +11,7 @@ ChangeLog
 ************
 
 * Add support for Django 3.0.
+* The docker image is now based on Alpine Linux 3.11.
 * Start supporting Celery tasks to allow running tasks in a distributed, asynchronous task queue. Some tasks
   will automatically be run with Celery if it is enabled. Celery is used automatically if installed, but can
   always be disabled by setting ``CA_USE_CELERY=False``.
