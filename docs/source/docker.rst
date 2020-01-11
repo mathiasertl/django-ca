@@ -133,7 +133,14 @@ cache, no message broker and no other fancy stuff.
 
 Assuming you have Docker installed, simply start the docker container with::
 
-   docker run --name=django-ca -e DJANGO_CA_CA_DEFAULT_HOSTNAME=localhost -p 8000:8000 mathiasertl/django-ca
+.. code-block:: console
+
+   $ docker run --name=django-ca -p 8000:8000 \
+   >     -e DJANGO_CA_CA_DEFAULT_HOSTNAME=localhost \
+   >     -e DJANGO_CA_CA_USE_CELERY=0 \
+   >     mathiasertl/django-ca
+
+We disable celery in this example, as some commands would hang if they cannot connect to a broker.
 
 You still need the shell to create one or more root CAs. For the admin
 interface, we also create a superuser::

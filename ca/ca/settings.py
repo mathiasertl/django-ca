@@ -222,6 +222,8 @@ for key, value in {k[10:]: v for k, v in os.environ.items() if k.startswith('DJA
         continue
     elif key == 'ALLOWED_HOSTS':
         globals()[key] = value.split()
+    elif key == 'CA_USE_CELERY':
+        globals()[key] = value != "0"
     else:
         globals()[key] = value
 
