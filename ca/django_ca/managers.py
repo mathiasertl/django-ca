@@ -455,7 +455,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             subject_alternative_name = SubjectAlternativeName(subject_alternative_name)
 
         # use first SAN as CN if CN is not set
-        if 'CN' not in subject:
+        if 'CN' not in subject and subject_alternative_name:
             subject['CN'] = subject_alternative_name.value[0].value
         elif cn_in_san and 'CN' in subject:  # add CN to SAN if cn_in_san is True (default)
             try:
@@ -465,6 +465,9 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
             else:
                 if cn_name not in subject_alternative_name:
                     subject_alternative_name.insert(0, cn_name)
+
+        if 'CN' not in subject and not subject_alternative_name:
+            raise ValueError('Certificate has neither CommonName nor SubjectAlternativeName.')
 
         if issuer_url is None:
             issuer_url = ca.issuer_url
