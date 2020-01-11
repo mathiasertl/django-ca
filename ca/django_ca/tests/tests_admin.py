@@ -500,7 +500,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertFalse(post.called)
         self.assertFalse(response.context['adminform'].form.is_valid())
         self.assertEqual(response.context['adminform'].form.errors,
-                         {'subject': ['Enter a complete value.']})
+                         {'subject': ['This field is required.']})
         self.assertEqual(cert_count, Certificate.objects.all().count())
 
     @override_tmpcadir()
