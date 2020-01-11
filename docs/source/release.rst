@@ -61,7 +61,7 @@ Test admin interface
 Docker image
 ************
 
-Create a docker image::
+Create a docker image:
 
 .. code-block:: console
 
