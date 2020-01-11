@@ -89,7 +89,36 @@ You should now be able to visit http://localhost and log in. You are able to sig
 for the "child" CA.
 
 Now, let's create a certificate for the root CA. Because it's only present for Celery, we need to create it
-using the CLI. 
+using the CLI:
+
+.. code-block:: console
+
+   $ docker-compose exec frontend ./manage.py sign_cert --ca=example.com \
+   >     --subject="/CN=signed-in-backend.example.com
+
+Check that the same fails in the frontend container (because the root CA is only available in the backend):
+
+.. code-block:: console
+
+   $ docker-compose exec frontend ./manage.py sign_cert --ca=example.com \
+   >     --subject="/CN=signed-in-backend.example.com"
+
+Finally, verify that CRL and OCSP validation works:
+
+.. code-block:: console
+
+   $ docker-compose exec backend ./manage.py dump_ca example.com
+   $ docker-compose exec backend ./manage.py dump_cert signed-in-backend.example.com > cert.pem
+   $ openssl verify -CAfile root.pem -crl_download -crl_check cert.pem
+   cert.pem: OK
+   $ openssl x509 -in cert.pem -noout -text | grep OCSP 
+         OCSP - URI:http://localhost/django_ca/ocsp/772198A6DAEF88A44C3F34780F0D657A60378EB1/cert/
+   $ openssl ocsp -CAfile root.pem -issuer root.pem -cert cert.pem -resp_text \
+   >     -url http://localhost/django_ca/ocsp/772198A6DAEF88A44C3F34780F0D657A60378EB1/cert/
+   ...
+   Response verify OK
+   cert.pem: good
+
 
 ***************
 Release process
