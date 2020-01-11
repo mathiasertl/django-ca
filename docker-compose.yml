@@ -37,7 +37,6 @@ services:
             - shared:/var/lib/django-ca/shared/
         environment:
             DJANGO_CA_ALLOWED_HOSTS: ${DJANGO_CA_CA_DEFAULT_HOSTNAME:-localhost}
-            DJANGO_CA_SECRET_KEY: ${DJANGO_CA_SECRET_KEY:-}
             DJANGO_CA_SECRET_KEY_FILE: ${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/shared/secret-key}
             DJANGO_CA_CA_DEFAULT_HOSTNAME: ${DJANGO_CA_CA_DEFAULT_HOSTNAME:-localhost}
             DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-settings.yaml:compose.yaml}
@@ -71,7 +70,6 @@ services:
             DJANGO_CA_ALLOWED_HOSTS: ${DJANGO_CA_CA_DEFAULT_HOSTNAME:-localhost}
             DJANGO_CA_CA_DEFAULT_HOSTNAME: ${DJANGO_CA_CA_DEFAULT_HOSTNAME:-localhost}
             DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-settings.yaml:compose.yaml}
-            DJANGO_CA_SECRET_KEY: ${DJANGO_CA_SECRET_KEY:-}
             DJANGO_CA_SECRET_KEY_FILE: ${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/shared/secret-key}
             DJANGO_CA_UWSGI_INI: /usr/src/django-ca/uwsgi/uwsgi.ini
             POSTGRES_DB:
