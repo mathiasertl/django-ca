@@ -365,6 +365,7 @@ elif args.command == 'init-demo':
     if 'TOX_ENV_DIR' in os.environ:
         os.environ['DJANGO_CA_SKIP_LOCAL_CONFIG'] = '1'
         os.environ['CA_DIR'] = os.environ['TOX_ENV_DIR']
+        os.environ['SQLITE_NAME'] = os.path.join(os.environ['TOX_ENV_DIR'], 'db.sqlite3')
 
     try:
         setup_django('ca.settings')

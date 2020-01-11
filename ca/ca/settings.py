@@ -24,8 +24,6 @@ ADMINS = (
 
 if os.environ.get('SQLITE_NAME'):
     db_file = os.environ.get('SQLITE_NAME')
-elif 'TOX_ENV_DIR' in os.environ:
-    db_file = os.path.join(os.environ['TOX_ENV_DIR'], 'db.sqlite3')
 else:
     db_file = os.path.join(BASE_DIR, 'db.sqlite3')
 
