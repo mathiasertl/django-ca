@@ -9,8 +9,7 @@
 /.tox/
 /bin/
 /ca/*.egg-info
-/ca/ca/demosettings.py
-/ca/ca/localsettings.py
+/ca/ca/settings.yaml
 /ca/db.sqlite3
 /ca/files/
 /docs/build/
