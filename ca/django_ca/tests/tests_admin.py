@@ -441,6 +441,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     def test_required_subject(self):
         ca = self.cas['root']
         csr = certs['root-cert']['csr']['pem']
+        cert_count = Certificate.objects.all().count()
 
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.add_url, data={
@@ -464,6 +465,43 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertFalse(response.context['adminform'].form.is_valid())
         self.assertEqual(response.context['adminform'].form.errors,
                          {'subject': ['Enter a complete value.']})
+        self.assertEqual(cert_count, Certificate.objects.all().count())
+
+    @override_tmpcadir()
+    def test_empty_subject(self):
+        ca = self.cas['root']
+        csr = certs['root-cert']['csr']['pem']
+        cert_count = Certificate.objects.all().count()
+
+        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            response = self.client.post(self.add_url, data={
+                'csr': csr,
+                'ca': ca.pk,
+                'profile': 'webserver',
+                'subject_0': '',
+                'subject_1': '',
+                'subject_2': '',
+                'subject_3': '',
+                'subject_4': '',
+                'subject_5': '',
+                'subject_6': '',
+                'subject_alternative_name_1': True,
+                'algorithm': 'SHA256',
+                'expires': ca.expires.strftime('%Y-%m-%d'),
+                'key_usage_0': ['digitalSignature', 'keyAgreement', ],
+                'key_usage_1': True,
+                'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
+                'extended_key_usage_1': False,
+                'tls_feature_0': ['OCSPMustStaple', 'MultipleCertStatusRequest'],
+                'tls_feature_1': False,
+            })
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
+        self.assertFalse(response.context['adminform'].form.is_valid())
+        self.assertEqual(response.context['adminform'].form.errors,
+                         {'subject': ['Enter a complete value.']})
+        self.assertEqual(cert_count, Certificate.objects.all().count())
 
     @override_tmpcadir()
     def test_add_no_key_usage(self):

@@ -175,8 +175,11 @@ class CreateCertificateForm(CreateCertificateBaseForm):
 
     def clean(self):
         data = super().clean()
-        if not data['subject_alternative_name'][0] and not data['subject']:
-            self.add_error(None, _('No CommonName or SubjectAlternativeName given.'))
+
+        # subject is None if the user enters no values at all. In this case, for some reason, the
+        # the error for the SubjectField common name (which is required) is never thrown.
+        if not data.get('subject'):
+            self.add_error('subject', _('Enter a complete value.'))
 
         return data
 
