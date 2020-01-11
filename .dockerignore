@@ -1,8 +1,10 @@
-**/*.py[co]
-**/*.sw[a-z]
 **/*.log
-**/__pycache__
+**/*.py[co]
 **/*.sqlite3
+**/*.sw[a-z]
+**/__pycache__
+**/geckodriver.log
+**/pip-selfcheck.json
 /.git/
 /.coverage
 /.docker/
@@ -10,10 +12,8 @@
 /bin/
 /ca/*.egg-info
 /ca/ca/settings.yaml
-/ca/db.sqlite3
 /ca/files/
 /docs/build/
 /include/
 /lib/
-/py2/
 /share/
