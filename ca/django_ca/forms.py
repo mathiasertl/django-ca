@@ -156,6 +156,7 @@ class CreateCertificateBaseForm(forms.ModelForm):
             stamp = ca.expires.strftime('%Y-%m-%d')
             self.add_error('expires', _(
                 'CA expires on %s, certificate must not expire after that.') % stamp)
+        return data
 
     class Meta:
         model = Certificate
@@ -169,6 +170,13 @@ class CreateCertificateForm(CreateCertificateBaseForm):
         if not lines or lines[0] != '-----BEGIN CERTIFICATE REQUEST-----' \
                 or lines[-1] != '-----END CERTIFICATE REQUEST-----':
             raise forms.ValidationError(_("Enter a valid CSR (in PEM format)."))
+
+        return data
+
+    def clean(self):
+        data = super().clean()
+        if not data['subject_alternative_name'][0] and not data['subject']:
+            self.add_error(None, _('No CommonName or SubjectAlternativeName given.'))
 
         return data
 
