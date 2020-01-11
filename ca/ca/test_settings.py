@@ -246,6 +246,10 @@ SKIP_SELENIUM_TESTS = os.environ.get(
 
 VIRTUAL_DISPLAY = os.environ.get('VIRTUAL_DISPLAY', 'y').lower().strip() == 'y'
 GECKODRIVER_PATH = os.path.join(ROOT_DIR, 'contrib', 'selenium', 'geckodriver')
+if 'TOX_ENV_DIR' in os.environ:
+    GECKODRIVER_LOG_PATH = os.path.join(os.environ['TOX_ENV_DIR'], 'geckodriver.log')
+else:
+    GECKODRIVER_LOG_PATH = os.path.join(ROOT_DIR, 'geckodriver.log')
 
 if not os.path.exists(GECKODRIVER_PATH) and not SKIP_SELENIUM_TESTS:
     raise ImproperlyConfigured(

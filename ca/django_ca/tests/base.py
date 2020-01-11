@@ -923,7 +923,10 @@ class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # prag
             cls.vdisplay = Display(visible=0, size=(1024, 768))
             cls.vdisplay.start()
 
-        cls.selenium = WebDriver(executable_path=settings.GECKODRIVER_PATH)
+        cls.selenium = WebDriver(
+            executable_path=settings.GECKODRIVER_PATH,
+            service_log_path=settings.GECKODRIVER_LOG_PATH
+        )
         cls.selenium.implicitly_wait(10)
 
     @classmethod
