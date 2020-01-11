@@ -135,21 +135,40 @@ git checkout:
 Configure django-ca
 ===================
 
+.. versionchanged:: 1.15.0
+
+   Until 1.14.0, django-ca imported from a file called ``localsettings.py``. This functionality is depcreated
+   and will be removed in ``django-ca>=1.18``.
+
 Before you continue, you have to configure **django-ca**. Django uses a file called ``settings.py``, but so
-you don't have to change any files managed by git, it includes ``localsettings.py`` in the same directory. So
-copy the example file and edit it with your favourite editor:
+you don't have to change any files managed by git, it will load a file called ``settings.yaml`` in the same
+location so you can override any default settings.  If you deploy using Docker, files are also read from
+``/usr/src/django-ca/ca/conf/`` (in alphabetical order).
 
-.. code-block:: console
+The `conf/ directory <https://github.com/mathiasertl/django-ca/tree/master/conf>`__ in git includes a few
+examples. If you just want to get started, save (and adapt) this file to ``ca/ca/settings.yaml``:
 
-   $ cp ca/ca/localsettings.py.example ca/ca/localsettings.py
+.. code-block:: yaml
+   :caption: ca/ca/settings.yaml
+   
+   # settings reference:
+   #  https://docs.djangoproject.com/en/dev/ref/settings/
+   #  https://django-ca.readthedocs.io/en/latest/settings.html
+   
+   DEBUG: False
+   
+   # WARNING: set this to a long random value:
+   SECRET_KEY: secret123
+   
+   # Of course, SQLite is not very suitable for production
+   DATABASES:
+       default:
+           ENGINE: django.db.backends.sqlite3
+           NAME: db.sqlite3
+   
+   # Assumes your CA runs on localhost
+   CA_DEFAULT_HOSTNAME: localhost
 
-The most important settings are documented there, but you can of course use any setting `provided by Django
-<https://docs.djangoproject.com/en/dev/topics/settings/>`_.
-
-.. WARNING::
-
-   The ``SECRET_KEY`` and ``DATABASES`` settings are absolutely mandatory. If you use the
-   :doc:`web_interface`, the ``STATIC_ROOT`` setting is also mandatory.
 
 Initialize the project
 ======================

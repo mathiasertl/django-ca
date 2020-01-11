@@ -1,6 +1,7 @@
 # Django settings for ca project.
 
 import os
+import warnings
 
 import yaml
 
@@ -13,6 +14,7 @@ except ImportError:
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SETTINGS_YAML = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'settings.yaml')
 
 DEBUG = False
 
@@ -180,13 +182,15 @@ try:
             from .localsettings import *  # NOQA
         except ImportError:
             from localsettings import *  # NOQA
+
+        warnings.warn('localsettings.py is deprecated and will be removed in django-ca>=1.18.')
 except ImportError:
     pass
 
+_settings_files = []
 if os.environ.get('DJANGO_CA_SETTINGS'):
     _settings_paths = [os.path.join(BASE_DIR, p) for p in os.environ['DJANGO_CA_SETTINGS'].split(':')]
 
-    _settings_files = []
     for _path in _settings_paths:
         if not os.path.exists(_path):
             raise ImproperlyConfigured('%s: No such file or directory.' % _path)
@@ -198,9 +202,13 @@ if os.environ.get('DJANGO_CA_SETTINGS'):
         else:
             _settings_files.append((os.path.basename(_path), os.path.dirname(_path)))
 
-    for _filename, _path in sorted(_settings_files):
+_settings_files = sorted(_settings_files)
+if os.path.exists(SETTINGS_YAML):
+    _settings_files.append((SETTINGS_YAML, os.path.dirname(SETTINGS_YAML)))
+
+if not _skip_local_config:
+    for _filename, _path in _settings_files:
         _full_path = os.path.join(_path, _filename)
-        print('### Parsing %s' % _full_path)
         with open(_full_path) as stream:
             data = yaml.load(stream, Loader=Loader)
         if not isinstance(data, dict):

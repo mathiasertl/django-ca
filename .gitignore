@@ -3,7 +3,6 @@
 *.sqlite3
 *.egg-info
 geckodriver.log
-localsettings.py
 /.env
 /.tox/
 /MANIFEST
@@ -11,6 +10,7 @@ localsettings.py
 /build/
 /.coverage
 /.docker/
+/ca/ca/settings.yaml
 /ca/files/
 /contrib/
 /dist
