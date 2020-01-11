@@ -131,7 +131,7 @@ Use Docker
 You may want to use the Docker image verbatim for a sleeker setup that uses SQLite3 as a database and no
 cache, no message broker and no other fancy stuff.
 
-Assuming you have Docker installed, simply start the docker container with::
+Assuming you have Docker installed, simply start the docker container with:
 
 .. code-block:: console
 
@@ -143,11 +143,13 @@ Assuming you have Docker installed, simply start the docker container with::
 We disable celery in this example, as some commands would hang if they cannot connect to a broker.
 
 You still need the shell to create one or more root CAs. For the admin
-interface, we also create a superuser::
+interface, we also create a superuser:
 
-   docker exec -it django-ca ./manage.py createsuperuser
-   docker exec -it django-ca ./manage.py init_ca \
-      example /C=AT/ST=Vienna/L=Vienna/O=Org/CN=ca.example.com
+.. code-block:: console
+
+   $ docker exec -it django-ca ./manage.py createsuperuser
+   $ docker exec -it django-ca ./manage.py init_ca \
+   >     example /C=AT/ST=Vienna/L=Vienna/O=Org/CN=ca.example.com
 
 ... and visit http://localhost:8000/admin/.
 

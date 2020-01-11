@@ -63,6 +63,8 @@ Docker image
 
 Create a docker image::
 
+.. code-block:: console
+
    export DOCKER_BUILDKIT=1
    docker build --progress=plain -t mathiasertl/django-ca .
 
