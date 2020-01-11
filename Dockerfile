@@ -56,13 +56,10 @@ RUN chown django-ca:django-ca .coverage /var/lib/django-ca/ /usr/src/django-ca/c
 USER django-ca:django-ca
 
 # copy this late so that changes do not trigger a cache miss during build
-#RUN python dev.py code-quality
-#RUN python dev.py coverage --format=text
-#RUN make -C docs html-check
-RUN ls -ld /usr/src/django-ca/ca/
-RUN ls -l /usr/src/django-ca/ca/
+RUN python dev.py code-quality
+RUN python dev.py coverage --format=text
+RUN make -C docs html-check
 RUN python dev.py init-demo
-RUN exit 4
 
 ###############
 # Build stage #
