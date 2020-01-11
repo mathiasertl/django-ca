@@ -12,6 +12,8 @@ ChangeLog
 
 * Add support for Django 3.0.
 * The docker image is now based on Alpine Linux 3.11.
+* The default project now supports configuring django-ca using YAML configuration files. Configuration using
+  ``localsettings.py`` is now deprecated and will be removed in ``django-ca>=1.18.0``.
 * Start supporting Celery tasks to allow running tasks in a distributed, asynchronous task queue. Some tasks
   will automatically be run with Celery if it is enabled. Celery is used automatically if installed, but can
   always be disabled by setting ``CA_USE_CELERY=False``.
@@ -34,7 +36,6 @@ ChangeLog
 * Add support for the :py:class:`~django_ca.extensions.FreshestCRL` extension.
 * Store CA private keys in the ``ca/`` subdirectory by default, the directory can be configured using
   ``manage.py init_ca --path=...``.
-* The default project now supports configuring django-ca using YAML configuration files.
 
 Backwards incompatible changes
 ==============================
@@ -75,6 +76,8 @@ Deprecation notices
 ===================
 
 * This is the last release to support Django 1.11 and 2.1.
+* The Django project included in this git repository will stop loading ``localsetttings.py`` files in
+  ``django-ca>=1.18.0``.
 * :py:func:`Certificate.objects.init() <django_ca.managers.CertificateManager.init>` and
   :py:func:`~django_ca.profiles.get_cert_profile_kwargs` were deprecated in :ref:`1.14.0 <changelog-1.14.0>`
   and will be removed in ``django-ca==1.16.0``. Use
