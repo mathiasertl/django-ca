@@ -54,7 +54,7 @@ Make sure that the demo works::
 Test admin interface
 ********************
 
-* Check if the output of CAs and certs look okay.
+* Check if the output of CAs and certs look okay: http://localhost:8000/admin
 * Check if the profile selection when creating a certificate works.
 
 ************
