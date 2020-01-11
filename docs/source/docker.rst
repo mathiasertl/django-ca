@@ -38,9 +38,9 @@ create keys for the intermediate CA using the web interface:
 
 .. code-block:: console
 
-   $ docker-compose exec backend python manage.py createsuperuser
-   $ docker-compose exec backend python manage.py init_ca --pathlen=1 root /CN=example.com
-   $ docker-compose exec backend python manage.py init_ca \
+   $ docker-compose exec backend ./manage.py createsuperuser
+   $ docker-compose exec backend ./manage.py init_ca --pathlen=1 root /CN=example.com
+   $ docker-compose exec backend ./manage.py init_ca \
    >   --path=ca/shared/ --parent=example.com child /CN=child.example.com
 
 You can configure django-ca using all the mechanisms described in :ref:`docker-configuration`. For more
@@ -121,6 +121,8 @@ documentation <https://hub.docker.com/_/nginx>`_:
       # other directives...
    }
 
+
+.. _docker-use:
 
 **********
 Use Docker
