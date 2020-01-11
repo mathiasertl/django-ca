@@ -6,9 +6,9 @@ ChangeLog
 
 .. _changelog-1.15.0:
 
-************
-1.15.0 (TBR)
-************
+*******************
+1.15.0 (2020-01-11)
+*******************
 
 * Add support for Django 3.0.
 * The docker image is now based on Alpine Linux 3.11.
