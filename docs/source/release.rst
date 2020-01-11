@@ -64,13 +64,30 @@ Docker image
 Create a docker image::
 
    export DOCKER_BUILDKIT=1
-   docker build --no-cache -t django-ca-dev .
-   docker run --rm -d --name=django-ca-dev -p 8000:8000 django-ca-dev
-   docker exec -it django-ca-dev python manage.py createsuperuser
-   docker exec -it django-ca-dev python manage.py init_ca \
-      example /C=AT/ST=Vienna/L=Vienna/O=Org/CN=ca.example.com
+   docker build --progress=plain -t mathiasertl/django-ca .
 
-... and browse http://localhost:8000/admin.
+... and follow instructions at :ref:`docker-use` to test the Docker image.
+
+**************
+docker-compose
+**************
+
+* Verify that docker-compose uses up-to-date version of 3rd-party containers.
+* Follow instructions to test the docker-compose setup:
+
+.. code-block:: console
+
+   $ DJANGO_CA_CA_DEFAULT_HOSTNAME=localhost docker-compose up
+   $ docker-compose exec backend ./manage.py createsuperuser
+   $ docker-compose exec backend ./manage.py init_ca --pathlen=1 root /CN=example.com
+   $ docker-compose exec backend ./manage.py init_ca \
+   >     --path=ca/shared/ --parent=example.com child /CN=child.example.com
+
+You should now be able to visit http://localhost and log in. You are able to sign a certificate, but *only*
+for the "child" CA.
+
+Now, let's create a certificate for the root CA. Because it's only present for Celery, we need to create it
+using the CLI. 
 
 ***************
 Release process
@@ -84,9 +101,8 @@ Release process
 * Upload package to PyPi: ``twine upload dist/*``
 * Tag and upload the docker image  (note that we create a image revision by appending ``-1``)::
 
-      docker tag django-ca-dev mathiasertl/django-ca
-      docker tag django-ca-dev mathiasertl/django-ca:$version
-      docker tag django-ca-dev mathiasertl/django-ca:$version-1
+      docker tag mathiasertl/django-ca mathiasertl/django-ca:$version
+      docker tag mathiasertl/django-ca mathiasertl/django-ca:$version-1
       docker push mathiasertl/django-ca:$version-1
       docker push mathiasertl/django-ca:$version
       docker push mathiasertl/django-ca
@@ -100,3 +116,4 @@ After a release
 * Update version in ``setup.py``.
 * Drop support for older software versions in ``.travis.yml``, ``tox.ini`` and ``dev.py docker-test``.
 * Remove files in dist: ``rm -rf dist/*``
+* Update ``docker-compose.yml`` to use the ``latest`` version of **django-ca**.
