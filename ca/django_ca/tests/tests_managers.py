@@ -124,6 +124,16 @@ class CreateCertTestCase(DjangoCAWithGeneratedCAsTestCase):
             certs['root-cert']['subject_key_identifier'],
         ])
 
+    @override_tmpcadir()
+    def test_no_cn_or_san(self):
+        ca = self.cas['root']
+        csr = certs['root-cert']['csr']['pem']
+        subject = None
+
+        msg = r"^Must name at least a CN or a subjectAlternativeName\.$"
+        with self.assertRaisesRegex(ValueError, msg):
+            Certificate.objects.create_cert(ca, csr, subject=subject, extensions=[SubjectAlternativeName()])
+
     @override_tmpcadir(CA_PROFILES={k: None for k in ca_settings.CA_PROFILES})
     def test_no_profile(self):
         ca = self.cas['root']
