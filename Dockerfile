@@ -67,15 +67,18 @@ FROM build as prepare
 COPY --from=build /install /install
 
 COPY ca/ ca/
-COPY docker/* ca/
+COPY scripts/* ca/
+COPY conf/ ca/conf/
 COPY uwsgi/ uwsgi/
 COPY nginx/ nginx/
 RUN rm -rf requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.example ca/.coverage
 
 # Collect static files and remove source files
 COPY dev.py .
+RUN echo 2
+RUN find | grep yaml
 ENV DJANGO_SETTINGS_MODULE=ca.settings
-ENV DJANGO_CA_SETTINGS=settings.yaml
+ENV DJANGO_CA_SETTINGS=conf/
 ENV DJANGO_CA_SECRET_KEY=dummy
 RUN SCRIPT_LOCATION=/install ./dev.py collectstatic
 
@@ -107,5 +110,5 @@ USER django-ca:django-ca
 EXPOSE 8000
 VOLUME ["/var/lib/django-ca/", "/usr/share/django-ca/media/"]
 WORKDIR /usr/src/django-ca/ca/
-ENV DJANGO_CA_SETTINGS=settings.yaml
+ENV DJANGO_CA_SETTINGS=conf/
 CMD ./uwsgi.sh

@@ -4,6 +4,8 @@ import os
 
 import yaml
 
+from django.core.exceptions import ImproperlyConfigured
+
 try:
     from yaml import CLoader as Loader
 except ImportError:
@@ -121,6 +123,7 @@ INSTALLED_APPS = [
     'django_ca',
 ]
 CA_CUSTOM_APPS = []
+CA_DEFAULT_HOSTNAME = None
 
 TEMPLATES = [
     {
@@ -180,17 +183,28 @@ try:
 except ImportError:
     pass
 
-_default_settings = 'settings.yaml'
-_CA_SETTINGS_FILE = os.environ.get('DJANGO_CA_SETTINGS', _default_settings)
-if _CA_SETTINGS_FILE and not _skip_local_config:
-    for _filename in _CA_SETTINGS_FILE.split(':'):
-        _full_path = os.path.join(BASE_DIR, _filename)
-        if _filename == _default_settings and not os.path.exists(_full_path):
-            # it's okay if the default settings file does not exists (--> fresh installation?)
-            continue
+if os.environ.get('DJANGO_CA_SETTINGS'):
+    _settings_paths = [os.path.join(BASE_DIR, p) for p in os.environ['DJANGO_CA_SETTINGS'].split(':')]
 
+    _settings_files = []
+    for _path in _settings_paths:
+        if not os.path.exists(_path):
+            raise ImproperlyConfigured('%s: No such file or directory.' % _path)
+
+        if os.path.isdir(_path):
+            # exclude files that don't end with '.yaml' and any directories
+            _settings_files += [(_f, _path) for _f in os.listdir(_path)
+                                if _f.endswith('.yaml') and not os.path.isdir(os.path.join(_path, _f))]
+        else:
+            _settings_files.append((os.path.basename(_path), os.path.dirname(_path)))
+
+    for _filename, _path in sorted(_settings_files):
+        _full_path = os.path.join(_path, _filename)
+        print('### Parsing %s' % _full_path)
         with open(_full_path) as stream:
             data = yaml.load(stream, Loader=Loader)
+        if not isinstance(data, dict):
+            raise ImproperlyConfigured('%s: File is not a key/value mapping.' % _full_path)
         for key, value in data.items():
             globals()[key] = value
 
@@ -202,6 +216,10 @@ for key, value in {k[10:]: v for k, v in os.environ.items() if k.startswith('DJA
         globals()[key] = value.split()
     else:
         globals()[key] = value
+
+# Set ALLOWED_HOSTS to CA_DEFAULT_HOSTNAME if the former is not yet defined but the latter isn't
+if not ALLOWED_HOSTS and CA_DEFAULT_HOSTNAME:
+    ALLOWED_HOSTS = [CA_DEFAULT_HOSTNAME]
 
 if not SECRET_KEY:
     # We generate SECRET_KEY on first invocation

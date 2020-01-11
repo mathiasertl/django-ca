@@ -23,8 +23,8 @@ message broker.
 You can fetch tagged versions or the current development version of ``docker-compose.yml`` `from GitHub
 <https://github.com/mathiasertl/django-ca/>`_.
 
-The only environment variable you need to pass is ``DJANGO_CA_CA_DEFAULT_HOSTNAME`` (as it defaults to localhost),
-configuring the domain where your CA should be available::
+The only environment variable you need to pass is ``DJANGO_CA_CA_DEFAULT_HOSTNAME`` (note the double "CA"
+here!), configuring the domain where your CA should be available::
 
    DJANGO_CA_CA_DEFAULT_HOSTNAME=ca.local.example.com docker-compose up
 
@@ -55,15 +55,11 @@ itself, create an override file:
    services:
        backend:
            volumes:
-               # local.yml is your additional configuration file
-               - ${PWD}/local.yml:/usr/src/django-ca/ca/local.yml
-           environment:
-               - DJANGO_CA_SETTINGS: settings.yaml:compose.yaml:local.yml
+               # settings.yaml is your additional configuration file
+               - ${PWD}/settings.yaml:/usr/src/django-ca/ca/conf/30-settings.yaml
        frontend:
            volumes:
-               - ${PWD}/local.yml:/usr/src/django-ca/ca/local.yml
-           environment:
-               - DJANGO_CA_SETTINGS: settings.yaml:compose.yaml:local.yml
+               - ${PWD}/settings.yaml:/usr/src/django-ca/ca/conf/30-settings.yaml
 
 
 The stack uses a PostgreSQL database and the ``POSTGRES_{DB,PASSWORD,USER}`` environment variables (as well as
@@ -135,7 +131,7 @@ cache, no message broker and no other fancy stuff.
 
 Assuming you have Docker installed, simply start the docker container with::
 
-   docker run --name=django-ca -p 8000:8000 mathiasertl/django-ca
+   docker run --name=django-ca -e DJANGO_CA_CA_DEFAULT_HOSTNAME=localhost -p 8000:8000 mathiasertl/django-ca
 
 You still need the shell to create one or more root CAs. For the admin
 interface, we also create a superuser::
@@ -164,18 +160,21 @@ Use environment variables
 =========================
 
 Every environment variable passed to the container that starts with ``DJANGO_CA_`` is loaded as a normal
-setting::
+setting (excluding the prefix). For example, if you start the container like this::
 
    docker run -e DJANGO_CA_CA_DIGEST_ALGORITHM=sha256 ...
+
+... the :ref:`CA_DIGEST_ALGORITHM <settings-ca-digest-algorithm>` setting will be set accordingly. This also
+works for any standard Django setting as long as Django expects a ``str`` as value.
 
 Use configuration files
 =======================
 
-The Docker image is able to load additional YAML configuration files for more complex (and reproducible)
-configuration changes. For example, if you create a file ``/etc/django-ca/settings.yaml``:
+The Docker image is able to load additional YAML configuration files for more complex local configuration.
+For example, if you create a file ``settings.yaml``:
 
 .. code-block:: YAML
-   :caption: /etc/django-ca/settings.yaml
+   :caption: settings.yaml
 
    # Certificates expire after ten years, default profile is "server":
    CA_DEFAULT_EXPIRES: 3650
@@ -187,10 +186,11 @@ configuration changes. For example, if you create a file ``/etc/django-ca/settin
          ENGINE: ...
 
 
-For django-ca to use the new configuration file, you need to extend the ``DJANGO_CA_SETTINGS`` environment
-variable::
+For django-ca to use the configuration file, simple pass it as a volume to ``/usr/src/django-ca/ca/conf/``.
+Files are parsed in alphabetical order overwriting previous files. The ``00-`` and ``10-`` are used by
+internal files, so it is best to map the file e.g. like this::
 
-   docker run -v /etc/django-ca/:/etc/django-ca -e DJANGO_CA_SETTINGS=settings.yaml:/etc/django-ca/settings.yaml ...
+   docker run -v `pwd`/settings.yaml:/usr/src/django-ca/ca/conf/30-settings.yaml ...
 
 uWSGI
 =====
@@ -281,7 +281,7 @@ Note that as described above, the default ``docker-compose.yml`` also supports t
 Djangos SECRET_KEY
 ==================
 
-Django uses a `SECRET_KEY <https://docs.djangoproject.com/en/3.0/ref/settings/#secret-key>` used in some
+Django uses a `SECRET_KEY <https://docs.djangoproject.com/en/dev/ref/settings/#secret-key>`__ used in some
 signing operations. Note that this key is *never* used by **django-ca** itself.
 
 By default, a random key will be generated on startup, so you do not have to do anything if you're happy with
@@ -295,7 +295,7 @@ Run as different user
 =====================
 
 It is possible to run the uWSGI instance inside the container as a different user, *but* you have to make sure
-that ``/var/lib/django-ca/`` and ``/usr/share/django-ca/`` are writable by that user. 
+that ``/var/lib/django-ca/`` is writable by that user. 
 
 .. WARNING:: 
 
@@ -304,8 +304,8 @@ that ``/var/lib/django-ca/`` and ``/usr/share/django-ca/`` are writable by that 
 
 Assuming you want to use uid 3000 and gid 3001, set up appropriate folders on the host::
 
-   mkdir /var/lib/django-ca/ /usr/share/django-ca/
-   chown 3000:3001 /var/lib/django-ca/ /usr/share/django-ca/
+   mkdir /var/lib/django-ca/
+   chown 3000:3001 /var/lib/django-ca/
    chmod go-rwx /var/lib/django-ca/
 
 If you want to keep any existing data, you now must copy the data for ``/var/lib/django-ca/`` in the container
@@ -315,11 +315,9 @@ Now you can run the container with the different uid/gid::
 
    docker run \
       -p 8000:8000 --name=django-ca \
-      -v /usr/share/django-ca:/usr/share/django-ca \
       -v /var/lib/django-ca:/var/lib/django-ca \
       --user 3000:3001 \
       django-ca
-
 
 ************************
 Build your own container

@@ -33,7 +33,7 @@ EOF
 fi
 
 set -x
-python manage.py migrate --noinput &>/dev/null
+python manage.py migrate --noinput
 python manage.py cache_crls &
 python manage.py regenerate_ocsp_keys &
-exec uwsgi --ini ${DJANGO_CA_UWSGI_INI} ${DJANGO_CA_UWSGI_PARAMS} "$@"
+uwsgi --ini ${DJANGO_CA_UWSGI_INI} ${DJANGO_CA_UWSGI_PARAMS} "$@"
