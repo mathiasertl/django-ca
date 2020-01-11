@@ -125,7 +125,7 @@ Release process
 ***************
 
 * Push the last commit and make sure that Travis and Read The Docs are updated.
-* Tag the release: ``git tag -s $version``
+* Tag the release: ``git tag -s $version -m "release $version"``
 * Push the tag: ``git push origin --tags``
 * Create a `release on GitHub <https://github.com/mathiasertl/django-ca/tags>`_.
 * Create package for PyPi: ``python setup.py sdist bdist_wheel``.
