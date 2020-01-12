@@ -100,9 +100,8 @@ Deprecation notices
 * This is the last release to support Django 1.11 and 2.1.
 * The Django project included in this git repository will stop loading ``localsetttings.py`` files in
   ``django-ca>=1.18.0``.
-* :py:func:`Certificate.objects.init() <django_ca.managers.CertificateManager.init>` and
-  :py:func:`~django_ca.profiles.get_cert_profile_kwargs` were deprecated in :ref:`1.14.0 <changelog-1.14.0>`
-  and will be removed in ``django-ca==1.16.0``. Use
+* ``Certificate.objects.init()`` and ``get_cert_profile_kwargs()`` were deprecated in :ref:`1.14.0
+  <changelog-1.14.0>` and will be removed in ``django-ca==1.16.0``. Use
   :py:func:`Certificate.objects.create_cert() <django_ca.managers.CertificateManager.create_cert>` instead.
 * The format for the ``CA_PROFILES`` setting has changed in :ref:`1.14.0 <changelog-1.14.0>`. Support for the
   old format will be removed in ``django-ca==1.17.0``. Please see the :ref:`migration instructions
@@ -158,12 +157,11 @@ Deprecation notices
   <update-file-storage>`. ``python manage.py migrate_ca`` will be removed in the next release.
 * This will be the last release to support the ``ca_crl`` setting in
   :py:class:`~django_ca.views.CertificateRevocationListView`.
-* :py:func:`Certificate.objects.init() <django_ca.managers.CertificateManager.init>` has been deprecated in
-  favor of :py:func:`Certificate.objects.create_cert() <django_ca.managers.CertificateManager.create_cert>`.
-  The old method will be removed in ``django-ca==1.16``.
-* :py:func:`~django_ca.profiles.get_cert_profile_kwargs` was only used by
-  :py:func:`~django_ca.managers.CertificateManager.init` and will  thus also be removed in
+* ``Certificate.objects.init()`` has been deprecated in favor of :py:func:`Certificate.objects.create_cert()
+  <django_ca.managers.CertificateManager.create_cert>`.  The old method will be removed in
   ``django-ca==1.16``.
+* ``get_cert_profile_kwargs()`` was only used by ``Certificate.objects.init()`` and will  thus also be removed
+  in ``django-ca==1.16``.
 * The old format for ``CA_PROFILES`` will be supported until ``django-ca==1.16``. Please see
   :ref:`profiles-pre-114-migration` for migration instructions.
 
@@ -218,10 +216,10 @@ Python API
 ==========
 
 * Add the ``root`` property to CAs and certificates returning the root Certificate Authority.
-* :py:func:`~django_ca.managers.CertificateManager.sign_cert` now also accepts a
+* ``django_ca.managers.CertificateManager.sign_cert()`` now also accepts a
   :py:class:`~cg:cryptography.x509.CertificateSigningRequest` as ``csr`` value.
 * Add the ``issuer_url``, ``crl_url``, ``ocsp_url`` and ``issuer_alternative_name`` parameter to 
-  :py:func:`~django_ca.managers.CertificateManager.sign_cert` to allow overriding or disabling the default
+  ``django_ca.managers.CertificateManager.sign_cert()`` to allow overriding or disabling the default
   values from the CA. This can also be used to pass extensions that do not just contain the URL using the
   ``extra_extensions`` parameter.
 * Add the :py:func:`~django_ca.models.CertificateAuthority.get_crl` function to get a CRL for the CA.
@@ -342,8 +340,7 @@ Python API
 ==========
 
 * **BACKWARDS INCOMPATIBLE:** Renamed the ``subjectAltName`` parameter of 
-  :py:meth:`Certificate.objects.init() <django_ca.managers.CertificateManager.init>` to
-  ``subject_alternative_name`` to be consistent with other extensions.
+  ``Certificate.objects.init()`` to ``subject_alternative_name`` to be consistent with other extensions.
 * Document how to use the ``name_constraints`` parameter in 
   :py:meth:`CertificateAuthority.objects.init() <django_ca.managers.CertificateAuthorityManager.init>`
 * Extensions can now always be passed as :py:class:`~django_ca.extensions.Extension` subclass or as any value

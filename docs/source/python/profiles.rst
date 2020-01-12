@@ -35,9 +35,3 @@ You can also access profiles using ``profiles.profiles``, create a copy and upda
 
 .. autoclass:: django_ca.profiles.Profile
    :members:
-
-********************
-Deprecated functions
-********************
-
-.. automethod:: django_ca.profiles.get_cert_profile_kwargs
