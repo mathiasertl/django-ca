@@ -12,7 +12,6 @@
 # see <http://www.gnu.org/licenses/>.
 
 import pathlib
-import warnings
 
 import idna
 
@@ -30,7 +29,6 @@ from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 
 from . import ca_settings
-from .deprecation import RemovedInDjangoCA16Warning
 from .extensions import ExtendedKeyUsage
 from .extensions import Extension
 from .extensions import IssuerAlternativeName
@@ -543,23 +541,3 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         cert = builder.sign(private_key=ca.key(password), algorithm=algorithm, backend=default_backend())
 
         return cert, req
-
-    def init(self, ca, csr, **kwargs):
-        """Create a signed certificate from a CSR and store it to the database.
-
-        .. WARNING:: **This function is deprecated** and will be removed in django-ca==1.16. Please use
-                     :py:func:`~django_ca.managers.CertificateManager.create_cert` instead.
-
-        All parameters are passed on to :py:func:`Certificate.objects.sign_cert()
-        <django_ca.managers.CertificateManager.sign_cert>`.
-        """
-
-        warnings.warn('Function will be removed in django-ca 1.16', RemovedInDjangoCA16Warning, stacklevel=2)
-
-        c = self.model(ca=ca)
-        c.x509, csr = self.sign_cert(ca, csr, **kwargs)
-        c.csr = csr.public_bytes(Encoding.PEM).decode('utf-8')
-        c.save()
-
-        post_issue_cert.send(sender=self.model, cert=c)
-        return c

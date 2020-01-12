@@ -402,39 +402,3 @@ class DefaultProfileProxy:
 
 
 profile = DefaultProfileProxy()
-
-
-def get_cert_profile_kwargs(name=None):
-    """Get kwargs suitable for get_cert X509 keyword arguments from the given profile.
-
-    .. WARNING:: **This function is deprecated** and will be removed in django-ca==1.16, together with
-                 :py:func:`~django_ca.managers.CertificateManager.init`.
-    """
-
-    warnings.warn('Function will be removed in django-ca 1.16', RemovedInDjangoCA16Warning, stacklevel=2)
-
-    if name is None:
-        name = ca_settings.CA_DEFAULT_PROFILE
-
-    profile = deepcopy(ca_settings.CA_PROFILES[name])
-    profile.setdefault('extensions', {})
-    kwargs = {
-        'cn_in_san': profile['cn_in_san'],
-        'subject': profile['subject'],
-    }
-
-    key_usage = profile.get('keyUsage', profile['extensions'].get(KeyUsage.key))
-    if key_usage and key_usage.get('value'):
-        kwargs['key_usage'] = KeyUsage(key_usage)
-    ext_key_usage = profile.get('extendedKeyUsage', profile['extensions'].get(ExtendedKeyUsage.key))
-    if ext_key_usage and ext_key_usage.get('value'):
-        kwargs['extended_key_usage'] = ExtendedKeyUsage(ext_key_usage)
-    tls_feature = profile.get('TLSFeature')
-    if tls_feature and tls_feature.get('value', profile['extensions'].get(TLSFeature.key)):
-        kwargs['tls_feature'] = TLSFeature(tls_feature)
-    if profile.get('ocsp_no_check'):
-        kwargs['ocsp_no_check'] = profile['ocsp_no_check']
-    elif OCSPNoCheck.key in profile['extensions'] and profile['extensions'].get(OCSPNoCheck.key) is not False:
-        kwargs['ocsp_no_check'] = True
-
-    return kwargs

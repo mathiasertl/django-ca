@@ -61,14 +61,12 @@ from selenium.webdriver.support.wait import WebDriverWait
 from .. import ca_settings
 from .. import profiles
 from ..constants import ReasonFlags
-from ..deprecation import RemovedInDjangoCA16Warning
 from ..extensions import KEY_TO_EXTENSION
 from ..extensions import Extension
 from ..extensions import IterableExtension
 from ..extensions import ListExtension
 from ..models import Certificate
 from ..models import CertificateAuthority
-from ..profiles import get_cert_profile_kwargs
 from ..signals import post_create_ca
 from ..signals import post_issue_cert
 from ..signals import post_revoke_cert
@@ -518,15 +516,6 @@ class DjangoCATestCaseMixin:
         with self.assertRaisesRegex(CommandError, msg):
             yield
 
-    def assertHasExtension(self, cert, oid):
-        """Assert that the given cert has the passed extension."""
-
-        self.assertIn(oid, [e.oid for e in cert.x509.extensions])
-
-    def assertHasNotExtension(self, cert, oid):
-        """Assert that the given cert does *not* have the passed extension."""
-        self.assertNotIn(oid, [e.oid for e in cert.x509.extensions])
-
     def assertIssuer(self, issuer, cert):
         self.assertEqual(cert.issuer, issuer.subject)
 
@@ -557,13 +546,6 @@ class DjangoCATestCaseMixin:
 
             if hasattr(msg, 'source'):  # pragma: no branch, pragma: only py>=3.6, not present in py3.5
                 self.assertEqual(data.get('source'), msg.source)
-
-    def get_cert_profile_kwargs(self, name=None):
-        with self.assertMultipleWarnings([{
-            'category': RemovedInDjangoCA16Warning, 'filename': __file__,
-            'msg': r'^Function will be removed in django-ca 1.16$',
-        }]):
-            return get_cert_profile_kwargs(name=name)
 
     def assertNotRevoked(self, cert):
         if isinstance(cert, CertificateAuthority):
