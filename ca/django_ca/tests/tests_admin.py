@@ -228,7 +228,7 @@ class RevokeActionTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
         # cert is not revoked
         cert = Certificate.objects.get(serial=cert.serial)
         self.assertFalse(cert.revoked)
-        self.assertIsNone(cert.revoked_reason)
+        self.assertEqual(cert.revoked_reason, '')
 
         # test with a logged in user, but not staff
         user = User.objects.create_user(username='staff', password='password', email='staff@example.com')

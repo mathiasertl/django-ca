@@ -482,7 +482,7 @@ class DjangoCATestCaseMixin:
             cert = Certificate.objects.get(serial=cert.serial)
 
         self.assertFalse(cert.revoked)
-        self.assertIsNone(cert.revoked_reason)
+        self.assertEqual(cert.revoked_reason, '')
 
     def assertParserError(self, args, expected, **kwargs):
         """Assert that given args throw a parser error."""

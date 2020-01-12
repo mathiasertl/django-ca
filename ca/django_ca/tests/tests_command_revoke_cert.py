@@ -57,7 +57,7 @@ class RevokeCertTestCase(DjangoCAWithGeneratedCertsTestCase):
             # unrevoke for next iteration of loop
             cert.revoked = False
             cert.revoked_date = None
-            cert.revoked_reason = None
+            cert.revoked_reason = ''
             cert.save()
 
     def test_revoked(self):

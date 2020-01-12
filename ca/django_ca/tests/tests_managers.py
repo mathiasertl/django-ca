@@ -55,7 +55,7 @@ class CertificateAuthorityManagerTestCase(DjangoCATestCase):
         name = 'ndh'
         subject = '/CN=ndh.example.com'
         ca = CertificateAuthority.objects.init(name, subject, default_hostname=False)
-        self.assertIsNone(ca.crl_url)
+        self.assertEqual(ca.crl_url, '')
         self.assertEqual(ca.crl_number, '{"scope": {}}')
         self.assertIsNone(ca.issuer_url)
         self.assertIsNone(ca.ocsp_url)

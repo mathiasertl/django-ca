@@ -171,6 +171,8 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         if issuer_alt_name and not isinstance(issuer_alt_name, IssuerAlternativeName):
             issuer_alt_name = IssuerAlternativeName(issuer_alt_name)
             issuer_alt_name = ','.join(issuer_alt_name.serialize()['value'])
+        if crl_url is None:
+            crl_url = []
 
         serial = x509.random_serial_number()
         hex_serial = int_to_hex(serial)

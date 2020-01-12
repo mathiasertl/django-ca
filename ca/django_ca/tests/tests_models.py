@@ -158,7 +158,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         # unrevoke cert (so we have all three combinations)
         cert.revoked = False
         cert.revoked_date = None
-        cert.revoked_reason = None
+        cert.revoked_reason = ''
         cert.save()
 
         crl = ca.get_crl().public_bytes(Encoding.PEM)
@@ -233,7 +233,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
     def test_no_idp(self):
         # CRLs require a full name (or only_some_reasons) if it's a full CRL
         ca = self.cas['child']
-        ca.crl_url = None
+        ca.crl_url = ''
         ca.save()
         crl = ca.get_crl().public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=None)
@@ -241,7 +241,6 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
     @override_tmpcadir()
     @freeze_time('2019-04-14 12:26:00')
     def test_counter(self):
-        self.maxDiff = None
         ca = self.cas['child']
         idp = self.get_idp(full_name=self.get_idp_full_name(ca))
         crl = ca.get_crl(counter='test').public_bytes(Encoding.PEM)

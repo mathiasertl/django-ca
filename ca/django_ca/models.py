@@ -107,12 +107,12 @@ def json_validator(value):
 
 
 class Watcher(models.Model):
-    name = models.CharField(max_length=64, null=True, blank=True, verbose_name=_('CommonName'))
+    name = models.CharField(max_length=64, blank=True, default='', verbose_name=_('CommonName'))
     mail = models.EmailField(verbose_name=_('E-Mail'), unique=True)
 
     @classmethod
     def from_addr(cls, addr):
-        name = None
+        name = ''
         match = re.match(r'(.*?)\s*<(.*)>', addr)
         if match is not None:
             name, addr = match.groups()
@@ -164,7 +164,7 @@ class X509CertMixin(models.Model):
     revoked_date = models.DateTimeField(null=True, blank=True, verbose_name=_('Revoked on'),
                                         validators=[validate_past])
     revoked_reason = models.CharField(
-        max_length=32, null=True, blank=True, verbose_name=_('Reason for revokation'),
+        max_length=32, blank=True, default='', verbose_name=_('Reason for revokation'),
         choices=REVOCATION_REASONS)
     compromised = models.DateTimeField(
         null=True, blank=True, verbose_name=_('Date of compromise'), validators=[validate_past],
@@ -299,8 +299,8 @@ class X509CertMixin(models.Model):
         """Date/Time this certificate expires."""
         return self.x509.not_valid_after
 
-    def revoke(self, reason=None, compromised=None):
-        if reason is None:
+    def revoke(self, reason='', compromised=None):
+        if not reason:
             reason = ReasonFlags.unspecified
 
         pre_revoke_cert.send(sender=self.__class__, cert=self, reason=reason)
@@ -508,7 +508,7 @@ class CertificateAuthority(X509CertMixin):
     private_key_path = models.CharField(max_length=256, help_text=_('Path to the private key.'))
 
     # various details used when signing certs
-    crl_url = models.TextField(blank=True, null=True, validators=[multiline_url_validator],
+    crl_url = models.TextField(blank=True, default='', validators=[multiline_url_validator],
                                verbose_name=_('CRL URLs'),
                                help_text=_("URLs, one per line, where you can retrieve the CRL."))
     crl_number = models.TextField(
