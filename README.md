@@ -15,7 +15,7 @@ Documentation is available at https://django-ca.readthedocs.org/.
 2. Written in Python 3.5+, Django 2.2+ and cryptography 2.7+.
 3. Management via command line and/or via Djangos admin interface.
 4. Certificate revocation via CRLs and OCSP.
-4. Get email notifications about certificates about to expire.
+5. Get email notifications about certificates about to expire.
 
 Please see https://django-ca.readthedocs.org for more extensive documentation.
 

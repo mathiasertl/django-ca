@@ -4,6 +4,28 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.16.0:
+
+************
+1.16.0 (TBR)
+************
+
+Backwards incompatible changes
+==============================
+
+* Drop support for Django 1.11 and 2.1.
+* ``Certificate.objects.init()`` and ``profiles.get_cert_profile_kwargs()`` were removed. Use
+  :py:func:`Certificate.objects.create_cert() <django_ca.managers.CertificateManager.create_cert>` instead.
+
+Deprecation notices
+===================
+
+* The Django project included in this git repository will stop loading ``localsetttings.py`` files in
+  ``django-ca>=1.18.0``.
+* The format for the ``CA_PROFILES`` setting has changed in :ref:`1.14.0 <changelog-1.14.0>`. Support for the
+  old format will be removed in ``django-ca==1.17.0``. Please see the :ref:`migration instructions
+  <profiles-pre-114-migration>` for what to change.
+
 .. _changelog-1.15.0:
 
 *******************
