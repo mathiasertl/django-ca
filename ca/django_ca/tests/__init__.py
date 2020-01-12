@@ -16,10 +16,10 @@
 
 import importlib
 
+from django.test.signals import setting_changed
+
 from .. import ca_settings
 from .. import profiles
-
-from django.test.signals import setting_changed
 
 
 def reload_ca_settings(sender, setting, **kwargs):  # pragma: no cover
