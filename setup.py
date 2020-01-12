@@ -35,7 +35,7 @@ Please see https://django-ca.readthedocs.org for more extensive documentation.
 """
 
 install_requires = [
-    'django>=1.11',
+    'django>=2.2',
     'asn1crypto>=1.0.1',
     'cryptography>=2.7',
     'django-object-actions>=1.1',
@@ -81,8 +81,6 @@ setup(
     },
     classifiers=[
         'Development Status :: 4 - Beta',
-        'Framework :: Django :: 1.11',
-        'Framework :: Django :: 2.1',
         'Framework :: Django :: 2.2',
         'Framework :: Django :: 3.0',
         'Framework :: Django',

@@ -12,12 +12,10 @@ Documentation is available at https://django-ca.readthedocs.org/.
 ## Features
 
 1. Set up a secure local certificate authority in just a few minutes.
-2. Written in Python3.5+, requires Django 1.11 or later.
-3. Manage your entire certificate authority from the command line and/or via
-   Djangos admin interface.
+2. Written in Python 3.5+, Django 2.2+ and cryptography 2.7+.
+3. Management via command line and/or via Djangos admin interface.
+4. Certificate revocation via CRLs and OCSP.
 4. Get email notifications about certificates about to expire.
-5. Certificate validation using Certificate Revocation Lists (CRLs) and via an included OCSP
-   responder.
 
 Please see https://django-ca.readthedocs.org for more extensive documentation.
 
