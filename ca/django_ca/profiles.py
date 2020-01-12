@@ -131,6 +131,15 @@ class Profile(object):
             self.add_issuer_alternative_name == o.add_issuer_alternative_name and \
             self.description == o.description
 
+    def _parse_extension_value(self, key, value):
+        """Parse an extension value into a django_ca extension."""
+        if isinstance(value, Extension):
+            return value
+        elif value is None:
+            return None
+        else:
+            return KEY_TO_EXTENSION[key](value)
+
     def __repr__(self):
         return '<Profile: %r>' % self.name
 
@@ -173,11 +182,12 @@ class Profile(object):
             Override the hash algorithm used when signing the certificate, passed to
             :py:func:`~django_ca.utils.parse_hash_algorithm`.
         extensions : list or dict of :py:class:`~django_ca.extensions.Extension`
-            List of additional extensions to set for the certificate. Note that values from the CA might
-            update the passed extensions: For example, if you pass an
+            List or dict of additional extensions to set for the certificate. Note that values from the CA
+            might update the passed extensions: For example, if you pass an
             :py:class:`~django_ca.extensions.IssuerAlternativeName` extension, *add_issuer_alternative_name*
             is ``True`` and the passed CA has an IssuerAlternativeName set, that value will be appended to the
-            extension you pass here.
+            extension you pass here. If you pass a dict with a ``None`` value, that extension will be removed
+            from the profile.
         cn_in_san : bool, optional
             Override if the CommonName should be added as an SubjectAlternativeName. If not passed, the value
             set in the profile is used.
@@ -207,8 +217,7 @@ class Profile(object):
         if extensions is None:
             extensions = {}
         elif isinstance(extensions, dict):
-            extensions = {k: v if isinstance(v, Extension) else KEY_TO_EXTENSION[k](v)
-                          for k, v in extensions.items()}
+            extensions = {k: self._parse_extension_value(k, v) for k, v in extensions.items()}
         else:
             extensions = {e.key: e for e in extensions}
 
@@ -226,6 +235,7 @@ class Profile(object):
 
         cert_extensions = deepcopy(self.extensions)
         cert_extensions.update(extensions)
+        cert_extensions = {k: v for k, v in cert_extensions.items() if v is not None}
         cert_subject = deepcopy(self.subject)
 
         issuer_name = self._update_from_ca(
