@@ -71,7 +71,6 @@ from ..signals import post_create_ca
 from ..signals import post_issue_cert
 from ..signals import post_revoke_cert
 from ..subject import Subject
-from ..utils import OID_NAME_MAPPINGS
 from ..utils import add_colons
 from ..utils import ca_storage
 from ..utils import x509_name
@@ -789,25 +788,9 @@ class DjangoCATestCaseMixin:
         cert.save()
         return cert
 
-    @classmethod
-    def get_subject(cls, cert):
-        return {OID_NAME_MAPPINGS[s.oid]: s.value for s in cert.subject}
-
     def create_superuser(self, username='admin', password='admin',
                          email='user@example.com'):  # pragma: no cover
         return User.objects.create_superuser(username=username, password=password, email=email)
-
-    @classmethod
-    def get_extensions(cls, cert):
-        # TODO: use cert.extensions as soon as everything is moved to the new framework
-        c = Certificate()
-        c.x509 = cert
-        exts = [e.oid._name for e in cert.extensions]
-
-        exts = {}
-        for ext in c.extensions:
-            exts[ext.__class__.__name__] = ext
-        return exts
 
     def load_usable_cas(self):
         self.cas.update({k: self.load_ca(name=v['name'], x509=v['pub']['parsed']) for k, v in certs.items()

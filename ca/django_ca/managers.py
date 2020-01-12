@@ -13,8 +13,6 @@
 
 import pathlib
 
-import idna
-
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -29,28 +27,20 @@ from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 
 from . import ca_settings
-from .extensions import ExtendedKeyUsage
 from .extensions import Extension
 from .extensions import IssuerAlternativeName
-from .extensions import KeyUsage
 from .extensions import NameConstraints
-from .extensions import OCSPNoCheck
-from .extensions import SubjectAlternativeName
-from .extensions import TLSFeature
 from .profiles import Profile
 from .profiles import profiles
 from .signals import post_create_ca
 from .signals import post_issue_cert
 from .signals import pre_create_ca
-from .signals import pre_issue_cert
 from .subject import Subject
 from .utils import ca_storage
 from .utils import generate_private_key
 from .utils import get_cert_builder
 from .utils import int_to_hex
-from .utils import parse_general_name
 from .utils import parse_hash_algorithm
-from .utils import shlex_split
 from .utils import validate_hostname
 from .utils import validate_key_parameters
 
@@ -341,203 +331,3 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         post_issue_cert.send(sender=self.model, cert=c)
 
         return c
-
-    def sign_cert(self, ca, csr, expires=None, algorithm=None, subject=None, cn_in_san=True,
-                  csr_format=Encoding.PEM, subject_alternative_name=None, key_usage=None,
-                  extended_key_usage=None, tls_feature=None, ocsp_no_check=False,
-                  issuer_url=None, crl_url=None, ocsp_url=None, issuer_alternative_name=None,
-                  extra_extensions=None, password=None):
-        """Create a signed certificate from a CSR.
-
-        .. WARNING:: **This function is deprecated** and will be removed in django-ca==1.16. Please use
-                     :py:func:`~django_ca.managers.CertificateManager.create_cert` instead.
-
-        **PLEASE NOTE:** This function creates the raw certificate and is usually not invoked directly. It is
-        called by :py:func:`Certificate.objects.init() <django_ca.managers.CertificateManager.init>`, which
-        passes along all parameters unchanged and saves the raw certificate to the database.
-
-        Parameters
-        ----------
-
-        ca : :py:class:`~django_ca.models.CertificateAuthority`
-            The certificate authority to sign the certificate with.
-        csr : str or :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
-            A valid CSR. If not already a :py:class:`~cg:cryptography.x509.CertificateSigningRequest`, the
-            format is given by the ``csr_format`` parameter.
-        expires : datetime, optional
-            Datetime for when this certificate will expire, defaults to the ``CA_DEFAULT_EXPIRES`` setting.
-        algorithm : str or :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
-            Hash algorithm used when signing the certificate, passed to
-            :py:func:`~django_ca.utils.parse_hash_algorithm`. The default is the value of the
-            :ref:`CA_DIGEST_ALGORITHM <settings-ca-digest-algorithm>` setting.
-        subject : dict or str or :py:class:`~django_ca.subject.Subject`
-            Subject string, e.g. ``"/CN=example.com"`` or ``Subject("/CN=example.com")``.
-            The value is actually passed to :py:class:`~django_ca.subject.Subject` if it is not already an
-            instance of that class. If this value is not passed or if the value does not contain a CommonName,
-            the first value of the ``subject_alternative_name`` parameter is used as CommonName.
-        cn_in_san : bool, optional
-            Wether the CommonName should also be included as subjectAlternativeName. The default is
-            ``True``, but the parameter is ignored if no CommonName is given. This is typically set
-            to ``False`` when creating a client certificate, where the subjects CommonName has no
-            meaningful value as subjectAlternativeName.
-        csr_format : :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding`, optional
-            The format of the CSR. The default is ``PEM``.
-        subject_alternative_name : dict or :py:class:`~django_ca.extensions.SubjectAlternativeName`, optional
-            A dict passed to :py:class:`~django_ca.extensions.SubjectAlternativeName` if not already an
-            instance of that class.
-        key_usage : dict or :py:class:`~django_ca.extensions.KeyUsage`, optional
-            Value for the ``keyUsage`` X509 extension. A dict passed to
-            :py:class:`~django_ca.extensions.KeyUsage` if not already an instance of that class.
-        extended_key_usage : dict or :py:class:`~django_ca.extensions.ExtendedKeyUsage`, optional
-            Value for the ``extendedKeyUsage`` X509 extension. A dict passed to
-            :py:class:`~django_ca.extensions.ExtendedKeyUsage` if not already an instance of that class.
-        tls_feature : dict or :py:class:`~django_ca.extensions.TLSFeature`, optional
-            Value for the ``TLSFeature`` X509 extension. The dict passed to
-            :py:class:`~django_ca.extensions.TLSFeature` if not already an instance of that class.
-        ocsp_no_check : bool, optional
-            Add the OCSPNoCheck flag, indicating that an OCSP client should trust this certificate for it's
-            lifetime. This value only makes sense if you intend to use the certificate for an OCSP responder,
-            the default is ``False``. See `RFC 6990, section 4.2.2.2.1
-            <https://tools.ietf.org/html/rfc6960#section-4.2.2.2>`_ for more information.
-        issuer_url : ``str`` or ``bool``, optional
-            Pass a custom issuer URL overriding the value configured in the CA or pass ``False`` to disable
-            getting any issuer_url from the CA (e.g. to pass a custom extension in ``extra_extensions``).
-        crl_url : ``str`` or ``bool``, optional
-            Pass a custom CRL URL overriding the value configured in the CA or pass ``False`` to disable
-            getting any issuer_url from the CA (e.g. to pass a custom extension in ``extra_extensions``).
-        ocsp_url : ``str`` or ``bool``, optional
-            Pass a custom OCSP URL overriding the value configured in the CA or pass ``False`` to disable
-            getting any issuer_url from the CA (e.g. to pass a custom extension in ``extra_extensions``).
-        issuer_alternative_name : ``dict`` or :py:class:`~django_ca.extensions.IssuerAlternativeName`, \
-                optional
-            Pass a custom issuer alternative name URL overriding the value configured in the CA or pass an
-            empty dict to disable getting any issuer_url from the CA.
-        extra_extensions : list of :py:class:`cg:cryptography.x509.Extension` or \
-                :py:class:`django_ca.extensions.Extension`, optional
-            An optional list of additional extensions to add to the certificate.
-        password : bytes, optional
-            Password used to load the private key of the certificate authority. If not passed, the private key
-            is assumed to be unencrypted.
-
-        Returns
-        -------
-
-        cryptography.x509.Certificate
-            The signed certificate.
-        """
-        # TODO: This function does not check the expiry of the parent CA yet (manage.py sign_cert does)
-        ########################
-        # Normalize parameters #
-        ########################
-        if subject is None:
-            subject = Subject()  # we need a subject instance so we can possibly add the CN
-        elif not isinstance(subject, Subject):
-            subject = Subject(subject)
-
-        if 'CN' not in subject and not subject_alternative_name:
-            raise ValueError("Must name at least a CN or a subjectAlternativeName.")
-
-        algorithm = parse_hash_algorithm(algorithm)
-
-        # Normalize extensions to django_ca.extensions.Extension subclasses
-        if key_usage and not isinstance(key_usage, KeyUsage):
-            key_usage = KeyUsage(key_usage)
-        if extended_key_usage and not isinstance(extended_key_usage, ExtendedKeyUsage):
-            extended_key_usage = ExtendedKeyUsage(extended_key_usage)
-        if tls_feature and not isinstance(tls_feature, TLSFeature):
-            tls_feature = TLSFeature(tls_feature)
-
-        if not subject_alternative_name:
-            subject_alternative_name = SubjectAlternativeName()
-        elif not isinstance(subject_alternative_name, SubjectAlternativeName):
-            subject_alternative_name = SubjectAlternativeName(subject_alternative_name)
-
-        # use first SAN as CN if CN is not set
-        if 'CN' not in subject and subject_alternative_name:
-            subject['CN'] = subject_alternative_name.value[0].value
-        elif cn_in_san and 'CN' in subject:  # add CN to SAN if cn_in_san is True (default)
-            try:
-                cn_name = parse_general_name(subject['CN'])
-            except idna.IDNAError:
-                raise ValueError('%s: Could not parse CommonName as subjectAlternativeName.' % subject['CN'])
-            else:
-                if cn_name not in subject_alternative_name:
-                    subject_alternative_name.insert(0, cn_name)
-
-        if issuer_url is None:
-            issuer_url = ca.issuer_url
-        if crl_url is None:
-            crl_url = ca.crl_url
-        if ocsp_url is None:
-            ocsp_url = ca.ocsp_url
-        if issuer_alternative_name is None:
-            issuer_alternative_name = IssuerAlternativeName({
-                'value': shlex_split(ca.issuer_alt_name, ','),
-            })
-
-        ################
-        # Read the CSR #
-        ################
-        req = self.parse_csr(csr, csr_format=csr_format)
-
-        #########################
-        # Send pre-issue signal #
-        #########################
-        pre_issue_cert.send(sender=self.model, ca=ca, csr=csr, expires=expires, algorithm=algorithm,
-                            subject=subject, cn_in_san=cn_in_san, csr_format=csr_format,
-                            subject_alternative_name=subject_alternative_name, key_usage=key_usage,
-                            extended_key_usage=extended_key_usage, tls_feature=tls_feature,
-                            issuer_url=issuer_url, crl_url=crl_url, ocsp_url=ocsp_url,
-                            issuer_alternative_name=issuer_alternative_name,
-                            extra_extensions=extra_extensions, password=password)
-
-        #######################
-        # Generate public key #
-        #######################
-        public_key = req.public_key()
-
-        builder = get_cert_builder(expires)
-        builder = builder.public_key(public_key)
-        builder = builder.issuer_name(ca.x509.subject)
-        builder = builder.subject_name(subject.name)
-
-        # Add extensions
-        builder = builder.add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
-        builder = builder.add_extension(
-            x509.SubjectKeyIdentifier.from_public_key(public_key), critical=False)
-
-        # Get authorityKeyIdentifier from subjectKeyIdentifier from signing CA
-        builder = builder.add_extension(ca.get_authority_key_identifier(), critical=False)
-
-        for critical, ext in self.get_common_extensions(issuer_url, crl_url, ocsp_url):
-            builder = builder.add_extension(ext, critical=critical)
-
-        if subject_alternative_name:
-            builder = builder.add_extension(**subject_alternative_name.for_builder())
-
-        if key_usage:
-            builder = builder.add_extension(**key_usage.for_builder())
-
-        if extended_key_usage:
-            builder = builder.add_extension(**extended_key_usage.for_builder())
-
-        if tls_feature:
-            builder = builder.add_extension(**tls_feature.for_builder())
-
-        if issuer_alternative_name:
-            if not isinstance(issuer_alternative_name, IssuerAlternativeName):
-                issuer_alternative_name = IssuerAlternativeName(issuer_alternative_name)
-            builder = builder.add_extension(**issuer_alternative_name.for_builder())
-
-        if ocsp_no_check:
-            builder = builder.add_extension(**OCSPNoCheck().for_builder())
-
-        if extra_extensions:
-            builder = self._extra_extensions(builder, extra_extensions)
-
-        ###################
-        # Sign public key #
-        ###################
-        cert = builder.sign(private_key=ca.key(password), algorithm=algorithm, backend=default_backend())
-
-        return cert, req
