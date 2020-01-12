@@ -386,7 +386,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
     def test_get_dict(self):
         self.test_get()
 
-    @override_tmpcadir()
+    @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_add(self):
         cn = 'test-add.example.com'
         ca = self.cas['root']
@@ -503,7 +503,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
                          {'subject': ['This field is required.']})
         self.assertEqual(cert_count, Certificate.objects.all().count())
 
-    @override_tmpcadir()
+    @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_add_no_key_usage(self):
         ca = self.cas['root']
         csr = certs['root-cert']['csr']['pem']
@@ -535,7 +535,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertIssuer(ca, cert)
         self.assertAuthorityKeyIdentifier(ca, cert)
         self.assertEqual(cert.subject_alternative_name,
-                         SubjectAlternativeName({'value': ['DNS:%s' % cn, 'DNS:%s' % san]}))
+                         SubjectAlternativeName({'value': ['DNS:%s' % san, 'DNS:%s' % cn]}))
         self.assertEqual(cert.basic_constraints,
                          BasicConstraints({'critical': True, 'value': {'ca': False}}))
         self.assertEqual(cert.ca, ca)
@@ -553,7 +553,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         response = self.client.get(self.change_url(cert.pk))
         self.assertEqual(response.status_code, 200)
 
-    @override_tmpcadir()
+    @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_add_with_password(self):
         ca = self.cas['pwd']
         csr = certs['pwd-cert']['csr']['pem']
@@ -1255,7 +1255,7 @@ class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithGeneratedCert
         form.submit().follow()
         self.assertResigned(cert)
 
-    @override_tmpcadir()
+    @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_webtest_no_ext(self):
         cert = self.certs['no-extensions']
         form = self.app.get(self.get_url(cert), user=self.user.username).form

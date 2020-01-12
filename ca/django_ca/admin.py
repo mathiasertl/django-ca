@@ -45,9 +45,12 @@ from .constants import ReasonFlags
 from .extensions import KEY_TO_EXTENSION
 from .extensions import AlternativeNameExtension
 from .extensions import CRLDistributionPointsBase
+from .extensions import ExtendedKeyUsage
+from .extensions import KeyUsage
 from .extensions import NullExtension
 from .extensions import OrderedSetExtension
 from .extensions import SubjectAlternativeName
+from .extensions import TLSFeature
 from .extensions import UnrecognizedExtension
 from .forms import CreateCertificateForm
 from .forms import ResignCertificateForm
@@ -423,7 +426,8 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                 'ca': resign_obj.ca,
                 'extended_key_usage': resign_obj.extended_key_usage,
                 'key_usage': resign_obj.key_usage,
-                'profile': '',
+                # TODO: pass profile once it's stored to the database
+                #'profile': '',
                 'subject': resign_obj.subject,
                 'subject_alternative_name': san,
                 'tls_feature': resign_obj.tls_feature,
@@ -584,9 +588,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
 
         # If this is a new certificate, initialize it.
         if change is False:
-            san, cn_in_san = data['subject_alternative_name']
-            expires = datetime.combine(data['expires'], datetime.min.time())
-            subjectAltName = {'value': [e.strip() for e in san.split(',') if e.strip()]}
+            profile = profiles[data['profile']]
 
             if hasattr(request, '_resign_obj'):
                 csr = getattr(request, '_resign_obj').csr
@@ -595,24 +597,24 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                 # Note: CSR is set by model form already
                 csr = data['csr']
 
-            kwargs = {
-                'ca': data['ca'],
-                'csr': csr,
-                'expires': expires,
-                'subject': data['subject'],
-                'algorithm': data['algorithm'],
-                'subject_alternative_name': subjectAltName,
-                'cn_in_san': cn_in_san,
-                'key_usage': data['key_usage'],
-                'extended_key_usage': data['extended_key_usage'],
-                'tls_feature': data['tls_feature'],
-                'password': data['password'],
-            }
+            parsed_csr = Certificate.objects.parse_csr(csr, Encoding.PEM)
+            expires = datetime.combine(data['expires'], datetime.min.time())
 
-            obj.x509, req = self.model.objects.sign_cert(**kwargs)
+            extensions = {}
+            san, cn_in_san = data['subject_alternative_name']
+            san = SubjectAlternativeName({'value': [e.strip() for e in san.split(',') if e.strip()]})
+            if san:
+                extensions[SubjectAlternativeName.key] = san
+            for ext_key in [KeyUsage.key, ExtendedKeyUsage.key, TLSFeature.key]:
+                if data[ext_key].value:
+                    extensions[ext_key] = data[ext_key]
+                else:
+                    extensions[ext_key] = None
+
+            obj.x509 = profile.create_cert(data['ca'], parsed_csr, subject=data['subject'], expires=expires,
+                                           algorithm=data['algorithm'], cn_in_san=cn_in_san,
+                                           password=data['password'], extensions=extensions)
             obj.save()
-
-            # call signals
             post_issue_cert.send(sender=self.model, cert=obj)
         else:
             obj.save()
