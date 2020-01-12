@@ -19,7 +19,7 @@ import importlib
 from .. import ca_settings
 from .. import profiles
 
-#from django.test.signals import setting_changed
+from django.test.signals import setting_changed
 
 
 def reload_ca_settings(sender, setting, **kwargs):  # pragma: no cover
@@ -35,4 +35,4 @@ def reload_ca_settings(sender, setting, **kwargs):  # pragma: no cover
     profiles.profiles._reset()
 
 
-#setting_changed.connect(reload_ca_settings)
+setting_changed.connect(reload_ca_settings)
