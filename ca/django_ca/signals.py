@@ -54,10 +54,9 @@ Parameters
 ca
 csr
 **kwargs
-    All additional parameters passed to :py:meth:`Certificate.objects.init()
-    <django_ca.managers.CertificateManager.init>`, but normalized to expected values. For example, this signal
-    will receive a :py:class:`~django_ca.extensions.KeyUsage` instance, regardless of how the parameter was
-    actually passed.
+    All additional parameters passed to :py:meth:`~django_ca.profiles.Profile.create_cert`, but normalized to
+    expected values. For example, this signal will receive a :py:class:`~django_ca.extensions.KeyUsage`
+    instance, regardless of how the parameter was actually passed.
 """
 
 post_issue_cert = django.dispatch.Signal(providing_args=['cert'])
