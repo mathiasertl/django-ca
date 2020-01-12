@@ -216,12 +216,6 @@ OPENSSL_SUPPORTS_SCT = default_backend()._lib.CRYPTOGRAPHY_OPENSSL_110F_OR_GREAT
 
 CA_FILE_STORAGE_URL = 'https://django-ca.readthedocs.io/en/latest/update.html#update-to-1-12-0-or-later'
 
-CA_DJANGO_SUPPORTS_PATH = True
-try:
-    from django.urls import path  # NOQA
-except ImportError:  # pragma: only django<=1.11
-    CA_DJANGO_SUPPORTS_PATH = False
-
 # Decide if we should use Celery or not
 CA_USE_CELERY = getattr(settings, 'CA_USE_CELERY', None)
 if CA_USE_CELERY is None:

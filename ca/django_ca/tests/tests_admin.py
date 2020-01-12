@@ -23,7 +23,6 @@ from cryptography.x509.extensions import UnrecognizedExtension
 from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import ObjectIdentifier
 
-import django
 from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.contrib.auth.models import User
@@ -268,14 +267,9 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         response = self.client.get(self.change_url())
         self.assertChangeResponse(response)
 
-        if django.VERSION < (2, 0):  # pragma: django<2.0
-            cls = 'field-box'
-        else:
-            cls = 'fieldBox'
-
-        self.assertContains(response, text='''<div class="%s field-revoked"><label>Revoked:</label>
+        self.assertContains(response, text='''<div class="fieldBox field-revoked"><label>Revoked:</label>
                      <div class="readonly"><img src="/static/admin/img/icon-yes.svg" alt="True"></div>
-                </div>''' % cls, html=True)
+                </div>''', html=True)
 
     def test_no_san(self):
         # Test display of a certificate with no SAN
