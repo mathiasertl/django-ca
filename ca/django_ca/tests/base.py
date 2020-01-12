@@ -379,10 +379,6 @@ class DjangoCATestCaseMixin:
         super().tearDown()
         cache.clear()
 
-    def settings(self, **kwargs):  # pragma: only django<2.2
-        # custom override_settings implementation is only necessary in django<=2.2
-        return override_settings(**kwargs)
-
     def tmpcadir(self, **kwargs):
         """Context manager to use a temporary CA dir."""
         return override_tmpcadir(**kwargs)
