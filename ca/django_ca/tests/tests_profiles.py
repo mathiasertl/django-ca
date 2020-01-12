@@ -373,6 +373,47 @@ class ProfileTestCase(DjangoCATestCase):
         ])
 
     @override_tmpcadir()
+    def test_hide_extension(self):
+        ca = self.load_ca(name='root', x509=certs['root']['pub']['parsed'])
+        csr = certs['child-cert']['csr']['parsed']
+        subject = Subject({'CN': 'example.com'})
+
+        profile = Profile('example', subject=Subject(), extensions={OCSPNoCheck.key: {}})
+        with self.assertSignal(pre_issue_cert) as pre:
+            cert = self.create_cert(profile, ca, csr, subject=subject, add_crl_url=False, add_ocsp_url=False,
+                                    add_issuer_url=False, add_issuer_alternative_name=False,
+                                    extensions={OCSPNoCheck.key: None})
+        self.assertEqual(pre.call_count, 1)
+        self.assertEqual(cert.subject, subject)
+        self.assertEqual(cert.extensions, [
+            ca.get_authority_key_identifier_extension(),
+            BasicConstraints({'value': {'ca': False}}),
+            SubjectAlternativeName({'value': ['DNS:example.com']}),
+            certs['child-cert']['subject_key_identifier'],
+        ])
+
+    @override_tmpcadir()
+    def test_extension_as_cryptography(self):
+        ca = self.load_ca(name='root', x509=certs['root']['pub']['parsed'])
+        csr = certs['child-cert']['csr']['parsed']
+        subject = Subject({'CN': 'example.com'})
+
+        profile = Profile('example', subject=Subject(), extensions={OCSPNoCheck.key: {}})
+        with self.assertSignal(pre_issue_cert) as pre:
+            cert = self.create_cert(profile, ca, csr, subject=subject, add_crl_url=False, add_ocsp_url=False,
+                                    add_issuer_url=False, add_issuer_alternative_name=False,
+                                    extensions={OCSPNoCheck.key: OCSPNoCheck().as_extension()})
+        self.assertEqual(pre.call_count, 1)
+        self.assertEqual(cert.subject, subject)
+        self.assertEqual(cert.extensions, [
+            ca.get_authority_key_identifier_extension(),
+            BasicConstraints({'value': {'ca': False}}),
+            OCSPNoCheck(),
+            SubjectAlternativeName({'value': ['DNS:example.com']}),
+            certs['child-cert']['subject_key_identifier'],
+        ])
+
+    @override_tmpcadir()
     def test_no_cn_no_san(self):
         ca = self.load_ca(name='root', x509=certs['root']['pub']['parsed'])
         csr = certs['child-cert']['csr']['parsed']

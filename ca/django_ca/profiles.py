@@ -133,6 +133,7 @@ class Profile(object):
 
     def _parse_extension_value(self, key, value):
         """Parse an extension value into a django_ca extension."""
+
         if isinstance(value, Extension):
             return value
         elif value is None:

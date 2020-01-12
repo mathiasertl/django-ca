@@ -49,8 +49,6 @@ class CertificateManagerMixin(object):
     def get_common_extensions(self, issuer_url=None, crl_url=None, ocsp_url=None):
         extensions = []
         if crl_url:
-            if isinstance(crl_url, str):
-                crl_url = [url.strip() for url in crl_url.split()]
             urls = [x509.UniformResourceIdentifier(force_text(c)) for c in crl_url]
             dps = [x509.DistributionPoint(full_name=[c], relative_name=None, crl_issuer=None, reasons=None)
                    for c in urls]
