@@ -261,8 +261,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
                                    backend=default_backend())
 
         # Normalize extensions for create()
-        if crl_url is not None:  # NOTE: also joins on empty lists
-            crl_url = '\n'.join(crl_url)
+        crl_url = '\n'.join(crl_url)
 
         ca = self.model(name=name, issuer_url=issuer_url, issuer_alt_name=issuer_alt_name,
                         ocsp_url=ocsp_url, crl_url=crl_url, parent=parent)
