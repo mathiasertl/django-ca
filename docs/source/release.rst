@@ -33,10 +33,11 @@ Other tasks
 Run testsuite
 =============
 
+* First, run ``./dev.py clean``.
 * Check code quality (``python dev.py code-quality``).
 * Check test coverage (``python dev.py coverage``).
 * Make sure that ``python dev.py docker-test`` runs through.
-* Make sure that tox runs through for all environments.
+* Make sure that ``tox`` runs through for all environments.
 
 *********
 Test demo
@@ -57,8 +58,6 @@ Test admin interface
 * Check if the output of CAs and certs look okay: http://localhost:8000/admin
 * Check if the profile selection when creating a certificate works.
 
-************
-Docker image
 ************
 
 Create a docker image:

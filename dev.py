@@ -73,6 +73,7 @@ collectstatic_parser = commands.add_parser('collectstatic', help="Collect and re
 collectstatic_parser.add_argument('--install-dir', metavar='PATH',
                                   help="Assume modules were installed to PATH.")
 
+commands.add_parser('clean', help="Remove generated files.")
 args = parser.parse_args()
 
 _rootdir = os.path.dirname(os.path.realpath(__file__))
@@ -1058,5 +1059,38 @@ elif args.command == 'collectstatic':
     for location in locations:
         print('rm -r "%s"' % location)
         shutil.rmtree(location)
+elif args.command == 'clean':
+    base = os.path.dirname(os.path.abspath(__file__))
+
+    def rm(*path):
+        path = os.path.join(base, *path)
+        if not os.path.exists(path):
+            return
+        elif os.path.isdir(path):
+            print('rm -r', path)
+            shutil.rmtree(path)
+        else:
+            print('rm', path)
+            os.remove(path)
+
+    rm('pip-selfcheck.json')
+    rm('geckodriver.log')
+    rm('docs', 'build')
+    rm('.tox')
+    rm('ca', 'files')
+    rm('ca', 'geckodriver.log')
+    rm('dist')
+    rm('build')
+    rm('.coverage')
+    rm('.docker')
+
+    for root, dirs, files in os.walk(base, topdown=False):
+        for name in files:
+            if name.endswith('.pyc') or name.endswith('.sqlite3'):
+                rm(root, name)
+        for name in dirs:
+            if name == '__pycache__' or name.endswith('.egg-info'):
+                rm(root, name)
+
 else:
     parser.print_help()
