@@ -11,7 +11,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-import warnings
 from copy import deepcopy
 from datetime import timedelta
 from threading import local
@@ -22,21 +21,16 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
 from . import ca_settings
-from .deprecation import RemovedInDjangoCA16Warning
 from .extensions import KEY_TO_EXTENSION
 from .extensions import AuthorityInformationAccess
 from .extensions import AuthorityKeyIdentifier
 from .extensions import BasicConstraints
 from .extensions import CRLDistributionPoints
 from .extensions import DistributionPoint
-from .extensions import ExtendedKeyUsage
 from .extensions import Extension
 from .extensions import IssuerAlternativeName
-from .extensions import KeyUsage
-from .extensions import OCSPNoCheck
 from .extensions import SubjectAlternativeName
 from .extensions import SubjectKeyIdentifier
-from .extensions import TLSFeature
 from .signals import pre_issue_cert
 from .subject import Subject
 from .utils import get_cert_builder
@@ -91,32 +85,6 @@ class Profile(object):
 
         # set some sane extension defaults
         self.extensions.setdefault(BasicConstraints.key, BasicConstraints())
-
-        if 'keyUsage' in kwargs:
-            warnings.warn('keyUsage in profile is deprecated, use extensions -> %s instead.' % KeyUsage.key,
-                          RemovedInDjangoCA16Warning, stacklevel=2)
-            self.extensions[KeyUsage.key] = KeyUsage(kwargs.pop('keyUsage'))
-        if 'extendedKeyUsage' in kwargs:
-            warnings.warn(
-                'extendedKeyUsage in profile is deprecated, use extensions -> %s instead.'
-                % ExtendedKeyUsage.key, RemovedInDjangoCA16Warning, stacklevel=2)
-            self.extensions[ExtendedKeyUsage.key] = ExtendedKeyUsage(kwargs.pop('extendedKeyUsage'))
-        if 'TLSFeature' in kwargs:
-            warnings.warn(
-                'TLSFeature in profile is deprecated, use extensions -> %s instead.' % TLSFeature.key,
-                RemovedInDjangoCA16Warning, stacklevel=2)
-            self.extensions[TLSFeature.key] = TLSFeature(kwargs.pop('TLSFeature'))
-        if 'desc' in kwargs:
-            warnings.warn('desc in profile is deprecated, use description instead.',
-                          RemovedInDjangoCA16Warning, stacklevel=2)
-            self.description = kwargs.pop('desc')
-        if 'ocsp_no_check' in kwargs:
-            warnings.warn('ocsp_no_check in profile is deprecated, use extensions -> %s instead.' %
-                          OCSPNoCheck.key, RemovedInDjangoCA16Warning, stacklevel=2)
-            self.extensions[OCSPNoCheck.key] = OCSPNoCheck()
-
-        # set some defaults
-        self.extensions.setdefault(BasicConstraints.key, BasicConstraints({'value': {'ca': False}}))
 
     def __eq__(self, o):
         if isinstance(o, (Profile, DefaultProfileProxy)) is False:

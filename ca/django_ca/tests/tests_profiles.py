@@ -15,17 +15,14 @@ import doctest
 from datetime import timedelta
 
 from .. import ca_settings
-from ..deprecation import RemovedInDjangoCA16Warning
 from ..extensions import AuthorityInformationAccess
 from ..extensions import BasicConstraints
 from ..extensions import CRLDistributionPoints
-from ..extensions import ExtendedKeyUsage
 from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
 from ..extensions import OCSPNoCheck
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
-from ..extensions import TLSFeature
 from ..models import Certificate
 from ..profiles import Profile
 from ..profiles import get_profile
@@ -113,42 +110,6 @@ class ProfileTestCase(DjangoCATestCase):
         with override_settings(CA_DEFAULT_SUBJECT=default_subject):
             p = Profile('test')
         self.assertEqual(p.subject, Subject(default_subject))
-
-    def test_init_old_values(self):
-        name = 'example'
-        subject = Subject('/C=AT/L=Vienna')
-        desc = 'example description'
-        ku = {'value': ['keyAgreement', 'keyEncipherment']}
-        eku = {'value': ['clientAuth', 'serverAuth']}
-        tf = {'value': ['OCSPMustStaple']}
-
-        p1 = Profile(name, subject=subject, description=desc, extensions={
-            KeyUsage.key: ku,
-            ExtendedKeyUsage.key: eku,
-            TLSFeature.key: tf,
-            OCSPNoCheck.key: {},
-        })
-        with self.assertMultipleWarnings([
-            {'category': RemovedInDjangoCA16Warning, 'filename': __file__,
-             'msg': r'^keyUsage in profile is deprecated, use extensions -> key_usage instead\.$',
-            },
-            {'category': RemovedInDjangoCA16Warning, 'filename': __file__,
-             'msg': r'^extendedKeyUsage in profile is deprecated, use extensions -> extended_key_usage instead\.$',   # NOQA
-            },
-            {'category': RemovedInDjangoCA16Warning, 'filename': __file__,
-             'msg': r'^TLSFeature in profile is deprecated, use extensions -> tls_feature instead\.$',
-            },
-            {'category': RemovedInDjangoCA16Warning, 'filename': __file__,
-             'msg': r'^desc in profile is deprecated, use description instead\.$',
-            },
-            {'category': RemovedInDjangoCA16Warning, 'filename': __file__,
-             'msg': r'^ocsp_no_check in profile is deprecated, use extensions -> ocsp_no_check instead\.$',
-            },
-        ]):
-            p2 = Profile(name, subject=subject, desc=desc, keyUsage=ku, extendedKeyUsage=eku, TLSFeature=tf,
-                         ocsp_no_check=True)
-
-        self.assertEqual(p1, p2)
 
     def test_init_expires(self):
         p = Profile('example', expires=30)
