@@ -1484,6 +1484,23 @@ class AddCertificateSeleniumTests(AdminTestMixin, SeleniumTestCase):
 
             self.assertEqual(value, profile.subject.get(key, ''))
 
+    def clear_form(self, ku_select, ku_critical, eku_select, eku_critical, tf_select, tf_critical, cn_in_san,
+                   subject_fields):
+        ku_select.deselect_all()
+        eku_select.deselect_all()
+        tf_select.deselect_all()
+
+        if ku_critical.is_selected():
+            ku_critical.click()
+        if eku_critical.is_selected():
+            eku_critical.click()
+        if tf_critical.is_selected():
+            tf_critical.click()
+        if cn_in_san.is_selected():
+            cn_in_san.click()
+        for field in subject_fields.values():
+            field.clear()
+
     @override_tmpcadir()
     def test_paste_csr_test(self):
         self.load_usable_cas()
@@ -1553,20 +1570,8 @@ class AddCertificateSeleniumTests(AdminTestMixin, SeleniumTestCase):
 
         for option in select.options:
             # first, clear everything to make sure that the profile *sets* everything
-            ku_select.deselect_all()
-            eku_select.deselect_all()
-            tf_select.deselect_all()
-
-            if ku_critical.is_selected():
-                ku_critical.click()
-            if eku_critical.is_selected():
-                eku_critical.click()
-            if tf_critical.is_selected():
-                tf_critical.click()
-            if cn_in_san.is_selected():
-                cn_in_san.click()
-            for field in subject_fields.values():
-                field.clear()
+            self.clear_form(ku_select, ku_critical, eku_select, eku_critical, tf_select, tf_critical,
+                            cn_in_san, subject_fields)
 
             value = option.get_attribute("value")
             if not value:
@@ -1595,7 +1600,9 @@ class AddCertificateSeleniumTests(AdminTestMixin, SeleniumTestCase):
                 field.send_keys('testdata')
 
             # select empty element in profile select, then select profile again
-            select.select_by_value('')
+            select.select_by_value(ca_settings.CA_DEFAULT_PROFILE)
+            self.clear_form(ku_select, ku_critical, eku_select, eku_critical, tf_select, tf_critical,
+                            cn_in_san, subject_fields)
             option.click()
 
             # see that all the right things are selected
