@@ -183,7 +183,7 @@ class UnrecognizedExtension(Extension):
     def __init__(self, value, name='', error=''):
         self._error = error
         self._name = name
-        super(UnrecognizedExtension, self).__init__(value)
+        super().__init__(value)
 
     def from_extension(self, value):
         self.value = value
@@ -221,7 +221,7 @@ class NullExtension(Extension):
         if not value:
             self.critical = self.default_critical
         else:
-            super(NullExtension, self).__init__(value)
+            super().__init__(value)
 
     def __hash__(self):
         return hash((self.critical, ))
@@ -418,7 +418,7 @@ class OrderedSetExtension(IterableExtension):
         return OrderedSetExtension({'critical': self.critical, 'value': value})
 
     def _repr_value(self):
-        return [str(v) for v in super(OrderedSetExtension, self)._repr_value()]
+        return [str(v) for v in super()._repr_value()]
 
     def add(self, elem):
         self.value.add(self.parse_value(elem))
@@ -1160,7 +1160,7 @@ class AuthorityKeyIdentifier(Extension):
             self.from_subject_key_identifier(value)
             self._test_value()
         else:
-            super(AuthorityKeyIdentifier, self).from_other(value)
+            super().from_other(value)
 
     def from_subject_key_identifier(self, ext):
         self.value = {
@@ -1480,7 +1480,7 @@ class KeyUsage(OrderedSetExtension):
     )
 
     def __init__(self, *args, **kwargs):
-        super(KeyUsage, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         # decipherOnly only makes sense if keyAgreement is True
         if 'decipher_only' in self.value and 'key_agreement' not in self.value:
@@ -1938,7 +1938,7 @@ class PrecertPoison(NullExtension):
     ext_class = x509.PrecertPoison
 
     def __init__(self, value=None):
-        super(PrecertPoison, self).__init__(value=value)
+        super().__init__(value=value)
 
         if self.critical is not True:
             raise ValueError('PrecertPoison must always be marked as critical')
@@ -2114,7 +2114,7 @@ class SubjectKeyIdentifier(KeyIdExtension):
             self.value = value.digest
             self._test_value()
         else:
-            super(AuthorityKeyIdentifier, self).from_other(value)
+            super().from_other(value)
 
     def from_extension(self, ext):
         self.value = ext.value.digest
