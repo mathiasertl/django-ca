@@ -452,7 +452,8 @@ class DjangoCATestCaseMixin:
         self.assertEqual(messages, expected)
 
     @contextmanager
-    def assertMultipleWarnings(self, warnings, msg=None):
+    def assertMultipleWarnings(self, warnings, msg=None):  # pragma: no cover
+        # not used in 1.16, but might still be useful
         arg = tuple([w['category'] for w in warnings if w.get('category')])
         with self.assertWarns(arg, msg=msg) as cm:
             yield cm
