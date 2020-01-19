@@ -21,7 +21,6 @@ from .base import override_settings
 from .base import timestamps
 
 
-@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class ListCertsTestCase(DjangoCAWithGeneratedCertsTestCase):
     def line(self, cert):
         if cert.revoked is True:
