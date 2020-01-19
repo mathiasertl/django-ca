@@ -468,6 +468,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
                          TLSFeature({'value': ['OCSPMustStaple', 'MultipleCertStatusRequest']}))
         self.assertEqual(cert.ca, ca)
         self.assertEqual(cert.csr, csr)
+        self.assertEqual(cert.profile, 'webserver')
 
         # Some extensions are not set
         self.assertIsNone(cert.issuer_alternative_name)
