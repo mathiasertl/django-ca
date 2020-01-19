@@ -2108,6 +2108,14 @@ class SubjectKeyIdentifier(KeyIdExtension):
     def extension_type(self):
         return x509.SubjectKeyIdentifier(digest=self.value)
 
+    def from_other(self, value):
+        if isinstance(value, x509.SubjectKeyIdentifier):
+            self.critical = self.default_critical
+            self.value = value.digest
+            self._test_value()
+        else:
+            super(AuthorityKeyIdentifier, self).from_other(value)
+
     def from_extension(self, ext):
         self.value = ext.value.digest
 
