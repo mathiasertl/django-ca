@@ -99,11 +99,8 @@ class CreateCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         cert = Certificate.objects.create_cert(ca, csr, subject=subject, add_crl_url=False,
                                                add_ocsp_url=False, add_issuer_url=False)
         self.assertEqual(cert.subject, Subject(subject))
-        self.assertEqual(cert.extensions, [
-            ca.get_authority_key_identifier_extension(),
-            BasicConstraints({'value': {'ca': False}}),
+        self.assertExtensions(cert, [
             SubjectAlternativeName({'value': ['DNS:example.com']}),
-            certs['root-cert']['subject_key_identifier'],
         ])
 
     @override_tmpcadir(CA_PROFILES={ca_settings.CA_DEFAULT_PROFILE: {'extensions': {}}})
@@ -116,11 +113,8 @@ class CreateCertTestCase(DjangoCAWithGeneratedCAsTestCase):
             ca, csr, subject=subject, profile=profiles[ca_settings.CA_DEFAULT_PROFILE],
             add_crl_url=False, add_ocsp_url=False, add_issuer_url=False)
         self.assertEqual(cert.subject, Subject(subject))
-        self.assertEqual(cert.extensions, [
-            ca.get_authority_key_identifier_extension(),
-            BasicConstraints({'value': {'ca': False}}),
+        self.assertExtensions(cert, [
             SubjectAlternativeName({'value': ['DNS:example.com']}),
-            certs['root-cert']['subject_key_identifier'],
         ])
 
     @override_tmpcadir()

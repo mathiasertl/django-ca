@@ -455,17 +455,14 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertPostIssueCert(post, cert)
         self.assertSubject(cert.x509, [('C', 'US'), ('CN', cn)])
         self.assertIssuer(ca, cert)
-        self.assertAuthorityKeyIdentifier(ca, cert)
-        self.assertEqual(cert.subject_alternative_name,
-                         SubjectAlternativeName({'value': ['DNS:%s' % cn]}))
-        self.assertEqual(cert.basic_constraints,
-                         BasicConstraints({'critical': True, 'value': {'ca': False}}))
-        self.assertEqual(cert.key_usage,
-                         KeyUsage({'critical': True, 'value': ['digitalSignature', 'keyAgreement']}))
-        self.assertEqual(cert.extended_key_usage,
-                         ExtendedKeyUsage({'value': ['clientAuth', 'serverAuth']}))
-        self.assertEqual(cert.tls_feature,
-                         TLSFeature({'value': ['OCSPMustStaple', 'MultipleCertStatusRequest']}))
+        self.maxDiff = None
+        self.assertExtensions(cert, [
+            ExtendedKeyUsage({'value': ['clientAuth', 'serverAuth']}),
+            KeyUsage({'critical': True, 'value': ['digitalSignature', 'keyAgreement']}),
+            SubjectAlternativeName({'value': ['DNS:%s' % cn]}),
+            TLSFeature({'value': ['OCSPMustStaple', 'MultipleCertStatusRequest']}),
+        ])
+
         self.assertEqual(cert.ca, ca)
         self.assertEqual(cert.csr, csr)
         self.assertEqual(cert.profile, 'webserver')
@@ -573,21 +570,13 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertPostIssueCert(post, cert)
         self.assertSubject(cert.x509, [('C', 'US'), ('CN', cn)])
         self.assertIssuer(ca, cert)
-        self.assertAuthorityKeyIdentifier(ca, cert)
-        self.assertEqual(cert.subject_alternative_name,
-                         SubjectAlternativeName({'value': ['DNS:%s' % san, 'DNS:%s' % cn]}))
-        self.assertEqual(cert.basic_constraints,
-                         BasicConstraints({'critical': True, 'value': {'ca': False}}))
         self.assertEqual(cert.ca, ca)
         self.assertEqual(cert.csr, csr)
 
         # Some extensions are not set
-        self.assertIsNone(cert.certificate_policies)
-        self.assertIsNone(cert.extended_key_usage)
-        self.assertIsNone(cert.issuer_alternative_name)
-        self.assertIsNone(cert.key_usage)
-        self.assertIsNone(cert.precertificate_signed_certificate_timestamps)
-        self.assertIsNone(cert.tls_feature)
+        self.assertExtensions(cert, [
+            SubjectAlternativeName({'value': ['DNS:%s' % san, 'DNS:%s' % cn]}),
+        ])
 
         # Test that we can view the certificate
         response = self.client.get(self.change_url(cert.pk))

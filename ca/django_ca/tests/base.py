@@ -60,11 +60,18 @@ from selenium.webdriver.support.wait import WebDriverWait
 from .. import ca_settings
 from ..constants import ReasonFlags
 from ..extensions import KEY_TO_EXTENSION
+from ..extensions import OID_TO_EXTENSION
+from ..extensions import AuthorityInformationAccess
+from ..extensions import AuthorityKeyIdentifier
+from ..extensions import BasicConstraints
+from ..extensions import CRLDistributionPoints
 from ..extensions import Extension
 from ..extensions import IterableExtension
 from ..extensions import ListExtension
+from ..extensions import SubjectKeyIdentifier
 from ..models import Certificate
 from ..models import CertificateAuthority
+from ..models import X509CertMixin
 from ..signals import post_create_ca
 from ..signals import post_issue_cert
 from ..signals import post_revoke_cert
@@ -443,6 +450,49 @@ class DjangoCATestCaseMixin:
         """
         with self.assertRaisesRegex(CommandError, msg):
             yield
+
+    def assertExtensions(self, cert, extensions, signer=None, expect_defaults=True):
+        extensions = {e.key: e for e in extensions}
+
+        if isinstance(cert, X509CertMixin):
+            pubkey = cert.x509.public_key()
+            actual = {e.key: e for e in cert.extensions}
+
+            if isinstance(cert, Certificate):
+                signer = cert.ca
+            elif cert.parent is None:  # root CA
+                signer = cert
+            else:  # intermediate CA
+                signer = cert.parent
+        else:  # cg cert
+            pubkey = cert.public_key()
+            actual = {e.key: e for e in [OID_TO_EXTENSION[e.oid](e) if e.oid in OID_TO_EXTENSION else e
+                                         for e in cert.extensions]}
+
+        if expect_defaults is True:
+            if isinstance(cert, Certificate):
+                extensions.setdefault(BasicConstraints.key, BasicConstraints())
+            if signer is not None:
+                extensions.setdefault(AuthorityKeyIdentifier.key,
+                                      signer.get_authority_key_identifier_extension())
+
+                if isinstance(cert, Certificate) and signer.crl_url:
+                    urls = signer.crl_url.split()
+                    ext = CRLDistributionPoints({'value': [{'full_name': urls}]})
+                    extensions.setdefault(CRLDistributionPoints.key, ext)
+
+                aia = AuthorityInformationAccess()
+                if isinstance(cert, Certificate) and signer.ocsp_url:
+                    aia.ocsp = [signer.ocsp_url]
+                if isinstance(cert, Certificate) and signer.issuer_url:
+                    aia.issuers = [signer.issuer_url]
+                if aia.ocsp or aia.issuers:
+                    extensions.setdefault(AuthorityInformationAccess.key, aia)
+
+            ski = x509.SubjectKeyIdentifier.from_public_key(pubkey)
+            extensions.setdefault(SubjectKeyIdentifier.key, SubjectKeyIdentifier(ski))
+
+        self.assertEqual(actual, extensions)
 
     def assertIssuer(self, issuer, cert):
         self.assertEqual(cert.issuer, issuer.subject)
