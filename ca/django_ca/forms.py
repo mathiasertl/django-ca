@@ -40,8 +40,7 @@ def _initial_expires():
 
 
 def _profile_choices():
-    choices = [('', '----')] + [(p, p) for p in ca_settings.CA_PROFILES]
-    return sorted(choices, key=lambda e: e[0])
+    return sorted([(p, p) for p in ca_settings.CA_PROFILES], key=lambda e: e[0])
 
 
 class X509CertMixinAdminForm(forms.ModelForm):

@@ -863,6 +863,10 @@ class Certificate(X509CertMixin):
                            verbose_name=_('Certificate Authority'))
     csr = models.TextField(verbose_name=_('CSR'), blank=True)
 
+    # Note: We don't set choices here because the available profiles might be changed by the user.
+    profile = models.CharField(blank=True, default='', max_length=32,
+                               help_text=_('Profile that was used to generate this certificate.'))
+
     @property
     def bundle(self):
         """The complete certificate bundle. This includes all CAs as well as the certificates itself."""

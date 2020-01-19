@@ -323,7 +323,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         csr = self.parse_csr(csr, csr_format=csr_format)
         cert = profile.create_cert(ca, csr, **kwargs)
 
-        c = self.model(ca=ca, csr=csr.public_bytes(Encoding.PEM).decode('utf-8'))
+        c = self.model(ca=ca, csr=csr.public_bytes(Encoding.PEM).decode('utf-8'), profile=profile.name)
         c.x509 = cert
         c.save()
 

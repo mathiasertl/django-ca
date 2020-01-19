@@ -10,6 +10,9 @@ ChangeLog
 1.16.0 (TBR)
 ************
 
+* The profile used to generate the certificate is now stored in the database.
+* It is no longer optional to select a profile in the admin interface when creating a certificate.
+
 Backwards incompatible changes
 ==============================
 

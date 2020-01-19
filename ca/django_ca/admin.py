@@ -344,16 +344,16 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
     add_form_template = 'admin/django_ca/certificate/add_form.html'
     change_form_template = 'admin/django_ca/certificate/change_form.html'
     list_display = ('cn_display', 'serial_field', 'status', 'expires_date')
-    list_filter = (StatusListFilter, 'ca')
+    list_filter = ('profile', StatusListFilter, 'ca')
     readonly_fields = [
         'expires', 'csr', 'pub', 'cn_display', 'serial_field', 'revoked', 'revoked_date', 'revoked_reason',
-        'distinguishedName', 'ca', 'hpkp_pin', 'subject_alternative_name']
+        'distinguishedName', 'ca', 'hpkp_pin', 'subject_alternative_name', 'profile', ]
     search_fields = ['cn', 'serial', ]
 
     fieldsets = [
         (None, {
             'fields': ['cn_display', 'subject_alternative_name', 'distinguishedName', 'serial_field', 'ca',
-                       'expires', 'watchers', 'hpkp_pin'],
+                       'expires', 'watchers', 'hpkp_pin', 'profile', ],
         }),
         (_('X.509 Extensions'), {
             'fields': [],
@@ -611,6 +611,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                 else:
                     extensions[ext_key] = None
 
+            obj.profile = profile.name
             obj.x509 = profile.create_cert(data['ca'], parsed_csr, subject=data['subject'], expires=expires,
                                            algorithm=data['algorithm'], cn_in_san=cn_in_san,
                                            password=data['password'], extensions=extensions)
