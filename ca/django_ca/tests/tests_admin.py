@@ -118,10 +118,42 @@ class ChangelistTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
         self.assertEqual(set(response.context['cl'].result_list), set(certs))
 
     def test_get(self):
-        # Just make sure that viewing the changelist doesn't yield an exception
-        self.load_all_certs()  # load all certs here
         response = self.client.get(self.changelist_url)
         self.assertResponse(response, self.certs.values())
+
+    def test_status_all(self):
+        # Test viewing all certificates, regardless of revocation or current time
+        self.load_all_certs()  # load all certs here
+
+        with freeze_time(timestamps['everything_valid']):
+            response = self.client.get('%s?status=all' % self.changelist_url)
+            self.assertResponse(response, self.certs.values())
+
+            # Revoke everything and try again
+            for cert in self.certs.values():
+                cert.revoke()
+                cert.save()
+            response = self.client.get('%s?status=all' % self.changelist_url)
+            self.assertResponse(response, self.certs.values())
+
+        with freeze_time(timestamps['everything_expired']):
+            self.client.force_login(self.user)
+            response = self.client.get('%s?status=all' % self.changelist_url)
+            self.assertResponse(response, self.certs.values())
+
+        with freeze_time(timestamps['before_everything']):
+            self.client.force_login(self.user)
+            response = self.client.get('%s?status=all' % self.changelist_url)
+            self.assertResponse(response, self.certs.values())
+
+        # Revoke everything and try again
+        with freeze_time(timestamps['everything_valid']):
+            self.client.force_login(self.user)
+            for cert in self.certs.values():
+                cert.revoke()
+                cert.save()
+            response = self.client.get('%s?status=all' % self.changelist_url)
+            self.assertResponse(response, self.certs.values())
 
     @freeze_time(timestamps['everything_valid'])
     def test_status_all_valid(self):
@@ -138,7 +170,7 @@ class ChangelistTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
     def test_status_ca_certs_expired(self):
         self.client.force_login(self.user)
 
-        response = self.client.get('%s?status=valid' % self.changelist_url)
+        response = self.client.get(self.changelist_url)
         self.assertResponse(response, [
             self.certs['profile-client'],
             self.certs['profile-server'],
@@ -164,7 +196,7 @@ class ChangelistTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
     def test_status_everything_expired(self):
         self.client.force_login(self.user)
 
-        response = self.client.get('%s?status=valid' % self.changelist_url)
+        response = self.client.get(self.changelist_url)
         self.assertResponse(response, [])
         response = self.client.get('%s?status=expired' % self.changelist_url)
         self.assertResponse(response, self.certs.values())
@@ -178,7 +210,7 @@ class ChangelistTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
 
         valid = [c for c in self.certs.values() if c != self.certs['root-cert']]
 
-        response = self.client.get('%s?status=valid' % self.changelist_url)
+        response = self.client.get(self.changelist_url)
         self.assertResponse(response, valid)
         response = self.client.get('%s?status=expired' % self.changelist_url)
         self.assertResponse(response, [])
