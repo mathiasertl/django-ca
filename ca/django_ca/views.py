@@ -18,6 +18,8 @@ import os
 from datetime import datetime
 from datetime import timedelta
 
+import josepy as jose
+
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -31,6 +33,8 @@ from cryptography.x509 import ocsp
 from django.core.cache import cache
 from django.http import HttpResponse
 from django.http import HttpResponseServerError
+from django.http import JsonResponse
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
@@ -44,6 +48,11 @@ from .utils import get_crl_cache_key
 from .utils import int_to_hex
 from .utils import parse_encoding
 from .utils import read_file
+
+try:
+    import secrets
+except ImportError:  # pragma: python<3.6
+    secrets = None
 
 log = logging.getLogger(__name__)
 
@@ -315,3 +324,48 @@ class GenericCAIssuersView(View):
         ca = CertificateAuthority.objects.get(serial=serial)
         data = ca.x509.public_bytes(encoding=Encoding.DER)
         return HttpResponse(data, content_type='application/pkix-cert')
+
+
+class AcmeDirectory(View):
+    """
+    `Equivalent LE URL <https://acme-v02.api.letsencrypt.org/directory`_
+    """
+    def get(self, request):
+        nonce_url = request.build_absolute_uri(reverse('django_ca:acme-new-nonce'))
+
+        return JsonResponse({
+            "0s_whpz2mU4": "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417",
+            "keyChange": "http://localhost:8000/django_ca/acme/key-change",
+            "meta": {
+                #"caaIdentities": [
+                #    "letsencrypt.org"
+                #],
+                "termsOfService": "https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf",
+                "website": "https://letsencrypt.org"
+            },
+            "newAccount": "http://localhost:8000/django_ca/acme/new-acct",
+            "newNonce": nonce_url,
+            "newOrder": "http://localhost:8000/django_ca/acme/new-order",
+            "revokeCert": "http://localhost:8000/django_ca/acme/revoke-cert"
+        })
+
+
+class AcmeNewNonce(View):
+    """
+    `Equivalent LE URL <https://acme-v02.api.letsencrypt.org/acme/new-nonce>`_
+    """
+
+    nonce_length = 32
+
+    def get_nonce(self):
+        if secrets is None:
+            data = os.urandom(self.nonce_length)
+        else:
+            data = secrets.token_bytes(self.nonce_length)
+        return jose.b64encode(data).decode()
+
+    def head(self, request):
+        nonce = self.get_nonce()
+        resp = HttpResponse()
+        resp['replay-nonce'] = nonce + '======_!#$'
+        return resp
