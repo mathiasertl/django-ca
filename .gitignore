@@ -3,6 +3,7 @@
 *.sqlite3
 *.egg-info
 geckodriver.log
+/.certbot/
 /.env
 /.tox/
 /MANIFEST
