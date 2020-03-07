@@ -416,7 +416,12 @@ class AcmeBaseView(View):
 
         if not self.validate_nonce(jose.encode_b64jose(combined.nonce)):
             # ... "nonce"
-            return AcmeResponseBadNonce()
+            resp = AcmeResponseBadNonce()
+
+            # MUST include a new Nonce: "An error response with the "badNonce" error type MUST include a
+            # Replay-Nonce header field with a fresh nonce that the server will accept"
+            resp['replay-nonce'] = self.get_nonce()
+            return resp
 
         if combined.url != request.build_absolute_uri():
             # ... "url"
@@ -445,10 +450,8 @@ class AcmeNewNonce(AcmeBaseView):
     nonce_length = 32
 
     def head(self, request):
-        nonce = self.get_nonce()
-        print('Nonce: "%s"' % nonce)
         resp = HttpResponse()
-        resp['replay-nonce'] = nonce
+        resp['replay-nonce'] = self.get_nonce()
         return resp
 
 

@@ -44,7 +44,7 @@ class AcmeResponseMalformed(AcmeResponseError):
 
 
 class AcmeResponseUnauthorized(AcmeResponseError):
-    status_code = HTTPStatus.UNAUTHORIZED
+    status_code = HTTPStatus.UNAUTHORIZED  # 401
     type = 'unauthorized'
     message = "You are not authorized to perform this request."
 
