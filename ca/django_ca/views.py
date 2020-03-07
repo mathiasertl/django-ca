@@ -43,11 +43,12 @@ from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin
 
 from . import ca_settings
+from .acme import AcmeResponseAccountCreated
 from .acme import AcmeResponseBadNonce
-from .acme import AcmeResponseError
 from .acme import AcmeResponseMalformed
 from .acme import AcmeResponseUnauthorized
 from .acme import AcmeResponseUnsupportedMediaType
+from .models import AcmeAccount
 from .models import Certificate
 from .models import CertificateAuthority
 from .utils import SERIAL_RE
@@ -339,6 +340,7 @@ class AcmeDirectory(View):
     """
     def get(self, request):
         nonce_url = request.build_absolute_uri(reverse('django_ca:acme-new-nonce'))
+        new_acc_url = request.build_absolute_uri(reverse('django_ca:acme-new-account'))
 
         return JsonResponse({
             "0s_whpz2mU4": "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417",
@@ -350,7 +352,7 @@ class AcmeDirectory(View):
                 "termsOfService": "https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf",
                 "website": "https://letsencrypt.org"
             },
-            "newAccount": "http://localhost:8000/django_ca/acme/new-account/",
+            "newAccount": new_acc_url,
             "newNonce": nonce_url,
             "newOrder": "http://localhost:8000/django_ca/acme/new-order",
             "revokeCert": "http://localhost:8000/django_ca/acme/revoke-cert"
@@ -359,6 +361,8 @@ class AcmeDirectory(View):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class AcmeBaseView(View):
+    nonce_length = 32
+
     def nonce_key(self, nonce):
         return 'acme-nonce-%s' % nonce
 
@@ -440,15 +444,15 @@ class AcmeBaseView(View):
             return AcmeResponseMalformed('JWS contained mutually exclusive fields "jwk" and "kid".')
 
         request.jws = jws
-        return self.acme_request(request)
+        response = self.acme_request(request)
+        response['replay-nonce'] = self.get_nonce()
+        return response
 
 
 class AcmeNewNonce(AcmeBaseView):
     """
     `Equivalent LE URL <https://acme-v02.api.letsencrypt.org/acme/new-nonce>`_
     """
-
-    nonce_length = 32
 
     def head(self, request):
         resp = HttpResponse()
@@ -459,10 +463,31 @@ class AcmeNewNonce(AcmeBaseView):
 class AcmeNewAccount(AcmeBaseView):
     def acme_request(self, request):
         jws = request.jws
-        combined = jws.signature.combined
         msg = Registration.json_loads(jws.payload)
 
-        print(msg)
-        print(msg.emails)
+        jwk = jws.signature.combined.jwk
+        pem = jwk['key'].public_bytes(
+            encoding=Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        ).decode('utf-8')
 
-        return AcmeResponseError()
+        # Not stored right now, but might be useful? --> RFC 7638
+        #thumbprint = jwk.thumbprint()
+
+        account = AcmeAccount(
+            contact=msg.emails[0],
+            status=AcmeAccount.STATUS_VALID,
+            terms_of_service_agreed=msg.terms_of_service_agreed,
+            pem=pem
+        )
+        account.save()
+
+        return AcmeResponseAccountCreated(request, account)
+
+
+class AcmeAccountView(AcmeBaseView):
+    pass
+
+
+class AcmeAccountOrderView(AcmeBaseView):
+    pass

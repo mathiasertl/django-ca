@@ -11,13 +11,31 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-import json
 from http import HTTPStatus
 
-from django.http import HttpResponse
+from django.http import JsonResponse
+from django.urls import reverse
 
-class AcmeResponse(HttpResponse):
+
+class AcmeResponse(JsonResponse):
     pass
+
+
+class AcmeResponseAccountCreated(AcmeResponse):
+    status_code = HTTPStatus.CREATED
+
+    def __init__(self, request, account):
+        data = {
+            'status': account.status,
+            'contanct': [account.contact],
+            'orders': request.build_absolute_uri(
+                reverse('django_ca:acme-account-orders', kwargs={'pk': account.pk})),
+        }
+
+        super().__init__(data)
+
+        self['Location'] = request.build_absolute_uri(
+            reverse('django_ca:acme-account', kwargs={'pk': account.pk}))
 
 
 class AcmeResponseError(AcmeResponse):
@@ -35,7 +53,7 @@ class AcmeResponseError(AcmeResponse):
         if message:
             details['detail'] = message
 
-        super().__init__(content=json.dumps(details), content_type='application/problem+json')
+        super().__init__(details, content_type='application/problem+json')
 
 
 class AcmeResponseMalformed(AcmeResponseError):

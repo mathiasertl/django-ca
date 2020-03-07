@@ -889,14 +889,21 @@ class Certificate(X509CertMixin):
 
 
 class AcmeAccount(models.Model):
+    STATUS_VALID = 'valid'
+    STATUS_DEACTIVATED = 'deactivated'  # deactivated by user
+    STATUS_REVOKED = 'revoked'  # deactivated by server
+
     # Choices from RFC 8555, section 7.1.2.
     STATUS_CHOICES = (
-        ('valid', _('Valid')),
-        ('deactivated', _('Deactivated')),
-        ('revoked', _('Revoked')),
+        (STATUS_VALID, _('Valid')),
+        (STATUS_DEACTIVATED, _('Deactivated')),
+        (STATUS_REVOKED, _('Revoked')),
     )
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
     contact = models.CharField(blank=True, max_length=255)
     status = models.CharField(choices=STATUS_CHOICES, max_length=12)
+    terms_of_service_agreed = models.BooleanField(default=False)
+    pem = models.TextField(verbose_name=_('Public key'))
+    # TODO: store JWK thumbprint?
