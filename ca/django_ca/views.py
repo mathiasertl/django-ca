@@ -20,6 +20,7 @@ from datetime import timedelta
 
 import acme.jws
 import josepy as jose
+from acme.messages import Registration
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -459,7 +460,9 @@ class AcmeNewAccount(AcmeBaseView):
     def acme_request(self, request):
         jws = request.jws
         combined = jws.signature.combined
-        print(combined.jwk)
-        print(dir(combined.jwk))
+        msg = Registration.json_loads(jws.payload)
+
+        print(msg)
+        print(msg.emails)
 
         return AcmeResponseError()
