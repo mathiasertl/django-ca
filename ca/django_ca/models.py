@@ -886,3 +886,17 @@ class Certificate(X509CertMixin):
 
     def __str__(self):
         return self.cn
+
+
+class AcmeAccount(models.Model):
+    # Choices from RFC 8555, section 7.1.2.
+    STATUS_CHOICES = (
+        ('valid', _('Valid')),
+        ('deactivated', _('Deactivated')),
+        ('revoked', _('Revoked')),
+    )
+
+    created = models.DateTimeField(default=timezone.now)
+    updated = models.DateTimeField(auto_now=True)
+    contact = models.CharField(blank=True, max_length=255)
+    status = models.CharField(choices=STATUS_CHOICES, max_length=12)

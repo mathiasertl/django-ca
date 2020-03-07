@@ -37,6 +37,7 @@ urlpatterns = [
     path('crl/ca/<hex:serial>/', views.CertificateRevocationListView.as_view(scope='ca'), name='ca-crl'),
     path('directory/', views.AcmeDirectory.as_view(), name='acme-directory'),
     path('acme/new-nonce/', views.AcmeNewNonce.as_view(), name='acme-new-nonce'),
+    path('acme/new-account/', views.AcmeNewAccount.as_view(), name='acme-new-account'),
 ]
 
 

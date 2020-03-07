@@ -18,6 +18,7 @@ import os
 from datetime import datetime
 from datetime import timedelta
 
+import acme.jws
 import josepy as jose
 
 from cryptography import x509
@@ -41,6 +42,11 @@ from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin
 
 from . import ca_settings
+from .acme import AcmeResponseBadNonce
+from .acme import AcmeResponseError
+from .acme import AcmeResponseMalformed
+from .acme import AcmeResponseUnauthorized
+from .acme import AcmeResponseUnsupportedMediaType
 from .models import Certificate
 from .models import CertificateAuthority
 from .utils import SERIAL_RE
@@ -343,29 +349,108 @@ class AcmeDirectory(View):
                 "termsOfService": "https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf",
                 "website": "https://letsencrypt.org"
             },
-            "newAccount": "http://localhost:8000/django_ca/acme/new-acct",
+            "newAccount": "http://localhost:8000/django_ca/acme/new-account/",
             "newNonce": nonce_url,
             "newOrder": "http://localhost:8000/django_ca/acme/new-order",
             "revokeCert": "http://localhost:8000/django_ca/acme/revoke-cert"
         })
 
 
-class AcmeNewNonce(View):
-    """
-    `Equivalent LE URL <https://acme-v02.api.letsencrypt.org/acme/new-nonce>`_
-    """
-
-    nonce_length = 32
+class AcmeBaseView(View):
+    def nonce_key(self, nonce):
+        return 'acme-nonce-%s' % nonce
 
     def get_nonce(self):
         if secrets is None:
             data = os.urandom(self.nonce_length)
         else:
             data = secrets.token_bytes(self.nonce_length)
-        return jose.b64encode(data).decode()
+
+        nonce = jose.encode_b64jose(data)
+        cache_key = self.nonce_key(nonce)
+        cache.set(cache_key, 0)
+        return nonce
+
+    def validate_nonce(self, nonce):
+        cache_key = self.nonce_key(nonce)
+        try:
+            count = cache.incr(cache_key)
+        except ValueError:
+            return False
+
+        if count > 1:  # nonce was already used
+            # NOTE: "incr" returns the *new* value, so "1" is the expected value.
+            return False
+
+        return True
+
+
+class AcmeNewNonce(AcmeBaseView):
+    """
+    `Equivalent LE URL <https://acme-v02.api.letsencrypt.org/acme/new-nonce>`_
+    """
+
+    nonce_length = 32
 
     def head(self, request):
         nonce = self.get_nonce()
+        print('Nonce: "%s"' % nonce)
         resp = HttpResponse()
-        resp['replay-nonce'] = nonce + '======_!#$'
+        resp['replay-nonce'] = nonce
         return resp
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class AcmeNewAccount(AcmeBaseView):
+    def post(self, request):
+        if request.content_type != 'application/jose+json':
+            # RFC 8555, 6.2:
+            # "Because client requests in ACME carry JWS objects in the Flattened JSON Serialization, they
+            # must have the Content-Type header field set to "application/jose+json".  If a request does not
+            # meet this requirement, then the server MUST return a response with status code 415 (Unsupported
+            # Media Type).
+            return AcmeResponseUnsupportedMediaType()
+
+        try:
+            jws = acme.jws.JWS.json_loads(request.body)
+        except Exception as e:
+            log.exception(e)
+            return AcmeResponseMalformed('Could not parse JWS token.')
+
+        if not jws.verify():
+            return AcmeResponseMalformed('JWS signature invalid.')
+
+        if len(jws.signatures) != 1:
+            # RFC 8555, 6.2: "The JWS MUST NOT have multiple signatures"
+            return AcmeResponseMalformed('Multiple JWS signatures encountered.')
+
+        combined = jws.signature.combined
+
+        # "The JWS Protected Header MUST include the following fields:...
+        if not combined.alg or combined.alg == 'none':
+            # ... "alg"
+            return AcmeResponseMalformed('No algorithm specified.')
+
+        if not self.validate_nonce(jose.encode_b64jose(combined.nonce)):
+            # ... "nonce"
+            return AcmeResponseBadNonce()
+
+        if combined.url != request.build_absolute_uri():
+            # ... "url"
+            # RFC 8555 is not really clear on the required response code, but merely says "If the two do not
+            # match, then the server MUST reject the request as unauthorized."
+            return AcmeResponseUnauthorized()
+
+        if not combined.jwk and not combined.kid:
+            # ... 'Either "jwk" (JSON Web Key) or "kid" (Key ID)'
+            return AcmeResponseMalformed('JWS contained mutually exclusive fields "jwk" and "kid".')
+
+        if combined.jwk and combined.kid:
+            # 'The "jwk" and "kid" fields are mutually exclusive.  Servers MUST reject requests that contain
+            # both.'
+            return AcmeResponseMalformed('JWS contained mutually exclusive fields "jwk" and "kid".')
+
+        print(combined.jwk)
+        print(dir(combined.jwk))
+
+        return AcmeResponseError()
