@@ -356,6 +356,7 @@ class AcmeDirectory(View):
         })
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class AcmeBaseView(View):
     def nonce_key(self, nonce):
         return 'acme-nonce-%s' % nonce
@@ -384,24 +385,6 @@ class AcmeBaseView(View):
 
         return True
 
-
-class AcmeNewNonce(AcmeBaseView):
-    """
-    `Equivalent LE URL <https://acme-v02.api.letsencrypt.org/acme/new-nonce>`_
-    """
-
-    nonce_length = 32
-
-    def head(self, request):
-        nonce = self.get_nonce()
-        print('Nonce: "%s"' % nonce)
-        resp = HttpResponse()
-        resp['replay-nonce'] = nonce
-        return resp
-
-
-@method_decorator(csrf_exempt, name='dispatch')
-class AcmeNewAccount(AcmeBaseView):
     def post(self, request):
         if request.content_type != 'application/jose+json':
             # RFC 8555, 6.2:
@@ -450,6 +433,29 @@ class AcmeNewAccount(AcmeBaseView):
             # both.'
             return AcmeResponseMalformed('JWS contained mutually exclusive fields "jwk" and "kid".')
 
+        request.jws = jws
+        return self.acme_request(request)
+
+
+class AcmeNewNonce(AcmeBaseView):
+    """
+    `Equivalent LE URL <https://acme-v02.api.letsencrypt.org/acme/new-nonce>`_
+    """
+
+    nonce_length = 32
+
+    def head(self, request):
+        nonce = self.get_nonce()
+        print('Nonce: "%s"' % nonce)
+        resp = HttpResponse()
+        resp['replay-nonce'] = nonce
+        return resp
+
+
+class AcmeNewAccount(AcmeBaseView):
+    def acme_request(self, request):
+        jws = request.jws
+        combined = jws.signature.combined
         print(combined.jwk)
         print(dir(combined.jwk))
 
