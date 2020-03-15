@@ -38,9 +38,9 @@ urlpatterns = [
     path('directory/', views.AcmeDirectory.as_view(), name='acme-directory'),
     path('acme/new-nonce/', views.AcmeNewNonce.as_view(), name='acme-new-nonce'),
     path('acme/new-account/', views.AcmeNewAccount.as_view(), name='acme-new-account'),
-    path('acme/new-order/', views.AcmeNewAccount.as_view(), name='acme-new-order'),
-    path('acme/acct/<int:pk>/', views.AcmeNewAccount.as_view(), name='acme-account'),
-    path('acme/acct/<int:pk>/orders/', views.AcmeNewAccount.as_view(), name='acme-account-orders'),
+    path('acme/new-order/', views.AcmeNewOrderView.as_view(), name='acme-new-order'),
+    path('acme/acct/<int:pk>/', views.AcmeAccountView.as_view(), name='acme-account'),
+    path('acme/acct/<int:pk>/orders/', views.AcmeAccountOrdersView.as_view(), name='acme-account-orders'),
 ]
 
 

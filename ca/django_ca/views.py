@@ -17,10 +17,12 @@ import logging
 import os
 from datetime import datetime
 from datetime import timedelta
+from urllib.parse import urlparse
 
 import acme.jws
 import josepy as jose
 from acme.messages import Registration
+from acme.messages import NewOrder
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -37,6 +39,7 @@ from django.http import HttpResponse
 from django.http import HttpResponseServerError
 from django.http import JsonResponse
 from django.urls import reverse
+from django.urls import resolve
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
@@ -368,6 +371,7 @@ class AcmeDirectory(View):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class AcmeBaseView(View):
+    requires_key = False  # True if we require a full key (-> new accounts)
     nonce_length = 32
 
     def nonce_key(self, nonce):
@@ -407,19 +411,57 @@ class AcmeBaseView(View):
             return AcmeResponseUnsupportedMediaType()
 
         try:
-            jws = acme.jws.JWS.json_loads(request.body)
+            self.jws = acme.jws.JWS.json_loads(request.body)
         except Exception as e:
             log.exception(e)
             return AcmeResponseMalformed('Could not parse JWS token.')
 
-        if not jws.verify():
-            return AcmeResponseMalformed('JWS signature invalid.')
+        combined = self.jws.signature.combined
+        if combined.jwk and combined.kid:
+            # 'The "jwk" and "kid" fields are mutually exclusive.  Servers MUST reject requests that contain
+            # both.'
+            return AcmeResponseMalformed('JWS contained mutually exclusive fields "jwk" and "kid".')
 
-        if len(jws.signatures) != 1:
+        elif combined.jwk:
+            if not self.requires_key:
+                return AcmeResponseMalformed('Request does not require a full JWK key.')
+
+            # verify request
+            if not self.jws.verify():
+                return AcmeResponseMalformed('JWS signature invalid.')
+
+            self.jwk = combined.jwk
+        elif combined.kid:
+            if self.requires_key:
+                return AcmeResponseMalformed('Request requires a full JWK key.')
+
+            # combined.kid is a full URL pointing to the account.
+            parsed_url = urlparse(combined.kid)
+            match = resolve(parsed_url.path)
+            if match.app_name != 'django_ca' or match.namespace != 'django_ca' \
+                    or match.url_name != 'acme-account':
+                return AcmeResponseMalformed('%s: Not an account URL.' % combined.kid)
+            if request.build_absolute_uri(parsed_url.path) != combined.kid:
+                # If the two URLs are not identical, it means the request contained e.g. a different hostname
+                # or similar.
+                return AcmeResponseMalformed('%s: Not a valid account URL.' % combined.kid)
+
+            try:
+                account = AcmeAccount.objects.get(pk=match.kwargs['pk'])
+            except AcmeAccount.DoesNotExist:
+                return AcmeResponseMalformed('Account not found.')  # TODO: status code etc
+
+            # load and verify JWK
+            self.jwk = jose.JWK.load(account.pem.encode('utf-8'))
+            if not self.jws.verify(self.jwk):
+                return AcmeResponseMalformed('JWS signature invalid.')
+        else:
+            # ... 'Either "jwk" (JSON Web Key) or "kid" (Key ID)'
+            return AcmeResponseMalformed('JWS contained mutually exclusive fields "jwk" and "kid".')
+
+        if len(self.jws.signatures) != 1:
             # RFC 8555, 6.2: "The JWS MUST NOT have multiple signatures"
             return AcmeResponseMalformed('Multiple JWS signatures encountered.')
-
-        combined = jws.signature.combined
 
         # "The JWS Protected Header MUST include the following fields:...
         if not combined.alg or combined.alg == 'none':
@@ -441,17 +483,8 @@ class AcmeBaseView(View):
             # match, then the server MUST reject the request as unauthorized."
             return AcmeResponseUnauthorized()
 
-        if not combined.jwk and not combined.kid:
-            # ... 'Either "jwk" (JSON Web Key) or "kid" (Key ID)'
-            return AcmeResponseMalformed('JWS contained mutually exclusive fields "jwk" and "kid".')
-
-        if combined.jwk and combined.kid:
-            # 'The "jwk" and "kid" fields are mutually exclusive.  Servers MUST reject requests that contain
-            # both.'
-            return AcmeResponseMalformed('JWS contained mutually exclusive fields "jwk" and "kid".')
-
-        request.jws = jws
-        response = self.acme_request(request)
+        message = self.message_cls.json_loads(self.jws.payload)
+        response = self.acme_request(message)
         response['replay-nonce'] = self.get_nonce()
         return response
 
@@ -460,7 +493,6 @@ class AcmeNewNonce(AcmeBaseView):
     """
     `Equivalent LE URL <https://acme-v02.api.letsencrypt.org/acme/new-nonce>`_
     """
-
     def head(self, request):
         resp = HttpResponse()
         resp['replay-nonce'] = self.get_nonce()
@@ -468,12 +500,11 @@ class AcmeNewNonce(AcmeBaseView):
 
 
 class AcmeNewAccount(AcmeBaseView):
-    def acme_request(self, request):
-        jws = request.jws
-        msg = Registration.json_loads(jws.payload)
+    message_cls = Registration
+    requires_key = True
 
-        jwk = jws.signature.combined.jwk
-        pem = jwk['key'].public_bytes(
+    def acme_request(self, message):
+        pem = self.jwk['key'].public_bytes(
             encoding=Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo
         ).decode('utf-8')
@@ -482,25 +513,27 @@ class AcmeNewAccount(AcmeBaseView):
         #thumbprint = jwk.thumbprint()
 
         account = AcmeAccount(
-            contact=msg.emails[0],
+            contact=message.emails[0],
             status=AcmeAccount.STATUS_VALID,
-            terms_of_service_agreed=msg.terms_of_service_agreed,
+            terms_of_service_agreed=message.terms_of_service_agreed,
             pem=pem
         )
         account.save()
 
-        return AcmeResponseAccountCreated(request, account)
+        return AcmeResponseAccountCreated(self.request, account)
 
 
 class AcmeAccountView(AcmeBaseView):
     pass
 
 
-class AcmeAccountOrderView(AcmeBaseView):
+class AcmeAccountOrdersView(AcmeBaseView):
     pass
 
 
 class AcmeNewOrderView(AcmeBaseView):
-    def acme_request(self, request):
-        print(request.jws)
+    message_cls = NewOrder
+
+    def acme_request(self, message):
+        print(message)
         return AcmeResponseMalformed('Sorry, still testing.')
