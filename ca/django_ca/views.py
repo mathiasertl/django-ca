@@ -338,13 +338,19 @@ class AcmeDirectory(View):
     """
     `Equivalent LE URL <https://acme-v02.api.letsencrypt.org/directory`_
     """
+
+    def _url(self, request, name):
+        return request.build_absolute_uri(reverse('django_ca:%s' % name))
+
     def get(self, request):
-        nonce_url = request.build_absolute_uri(reverse('django_ca:acme-new-nonce'))
-        new_acc_url = request.build_absolute_uri(reverse('django_ca:acme-new-account'))
-        new_order_url = request.build_absolute_uri(reverse('django_ca:acme-new-order'))
+        if secrets is None:
+            data = os.urandom(16)
+        else:
+            data = secrets.token_bytes(16)
+        rnd = jose.encode_b64jose(data)
 
         return JsonResponse({
-            "0s_whpz2mU4": "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417",
+            rnd: "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417",
             "keyChange": "http://localhost:8000/django_ca/acme/key-change",
             "meta": {
                 #"caaIdentities": [
@@ -353,9 +359,9 @@ class AcmeDirectory(View):
                 "termsOfService": "https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf",
                 "website": "https://letsencrypt.org"
             },
-            "newAccount": new_acc_url,
-            "newNonce": nonce_url,
-            "newOrder": new_order_url,
+            "newAccount": self._url(request, 'acme-new-account'),
+            "newNonce": self._url(request, 'acme-new-nonce'),
+            "newOrder": self._url(request, 'acme-new-order'),
             "revokeCert": "http://localhost:8000/django_ca/acme/revoke-cert"
         })
 
