@@ -341,6 +341,7 @@ class AcmeDirectory(View):
     def get(self, request):
         nonce_url = request.build_absolute_uri(reverse('django_ca:acme-new-nonce'))
         new_acc_url = request.build_absolute_uri(reverse('django_ca:acme-new-account'))
+        new_order_url = request.build_absolute_uri(reverse('django_ca:acme-new-order'))
 
         return JsonResponse({
             "0s_whpz2mU4": "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417",
@@ -354,7 +355,7 @@ class AcmeDirectory(View):
             },
             "newAccount": new_acc_url,
             "newNonce": nonce_url,
-            "newOrder": "http://localhost:8000/django_ca/acme/new-order",
+            "newOrder": new_order_url,
             "revokeCert": "http://localhost:8000/django_ca/acme/revoke-cert"
         })
 
@@ -491,3 +492,9 @@ class AcmeAccountView(AcmeBaseView):
 
 class AcmeAccountOrderView(AcmeBaseView):
     pass
+
+
+class AcmeNewOrderView(AcmeBaseView):
+    def acme_request(self, request):
+        print(request.jws)
+        return AcmeResponseMalformed('Sorry, still testing.')
