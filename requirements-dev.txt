@@ -10,7 +10,7 @@ pip>=19.3
 setuptools>=24.2.0
 
 sphinx-autobuild==0.7.1
-tabulate==0.8.6
+tabulate==0.8.7
 termcolor==1.1.0
 twine==3.1.1
 wheel==0.34.2
