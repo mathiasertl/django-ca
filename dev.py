@@ -191,20 +191,20 @@ elif args.command == 'coverage':
         cov.exclude(r'pragma: no SCT')
 
     # exclude python version specific code
-    py_versions = [(2, 7), (3, 4), (3, 5), (3, 6), (3, 7), (3, 8), (3, 9)]
+    py_versions = [(3, 5), (3, 6), (3, 7), (3, 8), (3, 9)]
     for version in py_versions:
         version_str = '.'.join([str(v) for v in version])
         exclude_versions(cov, 'py', sys.version_info[:2], version, version_str)
 
     # exclude django-version specific code
-    django_versions = [(1, 11), (2, 1), (2, 2), (3, 0), (3, 1)]
+    django_versions = [(2, 2), (3, 0), (3, 1)]
     for version in django_versions:
         version_str = '.'.join([str(v) for v in version])
         exclude_versions(cov, 'django', django.VERSION[:2], version, version_str)
 
     # exclude cryptography-version specific code
     this_version = packaging.version.parse(cryptography.__version__).release[:2]
-    cryptography_versions = [(2, 3), (2, 4), (2, 5), (2, 6), (2, 7), (2, 8), (2, 9)]
+    cryptography_versions = [(2, 7), (2, 8), (2, 9), (3, 0), (3, 1)]
     for ver in cryptography_versions:
         version_str = '.'.join([str(v) for v in ver])
         exclude_versions(cov, 'cryptography', this_version, ver, version_str)
