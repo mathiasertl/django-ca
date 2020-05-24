@@ -46,6 +46,7 @@ services:
             POSTGRES_PASSWORD_FILE:
             POSTGRES_USER:
             POSTGRES_USER_FILE:
+            WAIT_FOR_CONNECTIONS: 'db:5432'
         restart: unless-stopped
         stop_grace_period: 30s
 
@@ -78,6 +79,7 @@ services:
             POSTGRES_PASSWORD_FILE:
             POSTGRES_USER:
             POSTGRES_USER_FILE:
+            WAIT_FOR_CONNECTIONS: 'db:5432'
         restart: unless-stopped
         stop_signal: SIGINT
 
