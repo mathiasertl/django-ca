@@ -1,7 +1,7 @@
 version: "3.7"
 services:
     cache:
-        image: redis:5-alpine
+        image: redis:6-alpine
         ports:
             - "6379"
         networks:
