@@ -16,7 +16,7 @@ Standards
 Tipps and tricks
 ****************
 
-Query LE:
+Query LE::
 
    curl -v https://acme-v02.api.letsencrypt.org/directory
 
