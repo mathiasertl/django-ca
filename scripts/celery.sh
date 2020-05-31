@@ -33,5 +33,15 @@ EOF
     chmod go-rwx ${DJANGO_CA_SECRET_KEY_FILE}
 fi
 
+if [ -n "${WAIT_FOR_CONNECTIONS}" ]; then
+    for conn in ${WAIT_FOR_CONNECTIONS}; do
+        conn=${conn/:/ }
+        while ! nc -z $conn; do
+            echo "Wait for $conn..."
+            sleep 0.1 # wait for 1/10 of the second before check again
+        done
+    done
+fi
+
 set -x
 exec celery worker -A ca -B -s /var/lib/django-ca/celerybeat-schedule "$@"

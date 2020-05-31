@@ -856,7 +856,7 @@ def shlex_split(s, sep):
     lex = shlex.shlex(s, posix=True)
     lex.whitespace = sep
     lex.whitespace_split = True
-    return [l for l in lex]
+    return [line for line in lex]
 
 
 class GeneralNameList(list):

@@ -105,6 +105,7 @@ class AdminTestMixin(object):
         self.assertRedirects(response, expected, **kwargs)
 
 
+@freeze_time(timestamps['everything_valid'])
 class ChangelistTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
     """Test the changelist view."""
 
@@ -241,6 +242,8 @@ class ChangelistWithTZTestCase(ChangelistTestCase):
     pass
 
 
+# NOTE: default view gives only valid certificates, so an expired would not be included by default
+@freeze_time(timestamps['everything_valid'])
 class RevokeActionTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
     """Test the "revoke" action in the changelist."""
 

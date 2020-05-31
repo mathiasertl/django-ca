@@ -42,24 +42,24 @@ _rootdir = os.path.dirname(os.path.realpath(__file__))  # NOQA: E402
 _sphinx_dir = os.path.join(_rootdir, 'docs', 'source', '_files')  # NOQA: E402
 sys.path.insert(0, os.path.join(_rootdir, 'ca'))  # NOQA: E402
 os.environ["DJANGO_SETTINGS_MODULE"] = 'ca.test_settings'  # NOQA: E402
-import django  # isort:skip
+import django  # NOQA: E402 isort:skip
 django.setup()  # NOQA: E402
 
-from django.conf import settings
-from django.core.management import call_command as manage
-from django.test.utils import override_settings
-from django.urls import reverse
-from django.utils.encoding import force_text
+from django.conf import settings  # NOQA: E402
+from django.core.management import call_command as manage  # NOQA: E402
+from django.test.utils import override_settings  # NOQA: E402
+from django.urls import reverse  # NOQA: E402
+from django.utils.encoding import force_text  # NOQA: E402
 
-from django_ca import ca_settings
-from django_ca.extensions import OID_TO_EXTENSION
-from django_ca.extensions import Extension
-from django_ca.extensions import PolicyInformation
-from django_ca.models import Certificate
-from django_ca.models import CertificateAuthority
-from django_ca.subject import Subject
-from django_ca.utils import ca_storage
-from django_ca.utils import hex_to_bytes
+from django_ca import ca_settings  # NOQA: E402
+from django_ca.extensions import OID_TO_EXTENSION  # NOQA: E402
+from django_ca.extensions import Extension  # NOQA: E402
+from django_ca.extensions import PolicyInformation  # NOQA: E402
+from django_ca.models import Certificate  # NOQA: E402
+from django_ca.models import CertificateAuthority  # NOQA: E402
+from django_ca.subject import Subject  # NOQA: E402
+from django_ca.utils import ca_storage  # NOQA: E402
+from django_ca.utils import hex_to_bytes  # NOQA: E402
 
 now = datetime.utcnow().replace(second=0, minute=0)
 
