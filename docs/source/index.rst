@@ -65,6 +65,7 @@ Features:
    release
    ca_examples
    extensions
+   acme
 
 
 Indices and tables
