@@ -21,6 +21,7 @@ from urllib.parse import urlparse
 
 import acme.jws
 import josepy as jose
+import pytz
 from acme.messages import Registration
 from acme.messages import NewOrder
 
@@ -34,12 +35,15 @@ from cryptography.x509 import OCSPNonce
 from cryptography.x509 import load_pem_x509_certificate
 from cryptography.x509 import ocsp
 
+from django.conf import settings
 from django.core.cache import cache
+from django.db import transaction
 from django.http import HttpResponse
 from django.http import HttpResponseServerError
 from django.http import JsonResponse
 from django.urls import reverse
 from django.urls import resolve
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
@@ -49,11 +53,13 @@ from . import ca_settings
 from .acme import AcmeException
 from .acme import AcmeMalformed
 from .acme import AcmeResponseAccountCreated
+from .acme import AcmeResponseOrderCreated
 from .acme import AcmeResponseBadNonce
 from .acme import AcmeResponseMalformed
 from .acme import AcmeResponseUnauthorized
 from .acme import AcmeResponseUnsupportedMediaType
 from .models import AcmeAccount
+from .models import AcmeOrder
 from .models import Certificate
 from .models import CertificateAuthority
 from .utils import SERIAL_RE
@@ -563,10 +569,29 @@ class AcmeNewOrderView(AcmeBaseView):
         # TODO: test potential notBefore/notAfter in message, but this is not in the certbot message
         # TODO: test if identifiers are acceptable
 
+    @transaction.atomic
     def acme_request(self, message):
-        print(self.account, message)
+        print(message)
+        order = AcmeOrder.objects.create(account=self.account)
 
-        return AcmeResponseMalformed('Sorry, still testing.')
+        authorizations = []
+        for ident in message.identifiers:
+            authz = order.add_authorization(ident)
+            authorizations.append(self.request.build_absolute_uri(authz.acme_url))
+
+        expires = order.expires
+        if not settings.USE_TZ:  # acme.Order requires a timezone-aware object
+            expires = timezone.make_aware(expires, timezone=pytz.utc)
+
+        response = AcmeResponseOrderCreated(
+            status=order.status,
+            expires=expires,
+            identifiers=message.identifiers,
+            authorizations=authorizations,
+            finalize=self.request.build_absolute_uri(order.acme_finalize_url),
+        )
+        response['Location'] = self.request.build_absolute_uri(order.acme_url)
+        return response
 
 
 class AcmeOrderView(AcmeBaseView):

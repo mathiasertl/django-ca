@@ -941,6 +941,14 @@ class AcmeOrder(models.Model):
     status = models.CharField(choices=STATUS_CHOICES, max_length=10, default=STATUS_PENDING)
     expires = models.DateTimeField(default=acme_order_expires)
 
+    @property
+    def acme_url(self):
+        return reverse('django_ca:acme-order', kwargs={'slug': self.slug})
+
+    @property
+    def acme_finalize_url(self):
+        return reverse('django_ca:acme-order-finalize', kwargs={'slug': self.slug})
+
     def add_authorization(self, identifier):
         return AcmeAccountAuthorization.objects.create(
             order=self, type=identifier.typ, value=identifier.value,
@@ -959,3 +967,7 @@ class AcmeAccountAuthorization(models.Model):
     slug = models.SlugField(unique=True, default=acme_slug)
     type = models.CharField(choices=TYPE_CHOICES, max_length=8, default=TYPE_DNS)
     value = models.CharField(max_length=255)
+
+    @property
+    def acme_url(self):
+        return reverse('django_ca:acme-authz', kwargs={'slug': self.slug})
