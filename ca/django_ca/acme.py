@@ -13,6 +13,8 @@
 
 from http import HTTPStatus
 
+from acme.messages import Order
+
 from django.http import JsonResponse
 from django.urls import reverse
 
@@ -36,6 +38,13 @@ class AcmeResponseAccountCreated(AcmeResponse):
 
         self['Location'] = request.build_absolute_uri(
             reverse('django_ca:acme-account', kwargs={'pk': account.pk}))
+
+
+class AcmeResponseOrderCreated(AcmeResponse):
+    status_code = HTTPStatus.CREATED
+
+    def __init__(self, **kwargs):
+        super().__init__(Order(**kwargs).to_json())
 
 
 class AcmeResponseError(AcmeResponse):
@@ -86,3 +95,14 @@ class AcmeResponseBadNonce(AcmeResponseError):
 class AcmeResponseUnsupportedMediaType(AcmeResponseMalformed):
     status_code = HTTPStatus.UNSUPPORTED_MEDIA_TYPE
     message = 'Requests must use the application/jose+json content type.'
+
+
+class AcmeException(Exception):
+    response = AcmeResponseError
+
+    def get_response(self):
+        return self.response(*self.args)
+
+
+class AcmeMalformed(AcmeException):
+    response = AcmeResponseMalformed
