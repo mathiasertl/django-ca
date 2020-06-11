@@ -46,6 +46,8 @@ from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin
 
 from . import ca_settings
+from .acme import AcmeException
+from .acme import AcmeMalformed
 from .acme import AcmeResponseAccountCreated
 from .acme import AcmeResponseBadNonce
 from .acme import AcmeResponseMalformed
@@ -401,6 +403,10 @@ class AcmeBaseView(View):
 
         return True
 
+    def validate_message(self, message):
+        """Let subclasses do individual validation of the received message."""
+        pass
+
     def post(self, request):
         if request.content_type != 'application/jose+json':
             # RFC 8555, 6.2:
@@ -424,7 +430,7 @@ class AcmeBaseView(View):
 
         elif combined.jwk:
             if not self.requires_key:
-                return AcmeResponseMalformed('Request does not require a full JWK key.')
+                return AcmeResponseMalformed('Request requires a JWK key ID.')
 
             # verify request
             if not self.jws.verify():
@@ -455,6 +461,8 @@ class AcmeBaseView(View):
             self.jwk = jose.JWK.load(account.pem.encode('utf-8'))
             if not self.jws.verify(self.jwk):
                 return AcmeResponseMalformed('JWS signature invalid.')
+
+            self.account = account
         else:
             # ... 'Either "jwk" (JSON Web Key) or "kid" (Key ID)'
             return AcmeResponseMalformed('JWS contained mutually exclusive fields "jwk" and "kid".')
@@ -484,7 +492,13 @@ class AcmeBaseView(View):
             return AcmeResponseUnauthorized()
 
         message = self.message_cls.json_loads(self.jws.payload)
-        response = self.acme_request(message)
+
+        try:
+            self.validate_message(message)
+            response = self.acme_request(message)
+        except AcmeException as e:
+            response = e.get_response()
+
         response['replay-nonce'] = self.get_nonce()
         return response
 
@@ -534,6 +548,34 @@ class AcmeAccountOrdersView(AcmeBaseView):
 class AcmeNewOrderView(AcmeBaseView):
     message_cls = NewOrder
 
+    def validate_message(self, message):
+        """Test that fields not allowed for this endpoint are not present.
+
+        RFC 8555, 7.4 specifies that "body ... is a subset of the order object", so we test that other
+        possible fields for the NewOrder class are not set.
+
+        .. seealso:: `RFC 8555, 7.4 <https://tools.ietf.org/html/rfc8555#section-7.4>`_
+        """
+        for field in ['status', 'expires', 'error', 'authorizations', 'finalize', 'certificate']:
+            if getattr(message, field) is not None:
+                raise AcmeMalformed('%s is not allowed here.' % field)
+
+        # TODO: test potential notBefore/notAfter in message, but this is not in the certbot message
+        # TODO: test if identifiers are acceptable
+
     def acme_request(self, message):
-        print(message)
+        print(self.account, message)
+
         return AcmeResponseMalformed('Sorry, still testing.')
+
+
+class AcmeOrderView(AcmeBaseView):
+    pass
+
+
+class AcmeOrderFinalizeView(AcmeBaseView):
+    pass
+
+
+class AcmeAuthorizationView(AcmeBaseView):
+    pass

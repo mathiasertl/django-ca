@@ -23,6 +23,7 @@ app_name = 'django_ca'
 
 register_converter(converters.HexConverter, 'hex')
 register_converter(converters.Base64Converter, 'base64')
+register_converter(converters.AcmeSlugConverter, 'acme')
 
 urlpatterns = [
     path('issuer/<hex:serial>.der', views.GenericCAIssuersView.as_view(), name='issuer'),
@@ -41,6 +42,10 @@ urlpatterns = [
     path('acme/new-order/', views.AcmeNewOrderView.as_view(), name='acme-new-order'),
     path('acme/acct/<int:pk>/', views.AcmeAccountView.as_view(), name='acme-account'),
     path('acme/acct/<int:pk>/orders/', views.AcmeAccountOrdersView.as_view(), name='acme-account-orders'),
+    path('acme/acct/<acme:order>/', views.AcmeOrderView.as_view(), name='acme-order'),
+    path('acme/acct/<acme:slug>/finalize', views.AcmeOrderFinalizeView.as_view(),
+         name='acme-order-finalize'),
+    path('acme/authz/<acme:slug>/', views.AcmeAuthorizationView.as_view(), name='acme-authz'),
 ]
 
 
