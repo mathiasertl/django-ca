@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+from django.urls.converters import SlugConverter
+
 
 class HexConverter:
     regex = '[0-9A-F:]+'
@@ -30,3 +32,8 @@ class Base64Converter:
 
     def to_url(self, value):
         return value
+
+
+class AcmeSlugConverter(SlugConverter):
+    """ACME slugs consist of alphanumeric characters only."""
+    regex = '[a-zA-Z0-9]+'
