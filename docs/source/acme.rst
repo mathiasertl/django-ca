@@ -26,6 +26,13 @@ Use local server::
       --config-dir=.certbot/config/ --work-dir=.certbot/work/ --logs-dir=.certbot/logs \
       --server http://localhost:8000/django_ca/directory 
 
+   certbot certonly --standalone \
+      --config-dir=.certbot/config/ --work-dir=.certbot/work/ --logs-dir=.certbot/logs \
+      --server http://localhost:8000/django_ca/directory \
+      -d test.example.com
+
+Saving debug log to /home/mertl/git/mati/django-ca/.certbot/logs/letsencrypt.log
+
 
 base64url encoding
 ==================
