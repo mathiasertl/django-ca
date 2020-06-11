@@ -42,6 +42,7 @@ from django.core.files.base import ContentFile
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.crypto import get_random_string
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_str
 from django.utils.functional import cached_property
@@ -92,6 +93,14 @@ from .utils import read_file
 from .utils import validate_key_parameters
 
 log = logging.getLogger(__name__)
+
+
+def acme_slug():
+    return get_random_string(length=12)
+
+
+def acme_order_expires():
+    return timezone.now() + ca_settings.ACME_ORDER_VALIDITY
 
 
 def validate_past(value):
@@ -894,6 +903,7 @@ class AcmeAccount(models.Model):
     STATUS_REVOKED = 'revoked'  # deactivated by server
 
     # Choices from RFC 8555, section 7.1.2.
+    # TODO: get values from acme.messages.STATUS_* constants
     STATUS_CHOICES = (
         (STATUS_VALID, _('Valid')),
         (STATUS_DEACTIVATED, _('Deactivated')),
@@ -907,3 +917,45 @@ class AcmeAccount(models.Model):
     terms_of_service_agreed = models.BooleanField(default=False)
     pem = models.TextField(verbose_name=_('Public key'))
     # TODO: store JWK thumbprint?
+
+
+class AcmeOrder(models.Model):
+    # Possible states are from RFC 8555, section 7.1.6.
+    # TODO: get values from acme.messages.STATUS_* constants
+    STATUS_INVALID = 'invalid'
+    STATUS_PENDING = 'pending'
+    STATUS_PROCESSING = 'processing'
+    STATUS_READY = 'ready'
+    STATUS_VALID = 'valid'
+
+    STATUS_CHOICES = (
+        (STATUS_INVALID, _('Invalid')),
+        (STATUS_PENDING, _('Pending')),
+        (STATUS_PROCESSING, _('Processing')),
+        (STATUS_READY, _('Ready')),
+        (STATUS_VALID, _('Valid')),
+    )
+
+    account = models.ForeignKey(AcmeAccount, on_delete=models.PROTECT)
+    slug = models.SlugField(unique=True, default=acme_slug)
+    status = models.CharField(choices=STATUS_CHOICES, max_length=10, default=STATUS_PENDING)
+    expires = models.DateTimeField(default=acme_order_expires)
+
+    def add_authorization(self, identifier):
+        return AcmeAccountAuthorization.objects.create(
+            order=self, type=identifier.typ, value=identifier.value,
+        )
+
+
+class AcmeAccountAuthorization(models.Model):
+    # Choices from RFC 8555, section 9.7.7.
+    # TODO: get values from acme.messages.IDENTIFIER_* constants
+    TYPE_DNS = 'dns'
+    TYPE_CHOICES = (
+        (TYPE_DNS, _('DNS')),
+    )
+
+    order = models.ForeignKey(AcmeOrder, on_delete=models.PROTECT)
+    slug = models.SlugField(unique=True, default=acme_slug)
+    type = models.CharField(choices=TYPE_CHOICES, max_length=8, default=TYPE_DNS)
+    value = models.CharField(max_length=255)
