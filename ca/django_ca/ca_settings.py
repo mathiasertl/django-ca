@@ -175,6 +175,9 @@ CA_NOTIFICATION_DAYS = getattr(settings, 'CA_NOTIFICATION_DAYS', [14, 7, 3, 1, ]
 CA_CRL_PROFILES = getattr(settings, 'CA_CRL_PROFILES', _CA_CRL_PROFILES)
 CA_PASSWORDS = getattr(settings, 'CA_PASSWORDS', {})
 
+# ACME settings
+ACME_ORDER_VALIDITY = getattr(settings, 'ACME_ORDER_VALIDITY', timedelta(days=1))
+
 # Undocumented options, e.g. to share values between different parts of code
 CA_MIN_KEY_SIZE = getattr(settings, 'CA_MIN_KEY_SIZE', 2048)
 
@@ -188,6 +191,8 @@ except AttributeError:
 
 if isinstance(CA_DEFAULT_EXPIRES, int):
     CA_DEFAULT_EXPIRES = timedelta(days=CA_DEFAULT_EXPIRES)
+if isinstance(ACME_ORDER_VALIDITY, int):
+    ACME_ORDER_VALIDITY = timedelta(days=ACME_ORDER_VALIDITY)
 elif not isinstance(CA_DEFAULT_EXPIRES, timedelta):
     raise ImproperlyConfigured('CA_DEFAULT_EXPIRES: %s: Must be int or timedelta' % CA_DEFAULT_EXPIRES)
 if CA_DEFAULT_EXPIRES <= timedelta():

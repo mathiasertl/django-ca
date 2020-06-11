@@ -175,3 +175,14 @@ CA_USE_CELERY
 
    Set to ``True`` to force django-ca to use `Celery <https://docs.celeryproject.org>`_ or to ``False`` to
    force not using it. The default is to use Celery if it is installed.
+
+
+ACME settings
+-------------
+
+.. _settings-acme-order-validity:
+
+ACME_ORDER_VALIDITY
+   Default: ``1``
+
+   Default time a request for a new certificate ("order") remains valid.
