@@ -24,6 +24,7 @@ from datetime import timedelta
 
 import pytz
 
+from acme import challenges
 from acme import messages
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -940,7 +941,8 @@ class AcmeOrder(models.Model):
 
     account = models.ForeignKey(AcmeAccount, on_delete=models.PROTECT)
     slug = models.SlugField(unique=True, default=acme_slug)
-    status = models.CharField(choices=STATUS_CHOICES, max_length=10, default=STATUS_PENDING)
+    status = models.CharField(choices=STATUS_CHOICES, max_length=10,
+                              default=STATUS_PENDING)  # default from RFC 8555, section 7.1.6
     expires = models.DateTimeField(default=acme_order_expires)
 
     @property
@@ -953,7 +955,7 @@ class AcmeOrder(models.Model):
 
     def add_authorization(self, identifier):
         return AcmeAccountAuthorization.objects.create(
-            order=self, type=identifier.typ, value=identifier.value,
+            order=self, type=identifier.typ.name, value=identifier.value,
         )
 
 
@@ -965,14 +967,53 @@ class AcmeAccountAuthorization(models.Model):
         (TYPE_DNS, _('DNS')),
     )
 
+    # Possible values for Status are from RFC 8555, section 7.1.4
+    STATUS_PENDING = messages.STATUS_PENDING.name
+    STATUS_VALID = messages.STATUS_VALID.name
+    STATUS_INVALID = messages.STATUS_INVALID.name
+    STATUS_DEACTIVATED = messages.STATUS_DEACTIVATED.name
+    STATUS_EXPIRED = 'expired'  # STATUS_EXPIRED not present in acme 1.5.0
+    STATUS_REVOKED = messages.STATUS_REVOKED.name
+
+    STATUS_CHOICES = (
+        (STATUS_PENDING, messages.STATUS_PENDING.name),
+        (STATUS_VALID, messages.STATUS_VALID.name),
+        (STATUS_INVALID, messages.STATUS_INVALID.name),
+        (STATUS_DEACTIVATED, messages.STATUS_DEACTIVATED.name),
+        (STATUS_EXPIRED, 'expired'),
+        (STATUS_REVOKED, messages.STATUS_REVOKED.name),
+    )
+
     order = models.ForeignKey(AcmeOrder, on_delete=models.PROTECT)
     slug = models.SlugField(unique=True, default=acme_slug)
-    type = models.CharField(choices=TYPE_CHOICES, max_length=8, default=TYPE_DNS)
-    value = models.CharField(max_length=255)
+
+    # Fields according to RFC 8555, section 7.1.4:
+    type = models.CharField(choices=TYPE_CHOICES, max_length=8, default=TYPE_DNS)  # identifier
+    value = models.CharField(max_length=255)  # identifier
+    status = models.CharField(choices=STATUS_CHOICES, max_length=12,
+                              default=STATUS_PENDING)  # default from RFC 8555, section 7.1.6
+    # expires comes from the linked order (for now)
+    # challenges comes from the AcmeChallenge model linking from here
+    wildcard = models.BooleanField(default=False)
 
     @property
     def acme_url(self):
         return reverse('django_ca:acme-authz', kwargs={'slug': self.slug})
+
+    @property
+    def expires(self):
+        return self.order.expires  # so far there is no reason to have a different value here
+
+    @property
+    def identifier(self):
+        return messages.Identifier(typ=self.type, value=self.value)
+
+    def get_challenges(self):
+        # TODO: bulk create
+        return [
+            AcmeChallenge.objects.create(auth=self, type=AcmeChallenge.TYPE_HTTP_01),
+            AcmeChallenge.objects.create(auth=self, type=AcmeChallenge.TYPE_DNS_01),
+        ]
 
 
 class AcmeChallenge(models.Model):
@@ -1003,13 +1044,33 @@ class AcmeChallenge(models.Model):
     # Challenge object basic fields according to RFC 8555, section 8:
     type = models.CharField(choices=TYPE_CHOICES, max_length=12)
     # url is computed from slug and request
-    status = models.CharField(choices=TYPE_CHOICES, max_length=12)
+    status = models.CharField(choices=TYPE_CHOICES, max_length=12,
+                              default=STATUS_PENDING)  # default from RFC 8555, section 7.1.6
     validated = models.DateTimeField(null=True, blank=True)
     error = models.CharField(blank=True, max_length=64)  # max_length is just a guess
 
     # The token field is listed for both HTTP and DNS challenge, which are the most common types, so we
     # include it as an optional field here. It is generated when the token is first accessed.
     token = models.CharField(blank=True, max_length=64)
+
+    def get_challenge(self, request):
+        if not self.token:
+            self.generate_token()
+            self.save()
+
+        token = self.token.encode()
+        if self.type == AcmeChallenge.TYPE_HTTP_01:
+            chall = challenges.HTTP01(token=token)
+        elif self.type == AcmeChallenge.TYPE_DNS_01:
+            chall = challenges.DNS01(token=token)
+        elif self.type == AcmeChallenge.TYPE_TLS_ALPN_01:
+            chall = challenges.TLSALPN01(token=token)
+
+        url = request.build_absolute_uri(self.acme_url)
+
+        # NOTE: RFC855, section 7.5 shows challenges *without* a status, but this object always includes it.
+        #       It does not seem to hurt, but might be a slight spec-violation.
+        return messages.ChallengeBody(chall=chall, _url=url, status=self.status)
 
     def generate_token(self):
         """Generate the token for this challenge.
