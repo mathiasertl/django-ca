@@ -59,6 +59,7 @@ from .acme import AcmeResponseMalformed
 from .acme import AcmeResponseUnauthorized
 from .acme import AcmeResponseUnsupportedMediaType
 from .models import AcmeAccount
+from .models import AcmeAccountAuthorization
 from .models import AcmeOrder
 from .models import Certificate
 from .models import CertificateAuthority
@@ -379,6 +380,7 @@ class AcmeDirectory(View):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class AcmeBaseView(View):
+    post_as_get = False  # True if this is a POST-as-GET request (see RFC 8555, 6.3).
     requires_key = False  # True if we require a full key (-> new accounts)
     nonce_length = 32
 
@@ -413,7 +415,7 @@ class AcmeBaseView(View):
         """Let subclasses do individual validation of the received message."""
         pass
 
-    def post(self, request):
+    def post(self, request, **kwargs):
         if request.content_type != 'application/jose+json':
             # RFC 8555, 6.2:
             # "Because client requests in ACME carry JWS objects in the Flattened JSON Serialization, they
@@ -497,13 +499,22 @@ class AcmeBaseView(View):
             # match, then the server MUST reject the request as unauthorized."
             return AcmeResponseUnauthorized()
 
-        message = self.message_cls.json_loads(self.jws.payload)
+        if self.post_as_get is True:
+            if self.jws.payload != b'':
+                return AcmeResponseMalformed('Non-empty payload in get-as-post request.')
 
-        try:
-            self.validate_message(message)
-            response = self.acme_request(message)
-        except AcmeException as e:
-            response = e.get_response()
+            try:
+                response = self.acme_request(**kwargs)
+            except AcmeException as e:
+                response = e.get_response()
+        else:
+            message = self.message_cls.json_loads(self.jws.payload)
+
+            try:
+                self.validate_message(message)
+                response = self.acme_request(message, **kwargs)
+            except AcmeException as e:
+                response = e.get_response()
 
         response['replay-nonce'] = self.get_nonce()
         return response
@@ -552,6 +563,16 @@ class AcmeAccountOrdersView(AcmeBaseView):
 
 
 class AcmeNewOrderView(AcmeBaseView):
+    """Implements endpoint for applying for a new certificate, that is ``/acme/new-order``.
+
+    If the client receives a successful response, it will next fetch the authorizations listed in it, which
+    are served by :py:class:`~django_ca.views.AcmeAuthorizationView`.
+
+    ``certbot`` sends the :py:class:`~acme:acme.messages.NewOrder` message via
+    :py:func:`~acme:acme.client.ClientV2.new_order`.
+
+    .. seealso:: `RFC 8555, 7.4 <https://tools.ietf.org/html/rfc8555#section-7.4>`_
+    """
     message_cls = NewOrder
 
     def validate_message(self, message):
@@ -559,8 +580,6 @@ class AcmeNewOrderView(AcmeBaseView):
 
         RFC 8555, 7.4 specifies that "body ... is a subset of the order object", so we test that other
         possible fields for the NewOrder class are not set.
-
-        .. seealso:: `RFC 8555, 7.4 <https://tools.ietf.org/html/rfc8555#section-7.4>`_
         """
         for field in ['status', 'expires', 'error', 'authorizations', 'finalize', 'certificate']:
             if getattr(message, field) is not None:
@@ -571,7 +590,6 @@ class AcmeNewOrderView(AcmeBaseView):
 
     @transaction.atomic
     def acme_request(self, message):
-        print(message)
         order = AcmeOrder.objects.create(account=self.account)
 
         authorizations = []
@@ -603,4 +621,16 @@ class AcmeOrderFinalizeView(AcmeBaseView):
 
 
 class AcmeAuthorizationView(AcmeBaseView):
-    pass
+    """Implements endpoint for identifier authorization, that is ``/acme/authz/<slug>``.
+
+    .. seealso:: `RFC 8555, 7.5 <https://tools.ietf.org/html/rfc8555#section-7.5>`_
+    """
+
+    post_as_get = True
+
+    def acme_request(self, slug):
+        # TODO: filter for AcmeOrder status
+        auth = AcmeAccountAuthorization.objects.get(slug=slug)
+
+        print(auth)
+        raise AcmeMalformed('sorry, still testing: %s' % slug)
