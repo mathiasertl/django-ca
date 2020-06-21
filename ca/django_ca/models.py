@@ -1053,6 +1053,10 @@ class AcmeChallenge(models.Model):
     # include it as an optional field here. It is generated when the token is first accessed.
     token = models.CharField(blank=True, max_length=64)
 
+    @property
+    def acme_url(self):
+        return reverse('django_ca:acme-challenge', kwargs={'slug': self.slug})
+
     def get_challenge(self, request):
         if not self.token:
             self.generate_token()

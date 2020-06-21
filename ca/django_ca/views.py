@@ -22,8 +22,7 @@ from urllib.parse import urlparse
 import acme.jws
 import josepy as jose
 import pytz
-from acme.messages import Registration
-from acme.messages import NewOrder
+from acme import messages
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -53,9 +52,10 @@ from . import ca_settings
 from .acme import AcmeException
 from .acme import AcmeMalformed
 from .acme import AcmeResponseAccountCreated
-from .acme import AcmeResponseOrderCreated
+from .acme import AcmeResponseAuthorization
 from .acme import AcmeResponseBadNonce
 from .acme import AcmeResponseMalformed
+from .acme import AcmeResponseOrderCreated
 from .acme import AcmeResponseUnauthorized
 from .acme import AcmeResponseUnsupportedMediaType
 from .models import AcmeAccount
@@ -531,7 +531,7 @@ class AcmeNewNonce(AcmeBaseView):
 
 
 class AcmeNewAccount(AcmeBaseView):
-    message_cls = Registration
+    message_cls = messages.Registration
     requires_key = True
 
     def acme_request(self, message):
@@ -573,7 +573,7 @@ class AcmeNewOrderView(AcmeBaseView):
 
     .. seealso:: `RFC 8555, 7.4 <https://tools.ietf.org/html/rfc8555#section-7.4>`_
     """
-    message_cls = NewOrder
+    message_cls = messages.NewOrder
 
     def validate_message(self, message):
         """Test that fields not allowed for this endpoint are not present.
@@ -630,7 +630,20 @@ class AcmeAuthorizationView(AcmeBaseView):
 
     def acme_request(self, slug):
         # TODO: filter for AcmeOrder status
-        auth = AcmeAccountAuthorization.objects.get(slug=slug)
+        auth = AcmeAccountAuthorization.objects.select_related('order').get(slug=slug)
+        challenges = auth.get_challenges()
 
-        print(auth)
-        raise AcmeMalformed('sorry, still testing: %s' % slug)
+        expires = auth.expires
+        if not settings.USE_TZ:  # acme.Order requires a timezone-aware object
+            expires = timezone.make_aware(expires, timezone=pytz.utc)
+
+        resp = AcmeResponseAuthorization(
+            identifier=auth.identifier,
+            expires=expires,
+            challenges=[c.get_challenge(self.request) for c in challenges],
+        )
+        return resp
+
+
+class AcmeChallengeView(AcmeBaseView):
+    pass

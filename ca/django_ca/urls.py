@@ -46,6 +46,7 @@ urlpatterns = [
     path('acme/order/<acme:slug>/finalize/', views.AcmeOrderFinalizeView.as_view(),
          name='acme-order-finalize'),
     path('acme/authz/<acme:slug>/', views.AcmeAuthorizationView.as_view(), name='acme-authz'),
+    path('acme/chall/<acme:slug>/', views.AcmeChallengeView.as_view(), name='acme-challenge'),
 ]
 
 

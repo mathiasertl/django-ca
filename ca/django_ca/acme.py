@@ -14,7 +14,7 @@
 import string
 from http import HTTPStatus
 
-from acme.messages import Order
+from acme import messages
 
 from django.http import JsonResponse
 from django.urls import reverse
@@ -28,6 +28,11 @@ BASE64_URL_ALPHABET = string.ascii_letters + string.digits + '-_'
 
 class AcmeResponse(JsonResponse):
     pass
+
+
+class AcmeSimpleResponse(AcmeResponse):
+    def __init__(self, **kwargs):
+        super().__init__(self.message_cls(**kwargs).to_json())
 
 
 class AcmeResponseAccountCreated(AcmeResponse):
@@ -47,11 +52,13 @@ class AcmeResponseAccountCreated(AcmeResponse):
             reverse('django_ca:acme-account', kwargs={'pk': account.pk}))
 
 
-class AcmeResponseOrderCreated(AcmeResponse):
+class AcmeResponseOrderCreated(AcmeSimpleResponse):
+    message_cls = messages.Order
     status_code = HTTPStatus.CREATED
 
-    def __init__(self, **kwargs):
-        super().__init__(Order(**kwargs).to_json())
+
+class AcmeResponseAuthorization(AcmeSimpleResponse):
+    message_cls = messages.Authorization
 
 
 class AcmeResponseError(AcmeResponse):
