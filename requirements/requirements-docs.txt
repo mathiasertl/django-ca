@@ -1,5 +1,3 @@
-Sphinx==3.0.4
-# numpydoc requries sphinx_rtd_theme>=0.5.0rc1
-# https://github.com/numpy/numpydoc/issues/215
-sphinx_rtd_theme>=0.5.0rc1
+Sphinx==3.1.1
+sphinx_rtd_theme==0.5.0
 numpydoc==1.0.0
