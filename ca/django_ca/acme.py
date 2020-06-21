@@ -11,12 +11,19 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
+import string
 from http import HTTPStatus
 
 from acme.messages import Order
 
 from django.http import JsonResponse
 from django.urls import reverse
+
+# base64url alphabet is defined in RFC 4648, section 5:
+#   https://tools.ietf.org/html/rfc4648#section-5
+# Jose JWS defines that the padding character ('=') is stripped:
+#   https://tools.ietf.org/html/draft-ietf-jose-json-web-signature-37#section-2
+BASE64_URL_ALPHABET = string.ascii_letters + string.digits + '-_'
 
 
 class AcmeResponse(JsonResponse):
