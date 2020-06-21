@@ -24,6 +24,7 @@ from datetime import timedelta
 
 import pytz
 
+from acme import messages
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -50,6 +51,7 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
+from .acme import BASE64_URL_ALPHABET
 from .constants import ReasonFlags
 from .extensions import OID_TO_EXTENSION
 from .extensions import AuthorityInformationAccess
@@ -971,3 +973,51 @@ class AcmeAccountAuthorization(models.Model):
     @property
     def acme_url(self):
         return reverse('django_ca:acme-authz', kwargs={'slug': self.slug})
+
+
+class AcmeChallenge(models.Model):
+    """Implements an ACME Challenge Object.
+
+    .. seealso:: `RFC 8555, section 7.1.5 <https://tools.ietf.org/html/rfc8555#section-7.1.5>`
+    """
+
+    # Possible challenges
+    TYPE_HTTP_01 = 'http-01'
+    TYPE_DNS_01 = 'dns-01'
+    TYPE_TLS_ALPN_01 = 'tls-alpn-01'
+    TYPE_CHOICES = (
+        (TYPE_HTTP_01, _('HTTP Challenge')),
+        (TYPE_DNS_01, _('DNS Challenge')),
+        (TYPE_TLS_ALPN_01, _('TLS ALPN Challenge')),
+    )
+
+    # Possible values for Status are from RFC 8555, section 8:
+    STATUS_PENDING = messages.STATUS_PENDING.name
+    STATUS_PROCESSING = messages.STATUS_PROCESSING.name
+    STATUS_VALID = messages.STATUS_VALID.name
+    STATUS_INVALID = messages.STATUS_INVALID.name
+
+    auth = models.ForeignKey(AcmeAccountAuthorization, on_delete=models.PROTECT)
+    slug = models.SlugField(unique=True, default=acme_slug)
+
+    # Challenge object basic fields according to RFC 8555, section 8:
+    type = models.CharField(choices=TYPE_CHOICES, max_length=12)
+    # url is computed from slug and request
+    status = models.CharField(choices=TYPE_CHOICES, max_length=12)
+    validated = models.DateTimeField(null=True, blank=True)
+    error = models.CharField(blank=True, max_length=64)  # max_length is just a guess
+
+    # The token field is listed for both HTTP and DNS challenge, which are the most common types, so we
+    # include it as an optional field here. It is generated when the token is first accessed.
+    token = models.CharField(blank=True, max_length=64)
+
+    def generate_token(self):
+        """Generate the token for this challenge.
+
+        This method does **not** save the instance.
+
+        Note that currently all challenges have the same requirements on tokens, except for DNS challenges
+        which seem to allow padding ("=") characters. We ignore the '=' for DNS challenges as our tokens are
+        already longer then required.
+        """
+        self.token = get_random_string(64, allowed_chars=BASE64_URL_ALPHABET)
