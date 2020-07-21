@@ -24,8 +24,9 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from oscrypto import asymmetric
 
 from django.conf import settings
-from django.conf.urls import url
 from django.test import Client
+from django.urls import path
+from django.urls import re_path
 from django.urls import reverse
 from django.utils.encoding import force_text
 
@@ -74,25 +75,25 @@ unknown_req = _load_req('unknown-serial')
 multiple_req = _load_req('multiple-serial')
 
 urlpatterns = [
-    url(r'^ocsp/$', OCSPView.as_view(
+    path('ocsp/', OCSPView.as_view(
         ca=certs['child']['serial'],
         responder_key=ocsp_profile['key_filename'],
         responder_cert=ocsp_profile['pub_filename'],
         expires=1200,
     ), name='post'),
-    url(r'^ocsp/serial/$', OCSPView.as_view(
+    path('ocsp/serial/', OCSPView.as_view(
         ca=certs['child']['serial'],
         responder_key=ocsp_profile['key_filename'],
         responder_cert=certs['profile-ocsp']['serial'],
         expires=1300,
     ), name='post-serial'),
-    url(r'^ocsp/full-pem/$', OCSPView.as_view(
+    path('ocsp/full-pem/', OCSPView.as_view(
         ca=certs['child']['serial'],
         responder_key=ocsp_profile['key_filename'],
         responder_cert=ocsp_pem,
         expires=1400,
     ), name='post-full-pem'),
-    url(r'^ocsp/loaded-cryptography/$', OCSPView.as_view(
+    path('ocsp/loaded-cryptography/', OCSPView.as_view(
         ca=certs['child']['serial'],
         responder_key=ocsp_profile['key_filename'],
         responder_cert=certs['profile-ocsp']['pub']['parsed'],
@@ -100,33 +101,33 @@ urlpatterns = [
     ), name='post-loaded-cryptography'),
 
     # Use absolute paths to trigger log warnings
-    url(r'^ocsp/abs-path/$', OCSPView.as_view(
+    path('ocsp/abs-path/', OCSPView.as_view(
         ca=certs['child']['serial'],
         responder_key=ocsp_key_path,
         responder_cert=ocsp_pem_path,
         expires=1500,
     ), name='post-abs-path'),
 
-    url(r'^ocsp/cert/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
+    re_path(r'^ocsp/cert/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca=certs['child']['serial'],
         responder_key=ocsp_profile['key_filename'],
         responder_cert=ocsp_profile['pub_filename'],
     ), name='get'),
 
-    url(r'^ocsp/ca/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
+    re_path(r'^ocsp/ca/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca=certs['root']['serial'],
         responder_key=ocsp_profile['key_filename'],
         responder_cert=ocsp_profile['pub_filename'],
         ca_ocsp=True,
     ), name='get-ca'),
 
-    url(r'^ocsp-unknown/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
+    re_path(r'^ocsp-unknown/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca='unknown',
         responder_key=ocsp_profile['key_filename'],
         responder_cert=ocsp_profile['pub_filename'],
     ), name='unknown'),
 
-    url(r'^ocsp/false-key/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
+    re_path(r'^ocsp/false-key/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca=certs['root']['serial'],
         responder_key='/false/foobar',
         responder_cert=ocsp_profile['pub_filename'],
@@ -134,17 +135,17 @@ urlpatterns = [
     ), name='false-key'),
 
     # set invalid responder_certs
-    url(r'^ocsp/false-pem/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
+    re_path(r'^ocsp/false-pem/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca=certs['child']['serial'],
         responder_key=ocsp_profile['key_filename'],
         responder_cert='/false/foobar/',
     ), name='false-pem'),
-    url(r'^ocsp/false-pem-serial/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
+    re_path(r'^ocsp/false-pem-serial/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca=certs['child']['serial'],
         responder_key=ocsp_profile['key_filename'],
         responder_cert='AA:BB:CC',
     ), name='false-pem-serial'),
-    url(r'^ocsp/false-pem-full/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
+    re_path(r'^ocsp/false-pem-full/(?P<data>[a-zA-Z0-9=+/]+)$', OCSPView.as_view(
         ca=certs['child']['serial'],
         responder_key=ocsp_profile['key_filename'],
         responder_cert='-----BEGIN CERTIFICATE-----\nvery-mean!',
