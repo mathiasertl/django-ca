@@ -14,7 +14,7 @@
 import base64
 import os
 from datetime import timedelta
-import unittest.mock as mock
+from unittest import mock
 
 import asn1crypto
 import asn1crypto.x509
