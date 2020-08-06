@@ -1382,7 +1382,7 @@ class CRLDistributionPointsTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
     dp3 = DistributionPoint(s3)
     dp4 = DistributionPoint(s4)
 
-    cg_rdn1 = rdn([(NameOID.COMMON_NAME, u'example.com')])
+    cg_rdn1 = rdn([(NameOID.COMMON_NAME, 'example.com')])
 
     cg_dp1 = x509.DistributionPoint(full_name=[uri(uri1)], relative_name=None, crl_issuer=None, reasons=None)
     cg_dp2 = x509.DistributionPoint(full_name=[uri(uri1), dns(dns1)], relative_name=None, crl_issuer=None,

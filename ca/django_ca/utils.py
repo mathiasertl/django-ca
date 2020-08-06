@@ -143,7 +143,7 @@ def format_relative_name(name):
         >>> format_relative_name([('C', 'AT'), ('CN', 'example.com')])
         '/C=AT/CN=example.com'
         >>> format_relative_name(x509.RelativeDistinguishedName([
-        ...     x509.NameAttribute(NameOID.COMMON_NAME, u'example.com')
+        ...     x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')
         ... ]))
         '/CN=example.com'
     """

@@ -62,8 +62,8 @@ class TestSubject(TestCase):
 
     def test_init_name(self):
         name = x509.Name(attributes=[
-            x509.NameAttribute(oid=NameOID.COUNTRY_NAME, value=u'AT'),
-            x509.NameAttribute(oid=NameOID.COMMON_NAME, value=u'example.com'),
+            x509.NameAttribute(oid=NameOID.COUNTRY_NAME, value='AT'),
+            x509.NameAttribute(oid=NameOID.COMMON_NAME, value='example.com'),
         ])
         self.assertEqual(str(Subject(name)), '/C=AT/CN=example.com')
 

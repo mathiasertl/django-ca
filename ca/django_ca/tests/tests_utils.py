@@ -282,12 +282,12 @@ class ParseNameTestCase(DjangoCATestCase):
 
 class RelativeNameTestCase(TestCase):
     def test_format(self):
-        rdn = x509.RelativeDistinguishedName([x509.NameAttribute(NameOID.COMMON_NAME, u'example.com')])
+        rdn = x509.RelativeDistinguishedName([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')])
         self.assertEqual(format_relative_name([('C', 'AT'), ('CN', 'example.com')]), '/C=AT/CN=example.com')
         self.assertEqual(format_relative_name(rdn), '/CN=example.com')
 
     def test_parse(self):
-        expected = x509.RelativeDistinguishedName([x509.NameAttribute(NameOID.COMMON_NAME, u'example.com')])
+        expected = x509.RelativeDistinguishedName([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')])
         self.assertEqual(x509_relative_name('/CN=example.com'), expected)
         self.assertEqual(x509_relative_name([('CN', 'example.com')]), expected)
 
@@ -355,24 +355,24 @@ class ParseGeneralNameTest(TestCase):
     # some paths are not covered in doctests
 
     def test_ipv4(self):
-        self.assertEqual(parse_general_name('1.2.3.4'), x509.IPAddress(ipaddress.ip_address(u'1.2.3.4')))
-        self.assertEqual(parse_general_name('ip:1.2.3.4'), x509.IPAddress(ipaddress.ip_address(u'1.2.3.4')))
+        self.assertEqual(parse_general_name('1.2.3.4'), x509.IPAddress(ipaddress.ip_address('1.2.3.4')))
+        self.assertEqual(parse_general_name('ip:1.2.3.4'), x509.IPAddress(ipaddress.ip_address('1.2.3.4')))
 
     def test_ipv4_network(self):
         self.assertEqual(parse_general_name('1.2.3.0/24'),
-                         x509.IPAddress(ipaddress.ip_network(u'1.2.3.0/24')))
+                         x509.IPAddress(ipaddress.ip_network('1.2.3.0/24')))
         self.assertEqual(parse_general_name('ip:1.2.3.0/24'),
-                         x509.IPAddress(ipaddress.ip_network(u'1.2.3.0/24')))
+                         x509.IPAddress(ipaddress.ip_network('1.2.3.0/24')))
 
     def test_ipv6(self):
-        self.assertEqual(parse_general_name('fd00::32'), x509.IPAddress(ipaddress.ip_address(u'fd00::32')))
-        self.assertEqual(parse_general_name('ip:fd00::32'), x509.IPAddress(ipaddress.ip_address(u'fd00::32')))
+        self.assertEqual(parse_general_name('fd00::32'), x509.IPAddress(ipaddress.ip_address('fd00::32')))
+        self.assertEqual(parse_general_name('ip:fd00::32'), x509.IPAddress(ipaddress.ip_address('fd00::32')))
 
     def test_ipv6_network(self):
         self.assertEqual(parse_general_name('fd00::0/32'),
-                         x509.IPAddress(ipaddress.ip_network(u'fd00::0/32')))
+                         x509.IPAddress(ipaddress.ip_network('fd00::0/32')))
         self.assertEqual(parse_general_name('ip:fd00::0/32'),
-                         x509.IPAddress(ipaddress.ip_network(u'fd00::0/32')))
+                         x509.IPAddress(ipaddress.ip_network('fd00::0/32')))
 
     def test_domain(self):
         self.assertEqual(parse_general_name('DNS:example.com'), x509.DNSName('example.com'))
@@ -382,19 +382,19 @@ class ParseGeneralNameTest(TestCase):
         self.assertEqual(parse_general_name('.example.com'), x509.DNSName('.example.com'))
 
     def test_wildcard_domain(self):
-        self.assertEqual(parse_general_name('*.example.com'), x509.DNSName(u'*.example.com'))
-        self.assertEqual(parse_general_name('DNS:*.example.com'), x509.DNSName(u'*.example.com'))
+        self.assertEqual(parse_general_name('*.example.com'), x509.DNSName('*.example.com'))
+        self.assertEqual(parse_general_name('DNS:*.example.com'), x509.DNSName('*.example.com'))
 
         # Wildcard subdomains are allowed in DNS entries, however RFC 2595 limits their use to a single
         # wildcard in the outermost level
         msg = r'^Codepoint U\+002A at position 1 of \'\*\' not allowed$'
 
         with self.assertRaisesRegex(IDNAError, msg):
-            parse_general_name(u'test.*.example.com')
+            parse_general_name('test.*.example.com')
         with self.assertRaisesRegex(IDNAError, msg):
-            parse_general_name(u'*.*.example.com')
+            parse_general_name('*.*.example.com')
         with self.assertRaisesRegex(IDNAError, msg):
-            parse_general_name(u'example.com.*')
+            parse_general_name('example.com.*')
 
     def test_dirname(self):
         self.assertEqual(parse_general_name('/CN=example.com'), x509.DirectoryName(x509.Name([
