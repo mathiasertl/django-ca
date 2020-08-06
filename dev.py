@@ -255,7 +255,13 @@ elif args.command == 'test-imports':
     from django.conf import settings  # NOQA
 
     # import some modules - if any dependency is not installed, this will fail
-    from django_ca import utils, models, views, extensions, subject, tasks  # NOQA
+    from django_ca import extensions  # NOQA
+    from django_ca import models  # NOQA
+    from django_ca import subject  # NOQA
+    from django_ca import tasks  # NOQA
+    from django_ca import utils  # NOQA
+    from django_ca import views  # NOQA
+
 
 elif args.command == 'docker-test':
     images = args.images or [
@@ -1047,8 +1053,8 @@ elif args.command == 'collectstatic':
 
     setup_django('ca.settings')
 
-    from django.core.management import call_command
     from django.contrib.staticfiles.finders import get_finders
+    from django.core.management import call_command
     call_command('collectstatic', interactive=False)
 
     locations = set()
