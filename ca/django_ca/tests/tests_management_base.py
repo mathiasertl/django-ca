@@ -13,6 +13,7 @@
 
 import argparse
 from datetime import timedelta
+from unittest import mock
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -30,11 +31,6 @@ from .base import DjangoCAWithGeneratedCAsTestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
-
-try:
-    import unittest.mock as mock
-except ImportError:
-    import mock
 
 
 class SubjectActionTestCase(DjangoCATestCase):

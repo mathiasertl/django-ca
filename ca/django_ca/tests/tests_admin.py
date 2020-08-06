@@ -15,6 +15,7 @@ import json
 import unittest
 from datetime import datetime
 from datetime import timedelta
+from unittest import mock
 from urllib.parse import quote
 
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -64,11 +65,6 @@ from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
-
-try:
-    import unittest.mock as mock
-except ImportError:
-    import mock
 
 
 class AdminTestMixin(object):

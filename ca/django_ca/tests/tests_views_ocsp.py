@@ -14,6 +14,7 @@
 import base64
 import os
 from datetime import timedelta
+import unittest.mock as mock
 
 import asn1crypto
 import asn1crypto.x509
@@ -46,11 +47,6 @@ from .base import ocsp_data
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
-
-try:
-    import unittest.mock as mock
-except ImportError:
-    import mock
 
 
 # openssl ocsp -issuer django_ca/tests/fixtures/root.pem -serial <serial> \
