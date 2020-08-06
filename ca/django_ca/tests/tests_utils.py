@@ -13,8 +13,6 @@
 
 """Test utility functions."""
 
-from __future__ import unicode_literals
-
 import doctest
 import ipaddress
 import json
