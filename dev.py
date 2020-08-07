@@ -180,12 +180,6 @@ elif args.command == 'coverage':
     cov = coverage.Coverage(data_file=data_file, cover_pylib=False, branch=True, source=['django_ca'],
                             omit=['*migrations/*', '*/tests/tests*', ])
 
-    # exclude code that requires SCT
-    if not default_backend()._lib.CRYPTOGRAPHY_OPENSSL_110F_OR_GREATER:
-        cov.exclude(r'pragma: only SCT')
-    else:
-        cov.exclude(r'pragma: no SCT')
-
     # exclude python version specific code
     py_versions = [(3, 5), (3, 6), (3, 7), (3, 8), (3, 9)]
     for version in py_versions:

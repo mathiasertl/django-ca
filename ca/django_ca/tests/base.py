@@ -814,7 +814,7 @@ class DjangoCATestCaseMixin:
             yield mock
 
     @contextmanager
-    def patch_object(self, *args, **kwargs):  # pragma: only SCT
+    def patch_object(self, *args, **kwargs):
         with patch.object(*args, **kwargs) as mock:
             yield mock
 

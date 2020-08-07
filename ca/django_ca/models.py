@@ -69,7 +69,6 @@ from .extensions import PrecertPoison
 from .extensions import SubjectAlternativeName
 from .extensions import SubjectKeyIdentifier
 from .extensions import TLSFeature
-from .extensions import UnrecognizedExtension
 from .extensions import get_extension_name
 from .managers import CertificateAuthorityManager
 from .managers import CertificateManager
@@ -459,20 +458,8 @@ class X509CertMixin(models.Model):
 
     @cached_property
     def precertificate_signed_certificate_timestamps(self):
-        try:
-            ext = self.x509.extensions.get_extension_for_oid(
-                ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
-        except x509.ExtensionNotFound:
-            return None
-
-        if isinstance(ext.value, x509.UnrecognizedExtension):
-            # Older versions of OpenSSL (and LibreSSL) cannot parse this extension
-            # see https://github.com/pyca/cryptography/blob/master/tests/x509/test_x509_ext.py#L4455-L4459
-            return UnrecognizedExtension(
-                ext,
-                name=get_extension_name(ext),
-                error='Requires OpenSSL 1.1.0f or later')
-        else:  # pragma: only SCT
+        ext = self.get_x509_extension(ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
+        if ext is not None:
             return PrecertificateSignedCertificateTimestamps(ext)
 
     @cached_property
