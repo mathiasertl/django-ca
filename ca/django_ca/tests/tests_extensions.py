@@ -15,7 +15,6 @@ import doctest
 import functools
 import operator
 import os
-import unittest
 
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
@@ -29,7 +28,6 @@ from django.conf import settings
 from django.test import TestCase
 from django.utils.functional import cached_property
 
-from .. import ca_settings
 from ..extensions import KEY_TO_EXTENSION
 from ..extensions import OID_TO_EXTENSION
 from ..extensions import AuthorityInformationAccess
