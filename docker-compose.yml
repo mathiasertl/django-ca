@@ -84,7 +84,7 @@ services:
         stop_signal: SIGINT
 
     webserver:
-        image: nginx:1.17-alpine
+        image: nginx:1.18-alpine
         command: /bin/sh -c "envsubst < /etc/nginx/conf.d/default.template > /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"
         depends_on:
             - frontend

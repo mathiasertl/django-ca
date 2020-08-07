@@ -10,8 +10,9 @@ ChangeLog
 1.16.0 (TBR)
 ************
 
-* Add support for cryptography 2.9.
-* Update `redis` to version 6 when using docker-compose.
+* Add support for cryptography 2.9 and 3.0.
+* Add support for Django 3.1.
+* Update `redis` to version 6 and nginx version 18 when using docker-compose
 * Finally update Sphinx since `numpydoc#215 <https://github.com/numpy/numpydoc/issues/215#event-3371204027>`_
   is finally fixed.
 * The profile used to generate the certificate is now stored in the database.
