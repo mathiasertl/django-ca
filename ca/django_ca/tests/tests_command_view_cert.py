@@ -829,12 +829,12 @@ HPKP pin: {hpkp}
         name = 'letsencrypt_x3-cert'
         context = self.get_cert_context(name)
         sct = '''PrecertificateSignedCertificateTimestamps{sct_critical}:
-* Precertificate ({sct_values[0][version]}):
-    Timestamp: {sct_values[0][timestamp]}
-    Log ID: {sct_values[0][log_id]}
-* Precertificate ({sct_values[1][version]}):
-    Timestamp: {sct_values[1][timestamp]}
-    Log ID: {sct_values[1][log_id]}'''.format(**context)
+    * Precertificate ({sct_values[0][version]}):
+        Timestamp: {sct_values[0][timestamp]}
+        Log ID: {sct_values[0][log_id]}
+    * Precertificate ({sct_values[1][version]}):
+        Timestamp: {sct_values[1][timestamp]}
+        Log ID: {sct_values[1][log_id]}'''.format(**context)
 
         self.assertContrib('letsencrypt_x3-cert', '''Common Name: {cn}
 Valid from: {valid_from_short}
