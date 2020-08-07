@@ -30,7 +30,7 @@ from django.contrib.auth.models import User
 from django.templatetags.static import static
 from django.test import Client
 from django.urls import reverse
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 
 from django_webtest import WebTestMixin
 from freezegun import freeze_time
@@ -1100,7 +1100,7 @@ class CertDownloadTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
         self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
-        self.assertEqual(force_text(response.content), self.cert.pub)
+        self.assertEqual(force_str(response.content), self.cert.pub)
 
     def test_der(self):
         filename = 'root-cert_example_com.der'
@@ -1177,7 +1177,7 @@ class CertDownloadBundleTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestC
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
         self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
-        self.assertEqual(force_text(response.content),
+        self.assertEqual(force_str(response.content),
                          '%s\n%s' % (self.cert.pub.strip(), self.cert.ca.pub.strip()))
         self.assertEqual(self.cas['root'], self.cert.ca)  # just to be sure we test the right thing
 

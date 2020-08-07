@@ -12,7 +12,7 @@
 # see <http://www.gnu.org/licenses/>.
 
 from django.forms import widgets
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.translation import gettext as _
 
 from . import ca_settings
@@ -77,7 +77,7 @@ class ProfileWidget(widgets.Select):
         # different profile is selected)
         desc = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get(
             'description', ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get('desc', ''))
-        html += '<p class="help profile-desc">%s</p>' % force_text(desc)
+        html += '<p class="help profile-desc">%s</p>' % force_str(desc)
 
         return html
 

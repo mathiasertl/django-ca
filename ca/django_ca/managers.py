@@ -24,7 +24,7 @@ from django.core.files.base import ContentFile
 from django.db import models
 from django.urls import reverse
 from django.utils.encoding import force_bytes
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 
 from . import ca_settings
 from .extensions import Extension
@@ -49,17 +49,17 @@ class CertificateManagerMixin(object):
     def get_common_extensions(self, issuer_url=None, crl_url=None, ocsp_url=None):
         extensions = []
         if crl_url:
-            urls = [x509.UniformResourceIdentifier(force_text(c)) for c in crl_url]
+            urls = [x509.UniformResourceIdentifier(force_str(c)) for c in crl_url]
             dps = [x509.DistributionPoint(full_name=[c], relative_name=None, crl_issuer=None, reasons=None)
                    for c in urls]
             extensions.append((False, x509.CRLDistributionPoints(dps)))
         auth_info_access = []
         if ocsp_url:
-            uri = x509.UniformResourceIdentifier(force_text(ocsp_url))
+            uri = x509.UniformResourceIdentifier(force_str(ocsp_url))
             auth_info_access.append(x509.AccessDescription(
                 access_method=AuthorityInformationAccessOID.OCSP, access_location=uri))
         if issuer_url:
-            uri = x509.UniformResourceIdentifier(force_text(issuer_url))
+            uri = x509.UniformResourceIdentifier(force_str(issuer_url))
             auth_info_access.append(x509.AccessDescription(
                 access_method=AuthorityInformationAccessOID.CA_ISSUERS, access_location=uri))
         if auth_info_access:

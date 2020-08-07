@@ -29,7 +29,7 @@ from django.test import Client
 from django.urls import path
 from django.urls import re_path
 from django.urls import reverse
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 
 from freezegun import freeze_time
 
@@ -167,7 +167,7 @@ class OCSPViewTestMixin(object):
 
         # used for verifying signatures
         ocsp_key_path = os.path.join(settings.FIXTURES_DIR, ocsp_profile['key_filename'])
-        self.ocsp_private_key = asymmetric.load_private_key(force_text(ocsp_key_path))
+        self.ocsp_private_key = asymmetric.load_private_key(force_str(ocsp_key_path))
 
     def assertAlmostEqualDate(self, got, expected):
         # Sometimes next_update timestamps are off by a second or so, so we test
