@@ -131,12 +131,18 @@ def test(suites):
     warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='webtest.*', message=msg2)
     warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='webtest.*', message=msg3)
 
-    # force_text() is deprecated in Django 3.0, but should still be used as long as we support py2.
+    # At present, some libraries are not yet updated.
     from django.utils import deprecation
-    if hasattr(deprecation, 'RemovedInDjango40Warning'):  # pragma: django<=1.11
+    if hasattr(deprecation, 'RemovedInDjango40Warning'):  # pragma: django<=3.0
         warnings.filterwarnings(action='ignore', category=deprecation.RemovedInDjango40Warning,
                                 module='django_ca',
                                 message=r'^force_text\(\) is deprecated in favor of force_str\(\)\.$')
+        warnings.filterwarnings(
+            action='ignore', category=deprecation.RemovedInDjango40Warning,
+            module='django_object_actions.utils',
+            message=r'^django\.conf\.urls\.url\(\) is deprecated in favor of django\.urls\.re_path\(\)\.$'
+        )
+    #                            message=r'^force_text\(\) is deprecated in favor of force_str\(\)\.$')
 
     work_dir = os.path.join(_rootdir, 'ca')
 
