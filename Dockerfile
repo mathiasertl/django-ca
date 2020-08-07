@@ -14,7 +14,7 @@ RUN addgroup -g 9000 -S django-ca && \
 
 FROM base as build
 RUN --mount=type=cache,target=/etc/apk/cache apk add \
-        build-base linux-headers libffi-dev openssl-dev \
+        build-base linux-headers libffi libffi-dev openssl-dev \
         pcre-dev mailcap mariadb-connector-c-dev postgresql-dev
 RUN --mount=type=cache,target=/root/.cache/pip pip install -U setuptools pip wheel
 

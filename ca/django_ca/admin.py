@@ -171,22 +171,23 @@ class CertificateMixin(object):
     ##################################
 
     def output_template(self, obj, key):
-        extension = getattr(obj, key)
+        ext = getattr(obj, key)
         templates = ['django_ca/admin/extensions/%s.html' % key]
 
-        if isinstance(extension, NullExtension):
+        if isinstance(ext, NullExtension):
             templates.append('django_ca/admin/extensions/base/null_extension.html')
-        if isinstance(extension, AlternativeNameExtension):
+        if isinstance(ext, AlternativeNameExtension):
             templates.append('django_ca/admin/extensions/base/alternative_name_extension.html')
-        if isinstance(extension, CRLDistributionPointsBase):
+        if isinstance(ext, CRLDistributionPointsBase):
             templates.append('django_ca/admin/extensions/base/crl_distribution_points_base.html')
-        if isinstance(extension, OrderedSetExtension):
+        if isinstance(ext, OrderedSetExtension):
             templates.append('django_ca/admin/extensions/base/ordered_set_extension.html')
-        if isinstance(extension, UnrecognizedExtension) or isinstance(extension, x509.UnrecognizedExtension):
+        if isinstance(ext, UnrecognizedExtension) \
+                or isinstance(ext, x509.UnrecognizedExtension):  # pragma: no cover
             templates.append('django_ca/admin/extensions/base/unrecognized_extension.html')
         else:
             templates.append('django_ca/admin/extensions/base/base.html')
-        return render_to_string(templates, {'obj': obj, 'extension': extension})
+        return render_to_string(templates, {'obj': obj, 'extension': ext})
 
     def unknown_oid(self, oid, obj):
         ext = obj.x509.extensions.get_extension_for_oid(oid)
