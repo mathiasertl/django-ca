@@ -723,8 +723,7 @@ HPKP pin: %(hpkp)s
 
     @freeze_time("2019-04-01")
     def test_contrib_godaddy_derstandardat(self):
-        if ca_settings.OPENSSL_SUPPORTS_SCT:
-            sct = """PrecertificateSignedCertificateTimestamps:
+        sct = """PrecertificateSignedCertificateTimestamps:
     * Precertificate (v1):
         Timestamp: 2019-03-27 09:13:54.342000
         Log ID: a4b90990b418581487bb13a2cc67700a3c359804f91bdfb8e377cd0ec80ddc10
@@ -734,10 +733,6 @@ HPKP pin: %(hpkp)s
     * Precertificate (v1):
         Timestamp: 2019-03-27 09:13:56.485000
         Log ID: 4494652eb0eeceafc44007d8a8fe28c0dae682bed8cb31b53fd33396b5b681a8"""
-
-        else:
-            sct = '''PrecertificateSignedCertificateTimestamps:
-    Could not parse extension (Requires OpenSSL 1.1.0f or later)'''
 
         self.assertContrib('godaddy_g2_intermediate-cert', '''Common Name: {cn}
 Valid from: {valid_from_short}
@@ -833,19 +828,14 @@ HPKP pin: {hpkp}
     @freeze_time("2019-07-05")
     def test_contrib_letsencrypt_jabber_at(self):
         name = 'letsencrypt_x3-cert'
-        if ca_settings.OPENSSL_SUPPORTS_SCT:
-            context = self.get_cert_context(name)
-            sct = '''PrecertificateSignedCertificateTimestamps{sct_critical}:
-    * Precertificate ({sct_values[0][version]}):
-        Timestamp: {sct_values[0][timestamp]}
-        Log ID: {sct_values[0][log_id]}
-    * Precertificate ({sct_values[1][version]}):
-        Timestamp: {sct_values[1][timestamp]}
-        Log ID: {sct_values[1][log_id]}'''.format(**context)
-
-        else:
-            sct = '''PrecertificateSignedCertificateTimestamps:
-    Could not parse extension (Requires OpenSSL 1.1.0f or later)'''
+        context = self.get_cert_context(name)
+        sct = '''PrecertificateSignedCertificateTimestamps{sct_critical}:
+* Precertificate ({sct_values[0][version]}):
+    Timestamp: {sct_values[0][timestamp]}
+    Log ID: {sct_values[0][log_id]}
+* Precertificate ({sct_values[1][version]}):
+    Timestamp: {sct_values[1][timestamp]}
+    Log ID: {sct_values[1][log_id]}'''.format(**context)
 
         self.assertContrib('letsencrypt_x3-cert', '''Common Name: {cn}
 Valid from: {valid_from_short}

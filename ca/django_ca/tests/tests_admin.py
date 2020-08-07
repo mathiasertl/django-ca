@@ -380,9 +380,6 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
         self.assertEqual(logs.output, sorted(expected))
 
-    @unittest.skipUnless(
-        ca_settings.OPENSSL_SUPPORTS_SCT,
-        'Older versions of OpenSSL/LibreSSL do not recognize this extension anyway.')
     def test_unsupported_sct(self):
         # Test return value for older versions of OpenSSL
         cert = self.certs['letsencrypt_x3-cert']
