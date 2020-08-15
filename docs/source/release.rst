@@ -84,16 +84,25 @@ docker-compose
    $ docker-compose exec backend ./manage.py init_ca \
    >     --path=ca/shared/ --parent=example.com child /CN=child.example.com
 
-You should now be able to visit http://localhost and log in. You are able to sign a certificate, but *only*
-for the "child" CA.
+You should now be able to visit http://localhost/admin and log in. You are able to sign a certificate, but
+*only* for the "child" CA.
+
+In order to sign a certificate, we first need a private key and a CSR:
+
+.. code-block:: console
+
+   $ openssl genrsa -out cert.key 4096
+   $ openssl req -new -key cert.key -out cert.csr -utf8 -batch \
+   >     -subj '/CN=hostname/emailAddress=root@hostname'
+
 
 Now, let's create a certificate for the root CA. Because it's only present for Celery, we need to create it
 using the CLI:
 
 .. code-block:: console
 
-   $ docker-compose exec frontend ./manage.py sign_cert --ca=example.com \
-   >     --subject="/CN=signed-in-backend.example.com
+   $ docker-compose exec backend ./manage.py sign_cert --ca=example.com \
+   >     --subject="/CN=signed-in-backend.example.com"
 
 Check that the same fails in the frontend container (because the root CA is only available in the backend):
 
@@ -106,7 +115,7 @@ Finally, verify that CRL and OCSP validation works:
 
 .. code-block:: console
 
-   $ docker-compose exec backend ./manage.py dump_ca example.com
+   $ docker-compose exec backend ./manage.py dump_ca example.com > root.pem
    $ docker-compose exec backend ./manage.py dump_cert signed-in-backend.example.com > cert.pem
    $ openssl verify -CAfile root.pem -crl_download -crl_check cert.pem
    cert.pem: OK
