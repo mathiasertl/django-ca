@@ -34,6 +34,8 @@ Backwards incompatible changes
 Deprecation notices
 ===================
 
+* This is the last release to support Python 3.5.
+* This is the last release to support Celery 4.2.
 * The Django project included in this git repository will stop loading ``localsetttings.py`` files in
   ``django-ca>=1.18.0``.
 * The format for the ``CA_PROFILES`` setting has changed in :ref:`1.14.0 <changelog-1.14.0>`. Support for the

@@ -13,4 +13,4 @@ sphinx-autobuild==0.7.1
 tabulate==0.8.7
 termcolor==1.1.0
 twine==3.2.0
-wheel==0.34.2
+wheel==0.35.1
