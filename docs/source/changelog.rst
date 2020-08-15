@@ -36,6 +36,7 @@ Deprecation notices
 ===================
 
 * This is the last release to support Python 3.5.
+* This is the last release to support cryptography 2.7.
 * This is the last release to support Celery 4.2.
 * This is the last release to support idna 2.8.
 * The Django project included in this git repository will stop loading ``localsetttings.py`` files in
