@@ -523,9 +523,6 @@ class DjangoCATestCaseMixin:
             self.assertEqual(data.get('file'), msg.file)
             self.assertEqual(data.get('line'), msg.line)
 
-            if hasattr(msg, 'source'):  # pragma: no branch, pragma: only py>=3.6, not present in py3.5
-                self.assertEqual(data.get('source'), msg.source)
-
     def assertNotRevoked(self, cert):
         if isinstance(cert, CertificateAuthority):
             cert = CertificateAuthority.objects.get(serial=cert.serial)

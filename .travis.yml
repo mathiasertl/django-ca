@@ -1,7 +1,6 @@
 dist: "bionic"  # https://docs.travis-ci.com/user/reference/overview/
 language: python
 python:  # https://devguide.python.org/#status-of-python-branches
-  - "3.5"
   - "3.6"
   - "3.7"
   - "3.8"
