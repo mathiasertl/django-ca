@@ -37,7 +37,7 @@ Please see https://django-ca.readthedocs.org for more extensive documentation.
 install_requires = [
     'django>=2.2',
     'asn1crypto>=1.0.1',
-    'cryptography>=2.7',
+    'cryptography>=2.8',
     'django-object-actions>=1.1',
     'idna>=2.8',
     'packaging',
