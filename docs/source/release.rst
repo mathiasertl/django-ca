@@ -157,3 +157,4 @@ After a release
 * Drop support for older software versions in ``.travis.yml``, ``tox.ini`` and ``dev.py docker-test``.
 * Remove files in dist: ``rm -rf dist/*``
 * Update ``docker-compose.yml`` to use the ``latest`` version of **django-ca**.
+* Start new changelog entry in ``docs/source/changelog.rst``.
