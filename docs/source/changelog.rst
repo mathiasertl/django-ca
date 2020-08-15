@@ -12,6 +12,7 @@ ChangeLog
 
 * Add support for cryptography 2.9 and 3.0.
 * Add support for Django 3.1.
+* The docker image is now based on Alpine Linux 3.12.
 * Update `redis` to version 6 and nginx version 18 when using docker-compose
 * Finally update Sphinx since `numpydoc#215 <https://github.com/numpy/numpydoc/issues/215#event-3371204027>`_
   is finally fixed.
