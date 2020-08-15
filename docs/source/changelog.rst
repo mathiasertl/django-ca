@@ -6,9 +6,9 @@ ChangeLog
 
 .. _changelog-1.16.0:
 
-************
-1.16.0 (TBR)
-************
+*******************
+1.16.0 (2020-08-15)
+*******************
 
 * Add support for cryptography 2.9 and 3.0.
 * Add support for Django 3.1.
