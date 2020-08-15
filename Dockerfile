@@ -16,11 +16,11 @@ FROM base as build
 RUN --mount=type=cache,target=/etc/apk/cache apk add \
         build-base linux-headers libffi libffi-dev openssl-dev \
         pcre-dev mailcap mariadb-connector-c-dev postgresql-dev
-RUN --mount=type=cache,target=/root/.cache/pip pip install -U setuptools pip wheel
+RUN --mount=type=cache,target=/root/.cache/pip/http pip install -U setuptools pip wheel
 
 COPY requirements.txt ./
 COPY requirements/ requirements/
-RUN --mount=type=cache,target=/root/.cache/pip pip install --no-warn-script-location --prefix=/install \
+RUN --mount=type=cache,target=/root/.cache/pip/http pip install --no-warn-script-location --prefix=/install \
     -r requirements/requirements-docker.txt \
     -r requirements/requirements-redis.txt \
     -r requirements/requirements-mysql.txt \
@@ -38,7 +38,7 @@ ENV SKIP_SELENIUM_TESTS=y
 ENV SQLITE_NAME=:memory:
 
 # Install additional requirements for testing:
-RUN --mount=type=cache,target=/root/.cache/pip pip install \
+RUN --mount=type=cache,target=/root/.cache/pip/http pip install \
     -r requirements/requirements-docs.txt \
     -r requirements/requirements-test.txt \
     -r requirements/requirements-lint.txt
