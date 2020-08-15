@@ -1,3 +1,3 @@
-Celery>=4.2
+Celery>=4.3
 PyYAML==5.3.1
 django-object-actions==3.0.1

@@ -77,7 +77,7 @@ setup(
     install_requires=install_requires,
     extras_require={
         'redis': ['hiredis>=1.0', 'redis>=3.2', 'django-redis-cache>=1.8.0'],
-        'celery': ['celery>=4.2'],
+        'celery': ['celery>=4.3'],
     },
     classifiers=[
         'Development Status :: 4 - Beta',
