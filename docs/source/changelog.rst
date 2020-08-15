@@ -25,7 +25,9 @@ Backwards incompatible changes
 ==============================
 
 * Drop support for Django 1.11 and 2.1.
-* Drop support for OpenSSL 1.1.0f. This affects Debian oldoldstable (jessie), Ubuntu 16.04 and Alpine 3.8.
+* Drop support for Celery 4.0 and 4.1.
+* Drop support for OpenSSL 1.1.0f and earlier. This affects Debian oldoldstable (jessie), Ubuntu 16.04 and
+  Alpine 3.8.
 * ``Certificate.objects.init()`` and ``profiles.get_cert_profile_kwargs()`` were removed. Use
   :py:func:`Certificate.objects.create_cert() <django_ca.managers.CertificateManager.create_cert>` instead.
 
