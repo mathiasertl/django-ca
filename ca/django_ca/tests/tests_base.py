@@ -81,7 +81,6 @@ class TestDjangoCATestCase(DjangoCATestCase):
             data[TLSFeature.key],
         ]
 
-        self.maxDiff = None
         self.assertExtensions(cert, all_extensions)
 
         # when we pass an x509 with a signer, we still have a default AuthorityKeyIdentifier extension

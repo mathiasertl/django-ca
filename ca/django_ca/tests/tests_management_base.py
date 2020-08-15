@@ -382,7 +382,6 @@ class ReasonTestCase(DjangoCATestCase):
         self.assertEqual(ns.reason, ReasonFlags.unspecified)
 
     def test_wrong_reason(self):
-        self.maxDiff = None
         self.assertParserError(['foo'],
                                'usage: {script} [-h]\n'
                                '              {{aa_compromise,affiliation_changed,ca_compromise,certificate_hold,cessation_of_operation,key_compromise,privilege_withdrawn,remove_from_crl,superseded,unspecified}}\n'  # NOQA

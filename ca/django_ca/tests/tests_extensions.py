@@ -186,7 +186,6 @@ class AbstractExtensionTestMixin:
                 self.assertEqual(ext_not_critical, ext_3)
 
     def test_init(self):
-        self.maxDiff = None
         # Test that the constructor behaves equal regardles of input value
         for key, config in self.test_values.items():
             expected = self.ext(config['expected'])

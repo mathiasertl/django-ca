@@ -350,7 +350,6 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
     def test_unsupported_extensions(self):
         cert = self.certs['all-extensions']
-        self.maxDiff = None
         # Act as if no extensions is recognized, to see what happens if we'd encounter an unknown extension.
         with mock.patch.object(models, 'OID_TO_EXTENSION', {}), \
                 mock.patch.object(extensions, 'OID_TO_EXTENSION', {}), \
@@ -451,7 +450,6 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertPostIssueCert(post, cert)
         self.assertSubject(cert.x509, [('C', 'US'), ('CN', cn)])
         self.assertIssuer(ca, cert)
-        self.maxDiff = None
         self.assertExtensions(cert, [
             ExtendedKeyUsage({'value': ['clientAuth', 'serverAuth']}),
             KeyUsage({'critical': True, 'value': ['digitalSignature', 'keyAgreement']}),
@@ -941,7 +939,6 @@ class ProfilesViewTestCase(AdminTestMixin, DjangoCATestCase):
         super(ProfilesViewTestCase, self).setUp()
 
     def test_basic(self):
-        self.maxDiff = None
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(json.loads(response.content.decode('utf-8')), {
@@ -1066,7 +1063,6 @@ class ProfilesViewTestCase(AdminTestMixin, DjangoCATestCase):
     def test_empty_profile(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.maxDiff = None
         self.assertEqual(json.loads(response.content.decode('utf-8')), {
             'test': {
                 'cn_in_san': True,
