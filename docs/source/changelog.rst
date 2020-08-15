@@ -4,6 +4,20 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.17.0:
+
+************
+1.17.0 (TBR)
+************
+
+Backwards incompatible changes
+==============================
+
+* Drop support for Python 3.5.
+* Drop support for cryptography 2.7.
+* Drop support for Celery 4.2.
+* Drop support for idna 2.8.
+
 .. _changelog-1.16.0:
 
 *******************
