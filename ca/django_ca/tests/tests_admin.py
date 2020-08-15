@@ -1192,6 +1192,7 @@ class CertDownloadBundleTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestC
         self.assertEqual(response.content, b'DER/ASN.1 certificates cannot be downloaded as a bundle.')
 
 
+@freeze_time(timestamps['everything_valid'])
 class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithGeneratedCertsTestCase):
     def setUp(self):
         super(ResignCertTestCase, self).setUp()
