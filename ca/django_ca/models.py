@@ -908,6 +908,13 @@ class AcmeAccount(models.Model):
     pem = models.TextField(verbose_name=_('Public key'))
     # TODO: store JWK thumbprint?
 
+    class Meta:
+        verbose_name = _('ACME Account')
+        verbose_name_plural = _('ACME Accounts')
+
+    def __str__(self):
+        return self.contact
+
 
 class AcmeOrder(models.Model):
     # Possible states are from RFC 8555, section 7.1.6.
@@ -931,6 +938,13 @@ class AcmeOrder(models.Model):
     status = models.CharField(choices=STATUS_CHOICES, max_length=10,
                               default=STATUS_PENDING)  # default from RFC 8555, section 7.1.6
     expires = models.DateTimeField(default=acme_order_expires)
+
+    class Meta:
+        verbose_name = _('ACME Order')
+        verbose_name_plural = _('ACME Orders')
+
+    def __str__(self):
+        return '%s (%s)' % (self.slug, self.account)
 
     @property
     def acme_url(self):
@@ -982,6 +996,17 @@ class AcmeAccountAuthorization(models.Model):
     # expires comes from the linked order (for now)
     # challenges comes from the AcmeChallenge model linking from here
     wildcard = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = _('ACME Account Authorization')
+        verbose_name_plural = _('ACME Account Authorizations')
+
+    def __str__(self):
+        return '%s: %s' % (self.type, self.value)
+
+    @property
+    def account(self):
+        return self.order.account
 
     @property
     def acme_url(self):
@@ -1045,6 +1070,13 @@ class AcmeChallenge(models.Model):
     # The token field is listed for both HTTP and DNS challenge, which are the most common types, so we
     # include it as an optional field here. It is generated when the token is first accessed.
     token = models.CharField(blank=True, max_length=64)
+
+    class Meta:
+        verbose_name = _('ACME Challenge')
+        verbose_name_plural = _('ACME Challenges')
+
+    def __str__(self):
+        return '%s (%s)' % (self.auth.value, self.type)
 
     @property
     def acme_url(self):

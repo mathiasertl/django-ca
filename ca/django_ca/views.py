@@ -60,6 +60,7 @@ from .acme import AcmeResponseUnauthorized
 from .acme import AcmeResponseUnsupportedMediaType
 from .models import AcmeAccount
 from .models import AcmeAccountAuthorization
+from .models import AcmeChallenge
 from .models import AcmeOrder
 from .models import Certificate
 from .models import CertificateAuthority
@@ -646,4 +647,7 @@ class AcmeAuthorizationView(AcmeBaseView):
 
 
 class AcmeChallengeView(AcmeBaseView):
-    pass
+    post_as_get = True
+
+    def acme_request(self, slug):
+        challenge = AcmeChallenge.objects.get(slug=slug)

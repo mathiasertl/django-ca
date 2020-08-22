@@ -677,19 +677,37 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
 
 @admin.register(AcmeAccount)
 class AcmeAccountAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('contact', 'status', 'created', 'terms_of_service_agreed')
+    list_filter = ('status', 'terms_of_service_agreed')
+    readonly_fields = ('pem', 'created', )
+    search_fields = ('contact', )
 
 
 @admin.register(AcmeOrder)
 class AcmeOrderAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('slug', 'status', 'account', 'expires', )
+    list_filter = ('status', )
+    search_fields = ('account__contact', 'slug')
 
 
 @admin.register(AcmeAccountAuthorization)
 class AcmeAccountAuthorizationAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('slug', 'value', 'wildcard', 'type', 'status', 'order_display', 'contact')
+    list_filter = ('type', 'status', )
+    search_fields = ('value', 'slug', 'order__account__contact', )
+
+    def contact(self, obj):
+        return obj.order.account.contact
+    contact.short_description = _('Contact')
+    contact.admin_order_field = 'order__account'
+
+    def order_display(self, obj):
+        return obj.order.slug
+    order_display.short_description = _('Order')
+    order_display.admin_order_field = 'order__slug'
 
 
 @admin.register(AcmeChallenge)
 class AcmeChallengeAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('slug', 'auth', 'type', 'status', 'validated', )
+    list_filter = ('type', 'status', 'auth__order')
