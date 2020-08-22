@@ -1024,6 +1024,12 @@ class AcmeChallenge(models.Model):
     STATUS_PROCESSING = messages.STATUS_PROCESSING.name
     STATUS_VALID = messages.STATUS_VALID.name
     STATUS_INVALID = messages.STATUS_INVALID.name
+    STATUS_CHOICES = (
+        (STATUS_PENDING, _('Pending')),
+        (STATUS_PROCESSING, _('Processing')),
+        (STATUS_VALID, _('Valid')),
+        (STATUS_INVALID, _('Name')),
+    )
 
     auth = models.ForeignKey(AcmeAccountAuthorization, on_delete=models.PROTECT)
     slug = models.SlugField(unique=True, default=acme_slug)
@@ -1031,7 +1037,7 @@ class AcmeChallenge(models.Model):
     # Challenge object basic fields according to RFC 8555, section 8:
     type = models.CharField(choices=TYPE_CHOICES, max_length=12)
     # url is computed from slug and request
-    status = models.CharField(choices=TYPE_CHOICES, max_length=12,
+    status = models.CharField(choices=STATUS_CHOICES, max_length=12,
                               default=STATUS_PENDING)  # default from RFC 8555, section 7.1.6
     validated = models.DateTimeField(null=True, blank=True)
     error = models.CharField(blank=True, max_length=64)  # max_length is just a guess
