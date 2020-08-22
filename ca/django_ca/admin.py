@@ -56,6 +56,10 @@ from .forms import CreateCertificateForm
 from .forms import ResignCertificateForm
 from .forms import RevokeCertificateForm
 from .forms import X509CertMixinAdminForm
+from .models import AcmeAccount
+from .models import AcmeOrder
+from .models import AcmeAccountAuthorization
+from .models import AcmeChallenge
 from .models import Certificate
 from .models import CertificateAuthority
 from .models import Watcher
@@ -669,3 +673,23 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             'admin/js/jquery.init.js',
             'django_ca/admin/js/sign.js',
         )
+
+
+@admin.register(AcmeAccount)
+class AcmeAccountAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(AcmeOrder)
+class AcmeOrderAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(AcmeAccountAuthorization)
+class AcmeAccountAuthorizationAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(AcmeChallenge)
+class AcmeChallengeAdmin(admin.ModelAdmin):
+    pass
