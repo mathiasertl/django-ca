@@ -15,6 +15,7 @@ import json
 import unittest
 from datetime import datetime
 from datetime import timedelta
+from unittest import mock
 from urllib.parse import quote
 
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -29,7 +30,7 @@ from django.contrib.auth.models import User
 from django.templatetags.static import static
 from django.test import Client
 from django.urls import reverse
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 
 from django_webtest import WebTestMixin
 from freezegun import freeze_time
@@ -64,11 +65,6 @@ from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
-
-try:
-    import unittest.mock as mock
-except ImportError:
-    import mock
 
 
 class AdminTestMixin(object):
@@ -354,7 +350,6 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
     def test_unsupported_extensions(self):
         cert = self.certs['all-extensions']
-        self.maxDiff = None
         # Act as if no extensions is recognized, to see what happens if we'd encounter an unknown extension.
         with mock.patch.object(models, 'OID_TO_EXTENSION', {}), \
                 mock.patch.object(extensions, 'OID_TO_EXTENSION', {}), \
@@ -384,9 +379,6 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
         self.assertEqual(logs.output, sorted(expected))
 
-    @unittest.skipUnless(
-        ca_settings.OPENSSL_SUPPORTS_SCT,
-        'Older versions of OpenSSL/LibreSSL do not recognize this extension anyway.')
     def test_unsupported_sct(self):
         # Test return value for older versions of OpenSSL
         cert = self.certs['letsencrypt_x3-cert']
@@ -458,7 +450,6 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertPostIssueCert(post, cert)
         self.assertSubject(cert.x509, [('C', 'US'), ('CN', cn)])
         self.assertIssuer(ca, cert)
-        self.maxDiff = None
         self.assertExtensions(cert, [
             ExtendedKeyUsage({'value': ['clientAuth', 'serverAuth']}),
             KeyUsage({'critical': True, 'value': ['digitalSignature', 'keyAgreement']}),
@@ -948,7 +939,6 @@ class ProfilesViewTestCase(AdminTestMixin, DjangoCATestCase):
         super(ProfilesViewTestCase, self).setUp()
 
     def test_basic(self):
-        self.maxDiff = None
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(json.loads(response.content.decode('utf-8')), {
@@ -1073,7 +1063,6 @@ class ProfilesViewTestCase(AdminTestMixin, DjangoCATestCase):
     def test_empty_profile(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.maxDiff = None
         self.assertEqual(json.loads(response.content.decode('utf-8')), {
             'test': {
                 'cn_in_san': True,
@@ -1107,7 +1096,7 @@ class CertDownloadTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
         self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
-        self.assertEqual(force_text(response.content), self.cert.pub)
+        self.assertEqual(force_str(response.content), self.cert.pub)
 
     def test_der(self):
         filename = 'root-cert_example_com.der'
@@ -1184,7 +1173,7 @@ class CertDownloadBundleTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestC
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
         self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
-        self.assertEqual(force_text(response.content),
+        self.assertEqual(force_str(response.content),
                          '%s\n%s' % (self.cert.pub.strip(), self.cert.ca.pub.strip()))
         self.assertEqual(self.cas['root'], self.cert.ca)  # just to be sure we test the right thing
 
@@ -1199,6 +1188,7 @@ class CertDownloadBundleTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestC
         self.assertEqual(response.content, b'DER/ASN.1 certificates cannot be downloaded as a bundle.')
 
 
+@freeze_time(timestamps['everything_valid'])
 class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithGeneratedCertsTestCase):
     def setUp(self):
         super(ResignCertTestCase, self).setUp()

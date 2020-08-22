@@ -92,7 +92,6 @@ class CertificateAuthorityManagerTestCase(DjangoCATestCase):
 class CreateCertTestCase(DjangoCAWithGeneratedCAsTestCase):
     @override_tmpcadir(CA_PROFILES={ca_settings.CA_DEFAULT_PROFILE: {'extensions': {}}})
     def test_basic(self):
-        self.maxDiff = None
         ca = self.cas['root']
         csr = certs['root-cert']['csr']['pem']
         subject = '/CN=example.com'

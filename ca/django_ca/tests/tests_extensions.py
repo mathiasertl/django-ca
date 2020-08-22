@@ -11,13 +11,10 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from __future__ import unicode_literals
-
 import doctest
 import functools
 import operator
 import os
-import unittest
 
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
@@ -31,7 +28,6 @@ from django.conf import settings
 from django.test import TestCase
 from django.utils.functional import cached_property
 
-from .. import ca_settings
 from ..extensions import KEY_TO_EXTENSION
 from ..extensions import OID_TO_EXTENSION
 from ..extensions import AuthorityInformationAccess
@@ -190,7 +186,6 @@ class AbstractExtensionTestMixin:
                 self.assertEqual(ext_not_critical, ext_3)
 
     def test_init(self):
-        self.maxDiff = None
         # Test that the constructor behaves equal regardles of input value
         for key, config in self.test_values.items():
             expected = self.ext(config['expected'])
@@ -1384,7 +1379,7 @@ class CRLDistributionPointsTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
     dp3 = DistributionPoint(s3)
     dp4 = DistributionPoint(s4)
 
-    cg_rdn1 = rdn([(NameOID.COMMON_NAME, u'example.com')])
+    cg_rdn1 = rdn([(NameOID.COMMON_NAME, 'example.com')])
 
     cg_dp1 = x509.DistributionPoint(full_name=[uri(uri1)], relative_name=None, crl_issuer=None, reasons=None)
     cg_dp2 = x509.DistributionPoint(full_name=[uri(uri1), dns(dns1)], relative_name=None, crl_issuer=None,
@@ -2498,8 +2493,6 @@ class PrecertPoisonTestCase(NullExtensionTestMixin, TestCase):
             PrecertPoison({'critical': False})
 
 
-@unittest.skipUnless(ca_settings.OPENSSL_SUPPORTS_SCT,
-                     'This version of OpenSSL does not support SCTs')
 class PrecertificateSignedCertificateTimestampsTestCase(DjangoCAWithCertTestCase):
     ext_class = PrecertificateSignedCertificateTimestamps
     ext_class_key = 'precertificate_signed_certificate_timestamps'

@@ -118,12 +118,6 @@ def test(suites):
     warnings.filterwarnings(action='error', module='django_ca')
 
     # ignore this warning in some modules to get cleaner output
-    msg = "Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated"
-    warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='webtest.lint', message=msg)
-    warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='markupsafe', message=msg)
-    warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='jinja2', message=msg)
-    # in bs4==4.8.1
-    warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='bs4', message=msg)
 
     # filter some webtest warnings
     msg2 = r'urllib.parse.splithost\(\) is deprecated as of 3.8, use urllib.parse.urlparse\(\) instead'
@@ -131,12 +125,14 @@ def test(suites):
     warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='webtest.*', message=msg2)
     warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='webtest.*', message=msg3)
 
-    # force_text() is deprecated in Django 3.0, but should still be used as long as we support py2.
+    # At present, some libraries are not yet updated.
     from django.utils import deprecation
-    if hasattr(deprecation, 'RemovedInDjango40Warning'):  # pragma: django<=1.11
-        warnings.filterwarnings(action='ignore', category=deprecation.RemovedInDjango40Warning,
-                                module='django_ca',
-                                message=r'^force_text\(\) is deprecated in favor of force_str\(\)\.$')
+    if hasattr(deprecation, 'RemovedInDjango40Warning'):  # pragma: django<=3.0
+        warnings.filterwarnings(
+            action='ignore', category=deprecation.RemovedInDjango40Warning,
+            module='django_object_actions.utils',
+            message=r'^django\.conf\.urls\.url\(\) is deprecated in favor of django\.urls\.re_path\(\)\.$'
+        )
 
     work_dir = os.path.join(_rootdir, 'ca')
 
@@ -183,12 +179,6 @@ elif args.command == 'coverage':
 
     cov = coverage.Coverage(data_file=data_file, cover_pylib=False, branch=True, source=['django_ca'],
                             omit=['*migrations/*', '*/tests/tests*', ])
-
-    # exclude code that requires SCT
-    if not default_backend()._lib.CRYPTOGRAPHY_OPENSSL_110F_OR_GREATER:
-        cov.exclude(r'pragma: only SCT')
-    else:
-        cov.exclude(r'pragma: no SCT')
 
     # exclude python version specific code
     py_versions = [(3, 5), (3, 6), (3, 7), (3, 8), (3, 9)]
@@ -255,7 +245,13 @@ elif args.command == 'test-imports':
     from django.conf import settings  # NOQA
 
     # import some modules - if any dependency is not installed, this will fail
-    from django_ca import utils, models, views, extensions, subject, tasks  # NOQA
+    from django_ca import extensions  # NOQA
+    from django_ca import models  # NOQA
+    from django_ca import subject  # NOQA
+    from django_ca import tasks  # NOQA
+    from django_ca import utils  # NOQA
+    from django_ca import views  # NOQA
+
 
 elif args.command == 'docker-test':
     images = args.images or [
@@ -264,6 +260,9 @@ elif args.command == 'docker-test':
         # Currently supported Alpine releases:
         #   https://wiki.alpinelinux.org/wiki/Alpine_Linux:Releases
 
+        'python:3.6-alpine3.12',
+        'python:3.7-alpine3.12',
+        'python:3.8-alpine3.12',
         'python:3.5-alpine3.11',
         'python:3.6-alpine3.11',
         'python:3.7-alpine3.11',
@@ -272,10 +271,6 @@ elif args.command == 'docker-test':
         'python:3.6-alpine3.10',
         'python:3.7-alpine3.10',
         'python:3.8-alpine3.10',
-        'python:3.9-rc-alpine3.10',
-        'python:3.5-alpine3.9',
-        'python:3.6-alpine3.9',
-        'python:3.7-alpine3.9',
     ]
 
     docker_runs = []
@@ -1047,8 +1042,8 @@ elif args.command == 'collectstatic':
 
     setup_django('ca.settings')
 
-    from django.core.management import call_command
     from django.contrib.staticfiles.finders import get_finders
+    from django.core.management import call_command
     call_command('collectstatic', interactive=False)
 
     locations = set()

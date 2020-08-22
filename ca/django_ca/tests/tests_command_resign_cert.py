@@ -14,6 +14,8 @@
 import os
 from unittest.mock import patch
 
+from freezegun import freeze_time
+
 from .. import ca_settings
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
@@ -29,8 +31,10 @@ from ..signals import pre_issue_cert
 from ..subject import Subject
 from .base import DjangoCAWithCertTestCase
 from .base import override_tmpcadir
+from .base import timestamps
 
 
+@freeze_time(timestamps['everything_valid'])
 class ResignCertTestCase(DjangoCAWithCertTestCase):
     def setUp(self):
         super(ResignCertTestCase, self).setUp()

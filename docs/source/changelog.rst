@@ -4,14 +4,30 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.17.0:
+
+************
+1.17.0 (TBR)
+************
+
+Backwards incompatible changes
+==============================
+
+* Drop support for Python 3.5.
+* Drop support for cryptography 2.7.
+* Drop support for Celery 4.2.
+* Drop support for idna 2.8.
+
 .. _changelog-1.16.0:
 
-************
-1.16.0 (TBR)
-************
+*******************
+1.16.0 (2020-08-15)
+*******************
 
-* Add support for cryptography 2.9.
-* Update `redis` to version 6 when using docker-compose.
+* Add support for cryptography 2.9 and 3.0.
+* Add support for Django 3.1.
+* The docker image is now based on Alpine Linux 3.12.
+* Update `redis` to version 6 and nginx version 18 when using docker-compose
 * Finally update Sphinx since `numpydoc#215 <https://github.com/numpy/numpydoc/issues/215#event-3371204027>`_
   is finally fixed.
 * The profile used to generate the certificate is now stored in the database.
@@ -24,12 +40,19 @@ Backwards incompatible changes
 ==============================
 
 * Drop support for Django 1.11 and 2.1.
+* Drop support for Celery 4.0 and 4.1.
+* Drop support for OpenSSL 1.1.0f and earlier. This affects Debian oldoldstable (jessie), Ubuntu 16.04 and
+  Alpine 3.8.
 * ``Certificate.objects.init()`` and ``profiles.get_cert_profile_kwargs()`` were removed. Use
   :py:func:`Certificate.objects.create_cert() <django_ca.managers.CertificateManager.create_cert>` instead.
 
 Deprecation notices
 ===================
 
+* This is the last release to support Python 3.5.
+* This is the last release to support cryptography 2.7.
+* This is the last release to support Celery 4.2.
+* This is the last release to support idna 2.8.
 * The Django project included in this git repository will stop loading ``localsetttings.py`` files in
   ``django-ca>=1.18.0``.
 * The format for the ``CA_PROFILES`` setting has changed in :ref:`1.14.0 <changelog-1.14.0>`. Support for the

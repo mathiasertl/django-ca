@@ -11,12 +11,11 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from __future__ import unicode_literals
-
 import os
 import re
 from datetime import datetime
 from datetime import timedelta
+from unittest import mock
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -43,11 +42,6 @@ from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
-
-try:
-    import unittest.mock as mock
-except ImportError:
-    import mock
 
 
 class TestWatcher(TestCase):

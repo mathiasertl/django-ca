@@ -11,8 +11,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from __future__ import unicode_literals
-
 import binascii
 import re
 import textwrap
@@ -25,7 +23,7 @@ from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import ObjectIdentifier
 
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 
 from .utils import GeneralNameList
 from .utils import bytes_to_hex
@@ -837,7 +835,7 @@ class PolicyInformation(object):
 
     def parse_policy_qualifier(self, qualifier):
         if isinstance(qualifier, str):
-            return force_text(qualifier)
+            return force_str(qualifier)
         elif isinstance(qualifier, x509.UserNotice):
             return qualifier
         elif isinstance(qualifier, dict):
@@ -846,7 +844,7 @@ class PolicyInformation(object):
             notice_reference = qualifier.get('notice_reference')
             if isinstance(notice_reference, dict):
                 notice_reference = x509.NoticeReference(
-                    organization=force_text(notice_reference.get('organization', '')),
+                    organization=force_str(notice_reference.get('organization', '')),
                     notice_numbers=[int(i) for i in notice_reference.get('notice_numbers', [])]
                 )
             elif notice_reference is None:
@@ -1944,7 +1942,7 @@ class PrecertPoison(NullExtension):
             raise ValueError('PrecertPoison must always be marked as critical')
 
 
-class PrecertificateSignedCertificateTimestamps(ListExtension):  # pragma: only SCT
+class PrecertificateSignedCertificateTimestamps(ListExtension):
     """Class representing signed certificate timestamps.
 
     This extension can be used to verify that a certificate is included in a Certificate Transparency log.

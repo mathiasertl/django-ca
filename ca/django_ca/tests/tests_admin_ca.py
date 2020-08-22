@@ -17,7 +17,7 @@ from django.contrib.auth.models import User
 from django.templatetags.static import static
 from django.test import Client
 from django.urls import reverse
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 
 from .base import DjangoCAWithCATestCase
 from .base import certs
@@ -100,7 +100,7 @@ class CADownloadBundleTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithC
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
         self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
-        self.assertEqual(force_text(response.content), certs['root']['pub']['pem'].strip())
+        self.assertEqual(force_str(response.content), certs['root']['pub']['pem'].strip())
 
     def test_child(self):
         filename = 'child_example_com_bundle.pem'
@@ -109,7 +109,7 @@ class CADownloadBundleTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithC
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
         self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
-        self.assertEqual(force_text(response.content), expected)
+        self.assertEqual(force_str(response.content), expected)
 
     def test_invalid_format(self):
         response = self.client.get('%s?format=INVALID' % self.url)

@@ -22,7 +22,6 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding
 
-from django.conf.urls import url
 from django.contrib import admin
 from django.contrib.messages import constants as messages
 from django.core.exceptions import PermissionDenied
@@ -32,6 +31,7 @@ from django.http import HttpResponseBadRequest
 from django.http import HttpResponseRedirect
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
+from django.urls import path
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes
@@ -80,10 +80,10 @@ class CertificateMixin(object):
     def get_urls(self):
         info = self.model._meta.app_label, self.model._meta.model_name
         urls = [
-            url(r'^(?P<pk>\d+)/download/$', self.admin_site.admin_view(self.download_view),
-                name='%s_%s_download' % info),
-            url(r'^(?P<pk>\d+)/download_bundle/$', self.admin_site.admin_view(self.download_bundle_view),
-                name='%s_%s_download_bundle' % info),
+            path('<int:pk>/download/', self.admin_site.admin_view(self.download_view),
+                 name='%s_%s_download' % info),
+            path('<int:pk>/download_bundle/', self.admin_site.admin_view(self.download_bundle_view),
+                 name='%s_%s_download_bundle' % info),
         ]
         urls += super(CertificateMixin, self).get_urls()
         return urls
@@ -171,22 +171,23 @@ class CertificateMixin(object):
     ##################################
 
     def output_template(self, obj, key):
-        extension = getattr(obj, key)
+        ext = getattr(obj, key)
         templates = ['django_ca/admin/extensions/%s.html' % key]
 
-        if isinstance(extension, NullExtension):
+        if isinstance(ext, NullExtension):
             templates.append('django_ca/admin/extensions/base/null_extension.html')
-        if isinstance(extension, AlternativeNameExtension):
+        if isinstance(ext, AlternativeNameExtension):
             templates.append('django_ca/admin/extensions/base/alternative_name_extension.html')
-        if isinstance(extension, CRLDistributionPointsBase):
+        if isinstance(ext, CRLDistributionPointsBase):
             templates.append('django_ca/admin/extensions/base/crl_distribution_points_base.html')
-        if isinstance(extension, OrderedSetExtension):
+        if isinstance(ext, OrderedSetExtension):
             templates.append('django_ca/admin/extensions/base/ordered_set_extension.html')
-        if isinstance(extension, UnrecognizedExtension) or isinstance(extension, x509.UnrecognizedExtension):
+        if isinstance(ext, UnrecognizedExtension) \
+                or isinstance(ext, x509.UnrecognizedExtension):  # pragma: no cover
             templates.append('django_ca/admin/extensions/base/unrecognized_extension.html')
         else:
             templates.append('django_ca/admin/extensions/base/base.html')
-        return render_to_string(templates, {'obj': obj, 'extension': extension})
+        return render_to_string(templates, {'obj': obj, 'extension': ext})
 
     def unknown_oid(self, oid, obj):
         ext = obj.x509.extensions.get_extension_for_oid(oid)
@@ -523,10 +524,10 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
         urls = super(CertificateAdmin, self).get_urls()
 
         # add csr-details and profiles
-        urls.insert(0, url(r'^ajax/csr-details', self.admin_site.admin_view(self.csr_details_view),
-                           name=self.csr_details_view_name))
-        urls.insert(0, url(r'^ajax/profiles', self.admin_site.admin_view(self.profiles_view),
-                           name=self.profiles_view_name))
+        urls.insert(0, path('ajax/csr-details', self.admin_site.admin_view(self.csr_details_view),
+                            name=self.csr_details_view_name))
+        urls.insert(0, path('ajax/profiles', self.admin_site.admin_view(self.profiles_view),
+                            name=self.profiles_view_name))
 
         return urls
 

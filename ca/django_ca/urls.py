@@ -12,7 +12,6 @@
 # see <http://www.gnu.org/licenses/>.
 
 from django.conf import settings
-from django.conf.urls import url
 from django.urls import path
 from django.urls import register_converter
 
@@ -53,7 +52,6 @@ urlpatterns = [
 for name, kwargs in getattr(settings, 'CA_OCSP_URLS', {}).items():
     kwargs.setdefault('ca', name)
     urlpatterns += [
-        url(r'ocsp/%s/$' % name, views.OCSPView.as_view(**kwargs), name='ocsp-post-%s' % name),
-        url(r'ocsp/%s/(?P<data>[a-zA-Z0-9=+/]+)$' % name, views.OCSPView.as_view(**kwargs),
-            name='ocsp-get-%s' % name)
+        path('ocsp/%s/' % name, views.OCSPView.as_view(**kwargs), name='ocsp-post-%s' % name),
+        path('ocsp/%s/<base64:data>' % name, views.OCSPView.as_view(**kwargs), name='ocsp-get-%s' % name)
     ]

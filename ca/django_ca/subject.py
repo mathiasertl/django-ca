@@ -14,7 +14,7 @@
 from cryptography import x509
 
 from django.core.exceptions import ImproperlyConfigured
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 
 from . import ca_settings
 from .utils import MULTIPLE_OIDS
@@ -216,7 +216,7 @@ class Subject(object):
         """
         for oid, values in self._iter:
             for val in values:
-                yield oid, force_text(val)
+                yield oid, force_str(val)
 
     @property
     def name(self):

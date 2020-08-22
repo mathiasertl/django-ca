@@ -13,6 +13,7 @@
 
 import argparse
 from datetime import timedelta
+from unittest import mock
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -30,11 +31,6 @@ from .base import DjangoCAWithGeneratedCAsTestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
-
-try:
-    import unittest.mock as mock
-except ImportError:
-    import mock
 
 
 class SubjectActionTestCase(DjangoCATestCase):
@@ -386,7 +382,6 @@ class ReasonTestCase(DjangoCATestCase):
         self.assertEqual(ns.reason, ReasonFlags.unspecified)
 
     def test_wrong_reason(self):
-        self.maxDiff = None
         self.assertParserError(['foo'],
                                'usage: {script} [-h]\n'
                                '              {{aa_compromise,affiliation_changed,ca_compromise,certificate_hold,cessation_of_operation,key_compromise,privilege_withdrawn,remove_from_crl,superseded,unspecified}}\n'  # NOQA

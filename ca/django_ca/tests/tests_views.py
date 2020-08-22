@@ -17,9 +17,9 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
-from django.conf.urls import url
 from django.core.cache import cache
 from django.test import Client
+from django.urls import re_path
 from django.urls import reverse
 
 from freezegun import freeze_time
@@ -33,17 +33,18 @@ from .base import override_settings
 from .base import override_tmpcadir
 
 urlpatterns = [
-    url(r'^crl/(?P<serial>[0-9A-F:]+)/$', CertificateRevocationListView.as_view(), name='default'),
-    url(r'^full/(?P<serial>[0-9A-F:]+)/$', CertificateRevocationListView.as_view(scope=None), name='full'),
-    url(r'^adv/(?P<serial>[0-9A-F:]+)/$',
-        CertificateRevocationListView.as_view(
-            content_type='text/plain',
-            digest=hashes.MD5(),
-            expires=321,
-            type=Encoding.PEM,
-        ),
-        name='advanced'),
-    url(r'^crl/ca/(?P<serial>[0-9A-F:]+)/$', CertificateRevocationListView.as_view(
+    re_path(r'^crl/(?P<serial>[0-9A-F:]+)/$', CertificateRevocationListView.as_view(), name='default'),
+    re_path(r'^full/(?P<serial>[0-9A-F:]+)/$', CertificateRevocationListView.as_view(scope=None),
+            name='full'),
+    re_path(r'^adv/(?P<serial>[0-9A-F:]+)/$',
+            CertificateRevocationListView.as_view(
+                content_type='text/plain',
+                digest=hashes.MD5(),
+                expires=321,
+                type=Encoding.PEM,
+            ),
+            name='advanced'),
+    re_path(r'^crl/ca/(?P<serial>[0-9A-F:]+)/$', CertificateRevocationListView.as_view(
         scope='ca', type=Encoding.PEM
     ), name='ca_crl'),
 ]

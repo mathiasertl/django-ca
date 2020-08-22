@@ -23,7 +23,7 @@ If you use **django-ca** as :ref:`standalone project <as-standalone>`, use the :
 
 import django.dispatch
 
-pre_create_ca = django.dispatch.Signal(providing_args=['name', '**kwargs'])
+pre_create_ca = django.dispatch.Signal()
 """Called before a new certificate authority is created.
 
 Parameters
@@ -34,7 +34,7 @@ name : str
 **kwargs
 """
 
-post_create_ca = django.dispatch.Signal(providing_args=['ca'])
+post_create_ca = django.dispatch.Signal()
 """Called after a new certificate authority was created.
 
 Parameters
@@ -45,7 +45,7 @@ ca : :py:class:`~django_ca.models.CertificateAuthority`
 """
 
 
-pre_issue_cert = django.dispatch.Signal(providing_args=['ca', 'csr', '**kwargs'])
+pre_issue_cert = django.dispatch.Signal()
 """Called before a new certificate is issued.
 
 Parameters
@@ -59,7 +59,7 @@ csr
     instance, regardless of how the parameter was actually passed.
 """
 
-post_issue_cert = django.dispatch.Signal(providing_args=['cert'])
+post_issue_cert = django.dispatch.Signal()
 """Called after a new certificate was issued.
 
 Parameters
@@ -69,7 +69,7 @@ cert : :py:class:`~django_ca.models.Certificate`
     The certificate that was just issued.
 """
 
-pre_revoke_cert = django.dispatch.Signal(providing_args=['cert', 'reason'])
+pre_revoke_cert = django.dispatch.Signal()
 """Called before a certificate is revoked.
 
 Parameters
@@ -80,7 +80,7 @@ csr
 **kwargs
 """
 
-post_revoke_cert = django.dispatch.Signal(providing_args=['cert'])
+post_revoke_cert = django.dispatch.Signal()
 """Called after a certificate was revoked
 
 Parameters

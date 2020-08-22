@@ -37,9 +37,9 @@ Please see https://django-ca.readthedocs.org for more extensive documentation.
 install_requires = [
     'django>=2.2',
     'asn1crypto>=1.0.1',
-    'cryptography>=2.7',
+    'cryptography>=2.8',
     'django-object-actions>=1.1',
-    'idna>=2.8',
+    'idna>=2.9',
     'packaging',
 ]
 
@@ -57,7 +57,7 @@ package_data = find_package_data('static') + find_package_data('templates')
 
 setup(
     name='django-ca',
-    version='1.16.0.dev1',
+    version='1.17.0.dev1',
     description='A Django app providing a SSL/TLS certificate authority.',
     long_description=long_description,
     author='Mathias Ertl',
@@ -77,12 +77,13 @@ setup(
     install_requires=install_requires,
     extras_require={
         'redis': ['hiredis>=1.0', 'redis>=3.2', 'django-redis-cache>=1.8.0'],
-        'celery': ['celery>=4'],
+        'celery': ['celery>=4.3'],
     },
     classifiers=[
         'Development Status :: 4 - Beta',
         'Framework :: Django :: 2.2',
         'Framework :: Django :: 3.0',
+        'Framework :: Django :: 3.1',
         'Framework :: Django',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',

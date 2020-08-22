@@ -38,7 +38,7 @@ from django.core.files.storage import get_storage_class
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import URLValidator
 from django.utils.encoding import force_bytes
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
@@ -108,7 +108,7 @@ class LazyEncoder(DjangoJSONEncoder):
 
     def default(self, obj):
         if isinstance(obj, Promise):
-            return force_text(obj)
+            return force_str(obj)
         return super(LazyEncoder, self).default(obj)
 
 
@@ -132,7 +132,7 @@ def format_name(subject):
     if isinstance(subject, x509.Name):
         subject = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in subject]
 
-    return '/%s' % ('/'.join(['%s=%s' % (force_text(k), force_text(v)) for k, v in subject]))
+    return '/%s' % ('/'.join(['%s=%s' % (force_str(k), force_str(v)) for k, v in subject]))
 
 
 def format_relative_name(name):
@@ -143,14 +143,14 @@ def format_relative_name(name):
         >>> format_relative_name([('C', 'AT'), ('CN', 'example.com')])
         '/C=AT/CN=example.com'
         >>> format_relative_name(x509.RelativeDistinguishedName([
-        ...     x509.NameAttribute(NameOID.COMMON_NAME, u'example.com')
+        ...     x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')
         ... ]))
         '/CN=example.com'
     """
     if isinstance(name, x509.RelativeDistinguishedName):
         name = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in name]
 
-    return '/%s' % ('/'.join(['%s=%s' % (force_text(k), force_text(v)) for k, v in name]))
+    return '/%s' % ('/'.join(['%s=%s' % (force_str(k), force_str(v)) for k, v in name]))
 
 
 def format_general_name(name):
@@ -292,7 +292,7 @@ def parse_name(name):
         return []
 
     try:
-        items = [(NAME_CASE_MAPPINGS[t[0].upper()], force_text(t[2])) for t in NAME_RE.findall(name)]
+        items = [(NAME_CASE_MAPPINGS[t[0].upper()], force_str(t[2])) for t in NAME_RE.findall(name)]
     except KeyError as e:
         raise ValueError('Unknown x509 name field: %s' % e.args[0])
 
@@ -317,7 +317,7 @@ def x509_name(name):
     if isinstance(name, str):
         name = parse_name(name)
 
-    return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], force_text(value)) for typ, value in name])
+    return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], force_str(value)) for typ, value in name])
 
 
 def x509_relative_name(name):
@@ -334,7 +334,7 @@ def x509_relative_name(name):
         name = parse_name(name)
 
     return x509.RelativeDistinguishedName([
-        x509.NameAttribute(NAME_OID_MAPPINGS[typ], force_text(value)) for typ, value in name
+        x509.NameAttribute(NAME_OID_MAPPINGS[typ], force_str(value)) for typ, value in name
     ])
 
 
@@ -356,11 +356,11 @@ def validate_email(addr):
 
     node, domain = addr.split('@', 1)
     try:
-        domain = idna.encode(force_text(domain))
+        domain = idna.encode(force_str(domain))
     except idna.core.IDNAError:
         raise ValueError('Invalid domain: %s' % domain)
 
-    return '%s@%s' % (node, force_text(domain))
+    return '%s@%s' % (node, force_str(domain))
 
 
 def validate_hostname(hostname, allow_port=False):
