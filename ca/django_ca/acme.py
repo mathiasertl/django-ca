@@ -35,6 +35,11 @@ class AcmeSimpleResponse(AcmeResponse):
         super().__init__(self.message_cls(**kwargs).to_json())
 
 
+class AcmeObjectResponse(AcmeResponse):
+    def __init__(self, obj):
+        super().__init__(obj.to_json())
+
+
 class AcmeResponseAccountCreated(AcmeResponse):
     status_code = HTTPStatus.CREATED
 

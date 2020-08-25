@@ -51,6 +51,7 @@ from django.views.generic.detail import SingleObjectMixin
 from . import ca_settings
 from .acme import AcmeException
 from .acme import AcmeMalformed
+from .acme import AcmeObjectResponse
 from .acme import AcmeResponseAccountCreated
 from .acme import AcmeResponseAuthorization
 from .acme import AcmeResponseBadNonce
@@ -381,12 +382,16 @@ class AcmeDirectory(View):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class AcmeBaseView(View):
+    ignore_body = False  # True if we want to ignore the message body
     post_as_get = False  # True if this is a POST-as-GET request (see RFC 8555, 6.3).
     requires_key = False  # True if we require a full key (-> new accounts)
     nonce_length = 32
 
     def nonce_key(self, nonce):
         return 'acme-nonce-%s' % nonce
+
+    def get_message_cls(self, request, **kwargs):
+        return self.message_cls
 
     def get_nonce(self):
         if secrets is None:
@@ -508,8 +513,15 @@ class AcmeBaseView(View):
                 response = self.acme_request(**kwargs)
             except AcmeException as e:
                 response = e.get_response()
+        elif self.ignore_body is True:
+            print('### Ignoring', self.jws.payload.decode('utf-8'))
+            try:
+                response = self.acme_request(**kwargs)
+            except AcmeException as e:
+                response = e.get_response()
         else:
-            message = self.message_cls.json_loads(self.jws.payload)
+            message_cls = self.get_message_cls(request, **kwargs)
+            message = message_cls.json_loads(self.jws.payload)
 
             try:
                 self.validate_message(message)
@@ -647,7 +659,15 @@ class AcmeAuthorizationView(AcmeBaseView):
 
 
 class AcmeChallengeView(AcmeBaseView):
-    post_as_get = True
+    ignore_body = True
+
+    def get_message_cls(self, request, slug):
+        self.challenge = AcmeChallenge.objects.get(slug=slug)
+        return self.challenge.get_challenge(request)
 
     def acme_request(self, slug):
         challenge = AcmeChallenge.objects.get(slug=slug)
+        challenge.status = AcmeChallenge.STATUS_PROCESSING
+        challenge.save()
+        print(challenge)
+        return AcmeObjectResponse(challenge.get_challenge(self.request))
