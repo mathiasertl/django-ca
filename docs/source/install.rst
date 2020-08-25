@@ -64,11 +64,12 @@ You can install **django-ca** simply via pip:
 
    $ pip install django-ca
 
-and add it to your ``INSTALLED_APPS``::
+and add it to your ``INSTALLED_APPS`` (and if you don't use it already, ``django_object_actions``)::
 
    INSTALLED_APPS = [
       # ... your other apps...
 
+      'django_object_actions',
       'django_ca',
    ]
 
