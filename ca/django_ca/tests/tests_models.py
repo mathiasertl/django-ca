@@ -158,6 +158,22 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         crl = ca.get_crl().public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, certs=[child], crl_number=4, signer=ca)
 
+    @freeze_time(timestamps['everything_valid'])
+    @override_tmpcadir()
+    def test_intermediate_crl(self):
+        child = self.cas['child']
+        cert = self.certs['child-cert']
+        full_name = 'http://localhost/crl'
+        idp = self.get_idp(full_name=[x509.UniformResourceIdentifier(value=full_name)])
+
+        crl = child.get_crl(full_name=[full_name]).public_bytes(Encoding.PEM)
+        self.assertCRL(crl, idp=idp, signer=child)
+
+        # Revoke a cert
+        cert.revoke()
+        crl = child.get_crl(full_name=[full_name]).public_bytes(Encoding.PEM)
+        self.assertCRL(crl, idp=idp, certs=[cert], crl_number=1, signer=child)
+
     @override_settings(USE_TZ=True)
     def test_full_crl_tz(self):
         # otherwise we get TZ warnings for preloaded objects
@@ -250,7 +266,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
     def test_no_auth_key_identifier(self):
         # All CAs have a authority key identifier, so we mock that this exception is not present
         def side_effect(cls):
-            raise x509.ExtensionNotFound('mocked', x509.AuthorityKeyIdentifier.oid)
+            raise x509.ExtensionNotFound('mocked', x509.SubjectKeyIdentifier.oid)
 
         ca = self.cas['child']
         full_name = 'http://localhost/crl'
@@ -259,7 +275,8 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         with mock.patch('cryptography.x509.extensions.Extensions.get_extension_for_oid',
                         side_effect=side_effect):
             crl = ca.get_crl(full_name=[full_name]).public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=idp, signer=ca, skip_authority_key_identifier=True)
+        # Note that we still get an AKI because the value comes from the public key in this case
+        self.assertCRL(crl, idp=idp, signer=ca)
 
     def test_validate_json(self):
         # Validation works if we're not revoked

@@ -749,8 +749,8 @@ class CertificateAuthority(X509CertMixin):
 
         # Add AuthorityKeyIdentifier from CA if present
         try:
-            aki = self.x509.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_KEY_IDENTIFIER)
-            builder = builder.add_extension(aki.value, critical=aki.critical)
+            aki = self.get_authority_key_identifier()
+            builder = builder.add_extension(aki, critical=False)
         except x509.ExtensionNotFound:
             pass
 

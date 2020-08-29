@@ -417,7 +417,10 @@ class DjangoCATestCaseMixin:
             critical=False, oid=ExtensionOID.CRL_NUMBER
         ))
         if not skip_authority_key_identifier:
-            extensions.append(signer.authority_key_identifier.as_extension())
+            extensions.append(x509.Extension(
+                value=signer.get_authority_key_identifier(),
+                oid=ExtensionOID.AUTHORITY_KEY_IDENTIFIER, critical=False
+            ))
 
         if encoding == Encoding.PEM:
             crl = x509.load_pem_x509_crl(crl, default_backend())
