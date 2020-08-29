@@ -164,7 +164,7 @@ class CreateCertificateBaseForm(forms.ModelForm):
             except idna.IDNAError:
                 self.add_error('subject_alternative_name',
                                _('The CommonName cannot be parsed as general name. Either change the '
-                                 'CommonName or don\'t include it.'))
+                                 'CommonName or do not include it.'))
 
         if ca and expires and ca.expires.date() < expires:
             stamp = ca.expires.strftime('%Y-%m-%d')

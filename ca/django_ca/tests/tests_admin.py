@@ -811,7 +811,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         # we need to throw a form error.
         #   https://github.com/mathiasertl/django-ca/issues/62
         cn = 'Foo Bar'
-        error = 'The CommonName cannot be parsed as general name. Either change the CommonName or don\'t include it.'  # NOQA
+        error = 'The CommonName cannot be parsed as general name. Either change the CommonName or do not include it.'  # NOQA
         ca = self.cas['root']
         csr = certs['root-cert']['csr']['pem']
 
