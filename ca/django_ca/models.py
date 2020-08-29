@@ -747,12 +747,9 @@ class CertificateAuthority(X509CertMixin):
         if add_idp:  # pragma: no branch
             builder = builder.add_extension(x509.IssuingDistributionPoint(**idp_kwargs), critical=True)
 
-        # Add AuthorityKeyIdentifier from CA if present
-        try:
-            aki = self.get_authority_key_identifier()
-            builder = builder.add_extension(aki, critical=False)
-        except x509.ExtensionNotFound:
-            pass
+        # Add AuthorityKeyIdentifier from CA
+        aki = self.get_authority_key_identifier()
+        builder = builder.add_extension(aki, critical=False)
 
         # Add the CRLNumber extension (RFC 5280, 5.2.3)
         if counter is None:
