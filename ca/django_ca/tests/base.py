@@ -403,7 +403,7 @@ class DjangoCATestCaseMixin:
         self.assertIsInstance(cert.signature_hash_algorithm, getattr(hashes, algo.upper()))
 
     def assertCRL(self, crl, certs=None, signer=None, expires=86400, algorithm=None, encoding=Encoding.PEM,
-                  idp=None, extensions=None, crl_number=0, skip_authority_key_identifier=False):
+                  idp=None, extensions=None, crl_number=0):
         certs = certs or []
         signer = signer or self.cas['child']
         algorithm = algorithm or ca_settings.CA_DIGEST_ALGORITHM
@@ -416,11 +416,10 @@ class DjangoCATestCaseMixin:
             value=x509.CRLNumber(crl_number=crl_number),
             critical=False, oid=ExtensionOID.CRL_NUMBER
         ))
-        if not skip_authority_key_identifier:
-            extensions.append(x509.Extension(
-                value=signer.get_authority_key_identifier(),
-                oid=ExtensionOID.AUTHORITY_KEY_IDENTIFIER, critical=False
-            ))
+        extensions.append(x509.Extension(
+            value=signer.get_authority_key_identifier(),
+            oid=ExtensionOID.AUTHORITY_KEY_IDENTIFIER, critical=False
+        ))
 
         if encoding == Encoding.PEM:
             crl = x509.load_pem_x509_crl(crl, default_backend())
