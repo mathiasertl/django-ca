@@ -7,15 +7,18 @@ python:  # https://devguide.python.org/#status-of-python-branches
   - "3.8"
   - "nightly"
 env:  # https://www.djangoproject.com/download/
+  - DJANGO=3.1 CRYPTOGRAPHY=3.1
   - DJANGO=3.1 CRYPTOGRAPHY=3.0
   - DJANGO=3.1 CRYPTOGRAPHY=2.9.2
   - DJANGO=3.1 CRYPTOGRAPHY=2.8
   - DJANGO=3.1 CRYPTOGRAPHY=2.7
+  - DJANGO=3.0.9 CRYPTOGRAPHY=3.1
   - DJANGO=3.0.9 CRYPTOGRAPHY=3.0
   - DJANGO=3.0.9 CRYPTOGRAPHY=2.9.2
   - DJANGO=3.0.9 CRYPTOGRAPHY=2.8
   - DJANGO=3.0.9 CRYPTOGRAPHY=2.7
-  - DJANGO=2.2.15 CRYPTOGRAPHY=3.0
+  - DJANGO=2.2.15 CRYPTOGRAPHY=3.1
+  - DJANGO=3.0.9 CRYPTOGRAPHY=3.1
   - DJANGO=2.2.15 CRYPTOGRAPHY=2.9.2
   - DJANGO=2.2.15 CRYPTOGRAPHY=2.8
   - DJANGO=2.2.15 CRYPTOGRAPHY=2.7
@@ -49,6 +52,8 @@ matrix:
           python: "3.5"
         - env: DJANGO=3.1 CRYPTOGRAPHY=3.0
           python: "3.5"
+        - env: DJANGO=3.1 CRYPTOGRAPHY=3.1
+          python: "3.5"
         - env: DJANGO=3.0.9 CRYPTOGRAPHY=2.7
           python: "3.5"
         - env: DJANGO=3.0.9 CRYPTOGRAPHY=2.8
@@ -56,4 +61,6 @@ matrix:
         - env: DJANGO=3.0.9 CRYPTOGRAPHY=2.9.2
           python: "3.5"
         - env: DJANGO=3.0.9 CRYPTOGRAPHY=3.0
+          python: "3.5"
+        - env: DJANGO=3.0.9 CRYPTOGRAPHY=3.1
           python: "3.5"
