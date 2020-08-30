@@ -18,7 +18,6 @@ from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 
-from django.urls import reverse
 from django.utils import timezone
 
 from .. import ca_settings
@@ -26,8 +25,6 @@ from ..extensions import AuthorityInformationAccess
 from ..extensions import CRLDistributionPoints
 from ..extensions import NameConstraints
 from ..models import CertificateAuthority
-from ..signals import post_create_ca
-from ..signals import pre_create_ca
 from ..utils import int_to_hex
 from .base import DjangoCATestCase
 from .base import override_settings
@@ -43,7 +40,7 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_basic(self):
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca()
         self.assertTrue(pre.called)
         self.assertEqual(out, '')
@@ -74,7 +71,7 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_arguments(self):
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(
                 algorithm=hashes.SHA1(),
                 key_type='DSA',
@@ -129,7 +126,7 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_ecc(self):
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(
                 algorithm=hashes.SHA1(),
                 key_type='ECC',
@@ -157,7 +154,7 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_permitted(self):
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(
                 name='permitted',
                 permit_name=['DNS:.com'],
@@ -176,7 +173,7 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_excluded(self):
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(
                 name='excluded',
                 exclude_name=['DNS:.com'],
@@ -198,7 +195,7 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_no_pathlen(self):
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(pathlen=None)
         self.assertTrue(pre.called)
         self.assertEqual(out, '')
@@ -217,7 +214,7 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_empty_subject_fields(self):
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.cmd('init_ca', 'test', '/C=/ST=/L=/O=/OU=/CN=test',
                                 key_size=ca_settings.CA_MIN_KEY_SIZE)
         self.assertTrue(pre.called)
@@ -247,7 +244,7 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_parent(self):
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name='Parent', pathlen=1)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
@@ -259,7 +256,7 @@ class InitCATest(DjangoCATestCase):
         self.assertSignature([parent], parent)
 
         # test that the default is not a child-relationship
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name='Second')
         self.assertEqual(out, '')
         self.assertEqual(err, '')
@@ -272,7 +269,7 @@ class InitCATest(DjangoCATestCase):
         self.assertIsNone(second.parent)
 
         ca_crl_url = 'http://ca.crl.example.com'
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(
                 name='Child', parent=parent,
                 ca_crl_url=[ca_crl_url],
@@ -309,7 +306,7 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_intermediate_check(self):
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name='default')
         self.assertEqual(out, '')
         self.assertEqual(err, '')
@@ -322,7 +319,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(parent.max_pathlen, 0)
         self.assertFalse(parent.allows_intermediate_ca)
 
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name='pathlen-1', pathlen=1)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
@@ -335,7 +332,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(pathlen_1.max_pathlen, 1)
         self.assertTrue(pathlen_1.allows_intermediate_ca)
 
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name='pathlen-1-none', pathlen=None, parent=pathlen_1)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
@@ -351,12 +348,12 @@ class InitCATest(DjangoCATestCase):
         self.assertFalse(pathlen_1_none.allows_intermediate_ca)
         with self.assertCommandError(
                 r'^Parent CA cannot create intermediate CA due to pathlen restrictions\.$'), \
-                self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+                self.assertCreateCASignals(False, False):
             out, err = self.init_ca(name='wrong', parent=pathlen_1_none)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
 
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name='pathlen-1-three', pathlen=3, parent=pathlen_1)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
@@ -372,13 +369,11 @@ class InitCATest(DjangoCATestCase):
         self.assertFalse(pathlen_1_three.allows_intermediate_ca)
         with self.assertCommandError(
                 r'^Parent CA cannot create intermediate CA due to pathlen restrictions\.$'), \
-                self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+                self.assertCreateCASignals(False, False):
             out, _err = self.init_ca(name='wrong', parent=pathlen_1_none)
         self.assertEqual(out, '')
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
 
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name='pathlen-none', pathlen=None)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
@@ -391,7 +386,7 @@ class InitCATest(DjangoCATestCase):
         self.assertIsNone(pathlen_none.max_pathlen, None)
         self.assertTrue(pathlen_none.allows_intermediate_ca)
 
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name='pathlen-none-none', pathlen=None, parent=pathlen_none)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
@@ -402,7 +397,7 @@ class InitCATest(DjangoCATestCase):
         self.assertIsNone(pathlen_none_none.pathlen)
         self.assertIsNone(pathlen_none_none.max_pathlen)
 
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name='pathlen-none-1', pathlen=1, parent=pathlen_none)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
@@ -418,7 +413,7 @@ class InitCATest(DjangoCATestCase):
         # If we request an expiry after that of the parrent, we silently override to that of the
         # parent.
 
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name='Parent', pathlen=1)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
@@ -430,7 +425,7 @@ class InitCATest(DjangoCATestCase):
         self.assertSignature([parent], parent)
 
         # test that the default is not a child-relationship
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name='Second')
         self.assertEqual(out, '')
         self.assertEqual(err, '')
@@ -442,7 +437,7 @@ class InitCATest(DjangoCATestCase):
         self.assertSignature([second], second)
 
         expires = parent.expires - timezone.now() + timedelta(days=10)
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name='Child', parent=parent, expires=expires)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
@@ -463,7 +458,7 @@ class InitCATest(DjangoCATestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_password(self):
         password = b'testpassword'
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name='Parent', password=password, pathlen=1)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
@@ -494,16 +489,14 @@ class InitCATest(DjangoCATestCase):
         parent = CertificateAuthority.objects.get(name='Parent')  # Get again, key is cached
 
         with self.assertCommandError(r'^Password was not given but private key is encrypted$'), \
-                self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+                self.assertCreateCASignals(False, False):
             out, err = self.init_ca(name='Child', parent=parent, password=child_password)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
         self.assertIsNone(CertificateAuthority.objects.filter(name='Child').first())
 
         # Create again with parent ca
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name='Child', parent=parent, password=child_password,
                                     parent_password=password)
         self.assertEqual(out, '')
@@ -527,7 +520,7 @@ class InitCATest(DjangoCATestCase):
 
         name = 'ca'
         hostname = 'test-default-hostname.com'
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name=name, parent=self.cas['root'], default_hostname=hostname)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
@@ -547,9 +540,7 @@ class InitCATest(DjangoCATestCase):
             }})
         )
 
-        ca_crl_url = 'http://%s%s' % (hostname, reverse('django_ca:ca-crl', kwargs={
-            'serial': self.cas['root'].serial,
-        }))
+        ca_crl_url = 'http://%s%s' % (hostname, self.reverse('ca-crl', serial=self.cas['root'].serial))
         self.assertEqual(ca.crl_distribution_points, CRLDistributionPoints({
             'value': [{
                 'full_name': [ca_crl_url],
@@ -560,7 +551,7 @@ class InitCATest(DjangoCATestCase):
     def test_no_default_hostname(self):
         # disable default hostname via the command line
         name = 'ca'
-        with self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+        with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name=name, default_hostname=False)
         self.assertEqual(out, '')
         self.assertEqual(err, '')
@@ -575,31 +566,23 @@ class InitCATest(DjangoCATestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_root_ca_crl_url(self):
         with self.assertCommandError(r'^CRLs cannot be used to revoke root CAs\.$'), \
-                self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+                self.assertCreateCASignals(False, False):
             self.init_ca(name='foobar', ca_crl_url='https://example.com')
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_root_ca_ocsp_url(self):
         with self.assertCommandError(r'^OCSP cannot be used to revoke root CAs\.$'), \
-                self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+                self.assertCreateCASignals(False, False):
             self.init_ca(name='foobar', ca_ocsp_url='https://example.com')
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
 
     @override_tmpcadir()
     def test_small_key_size(self):
         with self.assertCommandError(r'^256: Key size must be least 1024 bits$'), \
-                self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+                self.assertCreateCASignals(False, False):
             self.init_ca(key_size=256)
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
 
     @override_tmpcadir()
     def test_key_not_power_of_two(self):
         with self.assertCommandError(r'^2049: Key size must be a power of two$'), \
-                self.assertSignal(pre_create_ca) as pre, self.assertSignal(post_create_ca) as post:
+                self.assertCreateCASignals(False, False):
             self.init_ca(key_size=2049)
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)

@@ -57,7 +57,9 @@ class CertificateAuthorityManagerTestCase(DjangoCATestCase):
     def test_basic(self):
         name = 'basic'
         subject = '/CN=example.com'
-        self.assertBasic(CertificateAuthority.objects.init(name, subject), name, subject)
+        with self.assertCreateCASignals():
+            ca = CertificateAuthority.objects.init(name, subject)
+        self.assertBasic(ca, name, subject)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_intermediate(self):
@@ -113,7 +115,8 @@ class CertificateAuthorityManagerTestCase(DjangoCATestCase):
     def test_no_default_hostname(self):
         name = 'ndh'
         subject = '/CN=ndh.example.com'
-        ca = CertificateAuthority.objects.init(name, subject, default_hostname=False)
+        with self.assertCreateCASignals():
+            ca = CertificateAuthority.objects.init(name, subject, default_hostname=False)
         self.assertEqual(ca.crl_url, '')
         self.assertEqual(ca.crl_number, '{"scope": {}}')
         self.assertIsNone(ca.issuer_url)
@@ -125,9 +128,10 @@ class CertificateAuthorityManagerTestCase(DjangoCATestCase):
         subject = '/CN=example.com'
         tlsf = TLSFeature({'value': ['OCSPMustStaple']})
         ocsp_no_check = OCSPNoCheck()
-        ca = CertificateAuthority.objects.init('with-extra', subject, extra_extensions=[
-            tlsf, ocsp_no_check.as_extension()
-        ])
+        with self.assertCreateCASignals():
+            ca = CertificateAuthority.objects.init('with-extra', subject, extra_extensions=[
+                tlsf, ocsp_no_check.as_extension()
+            ])
 
         exts = [e for e in ca.extensions
                 if not isinstance(e, (SubjectKeyIdentifier, AuthorityKeyIdentifier))]

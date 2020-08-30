@@ -444,9 +444,11 @@ class DjangoCATestCaseMixin:
     @contextmanager
     def assertCreateCASignals(self, pre=True, post=True):
         with self.assertSignal(pre_create_ca) as pre_sig, self.assertSignal(post_create_ca) as post_sig:
-            yield
-        self.assertTrue(pre_sig.called is pre)
-        self.assertTrue(post_sig.called is post)
+            try:
+                yield (pre_sig, post_sig)
+            finally:
+                self.assertTrue(pre_sig.called is pre)
+                self.assertTrue(post_sig.called is post)
 
     @contextmanager
     def assertCommandError(self, msg):
