@@ -833,6 +833,9 @@ class DjangoCATestCaseMixin:
         with patch('celery.app.task.Task.apply_async') as mock:
             yield mock
 
+    def reverse(self, name, *args, **kwargs):
+        return reverse('django_ca:%s' % name, args=args, kwargs=kwargs)
+
 
 class DjangoCATestCase(DjangoCATestCaseMixin, TestCase):
     pass
