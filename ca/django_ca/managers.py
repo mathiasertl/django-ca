@@ -184,7 +184,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         if default_hostname:
             default_hostname = validate_hostname(default_hostname, allow_port=True)
             if parent:
-                root_serial = parent.root.serial
+                root_serial = parent.serial
             else:
                 root_serial = hex_serial
 
