@@ -4,6 +4,20 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.16.1:
+
+************
+1.16.1 (TBR)
+************
+
+* Add support for cryptography 3.1.
+* Fix OCSP, Issuer and CRL URLs for intermediate CAs that are not a *direct* child of a root CA.
+* Fix AuthorityKeyIdentifier in CRLs for intermediate CAs
+  (`issue 65 <https://github.com/mathiasertl/django-ca/issues/65>`_).
+* Properly handle CommonNames which are not parseable as SubjectAlternativeName in admin interface
+  (`issue 62 <https://github.com/mathiasertl/django-ca/issues/62>`_).
+* Minor documentation updates (`issue 63 <https://github.com/mathiasertl/django-ca/issues/63>`_).
+
 .. _changelog-1.16.0:
 
 *******************
