@@ -18,6 +18,7 @@ from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 
+from django.urls import reverse
 from django.utils import timezone
 
 from .. import ca_settings
@@ -541,10 +542,19 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(
             ca.authority_information_access,
             AuthorityInformationAccess({'value': {
-                'issuers': ['URI:http://%s/django_ca/issuer/%s.der' % (hostname, ca.root.serial)],
-                'ocsp': ['URI:http://%s/django_ca/ocsp/%s/ca/' % (hostname, ca.serial)],
+                'issuers': ['URI:http://%s/django_ca/issuer/%s.der' % (hostname, ca.parent.serial)],
+                'ocsp': ['URI:http://%s/django_ca/ocsp/%s/ca/' % (hostname, ca.parent.serial)],
             }})
         )
+
+        ca_crl_url = 'http://%s%s' % (hostname, reverse('django_ca:ca-crl', kwargs={
+            'serial': self.cas['root'].serial,
+        }))
+        self.assertEqual(ca.crl_distribution_points, CRLDistributionPoints({
+            'value': [{
+                'full_name': [ca_crl_url],
+            }]
+        }))
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_no_default_hostname(self):
