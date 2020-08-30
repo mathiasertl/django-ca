@@ -75,6 +75,7 @@ from ..models import X509CertMixin
 from ..signals import post_create_ca
 from ..signals import post_issue_cert
 from ..signals import post_revoke_cert
+from ..signals import pre_create_ca
 from ..subject import Subject
 from ..utils import add_colons
 from ..utils import ca_storage
@@ -439,6 +440,13 @@ class DjangoCATestCaseMixin:
         for serial, entry in entries.items():
             self.assertEqual(entry.revocation_date, datetime.utcnow())
             self.assertEqual(list(entry.extensions), [])
+
+    @contextmanager
+    def assertCreateCASignals(self, pre=True, post=True):
+        with self.assertSignal(pre_create_ca) as pre_sig, self.assertSignal(post_create_ca) as post_sig:
+            yield
+        self.assertTrue(pre_sig.called is pre)
+        self.assertTrue(post_sig.called is post)
 
     @contextmanager
     def assertCommandError(self, msg):
