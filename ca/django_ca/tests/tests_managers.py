@@ -12,15 +12,15 @@
 # see <http://www.gnu.org/licenses/>.
 
 from .. import ca_settings
+from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
+from ..extensions import CRLDistributionPoints
 from ..extensions import KeyUsage
 from ..extensions import OCSPNoCheck
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
-from ..extensions import AuthorityInformationAccess
-from ..extensions import CRLDistributionPoints
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..profiles import profiles
