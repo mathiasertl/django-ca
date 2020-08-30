@@ -17,6 +17,7 @@ ChangeLog
 * Properly handle CommonNames which are not parseable as SubjectAlternativeName in admin interface
   (`issue 62 <https://github.com/mathiasertl/django-ca/issues/62>`_).
 * Minor documentation updates (`issue 63 <https://github.com/mathiasertl/django-ca/issues/63>`_).
+* Fix error in ``manage.py notify_expiring_certs`` in non-timezone aware setups.
 
 .. _changelog-1.16.0:
 
