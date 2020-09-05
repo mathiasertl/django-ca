@@ -67,8 +67,9 @@ class CertificateAuthorityTests(DjangoCATestCase):
     def openssl(self, cmd, *args, **kwargs):
         cmd = cmd.format(*args, **kwargs)
         #print('openssl %s' % cmd)
-        subprocess.run(['openssl'] + shlex.split(cmd), check=True,
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        p = subprocess.run(['openssl'] + shlex.split(cmd), text=True,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+        self.assertEqual(p.returncode, 0, p.stderr)
 
     def verify(self, cmd, *args, **kwargs):
         return self.openssl('verify %s' % cmd, *args, **kwargs)
