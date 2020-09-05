@@ -239,7 +239,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
     @override_tmpcadir()
     def test_attr_crl(self):
         ca = self.cas['root']
-        idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_attribute_certs=True)
+        idp = self.get_idp(only_contains_attribute_certs=True)
 
         crl = ca.get_crl(scope='attribute').public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=ca)

@@ -722,7 +722,7 @@ class CertificateAuthority(X509CertMixin):
             full_name = [x509.UniformResourceIdentifier(
                 'http://%s%s' % (ca_settings.CA_DEFAULT_HOSTNAME, crl_path)
             )]
-        elif self.crl_url:
+        elif scope in ('user', None) and self.crl_url:
             crl_url = [url.strip() for url in self.crl_url.split()]
             full_name = [x509.UniformResourceIdentifier(c) for c in crl_url]
         else:
