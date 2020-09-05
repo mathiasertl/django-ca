@@ -35,7 +35,7 @@ class CertificateAuthorityTests(DjangoCATestCase):
         return CertificateAuthority.objects.get(name=name)
 
     @contextmanager
-    def dump_crl(self, ca, **kwargs):
+    def crl(self, ca, **kwargs):
         kwargs['ca'] = ca
         with tempfile.TemporaryDirectory() as tempdir:
             path = os.path.join(tempdir, '%s.%s.crl' % (ca.name, kwargs.get('scope')))
@@ -85,15 +85,15 @@ class CertificateAuthorityTests(DjangoCATestCase):
             self.verify('-CAfile {0} {0}', *paths)
 
         # Create a CRL too and include it
-        with self.dumped(ca) as paths, self.dump_crl(ca, scope='ca') as crl:
+        with self.dumped(ca) as paths, self.crl(ca, scope='ca') as crl:
             self.verify('-CAfile {0} -CRLfile {crl} -crl_check_all {0}', *paths, crl=crl)
 
         # Try again with no scope
-        with self.dumped(ca) as paths, self.dump_crl(ca) as crl:
+        with self.dumped(ca) as paths, self.crl(ca) as crl:
             self.verify('-CAfile {0} -CRLfile {crl} -crl_check_all {0}', *paths, crl=crl)
 
         # Try with cert scope (fails because of wrong scope
-        with self.dumped(ca) as paths, self.dump_crl(ca, scope='user') as crl, \
+        with self.dumped(ca) as paths, self.crl(ca, scope='user') as crl, \
                 self.assertRaises(subprocess.CalledProcessError):
             self.verify('-CAfile {0} -CRLfile {crl} -crl_check_all {0}', *paths, crl=crl)
 
@@ -107,12 +107,12 @@ class CertificateAuthorityTests(DjangoCATestCase):
             self.verify('-CAfile {0} {cert}', *paths, cert=cert)
 
             # Create a CRL too and include it
-            with self.dump_crl(ca, scope='user') as crl:
+            with self.crl(ca, scope='user') as crl:
                 self.verify('-CAfile {0} -CRLfile {crl} -crl_check {cert}', *paths,
                             crl=crl, cert=cert)
 
                 # for crl_check_all, we also need the root CRL
-                with self.dump_crl(ca, scope='ca') as crl2:
+                with self.crl(ca, scope='ca') as crl2:
                     self.verify('-CAfile {0} -CRLfile {crl} -CRLfile {crl2} -crl_check_all {cert}',
                                 *paths, crl=crl, crl2=crl2, cert=cert)
 
@@ -129,7 +129,7 @@ class CertificateAuthorityTests(DjangoCATestCase):
             self.verify('-CAfile {0} -untrusted {1} {2}', *paths)
 
             # Try validation with CRLs
-            with self.dump_crl(root, scope='ca') as crl1, self.dump_crl(child, scope='ca') as crl2:
+            with self.crl(root, scope='ca') as crl1, self.crl(child, scope='ca') as crl2:
                 self.verify('-CAfile {0} -untrusted {1} -CRLfile {crl1} -CRLfile {crl2} -crl_check_all {2}',
                             *paths, crl1=crl1, crl2=crl2)
 
