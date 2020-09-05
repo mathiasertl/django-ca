@@ -67,9 +67,9 @@ class CertificateAuthorityTests(DjangoCATestCase):
     def openssl(self, cmd, *args, **kwargs):
         cmd = cmd.format(*args, **kwargs)
         #print('openssl %s' % cmd)
-        p = subprocess.run(['openssl'] + shlex.split(cmd), text=True,
+        p = subprocess.run(['openssl'] + shlex.split(cmd),
                            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertEqual(p.returncode, 0, p.stderr.decode('utf-8'))
 
     def verify(self, cmd, *args, **kwargs):
         if 'untrusted' in kwargs:
