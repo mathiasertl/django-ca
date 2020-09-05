@@ -191,7 +191,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
     @freeze_time('2019-04-14 12:26:00')
     def test_ca_crl(self):
         ca = self.cas['root']
-        idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_ca_certs=True)
+        idp = self.get_idp(only_contains_ca_certs=True)   # root CAs don't have a full name (github issue #64)
 
         crl = ca.get_crl(scope='ca').public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=ca)
@@ -204,6 +204,19 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         self.certs['child-cert'].revoke()
         crl = ca.get_crl(scope='ca').public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, certs=[child_ca], crl_number=1, signer=ca)
+
+    @override_tmpcadir()
+    @freeze_time('2019-04-14 12:26:00')
+    def test_intermediate_ca_crl(self):
+        # Intermediate CAs have a DP in the CRL that has the CA url
+        ca = self.cas['child']
+        full_name = [x509.UniformResourceIdentifier(
+            'http://%s/django_ca/crl/ca/%s/' % (ca_settings.CA_DEFAULT_HOSTNAME, ca.serial)
+        )]
+        idp = self.get_idp(full_name=full_name, only_contains_ca_certs=True)
+
+        crl = ca.get_crl(scope='ca').public_bytes(Encoding.PEM)
+        self.assertCRL(crl, idp=idp, signer=ca)
 
     @freeze_time('2019-04-14 12:26:00')
     @override_tmpcadir()

@@ -704,6 +704,24 @@ class CertificateAuthority(X509CertMixin):
         if kwargs.get('full_name'):
             full_name = kwargs['full_name']
             full_name = [parse_general_name(n) for n in full_name]
+
+        # CRLs for root CAs with scope "ca" do not add an IssuingDistributionPoint extension by default. For
+        # full path validation with CRLs, the CRL is also used for validating the Root CA (which does not
+        # contain a CRL Distribution Point). But the Full Name in the CRL IDP and the CA CRL DP have to match.
+        # See also:
+        #       https://github.com/mathiasertl/django-ca/issues/64
+        elif scope == 'ca' and self.parent is None:
+            full_name = None
+
+        # If CA_DEFAULT_HOSTNAME is set, CRLs with scope "ca" add the same URL in the IssuingDistributionPoint
+        # extension that is also added in the CRL Distribution Points extension for CAs issued by this CA.
+        # See also:
+        #       https://github.com/mathiasertl/django-ca/issues/64
+        elif scope == 'ca':
+            crl_path = reverse('django_ca:ca-crl', kwargs={'serial': self.serial})
+            full_name = [x509.UniformResourceIdentifier(
+                'http://%s%s' % (settings.CA_DEFAULT_HOSTNAME, crl_path)
+            )]
         elif self.crl_url:
             crl_url = [url.strip() for url in self.crl_url.split()]
             full_name = [x509.UniformResourceIdentifier(c) for c in crl_url]
