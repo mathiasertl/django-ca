@@ -137,17 +137,17 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         ca.crl_url = full_name
         ca.save()
         crl = ca.get_crl().public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=idp, crl_number=1, signer=ca)
+        self.assertCRL(crl, crl_number=1, signer=ca)
 
         # revoke a cert
         cert.revoke()
         crl = ca.get_crl().public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=idp, certs=[cert], crl_number=2, signer=ca)
+        self.assertCRL(crl, certs=[cert], crl_number=2, signer=ca)
 
         # also revoke a CA
         child.revoke()
         crl = ca.get_crl().public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=idp, certs=[cert, child], crl_number=3, signer=ca)
+        self.assertCRL(crl, certs=[cert, child], crl_number=3, signer=ca)
 
         # unrevoke cert (so we have all three combinations)
         cert.revoked = False
@@ -156,7 +156,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         cert.save()
 
         crl = ca.get_crl().public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=idp, certs=[child], crl_number=4, signer=ca)
+        self.assertCRL(crl, certs=[child], crl_number=4, signer=ca)
 
     @freeze_time(timestamps['everything_valid'])
     @override_tmpcadir()
