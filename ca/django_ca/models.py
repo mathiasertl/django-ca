@@ -717,10 +717,10 @@ class CertificateAuthority(X509CertMixin):
         # extension that is also added in the CRL Distribution Points extension for CAs issued by this CA.
         # See also:
         #       https://github.com/mathiasertl/django-ca/issues/64
-        elif scope == 'ca':
+        elif scope == 'ca' and ca_settings.CA_DEFAULT_HOSTNAME:
             crl_path = reverse('django_ca:ca-crl', kwargs={'serial': self.serial})
             full_name = [x509.UniformResourceIdentifier(
-                'http://%s%s' % (settings.CA_DEFAULT_HOSTNAME, crl_path)
+                'http://%s%s' % (ca_settings.CA_DEFAULT_HOSTNAME, crl_path)
             )]
         elif self.crl_url:
             crl_url = [url.strip() for url in self.crl_url.split()]
