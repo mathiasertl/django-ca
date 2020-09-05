@@ -122,7 +122,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         self.assertEqual(self.cas['root'].root, self.cas['root'])
         self.assertEqual(self.cas['child'].root, self.cas['root'])
 
-    @freeze_time('2019-04-14 12:26:00')
+    @freeze_time(timestamps['everything_valid'])
     @override_tmpcadir()
     def test_full_crl(self):
         ca = self.cas['root']
@@ -188,7 +188,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         self.test_full_crl()
 
     @override_tmpcadir()
-    @freeze_time('2019-04-14 12:26:00')
+    @freeze_time(timestamps['everything_valid'])
     def test_ca_crl(self):
         ca = self.cas['root']
         idp = self.get_idp(only_contains_ca_certs=True)   # root CAs don't have a full name (github issue #64)
@@ -206,7 +206,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         self.assertCRL(crl, idp=idp, certs=[child_ca], crl_number=1, signer=ca)
 
     @override_tmpcadir()
-    @freeze_time('2019-04-14 12:26:00')
+    @freeze_time(timestamps['everything_valid'])
     def test_intermediate_ca_crl(self):
         # Intermediate CAs have a DP in the CRL that has the CA url
         ca = self.cas['child']
@@ -218,7 +218,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         crl = ca.get_crl(scope='ca').public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=ca)
 
-    @freeze_time('2019-04-14 12:26:00')
+    @freeze_time(timestamps['everything_valid'])
     @override_tmpcadir()
     def test_user_crl(self):
         ca = self.cas['root']
@@ -235,7 +235,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         crl = ca.get_crl(scope='user').public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, certs=[cert], crl_number=1, signer=ca)
 
-    @freeze_time('2019-04-14 12:26:00')
+    @freeze_time(timestamps['everything_valid'])
     @override_tmpcadir()
     def test_attr_crl(self):
         ca = self.cas['root']
@@ -252,7 +252,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         self.assertCRL(crl, idp=idp, crl_number=1, signer=ca)
 
     @override_tmpcadir()
-    @freeze_time('2019-04-14 12:26:00')
+    @freeze_time(timestamps['everything_valid'])
     def test_no_idp(self):
         # CRLs require a full name (or only_some_reasons) if it's a full CRL
         ca = self.cas['child']
@@ -262,7 +262,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         self.assertCRL(crl, idp=None)
 
     @override_tmpcadir()
-    @freeze_time('2019-04-14 12:26:00')
+    @freeze_time(timestamps['everything_valid'])
     def test_counter(self):
         ca = self.cas['child']
         idp = self.get_idp(full_name=self.get_idp_full_name(ca))
