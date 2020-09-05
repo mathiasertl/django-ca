@@ -18,6 +18,8 @@ ChangeLog
   (`issue 62 <https://github.com/mathiasertl/django-ca/issues/62>`_).
 * Minor documentation updates (`issue 63 <https://github.com/mathiasertl/django-ca/issues/63>`_).
 * Fix error in ``manage.py notify_expiring_certs`` in non-timezone aware setups.
+* Override terminal size when running test cases, otherwise the output of argparse depends on the
+  terminal size, leading to test failures on large terminals.
 
 .. _changelog-1.16.0:
 

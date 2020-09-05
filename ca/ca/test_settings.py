@@ -244,6 +244,10 @@ SKIP_SELENIUM_TESTS = os.environ.get(
     'n' if (NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY) else 'y'
 ).lower().strip() == 'y'
 
+# Set COLUMNS, which is used by argparse to determine the terminal width. If this is not set, the output of
+# some argparse commands depend on the terminal size.
+os.environ['COLUMNS'] = '80'
+
 VIRTUAL_DISPLAY = os.environ.get('VIRTUAL_DISPLAY', 'y').lower().strip() == 'y'
 GECKODRIVER_PATH = os.path.join(ROOT_DIR, 'contrib', 'selenium', 'geckodriver')
 if 'TOX_ENV_DIR' in os.environ:
