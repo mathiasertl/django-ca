@@ -41,7 +41,7 @@ def _gnl_or_empty(value, default=None):
     return GeneralNameList(value)
 
 
-class Extension(object):
+class Extension:
     """Convenience class to handle X509 Extensions.
 
     The value is a ``dict`` as used by the :ref:`CA_PROFILES <settings-ca-profiles>` setting::
@@ -131,7 +131,7 @@ class Extension(object):
     def from_dict(self, value):
         self.value = value['value']
 
-    def from_other(self, value):
+    def from_other(self, value):  # pylint: disable=no-self-use
         raise ValueError('Value is of unsupported type %s' % type(value).__name__)
 
     def _test_value(self):
@@ -448,14 +448,14 @@ class OrderedSetExtension(IterableExtension):
     def intersection_update(self, *others):  # equivalent to &= operator
         self.value.intersection_update(*[self.parse_iterable(o) for o in others])
 
-    def isdisjoint(self, o):
-        return self.value.isdisjoint(self.parse_iterable(o))
+    def isdisjoint(self, other):
+        return self.value.isdisjoint(self.parse_iterable(other))
 
-    def issubset(self, o):
-        return self.value.issubset(self.parse_iterable(o))
+    def issubset(self, other):
+        return self.value.issubset(self.parse_iterable(other))
 
-    def issuperset(self, o):
-        return self.value.issuperset(self.parse_iterable(o))
+    def issuperset(self, other):
+        return self.value.issuperset(self.parse_iterable(other))
 
     def parse_iterable(self, iterable):
         return set(self.parse_value(i) for i in iterable)
@@ -472,7 +472,7 @@ class OrderedSetExtension(IterableExtension):
     def symmetric_difference(self, other):  # equivalent to ^ operator
         return self ^ other
 
-    def symmetric_difference_update(self, other):  # equivalent to ^= operator
+    def symmetric_difference_update(self, other):  # pylint: disable=no-self-use
         self ^= other
 
     def union(self, *others):
@@ -480,11 +480,11 @@ class OrderedSetExtension(IterableExtension):
         return OrderedSetExtension({'critical': self.critical, 'value': value})
 
     def update(self, *others):
-        for o in others:
-            self.value.update(self.parse_iterable(o))
+        for elem in others:
+            self.value.update(self.parse_iterable(elem))
 
 
-class AlternativeNameExtension(ListExtension):
+class AlternativeNameExtension(ListExtension):  # pylint: disable=abstract-method
     """Base class for extensions that contain a list of general names.
 
     This class also allows you to pass :py:class:`~cg:cryptography.x509.GeneralName` instances::
@@ -522,6 +522,7 @@ class KeyIdExtension(Extension):
         >>> KeyIdExtension({'value': b'33'})
         <KeyIdExtension: b'33', critical=False>
     """
+    # pylint: disable=abstract-method; from_extension is not overwridden in this base class
     name = 'KeyIdExtension'
 
     def from_dict(self, value):
@@ -677,21 +678,21 @@ class DistributionPoint:
                                       crl_issuer=self.crl_issuer, reasons=self.reasons)
 
     def serialize(self):
-        s = {}
+        val = {}
 
         if self.full_name is not None:
-            s['full_name'] = list(self.full_name.serialize())
+            val['full_name'] = list(self.full_name.serialize())
         if self.relative_name is not None:
-            s['relative_name'] = format_relative_name(self.relative_name)
+            val['relative_name'] = format_relative_name(self.relative_name)
         if self.crl_issuer is not None:
-            s['crl_issuer'] = list(self.crl_issuer.serialize())
+            val['crl_issuer'] = list(self.crl_issuer.serialize())
         if self.reasons is not None:
-            s['reasons'] = list(sorted([r.name for r in self.reasons]))
-        return s
+            val['reasons'] = list(sorted([r.name for r in self.reasons]))
+        return val
 
 
 # NOT AN EXTENSION
-class PolicyInformation(object):
+class PolicyInformation:
     """Class representing a PolicyInformation object.
 
     This class is internally used by the :py:class:`~django_ca.extensions.CertificatePolicies` extension.
@@ -749,18 +750,18 @@ class PolicyInformation(object):
     def __getitem__(self, key):
         if self.policy_qualifiers is None:
             raise IndexError('list index out of range')
-        elif isinstance(key, int):
+        if isinstance(key, int):
             return self.serialize_policy_qualifier(self.policy_qualifiers[key])
-        else:
-            return [self.serialize_policy_qualifier(k) for k in self.policy_qualifiers[key]]
+
+        return [self.serialize_policy_qualifier(k) for k in self.policy_qualifiers[key]]
 
     def __hash__(self):
         if self.policy_qualifiers is None:
-            t = None
+            tup = None
         else:
-            t = tuple(self.policy_qualifiers)
+            tup = tuple(self.policy_qualifiers)
 
-        return hash((self.policy_identifier, t))
+        return hash((self.policy_identifier, tup))
 
     def __len__(self):
         if self.policy_qualifiers is None:
@@ -833,12 +834,12 @@ class PolicyInformation(object):
             self.policy_qualifiers = []
         return self.policy_qualifiers.insert(index, self.parse_policy_qualifier(value))
 
-    def parse_policy_qualifier(self, qualifier):
+    def parse_policy_qualifier(self, qualifier):  # pylint: disable=no-self-use
         if isinstance(qualifier, str):
             return force_str(qualifier)
-        elif isinstance(qualifier, x509.UserNotice):
+        if isinstance(qualifier, x509.UserNotice):
             return qualifier
-        elif isinstance(qualifier, dict):
+        if isinstance(qualifier, dict):
             explicit_text = qualifier.get('explicit_text')
 
             notice_reference = qualifier.get('notice_reference')
@@ -894,19 +895,19 @@ class PolicyInformation(object):
 
         return val
 
-    def serialize_policy_qualifier(self, qualifier):
+    def serialize_policy_qualifier(self, qualifier):  # pylint: disable=no-self-use
         if isinstance(qualifier, str):
             return qualifier
-        else:
-            value = {}
-            if qualifier.explicit_text:
-                value['explicit_text'] = qualifier.explicit_text
-            if qualifier.notice_reference:
-                value['notice_reference'] = {
-                    'notice_numbers': qualifier.notice_reference.notice_numbers,
-                    'organization': qualifier.notice_reference.organization,
-                }
-            return value
+
+        value = {}
+        if qualifier.explicit_text:
+            value['explicit_text'] = qualifier.explicit_text
+        if qualifier.notice_reference:
+            value['notice_reference'] = {
+                'notice_numbers': qualifier.notice_reference.notice_numbers,
+                'organization': qualifier.notice_reference.organization,
+            }
+        return value
 
     def serialize_policy_qualifiers(self):
         if self.policy_qualifiers is None:
@@ -1031,15 +1032,15 @@ class AuthorityInformationAccess(Extension):
         self.value['ocsp'] = _gnl_or_empty(value)
 
     def serialize(self):
-        s = {
+        val = {
             'critical': self.critical,
             'value': {}
         }
         if self.value['issuers']:
-            s['value']['issuers'] = list(self.value['issuers'].serialize())
+            val['value']['issuers'] = list(self.value['issuers'].serialize())
         if self.value['ocsp']:
-            s['value']['ocsp'] = list(self.value['ocsp'].serialize())
-        return s
+            val['value']['ocsp'] = list(self.value['ocsp'].serialize())
+        return val
 
 
 class AuthorityKeyIdentifier(Extension):
@@ -1175,26 +1176,26 @@ class AuthorityKeyIdentifier(Extension):
     def key_identifier(self, value):
         self.value['key_identifier'] = self.parse_keyid(value)
 
-    def parse_keyid(self, value):
+    def parse_keyid(self, value):  # pylint: disable=no-self-use,inconsistent-return-statements
         if isinstance(value, bytes):
             return value
-        elif value is not None:
+        if value is not None:
             return hex_to_bytes(value)
 
     def serialize(self):
-        s = {
+        val = {
             'critical': self.critical,
             'value': {},
         }
 
         if self.value['key_identifier'] is not None:
-            s['value']['key_identifier'] = bytes_to_hex(self.value['key_identifier'])
+            val['value']['key_identifier'] = bytes_to_hex(self.value['key_identifier'])
         if self.value['authority_cert_issuer'] is not None:
-            s['value']['authority_cert_issuer'] = list(self.value['authority_cert_issuer'].serialize())
+            val['value']['authority_cert_issuer'] = list(self.value['authority_cert_issuer'].serialize())
         if self.value['authority_cert_serial_number'] is not None:
-            s['value']['authority_cert_serial_number'] = self.value['authority_cert_serial_number']
+            val['value']['authority_cert_serial_number'] = self.value['authority_cert_serial_number']
 
-        return s
+        return val
 
 
 class BasicConstraints(Extension):
@@ -1269,15 +1270,17 @@ class BasicConstraints(Extension):
         return val
 
     def parse_pathlen(self, value):  # pylint: disable=no-self-use
+        """Parse a pathlen from the given value (either an int, a str of an int or None)."""
         if value is not None:
             try:
                 return int(value)
-            except ValueError:
-                raise ValueError('Could not parse pathlen: "%s"' % value)
+            except ValueError as e:
+                raise ValueError('Could not parse pathlen: "%s"' % value) from e
         return value
 
     @property
     def pathlen(self):
+        """The ``pathlen`` value of this instance."""
         return self.value['pathlen']
 
     @pathlen.setter
@@ -1489,10 +1492,10 @@ class KeyUsage(OrderedSetExtension):
     def from_extension(self, value):
         self.value = set()
 
-        for v in self.KNOWN_VALUES:
+        for val in self.KNOWN_VALUES:
             try:
-                if getattr(value.value, v):
-                    self.value.add(v)
+                if getattr(value.value, val):
+                    self.value.add(val)
             except ValueError:
                 # cryptography throws a ValueError if encipher_only/decipher_only is accessed and
                 # key_agreement is not set.
@@ -1508,8 +1511,8 @@ class KeyUsage(OrderedSetExtension):
             return value
         try:
             return self.CRYPTOGRAPHY_MAPPING[value]
-        except KeyError:
-            raise ValueError('Unknown value: %s' % value)
+        except KeyError as e:
+            raise ValueError('Unknown value: %s' % value) from e
         raise ValueError('Unknown value: %s' % value)  # pragma: no cover - function returns/raises before
 
     def serialize_value(self, value):
@@ -1567,7 +1570,7 @@ class ExtendedKeyUsage(OrderedSetExtension):
     @property
     def extension_type(self):
         # call serialize_value() to ensure consistent sort order
-        return x509.ExtendedKeyUsage(sorted(self.value, key=lambda v: self.serialize_value(v)))
+        return x509.ExtendedKeyUsage(sorted(self.value, key=self.serialize_value))
 
     def serialize_value(self, value):
         return self._CRYPTOGRAPHY_MAPPING_REVERSED[value]
@@ -1630,6 +1633,7 @@ class InhibitAnyPolicy(Extension):
         self.value = value.value.skip_certs
 
     def from_int(self, value):
+        """Parser allowing creation of an instance just from an int."""
         self.value = value
 
     def from_other(self, value):
@@ -1642,6 +1646,7 @@ class InhibitAnyPolicy(Extension):
 
     @property
     def skip_certs(self):
+        """The ``skip_certs`` value of this instance."""
         return self.value
 
     @skip_certs.setter
@@ -1740,6 +1745,7 @@ class PolicyConstraints(Extension):
 
     @property
     def inhibit_policy_mapping(self):
+        """The ``inhibit_policy_mapping`` value of this instance."""
         return self.value['inhibit_policy_mapping']
 
     @inhibit_policy_mapping.setter
@@ -1753,6 +1759,7 @@ class PolicyConstraints(Extension):
 
     @property
     def require_explicit_policy(self):
+        """The ``require_explicit_policy`` value of this instance."""
         return self.value['require_explicit_policy']
 
     @require_explicit_policy.setter
@@ -1842,6 +1849,7 @@ class NameConstraints(Extension):
 
     @property
     def excluded(self):
+        """The ``excluded`` value of this instance."""
         return self.value['excluded']
 
     @excluded.setter
@@ -1868,6 +1876,7 @@ class NameConstraints(Extension):
 
     @property
     def permitted(self):
+        """The ``permitted`` value of this instance."""
         return self.value['permitted']
 
     @permitted.setter
@@ -1990,6 +1999,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
         raise NotImplementedError
 
     def human_readable_timestamps(self):
+        """Convert SCTs into a generator of serializable dicts."""
         for sct in self.value:
             if sct.entry_type == LogEntryType.PRE_CERTIFICATE:
                 entry_type = 'Precertificate'
