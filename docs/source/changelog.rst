@@ -6,10 +6,11 @@ ChangeLog
 
 .. _changelog-1.16.1:
 
-************
-1.16.1 (TBR)
-************
+*******************
+1.16.1 (2020-09-06)
+*******************
 
+* This is a bugfix release for 1.16.0 that mostly addresses CRL validation issues.
 * Add support for cryptography 3.1.
 * Fix OCSP, Issuer and CRL URLs for intermediate CAs that are not a *direct* child of a root CA.
 * Fix AuthorityKeyIdentifier in CRLs for intermediate CAs
