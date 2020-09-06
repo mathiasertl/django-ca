@@ -11,6 +11,11 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Django models for the django-ca application.
+
+.. seealso:: https://docs.djangoproject.com/en/dev/topics/db/models/
+"""
+
 import base64
 import binascii
 import hashlib
@@ -106,39 +111,43 @@ def acme_order_expires():
 
 
 def validate_past(value):
+    """Validate that a given datetime is not in the future."""
     if value > timezone.now():
         raise ValidationError(_('Date must be in the past!'))
 
 
 def json_validator(value):
+    """Validated that the given data is valid JSON."""
     try:
         json.loads(value)
     except Exception as e:
-        raise ValidationError(_('Must be valid JSON: %(message)s') % {'message': str(e)})
+        raise ValidationError(_('Must be valid JSON: %(message)s') % {'message': str(e)}) from e
 
 
 class Watcher(models.Model):
+    """A watcher represents an email address that will receive notifications about expiring certificates."""
     name = models.CharField(max_length=64, blank=True, default='', verbose_name=_('CommonName'))
     mail = models.EmailField(verbose_name=_('E-Mail'), unique=True)
 
     @classmethod
     def from_addr(cls, addr):
+        """Class constructor that creates an instance from an email address."""
         name = ''
         match = re.match(r'(.*?)\s*<(.*)>', addr)
         if match is not None:
             name, addr = match.groups()
 
         try:
-            w = cls.objects.get(mail=addr)
-            if w.name != name:
-                w.name = name
-                w.save()
+            watcher = cls.objects.get(mail=addr)
+            if watcher.name != name:
+                watcher.name = name
+                watcher.save()
         except cls.DoesNotExist:
-            w = cls(mail=addr, name=name)
-            w.full_clean()
-            w.save()
+            watcher = cls(mail=addr, name=name)
+            watcher.full_clean()
+            watcher.save()
 
-        return w
+        return watcher
 
     def __str__(self):
         if self.name:
@@ -147,6 +156,10 @@ class Watcher(models.Model):
 
 
 class X509CertMixin(models.Model):
+    """Mixin class with common attributes for Certificates and Certificate Authorities."""
+    # pylint: disable=too-many-instance-attributes,too-many-public-methods
+    # X.509 certificates are complex. Sorry.
+
     # reasons are defined in http://www.ietf.org/rfc/rfc3280.txt
     REVOCATION_REASONS = (
         (ReasonFlags.aa_compromise.name, _('Attribute Authority compromised')),
@@ -189,13 +202,17 @@ class X509CertMixin(models.Model):
     def get_revocation_reason(self):
         """Get the revocation reason of this certificate."""
         if self.revoked is False:
-            return
+            return None
 
         return x509.ReasonFlags[self.revoked_reason]
 
     def get_compromised_time(self):
+        """Return when this certificate was compromised as a *naive* datetime.
+
+        Returns ``None`` if the time is not known **or** if the certificate is not revoked.
+        """
         if self.revoked is False or not self.compromised:
-            return
+            return None
 
         if timezone.is_aware(self.compromised):
             # convert datetime object to UTC and make it naive
@@ -204,12 +221,9 @@ class X509CertMixin(models.Model):
         return self.compromised
 
     def get_revocation_time(self):
-        """Get the revocation time as naive datetime.
-
-        Note that this method is only used by cryptography>=2.4.
-        """
+        """Get the revocation time as naive datetime."""
         if self.revoked is False:
-            return
+            return None
 
         if timezone.is_aware(self.revoked_date):
             # convert datetime object to UTC and make it naive
@@ -227,9 +241,10 @@ class X509CertMixin(models.Model):
 
     @x509.setter
     def x509(self, value):
+        """Setter for the underlying :py:class:`cg:cryptography.x509.Certificate`."""
         self._x509 = value
         self.pub = force_str(self.dump_certificate(Encoding.PEM))
-        self.cn = self.subject.get('CN', '')
+        self.cn = self.subject.get('CN', '')  # pylint: disable=invalid-name
         self.expires = self.not_after
         self.valid_from = self.not_before
         if settings.USE_TZ:
@@ -240,6 +255,7 @@ class X509CertMixin(models.Model):
 
     @property
     def admin_change_url(self):
+        """Change URL in the admin interface for the given class."""
         return reverse('admin:%s_%s_change' % (self._meta.app_label, self._meta.verbose_name),
                        args=(self.pk, ))
 
@@ -249,24 +265,62 @@ class X509CertMixin(models.Model):
 
     @property
     def algorithm(self):
+        """A shortcut for :py:attr:`~cg:cryptography.x509.Certificate.signature_hash_algorithm`."""
         return self.x509.signature_hash_algorithm
 
     def dump_certificate(self, encoding=Encoding.PEM):
+        """Get the certificate as bytes in the requested format.
+
+        Parameters
+        ----------
+
+        encoding : attr of :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding`, optional
+            The format to return, defaults to ``Encoding.PEM``.
+        """
+
         return self.x509.public_bytes(encoding=encoding)
 
     def get_digest(self, algo):
+        """Get the digest for a certificate as string, including colons."""
         algo = getattr(hashes, algo.upper())()
         return add_colons(binascii.hexlify(self.x509.fingerprint(algo)).upper().decode('utf-8'))
 
     def get_filename(self, ext, bundle=False):
+        """Get a filename safe for any file system and OS for this certificate based on the common name.
+
+        Parameters
+        ----------
+
+        ext : str
+            The filename extension to use (e.g. 'pem').
+        bundle : bool, optional
+            Adds "_bundle" as suffix.
+        """
         slug = slugify(self.cn.replace('.', '_'))
 
         if bundle is True:
             return '%s_bundle.%s' % (slug, ext.lower())
-        else:
-            return '%s.%s' % (slug, ext.lower())
+        return '%s.%s' % (slug, ext.lower())
 
     def get_revocation(self):
+        """Get the `RevokedCertificate` instance for this certificate for CRLs.
+
+        This function is just a shortcut for
+        :py:class:`~cg:cryptography.x509.RevokedCertificateBuilder`.
+
+        .. seealso:: :py:class:`~cg:cryptography.x509.CertificateRevocationListBuilder`.
+
+        Raises
+        ------
+
+        ValueError
+            If the certificate is not revoked.
+
+        Returns
+        -------
+
+        :py:class:`~cg:cryptography.x509.RevokedCertificate`
+        """
         if self.revoked is False:
             raise ValueError('Certificate is not revoked.')
 
@@ -288,7 +342,12 @@ class X509CertMixin(models.Model):
 
     @property
     def hpkp_pin(self):
-        # taken from https://github.com/luisgf/hpkp-python/blob/master/hpkp.py
+        """The HPKP public key pin for this certificate.
+
+        Inspired by https://github.com/luisgf/hpkp-python/blob/master/hpkp.py.
+
+        .. seealso:: https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning
+        """
 
         public_key_raw = self.x509.public_key().public_bytes(
             encoding=Encoding.DER, format=PublicFormat.SubjectPublicKeyInfo)
@@ -311,6 +370,18 @@ class X509CertMixin(models.Model):
         return self.x509.not_valid_after
 
     def revoke(self, reason='', compromised=None):
+        """Revoke the current certificate.
+
+        This function emits the ``pre_revoke_cert`` and ``post_revoke_cert`` signals.
+
+        Parameters
+        ----------
+
+        reason : :py:class:`~django_ca.constants.ReasonFlags`, optional
+            The reason for revocation, defaults to ``ReasonFlags.unspecified``.
+        compromised : datetime, optional
+            When this certificate was compromised.
+        """
         if not reason:
             reason = ReasonFlags.unspecified
 
@@ -329,9 +400,11 @@ class X509CertMixin(models.Model):
         """The certificates subject as :py:class:`~django_ca.subject.Subject`."""
         return Subject([(s.oid, s.value) for s in self.x509.subject])
 
-    def distinguishedName(self):
+    @property
+    def distinguished_name(self):
+        """The certificates distinguished name formatted as string."""
         return format_name(self.x509.subject)
-    distinguishedName.short_description = 'Distinguished Name'
+    distinguished_name.fget.short_description = 'Distinguished Name'
 
     ###################
     # X509 extensions #
@@ -342,6 +415,7 @@ class X509CertMixin(models.Model):
         return {e.oid: e for e in self.x509.extensions}
 
     def get_x509_extension(self, oid):
+        """Get extension by a cryptography OID."""
         return self._x509_extensions.get(oid)
 
     @cached_property
@@ -353,6 +427,7 @@ class X509CertMixin(models.Model):
 
     @cached_property
     def extension_fields(self):
+        """List of all extensions fields for this certificate."""
         fields = []
 
         for ext in self._sorted_extensions:
@@ -368,6 +443,7 @@ class X509CertMixin(models.Model):
 
     @cached_property
     def extensions(self):
+        """List of all extensions for this certificate."""
         exts = []
 
         for ext in self._sorted_extensions:
@@ -380,123 +456,141 @@ class X509CertMixin(models.Model):
         return exts
 
     @cached_property
-    def authority_information_access(self):
+    def authority_information_access(self):  # pylint: disable=inconsistent-return-statements
+        """The :py:class:`~django_ca.extensions.AuthorityInformationAccess` extension or ``None`` if not
+        present."""
         ext = self.get_x509_extension(ExtensionOID.AUTHORITY_INFORMATION_ACCESS)
         if ext is not None:
             return AuthorityInformationAccess(ext)
 
     @cached_property
-    def authority_key_identifier(self):
-        """The :py:class:`~django_ca.extensions.AuthorityKeyIdentifier` extension, or ``None`` if it doesn't
-        exist."""
+    def authority_key_identifier(self):  # pylint: disable=inconsistent-return-statements
+        """The :py:class:`~django_ca.extensions.AuthorityKeyIdentifier` extension or ``None`` if not
+        present."""
         ext = self.get_x509_extension(ExtensionOID.AUTHORITY_KEY_IDENTIFIER)
         if ext is not None:
             return AuthorityKeyIdentifier(ext)
 
     @cached_property
-    def basic_constraints(self):
+    def basic_constraints(self):  # pylint: disable=inconsistent-return-statements
+        """The :py:class:`~django_ca.extensions.BasicConstraints` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.BASIC_CONSTRAINTS)
         if ext is not None:
             return BasicConstraints(ext)
 
     @cached_property
-    def crl_distribution_points(self):
+    def crl_distribution_points(self):  # pylint: disable=inconsistent-return-statements
+        """The :py:class:`~django_ca.extensions.CRLDistributionPoints` extension or ``None`` if not
+        present."""
         ext = self.get_x509_extension(ExtensionOID.CRL_DISTRIBUTION_POINTS)
         if ext is not None:
             return CRLDistributionPoints(ext)
 
     @cached_property
-    def certificate_policies(self):
+    def certificate_policies(self):  # pylint: disable=inconsistent-return-statements
+        """The :py:class:`~django_ca.extensions.CertificatePolicies` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.CERTIFICATE_POLICIES)
         if ext is not None:
             return CertificatePolicies(ext)
 
     @cached_property
-    def freshest_crl(self):
+    def freshest_crl(self):  # pylint: disable=inconsistent-return-statements
+        """The :py:class:`~django_ca.extensions.FreshestCRL` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.FRESHEST_CRL)
         if ext is not None:
             return FreshestCRL(ext)
 
     @cached_property
-    def inhibit_any_policy(self):
+    def inhibit_any_policy(self):  # pylint: disable=inconsistent-return-statements
+        """The :py:class:`~django_ca.extensions.InhibitAnyPolicy` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.INHIBIT_ANY_POLICY)
         if ext is not None:
             return InhibitAnyPolicy(ext)
 
     @cached_property
-    def issuer_alternative_name(self):
+    def issuer_alternative_name(self):  # pylint: disable=inconsistent-return-statements
+        """The :py:class:`~django_ca.extensions.IssuerAlternativeName` extension or ``None`` if not
+        present."""
         ext = self.get_x509_extension(ExtensionOID.ISSUER_ALTERNATIVE_NAME)
         if ext is not None:
             return IssuerAlternativeName(ext)
 
     @cached_property
-    def policy_constraints(self):
+    def policy_constraints(self):  # pylint: disable=inconsistent-return-statements
+        """The :py:class:`~django_ca.extensions.PolicyConstraints` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.POLICY_CONSTRAINTS)
         if ext is not None:
             return PolicyConstraints(ext)
 
     @cached_property
-    def key_usage(self):
-        """The :py:class:`~django_ca.extensions.KeyUsage` extension, or ``None`` if it doesn't exist."""
+    def key_usage(self):  # pylint: disable=inconsistent-return-statements
+        """The :py:class:`~django_ca.extensions.KeyUsage` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.KEY_USAGE)
         if ext is not None:
             return KeyUsage(ext)
 
     @cached_property
-    def extended_key_usage(self):
-        """The :py:class:`~django_ca.extensions.ExtendedKeyUsage` extension, or ``None`` if it doesn't
-        exist."""
+    def extended_key_usage(self):  # pylint: disable=inconsistent-return-statements
+        """The :py:class:`~django_ca.extensions.ExtendedKeyUsage` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.EXTENDED_KEY_USAGE)
         if ext is not None:
             return ExtendedKeyUsage(ext)
 
     @cached_property
-    def name_constraints(self):
+    def name_constraints(self):  # pylint: disable=inconsistent-return-statements
+        """The :py:class:`~django_ca.extensions.NameConstraints` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.NAME_CONSTRAINTS)
         if ext is not None:
             return NameConstraints(ext)
 
     @cached_property
-    def ocsp_no_check(self):
+    def ocsp_no_check(self):  # pylint: disable=inconsistent-return-statements
+        """The :py:class:`~django_ca.extensions.OCSPNoCheck` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.OCSP_NO_CHECK)
         if ext is not None:
             return OCSPNoCheck(ext)
 
     @cached_property
-    def precert_poison(self):
+    def precert_poison(self):  # pylint: disable=inconsistent-return-statements
+        """The :py:class:`~django_ca.extensions.PrecertPoison` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.PRECERT_POISON)
         if ext is not None:
             return PrecertPoison(ext)
 
     @cached_property
-    def precertificate_signed_certificate_timestamps(self):
+    def precertificate_signed_certificate_timestamps(self):  # pylint: disable=inconsistent-return-statements
+        """The :py:class:`~django_ca.extensions.PrecertificateSignedCertificateTimestamps` extension or
+        ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
         if ext is not None:
             return PrecertificateSignedCertificateTimestamps(ext)
 
     @cached_property
-    def subject_alternative_name(self):
+    def subject_alternative_name(self):  # pylint: disable=inconsistent-return-statements
+        """The :py:class:`~django_ca.extensions.SubjectAlternativeName` extension or ``None`` if not
+        present."""
         ext = self.get_x509_extension(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
         if ext is not None:
             return SubjectAlternativeName(ext)
 
     @cached_property
-    def subject_key_identifier(self):
-        """The :py:class:`~django_ca.extensions.SubjectKeyIdentifier` extension, or ``None`` if it doesn't
-        exist."""
+    def subject_key_identifier(self):  # pylint: disable=inconsistent-return-statements
+        """The :py:class:`~django_ca.extensions.SubjectKeyIdentifier` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.SUBJECT_KEY_IDENTIFIER)
         if ext is not None:
             return SubjectKeyIdentifier(ext)
 
     @cached_property
-    def tls_feature(self):
-        """The :py:class:`~django_ca.extensions.TLSFeature` extension, or ``None`` if it doesn't exist."""
+    def tls_feature(self):  # pylint: disable=inconsistent-return-statements
+        """The :py:class:`~django_ca.extensions.TLSFeature` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.TLS_FEATURE)
         if ext is not None:
             return TLSFeature(ext)
 
 
 class CertificateAuthority(X509CertMixin):
+    """Model representing a x509 Certificate Authority."""
+
     objects = CertificateAuthorityManager.from_queryset(CertificateAuthorityQuerySet)()
 
     name = models.CharField(max_length=32, help_text=_('A human-readable name'), unique=True)
@@ -524,6 +618,10 @@ class CertificateAuthority(X509CertMixin):
     _key = None
 
     def key(self, password):
+        """The CAs private key as private key.
+
+        .. seealso:: :py:func:`~cg:cryptography.hazmat.primitives.serialization.load_pem_private_key`.
+        """
         if self._key is None:
             key_data = read_file(self.private_key_path)
 
@@ -532,18 +630,20 @@ class CertificateAuthority(X509CertMixin):
 
     @property
     def key_exists(self):
+        """``True`` if the private key is locally accessible."""
         if self._key is not None:
             return True
-        else:
-            return ca_storage.exists(self.private_key_path)
+        return ca_storage.exists(self.private_key_path)
 
-    def cache_crls(self, password=None, algorithm=None):
+    def cache_crls(self, password=None, algorithm=None):  # pylint: disable=too-many-locals
+        """Function to cache all CRLs for this CA."""
+
         password = password or self.get_password()
         ca_key = self.key(password)
         if isinstance(ca_key, dsa.DSAPrivateKey) and algorithm is None:
             algorithm = hashes.SHA1()
 
-        for name, config in ca_settings.CA_CRL_PROFILES.items():
+        for config in ca_settings.CA_CRL_PROFILES.values():
             overrides = config.get('OVERRIDES', {}).get(self.serial, {})
 
             if overrides.get('skip'):
@@ -603,6 +703,9 @@ class CertificateAuthority(X509CertMixin):
             Set the "autogenerated" flag of the certificate. ``True`` by default, since this method is usually
             invoked in an automated cron-like fashion.
         """
+        # pylint: disable=too-many-arguments,too-many-locals
+        # OCSP is pretty complex, there is no way to trim down the arguments w/o losing features.
+
         password = password or self.get_password()
         if key_type is None:
             ca_key = self.key(password)
@@ -624,7 +727,7 @@ class CertificateAuthority(X509CertMixin):
         csr = x509.CertificateSigningRequestBuilder().subject_name(self.x509.subject).sign(
             private_key, hashes.SHA256(), default_backend())
 
-        # TODO: The subject we pass is just a guess - see what public CAs do!?
+        # TODO: The subject we pass is just a guess - see what public CAs do!?  pylint: disable=fixme
         cert = Certificate.objects.create_cert(ca=self, csr=csr, profile=profile, subject=self.subject,
                                                algorithm=algorithm, autogenerated=autogenerated,
                                                password=password, add_ocsp_url=False)
@@ -641,7 +744,14 @@ class CertificateAuthority(X509CertMixin):
         return private_path, cert_path, cert
 
     def get_authority_key_identifier(self):
-        """Return the AuthorityKeyIdentifier extension used in certificates signed by this CA."""
+        """Return the AuthorityKeyIdentifier extension used in certificates signed by this CA.
+
+        Returns
+        -------
+
+        :py:class:`~cg:cryptography.x509.AuthorityKeyIdentifier`
+            The value to use for this extension.
+        """
 
         try:
             ski = self.x509.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
@@ -651,6 +761,15 @@ class CertificateAuthority(X509CertMixin):
             return x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski.value)
 
     def get_authority_key_identifier_extension(self):
+        """Get the AuthorityKeyIdentifier extension to use in certificates signed by this CA.
+
+        Returns
+        -------
+
+        :py:class:`~django_ca.extensions.AuthorityKeyIdentifier`
+            The extension to use.
+        """
+
         return AuthorityKeyIdentifier(x509.Extension(
             critical=AuthorityKeyIdentifier.default_critical,
             oid=AuthorityKeyIdentifier.oid,
@@ -696,6 +815,8 @@ class CertificateAuthority(X509CertMixin):
         bytes
             The CRL in the requested format.
         """
+        # pylint: disable=too-many-statements,too-many-branches,too-many-locals,too-many-arguments
+        # It's not easy to create a CRL. Sorry.
 
         if scope is not None and scope not in ['ca', 'user', 'attribute']:
             raise ValueError('Scope must be either None, "ca", "user" or "attribute"')
@@ -716,7 +837,25 @@ class CertificateAuthority(X509CertMixin):
         if kwargs.get('full_name'):
             full_name = kwargs['full_name']
             full_name = [parse_general_name(n) for n in full_name]
-        elif self.crl_url:
+
+        # CRLs for root CAs with scope "ca" (or no scope) do not add an IssuingDistributionPoint extension by
+        # default. For full path validation with CRLs, the CRL is also used for validating the Root CA (which
+        # does not contain a CRL Distribution Point). But the Full Name in the CRL IDP and the CA CRL DP have
+        # to match. See also:
+        #       https://github.com/mathiasertl/django-ca/issues/64
+        elif scope in ('ca', None) and self.parent is None:
+            full_name = None
+
+        # If CA_DEFAULT_HOSTNAME is set, CRLs with scope "ca" add the same URL in the IssuingDistributionPoint
+        # extension that is also added in the CRL Distribution Points extension for CAs issued by this CA.
+        # See also:
+        #       https://github.com/mathiasertl/django-ca/issues/64
+        elif scope == 'ca' and ca_settings.CA_DEFAULT_HOSTNAME:
+            crl_path = reverse('django_ca:ca-crl', kwargs={'serial': self.serial})
+            full_name = [x509.UniformResourceIdentifier(
+                'http://%s%s' % (ca_settings.CA_DEFAULT_HOSTNAME, crl_path)
+            )]
+        elif scope in ('user', None) and self.crl_url:
             crl_url = [url.strip() for url in self.crl_url.split()]
             full_name = [x509.UniformResourceIdentifier(c) for c in crl_url]
         else:
@@ -759,12 +898,9 @@ class CertificateAuthority(X509CertMixin):
         if add_idp:  # pragma: no branch
             builder = builder.add_extension(x509.IssuingDistributionPoint(**idp_kwargs), critical=True)
 
-        # Add AuthorityKeyIdentifier from CA if present
-        try:
-            aki = self.x509.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_KEY_IDENTIFIER)
-            builder = builder.add_extension(aki.value, critical=aki.critical)
-        except x509.ExtensionNotFound:
-            pass
+        # Add AuthorityKeyIdentifier from CA
+        aki = self.get_authority_key_identifier()
+        builder = builder.add_extension(aki, critical=False)
 
         # Add the CRLNumber extension (RFC 5280, 5.2.3)
         if counter is None:
@@ -781,6 +917,7 @@ class CertificateAuthority(X509CertMixin):
         return builder.sign(private_key=self.key(password), algorithm=algorithm, backend=default_backend())
 
     def get_password(self):
+        """Get password for the private key from the ``CA_PASSWORDS`` setting."""
         return ca_settings.CA_PASSWORDS.get(self.serial)
 
     @property
@@ -809,10 +946,10 @@ class CertificateAuthority(X509CertMixin):
 
         if max_parent is None:
             return pathlen
-        elif pathlen is None:
+        if pathlen is None:
             return max_parent - 1
-        else:
-            return min(self.pathlen, max_parent - 1)
+
+        return min(self.pathlen, max_parent - 1)
 
     @property
     def allows_intermediate_ca(self):
@@ -856,6 +993,8 @@ class CertificateAuthority(X509CertMixin):
 
 
 class Certificate(X509CertMixin):
+    """Model representing a x509 Certificate."""
+
     objects = CertificateManager.from_queryset(CertificateQuerySet)()
 
     watchers = models.ManyToManyField(Watcher, related_name='certificates', blank=True)

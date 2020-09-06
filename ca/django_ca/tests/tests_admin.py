@@ -11,6 +11,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
+import html
 import json
 import unittest
 from datetime import datetime
@@ -804,6 +805,43 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         with self.assertRaises(Certificate.DoesNotExist):
             Certificate.objects.get(cn=cn)
 
+    @override_tmpcadir()
+    def test_invalid_cn_in_san(self):
+        # If you submit a CommonName that is not parseable as SubjectAlternativeName, but check "CN in SAN",
+        # we need to throw a form error.
+        #   https://github.com/mathiasertl/django-ca/issues/62
+        cn = 'Foo Bar'
+        error = 'The CommonName cannot be parsed as general name. Either change the CommonName or do not include it.'  # NOQA
+        ca = self.cas['root']
+        csr = certs['root-cert']['csr']['pem']
+
+        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            response = self.client.post(self.add_url, data={
+                'csr': csr,
+                'ca': ca.pk,
+                'profile': 'webserver',
+                'subject_0': 'US',
+                'subject_5': cn,
+                'subject_alternative_name_1': True,  # cn_in_san
+                'algorithm': 'SHA256',
+                'expires': ca.expires.strftime('%Y-%m-%d'),
+                'key_usage_0': ['digitalSignature', 'keyAgreement', ],
+                'key_usage_1': True,
+                'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
+                'extended_key_usage_1': False,
+                'tls_feature_0': ['OCSPMustStaple', 'MultipleCertStatusRequest'],
+                'tls_feature_1': False,
+            })
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(html.escape(error), response.content.decode('utf-8'))
+        self.assertFalse(response.context['adminform'].form.is_valid())
+        self.assertEqual(response.context['adminform'].form.errors, {'subject_alternative_name': [error]})
+
+        with self.assertRaises(Certificate.DoesNotExist):
+            Certificate.objects.get(cn=cn)
+
     def test_add_no_cas(self):
         ca = self.cas['root']
         csr = certs['pwd-cert']['csr']['pem']
@@ -1210,7 +1248,7 @@ class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithGeneratedCert
 
         self.assertEqual(cert.cn, resigned.cn)
         self.assertEqual(cert.csr, resigned.csr)
-        self.assertEqual(cert.distinguishedName(), resigned.distinguishedName())
+        self.assertEqual(cert.distinguished_name, resigned.distinguished_name)
         self.assertEqual(cert.extended_key_usage, resigned.extended_key_usage)
         self.assertEqual(cert.key_usage, resigned.key_usage)
         self.assertEqual(cert.subject_alternative_name, resigned.subject_alternative_name)

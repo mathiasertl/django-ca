@@ -19,6 +19,8 @@ from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.cache import cache
 from django.test import Client
+from django.urls import include
+from django.urls import path
 from django.urls import re_path
 from django.urls import reverse
 
@@ -32,7 +34,10 @@ from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
 
+app_name = 'django_ca'
 urlpatterns = [
+    path('django_ca/', include('django_ca.urls')),
+
     re_path(r'^crl/(?P<serial>[0-9A-F:]+)/$', CertificateRevocationListView.as_view(), name='default'),
     re_path(r'^full/(?P<serial>[0-9A-F:]+)/$', CertificateRevocationListView.as_view(scope=None),
             name='full'),
@@ -103,7 +108,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
     def test_ca_crl(self):
         root = self.cas['root']
         child = self.cas['child']
-        idp = self.get_idp(full_name=self.get_idp_full_name(root), only_contains_ca_certs=True)
+        idp = self.get_idp(only_contains_ca_certs=True)  # root CAs don't have a full name (github issue #64)
         self.assertIsNotNone(root.key(password=None))
 
         response = self.client.get(reverse('ca_crl', kwargs={'serial': root.serial}))
@@ -126,6 +131,19 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'text/plain')
         self.assertCRL(response.content, expires=600, idp=idp, certs=[child], crl_number=1, signer=root)
+
+    @override_tmpcadir()
+    def test_ca_crl_intermediate(self):
+        child = self.cas['child']
+        full_name = 'http://%s/django_ca/crl/ca/%s/' % (ca_settings.CA_DEFAULT_HOSTNAME, child.serial)
+        full_name = [x509.UniformResourceIdentifier(full_name)]
+        idp = self.get_idp(full_name=full_name, only_contains_ca_certs=True)
+        self.assertIsNotNone(child.key(password=None))
+
+        response = self.client.get(reverse('ca_crl', kwargs={'serial': child.serial}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'text/plain')
+        self.assertCRL(response.content, expires=600, idp=idp, signer=child)
 
     @override_tmpcadir()
     def test_password(self):

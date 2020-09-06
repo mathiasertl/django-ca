@@ -75,6 +75,7 @@ from ..models import X509CertMixin
 from ..signals import post_create_ca
 from ..signals import post_issue_cert
 from ..signals import post_revoke_cert
+from ..signals import pre_create_ca
 from ..subject import Subject
 from ..utils import add_colons
 from ..utils import ca_storage
@@ -403,7 +404,7 @@ class DjangoCATestCaseMixin:
         self.assertIsInstance(cert.signature_hash_algorithm, getattr(hashes, algo.upper()))
 
     def assertCRL(self, crl, certs=None, signer=None, expires=86400, algorithm=None, encoding=Encoding.PEM,
-                  idp=None, extensions=None, crl_number=0, skip_authority_key_identifier=False):
+                  idp=None, extensions=None, crl_number=0):
         certs = certs or []
         signer = signer or self.cas['child']
         algorithm = algorithm or ca_settings.CA_DIGEST_ALGORITHM
@@ -416,8 +417,10 @@ class DjangoCATestCaseMixin:
             value=x509.CRLNumber(crl_number=crl_number),
             critical=False, oid=ExtensionOID.CRL_NUMBER
         ))
-        if not skip_authority_key_identifier:
-            extensions.append(signer.authority_key_identifier.as_extension())
+        extensions.append(x509.Extension(
+            value=signer.get_authority_key_identifier(),
+            oid=ExtensionOID.AUTHORITY_KEY_IDENTIFIER, critical=False
+        ))
 
         if encoding == Encoding.PEM:
             crl = x509.load_pem_x509_crl(crl, default_backend())
@@ -437,6 +440,15 @@ class DjangoCATestCaseMixin:
         for serial, entry in entries.items():
             self.assertEqual(entry.revocation_date, datetime.utcnow())
             self.assertEqual(list(entry.extensions), [])
+
+    @contextmanager
+    def assertCreateCASignals(self, pre=True, post=True):
+        with self.assertSignal(pre_create_ca) as pre_sig, self.assertSignal(post_create_ca) as post_sig:
+            try:
+                yield (pre_sig, post_sig)
+            finally:
+                self.assertTrue(pre_sig.called is pre)
+                self.assertTrue(post_sig.called is post)
 
     @contextmanager
     def assertCommandError(self, msg):
@@ -819,6 +831,9 @@ class DjangoCATestCaseMixin:
     def mute_celery(self):
         with patch('celery.app.task.Task.apply_async') as mock:
             yield mock
+
+    def reverse(self, name, *args, **kwargs):
+        return reverse('django_ca:%s' % name, args=args, kwargs=kwargs)
 
 
 class DjangoCATestCase(DjangoCATestCaseMixin, TestCase):

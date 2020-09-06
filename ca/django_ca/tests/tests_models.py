@@ -122,7 +122,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         self.assertEqual(self.cas['root'].root, self.cas['root'])
         self.assertEqual(self.cas['child'].root, self.cas['root'])
 
-    @freeze_time('2019-04-14 12:26:00')
+    @freeze_time(timestamps['everything_valid'])
     @override_tmpcadir()
     def test_full_crl(self):
         ca = self.cas['root']
@@ -137,17 +137,17 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         ca.crl_url = full_name
         ca.save()
         crl = ca.get_crl().public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=idp, crl_number=1, signer=ca)
+        self.assertCRL(crl, crl_number=1, signer=ca)
 
         # revoke a cert
         cert.revoke()
         crl = ca.get_crl().public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=idp, certs=[cert], crl_number=2, signer=ca)
+        self.assertCRL(crl, certs=[cert], crl_number=2, signer=ca)
 
         # also revoke a CA
         child.revoke()
         crl = ca.get_crl().public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=idp, certs=[cert, child], crl_number=3, signer=ca)
+        self.assertCRL(crl, certs=[cert, child], crl_number=3, signer=ca)
 
         # unrevoke cert (so we have all three combinations)
         cert.revoked = False
@@ -156,7 +156,23 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         cert.save()
 
         crl = ca.get_crl().public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=idp, certs=[child], crl_number=4, signer=ca)
+        self.assertCRL(crl, certs=[child], crl_number=4, signer=ca)
+
+    @freeze_time(timestamps['everything_valid'])
+    @override_tmpcadir()
+    def test_intermediate_crl(self):
+        child = self.cas['child']
+        cert = self.certs['child-cert']
+        full_name = 'http://localhost/crl'
+        idp = self.get_idp(full_name=[x509.UniformResourceIdentifier(value=full_name)])
+
+        crl = child.get_crl(full_name=[full_name]).public_bytes(Encoding.PEM)
+        self.assertCRL(crl, idp=idp, signer=child)
+
+        # Revoke a cert
+        cert.revoke()
+        crl = child.get_crl(full_name=[full_name]).public_bytes(Encoding.PEM)
+        self.assertCRL(crl, idp=idp, certs=[cert], crl_number=1, signer=child)
 
     @override_settings(USE_TZ=True)
     def test_full_crl_tz(self):
@@ -172,10 +188,10 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         self.test_full_crl()
 
     @override_tmpcadir()
-    @freeze_time('2019-04-14 12:26:00')
+    @freeze_time(timestamps['everything_valid'])
     def test_ca_crl(self):
         ca = self.cas['root']
-        idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_ca_certs=True)
+        idp = self.get_idp(only_contains_ca_certs=True)   # root CAs don't have a full name (github issue #64)
 
         crl = ca.get_crl(scope='ca').public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=ca)
@@ -189,7 +205,20 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         crl = ca.get_crl(scope='ca').public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, certs=[child_ca], crl_number=1, signer=ca)
 
-    @freeze_time('2019-04-14 12:26:00')
+    @override_tmpcadir()
+    @freeze_time(timestamps['everything_valid'])
+    def test_intermediate_ca_crl(self):
+        # Intermediate CAs have a DP in the CRL that has the CA url
+        ca = self.cas['child']
+        full_name = [x509.UniformResourceIdentifier(
+            'http://%s/django_ca/crl/ca/%s/' % (ca_settings.CA_DEFAULT_HOSTNAME, ca.serial)
+        )]
+        idp = self.get_idp(full_name=full_name, only_contains_ca_certs=True)
+
+        crl = ca.get_crl(scope='ca').public_bytes(Encoding.PEM)
+        self.assertCRL(crl, idp=idp, signer=ca)
+
+    @freeze_time(timestamps['everything_valid'])
     @override_tmpcadir()
     def test_user_crl(self):
         ca = self.cas['root']
@@ -206,11 +235,11 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         crl = ca.get_crl(scope='user').public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, certs=[cert], crl_number=1, signer=ca)
 
-    @freeze_time('2019-04-14 12:26:00')
+    @freeze_time(timestamps['everything_valid'])
     @override_tmpcadir()
     def test_attr_crl(self):
         ca = self.cas['root']
-        idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_attribute_certs=True)
+        idp = self.get_idp(only_contains_attribute_certs=True)
 
         crl = ca.get_crl(scope='attribute').public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=ca)
@@ -223,7 +252,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         self.assertCRL(crl, idp=idp, crl_number=1, signer=ca)
 
     @override_tmpcadir()
-    @freeze_time('2019-04-14 12:26:00')
+    @freeze_time(timestamps['everything_valid'])
     def test_no_idp(self):
         # CRLs require a full name (or only_some_reasons) if it's a full CRL
         ca = self.cas['child']
@@ -233,7 +262,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         self.assertCRL(crl, idp=None)
 
     @override_tmpcadir()
-    @freeze_time('2019-04-14 12:26:00')
+    @freeze_time(timestamps['everything_valid'])
     def test_counter(self):
         ca = self.cas['child']
         idp = self.get_idp(full_name=self.get_idp_full_name(ca))
@@ -250,7 +279,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
     def test_no_auth_key_identifier(self):
         # All CAs have a authority key identifier, so we mock that this exception is not present
         def side_effect(cls):
-            raise x509.ExtensionNotFound('mocked', x509.AuthorityKeyIdentifier.oid)
+            raise x509.ExtensionNotFound('mocked', x509.SubjectKeyIdentifier.oid)
 
         ca = self.cas['child']
         full_name = 'http://localhost/crl'
@@ -259,7 +288,8 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         with mock.patch('cryptography.x509.extensions.Extensions.get_extension_for_oid',
                         side_effect=side_effect):
             crl = ca.get_crl(full_name=[full_name]).public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=idp, signer=ca, skip_authority_key_identifier=True)
+        # Note that we still get an AKI because the value comes from the public key in this case
+        self.assertCRL(crl, idp=idp, signer=ca)
 
     def test_validate_json(self):
         # Validation works if we're not revoked

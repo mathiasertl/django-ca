@@ -11,12 +11,12 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from datetime import datetime
 from datetime import timedelta
 
 from django.conf import settings
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 
 from ... import ca_settings
 from ...models import Certificate
@@ -30,7 +30,7 @@ class Command(BaseCommand):
                             help='Warn DAYS days ahead of time (default: %(default)s).')
 
     def handle(self, *args, **options):
-        now = datetime.utcnow()
+        now = timezone.now()
         expires = now + timedelta(days=options['days'] + 1)  # add a day to avoid one-of errors
 
         qs = Certificate.objects.valid().filter(expires__lt=expires)

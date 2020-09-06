@@ -179,14 +179,14 @@ class OCSPBaseView(View):
 
         try:
             return self.process_ocsp_request(data)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except; we really need to catch everything here
             log.exception(e)
             return self.fail()
 
     def post(self, request):
         try:
             return self.process_ocsp_request(request.body)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except; we really need to catch everything here
             log.exception(e)
             return self.fail()
 
@@ -252,7 +252,7 @@ class OCSPView(OCSPBaseView):
     def process_ocsp_request(self, data):
         try:
             ocsp_req = ocsp.load_der_ocsp_request(data)  # NOQA
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except; we really need to catch everything here
             log.exception(e)
             return self.malformed_request()
 
@@ -282,7 +282,7 @@ class OCSPView(OCSPBaseView):
         try:
             responder_key = self.get_responder_key()
             responder_cert = self.get_responder_cert()
-        except Exception:
+        except Exception:  # pylint: disable=broad-except; we really need to catch everything here
             log.error('Could not read responder key/cert.')
             return self.fail()
 
@@ -326,10 +326,10 @@ class GenericOCSPView(OCSPView):
     def dispatch(self, request, serial, **kwargs):
         if request.method == 'GET' and 'data' not in kwargs:
             return self.http_method_not_allowed(request, serial, **kwargs)
-        elif request.method == 'POST' and 'data' in kwargs:
+        if request.method == 'POST' and 'data' in kwargs:
             return self.http_method_not_allowed(request, serial, **kwargs)
         self.ca = CertificateAuthority.objects.get(serial=serial)
-        return super(GenericOCSPView, self).dispatch(request, **kwargs)
+        return super().dispatch(request, **kwargs)
 
     def get_ca(self):
         return self.ca
@@ -342,7 +342,13 @@ class GenericOCSPView(OCSPView):
 
 
 class GenericCAIssuersView(View):
-    def get(self, request, serial):
+    """Generic view that returns a CA public key in DER format.
+
+    This view serves the URL named in the ``issuers`` key in the
+    :py:class:`~django_ca.extensions.AuthorityInformationAccess` extension.
+    """
+
+    def get(self, request, serial):  # pylint: disable=missing-function-docstring; standard Django view func
         ca = CertificateAuthority.objects.get(serial=serial)
         data = ca.x509.public_bytes(encoding=Encoding.DER)
         return HttpResponse(data, content_type='application/pkix-cert')

@@ -4,6 +4,9 @@
 *.egg-info
 geckodriver.log
 /.certbot/
+/ca/*.key
+/ca/*.pem
+/ca/*.csr
 /.env
 /.tox/
 /MANIFEST

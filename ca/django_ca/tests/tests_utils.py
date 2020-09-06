@@ -21,8 +21,6 @@ from contextlib import contextmanager
 from datetime import datetime
 from datetime import timedelta
 
-from idna.core import IDNAError
-
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -387,13 +385,13 @@ class ParseGeneralNameTest(TestCase):
 
         # Wildcard subdomains are allowed in DNS entries, however RFC 2595 limits their use to a single
         # wildcard in the outermost level
-        msg = r'^Codepoint U\+002A at position 1 of \'\*\' not allowed$'
+        msg = r'^Could not parse name: %s$'
 
-        with self.assertRaisesRegex(IDNAError, msg):
+        with self.assertRaisesRegex(ValueError, msg % r'test\.\*\.example\.com'):
             parse_general_name('test.*.example.com')
-        with self.assertRaisesRegex(IDNAError, msg):
+        with self.assertRaisesRegex(ValueError, msg % r'\*\.\*\.example\.com'):
             parse_general_name('*.*.example.com')
-        with self.assertRaisesRegex(IDNAError, msg):
+        with self.assertRaisesRegex(ValueError, msg % r'example\.com\.\*'):
             parse_general_name('example.com.*')
 
     def test_dirname(self):
@@ -421,10 +419,25 @@ class ParseGeneralNameTest(TestCase):
             NameOID.COMMON_NAME, b'example.com'
         ))
 
-    def test_wrong_email(self):
-        msg = r"^Codepoint U\+0040 at position 5 of 'user@' not allowed$"
+    def test_unicode_domains(self):
+        self.assertEqual(parse_general_name('https://exämple.com/test'),
+                         x509.UniformResourceIdentifier('https://xn--exmple-cua.com/test'))
+        self.assertEqual(parse_general_name('https://exämple.com:8000/test'),
+                         x509.UniformResourceIdentifier('https://xn--exmple-cua.com:8000/test'))
+        self.assertEqual(parse_general_name('https://exämple.com:8000/test'),
+                         x509.UniformResourceIdentifier('https://xn--exmple-cua.com:8000/test'))
+        self.assertEqual(parse_general_name('uri:https://exämple.com:8000/test'),
+                         x509.UniformResourceIdentifier('https://xn--exmple-cua.com:8000/test'))
 
-        with self.assertRaisesRegex(IDNAError, msg):
+        self.assertEqual(parse_general_name('exämple.com'), x509.DNSName('xn--exmple-cua.com'))
+        self.assertEqual(parse_general_name('.exämple.com'), x509.DNSName('.xn--exmple-cua.com'))
+        self.assertEqual(parse_general_name('*.exämple.com'), x509.DNSName('*.xn--exmple-cua.com'))
+        self.assertEqual(parse_general_name('dns:exämple.com'), x509.DNSName('xn--exmple-cua.com'))
+        self.assertEqual(parse_general_name('dns:.exämple.com'), x509.DNSName('.xn--exmple-cua.com'))
+        self.assertEqual(parse_general_name('dns:*.exämple.com'), x509.DNSName('*.xn--exmple-cua.com'))
+
+    def test_wrong_email(self):
+        with self.assertRaisesRegex(ValueError, r'^Could not parse name: user@$'):
             parse_general_name('user@')
 
         with self.assertRaisesRegex(ValueError, '^Invalid domain: $'):
@@ -446,6 +459,14 @@ class ParseGeneralNameTest(TestCase):
     def test_error(self):
         with self.assertRaisesRegex(ValueError, r'^Could not parse IP address\.$'):
             parse_general_name('ip:1.2.3.4/24')
+
+    def test_unparseable(self):
+        with self.assertRaisesRegex(ValueError, r'^Could not parse name: http://ex ample\.com$'):
+            parse_general_name('http://ex ample.com')
+        with self.assertRaisesRegex(ValueError, r'^Could not parse DNS name in URL: http://ex ample\.com$'):
+            parse_general_name('uri:http://ex ample.com')
+        with self.assertRaisesRegex(ValueError, r'^Could not parse DNS name: ex ample\.com'):
+            parse_general_name('dns:ex ample.com')
 
 
 class FormatGeneralNameTest(TestCase):

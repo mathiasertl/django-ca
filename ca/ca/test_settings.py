@@ -234,7 +234,7 @@ CA_OCSP_URLS = {
 
 CRYPTOGRAPHY_VERSION = packaging.version.parse(cryptography.__version__).release[:2]
 NEWEST_PYTHON = sys.version_info[0:2] == (3, 8)
-NEWEST_CRYPTOGRAPHY = CRYPTOGRAPHY_VERSION == (3, 0)
+NEWEST_CRYPTOGRAPHY = CRYPTOGRAPHY_VERSION == (3, 1)
 NEWEST_DJANGO = django.VERSION[:2] == (3, 1)
 NEWEST_VERSIONS = NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY and NEWEST_DJANGO
 
@@ -243,6 +243,10 @@ SKIP_SELENIUM_TESTS = os.environ.get(
     'SKIP_SELENIUM_TESTS',
     'n' if (NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY) else 'y'
 ).lower().strip() == 'y'
+
+# Set COLUMNS, which is used by argparse to determine the terminal width. If this is not set, the output of
+# some argparse commands depend on the terminal size.
+os.environ['COLUMNS'] = '80'
 
 VIRTUAL_DISPLAY = os.environ.get('VIRTUAL_DISPLAY', 'y').lower().strip() == 'y'
 GECKODRIVER_PATH = os.path.join(ROOT_DIR, 'contrib', 'selenium', 'geckodriver')

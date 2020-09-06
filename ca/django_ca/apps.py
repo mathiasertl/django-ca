@@ -11,10 +11,15 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Default Django app configuration.
+
+.. seealso:: https://docs.djangoproject.com/en/dev/ref/applications/
+"""
+
 from django.apps import AppConfig
 from django.utils.translation import gettext_lazy as _
 
 
-class DjangoCAConfig(AppConfig):
+class DjangoCAConfig(AppConfig):  # pylint: disable=missing-class-docstring
     name = 'django_ca'
     verbose_name = _('Certificate Authority')

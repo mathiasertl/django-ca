@@ -241,7 +241,7 @@ def copy_cert(cert, data, key_path, csr_path):
         stream.write(cert.dump_certificate(Encoding.DER))
 
     data['crl'] = cert.ca.crl_url
-    data['subject'] = cert.distinguishedName()
+    data['subject'] = cert.distinguished_name
     data['parsed_cert'] = cert
 
     update_cert_data(cert, data)
@@ -258,7 +258,7 @@ def update_contrib(data, cert, name, filename):
         'valid_from': parsed.not_valid_before.strftime(_timeformat),
         'valid_until': parsed.not_valid_after.strftime(_timeformat),
         'serial': cert.serial,
-        'subject': cert.distinguishedName(),
+        'subject': cert.distinguished_name,
         'hpkp': cert.hpkp_pin,
         'md5': cert.get_digest('md5'),
         'sha1': cert.get_digest('sha1'),

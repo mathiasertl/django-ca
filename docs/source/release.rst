@@ -34,9 +34,9 @@ Run testsuite
 =============
 
 * First, run ``./dev.py clean``.
-* Check code quality (``python dev.py code-quality``).
-* Check test coverage (``python dev.py coverage``).
-* Make sure that ``python dev.py docker-test`` runs through.
+* Check code quality (``./dev.py code-quality``).
+* Check test coverage (``./dev.py coverage``).
+* Make sure that ``./dev.py docker-test`` runs through.
 * Make sure that ``tox`` runs through for all environments.
 
 *********

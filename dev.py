@@ -40,8 +40,11 @@ from django.core.exceptions import ImproperlyConfigured  # isort:skip
 test_base = argparse.ArgumentParser(add_help=False)
 test_base.add_argument('-s', '--suites', default=[], nargs='+',
                        help="Modules to test (e.g. tests_modules).")
-test_base.add_argument('-p', '--no-virtual-display', dest='virtual_display', action='store_false',
-                       default=True, help="Do not run tests in virtual display.")
+selenium_grp = test_base.add_argument_group('Selenium tests')
+selenium_grp.add_argument('--no-selenium', dest='selenium', action='store_false', default=True,
+                          help='Do not run selenium tests at all.')
+selenium_grp.add_argument('-p', '--no-virtual-display', dest='virtual_display', action='store_false',
+                          default=True, help="Do not run tests in virtual display.")
 
 parser = argparse.ArgumentParser(
     description='Helper-script for various tasks during development.'
@@ -164,6 +167,8 @@ def exclude_versions(cov, sw, this_version, version, version_str):
 if args.command == 'test':
     if not args.virtual_display:
         os.environ['VIRTUAL_DISPLAY'] = 'n'
+    if not args.selenium:
+        os.environ['SKIP_SELENIUM_TESTS'] = 'y'
 
     setup_django()
     test(args.suites)
@@ -203,6 +208,8 @@ elif args.command == 'coverage':
 
     if not args.virtual_display:
         os.environ['VIRTUAL_DISPLAY'] = 'n'
+    if not args.selenium:
+        os.environ['SKIP_SELENIUM_TESTS'] = 'y'
 
     setup_django()
     test(args.suites)
@@ -223,8 +230,8 @@ elif args.command == 'coverage':
         sys.exit(2)  # coverage cli utility also exits with 2
 
 elif args.command == 'code-quality':
-    print('isort --check-only --diff -rc ca/ setup.py dev.py')
-    status = subprocess.call(['isort', '--check-only', '--diff', '-rc', 'ca/', 'setup.py', 'dev.py'])
+    print('isort --check-only --diff ca/ setup.py dev.py')
+    status = subprocess.call(['isort', '--check-only', '--diff', 'ca/', 'setup.py', 'dev.py'])
     if status != 0:
         sys.exit(status)
 

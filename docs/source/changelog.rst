@@ -10,6 +10,8 @@ ChangeLog
 1.17.0 (TBR)
 ************
 
+* Correctly handle IDNA domain names in URLs and certificates.
+
 Backwards incompatible changes
 ==============================
 
@@ -17,6 +19,24 @@ Backwards incompatible changes
 * Drop support for cryptography 2.7.
 * Drop support for Celery 4.2.
 * Drop support for idna 2.8.
+
+.. _changelog-1.16.1:
+
+*******************
+1.16.1 (2020-09-06)
+*******************
+
+* This is a bugfix release for 1.16.0 that mostly addresses CRL validation issues.
+* Add support for cryptography 3.1.
+* Fix OCSP, Issuer and CRL URLs for intermediate CAs that are not a *direct* child of a root CA.
+* Fix AuthorityKeyIdentifier in CRLs for intermediate CAs
+  (`issue 65 <https://github.com/mathiasertl/django-ca/issues/65>`_).
+* Properly handle CommonNames which are not parseable as SubjectAlternativeName in admin interface
+  (`issue 62 <https://github.com/mathiasertl/django-ca/issues/62>`_).
+* Minor documentation updates (`issue 63 <https://github.com/mathiasertl/django-ca/issues/63>`_).
+* Fix error in ``manage.py notify_expiring_certs`` in non-timezone aware setups.
+* Override terminal size when running test cases, otherwise the output of argparse depends on the
+  terminal size, leading to test failures on large terminals.
 
 .. _changelog-1.16.0:
 

@@ -56,7 +56,7 @@ class Command(BaseCommand):
         if pathlen is None:
             pathlen = 'unlimited'
 
-        self.stdout.write('* Distinguished Name: %s' % ca.distinguishedName())
+        self.stdout.write('* Distinguished Name: %s' % ca.distinguished_name)
         self.stdout.write('* Maximum levels of sub-CAs (pathlen): %s' % pathlen)
         self.stdout.write('* HPKP pin: %s' % ca.hpkp_pin)
 

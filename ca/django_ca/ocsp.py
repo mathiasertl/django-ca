@@ -47,5 +47,5 @@ def get_index(ca):
             revocation,
             cert.serial.replace(':', ''),
             'unknown',  # we don't save to any file
-            cert.distinguishedName(),
+            cert.distinguished_name,
         ])
