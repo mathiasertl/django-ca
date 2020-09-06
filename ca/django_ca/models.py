@@ -11,6 +11,11 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Django models for the django-ca application.
+
+.. seealso:: https://docs.djangoproject.com/en/dev/topics/db/models/
+"""
+
 import base64
 import binascii
 import hashlib
@@ -103,16 +108,18 @@ def json_validator(value):
     """Validated that the given data is valid JSON."""
     try:
         json.loads(value)
-    except Exception as exp:
-        raise ValidationError(_('Must be valid JSON: %(message)s') % {'message': str(exp)})
+    except Exception as e:
+        raise ValidationError(_('Must be valid JSON: %(message)s') % {'message': str(e)}) from e
 
 
 class Watcher(models.Model):
+    """A watcher represents an email address that will receive notifications about expiring certificates."""
     name = models.CharField(max_length=64, blank=True, default='', verbose_name=_('CommonName'))
     mail = models.EmailField(verbose_name=_('E-Mail'), unique=True)
 
     @classmethod
     def from_addr(cls, addr):
+        """Class constructor that creates an instance from an email address."""
         name = ''
         match = re.match(r'(.*?)\s*<(.*)>', addr)
         if match is not None:
@@ -138,7 +145,8 @@ class Watcher(models.Model):
 
 class X509CertMixin(models.Model):
     """Mixin class with common attributes for Certificates and Certificate Authorities."""
-    # pylint: disable=too-many-instance-attributes
+    # pylint: disable=too-many-instance-attributes,too-many-public-methods
+    # X.509 certificates are complex. Sorry.
 
     # reasons are defined in http://www.ietf.org/rfc/rfc3280.txt
     REVOCATION_REASONS = (
@@ -182,13 +190,17 @@ class X509CertMixin(models.Model):
     def get_revocation_reason(self):
         """Get the revocation reason of this certificate."""
         if self.revoked is False:
-            return
+            return None
 
         return x509.ReasonFlags[self.revoked_reason]
 
     def get_compromised_time(self):
+        """Return when this certificate was compromised as a *naive* datetime.
+
+        Returns ``None`` if the time is not known **or** if the certificate is not revoked.
+        """
         if self.revoked is False or not self.compromised:
-            return
+            return None
 
         if timezone.is_aware(self.compromised):
             # convert datetime object to UTC and make it naive
@@ -197,12 +209,9 @@ class X509CertMixin(models.Model):
         return self.compromised
 
     def get_revocation_time(self):
-        """Get the revocation time as naive datetime.
-
-        Note that this method is only used by cryptography>=2.4.
-        """
+        """Get the revocation time as naive datetime."""
         if self.revoked is False:
-            return
+            return None
 
         if timezone.is_aware(self.revoked_date):
             # convert datetime object to UTC and make it naive
@@ -220,9 +229,10 @@ class X509CertMixin(models.Model):
 
     @x509.setter
     def x509(self, value):
+        """Setter for the underlying :py:class:`cg:cryptography.x509.Certificate`."""
         self._x509 = value
         self.pub = force_str(self.dump_certificate(Encoding.PEM))
-        self.cn = self.subject.get('CN', '')
+        self.cn = self.subject.get('CN', '')  # pylint: disable=invalid-name
         self.expires = self.not_after
         self.valid_from = self.not_before
         if settings.USE_TZ:
@@ -233,6 +243,7 @@ class X509CertMixin(models.Model):
 
     @property
     def admin_change_url(self):
+        """Change URL in the admin interface for the given class."""
         return reverse('admin:%s_%s_change' % (self._meta.app_label, self._meta.verbose_name),
                        args=(self.pk, ))
 
@@ -242,16 +253,37 @@ class X509CertMixin(models.Model):
 
     @property
     def algorithm(self):
+        """A shortcut for :py:attr:`~cg:cryptography.x509.Certificate.signature_hash_algorithm`."""
         return self.x509.signature_hash_algorithm
 
     def dump_certificate(self, encoding=Encoding.PEM):
+        """Get the certificate as bytes in the requested format.
+
+        Parameters
+        ----------
+
+        encoding : attr of :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding`, optional
+            The format to return, defaults to ``Encoding.PEM``.
+        """
+
         return self.x509.public_bytes(encoding=encoding)
 
     def get_digest(self, algo):
+        """Get the digest for a certificate as string, including colons."""
         algo = getattr(hashes, algo.upper())()
         return add_colons(binascii.hexlify(self.x509.fingerprint(algo)).upper().decode('utf-8'))
 
     def get_filename(self, ext, bundle=False):
+        """Get a filename safe for any file system and OS for this certificate based on the common name.
+
+        Parameters
+        ----------
+
+        ext : str
+            The filename extension to use (e.g. 'pem').
+        bundle : bool, optional
+            Adds "_bundle" as suffix.
+        """
         slug = slugify(self.cn.replace('.', '_'))
 
         if bundle is True:
@@ -259,6 +291,24 @@ class X509CertMixin(models.Model):
         return '%s.%s' % (slug, ext.lower())
 
     def get_revocation(self):
+        """Get the `RevokedCertificate` instance for this certificate for CRLs.
+
+        This function is just a shortcut for
+        :py:class:`~cg:cryptography.x509.RevokedCertificateBuilder`.
+
+        .. seealso:: :py:class:`~cg:cryptography.x509.CertificateRevocationListBuilder`.
+
+        Raises
+        ------
+
+        ValueError
+            If the certificate is not revoked.
+
+        Returns
+        -------
+
+        :py:class:`~cg:cryptography.x509.RevokedCertificate`
+        """
         if self.revoked is False:
             raise ValueError('Certificate is not revoked.')
 
@@ -280,7 +330,12 @@ class X509CertMixin(models.Model):
 
     @property
     def hpkp_pin(self):
-        # taken from https://github.com/luisgf/hpkp-python/blob/master/hpkp.py
+        """The HPKP public key pin for this certificate.
+
+        Inspired by https://github.com/luisgf/hpkp-python/blob/master/hpkp.py.
+
+        .. seealso:: https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning
+        """
 
         public_key_raw = self.x509.public_key().public_bytes(
             encoding=Encoding.DER, format=PublicFormat.SubjectPublicKeyInfo)
@@ -303,6 +358,18 @@ class X509CertMixin(models.Model):
         return self.x509.not_valid_after
 
     def revoke(self, reason='', compromised=None):
+        """Revoke the current certificate.
+
+        This function emits the ``pre_revoke_cert`` and ``post_revoke_cert`` signals.
+
+        Parameters
+        ----------
+
+        reason : :py:class:`~django_ca.constants.ReasonFlags`, optional
+            The reason for revocation, defaults to ``ReasonFlags.unspecified``.
+        compromised : datetime, optional
+            When this certificate was compromised.
+        """
         if not reason:
             reason = ReasonFlags.unspecified
 
@@ -321,9 +388,11 @@ class X509CertMixin(models.Model):
         """The certificates subject as :py:class:`~django_ca.subject.Subject`."""
         return Subject([(s.oid, s.value) for s in self.x509.subject])
 
-    def distinguishedName(self):
+    @property
+    def distinguished_name(self):
+        """The certificates distinguished name formatted as string."""
         return format_name(self.x509.subject)
-    distinguishedName.short_description = 'Distinguished Name'
+    distinguished_name.fget.short_description = 'Distinguished Name'
 
     ###################
     # X509 extensions #
@@ -334,6 +403,7 @@ class X509CertMixin(models.Model):
         return {e.oid: e for e in self.x509.extensions}
 
     def get_x509_extension(self, oid):
+        """Get extension by a cryptography OID."""
         return self._x509_extensions.get(oid)
 
     @cached_property
@@ -345,6 +415,7 @@ class X509CertMixin(models.Model):
 
     @cached_property
     def extension_fields(self):
+        """List of all extensions fields for this certificate."""
         fields = []
 
         for ext in self._sorted_extensions:
@@ -360,6 +431,7 @@ class X509CertMixin(models.Model):
 
     @cached_property
     def extensions(self):
+        """List of all extensions for this certificate."""
         exts = []
 
         for ext in self._sorted_extensions:
@@ -389,7 +461,7 @@ class X509CertMixin(models.Model):
 
     @cached_property
     def basic_constraints(self):  # pylint: disable=inconsistent-return-statements
-        """The :py:class:`~django_ca.extensions.BasicConstriants` extension or ``None`` if not present."""
+        """The :py:class:`~django_ca.extensions.BasicConstraints` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.BASIC_CONSTRAINTS)
         if ext is not None:
             return BasicConstraints(ext)
@@ -534,6 +606,10 @@ class CertificateAuthority(X509CertMixin):
     _key = None
 
     def key(self, password):
+        """The CAs private key as private key.
+
+        .. seealso:: :py:func:`~cg:cryptography.hazmat.primitives.serialization.load_pem_private_key`.
+        """
         if self._key is None:
             key_data = read_file(self.private_key_path)
 
@@ -547,7 +623,7 @@ class CertificateAuthority(X509CertMixin):
             return True
         return ca_storage.exists(self.private_key_path)
 
-    def cache_crls(self, password=None, algorithm=None):
+    def cache_crls(self, password=None, algorithm=None):  # pylint: disable=too-many-locals
         """Function to cache all CRLs for this CA."""
 
         password = password or self.get_password()
@@ -615,6 +691,9 @@ class CertificateAuthority(X509CertMixin):
             Set the "autogenerated" flag of the certificate. ``True`` by default, since this method is usually
             invoked in an automated cron-like fashion.
         """
+        # pylint: disable=too-many-arguments,too-many-locals
+        # OCSP is pretty complex, there is no way to trim down the arguments w/o losing features.
+
         password = password or self.get_password()
         if key_type is None:
             ca_key = self.key(password)

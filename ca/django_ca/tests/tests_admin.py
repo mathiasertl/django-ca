@@ -1248,7 +1248,7 @@ class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithGeneratedCert
 
         self.assertEqual(cert.cn, resigned.cn)
         self.assertEqual(cert.csr, resigned.csr)
-        self.assertEqual(cert.distinguishedName(), resigned.distinguishedName())
+        self.assertEqual(cert.distinguished_name, resigned.distinguished_name)
         self.assertEqual(cert.extended_key_usage, resigned.extended_key_usage)
         self.assertEqual(cert.key_usage, resigned.key_usage)
         self.assertEqual(cert.subject_alternative_name, resigned.subject_alternative_name)

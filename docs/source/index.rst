@@ -54,6 +54,7 @@ Features:
    python/models
    python/subject
    python/utils
+   python/constants
 
 
 .. toctree::
