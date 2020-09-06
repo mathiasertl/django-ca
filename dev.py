@@ -230,8 +230,8 @@ elif args.command == 'coverage':
         sys.exit(2)  # coverage cli utility also exits with 2
 
 elif args.command == 'code-quality':
-    print('isort --check-only --diff -rc ca/ setup.py dev.py')
-    status = subprocess.call(['isort', '--check-only', '--diff', '-rc', 'ca/', 'setup.py', 'dev.py'])
+    print('isort --check-only --diff ca/ setup.py dev.py')
+    status = subprocess.call(['isort', '--check-only', '--diff', 'ca/', 'setup.py', 'dev.py'])
     if status != 0:
         sys.exit(status)
 
