@@ -437,9 +437,7 @@ class ParseGeneralNameTest(TestCase):
         self.assertEqual(parse_general_name('dns:*.exämple.com'), x509.DNSName('*.xn--exmple-cua.com'))
 
     def test_wrong_email(self):
-        msg = r"^Could not parse name: user@$"
-
-        with self.assertRaisesRegex(ValueError, msg):
+        with self.assertRaisesRegex(ValueError, r'^Could not parse name: user@$'):
             parse_general_name('user@')
 
         with self.assertRaisesRegex(ValueError, '^Invalid domain: $'):
@@ -461,6 +459,14 @@ class ParseGeneralNameTest(TestCase):
     def test_error(self):
         with self.assertRaisesRegex(ValueError, r'^Could not parse IP address\.$'):
             parse_general_name('ip:1.2.3.4/24')
+
+    def test_unparseable(self):
+        with self.assertRaisesRegex(ValueError, r'^Could not parse name: http://ex ample\.com$'):
+            parse_general_name('http://ex ample.com')
+        with self.assertRaisesRegex(ValueError, r'^Could not parse DNS name in URL: http://ex ample\.com$'):
+            parse_general_name('uri:http://ex ample.com')
+        with self.assertRaisesRegex(ValueError, r'^Could not parse DNS name: ex ample\.com'):
+            parse_general_name('dns:ex ample.com')
 
 
 class FormatGeneralNameTest(TestCase):

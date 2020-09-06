@@ -396,13 +396,13 @@ def validate_email(addr):
     if '@' not in addr:
         raise ValueError('Invalid email address: %s' % addr)
 
-    node, domain = addr.split('@', 1)
+    node, domain = addr.rsplit('@', 1)
     try:
-        domain = idna.encode(force_str(domain))
+        domain = idna.encode(domain).decode('utf-8')
     except idna.core.IDNAError as e:
         raise ValueError('Invalid domain: %s' % domain) from e
 
-    return '%s@%s' % (node, force_str(domain))
+    return '%s@%s' % (node, domain)
 
 
 def validate_hostname(hostname, allow_port=False):
@@ -596,7 +596,7 @@ def parse_general_name(name):
         if '@' in name:  # Looks like an Email address
             try:
                 return x509.RFC822Name(validate_email(name))
-            except Exception:
+            except ValueError:
                 pass
 
         if name.strip().startswith('/'):  # maybe it's a dirname?
@@ -624,7 +624,7 @@ def parse_general_name(name):
         except idna.IDNAError as e:
             raise ValueError('Could not parse DNS name in URL: %s' % name) from e
     elif typ == 'email':
-        return x509.RFC822Name(validate_email(name))
+        return x509.RFC822Name(validate_email(name))  # validate_email already raises ValueError
     elif typ == 'ip':
         try:
             return x509.IPAddress(ip_address(name))
@@ -653,8 +653,8 @@ def parse_general_name(name):
                 raise ValueError('Unsupported ASN type in otherName: %s' % asn_typ)
             val = force_bytes(val)
             return x509.OtherName(oid, val)
-        else:
-            raise ValueError('Incorrect otherName format: %s' % name)
+
+        raise ValueError('Incorrect otherName format: %s' % name)
     elif typ == 'dirname':
         return x509.DirectoryName(x509_name(name))
     else:

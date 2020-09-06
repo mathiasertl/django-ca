@@ -15,8 +15,6 @@ from copy import deepcopy
 from datetime import timedelta
 from threading import local
 
-import idna
-
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
@@ -308,8 +306,9 @@ class Profile(object):
         if subject.get('CN') and cn_in_san is True:
             try:
                 cn = parse_general_name(subject['CN'])
-            except idna.IDNAError:
-                raise ValueError('%s: Could not parse CommonName as subjectAlternativeName.' % subject['CN'])
+            except ValueError as e:
+                raise ValueError(
+                    '%s: Could not parse CommonName as subjectAlternativeName.' % subject['CN']) from e
 
             extensions.setdefault(SubjectAlternativeName.key, SubjectAlternativeName())
             if cn not in extensions[SubjectAlternativeName.key]:

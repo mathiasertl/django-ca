@@ -14,8 +14,6 @@
 from datetime import date
 from datetime import datetime
 
-import idna
-
 from cryptography.hazmat.primitives import hashes
 
 from django import forms
@@ -161,7 +159,7 @@ class CreateCertificateBaseForm(forms.ModelForm):
         if cn_in_san and subject and subject.get('CN'):
             try:
                 parse_general_name(subject['CN'])
-            except idna.IDNAError:
+            except ValueError:
                 self.add_error('subject_alternative_name',
                                _('The CommonName cannot be parsed as general name. Either change the '
                                  'CommonName or do not include it.'))
