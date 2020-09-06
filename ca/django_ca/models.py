@@ -704,7 +704,25 @@ class CertificateAuthority(X509CertMixin):
         if kwargs.get('full_name'):
             full_name = kwargs['full_name']
             full_name = [parse_general_name(n) for n in full_name]
-        elif self.crl_url:
+
+        # CRLs for root CAs with scope "ca" (or no scope) do not add an IssuingDistributionPoint extension by
+        # default. For full path validation with CRLs, the CRL is also used for validating the Root CA (which
+        # does not contain a CRL Distribution Point). But the Full Name in the CRL IDP and the CA CRL DP have
+        # to match. See also:
+        #       https://github.com/mathiasertl/django-ca/issues/64
+        elif scope in ('ca', None) and self.parent is None:
+            full_name = None
+
+        # If CA_DEFAULT_HOSTNAME is set, CRLs with scope "ca" add the same URL in the IssuingDistributionPoint
+        # extension that is also added in the CRL Distribution Points extension for CAs issued by this CA.
+        # See also:
+        #       https://github.com/mathiasertl/django-ca/issues/64
+        elif scope == 'ca' and ca_settings.CA_DEFAULT_HOSTNAME:
+            crl_path = reverse('django_ca:ca-crl', kwargs={'serial': self.serial})
+            full_name = [x509.UniformResourceIdentifier(
+                'http://%s%s' % (ca_settings.CA_DEFAULT_HOSTNAME, crl_path)
+            )]
+        elif scope in ('user', None) and self.crl_url:
             crl_url = [url.strip() for url in self.crl_url.split()]
             full_name = [x509.UniformResourceIdentifier(c) for c in crl_url]
         else:
@@ -747,12 +765,9 @@ class CertificateAuthority(X509CertMixin):
         if add_idp:  # pragma: no branch
             builder = builder.add_extension(x509.IssuingDistributionPoint(**idp_kwargs), critical=True)
 
-        # Add AuthorityKeyIdentifier from CA if present
-        try:
-            aki = self.x509.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_KEY_IDENTIFIER)
-            builder = builder.add_extension(aki.value, critical=aki.critical)
-        except x509.ExtensionNotFound:
-            pass
+        # Add AuthorityKeyIdentifier from CA
+        aki = self.get_authority_key_identifier()
+        builder = builder.add_extension(aki, critical=False)
 
         # Add the CRLNumber extension (RFC 5280, 5.2.3)
         if counter is None:

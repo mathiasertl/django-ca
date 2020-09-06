@@ -14,6 +14,8 @@
 from datetime import date
 from datetime import datetime
 
+import idna
+
 from cryptography.hazmat.primitives import hashes
 
 from django import forms
@@ -32,6 +34,7 @@ from .fields import SubjectField
 from .models import Certificate
 from .utils import EXTENDED_KEY_USAGE_DESC
 from .utils import KEY_USAGE_DESC
+from .utils import parse_general_name
 from .widgets import ProfileWidget
 
 
@@ -146,12 +149,22 @@ class CreateCertificateBaseForm(forms.ModelForm):
         expires = data.get('expires')
         ca = data.get('ca')
         password = data.get('password')
+        subject = data.get('subject')
+        cn_in_san = data.get('subject_alternative_name')[1]
 
         # test the password
         try:
             ca.key(password)
         except Exception as e:
             self.add_error('password', str(e))
+
+        if cn_in_san and subject and subject.get('CN'):
+            try:
+                parse_general_name(subject['CN'])
+            except idna.IDNAError:
+                self.add_error('subject_alternative_name',
+                               _('The CommonName cannot be parsed as general name. Either change the '
+                                 'CommonName or do not include it.'))
 
         if ca and expires and ca.expires.date() < expires:
             stamp = ca.expires.strftime('%Y-%m-%d')

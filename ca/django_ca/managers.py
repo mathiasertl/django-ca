@@ -184,7 +184,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         if default_hostname:
             default_hostname = validate_hostname(default_hostname, allow_port=True)
             if parent:
-                root_serial = parent.root.serial
+                root_serial = parent.serial
             else:
                 root_serial = hex_serial
 
@@ -193,7 +193,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
                 ocsp_path = reverse('django_ca:ocsp-cert-post', kwargs={'serial': hex_serial})
                 ocsp_url = 'http://%s%s' % (default_hostname, ocsp_path)
             if parent and not ca_ocsp_url:  # OCSP for CA only makes sense in intermediate CAs
-                ocsp_path = reverse('django_ca:ocsp-ca-post', kwargs={'serial': hex_serial})
+                ocsp_path = reverse('django_ca:ocsp-ca-post', kwargs={'serial': root_serial})
                 ca_ocsp_url = 'http://%s%s' % (default_hostname, ocsp_path)
 
             # Set issuer path
@@ -208,7 +208,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
                 crl_path = reverse('django_ca:crl', kwargs={'serial': hex_serial})
                 crl_url = ['http://%s%s' % (default_hostname, crl_path)]
             if parent and not ca_crl_url:  # CRL for CA only makes sense in intermediate CAs
-                ca_crl_path = reverse('django_ca:ca-crl', kwargs={'serial': hex_serial})
+                ca_crl_path = reverse('django_ca:ca-crl', kwargs={'serial': root_serial})
                 ca_crl_url = ['http://%s%s' % (default_hostname, ca_crl_path)]
 
         pre_create_ca.send(
