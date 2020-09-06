@@ -10,6 +10,8 @@ ChangeLog
 1.17.0 (TBR)
 ************
 
+* Correctly handle IDNA domain names in URLs and certificates.
+
 Backwards incompatible changes
 ==============================
 

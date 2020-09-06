@@ -21,6 +21,7 @@ from datetime import datetime
 from datetime import timedelta
 from ipaddress import ip_address
 from ipaddress import ip_network
+from urllib.parse import urlparse
 
 import idna
 
@@ -61,7 +62,6 @@ GENERAL_NAME_RE = re.compile('^(email|URI|IP|DNS|RID|dirName|otherName):(.*)', f
 
 #: Regular expression matching hexlified certificate serials
 SERIAL_RE = re.compile('^([0-9A-F][0-9A-F]:?)+[0-9A-F][0-9A-F]?$')
-_datetime_format = '%Y%m%d%H%M%SZ'
 
 SAN_NAME_MAPPINGS = {
     x509.DNSName: 'DNS',
@@ -106,15 +106,57 @@ NAME_CASE_MAPPINGS = {v.upper(): v for v in OID_NAME_MAPPINGS.values()}
 class LazyEncoder(DjangoJSONEncoder):
     """Encoder that also encodes strings translated with gettext_lazy."""
 
-    def default(self, obj):
-        if isinstance(obj, Promise):
-            return force_str(obj)
-        return super(LazyEncoder, self).default(obj)
+    def default(self, o):
+        if isinstance(o, Promise):
+            return force_str(o)
+        return super().default(o)
 
 
 def sort_name(subject):
     """Returns the subject in the correct order for a x509 subject."""
     return sorted(subject, key=lambda e: SUBJECT_FIELDS.index(e[0]))
+
+
+def encode_url(url):
+    """IDNA encoding for domains in URLs.
+
+    Examples::
+
+        >>> encode_url('https://example.com')
+        'https://example.com'
+        >>> encode_url('https://exämple.com/foobar')
+        'https://xn--exmple-cua.com/foobar'
+        >>> encode_url('https://exämple.com:8000/foobar')
+        'https://xn--exmple-cua.com:8000/foobar'
+    """
+    parsed = urlparse(url)
+    if parsed.port:
+        hostname = idna.encode(parsed.hostname).decode('utf-8')
+        parsed = parsed._replace(netloc='%s:%s' % (hostname, parsed.port))
+    else:
+        parsed = parsed._replace(netloc=idna.encode(parsed.netloc).decode('utf-8'))
+    return parsed.geturl()
+
+
+def encode_dns(name):
+    """IDNA encoding for domains.
+
+    Examples::
+
+        >>> encode_dns('example.com')
+        'example.com'
+        >>> encode_dns('exämple.com')
+        'xn--exmple-cua.com'
+        >>> encode_dns('.exämple.com')
+        '.xn--exmple-cua.com'
+        >>> encode_dns('*.exämple.com')
+        '*.xn--exmple-cua.com'
+    """
+    if name.startswith('*.'):
+        return '*.%s' % idna.encode(name[2:]).decode('utf-8')
+    if name.startswith('.'):
+        return '.%s' % idna.encode(name[1:]).decode('utf-8')
+    return idna.encode(name).decode('utf-8')
 
 
 def format_name(subject):
@@ -192,7 +234,7 @@ def multiline_url_validator(value):
         validator(line)
 
 
-def add_colons(s, pad='0'):
+def add_colons(value, pad='0'):
     """Add colons after every second digit.
 
     This function is used in functions to prettify serials.
@@ -210,10 +252,10 @@ def add_colons(s, pad='0'):
         ``"0"``.
     """
 
-    if len(s) % 2 == 1 and pad is not None:
-        s = '%s%s' % (pad, s)
+    if len(value) % 2 == 1 and pad is not None:
+        value = '%s%s' % (pad, value)
 
-    return ':'.join([s[i:i + 2] for i in range(0, len(s), 2)])
+    return ':'.join([value[i:i + 2] for i in range(0, len(value), 2)])
 
 
 def int_to_hex(i):
@@ -225,16 +267,16 @@ def int_to_hex(i):
     return hex(i)[2:].upper()
 
 
-def bytes_to_hex(v):
+def bytes_to_hex(value):
     """Convert a bytes array to hex.
 
     >>> bytes_to_hex(b'test')
     '74:65:73:74'
     """
-    return add_colons(binascii.hexlify(v).upper().decode('utf-8'))
+    return add_colons(binascii.hexlify(value).upper().decode('utf-8'))
 
 
-def hex_to_bytes(v):
+def hex_to_bytes(value):
     """Convert a hex number to bytes.
 
     This should be the inverse of :py:func:`~django_ca.utils.bytes_to_hex`.
@@ -242,7 +284,7 @@ def hex_to_bytes(v):
     >>> hex_to_bytes('74:65:73:74')
     b'test'
     """
-    return binascii.unhexlify(v.replace(':', ''))
+    return binascii.unhexlify(value.replace(':', ''))
 
 
 def parse_name(name):
@@ -294,7 +336,7 @@ def parse_name(name):
     try:
         items = [(NAME_CASE_MAPPINGS[t[0].upper()], force_str(t[2])) for t in NAME_RE.findall(name)]
     except KeyError as e:
-        raise ValueError('Unknown x509 name field: %s' % e.args[0])
+        raise ValueError('Unknown x509 name field: %s' % e.args[0]) from e
 
     # Check that no OIDs not in MULTIPLE_OIDS occur more then once
     for key, oid in NAME_OID_MAPPINGS.items():
@@ -330,7 +372,7 @@ def x509_relative_name(name):
     """
     if isinstance(name, x509.RelativeDistinguishedName):
         return name
-    elif isinstance(name, str):
+    if isinstance(name, str):
         name = parse_name(name)
 
     return x509.RelativeDistinguishedName([
@@ -357,8 +399,8 @@ def validate_email(addr):
     node, domain = addr.split('@', 1)
     try:
         domain = idna.encode(force_str(domain))
-    except idna.core.IDNAError:
-        raise ValueError('Invalid domain: %s' % domain)
+    except idna.core.IDNAError as e:
+        raise ValueError('Invalid domain: %s' % domain) from e
 
     return '%s@%s' % (node, force_str(domain))
 
@@ -392,16 +434,16 @@ def validate_hostname(hostname, allow_port=False):
 
         try:
             port = int(port)
-        except ValueError:
-            raise ValueError('%s: Port must be an integer' % port)
+        except ValueError as e:
+            raise ValueError('%s: Port must be an integer' % port) from e
         else:
             if port < 1 or port > 65535:
                 raise ValueError('%s: Port must be between 1 and 65535' % port)
 
     try:
         encoded = idna.encode(hostname).decode('utf-8')
-    except idna.IDNAError:
-        raise ValueError('%s: Not a valid hostname' % hostname)
+    except idna.IDNAError as e:
+        raise ValueError('%s: Not a valid hostname' % hostname) from e
 
     if allow_port is True and port is not None:
         return '%s:%s' % (encoded, port)
@@ -435,7 +477,7 @@ def validate_key_parameters(key_size=None, key_type='RSA', ecc_curve=None):
 
         if not is_power2(key_size):
             raise ValueError("%s: Key size must be a power of two" % key_size)
-        elif key_size < ca_settings.CA_MIN_KEY_SIZE:
+        if key_size < ca_settings.CA_MIN_KEY_SIZE:
             raise ValueError("%s: Key size must be least %s bits" % (
                 key_size, ca_settings.CA_MIN_KEY_SIZE))
     else:
@@ -505,7 +547,7 @@ def parse_general_name(name):
     >>> parse_general_name('foo..bar`*123')  # doctest: +ELLIPSIS
     Traceback (most recent call last):
         ...
-    idna.core.IDNAError: ...
+    ValueError: Could not parse name: foo..bar`*123
 
     If you want to override detection, you can prefix the name to match :py:const:`GENERAL_NAME_RE`:
 
@@ -534,7 +576,7 @@ def parse_general_name(name):
     """
     if isinstance(name, x509.GeneralName):
         return name
-    elif not isinstance(name, str):
+    if not isinstance(name, str):
         raise ValueError('Cannot parse general name %s: Must be of type str (was: %s).' %
                          (name, type(name).__name__))
 
@@ -547,8 +589,8 @@ def parse_general_name(name):
     if typ is None:
         if re.match('[a-z0-9]{2,}://', name):  # Looks like a URI
             try:
-                return x509.UniformResourceIdentifier(name)
-            except Exception:  # pragma: no cover - this really accepts anything
+                return x509.UniformResourceIdentifier(encode_url(name))
+            except idna.IDNAError:
                 pass
 
         if '@' in name:  # Looks like an Email address
@@ -570,19 +612,17 @@ def parse_general_name(name):
         except ValueError:
             pass
 
-        # Try to encode as domain name. DNSName() does not validate the domain name, but this check will fail.
-        if name.startswith('*.'):
-            idna.encode(name[2:])
-        elif name.startswith('.'):
-            idna.encode(name[1:])
-        else:
-            idna.encode(name)
-
         # Almost anything passes as DNS name, so this is our default fallback
-        return x509.DNSName(name)
+        try:
+            return x509.DNSName(encode_dns(name))
+        except idna.IDNAError as e:
+            raise ValueError('Could not parse name: %s' % name) from e
 
     if typ == 'uri':
-        return x509.UniformResourceIdentifier(name)
+        try:
+            return x509.UniformResourceIdentifier(encode_url(name))
+        except idna.IDNAError as e:
+            raise ValueError('Could not parse DNS name in URL: %s' % name) from e
     elif typ == 'email':
         return x509.RFC822Name(validate_email(name))
     elif typ == 'ip':
@@ -618,16 +658,10 @@ def parse_general_name(name):
     elif typ == 'dirname':
         return x509.DirectoryName(x509_name(name))
     else:
-        # Try to encode the domain name. DNSName() does not validate the domain name, but this
-        # check will fail.
-        if name.startswith('*.'):
-            idna.encode(name[2:])
-        elif name.startswith('.'):
-            idna.encode(name[1:])
-        else:
-            idna.encode(name)
-
-        return x509.DNSName(name)
+        try:
+            return x509.DNSName(encode_dns(name))
+        except idna.IDNAError as e:
+            raise ValueError('Could not parse DNS name: %s' % name) from e
 
 
 def parse_hash_algorithm(value=None):
