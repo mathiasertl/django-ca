@@ -283,8 +283,8 @@ class IterableExtension(Extension):
     def as_text(self):
         return '\n'.join(['* %s' % v for v in self.serialize_iterable()])
 
-    def parse_value(self, v):
-        return v
+    def parse_value(self, value):
+        return value
 
     def serialize(self):
         return {
@@ -297,10 +297,10 @@ class IterableExtension(Extension):
 
         return [self.serialize_value(v) for v in self.value]
 
-    def serialize_value(self, v):
+    def serialize_value(self, value):
         """Serialize a single value from the iterable contained in this extension."""
 
-        return v
+        return value
 
 
 class ListExtension(IterableExtension):
@@ -341,8 +341,8 @@ class ListExtension(IterableExtension):
     def from_dict(self, value):
         self.value = [self.parse_value(v) for v in value.get('value', [])]
 
-    def from_extension(self, ext):
-        self.value = [self.parse_value(v) for v in ext.value]
+    def from_extension(self, value):
+        self.value = [self.parse_value(v) for v in value.value]
 
     def insert(self, index, value):
         self.value.insert(index, self.parse_value(value))
@@ -505,11 +505,11 @@ class AlternativeNameExtension(ListExtension):
         else:
             self.value = GeneralNameList(value)
 
-    def from_extension(self, ext):
-        self.value = GeneralNameList(ext.value)
+    def from_extension(self, value):
+        self.value = GeneralNameList(value.value)
 
-    def serialize_value(self, v):
-        return format_general_name(v)
+    def serialize_value(self, value):
+        return format_general_name(value)
 
 
 class KeyIdExtension(Extension):
@@ -555,10 +555,10 @@ class CRLDistributionPointsBase(ListExtension):
     def extension_type(self):
         return x509.CRLDistributionPoints(distribution_points=[dp.for_extension_type for dp in self.value])
 
-    def parse_value(self, v):
-        if isinstance(v, DistributionPoint):
-            return v
-        return DistributionPoint(v)
+    def parse_value(self, value):
+        if isinstance(value, DistributionPoint):
+            return value
+        return DistributionPoint(value)
 
     def serialize(self):
         return {
@@ -1145,11 +1145,11 @@ class AuthorityKeyIdentifier(Extension):
                 'authority_cert_serial_number': value.get('authority_cert_serial_number'),
             }
 
-    def from_extension(self, ext):
+    def from_extension(self, value):
         self.value = {
-            'key_identifier': ext.value.key_identifier,
-            'authority_cert_issuer': _gnl_or_empty(ext.value.authority_cert_issuer),
-            'authority_cert_serial_number': ext.value.authority_cert_serial_number,
+            'key_identifier': value.value.key_identifier,
+            'authority_cert_issuer': _gnl_or_empty(value.value.authority_cert_issuer),
+            'authority_cert_serial_number': value.value.authority_cert_serial_number,
         }
 
     def from_other(self, value):
@@ -1238,10 +1238,10 @@ class BasicConstraints(Extension):
     def ca(self, value):
         self.value['ca'] = bool(value)
 
-    def from_extension(self, ext):
+    def from_extension(self, value):
         self.value = {
-            'ca': ext.value.ca,
-            'pathlen': ext.value.path_length,
+            'ca': value.value.ca,
+            'pathlen': value.value.path_length,
         }
 
     def from_dict(self, value):
@@ -1268,7 +1268,7 @@ class BasicConstraints(Extension):
 
         return val
 
-    def parse_pathlen(self, value):
+    def parse_pathlen(self, value):  # pylint: disable=no-self-use
         if value is not None:
             try:
                 return int(value)
@@ -1360,10 +1360,10 @@ class CertificatePolicies(ListExtension):
     def extension_type(self):
         return x509.CertificatePolicies(policies=[p.for_extension_type for p in self.value])
 
-    def parse_value(self, v):
-        if isinstance(v, PolicyInformation):
-            return v
-        return PolicyInformation(v)
+    def parse_value(self, value):
+        if isinstance(value, PolicyInformation):
+            return value
+        return PolicyInformation(value)
 
     def serialize(self):
         return {
@@ -1486,12 +1486,12 @@ class KeyUsage(OrderedSetExtension):
         if 'encipher_only' in self.value and 'key_agreement' not in self.value:
             self.value.add('key_agreement')
 
-    def from_extension(self, ext):
+    def from_extension(self, value):
         self.value = set()
 
         for v in self.KNOWN_VALUES:
             try:
-                if getattr(ext.value, v):
+                if getattr(value.value, v):
                     self.value.add(v)
             except ValueError:
                 # cryptography throws a ValueError if encipher_only/decipher_only is accessed and
@@ -1503,17 +1503,17 @@ class KeyUsage(OrderedSetExtension):
         kwargs = {v: (v in self.value) for v in self.KNOWN_VALUES}
         return x509.KeyUsage(**kwargs)
 
-    def parse_value(self, v):
-        if v in self.KNOWN_VALUES:
-            return v
+    def parse_value(self, value):
+        if value in self.KNOWN_VALUES:
+            return value
         try:
-            return self.CRYPTOGRAPHY_MAPPING[v]
+            return self.CRYPTOGRAPHY_MAPPING[value]
         except KeyError:
-            raise ValueError('Unknown value: %s' % v)
-        raise ValueError('Unknown value: %s' % v)  # pragma: no cover - function returns/raises before
+            raise ValueError('Unknown value: %s' % value)
+        raise ValueError('Unknown value: %s' % value)  # pragma: no cover - function returns/raises before
 
-    def serialize_value(self, v):
-        return self._CRYPTOGRAPHY_MAPPING_REVERSED[v]
+    def serialize_value(self, value):
+        return self._CRYPTOGRAPHY_MAPPING_REVERSED[value]
 
 
 class ExtendedKeyUsage(OrderedSetExtension):
@@ -1561,23 +1561,23 @@ class ExtendedKeyUsage(OrderedSetExtension):
         ('anyExtendedKeyUsage', 'Any Extended Key Usage'),
     )
 
-    def from_extension(self, ext):
-        self.value = set(ext.value)
+    def from_extension(self, value):
+        self.value = set(value.value)
 
     @property
     def extension_type(self):
         # call serialize_value() to ensure consistent sort order
         return x509.ExtendedKeyUsage(sorted(self.value, key=lambda v: self.serialize_value(v)))
 
-    def serialize_value(self, v):
-        return self._CRYPTOGRAPHY_MAPPING_REVERSED[v]
+    def serialize_value(self, value):
+        return self._CRYPTOGRAPHY_MAPPING_REVERSED[value]
 
-    def parse_value(self, v):
-        if isinstance(v, ObjectIdentifier) and v in self._CRYPTOGRAPHY_MAPPING_REVERSED:
-            return v
-        elif isinstance(v, str) and v in self.CRYPTOGRAPHY_MAPPING:
-            return self.CRYPTOGRAPHY_MAPPING[v]
-        raise ValueError('Unknown value: %s' % v)
+    def parse_value(self, value):
+        if isinstance(value, ObjectIdentifier) and value in self._CRYPTOGRAPHY_MAPPING_REVERSED:
+            return value
+        if isinstance(value, str) and value in self.CRYPTOGRAPHY_MAPPING:
+            return self.CRYPTOGRAPHY_MAPPING[value]
+        raise ValueError('Unknown value: %s' % value)
 
 
 class InhibitAnyPolicy(Extension):
@@ -1726,10 +1726,10 @@ class PolicyConstraints(Extension):
                                       inhibit_policy_mapping=self.value['inhibit_policy_mapping'])
 
     def from_dict(self, value):
-        v = value.get('value', {})
+        value = value.get('value', {})
         self.value = {
-            'require_explicit_policy': v.get('require_explicit_policy'),
-            'inhibit_policy_mapping': v.get('inhibit_policy_mapping'),
+            'require_explicit_policy': value.get('require_explicit_policy'),
+            'inhibit_policy_mapping': value.get('inhibit_policy_mapping'),
         }
 
     def from_extension(self, value):
@@ -2009,8 +2009,8 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
 
     def as_text(self):
         lines = []
-        for v in self.human_readable_timestamps():
-            line = '* {type} ({version}):\n    Timestamp: {timestamp}\n    Log ID: {log_id}'.format(**v)
+        for val in self.human_readable_timestamps():
+            line = '* {type} ({version}):\n    Timestamp: {timestamp}\n    Log ID: {log_id}'.format(**val)
             lines.append(line)
 
         return '\n'.join(lines)
@@ -2018,7 +2018,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
     def count(self, value):
         if isinstance(value, dict):
             return self.serialize()['value'].count(value)
-        return self.value._signed_certificate_timestamps.count(value)
+        return self.value._signed_certificate_timestamps.count(value)  # pylint: disable=protected-access
 
     def extend(self, iterable):
         raise NotImplementedError
@@ -2039,12 +2039,12 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
     def remove(self, v):
         raise NotImplementedError
 
-    def serialize_value(self, v):
+    def serialize_value(self, value):
         return {
-            'type': PrecertificateSignedCertificateTimestamps.LOG_ENTRY_TYPE_MAPPING[v.entry_type],
-            'timestamp': v.timestamp.strftime(self._timeformat),
-            'log_id': binascii.hexlify(v.log_id).decode('utf-8'),
-            'version': v.version.name,
+            'type': PrecertificateSignedCertificateTimestamps.LOG_ENTRY_TYPE_MAPPING[value.entry_type],
+            'timestamp': value.timestamp.strftime(self._timeformat),
+            'log_id': binascii.hexlify(value.log_id).decode('utf-8'),
+            'version': value.version.name,
         }
 
 
@@ -2114,8 +2114,8 @@ class SubjectKeyIdentifier(KeyIdExtension):
         else:
             super().from_other(value)
 
-    def from_extension(self, ext):
-        self.value = ext.value.digest
+    def from_extension(self, value):
+        self.value = value.value.digest
 
 
 class TLSFeature(OrderedSetExtension):
@@ -2151,23 +2151,23 @@ class TLSFeature(OrderedSetExtension):
     KNOWN_PARAMETERS = sorted(CRYPTOGRAPHY_MAPPING)
     """Known values that can be passed to this extension."""
 
-    def from_extension(self, ext):
-        self.value = set(ext.value)
+    def from_extension(self, value):
+        self.value = set(value.value)
 
     @property
     def extension_type(self):
         # call serialize_value() to ensure consistent sort order
-        return x509.TLSFeature(sorted(self.value, key=lambda v: self.serialize_value(v)))
+        return x509.TLSFeature(sorted(self.value, key=self.serialize_value))
 
-    def serialize_value(self, v):
-        return self._CRYPTOGRAPHY_MAPPING_REVERSED[v]
+    def serialize_value(self, value):
+        return self._CRYPTOGRAPHY_MAPPING_REVERSED[value]
 
-    def parse_value(self, v):
-        if isinstance(v, TLSFeatureType):
-            return v
-        elif isinstance(v, str) and v in self.CRYPTOGRAPHY_MAPPING:
-            return self.CRYPTOGRAPHY_MAPPING[v]
-        raise ValueError('Unknown value: %s' % v)
+    def parse_value(self, value):
+        if isinstance(value, TLSFeatureType):
+            return value
+        if isinstance(value, str) and value in self.CRYPTOGRAPHY_MAPPING:
+            return self.CRYPTOGRAPHY_MAPPING[value]
+        raise ValueError('Unknown value: %s' % value)
 
 
 KEY_TO_EXTENSION = {
@@ -2200,4 +2200,5 @@ def get_extension_name(ext):
     if ext.oid in OID_TO_EXTENSION:
         return OID_TO_EXTENSION[ext.oid].name
 
+    # pylint: disable=protected-access; there is no other way to get a human-readable name
     return re.sub('^([a-z])', lambda x: x.groups()[0].upper(), ext.oid._name)
