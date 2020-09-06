@@ -574,6 +574,8 @@ def parse_general_name(name):
     ValueError: Invalid domain: bar com
 
     """
+    # pylint: disable=too-many-return-statements,too-many-branches,too-many-statements
+
     if isinstance(name, x509.GeneralName):
         return name
     if not isinstance(name, str):
@@ -716,17 +718,17 @@ def parse_hash_algorithm(value=None):
     """
     if value is None:
         return ca_settings.CA_DIGEST_ALGORITHM
-    elif isinstance(value, type) and issubclass(value, hashes.HashAlgorithm):
+    if isinstance(value, type) and issubclass(value, hashes.HashAlgorithm):
         return value()
-    elif isinstance(value, hashes.HashAlgorithm):
+    if isinstance(value, hashes.HashAlgorithm):
         return value
-    elif isinstance(value, str):
+    if isinstance(value, str):
         try:
             return getattr(hashes, value.strip())()
-        except AttributeError:
-            raise ValueError('Unknown hash algorithm: %s' % value)
-    else:
-        raise ValueError('Unknown type passed: %s' % type(value).__name__)
+        except AttributeError as e:
+            raise ValueError('Unknown hash algorithm: %s' % value) from e
+
+    raise ValueError('Unknown type passed: %s' % type(value).__name__)
 
 
 def parse_encoding(value=None):
@@ -746,18 +748,18 @@ def parse_encoding(value=None):
     """
     if value is None:
         return ca_settings.CA_DEFAULT_ENCODING
-    elif isinstance(value, Encoding):
+    if isinstance(value, Encoding):
         return value
-    elif isinstance(value, str):
+    if isinstance(value, str):
         if value == 'ASN1':
             value = 'DER'
 
         try:
             return getattr(Encoding, value)
-        except AttributeError:
-            raise ValueError('Unknown encoding: %s' % value)
-    else:
-        raise ValueError('Unknown type passed: %s' % type(value).__name__)
+        except AttributeError as e:
+            raise ValueError('Unknown encoding: %s' % value) from e
+
+    raise ValueError('Unknown type passed: %s' % type(value).__name__)
 
 
 def parse_key_curve(value=None):
@@ -873,7 +875,7 @@ def read_file(path):
 #        fh.write(data)
 
 
-def shlex_split(s, sep):
+def shlex_split(val, sep):
     """Split a character on the given set of characters.
 
     Example::
@@ -887,10 +889,10 @@ def shlex_split(s, sep):
         >>> shlex_split('foo,"bar,bla"', ',')
         ['foo', 'bar,bla']
     """
-    lex = shlex.shlex(s, posix=True)
+    lex = shlex.shlex(val, posix=True)
     lex.whitespace = sep
     lex.whitespace_split = True
-    return [line for line in lex]
+    return list(lex)
 
 
 class GeneralNameList(list):
@@ -920,8 +922,9 @@ class GeneralNameList(list):
         super().__init__(parse_general_name(v) for v in iterable)
 
     def serialize(self):
-        for v in self:
-            yield format_general_name(v)
+        """Generate a list of formatted names."""
+        for val in self:
+            yield format_general_name(val)
 
     def __add__(self, value):  # self + other_list
         if isinstance(value, GeneralNameList) is False:
@@ -953,8 +956,8 @@ class GeneralNameList(list):
         else:
             list.__setitem__(self, key, parse_general_name(value))
 
-    def append(self, object):
-        list.append(self, parse_general_name(object))
+    def append(self, o):
+        list.append(self, parse_general_name(o))
 
     def count(self, value):
         try:
@@ -970,14 +973,16 @@ class GeneralNameList(list):
     def index(self, value, *args):
         return list.index(self, parse_general_name(value), *args)
 
-    def insert(self, index, object):
-        list.insert(self, index, parse_general_name(object))
+    def insert(self, index, o):
+        list.insert(self, index, parse_general_name(o))
 
     def remove(self, value):
         list.remove(self, parse_general_name(value))
 
 
 def get_crl_cache_key(serial, algorithm=hashes.SHA512, encoding=Encoding.DER, scope=None):
+    """Function to get a cache key for a CRL with the given parameters."""
+
     return 'crl_%s_%s_%s_%s' % (serial, algorithm.name, encoding.name, scope)
 
 
