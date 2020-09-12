@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function
+"""Various commands used in development."""
 
 import argparse
 import json
@@ -570,39 +570,42 @@ elif args.command == 'update-ca-data':
                         ]
                     elif isinstance(value, x509.CRLDistributionPoints):
                         this_cert_values['crldp'] = []
-                        for dp in value:
+                        for distribution_point in value:
                             full_name = '* '.join(
-                                [format_general_name(name) for name in dp.full_name]
-                            ) if dp.full_name else '✗'
+                                [format_general_name(name) for name in distribution_point.full_name]
+                            ) if distribution_point.full_name else '✗'
                             issuer = '* '.join(
-                                [format_general_name(name) for name in dp.crl_issuer]
-                            ) if dp.crl_issuer else '✗'
-                            reasons = ', '.join([r.name for r in dp.reasons]) if dp.reasons else '✗'
-                            this_cert_values['crldp'].append([
-                                critical,
-                                full_name,
-                                format_name(dp.relative_name) if dp.relative_name else '✗',
-                                issuer, reasons,
+                                [format_general_name(name) for name in distribution_point.crl_issuer]
+                            ) if distribution_point.crl_issuer else '✗'
+                            reasons = ', '.join(
+                                [r.name for r in distribution_point.reasons]
+                            ) if distribution_point.reasons else '✗'
+
+                            relative_name = format_name(
+                                distribution_point.relative_name
+                            ) if distribution_point.relative_name else '✗'
+                            this_cert_values['crldistribution_point'].append([
+                                critical, full_name, relative_name, issuer, reasons,
                             ])
                     elif isinstance(value, x509.CertificatePolicies):
                         policies = []
 
-                        def ref_as_str(r):
-                            numbers = [str(n) for n in r.notice_numbers]
-                            return '%s: %s' % (r.organization, ', '.join(numbers))
+                        def ref_as_str(ref):
+                            numbers = [str(n) for n in ref.notice_numbers]
+                            return '%s: %s' % (ref.organization, ', '.join(numbers))
 
-                        def policy_as_str(p):
-                            if isinstance(p, str):
-                                return p
-                            elif p.explicit_text is None and p.notice_reference is None:
+                        def policy_as_str(policy):
+                            if isinstance(policy, str):
+                                return policy
+                            elif policy.explicit_text is None and policy.notice_reference is None:
                                 return 'Empty UserNotice'
-                            elif p.notice_reference is None:
-                                return 'User Notice: %s' % p.explicit_text
-                            elif p.explicit_text is None:
-                                return 'User Notice: %s' % (ref_as_str(p.notice_reference))
+                            elif policy.notice_reference is None:
+                                return 'User Notice: %s' % policy.explicit_text
+                            elif policy.explicit_text is None:
+                                return 'User Notice: %s' % (ref_as_str(policy.notice_reference))
                             else:
-                                return 'User Notice: %s: %s' % (ref_as_str(p.notice_reference),
-                                                                p.explicit_text)
+                                return 'User Notice: %s: %s' % (ref_as_str(policy.notice_reference),
+                                                                policy.explicit_text)
 
                         for policy in value:
                             policy_name = policy.policy_identifier.dotted_string
@@ -1051,6 +1054,7 @@ elif args.command == 'collectstatic':
 
     from django.contrib.staticfiles.finders import get_finders
     from django.core.management import call_command
+
     call_command('collectstatic', interactive=False)
 
     locations = set()

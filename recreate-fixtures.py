@@ -160,9 +160,9 @@ def update_cert_data(cert, data):
     if ski is not None:
         data['subject_key_identifier'] = ski.serialize()
 
-    ku = cert.key_usage
-    if ku is not None:
-        data['key_usage'] = ku.serialize()
+    key_usage = cert.key_usage
+    if key_usage is not None:
+        data['key_usage'] = key_usage.serialize()
 
     aia = cert.authority_information_access
     if aia is not None:
