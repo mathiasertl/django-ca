@@ -24,18 +24,19 @@ import sys
 import traceback
 import warnings
 
-if os.environ.get('SCRIPT_LOCATION'):  # NOQA
-    pyver = 'python{v.major}.{v.minor}'.format(v=sys.version_info)
-    sys.path.insert(0, os.path.join(os.environ['SCRIPT_LOCATION'], 'lib', pyver, 'site-packages'))
+import packaging.version
 
-import packaging.version  # isort:skip
+import cryptography
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 
-import cryptography  # isort:skip
-from cryptography import x509  # isort:skip
-from cryptography.hazmat.backends import default_backend  # isort:skip
+import django
+from django.core.exceptions import ImproperlyConfigured
 
-import django  # isort:skip
-from django.core.exceptions import ImproperlyConfigured  # isort:skip
+from common import bold
+from common import error
+from common import ok
+from common import setup_django
 
 test_base = argparse.ArgumentParser(add_help=False)
 test_base.add_argument('-s', '--suites', default=[], nargs='+',
@@ -79,40 +80,6 @@ commands.add_parser('clean', help="Remove generated files.")
 args = parser.parse_args()
 
 _rootdir = os.path.dirname(os.path.realpath(__file__))
-
-try:
-    from termcolor import colored
-except ImportError:
-    def colored(msg, *args, **kwargs):
-        return msg
-
-
-def error(msg, **kwargs):
-    print(colored(msg, 'red'), **kwargs)
-
-
-def warn(msg, **kwargs):
-    print(colored(msg, 'yellow'), **kwargs)
-
-
-def ok(msg=' OK.', **kwargs):
-    print(colored(msg, 'green'), **kwargs)
-
-
-def bold(msg):
-    return colored(msg, attrs=['bold'])
-
-
-def abort(msg):
-    print(msg)
-    sys.exit(1)
-
-
-def setup_django(settings_module="ca.test_settings"):
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings_module)
-    sys.path.insert(0, os.path.join(_rootdir, 'ca'))
-
-    django.setup()
 
 
 def test(suites):

@@ -43,7 +43,7 @@ RUN --mount=type=cache,target=/root/.cache/pip/http pip install \
     -r requirements/requirements-test.txt \
     -r requirements/requirements-lint.txt
 
-COPY setup.py dev.py tox.ini recreate-fixtures.py ./
+COPY setup.py dev.py common.py tox.ini recreate-fixtures.py ./
 COPY --chown=django-ca:django-ca docs/ docs/
 COPY --chown=django-ca:django-ca ca/ ca/
 
@@ -74,15 +74,10 @@ COPY uwsgi/ uwsgi/
 COPY nginx/ nginx/
 RUN rm -rf requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.example ca/.coverage
 
-# Collect static files and remove source files
-COPY dev.py .
-ENV DJANGO_SETTINGS_MODULE=ca.settings
-ENV DJANGO_CA_SETTINGS=conf/
-ENV DJANGO_CA_SECRET_KEY=dummy
-RUN SCRIPT_LOCATION=/install ./dev.py collectstatic
-
 # Test that imports are working
+COPY dev.py common.py .
 RUN cp -a /install/* /usr/local/
+ENV DJANGO_CA_SECRET_KEY=dummy
 RUN ./dev.py test-imports
 
 # Remove files from working directory
@@ -91,12 +86,25 @@ RUN rm dev.py
 # Seems like with BuildKit, the test stage is never executed unless we somehow depend on it
 COPY --from=test /usr/src/django-ca/.coverage /tmp
 
+################
+# static stage #
+################
+# just prepare static files
+FROM build as static
+COPY --from=prepare /install /usr/local
+COPY --from=prepare /usr/src/django-ca/ ./
+COPY dev.py common.py .
+ENV DJANGO_SETTINGS_MODULE=ca.settings
+ENV DJANGO_CA_SETTINGS=conf/
+ENV DJANGO_CA_SECRET_KEY=dummy
+RUN ./dev.py collectstatic
+
 ###############
 # final stage #
 ###############
 FROM base
 COPY --from=prepare /install /usr/local
-COPY --from=prepare /usr/share/django-ca/static /usr/share/django-ca/static
+COPY --from=static /usr/share/django-ca/static /usr/share/django-ca/static
 
 RUN mkdir -p /usr/share/django-ca/static /usr/share/django-ca/media /var/lib/django-ca/ \
              /var/lib/django-ca/certs/ca/shared /var/lib/django-ca/certs/ocsp \
