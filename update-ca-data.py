@@ -49,8 +49,10 @@ def optional(value, formatter=None, fallback=None):
 
     if not value:
         return fallback
-    if formatter:
+    if callable(formatter):
         return formatter(value)
+    if formatter is not None:
+        return formatter
     return value
 
 
@@ -251,7 +253,11 @@ def policy_as_str(policy):
                                     policy.explicit_text)
 
 
-def _update_cert_data(prefix, dirname, cert_data, name_header):
+def update_cert_data(prefix, dirname, cert_data, name_header):
+    """Update certificate/ca data."""
+
+    # pylint: disable=too-many-locals,too-many-branches,too-many-statements; there are many extensions
+
     cert_values = {
         'subject': [(name_header, 'Subject', )],
         'issuer': [(name_header, 'Issuer', )],
@@ -282,7 +288,7 @@ def _update_cert_data(prefix, dirname, cert_data, name_header):
         cert_name = cert_data[cert_filename]['name']
 
         this_cert_values = {}
-        for cert_key in cert_values.keys():
+        for cert_key in cert_values:
             this_cert_values[cert_key] = ['']
 
         with open(os.path.join(dirname, cert_filename), 'rb') as cert_stream:
@@ -308,7 +314,7 @@ def _update_cert_data(prefix, dirname, cert_data, name_header):
                     critical,
                     bytes_to_hex(value.key_identifier),
                     optional(value.authority_cert_issuer, format_general_name, '✗'),
-                    value.authority_cert_serial_number if value.authority_cert_serial_number else '✗',
+                    optional(value.authority_cert_serial_number, fallback='✗'),
                 ]
             elif isinstance(value, x509.BasicConstraints):
                 this_cert_values['basicconstraints'] = [
@@ -432,175 +438,162 @@ def _update_cert_data(prefix, dirname, cert_data, name_header):
             stream.write(table)
 
 
+def update_crl_data():  # pylint: disable=too-many-locals
+    """Update CRL data."""
+    crls = {
+        'gdig2s1-1015.crl': {
+            'info': 'CRL in Go Daddy G2 end user certificates',
+            'last': '2019-04-19',
+            'name': 'Go Daddy G2/user',
+            'url': 'http://crl.godaddy.com/gdig2s1-1015.crl',
+        },
+        'gdroot-g2.crl': {
+            'info': 'CRL in Go Daddy G2 intermediate CA',
+            'last': '2019-04-19',
+            'name': 'Go Daddy G2/ca',
+            'url': 'http://crl.godaddy.com/gdroot-g2.crl',
+        },
+        'DSTROOTCAX3CRL.crl': {
+            'info': 'CRL in Let\'s Encrypt X3',
+            'last': '2019-04-19',
+            'name': "Let's Encrypt Authority X3/ca",
+            'url': 'http://crl.identrust.com/DSTROOTCAX3CRL.crl',
+        },
+        'root-r2.crl': {
+            'info': 'CRL in GlobalSign R2',
+            'last': '2019-04-19',
+            'name': 'GlobalSign R2/ca',
+            'url': 'http://crl.globalsign.net/root-r2.crl',
+        },
+        'gsr2.crl': {
+            'info': 'CRL in Google G3 CA',
+            'last': '2019-04-19',
+            'name': 'Google G3/ca',
+            'url': 'http://crl.pki.goog/gsr2/gsr2.crl',
+        },
+        'GTSGIAG3.crl': {
+            'info': 'CRL in Google G3 end user certificates',
+            'last': '2019-04-19',
+            'name': 'Google G3/user',
+            'url': 'http://crl.pki.goog/GTSGIAG3.crl',
+        },
+        'comodo_ev_user.pem': {
+            'info': 'CRL in %s end user certificates' % certs['comodo_ev.pem']['name'],
+            'last': '2019-04-21',
+            'name': '%s/user' % cas['comodo_ev.pem']['name'],
+            'url': 'http://crl.comodoca.com/COMODORSAExtendedValidationSecureServerCA.crl',
+        },
+        'digicert_ha_intermediate.crl': {
+            'info': 'CRL in %s' % cas['digicert_ha_intermediate.pem']['name'],
+            'last': '2019-04-21',
+            'name': '%s/ca' % cas['digicert_ha_intermediate.pem']['name'],
+            'url': 'http://crl4.digicert.com/DigiCertHighAssuranceEVRootCA.crl',
+        },
+        'digicert_ha_intermediate_user.crl': {
+            'info': 'CRL %s end user certificates' % cas['digicert_ha_intermediate.pem']['name'],
+            'last': '2019-04-21',
+            'name': '%s/user' % certs['digicert_ha_intermediate.pem']['name'],
+            'url': 'http://crl3.digicert.com/sha2-ha-server-g6.crl',
+        },
+        'trustid_server_a52_ca.crl': {
+            'info': 'CRL in %s' % cas['trustid_server_a52.pem']['name'],
+            'last': '2019-04-21',
+            'name': '%s/ca' % cas['trustid_server_a52.pem']['name'],
+            'url': 'http://validation.identrust.com/crl/commercialrootca1.crl',
+        },
+        'trustid_server_a52_user.crl': {
+            'info': 'CRL %s end user certificates' % cas['trustid_server_a52.pem']['name'],
+            'last': '2019-04-21',
+            'name': '%s/user' % certs['trustid_server_a52.pem']['name'],
+            'url': 'http://validation.identrust.com/crl/trustidcaa52.crl',
+        },
+    }
+
+    crl_dir = os.path.join(docs_base, '_files', 'crl')
+    crl_values = {
+        # meta data
+        'crl_info': [('CRL', 'Source', 'Last accessed', 'Info')],
+        'crl_issuer': [('CRL', 'Issuer Name')],
+        'crl_data': [('CRL', 'Update freq.', 'hash')],
+
+        # extensions
+        'crl_aki': [('CRL', 'key_identifier', 'cert_issuer', 'cert_serial')],
+        'crl_crlnumber': [('CRL', 'number')],
+        'crl_idp': [('CRL', 'full name', 'relative name', 'only attr certs', 'only ca certs',
+                     'only user certs', 'reasons', 'indirect CRL', ), ]
+    }
+
+    for crl_filename in sorted(os.listdir(crl_dir), key=lambda f: crls.get(f, {}).get('name', '')):
+        if crl_filename not in crls:
+            common.warn('Unknown CRL: %s' % crl_filename)
+            continue
+
+        crl_name = crls[crl_filename]['name']
+
+        # set empty string as default value
+        this_crl_values = {}
+        for crl_key in crl_values:
+            this_crl_values[crl_key] = [''] * (len(crl_values[crl_key][0]) - 1)
+
+        with open(os.path.join(crl_dir, crl_filename), 'rb') as crl_stream:
+            crl = x509.load_der_x509_crl(crl_stream.read(), backend=default_backend())
+
+        # add info
+        this_crl_values['crl_info'] = (
+            ':download:`%s </_files/crl/%s>` (`URL <%s>`__)' % (crl_filename, crl_filename,
+                                                                crls[crl_filename]['url']),
+            crls[crl_filename]['last'],
+            crls[crl_filename]['info'],
+        )
+
+        # add data row
+        this_crl_values['crl_data'] = (
+            crl.next_update - crl.last_update,
+            crl.signature_hash_algorithm.name,
+        )
+        this_crl_values['crl_issuer'] = (
+            format_name(crl.issuer),
+        )
+
+        # add extension values
+        for ext in crl.extensions:
+            value = ext.value
+
+            if isinstance(value, x509.CRLNumber):
+                this_crl_values['crl_crlnumber'] = (ext.value.crl_number, )
+            elif isinstance(value, x509.IssuingDistributionPoint):
+                this_crl_values['crl_idp'] = (
+                    optional(value.full_name, lambda v: '* '.join([format_general_name(n) for n in v]), '✗'),
+                    optional(value.relative_name, format_name, '✗'),
+                    '✓' if value.only_contains_attribute_certs else '✗',
+                    '✓' if value.only_contains_ca_certs else '✗',
+                    '✓' if value.only_contains_user_certs else '✗',
+                    optional(value.only_some_reasons, lambda v: ', '.join([f.name for f in v]), '✗'),
+                    '✓' if value.indirect_crl else '✗',
+                )
+            elif isinstance(value, x509.AuthorityKeyIdentifier):
+                crl_aci = optional(value.authority_cert_issuer,
+                                   lambda v: '* '.join([format_general_name(n) for n in v]), '✗')
+                crl_acsn = optional(value.authority_cert_serial_number, fallback='✗')
+
+                this_crl_values['crl_aki'] = (bytes_to_hex(value.key_identifier), crl_aci, crl_acsn)
+            else:
+                common.warn('Unknown extension: %s' % ext.oid._name)  # pylint: disable=protected-access
+
+        for crl_key, crl_row in this_crl_values.items():
+            crl_values[crl_key].append([crl_name] + list(crl_row))
+
+    # Finally, write CRL data to RST table
+    for crl_name, crl_extensions in crl_values.items():
+        crl_table = tabulate(crl_extensions, headers='firstrow', tablefmt='rst')
+        with open(os.path.join(out_base, '%s.rst' % crl_name), 'w') as crl_table_stream:
+            crl_table_stream.write(crl_table)
+
+
 ######################
 # Generate Cert data #
 ######################
 
-_update_cert_data('cert', cert_dir, certs, 'Certificate')
-_update_cert_data('ca', ca_dir, cas, 'CA')
-
-#####################
-# Generate CRL data #
-#####################
-crls = {
-    'gdig2s1-1015.crl': {
-        'info': 'CRL in Go Daddy G2 end user certificates',
-        'last': '2019-04-19',
-        'name': 'Go Daddy G2/user',
-        'url': 'http://crl.godaddy.com/gdig2s1-1015.crl',
-    },
-    'gdroot-g2.crl': {
-        'info': 'CRL in Go Daddy G2 intermediate CA',
-        'last': '2019-04-19',
-        'name': 'Go Daddy G2/ca',
-        'url': 'http://crl.godaddy.com/gdroot-g2.crl',
-    },
-    'DSTROOTCAX3CRL.crl': {
-        'info': 'CRL in Let\'s Encrypt X3',
-        'last': '2019-04-19',
-        'name': "Let's Encrypt Authority X3/ca",
-        'url': 'http://crl.identrust.com/DSTROOTCAX3CRL.crl',
-    },
-    'root-r2.crl': {
-        'info': 'CRL in GlobalSign R2',
-        'last': '2019-04-19',
-        'name': 'GlobalSign R2/ca',
-        'url': 'http://crl.globalsign.net/root-r2.crl',
-    },
-    'gsr2.crl': {
-        'info': 'CRL in Google G3 CA',
-        'last': '2019-04-19',
-        'name': 'Google G3/ca',
-        'url': 'http://crl.pki.goog/gsr2/gsr2.crl',
-    },
-    'GTSGIAG3.crl': {
-        'info': 'CRL in Google G3 end user certificates',
-        'last': '2019-04-19',
-        'name': 'Google G3/user',
-        'url': 'http://crl.pki.goog/GTSGIAG3.crl',
-    },
-    'comodo_ev_user.pem': {
-        'info': 'CRL in %s end user certificates' % certs['comodo_ev.pem']['name'],
-        'last': '2019-04-21',
-        'name': '%s/user' % cas['comodo_ev.pem']['name'],
-        'url': 'http://crl.comodoca.com/COMODORSAExtendedValidationSecureServerCA.crl',
-    },
-    'digicert_ha_intermediate.crl': {
-        'info': 'CRL in %s' % cas['digicert_ha_intermediate.pem']['name'],
-        'last': '2019-04-21',
-        'name': '%s/ca' % cas['digicert_ha_intermediate.pem']['name'],
-        'url': 'http://crl4.digicert.com/DigiCertHighAssuranceEVRootCA.crl',
-    },
-    'digicert_ha_intermediate_user.crl': {
-        'info': 'CRL %s end user certificates' % cas['digicert_ha_intermediate.pem']['name'],
-        'last': '2019-04-21',
-        'name': '%s/user' % certs['digicert_ha_intermediate.pem']['name'],
-        'url': 'http://crl3.digicert.com/sha2-ha-server-g6.crl',
-    },
-    'trustid_server_a52_ca.crl': {
-        'info': 'CRL in %s' % cas['trustid_server_a52.pem']['name'],
-        'last': '2019-04-21',
-        'name': '%s/ca' % cas['trustid_server_a52.pem']['name'],
-        'url': 'http://validation.identrust.com/crl/commercialrootca1.crl',
-    },
-    'trustid_server_a52_user.crl': {
-        'info': 'CRL %s end user certificates' % cas['trustid_server_a52.pem']['name'],
-        'last': '2019-04-21',
-        'name': '%s/user' % certs['trustid_server_a52.pem']['name'],
-        'url': 'http://validation.identrust.com/crl/trustidcaa52.crl',
-    },
-}
-
-crl_dir = os.path.join(docs_base, '_files', 'crl')
-crl_values = {
-    # meta data
-    'crl_info': [('CRL', 'Source', 'Last accessed', 'Info')],
-    'crl_issuer': [('CRL', 'Issuer Name')],
-    'crl_data': [('CRL', 'Update freq.', 'hash')],
-
-    # extensions
-    'crl_aki': [('CRL', 'key_identifier', 'cert_issuer', 'cert_serial')],
-    'crl_crlnumber': [('CRL', 'number')],
-    'crl_idp': [('CRL', 'full name', 'relative name', 'only attr certs', 'only ca certs',
-                 'only user certs', 'reasons', 'indirect CRL', ), ]
-}
-
-for crl_filename in sorted(os.listdir(crl_dir), key=lambda f: crls.get(f, {}).get('name', '')):
-    if crl_filename not in crls:
-        common.warn('Unknown CRL: %s' % crl_filename)
-        continue
-
-    crl_name = crls[crl_filename]['name']
-
-    # set empty string as default value
-    not_present = ['']
-    this_crl_values = {}
-    for crl_key in crl_values.keys():
-        this_crl_values[crl_key] = not_present * (len(crl_values[crl_key][0]) - 1)
-
-    with open(os.path.join(crl_dir, crl_filename), 'rb') as crl_stream:
-        crl = x509.load_der_x509_crl(crl_stream.read(), backend=default_backend())
-
-    # add info
-    this_crl_values['crl_info'] = (
-        ':download:`%s </_files/crl/%s>` (`URL <%s>`__)' % (crl_filename, crl_filename,
-                                                            crls[crl_filename]['url']),
-        crls[crl_filename]['last'],
-        crls[crl_filename]['info'],
-    )
-
-    # add data row
-    this_crl_values['crl_data'] = (
-        crl.next_update - crl.last_update,
-        crl.signature_hash_algorithm.name,
-    )
-    this_crl_values['crl_issuer'] = (
-        format_name(crl.issuer),
-    )
-
-    # add extension values
-    for crl_ext in crl.extensions:
-        crl_ext_value = crl_ext.value
-
-        if isinstance(crl_ext_value, x509.CRLNumber):
-            this_crl_values['crl_crlnumber'] = (crl_ext.value.crl_number, )
-        elif isinstance(crl_ext_value, x509.IssuingDistributionPoint):
-            crl_full_name = crl_rel_name = crl_reasons = '✗'
-            if crl_ext_value.full_name:
-                crl_full_name = '* '.join([format_general_name(v) for v in crl_ext_value.full_name])
-            if crl_ext_value.relative_name:
-                crl_rel_name = format_name(crl_ext_value.relative_name)
-            if crl_ext_value.only_some_reasons:
-                crl_reasons = ', '.join([f.name for f in crl_ext_value.only_some_reasons])
-
-            this_crl_values['crl_idp'] = (
-                crl_full_name,
-                crl_rel_name,
-                '✓' if crl_ext_value.only_contains_attribute_certs else '✗',
-                '✓' if crl_ext_value.only_contains_ca_certs else '✗',
-                '✓' if crl_ext_value.only_contains_user_certs else '✗',
-                crl_reasons,
-                '✓' if crl_ext_value.indirect_crl else '✗',
-            )
-        elif isinstance(crl_ext_value, x509.AuthorityKeyIdentifier):
-            crl_aci = '✗'
-            if crl_ext_value.authority_cert_issuer:
-                crl_aci = '* '.join([format_general_name(v) for v in crl_ext_value.authority_cert_issuer])
-
-            crl_acsn = '✗'
-            if crl_ext_value.authority_cert_serial_number:
-                crl_acsn = crl_ext_value.authority_cert_serial_number
-
-            this_crl_values['crl_aki'] = (bytes_to_hex(crl_ext_value.key_identifier), crl_aci, crl_acsn)
-        else:
-            common.warn('Unknown extension: %s' % crl_ext.oid._name)
-
-    for crl_key, crl_row in this_crl_values.items():
-        crl_values[crl_key].append([crl_name] + list(crl_row))
-
-for crl_name, crl_extensions in crl_values.items():
-    crl_filename = os.path.join(out_base, '%s.rst' % crl_name)
-    crl_table = tabulate(crl_extensions, headers='firstrow', tablefmt='rst')
-
-    with open(crl_filename, 'w') as crl_table_stream:
-        crl_table_stream.write(crl_table)
+update_cert_data('cert', cert_dir, certs, 'Certificate')
+update_cert_data('ca', ca_dir, cas, 'CA')
+update_crl_data()
