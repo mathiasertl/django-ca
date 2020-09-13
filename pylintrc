@@ -31,6 +31,9 @@ suggestion-mode=yes
 # active Python interpreter and may run arbitrary code.
 unsafe-load-any-extension=no
 
+# Add init-hook so that django_ca can be imported in pylint
+init-hook="import os, sys; sys.path.insert(0, os.path.abspath('ca'))"
+
 
 [MESSAGES CONTROL]
 
