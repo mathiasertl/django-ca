@@ -33,6 +33,8 @@ from cryptography.hazmat.backends import default_backend
 import django
 from django.core.exceptions import ImproperlyConfigured
 
+from common import CADIR
+from common import ROOTDIR
 from common import bold
 from common import error
 from common import ok
@@ -71,18 +73,27 @@ cov_parser.add_argument('--fail-under', type=int, default=100, metavar='[0-100]'
                         help='Fail if coverage is below given percentage (default: %(default)s%%).')
 
 demo_parser = commands.add_parser('init-demo', help="Initialize the demo data.")
+demo_parser.add_argument('--base-url', metavar='URL', default='http://localhost:8000/',
+                         help="Base URL for CRL/OCSP URLs.")
 
-collectstatic_parser = commands.add_parser('collectstatic', help="Collect and remove static files.")
-collectstatic_parser.add_argument('--install-dir', metavar='PATH',
-                                  help="Assume modules were installed to PATH.")
-
+commands.add_parser('collectstatic', help="Collect and remove static files.")
 commands.add_parser('clean', help="Remove generated files.")
 args = parser.parse_args()
 
-_rootdir = os.path.dirname(os.path.realpath(__file__))
-
 
 def test(suites):
+    """Run named test suites (or all of them)."""
+    # pylint: disable=import-outside-toplevel; imported here so that script runs without django
+    from django.utils import deprecation
+    from django.core.management import call_command  # pylint: disable=redefined-outer-name
+
+    # pylint: enable=import-outside-toplevel
+
+    if not args.virtual_display:
+        os.environ['VIRTUAL_DISPLAY'] = 'n'
+    if not args.selenium:
+        os.environ['SKIP_SELENIUM_TESTS'] = 'y'
+
     warnings.filterwarnings(action='always')
     warnings.filterwarnings(action='error', module='django_ca')
 
@@ -95,7 +106,6 @@ def test(suites):
     warnings.filterwarnings(action='ignore', category=DeprecationWarning, module='webtest.*', message=msg3)
 
     # At present, some libraries are not yet updated.
-    from django.utils import deprecation
     if hasattr(deprecation, 'RemovedInDjango40Warning'):  # pragma: django<=3.0
         warnings.filterwarnings(
             action='ignore', category=deprecation.RemovedInDjango40Warning,
@@ -103,14 +113,11 @@ def test(suites):
             message=r'^django\.conf\.urls\.url\(\) is deprecated in favor of django\.urls\.re_path\(\)\.$'
         )
 
-    work_dir = os.path.join(_rootdir, 'ca')
-
-    os.chdir(work_dir)
-    sys.path.insert(0, work_dir)
+    os.chdir(CADIR)
+    sys.path.insert(0, CADIR)
 
     suites = ['django_ca.tests.%s' % s.strip('.') for s in suites]
 
-    from django.core.management import call_command
     call_command('test', *suites)
 
 
@@ -131,11 +138,6 @@ def exclude_versions(cov, sw, this_version, version, version_str):
 
 
 if args.command == 'test':
-    if not args.virtual_display:
-        os.environ['VIRTUAL_DISPLAY'] = 'n'
-    if not args.selenium:
-        os.environ['SKIP_SELENIUM_TESTS'] = 'y'
-
     setup_django()
     test(args.suites)
 elif args.command == 'coverage':
@@ -145,7 +147,7 @@ elif args.command == 'coverage':
         report_dir = os.path.join(os.environ['TOX_ENV_DIR'], 'coverage')
         data_file = os.path.join(os.environ['TOX_ENV_DIR'], '.coverage')
     else:
-        report_dir = os.path.join(_rootdir, 'docs', 'build', 'coverage')
+        report_dir = os.path.join(ROOTDIR, 'docs', 'build', 'coverage')
         data_file = None
 
     cov = coverage.Coverage(data_file=data_file, cover_pylib=False, branch=True, source=['django_ca'],
@@ -172,11 +174,6 @@ elif args.command == 'coverage':
 
     cov.start()
 
-    if not args.virtual_display:
-        os.environ['VIRTUAL_DISPLAY'] = 'n'
-    if not args.selenium:
-        os.environ['SKIP_SELENIUM_TESTS'] = 'y'
-
     setup_django()
     test(args.suites)
 
@@ -197,34 +194,31 @@ elif args.command == 'coverage':
 
 elif args.command == 'code-quality':
     print('isort --check-only --diff ca/ setup.py dev.py')
-    status = subprocess.call(['isort', '--check-only', '--diff', 'ca/', 'setup.py', 'dev.py'])
-    if status != 0:
-        sys.exit(status)
+    subprocess.run(['isort', '--check-only', '--diff', 'ca/', 'setup.py', 'dev.py'], check=True)
 
     print('flake8 ca/ setup.py dev.py recreate-fixtures.py')
-    status = subprocess.call(['flake8', 'ca/', 'setup.py', 'dev.py', 'recreate-fixtures.py'])
-    if status != 0:
-        sys.exit(status)
+    subprocess.run(['flake8', 'ca/', 'setup.py', 'dev.py', 'recreate-fixtures.py'], check=True)
 
     print('python -Wd manage.py check')
-    setup_django('ca.test_settings')
-    status = subprocess.call(['python', '-Wd', 'manage.py', 'check'], cwd=os.path.join(_rootdir, 'ca'))
-    if status != 0:
-        sys.exit(status)
+    subprocess.run(['python', '-Wd', 'manage.py', 'check'], cwd=CADIR, check=True)
 elif args.command == 'test-imports':
     setup_django('ca.settings')
 
+    # pylint: disable=ungrouped-imports; have to call setup_django() first
+    # pylint: disable=unused-import; this command just tests if import is working
+
     # useful when run in docker-test, where localsettings uses YAML
-    from django.conf import settings  # NOQA
+    from django.conf import settings  # NOQA: F401
 
     # import some modules - if any dependency is not installed, this will fail
-    from django_ca import extensions  # NOQA
-    from django_ca import models  # NOQA
-    from django_ca import subject  # NOQA
-    from django_ca import tasks  # NOQA
-    from django_ca import utils  # NOQA
-    from django_ca import views  # NOQA
+    from django_ca import extensions  # NOQA: F401
+    from django_ca import models  # NOQA: F401
+    from django_ca import subject  # NOQA: F401
+    from django_ca import tasks  # NOQA: F401
+    from django_ca import utils  # NOQA: F401
+    from django_ca import views  # NOQA: F401
 
+    # pylint: enable=ungrouped-imports,unused-import
 
 elif args.command == 'docker-test':
     images = args.images or [
@@ -299,7 +293,7 @@ elif args.command == 'docker-test':
                     'error': 'return code: %s' % p.returncode,
                 })
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except; to make sure we test all images
             msg = '%s: %s: %s' % (image, type(e).__name__, e)
             docker_runs.append({
                 'image': image,
@@ -315,18 +309,18 @@ elif args.command == 'docker-test':
                 subprocess.call(['docker', 'image', 'rm', tag])
 
     print("\nSummary of test runs:")
-    success = True
     for run in docker_runs:
         if run['success']:
             ok('  %s: passed.' % run['image'])
         else:
             error('  %s: %s' % (run['image'], run['error']))
-            success = False
 
-    if success:
+    failed_images = [r for r in docker_runs if r['success']]
+    if not failed_images:
         ok("\nCongratulations :)")
     else:
         error("\nSome images failed.")
+        sys.exit(1)
 
 elif args.command == 'init-demo':
     os.environ['DJANGO_CA_SECRET_KEY'] = 'dummy'
@@ -341,7 +335,7 @@ elif args.command == 'init-demo':
     except ImproperlyConfigured:
         # Cannot import settings, probably because localsettings.py wasn't created.
         traceback.print_exc()
-        localsettings = os.path.join(_rootdir, 'ca', 'ca', 'localsettings.py')
+        localsettings = os.path.join(CADIR, 'ca', 'localsettings.py')
         print("""
 Could not configure settings! Have you created localsettings.py?
 
@@ -351,6 +345,7 @@ Please create %(localsettings)s from %(example)s and try again.""" % {
         })
         sys.exit(1)
 
+    # pylint: disable=ungrouped-imports; have to call setup_django() first
     from django.contrib.auth import get_user_model
     from django.core.files.base import ContentFile
     from django.core.management import call_command as manage
@@ -360,6 +355,8 @@ Please create %(localsettings)s from %(example)s and try again.""" % {
     from django_ca.models import Certificate
     from django_ca.models import CertificateAuthority
     from django_ca.utils import ca_storage
+
+    # pylint: enable=ungrouped-imports
 
     User = get_user_model()
 
@@ -421,7 +418,6 @@ Please create %(localsettings)s from %(example)s and try again.""" % {
     chain = loaded_cas['child'].pub + loaded_cas['root'].pub
     chain_path = ca_storage.path(ca_storage.save('child-chain.pem', ContentFile(chain)))
 
-    base_url = 'http://localhost:8000/'
     cwd = os.getcwd()
     rel = lambda p: os.path.relpath(p, cwd)  # NOQA
     root_ca_path = ca_storage.path(certs['root']['pub_filename'])
@@ -430,14 +426,14 @@ Please create %(localsettings)s from %(example)s and try again.""" % {
     root_cert_path = ca_storage.path(certs['root-cert']['pub_filename'])
     child_cert_path = ca_storage.path(certs['child-cert']['pub_filename'])
 
-    ocsp_url = '%s%s' % (base_url.rstrip('/'),
+    ocsp_url = '%s%s' % (args.base_url.rstrip('/'),
                          reverse('django_ca:ocsp-cert-post', kwargs={'serial': certs['child']['serial']}))
 
     print("")
     print('* All certificates are in %s.' % bold(ca_settings.CA_DIR))
     ok('* Start webserver with the admin interface:')
     print('  * Run "%s"' % bold('python ca/manage.py runserver'))
-    print('  * Visit %s' % bold('%sadmin/' % base_url))
+    print('  * Visit %s' % bold('%sadmin/' % args.base_url))
     print('  * User/Password: %s / %s' % (bold('user'), bold('nopass')))
     ok('* Create CRLs with:')
     print('  * %s' % bold('python ca/manage.py dump_crl -f PEM --ca %s > root.crl' %
@@ -454,15 +450,13 @@ Please create %(localsettings)s from %(example)s and try again.""" % {
         rel(root_ca_path), rel(child_ca_path), rel(child_cert_path), ocsp_url)))
 
 elif args.command == 'collectstatic':
-    if args.install_dir:
-        pyver = 'python{v.major}{v.minor}'.format(v=sys.version_info)
-        sys.path.insert(0, os.path.join(args.install_dir, 'lib', pyver, 'site-packages'))
-        print('###', sys.path[0])
-
     setup_django('ca.settings')
 
+    # pylint: disable=ungrouped-imports; have to call setup_django() first
     from django.contrib.staticfiles.finders import get_finders
     from django.core.management import call_command
+
+    # pylint: enable=ungrouped-imports
 
     call_command('collectstatic', interactive=False)
 
@@ -477,16 +471,17 @@ elif args.command == 'collectstatic':
 elif args.command == 'clean':
     base = os.path.dirname(os.path.abspath(__file__))
 
-    def rm(*path):
-        path = os.path.join(base, *path)
-        if not os.path.exists(path):
+    def rm(*paths):  # pylint: disable=invalid-name; rm() is just descriptive
+        """Remove a file/dir if it exists."""
+        rm_path = os.path.join(base, *paths)
+        if not os.path.exists(rm_path):
             return
-        elif os.path.isdir(path):
-            print('rm -r', path)
-            shutil.rmtree(path)
+        if os.path.isdir(rm_path):
+            print('rm -r', rm_path)
+            shutil.rmtree(rm_path)
         else:
-            print('rm', path)
-            os.remove(path)
+            print('rm', rm_path)
+            os.remove(rm_path)
 
     rm('pip-selfcheck.json')
     rm('geckodriver.log')

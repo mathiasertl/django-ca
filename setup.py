@@ -13,11 +13,13 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""setuptools based setup.py file for django-ca."""
+
 import os
 
 from setuptools import setup
 
-long_description = """django-ca is a tool to manage TLS certificate authorities and easily issue and revoke
+LONG_DESCRIPTION = """django-ca is a tool to manage TLS certificate authorities and easily issue and revoke
 certificates. It is based `cryptography <https://cryptography.io/>`_ and `Django
 <https://www.djangoproject.com/>`_. It can be used as an app in an existing Django project or stand-alone with
 the basic project included.  Everything can be managed via the command line via `manage.py` commands - so no
@@ -44,10 +46,11 @@ install_requires = [
 ]
 
 
-def find_package_data(dir):
+def find_package_data(path):
+    """Find static package data for given path."""
     data = []
     package_root = os.path.join('ca', 'django_ca')
-    for root, dirs, files in os.walk(os.path.join(package_root, dir)):
+    for root, _dirs, files in os.walk(os.path.join(package_root, path)):
         for file in files:
             data.append(os.path.join(root, file).lstrip(package_root))
     return data
@@ -59,7 +62,7 @@ setup(
     name='django-ca',
     version='1.17.0.dev1',
     description='A Django app providing a SSL/TLS certificate authority.',
-    long_description=long_description,
+    long_description=LONG_DESCRIPTION,
     author='Mathias Ertl',
     author_email='mati@er.tl',
     url='https://github.com/mathiasertl/django-ca',
