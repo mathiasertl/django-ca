@@ -44,6 +44,16 @@ if not os.path.exists(out_base):
     os.makedirs(out_base)
 
 
+def optional(value, formatter=None, fallback=None):
+    """Small function to get an value if set or a fallback."""
+
+    if not value:
+        return fallback
+    if formatter:
+        return formatter(value)
+    return value
+
+
 cert_dir = os.path.join(docs_base, '_files', 'cert')
 ca_dir = os.path.join(docs_base, '_files', 'ca')
 certs = {
@@ -241,7 +251,7 @@ def policy_as_str(policy):
                                     policy.explicit_text)
 
 
-def _update_cert_data(prefix, name_header):
+def _update_cert_data(prefix, dirname, cert_data, name_header):
     cert_values = {
         'subject': [(name_header, 'Subject', )],
         'issuer': [(name_header, 'Issuer', )],
@@ -263,141 +273,139 @@ def _update_cert_data(prefix, name_header):
     }
     exclude_empty_lines = {'unknown', }
 
-    for cert_filename in sorted(os.listdir(cert_dir), key=lambda f: certs.get(f, {}).get('name', '')):
-        if cert_filename not in certs:
+    for cert_filename in sorted(os.listdir(dirname), key=lambda f: cert_data.get(f, {}).get('name', '')):
+        if cert_filename not in cert_data:
             common.warn('Unknown %s: %s' % (prefix, cert_filename))
             continue
         print('Parsing %s (%s)...' % (cert_filename, prefix))
 
-        cert_name = certs[cert_filename]['name']
+        cert_name = cert_data[cert_filename]['name']
 
         this_cert_values = {}
         for cert_key in cert_values.keys():
             this_cert_values[cert_key] = ['']
 
-        with open(os.path.join(cert_dir, cert_filename), 'rb') as cert_stream:
+        with open(os.path.join(dirname, cert_filename), 'rb') as cert_stream:
             cert = x509.load_pem_x509_certificate(cert_stream.read(), backend=default_backend())
 
-            this_cert_values['subject'] = [format_name(cert.subject)]
-            this_cert_values['issuer'] = [format_name(cert.issuer)]
+        this_cert_values['subject'] = [format_name(cert.subject)]
+        this_cert_values['issuer'] = [format_name(cert.issuer)]
 
-            for ext in cert.extensions:
-                value = ext.value
-                critical = '✓' if ext.critical else '✗'
+        for cert_ext in cert.extensions:
+            value = cert_ext.value
+            critical = '✓' if cert_ext.critical else '✗'
 
-                if isinstance(value, x509.AuthorityInformationAccess):
-                    this_cert_values['aia'] = [
-                        critical, '\n'.join(
-                            ['* %s: %s' % (v.access_method._name, format_general_name(v.access_location))
-                             for v in value])
-                    ]
-                elif isinstance(value, x509.AuthorityKeyIdentifier):
-                    aci = '✗'
-                    if value.authority_cert_issuer:
-                        aci = format_general_name(value.authority_cert_issuer)
+            if isinstance(value, x509.AuthorityInformationAccess):
+                this_cert_values['aia'] = [
+                    critical, '\n'.join(
+                        ['* %s: %s' % (
+                            v.access_method._name,  # pylint: disable=protected-access; only way to get name
+                            format_general_name(v.access_location)
+                        ) for v in value])
+                ]
+            elif isinstance(value, x509.AuthorityKeyIdentifier):
+                this_cert_values['aki'] = [
+                    critical,
+                    bytes_to_hex(value.key_identifier),
+                    optional(value.authority_cert_issuer, format_general_name, '✗'),
+                    value.authority_cert_serial_number if value.authority_cert_serial_number else '✗',
+                ]
+            elif isinstance(value, x509.BasicConstraints):
+                this_cert_values['basicconstraints'] = [
+                    critical,
+                    value.ca,
+                    value.path_length if value.path_length is not None else 'None',
+                ]
+            elif isinstance(value, x509.CRLDistributionPoints):
+                this_cert_values['crldp'] = []
+                for distribution_point in value:
+                    full_name = '* '.join(
+                        [format_general_name(name) for name in distribution_point.full_name]
+                    ) if distribution_point.full_name else '✗'
+                    issuer = '* '.join(
+                        [format_general_name(name) for name in distribution_point.crl_issuer]
+                    ) if distribution_point.crl_issuer else '✗'
+                    reasons = ', '.join(
+                        [r.name for r in distribution_point.reasons]
+                    ) if distribution_point.reasons else '✗'
 
-                    this_cert_values['aki'] = [
-                        critical,
-                        bytes_to_hex(value.key_identifier),
-                        aci,
-                        value.authority_cert_serial_number if value.authority_cert_serial_number else '✗',
-                    ]
-                elif isinstance(value, x509.BasicConstraints):
-                    this_cert_values['basicconstraints'] = [
-                        critical,
-                        value.ca,
-                        value.path_length if value.path_length is not None else 'None',
-                    ]
-                elif isinstance(value, x509.CRLDistributionPoints):
-                    this_cert_values['crldp'] = []
-                    for distribution_point in value:
-                        full_name = '* '.join(
-                            [format_general_name(name) for name in distribution_point.full_name]
-                        ) if distribution_point.full_name else '✗'
-                        issuer = '* '.join(
-                            [format_general_name(name) for name in distribution_point.crl_issuer]
-                        ) if distribution_point.crl_issuer else '✗'
-                        reasons = ', '.join(
-                            [r.name for r in distribution_point.reasons]
-                        ) if distribution_point.reasons else '✗'
+                    relative_name = format_name(
+                        distribution_point.relative_name
+                    ) if distribution_point.relative_name else '✗'
+                    this_cert_values['crldp'].append([
+                        critical, full_name, relative_name, issuer, reasons,
+                    ])
+            elif isinstance(value, x509.CertificatePolicies):
+                policies = []
 
-                        relative_name = format_name(
-                            distribution_point.relative_name
-                        ) if distribution_point.relative_name else '✗'
-                        this_cert_values['crldp'].append([
-                            critical, full_name, relative_name, issuer, reasons,
-                        ])
-                elif isinstance(value, x509.CertificatePolicies):
-                    policies = []
-
-                    for policy in value:
-                        policy_name = policy.policy_identifier.dotted_string
-                        if policy.policy_qualifiers is None:
-                            policies.append('* %s' % policy_name)
-                        elif len(policy.policy_qualifiers) == 1:
-                            policies.append('* %s: %s' % (
-                                policy_name,
-                                policy_as_str(policy.policy_qualifiers[0])
-                            ))
-                        else:
-                            qualifiers = '\n'.join(
-                                ['  * %s' % policy_as_str(p) for p in policy.policy_qualifiers]
-                            )
-                            policies.append('* %s:\n\n%s\n' % (policy_name, qualifiers))
-
-                    this_cert_values['certificatepolicies'] = [critical, '\n'.join(policies)]
-                elif isinstance(value, x509.ExtendedKeyUsage):
-                    this_cert_values['eku'] = [
-                        critical,
-                        ', '.join([u._name for u in value]),  # pylint: disable=protected-access
-                    ]
-                elif isinstance(value, x509.IssuerAlternativeName):
-                    this_cert_values['ian'] = [
-                        critical,
-                        '* '.join([format_general_name(v) for v in value]),
-                    ]
-                elif isinstance(value, x509.KeyUsage):
-                    key_usages = []
-                    for key in cert_values['key_usage'][0][2:]:
-                        try:
-                            key_usages.append('✓' if getattr(value, key) else '✗')
-                        except ValueError:
-                            key_usages.append('✗')
-
-                    this_cert_values['key_usage'] = [
-                        critical,
-                    ] + key_usages
-                elif isinstance(value, x509.NameConstraints):
-                    permitted = '\n'.join(
-                        ['* %s' % format_general_name(n) for n in value.permitted_subtrees]
-                    ) if value.permitted_subtrees else '✗'
-                    excluded = '\n'.join(
-                        ['* %s' % format_general_name(n) for n in value.excluded_subtrees]
-                    ) if value.excluded_subtrees else '✗'
-                    this_cert_values['nc'] = [critical, permitted, excluded]
-                elif isinstance(value, x509.PrecertificateSignedCertificateTimestamps):
-                    this_cert_values['sct'] = [
-                        critical,
-                        '\n'.join(['* Type: %s, version: %s' % (e.entry_type.name, e.version.name)
-                                   for e in value])
-                    ]
-                elif isinstance(value, x509.SubjectKeyIdentifier):
-                    this_cert_values['ski'] = [critical, bytes_to_hex(value.digest)]
-                elif isinstance(value, x509.SubjectAlternativeName):
-                    continue  # not interesting here
-                else:
-                    # These are some OIDs identified by OpenSSL cli as "Netscape Cert Type" and
-                    # "Netscape Comment". They only occur in the old, discontinued StartSSL root
-                    # certificate.
-                    if ext.oid.dotted_string == '2.16.840.1.113730.1.1':
-                        name = 'Netscape Cert Type'
-                    elif ext.oid.dotted_string == '2.16.840.1.113730.1.13':
-                        name = "Netscape Comment"
+                for policy in value:
+                    policy_name = policy.policy_identifier.dotted_string
+                    if policy.policy_qualifiers is None:
+                        policies.append('* %s' % policy_name)
+                    elif len(policy.policy_qualifiers) == 1:
+                        policies.append('* %s: %s' % (
+                            policy_name,
+                            policy_as_str(policy.policy_qualifiers[0])
+                        ))
                     else:
-                        name = ext.oid._name
+                        qualifiers = '\n'.join(
+                            ['  * %s' % policy_as_str(p) for p in policy.policy_qualifiers]
+                        )
+                        policies.append('* %s:\n\n%s\n' % (policy_name, qualifiers))
 
-                    ext_str = '%s (Critical: %s, OID: %s)' % (name, ext.critical, ext.oid.dotted_string)
-                    this_cert_values['unknown'].append(ext_str)
+                this_cert_values['certificatepolicies'] = [critical, '\n'.join(policies)]
+            elif isinstance(value, x509.ExtendedKeyUsage):
+                this_cert_values['eku'] = [
+                    critical,
+                    ', '.join([u._name for u in value]),  # pylint: disable=protected-access
+                ]
+            elif isinstance(value, x509.IssuerAlternativeName):
+                this_cert_values['ian'] = [
+                    critical,
+                    '* '.join([format_general_name(v) for v in value]),
+                ]
+            elif isinstance(value, x509.KeyUsage):
+                key_usages = []
+                for key in cert_values['key_usage'][0][2:]:
+                    try:
+                        key_usages.append('✓' if getattr(value, key) else '✗')
+                    except ValueError:
+                        key_usages.append('✗')
+
+                this_cert_values['key_usage'] = [
+                    critical,
+                ] + key_usages
+            elif isinstance(value, x509.NameConstraints):
+                permitted = '\n'.join(
+                    ['* %s' % format_general_name(n) for n in value.permitted_subtrees]
+                ) if value.permitted_subtrees else '✗'
+                excluded = '\n'.join(
+                    ['* %s' % format_general_name(n) for n in value.excluded_subtrees]
+                ) if value.excluded_subtrees else '✗'
+                this_cert_values['nc'] = [critical, permitted, excluded]
+            elif isinstance(value, x509.PrecertificateSignedCertificateTimestamps):
+                this_cert_values['sct'] = [
+                    critical,
+                    '\n'.join(['* Type: %s, version: %s' % (e.entry_type.name, e.version.name)
+                               for e in value])
+                ]
+            elif isinstance(value, x509.SubjectKeyIdentifier):
+                this_cert_values['ski'] = [critical, bytes_to_hex(value.digest)]
+            elif isinstance(value, x509.SubjectAlternativeName):
+                continue  # not interesting here
+            else:
+                # These are some OIDs identified by OpenSSL cli as "Netscape Cert Type" and
+                # "Netscape Comment". They only occur in the old, discontinued StartSSL root
+                # certificate.
+                if cert_ext.oid.dotted_string == '2.16.840.1.113730.1.1':
+                    name = 'Netscape Cert Type'
+                elif cert_ext.oid.dotted_string == '2.16.840.1.113730.1.13':
+                    name = "Netscape Comment"
+                else:
+                    name = cert_ext.oid._name  # pylint: disable=protected-access; only way to get name
+
+                ext_str = '%s (Critical: %s, OID: %s)' % (name, cert_ext.critical, cert_ext.oid.dotted_string)
+                this_cert_values['unknown'].append(ext_str)
 
         this_cert_values['unknown'] = ['\n'.join(['* %s' % v for v in this_cert_values['unknown'][1:]])]
 
@@ -527,72 +535,72 @@ for crl_filename in sorted(os.listdir(crl_dir), key=lambda f: crls.get(f, {}).ge
     # set empty string as default value
     not_present = ['']
     this_crl_values = {}
-    for key, headers in crl_values.items():
-        this_crl_values[key] = not_present * (len(crl_values[key][0]) - 1)
+    for crl_key in crl_values.keys():
+        this_crl_values[crl_key] = not_present * (len(crl_values[crl_key][0]) - 1)
 
-    with open(os.path.join(crl_dir, crl_filename), 'rb') as stream:
-        crl = x509.load_der_x509_crl(stream.read(), backend=default_backend())
+    with open(os.path.join(crl_dir, crl_filename), 'rb') as crl_stream:
+        crl = x509.load_der_x509_crl(crl_stream.read(), backend=default_backend())
 
-        # add info
-        this_crl_values['crl_info'] = (
-            ':download:`%s </_files/crl/%s>` (`URL <%s>`__)' % (crl_filename, crl_filename,
-                                                                crls[crl_filename]['url']),
-            crls[crl_filename]['last'],
-            crls[crl_filename]['info'],
-        )
+    # add info
+    this_crl_values['crl_info'] = (
+        ':download:`%s </_files/crl/%s>` (`URL <%s>`__)' % (crl_filename, crl_filename,
+                                                            crls[crl_filename]['url']),
+        crls[crl_filename]['last'],
+        crls[crl_filename]['info'],
+    )
 
-        # add data row
-        this_crl_values['crl_data'] = (
-            crl.next_update - crl.last_update,
-            crl.signature_hash_algorithm.name,
-        )
-        this_crl_values['crl_issuer'] = (
-            format_name(crl.issuer),
-        )
+    # add data row
+    this_crl_values['crl_data'] = (
+        crl.next_update - crl.last_update,
+        crl.signature_hash_algorithm.name,
+    )
+    this_crl_values['crl_issuer'] = (
+        format_name(crl.issuer),
+    )
 
-        # add extension values
-        for ext in crl.extensions:
-            value = ext.value
+    # add extension values
+    for crl_ext in crl.extensions:
+        crl_ext_value = crl_ext.value
 
-            if isinstance(value, x509.CRLNumber):
-                this_crl_values['crl_crlnumber'] = (ext.value.crl_number, )
-            elif isinstance(value, x509.IssuingDistributionPoint):
-                full_name = rel_name = reasons = '✗'
-                if value.full_name:
-                    full_name = '* '.join([format_general_name(v) for v in value.full_name])
-                if value.relative_name:
-                    rel_name = format_name(value.relative_name)
-                if value.only_some_reasons:
-                    reasons = ', '.join([f.name for f in value.only_some_reasons])
+        if isinstance(crl_ext_value, x509.CRLNumber):
+            this_crl_values['crl_crlnumber'] = (crl_ext.value.crl_number, )
+        elif isinstance(crl_ext_value, x509.IssuingDistributionPoint):
+            crl_full_name = crl_rel_name = crl_reasons = '✗'
+            if crl_ext_value.full_name:
+                crl_full_name = '* '.join([format_general_name(v) for v in crl_ext_value.full_name])
+            if crl_ext_value.relative_name:
+                crl_rel_name = format_name(crl_ext_value.relative_name)
+            if crl_ext_value.only_some_reasons:
+                crl_reasons = ', '.join([f.name for f in crl_ext_value.only_some_reasons])
 
-                this_crl_values['crl_idp'] = (
-                    full_name,
-                    rel_name,
-                    '✓' if value.only_contains_attribute_certs else '✗',
-                    '✓' if value.only_contains_ca_certs else '✗',
-                    '✓' if value.only_contains_user_certs else '✗',
-                    reasons,
-                    '✓' if value.indirect_crl else '✗',
-                )
-            elif isinstance(value, x509.AuthorityKeyIdentifier):
-                aci = '✗'
-                if value.authority_cert_issuer:
-                    aci = '* '.join([format_general_name(v) for v in value.authority_cert_issuer])
+            this_crl_values['crl_idp'] = (
+                crl_full_name,
+                crl_rel_name,
+                '✓' if crl_ext_value.only_contains_attribute_certs else '✗',
+                '✓' if crl_ext_value.only_contains_ca_certs else '✗',
+                '✓' if crl_ext_value.only_contains_user_certs else '✗',
+                crl_reasons,
+                '✓' if crl_ext_value.indirect_crl else '✗',
+            )
+        elif isinstance(crl_ext_value, x509.AuthorityKeyIdentifier):
+            crl_aci = '✗'
+            if crl_ext_value.authority_cert_issuer:
+                crl_aci = '* '.join([format_general_name(v) for v in crl_ext_value.authority_cert_issuer])
 
-                this_crl_values['crl_aki'] = (
-                    bytes_to_hex(value.key_identifier),
-                    aci,
-                    value.authority_cert_serial_number if value.authority_cert_serial_number else '✗',
-                )
-            else:
-                common.warn('Unknown extension: %s' % ext.oid._name)
+            crl_acsn = '✗'
+            if crl_ext_value.authority_cert_serial_number:
+                crl_acsn = crl_ext_value.authority_cert_serial_number
 
-    for key, row in this_crl_values.items():
-        crl_values[key].append([crl_name] + list(row))
+            this_crl_values['crl_aki'] = (bytes_to_hex(crl_ext_value.key_identifier), crl_aci, crl_acsn)
+        else:
+            common.warn('Unknown extension: %s' % crl_ext.oid._name)
 
-for name, values in crl_values.items():
-    crl_filename = os.path.join(out_base, '%s.rst' % name)
-    table = tabulate(values, headers='firstrow', tablefmt='rst')
+    for crl_key, crl_row in this_crl_values.items():
+        crl_values[crl_key].append([crl_name] + list(crl_row))
 
-    with open(crl_filename, 'w') as stream:
-        stream.write(table)
+for crl_name, crl_extensions in crl_values.items():
+    crl_filename = os.path.join(out_base, '%s.rst' % crl_name)
+    crl_table = tabulate(crl_extensions, headers='firstrow', tablefmt='rst')
+
+    with open(crl_filename, 'w') as crl_table_stream:
+        crl_table_stream.write(crl_table)
