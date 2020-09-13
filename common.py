@@ -54,3 +54,8 @@ def ok(msg=' OK.', **kwargs):
 
 def bold(msg):
     return colored(msg, attrs=['bold'])
+
+
+def abort(msg):
+    print(msg)
+    sys.exit(1)
