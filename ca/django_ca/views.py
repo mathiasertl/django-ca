@@ -40,8 +40,8 @@ from django.db import transaction
 from django.http import HttpResponse
 from django.http import HttpResponseServerError
 from django.http import JsonResponse
-from django.urls import reverse
 from django.urls import resolve
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt

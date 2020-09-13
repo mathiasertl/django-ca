@@ -57,9 +57,9 @@ from .forms import ResignCertificateForm
 from .forms import RevokeCertificateForm
 from .forms import X509CertMixinAdminForm
 from .models import AcmeAccount
-from .models import AcmeOrder
 from .models import AcmeAccountAuthorization
 from .models import AcmeChallenge
+from .models import AcmeOrder
 from .models import Certificate
 from .models import CertificateAuthority
 from .models import Watcher
