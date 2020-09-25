@@ -427,6 +427,21 @@ class AcmeBaseView(View):
         """Let subclasses do individual validation of the received message."""
         pass
 
+    def set_link_relations(self, response, **kwargs):
+        """Set Link releations headers according to RFC8288.
+
+        `RFC8555, section 7.1 <https://tools.ietf.org/html/rfc8555#section-7.1>`_ states:
+
+            The "index" link relation is present on all resources other than the directory and indicates the
+            URL of the directory.
+
+        .. seealso:: https://tools.ietf.org/html/rfc8288
+        """
+
+        kwargs['index'] = reverse('django_ca:acme-directory')
+        response['Link'] = ', '.join('<%s>; rel="%s"' % (self.request.build_absolute_uri(v), k)
+                                     for k, v in kwargs.items())
+
     def post(self, request, **kwargs):
         if request.content_type != 'application/jose+json':
             # RFC 8555, 6.2:
@@ -536,6 +551,8 @@ class AcmeBaseView(View):
                 response = e.get_response()
 
         response['replay-nonce'] = self.get_nonce()
+        self.set_link_relations(response)
+
         return response
 
 
@@ -667,13 +684,23 @@ class AcmeAuthorizationView(AcmeBaseView):
 class AcmeChallengeView(AcmeBaseView):
     ignore_body = True
 
+    def set_link_relations(self, response, **kwargs):
+        """SEt the "up" link header to the matching authorization.
+
+        `RFC8555, section 7.1 <https://tools.ietf.org/html/rfc8555#section-7.1>`_ states:
+
+            The "up" link relation is used with challenge resources to indicate the authorization resource to
+            which a challenge belongs.
+        """
+        url = reverse('django_ca:acme-authz', kwargs={'slug': self.challenge.auth.slug})
+        return super().set_link_relations(response, up=url, **kwargs)
+
     def get_message_cls(self, request, slug):
         self.challenge = AcmeChallenge.objects.get(slug=slug)
         return self.challenge.get_challenge(request)
 
     def acme_request(self, slug):
-        challenge = AcmeChallenge.objects.get(slug=slug)
-        challenge.status = AcmeChallenge.STATUS_PROCESSING
-        challenge.save()
-        print(challenge)
-        return AcmeObjectResponse(challenge.get_challenge(self.request))
+        self.challenge = AcmeChallenge.objects.get(slug=slug)
+        self.challenge.status = AcmeChallenge.STATUS_PROCESSING
+        self.challenge.save()
+        return AcmeObjectResponse(self.challenge.get_challenge(self.request))
