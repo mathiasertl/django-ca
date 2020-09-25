@@ -65,6 +65,7 @@ from .models import AcmeChallenge
 from .models import AcmeOrder
 from .models import Certificate
 from .models import CertificateAuthority
+from .tasks import acme_validate_challenge
 from .utils import SERIAL_RE
 from .utils import get_crl_cache_key
 from .utils import int_to_hex
@@ -576,13 +577,11 @@ class AcmeNewAccount(AcmeBaseView):
             format=serialization.PublicFormat.SubjectPublicKeyInfo
         ).decode('utf-8')
 
-        # Not stored right now, but might be useful? --> RFC 7638
-        #thumbprint = jwk.thumbprint()
-
         account = AcmeAccount(
             contact=message.emails[0],
             status=AcmeAccount.STATUS_VALID,
             terms_of_service_agreed=message.terms_of_service_agreed,
+            thumbprint=jose.encode_b64jose(self.jwk.thumbprint()),
             pem=pem
         )
         account.save()
@@ -682,6 +681,11 @@ class AcmeAuthorizationView(AcmeBaseView):
 
 
 class AcmeChallengeView(AcmeBaseView):
+    """Implements ``/acme/chall/<slug>``, indicating to the server that the challenge can now be validated.
+
+    .. seealso:: https://tools.ietf.org/html/rfc8555#section-7.1.5
+    """
+
     ignore_body = True
 
     def set_link_relations(self, response, **kwargs):
@@ -701,6 +705,13 @@ class AcmeChallengeView(AcmeBaseView):
 
     def acme_request(self, slug):
         self.challenge = AcmeChallenge.objects.get(slug=slug)
+
+        # Set the status to "processing", to quote RFC8555, Section 7.1.6:
+        # "They transition to the "processing" state when the client responds to the challenge"
         self.challenge.status = AcmeChallenge.STATUS_PROCESSING
         self.challenge.save()
+
+        # Actually perform challenge validation asynchronously
+        acme_validate_challenge.delay(self.challenge.pk)
+
         return AcmeObjectResponse(self.challenge.get_challenge(self.request))
