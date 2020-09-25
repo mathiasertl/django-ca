@@ -1045,7 +1045,7 @@ class AcmeAccount(models.Model):
     status = models.CharField(choices=STATUS_CHOICES, max_length=12)
     terms_of_service_agreed = models.BooleanField(default=False)
     pem = models.TextField(verbose_name=_('Public key'))
-    # TODO: store JWK thumbprint?
+    thumbprint = models.CharField(max_length=64)
 
     class Meta:
         verbose_name = _('ACME Account')
@@ -1160,10 +1160,9 @@ class AcmeAccountAuthorization(models.Model):
         return messages.Identifier(typ=self.type, value=self.value)
 
     def get_challenges(self):
-        # TODO: bulk create
         return [
-            AcmeChallenge.objects.create(auth=self, type=AcmeChallenge.TYPE_HTTP_01),
-            AcmeChallenge.objects.create(auth=self, type=AcmeChallenge.TYPE_DNS_01),
+            AcmeChallenge.objects.get_or_create(auth=self, type=AcmeChallenge.TYPE_HTTP_01)[0],
+            AcmeChallenge.objects.get_or_create(auth=self, type=AcmeChallenge.TYPE_DNS_01)[0],
         ]
 
 
