@@ -57,8 +57,11 @@ class AcmeResponseAccountCreated(AcmeResponse):
             reverse('django_ca:acme-account', kwargs={'pk': account.pk}))
 
 
-class AcmeResponseOrderCreated(AcmeSimpleResponse):
+class AcmeResponseOrder(AcmeSimpleResponse):
     message_cls = messages.Order
+
+
+class AcmeResponseOrderCreated(AcmeResponseOrder):
     status_code = HTTPStatus.CREATED
 
 
