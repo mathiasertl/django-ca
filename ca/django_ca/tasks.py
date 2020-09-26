@@ -12,6 +12,7 @@
 # see <http://www.gnu.org/licenses/>.
 
 import logging
+from datetime import timedelta
 
 import josepy as jose
 import requests
@@ -19,9 +20,14 @@ import requests
 from django.utils import timezone
 
 from . import ca_settings
-from .models import AcmeChallenge
+from .extensions import SubjectAlternativeName
 from .models import AcmeAccountAuthorization
+from .models import AcmeCertificate
+from .models import AcmeChallenge
+from .models import AcmeOrder
+from .models import Certificate
 from .models import CertificateAuthority
+from .profiles import profiles
 
 log = logging.getLogger(__name__)
 
@@ -77,8 +83,8 @@ def generate_ocsp_keys(**kwargs):
 
 
 @shared_task
-def acme_validate_challenge(pk):
-    challenge = AcmeChallenge.objects.get(pk=pk)
+def acme_validate_challenge(challenge_pk):
+    challenge = AcmeChallenge.objects.get(pk=challenge_pk)
 
     # Set the status to "processing", to quote RFC8555, Section 7.1.6:
     # "They transition to the "processing" state when the client responds to the challenge"
@@ -106,14 +112,45 @@ def acme_validate_challenge(pk):
     #   authorization also changes to the "valid" state.  If the client attempts to fulfill a challenge and
     #   fails, or if there is an error while the authorization is still pending, then the authorization
     #   transitions to the "invalid" state.
+    #
+    # We also transition the matching order object (section 7.4):
+    #
+    #   "* ready: The server agrees that the requirements have been fulfilled, and is awaiting finalization.
+    #   Submit a finalization request."
     if response.text == expected:
         challenge.status = AcmeChallenge.STATUS_VALID
         challenge.validated = timezone.now()
         challenge.auth.status = AcmeAccountAuthorization.STATUS_VALID
+
+        # TODO: only transition if all authorizations are valid!
+        challenge.auth.order.status = AcmeOrder.STATUS_READY
     else:
         challenge.status = AcmeChallenge.STATUS_INVALID
         challenge.auth.status = AcmeAccountAuthorization.STATUS_INVALID
+        challenge.auth.order.status = AcmeOrder.STATUS_INVALID
 
     log.info('Challenge %s is %s', challenge.pk, challenge.status)
     challenge.save()
     challenge.auth.save()
+    challenge.auth.order.save()
+
+
+@shared_task
+def acme_issue_certificate(acme_certificate_pk):
+    queryset = AcmeCertificate.objects.filter(order__status=AcmeOrder.STATUS_READY).select_related('order')
+    acme_cert = queryset.get(pk=acme_certificate_pk)
+    log.info('Issuing acme_cert: %s', acme_cert)
+    subject_alternative_names = [a.subject_alternative_name for a in acme_cert.order.authorizations.all()]
+    log.info('SAN: %s', subject_alternative_names)
+
+    extensions = {
+        SubjectAlternativeName.key: SubjectAlternativeName({'value': subject_alternative_names})
+    }
+
+    ca = CertificateAuthority.objects.first()  # TODO: properly select CA
+
+    profile = profiles['server']
+    expires = timezone.now() + timedelta(days=90)
+    csr = acme_cert.parse_csr()
+
+    Certificate.objects.create_cert(ca, csr=csr, profile=profile, expires=expires, extensions=extensions)
