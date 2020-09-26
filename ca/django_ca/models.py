@@ -1234,10 +1234,17 @@ class AcmeChallenge(models.Model):
             chall = challenges.TLSALPN01(token=token)
 
         url = request.build_absolute_uri(self.acme_url)
+        kwargs = {}
+        if self.status == AcmeChallenge.STATUS_VALID:
+            # ChallengeBody fails during serialization for non-aware objects
+            if timezone.is_naive(self.validated):
+                kwargs['validated'] = timezone.make_aware(self.validated, timezone=pytz.UTC)
+            else:
+                kwargs['validated'] = self.validated
 
         # NOTE: RFC855, section 7.5 shows challenges *without* a status, but this object always includes it.
         #       It does not seem to hurt, but might be a slight spec-violation.
-        return messages.ChallengeBody(chall=chall, _url=url, status=self.status)
+        return messages.ChallengeBody(chall=chall, _url=url, status=self.status, **kwargs)
 
     def generate_token(self):
         """Generate the token for this challenge.
