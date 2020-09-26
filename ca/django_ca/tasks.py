@@ -16,6 +16,8 @@ import logging
 import josepy as jose
 import requests
 
+from django.utils import timezone
+
 from . import ca_settings
 from .models import AcmeChallenge
 from .models import AcmeAccountAuthorization
@@ -106,6 +108,7 @@ def acme_validate_challenge(pk):
     #   transitions to the "invalid" state.
     if response.text == expected:
         challenge.status = AcmeChallenge.STATUS_VALID
+        challenge.validated = timezone.now()
         challenge.auth.status = AcmeAccountAuthorization.STATUS_VALID
     else:
         challenge.status = AcmeChallenge.STATUS_INVALID
