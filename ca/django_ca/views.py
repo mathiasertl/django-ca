@@ -672,10 +672,20 @@ class AcmeAuthorizationView(AcmeBaseView):
         if not settings.USE_TZ:  # acme.Order requires a timezone-aware object
             expires = timezone.make_aware(expires, timezone=pytz.utc)
 
+        # RFC8555, section 7.5.1:
+        #
+        #   "When finalizing an authorization, the server MAY remove challenges other than the one that was
+        #   completed".
+        #
+        # The example response at the end of section 7.5.1 also only shows the valid challenge.
+        if auth.status == AcmeAccountAuthorization.STATUS_VALID:
+            challenges = [c for c in challenges if c.status == AcmeChallenge.STATUS_VALID]
+
         resp = AcmeResponseAuthorization(
             identifier=auth.identifier,
-            expires=expires,
             challenges=[c.get_challenge(self.request) for c in challenges],
+            status=auth.status,
+            expires=expires,
         )
         return resp
 
