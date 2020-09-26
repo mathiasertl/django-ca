@@ -28,6 +28,7 @@ from datetime import datetime
 from datetime import timedelta
 
 import pytz
+import josepy as jose
 from acme import challenges
 from acme import messages
 
@@ -1124,7 +1125,7 @@ class AcmeAccountAuthorization(models.Model):
         (STATUS_REVOKED, messages.STATUS_REVOKED.name),
     )
 
-    order = models.ForeignKey(AcmeOrder, on_delete=models.PROTECT)
+    order = models.ForeignKey(AcmeOrder, on_delete=models.PROTECT, related_name='authorizations')
     slug = models.SlugField(unique=True, default=acme_slug)
 
     # Fields according to RFC 8555, section 7.1.4:
@@ -1158,6 +1159,10 @@ class AcmeAccountAuthorization(models.Model):
     @property
     def identifier(self):
         return messages.Identifier(typ=self.type, value=self.value)
+
+    @property
+    def subject_alternative_name(self):
+        return '%s:%s' % (self.type, self.value)
 
     def get_challenges(self):
         return [
@@ -1256,3 +1261,14 @@ class AcmeChallenge(models.Model):
         already longer then required.
         """
         self.token = get_random_string(64, allowed_chars=BASE64_URL_ALPHABET)
+
+
+class AcmeCertificate(models.Model):
+    slug = models.SlugField(unique=True, default=acme_slug)
+    order = models.ForeignKey(AcmeOrder, on_delete=models.CASCADE)
+    cert = models.ForeignKey(Certificate, on_delete=models.CASCADE, null=True)
+    csr = models.TextField(verbose_name=_('CSR'))
+
+    def parse_csr(self):
+        decoded = jose.decode_b64jose(self.csr)
+        return x509.load_der_x509_csr(decoded, default_backend())
