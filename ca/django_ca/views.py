@@ -56,15 +56,18 @@ from .acme import AcmeResponseAccountCreated
 from .acme import AcmeResponseAuthorization
 from .acme import AcmeResponseBadNonce
 from .acme import AcmeResponseMalformed
+from .acme import AcmeResponseOrder
 from .acme import AcmeResponseOrderCreated
 from .acme import AcmeResponseUnauthorized
 from .acme import AcmeResponseUnsupportedMediaType
 from .models import AcmeAccount
 from .models import AcmeAccountAuthorization
+from .models import AcmeCertificate
 from .models import AcmeChallenge
 from .models import AcmeOrder
 from .models import Certificate
 from .models import CertificateAuthority
+from .tasks import acme_issue_certificate
 from .tasks import acme_validate_challenge
 from .utils import SERIAL_RE
 from .utils import get_crl_cache_key
@@ -536,7 +539,6 @@ class AcmeBaseView(View):
             except AcmeException as e:
                 response = e.get_response()
         elif self.ignore_body is True:
-            print('### Ignoring', self.jws.payload.decode('utf-8'))
             try:
                 response = self.acme_request(**kwargs)
             except AcmeException as e:
@@ -633,7 +635,7 @@ class AcmeNewOrderView(AcmeBaseView):
             authorizations.append(self.request.build_absolute_uri(authz.acme_url))
 
         expires = order.expires
-        if not settings.USE_TZ:  # acme.Order requires a timezone-aware object
+        if timezone.is_naive(expires):  # acme.messages.Order requires a timezone-aware object
             expires = timezone.make_aware(expires, timezone=pytz.utc)
 
         response = AcmeResponseOrderCreated(
@@ -652,11 +654,58 @@ class AcmeOrderView(AcmeBaseView):
 
 
 class AcmeOrderFinalizeView(AcmeBaseView):
-    pass
+    message_cls = messages.CertificateRequest
+
+    def acme_request(self, message, slug):
+        print(self.jws.payload)
+        order = AcmeOrder.objects.get(slug=slug)
+
+        # Note: Jose wraps the CSR in a josepy.util.ComparableX509, that has *no* public member methods.
+        # The only public attribute or function is the wrapped object. We encode it back to get the regular
+        # PEM.
+        csr = message.encode('csr')
+        print(csr, type(csr))
+
+        expires = order.expires
+        if timezone.is_naive(expires):  # acme.messages.Order requires a timezone-aware object
+            expires = timezone.make_aware(expires, timezone=pytz.utc)
+
+        cert = AcmeCertificate.objects.get_or_create(order=order, defaults={'csr': csr})[0]
+        authorizations = order.authorizations.all()
+        cert_url = self.request.build_absolute_uri(reverse('django_ca:acme-cert', kwargs={'slug': cert.slug}))
+
+        if order.status == AcmeOrder.STATUS_READY:
+            order.status == AcmeOrder.STATUS_PROCESSING
+            order.save()
+
+            acme_issue_certificate.delay(acme_certificate_pk=cert.pk)
+
+        response = AcmeResponseOrder(
+            status=order.status,
+            expires=expires,
+            identifiers=[{'type': a.type, 'value': a.value} for a in authorizations],
+            authorizations=[self.request.build_absolute_uri(a) for a in authorizations],
+            certificate=cert_url
+        )
+        response['Location'] = self.request.build_absolute_uri(order.acme_url)
+        return response
+
+
+class AcmeCertificateView(AcmeBaseView):
+    """Implements endpoint to download a certificate, that is ``/acme/cert/<slug>/``.
+
+    .. seealso:: `RFC8555, 8555, 7.4.2 <https://tools.ietf.org/html/rfc8555#section-7.4.2>`_
+    """
+    post_as_get = True
+
+    def acme_request(self, slug):
+        acme_cert = AcmeCertificate.objects.exclude(cert__isnull=True).get(slug=slug)
+        bundle = acme_cert.cert.bundle
+        return HttpResponse(bundle, content_type='application/pem-certificate-chain')
 
 
 class AcmeAuthorizationView(AcmeBaseView):
-    """Implements endpoint for identifier authorization, that is ``/acme/authz/<slug>``.
+    """Implements endpoint for identifier authorization, that is ``/acme/authz/<slug>/``.
 
     .. seealso:: `RFC 8555, 7.5 <https://tools.ietf.org/html/rfc8555#section-7.5>`_
     """
