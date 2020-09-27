@@ -58,6 +58,7 @@ from .forms import RevokeCertificateForm
 from .forms import X509CertMixinAdminForm
 from .models import AcmeAccount
 from .models import AcmeAccountAuthorization
+from .models import AcmeCertificate
 from .models import AcmeChallenge
 from .models import AcmeOrder
 from .models import Certificate
@@ -711,3 +712,8 @@ class AcmeAccountAuthorizationAdmin(admin.ModelAdmin):
 class AcmeChallengeAdmin(admin.ModelAdmin):
     list_display = ('slug', 'auth', 'type', 'status', 'validated', )
     list_filter = ('type', 'status', 'auth__order')
+
+
+@admin.register(AcmeCertificate)
+class AcmeCertificateAdmin(admin.ModelAdmin):
+    pass
