@@ -217,6 +217,8 @@ CA_FILE_STORAGE_KWARGS = getattr(settings, 'CA_FILE_STORAGE_KWARGS', {
 
 CA_FILE_STORAGE_URL = 'https://django-ca.readthedocs.io/en/latest/update.html#update-to-1-12-0-or-later'
 
+CA_ENABLE_ACME = getattr(settings, 'CA_ENABLE_ACME', False)
+
 # Decide if we should use Celery or not
 CA_USE_CELERY = getattr(settings, 'CA_USE_CELERY', None)
 if CA_USE_CELERY is None:

@@ -37,6 +37,7 @@ from cryptography.x509 import ocsp
 from django.conf import settings
 from django.core.cache import cache
 from django.db import transaction
+from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseServerError
 from django.http import JsonResponse
@@ -367,6 +368,9 @@ class AcmeDirectory(View):
         return request.build_absolute_uri(reverse('django_ca:%s' % name))
 
     def get(self, request):
+        if not ca_settings.CA_ENABLE_ACME:
+            raise Http404('Page not found.')
+
         if secrets is None:
             data = os.urandom(16)
         else:
@@ -447,6 +451,9 @@ class AcmeBaseView(View):
                                      for k, v in kwargs.items())
 
     def post(self, request, **kwargs):
+        if not ca_settings.CA_ENABLE_ACME:
+            raise Http404('Page not found.')
+
         if request.content_type != 'application/jose+json':
             # RFC 8555, 6.2:
             # "Because client requests in ACME carry JWS objects in the Flattened JSON Serialization, they
@@ -564,6 +571,9 @@ class AcmeNewNonce(AcmeBaseView):
     `Equivalent LE URL <https://acme-v02.api.letsencrypt.org/acme/new-nonce>`_
     """
     def head(self, request):
+        if not ca_settings.CA_ENABLE_ACME:
+            raise Http404('Page not found.')
+
         resp = HttpResponse()
         resp['replay-nonce'] = self.get_nonce()
         return resp

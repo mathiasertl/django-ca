@@ -180,6 +180,19 @@ CA_USE_CELERY
 ACME settings
 -------------
 
+.. WARNING::
+
+   ACME functionality is still in development and far from ready for any production environment. It is
+   disabled by default, and you have to set ``CA_ENABLE_ACME=True`` to enable the feature.
+
+.. _settings-acme-enable-acme:
+
+CA_ENABLE_ACME
+   Default: ``False``
+
+   Set to ``True`` to enable ACME functionality. If set to ``False`` (the default), all ACME functionality is
+   disabled.
+
 .. _settings-acme-order-validity:
 
 ACME_ORDER_VALIDITY

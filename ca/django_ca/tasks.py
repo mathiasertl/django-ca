@@ -84,6 +84,10 @@ def generate_ocsp_keys(**kwargs):
 
 @shared_task
 def acme_validate_challenge(challenge_pk):
+    if not ca_settings.CA_ENABLE_ACME:
+        log.error('ACME is not enabled.')
+        return
+
     challenge = AcmeChallenge.objects.get(pk=challenge_pk)
 
     # Set the status to "processing", to quote RFC8555, Section 7.1.6:
@@ -137,6 +141,10 @@ def acme_validate_challenge(challenge_pk):
 
 @shared_task
 def acme_issue_certificate(acme_certificate_pk):
+    if not ca_settings.CA_ENABLE_ACME:
+        log.error('ACME is not enabled.')
+        return
+
     queryset = AcmeCertificate.objects.filter(order__status=AcmeOrder.STATUS_READY).select_related('order')
     acme_cert = queryset.get(pk=acme_certificate_pk)
     log.info('Issuing acme_cert: %s', acme_cert)
