@@ -1264,11 +1264,23 @@ class AcmeChallenge(models.Model):
 
 
 class AcmeCertificate(models.Model):
+    """Intermediate model for certificates to be issued via ACME."""
+
     slug = models.SlugField(unique=True, default=acme_slug)
     order = models.ForeignKey(AcmeOrder, on_delete=models.CASCADE)
     cert = models.ForeignKey(Certificate, on_delete=models.CASCADE, null=True)
-    csr = models.TextField(verbose_name=_('CSR'))
+    csr = models.TextField(verbose_name=_('CSR'))  # NOTE: **NOT** a PEM, see parse_csr()
 
     def parse_csr(self):
+        """Convert the CSR as received via ACMEv2 into a valid CSR.
+
+        ACMEv2 sends the CSR as a base64url encoded string of its DER /ASN.1 representation.
+
+        Returns
+        -------
+
+        :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
+            The CSR as used by cryptography.
+        """
         decoded = jose.decode_b64jose(self.csr)
         return x509.load_der_x509_csr(decoded, default_backend())

@@ -153,4 +153,7 @@ def acme_issue_certificate(acme_certificate_pk):
     expires = timezone.now() + timedelta(days=90)
     csr = acme_cert.parse_csr()
 
-    Certificate.objects.create_cert(ca, csr=csr, profile=profile, expires=expires, extensions=extensions)
+    cert = Certificate.objects.create_cert(ca, csr=csr, profile=profile, expires=expires,
+                                           extensions=extensions)
+    acme_cert.cert = cert
+    acme_cert.save()

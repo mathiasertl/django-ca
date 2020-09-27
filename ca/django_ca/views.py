@@ -650,27 +650,57 @@ class AcmeNewOrderView(AcmeBaseView):
 
 
 class AcmeOrderView(AcmeBaseView):
-    pass
+    post_as_get = True
+
+    def acme_request(self, slug):
+        order = AcmeOrder.objects.get(slug=slug)
+
+        expires = order.expires
+        if timezone.is_naive(expires):  # acme.messages.Order requires a timezone-aware object
+            expires = timezone.make_aware(expires, timezone=pytz.utc)
+
+        # TODO: should only be pending auths, and only if state of order is pending
+        authorizations = order.authorizations.all()
+
+        cert = AcmeCertificate.objects.get(order=order)
+        cert_url = self.request.build_absolute_uri(reverse('django_ca:acme-cert', kwargs={'slug': cert.slug}))
+
+        response = AcmeResponseOrder(
+            status=order.status,
+            expires=expires,
+            identifiers=[{'type': a.type, 'value': a.value} for a in authorizations],
+            authorizations=[self.request.build_absolute_uri(a) for a in authorizations],
+            certificate=cert_url
+        )
+        response['Location'] = self.request.build_absolute_uri(order.acme_url)
+        return response
 
 
 class AcmeOrderFinalizeView(AcmeBaseView):
+    """Implements endpoint for applying for certificate issuance, that is ``/acme/order/<slug>/finalize``.
+
+    The client is supposed to call this URL to submit its CSR, once "it believes it has fulfilled the server's
+    requirements".
+
+    .. seealso:: `RFC 8555, 7.4 <https://tools.ietf.org/html/rfc8555#section-7.4>`_
+    """
     message_cls = messages.CertificateRequest
 
     def acme_request(self, message, slug):
-        print(self.jws.payload)
         order = AcmeOrder.objects.get(slug=slug)
 
         # Note: Jose wraps the CSR in a josepy.util.ComparableX509, that has *no* public member methods.
         # The only public attribute or function is the wrapped object. We encode it back to get the regular
         # PEM.
+        # Note that the CSR received here is not an actual PEM, see AcmeCertificate.parse_csr()
         csr = message.encode('csr')
-        print(csr, type(csr))
 
         expires = order.expires
         if timezone.is_naive(expires):  # acme.messages.Order requires a timezone-aware object
             expires = timezone.make_aware(expires, timezone=pytz.utc)
 
         cert = AcmeCertificate.objects.get_or_create(order=order, defaults={'csr': csr})[0]
+        # TODO: should only be pending auths, and only if state of order is pending
         authorizations = order.authorizations.all()
         cert_url = self.request.build_absolute_uri(reverse('django_ca:acme-cert', kwargs={'slug': cert.slug}))
 
@@ -699,8 +729,8 @@ class AcmeCertificateView(AcmeBaseView):
     post_as_get = True
 
     def acme_request(self, slug):
-        acme_cert = AcmeCertificate.objects.exclude(cert__isnull=True).get(slug=slug)
-        bundle = acme_cert.cert.bundle
+        acme_cert = AcmeCertificate.objects.get(slug=slug)
+        bundle = '\n'.join([cert.pub.strip() for cert in acme_cert.cert.bundle])
         return HttpResponse(bundle, content_type='application/pem-certificate-chain')
 
 
