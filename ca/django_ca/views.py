@@ -483,6 +483,7 @@ class AcmeBaseView(View):
                 return AcmeResponseMalformed('JWS signature invalid.')
 
             self.jwk = combined.jwk
+            print('thumbprint', self.jwk.thumbprint())
         elif combined.kid:
             if self.requires_key:
                 return AcmeResponseMalformed('Request requires a full JWK key.')
@@ -505,6 +506,7 @@ class AcmeBaseView(View):
 
             # load and verify JWK
             self.jwk = jose.JWK.load(account.pem.encode('utf-8'))
+            print('thumbprint', self.jwk.thumbprint())
             if not self.jws.verify(self.jwk):
                 return AcmeResponseMalformed('JWS signature invalid.')
 
