@@ -16,6 +16,7 @@
 """setuptools based setup.py file for django-ca."""
 
 import os
+import sys
 
 from setuptools import setup
 
@@ -45,11 +46,19 @@ install_requires = [
     'packaging',
 ]
 
+package_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ca')
+package_root = os.path.join(package_path, 'django_ca')
+
+if os.path.exists(package_path):
+    sys.path.insert(0, package_path)
+
+# https://packaging.python.org/guides/single-sourcing-package-version/
+import django_ca  # NOQA: E402, pylint: disable=wrong-import-position
+
 
 def find_package_data(path):
     """Find static package data for given path."""
     data = []
-    package_root = os.path.join('ca', 'django_ca')
     for root, _dirs, files in os.walk(os.path.join(package_root, path)):
         for file in files:
             data.append(os.path.join(root, file).lstrip(package_root))
@@ -60,7 +69,7 @@ package_data = find_package_data('static') + find_package_data('templates')
 
 setup(
     name='django-ca',
-    version='1.17.0.dev1',
+    version=django_ca.__version__,
     description='A Django app providing a SSL/TLS certificate authority.',
     long_description=LONG_DESCRIPTION,
     author='Mathias Ertl',
