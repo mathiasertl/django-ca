@@ -15,6 +15,7 @@ from django.conf import settings
 from django.urls import path
 from django.urls import register_converter
 
+from . import ca_settings
 from . import converters
 from . import views
 
@@ -35,19 +36,24 @@ urlpatterns = [
          name='ocsp-ca-get'),
     path('crl/<hex:serial>/', views.CertificateRevocationListView.as_view(), name='crl'),
     path('crl/ca/<hex:serial>/', views.CertificateRevocationListView.as_view(scope='ca'), name='ca-crl'),
-    path('directory/', views.AcmeDirectory.as_view(), name='acme-directory'),
-    path('acme/new-nonce/', views.AcmeNewNonce.as_view(), name='acme-new-nonce'),
-    path('acme/new-account/', views.AcmeNewAccount.as_view(), name='acme-new-account'),
-    path('acme/new-order/', views.AcmeNewOrderView.as_view(), name='acme-new-order'),
-    path('acme/acct/<int:pk>/', views.AcmeAccountView.as_view(), name='acme-account'),
-    path('acme/acct/<int:pk>/orders/', views.AcmeAccountOrdersView.as_view(), name='acme-account-orders'),
-    path('acme/order/<acme:slug>/', views.AcmeOrderView.as_view(), name='acme-order'),
-    path('acme/order/<acme:slug>/finalize/', views.AcmeOrderFinalizeView.as_view(),
-         name='acme-order-finalize'),
-    path('acme/authz/<acme:slug>/', views.AcmeAuthorizationView.as_view(), name='acme-authz'),
-    path('acme/chall/<acme:slug>/', views.AcmeChallengeView.as_view(), name='acme-challenge'),
-    path('acme/cert/<acme:slug>/', views.AcmeCertificateView.as_view(), name='acme-cert'),
 ]
+
+
+if ca_settings.CA_ENABLE_ACME:
+    urlpatterns += [
+        path('directory/', views.AcmeDirectory.as_view(), name='acme-directory'),
+        path('acme/new-nonce/', views.AcmeNewNonce.as_view(), name='acme-new-nonce'),
+        path('acme/new-account/', views.AcmeNewAccount.as_view(), name='acme-new-account'),
+        path('acme/new-order/', views.AcmeNewOrderView.as_view(), name='acme-new-order'),
+        path('acme/acct/<int:pk>/', views.AcmeAccountView.as_view(), name='acme-account'),
+        path('acme/acct/<int:pk>/orders/', views.AcmeAccountOrdersView.as_view(), name='acme-account-orders'),
+        path('acme/order/<acme:slug>/', views.AcmeOrderView.as_view(), name='acme-order'),
+        path('acme/order/<acme:slug>/finalize/', views.AcmeOrderFinalizeView.as_view(),
+             name='acme-order-finalize'),
+        path('acme/authz/<acme:slug>/', views.AcmeAuthorizationView.as_view(), name='acme-authz'),
+        path('acme/chall/<acme:slug>/', views.AcmeChallengeView.as_view(), name='acme-challenge'),
+        path('acme/cert/<acme:slug>/', views.AcmeCertificateView.as_view(), name='acme-cert'),
+    ]
 
 
 for name, kwargs in getattr(settings, 'CA_OCSP_URLS', {}).items():
