@@ -364,12 +364,21 @@ class AcmeDirectory(View):
     `Equivalent LE URL <https://acme-v02.api.letsencrypt.org/directory`_
     """
 
-    def _url(self, request, name):
-        return request.build_absolute_uri(reverse('django_ca:%s' % name))
+    def _url(self, request, name, ca):  # pylint: disable=no-self-use
+        return request.build_absolute_uri(reverse('django_ca:%s' % name, kwargs={'serial': ca.serial}))
 
-    def get(self, request):
+    def get(self, request, serial=None):  # pylint: disable=missing-function-docstring; standard Django
         if not ca_settings.CA_ENABLE_ACME:
             raise Http404('Page not found.')
+
+        if serial is None:
+            ca = CertificateAuthority.objects.default()
+        else:
+            # Sanitize serial before querying it
+            serial = serial.replace(':', '')
+            if serial != '0':
+                serial = serial.lstrip('0')
+            ca = CertificateAuthority.objects.get(serial=serial)
 
         if secrets is None:
             data = os.urandom(16)
@@ -387,10 +396,10 @@ class AcmeDirectory(View):
                 "termsOfService": "https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf",
                 "website": "https://letsencrypt.org"
             },
-            "newAccount": self._url(request, 'acme-new-account'),
-            "newNonce": self._url(request, 'acme-new-nonce'),
-            "newOrder": self._url(request, 'acme-new-order'),
-            "revokeCert": "http://localhost:8000/django_ca/acme/revoke-cert"
+            "newAccount": self._url(request, 'acme-new-account', ca),
+            "newNonce": self._url(request, 'acme-new-nonce', ca),
+            "newOrder": self._url(request, 'acme-new-order', ca),
+            "revokeCert": "http://localhost:8000/django_ca/acme/revoke-cert"  # TODO
         })
 
 
@@ -400,6 +409,10 @@ class AcmeBaseView(View):
     post_as_get = False  # True if this is a POST-as-GET request (see RFC 8555, 6.3).
     requires_key = False  # True if we require a full key (-> new accounts)
     nonce_length = 32
+
+    def acme_request(self, **kwargs):
+        """Function to handle the given ACME request. Views are expected to implement this function."""
+        raise NotImplementedError
 
     def nonce_key(self, nonce):
         return 'acme-nonce-%s' % nonce
@@ -450,7 +463,9 @@ class AcmeBaseView(View):
         response['Link'] = ', '.join('<%s>; rel="%s"' % (self.request.build_absolute_uri(v), k)
                                      for k, v in kwargs.items())
 
-    def post(self, request, **kwargs):
+    def post(self, request, serial, **kwargs):
+        # pylint: disable=missing-function-docstring; standard Django function
+        # pylint: disable=attribute-defined-outside-init
         if not ca_settings.CA_ENABLE_ACME:
             raise Http404('Page not found.')
 
@@ -538,6 +553,8 @@ class AcmeBaseView(View):
             # RFC 8555 is not really clear on the required response code, but merely says "If the two do not
             # match, then the server MUST reject the request as unauthorized."
             return AcmeResponseUnauthorized()
+
+        self.ca = CertificateAuthority.objects.get(serial=serial)
 
         if self.post_as_get is True:
             if self.jws.payload != b'':

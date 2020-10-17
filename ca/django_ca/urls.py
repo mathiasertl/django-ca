@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""URL configuration for this project."""
+
 from django.conf import settings
 from django.urls import path
 from django.urls import register_converter
@@ -42,17 +44,22 @@ urlpatterns = [
 if ca_settings.CA_ENABLE_ACME:
     urlpatterns += [
         path('directory/', views.AcmeDirectory.as_view(), name='acme-directory'),
-        path('acme/new-nonce/', views.AcmeNewNonce.as_view(), name='acme-new-nonce'),
-        path('acme/new-account/', views.AcmeNewAccount.as_view(), name='acme-new-account'),
-        path('acme/new-order/', views.AcmeNewOrderView.as_view(), name='acme-new-order'),
-        path('acme/acct/<int:pk>/', views.AcmeAccountView.as_view(), name='acme-account'),
-        path('acme/acct/<int:pk>/orders/', views.AcmeAccountOrdersView.as_view(), name='acme-account-orders'),
-        path('acme/order/<acme:slug>/', views.AcmeOrderView.as_view(), name='acme-order'),
-        path('acme/order/<acme:slug>/finalize/', views.AcmeOrderFinalizeView.as_view(),
+        path('directory/<hex:serial>/', views.AcmeDirectory.as_view(), name='acme-directory'),
+        path('acme/<hex:serial>/new-nonce/', views.AcmeNewNonce.as_view(), name='acme-new-nonce'),
+        path('acme/<hex:serial>/new-account/', views.AcmeNewAccount.as_view(), name='acme-new-account'),
+        path('acme/<hex:serial>/new-order/', views.AcmeNewOrderView.as_view(), name='acme-new-order'),
+        path('acme/<hex:serial>/acct/<int:pk>/', views.AcmeAccountView.as_view(), name='acme-account'),
+        path('acme/<hex:serial>/acct/<int:pk>/orders/', views.AcmeAccountOrdersView.as_view(),
+             name='acme-account-orders'),
+        path('acme/<hex:serial>/order/<acme:slug>/', views.AcmeOrderView.as_view(), name='acme-order'),
+        path('acme/<hex:serial>/order/<acme:slug>/finalize/', views.AcmeOrderFinalizeView.as_view(),
              name='acme-order-finalize'),
-        path('acme/authz/<acme:slug>/', views.AcmeAuthorizationView.as_view(), name='acme-authz'),
-        path('acme/chall/<acme:slug>/', views.AcmeChallengeView.as_view(), name='acme-challenge'),
-        path('acme/cert/<acme:slug>/', views.AcmeCertificateView.as_view(), name='acme-cert'),
+        path('acme/<hex:serial>/authz/<acme:slug>/', views.AcmeAuthorizationView.as_view(),
+             name='acme-authz'),
+        path('acme/<hex:serial>/chall/<acme:slug>/', views.AcmeChallengeView.as_view(),
+             name='acme-challenge'),
+        path('acme/<hex:serial>/cert/<acme:slug>/', views.AcmeCertificateView.as_view(),
+             name='acme-cert'),
     ]
 
 
