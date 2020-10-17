@@ -1042,18 +1042,26 @@ class AcmeAccount(models.Model):
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
+    ca = models.ForeignKey(CertificateAuthority, on_delete=models.CASCADE)
     contact = models.CharField(blank=True, max_length=255)
     status = models.CharField(choices=STATUS_CHOICES, max_length=12)
     terms_of_service_agreed = models.BooleanField(default=False)
-    pem = models.TextField(verbose_name=_('Public key'))
+    pem = models.TextField(verbose_name=_('Public key'), unique=True)
     thumbprint = models.CharField(max_length=64)
 
     class Meta:
         verbose_name = _('ACME Account')
         verbose_name_plural = _('ACME Accounts')
+        unique_together = (
+            ('ca', 'thumbprint'),
+        )
 
     def __str__(self):
         return self.contact
+
+    @property
+    def serial(self):
+        return self.ca.serial
 
 
 class AcmeOrder(models.Model):
@@ -1088,11 +1096,16 @@ class AcmeOrder(models.Model):
 
     @property
     def acme_url(self):
-        return reverse('django_ca:acme-order', kwargs={'slug': self.slug})
+        return reverse('django_ca:acme-order', kwargs={'slug': self.slug, 'serial': self.serial})
 
     @property
     def acme_finalize_url(self):
-        return reverse('django_ca:acme-order-finalize', kwargs={'slug': self.slug})
+        return reverse('django_ca:acme-order-finalize', kwargs={'slug': self.slug, 'serial': self.serial})
+
+    @property
+    def serial(self):
+        """Serial of the CA for this order."""
+        return self.account.serial
 
     def add_authorization(self, identifier):
         return AcmeAccountAuthorization.objects.create(
@@ -1150,7 +1163,7 @@ class AcmeAccountAuthorization(models.Model):
 
     @property
     def acme_url(self):
-        return reverse('django_ca:acme-authz', kwargs={'slug': self.slug})
+        return reverse('django_ca:acme-authz', kwargs={'slug': self.slug, 'serial': self.serial})
 
     @property
     def expires(self):
@@ -1159,6 +1172,10 @@ class AcmeAccountAuthorization(models.Model):
     @property
     def identifier(self):
         return messages.Identifier(typ=self.type, value=self.value)
+
+    @property
+    def serial(self):
+        return self.order.serial
 
     @property
     def subject_alternative_name(self):
@@ -1223,7 +1240,7 @@ class AcmeChallenge(models.Model):
 
     @property
     def acme_url(self):
-        return reverse('django_ca:acme-challenge', kwargs={'slug': self.slug})
+        return reverse('django_ca:acme-challenge', kwargs={'slug': self.slug, 'serial': self.serial})
 
     def get_challenge(self, request):
         if not self.token:
@@ -1262,6 +1279,10 @@ class AcmeChallenge(models.Model):
         """
         self.token = get_random_string(64, allowed_chars=BASE64_URL_ALPHABET)
 
+    @property
+    def serial(self):
+        return self.auth.serial
+
 
 class AcmeCertificate(models.Model):
     """Intermediate model for certificates to be issued via ACME."""
@@ -1270,6 +1291,10 @@ class AcmeCertificate(models.Model):
     order = models.ForeignKey(AcmeOrder, on_delete=models.CASCADE)
     cert = models.ForeignKey(Certificate, on_delete=models.CASCADE, null=True)
     csr = models.TextField(verbose_name=_('CSR'))  # NOTE: **NOT** a PEM, see parse_csr()
+
+    @property
+    def acme_url(self):
+        return reverse('django_ca:acme-cert', kwargs={'slug': self.slug, 'serial': self.order.serial})
 
     def parse_csr(self):
         """Convert the CSR as received via ACMEv2 into a valid CSR.

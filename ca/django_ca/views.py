@@ -429,7 +429,7 @@ class AcmeBaseView(View):
         """Get the message class used for parsing the request body."""
         return self.message_cls
 
-    def get_nonce(self):
+    def get_nonce(self, ca):
         """Get a random Nonce and add it to the cache."""
         if secrets is None:
             data = os.urandom(self.nonce_length)
@@ -437,13 +437,13 @@ class AcmeBaseView(View):
             data = secrets.token_bytes(self.nonce_length)
 
         nonce = jose.encode_b64jose(data)
-        cache_key = 'acme-nonce-%s' % nonce
+        cache_key = 'acme-nonce-%s-%s' % (ca.pk, nonce)
         cache.set(cache_key, 0)
         return nonce
 
-    def validate_nonce(self, nonce):  # pylint: disable=no-self-use
+    def validate_nonce(self, nonce):
         """Validate that the given nonce was issued and was not used before."""
-        cache_key = 'acme-nonce-%s' % nonce
+        cache_key = 'acme-nonce-%s-%s' % (self.ca.pk, nonce)
         try:
             count = cache.incr(cache_key)
         except ValueError:
@@ -500,7 +500,7 @@ class AcmeBaseView(View):
             # both.'
             return AcmeResponseMalformed('JWS contained mutually exclusive fields "jwk" and "kid".')
 
-        elif combined.jwk:
+        if combined.jwk:
             if not self.requires_key:
                 return AcmeResponseMalformed('Request requires a JWK key ID.')
 
@@ -550,13 +550,16 @@ class AcmeBaseView(View):
             # ... "alg"
             return AcmeResponseMalformed('No algorithm specified.')
 
+        # Get certificate authority for this request
+        self.ca = CertificateAuthority.objects.get(serial=serial)
+
         if not self.validate_nonce(jose.encode_b64jose(combined.nonce)):
             # ... "nonce"
             resp = AcmeResponseBadNonce()
 
             # MUST include a new Nonce: "An error response with the "badNonce" error type MUST include a
             # Replay-Nonce header field with a fresh nonce that the server will accept"
-            resp['replay-nonce'] = self.get_nonce()
+            resp['replay-nonce'] = self.get_nonce(ca=self.ca)
             return resp
 
         if combined.url != request.build_absolute_uri():
@@ -564,8 +567,6 @@ class AcmeBaseView(View):
             # RFC 8555 is not really clear on the required response code, but merely says "If the two do not
             # match, then the server MUST reject the request as unauthorized."
             return AcmeResponseUnauthorized()
-
-        self.ca = CertificateAuthority.objects.get(serial=serial)
 
         if self.post_as_get is True:
             if self.jws.payload != b'':
@@ -590,43 +591,51 @@ class AcmeBaseView(View):
             except AcmeException as e:
                 response = e.get_response()
 
-        response['replay-nonce'] = self.get_nonce()
+        response['replay-nonce'] = self.get_nonce(ca=self.ca)
         self.set_link_relations(response)
 
         return response
 
 
-class AcmeNewNonce(AcmeBaseView):
+class AcmeNewNonce(AcmeBaseView):  # pylint: disable=abstract-method; no need to override acme_request()
     """
     `Equivalent LE URL <https://acme-v02.api.letsencrypt.org/acme/new-nonce>`_
     """
-    def head(self, request):
+    def head(self, request, serial):
+        # pylint: disable=method-hidden; seems like a false positive
+        # pylint: disable=missing-function-docstring; standard Django method
         if not ca_settings.CA_ENABLE_ACME:
             raise Http404('Page not found.')
 
+        ca = CertificateAuthority.objects.get(serial=serial)
+
         resp = HttpResponse()
-        resp['replay-nonce'] = self.get_nonce()
+        resp['replay-nonce'] = self.get_nonce(ca=ca)
         return resp
 
 
 class AcmeNewAccount(AcmeBaseView):
+    """Implements endpoint for creating a new account, that is ``/acme/new-account``.
+
+    .. seealso:: `RFC 8555, 7.3 <https://tools.ietf.org/html/rfc8555#section-7.3>`_
+    """
     message_cls = messages.Registration
     requires_key = True
 
-    def acme_request(self, message):
+    def acme_request(self, message):  # pylint: disable=arguments-differ; more concrete here
         pem = self.jwk['key'].public_bytes(
             encoding=Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo
         ).decode('utf-8')
 
-        account = AcmeAccount(
+        account = AcmeAccount.objects.create(
+            ca=self.ca,
             contact=message.emails[0],
             status=AcmeAccount.STATUS_VALID,
             terms_of_service_agreed=message.terms_of_service_agreed,
             thumbprint=jose.encode_b64jose(self.jwk.thumbprint()),
             pem=pem
         )
-        account.save()
 
         return AcmeResponseAccountCreated(self.request, account)
 
@@ -666,7 +675,7 @@ class AcmeNewOrderView(AcmeBaseView):
         # TODO: test if identifiers are acceptable
 
     @transaction.atomic
-    def acme_request(self, message):
+    def acme_request(self, message):  # pylint: disable=arguments-differ; more concrete here
         order = AcmeOrder.objects.create(account=self.account)
 
         authorizations = []
@@ -692,7 +701,7 @@ class AcmeNewOrderView(AcmeBaseView):
 class AcmeOrderView(AcmeBaseView):
     post_as_get = True
 
-    def acme_request(self, slug):
+    def acme_request(self, slug):  # pylint: disable=arguments-differ; more concrete here
         order = AcmeOrder.objects.get(slug=slug)
 
         expires = order.expires
@@ -703,7 +712,7 @@ class AcmeOrderView(AcmeBaseView):
         authorizations = order.authorizations.all()
 
         cert = AcmeCertificate.objects.get(order=order)
-        cert_url = self.request.build_absolute_uri(reverse('django_ca:acme-cert', kwargs={'slug': cert.slug}))
+        cert_url = self.request.build_absolute_uri(cert.acme_url)
 
         response = AcmeResponseOrder(
             status=order.status,
@@ -726,7 +735,7 @@ class AcmeOrderFinalizeView(AcmeBaseView):
     """
     message_cls = messages.CertificateRequest
 
-    def acme_request(self, message, slug):
+    def acme_request(self, message, slug):  # pylint: disable=arguments-differ; more concrete here
         order = AcmeOrder.objects.get(slug=slug)
 
         # Note: Jose wraps the CSR in a josepy.util.ComparableX509, that has *no* public member methods.
@@ -742,7 +751,7 @@ class AcmeOrderFinalizeView(AcmeBaseView):
         cert = AcmeCertificate.objects.get_or_create(order=order, defaults={'csr': csr})[0]
         # TODO: should only be pending auths, and only if state of order is pending
         authorizations = order.authorizations.all()
-        cert_url = self.request.build_absolute_uri(reverse('django_ca:acme-cert', kwargs={'slug': cert.slug}))
+        cert_url = self.request.build_absolute_uri(cert.acme_url)
 
         if order.status == AcmeOrder.STATUS_READY:
             order.status == AcmeOrder.STATUS_PROCESSING
@@ -768,7 +777,7 @@ class AcmeCertificateView(AcmeBaseView):
     """
     post_as_get = True
 
-    def acme_request(self, slug):
+    def acme_request(self, slug):  # pylint: disable=arguments-differ; more concrete here
         acme_cert = AcmeCertificate.objects.get(slug=slug)
         bundle = '\n'.join([cert.pub.strip() for cert in acme_cert.cert.bundle])
         return HttpResponse(bundle, content_type='application/pem-certificate-chain')
@@ -782,7 +791,7 @@ class AcmeAuthorizationView(AcmeBaseView):
 
     post_as_get = True
 
-    def acme_request(self, slug):
+    def acme_request(self, slug):  # pylint: disable=arguments-differ; more concrete here
         # TODO: filter for AcmeOrder status
         auth = AcmeAccountAuthorization.objects.select_related('order').get(slug=slug)
         challenges = auth.get_challenges()
@@ -825,14 +834,16 @@ class AcmeChallengeView(AcmeBaseView):
             The "up" link relation is used with challenge resources to indicate the authorization resource to
             which a challenge belongs.
         """
-        url = reverse('django_ca:acme-authz', kwargs={'slug': self.challenge.auth.slug})
-        return super().set_link_relations(response, up=url, **kwargs)
+        url = reverse('django_ca:acme-authz', kwargs={'slug': self.challenge.auth.slug,
+                                                      'serial': self.challenge.serial})
+        print(url, self.challenge.acme_url)
+        return super().set_link_relations(response, up=self.challenge.acme_url, **kwargs)
 
     def get_message_cls(self, request, slug):
         self.challenge = AcmeChallenge.objects.get(slug=slug)
         return self.challenge.get_challenge(request)
 
-    def acme_request(self, slug):
+    def acme_request(self, slug):  # pylint: disable=arguments-differ; more concrete here
         self.challenge = AcmeChallenge.objects.get(slug=slug)
 
         # Set the status to "processing", to quote RFC8555, Section 7.1.6:

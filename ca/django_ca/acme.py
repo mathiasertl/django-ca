@@ -41,6 +41,8 @@ class AcmeObjectResponse(AcmeResponse):
 
 
 class AcmeResponseAccountCreated(AcmeResponse):
+    """Response when an ACME account is created."""
+
     status_code = HTTPStatus.CREATED
 
     def __init__(self, request, account):
@@ -48,13 +50,14 @@ class AcmeResponseAccountCreated(AcmeResponse):
             'status': account.status,
             'contanct': [account.contact],
             'orders': request.build_absolute_uri(
-                reverse('django_ca:acme-account-orders', kwargs={'pk': account.pk})),
+                reverse('django_ca:acme-account-orders', kwargs={'pk': account.pk,
+                                                                 'serial': account.ca.serial})),
         }
 
         super().__init__(data)
 
         self['Location'] = request.build_absolute_uri(
-            reverse('django_ca:acme-account', kwargs={'pk': account.pk}))
+            reverse('django_ca:acme-account', kwargs={'pk': account.pk, 'serial': account.ca.serial}))
 
 
 class AcmeResponseOrder(AcmeSimpleResponse):
