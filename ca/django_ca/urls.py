@@ -43,8 +43,8 @@ urlpatterns = [
 
 if ca_settings.CA_ENABLE_ACME:
     urlpatterns += [
-        path('directory/', views.AcmeDirectory.as_view(), name='acme-directory'),
-        path('directory/<hex:serial>/', views.AcmeDirectory.as_view(), name='acme-directory'),
+        path('acme/directory/', views.AcmeDirectory.as_view(), name='acme-directory'),
+        path('acme/directory/<hex:serial>/', views.AcmeDirectory.as_view(), name='acme-directory'),
         path('acme/<hex:serial>/new-nonce/', views.AcmeNewNonce.as_view(), name='acme-new-nonce'),
         path('acme/<hex:serial>/new-account/', views.AcmeNewAccount.as_view(), name='acme-new-account'),
         path('acme/<hex:serial>/new-order/', views.AcmeNewOrderView.as_view(), name='acme-new-order'),
