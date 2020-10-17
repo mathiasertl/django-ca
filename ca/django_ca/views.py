@@ -405,34 +405,45 @@ class AcmeDirectory(View):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class AcmeBaseView(View):
+    """Base class for all ACME views."""
+
     ignore_body = False  # True if we want to ignore the message body
     post_as_get = False  # True if this is a POST-as-GET request (see RFC 8555, 6.3).
     requires_key = False  # True if we require a full key (-> new accounts)
+    message_cls = None  # Set to class parsing the request body if post_as_get=False.
     nonce_length = 32
 
     def acme_request(self, **kwargs):
-        """Function to handle the given ACME request. Views are expected to implement this function."""
+        """Function to handle the given ACME request. Views are expected to implement this function.
+
+        Parameters
+        ----------
+
+        **kwargs : dict
+            The arguments as passed by the resolver. If ``post_as_get`` is True, an instance of the class
+            specified in ``message_cls`` is passed as the ``message`` keyword argument.
+        """
         raise NotImplementedError
 
-    def nonce_key(self, nonce):
-        return 'acme-nonce-%s' % nonce
-
     def get_message_cls(self, request, **kwargs):
+        """Get the message class used for parsing the request body."""
         return self.message_cls
 
     def get_nonce(self):
+        """Get a random Nonce and add it to the cache."""
         if secrets is None:
             data = os.urandom(self.nonce_length)
         else:
             data = secrets.token_bytes(self.nonce_length)
 
         nonce = jose.encode_b64jose(data)
-        cache_key = self.nonce_key(nonce)
+        cache_key = 'acme-nonce-%s' % nonce
         cache.set(cache_key, 0)
         return nonce
 
-    def validate_nonce(self, nonce):
-        cache_key = self.nonce_key(nonce)
+    def validate_nonce(self, nonce):  # pylint: disable=no-self-use
+        """Validate that the given nonce was issued and was not used before."""
+        cache_key = 'acme-nonce-%s' % nonce
         try:
             count = cache.incr(cache_key)
         except ValueError:
@@ -446,7 +457,6 @@ class AcmeBaseView(View):
 
     def validate_message(self, message):
         """Let subclasses do individual validation of the received message."""
-        pass
 
     def set_link_relations(self, response, **kwargs):
         """Set Link releations headers according to RFC8288.
@@ -466,6 +476,7 @@ class AcmeBaseView(View):
     def post(self, request, serial, **kwargs):
         # pylint: disable=missing-function-docstring; standard Django function
         # pylint: disable=attribute-defined-outside-init
+        # pylint: disable=too-many-return-statements,too-many-branches; b/c of the many checks
         if not ca_settings.CA_ENABLE_ACME:
             raise Http404('Page not found.')
 
@@ -575,7 +586,7 @@ class AcmeBaseView(View):
 
             try:
                 self.validate_message(message)
-                response = self.acme_request(message, **kwargs)
+                response = self.acme_request(message=message, **kwargs)
             except AcmeException as e:
                 response = e.get_response()
 
