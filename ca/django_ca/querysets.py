@@ -11,13 +11,24 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""QuerySet classes for DjangoCA models."""
+
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
 
-class DjangoCAMixin(object):
+class DjangoCAMixin:
+    """Mixin with common methods for CertificateAuthority and Certificate models."""
+
     def get_by_serial_or_cn(self, identifier):
+        """Get a model by serial *or* by common name.
+
+        This method is meant to get a CA from a user input value. If `identifier` is a serial, colons (``:``)
+        and leading zeros are ignored. If no exact match is found it will search for CAs starting with that
+        value. For example, if a CA has the serial ``ABCDE``, it will be found with "ABCDE", "A:BC:DE",
+        "0A:BC:DE" or just "0AB" as `identifier`.
+        """
         identifier = identifier.strip()
         serial = identifier.upper()
 
@@ -41,25 +52,34 @@ class DjangoCAMixin(object):
 
 
 class CertificateAuthorityQuerySet(models.QuerySet, DjangoCAMixin):
+    """QuerySet for the CertificateAuthority model."""
+
     def disabled(self):
+        """Return CAs that are disabled."""
         return self.filter(enabled=False)
 
     def enabled(self):
+        """Return CAs that are enabled."""
         return self.filter(enabled=True)
 
     def valid(self):
+        """Return CAs that are currently valid."""
         now = timezone.now()
         return self.filter(expires__gt=now, valid_from__lt=now)
 
     def invalid(self):
+        """Return CAs that are either expired or not yet valid."""
         now = timezone.now()
         return self.exclude(expires__gt=now, valid_from__lt=now)
 
     def usable(self):
+        """Return CAs that are enabled and currently valid."""
         return self.enabled().valid()
 
 
 class CertificateQuerySet(models.QuerySet, DjangoCAMixin):
+    """QuerySet for the Certificate model."""
+
     def not_yet_valid(self):
         """Return certificates that are not yet valid."""
 
