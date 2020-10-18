@@ -11,11 +11,14 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
+"""Base test cases for admin views and CertificateAdmin tests."""
+
 import html
 import json
 import unittest
 from datetime import datetime
 from datetime import timedelta
+from http import HTTPStatus
 from unittest import mock
 from urllib.parse import quote
 
@@ -26,8 +29,8 @@ from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import ObjectIdentifier
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
-from django.contrib.auth.models import User
 from django.templatetags.static import static
 from django.test import Client
 from django.urls import reverse
@@ -67,26 +70,74 @@ from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
 
+User = get_user_model()
 
-class AdminTestMixin(object):
+
+class AdminTestMixin:
+    """Common mixin for testing admin classes for models."""
+
+    model = None
+    """Model must be configured for TestCase instances using this mixin."""
+
+    username = 'user'
+    password = 'password'
+    email = 'user@example.com'
+
     def setUp(self):
-        self.user = User.objects.create_superuser(username='user', password='password',
-                                                  email='user@example.com')
-        self.add_url = reverse('admin:django_ca_certificate_add')
-        self.changelist_url = reverse('admin:django_ca_certificate_changelist')
-        self.client = Client()
+        # pylint: disable=invalid-name,missing-function-docstring; unittest standard
+        self.user = User.objects.create_superuser(username=self.username, password=self.password,
+                                                  email=self.email)
+        self.add_url = reverse('admin:%s_%s_add' % self._admin_url_format_tuple)
+        self.changelist_url = reverse('admin:%s_%s_changelist' % self._admin_url_format_tuple)
         self.client.force_login(self.user)
-        super(AdminTestMixin, self).setUp()
+        super().setUp()
 
-    def assertCSS(self, response, path):
+    @property
+    def _admin_url_format_tuple(self):
+        return (self.model._meta.app_label, self.model._meta.model_name)
+
+    def assertCSS(self, response, path):  # pylint: disable=invalid-name; unittest standard
+        """Assert that the HTML from the given response includes the mentioned CSS."""
         css = '<link href="%s" type="text/css" media="all" rel="stylesheet" />' % static(path)
         self.assertInHTML(css, response.content.decode('utf-8'), 1)
+
+    def change_url(self, pk):
+        """Admin change URL for the given primary key."""
+        return reverse('admin:%s_%s_change' % self._admin_url_format_tuple, kwargs={'object_id': pk})
+
+
+class StandardAdminViewTestMixin(AdminTestMixin):
+    """A mixin that adds tests for the standard Django admin views.
+
+    TestCases using this mixin are expected to implement ``setUp`` to add some useful test model instances.
+    """
+
+    def test_model_count(self):
+        """Test that the implementing TestCase actually creates some instances."""
+        self.assertGreater(self.model.objects.all().count(), 0)
+
+    def test_changelist_view(self):
+        """Test that the changelist view works."""
+        response = self.client.get(self.changelist_url)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(set(response.context['cl'].result_list), set(self.model.objects.all()))
+
+    def test_change_view(self):
+        """Test that the change view works for all instances."""
+        for obj in self.model.objects.all():
+            response = self.client.get(self.change_url(pk=obj.pk))
+            self.assertEqual(response.status_code, HTTPStatus.OK)
+
+
+class CertificateAdminTestMixin(AdminTestMixin):
+    """Specialized variant of :py:class:`~django_ca.tests.tests_admin.AdminTestMixin` for certificates."""
+
+    model = Certificate
 
     def change_url(self, pk=None):
         if pk is None:
             pk = self.certs['root-cert'].pk
-
-        return reverse('admin:django_ca_certificate_change', args=(pk, ))
+        return super().change_url(pk=pk)
 
     def assertChangeResponse(self, response):
         self.assertEqual(response.status_code, 200)
@@ -103,7 +154,7 @@ class AdminTestMixin(object):
 
 
 @freeze_time(timestamps['everything_valid'])
-class ChangelistTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
+class ChangelistTestCase(CertificateAdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
     """Test the changelist view."""
 
     def assertResponse(self, response, certs=None):
@@ -241,7 +292,7 @@ class ChangelistWithTZTestCase(ChangelistTestCase):
 
 # NOTE: default view gives only valid certificates, so an expired would not be included by default
 @freeze_time(timestamps['everything_valid'])
-class RevokeActionTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
+class RevokeActionTestCase(CertificateAdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
     """Test the "revoke" action in the changelist."""
 
     def test_basic(self):
@@ -298,7 +349,7 @@ class RevokeActionTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
         self.assertRevoked(cert)
 
 
-class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
+class ChangeTestCase(CertificateAdminTestMixin, DjangoCAWithCertTestCase):
     def test_basic(self):
         # Just assert that viewing a certificate does not throw an exception
         for name, cert in self.certs.items():
@@ -406,7 +457,7 @@ class ChangeTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
 
 @freeze_time(timestamps['after_child'])
-class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
+class AddTestCase(CertificateAdminTestMixin, DjangoCAWithCertTestCase):
     @override_tmpcadir()
     def test_get(self):
         response = self.client.get(self.add_url)
@@ -904,7 +955,7 @@ class AddTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
         self.assertFalse(post.called)
 
 
-class CSRDetailTestCase(AdminTestMixin, DjangoCATestCase):
+class CSRDetailTestCase(CertificateAdminTestMixin, DjangoCATestCase):
     def setUp(self):
         self.url = reverse('admin:django_ca_certificate_csr_details')
         self.csr_pem = certs['root-cert']['csr']['pem']
@@ -971,7 +1022,7 @@ class CSRDetailTestCase(AdminTestMixin, DjangoCATestCase):
         self.assertRequiresLogin(response)
 
 
-class ProfilesViewTestCase(AdminTestMixin, DjangoCATestCase):
+class ProfilesViewTestCase(CertificateAdminTestMixin, DjangoCATestCase):
     def setUp(self):
         self.url = reverse('admin:django_ca_certificate_profiles')
         super(ProfilesViewTestCase, self).setUp()
@@ -1116,7 +1167,7 @@ class ProfilesViewTestCase(AdminTestMixin, DjangoCATestCase):
         })
 
 
-class CertDownloadTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
+class CertDownloadTestCase(CertificateAdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
     def setUp(self):
         super(CertDownloadTestCase, self).setUp()
         self.cert = self.certs['root-cert']
@@ -1193,7 +1244,7 @@ class CertDownloadTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
         self.assertRequiresLogin(response)
 
 
-class CertDownloadBundleTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
+class CertDownloadBundleTestCase(CertificateAdminTestMixin, DjangoCAWithGeneratedCertsTestCase):
     def setUp(self):
         super(CertDownloadBundleTestCase, self).setUp()
         self.cert = self.certs['root-cert']
@@ -1227,7 +1278,7 @@ class CertDownloadBundleTestCase(AdminTestMixin, DjangoCAWithGeneratedCertsTestC
 
 
 @freeze_time(timestamps['everything_valid'])
-class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithGeneratedCertsTestCase):
+class ResignCertTestCase(CertificateAdminTestMixin, WebTestMixin, DjangoCAWithGeneratedCertsTestCase):
     def setUp(self):
         super(ResignCertTestCase, self).setUp()
         self.cert = self.certs['root-cert']
@@ -1323,7 +1374,7 @@ class ResignCertTestCase(AdminTestMixin, WebTestMixin, DjangoCAWithGeneratedCert
         self.assertResigned(cert)
 
 
-class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
+class RevokeCertViewTestCase(CertificateAdminTestMixin, DjangoCAWithCertTestCase):
     def setUp(self):
         super(RevokeCertViewTestCase, self).setUp()
         self.cert = self.certs['root-cert']
@@ -1478,7 +1529,7 @@ class RevokeCertViewTestCase(AdminTestMixin, DjangoCAWithCertTestCase):
 
 
 @unittest.skipIf(settings.SKIP_SELENIUM_TESTS, 'Selenium tests skipped.')
-class AddCertificateSeleniumTests(AdminTestMixin, SeleniumTestCase):
+class AddCertificateSeleniumTests(CertificateAdminTestMixin, SeleniumTestCase):
     def get_expected(self, profile, extension_class, default=None):
         if extension_class.key in profile.extensions:
             return profile.extensions[extension_class.key].serialize()

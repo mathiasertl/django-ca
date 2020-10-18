@@ -676,7 +676,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
         )
 
 
-if ca_settings.CA_ENABLE_ACME:
+if ca_settings.CA_ENABLE_ACME:  # pragma: no branch
     @admin.register(AcmeAccount)
     class AcmeAccountAdmin(admin.ModelAdmin):
         list_display = ('contact', 'status', 'created', 'terms_of_service_agreed')
