@@ -403,18 +403,18 @@ class AcmeDirectory(View):
 
         return JsonResponse({
             rnd: "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417",
-            "keyChange": "http://localhost:8000/django_ca/acme/key-change",
+            "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
             "meta": {
                 #"caaIdentities": [
                 #    "letsencrypt.org"
                 #],
-                "termsOfService": "https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf",
-                "website": "https://letsencrypt.org"
+                "termsOfService": "https://localhost:8000/django_ca/example.pdf",
+                "website": "https://localhost:8000"
             },
             "newAccount": self._url(request, 'acme-new-account', ca),
             "newNonce": self._url(request, 'acme-new-nonce', ca),
             "newOrder": self._url(request, 'acme-new-order', ca),
-            "revokeCert": "http://localhost:8000/django_ca/acme/revoke-cert"  # TODO
+            "revokeCert": "http://localhost:8000/django_ca/acme/todo/revoke-cert"  # TODO
         })
 
 
