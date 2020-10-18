@@ -45,6 +45,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.core.cache import cache
+from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import ValidationError
 from django.core.management import ManagementUtility
 from django.core.management import call_command
@@ -505,6 +506,12 @@ class DjangoCATestCaseMixin:
             extensions.setdefault(SubjectKeyIdentifier.key, SubjectKeyIdentifier(ski))
 
         self.assertEqual(actual, extensions)
+
+    @contextmanager
+    def assertImproperlyConfigured(self, msg):  # pylint: disable=invalid-name; unittest standard
+        """Shortcut for testing that the code raises ImproperlyConfigured with the given message."""
+        with self.assertRaisesRegex(ImproperlyConfigured, msg):
+            yield
 
     def assertIssuer(self, issuer, cert):
         self.assertEqual(cert.issuer, issuer.subject)

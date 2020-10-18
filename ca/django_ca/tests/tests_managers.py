@@ -11,6 +11,10 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""TestCases for various model managers."""
+
+from freezegun import freeze_time
+
 from .. import ca_settings
 from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
@@ -30,11 +34,15 @@ from .base import DjangoCAWithGeneratedCAsTestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
+from .base import timestamps
 
 
 @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={}, )
 class CertificateAuthorityManagerTestCase(DjangoCATestCase):
+    """Tests for :py:class:`django_ca.managers.CertificateAuthorityManager`."""
+
     def assertBasic(self, ca, name, subject, parent=None):
+        """Assert some basic properties of a CA."""
         parent_ca = parent or ca
         parent_serial = parent_ca.serial
         parent_ski = parent_ca.subject_key_identifier.value
@@ -149,6 +157,59 @@ class CertificateAuthorityManagerTestCase(DjangoCATestCase):
         with self.assertRaisesRegex(ValueError, r'^Cannot add extension of type bool$'):
             CertificateAuthority.objects.init(name, subject, extra_extensions=[True])
         self.assertEqual(CertificateAuthority.objects.filter(name=name).count(), 0)
+
+
+@override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={}, CA_DEFAULT_CA=certs['root']['serial'])
+@freeze_time(timestamps['everything_valid'])
+class CertificateAuthorityManagerDefaultTestCase(DjangoCAWithGeneratedCAsTestCase):
+    """Tests for :py:func:`django_ca.managers.CertificateAuthorityManager.default`."""
+
+    def setUp(self):
+        super().setUp()
+        self.ca = self.cas['root']
+
+    def test_default(self):
+        """Test the correct CA is returned if CA_DEFAULT_CA is set."""
+        self.assertEqual(CertificateAuthority.objects.default(), self.ca)
+
+    def test_disabled(self):
+        """Test that an exception is raised if the CA is disabled."""
+        self.ca.enabled = False
+        self.ca.save()
+
+        with self.assertImproperlyConfigured(r'^CA_DEFAULT_CA: %s is disabled\.$' % self.ca.serial):
+            CertificateAuthority.objects.default()
+
+    @freeze_time(timestamps['everything_expired'])
+    def test_expired(self):
+        """Test that an exception is raised if CA is expired."""
+        with self.assertImproperlyConfigured(r'^CA_DEFAULT_CA: %s is expired\.$' % self.ca.serial):
+            CertificateAuthority.objects.default()
+
+    @freeze_time(timestamps['before_everything'])
+    def test_not_yet_valid(self):
+        """Test that an exception is raised if CA is not yet valid."""
+        with self.assertImproperlyConfigured(r'^CA_DEFAULT_CA: %s is not yet valid\.$' % self.ca.serial):
+            CertificateAuthority.objects.default()
+
+    @override_settings(CA_DEFAULT_CA='')
+    def test_default_ca(self):
+        """Test what is returned when **no** CA is configured as default."""
+        ca = sorted(self.cas.values(), key=lambda ca: (ca.expires, ca.serial))[-1]
+        self.assertEqual(CertificateAuthority.objects.default(), ca)
+
+    @override_settings(CA_DEFAULT_CA='')
+    @freeze_time(timestamps['everything_expired'])
+    def test_default_ca_expired(self):
+        """Test that exception is raised if no CA is currently valid."""
+        with self.assertImproperlyConfigured(r'^No CA is currently usable\.$'):
+            CertificateAuthority.objects.default()
+
+    @override_settings(CA_DEFAULT_CA='ABC')
+    def test_unknown_ca_configured(self):
+        """Test behavior when an unknown CA is manually configured."""
+        with self.assertImproperlyConfigured(r'^CA_DEFAULT_CA: ABC: CA not found\.$'):
+            CertificateAuthority.objects.default()
 
 
 @override_settings(CA_DEFAULT_SUBJECT={})
