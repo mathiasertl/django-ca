@@ -1,5 +1,5 @@
 Django>=2.2
-acme==1.8.0
+acme==1.9.0
 asn1crypto>=1.0.1
 cryptography>=2.8
 idna>=2.9
