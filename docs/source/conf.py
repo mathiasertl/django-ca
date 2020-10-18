@@ -79,7 +79,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'django-ca'
-copyright = '2016, Mathias Ertl'
+copyright = '2016 - 2020, Mathias Ertl'
 author = 'Mathias Ertl'
 
 import django_ca  # NOQA
