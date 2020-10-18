@@ -1036,12 +1036,11 @@ class AcmeAccount(models.Model):
 
         `RFC 8555, 7.1.2 <https://tools.ietf.org/html/rfc8555#section-7.1.2>`_
     """
-    STATUS_VALID = 'valid'
-    STATUS_DEACTIVATED = 'deactivated'  # deactivated by user
-    STATUS_REVOKED = 'revoked'  # deactivated by server
 
-    # Choices from RFC 8555, section 7.1.2.
-    # TODO: get values from acme.messages.STATUS_* constants
+    # RFC 8555, 7.1.2: "Possible values are "valid", "deactivated", and "revoked"."
+    STATUS_VALID = messages.STATUS_VALID
+    STATUS_DEACTIVATED = messages.STATUS_DEACTIVATED  # deactivated by user
+    STATUS_REVOKED = messages.STATUS_REVOKED  # revoked by server
     STATUS_CHOICES = (
         (STATUS_VALID, _('Valid')),
         (STATUS_DEACTIVATED, _('Deactivated')),
@@ -1080,13 +1079,12 @@ class AcmeOrder(models.Model):
 
         `RFC 8555, 7.1.3 <https://tools.ietf.org/html/rfc8555#section-7.1.3>`_
     """
-    # Possible states are from RFC 8555, section 7.1.6.
-    # TODO: get values from acme.messages.STATUS_* constants
-    STATUS_INVALID = 'invalid'
-    STATUS_PENDING = 'pending'
-    STATUS_PROCESSING = 'processing'
-    STATUS_READY = 'ready'
-    STATUS_VALID = 'valid'
+    # RFC 8555, 7.1.3: "Possible values are "pending", "ready", "processing", "valid", and "invalid"."
+    STATUS_PENDING = messages.STATUS_PENDING
+    STATUS_READY = messages.STATUS_READY
+    STATUS_PROCESSING = messages.STATUS_PROCESSING
+    STATUS_VALID = messages.STATUS_VALID
+    STATUS_INVALID = messages.STATUS_INVALID
 
     STATUS_CHOICES = (
         (STATUS_INVALID, _('Invalid')),
@@ -1145,27 +1143,26 @@ class AcmeAccountAuthorization(models.Model):
         `RFC 8555, 7.1.4 <https://tools.ietf.org/html/rfc8555#section-7.1.4>`_
     """
     # Choices from RFC 8555, section 9.7.7.
-    # TODO: get values from acme.messages.IDENTIFIER_* constants
-    TYPE_DNS = 'dns'
+    TYPE_DNS = messages.IDENTIFIER_FQDN
     TYPE_CHOICES = (
         (TYPE_DNS, _('DNS')),
     )
 
-    # Possible values for Status are from RFC 8555, section 7.1.4
+    # RFC 8555, 7.1.4: "Possible values are "pending", "valid", "invalid", "deactivated", "expired", and
+    #                   "revoked"."
     STATUS_PENDING = messages.STATUS_PENDING.name
     STATUS_VALID = messages.STATUS_VALID.name
     STATUS_INVALID = messages.STATUS_INVALID.name
     STATUS_DEACTIVATED = messages.STATUS_DEACTIVATED.name
-    STATUS_EXPIRED = 'expired'  # STATUS_EXPIRED not present in acme 1.5.0
+    STATUS_EXPIRED = 'expired'  # STATUS_EXPIRED not present in acme 1.9.0
     STATUS_REVOKED = messages.STATUS_REVOKED.name
-
     STATUS_CHOICES = (
-        (STATUS_PENDING, messages.STATUS_PENDING.name),
-        (STATUS_VALID, messages.STATUS_VALID.name),
-        (STATUS_INVALID, messages.STATUS_INVALID.name),
-        (STATUS_DEACTIVATED, messages.STATUS_DEACTIVATED.name),
-        (STATUS_EXPIRED, 'expired'),
-        (STATUS_REVOKED, messages.STATUS_REVOKED.name),
+        (STATUS_PENDING, _('Pending')),
+        (STATUS_VALID, _('Valid')),
+        (STATUS_INVALID, _('Invalid')),
+        (STATUS_DEACTIVATED, _('Deactivated')),
+        (STATUS_EXPIRED, _('Expired')),
+        (STATUS_REVOKED, _('Revoked')),
     )
 
     order = models.ForeignKey(AcmeOrder, on_delete=models.PROTECT, related_name='authorizations')
@@ -1234,7 +1231,7 @@ class AcmeChallenge(models.Model):
         (TYPE_TLS_ALPN_01, _('TLS ALPN Challenge')),
     )
 
-    # Possible values for Status are from RFC 8555, section 8:
+    # RFC 8555, 8: "Possible values are "pending", "processing", "valid", and "invalid"."
     STATUS_PENDING = messages.STATUS_PENDING.name
     STATUS_PROCESSING = messages.STATUS_PROCESSING.name
     STATUS_VALID = messages.STATUS_VALID.name
