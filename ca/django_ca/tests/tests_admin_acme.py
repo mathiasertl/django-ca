@@ -46,16 +46,6 @@ VQIDAQAB
 
 THUMBPRINT1 = 'U-yUM27CQn9pClKlEITobHB38GJOJ9YbOxnw5KKqU-8'
 THUMBPRINT2 = 's_glgc6Fem0CW7ZioXHBeuUQVHSO-viZ3xNR8TBebCo'
-SLUG1 = 'DDKFSSsnFKJd'
-SLUG2 = 'waBG4dciy57d'
-SLUG3 = 'tWZRj4zVEEhO'
-SLUG4 = 'iUdtU3hEZzwU'
-SLUG5 = '2spxYO3nd4e6'
-SLUG6 = 'iiCTyXl9fp1j'
-SLUG7 = 'EHoll0zMQuiT'
-SLUG8 = 'hLqWJk0WObcF'
-SLUG9 = '2j9XdeDgwgbV'
-SLUG10 = 'zZsu00i6PLgf'
 TOKEN1 = 'grhuo1-ZmUMD8_53lQMlUN1WeURMpYkSGq5_4r-1S7JNVF3a25_xcA2K3dGtyGjt'
 TOKEN2 = '3vmQafd29ROOktb7wJO_kZ8bIBlqoasegI9ElyLVRyMre_OyEPvjKjkQRxfzWprS'
 TOKEN3 = 'gY-kE5LdgwZyFeUCbjQKaX5Eo2lMsgabeB-m8zQ6eirhJP1WpVhenAyB7Yn-7BIq'
@@ -85,10 +75,8 @@ class AcmeOrderViewsTestCase(AcmeAccountViewsTestCase):
 
     def setUp(self):
         super().setUp()
-        self.order1 = AcmeOrder.objects.create(account=self.account1, status=AcmeOrder.STATUS_VALID,
-                                               slug=SLUG1)
-        self.order2 = AcmeOrder.objects.create(account=self.account1, status=AcmeOrder.STATUS_PROCESSING,
-                                               slug=SLUG2)
+        self.order1 = AcmeOrder.objects.create(account=self.account1, status=AcmeOrder.STATUS_VALID)
+        self.order2 = AcmeOrder.objects.create(account=self.account1, status=AcmeOrder.STATUS_PROCESSING)
 
 
 class AcmeAccountAuthorizationViewsTestCase(AcmeOrderViewsTestCase):
@@ -98,10 +86,10 @@ class AcmeAccountAuthorizationViewsTestCase(AcmeOrderViewsTestCase):
     def setUp(self):
         super().setUp()
         self.auth1 = AcmeAccountAuthorization.objects.create(
-            order=self.order1, slug=SLUG3, type=AcmeAccountAuthorization.TYPE_DNS, value='example.com',
+            order=self.order1, type=AcmeAccountAuthorization.TYPE_DNS, value='example.com',
             status=AcmeAccountAuthorization.STATUS_PENDING, wildcard=True)
         self.auth2 = AcmeAccountAuthorization.objects.create(
-            order=self.order2, slug=SLUG4, type=AcmeAccountAuthorization.TYPE_DNS, value='example.net',
+            order=self.order2, type=AcmeAccountAuthorization.TYPE_DNS, value='example.net',
             status=AcmeAccountAuthorization.STATUS_VALID, wildcard=False)
 
 
@@ -112,13 +100,11 @@ class AcmeChallengeViewsTestCase(AcmeAccountAuthorizationViewsTestCase):
     def setUp(self):
         super().setUp()
         self.chall1 = AcmeChallenge.objects.create(
-            auth=self.auth1, slug=SLUG5, status=AcmeChallenge.STATUS_PENDING, token=TOKEN1)
+            auth=self.auth1, status=AcmeChallenge.STATUS_PENDING, token=TOKEN1)
         self.chall2 = AcmeChallenge.objects.create(
-            auth=self.auth2, slug=SLUG6, status=AcmeChallenge.STATUS_VALID, token=TOKEN2,
-            validated=timezone.now())
+            auth=self.auth2, status=AcmeChallenge.STATUS_VALID, token=TOKEN2, validated=timezone.now())
         self.chall3 = AcmeChallenge.objects.create(
-            auth=self.auth2, slug=SLUG7, status=AcmeChallenge.STATUS_INVALID, token=TOKEN3,
-            error='some-error')
+            auth=self.auth2, status=AcmeChallenge.STATUS_INVALID, token=TOKEN3, error='some-error')
 
 
 class AcmeCertificateViewsTestCase(AcmeChallengeViewsTestCase):
@@ -127,6 +113,6 @@ class AcmeCertificateViewsTestCase(AcmeChallengeViewsTestCase):
 
     def setUp(self):
         super().setUp()
-        self.cert1 = AcmeCertificate.objects.create(order=self.order1, slug=SLUG8)
-        self.cert2 = AcmeCertificate.objects.create(order=self.order1, slug=SLUG9, csr=CSR1)
-        self.cert2 = AcmeCertificate.objects.create(order=self.order2, slug=SLUG10, csr=CSR2)
+        self.cert1 = AcmeCertificate.objects.create(order=self.order1)
+        self.cert2 = AcmeCertificate.objects.create(order=self.order1, csr=CSR1)
+        self.cert2 = AcmeCertificate.objects.create(order=self.order2, csr=CSR2)
