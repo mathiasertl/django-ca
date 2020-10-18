@@ -17,6 +17,8 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
+from .utils import sanitize_serial
+
 
 class DjangoCAMixin:
     """Mixin with common methods for CertificateAuthority and Certificate models."""
@@ -30,20 +32,22 @@ class DjangoCAMixin:
         "0A:BC:DE" or just "0AB" as `identifier`.
         """
         identifier = identifier.strip()
-        serial = identifier.upper()
+        exact_query = startswith_query = Q(cn=identifier)
 
-        # NOTE: serials are stored without leading zeros, but will be shown in the CLI and web interface with
-        #       leading zeros for padding so we strip it here.
-        if identifier != '0':
-            serial = serial.lstrip('0')
+        try:
+            serial = sanitize_serial(identifier)
+            exact_query |= Q(serial=serial)
+            startswith_query |= Q(serial__startswith=serial)
+        except ValueError:
+            pass
 
         try:
             # Imported CAs might have a shorter serial and there is a chance that it might become impossible
             # to select a CA by serial if its serial matches another CA with a longer serial. So we try to
             # match by exact serial first.
-            return self.get(Q(serial=serial.replace(':', '')) | Q(cn=identifier))
+            return self.get(exact_query)
         except self.model.DoesNotExist:
-            return self.get(Q(serial__startswith=serial.replace(':', '')) | Q(cn=identifier))
+            return self.get(startswith_query)
 
     def revoked(self):
         """Return revoked certificates."""

@@ -101,6 +101,14 @@ class AcmeResponseUnauthorized(AcmeResponseError):
     message = "You are not authorized to perform this request."
 
 
+class AcmeResponseNotFound(AcmeResponseError):
+    """ACME response when a requested entity cannot be found."""
+
+    status_code = HTTPStatus.NOT_FOUND  # 404
+    type = 'not-found'
+    message = "The requested entity could not be found."
+
+
 class AcmeResponseBadNonce(AcmeResponseError):
     """
 

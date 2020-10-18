@@ -663,6 +663,32 @@ class IntToHexTestCase(TestCase):
         self.assertEqual(utils.int_to_hex(1513282113), '5A32DA41')
 
 
+class SanitizeSerialTestCase(TestCase):
+    """Test :py:func:`~django_ca.utils.sanitize_serial`."""
+
+    def test_already_sanitized(self):
+        """Test some already sanitized input."""
+        self.assertEqual(utils.sanitize_serial('A'), 'A')
+        self.assertEqual(utils.sanitize_serial('5A32DA3B'), '5A32DA3B')
+        self.assertEqual(utils.sanitize_serial('1234567890ABCDEF'), '1234567890ABCDEF')
+
+    def test_sanitized(self):
+        """Test some input that can be correctly sanitized."""
+        self.assertEqual(utils.sanitize_serial('5A:32:DA:3B'), '5A32DA3B')
+        self.assertEqual(utils.sanitize_serial('0A:32:DA:3B'), 'A32DA3B')
+        self.assertEqual(utils.sanitize_serial('0a:32:da:3b'), 'A32DA3B')
+
+    def test_zero(self):
+        """An imported CA might have a serial of just a ``0``, so it must not be stripped."""
+        self.assertEqual(utils.sanitize_serial('0'), '0')
+
+    def test_invalid_input(self):
+        """Test some input that raises an exception."""
+
+        with self.assertRaisesRegex(ValueError, r'^ABCXY: Serial has invalid characters$'):
+            utils.sanitize_serial('ABCXY')
+
+
 class MultilineURLValidatorTestCase(TestCase):
     def test_basic(self):
         multiline_url_validator('')

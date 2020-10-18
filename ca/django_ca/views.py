@@ -36,6 +36,7 @@ from cryptography.x509 import ocsp
 
 from django.conf import settings
 from django.core.cache import cache
+from django.core.exceptions import ImproperlyConfigured
 from django.db import transaction
 from django.http import Http404
 from django.http import HttpResponse
@@ -57,6 +58,7 @@ from .acme import AcmeResponseAccountCreated
 from .acme import AcmeResponseAuthorization
 from .acme import AcmeResponseBadNonce
 from .acme import AcmeResponseMalformed
+from .acme import AcmeResponseNotFound
 from .acme import AcmeResponseOrder
 from .acme import AcmeResponseOrderCreated
 from .acme import AcmeResponseUnauthorized
@@ -75,6 +77,7 @@ from .utils import get_crl_cache_key
 from .utils import int_to_hex
 from .utils import parse_encoding
 from .utils import read_file
+from .utils import sanitize_serial
 
 try:
     import secrets
@@ -372,13 +375,17 @@ class AcmeDirectory(View):
             raise Http404('Page not found.')
 
         if serial is None:
-            ca = CertificateAuthority.objects.default()
+            try:
+                ca = CertificateAuthority.objects.default()
+            except ImproperlyConfigured:
+                return AcmeResponseNotFound('No (usable) default CA configured.')
         else:
-            # Sanitize serial before querying it
-            serial = serial.replace(':', '')
-            if serial != '0':
-                serial = serial.lstrip('0')
-            ca = CertificateAuthority.objects.get(serial=serial)
+            try:
+                ca = CertificateAuthority.objects.get(serial=sanitize_serial(serial))
+            except ValueError:
+                return AcmeResponseMalformed('%s: Serial not valid.' % serial)
+            except CertificateAuthority.DoesNotExist:
+                return AcmeResponseNotFound('%s: CA not found.' % serial)
 
         if secrets is None:
             data = os.urandom(16)

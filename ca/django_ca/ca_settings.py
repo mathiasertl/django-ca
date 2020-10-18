@@ -14,6 +14,7 @@
 """Keep track of internal settings for django-ca."""
 
 import os
+import re
 from datetime import timedelta
 
 from cryptography.hazmat.primitives import hashes
@@ -153,9 +154,12 @@ _CA_CRL_PROFILES = {
 }
 
 # Get and sanitize default CA serial
+# NOTE: This effectively duplicates utils.sanitize_serial()
 CA_DEFAULT_CA = getattr(settings, 'CA_DEFAULT_CA', '').replace(':', '').upper()
 if CA_DEFAULT_CA != '0':
     CA_DEFAULT_CA = CA_DEFAULT_CA.lstrip('0')
+if re.search('[^0-9A-F]', CA_DEFAULT_CA):
+    raise ImproperlyConfigured('CA_DEFAULT_CA: %s: Serial contains invalid characters.' % CA_DEFAULT_CA)
 
 CA_DEFAULT_SUBJECT = getattr(settings, 'CA_DEFAULT_SUBJECT', {})
 

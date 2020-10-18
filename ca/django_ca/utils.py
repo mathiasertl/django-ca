@@ -287,6 +287,27 @@ def hex_to_bytes(value):
     return binascii.unhexlify(value.replace(':', ''))
 
 
+def sanitize_serial(value):
+    """Sanitize a serial provided by user/untrusted input.
+
+    This function is intended to be used to get a serial as used internaly by **django-ca** from untrusted
+    user input. Internally, serials are stored in upper case and without ``:`` and leading zeros, but user
+    output adds at least ``:``.
+
+    Examples:
+
+        >>> sanitize_serial('01:aB')
+        '1AB'
+    """
+
+    serial = value.upper().replace(':', '')
+    if serial != '0':
+        serial = serial.lstrip('0')
+    if re.search('[^0-9A-F]', serial):
+        raise ValueError('%s: Serial has invalid characters' % value)
+    return serial
+
+
 def parse_name(name):
     """Parses a subject string as used in OpenSSLs command line utilities.
 
