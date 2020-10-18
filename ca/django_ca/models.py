@@ -1186,29 +1186,51 @@ class AcmeAccountAuthorization(models.Model):
 
     @property
     def account(self):
+        """Account that this authorization belongs to."""
         return self.order.account
 
     @property
     def acme_url(self):
+        """Get the ACME url path for this account authorization."""
         return reverse('django_ca:acme-authz', kwargs={'slug': self.slug, 'serial': self.serial})
 
     @property
     def expires(self):
+        """When this authorization expires."""
         return self.order.expires  # so far there is no reason to have a different value here
 
     @property
     def identifier(self):
+        """Get ACME identifier for this object.
+
+        Returns
+        -------
+
+        acme.messages.Identifier
+        """
+
         return messages.Identifier(typ=self.type, value=self.value)
 
     @property
     def serial(self):
+        """Serial of the CA for this authorization."""
         return self.order.serial
 
     @property
     def subject_alternative_name(self):
+        """Get the domain for this challenge as prefixed SubjectAlternativeName.
+
+        This method is intended to be used when creating the
+        :py:class:`~django_ca.extensions.SubjectAlternativeName` extension for a certificate to be signed.
+        """
         return '%s:%s' % (self.type, self.value)
 
     def get_challenges(self):
+        """Get list of :py:class:`~django_ca.models.AcmeChallenge` objects for this authorization.
+
+        Note that challenges will be created if they don't exist.
+        """
+
         return [
             AcmeChallenge.objects.get_or_create(auth=self, type=AcmeChallenge.TYPE_HTTP_01)[0],
             AcmeChallenge.objects.get_or_create(auth=self, type=AcmeChallenge.TYPE_DNS_01)[0],
@@ -1267,9 +1289,18 @@ class AcmeChallenge(models.Model):
 
     @property
     def acme_url(self):
+        """Get the ACME url path for this challenge."""
         return reverse('django_ca:acme-challenge', kwargs={'slug': self.slug, 'serial': self.serial})
 
     def get_challenge(self, request):
+        """Get the ACME challenge body for this challenge.
+
+        Returns
+        -------
+
+        acme.messages.ChallengeBody
+            The acme representation of this class.
+        """
         if not self.token:
             self.generate_token()
             self.save()
@@ -1308,6 +1339,7 @@ class AcmeChallenge(models.Model):
 
     @property
     def serial(self):
+        """Serial of the CA for this challenge."""
         return self.auth.serial
 
 
@@ -1321,6 +1353,7 @@ class AcmeCertificate(models.Model):
 
     @property
     def acme_url(self):
+        """Get the ACME url path for this certificate."""
         return reverse('django_ca:acme-cert', kwargs={'slug': self.slug, 'serial': self.order.serial})
 
     def parse_csr(self):
