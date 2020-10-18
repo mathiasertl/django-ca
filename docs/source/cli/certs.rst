@@ -28,6 +28,8 @@ view_cert             View a certificate.
 Like all *manage.py* subcommands, you can run ``manage.py <subcomand> -h`` to get a list of availabble
 parameters.
 
+.. _cli_sign_certs:
+
 ********************
 Signing certificates
 ********************

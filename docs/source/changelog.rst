@@ -10,7 +10,9 @@ ChangeLog
 1.17.0 (TBR)
 ************
 
+* New :ref:`CA_DEFAULT_CA <settings-ca-default-ca>` setting to consistently configure the CA used by default.
 * Correctly handle IDNA domain names in URLs and certificates.
+* :py:exc:`~django:django.core.exceptions.ImproperlyConfigured`
 
 Backwards incompatible changes
 ==============================

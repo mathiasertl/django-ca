@@ -20,6 +20,7 @@ from textwrap import indent
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
 
+from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand as _BaseCommand
 from django.core.management.base import CommandError
 from django.core.management.base import OutputWrapper
@@ -298,13 +299,27 @@ class BaseCommand(_BaseCommand):
     def add_subject(self, parser, arg='subject', metavar=None, help=None):
         parser.add_argument(arg, action=SubjectAction, metavar=metavar, help=help)
 
-    def add_ca(self, parser, arg='--ca',
-               help='Certificate authority to use (default: %(default)s).',
+    def add_ca(self, parser, arg='--ca', help='Certificate authority to use (default: %(default)s).',
                allow_disabled=False, no_default=False, allow_unusable=False):
+        """Add the ``--ca`` action.
+
+        Parameters
+        ----------
+
+        parser
+        arg : str, optional
+        help : str, optional
+        allow_disabled : bool, optional
+        no_default : bool, optional
+        allow_unusable : bool, optional
+        """
         if no_default is True:
             default = None
         else:
-            default = CertificateAuthority.objects.enabled().first()
+            try:
+                default = CertificateAuthority.objects.default()
+            except ImproperlyConfigured:
+                default = None
 
         help = help % {'default': add_colons(default.serial) if default else None}
         parser.add_argument('%s' % arg, metavar='SERIAL', help=help, default=default,

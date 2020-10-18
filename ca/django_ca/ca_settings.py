@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Keep track of internal settings for django-ca."""
+
 import os
 from datetime import timedelta
 
@@ -150,6 +152,11 @@ _CA_CRL_PROFILES = {
     }
 }
 
+# Get and sanitize default CA serial
+CA_DEFAULT_CA = getattr(settings, 'CA_DEFAULT_CA', '').replace(':', '').upper()
+if CA_DEFAULT_CA != '0':
+    CA_DEFAULT_CA = CA_DEFAULT_CA.lstrip('0')
+
 CA_DEFAULT_SUBJECT = getattr(settings, 'CA_DEFAULT_SUBJECT', {})
 
 # Add ability just override/add some profiles
@@ -186,6 +193,7 @@ CA_DIGEST_ALGORITHM = getattr(settings, 'CA_DIGEST_ALGORITHM', "sha512").strip()
 try:
     CA_DIGEST_ALGORITHM = getattr(hashes, CA_DIGEST_ALGORITHM)()
 except AttributeError:
+    # pylint: disable=raise-missing-from; not really useful in this context
     raise ImproperlyConfigured('Unkown CA_DIGEST_ALGORITHM: %s' % settings.CA_DIGEST_ALGORITHM)
 
 if isinstance(CA_DEFAULT_EXPIRES, int):
@@ -206,6 +214,7 @@ try:
     if not isinstance(CA_DEFAULT_ECC_CURVE, ec.EllipticCurve):
         raise ImproperlyConfigured('%s: Not an EllipticCurve.' % _CA_DEFAULT_ECC_CURVE)
 except AttributeError:
+    # pylint: disable=raise-missing-from; not really useful in this context
     raise ImproperlyConfigured('Unkown CA_DEFAULT_ECC_CURVE: %s' % settings.CA_DEFAULT_ECC_CURVE)
 
 CA_FILE_STORAGE = getattr(settings, 'CA_FILE_STORAGE', global_settings.DEFAULT_FILE_STORAGE)
@@ -223,12 +232,13 @@ CA_ENABLE_ACME = getattr(settings, 'CA_ENABLE_ACME', False)
 CA_USE_CELERY = getattr(settings, 'CA_USE_CELERY', None)
 if CA_USE_CELERY is None:
     try:
-        from celery import shared_task  # NOQA
+        from celery import shared_task  # pylint: disable=unused-import
         CA_USE_CELERY = True
     except ImportError:
         CA_USE_CELERY = False
 elif CA_USE_CELERY is True:
     try:
-        from celery import shared_task  # NOQA
+        from celery import shared_task  # NOQA: F401
     except ImportError:
+        # pylint: disable=raise-missing-from; not really useful in this context
         raise ImproperlyConfigured('CA_USE_CELERY set to True, but Celery is not installed')

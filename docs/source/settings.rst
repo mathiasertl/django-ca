@@ -47,6 +47,25 @@ CA_CUSTOM_APPS
    The list gets appended to the standard ``INSTALLED_APPS`` setting. If you need more control, you can always
    override that setting instead.
 
+.. _settings-ca-default-ca:
+
+CA_DEFAULT_CA
+   Default: ``""``
+
+   The serial of the CA to use when no CA is explicitly given.
+   
+   For example, if you sign a certificate using the :ref:`manage.py sign_cert <cli_sign_certs>` command and do
+   not pass the ``--ca`` parameter, the CA given here will be used. You can get a list of serials from the
+   admin interface or via the ``manage.py list_cas`` command.
+   
+   .. WARNING::
+   
+      Some parts of **django-ca** will start throwing errors when attempting to use a default CA that is
+      expired or disabled. So please make sure you keep this setting up to date.
+
+   If this setting is *not* set, **django-ca** will select the CA that is currently usable (enabled, currently
+   valid, not revoked) and and has an expiry furthest in the future.
+
 .. _settings-ca-default-ecc-curve:
 
 CA_DEFAULT_ECC_CURVE
