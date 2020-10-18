@@ -230,9 +230,7 @@ class CreateCertTestCase(DjangoCAWithGeneratedCAsTestCase):
 
         cert = Certificate.objects.create_cert(ca, csr, subject=subject)
         self.assertEqual(cert.subject, Subject(subject))
-        self.assertExtensions(cert, [
-            SubjectAlternativeName({'value': ['DNS:example.com']}),
-        ])
+        self.assertExtensions(cert, [SubjectAlternativeName({'value': ['DNS:example.com']})])
 
     @override_tmpcadir(CA_PROFILES={ca_settings.CA_DEFAULT_PROFILE: {'extensions': {}}})
     def test_explicit_profile(self):
@@ -244,9 +242,7 @@ class CreateCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         cert = Certificate.objects.create_cert(
             ca, csr, subject=subject, profile=profiles[ca_settings.CA_DEFAULT_PROFILE])
         self.assertEqual(cert.subject, Subject(subject))
-        self.assertExtensions(cert, [
-            SubjectAlternativeName({'value': ['DNS:example.com']}),
-        ])
+        self.assertExtensions(cert, [SubjectAlternativeName({'value': ['DNS:example.com']})])
 
     @override_tmpcadir()
     def test_no_cn_or_san(self):
