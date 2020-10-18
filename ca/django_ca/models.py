@@ -27,8 +27,8 @@ import re
 from datetime import datetime
 from datetime import timedelta
 
-import pytz
 import josepy as jose
+import pytz
 from acme import challenges
 from acme import messages
 
@@ -104,10 +104,12 @@ log = logging.getLogger(__name__)
 
 
 def acme_slug():
+    """Default function to get an ACME conforming slug."""
     return get_random_string(length=12)
 
 
 def acme_order_expires():
+    """Default function for the expiry of an ACME order."""
     return timezone.now() + ca_settings.ACME_ORDER_VALIDITY
 
 
@@ -1028,6 +1030,12 @@ class Certificate(X509CertMixin):
 
 
 class AcmeAccount(models.Model):
+    """Implements an ACME account object.
+
+    .. seealso::
+
+        `RFC 8555, 7.1.2 <https://tools.ietf.org/html/rfc8555#section-7.1.2>`_
+    """
     STATUS_VALID = 'valid'
     STATUS_DEACTIVATED = 'deactivated'  # deactivated by user
     STATUS_REVOKED = 'revoked'  # deactivated by server
@@ -1061,10 +1069,17 @@ class AcmeAccount(models.Model):
 
     @property
     def serial(self):
+        """Serial of the CA for this account."""
         return self.ca.serial
 
 
 class AcmeOrder(models.Model):
+    """Implements an ACME order object.
+
+    .. seealso::
+
+        `RFC 8555, 7.1.3 <https://tools.ietf.org/html/rfc8555#section-7.1.3>`_
+    """
     # Possible states are from RFC 8555, section 7.1.6.
     # TODO: get values from acme.messages.STATUS_* constants
     STATUS_INVALID = 'invalid'
@@ -1096,10 +1111,12 @@ class AcmeOrder(models.Model):
 
     @property
     def acme_url(self):
+        """Get the ACME url path for this order."""
         return reverse('django_ca:acme-order', kwargs={'slug': self.slug, 'serial': self.serial})
 
     @property
     def acme_finalize_url(self):
+        """Get the ACME "finalize" url path for this order."""
         return reverse('django_ca:acme-order-finalize', kwargs={'slug': self.slug, 'serial': self.serial})
 
     @property
@@ -1108,12 +1125,25 @@ class AcmeOrder(models.Model):
         return self.account.serial
 
     def add_authorization(self, identifier):
+        """Add an :py:class:`~django_ca.models.AcmeAccountAuthorization` for this order and return it.
+
+        Parameters
+        ----------
+
+        identifier
+        """
         return AcmeAccountAuthorization.objects.create(
             order=self, type=identifier.typ.name, value=identifier.value,
         )
 
 
 class AcmeAccountAuthorization(models.Model):
+    """Implements an ACME authorization object.
+
+    .. seealso::
+
+        `RFC 8555, 7.1.4 <https://tools.ietf.org/html/rfc8555#section-7.1.4>`_
+    """
     # Choices from RFC 8555, section 9.7.7.
     # TODO: get values from acme.messages.IDENTIFIER_* constants
     TYPE_DNS = 'dns'
