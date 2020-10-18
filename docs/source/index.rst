@@ -52,6 +52,7 @@ Features:
    python/extensions
    python/profiles
    python/models
+   python/views
    python/subject
    python/utils
    python/constants

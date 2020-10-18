@@ -11,10 +11,19 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
+"""Views for the django-ca app.
+
+.. seealso::
+
+   * https://docs.djangoproject.com/en/dev/topics/class-based-views/
+   * https://django-ca.readthedocs.io/en/latest/python/views.html
+"""
+
 import base64
 import binascii
 import logging
 import os
+import secrets
 from datetime import datetime
 from datetime import timedelta
 from urllib.parse import urlparse
@@ -79,11 +88,6 @@ from .utils import parse_encoding
 from .utils import read_file
 from .utils import sanitize_serial
 
-try:
-    import secrets
-except ImportError:  # pragma: python<3.6
-    secrets = None
-
 log = logging.getLogger(__name__)
 
 
@@ -117,6 +121,7 @@ class CertificateRevocationListView(View, SingleObjectMixin):
     """Value of the Content-Type header used in the response. For CRLs in PEM format, use ``text/plain``."""
 
     def get(self, request, serial):
+        # pylint: disable=missing-function-docstring; standard Django view function
         encoding = parse_encoding(request.GET.get('encoding', self.type))
         cache_key = get_crl_cache_key(serial, algorithm=self.digest, encoding=encoding, scope=self.scope)
 
@@ -180,6 +185,7 @@ class OCSPBaseView(View):
     """If set to ``True``, validate child CAs instead."""
 
     def get(self, request, data):
+        # pylint: disable=missing-function-docstring; standard Django view function
         try:
             data = base64.b64decode(data)
         except binascii.Error:
@@ -192,6 +198,7 @@ class OCSPBaseView(View):
             return self.fail()
 
     def post(self, request):
+        # pylint: disable=missing-function-docstring; standard Django view function
         try:
             return self.process_ocsp_request(request.body)
         except Exception as e:  # pylint: disable=broad-except; we really need to catch everything here
@@ -332,6 +339,7 @@ class OCSPView(OCSPBaseView):
 @method_decorator(csrf_exempt, name='dispatch')
 class GenericOCSPView(OCSPView):
     def dispatch(self, request, serial, **kwargs):
+        # pylint: disable=missing-function-docstring; standard Django view function
         if request.method == 'GET' and 'data' not in kwargs:
             return self.http_method_not_allowed(request, serial, **kwargs)
         if request.method == 'POST' and 'data' in kwargs:
@@ -356,7 +364,8 @@ class GenericCAIssuersView(View):
     :py:class:`~django_ca.extensions.AuthorityInformationAccess` extension.
     """
 
-    def get(self, request, serial):  # pylint: disable=missing-function-docstring; standard Django view func
+    def get(self, request, serial):
+        # pylint: disable=missing-function-docstring; standard Django view function
         ca = CertificateAuthority.objects.get(serial=serial)
         data = ca.x509.public_bytes(encoding=Encoding.DER)
         return HttpResponse(data, content_type='application/pkix-cert')
@@ -370,7 +379,8 @@ class AcmeDirectory(View):
     def _url(self, request, name, ca):  # pylint: disable=no-self-use
         return request.build_absolute_uri(reverse('django_ca:%s' % name, kwargs={'serial': ca.serial}))
 
-    def get(self, request, serial=None):  # pylint: disable=missing-function-docstring; standard Django
+    def get(self, request, serial=None):
+        # pylint: disable=missing-function-docstring; standard Django view function
         if not ca_settings.CA_ENABLE_ACME:
             raise Http404('Page not found.')
 
@@ -387,11 +397,9 @@ class AcmeDirectory(View):
             except CertificateAuthority.DoesNotExist:
                 return AcmeResponseNotFound('%s: CA not found.' % serial)
 
-        if secrets is None:
-            data = os.urandom(16)
-        else:
-            data = secrets.token_bytes(16)
-        rnd = jose.encode_b64jose(data)
+        # Get some random data into the directory view, as explained in the Let's Encrypt directory:
+        #   https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417
+        rnd = jose.encode_b64jose(secrets.token_bytes(16))
 
         return JsonResponse({
             rnd: "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417",
@@ -434,15 +442,13 @@ class AcmeBaseView(View):
 
     def get_message_cls(self, request, **kwargs):
         """Get the message class used for parsing the request body."""
+        # pylint: disable=unused-argument; kwargs is not usually used
         return self.message_cls
 
     def get_nonce(self, ca):
         """Get a random Nonce and add it to the cache."""
-        if secrets is None:
-            data = os.urandom(self.nonce_length)
-        else:
-            data = secrets.token_bytes(self.nonce_length)
 
+        data = secrets.token_bytes(self.nonce_length)
         nonce = jose.encode_b64jose(data)
         cache_key = 'acme-nonce-%s-%s' % (ca.pk, nonce)
         cache.set(cache_key, 0)
@@ -481,7 +487,7 @@ class AcmeBaseView(View):
                                      for k, v in kwargs.items())
 
     def post(self, request, serial, **kwargs):
-        # pylint: disable=missing-function-docstring; standard Django function
+        # pylint: disable=missing-function-docstring; standard Django view function
         # pylint: disable=attribute-defined-outside-init
         # pylint: disable=too-many-return-statements,too-many-branches; b/c of the many checks
         if not ca_settings.CA_ENABLE_ACME:

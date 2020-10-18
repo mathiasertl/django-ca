@@ -101,13 +101,10 @@ dictionary for the arguments of the view. For example::
 
 This would mean that your OCSP responder would be located at ``/django_ca/ocsp/root-ca/`` at whatever
 domain you have configured your WSGI daemon. If you're using your own URL configuration, pass the
-same parameters to the ``as_view()`` method.
+same parameters to the ``as_view()`` method. Please see the the class documentation for possible options:
 
-.. autoclass:: django_ca.views.OCSPBaseView
-   :members:
-
-.. autoclass:: django_ca.views.OCSPView
-   :members:
+* :py:class:`django_ca.views.OCSPBaseView`
+* :py:class:`django_ca.views.OCSPView`
 
 .. _add-ocsp-url:
 
