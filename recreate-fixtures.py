@@ -24,7 +24,6 @@ from datetime import datetime
 from datetime import timedelta
 from unittest.mock import patch
 
-from freezegun import freeze_time
 from six.moves import reload_module
 
 from cryptography import x509
@@ -38,10 +37,13 @@ from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import NameOID
 
+from freezegun import freeze_time
+
 _rootdir = os.path.dirname(os.path.realpath(__file__))  # NOQA: E402
 _sphinx_dir = os.path.join(_rootdir, 'docs', 'source', '_files')  # NOQA: E402
 sys.path.insert(0, os.path.join(_rootdir, 'ca'))  # NOQA: E402
 os.environ["DJANGO_SETTINGS_MODULE"] = 'ca.test_settings'  # NOQA: E402
+# pylint: disable=wrong-import-position
 import django  # NOQA: E402 isort:skip
 django.setup()  # NOQA: E402
 
@@ -60,6 +62,8 @@ from django_ca.models import CertificateAuthority  # NOQA: E402
 from django_ca.subject import Subject  # NOQA: E402
 from django_ca.utils import ca_storage  # NOQA: E402
 from django_ca.utils import hex_to_bytes  # NOQA: E402
+
+# pylint: enable=wrong-import-position
 
 now = datetime.utcnow().replace(second=0, minute=0)
 

@@ -84,8 +84,8 @@ args = parser.parse_args()
 def test(suites):
     """Run named test suites (or all of them)."""
     # pylint: disable=import-outside-toplevel; imported here so that script runs without django
-    from django.utils import deprecation
     from django.core.management import call_command  # pylint: disable=redefined-outer-name
+    from django.utils import deprecation
 
     # pylint: enable=import-outside-toplevel
 
@@ -193,11 +193,12 @@ elif args.command == 'coverage':
         sys.exit(2)  # coverage cli utility also exits with 2
 
 elif args.command == 'code-quality':
-    print('isort --check-only --diff ca/ setup.py dev.py')
-    subprocess.run(['isort', '--check-only', '--diff', 'ca/', 'setup.py', 'dev.py'], check=True)
+    files = ['ca/', 'setup.py', 'dev.py', 'recreate-fixtures.py']
+    print('isort --check-only --diff %s' % ' '.join(files))
+    subprocess.run(['isort', '--check-only', '--diff'] + files, check=True)
 
-    print('flake8 ca/ setup.py dev.py recreate-fixtures.py')
-    subprocess.run(['flake8', 'ca/', 'setup.py', 'dev.py', 'recreate-fixtures.py'], check=True)
+    print('flake8 %s' % ' '.join(files))
+    subprocess.run(['flake8'] + files, check=True)
 
     print('python -Wd manage.py check')
     subprocess.run(['python', '-Wd', 'manage.py', 'check'], cwd=CADIR, check=True)
