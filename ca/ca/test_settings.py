@@ -1,4 +1,4 @@
-# Django settings for ca project.
+"""Test settings for the django-ca project."""
 
 import json
 import os
@@ -203,7 +203,6 @@ CA_DIR = '/non/existent'
 # WARNING: do not set to testserver, as URLValidator does not consider it a valid hostname
 CA_DEFAULT_HOSTNAME = 'localhost:8000'
 
-# TODO: get serial and paths from fixture data
 CA_OCSP_URLS = {
     'root': {
         'ca': _fixture_data['certs']['root']['serial'],
@@ -231,6 +230,7 @@ CA_OCSP_URLS = {
         'responder_cert': _fixture_data['certs']['profile-ocsp']['pub_filename'],
     },
 }
+CA_ENABLE_ACME = True
 
 CRYPTOGRAPHY_VERSION = packaging.version.parse(cryptography.__version__).release[:2]
 NEWEST_PYTHON = sys.version_info[0:2] == (3, 8)
