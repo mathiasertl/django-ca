@@ -38,10 +38,10 @@ from .base import timestamps
 
 
 @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={}, )
-class CertificateAuthorityManagerTestCase(DjangoCATestCase):
-    """Tests for :py:class:`django_ca.managers.CertificateAuthorityManager`."""
+class CertificateAuthorityManagerInitTestCase(DjangoCATestCase):
+    """Tests for :py:func:`django_ca.managers.CertificateAuthorityManager.init` (create a new CA)."""
 
-    def assertBasic(self, ca, name, subject, parent=None):
+    def assertProperties(self, ca, name, subject, parent=None):  # pylint: disable=invalid-name
         """Assert some basic properties of a CA."""
         parent_ca = parent or ca
         parent_serial = parent_ca.serial
@@ -63,21 +63,23 @@ class CertificateAuthorityManagerTestCase(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_basic(self):
+        """Test creating the most basic possible CA."""
         name = 'basic'
         subject = '/CN=example.com'
         with self.assertCreateCASignals():
             ca = CertificateAuthority.objects.init(name, subject)
-        self.assertBasic(ca, name, subject)
+        self.assertProperties(ca, name, subject)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_intermediate(self):
+        """Test creating intermediate CAs."""
         # test a few properties of intermediate CAs, with multiple levels
         host = ca_settings.CA_DEFAULT_HOSTNAME  # shortcut
         name = 'root'
         subject = '/CN=root.example.com'
         with self.assertCreateCASignals():
             ca = CertificateAuthority.objects.init(name, subject, pathlen=2)
-        self.assertBasic(ca, name, subject)
+        self.assertProperties(ca, name, subject)
         self.assertIsNone(ca.authority_information_access)
         self.assertIsNone(ca.crl_distribution_points)
 
@@ -85,7 +87,7 @@ class CertificateAuthorityManagerTestCase(DjangoCATestCase):
         subject = '/CN=child.example.com'
         with self.assertCreateCASignals():
             child = CertificateAuthority.objects.init(name, subject, parent=ca)
-        self.assertBasic(child, name, subject, parent=ca)
+        self.assertProperties(child, name, subject, parent=ca)
         self.assertEqual(
             child.authority_information_access,
             AuthorityInformationAccess({'value': {
@@ -104,7 +106,7 @@ class CertificateAuthorityManagerTestCase(DjangoCATestCase):
         subject = '/CN=grandchild.example.com'
         with self.assertCreateCASignals():
             grandchild = CertificateAuthority.objects.init(name, subject, parent=child)
-        self.assertBasic(grandchild, name, subject, parent=child)
+        self.assertProperties(grandchild, name, subject, parent=child)
         self.assertEqual(
             grandchild.authority_information_access,
             AuthorityInformationAccess({'value': {
@@ -121,6 +123,7 @@ class CertificateAuthorityManagerTestCase(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_no_default_hostname(self):
+        """Test creating a CA with no default hostname."""
         name = 'ndh'
         subject = '/CN=ndh.example.com'
         with self.assertCreateCASignals():
@@ -133,6 +136,7 @@ class CertificateAuthorityManagerTestCase(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_extra_extensions(self):
+        """Test creating a CA with extra extensions."""
         subject = '/CN=example.com'
         tlsf = TLSFeature({'value': ['OCSPMustStaple']})
         ocsp_no_check = OCSPNoCheck()
@@ -152,6 +156,7 @@ class CertificateAuthorityManagerTestCase(DjangoCATestCase):
         ])
 
     def test_unknown_extension_type(self):
+        """Test that creating a CA with an unknown extension throws an error."""
         name = 'unknown-extension-type'
         subject = '/CN=%s.example.com' % name
         with self.assertRaisesRegex(ValueError, r'^Cannot add extension of type bool$'):
@@ -214,8 +219,11 @@ class CertificateAuthorityManagerDefaultTestCase(DjangoCAWithGeneratedCAsTestCas
 
 @override_settings(CA_DEFAULT_SUBJECT={})
 class CreateCertTestCase(DjangoCAWithGeneratedCAsTestCase):
+    """Test :py:class:`django_ca.managers.CertificateManager.create_cert` (create a new cert)."""
+
     @override_tmpcadir(CA_PROFILES={ca_settings.CA_DEFAULT_PROFILE: {'extensions': {}}})
     def test_basic(self):
+        """Test creating the most basic cert possible."""
         ca = self.cas['root']
         csr = certs['root-cert']['csr']['pem']
         subject = '/CN=example.com'
@@ -228,6 +236,7 @@ class CreateCertTestCase(DjangoCAWithGeneratedCAsTestCase):
 
     @override_tmpcadir(CA_PROFILES={ca_settings.CA_DEFAULT_PROFILE: {'extensions': {}}})
     def test_explicit_profile(self):
+        """Test creating a cert with a profile."""
         ca = self.cas['root']
         csr = certs['root-cert']['csr']['pem']
         subject = '/CN=example.com'
@@ -241,6 +250,7 @@ class CreateCertTestCase(DjangoCAWithGeneratedCAsTestCase):
 
     @override_tmpcadir()
     def test_no_cn_or_san(self):
+        """Test that creating a cert with no CommonName or SubjectAlternativeName is an error."""
         ca = self.cas['root']
         csr = certs['root-cert']['csr']['pem']
         subject = None
@@ -251,6 +261,7 @@ class CreateCertTestCase(DjangoCAWithGeneratedCAsTestCase):
 
     @override_tmpcadir(CA_PROFILES={k: None for k in ca_settings.CA_PROFILES})
     def test_no_profile(self):
+        """Test that creating a cert with no profiles throws an error."""
         ca = self.cas['root']
         csr = certs['root-cert']['csr']['pem']
         subject = '/CN=example.com'
