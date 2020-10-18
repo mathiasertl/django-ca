@@ -1221,7 +1221,7 @@ class AcmeAccountAuthorization(models.Model):
 class AcmeChallenge(models.Model):
     """Implements an ACME Challenge Object.
 
-    .. seealso:: `RFC 8555, section 7.1.5 <https://tools.ietf.org/html/rfc8555#section-7.1.5>`
+    .. seealso:: `RFC 8555, section 7.1.5 <https://tools.ietf.org/html/rfc8555#section-7.1.5>`_
     """
 
     # Possible challenges

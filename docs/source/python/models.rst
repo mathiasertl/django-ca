@@ -135,3 +135,23 @@ Watchers
 
 .. autoclass:: django_ca.models.Watcher
    :members:
+
+****
+ACME
+****
+
+.. autoclass:: django_ca.models.AcmeAccount
+   :members:
+
+.. autoclass:: django_ca.models.AcmeOrder
+   :members:
+
+.. autoclass:: django_ca.models.AcmeAccountAuthorization
+   :members:
+
+.. autoclass:: django_ca.models.AcmeChallenge
+   :members:
+
+.. autoclass:: django_ca.models.AcmeCertificate
+   :members:
+
