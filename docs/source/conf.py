@@ -323,6 +323,7 @@ intersphinx_mapping = {
     'python': ('https://docs.python.org/3.8', None),
     'cg': ('https://cryptography.io/en/latest/', None),
     'django': ('https://docs.djangoproject.com/en/dev/', 'https://docs.djangoproject.com/en/dev/_objects/'),
+    'acme': ('https://acme-python.readthedocs.io/en/stable/', None),
 }
 
 import sphinx_rtd_theme  # NOQA
