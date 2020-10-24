@@ -1043,23 +1043,34 @@ class AcmeAccount(models.Model):
     """
 
     # RFC 8555, 7.1.2: "Possible values are "valid", "deactivated", and "revoked"."
-    STATUS_VALID = messages.STATUS_VALID
-    STATUS_DEACTIVATED = messages.STATUS_DEACTIVATED  # deactivated by user
-    STATUS_REVOKED = messages.STATUS_REVOKED  # revoked by server
+    STATUS_VALID = messages.STATUS_VALID.name
+    STATUS_DEACTIVATED = messages.STATUS_DEACTIVATED.name  # deactivated by user
+    STATUS_REVOKED = messages.STATUS_REVOKED.name  # revoked by server
     STATUS_CHOICES = (
         (STATUS_VALID, _('Valid')),
         (STATUS_DEACTIVATED, _('Deactivated')),
         (STATUS_REVOKED, _('Revoked')),
     )
 
+    # Account meta data
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
+
+    # Account information
     ca = models.ForeignKey(CertificateAuthority, on_delete=models.CASCADE)
-    contact = models.CharField(blank=True, max_length=255)
-    status = models.CharField(choices=STATUS_CHOICES, max_length=12)
-    terms_of_service_agreed = models.BooleanField(default=False)
+    # Full public key of the account
     pem = models.TextField(verbose_name=_('Public key'), unique=True)
+    # JSON Web Key thumbprint - a hash of the public key, see RFC 7638.
+    #   NOTE: Only unique for the given CA to make hash collisions less likely
     thumbprint = models.CharField(max_length=64)
+
+    # Fields according to RFC 8555, 7.1.3
+    # RFC 8555, 7.1.6: "Account objects are created in the "valid" state"
+    status = models.CharField(choices=STATUS_CHOICES, max_length=12, default=STATUS_VALID)
+    contact = models.CharField(blank=True, max_length=255)
+    terms_of_service_agreed = models.BooleanField(default=False)
+    # NOTE: externalAccountBinding is not yet supported
+    # NOTE: orders property is provided by reverse relation of the AcmeOrder model
 
     class Meta:
         verbose_name = _('ACME Account')
@@ -1090,11 +1101,11 @@ class AcmeOrder(models.Model):
         `RFC 8555, 7.1.3 <https://tools.ietf.org/html/rfc8555#section-7.1.3>`_
     """
     # RFC 8555, 7.1.3: "Possible values are "pending", "ready", "processing", "valid", and "invalid"."
-    STATUS_PENDING = messages.STATUS_PENDING
-    STATUS_READY = messages.STATUS_READY
-    STATUS_PROCESSING = messages.STATUS_PROCESSING
-    STATUS_VALID = messages.STATUS_VALID
-    STATUS_INVALID = messages.STATUS_INVALID
+    STATUS_PENDING = messages.STATUS_PENDING.name
+    STATUS_READY = messages.STATUS_READY.name
+    STATUS_PROCESSING = messages.STATUS_PROCESSING.name
+    STATUS_VALID = messages.STATUS_VALID.name
+    STATUS_INVALID = messages.STATUS_INVALID.name
 
     STATUS_CHOICES = (
         (STATUS_INVALID, _('Invalid')),
@@ -1106,8 +1117,9 @@ class AcmeOrder(models.Model):
 
     account = models.ForeignKey(AcmeAccount, on_delete=models.PROTECT)
     slug = models.SlugField(unique=True, default=acme_slug)
-    status = models.CharField(choices=STATUS_CHOICES, max_length=10,
-                              default=STATUS_PENDING)  # default from RFC 8555, section 7.1.6
+
+    # RFC 8555, 7.1.6: "Order objects are created in the "pending" state."
+    status = models.CharField(choices=STATUS_CHOICES, max_length=10, default=STATUS_PENDING)
     expires = models.DateTimeField(default=acme_order_expires)
 
     class Meta:
@@ -1153,7 +1165,7 @@ class AcmeAccountAuthorization(models.Model):
         `RFC 8555, 7.1.4 <https://tools.ietf.org/html/rfc8555#section-7.1.4>`_
     """
     # Choices from RFC 8555, section 9.7.7.
-    TYPE_DNS = messages.IDENTIFIER_FQDN
+    TYPE_DNS = messages.IDENTIFIER_FQDN.name
     TYPE_CHOICES = (
         (TYPE_DNS, _('DNS')),
     )

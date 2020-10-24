@@ -25,6 +25,8 @@ from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.db.utils import IntegrityError
 from django.test import TestCase
 from django.utils import timezone
 
@@ -663,3 +665,13 @@ VQIDAQAB
         # If the CA is not usable, neither is the account
         self.account1.ca.enabled = False
         self.assertFalse(self.account1.usable)
+
+    def test_unique_together(self):
+        """Test that a thumbprint must be unique for the given CA."""
+
+        msg = r'^UNIQUE constraint failed: django_ca_acmeaccount\.ca_id, django_ca_acmeaccount\.thumbprint$'
+        with transaction.atomic(), self.assertRaisesRegex(IntegrityError, msg):
+            AcmeAccount.objects.create(ca=self.account1.ca, thumbprint=self.account1.thumbprint)
+
+        # Works, because CA is different
+        AcmeAccount.objects.create(ca=self.account2.ca, thumbprint=self.account1.thumbprint)
