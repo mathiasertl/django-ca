@@ -19,6 +19,8 @@ from datetime import datetime
 from datetime import timedelta
 from unittest import mock
 
+from acme import messages
+
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -38,6 +40,7 @@ from ..extensions import KEY_TO_EXTENSION
 from ..extensions import PrecertificateSignedCertificateTimestamps
 from ..extensions import SubjectAlternativeName
 from ..models import AcmeAccount
+from ..models import AcmeOrder
 from ..models import Certificate
 from ..models import Watcher
 from ..subject import Subject
@@ -720,3 +723,56 @@ VQIDAQAB
 
         # Works, because CA is different
         AcmeAccount.objects.create(ca=self.account2.ca, thumbprint=self.account1.thumbprint)
+
+
+class AcmeOrderTestCase(DjangoCAWithGeneratedCAsTestCase):
+    """Test :py:class:`django_ca.models.AcmeOrder`."""
+
+    thumbprint1 = 'U-yUM27CQn9pClKlEITobHB38GJOJ9YbOxnw5KKqU-8'
+    pem1 = '''-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvP5N/1KjBQniyyukn30E
+tyHz6cIYPv5u5zZbHGfNvrmMl8qHMmddQSv581AAFa21zueS+W8jnRI5ISxER95J
+tNad2XEDsFINNvYaSG8E54IHMNQijVLR4MJchkfMAa6g1gIsJB+ffEt4Ea3TMyGr
+MifJG0EjmtjkjKFbr2zuPhRX3fIGjZTlkxgvb1AY2P4AxALwS/hG4bsxHHNxHt2Z
+s9Bekv+55T5+ZqvhNz1/3yADRapEn6dxHRoUhnYebqNLSVoEefM+h5k7AS48waJS
+lKC17RMZfUgGE/5iMNeg9qtmgWgZOIgWDyPEpiXZEDDKeoifzwn1LO59W8c4W6L7
+XwIDAQAB
+-----END PUBLIC KEY-----'''
+
+    def setUp(self):
+        super().setUp()
+        self.account = AcmeAccount.objects.create(ca=self.cas['root'], contact='user@example.com',
+                                                  terms_of_service_agreed=True,
+                                                  status=AcmeAccount.STATUS_VALID, pem=self.pem1,
+                                                  thumbprint=self.thumbprint1)
+        self.order1 = AcmeOrder.objects.create(account=self.account)
+
+    def test_str(self):
+        """Test the str function."""
+        self.assertEqual(str(self.order1), '%s (%s)' % (self.order1.slug, self.account))
+
+    def test_acme_url(self):
+        """Test the acme url function."""
+        self.assertEqual(self.order1.acme_url,
+                         '/django_ca/acme/%s/order/%s/' % (self.account.ca.serial, self.order1.slug))
+
+    def test_acme_finalize_url(self):
+        """Test the acme finalize url function."""
+        self.assertEqual(self.order1.acme_finalize_url,
+                         '/django_ca/acme/%s/order/%s/finalize/' % (self.account.ca.serial, self.order1.slug))
+
+    def test_add_authorization(self):
+        """Test the add_authorizations method."""
+        identifier = messages.Identifier(typ=messages.IDENTIFIER_FQDN, value='example.com')
+        auth = self.order1.add_authorization(identifier)
+        self.assertEqual([auth], list(self.order1.authorizations.all()))
+        self.assertEqual(auth.type, 'dns')
+        self.assertEqual(auth.value, 'example.com')
+
+        msg = r'^UNIQUE constraint failed: django_ca_acmeaccountauthorization\.order_id, django_ca_acmeaccountauthorization\.type, django_ca_acmeaccountauthorization\.value$'  # NOQA: E501
+        with transaction.atomic(), self.assertRaisesRegex(IntegrityError, msg):
+            self.order1.add_authorization(identifier)
+
+    def test_serial(self):
+        """Test getting the serial of the associated CA."""
+        self.assertEqual(self.order1.serial, self.cas['root'].serial)

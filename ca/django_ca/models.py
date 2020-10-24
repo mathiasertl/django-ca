@@ -989,8 +989,8 @@ class CertificateAuthority(X509CertMixin):
 
     @property
     def usable(self):
-        now = timezone.now()
-        return self.enabled and self.expires > now and self.valid_from < now
+        """True if the CA is currently usable or not."""
+        return self.enabled and self.valid_from < timezone.now() < self.expires
 
     class Meta:
         verbose_name = _('Certificate Authority')
@@ -1064,7 +1064,7 @@ class AcmeAccount(models.Model):
     #   NOTE: Only unique for the given CA to make hash collisions less likely
     thumbprint = models.CharField(max_length=64)
 
-    # Fields according to RFC 8555, 7.1.3
+    # Fields according to RFC 8555, 7.1.2
     # RFC 8555, 7.1.6: "Account objects are created in the "valid" state"
     status = models.CharField(choices=STATUS_CHOICES, max_length=12, default=STATUS_VALID)
     contact = models.CharField(blank=True, max_length=255)
@@ -1115,12 +1115,21 @@ class AcmeOrder(models.Model):
         (STATUS_VALID, _('Valid')),
     )
 
-    account = models.ForeignKey(AcmeAccount, on_delete=models.PROTECT)
+    account = models.ForeignKey(AcmeAccount, on_delete=models.PROTECT, related_name='orders')
     slug = models.SlugField(unique=True, default=acme_slug)
 
+    # Fields according to RFC 8555, 7.1.3
     # RFC 8555, 7.1.6: "Order objects are created in the "pending" state."
     status = models.CharField(choices=STATUS_CHOICES, max_length=10, default=STATUS_PENDING)
     expires = models.DateTimeField(default=acme_order_expires)
+    # NOTE: identifiers property is provided by reverse relation of the AcmeAccountAuthorization model
+    # NOTE: not_before/not_after is currently never set, as certbot does not set this value
+    not_before = models.DateTimeField(null=True)  # NOTE: currently unused
+    not_after = models.DateTimeField(null=True)  # NOTE: currently unused
+    # NOTE: error property is not yet supported
+    # NOTE: authorizations property is provided by reverse relation of the AcmeAccountAuthorization model
+    # NOTE: finalize property is provided by acme_finalize_url property
+    # NOTE: certificate property is provided by reverse relation of the AcmeCertificate model
 
     class Meta:
         verbose_name = _('ACME Order')
@@ -1145,12 +1154,27 @@ class AcmeOrder(models.Model):
         return self.account.serial
 
     def add_authorization(self, identifier):
-        """Add an :py:class:`~django_ca.models.AcmeAccountAuthorization` for this order and return it.
+        """Add an :py:class:`~django_ca.models.AcmeAccountAuthorization` for the given identifier.
+
+        Note that this method already adds the account authorization to the database. It does not verify if it
+        already exists and will raise an IntegrityError if it does.
+
+        Example::
+
+            >>> from acme import messages
+            >>> identifier = messages.Identifier(typ=messages.IDENTIFIER_FQDN, value='example.com')
+            >>> order.add_authorization(identifier)
 
         Parameters
         ----------
 
-        identifier
+        identifier : :py:class:`acme:acme.messages.Identifier`
+            The identifier for this
+
+        Returns
+        -------
+
+        :py:class:`~django_ca.models.AcmeAccountAuthorization`
         """
         return AcmeAccountAuthorization.objects.create(
             order=self, type=identifier.typ.name, value=identifier.value,
@@ -1190,16 +1214,20 @@ class AcmeAccountAuthorization(models.Model):
     order = models.ForeignKey(AcmeOrder, on_delete=models.PROTECT, related_name='authorizations')
     slug = models.SlugField(unique=True, default=acme_slug)
 
-    # Fields according to RFC 8555, section 7.1.4:
+    # Fields according to RFC 8555, 7.1.4:
+    # NOTE: RFC 8555 does not specify a default value but DNS is the only default value
     type = models.CharField(choices=TYPE_CHOICES, max_length=8, default=TYPE_DNS)  # identifier
     value = models.CharField(max_length=255)  # identifier
-    status = models.CharField(choices=STATUS_CHOICES, max_length=12,
-                              default=STATUS_PENDING)  # default from RFC 8555, section 7.1.6
-    # expires comes from the linked order (for now)
-    # challenges comes from the AcmeChallenge model linking from here
+    # RFC 8555, 7.1.6: "Authorization objects are created in the "pending" state."
+    status = models.CharField(choices=STATUS_CHOICES, max_length=12, default=STATUS_PENDING)
+    # NOTE: expires property comes from the linked order
+    # NOTE: challenges property is provided by reverse relation of the AcmeChallenge model
     wildcard = models.BooleanField(default=False)
 
     class Meta:
+        unique_together = (
+            ('order', 'type', 'value'),
+        )
         verbose_name = _('ACME Account Authorization')
         verbose_name_plural = _('ACME Account Authorizations')
 

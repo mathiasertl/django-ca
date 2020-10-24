@@ -373,7 +373,7 @@ class GenericCAIssuersView(View):
 
 class AcmeDirectory(View):
     """
-    `Equivalent LE URL <https://acme-v02.api.letsencrypt.org/directory`_
+    `Equivalent LE URL <https://acme-v02.api.letsencrypt.org/directory>`__
     """
 
     def _url(self, request, name, ca):  # pylint: disable=no-self-use
@@ -503,8 +503,8 @@ class AcmeBaseView(View):
 
         try:
             self.jws = acme.jws.JWS.json_loads(request.body)
-        except Exception as e:
-            log.exception(e)
+        except Exception as ex:
+            log.exception(ex)
             return AcmeResponseMalformed('Could not parse JWS token.')
 
         combined = self.jws.signature.combined
@@ -522,7 +522,6 @@ class AcmeBaseView(View):
                 return AcmeResponseMalformed('JWS signature invalid.')
 
             self.jwk = combined.jwk
-            print('thumbprint', self.jwk.thumbprint())
         elif combined.kid:
             if self.requires_key:
                 return AcmeResponseMalformed('Request requires a full JWK key.')
@@ -542,10 +541,11 @@ class AcmeBaseView(View):
                 account = AcmeAccount.objects.get(pk=match.kwargs['pk'])
             except AcmeAccount.DoesNotExist:
                 return AcmeResponseMalformed('Account not found.')  # TODO: status code etc
+            if account.usable is False:
+                return AcmeResponseUnauthorized()
 
             # load and verify JWK
             self.jwk = jose.JWK.load(account.pem.encode('utf-8'))
-            print('thumbprint', self.jwk.thumbprint())
             if not self.jws.verify(self.jwk):
                 return AcmeResponseMalformed('JWS signature invalid.')
 
@@ -612,7 +612,7 @@ class AcmeBaseView(View):
 
 class AcmeNewNonce(AcmeBaseView):  # pylint: disable=abstract-method; no need to override acme_request()
     """
-    `Equivalent LE URL <https://acme-v02.api.letsencrypt.org/acme/new-nonce>`_
+    `Equivalent LE URL <https://acme-v02.api.letsencrypt.org/acme/new-nonce>`__
     """
     def head(self, request, serial):
         # pylint: disable=method-hidden; seems like a false positive
@@ -668,7 +668,7 @@ class AcmeNewOrderView(AcmeBaseView):
     are served by :py:class:`~django_ca.views.AcmeAuthorizationView`.
 
     ``certbot`` sends the :py:class:`~acme:acme.messages.NewOrder` message via
-    :py:func:`~acme:acme.client.ClientV2.new_order`.
+    :py:meth:`~acme:acme.client.ClientV2.new_order`.
 
     .. seealso:: `RFC 8555, 7.4 <https://tools.ietf.org/html/rfc8555#section-7.4>`_
     """
