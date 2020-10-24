@@ -24,11 +24,11 @@ Use local server::
 
    certbot register --agree-tos -m user@localhost \
       --config-dir=.certbot/config/ --work-dir=.certbot/work/ --logs-dir=.certbot/logs \
-      --server http://localhost:8000/django_ca/directory 
+      --server http://localhost:8000/django_ca/acme/directory/
 
    certbot certonly --standalone \
       --config-dir=.certbot/config/ --work-dir=.certbot/work/ --logs-dir=.certbot/logs \
-      --server http://localhost:8000/django_ca/directory \
+      --server http://localhost:8000/django_ca/acme/directory/ \
       -d test.example.com
 
 Saving debug log to /home/mertl/git/mati/django-ca/.certbot/logs/letsencrypt.log
