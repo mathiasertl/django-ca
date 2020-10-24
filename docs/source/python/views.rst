@@ -3,5 +3,6 @@
 ####################################
 
 .. automodule:: django_ca.views
+   :exclude-members: CertificateRevocationListView
    :members:
 
