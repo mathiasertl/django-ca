@@ -987,6 +987,11 @@ class CertificateAuthority(X509CertMixin):
             ca = ca.parent
         return ca
 
+    @property
+    def usable(self):
+        now = timezone.now()
+        return self.enabled and self.expires > now and self.valid_from < now
+
     class Meta:
         verbose_name = _('Certificate Authority')
         verbose_name_plural = _('Certificate Authorities')
@@ -1070,6 +1075,11 @@ class AcmeAccount(models.Model):
     def serial(self):
         """Serial of the CA for this account."""
         return self.ca.serial
+
+    @property
+    def usable(self):
+        """Boolean if the Account is currently usable."""
+        return self.terms_of_service_agreed and self.status == AcmeAccount.STATUS_VALID and self.ca.usable
 
 
 class AcmeOrder(models.Model):

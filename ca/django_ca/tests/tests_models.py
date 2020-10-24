@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Test Django model classes."""
+
 import os
 import re
 from datetime import datetime
@@ -33,11 +35,13 @@ from ..constants import ReasonFlags
 from ..extensions import KEY_TO_EXTENSION
 from ..extensions import PrecertificateSignedCertificateTimestamps
 from ..extensions import SubjectAlternativeName
+from ..models import AcmeAccount
 from ..models import Certificate
 from ..models import Watcher
 from ..subject import Subject
 from ..utils import get_crl_cache_key
 from .base import DjangoCAWithCertTestCase
+from .base import DjangoCAWithGeneratedCAsTestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
@@ -45,51 +49,58 @@ from .base import timestamps
 
 
 class TestWatcher(TestCase):
+    """Test :py:class:`django_ca.models.Watcher`."""
+
     def test_from_addr(self):
+        """Basic test for the ``from_addr()`` function."""
         mail = 'user@example.com'
         name = 'Firstname Lastname'
 
-        w = Watcher.from_addr('%s <%s>' % (name, mail))
-        self.assertEqual(w.mail, mail)
-        self.assertEqual(w.name, name)
+        watcher = Watcher.from_addr('%s <%s>' % (name, mail))
+        self.assertEqual(watcher.mail, mail)
+        self.assertEqual(watcher.name, name)
 
     def test_spaces(self):
+        """Test that ``from_addr() is agnostic to spaces."""
         mail = 'user@example.com'
         name = 'Firstname Lastname'
 
-        w = Watcher.from_addr('%s     <%s>' % (name, mail))
-        self.assertEqual(w.mail, mail)
-        self.assertEqual(w.name, name)
+        watcher = Watcher.from_addr('%s     <%s>' % (name, mail))
+        self.assertEqual(watcher.mail, mail)
+        self.assertEqual(watcher.name, name)
 
-        w = Watcher.from_addr('%s<%s>' % (name, mail))
-        self.assertEqual(w.mail, mail)
-        self.assertEqual(w.name, name)
+        watcher = Watcher.from_addr('%s<%s>' % (name, mail))
+        self.assertEqual(watcher.mail, mail)
+        self.assertEqual(watcher.name, name)
 
     def test_error(self):
+        """Test some validation errors."""
         with self.assertRaises(ValidationError):
             Watcher.from_addr('foobar ')
         with self.assertRaises(ValidationError):
             Watcher.from_addr('foobar @')
 
     def test_update(self):
+        """Test that from_addr updates the name if passed."""
         mail = 'user@example.com'
         name = 'Firstname Lastname'
         newname = 'Newfirst Newlast'
 
         Watcher.from_addr('%s <%s>' % (name, mail))
-        w = Watcher.from_addr('%s <%s>' % (newname, mail))
-        self.assertEqual(w.mail, mail)
-        self.assertEqual(w.name, newname)
+        watcher = Watcher.from_addr('%s <%s>' % (newname, mail))
+        self.assertEqual(watcher.mail, mail)
+        self.assertEqual(watcher.name, newname)
 
-    def test_output(self):
+    def test_str(self):
+        """Test the str function."""
         mail = 'user@example.com'
         name = 'Firstname Lastname'
 
-        w = Watcher(mail=mail)
-        self.assertEqual(str(w), mail)
+        watcher = Watcher(mail=mail)
+        self.assertEqual(str(watcher), mail)
 
-        w.name = name
-        self.assertEqual(str(w), '%s <%s>' % (name, mail))
+        watcher.name = name
+        self.assertEqual(str(watcher), '%s <%s>' % (name, mail))
 
 
 class CertificateAuthorityTests(DjangoCAWithCertTestCase):
@@ -574,3 +585,81 @@ class CertificateTests(DjangoCAWithCertTestCase):
                 self.assertIsInstance(ext, PrecertificateSignedCertificateTimestamps)
             else:
                 self.assertIsNone(ext)
+
+
+class AcmeAccountTestCase(DjangoCAWithGeneratedCAsTestCase):
+    """Test :py:class:`django_ca.models.AcmeAccount`."""
+
+    thumbprint1 = 'U-yUM27CQn9pClKlEITobHB38GJOJ9YbOxnw5KKqU-8'
+    thumbprint2 = 's_glgc6Fem0CW7ZioXHBeuUQVHSO-viZ3xNR8TBebCo'
+    pem1 = '''-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvP5N/1KjBQniyyukn30E
+tyHz6cIYPv5u5zZbHGfNvrmMl8qHMmddQSv581AAFa21zueS+W8jnRI5ISxER95J
+tNad2XEDsFINNvYaSG8E54IHMNQijVLR4MJchkfMAa6g1gIsJB+ffEt4Ea3TMyGr
+MifJG0EjmtjkjKFbr2zuPhRX3fIGjZTlkxgvb1AY2P4AxALwS/hG4bsxHHNxHt2Z
+s9Bekv+55T5+ZqvhNz1/3yADRapEn6dxHRoUhnYebqNLSVoEefM+h5k7AS48waJS
+lKC17RMZfUgGE/5iMNeg9qtmgWgZOIgWDyPEpiXZEDDKeoifzwn1LO59W8c4W6L7
+XwIDAQAB
+-----END PUBLIC KEY-----'''
+    pem2 = '''-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp8SCUVQqpTBRyryuu560
+Q8cAi18Ac+iLjaSLL4gOaDEU9CpPi4l9yCGphnQFQ92YP+GWv+C6/JRp24852QbR
+RzuUJqJPdDxD78yFXoxYCLPmwQMnToA7SE3SnZ/PW2GPFMbAICuRdd3PhMAWCODS
+NewZPLBlG35brRlfFtUEc2oQARb2lhBkMXrpIWeuSNQtInAHtfTJNA51BzdrIT2t
+MIfadw4ljk7cVbrSYemT6e59ATYxiMXalu5/4v22958voEBZ38TE8AXWiEtTQYwv
+/Kj0P67yuzE94zNdT28pu+jJYr5nHusa2NCbvnYFkDwzigmwCxVt9kW3xj3gfpgc
+VQIDAQAB
+-----END PUBLIC KEY-----'''
+
+    def setUp(self):
+        super().setUp()
+        self.account1 = AcmeAccount.objects.create(ca=self.cas['root'], contact='user@example.com',
+                                                   terms_of_service_agreed=True,
+                                                   status=AcmeAccount.STATUS_VALID, pem=self.pem1,
+                                                   thumbprint=self.thumbprint1)
+        self.account2 = AcmeAccount.objects.create(ca=self.cas['child'], contact='user@example.net',
+                                                   terms_of_service_agreed=False,
+                                                   status=AcmeAccount.STATUS_REVOKED, pem=self.pem2,
+                                                   thumbprint=self.thumbprint2)
+
+    def test_str(self):
+        """Test str() function."""
+        self.assertEqual(str(self.account1), self.account1.contact)
+        self.assertEqual(str(self.account2), self.account2.contact)
+        self.assertEqual(str(AcmeAccount()), '')
+
+    def test_serial(self):
+        """Test the ``serial`` property."""
+        self.assertEqual(self.account1.serial, self.cas['root'].serial)
+        self.assertEqual(self.account2.serial, self.cas['child'].serial)
+
+        # pylint: disable=no-member; false positive: pylint does not detect RelatedObjectDoesNotExist member
+        with self.assertRaisesRegex(AcmeAccount.ca.RelatedObjectDoesNotExist, r'^AcmeAccount has no ca\.$'):
+            AcmeAccount().serial  # pylint: disable=expression-not-assigned
+
+    def test_usable(self):
+        """Test the ``usable`` property."""
+        self.assertTrue(self.account1.usable)
+        self.assertFalse(self.account2.usable)
+
+        # Try states that make an account **unusable**
+        self.account1.status = AcmeAccount.STATUS_DEACTIVATED
+        self.assertFalse(self.account1.usable)
+        self.account1.status = AcmeAccount.STATUS_REVOKED
+        self.assertFalse(self.account1.usable)
+
+        # Make the account usable again
+        self.account1.status = AcmeAccount.STATUS_VALID
+        self.assertTrue(self.account1.usable)
+
+        # TOS must be agreed
+        self.account1.terms_of_service_agreed = False
+        self.assertFalse(self.account1.usable)
+
+        # Make the account usable again
+        self.account1.terms_of_service_agreed = True
+        self.assertTrue(self.account1.usable)
+
+        # If the CA is not usable, neither is the account
+        self.account1.ca.enabled = False
+        self.assertFalse(self.account1.usable)
