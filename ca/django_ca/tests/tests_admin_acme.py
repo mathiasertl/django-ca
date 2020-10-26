@@ -49,10 +49,8 @@ THUMBPRINT2 = 's_glgc6Fem0CW7ZioXHBeuUQVHSO-viZ3xNR8TBebCo'
 TOKEN1 = 'grhuo1-ZmUMD8_53lQMlUN1WeURMpYkSGq5_4r-1S7JNVF3a25_xcA2K3dGtyGjt'
 TOKEN2 = '3vmQafd29ROOktb7wJO_kZ8bIBlqoasegI9ElyLVRyMre_OyEPvjKjkQRxfzWprS'
 TOKEN3 = 'gY-kE5LdgwZyFeUCbjQKaX5Eo2lMsgabeB-m8zQ6eirhJP1WpVhenAyB7Yn-7BIq'
-# pylint: disable=line-too-long
 CSR1 = 'MIICbDCCAVQCAQIwADCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKZoFq9UCNpCAfqNrdD2za8W9xuS6PTZzE13iitAbex75cs894cyhvNvBsJgreQ0ZTzvEy9FDB7CSBKQebsnewcETG4v2E4QyhvEBsWEzlIYNmlXxwkQXoxy3vm4bavxIcya5Db9HPw0oo0wqUWyx_GsEu0hRGY-Ys9VPuq81w60kHiXhcwv2PQtgiDtJ-VJ4xycYMRyAzYr_R13YzMa4gXUf7Hk4hDPitG28VyVcO8f5CR0ogtzA0C3r1SdwceJog1YgQfHLbgOUDsQhfbUrBAR7Iq_3K-txkxVtzwZedjCFGjNXe4CIL6e-NDo5nbFyuNseCQjP7TXfvQxhtrCIlECAwEAAaAnMCUGCSqGSIb3DQEJDjEYMBYwFAYDVR0RBA0wC4IJbG9jYWxob3N0MA0GCSqGSIb3DQEBCwUAA4IBAQArIgdF2oMuxtHSgNrAk1_stu1bmXrr9dZ-ewbkgBaMq_o5PGh7OY3TFcF-7Uk-lbuCayHX-FcNe7X8dPiWg62ajzR_RROGGII0QiROe1Z77jtJuurE1MXnzkgYuE0JU0_9luAHHQFSCv9Nr6rO8Xy6otZfcolqwtWzSf7puOiQ5fC6Jdq5W4UAvlBfO7mqlhO7G_XCcSuzjSa1OcWSgd9zsp5Z-xYpL_4EgqXCiUsMCZ0sLhH2FuEkTw_tPEgRVUBz0ro51jijmG2Mg2N3irGv58IoElz3_NwWQewpfkIKEWzWcoG31sFJxEJapi_NuwdYAcKvYFNdPMH994rNKVjL'  # NOQA: E501
 CSR2 = 'MIICbDCCAVQCAQIwADCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALpIUHFIMXJSJ6YfoTsDRUgut6AY6sdhprPBumVdJXoBbDUjSW4R1aJuXPXmQMDRo-D5Tkvxx7rxsWnOG3l3-vZi18Ortk27k_5f-6_7OdoujijZFYxq0T0hVvgDh47r-aY67q0-CfTNfCYRfAkbOZ8UpAbV6u0vynguHznacIywl2NB5wmlDTLBo0CYp2ElRDfaj-Syhh6fwMTpDXs43wQJelJvDjOgMAPbcW1CiSnamIt3nSxwQjSOrAs6r-nIZblgPsQCvjjuF55okC4tjDqMSk2Qtq5bQwh9OO-AX9xTFCBeH8rqycqgPkIustUsFJEbOayQa4w2JWumgysFATkCAwEAAaAnMCUGCSqGSIb3DQEJDjEYMBYwFAYDVR0RBA0wC4IJbG9jYWxob3N0MA0GCSqGSIb3DQEBCwUAA4IBAQAxc3zi_S79F_M5I8SFR4IOfJOt1pU1z6tsGNcVeK_vN-8jCMuQiicBlEwcauxox7KO1czMFX_Ikq-W_ctc2RhqfD4GsU80KDrDLQarZ1KC6egSXrHcuYqTeqRdNtnExCCrzRlUzaB5kojUpmdnRJ48rFgoLHuTxPd47vqTQahzx0xl3xhM-VQmQFc-urvIcyYNR620qA9b84lOwmzT9duRjYIrAS1H2vRatNqRU8tDAhbuvu-_yU_U0lo3gQcK5NGLVR45qU-yr0SgYIKgfkL6E6W9B80xT5Qt4Py7WZCSvrUOLC2uco_jDODrY-xCky7Tbalu1_FEzF-nkSEDK_x0'  # NOQA: E501
-# pylint: enable=line-too-long
 
 
 class AcmeAccountViewsTestCase(StandardAdminViewTestMixin, DjangoCAWithCATestCase):
@@ -102,9 +100,13 @@ class AcmeChallengeViewsTestCase(AcmeAccountAuthorizationViewsTestCase):
         self.chall1 = AcmeChallenge.objects.create(
             auth=self.auth1, status=AcmeChallenge.STATUS_PENDING, token=TOKEN1)
         self.chall2 = AcmeChallenge.objects.create(
-            auth=self.auth2, status=AcmeChallenge.STATUS_VALID, token=TOKEN2, validated=timezone.now())
+            auth=self.auth2, status=AcmeChallenge.STATUS_VALID, token=TOKEN2, validated=timezone.now(),
+            type=AcmeChallenge.TYPE_HTTP_01
+        )
         self.chall3 = AcmeChallenge.objects.create(
-            auth=self.auth2, status=AcmeChallenge.STATUS_INVALID, token=TOKEN3, error='some-error')
+            auth=self.auth2, status=AcmeChallenge.STATUS_INVALID, token=TOKEN3, error='some-error',
+            type=AcmeChallenge.TYPE_DNS_01
+        )
 
 
 class AcmeCertificateViewsTestCase(AcmeChallengeViewsTestCase):
@@ -114,5 +116,4 @@ class AcmeCertificateViewsTestCase(AcmeChallengeViewsTestCase):
     def setUp(self):
         super().setUp()
         self.cert1 = AcmeCertificate.objects.create(order=self.order1)
-        self.cert2 = AcmeCertificate.objects.create(order=self.order1, csr=CSR1)
-        self.cert2 = AcmeCertificate.objects.create(order=self.order2, csr=CSR2)
+        self.cert2 = AcmeCertificate.objects.create(order=self.order2, csr=CSR1)
