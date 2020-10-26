@@ -392,7 +392,7 @@ class AcmeDirectory(View):
         else:
             try:
                 ca = CertificateAuthority.objects.get(serial=sanitize_serial(serial))
-            except ValueError:
+            except ValueError:  # pragma: no cover; any invalid serial already caught by URL converter
                 return AcmeResponseMalformed('%s: Serial not valid.' % serial)
             except CertificateAuthority.DoesNotExist:
                 return AcmeResponseNotFound('%s: CA not found.' % serial)
@@ -438,7 +438,7 @@ class AcmeBaseView(View):
             The arguments as passed by the resolver. If ``post_as_get`` is True, an instance of the class
             specified in ``message_cls`` is passed as the ``message`` keyword argument.
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def get_message_cls(self, request, **kwargs):
         """Get the message class used for parsing the request body."""
@@ -503,7 +503,7 @@ class AcmeBaseView(View):
 
         try:
             self.jws = acme.jws.JWS.json_loads(request.body)
-        except Exception as ex:
+        except Exception as ex:  # pylint: disable=broad-except; we really should catch everything here
             log.exception(ex)
             return AcmeResponseMalformed('Could not parse JWS token.')
 
@@ -620,7 +620,10 @@ class AcmeNewNonce(AcmeBaseView):  # pylint: disable=abstract-method; no need to
         if not ca_settings.CA_ENABLE_ACME:
             raise Http404('Page not found.')
 
-        ca = CertificateAuthority.objects.get(serial=serial)
+        try:
+            ca = CertificateAuthority.objects.get(serial=serial)
+        except CertificateAuthority.DoesNotExist:
+            return AcmeResponseNotFound('%s: CA not found.' % serial)
 
         resp = HttpResponse()
         resp['replay-nonce'] = self.get_nonce(ca=ca)
