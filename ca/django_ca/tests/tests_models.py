@@ -40,6 +40,8 @@ from ..extensions import KEY_TO_EXTENSION
 from ..extensions import PrecertificateSignedCertificateTimestamps
 from ..extensions import SubjectAlternativeName
 from ..models import AcmeAccount
+from ..models import AcmeAccountAuthorization
+from ..models import AcmeChallenge
 from ..models import AcmeOrder
 from ..models import Certificate
 from ..models import Watcher
@@ -51,6 +53,27 @@ from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
+
+ACME_THUMBPRINT_1 = 'U-yUM27CQn9pClKlEITobHB38GJOJ9YbOxnw5KKqU-8'
+ACME_THUMBPRINT_2 = 's_glgc6Fem0CW7ZioXHBeuUQVHSO-viZ3xNR8TBebCo'
+ACME_PEM_1 = '''-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvP5N/1KjBQniyyukn30E
+tyHz6cIYPv5u5zZbHGfNvrmMl8qHMmddQSv581AAFa21zueS+W8jnRI5ISxER95J
+tNad2XEDsFINNvYaSG8E54IHMNQijVLR4MJchkfMAa6g1gIsJB+ffEt4Ea3TMyGr
+MifJG0EjmtjkjKFbr2zuPhRX3fIGjZTlkxgvb1AY2P4AxALwS/hG4bsxHHNxHt2Z
+s9Bekv+55T5+ZqvhNz1/3yADRapEn6dxHRoUhnYebqNLSVoEefM+h5k7AS48waJS
+lKC17RMZfUgGE/5iMNeg9qtmgWgZOIgWDyPEpiXZEDDKeoifzwn1LO59W8c4W6L7
+XwIDAQAB
+-----END PUBLIC KEY-----'''
+ACME_PEM_2 = '''-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp8SCUVQqpTBRyryuu560
+Q8cAi18Ac+iLjaSLL4gOaDEU9CpPi4l9yCGphnQFQ92YP+GWv+C6/JRp24852QbR
+RzuUJqJPdDxD78yFXoxYCLPmwQMnToA7SE3SnZ/PW2GPFMbAICuRdd3PhMAWCODS
+NewZPLBlG35brRlfFtUEc2oQARb2lhBkMXrpIWeuSNQtInAHtfTJNA51BzdrIT2t
+MIfadw4ljk7cVbrSYemT6e59ATYxiMXalu5/4v22958voEBZ38TE8AXWiEtTQYwv
+/Kj0P67yuzE94zNdT28pu+jJYr5nHusa2NCbvnYFkDwzigmwCxVt9kW3xj3gfpgc
+VQIDAQAB
+-----END PUBLIC KEY-----'''
 
 
 class TestWatcher(TestCase):
@@ -640,37 +663,14 @@ class CertificateTests(DjangoCAWithCertTestCase):
 class AcmeAccountTestCase(DjangoCAWithGeneratedCAsTestCase):
     """Test :py:class:`django_ca.models.AcmeAccount`."""
 
-    thumbprint1 = 'U-yUM27CQn9pClKlEITobHB38GJOJ9YbOxnw5KKqU-8'
-    thumbprint2 = 's_glgc6Fem0CW7ZioXHBeuUQVHSO-viZ3xNR8TBebCo'
-    pem1 = '''-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvP5N/1KjBQniyyukn30E
-tyHz6cIYPv5u5zZbHGfNvrmMl8qHMmddQSv581AAFa21zueS+W8jnRI5ISxER95J
-tNad2XEDsFINNvYaSG8E54IHMNQijVLR4MJchkfMAa6g1gIsJB+ffEt4Ea3TMyGr
-MifJG0EjmtjkjKFbr2zuPhRX3fIGjZTlkxgvb1AY2P4AxALwS/hG4bsxHHNxHt2Z
-s9Bekv+55T5+ZqvhNz1/3yADRapEn6dxHRoUhnYebqNLSVoEefM+h5k7AS48waJS
-lKC17RMZfUgGE/5iMNeg9qtmgWgZOIgWDyPEpiXZEDDKeoifzwn1LO59W8c4W6L7
-XwIDAQAB
------END PUBLIC KEY-----'''
-    pem2 = '''-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp8SCUVQqpTBRyryuu560
-Q8cAi18Ac+iLjaSLL4gOaDEU9CpPi4l9yCGphnQFQ92YP+GWv+C6/JRp24852QbR
-RzuUJqJPdDxD78yFXoxYCLPmwQMnToA7SE3SnZ/PW2GPFMbAICuRdd3PhMAWCODS
-NewZPLBlG35brRlfFtUEc2oQARb2lhBkMXrpIWeuSNQtInAHtfTJNA51BzdrIT2t
-MIfadw4ljk7cVbrSYemT6e59ATYxiMXalu5/4v22958voEBZ38TE8AXWiEtTQYwv
-/Kj0P67yuzE94zNdT28pu+jJYr5nHusa2NCbvnYFkDwzigmwCxVt9kW3xj3gfpgc
-VQIDAQAB
------END PUBLIC KEY-----'''
-
     def setUp(self):
         super().setUp()
-        self.account1 = AcmeAccount.objects.create(ca=self.cas['root'], contact='user@example.com',
-                                                   terms_of_service_agreed=True,
-                                                   status=AcmeAccount.STATUS_VALID, pem=self.pem1,
-                                                   thumbprint=self.thumbprint1)
-        self.account2 = AcmeAccount.objects.create(ca=self.cas['child'], contact='user@example.net',
-                                                   terms_of_service_agreed=False,
-                                                   status=AcmeAccount.STATUS_REVOKED, pem=self.pem2,
-                                                   thumbprint=self.thumbprint2)
+        self.account1 = AcmeAccount.objects.create(
+            ca=self.cas['root'], contact='user@example.com', terms_of_service_agreed=True,
+            status=AcmeAccount.STATUS_VALID, pem=ACME_PEM_1, thumbprint=ACME_THUMBPRINT_1)
+        self.account2 = AcmeAccount.objects.create(
+            ca=self.cas['child'], contact='user@example.net', terms_of_service_agreed=False,
+            status=AcmeAccount.STATUS_REVOKED, pem=ACME_PEM_2, thumbprint=ACME_THUMBPRINT_2)
 
     def test_str(self):
         """Test str() function."""
@@ -728,23 +728,11 @@ VQIDAQAB
 class AcmeOrderTestCase(DjangoCAWithGeneratedCAsTestCase):
     """Test :py:class:`django_ca.models.AcmeOrder`."""
 
-    thumbprint1 = 'U-yUM27CQn9pClKlEITobHB38GJOJ9YbOxnw5KKqU-8'
-    pem1 = '''-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvP5N/1KjBQniyyukn30E
-tyHz6cIYPv5u5zZbHGfNvrmMl8qHMmddQSv581AAFa21zueS+W8jnRI5ISxER95J
-tNad2XEDsFINNvYaSG8E54IHMNQijVLR4MJchkfMAa6g1gIsJB+ffEt4Ea3TMyGr
-MifJG0EjmtjkjKFbr2zuPhRX3fIGjZTlkxgvb1AY2P4AxALwS/hG4bsxHHNxHt2Z
-s9Bekv+55T5+ZqvhNz1/3yADRapEn6dxHRoUhnYebqNLSVoEefM+h5k7AS48waJS
-lKC17RMZfUgGE/5iMNeg9qtmgWgZOIgWDyPEpiXZEDDKeoifzwn1LO59W8c4W6L7
-XwIDAQAB
------END PUBLIC KEY-----'''
-
     def setUp(self):
         super().setUp()
-        self.account = AcmeAccount.objects.create(ca=self.cas['root'], contact='user@example.com',
-                                                  terms_of_service_agreed=True,
-                                                  status=AcmeAccount.STATUS_VALID, pem=self.pem1,
-                                                  thumbprint=self.thumbprint1)
+        self.account = AcmeAccount.objects.create(
+            ca=self.cas['root'], contact='user@example.com', terms_of_service_agreed=True,
+            status=AcmeAccount.STATUS_VALID, pem=ACME_PEM_1, thumbprint=ACME_THUMBPRINT_1)
         self.order1 = AcmeOrder.objects.create(account=self.account)
 
     def test_str(self):
@@ -776,3 +764,79 @@ XwIDAQAB
     def test_serial(self):
         """Test getting the serial of the associated CA."""
         self.assertEqual(self.order1.serial, self.cas['root'].serial)
+
+
+class AcmeAccountAuthorizationTestCase(DjangoCAWithGeneratedCAsTestCase):
+    """Test :py:class:`django_ca.models.AcmeAccountAuthorization`."""
+
+    def setUp(self):
+        super().setUp()
+        self.account = AcmeAccount.objects.create(
+            ca=self.cas['root'], contact='user@example.com', terms_of_service_agreed=True,
+            status=AcmeAccount.STATUS_VALID, pem=ACME_PEM_1, thumbprint=ACME_THUMBPRINT_1)
+        self.order = AcmeOrder.objects.create(account=self.account)
+        self.auth1 = AcmeAccountAuthorization.objects.create(
+            order=self.order, type=AcmeAccountAuthorization.TYPE_DNS, value='example.com')
+        self.auth2 = AcmeAccountAuthorization.objects.create(
+            order=self.order, type=AcmeAccountAuthorization.TYPE_DNS, value='example.net')
+
+    def test_str(self):
+        """Test the __str__ method."""
+        self.assertEqual(str(self.auth1), 'dns: example.com')
+        self.assertEqual(str(self.auth2), 'dns: example.net')
+
+    def test_account_property(self):
+        """Test the account property."""
+        self.assertEqual(self.auth1.account, self.account)
+        self.assertEqual(self.auth2.account, self.account)
+
+    def test_acme_url(self):
+        """Test acme_url property."""
+        self.assertEqual(self.auth1.acme_url,
+                         '/django_ca/acme/%s/authz/%s/' % (self.cas['root'].serial, self.auth1.slug))
+        self.assertEqual(self.auth2.acme_url,
+                         '/django_ca/acme/%s/authz/%s/' % (self.cas['root'].serial, self.auth2.slug))
+
+    def test_expires(self):
+        """Test the expires property."""
+        self.assertEqual(self.auth1.expires, self.order.expires)
+        self.assertEqual(self.auth2.expires, self.order.expires)
+
+    def test_identifier(self):
+        """Test the identifier property."""
+
+        self.assertEqual(self.auth1.identifier,
+                         messages.Identifier(typ=messages.IDENTIFIER_FQDN, value=self.auth1.value))
+        self.assertEqual(self.auth2.identifier,
+                         messages.Identifier(typ=messages.IDENTIFIER_FQDN, value=self.auth2.value))
+
+    def test_identifier_unknown_type(self):
+        """Test that an identifier with an unknown type raises a ValueError."""
+
+        self.auth1.type = 'foo'
+        with self.assertRaisesRegex(ValueError, r'^Unknown identifier type: foo$'):
+            self.auth1.identifier  # pylint: disable=pointless-statement; access to prop raises exception
+
+    def test_subject_alternative_name(self):
+        """Test the subject_alternative_name property."""
+
+        self.assertEqual(self.auth1.subject_alternative_name, 'dns:example.com')
+        self.assertEqual(self.auth2.subject_alternative_name, 'dns:example.net')
+
+        self.assertEqual(
+            SubjectAlternativeName({'value': [self.auth1.subject_alternative_name]}).extension_type,
+            x509.SubjectAlternativeName([x509.DNSName('example.com')])
+        )
+        self.assertEqual(
+            SubjectAlternativeName({'value': [self.auth2.subject_alternative_name]}).extension_type,
+            x509.SubjectAlternativeName([x509.DNSName('example.net')])
+        )
+
+    def test_get_challenges(self):
+        """Test the get_challenges() method."""
+        challenges = self.auth1.get_challenges()
+        self.assertIsInstance(challenges[0], AcmeChallenge)
+        self.assertIsInstance(challenges[1], AcmeChallenge)
+
+        self.assertEqual(self.auth1.get_challenges(), challenges)
+        self.assertEqual(AcmeChallenge.objects.all().count(), 2)
