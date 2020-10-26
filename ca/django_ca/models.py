@@ -1256,10 +1256,11 @@ class AcmeAccountAuthorization(models.Model):
         Returns
         -------
 
-        acme.messages.Identifier
+        identifier : :py:class:`acme:acme.messages.Identifier`
         """
-
-        return messages.Identifier(typ=self.type, value=self.value)
+        if self.type == AcmeAccountAuthorization.TYPE_DNS:
+            return messages.Identifier(typ=messages.IDENTIFIER_FQDN, value=self.value)
+        raise ValueError('Unknown identifier type: %s' % self.type)
 
     @property
     def serial(self):
@@ -1318,11 +1319,11 @@ class AcmeChallenge(models.Model):
     auth = models.ForeignKey(AcmeAccountAuthorization, on_delete=models.PROTECT)
     slug = models.SlugField(unique=True, default=acme_slug)
 
-    # Challenge object basic fields according to RFC 8555, section 8:
+    # Fields according to RFC 8555, 8:
     type = models.CharField(choices=TYPE_CHOICES, max_length=12)
-    # url is computed from slug and request
-    status = models.CharField(choices=STATUS_CHOICES, max_length=12,
-                              default=STATUS_PENDING)  # default from RFC 8555, section 7.1.6
+    # NOTE: url property is provided by the acme_url property and computed on the fly
+    # RFC 8555, 7.1.6: "Challenge objects are created in the "pending" state."
+    status = models.CharField(choices=STATUS_CHOICES, max_length=12, default=STATUS_PENDING)
     validated = models.DateTimeField(null=True, blank=True)
     error = models.CharField(blank=True, max_length=64)  # max_length is just a guess
 
@@ -1331,6 +1332,9 @@ class AcmeChallenge(models.Model):
     token = models.CharField(blank=True, max_length=64)
 
     class Meta:
+        unique_together = (
+            ('auth', 'type'),
+        )
         verbose_name = _('ACME Challenge')
         verbose_name_plural = _('ACME Challenges')
 
@@ -1397,9 +1401,13 @@ class AcmeCertificate(models.Model):
     """Intermediate model for certificates to be issued via ACME."""
 
     slug = models.SlugField(unique=True, default=acme_slug)
-    order = models.ForeignKey(AcmeOrder, on_delete=models.CASCADE)
-    cert = models.ForeignKey(Certificate, on_delete=models.CASCADE, null=True)
+    order = models.OneToOneField(AcmeOrder, on_delete=models.CASCADE)
+    cert = models.OneToOneField(Certificate, on_delete=models.CASCADE, null=True)
     csr = models.TextField(verbose_name=_('CSR'))  # NOTE: **NOT** a PEM, see parse_csr()
+
+    class Meta:
+        verbose_name = _('ACME Certificate')
+        verbose_name_plural = _('ACME Certificate')
 
     @property
     def acme_url(self):
