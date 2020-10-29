@@ -391,7 +391,7 @@ class AcmeDirectory(View):
                 return AcmeResponseNotFound('No (usable) default CA configured.')
         else:
             try:
-                ca = CertificateAuthority.objects.get(serial=sanitize_serial(serial))
+                ca = CertificateAuthority.objects.usable().get(serial=sanitize_serial(serial))
             except ValueError:  # pragma: no cover; any invalid serial already caught by URL converter
                 return AcmeResponseMalformed('%s: Serial not valid.' % serial)
             except CertificateAuthority.DoesNotExist:
@@ -564,7 +564,7 @@ class AcmeBaseView(View):
             return AcmeResponseMalformed('No algorithm specified.')
 
         # Get certificate authority for this request
-        self.ca = CertificateAuthority.objects.get(serial=serial)
+        self.ca = CertificateAuthority.objects.usable().get(serial=serial)
 
         if not self.validate_nonce(jose.encode_b64jose(combined.nonce)):
             # ... "nonce"
@@ -621,7 +621,7 @@ class AcmeNewNonce(AcmeBaseView):  # pylint: disable=abstract-method; no need to
             raise Http404('Page not found.')
 
         try:
-            ca = CertificateAuthority.objects.get(serial=serial)
+            ca = CertificateAuthority.objects.usable().get(serial=serial)
         except CertificateAuthority.DoesNotExist:
             return AcmeResponseNotFound('%s: CA not found.' % serial)
 

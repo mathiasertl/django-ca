@@ -146,3 +146,9 @@ class NewNonceTestCase(DjangoCAWithCATestCase):
         url = reverse('django_ca:acme-new-nonce', kwargs={'serial': 'AA:BB:CC'})
         response = self.client.head(url)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+
+    @freeze_time(timestamps['everything_expired'])
+    def test_expired_ca(self):
+        """Test using default CA when all CAs are expired."""
+        response = self.client.head(self.url)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
