@@ -48,7 +48,7 @@ class AcmeResponseAccountCreated(AcmeResponse):
     def __init__(self, request, account):
         data = {
             'status': account.status,
-            'contanct': [account.contact],
+            'contact': [account.contact],
             'orders': request.build_absolute_uri(
                 reverse('django_ca:acme-account-orders', kwargs={'pk': account.pk,
                                                                  'serial': account.ca.serial})),
