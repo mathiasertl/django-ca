@@ -23,9 +23,10 @@ from . import views
 
 app_name = 'django_ca'
 
-register_converter(converters.HexConverter, 'hex')
-register_converter(converters.Base64Converter, 'base64')
 register_converter(converters.AcmeSlugConverter, 'acme')
+register_converter(converters.Base64Converter, 'base64')
+register_converter(converters.HexConverter, 'hex')
+register_converter(converters.SerialConverter, 'serial')
 
 urlpatterns = [
     path('issuer/<hex:serial>.der', views.GenericCAIssuersView.as_view(), name='issuer'),
@@ -42,23 +43,24 @@ urlpatterns = [
 
 
 if ca_settings.CA_ENABLE_ACME:
+    # NOTE: Some functions depend on the fact that ALL ACME urls have a "serial" kwarg
     urlpatterns += [
         path('acme/directory/', views.AcmeDirectory.as_view(), name='acme-directory'),
-        path('acme/directory/<hex:serial>/', views.AcmeDirectory.as_view(), name='acme-directory'),
-        path('acme/<hex:serial>/new-nonce/', views.AcmeNewNonce.as_view(), name='acme-new-nonce'),
-        path('acme/<hex:serial>/new-account/', views.AcmeNewAccount.as_view(), name='acme-new-account'),
-        path('acme/<hex:serial>/new-order/', views.AcmeNewOrderView.as_view(), name='acme-new-order'),
-        path('acme/<hex:serial>/acct/<int:pk>/', views.AcmeAccountView.as_view(), name='acme-account'),
-        path('acme/<hex:serial>/acct/<int:pk>/orders/', views.AcmeAccountOrdersView.as_view(),
+        path('acme/directory/<serial:serial>/', views.AcmeDirectory.as_view(), name='acme-directory'),
+        path('acme/<serial:serial>/new-nonce/', views.AcmeNewNonce.as_view(), name='acme-new-nonce'),
+        path('acme/<serial:serial>/new-account/', views.AcmeNewAccount.as_view(), name='acme-new-account'),
+        path('acme/<serial:serial>/new-order/', views.AcmeNewOrderView.as_view(), name='acme-new-order'),
+        path('acme/<serial:serial>/acct/<int:pk>/', views.AcmeAccountView.as_view(), name='acme-account'),
+        path('acme/<serial:serial>/acct/<int:pk>/orders/', views.AcmeAccountOrdersView.as_view(),
              name='acme-account-orders'),
-        path('acme/<hex:serial>/order/<acme:slug>/', views.AcmeOrderView.as_view(), name='acme-order'),
-        path('acme/<hex:serial>/order/<acme:slug>/finalize/', views.AcmeOrderFinalizeView.as_view(),
+        path('acme/<serial:serial>/order/<acme:slug>/', views.AcmeOrderView.as_view(), name='acme-order'),
+        path('acme/<serial:serial>/order/<acme:slug>/finalize/', views.AcmeOrderFinalizeView.as_view(),
              name='acme-order-finalize'),
-        path('acme/<hex:serial>/authz/<acme:slug>/', views.AcmeAuthorizationView.as_view(),
+        path('acme/<serial:serial>/authz/<acme:slug>/', views.AcmeAuthorizationView.as_view(),
              name='acme-authz'),
-        path('acme/<hex:serial>/chall/<acme:slug>/', views.AcmeChallengeView.as_view(),
+        path('acme/<serial:serial>/chall/<acme:slug>/', views.AcmeChallengeView.as_view(),
              name='acme-challenge'),
-        path('acme/<hex:serial>/cert/<acme:slug>/', views.AcmeCertificateView.as_view(),
+        path('acme/<serial:serial>/cert/<acme:slug>/', views.AcmeCertificateView.as_view(),
              name='acme-cert'),
     ]
 
