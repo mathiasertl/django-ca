@@ -66,6 +66,7 @@ from .acme import AcmeObjectResponse
 from .acme import AcmeResponseAccountCreated
 from .acme import AcmeResponseAuthorization
 from .acme import AcmeResponseBadNonce
+from .acme import AcmeResponseError
 from .acme import AcmeResponseMalformed
 from .acme import AcmeResponseNotFound
 from .acme import AcmeResponseOrder
@@ -445,18 +446,18 @@ class AcmeBaseView(View):
         # pylint: disable=unused-argument; kwargs is not usually used
         return self.message_cls
 
-    def get_nonce(self, ca):
+    def get_nonce(self):
         """Get a random Nonce and add it to the cache."""
 
         data = secrets.token_bytes(self.nonce_length)
         nonce = jose.encode_b64jose(data)
-        cache_key = 'acme-nonce-%s-%s' % (ca.pk, nonce)
+        cache_key = 'acme-nonce-%s-%s' % (self.kwargs['serial'], nonce)
         cache.set(cache_key, 0)
         return nonce
 
     def validate_nonce(self, nonce):
         """Validate that the given nonce was issued and was not used before."""
-        cache_key = 'acme-nonce-%s-%s' % (self.ca.pk, nonce)
+        cache_key = 'acme-nonce-%s-%s' % (self.kwargs['serial'], nonce)
         try:
             count = cache.incr(cache_key)
         except ValueError:
@@ -482,16 +483,32 @@ class AcmeBaseView(View):
         .. seealso:: https://tools.ietf.org/html/rfc8288
         """
 
-        kwargs['index'] = reverse('django_ca:acme-directory')
-        response['Link'] = ', '.join('<%s>; rel="%s"' % (self.request.build_absolute_uri(v), k)
+        kwargs['index'] = reverse('django_ca:acme-directory', kwargs={'serial': self.kwargs['serial']})
+        response['Link'] = ', '.join('<%s>;rel="%s"' % (self.request.build_absolute_uri(v), k)
                                      for k, v in kwargs.items())
+
+    def dispatch(self, request, *args, **kwargs):
+        if not ca_settings.CA_ENABLE_ACME:
+            raise Http404('Page not found.')
+
+        try:
+            response = super().dispatch(request, *args, **kwargs)
+            self.set_link_relations(response)
+        except Exception as ex:  # pylint: disable=broad-except
+            log.exception(ex)
+            response = AcmeResponseError(message='Internal server error')
+
+        # RFC 8555, section 6.7:
+        # An ACME server provides nonces to clients using the HTTP Replay-Nonce header field, as specified in
+        # Section 6.5.1.  The server MUST include a Replay-Nonce header field in every successful response to
+        # a POST request and SHOULD provide it in error responses as well.
+        response['replay-nonce'] = self.get_nonce()
+        return response
 
     def post(self, request, serial, **kwargs):
         # pylint: disable=missing-function-docstring; standard Django view function
         # pylint: disable=attribute-defined-outside-init
         # pylint: disable=too-many-return-statements,too-many-branches; b/c of the many checks
-        if not ca_settings.CA_ENABLE_ACME:
-            raise Http404('Page not found.')
 
         if request.content_type != 'application/jose+json':
             # RFC 8555, 6.2:
@@ -570,9 +587,6 @@ class AcmeBaseView(View):
             # ... "nonce"
             resp = AcmeResponseBadNonce()
 
-            # MUST include a new Nonce: "An error response with the "badNonce" error type MUST include a
-            # Replay-Nonce header field with a fresh nonce that the server will accept"
-            resp['replay-nonce'] = self.get_nonce(ca=self.ca)
             return resp
 
         if combined.url != request.build_absolute_uri():
@@ -604,9 +618,6 @@ class AcmeBaseView(View):
             except AcmeException as e:
                 response = e.get_response()
 
-        response['replay-nonce'] = self.get_nonce(ca=self.ca)
-        self.set_link_relations(response)
-
         return response
 
 
@@ -617,16 +628,8 @@ class AcmeNewNonce(AcmeBaseView):  # pylint: disable=abstract-method; no need to
     def head(self, request, serial):
         # pylint: disable=method-hidden; seems like a false positive
         # pylint: disable=missing-function-docstring; standard Django method
-        if not ca_settings.CA_ENABLE_ACME:
-            raise Http404('Page not found.')
-
-        try:
-            ca = CertificateAuthority.objects.usable().get(serial=serial)
-        except CertificateAuthority.DoesNotExist:
-            return AcmeResponseNotFound('%s: CA not found.' % serial)
-
         resp = HttpResponse()
-        resp['replay-nonce'] = self.get_nonce(ca=ca)
+        resp['replay-nonce'] = self.get_nonce()
         return resp
 
 
@@ -850,9 +853,6 @@ class AcmeChallengeView(AcmeBaseView):
             The "up" link relation is used with challenge resources to indicate the authorization resource to
             which a challenge belongs.
         """
-        url = reverse('django_ca:acme-authz', kwargs={'slug': self.challenge.auth.slug,
-                                                      'serial': self.challenge.serial})
-        print(url, self.challenge.acme_url)
         return super().set_link_relations(response, up=self.challenge.acme_url, **kwargs)
 
     def get_message_cls(self, request, slug):

@@ -18,11 +18,14 @@ from datetime import datetime
 from http import HTTPStatus
 from unittest import mock
 
+from requests.utils import parse_header_links
+
 from django.core.cache import cache
 from django.urls import reverse
 
 from freezegun import freeze_time
 
+from ..models import AcmeAccount
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
 from .base import override_settings
@@ -108,13 +111,13 @@ class DirectoryTestCase(DjangoCAWithCATestCase):
 
     def test_unknown_serial(self):
         """Test explicitly naming an unknown serial."""
-        serial = 'AB:CD:EF'
+        serial = 'ABCDEF'
         url = reverse('django_ca:acme-directory', kwargs={'serial': serial})
         response = self.client.get(url)
 
         self.assertEqual(response['Content-Type'], 'application/problem+json')
         self.assertEqual(response.json(), {
-            'detail': 'AB:CD:EF: CA not found.',
+            'detail': 'ABCDEF: CA not found.',
             'status': 404,
             'type': 'urn:ietf:params:acme:error:not-found',
         })
@@ -167,12 +170,14 @@ class AcmeNewAccountTestCase(DjangoCAWithCATestCase):
         'payload': 'ewogICJjb250YWN0IjogWwogICAgIm1haWx0bzp1c2VyQGxvY2FsaG9zdCIKICBdLAogICJ0ZXJtc09mU2VydmljZUFncmVlZCI6IHRydWUsCiAgInJlc291cmNlIjogIm5ldy1yZWciCn0'  # NOQA: E501
     }
     nonce1 = 'dhJVqXIJLaXK-oDDu36B3BkS7zBg399l_dM2nKHYEx4'
+    thumbprint1 = 'AmahA-otYnHNw4zeTQ6PMoY7bAFpjpMHGfoVdFK9Mhg'
     req2 = {
         'protected': 'eyJhbGciOiAiUlMyNTYiLCAiandrIjogeyJuIjogIjNwUXJ3YWQyemZiMDU4eEhCenRBOWR6c3RtdlFzZ2Njc1E1dUVRZjBVdXY4bUk3UGFXVHRvSmM4Nk9fVWp2V0R5T0ZXZWVyYUNzV0QyYVBzU09lLXRQRGMtcUNBWThQbHVWMXNGanFLMHBSbElkaWk4UWRSRDYyRmtsOXZULTRlQjI1Zm8yXzktRExEMnF5V3RScmJGSDA0RjNBa1ZFY3hWQURvU3AtaXJtWjJtOVpDOUFLTF9GeUl4Yy1ybm82MktwVUhVWW82M3NpaUhPRVBubHlTb2IzcnZGeUROa1JsZ2JKQTYwLXNVQmYwMDJ3cTVsczhzVVVfazhyZTl4TnVIVW1XZGZWNW5QZEVzaU5fWXV5RlYtQzA2dEswTTVtMm1mbU9TN1c1RS1hMno3bkZxTlBIZUpTQUZJZk13bVJlSE9CZGtuem0yOXN3YnBTNGV6eVFMUSIsICJlIjogIkFRQUIiLCAia3R5IjogIlJTQSJ9LCAibm9uY2UiOiAiSGxYaEhzSlRwdmctRjhJVjNzSU81UjFIdzNPN2RMVDk3UEhkejN5UnRDRSIsICJ1cmwiOiAiaHR0cDovL2xvY2FsaG9zdDo4MDAwL2RqYW5nb19jYS9hY21lLzNGMUU2RTlCMzk5NkIyNkI4MDcyRTRERDI1OTdFOEI0MEYzRkJDN0UvbmV3LWFjY291bnQvIn0',  # NOQA: E501
         'signature': 'NPn-xMBHdfstuH7DNINWx7sdKy6VqgGHU3a8TY0aM_d8o-WWbDEhqsDbGgbMPqDsIyPuHVFPV30uCQW-R_AGvD6Px-qCn7beDjLJXsvSneD7zW20Cl_ceL_u3HyWZAWN1T6VKbMFvR9rL8KOawf6Pq6yVXEv2aiiSLQIj-wZXzcEMMtGzEnXudMcqfDw04Pv7ZEEzdg7b12juc504LoBWXoE7auZkeG-7e3ljApHxrzDxCeVqA3qJUmZJIVAf5YTdxVRCCMCzmtjrLtzyIDKWkXJSxz_p-W7r2Mx-sV0iJj1cr_RPDTAo4cGr3ycOW4e6B0HSlClorK9PTwI__f0aA',  # NOQA: E501
         'payload': 'ewogICJjb250YWN0IjogWwogICAgIm1haWx0bzp1c2VyQGxvY2FsaG9zdCIKICBdLAogICJ0ZXJtc09mU2VydmljZUFncmVlZCI6IHRydWUsCiAgInJlc291cmNlIjogIm5ldy1yZWciCn0'  # NOQA: E501
     }
     nonce2 = 'HlXhHsJTpvg-F8IV3sIO5R1Hw3O7dLT97PHdz3yRtCE'
+    thumbprint2 = 'UwPv-4WcRpKXsvcHXVCunVz13SmC1k15gIfu6B5HBB4'
 
     req3 = {
         'protected': 'eyJhbGciOiAiUlMyNTYiLCAiandrIjogeyJuIjogInczcTBmT3JTekNEbVZWd0daNkhpMTBQVXpqNTB6TlNLMWN5Szl3andxOExZMUlLUG1xS0RQM3AtQkQza28xclB1OVR4XzJHbGNnem50c0V1cGhrWHNFOHNzTGVzTjNnTjNMbVIzUVVNSzFYOUVvcFlPaXNTSGZIdkdGSnRXS2htYXVXdzBLY1JsMGJUd3pMdVZxbVBJTy1Fdl9wamdvWnhELWpZemlqUS1wa1dtYjBkNURCWTRtdGFRb0NFM0xud3Zsanl0aXA3bng1OGZoLUQ3VHVLazcxT3A1WnZEZnlld0Uwb2ljWnpBSjFjakNrQk1HVVB4UEpPLVlnUUdXdGtFbGRRS2M3S1hacEVlOTF3YTlwRllOSU5aTVdsMk1mVk5MUUtSd1BvY3R2c2tqQjc5WXVDX2ZCVXdoZDBBbktMWDdKSzIzU3BydTBvYnpHVWNkUEV4USIsICJlIjogIkFRQUIiLCAia3R5IjogIlJTQSJ9LCAibm9uY2UiOiAiQ3hBZGxxaC1mcHJ3WEhWNWVRQ3ZCQUhDQ05sdWhNMEpZRk1raFNuZnk2YyIsICJ1cmwiOiAiaHR0cDovL2xvY2FsaG9zdDo4MDAwL2RqYW5nb19jYS9hY21lLzNGMUU2RTlCMzk5NkIyNkI4MDcyRTRERDI1OTdFOEI0MEYzRkJDN0UvbmV3LWFjY291bnQvIn0',  # NOQA: E501
@@ -180,10 +185,39 @@ class AcmeNewAccountTestCase(DjangoCAWithCATestCase):
         'payload': 'ewogICJjb250YWN0IjogWwogICAgIm1haWx0bzp1c2VyQGxvY2FsaG9zdCIKICBdLAogICJ0ZXJtc09mU2VydmljZUFncmVlZCI6IHRydWUsCiAgInJlc291cmNlIjogIm5ldy1yZWciCn0'  # NOQA: E501
     }
     nonce3 = 'CxAdlqh-fprwXHV5eQCvBAHCCNluhM0JYFMkhSnfy6c'
+    thumbprint3 = 'oviCgj8M5yAwHMNUWrlBHdr_mKow0xNLIzkOyYyNRy8'
 
     def setUp(self):
         super().setUp()
         self.ca = self.cas['root']
+
+    def assertAcmeProblem(self, response, typ, status, ca=None):  # pylint: disable=invalid-name
+        """Assert that a HTTP response confirms to an ACME problem report.
+
+        .. seealso:: `RFC 8555, section 8 <https://tools.ietf.org/html/rfc8555#section-6.7>`_
+        """
+        self.assertEqual(response['Content-Type'], 'application/problem+json')
+        self.assertLinkRelations(response, ca=ca)
+        data = response.json()
+        self.assertEqual(data['type'], 'urn:ietf:params:acme:error:%s' % typ)
+        self.assertEqual(data['status'], status)
+
+    def assertAcmeResponse(self, response, ca=None):  # pylint: disable=invalid-name
+        """Assert basic Acme Response properties (Content-Type & Link header)."""
+        self.assertLinkRelations(response, ca=ca)
+        self.assertEqual(response['Content-Type'], 'application/json')
+
+    def assertLinkRelations(self, response, ca=None, **kwargs):  # pylint: disable=invalid-name
+        """Assert Link relations for a given request."""
+        if ca is None:
+            ca = self.ca
+
+        directory = reverse('django_ca:acme-directory', kwargs={'serial': ca.serial})
+        kwargs['index'] = response.wsgi_request.build_absolute_uri(directory)
+
+        expected = [{'rel': k, 'url': v} for k, v in kwargs.items()]
+        actual = parse_header_links(response['Link'])
+        self.assertEqual(expected, actual)
 
     def get_nonce(self, ca=None):
         """Get a nonce with an actualy request."""
@@ -201,6 +235,15 @@ class AcmeNewAccountTestCase(DjangoCAWithCATestCase):
         kwargs.setdefault('SERVER_NAME', 'localhost:8000')
         return self.client.post(url, json.dumps(data), **kwargs)
 
+    @property
+    def precreated_requests(self):
+        """Iterable for pre-created request data."""
+        return [
+            (self.req1, self.nonce1, self.thumbprint1),
+            (self.req2, self.nonce2, self.thumbprint2),
+            (self.req3, self.nonce3, self.thumbprint3),
+        ]
+
     @override_settings(ALLOWED_HOSTS=['localhost'])
     @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
     def test_precreated_requests(self):
@@ -210,8 +253,53 @@ class AcmeNewAccountTestCase(DjangoCAWithCATestCase):
         self.ca.save()
         url = reverse('django_ca:acme-new-account', kwargs={'serial': self.ca.serial})
 
-        for data, nonce in [(self.req1, self.nonce1), (self.req2, self.nonce2), (self.req3, self.nonce3)]:
-            cache.set('acme-nonce-%s-%s' % (self.ca.pk, nonce), 0)
+        for data, nonce, thumbprint in self.precreated_requests:
+            cache.set('acme-nonce-%s-%s' % (self.ca.serial, nonce), 0)
             response = self.post(url, data)
             self.assertEqual(response.status_code, HTTPStatus.CREATED)
-            # TODO: validate other request properties
+            self.assertAcmeResponse(response)
+
+            account = AcmeAccount.objects.get(thumbprint=thumbprint)
+            uri = response.wsgi_request.build_absolute_uri
+            kwargs = {'serial': self.ca.serial, 'pk': account.pk}
+            self.assertEqual(response['Location'], uri(
+                reverse('django_ca:acme-account', kwargs=kwargs)
+            ))
+            # An example response can be found in RFC 8555, section 7.3
+            # https://tools.ietf.org/html/rfc8555#section-7.3
+            self.assertEqual(response.json(), {
+                'status': 'valid',
+                'contact': ['user@localhost'],
+                'orders': uri(reverse('django_ca:acme-account-orders', kwargs=kwargs))
+            })
+
+    @override_settings(ALLOWED_HOSTS=['localhost'])
+    @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
+    def test_duplicate_nonce_use(self):
+        """Test that a Nonce can really only be used once."""
+        self.ca.serial = '3F1E6E9B3996B26B8072E4DD2597E8B40F3FBC7E'
+        self.ca.save()
+        url = reverse('django_ca:acme-new-account', kwargs={'serial': self.ca.serial})
+
+        for data, nonce in [(self.req1, self.nonce1), (self.req2, self.nonce2), (self.req3, self.nonce3)]:
+            cache.set('acme-nonce-%s-%s' % (self.ca.serial, nonce), 0)
+            response = self.post(url, data)
+            self.assertEqual(response.status_code, HTTPStatus.CREATED)
+
+            # Do the request again to validate that the nonce is now invalid
+            response = self.post(url, data)
+            self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
+            self.assertAcmeProblem(response, typ='badNonce', status=400)
+
+    @override_settings(ALLOWED_HOSTS=['localhost'])
+    @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
+    def test_unknown_nonce_use(self):
+        """Test that an unknown nonce does not work."""
+        self.ca.serial = '3F1E6E9B3996B26B8072E4DD2597E8B40F3FBC7E'
+        self.ca.save()
+        url = reverse('django_ca:acme-new-account', kwargs={'serial': self.ca.serial})
+
+        for data in [self.req1, self.req2, self.req3]:
+            response = self.post(url, data)
+            self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
+            self.assertAcmeProblem(response, typ='badNonce', status=400)
