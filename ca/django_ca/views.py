@@ -26,6 +26,7 @@ import os
 import secrets
 from datetime import datetime
 from datetime import timedelta
+from http import HTTPStatus
 from urllib.parse import urlparse
 
 import acme.jws
@@ -392,9 +393,8 @@ class AcmeDirectory(View):
                 return AcmeResponseNotFound('No (usable) default CA configured.')
         else:
             try:
-                ca = CertificateAuthority.objects.usable().get(serial=sanitize_serial(serial))
-            except ValueError:  # pragma: no cover; any invalid serial already caught by URL converter
-                return AcmeResponseMalformed('%s: Serial not valid.' % serial)
+                # NOTE: Serial is already sanitized by URL converter
+                ca = CertificateAuthority.objects.usable().get(serial=serial)
             except CertificateAuthority.DoesNotExist:
                 return AcmeResponseNotFound('%s: CA not found.' % serial)
 
@@ -419,32 +419,14 @@ class AcmeDirectory(View):
         })
 
 
-@method_decorator(csrf_exempt, name='dispatch')
-class AcmeBaseView(View):
-    """Base class for all ACME views."""
+class AcmeGetNonceViewMixin:
+    """View mixin that provides methods to get and validate a Nonce.
 
-    ignore_body = False  # True if we want to ignore the message body
-    post_as_get = False  # True if this is a POST-as-GET request (see RFC 8555, 6.3).
-    requires_key = False  # True if we require a full key (-> new accounts)
-    message_cls = None  # Set to class parsing the request body if post_as_get=False.
+    Note that thix mixin depends on the presence of a ``serial`` argument to the URL resolver.
+    """
+
     nonce_length = 32
-
-    def acme_request(self, **kwargs):
-        """Function to handle the given ACME request. Views are expected to implement this function.
-
-        Parameters
-        ----------
-
-        **kwargs : dict
-            The arguments as passed by the resolver. If ``post_as_get`` is True, an instance of the class
-            specified in ``message_cls`` is passed as the ``message`` keyword argument.
-        """
-        raise NotImplementedError  # pragma: no cover
-
-    def get_message_cls(self, request, **kwargs):
-        """Get the message class used for parsing the request body."""
-        # pylint: disable=unused-argument; kwargs is not usually used
-        return self.message_cls
+    """Length of generated Nonces."""
 
     def get_nonce(self):
         """Get a random Nonce and add it to the cache."""
@@ -468,6 +450,33 @@ class AcmeBaseView(View):
             return False
 
         return True
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class AcmeBaseView(AcmeGetNonceViewMixin, View):
+    """Base class for all ACME views."""
+
+    ignore_body = False  # True if we want to ignore the message body
+    post_as_get = False  # True if this is a POST-as-GET request (see RFC 8555, 6.3).
+    requires_key = False  # True if we require a full key (-> new accounts)
+    message_cls = None  # Set to class parsing the request body if post_as_get=False.
+
+    def acme_request(self, **kwargs):
+        """Function to handle the given ACME request. Views are expected to implement this function.
+
+        Parameters
+        ----------
+
+        **kwargs : dict
+            The arguments as passed by the resolver. If ``post_as_get`` is True, an instance of the class
+            specified in ``message_cls`` is passed as the ``message`` keyword argument.
+        """
+        raise NotImplementedError  # pragma: no cover
+
+    def get_message_cls(self, request, **kwargs):
+        """Get the message class used for parsing the request body."""
+        # pylint: disable=unused-argument; kwargs is not usually used
+        return self.message_cls
 
     def validate_message(self, message):
         """Let subclasses do individual validation of the received message."""
@@ -621,19 +630,43 @@ class AcmeBaseView(View):
         return response
 
 
-class AcmeNewNonce(AcmeBaseView):  # pylint: disable=abstract-method; no need to override acme_request()
+class AcmeNewNonceView(AcmeGetNonceViewMixin, View):
+    """View to retrieve a new nonce for replay protection.
+
+    Equivalent LE URL: https://acme-v02.api.letsencrypt.org/acme/new-nonce
+
+    .. seealso::
+
+       * `RFC 8555, section 6.5 <https://tools.ietf.org/html/rfc8555#section-6.5>`_
+       * `RFC 8555, section 7.2 <https://tools.ietf.org/html/rfc8555#section-7.2>`_
     """
-    `Equivalent LE URL <https://acme-v02.api.letsencrypt.org/acme/new-nonce>`__
-    """
-    def head(self, request, serial):
-        # pylint: disable=method-hidden; seems like a false positive
-        # pylint: disable=missing-function-docstring; standard Django method
-        resp = HttpResponse()
-        resp['replay-nonce'] = self.get_nonce()
-        return resp
+
+    def dispatch(self, request, *args, **kwargs):
+        if not ca_settings.CA_ENABLE_ACME:
+            raise Http404('Page not found.')
+
+        response = super().dispatch(request, *args, **kwargs)
+        response['replay-nonce'] = self.get_nonce()
+        response['cache-control'] = 'no-store'
+        return response
+
+    def head(self, request, serial):  # pylint: disable=no-self-use
+        """Get a new Nonce with a HEAD request."""
+        # pylint: disable=method-hidden; false positive - View.setup() sets head as property if not defined
+        # pylint: disable=unused-argument; false positive - really used by AcmeGetNonceViewMixin
+        return HttpResponse()
+
+    def get(self, request, serial):
+        """Get a new Nonce with a GET request.
+
+        Note that certbot always does a HEAD request, but RFC 8555, section 7.2 mandates support for GET
+        requests.
+        """
+        # pylint: disable=unused-argument; false positive - really used by AcmeGetNonceViewMixin
+        return HttpResponse(status=HTTPStatus.NO_CONTENT)  # 204, unlike HEAD, which has 200
 
 
-class AcmeNewAccount(AcmeBaseView):
+class AcmeNewAccountView(AcmeBaseView):
     """Implements endpoint for creating a new account, that is ``/acme/new-account``.
 
     .. seealso:: `RFC 8555, 7.3 <https://tools.ietf.org/html/rfc8555#section-7.3>`_

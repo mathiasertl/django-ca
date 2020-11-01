@@ -108,6 +108,7 @@ class DirectoryTestCase(DjangoCAWithCATestCase):
         """Test that CA_ENABLE_ACME=False means HTTP 404."""
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        self.assertEqual(response['Content-Type'], 'text/html')  # --> coming from Django
 
     def test_unknown_serial(self):
         """Test explicitly naming an unknown serial."""
@@ -123,7 +124,7 @@ class DirectoryTestCase(DjangoCAWithCATestCase):
         })
 
 
-class NewNonceTestCase(DjangoCAWithCATestCase):
+class AcmeNewNonceViewTestCase(DjangoCAWithCATestCase):
     """Test getting a new ACME nonce."""
 
     def setUp(self):
@@ -135,6 +136,7 @@ class NewNonceTestCase(DjangoCAWithCATestCase):
         """Test that CA_ENABLE_ACME=False means HTTP 404."""
         response = self.client.head(self.url)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        self.assertEqual(response['Content-Type'], 'text/html')  # --> coming from Django
 
     def test_get_nonce(self):
         """Test that getting multiple nonces returns unique nonces."""
@@ -143,21 +145,19 @@ class NewNonceTestCase(DjangoCAWithCATestCase):
         for _i in range(1, 5):
             response = self.client.head(self.url)
             self.assertEqual(response.status_code, HTTPStatus.OK)
+            self.assertEqual(len(response['replay-nonce']), 43)
+            self.assertEqual(response['cache-control'], 'no-store')
             nonces.append(response['replay-nonce'])
 
         self.assertEqual(len(nonces), len(set(nonces)))
 
-    def test_unknown_ca(self):
-        """Test fetching a nonce for an unknown CA."""
-        url = reverse('django_ca:acme-new-nonce', kwargs={'serial': 'AA:BB:CC'})
-        response = self.client.head(url)
-        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+    def test_get_request(self):
+        """RFC 8555, section 7.2 also specifies a GET request."""
 
-    @freeze_time(timestamps['everything_expired'])
-    def test_expired_ca(self):
-        """Test using default CA when all CAs are expired."""
-        response = self.client.head(self.url)
-        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, HTTPStatus.NO_CONTENT)
+        self.assertEqual(len(response['replay-nonce']), 43)
+        self.assertEqual(response['cache-control'], 'no-store')
 
 
 class AcmeNewAccountTestCase(DjangoCAWithCATestCase):
@@ -201,6 +201,7 @@ class AcmeNewAccountTestCase(DjangoCAWithCATestCase):
         data = response.json()
         self.assertEqual(data['type'], 'urn:ietf:params:acme:error:%s' % typ)
         self.assertEqual(data['status'], status)
+        self.assertIn('Replay-Nonce', response)
 
     def assertAcmeResponse(self, response, ca=None):  # pylint: disable=invalid-name
         """Assert basic Acme Response properties (Content-Type & Link header)."""
@@ -272,6 +273,21 @@ class AcmeNewAccountTestCase(DjangoCAWithCATestCase):
                 'contact': ['user@localhost'],
                 'orders': uri(reverse('django_ca:acme-account-orders', kwargs=kwargs))
             })
+
+    @override_settings(ALLOWED_HOSTS=['localhost'])
+    @override_settings(CA_ENABLE_ACME=False)
+    def test_disabled(self):
+        """Test that CA_ENABLE_ACME=False means HTTP 404."""
+        self.ca.serial = '3F1E6E9B3996B26B8072E4DD2597E8B40F3FBC7E'
+        self.ca.save()
+        url = reverse('django_ca:acme-new-account', kwargs={'serial': self.ca.serial})
+
+        for data, nonce, _thumbprint in self.precreated_requests:
+            cache.set('acme-nonce-%s-%s' % (self.ca.serial, nonce), 0)
+            response = self.post(url, data)
+            self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+            self.assertEqual(response['Content-Type'], 'text/html')  # --> coming from Django
+            self.assertEqual(AcmeAccount.objects.all().count(), 0)
 
     @override_settings(ALLOWED_HOSTS=['localhost'])
     @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
