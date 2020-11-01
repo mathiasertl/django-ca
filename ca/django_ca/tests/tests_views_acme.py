@@ -31,6 +31,16 @@ from .base import DjangoCAWithCATestCase
 from .base import override_settings
 from .base import timestamps
 
+PEM_1 = '''-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAw3q0fOrSzCDmVVwGZ6Hi
+10PUzj50zNSK1cyK9wjwq8LY1IKPmqKDP3p+BD3ko1rPu9Tx/2GlcgzntsEuphkX
+sE8ssLesN3gN3LmR3QUMK1X9EopYOisSHfHvGFJtWKhmauWw0KcRl0bTwzLuVqmP
+IO+Ev/pjgoZxD+jYzijQ+pkWmb0d5DBY4mtaQoCE3Lnwvljytip7nx58fh+D7TuK
+k71Op5ZvDfyewE0oicZzAJ1cjCkBMGUPxPJO+YgQGWtkEldQKc7KXZpEe91wa9pF
+YNINZMWl2MfVNLQKRwPoctvskjB79YuC/fBUwhd0AnKLX7JK23Spru0obzGUcdPE
+xQIDAQAB
+-----END PUBLIC KEY-----'''
+
 
 class DirectoryTestCase(DjangoCAWithCATestCase):
     """Test basic ACMEv2 directory view."""
@@ -124,6 +134,45 @@ class DirectoryTestCase(DjangoCAWithCATestCase):
         })
 
 
+class AcmeTestCaseMixin:
+    """TestCase mixin with various common utility functions."""
+
+    def assertAcmeProblem(self, response, typ, status, ca=None):  # pylint: disable=invalid-name
+        """Assert that a HTTP response confirms to an ACME problem report.
+
+        .. seealso:: `RFC 8555, section 8 <https://tools.ietf.org/html/rfc8555#section-6.7>`_
+        """
+        self.assertEqual(response['Content-Type'], 'application/problem+json')
+        self.assertLinkRelations(response, ca=ca)
+        data = response.json()
+        self.assertEqual(data['type'], 'urn:ietf:params:acme:error:%s' % typ)
+        self.assertEqual(data['status'], status)
+        self.assertIn('Replay-Nonce', response)
+
+    def assertAcmeResponse(self, response, ca=None):  # pylint: disable=invalid-name
+        """Assert basic Acme Response properties (Content-Type & Link header)."""
+        self.assertLinkRelations(response, ca=ca)
+        self.assertEqual(response['Content-Type'], 'application/json')
+
+    def assertLinkRelations(self, response, ca=None, **kwargs):  # pylint: disable=invalid-name
+        """Assert Link relations for a given request."""
+        if ca is None:
+            ca = self.ca
+
+        directory = reverse('django_ca:acme-directory', kwargs={'serial': ca.serial})
+        kwargs['index'] = response.wsgi_request.build_absolute_uri(directory)
+
+        expected = [{'rel': k, 'url': v} for k, v in kwargs.items()]
+        actual = parse_header_links(response['Link'])
+        self.assertEqual(expected, actual)
+
+    def post(self, url, data, **kwargs):
+        """Make a post request with some ACME specific default data."""
+        kwargs.setdefault('content_type', 'application/jose+json')
+        kwargs.setdefault('SERVER_NAME', 'localhost:8000')
+        return self.client.post(url, json.dumps(data), **kwargs)
+
+
 class AcmeNewNonceViewTestCase(DjangoCAWithCATestCase):
     """Test getting a new ACME nonce."""
 
@@ -160,7 +209,7 @@ class AcmeNewNonceViewTestCase(DjangoCAWithCATestCase):
         self.assertEqual(response['cache-control'], 'no-store')
 
 
-class AcmeNewAccountTestCase(DjangoCAWithCATestCase):
+class AcmeNewAccountTestCase(AcmeTestCaseMixin, DjangoCAWithCATestCase):
     """Test creating a new account."""
 
     # A collection of requests that where collected by certbot
@@ -191,35 +240,6 @@ class AcmeNewAccountTestCase(DjangoCAWithCATestCase):
         super().setUp()
         self.ca = self.cas['root']
 
-    def assertAcmeProblem(self, response, typ, status, ca=None):  # pylint: disable=invalid-name
-        """Assert that a HTTP response confirms to an ACME problem report.
-
-        .. seealso:: `RFC 8555, section 8 <https://tools.ietf.org/html/rfc8555#section-6.7>`_
-        """
-        self.assertEqual(response['Content-Type'], 'application/problem+json')
-        self.assertLinkRelations(response, ca=ca)
-        data = response.json()
-        self.assertEqual(data['type'], 'urn:ietf:params:acme:error:%s' % typ)
-        self.assertEqual(data['status'], status)
-        self.assertIn('Replay-Nonce', response)
-
-    def assertAcmeResponse(self, response, ca=None):  # pylint: disable=invalid-name
-        """Assert basic Acme Response properties (Content-Type & Link header)."""
-        self.assertLinkRelations(response, ca=ca)
-        self.assertEqual(response['Content-Type'], 'application/json')
-
-    def assertLinkRelations(self, response, ca=None, **kwargs):  # pylint: disable=invalid-name
-        """Assert Link relations for a given request."""
-        if ca is None:
-            ca = self.ca
-
-        directory = reverse('django_ca:acme-directory', kwargs={'serial': ca.serial})
-        kwargs['index'] = response.wsgi_request.build_absolute_uri(directory)
-
-        expected = [{'rel': k, 'url': v} for k, v in kwargs.items()]
-        actual = parse_header_links(response['Link'])
-        self.assertEqual(expected, actual)
-
     def get_nonce(self, ca=None):
         """Get a nonce with an actualy request."""
         if ca is None:
@@ -229,12 +249,6 @@ class AcmeNewAccountTestCase(DjangoCAWithCATestCase):
         response = self.client.head(url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         return response['replay-nonce']
-
-    def post(self, url, data, **kwargs):
-        """Make a post request with some ACME specific default data."""
-        kwargs.setdefault('content_type', 'application/jose+json')
-        kwargs.setdefault('SERVER_NAME', 'localhost:8000')
-        return self.client.post(url, json.dumps(data), **kwargs)
 
     @property
     def precreated_requests(self):
@@ -248,7 +262,7 @@ class AcmeNewAccountTestCase(DjangoCAWithCATestCase):
     @override_settings(ALLOWED_HOSTS=['localhost'])
     @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
     def test_precreated_requests(self):
-        """Test requests collected by certbot."""
+        """Test requests collected from certbot."""
 
         self.ca.serial = '3F1E6E9B3996B26B8072E4DD2597E8B40F3FBC7E'
         self.ca.save()
@@ -297,7 +311,7 @@ class AcmeNewAccountTestCase(DjangoCAWithCATestCase):
         self.ca.save()
         url = reverse('django_ca:acme-new-account', kwargs={'serial': self.ca.serial})
 
-        for data, nonce in [(self.req1, self.nonce1), (self.req2, self.nonce2), (self.req3, self.nonce3)]:
+        for data, nonce, _tp in self.precreated_requests:
             cache.set('acme-nonce-%s-%s' % (self.ca.serial, nonce), 0)
             response = self.post(url, data)
             self.assertEqual(response.status_code, HTTPStatus.CREATED)
@@ -315,7 +329,61 @@ class AcmeNewAccountTestCase(DjangoCAWithCATestCase):
         self.ca.save()
         url = reverse('django_ca:acme-new-account', kwargs={'serial': self.ca.serial})
 
-        for data in [self.req1, self.req2, self.req3]:
+        for data, _nonce, _tp in self.precreated_requests:
             response = self.post(url, data)
             self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
             self.assertAcmeProblem(response, typ='badNonce', status=400)
+
+
+class AcmeNewOrderTestCase(AcmeTestCaseMixin, DjangoCAWithCATestCase):
+    """Test creating a new order."""
+
+    req1 = {
+        "protected": "eyJhbGciOiAiUlMyNTYiLCAia2lkIjogImh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC9kamFuZ29fY2EvYWNtZS8zRjFFNkU5QjM5OTZCMjZCODA3MkU0REQyNTk3RThCNDBGM0ZCQzdFL2FjY3QvMTAvIiwgIm5vbmNlIjogImJfakVOSngxMmRNZ3lmdEFhWkNJeTNpZ0NPQVg5VExneXFuem5yU3pGZTQiLCAidXJsIjogImh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC9kamFuZ29fY2EvYWNtZS8zRjFFNkU5QjM5OTZCMjZCODA3MkU0REQyNTk3RThCNDBGM0ZCQzdFL25ldy1vcmRlci8ifQ",  # NOQA: E501
+        "signature": "h9Gja5YHqwUMVqamm_LdJgxdC37IfYthQCT53RlYSo70V0hmqpWqhOIk9TLLs7ehi-bRa1zsVeTpYGzy1USQzuPXozvPZeLu4ifQFGEQj70oJfNyWZYfN3FB9K6I8mdmm6LyK1Vkl9qzkkAlD4-RJIDyEbD64O7aL8IjlmPotbpNtWx0czZlG3G-TP9XIUWY4Yd_4i5jEvuCShN2uiW2d7Rz7UUVbqS1ESZpSTpfTqWC0urgYHJNq7IpHqxVnlWCZFksEjDwVXHsWQ9M1rm9z9Vg2eJ36kBVi4DarDHfM4VWxXD0Kjnt3UEauZQsXBEejhDMiONq8OYev2KRgTNOvA",  # NOQA: E501
+        "payload": "ewogICJpZGVudGlmaWVycyI6IFsKICAgIHsKICAgICAgInR5cGUiOiAiZG5zIiwKICAgICAgInZhbHVlIjogImxvY2FsaG9zdCIKICAgIH0KICBdCn0"  # NOQA: E501
+    }
+    nonce1 = 'b_jENJx12dMgyftAaZCIy3igCOAX9TLgyqnznrSzFe4'
+    req2 = {
+        "protected": "eyJhbGciOiAiUlMyNTYiLCAia2lkIjogImh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC9kamFuZ29fY2EvYWNtZS8zRjFFNkU5QjM5OTZCMjZCODA3MkU0REQyNTk3RThCNDBGM0ZCQzdFL2FjY3QvMTAvIiwgIm5vbmNlIjogIlUwUC1PemtPSHVua2ttWFNISi1fNThOR3dUa3RrcDFEQ1ctaklQWWlXa1EiLCAidXJsIjogImh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC9kamFuZ29fY2EvYWNtZS8zRjFFNkU5QjM5OTZCMjZCODA3MkU0REQyNTk3RThCNDBGM0ZCQzdFL25ldy1vcmRlci8ifQ",  # NOQA: E501
+        "signature": "L5qP32ZuSzfcbIxWuM3Cr7JhZ5MJvR7xkZ-LJ55fYOHRpdnJfIYoOPsXuu8kaK7cFg8NRmhdb0Z659C62YKmUnY5z7q4BBIqG83oj9tJudkxcnVWS2ExNxhVsP-m95cTvGoLU55S_rhtizvnmKHfW2tvfj4hxJESq1lxSy6HLgywtjFQxBFJa9bhlTN7J84iZnRnhgBlFdgK0QNt5EKnVVSsjrpgnirHEMtTr5xHqzDIsoRMD7PDKzXu-qWfxzNsryqqaQTh0x9H-wcryAXt3_BKYoMeNg8CnUb3N1OzeQgsN_8FvJcvdPOVaAEYEiAYxcpX_tKPl-2ptTjb1fauvw",  # NOQA: E501
+        "payload": "ewogICJpZGVudGlmaWVycyI6IFsKICAgIHsKICAgICAgInR5cGUiOiAiZG5zIiwKICAgICAgInZhbHVlIjogImxvY2FsaG9zdCIKICAgIH0KICBdCn0"  # NOQA: E501
+    }
+    nonce2 = 'U0P-OzkOHunkkmXSHJ-_58NGwTktkp1DCW-jIPYiWkQ'
+    req3 = {
+        "protected": "eyJhbGciOiAiUlMyNTYiLCAia2lkIjogImh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC9kamFuZ29fY2EvYWNtZS8zRjFFNkU5QjM5OTZCMjZCODA3MkU0REQyNTk3RThCNDBGM0ZCQzdFL2FjY3QvMTAvIiwgIm5vbmNlIjogIkJfemFWdFNDcVQ0NW0zYnA3NE5OWE1XYnVzSjlOYzRYcUN0TDY5NG81WlEiLCAidXJsIjogImh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC9kamFuZ29fY2EvYWNtZS8zRjFFNkU5QjM5OTZCMjZCODA3MkU0REQyNTk3RThCNDBGM0ZCQzdFL25ldy1vcmRlci8ifQ",  # NOQA: E501
+        "signature": "q7Z5HN4o9VLJvRJxfPbpqceRZwACy1aEjD6zl6JXkZQOTcTMnLqXTeAQF0J2m2ilAX51TMgfKK_rs0durpCJ8CXBz8kNcsAwrO-96rwjcLAflZIYI4RTfp_jfCEFxCRFfbG7nNTCltHth2OztlJymhHh9J8r9kfZop2XmNn9Kmc4u_zhs5FrLUogzqdjN3d_zswSglHekTJh9fJen0odAX9UdIp3C3hvObIhR7CCvEbpFmPVeCgtkAQPCjh_UoNPXdySIeU_kplq0-9f67UoY9giWCyNlxvYwm2Z9nBWHEcjxDh730Rb6192o6eDuNcLsDuppjbe7eJ_OHxRpI5y1w",  # NOQA: E501
+        "payload": "ewogICJpZGVudGlmaWVycyI6IFsKICAgIHsKICAgICAgInR5cGUiOiAiZG5zIiwKICAgICAgInZhbHVlIjogImxvY2FsaG9zdCIKICAgIH0KICBdCn0"  # NOQA: E501
+    }
+    nonce3 = 'B_zaVtSCqT45m3bp74NNXMWbusJ9Nc4XqCtL694o5ZQ'
+
+    def setUp(self):
+        super().setUp()
+        self.ca = self.cas['root']
+        self.account = AcmeAccount.objects.create(
+            pk=10, contact='user@localhost', ca=self.ca, terms_of_service_agreed=True, pem=PEM_1,
+            thumbprint='oviCgj8M5yAwHMNUWrlBHdr_mKow0xNLIzkOyYyNRy8')
+
+    @property
+    def precreated_requests(self):
+        """Iterable for pre-created request data."""
+        return [
+            (self.req1, self.nonce1),
+            (self.req2, self.nonce2),
+            (self.req3, self.nonce3),
+        ]
+
+    @override_settings(ALLOWED_HOSTS=['localhost'])
+    @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
+    def test_prepared_requests(self):
+        """Test requests collected from certbot."""
+
+        self.ca.serial = '3F1E6E9B3996B26B8072E4DD2597E8B40F3FBC7E'
+        self.ca.save()
+        url = reverse('django_ca:acme-new-order', kwargs={'serial': self.ca.serial})
+
+        for req, nonce in self.precreated_requests:
+            cache.set('acme-nonce-%s-%s' % (self.ca.serial, nonce), 0)
+            response = self.post(url, req)
+            self.assertEqual(response.status_code, HTTPStatus.CREATED)
+            self.assertAcmeResponse(response)

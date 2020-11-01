@@ -47,6 +47,7 @@ from cryptography.x509 import ocsp
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import Http404
 from django.http import HttpResponse
@@ -88,7 +89,6 @@ from .utils import get_crl_cache_key
 from .utils import int_to_hex
 from .utils import parse_encoding
 from .utils import read_file
-from .utils import sanitize_serial
 
 log = logging.getLogger(__name__)
 
@@ -678,9 +678,9 @@ class AcmeNewAccountView(AcmeBaseView):
         pem = self.jwk['key'].public_bytes(
             encoding=Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo
-        ).decode('utf-8')
+        ).decode('utf-8').strip()
 
-        account = AcmeAccount.objects.create(
+        account = AcmeAccount(
             ca=self.ca,
             contact=message.emails[0],
             status=AcmeAccount.STATUS_VALID,
@@ -688,6 +688,14 @@ class AcmeNewAccountView(AcmeBaseView):
             thumbprint=jose.encode_b64jose(self.jwk.thumbprint()),
             pem=pem
         )
+
+        # Call full_clean() so that model validation can do its magic
+        try:
+            account.full_clean()
+            account.save()
+        except ValidationError:
+            # TODO: section 6.5.1 has some more specific error codes
+            raise AcmeMalformed()
 
         return AcmeResponseAccountCreated(self.request, account)
 

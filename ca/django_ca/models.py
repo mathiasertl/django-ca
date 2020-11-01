@@ -127,6 +127,21 @@ def json_validator(value):
         raise ValidationError(_('Must be valid JSON: %(message)s') % {'message': str(e)}) from e
 
 
+def pem_validator(value):
+    """Validator that ensures a value is a valid PEM public certificate."""
+
+    if not value.startswith('-----BEGIN PUBLIC KEY-----\n'):
+        raise ValidationError(_('Not a valid PEM.'))
+    if not value.endswith('\n-----END PUBLIC KEY-----'):
+        raise ValidationError(_('Not a valid PEM.'))
+
+    # TODO: for some reason cryptography cannot load LE account PEMs
+    #try:
+    #    x509.load_pem_x509_certificate(force_bytes(value), default_backend())
+    #except Exception as ex:  # pylint: disable=broad-except
+    #    raise ValidationError(_('Not a valid PEM.')) from ex
+
+
 class Watcher(models.Model):
     """A watcher represents an email address that will receive notifications about expiring certificates."""
     name = models.CharField(max_length=64, blank=True, default='', verbose_name=_('CommonName'))
@@ -1059,7 +1074,7 @@ class AcmeAccount(models.Model):
     # Account information
     ca = models.ForeignKey(CertificateAuthority, on_delete=models.CASCADE)
     # Full public key of the account
-    pem = models.TextField(verbose_name=_('Public key'), unique=True)
+    pem = models.TextField(verbose_name=_('Public key'), unique=True, blank=False, validators=[pem_validator])
     # JSON Web Key thumbprint - a hash of the public key, see RFC 7638.
     #   NOTE: Only unique for the given CA to make hash collisions less likely
     thumbprint = models.CharField(max_length=64)
