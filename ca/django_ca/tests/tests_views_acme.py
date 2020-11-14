@@ -22,10 +22,13 @@ from requests.utils import parse_header_links
 
 from django.core.cache import cache
 from django.urls import reverse
+from django.utils import timezone
 
 from freezegun import freeze_time
 
+from .. import ca_settings
 from ..models import AcmeAccount
+from ..models import AcmeOrder
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
 from .base import override_settings
@@ -234,8 +237,6 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
     def assertPreparedResponse(self, data, response):  # pylint: disable=invalid-name; unittest standard
         """Any assertions on the response of a prepared request."""
 
-    @override_settings(ALLOWED_HOSTS=['localhost'])
-    @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
     def test_requests(self):
         """Test requests collected from certbot."""
 
@@ -247,7 +248,6 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
             self.assertAcmeResponse(response)
             self.assertPreparedResponse(data, response)
 
-    @override_settings(ALLOWED_HOSTS=['localhost'])
     @override_settings(CA_ENABLE_ACME=False)
     def test_disabled(self):
         """Test that CA_ENABLE_ACME=False means HTTP 404."""
@@ -258,8 +258,6 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
             self.assertEqual(response['Content-Type'], 'text/html')  # --> coming from Django
             self.assertFailedPreparedResponse(data, response)
 
-    @override_settings(ALLOWED_HOSTS=['localhost'])
-    @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
     def test_invalid_content_type(self):
         """Test sending an invalid content type."""
         for data in self.requests:
@@ -268,8 +266,6 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
             self.assertAcmeProblem(response, typ='malformed', status=415)
             self.assertFailedPreparedResponse(data, response)
 
-    @override_settings(ALLOWED_HOSTS=['localhost'])
-    @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
     def test_duplicate_nonce_use(self):
         """Test that a Nonce can really only be used once."""
         for data in self.requests:
@@ -285,8 +281,6 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
             self.assertAcmeProblem(response, typ='badNonce', status=400)
             self.assertDuplicateNoncePreparedResponse(data, response)
 
-    @override_settings(ALLOWED_HOSTS=['localhost'])
-    @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
     def test_unknown_nonce_use(self):
         """Test that an unknown nonce does not work."""
         for data in self.requests:
@@ -296,6 +290,8 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
             self.assertFailedPreparedResponse(data, response)
 
 
+@override_settings(ALLOWED_HOSTS=['localhost'])
+@freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
 class AcmePreparedNewAccountTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
     """Test creating a new account."""
 
@@ -360,6 +356,8 @@ class AcmePreparedNewAccountTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCA
         })
 
 
+@override_settings(ALLOWED_HOSTS=['localhost'])
+@freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
 class AcmePreparedNewOrderTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
     """Test creating a new order."""
 
@@ -393,3 +391,34 @@ class AcmePreparedNewOrderTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWi
             pk=10, contact='user@localhost', ca=self.ca, terms_of_service_agreed=True, pem=PEM_1,
             thumbprint='oviCgj8M5yAwHMNUWrlBHdr_mKow0xNLIzkOyYyNRy8')
         self.url = reverse('django_ca:acme-new-order', kwargs={'serial': self.ca_serial})
+        self.done = {}
+
+    def assertPreparedResponse(self, data, response):
+        self.assertEqual(list(AcmeAccount.objects.all()), [self.account])
+
+        order = AcmeOrder.objects.exclude(pk__in=[o.pk for o in self.done.values()]).get(account=self.account)
+        self.done[data['nonce']] = order
+
+        self.assertEqual(order.account, self.account)
+        self.assertEqual(order.status, 'pending')
+        self.assertEqual(order.expires, timezone.now() + ca_settings.ACME_ORDER_VALIDITY)
+        self.assertIsNone(order.not_before)
+        self.assertIsNone(order.not_after)
+        self.assertEqual(order.acme_finalize_url,
+                         f'/django_ca/acme/{self.ca_serial}/order/{order.slug}/finalize/')
+        # pylint: disable=no-member
+        with self.assertRaises(AcmeOrder.acmecertificate.RelatedObjectDoesNotExist):
+            self.assertIsNone(order.acmecertificate)
+        # pylint: enable=no-member
+
+        auths = order.authorizations.all()
+        self.assertEqual(len(auths), 1)
+        auth = auths[0]
+        self.assertEqual(auth.status, 'pending')
+        self.assertEqual(auth.type, 'dns')
+        self.assertEqual(auth.value, 'localhost')
+        self.assertEqual(auth.expires, order.expires)
+        self.assertFalse(auth.wildcard)
+
+        # Challenges are only created once the selected authorization is retrieved, not when order is created
+        self.assertFalse(auth.acmechallenge_set.exists())
