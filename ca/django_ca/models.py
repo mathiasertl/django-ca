@@ -1331,7 +1331,7 @@ class AcmeChallenge(models.Model):
         (STATUS_INVALID, _('Name')),
     )
 
-    auth = models.ForeignKey(AcmeAccountAuthorization, on_delete=models.PROTECT)
+    auth = models.ForeignKey(AcmeAccountAuthorization, on_delete=models.PROTECT, related_name='challenges')
     slug = models.SlugField(unique=True, default=acme_slug)
 
     # Fields according to RFC 8555, 8:

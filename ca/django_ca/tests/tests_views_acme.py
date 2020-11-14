@@ -421,4 +421,4 @@ class AcmePreparedNewOrderTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWi
         self.assertFalse(auth.wildcard)
 
         # Challenges are only created once the selected authorization is retrieved, not when order is created
-        self.assertFalse(auth.acmechallenge_set.exists())
+        self.assertFalse(auth.challenges.exists())
