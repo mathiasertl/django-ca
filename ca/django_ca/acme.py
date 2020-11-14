@@ -139,3 +139,7 @@ class AcmeException(Exception):
 
 class AcmeMalformed(AcmeException):
     response = AcmeResponseMalformed
+
+
+class AcmeUnauthorized(AcmeException):
+    response = AcmeResponseUnauthorized

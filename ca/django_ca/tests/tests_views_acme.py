@@ -14,12 +14,14 @@
 """Test ACME related views."""
 
 import json
+import os
 from datetime import datetime
 from http import HTTPStatus
 from unittest import mock
 
 from requests.utils import parse_header_links
 
+from django.conf import settings
 from django.core.cache import cache
 from django.urls import reverse
 from django.utils import timezone
@@ -28,11 +30,16 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from ..models import AcmeAccount
+from ..models import AcmeAccountAuthorization
+from ..models import AcmeChallenge
 from ..models import AcmeOrder
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
 from .base import override_settings
 from .base import timestamps
+
+with open(os.path.join(settings.FIXTURES_DIR, 'prepared-acme-requests.json')) as stream:
+    prepared_requests = json.load(stream)
 
 PEM_1 = '''-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAw3q0fOrSzCDmVVwGZ6Hi
@@ -234,8 +241,17 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
     def assertDuplicateNoncePreparedResponse(self, data, response):  # pylint: disable=invalid-name
         """Any assertions after doing a prepared request twice with the same nonce."""
 
-    def assertPreparedResponse(self, data, response):  # pylint: disable=invalid-name; unittest standard
+    def assertPreparedResponse(self, data, response, celery_mock):  # pylint: disable=invalid-name
         """Any assertions on the response of a prepared request."""
+
+    def get_url(self, data):  # pylint: disable=unused-argument
+        """Get URL based on given request data."""
+        return self.url
+
+    @property
+    def requests(self):
+        """Get prepared requests for `self.view_name`."""
+        return prepared_requests[self.view_name]
 
     def test_requests(self):
         """Test requests collected from certbot."""
@@ -243,17 +259,19 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
         for data in self.requests:
             cache.set('acme-nonce-%s-%s' % (self.ca.serial, data['nonce']), 0)
             self.before_prepared_request(data)
-            response = self.post(self.url, data['body'])
+            with self.mute_celery() as celery_mock:
+                response = self.post(self.get_url(data), data['body'])
             self.assertEqual(response.status_code, self.expected_status_code)
             self.assertAcmeResponse(response)
-            self.assertPreparedResponse(data, response)
+            self.assertPreparedResponse(data, response, celery_mock)
 
     @override_settings(CA_ENABLE_ACME=False)
     def test_disabled(self):
         """Test that CA_ENABLE_ACME=False means HTTP 404."""
         for data in self.requests:
             cache.set('acme-nonce-%s-%s' % (self.ca.serial, data['nonce']), 0)
-            response = self.post(self.url, data['body'])
+            self.before_prepared_request(data)
+            response = self.post(self.get_url(data), data['body'])
             self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
             self.assertEqual(response['Content-Type'], 'text/html')  # --> coming from Django
             self.assertFailedPreparedResponse(data, response)
@@ -262,7 +280,8 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
         """Test sending an invalid content type."""
         for data in self.requests:
             cache.set('acme-nonce-%s-%s' % (self.ca.serial, data['nonce']), 0)
-            response = self.post(self.url, data['body'], content_type='application/json')
+            self.before_prepared_request(data)
+            response = self.post(self.get_url(data), data['body'], content_type='application/json')
             self.assertAcmeProblem(response, typ='malformed', status=415)
             self.assertFailedPreparedResponse(data, response)
 
@@ -270,13 +289,15 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
         """Test that a Nonce can really only be used once."""
         for data in self.requests:
             cache.set('acme-nonce-%s-%s' % (self.ca.serial, data['nonce']), 0)
-            response = self.post(self.url, data['body'])
-            self.assertEqual(response.status_code, HTTPStatus.CREATED)
+            self.before_prepared_request(data)
+            with self.mute_celery() as celery_mock:
+                response = self.post(self.get_url(data), data['body'])
+            self.assertEqual(response.status_code, self.expected_status_code)
             self.assertAcmeResponse(response)
-            self.assertPreparedResponse(data, response)
+            self.assertPreparedResponse(data, response, celery_mock)
 
             # Do the request again to validate that the nonce is now invalid
-            response = self.post(self.url, data['body'])
+            response = self.post(self.get_url(data), data['body'])
             self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
             self.assertAcmeProblem(response, typ='badNonce', status=400)
             self.assertDuplicateNoncePreparedResponse(data, response)
@@ -284,7 +305,8 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
     def test_unknown_nonce_use(self):
         """Test that an unknown nonce does not work."""
         for data in self.requests:
-            response = self.post(self.url, data['body'])
+            self.before_prepared_request(data)
+            response = self.post(self.get_url(data), data['body'])
             self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
             self.assertAcmeProblem(response, typ='badNonce', status=400)
             self.assertFailedPreparedResponse(data, response)
@@ -292,7 +314,7 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
 
 @override_settings(ALLOWED_HOSTS=['localhost'])
 @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
-class AcmePreparedNewAccountTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
+class PreparedAcmeNewAccountViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
     """Test creating a new account."""
 
     expected_status_code = HTTPStatus.CREATED
@@ -340,7 +362,7 @@ class AcmePreparedNewAccountTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCA
         self.assertEqual(response.status_code, HTTPStatus.OK)
         return response['replay-nonce']
 
-    def assertPreparedResponse(self, data, response):
+    def assertPreparedResponse(self, data, response, celery_mock):
         account = AcmeAccount.objects.get(thumbprint=data['thumbprint'])
         uri = response.wsgi_request.build_absolute_uri
         kwargs = {'serial': self.ca.serial, 'pk': account.pk}
@@ -358,32 +380,11 @@ class AcmePreparedNewAccountTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCA
 
 @override_settings(ALLOWED_HOSTS=['localhost'])
 @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
-class AcmePreparedNewOrderTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
+class PreparedAcmeNewOrderViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
     """Test creating a new order."""
 
     expected_status_code = HTTPStatus.CREATED
-    requests = [{
-        'body': {
-            "protected": "eyJhbGciOiAiUlMyNTYiLCAia2lkIjogImh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC9kamFuZ29fY2EvYWNtZS8zRjFFNkU5QjM5OTZCMjZCODA3MkU0REQyNTk3RThCNDBGM0ZCQzdFL2FjY3QvMTAvIiwgIm5vbmNlIjogImJfakVOSngxMmRNZ3lmdEFhWkNJeTNpZ0NPQVg5VExneXFuem5yU3pGZTQiLCAidXJsIjogImh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC9kamFuZ29fY2EvYWNtZS8zRjFFNkU5QjM5OTZCMjZCODA3MkU0REQyNTk3RThCNDBGM0ZCQzdFL25ldy1vcmRlci8ifQ",  # NOQA: E501
-            "signature": "h9Gja5YHqwUMVqamm_LdJgxdC37IfYthQCT53RlYSo70V0hmqpWqhOIk9TLLs7ehi-bRa1zsVeTpYGzy1USQzuPXozvPZeLu4ifQFGEQj70oJfNyWZYfN3FB9K6I8mdmm6LyK1Vkl9qzkkAlD4-RJIDyEbD64O7aL8IjlmPotbpNtWx0czZlG3G-TP9XIUWY4Yd_4i5jEvuCShN2uiW2d7Rz7UUVbqS1ESZpSTpfTqWC0urgYHJNq7IpHqxVnlWCZFksEjDwVXHsWQ9M1rm9z9Vg2eJ36kBVi4DarDHfM4VWxXD0Kjnt3UEauZQsXBEejhDMiONq8OYev2KRgTNOvA",  # NOQA: E501
-            "payload": "ewogICJpZGVudGlmaWVycyI6IFsKICAgIHsKICAgICAgInR5cGUiOiAiZG5zIiwKICAgICAgInZhbHVlIjogImxvY2FsaG9zdCIKICAgIH0KICBdCn0"  # NOQA: E501
-        },
-        'nonce': 'b_jENJx12dMgyftAaZCIy3igCOAX9TLgyqnznrSzFe4',
-    }, {
-        'body': {
-            "protected": "eyJhbGciOiAiUlMyNTYiLCAia2lkIjogImh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC9kamFuZ29fY2EvYWNtZS8zRjFFNkU5QjM5OTZCMjZCODA3MkU0REQyNTk3RThCNDBGM0ZCQzdFL2FjY3QvMTAvIiwgIm5vbmNlIjogIlUwUC1PemtPSHVua2ttWFNISi1fNThOR3dUa3RrcDFEQ1ctaklQWWlXa1EiLCAidXJsIjogImh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC9kamFuZ29fY2EvYWNtZS8zRjFFNkU5QjM5OTZCMjZCODA3MkU0REQyNTk3RThCNDBGM0ZCQzdFL25ldy1vcmRlci8ifQ",  # NOQA: E501
-            "signature": "L5qP32ZuSzfcbIxWuM3Cr7JhZ5MJvR7xkZ-LJ55fYOHRpdnJfIYoOPsXuu8kaK7cFg8NRmhdb0Z659C62YKmUnY5z7q4BBIqG83oj9tJudkxcnVWS2ExNxhVsP-m95cTvGoLU55S_rhtizvnmKHfW2tvfj4hxJESq1lxSy6HLgywtjFQxBFJa9bhlTN7J84iZnRnhgBlFdgK0QNt5EKnVVSsjrpgnirHEMtTr5xHqzDIsoRMD7PDKzXu-qWfxzNsryqqaQTh0x9H-wcryAXt3_BKYoMeNg8CnUb3N1OzeQgsN_8FvJcvdPOVaAEYEiAYxcpX_tKPl-2ptTjb1fauvw",  # NOQA: E501
-            "payload": "ewogICJpZGVudGlmaWVycyI6IFsKICAgIHsKICAgICAgInR5cGUiOiAiZG5zIiwKICAgICAgInZhbHVlIjogImxvY2FsaG9zdCIKICAgIH0KICBdCn0"  # NOQA: E501
-        },
-        'nonce': 'U0P-OzkOHunkkmXSHJ-_58NGwTktkp1DCW-jIPYiWkQ',
-    }, {
-        'body': {
-            "protected": "eyJhbGciOiAiUlMyNTYiLCAia2lkIjogImh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC9kamFuZ29fY2EvYWNtZS8zRjFFNkU5QjM5OTZCMjZCODA3MkU0REQyNTk3RThCNDBGM0ZCQzdFL2FjY3QvMTAvIiwgIm5vbmNlIjogIkJfemFWdFNDcVQ0NW0zYnA3NE5OWE1XYnVzSjlOYzRYcUN0TDY5NG81WlEiLCAidXJsIjogImh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC9kamFuZ29fY2EvYWNtZS8zRjFFNkU5QjM5OTZCMjZCODA3MkU0REQyNTk3RThCNDBGM0ZCQzdFL25ldy1vcmRlci8ifQ",  # NOQA: E501
-            "signature": "q7Z5HN4o9VLJvRJxfPbpqceRZwACy1aEjD6zl6JXkZQOTcTMnLqXTeAQF0J2m2ilAX51TMgfKK_rs0durpCJ8CXBz8kNcsAwrO-96rwjcLAflZIYI4RTfp_jfCEFxCRFfbG7nNTCltHth2OztlJymhHh9J8r9kfZop2XmNn9Kmc4u_zhs5FrLUogzqdjN3d_zswSglHekTJh9fJen0odAX9UdIp3C3hvObIhR7CCvEbpFmPVeCgtkAQPCjh_UoNPXdySIeU_kplq0-9f67UoY9giWCyNlxvYwm2Z9nBWHEcjxDh730Rb6192o6eDuNcLsDuppjbe7eJ_OHxRpI5y1w",  # NOQA: E501
-            "payload": "ewogICJpZGVudGlmaWVycyI6IFsKICAgIHsKICAgICAgInR5cGUiOiAiZG5zIiwKICAgICAgInZhbHVlIjogImxvY2FsaG9zdCIKICAgIH0KICBdCn0"  # NOQA: E501
-        },
-        'nonce': 'B_zaVtSCqT45m3bp74NNXMWbusJ9Nc4XqCtL694o5ZQ',
-    }]
+    view_name = 'AcmeNewOrderView'
 
     def setUp(self):
         super().setUp()
@@ -393,7 +394,7 @@ class AcmePreparedNewOrderTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWi
         self.url = reverse('django_ca:acme-new-order', kwargs={'serial': self.ca_serial})
         self.done = {}
 
-    def assertPreparedResponse(self, data, response):
+    def assertPreparedResponse(self, data, response, celery_mock):
         self.assertEqual(list(AcmeAccount.objects.all()), [self.account])
 
         order = AcmeOrder.objects.exclude(pk__in=[o.pk for o in self.done.values()]).get(account=self.account)
@@ -422,3 +423,79 @@ class AcmePreparedNewOrderTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWi
 
         # Challenges are only created once the selected authorization is retrieved, not when order is created
         self.assertFalse(auth.challenges.exists())
+
+
+@override_settings(ALLOWED_HOSTS=['localhost'])
+@freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
+class PreparedAcmeAuthorizationViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
+    """Test creating a new order."""
+
+    view_name = 'AcmeAuthorizationView'
+
+    def before_prepared_request(self, data):
+        acc = AcmeAccount.objects.get_or_create(thumbprint=data['thumbprint'], defaults={
+            'pk': 10, 'contact': 'user@localhost', 'ca': self.ca, 'terms_of_service_agreed': True,
+            'pem': PEM_1,
+        })[0]
+        order = AcmeOrder.objects.get_or_create(account=acc, slug=data['order'])[0]
+        AcmeAccountAuthorization.objects.get_or_create(order=order, slug=data['auth'], defaults={
+            'value': 'localhost'
+        })
+
+    def get_url(self, data):
+        return reverse('django_ca:acme-authz', kwargs={'serial': self.ca_serial, 'slug': data['auth']})
+
+
+@override_settings(ALLOWED_HOSTS=['localhost'])
+@freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
+class PreparedAcmeChallengeViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
+    """Test retrieving a challenge."""
+
+    view_name = 'AcmeChallengeView'
+
+    def assertLinkRelations(self, response, ca=None, **kwargs):  # pylint: disable=invalid-name
+        if response.status_code < HTTPStatus.BAD_REQUEST:
+            kwargs.setdefault('up', response.wsgi_request.build_absolute_uri(self.challenge.acme_url))
+        super().assertLinkRelations(response=response, ca=ca, **kwargs)
+
+    def before_prepared_request(self, data):
+        acc = AcmeAccount.objects.get_or_create(thumbprint=data['thumbprint'], defaults={
+            'pk': 10, 'contact': 'user@localhost', 'ca': self.ca, 'terms_of_service_agreed': True,
+            'pem': PEM_1,
+        })[0]
+        order = AcmeOrder.objects.create(account=acc, slug=data['order'])
+        auth = AcmeAccountAuthorization.objects.create(order=order, slug=data['auth'], value='localhost')
+
+        self.challenge = AcmeChallenge.objects.create(  # pylint: disable=attribute-defined-outside-init
+            slug=data['challenge'], auth=auth, type=AcmeChallenge.TYPE_HTTP_01
+        )
+
+    def get_url(self, data):
+        return reverse('django_ca:acme-challenge', kwargs={
+            'serial': self.ca_serial,
+            'slug': data['challenge'],
+        })
+
+
+@override_settings(ALLOWED_HOSTS=['localhost'])
+@freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
+class PreparedAcmeOrderFinalizeViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
+    """Test retrieving a challenge."""
+
+    view_name = 'AcmeOrderFinalizeView'
+
+
+@override_settings(ALLOWED_HOSTS=['localhost'])
+@freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
+class PreparedAcmeOrderViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
+    """Test retrieving a challenge."""
+
+    view_name = 'AcmeOrderView'
+
+
+@override_settings(ALLOWED_HOSTS=['localhost'])
+@freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
+class PreparedAcmeCertificateViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
+    """Test retrieving a challenge."""
+
+    view_name = 'AcmeCertificateView'
