@@ -51,6 +51,7 @@ if ca_settings.CA_ENABLE_ACME:
         path('acme/<serial:serial>/new-account/', views.AcmeNewAccountView.as_view(),
              name='acme-new-account'),
         path('acme/<serial:serial>/new-order/', views.AcmeNewOrderView.as_view(), name='acme-new-order'),
+        # TODO: use slug here instead of pk (to leak less info)
         path('acme/<serial:serial>/acct/<int:pk>/', views.AcmeAccountView.as_view(), name='acme-account'),
         path('acme/<serial:serial>/acct/<int:pk>/orders/', views.AcmeAccountOrdersView.as_view(),
              name='acme-account-orders'),
