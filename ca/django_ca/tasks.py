@@ -17,6 +17,7 @@ from datetime import timedelta
 import josepy as jose
 import requests
 
+from django.db import transaction
 from django.utils import timezone
 
 from . import ca_settings
@@ -83,7 +84,9 @@ def generate_ocsp_keys(**kwargs):
 
 
 @shared_task
+@transaction.atomic
 def acme_validate_challenge(challenge_pk):
+    """Validate an ACME challenge."""
     if not ca_settings.CA_ENABLE_ACME:
         log.error('ACME is not enabled.')
         return
@@ -130,6 +133,7 @@ def acme_validate_challenge(challenge_pk):
         auths = AcmeAccountAuthorization.objects.filter(order=challenge.auth.order)
         auths = auths.exclude(status=AcmeAccountAuthorization.STATUS_VALID)
         if not auths.exclude(pk=challenge.auth.pk).exists():
+            log.info('Order is now valid.')
             challenge.auth.order.status = AcmeOrder.STATUS_READY
     else:
         challenge.status = AcmeChallenge.STATUS_INVALID
@@ -143,13 +147,18 @@ def acme_validate_challenge(challenge_pk):
 
 
 @shared_task
+@transaction.atomic
 def acme_issue_certificate(acme_certificate_pk):
+    """Actually issue an ACME certificate."""
     if not ca_settings.CA_ENABLE_ACME:
         log.error('ACME is not enabled.')
         return
 
-    queryset = AcmeCertificate.objects.filter(order__status=AcmeOrder.STATUS_READY).select_related('order')
-    acme_cert = queryset.get(pk=acme_certificate_pk)
+    log.info('#1 %s', AcmeCertificate.objects.get(pk=acme_certificate_pk))
+    log.info('#2 %s', AcmeCertificate.objects.get(pk=acme_certificate_pk).order.status)
+
+    qs = AcmeCertificate.objects.filter(order__status=AcmeOrder.STATUS_PROCESSING).select_related('order')
+    acme_cert = qs.get(pk=acme_certificate_pk)
     log.info('Issuing acme_cert: %s', acme_cert)
     subject_alternative_names = [a.subject_alternative_name for a in acme_cert.order.authorizations.all()]
     log.info('SAN: %s', subject_alternative_names)
@@ -167,4 +176,5 @@ def acme_issue_certificate(acme_certificate_pk):
     cert = Certificate.objects.create_cert(ca, csr=csr, profile=profile, expires=expires,
                                            extensions=extensions)
     acme_cert.cert = cert
+    acme_cert.order.status = AcmeOrder.STATUS_VALID
     acme_cert.save()

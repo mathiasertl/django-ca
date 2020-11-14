@@ -77,9 +77,10 @@ class AcmeResponseError(AcmeResponse):
     type = 'serverInternal'
     message = ''
 
-    def __init__(self, message=''):
+    def __init__(self, typ=None, message=''):
+        typ = typ or self.type
         details = {
-            'type': 'urn:ietf:params:acme:error:%s' % self.type,
+            'type': 'urn:ietf:params:acme:error:%s' % typ,
             'status': self.status_code,
         }
 
@@ -99,6 +100,13 @@ class AcmeResponseUnauthorized(AcmeResponseError):
     status_code = HTTPStatus.UNAUTHORIZED  # 401
     type = 'unauthorized'
     message = "You are not authorized to perform this request."
+
+
+class AcmeResponseForbidden(AcmeResponseError):
+    """ACME response with HTTP status code 403 (Forbidden)."""
+    status_code = HTTPStatus.FORBIDDEN  # 403
+    type = 'forbidden'
+    message = "You are forbidden from accessing this resource."
 
 
 class AcmeResponseNotFound(AcmeResponseError):

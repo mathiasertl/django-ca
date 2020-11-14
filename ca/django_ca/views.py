@@ -69,12 +69,14 @@ from .acme import AcmeResponseAccountCreated
 from .acme import AcmeResponseAuthorization
 from .acme import AcmeResponseBadNonce
 from .acme import AcmeResponseError
+from .acme import AcmeResponseForbidden
 from .acme import AcmeResponseMalformed
 from .acme import AcmeResponseNotFound
 from .acme import AcmeResponseOrder
 from .acme import AcmeResponseOrderCreated
 from .acme import AcmeResponseUnauthorized
 from .acme import AcmeResponseUnsupportedMediaType
+from .acme import AcmeUnauthorized
 from .models import AcmeAccount
 from .models import AcmeAccountAuthorization
 from .models import AcmeCertificate
@@ -390,13 +392,13 @@ class AcmeDirectory(View):
             try:
                 ca = CertificateAuthority.objects.default()
             except ImproperlyConfigured:
-                return AcmeResponseNotFound('No (usable) default CA configured.')
+                return AcmeResponseNotFound(message='No (usable) default CA configured.')
         else:
             try:
                 # NOTE: Serial is already sanitized by URL converter
                 ca = CertificateAuthority.objects.usable().get(serial=serial)
             except CertificateAuthority.DoesNotExist:
-                return AcmeResponseNotFound('%s: CA not found.' % serial)
+                return AcmeResponseNotFound(message='%s: CA not found.' % serial)
 
         # Get some random data into the directory view, as explained in the Let's Encrypt directory:
         #   https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417
@@ -496,16 +498,35 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
         response['Link'] = ', '.join('<%s>;rel="%s"' % (self.request.build_absolute_uri(v), k)
                                      for k, v in kwargs.items())
 
+    #def log_request(self):
+    #    """Function for logging prepared requests."""
+    #    if getattr(settings, 'LOG_ACME_REQUESTS', None):
+    #        prepared_key = self.__class__.__name__
+    #        prepared_path = os.path.join(settings.FIXTURES_DIR, 'prepared-acme-requests.json')
+    #        prepared_data = {}
+    #        if os.path.exists(prepared_path):
+    #            with open(prepared_path) as stream:
+    #                prepared_data = json.load(stream)
+    #        if prepared_key not in prepared_data:
+    #            prepared_data[prepared_key] = []
+    #        prepared_data[prepared_key].append(self.prepared)
+    #        with open(prepared_path, 'w') as stream:
+    #            json.dump(prepared_data, stream, indent=4)
+
     def dispatch(self, request, *args, **kwargs):
         if not ca_settings.CA_ENABLE_ACME:
             raise Http404('Page not found.')
 
+        #self.prepared = OrderedDict()  # pylint: disable=attribute-defined-outside-init
         try:
             response = super().dispatch(request, *args, **kwargs)
             self.set_link_relations(response)
         except Exception as ex:  # pylint: disable=broad-except
+            print('ex', ex)
             log.exception(ex)
             response = AcmeResponseError(message='Internal server error')
+
+        #self.log_request()
 
         # RFC 8555, section 6.7:
         # An ACME server provides nonces to clients using the HTTP Replay-Nonce header field, as specified in
@@ -526,6 +547,8 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
             # meet this requirement, then the server MUST return a response with status code 415 (Unsupported
             # Media Type).
             return AcmeResponseUnsupportedMediaType()
+
+        #self.prepared['body'] = json.loads(request.body.decode('utf-8'))
 
         try:
             self.jws = acme.jws.JWS.json_loads(request.body)
@@ -566,9 +589,12 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
             try:
                 account = AcmeAccount.objects.get(pk=match.kwargs['pk'])
             except AcmeAccount.DoesNotExist:
-                return AcmeResponseMalformed('Account not found.')  # TODO: status code etc
+                return AcmeResponseUnauthorized()
             if account.usable is False:
                 return AcmeResponseUnauthorized()
+            #self.prepared['thumbprint'] = account.thumbprint
+            #self.prepared['pem'] = account.pem
+            #self.prepared['account_pk'] = account.pk
 
             # load and verify JWK
             self.jwk = jose.JWK.load(account.pem.encode('utf-8'))
@@ -592,6 +618,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
         # Get certificate authority for this request
         self.ca = CertificateAuthority.objects.usable().get(serial=serial)
 
+        #self.prepared['nonce'] = jose.encode_b64jose(combined.nonce)
         if not self.validate_nonce(jose.encode_b64jose(combined.nonce)):
             # ... "nonce"
             resp = AcmeResponseBadNonce()
@@ -688,6 +715,9 @@ class AcmeNewAccountView(AcmeBaseView):
             thumbprint=jose.encode_b64jose(self.jwk.thumbprint()),
             pem=pem
         )
+        #self.prepared['thumbprint'] = account.thumbprint
+        #self.prepared['pem'] = account.pem
+        #self.prepared['account_pk'] = account.pem
 
         # Call full_clean() so that model validation can do its magic
         try:
@@ -759,10 +789,22 @@ class AcmeNewOrderView(AcmeBaseView):
 
 
 class AcmeOrderView(AcmeBaseView):
+    """Implements endpoint for viewing an order, that is ``/acme/order/<slug>/``.
+
+    A client fcalls this
+
+    .. seealso:: `RFC 8555, 7.4 <https://tools.ietf.org/html/rfc8555#section-7.4>`_
+    """
     post_as_get = True
 
     def acme_request(self, slug):  # pylint: disable=arguments-differ; more concrete here
-        order = AcmeOrder.objects.get(slug=slug)
+        try:
+            order = AcmeOrder.objects.get(slug=slug)
+        except AcmeOrder.DoesNotExist:
+            # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
+            # return a normal unauthorized message.
+            return AcmeResponseUnauthorized()
+        #self.prepared['order'] = order.slug
 
         expires = order.expires
         if timezone.is_naive(expires):  # acme.messages.Order requires a timezone-aware object
@@ -771,14 +813,17 @@ class AcmeOrderView(AcmeBaseView):
         # TODO: should only be pending auths, and only if state of order is pending
         authorizations = order.authorizations.all()
 
-        cert = AcmeCertificate.objects.get(order=order)
-        cert_url = self.request.build_absolute_uri(cert.acme_url)
+        try:
+            cert = AcmeCertificate.objects.get(order=order)
+            cert_url = self.request.build_absolute_uri(cert.acme_url)
+        except AcmeCertificate.DoesNotExist:
+            cert_url = None
 
         response = AcmeResponseOrder(
             status=order.status,
             expires=expires,
-            identifiers=[{'type': a.type, 'value': a.value} for a in authorizations],
-            authorizations=[self.request.build_absolute_uri(a) for a in authorizations],
+            identifiers=tuple([{'type': a.type, 'value': a.value} for a in authorizations]),
+            authorizations=tuple([self.request.build_absolute_uri(a) for a in authorizations]),
             certificate=cert_url
         )
         response['Location'] = self.request.build_absolute_uri(order.acme_url)
@@ -796,7 +841,22 @@ class AcmeOrderFinalizeView(AcmeBaseView):
     message_cls = messages.CertificateRequest
 
     def acme_request(self, message, slug):  # pylint: disable=arguments-differ; more concrete here
-        order = AcmeOrder.objects.get(slug=slug)
+        try:
+            order = AcmeOrder.objects.get(slug=slug)
+        except AcmeOrder.DoesNotExist:
+            # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
+            # return a normal unauthorized message.
+            return AcmeResponseUnauthorized()
+        #self.prepared['order'] = order.slug
+
+        # RFC 8555, section 7.4:
+        #   A request to finalize an order will result in error if the order is not in the "ready" state.  In
+        #   such cases, the server MUST return a 403 (Forbidden) error with a problem document of type
+        #   "orderNotReady".  The client should then send a POST-as-GET request to the order resource to
+        #   obtain its current state.  The status of the order will indicate what action the client should
+        #   take (see below).
+        if order.status != AcmeOrder.STATUS_READY:
+            return AcmeResponseForbidden(typ='orderNotReady', message='This order is not yet ready.')
 
         # Note: Jose wraps the CSR in a josepy.util.ComparableX509, that has *no* public member methods.
         # The only public attribute or function is the wrapped object. We encode it back to get the regular
@@ -813,17 +873,19 @@ class AcmeOrderFinalizeView(AcmeBaseView):
         authorizations = order.authorizations.all()
         cert_url = self.request.build_absolute_uri(cert.acme_url)
 
-        if order.status == AcmeOrder.STATUS_READY:
-            order.status == AcmeOrder.STATUS_PROCESSING
-            order.save()
+        # Update the state to "processing"
+        order.status = AcmeOrder.STATUS_PROCESSING
+        order.save()
 
-            acme_issue_certificate.delay(acme_certificate_pk=cert.pk)
+        # start task only after commit, see:
+        # https://docs.djangoproject.com/en/dev/topics/db/transactions/#django.db.transaction.on_commit
+        transaction.on_commit(lambda: acme_issue_certificate.delay(acme_certificate_pk=cert.pk))
 
         response = AcmeResponseOrder(
             status=order.status,
             expires=expires,
-            identifiers=[{'type': a.type, 'value': a.value} for a in authorizations],
-            authorizations=[self.request.build_absolute_uri(a) for a in authorizations],
+            identifiers=tuple([{'type': a.type, 'value': a.value} for a in authorizations]),
+            authorizations=tuple([self.request.build_absolute_uri(a) for a in authorizations]),
             certificate=cert_url
         )
         response['Location'] = self.request.build_absolute_uri(order.acme_url)
@@ -838,13 +900,16 @@ class AcmeCertificateView(AcmeBaseView):
     post_as_get = True
 
     def acme_request(self, slug):  # pylint: disable=arguments-differ; more concrete here
+        #self.prepared['cert'] = slug
         acme_cert = AcmeCertificate.objects.get(slug=slug)
+        #self.prepared['csr'] = acme_cert.csr
+        #self.prepared['order'] = acme_cert.order.slug
         bundle = '\n'.join([cert.pub.strip() for cert in acme_cert.cert.bundle])
         return HttpResponse(bundle, content_type='application/pem-certificate-chain')
 
 
 class AcmeAuthorizationView(AcmeBaseView):
-    """Implements endpoint for identifier authorization, that is ``/acme/authz/<slug>/``.
+    """Implements endpoint for i)dentifier authorization, that is ``/acme/authz/<slug>/``.
 
     .. seealso:: `RFC 8555, 7.5 <https://tools.ietf.org/html/rfc8555#section-7.5>`_
     """
@@ -852,8 +917,16 @@ class AcmeAuthorizationView(AcmeBaseView):
     post_as_get = True
 
     def acme_request(self, slug):  # pylint: disable=arguments-differ; more concrete here
-        # TODO: filter for AcmeOrder status
-        auth = AcmeAccountAuthorization.objects.select_related('order').get(slug=slug)
+        try:
+            # TODO: filter for AcmeOrder status
+            auth = AcmeAccountAuthorization.objects.select_related('order').get(slug=slug)
+        except AcmeAccountAuthorization.DoesNotExist:
+            # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
+            # return a normal unauthorized message.
+            return AcmeResponseUnauthorized()
+
+        #self.prepared['order'] = auth.order.slug
+        #self.prepared['auth'] = auth.slug
         challenges = auth.get_challenges()
 
         expires = auth.expires
@@ -887,21 +960,31 @@ class AcmeChallengeView(AcmeBaseView):
     ignore_body = True
 
     def set_link_relations(self, response, **kwargs):
-        """SEt the "up" link header to the matching authorization.
+        """Set the "up" link header to the matching authorization.
 
         `RFC8555, section 7.1 <https://tools.ietf.org/html/rfc8555#section-7.1>`_ states:
 
             The "up" link relation is used with challenge resources to indicate the authorization resource to
             which a challenge belongs.
         """
-        return super().set_link_relations(response, up=self.challenge.acme_url, **kwargs)
-
-    def get_message_cls(self, request, slug):
-        self.challenge = AcmeChallenge.objects.get(slug=slug)
-        return self.challenge.get_challenge(request)
+        if response.status_code < HTTPStatus.BAD_REQUEST:
+            # Only return an up relation if no error is thrown
+            kwargs['up'] = self.challenge.acme_url
+        return super().set_link_relations(response, **kwargs)
 
     def acme_request(self, slug):  # pylint: disable=arguments-differ; more concrete here
-        self.challenge = AcmeChallenge.objects.get(slug=slug)
+        try:
+            # pylint: disable=attribute-defined-outside-init
+            self.challenge = AcmeChallenge.objects.get(slug=slug)
+            # pylint: enable=attribute-defined-outside-init
+        except AcmeAccountAuthorization.DoesNotExist:
+            # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
+            # return a normal unauthorized message.
+            raise AcmeUnauthorized()  # pylint: disable=raise-missing-from
+
+        #self.prepared['order'] = self.challenge.auth.order.slug
+        #self.prepared['auth'] = self.challenge.auth.slug
+        #self.prepared['challenge'] = slug
 
         # Set the status to "processing", to quote RFC8555, Section 7.1.6:
         # "They transition to the "processing" state when the client responds to the challenge"
@@ -909,6 +992,8 @@ class AcmeChallengeView(AcmeBaseView):
         self.challenge.save()
 
         # Actually perform challenge validation asynchronously
-        acme_validate_challenge.delay(self.challenge.pk)
+        # start task only after commit, see:
+        # https://docs.djangoproject.com/en/2.2/topics/db/transactions/#django.db.transaction.on_commit
+        transaction.on_commit(lambda: acme_validate_challenge.delay(self.challenge.pk))
 
         return AcmeObjectResponse(self.challenge.get_challenge(self.request))

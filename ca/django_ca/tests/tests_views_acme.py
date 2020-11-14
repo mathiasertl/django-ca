@@ -31,10 +31,12 @@ from freezegun import freeze_time
 from .. import ca_settings
 from ..models import AcmeAccount
 from ..models import AcmeAccountAuthorization
+from ..models import AcmeCertificate
 from ..models import AcmeChallenge
 from ..models import AcmeOrder
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
+from .base import DjangoCAWithCertTestCase
 from .base import override_settings
 from .base import timestamps
 
@@ -318,31 +320,7 @@ class PreparedAcmeNewAccountViewTestCase(AcmePreparedRequestsTestCaseMixin, Djan
     """Test creating a new account."""
 
     expected_status_code = HTTPStatus.CREATED
-    requests = [{
-        'body': {
-            'protected': 'eyJhbGciOiAiUlMyNTYiLCAiandrIjogeyJuIjogIm5ZVW5DZUI4VXY4X2pmdDRTRUgxTlBJbENCUE1OQVMtUUc2Q0ZzMmliRWI2MUs1ZU1KaTVMZFd5Y2FzY1FDYUppaS10VnpnRzc5LVk3Yzk5ZzVJbFNjVWhZY0l6aVB1b3ZBaFMxZkFXYmU0VEZWcHlFWjk2TzNFOTRvY3dQakh5MVdXT3AzSnR0cC15R2IxTFI4OWJOaTNJQmNFODE5UGJrNHVIWHhmbWMxWXk2UXlzY2ZwallMMFBvOWJfdkM1cXJ0X2pzWXpORGxxQlltNnlBYkpYak1lRVdIODdQZVBYcE9RbXhLNmI1Mk1SakwzR1RPaTBOUm5uUTJYc2RSdERBeXNySFJvU1lYR1pkb0VTUFJiVDlpRzUwTVE1ejZnRUdMa1QzeDYxQTZuQTRMQWxOX2RwdkxtYndQNGwtVmp3VzVUTEZjaUdnSFRyLVA0MnZGc0FsdyIsICJlIjogIkFRQUIiLCAia3R5IjogIlJTQSJ9LCAibm9uY2UiOiAiZGhKVnFYSUpMYVhLLW9ERHUzNkIzQmtTN3pCZzM5OWxfZE0ybktIWUV4NCIsICJ1cmwiOiAiaHR0cDovL2xvY2FsaG9zdDo4MDAwL2RqYW5nb19jYS9hY21lLzNGMUU2RTlCMzk5NkIyNkI4MDcyRTRERDI1OTdFOEI0MEYzRkJDN0UvbmV3LWFjY291bnQvIn0',  # NOQA: E501
-            'signature': 'ajCXb6mJ2xjILHIAM44RqgCSPdUSfInEMHzhUl0w3qIVObmyTJvTWQl1mhdub2l9gg8O70uhfD-9S0OkOSgF01e4x-sXFemCjR74Og7t8rhbjfu0JjWZtQLDUNcb2mYJUBAx9vux8ezuVzFogK2KRjkqL4riPA7gOXXWQw3hxMqkNEwMvs0VoYO2HYdX6gA3EDLzdawl4hCCw1mXdZ3gYvBNT2t0i7xV0p4G9-h8IWUNF4JlXSAgp_muxN7E7oqcJU48chmIOKZg8EqAS_L48ePqTLBBDbYqPcuQGRSZZ_cJfd6tv7EHsH4fmGXYljt2sImxt0gLoeYRooOhQ-XZ2g',  # NOQA: E501
-            'payload': 'ewogICJjb250YWN0IjogWwogICAgIm1haWx0bzp1c2VyQGxvY2FsaG9zdCIKICBdLAogICJ0ZXJtc09mU2VydmljZUFncmVlZCI6IHRydWUsCiAgInJlc291cmNlIjogIm5ldy1yZWciCn0'  # NOQA: E501
-        },
-        'nonce': 'dhJVqXIJLaXK-oDDu36B3BkS7zBg399l_dM2nKHYEx4',
-        'thumbprint': 'AmahA-otYnHNw4zeTQ6PMoY7bAFpjpMHGfoVdFK9Mhg',
-    }, {
-        'body': {
-            'protected': 'eyJhbGciOiAiUlMyNTYiLCAiandrIjogeyJuIjogIjNwUXJ3YWQyemZiMDU4eEhCenRBOWR6c3RtdlFzZ2Njc1E1dUVRZjBVdXY4bUk3UGFXVHRvSmM4Nk9fVWp2V0R5T0ZXZWVyYUNzV0QyYVBzU09lLXRQRGMtcUNBWThQbHVWMXNGanFLMHBSbElkaWk4UWRSRDYyRmtsOXZULTRlQjI1Zm8yXzktRExEMnF5V3RScmJGSDA0RjNBa1ZFY3hWQURvU3AtaXJtWjJtOVpDOUFLTF9GeUl4Yy1ybm82MktwVUhVWW82M3NpaUhPRVBubHlTb2IzcnZGeUROa1JsZ2JKQTYwLXNVQmYwMDJ3cTVsczhzVVVfazhyZTl4TnVIVW1XZGZWNW5QZEVzaU5fWXV5RlYtQzA2dEswTTVtMm1mbU9TN1c1RS1hMno3bkZxTlBIZUpTQUZJZk13bVJlSE9CZGtuem0yOXN3YnBTNGV6eVFMUSIsICJlIjogIkFRQUIiLCAia3R5IjogIlJTQSJ9LCAibm9uY2UiOiAiSGxYaEhzSlRwdmctRjhJVjNzSU81UjFIdzNPN2RMVDk3UEhkejN5UnRDRSIsICJ1cmwiOiAiaHR0cDovL2xvY2FsaG9zdDo4MDAwL2RqYW5nb19jYS9hY21lLzNGMUU2RTlCMzk5NkIyNkI4MDcyRTRERDI1OTdFOEI0MEYzRkJDN0UvbmV3LWFjY291bnQvIn0',  # NOQA: E501
-            'signature': 'NPn-xMBHdfstuH7DNINWx7sdKy6VqgGHU3a8TY0aM_d8o-WWbDEhqsDbGgbMPqDsIyPuHVFPV30uCQW-R_AGvD6Px-qCn7beDjLJXsvSneD7zW20Cl_ceL_u3HyWZAWN1T6VKbMFvR9rL8KOawf6Pq6yVXEv2aiiSLQIj-wZXzcEMMtGzEnXudMcqfDw04Pv7ZEEzdg7b12juc504LoBWXoE7auZkeG-7e3ljApHxrzDxCeVqA3qJUmZJIVAf5YTdxVRCCMCzmtjrLtzyIDKWkXJSxz_p-W7r2Mx-sV0iJj1cr_RPDTAo4cGr3ycOW4e6B0HSlClorK9PTwI__f0aA',  # NOQA: E501
-            'payload': 'ewogICJjb250YWN0IjogWwogICAgIm1haWx0bzp1c2VyQGxvY2FsaG9zdCIKICBdLAogICJ0ZXJtc09mU2VydmljZUFncmVlZCI6IHRydWUsCiAgInJlc291cmNlIjogIm5ldy1yZWciCn0',  # NOQA: E501
-        },
-        'nonce': 'HlXhHsJTpvg-F8IV3sIO5R1Hw3O7dLT97PHdz3yRtCE',
-        'thumbprint': 'UwPv-4WcRpKXsvcHXVCunVz13SmC1k15gIfu6B5HBB4',
-    }, {
-        'body': {
-            'protected': 'eyJhbGciOiAiUlMyNTYiLCAiandrIjogeyJuIjogInczcTBmT3JTekNEbVZWd0daNkhpMTBQVXpqNTB6TlNLMWN5Szl3andxOExZMUlLUG1xS0RQM3AtQkQza28xclB1OVR4XzJHbGNnem50c0V1cGhrWHNFOHNzTGVzTjNnTjNMbVIzUVVNSzFYOUVvcFlPaXNTSGZIdkdGSnRXS2htYXVXdzBLY1JsMGJUd3pMdVZxbVBJTy1Fdl9wamdvWnhELWpZemlqUS1wa1dtYjBkNURCWTRtdGFRb0NFM0xud3Zsanl0aXA3bng1OGZoLUQ3VHVLazcxT3A1WnZEZnlld0Uwb2ljWnpBSjFjakNrQk1HVVB4UEpPLVlnUUdXdGtFbGRRS2M3S1hacEVlOTF3YTlwRllOSU5aTVdsMk1mVk5MUUtSd1BvY3R2c2tqQjc5WXVDX2ZCVXdoZDBBbktMWDdKSzIzU3BydTBvYnpHVWNkUEV4USIsICJlIjogIkFRQUIiLCAia3R5IjogIlJTQSJ9LCAibm9uY2UiOiAiQ3hBZGxxaC1mcHJ3WEhWNWVRQ3ZCQUhDQ05sdWhNMEpZRk1raFNuZnk2YyIsICJ1cmwiOiAiaHR0cDovL2xvY2FsaG9zdDo4MDAwL2RqYW5nb19jYS9hY21lLzNGMUU2RTlCMzk5NkIyNkI4MDcyRTRERDI1OTdFOEI0MEYzRkJDN0UvbmV3LWFjY291bnQvIn0',  # NOQA: E501
-            'signature': 'DVhEztx6-M6hgwSmgrM-1jzzIxiD2SrBnwmPq2KIP3Cw2rAJC46g9Wtn6VuN371EtJR0TIdJ8dXrOZbR-Q63YdDvb6Kni9KxE0yIz0wOn5CvN6qdLIo6cndMF9sr4IiewV2BrI66MfExyxgojpVj9zQ7hWOaeXYKAb9UmUfRHE6Y7GdXoH7vcl2H0gEKXf30VT3t3i8GNA0sI4yk8i48BVEXLTqKP7RcFozkI_QDyKQOGH0zRkk8mZwZf110w9ztm8hWeyJ5nrYZNA_MJdOgzGUtsc4lF1Mw7ZtLc1EDzHvcFA4w-rBsS9LYxvvFFtJeT9UcQpQcs22UiufH05QCrg',  # NOQA: E501
-            'payload': 'ewogICJjb250YWN0IjogWwogICAgIm1haWx0bzp1c2VyQGxvY2FsaG9zdCIKICBdLAogICJ0ZXJtc09mU2VydmljZUFncmVlZCI6IHRydWUsCiAgInJlc291cmNlIjogIm5ldy1yZWciCn0',  # NOQA: E501
-        },
-        'nonce': 'CxAdlqh-fprwXHV5eQCvBAHCCNluhM0JYFMkhSnfy6c',
-        'thumbprint': 'oviCgj8M5yAwHMNUWrlBHdr_mKow0xNLIzkOyYyNRy8',
-    }]
+    view_name = 'AcmeNewAccountView'
 
     def setUp(self):
         super().setUp()
@@ -388,11 +366,14 @@ class PreparedAcmeNewOrderViewTestCase(AcmePreparedRequestsTestCaseMixin, Django
 
     def setUp(self):
         super().setUp()
-        self.account = AcmeAccount.objects.create(
-            pk=10, contact='user@localhost', ca=self.ca, terms_of_service_agreed=True, pem=PEM_1,
-            thumbprint='oviCgj8M5yAwHMNUWrlBHdr_mKow0xNLIzkOyYyNRy8')
         self.url = reverse('django_ca:acme-new-order', kwargs={'serial': self.ca_serial})
         self.done = {}
+
+    def before_prepared_request(self, data):
+        # pylint: disable=attribute-defined-outside-init
+        self.account = AcmeAccount.objects.create(
+            pk=data['account_pk'], contact='user@localhost', ca=self.ca, terms_of_service_agreed=True,
+            pem=data['pem'], thumbprint=data['thumbprint'])
 
     def assertPreparedResponse(self, data, response, celery_mock):
         self.assertEqual(list(AcmeAccount.objects.all()), [self.account])
@@ -434,8 +415,8 @@ class PreparedAcmeAuthorizationViewTestCase(AcmePreparedRequestsTestCaseMixin, D
 
     def before_prepared_request(self, data):
         acc = AcmeAccount.objects.get_or_create(thumbprint=data['thumbprint'], defaults={
-            'pk': 10, 'contact': 'user@localhost', 'ca': self.ca, 'terms_of_service_agreed': True,
-            'pem': PEM_1,
+            'pk': data['account_pk'], 'contact': 'user@localhost', 'ca': self.ca,
+            'terms_of_service_agreed': True, 'pem': data['pem'],
         })[0]
         order = AcmeOrder.objects.get_or_create(account=acc, slug=data['order'])[0]
         AcmeAccountAuthorization.objects.get_or_create(order=order, slug=data['auth'], defaults={
@@ -460,8 +441,8 @@ class PreparedAcmeChallengeViewTestCase(AcmePreparedRequestsTestCaseMixin, Djang
 
     def before_prepared_request(self, data):
         acc = AcmeAccount.objects.get_or_create(thumbprint=data['thumbprint'], defaults={
-            'pk': 10, 'contact': 'user@localhost', 'ca': self.ca, 'terms_of_service_agreed': True,
-            'pem': PEM_1,
+            'pk': data['account_pk'], 'contact': 'user@localhost', 'ca': self.ca,
+            'terms_of_service_agreed': True, 'pem': data['pem'],
         })[0]
         order = AcmeOrder.objects.create(account=acc, slug=data['order'])
         auth = AcmeAccountAuthorization.objects.create(order=order, slug=data['auth'], value='localhost')
@@ -484,6 +465,19 @@ class PreparedAcmeOrderFinalizeViewTestCase(AcmePreparedRequestsTestCaseMixin, D
 
     view_name = 'AcmeOrderFinalizeView'
 
+    def before_prepared_request(self, data):
+        acc = AcmeAccount.objects.get_or_create(thumbprint=data['thumbprint'], defaults={
+            'pk': data['account_pk'], 'contact': 'user@localhost', 'ca': self.ca,
+            'terms_of_service_agreed': True, 'pem': data['pem'],
+        })[0]
+        AcmeOrder.objects.create(account=acc, slug=data['order'], status=AcmeOrder.STATUS_READY)
+
+    def get_url(self, data):
+        return reverse('django_ca:acme-order-finalize', kwargs={
+            'serial': self.ca_serial,
+            'slug': data['order'],
+        })
+
 
 @override_settings(ALLOWED_HOSTS=['localhost'])
 @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
@@ -492,10 +486,43 @@ class PreparedAcmeOrderViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAW
 
     view_name = 'AcmeOrderView'
 
+    def before_prepared_request(self, data):
+        acc = AcmeAccount.objects.get_or_create(thumbprint=data['thumbprint'], defaults={
+            'pk': data['account_pk'], 'contact': 'user@localhost', 'ca': self.ca,
+            'terms_of_service_agreed': True, 'pem': data['pem'],
+        })[0]
+        AcmeOrder.objects.create(account=acc, slug=data['order'], status=AcmeOrder.STATUS_READY)
+
+    def get_url(self, data):
+        return reverse('django_ca:acme-order', kwargs={
+            'serial': self.ca_serial,
+            'slug': data['order'],
+        })
+
 
 @override_settings(ALLOWED_HOSTS=['localhost'])
 @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
-class PreparedAcmeCertificateViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
+class PreparedAcmeCertificateViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCertTestCase):
     """Test retrieving a challenge."""
 
     view_name = 'AcmeCertificateView'
+
+    def assertAcmeResponse(self, response, ca=None):
+        """This view does not return normal ACME responses but a certificate bundle."""
+        self.assertLinkRelations(response, ca=ca)
+        self.assertEqual(response['Content-Type'], 'application/pem-certificate-chain')
+
+    def before_prepared_request(self, data):
+        acc = AcmeAccount.objects.get_or_create(thumbprint=data['thumbprint'], defaults={
+            'pk': data['account_pk'], 'contact': 'user@localhost', 'ca': self.ca,
+            'terms_of_service_agreed': True, 'pem': data['pem'],
+        })[0]
+        order = AcmeOrder.objects.create(account=acc, slug=data['order'])
+        AcmeCertificate.objects.create(slug=data['cert'], order=order, cert=self.certs['root-cert'],
+                                       csr=data['csr'])
+
+    def get_url(self, data):
+        return reverse('django_ca:acme-cert', kwargs={
+            'serial': self.ca_serial,
+            'slug': data['cert'],
+        })
