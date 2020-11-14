@@ -126,8 +126,11 @@ def acme_validate_challenge(challenge_pk):
         challenge.validated = timezone.now()
         challenge.auth.status = AcmeAccountAuthorization.STATUS_VALID
 
-        # TODO: only transition if all authorizations are valid!
-        challenge.auth.order.status = AcmeOrder.STATUS_READY
+        # Set the order status to READY if all challenges are valid
+        auths = AcmeAccountAuthorization.objects.filter(order=challenge.auth.order)
+        auths = auths.exclude(status=AcmeAccountAuthorization.STATUS_VALID)
+        if not auths.exclude(pk=challenge.auth.pk).exists():
+            challenge.auth.order.status = AcmeOrder.STATUS_READY
     else:
         challenge.status = AcmeChallenge.STATUS_INVALID
         challenge.auth.status = AcmeAccountAuthorization.STATUS_INVALID
