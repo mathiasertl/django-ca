@@ -633,6 +633,18 @@ class CertificateAuthority(X509CertMixin):
     issuer_alt_name = models.CharField(blank=True, max_length=255, default='',
                                        verbose_name=_('issuerAltName'), help_text=_("URL for your CA."))
 
+    caa_identity = models.CharField(
+        blank=True, max_length=32, verbose_name=_('CAA identity'),
+        help_text=_('CAA identity for this CA (NOTE: Not currently used!).')
+    )
+    website = models.URLField(blank=True, help_text=_('Website for your CA.'))
+
+    # ACMEv2 fields
+    acme_enabled = models.BooleanField(
+        default=False, help_text=_("Whether it is possible to use ACME for this CA."))
+    acme_terms_of_service = models.URLField(blank=True, help_text=_('Terms of Service for this CA'))
+    # CAA record and website are general fields
+
     _key = None
 
     def key(self, password):
@@ -1082,7 +1094,7 @@ class AcmeAccount(models.Model):
     # Fields according to RFC 8555, 7.1.2
     # RFC 8555, 7.1.6: "Account objects are created in the "valid" state"
     status = models.CharField(choices=STATUS_CHOICES, max_length=12, default=STATUS_VALID)
-    contact = models.CharField(blank=True, max_length=255)
+    contact = models.TextField(blank=True, help_text=_('Contact addresses for this account, one per line.'))
     terms_of_service_agreed = models.BooleanField(default=False)
     # NOTE: externalAccountBinding is not yet supported
     # NOTE: orders property is provided by reverse relation of the AcmeOrder model
