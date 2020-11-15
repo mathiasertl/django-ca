@@ -22,11 +22,9 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
 from cryptography.x509.oid import AuthorityInformationAccessOID
 
-from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import ContentFile
 from django.db import models
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_str
 
@@ -293,55 +291,6 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         ca.save()
 
         post_create_ca.send(sender=self.model, ca=ca)
-        return ca
-
-    def default(self, acme=False):
-        """Return the default CA to use when no CA is selected.
-
-        This function honors the :ref:`CA_DEFAULT_CA <settings-ca-default-ca>`. If no usable CA can be
-        returned, raises :py:exc:`~django:django.core.exceptions.ImproperlyConfigured`.
-
-        Parameters
-        ----------
-
-        acme : bool, optional
-            If ``True``, this function will only select CAs that have the ``acme_enabled`` field set.
-
-        Raises
-        ------
-
-        :py:exc:`~django:django.core.exceptions.ImproperlyConfigured`
-            When the CA named by :ref:`CA_DEFAULT_CA <settings-ca-default-ca>` is either not found, disabled
-            or not currently valid. Or, if the setting is not set, no CA is currently usable.
-        """
-
-        if ca_settings.CA_DEFAULT_CA:
-            now = timezone.now()
-
-            try:
-                # NOTE: Don't prefilter queryset so that we can provide more specialized error messages below.
-                ca = self.get(serial=ca_settings.CA_DEFAULT_CA)
-            except self.model.DoesNotExist:
-                # pylint: disable=raise-missing-from; not useful here
-                raise ImproperlyConfigured('CA_DEFAULT_CA: %s: CA not found.' % ca_settings.CA_DEFAULT_CA)
-
-            if ca.enabled is False:
-                raise ImproperlyConfigured('CA_DEFAULT_CA: %s is disabled.' % ca_settings.CA_DEFAULT_CA)
-            if ca.expires < now:
-                raise ImproperlyConfigured('CA_DEFAULT_CA: %s is expired.' % ca_settings.CA_DEFAULT_CA)
-            if ca.valid_from > now:  # OK, how could this ever happen? ;-)
-                raise ImproperlyConfigured('CA_DEFAULT_CA: %s is not yet valid.' % ca_settings.CA_DEFAULT_CA)
-            return ca
-
-        # NOTE: We add the serial to sorting make *sure* we have deterministic behavior. In many cases, users
-        # will just create several CAs that all actually expire on the same day.
-        qs = self.usable().order_by('-expires', 'serial')  # usable == enabled and valid
-        if acme is True:
-            qs = qs.filter(acme_enabled=True)
-
-        ca = qs.first()
-        if ca is None:
-            raise ImproperlyConfigured('No CA is currently usable.')
         return ca
 
 

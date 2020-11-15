@@ -13,10 +13,12 @@
 
 """QuerySet classes for DjangoCA models."""
 
+from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
+from . import ca_settings
 from .utils import sanitize_serial
 
 
@@ -57,6 +59,49 @@ class DjangoCAMixin:
 
 class CertificateAuthorityQuerySet(models.QuerySet, DjangoCAMixin):
     """QuerySet for the CertificateAuthority model."""
+
+    def acme(self):
+        """Return usable CAs that have support for the ACME protocol enabled."""
+        return self.filter(acme_enabled=True)
+
+    def default(self):
+        """Return the default CA to use when no CA is selected.
+
+        This function honors the :ref:`CA_DEFAULT_CA <settings-ca-default-ca>`. If no usable CA can be
+        returned, raises :py:exc:`~django:django.core.exceptions.ImproperlyConfigured`.
+
+        Raises
+        ------
+
+        :py:exc:`~django:django.core.exceptions.ImproperlyConfigured`
+            When the CA named by :ref:`CA_DEFAULT_CA <settings-ca-default-ca>` is either not found, disabled
+            or not currently valid. Or, if the setting is not set, no CA is currently usable.
+        """
+
+        if ca_settings.CA_DEFAULT_CA:
+            now = timezone.now()
+
+            try:
+                # NOTE: Don't prefilter queryset so that we can provide more specialized error messages below.
+                ca = self.get(serial=ca_settings.CA_DEFAULT_CA)
+            except self.model.DoesNotExist:
+                # pylint: disable=raise-missing-from; not useful here
+                raise ImproperlyConfigured('CA_DEFAULT_CA: %s: CA not found.' % ca_settings.CA_DEFAULT_CA)
+
+            if ca.enabled is False:
+                raise ImproperlyConfigured('CA_DEFAULT_CA: %s is disabled.' % ca_settings.CA_DEFAULT_CA)
+            if ca.expires < now:
+                raise ImproperlyConfigured('CA_DEFAULT_CA: %s is expired.' % ca_settings.CA_DEFAULT_CA)
+            if ca.valid_from > now:  # OK, how could this ever happen? ;-)
+                raise ImproperlyConfigured('CA_DEFAULT_CA: %s is not yet valid.' % ca_settings.CA_DEFAULT_CA)
+            return ca
+
+        # NOTE: We add the serial to sorting make *sure* we have deterministic behavior. In many cases, users
+        # will just create several CAs that all actually expire on the same day.
+        ca = self.usable().order_by('-expires', 'serial').first()  # usable == enabled and valid
+        if ca is None:
+            raise ImproperlyConfigured('No CA is currently usable.')
+        return ca
 
     def disabled(self):
         """Return CAs that are disabled."""

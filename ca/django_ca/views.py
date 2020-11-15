@@ -393,13 +393,14 @@ class AcmeDirectory(View):
 
         if serial is None:
             try:
-                ca = CertificateAuthority.objects.default(acme=True)
+                # NOTE: default() already calls usable()
+                ca = CertificateAuthority.objects.acme().default()
             except ImproperlyConfigured:
                 return AcmeResponseNotFound(message='No (usable) default CA configured.')
         else:
             try:
                 # NOTE: Serial is already sanitized by URL converter
-                ca = CertificateAuthority.objects.usable().get(serial=serial)
+                ca = CertificateAuthority.objects.acme().usable().get(serial=serial)
             except CertificateAuthority.DoesNotExist:
                 return AcmeResponseNotFound(message='%s: CA not found.' % serial)
 
@@ -626,7 +627,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
             return AcmeResponseMalformed('No algorithm specified.')
 
         # Get certificate authority for this request
-        self.ca = CertificateAuthority.objects.usable().get(serial=serial)
+        self.ca = CertificateAuthority.objects.acme().usable().get(serial=serial)
 
         #self.prepared['nonce'] = jose.encode_b64jose(combined.nonce)
         if not self.validate_nonce(jose.encode_b64jose(combined.nonce)):
