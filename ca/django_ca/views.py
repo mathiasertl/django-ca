@@ -684,6 +684,10 @@ class AcmeNewNonceView(AcmeGetNonceViewMixin, View):
 
         response = super().dispatch(request, *args, **kwargs)
         response['replay-nonce'] = self.get_nonce()
+
+        # RFC 8555, section 7.2:
+        #
+        #   The server MUST include a Cache-Control header field with the "no-store" directive in responses
         response['cache-control'] = 'no-store'
         return response
 
