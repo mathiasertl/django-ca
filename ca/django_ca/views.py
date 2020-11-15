@@ -91,6 +91,7 @@ from .utils import get_crl_cache_key
 from .utils import int_to_hex
 from .utils import parse_encoding
 from .utils import read_file
+from .utils import validate_email
 
 log = logging.getLogger(__name__)
 
@@ -378,6 +379,8 @@ class GenericCAIssuersView(View):
 class AcmeDirectory(View):
     """
     `Equivalent LE URL <https://acme-v02.api.letsencrypt.org/directory>`__
+
+    .. seealso:: `RFC 8555, section 7.1.1 <https://tools.ietf.org/html/rfc8555#section-7.1.1>`_
     """
 
     def _url(self, request, name, ca):  # pylint: disable=no-self-use
@@ -390,7 +393,7 @@ class AcmeDirectory(View):
 
         if serial is None:
             try:
-                ca = CertificateAuthority.objects.default()
+                ca = CertificateAuthority.objects.default(acme=True)
             except ImproperlyConfigured:
                 return AcmeResponseNotFound(message='No (usable) default CA configured.')
         else:
@@ -404,21 +407,28 @@ class AcmeDirectory(View):
         #   https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417
         rnd = jose.encode_b64jose(secrets.token_bytes(16))
 
-        return JsonResponse({
+        directory = {
             rnd: "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417",
             "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
-            "meta": {
-                #"caaIdentities": [
-                #    "letsencrypt.org"
-                #],
-                "termsOfService": "https://localhost:8000/django_ca/example.pdf",
-                "website": "https://localhost:8000"
-            },
             "newAccount": self._url(request, 'acme-new-account', ca),
             "newNonce": self._url(request, 'acme-new-nonce', ca),
             "newOrder": self._url(request, 'acme-new-order', ca),
-            "revokeCert": "http://localhost:8000/django_ca/acme/todo/revoke-cert"  # TODO
-        })
+            "revokeCert": "http://localhost:8000/django_ca/acme/todo/revoke-cert"
+        }
+
+        # Construct a "meta" object if and add it if any fields are defined. Note that the meta object is
+        # optional (RFC 8555, section 7.1.1: "The object MAY additionally contain a "meta" field.").
+        meta = {}
+        if ca.website:
+            meta['website'] = ca.website
+        if ca.acme_terms_of_service:
+            meta['termsOfService'] = ca.acme_terms_of_service
+        if ca.caa_identity:
+            meta['caaIdentities'] = [ca.caa_identity]  # array of string
+        if meta:
+            directory['meta'] = meta
+
+        return JsonResponse(directory)
 
 
 class AcmeGetNonceViewMixin:
@@ -707,26 +717,88 @@ class AcmeNewAccountView(AcmeBaseView):
             format=serialization.PublicFormat.SubjectPublicKeyInfo
         ).decode('utf-8').strip()
 
-        account = AcmeAccount(
-            ca=self.ca,
-            contact=message.emails[0],
-            status=AcmeAccount.STATUS_VALID,
-            terms_of_service_agreed=message.terms_of_service_agreed,
-            thumbprint=jose.encode_b64jose(self.jwk.thumbprint()),
-            pem=pem
-        )
+        if message.only_return_existing:
+            # RFC 8555, section 7.3:
+            #
+            #   If this field is present with the value "true", then the server MUST NOT create a new account
+            #   if one does not already exist.  This allows a client to look up an account URL based on an
+            #   account key (see Section 7.3.1).
+            account = AcmeAccount.objects.get(pem=pem)
+        else:
+            for contact in message.contact:
+                if contact.startswith(messages.Registration.email_prefix):
+                    addr = contact[len(messages.Registration.email_prefix):]
+
+                    # RFC 8555, section 7.3
+                    #
+                    #   Clients MUST NOT provide a "mailto" URL in the "contact" field that contains "hfields"
+                    #   [RFC6068] or more than one "addr-spec" in the "to" component.
+
+                    # We rule out quoted local address fields, otherwise it's extremely hard to validate
+                    # email addresses.
+                    if addr.startswith('"'):
+                        return AcmeResponseMalformed(
+                            typ='invalidContact',
+                            message='Quoted local part in email is not allowed.'
+                        )
+
+                    # Since the local part is not quoted, it cannot contain a ',' either, so a ',' means there
+                    # is more than one "addr-spec" in the "to" component. (see RFC 8555 quote above)
+                    if ',' in addr:
+                        return AcmeResponseMalformed(
+                            typ='invalidContact',
+                            message='More than one addr-spec is not allowed.'
+                        )
+
+                    # Validate that there are no hfields in the address.
+                    # NOTE: ',' appears to be valid in the local part according to RFC 5322
+                    _local, domain = addr.split('@', 1)
+                    if '?' in domain:
+                        return AcmeResponseMalformed(
+                            typ='invalidContact',
+                            message='%s: hfields are not allowed.' % domain
+                        )
+
+                    # Finally, verify that we're getting at least a valid domain.
+                    try:
+                        validate_email(addr)
+                    except ValueError:
+                        return AcmeResponseMalformed(
+                            typ='invalidContact',
+                            message='%s: Not a valid email address.' % domain
+                        )
+                else:
+                    # RFC 8555, section 7.3
+                    #
+                    #   If the server rejects a contact URL for using an unsupported scheme, it MUST return an
+                    #   error of type "unsupportedContact", ...
+                    return AcmeResponseMalformed(
+                        typ='unsupportedContact',
+                        message='Only email addresses are allowed for contact addresses.'
+                    )
+
+            if ca_settings.ACME_ACCOUNT_REQUIRES_CONTACT and not message.emails:
+                return AcmeResponseUnauthorized(message='Must provide at least one contact address.')
+
+            account = AcmeAccount(
+                ca=self.ca,
+                contact='\n'.join(message.contact),
+                status=AcmeAccount.STATUS_VALID,
+                terms_of_service_agreed=message.terms_of_service_agreed,
+                thumbprint=jose.encode_b64jose(self.jwk.thumbprint()),
+                pem=pem
+            )
+
+            # Call full_clean() so that model validation can do its magic
+            try:
+                account.full_clean()
+                account.save()
+            except ValidationError:
+                raise AcmeMalformed()  # pylint: disable=raise-missing-from
+
         #self.prepared['thumbprint'] = account.thumbprint
         #self.prepared['pem'] = account.pem
         #self.prepared['account_pk'] = account.pem
-
-        # Call full_clean() so that model validation can do its magic
-        try:
-            account.full_clean()
-            account.save()
-        except ValidationError:
-            # TODO: section 6.5.1 has some more specific error codes
-            raise AcmeMalformed()
-
         return AcmeResponseAccountCreated(self.request, account)
 
 
