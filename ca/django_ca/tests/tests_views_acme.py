@@ -58,12 +58,16 @@ class DirectoryTestCase(DjangoCAWithCATestCase):
     """Test basic ACMEv2 directory view."""
     url = reverse('django_ca:acme-directory')
 
+    @freeze_time(timestamps['everything_valid'])
     def test_default(self):
         """Test the default directory view."""
+        ca = CertificateAuthority.objects.default()
+        ca.acme_enabled = True
+        ca.save()
+
         with mock.patch('secrets.token_bytes', return_value=b'foobar'):
             response = self.client.get(self.url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        ca = CertificateAuthority.objects.default()
         req = response.wsgi_request
         self.assertEqual(response.json(), {
             'Zm9vYmFy': 'https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417',
@@ -72,16 +76,41 @@ class DirectoryTestCase(DjangoCAWithCATestCase):
             'newAccount': req.build_absolute_uri('/django_ca/acme/%s/new-account/' % ca.serial),
             'newNonce': req.build_absolute_uri('/django_ca/acme/%s/new-nonce/' % ca.serial),
             'newOrder': req.build_absolute_uri('/django_ca/acme/%s/new-order/' % ca.serial),
-            'meta': {
-                "termsOfService": "https://localhost:8000/django_ca/example.pdf",
-                "website": "https://localhost:8000",
-            }
         })
 
+    @freeze_time(timestamps['everything_valid'])
     def test_named_ca(self):
         """Test getting directory for named CA."""
 
         ca = CertificateAuthority.objects.default()
+        ca.acme_enabled = True
+        ca.save()
+
+        url = reverse('django_ca:acme-directory', kwargs={'serial': ca.serial})
+        with mock.patch('secrets.token_bytes', return_value=b'foobar'):
+            response = self.client.get(url)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(response['Content-Type'], 'application/json')
+        req = response.wsgi_request
+        self.assertEqual(response.json(), {
+            'Zm9vYmFy': 'https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417',
+            'keyChange': 'http://localhost:8000/django_ca/acme/todo/key-change',
+            'revokeCert': 'http://localhost:8000/django_ca/acme/todo/revoke-cert',
+            'newAccount': req.build_absolute_uri('/django_ca/acme/%s/new-account/' % ca.serial),
+            'newNonce': req.build_absolute_uri('/django_ca/acme/%s/new-nonce/' % ca.serial),
+            'newOrder': req.build_absolute_uri('/django_ca/acme/%s/new-order/' % ca.serial),
+        })
+
+    @freeze_time(timestamps['everything_valid'])
+    def test_meta(self):
+        """Test the meta property."""
+        ca = CertificateAuthority.objects.default()
+        ca.acme_enabled = True
+        ca.website = 'http://ca.example.com'
+        ca.acme_terms_of_service = 'http://ca.example.com/acme/tos'
+        ca.caa_identity = 'ca.example.com'
+        ca.save()
+
         url = reverse('django_ca:acme-directory', kwargs={'serial': ca.serial})
         with mock.patch('secrets.token_bytes', return_value=b'foobar'):
             response = self.client.get(url)
@@ -96,9 +125,38 @@ class DirectoryTestCase(DjangoCAWithCATestCase):
             'newNonce': req.build_absolute_uri('/django_ca/acme/%s/new-nonce/' % ca.serial),
             'newOrder': req.build_absolute_uri('/django_ca/acme/%s/new-order/' % ca.serial),
             'meta': {
-                "termsOfService": "https://localhost:8000/django_ca/example.pdf",
-                "website": "https://localhost:8000",
-            }
+                'termsOfService': ca.acme_terms_of_service,
+                'caaIdentities': [
+                    ca.caa_identity,
+                ],
+                'website': ca.website,
+            },
+        })
+
+    @freeze_time(timestamps['everything_valid'])
+    def test_acme_default_disabled(self):
+        """Test that fetching the default CA with ACME disabled doesn't work."""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        self.assertEqual(response['Content-Type'], 'application/problem+json')
+        self.assertEqual(response.json(), {
+            'detail': 'No (usable) default CA configured.',
+            'status': 404,
+            'type': 'urn:ietf:params:acme:error:not-found',
+        })
+
+    @freeze_time(timestamps['everything_valid'])
+    def test_acme_disabled(self):
+        """Test that fetching the default CA with ACME disabled doesn't work."""
+        ca = CertificateAuthority.objects.default()
+        url = reverse('django_ca:acme-directory', kwargs={'serial': ca.serial})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        self.assertEqual(response['Content-Type'], 'application/problem+json')
+        self.assertEqual(response.json(), {
+            'detail': '%s: CA not found.' % ca.serial,
+            'status': 404,
+            'type': 'urn:ietf:params:acme:error:not-found',
         })
 
     def test_no_ca(self):
@@ -231,6 +289,7 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
     def setUp(self):  # pylint: disable=invalid-name, missing-function-docstring; unittest standard
         super().setUp()
         self.ca = self.cas['root']
+        self.ca.acme_enabled = True
         self.ca.serial = self.ca_serial
         self.ca.save()
 
@@ -351,7 +410,7 @@ class PreparedAcmeNewAccountViewTestCase(AcmePreparedRequestsTestCaseMixin, Djan
         # https://tools.ietf.org/html/rfc8555#section-7.3
         self.assertEqual(response.json(), {
             'status': 'valid',
-            'contact': ['user@localhost'],
+            'contact': ['mailto:user@localhost'],
             'orders': uri(reverse('django_ca:acme-account-orders', kwargs=kwargs))
         })
 
