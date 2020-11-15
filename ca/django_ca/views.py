@@ -725,6 +725,10 @@ class AcmeNewAccountView(AcmeBaseView):
             #   account key (see Section 7.3.1).
             account = AcmeAccount.objects.get(pem=pem)
         else:
+            if self.ca.acme_requires_contact and not message.emails:
+                return AcmeResponseUnauthorized(message='Must provide at least one contact address.')
+
+            # Verify that all contact addresses are valid email addresses (only thing we support and allow).
             for contact in message.contact:
                 if contact.startswith(messages.Registration.email_prefix):
                     addr = contact[len(messages.Registration.email_prefix):]
@@ -776,9 +780,6 @@ class AcmeNewAccountView(AcmeBaseView):
                         typ='unsupportedContact',
                         message='Only email addresses are allowed for contact addresses.'
                     )
-
-            if ca_settings.ACME_ACCOUNT_REQUIRES_CONTACT and not message.emails:
-                return AcmeResponseUnauthorized(message='Must provide at least one contact address.')
 
             account = AcmeAccount(
                 ca=self.ca,
