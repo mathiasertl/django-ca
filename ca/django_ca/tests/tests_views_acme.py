@@ -23,6 +23,7 @@ from requests.utils import parse_header_links
 
 from django.conf import settings
 from django.core.cache import cache
+from django.test.utils import override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -37,21 +38,10 @@ from ..models import AcmeOrder
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
 from .base import DjangoCAWithCertTestCase
-from .base import override_settings
 from .base import timestamps
 
 with open(os.path.join(settings.FIXTURES_DIR, 'prepared-acme-requests.json')) as stream:
     prepared_requests = json.load(stream)
-
-PEM_1 = '''-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAw3q0fOrSzCDmVVwGZ6Hi
-10PUzj50zNSK1cyK9wjwq8LY1IKPmqKDP3p+BD3ko1rPu9Tx/2GlcgzntsEuphkX
-sE8ssLesN3gN3LmR3QUMK1X9EopYOisSHfHvGFJtWKhmauWw0KcRl0bTwzLuVqmP
-IO+Ev/pjgoZxD+jYzijQ+pkWmb0d5DBY4mtaQoCE3Lnwvljytip7nx58fh+D7TuK
-k71Op5ZvDfyewE0oicZzAJ1cjCkBMGUPxPJO+YgQGWtkEldQKc7KXZpEe91wa9pF
-YNINZMWl2MfVNLQKRwPoctvskjB79YuC/fBUwhd0AnKLX7JK23Spru0obzGUcdPE
-xQIDAQAB
------END PUBLIC KEY-----'''
 
 
 class DirectoryTestCase(DjangoCAWithCATestCase):
@@ -325,6 +315,11 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
             self.assertEqual(response.status_code, self.expected_status_code)
             self.assertAcmeResponse(response)
             self.assertPreparedResponse(data, response, celery_mock)
+
+    @override_settings(USE_TZ=True)
+    def test_requests_no_tz(self):
+        """Test requests but with timezone support enabled."""
+        self.test_requests()
 
     @override_settings(CA_ENABLE_ACME=False)
     def test_disabled(self):
