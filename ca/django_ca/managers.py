@@ -295,11 +295,17 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         post_create_ca.send(sender=self.model, ca=ca)
         return ca
 
-    def default(self):
+    def default(self, acme=False):
         """Return the default CA to use when no CA is selected.
 
         This function honors the :ref:`CA_DEFAULT_CA <settings-ca-default-ca>`. If no usable CA can be
         returned, raises :py:exc:`~django:django.core.exceptions.ImproperlyConfigured`.
+
+        Parameters
+        ----------
+
+        acme : bool, optional
+            If ``True``, this function will only select CAs that have the ``acme_enabled`` field set.
 
         Raises
         ------
@@ -329,7 +335,11 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
         # NOTE: We add the serial to sorting make *sure* we have deterministic behavior. In many cases, users
         # will just create several CAs that all actually expire on the same day.
-        ca = self.usable().order_by('-expires', 'serial').first()  # usable == enabled and valid
+        qs = self.usable().order_by('-expires', 'serial')  # usable == enabled and valid
+        if acme is True:
+            qs = qs.filter(acme_enabled=True)
+
+        ca = qs.first()
         if ca is None:
             raise ImproperlyConfigured('No CA is currently usable.')
         return ca
