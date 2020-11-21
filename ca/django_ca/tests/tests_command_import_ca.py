@@ -11,44 +11,41 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Test the import_ca management command."""
+
 import os
 import tempfile
-from io import BufferedReader
-from io import BytesIO
 
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 
 from django.conf import settings
 
-from .. import ca_settings
+from freezegun import freeze_time
+
 from ..models import CertificateAuthority
 from .base import DjangoCATestCase
 from .base import certs
 from .base import override_tmpcadir
+from .base import timestamps
 
 
 class ImportCATest(DjangoCATestCase):
-    def get_reader(self, path):
-        path = os.path.join(settings.FIXTURES_DIR, path)
-        with open(path, 'rb') as stream:
-            data = stream.read()
-
-        return BufferedReader(BytesIO(data))
-
-    def init_ca(self, **kwargs):
-        name = kwargs.pop('name', 'Test CA')
-        kwargs.setdefault('key_size', ca_settings.CA_MIN_KEY_SIZE)
-        return self.cmd('init_ca', name, '/C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=%s' % name,
-                        **kwargs)
+    """Test the import_ca management command."""
 
     @override_tmpcadir()
+    @freeze_time(timestamps['everything_valid'])
     def test_basic(self):
+        """Test basic import command.
+
+        Note: freeze time because we verify the certificate here.
+        """
+
         cas = {name: data for name, data in certs.items()
                if data['type'] == 'ca' and data.get('key_filename')}
 
         for name, data in cas.items():
             if data.get('password'):
-                continue  # TODO: cmd can't parse this yet
+                continue
 
             key_path = os.path.join(settings.FIXTURES_DIR, data['key_filename'])
             pem_path = os.path.join(settings.FIXTURES_DIR, data['pub_filename'])
@@ -71,13 +68,19 @@ class ImportCATest(DjangoCATestCase):
             self.assertEqual(ca.serial, data['serial'])
 
     @override_tmpcadir()
+    @freeze_time(timestamps['everything_valid'])
     def test_der(self):
+        """Test importing a der key.
+
+        Note: freeze time because we verify the certificate here.
+        """
+
         cas = {name: data for name, data in certs.items()
                if data.get('key_der_filename') and data['type'] == 'ca'}
 
         for name, data in cas.items():
             if data.get('password'):
-                continue  # TODO: cmd can't parse this yet
+                continue
 
             key_path = os.path.join(settings.FIXTURES_DIR, data['key_der_filename'])
             pem_path = os.path.join(settings.FIXTURES_DIR, data['pub_der_filename'])
@@ -101,7 +104,13 @@ class ImportCATest(DjangoCATestCase):
             self.assertEqual(ca.serial, data['serial'])
 
     @override_tmpcadir()
+    @freeze_time(timestamps['everything_valid'])
     def test_password(self):
+        """Test importing a CA with a password for the private key.
+
+        Note: freeze time because we verify the certificate here.
+        """
+
         name = 'testname'
         password = b'testpassword'
         key_path = os.path.join(settings.FIXTURES_DIR, certs['root']['key_filename'])
@@ -125,11 +134,10 @@ class ImportCATest(DjangoCATestCase):
         self.assertEqual(key.key_size, certs['root']['key_size'])
         self.assertEqual(ca.serial, certs['root']['serial'])
 
-    def test_intermediate(self):
-        pass  # TODO
-
     @override_tmpcadir()
     def test_permission_denied(self):
+        """Test importing a CA when we can't ready one of the files."""
+
         name = 'testname'
         pem_path = os.path.join(settings.FIXTURES_DIR, certs['root']['pub_filename'])
         key_path = os.path.join(settings.FIXTURES_DIR, certs['root']['key_filename'])
@@ -147,6 +155,8 @@ class ImportCATest(DjangoCATestCase):
             os.chmod(settings.CA_DIR, 0o755)
 
     def test_create_cadir(self):
+        """Test importing a CA when the directory does not yet exist."""
+
         name = 'testname'
         pem_path = os.path.join(settings.FIXTURES_DIR, certs['root']['pub_filename'])
         key_path = os.path.join(settings.FIXTURES_DIR, certs['root']['key_filename'])
@@ -157,6 +167,8 @@ class ImportCATest(DjangoCATestCase):
                 self.cmd('import_ca', name, key_path, pem_path)
 
     def test_create_cadir_permission_denied(self):
+        """Test importing a CA when the directory does not yet exist and we cannot create it."""
+
         name = 'testname'
         pem_path = os.path.join(settings.FIXTURES_DIR, certs['root']['pub_filename'])
         key_path = os.path.join(settings.FIXTURES_DIR, certs['root']['key_filename'])
@@ -173,6 +185,8 @@ class ImportCATest(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_bogus_pub(self):
+        """Test importing a CA with a bogus public key."""
+
         name = 'testname'
         pem_path = os.path.join(settings.FIXTURES_DIR, __file__)
         key_path = os.path.join(settings.FIXTURES_DIR, certs['root']['key_der_filename'])
@@ -182,6 +196,8 @@ class ImportCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_bogus_priv(self):
+        """Test importing a CA with a bogus private key."""
+
         name = 'testname'
         pem_path = os.path.join(settings.FIXTURES_DIR, certs['root']['pub_der_filename'])
         key_path = os.path.join(settings.FIXTURES_DIR, __file__)

@@ -687,6 +687,7 @@ class AcmeAccountTestCase(DjangoCAWithGeneratedCAsTestCase):
         with self.assertRaisesRegex(AcmeAccount.ca.RelatedObjectDoesNotExist, r'^AcmeAccount has no ca\.$'):
             AcmeAccount().serial  # pylint: disable=expression-not-assigned
 
+    @freeze_time(timestamps['everything_valid'])
     def test_usable(self):
         """Test the ``usable`` property."""
         self.assertTrue(self.account1.usable)

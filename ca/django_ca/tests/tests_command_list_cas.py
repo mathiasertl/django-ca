@@ -11,16 +11,21 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
+"""Test the list_cas management command."""
+
 from datetime import timedelta
 
 from django.utils import timezone
+
+from freezegun import freeze_time
 
 from ..models import CertificateAuthority
 from .base import DjangoCATestCase
 from .base import certs
 from .base import override_settings
+from .base import timestamps
 
-expected = """{dsa[serial_colons]} - {dsa[name]}{dsa_state}
+EXPECTED = """{dsa[serial_colons]} - {dsa[name]}{dsa_state}
 {ecc[serial_colons]} - {ecc[name]}{ecc_state}
 {pwd[serial_colons]} - {pwd[name]}{pwd_state}
 {root[serial_colons]} - {root[name]}{root_state}
@@ -29,11 +34,14 @@ expected = """{dsa[serial_colons]} - {dsa[name]}{dsa_state}
 
 
 class ListCertsTestCase(DjangoCATestCase):
+    """Test the list_cas management command."""
+
     def setUp(self):
         super(ListCertsTestCase, self).setUp()
         self.load_usable_cas()
 
-    def assertOutput(self, output, expected, **context):
+    def assertOutput(self, output, expected, **context):  # pyling: disable=invalid-name
+        """Assert the output of this command."""
         context.update(certs)
         for ca_name in self.cas:
             context.setdefault('%s_state' % ca_name, '')
@@ -74,26 +82,38 @@ class ListCertsTestCase(DjangoCATestCase):
         self.assertEqual(stderr, '')
 
     def test_no_cas(self):
+        """Test the command if no CAs are defined."""
+
         CertificateAuthority.objects.all().delete()
         stdout, stderr = self.cmd('list_cas')
         self.assertEqual(stdout, '')
         self.assertEqual(stderr, '')
 
     def test_basic(self):
+        """Basic test of the command."""
+
         stdout, stderr = self.cmd('list_cas')
-        self.assertOutput(stdout, expected)
+        self.assertOutput(stdout, EXPECTED)
         self.assertEqual(stderr, '')
 
     def test_disabled(self):
+        """Test the command if some CA is disabled."""
+
         ca = self.cas['root']
         ca.enabled = False
         ca.save()
 
         stdout, stderr = self.cmd('list_cas')
-        self.assertOutput(stdout, expected, root_state=' (disabled)')
+        self.assertOutput(stdout, EXPECTED, root_state=' (disabled)')
         self.assertEqual(stderr, '')
 
+    @freeze_time(timestamps['everything_valid'])
     def test_tree(self):
+        """Test the tree output.
+
+        NOTE: freeze_time b/c we create some fake CA objects and order in the tree depends on validity.
+        """
+
         stdout, stderr = self.cmd('list_cas', tree=True)
         self.assertEqual(stdout, """{dsa[serial_colons]} - {dsa[name]}
 {ecc[serial_colons]} - {ecc[name]}
@@ -130,4 +150,5 @@ class ListCertsTestCase(DjangoCATestCase):
 
 @override_settings(USE_TZ=True)
 class ListCertsWithTZTestCase(ListCertsTestCase):
+    """Same tests as above but with Timezone support."""
     pass
