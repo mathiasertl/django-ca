@@ -804,6 +804,13 @@ class AcmeNewAccountView(AcmeBaseView):
         #self.prepared['thumbprint'] = account.thumbprint
         #self.prepared['pem'] = account.pem
         #self.prepared['account_pk'] = account.pem
+
+        # RFC 8555, section 7.3
+        #
+        #   The server returns this account object in a 201 (Created) response, with the account URL in a
+        #   Location header field.
+        #
+        # AcmeResponseAccountCreated adds the Location field currently.
         return AcmeResponseAccountCreated(self.request, account)
 
 

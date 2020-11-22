@@ -326,6 +326,8 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCase, DjangoCAWithCATestCase):
         self.assertTrue(acc.terms_of_service_agreed)
 
         # Test the response body
+        self.assertEqual(resp['location'], self.absolute_uri(':acme-account', serial=self.ca.serial,
+                                                             pk=acc.pk))
         self.assertEqual(resp.json(), {
             'contact': [contact],
             'orders': self.absolute_uri(':acme-account-orders', serial=self.ca.serial, pk=acc.pk),
