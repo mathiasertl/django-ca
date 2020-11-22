@@ -533,7 +533,6 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
             response = super().dispatch(request, *args, **kwargs)
             self.set_link_relations(response)
         except Exception as ex:  # pylint: disable=broad-except
-            print('ex', ex)
             log.exception(ex)
             response = AcmeResponseError(message='Internal server error')
 
@@ -563,8 +562,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
 
         try:
             self.jws = acme.jws.JWS.json_loads(request.body)
-        except Exception as ex:  # pylint: disable=broad-except; we really should catch everything here
-            log.exception(ex)
+        except jose.errors.DeserializationError:
             return AcmeResponseMalformed('Could not parse JWS token.')
 
         combined = self.jws.signature.combined
@@ -627,20 +625,21 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
             return AcmeResponseMalformed('No algorithm specified.')
 
         # Get certificate authority for this request
-        self.ca = CertificateAuthority.objects.acme().usable().get(serial=serial)
+        try:
+            self.ca = CertificateAuthority.objects.acme().usable().get(serial=serial)
+        except CertificateAuthority.DoesNotExist:
+            return AcmeResponseNotFound(message="The requested CA cannot be found.")
 
         #self.prepared['nonce'] = jose.encode_b64jose(combined.nonce)
         if not self.validate_nonce(jose.encode_b64jose(combined.nonce)):
             # ... "nonce"
-            resp = AcmeResponseBadNonce()
-
-            return resp
+            return AcmeResponseBadNonce()
 
         if combined.url != request.build_absolute_uri():
             # ... "url"
             # RFC 8555 is not really clear on the required response code, but merely says "If the two do not
             # match, then the server MUST reject the request as unauthorized."
-            return AcmeResponseUnauthorized()
+            return AcmeResponseUnauthorized(message='URL does not match.')
 
         if self.post_as_get is True:
             if self.jws.payload != b'':
