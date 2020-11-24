@@ -112,7 +112,8 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
             cache.set('acme-nonce-%s-%s' % (self.ca.serial, data['nonce']), 0)
             self.before_prepared_request(data)
             response = self.post(self.get_url(data), data['body'], content_type='application/json')
-            self.assertAcmeProblem(response, typ='malformed', status=415)
+            self.assertAcmeProblem(response, typ='malformed', status=415,
+                                   message='Requests must use the application/jose+json content type.')
             self.assertFailedPreparedResponse(data, response)
 
     def test_generic_exception(self):
@@ -145,7 +146,8 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
             # Do the request again to validate that the nonce is now invalid
             response = self.post(self.get_url(data), data['body'])
             self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
-            self.assertAcmeProblem(response, typ='badNonce', status=400)
+            self.assertAcmeProblem(response, typ='badNonce', status=400,
+                                   message='Bad or invalid nonce.')
             self.assertDuplicateNoncePreparedResponse(data, response)
 
     def test_unknown_nonce_use(self):
@@ -154,7 +156,8 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
             self.before_prepared_request(data)
             response = self.post(self.get_url(data), data['body'])
             self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
-            self.assertAcmeProblem(response, typ='badNonce', status=400)
+            self.assertAcmeProblem(response, typ='badNonce', status=400,
+                                   message='Bad or invalid nonce.')
             self.assertFailedPreparedResponse(data, response)
 
 

@@ -29,7 +29,6 @@ from freezegun import freeze_time
 from ..models import AcmeAccount
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
-from .base import DjangoCAWithCertTestCase
 from .base import certs
 from .base import override_tmpcadir
 from .base import timestamps
@@ -188,13 +187,14 @@ class DirectoryTestCase(DjangoCAWithCATestCase):
 class AcmeTestCaseMixin:
     """TestCase mixin with various common utility functions."""
 
-    def setUp(self):
+    def setUp(self):  # pylint: disable=invalid-name
         super().setUp()
         self.ca = self.cas['root']
+        self.cert = self.cas['child']  # actually a ca, but doesn't matter
         self.ca.acme_enabled = True
         self.ca.save()
 
-    def assertAcmeProblem(self, response, typ, status, ca=None):  # pylint: disable=invalid-name
+    def assertAcmeProblem(self, response, typ, status, message, ca=None):  # pylint: disable=invalid-name
         """Assert that a HTTP response confirms to an ACME problem report.
 
         .. seealso:: `RFC 8555, section 8 <https://tools.ietf.org/html/rfc8555#section-6.7>`_
@@ -204,6 +204,7 @@ class AcmeTestCaseMixin:
         data = response.json()
         self.assertEqual(data['type'], 'urn:ietf:params:acme:error:%s' % typ)
         self.assertEqual(data['status'], status)
+        self.assertEqual(data['detail'], message)
         self.assertIn('Replay-Nonce', response)
 
     def assertAcmeResponse(self, response, ca=None):  # pylint: disable=invalid-name
@@ -246,14 +247,6 @@ class AcmeTestCaseMixin:
         return self.client.post(url, json.dumps(data), **kwargs)
 
 
-class AcmeBaseViewTestCase(AcmeTestCaseMixin):
-    def test_invalid_json(self):
-        """Test sending invalid JSON to the server."""
-
-        return self.client.post(self.generic_url, '{',
-                                content_type='application/jose+json', SERVER_NAME='localhost:8000')
-
-
 class AcmeNewNonceViewTestCase(DjangoCAWithCATestCase):
     """Test getting a new ACME nonce."""
 
@@ -290,11 +283,34 @@ class AcmeNewNonceViewTestCase(DjangoCAWithCATestCase):
         self.assertEqual(response['cache-control'], 'no-store')
 
 
+class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
+    """Base class with test cases for all views."""
+
+    def test_invalid_json(self):
+        """Test sending invalid JSON to the server."""
+
+        resp = self.client.post(self.generic_url, '{', content_type='application/jose+json')
+        self.assertAcmeProblem(resp, 'malformed', status=HTTPStatus.BAD_REQUEST,
+                               message='Could not parse JWS token.')
+
+
 @freeze_time(timestamps['everything_valid'])
-class AcmeNewAccountViewTestCase(AcmeBaseViewTestCase, DjangoCAWithCATestCase):
+class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test creating a new account."""
 
     generic_url = reverse('django_ca:acme-new-account', kwargs={'serial': certs['root']['serial']})
+
+    def acme(self, uri, msg, cert=None, nonce=None):
+        if nonce is None:
+            nonce = self.get_nonce()
+        if cert is None:
+            cert = self.cert
+
+        comparable = jose.util.ComparableRSAKey(cert.key(password=None))
+        key = jose.jwk.JWKRSA(key=comparable)
+        jws = acme.jws.JWS.sign(msg.json_dumps().encode('utf-8'), key, jose.jwa.RS256,
+                                nonce=nonce, url=self.absolute_uri(uri))
+        return self.post(uri, jws.to_json())
 
     @override_tmpcadir()
     def test_basic(self):
@@ -302,26 +318,17 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCase, DjangoCAWithCATestCase):
 
         self.assertEqual(AcmeAccount.objects.count(), 0)
         contact = 'mailto:user@example.com'
-        nonce = self.get_nonce()
-        msg = acme.messages.Registration(
+        resp = self.acme(self.generic_url, acme.messages.Registration(
             contact=(contact, ),
             terms_of_service_agreed=True,
-        )
-        comparable = jose.util.ComparableRSAKey(self.ca.key(password=None))
-        key = jose.jwk.JWKRSA(key=comparable)
-
-        url = self.absolute_uri(self.generic_url)
-        jws = acme.jws.JWS.sign(msg.json_dumps().encode('utf-8'), key, jose.jwa.RS256,
-                                nonce=nonce, url=url)
-        resp = self.post(self.generic_url, jws.to_json())
+        ))
         self.assertEqual(resp.status_code, HTTPStatus.CREATED)
         self.assertAcmeResponse(resp)
 
         # Get first AcmeAccount - which must be the one we just created
-        acc = AcmeAccount.objects.get()
+        acc = AcmeAccount.objects.get(thumbprint='ERBwTPWxRgjzsjPaG8F1NTVQuA3a9QYWSL41Dcjxhe4')
         self.assertEqual(acc.status, AcmeAccount.STATUS_VALID)
         self.assertEqual(acc.ca, self.ca)
-        self.assertEqual(acc.thumbprint, 'S2TMj-a2xqznFiLu8HhqeomBqrtmI_97pUqXMsDasMY')
         self.assertEqual(acc.contact, contact)
         self.assertTrue(acc.terms_of_service_agreed)
 
@@ -335,51 +342,45 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCase, DjangoCAWithCATestCase):
         })
 
 
-@override_settings(ALLOWED_HOSTS=['localhost'])
 @freeze_time(timestamps['everything_valid'])
-class AcmeNewOrderViewTestCase(AcmeBaseViewTestCase, DjangoCAWithCATestCase):
+class AcmeNewOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test creating a new order."""
 
     generic_url = reverse('django_ca:acme-new-order', kwargs={'serial': certs['root']['serial']})
 
 
-@override_settings(ALLOWED_HOSTS=['localhost'])
 @freeze_time(timestamps['everything_valid'])
-class AcmeAuthorizationViewTestCase(AcmeBaseViewTestCase, DjangoCAWithCATestCase):
+class AcmeAuthorizationViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test creating a new order."""
 
     generic_url = reverse('django_ca:acme-authz', kwargs={'serial': certs['root']['serial'], 'slug': 'foo'})
 
 
-@override_settings(ALLOWED_HOSTS=['localhost'])
 @freeze_time(timestamps['everything_valid'])
-class AcmeChallengeViewTestCase(AcmeBaseViewTestCase, DjangoCAWithCATestCase):
+class AcmeChallengeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test retrieving a challenge."""
 
     generic_url = reverse('django_ca:acme-challenge',
                           kwargs={'serial': certs['root']['serial'], 'slug': 'foo'})
 
 
-@override_settings(ALLOWED_HOSTS=['localhost'])
 @freeze_time(timestamps['everything_valid'])
-class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCase, DjangoCAWithCATestCase):
+class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test retrieving a challenge."""
 
     generic_url = reverse('django_ca:acme-order-finalize',
                           kwargs={'serial': certs['root']['serial'], 'slug': 'foo'})
 
 
-@override_settings(ALLOWED_HOSTS=['localhost'])
 @freeze_time(timestamps['everything_valid'])
-class AcmeOrderViewTestCase(AcmeBaseViewTestCase, DjangoCAWithCATestCase):
+class AcmeOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test retrieving a challenge."""
 
     generic_url = reverse('django_ca:acme-order', kwargs={'serial': certs['root']['serial'], 'slug': 'foo'})
 
 
-@override_settings(ALLOWED_HOSTS=['localhost'])
 @freeze_time(timestamps['everything_valid'])
-class AcmeCertificateViewTestCase(AcmeBaseViewTestCase, DjangoCAWithCertTestCase):
+class AcmeCertificateViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test retrieving a challenge."""
 
     generic_url = reverse('django_ca:acme-cert', kwargs={'serial': certs['root']['serial'], 'slug': 'foo'})

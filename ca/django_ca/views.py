@@ -563,7 +563,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
         try:
             self.jws = acme.jws.JWS.json_loads(request.body)
         except jose.errors.DeserializationError:
-            return AcmeResponseMalformed('Could not parse JWS token.')
+            return AcmeResponseMalformed(message='Could not parse JWS token.')
 
         combined = self.jws.signature.combined
         if combined.jwk and combined.kid:
