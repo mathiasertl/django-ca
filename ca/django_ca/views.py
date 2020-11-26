@@ -65,6 +65,7 @@ from . import ca_settings
 from .acme import AcmeException
 from .acme import AcmeMalformed
 from .acme import AcmeObjectResponse
+from .acme import AcmeResponseAccount
 from .acme import AcmeResponseAccountCreated
 from .acme import AcmeResponseAuthorization
 from .acme import AcmeResponseBadNonce
@@ -715,91 +716,103 @@ class AcmeNewAccountView(AcmeBaseView):
     message_cls = messages.Registration
     requires_key = True
 
+    def validate_contacts(self, message):
+        """Validate the contact information for this message."""
+
+        for contact in message.contact:
+            if contact.startswith(messages.Registration.email_prefix):
+                addr = contact[len(messages.Registration.email_prefix):]
+
+                # RFC 8555, section 7.3
+                #
+                #   Clients MUST NOT provide a "mailto" URL in the "contact" field that contains "hfields"
+                #   [RFC6068] or more than one "addr-spec" in the "to" component.
+
+                # We rule out quoted local address fields, otherwise it's extremely hard to validate
+                # email addresses.
+                if addr.startswith('"'):
+                    raise AcmeMalformed('invalidContact', 'Quoted local part in email is not allowed.')
+
+                # Since the local part is not quoted, it cannot contain a ',' either, so a ',' means there
+                # is more than one "addr-spec" in the "to" component. (see RFC 8555 quote above)
+                if ',' in addr:
+                    raise AcmeMalformed('invalidContact', 'More than one addr-spec is not allowed.')
+
+                # Validate that there are no hfields in the address.
+                # NOTE: ',' appears to be valid in the local part according to RFC 5322
+                _local, domain = addr.split('@', 1)
+                if '?' in domain:
+                    raise AcmeMalformed('invalidContact', '%s: hfields are not allowed.' % domain)
+
+                # Finally, verify that we're getting at least a valid domain.
+                try:
+                    validate_email(addr)
+                except ValueError:
+                    raise AcmeMalformed('invalidContact', '%s: Not a valid email address.' % domain)
+            else:
+                # RFC 8555, section 7.3
+                #
+                #   If the server rejects a contact URL for using an unsupported scheme, it MUST raise an
+                #   error of type "unsupportedContact", ...
+                raise AcmeMalformed('unsupportedContact', '%s: Unsupported address scheme.' % contact)
+
     def acme_request(self, message):  # pylint: disable=arguments-differ; more concrete here
         pem = self.jwk['key'].public_bytes(
             encoding=Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo
         ).decode('utf-8').strip()
+        thumbprint = jose.encode_b64jose(self.jwk.thumbprint())
 
+        # RFC 8555, section 7.3:
+        #
+        #   If this field is present with the value "true", then the server MUST NOT create a new account if
+        #   one does not already exist.  This allows a client to look up an account URL based on an account
+        #   key (see Section 7.3.1).
         if message.only_return_existing:
-            # RFC 8555, section 7.3:
-            #
-            #   If this field is present with the value "true", then the server MUST NOT create a new account
-            #   if one does not already exist.  This allows a client to look up an account URL based on an
-            #   account key (see Section 7.3.1).
-            account = AcmeAccount.objects.get(pem=pem)
-        else:
-            if self.ca.acme_requires_contact and not message.emails:
-                return AcmeResponseUnauthorized(message='Must provide at least one contact address.')
-
-            # Verify that all contact addresses are valid email addresses (only thing we support and allow).
-            for contact in message.contact:
-                if contact.startswith(messages.Registration.email_prefix):
-                    addr = contact[len(messages.Registration.email_prefix):]
-
-                    # RFC 8555, section 7.3
-                    #
-                    #   Clients MUST NOT provide a "mailto" URL in the "contact" field that contains "hfields"
-                    #   [RFC6068] or more than one "addr-spec" in the "to" component.
-
-                    # We rule out quoted local address fields, otherwise it's extremely hard to validate
-                    # email addresses.
-                    if addr.startswith('"'):
-                        return AcmeResponseMalformed(
-                            typ='invalidContact',
-                            message='Quoted local part in email is not allowed.'
-                        )
-
-                    # Since the local part is not quoted, it cannot contain a ',' either, so a ',' means there
-                    # is more than one "addr-spec" in the "to" component. (see RFC 8555 quote above)
-                    if ',' in addr:
-                        return AcmeResponseMalformed(
-                            typ='invalidContact',
-                            message='More than one addr-spec is not allowed.'
-                        )
-
-                    # Validate that there are no hfields in the address.
-                    # NOTE: ',' appears to be valid in the local part according to RFC 5322
-                    _local, domain = addr.split('@', 1)
-                    if '?' in domain:
-                        return AcmeResponseMalformed(
-                            typ='invalidContact',
-                            message='%s: hfields are not allowed.' % domain
-                        )
-
-                    # Finally, verify that we're getting at least a valid domain.
-                    try:
-                        validate_email(addr)
-                    except ValueError:
-                        return AcmeResponseMalformed(
-                            typ='invalidContact',
-                            message='%s: Not a valid email address.' % domain
-                        )
-                else:
-                    # RFC 8555, section 7.3
-                    #
-                    #   If the server rejects a contact URL for using an unsupported scheme, it MUST return an
-                    #   error of type "unsupportedContact", ...
-                    return AcmeResponseMalformed(
-                        typ='unsupportedContact',
-                        message='Only email addresses are allowed for contact addresses.'
-                    )
-
-            account = AcmeAccount(
-                ca=self.ca,
-                contact='\n'.join(message.contact),
-                status=AcmeAccount.STATUS_VALID,
-                terms_of_service_agreed=message.terms_of_service_agreed,
-                thumbprint=jose.encode_b64jose(self.jwk.thumbprint()),
-                pem=pem
-            )
-
-            # Call full_clean() so that model validation can do its magic
             try:
-                account.full_clean()
-                account.save()
-            except ValidationError:
-                raise AcmeMalformed()  # pylint: disable=raise-missing-from
+                account = AcmeAccount.objects.get(thumbprint=thumbprint, pem=pem)
+                return AcmeResponseAccount(self.request, account)
+            except AcmeAccount.DoesNotExist:
+                # RFC 8555, section 7.3:
+                #
+                #   ... account does not exist, then the server MUST return an error response with status code
+                #   400 (Bad Request) and type "urn:ietf:params:acme:error:accountDoesNotExist".
+                return AcmeResponseMalformed(typ='accountDoesNotExist', message='Account does not exist.')
+
+        # RFC 8555, section 7.3.1
+        #
+        #   If the server receives a newAccount request signed with a key for which it already has an account
+        #   registered with the provided account key, then it MUST return a response with status code 200 (OK)
+        #   and provide the URL of that account in the Location header field.
+        try:
+            # NOTE: Filter for thumbprint too b/c index for the field should speed up lookups.
+            account = AcmeAccount.objects.get(thumbprint=thumbprint, pem=pem)
+            return AcmeResponseAccount(self.request, account)
+        except AcmeAccount.DoesNotExist:
+            pass
+
+        if self.ca.acme_requires_contact and not message.emails:
+            # NOTE: RFC 8555 does not specify an error code in this case
+            return AcmeResponseUnauthorized(message='Must provide at least one contact address.')
+
+        # Make sure that contact addresses are valid
+        self.validate_contacts(message)
+
+        account = AcmeAccount(
+            ca=self.ca,
+            contact='\n'.join(message.contact),
+            status=AcmeAccount.STATUS_VALID,
+            terms_of_service_agreed=message.terms_of_service_agreed,
+            thumbprint=thumbprint,
+            pem=pem
+        )
+
+        # Call full_clean() so that model validation can do its magic
+        try:
+            account.full_clean()
+            account.save()
+        except ValidationError:
+            return AcmeResponseMalformed(message="Account cannot be stored.")
 
         #self.prepared['thumbprint'] = account.thumbprint
         #self.prepared['pem'] = account.pem

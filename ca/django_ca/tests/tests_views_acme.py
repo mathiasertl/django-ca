@@ -298,6 +298,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
 class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test creating a new account."""
 
+    contact = 'mailto:user@example.com'
     generic_url = reverse('django_ca:acme-new-account', kwargs={'serial': certs['root']['serial']})
 
     def acme(self, uri, msg, cert=None, nonce=None):
@@ -317,9 +318,8 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
         """Basic test for creating an account via ACME."""
 
         self.assertEqual(AcmeAccount.objects.count(), 0)
-        contact = 'mailto:user@example.com'
         resp = self.acme(self.generic_url, acme.messages.Registration(
-            contact=(contact, ),
+            contact=(self.contact, ),
             terms_of_service_agreed=True,
         ))
         self.assertEqual(resp.status_code, HTTPStatus.CREATED)
@@ -329,17 +329,208 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
         acc = AcmeAccount.objects.get(thumbprint='ERBwTPWxRgjzsjPaG8F1NTVQuA3a9QYWSL41Dcjxhe4')
         self.assertEqual(acc.status, AcmeAccount.STATUS_VALID)
         self.assertEqual(acc.ca, self.ca)
-        self.assertEqual(acc.contact, contact)
+        self.assertEqual(acc.contact, self.contact)
         self.assertTrue(acc.terms_of_service_agreed)
 
         # Test the response body
         self.assertEqual(resp['location'], self.absolute_uri(':acme-account', serial=self.ca.serial,
                                                              pk=acc.pk))
         self.assertEqual(resp.json(), {
-            'contact': [contact],
+            'contact': [self.contact],
             'orders': self.absolute_uri(':acme-account-orders', serial=self.ca.serial, pk=acc.pk),
             'status': 'valid',
         })
+
+        # Test making a request where we already have a key
+        resp = self.acme(self.generic_url, acme.messages.Registration(
+            contact=('mailto:other@example.net', ),  # make sure that we do not update the user
+            terms_of_service_agreed=True,
+        ))
+        self.assertEqual(resp.status_code, HTTPStatus.OK)
+        self.assertAcmeResponse(resp)
+        self.assertEqual(resp['location'], self.absolute_uri(':acme-account', serial=self.ca.serial,
+                                                             pk=acc.pk))
+        self.assertEqual(resp.json(), {
+            'contact': [self.contact],
+            'orders': self.absolute_uri(':acme-account-orders', serial=self.ca.serial, pk=acc.pk),
+            'status': 'valid',
+        })
+        self.assertEqual(AcmeAccount.objects.count(), 1)
+
+        # test only_return existing:
+        resp = self.acme(self.generic_url, acme.messages.Registration(
+            contact=('mailto:other@example.net', ),  # make sure that we do not update the user
+            only_return_existing=True,
+        ))
+        self.assertEqual(resp.status_code, HTTPStatus.OK)
+        self.assertAcmeResponse(resp)
+        self.assertEqual(resp['location'], self.absolute_uri(':acme-account', serial=self.ca.serial,
+                                                             pk=acc.pk))
+        self.assertEqual(resp.json(), {
+            'contact': [self.contact],
+            'orders': self.absolute_uri(':acme-account-orders', serial=self.ca.serial, pk=acc.pk),
+            'status': 'valid',
+        })
+        self.assertEqual(AcmeAccount.objects.count(), 1)
+
+        # Test object properties one last time
+        acc = AcmeAccount.objects.get(thumbprint='ERBwTPWxRgjzsjPaG8F1NTVQuA3a9QYWSL41Dcjxhe4')
+        self.assertEqual(acc.status, AcmeAccount.STATUS_VALID)
+        self.assertEqual(acc.ca, self.ca)
+        self.assertEqual(acc.contact, self.contact)
+        self.assertTrue(acc.terms_of_service_agreed)
+
+    @override_tmpcadir()
+    def test_no_contact(self):
+        """Basic test for creating an account via ACME."""
+
+        self.ca.acme_requires_contact = False
+        self.ca.save()
+
+        self.assertEqual(AcmeAccount.objects.count(), 0)
+        resp = self.acme(self.generic_url, acme.messages.Registration(
+            terms_of_service_agreed=True,
+        ))
+        self.assertEqual(resp.status_code, HTTPStatus.CREATED)
+        self.assertAcmeResponse(resp)
+
+        # Get first AcmeAccount - which must be the one we just created
+        acc = AcmeAccount.objects.get(thumbprint='ERBwTPWxRgjzsjPaG8F1NTVQuA3a9QYWSL41Dcjxhe4')
+        self.assertEqual(acc.status, AcmeAccount.STATUS_VALID)
+        self.assertEqual(acc.ca, self.ca)
+        self.assertEqual(acc.contact, '')
+        self.assertTrue(acc.terms_of_service_agreed)
+
+        # Test the response body
+        self.assertEqual(resp['location'], self.absolute_uri(':acme-account', serial=self.ca.serial,
+                                                             pk=acc.pk))
+        self.assertEqual(resp.json(), {
+            'contact': [],
+            'orders': self.absolute_uri(':acme-account-orders', serial=self.ca.serial, pk=acc.pk),
+            'status': 'valid',
+        })
+
+    @override_tmpcadir()
+    def test_multiple_contacts(self):
+        """Test for creating an account with multiple email addresses."""
+
+        contact_2 = 'mailto:user@example.net'
+        resp = self.acme(self.generic_url, acme.messages.Registration(
+            contact=(self.contact, contact_2),
+            terms_of_service_agreed=True,
+        ))
+        self.assertEqual(resp.status_code, HTTPStatus.CREATED)
+        self.assertAcmeResponse(resp)
+
+        # Get first AcmeAccount - which must be the one we just created
+        acc = AcmeAccount.objects.get(thumbprint='ERBwTPWxRgjzsjPaG8F1NTVQuA3a9QYWSL41Dcjxhe4')
+        self.assertEqual(acc.status, AcmeAccount.STATUS_VALID)
+        self.assertEqual(acc.ca, self.ca)
+        self.assertCountEqual(acc.contact.split('\n'), [self.contact, contact_2])
+        self.assertTrue(acc.terms_of_service_agreed)
+
+        # Test the response body
+        self.assertEqual(resp['location'], self.absolute_uri(':acme-account', serial=self.ca.serial,
+                                                             pk=acc.pk))
+        self.assertEqual(resp.json(), {
+            'contact': [self.contact, contact_2],
+            'orders': self.absolute_uri(':acme-account-orders', serial=self.ca.serial, pk=acc.pk),
+            'status': 'valid',
+        })
+
+    @override_tmpcadir()
+    def test_contacts_required(self):
+        """Test failing to create an account if contact is required."""
+        self.ca.acme_requires_contact = True
+        self.ca.save()
+
+        resp = self.acme(self.generic_url, acme.messages.Registration(
+            terms_of_service_agreed=True,
+        ))
+        self.assertEqual(resp.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertAcmeProblem(resp, 'unauthorized', status=HTTPStatus.UNAUTHORIZED,
+                               message='Must provide at least one contact address.')
+        self.assertEqual(AcmeAccount.objects.count(), 0)
+
+    @override_tmpcadir()
+    def test_unsupported_contact(self):
+        """Test that creating an account with a phone number fails."""
+
+        resp = self.acme(self.generic_url, acme.messages.Registration(
+            contact=('tel:1234567', self.contact),
+            terms_of_service_agreed=True,
+        ))
+        self.assertEqual(resp.status_code, HTTPStatus.BAD_REQUEST)
+        self.assertAcmeProblem(resp, 'unsupportedContact', status=HTTPStatus.BAD_REQUEST,
+                               message='tel:1234567: Unsupported address scheme.')
+        self.assertEqual(AcmeAccount.objects.count(), 0)
+
+    @override_tmpcadir()
+    def test_invalid_email(self):
+        """Test that creating an account with a phone number fails."""
+
+        resp = self.acme(self.generic_url, acme.messages.Registration(
+            contact=('mailto:"with spaces"@example.com', ),
+            terms_of_service_agreed=True,
+        ))
+        self.assertEqual(resp.status_code, HTTPStatus.BAD_REQUEST)
+        self.assertAcmeProblem(resp, 'invalidContact', status=HTTPStatus.BAD_REQUEST,
+                               message='Quoted local part in email is not allowed.')
+        self.assertEqual(AcmeAccount.objects.count(), 0)
+
+        resp = self.acme(self.generic_url, acme.messages.Registration(
+            contact=('mailto:user@example.com,user@example.net', ),
+            terms_of_service_agreed=True,
+        ))
+        self.assertEqual(resp.status_code, HTTPStatus.BAD_REQUEST)
+        self.assertAcmeProblem(resp, 'invalidContact', status=HTTPStatus.BAD_REQUEST,
+                               message='More than one addr-spec is not allowed.')
+        self.assertEqual(AcmeAccount.objects.count(), 0)
+
+        resp = self.acme(self.generic_url, acme.messages.Registration(
+            contact=('mailto:user@example.com?who-uses=this', ),
+            terms_of_service_agreed=True,
+        ))
+        self.assertEqual(resp.status_code, HTTPStatus.BAD_REQUEST)
+        self.assertAcmeProblem(resp, 'invalidContact', status=HTTPStatus.BAD_REQUEST,
+                               message='example.com?who-uses=this: hfields are not allowed.')
+        self.assertEqual(AcmeAccount.objects.count(), 0)
+
+        resp = self.acme(self.generic_url, acme.messages.Registration(
+            contact=('mailto:user@example..com', ),
+            terms_of_service_agreed=True,
+        ))
+        self.assertEqual(resp.status_code, HTTPStatus.BAD_REQUEST)
+        self.assertAcmeProblem(resp, 'invalidContact', status=HTTPStatus.BAD_REQUEST,
+                               message='example..com: Not a valid email address.')
+        self.assertEqual(AcmeAccount.objects.count(), 0)
+
+    @override_tmpcadir()
+    def test_only_existing_does_not_exist(self):
+        """Test making an only_existing request for an account that does not exist."""
+
+        # test only_return existing:
+        resp = self.acme(self.generic_url, acme.messages.Registration(
+            only_return_existing=True,
+        ))
+        self.assertAcmeProblem(resp, 'accountDoesNotExist', status=HTTPStatus.BAD_REQUEST,
+                               message='Account does not exist.')
+        self.assertEqual(AcmeAccount.objects.count(), 0)
+
+    @override_tmpcadir()
+    def test_validation_error(self):
+        """Test triggering a model validation error.
+
+        Note that at present it's probably inpossible to have such an error in real life as no fields have any
+        validation of user-generated input that would not be captured before model validation.
+        """
+        with mock.patch('josepy.jwk.JWKRSA.thumbprint', return_value=b'abc' * 64):
+            resp = self.acme(self.generic_url, acme.messages.Registration(
+                contact=(self.contact, ),
+                terms_of_service_agreed=True,
+            ))
+            self.assertAcmeProblem(resp, 'malformed', status=HTTPStatus.BAD_REQUEST,
+                                   message='Account cannot be stored.')
 
 
 @freeze_time(timestamps['everything_valid'])
