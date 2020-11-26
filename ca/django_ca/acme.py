@@ -40,15 +40,17 @@ class AcmeObjectResponse(AcmeResponse):
         super().__init__(obj.to_json())
 
 
-class AcmeResponseAccountCreated(AcmeResponse):
-    """Response when an ACME account is created."""
-
-    status_code = HTTPStatus.CREATED
+class AcmeResponseAccount(AcmeResponse):
+    """Response containing an ACME account."""
 
     def __init__(self, request, account):
+        contact = []
+        if account.contact:
+            contact = account.contact.split('\n')
+
         data = {
             'status': account.status,
-            'contact': [account.contact],
+            'contact': contact,
             'orders': request.build_absolute_uri(
                 reverse('django_ca:acme-account-orders', kwargs={'pk': account.pk,
                                                                  'serial': account.ca.serial})),
@@ -58,6 +60,12 @@ class AcmeResponseAccountCreated(AcmeResponse):
 
         self['Location'] = request.build_absolute_uri(
             reverse('django_ca:acme-account', kwargs={'pk': account.pk, 'serial': account.ca.serial}))
+
+
+class AcmeResponseAccountCreated(AcmeResponseAccount):
+    """Response when an ACME account is created."""
+
+    status_code = HTTPStatus.CREATED
 
 
 class AcmeResponseOrder(AcmeSimpleResponse):
@@ -141,8 +149,12 @@ class AcmeResponseUnsupportedMediaType(AcmeResponseMalformed):
 class AcmeException(Exception):
     response = AcmeResponseError
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args)
+        self.kwargs = kwargs
+
     def get_response(self):
-        return self.response(*self.args)
+        return self.response(*self.args, **self.kwargs)
 
 
 class AcmeMalformed(AcmeException):
