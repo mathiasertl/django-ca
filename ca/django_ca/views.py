@@ -27,7 +27,6 @@ import secrets
 from datetime import datetime
 from datetime import timedelta
 from http import HTTPStatus
-from urllib.parse import urlparse
 
 import acme.jws
 import josepy as jose
@@ -53,7 +52,6 @@ from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseServerError
 from django.http import JsonResponse
-from django.urls import resolve
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -589,9 +587,9 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
             try:
                 account = AcmeAccount.objects.get(acme_kid=combined.kid)
             except AcmeAccount.DoesNotExist:
-                return AcmeResponseUnauthorized()
+                return AcmeResponseUnauthorized(message='Account not found.')
             if account.usable is False:
-                return AcmeResponseUnauthorized()
+                return AcmeResponseUnauthorized(message='Account not usable.')
             #self.prepared['thumbprint'] = account.thumbprint
             #self.prepared['pem'] = account.pem
             #self.prepared['account_pk'] = account.pk
@@ -611,12 +609,12 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
 
         if len(self.jws.signatures) != 1:
             # RFC 8555, 6.2: "The JWS MUST NOT have multiple signatures"
-            return AcmeResponseMalformed('Multiple JWS signatures encountered.')
+            return AcmeResponseMalformed(message='Multiple JWS signatures encountered.')
 
         # "The JWS Protected Header MUST include the following fields:...
         if not combined.alg or combined.alg == 'none':
             # ... "alg"
-            return AcmeResponseMalformed('No algorithm specified.')
+            return AcmeResponseMalformed(message='No algorithm specified.')
 
         # Get certificate authority for this request
         try:

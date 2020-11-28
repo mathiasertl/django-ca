@@ -43,6 +43,8 @@ MIfadw4ljk7cVbrSYemT6e59ATYxiMXalu5/4v22958voEBZ38TE8AXWiEtTQYwv
 /Kj0P67yuzE94zNdT28pu+jJYr5nHusa2NCbvnYFkDwzigmwCxVt9kW3xj3gfpgc
 VQIDAQAB
 -----END PUBLIC KEY-----'''
+ACME_SLUG_1 = 'Mr6FfdD68lzp'
+ACME_SLUG_2 = 'DzW4PQ6L76PE'
 
 THUMBPRINT1 = 'U-yUM27CQn9pClKlEITobHB38GJOJ9YbOxnw5KKqU-8'
 THUMBPRINT2 = 's_glgc6Fem0CW7ZioXHBeuUQVHSO-viZ3xNR8TBebCo'
@@ -59,12 +61,18 @@ class AcmeAccountViewsTestCase(StandardAdminViewTestMixin, DjangoCAWithCATestCas
 
     def setUp(self):
         super().setUp()
+        self.kid1 = 'http://example.com%s' % self.absolute_uri(
+            ':acme-account', serial=self.cas['child'].serial, slug=ACME_SLUG_1)
         self.account1 = AcmeAccount.objects.create(
             ca=self.cas['child'], contact=self.email, status=AcmeAccount.STATUS_VALID,
-            terms_of_service_agreed=True, pem=PEM1, thumbprint=THUMBPRINT1)
+            terms_of_service_agreed=True, pem=PEM1, thumbprint=THUMBPRINT1, slug=ACME_SLUG_1,
+            acme_kid=self.kid1)
+        self.kid2 = 'http://example.com%s' % self.absolute_uri(
+            ':acme-account', serial=self.cas['root'].serial, slug=ACME_SLUG_1)
         self.account2 = AcmeAccount.objects.create(
             ca=self.cas['root'], contact=self.email, status=AcmeAccount.STATUS_REVOKED,
-            terms_of_service_agreed=False, pem=PEM2, thumbprint=THUMBPRINT2)
+            terms_of_service_agreed=False, pem=PEM2, thumbprint=THUMBPRINT2, slug=ACME_SLUG_2,
+            acme_kid=self.kid2)
 
 
 class AcmeOrderViewsTestCase(AcmeAccountViewsTestCase):

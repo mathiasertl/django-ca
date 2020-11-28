@@ -74,6 +74,8 @@ MIfadw4ljk7cVbrSYemT6e59ATYxiMXalu5/4v22958voEBZ38TE8AXWiEtTQYwv
 /Kj0P67yuzE94zNdT28pu+jJYr5nHusa2NCbvnYFkDwzigmwCxVt9kW3xj3gfpgc
 VQIDAQAB
 -----END PUBLIC KEY-----'''
+ACME_SLUG_1 = 'Mr6FfdD68lzp'
+ACME_SLUG_2 = 'DzW4PQ6L76PE'
 
 
 class TestWatcher(TestCase):
@@ -665,12 +667,21 @@ class AcmeAccountTestCase(DjangoCAWithGeneratedCAsTestCase):
 
     def setUp(self):
         super().setUp()
+
+        self.kid1 = 'http://example.com%s' % self.absolute_uri(
+            ':acme-account', serial=self.cas['root'].serial, slug=ACME_SLUG_1)
         self.account1 = AcmeAccount.objects.create(
             ca=self.cas['root'], contact='user@example.com', terms_of_service_agreed=True,
-            status=AcmeAccount.STATUS_VALID, pem=ACME_PEM_1, thumbprint=ACME_THUMBPRINT_1)
+            status=AcmeAccount.STATUS_VALID, pem=ACME_PEM_1, thumbprint=ACME_THUMBPRINT_1,
+            slug=ACME_SLUG_1, acme_kid=self.kid1
+        )
+        self.kid2 = 'http://example.com%s' % self.absolute_uri(
+            ':acme-account', serial=self.cas['child'].serial, slug=ACME_SLUG_2)
         self.account2 = AcmeAccount.objects.create(
             ca=self.cas['child'], contact='user@example.net', terms_of_service_agreed=False,
-            status=AcmeAccount.STATUS_REVOKED, pem=ACME_PEM_2, thumbprint=ACME_THUMBPRINT_2)
+            status=AcmeAccount.STATUS_REVOKED, pem=ACME_PEM_2, thumbprint=ACME_THUMBPRINT_2,
+            slug=ACME_SLUG_2, acme_kid=self.kid2
+        )
 
     def test_str(self):
         """Test str() function."""
