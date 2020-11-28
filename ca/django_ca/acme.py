@@ -52,14 +52,12 @@ class AcmeResponseAccount(AcmeResponse):
             'status': account.status,
             'contact': contact,
             'orders': request.build_absolute_uri(
-                reverse('django_ca:acme-account-orders', kwargs={'pk': account.pk,
+                reverse('django_ca:acme-account-orders', kwargs={'slug': account.slug,
                                                                  'serial': account.ca.serial})),
         }
 
         super().__init__(data)
-
-        self['Location'] = request.build_absolute_uri(
-            reverse('django_ca:acme-account', kwargs={'pk': account.pk, 'serial': account.ca.serial}))
+        self['Location'] = account.acme_kid
 
 
 class AcmeResponseAccountCreated(AcmeResponseAccount):

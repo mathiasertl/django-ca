@@ -14,19 +14,25 @@
 """Test ACME related views."""
 
 import json
+from contextlib import contextmanager
 from http import HTTPStatus
 from unittest import mock
 
 import acme
 import josepy as jose
+import pyrfc3339
 from requests.utils import parse_header_links
 
 from django.test.utils import override_settings
 from django.urls import reverse
+from django.utils import timezone
+from django.utils.crypto import get_random_string
 
 from freezegun import freeze_time
 
+from .. import ca_settings
 from ..models import AcmeAccount
+from ..models import AcmeOrder
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
 from .base import certs
@@ -187,12 +193,27 @@ class DirectoryTestCase(DjangoCAWithCATestCase):
 class AcmeTestCaseMixin:
     """TestCase mixin with various common utility functions."""
 
-    def setUp(self):  # pylint: disable=invalid-name
+    SERVER_NAME = 'example.com'
+    PEM = '''-----BEGIN PUBLIC KEY-----
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDF9BgQzTqQQnCLTcniyO++uDyb
+RWtl+pCaG18whZOFa5ei+Sf0Qv9Z0cvOtZpxs3fE/IBVExKvZExtSf7JiBvh8Jv1
+85svKEiZOhlkxB3sSem1xTdkPIr/kpgswK1BoWqX0pP5EQuVn483jXNNFWvaYM6H
+KSAr5SU7IyM/9M95oQIDAQAB
+-----END PUBLIC KEY-----'''
+
+    def setUp(self):  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()
         self.ca = self.cas['root']
         self.cert = self.cas['child']  # actually a ca, but doesn't matter
         self.ca.acme_enabled = True
         self.ca.save()
+        self.client.defaults['SERVER_NAME'] = self.SERVER_NAME
+
+    def absolute_uri(self, name, **kwargs):
+        """Override to set a default for `hostname`."""
+
+        kwargs.setdefault('hostname', self.SERVER_NAME)
+        return super().absolute_uri(name, **kwargs)
 
     def assertAcmeProblem(self, response, typ, status, message, ca=None):  # pylint: disable=invalid-name
         """Assert that a HTTP response confirms to an ACME problem report.
@@ -238,8 +259,14 @@ class AcmeTestCaseMixin:
 
         url = reverse('django_ca:acme-new-nonce', kwargs={'serial': ca.serial})
         response = self.client.head(url)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(response.status_code, HTTPStatus.OK, response.content)
         return jose.decode_b64jose(response['replay-nonce'])
+
+    @contextmanager
+    def mock_slug(self):
+        slug = get_random_string(length=12)
+        with mock.patch('django_ca.models.get_random_string', return_value=slug):
+            yield slug
 
     def post(self, url, data, **kwargs):
         """Make a post request with some ACME specific default data."""
@@ -286,6 +313,28 @@ class AcmeNewNonceViewTestCase(DjangoCAWithCATestCase):
 class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
     """Base class with test cases for all views."""
 
+    def acme(self, uri, msg, cert=None, kid=None, nonce=None):
+        """Do a generic ACME request."""
+
+        if nonce is None:
+            nonce = self.get_nonce()
+        if cert is None:
+            cert = self.cert
+
+        comparable = jose.util.ComparableRSAKey(cert.key(password=None))
+        key = jose.jwk.JWKRSA(key=comparable)
+        jws = acme.jws.JWS.sign(msg.json_dumps().encode('utf-8'), key, jose.jwa.RS256,
+                                nonce=nonce, url=self.absolute_uri(uri), kid=kid)
+        return self.post(uri, jws.to_json())
+
+    def get_basic_message(self):
+        """Return a basic message that can be sent to the server successfully.
+
+        This function is used by test cases that want to get a useful message and manipulate it in some way so
+        that it violates the ACME spec.
+        """
+        raise NotImplementedError
+
     def test_invalid_json(self):
         """Test sending invalid JSON to the server."""
 
@@ -301,28 +350,19 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
     contact = 'mailto:user@example.com'
     generic_url = reverse('django_ca:acme-new-account', kwargs={'serial': certs['root']['serial']})
 
-    def acme(self, uri, msg, cert=None, nonce=None):
-        if nonce is None:
-            nonce = self.get_nonce()
-        if cert is None:
-            cert = self.cert
-
-        comparable = jose.util.ComparableRSAKey(cert.key(password=None))
-        key = jose.jwk.JWKRSA(key=comparable)
-        jws = acme.jws.JWS.sign(msg.json_dumps().encode('utf-8'), key, jose.jwa.RS256,
-                                nonce=nonce, url=self.absolute_uri(uri))
-        return self.post(uri, jws.to_json())
+    def get_basic_message(self):
+        return acme.messages.Registration(
+            contact=(self.contact, ),
+            terms_of_service_agreed=True,
+        )
 
     @override_tmpcadir()
     def test_basic(self):
         """Basic test for creating an account via ACME."""
 
         self.assertEqual(AcmeAccount.objects.count(), 0)
-        resp = self.acme(self.generic_url, acme.messages.Registration(
-            contact=(self.contact, ),
-            terms_of_service_agreed=True,
-        ))
-        self.assertEqual(resp.status_code, HTTPStatus.CREATED)
+        resp = self.acme(self.generic_url, self.get_basic_message())
+        self.assertEqual(resp.status_code, HTTPStatus.CREATED, resp.content)
         self.assertAcmeResponse(resp)
 
         # Get first AcmeAccount - which must be the one we just created
@@ -331,13 +371,14 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
         self.assertEqual(acc.ca, self.ca)
         self.assertEqual(acc.contact, self.contact)
         self.assertTrue(acc.terms_of_service_agreed)
+        self.assertEqual(acc.pem, self.PEM)
 
         # Test the response body
         self.assertEqual(resp['location'], self.absolute_uri(':acme-account', serial=self.ca.serial,
-                                                             pk=acc.pk))
+                                                             slug=acc.slug))
         self.assertEqual(resp.json(), {
             'contact': [self.contact],
-            'orders': self.absolute_uri(':acme-account-orders', serial=self.ca.serial, pk=acc.pk),
+            'orders': self.absolute_uri(':acme-account-orders', serial=self.ca.serial, slug=acc.slug),
             'status': 'valid',
         })
 
@@ -349,10 +390,10 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
         self.assertEqual(resp.status_code, HTTPStatus.OK)
         self.assertAcmeResponse(resp)
         self.assertEqual(resp['location'], self.absolute_uri(':acme-account', serial=self.ca.serial,
-                                                             pk=acc.pk))
+                                                             slug=acc.slug))
         self.assertEqual(resp.json(), {
             'contact': [self.contact],
-            'orders': self.absolute_uri(':acme-account-orders', serial=self.ca.serial, pk=acc.pk),
+            'orders': self.absolute_uri(':acme-account-orders', serial=self.ca.serial, slug=acc.slug),
             'status': 'valid',
         })
         self.assertEqual(AcmeAccount.objects.count(), 1)
@@ -365,10 +406,10 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
         self.assertEqual(resp.status_code, HTTPStatus.OK)
         self.assertAcmeResponse(resp)
         self.assertEqual(resp['location'], self.absolute_uri(':acme-account', serial=self.ca.serial,
-                                                             pk=acc.pk))
+                                                             slug=acc.slug))
         self.assertEqual(resp.json(), {
             'contact': [self.contact],
-            'orders': self.absolute_uri(':acme-account-orders', serial=self.ca.serial, pk=acc.pk),
+            'orders': self.absolute_uri(':acme-account-orders', serial=self.ca.serial, slug=acc.slug),
             'status': 'valid',
         })
         self.assertEqual(AcmeAccount.objects.count(), 1)
@@ -403,10 +444,10 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
 
         # Test the response body
         self.assertEqual(resp['location'], self.absolute_uri(':acme-account', serial=self.ca.serial,
-                                                             pk=acc.pk))
+                                                             slug=acc.slug))
         self.assertEqual(resp.json(), {
             'contact': [],
-            'orders': self.absolute_uri(':acme-account-orders', serial=self.ca.serial, pk=acc.pk),
+            'orders': self.absolute_uri(':acme-account-orders', serial=self.ca.serial, slug=acc.slug),
             'status': 'valid',
         })
 
@@ -431,10 +472,10 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
 
         # Test the response body
         self.assertEqual(resp['location'], self.absolute_uri(':acme-account', serial=self.ca.serial,
-                                                             pk=acc.pk))
+                                                             slug=acc.slug))
         self.assertEqual(resp.json(), {
             'contact': [self.contact, contact_2],
-            'orders': self.absolute_uri(':acme-account-orders', serial=self.ca.serial, pk=acc.pk),
+            'orders': self.absolute_uri(':acme-account-orders', serial=self.ca.serial, slug=acc.slug),
             'status': 'valid',
         })
 
@@ -538,6 +579,44 @@ class AcmeNewOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase
     """Test creating a new order."""
 
     generic_url = reverse('django_ca:acme-new-order', kwargs={'serial': certs['root']['serial']})
+
+    def setUp(self):
+        super().setUp()
+        self.account_slug = 'abc'
+        self.account_kid = 'http://%s%s' % (self.SERVER_NAME, self.absolute_uri(
+            ':acme-account', serial=self.ca.serial, slug=self.account_slug
+        ))
+        self.account = AcmeAccount.objects.create(
+            ca=self.ca, terms_of_service_agreed=True, slug='abc', acme_kid=self.account_kid, pem=self.PEM
+        )
+
+    def get_basic_message(self):
+        return acme.messages.NewOrder(
+            identifiers=[{'type': 'dns', 'value': self.SERVER_NAME}],
+        )
+
+    @override_tmpcadir(USE_TZ=True)
+    def test_basic(self):
+        """Basic test for creating an account via ACME."""
+
+        with self.mock_slug() as slug:
+            resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        self.assertEqual(resp.status_code, HTTPStatus.CREATED, resp.content)
+
+        expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
+        self.assertEqual(resp.json(), {
+            'authorizations': [
+                self.absolute_uri(':acme-authz', serial=self.ca.serial, slug=slug),
+            ],
+            'expires': pyrfc3339.generate(expires),
+            'finalize': self.absolute_uri(':acme-order-finalize', serial=self.ca.serial, slug=slug),
+            'identifiers': [{'type': 'dns', 'value': self.SERVER_NAME}],
+            'status': 'pending'
+        })
+
+        order = AcmeOrder.objects.get(account=self.account)
+        self.assertEqual(order.status, 'pending')
+        self.assertEqual(order.slug, slug)
 
 
 @freeze_time(timestamps['everything_valid'])

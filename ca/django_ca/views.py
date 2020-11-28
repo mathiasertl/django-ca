@@ -586,18 +586,8 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
                 return AcmeResponseMalformed('Request requires a full JWK key.')
 
             # combined.kid is a full URL pointing to the account.
-            parsed_url = urlparse(combined.kid)
-            match = resolve(parsed_url.path)
-            if match.app_name != 'django_ca' or match.namespace != 'django_ca' \
-                    or match.url_name != 'acme-account':
-                return AcmeResponseMalformed('%s: Not an account URL.' % combined.kid)
-            if request.build_absolute_uri(parsed_url.path) != combined.kid:
-                # If the two URLs are not identical, it means the request contained e.g. a different hostname
-                # or similar.
-                return AcmeResponseMalformed('%s: Not a valid account URL.' % combined.kid)
-
             try:
-                account = AcmeAccount.objects.get(pk=match.kwargs['pk'])
+                account = AcmeAccount.objects.get(acme_kid=combined.kid)
             except AcmeAccount.DoesNotExist:
                 return AcmeResponseUnauthorized()
             if account.usable is False:
@@ -608,8 +598,11 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
 
             # load and verify JWK
             self.jwk = jose.JWK.load(account.pem.encode('utf-8'))
-            if not self.jws.verify(self.jwk):
-                return AcmeResponseMalformed('JWS signature invalid.')
+            try:
+                if not self.jws.verify(self.jwk):
+                    return AcmeResponseMalformed('JWS signature invalid.')
+            except Exception:
+                return AcmeResponseMalformed('Cannot parse JWS signature.')
 
             self.account = account
         else:
@@ -806,6 +799,7 @@ class AcmeNewAccountView(AcmeBaseView):
             thumbprint=thumbprint,
             pem=pem
         )
+        account.set_acme_kid(self.request)
 
         # Call full_clean() so that model validation can do its magic
         try:
