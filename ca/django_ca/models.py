@@ -1092,6 +1092,8 @@ class AcmeAccount(models.Model):
     # JSON Web Key thumbprint - a hash of the public key, see RFC 7638.
     #   NOTE: Only unique for the given CA to make hash collisions less likely
     thumbprint = models.CharField(max_length=64)
+    slug = models.SlugField(unique=True, default=acme_slug)
+    acme_kid = models.URLField(unique=True)  # NOTE: schems for URLValidator?
 
     # Fields according to RFC 8555, 7.1.2
     # RFC 8555, 7.1.6: "Account objects are created in the "valid" state"
@@ -1115,6 +1117,15 @@ class AcmeAccount(models.Model):
     def serial(self):
         """Serial of the CA for this account."""
         return self.ca.serial
+
+    def set_acme_kid(self, request):
+        """Set the ACME kid based on this accounts CA and slug.
+
+        Note that `slug` and `ca` must be already set when using this method.
+        """
+        self.acme_kid = request.build_absolute_uri(
+            reverse('django_ca:acme-account', kwargs={'slug': self.slug, 'serial': self.ca.serial})
+        )
 
     @property
     def usable(self):
