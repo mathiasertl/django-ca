@@ -30,9 +30,9 @@ script:
   - wget https://github.com/mozilla/geckodriver/releases/download/v0.26.0/geckodriver-v0.26.0-linux64.tar.gz
   - tar xf geckodriver-v0.26.0-linux64.tar.gz -C contrib/selenium
 
+  - echo -e "DEBUG = True\nSECRET_KEY = 'dummy'" > ca/ca/localsettings.py
   - python dev.py code-quality
   - python dev.py coverage --format=text
-  - echo -e "DEBUG = True\nSECRET_KEY = 'dummy'" > ca/ca/localsettings.py
   - python dev.py init-demo
   - python setup.py install
   - make -C docs html-check
