@@ -212,6 +212,13 @@ CA_ENABLE_ACME
    Set to ``True`` to enable ACME functionality. If set to ``False`` (the default), all ACME functionality is
    disabled.
 
+.. _settings-acme-max-cert-validity:
+
+CA_ACME_MAX_CERT_VALIDITY
+   Default: ``timedelta(days=90)``
+
+   A timedelta representing the maximum validity time any certificate issued via ACME is valid.
+
 .. _settings-acme-order-validity:
 
 ACME_ORDER_VALIDITY

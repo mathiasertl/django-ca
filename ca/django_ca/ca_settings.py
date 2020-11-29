@@ -186,8 +186,9 @@ CA_CRL_PROFILES = getattr(settings, 'CA_CRL_PROFILES', _CA_CRL_PROFILES)
 CA_PASSWORDS = getattr(settings, 'CA_PASSWORDS', {})
 
 # ACME settings
-ACME_ORDER_VALIDITY = getattr(settings, 'ACME_ORDER_VALIDITY', timedelta(days=1))
+ACME_ORDER_VALIDITY = getattr(settings, 'ACME_ORDER_VALIDITY', timedelta(hours=1))
 ACME_ACCOUNT_REQUIRES_CONTACT = getattr(settings, 'ACME_ACCOUNT_REQUIRES_CONTACT', True)
+ACME_MAX_CERT_VALIDITY = getattr(settings, 'CA_ACME_MAX_CERT_VALIDITY', timedelta(days=90))
 
 # Undocumented options, e.g. to share values between different parts of code
 CA_MIN_KEY_SIZE = getattr(settings, 'CA_MIN_KEY_SIZE', 2048)
