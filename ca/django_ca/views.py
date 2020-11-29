@@ -709,12 +709,14 @@ class AcmeNewNonceView(AcmeGetNonceViewMixin, View):
 class AcmeNewAccountView(AcmeBaseView):
     """Implements endpoint for creating a new account, that is ``/acme/new-account``.
 
+    This view is called when the ACME client tries to register a new account.
+
     .. seealso:: `RFC 8555, 7.3 <https://tools.ietf.org/html/rfc8555#section-7.3>`_
     """
     message_cls = messages.Registration
     requires_key = True
 
-    def validate_contacts(self, message):
+    def validate_contacts(self, message):  # pylint: disable=no-self-use
         """Validate the contact information for this message."""
 
         for contact in message.contact:
@@ -745,8 +747,8 @@ class AcmeNewAccountView(AcmeBaseView):
                 # Finally, verify that we're getting at least a valid domain.
                 try:
                     validate_email(addr)
-                except ValueError:
-                    raise AcmeMalformed('invalidContact', '%s: Not a valid email address.' % domain)
+                except ValueError as ex:
+                    raise AcmeMalformed('invalidContact', '%s: Not a valid email address.' % domain) from ex
             else:
                 # RFC 8555, section 7.3
                 #
@@ -837,6 +839,8 @@ class AcmeAccountOrdersView(AcmeBaseView):
 class AcmeNewOrderView(AcmeBaseView):
     """Implements endpoint for applying for a new certificate, that is ``/acme/new-order``.
 
+    This is the first request of an ACME client when requesting a new certificate.
+
     If the client receives a successful response, it will next fetch the authorizations listed in it, which
     are served by :py:class:`~django_ca.views.AcmeAuthorizationView`.
 
@@ -896,7 +900,11 @@ class AcmeNewOrderView(AcmeBaseView):
 class AcmeOrderView(AcmeBaseView):
     """Implements endpoint for viewing an order, that is ``/acme/order/<slug>/``.
 
-    A client fcalls this
+    A client calls this view after calling :py:class:`~acme:acme.messages.AcmeOrderFinalizeView`, presumably
+    to retrieve final information about this certificate. This view itself is sparsely documented in RFC 8555.
+
+    This view does seem to be a little redundant too, as the response is almost identical to the response the
+    client received in the previous request. Nevertheless, certbot still calls this view and fails without it.
 
     .. seealso:: `RFC 8555, 7.4 <https://tools.ietf.org/html/rfc8555#section-7.4>`_
     """
@@ -1000,6 +1008,8 @@ class AcmeOrderFinalizeView(AcmeBaseView):
 class AcmeCertificateView(AcmeBaseView):
     """Implements endpoint to download a certificate, that is ``/acme/cert/<slug>/``.
 
+    This is the final view called in the certificate validation process and downloads the issued certificate.
+
     .. seealso:: `RFC8555, 8555, 7.4.2 <https://tools.ietf.org/html/rfc8555#section-7.4.2>`_
     """
     post_as_get = True
@@ -1014,7 +1024,20 @@ class AcmeCertificateView(AcmeBaseView):
 
 
 class AcmeAuthorizationView(AcmeBaseView):
-    """Implements endpoint for i)dentifier authorization, that is ``/acme/authz/<slug>/``.
+    """Implements endpoint for identifier authorization, that is ``/acme/authz/<slug>/``.
+
+    This is the second request when a client requests a new certificate and represents an authorization
+    request for one of the identifiers in the order. The URL for this view is returned by the
+    :py:class:`~django_ca.views.AcmeNewOrderView`.
+
+    This view returns URLs to the challenges served by ::py:class:`~django_ca.views.AcmeChallengeView`. The
+    client will then post to one of these challenges to start the validation process.
+
+    The client periodically polls this view after initiating a challenge to know when the server has
+    successfully validated the challenge.
+
+    Note that this resource accepts both a post-as-get request but also a response body: RFC 8555, section
+    7.5.2 describes deactivating an account authorization.
 
     .. seealso:: `RFC 8555, 7.5 <https://tools.ietf.org/html/rfc8555#section-7.5>`_
     """
@@ -1022,6 +1045,8 @@ class AcmeAuthorizationView(AcmeBaseView):
     post_as_get = True
 
     def acme_request(self, slug):  # pylint: disable=arguments-differ; more concrete here
+        # TODO: implement deactivating an authorization (sectio 7.5.2)
+
         try:
             # TODO: filter for AcmeOrder status
             auth = AcmeAccountAuthorization.objects.select_related('order').get(slug=slug)
@@ -1059,7 +1084,17 @@ class AcmeAuthorizationView(AcmeBaseView):
 class AcmeChallengeView(AcmeBaseView):
     """Implements ``/acme/chall/<slug>``, indicating to the server that the challenge can now be validated.
 
-    .. seealso:: https://tools.ietf.org/html/rfc8555#section-7.1.5
+    The client calls this view to tell the server to start validation of the resource of this challenges
+    resource using the challenge method (http-01, dns-01, ...) for this challenge.
+
+    After this view is called, the client will poll :py:class:`~django_ca.views.AcmeAuthorizationView` to know
+    when the server has validated the challenge. After successful validation the client calls
+    :py:class:`~django_ca.views.AcmeOrderFinalizeView` to request issuing of the certificate.
+
+    .. seealso::
+
+        * `RFC 8555, section 7.1.5 <https://tools.ietf.org/html/rfc8555#section-7.1.5>`_
+        * `RFC 8555, section 7.5.1 <https://tools.ietf.org/html/rfc8555#section-7.5.1>`_
     """
 
     ignore_body = True
