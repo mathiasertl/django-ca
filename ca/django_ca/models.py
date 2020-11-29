@@ -1194,8 +1194,8 @@ class AcmeOrder(models.Model):
         return self.account.serial
 
     def add_authorizations(self, identifiers):
-        self.authorizations.bulk_create(
-            [AcmeAccountAuthorization(type=ident.typ.name, value=ident.value) for ident in identifiers]
+        return self.authorizations.bulk_create(
+            [AcmeAccountAuthorization(type=ident.typ.name, value=ident.value, order=self) for ident in identifiers]
         )
 
     def add_authorization(self, identifier):
@@ -1260,7 +1260,7 @@ class AcmeAccountAuthorization(models.Model):
     slug = models.SlugField(unique=True, default=acme_slug)
 
     # Fields according to RFC 8555, 7.1.4:
-    # NOTE: RFC 8555 does not specify a default value but DNS is the only default value
+    # NOTE: RFC 8555 does not specify a default value but DNS is the only known value
     type = models.CharField(choices=TYPE_CHOICES, max_length=8, default=TYPE_DNS)  # identifier
     value = models.CharField(max_length=255)  # identifier
     # RFC 8555, 7.1.6: "Authorization objects are created in the "pending" state."

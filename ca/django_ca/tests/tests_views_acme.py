@@ -268,7 +268,7 @@ KSAr5SU7IyM/9M95oQIDAQAB
         return jose.decode_b64jose(response['replay-nonce'])
 
     @contextmanager
-    def mock_slug(self):
+    def mock_slug(self):  # pylint: disable=no-self-use
         """Mock random slug generation, yields the static value."""
 
         slug = get_random_string(length=12)

@@ -534,6 +534,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
             response = super().dispatch(request, *args, **kwargs)
             self.set_link_relations(response)
         except Exception as ex:  # pylint: disable=broad-except
+            raise
             log.exception(ex)
             response = AcmeResponseError(message='Internal server error')
 
@@ -872,10 +873,8 @@ class AcmeNewOrderView(AcmeBaseView):
         # TODO: test if identifiers are acceptable
         order = AcmeOrder.objects.create(account=self.account, not_before=not_before, not_after=not_after)
 
-        authorizations = []
-        for ident in message.identifiers:
-            authz = order.add_authorization(ident)
-            authorizations.append(self.request.build_absolute_uri(authz.acme_url))
+        authorizations = [self.request.build_absolute_uri(authz.acme_url)
+                          for authz in order.add_authorizations(message.identifiers)]
 
         expires = order.expires
         if timezone.is_naive(expires):  # acme.messages.Order requires a timezone-aware object
