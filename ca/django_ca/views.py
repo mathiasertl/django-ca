@@ -70,12 +70,14 @@ from .acme import AcmeResponseBadNonce
 from .acme import AcmeResponseError
 from .acme import AcmeResponseForbidden
 from .acme import AcmeResponseMalformed
+from .acme import AcmeResponseMalformedPayload
 from .acme import AcmeResponseNotFound
 from .acme import AcmeResponseOrder
 from .acme import AcmeResponseOrderCreated
 from .acme import AcmeResponseUnauthorized
 from .acme import AcmeResponseUnsupportedMediaType
 from .acme import AcmeUnauthorized
+from .acme import NewOrder
 from .models import AcmeAccount
 from .models import AcmeAccountAuthorization
 from .models import AcmeCertificate
@@ -648,7 +650,11 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
                 response = e.get_response()
         else:
             message_cls = self.get_message_cls(request, **kwargs)
-            message = message_cls.json_loads(self.jws.payload)
+
+            try:
+                message = message_cls.json_loads(self.jws.payload)
+            except jose.errors.DeserializationError:
+                return AcmeResponseMalformedPayload()
 
             try:
                 self.validate_message(message)
@@ -838,24 +844,33 @@ class AcmeNewOrderView(AcmeBaseView):
 
     .. seealso:: `RFC 8555, 7.4 <https://tools.ietf.org/html/rfc8555#section-7.4>`_
     """
-    message_cls = messages.NewOrder
-
-    def validate_message(self, message):
-        """Test that fields not allowed for this endpoint are not present.
-
-        RFC 8555, 7.4 specifies that "body ... is a subset of the order object", so we test that other
-        possible fields for the NewOrder class are not set.
-        """
-        for field in ['status', 'expires', 'error', 'authorizations', 'finalize', 'certificate']:
-            if getattr(message, field) is not None:
-                raise AcmeMalformed('%s is not allowed here.' % field)
-
-        # TODO: test potential notBefore/notAfter in message, but this is not in the certbot message
-        # TODO: test if identifiers are acceptable
+    message_cls = NewOrder
 
     @transaction.atomic
     def acme_request(self, message):  # pylint: disable=arguments-differ; more concrete here
-        order = AcmeOrder.objects.create(account=self.account)
+        now = timezone.now()
+        if timezone.is_naive(now):
+            now = timezone.make_aware(now, timezone=pytz.utc)
+
+        if message.not_before and message.not_before < now:
+            return AcmeResponseMalformed(message='Certificate cannot be valid before now.')
+        if message.not_after and message.not_after > now + ca_settings.ACME_MAX_CERT_VALIDITY:
+            return AcmeResponseMalformed(message='Certificate cannot be valid that long.')
+        if message.not_before and message.not_after and message.not_before > message.not_after:
+            return AcmeResponseMalformed(message='not_before must be before not_after.')
+        if not message.identifiers:
+            return AcmeResponseMalformedPayload()
+
+        not_before = message.not_before
+        not_after = message.not_after
+
+        if not settings.USE_TZ and message.not_before:
+            not_before = timezone.make_naive(not_before)
+        if not settings.USE_TZ and message.not_after:
+            not_after = timezone.make_naive(not_after)
+
+        # TODO: test if identifiers are acceptable
+        order = AcmeOrder.objects.create(account=self.account, not_before=not_before, not_after=not_after)
 
         authorizations = []
         for ident in message.identifiers:
@@ -867,11 +882,13 @@ class AcmeNewOrderView(AcmeBaseView):
             expires = timezone.make_aware(expires, timezone=pytz.utc)
 
         response = AcmeResponseOrderCreated(
-            status=order.status,
-            expires=expires,
-            identifiers=message.identifiers,
             authorizations=authorizations,
+            expires=expires,
             finalize=self.request.build_absolute_uri(order.acme_finalize_url),
+            identifiers=message.identifiers,
+            not_after=message.not_after,
+            not_before=message.not_before,
+            status=order.status,
         )
         response['Location'] = self.request.build_absolute_uri(order.acme_url)
         return response
