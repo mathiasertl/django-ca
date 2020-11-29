@@ -1193,6 +1193,11 @@ class AcmeOrder(models.Model):
         """Serial of the CA for this order."""
         return self.account.serial
 
+    def add_authorizations(self, identifiers):
+        self.authorizations.bulk_create(
+            [AcmeAccountAuthorization(type=ident.typ.name, value=ident.value) for ident in identifiers]
+        )
+
     def add_authorization(self, identifier):
         """Add an :py:class:`~django_ca.models.AcmeAccountAuthorization` for the given identifier.
 

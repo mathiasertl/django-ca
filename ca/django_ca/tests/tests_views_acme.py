@@ -269,6 +269,8 @@ KSAr5SU7IyM/9M95oQIDAQAB
 
     @contextmanager
     def mock_slug(self):
+        """Mock random slug generation, yields the static value."""
+
         slug = get_random_string(length=12)
         with mock.patch('django_ca.models.get_random_string', return_value=slug):
             yield slug
@@ -722,6 +724,28 @@ class AcmeNewOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase
                                message='Malformed payload.')
 
         self.assertEqual(AcmeOrder.objects.all().count(), 0)
+
+    @override_tmpcadir(USE_TZ=True)
+    def test_invalid_not_before_after(self):
+        """Test invalid not_before/not_after dates."""
+
+        past = timezone.now() - timedelta(days=1)
+        resp = self.acme(self.generic_url, self.get_basic_message(not_before=past), kid=self.account_kid)
+        self.assertAcmeProblem(resp, 'malformed', status=HTTPStatus.BAD_REQUEST,
+                               message='Certificate cannot be valid before now.')
+
+        far_future = timezone.now() + timedelta(days=3650)
+        resp = self.acme(self.generic_url, self.get_basic_message(not_after=far_future), kid=self.account_kid)
+        self.assertAcmeProblem(resp, 'malformed', status=HTTPStatus.BAD_REQUEST,
+                               message='Certificate cannot be valid that long.')
+
+        not_before = timezone.now() + timedelta(days=10)
+        not_after = timezone.now() + timedelta(days=1)
+
+        resp = self.acme(self.generic_url, self.get_basic_message(
+            not_before=not_before, not_after=not_after), kid=self.account_kid)
+        self.assertAcmeProblem(resp, 'malformed', status=HTTPStatus.BAD_REQUEST,
+                               message='notBefore must be before notAfter.')
 
 
 @freeze_time(timestamps['everything_valid'])

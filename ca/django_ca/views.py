@@ -857,7 +857,7 @@ class AcmeNewOrderView(AcmeBaseView):
         if message.not_after and message.not_after > now + ca_settings.ACME_MAX_CERT_VALIDITY:
             return AcmeResponseMalformed(message='Certificate cannot be valid that long.')
         if message.not_before and message.not_after and message.not_before > message.not_after:
-            return AcmeResponseMalformed(message='not_before must be before not_after.')
+            return AcmeResponseMalformed(message='notBefore must be before notAfter.')
         if not message.identifiers:
             return AcmeResponseMalformedPayload()
 
