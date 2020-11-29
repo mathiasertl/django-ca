@@ -14,6 +14,8 @@
 import string
 from http import HTTPStatus
 
+import josepy as jose
+from acme import fields
 from acme import messages
 
 from django.http import JsonResponse
@@ -66,14 +68,6 @@ class AcmeResponseAccountCreated(AcmeResponseAccount):
     status_code = HTTPStatus.CREATED
 
 
-class AcmeResponseOrder(AcmeSimpleResponse):
-    message_cls = messages.Order
-
-
-class AcmeResponseOrderCreated(AcmeResponseOrder):
-    status_code = HTTPStatus.CREATED
-
-
 class AcmeResponseAuthorization(AcmeSimpleResponse):
     message_cls = messages.Authorization
 
@@ -100,6 +94,15 @@ class AcmeResponseError(AcmeResponse):
 class AcmeResponseMalformed(AcmeResponseError):
     status_code = HTTPStatus.BAD_REQUEST  # 400
     type = 'malformed'
+
+
+class AcmeResponseMalformedPayload(AcmeResponseMalformed):
+    """A subclass of a malformed response for unparseable payloads.
+
+    This class is reserved for cases where the payload cannot even be processed, e.g. it's missing a required
+    key, or a value is invalid.
+    """
+    message = "Malformed payload."
 
 
 class AcmeResponseUnauthorized(AcmeResponseError):
@@ -161,3 +164,42 @@ class AcmeMalformed(AcmeException):
 
 class AcmeUnauthorized(AcmeException):
     response = AcmeResponseUnauthorized
+
+
+class Order(messages.Order):
+    """An object describing an ACME order.
+
+    This class adds the not_before/not_after field to :py:class:`acme:acme.messages.Order`.
+    """
+
+    not_before = fields.RFC3339Field('notBefore', omitempty=True)
+    not_after = fields.RFC3339Field('notAfter', omitempty=True)
+
+
+class NewOrder(messages.ResourceBody):
+    """An object describing a new order.
+
+    This class differs from :py:class:`acme:acme.messages.NewOrder` in that the fields for this message are
+    the subset of fields described for the ``newOrder`` resource in RFC 8555, section 7.4. Unlike in the ACME
+    class, the `identifiers` field is mandatory, while the `not_before` and `not_after` fields are added.
+
+    .. seealso:: `RFC 8555, section 7.4 <https://tools.ietf.org/html/rfc8555#section-7.4>`__
+    """
+    resource_type = messages.NewOrder.resource_type
+
+    identifiers = jose.Field('identifiers', omitempty=False,
+                             decoder=messages.Order._fields['identifiers'].fdec)
+    not_before = fields.RFC3339Field('notBefore', omitempty=True)
+    not_after = fields.RFC3339Field('notAfter', omitempty=True)
+
+
+class AcmeResponseOrder(AcmeSimpleResponse):
+    """A HTTP response returning an Order object."""
+
+    message_cls = Order
+
+
+class AcmeResponseOrderCreated(AcmeResponseOrder):
+    """An Order response but with HTTP status code CREATED (201)."""
+
+    status_code = HTTPStatus.CREATED
