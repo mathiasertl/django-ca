@@ -1049,8 +1049,7 @@ class AcmeAuthorizationView(AcmeBaseView):
         # TODO: implement deactivating an authorization (sectio 7.5.2)
 
         try:
-            # TODO: filter for AcmeOrder status
-            auth = AcmeAccountAuthorization.objects.select_related('order').get(slug=slug)
+            auth = AcmeAccountAuthorization.objects.viewable().select_related('order').get(slug=slug)
         except AcmeAccountAuthorization.DoesNotExist:
             # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
             # return a normal unauthorized message.

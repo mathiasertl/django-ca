@@ -338,12 +338,16 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
         comparable = jose.util.ComparableRSAKey(cert.key(password=None))
         key = jose.jwk.JWKRSA(key=comparable)
 
-        payload = msg.to_json()
-        if payload_cb is not None:
-            payload = payload_cb(payload)
+        if isinstance(msg, acme.messages.ResourceBody):
+            payload = msg.to_json()
+            if payload_cb is not None:
+                payload = payload_cb(payload)
+            payload = json.dumps(payload).encode('utf-8')
+        else:
+            payload = msg
 
-        jws = acme.jws.JWS.sign(json.dumps(payload).encode('utf-8'), key, jose.jwa.RS256,
-                                nonce=nonce, url=self.absolute_uri(uri), kid=kid)
+        jws = acme.jws.JWS.sign(payload, key, jose.jwa.RS256, nonce=nonce, url=self.absolute_uri(uri),
+                                kid=kid)
         return self.post(uri, jws.to_json(), **post_kwargs)
 
     def get_basic_message(self):
@@ -781,7 +785,68 @@ class AcmeNewOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase
 class AcmeAuthorizationViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test creating a new order."""
 
-    generic_url = reverse('django_ca:acme-authz', kwargs={'serial': certs['root']['serial'], 'slug': 'foo'})
+    def setUp(self):
+        super().setUp()
+        self.account_slug = 'abc'
+        self.account_kid = 'http://%s%s' % (self.SERVER_NAME, self.absolute_uri(
+            ':acme-account', serial=self.ca.serial, slug=self.account_slug
+        ))
+        self.account = AcmeAccount.objects.create(
+            ca=self.ca, terms_of_service_agreed=True, slug='abc', acme_kid=self.account_kid, pem=self.PEM
+        )
+        self.order = AcmeOrder.objects.create(account=self.account)
+        self.order.add_authorizations([
+            acme.messages.Identifier(typ=acme.messages.IDENTIFIER_FQDN, value='example.com')
+        ])
+        self.authz = AcmeAccountAuthorization.objects.get(order=self.order, value='example.com')
+
+    @property
+    def generic_url(self):
+        return reverse('django_ca:acme-authz', kwargs={'serial': self.ca.serial, 'slug': self.authz.slug})
+
+    def get_basic_message(self, **kwargs):
+        return b''
+
+    @override_tmpcadir()
+    def test_basic(self, accept_naive=True):
+        """Basic test for creating an account via ACME."""
+
+        resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
+        self.assertAcmeResponse(resp)
+
+        challenges = self.authz.challenges.all()
+        self.assertEqual(len(challenges), 2)
+
+        self.maxDiff=None
+        resp_data = resp.json()
+        resp_challenges = resp_data.pop('challenges')
+        self.assertCountEqual(resp_challenges, [
+            {
+                'type': challenges[0].type,
+                'status': 'pending',
+                'token': jose.encode_b64jose(challenges[0].token.encode('utf-8')),
+                'url': 'http://%s/django_ca/acme/%s/chall/%s/' % (
+                    self.SERVER_NAME, self.ca.serial, challenges[0].slug),
+            },
+            {
+                'type': challenges[1].type,
+                'status': 'pending',
+                'token': jose.encode_b64jose(challenges[1].token.encode('utf-8')),
+                'url': 'http://%s/django_ca/acme/%s/chall/%s/' % (
+                    self.SERVER_NAME, self.ca.serial, challenges[1].slug),
+            }
+        ])
+
+        expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
+        self.assertEqual(resp_data, {
+            'expires': pyrfc3339.generate(expires, accept_naive=accept_naive),
+            'identifier': {
+                'type': 'dns',
+                'value': 'example.com',
+            },
+            'status': 'pending',
+        })
 
 
 @freeze_time(timestamps['everything_valid'])

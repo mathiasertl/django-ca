@@ -13,6 +13,8 @@
 
 """QuerySet classes for DjangoCA models."""
 
+from acme import messages
+
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.db.models import Q
@@ -151,13 +153,44 @@ class CertificateQuerySet(models.QuerySet, DjangoCAMixin):
 class AcmeAccountQuerySet(models.QuerySet):
     """QuerySet for :py:class:`~django_ca.models.AcmeAccount`."""
 
+    def viewable(self):
+        """Filter ACME accounts that can be viewed via the ACME API.
+
+        An account is considered viewable if the associated CA is usable.
+        """
+        now = timezone.now()
+        return self.filter(ca__enabled=True, ca__acme_enabled=True,
+                           ca__expires__gt=now, ca__valid_from__lt=now)
+
 
 class AcmeOrderQuerySet(models.QuerySet):
     """QuerySet for :py:class:`~django_ca.models.AcmeOrder`."""
 
+    def viewable(self):
+        """Filter ACME orders that can be viewed via the ACME API.
+
+        An order is considered viewable if the associated CA is usable and the account is not revoked.
+        """
+        now = timezone.now()
+        return self.filter(
+            account__ca__enabled=True, account__ca__acme_enabled=True,
+            account__ca__expires__gt=now, account__ca__valid_from__lt=now
+        ).exclude(account__status=messages.STATUS_REVOKED.name)
+
 
 class AcmeAuthorizationQuerySet(models.QuerySet):
     """QuerySet for :py:class:`~django_ca.models.AcmeAccountAuthorization`."""
+
+    def viewable(self):
+        """Filter ACME authzs that can be viewed via the ACME API.
+
+        An authz is considered viewable if the associated CA is usable and the account is not revoked.
+        """
+        now = timezone.now()
+        return self.filter(
+            order__account__ca__enabled=True, order__account__ca__acme_enabled=True,
+            order__account__ca__expires__gt=now, order__account__ca__valid_from__lt=now
+        ).exclude(order__account__status=messages.STATUS_REVOKED.name)
 
 
 class AcmeChallengeQuerySet(models.QuerySet):
