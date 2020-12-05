@@ -54,6 +54,7 @@ from django.core.management.base import CommandError
 from django.db import connections
 from django.db import DEFAULT_DB_ALIAS
 from django.test import TestCase
+from django.test import TransactionTestCase
 from django.test.utils import override_settings
 from django.urls import reverse
 
@@ -889,26 +890,39 @@ class DjangoCAWithCATestCase(DjangoCATestCase):
     """A test class that already has a CA predefined."""
 
     def setUp(self):
-        super(DjangoCAWithCATestCase, self).setUp()
+        super().setUp()
         self.load_all_cas()
 
 
 class DjangoCAWithGeneratedCAsTestCase(DjangoCATestCase):
     def setUp(self):
-        super(DjangoCAWithGeneratedCAsTestCase, self).setUp()
+        super().setUp()
         self.load_usable_cas()
 
 
 class DjangoCAWithGeneratedCertsTestCase(DjangoCAWithCATestCase):
     def setUp(self):
-        super(DjangoCAWithGeneratedCertsTestCase, self).setUp()
+        super().setUp()
         self.load_generated_certs()
 
 
 class DjangoCAWithCertTestCase(DjangoCAWithCATestCase):
     def setUp(self):
-        super(DjangoCAWithCertTestCase, self).setUp()
+        super().setUp()
         self.load_all_certs()
+
+
+class DjangoCATransactionTestCase(DjangoCATestCaseMixin, TransactionTestCase):
+    pass
+
+
+@override_settings(CA_MIN_KEY_SIZE=512)
+class DjangoCAWithCATransactionTestCase(DjangoCATransactionTestCase):
+    """A test class that already has a CA predefined."""
+
+    def setUp(self):
+        super().setUp()
+        self.load_all_cas()
 
 
 class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # pragma: no cover
