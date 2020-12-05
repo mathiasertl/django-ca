@@ -40,6 +40,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID
 
+import django
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
@@ -50,6 +51,8 @@ from django.core.exceptions import ValidationError
 from django.core.management import ManagementUtility
 from django.core.management import call_command
 from django.core.management.base import CommandError
+from django.db import connections
+from django.db import DEFAULT_DB_ALIAS
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.urls import reverse
@@ -649,6 +652,24 @@ class DjangoCATestCaseMixin:
         with self.assertRaises(ValidationError) as cm:
             yield
         self.assertEqual(cm.exception.message_dict, errors)
+
+    if django.VERSION < (3, 2):
+        # new in Django 3.2: https://github.com/django/django/pull/12944
+        #   https://adamj.eu/tech/2020/05/20/the-fast-way-to-test-django-transaction-on-commit-callbacks/
+        @classmethod
+        @contextmanager
+        def captureOnCommitCallbacks(cls, *, using=DEFAULT_DB_ALIAS, execute=False):
+            """Context manager to capture transaction.on_commit() callbacks."""
+            callbacks = []
+            start_count = len(connections[using].run_on_commit)
+            try:
+                yield callbacks
+            finally:
+                run_on_commit = connections[using].run_on_commit[start_count:]
+                callbacks[:] = [func for sids, func in run_on_commit]
+                if execute:
+                    for callback in callbacks:
+                        callback()
 
     def cmd(self, *args, **kwargs):
         """Call to a manage.py command using call_command."""
