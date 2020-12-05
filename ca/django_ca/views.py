@@ -552,6 +552,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
         # pylint: disable=attribute-defined-outside-init
         # pylint: disable=too-many-return-statements,too-many-branches; b/c of the many checks
 
+        # TODO: RFC 8555, 6.2 has a nice list of things to check here that we don't yet fully cover
         if request.content_type != 'application/jose+json':
             # RFC 8555, 6.2:
             # "Because client requests in ACME carry JWS objects in the Flattened JSON Serialization, they
@@ -571,7 +572,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
         if combined.jwk and combined.kid:
             # 'The "jwk" and "kid" fields are mutually exclusive.  Servers MUST reject requests that contain
             # both.'
-            return AcmeResponseMalformed('JWS contained mutually exclusive fields "jwk" and "kid".')
+            return AcmeResponseMalformed(message='jwk and kid are mutually exclusive.')
 
         if combined.jwk:
             if not self.requires_key:

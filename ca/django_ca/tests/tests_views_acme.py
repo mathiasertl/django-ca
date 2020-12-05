@@ -23,6 +23,7 @@ import acme
 import josepy as jose
 import pyrfc3339
 import pytz
+from josepy.jws import Signature
 from requests.utils import parse_header_links
 
 from django.conf import settings
@@ -320,7 +321,7 @@ class AcmeNewNonceViewTestCase(DjangoCAWithCATestCase):
 class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
     """Base class with test cases for all views."""
 
-    def acme(self, uri, msg, cert=None, kid=None, nonce=None, payload_cb=None):
+    def acme(self, uri, msg, cert=None, kid=None, nonce=None, payload_cb=None, post_kwargs=None):
         """Do a generic ACME request.
 
         The `payload_cb` parameter is an optional callback that will receive the message data before being
@@ -331,6 +332,8 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
             nonce = self.get_nonce()
         if cert is None:
             cert = self.cert
+        if post_kwargs is None:
+            post_kwargs = {}
 
         comparable = jose.util.ComparableRSAKey(cert.key(password=None))
         key = jose.jwk.JWKRSA(key=comparable)
@@ -341,7 +344,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
 
         jws = acme.jws.JWS.sign(json.dumps(payload).encode('utf-8'), key, jose.jwa.RS256,
                                 nonce=nonce, url=self.absolute_uri(uri), kid=kid)
-        return self.post(uri, jws.to_json())
+        return self.post(uri, jws.to_json(), **post_kwargs)
 
     def get_basic_message(self):
         """Return a basic message that can be sent to the server successfully.
@@ -350,6 +353,32 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
         that it violates the ACME spec.
         """
         raise NotImplementedError
+
+    @override_tmpcadir()
+    def test_invalid_content_type(self):
+        """Test that any request with an invalid Content-Type header is an error.
+
+        .. seealso:: RFC 8555, 6.2
+        """
+        resp = self.acme(self.generic_url, self.get_basic_message(), post_kwargs={'CONTENT_TYPE': 'FOO'})
+        self.assertAcmeProblem(resp, 'malformed', status=HTTPStatus.UNSUPPORTED_MEDIA_TYPE,
+                               message='Requests must use the application/jose+json content type.')
+
+    @override_tmpcadir()
+    def test_jwk_and_kid(self):
+        """Test sending both a jwk and a kid, which are supposed to be mutually exclusive."""
+
+        sign = acme.jws.Signature.sign
+
+        def sign_mock(*args, **kwargs):
+            """Mock function to set include_jwk to true."""
+            kwargs['include_jwk'] = True
+            return sign(*args, **kwargs)
+
+        with mock.patch('acme.jws.Signature.sign', side_effect=sign_mock):
+            resp = self.acme(self.generic_url, self.get_basic_message(), kid='foo')
+        self.assertAcmeProblem(resp, 'malformed', status=HTTPStatus.BAD_REQUEST,
+                               message='jwk and kid are mutually exclusive.')
 
     def test_invalid_json(self):
         """Test sending invalid JSON to the server."""
