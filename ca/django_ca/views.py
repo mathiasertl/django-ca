@@ -535,6 +535,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
             response = super().dispatch(request, *args, **kwargs)
             self.set_link_relations(response)
         except Exception as ex:  # pylint: disable=broad-except
+            raise
             log.exception(ex)
             response = AcmeResponseError(message='Internal server error')
 
@@ -1049,6 +1050,7 @@ class AcmeAuthorizationView(AcmeBaseView):
         # TODO: implement deactivating an authorization (sectio 7.5.2)
 
         try:
+            # select_related: order provides the expires property, which is part of the response
             auth = AcmeAccountAuthorization.objects.viewable().select_related('order').get(slug=slug)
         except AcmeAccountAuthorization.DoesNotExist:
             # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
@@ -1074,7 +1076,7 @@ class AcmeAuthorizationView(AcmeBaseView):
 
         resp = AcmeResponseAuthorization(
             identifier=auth.identifier,
-            challenges=[c.get_challenge(self.request) for c in challenges],
+            challenges=tuple([c.get_challenge(self.request) for c in challenges]),
             status=auth.status,
             expires=expires,
         )

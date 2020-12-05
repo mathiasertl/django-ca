@@ -38,6 +38,7 @@ from .. import ca_settings
 from ..acme.messages import NewOrder
 from ..models import AcmeAccount
 from ..models import AcmeAccountAuthorization
+from ..models import AcmeChallenge
 from ..models import AcmeOrder
 from ..models import CertificateAuthority
 from ..tasks import acme_validate_challenge
@@ -805,9 +806,11 @@ class AcmeAuthorizationViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATes
 
     @property
     def generic_url(self):
+        """Get URL for the standard auth object."""
         return reverse('django_ca:acme-authz', kwargs={'serial': self.ca.serial, 'slug': self.authz.slug})
 
-    def get_basic_message(self, **kwargs):
+    def get_basic_message(self):
+        """Return empty byte sequence (it's a get-as-post request)."""
         return b''
 
     @override_tmpcadir()
@@ -849,6 +852,87 @@ class AcmeAuthorizationViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATes
             },
             'status': 'pending',
         })
+
+    @override_settings(USE_TZ=True)
+    def test_basic_with_tz(self):
+        """Basic test but with timezone support."""
+        self.test_basic(accept_naive=False)
+
+    @override_tmpcadir(USE_TZ=True)
+    def test_valid_auth(self):
+        """Test fetching a valid auth object."""
+
+        self.authz.get_challenges()  # creates challenges in the first place
+        self.authz.status = AcmeAccountAuthorization.STATUS_VALID
+        self.authz.save()
+        self.authz.challenges.filter(type=AcmeChallenge.TYPE_HTTP_01).update(
+            status=AcmeChallenge.STATUS_VALID, validated=timezone.now())
+
+        resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
+        self.assertAcmeResponse(resp)
+
+        challenges = self.authz.challenges.filter(status=AcmeChallenge.STATUS_VALID)
+        self.assertEqual(len(challenges), 1)
+
+        resp_data = resp.json()
+        resp_challenges = resp_data.pop('challenges')
+        self.assertCountEqual(resp_challenges, [
+            {
+                'type': challenges[0].type,
+                'status': 'valid',
+                'validated': pyrfc3339.generate(timezone.now()),  # time is frozen anyway
+                'token': jose.encode_b64jose(challenges[0].token.encode('utf-8')),
+                'url': 'http://%s/django_ca/acme/%s/chall/%s/' % (
+                    self.SERVER_NAME, self.ca.serial, challenges[0].slug),
+            },
+        ])
+
+        expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
+        self.assertEqual(resp_data, {
+            'expires': pyrfc3339.generate(expires),
+            'identifier': {
+                'type': 'dns',
+                'value': 'example.com',
+            },
+            'status': 'valid',
+        })
+
+    @override_tmpcadir(USE_TZ=True)
+    def test_no_challenges(self):
+        """Test viewing Auth with **no* challenges.
+
+        This test case is useful because the ACME message class does not tolerate empty lists.
+        """
+
+        self.authz.get_challenges()  # creates challenges in the first place
+        self.authz.status = AcmeAccountAuthorization.STATUS_VALID
+        self.authz.save()
+
+        resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
+        self.assertAcmeResponse(resp)
+
+        challenges = self.authz.challenges.filter(status=AcmeChallenge.STATUS_VALID)
+        self.assertEqual(len(challenges), 0)
+
+        expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
+        self.assertEqual(resp.json(), {
+            'expires': pyrfc3339.generate(expires),
+            'identifier': {
+                'type': 'dns',
+                'value': 'example.com',
+            },
+            'status': 'valid',
+        })
+
+    @override_tmpcadir()
+    def test_unknown_auth(self):
+        """Test fetching unknown auth object."""
+        url = reverse('django_ca:acme-authz', kwargs={'serial': self.ca.serial, 'slug': 'unknown'})
+        resp = self.acme(url, self.get_basic_message(), kid=self.account_kid)
+        self.assertAcmeProblem(resp, 'unauthorized', status=HTTPStatus.UNAUTHORIZED,
+                               message='You are not authorized to perform this request.')
 
 
 @freeze_time(timestamps['everything_valid'])
