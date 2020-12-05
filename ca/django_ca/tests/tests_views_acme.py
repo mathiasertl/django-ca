@@ -23,6 +23,7 @@ import acme
 import josepy as jose
 import pyrfc3339
 import pytz
+from OpenSSL.crypto import X509Req
 from requests.utils import parse_header_links
 
 from django.conf import settings
@@ -45,6 +46,8 @@ from .base import DjangoCAWithCATransactionTestCase
 from .base import certs
 from .base import override_tmpcadir
 from .base import timestamps
+
+CSR_1 = 'MIICbDCCAVQCAQIwADCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAOY4o35e9YA75Z14BZfNPaXDve7XxfP6QIgJUWFg2nQ2SuJ8PCpcHkmV_k969b1sdd5oaL3OvT6swIkOoix5chfJ1zMqojj5ErSbvXgMws7Mr3d9AJgvhDJV4UUFo_4XFjzwyaSQrPRIKKKOmFal_y3zbMJJ5t6FvCZE2APYNbq64KrONe-iPbZN1WxlubBt0nPK8li6Cq70NQAR78kgzaxdlNHbDqhDf8uj0mxFfNBjo8CM1ke_dOEilF8P6IZPVUqExIR6ZO1MAXVsmaxrwIipky_Vo7KGdY6i7C5P-P0Fj7QfsapajLhr7yA8TiJrXvmUOcv8BNapk8RcyO3oxkkCAwEAAaAnMCUGCSqGSIb3DQEJDjEYMBYwFAYDVR0RBA0wC4IJbG9jYWxob3N0MA0GCSqGSIb3DQEBCwUAA4IBAQBw0Ji7MX400CfSOWMgm9c4H2FMSVVchV8zuRxRXW-Aa9YZcXQy9j6aacm1ATSfI0aH8qcB6dqYO2cEThnImUKQy-F8A5iKgFZGb5rIHXIQB2Fd8CJHQiVjYl4fsXK46rLNmu28plw2Psee9ZlGqRQ9mi7e09KQ6DmrfQc_tDfZhpmNot7hczC676EtESBL2NnaoHycDdHOLNGe_nje7PY5Rx5rzhVAcStjQzz9gPBKDlhqDETO27ijvhxK5sA7q0c7IXyxfc9TZ8bOj_Od1b_knRMIUXvBpnZr3QO3ze8o4zIb2Xq92uDB7-BpHZbJ-40YgQHhNcp0ZMh1intcQXT9'
 
 
 class DirectoryTestCase(DjangoCAWithCATestCase):
@@ -340,7 +343,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
         comparable = jose.util.ComparableRSAKey(cert.key(password=None))
         key = jose.jwk.JWKRSA(key=comparable)
 
-        if isinstance(msg, acme.messages.ResourceBody):
+        if isinstance(msg, jose.json_util.JSONObjectWithFields):
             payload = msg.to_json()
             if payload_cb is not None:
                 payload = payload_cb(payload)
@@ -912,6 +915,12 @@ class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATes
     generic_url = reverse('django_ca:acme-order-finalize',
                           kwargs={'serial': certs['root']['serial'], 'slug': 'foo'})
 
+    def get_basic_message(self):
+        req = X509Req.from_cryptography(certs['root-cert']['csr']['parsed'])
+        return acme.messages.CertificateRequest(
+            csr=jose.util.ComparableX509(req)
+        )
+
 
 @freeze_time(timestamps['everything_valid'])
 class AcmeOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
@@ -919,9 +928,15 @@ class AcmeOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
 
     generic_url = reverse('django_ca:acme-order', kwargs={'serial': certs['root']['serial'], 'slug': 'foo'})
 
+    def get_basic_message(self):
+        return b''
+
 
 @freeze_time(timestamps['everything_valid'])
 class AcmeCertificateViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test retrieving a challenge."""
 
     generic_url = reverse('django_ca:acme-cert', kwargs={'serial': certs['root']['serial'], 'slug': 'foo'})
+
+    def get_basic_message(self):
+        return b''
