@@ -35,7 +35,7 @@ from django.utils.crypto import get_random_string
 from freezegun import freeze_time
 
 from .. import ca_settings
-from ..acme import NewOrder
+from ..acme.messages import NewOrder
 from ..models import AcmeAccount
 from ..models import AcmeAccountAuthorization
 from ..models import AcmeOrder

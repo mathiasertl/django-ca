@@ -58,7 +58,7 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
-from .acme import BASE64_URL_ALPHABET
+from .acme.constants import BASE64_URL_ALPHABET
 from .constants import ReasonFlags
 from .extensions import OID_TO_EXTENSION
 from .extensions import AuthorityInformationAccess
