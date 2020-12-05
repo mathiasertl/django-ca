@@ -1206,7 +1206,8 @@ class AcmeOrder(models.Model):
 
     def add_authorizations(self, identifiers):
         return self.authorizations.bulk_create(
-            [AcmeAccountAuthorization(type=ident.typ.name, value=ident.value, order=self) for ident in identifiers]
+            [AcmeAccountAuthorization(type=ident.typ.name, value=ident.value, order=self)
+             for ident in identifiers]
         )
 
     def add_authorization(self, identifier):

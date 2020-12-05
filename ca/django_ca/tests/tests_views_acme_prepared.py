@@ -125,7 +125,7 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
             cache.set('acme-nonce-%s-%s' % (self.ca.serial, data['nonce']), 0)
             self.before_prepared_request(data)
 
-            with mock.patch('django.views.generic.base.View.dispatch', side_effect=Exception('foo2')):
+            with mock.patch('django.views.generic.base.View.dispatch', side_effect=Exception('foo')):
                 response = self.post(self.get_url(data), data['body'], content_type='application/json')
             self.assertEqual(response.status_code, HTTPStatus.INTERNAL_SERVER_ERROR)
             self.assertEqual(response.json(), {

@@ -51,8 +51,8 @@ from django.core.exceptions import ValidationError
 from django.core.management import ManagementUtility
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.db import connections
 from django.db import DEFAULT_DB_ALIAS
+from django.db import connections
 from django.test import TestCase
 from django.test import TransactionTestCase
 from django.test.utils import override_settings
