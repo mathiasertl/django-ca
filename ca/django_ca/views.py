@@ -87,6 +87,7 @@ from .models import Certificate
 from .models import CertificateAuthority
 from .tasks import acme_issue_certificate
 from .tasks import acme_validate_challenge
+from .tasks import run_task
 from .utils import SERIAL_RE
 from .utils import get_crl_cache_key
 from .utils import int_to_hex
@@ -1109,7 +1110,7 @@ class AcmeChallengeView(AcmeBaseView):
         """
         if response.status_code < HTTPStatus.BAD_REQUEST:
             # Only return an up relation if no error is thrown
-            kwargs['up'] = self.challenge.acme_url
+            kwargs['up'] = self.challenge.auth.acme_url
         return super().set_link_relations(response, **kwargs)
 
     def acme_request(self, slug):  # pylint: disable=arguments-differ; more concrete here
@@ -1134,6 +1135,6 @@ class AcmeChallengeView(AcmeBaseView):
         # Actually perform challenge validation asynchronously
         # start task only after commit, see:
         # https://docs.djangoproject.com/en/2.2/topics/db/transactions/#django.db.transaction.on_commit
-        transaction.on_commit(lambda: acme_validate_challenge.delay(self.challenge.pk))
+        transaction.on_commit(lambda: run_task(acme_validate_challenge, self.challenge.pk))
 
         return AcmeObjectResponse(self.challenge.get_challenge(self.request))
