@@ -80,8 +80,16 @@ from .extensions import SubjectAlternativeName
 from .extensions import SubjectKeyIdentifier
 from .extensions import TLSFeature
 from .extensions import get_extension_name
+from .managers import AcmeAccountManager
+from .managers import AcmeAuthorizationManager
+from .managers import AcmeChallengeManager
+from .managers import AcmeOrderManager
 from .managers import CertificateAuthorityManager
 from .managers import CertificateManager
+from .querysets import AcmeAccountQuerySet
+from .querysets import AcmeAuthorizationQuerySet
+from .querysets import AcmeChallengeQuerySet
+from .querysets import AcmeOrderQuerySet
 from .querysets import CertificateAuthorityQuerySet
 from .querysets import CertificateQuerySet
 from .signals import post_revoke_cert
@@ -1081,6 +1089,8 @@ class AcmeAccount(models.Model):
         (STATUS_REVOKED, _('Revoked')),
     )
 
+    objects = AcmeAccountManager.from_queryset(AcmeAccountQuerySet)()
+
     # Account meta data
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
@@ -1154,6 +1164,8 @@ class AcmeOrder(models.Model):
         (STATUS_READY, _('Ready')),
         (STATUS_VALID, _('Valid')),
     )
+
+    objects = AcmeOrderManager.from_queryset(AcmeOrderQuerySet)()
 
     account = models.ForeignKey(AcmeAccount, on_delete=models.PROTECT, related_name='orders')
     slug = models.SlugField(unique=True, default=acme_slug)
@@ -1255,6 +1267,8 @@ class AcmeAccountAuthorization(models.Model):
         (STATUS_EXPIRED, _('Expired')),
         (STATUS_REVOKED, _('Revoked')),
     )
+
+    objects = AcmeAuthorizationManager.from_queryset(AcmeAuthorizationQuerySet)()
 
     order = models.ForeignKey(AcmeOrder, on_delete=models.PROTECT, related_name='authorizations')
     slug = models.SlugField(unique=True, default=acme_slug)
@@ -1360,6 +1374,8 @@ class AcmeChallenge(models.Model):
         (STATUS_VALID, _('Valid')),
         (STATUS_INVALID, _('Name')),
     )
+
+    objects = AcmeChallengeManager.from_queryset(AcmeChallengeQuerySet)()
 
     auth = models.ForeignKey(AcmeAccountAuthorization, on_delete=models.PROTECT, related_name='challenges')
     slug = models.SlugField(unique=True, default=acme_slug)

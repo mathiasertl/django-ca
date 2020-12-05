@@ -146,3 +146,19 @@ class CertificateQuerySet(models.QuerySet, DjangoCAMixin):
         Note that this method does not return revoked certificates that would otherwise be expired.
         """
         return self.filter(revoked=False, expires__lt=timezone.now())
+
+
+class AcmeAccountQuerySet(models.QuerySet):
+    """QuerySet for :py:class:`~django_ca.models.AcmeAccount`."""
+
+
+class AcmeOrderQuerySet(models.QuerySet):
+    """QuerySet for :py:class:`~django_ca.models.AcmeOrder`."""
+
+
+class AcmeAuthorizationQuerySet(models.QuerySet):
+    """QuerySet for :py:class:`~django_ca.models.AcmeAccountAuthorization`."""
+
+
+class AcmeChallengeQuerySet(models.QuerySet):
+    """QuerySet for :py:class:`~django_ca.models.AcmeChallenge`."""

@@ -350,3 +350,19 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         post_issue_cert.send(sender=self.model, cert=obj)
 
         return obj
+
+
+class AcmeAccountManager(models.Manager):
+    """Model manager for :py:class:`~django_ca.models.AcmeAccount`."""
+
+
+class AcmeOrderManager(models.Manager):
+    """Model manager for :py:class:`~django_ca.models.AcmeOrder`."""
+
+
+class AcmeAuthorizationManager(models.Manager):
+    """Model manager for :py:class:`~django_ca.models.AcmeAccountAuthorization`."""
+
+
+class AcmeChallengeManager(models.Manager):
+    """Model manager for :py:class:`~django_ca.models.AcmeChallenge`."""
