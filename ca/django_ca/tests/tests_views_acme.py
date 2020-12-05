@@ -23,7 +23,6 @@ import acme
 import josepy as jose
 import pyrfc3339
 import pytz
-from josepy.jws import Signature
 from requests.utils import parse_header_links
 
 from django.conf import settings
@@ -40,7 +39,9 @@ from ..models import AcmeAccount
 from ..models import AcmeAccountAuthorization
 from ..models import AcmeOrder
 from ..models import CertificateAuthority
+from ..tasks import acme_validate_challenge
 from .base import DjangoCAWithCATestCase
+from .base import DjangoCAWithCATransactionTestCase
 from .base import certs
 from .base import override_tmpcadir
 from .base import timestamps
@@ -234,9 +235,10 @@ KSAr5SU7IyM/9M95oQIDAQAB
         self.assertEqual(data['detail'], message)
         self.assertIn('Replay-Nonce', response)
 
-    def assertAcmeResponse(self, response, ca=None):  # pylint: disable=invalid-name
+    def assertAcmeResponse(self, response, ca=None, link_relations=None):  # pylint: disable=invalid-name
         """Assert basic Acme Response properties (Content-Type & Link header)."""
-        self.assertLinkRelations(response, ca=ca)
+        link_relations = link_relations or {}
+        self.assertLinkRelations(response, ca=ca, **link_relations)
         self.assertEqual(response['Content-Type'], 'application/json')
 
     def assertLinkRelations(self, response, ca=None, **kwargs):  # pylint: disable=invalid-name
@@ -818,7 +820,6 @@ class AcmeAuthorizationViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATes
         challenges = self.authz.challenges.all()
         self.assertEqual(len(challenges), 2)
 
-        self.maxDiff=None
         resp_data = resp.json()
         resp_challenges = resp_data.pop('challenges')
         self.assertCountEqual(resp_challenges, [
@@ -850,11 +851,58 @@ class AcmeAuthorizationViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATes
 
 
 @freeze_time(timestamps['everything_valid'])
-class AcmeChallengeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
+class AcmeChallengeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATransactionTestCase):
     """Test retrieving a challenge."""
 
-    generic_url = reverse('django_ca:acme-challenge',
-                          kwargs={'serial': certs['root']['serial'], 'slug': 'foo'})
+    def setUp(self):
+        super().setUp()
+        self.account_slug = 'abc'
+        self.account_kid = 'http://%s%s' % (self.SERVER_NAME, self.absolute_uri(
+            ':acme-account', serial=self.ca.serial, slug=self.account_slug
+        ))
+        self.account = AcmeAccount.objects.create(
+            ca=self.ca, terms_of_service_agreed=True, slug='abc', acme_kid=self.account_kid, pem=self.PEM
+        )
+        self.order = AcmeOrder.objects.create(account=self.account)
+        self.order.add_authorizations([
+            acme.messages.Identifier(typ=acme.messages.IDENTIFIER_FQDN, value='example.com')
+        ])
+        self.authz = AcmeAccountAuthorization.objects.get(order=self.order, value='example.com')
+        self.challenge = self.authz.get_challenges()[0]
+        self.challenge.token = 'foobar'
+        self.challenge.save()
+
+    @property
+    def generic_url(self):
+        """Get default generic url"""
+        return reverse('django_ca:acme-challenge', kwargs={
+            'serial': self.challenge.serial,
+            'slug': self.challenge.slug,
+        })
+
+    def get_basic_message(self):
+        return b''
+
+    @override_tmpcadir()
+    def test_basic(self):
+        """Basic test for creating an account via ACME."""
+
+        with self.patch('django_ca.views.run_task') as mockcm:
+            resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+
+        self.assertEqual(mockcm.call_args_list, [mock.call(acme_validate_challenge, self.challenge.pk)])
+
+        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
+        self.assertAcmeResponse(resp, link_relations={
+            'up': 'http://%s%s' % (self.SERVER_NAME, self.authz.acme_url),
+        })
+
+        self.assertEqual(resp.json(), {
+            'status': 'processing',
+            'type': self.challenge.type,
+            'token': jose.encode_b64jose(self.challenge.token.encode()),
+            'url': 'http://%s%s' % (self.SERVER_NAME, self.challenge.acme_url),
+        })
 
 
 @freeze_time(timestamps['everything_valid'])
