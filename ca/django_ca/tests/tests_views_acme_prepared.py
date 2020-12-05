@@ -125,7 +125,7 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
             cache.set('acme-nonce-%s-%s' % (self.ca.serial, data['nonce']), 0)
             self.before_prepared_request(data)
 
-            with mock.patch('django.views.generic.base.View.dispatch', side_effect=Exception('foo')):
+            with mock.patch('django.views.generic.base.View.dispatch', side_effect=Exception('foo2')):
                 response = self.post(self.get_url(data), data['body'], content_type='application/json')
             self.assertEqual(response.status_code, HTTPStatus.INTERNAL_SERVER_ERROR)
             self.assertEqual(response.json(), {
@@ -289,7 +289,7 @@ class PreparedAcmeChallengeViewTestCase(AcmePreparedRequestsTestCaseMixin, Djang
 
     def assertLinkRelations(self, response, ca=None, **kwargs):  # pylint: disable=invalid-name
         if response.status_code < HTTPStatus.BAD_REQUEST:
-            kwargs.setdefault('up', response.wsgi_request.build_absolute_uri(self.challenge.acme_url))
+            kwargs.setdefault('up', response.wsgi_request.build_absolute_uri(self.challenge.auth.acme_url))
         super().assertLinkRelations(response=response, ca=ca, **kwargs)
 
     def before_prepared_request(self, data):

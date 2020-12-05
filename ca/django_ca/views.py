@@ -535,7 +535,6 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
             response = super().dispatch(request, *args, **kwargs)
             self.set_link_relations(response)
         except Exception as ex:  # pylint: disable=broad-except
-            raise
             log.exception(ex)
             response = AcmeResponseError(message='Internal server error')
 
