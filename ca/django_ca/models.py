@@ -1175,9 +1175,8 @@ class AcmeOrder(models.Model):
     status = models.CharField(choices=STATUS_CHOICES, max_length=10, default=STATUS_PENDING)
     expires = models.DateTimeField(default=acme_order_expires)
     # NOTE: identifiers property is provided by reverse relation of the AcmeAccountAuthorization model
-    # NOTE: not_before/not_after is currently never set, as certbot does not set this value
-    not_before = models.DateTimeField(null=True)  # NOTE: currently unused
-    not_after = models.DateTimeField(null=True)  # NOTE: currently unused
+    not_before = models.DateTimeField(null=True)
+    not_after = models.DateTimeField(null=True)
     # NOTE: error property is not yet supported
     # NOTE: authorizations property is provided by reverse relation of the AcmeAccountAuthorization model
     # NOTE: finalize property is provided by acme_finalize_url property
