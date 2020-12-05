@@ -574,6 +574,12 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
             # both.'
             return AcmeResponseMalformed(message='jwk and kid are mutually exclusive.')
 
+        # Get certificate authority for this request
+        try:
+            self.ca = CertificateAuthority.objects.acme().usable().get(serial=serial)
+        except CertificateAuthority.DoesNotExist:
+            return AcmeResponseNotFound(message="The requested CA cannot be found.")
+
         if combined.jwk:
             if not self.requires_key:
                 return AcmeResponseMalformed('Request requires a JWK key ID.')
@@ -589,7 +595,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
 
             # combined.kid is a full URL pointing to the account.
             try:
-                account = AcmeAccount.objects.get(acme_kid=combined.kid)
+                account = AcmeAccount.objects.get(ca=self.ca, acme_kid=combined.kid)
             except AcmeAccount.DoesNotExist:
                 return AcmeResponseUnauthorized(message='Account not found.')
             if account.usable is False:
@@ -603,7 +609,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
             try:
                 if not self.jws.verify(self.jwk):
                     return AcmeResponseMalformed('JWS signature invalid.')
-            except Exception:
+            except Exception:  # pylint: disable=broad-except
                 return AcmeResponseMalformed('Cannot parse JWS signature.')
 
             self.account = account
@@ -619,12 +625,6 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
         if not combined.alg or combined.alg == 'none':
             # ... "alg"
             return AcmeResponseMalformed(message='No algorithm specified.')
-
-        # Get certificate authority for this request
-        try:
-            self.ca = CertificateAuthority.objects.acme().usable().get(serial=serial)
-        except CertificateAuthority.DoesNotExist:
-            return AcmeResponseNotFound(message="The requested CA cannot be found.")
 
         #self.prepared['nonce'] = jose.encode_b64jose(combined.nonce)
         if not self.validate_nonce(jose.encode_b64jose(combined.nonce)):
