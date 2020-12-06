@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
+"""Collection of Django HTTP response subclasses representing ACME responses."""
+
 from http import HTTPStatus
 
 from acme import messages
@@ -22,17 +24,14 @@ from .messages import Order
 
 
 class AcmeResponse(JsonResponse):
-    pass
+    """Base class for all ACME responses."""
 
 
 class AcmeSimpleResponse(AcmeResponse):
+    """Base class for all responses returning an ACME recourses (accounts, etc.)."""
+
     def __init__(self, **kwargs):
-        super().__init__(self.message_cls(**kwargs).to_json())
-
-
-class AcmeObjectResponse(AcmeResponse):
-    def __init__(self, obj):
-        super().__init__(obj.to_json())
+        super().__init__(self.message_cls(**kwargs).to_json())  # pylint: disable=no-member
 
 
 class AcmeResponseAccount(AcmeResponse):
@@ -74,10 +73,20 @@ class AcmeResponseOrderCreated(AcmeResponseOrder):
 
 
 class AcmeResponseAuthorization(AcmeSimpleResponse):
+    """A HTTP response for an ACME authorization."""
+
     message_cls = messages.Authorization
 
 
+class AcmeResponseChallenge(AcmeSimpleResponse):
+    """A HTTP response for an ACME challenge."""
+
+    message_cls = messages.ChallengeBody
+
+
 class AcmeResponseError(AcmeResponse):
+    """Base class for all ACME error responses."""
+
     status_code = HTTPStatus.INTERNAL_SERVER_ERROR
     type = 'serverInternal'
     message = ''
@@ -97,6 +106,8 @@ class AcmeResponseError(AcmeResponse):
 
 
 class AcmeResponseMalformed(AcmeResponseError):
+    """ACME response with type malformed."""
+
     status_code = HTTPStatus.BAD_REQUEST  # 400
     type = 'malformed'
 
@@ -111,6 +122,8 @@ class AcmeResponseMalformedPayload(AcmeResponseMalformed):
 
 
 class AcmeResponseUnauthorized(AcmeResponseError):
+    """ACME response with type unauthorized."""
+
     status_code = HTTPStatus.UNAUTHORIZED  # 401
     type = 'unauthorized'
     message = "You are not authorized to perform this request."
@@ -148,5 +161,7 @@ class AcmeResponseBadNonce(AcmeResponseError):
 
 
 class AcmeResponseUnsupportedMediaType(AcmeResponseMalformed):
+    """Acme response for unsupported media type."""
+
     status_code = HTTPStatus.UNSUPPORTED_MEDIA_TYPE
     message = 'Requests must use the application/jose+json content type.'

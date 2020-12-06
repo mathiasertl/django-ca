@@ -1416,8 +1416,9 @@ class AcmeChallenge(models.Model):
         """Get the ACME url path for this challenge."""
         return reverse('django_ca:acme-challenge', kwargs={'slug': self.slug, 'serial': self.serial})
 
-    def get_challenge(self, request):
-        """Get the ACME challenge body for this challenge.
+    @property
+    def acme_challenge(self):
+        """Challenge as ACME challenge object.
 
         Returns
         -------
@@ -1428,24 +1429,46 @@ class AcmeChallenge(models.Model):
 
         token = self.token.encode()
         if self.type == AcmeChallenge.TYPE_HTTP_01:
-            chall = challenges.HTTP01(token=token)
+            return challenges.HTTP01(token=token)
         elif self.type == AcmeChallenge.TYPE_DNS_01:
-            chall = challenges.DNS01(token=token)
+            return challenges.DNS01(token=token)
         elif self.type == AcmeChallenge.TYPE_TLS_ALPN_01:
-            chall = challenges.TLSALPN01(token=token)
+            return challenges.TLSALPN01(token=token)
+
+        raise ValueError('%s: Unsupported challenge type.' % self.type)
+
+    @property
+    def acme_validated(self):
+        """Timestamp when this challenge was validated.
+
+        This property is a wrapper around the `validated` field. It always returns `None` if the challenge is
+        not marked as valid (even if it had a timestamp), and the timestamp will always have a timezone, even
+        if ``USE_TZ=False``.
+        """
+        if self.status != AcmeChallenge.STATUS_VALID or self.validated is None:
+            return self.validated
+
+        if timezone.is_naive(self.validated):
+            return timezone.make_aware(self.validated, timezone=pytz.UTC)
+        else:
+            return self.validated
+
+    def get_challenge(self, request):
+        """Get the ACME challenge body for this challenge.
+
+        Returns
+        -------
+
+        acme.messages.ChallengeBody
+            The acme representation of this class.
+        """
 
         url = request.build_absolute_uri(self.acme_url)
-        kwargs = {}
-        if self.status == AcmeChallenge.STATUS_VALID:
-            # ChallengeBody fails during serialization for non-aware objects
-            if timezone.is_naive(self.validated):
-                kwargs['validated'] = timezone.make_aware(self.validated, timezone=pytz.UTC)
-            else:
-                kwargs['validated'] = self.validated
 
         # NOTE: RFC855, section 7.5 shows challenges *without* a status, but this object always includes it.
         #       It does not seem to hurt, but might be a slight spec-violation.
-        return messages.ChallengeBody(chall=chall, _url=url, status=self.status, **kwargs)
+        return messages.ChallengeBody(chall=self.acme_challenge, _url=url, status=self.status,
+                                      validated=self.acme_validated)
 
     @property
     def serial(self):

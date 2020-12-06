@@ -64,11 +64,11 @@ from .acme.errors import AcmeException
 from .acme.errors import AcmeMalformed
 from .acme.errors import AcmeUnauthorized
 from .acme.messages import NewOrder
-from .acme.responses import AcmeObjectResponse
 from .acme.responses import AcmeResponseAccount
 from .acme.responses import AcmeResponseAccountCreated
 from .acme.responses import AcmeResponseAuthorization
 from .acme.responses import AcmeResponseBadNonce
+from .acme.responses import AcmeResponseChallenge
 from .acme.responses import AcmeResponseError
 from .acme.responses import AcmeResponseForbidden
 from .acme.responses import AcmeResponseMalformed
@@ -1154,4 +1154,9 @@ class AcmeChallengeView(AcmeBaseView):
         # https://docs.djangoproject.com/en/2.2/topics/db/transactions/#django.db.transaction.on_commit
         transaction.on_commit(lambda: run_task(acme_validate_challenge, challenge.pk))
 
-        return AcmeObjectResponse(challenge.get_challenge(self.request))
+        return AcmeResponseChallenge(
+            chall=challenge.acme_challenge,
+            _url=self.request.build_absolute_uri(challenge.acme_url),
+            status=challenge.status,
+            validated=challenge.validated
+        )
