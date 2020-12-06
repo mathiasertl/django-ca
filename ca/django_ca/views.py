@@ -1047,11 +1047,11 @@ class AcmeAuthorizationView(AcmeBaseView):
     post_as_get = True
 
     def acme_request(self, slug):  # pylint: disable=arguments-differ; more concrete here
-        # TODO: implement deactivating an authorization (sectio 7.5.2)
+        # TODO: implement deactivating an authorization (section 7.5.2)
 
         try:
-            # select_related: order provides the expires property, which is part of the response
-            auth = AcmeAccountAuthorization.objects.viewable().select_related('order').get(slug=slug)
+            auth = AcmeAccountAuthorization.objects.viewable().account(
+                account=self.account).url().get(slug=slug)
         except AcmeAccountAuthorization.DoesNotExist:
             # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
             # return a normal unauthorized message.
@@ -1111,31 +1111,32 @@ class AcmeChallengeView(AcmeBaseView):
         """
         if response.status_code < HTTPStatus.BAD_REQUEST:
             # Only return an up relation if no error is thrown
-            kwargs['up'] = self.challenge.auth.acme_url
+            kwargs['up'] = self.auth.acme_url
         return super().set_link_relations(response, **kwargs)
 
     def acme_request(self, slug):  # pylint: disable=arguments-differ; more concrete here
         try:
-            # pylint: disable=attribute-defined-outside-init
-            self.challenge = AcmeChallenge.objects.viewable().get(slug=slug)
-            # pylint: enable=attribute-defined-outside-init
+            challenge = AcmeChallenge.objects.viewable().account(self.account).url().get(slug=slug)
         except AcmeAccountAuthorization.DoesNotExist:
             # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
             # return a normal unauthorized message.
             raise AcmeUnauthorized()  # pylint: disable=raise-missing-from
 
-        #self.prepared['order'] = self.challenge.auth.order.slug
-        #self.prepared['auth'] = self.challenge.auth.slug
+        # Set self.auth attribute, we need it in set_link_relations()
+        self.auth = challenge.auth  # pylint: disable=attribute-defined-outside-init
+
+        #self.prepared['order'] = challenge.auth.order.slug
+        #self.prepared['auth'] = challenge.auth.slug
         #self.prepared['challenge'] = slug
 
         # Set the status to "processing", to quote RFC8555, Section 7.1.6:
         # "They transition to the "processing" state when the client responds to the challenge"
-        self.challenge.status = AcmeChallenge.STATUS_PROCESSING
-        self.challenge.save()
+        challenge.status = AcmeChallenge.STATUS_PROCESSING
+        challenge.save()
 
         # Actually perform challenge validation asynchronously
         # start task only after commit, see:
         # https://docs.djangoproject.com/en/2.2/topics/db/transactions/#django.db.transaction.on_commit
-        transaction.on_commit(lambda: run_task(acme_validate_challenge, self.challenge.pk))
+        transaction.on_commit(lambda: run_task(acme_validate_challenge, challenge.pk))
 
-        return AcmeObjectResponse(self.challenge.get_challenge(self.request))
+        return AcmeObjectResponse(challenge.get_challenge(self.request))

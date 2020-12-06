@@ -166,6 +166,10 @@ class AcmeAccountQuerySet(models.QuerySet):
 class AcmeOrderQuerySet(models.QuerySet):
     """QuerySet for :py:class:`~django_ca.models.AcmeOrder`."""
 
+    def account(self, account):
+        """Filter orders belonging to the given account."""
+        return self.filter(account=account)
+
     def viewable(self):
         """Filter ACME orders that can be viewed via the ACME API.
 
@@ -181,6 +185,14 @@ class AcmeOrderQuerySet(models.QuerySet):
 class AcmeAuthorizationQuerySet(models.QuerySet):
     """QuerySet for :py:class:`~django_ca.models.AcmeAccountAuthorization`."""
 
+    def account(self, account):
+        """Filter authorizations belonging to the given account."""
+        return self.filter(order__account=account)
+
+    def url(self):
+        """Prepare queryset to get the ACME URL of objects without subsequent database lookups."""
+        return self.select_related('order__account__ca')
+
     def viewable(self):
         """Filter ACME authzs that can be viewed via the ACME API.
 
@@ -195,6 +207,14 @@ class AcmeAuthorizationQuerySet(models.QuerySet):
 
 class AcmeChallengeQuerySet(models.QuerySet):
     """QuerySet for :py:class:`~django_ca.models.AcmeChallenge`."""
+
+    def account(self, account):
+        """Filter challenges belonging to the given account."""
+        return self.filter(auth__order__account=account)
+
+    def url(self):
+        """Prepare queryset to get the ACME URL of objects without subsequent database lookups."""
+        return self.select_related('auth__order__account__ca')
 
     def viewable(self):
         """Filter ACME challenges that can be viewed via the ACME API.
