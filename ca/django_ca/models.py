@@ -1482,7 +1482,7 @@ class AcmeCertificate(models.Model):
     slug = models.SlugField(unique=True, default=acme_slug)
     order = models.OneToOneField(AcmeOrder, on_delete=models.CASCADE)
     cert = models.OneToOneField(Certificate, on_delete=models.CASCADE, null=True)
-    csr = models.TextField(verbose_name=_('CSR'))  # NOTE: **NOT** a PEM, see parse_csr()
+    csr = models.TextField(verbose_name=_('CSR'))
 
     class Meta:
         verbose_name = _('ACME Certificate')
@@ -1494,9 +1494,7 @@ class AcmeCertificate(models.Model):
         return reverse('django_ca:acme-cert', kwargs={'slug': self.slug, 'serial': self.order.serial})
 
     def parse_csr(self):
-        """Convert the CSR as received via ACMEv2 into a valid CSR.
-
-        ACMEv2 sends the CSR as a base64url encoded string of its DER /ASN.1 representation.
+        """Load the CSR into a cryptography object.
 
         Returns
         -------
@@ -1504,5 +1502,4 @@ class AcmeCertificate(models.Model):
         :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
             The CSR as used by cryptography.
         """
-        decoded = jose.decode_b64jose(self.csr)
-        return x509.load_der_x509_csr(decoded, default_backend())
+        return x509.load_der_x509_csr(self.csr.encode(), default_backend())

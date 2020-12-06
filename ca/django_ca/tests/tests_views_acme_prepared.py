@@ -325,7 +325,9 @@ class PreparedAcmeOrderFinalizeViewTestCase(AcmePreparedRequestsTestCaseMixin, D
             'terms_of_service_agreed': True, 'pem': data['pem'], 'slug': data['account_pk'],
             'acme_kid': data['kid'],
         })[0]
-        AcmeOrder.objects.create(account=acc, slug=data['order'], status=AcmeOrder.STATUS_READY)
+        self.order = AcmeOrder.objects.create(account=acc, slug=data['order'], status=AcmeOrder.STATUS_READY)
+        auth = AcmeAuthorization.objects.create(order=self.order, value='localhost',
+                                                status=AcmeAuthorization.STATUS_VALID)
 
     def get_url(self, data):
         return reverse('django_ca:acme-order-finalize', kwargs={

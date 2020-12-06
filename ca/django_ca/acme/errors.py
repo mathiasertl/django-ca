@@ -11,6 +11,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
+from .responses import AcmeResponseBadCSR
 from .responses import AcmeResponseError
 from .responses import AcmeResponseMalformed
 from .responses import AcmeResponseUnauthorized
@@ -33,3 +34,9 @@ class AcmeMalformed(AcmeException):
 
 class AcmeUnauthorized(AcmeException):
     response = AcmeResponseUnauthorized
+
+
+class AcmeBadCSR(AcmeException):
+    """Exception raised when a CSR is not acceptable."""
+
+    response = AcmeResponseBadCSR

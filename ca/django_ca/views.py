@@ -42,6 +42,7 @@ from cryptography.x509 import ExtensionNotFound
 from cryptography.x509 import OCSPNonce
 from cryptography.x509 import load_pem_x509_certificate
 from cryptography.x509 import ocsp
+from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
 from django.core.cache import cache
@@ -63,6 +64,7 @@ from . import ca_settings
 from .acme.errors import AcmeException
 from .acme.errors import AcmeMalformed
 from .acme.errors import AcmeUnauthorized
+from .acme.errors import AcmeBadCSR
 from .acme.messages import NewOrder
 from .acme.responses import AcmeResponseAccount
 from .acme.responses import AcmeResponseAccountCreated
@@ -78,6 +80,8 @@ from .acme.responses import AcmeResponseOrder
 from .acme.responses import AcmeResponseOrderCreated
 from .acme.responses import AcmeResponseUnauthorized
 from .acme.responses import AcmeResponseUnsupportedMediaType
+from .acme.utils import parse_acme_csr
+from .extensions import SubjectAlternativeName
 from .models import AcmeAccount
 from .models import AcmeAuthorization
 from .models import AcmeCertificate
@@ -85,6 +89,7 @@ from .models import AcmeChallenge
 from .models import AcmeOrder
 from .models import Certificate
 from .models import CertificateAuthority
+from .subject import Subject
 from .tasks import acme_issue_certificate
 from .tasks import acme_validate_challenge
 from .tasks import run_task
@@ -535,6 +540,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
             response = super().dispatch(request, *args, **kwargs)
             self.set_link_relations(response)
         except Exception as ex:  # pylint: disable=broad-except
+            #raise
             log.exception(ex)
             response = AcmeResponseError(message='Internal server error')
 
@@ -950,9 +956,50 @@ class AcmeOrderFinalizeView(AcmeBaseView):
     The client is supposed to call this URL to submit its CSR, once "it believes it has fulfilled the server's
     requirements".
 
+    Note that in practice, the client can call this endpoint only once while the order is "ready". The
+    endpoint returns an error if the order is not ready, and the call updates the state to "processing".
+
     .. seealso:: `RFC 8555, 7.4 <https://tools.ietf.org/html/rfc8555#section-7.4>`_
     """
     message_cls = messages.CertificateRequest
+
+    def validate_csr(self, message, authorizations):  # pylint: disable=no-self-use
+        """Parse and validate the CSR, returns the PEM as str."""
+
+        # Note: Jose wraps the CSR in a josepy.util.ComparableX509, that has *no* public member methods.
+        # The only public attribute or function is the wrapped object. We encode it back to get the regular
+        # PEM.
+        # Note that the CSR received here is not an actual PEM, see AcmeCertificate.parse_csr()
+        csr = parse_acme_csr(message.encode('csr'))
+        if csr.is_signature_valid is False:
+            raise AcmeBadCSR(message='CSR signature is not valid.')
+
+        # Do not accept MD5 or SHA1 signatures
+        if isinstance(csr.signature_hash_algorithm, (hashes.MD5, hashes.SHA1)):
+            raise AcmeBadCSR(message='%s: Insecure hash algorithm.' % csr.signature_hash_algorithm.name)
+
+        # Get list of general names from the authorizations
+        names_from_order = list(SubjectAlternativeName({
+            'value': [auth.subject_alternative_name for auth in authorizations]
+        }).extension_type)
+
+        # Test if any subject Common Name is in the names for this order
+        # NOTE: certbot does *not* set name in the subject
+        csr_subject = Subject(csr.subject)
+        if csr_subject.get('CN') and csr_subject.get('CN') not in names_from_order:
+            raise AcmeBadCSR(message='CommonName was not in order.')
+
+        try:
+            names_from_csr = list(
+                csr.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_ALTERNATIVE_NAME).value
+            )
+        except x509.ExtensionNotFound:
+            raise AcmeBadCSR(message='No subject alternative names found in CSR.')
+
+        if sorted(names_from_order) != sorted(names_from_csr):
+            raise AcmeBadCSR(message="Names in CSR do not match.")
+
+        return csr.public_bytes(Encoding.PEM).decode('utf-8')
 
     def acme_request(self, message, slug):  # pylint: disable=arguments-differ; more concrete here
         try:
@@ -980,30 +1027,24 @@ class AcmeOrderFinalizeView(AcmeBaseView):
             # Further investigation is on what LE and certbot do is needed here.
             return AcmeResponseForbidden(typ='orderNotReady', message='This order is not yet ready.')
 
-        # Note: Jose wraps the CSR in a josepy.util.ComparableX509, that has *no* public member methods.
-        # The only public attribute or function is the wrapped object. We encode it back to get the regular
-        # PEM.
-        # Note that the CSR received here is not an actual PEM, see AcmeCertificate.parse_csr()
-        csr = message.encode('csr')
-
         expires = order.expires
         if timezone.is_naive(expires):  # acme.messages.Order requires a timezone-aware object
             expires = timezone.make_aware(expires, timezone=pytz.utc)
 
-        # Validate authorization objects:
         authorizations = order.authorizations.all()
-        cert = AcmeCertificate(order=order, csr=csr)
         for auth in authorizations:
             if auth.status != AcmeAuthorization.STATUS_VALID:
                 # This is a state that should never happen in practice, because the order is only marked as
                 # ready once all authorizations are valid.
                 return AcmeResponseForbidden(typ='orderNotReady', message='This order is not yet ready.')
 
-            # TODO: match that CSR hostnames match the ones validated
+        # Parse and validate the CSR
+        csr = self.validate_csr(message, authorizations)
 
-        cert.save()
+        # Create AcmeCertificate object (at this point without cert, as it hasn't been issued yet)
+        cert = AcmeCertificate.objects.create(order=order, csr=csr)
 
-        # Update the state to "processing"
+        # Update the status of the order to "processing"
         order.status = AcmeOrder.STATUS_PROCESSING
         order.save()
 
@@ -1065,8 +1106,7 @@ class AcmeAuthorizationView(AcmeBaseView):
         # TODO: implement deactivating an authorization (section 7.5.2)
 
         try:
-            auth = AcmeAuthorization.objects.viewable().account(
-                account=self.account).url().get(slug=slug)
+            auth = AcmeAuthorization.objects.viewable().account(account=self.account).url().get(slug=slug)
         except AcmeAuthorization.DoesNotExist:
             # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
             # return a normal unauthorized message.

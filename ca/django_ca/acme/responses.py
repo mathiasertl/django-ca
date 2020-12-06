@@ -112,6 +112,13 @@ class AcmeResponseMalformed(AcmeResponseError):
     type = 'malformed'
 
 
+class AcmeResponseBadCSR(AcmeResponseMalformed):
+    """ACME response for an invalid CSR."""
+
+    type = 'badCSR'
+    message = 'CSR is not acceptable.'  # just a default
+
+
 class AcmeResponseMalformedPayload(AcmeResponseMalformed):
     """A subclass of a malformed response for unparseable payloads.
 
