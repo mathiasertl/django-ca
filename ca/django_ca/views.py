@@ -1117,7 +1117,7 @@ class AcmeChallengeView(AcmeBaseView):
     def acme_request(self, slug):  # pylint: disable=arguments-differ; more concrete here
         try:
             challenge = AcmeChallenge.objects.viewable().account(self.account).url().get(slug=slug)
-        except AcmeAccountAuthorization.DoesNotExist:
+        except AcmeChallenge.DoesNotExist:
             # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
             # return a normal unauthorized message.
             raise AcmeUnauthorized()  # pylint: disable=raise-missing-from
