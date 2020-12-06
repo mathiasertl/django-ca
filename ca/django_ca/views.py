@@ -535,7 +535,6 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
             response = super().dispatch(request, *args, **kwargs)
             self.set_link_relations(response)
         except Exception as ex:  # pylint: disable=broad-except
-            raise
             log.exception(ex)
             response = AcmeResponseError(message='Internal server error')
 
@@ -914,7 +913,7 @@ class AcmeOrderView(AcmeBaseView):
 
     def acme_request(self, slug):  # pylint: disable=arguments-differ; more concrete here
         try:
-            order = AcmeOrder.objects.get(slug=slug)
+            order = AcmeOrder.objects.viewable().account(self.account).get(slug=slug)
         except AcmeOrder.DoesNotExist:
             # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
             # return a normal unauthorized message.
