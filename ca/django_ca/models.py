@@ -120,6 +120,15 @@ def acme_order_expires():
     """Default function for the expiry of an ACME order."""
     return timezone.now() + ca_settings.ACME_ORDER_VALIDITY
 
+def acme_token():
+    """Generate an ACME token for this challenge.
+
+    Note that currently all challenges have the same requirements on tokens, except for DNS challenges
+    which seem to allow padding ("=") characters. We ignore the '=' for DNS challenges as our tokens are
+    already longer then required.
+    """
+    return get_random_string(64, allowed_chars=BASE64_URL_ALPHABET)
+
 
 def validate_past(value):
     """Validate that a given datetime is not in the future."""
@@ -1390,7 +1399,7 @@ class AcmeChallenge(models.Model):
 
     # The token field is listed for both HTTP and DNS challenge, which are the most common types, so we
     # include it as an optional field here. It is generated when the token is first accessed.
-    token = models.CharField(blank=True, max_length=64)
+    token = models.CharField(blank=True, max_length=64, default=acme_token)
 
     class Meta:
         unique_together = (
@@ -1416,9 +1425,6 @@ class AcmeChallenge(models.Model):
         acme.messages.ChallengeBody
             The acme representation of this class.
         """
-        if not self.token:
-            self.generate_token()
-            self.save()
 
         token = self.token.encode()
         if self.type == AcmeChallenge.TYPE_HTTP_01:
@@ -1440,17 +1446,6 @@ class AcmeChallenge(models.Model):
         # NOTE: RFC855, section 7.5 shows challenges *without* a status, but this object always includes it.
         #       It does not seem to hurt, but might be a slight spec-violation.
         return messages.ChallengeBody(chall=chall, _url=url, status=self.status, **kwargs)
-
-    def generate_token(self):
-        """Generate the token for this challenge.
-
-        This method does **not** save the instance.
-
-        Note that currently all challenges have the same requirements on tokens, except for DNS challenges
-        which seem to allow padding ("=") characters. We ignore the '=' for DNS challenges as our tokens are
-        already longer then required.
-        """
-        self.token = get_random_string(64, allowed_chars=BASE64_URL_ALPHABET)
 
     @property
     def serial(self):
