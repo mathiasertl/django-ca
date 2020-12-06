@@ -956,7 +956,7 @@ class AcmeOrderFinalizeView(AcmeBaseView):
 
     def acme_request(self, message, slug):  # pylint: disable=arguments-differ; more concrete here
         try:
-            order = AcmeOrder.objects.get(slug=slug)
+            order = AcmeOrder.objects.viewable().account(account=self.account).get(slug=slug)
         except AcmeOrder.DoesNotExist:
             # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
             # return a normal unauthorized message.
@@ -964,12 +964,20 @@ class AcmeOrderFinalizeView(AcmeBaseView):
         #self.prepared['order'] = order.slug
 
         # RFC 8555, section 7.4:
+        #
         #   A request to finalize an order will result in error if the order is not in the "ready" state.  In
         #   such cases, the server MUST return a 403 (Forbidden) error with a problem document of type
         #   "orderNotReady".  The client should then send a POST-as-GET request to the order resource to
         #   obtain its current state.  The status of the order will indicate what action the client should
         #   take (see below).
         if order.status != AcmeOrder.STATUS_READY:
+            # NOTE: The provision quoted above means that you will *always* get "orderNotReady", even if you
+            # fetch this URL and the certificate has already been issued. We might consider returning the
+            # order instead in this case.
+            # The spec also says you should send a POST-as-GET after a certain time, if the order is in the
+            # processing state, but it's not entirely clear if that request should go here or the normal order
+            # resource.
+            # Further investigation is on what LE and certbot do is needed here.
             return AcmeResponseForbidden(typ='orderNotReady', message='This order is not yet ready.')
 
         # Note: Jose wraps the CSR in a josepy.util.ComparableX509, that has *no* public member methods.
@@ -982,10 +990,18 @@ class AcmeOrderFinalizeView(AcmeBaseView):
         if timezone.is_naive(expires):  # acme.messages.Order requires a timezone-aware object
             expires = timezone.make_aware(expires, timezone=pytz.utc)
 
-        cert = AcmeCertificate.objects.get_or_create(order=order, defaults={'csr': csr})[0]
-        # TODO: should only be pending auths, and only if state of order is pending
+        # Validate authorization objects:
         authorizations = order.authorizations.all()
-        cert_url = self.request.build_absolute_uri(cert.acme_url)
+        cert = AcmeCertificate(order=order, csr=csr)
+        for auth in authorizations:
+            if auth.status != AcmeAccountAuthorization.STATUS_VALID:
+                # This is a state that should never happen in practice, because the order is only marked as
+                # ready once all authorizations are valid.
+                return AcmeResponseForbidden(typ='orderNotReady', message='This order is not yet ready.')
+
+            # TODO: match that CSR hostnames match the ones validated
+
+        cert.save()
 
         # Update the state to "processing"
         order.status = AcmeOrder.STATUS_PROCESSING
@@ -1000,7 +1016,7 @@ class AcmeOrderFinalizeView(AcmeBaseView):
             expires=expires,
             identifiers=tuple([{'type': a.type, 'value': a.value} for a in authorizations]),
             authorizations=tuple([self.request.build_absolute_uri(a) for a in authorizations]),
-            certificate=cert_url
+            certificate=self.request.build_absolute_uri(cert.acme_url),
         )
         response['Location'] = self.request.build_absolute_uri(order.acme_url)
         return response
