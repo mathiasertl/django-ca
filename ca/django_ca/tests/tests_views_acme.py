@@ -1285,10 +1285,46 @@ class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATra
 class AcmeOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test retrieving a challenge."""
 
-    generic_url = reverse('django_ca:acme-order', kwargs={'serial': certs['root']['serial'], 'slug': 'foo'})
+    def setUp(self):
+        super().setUp()
+        self.hostname = 'example.net'
+        self.account_slug = 'abc'
+        self.account_kid = 'http://%s%s' % (self.SERVER_NAME, self.absolute_uri(
+            ':acme-account', serial=self.ca.serial, slug=self.account_slug
+        ))
+        self.account = AcmeAccount.objects.create(
+            ca=self.ca, terms_of_service_agreed=True, slug=self.account_slug, acme_kid=self.account_kid,
+            pem=self.PEM
+        )
+        self.order = AcmeOrder.objects.create(account=self.account)
+        self.authz = AcmeAuthorization.objects.create(order=self.order, value=self.hostname)
 
     def get_basic_message(self):
         return b''
+
+    @property
+    def generic_url(self):
+        """Get URL for the standard auth object."""
+        return reverse('django_ca:acme-order', kwargs={
+            'serial': certs['root']['serial'],
+            'slug': self.order.slug,
+        })
+
+    @override_tmpcadir()
+    def test_basic(self, accept_naive=True):
+        """Basic test for creating an account via ACME."""
+
+        resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
+        self.assertAcmeResponse(resp)
+        self.assertEqual(resp.json(), {
+            'authorizations': [
+                'http://%s%s' % (self.SERVER_NAME, self.authz.acme_url)
+            ],
+            'expires': pyrfc3339.generate(self.order.expires, accept_naive=accept_naive),
+            'identifiers': [{'type': 'dns', 'value': self.hostname}],
+            'status': 'pending',
+        })
 
 
 @freeze_time(timestamps['everything_valid'])

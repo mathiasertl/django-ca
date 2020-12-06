@@ -929,8 +929,12 @@ class AcmeOrderView(AcmeBaseView):
         if timezone.is_naive(expires):  # acme.messages.Order requires a timezone-aware object
             expires = timezone.make_aware(expires, timezone=pytz.utc)
 
-        # TODO: should only be pending auths, and only if state of order is pending
         authorizations = order.authorizations.all()
+        if order.status in [AcmeOrder.STATUS_READY, AcmeOrder.STATUS_INVALID]:
+            # RFC 8555, section 7.1.3:
+            #
+            #   For final orders (in the "valid" or "invalid" state), the authorizations that were completed.
+            authorizations = authorizations.filter(status=AcmeAuthorization.STATUS_VALID)
 
         try:
             cert = AcmeCertificate.objects.get(order=order)
@@ -942,7 +946,7 @@ class AcmeOrderView(AcmeBaseView):
             status=order.status,
             expires=expires,
             identifiers=tuple([{'type': a.type, 'value': a.value} for a in authorizations]),
-            authorizations=tuple([self.request.build_absolute_uri(a) for a in authorizations]),
+            authorizations=tuple([self.request.build_absolute_uri(a.acme_url) for a in authorizations]),
             certificate=cert_url
         )
         response['Location'] = self.request.build_absolute_uri(order.acme_url)
