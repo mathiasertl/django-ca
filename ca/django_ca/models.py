@@ -1174,11 +1174,11 @@ class AcmeOrder(models.Model):
     # RFC 8555, 7.1.6: "Order objects are created in the "pending" state."
     status = models.CharField(choices=STATUS_CHOICES, max_length=10, default=STATUS_PENDING)
     expires = models.DateTimeField(default=acme_order_expires)
-    # NOTE: identifiers property is provided by reverse relation of the AcmeAccountAuthorization model
+    # NOTE: identifiers property is provided by reverse relation of the AcmeAuthorization model
     not_before = models.DateTimeField(null=True)
     not_after = models.DateTimeField(null=True)
     # NOTE: error property is not yet supported
-    # NOTE: authorizations property is provided by reverse relation of the AcmeAccountAuthorization model
+    # NOTE: authorizations property is provided by reverse relation of the AcmeAuthorization model
     # NOTE: finalize property is provided by acme_finalize_url property
     # NOTE: certificate property is provided by reverse relation of the AcmeCertificate model
 
@@ -1206,12 +1206,12 @@ class AcmeOrder(models.Model):
 
     def add_authorizations(self, identifiers):
         return self.authorizations.bulk_create(
-            [AcmeAccountAuthorization(type=ident.typ.name, value=ident.value, order=self)
+            [AcmeAuthorization(type=ident.typ.name, value=ident.value, order=self)
              for ident in identifiers]
         )
 
     def add_authorization(self, identifier):
-        """Add an :py:class:`~django_ca.models.AcmeAccountAuthorization` for the given identifier.
+        """Add an :py:class:`~django_ca.models.AcmeAuthorization` for the given identifier.
 
         Note that this method already adds the account authorization to the database. It does not verify if it
         already exists and will raise an IntegrityError if it does.
@@ -1231,14 +1231,14 @@ class AcmeOrder(models.Model):
         Returns
         -------
 
-        :py:class:`~django_ca.models.AcmeAccountAuthorization`
+        :py:class:`~django_ca.models.AcmeAuthorization`
         """
-        return AcmeAccountAuthorization.objects.create(
+        return AcmeAuthorization.objects.create(
             order=self, type=identifier.typ.name, value=identifier.value,
         )
 
 
-class AcmeAccountAuthorization(models.Model):
+class AcmeAuthorization(models.Model):
     """Implements an ACME authorization object.
 
     .. seealso::
@@ -1287,8 +1287,8 @@ class AcmeAccountAuthorization(models.Model):
         unique_together = (
             ('order', 'type', 'value'),
         )
-        verbose_name = _('ACME Account Authorization')
-        verbose_name_plural = _('ACME Account Authorizations')
+        verbose_name = _('ACME Authorization')
+        verbose_name_plural = _('ACME Authorizations')
 
     def __str__(self):
         return '%s: %s' % (self.type, self.value)
@@ -1317,7 +1317,7 @@ class AcmeAccountAuthorization(models.Model):
 
         identifier : :py:class:`acme:acme.messages.Identifier`
         """
-        if self.type == AcmeAccountAuthorization.TYPE_DNS:
+        if self.type == AcmeAuthorization.TYPE_DNS:
             return messages.Identifier(typ=messages.IDENTIFIER_FQDN, value=self.value)
         raise ValueError('Unknown identifier type: %s' % self.type)
 
@@ -1377,7 +1377,7 @@ class AcmeChallenge(models.Model):
 
     objects = AcmeChallengeManager.from_queryset(AcmeChallengeQuerySet)()
 
-    auth = models.ForeignKey(AcmeAccountAuthorization, on_delete=models.PROTECT, related_name='challenges')
+    auth = models.ForeignKey(AcmeAuthorization, on_delete=models.PROTECT, related_name='challenges')
     slug = models.SlugField(unique=True, default=acme_slug)
 
     # Fields according to RFC 8555, 8:

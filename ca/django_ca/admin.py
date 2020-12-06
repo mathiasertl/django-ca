@@ -57,7 +57,7 @@ from .forms import ResignCertificateForm
 from .forms import RevokeCertificateForm
 from .forms import X509CertMixinAdminForm
 from .models import AcmeAccount
-from .models import AcmeAccountAuthorization
+from .models import AcmeAuthorization
 from .models import AcmeCertificate
 from .models import AcmeChallenge
 from .models import AcmeOrder
@@ -690,8 +690,8 @@ if ca_settings.CA_ENABLE_ACME:  # pragma: no branch
         list_filter = ('status', )
         search_fields = ('account__contact', 'slug')
 
-    @admin.register(AcmeAccountAuthorization)
-    class AcmeAccountAuthorizationAdmin(admin.ModelAdmin):
+    @admin.register(AcmeAuthorization)
+    class AcmeAuthorizationAdmin(admin.ModelAdmin):
         list_display = ('slug', 'value', 'wildcard', 'type', 'status', 'order_display', 'contact')
         list_filter = ('type', 'status', )
         search_fields = ('value', 'slug', 'order__account__contact', )

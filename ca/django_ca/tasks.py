@@ -22,7 +22,7 @@ from django.utils import timezone
 
 from . import ca_settings
 from .extensions import SubjectAlternativeName
-from .models import AcmeAccountAuthorization
+from .models import AcmeAuthorization
 from .models import AcmeCertificate
 from .models import AcmeChallenge
 from .models import AcmeOrder
@@ -127,17 +127,17 @@ def acme_validate_challenge(challenge_pk):
     if response.text == expected:
         challenge.status = AcmeChallenge.STATUS_VALID
         challenge.validated = timezone.now()
-        challenge.auth.status = AcmeAccountAuthorization.STATUS_VALID
+        challenge.auth.status = AcmeAuthorization.STATUS_VALID
 
         # Set the order status to READY if all challenges are valid
-        auths = AcmeAccountAuthorization.objects.filter(order=challenge.auth.order)
-        auths = auths.exclude(status=AcmeAccountAuthorization.STATUS_VALID)
+        auths = AcmeAuthorization.objects.filter(order=challenge.auth.order)
+        auths = auths.exclude(status=AcmeAuthorization.STATUS_VALID)
         if not auths.exclude(pk=challenge.auth.pk).exists():
             log.info('Order is now valid.')
             challenge.auth.order.status = AcmeOrder.STATUS_READY
     else:
         challenge.status = AcmeChallenge.STATUS_INVALID
-        challenge.auth.status = AcmeAccountAuthorization.STATUS_INVALID
+        challenge.auth.status = AcmeAuthorization.STATUS_INVALID
         challenge.auth.order.status = AcmeOrder.STATUS_INVALID
 
     log.info('Challenge %s is %s', challenge.pk, challenge.status)

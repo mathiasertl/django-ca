@@ -183,7 +183,7 @@ class AcmeOrderQuerySet(models.QuerySet):
 
 
 class AcmeAuthorizationQuerySet(models.QuerySet):
-    """QuerySet for :py:class:`~django_ca.models.AcmeAccountAuthorization`."""
+    """QuerySet for :py:class:`~django_ca.models.AcmeAuthorization`."""
 
     def account(self, account):
         """Filter authorizations belonging to the given account."""

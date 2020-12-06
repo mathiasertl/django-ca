@@ -29,7 +29,7 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from ..models import AcmeAccount
-from ..models import AcmeAccountAuthorization
+from ..models import AcmeAuthorization
 from ..models import AcmeCertificate
 from ..models import AcmeChallenge
 from ..models import AcmeOrder
@@ -272,7 +272,7 @@ class PreparedAcmeAuthorizationViewTestCase(AcmePreparedRequestsTestCaseMixin, D
 
         })[0]
         order = AcmeOrder.objects.get_or_create(account=acc, slug=data['order'])[0]
-        AcmeAccountAuthorization.objects.get_or_create(order=order, slug=data['auth'], defaults={
+        AcmeAuthorization.objects.get_or_create(order=order, slug=data['auth'], defaults={
             'value': 'localhost'
         })
 
@@ -299,7 +299,7 @@ class PreparedAcmeChallengeViewTestCase(AcmePreparedRequestsTestCaseMixin, Djang
             'acme_kid': data['kid'],
         })[0]
         order = AcmeOrder.objects.create(account=acc, slug=data['order'])
-        auth = AcmeAccountAuthorization.objects.create(order=order, slug=data['auth'], value='localhost')
+        auth = AcmeAuthorization.objects.create(order=order, slug=data['auth'], value='localhost')
 
         self.challenge = AcmeChallenge.objects.create(  # pylint: disable=attribute-defined-outside-init
             slug=data['challenge'], auth=auth, type=AcmeChallenge.TYPE_HTTP_01

@@ -79,7 +79,7 @@ from .acme.responses import AcmeResponseOrderCreated
 from .acme.responses import AcmeResponseUnauthorized
 from .acme.responses import AcmeResponseUnsupportedMediaType
 from .models import AcmeAccount
-from .models import AcmeAccountAuthorization
+from .models import AcmeAuthorization
 from .models import AcmeCertificate
 from .models import AcmeChallenge
 from .models import AcmeOrder
@@ -994,7 +994,7 @@ class AcmeOrderFinalizeView(AcmeBaseView):
         authorizations = order.authorizations.all()
         cert = AcmeCertificate(order=order, csr=csr)
         for auth in authorizations:
-            if auth.status != AcmeAccountAuthorization.STATUS_VALID:
+            if auth.status != AcmeAuthorization.STATUS_VALID:
                 # This is a state that should never happen in practice, because the order is only marked as
                 # ready once all authorizations are valid.
                 return AcmeResponseForbidden(typ='orderNotReady', message='This order is not yet ready.')
@@ -1065,9 +1065,9 @@ class AcmeAuthorizationView(AcmeBaseView):
         # TODO: implement deactivating an authorization (section 7.5.2)
 
         try:
-            auth = AcmeAccountAuthorization.objects.viewable().account(
+            auth = AcmeAuthorization.objects.viewable().account(
                 account=self.account).url().get(slug=slug)
-        except AcmeAccountAuthorization.DoesNotExist:
+        except AcmeAuthorization.DoesNotExist:
             # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
             # return a normal unauthorized message.
             return AcmeResponseUnauthorized()
@@ -1086,7 +1086,7 @@ class AcmeAuthorizationView(AcmeBaseView):
         #   completed".
         #
         # The example response at the end of section 7.5.1 also only shows the valid challenge.
-        if auth.status == AcmeAccountAuthorization.STATUS_VALID:
+        if auth.status == AcmeAuthorization.STATUS_VALID:
             challenges = [c for c in challenges if c.status == AcmeChallenge.STATUS_VALID]
 
         resp = AcmeResponseAuthorization(

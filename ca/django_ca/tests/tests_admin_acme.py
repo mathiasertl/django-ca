@@ -18,7 +18,7 @@
 from django.utils import timezone
 
 from ..models import AcmeAccount
-from ..models import AcmeAccountAuthorization
+from ..models import AcmeAuthorization
 from ..models import AcmeCertificate
 from ..models import AcmeChallenge
 from ..models import AcmeOrder
@@ -85,21 +85,21 @@ class AcmeOrderViewsTestCase(AcmeAccountViewsTestCase):
         self.order2 = AcmeOrder.objects.create(account=self.account1, status=AcmeOrder.STATUS_PROCESSING)
 
 
-class AcmeAccountAuthorizationViewsTestCase(AcmeOrderViewsTestCase):
-    """Test standard views for :py:class:`~django_ca.models.AcmeAccountAuthorization`."""
-    model = AcmeAccountAuthorization
+class AcmeAuthorizationViewsTestCase(AcmeOrderViewsTestCase):
+    """Test standard views for :py:class:`~django_ca.models.AcmeAuthorization`."""
+    model = AcmeAuthorization
 
     def setUp(self):
         super().setUp()
-        self.auth1 = AcmeAccountAuthorization.objects.create(
-            order=self.order1, type=AcmeAccountAuthorization.TYPE_DNS, value='example.com',
-            status=AcmeAccountAuthorization.STATUS_PENDING, wildcard=True)
-        self.auth2 = AcmeAccountAuthorization.objects.create(
-            order=self.order2, type=AcmeAccountAuthorization.TYPE_DNS, value='example.net',
-            status=AcmeAccountAuthorization.STATUS_VALID, wildcard=False)
+        self.auth1 = AcmeAuthorization.objects.create(
+            order=self.order1, type=AcmeAuthorization.TYPE_DNS, value='example.com',
+            status=AcmeAuthorization.STATUS_PENDING, wildcard=True)
+        self.auth2 = AcmeAuthorization.objects.create(
+            order=self.order2, type=AcmeAuthorization.TYPE_DNS, value='example.net',
+            status=AcmeAuthorization.STATUS_VALID, wildcard=False)
 
 
-class AcmeChallengeViewsTestCase(AcmeAccountAuthorizationViewsTestCase):
+class AcmeChallengeViewsTestCase(AcmeAuthorizationViewsTestCase):
     """Test standard views for :py:class:`~django_ca.models.AcmeChallenge`."""
     model = AcmeChallenge
 

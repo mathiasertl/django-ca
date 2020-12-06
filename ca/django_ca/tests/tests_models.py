@@ -40,7 +40,7 @@ from ..extensions import KEY_TO_EXTENSION
 from ..extensions import PrecertificateSignedCertificateTimestamps
 from ..extensions import SubjectAlternativeName
 from ..models import AcmeAccount
-from ..models import AcmeAccountAuthorization
+from ..models import AcmeAuthorization
 from ..models import AcmeChallenge
 from ..models import AcmeOrder
 from ..models import Certificate
@@ -769,7 +769,7 @@ class AcmeOrderTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertEqual(auth.type, 'dns')
         self.assertEqual(auth.value, 'example.com')
 
-        msg = r'^UNIQUE constraint failed: django_ca_acmeaccountauthorization\.order_id, django_ca_acmeaccountauthorization\.type, django_ca_acmeaccountauthorization\.value$'  # NOQA: E501
+        msg = r'^UNIQUE constraint failed: django_ca_acmeauthorization\.order_id, django_ca_acmeauthorization\.type, django_ca_acmeauthorization\.value$'  # NOQA: E501
         with transaction.atomic(), self.assertRaisesRegex(IntegrityError, msg):
             self.order1.add_authorization(identifier)
 
@@ -778,8 +778,8 @@ class AcmeOrderTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertEqual(self.order1.serial, self.cas['root'].serial)
 
 
-class AcmeAccountAuthorizationTestCase(DjangoCAWithGeneratedCAsTestCase):
-    """Test :py:class:`django_ca.models.AcmeAccountAuthorization`."""
+class AcmeAuthorizationTestCase(DjangoCAWithGeneratedCAsTestCase):
+    """Test :py:class:`django_ca.models.AcmeAuthorization`."""
 
     def setUp(self):
         super().setUp()
@@ -787,10 +787,10 @@ class AcmeAccountAuthorizationTestCase(DjangoCAWithGeneratedCAsTestCase):
             ca=self.cas['root'], contact='user@example.com', terms_of_service_agreed=True,
             status=AcmeAccount.STATUS_VALID, pem=ACME_PEM_1, thumbprint=ACME_THUMBPRINT_1)
         self.order = AcmeOrder.objects.create(account=self.account)
-        self.auth1 = AcmeAccountAuthorization.objects.create(
-            order=self.order, type=AcmeAccountAuthorization.TYPE_DNS, value='example.com')
-        self.auth2 = AcmeAccountAuthorization.objects.create(
-            order=self.order, type=AcmeAccountAuthorization.TYPE_DNS, value='example.net')
+        self.auth1 = AcmeAuthorization.objects.create(
+            order=self.order, type=AcmeAuthorization.TYPE_DNS, value='example.com')
+        self.auth2 = AcmeAuthorization.objects.create(
+            order=self.order, type=AcmeAuthorization.TYPE_DNS, value='example.net')
 
     def test_str(self):
         """Test the __str__ method."""

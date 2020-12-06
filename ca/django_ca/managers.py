@@ -361,7 +361,7 @@ class AcmeOrderManager(models.Manager):
 
 
 class AcmeAuthorizationManager(models.Manager):
-    """Model manager for :py:class:`~django_ca.models.AcmeAccountAuthorization`."""
+    """Model manager for :py:class:`~django_ca.models.AcmeAuthorization`."""
 
 
 class AcmeChallengeManager(models.Manager):
