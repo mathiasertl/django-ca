@@ -989,6 +989,17 @@ class AcmeChallengeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATransac
             'url': 'http://%s%s' % (self.SERVER_NAME, self.challenge.acme_url),
         })
 
+    @override_tmpcadir()
+    def test_not_found(self):
+        """Basic test for creating an account via ACME."""
+
+        url = reverse('django_ca:acme-challenge', kwargs={'serial': self.challenge.serial, 'slug': 'foo'})
+        with self.patch('django_ca.views.run_task') as mockcm:
+            resp = self.acme(url, self.get_basic_message(), kid=self.account_kid)
+        mockcm.assert_not_called()
+        self.assertAcmeProblem(resp, 'unauthorized', status=HTTPStatus.UNAUTHORIZED,
+                               message='You are not authorized to perform this request.')
+
 
 @freeze_time(timestamps['everything_valid'])
 class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
