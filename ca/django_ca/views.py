@@ -1117,7 +1117,7 @@ class AcmeChallengeView(AcmeBaseView):
     def acme_request(self, slug):  # pylint: disable=arguments-differ; more concrete here
         try:
             # pylint: disable=attribute-defined-outside-init
-            self.challenge = AcmeChallenge.objects.get(slug=slug)
+            self.challenge = AcmeChallenge.objects.viewable().get(slug=slug)
             # pylint: enable=attribute-defined-outside-init
         except AcmeAccountAuthorization.DoesNotExist:
             # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by

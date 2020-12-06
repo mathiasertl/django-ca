@@ -195,3 +195,14 @@ class AcmeAuthorizationQuerySet(models.QuerySet):
 
 class AcmeChallengeQuerySet(models.QuerySet):
     """QuerySet for :py:class:`~django_ca.models.AcmeChallenge`."""
+
+    def viewable(self):
+        """Filter ACME challenges that can be viewed via the ACME API.
+
+        An authz is considered viewable if the associated CA is usable and the account is not revoked.
+        """
+        now = timezone.now()
+        return self.filter(
+            auth__order__account__ca__enabled=True, auth__order__account__ca__acme_enabled=True,
+            auth__order__account__ca__expires__gt=now, auth__order__account__ca__valid_from__lt=now
+        ).exclude(auth__order__account__status=messages.STATUS_REVOKED.name)
