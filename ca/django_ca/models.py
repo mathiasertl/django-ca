@@ -1453,6 +1453,27 @@ class AcmeChallenge(models.Model):
         else:
             return self.validated
 
+    @property
+    def can_be_processed(self):
+        """Boolean representing if this challenge can still be processed."""
+
+        # The initial state is "pending". A failed validation transitions the state to "invalid", but the
+        # client may request a retry (RFC 8555, section 8.2).
+        if self.status not in [AcmeChallenge.STATUS_PENDING, AcmeChallenge.STATUS_INVALID]:
+            return False
+
+        # The status of the authorization is similar to that of the challenge. An authorization may be invalid
+        # because a challenge has already failed.
+        if self.auth.status not in [AcmeAuthorization.STATUS_PENDING, AcmeAuthorization.STATUS_INVALID]:
+            return False
+
+        # We can only process a challenge if the the order is still pending. All other states are final states
+        # that do not allow to reprocess a challenge.
+        if self.auth.order.status != AcmeOrder.STATUS_PENDING:
+            return False
+
+        return True
+
     def get_challenge(self, request):
         """Get the ACME challenge body for this challenge.
 

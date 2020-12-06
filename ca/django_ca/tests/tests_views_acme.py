@@ -26,6 +26,10 @@ import pytz
 from OpenSSL.crypto import X509Req
 from requests.utils import parse_header_links
 
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes
+from cryptography.x509.oid import NameOID
+
 from django.conf import settings
 from django.test.utils import override_settings
 from django.urls import reverse
@@ -41,6 +45,7 @@ from ..models import AcmeAuthorization
 from ..models import AcmeChallenge
 from ..models import AcmeOrder
 from ..models import CertificateAuthority
+from ..tasks import acme_issue_certificate
 from ..tasks import acme_validate_challenge
 from .base import DjangoCAWithCATestCase
 from .base import DjangoCAWithCATransactionTestCase
@@ -990,6 +995,35 @@ class AcmeChallengeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATransac
         })
 
     @override_tmpcadir()
+    def test_no_state_change(self):
+        """Test challenge endpoint when no state change is triggered (e.g. already valid)."""
+
+        self.challenge.status = AcmeChallenge.STATUS_VALID
+        self.challenge.save()
+        self.authz.status = AcmeAuthorization.STATUS_VALID
+        self.authz.save()
+        self.order.status = AcmeOrder.STATUS_VALID
+        self.order.save()
+
+        with self.patch('django_ca.views.run_task') as mockcm:
+            resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+
+        mockcm.assert_not_called()  # no validation task was triggerd
+
+        # ... but response is still ok
+        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
+        self.assertAcmeResponse(resp, link_relations={
+            'up': 'http://%s%s' % (self.SERVER_NAME, self.authz.acme_url),
+        })
+
+        self.assertEqual(resp.json(), {
+            'status': 'valid',
+            'type': self.challenge.type,
+            'token': jose.encode_b64jose(self.challenge.token.encode()),
+            'url': 'http://%s%s' % (self.SERVER_NAME, self.challenge.acme_url),
+        })
+
+    @override_tmpcadir()
     def test_not_found(self):
         """Basic test for creating an account via ACME."""
 
@@ -1002,17 +1036,249 @@ class AcmeChallengeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATransac
 
 
 @freeze_time(timestamps['everything_valid'])
-class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
+class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATransactionTestCase):
     """Test retrieving a challenge."""
 
+    slug = '92MPyl7jm0zw'
     generic_url = reverse('django_ca:acme-order-finalize',
-                          kwargs={'serial': certs['root']['serial'], 'slug': 'foo'})
+                          kwargs={'serial': certs['root']['serial'], 'slug': slug})
+
+    def setUp(self):
+        super().setUp()
+
+        # Create a CSR based on root-cert
+        # NOTE: certbot CSRs have an empty subject
+        self.hostname = 'example.com'
+        self.csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([])).add_extension(
+            x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False
+        ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256())
+
+        self.account_slug = 'abc'
+        self.account_kid = 'http://%s%s' % (self.SERVER_NAME, self.absolute_uri(
+            ':acme-account', serial=self.ca.serial, slug=self.account_slug
+        ))
+        self.account = AcmeAccount.objects.create(
+            ca=self.ca, terms_of_service_agreed=True, slug='abc', acme_kid=self.account_kid, pem=self.PEM
+        )
+        self.order = AcmeOrder.objects.create(account=self.account, status=AcmeOrder.STATUS_READY,
+                                              slug=self.slug)
+        self.order.add_authorizations([
+            acme.messages.Identifier(typ=acme.messages.IDENTIFIER_FQDN, value=self.hostname)
+        ])
+        self.authz = AcmeAuthorization.objects.get(order=self.order, value=self.hostname)
+        self.authz.status = AcmeAuthorization.STATUS_VALID
+        self.authz.save()
+
+    def assertBadCSR(self, resp, message):  # pylint: disable=invalid-name
+        """Assert a badCSR error."""
+        self.assertAcmeProblem(resp, 'badCSR', status=HTTPStatus.BAD_REQUEST, message=message)
 
     def get_basic_message(self):
-        req = X509Req.from_cryptography(certs['root-cert']['csr']['parsed'])
+        return self.get_message(self.csr)
+
+    def get_message(self, csr):  # pylint: disable=no-self-use
+        """Get a message for the given cryptography CSR object."""
+        req = X509Req.from_cryptography(csr)
         return acme.messages.CertificateRequest(
             csr=jose.util.ComparableX509(req)
         )
+
+    @override_tmpcadir()
+    def test_basic(self, accept_naive=True):
+        """Basic test for creating an account via ACME."""
+
+        with self.patch('django_ca.views.run_task') as mockcm:
+            resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
+        self.assertAcmeResponse(resp)
+
+        order = AcmeOrder.objects.get(pk=self.order.pk)
+        cert = order.acmecertificate
+        self.assertEqual(mockcm.call_args_list,
+                         [mock.call(acme_issue_certificate, acme_certificate_pk=cert.pk)])
+        self.assertEqual(resp.json(), {
+            'authorizations': [
+                'http://%s%s' % (self.SERVER_NAME, self.authz.acme_url)
+            ],
+            'certificate': 'http://%s%s' % (self.SERVER_NAME, cert.acme_url),
+            'expires': pyrfc3339.generate(order.expires, accept_naive=accept_naive),
+            'identifiers': [{'type': 'dns', 'value': self.hostname}],
+            'status': 'processing',
+        })
+
+    @override_settings(USE_TZ=True)
+    def test_basic_with_tz(self):
+        """Basic test with USE_TZ=True."""
+        self.test_basic(False)
+
+    @override_tmpcadir()
+    def test_not_found(self):
+        """Test an order that does not exist."""
+        url = reverse('django_ca:acme-order-finalize', kwargs={'serial': self.ca.serial, 'slug': 'foo'})
+        with self.patch('django_ca.views.run_task') as mockcm:
+            resp = self.acme(url, self.get_basic_message(), kid=self.account_kid)
+        mockcm.assert_not_called()
+        self.assertAcmeProblem(resp, 'unauthorized', status=HTTPStatus.UNAUTHORIZED,
+                               message='You are not authorized to perform this request.')
+
+    @override_tmpcadir()
+    def test_wrong_account(self):
+        """Test an order for a different account."""
+
+        account = AcmeAccount.objects.create(
+            ca=self.ca, terms_of_service_agreed=True, slug='def', acme_kid='kid', pem='bar',
+            thumbprint='foo'
+        )
+        self.order.account = account
+        self.order.save()
+
+        with self.patch('django_ca.views.run_task') as mockcm:
+            resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        mockcm.assert_not_called()
+        self.assertAcmeProblem(resp, 'unauthorized', status=HTTPStatus.UNAUTHORIZED,
+                               message='You are not authorized to perform this request.')
+
+    @override_tmpcadir()
+    def test_not_ready(self):
+        """Test an order that is not yet ready."""
+
+        self.order.status = AcmeOrder.STATUS_INVALID
+        self.order.save()
+
+        with self.patch('django_ca.views.run_task') as mockcm:
+            resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        mockcm.assert_not_called()
+        self.assertAcmeProblem(resp, 'orderNotReady', status=HTTPStatus.FORBIDDEN,
+                               message='This order is not yet ready.')
+
+    @override_tmpcadir()
+    def test_invalid_auth(self):
+        """Test an order where one of the authentications is not valid."""
+
+        self.authz.status = AcmeAuthorization.STATUS_INVALID
+        self.authz.save()
+
+        with self.patch('django_ca.views.run_task') as mockcm:
+            resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        mockcm.assert_not_called()
+        self.assertAcmeProblem(resp, 'orderNotReady', status=HTTPStatus.FORBIDDEN,
+                               message='This order is not yet ready.')
+
+    @override_tmpcadir()
+    def test_csr_invalid_signature(self):
+        """Test posting a CSR with an invalid signature"""
+
+        # create property mock for CSR object.
+        # We mock parse_acme_csr below because the actual class returned depends on the backend in use
+        csr_mock = mock.MagicMock()
+        # attach to type: https://docs.python.org/3/library/unittest.mock.html#unittest.mock.PropertyMock
+        type(csr_mock).is_signature_valid = mock.PropertyMock(return_value=False)
+
+        with self.patch('django_ca.views.run_task') as mockcm, self.patch(
+                'django_ca.views.parse_acme_csr', return_value=csr_mock):
+            resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        mockcm.assert_not_called()
+        self.assertBadCSR(resp, 'CSR signature is not valid.')
+
+    @override_tmpcadir()
+    def test_csr_bad_algorithm(self):
+        """Test posting a CSR with a bad algorithm."""
+
+        csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([])).add_extension(
+            x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False
+        ).sign(certs['root-cert']['key']['parsed'], hashes.MD5())
+
+        with self.patch('django_ca.views.run_task') as mockcm:
+            resp = self.acme(self.generic_url, self.get_message(csr), kid=self.account_kid)
+        mockcm.assert_not_called()
+        self.assertBadCSR(resp, 'md5: Insecure hash algorithm.')
+
+    @override_tmpcadir()
+    def test_csr_valid_subject(self):
+        """Test posting a CSR where the CommonName was in the order."""
+
+        csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
+            x509.NameAttribute(NameOID.COMMON_NAME, self.hostname),
+        ])).add_extension(
+            x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False
+        ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256())
+
+        with self.patch('django_ca.views.run_task') as mockcm:
+            resp = self.acme(self.generic_url, self.get_message(csr), kid=self.account_kid)
+        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
+        self.assertAcmeResponse(resp)
+
+        order = AcmeOrder.objects.get(pk=self.order.pk)
+        cert = order.acmecertificate
+        self.assertEqual(mockcm.call_args_list,
+                         [mock.call(acme_issue_certificate, acme_certificate_pk=cert.pk)])
+        self.assertEqual(resp.json(), {
+            'authorizations': [
+                'http://%s%s' % (self.SERVER_NAME, self.authz.acme_url)
+            ],
+            'certificate': 'http://%s%s' % (self.SERVER_NAME, cert.acme_url),
+            'expires': pyrfc3339.generate(order.expires, accept_naive=True),
+            'identifiers': [{'type': 'dns', 'value': self.hostname}],
+            'status': 'processing',
+        })
+
+    @override_tmpcadir()
+    def test_csr_subject_no_domain(self):
+        """Test posting a CSR where the CommonName is not a domain name."""
+
+        csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
+            x509.NameAttribute(NameOID.COMMON_NAME, "user@example.com"),
+        ])).add_extension(
+            x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False
+        ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256())
+
+        with self.patch('django_ca.views.run_task') as mockcm:
+            resp = self.acme(self.generic_url, self.get_message(csr), kid=self.account_kid)
+        mockcm.assert_not_called()
+        self.assertBadCSR(resp, 'CommonName was not in order.')
+
+    @override_tmpcadir()
+    def test_csr_subject_not_in_order(self):
+        """Test posting a CSR where the CommonName was not in the order."""
+
+        csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
+            x509.NameAttribute(NameOID.COMMON_NAME, "example.net"),
+        ])).add_extension(
+            x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False
+        ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256())
+
+        with self.patch('django_ca.views.run_task') as mockcm:
+            resp = self.acme(self.generic_url, self.get_message(csr), kid=self.account_kid)
+        mockcm.assert_not_called()
+        self.assertBadCSR(resp, 'CommonName was not in order.')
+
+    @override_tmpcadir()
+    def test_csr_no_san(self):
+        """Test posting a CSR with no SubjectAlternativeName extension."""
+
+        csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([])).sign(
+            certs['root-cert']['key']['parsed'], hashes.SHA256())
+
+        with self.patch('django_ca.views.run_task') as mockcm:
+            resp = self.acme(self.generic_url, self.get_message(csr), kid=self.account_kid)
+        mockcm.assert_not_called()
+        self.assertBadCSR(resp, 'No subject alternative names found in CSR.')
+
+    @override_tmpcadir()
+    def test_csr_different_names(self):
+        """Test posting a CSR with different names in the SubjectAlternativeName extesion."""
+
+        csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([])).add_extension(
+            x509.SubjectAlternativeName([
+                x509.DNSName(self.hostname),
+                x509.DNSName('example.net')
+            ]), critical=False
+        ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256())
+
+        with self.patch('django_ca.views.run_task') as mockcm:
+            resp = self.acme(self.generic_url, self.get_message(csr), kid=self.account_kid)
+        mockcm.assert_not_called()
+        self.assertBadCSR(resp, "Names in CSR do not match.")
 
 
 @freeze_time(timestamps['everything_valid'])

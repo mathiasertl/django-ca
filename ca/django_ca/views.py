@@ -540,7 +540,6 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
             response = super().dispatch(request, *args, **kwargs)
             self.set_link_relations(response)
         except Exception as ex:  # pylint: disable=broad-except
-            #raise
             log.exception(ex)
             response = AcmeResponseError(message='Internal server error')
 
@@ -979,24 +978,24 @@ class AcmeOrderFinalizeView(AcmeBaseView):
             raise AcmeBadCSR(message='%s: Insecure hash algorithm.' % csr.signature_hash_algorithm.name)
 
         # Get list of general names from the authorizations
-        names_from_order = list(SubjectAlternativeName({
+        names_from_order = set(SubjectAlternativeName({
             'value': [auth.subject_alternative_name for auth in authorizations]
         }).extension_type)
 
         # Test if any subject Common Name is in the names for this order
         # NOTE: certbot does *not* set name in the subject
         csr_subject = Subject(csr.subject)
-        if csr_subject.get('CN') and csr_subject.get('CN') not in names_from_order:
+        if csr_subject.get('CN') and x509.DNSName(csr_subject.get('CN')) not in names_from_order:
             raise AcmeBadCSR(message='CommonName was not in order.')
 
         try:
-            names_from_csr = list(
+            names_from_csr = set(
                 csr.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_ALTERNATIVE_NAME).value
             )
         except x509.ExtensionNotFound:
             raise AcmeBadCSR(message='No subject alternative names found in CSR.')
 
-        if sorted(names_from_order) != sorted(names_from_csr):
+        if names_from_order != names_from_csr:
             raise AcmeBadCSR(message="Names in CSR do not match.")
 
         return csr.public_bytes(Encoding.PEM).decode('utf-8')
@@ -1050,13 +1049,13 @@ class AcmeOrderFinalizeView(AcmeBaseView):
 
         # start task only after commit, see:
         # https://docs.djangoproject.com/en/dev/topics/db/transactions/#django.db.transaction.on_commit
-        transaction.on_commit(lambda: acme_issue_certificate.delay(acme_certificate_pk=cert.pk))
+        transaction.on_commit(lambda: run_task(acme_issue_certificate, acme_certificate_pk=cert.pk))
 
         response = AcmeResponseOrder(
             status=order.status,
             expires=expires,
             identifiers=tuple([{'type': a.type, 'value': a.value} for a in authorizations]),
-            authorizations=tuple([self.request.build_absolute_uri(a) for a in authorizations]),
+            authorizations=tuple([self.request.build_absolute_uri(a.acme_url) for a in authorizations]),
             certificate=self.request.build_absolute_uri(cert.acme_url),
         )
         response['Location'] = self.request.build_absolute_uri(order.acme_url)
@@ -1184,15 +1183,17 @@ class AcmeChallengeView(AcmeBaseView):
         #self.prepared['auth'] = challenge.auth.slug
         #self.prepared['challenge'] = slug
 
-        # Set the status to "processing", to quote RFC8555, Section 7.1.6:
-        # "They transition to the "processing" state when the client responds to the challenge"
-        challenge.status = AcmeChallenge.STATUS_PROCESSING
-        challenge.save()
+        if challenge.can_be_processed is True:  # if not -> no state change
+            # RFC8555, Section 7.1.6:
+            #
+            #   They transition to the "processing" state when the client responds to the challenge
+            challenge.status = AcmeChallenge.STATUS_PROCESSING
+            challenge.save()
 
-        # Actually perform challenge validation asynchronously
-        # start task only after commit, see:
-        # https://docs.djangoproject.com/en/2.2/topics/db/transactions/#django.db.transaction.on_commit
-        transaction.on_commit(lambda: run_task(acme_validate_challenge, challenge.pk))
+            # Actually perform challenge validation asynchronously
+            # start task only after commit, see:
+            # https://docs.djangoproject.com/en/2.2/topics/db/transactions/#django.db.transaction.on_commit
+            transaction.on_commit(lambda: run_task(acme_validate_challenge, challenge.pk))
 
         return AcmeResponseChallenge(
             chall=challenge.acme_challenge,
