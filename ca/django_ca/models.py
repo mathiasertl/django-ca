@@ -27,7 +27,6 @@ import re
 from datetime import datetime
 from datetime import timedelta
 
-import josepy as jose
 import pytz
 from acme import challenges
 from acme import messages
@@ -119,6 +118,7 @@ def acme_slug():
 def acme_order_expires():
     """Default function for the expiry of an ACME order."""
     return timezone.now() + ca_settings.ACME_ORDER_VALIDITY
+
 
 def acme_token():
     """Generate an ACME token for this challenge.
