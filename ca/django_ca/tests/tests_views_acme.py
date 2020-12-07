@@ -40,8 +40,10 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from ..acme.messages import NewOrder
+from ..acme.responses import AcmeResponseUnauthorized
 from ..models import AcmeAccount
 from ..models import AcmeAuthorization
+from ..models import AcmeCertificate
 from ..models import AcmeChallenge
 from ..models import AcmeOrder
 from ..models import CertificateAuthority
@@ -259,6 +261,11 @@ KSAr5SU7IyM/9M95oQIDAQAB
         expected = [{'rel': k, 'url': v} for k, v in kwargs.items()]
         actual = parse_header_links(response['Link'])
         self.assertEqual(expected, actual)
+
+    def assertUnauthorized(self, resp,    # pylint: disable=invalid-name
+                           message=AcmeResponseUnauthorized.message):
+        """Assert an unauthorized response."""
+        self.assertAcmeProblem(resp, 'unauthorized', status=HTTPStatus.UNAUTHORIZED, message=message)
 
     def get_nonce(self, ca=None):
         """Get a nonce with an actual request.
@@ -1283,7 +1290,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATra
 
 @freeze_time(timestamps['everything_valid'])
 class AcmeOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
-    """Test retrieving a challenge."""
+    """Test retrieving an order."""
 
     def setUp(self):
         super().setUp()
@@ -1317,19 +1324,77 @@ class AcmeOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
         resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(resp)
+        expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
         self.assertEqual(resp.json(), {
             'authorizations': [
                 'http://%s%s' % (self.SERVER_NAME, self.authz.acme_url)
             ],
-            'expires': pyrfc3339.generate(self.order.expires, accept_naive=accept_naive),
+            'expires': pyrfc3339.generate(expires, accept_naive=accept_naive),
             'identifiers': [{'type': 'dns', 'value': self.hostname}],
             'status': 'pending',
         })
 
+    @override_settings(USE_TZ=True)
+    def test_basic_with_tz(self):
+        """Basic test with USE_TZ=True."""
+        self.test_basic(False)
+
+    @override_tmpcadir()
+    def test_ready_cert(self):
+        """Test viewing a ready certificate"""
+        self.order.status = AcmeOrder.STATUS_READY
+        self.order.save()
+        self.authz.status = AcmeAuthorization.STATUS_VALID
+        self.authz.save()
+        acmecert = AcmeCertificate.objects.create(order=self.order)
+
+        resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
+        self.assertAcmeResponse(resp)
+        expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
+        self.assertEqual(resp.json(), {
+            'authorizations': [
+                'http://%s%s' % (self.SERVER_NAME, self.authz.acme_url)
+            ],
+            'certificate': 'http://%s%s' % (self.SERVER_NAME, acmecert.acme_url),
+            'expires': pyrfc3339.generate(expires, accept_naive=True),
+            'identifiers': [{'type': 'dns', 'value': self.hostname}],
+            'status': 'ready',
+        })
+
+    @override_tmpcadir()
+    def test_wrong_account(self):
+        """Test viewing for the wrong account"""
+
+        account = AcmeAccount.objects.create(
+            ca=self.ca, terms_of_service_agreed=True, slug='def', acme_kid='kid', pem='bar',
+            thumbprint='foo'
+        )
+        self.order.account = account
+        self.order.save()
+
+        resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        self.assertUnauthorized(resp)
+
+    @override_tmpcadir()
+    def test_not_found(self):
+        """Test viewing an order that simply does not exist."""
+
+        account = AcmeAccount.objects.create(
+            ca=self.ca, terms_of_service_agreed=True, slug='def', acme_kid='kid', pem='bar',
+            thumbprint='foo'
+        )
+        self.order.account = account
+        self.order.save()
+        url = reverse('django_ca:acme-order', kwargs={'serial': self.ca.serial, 'slug': self.order.slug})
+
+        resp = self.acme(url, self.get_basic_message(), kid=self.account_kid)
+        self.assertUnauthorized(resp)
+
 
 @freeze_time(timestamps['everything_valid'])
 class AcmeCertificateViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
-    """Test retrieving a challenge."""
+    """Test retrieving a certificate."""
 
     generic_url = reverse('django_ca:acme-cert', kwargs={'serial': certs['root']['serial'], 'slug': 'foo'})
 
