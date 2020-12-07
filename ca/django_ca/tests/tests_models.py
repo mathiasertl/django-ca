@@ -761,17 +761,16 @@ class AcmeOrderTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertEqual(self.order1.acme_finalize_url,
                          '/django_ca/acme/%s/order/%s/finalize/' % (self.account.ca.serial, self.order1.slug))
 
-    def test_add_authorization(self):
+    def test_add_authorizations(self):
         """Test the add_authorizations method."""
         identifier = messages.Identifier(typ=messages.IDENTIFIER_FQDN, value='example.com')
-        auth = self.order1.add_authorization(identifier)
-        self.assertEqual([auth], list(self.order1.authorizations.all()))
-        self.assertEqual(auth.type, 'dns')
-        self.assertEqual(auth.value, 'example.com')
+        auths = self.order1.add_authorizations([identifier])
+        self.assertEqual(auths[0].type, 'dns')
+        self.assertEqual(auths[0].value, 'example.com')
 
         msg = r'^UNIQUE constraint failed: django_ca_acmeauthorization\.order_id, django_ca_acmeauthorization\.type, django_ca_acmeauthorization\.value$'  # NOQA: E501
         with transaction.atomic(), self.assertRaisesRegex(IntegrityError, msg):
-            self.order1.add_authorization(identifier)
+            self.order1.add_authorizations([identifier])
 
     def test_serial(self):
         """Test getting the serial of the associated CA."""

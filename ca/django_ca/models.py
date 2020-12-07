@@ -1216,13 +1216,7 @@ class AcmeOrder(models.Model):
         return self.account.serial
 
     def add_authorizations(self, identifiers):
-        return self.authorizations.bulk_create(
-            [AcmeAuthorization(type=ident.typ.name, value=ident.value, order=self)
-             for ident in identifiers]
-        )
-
-    def add_authorization(self, identifier):
-        """Add an :py:class:`~django_ca.models.AcmeAuthorization` for the given identifier.
+        """Add :py:class:`~django_ca.models.AcmeAuthorization` instances for the given identifiers.
 
         Note that this method already adds the account authorization to the database. It does not verify if it
         already exists and will raise an IntegrityError if it does.
@@ -1231,22 +1225,22 @@ class AcmeOrder(models.Model):
 
             >>> from acme import messages
             >>> identifier = messages.Identifier(typ=messages.IDENTIFIER_FQDN, value='example.com')
-            >>> order.add_authorization(identifier)
+            >>> order.add_authorizations([identifier])
 
         Parameters
         ----------
 
-        identifier : :py:class:`acme:acme.messages.Identifier`
-            The identifier for this
+        identifiers : list of :py:class:`acme:acme.messages.Identifier`
+            The identifiers for this for this order.
 
         Returns
         -------
 
-        :py:class:`~django_ca.models.AcmeAuthorization`
+        list of :py:class:`~django_ca.models.AcmeAuthorization`
         """
-        return AcmeAuthorization.objects.create(
-            order=self, type=identifier.typ.name, value=identifier.value,
-        )
+        return self.authorizations.bulk_create([
+            AcmeAuthorization(type=ident.typ.name, value=ident.value, order=self) for ident in identifiers
+        ])
 
 
 class AcmeAuthorization(models.Model):
@@ -1432,9 +1426,9 @@ class AcmeChallenge(models.Model):
         token = self.token.encode()
         if self.type == AcmeChallenge.TYPE_HTTP_01:
             return challenges.HTTP01(token=token)
-        elif self.type == AcmeChallenge.TYPE_DNS_01:
+        if self.type == AcmeChallenge.TYPE_DNS_01:
             return challenges.DNS01(token=token)
-        elif self.type == AcmeChallenge.TYPE_TLS_ALPN_01:
+        if self.type == AcmeChallenge.TYPE_TLS_ALPN_01:
             return challenges.TLSALPN01(token=token)
 
         raise ValueError('%s: Unsupported challenge type.' % self.type)
@@ -1448,12 +1442,11 @@ class AcmeChallenge(models.Model):
         if ``USE_TZ=False``.
         """
         if self.status != AcmeChallenge.STATUS_VALID or self.validated is None:
-            return self.validated
+            return None
 
         if timezone.is_naive(self.validated):
             return timezone.make_aware(self.validated, timezone=pytz.UTC)
-        else:
-            return self.validated
+        return self.validated
 
     @property
     def can_be_processed(self):
