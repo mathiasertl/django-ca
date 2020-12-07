@@ -345,6 +345,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
     """Base class with test cases for all views."""
 
     post_as_get = False
+    requires_kid = True
 
     def setUp(self):
         super().setUp()
@@ -438,6 +439,54 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
             resp = self.acme(self.url, self.message, kid='foo')
         self.assertMalformed(resp, 'jwk and kid are mutually exclusive.')
 
+    @override_tmpcadir()
+    def test_invalid_ca(self):
+        """Test a request where the CA cannot be found."""
+        CertificateAuthority.objects.all().update(acme_enabled=False)
+        resp = self.acme(self.url, self.message)
+        self.assertAcmeProblem(resp, 'not-found', status=HTTPStatus.NOT_FOUND,
+                               message="The requested CA cannot be found.")
+
+    @override_tmpcadir()
+    def test_wrong_jwk_or_kid(self):
+        """Send a KID where a JWK is required and vice-versa."""
+        kid = self.kid
+        expected = 'Request requires a full JWK key.'
+        if self.requires_kid:
+            expected = 'Request requires a JWK key ID.'
+            kid = None
+
+        self.assertMalformed(self.acme(self.url, self.message, kid=kid), expected)
+
+    @override_tmpcadir()
+    def test_invalid_jws(self):
+        """Test invalid JWS signature."""
+        kid = self.kid if self.requires_kid else None
+        with self.patch('acme.jws.JWS.verify', return_value=False) as verify_mock:
+            self.assertMalformed(self.acme(self.url, self.message, kid=kid), 'JWS signature invalid.')
+        verify_mock.assert_called_once()
+
+        # function might also raise an exception
+        with self.patch('acme.jws.JWS.verify', side_effect=Exception('foo')) as verify_mock:
+            self.assertMalformed(self.acme(self.url, self.message, kid=kid), 'JWS signature invalid.')
+        verify_mock.assert_called_once()
+
+    @override_tmpcadir()
+    def test_neither_jwk_nor_kid(self):
+        """Test sending neither a jwk and a kid."""
+
+        sign = acme.jws.Signature.sign
+
+        def sign_mock(*args, **kwargs):
+            """Mock function so that JWS has neither jwk nor kid"""
+            kwargs.pop('kid')
+            kwargs['include_jwk'] = False
+            return sign(*args, **kwargs)
+
+        with mock.patch('acme.jws.Signature.sign', side_effect=sign_mock):
+            resp = self.acme(self.url, self.message, kid='foo')
+        self.assertMalformed(resp, 'JWS contained neither key nor key ID.')
+
     def test_invalid_json(self):
         """Test sending invalid JSON to the server."""
 
@@ -453,6 +502,18 @@ class AcmeWithAccountViewTestCaseMixin(AcmeBaseViewTestCaseMixin):  # pylint: di
             ca=self.ca, terms_of_service_agreed=True, slug=self.account_slug, acme_kid=self.kid, pem=self.PEM
         )
 
+    @override_tmpcadir()
+    def test_unknown_account(self):
+        """Test doing requeist with an unknown kid."""
+        self.assertUnauthorized(self.acme(self.url, self.message, kid='unknown'), 'Account not found.')
+
+    @override_tmpcadir()
+    def test_unusable_account(self):
+        """Test doing a request with an unusable account."""
+        self.account.status = AcmeAccount.STATUS_REVOKED
+        self.account.save()
+        self.assertUnauthorized(self.acme(self.url, self.message, kid=self.kid), 'Account not usable.')
+
 
 @freeze_time(timestamps['everything_valid'])
 class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
@@ -462,6 +523,7 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
     url = reverse('django_ca:acme-new-account', kwargs={'serial': certs['root']['serial']})
     message = acme.messages.Registration(contact=(contact, ), terms_of_service_agreed=True)
     message_cls = acme.messages.Registration
+    requires_kid = False
     view_name = 'acme-new-account'
 
     @override_tmpcadir()
