@@ -39,6 +39,7 @@ from django.utils.crypto import get_random_string
 from freezegun import freeze_time
 
 from .. import ca_settings
+from ..acme.errors import AcmeUnauthorized
 from ..acme.messages import NewOrder
 from ..acme.responses import AcmeResponseUnauthorized
 from ..models import AcmeAccount
@@ -234,13 +235,15 @@ KSAr5SU7IyM/9M95oQIDAQAB
         kwargs.setdefault('hostname', self.SERVER_NAME)
         return super().absolute_uri(name, **kwargs)
 
-    def assertAcmeProblem(self, response, typ, status, message, ca=None):  # pylint: disable=invalid-name
+    def assertAcmeProblem(self, response, typ, status, message, ca=None,  # pylint: disable=invalid-name
+                          link_relations=None):
         """Assert that a HTTP response confirms to an ACME problem report.
 
         .. seealso:: `RFC 8555, section 8 <https://tools.ietf.org/html/rfc8555#section-6.7>`_
         """
+        link_relations = link_relations or {}
         self.assertEqual(response['Content-Type'], 'application/problem+json')
-        self.assertLinkRelations(response, ca=ca)
+        self.assertLinkRelations(response, ca=ca, **link_relations)
         data = response.json()
         self.assertEqual(data['type'], 'urn:ietf:params:acme:error:%s' % typ)
         self.assertEqual(data['status'], status)
@@ -259,20 +262,21 @@ KSAr5SU7IyM/9M95oQIDAQAB
             ca = self.ca
 
         directory = reverse('django_ca:acme-directory', kwargs={'serial': ca.serial})
-        kwargs['index'] = response.wsgi_request.build_absolute_uri(directory)
+        kwargs.setdefault('index', response.wsgi_request.build_absolute_uri(directory))
 
         expected = [{'rel': k, 'url': v} for k, v in kwargs.items()]
         actual = parse_header_links(response['Link'])
         self.assertEqual(expected, actual)
 
-    def assertMalformed(self, resp, message='', typ='malformed'):  # pylint: disable=invalid-name
+    def assertMalformed(self, resp, message='', typ='malformed', **kwargs):  # pylint: disable=invalid-name
         """Assert an unauthorized response."""
-        self.assertAcmeProblem(resp, typ=typ, status=HTTPStatus.BAD_REQUEST, message=message)
+        self.assertAcmeProblem(resp, typ=typ, status=HTTPStatus.BAD_REQUEST, message=message, **kwargs)
 
     def assertUnauthorized(self, resp,    # pylint: disable=invalid-name
-                           message=AcmeResponseUnauthorized.message):
+                           message=AcmeResponseUnauthorized.message, **kwargs):
         """Assert an unauthorized response."""
-        self.assertAcmeProblem(resp, 'unauthorized', status=HTTPStatus.UNAUTHORIZED, message=message)
+        self.assertAcmeProblem(resp, 'unauthorized', status=HTTPStatus.UNAUTHORIZED, message=message,
+                               **kwargs)
 
     def get_nonce(self, ca=None):
         """Get a nonce with an actual request.
@@ -492,6 +496,26 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
 
         resp = self.client.post(self.url, '{', content_type='application/jose+json')
         self.assertMalformed(resp, 'Could not parse JWS token.')
+
+    @override_tmpcadir()
+    def test_wrong_url(self):
+        """Test sending the wrong URL."""
+
+        kid = self.kid if self.requires_kid else None
+        with self.patch('django.http.request.HttpRequest.build_absolute_uri', return_value='foo'):
+            resp = self.acme(self.url, self.message, kid=kid)
+        self.assertUnauthorized(resp, 'URL does not match.', link_relations={'index': 'foo'})
+
+    @override_tmpcadir()
+    def test_payload_in_post_as_get(self):
+        """Test sending a paylod to a post-as-get request."""
+        if not self.post_as_get:
+            return
+
+        # just some bogus data
+        message = acme.messages.Registration(contact=('user@example.com', ), terms_of_service_agreed=True)
+        resp = self.acme(self.url, message, kid=self.kid)
+        self.assertMalformed(resp, 'Non-empty payload in get-as-post request.')
 
 
 class AcmeWithAccountViewTestCaseMixin(AcmeBaseViewTestCaseMixin):  # pylint: disable=too-few-public-methods
@@ -1107,6 +1131,10 @@ class AcmeChallengeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCA
         mockcm.assert_not_called()
         self.assertUnauthorized(resp, 'You are not authorized to perform this request.')
 
+    def test_payload_in_post_as_get(self):
+        """Do nothing, since we ignore the body."""
+        return
+
 
 @freeze_time(timestamps['everything_valid'])
 class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATransactionTestCase):
@@ -1495,6 +1523,18 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATest
         url = self.get_url(serial=self.ca.serial, slug=self.order.slug)
         resp = self.acme(url, self.message, kid=self.kid)
         self.assertUnauthorized(resp)
+
+    @override_tmpcadir()
+    def test_basic_exception(self):
+        """Test throwing an AcmeException in acme_request().
+
+        We have to mock this, as at present this is not usually done.
+        """
+
+        with self.patch('django_ca.views.AcmeOrderView.acme_request',
+                        side_effect=AcmeUnauthorized(message='foo')):
+            resp = self.acme(self.url, self.message, kid=self.kid)
+        self.assertUnauthorized(resp, 'foo')
 
 
 @freeze_time(timestamps['everything_valid'])

@@ -570,7 +570,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
 
         try:
             self.jws = acme.jws.JWS.json_loads(request.body)
-        except jose.errors.DeserializationError:
+        except (jose.errors.DeserializationError, TypeError):
             return AcmeResponseMalformed(message='Could not parse JWS token.')
 
         combined = self.jws.signature.combined
@@ -640,7 +640,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
 
         if self.post_as_get is True:
             if self.jws.payload != b'':
-                return AcmeResponseMalformed('Non-empty payload in get-as-post request.')
+                return AcmeResponseMalformed(message='Non-empty payload in get-as-post request.')
 
             try:
                 response = self.acme_request(**kwargs)
