@@ -1108,7 +1108,6 @@ class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATra
             'authorizations': [
                 'http://%s%s' % (self.SERVER_NAME, self.authz.acme_url)
             ],
-            'certificate': 'http://%s%s' % (self.SERVER_NAME, cert.acme_url),
             'expires': pyrfc3339.generate(order.expires, accept_naive=accept_naive),
             'identifiers': [{'type': 'dns', 'value': self.hostname}],
             'status': 'processing',
@@ -1224,7 +1223,6 @@ class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATra
             'authorizations': [
                 'http://%s%s' % (self.SERVER_NAME, self.authz.acme_url)
             ],
-            'certificate': 'http://%s%s' % (self.SERVER_NAME, cert.acme_url),
             'expires': pyrfc3339.generate(order.expires, accept_naive=True),
             'identifiers': [{'type': 'dns', 'value': self.hostname}],
             'status': 'processing',
@@ -1341,13 +1339,18 @@ class AcmeOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
         self.test_basic(False)
 
     @override_tmpcadir()
-    def test_ready_cert(self):
-        """Test viewing a ready certificate"""
-        self.order.status = AcmeOrder.STATUS_READY
+    def test_valid_cert(self):
+        """Test viewing a an order with a valid certificate"""
+
+        cert = Certificate(ca=self.ca)
+        cert.x509 = certs['root-cert']['pub']['parsed']
+        cert.save()
+
+        self.order.status = AcmeOrder.STATUS_VALID
         self.order.save()
         self.authz.status = AcmeAuthorization.STATUS_VALID
         self.authz.save()
-        acmecert = AcmeCertificate.objects.create(order=self.order)
+        acmecert = AcmeCertificate.objects.create(order=self.order, cert=cert)
 
         resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
@@ -1360,7 +1363,65 @@ class AcmeOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
             'certificate': 'http://%s%s' % (self.SERVER_NAME, acmecert.acme_url),
             'expires': pyrfc3339.generate(expires, accept_naive=True),
             'identifiers': [{'type': 'dns', 'value': self.hostname}],
-            'status': 'ready',
+            'status': 'valid',
+        })
+
+    @override_tmpcadir()
+    def test_cert_not_yet_issued(self):
+        """Test viewing a an order where the certificate has not yet been issued.
+
+        NOTE: test_cert_not_yet_issued and test_cert_not_yet_valid test two different conditionas that
+        *should* always be true at the same time.
+        """
+
+        self.order.status = AcmeOrder.STATUS_VALID
+        self.order.save()
+        self.authz.status = AcmeAuthorization.STATUS_VALID
+        self.authz.save()
+        AcmeCertificate.objects.create(order=self.order)
+
+        resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
+        self.assertAcmeResponse(resp)
+        expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
+        self.assertEqual(resp.json(), {
+            'authorizations': [
+                'http://%s%s' % (self.SERVER_NAME, self.authz.acme_url)
+            ],
+            'expires': pyrfc3339.generate(expires, accept_naive=True),
+            'identifiers': [{'type': 'dns', 'value': self.hostname}],
+            'status': 'valid',
+        })
+
+    @override_tmpcadir()
+    def test_cert_not_yet_valid(self):
+        """Test viewing a an order where the certificate has not yet valid.
+
+        NOTE: test_cert_not_yet_issued and test_cert_not_yet_valid test two different conditionas that
+        *should* always be true at the same time.
+        """
+
+        cert = Certificate(ca=self.ca)
+        cert.x509 = certs['root-cert']['pub']['parsed']
+        cert.save()
+
+        self.order.status = AcmeOrder.STATUS_PROCESSING
+        self.order.save()
+        self.authz.status = AcmeAuthorization.STATUS_VALID
+        self.authz.save()
+        AcmeCertificate.objects.create(order=self.order, cert=cert)
+
+        resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
+        self.assertAcmeResponse(resp)
+        expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
+        self.assertEqual(resp.json(), {
+            'authorizations': [
+                'http://%s%s' % (self.SERVER_NAME, self.authz.acme_url)
+            ],
+            'expires': pyrfc3339.generate(expires, accept_naive=True),
+            'identifiers': [{'type': 'dns', 'value': self.hostname}],
+            'status': 'processing',
         })
 
     @override_tmpcadir()

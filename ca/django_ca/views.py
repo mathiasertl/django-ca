@@ -930,17 +930,24 @@ class AcmeOrderView(AcmeBaseView):
             expires = timezone.make_aware(expires, timezone=pytz.utc)
 
         authorizations = order.authorizations.all()
-        if order.status in [AcmeOrder.STATUS_READY, AcmeOrder.STATUS_INVALID]:
+        if order.status in [AcmeOrder.STATUS_VALID, AcmeOrder.STATUS_INVALID]:
             # RFC 8555, section 7.1.3:
             #
             #   For final orders (in the "valid" or "invalid" state), the authorizations that were completed.
             authorizations = authorizations.filter(status=AcmeAuthorization.STATUS_VALID)
 
+        cert_url = None
         try:
             cert = AcmeCertificate.objects.get(order=order)
-            cert_url = self.request.build_absolute_uri(cert.acme_url)
+            if cert.cert and order.status == AcmeOrder.STATUS_VALID:
+                # WARNING: certbot (at least version 0.31.0) will try to fetch the certificate immediately if
+                # we return the URL. That view will fail if the certificate is not yet issued, and certbot
+                # fails with an error.
+                # This behavior is independent of the status of the order, despite the fact this is the field
+                # that should be used for this according to RFC 8555.
+                cert_url = self.request.build_absolute_uri(cert.acme_url)
         except AcmeCertificate.DoesNotExist:
-            cert_url = None
+            pass
 
         response = AcmeResponseOrder(
             status=order.status,
@@ -1060,7 +1067,6 @@ class AcmeOrderFinalizeView(AcmeBaseView):
             expires=expires,
             identifiers=tuple([{'type': a.type, 'value': a.value} for a in authorizations]),
             authorizations=tuple([self.request.build_absolute_uri(a.acme_url) for a in authorizations]),
-            certificate=self.request.build_absolute_uri(cert.acme_url),
         )
         response['Location'] = self.request.build_absolute_uri(order.acme_url)
         return response

@@ -376,7 +376,7 @@ class PreparedAcmeCertificateViewTestCase(AcmePreparedRequestsTestCaseMixin, Dja
             'terms_of_service_agreed': True, 'pem': data['pem'], 'slug': data['account_pk'],
             'acme_kid': data['kid'],
         })[0]
-        order = AcmeOrder.objects.create(account=acc, slug=data['order'])
+        order = AcmeOrder.objects.create(account=acc, slug=data['order'], status=AcmeOrder.STATUS_VALID)
         AcmeCertificate.objects.create(slug=data['cert'], order=order, cert=self.certs['root-cert'],
                                        csr=data['csr'])
 
