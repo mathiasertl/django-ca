@@ -156,7 +156,8 @@ class AcmeAccountQuerySet(models.QuerySet):
     def viewable(self):
         """Filter ACME accounts that can be viewed via the ACME API.
 
-        An account is considered viewable if the associated CA is usable.
+        An account is considered viewable if the associated CA is usable. Note that an account is *viewable*
+        also if it was revoked by the CA.
         """
         now = timezone.now()
         return self.filter(ca__enabled=True, ca__acme_enabled=True,
