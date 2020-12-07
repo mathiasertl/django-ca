@@ -211,6 +211,7 @@ class DirectoryTestCase(DjangoCAWithCATestCase):
 class AcmeTestCaseMixin:
     """TestCase mixin with various common utility functions."""
 
+    hostname = 'example.com'  # what we want a certificate for
     SERVER_NAME = 'example.com'
     PEM = '''-----BEGIN PUBLIC KEY-----
 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDF9BgQzTqQQnCLTcniyO++uDyb
@@ -444,6 +445,15 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
         self.assertMalformed(resp, 'Could not parse JWS token.')
 
 
+class AcmeWithAccountViewTestCaseMixin(AcmeBaseViewTestCaseMixin):  # pylint: disable=too-few-public-methods
+    """Mixin that also adds an account to the database."""
+    def setUp(self):  # pylint: disable=invalid-name,missing-function-docstring
+        super().setUp()
+        self.account = AcmeAccount.objects.create(
+            ca=self.ca, terms_of_service_agreed=True, slug=self.account_slug, acme_kid=self.kid, pem=self.PEM
+        )
+
+
 @freeze_time(timestamps['everything_valid'])
 class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test creating a new account."""
@@ -670,17 +680,11 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
 
 
 @freeze_time(timestamps['everything_valid'])
-class AcmeNewOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
+class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test creating a new order."""
 
     url = reverse('django_ca:acme-new-order', kwargs={'serial': certs['root']['serial']})
     message_cls = NewOrder
-
-    def setUp(self):
-        super().setUp()
-        self.account = AcmeAccount.objects.create(
-            ca=self.ca, terms_of_service_agreed=True, slug='abc', acme_kid=self.kid, pem=self.PEM
-        )
 
     def get_message(self, **kwargs):
         kwargs.setdefault('identifiers', [{'type': 'dns', 'value': self.SERVER_NAME}])
@@ -819,7 +823,7 @@ class AcmeNewOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase
 
 
 @freeze_time(timestamps['everything_valid'])
-class AcmeAuthorizationViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
+class AcmeAuthorizationViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test creating a new order."""
 
     post_as_get = True
@@ -827,9 +831,6 @@ class AcmeAuthorizationViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATes
 
     def setUp(self):
         super().setUp()
-        self.account = AcmeAccount.objects.create(
-            ca=self.ca, terms_of_service_agreed=True, slug='abc', acme_kid=self.kid, pem=self.PEM
-        )
         self.order = AcmeOrder.objects.create(account=self.account)
         self.order.add_authorizations([
             acme.messages.Identifier(typ=acme.messages.IDENTIFIER_FQDN, value='example.com')
@@ -962,7 +963,7 @@ class AcmeAuthorizationViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATes
 
 
 @freeze_time(timestamps['everything_valid'])
-class AcmeChallengeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATransactionTestCase):
+class AcmeChallengeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATransactionTestCase):
     """Test retrieving a challenge."""
 
     post_as_get = True
@@ -970,9 +971,6 @@ class AcmeChallengeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATransac
 
     def setUp(self):
         super().setUp()
-        self.account = AcmeAccount.objects.create(
-            ca=self.ca, terms_of_service_agreed=True, slug='abc', acme_kid=self.kid, pem=self.PEM
-        )
         self.order = AcmeOrder.objects.create(account=self.account)
         self.order.add_authorizations([
             acme.messages.Identifier(typ=acme.messages.IDENTIFIER_FQDN, value='example.com')
@@ -1049,7 +1047,7 @@ class AcmeChallengeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATransac
 
 
 @freeze_time(timestamps['everything_valid'])
-class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATransactionTestCase):
+class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATransactionTestCase):
     """Test retrieving a challenge."""
 
     slug = '92MPyl7jm0zw'
@@ -1060,14 +1058,10 @@ class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATra
 
         # Create a CSR based on root-cert
         # NOTE: certbot CSRs have an empty subject
-        self.hostname = 'example.com'
         self.csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([])).add_extension(
             x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False
         ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256())
 
-        self.account = AcmeAccount.objects.create(
-            ca=self.ca, terms_of_service_agreed=True, slug='abc', acme_kid=self.kid, pem=self.PEM
-        )
         self.order = AcmeOrder.objects.create(account=self.account, status=AcmeOrder.STATUS_READY,
                                               slug=self.slug)
         self.order.add_authorizations([
@@ -1287,7 +1281,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATra
 
 
 @freeze_time(timestamps['everything_valid'])
-class AcmeOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
+class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test retrieving an order."""
 
     post_as_get = True
@@ -1295,11 +1289,6 @@ class AcmeOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
 
     def setUp(self):
         super().setUp()
-        self.hostname = 'example.net'
-        self.account = AcmeAccount.objects.create(
-            ca=self.ca, terms_of_service_agreed=True, slug=self.account_slug, acme_kid=self.kid,
-            pem=self.PEM
-        )
         self.order = AcmeOrder.objects.create(account=self.account)
         self.authz = AcmeAuthorization.objects.create(order=self.order, value=self.hostname)
 
@@ -1447,7 +1436,7 @@ class AcmeOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
 
 
 @freeze_time(timestamps['everything_valid'])
-class AcmeCertificateViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
+class AcmeCertificateViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test retrieving a certificate."""
 
     post_as_get = True
@@ -1455,11 +1444,6 @@ class AcmeCertificateViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestC
 
     def setUp(self):
         super().setUp()
-        self.hostname = 'example.net'
-        self.account = AcmeAccount.objects.create(
-            ca=self.ca, terms_of_service_agreed=True, slug=self.account_slug, acme_kid=self.kid,
-            pem=self.PEM
-        )
         self.order = AcmeOrder.objects.create(account=self.account, status=AcmeOrder.STATUS_VALID)
 
         cert = Certificate(ca=self.ca)
