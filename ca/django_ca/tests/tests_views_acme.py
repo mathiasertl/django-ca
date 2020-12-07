@@ -448,6 +448,7 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
     contact = 'mailto:user@example.com'
     url = reverse('django_ca:acme-new-account', kwargs={'serial': certs['root']['serial']})
     message = acme.messages.Registration(contact=(contact, ), terms_of_service_agreed=True)
+    message_cls = acme.messages.Registration
     view_name = 'acme-new-account'
 
     @override_tmpcadir()
@@ -455,12 +456,13 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
         """Basic test for creating an account via ACME."""
 
         self.assertEqual(AcmeAccount.objects.count(), 0)
-        resp = self.acme(self.url, self.message)
+        with self.mock_slug() as slug:
+            resp = self.acme(self.url, self.message)
         self.assertEqual(resp.status_code, HTTPStatus.CREATED, resp.content)
         self.assertAcmeResponse(resp)
 
         # Get first AcmeAccount - which must be the one we just created
-        acc = AcmeAccount.objects.get(thumbprint='ERBwTPWxRgjzsjPaG8F1NTVQuA3a9QYWSL41Dcjxhe4')
+        acc = AcmeAccount.objects.get(slug=slug)
         self.assertEqual(acc.status, AcmeAccount.STATUS_VALID)
         self.assertEqual(acc.ca, self.ca)
         self.assertEqual(acc.contact, self.contact)
@@ -477,7 +479,7 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
         })
 
         # Test making a request where we already have a key
-        resp = self.acme(self.url, acme.messages.Registration(
+        resp = self.acme(self.url, self.get_message(
             contact=('mailto:other@example.net', ),  # make sure that we do not update the user
             terms_of_service_agreed=True,
         ))
@@ -493,7 +495,7 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
         self.assertEqual(AcmeAccount.objects.count(), 1)
 
         # test only_return existing:
-        resp = self.acme(self.url, acme.messages.Registration(
+        resp = self.acme(self.url, self.get_message(
             contact=('mailto:other@example.net', ),  # make sure that we do not update the user
             only_return_existing=True,
         ))
@@ -509,7 +511,7 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
         self.assertEqual(AcmeAccount.objects.count(), 1)
 
         # Test object properties one last time
-        acc = AcmeAccount.objects.get(thumbprint='ERBwTPWxRgjzsjPaG8F1NTVQuA3a9QYWSL41Dcjxhe4')
+        acc = AcmeAccount.objects.get(slug=slug)
         self.assertEqual(acc.status, AcmeAccount.STATUS_VALID)
         self.assertEqual(acc.ca, self.ca)
         self.assertEqual(acc.contact, self.contact)
@@ -523,14 +525,13 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
         self.ca.save()
 
         self.assertEqual(AcmeAccount.objects.count(), 0)
-        resp = self.acme(self.url, acme.messages.Registration(
-            terms_of_service_agreed=True,
-        ))
+        with self.mock_slug() as slug:
+            resp = self.acme(self.url, self.get_message(terms_of_service_agreed=True))
         self.assertEqual(resp.status_code, HTTPStatus.CREATED)
         self.assertAcmeResponse(resp)
 
         # Get first AcmeAccount - which must be the one we just created
-        acc = AcmeAccount.objects.get(thumbprint='ERBwTPWxRgjzsjPaG8F1NTVQuA3a9QYWSL41Dcjxhe4')
+        acc = AcmeAccount.objects.get(slug=slug)
         self.assertEqual(acc.status, AcmeAccount.STATUS_VALID)
         self.assertEqual(acc.ca, self.ca)
         self.assertEqual(acc.contact, '')
@@ -550,15 +551,14 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
         """Test for creating an account with multiple email addresses."""
 
         contact_2 = 'mailto:user@example.net'
-        resp = self.acme(self.url, acme.messages.Registration(
-            contact=(self.contact, contact_2),
-            terms_of_service_agreed=True,
-        ))
+        with self.mock_slug() as slug:
+            resp = self.acme(self.url, self.get_message(contact=(self.contact, contact_2),
+                                                        terms_of_service_agreed=True))
         self.assertEqual(resp.status_code, HTTPStatus.CREATED)
         self.assertAcmeResponse(resp)
 
         # Get first AcmeAccount - which must be the one we just created
-        acc = AcmeAccount.objects.get(thumbprint='ERBwTPWxRgjzsjPaG8F1NTVQuA3a9QYWSL41Dcjxhe4')
+        acc = AcmeAccount.objects.get(slug=slug)
         self.assertEqual(acc.status, AcmeAccount.STATUS_VALID)
         self.assertEqual(acc.ca, self.ca)
         self.assertCountEqual(acc.contact.split('\n'), [self.contact, contact_2])
