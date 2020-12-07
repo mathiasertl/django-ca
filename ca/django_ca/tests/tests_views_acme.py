@@ -48,6 +48,7 @@ from ..models import AcmeChallenge
 from ..models import AcmeOrder
 from ..models import Certificate
 from ..models import CertificateAuthority
+from ..models import acme_slug
 from ..tasks import acme_issue_certificate
 from ..tasks import acme_validate_challenge
 from .base import DjangoCAWithCATestCase
@@ -344,6 +345,10 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
 
     post_as_get = False
 
+    def setUp(self):
+        self.account_slug = acme_slug()
+        super().setUp()
+
     def acme(self, uri, msg, cert=None, kid=None, nonce=None, payload_cb=None, post_kwargs=None):
         """Do a generic ACME request.
 
@@ -397,6 +402,12 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
             return b''
 
         return self.get_message()
+
+    @override_tmpcadir(CA_ENABLE_ACME=False)
+    def test_disabled_acme(self):
+        """Test that we get HTTP 404 if ACME is disabled."""
+        resp = self.acme(self.url, self.message, nonce=b'foo')
+        self.assertEqual(resp.status_code, HTTPStatus.NOT_FOUND)
 
     @override_tmpcadir()
     def test_invalid_content_type(self):
@@ -664,7 +675,6 @@ class AcmeNewOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase
 
     def setUp(self):
         super().setUp()
-        self.account_slug = 'abc'
         self.account_kid = 'http://%s%s' % (self.SERVER_NAME, self.absolute_uri(
             ':acme-account', serial=self.ca.serial, slug=self.account_slug
         ))
@@ -817,7 +827,6 @@ class AcmeAuthorizationViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATes
 
     def setUp(self):
         super().setUp()
-        self.account_slug = 'abc'
         self.account_kid = 'http://%s%s' % (self.SERVER_NAME, self.absolute_uri(
             ':acme-account', serial=self.ca.serial, slug=self.account_slug
         ))
@@ -964,7 +973,6 @@ class AcmeChallengeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATransac
 
     def setUp(self):
         super().setUp()
-        self.account_slug = 'abc'
         self.account_kid = 'http://%s%s' % (self.SERVER_NAME, self.absolute_uri(
             ':acme-account', serial=self.ca.serial, slug=self.account_slug
         ))
@@ -1063,7 +1071,6 @@ class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATra
             x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False
         ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256())
 
-        self.account_slug = 'abc'
         self.account_kid = 'http://%s%s' % (self.SERVER_NAME, self.absolute_uri(
             ':acme-account', serial=self.ca.serial, slug=self.account_slug
         ))
@@ -1298,7 +1305,6 @@ class AcmeOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
     def setUp(self):
         super().setUp()
         self.hostname = 'example.net'
-        self.account_slug = 'abc'
         self.account_kid = 'http://%s%s' % (self.SERVER_NAME, self.absolute_uri(
             ':acme-account', serial=self.ca.serial, slug=self.account_slug
         ))
@@ -1462,7 +1468,6 @@ class AcmeCertificateViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestC
     def setUp(self):
         super().setUp()
         self.hostname = 'example.net'
-        self.account_slug = 'abc'
         self.account_kid = 'http://%s%s' % (self.SERVER_NAME, self.absolute_uri(
             ':acme-account', serial=self.ca.serial, slug=self.account_slug
         ))
