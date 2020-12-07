@@ -154,9 +154,6 @@ def acme_issue_certificate(acme_certificate_pk):
         log.error('ACME is not enabled.')
         return
 
-    log.info('#1 %s', AcmeCertificate.objects.get(pk=acme_certificate_pk))
-    log.info('#2 %s', AcmeCertificate.objects.get(pk=acme_certificate_pk).order.status)
-
     qs = AcmeCertificate.objects.filter(order__status=AcmeOrder.STATUS_PROCESSING).select_related('order')
     acme_cert = qs.get(pk=acme_certificate_pk)
     log.info('Issuing acme_cert: %s', acme_cert)
@@ -167,7 +164,8 @@ def acme_issue_certificate(acme_certificate_pk):
         SubjectAlternativeName.key: SubjectAlternativeName({'value': subject_alternative_names})
     }
 
-    ca = CertificateAuthority.objects.first()  # TODO: properly select CA
+    # Get ca for the certificate
+    ca = acme_cert.order.account.ca
 
     profile = profiles['server']
     expires = timezone.now() + timedelta(days=90)
@@ -177,4 +175,5 @@ def acme_issue_certificate(acme_certificate_pk):
                                            extensions=extensions)
     acme_cert.cert = cert
     acme_cert.order.status = AcmeOrder.STATUS_VALID
+    acme_cert.order.save()
     acme_cert.save()
