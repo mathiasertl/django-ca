@@ -263,6 +263,10 @@ KSAr5SU7IyM/9M95oQIDAQAB
         actual = parse_header_links(response['Link'])
         self.assertEqual(expected, actual)
 
+    def assertMalformed(self, resp, message='', typ='malformed'):  # pylint: disable=invalid-name
+        """Assert an unauthorized response."""
+        self.assertAcmeProblem(resp, typ=typ, status=HTTPStatus.BAD_REQUEST, message=message)
+
     def assertUnauthorized(self, resp,    # pylint: disable=invalid-name
                            message=AcmeResponseUnauthorized.message):
         """Assert an unauthorized response."""
@@ -417,15 +421,13 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
 
         with mock.patch('acme.jws.Signature.sign', side_effect=sign_mock):
             resp = self.acme(self.url, self.message, kid='foo')
-        self.assertAcmeProblem(resp, 'malformed', status=HTTPStatus.BAD_REQUEST,
-                               message='jwk and kid are mutually exclusive.')
+        self.assertMalformed(resp, 'jwk and kid are mutually exclusive.')
 
     def test_invalid_json(self):
         """Test sending invalid JSON to the server."""
 
         resp = self.client.post(self.url, '{', content_type='application/jose+json')
-        self.assertAcmeProblem(resp, 'malformed', status=HTTPStatus.BAD_REQUEST,
-                               message='Could not parse JWS token.')
+        self.assertMalformed(resp, 'Could not parse JWS token.')
 
 
 @freeze_time(timestamps['everything_valid'])
@@ -570,8 +572,7 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
             terms_of_service_agreed=True,
         ))
         self.assertEqual(resp.status_code, HTTPStatus.UNAUTHORIZED)
-        self.assertAcmeProblem(resp, 'unauthorized', status=HTTPStatus.UNAUTHORIZED,
-                               message='Must provide at least one contact address.')
+        self.assertUnauthorized(resp, 'Must provide at least one contact address.')
         self.assertEqual(AcmeAccount.objects.count(), 0)
 
     @override_tmpcadir()
@@ -651,8 +652,7 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
                 contact=(self.contact, ),
                 terms_of_service_agreed=True,
             ))
-            self.assertAcmeProblem(resp, 'malformed', status=HTTPStatus.BAD_REQUEST,
-                                   message='Account cannot be stored.')
+            self.assertMalformed(resp, 'Account cannot be stored.')
 
 
 @freeze_time(timestamps['everything_valid'])
@@ -779,14 +779,12 @@ class AcmeNewOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase
         """Test sending no identifiers."""
 
         resp = self.acme(self.url, acme.messages.NewOrder(), kid=self.account_kid)
-        self.assertAcmeProblem(resp, 'malformed', status=HTTPStatus.BAD_REQUEST,
-                               message='Malformed payload.')
+        self.assertMalformed(resp, 'Malformed payload.')
 
         # try empty tuple too
         resp = self.acme(self.url, acme.messages.NewOrder(identifiers=tuple()), kid=self.account_kid,
                          payload_cb=lambda d: dict(d, identifiers=()))
-        self.assertAcmeProblem(resp, 'malformed', status=HTTPStatus.BAD_REQUEST,
-                               message='Malformed payload.')
+        self.assertMalformed(resp, 'Malformed payload.')
 
         self.assertEqual(AcmeOrder.objects.all().count(), 0)
 
@@ -796,21 +794,18 @@ class AcmeNewOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase
 
         past = timezone.now() - timedelta(days=1)
         resp = self.acme(self.url, self.get_message(not_before=past), kid=self.account_kid)
-        self.assertAcmeProblem(resp, 'malformed', status=HTTPStatus.BAD_REQUEST,
-                               message='Certificate cannot be valid before now.')
+        self.assertMalformed(resp, 'Certificate cannot be valid before now.')
 
         far_future = timezone.now() + timedelta(days=3650)
         resp = self.acme(self.url, self.get_message(not_after=far_future), kid=self.account_kid)
-        self.assertAcmeProblem(resp, 'malformed', status=HTTPStatus.BAD_REQUEST,
-                               message='Certificate cannot be valid that long.')
+        self.assertMalformed(resp, 'Certificate cannot be valid that long.')
 
         not_before = timezone.now() + timedelta(days=10)
         not_after = timezone.now() + timedelta(days=1)
 
         resp = self.acme(self.url, self.get_message(
             not_before=not_before, not_after=not_after), kid=self.account_kid)
-        self.assertAcmeProblem(resp, 'malformed', status=HTTPStatus.BAD_REQUEST,
-                               message='notBefore must be before notAfter.')
+        self.assertMalformed(resp, 'notBefore must be before notAfter.')
 
 
 @freeze_time(timestamps['everything_valid'])
@@ -957,8 +952,7 @@ class AcmeAuthorizationViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATes
     def test_unknown_auth(self):
         """Test fetching unknown auth object."""
         resp = self.acme(self.get_url(serial=self.ca.serial, slug='abc'), self.message, kid=self.account_kid)
-        self.assertAcmeProblem(resp, 'unauthorized', status=HTTPStatus.UNAUTHORIZED,
-                               message='You are not authorized to perform this request.')
+        self.assertUnauthorized(resp, 'You are not authorized to perform this request.')
 
 
 @freeze_time(timestamps['everything_valid'])
@@ -1049,8 +1043,7 @@ class AcmeChallengeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATransac
         with self.patch('django_ca.views.run_task') as mockcm:
             resp = self.acme(url, self.message, kid=self.account_kid)
         mockcm.assert_not_called()
-        self.assertAcmeProblem(resp, 'unauthorized', status=HTTPStatus.UNAUTHORIZED,
-                               message='You are not authorized to perform this request.')
+        self.assertUnauthorized(resp, 'You are not authorized to perform this request.')
 
 
 @freeze_time(timestamps['everything_valid'])
@@ -1135,8 +1128,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATra
         with self.patch('django_ca.views.run_task') as mockcm:
             resp = self.acme(url, self.message, kid=self.account_kid)
         mockcm.assert_not_called()
-        self.assertAcmeProblem(resp, 'unauthorized', status=HTTPStatus.UNAUTHORIZED,
-                               message='You are not authorized to perform this request.')
+        self.assertUnauthorized(resp, 'You are not authorized to perform this request.')
 
     @override_tmpcadir()
     def test_wrong_account(self):
@@ -1152,8 +1144,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATra
         with self.patch('django_ca.views.run_task') as mockcm:
             resp = self.acme(self.url, self.message, kid=self.account_kid)
         mockcm.assert_not_called()
-        self.assertAcmeProblem(resp, 'unauthorized', status=HTTPStatus.UNAUTHORIZED,
-                               message='You are not authorized to perform this request.')
+        self.assertUnauthorized(resp, 'You are not authorized to perform this request.')
 
     @override_tmpcadir()
     def test_not_ready(self):
