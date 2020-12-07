@@ -587,20 +587,16 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
 
         if combined.jwk:
             if not self.requires_key:
-                return AcmeResponseMalformed('Request requires a JWK key ID.')
+                return AcmeResponseMalformed(message='Request requires a JWK key ID.')
 
-            # verify request
-            if not self.jws.verify():
-                return AcmeResponseMalformed('JWS signature invalid.')
-
-            self.jwk = combined.jwk
+            self.jwk = combined.jwk  # set JWK from request
         elif combined.kid:
             if self.requires_key:
-                return AcmeResponseMalformed('Request requires a full JWK key.')
+                return AcmeResponseMalformed(message='Request requires a full JWK key.')
 
             # combined.kid is a full URL pointing to the account.
             try:
-                account = AcmeAccount.objects.get(ca=self.ca, acme_kid=combined.kid)
+                account = AcmeAccount.objects.viewable().get(ca=self.ca, acme_kid=combined.kid)
             except AcmeAccount.DoesNotExist:
                 return AcmeResponseUnauthorized(message='Account not found.')
             if account.usable is False:
@@ -609,27 +605,27 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
             #self.prepared['pem'] = account.pem
             #self.prepared['account_pk'] = account.pk
 
-            # load and verify JWK
-            self.jwk = jose.JWK.load(account.pem.encode('utf-8'))
-            try:
-                if not self.jws.verify(self.jwk):
-                    return AcmeResponseMalformed('JWS signature invalid.')
-            except Exception:  # pylint: disable=broad-except
-                return AcmeResponseMalformed('Cannot parse JWS signature.')
-
+            self.jwk = jose.JWK.load(account.pem.encode('utf-8'))  # load JWK from database
             self.account = account
         else:
             # ... 'Either "jwk" (JSON Web Key) or "kid" (Key ID)'
-            return AcmeResponseMalformed('JWS contained mutually exclusive fields "jwk" and "kid".')
+            return AcmeResponseMalformed(message='JWS contained neither key nor key ID.')
 
-        if len(self.jws.signatures) != 1:
+        if len(self.jws.signatures) != 1:  # pragma: no cover
             # RFC 8555, 6.2: "The JWS MUST NOT have multiple signatures"
             return AcmeResponseMalformed(message='Multiple JWS signatures encountered.')
 
         # "The JWS Protected Header MUST include the following fields:...
-        if not combined.alg or combined.alg == 'none':
+        if not combined.alg or combined.alg == 'none':  # pragma: no cover
             # ... "alg"
             return AcmeResponseMalformed(message='No algorithm specified.')
+
+        # Verify JWS signature
+        try:
+            if not self.jws.verify(self.jwk):
+                return AcmeResponseMalformed(message='JWS signature invalid.')
+        except Exception:  # pylint: disable=broad-except
+            return AcmeResponseMalformed(message='JWS signature invalid.')
 
         #self.prepared['nonce'] = jose.encode_b64jose(combined.nonce)
         if not self.validate_nonce(jose.encode_b64jose(combined.nonce)):
