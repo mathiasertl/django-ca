@@ -81,12 +81,14 @@ from .extensions import TLSFeature
 from .extensions import get_extension_name
 from .managers import AcmeAccountManager
 from .managers import AcmeAuthorizationManager
+from .managers import AcmeCertificateManager
 from .managers import AcmeChallengeManager
 from .managers import AcmeOrderManager
 from .managers import CertificateAuthorityManager
 from .managers import CertificateManager
 from .querysets import AcmeAccountQuerySet
 from .querysets import AcmeAuthorizationQuerySet
+from .querysets import AcmeCertificateQuerySet
 from .querysets import AcmeChallengeQuerySet
 from .querysets import AcmeOrderQuerySet
 from .querysets import CertificateAuthorityQuerySet
@@ -1499,6 +1501,8 @@ class AcmeChallenge(models.Model):
 
 class AcmeCertificate(models.Model):
     """Intermediate model for certificates to be issued via ACME."""
+
+    objects = AcmeCertificateManager.from_queryset(AcmeCertificateQuerySet)()
 
     slug = models.SlugField(unique=True, default=acme_slug)
     order = models.OneToOneField(AcmeOrder, on_delete=models.CASCADE)

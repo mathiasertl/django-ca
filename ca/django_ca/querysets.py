@@ -226,3 +226,34 @@ class AcmeChallengeQuerySet(models.QuerySet):
             auth__order__account__ca__enabled=True, auth__order__account__ca__acme_enabled=True,
             auth__order__account__ca__expires__gt=now, auth__order__account__ca__valid_from__lt=now
         ).exclude(auth__order__account__status=messages.STATUS_REVOKED.name)
+
+
+class AcmeCertificateQuerySet(models.QuerySet):
+    """QuerySet for :py:class:`~django_ca.models.AcmeCertificate`."""
+
+    def account(self, account):
+        """Filter certificates belonging to the given account."""
+        return self.filter(order__account=account)
+
+    def url(self):
+        """Prepare queryset to get the ACME URL of objects without subsequent database lookups."""
+        return self.select_related('order__account__ca')
+
+    def viewable(self):
+        """Filter ACME certificates that can be viewed via the ACME API.
+
+        An authz is considered viewable if the associated CA is usable, the order is ready, the account is not
+        revoked and the certificate itself was not revoked.
+        """
+        now = timezone.now()
+        return self.filter(
+            order__account__ca__enabled=True, order__account__ca__acme_enabled=True,
+            order__account__ca__expires__gt=now, order__account__ca__valid_from__lt=now,
+            order__status=messages.STATUS_VALID.name,
+        ).exclude(
+            order__account__status=messages.STATUS_REVOKED.name
+        ).exclude(
+            cert__isnull=True
+        ).exclude(
+            cert__revoked=True
+        )

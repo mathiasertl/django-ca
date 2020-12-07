@@ -46,6 +46,7 @@ from ..models import AcmeAuthorization
 from ..models import AcmeCertificate
 from ..models import AcmeChallenge
 from ..models import AcmeOrder
+from ..models import Certificate
 from ..models import CertificateAuthority
 from ..tasks import acme_issue_certificate
 from ..tasks import acme_validate_challenge
@@ -1396,7 +1397,70 @@ class AcmeOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
 class AcmeCertificateViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test retrieving a certificate."""
 
-    generic_url = reverse('django_ca:acme-cert', kwargs={'serial': certs['root']['serial'], 'slug': 'foo'})
+    def setUp(self):
+        super().setUp()
+        self.hostname = 'example.net'
+        self.account_slug = 'abc'
+        self.account_kid = 'http://%s%s' % (self.SERVER_NAME, self.absolute_uri(
+            ':acme-account', serial=self.ca.serial, slug=self.account_slug
+        ))
+        self.account = AcmeAccount.objects.create(
+            ca=self.ca, terms_of_service_agreed=True, slug=self.account_slug, acme_kid=self.account_kid,
+            pem=self.PEM
+        )
+        self.order = AcmeOrder.objects.create(account=self.account, status=AcmeOrder.STATUS_VALID)
+
+        cert = Certificate(ca=self.ca)
+        cert.x509 = certs['root-cert']['pub']['parsed']
+        cert.save()
+        self.acmecert = AcmeCertificate.objects.create(order=self.order, cert=cert)
+
+    @property
+    def generic_url(self):
+        """Get URL for the standard cert object."""
+        return reverse('django_ca:acme-cert', kwargs={
+            'serial': self.ca.serial,
+            'slug': self.acmecert.slug,
+        })
 
     def get_basic_message(self):
         return b''
+
+    @override_tmpcadir()
+    def test_basic(self):
+        """Basic test case."""
+        resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
+
+    @override_tmpcadir()
+    def test_not_found(self):
+        """Test fetching a cert that simply does not exist."""
+        url = reverse('django_ca:acme-cert', kwargs={'serial': self.ca.serial, 'slug': 'abc'})
+        resp = self.acme(url, self.get_basic_message(), kid=self.account_kid)
+        self.assertUnauthorized(resp)
+
+    @override_tmpcadir()
+    def test_wrong_account(self):
+        """Test fetching a certificate for a different account."""
+        account = AcmeAccount.objects.create(
+            ca=self.ca, terms_of_service_agreed=True, slug='def', acme_kid='kid', pem='bar',
+            thumbprint='foo'
+        )
+        self.order.account = account
+        self.order.save()
+
+        resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        self.assertUnauthorized(resp)
+
+    @override_tmpcadir()
+    def test_no_cert_issued(self):
+        """Test when no cert is issued.
+
+        NOTE: should not really happen, as the order is marked as valid, the certificate is also set in one
+        transaction.
+        """
+
+        self.acmecert.cert = None
+        self.acmecert.save()
+        resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        self.assertUnauthorized(resp)

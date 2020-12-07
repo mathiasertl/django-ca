@@ -1076,11 +1076,15 @@ class AcmeCertificateView(AcmeBaseView):
     post_as_get = True
 
     def acme_request(self, slug):  # pylint: disable=arguments-differ; more concrete here
+        try:
+            cert = AcmeCertificate.objects.viewable().account(self.account).get(slug=slug)
+        except AcmeCertificate.DoesNotExist:
+            return AcmeResponseUnauthorized()
+
         #self.prepared['cert'] = slug
-        acme_cert = AcmeCertificate.objects.get(slug=slug)
-        #self.prepared['csr'] = acme_cert.csr
-        #self.prepared['order'] = acme_cert.order.slug
-        bundle = '\n'.join([cert.pub.strip() for cert in acme_cert.cert.bundle])
+        #self.prepared['csr'] = cert.csr
+        #self.prepared['order'] = cert.order.slug
+        bundle = '\n'.join([c.pub.strip() for c in cert.cert.bundle])
         return HttpResponse(bundle, content_type='application/pem-certificate-chain')
 
 

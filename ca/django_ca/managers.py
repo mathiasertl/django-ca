@@ -366,3 +366,6 @@ class AcmeAuthorizationManager(models.Manager):
 
 class AcmeChallengeManager(models.Manager):
     """Model manager for :py:class:`~django_ca.models.AcmeChallenge`."""
+
+class AcmeCertificateManager(models.Manager):
+    """Model manager for :py:class:`~django_ca.models.AcmeCertificate`."""
