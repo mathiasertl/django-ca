@@ -1527,4 +1527,4 @@ class AcmeCertificate(models.Model):
         :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
             The CSR as used by cryptography.
         """
-        return x509.load_der_x509_csr(self.csr.encode(), default_backend())
+        return x509.load_pem_x509_csr(self.csr.encode(), default_backend())
