@@ -338,6 +338,8 @@ class AcmeNewNonceViewTestCase(DjangoCAWithCATestCase):
 class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
     """Base class with test cases for all views."""
 
+    post_as_get = False
+
     def acme(self, uri, msg, cert=None, kid=None, nonce=None, payload_cb=None, post_kwargs=None):
         """Do a generic ACME request.
 
@@ -367,13 +369,26 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
                                 kid=kid)
         return self.post(uri, jws.to_json(), **post_kwargs)
 
-    def get_basic_message(self):
-        """Return a basic message that can be sent to the server successfully.
+    def get_message(self, **kwargs):
+        """Return a  message that can be sent to the server successfully.
 
         This function is used by test cases that want to get a useful message and manipulate it in some way so
         that it violates the ACME spec.
         """
-        raise NotImplementedError
+        if self.post_as_get:
+            return b''
+
+        return self.message_cls(**kwargs)
+
+    @property
+    def message(self):
+        """Property for sending the default message.
+
+        """
+        if self.post_as_get:
+            return b''
+
+        return self.get_message()
 
     @override_tmpcadir()
     def test_invalid_content_type(self):
@@ -381,7 +396,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
 
         .. seealso:: RFC 8555, 6.2
         """
-        resp = self.acme(self.generic_url, self.get_basic_message(), post_kwargs={'CONTENT_TYPE': 'FOO'})
+        resp = self.acme(self.generic_url, self.message, post_kwargs={'CONTENT_TYPE': 'FOO'})
         self.assertAcmeProblem(resp, 'malformed', status=HTTPStatus.UNSUPPORTED_MEDIA_TYPE,
                                message='Requests must use the application/jose+json content type.')
 
@@ -397,7 +412,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
             return sign(*args, **kwargs)
 
         with mock.patch('acme.jws.Signature.sign', side_effect=sign_mock):
-            resp = self.acme(self.generic_url, self.get_basic_message(), kid='foo')
+            resp = self.acme(self.generic_url, self.message, kid='foo')
         self.assertAcmeProblem(resp, 'malformed', status=HTTPStatus.BAD_REQUEST,
                                message='jwk and kid are mutually exclusive.')
 
@@ -415,19 +430,14 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
 
     contact = 'mailto:user@example.com'
     generic_url = reverse('django_ca:acme-new-account', kwargs={'serial': certs['root']['serial']})
-
-    def get_basic_message(self):
-        return acme.messages.Registration(
-            contact=(self.contact, ),
-            terms_of_service_agreed=True,
-        )
+    message = acme.messages.Registration(contact=(contact, ), terms_of_service_agreed=True)
 
     @override_tmpcadir()
     def test_basic(self):
         """Basic test for creating an account via ACME."""
 
         self.assertEqual(AcmeAccount.objects.count(), 0)
-        resp = self.acme(self.generic_url, self.get_basic_message())
+        resp = self.acme(self.generic_url, self.message)
         self.assertEqual(resp.status_code, HTTPStatus.CREATED, resp.content)
         self.assertAcmeResponse(resp)
 
@@ -645,6 +655,7 @@ class AcmeNewOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase
     """Test creating a new order."""
 
     generic_url = reverse('django_ca:acme-new-order', kwargs={'serial': certs['root']['serial']})
+    message_cls = NewOrder
 
     def setUp(self):
         super().setUp()
@@ -656,17 +667,16 @@ class AcmeNewOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase
             ca=self.ca, terms_of_service_agreed=True, slug='abc', acme_kid=self.account_kid, pem=self.PEM
         )
 
-    def get_basic_message(self, **kwargs):
-        return NewOrder(
-            identifiers=[{'type': 'dns', 'value': self.SERVER_NAME}], **kwargs
-        )
+    def get_message(self, **kwargs):
+        kwargs.setdefault('identifiers', [{'type': 'dns', 'value': self.SERVER_NAME}])
+        return super().get_message(**kwargs)
 
     @override_tmpcadir()
     def test_basic(self, accept_naive=True):
         """Basic test for creating an account via ACME."""
 
         with self.mock_slug() as slug:
-            resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+            resp = self.acme(self.generic_url, self.message, kid=self.account_kid)
         self.assertEqual(resp.status_code, HTTPStatus.CREATED, resp.content)
 
         expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
@@ -713,7 +723,7 @@ class AcmeNewOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase
         if timezone.is_naive(not_after):
             not_after = timezone.make_aware(not_after, timezone=pytz.utc)
 
-        msg = self.get_basic_message(not_before=not_before, not_after=not_after)
+        msg = self.get_message(not_before=not_before, not_after=not_after)
 
         with self.mock_slug() as slug:
             resp = self.acme(self.generic_url, msg, kid=self.account_kid)
@@ -780,19 +790,19 @@ class AcmeNewOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase
         """Test invalid not_before/not_after dates."""
 
         past = timezone.now() - timedelta(days=1)
-        resp = self.acme(self.generic_url, self.get_basic_message(not_before=past), kid=self.account_kid)
+        resp = self.acme(self.generic_url, self.get_message(not_before=past), kid=self.account_kid)
         self.assertAcmeProblem(resp, 'malformed', status=HTTPStatus.BAD_REQUEST,
                                message='Certificate cannot be valid before now.')
 
         far_future = timezone.now() + timedelta(days=3650)
-        resp = self.acme(self.generic_url, self.get_basic_message(not_after=far_future), kid=self.account_kid)
+        resp = self.acme(self.generic_url, self.get_message(not_after=far_future), kid=self.account_kid)
         self.assertAcmeProblem(resp, 'malformed', status=HTTPStatus.BAD_REQUEST,
                                message='Certificate cannot be valid that long.')
 
         not_before = timezone.now() + timedelta(days=10)
         not_after = timezone.now() + timedelta(days=1)
 
-        resp = self.acme(self.generic_url, self.get_basic_message(
+        resp = self.acme(self.generic_url, self.get_message(
             not_before=not_before, not_after=not_after), kid=self.account_kid)
         self.assertAcmeProblem(resp, 'malformed', status=HTTPStatus.BAD_REQUEST,
                                message='notBefore must be before notAfter.')
@@ -801,6 +811,8 @@ class AcmeNewOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase
 @freeze_time(timestamps['everything_valid'])
 class AcmeAuthorizationViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test creating a new order."""
+
+    post_as_get = True
 
     def setUp(self):
         super().setUp()
@@ -822,15 +834,11 @@ class AcmeAuthorizationViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATes
         """Get URL for the standard auth object."""
         return reverse('django_ca:acme-authz', kwargs={'serial': self.ca.serial, 'slug': self.authz.slug})
 
-    def get_basic_message(self):
-        """Return empty byte sequence (it's a get-as-post request)."""
-        return b''
-
     @override_tmpcadir()
     def test_basic(self, accept_naive=True):
         """Basic test for creating an account via ACME."""
 
-        resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        resp = self.acme(self.generic_url, self.message, kid=self.account_kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(resp)
 
@@ -881,7 +889,7 @@ class AcmeAuthorizationViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATes
         self.authz.challenges.filter(type=AcmeChallenge.TYPE_HTTP_01).update(
             status=AcmeChallenge.STATUS_VALID, validated=timezone.now())
 
-        resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        resp = self.acme(self.generic_url, self.message, kid=self.account_kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(resp)
 
@@ -922,7 +930,7 @@ class AcmeAuthorizationViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATes
         self.authz.status = AcmeAuthorization.STATUS_VALID
         self.authz.save()
 
-        resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        resp = self.acme(self.generic_url, self.message, kid=self.account_kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(resp)
 
@@ -943,7 +951,7 @@ class AcmeAuthorizationViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATes
     def test_unknown_auth(self):
         """Test fetching unknown auth object."""
         url = reverse('django_ca:acme-authz', kwargs={'serial': self.ca.serial, 'slug': 'unknown'})
-        resp = self.acme(url, self.get_basic_message(), kid=self.account_kid)
+        resp = self.acme(url, self.message, kid=self.account_kid)
         self.assertAcmeProblem(resp, 'unauthorized', status=HTTPStatus.UNAUTHORIZED,
                                message='You are not authorized to perform this request.')
 
@@ -951,6 +959,8 @@ class AcmeAuthorizationViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATes
 @freeze_time(timestamps['everything_valid'])
 class AcmeChallengeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATransactionTestCase):
     """Test retrieving a challenge."""
+
+    post_as_get = True
 
     def setUp(self):
         super().setUp()
@@ -978,15 +988,12 @@ class AcmeChallengeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATransac
             'slug': self.challenge.slug,
         })
 
-    def get_basic_message(self):
-        return b''
-
     @override_tmpcadir()
     def test_basic(self):
         """Basic test for creating an account via ACME."""
 
         with self.patch('django_ca.views.run_task') as mockcm:
-            resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+            resp = self.acme(self.generic_url, self.message, kid=self.account_kid)
 
         self.assertEqual(mockcm.call_args_list, [mock.call(acme_validate_challenge, self.challenge.pk)])
 
@@ -1014,7 +1021,7 @@ class AcmeChallengeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATransac
         self.order.save()
 
         with self.patch('django_ca.views.run_task') as mockcm:
-            resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+            resp = self.acme(self.generic_url, self.message, kid=self.account_kid)
 
         mockcm.assert_not_called()  # no validation task was triggerd
 
@@ -1037,7 +1044,7 @@ class AcmeChallengeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATransac
 
         url = reverse('django_ca:acme-challenge', kwargs={'serial': self.challenge.serial, 'slug': 'foo'})
         with self.patch('django_ca.views.run_task') as mockcm:
-            resp = self.acme(url, self.get_basic_message(), kid=self.account_kid)
+            resp = self.acme(url, self.message, kid=self.account_kid)
         mockcm.assert_not_called()
         self.assertAcmeProblem(resp, 'unauthorized', status=HTTPStatus.UNAUTHORIZED,
                                message='You are not authorized to perform this request.')
@@ -1081,9 +1088,6 @@ class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATra
         """Assert a badCSR error."""
         self.assertAcmeProblem(resp, 'badCSR', status=HTTPStatus.BAD_REQUEST, message=message)
 
-    def get_basic_message(self):
-        return self.get_message(self.csr)
-
     def get_message(self, csr):  # pylint: disable=no-self-use
         """Get a message for the given cryptography CSR object."""
         req = X509Req.from_cryptography(csr)
@@ -1091,12 +1095,16 @@ class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATra
             csr=jose.util.ComparableX509(req)
         )
 
+    @property
+    def message(self):
+        return self.get_message(self.csr)
+
     @override_tmpcadir()
     def test_basic(self, accept_naive=True):
         """Basic test for creating an account via ACME."""
 
         with self.patch('django_ca.views.run_task') as mockcm:
-            resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+            resp = self.acme(self.generic_url, self.message, kid=self.account_kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(resp)
 
@@ -1123,7 +1131,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATra
         """Test an order that does not exist."""
         url = reverse('django_ca:acme-order-finalize', kwargs={'serial': self.ca.serial, 'slug': 'foo'})
         with self.patch('django_ca.views.run_task') as mockcm:
-            resp = self.acme(url, self.get_basic_message(), kid=self.account_kid)
+            resp = self.acme(url, self.message, kid=self.account_kid)
         mockcm.assert_not_called()
         self.assertAcmeProblem(resp, 'unauthorized', status=HTTPStatus.UNAUTHORIZED,
                                message='You are not authorized to perform this request.')
@@ -1140,7 +1148,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATra
         self.order.save()
 
         with self.patch('django_ca.views.run_task') as mockcm:
-            resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+            resp = self.acme(self.generic_url, self.message, kid=self.account_kid)
         mockcm.assert_not_called()
         self.assertAcmeProblem(resp, 'unauthorized', status=HTTPStatus.UNAUTHORIZED,
                                message='You are not authorized to perform this request.')
@@ -1153,7 +1161,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATra
         self.order.save()
 
         with self.patch('django_ca.views.run_task') as mockcm:
-            resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+            resp = self.acme(self.generic_url, self.message, kid=self.account_kid)
         mockcm.assert_not_called()
         self.assertAcmeProblem(resp, 'orderNotReady', status=HTTPStatus.FORBIDDEN,
                                message='This order is not yet ready.')
@@ -1166,7 +1174,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATra
         self.authz.save()
 
         with self.patch('django_ca.views.run_task') as mockcm:
-            resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+            resp = self.acme(self.generic_url, self.message, kid=self.account_kid)
         mockcm.assert_not_called()
         self.assertAcmeProblem(resp, 'orderNotReady', status=HTTPStatus.FORBIDDEN,
                                message='This order is not yet ready.')
@@ -1183,7 +1191,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATra
 
         with self.patch('django_ca.views.run_task') as mockcm, self.patch(
                 'django_ca.views.parse_acme_csr', return_value=csr_mock):
-            resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+            resp = self.acme(self.generic_url, self.message, kid=self.account_kid)
         mockcm.assert_not_called()
         self.assertBadCSR(resp, 'CSR signature is not valid.')
 
@@ -1291,6 +1299,8 @@ class AcmeOrderFinalizeViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATra
 class AcmeOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test retrieving an order."""
 
+    post_as_get = True
+
     def setUp(self):
         super().setUp()
         self.hostname = 'example.net'
@@ -1305,9 +1315,6 @@ class AcmeOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
         self.order = AcmeOrder.objects.create(account=self.account)
         self.authz = AcmeAuthorization.objects.create(order=self.order, value=self.hostname)
 
-    def get_basic_message(self):
-        return b''
-
     @property
     def generic_url(self):
         """Get URL for the standard auth object."""
@@ -1320,7 +1327,7 @@ class AcmeOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
     def test_basic(self, accept_naive=True):
         """Basic test for creating an account via ACME."""
 
-        resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        resp = self.acme(self.generic_url, self.message, kid=self.account_kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(resp)
         expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
@@ -1352,7 +1359,7 @@ class AcmeOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
         self.authz.save()
         acmecert = AcmeCertificate.objects.create(order=self.order, cert=cert)
 
-        resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        resp = self.acme(self.generic_url, self.message, kid=self.account_kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(resp)
         expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
@@ -1380,7 +1387,7 @@ class AcmeOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
         self.authz.save()
         AcmeCertificate.objects.create(order=self.order)
 
-        resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        resp = self.acme(self.generic_url, self.message, kid=self.account_kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(resp)
         expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
@@ -1411,7 +1418,7 @@ class AcmeOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
         self.authz.save()
         AcmeCertificate.objects.create(order=self.order, cert=cert)
 
-        resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        resp = self.acme(self.generic_url, self.message, kid=self.account_kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(resp)
         expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
@@ -1435,7 +1442,7 @@ class AcmeOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
         self.order.account = account
         self.order.save()
 
-        resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        resp = self.acme(self.generic_url, self.message, kid=self.account_kid)
         self.assertUnauthorized(resp)
 
     @override_tmpcadir()
@@ -1450,13 +1457,15 @@ class AcmeOrderViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
         self.order.save()
         url = reverse('django_ca:acme-order', kwargs={'serial': self.ca.serial, 'slug': self.order.slug})
 
-        resp = self.acme(url, self.get_basic_message(), kid=self.account_kid)
+        resp = self.acme(url, self.message, kid=self.account_kid)
         self.assertUnauthorized(resp)
 
 
 @freeze_time(timestamps['everything_valid'])
 class AcmeCertificateViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test retrieving a certificate."""
+
+    post_as_get = True
 
     def setUp(self):
         super().setUp()
@@ -1484,20 +1493,17 @@ class AcmeCertificateViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestC
             'slug': self.acmecert.slug,
         })
 
-    def get_basic_message(self):
-        return b''
-
     @override_tmpcadir()
     def test_basic(self):
         """Basic test case."""
-        resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        resp = self.acme(self.generic_url, self.message, kid=self.account_kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
 
     @override_tmpcadir()
     def test_not_found(self):
         """Test fetching a cert that simply does not exist."""
         url = reverse('django_ca:acme-cert', kwargs={'serial': self.ca.serial, 'slug': 'abc'})
-        resp = self.acme(url, self.get_basic_message(), kid=self.account_kid)
+        resp = self.acme(url, self.message, kid=self.account_kid)
         self.assertUnauthorized(resp)
 
     @override_tmpcadir()
@@ -1510,7 +1516,7 @@ class AcmeCertificateViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestC
         self.order.account = account
         self.order.save()
 
-        resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        resp = self.acme(self.generic_url, self.message, kid=self.account_kid)
         self.assertUnauthorized(resp)
 
     @override_tmpcadir()
@@ -1523,5 +1529,5 @@ class AcmeCertificateViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestC
 
         self.acmecert.cert = None
         self.acmecert.save()
-        resp = self.acme(self.generic_url, self.get_basic_message(), kid=self.account_kid)
+        resp = self.acme(self.generic_url, self.message, kid=self.account_kid)
         self.assertUnauthorized(resp)
