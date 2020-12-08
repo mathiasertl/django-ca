@@ -59,29 +59,6 @@ from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
 
-ACME_THUMBPRINT_1 = 'U-yUM27CQn9pClKlEITobHB38GJOJ9YbOxnw5KKqU-8'
-ACME_THUMBPRINT_2 = 's_glgc6Fem0CW7ZioXHBeuUQVHSO-viZ3xNR8TBebCo'
-ACME_PEM_1 = '''-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvP5N/1KjBQniyyukn30E
-tyHz6cIYPv5u5zZbHGfNvrmMl8qHMmddQSv581AAFa21zueS+W8jnRI5ISxER95J
-tNad2XEDsFINNvYaSG8E54IHMNQijVLR4MJchkfMAa6g1gIsJB+ffEt4Ea3TMyGr
-MifJG0EjmtjkjKFbr2zuPhRX3fIGjZTlkxgvb1AY2P4AxALwS/hG4bsxHHNxHt2Z
-s9Bekv+55T5+ZqvhNz1/3yADRapEn6dxHRoUhnYebqNLSVoEefM+h5k7AS48waJS
-lKC17RMZfUgGE/5iMNeg9qtmgWgZOIgWDyPEpiXZEDDKeoifzwn1LO59W8c4W6L7
-XwIDAQAB
------END PUBLIC KEY-----'''
-ACME_PEM_2 = '''-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp8SCUVQqpTBRyryuu560
-Q8cAi18Ac+iLjaSLL4gOaDEU9CpPi4l9yCGphnQFQ92YP+GWv+C6/JRp24852QbR
-RzuUJqJPdDxD78yFXoxYCLPmwQMnToA7SE3SnZ/PW2GPFMbAICuRdd3PhMAWCODS
-NewZPLBlG35brRlfFtUEc2oQARb2lhBkMXrpIWeuSNQtInAHtfTJNA51BzdrIT2t
-MIfadw4ljk7cVbrSYemT6e59ATYxiMXalu5/4v22958voEBZ38TE8AXWiEtTQYwv
-/Kj0P67yuzE94zNdT28pu+jJYr5nHusa2NCbvnYFkDwzigmwCxVt9kW3xj3gfpgc
-VQIDAQAB
------END PUBLIC KEY-----'''
-ACME_SLUG_1 = 'Mr6FfdD68lzp'
-ACME_SLUG_2 = 'DzW4PQ6L76PE'
-
 
 class TestWatcher(TestCase):
     """Test :py:class:`django_ca.models.Watcher`."""
@@ -673,17 +650,17 @@ class AcmeAccountTestCase(DjangoCAWithGeneratedCAsTestCase):
     def setUp(self):
         super().setUp()
 
-        self.kid1 = self.absolute_uri(':acme-account', serial=self.cas['root'].serial, slug=ACME_SLUG_1)
+        self.kid1 = self.absolute_uri(':acme-account', serial=self.cas['root'].serial, slug=self.ACME_SLUG_1)
         self.account1 = AcmeAccount.objects.create(
             ca=self.cas['root'], contact='user@example.com', terms_of_service_agreed=True,
-            status=AcmeAccount.STATUS_VALID, pem=ACME_PEM_1, thumbprint=ACME_THUMBPRINT_1,
-            slug=ACME_SLUG_1, kid=self.kid1
+            status=AcmeAccount.STATUS_VALID, pem=self.ACME_PEM_1, thumbprint=self.ACME_THUMBPRINT_1,
+            slug=self.ACME_SLUG_1, kid=self.kid1
         )
-        self.kid2 = self.absolute_uri(':acme-account', serial=self.cas['child'].serial, slug=ACME_SLUG_2)
+        self.kid2 = self.absolute_uri(':acme-account', serial=self.cas['child'].serial, slug=self.ACME_SLUG_2)
         self.account2 = AcmeAccount.objects.create(
             ca=self.cas['child'], contact='user@example.net', terms_of_service_agreed=False,
-            status=AcmeAccount.STATUS_REVOKED, pem=ACME_PEM_2, thumbprint=ACME_THUMBPRINT_2,
-            slug=ACME_SLUG_2, kid=self.kid2
+            status=AcmeAccount.STATUS_REVOKED, pem=self.ACME_PEM_2, thumbprint=self.ACME_THUMBPRINT_2,
+            slug=self.ACME_SLUG_2, kid=self.kid2
         )
 
     def test_str(self):
@@ -771,7 +748,7 @@ class AcmeOrderTestCase(DjangoCAWithGeneratedCAsTestCase):
         super().setUp()
         self.account = AcmeAccount.objects.create(
             ca=self.cas['root'], contact='user@example.com', terms_of_service_agreed=True,
-            status=AcmeAccount.STATUS_VALID, pem=ACME_PEM_1, thumbprint=ACME_THUMBPRINT_1)
+            status=AcmeAccount.STATUS_VALID, pem=self.ACME_PEM_1, thumbprint=self.ACME_THUMBPRINT_1)
         self.order1 = AcmeOrder.objects.create(account=self.account)
 
     def test_str(self):
@@ -811,7 +788,7 @@ class AcmeAuthorizationTestCase(DjangoCAWithGeneratedCAsTestCase):
         super().setUp()
         self.account = AcmeAccount.objects.create(
             ca=self.cas['root'], contact='user@example.com', terms_of_service_agreed=True,
-            status=AcmeAccount.STATUS_VALID, pem=ACME_PEM_1, thumbprint=ACME_THUMBPRINT_1)
+            status=AcmeAccount.STATUS_VALID, pem=self.ACME_PEM_1, thumbprint=self.ACME_THUMBPRINT_1)
         self.order = AcmeOrder.objects.create(account=self.account)
         self.auth1 = AcmeAuthorization.objects.create(
             order=self.order, type=AcmeAuthorization.TYPE_DNS, value='example.com')
@@ -888,7 +865,7 @@ class AcmeChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.hostname = 'challenge.example.com'
         self.account = AcmeAccount.objects.create(
             ca=self.cas['root'], contact='user@example.com', terms_of_service_agreed=True,
-            status=AcmeAccount.STATUS_VALID, pem=ACME_PEM_1, thumbprint=ACME_THUMBPRINT_1)
+            status=AcmeAccount.STATUS_VALID, pem=self.ACME_PEM_1, thumbprint=self.ACME_THUMBPRINT_1)
         self.order = AcmeOrder.objects.create(account=self.account)
         self.auth = AcmeAuthorization.objects.create(
             order=self.order, type=AcmeAuthorization.TYPE_DNS, value=self.hostname)
@@ -968,7 +945,7 @@ class AcmeCertificateTestCase(DjangoCAWithGeneratedCAsTestCase):
         super().setUp()
         self.account = AcmeAccount.objects.create(
             ca=self.cas['root'], contact='user@example.com', terms_of_service_agreed=True,
-            status=AcmeAccount.STATUS_VALID, pem=ACME_PEM_1, thumbprint=ACME_THUMBPRINT_1)
+            status=AcmeAccount.STATUS_VALID, pem=self.ACME_PEM_1, thumbprint=self.ACME_THUMBPRINT_1)
         self.order = AcmeOrder.objects.create(account=self.account)
         self.cert = AcmeCertificate.objects.create(order=self.order)
 
