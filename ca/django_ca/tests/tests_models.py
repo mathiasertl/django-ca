@@ -946,45 +946,6 @@ class AcmeChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
             self.chall.validated = timezone.now()
             self.assertEqual(self.chall.acme_validated, timezone.now())
 
-    def test_can_be_processed(self):
-        """Test the can_be_processed property."""
-
-        # preconditions for checks (might change them in setUp without realising it might affect this test)
-        self.assertEqual(self.chall.status, AcmeChallenge.STATUS_PENDING)
-        self.assertEqual(self.auth.status, AcmeAuthorization.STATUS_PENDING)
-        self.assertEqual(self.order.status, AcmeOrder.STATUS_PENDING)
-
-        self.assertTrue(self.chall.can_be_processed)
-
-        # If the order is not pending, it cannot be processed
-        for status, _str in AcmeOrder.STATUS_CHOICES:
-            self.chall.auth.order.status = status
-            if status == AcmeOrder.STATUS_PENDING:
-                self.assertTrue(self.chall.can_be_processed)
-            else:
-                self.assertFalse(self.chall.can_be_processed)
-            self.chall.auth.order.status = AcmeOrder.STATUS_PENDING
-
-        # If authorization is not pending/invalid, it cannot be processed (invalid -> retry)
-        for status, _str in AcmeAuthorization.STATUS_CHOICES:
-            self.chall.auth.status = status
-
-            if status in [AcmeAuthorization.STATUS_PENDING, AcmeAuthorization.STATUS_INVALID]:
-                self.assertTrue(self.chall.can_be_processed)
-            else:
-                self.assertFalse(self.chall.can_be_processed)
-            self.chall.auth.status = AcmeAuthorization.STATUS_PENDING
-
-        # If our own status is not pending/invalid, it cannot be processed
-        for status, _str in AcmeChallenge.STATUS_CHOICES:
-            self.chall.status = status
-
-            if status in [AcmeChallenge.STATUS_PENDING, AcmeChallenge.STATUS_INVALID]:
-                self.assertTrue(self.chall.can_be_processed)
-            else:
-                self.assertFalse(self.chall.can_be_processed)
-            self.chall.status = AcmeChallenge.STATUS_PENDING
-
     def test_get_challenge(self):
         """Test the get_challenge() function."""
 
