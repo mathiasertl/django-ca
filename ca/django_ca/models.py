@@ -1419,7 +1419,7 @@ class AcmeChallenge(models.Model):
         Returns
         -------
 
-        acme.messages.ChallengeBody
+        acme.messages.Challenge
             The acme representation of this class.
         """
 

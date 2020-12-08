@@ -19,16 +19,20 @@ from datetime import datetime
 from datetime import timedelta
 from unittest import mock
 
+import pytz
+from acme import challenges
 from acme import messages
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
+from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.utils import IntegrityError
+from django.test import RequestFactory
 from django.test import TestCase
 from django.utils import timezone
 
@@ -41,6 +45,7 @@ from ..extensions import PrecertificateSignedCertificateTimestamps
 from ..extensions import SubjectAlternativeName
 from ..models import AcmeAccount
 from ..models import AcmeAuthorization
+from ..models import AcmeCertificate
 from ..models import AcmeChallenge
 from ..models import AcmeOrder
 from ..models import Certificate
@@ -668,15 +673,13 @@ class AcmeAccountTestCase(DjangoCAWithGeneratedCAsTestCase):
     def setUp(self):
         super().setUp()
 
-        self.kid1 = 'http://example.com%s' % self.absolute_uri(
-            ':acme-account', serial=self.cas['root'].serial, slug=ACME_SLUG_1)
+        self.kid1 = self.absolute_uri(':acme-account', serial=self.cas['root'].serial, slug=ACME_SLUG_1)
         self.account1 = AcmeAccount.objects.create(
             ca=self.cas['root'], contact='user@example.com', terms_of_service_agreed=True,
             status=AcmeAccount.STATUS_VALID, pem=ACME_PEM_1, thumbprint=ACME_THUMBPRINT_1,
             slug=ACME_SLUG_1, kid=self.kid1
         )
-        self.kid2 = 'http://example.com%s' % self.absolute_uri(
-            ':acme-account', serial=self.cas['child'].serial, slug=ACME_SLUG_2)
+        self.kid2 = self.absolute_uri(':acme-account', serial=self.cas['child'].serial, slug=ACME_SLUG_2)
         self.account2 = AcmeAccount.objects.create(
             ca=self.cas['child'], contact='user@example.net', terms_of_service_agreed=False,
             status=AcmeAccount.STATUS_REVOKED, pem=ACME_PEM_2, thumbprint=ACME_THUMBPRINT_2,
@@ -735,6 +738,30 @@ class AcmeAccountTestCase(DjangoCAWithGeneratedCAsTestCase):
 
         # Works, because CA is different
         AcmeAccount.objects.create(ca=self.account2.ca, thumbprint=self.account1.thumbprint)
+
+    @override_settings(ALLOWED_HOSTS=['kid-test.example.net'])
+    def test_set_kid(self):
+        """Test set_kid()."""
+
+        hostname = settings.ALLOWED_HOSTS[0]
+        req = RequestFactory().get('/foobar', HTTP_HOST=hostname)
+        self.account1.set_kid(req)
+        self.assertEqual(
+            self.account1.kid,
+            f'http://{hostname}/django_ca/acme/{self.account1.serial}/acct/{self.account1.slug}/')
+
+    def test_validate_pem(self):
+        """Test the PEM validator."""
+        self.account1.full_clean()
+
+        # So far we only test first and last line, so we just append/prepend a character
+        self.account1.pem = 'x%s' % self.account1.pem
+        with self.assertValidationError({'pem': ['Not a valid PEM.']}):
+            self.account1.full_clean()
+
+        self.account1.pem = '%sx' % self.account1.pem[1:]
+        with self.assertValidationError({'pem': ['Not a valid PEM.']}):
+            self.account1.full_clean()
 
 
 class AcmeOrderTestCase(DjangoCAWithGeneratedCAsTestCase):
@@ -845,9 +872,151 @@ class AcmeAuthorizationTestCase(DjangoCAWithGeneratedCAsTestCase):
 
     def test_get_challenges(self):
         """Test the get_challenges() method."""
-        challenges = self.auth1.get_challenges()
-        self.assertIsInstance(challenges[0], AcmeChallenge)
-        self.assertIsInstance(challenges[1], AcmeChallenge)
+        chall_qs = self.auth1.get_challenges()
+        self.assertIsInstance(chall_qs[0], AcmeChallenge)
+        self.assertIsInstance(chall_qs[1], AcmeChallenge)
 
-        self.assertEqual(self.auth1.get_challenges(), challenges)
+        self.assertEqual(self.auth1.get_challenges(), chall_qs)
         self.assertEqual(AcmeChallenge.objects.all().count(), 2)
+
+
+class AcmeChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
+    """Test :py:class:`django_ca.models.AcmeChallenge`."""
+
+    def setUp(self):
+        super().setUp()
+        self.hostname = 'challenge.example.com'
+        self.account = AcmeAccount.objects.create(
+            ca=self.cas['root'], contact='user@example.com', terms_of_service_agreed=True,
+            status=AcmeAccount.STATUS_VALID, pem=ACME_PEM_1, thumbprint=ACME_THUMBPRINT_1)
+        self.order = AcmeOrder.objects.create(account=self.account)
+        self.auth = AcmeAuthorization.objects.create(
+            order=self.order, type=AcmeAuthorization.TYPE_DNS, value=self.hostname)
+        self.chall = AcmeChallenge.objects.create(auth=self.auth, type=AcmeChallenge.TYPE_HTTP_01)
+
+    def assertChallenge(self, challenge, typ, token, cls):  # pylint: disable=invalid-name
+        """Test that the ACME challenge is of the given type."""
+        self.assertIsInstance(challenge, cls)
+        self.assertEqual(challenge.typ, typ)
+        self.assertEqual(challenge.token, token)
+
+    def test_str(self):
+        """Test the __str__ method."""
+        self.assertEqual(str(self.chall), '%s (%s)' % (self.hostname, self.chall.type))
+
+    def test_acme_url(self):
+        """Test acme_url property."""
+        self.assertEqual(
+            self.chall.acme_url, f'/django_ca/acme/{self.chall.serial}/chall/{self.chall.slug}/')
+
+    def test_acme_challenge(self):
+        """Test acme_challenge property."""
+        self.assertChallenge(self.chall.acme_challenge, 'http-01', self.chall.token.encode(),
+                             challenges.HTTP01)
+
+        self.chall.type = AcmeChallenge.TYPE_DNS_01
+        self.assertChallenge(self.chall.acme_challenge, 'dns-01', self.chall.token.encode(),
+                             challenges.DNS01)
+
+        self.chall.type = AcmeChallenge.TYPE_TLS_ALPN_01
+        self.assertChallenge(self.chall.acme_challenge, 'tls-alpn-01', self.chall.token.encode(),
+                             challenges.TLSALPN01)
+
+        self.chall.type = 'foo'
+        with self.assertRaisesRegex(ValueError, r'^foo: Unsupported challenge type\.$'):
+            self.chall.acme_challenge  # pylint: disable=pointless-statement
+
+    @freeze_time(timestamps['everything_valid'])
+    def test_acme_validated(self):
+        """Test acme_calidated property."""
+
+        # preconditions for checks (might change them in setUp without realising it might affect this test)
+        self.assertNotEqual(self.chall.status, AcmeChallenge.STATUS_VALID)
+        self.assertIsNone(self.chall.validated)
+
+        self.assertIsNone(self.chall.acme_validated)
+
+        self.chall.status = AcmeChallenge.STATUS_VALID
+        self.assertIsNone(self.chall.acme_validated)  # still None (no validated timestamp)
+
+        self.chall.validated = timezone.now()
+        self.assertEqual(self.chall.acme_validated, timezone.make_aware(timezone.now(), timezone=pytz.UTC))
+
+        with self.settings(USE_TZ=True):
+            self.chall.validated = timezone.now()
+            self.assertEqual(self.chall.acme_validated, timezone.now())
+
+    def test_can_be_processed(self):
+        """Test the can_be_processed property."""
+
+        # preconditions for checks (might change them in setUp without realising it might affect this test)
+        self.assertEqual(self.chall.status, AcmeChallenge.STATUS_PENDING)
+        self.assertEqual(self.auth.status, AcmeAuthorization.STATUS_PENDING)
+        self.assertEqual(self.order.status, AcmeOrder.STATUS_PENDING)
+
+        self.assertTrue(self.chall.can_be_processed)
+
+        # If the order is not pending, it cannot be processed
+        for status, _str in AcmeOrder.STATUS_CHOICES:
+            self.chall.auth.order.status = status
+            if status == AcmeOrder.STATUS_PENDING:
+                self.assertTrue(self.chall.can_be_processed)
+            else:
+                self.assertFalse(self.chall.can_be_processed)
+            self.chall.auth.order.status = AcmeOrder.STATUS_PENDING
+
+        # If authorization is not pending/invalid, it cannot be processed (invalid -> retry)
+        for status, _str in AcmeAuthorization.STATUS_CHOICES:
+            self.chall.auth.status = status
+
+            if status in [AcmeAuthorization.STATUS_PENDING, AcmeAuthorization.STATUS_INVALID]:
+                self.assertTrue(self.chall.can_be_processed)
+            else:
+                self.assertFalse(self.chall.can_be_processed)
+            self.chall.auth.status = AcmeAuthorization.STATUS_PENDING
+
+        # If our own status is not pending/invalid, it cannot be processed
+        for status, _str in AcmeChallenge.STATUS_CHOICES:
+            self.chall.status = status
+
+            if status in [AcmeChallenge.STATUS_PENDING, AcmeChallenge.STATUS_INVALID]:
+                self.assertTrue(self.chall.can_be_processed)
+            else:
+                self.assertFalse(self.chall.can_be_processed)
+            self.chall.status = AcmeChallenge.STATUS_PENDING
+
+    def test_get_challenge(self):
+        """Test the get_challenge() function."""
+
+        body = self.chall.get_challenge(RequestFactory().get('/'))
+        self.assertIsInstance(body, messages.ChallengeBody)
+        self.assertEqual(body.chall, self.chall.acme_challenge)
+        self.assertEqual(body.status, self.chall.status)
+        self.assertEqual(body.validated, self.chall.acme_validated)
+        self.assertEqual(body.uri, f'http://testserver{self.chall.acme_url}')
+
+    def test_serial(self):
+        """Test the serial property."""
+        self.assertEqual(self.chall.serial, self.chall.auth.order.account.ca.serial)
+
+
+class AcmeCertificateTestCase(DjangoCAWithGeneratedCAsTestCase):
+    """Test :py:class:`django_ca.models.AcmeCertificate`."""
+
+    def setUp(self):
+        super().setUp()
+        self.account = AcmeAccount.objects.create(
+            ca=self.cas['root'], contact='user@example.com', terms_of_service_agreed=True,
+            status=AcmeAccount.STATUS_VALID, pem=ACME_PEM_1, thumbprint=ACME_THUMBPRINT_1)
+        self.order = AcmeOrder.objects.create(account=self.account)
+        self.cert = AcmeCertificate.objects.create(order=self.order)
+
+    def test_acme_url(self):
+        """Test the acme_url property."""
+        self.assertEqual(self.cert.acme_url,
+                         f'/django_ca/acme/{self.order.serial}/cert/{self.cert.slug}/')
+
+    def test_parse_csr(self):
+        """Test the parse_csr property."""
+        self.cert.csr = certs['root-cert']['csr']['pem']
+        self.assertIsInstance(self.cert.parse_csr(), x509.CertificateSigningRequest)
