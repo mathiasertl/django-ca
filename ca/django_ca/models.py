@@ -1150,7 +1150,11 @@ class AcmeAccount(models.Model):
 
     @property
     def usable(self):
-        """Boolean if the Account is currently usable."""
+        """Boolean if the account is currently usable.
+
+        An account is usable if the terms of service have been agreed, the status is "valid" and the
+        associated CA is usable.
+        """
         return self.terms_of_service_agreed and self.status == AcmeAccount.STATUS_VALID and self.ca.usable
 
 
@@ -1210,11 +1214,6 @@ class AcmeOrder(models.Model):
         """Get the ACME "finalize" url path for this order."""
         return reverse('django_ca:acme-order-finalize', kwargs={'slug': self.slug, 'serial': self.serial})
 
-    @property
-    def serial(self):
-        """Serial of the CA for this order."""
-        return self.account.serial
-
     def add_authorizations(self, identifiers):
         """Add :py:class:`~django_ca.models.AcmeAuthorization` instances for the given identifiers.
 
@@ -1241,6 +1240,20 @@ class AcmeOrder(models.Model):
         return self.authorizations.bulk_create([
             AcmeAuthorization(type=ident.typ.name, value=ident.value, order=self) for ident in identifiers
         ])
+
+    @property
+    def serial(self):
+        """Serial of the CA for this order."""
+        return self.account.serial
+
+    @property
+    def usable(self):
+        """Boolean defining if an order is "usable", meaning it can be used to issue a certificate.
+
+        An order is usable if it is in the "pending" status, has not expired and the account is usable.
+        """
+        return self.status == AcmeOrder.STATUS_PENDING and self.expires > timezone.now() \
+            and self.account.usable
 
 
 class AcmeAuthorization(models.Model):
@@ -1350,6 +1363,16 @@ class AcmeAuthorization(models.Model):
             AcmeChallenge.objects.get_or_create(auth=self, type=AcmeChallenge.TYPE_HTTP_01)[0],
             AcmeChallenge.objects.get_or_create(auth=self, type=AcmeChallenge.TYPE_DNS_01)[0],
         ]
+
+    @property
+    def usable(self):
+        """Boolean defining if an auth is "usable", meaning it still can be used in order validation
+
+        An order is usable if it is in the "pending" or "invalid" status, the order is usable. An
+        authorization that is in the "invalid" status is eligible to be retried by the client.
+        """
+        states = (AcmeAuthorization.STATUS_PENDING, AcmeAuthorization.STATUS_INVALID)
+        return self.status in states and self.order.usable
 
 
 class AcmeChallenge(models.Model):
@@ -1490,6 +1513,15 @@ class AcmeChallenge(models.Model):
     def serial(self):
         """Serial of the CA for this challenge."""
         return self.auth.serial
+
+    @property
+    def usable(self):
+        """Boolean defining if an challenge is "usable", meaning it still can be used in order validation.
+
+        A challenge is usable if it is in the "pending" or "invalid status and the authorization is usable.
+        """
+        states = (AcmeChallenge.STATUS_PENDING, AcmeChallenge.STATUS_INVALID)
+        return self.status in states and self.auth.usable
 
 
 class AcmeCertificate(models.Model):
