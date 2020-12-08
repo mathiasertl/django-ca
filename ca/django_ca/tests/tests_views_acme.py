@@ -27,6 +27,7 @@ from OpenSSL.crypto import X509Req
 from requests.utils import parse_header_links
 
 from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import NameOID
 
@@ -1149,7 +1150,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
         # NOTE: certbot CSRs have an empty subject
         self.csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([])).add_extension(
             x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False
-        ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256())
+        ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256(), default_backend())
 
         self.order = AcmeOrder.objects.create(account=self.account, status=AcmeOrder.STATUS_READY,
                                               slug=self.slug)
@@ -1273,7 +1274,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
 
         csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([])).add_extension(
             x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False
-        ).sign(certs['root-cert']['key']['parsed'], hashes.MD5())
+        ).sign(certs['root-cert']['key']['parsed'], hashes.MD5(), default_backend())
 
         with self.patch('django_ca.views.run_task') as mockcm:
             resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
@@ -1288,7 +1289,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
             x509.NameAttribute(NameOID.COMMON_NAME, self.hostname),
         ])).add_extension(
             x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False
-        ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256())
+        ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256(), default_backend())
 
         with self.patch('django_ca.views.run_task') as mockcm:
             resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
@@ -1316,7 +1317,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
             x509.NameAttribute(NameOID.COMMON_NAME, "user@example.com"),
         ])).add_extension(
             x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False
-        ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256())
+        ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256(), default_backend())
 
         with self.patch('django_ca.views.run_task') as mockcm:
             resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
@@ -1331,7 +1332,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
             x509.NameAttribute(NameOID.COMMON_NAME, "example.net"),
         ])).add_extension(
             x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False
-        ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256())
+        ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256(), default_backend())
 
         with self.patch('django_ca.views.run_task') as mockcm:
             resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
@@ -1343,7 +1344,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
         """Test posting a CSR with no SubjectAlternativeName extension."""
 
         csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([])).sign(
-            certs['root-cert']['key']['parsed'], hashes.SHA256())
+            certs['root-cert']['key']['parsed'], hashes.SHA256(), default_backend())
 
         with self.patch('django_ca.views.run_task') as mockcm:
             resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
@@ -1359,7 +1360,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
                 x509.DNSName(self.hostname),
                 x509.DNSName('example.net')
             ]), critical=False
-        ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256())
+        ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256(), default_backend())
 
         with self.patch('django_ca.views.run_task') as mockcm:
             resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
