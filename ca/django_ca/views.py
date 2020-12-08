@@ -1193,7 +1193,7 @@ class AcmeChallengeView(AcmeBaseView):
         #self.prepared['auth'] = challenge.auth.slug
         #self.prepared['challenge'] = slug
 
-        if challenge.can_be_processed is True:  # if not -> no state change
+        if challenge.usable is True:  # if not -> no state change
             # RFC8555, Section 7.1.6:
             #
             #   They transition to the "processing" state when the client responds to the challenge
