@@ -902,7 +902,7 @@ class AcmeNewOrderView(AcmeBaseView):
 class AcmeOrderView(AcmeBaseView):
     """Implements endpoint for viewing an order, that is ``/acme/order/<slug>/``.
 
-    A client calls this view after calling :py:class:`~acme:acme.messages.AcmeOrderFinalizeView`, presumably
+    A client calls this view after calling :py:class:`~django_ca.views.AcmeOrderFinalizeView`, presumably
     to retrieve final information about this certificate. This view itself is sparsely documented in RFC 8555.
 
     This view does seem to be a little redundant too, as the response is almost identical to the response the

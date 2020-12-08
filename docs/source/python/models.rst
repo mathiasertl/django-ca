@@ -146,7 +146,7 @@ ACME
 .. autoclass:: django_ca.models.AcmeOrder
    :members:
 
-.. autoclass:: django_ca.models.AcmeAccountAuthorization
+.. autoclass:: django_ca.models.AcmeAuthorization
    :members:
 
 .. autoclass:: django_ca.models.AcmeChallenge
