@@ -23,7 +23,6 @@ Backwards incompatible changes
 * Drop support for idna 2.8.
 
 Deprecation notices
-
 ===================
 
 * This is the last release to support cryptography 2.8 and 2.9.
