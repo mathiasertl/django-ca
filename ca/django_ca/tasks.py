@@ -11,6 +11,11 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Asynchronous Celery tasks for django-ca.
+
+.. seealso:: https://docs.celeryproject.org/en/stable/index.html
+"""
+
 import logging
 from datetime import timedelta
 
@@ -36,7 +41,7 @@ try:
     from celery import shared_task
 except ImportError:
     def shared_task(func):
-        # Dummy decorator so that we can use the decorator wether celery is installed or not
+        """Dummy decorator so that we can use the decorator wether celery is installed or not."""
 
         # We do not yet need this, but might come in handy in the future:
         #func.delay = lambda *a, **kw: func(*a, **kw)
@@ -45,22 +50,25 @@ except ImportError:
 
 
 def run_task(task, *args, **kwargs):
+    """Function that passes `task` to celery or invokes it directly, depending on if Celery is installed."""
     eager = kwargs.pop('eager', False)
 
     if ca_settings.CA_USE_CELERY is True and eager is False:
         return task.delay(*args, **kwargs)
-    else:
-        return task(*args, **kwargs)
+
+    return task(*args, **kwargs)
 
 
 @shared_task
 def cache_crl(serial, **kwargs):
+    """Task to cache the CRL for a given CA."""
     ca = CertificateAuthority.objects.get(serial=serial)
     ca.cache_crls(**kwargs)
 
 
 @shared_task
 def cache_crls(serials=None):
+    """Task to cache the CRLs for all CAs."""
     if not serials:
         serials = CertificateAuthority.objects.usable().values_list('serial', flat=True)
 
@@ -70,6 +78,7 @@ def cache_crls(serials=None):
 
 @shared_task
 def generate_ocsp_key(serial, **kwargs):
+    """Task to generate an OCSP key for the CA named by `serial`."""
     ca = CertificateAuthority.objects.get(serial=serial)
     private_path, cert_path, cert = ca.generate_ocsp_key(**kwargs)
     return private_path, cert_path, cert.pk
@@ -77,6 +86,7 @@ def generate_ocsp_key(serial, **kwargs):
 
 @shared_task
 def generate_ocsp_keys(**kwargs):
+    """Task to generate an OCSP keys for all usable CAs."""
     keys = []
     for serial in CertificateAuthority.objects.usable().values_list('serial', flat=True):
         keys.append(generate_ocsp_key(serial, **kwargs))
@@ -91,22 +101,41 @@ def acme_validate_challenge(challenge_pk):
         log.error('ACME is not enabled.')
         return
 
-    challenge = AcmeChallenge.objects.get(pk=challenge_pk)
+    try:
+        challenge = AcmeChallenge.objects.url().get(pk=challenge_pk)
+    except AcmeChallenge.DoesNotExist:
+        log.error('%s: Challenge with id not found', challenge_pk)
 
-    # Set the status to "processing", to quote RFC8555, Section 7.1.6:
-    # "They transition to the "processing" state when the client responds to the challenge"
-    challenge.status = AcmeChallenge.STATUS_PROCESSING
-    challenge.save()
+    # Whoever is invoking this task is responsible for setting the status to "processing" first.
+    if challenge.status != AcmeChallenge.STATUS_PROCESSING:
+        log.error('%s: %s: Invalid state (must be %s)', challenge, challenge.status,
+                  AcmeChallenge.STATUS_PENDING)
+        return
 
+    # If the auth cannot be used for validation, neither can this challenge. We check auth.usable instead of
+    # challenge.usable b/c a challenge in the "processing" state is not "usable" (= it is already being used).
+    if challenge.auth.usable is False:
+        log.error('%s: Authentication is not usable.')
+        return
+
+    # General data for challenge validation
     token = challenge.token
     value = challenge.auth.value
     encoded = jose.encode_b64jose(token.encode('utf-8'))
     thumbprint = challenge.auth.order.account.thumbprint
-    url = f'http://{value}/.well-known/acme-challenge/{encoded}'
     expected = f'{encoded}.{thumbprint}'
 
-    # Validate HTTP challenge (only thing supported so far)
-    response = requests.get(url)
+    if challenge.type == AcmeChallenge.TYPE_HTTP_01:
+        url = f'http://{value}/.well-known/acme-challenge/{encoded}'
+
+        # Validate HTTP challenge (only thing supported so far)
+        try:
+            response = requests.get(url, timeout=1).text
+        except Exception:  # pylint: disable=broad-except
+            response = False
+    else:
+        log.error("Only HTTP-01 challenges supported so far.")
+        response = False
 
     # Transition state of the challenge depending on if the challenge is valid or not. RFC8555, Section 7.1.6:
     #
@@ -137,7 +166,16 @@ def acme_validate_challenge(challenge_pk):
             challenge.auth.order.status = AcmeOrder.STATUS_READY
     else:
         challenge.status = AcmeChallenge.STATUS_INVALID
+
+        # RFC 8555, section 7.1.6:
+        #
+        # If the client attempts to fulfill a challenge and fails, or if there is an error while the
+        # authorization is still pending, then the authorization transitions to the "invalid" state.
         challenge.auth.status = AcmeAuthorization.STATUS_INVALID
+
+        # RFC 8555, section 7.1.6:
+        #
+        #   If an error occurs at any of these stages, the order moves to the "invalid" state.
         challenge.auth.order.status = AcmeOrder.STATUS_INVALID
 
     log.info('Challenge %s is %s', challenge.pk, challenge.status)
