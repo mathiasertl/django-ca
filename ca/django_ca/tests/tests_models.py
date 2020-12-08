@@ -673,14 +673,14 @@ class AcmeAccountTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.account1 = AcmeAccount.objects.create(
             ca=self.cas['root'], contact='user@example.com', terms_of_service_agreed=True,
             status=AcmeAccount.STATUS_VALID, pem=ACME_PEM_1, thumbprint=ACME_THUMBPRINT_1,
-            slug=ACME_SLUG_1, acme_kid=self.kid1
+            slug=ACME_SLUG_1, kid=self.kid1
         )
         self.kid2 = 'http://example.com%s' % self.absolute_uri(
             ':acme-account', serial=self.cas['child'].serial, slug=ACME_SLUG_2)
         self.account2 = AcmeAccount.objects.create(
             ca=self.cas['child'], contact='user@example.net', terms_of_service_agreed=False,
             status=AcmeAccount.STATUS_REVOKED, pem=ACME_PEM_2, thumbprint=ACME_THUMBPRINT_2,
-            slug=ACME_SLUG_2, acme_kid=self.kid2
+            slug=ACME_SLUG_2, kid=self.kid2
         )
 
     def test_str(self):

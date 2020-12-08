@@ -596,7 +596,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
 
             # combined.kid is a full URL pointing to the account.
             try:
-                account = AcmeAccount.objects.viewable().get(ca=self.ca, acme_kid=combined.kid)
+                account = AcmeAccount.objects.viewable().get(ca=self.ca, kid=combined.kid)
             except AcmeAccount.DoesNotExist:
                 return AcmeResponseUnauthorized(message='Account not found.')
             if account.usable is False:
@@ -808,7 +808,7 @@ class AcmeNewAccountView(AcmeBaseView):
             thumbprint=thumbprint,
             pem=pem
         )
-        account.set_acme_kid(self.request)
+        account.set_kid(self.request)
 
         # Call full_clean() so that model validation can do its magic
         try:

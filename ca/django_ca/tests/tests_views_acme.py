@@ -523,8 +523,7 @@ class AcmeWithAccountViewTestCaseMixin(AcmeBaseViewTestCaseMixin):  # pylint: di
     def setUp(self):  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()
         self.account = AcmeAccount.objects.create(
-            ca=self.ca, terms_of_service_agreed=True, slug=self.account_slug, acme_kid=self.kid, pem=self.PEM
-        )
+            ca=self.ca, terms_of_service_agreed=True, slug=self.account_slug, kid=self.kid, pem=self.PEM)
 
     @override_tmpcadir()
     def test_unknown_account(self):
@@ -1217,9 +1216,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
         """Test an order for a different account."""
 
         account = AcmeAccount.objects.create(
-            ca=self.ca, terms_of_service_agreed=True, slug='def', acme_kid='kid', pem='bar',
-            thumbprint='foo'
-        )
+            ca=self.ca, terms_of_service_agreed=True, slug='def', kid='kid', pem='bar', thumbprint='foo')
         self.order.account = account
         self.order.save()
 
@@ -1500,9 +1497,7 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATest
         """Test viewing for the wrong account"""
 
         account = AcmeAccount.objects.create(
-            ca=self.ca, terms_of_service_agreed=True, slug='def', acme_kid='kid', pem='bar',
-            thumbprint='foo'
-        )
+            ca=self.ca, terms_of_service_agreed=True, slug='def', kid='kid', pem='bar', thumbprint='foo')
         self.order.account = account
         self.order.save()
 
@@ -1514,9 +1509,7 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATest
         """Test viewing an order that simply does not exist."""
 
         account = AcmeAccount.objects.create(
-            ca=self.ca, terms_of_service_agreed=True, slug='def', acme_kid='kid', pem='bar',
-            thumbprint='foo'
-        )
+            ca=self.ca, terms_of_service_agreed=True, slug='def', kid='kid', pem='bar', thumbprint='foo')
         self.order.account = account
         self.order.save()
 
@@ -1574,9 +1567,7 @@ class AcmeCertificateViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWith
     def test_wrong_account(self):
         """Test fetching a certificate for a different account."""
         account = AcmeAccount.objects.create(
-            ca=self.ca, terms_of_service_agreed=True, slug='def', acme_kid='kid', pem='bar',
-            thumbprint='foo'
-        )
+            ca=self.ca, terms_of_service_agreed=True, slug='def', kid='kid', pem='bar', thumbprint='foo')
         self.order.account = account
         self.order.save()
 

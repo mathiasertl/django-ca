@@ -51,7 +51,7 @@ class AcmeResponseAccount(AcmeResponse):
         }
 
         super().__init__(data)
-        self['Location'] = account.acme_kid
+        self['Location'] = account.kid
 
 
 class AcmeResponseAccountCreated(AcmeResponseAccount):

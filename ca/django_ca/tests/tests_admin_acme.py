@@ -64,15 +64,13 @@ class AcmeAccountViewsTestCase(StandardAdminViewTestMixin, DjangoCAWithCATestCas
         self.kid1 = 'http://example.com%s' % self.absolute_uri(
             ':acme-account', serial=self.cas['child'].serial, slug=ACME_SLUG_1)
         self.account1 = AcmeAccount.objects.create(
-            ca=self.cas['child'], contact=self.email, status=AcmeAccount.STATUS_VALID,
-            terms_of_service_agreed=True, pem=PEM1, thumbprint=THUMBPRINT1, slug=ACME_SLUG_1,
-            acme_kid=self.kid1)
+            ca=self.cas['child'], contact=self.email, status=AcmeAccount.STATUS_VALID, kid=self.kid1,
+            terms_of_service_agreed=True, pem=PEM1, thumbprint=THUMBPRINT1, slug=ACME_SLUG_1)
         self.kid2 = 'http://example.com%s' % self.absolute_uri(
             ':acme-account', serial=self.cas['root'].serial, slug=ACME_SLUG_1)
         self.account2 = AcmeAccount.objects.create(
-            ca=self.cas['root'], contact=self.email, status=AcmeAccount.STATUS_REVOKED,
-            terms_of_service_agreed=False, pem=PEM2, thumbprint=THUMBPRINT2, slug=ACME_SLUG_2,
-            acme_kid=self.kid2)
+            ca=self.cas['root'], contact=self.email, status=AcmeAccount.STATUS_REVOKED, kid=self.kid2,
+            terms_of_service_agreed=False, pem=PEM2, thumbprint=THUMBPRINT2, slug=ACME_SLUG_2)
 
 
 class AcmeOrderViewsTestCase(AcmeAccountViewsTestCase):
