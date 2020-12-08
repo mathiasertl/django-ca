@@ -15,7 +15,10 @@
 
 import importlib
 import types
+from http import HTTPStatus
 from unittest import mock
+
+import josepy as jose
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -27,6 +30,10 @@ from django.core.cache import cache
 from freezegun import freeze_time
 
 from .. import tasks
+from ..models import AcmeAccount
+from ..models import AcmeAuthorization
+from ..models import AcmeChallenge
+from ..models import AcmeOrder
 from ..utils import ca_storage
 from ..utils import get_crl_cache_key
 from .base import DjangoCAWithGeneratedCAsTestCase
@@ -152,3 +159,150 @@ class GenerateOCSPKeysTestCase(DjangoCAWithGeneratedCAsTestCase):
             tasks.generate_ocsp_key(ca.serial)
             self.assertTrue(ca_storage.exists('ocsp/%s.key' % ca.serial))
             self.assertTrue(ca_storage.exists('ocsp/%s.pem' % ca.serial))
+
+
+@freeze_time(timestamps['everything_valid'])
+class AcmeValidateChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
+    """Test :py:func:`~django_ca.tasks.acme_validate_challenge`."""
+
+    def setUp(self):
+        super().setUp()
+        self.hostname = 'challenge.example.com'
+        self.account = AcmeAccount.objects.create(
+            ca=self.cas['root'], contact='user@example.com', terms_of_service_agreed=True,
+            status=AcmeAccount.STATUS_VALID, pem=self.ACME_PEM_1, thumbprint=self.ACME_THUMBPRINT_1)
+        self.order = AcmeOrder.objects.create(account=self.account)
+        self.auth = AcmeAuthorization.objects.create(
+            order=self.order, type=AcmeAuthorization.TYPE_DNS, value=self.hostname)
+        self.chall = AcmeChallenge.objects.create(auth=self.auth, type=AcmeChallenge.TYPE_HTTP_01,
+                                                  status=AcmeChallenge.STATUS_PROCESSING)
+
+        encoded = jose.encode_b64jose(self.chall.token.encode('utf-8'))
+        thumbprint = self.account.thumbprint
+        self.expected = f'{encoded}.{thumbprint}'
+        self.url = f'http://{self.auth.value}/.well-known/acme-challenge/{encoded}'
+
+    def refresh_from_db(self):
+        """Refresh objects from database."""
+        self.account.refresh_from_db()
+        self.order.refresh_from_db()
+        self.auth.refresh_from_db()
+        self.chall.refresh_from_db()
+
+    def assertInvalid(self):  # pylint: disable=invalid-name; unittest standard
+        """Assert that the challenge validation failed."""
+        self.refresh_from_db()
+        self.assertEqual(self.chall.status, AcmeChallenge.STATUS_INVALID)
+        self.assertEqual(self.auth.status, AcmeAuthorization.STATUS_INVALID)
+        self.assertEqual(self.order.status, AcmeOrder.STATUS_INVALID)
+
+    def assertValid(self, order_state=AcmeOrder.STATUS_READY):  # pylint: disable=invalid-name
+        """Assert that the challenge is valid."""
+        self.refresh_from_db()
+        self.assertEqual(self.chall.status, AcmeChallenge.STATUS_VALID)
+        self.assertEqual(self.auth.status, AcmeAuthorization.STATUS_VALID)
+        self.assertEqual(self.order.status, order_state)
+
+    def test_acme_disabled(self):
+        """Test invoking task when ACME support is not enabled."""
+
+        with self.settings(CA_ENABLE_ACME=False), self.assertLogs() as logcm:
+            tasks.acme_validate_challenge(self.chall.pk)
+        self.assertEqual(logcm.output, ['ERROR:django_ca.tasks:ACME is not enabled.'])
+
+    def test_unknown_challenge(self):
+        """Test invoking task with an unknown challenge."""
+
+        AcmeChallenge.objects.all().delete()
+        with self.assertLogs() as logcm:
+            tasks.acme_validate_challenge(self.chall.pk)
+
+        self.assertEqual(logcm.output, [f'ERROR:django_ca.tasks:Challenge with id={self.chall.pk} not found'])
+
+    def test_status_not_processing(self):
+        """Test invoking task where the status is not "processing"."""
+
+        self.chall.status = AcmeChallenge.STATUS_PENDING
+        self.chall.save()
+
+        with self.assertLogs() as logcm:
+            tasks.acme_validate_challenge(self.chall.pk)
+
+        self.assertEqual(logcm.output, [
+            f'ERROR:django_ca.tasks:{self.chall}: pending: Invalid state (must be processing)'
+        ])
+
+    def test_unusable_auth(self):
+        """Test invoking task with an unusable authentication."""
+        self.auth.status = AcmeAuthorization.STATUS_VALID
+        self.auth.save()
+
+        with self.assertLogs() as logcm:
+            tasks.acme_validate_challenge(self.chall.pk)
+
+        self.assertEqual(logcm.output, [
+            f'ERROR:django_ca.tasks:{self.chall}: Authentication is not usable'
+        ])
+
+    def test_request_exception(self):
+        """Test requests throwing an exception."""
+        with self.patch('requests.get', side_effect=Exception('foo')) as req_mock:
+            tasks.acme_validate_challenge(self.chall.pk)
+        self.assertInvalid()
+        self.assertEqual(req_mock.mock_calls, [((self.url, ), {'timeout': 1})])
+
+    def test_response_not_ok(self):
+        """Test the server not returning a HTTP status code 200."""
+
+        with self.patch('requests.get') as req_mock:
+            req_mock.return_value.status_code = HTTPStatus.NOT_FOUND
+            req_mock.return_value.text = self.expected
+            tasks.acme_validate_challenge(self.chall.pk)
+        self.assertInvalid()
+        self.assertEqual(req_mock.mock_calls, [((self.url, ), {'timeout': 1})])
+
+    def test_response_wrong_content(self):
+        """Test the server returning the wrong content in the response."""
+
+        with self.patch('requests.get') as req_mock:
+            req_mock.return_value.status_code = HTTPStatus.OK
+            req_mock.return_value.text = 'wrong answer!'
+            tasks.acme_validate_challenge(self.chall.pk)
+        self.assertInvalid()
+        self.assertEqual(req_mock.mock_calls, [((self.url, ), {'timeout': 1})])
+
+    def test_unsupported_challenge(self):
+        """Test what happens when challenge type is not supported."""
+
+        self.chall.type = AcmeChallenge.TYPE_TLS_ALPN_01
+        self.chall.save()
+
+        with self.patch('requests.get') as req_mock:
+            req_mock.return_value.status_code = HTTPStatus.OK
+            req_mock.return_value.text = self.expected
+            tasks.acme_validate_challenge(self.chall.pk)
+        self.assertInvalid()
+        req_mock.assert_not_called()
+
+    def test_basic(self):
+        """Test validation actually working."""
+
+        with self.patch('requests.get') as req_mock:
+            req_mock.return_value.status_code = HTTPStatus.OK
+            req_mock.return_value.text = self.expected
+            tasks.acme_validate_challenge(self.chall.pk)
+        self.assertValid()
+        self.assertEqual(req_mock.mock_calls, [((self.url, ), {'timeout': 1})])
+
+    def test_multiple_auths(self):
+        """If other authentications exist that are not in the valid state, order does not become valid."""
+
+        AcmeAuthorization.objects.create(order=self.order, type=AcmeAuthorization.TYPE_DNS,
+                                         value='other.example.com')
+        with self.patch('requests.get') as req_mock:
+            req_mock.return_value.status_code = HTTPStatus.OK
+            req_mock.return_value.text = self.expected
+            tasks.acme_validate_challenge(self.chall.pk)
+
+        self.assertValid(AcmeOrder.STATUS_PENDING)
+        self.assertEqual(req_mock.mock_calls, [((self.url, ), {'timeout': 1})])

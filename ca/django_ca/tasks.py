@@ -18,6 +18,7 @@
 
 import logging
 from datetime import timedelta
+from http import HTTPStatus
 
 import josepy as jose
 import requests
@@ -104,18 +105,19 @@ def acme_validate_challenge(challenge_pk):
     try:
         challenge = AcmeChallenge.objects.url().get(pk=challenge_pk)
     except AcmeChallenge.DoesNotExist:
-        log.error('%s: Challenge with id not found', challenge_pk)
+        log.error('Challenge with id=%s not found', challenge_pk)
+        return
 
     # Whoever is invoking this task is responsible for setting the status to "processing" first.
     if challenge.status != AcmeChallenge.STATUS_PROCESSING:
         log.error('%s: %s: Invalid state (must be %s)', challenge, challenge.status,
-                  AcmeChallenge.STATUS_PENDING)
+                  AcmeChallenge.STATUS_PROCESSING)
         return
 
     # If the auth cannot be used for validation, neither can this challenge. We check auth.usable instead of
     # challenge.usable b/c a challenge in the "processing" state is not "usable" (= it is already being used).
     if challenge.auth.usable is False:
-        log.error('%s: Authentication is not usable.')
+        log.error('%s: Authentication is not usable', challenge)
         return
 
     # General data for challenge validation
@@ -130,12 +132,18 @@ def acme_validate_challenge(challenge_pk):
 
         # Validate HTTP challenge (only thing supported so far)
         try:
-            response = requests.get(url, timeout=1).text
-        except Exception:  # pylint: disable=broad-except
-            response = False
+            response = requests.get(url, timeout=1)
+
+            if response.status_code == HTTPStatus.OK:
+                received = response.text
+            else:
+                received = False
+        except Exception as ex:  # pylint: disable=broad-except
+            log.exception(ex)
+            received = False
     else:
-        log.error("Only HTTP-01 challenges supported so far.")
-        response = False
+        log.error("%s: Only HTTP-01 challenges supported so far", challenge)
+        received = False
 
     # Transition state of the challenge depending on if the challenge is valid or not. RFC8555, Section 7.1.6:
     #
@@ -153,7 +161,7 @@ def acme_validate_challenge(challenge_pk):
     #
     #   "* ready: The server agrees that the requirements have been fulfilled, and is awaiting finalization.
     #   Submit a finalization request."
-    if response.text == expected:
+    if received == expected:
         challenge.status = AcmeChallenge.STATUS_VALID
         challenge.validated = timezone.now()
         challenge.auth.status = AcmeAuthorization.STATUS_VALID
@@ -162,7 +170,7 @@ def acme_validate_challenge(challenge_pk):
         auths = AcmeAuthorization.objects.filter(order=challenge.auth.order)
         auths = auths.exclude(status=AcmeAuthorization.STATUS_VALID)
         if not auths.exclude(pk=challenge.auth.pk).exists():
-            log.info('Order is now valid.')
+            log.info('Order is now valid')
             challenge.auth.order.status = AcmeOrder.STATUS_READY
     else:
         challenge.status = AcmeChallenge.STATUS_INVALID
