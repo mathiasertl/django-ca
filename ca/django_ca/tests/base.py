@@ -411,7 +411,7 @@ class DjangoCATestCaseMixin:
 
         if name.startswith('/'):
             return 'http://%s%s' % (hostname, name)
-        if name.startswith(':'):
+        if name.startswith(':'):  # pragma: no branch
             name = 'django_ca%s' % name
         return 'http://%s%s' % (hostname, reverse(name, kwargs=kwargs))
 
