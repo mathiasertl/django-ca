@@ -17,7 +17,6 @@
 """
 
 import logging
-from datetime import timedelta
 from http import HTTPStatus
 
 import josepy as jose
@@ -200,25 +199,37 @@ def acme_issue_certificate(acme_certificate_pk):
         log.error('ACME is not enabled.')
         return
 
-    qs = AcmeCertificate.objects.filter(order__status=AcmeOrder.STATUS_PROCESSING).select_related('order')
-    acme_cert = qs.get(pk=acme_certificate_pk)
-    log.info('Issuing acme_cert: %s', acme_cert)
+    try:
+        acme_cert = AcmeCertificate.objects.select_related('order__account__ca').get(pk=acme_certificate_pk)
+    except AcmeCertificate.DoesNotExist:
+        log.error('Certificate with id=%s not found', acme_certificate_pk)
+        return
+
+    if acme_cert.usable is False:
+        log.error('%s: Cannot issue certificate for this order', acme_cert.order)
+        return
+
     subject_alternative_names = [a.subject_alternative_name for a in acme_cert.order.authorizations.all()]
-    log.info('SAN: %s', subject_alternative_names)
+    log.info('%s: Issuing certificate for %s', acme_cert.order, ',' .join(subject_alternative_names))
 
     extensions = {
         SubjectAlternativeName.key: SubjectAlternativeName({'value': subject_alternative_names})
     }
 
-    # Get ca for the certificate
-    ca = acme_cert.order.account.ca
-
     profile = profiles['server']
-    expires = timezone.now() + timedelta(days=90)
+
+    # Honor not_after from the order if set
+    if acme_cert.order.not_after:
+        expires = acme_cert.order.not_after
+    else:
+        expires = timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY
+
     csr = acme_cert.parse_csr()
 
-    cert = Certificate.objects.create_cert(ca, csr=csr, profile=profile, expires=expires,
-                                           extensions=extensions)
+    # Finally, actually create a certificate
+    cert = Certificate.objects.create_cert(
+        acme_cert.order.account.ca, csr=csr, profile=profile, expires=expires, extensions=extensions)
+
     acme_cert.cert = cert
     acme_cert.order.status = AcmeOrder.STATUS_VALID
     acme_cert.order.save()

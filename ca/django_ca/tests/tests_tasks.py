@@ -15,6 +15,7 @@
 
 import importlib
 import types
+from datetime import timedelta
 from http import HTTPStatus
 from unittest import mock
 
@@ -26,17 +27,22 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.cache import cache
+from django.utils import timezone
 
 from freezegun import freeze_time
 
+from .. import ca_settings
 from .. import tasks
+from ..extensions import SubjectAlternativeName
 from ..models import AcmeAccount
 from ..models import AcmeAuthorization
+from ..models import AcmeCertificate
 from ..models import AcmeChallenge
 from ..models import AcmeOrder
 from ..utils import ca_storage
 from ..utils import get_crl_cache_key
 from .base import DjangoCAWithGeneratedCAsTestCase
+from .base import certs
 from .base import override_tmpcadir
 from .base import timestamps
 
@@ -137,6 +143,7 @@ class TestCacheCRLs(DjangoCAWithGeneratedCAsTestCase):
             tasks.cache_crl(self.cas['pwd'].serial)
 
 
+@freeze_time(timestamps['everything_valid'])
 class GenerateOCSPKeysTestCase(DjangoCAWithGeneratedCAsTestCase):
     """Test the generate_ocsp_key task."""
 
@@ -306,3 +313,112 @@ class AcmeValidateChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
 
         self.assertValid(AcmeOrder.STATUS_PENDING)
         self.assertEqual(req_mock.mock_calls, [((self.url, ), {'timeout': 1})])
+
+
+@freeze_time(timestamps['everything_valid'])
+class AcmeIssueCertificateTestCase(DjangoCAWithGeneratedCAsTestCase):
+    """Test :py:func:`~django_ca.tasks.acme_issue_certificate`."""
+
+    def setUp(self):
+        super().setUp()
+        self.hostname = 'challenge.example.com'
+        self.account = AcmeAccount.objects.create(
+            ca=self.cas['root'], contact='user@example.com', terms_of_service_agreed=True,
+            pem=self.ACME_PEM_1, thumbprint=self.ACME_THUMBPRINT_1)
+        self.order = AcmeOrder.objects.create(account=self.account, status=AcmeOrder.STATUS_PROCESSING)
+        self.auth = AcmeAuthorization.objects.create(order=self.order, value=self.hostname)
+
+        # NOTE: This is of course not the right CSR for the order. It would be validated on submission, and
+        # all data from the CSR is discarded anyway.
+        self.cert = AcmeCertificate.objects.create(order=self.order, csr=certs['root-cert']['csr']['pem'])
+
+    def test_acme_disabled(self):
+        """Test invoking task when ACME support is not enabled."""
+
+        with self.settings(CA_ENABLE_ACME=False), self.assertLogs() as logcm:
+            tasks.acme_issue_certificate(self.cert.pk)
+        self.assertEqual(logcm.output, ['ERROR:django_ca.tasks:ACME is not enabled.'])
+
+    def test_unknown_ert(self):
+        """Test invoking task with an unknown cert."""
+
+        AcmeCertificate.objects.all().delete()
+        with self.assertLogs() as logcm:
+            tasks.acme_issue_certificate(self.cert.pk)
+
+        self.assertEqual(logcm.output, [
+            f'ERROR:django_ca.tasks:Certificate with id={self.cert.pk} not found'
+        ])
+
+    def test_unusable_cert(self):
+        """Test invoking task where the order is not usable."""
+
+        self.order.status = AcmeChallenge.STATUS_VALID  # usually would mean: already issued
+        self.order.save()
+
+        with self.assertLogs() as logcm:
+            tasks.acme_issue_certificate(self.cert.pk)
+
+        self.assertEqual(logcm.output, [
+            f'ERROR:django_ca.tasks:{self.order}: Cannot issue certificate for this order'
+        ])
+
+    @override_tmpcadir()
+    def test_basic(self):
+        """Test basic certificate issuance."""
+
+        with self.assertLogs() as logcm:
+            tasks.acme_issue_certificate(self.cert.pk)
+
+        self.assertEqual(logcm.output, [
+            f'INFO:django_ca.tasks:{self.order}: Issuing certificate for dns:{self.hostname}'
+        ])
+        self.cert.refresh_from_db()
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
+        self.assertEqual(self.cert.cert.subject_alternative_name,
+                         SubjectAlternativeName({'value': ['dns:%s' % self.hostname]}))
+        self.assertEqual(self.cert.cert.expires, timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY)
+        self.assertEqual(self.cert.cert.cn, self.hostname)
+
+    @override_tmpcadir()
+    def test_two_hostnames(self):
+        """Test setting two hostnames."""
+
+        hostname2 = 'example.net'
+        AcmeAuthorization.objects.create(order=self.order, value=hostname2)
+
+        # NOTE; not testing log output here, because order of hostnames might not be stable
+        tasks.acme_issue_certificate(self.cert.pk)
+
+        self.cert.refresh_from_db()
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
+        self.assertEqual(self.cert.cert.subject_alternative_name,
+                         SubjectAlternativeName({'value': [
+                             'dns:%s' % self.hostname,
+                             'dns:%s' % hostname2,
+                         ]}))
+        self.assertEqual(self.cert.cert.expires, timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY)
+        self.assertIn(self.cert.cert.cn, [self.hostname, hostname2])
+
+    @override_tmpcadir()
+    def test_not_after(self):
+        """Test certificate issuance with not_after attr."""
+        not_after = timezone.now() + timedelta(days=20)
+        self.order.not_after = not_after
+        self.order.save()
+
+        with self.assertLogs() as logcm:
+            tasks.acme_issue_certificate(self.cert.pk)
+
+        self.assertEqual(logcm.output, [
+            f'INFO:django_ca.tasks:{self.order}: Issuing certificate for dns:{self.hostname}'
+        ])
+        self.cert.refresh_from_db()
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
+        self.assertEqual(self.cert.cert.subject_alternative_name,
+                         SubjectAlternativeName({'value': ['dns:%s' % self.hostname]}))
+        self.assertEqual(self.cert.cert.expires, not_after)
+        self.assertEqual(self.cert.cert.cn, self.hostname)
