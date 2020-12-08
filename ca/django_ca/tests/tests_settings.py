@@ -40,9 +40,19 @@ class SettingsTestCase(DjangoCATestCase):
             self.assertEqual(ca_settings.CA_PROFILES['client']['desc'], desc)
 
     def test_acme_order_validity(self):
-        """Test that ACME_ORDER_VALIDITY can be set to an int."""
-        with self.settings(ACME_ORDER_VALIDITY=1):
+        """Test that CA_ACME_ORDER_VALIDITY can be set to an int."""
+        with self.settings(CA_ACME_ORDER_VALIDITY=1):
             self.assertEqual(ca_settings.ACME_ORDER_VALIDITY, timedelta(days=1))
+
+    def test_acme_default_validity(self):
+        """Test that CA_DEFAULT_CERT_VALIDITY can be set to an int."""
+        with self.settings(CA_ACME_DEFAULT_CERT_VALIDITY=1):
+            self.assertEqual(ca_settings.ACME_DEFAULT_CERT_VALIDITY, timedelta(days=1))
+
+    def test_acme_max_validity(self):
+        """Test that CA_MAX_CERT_VALIDITY can be set to an int."""
+        with self.settings(CA_ACME_MAX_CERT_VALIDITY=1):
+            self.assertEqual(ca_settings.ACME_MAX_CERT_VALIDITY, timedelta(days=1))
 
     def test_use_celery(self):
         """Test CA_USE_CELERY setting."""

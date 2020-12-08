@@ -186,8 +186,8 @@ CA_CRL_PROFILES = getattr(settings, 'CA_CRL_PROFILES', _CA_CRL_PROFILES)
 CA_PASSWORDS = getattr(settings, 'CA_PASSWORDS', {})
 
 # ACME settings
-ACME_ORDER_VALIDITY = getattr(settings, 'ACME_ORDER_VALIDITY', timedelta(hours=1))
-ACME_ACCOUNT_REQUIRES_CONTACT = getattr(settings, 'ACME_ACCOUNT_REQUIRES_CONTACT', True)
+ACME_ORDER_VALIDITY = getattr(settings, 'CA_ACME_ORDER_VALIDITY', timedelta(hours=1))
+ACME_ACCOUNT_REQUIRES_CONTACT = getattr(settings, 'CA_ACME_ACCOUNT_REQUIRES_CONTACT', True)
 ACME_MAX_CERT_VALIDITY = getattr(settings, 'CA_ACME_MAX_CERT_VALIDITY', timedelta(days=90))
 ACME_DEFAULT_CERT_VALIDITY = getattr(settings, 'CA_ACME_DEFAULT_CERT_VALIDITY', timedelta(days=90))
 
@@ -205,6 +205,10 @@ except AttributeError:
 
 if isinstance(CA_DEFAULT_EXPIRES, int):
     CA_DEFAULT_EXPIRES = timedelta(days=CA_DEFAULT_EXPIRES)
+if isinstance(ACME_MAX_CERT_VALIDITY, int):
+    ACME_MAX_CERT_VALIDITY = timedelta(days=ACME_MAX_CERT_VALIDITY)
+if isinstance(ACME_DEFAULT_CERT_VALIDITY, int):
+    ACME_DEFAULT_CERT_VALIDITY = timedelta(days=ACME_DEFAULT_CERT_VALIDITY)
 if isinstance(ACME_ORDER_VALIDITY, int):
     ACME_ORDER_VALIDITY = timedelta(days=ACME_ORDER_VALIDITY)
 elif not isinstance(CA_DEFAULT_EXPIRES, timedelta):
