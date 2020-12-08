@@ -55,6 +55,13 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
         self.ca.serial = self.ca_serial
         self.ca.save()
 
+    def add_account(self, data):
+        """Add an account with the given test data."""
+        return AcmeAccount.objects.get_or_create(thumbprint=data['thumbprint'], defaults={
+            'pk': data['account_pk'], 'contact': 'user@localhost', 'ca': self.ca, 'kid': data['kid'],
+            'terms_of_service_agreed': True, 'pem': data['pem'], 'slug': data['account_pk'],
+        })[0]
+
     def before_prepared_request(self, data):
         """Any action to take **before** sending a prepared request."""
 
@@ -220,9 +227,7 @@ class PreparedAcmeNewOrderViewTestCase(AcmePreparedRequestsTestCaseMixin, Django
 
     def before_prepared_request(self, data):
         # pylint: disable=attribute-defined-outside-init
-        self.account = AcmeAccount.objects.create(
-            pk=data['account_pk'], contact='user@localhost', ca=self.ca, terms_of_service_agreed=True,
-            pem=data['pem'], thumbprint=data['thumbprint'], slug=ACCOUNT_SLUG, kid=data['kid'])
+        self.account = self.add_account(data)
 
     def assertPreparedResponse(self, data, response, celery_mock):
         self.assertEqual(list(AcmeAccount.objects.all()), [self.account])
@@ -263,11 +268,7 @@ class PreparedAcmeAuthorizationViewTestCase(AcmePreparedRequestsTestCaseMixin, D
     view_name = 'AcmeAuthorizationView'
 
     def before_prepared_request(self, data):
-        acc = AcmeAccount.objects.get_or_create(thumbprint=data['thumbprint'], defaults={
-            'pk': data['account_pk'], 'contact': 'user@localhost', 'ca': self.ca, 'kid': data['kid'],
-            'terms_of_service_agreed': True, 'pem': data['pem'], 'slug': data['account_pk'],
-
-        })[0]
+        acc = self.add_account(data)
         order = AcmeOrder.objects.get_or_create(account=acc, slug=data['order'])[0]
         AcmeAuthorization.objects.get_or_create(order=order, slug=data['auth'], defaults={
             'value': 'localhost'
@@ -290,10 +291,7 @@ class PreparedAcmeChallengeViewTestCase(AcmePreparedRequestsTestCaseMixin, Djang
         super().assertLinkRelations(response=response, ca=ca, **kwargs)
 
     def before_prepared_request(self, data):
-        acc = AcmeAccount.objects.get_or_create(thumbprint=data['thumbprint'], defaults={
-            'pk': data['account_pk'], 'contact': 'user@localhost', 'ca': self.ca, 'kid': data['kid'],
-            'terms_of_service_agreed': True, 'pem': data['pem'], 'slug': data['account_pk'],
-        })[0]
+        acc = self.add_account(data)
         order = AcmeOrder.objects.create(account=acc, slug=data['order'])
         auth = AcmeAuthorization.objects.create(order=order, slug=data['auth'], value='localhost')
 
@@ -316,12 +314,9 @@ class PreparedAcmeOrderFinalizeViewTestCase(AcmePreparedRequestsTestCaseMixin, D
     view_name = 'AcmeOrderFinalizeView'
 
     def before_prepared_request(self, data):
-        acc = AcmeAccount.objects.get_or_create(thumbprint=data['thumbprint'], defaults={
-            'pk': data['account_pk'], 'contact': 'user@localhost', 'ca': self.ca, 'kid': data['kid'],
-            'terms_of_service_agreed': True, 'pem': data['pem'], 'slug': data['account_pk'],
-        })[0]
-        self.order = AcmeOrder.objects.create(account=acc, slug=data['order'], status=AcmeOrder.STATUS_READY)
-        AcmeAuthorization.objects.create(order=self.order, value='localhost',
+        acc = self.add_account(data)
+        order = AcmeOrder.objects.create(account=acc, slug=data['order'], status=AcmeOrder.STATUS_READY)
+        AcmeAuthorization.objects.create(order=order, value='localhost',
                                          status=AcmeAuthorization.STATUS_VALID)
 
     def get_url(self, data):
@@ -339,10 +334,7 @@ class PreparedAcmeOrderViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAW
     view_name = 'AcmeOrderView'
 
     def before_prepared_request(self, data):
-        acc = AcmeAccount.objects.get_or_create(thumbprint=data['thumbprint'], defaults={
-            'pk': data['account_pk'], 'contact': 'user@localhost', 'ca': self.ca, 'kid': data['kid'],
-            'terms_of_service_agreed': True, 'pem': data['pem'], 'slug': data['account_pk'],
-        })[0]
+        acc = self.add_account(data)
         AcmeOrder.objects.create(account=acc, slug=data['order'], status=AcmeOrder.STATUS_READY)
 
     def get_url(self, data):
@@ -359,16 +351,13 @@ class PreparedAcmeCertificateViewTestCase(AcmePreparedRequestsTestCaseMixin, Dja
 
     view_name = 'AcmeCertificateView'
 
-    def assertAcmeResponse(self, response, ca=None):
+    def assertAcmeResponse(self, response, **kwargs):  # pylint: disable=arguments-differ
         """This view does not return normal ACME responses but a certificate bundle."""
-        self.assertLinkRelations(response, ca=ca)
+        self.assertLinkRelations(response, **kwargs)
         self.assertEqual(response['Content-Type'], 'application/pem-certificate-chain')
 
     def before_prepared_request(self, data):
-        acc = AcmeAccount.objects.get_or_create(thumbprint=data['thumbprint'], defaults={
-            'pk': data['account_pk'], 'contact': 'user@localhost', 'ca': self.ca, 'kid': data['kid'],
-            'terms_of_service_agreed': True, 'pem': data['pem'], 'slug': data['account_pk'],
-        })[0]
+        acc = self.add_account(data)
         order = AcmeOrder.objects.create(account=acc, slug=data['order'], status=AcmeOrder.STATUS_VALID)
         AcmeCertificate.objects.create(slug=data['cert'], order=order, cert=self.certs['root-cert'],
                                        csr=data['csr'])
