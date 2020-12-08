@@ -12,6 +12,7 @@ ChangeLog
 
 * New :ref:`CA_DEFAULT_CA <settings-ca-default-ca>` setting to consistently configure the CA used by default.
 * Correctly handle IDNA domain names in URLs and certificates.
+* Preliminary :doc:`acme`.
 
 Backwards incompatible changes
 ==============================
@@ -20,6 +21,13 @@ Backwards incompatible changes
 * Drop support for cryptography 2.7.
 * Drop support for Celery 4.2.
 * Drop support for idna 2.8.
+
+Deprecation notices
+
+===================
+
+* This is the last release to support cryptography 2.8 and 2.9.
+* This is the last release to support Django 3.0 (2.2 LTS will still be supported).
 
 .. _changelog-1.16.1:
 
