@@ -57,7 +57,7 @@ class AcmeResponseAccount(AcmeResponse):
 class AcmeResponseAccountCreated(AcmeResponseAccount):
     """Response when an ACME account is created."""
 
-    status_code = HTTPStatus.CREATED
+    status_code = HTTPStatus.CREATED  # 201
 
 
 class AcmeResponseOrder(AcmeSimpleResponse):
@@ -69,7 +69,7 @@ class AcmeResponseOrder(AcmeSimpleResponse):
 class AcmeResponseOrderCreated(AcmeResponseOrder):
     """An Order response but with HTTP status code CREATED (201)."""
 
-    status_code = HTTPStatus.CREATED
+    status_code = HTTPStatus.CREATED  # 201
 
 
 class AcmeResponseAuthorization(AcmeSimpleResponse):
@@ -87,27 +87,22 @@ class AcmeResponseChallenge(AcmeSimpleResponse):
 class AcmeResponseError(AcmeResponse):
     """Base class for all ACME error responses."""
 
-    status_code = HTTPStatus.INTERNAL_SERVER_ERROR
+    message = 'Internal server error'
+    status_code = HTTPStatus.INTERNAL_SERVER_ERROR  # 500
     type = 'serverInternal'
-    message = ''
 
     def __init__(self, typ=None, message=''):
-        typ = typ or self.type
-        details = {
-            'type': 'urn:ietf:params:acme:error:%s' % typ,
+        super().__init__({
+            'type': 'urn:ietf:params:acme:error:%s' % (typ or self.type),
             'status': self.status_code,
-        }
-
-        message = message or self.message
-        if message:
-            details['detail'] = message
-
-        super().__init__(details, content_type='application/problem+json')
+            'detail': message or self.message,
+        }, content_type='application/problem+json')
 
 
 class AcmeResponseMalformed(AcmeResponseError):
     """ACME response with type malformed."""
 
+    message = 'Malformed request'
     status_code = HTTPStatus.BAD_REQUEST  # 400
     type = 'malformed'
 
@@ -116,7 +111,7 @@ class AcmeResponseBadCSR(AcmeResponseMalformed):
     """ACME response for an invalid CSR."""
 
     type = 'badCSR'
-    message = 'CSR is not acceptable.'  # just a default
+    message = 'CSR is not acceptable.'
 
 
 class AcmeResponseMalformedPayload(AcmeResponseMalformed):
