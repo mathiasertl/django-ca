@@ -913,16 +913,24 @@ class DjangoCAWithCertTestCase(DjangoCAWithCATestCase):
 
 
 class DjangoCATransactionTestCase(DjangoCATestCaseMixin, TransactionTestCase):
-    pass
+    """Same as DjangoCATestCase but as TransactionTestCase."""
 
 
 @override_settings(CA_MIN_KEY_SIZE=512)
 class DjangoCAWithCATransactionTestCase(DjangoCATransactionTestCase):
-    """A test class that already has a CA predefined."""
+    """Same as DjangoCAWithCATestCase but as TransactionTestCase."""
 
     def setUp(self):
         super().setUp()
         self.load_all_cas()
+
+
+class DjangoCAWithGeneratedCAsTransactionTestCase(DjangoCATransactionTestCase):
+    """Same as DjangoCAWithGeneratedCAsTestCase but as TransactionTestCase."""
+
+    def setUp(self):
+        super().setUp()
+        self.load_usable_cas()
 
 
 class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # pragma: no cover
