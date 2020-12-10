@@ -5,7 +5,7 @@ python:  # https://devguide.python.org/#status-of-python-branches
   - "3.7"
   - "3.8"
   - "3.9"
-  - "nightly"
+    #- "nightly"
 env:  # https://www.djangoproject.com/download/
   - DJANGO=3.1.4 CRYPTOGRAPHY=3.2.1
   - DJANGO=3.1.4 CRYPTOGRAPHY=3.1
