@@ -28,12 +28,13 @@ certificate issuance is working.
 
 The following things are known to not yet work:
 
-* Challenge types others then ``http-01``.
+* Challenge types others then ``http-01``
 * Certificate revocation
 * Pre-Authorization for certificates
 * Account update and deactivation
 * External account bindings
 * CAA validation (django-ca will happily issue certificates for google.com etc.)
+* Wildcard certificates
 
 ********
 Settings
