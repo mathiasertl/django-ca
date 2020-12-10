@@ -660,9 +660,11 @@ class CertificateAuthority(X509CertMixin):
 
     # ACMEv2 fields
     acme_enabled = models.BooleanField(
-        default=False, help_text=_("Whether it is possible to use ACME for this CA."))
-    acme_terms_of_service = models.URLField(blank=True, help_text=_('Terms of Service for this CA'))
-    acme_requires_contact = models.BooleanField(default=True, help_text=_(
+        default=False, verbose_name=_('Enable ACME'),
+        help_text=_("Whether it is possible to use ACME for this CA."))
+    acme_terms_of_service = models.URLField(blank=True, verbose_name='Terms of Service',
+                                            help_text=_('URL to Terms of Service for this CA'))
+    acme_requires_contact = models.BooleanField(default=True, verbose_name='Requires contact', help_text=_(
         'If this CA requires a contact address during account registration.'))
     # CAA record and website are general fields
 

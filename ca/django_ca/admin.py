@@ -289,7 +289,7 @@ for key, ext in KEY_TO_EXTENSION.items():
 class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
     fieldsets = (
         (None, {
-            'fields': ['name', 'enabled', 'cn_display', 'parent', 'hpkp_pin', ],
+            'fields': ['name', 'enabled', 'cn_display', 'parent', 'hpkp_pin', 'caa_identity', 'website', ],
         }),
         (_('Details'), {
             'description': _('Information to add to newly signed certificates.'),
@@ -313,6 +313,17 @@ class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+    def get_fieldsets(self, request, obj=None):
+        """Collapse the "Revocation" section unless the certificate is revoked."""
+        fieldsets = super().get_fieldsets(request, obj=obj)
+        if ca_settings.CA_ENABLE_ACME:
+            fieldsets = list(copy.deepcopy(fieldsets))
+            fieldsets.insert(1, (_('ACME'), {
+                'fields': ['acme_enabled', 'acme_terms_of_service', 'acme_requires_contact', ],
+            }))
+
+        return fieldsets
 
     class Media:
         css = {

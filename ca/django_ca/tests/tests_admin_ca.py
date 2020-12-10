@@ -16,6 +16,7 @@ from urllib.parse import quote
 from django.contrib.auth.models import User
 from django.templatetags.static import static
 from django.test import Client
+from django.test import override_settings
 from django.urls import reverse
 from django.utils.encoding import force_str
 
@@ -79,11 +80,18 @@ class ChangelistTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithCATestC
 
 
 class ChangeTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithCATestCase):
+    """Test the change view."""
+
     def test_basic(self):
-        # Just test that we can view them all
-        for name, ca in self.cas.items():
+        """Test that viewing a CA at least does not throw an exception."""
+        for ca in self.cas.values():
             response = self.client.get(self.change_url(ca.pk))
             self.assertChangeResponse(response)
+
+    @override_settings(CA_ENABLE_ACME=False)
+    def test_with_acme(self):
+        """Basic tests but with ACME support disabled."""
+        self.test_basic()
 
 
 class CADownloadBundleTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithCATestCase):
