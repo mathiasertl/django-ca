@@ -13,6 +13,7 @@ ChangeLog
 * New :ref:`CA_DEFAULT_CA <settings-ca-default-ca>` setting to consistently configure the CA used by default.
 * Correctly handle IDNA domain names in URLs and certificates.
 * Preliminary :doc:`acme`.
+* Add support for Python 3.9.
 
 Backwards incompatible changes
 ==============================
