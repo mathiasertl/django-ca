@@ -39,9 +39,11 @@ from ..base import URLAction
 
 
 class Command(BaseCommand, CertificateAuthorityDetailMixin):
+    """Create a certificate authority."""
     help = "Create a certificate authority."
 
     def add_arguments(self, parser):
+        self.add_general_args(parser)
         self.add_algorithm(parser)
 
         self.add_key_type(parser)
@@ -124,7 +126,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
 
         self.add_ca_args(parser)
 
-    def handle(self, name, subject, **options):
+    def handle(self, name, subject, **options):  # pylint: disable=arguments-differ
         if not os.path.exists(ca_settings.CA_DIR):  # pragma: no cover
             # TODO: set permissions
             os.makedirs(ca_settings.CA_DIR)
@@ -185,10 +187,13 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
                 name_constraints=name_constraints,
                 name=name, subject=subject, password=options['password'],
                 parent_password=options['parent_password'],
+                caa=options['caa'],
+                website=options['website'],
+                terms_of_service=options['tos'],
                 **kwargs
             )
-        except Exception as e:
-            raise CommandError(e)
+        except Exception as ex:
+            raise CommandError(ex) from ex
 
         # Generate OCSP keys and cache CRLs
         run_task(generate_ocsp_key, serial=ca.serial, password=options['password'])

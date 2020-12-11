@@ -91,7 +91,8 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
              pathlen=None, issuer_url=None, issuer_alt_name='', crl_url=None, ocsp_url=None,
              ca_issuer_url=None, ca_crl_url=None, ca_ocsp_url=None, name_constraints=None,
              password=None, parent_password=None, ecc_curve=None, key_type='RSA', key_size=None,
-             extra_extensions=None, path='ca'):
+             extra_extensions=None, path='ca',
+             caa='', website='', terms_of_service='', acme_enabled=False, acme_requires_contact=True):
         """Create a new certificate authority.
 
         Parameters
@@ -160,6 +161,16 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             An optional list of additional extensions to add to the certificate.
         path : str or pathlib.PurePath, optional
             Where to store the CA private key (default ``ca``).
+        caa : str, optional
+            CAA identity. Note that this field is not yet currently used.
+        website : str, optional
+            URL to a human-readable website.
+        terms_of_service : str, optional
+            URL to the terms of service for the CA.
+        acme_enabled : bool, optional
+            Set to ``True`` to enable ACME support for this CA.
+        acme_requires_contact : bool, optional
+            Set to ``False`` if you do not want to force clients to register with an email address.
 
         Raises
         ------
@@ -226,7 +237,9 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             expires=expires, parent=parent, subject=subject, pathlen=pathlen, issuer_url=issuer_url,
             issuer_alt_name=issuer_alt_name, crl_url=crl_url, ocsp_url=ocsp_url, ca_issuer_url=ca_issuer_url,
             ca_crl_url=ca_crl_url, ca_ocsp_url=ca_ocsp_url, name_constraints=name_constraints,
-            password=password, parent_password=parent_password, extra_extensions=extra_extensions)
+            password=password, parent_password=parent_password, extra_extensions=extra_extensions, caa=caa,
+            website=website, terms_of_service=terms_of_service, acme_enabled=acme_enabled,
+            acme_requires_contact=acme_requires_contact)
 
         private_key = generate_private_key(key_size, key_type, ecc_curve)
         public_key = private_key.public_key()
@@ -274,7 +287,9 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         crl_url = '\n'.join(crl_url)
 
         ca = self.model(name=name, issuer_url=issuer_url, issuer_alt_name=issuer_alt_name,
-                        ocsp_url=ocsp_url, crl_url=crl_url, parent=parent)
+                        ocsp_url=ocsp_url, crl_url=crl_url, parent=parent, caa_identity=caa, website=website,
+                        acme_terms_of_service=terms_of_service, acme_enabled=acme_enabled,
+                        acme_requires_contact=acme_requires_contact)
         ca.x509 = certificate
 
         if password is None:

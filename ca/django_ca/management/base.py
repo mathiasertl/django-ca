@@ -478,8 +478,22 @@ class CertCommand(BaseCommand):
         super(CertCommand, self).add_arguments(parser)
 
 
-class CertificateAuthorityDetailMixin(object):
-    def add_ca_args(self, parser):
+class CertificateAuthorityDetailMixin:
+    """Mixin to add common arguments to init_ca and edit_ca."""
+
+    def add_general_args(self, parser):  # pylint: disable=no-self-use
+        """Add some general arguments."""
+
+        group = parser.add_argument_group('General', 'General information about the CA.')
+        group.add_argument('--caa', default='', metavar='NAME', help='CAA record for this CA.')
+        group.add_argument('--website', default='', metavar='URL', action=URLAction,
+                           help='Browsable URL for the CA.')
+        group.add_argument('--tos', default='', metavar='URL', action=URLAction,
+                           help='Terms of service URL for the CA.')
+
+    def add_ca_args(self, parser):  # pylint: disable=no-self-use
+        """Add CA arguments."""
+
         group = parser.add_argument_group(
             'X509 v3 certificate extensions for signed certificates',
             'Extensions added when signing certificates.')
@@ -493,7 +507,4 @@ class CertificateAuthorityDetailMixin(object):
             '--crl-url', metavar='URL', action=MultipleURLAction, default=[],
             help='URL to a certificate revokation list. Can be given multiple times.'
         )
-        group.add_argument(
-            '--ocsp-url', metavar='URL', action=URLAction,
-            help='URL of an OCSP responder.'
-        )
+        group.add_argument('--ocsp-url', metavar='URL', action=URLAction, help='URL of an OCSP responder.')
