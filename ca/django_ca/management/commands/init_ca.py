@@ -178,7 +178,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
                 expires=options['expires'],
                 pathlen=options['pathlen'],
                 issuer_url=options['issuer_url'],
-                issuer_alt_name=issuer_alternative_name,
+                issuer_alt_name=','.join(issuer_alternative_name),
                 crl_url=options['crl_url'],
                 ocsp_url=options['ocsp_url'],
                 ca_issuer_url=options['ca_issuer_url'],

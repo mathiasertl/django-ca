@@ -26,6 +26,7 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from ..extensions import ExtendedKeyUsage
+from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
 from ..extensions import SubjectAlternativeName
 from ..extensions import TLSFeature
@@ -264,6 +265,9 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
 
     @override_tmpcadir()
     def test_extensions(self):
+        self.ca.issuer_alt_name = 'DNS:ian.example.com'
+        self.ca.save()
+
         stdin = StringIO(self.csr_pem)
         cmdline = [
             'sign_cert', '--subject=%s' % Subject([('CN', 'example.com')]),
@@ -289,6 +293,8 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertEqual(cert.subject_alternative_name,
                          SubjectAlternativeName({'value': ['URI:https://example.net', 'DNS:example.com']}))
         self.assertEqual(cert.tls_feature, TLSFeature({'value': ['OCSPMustStaple']}))
+        self.assertEqual(cert.issuer_alternative_name,
+                         IssuerAlternativeName({'value': [self.ca.issuer_alt_name]}))
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_no_subject(self):

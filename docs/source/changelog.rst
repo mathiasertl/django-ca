@@ -11,6 +11,7 @@ ChangeLog
 ************
 
 * New :ref:`CA_DEFAULT_CA <settings-ca-default-ca>` setting to consistently configure the CA used by default.
+* Fix the ``--issuer-alt-name`` option for the init_ca/edit_ca management commands.
 * Correctly handle IDNA domain names in URLs and certificates.
 * Preliminary :doc:`acme`.
 * Add support for Python 3.9.

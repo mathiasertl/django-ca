@@ -87,20 +87,21 @@ class InitCATest(DjangoCATestCase):
         """Test most arguments."""
 
         with self.assertCreateCASignals() as (pre, post):
-            out, err = self.init_ca(
-                algorithm=hashes.SHA1(),
-                key_type='DSA',
-                key_size=1024,
-                expires=self.expires(720),
-                pathlen=3,
-                issuer_url='http://issuer.ca.example.com',
-                issuer_alt_name={'value': ['http://ian.ca.example.com']},
-                crl_url=['http://crl.example.com'],
-                ocsp_url='http://ocsp.example.com',
-                ca_issuer_url='http://ca.issuer.ca.example.com',
-                permit_name=['DNS:.com'],
-                exclude_name=['DNS:.net'],
-            )
+            out, err = self.cmd_e2e([
+                'init_ca', 'Test CA', '/CN=args.example.com',
+                '--algorithm=SHA1',  # hashes.SHA1(),
+                '--key-type=DSA',
+                '--key-size=1024',
+                '--expires=720',
+                '--pathlen=3',
+                '--issuer-url=http://issuer.ca.example.com',
+                '--issuer-alt-name=http://ian.ca.example.com',
+                '--crl-url=http://crl.example.com',
+                '--ocsp-url=http://ocsp.example.com',
+                '--ca-issuer-url=http://ca.issuer.ca.example.com',
+                '--permit-name=DNS:.com',
+                '--exclude-name=DNS:.net',
+            ])
         self.assertTrue(pre.called)
         self.assertEqual(out, '')
         self.assertEqual(err, '')

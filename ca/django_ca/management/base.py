@@ -481,14 +481,14 @@ class CertCommand(BaseCommand):
 class CertificateAuthorityDetailMixin:
     """Mixin to add common arguments to init_ca and edit_ca."""
 
-    def add_general_args(self, parser):  # pylint: disable=no-self-use
+    def add_general_args(self, parser, default=''):  # pylint: disable=no-self-use
         """Add some general arguments."""
 
         group = parser.add_argument_group('General', 'General information about the CA.')
-        group.add_argument('--caa', default='', metavar='NAME', help='CAA record for this CA.')
-        group.add_argument('--website', default='', metavar='URL', action=URLAction,
+        group.add_argument('--caa', default=default, metavar='NAME', help='CAA record for this CA.')
+        group.add_argument('--website', default=default, metavar='URL', action=URLAction,
                            help='Browsable URL for the CA.')
-        group.add_argument('--tos', default='', metavar='URL', action=URLAction,
+        group.add_argument('--tos', default=default, metavar='URL', action=URLAction,
                            help='Terms of service URL for the CA.')
 
     def add_ca_args(self, parser):  # pylint: disable=no-self-use
@@ -500,7 +500,7 @@ class CertificateAuthorityDetailMixin:
         group.add_argument('--issuer-url', metavar='URL', action=URLAction,
                            help='URL to the certificate of your CA (in DER format).')
         group.add_argument(
-            '--issuer-alt-name', metavar='URL', action=ExtensionAction, extension=IssuerAlternativeName,
+            '--issuer-alt-name', metavar='URL', action=AlternativeNameAction, extension=IssuerAlternativeName,
             help='URL to the homepage of your CA.'
         )
         group.add_argument(

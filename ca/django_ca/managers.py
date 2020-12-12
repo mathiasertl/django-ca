@@ -190,8 +190,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         if not isinstance(subject, Subject):
             subject = Subject(subject)
         if issuer_alt_name and not isinstance(issuer_alt_name, IssuerAlternativeName):
-            issuer_alt_name = IssuerAlternativeName(issuer_alt_name)
-            issuer_alt_name = ','.join(issuer_alt_name.serialize()['value'])
+            issuer_alt_name = IssuerAlternativeName({'value': [issuer_alt_name]})
         if crl_url is None:
             crl_url = []
 
@@ -286,7 +285,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         # Normalize extensions for create()
         crl_url = '\n'.join(crl_url)
 
-        ca = self.model(name=name, issuer_url=issuer_url, issuer_alt_name=issuer_alt_name,
+        ca = self.model(name=name, issuer_url=issuer_url, issuer_alt_name=','.join(issuer_alt_name),
                         ocsp_url=ocsp_url, crl_url=crl_url, parent=parent, caa_identity=caa, website=website,
                         terms_of_service=terms_of_service, acme_enabled=acme_enabled,
                         acme_requires_contact=acme_requires_contact)

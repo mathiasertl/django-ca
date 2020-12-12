@@ -11,41 +11,76 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
+"""Test the edit_ca management command."""
+
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
 from .base import override_tmpcadir
 
 
 class EditCATestCase(DjangoCAWithCATestCase):
+    """Test the edit_ca management command."""
+
+    issuer = 'https://issuer-test.example.org'
+    ian = 'http://ian-test.example.org'
+    ocsp = 'http://ocsp-test.example.org'
+    crl = ['http://example.org/crl-test']
+    caa = 'caa.example.com'
+    website = 'https://website.example.com'
+    tos = 'https://tos.example.com'
+
     def setUp(self):
-        super(EditCATestCase, self).setUp()
+        super().setUp()
         self.ca = self.cas['root']
 
     @override_tmpcadir()
     def test_basic(self):
-        issuer = 'https://issuer-test.example.org'
-        ian = 'http://ian-test.example.org'
-        ocsp = 'http://ocsp-test.example.org'
-        crl = ['http://example.org/crl-test']
+        """Test command with e2e cli argument parsing."""
 
-        self.ca.enabled = False
-        self.ca.save()
-
-        stdout, stderr = self.cmd(
-            'edit_ca', self.ca.serial, issuer_url=issuer, issuer_alt_name=ian,
-            ocsp_url=ocsp, crl_url=crl)
+        stdout, stderr = self.cmd_e2e([
+            'edit_ca', self.ca.serial,
+            '--issuer-url=%s' % self.issuer, '--issuer-alt-name=%s' % self.ian,
+            '--ocsp-url=%s' % self.ocsp, '--crl-url=%s' % '\n'.join(self.crl), '--caa=%s' % self.caa,
+            '--website=%s' % self.website, '--tos=%s' % self.tos,
+        ])
         self.assertEqual(stdout, '')
         self.assertEqual(stderr, '')
 
         ca = CertificateAuthority.objects.get(serial=self.ca.serial)
-        self.assertEqual(ca.issuer_url, issuer)
-        self.assertEqual(ca.issuer_alt_name, ian)
-        self.assertEqual(ca.ocsp_url, ocsp)
-        self.assertEqual(ca.crl_url, '\n'.join(crl))
-        self.assertFalse(ca.enabled)
+        self.assertEqual(ca.issuer_url, self.issuer)
+        self.assertEqual(ca.issuer_alt_name, 'URI:%s' % self.ian)
+        self.assertEqual(ca.ocsp_url, self.ocsp)
+        self.assertEqual(ca.crl_url, '\n'.join(self.crl))
+        self.assertEqual(ca.caa_identity, self.caa)
+        self.assertEqual(ca.website, self.website)
+        self.assertEqual(ca.terms_of_service, self.tos)
+
+    @override_tmpcadir()
+    def test_enable_disable(self):
+        """Test the enable/disable options."""
+        self.assertTrue(self.ca.enabled)  # initial state
+
+        stdout, stderr = self.cmd_e2e(['edit_ca', self.ca.serial, '--disable'])
+        self.assertEqual(stdout, '')
+        self.assertEqual(stderr, '')
+        self.assertFalse(CertificateAuthority.objects.get(pk=self.ca.pk).enabled)
+
+        stdout, stderr = self.cmd_e2e(['edit_ca', self.ca.serial, '--enable'])
+        self.assertEqual(stdout, '')
+        self.assertEqual(stderr, '')
+        self.assertTrue(CertificateAuthority.objects.get(pk=self.ca.pk).enabled)
+
+        with self.assertRaisesRegex(SystemExit, r'^2$') as excm:
+            stdout, stderr = self.cmd_e2e(['edit_ca', self.ca.serial, '--enable', '--disable'])
+        self.assertEqual(stdout, '')
+        self.assertEqual(stderr, '')
+        self.assertEqual(excm.exception.args, (2, ))
+
+        self.assertTrue(CertificateAuthority.objects.get(pk=self.ca.pk).enabled)
 
     @override_tmpcadir()
     def test_enable(self):
+        """Test enabling the CA."""
         ca = CertificateAuthority.objects.get(serial=self.ca.serial)
         ca.enabled = False
         ca.save()
