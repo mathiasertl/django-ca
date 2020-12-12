@@ -15,6 +15,7 @@ ChangeLog
 * Correctly handle IDNA domain names in URLs and certificates.
 * Preliminary :doc:`acme`.
 * Add support for Python 3.9.
+* Add support for cryptography 3.1, 3.2 and 3.3.
 
 Backwards incompatible changes
 ==============================

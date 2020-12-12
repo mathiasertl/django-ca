@@ -7,16 +7,19 @@ python:  # https://devguide.python.org/#status-of-python-branches
   - "3.9"
     #- "nightly"
 env:  # https://www.djangoproject.com/download/
+  - DJANGO=3.1.4 CRYPTOGRAPHY=3.3.1
   - DJANGO=3.1.4 CRYPTOGRAPHY=3.2.1
   - DJANGO=3.1.4 CRYPTOGRAPHY=3.1
   - DJANGO=3.1.4 CRYPTOGRAPHY=3.0
   - DJANGO=3.1.4 CRYPTOGRAPHY=2.9.2
   - DJANGO=3.1.4 CRYPTOGRAPHY=2.8
+  - DJANGO=3.0.11 CRYPTOGRAPHY=3.3.1
   - DJANGO=3.0.11 CRYPTOGRAPHY=3.2.1
   - DJANGO=3.0.11 CRYPTOGRAPHY=3.1
   - DJANGO=3.0.11 CRYPTOGRAPHY=3.0
   - DJANGO=3.0.11 CRYPTOGRAPHY=2.9.2
   - DJANGO=3.0.11 CRYPTOGRAPHY=2.8
+  - DJANGO=2.2.17 CRYPTOGRAPHY=3.3.1
   - DJANGO=2.2.17 CRYPTOGRAPHY=3.2.1
   - DJANGO=2.2.17 CRYPTOGRAPHY=3.1
   - DJANGO=2.2.17 CRYPTOGRAPHY=3.0
@@ -40,27 +43,3 @@ script:
   - python dev.py init-demo
   - python setup.py install
   - make -C docs html-check
-
-matrix:
-    exclude:
-        # Django 3.0 doesn't support Python 3.5
-        - env: DJANGO=3.1.4 CRYPTOGRAPHY=2.8
-          python: "3.5"
-        - env: DJANGO=3.1.4 CRYPTOGRAPHY=2.9.2
-          python: "3.5"
-        - env: DJANGO=3.1.4 CRYPTOGRAPHY=3.0
-          python: "3.5"
-        - env: DJANGO=3.1.4 CRYPTOGRAPHY=3.1
-          python: "3.5"
-        - env: DJANGO=3.1.4 CRYPTOGRAPHY=3.2.1
-          python: "3.5"
-        - env: DJANGO=3.0.11 CRYPTOGRAPHY=2.8
-          python: "3.5"
-        - env: DJANGO=3.0.11 CRYPTOGRAPHY=2.9.2
-          python: "3.5"
-        - env: DJANGO=3.0.11 CRYPTOGRAPHY=3.0
-          python: "3.5"
-        - env: DJANGO=3.0.11 CRYPTOGRAPHY=3.1
-          python: "3.5"
-        - env: DJANGO=3.0.11 CRYPTOGRAPHY=3.2.1
-          python: "3.5"
