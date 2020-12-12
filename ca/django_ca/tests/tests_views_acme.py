@@ -113,7 +113,7 @@ class DirectoryTestCase(DjangoCAWithCATestCase):
         ca = CertificateAuthority.objects.default()
         ca.acme_enabled = True
         ca.website = 'http://ca.example.com'
-        ca.acme_terms_of_service = 'http://ca.example.com/acme/tos'
+        ca.terms_of_service = 'http://ca.example.com/acme/tos'
         ca.caa_identity = 'ca.example.com'
         ca.save()
 
@@ -131,7 +131,7 @@ class DirectoryTestCase(DjangoCAWithCATestCase):
             'newNonce': req.build_absolute_uri('/django_ca/acme/%s/new-nonce/' % ca.serial),
             'newOrder': req.build_absolute_uri('/django_ca/acme/%s/new-order/' % ca.serial),
             'meta': {
-                'termsOfService': ca.acme_terms_of_service,
+                'termsOfService': ca.terms_of_service,
                 'caaIdentities': [
                     ca.caa_identity,
                 ],

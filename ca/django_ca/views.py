@@ -429,8 +429,8 @@ class AcmeDirectory(View):
         meta = {}
         if ca.website:
             meta['website'] = ca.website
-        if ca.acme_terms_of_service:
-            meta['termsOfService'] = ca.acme_terms_of_service
+        if ca.terms_of_service:
+            meta['termsOfService'] = ca.terms_of_service
         if ca.caa_identity:
             meta['caaIdentities'] = [ca.caa_identity]  # array of string
         if meta:

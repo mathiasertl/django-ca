@@ -288,7 +288,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
         ca = self.model(name=name, issuer_url=issuer_url, issuer_alt_name=issuer_alt_name,
                         ocsp_url=ocsp_url, crl_url=crl_url, parent=parent, caa_identity=caa, website=website,
-                        acme_terms_of_service=terms_of_service, acme_enabled=acme_enabled,
+                        terms_of_service=terms_of_service, acme_enabled=acme_enabled,
                         acme_requires_contact=acme_requires_contact)
         ca.x509 = certificate
 
