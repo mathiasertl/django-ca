@@ -20,6 +20,7 @@ from io import StringIO
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
+from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 
 from freezegun import freeze_time
@@ -265,6 +266,8 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
 
     @override_tmpcadir()
     def test_extensions(self):
+        """Test setting extensions for the signed certificate."""
+
         self.ca.issuer_alt_name = 'DNS:ian.example.com'
         self.ca.save()
 
@@ -354,7 +357,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
     @unittest.skipUnless(isinstance(ca_storage, FileSystemStorage),
                          'Test only makes sense with local filesystem storage.')
     def test_unparseable(self):
-        # Private key contains bogus data
+        """Test creating a cert where the CA private key contains bogus data."""
         key_path = os.path.join(ca_storage.location, self.ca.private_key_path)
 
         os.chmod(key_path, stat.S_IWUSR | stat.S_IRUSR)
@@ -363,8 +366,14 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         os.chmod(key_path, stat.S_IRUSR)
 
         # Giving no password raises a CommandError
+        msg = r'^Could not deserialize key data\.'
+        if settings.CRYPTOGRAPHY_VERSION >= (3, 3):
+            # msg got changed in version 3.3
+            msg += r' The data may be in an incorrect format or it may be encrypted with an unsupported algorithm\.'  # NOQA: E501
+        msg += '$'
+
         stdin = StringIO(self.csr_pem)
-        with self.assertCommandError('^Could not deserialize key data.$'), \
+        with self.assertCommandError(msg), \
                 self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             self.cmd('sign_cert', ca=self.ca, alt=['example.com'], stdin=stdin)
         self.assertEqual(pre.call_count, 0)
