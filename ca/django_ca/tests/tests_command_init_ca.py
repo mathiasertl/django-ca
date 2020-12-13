@@ -86,6 +86,11 @@ class InitCATest(DjangoCATestCase):
     def test_arguments(self):
         """Test most arguments."""
 
+        hostname = 'example.com'
+        website = f'https://{hostname}'
+        tos = f'{website}/tos/'
+        caa = f'caa.{hostname}'
+
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.cmd_e2e([
                 'init_ca', 'Test CA', '/CN=args.example.com',
@@ -101,6 +106,9 @@ class InitCATest(DjangoCATestCase):
                 '--ca-issuer-url=http://ca.issuer.ca.example.com',
                 '--permit-name=DNS:.com',
                 '--exclude-name=DNS:.net',
+                f'--caa={caa}',
+                f'--website={website}',
+                f'--tos={tos}',
             ])
         self.assertTrue(pre.called)
         self.assertEqual(out, '')
@@ -139,6 +147,11 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(ca.ocsp_url, 'http://ocsp.example.com')
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
+
+        # test non-extension properties
+        self.assertEqual(ca.caa_identity, caa)
+        self.assertEqual(ca.website, website)
+        self.assertEqual(ca.terms_of_service, tos)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_ecc(self):
