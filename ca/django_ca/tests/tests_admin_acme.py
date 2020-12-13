@@ -17,8 +17,6 @@
 
 from django.utils import timezone
 
-from freezegun import freeze_time
-
 from ..models import AcmeAccount
 from ..models import AcmeAuthorization
 from ..models import AcmeCertificate
@@ -26,7 +24,6 @@ from ..models import AcmeChallenge
 from ..models import AcmeOrder
 from .base import DjangoCAWithCATestCase
 from .base import override_tmpcadir
-from .base import timestamps
 from .tests_admin import StandardAdminViewTestMixin
 
 PEM1 = '''-----BEGIN PUBLIC KEY-----
@@ -77,11 +74,11 @@ class AcmeAccountViewsTestCase(StandardAdminViewTestMixin, DjangoCAWithCATestCas
             kid=self.kid2, terms_of_service_agreed=False, pem=PEM2, thumbprint=THUMBPRINT2, slug=ACME_SLUG_2)
 
 
-class AcmeOrderViewsTestCaseMixin:
+class AcmeOrderViewsTestCaseMixin:  # pylint: disable=too-few-public-methods
     """Mixin to create orders."""
     model = AcmeOrder
 
-    def setUp(self):
+    def setUp(self):  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()
         self.order1 = AcmeOrder.objects.create(account=self.account1, status=AcmeOrder.STATUS_VALID)
         self.order2 = AcmeOrder.objects.create(account=self.account1, status=AcmeOrder.STATUS_PROCESSING)
@@ -92,11 +89,12 @@ class AcmeOrderViewsTestCase(AcmeOrderViewsTestCaseMixin, AcmeAccountViewsTestCa
 
     @override_tmpcadir()
     def test_expired_filter(self):
+        """Test the "expired" list filter."""
         self.assertChangelistResponse(
             self.client.get('%s?expired=0' % self.changelist_url), self.order1, self.order2)
         self.assertChangelistResponse(self.client.get('%s?expired=1' % self.changelist_url))
 
-        with freeze_time(timestamps['everything_expired']):
+        with self.freeze_time('everything_expired'):
             self.client.force_login(self.user)
             self.assertChangelistResponse(self.client.get('%s?expired=0' % self.changelist_url))
             self.assertChangelistResponse(self.client.get('%s?expired=1' % self.changelist_url),

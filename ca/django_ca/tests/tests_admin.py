@@ -16,6 +16,7 @@
 import html
 import json
 import unittest
+from contextlib import contextmanager
 from datetime import datetime
 from datetime import timedelta
 from http import HTTPStatus
@@ -102,12 +103,21 @@ class AdminTestMixin:
         self.assertInHTML(css, response.content.decode('utf-8'), 1)
 
     def assertChangelistResponse(self, response, *objects):  # pylint: disable=invalid-name
+        """Assert some basic characterisics of a changlist response."""
         self.assertEqual(response.status_code, 200)
         self.assertCountEqual(response.context['cl'].result_list, objects)
 
     def change_url(self, pk):
         """Admin change URL for the given primary key."""
         return reverse('admin:%s_%s_change' % self._admin_url_format_tuple, kwargs={'object_id': pk})
+
+    @contextmanager
+    def freeze_time(self, timestamp):
+        """Overridden to force a client login, otherwise the user session is expired."""
+
+        with super().freeze_time(timestamp) as frozen:
+            self.client.force_login(self.user)
+            yield frozen
 
 
 class StandardAdminViewTestMixin(AdminTestMixin):
@@ -178,30 +188,26 @@ class ChangelistTestCase(CertificateAdminTestMixin, DjangoCAWithGeneratedCertsTe
         # Test viewing all certificates, regardless of revocation or current time
         self.load_all_certs()  # load all certs here
 
-        with freeze_time(timestamps['everything_valid']):
+        response = self.client.get('%s?status=all' % self.changelist_url)
+        self.assertResponse(response, self.certs.values())
+
+        # Revoke everything and try again
+        for cert in self.certs.values():
+            cert.revoke()
+            cert.save()
+        response = self.client.get('%s?status=all' % self.changelist_url)
+        self.assertResponse(response, self.certs.values())
+
+        with self.freeze_time('everything_expired'):
             response = self.client.get('%s?status=all' % self.changelist_url)
             self.assertResponse(response, self.certs.values())
 
-            # Revoke everything and try again
-            for cert in self.certs.values():
-                cert.revoke()
-                cert.save()
-            response = self.client.get('%s?status=all' % self.changelist_url)
-            self.assertResponse(response, self.certs.values())
-
-        with freeze_time(timestamps['everything_expired']):
-            self.client.force_login(self.user)
-            response = self.client.get('%s?status=all' % self.changelist_url)
-            self.assertResponse(response, self.certs.values())
-
-        with freeze_time(timestamps['before_everything']):
-            self.client.force_login(self.user)
+        with self.freeze_time('before_everything'):
             response = self.client.get('%s?status=all' % self.changelist_url)
             self.assertResponse(response, self.certs.values())
 
         # Revoke everything and try again
-        with freeze_time(timestamps['everything_valid']):
-            self.client.force_login(self.user)
+        with self.freeze_time('everything_valid'):
             for cert in self.certs.values():
                 cert.revoke()
                 cert.save()

@@ -55,6 +55,7 @@ from django.test import TransactionTestCase
 from django.test.utils import override_settings
 from django.urls import reverse
 
+from freezegun import freeze_time
 from pyvirtualdisplay import Display
 from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.webdriver.support.wait import WebDriverWait
@@ -712,6 +713,18 @@ VQIDAQAB
                     config['OVERRIDES'][data['serial']]['password'] = data['password']
 
         return profiles
+
+    @contextmanager
+    def freeze_time(self, timestamp):  # pylint: disable=no-self-use
+        """Context manager to freeze time to one of the given timestamps.
+
+        If `timestamp` is a str that is in the `timestamps` dict, that timestamp.
+        """
+        if isinstance(timestamp, str) and timestamp in timestamps:  # pragma: no branch
+            timestamp = timestamps[timestamp]
+
+        with freeze_time(timestamp) as frozen:
+            yield frozen
 
     def get_cert_context(self, name):
         # Get a dictionary suitable for testing output based on the dictionary in basic.certs
