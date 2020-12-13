@@ -26,6 +26,9 @@ expected = {
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
 
+ACMEv2 support:
+* Enabled: False
+
 X509 v3 certificate extensions for CA:
 AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
@@ -53,6 +56,9 @@ X509 v3 certificate extensions for signed certificates:
 * Distinguished Name: {subject_str}
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
+
+ACMEv2 support:
+* Enabled: False
 
 X509 v3 certificate extensions for CA:
 AuthorityInformationAccess{authority_information_access_critical}:
@@ -92,6 +98,74 @@ X509 v3 certificate extensions for signed certificates:
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
 
+ACMEv2 support:
+* Enabled: False
+
+X509 v3 certificate extensions for CA:
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): {crl_url}
+* Issuer URL: {issuer_url}
+* OCSP URL: {ocsp_url}
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+    'root-properties': '''{name} (enabled):
+* Serial: {serial_colons}
+* Path to private key:
+  {key_path}
+* Is a root CA.
+* Children:
+  * {children[0][0]} ({children[0][1]})
+* Distinguished Name: {subject_str}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+* Website: {ca.website}
+* Terms of service: {ca.terms_of_service}
+* CAA identity: {ca.caa_identity}
+
+ACMEv2 support:
+* Enabled: {ca.acme_enabled}
+* Requires contact: {ca.acme_requires_contact}
+
+X509 v3 certificate extensions for CA:
+AuthorityKeyIdentifier{authority_key_identifier_critical}:
+    {authority_key_identifier_text}
+BasicConstraints{basic_constraints_critical}:
+    {basic_constraints_text}
+KeyUsage{key_usage_critical}:
+    * {key_usage_0}
+    * {key_usage_1}
+SubjectKeyIdentifier{subject_key_identifier_critical}:
+    {subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): {crl_url}
+* Issuer URL: {issuer_url}
+* OCSP URL: {ocsp_url}
+* Issuer Alternative Name: None
+
+{pub[pem]}''',
+    'root-acme-disabled': '''{name} (enabled):
+* Serial: {serial_colons}
+* Path to private key:
+  {key_path}
+* Is a root CA.
+* Children:
+  * {children[0][0]} ({children[0][1]})
+* Distinguished Name: {subject_str}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
 X509 v3 certificate extensions for CA:
 AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
@@ -120,6 +194,9 @@ X509 v3 certificate extensions for signed certificates:
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
 
+ACMEv2 support:
+* Enabled: False
+
 X509 v3 certificate extensions for CA:
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
@@ -145,6 +222,9 @@ X509 v3 certificate extensions for signed certificates:
 * Distinguished Name: {subject}
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
+
+ACMEv2 support:
+* Enabled: False
 
 X509 v3 certificate extensions for CA:
 AuthorityKeyIdentifier{authority_key_identifier_critical}:
@@ -175,6 +255,9 @@ X509 v3 certificate extensions for signed certificates:
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
 
+ACMEv2 support:
+* Enabled: False
+
 X509 v3 certificate extensions for CA:
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
@@ -201,6 +284,9 @@ X509 v3 certificate extensions for signed certificates:
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
 
+ACMEv2 support:
+* Enabled: False
+
 X509 v3 certificate extensions for CA:
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
@@ -226,6 +312,9 @@ X509 v3 certificate extensions for signed certificates:
 * Distinguished Name: {subject}
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
+
+ACMEv2 support:
+* Enabled: False
 
 X509 v3 certificate extensions for CA:
 AuthorityKeyIdentifier{authority_key_identifier_critical}:
@@ -258,6 +347,9 @@ X509 v3 certificate extensions for signed certificates:
 * Distinguished Name: {subject}
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
+
+ACMEv2 support:
+* Enabled: False
 
 X509 v3 certificate extensions for CA:
 AuthorityInformationAccess{authority_information_access_critical}:
@@ -305,6 +397,9 @@ X509 v3 certificate extensions for signed certificates:
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
 
+ACMEv2 support:
+* Enabled: False
+
 X509 v3 certificate extensions for CA:
 AuthorityInformationAccess{authority_information_access_critical}:
     OCSP:
@@ -344,6 +439,9 @@ X509 v3 certificate extensions for signed certificates:
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
 
+ACMEv2 support:
+* Enabled: False
+
 X509 v3 certificate extensions for CA:
 AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
@@ -368,6 +466,9 @@ X509 v3 certificate extensions for signed certificates:
 * Distinguished Name: {subject}
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
+
+ACMEv2 support:
+* Enabled: False
 
 X509 v3 certificate extensions for CA:
 AuthorityInformationAccess{authority_information_access_critical}:
@@ -409,6 +510,9 @@ X509 v3 certificate extensions for signed certificates:
 * Distinguished Name: {subject}
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
+
+ACMEv2 support:
+* Enabled: False
 
 X509 v3 certificate extensions for CA:
 AuthorityInformationAccess{authority_information_access_critical}:
@@ -453,6 +557,9 @@ X509 v3 certificate extensions for signed certificates:
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
 
+ACMEv2 support:
+* Enabled: False
+
 X509 v3 certificate extensions for CA:
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
@@ -478,6 +585,9 @@ X509 v3 certificate extensions for signed certificates:
 * Distinguished Name: {subject}
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
+
+ACMEv2 support:
+* Enabled: False
 
 X509 v3 certificate extensions for CA:
 AuthorityInformationAccess{authority_information_access_critical}:
@@ -518,6 +628,9 @@ X509 v3 certificate extensions for signed certificates:
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
 
+ACMEv2 support:
+* Enabled: False
+
 X509 v3 certificate extensions for CA:
 AuthorityInformationAccess{authority_information_access_critical}:
     OCSP:
@@ -557,6 +670,9 @@ X509 v3 certificate extensions for signed certificates:
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
 
+ACMEv2 support:
+* Enabled: False
+
 X509 v3 certificate extensions for CA:
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
@@ -582,6 +698,9 @@ X509 v3 certificate extensions for signed certificates:
 * Distinguished Name: {subject}
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
+
+ACMEv2 support:
+* Enabled: False
 
 X509 v3 certificate extensions for CA:
 AuthorityInformationAccess{authority_information_access_critical}:
@@ -625,6 +744,9 @@ X509 v3 certificate extensions for signed certificates:
 * Distinguished Name: {subject}
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
+
+ACMEv2 support:
+* Enabled: False
 
 X509 v3 certificate extensions for CA:
 AuthorityInformationAccess{authority_information_access_critical}:
@@ -673,6 +795,9 @@ X509 v3 certificate extensions for signed certificates:
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
 
+ACMEv2 support:
+* Enabled: False
+
 X509 v3 certificate extensions for CA:
 AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
@@ -717,6 +842,9 @@ X509 v3 certificate extensions for signed certificates:
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
 
+ACMEv2 support:
+* Enabled: False
+
 X509 v3 certificate extensions for CA:
 AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
@@ -758,6 +886,9 @@ X509 v3 certificate extensions for signed certificates:
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
 
+ACMEv2 support:
+* Enabled: False
+
 X509 v3 certificate extensions for CA:
 AuthorityInformationAccess{authority_information_access_critical}:
     CA Issuers:
@@ -798,6 +929,9 @@ X509 v3 certificate extensions for signed certificates:
 * Distinguished Name: {subject}
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
+
+ACMEv2 support:
+* Enabled: False
 
 X509 v3 certificate extensions for CA:
 AuthorityInformationAccess{authority_information_access_critical}:
@@ -842,6 +976,9 @@ X509 v3 certificate extensions for signed certificates:
 * Distinguished Name: {subject}
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
+
+ACMEv2 support:
+* Enabled: False
 
 X509 v3 certificate extensions for CA:
 AuthorityInformationAccess{authority_information_access_critical}:
@@ -898,6 +1035,9 @@ X509 v3 certificate extensions for signed certificates:
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
 
+ACMEv2 support:
+* Enabled: False
+
 X509 v3 certificate extensions for CA:
 AuthorityKeyIdentifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
@@ -926,6 +1066,9 @@ X509 v3 certificate extensions for signed certificates:
 * Distinguished Name: {subject}
 * Maximum levels of sub-CAs (pathlen): {pathlen_text}
 * HPKP pin: {hpkp}
+
+ACMEv2 support:
+* Enabled: False
 
 X509 v3 certificate extensions for CA:
 AuthorityInformationAccess{authority_information_access_critical}:
@@ -975,6 +1118,31 @@ class ViewCATestCase(DjangoCAWithCATestCase):
             data = self.get_cert_context(name)
             self.assertMultiLineEqual(stdout, expected[name].format(**data))
             self.assertEqual(stderr, '')
+
+    @override_tmpcadir()
+    def test_properties(self):
+        """Test viewing of various optional properties."""
+        ca = self.cas['root']
+        hostname = 'ca.example.com'
+        ca.website = f'https://website.{hostname}'
+        ca.terms_of_service = f'{ca.website}/tos/'
+        ca.caa_identity = hostname
+        ca.acme_enabled = True
+        ca.acme_requires_contact = False
+        ca.save()
+
+        stdout, stderr = self.cmd('view_ca', ca.serial)
+        self.assertEqual(stderr, '')
+        data = self.get_cert_context('root')
+        self.assertMultiLineEqual(stdout, expected['root-properties'].format(ca=ca, **data))
+
+    @override_tmpcadir(CA_ENABLE_ACME=False)
+    def test_acme_disabled(self):
+        """Test viewing when ACME is disabled."""
+        stdout, stderr = self.cmd('view_ca', self.cas['root'].serial)
+        self.assertEqual(stderr, '')
+        data = self.get_cert_context('root')
+        self.assertMultiLineEqual(stdout, expected['root-acme-disabled'].format(**data))
 
     @override_tmpcadir()
     def test_no_implemented(self):

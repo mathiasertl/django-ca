@@ -11,6 +11,12 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""``view_ca`` management command to view details for a certificate authority.
+
+.. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
+"""
+
+from ... import ca_settings
 from ...utils import add_colons
 from ...utils import ca_storage
 from ..base import BaseCommand
@@ -59,6 +65,20 @@ class Command(BaseCommand):
         self.stdout.write('* Distinguished Name: %s' % ca.distinguished_name)
         self.stdout.write('* Maximum levels of sub-CAs (pathlen): %s' % pathlen)
         self.stdout.write('* HPKP pin: %s' % ca.hpkp_pin)
+
+        if ca.website:
+            self.stdout.write('* Website: %s' % ca.website)
+        if ca.terms_of_service:
+            self.stdout.write('* Terms of service: %s' % ca.terms_of_service)
+        if ca.caa_identity:
+            self.stdout.write('* CAA identity: %s' % ca.caa_identity)
+
+        if ca_settings.CA_ENABLE_ACME:
+            self.stdout.write('')
+            self.stdout.write('ACMEv2 support:')
+            self.stdout.write('* Enabled: %s' % ca.acme_enabled)
+            if ca.acme_enabled:
+                self.stdout.write('* Requires contact: %s' % ca.acme_requires_contact)
 
         self.stdout.write('')
         self.stdout.write('X509 v3 certificate extensions for CA:')
