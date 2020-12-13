@@ -11,6 +11,11 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Management command to resign an existing certificate.
+
+.. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
+"""
+
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandError
@@ -26,7 +31,7 @@ from ...models import Certificate
 from ...models import Watcher
 
 
-class Command(BaseSignCommand):
+class Command(BaseSignCommand):  # pylint: disable=missing-class-docstring
     help = """Sign a CSR and output signed certificate. The defaults depend on the configured
 default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
 
@@ -38,12 +43,11 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
         parser.add_argument('cert', action=CertificateAction, allow_revoked=True,
                             help='The certificate to resign.')
 
-    def handle(self, *args, **options):
+    def handle(self, *args, **options):  # pylint: disable=arguments-differ
         cert = options['cert']
         ca = options['ca']
         if not ca:
             ca = options['ca'] = cert.ca
-        csr = cert.csr
         self.test_options(*args, **options)
 
         # get list of watchers
@@ -107,14 +111,14 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
             raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")
 
         try:
-            cert = Certificate.objects.create_cert(ca=ca, csr=csr, **kwargs)
-        except Exception as e:
-            raise CommandError(e)
+            cert = Certificate.objects.create_cert(ca=ca, csr=cert.csr, **kwargs)
+        except Exception as ex:
+            raise CommandError(ex) from ex
 
         cert.watchers.add(*watchers)
 
         if options['out']:
-            with open(options['out'], 'w') as f:
-                f.write(cert.pub)
+            with open(options['out'], 'w') as stream:
+                stream.write(cert.pub)
         else:
             self.stdout.write(cert.pub)

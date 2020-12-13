@@ -11,6 +11,11 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Management command to list all available certificates.
+
+.. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
+"""
+
 from django.utils import timezone
 
 from ...models import Certificate
@@ -18,7 +23,7 @@ from ...utils import add_colons
 from ..base import BaseCommand
 
 
-class Command(BaseCommand):
+class Command(BaseCommand):  # pylint: disable=missing-class-docstring
     help = "List all certificates."
 
     def add_arguments(self, parser):
@@ -31,7 +36,7 @@ class Command(BaseCommand):
         parser.add_argument('--revoked', default=False, action='store_true',
                             help='Also list revoked certificates.')
 
-    def handle(self, *args, **options):
+    def handle(self, *args, **options):  # pylint: disable=arguments-differ
         certs = Certificate.objects.order_by('expires', 'cn', 'serial')
 
         if not options['expired']:

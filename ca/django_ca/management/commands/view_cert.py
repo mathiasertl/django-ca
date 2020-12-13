@@ -11,12 +11,17 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Management command to view details for a certificate.
+
+.. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
+"""
+
 from datetime import datetime
 
 from ..base import CertCommand
 
 
-class Command(CertCommand):
+class Command(CertCommand):  # pylint: disable=missing-class-docstring
     binary_output = True
     allow_revoked = True
     help = 'View a certificate. The "list_certs" command lists all known certificates.'
@@ -29,9 +34,9 @@ class Command(CertCommand):
             '-e', '--extensions', default=False, action='store_true',
             help='Show all extensions, not just subjectAltName.')
         self.add_format(parser)
-        super(Command, self).add_arguments(parser)
+        super().add_arguments(parser)
 
-    def handle(self, cert, **options):
+    def handle(self, cert, **options):  # pylint: disable=arguments-differ
         self.stdout.write('Common Name: %s' % cert.cn)
 
         # self.stdout.write notBefore/notAfter

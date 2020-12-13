@@ -11,7 +11,10 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-"""Management command to edit a certificate authority via the command line."""
+"""Management command to edit a certificate authority.
+
+.. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
+"""
 
 from ...extensions import IssuerAlternativeName
 from ..base import BaseCommand

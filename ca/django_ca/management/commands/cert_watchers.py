@@ -11,11 +11,16 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Management command to add/remove certificate watchers.
+
+.. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
+"""
+
 from django_ca.management.base import CertCommand
 from django_ca.models import Watcher
 
 
-class Command(CertCommand):
+class Command(CertCommand):  # pylint: disable=missing-class-docstring
     help = '''Add/remove addresses to be notified of an expiring certificate. The
         "list_certs" command lists all known certificates.
 
@@ -32,9 +37,9 @@ class Command(CertCommand):
             '-r', '--rm', metavar='EMAIL', default=[], action='append',
             help='''Address that shoult no longer be notified when the certificate expires
                 (may be given multiple times).''')
-        super(Command, self).add_arguments(parser)
+        super().add_arguments(parser)
 
-    def handle(self, cert, **options):
+    def handle(self, cert, **options):  # pylint: disable=arguments-differ
         # add/remove users:
         cert.watchers.add(*[Watcher.from_addr(addr) for addr in options['add']])
         cert.watchers.remove(*[Watcher.from_addr(addr) for addr in options['rm']])

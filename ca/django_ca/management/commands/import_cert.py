@@ -11,6 +11,11 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Management command to import a certificate.
+
+.. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
+"""
+
 import argparse
 
 from cryptography import x509
@@ -22,7 +27,7 @@ from ...models import Certificate
 from ..base import BaseCommand
 
 
-class Command(BaseCommand):
+class Command(BaseCommand):  # pylint: disable=missing-class-docstring
     help = """Import an existing certificate.
 
 The authority that that signed the certificate must exist in the database."""
@@ -32,22 +37,20 @@ The authority that that signed the certificate must exist in the database."""
         parser.add_argument('pub', help='Path to the public key (PEM or DER format).',
                             type=argparse.FileType('rb'))
 
-    def handle(self, pub, **options):
+    def handle(self, pub, **options):  # pylint: disable=arguments-differ
         pub_data = pub.read()
 
-        try:  # close reader objects (otherwise we get a ResourceWarning)
-            pub.close()
-        except Exception:  # pragma: no cover
-            pass
+        # close reader objects (otherwise we get a ResourceWarning)
+        pub.close()
 
         # load public key
         try:
             pub_loaded = x509.load_pem_x509_certificate(pub_data, default_backend())
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             try:
                 pub_loaded = x509.load_der_x509_certificate(pub_data, default_backend())
-            except Exception:
-                raise CommandError('Unable to load public key.')
+            except Exception as ex:
+                raise CommandError('Unable to load public key.') from ex
 
         cert = Certificate(ca=options['ca'])
         cert.x509 = pub_loaded

@@ -11,6 +11,11 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Management command to sign a new certificate.
+
+.. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
+"""
+
 from django.core.management.base import CommandError
 from django.utils import timezone
 
@@ -22,7 +27,7 @@ from ...models import Watcher
 from ...subject import Subject
 
 
-class Command(BaseSignCommand):
+class Command(BaseSignCommand):  # pylint: disable=missing-class-docstring
     help = """Sign a CSR and output signed certificate. The defaults depend on the configured
 default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
 
@@ -34,7 +39,8 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
             --profile. The --subject option allows you to name a CommonName (which is not usually
             in the defaults) and override any default values.'''
 
-    def add_cn_in_san(self, parser):
+    def add_cn_in_san(self, parser):  # pylint: disable=no-self-use
+        """Add argument group for the CommonName-in-SubjectAlternativeName options."""
         default = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]['cn_in_san']
 
         group = parser.add_argument_group(
@@ -65,7 +71,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         self.add_profile(parser, """Sign certificate based on the given profile. A profile only sets the the
                          default values, options like --key-usage still override the profile.""")
 
-    def handle(self, *args, **options):
+    def handle(self, *args, **options):  # pylint: disable=arguments-differ
         ca = options['ca']
         if ca.expires < timezone.now():
             raise CommandError('Certificate Authority has expired.')
@@ -108,13 +114,13 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
 
         try:
             cert = Certificate.objects.create_cert(ca, csr, profile=options['profile'], **kwargs)
-        except Exception as e:
-            raise CommandError(e)
+        except Exception as ex:
+            raise CommandError(ex) from ex
 
         cert.watchers.add(*watchers)
 
         if options['out']:
-            with open(options['out'], 'w') as f:
-                f.write(cert.pub)
+            with open(options['out'], 'w') as stream:
+                stream.write(cert.pub)
         else:
             self.stdout.write(cert.pub)

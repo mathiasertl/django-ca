@@ -11,12 +11,17 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Management command to write a CRL to stdout or a file.
+
+.. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
+"""
+
 from django.core.management.base import CommandError
 
 from ..base import BaseCommand
 
 
-class Command(BaseCommand):
+class Command(BaseCommand):  # pylint: disable=missing-class-docstring
     help = "Write the certificate revocation list (CRL)."
     binary_output = True
 
@@ -36,9 +41,9 @@ class Command(BaseCommand):
         self.add_format(parser)
         self.add_ca(parser, allow_disabled=True)
         self.add_password(parser)
-        super(Command, self).add_arguments(parser)
+        super().add_arguments(parser)
 
-    def handle(self, path, **options):
+    def handle(self, path, **options):  # pylint: disable=arguments-differ
         if options['ca_crl']:
             self.stderr.write(self.style.WARNING('WARNING: --ca-crl is deprecated, use --scope=ca instead.'))
             options['scope'] = 'ca'
@@ -56,9 +61,9 @@ class Command(BaseCommand):
 
         try:
             crl = ca.get_crl(**kwargs).public_bytes(options['format'])
-        except Exception as e:  # pragma: no cover
+        except Exception as ex:
             # Note: all parameters are already sanitized by parser actions
-            raise CommandError(str(e))
+            raise CommandError(ex) from ex
 
         if path == '-':
             self.stdout.write(crl, ending=b'')
@@ -66,5 +71,5 @@ class Command(BaseCommand):
             try:
                 with open(path, 'wb') as stream:
                     stream.write(crl)
-            except IOError as e:
-                raise CommandError(e)
+            except IOError as ex:
+                raise CommandError(ex) from ex

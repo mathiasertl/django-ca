@@ -11,6 +11,11 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Management command to notify watchers about expiring certificates.
+
+.. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
+"""
+
 from datetime import timedelta
 
 from django.conf import settings
@@ -22,14 +27,14 @@ from ... import ca_settings
 from ...models import Certificate
 
 
-class Command(BaseCommand):
+class Command(BaseCommand):  # pylint: disable=missing-class-docstring
     help = "Send notifications about expiring certificates to watchers."
 
     def add_arguments(self, parser):
         parser.add_argument('--days', type=int, default=14,
                             help='Warn DAYS days ahead of time (default: %(default)s).')
 
-    def handle(self, *args, **options):
+    def handle(self, *args, **options):  # pylint: disable=arguments-differ
         now = timezone.now()
         expires = now + timedelta(days=options['days'] + 1)  # add a day to avoid one-of errors
 
@@ -43,5 +48,5 @@ class Command(BaseCommand):
             timestamp = cert.expires.strftime('%Y-%m-%d')
             subj = 'Certificate expiration for %s on %s' % (cert.cn, timestamp)
             msg = 'The certificate for %s will expire on %s.' % (cert.cn, timestamp)
-            to = list(cert.watchers.values_list('mail', flat=True))
-            send_mail(subj, msg, settings.DEFAULT_FROM_EMAIL, to)
+            recipient = list(cert.watchers.values_list('mail', flat=True))
+            send_mail(subj, msg, settings.DEFAULT_FROM_EMAIL, recipient)

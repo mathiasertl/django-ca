@@ -11,17 +11,22 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Management command to cache CRLs.
+
+.. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
+"""
+
 from ...tasks import cache_crls
 from ...tasks import run_task
 from ..base import BaseCommand
 
 
-class Command(BaseCommand):
+class Command(BaseCommand):  # pylint: disable=missing-class-docstring
     help = "Cache CRLs"
 
     def add_arguments(self, parser):
         parser.add_argument('serial', nargs='*',
                             help="Generate CRLs for the given CAs. If omitted, generate CRLs for all CAs.")
 
-    def handle(self, **options):
+    def handle(self, **options):  # pylint: disable=arguments-differ
         run_task(cache_crls, options['serial'])

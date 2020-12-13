@@ -11,7 +11,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-"""``view_ca`` management command to view details for a certificate authority.
+"""Management command to view details for a certificate authority.
 
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
@@ -22,13 +22,13 @@ from ...utils import ca_storage
 from ..base import BaseCommand
 
 
-class Command(BaseCommand):
+class Command(BaseCommand):  # pylint: disable=missing-class-docstring
     help = 'View details of a certificate authority.'
 
     def add_arguments(self, parser):
         self.add_ca(parser, arg='ca', allow_disabled=True, allow_unusable=True)
 
-    def handle(self, ca, **options):
+    def handle(self, ca, **options):  # pylint: disable=arguments-differ
         try:
             path = ca_storage.path(ca.private_key_path)
         except NotImplementedError:

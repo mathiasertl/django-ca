@@ -224,6 +224,14 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
         self.assertEqual(list(crl), [])
 
+    @override_tmpcadir()
+    def test_error(self):
+        """Test that creating a CRL fails for an unknown reason."""
+
+        method = 'django_ca.models.CertificateAuthority.get_crl'
+        with self.patch(method, side_effect=Exception('foo')), self.assertCommandError('foo'):
+            self.cmd('dump_crl', ca=self.ca, stdout=BytesIO(), stderr=BytesIO())
+
 
 @override_settings(USE_TZ=True)
 class DumpCRLWithTZTestCase(DumpCRLTestCase):

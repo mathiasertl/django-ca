@@ -11,6 +11,11 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Management command to write a certificates public key to stdout or a file.
+
+.. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
+"""
+
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandError
@@ -18,20 +23,20 @@ from django.core.management.base import CommandError
 from ..base import CertCommand
 
 
-class Command(CertCommand):
+class Command(CertCommand):  # pylint: disable=missing-class-docstring
     allow_revoked = True
     binary_output = True
     help = "Dump a certificate to a file."
 
     def add_arguments(self, parser):
-        super(Command, self).add_arguments(parser)
+        super().add_arguments(parser)
         self.add_format(parser)
         parser.add_argument('-b', '--bundle', default=False, action='store_true',
                             help="Dump the whole certificate bundle.")
         parser.add_argument('path', nargs='?', default='-',
                             help='Path where to dump the certificate. Use "-" for stdout.')
 
-    def handle(self, cert, path, **options):
+    def handle(self, cert, path, **options):  # pylint: disable=arguments-differ
         if options['bundle'] and options['format'] == Encoding.DER:
             raise CommandError('Cannot dump bundle when using DER format.')
 
@@ -40,12 +45,4 @@ class Command(CertCommand):
         else:
             certs = [cert]
 
-        data = b''.join([c.dump_certificate(options['format']) for c in certs])
-        if path == '-':
-            self.stdout.write(data, ending=b'')
-        else:
-            try:
-                with open(path, 'wb') as stream:
-                    stream.write(data)
-            except IOError as e:
-                raise CommandError(e)
+        self.dump(path, b''.join([c.dump_certificate(options['format']) for c in certs]))

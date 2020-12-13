@@ -11,6 +11,11 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Management command to regenerate keys used for OCSP signing.
+
+.. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
+"""
+
 from datetime import timedelta
 
 from django.core.management.base import CommandError
@@ -24,7 +29,7 @@ from ..base import BaseCommand
 from ..base import ExpiresAction
 
 
-class Command(BaseCommand):
+class Command(BaseCommand):  # pylint: disable=missing-class-docstring
     help = "Regenerate OCSP keys."
 
     def add_arguments(self, parser):
@@ -47,7 +52,7 @@ class Command(BaseCommand):
         self.add_profile(
             parser, 'Override the profile used for generating the certificate. By default, "ocsp" is used.')
 
-    def handle(self, **options):
+    def handle(self, **options):  # pylint: disable=arguments-differ
         serials = options['serial']
         profile = options['profile'] or 'ocsp'
 

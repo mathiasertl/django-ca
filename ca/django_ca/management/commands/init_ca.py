@@ -11,9 +11,9 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-"""
-Inspired by:
-https://skippylovesmalorie.wordpress.com/2010/02/12/how-to-generate-a-self-signed-certificate-using-pyopenssl/
+"""Management command to create a certificate authority.
+
+.. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
 import os
@@ -38,7 +38,7 @@ from ..base import PasswordAction
 from ..base import URLAction
 
 
-class Command(BaseCommand, CertificateAuthorityDetailMixin):
+class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=missing-class-docstring
     """Create a certificate authority."""
     help = "Create a certificate authority."
 

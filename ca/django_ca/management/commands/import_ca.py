@@ -11,6 +11,11 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Management command to import a certificate authority.
+
+.. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
+"""
+
 import argparse
 import os
 
@@ -32,7 +37,7 @@ from ..base import CertificateAuthorityDetailMixin
 from ..base import PasswordAction
 
 
-class Command(BaseCommand, CertificateAuthorityDetailMixin):
+class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=missing-class-docstring
     help = """Import an existing certificate authority.
 
 Note that the private key will be copied to the directory configured by the CA_DIR setting."""
@@ -55,19 +60,18 @@ Note that the private key will be copied to the directory configured by the CA_D
         parser.add_argument('pem', help='Path to the public key (PEM or DER format).',
                             type=argparse.FileType('rb'))
 
-    def handle(self, name, key, pem, **options):
+    def handle(self, name, key, pem, **options):  # pylint: disable=arguments-differ
         if not os.path.exists(ca_settings.CA_DIR):
             try:
                 os.makedirs(ca_settings.CA_DIR)
-            except PermissionError:
+            except PermissionError as ex:
                 pem.close()
                 key.close()
-                raise CommandError('%s: Could not create CA_DIR: Permission denied.' % ca_settings.CA_DIR)
+                raise CommandError(
+                    '%s: Could not create CA_DIR: Permission denied.' % ca_settings.CA_DIR) from ex
             # FileNotFoundError shouldn't happen, whole point of this block is to create it
 
-        password = options['password']
         import_password = options['import_password']
-        parent = options['parent']
         pem_data = pem.read()
         key_data = key.read()
         crl_url = '\n'.join(options['crl_url'])
@@ -80,45 +84,43 @@ Note that the private key will be copied to the directory configured by the CA_D
         if issuer_alternative_name is None:  # pragma: no branch - no CA sets this
             issuer_alternative_name = ''
 
-        ca = CertificateAuthority(name=name, parent=parent, issuer_url=options['issuer_url'],
+        ca = CertificateAuthority(name=name, parent=options['parent'], issuer_url=options['issuer_url'],
                                   issuer_alt_name=issuer_alternative_name, crl_url=crl_url)
 
         # load public key
         try:
             pem_loaded = x509.load_pem_x509_certificate(pem_data, default_backend())
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             try:
                 pem_loaded = x509.load_der_x509_certificate(pem_data, default_backend())
-            except Exception:
-                raise CommandError('Unable to load public key.')
+            except Exception as ex:
+                raise CommandError('Unable to load public key.') from ex
         ca.x509 = pem_loaded
         ca.private_key_path = ca_storage.generate_filename('%s.key' % ca.serial.replace(':', ''))
 
         # load private key
         try:
             key_loaded = serialization.load_pem_private_key(key_data, import_password, default_backend())
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             try:
                 key_loaded = serialization.load_der_private_key(key_data, import_password, default_backend())
-            except Exception:
-                raise CommandError('Unable to load private key.')
+            except Exception as ex:
+                raise CommandError('Unable to load private key.') from ex
 
-        if password is None:
+        if options['password'] is None:
             encryption = serialization.NoEncryption()
         else:
-            encryption = serialization.BestAvailableEncryption(password)
+            encryption = serialization.BestAvailableEncryption(options['password'])
 
         # write private key to file
-        pem = key_loaded.private_bytes(encoding=Encoding.PEM,
-                                       format=PrivateFormat.TraditionalOpenSSL,
+        pem = key_loaded.private_bytes(encoding=Encoding.PEM, format=PrivateFormat.TraditionalOpenSSL,
                                        encryption_algorithm=encryption)
-
-        perm_denied = '%s: Permission denied: Could not open file for writing' % ca.private_key_path
 
         try:
             ca_storage.save(ca.private_key_path, ContentFile(pem))
-        except PermissionError:
-            raise CommandError(perm_denied)
+        except PermissionError as ex:
+            raise CommandError(
+                '%s: Permission denied: Could not open file for writing' % ca.private_key_path) from ex
 
         # Only save CA to database if we loaded all data and copied private key
         ca.save()

@@ -271,6 +271,18 @@ class BaseCommand(_BaseCommand):
         else:
             super(BaseCommand, self).__init__(stdout, stderr, no_color=no_color)
 
+    def dump(self, path, data):
+        """Dump `data` to `path` (``-`` means stdout)."""
+
+        if path == '-':
+            self.stdout.write(data, ending=b'')
+        else:
+            try:
+                with open(path, 'wb') as stream:
+                    stream.write(data)
+            except IOError as ex:
+                raise CommandError(ex) from ex
+
     def execute(self, *args, **options):
         if self.binary_output is True:
             if options.get('stdout'):  # pragma: no branch

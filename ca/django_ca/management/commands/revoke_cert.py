@@ -11,21 +11,26 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Management command to revoke a certificate.
+
+.. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
+"""
+
 from django.core.management.base import CommandError
 
 from ..base import CertCommand
 from ..base import ReasonAction
 
 
-class Command(CertCommand):
+class Command(CertCommand):  # pylint: disable=missing-class-docstring
     allow_revoked = True
     help = "Revoke a certificate."
 
     def add_arguments(self, parser):
         parser.add_argument('--reason', action=ReasonAction, help="An optional reason for revokation.")
-        super(Command, self).add_arguments(parser)
+        super().add_arguments(parser)
 
-    def handle(self, cert, **options):
+    def handle(self, cert, **options):  # pylint: disable=arguments-differ
         if cert.revoked:
             raise CommandError('%s: Certificate is already revoked.' % cert.serial)
 
