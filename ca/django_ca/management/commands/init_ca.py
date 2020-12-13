@@ -85,6 +85,8 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
         group.add_argument('--no-default-hostname', dest='default_hostname', action='store_false',
                            help='Disable any default hostname configured in your settings.')
 
+        self.add_acme_group(parser)
+
         group = parser.add_argument_group(
             'pathlen attribute',
             """Maximum number of CAs that can appear below this one. A pathlen of zero (the default) means it
@@ -166,7 +168,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):
             issuer_alternative_name = ''
 
         kwargs = {}
-        for opt in ['path', 'parent', 'default_hostname']:
+        for opt in ['path', 'parent', 'default_hostname', 'acme_enabled', 'acme_requires_contact']:
             if options[opt] is not None:
                 kwargs[opt] = options[opt]
 

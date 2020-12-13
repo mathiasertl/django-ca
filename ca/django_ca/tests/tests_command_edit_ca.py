@@ -33,6 +33,14 @@ class EditCATestCase(DjangoCAWithCATestCase):
         super().setUp()
         self.ca = self.cas['root']
 
+    def edit_ca(self, *args):
+        """Shortcut for calling the edit_ca management command."""
+
+        stdout, stderr = self.cmd_e2e(['edit_ca', self.ca.serial] + list(args))
+        self.assertEqual(stdout, '')
+        self.assertEqual(stderr, '')
+        self.ca.refresh_from_db()
+
     @override_tmpcadir()
     def test_basic(self):
         """Test command with e2e cli argument parsing."""
@@ -60,23 +68,61 @@ class EditCATestCase(DjangoCAWithCATestCase):
         """Test the enable/disable options."""
         self.assertTrue(self.ca.enabled)  # initial state
 
-        stdout, stderr = self.cmd_e2e(['edit_ca', self.ca.serial, '--disable'])
-        self.assertEqual(stdout, '')
-        self.assertEqual(stderr, '')
-        self.assertFalse(CertificateAuthority.objects.get(pk=self.ca.pk).enabled)
-
-        stdout, stderr = self.cmd_e2e(['edit_ca', self.ca.serial, '--enable'])
-        self.assertEqual(stdout, '')
-        self.assertEqual(stderr, '')
-        self.assertTrue(CertificateAuthority.objects.get(pk=self.ca.pk).enabled)
+        self.edit_ca('--disable')
+        self.assertFalse(self.ca.enabled)
+        self.edit_ca('--enable')
+        self.assertTrue(self.ca.enabled)
 
         with self.assertRaisesRegex(SystemExit, r'^2$') as excm:
-            stdout, stderr = self.cmd_e2e(['edit_ca', self.ca.serial, '--enable', '--disable'])
-        self.assertEqual(stdout, '')
-        self.assertEqual(stderr, '')
+            self.edit_ca('--enable', '--disable')
         self.assertEqual(excm.exception.args, (2, ))
+        self.assertTrue(self.ca.enabled)  # state unchanged
 
-        self.assertTrue(CertificateAuthority.objects.get(pk=self.ca.pk).enabled)
+        # Try again, this time with a disabled state
+        self.ca.enabled = False
+        self.ca.save()
+        with self.assertRaisesRegex(SystemExit, r'^2$') as excm:
+            self.edit_ca('--enable', '--disable')
+        self.assertEqual(excm.exception.args, (2, ))
+        self.assertFalse(self.ca.enabled)  # state unchanged
+
+    @override_tmpcadir()
+    def test_acme_arguments(self):
+        """Test ACME arguments."""
+
+        self.assertFalse(self.ca.acme_enabled)  # initial state
+        self.assertTrue(self.ca.acme_requires_contact)  # initial state
+
+        self.edit_ca('--acme-enable', '--acme-contact-optional')
+        self.assertTrue(self.ca.acme_enabled)
+        self.assertFalse(self.ca.acme_requires_contact)
+
+        # Try mutually exclusive arguments
+        with self.assertRaisesRegex(SystemExit, r'^2$') as excm:
+            self.edit_ca('--acme-enable', '--acme-disable')
+        self.assertEqual(excm.exception.args, (2, ))
+        self.assertTrue(self.ca.acme_enabled)  # state unchanged
+
+        with self.assertRaisesRegex(SystemExit, r'^2$') as excm:
+            self.edit_ca('--acme-contact-optional', '--acme-contact-required')
+        self.assertEqual(excm.exception.args, (2, ))
+        self.assertFalse(self.ca.acme_requires_contact)  # state unchanged
+
+        # Try switching both settings
+        self.edit_ca('--acme-disable', '--acme-contact-required')
+        self.assertFalse(self.ca.acme_enabled)
+        self.assertTrue(self.ca.acme_requires_contact)
+
+        # Try mutually exclusive arguments again
+        with self.assertRaisesRegex(SystemExit, r'^2$') as excm:
+            self.edit_ca('--acme-enable', '--acme-disable')
+        self.assertEqual(excm.exception.args, (2, ))
+        self.assertFalse(self.ca.acme_enabled)  # state unchanged
+
+        with self.assertRaisesRegex(SystemExit, r'^2$') as excm:
+            self.edit_ca('--acme-contact-optional', '--acme-contact-required')
+        self.assertEqual(excm.exception.args, (2, ))
+        self.assertTrue(self.ca.acme_requires_contact)  # state unchanged
 
     @override_tmpcadir()
     def test_enable(self):

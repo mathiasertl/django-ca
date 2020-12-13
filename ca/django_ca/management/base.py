@@ -491,6 +491,29 @@ class CertificateAuthorityDetailMixin:
         group.add_argument('--tos', default=default, metavar='URL', action=URLAction,
                            help='Terms of service URL for the CA.')
 
+    def add_acme_group(self, parser):  # pylint: disable=no-self-use
+        """Add configuration for ACMEv2."""
+
+        if not ca_settings.CA_ENABLE_ACME:
+            return
+
+        group = parser.add_argument_group('ACMEv2', 'ACMEv2 configuration.')
+
+        enable_group = group.add_mutually_exclusive_group()
+        enable_group.add_argument('--acme-enable', dest='acme_enabled', action='store_true',
+                           help="Enable ACMEv2 support.")
+        enable_group.add_argument('--acme-disable', dest='acme_enabled', action='store_false',
+                           help='Disable ACMEv2 support.')
+
+        disable_group = group.add_mutually_exclusive_group()
+        disable_group.add_argument(
+            '--acme-contact-optional', dest='acme_requires_contact', action='store_false',
+            help="Do not require email address during ACME account registration.")
+
+        disable_group.add_argument(
+            '--acme-contact-required', dest='acme_requires_contact', action='store_true',
+            help="Require email address during ACME account registration.")
+
     def add_ca_args(self, parser):  # pylint: disable=no-self-use
         """Add CA arguments."""
 

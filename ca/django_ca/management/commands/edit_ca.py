@@ -24,6 +24,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=
     def add_arguments(self, parser):
         self.add_general_args(parser, default=None)
         self.add_ca(parser, 'ca', allow_disabled=True)
+        self.add_acme_group(parser)
         self.add_ca_args(parser)
 
         group = parser.add_mutually_exclusive_group()
@@ -51,5 +52,10 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=
             ca.website = options['website']
         if options['tos'] is not None:
             ca.terms_of_service = options['tos']
+
+        # set options where argparse dest matches Django model field name
+        for param in ['acme_enabled', 'acme_requires_contact']:
+            if options[param] is not None:
+                setattr(ca, param, options[param])
 
         ca.save()

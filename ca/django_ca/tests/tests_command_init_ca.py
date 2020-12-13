@@ -153,6 +153,29 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(ca.website, website)
         self.assertEqual(ca.terms_of_service, tos)
 
+        # test acme properties
+        self.assertFalse(ca.acme_enabled)
+        self.assertTrue(ca.acme_requires_contact)
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_acme_arguments(self):
+        """Test most arguments."""
+
+        with self.assertCreateCASignals() as (pre, post):
+            out, err = self.cmd_e2e(['init_ca', 'Test CA', '/CN=acme.example.com',
+                                     '--acme-enable', '--acme-contact-optional'])
+        self.assertTrue(pre.called)
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+        ca = CertificateAuthority.objects.get(cn='acme.example.com')
+        self.assertPostCreateCa(post, ca)
+        self.assertPrivateKey(ca)
+        self.assertSerial(ca.serial)
+        ca.full_clean()  # assert e.g. max_length in serials
+
+        self.assertTrue(ca.acme_enabled)
+        self.assertFalse(ca.acme_requires_contact)
+
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_ecc(self):
         """Test creating an ECC CA."""
