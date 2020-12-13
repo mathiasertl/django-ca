@@ -1193,7 +1193,7 @@ class AcmeOrder(DjangoCAModelMixin, models.Model):
 
     objects = AcmeOrderManager.from_queryset(AcmeOrderQuerySet)()
 
-    account = models.ForeignKey(AcmeAccount, on_delete=models.PROTECT, related_name='orders')
+    account = models.ForeignKey(AcmeAccount, on_delete=models.CASCADE, related_name='orders')
     slug = models.SlugField(unique=True, default=acme_slug)
 
     # Fields according to RFC 8555, 7.1.3
@@ -1299,7 +1299,7 @@ class AcmeAuthorization(models.Model):
 
     objects = AcmeAuthorizationManager.from_queryset(AcmeAuthorizationQuerySet)()
 
-    order = models.ForeignKey(AcmeOrder, on_delete=models.PROTECT, related_name='authorizations')
+    order = models.ForeignKey(AcmeOrder, on_delete=models.CASCADE, related_name='authorizations')
     slug = models.SlugField(unique=True, default=acme_slug)
 
     # Fields according to RFC 8555, 7.1.4:
@@ -1416,7 +1416,7 @@ class AcmeChallenge(models.Model):
 
     objects = AcmeChallengeManager.from_queryset(AcmeChallengeQuerySet)()
 
-    auth = models.ForeignKey(AcmeAuthorization, on_delete=models.PROTECT, related_name='challenges')
+    auth = models.ForeignKey(AcmeAuthorization, on_delete=models.CASCADE, related_name='challenges')
     slug = models.SlugField(unique=True, default=acme_slug)
 
     # Fields according to RFC 8555, 8:
