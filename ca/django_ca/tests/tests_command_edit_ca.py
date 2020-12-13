@@ -124,6 +124,18 @@ class EditCATestCase(DjangoCAWithCATestCase):
         self.assertEqual(excm.exception.args, (2, ))
         self.assertTrue(self.ca.acme_requires_contact)  # state unchanged
 
+    @override_tmpcadir(CA_ENABLE_ACME=False)
+    def test_acme_disabled(self):
+        """Test ACME arguments do not work when ACME support is disabled."""
+
+        with self.assertRaisesRegex(SystemExit, r'^2$') as excm:
+            self.edit_ca('--acme-enable')
+        self.assertEqual(excm.exception.args, (2, ))
+
+        with self.assertRaisesRegex(SystemExit, r'^2$') as excm:
+            self.edit_ca('--acme-contact-optional')
+        self.assertEqual(excm.exception.args, (2, ))
+
     @override_tmpcadir()
     def test_enable(self):
         """Test enabling the CA."""

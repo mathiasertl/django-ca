@@ -500,14 +500,14 @@ class CertificateAuthorityDetailMixin:
         group = parser.add_argument_group('ACMEv2', 'ACMEv2 configuration.')
 
         enable_group = group.add_mutually_exclusive_group()
-        enable_group.add_argument('--acme-enable', dest='acme_enabled', action='store_true',
-                           help="Enable ACMEv2 support.")
+        enable_group.add_argument('--acme-enable', dest='acme_enabled', action='store_true', default=None,
+                                  help="Enable ACMEv2 support.")
         enable_group.add_argument('--acme-disable', dest='acme_enabled', action='store_false',
-                           help='Disable ACMEv2 support.')
+                                  help='Disable ACMEv2 support.')
 
         disable_group = group.add_mutually_exclusive_group()
         disable_group.add_argument(
-            '--acme-contact-optional', dest='acme_requires_contact', action='store_false',
+            '--acme-contact-optional', dest='acme_requires_contact', action='store_false', default=None,
             help="Do not require email address during ACME account registration.")
 
         disable_group.add_argument(

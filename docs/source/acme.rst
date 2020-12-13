@@ -22,10 +22,11 @@ management command.
 Enable ACMEv2 for a CA
 ======================
 
-By default, any CA cannot be used for issuing certificates via ACMEv2, even if ACME support is enabled. 
+Additionally to setting ``CA_ENABLE_ACME=True``, a CA can only be used for issuing certificates via ACMEv2 if
+explicitly enabled.
 
-You have to enable it for every CA individually. You an do so either in the admin interface or via the command
-line when creating a CA or editing it:
+You have to enable the feature for every CA individually. You an do so either in the admin interface or via
+the command line when creating a CA or editing it:
 
 .. code-block:: console
 
