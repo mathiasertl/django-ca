@@ -422,3 +422,55 @@ class AcmeIssueCertificateTestCase(DjangoCAWithGeneratedCAsTestCase):
                          SubjectAlternativeName({'value': ['dns:%s' % self.hostname]}))
         self.assertEqual(self.cert.cert.expires, not_after)
         self.assertEqual(self.cert.cert.cn, self.hostname)
+
+
+@freeze_time(timestamps['everything_valid'])
+class AcmeCleanupTestCase(DjangoCAWithGeneratedCAsTestCase):
+    """Test :py:func:`~django_ca.tasks.acme_cleanup`."""
+
+    def setUp(self):
+        super().setUp()
+        self.hostname = 'challenge.example.com'
+        self.account = AcmeAccount.objects.create(
+            ca=self.cas['root'], contact='mailto:user@example.com', terms_of_service_agreed=True,
+            pem=self.ACME_PEM_1, thumbprint=self.ACME_THUMBPRINT_1)
+        self.order = AcmeOrder.objects.create(account=self.account, status=AcmeOrder.STATUS_PROCESSING)
+        self.auth = AcmeAuthorization.objects.create(order=self.order, value=self.hostname)
+        self.chall = AcmeChallenge.objects.create(auth=self.auth, type=AcmeChallenge.TYPE_HTTP_01,
+                                                  status=AcmeChallenge.STATUS_PROCESSING)
+
+        # NOTE: This is of course not the right CSR for the order. It would be validated on submission, and
+        # all data from the CSR is discarded anyway.
+        self.cert = AcmeCertificate.objects.create(order=self.order, csr=certs['root-cert']['csr']['pem'])
+
+    def test_basic(self):
+        """Basic test."""
+        tasks.acme_cleanup()  # does nothing if nothing is expired
+
+        self.assertEqual(self.cert, AcmeCertificate.objects.get(pk=self.cert.pk))
+        self.assertEqual(self.order, AcmeOrder.objects.get(pk=self.order.pk))
+        self.assertEqual(self.auth, AcmeAuthorization.objects.get(pk=self.auth.pk))
+        self.assertEqual(self.account, AcmeAccount.objects.get(pk=self.account.pk))
+
+        with self.freeze_time(timezone.now() + timedelta(days=3)):
+            tasks.acme_cleanup()
+
+        self.assertEqual(AcmeOrder.objects.all().count(), 0)
+        self.assertEqual(AcmeAuthorization.objects.all().count(), 0)
+        self.assertEqual(AcmeChallenge.objects.all().count(), 0)
+        self.assertEqual(AcmeCertificate.objects.all().count(), 0)
+
+    def test_acme_disabled(self):
+        """Test task when ACME is disabled."""
+
+        with self.settings(CA_ENABLE_ACME=False), self.assertLogs() as logcm:
+            with self.freeze_time(timezone.now() + timedelta(days=3)):
+                tasks.acme_cleanup()
+        self.assertEqual(logcm.output, [
+            'INFO:django_ca.tasks:ACME is not enabled, not doing anything.'
+        ])
+
+        self.assertEqual(AcmeOrder.objects.all().count(), 1)
+        self.assertEqual(AcmeAuthorization.objects.all().count(), 1)
+        self.assertEqual(AcmeChallenge.objects.all().count(), 1)
+        self.assertEqual(AcmeCertificate.objects.all().count(), 1)

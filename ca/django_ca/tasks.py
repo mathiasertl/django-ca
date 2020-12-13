@@ -17,6 +17,7 @@
 """
 
 import logging
+from datetime import timedelta
 from http import HTTPStatus
 
 import josepy as jose
@@ -234,3 +235,18 @@ def acme_issue_certificate(acme_certificate_pk):
     acme_cert.order.status = AcmeOrder.STATUS_VALID
     acme_cert.order.save()
     acme_cert.save()
+
+
+@shared_task
+@transaction.atomic
+def acme_cleanup():
+    """Cleanup expired ACME orders."""
+
+    if not ca_settings.CA_ENABLE_ACME:
+        # NOTE: Since this task does only cleanup, log message is only info.
+        log.info('ACME is not enabled, not doing anything.')
+        return
+
+    # Delete orders that expired more then a day ago.
+    threshold = timezone.now() - timedelta(days=1)
+    AcmeOrder.objects.filter(expires__lt=threshold).delete()
