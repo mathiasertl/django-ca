@@ -101,6 +101,10 @@ class AdminTestMixin:
         css = '<link href="%s" type="text/css" media="all" rel="stylesheet" />' % static(path)
         self.assertInHTML(css, response.content.decode('utf-8'), 1)
 
+    def assertChangelistResponse(self, response, *objects):  # pylint: disable=invalid-name
+        self.assertEqual(response.status_code, 200)
+        self.assertCountEqual(response.context['cl'].result_list, objects)
+
     def change_url(self, pk):
         """Admin change URL for the given primary key."""
         return reverse('admin:%s_%s_change' % self._admin_url_format_tuple, kwargs={'object_id': pk})

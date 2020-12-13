@@ -17,12 +17,16 @@
 
 from django.utils import timezone
 
+from freezegun import freeze_time
+
 from ..models import AcmeAccount
 from ..models import AcmeAuthorization
 from ..models import AcmeCertificate
 from ..models import AcmeChallenge
 from ..models import AcmeOrder
 from .base import DjangoCAWithCATestCase
+from .base import override_tmpcadir
+from .base import timestamps
 from .tests_admin import StandardAdminViewTestMixin
 
 PEM1 = '''-----BEGIN PUBLIC KEY-----
@@ -73,8 +77,8 @@ class AcmeAccountViewsTestCase(StandardAdminViewTestMixin, DjangoCAWithCATestCas
             kid=self.kid2, terms_of_service_agreed=False, pem=PEM2, thumbprint=THUMBPRINT2, slug=ACME_SLUG_2)
 
 
-class AcmeOrderViewsTestCase(AcmeAccountViewsTestCase):
-    """Test standard views for :py:class:`~django_ca.models.AcmeOrder`."""
+class AcmeOrderViewsTestCaseMixin:
+    """Mixin to create orders."""
     model = AcmeOrder
 
     def setUp(self):
@@ -83,7 +87,23 @@ class AcmeOrderViewsTestCase(AcmeAccountViewsTestCase):
         self.order2 = AcmeOrder.objects.create(account=self.account1, status=AcmeOrder.STATUS_PROCESSING)
 
 
-class AcmeAuthorizationViewsTestCase(AcmeOrderViewsTestCase):
+class AcmeOrderViewsTestCase(AcmeOrderViewsTestCaseMixin, AcmeAccountViewsTestCase):
+    """Test standard views for :py:class:`~django_ca.models.AcmeOrder`."""
+
+    @override_tmpcadir()
+    def test_expired_filter(self):
+        self.assertChangelistResponse(
+            self.client.get('%s?expired=0' % self.changelist_url), self.order1, self.order2)
+        self.assertChangelistResponse(self.client.get('%s?expired=1' % self.changelist_url))
+
+        with freeze_time(timestamps['everything_expired']):
+            self.client.force_login(self.user)
+            self.assertChangelistResponse(self.client.get('%s?expired=0' % self.changelist_url))
+            self.assertChangelistResponse(self.client.get('%s?expired=1' % self.changelist_url),
+                                          self.order1, self.order2)
+
+
+class AcmeAuthorizationViewsTestCase(AcmeOrderViewsTestCaseMixin, AcmeAccountViewsTestCase):
     """Test standard views for :py:class:`~django_ca.models.AcmeAuthorization`."""
     model = AcmeAuthorization
 
