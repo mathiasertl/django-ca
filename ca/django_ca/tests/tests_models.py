@@ -652,21 +652,21 @@ class AcmeAccountTestCase(DjangoCAWithGeneratedCAsTestCase):
 
         self.kid1 = self.absolute_uri(':acme-account', serial=self.cas['root'].serial, slug=self.ACME_SLUG_1)
         self.account1 = AcmeAccount.objects.create(
-            ca=self.cas['root'], contact='user@example.com', terms_of_service_agreed=True,
+            ca=self.cas['root'], contact='mailto:user@example.com', terms_of_service_agreed=True,
             status=AcmeAccount.STATUS_VALID, pem=self.ACME_PEM_1, thumbprint=self.ACME_THUMBPRINT_1,
             slug=self.ACME_SLUG_1, kid=self.kid1
         )
         self.kid2 = self.absolute_uri(':acme-account', serial=self.cas['child'].serial, slug=self.ACME_SLUG_2)
         self.account2 = AcmeAccount.objects.create(
-            ca=self.cas['child'], contact='user@example.net', terms_of_service_agreed=False,
+            ca=self.cas['child'], contact='mailto:user@example.net', terms_of_service_agreed=False,
             status=AcmeAccount.STATUS_REVOKED, pem=self.ACME_PEM_2, thumbprint=self.ACME_THUMBPRINT_2,
             slug=self.ACME_SLUG_2, kid=self.kid2
         )
 
     def test_str(self):
         """Test str() function."""
-        self.assertEqual(str(self.account1), self.account1.contact)
-        self.assertEqual(str(self.account2), self.account2.contact)
+        self.assertEqual(str(self.account1), 'user@example.com')
+        self.assertEqual(str(self.account2), 'user@example.net')
         self.assertEqual(str(AcmeAccount()), '')
 
     def test_serial(self):
@@ -747,7 +747,7 @@ class AcmeOrderTestCase(DjangoCAWithGeneratedCAsTestCase):
     def setUp(self):
         super().setUp()
         self.account = AcmeAccount.objects.create(
-            ca=self.cas['root'], contact='user@example.com', terms_of_service_agreed=True,
+            ca=self.cas['root'], contact='mailto:user@example.com', terms_of_service_agreed=True,
             status=AcmeAccount.STATUS_VALID, pem=self.ACME_PEM_1, thumbprint=self.ACME_THUMBPRINT_1)
         self.order1 = AcmeOrder.objects.create(account=self.account)
 
@@ -944,7 +944,7 @@ class AcmeCertificateTestCase(DjangoCAWithGeneratedCAsTestCase):
     def setUp(self):
         super().setUp()
         self.account = AcmeAccount.objects.create(
-            ca=self.cas['root'], contact='user@example.com', terms_of_service_agreed=True,
+            ca=self.cas['root'], contact='mailto:user@example.com', terms_of_service_agreed=True,
             status=AcmeAccount.STATUS_VALID, pem=self.ACME_PEM_1, thumbprint=self.ACME_THUMBPRINT_1)
         self.order = AcmeOrder.objects.create(account=self.account)
         self.cert = AcmeCertificate.objects.create(order=self.order)

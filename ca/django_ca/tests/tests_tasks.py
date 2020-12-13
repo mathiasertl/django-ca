@@ -176,7 +176,7 @@ class AcmeValidateChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
         super().setUp()
         self.hostname = 'challenge.example.com'
         self.account = AcmeAccount.objects.create(
-            ca=self.cas['root'], contact='user@example.com', terms_of_service_agreed=True,
+            ca=self.cas['root'], contact='mailto:user@example.com', terms_of_service_agreed=True,
             status=AcmeAccount.STATUS_VALID, pem=self.ACME_PEM_1, thumbprint=self.ACME_THUMBPRINT_1)
         self.order = AcmeOrder.objects.create(account=self.account)
         self.auth = AcmeAuthorization.objects.create(
@@ -323,7 +323,7 @@ class AcmeIssueCertificateTestCase(DjangoCAWithGeneratedCAsTestCase):
         super().setUp()
         self.hostname = 'challenge.example.com'
         self.account = AcmeAccount.objects.create(
-            ca=self.cas['root'], contact='user@example.com', terms_of_service_agreed=True,
+            ca=self.cas['root'], contact='mailto:user@example.com', terms_of_service_agreed=True,
             pem=self.ACME_PEM_1, thumbprint=self.ACME_THUMBPRINT_1)
         self.order = AcmeOrder.objects.create(account=self.account, status=AcmeOrder.STATUS_PROCESSING)
         self.auth = AcmeAuthorization.objects.create(order=self.order, value=self.hostname)

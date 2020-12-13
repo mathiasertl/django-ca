@@ -46,6 +46,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
+from django.core.validators import URLValidator
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -161,6 +162,15 @@ def pem_validator(value):
     #    raise ValidationError(_('Not a valid PEM.')) from ex
 
 
+class DjangoCAModelMixin:
+    """Mixin with shared properties for all django-ca models."""
+
+    @property
+    def admin_change_url(self):
+        """Change URL in the admin interface for the given class."""
+        return reverse('admin:%s_%s_change' % (self._meta.app_label, self._meta.model_name), args=(self.pk, ))
+
+
 class Watcher(models.Model):
     """A watcher represents an email address that will receive notifications about expiring certificates."""
     name = models.CharField(max_length=64, blank=True, default='', verbose_name=_('CommonName'))
@@ -192,7 +202,7 @@ class Watcher(models.Model):
         return self.mail
 
 
-class X509CertMixin(models.Model):
+class X509CertMixin(DjangoCAModelMixin, models.Model):
     """Mixin class with common attributes for Certificates and Certificate Authorities."""
     # pylint: disable=too-many-instance-attributes,too-many-public-methods
     # X.509 certificates are complex. Sorry.
@@ -289,12 +299,6 @@ class X509CertMixin(models.Model):
             self.valid_from = timezone.make_aware(self.valid_from, timezone=pytz.utc)
 
         self.serial = int_to_hex(value.serial_number)
-
-    @property
-    def admin_change_url(self):
-        """Change URL in the admin interface for the given class."""
-        return reverse('admin:%s_%s_change' % (self._meta.app_label, self._meta.verbose_name),
-                       args=(self.pk, ))
 
     ##########################
     # Certificate properties #
@@ -1084,7 +1088,7 @@ class Certificate(X509CertMixin):
         return self.cn
 
 
-class AcmeAccount(models.Model):
+class AcmeAccount(DjangoCAModelMixin, models.Model):
     """Implements an ACME account object.
 
     .. seealso::
@@ -1109,14 +1113,16 @@ class AcmeAccount(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     # Account information
-    ca = models.ForeignKey(CertificateAuthority, on_delete=models.CASCADE)
+    ca = models.ForeignKey(CertificateAuthority, on_delete=models.CASCADE,
+                           verbose_name=_('Certificate Authority'))
     # Full public key of the account
     pem = models.TextField(verbose_name=_('Public key'), unique=True, blank=False, validators=[pem_validator])
     # JSON Web Key thumbprint - a hash of the public key, see RFC 7638.
     #   NOTE: Only unique for the given CA to make hash collisions less likely
     thumbprint = models.CharField(max_length=64)
     slug = models.SlugField(unique=True, default=acme_slug)
-    kid = models.URLField(unique=True)  # NOTE: schems for URLValidator?
+    kid = models.URLField(unique=True, validators=[URLValidator(schemes=('http', 'https'))],
+                          verbose_name=_('Key ID'))
 
     # Fields according to RFC 8555, 7.1.2
     # RFC 8555, 7.1.6: "Account objects are created in the "valid" state"
@@ -1134,7 +1140,10 @@ class AcmeAccount(models.Model):
         )
 
     def __str__(self):
-        return self.contact
+        try:
+            return self.contact.split('\n')[0].split(':', 1)[1]
+        except IndexError:
+            return ''
 
     @property
     def serial(self):
@@ -1160,7 +1169,7 @@ class AcmeAccount(models.Model):
         return self.terms_of_service_agreed and self.status == AcmeAccount.STATUS_VALID and self.ca.usable
 
 
-class AcmeOrder(models.Model):
+class AcmeOrder(DjangoCAModelMixin, models.Model):
     """Implements an ACME order object.
 
     .. seealso::
