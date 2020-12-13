@@ -498,9 +498,6 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
         # pylint: disable=unused-argument; kwargs is not usually used
         return self.message_cls
 
-    def validate_message(self, message):
-        """Let subclasses do individual validation of the received message."""
-
     def set_link_relations(self, response, **kwargs):
         """Set Link releations headers according to RFC8288.
 
@@ -660,7 +657,6 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
                 return AcmeResponseMalformedPayload()
 
             try:
-                self.validate_message(message)
                 response = self.acme_request(message=message, **kwargs)
             except AcmeException as e:
                 response = e.get_response()
