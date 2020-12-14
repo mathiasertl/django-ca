@@ -1075,7 +1075,7 @@ class AcmeChallengeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCA
     def test_basic(self):
         """Basic test for creating an account via ACME."""
 
-        with self.patch('django_ca.views.run_task') as mockcm:
+        with self.patch('django_ca.acme.views.run_task') as mockcm:
             resp = self.acme(self.url, self.message, kid=self.kid)
 
         self.assertEqual(mockcm.call_args_list, [mock.call(acme_validate_challenge, self.challenge.pk)])
@@ -1103,7 +1103,7 @@ class AcmeChallengeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCA
         self.order.status = AcmeOrder.STATUS_VALID
         self.order.save()
 
-        with self.patch('django_ca.views.run_task') as mockcm:
+        with self.patch('django_ca.acme.views.run_task') as mockcm:
             resp = self.acme(self.url, self.message, kid=self.kid)
 
         mockcm.assert_not_called()  # no validation task was triggerd
@@ -1126,7 +1126,7 @@ class AcmeChallengeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCA
         """Basic test for creating an account via ACME."""
 
         url = self.get_url(serial=self.challenge.serial, slug='abc')
-        with self.patch('django_ca.views.run_task') as mockcm:
+        with self.patch('django_ca.acme.views.run_task') as mockcm:
             resp = self.acme(url, self.message, kid=self.kid)
         mockcm.assert_not_called()
         self.assertUnauthorized(resp, 'You are not authorized to perform this request.')
@@ -1180,7 +1180,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
     def test_basic(self, accept_naive=True):
         """Basic test for creating an account via ACME."""
 
-        with self.patch('django_ca.views.run_task') as mockcm:
+        with self.patch('django_ca.acme.views.run_task') as mockcm:
             resp = self.acme(self.url, self.message, kid=self.kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(resp)
@@ -1207,7 +1207,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
     def test_not_found(self):
         """Test an order that does not exist."""
         url = reverse('django_ca:acme-order-finalize', kwargs={'serial': self.ca.serial, 'slug': 'foo'})
-        with self.patch('django_ca.views.run_task') as mockcm:
+        with self.patch('django_ca.acme.views.run_task') as mockcm:
             resp = self.acme(url, self.message, kid=self.kid)
         mockcm.assert_not_called()
         self.assertUnauthorized(resp, 'You are not authorized to perform this request.')
@@ -1221,7 +1221,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
         self.order.account = account
         self.order.save()
 
-        with self.patch('django_ca.views.run_task') as mockcm:
+        with self.patch('django_ca.acme.views.run_task') as mockcm:
             resp = self.acme(self.url, self.message, kid=self.kid)
         mockcm.assert_not_called()
         self.assertUnauthorized(resp, 'You are not authorized to perform this request.')
@@ -1233,7 +1233,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
         self.order.status = AcmeOrder.STATUS_INVALID
         self.order.save()
 
-        with self.patch('django_ca.views.run_task') as mockcm:
+        with self.patch('django_ca.acme.views.run_task') as mockcm:
             resp = self.acme(self.url, self.message, kid=self.kid)
         mockcm.assert_not_called()
         self.assertAcmeProblem(resp, 'orderNotReady', status=HTTPStatus.FORBIDDEN,
@@ -1246,7 +1246,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
         self.authz.status = AcmeAuthorization.STATUS_INVALID
         self.authz.save()
 
-        with self.patch('django_ca.views.run_task') as mockcm:
+        with self.patch('django_ca.acme.views.run_task') as mockcm:
             resp = self.acme(self.url, self.message, kid=self.kid)
         mockcm.assert_not_called()
         self.assertAcmeProblem(resp, 'orderNotReady', status=HTTPStatus.FORBIDDEN,
@@ -1262,8 +1262,8 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
         # attach to type: https://docs.python.org/3/library/unittest.mock.html#unittest.mock.PropertyMock
         type(csr_mock).is_signature_valid = mock.PropertyMock(return_value=False)
 
-        with self.patch('django_ca.views.run_task') as mockcm, self.patch(
-                'django_ca.views.parse_acme_csr', return_value=csr_mock):
+        with self.patch('django_ca.acme.views.run_task') as mockcm, self.patch(
+                'django_ca.acme.views.parse_acme_csr', return_value=csr_mock):
             resp = self.acme(self.url, self.message, kid=self.kid)
         mockcm.assert_not_called()
         self.assertBadCSR(resp, 'CSR signature is not valid.')
@@ -1276,7 +1276,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
             x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False
         ).sign(certs['root-cert']['key']['parsed'], hashes.MD5(), default_backend())
 
-        with self.patch('django_ca.views.run_task') as mockcm:
+        with self.patch('django_ca.acme.views.run_task') as mockcm:
             resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
         mockcm.assert_not_called()
         self.assertBadCSR(resp, 'md5: Insecure hash algorithm.')
@@ -1291,7 +1291,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
             x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False
         ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256(), default_backend())
 
-        with self.patch('django_ca.views.run_task') as mockcm:
+        with self.patch('django_ca.acme.views.run_task') as mockcm:
             resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(resp)
@@ -1319,7 +1319,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
             x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False
         ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256(), default_backend())
 
-        with self.patch('django_ca.views.run_task') as mockcm:
+        with self.patch('django_ca.acme.views.run_task') as mockcm:
             resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
         mockcm.assert_not_called()
         self.assertBadCSR(resp, 'CommonName was not in order.')
@@ -1334,7 +1334,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
             x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False
         ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256(), default_backend())
 
-        with self.patch('django_ca.views.run_task') as mockcm:
+        with self.patch('django_ca.acme.views.run_task') as mockcm:
             resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
         mockcm.assert_not_called()
         self.assertBadCSR(resp, 'CommonName was not in order.')
@@ -1346,7 +1346,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
         csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([])).sign(
             certs['root-cert']['key']['parsed'], hashes.SHA256(), default_backend())
 
-        with self.patch('django_ca.views.run_task') as mockcm:
+        with self.patch('django_ca.acme.views.run_task') as mockcm:
             resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
         mockcm.assert_not_called()
         self.assertBadCSR(resp, 'No subject alternative names found in CSR.')
@@ -1362,7 +1362,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
             ]), critical=False
         ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256(), default_backend())
 
-        with self.patch('django_ca.views.run_task') as mockcm:
+        with self.patch('django_ca.acme.views.run_task') as mockcm:
             resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
         mockcm.assert_not_called()
         self.assertBadCSR(resp, "Names in CSR do not match.")
@@ -1525,7 +1525,7 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATest
         We have to mock this, as at present this is not usually done.
         """
 
-        with self.patch('django_ca.views.AcmeOrderView.acme_request',
+        with self.patch('django_ca.acme.views.AcmeOrderView.acme_request',
                         side_effect=AcmeUnauthorized(message='foo')):
             resp = self.acme(self.url, self.message, kid=self.kid)
         self.assertUnauthorized(resp, 'foo')

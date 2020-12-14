@@ -43,25 +43,29 @@ urlpatterns = [
 
 
 if ca_settings.CA_ENABLE_ACME:
+    from .acme import views as acme_views
+
     # NOTE: Some functions depend on the fact that ALL ACME urls have a "serial" kwarg
     urlpatterns += [
-        path('acme/directory/', views.AcmeDirectory.as_view(), name='acme-directory'),
-        path('acme/directory/<serial:serial>/', views.AcmeDirectory.as_view(), name='acme-directory'),
-        path('acme/<serial:serial>/new-nonce/', views.AcmeNewNonceView.as_view(), name='acme-new-nonce'),
-        path('acme/<serial:serial>/new-account/', views.AcmeNewAccountView.as_view(),
+        path('acme/directory/', acme_views.AcmeDirectory.as_view(), name='acme-directory'),
+        path('acme/directory/<serial:serial>/', acme_views.AcmeDirectory.as_view(), name='acme-directory'),
+        path('acme/<serial:serial>/new-nonce/', acme_views.AcmeNewNonceView.as_view(), name='acme-new-nonce'),
+        path('acme/<serial:serial>/new-account/', acme_views.AcmeNewAccountView.as_view(),
              name='acme-new-account'),
-        path('acme/<serial:serial>/new-order/', views.AcmeNewOrderView.as_view(), name='acme-new-order'),
-        path('acme/<serial:serial>/acct/<acme:slug>/', views.AcmeAccountView.as_view(), name='acme-account'),
-        path('acme/<serial:serial>/acct/<acme:slug>/orders/', views.AcmeAccountOrdersView.as_view(),
+        path('acme/<serial:serial>/new-order/', acme_views.AcmeNewOrderView.as_view(), name='acme-new-order'),
+        path('acme/<serial:serial>/acct/<acme:slug>/', acme_views.AcmeAccountView.as_view(),
+             name='acme-account'),
+        path('acme/<serial:serial>/acct/<acme:slug>/orders/', acme_views.AcmeAccountOrdersView.as_view(),
              name='acme-account-orders'),
-        path('acme/<serial:serial>/order/<acme:slug>/', views.AcmeOrderView.as_view(), name='acme-order'),
-        path('acme/<serial:serial>/order/<acme:slug>/finalize/', views.AcmeOrderFinalizeView.as_view(),
+        path('acme/<serial:serial>/order/<acme:slug>/', acme_views.AcmeOrderView.as_view(),
+             name='acme-order'),
+        path('acme/<serial:serial>/order/<acme:slug>/finalize/', acme_views.AcmeOrderFinalizeView.as_view(),
              name='acme-order-finalize'),
-        path('acme/<serial:serial>/authz/<acme:slug>/', views.AcmeAuthorizationView.as_view(),
+        path('acme/<serial:serial>/authz/<acme:slug>/', acme_views.AcmeAuthorizationView.as_view(),
              name='acme-authz'),
-        path('acme/<serial:serial>/chall/<acme:slug>/', views.AcmeChallengeView.as_view(),
+        path('acme/<serial:serial>/chall/<acme:slug>/', acme_views.AcmeChallengeView.as_view(),
              name='acme-challenge'),
-        path('acme/<serial:serial>/cert/<acme:slug>/', views.AcmeCertificateView.as_view(),
+        path('acme/<serial:serial>/cert/<acme:slug>/', acme_views.AcmeCertificateView.as_view(),
              name='acme-cert'),
     ]
 
