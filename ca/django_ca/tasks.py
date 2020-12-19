@@ -16,12 +16,9 @@
 .. seealso:: https://docs.celeryproject.org/en/stable/index.html
 """
 
-import importlib
 import logging
 from datetime import timedelta
 from http import HTTPStatus
-
-import requests
 
 from django.db import transaction
 from django.utils import timezone
@@ -42,12 +39,19 @@ try:
     from celery import shared_task
 except ImportError:
     def shared_task(func):
-        """Dummy decorator so that we can use the decorator wether celery is installed or not."""
+        """Dummy decorator so that we can use the decorator whether celery is installed or not."""
 
         # We do not yet need this, but might come in handy in the future:
         #func.delay = lambda *a, **kw: func(*a, **kw)
         #func.apply_async = lambda *a, **kw: func(*a, **kw)
         return func
+
+# requests and josepy are optional dependencies for acme tasks
+try:
+    import josepy as jose
+    import requests
+except ImportError:  # pragma: no cover
+    jose = requests = None
 
 
 def run_task(task, *args, **kwargs):
@@ -102,6 +106,10 @@ def acme_validate_challenge(challenge_pk):
         log.error('ACME is not enabled.')
         return
 
+    if jose is None:  # pragma: no cover
+        log.error('josepy is not installed, cannot do challenge validation.')
+        return
+
     try:
         challenge = AcmeChallenge.objects.url().get(pk=challenge_pk)
     except AcmeChallenge.DoesNotExist:
@@ -120,9 +128,6 @@ def acme_validate_challenge(challenge_pk):
         log.error('%s: Authentication is not usable', challenge)
         return
 
-    # Import josepy so that it is not a module level dependency.
-    jose = importlib.import_module('josepy')
-
     # General data for challenge validation
     token = challenge.token
     value = challenge.auth.value
@@ -131,6 +136,10 @@ def acme_validate_challenge(challenge_pk):
     expected = f'{encoded}.{thumbprint}'
 
     if challenge.type == AcmeChallenge.TYPE_HTTP_01:
+        if requests is None:  # pragma: no cover
+            log.error('requests is not installed, cannot do http-01 challenge validation.')
+            return
+
         url = f'http://{value}/.well-known/acme-challenge/{encoded}'
 
         # Validate HTTP challenge (only thing supported so far)
