@@ -16,12 +16,16 @@
 from contextlib import contextmanager
 from importlib import reload
 
+import acme
+
 from django.urls import include
 from django.urls import path
 from django.urls import reverse
 from django.urls.exceptions import NoReverseMatch
 
 from .. import urls
+from ..acme.constants import IdentifierType
+from ..acme.constants import Status
 from .base import DjangoCATestCase
 from .base import override_settings
 
@@ -68,3 +72,20 @@ class URLPatternTestCase(DjangoCATestCase):
         reverse('django_ca:acme-directory')
         reverse('django_ca:acme-directory', kwargs={'serial': 'AB:CD'})
         reverse('django_ca:acme-new-nonce', kwargs={'serial': 'AB:CD'})
+
+
+class TestConstantsTestCase(DjangoCATestCase):
+    """Test constants."""
+
+    def test_status_enum(self):
+        """Test that the Status Enum is equivalent to the main ACME library."""
+
+        expected = list(acme.messages.Status.POSSIBLE_NAMES) + ['expired']
+        self.assertCountEqual(expected,
+                              [s.value for s in Status])
+
+    def test_identifier_enum(self):
+        """Test that the IdentifierType Enum is equivalent to the main ACME library."""
+
+        self.assertCountEqual(acme.messages.IdentifierType.POSSIBLE_NAMES,
+                              [s.value for s in IdentifierType])

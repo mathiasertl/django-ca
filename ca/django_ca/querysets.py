@@ -13,14 +13,13 @@
 
 """QuerySet classes for DjangoCA models."""
 
-from acme import messages
-
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
 from . import ca_settings
+from .acme.constants import Status
 from .utils import sanitize_serial
 
 
@@ -180,7 +179,7 @@ class AcmeOrderQuerySet(models.QuerySet):
         return self.filter(
             account__ca__enabled=True, account__ca__acme_enabled=True,
             account__ca__expires__gt=now, account__ca__valid_from__lt=now
-        ).exclude(account__status=messages.STATUS_REVOKED.name)
+        ).exclude(account__status=Status.REVOKED.value)
 
 
 class AcmeAuthorizationQuerySet(models.QuerySet):
@@ -203,7 +202,7 @@ class AcmeAuthorizationQuerySet(models.QuerySet):
         return self.filter(
             order__account__ca__enabled=True, order__account__ca__acme_enabled=True,
             order__account__ca__expires__gt=now, order__account__ca__valid_from__lt=now
-        ).exclude(order__account__status=messages.STATUS_REVOKED.name)
+        ).exclude(order__account__status=Status.REVOKED.value)
 
 
 class AcmeChallengeQuerySet(models.QuerySet):
@@ -226,7 +225,7 @@ class AcmeChallengeQuerySet(models.QuerySet):
         return self.filter(
             auth__order__account__ca__enabled=True, auth__order__account__ca__acme_enabled=True,
             auth__order__account__ca__expires__gt=now, auth__order__account__ca__valid_from__lt=now
-        ).exclude(auth__order__account__status=messages.STATUS_REVOKED.name)
+        ).exclude(auth__order__account__status=Status.REVOKED.value)
 
 
 class AcmeCertificateQuerySet(models.QuerySet):
@@ -250,9 +249,9 @@ class AcmeCertificateQuerySet(models.QuerySet):
         return self.filter(
             order__account__ca__enabled=True, order__account__ca__acme_enabled=True,
             order__account__ca__expires__gt=now, order__account__ca__valid_from__lt=now,
-            order__status=messages.STATUS_VALID.name,
+            order__status=Status.VALID.value,
         ).exclude(
-            order__account__status=messages.STATUS_REVOKED.name
+            order__account__status=Status.REVOKED.value
         ).exclude(
             cert__isnull=True
         ).exclude(

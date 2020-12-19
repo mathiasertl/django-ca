@@ -19,6 +19,7 @@
 import base64
 import binascii
 import hashlib
+import importlib
 import itertools
 import json
 import logging
@@ -28,8 +29,6 @@ from datetime import datetime
 from datetime import timedelta
 
 import pytz
-from acme import challenges
-from acme import messages
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -59,6 +58,8 @@ from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
 from .acme.constants import BASE64_URL_ALPHABET
+from .acme.constants import IdentifierType
+from .acme.constants import Status
 from .constants import ReasonFlags
 from .extensions import OID_TO_EXTENSION
 from .extensions import AuthorityInformationAccess
@@ -1097,9 +1098,9 @@ class AcmeAccount(DjangoCAModelMixin, models.Model):
     """
 
     # RFC 8555, 7.1.2: "Possible values are "valid", "deactivated", and "revoked"."
-    STATUS_VALID = messages.STATUS_VALID.name
-    STATUS_DEACTIVATED = messages.STATUS_DEACTIVATED.name  # deactivated by user
-    STATUS_REVOKED = messages.STATUS_REVOKED.name  # revoked by server
+    STATUS_VALID = Status.VALID.value
+    STATUS_DEACTIVATED = Status.DEACTIVATED.value  # deactivated by user
+    STATUS_REVOKED = Status.REVOKED.value  # revoked by server
     STATUS_CHOICES = (
         (STATUS_VALID, _('Valid')),
         (STATUS_DEACTIVATED, _('Deactivated')),
@@ -1177,11 +1178,11 @@ class AcmeOrder(DjangoCAModelMixin, models.Model):
         `RFC 8555, 7.1.3 <https://tools.ietf.org/html/rfc8555#section-7.1.3>`_
     """
     # RFC 8555, 7.1.3: "Possible values are "pending", "ready", "processing", "valid", and "invalid"."
-    STATUS_PENDING = messages.STATUS_PENDING.name
-    STATUS_READY = messages.STATUS_READY.name
-    STATUS_PROCESSING = messages.STATUS_PROCESSING.name
-    STATUS_VALID = messages.STATUS_VALID.name
-    STATUS_INVALID = messages.STATUS_INVALID.name
+    STATUS_PENDING = Status.PENDING.value
+    STATUS_READY = Status.READY.value
+    STATUS_PROCESSING = Status.PROCESSING.value
+    STATUS_VALID = Status.VALID.value
+    STATUS_INVALID = Status.INVALID.value
 
     STATUS_CHOICES = (
         (STATUS_INVALID, _('Invalid')),
@@ -1275,19 +1276,19 @@ class AcmeAuthorization(models.Model):
         `RFC 8555, 7.1.4 <https://tools.ietf.org/html/rfc8555#section-7.1.4>`_
     """
     # Choices from RFC 8555, section 9.7.7.
-    TYPE_DNS = messages.IDENTIFIER_FQDN.name
+    TYPE_DNS = IdentifierType.DNS.value
     TYPE_CHOICES = (
         (TYPE_DNS, _('DNS')),
     )
 
     # RFC 8555, 7.1.4: "Possible values are "pending", "valid", "invalid", "deactivated", "expired", and
     #                   "revoked"."
-    STATUS_PENDING = messages.STATUS_PENDING.name
-    STATUS_VALID = messages.STATUS_VALID.name
-    STATUS_INVALID = messages.STATUS_INVALID.name
-    STATUS_DEACTIVATED = messages.STATUS_DEACTIVATED.name
-    STATUS_EXPIRED = 'expired'  # STATUS_EXPIRED not present in acme 1.9.0
-    STATUS_REVOKED = messages.STATUS_REVOKED.name
+    STATUS_PENDING = Status.PENDING.value
+    STATUS_VALID = Status.VALID.value
+    STATUS_INVALID = Status.INVALID.value
+    STATUS_DEACTIVATED = Status.DEACTIVATED.value
+    STATUS_EXPIRED = Status.EXPIRED.value
+    STATUS_REVOKED = Status.REVOKED.value
     STATUS_CHOICES = (
         (STATUS_PENDING, _('Pending')),
         (STATUS_VALID, _('Valid')),
@@ -1346,6 +1347,9 @@ class AcmeAuthorization(models.Model):
 
         identifier : :py:class:`acme:acme.messages.Identifier`
         """
+        # Programatic import to make sure that the acme library is an optional dependency
+        messages = importlib.import_module('acme.messages')
+
         if self.type == AcmeAuthorization.TYPE_DNS:
             return messages.Identifier(typ=messages.IDENTIFIER_FQDN, value=self.value)
         raise ValueError('Unknown identifier type: %s' % self.type)
@@ -1403,10 +1407,10 @@ class AcmeChallenge(models.Model):
     )
 
     # RFC 8555, 8: "Possible values are "pending", "processing", "valid", and "invalid"."
-    STATUS_PENDING = messages.STATUS_PENDING.name
-    STATUS_PROCESSING = messages.STATUS_PROCESSING.name
-    STATUS_VALID = messages.STATUS_VALID.name
-    STATUS_INVALID = messages.STATUS_INVALID.name
+    STATUS_PENDING = Status.PENDING.value
+    STATUS_PROCESSING = Status.PROCESSING.value
+    STATUS_VALID = Status.VALID.value
+    STATUS_INVALID = Status.INVALID.value
     STATUS_CHOICES = (
         (STATUS_PENDING, _('Pending')),
         (STATUS_PROCESSING, _('Processing')),
@@ -1456,6 +1460,8 @@ class AcmeChallenge(models.Model):
         acme.messages.Challenge
             The acme representation of this class.
         """
+        # Programatic import to make sure that the acme library is an optional dependency
+        challenges = importlib.import_module('acme.challenges')
 
         token = self.token.encode()
         if self.type == AcmeChallenge.TYPE_HTTP_01:
@@ -1491,6 +1497,9 @@ class AcmeChallenge(models.Model):
         acme.messages.ChallengeBody
             The acme representation of this class.
         """
+
+        # Programatic import to make sure that the acme library is an optional dependency
+        messages = importlib.import_module('acme.messages')
 
         url = request.build_absolute_uri(self.acme_url)
 

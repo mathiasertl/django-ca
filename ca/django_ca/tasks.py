@@ -16,11 +16,11 @@
 .. seealso:: https://docs.celeryproject.org/en/stable/index.html
 """
 
+import importlib
 import logging
 from datetime import timedelta
 from http import HTTPStatus
 
-import josepy as jose
 import requests
 
 from django.db import transaction
@@ -119,6 +119,9 @@ def acme_validate_challenge(challenge_pk):
     if challenge.auth.usable is False:
         log.error('%s: Authentication is not usable', challenge)
         return
+
+    # Import josepy so that it is not a module level dependency.
+    jose = importlib.import_module('josepy')
 
     # General data for challenge validation
     token = challenge.token
