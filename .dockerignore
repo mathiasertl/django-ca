@@ -8,6 +8,7 @@
 /.git/
 /.coverage
 /.docker/
+/.certbot/
 /.tox/
 /bin/
 /ca/*.egg-info
