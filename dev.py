@@ -201,7 +201,8 @@ elif args.command == 'code-quality':
     subprocess.run(['flake8'] + files, check=True)
 
     print('python -Wd manage.py check')
-    subprocess.run(['python', '-Wd', 'manage.py', 'check'], cwd=CADIR, check=True)
+    subprocess.run(['python', '-Wd', 'manage.py', 'check'], cwd=CADIR, check=True,
+                   env=dict(os.environ, DJANGO_CA_SECRET_KEY='dummy'))
 elif args.command == 'test-imports':
     setup_django('ca.settings')
 
