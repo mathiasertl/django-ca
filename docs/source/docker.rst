@@ -28,8 +28,11 @@ here!), configuring the domain where your CA should be available::
 
    DJANGO_CA_CA_DEFAULT_HOSTNAME=ca.local.example.com docker-compose up
 
-... and visit http://ca.local.example.com (assuming you set up your DNS correctly). If you want SSL for the
+... and visit http://ca.local.example.com/admin/ (assuming you set up your DNS correctly). If you want SSL for the
 admin interface (you probably should) you have to :ref:`configure nginx <docker-compose-nginx>`.
+
+Initial setup
+=============
 
 All you need now is to create a user for the web interface as well as CAs to create certificates. You have to
 create the CAs in the *backend* service to be able to automatically generate CRLs and OCSP keys. You can pass
@@ -42,6 +45,9 @@ create keys for the intermediate CA using the web interface:
    $ docker-compose exec backend ./manage.py init_ca --pathlen=1 root /CN=example.com
    $ docker-compose exec backend ./manage.py init_ca \
    >   --path=ca/shared/ --parent=example.com child /CN=child.example.com
+
+Configuration
+=============
 
 You can configure django-ca using all the mechanisms described in :ref:`docker-configuration`. For more
 complex configuration changes, you might want to consider `extending docker-compose.yml
