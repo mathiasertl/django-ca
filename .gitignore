@@ -20,6 +20,7 @@ geckodriver.log
 /dist
 /dj18/
 /docs/build/
+/docs/source/_files/docker-compose.yml
 /fab.conf
 /include/
 /lib/
