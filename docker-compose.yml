@@ -87,12 +87,15 @@ services:
 
     webserver:
         image: nginx:1.18-alpine
-        command: /bin/sh -c "envsubst < /etc/nginx/conf.d/default.template > /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"
+        command: /bin/sh -c "envsubst < /etc/nginx/conf.d/${NGINX_TEMPLATE:-default}.template > /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"
         depends_on:
             - frontend
         environment:
             NGINX_HOST: ${DJANGO_CA_CA_DEFAULT_HOSTNAME:-localhost}
             NGINX_PORT: ${NGINX_PORT:-80}
+            # Defaults match the certbot directory structure (see quickstart tutorial):
+            NGINX_PRIVATE_KEY: ${NGINX_PRIVATE_KEY:-/etc/certs/live/privkey.pem}
+            NGINX_PUBLIC_KEY: ${NGINX_PUBLIC_KEY:-/etc/certs/live/fullchain.pem}
         ports:
             - 80:80
         networks:
