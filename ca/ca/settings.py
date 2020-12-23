@@ -216,14 +216,21 @@ if not _skip_local_config:
         for key, value in data.items():
             globals()[key] = value
 
+
+def _parse_bool(env_value):
+    # parse a env variable that is supposed to represent a boolean value
+    return env_value.strip().lower() in ('true', 'yes', '1')
+
+
 # Also use DJANGO_CA_ environment variables
 for key, value in {k[10:]: v for k, v in os.environ.items() if k.startswith('DJANGO_CA_')}.items():
     if key == 'SETTINGS':  # points to yaml files loaded above
         continue
-    elif key == 'ALLOWED_HOSTS':
+
+    if key == 'ALLOWED_HOSTS':
         globals()[key] = value.split()
-    elif key == 'CA_USE_CELERY':
-        globals()[key] = value != "0"
+    elif key in ('CA_USE_CELERY', 'CA_ENABLE_ACME'):
+        globals()[key] = _parse_bool(value)
     else:
         globals()[key] = value
 
