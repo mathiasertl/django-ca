@@ -3,7 +3,11 @@ Docker
 ######
 
 There is a Docker container available for **django-ca**. A docker-compose file is available to deploy the full
-stack including all dependencies. 
+stack including all dependencies.
+
+.. NOTE::
+
+   If you just want to get a CA up and running quickly, why not try :doc:`quickstart_docker_compose`.
 
 .. _docker-compose:
 
@@ -26,9 +30,9 @@ You can fetch tagged versions or the current development version of ``docker-com
 The only environment variable you need to pass is ``DJANGO_CA_CA_DEFAULT_HOSTNAME`` (note the double "CA"
 here!), configuring the domain where your CA should be available::
 
-   DJANGO_CA_CA_DEFAULT_HOSTNAME=ca.local.example.com docker-compose up
+   DJANGO_CA_CA_DEFAULT_HOSTNAME=ca.example.com docker-compose up -d
 
-... and visit http://ca.local.example.com/admin/ (assuming you set up your DNS correctly). If you want SSL for the
+... and visit http://ca.example.com/admin/ (assuming you set up your DNS correctly). If you want SSL for the
 admin interface (you probably should) you have to :ref:`configure nginx <docker-compose-nginx>`.
 
 Initial setup
@@ -79,8 +83,53 @@ database out of the box::
 Configure nginx
 ===============
 
-If you want to change the nginx configuration (for example, to add TLS to your setup), you can override
-``/etc/nginx/conf.d/default.template`` as a custom volume.
+By default, nginx will only listen on HTTP, but a configuration for TLS is included for your convenience.
+
+All you need to do is enable port 443, tell nginx about public and private key, and finally set the
+``NGINX_TEMPLATE=tls`` environment variable. For this example, we retrieve TLS certificates from Let's Encrypt
+**before** we run docker-compose (so that port 443 is still open):
+
+.. code-block:: console
+
+   certbot certonly --standalone -d ca.example.com
+
+The below example assumes you retrieved TLS certificates from Let's Encrypt to secure the admin interface:
+
+.. code-block:: yaml
+   :caption: docker-compose.override.yml
+
+   version: "3.7"
+   services:
+       environment:
+           NGINX_PRIVATE_KEY: /etc/certs/privkey.pem
+           NGINX_PUBLIC_KEY: /etc/certs/fullchain.pem
+           NGINX_TEMPLATE: tls
+       volumes:
+           - /etc/letsencrypt/live/${DJANGO_CA_CA_DEFAULT_HOSTNAME}:/etc/certs/
+           - /etc/letsencrypt/archive/${DJANGO_CA_CA_DEFAULT_HOSTNAME}:/etc/certs/
+           - /tmp/ca.example.com/acme/:/usr/share/django-ca/acme/
+       ports:
+           - 443:443
+
+Now, you can run docker-compose up as usual:
+
+.. code-block:: console
+
+   $ DJANGO_CA_CA_DEFAULT_HOSTNAME=ca.example.com docker-compose up
+
+The last step is to reconfigure certbot, so that automatic update works (assuming ``/home/user/`` is where you
+have your docker-compose file:
+
+.. code-block:: console
+
+   $ certbot certonly --webroot -w /tmp/ca.example.com/acme/ -d ca.example.com --force-renewal \
+   >     --deploy-hook "docker-compose --project-directory /home/user exec -T webserver ngin -s reload"
+
+Custom nginx configuration
+==========================
+
+If the defaults above are not good enough, you can override ``/etc/nginx/conf.d/default.template`` as a custom
+volume.
 
 .. NOTE::
 
@@ -108,7 +157,7 @@ documentation <https://hub.docker.com/_/nginx>`_:
    upstream django_ca_frontend {
       server frontend:8000;
    }
-   
+
    server {
       listen       ${NGINX_PORT} default_server;
       server_name  ${NGINX_HOST};
@@ -224,7 +273,7 @@ The docker container comes with different ini files, each located in ``/usr/src/
 ============== ===============================================================================================
 config         Description
 ============== ===============================================================================================
-standalone.ini **Default**. Serves plain HTTP on port 8000, including static files. 
+standalone.ini **Default**. Serves plain HTTP on port 8000, including static files.
                Suitable for basic setups.
 uwsgi.ini      Serves the uwsgi protocol supported by NGINX and Apache. Does not serve static files, has three
                worker processes.
@@ -284,7 +333,7 @@ you configured NGINX on port 80, you can now visit e.g. http://localhost/admin/ 
 
 Database configuration
 ======================
- 
+
 You can use the environment variables used by the `PostgreSQL <https://hub.docker.com/_/postgres>`_ and `MySQL
 <https://hub.docker.com/_/mysql>`_/`MariaDB <https://hub.docker.com/_/mariadb>`_ images to set up database
 access. This also works for the variables using the ``_FILE`` suffix (e.g. for Docker Secrets)::
@@ -306,15 +355,15 @@ that. If you want to pass a custom key, you can use the ``DJANGO_CA_SECRET_KEY``
 described above).
 
 You can also use `Docker Secrets <https://docs.docker.com/engine/swarm/secrets/>`_ and pass the
-``DJANGO_CA_SECRET_KEY_FILE`` to read the secret from the file. 
+``DJANGO_CA_SECRET_KEY_FILE`` to read the secret from the file.
 
 Run as different user
 =====================
 
 It is possible to run the uWSGI instance inside the container as a different user, *but* you have to make sure
-that ``/var/lib/django-ca/`` is writable by that user. 
+that ``/var/lib/django-ca/`` is writable by that user.
 
-.. WARNING:: 
+.. WARNING::
 
    ``/var/lib/django-ca/`` contains all sensitive data including CA private keys and login credentials to the
    admin interface. Make sure you protect this directory!

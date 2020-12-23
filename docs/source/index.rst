@@ -34,6 +34,12 @@ Features:
 
 .. toctree::
    :maxdepth: 1
+   :caption: Quickstart
+
+   ... with docker-compose <quickstart_docker_compose>
+
+.. toctree::
+   :maxdepth: 1
    :caption: Usage
 
    cli/intro
