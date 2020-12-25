@@ -70,7 +70,7 @@ port 80 (HTTP).
 
    user@host:~$ sudo certbot certonly --standalone -d ca.example.com
    ...
-   user@host:~$ /etc/letsencrypt/live/ca.example.com
+   user@host:~$ ls /etc/letsencrypt/live/ca.example.com
    README  cert.pem  chain.pem  fullchain.pem  privkey.pem
 
 *****************
@@ -214,5 +214,5 @@ certbot command:
 
 .. code-block:: console
 
-   certbot register --server https://ca.example.com/django_ca/acme/directory/
-   certbot certonly --server https://ca.example.com/django_ca/acme/directory/ ...
+   $ certbot register --server https://ca.example.com/django_ca/acme/directory/
+   $ certbot certonly --server https://ca.example.com/django_ca/acme/directory/ ...
