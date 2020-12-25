@@ -112,6 +112,7 @@ RUN mkdir -p /usr/share/django-ca/static /usr/share/django-ca/media /var/lib/dja
     chown -R django-ca:django-ca /usr/share/django-ca/ /var/lib/django-ca/
 
 COPY --from=prepare /usr/src/django-ca/ ./
+RUN ln -s /usr/src/django-ca/ca/manage.py /usr/local/bin/manage
 
 USER django-ca:django-ca
 EXPOSE 8000
