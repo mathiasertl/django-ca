@@ -89,11 +89,11 @@ can also download the file for other versions `from github
 Add docker-compose.override.yml
 ===============================
 
-The default :file:`docker-compose.yml` does not use port 443, because to many details (cert location, etc.)
-are different from system to system. We need to add a `docker-compose override file
+The default :file:`docker-compose.yml` does not offer HTTPS, because to many details (cert location, etc.) are
+different from system to system. We need to add a `docker-compose override file
 <https://docs.docker.com/compose/extends/>`_ to open the port and map the directories with the certificates
-into the container.  Simply add a file called `docker-compose.override.yml` next to your main configuration
-file:
+into the container.  Simply add a file called :file:`docker-compose.override.yml` next to your main
+configuration file:
 
 .. code-block:: yaml
    :caption: docker-compose.override.yml
@@ -106,6 +106,10 @@ file:
            - /tmp/ca.example.com/acme/:/usr/share/django-ca/acme/
        ports:
            - 443:443
+
+This will work if you get your certificates using ``certbot`` or a similar client. If your private key ein
+public key chain is named different, you can set ``NGINX_PRIVATE_KEY`` and ``NGINX_PUBLIC_KEY`` in your
+:file:`.env` file velow.
 
 Add .env file
 =============
@@ -123,6 +127,10 @@ For a quick start, one variable is actually sufficient:
 
    # If you want to enable *experimental* ACMEv2 support:
    #DJANGO_CA_CA_ENABLE_ACME=true
+
+   # If private/public TLS key for the admin interface have different filenames:
+   #NGINX_PRIVATE_KEY=/etc/certs/some-private-key.pem
+   #NGINX_PUBLIC_KEY=/etc/certs/some-public-key.pem
 
 Recap
 =====
@@ -162,7 +170,7 @@ Simply go to https://ca.example.com/admin/.
 Create admin user and set up CAs
 ================================
 
-Inside the backend container, ``manage`` is an alias `Djangos manage.py script
+Inside the backend container, ``manage`` is an alias for the `Djangos manage.py script
 <https://docs.djangoproject.com/en/dev/ref/django-admin/>`_. We provide many custom management commands, see
 :doc:`/cli/intro`. We need to create a user (that can log into the admin interface) and create a root and
 intermediate CA:
@@ -171,16 +179,40 @@ intermediate CA:
 
    user@host:~/ca/$ docker-compose exec backend manage createsuperuser
    ...
-   user@host:~/ca/$ docker-compose exec backend manage init_ca --pathlen=1 Root "/CN=Root CA"
+   user@host:~/ca/$ docker-compose exec backend manage init_ca \
+   >     --pathlen=1 Root "/CN=Root CA"
    user@host:~/ca/$ docker-compose exec backend manage init_ca \
    >     --path=ca/shared/ --parent="Root CA" Intermediate "/CN=Intermediate CA"
 
 There are a few things to break down in the above commands:
 
-* The subject (``/CN=...``) in the CA really only used by browsers to display the name of a CA. It can be any
-  human readable value.
+* The subject (``/CN=...``) in the CA is only used by browsers to display the name of a CA. It can be any
+  human readable value and does not have to be a domain name.
 * The first positional argument to ``init_ca``, ("Root", "Intermediate") is just a human readable name used to
   identify the CA within the cli/web interface. Unlike the CommonName, it must be unique.
 * The ``--path=ca/shared/`` parameter for the intermediate CA means that you can use the admin interface to
   issue certificates. Without it, the webserver has no access to the private key for your CA.
 * The ``--pathlen=1`` parameter for the root CA means that there is at most one level of intermediate CAs.
+
+***********
+Use your CA
+***********
+
+You now should be able to log into the admin interface you set up at https://ca.example.com/admin/ with the
+credentials you created above. In the admin interface, you can create certificates for the "Intermediate" CA
+but not for the "Root" CA (since you didn't pass ``--path=ca/shared/``). You can also use the admin interface
+to revoke any certificate. 
+
+You can always use the :doc:`/cli/intro` for advanced administration operations, including creating
+certificates for any CA and revoking certificates.
+
+CRL and OCSP services are provided by default, there's nothing you need to do to enable them. 
+
+If you enabled :doc:`ACMEv2 support <acme>`, all you need to do is enable ACMEv2 for the intermediate CA using
+the admin interface (or using ``manage edit_ca``). After that, you can retrieve a certificate using a simple
+certbot command:
+
+.. code-block:: console
+
+   certbot register --server https://ca.example.com/django_ca/acme/directory/
+   certbot certonly --server https://ca.example.com/django_ca/acme/directory/ ...
