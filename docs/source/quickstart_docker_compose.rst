@@ -112,19 +112,33 @@ This will work if you get your certificates using ``certbot`` or a similar clien
 public key chain is named different, you can set ``NGINX_PRIVATE_KEY`` and ``NGINX_PUBLIC_KEY`` in your
 :file:`.env` file velow.
 
+.. code-block:: console
+
+   user@host:~$ apt update
+   user@host:~$ apt install -y python3 python3-pip
+   user@host:~$ mkdir -p ~/.config/pip/
+   user@host:~$ echo -e "[install]\nupdate-strategy = eager" > ~/.config/pip/pip.conf
+
 Add .env file
 =============
 
 Some settings in **django-ca** can be configured with environment variables (except where a more complex
 structure is required). Simply create a file called ``.env`` next to :file:`docker-compose.yaml`. 
 
-For a quick start, one variable is actually sufficient:
+For a quick start, there are only a few variables you need to specify:
 
 .. code-block:: bash
 
    # The hostname for your CA.
    # WARNING: Changing this requires new CAs (because the hostname goes into the certificates).
    DJANGO_CA_CA_DEFAULT_HOSTNAME=ca.example.com
+
+   # PostgreSQL superuser password (required by the Docker image), see also:
+   #   https://hub.docker.com/_/postgres
+   POSTGRES_PASSWORD=mysecretpassword
+
+   # Use nginx template that enables TLS support
+   NGINX_TEMPLATE=tls
 
    # If you want to enable *experimental* ACMEv2 support:
    #DJANGO_CA_CA_ENABLE_ACME=true
