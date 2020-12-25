@@ -70,7 +70,7 @@ port 80 (HTTP).
 
    user@host:~$ sudo certbot certonly --standalone -d ca.example.com
    ...
-   user@host:~$ ls /etc/letsencrypt/live/ca.example.com
+   user@host:~$ sudo ls /etc/letsencrypt/live/ca.example.com
    README  cert.pem  chain.pem  fullchain.pem  privkey.pem
 
 *****************
@@ -98,14 +98,15 @@ configuration file:
 .. code-block:: yaml
    :caption: docker-compose.override.yml
 
-   version: "3.7"
+   version: "3.6"
    services:
-       volumes:
-           - /etc/letsencrypt/live/${DJANGO_CA_CA_DEFAULT_HOSTNAME}:/etc/certs/
-           - /etc/letsencrypt/archive/${DJANGO_CA_CA_DEFAULT_HOSTNAME}:/etc/certs/
-           - /tmp/ca.example.com/acme/:/usr/share/django-ca/acme/
-       ports:
-           - 443:443
+       webserver:
+           volumes:
+               - /etc/letsencrypt/live/${DJANGO_CA_CA_DEFAULT_HOSTNAME}:/etc/certs/
+               - /etc/letsencrypt/archive/${DJANGO_CA_CA_DEFAULT_HOSTNAME}:/etc/certs/
+               - /tmp/ca.example.com/acme/:/usr/share/django-ca/acme/
+           ports:
+               - 443:443
 
 This will work if you get your certificates using ``certbot`` or a similar client. If your private key ein
 public key chain is named different, you can set ``NGINX_PRIVATE_KEY`` and ``NGINX_PUBLIC_KEY`` in your
