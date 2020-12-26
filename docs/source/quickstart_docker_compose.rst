@@ -41,12 +41,13 @@ Install required software
 *************************
 
 To run **django-ca**, you need Docker and Docker Compose. You also need certbot to aquire Let's Encrypt
-certificates for the admin interface. On Debian/Ubuntu, simply do:
+certificates for the admin interface. OpenSSL is used to generate the DH parameter file. On Debian/Ubuntu,
+simply do:
 
 .. code-block:: console
 
    user@host:~$ sudo apt update
-   user@host:~$ sudo apt install docker.io docker-compose certbot
+   user@host:~$ sudo apt install docker.io docker-compose certbot openssl
 
 For a different OS, please read `Install Docker <https://docs.docker.com/engine/install/>`_, `Install
 docker-compose <https://docs.docker.com/compose/install/>`_ and `Get certbot
@@ -102,22 +103,16 @@ configuration file:
    services:
        webserver:
            volumes:
-               - /etc/letsencrypt/live/${DJANGO_CA_CA_DEFAULT_HOSTNAME}:/etc/certs/
-               - /etc/letsencrypt/archive/${DJANGO_CA_CA_DEFAULT_HOSTNAME}:/etc/certs/
-               - /tmp/ca.example.com/acme/:/usr/share/django-ca/acme/
+               - /etc/letsencrypt/live/${DJANGO_CA_CA_DEFAULT_HOSTNAME}:/etc/certs/live/${DJANGO_CA_CA_DEFAULT_HOSTNAME}/
+               - /etc/letsencrypt/archive/${DJANGO_CA_CA_DEFAULT_HOSTNAME}:/etc/certs/archive/${DJANGO_CA_CA_DEFAULT_HOSTNAME}/
+               - ${PWD}/dhparam.pem:/etc/nginx/dhparams/dhparam.pem
+               - ${PWD}/acme/:/usr/share/django-ca/acme/
            ports:
                - 443:443
 
 This will work if you get your certificates using ``certbot`` or a similar client. If your private key ein
 public key chain is named different, you can set ``NGINX_PRIVATE_KEY`` and ``NGINX_PUBLIC_KEY`` in your
-:file:`.env` file velow.
-
-.. code-block:: console
-
-   user@host:~$ apt update
-   user@host:~$ apt install -y python3 python3-pip
-   user@host:~$ mkdir -p ~/.config/pip/
-   user@host:~$ echo -e "[install]\nupdate-strategy = eager" > ~/.config/pip/pip.conf
+:file:`.env` file below.
 
 Add .env file
 =============
@@ -133,29 +128,37 @@ For a quick start, there are only a few variables you need to specify:
    # WARNING: Changing this requires new CAs (because the hostname goes into the certificates).
    DJANGO_CA_CA_DEFAULT_HOSTNAME=ca.example.com
 
+   # If you want to enable *experimental* ACMEv2 support:
+   #DJANGO_CA_CA_ENABLE_ACME=true
+
    # PostgreSQL superuser password (required by the Docker image), see also:
    #   https://hub.docker.com/_/postgres
    POSTGRES_PASSWORD=mysecretpassword
 
-   # Use nginx template that enables TLS support
+   # NGINX TLS configuration
    NGINX_TEMPLATE=tls
+   NGINX_PRIVATE_KEY=/etc/certs/live/ca.example.com/privkey.pem
+   NGINX_PUBLIC_KEY=/etc/certs/live/ca.example.com/fullchain.pem
 
-   # If you want to enable *experimental* ACMEv2 support:
-   #DJANGO_CA_CA_ENABLE_ACME=true
+Generate dhparams
+=================
 
-   # If private/public TLS key for the admin interface have different filenames:
-   #NGINX_PRIVATE_KEY=/etc/certs/some-private-key.pem
-   #NGINX_PUBLIC_KEY=/etc/certs/some-public-key.pem
+The TLS configuration also requires that you generate a DH parameter file, used by some TLS ciphers. You can
+generate it with:
+
+.. code-block:: console
+
+   user@host:~/ca/$ openssl dhparam -dsaparam -out dhparam.pem 4096
 
 Recap
 =====
 
-By now, you should have three files in ``~/ca/``:
+By now, you should have four files in ``~/ca/``:
 
 .. code-block:: console
 
    user@host:~/ca/$ ls -A
-   docker-compose.yml docker-compose.override.yml .env
+   docker-compose.yml docker-compose.override.yml .env dhparam.pem
 
 *************
 Start your CA
