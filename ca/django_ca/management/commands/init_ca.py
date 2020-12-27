@@ -168,9 +168,15 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=
             issuer_alternative_name = ''
 
         kwargs = {}
-        for opt in ['path', 'parent', 'default_hostname', 'acme_enabled', 'acme_requires_contact']:
+        for opt in ['path', 'parent', 'default_hostname']:
             if options[opt] is not None:
                 kwargs[opt] = options[opt]
+
+        if not ca_settings.CA_ENABLE_ACME:
+            # These settings are only there if ACME is enabled
+            for opt in ['acme_enabled', 'acme_requires_contact']:
+                if options[opt] is not None:
+                    kwargs[opt] = options[opt]
 
         try:
             ca = CertificateAuthority.objects.init(

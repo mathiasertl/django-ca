@@ -180,7 +180,7 @@ docker-compose (and verify that everything is running):
    django-ca_cache_1       docker-entrypoint.sh redis ...   Up                        
    django-ca_db_1          docker-entrypoint.sh postgres    Up                        
    django-ca_frontend_1    /bin/sh -c ./uwsgi.sh            Up                        
-   django-ca_webserver_1   /docker-entrypoint.sh /bin ...   Up      0.0.0.0:80->80/tcp
+   django-ca_webserver_1   /docker-entrypoint.sh /bin ...   Up      0.0.0.0:443->443/tcp,...
 
 By now, you should be able to see the admin interface (but not log in yet - you haven't created a user yet).
 Simply go to https://ca.example.com/admin/.

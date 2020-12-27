@@ -16,6 +16,7 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
+from ... import ca_settings
 from ...extensions import IssuerAlternativeName
 from ..base import BaseCommand
 from ..base import CertificateAuthorityDetailMixin
@@ -57,8 +58,9 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=
             ca.terms_of_service = options['tos']
 
         # set options where argparse dest matches Django model field name
-        for param in ['acme_enabled', 'acme_requires_contact']:
-            if options[param] is not None:
-                setattr(ca, param, options[param])
+        if not ca_settings.CA_ENABLE_ACME:
+            for param in ['acme_enabled', 'acme_requires_contact']:
+                if options[param] is not None:
+                    setattr(ca, param, options[param])
 
         ca.save()
