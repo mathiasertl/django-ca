@@ -140,6 +140,18 @@ CA_DIR
    Where the root certificate is stored. The default is a ``files`` directory
    in the same location as your ``manage.py`` file.
 
+
+CA_ENABLE_CLICKJACKING_PROTECTION
+   Default: ``True``
+
+   This setting is only used if you use django-ca as a standalone project, e.g. when using it as a Docker
+   container.
+
+   Set to ``False`` to disable `Clickjacking protection
+   <https://docs.djangoproject.com/en/dev/ref/clickjacking/>`_. The setting influences if the
+   ``XFrameOptionsMiddleware`` is added to the list of middlewares.  This setting is useful if the header is
+   already set by the webserver.
+
 .. _settings-ca-file-storage:
 
 CA_FILE_STORAGE

@@ -103,7 +103,6 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 ROOT_URLCONF = 'ca.urls'
@@ -126,6 +125,9 @@ INSTALLED_APPS = [
 ]
 CA_CUSTOM_APPS = []
 CA_DEFAULT_HOSTNAME = None
+
+# Setting to allow us to disable clickjacking projection if header is already set by the webserver
+CA_ENABLE_CLICKJACKING_PROTECTION = True
 
 TEMPLATES = [
     {
@@ -179,9 +181,9 @@ _skip_local_config = os.environ.get('DJANGO_CA_SKIP_LOCAL_CONFIG') == '1'
 try:
     if not _skip_local_config:
         try:
-            from .localsettings import *  # NOQA
+            from .localsettings import *  # NOQA: F403,F401; pylint: disable=wildcard-import
         except ImportError:
-            from localsettings import *  # NOQA
+            from localsettings import *  # NOQA: F403,F401; pylint: disable=wildcard-import
 
         warnings.warn('localsettings.py is deprecated and will be removed in django-ca>=1.18.')
 except ImportError:
@@ -233,6 +235,11 @@ for key, value in {k[10:]: v for k, v in os.environ.items() if k.startswith('DJA
         globals()[key] = _parse_bool(value)
     else:
         globals()[key] = value
+
+
+if CA_ENABLE_CLICKJACKING_PROTECTION is True:
+    if 'django.middleware.clickjacking.XFrameOptionsMiddleware' not in MIDDLEWARE:
+        MIDDLEWARE.append('django.middleware.clickjacking.XFrameOptionsMiddleware')
 
 # Set ALLOWED_HOSTS to CA_DEFAULT_HOSTNAME if the former is not yet defined but the latter isn't
 if not ALLOWED_HOSTS and CA_DEFAULT_HOSTNAME:

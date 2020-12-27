@@ -33,3 +33,6 @@ SECURE_CONTENT_TYPE_NOSNIFF: false
 
 # Disable X-XSS-Protection
 SECURE_BROWSER_XSS_FILTER: false
+
+# Disable X-Frame-Options (Clickjacking protection)
+CA_ENABLE_CLICKJACKING_PROTECTION: false
