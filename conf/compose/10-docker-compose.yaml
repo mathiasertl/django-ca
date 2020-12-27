@@ -26,3 +26,10 @@ CELERY_BEAT_SCHEDULE:
         # ACME cleanup runs once a day
         task: django_ca.tasks.acme_cleanup
         schedule: 86400
+
+# Disable some security headers, because they are already added by NGINX
+# Disable X-Content-Type-Options
+SECURE_CONTENT_TYPE_NOSNIFF: false
+
+# Disable X-XSS-Protection
+SECURE_BROWSER_XSS_FILTER: false
