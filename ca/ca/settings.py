@@ -178,6 +178,11 @@ SECRET_KEY_FILE = ''
 
 _skip_local_config = os.environ.get('DJANGO_CA_SKIP_LOCAL_CONFIG') == '1'
 
+# Secure CSRF cookie
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SECURE = True
+
 try:
     if not _skip_local_config:
         try:
