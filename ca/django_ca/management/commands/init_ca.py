@@ -172,7 +172,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=
             if options[opt] is not None:
                 kwargs[opt] = options[opt]
 
-        if not ca_settings.CA_ENABLE_ACME:
+        if ca_settings.CA_ENABLE_ACME:  # pragma: no branch; never False because parser throws error already
             # These settings are only there if ACME is enabled
             for opt in ['acme_enabled', 'acme_requires_contact']:
                 if options[opt] is not None:

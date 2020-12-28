@@ -58,7 +58,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=
             ca.terms_of_service = options['tos']
 
         # set options where argparse dest matches Django model field name
-        if not ca_settings.CA_ENABLE_ACME:
+        if ca_settings.CA_ENABLE_ACME:  # pragma: no branch; never False because parser throws error already
             for param in ['acme_enabled', 'acme_requires_contact']:
                 if options[param] is not None:
                     setattr(ca, param, options[param])

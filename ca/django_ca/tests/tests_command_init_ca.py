@@ -159,7 +159,7 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_acme_arguments(self):
-        """Test most arguments."""
+        """Test ACME arguments."""
 
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.cmd_e2e(['init_ca', 'Test CA', '/CN=acme.example.com',
@@ -175,6 +175,17 @@ class InitCATest(DjangoCATestCase):
 
         self.assertTrue(ca.acme_enabled)
         self.assertFalse(ca.acme_requires_contact)
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_ENABLE_ACME=False)
+    def test_disabled_acme_arguments(self):
+        """Test that ACME options don't work when ACME is disabled."""
+        with self.assertRaisesRegex(SystemExit, r'^2$') as excm:
+            self.cmd_e2e(['init_ca', 'Test CA', '/CN=acme.example.com', '--acme-enable'])
+        self.assertEqual(excm.exception.args, (2, ))
+
+        with self.assertRaisesRegex(SystemExit, r'^2$') as excm:
+            self.cmd_e2e(['init_ca', 'Test CA', '/CN=acme.example.com', '--acme-contact-optional'])
+        self.assertEqual(excm.exception.args, (2, ))
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_ecc(self):
