@@ -22,7 +22,7 @@ function csrfSafeMethod(method) {
 }
 django.jQuery.ajaxSetup({
     beforeSend: function(xhr, settings) {
-        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+        if (!csrfSafeMethod(settings.type) && !this.crossDomain && csrftoken) {
             xhr.setRequestHeader("X-CSRFToken", csrftoken);
         }
     }
