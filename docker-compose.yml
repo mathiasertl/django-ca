@@ -92,7 +92,7 @@ services:
             - frontend
         environment:
             NGINX_HOST: ${DJANGO_CA_CA_DEFAULT_HOSTNAME:-localhost}
-            NGINX_HTTP_PORT: ${NGINX_HTTP_PORT:-80}
+            NGINX_PORT: ${NGINX_PORT:-80}
             NGINX_HTTPS_PORT: ${NGINX_HTTPS_PORT:-443}
             NGINX_PRIVATE_KEY:
             NGINX_PUBLIC_KEY:

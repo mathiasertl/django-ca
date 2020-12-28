@@ -3,7 +3,7 @@ upstream django_ca_frontend {
 }
 
 server {
-    listen       ${NGINX_HTTP_PORT} http2;
+    listen       ${NGINX_PORT} http2;
     server_name  ${NGINX_HOST};
 
     location /django_ca/issuer/ {
@@ -34,7 +34,7 @@ server {
 }
 
 server {
-    listen ${NGINX_HTTP_PORT} default_server;
+    listen ${NGINX_PORT} default_server;
     return 444;
 }
 
@@ -44,7 +44,7 @@ server {
 
     ssl_certificate_key ${NGINX_PRIVATE_KEY};
     ssl_certificate     ${NGINX_PUBLIC_KEY};
-    include /etc/nginx/conf.d/include/ssl.conf;
+    include /etc/nginx/conf.d/include.d/ssl.conf;
     include /etc/nginx/conf.d/include.d/headers.conf;
 
     location / {
