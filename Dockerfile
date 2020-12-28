@@ -89,25 +89,11 @@ RUN rm dev.py
 # Seems like with BuildKit, the test stage is never executed unless we somehow depend on it
 COPY --from=test /usr/src/django-ca/.coverage /tmp
 
-################
-# static stage #
-################
-# just prepare static files
-FROM build as static
-COPY --from=prepare /install /usr/local
-COPY --from=prepare /usr/src/django-ca/ ./
-COPY dev.py common.py .
-ENV DJANGO_SETTINGS_MODULE=ca.settings
-ENV DJANGO_CA_SETTINGS=conf/
-ENV DJANGO_CA_SECRET_KEY=dummy
-RUN ./dev.py collectstatic
-
 ###############
 # final stage #
 ###############
 FROM base
 COPY --from=prepare /install /usr/local
-COPY --from=static /usr/share/django-ca/static /usr/share/django-ca/static
 
 RUN mkdir -p /usr/share/django-ca/static /usr/share/django-ca/media /var/lib/django-ca/ \
              /var/lib/django-ca/certs/ca/shared /var/lib/django-ca/certs/ocsp \

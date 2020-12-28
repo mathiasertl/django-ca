@@ -24,7 +24,7 @@ django.jQuery.ajaxSetup({
     beforeSend: function(xhr, settings) {
         var token = csrftoken ? csrftoken : document.querySelector('[name=csrfmiddlewaretoken]').value;
         if (!csrfSafeMethod(settings.type) && !this.crossDomain && token) {
-            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            xhr.setRequestHeader("X-CSRFToken", token);
         }
     }
 });

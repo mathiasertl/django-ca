@@ -44,6 +44,7 @@ fi
 
 set -x
 python manage.py migrate --noinput
+python manage.py collectstatic --no-input &
 python manage.py cache_crls &
 python manage.py regenerate_ocsp_keys &
 uwsgi --ini ${DJANGO_CA_UWSGI_INI} ${DJANGO_CA_UWSGI_PARAMS} "$@"
