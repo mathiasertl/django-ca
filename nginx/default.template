@@ -2,13 +2,8 @@ server {
     listen       ${NGINX_PORT};
     server_name  ${NGINX_HOST};
 
-    location / {
-        uwsgi_pass django_ca_frontend;
-        include /etc/nginx/uwsgi_params;
-    }
-    location /static/ {
-        root   /usr/share/nginx/html/;
-    }
+    include /etc/nginx/conf.d/include.d/admin.conf;
+    include /etc/nginx/conf.d/include.d/ca.conf;
 
     error_page   500 502 503 504  /50x.html;
     location = /50x.html {

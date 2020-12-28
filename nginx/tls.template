@@ -2,24 +2,11 @@ server {
     listen       ${NGINX_PORT} http2;
     server_name  ${NGINX_HOST};
 
-    location /django_ca/issuer/ {
-        uwsgi_pass django_ca_frontend;
-        include /etc/nginx/uwsgi_params;
-    }
-    location /django_ca/crl/ {
-        uwsgi_pass django_ca_frontend;
-        include /etc/nginx/uwsgi_params;
-    }
-    location /django_ca/ocsp/ {
-        uwsgi_pass django_ca_frontend;
-        include /etc/nginx/uwsgi_params;
-    }
-    location /django_ca/acme/ {
-        uwsgi_pass django_ca_frontend;
-        include /etc/nginx/uwsgi_params;
-    }
-    location /static/ {
-        root   /usr/share/nginx/html/;
+    include /etc/nginx/conf.d/include.d/ca.conf;
+
+    # Ability to fulfill ACME challenges
+    location /.well-known/acme-challenge/ {
+        alias /usr/share/django-ca/acme/.well-known/acme-challenge/;
     }
 
     error_page   500 502 503 504  /50x.html;
@@ -43,13 +30,8 @@ server {
     include /etc/nginx/conf.d/include.d/ssl.conf;
     include /etc/nginx/conf.d/include.d/headers.conf;
 
-    location / {
-        uwsgi_pass django_ca_frontend;
-        include /etc/nginx/uwsgi_params;
-    }
-    location /static/ {
-        root   /usr/share/nginx/html/;
-    }
+    include /etc/nginx/conf.d/include.d/admin.conf;
+    include /etc/nginx/conf.d/include.d/acme.conf;
 
     error_page   500 502 503 504  /50x.html;
     location = /50x.html {
@@ -60,5 +42,8 @@ server {
 
 server {
     listen ${NGINX_HTTPS_PORT} default_server;
+    ssl_certificate_key ${NGINX_PRIVATE_KEY};
+    ssl_certificate     ${NGINX_PUBLIC_KEY};
+    include /etc/nginx/conf.d/include.d/ssl.conf;
     return 444;
 }
