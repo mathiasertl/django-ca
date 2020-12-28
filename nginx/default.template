@@ -3,7 +3,7 @@ upstream django_ca_frontend {
 }
 
 server {
-    listen       ${NGINX_PORT} default_server;
+    listen       ${NGINX_HTTP_PORT} default_server;
     server_name  ${NGINX_HOST};
 
     location / {
@@ -22,6 +22,6 @@ server {
 }
 
 server {
-    listen ${NGINX_PORT};
+    listen ${NGINX_HTTP_PORT};
     return 444;
 }

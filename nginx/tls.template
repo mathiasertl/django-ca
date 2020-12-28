@@ -1,0 +1,68 @@
+upstream django_ca_frontend {
+    server frontend:8000;
+}
+
+server {
+    listen       ${NGINX_HTTP_PORT} http2;
+    server_name  ${NGINX_HOST};
+
+    location /django_ca/issuer/ {
+        uwsgi_pass django_ca_frontend;
+        include /etc/nginx/uwsgi_params;
+    }
+    location /django_ca/crl/ {
+        uwsgi_pass django_ca_frontend;
+        include /etc/nginx/uwsgi_params;
+    }
+    location /django_ca/ocsp/ {
+        uwsgi_pass django_ca_frontend;
+        include /etc/nginx/uwsgi_params;
+    }
+    location /django_ca/acme/ {
+        uwsgi_pass django_ca_frontend;
+        include /etc/nginx/uwsgi_params;
+    }
+    location /static/ {
+        root   /usr/share/nginx/html/;
+    }
+
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+
+}
+
+server {
+    listen ${NGINX_HTTP_PORT} default_server;
+    return 444;
+}
+
+server {
+    listen       ${NGINX_HTTPS_PORT} ssl http2;
+    server_name  ${NGINX_HOST};
+
+    ssl_certificate_key ${NGINX_PRIVATE_KEY};
+    ssl_certificate     ${NGINX_PUBLIC_KEY};
+    include /etc/nginx/conf.d/include/ssl.conf;
+    include /etc/nginx/conf.d/include.d/headers.conf;
+
+    location / {
+        uwsgi_pass django_ca_frontend;
+        include /etc/nginx/uwsgi_params;
+    }
+    location /static/ {
+        root   /usr/share/nginx/html/;
+    }
+
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+
+}
+
+server {
+    listen ${NGINX_HTTPS_PORT} default_server;
+    return 444;
+}
