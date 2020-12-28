@@ -58,6 +58,9 @@ USER django-ca:django-ca
 # copy this late so that changes do not trigger a cache miss during build
 RUN python dev.py code-quality
 RUN python dev.py coverage --format=text
+
+# Generate documentation
+ADD docker-compose.yml ./
 RUN make -C docs html-check
 RUN python dev.py init-demo
 
