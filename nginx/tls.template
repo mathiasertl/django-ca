@@ -1,7 +1,3 @@
-upstream django_ca_frontend {
-    server frontend:8000;
-}
-
 server {
     listen       ${NGINX_PORT} http2;
     server_name  ${NGINX_HOST};
