@@ -228,11 +228,14 @@ certificates for any CA and revoking certificates.
 
 CRL and OCSP services are provided by default, there's nothing you need to do to enable them. 
 
+Use ACME with certbot
+======================
+
 If you enabled :doc:`ACMEv2 support <acme>`, all you need to do is enable ACMEv2 for the intermediate CA using
 the admin interface (or using ``manage edit_ca``). After that, you can retrieve a certificate using a simple
 certbot command:
 
 .. code-block:: console
 
-   $ certbot register --server https://ca.example.com/django_ca/acme/directory/
-   $ certbot certonly --server https://ca.example.com/django_ca/acme/directory/ ...
+   $ sudo certbot register --server https://ca.example.com/django_ca/acme/directory/
+   $ sudo certbot certonly --server https://ca.example.com/django_ca/acme/directory/ ...
