@@ -12,9 +12,6 @@ function getCookie(name) {
             }
         }
     }
-    if (! cookieValue) {
-        cookieValue = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    }
     return cookieValue;
 }
 var csrftoken = getCookie('csrftoken');
@@ -25,7 +22,8 @@ function csrfSafeMethod(method) {
 }
 django.jQuery.ajaxSetup({
     beforeSend: function(xhr, settings) {
-        if (!csrfSafeMethod(settings.type) && !this.crossDomain && csrftoken) {
+        var token = csrftoken ? csrftoken : document.querySelector('[name=csrfmiddlewaretoken]').value;
+        if (!csrfSafeMethod(settings.type) && !this.crossDomain && token) {
             xhr.setRequestHeader("X-CSRFToken", csrftoken);
         }
     }
