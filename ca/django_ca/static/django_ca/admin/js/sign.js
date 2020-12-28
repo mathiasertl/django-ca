@@ -1,4 +1,4 @@
-// see https://docs.djangoproject.com/en/1.9/ref/csrf/#ajax
+// see https://docs.djangoproject.com/en/dev/ref/csrf/#ajax
 function getCookie(name) {
     var cookieValue = null;
     if (document.cookie && document.cookie != '') {
@@ -11,6 +11,9 @@ function getCookie(name) {
                 break;
             }
         }
+    }
+    if (! cookieValue) {
+        cookieValue = document.querySelector('[name=csrfmiddlewaretoken]').value;
     }
     return cookieValue;
 }
