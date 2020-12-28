@@ -13,9 +13,12 @@ ChangeLog
 * New :ref:`CA_DEFAULT_CA <settings-ca-default-ca>` setting to consistently configure the CA used by default.
 * Fix the ``--issuer-alt-name`` option for the init_ca/edit_ca management commands.
 * Correctly handle IDNA domain names in URLs and certificates.
-* Preliminary :doc:`acme`.
+* **Preliminary** :doc:`acme`.
+* CAs have new fields ``caa_identity``, ``website`` and ``terms_of_service``, which are used by ACME.
+* Add thorough :doc:`quickstart_with_docke_compose`.
 * Add support for Python 3.9.
 * Add support for cryptography 3.1, 3.2 and 3.3.
+* Start linting code with `pylint <https://www.pylint.org/>`_.
 
 Backwards incompatible changes
 ==============================
@@ -28,7 +31,7 @@ Backwards incompatible changes
 Deprecation notices
 ===================
 
-* This is the last release to support Celery 4.3.
+* This is the last release to support Celery 4.3 and 4.4.
 * This is the last release to support cryptography 2.8 and 2.9.
 * This is the last release to support Django 3.0 (2.2 LTS will still be supported).
 * This is the last release to support idna 2.9.
