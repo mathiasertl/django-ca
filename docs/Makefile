@@ -58,6 +58,7 @@ html:
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
 html-check:
+	cp ../docker-compose.yml source/_files/
 	$(SPHINXBUILD) -n -W -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 
 dirhtml:
