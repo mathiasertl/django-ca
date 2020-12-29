@@ -233,11 +233,9 @@ elif args.command == 'docker-test':
         'python:3.7-alpine3.12',
         'python:3.8-alpine3.12',
         'python:3.9-alpine3.12',
-        'python:3.5-alpine3.11',
         'python:3.6-alpine3.11',
         'python:3.7-alpine3.11',
         'python:3.8-alpine3.11',
-        'python:3.5-alpine3.10',
         'python:3.6-alpine3.10',
         'python:3.7-alpine3.10',
         'python:3.8-alpine3.10',
@@ -282,14 +280,16 @@ elif args.command == 'docker-test':
                         break
 
             if p.returncode == 0:
-                ok("\n%s passed.\n" % image)
+                ok_str = '# %s passed. #' % image
+                ok("%s\n%s\n%s\n\n" % ('#' * len(ok_str), ok_str, '#' * len(ok_str)))
                 docker_runs.append({
                     'image': image,
                     'success': True,
                     'error': '',
                 })
             else:
-                error("\n%s failed: return code %s.\n" % (image, p.returncode))
+                failed_str = '# %s failed: return code %s. #' % (image, p.returncode)
+                error("%s\n%s\n%s\n\n" % ('#' * len(failed_str), failed_str, '#' * len(failed_str)))
                 docker_runs.append({
                     'image': image,
                     'success': False,
