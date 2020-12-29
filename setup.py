@@ -84,7 +84,7 @@ setup(
     ],
     package_dir={'': 'ca'},
     package_data={'': package_data},
-    python_requires='>=3.5',
+    python_requires='>=3.6',
     zip_safe=False,  # because of the static files
     install_requires=install_requires,
     extras_require={
