@@ -15,7 +15,7 @@ ChangeLog
 * Correctly handle IDNA domain names in URLs and certificates.
 * **Preliminary** :doc:`acme`.
 * CAs have new fields ``caa_identity``, ``website`` and ``terms_of_service``, which are used by ACME.
-* Add thorough :doc:`quickstart_with_docke_compose`.
+* Add thorough :doc:`quickstart_docker_compose`.
 * Add support for Python 3.9.
 * Add support for cryptography 3.1, 3.2 and 3.3.
 * Start linting code with `pylint <https://www.pylint.org/>`_.
