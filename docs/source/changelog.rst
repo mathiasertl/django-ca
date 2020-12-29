@@ -13,12 +13,22 @@ ChangeLog
 * New :ref:`CA_DEFAULT_CA <settings-ca-default-ca>` setting to consistently configure the CA used by default.
 * Fix the ``--issuer-alt-name`` option for the init_ca/edit_ca management commands.
 * Correctly handle IDNA domain names in URLs and certificates.
-* **Preliminary** :doc:`acme`.
+* **Preliminary** :doc:`acme` (disabled by default).
 * CAs have new fields ``caa_identity``, ``website`` and ``terms_of_service``, which are used by ACME.
-* Add thorough :doc:`quickstart_docker_compose`.
 * Add support for Python 3.9.
 * Add support for cryptography 3.1, 3.2 and 3.3.
 * Start linting code with `pylint <https://www.pylint.org/>`_.
+* Secure CSRF and session cookies using Djangos ``SESSION_COOKIE_SECURE``, ``CSRF_COOKIE_HTTPONLY`` and
+  ``CSRF_COOKIE_SECURE`` settings.
+
+Docker (Compose)
+================
+
+* Add thorough :doc:`quickstart_docker_compose`.
+* Collect static files on startup instead of during build. The latter causes problems with image updates.
+* Make ``manage.py`` available as the ``manage`` shortcut.
+* Add several security related headers to the admin interface (CSP, etc).
+* Include a template for a complete TLS configuration.
 
 Backwards incompatible changes
 ==============================
