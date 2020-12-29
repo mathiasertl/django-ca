@@ -16,7 +16,7 @@ Check versions
 * Check ``NEWEST_PYTHON``, ``NEWEST_DJANGO`` and ``NEWEST_CRYPTOGRAPHY`` in ``test_settings.py``.
 * Update ``VERSION`` and ``__version__`` in ``ca/django_ca/__init__.py``
   (see `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_).
-* Update ``version`` parameter in ``setup.py``.
+* Update the docker images in `dev.py docker-test`.
 
 Other tasks
 ===========

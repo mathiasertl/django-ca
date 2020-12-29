@@ -35,6 +35,7 @@ Deprecation notices
 * This is the last release to support cryptography 2.8 and 2.9.
 * This is the last release to support Django 3.0 (2.2 LTS will still be supported).
 * This is the last release to support idna 2.9.
+* This is the last release to support Alpine 3.10.
 
 .. _changelog-1.16.1:
 
