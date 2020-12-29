@@ -10,6 +10,22 @@ standard ACME clients.
    Support for ACME is preliminary and must be explicitly activated. Several features are not yet implemented.
    Use this feature only with the necessary caution.
 
+*****************************
+Install required dependencies
+*****************************
+
+The Docker image already includes all required dependencies, so there is nothing you need to do.
+
+If you install **django-ca** via pip, you can install all required dependencies using the ``acme`` extra:
+
+.. code-block:: console
+
+   $ pip install django-ca[acme]
+
+If you want to install dependencies manually, you need `acme <https://pypi.org/project/acme/>`_ and `requests
+<https://pypi.org/project/requests/>`_ (for challenge validation).
+
+
 *********************
 Enable ACMEv2 support
 *********************
