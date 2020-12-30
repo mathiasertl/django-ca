@@ -4,6 +4,14 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.18.0:
+
+************
+1.18.0 (TBR)
+************
+
+This version is currently unter development.
+
 .. _changelog-1.17.0:
 
 *******************
