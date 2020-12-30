@@ -77,15 +77,11 @@ docker-compose
 **************
 
 * Verify that docker-compose uses up-to-date version of 3rd-party containers.
-* Follow instructions to test the docker-compose setup:
-
-.. code-block:: console
-
-   $ DJANGO_CA_CA_DEFAULT_HOSTNAME=localhost docker-compose up
-   $ docker-compose exec backend ./manage.py createsuperuser
-   $ docker-compose exec backend ./manage.py init_ca --pathlen=1 root /CN=example.com
-   $ docker-compose exec backend ./manage.py init_ca \
-   >     --path=ca/shared/ --parent=example.com child /CN=child.example.com
+* Follow :doc:`quickstart_docker_compose` to set up a CA. 
+  
+  * Use ``localhost`` as hostname.
+  * Do not set ``NGINX_TEMPLATE`` in :file:`.env`.
+  * Do not add a :file:`docker-compose.override.yml` (it's only for TLS).
 
 You should now be able to visit http://localhost/admin and log in. You are able to sign a certificate, but
 *only* for the "child" CA.
@@ -104,28 +100,30 @@ using the CLI:
 
 .. code-block:: console
 
-   $ docker-compose exec backend ./manage.py sign_cert --ca=example.com \
+   $ docker-compose exec backend manage sign_cert --ca="Root CA" \
    >     --subject="/CN=signed-in-backend.example.com"
+   Please paste the CSR:
+   ...
 
 Check that the same fails in the frontend container (because the root CA is only available in the backend):
 
 .. code-block:: console
 
-   $ docker-compose exec frontend ./manage.py sign_cert --ca=example.com \
+   $ docker-compose exec frontend manage sign_cert --ca="Root CA" \
    >     --subject="/CN=signed-in-backend.example.com"
 
 Finally, verify that CRL and OCSP validation works:
 
 .. code-block:: console
 
-   $ docker-compose exec backend ./manage.py dump_ca example.com > root.pem
-   $ docker-compose exec backend ./manage.py dump_cert signed-in-backend.example.com > cert.pem
+   $ docker-compose exec backend manage dump_ca "Root CA" > root.pem
+   $ docker-compose exec backend manage dump_cert signed-in-backend.example.com > cert.pem
    $ openssl verify -CAfile root.pem -crl_download -crl_check cert.pem
    cert.pem: OK
    $ openssl x509 -in cert.pem -noout -text | grep OCSP 
-         OCSP - URI:http://localhost/django_ca/ocsp/772198A6DAEF88A44C3F34780F0D657A60378EB1/cert/
+         OCSP - URI:http://localhost/django_ca/ocsp/...
    $ openssl ocsp -CAfile root.pem -issuer root.pem -cert cert.pem -resp_text \
-   >     -url http://localhost/django_ca/ocsp/772198A6DAEF88A44C3F34780F0D657A60378EB1/cert/
+   >     -url http://localhost/django_ca/ocsp/...
    ...
    Response verify OK
    cert.pem: good
