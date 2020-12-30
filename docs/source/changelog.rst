@@ -6,9 +6,9 @@ ChangeLog
 
 .. _changelog-1.17.0:
 
-************
-1.17.0 (TBR)
-************
+*******************
+1.17.0 (2020-12-30)
+*******************
 
 * New :ref:`CA_DEFAULT_CA <settings-ca-default-ca>` setting to consistently configure the CA used by default.
 * Fix the ``--issuer-alt-name`` option for the init_ca/edit_ca management commands.
