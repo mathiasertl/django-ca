@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Test :py:mod:`django_ca.deprecation`."""
+
 import warnings
 
 from django.test import TestCase
@@ -21,20 +23,26 @@ from ..deprecation import RemovedInNextVersionWarning
 
 
 class TestDjangoCATestCase(TestCase):
+    """Test :py:mod:`django_ca.deprecation`."""
     msg_in_119 = 'deprecated in 1.19'
     msg_in_120 = 'deprecated in 1.20'
     msg_in_next = 'deprecated in next version'
 
     def deprecated_in_119(self):
+        """Emit a message about deprecation in 1.19."""
         warnings.warn(self.msg_in_119, category=RemovedInDjangoCA119Warning)
 
     def deprecated_in_120(self):
+        """Emit a message about deprecation in 1.20."""
         warnings.warn(self.msg_in_120, category=RemovedInDjangoCA120Warning)
 
     def deprecated_in_next(self):
+        """Emit a message about deprecation in the next version."""
         warnings.warn(self.msg_in_next, category=RemovedInNextVersionWarning)
 
     def test_base(self):
+        """Test warning messages."""
+
         with self.assertWarnsRegex(RemovedInDjangoCA119Warning, r'^%s$' % self.msg_in_119):
             self.deprecated_in_119()
         with self.assertWarnsRegex(RemovedInDjangoCA120Warning, r'^%s$' % self.msg_in_120):

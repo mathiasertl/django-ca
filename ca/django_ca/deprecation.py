@@ -11,15 +11,15 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Deprecation classes in django-ca."""
+
 
 class RemovedInDjangoCA119Warning(DeprecationWarning):
     """Warning if a feature will be removed in the next django-ca version."""
-    pass
 
 
 class RemovedInDjangoCA120Warning(PendingDeprecationWarning):
     """Warning if a feature will be removed in the version after the next django-ca version."""
-    pass
 
 
 RemovedInNextVersionWarning = RemovedInDjangoCA119Warning
