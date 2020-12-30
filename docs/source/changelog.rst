@@ -12,6 +12,14 @@ ChangeLog
 
 This version is currently unter development.
 
+Backwards incompatible changes
+==============================
+
+* Drop support for Django 3.0.
+* Drop support for cryptography 2.8 and 2.9.
+* Drop support for Celery 4.3 and 4.4.
+* Drop support for idna 2.9.
+
 .. _changelog-1.17.0:
 
 *******************
