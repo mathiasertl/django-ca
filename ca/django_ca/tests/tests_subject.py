@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Test module testing :py:class:`~django_ca.subject.Subject`."""
+
 import doctest
 
 from cryptography import x509
@@ -21,25 +23,31 @@ from django.test import TestCase
 from ..subject import Subject
 
 
-def load_tests(loader, tests, ignore):
+def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+    """Load doctests"""
     tests.addTests(doctest.DocTestSuite('django_ca.subject'))
     return tests
 
 
 class TestSubject(TestCase):
+    """Main test case class for :py:class:`~django_ca.subject.Subject`."""
+
     def test_init_str(self):
+        """Test creation with a str."""
         self.assertEqual(str(Subject('/CN=example.com')), '/CN=example.com')
         self.assertEqual(str(Subject('/C=AT/L=Vienna/O=example/CN=example.com')),
                          '/C=AT/L=Vienna/O=example/CN=example.com')
         self.assertEqual(str(Subject('/C=/CN=example.com')), '/CN=example.com')
 
     def test_init_dict(self):
+        """Test creation with a dict."""
         self.assertEqual(str(Subject({'CN': 'example.com'})), '/CN=example.com')
         self.assertEqual(str(Subject({'C': 'AT', 'L': 'Vienna', 'O': 'example', 'CN': 'example.com'})),
                          '/C=AT/L=Vienna/O=example/CN=example.com')
         self.assertEqual(str(Subject({'C': '', 'CN': 'example.com'})), '/CN=example.com')
 
     def test_init_list(self):
+        """Test creation with a list or tuple."""
         self.assertEqual(str(Subject([('CN', 'example.com')])), '/CN=example.com')
         self.assertEqual(str(Subject([('C', 'AT'), ('L', 'Vienna'), ('O', 'example'),
                                       ('CN', 'example.com')])),
@@ -54,6 +62,7 @@ class TestSubject(TestCase):
         self.assertEqual(str(Subject((('C', ''), ('CN', 'example.com'), ))), '/CN=example.com')
 
     def test_init_empty(self):
+        """Test creating an empty subject."""
         self.assertEqual(str(Subject()), '/')
         self.assertEqual(str(Subject([])), '/')
         self.assertEqual(str(Subject({})), '/')
@@ -61,6 +70,7 @@ class TestSubject(TestCase):
         self.assertEqual(str(Subject(x509.Name(attributes=[]))), '/')
 
     def test_init_name(self):
+        """Test creation with an x509.Name."""
         name = x509.Name(attributes=[
             x509.NameAttribute(oid=NameOID.COUNTRY_NAME, value='AT'),
             x509.NameAttribute(oid=NameOID.COMMON_NAME, value='example.com'),
@@ -68,6 +78,7 @@ class TestSubject(TestCase):
         self.assertEqual(str(Subject(name)), '/C=AT/CN=example.com')
 
     def test_init_order(self):
+        """Test that order is honored."""
         self.assertEqual(str(Subject([
             ('C', 'AT'),
             ('O', 'example'),
@@ -76,7 +87,7 @@ class TestSubject(TestCase):
         ])), '/C=AT/L=Vienna/O=example/CN=example.com')
 
     def test_init_multiple(self):
-        # OU can occur multiple times
+        """Test creating a subject with multiple OUs."""
         self.assertEqual(str(Subject([
             ('C', 'AT'),
             ('OU', 'foo'),
@@ -89,11 +100,13 @@ class TestSubject(TestCase):
         with self.assertRaisesRegex(ValueError, r'^C: Must not occur multiple times$'):
             Subject([('C', 'AT'), ('C', 'US')])
 
-    def test_init_type(self):
+    def test_init_invalid_type(self):
+        """Test creating a subject with an invalid type."""
         with self.assertRaisesRegex(ValueError, r'^Invalid subject: 33$'):
             Subject(33)
 
     def test_contains(self):
+        """Test the ``in`` operator."""
         self.assertIn('CN', Subject('/CN=example.com'))
         self.assertIn(NameOID.COMMON_NAME, Subject('/CN=example.com'))
         self.assertNotIn(NameOID.LOCALITY_NAME, Subject('/CN=example.com'))
@@ -102,6 +115,7 @@ class TestSubject(TestCase):
         self.assertIn(NameOID.COMMON_NAME, Subject('/C=AT/CN=example.com'))
 
     def test_getitem(self):
+        """Test dictionary-style value lookup (s['a'])."""
         self.assertEqual(Subject('/CN=example.com')['CN'], 'example.com')
         self.assertEqual(Subject('/C=AT/CN=example.com')['C'], 'AT')
         self.assertEqual(Subject('/C=AT/CN=example.com')['CN'], 'example.com')
@@ -117,12 +131,15 @@ class TestSubject(TestCase):
 
         # test keyerror
         with self.assertRaisesRegex(KeyError, r"^'L'$"):
+            # pylint: disable=expression-not-assigned
             Subject('/C=AT/OU=foo/CN=example.com')['L']
 
         with self.assertRaisesRegex(KeyError, r"^'L'$"):
+            # pylint: disable=expression-not-assigned
             Subject('/C=AT/OU=foo/CN=example.com')[NameOID.LOCALITY_NAME]
 
     def test_eq(self):
+        """Test subject equality."""
         self.assertEqual(Subject('/CN=example.com'), Subject([('CN', 'example.com')]))
         self.assertNotEqual(Subject('/CN=example.com'), Subject([('CN', 'example.org')]))
 
@@ -131,6 +148,7 @@ class TestSubject(TestCase):
         self.assertEqual(Subject('/C=AT/CN=example.com'), Subject('/CN=example.com/C=AT'))
 
     def test_len(self):
+        """Test the len() function."""
         self.assertEqual(len(Subject('')), 0)
         self.assertEqual(len(Subject('/C=AT')), 1)
         self.assertEqual(len(Subject('/C=AT/CN=example.com')), 2)
@@ -138,49 +156,52 @@ class TestSubject(TestCase):
         self.assertEqual(len(Subject('/C=AT/OU=foo/OU=bar/CN=example.com')), 3)
 
     def test_repr(self):
+        """Test repr()."""
         self.assertEqual(repr(Subject('/C=AT/CN=example.com')), 'Subject("/C=AT/CN=example.com")')
         self.assertEqual(repr(Subject('/CN=example.com/C=AT')), 'Subject("/C=AT/CN=example.com")')
         self.assertEqual(repr(Subject('/cn=example.com/c=AT')), 'Subject("/C=AT/CN=example.com")')
 
     def test_setitem(self):
-        s = Subject('')
-        s['C'] = 'AT'
-        self.assertEqual(s, Subject('/C=AT'))
-        s['C'] = 'DE'
-        self.assertEqual(s, Subject('/C=DE'))
-        s[NameOID.COUNTRY_NAME] = ['AT']
-        self.assertEqual(s, Subject('/C=AT'))
+        """Test dictionary style item setting (s['a'] = b)."""
+        subj = Subject('')
+        subj['C'] = 'AT'
+        self.assertEqual(subj, Subject('/C=AT'))
+        subj['C'] = 'DE'
+        self.assertEqual(subj, Subject('/C=DE'))
+        subj[NameOID.COUNTRY_NAME] = ['AT']
+        self.assertEqual(subj, Subject('/C=AT'))
 
-        s = Subject('/CN=example.com')
-        s[NameOID.COUNTRY_NAME] = ['AT']
-        self.assertEqual(s, Subject('/C=AT/CN=example.com'))
+        subj = Subject('/CN=example.com')
+        subj[NameOID.COUNTRY_NAME] = ['AT']
+        self.assertEqual(subj, Subject('/C=AT/CN=example.com'))
 
         # also test multiples
-        s = Subject('/C=AT/CN=example.com')
-        s['OU'] = ['foo', 'bar']
-        self.assertEqual(s, Subject('/C=AT/OU=foo/OU=bar/CN=example.com'))
+        subj = Subject('/C=AT/CN=example.com')
+        subj['OU'] = ['foo', 'bar']
+        self.assertEqual(subj, Subject('/C=AT/OU=foo/OU=bar/CN=example.com'))
 
         with self.assertRaisesRegex(ValueError, r'L: Must not occur multiple times'):
-            s['L'] = ['foo', 'bar']
-        self.assertEqual(s, Subject('/C=AT/OU=foo/OU=bar/CN=example.com'))
+            subj['L'] = ['foo', 'bar']
+        self.assertEqual(subj, Subject('/C=AT/OU=foo/OU=bar/CN=example.com'))
 
         # setting an empty str or list effectively removes the value
-        s = Subject('/C=AT/CN=example.com')
-        s['C'] = None
-        self.assertEqual(s, Subject('/CN=example.com'))
+        subj = Subject('/C=AT/CN=example.com')
+        subj['C'] = None
+        self.assertEqual(subj, Subject('/CN=example.com'))
 
-        s = Subject('/C=AT/CN=example.com')
-        s['C'] = ''
-        self.assertEqual(s, Subject('/CN=example.com'))
+        subj = Subject('/C=AT/CN=example.com')
+        subj['C'] = ''
+        self.assertEqual(subj, Subject('/CN=example.com'))
 
-        s = Subject('/C=AT/CN=example.com')
-        s['C'] = []
-        self.assertEqual(s, Subject('/CN=example.com'))
+        subj = Subject('/C=AT/CN=example.com')
+        subj['C'] = []
+        self.assertEqual(subj, Subject('/CN=example.com'))
 
         with self.assertRaisesRegex(ValueError, r'^Value must be str or list$'):
-            s['C'] = 33
+            subj['C'] = 33
 
     def test_get(self):
+        """Test Subject.get()."""
         self.assertEqual(Subject('/CN=example.com').get('CN'), 'example.com')
         self.assertEqual(Subject('/C=AT/CN=example.com').get('C'), 'AT')
         self.assertEqual(Subject('/C=AT/CN=example.com').get('CN'), 'example.com')
@@ -206,106 +227,112 @@ class TestSubject(TestCase):
         self.assertEqual(Subject('/C=AT/OU=foo/CN=example.com').get(NameOID.LOCALITY_NAME, 'foo'), 'foo')
 
     def test_iters(self):
-        s = Subject('/CN=example.com')
-        self.assertCountEqual(s.keys(), ['CN'])
-        self.assertCountEqual(s.values(), ['example.com'])
-        self.assertCountEqual(s.items(), [('CN', 'example.com')])
+        """Test various iterators (keys(), values(), items())."""
+        subj = Subject('/CN=example.com')
+        self.assertCountEqual(subj.keys(), ['CN'])
+        self.assertCountEqual(subj.values(), ['example.com'])
+        self.assertCountEqual(subj.items(), [('CN', 'example.com')])
 
-        s = Subject('/C=AT/O=Org/OU=foo/OU=bar/CN=example.com')
-        self.assertCountEqual(s.keys(), ['C', 'O', 'OU', 'OU', 'CN'])
-        self.assertCountEqual(s.values(), ['AT', 'Org', 'foo', 'bar', 'example.com'])
-        self.assertCountEqual(s.items(), [('C', 'AT'), ('O', 'Org'), ('OU', 'foo'), ('OU', 'bar'),
-                                          ('CN', 'example.com')])
+        subj = Subject('/C=AT/O=Org/OU=foo/OU=bar/CN=example.com')
+        self.assertCountEqual(subj.keys(), ['C', 'O', 'OU', 'CN'])
+        self.assertCountEqual(subj.values(), ['AT', 'Org', 'foo', 'bar', 'example.com'])
+        self.assertCountEqual(subj.items(), [('C', 'AT'), ('O', 'Org'), ('OU', 'foo'), ('OU', 'bar'),
+                                             ('CN', 'example.com')])
 
-        keys = ['C', 'O', 'OU', 'OU', 'CN']
-        for i, key in enumerate(s):
+        keys = ['C', 'O', 'OU', 'CN']
+        for i, key in enumerate(subj):
             self.assertEqual(key, keys[i])
 
     def test_setdefault(self):
-        s = Subject('/CN=example.com')
-        s.setdefault('CN', 'example.org')
-        self.assertEqual(s, Subject('/CN=example.com'))
+        """Test Subject.setdefault()."""
+        subj = Subject('/CN=example.com')
+        subj.setdefault('CN', 'example.org')
+        self.assertEqual(subj, Subject('/CN=example.com'))
 
-        s.setdefault(NameOID.COMMON_NAME, 'example.org')
-        self.assertEqual(s, Subject('/CN=example.com'))
+        subj.setdefault(NameOID.COMMON_NAME, 'example.org')
+        self.assertEqual(subj, Subject('/CN=example.com'))
 
         # set a new value
-        s.setdefault('C', 'AT')
-        self.assertEqual(s, Subject('/C=AT/CN=example.com'))
-        s.setdefault('C', 'DE')
-        self.assertEqual(s, Subject('/C=AT/CN=example.com'))
+        subj.setdefault('C', 'AT')
+        self.assertEqual(subj, Subject('/C=AT/CN=example.com'))
+        subj.setdefault('C', 'DE')
+        self.assertEqual(subj, Subject('/C=AT/CN=example.com'))
 
         # ok, now set multiple OUs
-        s = Subject('/C=AT/CN=example.com')
-        s.setdefault('OU', ['foo', 'bar'])
-        self.assertEqual(s, Subject('/C=AT/OU=foo/OU=bar/CN=example.com'))
+        subj = Subject('/C=AT/CN=example.com')
+        subj.setdefault('OU', ['foo', 'bar'])
+        self.assertEqual(subj, Subject('/C=AT/OU=foo/OU=bar/CN=example.com'))
 
         # We can't set multiple C's
         with self.assertRaisesRegex(ValueError, r'L: Must not occur multiple times'):
-            s.setdefault('L', ['AT', 'DE'])
-        self.assertEqual(s, Subject('/C=AT/OU=foo/OU=bar/CN=example.com'))
+            subj.setdefault('L', ['AT', 'DE'])
+        self.assertEqual(subj, Subject('/C=AT/OU=foo/OU=bar/CN=example.com'))
 
-        s = Subject()
+        subj = Subject()
         with self.assertRaisesRegex(ValueError, r'^Value must be str or list$'):
-            s.setdefault('C', 33)
+            subj.setdefault('C', 33)
 
     def test_clear_copy(self):
-        s = Subject('/O=Org/CN=example.com')
-        s2 = s.copy()
-        s.clear()
-        self.assertFalse(s)
-        self.assertTrue(s2)
+        """Test that a subjects clear() does not affect the copy."""
+        subj = Subject('/O=Org/CN=example.com')
+        subj2 = subj.copy()
+        subj.clear()
+        self.assertFalse(subj)
+        self.assertTrue(subj2)
 
     def test_update(self):
+        """Test Subject.update()."""
         merged = Subject('/C=AT/O=Org/CN=example.net')
 
-        s = Subject('/O=Org/CN=example.com')
-        s.update(Subject('/C=AT/CN=example.net'))
-        self.assertEqual(s, merged)
+        subj = Subject('/O=Org/CN=example.com')
+        subj.update(Subject('/C=AT/CN=example.net'))
+        self.assertEqual(subj, merged)
 
-        s = Subject('/O=Org/CN=example.com')
-        s.update({'C': 'AT', 'CN': 'example.net'})
-        self.assertEqual(s, merged)
+        subj = Subject('/O=Org/CN=example.com')
+        subj.update({'C': 'AT', 'CN': 'example.net'})
+        self.assertEqual(subj, merged)
 
-        s = Subject('/O=Org/CN=example.com')
-        s.update([('C', 'AT'), ('CN', 'example.net')])
-        self.assertEqual(s, merged)
+        subj = Subject('/O=Org/CN=example.com')
+        subj.update([('C', 'AT'), ('CN', 'example.net')])
+        self.assertEqual(subj, merged)
 
-        s = Subject('/O=Org/CN=example.com')
-        s.update([('C', 'AT')], CN='example.net')
-        self.assertEqual(s, merged)
+        subj = Subject('/O=Org/CN=example.com')
+        subj.update([('C', 'AT')], CN='example.net')
+        self.assertEqual(subj, merged)
 
-        s = Subject('/O=Org/CN=example.com')
-        s.update(C='AT', CN='example.net')
-        self.assertEqual(s, merged)
+        subj = Subject('/O=Org/CN=example.com')
+        subj.update(C='AT', CN='example.net')
+        self.assertEqual(subj, merged)
 
-        s = Subject('/O=Org/CN=example.com')
-        s.update([('C', 'DE')], C='AT', CN='example.net')
-        self.assertEqual(s, merged)
+        subj = Subject('/O=Org/CN=example.com')
+        subj.update([('C', 'DE')], C='AT', CN='example.net')
+        self.assertEqual(subj, merged)
 
     def test_fields(self):
-        s = Subject('')
-        self.assertEqual(list(s.fields), [])
+        """Test the fields property."""
+        subj = Subject('')
+        self.assertEqual(list(subj.fields), [])
 
-        s = Subject('/C=AT')
-        self.assertEqual(list(s.fields), [(NameOID.COUNTRY_NAME, 'AT')])
+        subj = Subject('/C=AT')
+        self.assertEqual(list(subj.fields), [(NameOID.COUNTRY_NAME, 'AT')])
 
-        s = Subject('/C=AT/CN=example.com')
-        self.assertEqual(list(s.fields), [(NameOID.COUNTRY_NAME, 'AT'), (NameOID.COMMON_NAME, 'example.com')])
+        subj = Subject('/C=AT/CN=example.com')
+        self.assertEqual(list(subj.fields), [(NameOID.COUNTRY_NAME, 'AT'),
+                                             (NameOID.COMMON_NAME, 'example.com')])
 
-        s = Subject('/C=AT/OU=foo/CN=example.com')
-        self.assertEqual(list(s.fields), [(NameOID.COUNTRY_NAME, 'AT'),
-                                          (NameOID.ORGANIZATIONAL_UNIT_NAME, 'foo'),
-                                          (NameOID.COMMON_NAME, 'example.com')])
-        s = Subject('/C=AT/OU=foo/OU=bar/CN=example.com')
-        self.assertEqual(list(s.fields), [(NameOID.COUNTRY_NAME, 'AT'),
-                                          (NameOID.ORGANIZATIONAL_UNIT_NAME, 'foo'),
-                                          (NameOID.ORGANIZATIONAL_UNIT_NAME, 'bar'),
-                                          (NameOID.COMMON_NAME, 'example.com')])
+        subj = Subject('/C=AT/OU=foo/CN=example.com')
+        self.assertEqual(list(subj.fields), [(NameOID.COUNTRY_NAME, 'AT'),
+                                             (NameOID.ORGANIZATIONAL_UNIT_NAME, 'foo'),
+                                             (NameOID.COMMON_NAME, 'example.com')])
+        subj = Subject('/C=AT/OU=foo/OU=bar/CN=example.com')
+        self.assertEqual(list(subj.fields), [(NameOID.COUNTRY_NAME, 'AT'),
+                                             (NameOID.ORGANIZATIONAL_UNIT_NAME, 'foo'),
+                                             (NameOID.ORGANIZATIONAL_UNIT_NAME, 'bar'),
+                                             (NameOID.COMMON_NAME, 'example.com')])
 
         # Also test order
-        s = Subject('/CN=example.com/C=AT/OU=foo/OU=bar')
-        self.assertEqual(list(s.fields), [(NameOID.COUNTRY_NAME, 'AT'),
-                                          (NameOID.ORGANIZATIONAL_UNIT_NAME, 'foo'),
-                                          (NameOID.ORGANIZATIONAL_UNIT_NAME, 'bar'),
-                                          (NameOID.COMMON_NAME, 'example.com')])
+        subj = Subject('/CN=example.com/C=AT/OU=foo/OU=bar')
+        self.assertEqual(list(subj.fields), [(NameOID.COUNTRY_NAME, 'AT'),
+                                             (NameOID.ORGANIZATIONAL_UNIT_NAME, 'foo'),
+                                             (NameOID.ORGANIZATIONAL_UNIT_NAME, 'bar'),
+                                             (NameOID.COMMON_NAME, 'example.com')])
