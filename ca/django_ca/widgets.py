@@ -14,7 +14,6 @@
 """Form widgets for django-ca admin interface."""
 
 from django.forms import widgets
-from django.utils.encoding import force_str
 from django.utils.translation import gettext as _
 
 from . import ca_settings
@@ -67,23 +66,20 @@ class LabeledTextInput(widgets.TextInput):
 
 class SubjectTextInput(LabeledTextInput):
     """Widget used in :py:class:`~django_ca.widgets.SubjectWidget`."""
+
     template_name = 'django_ca/forms/widgets/subjecttextinput.html'
 
 
 class ProfileWidget(widgets.Select):
     """Widget for profile selection."""
-    # TODO: shouldn't we set a template_name here? Perhaps that's why render() is still called
 
-    def render(self, name, value, attrs=None, renderer=None):
-        html = super().render(name, value, attrs=attrs, renderer=renderer)
+    template_name = 'django_ca/forms/widgets/profile.html'
 
-        # add the description of the default selected profile as help text (will be updated by JS when
-        # different profile is selected)
-        desc = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get(
+    def get_context(self, *args, **kwargs):
+        ctx = super().get_context(*args, **kwargs)
+        ctx['desc'] = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get(
             'description', ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get('desc', ''))
-        html += '<p class="help profile-desc">%s</p>' % force_str(desc)
-
-        return html
+        return ctx
 
     class Media:
         js = (
