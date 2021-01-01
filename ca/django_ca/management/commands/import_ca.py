@@ -43,9 +43,10 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=
 Note that the private key will be copied to the directory configured by the CA_DIR setting."""
 
     def add_arguments(self, parser):
-        self.add_ca(parser, '--parent',
-                    help='''Make the CA an intermediate CA of the named CA. By default, this is a
-                    new root CA.''', no_default=True)
+        self.add_ca(
+            parser, '--parent',
+            help_text='Make the CA an intermediate CA of the named CA. By default, this is a new root CA.',
+            no_default=True)
         self.add_password(
             parser, help='Password used to encrypt the private key. Pass no argument to be prompted.')
         parser.add_argument('--import-password', nargs='?', action=PasswordAction, metavar='PASSWORD',

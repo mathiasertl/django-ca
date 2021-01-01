@@ -56,11 +56,11 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=
         )
         self.add_ca(
             parser, '--parent', no_default=True,
-            help='''Make the CA an intermediate CA of the named CA. By default, this is a new root CA.''')
+            help_text='Make the CA an intermediate CA of the named CA. By default, this is a new root CA.')
         parser.add_argument('name', help='Human-readable name of the CA')
         self.add_subject(
-            parser, help='''The subject of the CA in the format "/key1=value1/key2=value2/...",
-                            valid keys are %s. If "CN" is not set, the name is used.'''
+            parser, help_text='''The subject of the CA in the format "/key1=value1/key2=value2/...",
+                                 valid keys are %s. If "CN" is not set, the name is used.'''
             % self.valid_subject_keys)
         self.add_password(
             parser, help='Optional password used to encrypt the private key. If no argument is passed, you '
