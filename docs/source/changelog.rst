@@ -12,6 +12,8 @@ ChangeLog
 
 This version is currently unter development.
 
+* Lint code using `pylint <https://www.pylint.org/>`_.
+
 Backwards incompatible changes
 ==============================
 
