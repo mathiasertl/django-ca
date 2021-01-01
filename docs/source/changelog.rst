@@ -396,11 +396,11 @@ OCSP
 ====
 
 * Reimplement OCSP using cryptography, used only if cryptography>=2.4 is installed.
-* :py:class:`django_ca.views.OCSPBaseView.responder_key` may now also be a relative path to be used with the 
+* ``django_ca.views.OCSPBaseView.responder_key`` may now also be a relative path to be used with the
   Django storage system.
-* :py:class:`django_ca.views.OCSPBaseView.responder_cert` may now also be a relative path to be used with the 
+* ``django_ca.views.OCSPBaseView.responder_cert`` may now also be a relative path to be used with the
   Django storage system.
-* :py:class:`django_ca.views.OCSPBaseView.responder_cert` may now also be a pre-loaded certificate. If you
+* ``django_ca.views.OCSPBaseView.responder_cert`` may now also be a pre-loaded certificate. If you
   still use ``cryptography<2.4`` use a ``oscrypto.asymmetric.Certificate``, for newer versions you must
   use a :py:class:`cg:cryptography.x509.Certificate`.
 * Fix log output string interpolation issue in OCSP responder.

@@ -65,6 +65,7 @@ Features:
    python/utils
    python/constants
    python/acme_messages
+   python/tasks
 
 
 .. toctree::

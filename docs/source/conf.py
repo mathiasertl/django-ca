@@ -68,6 +68,9 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.todo',
     'sphinx.ext.autosummary',
+
+    # Enable Celery task docs: https://docs.celeryproject.org/en/latest/userguide/sphinx.html
+    'celery.contrib.sphinx',
     'numpydoc',
 ]
 numpydoc_show_class_members = False
