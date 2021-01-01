@@ -92,7 +92,7 @@ class AcmeDirectory(View):
     .. seealso:: `RFC 8555, section 7.1.1 <https://tools.ietf.org/html/rfc8555#section-7.1.1>`_
     """
 
-    def _url(self, request, name, ca):  # pylint: disable=no-self-use
+    def _url(self, request, name, ca):
         return request.build_absolute_uri(reverse('django_ca:%s' % name, kwargs={'serial': ca.serial}))
 
     def get(self, request, serial=None):
@@ -390,7 +390,7 @@ class AcmeNewNonceView(AcmeGetNonceViewMixin, View):
         response['cache-control'] = 'no-store'
         return response
 
-    def head(self, request, serial):  # pylint: disable=no-self-use
+    def head(self, request, serial):
         """Get a new Nonce with a HEAD request."""
         # pylint: disable=method-hidden; false positive - View.setup() sets head as property if not defined
         # pylint: disable=unused-argument; false positive - really used by AcmeGetNonceViewMixin
@@ -416,7 +416,7 @@ class AcmeNewAccountView(AcmeBaseView):
     message_cls = messages.Registration
     requires_key = True
 
-    def validate_contacts(self, message):  # pylint: disable=no-self-use
+    def validate_contacts(self, message):
         """Validate the contact information for this message."""
 
         for contact in message.contact:
@@ -667,7 +667,7 @@ class AcmeOrderFinalizeView(AcmeBaseView):
     """
     message_cls = messages.CertificateRequest
 
-    def validate_csr(self, message, authorizations):  # pylint: disable=no-self-use
+    def validate_csr(self, message, authorizations):
         """Parse and validate the CSR, returns the PEM as str."""
 
         # Note: Jose wraps the CSR in a josepy.util.ComparableX509, that has *no* public member methods.

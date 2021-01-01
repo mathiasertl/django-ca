@@ -131,7 +131,7 @@ class Extension:
     def from_dict(self, value):
         self.value = value['value']
 
-    def from_other(self, value):  # pylint: disable=no-self-use
+    def from_other(self, value):
         raise ValueError('Value is of unsupported type %s' % type(value).__name__)
 
     def _test_value(self):
@@ -472,7 +472,7 @@ class OrderedSetExtension(IterableExtension):
     def symmetric_difference(self, other):  # equivalent to ^ operator
         return self ^ other
 
-    def symmetric_difference_update(self, other):  # pylint: disable=no-self-use
+    def symmetric_difference_update(self, other):
         self ^= other
 
     def union(self, *others):
@@ -834,7 +834,7 @@ class PolicyInformation:
             self.policy_qualifiers = []
         return self.policy_qualifiers.insert(index, self.parse_policy_qualifier(value))
 
-    def parse_policy_qualifier(self, qualifier):  # pylint: disable=no-self-use
+    def parse_policy_qualifier(self, qualifier):
         if isinstance(qualifier, str):
             return force_str(qualifier)
         if isinstance(qualifier, x509.UserNotice):
@@ -895,7 +895,7 @@ class PolicyInformation:
 
         return val
 
-    def serialize_policy_qualifier(self, qualifier):  # pylint: disable=no-self-use
+    def serialize_policy_qualifier(self, qualifier):
         if isinstance(qualifier, str):
             return qualifier
 
@@ -1176,7 +1176,7 @@ class AuthorityKeyIdentifier(Extension):
     def key_identifier(self, value):
         self.value['key_identifier'] = self.parse_keyid(value)
 
-    def parse_keyid(self, value):  # pylint: disable=no-self-use,inconsistent-return-statements
+    def parse_keyid(self, value):  # pylint: disable=inconsistent-return-statements
         if isinstance(value, bytes):
             return value
         if value is not None:
@@ -1269,7 +1269,7 @@ class BasicConstraints(Extension):
 
         return val
 
-    def parse_pathlen(self, value):  # pylint: disable=no-self-use
+    def parse_pathlen(self, value):
         """Parse a pathlen from the given value (either an int, a str of an int or None)."""
         if value is not None:
             try:

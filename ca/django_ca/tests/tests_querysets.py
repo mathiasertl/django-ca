@@ -47,7 +47,7 @@ class QuerySetTestCaseMixin:
         self.assertCountEqual(qs, items)
 
     @contextmanager
-    def attr(self, obj, attr, value):  # pylint: disable=no-self-use
+    def attr(self, obj, attr, value):
         """Context manager to temporarily set an attribute for an object."""
 
         original = getattr(obj, attr)

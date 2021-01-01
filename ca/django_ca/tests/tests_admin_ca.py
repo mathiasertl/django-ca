@@ -115,7 +115,7 @@ class ChangeTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithCATestCase)
 class CADownloadBundleTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithCATestCase):
     """Tests for downloading the certificate bundle."""
 
-    def get_url(self, ca):  # pylint: disable=no-self-use
+    def get_url(self, ca):
         """Function to get the bundle URL for the given CA."""
         return reverse('admin:django_ca_certificateauthority_download_bundle', kwargs={'pk': ca.pk})
 

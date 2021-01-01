@@ -101,7 +101,7 @@ class Profile:
             self.add_issuer_alternative_name == o.add_issuer_alternative_name and \
             self.description == o.description
 
-    def _parse_extension_value(self, key, value):  # pylint: disable=no-self-use
+    def _parse_extension_value(self, key, value):
         """Parse an extension value into a django_ca extension."""
 
         if isinstance(value, Extension):

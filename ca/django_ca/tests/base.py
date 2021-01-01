@@ -420,7 +420,7 @@ VQIDAQAB
     def mock_cadir(self, path):
         return mock_cadir(path)
 
-    def absolute_uri(self, name, hostname=None, **kwargs):  # pylint: disable: no-self-use
+    def absolute_uri(self, name, hostname=None, **kwargs):
         """Build an absolute uri for the given request.
 
         The `name` is assumed to be a URL name or a full path. If `name` starts with a colon, ``django_ca``
@@ -715,7 +715,7 @@ VQIDAQAB
         return profiles
 
     @contextmanager
-    def freeze_time(self, timestamp):  # pylint: disable=no-self-use
+    def freeze_time(self, timestamp):
         """Context manager to freeze time to one of the given timestamps.
 
         If `timestamp` is a str that is in the `timestamps` dict, that timestamp.

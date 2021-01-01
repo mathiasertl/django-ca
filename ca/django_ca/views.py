@@ -215,7 +215,7 @@ class OCSPView(View):
 
         return Certificate.objects.filter(ca=ca).get(serial=serial)
 
-    def http_response(self, data, status=200):  # pylint: disable=no-self-use
+    def http_response(self, data, status=200):
         """Get a HTTP OCSP response with given status and data."""
         return HttpResponse(data, status=status, content_type='application/ocsp-response')
 

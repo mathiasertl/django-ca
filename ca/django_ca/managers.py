@@ -52,7 +52,6 @@ class CertificateManagerMixin:  # pylint: disable=too-few-public-methods
 
     def get_common_extensions(self, issuer_url=None, crl_url=None, ocsp_url=None):
         """Add extensions potentially common to both CAs and certs."""
-        # pylint: disable=no-self-use
 
         extensions = []
         if crl_url:
@@ -73,7 +72,7 @@ class CertificateManagerMixin:  # pylint: disable=too-few-public-methods
             extensions.append((False, x509.AuthorityInformationAccess(auth_info_access)))
         return extensions
 
-    def _extra_extensions(self, builder, extra_extensions):  # pylint: disable=no-self-use
+    def _extra_extensions(self, builder, extra_extensions):
         for ext in extra_extensions:
             if isinstance(ext, x509.extensions.Extension):
                 builder = builder.add_extension(ext.value, critical=ext.critical)
@@ -311,7 +310,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 class CertificateManager(CertificateManagerMixin, models.Manager):
     """Model manager for the Certificate model."""
 
-    def parse_csr(self, csr, csr_format):  # pylint: disable=no-self-use; TODO: move to utils
+    def parse_csr(self, csr, csr_format):  # TODO: move to utils
         """Parse a CSR in the given format."""
 
         if isinstance(csr, x509.CertificateSigningRequest):

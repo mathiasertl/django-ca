@@ -493,7 +493,7 @@ class CertCommand(BaseCommand):
 class CertificateAuthorityDetailMixin:
     """Mixin to add common arguments to init_ca and edit_ca."""
 
-    def add_general_args(self, parser, default=''):  # pylint: disable=no-self-use
+    def add_general_args(self, parser, default=''):
         """Add some general arguments."""
 
         group = parser.add_argument_group('General', 'General information about the CA.')
@@ -503,7 +503,7 @@ class CertificateAuthorityDetailMixin:
         group.add_argument('--tos', default=default, metavar='URL', action=URLAction,
                            help='Terms of service URL for the CA.')
 
-    def add_acme_group(self, parser):  # pylint: disable=no-self-use
+    def add_acme_group(self, parser):
         """Add configuration for ACMEv2."""
 
         if not ca_settings.CA_ENABLE_ACME:
@@ -526,7 +526,7 @@ class CertificateAuthorityDetailMixin:
             '--acme-contact-required', dest='acme_requires_contact', action='store_true',
             help="Require email address during ACME account registration.")
 
-    def add_ca_args(self, parser):  # pylint: disable=no-self-use
+    def add_ca_args(self, parser):
         """Add CA arguments."""
 
         group = parser.add_argument_group(
