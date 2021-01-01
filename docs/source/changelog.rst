@@ -12,6 +12,7 @@ ChangeLog
 
 This version is currently unter development.
 
+* ``./dev.py init-demo`` now also saves profiles and CSRs.
 * Lint code using `pylint <https://www.pylint.org/>`_.
 
 Backwards incompatible changes

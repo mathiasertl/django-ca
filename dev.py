@@ -399,7 +399,10 @@ Please create %(localsettings)s from %(example)s and try again.""" % {
             if cert_data['cat'] != 'generated':
                 continue  # Imported cert
 
-            c = Certificate(ca=loaded_cas[cert_data['ca']])
+            with open(os.path.join(ca_settings.CA_DIR, cert_data['csr_filename']), 'r') as stream:
+                csr = stream.read()
+            profile = cert_data.get('profile', ca_settings.CA_DEFAULT_PROFILE)
+            c = Certificate(ca=loaded_cas[cert_data['ca']], csr=csr, profile=profile)
 
         with open(os.path.join(ca_settings.CA_DIR, cert_data['pub_filename']), 'rb') as stream:
             pem = stream.read()
