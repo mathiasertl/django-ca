@@ -91,8 +91,6 @@ def test(suites):
 
     if not args.virtual_display:
         os.environ['VIRTUAL_DISPLAY'] = 'n'
-    if not args.selenium:
-        os.environ['SKIP_SELENIUM_TESTS'] = 'y'
 
     warnings.filterwarnings(action='always')
     warnings.filterwarnings(action='error', module='django_ca')
@@ -138,6 +136,9 @@ def exclude_versions(cov, sw, this_version, version, version_str):
 
 
 if args.command == 'test':
+    if not args.selenium:
+        os.environ['SKIP_SELENIUM_TESTS'] = 'y'
+
     setup_django()
     test(args.suites)
 elif args.command == 'coverage':
@@ -149,6 +150,9 @@ elif args.command == 'coverage':
     else:
         report_dir = os.path.join(ROOTDIR, 'docs', 'build', 'coverage')
         data_file = None
+
+    if not args.selenium:
+        os.environ['SKIP_SELENIUM_TESTS'] = 'y'
 
     cov = coverage.Coverage(data_file=data_file, cover_pylib=False, branch=True, source=['django_ca'],
                             omit=['*migrations/*', '*/tests/tests*', ])
