@@ -88,8 +88,8 @@ class AdminTestMixin:
         # pylint: disable=invalid-name,missing-function-docstring; unittest standard
         self.user = User.objects.create_superuser(username=self.username, password=self.password,
                                                   email=self.email)
-        self.add_url = reverse('admin:%s_%s_add' % self._admin_url_format_tuple)
-        self.changelist_url = reverse('admin:%s_%s_changelist' % self._admin_url_format_tuple)
+        self.add_url = self.model.admin_add_url
+        self.changelist_url = self.model.admin_changelist_url
         self.client.force_login(self.user)
         super().setUp()
 

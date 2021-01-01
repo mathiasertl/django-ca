@@ -156,19 +156,25 @@ def pem_validator(value):
     if not value.endswith('\n-----END PUBLIC KEY-----'):
         raise ValidationError(_('Not a valid PEM.'))
 
-    # TODO: for some reason cryptography cannot load LE account PEMs
-    #try:
-    #    x509.load_pem_x509_certificate(force_bytes(value), default_backend())
-    #except Exception as ex:  # pylint: disable=broad-except
-    #    raise ValidationError(_('Not a valid PEM.')) from ex
-
 
 class DjangoCAModelMixin:
     """Mixin with shared properties for all django-ca models."""
 
+    @classmethod
+    @property
+    def admin_add_url(cls):
+        """URL to add an instance in the admin interface."""
+        return reverse('admin:%s_%s_add' % (cls._meta.app_label, cls._meta.model_name))
+
+    @classmethod
+    @property
+    def admin_changelist_url(cls):
+        """Changelist URL in the admin interface for the model."""
+        return reverse('admin:%s_%s_changelist' % (cls._meta.app_label, cls._meta.model_name))
+
     @property
     def admin_change_url(self):
-        """Change URL in the admin interface for the given class."""
+        """Change URL in the admin interface for the model instance."""
         return reverse('admin:%s_%s_change' % (self._meta.app_label, self._meta.model_name), args=(self.pk, ))
 
 
@@ -1268,7 +1274,7 @@ class AcmeOrder(DjangoCAModelMixin, models.Model):
             and self.account.usable
 
 
-class AcmeAuthorization(models.Model):
+class AcmeAuthorization(DjangoCAModelMixin, models.Model):
     """Implements an ACME authorization object.
 
     .. seealso::
@@ -1390,7 +1396,7 @@ class AcmeAuthorization(models.Model):
         return self.status in states and self.order.usable
 
 
-class AcmeChallenge(models.Model):
+class AcmeChallenge(DjangoCAModelMixin, models.Model):
     """Implements an ACME Challenge Object.
 
     .. seealso:: `RFC 8555, section 7.1.5 <https://tools.ietf.org/html/rfc8555#section-7.1.5>`_
@@ -1523,7 +1529,7 @@ class AcmeChallenge(models.Model):
         return self.status in states and self.auth.usable
 
 
-class AcmeCertificate(models.Model):
+class AcmeCertificate(DjangoCAModelMixin, models.Model):
     """Intermediate model for certificates to be issued via ACME."""
 
     objects = AcmeCertificateManager.from_queryset(AcmeCertificateQuerySet)()
