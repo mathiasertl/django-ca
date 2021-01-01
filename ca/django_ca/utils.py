@@ -308,6 +308,19 @@ def sanitize_serial(value):
     return serial
 
 
+def parse_csr(csr, csr_format):
+    """Parse a CSR in the given format."""
+
+    if isinstance(csr, x509.CertificateSigningRequest):
+        return csr
+    if csr_format == Encoding.PEM:
+        return x509.load_pem_x509_csr(force_bytes(csr), default_backend())
+    if csr_format == Encoding.DER:
+        return x509.load_der_x509_csr(force_bytes(csr), default_backend())
+
+    raise ValueError('Unknown CSR format passed: %s' % csr_format)
+
+
 def parse_name(name):
     """Parses a subject string as used in OpenSSLs command line utilities.
 

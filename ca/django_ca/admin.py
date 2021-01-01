@@ -71,6 +71,7 @@ from .utils import OID_NAME_MAPPINGS
 from .utils import SERIAL_RE
 from .utils import LazyEncoder
 from .utils import add_colons
+from .utils import parse_csr
 
 log = logging.getLogger(__name__)
 
@@ -653,7 +654,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                 # Note: CSR is set by model form already
                 csr = data['csr']
 
-            parsed_csr = Certificate.objects.parse_csr(csr, Encoding.PEM)
+            parsed_csr = parse_csr(csr, Encoding.PEM)
             expires = datetime.combine(data['expires'], datetime.min.time())
 
             extensions = {}
