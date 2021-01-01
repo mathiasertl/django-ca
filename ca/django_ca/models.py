@@ -100,6 +100,7 @@ from .signals import pre_revoke_cert
 from .subject import Subject
 from .utils import add_colons
 from .utils import ca_storage
+from .utils import classproperty
 from .utils import format_name
 from .utils import generate_private_key
 from .utils import get_crl_cache_key
@@ -160,15 +161,13 @@ def pem_validator(value):
 class DjangoCAModelMixin:
     """Mixin with shared properties for all django-ca models."""
 
-    @classmethod
-    @property
-    def admin_add_url(cls):
+    @classproperty
+    def admin_add_url(cls):  # pylint: disable=no-self-argument; false positive
         """URL to add an instance in the admin interface."""
         return reverse('admin:%s_%s_add' % (cls._meta.app_label, cls._meta.model_name))
 
-    @classmethod
-    @property
-    def admin_changelist_url(cls):
+    @classproperty
+    def admin_changelist_url(cls):  # pylint: disable=no-self-argument; false positive
         """Changelist URL in the admin interface for the model."""
         return reverse('admin:%s_%s_changelist' % (cls._meta.app_label, cls._meta.model_name))
 

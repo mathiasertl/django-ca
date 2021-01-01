@@ -112,6 +112,29 @@ class LazyEncoder(DjangoJSONEncoder):
         return super().default(o)
 
 
+try:
+    from django.utils.decorators import classproperty  # pylint: disable=unused-import
+except ImportError:  # pragma: no cover
+    # NOTE: Official Django documentation states that this decorator is new in Django 3.1, but in reality
+    #       it is present (but undocumented) in Django 2.2 as well.
+    # Copy of classproperty from django 3.1 for older versions
+    # pylint: disable=invalid-name,missing-function-docstring
+    class classproperty:
+        """
+        Decorator that converts a method with a single cls argument into a property
+        that can be accessed directly from the class.
+        """
+        def __init__(self, method=None):
+            self.fget = method
+
+        def __get__(self, instance, cls=None):
+            return self.fget(cls)
+
+        def getter(self, method):
+            self.fget = method
+            return self
+
+
 def sort_name(subject):
     """Returns the subject in the correct order for a x509 subject."""
     return sorted(subject, key=lambda e: SUBJECT_FIELDS.index(e[0]))
