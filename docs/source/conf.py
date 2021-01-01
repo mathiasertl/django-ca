@@ -337,7 +337,7 @@ autodoc_mock_imports = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3.8', None),
+    'python': ('https://docs.python.org/3.9', None),
     'cg': ('https://cryptography.io/en/latest/', None),
     'django': ('https://docs.djangoproject.com/en/dev/', 'https://docs.djangoproject.com/en/dev/_objects/'),
     'acme': ('https://acme-python.readthedocs.io/en/stable/', None),
