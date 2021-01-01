@@ -11,6 +11,11 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Module providing wrapper classes for various x509 extensions.
+
+The classes in this module wrap cryptography extensions, but allow adding/removing values, creating extensions
+in a more pythonic manner and provide access functions."""
+
 import binascii
 import re
 import textwrap
@@ -126,12 +131,19 @@ class Extension:
         return self.value
 
     def from_extension(self, value):
+        """Load a wrapper class from a cryptography extension instance.
+
+        Implementing classes are expected to implement this function."""
         raise NotImplementedError
 
     def from_dict(self, value):
+        """Load class from a dictionary."""
         self.value = value['value']
 
     def from_other(self, value):
+        """Load class from any other value type.
+
+        This class can be overwritten to allow loading classes from different types."""
         raise ValueError('Value is of unsupported type %s' % type(value).__name__)
 
     def _test_value(self):
@@ -178,6 +190,10 @@ class Extension:
 
 
 class UnrecognizedExtension(Extension):
+    """Class wrapping any extension this module does **not** support."""
+
+    # pylint: disable=abstract-method; We don't know the extension_type
+
     def __init__(self, value, name='', error=''):
         self._error = error
         self._name = name
@@ -188,6 +204,7 @@ class UnrecognizedExtension(Extension):
 
     @property
     def name(self):
+        """Name (best effort) for this extension."""
         if self._name:
             return self._name
         return 'Unsupported extension (OID %s)' % (self.value.oid.dotted_string)
@@ -235,7 +252,7 @@ class NullExtension(Extension):
 
     @property
     def extension_type(self):
-        return self.ext_class()
+        return self.ext_class()  # pylint: disable=no-member; concrete classes are expected to set this
 
     def from_extension(self, value):
         pass
@@ -262,6 +279,9 @@ class IterableExtension(Extension):
         foo
         bar
     """
+
+    # pylint: disable=abstract-method; class is itself a base class
+
     def __contains__(self, value):
         return self.parse_value(value) in self.value
 
@@ -284,6 +304,7 @@ class IterableExtension(Extension):
         return '\n'.join(['* %s' % v for v in self.serialize_iterable()])
 
     def parse_value(self, value):
+        """Parse a single value (presumably from an iterable)."""
         return value
 
     def serialize(self):
@@ -306,20 +327,30 @@ class IterableExtension(Extension):
 class ListExtension(IterableExtension):
     """Base class for extensions with multiple ordered values."""
 
+    # pylint: disable=abstract-method; class is itself a base class
+
     def __delitem__(self, key):
         del self.value[key]
 
     def __getitem__(self, key):
         if isinstance(key, int):
             return self.serialize_value(self.value[key])
-        else:  # a slice (e.g. "e[1:]")
-            return [self.serialize_value(v) for v in self.value[key]]
+        return [self.serialize_value(v) for v in self.value[key]]
 
     def __setitem__(self, key, value):
         if isinstance(key, int):
             self.value[key] = self.parse_value(value)
         else:
             self.value[key] = [self.parse_value(v) for v in value]
+
+    def from_dict(self, value):
+        self.value = [self.parse_value(v) for v in value.get('value', [])]
+
+    def from_extension(self, value):
+        self.value = [self.parse_value(v) for v in value.value]
+
+    # Implement functions provided by list(). Class mentions that this provides the same methods.
+    # pylint: disable=missing-function-docstring
 
     def append(self, value):
         self.value.append(self.parse_value(value))
@@ -338,20 +369,15 @@ class ListExtension(IterableExtension):
         self.value.extend([self.parse_value(n) for n in iterable])
         self._test_value()
 
-    def from_dict(self, value):
-        self.value = [self.parse_value(v) for v in value.get('value', [])]
-
-    def from_extension(self, value):
-        self.value = [self.parse_value(v) for v in value.value]
-
     def insert(self, index, value):
         self.value.insert(index, self.parse_value(value))
 
     def pop(self, index=-1):
         return self.serialize_value(self.value.pop(index))
 
-    def remove(self, v):
-        return self.value.remove(self.parse_value(v))
+    def remove(self, value):
+        return self.value.remove(self.parse_value(value))
+    # pylint: enable=missing-function-docstring
 
 
 class OrderedSetExtension(IterableExtension):
@@ -369,6 +395,8 @@ class OrderedSetExtension(IterableExtension):
         >>> e
         <OrderedSetExtension: ['bar'], critical=False>
     """
+
+    # pylint: disable=abstract-method; class is itself a base class
 
     name = 'OrderedSetExtension'
 
@@ -418,6 +446,19 @@ class OrderedSetExtension(IterableExtension):
     def _repr_value(self):
         return [str(v) for v in super()._repr_value()]
 
+    def parse_iterable(self, iterable):
+        """Parse values from the given iterable."""
+        return set(self.parse_value(i) for i in iterable)
+
+    def from_dict(self, value):
+        self.value = self.parse_iterable(value.get('value', set()))
+
+    def serialize_iterable(self):
+        return list(sorted(self.serialize_value(v) for v in self.value))
+
+    # Implement functions provided by set(). Class mentions that this provides the same methods.
+    # pylint: disable=missing-function-docstring
+
     def add(self, elem):
         self.value.add(self.parse_value(elem))
 
@@ -438,9 +479,6 @@ class OrderedSetExtension(IterableExtension):
     def discard(self, elem):
         self.value.discard(self.parse_value(elem))
 
-    def from_dict(self, value):
-        self.value = self.parse_iterable(value.get('value', set()))
-
     def intersection(self, *others):  # equivalent to & operator
         value = self.value.intersection(*[self.parse_iterable(o) for o in others])
         return OrderedSetExtension({'critical': self.critical, 'value': value})
@@ -457,17 +495,11 @@ class OrderedSetExtension(IterableExtension):
     def issuperset(self, other):
         return self.value.issuperset(self.parse_iterable(other))
 
-    def parse_iterable(self, iterable):
-        return set(self.parse_value(i) for i in iterable)
-
     def pop(self):
         return self.value.pop()
 
     def remove(self, elem):
         return self.value.remove(self.parse_value(elem))
-
-    def serialize_iterable(self):
-        return list(sorted(self.serialize_value(v) for v in self.value))
 
     def symmetric_difference(self, other):  # equivalent to ^ operator
         return self ^ other
@@ -482,6 +514,8 @@ class OrderedSetExtension(IterableExtension):
     def update(self, *others):
         for elem in others:
             self.value.update(self.parse_iterable(elem))
+
+    # pylint: enable=missing-function-docstring
 
 
 class AlternativeNameExtension(ListExtension):  # pylint: disable=abstract-method
@@ -659,6 +693,7 @@ class DistributionPoint:
         return repr(self)
 
     def as_text(self):
+        """Show as text."""
         if self.full_name is not None:
             names = [textwrap.indent('* %s' % s, '  ') for s in self.full_name.serialize()]
             text = '* Full Name:\n%s' % '\n'.join(names)
@@ -674,10 +709,12 @@ class DistributionPoint:
 
     @property
     def for_extension_type(self):
+        """Convert instance to a suitable cryptography class."""
         return x509.DistributionPoint(full_name=self.full_name, relative_name=self.relative_name,
                                       crl_issuer=self.crl_issuer, reasons=self.reasons)
 
     def serialize(self):
+        """Serialize this distribution point."""
         val = {}
 
         if self.full_name is not None:
@@ -734,7 +771,7 @@ class PolicyInformation:
     def __contains__(self, value):
         if self.policy_qualifiers is None:
             return False
-        return self.parse_policy_qualifier(value) in self.policy_qualifiers
+        return self._parse_policy_qualifier(value) in self.policy_qualifiers
 
     def __delitem__(self, key):
         if self.policy_qualifiers is None:
@@ -751,9 +788,9 @@ class PolicyInformation:
         if self.policy_qualifiers is None:
             raise IndexError('list index out of range')
         if isinstance(key, int):
-            return self.serialize_policy_qualifier(self.policy_qualifiers[key])
+            return self._serialize_policy_qualifier(self.policy_qualifiers[key])
 
-        return [self.serialize_policy_qualifier(k) for k in self.policy_qualifiers[key]]
+        return [self._serialize_policy_qualifier(k) for k in self.policy_qualifiers[key]]
 
     def __hash__(self):
         if self.policy_qualifiers is None:
@@ -780,11 +817,13 @@ class PolicyInformation:
         return repr(self)
 
     def append(self, value):
+        """Append the given policy qualifier."""
         if self.policy_qualifiers is None:
             self.policy_qualifiers = []
-        self.policy_qualifiers.append(self.parse_policy_qualifier(value))
+        self.policy_qualifiers.append(self._parse_policy_qualifier(value))
 
     def as_text(self, width=76):
+        """Show as text."""
         if self.policy_identifier is None:
             text = 'Policy Identifier: %s\n' % None
         else:
@@ -813,28 +852,33 @@ class PolicyInformation:
         return text.strip()
 
     def clear(self):
+        """Clear all qualifiers from this information."""
         self.policy_qualifiers = None
 
     def count(self, value):
+        """Count qualifiers from this information."""
         try:
-            return self.policy_qualifiers.count(self.parse_policy_qualifier(value))
+            return self.policy_qualifiers.count(self._parse_policy_qualifier(value))
         except (ValueError, AttributeError):
             return 0
 
     def extend(self, value):
-        self.policy_qualifiers.extend([self.parse_policy_qualifier(v) for v in value])
+        """Extend qualifiers with given iterable."""
+        self.policy_qualifiers.extend([self._parse_policy_qualifier(v) for v in value])
 
     @property
     def for_extension_type(self):
+        """Convert instance to a suitable cryptography class."""
         return x509.PolicyInformation(policy_identifier=self.policy_identifier,
                                       policy_qualifiers=self.policy_qualifiers)
 
     def insert(self, index, value):
+        """Insert qualifier at given index."""
         if self.policy_qualifiers is None:
             self.policy_qualifiers = []
-        return self.policy_qualifiers.insert(index, self.parse_policy_qualifier(value))
+        return self.policy_qualifiers.insert(index, self._parse_policy_qualifier(value))
 
-    def parse_policy_qualifier(self, qualifier):
+    def _parse_policy_qualifier(self, qualifier):
         if isinstance(qualifier, str):
             return force_str(qualifier)
         if isinstance(qualifier, x509.UserNotice):
@@ -859,12 +903,14 @@ class PolicyInformation:
         raise ValueError('PolicyQualifier must be string, dict or x509.UserNotice')
 
     def parse_policy_qualifiers(self, qualifiers):
+        """Parse given list of policy qualifiers."""
         if qualifiers is None:
             return None
-        return [self.parse_policy_qualifier(q) for q in qualifiers]
+        return [self._parse_policy_qualifier(q) for q in qualifiers]
 
     @property
     def policy_identifier(self):
+        """Return policy identifier."""
         return self._policy_identifier
 
     @policy_identifier.setter
@@ -874,10 +920,11 @@ class PolicyInformation:
         self._policy_identifier = value
 
     def pop(self, index=-1):
+        """Pop qualifier from given index."""
         if self.policy_qualifiers is None:
             return [].pop()
 
-        val = self.serialize_policy_qualifier(self.policy_qualifiers.pop(index))
+        val = self._serialize_policy_qualifier(self.policy_qualifiers.pop(index))
 
         if not self.policy_qualifiers:  # if list is now empty, set to none
             self.policy_qualifiers = None
@@ -885,17 +932,19 @@ class PolicyInformation:
         return val
 
     def remove(self, value):
+        """remove the given qualifier from this policy information."""
         if self.policy_qualifiers is None:
+            # Shortcut to raise the same Value error as if the element is not in the list
             return [].remove(None)
 
-        val = self.policy_qualifiers.remove(self.parse_policy_qualifier(value))
+        val = self.policy_qualifiers.remove(self._parse_policy_qualifier(value))
 
         if not self.policy_qualifiers:  # if list is now empty, set to none
             self.policy_qualifiers = None
 
         return val
 
-    def serialize_policy_qualifier(self, qualifier):
+    def _serialize_policy_qualifier(self, qualifier):
         if isinstance(qualifier, str):
             return qualifier
 
@@ -910,12 +959,14 @@ class PolicyInformation:
         return value
 
     def serialize_policy_qualifiers(self):
+        """Serialize policy qualifiers."""
         if self.policy_qualifiers is None:
             return None
 
-        return [self.serialize_policy_qualifier(q) for q in self.policy_qualifiers]
+        return [self._serialize_policy_qualifier(q) for q in self.policy_qualifiers]
 
     def serialize(self):
+        """Serialize this policy information."""
         value = {
             'policy_identifier': self.policy_identifier.dotted_string,
         }
@@ -1109,6 +1160,7 @@ class AuthorityKeyIdentifier(Extension):
 
     @property
     def authority_cert_issuer(self):
+        """Get the issuer of the Authority (if any)."""
         return self.value['authority_cert_issuer']
 
     @authority_cert_issuer.setter
@@ -1117,6 +1169,7 @@ class AuthorityKeyIdentifier(Extension):
 
     @property
     def authority_cert_serial_number(self):
+        """Get the serial number of the Authority."""
         return self.value['authority_cert_serial_number']
 
     @authority_cert_serial_number.setter
@@ -1162,6 +1215,8 @@ class AuthorityKeyIdentifier(Extension):
             super().from_other(value)
 
     def from_subject_key_identifier(self, ext):
+        """Create an extension based on SubjectKeyIdentifier extension."""
+        # pylint: disable=attribute-defined-outside-init; func is designed to be called by init
         self.value = {
             'key_identifier': ext.value,
             'authority_cert_issuer': None,
@@ -1170,6 +1225,7 @@ class AuthorityKeyIdentifier(Extension):
 
     @property
     def key_identifier(self):
+        """Get the key identifier for this extension."""
         return self.value['key_identifier']
 
     @key_identifier.setter
@@ -1177,6 +1233,7 @@ class AuthorityKeyIdentifier(Extension):
         self.value['key_identifier'] = self.parse_keyid(value)
 
     def parse_keyid(self, value):  # pylint: disable=inconsistent-return-statements
+        """Parse the given key id (may be None)."""
         if isinstance(value, bytes):
             return value
         if value is not None:
@@ -2046,7 +2103,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
     def pop(self, index=-1):
         raise NotImplementedError
 
-    def remove(self, v):
+    def remove(self, value):
         raise NotImplementedError
 
     def serialize_value(self, value):
