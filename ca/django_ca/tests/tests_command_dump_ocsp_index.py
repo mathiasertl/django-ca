@@ -14,12 +14,14 @@
 import os
 import shutil
 import tempfile
+from contextlib import contextmanager
 from datetime import datetime
 from datetime import timedelta
 
 from freezegun import freeze_time
 
 from ..constants import ReasonFlags
+from ..deprecation import RemovedInDjangoCA120Warning
 from .base import DjangoCAWithCertTestCase
 from .base import certs
 from .base import timestamps
@@ -94,14 +96,25 @@ revoked_second = "R\t{ecc-cert[ocsp-expires]}\t{revoked},key_compromise\t{ecc-ce
 
 
 class OCSPIndexTestCase(DjangoCAWithCertTestCase):
+    """Test the ``dump_ocsp_index`` management command."""
     timeformat = '%y%m%d%H%M%SZ'
 
-    def assertIndex(self, ca=None, expected='', **context):
+    @contextmanager
+    def assertDeprecation(self):  # pylint: disable=invalid-name; unittest standard
+        """Context manager to assert the deprecation message."""
+        with self.assertWarnsRegex(
+                RemovedInDjangoCA120Warning,
+                r'^Creating an OCSP index is deprecated and will be removed in 1\.20\.0\.$'
+        ) as warn_cm:
+            yield warn_cm
+
+    def assertIndex(self, ca=None, expected='', **context):  # pylint: disable=invalid-name; unittest standard
         if ca is None:
             ca = self.cas['child']
 
         context.update(certs)
-        stdout, stderr = self.cmd('dump_ocsp_index', ca=ca)
+        with self.assertDeprecation():
+            stdout, stderr = self.cmd('dump_ocsp_index', ca=ca)
         self.assertEqual(stdout, expected.format(**context))
         self.assertEqual(stderr, '')
 
@@ -157,7 +170,8 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
         try:
             path = os.path.join(tmpdir, 'ocsp-index.txt')
 
-            stdout, stderr = self.cmd('dump_ocsp_index', path, ca=self.cas['child'])
+            with self.assertDeprecation():
+                stdout, stderr = self.cmd('dump_ocsp_index', path, ca=self.cas['child'])
             self.assertEqual(stdout, '')
             self.assertEqual(stderr, '')
 

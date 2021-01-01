@@ -20,6 +20,13 @@ Backwards incompatible changes
 * Drop support for Celery 4.3 and 4.4.
 * Drop support for idna 2.9.
 
+Deprecation notices
+===================
+
+* Creating an index for running an OCSP responder with :manpage:`openssl-ocsp(1SSL)` is deprecated and will be
+  removed in django-ca 1.20.0. The manpage explicitly states it "is only useful for test and demonstration
+  purposes", and we can solidly run our own responders by now.
+
 .. _changelog-1.17.0:
 
 *******************

@@ -124,6 +124,23 @@ certificates, obviously), either set it in the admin interface or via the comman
 Run an OCSP responser with ``openssl ocsp``
 *******************************************
 
+.. deprecated:: 1.18.0
+
+   This function will be removed in django-ca 1.20.0.
+
+.. WARNING::
+
+   The OCSP responder provided by :manpage:`openssl-ocsp(1SSL)` is not a full OCSP responder. The manpage
+   states explicitly states:
+
+       The OCSP server is only useful for test and demonstration purposes: it is not really usable as a full OCSP responder. It contains only
+       a very simple HTTP request handling and can only handle the POST form of OCSP queries. It also handles requests serially meaning it
+       cannot respond to new requests until it has processed the current one. The text index file format of revocation is also inefficient for
+       large quantities of revocation data.
+
+   Thus this functionality will be removed in django-ca 1.20.0.
+
+
 OpenSSL ships with the ``openssl ocsp`` command that allows you to run an OCSP
 responser, but note that the manpage says **"only useful for test and
 demonstration purposes"**.
