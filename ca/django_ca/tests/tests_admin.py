@@ -1334,6 +1334,7 @@ class ResignCertTestCase(CertificateAdminTestMixin, WebTestMixin, DjangoCAWithGe
 
     @override_tmpcadir()
     def test_resign(self):
+        """Try a basic resign request."""
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.url, data={
                 'ca': self.cert.ca.pk,
@@ -1354,7 +1355,21 @@ class ResignCertTestCase(CertificateAdminTestMixin, WebTestMixin, DjangoCAWithGe
         self.assertEqual(post.call_count, 1)
         self.assertResigned()
 
+    @override_tmpcadir()  # otherwise there are no usable CAs, hiding the message we want to test
+    def test_no_permission(self):
+        """Try resigning a certificate when we don't have the permissions."""
+        self.user.is_superuser = False
+        self.user.save()
+
+        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            response = self.client.get(self.url)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
+
+    @override_tmpcadir()  # otherwise there are no usable CAs, hiding the message we want to test
     def test_no_csr(self):
+        """Try resigning a cert that has no CSR."""
         self.cert.csr = ''
         self.cert.save()
 

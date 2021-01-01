@@ -559,8 +559,8 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
     def profiles_view(self, request):
         """Returns profiles."""
 
-        if not request.user.is_staff or not self.has_change_permission(request):
-            # NOTE: is_staff is already assured by ModelAdmin, but just to be sure
+        if not self.has_change_permission(request):
+            # NOTE: is_staff/is_active is checked by self.admin_site.admin_view()
             raise PermissionDenied
 
         data = {name: profiles[name].serialize() for name in ca_settings.CA_PROFILES}
@@ -580,12 +580,15 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
 
     def resign(self, request, obj):
         """View for resigning an existing certificate."""
+
+        if not self.has_view_permission(request, obj) or not self.has_add_permission(request):
+            # NOTE: is_staff/is_active is checked by self.admin_site.admin_view()
+            raise PermissionDenied
+
         if not obj.csr:
             self.message_user(request, _('Certificate has no CSR (most likely because it was imported).'),
                               messages.ERROR)
             return HttpResponseRedirect(obj.admin_change_url)
-
-        # TODO: check for has_add_permission/has_view_permission
 
         request._resign_obj = obj  # pylint: disable=protected-access; set/used by django-ca only
         extra_context = {
@@ -599,7 +602,9 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
     def revoke_change(self, request, obj):
         """View for the revoke action."""
         if not self.has_change_permission(request, obj):
+            # NOTE: is_staff/is_active is checked by self.admin_site.admin_view()
             raise PermissionDenied
+
         if obj.revoked:
             self.message_user(request, _('Certificate is already revoked.'), level=messages.ERROR)
             return HttpResponseRedirect(obj.admin_change_url)
