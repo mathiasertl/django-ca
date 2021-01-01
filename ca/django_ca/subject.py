@@ -197,7 +197,7 @@ class Subject:
         return value
 
     def update(self, e=None, **f):
-        """S.update([e, ]**f) -> None. Update S from dict/iterable E and F."""
+        """Update S from subject/dict/iterable E and F."""
         if e is None:
             e = {}
 
