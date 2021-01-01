@@ -1292,6 +1292,8 @@ class ResignCertTestCase(CertificateAdminTestMixin, WebTestMixin, DjangoCAWithGe
     def setUp(self):
         super(ResignCertTestCase, self).setUp()
         self.cert = self.certs['root-cert']
+        self.cert.profile = 'webserver'
+        self.cert.save()
 
     def get_url(self, cert):
         return reverse('admin:django_ca_certificate_actions', kwargs={'pk': cert.pk, 'tool': 'resign'})
@@ -1300,15 +1302,18 @@ class ResignCertTestCase(CertificateAdminTestMixin, WebTestMixin, DjangoCAWithGe
     def url(self):
         return self.get_url(cert=self.cert)
 
-    def assertResigned(self, cert=None):
+    def assertResigned(self, cert=None, resigned=None, expected_cn=None):
         if cert is None:
             cert = self.cert
-
-        resigned = Certificate.objects.filter(cn=cert.cn).exclude(pk=cert.pk).get()
+        if resigned is None:
+            resigned = Certificate.objects.filter(cn=cert.cn).exclude(pk=cert.pk).get()
+        if expected_cn is None:
+            expected_cn = cert.cn
         self.assertFalse(cert.revoked)
 
-        self.assertEqual(cert.cn, resigned.cn)
+        self.assertEqual(resigned.cn, expected_cn)
         self.assertEqual(cert.csr, resigned.csr)
+        self.assertEqual(cert.profile, resigned.profile)
         self.assertEqual(cert.distinguished_name, resigned.distinguished_name)
         self.assertEqual(cert.extended_key_usage, resigned.extended_key_usage)
         self.assertEqual(cert.key_usage, resigned.key_usage)
@@ -1329,26 +1334,25 @@ class ResignCertTestCase(CertificateAdminTestMixin, WebTestMixin, DjangoCAWithGe
 
     @override_tmpcadir()
     def test_resign(self):
-        cn = 'resigned.example.com'
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.url, data={
                 'ca': self.cert.ca.pk,
                 'profile': 'webserver',
-                'subject_5': cn,
+                'subject_5': self.cert.cn,
                 'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
                 'expires': self.cert.ca.expires.strftime('%Y-%m-%d'),
-                'key_usage_0': ['digitalSignature', 'keyAgreement', ],
+                'key_usage_0': ['digitalSignature', 'keyAgreement', 'keyEncipherment'],
                 'key_usage_1': True,
                 'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
                 'extended_key_usage_1': False,
-                'tls_feature_0': ['OCSPMustStaple', 'MultipleCertStatusRequest'],
+                'tls_feature_0': [],
                 'tls_feature_1': False,
             })
         self.assertRedirects(response, self.changelist_url)
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(post.call_count, 1)
-        self.assertTrue(Certificate.objects.get(cn=cn).cn, cn)
+        self.assertResigned()
 
     def test_no_csr(self):
         self.cert.csr = ''
@@ -1362,23 +1366,40 @@ class ResignCertTestCase(CertificateAdminTestMixin, WebTestMixin, DjangoCAWithGe
         self.assertMessages(response, ['Certificate has no CSR (most likely because it was imported).'])
 
     @override_tmpcadir()
+    def test_no_profile(self):
+        """Test that resigning a cert with no stored profile stores the default profile."""
+
+        self.cert.profile = ''
+        self.cert.save()
+        form = self.app.get(self.url, user=self.user.username).form
+        form.submit().follow()
+
+        resigned = Certificate.objects.filter(cn=self.cert.cn).exclude(pk=self.cert.pk).get()
+        self.assertEqual(resigned.profile, ca_settings.CA_DEFAULT_PROFILE)
+
+    @override_tmpcadir()
     def test_webtest_basic(self):
-        # resign the basic cert
+        """Resign basic certificate."""
         form = self.app.get(self.url, user=self.user.username).form
         form.submit().follow()
         self.assertResigned(self.cert)
 
     @override_tmpcadir()
     def test_webtest_all(self):
-        # resign the basic cert
+        """Resign certificate with **all** extensions."""
         cert = self.certs['all-extensions']
+        cert.profile = 'webserver'
+        cert.save()
         form = self.app.get(self.get_url(cert), user=self.user.username).form
         form.submit().follow()
         self.assertResigned(cert)
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_webtest_no_ext(self):
+        """Resign certificate with **no** extensions."""
         cert = self.certs['no-extensions']
+        cert.profile = 'webserver'
+        cert.save()
         form = self.app.get(self.get_url(cert), user=self.user.username).form
         form.submit().follow()
         self.assertResigned(cert)

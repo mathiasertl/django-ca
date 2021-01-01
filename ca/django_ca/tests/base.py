@@ -831,8 +831,8 @@ VQIDAQAB
         return cert
 
     @classmethod
-    def load_cert(cls, ca, x509, csr=''):
-        cert = Certificate(ca=ca, csr=csr)
+    def load_cert(cls, ca, x509, csr='', profile=''):
+        cert = Certificate(ca=ca, csr=csr, profile=profile)
         cert.x509 = x509
         cert.save()
         return cert
@@ -871,7 +871,8 @@ VQIDAQAB
         for name, data in [(k, v) for k, v in certs.items() if v['type'] == 'cert' and k not in self.certs]:
             ca = self.cas[data['ca']]
             csr = data.get('csr', {}).get('pem', '')
-            self.certs[name] = self.load_cert(ca, x509=data['pub']['parsed'], csr=csr)
+            profile = data.get('profile', ca_settings.CA_DEFAULT_PROFILE)
+            self.certs[name] = self.load_cert(ca, x509=data['pub']['parsed'], csr=csr, profile=profile)
 
         self.generated_certs = {k: v for k, v in self.certs.items() if certs[k]['cat'] == 'generated'}
         self.ca_certs = {k: v for k, v in self.certs.items()

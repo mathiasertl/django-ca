@@ -504,13 +504,17 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                 san = (','.join(san), False)
             algo = resign_obj.algorithm.__class__.__name__
 
+            if resign_obj.profile:
+                profile = resign_obj.profile
+            else:
+                profile = ca_settings.CA_DEFAULT_PROFILE
+
             data = {
                 'algorithm': algo,
                 'ca': resign_obj.ca,
                 'extended_key_usage': resign_obj.extended_key_usage,
                 'key_usage': resign_obj.key_usage,
-                # TODO: pass profile once it's stored to the database
-                #'profile': '',
+                'profile': profile,
                 'subject': resign_obj.subject,
                 'subject_alternative_name': san,
                 'tls_feature': resign_obj.tls_feature,

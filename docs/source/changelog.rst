@@ -12,6 +12,7 @@ ChangeLog
 
 This version is currently unter development.
 
+* Preselect profile of original certificate when resigning certificates.
 * ``./dev.py init-demo`` now also saves profiles and CSRs.
 * Lint code using `pylint <https://www.pylint.org/>`_.
 
