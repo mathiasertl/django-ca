@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
+"""Test cases for django-ca actions."""
+
 import argparse
 from datetime import timedelta
 from unittest import mock
@@ -21,7 +23,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 
 from ..constants import ReasonFlags
 from ..extensions import TLSFeature
-from ..management import base
+from ..management import actions
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..subject import Subject
@@ -37,7 +39,7 @@ class SubjectActionTestCase(DjangoCATestCase):
     def setUp(self):
         super(SubjectActionTestCase, self).setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('--subject', action=base.SubjectAction)
+        self.parser.add_argument('--subject', action=actions.SubjectAction)
 
     def test_basic(self):
         ns = self.parser.parse_args(['--subject=/CN=example.com'])
@@ -69,7 +71,7 @@ class OrderedSetExtensionActionTestCase(DjangoCATestCase):
     def setUp(self):
         super(OrderedSetExtensionActionTestCase, self).setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('-e', action=base.OrderedSetExtensionAction, extension=TLSFeature)
+        self.parser.add_argument('-e', action=actions.OrderedSetExtensionAction, extension=TLSFeature)
 
     def test_basic(self):
         ns = self.parser.parse_args(['-e=OCSPMustStaple'])
@@ -94,7 +96,7 @@ class FormatActionTestCase(DjangoCATestCase):
     def setUp(self):
         super(FormatActionTestCase, self).setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('--action', action=base.FormatAction)
+        self.parser.add_argument('--action', action=actions.FormatAction)
 
     def test_basic(self):
         ns = self.parser.parse_args(['--action=DER'])
@@ -116,7 +118,7 @@ class CurveActionTestCase(DjangoCATestCase):
     def setUp(self):
         super(CurveActionTestCase, self).setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('--curve', action=base.KeyCurveAction)
+        self.parser.add_argument('--curve', action=actions.KeyCurveAction)
 
     def test_basic(self):
         ns = self.parser.parse_args(['--curve=SECT409K1'])
@@ -135,7 +137,7 @@ class AlgorithmActionTestCase(DjangoCATestCase):
     def setUp(self):
         super(AlgorithmActionTestCase, self).setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('--algo', action=base.AlgorithmAction)
+        self.parser.add_argument('--algo', action=actions.AlgorithmAction)
 
     def test_basic(self):
         ns = self.parser.parse_args(['--algo=SHA256'])
@@ -158,7 +160,7 @@ class KeySizeActionTestCase(DjangoCATestCase):
         super(KeySizeActionTestCase, self).setUp()
 
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('--size', type=int, action=base.KeySizeAction)
+        self.parser.add_argument('--size', type=int, action=actions.KeySizeAction)
 
     def test_basic(self):
         ns = self.parser.parse_args(['--size=2048'])
@@ -191,7 +193,7 @@ class PasswordActionTestCase(DjangoCATestCase):
         super(PasswordActionTestCase, self).setUp()
 
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('--password', nargs='?', action=base.PasswordAction)
+        self.parser.add_argument('--password', nargs='?', action=actions.PasswordAction)
 
     def test_none(self):
         ns = self.parser.parse_args([])
@@ -205,7 +207,7 @@ class PasswordActionTestCase(DjangoCATestCase):
     def test_output(self, getpass):
         prompt = 'new prompt: '
         parser = argparse.ArgumentParser()
-        parser.add_argument('--password', nargs='?', action=base.PasswordAction, prompt=prompt)
+        parser.add_argument('--password', nargs='?', action=actions.PasswordAction, prompt=prompt)
         ns = parser.parse_args(['--password'])
         self.assertEqual(ns.password, b'prompted')
 
@@ -214,7 +216,7 @@ class PasswordActionTestCase(DjangoCATestCase):
     @mock.patch("getpass.getpass", return_value="prompted")
     def test_prompt(self, getpass):
         parser = argparse.ArgumentParser()
-        parser.add_argument('--password', nargs='?', action=base.PasswordAction)
+        parser.add_argument('--password', nargs='?', action=actions.PasswordAction)
         ns = parser.parse_args(['--password'])
 
         self.assertEqual(ns.password, b'prompted')
@@ -224,7 +226,7 @@ class CertificateActionTestCase(DjangoCAWithCertTestCase):
     def setUp(self):
         super(CertificateActionTestCase, self).setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('cert', action=base.CertificateAction)
+        self.parser.add_argument('cert', action=actions.CertificateAction)
 
     def test_basic(self):
         for name, cert in self.certs.items():
@@ -258,7 +260,7 @@ class CertificateAuthorityActionTestCase(DjangoCAWithGeneratedCAsTestCase):
     def setUp(self):
         super(CertificateAuthorityActionTestCase, self).setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('ca', action=base.CertificateAuthorityAction)
+        self.parser.add_argument('ca', action=actions.CertificateAuthorityAction)
 
     @override_tmpcadir()
     def test_basic(self):
@@ -302,7 +304,7 @@ class CertificateAuthorityActionTestCase(DjangoCAWithGeneratedCAsTestCase):
 
         # test allow_disabled=True
         parser = argparse.ArgumentParser()
-        parser.add_argument('ca', action=base.CertificateAuthorityAction, allow_disabled=True)
+        parser.add_argument('ca', action=actions.CertificateAuthorityAction, allow_disabled=True)
 
         ns = parser.parse_args([ca.serial])
         self.assertEqual(ns.ca, ca)
@@ -328,7 +330,7 @@ class URLActionTestCase(DjangoCATestCase):
     def setUp(self):
         super(URLActionTestCase, self).setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('--url', action=base.URLAction)
+        self.parser.add_argument('--url', action=actions.URLAction)
 
     def test_basic(self):
         for url in ['http://example.com', 'https://www.example.org']:
@@ -344,7 +346,7 @@ class ExpiresActionTestCase(DjangoCATestCase):
     def setUp(self):
         super(ExpiresActionTestCase, self).setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('--expires', action=base.ExpiresAction)
+        self.parser.add_argument('--expires', action=actions.ExpiresAction)
 
     def test_basic(self):
         expires = timedelta(days=30)
@@ -354,7 +356,7 @@ class ExpiresActionTestCase(DjangoCATestCase):
     def test_default(self):
         delta = timedelta(days=100)
         parser = argparse.ArgumentParser()
-        parser.add_argument('--expires', action=base.ExpiresAction, default=delta)
+        parser.add_argument('--expires', action=actions.ExpiresAction, default=delta)
         ns = parser.parse_args([])
         self.assertEqual(ns.expires, delta)
 
@@ -375,7 +377,7 @@ class ReasonTestCase(DjangoCATestCase):
     def setUp(self):
         super(ReasonTestCase, self).setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('reason', action=base.ReasonAction)
+        self.parser.add_argument('reason', action=actions.ReasonAction)
 
     def test_reason(self):
         ns = self.parser.parse_args([ReasonFlags.unspecified.name])
@@ -392,20 +394,20 @@ class MultipleURLActionTestCase(DjangoCATestCase):
     def setUp(self):
         super(MultipleURLActionTestCase, self).setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('--url', action=base.MultipleURLAction, default=[])
+        self.parser.add_argument('--url', action=actions.MultipleURLAction, default=[])
 
     def test_basic(self):
         urls = ['http://example.com', 'https://www.example.org']
 
         for url in urls:
             parser = argparse.ArgumentParser()
-            parser.add_argument('--url', action=base.MultipleURLAction)
+            parser.add_argument('--url', action=actions.MultipleURLAction)
 
             ns = parser.parse_args(['--url=%s' % url])
             self.assertEqual(ns.url, [url])
 
         parser = argparse.ArgumentParser()
-        parser.add_argument('--url', action=base.MultipleURLAction, default=[])
+        parser.add_argument('--url', action=actions.MultipleURLAction, default=[])
         ns = parser.parse_args(['--url=%s' % urls[0], '--url=%s' % urls[1]])
         self.assertEqual(ns.url, urls)
 

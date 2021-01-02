@@ -13,27 +13,21 @@
 
 """Command subclasses and argparse helpers for django-ca."""
 
-import argparse
-import getpass
 import sys
-from datetime import timedelta
 from textwrap import indent
 
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.exceptions import ImproperlyConfigured
-from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand as _BaseCommand
 from django.core.management.base import CommandError
 from django.core.management.base import OutputWrapper
 from django.core.management.color import no_style
-from django.core.validators import URLValidator
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 
 from .. import ca_settings
-from ..constants import ReasonFlags
 from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
 from ..extensions import IssuerAlternativeName
@@ -41,249 +35,10 @@ from ..extensions import KeyUsage
 from ..extensions import NullExtension
 from ..extensions import SubjectAlternativeName
 from ..extensions import TLSFeature
-from ..models import Certificate
 from ..models import CertificateAuthority
-from ..subject import Subject
 from ..utils import SUBJECT_FIELDS
 from ..utils import add_colons
-from ..utils import is_power2
-from ..utils import parse_encoding
-from ..utils import parse_hash_algorithm
-from ..utils import parse_key_curve
-from ..utils import shlex_split
-
-
-class SubjectAction(argparse.Action):
-    """Action for giving a subject."""
-
-    def __call__(self, parser, namespace, value, option_string=None):
-        try:
-            value = Subject(value)
-        except ValueError as e:
-            parser.error(e)
-        setattr(namespace, self.dest, value)
-
-
-class FormatAction(argparse.Action):
-    """Action for giving an encoding (DER/PEM)."""
-
-    def __call__(self, parser, namespace, value, option_string=None):
-        try:
-            value = parse_encoding(value)
-        except ValueError as e:
-            parser.error(str(e))
-
-        setattr(namespace, self.dest, value)
-
-
-class AlgorithmAction(argparse.Action):
-    """Action for giving an algorithm."""
-
-    def __call__(self, parser, namespace, value, option_string=None):
-        try:
-            value = parse_hash_algorithm(value)
-        except ValueError as e:
-            parser.error(str(e))
-
-        setattr(namespace, self.dest, value)
-
-
-class KeyCurveAction(argparse.Action):
-    """Action to parse an ECC curve value."""
-
-    def __call__(self, parser, namespace, value, option_string=None):
-
-        try:
-            curve = parse_key_curve(value)
-        except ValueError as e:
-            parser.error(e)
-        setattr(namespace, self.dest, curve)
-
-
-class KeySizeAction(argparse.Action):
-    """Action for adding a keysize, an integer that must be a power of two (2048, 4096, ...)."""
-
-    def __call__(self, parser, namespace, value, option_string=None):
-        option_string = option_string or 'key size'
-
-        if not is_power2(value):
-            parser.error('%s must be a power of two (2048, 4096, ...)' % option_string)
-        elif value < ca_settings.CA_MIN_KEY_SIZE:
-            parser.error('%s must be at least %s bits.'
-                         % (option_string, ca_settings.CA_MIN_KEY_SIZE))
-        setattr(namespace, self.dest, value)
-
-
-class PasswordAction(argparse.Action):
-    """Action for adding a password argument.
-
-    If the cli does not pass an argument value, the action prompt the user for a password.
-    """
-
-    def __init__(self, prompt=None, **kwargs):
-        super().__init__(**kwargs)
-        self.prompt = prompt
-
-    def __call__(self, parser, namespace, value, option_string=None):
-        if value is None:
-            kwargs = {}
-            if self.prompt:
-                kwargs['prompt'] = self.prompt
-            value = getpass.getpass(**kwargs)
-
-        setattr(namespace, self.dest, value.encode('utf-8'))
-
-
-class CertificateAction(argparse.Action):
-    """Action for naming a certificate."""
-
-    def __init__(self, allow_revoked=False, **kwargs):
-        super().__init__(**kwargs)
-        self.allow_revoked = allow_revoked
-
-    def __call__(self, parser, namespace, value, option_string=None):
-        queryset = Certificate.objects.all()
-        if self.allow_revoked is False:
-            queryset = queryset.filter(revoked=False)
-
-        try:
-            setattr(namespace, self.dest, queryset.get_by_serial_or_cn(value))
-        except Certificate.DoesNotExist as ex:
-            raise parser.error('%s: Certificate not found.' % value) from ex
-        except Certificate.MultipleObjectsReturned as ex:
-            raise parser.error('%s: Multiple certificates match.' % value) from ex
-
-
-class CertificateAuthorityAction(argparse.Action):
-    """Action for naming a certificate authority."""
-
-    def __init__(self, allow_disabled=False, allow_unusable=False, **kwargs):
-        super().__init__(**kwargs)
-        self.allow_disabled = allow_disabled
-        self.allow_unusable = allow_unusable
-
-    def __call__(self, parser, namespace, value, option_string=None):
-        qs = CertificateAuthority.objects.all()
-        if self.allow_disabled is False:
-            qs = qs.enabled()
-
-        try:
-            value = qs.get_by_serial_or_cn(value)
-        except CertificateAuthority.DoesNotExist:
-            parser.error('%s: Certificate authority not found.' % value)
-        except CertificateAuthority.MultipleObjectsReturned:
-            parser.error('%s: Multiple Certificate authorities match.' % value)
-
-        # verify that the private key exists
-        if not self.allow_unusable and not value.key_exists:
-            parser.error('%s: %s: Private key does not exist.' % (value, value.private_key_path))
-
-        setattr(namespace, self.dest, value)
-
-
-class URLAction(argparse.Action):
-    """Action to pass a single valid URL."""
-
-    def __call__(self, parser, namespace, value, option_string=None):
-        validator = URLValidator()
-        try:
-            validator(value)
-        except ValidationError:
-            parser.error('%s: Not a valid URL.' % value)
-        setattr(namespace, self.dest, value)
-
-
-class ExpiresAction(argparse.Action):
-    """Action for passing a timedelta in days."""
-
-    def __init__(self, *args, **kwargs):
-        kwargs['type'] = self._parse_timedelta
-        kwargs.setdefault('default', ca_settings.CA_DEFAULT_EXPIRES)
-        super().__init__(*args, **kwargs)
-
-    def __call__(self, parser, namespace, value, option_string=None):
-        setattr(namespace, self.dest, value)
-
-    def _parse_timedelta(self, value):
-        try:
-            value = int(value)
-        except ValueError as ex:
-            raise argparse.ArgumentTypeError('Value must be an integer: "%s"' % value) from ex
-        if value <= 0:
-            raise argparse.ArgumentTypeError('Value must not be negative.')
-
-        return timedelta(days=value)
-
-
-class MultipleURLAction(argparse.Action):
-    """Action for multiple URLs."""
-
-    def __call__(self, parser, namespace, value, option_string=None):
-        validator = URLValidator()
-        try:
-            validator(value)
-        except ValidationError:
-            parser.error('%s: Not a valid URL.' % value)
-
-        if getattr(namespace, self.dest) is None:
-            setattr(namespace, self.dest, [])
-
-        getattr(namespace, self.dest).append(value)
-
-
-class ExtensionAction(argparse.Action):  # pylint: disable=abstract-method,too-few-public-methods
-    """Base class for extension actions."""
-
-    def __init__(self, *args, **kwargs):
-        self.extension = kwargs.pop('extension')
-        kwargs['dest'] = self.extension.key
-        super().__init__(*args, **kwargs)
-
-
-class OrderedSetExtensionAction(ExtensionAction):
-    """Action for AlternativeName extensions, e.g. KeyUsage.
-
-    Arguments using this action expect an extra ``extension`` kwarg with a subclass of
-    :py:class:`~django_ca.extensions.OrderedSetExtension`.
-    """
-
-    def __call__(self, parser, namespace, value, option_string=None):
-        ext = self.extension()
-
-        values = shlex_split(value, ', ')
-        if values[0] == 'critical':
-            values = values[1:]
-            ext.critical = True
-        else:
-            ext.critical = False
-
-        try:
-            ext |= values
-        except ValueError as e:
-            parser.error('Invalid extension value: %s: %s' % (value, e))
-
-        setattr(namespace, self.dest, ext)
-
-
-class AlternativeNameAction(ExtensionAction):
-    """Action for AlternativeName extensions.
-
-    Arguments using this action expect an extra ``extension`` kwarg with a subclass of
-    :py:class:`~django_ca.extensions.AlternativeNameExtension`.
-    """
-    def __call__(self, parser, namespace, value, option_string=None):
-        setattr(namespace, self.dest, self.extension({'value': [value]}))
-
-
-class ReasonAction(argparse.Action):
-    """Action to select a revocation reason."""
-    def __init__(self, *args, **kwargs):
-        kwargs['choices'] = sorted([r.name for r in ReasonFlags])
-        super().__init__(*args, **kwargs)
-
-    def __call__(self, parser, namespace, value, option_string=None):
-        # NOTE: set of choices already assures that value is a valid ReasonFlag
-        setattr(namespace, self.dest, ReasonFlags[value])
+from . import actions
 
 
 class BinaryOutputWrapper(OutputWrapper):
@@ -343,7 +98,7 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
 
         parser.add_argument(
             '--algorithm', metavar='{sha512,sha256,...}', default=ca_settings.CA_DIGEST_ALGORITHM,
-            action=AlgorithmAction, help=help_text)
+            action=actions.AlgorithmAction, help=help_text)
 
     @property
     def valid_subject_keys(self):
@@ -353,7 +108,7 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
 
     def add_subject(self, parser, arg='subject', metavar=None, help_text=None):
         """Add subject option."""
-        parser.add_argument(arg, action=SubjectAction, metavar=metavar, help=help_text)
+        parser.add_argument(arg, action=actions.SubjectAction, metavar=metavar, help=help_text)
 
     def add_ca(self, parser, arg='--ca', help_text='Certificate authority to use (default: %(default)s).',
                allow_disabled=False, no_default=False, allow_unusable=False):
@@ -380,14 +135,14 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
         help_text = help_text % {'default': add_colons(default.serial) if default else None}
         parser.add_argument('%s' % arg, metavar='SERIAL', help=help_text, default=default,
                             allow_disabled=allow_disabled, allow_unusable=allow_unusable,
-                            action=CertificateAuthorityAction)
+                            action=actions.CertificateAuthorityAction)
 
     def add_ecc_curve(self, parser):
         """Add --ecc-curve option."""
         curve_help = 'Elliptic Curve used for ECC keys (default: %(default)s).' % {
             'default': ca_settings.CA_DEFAULT_ECC_CURVE.__class__.__name__,
         }
-        parser.add_argument('--ecc-curve', metavar='CURVE', action=KeyCurveAction,
+        parser.add_argument('--ecc-curve', metavar='CURVE', action=actions.KeyCurveAction,
                             default=ca_settings.CA_DEFAULT_ECC_CURVE,
                             help=curve_help)
 
@@ -400,12 +155,12 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
             help_text = 'The format to use ("ASN1" is an alias for "DER", default: %(default)s).'
         help_text = help_text % {'default': default.name}
         parser.add_argument(*opts, metavar='{PEM,ASN1,DER}', default=default,
-                            action=FormatAction, help=help_text)
+                            action=actions.FormatAction, help=help_text)
 
     def add_key_size(self, parser):
         """Add --key-size option (2048, 4096, ...)."""
         parser.add_argument(
-            '--key-size', type=int, action=KeySizeAction, default=ca_settings.CA_DEFAULT_KEY_SIZE,
+            '--key-size', type=int, action=actions.KeySizeAction, default=ca_settings.CA_DEFAULT_KEY_SIZE,
             metavar='{2048,4096,8192,...}',
             help="Key size for the private key (default: %(default)s).")
 
@@ -419,7 +174,7 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
         """Add password option."""
         if help_text is None:
             help_text = 'Password used for accessing the private key of the CA.'
-        parser.add_argument('-p', '--password', nargs='?', action=PasswordAction, help=help_text)
+        parser.add_argument('-p', '--password', nargs='?', action=actions.PasswordAction, help=help_text)
 
     def add_profile(self, parser, help_text):
         """Add profile-related options."""
@@ -493,10 +248,10 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
         self.add_extensions(parser)
 
         parser.add_argument(
-            '--expires', default=ca_settings.CA_DEFAULT_EXPIRES, action=ExpiresAction,
+            '--expires', default=ca_settings.CA_DEFAULT_EXPIRES, action=actions.ExpiresAction,
             help='Sign the certificate for DAYS days (default: %(default)s)')
         parser.add_argument(
-            '--alt', metavar='DOMAIN', action=AlternativeNameAction, extension=SubjectAlternativeName,
+            '--alt', metavar='DOMAIN', action=actions.AlternativeNameAction, extension=SubjectAlternativeName,
             help='Add a subjectAltName to the certificate (may be given multiple times)')
         parser.add_argument(
             '--watch', metavar='EMAIL', action='append', default=[],
@@ -510,8 +265,7 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
 
         group = parser.add_argument_group('Certificate subject', self.subject_help)
 
-        # NOTE: We do not set the default argument here because that would mask the user not
-        # setting anything at all.
+        # NOTE: Don't set the default value here because it would mask the user not setting anything at all.
         self.add_subject(
             group, arg='--subject', metavar='/key1=value1/key2=value2/...',
             help_text='''Valid keys are %s. Pass an empty value (e.g. "/C=/ST=...") to remove a field
@@ -521,13 +275,14 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
         """Add arguments for x509 extensions."""
         group = parser.add_argument_group('X509 v3 certificate extensions', self.add_extensions_help)
         group.add_argument(
-            '--key-usage', metavar='VALUES', action=OrderedSetExtensionAction, extension=KeyUsage,
+            '--key-usage', metavar='VALUES', action=actions.OrderedSetExtensionAction, extension=KeyUsage,
             help='The keyUsage extension, e.g. "critical,keyCertSign".')
         group.add_argument(
-            '--ext-key-usage', metavar='VALUES', action=OrderedSetExtensionAction, extension=ExtendedKeyUsage,
+            '--ext-key-usage', metavar='VALUES', action=actions.OrderedSetExtensionAction,
+            extension=ExtendedKeyUsage,
             help='The extendedKeyUsage extension, e.g. "serverAuth,clientAuth".')
         group.add_argument(
-            '--tls-feature', metavar='VALUES', action=OrderedSetExtensionAction, extension=TLSFeature,
+            '--tls-feature', metavar='VALUES', action=actions.OrderedSetExtensionAction, extension=TLSFeature,
             help='TLS Feature extensions.')
 
     def test_options(self, *args, **options):  # pylint: disable=unused-argument; args may be used in future
@@ -550,7 +305,7 @@ class CertCommand(BaseCommand):  # pylint: disable=abstract-method; is a base cl
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'cert', action=CertificateAction, allow_revoked=self.allow_revoked,
+            'cert', action=actions.CertificateAction, allow_revoked=self.allow_revoked,
             help='''Certificate by CommonName or serial. If you give a CommonName (which is not by
                 definition unique) there must be only one valid certificate with the given
                 CommonName.''')
@@ -565,9 +320,9 @@ class CertificateAuthorityDetailMixin:
 
         group = parser.add_argument_group('General', 'General information about the CA.')
         group.add_argument('--caa', default=default, metavar='NAME', help='CAA record for this CA.')
-        group.add_argument('--website', default=default, metavar='URL', action=URLAction,
+        group.add_argument('--website', default=default, metavar='URL', action=actions.URLAction,
                            help='Browsable URL for the CA.')
-        group.add_argument('--tos', default=default, metavar='URL', action=URLAction,
+        group.add_argument('--tos', default=default, metavar='URL', action=actions.URLAction,
                            help='Terms of service URL for the CA.')
 
     def add_acme_group(self, parser):
@@ -599,14 +354,15 @@ class CertificateAuthorityDetailMixin:
         group = parser.add_argument_group(
             'X509 v3 certificate extensions for signed certificates',
             'Extensions added when signing certificates.')
-        group.add_argument('--issuer-url', metavar='URL', action=URLAction,
+        group.add_argument('--issuer-url', metavar='URL', action=actions.URLAction,
                            help='URL to the certificate of your CA (in DER format).')
         group.add_argument(
-            '--issuer-alt-name', metavar='URL', action=AlternativeNameAction, extension=IssuerAlternativeName,
-            help='URL to the homepage of your CA.'
+            '--issuer-alt-name', metavar='URL', action=actions.AlternativeNameAction,
+            extension=IssuerAlternativeName, help='URL to the homepage of your CA.'
         )
         group.add_argument(
-            '--crl-url', metavar='URL', action=MultipleURLAction, default=[],
+            '--crl-url', metavar='URL', action=actions.MultipleURLAction, default=[],
             help='URL to a certificate revokation list. Can be given multiple times.'
         )
-        group.add_argument('--ocsp-url', metavar='URL', action=URLAction, help='URL of an OCSP responder.')
+        group.add_argument('--ocsp-url', metavar='URL', action=actions.URLAction,
+                           help='URL of an OCSP responder.')

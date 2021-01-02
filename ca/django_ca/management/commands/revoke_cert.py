@@ -18,8 +18,8 @@
 
 from django.core.management.base import CommandError
 
+from ..actions import ReasonAction
 from ..base import CertCommand
-from ..base import ReasonAction
 
 
 class Command(CertCommand):  # pylint: disable=missing-class-docstring

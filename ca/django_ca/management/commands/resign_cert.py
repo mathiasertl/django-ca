@@ -25,8 +25,8 @@ from ...extensions import ExtendedKeyUsage
 from ...extensions import KeyUsage
 from ...extensions import SubjectAlternativeName
 from ...extensions import TLSFeature
+from ...management.actions import CertificateAction
 from ...management.base import BaseSignCommand
-from ...management.base import CertificateAction
 from ...models import Certificate
 from ...models import Watcher
 

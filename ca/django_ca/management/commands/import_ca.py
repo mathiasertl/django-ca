@@ -32,9 +32,9 @@ from ... import ca_settings
 from ...extensions import IssuerAlternativeName
 from ...models import CertificateAuthority
 from ...utils import ca_storage
+from ..actions import PasswordAction
 from ..base import BaseCommand
 from ..base import CertificateAuthorityDetailMixin
-from ..base import PasswordAction
 
 
 class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=missing-class-docstring

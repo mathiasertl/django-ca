@@ -30,12 +30,12 @@ from ...models import CertificateAuthority
 from ...tasks import cache_crl
 from ...tasks import generate_ocsp_key
 from ...tasks import run_task
+from ..actions import ExpiresAction
+from ..actions import MultipleURLAction
+from ..actions import PasswordAction
+from ..actions import URLAction
 from ..base import BaseCommand
 from ..base import CertificateAuthorityDetailMixin
-from ..base import ExpiresAction
-from ..base import MultipleURLAction
-from ..base import PasswordAction
-from ..base import URLAction
 
 
 class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=missing-class-docstring
