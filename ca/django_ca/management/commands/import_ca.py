@@ -48,7 +48,7 @@ Note that the private key will be copied to the directory configured by the CA_D
             help_text='Make the CA an intermediate CA of the named CA. By default, this is a new root CA.',
             no_default=True)
         self.add_password(
-            parser, help='Password used to encrypt the private key. Pass no argument to be prompted.')
+            parser, help_text='Password used to encrypt the private key. Pass no argument to be prompted.')
         parser.add_argument('--import-password', nargs='?', action=PasswordAction, metavar='PASSWORD',
                             prompt='Password to import CA: ',
                             help='Password for the private key.')

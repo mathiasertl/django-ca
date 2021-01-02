@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Command subclasses and argparse helpers for django-ca."""
+
 import argparse
 import getpass
 import sys
@@ -52,6 +54,8 @@ from ..utils import shlex_split
 
 
 class SubjectAction(argparse.Action):
+    """Action for giving a subject."""
+
     def __call__(self, parser, namespace, value, option_string=None):
         try:
             value = Subject(value)
@@ -61,6 +65,8 @@ class SubjectAction(argparse.Action):
 
 
 class FormatAction(argparse.Action):
+    """Action for giving an encoding (DER/PEM)."""
+
     def __call__(self, parser, namespace, value, option_string=None):
         try:
             value = parse_encoding(value)
@@ -71,6 +77,8 @@ class FormatAction(argparse.Action):
 
 
 class AlgorithmAction(argparse.Action):
+    """Action for giving an algorithm."""
+
     def __call__(self, parser, namespace, value, option_string=None):
         try:
             value = parse_hash_algorithm(value)
@@ -93,6 +101,8 @@ class KeyCurveAction(argparse.Action):
 
 
 class KeySizeAction(argparse.Action):
+    """Action for adding a keysize, an integer that must be a power of two (2048, 4096, ...)."""
+
     def __call__(self, parser, namespace, value, option_string=None):
         option_string = option_string or 'key size'
 
@@ -105,6 +115,11 @@ class KeySizeAction(argparse.Action):
 
 
 class PasswordAction(argparse.Action):
+    """Action for adding a password argument.
+
+    If the cli does not pass an argument value, the action prompt the user for a password.
+    """
+
     def __init__(self, prompt=None, **kwargs):
         super().__init__(**kwargs)
         self.prompt = prompt
@@ -120,6 +135,8 @@ class PasswordAction(argparse.Action):
 
 
 class CertificateAction(argparse.Action):
+    """Action for naming a certificate."""
+
     def __init__(self, allow_revoked=False, **kwargs):
         super().__init__(**kwargs)
         self.allow_revoked = allow_revoked
@@ -138,6 +155,8 @@ class CertificateAction(argparse.Action):
 
 
 class CertificateAuthorityAction(argparse.Action):
+    """Action for naming a certificate authority."""
+
     def __init__(self, allow_disabled=False, allow_unusable=False, **kwargs):
         super().__init__(**kwargs)
         self.allow_disabled = allow_disabled
@@ -163,6 +182,8 @@ class CertificateAuthorityAction(argparse.Action):
 
 
 class URLAction(argparse.Action):
+    """Action to pass a single valid URL."""
+
     def __call__(self, parser, namespace, value, option_string=None):
         validator = URLValidator()
         try:
@@ -172,33 +193,36 @@ class URLAction(argparse.Action):
         setattr(namespace, self.dest, value)
 
 
-def parse_timedelta(value):
-    try:
-        value = int(value)
-    except ValueError as ex:
-        raise argparse.ArgumentTypeError('Value must be an integer: "%s"' % value) from ex
-    if value <= 0:
-        raise argparse.ArgumentTypeError('Value must not be negative.')
-
-    return timedelta(days=value)
-
-
 class ExpiresAction(argparse.Action):
+    """Action for passing a timedelta in days."""
+
     def __init__(self, *args, **kwargs):
-        kwargs['type'] = parse_timedelta
+        kwargs['type'] = self._parse_timedelta
         kwargs.setdefault('default', ca_settings.CA_DEFAULT_EXPIRES)
         super().__init__(*args, **kwargs)
 
     def __call__(self, parser, namespace, value, option_string=None):
         setattr(namespace, self.dest, value)
 
+    def _parse_timedelta(self, value):
+        try:
+            value = int(value)
+        except ValueError as ex:
+            raise argparse.ArgumentTypeError('Value must be an integer: "%s"' % value) from ex
+        if value <= 0:
+            raise argparse.ArgumentTypeError('Value must not be negative.')
+
+        return timedelta(days=value)
+
 
 class MultipleURLAction(argparse.Action):
+    """Action for multiple URLs."""
+
     def __call__(self, parser, namespace, value, option_string=None):
         validator = URLValidator()
         try:
             validator(value)
-        except Exception:
+        except ValidationError:
             parser.error('%s: Not a valid URL.' % value)
 
         if getattr(namespace, self.dest) is None:
@@ -207,7 +231,9 @@ class MultipleURLAction(argparse.Action):
         getattr(namespace, self.dest).append(value)
 
 
-class ExtensionAction(argparse.Action):
+class ExtensionAction(argparse.Action):  # pylint: disable=abstract-method,too-few-public-methods
+    """Base class for extension actions."""
+
     def __init__(self, *args, **kwargs):
         self.extension = kwargs.pop('extension')
         kwargs['dest'] = self.extension.key
@@ -215,6 +241,12 @@ class ExtensionAction(argparse.Action):
 
 
 class OrderedSetExtensionAction(ExtensionAction):
+    """Action for AlternativeName extensions, e.g. KeyUsage.
+
+    Arguments using this action expect an extra ``extension`` kwarg with a subclass of
+    :py:class:`~django_ca.extensions.OrderedSetExtension`.
+    """
+
     def __call__(self, parser, namespace, value, option_string=None):
         ext = self.extension()
 
@@ -234,6 +266,11 @@ class OrderedSetExtensionAction(ExtensionAction):
 
 
 class AlternativeNameAction(ExtensionAction):
+    """Action for AlternativeName extensions.
+
+    Arguments using this action expect an extra ``extension`` kwarg with a subclass of
+    :py:class:`~django_ca.extensions.AlternativeNameExtension`.
+    """
     def __call__(self, parser, namespace, value, option_string=None):
         setattr(namespace, self.dest, self.extension({'value': [value]}))
 
@@ -366,22 +403,23 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
                             action=FormatAction, help=help_text)
 
     def add_key_size(self, parser):
-        """Add --key-size option."""
+        """Add --key-size option (2048, 4096, ...)."""
         parser.add_argument(
             '--key-size', type=int, action=KeySizeAction, default=ca_settings.CA_DEFAULT_KEY_SIZE,
             metavar='{2048,4096,8192,...}',
             help="Key size for the private key (default: %(default)s).")
 
     def add_key_type(self, parser):
+        """Add --key-type option (type of private key - RSA/DSA/ECC)."""
         parser.add_argument(
             '--key-type', choices=['RSA', 'DSA', 'ECC'], default='RSA',
             help="Key type for the private key (default: %(default)s).")
 
-    def add_password(self, parser, help=None):
+    def add_password(self, parser, help_text=None):
         """Add password option."""
-        if help is None:
-            help = 'Password used for accessing the private key of the CA.'
-        parser.add_argument('-p', '--password', nargs='?', action=PasswordAction, help=help)
+        if help_text is None:
+            help_text = 'Password used for accessing the private key of the CA.'
+        parser.add_argument('-p', '--password', nargs='?', action=PasswordAction, help=help_text)
 
     def add_profile(self, parser, help_text):
         """Add profile-related options."""
