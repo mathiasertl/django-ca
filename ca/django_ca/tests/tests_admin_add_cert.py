@@ -557,6 +557,9 @@ class AddCertificateSeleniumTestCase(CertificateAdminTestMixin, SeleniumTestCase
     def assertProfile(self, profile, ku_select, ku_critical, eku_select,  # pylint: disable=invalid-name
                       eku_critical, tf_select, tf_critical, subject, cn_in_san):
         """Assert that the admin form equals the given profile."""
+
+        # pylint: disable=too-many-locals
+
         profile = profiles[profile]
 
         ku_expected = self.get_expected(profile, KeyUsage, [])
