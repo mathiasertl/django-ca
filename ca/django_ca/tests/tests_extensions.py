@@ -89,6 +89,7 @@ class AbstractExtensionTestMixin:
         self.assertEqual(first.value, second.value)
 
     def assertSerialized(self, ext, config, critical=None):  # pylint: disable=invalid-name
+        """Assert that the extension can be serialized as expected."""
         if critical is None:
             critical = self.ext_class.default_critical
 
@@ -99,12 +100,17 @@ class AbstractExtensionTestMixin:
 
     @property
     def critical_values(self):
+        """Loop through all possible values for critical.
+
+        This may or may not include both boolean values depending on ``force_critical``.
+        """
         if self.force_critical is not False:
             yield True
         if self.force_critical is not True:
             yield False
 
     def ext(self, value=None, critical=None):
+        """Get an extension instance with the given value."""
         if value is None:
             value = {}
 
@@ -113,20 +119,21 @@ class AbstractExtensionTestMixin:
                 critical = self.ext_class.default_critical
             ext = x509.extensions.Extension(oid=self.ext_class.oid, critical=critical, value=value)
             return self.ext_class(ext)
-        else:
-            d = {'value': value}
-            if critical is not None:
-                d['critical'] = critical
-            return self.ext_class(d)
+
+        val = {'value': value}
+        if critical is not None:
+            val['critical'] = critical
+        return self.ext_class(val)
 
     def test_as_extension(self):
+        """Test as_extension()."""
         for config in self.test_values.values():
             with self.assertRaises(NotImplementedError):
                 Extension({'value': config['expected']}).as_extension()
 
     def test_as_text(self):
         """Test as_text()."""
-        for key, config in self.test_values.items():
+        for config in self.test_values.values():
             ext = self.ext(config['expected'])
             self.assertEqual(ext.as_text(), config['expected_text'])
 
@@ -134,14 +141,17 @@ class AbstractExtensionTestMixin:
         """Test extension_type property."""
         for config in self.test_values.values():
             with self.assertRaises(NotImplementedError):
+                # pylint: disable=expression-not-assigned
                 Extension({'value': config['expected']}).extension_type
 
     def test_for_builder(self):
+        """Test for_builder() method (not implemented here)."""
         for config in self.test_values.values():
             with self.assertRaises(NotImplementedError):
                 Extension({'value': config['expected']}).for_builder()
 
     def test_config(self):
+        """Test basic extension configuration."""
         self.assertIsNone(self.ext_class.key)
         self.assertIsNone(self.ext_class.oid)
 
@@ -175,6 +185,7 @@ class AbstractExtensionTestMixin:
                     self.assertNotEqual(hash(ext_not_critical), hash(other_ext_not_critical))
 
     def test_eq(self):
+        """Test extension equality (``==``)."""
         for values in self.test_values.values():
             ext = self.ext(values['expected'])
             self.assertEqual(ext, ext)
@@ -192,8 +203,8 @@ class AbstractExtensionTestMixin:
                 self.assertEqual(ext_not_critical, ext_3)
 
     def test_init(self):
-        # Test that the constructor behaves equal regardles of input value
-        for key, config in self.test_values.items():
+        """Test that the constructor behaves equal regardles of input value."""
+        for config in self.test_values.values():
             expected = self.ext(config['expected'])
 
             for value in config['values']:
@@ -213,26 +224,28 @@ class AbstractExtensionTestMixin:
                     self.assertEqual(self.ext(config['extension_type'], critical=critical), expected)
 
     def test_init_no_bool_critical(self):
+        """"Test creating an extension with a non-bool critical value."""
         class_name = 'example_class'
 
-        class example:
+        class _Example:  # pylint: disable=too-few-public-methods
             def __str__(self):
                 return class_name
 
-        for key, config in self.test_values.items():
+        for config in self.test_values.values():
             for value in config['values']:
                 if isinstance(value, x509.extensions.ExtensionType):
                     continue  # self.ext() would construct an x509.Extension and the constructor would fail
 
                 with self.assertRaisesRegex(ValueError, '^%s: Invalid critical value passed$' % class_name):
-                    self.ext(value, critical=example())
+                    self.ext(value, critical=_Example())
 
     def test_init_unknown_type(self):
-        class example:
+        """Try creating an extension with a value of unknown type."""
+        class _Example:  # pylint: disable=too-few-public-methods
             pass
 
         with self.assertRaisesRegex(ValueError, '^Value is of unsupported type example$'):
-            self.ext_class(example())
+            self.ext_class(_Example())
 
     def test_ne(self):
         """Test ``!=`` (not-equal) operator."""
@@ -278,7 +291,7 @@ class AbstractExtensionTestMixin:
 
     def test_serialize(self):
         """Test serialization of extension."""
-        for key, config in self.test_values.items():
+        for config in self.test_values.values():
             ext = self.ext(config['expected'])
             self.assertSerialized(ext, config)
 
@@ -303,7 +316,7 @@ class AbstractExtensionTestMixin:
                     self.assertEqual(str(ext), expected)
 
     def test_value(self):
-        # test that value property can be used for the constructor
+        """Test that value property can be used for the constructor."""
         for config in self.test_values.values():
             ext = self.ext(value=config['expected'])
             self.assertExtensionEqual(ext, self.ext(ext.value))
@@ -313,15 +326,15 @@ class ExtensionTestMixin(AbstractExtensionTestMixin):
     """Override generic implementations to use test_value property."""
 
     def test_as_extension(self):
-        for key, config in self.test_values.items():
+        for config in self.test_values.values():
             if config['extension_type'] is None:
                 continue  # test case is not a valid extension
 
             ext = self.ext(config['expected'])
-            cg = x509.extensions.Extension(
+            cg_ext = x509.extensions.Extension(
                 oid=self.ext_class.oid, critical=self.ext_class.default_critical,
                 value=config['extension_type'])
-            self.assertEqual(ext.as_extension(), cg)
+            self.assertEqual(ext.as_extension(), cg_ext)
 
             for critical in self.critical_values:
                 ext = self.ext(config['expected'], critical=critical)
@@ -350,7 +363,7 @@ class ExtensionTestMixin(AbstractExtensionTestMixin):
 
     def test_extension_type(self):
         """Test extension_type property."""
-        for key, config in self.test_values.items():
+        for config in self.test_values.values():
             if config['extension_type'] is None:
                 continue  # test case is not a valid extension
 
@@ -358,7 +371,7 @@ class ExtensionTestMixin(AbstractExtensionTestMixin):
             self.assertEqual(ext.extension_type, config['extension_type'])
 
     def test_for_builder(self):
-        for key, config in self.test_values.items():
+        for config in self.test_values.values():
             if config['extension_type'] is None:
                 continue  # test case is not a valid extension
 
@@ -396,17 +409,16 @@ class NullExtensionTestMixin(ExtensionTestMixin):
 class IterableExtensionTestMixin:
     """Mixin for testing IterableExtension-based extensions."""
 
-    container_type = None  # extension emulates a given container type
     invalid_values = []
 
-    def assertSameInstance(self, orig_id, orig_value_id, new, expected_value):
+    def assertSameInstance(self, orig_id, orig_value_id, new, expected_value):  # pylint: disable=invalid-name
         """Assert that `new` is still the same instance and has the expected value."""
         self.assertEqual(new.value, expected_value)
         self.assertEqual(id(new), orig_id)  # assert that this is really the same instance
         self.assertEqual(id(new.value), orig_value_id)
 
-    def assertEqualFunction(self, f, init, value, update=True, infix=True, set_init=None, set_value=None,
-                            raises=None):
+    def assertEqualFunction(self, func, init, value, update=True, infix=True,  # pylint: disable=invalid-name
+                            set_init=None, set_value=None, raises=None):
         """Assert that the given function f behaves the same way on a set and on the tested extension.
 
         This example would test if ``set.update()`` and ``self.ext_class.update()`` would behave the same way,
@@ -448,15 +460,17 @@ class IterableExtensionTestMixin:
         if set_init is None:
             set_init = init
 
-        s, ext = self.container_type(set_init), self.ext_class({'value': init})
+        container = self.container_type(set_init)
+        ext = self.ext_class({'value': init})
+
         if update is True:
             orig_id, orig_value_id = id(ext), id(ext.value)
 
             if raises:
                 with self.assertRaisesRegex(*raises):
-                    f(s, set_value)
+                    func(container, set_value)
                 with self.assertRaisesRegex(*raises):
-                    f(ext, value)
+                    func(ext, value)
             elif infix is True:
                 # infix functions from the operator module (e.g. operator.ixor) return the updated value,
                 # while the function equivalent returns None. For example:
@@ -467,20 +481,21 @@ class IterableExtensionTestMixin:
                 #
                 # but:
                 #   >>> operator.ixor(s, {'foo'}) == {'foo'}  # and not None, like above
-                f(s, set_value)
-                f(ext, value)
+                func(container, set_value)
+                func(ext, value)
             else:
-                self.assertIsNone(f(s, set_value))  # apply to set
-                self.assertIsNone(f(ext, value))
+                self.assertIsNone(func(container, set_value))  # apply to set
+                self.assertIsNone(func(ext, value))
 
             # Note: Also checked when exception is raised, to make sure that it hasn't changed
-            self.assertSameInstance(orig_id, orig_value_id, ext, expected_value=s)
+            self.assertSameInstance(orig_id, orig_value_id, ext, expected_value=container)
         else:
-            ext_updated = f(ext, value)
-            s_updated = f(s, set_value)  # apply to set
+            ext_updated = func(ext, value)
+            s_updated = func(container, set_value)  # apply to set
             self.assertIsCopy(ext, ext_updated, s_updated)
 
     def test_clear(self):
+        """Test ext.clear()."""
         for values in self.test_values.values():
             ext = self.ext(values['expected'])
             ext.clear()
@@ -488,9 +503,9 @@ class IterableExtensionTestMixin:
 
     def test_in(self):
         """Test the ``in`` operator."""
-        for values in self.test_values.values():
-            ext = self.ext_class({'value': values['expected']})
-            for values in values['values']:
+        for config in self.test_values.values():
+            ext = self.ext_class({'value': config['expected']})
+            for values in config['values']:
                 for value in values:
                     self.assertIn(value, ext)
 
@@ -513,22 +528,25 @@ class IterableExtensionTestMixin:
 class ListExtensionTestMixin(IterableExtensionTestMixin):
     """Mixin for testing ListExtension-based extensions."""
 
+    # pylint: disable=unnecessary-lambda; assertion functions require passing lambda functions
+
     container_type = list
 
     def test_append(self):
-        for key, config in self.test_values.items():
+        """Test ext.append()."""
+        for config in self.test_values.values():
             if not config['expected']:
                 continue  # we don't have values to append
 
             for values in config['values']:
                 expected = self.ext(config['expected'])
-                ext = self.ext(config['expected'][:-1])  # all but the last item
-                ext.append(config['expected'][-1])
+                ext = self.ext(values[:-1])  # all but the last item
+                ext.append(values[-1])
                 self.assertExtensionEqual(ext, expected)
 
     def test_count(self):
         """Test ext.count()."""
-        for key, config in self.test_values.items():
+        for config in self.test_values.values():
             ext = self.ext(config['expected'])
             for values in config['values']:
                 for expected_elem, other_elem in zip(config['expected'], values):
@@ -536,17 +554,17 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
                     self.assertEqual(config['expected'].count(expected_elem), ext.count(other_elem))
 
         for value in self.invalid_values:
-            for key, config in self.test_values.items():
+            for config in self.test_values.values():
                 ext = self.ext(config['expected'])
                 self.assertEqual(ext.count(value), 0)
 
     def test_del(self):
         """Test item deletion (e.g. ``del ext[0]``)."""
-        for key, config in self.test_values.items():
+        for config in self.test_values.values():
             ext = self.ext(config['expected'])
             self.assertEqual(len(ext), len(config['expected']))
 
-            for i, val in enumerate(config['expected']):
+            for _val in config['expected']:  # loop so that we subsequently delete all values
                 del ext[0]
             self.assertEqual(len(ext), 0)
 
@@ -554,7 +572,8 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
                 del ext[0]
 
     def test_del_slices(self):
-        for key, config in self.test_values.items():
+        """Test deleting slices."""
+        for config in self.test_values.values():
             ext = self.ext(config['expected'])
             del ext[0:]
             self.assertEqual(len(ext), 0)
@@ -562,7 +581,7 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
     def test_extend(self):
         """Test ext.extend()."""
         func = lambda c, j: c.extend(j)  # noqa
-        for key, config in self.test_values.items():
+        for config in self.test_values.values():
             set_value = config['expected']
             if 'expected_djca' in config:
                 set_value = config['expected_djca']
@@ -579,15 +598,14 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
     def test_getitem(self):
         """Test item getter (e.g. ``x = ext[0]``)."""
         func = lambda c, j: operator.getitem(c, j)  # noqa
-        for key, config in self.test_values.items():
+        for config in self.test_values.values():
             ct_expected = config['expected']
             if 'expected_djca' in config:
                 ct_expected = config['expected_djca']
 
             for values in config['values']:
-                for value in values:
-                    for i in range(0, len(values)):
-                        self.assertEqualFunction(func, config['expected'], i, set_init=ct_expected)
+                for i in range(0, len(values)):
+                    self.assertEqualFunction(func, values, i, set_init=ct_expected)
 
                 self.assertEqualFunction(func, config['expected'], len(config['expected']),
                                          set_init=ct_expected,
@@ -596,20 +614,20 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
     def test_getitem_slices(self):
         """Test getting slices (e.g. ``x = ext[0:1]``)."""
         func = lambda c, j: operator.getitem(c, j)  # noqa
-        for key, config in self.test_values.items():
+        for config in self.test_values.values():
             ct_expected = config['expected']
             if 'expected_djca' in config:
                 ct_expected = config['expected_djca']
 
             for values in config['values']:
-                self.assertEqualFunction(func, config['expected'], slice(1), set_init=ct_expected)
-                self.assertEqualFunction(func, config['expected'], slice(0, 1), set_init=ct_expected)
-                self.assertEqualFunction(func, config['expected'], slice(0, 2), set_init=ct_expected)
-                self.assertEqualFunction(func, config['expected'], slice(0, 2, 2), set_init=ct_expected)
+                self.assertEqualFunction(func, values, slice(1), set_init=ct_expected)
+                self.assertEqualFunction(func, values, slice(0, 1), set_init=ct_expected)
+                self.assertEqualFunction(func, values, slice(0, 2), set_init=ct_expected)
+                self.assertEqualFunction(func, values, slice(0, 2, 2), set_init=ct_expected)
 
     def test_insert(self):
         """Test ext.insert()."""
-        for key, config in self.test_values.items():
+        for config in self.test_values.values():
             ct_expected = config['expected']
             if 'expected_djca' in config:
                 ct_expected = config['expected_djca']
@@ -627,9 +645,9 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
 
     def test_pop(self):
         """Test ext.pop()."""
-        for key, config in self.test_values.items():
+        for config in self.test_values.values():
             for values in config['values']:
-                ext = self.ext(config['expected'])
+                ext = self.ext(values)
 
                 if config['expected']:
                     with self.assertRaisesRegex(IndexError, '^pop index out of range$'):
@@ -639,7 +657,7 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
                 if 'expected_djca' in config:
                     exp = reversed(config['expected_djca'])
 
-                for expected, value in zip(exp, config['values']):
+                for expected in exp:
                     self.assertEqual(expected, ext.pop())
                 self.assertEqual(len(ext), 0)
 
@@ -648,7 +666,7 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
 
     def test_remove(self):
         """Test ext.remove()."""
-        for key, config in self.test_values.items():
+        for config in self.test_values.values():
             for values in config['values']:
                 for expected_value, value in zip(config['expected'], values):
                     kwargs = {'infix': False, 'set_value': expected_value}
@@ -657,32 +675,38 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
     def test_setitem(self):
         """Test setting items (e.g. ``ext[0] = ...``)."""
         func = lambda c, j: operator.setitem(c, j[0], j[1])  # noqa
-        for key, config in self.test_values.items():
+        for config in self.test_values.values():
             ct_expected = config['expected']
             if 'expected_djca' in config:
                 ct_expected = config['expected_djca']
 
             for values in config['values']:
-                for i in range(0, len(values)):
-                    self.assertEqualFunction(func, list(config['expected']), (i, values[i], ),
+                for i, val in enumerate(values):
+                    self.assertEqualFunction(func, list(config['expected']), (i, val),
                                              set_init=ct_expected, set_value=(i, ct_expected[i]))
 
     def test_setitem_slices(self):
         """Test setting slices."""
         func = lambda c, j: operator.setitem(c, j[0], j[1])  # noqa
-        for key, config in self.test_values.items():
+        for config in self.test_values.values():
             ct_expected = config['expected']
             if 'expected_djca' in config:
                 ct_expected = config['expected_djca']
 
             for values in config['values']:
-                for i in range(0, len(values)):
-                    s = slice(0, 1)
-                    self.assertEqualFunction(func, list(config['expected']), (s, values[s], ),
-                                             set_init=ct_expected, set_value=(s, ct_expected[s]))
+                for _i in range(0, len(values)):  # loop to test all possible slices
+                    start_slice = slice(0, 1)
+                    self.assertEqualFunction(
+                        func, list(config['expected']), (start_slice, values[start_slice], ),
+                        set_init=ct_expected, set_value=(start_slice, ct_expected[start_slice]))
 
 
 class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
+    """Mixin for OrderedSetExtension based extensions."""
+
+    # pylint: disable=unnecessary-lambda; assertion functions require passing lambda functions
+    # pylint: disable=too-many-public-methods; b/c we're testing all those set functions
+
     container_type = set
     ext_class_name = 'OrderedSetExtension'
 
@@ -736,6 +760,7 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
                                              infix=infix)
 
     def assertRelation(self, oper):  # pylint: disable=invalid-name
+        """Assert that a extension relation is equal to that of set()."""
         self.assertEqual(oper(set(), set()), oper(self.ext_class({'value': set()}), set()))
         self.assertEqual(oper(set(), set()), oper(self.ext_class({'value': set()}),
                                                   self.ext_class({'value': set()})))
@@ -800,6 +825,7 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
                 )
 
     def test_add(self):
+        """Test ext.add()."""
         for config in self.test_values.values():
             for values in config['values']:
                 ext = self.ext_class({'value': set()})
@@ -811,31 +837,37 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
                 self.assertEqual(ext, self.ext_class({'value': config['expected']}))
 
     def test_copy(self):
+        """Test ext.copy()."""
         for config in self.test_values.values():
             ext = self.ext_class({'value': config['expected']})
             ext_copy = ext.copy()
             self.assertIsCopy(ext, ext_copy, config['expected'])
 
     def test_difference(self):
+        """Test ext.difference()."""
         self.assertSingleValueOperator(lambda s, o: s.difference(o), infix=False, update=False)
         self.assertMultipleValuesOperator(lambda s, o: s.difference(*o), infix=False, update=False)
 
-    def test_difference_operator(self):  # test - operator
+    def test_difference_operator(self):
+        """Test the ``-`` operator."""
         self.assertSingleValueOperator(lambda s, o: operator.sub(s, o), update=False)
         self.assertMultipleValuesOperator(
             lambda s, o: operator.sub(s, functools.reduce(operator.sub, [t.copy() for t in o])),
             update=False)
 
     def test_difference_update(self):
+        """Test ext.difference_update()."""
         self.assertSingleValueOperator(lambda s, o: s.difference_update(o), infix=False)
         self.assertMultipleValuesOperator(lambda s, o: s.difference_update(*o), infix=False)
 
-    def test_difference_update_operator(self):  # test -= operator
+    def test_difference_update_operator(self):
+        """Test the ``-=`` operator."""
         self.assertSingleValueOperator(lambda s, o: operator.isub(s, o))
         self.assertMultipleValuesOperator(
             lambda s, o: operator.isub(s, functools.reduce(operator.sub, [t.copy() for t in o])))
 
     def test_discard(self):
+        """Test  ext.discard()."""
         for config in self.test_values.values():
             for values in config['values']:
                 ext = self.ext_class({'value': config['expected']})
@@ -851,50 +883,61 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
                     ext_empty.discard(value)
                     self.assertEqual(len(ext_empty), 0)
 
-    def test_greater_then_operator(self):  # test < relation
+    def test_greater_then_operator(self):
+        """Test the ``<`` operator."""
         self.assertRelation(lambda s, o: operator.gt(s, o))
 
     def test_intersection(self):
+        """Test ext.intersection()."""
         self.assertSingleValueOperator(lambda s, o: s.intersection(o), infix=False, update=False)
         self.assertMultipleValuesOperator(lambda s, o: s.intersection(*o), infix=False, update=False)
 
-    def test_intersection_operator(self):  # test & operator
+    def test_intersection_operator(self):
+        """Test the ``&`` operator."""
         self.assertSingleValueOperator(lambda s, o: operator.and_(s, o), update=False)
         self.assertMultipleValuesOperator(
             lambda s, o: operator.and_(s, functools.reduce(operator.and_, [t.copy() for t in o])),
             update=False)
 
     def test_intersection_update(self):
+        """Test ext.intersection_update()."""
         self.assertSingleValueOperator(lambda s, o: s.intersection_update(o), infix=False)
         self.assertMultipleValuesOperator(lambda s, o: s.intersection_update(*o), infix=False)
 
-    def test_intersection_update_operator(self):  # test &= operator
+    def test_intersection_update_operator(self):
+        """Test the ``&=`` operator."""
         self.assertSingleValueOperator(lambda s, o: operator.iand(s, o))
         self.assertMultipleValuesOperator(
             lambda s, o: operator.iand(s, functools.reduce(operator.and_, [t.copy() for t in o])))
 
     def test_isdisjoint(self):
+        """Test ext.isdisjoint()."""
         self.assertRelation(lambda s, o: s.isdisjoint(o))
 
     def test_issubset(self):
+        """Test ext.issubset()."""
         self.assertRelation(lambda s, o: s.issubset(o))
 
-    def test_issubset_operator(self):  # test <= operator
+    def test_issubset_operator(self):
+        """Test the ``<=`` operator."""
         self.assertRelation(lambda s, o: operator.le(s, o))
 
     def test_issuperset(self):
+        """Test ext.issuperset()."""
         self.assertRelation(lambda s, o: s.issuperset(o))
 
-    def test_issuperset_operator(self):  # test >= operator
+    def test_issuperset_operator(self):
+        """Test the ``>=`` operator."""
         self.assertRelation(lambda s, o: operator.ge(s, o))
 
-    def test_lesser_then_operator(self):  # test < operator
+    def test_lesser_then_operator(self):
+        """Test the ``<`` operator."""
         self.assertRelation(lambda s, o: operator.lt(s, o))
 
     def test_pop(self):
         """Test ext.pop()."""
         for config in self.test_values.values():
-            for values in config['values']:
+            for _values in config['values']:  # loop so that we pop all values from ext
                 ext = self.ext_class({'value': set(config['expected'])})
                 self.assertEqual(len(ext), len(config['expected']))
 
@@ -925,40 +968,44 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
                         # NOTE: We cannot test the message here because it may be a mapped value
                         ext.remove(value)
 
-        ext = self.ext_class({'value': set(config['expected'])})
-
-    def test_smaller_then_operator(self):  # test < operator
+    def test_smaller_then_operator(self):
+        """Test the ``<`` operator."""
         self.assertRelation(lambda s, o: operator.lt(s, o))
 
-    def test_symmetric_difference(self):  # equivalent to ^ operator
+    def test_symmetric_difference(self):
+        """Test ext.symmetric_difference."""
         self.assertSingleValueOperator(lambda s, o: s.symmetric_difference(o), update=False, infix=False)
 
-    def test_symmetric_difference_operator(self):  # test ^ operator == symmetric_difference
+    def test_symmetric_difference_operator(self):
+        """Test ``^`` operator (symmetric_difference)."""
         self.assertSingleValueOperator(lambda s, o: operator.xor(s, o), update=False)
 
-    def _test_symmetric_difference_update(self, f, infix=True):
-        self.assertSingleValueOperator(f, update=True, infix=infix)
-
     def test_symmetric_difference_update(self):
+        """Test ext.symmetric_difference_update()."""
         self.assertSingleValueOperator(lambda s, o: s.symmetric_difference_update(o), infix=False)
 
-    def test_symmetric_difference_update_operator(self):  # test ^= operator
+    def test_symmetric_difference_update_operator(self):
+        """Test the ``^=`` operator."""
         self.assertSingleValueOperator(lambda s, o: operator.ixor(s, o))
 
     def test_union(self):
+        """Test ext.union()."""
         self.assertSingleValueOperator(lambda s, o: s.union(o), infix=False, update=False)
         self.assertMultipleValuesOperator(lambda s, o: s.union(*o), infix=False, update=False)
 
-    def test_union_operator(self):  # test | operator
+    def test_union_operator(self):
+        """Test the ``|`` operator``."""
         self.assertSingleValueOperator(lambda s, o: operator.or_(s, o), update=False)
         self.assertMultipleValuesOperator(
             lambda s, o: operator.or_(s, functools.reduce(operator.or_, [t.copy() for t in o])), update=False)
 
     def test_update(self):
+        """Test ext.update()."""
         self.assertSingleValueOperator(lambda s, o: s.update(o), infix=False)
         self.assertMultipleValuesOperator(lambda s, o: s.update(*o), infix=False)
 
-    def test_update_operator(self):  # test |= operator
+    def test_update_operator(self):
+        """Test the ``|=`` operator."""
         self.assertSingleValueOperator(lambda s, o: operator.ior(s, o))
         self.assertMultipleValuesOperator(
             lambda s, o: operator.ior(s, functools.reduce(operator.ior, [t.copy() for t in o])))

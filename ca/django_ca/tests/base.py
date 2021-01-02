@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""TestCase base classes that preload some data and add common helper methods."""
+
 import copy
 import inspect
 import json
@@ -295,10 +297,10 @@ for cert_name, cert_data in certs.items():
     cert_data['ocsp-expires'] = cert_data['valid_until'].strftime('%y%m%d%H%M%SZ')
 
     # parse extensions
-    for key, cls in KEY_TO_EXTENSION.items():
+    for key, ext_cls in KEY_TO_EXTENSION.items():
         if cert_data.get(key):
             cert_data['%s_serialized' % key] = cert_data[key]
-            cert_data[key] = cls(cert_data[key])
+            cert_data[key] = ext_cls(cert_data[key])
 
 # Calculate some fixted timestamps that we reuse throughout the tests
 timestamps = {
@@ -814,6 +816,7 @@ VQIDAQAB
 
     @classmethod
     def create_csr(cls, subject):
+        """Generate a CSR with the given subject."""
         private_key = rsa.generate_private_key(
             public_exponent=65537, key_size=1024, backend=default_backend())
         builder = x509.CertificateSigningRequestBuilder()
@@ -826,12 +829,14 @@ VQIDAQAB
 
     @classmethod
     def create_cert(cls, ca, csr, subject, **kwargs):
+        """Create a certificate with the given data."""
         cert = Certificate.objects.create_cert(ca, csr, subject=subject, **kwargs)
         cert.full_clean()
         return cert
 
     @classmethod
     def load_cert(cls, ca, x509, csr='', profile=''):
+        """Load a certificate from the given data."""
         cert = Certificate(ca=ca, csr=csr, profile=profile)
         cert.x509 = x509
         cert.save()
@@ -842,6 +847,7 @@ VQIDAQAB
         return User.objects.create_superuser(username=username, password=password, email=email)
 
     def load_usable_cas(self):
+        """Load CAs generated as fixture data."""
         self.cas.update({k: self.load_ca(name=v['name'], x509=v['pub']['parsed']) for k, v in certs.items()
                         if v.get('type') == 'ca' and k not in self.cas and v['key_filename'] is not False})
         self.cas['child'].parent = self.cas['root']
@@ -849,6 +855,7 @@ VQIDAQAB
         self.usable_cas = self.cas
 
     def load_all_cas(self):
+        """Load all known CAs."""
         self.cas.update({k: self.load_ca(name=v['name'], x509=v['pub']['parsed']) for k, v in certs.items()
                         if v.get('type') == 'ca' and k not in self.cas})
         self.cas['child'].parent = self.cas['root']
@@ -857,6 +864,7 @@ VQIDAQAB
                            if certs[name]['key_filename'] is not False}
 
     def load_generated_certs(self):
+        """Load certificates created as fixture data."""
         for name, data in [(k, v) for k, v in certs.items()
                            if v['type'] == 'cert' and v['cat'] == 'generated' and k not in self.certs]:
             ca = self.cas[data['ca']]
@@ -868,6 +876,7 @@ VQIDAQAB
                          if k in ['root-cert', 'child-cert', 'ecc-cert', 'dsa-cert', 'pwd-cert']}
 
     def load_all_certs(self):
+        """Load all known certs."""
         for name, data in [(k, v) for k, v in certs.items() if v['type'] == 'cert' and k not in self.certs]:
             ca = self.cas[data['ca']]
             csr = data.get('csr', {}).get('pem', '')
@@ -880,30 +889,34 @@ VQIDAQAB
 
     @contextmanager
     def patch(self, *args, **kwargs):
+        """Shortcut to :py:func:`py:unittest.mock.patch`."""
         with patch(*args, **kwargs) as mock:
             yield mock
 
     @contextmanager
     def patch_object(self, *args, **kwargs):
+        """Shortcut to :py:func:`py:unittest.mock.patch.object`."""
         with patch.object(*args, **kwargs) as mock:
             yield mock
 
     @contextmanager
     def mute_celery(self):
+        """Mock celery invocations."""
         with patch('celery.app.task.Task.apply_async') as mock:
             yield mock
 
     def reverse(self, name, *args, **kwargs):
+        """Shortcut to reverse an URI name."""
         return reverse('django_ca:%s' % name, args=args, kwargs=kwargs)
 
 
 class DjangoCATestCase(DjangoCATestCaseMixin, TestCase):
-    pass
+    """Base TestCase class."""
 
 
 @override_settings(CA_MIN_KEY_SIZE=512)
 class DjangoCAWithCATestCase(DjangoCATestCase):
-    """A test class that already has a CA predefined."""
+    """A test class that already has all CA predefined."""
 
     def setUp(self):
         super().setUp()
@@ -911,18 +924,27 @@ class DjangoCAWithCATestCase(DjangoCATestCase):
 
 
 class DjangoCAWithGeneratedCAsTestCase(DjangoCATestCase):
+    """TestCase that has all generated (usable) CAs preloaded."""
+
     def setUp(self):
         super().setUp()
         self.load_usable_cas()
 
 
 class DjangoCAWithGeneratedCertsTestCase(DjangoCAWithCATestCase):
+    """TestCase that has all **generated** certificates preloaded."""
+
     def setUp(self):
         super().setUp()
         self.load_generated_certs()
 
 
 class DjangoCAWithCertTestCase(DjangoCAWithCATestCase):
+    """TestCase that has all certificates preloaded.
+
+    This class really loads all certificates that we know of. This includes certificates generated as test
+    fixture, certificates retrieved from the interned as example data and certificates from bug reports.
+    """
     def setUp(self):
         super().setUp()
         self.load_all_certs()
@@ -950,6 +972,7 @@ class DjangoCAWithGeneratedCAsTransactionTestCase(DjangoCATransactionTestCase):
 
 
 class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # pragma: no cover
+    """TestCase with some helper functions for Selenium."""
     # NOTE: coverage has weird issues all over this class
 
     @classmethod
@@ -985,6 +1008,7 @@ class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # prag
         return self.selenium.find_element_by_css_selector(selector)
 
     def login(self, username='admin', password='admin'):
+        """Login the given user."""
         self.selenium.get('%s%s' % (self.live_server_url, reverse('admin:login')))
         self.find('#id_username').send_keys(username)
         self.find('#id_password').send_keys(password)
@@ -992,4 +1016,5 @@ class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # prag
         self.wait_for_page_load()
 
     def wait_for_page_load(self, wait=2):
+        """Wait for the page to load."""
         WebDriverWait(self.selenium, wait).until(lambda driver: driver.find_element_by_tag_name('body'))

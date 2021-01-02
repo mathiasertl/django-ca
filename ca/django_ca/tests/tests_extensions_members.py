@@ -30,31 +30,33 @@ class DistributionPointTestCase(TestCase):
     """Test DistributionPoint class."""
 
     def test_init_basic(self):
-        dp = DistributionPoint()
-        self.assertIsNone(dp.full_name)
-        self.assertIsNone(dp.relative_name)
-        self.assertIsNone(dp.crl_issuer)
-        self.assertIsNone(dp.reasons)
+        """Test basic initialization."""
+        dpoint = DistributionPoint()
+        self.assertIsNone(dpoint.full_name)
+        self.assertIsNone(dpoint.relative_name)
+        self.assertIsNone(dpoint.crl_issuer)
+        self.assertIsNone(dpoint.reasons)
 
-        dp = DistributionPoint({
+        dpoint = DistributionPoint({
             'full_name': ['http://example.com'],
             'crl_issuer': ['http://example.net'],
         })
-        self.assertEqual(dp.full_name, [uri('http://example.com')])
-        self.assertIsNone(dp.relative_name)
-        self.assertEqual(dp.crl_issuer, [uri('http://example.net')])
-        self.assertIsNone(dp.reasons)
+        self.assertEqual(dpoint.full_name, [uri('http://example.com')])
+        self.assertIsNone(dpoint.relative_name)
+        self.assertEqual(dpoint.crl_issuer, [uri('http://example.net')])
+        self.assertIsNone(dpoint.reasons)
 
-        dp = DistributionPoint({
+        dpoint = DistributionPoint({
             'full_name': 'http://example.com',
             'crl_issuer': 'http://example.net',
         })
-        self.assertEqual(dp.full_name, [uri('http://example.com')])
-        self.assertIsNone(dp.relative_name)
-        self.assertEqual(dp.crl_issuer, [uri('http://example.net')])
-        self.assertIsNone(dp.reasons)
+        self.assertEqual(dpoint.full_name, [uri('http://example.com')])
+        self.assertIsNone(dpoint.relative_name)
+        self.assertEqual(dpoint.crl_issuer, [uri('http://example.net')])
+        self.assertIsNone(dpoint.reasons)
 
     def test_init_errors(self):
+        """Test various invalid input values."""
         with self.assertRaisesRegex(ValueError, r'^data must be x509.DistributionPoint or dict$'):
             DistributionPoint('foobar')
 
@@ -66,8 +68,8 @@ class DistributionPointTestCase(TestCase):
 
     def test_str(self):
         """Test str()."""
-        dp = DistributionPoint({'full_name': 'http://example.com'})
-        self.assertEqual(str(dp), "<DistributionPoint: full_name=['URI:http://example.com']>")
+        dpoint = DistributionPoint({'full_name': 'http://example.com'})
+        self.assertEqual(str(dpoint), "<DistributionPoint: full_name=['URI:http://example.com']>")
 
 
 class PolicyInformationTestCase(DjangoCATestCase):
@@ -147,6 +149,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.pi_empty = PolicyInformation()
 
     def test_append(self):
+        """Test PolicyInformation.append()."""
         self.pi1.append(self.q2)
         self.pi1.append(self.s3['policy_qualifiers'][0])
         self.assertEqual(self.pi1, PolicyInformation({
@@ -193,55 +196,58 @@ class PolicyInformationTestCase(DjangoCATestCase):
                 continue
 
             for index, policy in enumerate(ext):
-                pi = PolicyInformation(policy)
-                self.assertEqual(pi.as_text(), certs[name]['policy_texts'][index])
+                pinfo = PolicyInformation(policy)
+                self.assertEqual(pinfo.as_text(), certs[name]['policy_texts'][index])
 
     def test_certs(self):
+        """Test for all known certs."""
         self.load_all_cas()
         self.load_all_certs()
-        for name, cert in list(self.cas.items()) + list(self.certs.items()):
+        for _name, cert in list(self.cas.items()) + list(self.certs.items()):
             try:
                 val = cert.x509.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES).value
             except x509.ExtensionNotFound:
                 continue
 
             for policy in val:
-                pi = PolicyInformation(policy)
-                self.assertEqual(pi.for_extension_type, policy)
+                pi1 = PolicyInformation(policy)
+                self.assertEqual(pi1.for_extension_type, policy)
 
                 # pass the serialized value to the constructor and see if it's still the same
-                pi2 = PolicyInformation(pi.serialize())
-                self.assertEqual(pi, pi2)
-                self.assertEqual(pi.serialize(), pi2.serialize())
+                pi2 = PolicyInformation(pi1.serialize())
+                self.assertEqual(pi1, pi2)
+                self.assertEqual(pi1.serialize(), pi2.serialize())
                 self.assertEqual(pi2.for_extension_type, policy)
 
     def test_clear(self):
+        """Test PolicyInformation.clear()."""
         self.pi1.clear()
         self.assertIsNone(self.pi1.policy_qualifiers)
 
     def test_constructor(self):
-        # just some constructors that are otherwise not called
-        pi = PolicyInformation()
-        self.assertIsNone(pi.policy_identifier)
-        self.assertIsNone(pi.policy_qualifiers)
+        """Test some constructors that are otherwise not called."""
+        pinfo = PolicyInformation()
+        self.assertIsNone(pinfo.policy_identifier)
+        self.assertIsNone(pinfo.policy_qualifiers)
 
-        pi = PolicyInformation({
+        pinfo = PolicyInformation({
             'policy_identifier': '1.2.3',
             'policy_qualifiers': [
                 x509.UserNotice(notice_reference=None, explicit_text='foobar'),
             ],
         })
-        # todo: test pi
+        self.assertEqual(len(pinfo), 1)
 
-        pi = PolicyInformation({
+        pinfo = PolicyInformation({
             'policy_identifier': '1.2.3',
             'policy_qualifiers': [{
                 'notice_reference': x509.NoticeReference(organization='foobar', notice_numbers=[1]),
             }],
         })
-        # todo: test pi
+        self.assertEqual(len(pinfo), 1)
 
     def test_constructor_errors(self):
+        """Test various invalid values for the constructor."""
         with self.assertRaisesRegex(
                 ValueError, r'^PolicyInformation data must be either x509.PolicyInformation or dict$'):
             PolicyInformation(True)
@@ -256,6 +262,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
             }]})
 
     def test_contains(self):
+        """Test PolicyInformation.contains()."""
         self.assertIn(self.q1, self.pi1)
         self.assertIn(self.q2, self.pi2)
         self.assertIn(self.q3, self.pi3)
@@ -282,6 +289,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.assertEqual(self.pi_empty.count(self.q2), 0)
 
     def test_delitem(self):
+        """Test item deletion (e.g. ``del pi[0]``)."""
         del self.pi1[0]
         self.pi_empty.policy_identifier = self.oid
         self.assertEqual(self.pi1, self.pi_empty)
@@ -315,9 +323,9 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.assertEqual(self.pi4[1:], [self.s4['policy_qualifiers'][1]])
 
         with self.assertRaisesRegex(IndexError, r'^list index out of range$'):
-            self.pi_empty[0]
+            self.pi_empty[0]  # pylint: disable=pointless-statement
         with self.assertRaisesRegex(IndexError, r'^list index out of range$'):
-            self.pi_empty[2:]
+            self.pi_empty[2:]  # pylint: disable=pointless-statement
 
     def test_hash(self):
         """Test hash()."""
@@ -366,19 +374,20 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.assertEqual(len(self.pi_empty), 0)
 
     def test_policy_identifier_setter(self):
+        """Test setting a policy identifier."""
         value = '1.2.3'
         expected = ObjectIdentifier(value)
-        pi = PolicyInformation({'policy_identifier': value})
-        pi.policy_identifier = value
-        self.assertEqual(pi.policy_identifier, expected)
+        pinfo = PolicyInformation({'policy_identifier': value})
+        pinfo.policy_identifier = value
+        self.assertEqual(pinfo.policy_identifier, expected)
 
-        pi = PolicyInformation({'policy_identifier': expected})
-        self.assertEqual(pi.policy_identifier, expected)
+        pinfo = PolicyInformation({'policy_identifier': expected})
+        self.assertEqual(pinfo.policy_identifier, expected)
 
         new_value = '2.3.4'
         new_expected = ObjectIdentifier(new_value)
-        pi.policy_identifier = new_value
-        self.assertEqual(pi.policy_identifier, new_expected)
+        pinfo.policy_identifier = new_value
+        self.assertEqual(pinfo.policy_identifier, new_expected)
 
     def test_pop(self):
         """Test ext.pop()."""
