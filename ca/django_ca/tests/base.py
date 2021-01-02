@@ -321,16 +321,19 @@ timestamps['everything_expired'] = timestamps['base'] + timedelta(days=365 * 20)
 ocsp_data = _fixture_data['ocsp']
 
 
-def dns(d):  # just a shortcut
-    return x509.DNSName(d)
+def dns(name):  # just a shortcut
+    """Shortcut to get a :py:class:`cg:cryptography.x509.DNSName`."""
+    return x509.DNSName(name)
 
 
-def uri(u):  # just a shortcut
-    return x509.UniformResourceIdentifier(u)
+def uri(url):  # just a shortcut
+    """Shortcut to get a :py:class:`cg:cryptography.x509.UniformResourceIdentifier`."""
+    return x509.UniformResourceIdentifier(url)
 
 
-def rdn(r):  # just a shortcut
-    return x509.RelativeDistinguishedName([x509.NameAttribute(*t) for t in r])
+def rdn(name):  # just a shortcut
+    """Shortcut to get a :py:class:`cg:cryptography.x509..RelativeDistinguishedNam`."""
+    return x509.RelativeDistinguishedName([x509.NameAttribute(*t) for t in name])
 
 
 @contextmanager
@@ -342,7 +345,7 @@ def mock_cadir(path):
         yield
 
 
-class override_tmpcadir(override_settings):
+class override_tmpcadir(override_settings):  # pylint: disable=invalid-name; in line with parent class
     """Sets the CA_DIR directory to a temporary directory.
 
     .. NOTE: This also takes any additional settings.
@@ -364,8 +367,10 @@ class override_tmpcadir(override_settings):
         shutil.copy(os.path.join(settings.FIXTURES_DIR, certs['profile-ocsp']['pub_filename']),
                     self.options['CA_DIR'])
 
+        # pylint: disable=attribute-defined-outside-init
         self.mock = patch.object(ca_storage, 'location', self.options['CA_DIR'])
         self.mock_ = patch.object(ca_storage, '_location', self.options['CA_DIR'])
+        # pylint: enable=attribute-defined-outside-init
         self.mock.start()
         self.mock_.start()
 
@@ -408,12 +413,12 @@ VQIDAQAB
     ACME_SLUG_2 = 'DzW4PQ6L76PE'
     re_false_password = r'^(Bad decrypt\. Incorrect password\?|Could not deserialize key data\.)$'
 
-    def setUp(self):
+    def setUp(self):  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()
         self.cas = {}
         self.certs = {}
 
-    def tearDown(self):
+    def tearDown(self):  # pylint: disable=invalid-name,missing-function-docstring
         super().tearDown()
         cache.clear()
 
@@ -421,7 +426,8 @@ VQIDAQAB
         """Context manager to use a temporary CA dir."""
         return override_tmpcadir(**kwargs)
 
-    def mock_cadir(self, path):
+    def mock_cadir(self, path):  # pylint: disable=invalid-name
+        """Shortcut to mock the ca dir to the given value."""
         return mock_cadir(path)
 
     def absolute_uri(self, name, hostname=None, **kwargs):
@@ -440,7 +446,8 @@ VQIDAQAB
             name = 'django_ca%s' % name
         return 'http://%s%s' % (hostname, reverse(name, kwargs=kwargs))
 
-    def assertAuthorityKeyIdentifier(self, issuer, cert, critical=False):  # pylint: disable=invalid-name
+    def assertAuthorityKeyIdentifier(self, issuer, cert):  # pylint: disable=invalid-name
+        """Test the key identifier of the AuthorityKeyIdentifier extenion of `cert`."""
         self.assertEqual(cert.authority_key_identifier.key_identifier, issuer.subject_key_identifier.value)
 
     def assertBasic(self, cert, algo='SHA256'):  # pylint: disable=invalid-name
@@ -451,6 +458,7 @@ VQIDAQAB
 
     def assertCRL(self, crl, certs=None, signer=None, expires=86400,  # pylint: disable=invalid-name
                   algorithm=None, encoding=Encoding.PEM, idp=None, extensions=None, crl_number=0):
+        """Test the given CRL."""
         certs = certs or []
         signer = signer or self.cas['child']
         algorithm = algorithm or ca_settings.CA_DIGEST_ALGORITHM
@@ -483,12 +491,13 @@ VQIDAQAB
         entries = {e.serial_number: e for e in crl}
         expected = {c.x509.serial_number: c for c in certs}
         self.assertCountEqual(entries, expected)
-        for serial, entry in entries.items():
+        for entry in entries.values():
             self.assertEqual(entry.revocation_date, datetime.utcnow())
             self.assertEqual(list(entry.extensions), [])
 
     @contextmanager
     def assertCreateCASignals(self, pre=True, post=True):  # pylint: disable=invalid-name
+        """Context manager mocking both pre and post_create_ca signals."""
         with self.assertSignal(pre_create_ca) as pre_sig, self.assertSignal(post_create_ca) as post_sig:
             try:
                 yield (pre_sig, post_sig)
@@ -511,6 +520,7 @@ VQIDAQAB
 
     def assertExtensions(self, cert, extensions, signer=None,  # pylint: disable=invalid-name
                          expect_defaults=True):
+        """Assert that `cert` has the given extensions."""
         extensions = {e.key: e for e in extensions}
 
         if isinstance(cert, X509CertMixin):
@@ -567,28 +577,6 @@ VQIDAQAB
         """Assert given Django messages for `response`."""
         messages = [str(m) for m in list(get_messages(response.wsgi_request))]
         self.assertEqual(messages, expected)
-
-    @contextmanager
-    def assertMultipleWarnings(self, warnings, msg=None):  # pragma: no cover; pylint: disable=invalid-name
-        # not used in 1.16, but might still be useful
-        arg = tuple([w['category'] for w in warnings if w.get('category')])
-        with self.assertWarns(arg, msg=msg) as cm:
-            yield cm
-
-        self.assertEqual(len(warnings), len(cm.warnings))
-
-        for data, msg in zip(warnings, cm.warnings):
-            self.assertEqual(msg.category, data['category'])
-
-            error = '"%s" does not match "%s"' % (msg.message, data['msg'])
-            self.assertIsNotNone(re.match(data['msg'], str(msg.message)), error)
-
-            if data.get('filename'):  # pragma: no cover - so far this is always None
-                self.assertEqual(data['filename'], msg.filename)
-            if data.get('lineno'):  # pragma: no cover - so far this is always None
-                self.assertEqual(data['lineno'], msg.lineno)
-            self.assertEqual(data.get('file'), msg.file)
-            self.assertEqual(data.get('line'), msg.line)
 
     def assertNotRevoked(self, cert):  # pylint: disable=invalid-name
         """Assert that the certificate is not revoked."""
@@ -821,7 +809,7 @@ VQIDAQAB
         return now + timedelta(days + 1)
 
     @classmethod
-    def load_ca(cls, name, x509, enabled=True, parent=None, **kwargs):
+    def load_ca(cls, name, parsed, enabled=True, parent=None, **kwargs):
         """Load a CA from one of the preloaded files."""
         path = '%s.key' % name
 
@@ -832,7 +820,7 @@ VQIDAQAB
         kwargs.setdefault('issuer_url', certs[name].get('issuer_url', ''))
 
         ca = CertificateAuthority(name=name, private_key_path=path, enabled=enabled, parent=parent, **kwargs)
-        ca.x509 = x509  # calculates serial etc
+        ca.x509 = parsed  # calculates serial etc
         ca.save()
         return ca
 
@@ -857,10 +845,10 @@ VQIDAQAB
         return cert
 
     @classmethod
-    def load_cert(cls, ca, x509, csr='', profile=''):
+    def load_cert(cls, ca, parsed, csr='', profile=''):
         """Load a certificate from the given data."""
         cert = Certificate(ca=ca, csr=csr, profile=profile)
-        cert.x509 = x509
+        cert.x509 = parsed
         cert.save()
         return cert
 
@@ -870,7 +858,7 @@ VQIDAQAB
 
     def load_usable_cas(self):
         """Load CAs generated as fixture data."""
-        self.cas.update({k: self.load_ca(name=v['name'], x509=v['pub']['parsed']) for k, v in certs.items()
+        self.cas.update({k: self.load_ca(name=v['name'], parsed=v['pub']['parsed']) for k, v in certs.items()
                         if v.get('type') == 'ca' and k not in self.cas and v['key_filename'] is not False})
         self.cas['child'].parent = self.cas['root']
         self.cas['child'].save()
@@ -878,7 +866,7 @@ VQIDAQAB
 
     def load_all_cas(self):
         """Load all known CAs."""
-        self.cas.update({k: self.load_ca(name=v['name'], x509=v['pub']['parsed']) for k, v in certs.items()
+        self.cas.update({k: self.load_ca(name=v['name'], parsed=v['pub']['parsed']) for k, v in certs.items()
                         if v.get('type') == 'ca' and k not in self.cas})
         self.cas['child'].parent = self.cas['root']
         self.cas['child'].save()
@@ -891,7 +879,7 @@ VQIDAQAB
                            if v['type'] == 'cert' and v['cat'] == 'generated' and k not in self.certs]:
             ca = self.cas[data['ca']]
             csr = data.get('csr', {}).get('pem', '')
-            self.certs[name] = self.load_cert(ca, x509=data['pub']['parsed'], csr=csr)
+            self.certs[name] = self.load_cert(ca, parsed=data['pub']['parsed'], csr=csr)
 
         self.generated_certs = self.certs
         self.ca_certs = {k: v for k, v in self.certs.items()
@@ -903,7 +891,7 @@ VQIDAQAB
             ca = self.cas[data['ca']]
             csr = data.get('csr', {}).get('pem', '')
             profile = data.get('profile', ca_settings.CA_DEFAULT_PROFILE)
-            self.certs[name] = self.load_cert(ca, x509=data['pub']['parsed'], csr=csr, profile=profile)
+            self.certs[name] = self.load_cert(ca, parsed=data['pub']['parsed'], csr=csr, profile=profile)
 
         self.generated_certs = {k: v for k, v in self.certs.items() if certs[k]['cat'] == 'generated'}
         self.ca_certs = {k: v for k, v in self.certs.items()

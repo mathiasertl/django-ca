@@ -41,7 +41,7 @@ from .base import override_tmpcadir
 class DocumentationTestCase(DjangoCATestCase):
     def setUp(self):
         super(DocumentationTestCase, self).setUp()
-        self.ca = self.load_ca(name=certs['root']['name'], x509=certs['root']['pub']['parsed'])
+        self.ca = self.load_ca(name=certs['root']['name'], parsed=certs['root']['pub']['parsed'])
 
     def get_globs(self):
         return {
@@ -144,7 +144,7 @@ class ProfileTestCase(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_create_cert_minimal(self):
-        ca = self.load_ca(name='root', x509=certs['root']['pub']['parsed'])
+        ca = self.load_ca(name='root', parsed=certs['root']['pub']['parsed'])
         csr = certs['child-cert']['csr']['parsed']
         subject = Subject({'CN': 'example.com'})
 
@@ -163,7 +163,7 @@ class ProfileTestCase(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_alternative_values(self):
-        ca = self.load_ca(name='root', x509=certs['root']['pub']['parsed'])
+        ca = self.load_ca(name='root', parsed=certs['root']['pub']['parsed'])
         ca.issuer_alt_name = 'https://example.com'
         ca.save()
         csr = certs['child-cert']['csr']['parsed']
@@ -193,7 +193,7 @@ class ProfileTestCase(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_overrides(self):
-        ca = self.load_ca(name='root', x509=certs['root']['pub']['parsed'])
+        ca = self.load_ca(name='root', parsed=certs['root']['pub']['parsed'])
         csr = certs['child-cert']['csr']['parsed']
         cn = 'example.com'
         subject = Subject({'C': 'AT', 'CN': cn})
@@ -230,7 +230,7 @@ class ProfileTestCase(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_cn_in_san(self):
-        ca = self.load_ca(name='root', x509=certs['root']['pub']['parsed'])
+        ca = self.load_ca(name='root', parsed=certs['root']['pub']['parsed'])
         csr = certs['child-cert']['csr']['parsed']
         cn = 'example.com'
         subject = Subject({'C': 'AT', 'CN': cn})
@@ -293,7 +293,7 @@ class ProfileTestCase(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_override_ski(self):
-        ca = self.load_ca(name='root', x509=certs['root']['pub']['parsed'])
+        ca = self.load_ca(name='root', parsed=certs['root']['pub']['parsed'])
         csr = certs['child-cert']['csr']['parsed']
         subject = Subject({'CN': 'example.com'})
         ski = SubjectKeyIdentifier({'value': b'333333'})
@@ -314,7 +314,7 @@ class ProfileTestCase(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_extensions_dict(self):
-        ca = self.load_ca(name='root', x509=certs['root']['pub']['parsed'])
+        ca = self.load_ca(name='root', parsed=certs['root']['pub']['parsed'])
         csr = certs['child-cert']['csr']['parsed']
         subject = Subject({'CN': 'example.com'})
         ski = SubjectKeyIdentifier({'value': b'333333'})
@@ -335,7 +335,7 @@ class ProfileTestCase(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_hide_extension(self):
-        ca = self.load_ca(name='root', x509=certs['root']['pub']['parsed'])
+        ca = self.load_ca(name='root', parsed=certs['root']['pub']['parsed'])
         csr = certs['child-cert']['csr']['parsed']
         subject = Subject({'CN': 'example.com'})
 
@@ -355,7 +355,7 @@ class ProfileTestCase(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_extension_as_cryptography(self):
-        ca = self.load_ca(name='root', x509=certs['root']['pub']['parsed'])
+        ca = self.load_ca(name='root', parsed=certs['root']['pub']['parsed'])
         csr = certs['child-cert']['csr']['parsed']
         subject = Subject({'CN': 'example.com'})
 
@@ -376,7 +376,7 @@ class ProfileTestCase(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_no_cn_no_san(self):
-        ca = self.load_ca(name='root', x509=certs['root']['pub']['parsed'])
+        ca = self.load_ca(name='root', parsed=certs['root']['pub']['parsed'])
         csr = certs['child-cert']['csr']['parsed']
 
         profile = Profile('example', subject=Subject({'C': 'AT'}))
@@ -394,7 +394,7 @@ class ProfileTestCase(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_unparsable_cn(self):
-        ca = self.load_ca(name='root', x509=certs['root']['pub']['parsed'])
+        ca = self.load_ca(name='root', parsed=certs['root']['pub']['parsed'])
         csr = certs['child-cert']['csr']['parsed']
         cn = 'foo bar'
 
