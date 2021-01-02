@@ -455,10 +455,15 @@ class ReasonActionTestCase(DjangoCATestCase):
 
     def test_error(self):
         """Test false option values."""
-        self.assertParserError(['foo'],
-                               'usage: {script} [-h]\n'
-                               '              {{aa_compromise,affiliation_changed,ca_compromise,certificate_hold,cessation_of_operation,key_compromise,privilege_withdrawn,remove_from_crl,superseded,unspecified}}\n'  # NOQA
-                               "{script}: error: argument reason: invalid choice: 'foo' (choose from 'aa_compromise', 'affiliation_changed', 'ca_compromise', 'certificate_hold', 'cessation_of_operation', 'key_compromise', 'privilege_withdrawn', 'remove_from_crl', 'superseded', 'unspecified')\n")  # NOQA
+        self.assertParserError(
+            ['foo'],
+            'usage: {script} [-h]\n'
+            '              {{aa_compromise,affiliation_changed,ca_compromise,certificate_hold,'
+            'cessation_of_operation,key_compromise,privilege_withdrawn,remove_from_crl,superseded,'
+            'unspecified}}\n'
+            "{script}: error: argument reason: invalid choice: 'foo' (choose from 'aa_compromise', "
+            "'affiliation_changed', 'ca_compromise', 'certificate_hold', 'cessation_of_operation', "
+            "'key_compromise', 'privilege_withdrawn', remove_from_crl', 'superseded', 'unspecified')\n")
 
 
 class MultipleURLActionTestCase(DjangoCATestCase):
@@ -486,6 +491,7 @@ class MultipleURLActionTestCase(DjangoCATestCase):
         self.assertEqual(args.url, urls)
 
     def test_none(self):
+        """Test passing no value at all."""
         args = self.parser.parse_args([])
         self.assertEqual(args.url, [])
 
