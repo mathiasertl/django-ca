@@ -211,9 +211,6 @@ class MultipleURLAction(argparse.Action):
         except ValidationError:
             parser.error('%s: Not a valid URL.' % value)
 
-        if getattr(namespace, self.dest) is None:
-            setattr(namespace, self.dest, [])
-
         getattr(namespace, self.dest).append(value)
 
 
