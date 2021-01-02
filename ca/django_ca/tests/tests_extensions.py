@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Test cases for :py:mod:`django_ca.extensions`."""
+
 import doctest
 import functools
 import operator
@@ -55,7 +57,6 @@ from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
 from ..extensions import UnrecognizedExtension
 from ..models import X509CertMixin
-from .base import DjangoCATestCase
 from .base import DjangoCAWithCertTestCase
 from .base import certs
 from .base import dns
@@ -63,7 +64,9 @@ from .base import rdn
 from .base import uri
 
 
-def load_tests(loader, tests, ignore):
+def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+    """Load doctests."""
+
     docs_path = os.path.join(settings.DOC_DIR, 'python', 'extensions.rst')
     tests.addTests(doctest.DocTestSuite('django_ca.extensions'))
     tests.addTests(doctest.DocFileSuite(docs_path, module_relative=False))
@@ -76,7 +79,7 @@ class AbstractExtensionTestMixin:
     force_critical = None
     repr_tmpl = '<{name}: {value}, critical={critical}>'
 
-    def assertExtensionEqual(self, first, second):
+    def assertExtensionEqual(self, first, second):  # pylint: disable=invalid-name
         """Function to test if an extension is really really equal.
 
         This function should compare extension internals directly not via the __eq__ function.
@@ -85,7 +88,7 @@ class AbstractExtensionTestMixin:
         self.assertEqual(first.critical, second.critical)
         self.assertEqual(first.value, second.value)
 
-    def assertSerialized(self, ext, config, critical=None):
+    def assertSerialized(self, ext, config, critical=None):  # pylint: disable=invalid-name
         if critical is None:
             critical = self.ext_class.default_critical
 
@@ -122,11 +125,13 @@ class AbstractExtensionTestMixin:
                 Extension({'value': config['expected']}).as_extension()
 
     def test_as_text(self):
+        """Test as_text()."""
         for key, config in self.test_values.items():
             ext = self.ext(config['expected'])
             self.assertEqual(ext.as_text(), config['expected_text'])
 
     def test_extension_type(self):
+        """Test extension_type property."""
         for config in self.test_values.values():
             with self.assertRaises(NotImplementedError):
                 Extension({'value': config['expected']}).extension_type
@@ -141,6 +146,7 @@ class AbstractExtensionTestMixin:
         self.assertIsNone(self.ext_class.oid)
 
     def test_hash(self):
+        """Test hash()."""
         for config in self.test_values.values():
             ext = self.ext(config['expected'])
             ext_critical = self.ext(config['expected'], critical=True)
@@ -229,6 +235,7 @@ class AbstractExtensionTestMixin:
             self.ext_class(example())
 
     def test_ne(self):
+        """Test ``!=`` (not-equal) operator."""
         for config in self.test_values.values():
             if self.force_critical is None:
                 self.assertNotEqual(
@@ -255,6 +262,7 @@ class AbstractExtensionTestMixin:
                     )
 
     def test_repr(self):
+        """Test repr()."""
         for config in self.test_values.values():
             for value in config['values']:
                 ext = self.ext(value)
@@ -269,6 +277,7 @@ class AbstractExtensionTestMixin:
                     self.assertEqual(repr(ext), expected)
 
     def test_serialize(self):
+        """Test serialization of extension."""
         for key, config in self.test_values.items():
             ext = self.ext(config['expected'])
             self.assertSerialized(ext, config)
@@ -278,6 +287,7 @@ class AbstractExtensionTestMixin:
                 self.assertSerialized(ext, config, critical=critical)
 
     def test_str(self):
+        """Test str()."""
         for config in self.test_values.values():
             for value in config['values']:
                 ext = self.ext(value)
@@ -339,6 +349,7 @@ class ExtensionTestMixin(AbstractExtensionTestMixin):
         self.assertIsInstance(getattr(X509CertMixin, self.ext_class.key), cached_property)
 
     def test_extension_type(self):
+        """Test extension_type property."""
         for key, config in self.test_values.items():
             if config['extension_type'] is None:
                 continue  # test case is not a valid extension
@@ -383,6 +394,8 @@ class NullExtensionTestMixin(ExtensionTestMixin):
 
 
 class IterableExtensionTestMixin:
+    """Mixin for testing IterableExtension-based extensions."""
+
     container_type = None  # extension emulates a given container type
     invalid_values = []
 
@@ -474,6 +487,7 @@ class IterableExtensionTestMixin:
             self.assertEqual(len(ext.value), 0)
 
     def test_in(self):
+        """Test the ``in`` operator."""
         for values in self.test_values.values():
             ext = self.ext_class({'value': values['expected']})
             for values in values['values']:
@@ -481,10 +495,12 @@ class IterableExtensionTestMixin:
                     self.assertIn(value, ext)
 
     def test_len(self):  # len()
+        """Test len(ext)."""
         for values in self.test_values.values():
             self.assertEqual(len(self.ext_class({'value': values['expected']})), len(values['expected']))
 
     def test_not_in(self):
+        """Test the ``not in`` operator."""
         for config in self.test_values.values():
             for values in config['values']:
                 ext = self.ext_class({'value': set()})
@@ -495,6 +511,8 @@ class IterableExtensionTestMixin:
 
 
 class ListExtensionTestMixin(IterableExtensionTestMixin):
+    """Mixin for testing ListExtension-based extensions."""
+
     container_type = list
 
     def test_append(self):
@@ -509,6 +527,7 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
                 self.assertExtensionEqual(ext, expected)
 
     def test_count(self):
+        """Test ext.count()."""
         for key, config in self.test_values.items():
             ext = self.ext(config['expected'])
             for values in config['values']:
@@ -522,6 +541,7 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
                 self.assertEqual(ext.count(value), 0)
 
     def test_del(self):
+        """Test item deletion (e.g. ``del ext[0]``)."""
         for key, config in self.test_values.items():
             ext = self.ext(config['expected'])
             self.assertEqual(len(ext), len(config['expected']))
@@ -540,6 +560,7 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
             self.assertEqual(len(ext), 0)
 
     def test_extend(self):
+        """Test ext.extend()."""
         func = lambda c, j: c.extend(j)  # noqa
         for key, config in self.test_values.items():
             set_value = config['expected']
@@ -556,6 +577,7 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
                                      set_init=set_value, set_value=set_value[:2])
 
     def test_getitem(self):
+        """Test item getter (e.g. ``x = ext[0]``)."""
         func = lambda c, j: operator.getitem(c, j)  # noqa
         for key, config in self.test_values.items():
             ct_expected = config['expected']
@@ -572,6 +594,7 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
                                          raises=(IndexError, r'^list index out of range$'))
 
     def test_getitem_slices(self):
+        """Test getting slices (e.g. ``x = ext[0:1]``)."""
         func = lambda c, j: operator.getitem(c, j)  # noqa
         for key, config in self.test_values.items():
             ct_expected = config['expected']
@@ -585,6 +608,7 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
                 self.assertEqualFunction(func, config['expected'], slice(0, 2, 2), set_init=ct_expected)
 
     def test_insert(self):
+        """Test ext.insert()."""
         for key, config in self.test_values.items():
             ct_expected = config['expected']
             if 'expected_djca' in config:
@@ -602,6 +626,7 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
                                              set_init=ct_expected, **kwargs)
 
     def test_pop(self):
+        """Test ext.pop()."""
         for key, config in self.test_values.items():
             for values in config['values']:
                 ext = self.ext(config['expected'])
@@ -622,6 +647,7 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
             self.ext([]).pop()
 
     def test_remove(self):
+        """Test ext.remove()."""
         for key, config in self.test_values.items():
             for values in config['values']:
                 for expected_value, value in zip(config['expected'], values):
@@ -629,6 +655,7 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
                     self.assertEqualFunction(lambda c, e: c.remove(e), config['expected'], value, **kwargs)
 
     def test_setitem(self):
+        """Test setting items (e.g. ``ext[0] = ...``)."""
         func = lambda c, j: operator.setitem(c, j[0], j[1])  # noqa
         for key, config in self.test_values.items():
             ct_expected = config['expected']
@@ -641,6 +668,7 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
                                              set_init=ct_expected, set_value=(i, ct_expected[i]))
 
     def test_setitem_slices(self):
+        """Test setting slices."""
         func = lambda c, j: operator.setitem(c, j[0], j[1])  # noqa
         for key, config in self.test_values.items():
             ct_expected = config['expected']
@@ -658,7 +686,7 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
     container_type = set
     ext_class_name = 'OrderedSetExtension'
 
-    def assertIsCopy(self, orig, new, expected_value=None):
+    def assertIsCopy(self, orig, new, expected_value=None):  # pylint: disable=invalid-name
         """Assert that `new` is a different instance then `other` and has possibly updated values."""
         if expected_value is None:
             expected_value = orig.value.copy()  # copy just to be sure
@@ -667,111 +695,112 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
         self.assertIsNot(orig, new)  # assert that this is a different instance
         self.assertIsNot(orig.value, new.value)  # value is also different instance
 
-    def assertSingleValueOperator(self, f, update=True, infix=True):
+    def assertSingleValueOperator(self, oper, update=True, infix=True):  # pylint: disable=invalid-name
         """Test that an operator taking a single value works the same way with sets and this extension."""
-        for key, config in self.test_values.items():
+        for config in self.test_values.values():
 
             # Apply function to an empty extension
-            self.assertEqualFunction(f, set(), config['expected'], update=update, infix=infix)
+            self.assertEqualFunction(oper, set(), config['expected'], update=update, infix=infix)
 
             # Apply function to an extension with every "expected" value
             for init_config in self.test_values.values():
-                self.assertEqualFunction(f, init_config['expected'], config['expected'], update=update,
+                self.assertEqualFunction(oper, init_config['expected'], config['expected'], update=update,
                                          infix=infix)
 
             # Test that equivalent values work exactly the same way:
             for test_value in config['values']:
                 # Again, apply function to the empty extension/set
-                self.assertEqualFunction(f, set(), test_value, set_value=config['expected'],
+                self.assertEqualFunction(oper, set(), test_value, set_value=config['expected'],
                                          update=update, infix=infix)
 
                 # Again, apply function to an extension with every "expected" value
-                for init_key, init_config in self.test_values.items():
-                    self.assertEqualFunction(f, init=init_config['expected'], value=test_value,
+                for init_config in self.test_values.values():
+                    self.assertEqualFunction(oper, init=init_config['expected'], value=test_value,
                                              set_value=config['expected'], update=update, infix=infix)
 
-    def assertMultipleValuesOperator(self, f, update=True, infix=True):
+    def assertMultipleValuesOperator(self, oper, update=True, infix=True):  # pylint: disable=invalid-name
         """Test that an operator taking a multiple values works the same way with sets and this extension."""
         for first_config in self.test_values.values():
             for second_config in self.test_values.values():
                 expected = (set(first_config['expected']), set(second_config['expected']))
 
                 # Apply function to an empty extension
-                self.assertEqualFunction(f, set(), expected, update=update, infix=infix)
+                self.assertEqualFunction(oper, set(), expected, update=update, infix=infix)
 
                 for init_config in self.test_values.values():
                     expected = (
                         set(init_config['expected']),
                         set(first_config['expected']), set(second_config['expected']),
                     )
-                    self.assertEqualFunction(f, init_config['expected'], expected, update=update, infix=infix)
+                    self.assertEqualFunction(oper, init_config['expected'], expected, update=update,
+                                             infix=infix)
 
-    def assertRelation(self, f):
-        self.assertEqual(f(set(), set()), f(self.ext_class({'value': set()}), set()))
-        self.assertEqual(f(set(), set()), f(self.ext_class({'value': set()}),
-                                            self.ext_class({'value': set()})))
+    def assertRelation(self, oper):  # pylint: disable=invalid-name
+        self.assertEqual(oper(set(), set()), oper(self.ext_class({'value': set()}), set()))
+        self.assertEqual(oper(set(), set()), oper(self.ext_class({'value': set()}),
+                                                  self.ext_class({'value': set()})))
 
-        for key, config in self.test_values.items():
+        for config in self.test_values.values():
             self.assertEqual(
-                f(config['expected'], config['expected']),
-                f(self.ext_class({'value': set(config['expected'])}), set(config['expected']))
+                oper(config['expected'], config['expected']),
+                oper(self.ext_class({'value': set(config['expected'])}), set(config['expected']))
             )
             self.assertEqual(
-                f(config['expected'], config['expected']),
-                f(self.ext_class({'value': set(config['expected'])}),
-                  self.ext_class({'value': set(config['expected'])}))
+                oper(config['expected'], config['expected']),
+                oper(self.ext_class({'value': set(config['expected'])}),
+                     self.ext_class({'value': set(config['expected'])}))
             )
 
-            for second_key, second_config in self.test_values.items():
+            for second_config in self.test_values.values():
                 intersection_expected = config['expected'] & second_config['expected']
                 self.assertEqual(
-                    f(config['expected'], intersection_expected),
-                    f(self.ext_class({'value': set(config['expected'])}), intersection_expected)
+                    oper(config['expected'], intersection_expected),
+                    oper(self.ext_class({'value': set(config['expected'])}), intersection_expected)
                 )
                 self.assertEqual(
-                    f(config['expected'], intersection_expected),
-                    f(self.ext_class({'value': set(config['expected'])}),
-                      self.ext_class({'value': intersection_expected}))
+                    oper(config['expected'], intersection_expected),
+                    oper(self.ext_class({'value': set(config['expected'])}),
+                         self.ext_class({'value': intersection_expected}))
                 )
                 self.assertEqual(
-                    f(config['expected'], intersection_expected),
-                    f(self.ext_class({'value': config['expected']}),
-                      self.ext_class({'value': set(intersection_expected)}))
+                    oper(config['expected'], intersection_expected),
+                    oper(self.ext_class({'value': config['expected']}),
+                         self.ext_class({'value': set(intersection_expected)}))
                 )
 
                 union_expected = config['expected'] | second_config['expected']
                 self.assertEqual(
-                    f(config['expected'], set(union_expected)),
-                    f(self.ext_class({'value': set(config['expected'])}), union_expected)
+                    oper(config['expected'], set(union_expected)),
+                    oper(self.ext_class({'value': set(config['expected'])}), union_expected)
                 )
                 self.assertEqual(
-                    f(config['expected'], set(union_expected)),
-                    f(self.ext_class({'value': set(config['expected'])}),
-                      self.ext_class({'value': set(union_expected)}))
+                    oper(config['expected'], set(union_expected)),
+                    oper(self.ext_class({'value': set(config['expected'])}),
+                         self.ext_class({'value': set(union_expected)}))
                 )
                 self.assertEqual(
-                    f(config['expected'], set(union_expected)),
-                    f(self.ext_class({'value': config['expected']}), set(union_expected))
+                    oper(config['expected'], set(union_expected)),
+                    oper(self.ext_class({'value': config['expected']}), set(union_expected))
                 )
 
                 symmetric_diff_expected = config['expected'] ^ second_config['expected']
                 self.assertEqual(
-                    f(config['expected'], set(symmetric_diff_expected)),
-                    f(self.ext_class({'value': set(config['expected'])}), set(symmetric_diff_expected))
+                    oper(config['expected'], set(symmetric_diff_expected)),
+                    oper(self.ext_class({'value': set(config['expected'])}), set(symmetric_diff_expected))
                 )
                 self.assertEqual(
-                    f(config['expected'], set(symmetric_diff_expected)),
-                    f(self.ext_class({'value': set(config['expected'])}),
-                      self.ext_class({'value': set(symmetric_diff_expected)}))
+                    oper(config['expected'], set(symmetric_diff_expected)),
+                    oper(self.ext_class({'value': set(config['expected'])}),
+                         self.ext_class({'value': set(symmetric_diff_expected)}))
                 )
                 self.assertEqual(
-                    f(set(symmetric_diff_expected), config['expected']),
-                    f(self.ext_class({'value': set(symmetric_diff_expected)}),
-                      self.ext_class({'value': set(config['expected'])}))
+                    oper(set(symmetric_diff_expected), config['expected']),
+                    oper(self.ext_class({'value': set(symmetric_diff_expected)}),
+                         self.ext_class({'value': set(config['expected'])}))
                 )
 
     def test_add(self):
-        for key, config in self.test_values.items():
+        for config in self.test_values.values():
             for values in config['values']:
                 ext = self.ext_class({'value': set()})
                 for value in values:
@@ -863,6 +892,7 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
         self.assertRelation(lambda s, o: operator.lt(s, o))
 
     def test_pop(self):
+        """Test ext.pop()."""
         for config in self.test_values.values():
             for values in config['values']:
                 ext = self.ext_class({'value': set(config['expected'])})
@@ -881,6 +911,7 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
             ext.pop()
 
     def test_remove(self):
+        """Test ext.remove()."""
         for config in self.test_values.values():
             for values in config['values']:
                 ext = self.ext_class({'value': set(config['expected'])})
@@ -934,6 +965,8 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
 
 
 class ExtensionTestCase(AbstractExtensionTestMixin, TestCase):
+    """Test Extension extension (test basic functionality of abstract extension)."""
+
     ext_class = Extension
     ext_class_name = 'Extension'
     test_values = {
@@ -947,6 +980,7 @@ class ExtensionTestCase(AbstractExtensionTestMixin, TestCase):
     }
 
     def test_from_extension(self):
+        """Test constructor from cryptography extension - not implemented in base class."""
         ext = x509.Extension(oid=x509.ExtensionOID.BASIC_CONSTRAINTS, critical=True,
                              value=x509.BasicConstraints(ca=True, path_length=3))
         with self.assertRaises(NotImplementedError):
@@ -954,7 +988,10 @@ class ExtensionTestCase(AbstractExtensionTestMixin, TestCase):
 
 
 class ListExtensionTestCase(TestCase):
+    """Test ListExtension (test basic functionality of abstract extension)."""
+
     def test_hash(self):
+        """Test hash()."""
         self.assertEqual(hash(ListExtension({'value': ['foo']})),
                          hash(ListExtension({'value': ['foo']})))
         self.assertNotEqual(hash(ListExtension({'value': 'foo', 'critical': False})),
@@ -963,11 +1000,13 @@ class ListExtensionTestCase(TestCase):
                             hash(ListExtension({'value': 'foo', 'critical': True})))
 
     def test_operators(self):
+        """Test basic operators."""
         ext = ListExtension({'value': ['foo']})
         self.assertIn('foo', ext)
         self.assertNotIn('bar', ext)
 
     def test_list_funcs(self):
+        """test basic list functionalities."""
         ext = ListExtension({'value': ['foo']})
         ext.append('bar')
         self.assertEqual(ext.value, ['foo', 'bar'])
@@ -994,6 +1033,7 @@ class ListExtensionTestCase(TestCase):
         self.assertEqual(ext.value, ['foo', 'bla'])
 
     def test_slices(self):
+        """Test accessing slices (e.g. ``ext[0]``)."""
         val = ['foo', 'bar', 'bla']
         ext = ListExtension({'value': val})
         self.assertEqual(ext[0], val[0])
@@ -1018,6 +1058,7 @@ class ListExtensionTestCase(TestCase):
         self.assertEqual(ext.value, val)
 
     def test_serialize(self):
+        """Test serialization of extension."""
         val = ['foo', 'bar', 'bla']
         ext = ListExtension({'value': val, 'critical': False})
         self.assertEqual(ext, ListExtension(ext.serialize()))
@@ -1026,6 +1067,8 @@ class ListExtensionTestCase(TestCase):
 
 
 class OrderedSetExtensionTestCase(OrderedSetExtensionTestMixin, AbstractExtensionTestMixin, TestCase):
+    """Test OrderedSetExtension extension (test basic functionality of abstract extension)."""
+
     ext_class = OrderedSetExtension
     test_values = {
         'one': {
@@ -1062,6 +1105,8 @@ class OrderedSetExtensionTestCase(OrderedSetExtensionTestMixin, AbstractExtensio
 
 
 class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
+    """Test AuthorityInformationAccess extension."""
+
     ext_class = AuthorityInformationAccess
     ext_class_key = 'authority_information_access'
     ext_class_name = 'AuthorityInformationAccess'
@@ -1135,11 +1180,13 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
     }
 
     def test_bool(self):
-        for key, config in self.test_values.items():
+        """Test bool(ext)."""
+        for config in self.test_values.values():
             ext = self.ext(config['expected'])
             self.assertEqual(bool(ext), config.get('expected_bool', True))
 
     def test_shortcuts(self):
+        """Test shortcut properties."""
         ext = self.ext()
         self.assertEqual(ext.issuers, [])
         self.assertEqual(ext.ocsp, [])
@@ -1150,6 +1197,8 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
 
 
 class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
+    """Test AuthorityKeyIdentifier extension."""
+
     ext_class = AuthorityKeyIdentifier
     ext_class_key = 'authority_key_identifier'
     ext_class_name = 'AuthorityKeyIdentifier'
@@ -1202,7 +1251,8 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
     }
 
     def test_from_subject_key_identifier(self):
-        for key, config in self.test_values.items():
+        """Test creating an extension from a subject key identifier."""
+        for config in self.test_values.values():
             if not isinstance(config['expected'], bytes):
                 continue
 
@@ -1211,6 +1261,7 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
             self.assertExtensionEqual(ext, self.ext_class({'value': config['expected']}))
 
     def test_shortcuts(self):
+        """Test shortcut properties."""
         expected = self.ext_class({'value': {
             'key_identifier': self.b1,
             'authority_cert_issuer': [dns(self.dns1)],
@@ -1243,6 +1294,8 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
 
 
 class BasicConstraintsTestCase(ExtensionTestMixin, TestCase):
+    """Test BasicConstraints extension."""
+
     ext_class = BasicConstraints
     ext_class_key = 'basic_constraints'
     ext_class_name = 'BasicConstraints'
@@ -1294,6 +1347,7 @@ class BasicConstraintsTestCase(ExtensionTestMixin, TestCase):
     }
 
     def test_setters(self):
+        """Test items etters."""
         ext = BasicConstraints({'value': {'ca': False, 'pathlen': None}})
         self.assertFalse(ext.ca)
         self.assertIsNone(ext.pathlen)
@@ -1304,6 +1358,7 @@ class BasicConstraintsTestCase(ExtensionTestMixin, TestCase):
         self.assertEqual(ext.pathlen, 3)
 
     def test_invalid_pathlen(self):
+        """Test passing an invalid pathlen."""
         with self.assertRaisesRegex(ValueError, r'^Could not parse pathlen: "foo"$'):
             BasicConstraints({'value': {'ca': True, 'pathlen': 'foo'}})
 
@@ -1314,48 +1369,9 @@ class BasicConstraintsTestCase(ExtensionTestMixin, TestCase):
             BasicConstraints({'value': {'ca': True, 'pathlen': 'foobar'}})
 
 
-class DistributionPointTestCase(TestCase):
-    def test_init_basic(self):
-        dp = DistributionPoint()
-        self.assertIsNone(dp.full_name)
-        self.assertIsNone(dp.relative_name)
-        self.assertIsNone(dp.crl_issuer)
-        self.assertIsNone(dp.reasons)
-
-        dp = DistributionPoint({
-            'full_name': ['http://example.com'],
-            'crl_issuer': ['http://example.net'],
-        })
-        self.assertEqual(dp.full_name, [uri('http://example.com')])
-        self.assertIsNone(dp.relative_name)
-        self.assertEqual(dp.crl_issuer, [uri('http://example.net')])
-        self.assertIsNone(dp.reasons)
-
-        dp = DistributionPoint({
-            'full_name': 'http://example.com',
-            'crl_issuer': 'http://example.net',
-        })
-        self.assertEqual(dp.full_name, [uri('http://example.com')])
-        self.assertIsNone(dp.relative_name)
-        self.assertEqual(dp.crl_issuer, [uri('http://example.net')])
-        self.assertIsNone(dp.reasons)
-
-    def test_init_errors(self):
-        with self.assertRaisesRegex(ValueError, r'^data must be x509.DistributionPoint or dict$'):
-            DistributionPoint('foobar')
-
-        with self.assertRaisesRegex(ValueError, r'^full_name and relative_name cannot both have a value$'):
-            DistributionPoint({
-                'full_name': ['http://example.com'],
-                'relative_name': '/CN=example.com',
-            })
-
-    def test_str(self):
-        dp = DistributionPoint({'full_name': 'http://example.com'})
-        self.assertEqual(str(dp), "<DistributionPoint: full_name=['URI:http://example.com']>")
-
-
 class CRLDistributionPointsTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):
+    """Test CRLDistributionPoints extension."""
+
     ext_class = CRLDistributionPoints
     ext_class_key = 'crl_distribution_points'
     ext_class_name = 'CRLDistributionPoints'
@@ -1440,359 +1456,9 @@ class CRLDistributionPointsTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
     }
 
 
-class PolicyInformationTestCase(DjangoCATestCase):
-    oid = '2.5.29.32.0'
-
-    # various qualifiers
-    q1 = 'text1'
-    q2 = x509.UserNotice(explicit_text='text2', notice_reference=None)
-    q3 = x509.UserNotice(
-        explicit_text=None,
-        notice_reference=x509.NoticeReference(organization='text3', notice_numbers=[1])
-    )
-    q4 = 'text4'
-    q5 = x509.UserNotice(
-        explicit_text='text5',
-        notice_reference=x509.NoticeReference(organization='text6', notice_numbers=[1, 2, 3])
-    )
-
-    x1 = x509.PolicyInformation(policy_identifier=ObjectIdentifier(oid),
-                                policy_qualifiers=[q1])
-    x2 = x509.PolicyInformation(
-        policy_identifier=ObjectIdentifier(oid),
-        policy_qualifiers=[q2],
-    )
-    x3 = x509.PolicyInformation(
-        policy_identifier=ObjectIdentifier(oid),
-        policy_qualifiers=[q3],
-    )
-    x4 = x509.PolicyInformation(
-        policy_identifier=ObjectIdentifier(oid),
-        policy_qualifiers=[q4, q5],
-    )
-    s1 = {
-        'policy_identifier': oid,
-        'policy_qualifiers': ['text1'],
-    }
-    s2 = {
-        'policy_identifier': oid,
-        'policy_qualifiers': [
-            {'explicit_text': 'text2', }
-        ],
-    }
-    s3 = {
-        'policy_identifier': oid,
-        'policy_qualifiers': [
-            {
-                'notice_reference': {
-                    'organization': 'text3',
-                    'notice_numbers': [1, ],
-                }
-            }
-        ],
-    }
-    s4 = {
-        'policy_identifier': oid,
-        'policy_qualifiers': [
-            'text4',
-            {
-                'explicit_text': 'text5',
-                'notice_reference': {
-                    'organization': 'text6',
-                    'notice_numbers': [1, 2, 3],
-                }
-            }
-        ],
-    }
-
-    def setUp(self):
-        super(PolicyInformationTestCase, self).setUp()
-
-        self.pi1 = PolicyInformation(self.s1)
-        self.pi2 = PolicyInformation(self.s2)
-        self.pi3 = PolicyInformation(self.s3)
-        self.pi4 = PolicyInformation(self.s4)
-        self.pi_empty = PolicyInformation()
-
-    def test_append(self):
-        self.pi1.append(self.q2)
-        self.pi1.append(self.s3['policy_qualifiers'][0])
-        self.assertEqual(self.pi1, PolicyInformation({
-            'policy_identifier': self.oid,
-            'policy_qualifiers': [self.q1, self.q2, self.q3],
-        }))
-
-        self.pi_empty.policy_identifier = self.oid
-        self.pi_empty.append(self.q3)
-        self.assertEqual(self.pi3, self.pi_empty)
-
-    def test_as_text(self):
-        self.assertEqual(self.pi1.as_text(), 'Policy Identifier: 2.5.29.32.0\n'
-                                             'Policy Qualifiers:\n* text1')
-        self.assertEqual(self.pi2.as_text(), 'Policy Identifier: 2.5.29.32.0\n'
-                                             'Policy Qualifiers:\n'
-                                             '* UserNotice:\n'
-                                             '  * Explicit text: text2')
-        self.assertEqual(self.pi3.as_text(),
-                         'Policy Identifier: 2.5.29.32.0\n'
-                         'Policy Qualifiers:\n'
-                         '* UserNotice:\n'
-                         '  * Reference:\n'
-                         '    * Organiziation: text3\n'
-                         '    * Notice Numbers: [1]')
-        self.assertEqual(self.pi4.as_text(),
-                         'Policy Identifier: 2.5.29.32.0\n'
-                         'Policy Qualifiers:\n'
-                         '* text4\n'
-                         '* UserNotice:\n'
-                         '  * Explicit text: text5\n'
-                         '  * Reference:\n'
-                         '    * Organiziation: text6\n'
-                         '    * Notice Numbers: [1, 2, 3]')
-        self.assertEqual(self.pi_empty.as_text(), 'Policy Identifier: None\nNo Policy Qualifiers')
-
-        self.load_all_cas()
-        self.load_all_certs()
-        for name, cert in list(self.cas.items()) + list(self.certs.items()):
-            try:
-                ext = cert.x509.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES).value
-            except x509.ExtensionNotFound:
-                continue
-
-            for index, policy in enumerate(ext):
-                pi = PolicyInformation(policy)
-                self.assertEqual(pi.as_text(), certs[name]['policy_texts'][index])
-
-    def test_certs(self):
-        self.load_all_cas()
-        self.load_all_certs()
-        for name, cert in list(self.cas.items()) + list(self.certs.items()):
-            try:
-                val = cert.x509.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES).value
-            except x509.ExtensionNotFound:
-                continue
-
-            for policy in val:
-                pi = PolicyInformation(policy)
-                self.assertEqual(pi.for_extension_type, policy)
-
-                # pass the serialized value to the constructor and see if it's still the same
-                pi2 = PolicyInformation(pi.serialize())
-                self.assertEqual(pi, pi2)
-                self.assertEqual(pi.serialize(), pi2.serialize())
-                self.assertEqual(pi2.for_extension_type, policy)
-
-    def test_clear(self):
-        self.pi1.clear()
-        self.assertIsNone(self.pi1.policy_qualifiers)
-
-    def test_constructor(self):
-        # just some constructors that are otherwise not called
-        pi = PolicyInformation()
-        self.assertIsNone(pi.policy_identifier)
-        self.assertIsNone(pi.policy_qualifiers)
-
-        pi = PolicyInformation({
-            'policy_identifier': '1.2.3',
-            'policy_qualifiers': [
-                x509.UserNotice(notice_reference=None, explicit_text='foobar'),
-            ],
-        })
-        # todo: test pi
-
-        pi = PolicyInformation({
-            'policy_identifier': '1.2.3',
-            'policy_qualifiers': [{
-                'notice_reference': x509.NoticeReference(organization='foobar', notice_numbers=[1]),
-            }],
-        })
-        # todo: test pi
-
-    def test_constructor_errors(self):
-        with self.assertRaisesRegex(
-                ValueError, r'^PolicyInformation data must be either x509.PolicyInformation or dict$'):
-            PolicyInformation(True)
-
-        with self.assertRaisesRegex(ValueError, r'^PolicyQualifier must be string, dict or x509.UserNotice$'):
-            PolicyInformation({'policy_identifier': '1.2.3', 'policy_qualifiers': [True]})
-
-        with self.assertRaisesRegex(
-                ValueError, r'^NoticeReference must be either None, a dict or an x509.NoticeReference$'):
-            PolicyInformation({'policy_identifier': '1.2.3', 'policy_qualifiers': [{
-                'notice_reference': True,
-            }]})
-
-    def test_contains(self):
-        self.assertIn(self.q1, self.pi1)
-        self.assertIn(self.q2, self.pi2)
-        self.assertIn(self.q3, self.pi3)
-        self.assertIn(self.q4, self.pi4)
-        self.assertIn(self.q5, self.pi4)
-        self.assertIn(self.s1['policy_qualifiers'][0], self.pi1)
-        self.assertIn(self.s2['policy_qualifiers'][0], self.pi2)
-        self.assertIn(self.s3['policy_qualifiers'][0], self.pi3)
-        self.assertIn(self.s4['policy_qualifiers'][0], self.pi4)
-        self.assertIn(self.s4['policy_qualifiers'][1], self.pi4)
-
-        self.assertNotIn(self.q2, self.pi1)
-        self.assertNotIn(self.q1, self.pi_empty)
-        self.assertNotIn(self.s1['policy_qualifiers'][0], self.pi2)
-        self.assertNotIn(self.s2['policy_qualifiers'][0], self.pi1)
-        self.assertNotIn(self.s2['policy_qualifiers'][0], self.pi_empty)
-
-    def test_count(self):
-        self.assertEqual(self.pi1.count(self.s1['policy_qualifiers'][0]), 1)
-        self.assertEqual(self.pi1.count(self.q1), 1)
-        self.assertEqual(self.pi1.count(self.s2), 0)
-        self.assertEqual(self.pi1.count(self.q2), 0)
-        self.assertEqual(self.pi_empty.count(self.q2), 0)
-
-    def test_delitem(self):
-        del self.pi1[0]
-        self.pi_empty.policy_identifier = self.oid
-        self.assertEqual(self.pi1, self.pi_empty)
-
-        self.assertEqual(len(self.pi4), 2)
-        del self.pi4[0]
-        self.assertEqual(len(self.pi4), 1)
-
-        with self.assertRaisesRegex(IndexError, r'^list assignment index out of range$'):
-            del self.pi1[0]
-
-    def test_extend(self):
-        self.pi1.extend([self.q2, self.q4])
-        self.assertEqual(self.pi1, PolicyInformation({
-            'policy_identifier': self.oid,
-            'policy_qualifiers': [self.q1, self.q2, self.q4],
-        }))
-
-        self.pi2.extend([self.s1['policy_qualifiers'][0]])
-        self.assertEqual(self.pi2, PolicyInformation({
-            'policy_identifier': self.oid,
-            'policy_qualifiers': [self.q2, self.q1],
-        }))
-
-    def test_getitem(self):
-        self.assertEqual(self.pi1[0], self.s1['policy_qualifiers'][0])
-        self.assertEqual(self.pi4[0], self.s4['policy_qualifiers'][0])
-        self.assertEqual(self.pi4[1], self.s4['policy_qualifiers'][1])
-        self.assertEqual(self.pi4[1:], [self.s4['policy_qualifiers'][1]])
-
-        with self.assertRaisesRegex(IndexError, r'^list index out of range$'):
-            self.pi_empty[0]
-        with self.assertRaisesRegex(IndexError, r'^list index out of range$'):
-            self.pi_empty[2:]
-
-    def test_hash(self):
-        self.assertEqual(hash(self.pi1), hash(self.pi1))
-        self.assertEqual(hash(self.pi2), hash(self.pi2))
-        self.assertEqual(hash(self.pi3), hash(self.pi3))
-        self.assertEqual(hash(self.pi4), hash(self.pi4))
-        self.assertEqual(hash(self.pi_empty), hash(self.pi_empty))
-
-        self.assertEqual(hash(self.pi1), hash(PolicyInformation(self.s1)))
-        self.assertEqual(hash(self.pi2), hash(PolicyInformation(self.s2)))
-        self.assertEqual(hash(self.pi3), hash(PolicyInformation(self.s3)))
-        self.assertEqual(hash(self.pi4), hash(PolicyInformation(self.s4)))
-        self.assertEqual(hash(self.pi_empty), hash(PolicyInformation()))
-
-        self.assertNotEqual(hash(self.pi1), hash(self.pi2))
-        self.assertNotEqual(hash(self.pi1), hash(self.pi3))
-        self.assertNotEqual(hash(self.pi1), hash(self.pi4))
-        self.assertNotEqual(hash(self.pi2), hash(self.pi3))
-        self.assertNotEqual(hash(self.pi2), hash(self.pi4))
-        self.assertNotEqual(hash(self.pi3), hash(self.pi4))
-
-    def test_insert(self):
-        self.pi1.insert(0, self.q2)
-        self.assertEqual(self.pi1, PolicyInformation({
-            'policy_identifier': self.oid,
-            'policy_qualifiers': [self.q2, self.q1],
-        }))
-        self.pi1.insert(1, self.s3['policy_qualifiers'][0])
-        self.assertEqual(self.pi1, PolicyInformation({
-            'policy_identifier': self.oid,
-            'policy_qualifiers': [self.q2, self.q3, self.q1],
-        }))
-
-        self.pi_empty.insert(1, self.q2)
-        self.pi_empty.policy_identifier = self.oid
-        self.assertEqual(self.pi2, self.pi_empty)
-
-    def test_len(self):
-        self.assertEqual(len(self.pi1), 1)
-        self.assertEqual(len(self.pi2), 1)
-        self.assertEqual(len(self.pi3), 1)
-        self.assertEqual(len(self.pi4), 2)
-        self.assertEqual(len(self.pi_empty), 0)
-
-    def test_policy_identifier_setter(self):
-        value = '1.2.3'
-        expected = ObjectIdentifier(value)
-        pi = PolicyInformation({'policy_identifier': value})
-        pi.policy_identifier = value
-        self.assertEqual(pi.policy_identifier, expected)
-
-        pi = PolicyInformation({'policy_identifier': expected})
-        self.assertEqual(pi.policy_identifier, expected)
-
-        new_value = '2.3.4'
-        new_expected = ObjectIdentifier(new_value)
-        pi.policy_identifier = new_value
-        self.assertEqual(pi.policy_identifier, new_expected)
-
-    def test_pop(self):
-        self.pi_empty.policy_identifier = self.oid
-        self.assertEqual(self.pi1.pop(), self.s1['policy_qualifiers'][0])
-        self.assertEqual(self.pi1, self.pi_empty)
-
-        self.assertEqual(self.pi4.pop(1), self.s4['policy_qualifiers'][1])
-        self.assertEqual(self.pi4, PolicyInformation({
-            'policy_identifier': self.oid,
-            'policy_qualifiers': [self.q4],
-        }))
-
-        self.assertEqual(self.pi4.pop(), self.s4['policy_qualifiers'][0])
-        self.assertEqual(self.pi4, self.pi_empty)
-
-        with self.assertRaisesRegex(IndexError, r'^pop from empty list$'):
-            self.pi_empty.pop()
-
-    def test_remove(self):
-        self.pi_empty.policy_identifier = self.oid
-        self.pi1.remove(self.q1)
-        self.assertEqual(self.pi1, self.pi_empty)
-
-        self.pi2.remove(self.s2['policy_qualifiers'][0])
-        self.assertEqual(self.pi1, self.pi_empty)
-
-        self.pi4.remove(self.q4)
-        self.assertEqual(self.pi4, PolicyInformation({
-            'policy_identifier': self.oid,
-            'policy_qualifiers': [self.q5],
-        }))
-
-        with self.assertRaisesRegex(ValueError, r'^list\.remove\(x\): x not in list$'):
-            self.pi_empty.remove(self.s3['policy_qualifiers'][0])
-
-    def _test_repr(self, func):
-        self.assertEqual(func(self.pi1), "<PolicyInformation(oid=2.5.29.32.0, qualifiers=['text1'])>")
-        self.assertEqual(func(self.pi2),
-                         "<PolicyInformation(oid=2.5.29.32.0, qualifiers=[{'explicit_text': 'text2'}])>")
-        self.assertEqual(func(self.pi_empty), "<PolicyInformation(oid=None, qualifiers=None)>")
-
-        # NOTE: order of dict is different here, so we do not test output, just make sure there's no exception
-        func(self.pi3)
-        func(self.pi4)
-
-    def test_repr(self):
-        self._test_repr(repr)
-
-    def test_str(self):
-        self._test_repr(str)
-
-
 class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):
+    """Test CertificatePolicies extension."""
+
     ext_class = CertificatePolicies
     ext_class_name = 'CertificatePolicies'
     ext_class_key = 'certificate_policies'
@@ -1921,6 +1587,8 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin, Te
 
 
 class FreshestCRLTestCase(CRLDistributionPointsTestCase):
+    """Test FreshestCRL extension."""
+
     ext_class = FreshestCRL
     ext_class_key = 'freshest_crl'
     ext_class_name = 'FreshestCRL'
@@ -1938,6 +1606,8 @@ class FreshestCRLTestCase(CRLDistributionPointsTestCase):
 
 
 class InhibitAnyPolicyTestCase(ExtensionTestMixin, TestCase):
+    """Test InhibitAnyPolicy extension."""
+
     ext_class = InhibitAnyPolicy
     ext_class_key = 'inhibit_any_policy'
     ext_class_name = 'InhibitAnyPolicy'
@@ -1966,6 +1636,7 @@ class InhibitAnyPolicyTestCase(ExtensionTestMixin, TestCase):
     }
 
     def test_int(self):
+        """Test passing various int values."""
         ext = InhibitAnyPolicy(0)
         self.assertEqual(ext.value, 0)
         ext = InhibitAnyPolicy(1)
@@ -1977,6 +1648,7 @@ class InhibitAnyPolicyTestCase(ExtensionTestMixin, TestCase):
             InhibitAnyPolicy({'value': -1})
 
     def test_no_int(self):
+        """Test passing invalid values."""
         with self.assertRaisesRegex(ValueError, r'^None: must be an int$'):
             InhibitAnyPolicy(None)
         with self.assertRaisesRegex(ValueError, r'^abc: must be an int$'):
@@ -1985,6 +1657,7 @@ class InhibitAnyPolicyTestCase(ExtensionTestMixin, TestCase):
             InhibitAnyPolicy('abc')
 
     def test_skip_certs(self):
+        """Test skip_certs property."""
         ext = InhibitAnyPolicy(0)
         self.assertEqual(ext.skip_certs, 0)
         ext.skip_certs = 3
@@ -1999,6 +1672,8 @@ class InhibitAnyPolicyTestCase(ExtensionTestMixin, TestCase):
 
 
 class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):
+    """Test IssuerAlternativeName extension."""
+
     ext_class = IssuerAlternativeName
     ext_class_key = 'issuer_alternative_name'
     ext_class_name = 'IssuerAlternativeName'
@@ -2073,6 +1748,8 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
 
 
 class PolicyConstraintsTestCase(ExtensionTestMixin, TestCase):
+    """Test PolicyConstraints extension."""
+
     ext_class = PolicyConstraints
     ext_class_key = 'policy_constraints'
     ext_class_name = 'PolicyConstraints'
@@ -2151,6 +1828,7 @@ class PolicyConstraintsTestCase(ExtensionTestMixin, TestCase):
     }
 
     def test_init_error(self):
+        """Test constructor errors."""
         with self.assertRaisesRegex(ValueError, r'^abc: inhibit_policy_mapping must be int or None$'):
             PolicyConstraints({'value': {'inhibit_policy_mapping': 'abc'}})
         with self.assertRaisesRegex(ValueError, r'^-1: inhibit_policy_mapping must be a positive int$'):
@@ -2161,45 +1839,49 @@ class PolicyConstraintsTestCase(ExtensionTestMixin, TestCase):
             PolicyConstraints({'value': {'require_explicit_policy': -1}})
 
     def test_properties(self):
-        p = PolicyConstraints()
-        self.assertIsNone(p.inhibit_policy_mapping)
-        self.assertIsNone(p.require_explicit_policy)
+        """Test properties"""
+        pconst = PolicyConstraints()
+        self.assertIsNone(pconst.inhibit_policy_mapping)
+        self.assertIsNone(pconst.require_explicit_policy)
 
-        p = PolicyConstraints({'value': {'inhibit_policy_mapping': 1, 'require_explicit_policy': 2}})
-        self.assertEqual(p.inhibit_policy_mapping, 1)
-        self.assertEqual(p.require_explicit_policy, 2)
+        pconst = PolicyConstraints({'value': {'inhibit_policy_mapping': 1, 'require_explicit_policy': 2}})
+        self.assertEqual(pconst.inhibit_policy_mapping, 1)
+        self.assertEqual(pconst.require_explicit_policy, 2)
 
-        p.inhibit_policy_mapping = 3
-        p.require_explicit_policy = 4
-        self.assertEqual(p.inhibit_policy_mapping, 3)
-        self.assertEqual(p.require_explicit_policy, 4)
+        pconst.inhibit_policy_mapping = 3
+        pconst.require_explicit_policy = 4
+        self.assertEqual(pconst.inhibit_policy_mapping, 3)
+        self.assertEqual(pconst.require_explicit_policy, 4)
 
-        p.inhibit_policy_mapping = None
-        p.require_explicit_policy = None
-        self.assertIsNone(p.inhibit_policy_mapping)
-        self.assertIsNone(p.require_explicit_policy)
+        pconst.inhibit_policy_mapping = None
+        pconst.require_explicit_policy = None
+        self.assertIsNone(pconst.inhibit_policy_mapping)
+        self.assertIsNone(pconst.require_explicit_policy)
 
     def test_property_errors(self):
-        p = PolicyConstraints({'value': {'inhibit_policy_mapping': 1, 'require_explicit_policy': 2}})
-        self.assertEqual(p.inhibit_policy_mapping, 1)
-        self.assertEqual(p.require_explicit_policy, 2)
+        """Test various invalid properties."""
+        pconst = PolicyConstraints({'value': {'inhibit_policy_mapping': 1, 'require_explicit_policy': 2}})
+        self.assertEqual(pconst.inhibit_policy_mapping, 1)
+        self.assertEqual(pconst.require_explicit_policy, 2)
 
         with self.assertRaisesRegex(ValueError, r'^abc: inhibit_policy_mapping must be int or None$'):
-            p.inhibit_policy_mapping = 'abc'
+            pconst.inhibit_policy_mapping = 'abc'
         with self.assertRaisesRegex(ValueError, r'^def: require_explicit_policy must be int or None$'):
-            p.require_explicit_policy = 'def'
-        self.assertEqual(p.inhibit_policy_mapping, 1)
-        self.assertEqual(p.require_explicit_policy, 2)
+            pconst.require_explicit_policy = 'def'
+        self.assertEqual(pconst.inhibit_policy_mapping, 1)
+        self.assertEqual(pconst.require_explicit_policy, 2)
 
         with self.assertRaisesRegex(ValueError, r'^-1: inhibit_policy_mapping must be a positive int$'):
-            p.inhibit_policy_mapping = -1
+            pconst.inhibit_policy_mapping = -1
         with self.assertRaisesRegex(ValueError, r'^-1: require_explicit_policy must be a positive int$'):
-            p.require_explicit_policy = -1
-        self.assertEqual(p.inhibit_policy_mapping, 1)
-        self.assertEqual(p.require_explicit_policy, 2)
+            pconst.require_explicit_policy = -1
+        self.assertEqual(pconst.inhibit_policy_mapping, 1)
+        self.assertEqual(pconst.require_explicit_policy, 2)
 
 
 class KeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestCase):
+    """Test KeyUsage extension."""
+
     ext_class = KeyUsage
     ext_class_key = 'key_usage'
     ext_class_name = 'KeyUsage'
@@ -2255,18 +1937,18 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestCas
     }
 
     def test_completeness(self):
-        # make sure whe haven't forgotton any keys anywhere
-        self.assertEqual(set(KeyUsage.CRYPTOGRAPHY_MAPPING.keys()),
-                         set([e[0] for e in KeyUsage.CHOICES]))
+        """Test that we support all key usages."""
+        self.assertEqual(set(KeyUsage.CRYPTOGRAPHY_MAPPING.keys()), {e[0] for e in KeyUsage.CHOICES})
 
     def test_auto_add(self):
-        # decipher/encipher_only automatically add key_agreement
+        """Test that ``decipher_only`` and ``encipher_only`` automatically add ``key_agreement``."""
         self.assertEqual(KeyUsage({'value': ['decipher_only']}),
                          KeyUsage({'value': ['decipher_only', 'key_agreement']}))
         self.assertEqual(KeyUsage({'value': ['encipher_only']}),
                          KeyUsage({'value': ['encipher_only', 'key_agreement']}))
 
     def test_unknown_values(self):
+        """Test passing unknown values."""
         with self.assertRaisesRegex(ValueError, r'^Unknown value: foo$'):
             KeyUsage({'value': ['foo']})
 
@@ -2275,6 +1957,8 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestCas
 
 
 class ExtendedKeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestCase):
+    """Test ExtendedKeyUsage extension."""
+
     ext_class = ExtendedKeyUsage
     ext_class_key = 'extended_key_usage'
     ext_class_name = 'ExtendedKeyUsage'
@@ -2330,6 +2014,7 @@ class ExtendedKeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin,
     }
 
     def test_unknown_values(self):
+        """Test passing unknown values."""
         with self.assertRaisesRegex(ValueError, r'^Unknown value: foo$'):
             ExtendedKeyUsage({'value': ['foo']})
 
@@ -2337,17 +2022,20 @@ class ExtendedKeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin,
             ExtendedKeyUsage({'value': [True]})
 
     def test_completeness(self):
-        # make sure we support all ExtendedKeyUsageOIDs
+        """Test that we support all ExtendedKeyUsageOIDs."""
         for attr in [getattr(ExtendedKeyUsageOID, a) for a in dir(ExtendedKeyUsageOID) if a[0] != '_']:
             if isinstance(attr, ObjectIdentifier):
+                # pylint: disable=protected-access; ok for a test case
                 self.assertIn(attr, ExtendedKeyUsage._CRYPTOGRAPHY_MAPPING_REVERSED)
 
         # make sure we haven't forgotton any keys in the form selection
         self.assertEqual(set(ExtendedKeyUsage.CRYPTOGRAPHY_MAPPING.keys()),
-                         set([e[0] for e in ExtendedKeyUsage.CHOICES]))
+                         {e[0] for e in ExtendedKeyUsage.CHOICES})
 
 
 class NameConstraintsTestCase(ExtensionTestMixin, TestCase):
+    """Test NameConstraints extension."""
+
     ext_class = NameConstraints
     ext_class_key = 'name_constraints'
     ext_class_name = 'NameConstraints'
@@ -2410,11 +2098,13 @@ class NameConstraintsTestCase(ExtensionTestMixin, TestCase):
     }
 
     def test_bool(self):
+        """Test bool(ext)."""
         self.assertFalse(bool(NameConstraints()))
         self.assertTrue(bool(NameConstraints({'value': {'permitted': ['example.com']}})))
         self.assertTrue(bool(NameConstraints({'value': {'excluded': ['example.com']}})))
 
     def test_setters(self):
+        """Test items etters."""
         ext = NameConstraints()
         ext.permitted += ['example.com']
         ext.excluded += ['example.net']
@@ -2426,6 +2116,8 @@ class NameConstraintsTestCase(ExtensionTestMixin, TestCase):
 
 
 class OCSPNoCheckTestCase(NullExtensionTestMixin, TestCase):
+    """Test OCSPNoCheck extension."""
+
     ext_class = OCSPNoCheck
     ext_class_key = 'ocsp_no_check'
     ext_class_name = 'OCSPNoCheck'
@@ -2443,6 +2135,8 @@ class OCSPNoCheckTestCase(NullExtensionTestMixin, TestCase):
 
 
 class PrecertPoisonTestCase(NullExtensionTestMixin, TestCase):
+    """Test PrecertPoison extension."""
+
     ext_class = PrecertPoison
     ext_class_key = 'precert_poison'
     ext_class_name = 'PrecertPoison'
@@ -2472,6 +2166,7 @@ class PrecertPoisonTestCase(NullExtensionTestMixin, TestCase):
                 self.assertEqual(ext_critical, ext_2)
 
     def test_hash(self):
+        """Test hash()."""
         for config in self.test_values.values():
             ext = self.ext(config['expected'])
             ext_critical = self.ext(config['expected'], critical=True)
@@ -2489,34 +2184,40 @@ class PrecertPoisonTestCase(NullExtensionTestMixin, TestCase):
                     self.assertNotEqual(hash(ext_critical), hash(other_ext_critical))
 
     def test_critical(self):
+        """Test the critical property."""
         with self.assertRaisesRegex(ValueError, r'^PrecertPoison must always be marked as critical$'):
             PrecertPoison({'critical': False})
 
 
 class PrecertificateSignedCertificateTimestampsTestCase(DjangoCAWithCertTestCase):
+    """Test PrecertificateSignedCertificateTimestamps extension."""
+
+    # pylint: disable=too-many-public-methods; RO-extension requires implementing everything again
+    # pylint: disable=too-many-instance-attributes; RO-extension requires implementing everything again
+
     ext_class = PrecertificateSignedCertificateTimestamps
     ext_class_key = 'precertificate_signed_certificate_timestamps'
     ext_class_name = 'PrecertificateSignedCertificateTimestamps'
 
     def setUp(self):
-        super(PrecertificateSignedCertificateTimestampsTestCase, self).setUp()
+        super().setUp()
         self.name1 = 'letsencrypt_x3-cert'
         self.name2 = 'comodo_ev-cert'
         cert1 = self.certs[self.name1]
         cert2 = self.certs[self.name2]
 
-        self.x1 = cert1.x509.extensions.get_extension_for_oid(
+        self.cgx1 = cert1.x509.extensions.get_extension_for_oid(
             ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
-        self.x2 = cert2.x509.extensions.get_extension_for_oid(
+        self.cgx2 = cert2.x509.extensions.get_extension_for_oid(
             ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
-        self.ext1 = PrecertificateSignedCertificateTimestamps(self.x1)
-        self.ext2 = PrecertificateSignedCertificateTimestamps(self.x2)
+        self.ext1 = PrecertificateSignedCertificateTimestamps(self.cgx1)
+        self.ext2 = PrecertificateSignedCertificateTimestamps(self.cgx2)
         self.exts = [self.ext1, self.ext2]
-        self.xs = [self.x1, self.x2]
         self.data1 = certs[self.name1]['precertificate_signed_certificate_timestamps_serialized']
         self.data2 = certs[self.name2]['precertificate_signed_certificate_timestamps_serialized']
 
     def test_config(self):
+        """Test basic configuration."""
         self.assertTrue(issubclass(self.ext_class, Extension))
         self.assertEqual(self.ext_class.key, self.ext_class_key)
         self.assertEqual(self.ext_class.name, self.ext_class_name)
@@ -2530,6 +2231,7 @@ class PrecertificateSignedCertificateTimestampsTestCase(DjangoCAWithCertTestCase
         self.assertIsInstance(getattr(X509CertMixin, self.ext_class.key), cached_property)
 
     def test_as_text(self):
+        """Test as_text()."""
         self.assertEqual(self.ext1.as_text(), '''* Precertificate ({v[0][version]}):
     Timestamp: {v[0][timestamp]}
     Log ID: {v[0][log_id]}
@@ -2548,97 +2250,112 @@ class PrecertificateSignedCertificateTimestampsTestCase(DjangoCAWithCertTestCase
     Log ID: {v[2][log_id]}'''.format(v=self.data2['value']))
 
     def test_count(self):
+        """Test ext.count()."""
         self.assertEqual(self.ext1.count(self.data1['value'][0]), 1)
         self.assertEqual(self.ext1.count(self.data2['value'][0]), 0)
-        self.assertEqual(self.ext1.count(self.x1.value[0]), 1)
-        self.assertEqual(self.ext1.count(self.x2.value[0]), 0)
+        self.assertEqual(self.ext1.count(self.cgx1.value[0]), 1)
+        self.assertEqual(self.ext1.count(self.cgx2.value[0]), 0)
 
         self.assertEqual(self.ext2.count(self.data1['value'][0]), 0)
         self.assertEqual(self.ext2.count(self.data2['value'][0]), 1)
-        self.assertEqual(self.ext2.count(self.x1.value[0]), 0)
-        self.assertEqual(self.ext2.count(self.x2.value[0]), 1)
+        self.assertEqual(self.ext2.count(self.cgx1.value[0]), 0)
+        self.assertEqual(self.ext2.count(self.cgx2.value[0]), 1)
 
     def test_del(self):
+        """Test item deletion (e.g. ``del ext[0]``, not supported here)."""
         with self.assertRaises(NotImplementedError):
             del self.ext1[0]
         with self.assertRaises(NotImplementedError):
             del self.ext2[0]
 
     def test_extend(self):
+        """Test ext.extend() (not supported here)."""
         with self.assertRaises(NotImplementedError):
             self.ext1.extend([])
         with self.assertRaises(NotImplementedError):
             self.ext2.extend([])
 
     def test_extension_type(self):
-        self.assertEqual(self.ext1.extension_type, self.x1.value)
-        self.assertEqual(self.ext2.extension_type, self.x2.value)
+        """Test extension_type property."""
+        self.assertEqual(self.ext1.extension_type, self.cgx1.value)
+        self.assertEqual(self.ext2.extension_type, self.cgx2.value)
 
     def test_getitem(self):
+        """Test item getter (e.g. ``x = ext[0]``)."""
         self.assertEqual(self.ext1[0], self.data1['value'][0])
         self.assertEqual(self.ext1[1], self.data1['value'][1])
         with self.assertRaises(IndexError):
-            self.ext1[2]
+            self.ext1[2]  # pylint: disable=pointless-statement
 
         self.assertEqual(self.ext2[0], self.data2['value'][0])
         self.assertEqual(self.ext2[1], self.data2['value'][1])
         self.assertEqual(self.ext2[2], self.data2['value'][2])
         with self.assertRaises(IndexError):
-            self.ext2[3]
+            self.ext2[3]  # pylint: disable=pointless-statement
 
     def test_getitem_slices(self):
+        """Test getting slices (e.g. ``x = ext[0:1]``)."""
         self.assertEqual(self.ext1[:1], self.data1['value'][:1])
         self.assertEqual(self.ext2[:2], self.data2['value'][:2])
         self.assertEqual(self.ext2[:], self.data2['value'][:])
 
     def test_hash(self):
+        """Test hash()."""
         self.assertEqual(hash(self.ext1), hash(self.ext1))
         self.assertEqual(hash(self.ext2), hash(self.ext2))
         self.assertNotEqual(hash(self.ext1), hash(self.ext2))
 
     def test_in(self):
+        """Test the ``in`` operator."""
         for val in self.data1['value']:
             self.assertIn(val, self.ext1)
-        for val in self.x1.value:
+        for val in self.cgx1.value:
             self.assertIn(val, self.ext1)
         for val in self.data2['value']:
             self.assertIn(val, self.ext2)
-        for val in self.x2.value:
+        for val in self.cgx2.value:
             self.assertIn(val, self.ext2)
 
     def test_insert(self):
+        """Test ext.insert() (Not supported here)."""
         with self.assertRaises(NotImplementedError):
             self.ext1.insert(0, self.data1['value'][0])
         with self.assertRaises(NotImplementedError):
             self.ext2.insert(0, self.data2['value'][0])
 
     def test_len(self):
+        """Test len(ext) (Not supported here)."""
         self.assertEqual(len(self.ext1), 2)
         self.assertEqual(len(self.ext2), 3)
 
     def test_ne(self):
+        """Test ``!=`` (not-equal) operator."""
         self.assertNotEqual(self.ext1, self.ext2)
 
     def test_not_in(self):
+        """Test the ``not in`` operator."""
         self.assertNotIn(self.data1['value'][0], self.ext2)
         self.assertNotIn(self.data2['value'][0], self.ext1)
 
-        self.assertNotIn(self.x1.value[0], self.ext2)
-        self.assertNotIn(self.x2.value[0], self.ext1)
+        self.assertNotIn(self.cgx1.value[0], self.ext2)
+        self.assertNotIn(self.cgx2.value[0], self.ext1)
 
     def test_pop(self):
+        """Test ext.pop() (Not supported here)."""
         with self.assertRaises(NotImplementedError):
             self.ext1.pop(self.data1['value'][0])
         with self.assertRaises(NotImplementedError):
             self.ext2.pop(self.data2['value'][0])
 
     def test_remove(self):
+        """Test ext.remove() (Not supported here)."""
         with self.assertRaises(NotImplementedError):
             self.ext1.remove(self.data1['value'][0])
         with self.assertRaises(NotImplementedError):
             self.ext2.remove(self.data2['value'][0])
 
     def test_repr(self):
+        """Test repr()."""
         self.assertEqual(repr(self.ext1),
                          '<PrecertificateSignedCertificateTimestamps: 2 timestamps, critical=False>')
         self.assertEqual(repr(self.ext2),
@@ -2649,22 +2366,26 @@ class PrecertificateSignedCertificateTimestampsTestCase(DjangoCAWithCertTestCase
                              '<PrecertificateSignedCertificateTimestamps: 3 timestamps, critical=True>')
 
     def test_serialize(self):
+        """Test serialization of extension."""
         self.assertEqual(self.ext1.serialize(), self.data1)
         self.assertEqual(self.ext2.serialize(), self.data2)
 
     def test_setitem(self):
+        """Test setting items (e.g. ``ext[0] = ...``)."""
         with self.assertRaises(NotImplementedError):
             self.ext1[0] = self.data2['value'][0]
         with self.assertRaises(NotImplementedError):
             self.ext2[0] = self.data1['value'][0]
 
     def test_setitem_slices(self):
+        """Test setting slices (not supported here)."""
         with self.assertRaises(NotImplementedError):
             self.ext1[:] = self.data2
         with self.assertRaises(NotImplementedError):
             self.ext2[:] = self.data1
 
     def test_str(self):
+        """Test str()."""
         self.assertEqual(str(self.ext1),
                          '<PrecertificateSignedCertificateTimestamps: 2 timestamps, critical=False>')
         self.assertEqual(str(self.ext2),
@@ -2676,7 +2397,10 @@ class PrecertificateSignedCertificateTimestampsTestCase(DjangoCAWithCertTestCase
 
 
 class UnknownExtensionTestCase(TestCase):
+    """Test UnrecognizedExtension extension."""
+
     def test_basic(self):
+        """Only test basic functionality."""
         unk = SubjectAlternativeName({'value': ['https://example.com']}).as_extension()
         ext = UnrecognizedExtension(unk)
         self.assertEqual(ext.name, 'Unsupported extension (OID %s)' % unk.oid.dotted_string)
@@ -2690,6 +2414,8 @@ class UnknownExtensionTestCase(TestCase):
 
 
 class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
+    """Test SubjectAlternativeName extension."""
+
     ext_class = SubjectAlternativeName
     ext_class_key = 'subject_alternative_name'
     ext_class_name = 'SubjectAlternativeName'
@@ -2762,23 +2488,26 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
     }
 
     def test_get_common_name(self):
-        cn = 'example.com'
-        dn = 'dirname:/CN=example.net'
+        """Test the get_common_name() function."""
+        common_name = 'example.com'
+        dirname = 'dirname:/CN=example.net'
 
-        san = SubjectAlternativeName({'value': [cn]})
-        self.assertEqual(san.get_common_name(), cn)
+        san = SubjectAlternativeName({'value': [common_name]})
+        self.assertEqual(san.get_common_name(), common_name)
 
-        san = SubjectAlternativeName({'value': [cn, dn]})
-        self.assertEqual(san.get_common_name(), cn)
+        san = SubjectAlternativeName({'value': [common_name, dirname]})
+        self.assertEqual(san.get_common_name(), common_name)
 
-        san = SubjectAlternativeName({'value': [dn, cn]})
+        san = SubjectAlternativeName({'value': [dirname, common_name]})
         self.assertEqual(san.get_common_name(), 'example.com')
 
-        san = SubjectAlternativeName({'value': [dn]})
+        san = SubjectAlternativeName({'value': [dirname]})
         self.assertIsNone(san.get_common_name())
 
 
 class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
+    """Test SubjectKeyIdentifier extension."""
+
     ext_class = SubjectKeyIdentifier
     ext_class_key = 'subject_key_identifier'
     ext_class_name = 'SubjectKeyIdentifier'
@@ -2819,6 +2548,8 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
 
 
 class TLSFeatureTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestCase):
+    """Test TLSFeature extension."""
+
     ext_class = TLSFeature
     ext_class_key = 'tls_feature'
     ext_class_name = 'TLSFeature'
@@ -2867,6 +2598,7 @@ class TLSFeatureTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestC
     }
 
     def test_unknown_values(self):
+        """Test passing unknown values."""
         with self.assertRaisesRegex(ValueError, r'^Unknown value: foo$'):
             TLSFeature({'value': ['foo']})
 
