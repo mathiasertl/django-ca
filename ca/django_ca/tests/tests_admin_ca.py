@@ -32,8 +32,7 @@ class CertificateAuthorityAdminTestMixin:
     """Mixin for test cases in this module."""
 
     def setUp(self):  # pylint: disable=invalid-name,missing-function-docstring; unittest standard
-        self.user = User.objects.create_superuser(username='user', password='password',
-                                                  email='user@example.com')
+        self.user = self.create_superuser()
         self.add_url = reverse('admin:django_ca_certificateauthority_add')
         self.changelist_url = reverse('admin:django_ca_certificateauthority_changelist')
         self.client = Client()

@@ -80,14 +80,9 @@ class AdminTestMixin:
     model = None
     """Model must be configured for TestCase instances using this mixin."""
 
-    username = 'user'
-    password = 'password'
-    email = 'user@example.com'
-
     def setUp(self):
         # pylint: disable=invalid-name,missing-function-docstring; unittest standard
-        self.user = User.objects.create_superuser(username=self.username, password=self.password,
-                                                  email=self.email)
+        self.user = self.create_superuser()
         self.add_url = self.model.admin_add_url
         self.changelist_url = self.model.admin_changelist_url
         self.client.force_login(self.user)

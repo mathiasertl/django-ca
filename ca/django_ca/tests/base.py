@@ -705,8 +705,9 @@ VQIDAQAB
 
     @property
     def crl_profiles(self):
+        """Return a list of CRL profiles."""
         profiles = copy.deepcopy(ca_settings.CA_CRL_PROFILES)
-        for name, config in profiles.items():
+        for config in profiles.values():
             config.setdefault('OVERRIDES', {})
 
             for data in [d for d in certs.values() if d.get('type') == 'ca']:
@@ -795,6 +796,7 @@ VQIDAQAB
 
     @classmethod
     def expires(cls, days):
+        """Get a timestamp `days` from now."""
         now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         return now + timedelta(days + 1)
 
@@ -842,8 +844,8 @@ VQIDAQAB
         cert.save()
         return cert
 
-    def create_superuser(self, username='admin', password='admin',
-                         email='user@example.com'):  # pragma: no cover
+    def create_superuser(self, username='admin', password='admin', email='user@example.com'):
+        """Shortcut to create a superuser."""
         return User.objects.create_superuser(username=username, password=password, email=email)
 
     def load_usable_cas(self):
