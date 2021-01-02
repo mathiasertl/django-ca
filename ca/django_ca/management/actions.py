@@ -112,10 +112,12 @@ class CertificateAuthorityAction(argparse.Action):
 class ExpiresAction(argparse.Action):
     """Action for passing a timedelta in days.
 
+    NOTE: str(timedelta) is different in python 3.6, so only outputting days here
+
     >>> parser.add_argument('--expires', action=ExpiresAction)  # doctest: +ELLIPSIS
     ExpiresAction(...)
-    >>> parser.parse_args(['--expires', '3'])
-    Namespace(expires=datetime.timedelta(days=3))
+    >>> parser.parse_args(['--expires', '3']).expires.days
+    3
     """
 
     def __init__(self, *args, **kwargs):

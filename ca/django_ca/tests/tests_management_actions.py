@@ -463,7 +463,7 @@ class ReasonActionTestCase(DjangoCATestCase):
             'unspecified}}\n'
             "{script}: error: argument reason: invalid choice: 'foo' (choose from 'aa_compromise', "
             "'affiliation_changed', 'ca_compromise', 'certificate_hold', 'cessation_of_operation', "
-            "'key_compromise', 'privilege_withdrawn', remove_from_crl', 'superseded', 'unspecified')\n")
+            "'key_compromise', 'privilege_withdrawn', 'remove_from_crl', 'superseded', 'unspecified')\n")
 
 
 class MultipleURLActionTestCase(DjangoCATestCase):
