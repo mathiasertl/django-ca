@@ -145,8 +145,8 @@ def _load_pub(data):
 
 cryptography_version = tuple([int(t) for t in cryptography.__version__.split('.')[:2]])
 
-with open(os.path.join(settings.FIXTURES_DIR, 'cert-data.json')) as stream:
-    _fixture_data = json.load(stream)
+with open(os.path.join(settings.FIXTURES_DIR, 'cert-data.json')) as cert_data_stream:
+    _fixture_data = json.load(cert_data_stream)
 certs = _fixture_data.get('certs')
 
 # Update some data from contrib (data is not in cert-data.json, since we don't generate them)
@@ -297,10 +297,10 @@ for cert_name, cert_data in certs.items():
     cert_data['ocsp-expires'] = cert_data['valid_until'].strftime('%y%m%d%H%M%SZ')
 
     # parse extensions
-    for key, ext_cls in KEY_TO_EXTENSION.items():
-        if cert_data.get(key):
-            cert_data['%s_serialized' % key] = cert_data[key]
-            cert_data[key] = ext_cls(cert_data[key])
+    for ext_key, ext_cls in KEY_TO_EXTENSION.items():
+        if cert_data.get(ext_key):
+            cert_data['%s_serialized' % ext_key] = cert_data[ext_key]
+            cert_data[ext_key] = ext_cls(cert_data[ext_key])
 
 # Calculate some fixted timestamps that we reuse throughout the tests
 timestamps = {
@@ -351,7 +351,7 @@ class override_tmpcadir(override_settings):
     def __call__(self, test_func):
         if not inspect.isfunction(test_func):
             raise ValueError("Only functions can use override_tmpcadir()")
-        return super(override_tmpcadir, self).__call__(test_func)
+        return super().__call__(test_func)
 
     def enable(self):
         self.options['CA_DIR'] = tempfile.mkdtemp()
@@ -369,10 +369,10 @@ class override_tmpcadir(override_settings):
         self.mock.start()
         self.mock_.start()
 
-        super(override_tmpcadir, self).enable()
+        super().enable()
 
     def disable(self):
-        super(override_tmpcadir, self).disable()
+        super().disable()
         self.mock.stop()
         self.mock_.stop()
         shutil.rmtree(self.options['CA_DIR'])
@@ -380,6 +380,8 @@ class override_tmpcadir(override_settings):
 
 class DjangoCATestCaseMixin:
     """Base class for all testcases with some enhancements."""
+
+    # pylint: disable=too-many-public-methods
 
     # ACME data present in all mixins
     ACME_THUMBPRINT_1 = 'U-yUM27CQn9pClKlEITobHB38GJOJ9YbOxnw5KKqU-8'
@@ -407,7 +409,7 @@ VQIDAQAB
     re_false_password = r'^(Bad decrypt\. Incorrect password\?|Could not deserialize key data\.)$'
 
     def setUp(self):
-        super(DjangoCATestCaseMixin, self).setUp()
+        super().setUp()
         self.cas = {}
         self.certs = {}
 
@@ -438,17 +440,17 @@ VQIDAQAB
             name = 'django_ca%s' % name
         return 'http://%s%s' % (hostname, reverse(name, kwargs=kwargs))
 
-    def assertAuthorityKeyIdentifier(self, issuer, cert, critical=False):
+    def assertAuthorityKeyIdentifier(self, issuer, cert, critical=False):  # pylint: disable=invalid-name
         self.assertEqual(cert.authority_key_identifier.key_identifier, issuer.subject_key_identifier.value)
 
-    def assertBasic(self, cert, algo='SHA256'):
+    def assertBasic(self, cert, algo='SHA256'):  # pylint: disable=invalid-name
         """Assert some basic key properties."""
         self.assertEqual(cert.version, x509.Version.v3)
         self.assertIsInstance(cert.public_key(), rsa.RSAPublicKey)
         self.assertIsInstance(cert.signature_hash_algorithm, getattr(hashes, algo.upper()))
 
-    def assertCRL(self, crl, certs=None, signer=None, expires=86400, algorithm=None, encoding=Encoding.PEM,
-                  idp=None, extensions=None, crl_number=0):
+    def assertCRL(self, crl, certs=None, signer=None, expires=86400,  # pylint: disable=invalid-name
+                  algorithm=None, encoding=Encoding.PEM, idp=None, extensions=None, crl_number=0):
         certs = certs or []
         signer = signer or self.cas['child']
         algorithm = algorithm or ca_settings.CA_DIGEST_ALGORITHM
@@ -486,7 +488,7 @@ VQIDAQAB
             self.assertEqual(list(entry.extensions), [])
 
     @contextmanager
-    def assertCreateCASignals(self, pre=True, post=True):
+    def assertCreateCASignals(self, pre=True, post=True):  # pylint: disable=invalid-name
         with self.assertSignal(pre_create_ca) as pre_sig, self.assertSignal(post_create_ca) as post_sig:
             try:
                 yield (pre_sig, post_sig)
@@ -495,7 +497,7 @@ VQIDAQAB
                 self.assertTrue(post_sig.called is post)
 
     @contextmanager
-    def assertCommandError(self, msg):
+    def assertCommandError(self, msg):  # pylint: disable=invalid-name
         """Context manager asserting that CommandError is raised.
 
         Parameters
@@ -507,7 +509,8 @@ VQIDAQAB
         with self.assertRaisesRegex(CommandError, msg):
             yield
 
-    def assertExtensions(self, cert, extensions, signer=None, expect_defaults=True):
+    def assertExtensions(self, cert, extensions, signer=None,  # pylint: disable=invalid-name
+                         expect_defaults=True):
         extensions = {e.key: e for e in extensions}
 
         if isinstance(cert, X509CertMixin):
@@ -556,15 +559,17 @@ VQIDAQAB
         with self.assertRaisesRegex(ImproperlyConfigured, msg):
             yield
 
-    def assertIssuer(self, issuer, cert):
+    def assertIssuer(self, issuer, cert):  # pylint: disable=invalid-name
+        """Assert that the issuer for `cert` matches the subject of `issuer`."""
         self.assertEqual(cert.issuer, issuer.subject)
 
-    def assertMessages(self, response, expected):
+    def assertMessages(self, response, expected):  # pylint: disable=invalid-name
+        """Assert given Django messages for `response`."""
         messages = [str(m) for m in list(get_messages(response.wsgi_request))]
         self.assertEqual(messages, expected)
 
     @contextmanager
-    def assertMultipleWarnings(self, warnings, msg=None):  # pragma: no cover
+    def assertMultipleWarnings(self, warnings, msg=None):  # pragma: no cover; pylint: disable=invalid-name
         # not used in 1.16, but might still be useful
         arg = tuple([w['category'] for w in warnings if w.get('category')])
         with self.assertWarns(arg, msg=msg) as cm:
@@ -585,7 +590,8 @@ VQIDAQAB
             self.assertEqual(data.get('file'), msg.file)
             self.assertEqual(data.get('line'), msg.line)
 
-    def assertNotRevoked(self, cert):
+    def assertNotRevoked(self, cert):  # pylint: disable=invalid-name
+        """Assert that the certificate is not revoked."""
         if isinstance(cert, CertificateAuthority):
             cert = CertificateAuthority.objects.get(serial=cert.serial)
         else:
@@ -594,7 +600,7 @@ VQIDAQAB
         self.assertFalse(cert.revoked)
         self.assertEqual(cert.revoked_reason, '')
 
-    def assertParserError(self, args, expected, **kwargs):
+    def assertParserError(self, args, expected, **kwargs):  # pylint: disable=invalid-name
         """Assert that given args throw a parser error."""
 
         kwargs.setdefault('script', os.path.basename(sys.argv[0]))
@@ -608,21 +614,26 @@ VQIDAQAB
         self.assertEqual(output, expected)
         return output
 
-    def assertPostCreateCa(self, post, ca):
+    def assertPostCreateCa(self, post, ca):  # pylint: disable=invalid-name
+        """Assert that the post_create_ca signal was called."""
         post.assert_called_once_with(ca=ca, signal=post_create_ca, sender=CertificateAuthority)
 
-    def assertPostIssueCert(self, post, cert):
+    def assertPostIssueCert(self, post, cert):  # pylint: disable=invalid-name
+        """Assert that the post_issue_cert signal was called."""
         post.assert_called_once_with(cert=cert, signal=post_issue_cert, sender=Certificate)
 
-    def assertPostRevoke(self, post, cert):
+    def assertPostRevoke(self, post, cert):  # pylint: disable=invalid-name
+        """Assert that the post_revoke_cert signal was called."""
         post.assert_called_once_with(cert=cert, signal=post_revoke_cert, sender=Certificate)
 
-    def assertPrivateKey(self, ca, password=None):
+    def assertPrivateKey(self, ca, password=None):  # pylint: disable=invalid-name
+        """Assert some basic properties for a private key."""
         key = ca.key(password)
         self.assertIsNotNone(key)
         self.assertTrue(key.key_size > 0)
 
-    def assertRevoked(self, cert, reason=None):
+    def assertRevoked(self, cert, reason=None):  # pylint: disable=invalid-name
+        """Assert that the certificate is now revoked."""
         if isinstance(cert, CertificateAuthority):
             cert = CertificateAuthority.objects.get(serial=cert.serial)
         else:
@@ -635,19 +646,23 @@ VQIDAQAB
         else:
             self.assertEqual(cert.revoked_reason, reason)
 
-    def assertSerial(self, serial):
+    def assertSerial(self, serial):  # pylint: disable=invalid-name
         """Assert that the serial matches a basic regex pattern."""
         self.assertIsNotNone(re.match('^[0-9A-F:]*$', serial), serial)
 
     @contextmanager
-    def assertSignal(self, signal):
+    def assertSignal(self, signal):  # pylint: disable=invalid-name
+        """Attach a mock to the given signal."""
         handler = Mock()
         signal.connect(handler)
         yield handler
         signal.disconnect(handler)
 
-    def assertSignature(self, chain, cert):
-        # see: http://stackoverflow.com/questions/30700348
+    def assertSignature(self, chain, cert):  # pylint: disable=invalid-name
+        """Assert that `cert` is properly signed by `chain`.
+
+        .. seealso:: http://stackoverflow.com/questions/30700348
+        """
         store = X509Store()
 
         # set the time of the OpenSSL context - freezegun doesn't work, because timestamp comes from OpenSSL
@@ -666,16 +681,18 @@ VQIDAQAB
         store_ctx = X509StoreContext(store, cert)
         self.assertIsNone(store_ctx.verify_certificate())
 
-    def assertSubject(self, cert, expected):
+    def assertSubject(self, cert, expected):  # pylint: disable=invalid-name
+        """Assert the subject of `cert` matches `expected`."""
         if not isinstance(expected, Subject):
             expected = Subject(expected)
         self.assertEqual(Subject([(s.oid, s.value) for s in cert.subject]), expected)
 
     @contextmanager
-    def assertValidationError(self, errors):
-        with self.assertRaises(ValidationError) as cm:
+    def assertValidationError(self, errors):  # pylint: disable=invalid-name
+        """Context manager to assert that a ValidationError is thrown."""
+        with self.assertRaises(ValidationError) as cmex:
             yield
-        self.assertEqual(cm.exception.message_dict, errors)
+        self.assertEqual(cmex.exception.message_dict, errors)
 
     def cmd(self, *args, **kwargs):
         """Call to a manage.py command using call_command."""
@@ -721,7 +738,8 @@ VQIDAQAB
     def freeze_time(self, timestamp):
         """Context manager to freeze time to one of the given timestamps.
 
-        If `timestamp` is a str that is in the `timestamps` dict, that timestamp.
+        If `timestamp` is a str that is in the `timestamps` dict (e.g. "everything-valid"), use that
+        timestamp.
         """
         if isinstance(timestamp, str) and timestamp in timestamps:  # pragma: no branch
             timestamp = timestamps[timestamp]
@@ -730,7 +748,7 @@ VQIDAQAB
             yield frozen
 
     def get_cert_context(self, name):
-        # Get a dictionary suitable for testing output based on the dictionary in basic.certs
+        """Get a dictionary suitable for testing output based on the dictionary in basic.certs."""
         ctx = {}
         for key, value in certs[name].items():
             if key == 'precert_poison':
@@ -738,8 +756,8 @@ VQIDAQAB
             elif key == 'precertificate_signed_certificate_timestamps_serialized':
                 ctx['sct_critical'] = ' (critical)' if value['critical'] else ''
                 ctx['sct_values'] = []
-                for value in value['value']:
-                    ctx['sct_values'].append(value)
+                for val in value['value']:
+                    ctx['sct_values'].append(val)
             elif key == 'precertificate_signed_certificate_timestamps':
                 continue  # special extension b/c it cannot be created
             elif key == 'pathlen':
@@ -776,12 +794,14 @@ VQIDAQAB
         return ctx
 
     def get_idp_full_name(self, ca):
+        """Get the IDP full name for `ca`."""
         crl_url = [url.strip() for url in ca.crl_url.split()]
         return [x509.UniformResourceIdentifier(c) for c in crl_url] or None
 
     def get_idp(self, full_name=None, indirect_crl=False, only_contains_attribute_certs=False,
                 only_contains_ca_certs=False, only_contains_user_certs=False, only_some_reasons=None,
                 relative_name=None):
+        """Get an IssuingDistributionPoint extension."""
         return x509.Extension(
             oid=ExtensionOID.ISSUING_DISTRIBUTION_POINT,
             value=x509.IssuingDistributionPoint(
@@ -979,7 +999,7 @@ class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # prag
 
     @classmethod
     def setUpClass(cls):
-        super(SeleniumTestCase, cls).setUpClass()
+        super().setUpClass()
         if settings.SKIP_SELENIUM_TESTS:
             return
 
@@ -996,13 +1016,13 @@ class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # prag
     @classmethod
     def tearDownClass(cls):
         if settings.SKIP_SELENIUM_TESTS:
-            super(SeleniumTestCase, cls).tearDownClass()
+            super().tearDownClass()
             return
 
         cls.selenium.quit()
         if settings.VIRTUAL_DISPLAY:
             cls.vdisplay.stop()
-        super(SeleniumTestCase, cls).tearDownClass()
+        super().tearDownClass()
 
     def find(self, selector):
         """Find an element by CSS selector."""
