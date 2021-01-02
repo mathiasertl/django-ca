@@ -160,8 +160,7 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
     def add_key_size(self, parser):
         """Add --key-size option (2048, 4096, ...)."""
         parser.add_argument(
-            '--key-size', type=int, action=actions.KeySizeAction, default=ca_settings.CA_DEFAULT_KEY_SIZE,
-            metavar='{2048,4096,8192,...}',
+            '--key-size', action=actions.KeySizeAction, default=ca_settings.CA_DEFAULT_KEY_SIZE,
             help="Key size for the private key (default: %(default)s).")
 
     def add_key_type(self, parser):
@@ -361,7 +360,7 @@ class CertificateAuthorityDetailMixin:
             extension=IssuerAlternativeName, help='URL to the homepage of your CA.'
         )
         group.add_argument(
-            '--crl-url', metavar='URL', action=actions.MultipleURLAction, default=[],
+            '--crl-url', action=actions.MultipleURLAction,
             help='URL to a certificate revokation list. Can be given multiple times.'
         )
         group.add_argument('--ocsp-url', metavar='URL', action=actions.URLAction,

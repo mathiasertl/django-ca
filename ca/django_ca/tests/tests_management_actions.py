@@ -14,6 +14,7 @@
 """Test cases for django-ca actions."""
 
 import argparse
+import doctest
 from datetime import timedelta
 from unittest import mock
 
@@ -33,6 +34,16 @@ from .base import DjangoCAWithGeneratedCAsTestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
+
+
+def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+    """Load doctests"""
+
+    def set_up(self):
+        self.globs['parser'] = argparse.ArgumentParser()
+
+    tests.addTests(doctest.DocTestSuite('django_ca.management.actions', setUp=set_up))
+    return tests
 
 
 class SubjectActionTestCase(DjangoCATestCase):
@@ -160,7 +171,9 @@ class KeySizeActionTestCase(DjangoCATestCase):
         super(KeySizeActionTestCase, self).setUp()
 
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('--size', type=int, action=actions.KeySizeAction)
+        # NOTE: explicitly set metavar here, because the default has curly braces causing troubles with
+        #       string formatting in assertParserError.
+        self.parser.add_argument('--size', action=actions.KeySizeAction, metavar='SIZE')
 
     def test_basic(self):
         ns = self.parser.parse_args(['--size=2048'])

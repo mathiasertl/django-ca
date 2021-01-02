@@ -33,7 +33,13 @@ from ..utils import shlex_split
 
 
 class SubjectAction(argparse.Action):
-    """Action for giving a subject."""
+    """Action for giving a subject.
+
+    >>> parser.add_argument('--subject', action=SubjectAction)  # doctest: +ELLIPSIS
+    SubjectAction(...)
+    >>> parser.parse_args(['--subject', '/CN=example.com'])
+    Namespace(subject=Subject("/CN=example.com"))
+    """
 
     def __call__(self, parser, namespace, value, option_string=None):
         try:
@@ -44,7 +50,13 @@ class SubjectAction(argparse.Action):
 
 
 class FormatAction(argparse.Action):
-    """Action for giving an encoding (DER/PEM)."""
+    """Action for giving an encoding (DER/PEM).
+
+    >>> parser.add_argument('--format', action=FormatAction)  # doctest: +ELLIPSIS
+    FormatAction(...)
+    >>> parser.parse_args(['--format', 'DER'])
+    Namespace(format=<Encoding.DER: 'DER'>)
+    """
 
     def __call__(self, parser, namespace, value, option_string=None):
         try:
@@ -56,7 +68,13 @@ class FormatAction(argparse.Action):
 
 
 class AlgorithmAction(argparse.Action):
-    """Action for giving an algorithm."""
+    """Action for giving an algorithm.
+
+    >>> parser.add_argument('--algorithm', action=AlgorithmAction)  # doctest: +ELLIPSIS
+    AlgorithmAction(...)
+    >>> parser.parse_args(['--algorithm', 'SHA256'])  # doctest: +ELLIPSIS
+    Namespace(algorithm=<cryptography.hazmat.primitives.hashes.SHA256 object at ...>)
+    """
 
     def __call__(self, parser, namespace, value, option_string=None):
         try:
@@ -68,7 +86,13 @@ class AlgorithmAction(argparse.Action):
 
 
 class KeyCurveAction(argparse.Action):
-    """Action to parse an ECC curve value."""
+    """Action to parse an ECC curve value.
+
+    >>> parser.add_argument('--curve', action=KeyCurveAction)  # doctest: +ELLIPSIS
+    KeyCurveAction(...)
+    >>> parser.parse_args(['--curve', 'SECP256R1'])  # doctest: +ELLIPSIS
+    Namespace(curve=<cryptography.hazmat.primitives.asymmetric.ec.SECP256R1 object at ...>)
+    """
 
     def __call__(self, parser, namespace, value, option_string=None):
 
@@ -80,7 +104,20 @@ class KeyCurveAction(argparse.Action):
 
 
 class KeySizeAction(argparse.Action):
-    """Action for adding a keysize, an integer that must be a power of two (2048, 4096, ...)."""
+    """Action for adding a keysize, an integer that must be a power of two (2048, 4096, ...).
+
+    >>> parser.add_argument('--size', action=KeySizeAction)  # doctest: +ELLIPSIS
+    KeySizeAction(...)
+    >>> parser.parse_args(['--size', '4096'])
+    Namespace(size=4096)
+    """
+
+    metavar = '{2048,4096,8192,...}'
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault('type', int)
+        kwargs.setdefault('metavar', self.metavar)
+        super().__init__(**kwargs)
 
     def __call__(self, parser, namespace, value, option_string=None):
         option_string = option_string or 'key size'
@@ -97,6 +134,11 @@ class PasswordAction(argparse.Action):
     """Action for adding a password argument.
 
     If the cli does not pass an argument value, the action prompt the user for a password.
+
+    >>> parser.add_argument('--password', action=PasswordAction)  # doctest: +ELLIPSIS
+    PasswordAction(...)
+    >>> parser.parse_args(['--password', 'secret'])
+    Namespace(password=b'secret')
     """
 
     def __init__(self, prompt=None, **kwargs):
@@ -161,7 +203,13 @@ class CertificateAuthorityAction(argparse.Action):
 
 
 class URLAction(argparse.Action):
-    """Action to pass a single valid URL."""
+    """Action to pass a single valid URL.
+
+    >>> parser.add_argument('--url', action=URLAction)  # doctest: +ELLIPSIS
+    URLAction(...)
+    >>> parser.parse_args(['--url', 'https://example.com'])
+    Namespace(url='https://example.com')
+    """
 
     def __call__(self, parser, namespace, value, option_string=None):
         validator = URLValidator()
@@ -185,7 +233,13 @@ def _parse_timedelta(value):
 
 
 class ExpiresAction(argparse.Action):
-    """Action for passing a timedelta in days."""
+    """Action for passing a timedelta in days.
+
+    >>> parser.add_argument('--expires', action=ExpiresAction)  # doctest: +ELLIPSIS
+    ExpiresAction(...)
+    >>> parser.parse_args(['--expires', '3'])
+    Namespace(expires=datetime.timedelta(days=3))
+    """
 
     def __init__(self, *args, **kwargs):
         kwargs['type'] = _parse_timedelta
@@ -197,7 +251,18 @@ class ExpiresAction(argparse.Action):
 
 
 class MultipleURLAction(argparse.Action):
-    """Action for multiple URLs."""
+    """Action for multiple URLs.
+
+    >>> parser.add_argument('--url', action=MultipleURLAction)  # doctest: +ELLIPSIS
+    MultipleURLAction(...)
+    >>> parser.parse_args(['--url', 'https://example.com', '--url', 'https://example.net'])
+    Namespace(url=['https://example.com', 'https://example.net'])
+    """
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('default', [])
+        kwargs.setdefault('metavar', 'URL')
+        super().__init__(*args, **kwargs)
 
     def __call__(self, parser, namespace, value, option_string=None):
         validator = URLValidator()
@@ -213,7 +278,21 @@ class MultipleURLAction(argparse.Action):
 
 
 class ExtensionAction(argparse.Action):  # pylint: disable=abstract-method,too-few-public-methods
-    """Base class for extension actions."""
+    """Base class for extension actions.
+
+    Actions using this class as a base class **have** to pass an extra ``extension`` kwarg with a subclass of
+    :py:class:`~django_ca.extensions.Extension`.
+
+    The namespace target will always be the extension key regardless of any option string, note how the
+    extension is stored in ``key_usage`` and not in ``--ext``, as you would normally expect:
+
+    >>> from django_ca.extensions import KeyUsage
+    >>> parser.add_argument('--ext', action=OrderedSetExtensionAction,
+    ...                     extension=KeyUsage)  # doctest: +ELLIPSIS
+    OrderedSetExtensionAction(...)
+    >>> parser.parse_args(['--ext', 'critical,keyCertSign'])
+    Namespace(key_usage=<KeyUsage: ['keyCertSign'], critical=True>)
+    """
 
     def __init__(self, *args, **kwargs):
         self.extension = kwargs.pop('extension')
@@ -226,6 +305,13 @@ class OrderedSetExtensionAction(ExtensionAction):
 
     Arguments using this action expect an extra ``extension`` kwarg with a subclass of
     :py:class:`~django_ca.extensions.OrderedSetExtension`.
+
+    >>> from django_ca.extensions import KeyUsage
+    >>> parser.add_argument('--ext', action=OrderedSetExtensionAction,
+    ...                     extension=KeyUsage)  # doctest: +ELLIPSIS
+    OrderedSetExtensionAction(...)
+    >>> parser.parse_args(['--ext', 'critical,keyCertSign'])
+    Namespace(key_usage=<KeyUsage: ['keyCertSign'], critical=True>)
     """
 
     def __call__(self, parser, namespace, value, option_string=None):
@@ -251,6 +337,13 @@ class AlternativeNameAction(ExtensionAction):
 
     Arguments using this action expect an extra ``extension`` kwarg with a subclass of
     :py:class:`~django_ca.extensions.AlternativeNameExtension`.
+
+    >>> from django_ca.extensions import SubjectAlternativeName
+    >>> parser.add_argument('--san', action=AlternativeNameAction,
+    ...                     extension=SubjectAlternativeName)  # doctest: +ELLIPSIS
+    AlternativeNameAction(...)
+    >>> parser.parse_args(['--san', 'https://example.com'])
+    Namespace(subject_alternative_name=<SubjectAlternativeName: ['URI:https://example.com'], critical=False>)
     """
 
     def __call__(self, parser, namespace, value, option_string=None):
@@ -258,7 +351,13 @@ class AlternativeNameAction(ExtensionAction):
 
 
 class ReasonAction(argparse.Action):
-    """Action to select a revocation reason."""
+    """Action to select a revocation reason.
+
+    >>> parser.add_argument('--reason', action=ReasonAction)  # doctest: +ELLIPSIS
+    ReasonAction(...)
+    >>> parser.parse_args(['--reason', 'key_compromise'])
+    Namespace(reason=<ReasonFlags.key_compromise: 'keyCompromise'>)
+    """
 
     def __init__(self, *args, **kwargs):
         kwargs['choices'] = sorted([r.name for r in ReasonFlags])
