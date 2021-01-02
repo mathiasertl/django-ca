@@ -456,10 +456,19 @@ VQIDAQAB
         self.assertIsInstance(cert.public_key(), rsa.RSAPublicKey)
         self.assertIsInstance(cert.signature_hash_algorithm, getattr(hashes, algo.upper()))
 
-    def assertCRL(self, crl, certs=None, signer=None, expires=86400,  # pylint: disable=invalid-name
+    def assertCRL(self, crl, expected=None, signer=None, expires=86400,  # pylint: disable=invalid-name
                   algorithm=None, encoding=Encoding.PEM, idp=None, extensions=None, crl_number=0):
-        """Test the given CRL."""
-        certs = certs or []
+        """Test the given CRL.
+
+        Parameters
+        ----------
+
+        crl : bytes
+            The raw CRL
+        expected : list
+            List of CAs/certs to be expected in this CRL
+        """
+        expected = expected or []
         signer = signer or self.cas['child']
         algorithm = algorithm or ca_settings.CA_DIGEST_ALGORITHM
         extensions = extensions or []
@@ -489,7 +498,7 @@ VQIDAQAB
         self.assertCountEqual(list(crl.extensions), extensions)
 
         entries = {e.serial_number: e for e in crl}
-        expected = {c.x509.serial_number: c for c in certs}
+        expected = {c.x509.serial_number: c for c in expected}
         self.assertCountEqual(entries, expected)
         for entry in entries.values():
             self.assertEqual(entry.revocation_date, datetime.utcnow())

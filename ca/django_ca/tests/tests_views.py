@@ -88,7 +88,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
         response = self.client.get(reverse('default', kwargs={'serial': self.ca.serial}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pkix-crl')
-        self.assertCRL(response.content, encoding=Encoding.DER, expires=600, idp=idp, certs=[cert],
+        self.assertCRL(response.content, expected=[cert], encoding=Encoding.DER, expires=600, idp=idp,
                        crl_number=1)
 
     @override_tmpcadir()
@@ -130,7 +130,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
         response = self.client.get(reverse('ca_crl', kwargs={'serial': root.serial}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'text/plain')
-        self.assertCRL(response.content, expires=600, idp=idp, certs=[child], crl_number=1, signer=root)
+        self.assertCRL(response.content, expected=[child], expires=600, idp=idp, crl_number=1, signer=root)
 
     @override_tmpcadir()
     def test_ca_crl_intermediate(self):
