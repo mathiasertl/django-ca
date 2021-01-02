@@ -244,7 +244,7 @@ class AbstractExtensionTestMixin:
         class _Example:  # pylint: disable=too-few-public-methods
             pass
 
-        with self.assertRaisesRegex(ValueError, '^Value is of unsupported type example$'):
+        with self.assertRaisesRegex(ValueError, '^Value is of unsupported type _Example$'):
             self.ext_class(_Example())
 
     def test_ne(self):
