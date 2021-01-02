@@ -467,7 +467,7 @@ class MultipleURLActionTestCase(DjangoCATestCase):
     def setUp(self):
         super().setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('--url', action=actions.MultipleURLAction, default=[])
+        self.parser.add_argument('--url', action=actions.MultipleURLAction)
 
     def test_basic(self):
         """Test basic functionality of action."""
@@ -481,9 +481,13 @@ class MultipleURLActionTestCase(DjangoCATestCase):
             self.assertEqual(args.url, [url])
 
         parser = argparse.ArgumentParser()
-        parser.add_argument('--url', action=actions.MultipleURLAction, default=[])
+        parser.add_argument('--url', action=actions.MultipleURLAction)
         args = parser.parse_args(['--url=%s' % urls[0], '--url=%s' % urls[1]])
         self.assertEqual(args.url, urls)
+
+    def test_none(self):
+        args = self.parser.parse_args([])
+        self.assertEqual(args.url, [])
 
     def test_error(self):
         """Test false option values."""
