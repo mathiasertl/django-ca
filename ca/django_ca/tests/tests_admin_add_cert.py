@@ -546,14 +546,17 @@ class AddCertificateTestCase(CertificateAdminTestMixin, DjangoCAWithCertTestCase
 
 @unittest.skipIf(settings.SKIP_SELENIUM_TESTS, 'Selenium tests skipped.')
 class AddCertificateSeleniumTestCase(CertificateAdminTestMixin, SeleniumTestCase):
+    """Some Selenium based test cases to test the client side javascript code."""
+
     def get_expected(self, profile, extension_class, default=None):
+        """Get expected value for a given extension for the given profile."""
         if extension_class.key in profile.extensions:
             return profile.extensions[extension_class.key].serialize()
-        else:
-            return {'value': default, 'critical': extension_class.default_critical}
+        return {'value': default, 'critical': extension_class.default_critical}
 
-    def assertProfile(self, profile, ku_select, ku_critical, eku_select, eku_critical, tf_select, tf_critical,
-                      subject, cn_in_san):
+    def assertProfile(self, profile, ku_select, ku_critical, eku_select,  # pylint: disable=invalid-name
+                      eku_critical, tf_select, tf_critical, subject, cn_in_san):
+        """Assert that the admin form equals the given profile."""
         profile = profiles[profile]
 
         ku_expected = self.get_expected(profile, KeyUsage, [])
@@ -584,6 +587,7 @@ class AddCertificateSeleniumTestCase(CertificateAdminTestMixin, SeleniumTestCase
 
     def clear_form(self, ku_select, ku_critical, eku_select, eku_critical, tf_select, tf_critical, cn_in_san,
                    subject_fields):
+        """Clear the form."""
         ku_select.deselect_all()
         eku_select.deselect_all()
         tf_select.deselect_all()
@@ -601,8 +605,8 @@ class AddCertificateSeleniumTestCase(CertificateAdminTestMixin, SeleniumTestCase
 
     @override_tmpcadir()
     def test_paste_csr_test(self):
+        """Test that pasting a CSR shows text next to subject input fields."""
         self.load_usable_cas()
-        self.create_superuser()
         self.login()
 
         self.selenium.get('%s%s' % (self.live_server_url, self.add_url))
@@ -634,8 +638,9 @@ class AddCertificateSeleniumTestCase(CertificateAdminTestMixin, SeleniumTestCase
 
     @override_tmpcadir()
     def test_select_profile(self):
+        """Test that selecting the profile modifies the extensions."""
+
         self.load_usable_cas()
-        self.create_superuser()
         self.login()
 
         self.selenium.get('%s%s' % (self.live_server_url, self.add_url))
@@ -680,9 +685,11 @@ class AddCertificateSeleniumTestCase(CertificateAdminTestMixin, SeleniumTestCase
                                tf_select, tf_critical, subject_fields, cn_in_san)
 
             # now fill everything with dummy values to test the other way round
+            # pylint: disable=expression-not-assigned
             [ku_select.select_by_value(o.get_attribute('value')) for o in ku_select.options]
             [eku_select.select_by_value(o.get_attribute('value')) for o in eku_select.options]
             [tf_select.select_by_value(o.get_attribute('value')) for o in tf_select.options]
+            # pylint: enable=expression-not-assigned
 
             if not ku_critical.is_selected():
                 ku_critical.click()
