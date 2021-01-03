@@ -116,7 +116,7 @@ def test(suites):
 
     suites = ['django_ca.tests.%s' % s.strip('.') for s in suites]
 
-    call_command('test', *suites)
+    call_command('test', *suites, parallel=True)
 
 
 def exclude_versions(cov, sw, this_version, version, version_str):
