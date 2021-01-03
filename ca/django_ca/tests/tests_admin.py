@@ -48,195 +48,88 @@ from .base import DjangoCATestCase
 from .base import DjangoCAWithCertTestCase
 from .base import DjangoCAWithGeneratedCertsTestCase
 from .base import certs
-from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
 from .base_mixins import AdminTestCaseMixin
+from .base_mixins import StandardAdminViewTestCaseMixin
 
 User = get_user_model()
 
 
-class StandardAdminViewTestMixin(AdminTestCaseMixin):
-    """A mixin that adds tests for the standard Django admin views.
-
-    TestCases using this mixin are expected to implement ``setUp`` to add some useful test model instances.
-    """
-
-    def test_model_count(self):
-        """Test that the implementing TestCase actually creates some instances."""
-        self.assertGreater(self.model.objects.all().count(), 0)
-
-    def test_changelist_view(self):
-        """Test that the changelist view works."""
-        response = self.client.get(self.changelist_url)
-        self.assertChangelistResponse(response, *self.model.objects.all())
-
-    def test_change_view(self):
-        """Test that the change view works for all instances."""
-        for obj in self.model.objects.all():
-            response = self.client.get(obj.admin_change_url)
-            self.assertChangeResponse(response)
-
-
-class CertificateAdminTestCaseMixin(AdminTestCaseMixin):
+class CertificateAdminTestCaseMixin:
     """Specialized variant of :py:class:`~django_ca.tests.tests_admin.AdminTestCaseMixin` for certificates."""
 
     model = Certificate
+    media_css = (
+        'django_ca/admin/css/base.css',
+        'django_ca/admin/css/certificateadmin.css',
+    )
 
-    def change_url(self, cert=None):
+    def change_url(self, obj=None):
         """Shortcut to be able to get admin_change_url from root-cert by default."""
-        if cert is None:
-            cert = self.certs['root-cert']
-        return cert.admin_change_url
-
-    def assertChangeResponse(self, response):
-        """Overwritten here to make sure custom templates are loaded."""
-        super().assertChangeResponse(response)
-
-        templates = [t.name for t in response.templates]
-        self.assertIn('admin/django_ca/certificate/change_form.html', templates)
-        self.assertCSS(response, 'django_ca/admin/css/base.css')
-        self.assertCSS(response, 'django_ca/admin/css/certificateadmin.css')
+        if obj is None:
+            obj = self.certs['root-cert']
+        return obj.admin_change_url
 
 
 @freeze_time(timestamps['everything_valid'])
-class ChangelistTestCase(CertificateAdminTestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
-    """Test the changelist view."""
+class CertificateAdminViewTestCase(CertificateAdminTestCaseMixin, StandardAdminViewTestCaseMixin,
+                                   DjangoCAWithGeneratedCertsTestCase):
+    """Tests for the Certificate ModelAdmin class."""
 
-    def assertResponse(self, response, certs=None):
-        if certs is None:
-            certs = []
+    def get_changelists(self):
+        with self.freeze_time('everything_valid'):
+            yield (self.model.objects.all(), {})
+            yield (self.model.objects.all(), {'status': 'valid'})
+            yield (self.model.objects.all(), {'status': 'all'})
+            yield ([], {'status': 'expired'})
+            yield ([], {'status': 'revoked'})
 
-        self.assertEqual(response.status_code, 200)
-        self.assertCSS(response, 'django_ca/admin/css/base.css')
-        self.assertCSS(response, 'django_ca/admin/css/certificateadmin.css')
-        self.assertEqual(set(response.context['cl'].result_list), set(certs))
+            yield ([], {'auto': 'auto'})
+            yield (self.model.objects.all(), {'auto': 'all'})
 
-    def test_get(self):
-        """Test a normal get response."""
-        response = self.client.get(self.changelist_url)
-        self.assertResponse(response, self.certs.values())
-
-    def test_status_all(self):
-        """Test various status filters."""
-        # Test viewing all certificates, regardless of revocation or current time
-        self.load_all_certs()  # load all certs here
-
-        response = self.client.get('%s?status=all' % self.changelist_url)
-        self.assertResponse(response, self.certs.values())
-
-        # Revoke everything and try again
-        for cert in self.certs.values():
-            cert.revoke()
-            cert.save()
-        response = self.client.get('%s?status=all' % self.changelist_url)
-        self.assertResponse(response, self.certs.values())
+        with self.freeze_time('ca_certs_expired'):
+            yield (self.model.objects.all(), {'status': 'all'})
+            yield [
+                self.certs['profile-client'], self.certs['profile-server'], self.certs['profile-webserver'],
+                self.certs['profile-enduser'], self.certs['profile-ocsp'], self.certs['no-extensions'],
+                self.certs['all-extensions'], self.certs['alt-extensions'],
+            ], {}
+            yield [
+                self.certs['root-cert'], self.certs['pwd-cert'], self.certs['ecc-cert'],
+                self.certs['dsa-cert'], self.certs['child-cert']
+            ], {'status': 'expired'}
+            yield [], {'status': 'revoked'}
 
         with self.freeze_time('everything_expired'):
-            response = self.client.get('%s?status=all' % self.changelist_url)
-            self.assertResponse(response, self.certs.values())
+            yield ([], {})  # default view shows nothing - everything is expired
+            yield (self.model.objects.all(), {'status': 'all'})
+            yield (self.model.objects.all(), {'status': 'expired'})
 
-        with self.freeze_time('before_everything'):
-            response = self.client.get('%s?status=all' % self.changelist_url)
-            self.assertResponse(response, self.certs.values())
-
-        # Revoke everything and try again
+        # load all certs (including 3rd party certs) and view with status_all
         with self.freeze_time('everything_valid'):
-            for cert in self.certs.values():
-                cert.revoke()
-                cert.save()
-            response = self.client.get('%s?status=all' % self.changelist_url)
-            self.assertResponse(response, self.certs.values())
+            self.load_all_certs()
+            yield (self.model.objects.all(), {'status': 'all'})
 
-    @freeze_time(timestamps['everything_valid'])
-    def test_status_all_valid(self):
-        self.client.force_login(self.user)
+            # now revoke all certs, to test that filter
+            self.model.objects.update(revoked=True)
+            yield (self.model.objects.all(), {'status': 'all'})
+            yield (self.model.objects.all(), {'status': 'revoked'})
+            yield ([], {})  # default shows nothing - everything expired
 
-        response = self.client.get('%s?status=valid' % self.changelist_url)
-        self.assertResponse(response, self.certs.values())
-        response = self.client.get('%s?status=expired' % self.changelist_url)
-        self.assertResponse(response, [])
-        response = self.client.get('%s?status=revoked' % self.changelist_url)
-        self.assertResponse(response, [])
+            # unrevoke all certs, but set one of them as auto-generated
+            self.model.objects.update(revoked=False)
+            self.certs['profile-ocsp'].autogenerated = True
+            self.certs['profile-ocsp'].save()
 
-    @freeze_time(timestamps['ca_certs_expired'])
-    def test_status_ca_certs_expired(self):
-        self.client.force_login(self.user)
-
-        response = self.client.get(self.changelist_url)
-        self.assertResponse(response, [
-            self.certs['profile-client'],
-            self.certs['profile-server'],
-            self.certs['profile-webserver'],
-            self.certs['profile-enduser'],
-            self.certs['profile-ocsp'],
-            self.certs['no-extensions'],
-            self.certs['all-extensions'],
-            self.certs['alt-extensions'],
-        ])
-        response = self.client.get('%s?status=expired' % self.changelist_url)
-        self.assertResponse(response, [
-            self.certs['root-cert'],
-            self.certs['pwd-cert'],
-            self.certs['ecc-cert'],
-            self.certs['dsa-cert'],
-            self.certs['child-cert'],
-        ])
-        response = self.client.get('%s?status=revoked' % self.changelist_url)
-        self.assertResponse(response, [])
-
-    @freeze_time(timestamps['everything_expired'])
-    def test_status_everything_expired(self):
-        self.client.force_login(self.user)
-
-        response = self.client.get(self.changelist_url)
-        self.assertResponse(response, [])
-        response = self.client.get('%s?status=expired' % self.changelist_url)
-        self.assertResponse(response, self.certs.values())
-        response = self.client.get('%s?status=revoked' % self.changelist_url)
-        self.assertResponse(response, [])
-
-    @freeze_time(timestamps['everything_valid'])
-    def test_status_revoked(self):
-        self.client.force_login(self.user)
-        self.certs['root-cert'].revoke()
-
-        valid = [c for c in self.certs.values() if c != self.certs['root-cert']]
-
-        response = self.client.get(self.changelist_url)
-        self.assertResponse(response, valid)
-        response = self.client.get('%s?status=expired' % self.changelist_url)
-        self.assertResponse(response, [])
-        response = self.client.get('%s?status=revoked' % self.changelist_url)
-        self.assertResponse(response, [self.certs['root-cert']])
-
-    @freeze_time(timestamps['everything_valid'])
-    def test_autogenerated(self):
-        self.certs['root-cert'].autogenerated = True
-        self.certs['root-cert'].save()
-
-        non_auto = [c for c in self.certs.values() if c != self.certs['root-cert']]
-        response = self.client.get(self.changelist_url)
-        self.assertResponse(response, non_auto)
-        response = self.client.get('%s?auto=auto' % self.changelist_url)
-        self.assertResponse(response, [self.certs['root-cert']])
-        response = self.client.get('%s?auto=all' % self.changelist_url)
-        self.assertResponse(response, self.certs.values())
-
-    def test_unauthorized(self):
-        client = Client()
-        response = client.get(self.changelist_url)
-        self.assertRequiresLogin(response)
-
-
-@override_settings(USE_TZ=True)
-class ChangelistWithTZTestCase(ChangelistTestCase):
-    pass
+            yield ([self.certs['profile-ocsp']], {'auto': 'auto'})
+            yield (self.model.objects.all(), {'auto': 'all', 'status': 'all'})
 
 
 # NOTE: default view gives only valid certificates, so an expired would not be included by default
 @freeze_time(timestamps['everything_valid'])
-class RevokeActionTestCase(CertificateAdminTestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
+class RevokeActionTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin,
+                           DjangoCAWithGeneratedCertsTestCase):
     """Test the "revoke" action in the changelist."""
 
     def test_basic(self):
@@ -293,7 +186,7 @@ class RevokeActionTestCase(CertificateAdminTestCaseMixin, DjangoCAWithGeneratedC
         self.assertRevoked(cert)
 
 
-class ChangeTestCase(CertificateAdminTestCaseMixin, DjangoCAWithCertTestCase):
+class ChangeTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, DjangoCAWithCertTestCase):
     def test_basic(self):
         # Just assert that viewing a certificate does not throw an exception
         for name, cert in self.certs.items():
@@ -400,7 +293,7 @@ class ChangeTestCase(CertificateAdminTestCaseMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 302)
 
 
-class CSRDetailTestCase(CertificateAdminTestCaseMixin, DjangoCATestCase):
+class CSRDetailTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, DjangoCATestCase):
     def setUp(self):
         self.url = reverse('admin:django_ca_certificate_csr_details')
         self.csr_pem = certs['root-cert']['csr']['pem']
@@ -467,7 +360,7 @@ class CSRDetailTestCase(CertificateAdminTestCaseMixin, DjangoCATestCase):
         self.assertRequiresLogin(response)
 
 
-class ProfilesViewTestCase(CertificateAdminTestCaseMixin, DjangoCATestCase):
+class ProfilesViewTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, DjangoCATestCase):
     def setUp(self):
         self.url = reverse('admin:django_ca_certificate_profiles')
         super(ProfilesViewTestCase, self).setUp()
@@ -612,7 +505,8 @@ class ProfilesViewTestCase(CertificateAdminTestCaseMixin, DjangoCATestCase):
         })
 
 
-class CertDownloadTestCase(CertificateAdminTestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
+class CertDownloadTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin,
+                           DjangoCAWithGeneratedCertsTestCase):
     def setUp(self):
         super(CertDownloadTestCase, self).setUp()
         self.cert = self.certs['root-cert']
@@ -689,7 +583,8 @@ class CertDownloadTestCase(CertificateAdminTestCaseMixin, DjangoCAWithGeneratedC
         self.assertRequiresLogin(response)
 
 
-class CertDownloadBundleTestCase(CertificateAdminTestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
+class CertDownloadBundleTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin,
+                                 DjangoCAWithGeneratedCertsTestCase):
     def setUp(self):
         super(CertDownloadBundleTestCase, self).setUp()
         self.cert = self.certs['root-cert']
@@ -723,7 +618,8 @@ class CertDownloadBundleTestCase(CertificateAdminTestCaseMixin, DjangoCAWithGene
 
 
 @freeze_time(timestamps['everything_valid'])
-class ResignCertTestCase(CertificateAdminTestCaseMixin, WebTestMixin, DjangoCAWithGeneratedCertsTestCase):
+class ResignCertTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, WebTestMixin,
+                         DjangoCAWithGeneratedCertsTestCase):
     def setUp(self):
         super(ResignCertTestCase, self).setUp()
         self.cert = self.certs['root-cert']
@@ -855,7 +751,7 @@ class ResignCertTestCase(CertificateAdminTestCaseMixin, WebTestMixin, DjangoCAWi
         self.assertResigned(cert)
 
 
-class RevokeCertViewTestCase(CertificateAdminTestCaseMixin, DjangoCAWithCertTestCase):
+class RevokeCertViewTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, DjangoCAWithCertTestCase):
     def setUp(self):
         super(RevokeCertViewTestCase, self).setUp()
         self.cert = self.certs['root-cert']

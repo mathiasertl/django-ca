@@ -29,6 +29,9 @@ class AdminTestCaseMixin:
     model = None
     """Model must be configured for TestCase instances using this mixin."""
 
+    media_css = []
+    """List of custom CSS files loaded by the ModelAdmin.Media class."""
+
     def setUp(self):  # pylint: disable=invalid-name,missing-function-docstring
         self.user = self.create_superuser()
         self.client.force_login(self.user)
@@ -52,6 +55,9 @@ class AdminTestCaseMixin:
         self.assertIn('admin/change_form.html', templates)
         self.assertIn('admin/base.html', templates)
 
+        for css in self.media_css:
+            self.assertCSS(response, css)
+
     def assertChangelistResponse(self, response, *objects,  # pylint: disable=invalid-name
                                  status=HTTPStatus.OK):
         """Assert that the passed response is a model changelist view."""
@@ -62,10 +68,18 @@ class AdminTestCaseMixin:
         self.assertIn('admin/base.html', templates)
         self.assertIn('admin/change_list.html', templates)
 
+        for css in self.media_css:
+            self.assertCSS(response, css)
+
     def assertRequiresLogin(self, response, **kwargs):  # pylint: disable=invalid-name
         """Assert that the given response is a redirect to the login page."""
         expected = '%s?next=%s' % (reverse('admin:login'), quote(response.wsgi_request.get_full_path()))
         self.assertRedirects(response, expected, **kwargs)
+
+    @classmethod
+    def change_url(cls, obj):
+        """Shortcut for the change URL of the given instance."""
+        return obj.admin_change_url
 
     @classproperty
     def changelist_url(cls):  # pylint: disable=no-self-argument; pylint does not detect django decorator
@@ -79,3 +93,39 @@ class AdminTestCaseMixin:
         with super().freeze_time(timestamp) as frozen:
             self.client.force_login(self.user)
             yield frozen
+
+    def get_changelist_view(self, data=None):
+        """Get the response to a changelist view for the given model."""
+        return self.client.get(self.changelist_url, data)
+
+    def get_change_view(self, obj, data=None):
+        """Get the response to a change view for the given model instance."""
+        return self.client.get(self.change_url(obj), data)
+
+
+class StandardAdminViewTestCaseMixin(AdminTestCaseMixin):
+    """A mixin that adds tests for the standard Django admin views.
+
+    TestCases using this mixin are expected to implement ``setUp`` to add some useful test model instances.
+    """
+
+    def get_changelists(self):
+        """Generator for possible changelist views.
+
+        Should yield tuples of objects that should be displayed and a dict of query parameters.
+        """
+        yield (self.model.objects.all(), {})
+
+    def test_model_count(self):
+        """Test that the implementing TestCase actually creates some instances."""
+        self.assertGreater(self.model.objects.all().count(), 0)
+
+    def test_changelist_view(self):
+        """Test that the changelist view works."""
+        for qs, data in self.get_changelists():
+            self.assertChangelistResponse(self.get_changelist_view(data), *qs)
+
+    def test_change_view(self):
+        """Test that the change view works for all instances."""
+        for obj in self.model.objects.all():
+            self.assertChangeResponse(self.get_change_view(obj))

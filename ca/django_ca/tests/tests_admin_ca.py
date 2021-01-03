@@ -13,8 +13,6 @@
 
 """Test cases for the admin interface for Certificate Authorities."""
 
-from http import HTTPStatus
-
 from django.contrib.auth import get_user_model
 from django.test import Client
 from django.test import override_settings
@@ -33,12 +31,10 @@ class CertificateAuthorityAdminTestMixin(AdminTestCaseMixin):
     """Mixin for test cases in this module."""
 
     model = CertificateAuthority
-
-    def assertChangeResponse(self, response, status=HTTPStatus.OK):
-        """Overwritten to check for custom CSS."""
-        super().assertChangeResponse(response, status=status)
-        self.assertCSS(response, 'django_ca/admin/css/base.css')
-        self.assertCSS(response, 'django_ca/admin/css/certificateauthorityadmin.css')
+    media_css = (
+        'django_ca/admin/css/base.css',
+        'django_ca/admin/css/certificateauthorityadmin.css',
+    )
 
 
 class ChangelistTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithCATestCase):
