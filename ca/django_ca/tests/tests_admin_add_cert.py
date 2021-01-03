@@ -42,11 +42,11 @@ from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
-from .tests_admin import CertificateAdminTestMixin
+from .tests_admin import CertificateAdminTestCaseMixin
 
 
 @freeze_time(timestamps['after_child'])
-class AddCertificateTestCase(CertificateAdminTestMixin, DjangoCAWithCertTestCase):
+class AddCertificateTestCase(CertificateAdminTestCaseMixin, DjangoCAWithCertTestCase):
     @override_tmpcadir()
     def test_get(self):
         response = self.client.get(self.add_url)
@@ -545,7 +545,7 @@ class AddCertificateTestCase(CertificateAdminTestMixin, DjangoCAWithCertTestCase
 
 
 @unittest.skipIf(settings.SKIP_SELENIUM_TESTS, 'Selenium tests skipped.')
-class AddCertificateSeleniumTestCase(CertificateAdminTestMixin, SeleniumTestCase):
+class AddCertificateSeleniumTestCase(CertificateAdminTestCaseMixin, SeleniumTestCase):
     """Some Selenium based test cases to test the client side javascript code."""
 
     def get_expected(self, profile, extension_class, default=None):

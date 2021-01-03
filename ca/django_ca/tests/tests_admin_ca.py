@@ -13,53 +13,32 @@
 
 """Test cases for the admin interface for Certificate Authorities."""
 
-from urllib.parse import quote
+from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
-from django.templatetags.static import static
 from django.test import Client
 from django.test import override_settings
 from django.urls import reverse
 from django.utils.encoding import force_str
 
+from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
 from .base import certs
+from .base_mixins import AdminTestCaseMixin
 
 User = get_user_model()
 
 
-class CertificateAuthorityAdminTestMixin:
+class CertificateAuthorityAdminTestMixin(AdminTestCaseMixin):
     """Mixin for test cases in this module."""
 
-    def setUp(self):  # pylint: disable=invalid-name,missing-function-docstring; unittest standard
-        self.user = self.create_superuser()
-        self.add_url = reverse('admin:django_ca_certificateauthority_add')
-        self.changelist_url = reverse('admin:django_ca_certificateauthority_changelist')
-        self.client = Client()
-        self.client.force_login(self.user)
-        super().setUp()
+    model = CertificateAuthority
 
-    def assertCSS(self, response, path):  # pylint: disable=invalid-name; unittest standard
-        """Assert some CSS path in the given response."""
-
-        css = '<link href="%s" type="text/css" media="all" rel="stylesheet" />' % static(path)
-        self.assertInHTML(css, response.content.decode('utf-8'), 1)
-
-    def assertChangeResponse(self, response):   # pylint: disable=invalid-name; unittest standard
-        """Assert basic characteristics of a change response."""
-
-        self.assertEqual(response.status_code, 200)
-
-        templates = [t.name for t in response.templates]
-        self.assertIn('admin/change_form.html', templates)
+    def assertChangeResponse(self, response, status=HTTPStatus.OK):
+        """Overwritten to check for custom CSS."""
+        super().assertChangeResponse(response, status=status)
         self.assertCSS(response, 'django_ca/admin/css/base.css')
         self.assertCSS(response, 'django_ca/admin/css/certificateauthorityadmin.css')
-
-    def assertRequiresLogin(self, response, **kwargs):   # pylint: disable=invalid-name; unittest standard
-        """Assert that the response requires a login."""
-
-        expected = '%s?next=%s' % (reverse('admin:login'), quote(response.wsgi_request.get_full_path()))
-        self.assertRedirects(response, expected, **kwargs)
 
 
 class ChangelistTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithCATestCase):
