@@ -36,6 +36,7 @@ class AdminTestCaseMixin:
         self.user = self.create_superuser()
         self.client.force_login(self.user)
         super().setUp()
+        self.obj = self.model.objects.first()
 
     @classproperty
     def add_url(cls):  # pylint: disable=no-self-argument; pylint does not detect django decorator
@@ -76,9 +77,9 @@ class AdminTestCaseMixin:
         expected = '%s?next=%s' % (reverse('admin:login'), quote(response.wsgi_request.get_full_path()))
         self.assertRedirects(response, expected, **kwargs)
 
-    @classmethod
-    def change_url(cls, obj):
+    def change_url(self, obj=None):
         """Shortcut for the change URL of the given instance."""
+        obj = obj or self.obj
         return obj.admin_change_url
 
     @classproperty
