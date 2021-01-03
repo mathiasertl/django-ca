@@ -634,6 +634,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
         for cert in queryset:
             cert.revoke()
     revoke.short_description = _('Revoke selected certificates')
+    revoke.allowed_permissions = ('change', )
 
     def get_change_actions(self, request, object_id, form_url):
         actions = list(super().get_change_actions(request, object_id, form_url))

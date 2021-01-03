@@ -133,6 +133,7 @@ class RevokeActionTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin,
     """Test the "revoke" action in the changelist."""
 
     def test_basic(self):
+        """Test basic revocation action."""
         self.assertNotRevoked(self.certs['root-cert'])
 
         data = {
@@ -148,41 +149,26 @@ class RevokeActionTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin,
         self.assertRevoked(self.certs['root-cert'])
 
     def test_permissions(self):
+        """Test that change permission is required for this action."""
         cert = self.certs['root-cert']
         data = {
             'action': 'revoke', '_selected_action': [cert.pk],
         }
 
-        # make an anonymous request
-        client = Client()
-        response = client.post(self.changelist_url, data)
-        self.assertRequiresLogin(response)
+        self.user.is_superuser = False
+        self.user.save()
 
-        # cert is not revoked
-        cert = Certificate.objects.get(serial=cert.serial)
-        self.assertFalse(cert.revoked)
-        self.assertEqual(cert.revoked_reason, '')
-
-        # test with a logged in user, but not staff
-        user = User.objects.create_user(username='staff', password='password', email='staff@example.com')
-        client.force_login(user=user)
-
-        response = client.post(self.changelist_url, data)
-        self.assertRequiresLogin(response)
+        # Just the view permission is not enough...
+        self.user.user_permissions.add(Permission.objects.get(codename='view_certificate'))
+        response = self.client.post(self.changelist_url, data)
+        # NOTE: No HTTP 403/FORBIDDEN, Django just shows the changelist page
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertNotRevoked(cert)
 
-        # make the user "staff"
-        user.is_staff = True
-        user.save()
-        self.assertTrue(User.objects.get(username='staff').is_staff)  # really is staff, right?
-        response = client.post(self.changelist_url, data)
-        self.assertEqual(response.status_code, 403)
-        self.assertNotRevoked(cert)
-
-        # now give appropriate permission
-        p = Permission.objects.get(codename='change_certificate')
-        user.user_permissions.add(p)
-        response = client.post(self.changelist_url, data)
+        # ... you really need the change permission
+        self.user.user_permissions.add(Permission.objects.get(codename='change_certificate'))
+        response = self.client.post(self.changelist_url, data)
+        self.assertRedirects(response, self.changelist_url)
         self.assertRevoked(cert)
 
 
