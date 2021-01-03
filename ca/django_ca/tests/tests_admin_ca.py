@@ -45,13 +45,6 @@ class CertificateAuthorityAdminTestMixin:
         css = '<link href="%s" type="text/css" media="all" rel="stylesheet" />' % static(path)
         self.assertInHTML(css, response.content.decode('utf-8'), 1)
 
-    def change_url(self, pk=None):
-        """Get change URL for the given object."""
-        if pk is None:
-            pk = self.cas['root'].pk
-
-        return reverse('admin:django_ca_certificateauthority_change', args=(pk, ))
-
     def assertChangeResponse(self, response):   # pylint: disable=invalid-name; unittest standard
         """Assert basic characteristics of a change response."""
 
@@ -102,7 +95,7 @@ class ChangeTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithCATestCase)
     def test_basic(self):
         """Test that viewing a CA at least does not throw an exception."""
         for ca in self.cas.values():
-            response = self.client.get(self.change_url(ca.pk))
+            response = self.client.get(ca.admin_change_url)
             self.assertChangeResponse(response)
 
     @override_settings(CA_ENABLE_ACME=False)

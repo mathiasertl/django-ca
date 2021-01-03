@@ -72,10 +72,6 @@ class AdminTestMixin:
         self.client.force_login(self.user)
         super().setUp()
 
-    @property
-    def _admin_url_format_tuple(self):
-        return (self.model._meta.app_label, self.model._meta.model_name)
-
     def assertCSS(self, response, path):  # pylint: disable=invalid-name; unittest standard
         """Assert that the HTML from the given response includes the mentioned CSS."""
         css = '<link href="%s" type="text/css" media="all" rel="stylesheet" />' % static(path)
@@ -85,10 +81,6 @@ class AdminTestMixin:
         """Assert some basic characterisics of a changlist response."""
         self.assertEqual(response.status_code, 200)
         self.assertCountEqual(response.context['cl'].result_list, objects)
-
-    def change_url(self, pk):
-        """Admin change URL for the given primary key."""
-        return reverse('admin:%s_%s_change' % self._admin_url_format_tuple, kwargs={'object_id': pk})
 
     @contextmanager
     def freeze_time(self, timestamp):
@@ -118,7 +110,7 @@ class StandardAdminViewTestMixin(AdminTestMixin):
     def test_change_view(self):
         """Test that the change view works for all instances."""
         for obj in self.model.objects.all():
-            response = self.client.get(self.change_url(pk=obj.pk))
+            response = self.client.get(obj.admin_change_url)
             self.assertEqual(response.status_code, HTTPStatus.OK)
 
 
@@ -127,10 +119,11 @@ class CertificateAdminTestMixin(AdminTestMixin):
 
     model = Certificate
 
-    def change_url(self, pk=None):
-        if pk is None:
-            pk = self.certs['root-cert'].pk
-        return super().change_url(pk=pk)
+    def change_url(self, cert=None):
+        """Shortcut to be able to get admin_change_url from root-cert by default."""
+        if cert is None:
+            cert = self.certs['root-cert']
+        return cert.admin_change_url
 
     def assertChangeResponse(self, response):
         self.assertEqual(response.status_code, 200)
@@ -342,7 +335,7 @@ class ChangeTestCase(CertificateAdminTestMixin, DjangoCAWithCertTestCase):
     def test_basic(self):
         # Just assert that viewing a certificate does not throw an exception
         for name, cert in self.certs.items():
-            response = self.client.get(self.change_url(cert.pk))
+            response = self.client.get(cert.admin_change_url)
             self.assertChangeResponse(response)
 
     def test_revoked(self):
@@ -359,7 +352,7 @@ class ChangeTestCase(CertificateAdminTestMixin, DjangoCAWithCertTestCase):
     def test_no_san(self):
         # Test display of a certificate with no SAN
         cert = self.certs['no-extensions']
-        response = self.client.get(self.change_url(cert.pk))
+        response = self.client.get(cert.admin_change_url)
         self.assertChangeResponse(response)
         self.assertContains(response, text='''
 <div class="form-row field-subject_alternative_name">
@@ -395,7 +388,7 @@ class ChangeTestCase(CertificateAdminTestMixin, DjangoCAWithCertTestCase):
         with mock.patch.object(models, 'OID_TO_EXTENSION', {}), \
                 mock.patch.object(extensions, 'OID_TO_EXTENSION', {}), \
                 self.assertLogs() as logs:
-            response = self.client.get(self.change_url(cert.pk))
+            response = self.client.get(cert.admin_change_url)
             self.assertChangeResponse(response)
 
         log_msg = 'WARNING:django_ca.models:Unknown extension encountered: %s'
@@ -437,11 +430,11 @@ class ChangeTestCase(CertificateAdminTestMixin, DjangoCAWithCertTestCase):
 
         with mock.patch('cryptography.x509.extensions.Extensions.get_extension_for_oid',
                         side_effect=side_effect):
-            response = self.client.get(self.change_url(cert.pk))
+            response = self.client.get(cert.admin_change_url)
             self.assertChangeResponse(response)
 
     def test_unknown_object(self):
-        response = self.client.get(self.change_url(1234))
+        response = self.client.get(self.change_url(Certificate(pk=1234)))
         self.assertEqual(response.status_code, 302)
 
 

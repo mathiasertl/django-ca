@@ -106,7 +106,7 @@ class AddCertificateTestCase(CertificateAdminTestMixin, DjangoCAWithCertTestCase
         self.assertIsNone(cert.issuer_alternative_name)
 
         # Test that we can view the certificate
-        response = self.client.get(self.change_url(cert.pk))
+        response = self.client.get(cert.admin_change_url)
         self.assertEqual(response.status_code, 200)
 
     @override_tmpcadir()
@@ -214,7 +214,7 @@ class AddCertificateTestCase(CertificateAdminTestMixin, DjangoCAWithCertTestCase
         ])
 
         # Test that we can view the certificate
-        response = self.client.get(self.change_url(cert.pk))
+        response = self.client.get(cert.admin_change_url)
         self.assertEqual(response.status_code, 200)
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
@@ -311,7 +311,7 @@ class AddCertificateTestCase(CertificateAdminTestMixin, DjangoCAWithCertTestCase
         self.assertIsNone(cert.tls_feature)
 
         # Test that we can view the certificate
-        response = self.client.get(self.change_url(cert.pk))
+        response = self.client.get(cert.admin_change_url)
         self.assertEqual(response.status_code, 200)
 
     @override_tmpcadir()
