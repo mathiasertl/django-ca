@@ -84,6 +84,14 @@ class CADownloadBundleTestCase(AdminTestCaseMixin, DjangoCAWithCATestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.content, b'DER/ASN.1 certificates cannot be downloaded as a bundle.')
 
+    def test_permission_denied(self):
+        """Test downloading without permissions fails."""
+        self.user.is_superuser = False
+        self.user.save()
+
+        response = self.client.get('%s?format=PEM' % self.url)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+
     def test_unauthorized(self):
         """Test viewing as unauthorized viewer."""
         client = Client()
