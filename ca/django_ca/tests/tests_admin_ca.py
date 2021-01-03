@@ -23,64 +23,25 @@ from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
 from .base import certs
 from .base_mixins import AdminTestCaseMixin
+from .base_mixins import StandardAdminViewTestCaseMixin
 
-User = get_user_model()
 
-
-class CertificateAuthorityAdminTestMixin(AdminTestCaseMixin):
-    """Mixin for test cases in this module."""
-
+class CertificateAuthorityAdminViewTestCase(StandardAdminViewTestCaseMixin, DjangoCAWithCATestCase):
     model = CertificateAuthority
     media_css = (
         'django_ca/admin/css/base.css',
         'django_ca/admin/css/certificateauthorityadmin.css',
     )
 
-
-class ChangelistTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithCATestCase):
-    """Test the changelist view."""
-
-    def assertResponse(self, response, certificates=None):  # pylint: disable=invalid-name
-        """Assert basic class of the response."""
-
-        if certificates is None:
-            certificates = []
-
-        self.assertEqual(response.status_code, 200)
-        self.assertCSS(response, 'django_ca/admin/css/base.css')
-        self.assertCSS(response, 'django_ca/admin/css/certificateauthorityadmin.css')
-        self.assertEqual(set(response.context['cl'].result_list), set(certificates))
-
-    def test_get(self):
-        """Test a normal view of the change list."""
-        response = self.client.get(self.changelist_url)
-        self.assertResponse(response, self.cas.values())
-
-    def test_unauthorized(self):
-        """Test viewing as unauthorized viewer."""
-
-        client = Client()
-        response = client.get(self.changelist_url)
-        self.assertRequiresLogin(response)
-
-
-class ChangeTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithCATestCase):
-    """Test the change view."""
-
-    def test_basic(self):
-        """Test that viewing a CA at least does not throw an exception."""
-        for ca in self.cas.values():
-            response = self.client.get(ca.admin_change_url)
-            self.assertChangeResponse(response)
-
     @override_settings(CA_ENABLE_ACME=False)
-    def test_with_acme(self):
+    def test_change_view_with_acme(self):
         """Basic tests but with ACME support disabled."""
-        self.test_basic()
+        self.test_change_view()
 
 
-class CADownloadBundleTestCase(CertificateAuthorityAdminTestMixin, DjangoCAWithCATestCase):
+class CADownloadBundleTestCase(AdminTestCaseMixin, DjangoCAWithCATestCase):
     """Tests for downloading the certificate bundle."""
+    model = CertificateAuthority
 
     def get_url(self, ca):
         """Function to get the bundle URL for the given CA."""
