@@ -13,11 +13,11 @@
 
 """Test cases for the admin interface for Certificate Authorities."""
 
-from django.contrib.auth import get_user_model
+from http import HTTPStatus
+
 from django.test import Client
 from django.test import override_settings
 from django.urls import reverse
-from django.utils.encoding import force_str
 
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
@@ -27,6 +27,8 @@ from .base_mixins import StandardAdminViewTestCaseMixin
 
 
 class CertificateAuthorityAdminViewTestCase(StandardAdminViewTestCaseMixin, DjangoCAWithCATestCase):
+    """Test CA admin views."""
+
     model = CertificateAuthority
     media_css = (
         'django_ca/admin/css/base.css',
@@ -52,32 +54,29 @@ class CADownloadBundleTestCase(AdminTestCaseMixin, DjangoCAWithCATestCase):
         """Shortcut property to get the bundle URL for the root CA."""
         return self.get_url(ca=self.cas['root'])
 
-    def test_root(self):
-        """TEst downloading the bundle for the root CA."""
-
-        filename = 'root_example_com_bundle.pem'
-        response = self.client.get('%s?format=PEM' % self.url)
-        self.assertEqual(response.status_code, 200)
+    def assertBundle(self, response, filename, content):  # pylint: disable=invalid-name
+        """Assert a given bundle response."""
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
         self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
-        self.assertEqual(force_str(response.content), certs['root']['pub']['pem'].strip())
+        self.assertEqual(response.content.decode('utf-8'), content.strip())
+
+    def test_root(self):
+        """Test downloading the bundle for the root CA."""
+        filename = 'root_example_com_bundle.pem'
+        self.assertBundle(self.client.get('%s?format=PEM' % self.url), filename, certs['root']['pub']['pem'])
 
     def test_child(self):
         """Test downloading the bundle for a child CA."""
-
         filename = 'child_example_com_bundle.pem'
+        content = '%s\n%s' % (certs['child']['pub']['pem'].strip(), certs['root']['pub']['pem'].strip())
         response = self.client.get('%s?format=PEM' % self.get_url(self.cas['child']))
-        expected = '%s\n%s' % (certs['child']['pub']['pem'].strip(), certs['root']['pub']['pem'].strip())
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response['Content-Type'], 'application/pkix-cert')
-        self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
-        self.assertEqual(force_str(response.content), expected)
+        self.assertBundle(response, filename, content)
 
     def test_invalid_format(self):
         """Test downloading the bundle in an invalid format."""
-
         response = self.client.get('%s?format=INVALID' % self.url)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         self.assertEqual(response.content, b'')
 
         # DER is not supported for bundles
@@ -87,7 +86,6 @@ class CADownloadBundleTestCase(AdminTestCaseMixin, DjangoCAWithCATestCase):
 
     def test_unauthorized(self):
         """Test viewing as unauthorized viewer."""
-
         client = Client()
         response = client.get(self.url)
         self.assertRequiresLogin(response)
