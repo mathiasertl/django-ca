@@ -18,10 +18,6 @@ from http import HTTPStatus
 from unittest import mock
 
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509.extensions import Extension
-from cryptography.x509.extensions import UnrecognizedExtension
-from cryptography.x509.oid import ExtensionOID
-from cryptography.x509.oid import ObjectIdentifier
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
@@ -37,7 +33,6 @@ from .. import extensions
 from .. import models
 from ..constants import ReasonFlags
 from ..models import Certificate
-from ..models import Watcher
 from ..signals import post_issue_cert
 from ..signals import post_revoke_cert
 from ..signals import pre_issue_cert
@@ -56,7 +51,7 @@ from .base_mixins import StandardAdminViewTestCaseMixin
 User = get_user_model()
 
 
-class CertificateAdminTestCaseMixin:
+class CertificateAdminTestCaseMixin:  # pylint: disable=too-few-public-methods
     """Specialized variant of :py:class:`~django_ca.tests.tests_admin.AdminTestCaseMixin` for certificates."""
 
     model = Certificate
@@ -78,6 +73,7 @@ class CertificateAdminViewTestCase(CertificateAdminTestCaseMixin, StandardAdminV
     """Tests for the Certificate ModelAdmin class."""
 
     def get_changelists(self):
+        # yield various different result sets for different filters and times
         with self.freeze_time('everything_valid'):
             yield (self.model.objects.all(), {})
             yield (self.model.objects.all(), {'status': 'valid'})
@@ -125,8 +121,74 @@ class CertificateAdminViewTestCase(CertificateAdminTestCaseMixin, StandardAdminV
             yield ([self.certs['profile-ocsp']], {'auto': 'auto'})
             yield (self.model.objects.all(), {'auto': 'all', 'status': 'all'})
 
+    def test_change_view(self):
+        self.load_all_certs()
+        super().test_change_view()
 
-# NOTE: default view gives only valid certificates, so an expired would not be included by default
+    def test_revoked(self):
+        """View a revoked certificate (fieldset should be collapsed)."""
+        self.certs['root-cert'].revoke()
+
+        response = self.client.get(self.change_url())
+        self.assertChangeResponse(response)
+
+        self.assertContains(response, text='''<div class="fieldBox field-revoked"><label>Revoked:</label>
+                     <div class="readonly"><img src="/static/admin/img/icon-yes.svg" alt="True"></div>
+                </div>''', html=True)
+
+    def test_no_san(self):
+        """Test viewing a certificate with no extensions."""
+        cert = self.certs['no-extensions']
+        response = self.client.get(cert.admin_change_url)
+        self.assertChangeResponse(response)
+        self.assertContains(response, text='''
+<div class="form-row field-subject_alternative_name">
+    <div>
+        <label>SubjectAlternativeName:</label>
+        <div class="readonly">
+            <span class="django-ca-extension">
+                <div class="django-ca-extension-value">
+                    &lt;Not present&gt;
+                </div>
+            </span>
+        </div>
+    </div>
+</div>
+''', html=True)
+
+    def test_unsupported_extensions(self):
+        """Test viewing a certificate with unsupported extensions."""
+        cert = self.certs['all-extensions']
+        # Act as if no extensions is recognized, to see what happens if we'd encounter an unknown extension.
+        with mock.patch.object(models, 'OID_TO_EXTENSION', {}), \
+                mock.patch.object(extensions, 'OID_TO_EXTENSION', {}), \
+                self.assertLogs() as logs:
+            response = self.client.get(cert.admin_change_url)
+            self.assertChangeResponse(response)
+
+        log_msg = 'WARNING:django_ca.models:Unknown extension encountered: %s'
+        expected = [
+            log_msg % 'AuthorityInfoAccess (1.3.6.1.5.5.7.1.1)',
+            log_msg % 'AuthorityKeyIdentifier (2.5.29.35)',
+            log_msg % 'BasicConstraints (2.5.29.19)',
+            log_msg % 'CRLDistributionPoints (2.5.29.31)',
+            log_msg % 'CtPoison (1.3.6.1.4.1.11129.2.4.3)',
+            log_msg % 'ExtendedKeyUsage (2.5.29.37)',
+            log_msg % 'FreshestCRL (2.5.29.46)',
+            log_msg % 'InhibitAnyPolicy (2.5.29.54)',
+            log_msg % 'IssuerAltName (2.5.29.18)',
+            log_msg % 'KeyUsage (2.5.29.15)',
+            log_msg % 'NameConstraints (2.5.29.30)',
+            log_msg % 'OCSPNoCheck (1.3.6.1.5.5.7.48.1.5)',
+            log_msg % 'PolicyConstraints (2.5.29.36)',
+            log_msg % 'SubjectAltName (2.5.29.17)',
+            log_msg % 'SubjectKeyIdentifier (2.5.29.14)',
+            log_msg % 'TLSFeature (1.3.6.1.5.5.7.1.24)',
+        ]
+
+        self.assertEqual(logs.output, sorted(expected))
+
+
 @freeze_time(timestamps['everything_valid'])
 class RevokeActionTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin,
                            DjangoCAWithGeneratedCertsTestCase):
@@ -165,113 +227,6 @@ class RevokeActionTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin,
         response = self.client.post(self.changelist_url, self.data)
         self.assertRedirects(response, self.changelist_url)
         self.assertRevoked(self.cert)
-
-
-class ChangeTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, DjangoCAWithCertTestCase):
-    def test_basic(self):
-        # Just assert that viewing a certificate does not throw an exception
-        for name, cert in self.certs.items():
-            response = self.client.get(cert.admin_change_url)
-            self.assertChangeResponse(response)
-
-    def test_revoked(self):
-        # view a revoked certificate (fieldsets are collapsed differently)
-        self.certs['root-cert'].revoke()
-
-        response = self.client.get(self.change_url())
-        self.assertChangeResponse(response)
-
-        self.assertContains(response, text='''<div class="fieldBox field-revoked"><label>Revoked:</label>
-                     <div class="readonly"><img src="/static/admin/img/icon-yes.svg" alt="True"></div>
-                </div>''', html=True)
-
-    def test_no_san(self):
-        # Test display of a certificate with no SAN
-        cert = self.certs['no-extensions']
-        response = self.client.get(cert.admin_change_url)
-        self.assertChangeResponse(response)
-        self.assertContains(response, text='''
-<div class="form-row field-subject_alternative_name">
-    <div>
-        <label>SubjectAlternativeName:</label>
-        <div class="readonly">
-            <span class="django-ca-extension">
-                <div class="django-ca-extension-value">
-                    &lt;Not present&gt;
-                </div>
-            </span>
-        </div>
-    </div>
-</div>
-''', html=True)
-
-    def test_change_watchers(self):
-        cert = self.certs['root-cert']
-        cert = Certificate.objects.get(serial=cert.serial)
-        watcher = Watcher.objects.create(name='User', mail='user@example.com')
-
-        response = self.client.post(self.change_url(), data={
-            'watchers': [watcher.pk],
-        })
-
-        self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, self.changelist_url)
-        self.assertEqual(list(cert.watchers.all()), [watcher])
-
-    def test_unsupported_extensions(self):
-        cert = self.certs['all-extensions']
-        # Act as if no extensions is recognized, to see what happens if we'd encounter an unknown extension.
-        with mock.patch.object(models, 'OID_TO_EXTENSION', {}), \
-                mock.patch.object(extensions, 'OID_TO_EXTENSION', {}), \
-                self.assertLogs() as logs:
-            response = self.client.get(cert.admin_change_url)
-            self.assertChangeResponse(response)
-
-        log_msg = 'WARNING:django_ca.models:Unknown extension encountered: %s'
-        expected = [
-            log_msg % 'AuthorityInfoAccess (1.3.6.1.5.5.7.1.1)',
-            log_msg % 'AuthorityKeyIdentifier (2.5.29.35)',
-            log_msg % 'BasicConstraints (2.5.29.19)',
-            log_msg % 'CRLDistributionPoints (2.5.29.31)',
-            log_msg % 'CtPoison (1.3.6.1.4.1.11129.2.4.3)',
-            log_msg % 'ExtendedKeyUsage (2.5.29.37)',
-            log_msg % 'FreshestCRL (2.5.29.46)',
-            log_msg % 'InhibitAnyPolicy (2.5.29.54)',
-            log_msg % 'IssuerAltName (2.5.29.18)',
-            log_msg % 'KeyUsage (2.5.29.15)',
-            log_msg % 'NameConstraints (2.5.29.30)',
-            log_msg % 'OCSPNoCheck (1.3.6.1.5.5.7.48.1.5)',
-            log_msg % 'PolicyConstraints (2.5.29.36)',
-            log_msg % 'SubjectAltName (2.5.29.17)',
-            log_msg % 'SubjectKeyIdentifier (2.5.29.14)',
-            log_msg % 'TLSFeature (1.3.6.1.5.5.7.1.24)',
-        ]
-
-        self.assertEqual(logs.output, sorted(expected))
-
-    def test_unsupported_sct(self):
-        # Test return value for older versions of OpenSSL
-        cert = self.certs['letsencrypt_x3-cert']
-
-        oid = ObjectIdentifier('1.1.1.1')
-        value = UnrecognizedExtension(oid, b'foo')
-        ext = Extension(oid=oid, critical=False, value=value)
-        orig_func = cert.x509.extensions.get_extension_for_oid
-
-        def side_effect(key):
-            if key == ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS:
-                return ext
-            else:
-                return orig_func(key)
-
-        with mock.patch('cryptography.x509.extensions.Extensions.get_extension_for_oid',
-                        side_effect=side_effect):
-            response = self.client.get(cert.admin_change_url)
-            self.assertChangeResponse(response)
-
-    def test_unknown_object(self):
-        response = self.client.get(self.change_url(Certificate(pk=1234)))
-        self.assertEqual(response.status_code, 302)
 
 
 class CSRDetailTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, DjangoCATestCase):
