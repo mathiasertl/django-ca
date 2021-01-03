@@ -249,16 +249,16 @@ class CSRDetailTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, Djang
     csr_pem = certs['root-cert']['csr']['pem']
 
     def test_basic(self):
-        for name, cert_data in [(k, v) for k, v in certs.items()
-                                if v['type'] == 'cert' and v['cat'] == 'generated']:
+        """Test a basic CSR info retrieval."""
+        for cert_data in [v for v in certs.values() if v['type'] == 'cert' and v['cat'] == 'generated']:
             response = self.client.post(self.url, data={'csr': cert_data['csr']['pem']})
             self.assertEqual(response.status_code, 200)
-            self.assertEqual(json.loads(response.content.decode('utf-8')),
-                             {'subject': cert_data['csr_subject']})
+            self.assertJSONEqual(response.content, {'subject': cert_data['csr_subject']})
 
     def test_fields(self):
+        """Test fetching a CSR with all subject fields."""
         subject = [(f, 'AT' if f == 'C' else 'test-%s' % f) for f in SUBJECT_FIELDS]
-        key, csr = self.create_csr(subject)
+        csr = self.create_csr(subject)[1]
         csr_pem = csr.public_bytes(Encoding.PEM).decode('utf-8')
 
         response = self.client.post(self.url, data={'csr': csr_pem})
@@ -268,53 +268,43 @@ class CSRDetailTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, Djang
             'test-ST', 'emailAddress': 'test-emailAddress'}})
 
     def test_bad_request(self):
+        """Test posting bogus data."""
         response = self.client.post(self.url, data={'csr': 'foobar'})
         self.assertEqual(response.status_code, 400)
 
     def test_anonymous(self):
+        """Try downloading as anonymous user."""
         client = Client()
-
-        response = client.post(self.url, data={'csr': self.csr_pem})
-        self.assertRequiresLogin(response)
+        self.assertRequiresLogin(client.post(self.url, data={'csr': self.csr_pem}))
 
     def test_plain_user(self):
-        # User isn't staff and has no permissions
-        client = Client()
-        user = User.objects.create_user(username='plain', password='password', email='plain@example.com')
-        client.force_login(user=user)
-
-        response = client.post(self.url, data={'csr': self.csr_pem})
-        self.assertRequiresLogin(response)
+        """Try downloading as non-superuser."""
+        self.user.is_superuser = self.user.is_staff = False
+        self.user.save()
+        self.assertRequiresLogin(self.client.post(self.url, data={'csr': self.csr_pem}))
 
     def test_no_perms(self):
-        # User is staff but has no permissions
-        client = Client()
-        user = User.objects.create_user(username='staff', password='password', email='staff@example.com',
-                                        is_staff=True)
-        client.force_login(user=user)
-
-        response = client.post(self.url, data={'csr': self.csr_pem})
+        """Try downloading as staff user with missing permissions."""
+        self.user.is_superuser = False
+        self.user.save()
+        response = self.client.post(self.url, data={'csr': self.csr_pem})
         self.assertEqual(response.status_code, 403)
 
     def test_no_staff(self):
-        # User isn't staff but has permissions
-        client = Client()
-        user = User.objects.create_user(username='no_perms', password='password',
-                                        email='no_perms@example.com')
-        p = Permission.objects.get(codename='change_certificate')
-        user.user_permissions.add(p)
-        client.force_login(user=user)
-
-        response = client.post(self.url, data={'csr': self.csr_pem})
-        self.assertRequiresLogin(response)
+        """Try downloading as user that has permissions but is not staff."""
+        self.user.is_superuser = self.user.is_staff = False
+        self.user.save()
+        self.user.user_permissions.add(Permission.objects.get(codename='change_certificate'))
+        self.assertRequiresLogin(self.client.post(self.url, data={'csr': self.csr_pem}))
 
 
 class ProfilesViewTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, DjangoCATestCase):
-    def setUp(self):
-        self.url = reverse('admin:django_ca_certificate_profiles')
-        super().setUp()
+    """Test fetching profile information."""
+
+    url = reverse('admin:django_ca_certificate_profiles')
 
     def test_basic(self):
+        """Test fetching basic profile information."""
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(json.loads(response.content.decode('utf-8')), {
@@ -417,13 +407,10 @@ class ProfilesViewTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, Dj
         })
 
     def test_permission_denied(self):
-        client = Client()
-        user = User.objects.create_user(username='staff', password='password', email='staff@example.com',
-                                        is_staff=True)
-        client.force_login(user=user)
-
-        response = client.get(self.url)
-        self.assertEqual(response.status_code, 403)
+        """Try fetching profiles without permissions."""
+        self.user.is_superuser = False
+        self.user.save()
+        self.assertEqual(self.client.get(self.url).status_code, HTTPStatus.FORBIDDEN)
 
     # removes all profiles, adds one pretty boring one
     @override_tmpcadir(CA_PROFILES={
@@ -437,6 +424,7 @@ class ProfilesViewTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, Dj
         }
     })
     def test_empty_profile(self):
+        """Try fetching a simple profile."""
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(json.loads(response.content.decode('utf-8')), {
@@ -456,77 +444,67 @@ class ProfilesViewTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, Dj
 
 class CertDownloadTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin,
                            DjangoCAWithGeneratedCertsTestCase):
+    """Test fetching certificate bundles."""
 
     def get_url(self, cert):
+        """Get url for the given object."""
         return reverse('admin:django_ca_certificate_download', kwargs={'pk': cert.pk})
 
     @property
     def url(self):
+        """Get URL for the default object."""
         return self.get_url(cert=self.obj)
 
     def test_basic(self):
+        """Basic bundle download."""
         filename = 'root-cert_example_com.pem'
-        response = self.client.get('%s?format=PEM' % self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response['Content-Type'], 'application/pkix-cert')
-        self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
-        self.assertEqual(force_str(response.content), self.obj.pub)
+        response = self.client.get(self.url, {'format': 'PEM'})
+        self.assertBundle(response, filename, self.obj.pub)
 
     def test_der(self):
+        """Download a certificate in DER format."""
         filename = 'root-cert_example_com.der'
-        response = self.client.get('%s?format=DER' % self.url)
-        self.assertEqual(response.status_code, 200)
+        response = self.client.get(self.url, {'format': 'DER'})
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
         self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
         self.assertEqual(response.content, self.obj.dump_certificate(Encoding.DER))
 
     def test_not_found(self):
+        """Try downloading a certificate that does not exist."""
         url = reverse('admin:django_ca_certificate_download', kwargs={'pk': '123'})
         response = self.client.get('%s?format=DER' % url)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
     def test_bad_format(self):
+        """Try downloading an unknown format."""
         response = self.client.get('%s?format=bad' % self.url)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         self.assertEqual(response.content, b'')
 
     def test_anonymous(self):
-        # Try an anonymous download
-        client = Client()
-        response = client.get('%s?format=PEM' % self.url)
-        self.assertRequiresLogin(response)
+        """Try an anonymous download."""
+        self.assertRequiresLogin(Client().get(self.url))
 
     def test_plain_user(self):
-        # User isn't staff and has no permissions
-        client = Client()
-        User.objects.create_user(username='plain', password='password', email='user@example.com')
-        self.assertTrue(client.login(username='plain', password='password'))
-        response = client.get('%s?format=PEM' % self.url)
-        self.assertRequiresLogin(response)
+        """Try downloading as plain user."""
+        self.user.is_superuser = self.user.is_staff = False
+        self.user.save()
+        self.assertRequiresLogin(self.client.get(self.url))
 
     def test_no_perms(self):
-        # User is staff but has no permissions
-        client = Client()
-        user = User.objects.create_user(username='no_perms', password='password', email='user@example.com',
-                                        is_staff=True)
-        user.save()
-        self.assertTrue(client.login(username='no_perms', password='password'))
-
-        response = client.get('%s?format=PEM' % self.url)
-        self.assertEqual(response.status_code, 403)
+        """Try downloading as staff user with no permissions."""
+        self.user.is_superuser = False
+        self.user.save()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
     def test_no_staff(self):
-        # User isn't staff but has permissions
-        client = Client()
-        response = client.get('%s?format=PEM' % self.url)
-
-        # create a user
-        user = User.objects.create_user(username='no_perms', password='password', email='user@example.com')
-        p = Permission.objects.get(codename='change_certificate')
-        user.user_permissions.add(p)
-        self.assertTrue(client.login(username='no_perms', password='password'))
-
-        self.assertRequiresLogin(response)
+        """Try downloading with right permissions but not as staff user."""
+        self.user.is_staff = False
+        self.user.save()
+        self.user.user_permissions.add(Permission.objects.get(codename='change_certificate'))
+        self.assertRequiresLogin(self.client.get(self.url))
 
 
 class CertDownloadBundleTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin,

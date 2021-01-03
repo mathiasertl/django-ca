@@ -54,13 +54,6 @@ class CADownloadBundleTestCase(AdminTestCaseMixin, DjangoCAWithCATestCase):
         """Shortcut property to get the bundle URL for the root CA."""
         return self.get_url(ca=self.cas['root'])
 
-    def assertBundle(self, response, filename, content):  # pylint: disable=invalid-name
-        """Assert a given bundle response."""
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertEqual(response['Content-Type'], 'application/pkix-cert')
-        self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
-        self.assertEqual(response.content.decode('utf-8'), content.strip())
-
     def test_root(self):
         """Test downloading the bundle for the root CA."""
         filename = 'root_example_com_bundle.pem'

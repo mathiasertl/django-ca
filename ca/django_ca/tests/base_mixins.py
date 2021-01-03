@@ -43,6 +43,13 @@ class AdminTestCaseMixin:
         """Shortcut for the "add" URL of the model under test."""
         return cls.model.admin_add_url
 
+    def assertBundle(self, response, filename, content):  # pylint: disable=invalid-name
+        """Assert a given bundle response."""
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(response['Content-Type'], 'application/pkix-cert')
+        self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
+        self.assertEqual(response.content.decode('utf-8').strip(), content.strip())
+
     def assertCSS(self, response, path):  # pylint: disable=invalid-name
         """Assert that the HTML from the given response includes the mentioned CSS."""
         css = '<link href="%s" type="text/css" media="all" rel="stylesheet" />' % static(path)
