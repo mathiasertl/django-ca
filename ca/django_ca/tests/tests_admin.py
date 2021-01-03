@@ -132,44 +132,39 @@ class RevokeActionTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin,
                            DjangoCAWithGeneratedCertsTestCase):
     """Test the "revoke" action in the changelist."""
 
+    def setUp(self):
+        super().setUp()
+        self.cert = self.certs['root-cert']
+        self.data = {'action': 'revoke', '_selected_action': [self.cert.pk]}
+
     def test_basic(self):
         """Test basic revocation action."""
-        self.assertNotRevoked(self.certs['root-cert'])
-
-        data = {
-            'action': 'revoke', '_selected_action': [self.certs['root-cert'].pk],
-        }
-        response = self.client.post(self.changelist_url, data)
+        response = self.client.post(self.changelist_url, self.data)
         self.assertRedirects(response, self.changelist_url)
-        self.assertRevoked(self.certs['root-cert'])
+        self.assertRevoked(self.cert)
 
         # revoking revoked certs does nothing:
-        response = self.client.post(self.changelist_url, data)
+        response = self.client.post(self.changelist_url, self.data)
         self.assertRedirects(response, self.changelist_url)
-        self.assertRevoked(self.certs['root-cert'])
+        self.assertRevoked(self.cert)
 
     def test_permissions(self):
         """Test that change permission is required for this action."""
-        cert = self.certs['root-cert']
-        data = {
-            'action': 'revoke', '_selected_action': [cert.pk],
-        }
-
         self.user.is_superuser = False
         self.user.save()
 
         # Just the view permission is not enough...
         self.user.user_permissions.add(Permission.objects.get(codename='view_certificate'))
-        response = self.client.post(self.changelist_url, data)
+        response = self.client.post(self.changelist_url, self.data)
         # NOTE: No HTTP 403/FORBIDDEN, Django just shows the changelist page
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertNotRevoked(cert)
+        self.assertNotRevoked(self.cert)
 
         # ... you really need the change permission
         self.user.user_permissions.add(Permission.objects.get(codename='change_certificate'))
-        response = self.client.post(self.changelist_url, data)
+        response = self.client.post(self.changelist_url, self.data)
         self.assertRedirects(response, self.changelist_url)
-        self.assertRevoked(cert)
+        self.assertRevoked(self.cert)
 
 
 class ChangeTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, DjangoCAWithCertTestCase):
