@@ -62,21 +62,27 @@ from .base import override_tmpcadir
 
 
 def load_tests(loader, tests, ignore):
+    """Load doctests."""
     tests.addTests(doctest.DocTestSuite(utils))
     return tests
 
 
 class NameMatchTest(TestCase):
+    """Test parsing of names."""
+
     def match(self, value, expected):
+        """Helper function to use NAME_RE."""
         value = [(t[0], t[2]) for t in NAME_RE.findall(value)]
         self.assertEqual(value, expected)
 
     def test_empty(self):
+        """Test parsing an empty subject."""
         self.match('', [])
         self.match(' ', [])
         self.match('  ', [])
 
     def test_single(self):
+        """Test parsing a single token."""
         self.match('C=AT', [('C', 'AT')])
         self.match('C="AT"', [('C', 'AT')])
         self.match('C=" AT "', [('C', 'AT')])
@@ -94,6 +100,7 @@ class NameMatchTest(TestCase):
         self.match("C='AT \\' DE'", [('C', "AT \\' DE")])
 
     def test_two(self):
+        """Test parsing two tokens."""
         self.match('C=AT/OU=example', [('C', 'AT'), ('OU', 'example')])
         self.match('C="AT"/OU=example', [('C', 'AT'), ('OU', 'example')])
         self.match('C=" AT "/OU=example', [('C', 'AT'), ('OU', 'example')])
@@ -144,12 +151,14 @@ class NameMatchTest(TestCase):
         self.match("C='AT \\' DE'/OU='ex / ample'/", [('C', "AT \\' DE"), ('OU', 'ex / ample')])
 
     def test_unquoted_slashes(self):
+        """Test using unquoted slashes."""
         self.match('C=AT/DE/OU=example', [('C', 'AT'), ('DE/OU', 'example')])
         self.match('C=AT/DE/OU="ex ample"', [('C', 'AT'), ('DE/OU', 'ex ample')])
         self.match('C=AT/DE/OU="ex / ample"', [('C', 'AT'), ('DE/OU', 'ex / ample')])
         self.match('C=AT/DE/OU="ex / ample"/', [('C', 'AT'), ('DE/OU', 'ex / ample')])
 
     def test_full_examples(self):
+        """Test some real examples."""
         expected = [('C', 'AT'), ('ST', 'Vienna'), ('L', 'Loc Fünf'), ('O', 'Org Name'),
                     ('OU', 'Org Unit'), ('CN', 'example.com')]
 
@@ -159,6 +168,7 @@ class NameMatchTest(TestCase):
 
 class LazyEncoderTestCase(TestCase):
     def test_basic(self):
+        """Some basic tests."""
         self.assertEqual('{"a": "b"}', json.dumps({'a': 'b'}, cls=LazyEncoder))
 
     def test_translated(self):
@@ -171,8 +181,11 @@ class LazyEncoderTestCase(TestCase):
 
 
 class ReadFileTestCase(DjangoCATestCase):
+    """Test :py:func:`django_ca.utils.read_file`."""
+
     @override_tmpcadir()
     def test_basic(self):
+        """Some basic tests."""
         name = 'test-data'
         path = os.path.join(ca_settings.CA_DIR, name)
         data = b'test data'
@@ -215,10 +228,13 @@ class ReadFileTestCase(DjangoCATestCase):
 
 
 class ParseNameTestCase(DjangoCATestCase):
+    """Test :py:func:`django_ca.utils.parse_name`."""
+
     def assertSubject(self, actual, expected):
         self.assertEqual(parse_name(actual), expected)
 
     def test_basic(self):
+        """Some basic tests."""
         self.assertSubject('/CN=example.com', [('CN', 'example.com')])
 
         # leading or trailing spaces are always ok.
@@ -279,6 +295,8 @@ class ParseNameTestCase(DjangoCATestCase):
 
 
 class RelativeNameTestCase(TestCase):
+    """Test :py:func:`django_ca.utils.format_relative_name`."""
+
     def test_format(self):
         rdn = x509.RelativeDistinguishedName([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')])
         self.assertEqual(format_relative_name([('C', 'AT'), ('CN', 'example.com')]), '/C=AT/CN=example.com')
@@ -291,7 +309,10 @@ class RelativeNameTestCase(TestCase):
 
 
 class ValidateEmailTestCase(DjangoCATestCase):
+    """Test :py:func:`django_ca.utils.validate_email`."""
+
     def test_basic(self):
+        """Some basic tests."""
         self.assertEqual(validate_email('user@example.com'), 'user@example.com')
 
     def test_i18n(self):
@@ -310,6 +331,8 @@ class ValidateEmailTestCase(DjangoCATestCase):
 
 
 class ValidateHostnameTestCase(TestCase):
+    """Test :py:func:`django_ca.utils.validate_hostname`."""
+
     def test_no_port(self):
         self.assertEqual(validate_hostname('localhost'), 'localhost')
         self.assertEqual(validate_hostname('testserver'), 'testserver')
@@ -350,7 +373,7 @@ class ValidateHostnameTestCase(TestCase):
 
 
 class ParseGeneralNameTest(TestCase):
-    # some paths are not covered in doctests
+    """Test :py:func:`django_ca.utils.parse_general_name`."""
 
     def test_ipv4(self):
         self.assertEqual(parse_general_name('1.2.3.4'), x509.IPAddress(ipaddress.ip_address('1.2.3.4')))
@@ -470,8 +493,10 @@ class ParseGeneralNameTest(TestCase):
 
 
 class FormatGeneralNameTest(TestCase):
+    """Test :py:func:`django_ca.utils.format_general_name`."""
+
     def test_basic(self):
-        # duplication of doctests, but those are not run for every version
+        """Some basic tests."""
         self.assertEqual(format_general_name(x509.DNSName('example.com')), 'DNS:example.com')
         self.assertEqual(format_general_name(x509.IPAddress(ipaddress.IPv4Address('127.0.0.1'))),
                          'IP:127.0.0.1')
@@ -485,8 +510,10 @@ class FormatGeneralNameTest(TestCase):
 
 
 class ParseHashAlgorithm(TestCase):
+    """Test :py:func:`django_ca.utils.parse_hash_algorithm`."""
+
     def test_basic(self):
-        # duplication of doctests, but those are not run for every version
+        """Some basic tests."""
         self.assertIsInstance(parse_hash_algorithm(), hashes.SHA512)
         self.assertIsInstance(parse_hash_algorithm(hashes.SHA512), hashes.SHA512)
         self.assertIsInstance(parse_hash_algorithm(hashes.SHA512()), hashes.SHA512)
@@ -500,7 +527,10 @@ class ParseHashAlgorithm(TestCase):
 
 
 class FormatNameTestCase(TestCase):
+    """Test :py:func:`django_ca.utils.format_name`."""
+
     def test_basic(self):
+        """Some basic tests."""
         subject = '/C=AT/ST=Vienna/L=Vienna/O=O/OU=OU/CN=example.com/emailAddress=user@example.com'
 
         subject_dict = [('C', 'AT'), ('ST', 'Vienna'), ('L', 'Vienna'), ('O', 'O'), ('OU', 'OU'),
@@ -509,6 +539,8 @@ class FormatNameTestCase(TestCase):
 
 
 class Power2TestCase(TestCase):
+    """Test :py:func:`django_ca.utils.is_power2`."""
+
     def test_true(self):
         for i in range(0, 20):
             self.assertTrue(is_power2(2 ** i))
@@ -524,7 +556,10 @@ class Power2TestCase(TestCase):
 
 
 class ParseKeyCurveTestCase(TestCase):
+    """Test :py:func:`django_ca.utils.parse_key_curve`."""
+
     def test_basic(self):
+        """Some basic tests."""
         self.assertIsInstance(parse_key_curve(), type(ca_settings.CA_DEFAULT_ECC_CURVE))
         self.assertIsInstance(parse_key_curve('SECT409R1'), ec.SECT409R1)
         self.assertIsInstance(parse_key_curve('SECP521R1'), ec.SECP521R1)
@@ -539,7 +574,10 @@ class ParseKeyCurveTestCase(TestCase):
 
 
 class ParseEncodingTestCase(TestCase):
+    """Test :py:func:`django_ca.utils.parse_encoding`."""
+
     def test_basic(self):
+        """Some basic tests."""
         self.assertEqual(parse_encoding(), Encoding.PEM)
         self.assertEqual(parse_encoding('PEM'), Encoding.PEM)
         self.assertEqual(parse_encoding(Encoding.PEM), Encoding.PEM)
@@ -560,7 +598,10 @@ class ParseEncodingTestCase(TestCase):
 
 
 class AddColonsTestCase(TestCase):
+    """Test :py:func:`django_ca.utils.add_colons`."""
+
     def test_basic(self):
+        """Some basic tests."""
         self.assertEqual(utils.add_colons(''), '')
         self.assertEqual(utils.add_colons('a'), '0a')
         self.assertEqual(utils.add_colons('ab'), 'ab')
@@ -592,7 +633,10 @@ class AddColonsTestCase(TestCase):
 
 
 class IntToHexTestCase(TestCase):
+    """Test :py:func:`django_ca.utils.int_to_hex`."""
+
     def test_basic(self):
+        """Test the first view numbers."""
         self.assertEqual(utils.int_to_hex(0), '0')
         self.assertEqual(utils.int_to_hex(1), '1')
         self.assertEqual(utils.int_to_hex(2), '2')
@@ -645,6 +689,7 @@ class IntToHexTestCase(TestCase):
         self.assertEqual(utils.int_to_hex(49), '31')
 
     def test_high(self):
+        """Test some high numbers."""
         self.assertEqual(utils.int_to_hex(1513282098), '5A32DA32')
         self.assertEqual(utils.int_to_hex(1513282099), '5A32DA33')
         self.assertEqual(utils.int_to_hex(1513282100), '5A32DA34')
@@ -690,7 +735,10 @@ class SanitizeSerialTestCase(TestCase):
 
 
 class MultilineURLValidatorTestCase(TestCase):
+    """Test :py:func:`django_ca.utils.multiline_url_validator`."""
+
     def test_basic(self):
+        """Basic working tests."""
         multiline_url_validator('')
         multiline_url_validator('http://example.com')
         multiline_url_validator('http://example.com\nhttp://www.example.org')
@@ -698,6 +746,7 @@ class MultilineURLValidatorTestCase(TestCase):
 http://www.example.net''')
 
     def test_error(self):
+        """Test various invalid cases."""
         with self.assertRaises(ValidationError) as e:
             multiline_url_validator('foo')
         self.assertEqual(e.exception.args, ('Enter a valid URL.', 'invalid', None))
@@ -716,12 +765,18 @@ http://www.example.net''')
 
 
 class GetCertBuilderTestCase(DjangoCATestCase):
+    """Test :py:func:`django_ca.utils.get_cert_builder`."""
+
     def parse_date(self, date):
+        """Helper to parse a date."""
         return datetime.strptime(date, '%Y%m%d%H%M%SZ')
 
     @freeze_time('2018-11-03 11:21:33')
     @override_settings(CA_DEFAULT_EXPIRES=100)
     def test_basic(self):
+        """Basic tests."""
+
+        # pylint: disable=protected-access; only way to test builder attributes
         after = datetime(2020, 10, 23, 11, 21)
         before = datetime(2018, 11, 3, 11, 21)
         builder = get_cert_builder(timedelta(days=720))
@@ -736,18 +791,23 @@ class GetCertBuilderTestCase(DjangoCATestCase):
 
     @freeze_time('2018-11-03 11:21:33')
     def test_negative(self):
+        """Test passing a date in the past."""
         with self.assertRaisesRegex(ValueError,
                                     r'^The not valid after date must be after the not valid before date\.$'):
             get_cert_builder(datetime(2017, 12, 12))
 
 
 class ValidateKeyParametersTest(TestCase):
+    """Test :py:func:`django_ca.utils.validate_key_parameters`."""
+
     def test_basic(self):
+        """Some basic tests."""
         self.assertEqual(validate_key_parameters(), (ca_settings.CA_DEFAULT_KEY_SIZE, 'RSA', None))
         self.assertEqual(validate_key_parameters(key_type=None),
                          (ca_settings.CA_DEFAULT_KEY_SIZE, 'RSA', None))
 
     def test_wrong_values(self):
+        """Test validating various bogus values."""
         with self.assertRaisesRegex(ValueError, '^FOOBAR: Unknown key type$'):
             validate_key_parameters(4096, 'FOOBAR')
 
@@ -759,18 +819,20 @@ class ValidateKeyParametersTest(TestCase):
 
 
 class GeneralNameListTestCase(DjangoCATestCase):
+    """Test GeneralNameList."""
     dns1 = 'example.com'
     dns2 = 'example.net'
 
     @contextmanager
-    def assertTrue(self):
-        # just a shortcut when we somehow add True
+    def assertAddTrue(self):  # pylint: disable=invalid-name
+        """Just a shortcut when we somehow add True"""
 
         msg = r'^Cannot parse general name True: Must be of type str \(was: bool\)\.$'
         with self.assertRaisesRegex(ValueError, msg):
             yield
 
     def test_init(self):
+        """Test various different item initializations."""
         self.assertEqual(GeneralNameList(), [])
         self.assertEqual(GeneralNameList([self.dns1]), [dns(self.dns1)])
         self.assertEqual(GeneralNameList([dns(self.dns1)]), [dns(self.dns1)])
@@ -781,10 +843,11 @@ class GeneralNameListTestCase(DjangoCATestCase):
         self.assertEqual(GeneralNameList(self.dns1), [dns(self.dns1)])
         self.assertEqual(GeneralNameList(dns(self.dns1)), [dns(self.dns1)])
 
-        with self.assertTrue():
+        with self.assertAddTrue():
             GeneralNameList([True])
 
     def test_add(self):
+        """Test add()."""
         values = [
             (GeneralNameList(), GeneralNameList([self.dns1]), GeneralNameList([self.dns1])),
             (GeneralNameList(), GeneralNameList([dns(self.dns1)]), GeneralNameList([self.dns1])),
@@ -795,28 +858,30 @@ class GeneralNameListTestCase(DjangoCATestCase):
             (GeneralNameList([dns(self.dns2)]), [dns(self.dns1)], GeneralNameList([self.dns2, self.dns1])),
         ]
 
-        for l1, l2, exp in values:
-            got = l1 + l2
+        for gnl1, gnl2, exp in values:
+            got = gnl1 + gnl2
             self.assertEqual(got, exp)
-            self.assertIsNot(l1, got)
-            self.assertIsNot(l2, got)
+            self.assertIsNot(gnl1, got)
+            self.assertIsNot(gnl2, got)
 
         empty = GeneralNameList()
-        with self.assertTrue():
-            empty + [True]
+        with self.assertAddTrue():
+            empty + [True]  # pylint: disable=pointless-statement
 
     def test_append(self):
-        l1 = GeneralNameList()
-        self.assertIsNone(l1.append(self.dns1))
-        self.assertEqual(l1, GeneralNameList([self.dns1]))
-        self.assertIsNone(l1.append(dns(self.dns2)))
-        self.assertEqual(l1, GeneralNameList([self.dns1, self.dns2]))
+        """Test append()."""
+        gnl1 = GeneralNameList()
+        self.assertIsNone(gnl1.append(self.dns1))
+        self.assertEqual(gnl1, GeneralNameList([self.dns1]))
+        self.assertIsNone(gnl1.append(dns(self.dns2)))
+        self.assertEqual(gnl1, GeneralNameList([self.dns1, self.dns2]))
 
-        with self.assertTrue():
-            l1.append(True)
-        self.assertEqual(l1, GeneralNameList([self.dns1, self.dns2]))
+        with self.assertAddTrue():
+            gnl1.append(True)
+        self.assertEqual(gnl1, GeneralNameList([self.dns1, self.dns2]))
 
     def test_contains(self):
+        """Test contains()."""
         self.assertNotIn(self.dns1, GeneralNameList())
         self.assertNotIn(dns(self.dns1), GeneralNameList())
 
@@ -831,19 +896,21 @@ class GeneralNameListTestCase(DjangoCATestCase):
         self.assertNotIn(True, GeneralNameList([dns(self.dns2)]))
 
     def test_count(self):
-        l1 = GeneralNameList()
-        self.assertEqual(l1.count(self.dns1), 0)
-        self.assertEqual(l1.count(dns(self.dns2)), 0)
-        self.assertEqual(l1.count(True), 0)
+        """Test count()."""
+        gnl1 = GeneralNameList()
+        self.assertEqual(gnl1.count(self.dns1), 0)
+        self.assertEqual(gnl1.count(dns(self.dns2)), 0)
+        self.assertEqual(gnl1.count(True), 0)
 
-        l1 = GeneralNameList([self.dns1])
-        self.assertEqual(l1.count(self.dns1), 1)
-        self.assertEqual(l1.count(dns(self.dns1)), 1)
-        self.assertEqual(l1.count(dns(self.dns2)), 0)
-        self.assertEqual(l1.count(self.dns2), 0)
-        self.assertEqual(l1.count(True), 0)
+        gnl1 = GeneralNameList([self.dns1])
+        self.assertEqual(gnl1.count(self.dns1), 1)
+        self.assertEqual(gnl1.count(dns(self.dns1)), 1)
+        self.assertEqual(gnl1.count(dns(self.dns2)), 0)
+        self.assertEqual(gnl1.count(self.dns2), 0)
+        self.assertEqual(gnl1.count(True), 0)
 
     def test_eq(self):
+        """Test list equality."""
         self.assertEqual(GeneralNameList(), [])
         self.assertEqual(GeneralNameList(), GeneralNameList())
         self.assertEqual(GeneralNameList([self.dns1]), GeneralNameList([self.dns1]))
@@ -860,20 +927,21 @@ class GeneralNameListTestCase(DjangoCATestCase):
         self.assertNotEqual(GeneralNameList([self.dns1]), [True])
 
     def test_extend(self):
+        """Test extend()."""
+        gnl1 = GeneralNameList()
+        self.assertIsNone(gnl1.extend([self.dns1]))
+        self.assertEqual(gnl1, GeneralNameList([self.dns1]))
 
-        l1 = GeneralNameList()
-        self.assertIsNone(l1.extend([self.dns1]))
-        self.assertEqual(l1, GeneralNameList([self.dns1]))
+        gnl2 = GeneralNameList()
+        self.assertIsNone(gnl2.extend([dns(self.dns1)]))
+        self.assertEqual(gnl2, GeneralNameList([self.dns1]))
 
-        l2 = GeneralNameList()
-        self.assertIsNone(l2.extend([dns(self.dns1)]))
-        self.assertEqual(l2, GeneralNameList([self.dns1]))
+        gnl3 = GeneralNameList([self.dns1])
+        self.assertIsNone(gnl3.extend([dns(self.dns1), self.dns2]))
+        self.assertEqual(gnl3, GeneralNameList([self.dns1, self.dns1, self.dns2]))
 
-        l3 = GeneralNameList([self.dns1])
-        self.assertIsNone(l3.extend([dns(self.dns1), self.dns2]))
-        self.assertEqual(l3, GeneralNameList([self.dns1, self.dns1, self.dns2]))
-
-    def test_iadd(self):  # test self += value
+    def test_iadd(self):
+        """Test infix add (e.g. ``self += value``)."""
         values = [
             (GeneralNameList(), GeneralNameList([self.dns1]), GeneralNameList([self.dns1])),
             (GeneralNameList(), GeneralNameList([dns(self.dns1)]), GeneralNameList([self.dns1])),
@@ -884,49 +952,53 @@ class GeneralNameListTestCase(DjangoCATestCase):
             (GeneralNameList([dns(self.dns2)]), [dns(self.dns1)], GeneralNameList([self.dns2, self.dns1])),
         ]
 
-        for l1, l2, exp in values:
-            l1 += l2
-            self.assertEqual(l1, exp)
+        for gnl1, gnl2, exp in values:
+            gnl1 += gnl2
+            self.assertEqual(gnl1, exp)
 
         empty = GeneralNameList()
-        with self.assertTrue():
+        with self.assertAddTrue():
             empty += [True]
 
     def test_index(self):
-        l1 = GeneralNameList()
+        """Test index()."""
+        gnl1 = GeneralNameList()
         with self.assertRaises(ValueError):
-            l1.index(self.dns1)
+            gnl1.index(self.dns1)
         with self.assertRaises(ValueError):
-            l1.index(dns(self.dns1))
+            gnl1.index(dns(self.dns1))
 
-        l2 = GeneralNameList([self.dns1])
-        self.assertEqual(l2.index(self.dns1), 0)
-        self.assertEqual(l2.index(dns(self.dns1)), 0)
+        gnl2 = GeneralNameList([self.dns1])
+        self.assertEqual(gnl2.index(self.dns1), 0)
+        self.assertEqual(gnl2.index(dns(self.dns1)), 0)
         with self.assertRaises(ValueError):
-            l1.index(self.dns2)
+            gnl1.index(self.dns2)
         with self.assertRaises(ValueError):
-            l1.index(dns(self.dns2))
+            gnl1.index(dns(self.dns2))
 
     def test_insert(self):
-        l1 = GeneralNameList()
-        l1.insert(0, self.dns1)
-        self.assertEqual(l1, [self.dns1])
+        """Test insert()."""
+        gnl1 = GeneralNameList()
+        gnl1.insert(0, self.dns1)
+        self.assertEqual(gnl1, [self.dns1])
 
-        l1.insert(0, dns(self.dns2))
-        self.assertEqual(l1, [self.dns2, self.dns1])
+        gnl1.insert(0, dns(self.dns2))
+        self.assertEqual(gnl1, [self.dns2, self.dns1])
 
-        with self.assertTrue():
-            l1.insert(0, True)
-        self.assertEqual(l1, [self.dns2, self.dns1])
+        with self.assertAddTrue():
+            gnl1.insert(0, True)
+        self.assertEqual(gnl1, [self.dns2, self.dns1])
 
     def test_remove(self):
-        l1 = GeneralNameList([self.dns1, self.dns2])
-        self.assertIsNone(l1.remove(self.dns1))
-        self.assertEqual(l1, [self.dns2])
-        self.assertIsNone(l1.remove(dns(self.dns2)))
-        self.assertEqual(l1, [])
+        """Test remove()."""
+        gnl1 = GeneralNameList([self.dns1, self.dns2])
+        self.assertIsNone(gnl1.remove(self.dns1))
+        self.assertEqual(gnl1, [self.dns2])
+        self.assertIsNone(gnl1.remove(dns(self.dns2)))
+        self.assertEqual(gnl1, [])
 
     def test_repr(self):
+        """Test repr()."""
         self.assertEqual(repr(GeneralNameList()), '<GeneralNameList: []>')
         self.assertEqual(repr(GeneralNameList([self.dns1])),
                          "<GeneralNameList: ['DNS:%s']>" % self.dns1)
@@ -934,28 +1006,30 @@ class GeneralNameListTestCase(DjangoCATestCase):
                          "<GeneralNameList: ['DNS:%s']>" % self.dns1)
 
     def test_serialize(self):
-        l1 = GeneralNameList([self.dns1, dns(self.dns2), self.dns1])
-        self.assertEqual(list(l1.serialize()),
+        """Test serialization."""
+        gnl1 = GeneralNameList([self.dns1, dns(self.dns2), self.dns1])
+        self.assertEqual(list(gnl1.serialize()),
                          ['DNS:%s' % self.dns1, 'DNS:%s' % self.dns2, 'DNS:%s' % self.dns1])
 
     def test_setitem(self):
-        l1 = GeneralNameList()
+        """Test setter, e.g. ``e[0] = ...``."""
+        gnl1 = GeneralNameList()
 
         with self.assertRaisesRegex(IndexError, r'^list assignment index out of range$'):
-            l1[0] = dns(self.dns1)
+            gnl1[0] = dns(self.dns1)
         with self.assertRaisesRegex(IndexError, r'^list assignment index out of range$'):
-            l1[0] = self.dns1
-        self.assertEqual(len(l1), 0)
+            gnl1[0] = self.dns1
+        self.assertEqual(len(gnl1), 0)
 
-        l2 = GeneralNameList([self.dns1])
-        l2[0] = self.dns2
-        self.assertEqual(l2, GeneralNameList([self.dns2]))
+        gnl2 = GeneralNameList([self.dns1])
+        gnl2[0] = self.dns2
+        self.assertEqual(gnl2, GeneralNameList([self.dns2]))
 
-        l3 = GeneralNameList([self.dns1])
-        l3[0] = dns(self.dns2)
-        self.assertEqual(l3, GeneralNameList([self.dns2]))
+        gnl3 = GeneralNameList([self.dns1])
+        gnl3[0] = dns(self.dns2)
+        self.assertEqual(gnl3, GeneralNameList([self.dns2]))
 
         # but we can only add parseable stuff
-        l4 = GeneralNameList([self.dns1])
-        with self.assertTrue():
-            l4[0] = True
+        gnl4 = GeneralNameList([self.dns1])
+        with self.assertAddTrue():
+            gnl4[0] = True
