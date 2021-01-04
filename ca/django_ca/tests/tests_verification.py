@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""This test module validates certificates using the openssl command line tool."""
+
 import os
 import shlex
 import subprocess
@@ -25,17 +27,21 @@ from .base import certs
 from .base import override_tmpcadir
 
 
-class CertificateAuthorityTests(DjangoCATestCase):
+class CRLValidationTestCase(DjangoCATestCase):
+    """CRL validation tests."""
+
     def setUp(self):
         super().setUp()
         self.csr_pem = certs['root-cert']['csr']['pem']  # just some CSR
 
     def init_ca(self, name, **kwargs):
+        """Create a CA."""
         self.cmd('init_ca', name, '/CN=%s' % name, **kwargs)
         return CertificateAuthority.objects.get(name=name)
 
     @contextmanager
     def crl(self, ca, **kwargs):
+        """Dump CRL to a tmpdir, yield path to it."""
         kwargs['ca'] = ca
         with tempfile.TemporaryDirectory() as tempdir:
             path = os.path.join(tempdir, '%s.%s.crl' % (ca.name, kwargs.get('scope')))
@@ -44,6 +50,7 @@ class CertificateAuthorityTests(DjangoCATestCase):
 
     @contextmanager
     def dumped(self, *certificates):
+        """Dump certificates to a tempdir, yield list of paths."""
         with tempfile.TemporaryDirectory() as tempdir:
             paths = []
             for cert in certificates:
@@ -56,6 +63,7 @@ class CertificateAuthorityTests(DjangoCATestCase):
 
     @contextmanager
     def sign_cert(self, ca, hostname='example.com', **kwargs):
+        """Create a signed certificate."""
         stdin = StringIO(self.csr_pem)
 
         with tempfile.TemporaryDirectory() as tempdir:
@@ -65,13 +73,16 @@ class CertificateAuthorityTests(DjangoCATestCase):
             yield out_path
 
     def openssl(self, cmd, *args, **kwargs):
+        """Run openssl."""
+        # pylint: disable=subprocess-run-check; we use an assertion
         cmd = cmd.format(*args, **kwargs)
         #print('openssl %s' % cmd)
-        p = subprocess.run(['openssl'] + shlex.split(cmd),
-                           stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-        self.assertEqual(p.returncode, 0, p.stderr.decode('utf-8'))
+        proc = subprocess.run(['openssl'] + shlex.split(cmd),
+                              stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+        self.assertEqual(proc.returncode, 0, proc.stderr.decode('utf-8'))
 
     def verify(self, cmd, *args, **kwargs):
+        """Run openssl verify."""
         if 'untrusted' in kwargs:
             cmd = '%s %s' % (' '.join('-untrusted %s' % path for path in kwargs.pop('untrusted')), cmd)
         if 'crl' in kwargs:
@@ -81,7 +92,7 @@ class CertificateAuthorityTests(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_root_ca(self):
-        # Try validating a root CA
+        """Try validating a root CA."""
         name = 'Root'
         ca = self.init_ca(name)
 
@@ -104,7 +115,7 @@ class CertificateAuthorityTests(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_root_ca_cert(self):
-        # Try validating a cert issued by the root CA
+        """Try validating a cert issued by the root CA."""
         name = 'Root'
         ca = self.init_ca(name)
 
@@ -121,7 +132,7 @@ class CertificateAuthorityTests(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_intermediate_ca(self):
-        # validate intermediate CA and its certs
+        """Validate intermediate CA and its certs."""
         root = self.init_ca('Root', pathlen=2)
         child = self.init_ca('Child', parent=root, pathlen=1)
         grandchild = self.init_ca('Grandchild', parent=child)

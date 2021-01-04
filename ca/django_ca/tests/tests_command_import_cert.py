@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Test the import_cert  management command."""
+
 import os
 
 from django.conf import settings
@@ -26,8 +28,11 @@ from .base import timestamps
 
 @freeze_time(timestamps['everything_valid'])
 class ImportCertTest(DjangoCAWithCATestCase):
+    """Main test class for this command."""
+
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_basic(self):
+        """Import a standard certificate."""
         pem_path = os.path.join(settings.FIXTURES_DIR, certs['root-cert']['pub_filename'])
         out, err = self.cmd('import_cert', pem_path, ca=self.cas['root'])
 
@@ -42,6 +47,7 @@ class ImportCertTest(DjangoCAWithCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_der(self):
+        """Import a DER certificate."""
         pem_path = os.path.join(settings.FIXTURES_DIR, certs['root-cert']['pub_der_filename'])
         out, err = self.cmd('import_cert', pem_path, ca=self.cas['root'])
 
@@ -56,6 +62,7 @@ class ImportCertTest(DjangoCAWithCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_bogus(self):
+        """Try to import bogus data."""
         with self.assertCommandError(r'^Unable to load public key\.$'):
             self.cmd('import_cert', __file__, ca=self.cas['root'])
         self.assertEqual(Certificate.objects.count(), 0)

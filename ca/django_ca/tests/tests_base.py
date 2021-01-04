@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Test some code in the test base module to make sure it really works."""
+
 import tempfile
 
 from django.test import TestCase
@@ -39,14 +41,16 @@ from .base import override_tmpcadir
 
 
 class TestDjangoCATestCase(DjangoCATestCase):
-    # test the base test-class
+    """Test some basic stuff in the base test classes."""
 
     @override_tmpcadir()
     def test_override_tmpcadir(self):
+        """Test override_tmpcadir as decorator."""
         ca_dir = ca_settings.CA_DIR
         self.assertTrue(ca_dir.startswith(tempfile.gettempdir()))
 
     def test_tmpcadir(self):
+        """Test the tmpcadir ad context manager."""
         old_ca_dir = ca_settings.CA_DIR
 
         with self.tmpcadir():
@@ -58,6 +62,7 @@ class TestDjangoCATestCase(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_assert_extensions(self):
+        """Test some basic extension properties."""
         self.load_usable_cas()
         self.load_generated_certs()
 
@@ -122,37 +127,44 @@ class TestDjangoCATestCase(DjangoCATestCase):
 
 
 class OverrideSettingsFuncTestCase(TestCase):
+    """Test function override."""
+
     @override_settings(CA_MIN_KEY_SIZE=256)
     def test_basic(self):
+        """Test that we see the overwritten key size."""
         self.assertEqual(ca_settings.CA_MIN_KEY_SIZE, 256)
 
 
 @override_settings(CA_MIN_KEY_SIZE=512)
 class OverrideSettingsClassOnlyTestCase(DjangoCATestCase):
+    """Test that override_settings also updates ca_settings."""
+
     def test_basic(self):
+        """Test that we see the overwritten key size."""
         self.assertEqual(ca_settings.CA_MIN_KEY_SIZE, 512)
-
-    def test_second(self):
-        self.assertEqual(ca_settings.CA_MIN_KEY_SIZE, 512)
-
-
-@override_settings(CA_MIN_KEY_SIZE=128)
-class OverrideSettingsClassTestCase(DjangoCATestCase):
-    def test_basic(self):
-        self.assertEqual(ca_settings.CA_MIN_KEY_SIZE, 128)
 
     @override_settings(CA_MIN_KEY_SIZE=256)
     def test_double(self):
+        """Test multiple layers of override_settings."""
         self.assertEqual(ca_settings.CA_MIN_KEY_SIZE, 256)
 
-        with self.settings(CA_MIN_KEY_SIZE=512):
-            self.assertEqual(ca_settings.CA_MIN_KEY_SIZE, 512)
+        with self.settings(CA_MIN_KEY_SIZE=1024):
+            self.assertEqual(ca_settings.CA_MIN_KEY_SIZE, 1024)
+
+        self.assertEqual(ca_settings.CA_MIN_KEY_SIZE, 256)
 
 
 class OverrideCaDirForFuncTestCase(DjangoCATestCase):
+    """Test the override_tmpcadir decorator for a method.
+
+    We do the same thing three times here, just to make sure that the result is really different.
+    """
+
+    # pylint: disable=missing-function-docstring
+
     @classmethod
     def setUpClass(cls):
-        super(OverrideCaDirForFuncTestCase, cls).setUpClass()
+        super().setUpClass()
         cls.seen_dirs = set()
 
     @override_tmpcadir()
@@ -178,10 +190,13 @@ class OverrideCaDirForFuncTestCase(DjangoCATestCase):
         msg = r'^Only functions can use override_tmpcadir\(\)$'
         with self.assertRaisesRegex(ValueError, msg):
             @override_tmpcadir()
-            class Foo():
+            class Foo():  # pylint: disable=missing-class-docstring,too-few-public-methods,unused-variable
                 pass
 
 
 class CommandTestCase(DjangoCAWithCATestCase):
+    """Test the cmd_e2e function."""
+
     def test_basic(self):
+        """Trivial basic test."""
         self.cmd_e2e(['list_cas'])

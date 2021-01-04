@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Some sanitity tests for constants."""
+
 from cryptography import x509
 
 from django.test import TestCase
@@ -19,7 +21,10 @@ from ..constants import ReasonFlags
 
 
 class ReasonFlagsTestCase(TestCase):
+    """Test readon flags."""
+
     def test_completeness(self):
+        """Test that our list completely mirrors the cryptography list."""
         self.assertEqual(
             list(sorted([(k, v.value) for k, v in ReasonFlags.__members__.items()])),
             list(sorted([(k, v.value) for k, v in x509.ReasonFlags.__members__.items()]))

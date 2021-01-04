@@ -29,7 +29,7 @@ from .base import timestamps
 
 
 class CacheCRLsTestCase(DjangoCAWithGeneratedCAsTestCase):
-    """Test the cache_crls management command."""
+    """Main test class for this command."""
 
     @override_tmpcadir()
     @freeze_time(timestamps['everything_valid'])

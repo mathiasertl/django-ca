@@ -528,12 +528,14 @@ class AcmeNewAccountView(AcmeBaseView):
         return AcmeResponseAccountCreated(self.request, account)
 
 
-class AcmeAccountView(AcmeBaseView):
-    pass
+class AcmeAccountView(AcmeBaseView):  # pylint: disable=abstract-method; acme_request
+    """View showing account details."""
+    # TODO: implement this view
 
 
-class AcmeAccountOrdersView(AcmeBaseView):
-    pass
+class AcmeAccountOrdersView(AcmeBaseView):  # pylint: disable=abstract-method; acme_request
+    """View showing orders for an account (not yet implemented)"""
+    # TODO: implement this view
 
 
 class AcmeNewOrderView(AcmeBaseView):
@@ -697,8 +699,8 @@ class AcmeOrderFinalizeView(AcmeBaseView):
             names_from_csr = set(
                 csr.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_ALTERNATIVE_NAME).value
             )
-        except x509.ExtensionNotFound:
-            raise AcmeBadCSR(message='No subject alternative names found in CSR.')
+        except x509.ExtensionNotFound as ex:
+            raise AcmeBadCSR(message='No subject alternative names found in CSR.') from ex
 
         if names_from_order != names_from_csr:
             raise AcmeBadCSR(message="Names in CSR do not match.")

@@ -37,10 +37,10 @@ class ListCertsTestCase(DjangoCATestCase):
     """Test the list_cas management command."""
 
     def setUp(self):
-        super(ListCertsTestCase, self).setUp()
+        super().setUp()
         self.load_usable_cas()
 
-    def assertOutput(self, output, expected, **context):  # pyling: disable=invalid-name
+    def assertOutput(self, output, expected, **context):  # pylint: disable=invalid-name
         """Assert the output of this command."""
         context.update(certs)
         for ca_name in self.cas:
@@ -48,6 +48,7 @@ class ListCertsTestCase(DjangoCATestCase):
         self.assertEqual(output, expected.format(**context))
 
     def test_all_cas(self):
+        """Test list with all CAs."""
         self.load_all_cas()
         stdout, stderr = self.cmd('list_cas')
         self.assertEqual(stdout, """{letsencrypt_x1[serial_colons]} - {letsencrypt_x1[name]}
@@ -151,4 +152,3 @@ class ListCertsTestCase(DjangoCATestCase):
 @override_settings(USE_TZ=True)
 class ListCertsWithTZTestCase(ListCertsTestCase):
     """Same tests as above but with Timezone support."""
-    pass

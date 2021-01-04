@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
+"""Test the view_cert management command."""
+
 from io import BytesIO
 
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -529,6 +531,8 @@ HPKP pin: {hpkp}
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 class ViewCertTestCase(DjangoCAWithCertTestCase):
+    """Main test class for this command."""
+
     def _get_format(self, cert):
         return {
             'cn': cert.cn,
@@ -545,7 +549,8 @@ class ViewCertTestCase(DjangoCAWithCertTestCase):
             'san': cert.subject_alternative_name,
         }
 
-    def assertBasic(self, status):
+    def assertBasic(self, status):  # pylint: disable=arguments-differ
+        """Test basic properties of output."""
         for key, cert in self.ca_certs.items():
             stdout, stderr = self.cmd('view_cert', cert.serial, stdout=BytesIO(), stderr=BytesIO())
             if cert.subject_alternative_name is None:
@@ -626,14 +631,17 @@ HPKP pin: {hpkp}
 
     @freeze_time(timestamps['before_everything'])
     def test_basic_not_yet_valid(self):
+        """Basic tests when all certs are not yet valid."""
         self.assertBasic(status='Not yet valid')
 
     @freeze_time(timestamps['everything_expired'])
     def test_basic_expired(self):
+        """Basic tests when all certs are expired."""
         self.assertBasic(status='Expired')
 
     @freeze_time(timestamps['everything_valid'])
     def test_certs(self):
+        """Test main certs."""
         for name, cert in self.generated_certs.items():
             stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, extensions=True,
                                       stdout=BytesIO(), stderr=BytesIO())
@@ -643,6 +651,7 @@ HPKP pin: {hpkp}
 
     @freeze_time(timestamps['everything_valid'])
     def test_der(self):
+        """Test viewing a cert as DER."""
         cert = self.certs['child-cert']
         stdout, stderr = self.cmd('view_cert', cert.serial, format=Encoding.DER,
                                   stdout=BytesIO(), stderr=BytesIO())
@@ -667,6 +676,7 @@ HPKP pin: {hpkp}
         self.assertEqual(stderr, b'')
 
     def test_revoked(self):
+        """Test viewing a revoked cert."""
         cert = self.certs['child-cert']
         cert.revoked = True
         cert.save()
@@ -689,7 +699,7 @@ HPKP pin: {hpkp}
 
     @override_tmpcadir()
     def test_no_san_with_watchers(self):
-        # test a cert with no subjectAltNames but with watchers.
+        """Test a cert with no subjectAltNames but with watchers."""
         ca = self.cas['root']
         csr = certs['root-cert']['csr']['pem']
         cert = self.create_cert(ca, csr, subject=Subject({'CN': 'example.com'}), cn_in_san=False)
@@ -712,7 +722,8 @@ HPKP pin: %(hpkp)s
 ''' % self._get_format(cert))
         self.assertEqual(stderr, b'')
 
-    def assertContrib(self, name, expected, **context):
+    def assertContrib(self, name, expected, **context):  # pylint: disable=invalid-name
+        """Assert basic contrib output."""
         cert = self.certs[name]
         stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, extensions=True,
                                   stdout=BytesIO(), stderr=BytesIO())
@@ -722,6 +733,7 @@ HPKP pin: %(hpkp)s
 
     @freeze_time("2019-04-01")
     def test_contrib_godaddy_derstandardat(self):
+        """Test contrib godaddy cert for derstandard.at."""
         sct = """PrecertificateSignedCertificateTimestamps:
     * Precertificate (v1):
         Timestamp: 2019-03-27 09:13:54.342000
@@ -826,6 +838,7 @@ HPKP pin: {hpkp}
 
     @freeze_time("2019-07-05")
     def test_contrib_letsencrypt_jabber_at(self):
+        """Test contrib letsencrypt cert."""
         name = 'letsencrypt_x3-cert'
         context = self.get_cert_context(name)
         sct = '''PrecertificateSignedCertificateTimestamps{sct_critical}:
@@ -886,6 +899,7 @@ HPKP pin: {hpkp}
 
     @freeze_time("2018-12-01")
     def test_contrib_cloudflare_1(self):
+        """Test contrib cloudflare cert."""
         self.assertContrib('cloudflare_1', '''Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
@@ -1013,6 +1027,7 @@ HPKP pin: {hpkp}
 '''.format(**self.get_cert_context('cloudflare_1')))
 
     def test_contrib_multiple_ous(self):
+        """Test special contrib case with multiple OUs."""
         self.assertContrib('multiple_ous', '''Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
@@ -1027,6 +1042,7 @@ HPKP pin: {hpkp}
 ''')
 
     def test_unknown_cert(self):
+        """Test viewing an unknown certificate."""
         name = 'foobar'
         with self.assertCommandError(r'^Error: %s: Certificate not found\.$' % name):
             self.cmd('view_cert', name, no_pem=True)
@@ -1034,4 +1050,4 @@ HPKP pin: {hpkp}
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={}, USE_TZ=True)
 class ViewCertWithTZTestCase(ViewCertTestCase):
-    pass
+    """Main tests but with TZ support."""

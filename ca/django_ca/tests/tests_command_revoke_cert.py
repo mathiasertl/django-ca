@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
+"""Test the revoke_cert management command."""
+
 from ..constants import ReasonFlags
 from ..models import Certificate
 from ..signals import post_revoke_cert
@@ -19,11 +21,14 @@ from .base import DjangoCAWithGeneratedCertsTestCase
 
 
 class RevokeCertTestCase(DjangoCAWithGeneratedCertsTestCase):
+    """Main test class for this command."""
+
     def setUp(self):
-        super(RevokeCertTestCase, self).setUp()
+        super().setUp()
         self.cert = self.certs['root-cert']
 
     def test_no_reason(self):
+        """Test revoking without a reason."""
         self.assertFalse(self.cert.revoked)
 
         with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
@@ -39,6 +44,7 @@ class RevokeCertTestCase(DjangoCAWithGeneratedCertsTestCase):
         self.assertEqual(cert.revoked_reason, ReasonFlags.unspecified.name)
 
     def test_with_reason(self):
+        """Test revoking with a reason."""
         self.assertFalse(self.cert.revoked)
 
         for reason in ReasonFlags:
@@ -61,7 +67,7 @@ class RevokeCertTestCase(DjangoCAWithGeneratedCertsTestCase):
             cert.save()
 
     def test_revoked(self):
-        # you cannot revoke a revoked certificate (and not update the reason)
+        """Test revoking a cert that is already revoked."""
 
         self.assertFalse(self.cert.revoked)
 

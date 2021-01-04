@@ -11,11 +11,16 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
+"""Test the cert_watchers management command."""
+
 from .base import DjangoCAWithGeneratedCertsTestCase
 
 
 class CertWatchersTestCase(DjangoCAWithGeneratedCertsTestCase):
+    """Main test class for this command."""
+
     def test_basic(self):
+        """Just some basic tests here."""
         cert = self.certs['root-cert']
         stdout, stderr = self.cmd('cert_watchers', cert.serial, add=['user-added@example.com'])
         self.assertEqual(stdout, '')

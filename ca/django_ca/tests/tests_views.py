@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Test basic views."""
+
 import copy
 
 from cryptography import x509
@@ -59,13 +61,16 @@ urlpatterns = [
 @override_settings(ROOT_URLCONF=__name__, CA_MIN_KEY_SIZE=1024)
 @freeze_time('2019-04-14 12:26:00')
 class GenericCRLViewTests(DjangoCAWithCertTestCase):
+    """Test generic CRL view."""
+
     def setUp(self):
-        super(GenericCRLViewTests, self).setUp()
+        super().setUp()
         self.ca = self.cas['child']
         self.client = Client()
 
     @override_tmpcadir()
     def test_basic(self):
+        """Basic test."""
         # test the default view
         idp = self.get_idp(full_name=self.get_idp_full_name(self.ca), only_contains_user_certs=True)
         response = self.client.get(reverse('default', kwargs={'serial': self.ca.serial}))
@@ -93,6 +98,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_full_scope(self):
+        """Test getting CRL with full scope."""
         full_name = 'http://localhost/crl'
         idp = self.get_idp(full_name=[x509.UniformResourceIdentifier(value=full_name)])
 
@@ -106,6 +112,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_ca_crl(self):
+        """Test getting a CA CRL."""
         root = self.cas['root']
         child = self.cas['child']
         idp = self.get_idp(only_contains_ca_certs=True)  # root CAs don't have a full name (github issue #64)
@@ -134,6 +141,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_ca_crl_intermediate(self):
+        """Test getting CRL for an intermediate CA."""
         child = self.cas['child']
         full_name = 'http://%s/django_ca/crl/ca/%s/' % (ca_settings.CA_DEFAULT_HOSTNAME, child.serial)
         full_name = [x509.UniformResourceIdentifier(full_name)]
@@ -147,6 +155,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_password(self):
+        """Test getting a CRL with a password."""
         ca = self.cas['pwd']
 
         # getting CRL from view directly doesn't work
@@ -154,7 +163,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
             self.client.get(reverse('default', kwargs={'serial': ca.serial}))
 
         profiles = copy.deepcopy(ca_settings.CA_CRL_PROFILES)
-        for name, config in profiles.items():
+        for config in profiles.values():
             config.setdefault('OVERRIDES', {})
             config['OVERRIDES'].setdefault(ca.serial, {})
             config['OVERRIDES'][ca.serial]['password'] = certs['pwd']['password']
@@ -170,6 +179,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_overwrite(self):
+        """Test overwriting a CRL."""
         idp = self.get_idp(full_name=self.get_idp_full_name(self.ca), only_contains_user_certs=True)
         response = self.client.get(reverse('advanced', kwargs={'serial': self.ca.serial}))
         self.assertEqual(response.status_code, 200)
@@ -179,14 +189,17 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
 
 @override_settings(USE_TZ=True)
 class GenericCRLWithTZViewTests(GenericCRLViewTests):
-    pass
+    """Same but with timezone support."""
 
 
 class GenericCAIssuersViewTests(DjangoCAWithGeneratedCAsTestCase):
+    """Test issuer view."""
+
     def test_view(self):
+        """Basic test for the view."""
         client = Client()
 
-        for name, ca in self.cas.items():
+        for ca in self.cas.values():
             url = reverse('django_ca:issuer', kwargs={'serial': ca.root.serial})
             resp = client.get(url)
             self.assertEqual(resp['Content-Type'], 'application/pkix-cert')
