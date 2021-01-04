@@ -23,10 +23,8 @@ from datetime import datetime
 from datetime import timedelta
 from ipaddress import ip_address
 from ipaddress import ip_network
-from typing import Iterable
 from typing import List
 from typing import Tuple
-from typing import Union
 from urllib.parse import urlparse
 
 import idna
@@ -195,7 +193,7 @@ def format_name(subject):
     return '/%s' % ('/'.join(['%s=%s' % (force_str(k), force_str(v)) for k, v in subject]))
 
 
-def format_relative_name(name: Union[x509.RelativeDistinguishedName, Iterable[Tuple[str, str]]]) -> str:
+def format_relative_name(name):
     """Convert a relative name (RDN) into a canonical form.
 
     Examples::
@@ -213,7 +211,7 @@ def format_relative_name(name: Union[x509.RelativeDistinguishedName, Iterable[Tu
     return '/%s' % ('/'.join(['%s=%s' % (force_str(k), force_str(v)) for k, v in name]))
 
 
-def format_general_name(name: x509.GeneralName) -> str:
+def format_general_name(name):
     """Format a single general name.
 
     >>> import ipaddress
@@ -326,10 +324,7 @@ def sanitize_serial(value: str) -> str:
     return serial
 
 
-def parse_csr(
-        csr: Union[x509.CertificateSigningRequest, bytes],
-        csr_format: Encoding
-) -> x509.CertificateSigningRequest:
+def parse_csr(csr, csr_format):
     """Parse a CSR in the given format."""
 
     if isinstance(csr, x509.CertificateSigningRequest):
@@ -417,7 +412,7 @@ def x509_name(name):
     return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], force_str(value)) for typ, value in name])
 
 
-def x509_relative_name(name: str) -> x509.RelativeDistinguishedName:
+def x509_relative_name(name):
     """Parse a relative name (RDN) into a :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`.
 
     >>> x509_relative_name('/CN=example.com')
