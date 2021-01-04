@@ -12,6 +12,7 @@ ChangeLog
 
 This version is currently unter development.
 
+* Stop loading ``localsetttings.py`` from the same location as ``settings.py``.
 * Properly check permissions when resigning certificates.
 * Require the ``change certificate`` permission when revoking certificates.
 * Preselect profile of original certificate when resigning certificates.

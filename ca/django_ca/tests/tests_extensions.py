@@ -152,7 +152,7 @@ class AbstractExtensionTestMixin:
 
     def test_config(self):
         """Test basic extension configuration."""
-        self.assertIsNone(self.ext_class.key)
+        self.assertEqual(self.ext_class.key, '')
         self.assertIsNone(self.ext_class.oid)
 
     def test_hash(self):

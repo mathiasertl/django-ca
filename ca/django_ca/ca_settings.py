@@ -16,6 +16,7 @@
 import os
 import re
 from datetime import timedelta
+from typing import Dict
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -33,7 +34,7 @@ else:
 
 CA_DEFAULT_KEY_SIZE = getattr(settings, 'CA_DEFAULT_KEY_SIZE', 4096)
 
-CA_PROFILES = {
+CA_PROFILES: Dict[str, dict] = {
     'client': {
         # see: http://security.stackexchange.com/questions/68491/
         'description': _('A certificate for a client.'),

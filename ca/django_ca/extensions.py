@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+# pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
+
 """Module providing wrapper classes for various x509 extensions.
 
 The classes in this module wrap cryptography extensions, but allow adding/removing values, creating extensions
@@ -19,6 +21,10 @@ in a more pythonic manner and provide access functions."""
 import binascii
 import re
 import textwrap
+from typing import Dict
+from typing import List
+from typing import Type
+from typing import Union
 
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
@@ -92,7 +98,7 @@ class Extension:
     value : list or tuple or dict or str or :py:class:`~cg:cryptography.x509.ExtensionType`
         The value of the extension, the description provides further details.
     """
-    key = None  # must be overwritten by actual classes
+    key = ''  # must be overwritten by actual classes
     """Key used in CA_PROFILES."""
 
     name = 'Extension'
@@ -542,7 +548,7 @@ class AlternativeNameExtension(ListExtension):  # pylint: disable=abstract-metho
     def from_extension(self, value):
         self.value = GeneralNameList(value.value)
 
-    def serialize_value(self, value):
+    def serialize_value(self, value: x509.GeneralName) -> str:
         return format_general_name(value)
 
 
@@ -559,16 +565,16 @@ class KeyIdExtension(Extension):
     # pylint: disable=abstract-method; from_extension is not overwridden in this base class
     name = 'KeyIdExtension'
 
-    def from_dict(self, value):
+    def from_dict(self, value: Dict[str, Union[str, bytes]]) -> None:
         self.value = value['value']
 
         if isinstance(self.value, str) and ':' in self.value:
             self.value = hex_to_bytes(self.value)
 
-    def as_text(self):
+    def as_text(self) -> str:
         return bytes_to_hex(self.value)
 
-    def serialize(self):
+    def serialize(self) -> Dict[str, Union[bool, str]]:
         return {
             'critical': self.critical,
             'value': bytes_to_hex(self.value),
@@ -668,8 +674,8 @@ class DistributionPoint:
             and self.relative_name == other.relative_name and self.crl_issuer == other.crl_issuer \
             and self.reasons == other.reasons
 
-    def __get_values(self):
-        values = []
+    def __get_values(self) -> List[str]:
+        values: List[str] = []
         if self.full_name is not None:
             values.append('full_name=%r' % list(self.full_name.serialize()))
         if self.relative_name:
@@ -692,7 +698,7 @@ class DistributionPoint:
     def __str__(self):
         return repr(self)
 
-    def as_text(self):
+    def as_text(self) -> str:
         """Show as text."""
         if self.full_name is not None:
             names = [textwrap.indent('* %s' % s, '  ') for s in self.full_name.serialize()]
@@ -713,7 +719,7 @@ class DistributionPoint:
         return x509.DistributionPoint(full_name=self.full_name, relative_name=self.relative_name,
                                       crl_issuer=self.crl_issuer, reasons=self.reasons)
 
-    def serialize(self):
+    def serialize(self) -> Dict[str, Union[List[str], str]]:
         """Serialize this distribution point."""
         val = {}
 
@@ -1135,7 +1141,7 @@ class AuthorityKeyIdentifier(Extension):
         return hash((self.value['key_identifier'], issuer, self.value['authority_cert_serial_number'],
                      self.critical))
 
-    def _repr_value(self):
+    def _repr_value(self) -> str:
         values = []
         if self.value['key_identifier'] is not None:
             values.append('keyid: %s' % bytes_to_hex(self.value['key_identifier']))
@@ -1146,7 +1152,7 @@ class AuthorityKeyIdentifier(Extension):
 
         return ', '.join(values)
 
-    def as_text(self):
+    def as_text(self) -> str:
         values = []
         if self.value['key_identifier'] is not None:
             values.append('* KeyID: %s' % bytes_to_hex(self.value['key_identifier']))
@@ -1239,7 +1245,7 @@ class AuthorityKeyIdentifier(Extension):
         if value is not None:
             return hex_to_bytes(value)
 
-    def serialize(self):
+    def serialize(self) -> Dict[str, Union[str, None, List[str]]]:
         val = {
             'critical': self.critical,
             'value': {},
@@ -2237,7 +2243,7 @@ class TLSFeature(OrderedSetExtension):
         raise ValueError('Unknown value: %s' % value)
 
 
-KEY_TO_EXTENSION = {
+KEY_TO_EXTENSION: Dict[str, Type[Extension]] = {
     AuthorityInformationAccess.key: AuthorityInformationAccess,
     AuthorityKeyIdentifier.key: AuthorityKeyIdentifier,
     BasicConstraints.key: BasicConstraints,

@@ -13,6 +13,8 @@
 
 """Central functions to load CA key and cert as PKey/X509 objects."""
 
+# pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
+
 import binascii
 import os
 import re
@@ -21,6 +23,10 @@ from datetime import datetime
 from datetime import timedelta
 from ipaddress import ip_address
 from ipaddress import ip_network
+from typing import Iterable
+from typing import List
+from typing import Tuple
+from typing import Union
 from urllib.parse import urlparse
 
 import idna
@@ -129,7 +135,7 @@ def sort_name(subject):
     return sorted(subject, key=lambda e: SUBJECT_FIELDS.index(e[0]))
 
 
-def encode_url(url):
+def encode_url(url: str) -> str:
     """IDNA encoding for domains in URLs.
 
     Examples::
@@ -150,7 +156,7 @@ def encode_url(url):
     return parsed.geturl()
 
 
-def encode_dns(name):
+def encode_dns(name: str) -> str:
     """IDNA encoding for domains.
 
     Examples::
@@ -189,7 +195,7 @@ def format_name(subject):
     return '/%s' % ('/'.join(['%s=%s' % (force_str(k), force_str(v)) for k, v in subject]))
 
 
-def format_relative_name(name):
+def format_relative_name(name: Union[x509.RelativeDistinguishedName, Iterable[Tuple[str, str]]]) -> str:
     """Convert a relative name (RDN) into a canonical form.
 
     Examples::
@@ -207,7 +213,7 @@ def format_relative_name(name):
     return '/%s' % ('/'.join(['%s=%s' % (force_str(k), force_str(v)) for k, v in name]))
 
 
-def format_general_name(name):
+def format_general_name(name: x509.GeneralName) -> str:
     """Format a single general name.
 
     >>> import ipaddress
@@ -224,7 +230,7 @@ def format_general_name(name):
     return '%s:%s' % (SAN_NAME_MAPPINGS[type(name)], value)
 
 
-def is_power2(num):
+def is_power2(num: int) -> bool:
     """Return True if num is a power of 2.
 
     >>> is_power2(4)
@@ -235,7 +241,7 @@ def is_power2(num):
     return num != 0 and ((num & (num - 1)) == 0)
 
 
-def multiline_url_validator(value):
+def multiline_url_validator(value: str) -> None:
     """Validate that a TextField contains one valid URL per line.
 
     .. seealso:: https://docs.djangoproject.com/en/1.9/ref/validators/
@@ -246,7 +252,7 @@ def multiline_url_validator(value):
         validator(line)
 
 
-def add_colons(value, pad='0'):
+def add_colons(value: str, pad: str = '0') -> str:
     """Add colons after every second digit.
 
     This function is used in functions to prettify serials.
@@ -270,7 +276,7 @@ def add_colons(value, pad='0'):
     return ':'.join([value[i:i + 2] for i in range(0, len(value), 2)])
 
 
-def int_to_hex(i):
+def int_to_hex(i: int) -> str:
     """Create a hex-representation of the given serial.
 
     >>> int_to_hex(12345678)
@@ -279,7 +285,7 @@ def int_to_hex(i):
     return hex(i)[2:].upper()
 
 
-def bytes_to_hex(value):
+def bytes_to_hex(value: bytes) -> str:
     """Convert a bytes array to hex.
 
     >>> bytes_to_hex(b'test')
@@ -288,7 +294,7 @@ def bytes_to_hex(value):
     return add_colons(binascii.hexlify(value).upper().decode('utf-8'))
 
 
-def hex_to_bytes(value):
+def hex_to_bytes(value: str) -> bytes:
     """Convert a hex number to bytes.
 
     This should be the inverse of :py:func:`~django_ca.utils.bytes_to_hex`.
@@ -299,7 +305,7 @@ def hex_to_bytes(value):
     return binascii.unhexlify(value.replace(':', ''))
 
 
-def sanitize_serial(value):
+def sanitize_serial(value: str) -> str:
     """Sanitize a serial provided by user/untrusted input.
 
     This function is intended to be used to get a serial as used internaly by **django-ca** from untrusted
@@ -320,7 +326,10 @@ def sanitize_serial(value):
     return serial
 
 
-def parse_csr(csr, csr_format):
+def parse_csr(
+        csr: Union[x509.CertificateSigningRequest, bytes],
+        csr_format: Encoding
+) -> x509.CertificateSigningRequest:
     """Parse a CSR in the given format."""
 
     if isinstance(csr, x509.CertificateSigningRequest):
@@ -333,7 +342,7 @@ def parse_csr(csr, csr_format):
     raise ValueError('Unknown CSR format passed: %s' % csr_format)
 
 
-def parse_name(name):
+def parse_name(name: str) -> List[Tuple[str, str]]:
     """Parses a subject string as used in OpenSSLs command line utilities.
 
     The ``name`` is expected to be close to the subject format commonly used by OpenSSL, for example
@@ -408,7 +417,7 @@ def x509_name(name):
     return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], force_str(value)) for typ, value in name])
 
 
-def x509_relative_name(name):
+def x509_relative_name(name: str) -> x509.RelativeDistinguishedName:
     """Parse a relative name (RDN) into a :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`.
 
     >>> x509_relative_name('/CN=example.com')
@@ -426,7 +435,7 @@ def x509_relative_name(name):
     ])
 
 
-def validate_email(addr):
+def validate_email(addr: str) -> str:
     """Validate an email address.
 
     This function raises ``ValueError`` if the email address is not valid.
@@ -451,7 +460,7 @@ def validate_email(addr):
     return '%s@%s' % (node, domain)
 
 
-def validate_hostname(hostname, allow_port=False):
+def validate_hostname(hostname: str, allow_port: bool = False) -> str:
     """Validate a hostname, optionally with a given port.
 
     >>> validate_hostname('example.com')
@@ -482,9 +491,9 @@ def validate_hostname(hostname, allow_port=False):
             port = int(port)
         except ValueError as e:
             raise ValueError('%s: Port must be an integer' % port) from e
-        else:
-            if port < 1 or port > 65535:
-                raise ValueError('%s: Port must be between 1 and 65535' % port)
+
+        if port < 1 or port > 65535:
+            raise ValueError('%s: Port must be between 1 and 65535' % port)
 
     try:
         encoded = idna.encode(hostname).decode('utf-8')

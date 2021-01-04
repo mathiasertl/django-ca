@@ -1,7 +1,7 @@
 # Django settings for ca project.
 
 import os
-import warnings
+from typing import List
 
 import yaml
 
@@ -10,7 +10,7 @@ from django.core.exceptions import ImproperlyConfigured
 try:
     from yaml import CLoader as Loader
 except ImportError:
-    from yaml import Loader
+    from yaml import Loader  # type: ignore
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -37,7 +37,7 @@ DATABASES = {
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS: List[str] = []
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -123,7 +123,7 @@ INSTALLED_APPS = [
 
     'django_ca',
 ]
-CA_CUSTOM_APPS = []
+CA_CUSTOM_APPS: List[str] = []
 CA_DEFAULT_HOSTNAME = None
 
 # Setting to allow us to disable clickjacking projection if header is already set by the webserver
@@ -182,17 +182,6 @@ _skip_local_config = os.environ.get('DJANGO_CA_SKIP_LOCAL_CONFIG') == '1'
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SECURE = True
-
-try:
-    if not _skip_local_config:
-        try:
-            from .localsettings import *  # NOQA: F403,F401; pylint: disable=wildcard-import
-        except ImportError:
-            from localsettings import *  # NOQA: F403,F401; pylint: disable=wildcard-import
-
-        warnings.warn('localsettings.py is deprecated and will be removed in django-ca>=1.18.')
-except ImportError:
-    pass
 
 _settings_files = []
 if os.environ.get('DJANGO_CA_SETTINGS'):
