@@ -12,10 +12,12 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+import inspect
 import os
 import re
 import sys
 
+import sphinx_autodoc_typehints
 import sphinx_rtd_theme
 from pygments.lexer import do_insertions
 from pygments.lexers.shell import BashLexer
@@ -72,6 +74,7 @@ extensions = [
     # Enable Celery task docs: https://docs.celeryproject.org/en/latest/userguide/sphinx.html
     'celery.contrib.sphinx',
     'numpydoc',
+    'sphinx_autodoc_typehints',
 ]
 numpydoc_show_class_members = False
 autodoc_inherit_docstrings = False
@@ -349,7 +352,6 @@ intersphinx_mapping = {
 html_theme = "sphinx_rtd_theme"
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
-
 # Custom console lexer to make space part of the prompt
 line_re = re.compile('.*?\n')
 
@@ -434,3 +436,24 @@ class BashSessionLexer(ShellSessionBaseLexer):
 
 lexers['console'] = BashSessionLexer()
 lexers['shell-session'] = BashSessionLexer()
+
+# Make typehints to third-party libraries work in Shpinx:
+#   https://github.com/agronholm/sphinx-autodoc-typehints/issues/38#issuecomment-448517805
+#   See also: https://github.com/sphinx-doc/sphinx/issues/4826
+qualname_overrides = {
+    'cryptography.x509.name.Name': 'cg:cryptography.x509.Name',
+}
+
+fa_orig = sphinx_autodoc_typehints.format_annotation
+
+
+def format_annotation(annotation, fully_qualified: bool = False):
+    if inspect.isclass(annotation):
+        full_name = f'{annotation.__module__}.{annotation.__qualname__}'
+        override = qualname_overrides.get(full_name)
+        if override is not None:
+            return f':py:class:`~{override}`'
+    return fa_orig(annotation, fully_qualified=fully_qualified)
+
+
+sphinx_autodoc_typehints.format_annotation = format_annotation

@@ -25,6 +25,7 @@ from ipaddress import ip_address
 from ipaddress import ip_network
 from typing import List
 from typing import Tuple
+from typing import Union
 from urllib.parse import urlparse
 
 import idna
@@ -396,7 +397,7 @@ def parse_name(name: str) -> List[Tuple[str, str]]:
     return sort_name(items)
 
 
-def x509_name(name):
+def x509_name(name: Union[List[Tuple[str, str]], str]) -> x509.Name:
     """Parses a subject into a :py:class:`x509.Name <cg:cryptography.x509.Name>`.
 
     If ``name`` is a string, :py:func:`parse_name` is used to parse it.
