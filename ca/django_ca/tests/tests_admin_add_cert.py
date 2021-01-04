@@ -17,6 +17,7 @@ import html
 import unittest
 from datetime import datetime
 from datetime import timedelta
+from http import HTTPStatus
 
 from django.conf import settings
 
@@ -48,10 +49,13 @@ from .tests_admin import CertificateAdminTestCaseMixin
 
 @freeze_time(timestamps['after_child'])
 class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, DjangoCAWithCertTestCase):
+    """Tests for adding certificates."""
+
     @override_tmpcadir()
     def test_get(self):
+        """Do a basic get request (to test CSS etc)."""
         response = self.client.get(self.add_url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         templates = [t.name for t in response.templates]
         self.assertIn('admin/django_ca/certificate/change_form.html', templates)
         self.assertIn('admin/change_form.html', templates)
@@ -60,11 +64,13 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
 
     @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
     def test_get_dict(self):
+        """Test get with no profiles and no default subject."""
         self.test_get()
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_add(self):
-        cn = 'test-add.example.com'
+        """Test to actually add a certificate."""
+        cname = 'test-add.example.com'
         ca = self.cas['root']
         csr = certs['root-cert']['csr']['pem']
 
@@ -74,7 +80,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
                 'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
-                'subject_5': cn,
+                'subject_5': cname,
                 'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
                 'expires': ca.expires.strftime('%Y-%m-%d'),
@@ -88,14 +94,14 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
         self.assertRedirects(response, self.changelist_url)
         self.assertEqual(pre.call_count, 1)
 
-        cert = Certificate.objects.get(cn=cn)
+        cert = Certificate.objects.get(cn=cname)
         self.assertPostIssueCert(post, cert)
-        self.assertSubject(cert.x509, [('C', 'US'), ('CN', cn)])
+        self.assertSubject(cert.x509, [('C', 'US'), ('CN', cname)])
         self.assertIssuer(ca, cert)
         self.assertExtensions(cert, [
             ExtendedKeyUsage({'value': ['clientAuth', 'serverAuth']}),
             KeyUsage({'critical': True, 'value': ['digitalSignature', 'keyAgreement']}),
-            SubjectAlternativeName({'value': ['DNS:%s' % cn]}),
+            SubjectAlternativeName({'value': ['DNS:%s' % cname]}),
             TLSFeature({'value': ['OCSPMustStaple', 'MultipleCertStatusRequest']}),
         ])
 
@@ -108,10 +114,11 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
 
         # Test that we can view the certificate
         response = self.client.get(cert.admin_change_url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     @override_tmpcadir()
     def test_required_subject(self):
+        """Test that we have to enter a complete subject value."""
         ca = self.cas['root']
         csr = certs['root-cert']['csr']['pem']
         cert_count = Certificate.objects.all().count()
@@ -132,7 +139,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
                 'tls_feature_0': ['OCSPMustStaple', 'MultipleCertStatusRequest'],
                 'tls_feature_1': False,
             })
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
         self.assertFalse(response.context['adminform'].form.is_valid())
@@ -142,6 +149,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
 
     @override_tmpcadir()
     def test_empty_subject(self):
+        """Test passing an empty subject."""
         ca = self.cas['root']
         csr = certs['root-cert']['csr']['pem']
         cert_count = Certificate.objects.all().count()
@@ -168,7 +176,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
                 'tls_feature_0': ['OCSPMustStaple', 'MultipleCertStatusRequest'],
                 'tls_feature_1': False,
             })
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
         self.assertFalse(response.context['adminform'].form.is_valid())
@@ -178,9 +186,10 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_add_no_key_usage(self):
+        """Test adding a cert with no (extended) key usage."""
         ca = self.cas['root']
         csr = certs['root-cert']['csr']['pem']
-        cn = 'test-add2.example.com'
+        cname = 'test-add2.example.com'
         san = 'test-san.example.com'
 
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
@@ -189,7 +198,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
                 'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
-                'subject_5': cn,
+                'subject_5': cname,
                 'subject_alternative_name_0': san,
                 'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
@@ -202,27 +211,28 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
         self.assertEqual(pre.call_count, 1)
         self.assertRedirects(response, self.changelist_url)
 
-        cert = Certificate.objects.get(cn=cn)
+        cert = Certificate.objects.get(cn=cname)
         self.assertPostIssueCert(post, cert)
-        self.assertSubject(cert.x509, [('C', 'US'), ('CN', cn)])
+        self.assertSubject(cert.x509, [('C', 'US'), ('CN', cname)])
         self.assertIssuer(ca, cert)
         self.assertEqual(cert.ca, ca)
         self.assertEqual(cert.csr, csr)
 
         # Some extensions are not set
         self.assertExtensions(cert, [
-            SubjectAlternativeName({'value': ['DNS:%s' % san, 'DNS:%s' % cn]}),
+            SubjectAlternativeName({'value': ['DNS:%s' % san, 'DNS:%s' % cname]}),
         ])
 
         # Test that we can view the certificate
         response = self.client.get(cert.admin_change_url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_add_with_password(self):
+        """Test adding with a password."""
         ca = self.cas['pwd']
         csr = certs['pwd-cert']['csr']['pem']
-        cn = 'with-password.example.com'
+        cname = 'with-password.example.com'
 
         # first post without password
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
@@ -231,7 +241,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
                 'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
-                'subject_5': cn,
+                'subject_5': cname,
                 'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
                 'expires': ca.expires.strftime('%Y-%m-%d'),
@@ -253,7 +263,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
                 'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
-                'subject_5': cn,
+                'subject_5': cname,
                 'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
                 'expires': ca.expires.strftime('%Y-%m-%d'),
@@ -276,7 +286,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
                 'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
-                'subject_5': cn,
+                'subject_5': cname,
                 'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
                 'expires': ca.expires.strftime('%Y-%m-%d'),
@@ -289,13 +299,13 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
         self.assertEqual(pre.call_count, 1)
         self.assertRedirects(response, self.changelist_url)
 
-        cert = Certificate.objects.get(cn=cn)
+        cert = Certificate.objects.get(cn=cname)
         self.assertPostIssueCert(post, cert)
-        self.assertSubject(cert.x509, [('C', 'US'), ('CN', cn)])
+        self.assertSubject(cert.x509, [('C', 'US'), ('CN', cname)])
         self.assertIssuer(ca, cert)
         self.assertAuthorityKeyIdentifier(ca, cert)
         self.assertEqual(cert.subject_alternative_name,
-                         SubjectAlternativeName({'value': ['DNS:%s' % cn]}))
+                         SubjectAlternativeName({'value': ['DNS:%s' % cname]}))
         self.assertEqual(cert.basic_constraints,
                          BasicConstraints({'critical': True, 'value': {'ca': False}}))
         self.assertEqual(cert.key_usage,
@@ -313,12 +323,13 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
 
         # Test that we can view the certificate
         response = self.client.get(cert.admin_change_url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     @override_tmpcadir()
     def test_wrong_csr(self):
+        """Test passing an unparseable CSR."""
         ca = self.cas['root']
-        cn = 'test-add-wrong-csr.example.com'
+        cname = 'test-add-wrong-csr.example.com'
 
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.add_url, data={
@@ -326,7 +337,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
                 'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
-                'subject_5': cn,
+                'subject_5': cname,
                 'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
                 'expires': ca.expires.strftime('%Y-%m-%d'),
@@ -337,20 +348,21 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
             })
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn("Enter a valid CSR (in PEM format).", response.content.decode('utf-8'))
         self.assertFalse(response.context['adminform'].form.is_valid())
         self.assertEqual(response.context['adminform'].form.errors,
                          {'csr': ['Enter a valid CSR (in PEM format).']})
 
         with self.assertRaises(Certificate.DoesNotExist):
-            Certificate.objects.get(cn=cn)
+            Certificate.objects.get(cn=cname)
 
     @override_tmpcadir()
     def test_wrong_algorithm(self):
+        """Test selecting an unknown algorithm."""
         ca = self.cas['root']
         csr = certs['pwd-cert']['csr']['pem']
-        cn = 'test-add-wrong-algo.example.com'
+        cname = 'test-add-wrong-algo.example.com'
 
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.add_url, data={
@@ -358,7 +370,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
                 'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
-                'subject_5': cn,
+                'subject_5': cname,
                 'subject_alternative_name_1': True,
                 'algorithm': 'wrong algo',
                 'expires': ca.expires.strftime('%Y-%m-%d'),
@@ -369,7 +381,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
             })
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         self.assertFalse(response.context['adminform'].form.is_valid())
         self.assertEqual(
@@ -377,13 +389,14 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
             {'algorithm': ['Select a valid choice. wrong algo is not one of the available choices.']})
 
         with self.assertRaises(Certificate.DoesNotExist):
-            Certificate.objects.get(cn=cn)
+            Certificate.objects.get(cn=cname)
 
     @override_tmpcadir()
     def test_expires_in_the_past(self):
+        """Test creating a cert that expires in the past."""
         ca = self.cas['root']
         csr = certs['pwd-cert']['csr']['pem']
-        cn = 'test-expires-in-the-past.example.com'
+        cname = 'test-expires-in-the-past.example.com'
         expires = datetime.now() - timedelta(days=3)
 
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
@@ -392,7 +405,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
                 'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
-                'subject_5': cn,
+                'subject_5': cname,
                 'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
                 'expires': expires.strftime('%Y-%m-%d'),
@@ -403,20 +416,21 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
             })
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn('Certificate cannot expire in the past.', response.content.decode('utf-8'))
         self.assertFalse(response.context['adminform'].form.is_valid())
         self.assertEqual(response.context['adminform'].form.errors,
                          {'expires': ['Certificate cannot expire in the past.']})
 
         with self.assertRaises(Certificate.DoesNotExist):
-            Certificate.objects.get(cn=cn)
+            Certificate.objects.get(cn=cname)
 
     @override_tmpcadir()
     def test_expires_too_late(self):
+        """Test that creating a cert that expires after the CA expires throws an error."""
         ca = self.cas['root']
         csr = certs['pwd-cert']['csr']['pem']
-        cn = 'test-expires-too-late.example.com'
+        cname = 'test-expires-too-late.example.com'
         expires = ca.expires + timedelta(days=3)
         correct_expires = ca.expires.strftime('%Y-%m-%d')
         error = 'CA expires on %s, certificate must not expire after that.' % correct_expires
@@ -427,7 +441,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
                 'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
-                'subject_5': cn,
+                'subject_5': cname,
                 'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
                 'expires': expires.strftime('%Y-%m-%d'),
@@ -438,20 +452,22 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
             })
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn(error, response.content.decode('utf-8'))
         self.assertFalse(response.context['adminform'].form.is_valid())
         self.assertEqual(response.context['adminform'].form.errors, {'expires': [error]})
 
         with self.assertRaises(Certificate.DoesNotExist):
-            Certificate.objects.get(cn=cn)
+            Certificate.objects.get(cn=cname)
 
     @override_tmpcadir()
     def test_invalid_cn_in_san(self):
-        # If you submit a CommonName that is not parseable as SubjectAlternativeName, but check "CN in SAN",
-        # we need to throw a form error.
-        #   https://github.com/mathiasertl/django-ca/issues/62
-        cn = 'Foo Bar'
+        """Test that if you submit a CommonName that is not parseable as SubjectAlternativeName, but check "CN
+        in SAN", an error is thrown.
+
+        .. seealso:: https://github.com/mathiasertl/django-ca/issues/62
+        """
+        cname = 'Foo Bar'
         error = 'The CommonName cannot be parsed as general name. Either change the CommonName or do not include it.'  # NOQA
         ca = self.cas['root']
         csr = certs['root-cert']['csr']['pem']
@@ -462,7 +478,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
                 'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
-                'subject_5': cn,
+                'subject_5': cname,
                 'subject_alternative_name_1': True,  # cn_in_san
                 'algorithm': 'SHA256',
                 'expires': ca.expires.strftime('%Y-%m-%d'),
@@ -475,29 +491,29 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
             })
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn(html.escape(error), response.content.decode('utf-8'))
         self.assertFalse(response.context['adminform'].form.is_valid())
         self.assertEqual(response.context['adminform'].form.errors, {'subject_alternative_name': [error]})
 
         with self.assertRaises(Certificate.DoesNotExist):
-            Certificate.objects.get(cn=cn)
+            Certificate.objects.get(cn=cname)
 
     def test_add_no_cas(self):
+        """Test adding when all CAs are disabled."""
         ca = self.cas['root']
         csr = certs['pwd-cert']['csr']['pem']
         CertificateAuthority.objects.update(enabled=False)
         response = self.client.get(self.add_url)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
-        cn = 'test-add-no-cas.example.com'
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.add_url, data={
                 'csr': csr,
                 'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
-                'subject_5': cn,
+                'subject_5': 'test-add-no-cas.example.com',
                 'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
                 'expires': ca.expires.strftime('%Y-%m-%d'),
@@ -506,11 +522,12 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
                 'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
                 'extended_key_usage_1': False,
             })
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
     def test_add_unusable_cas(self):
+        """Try adding with an unusable CA."""
         ca = self.cas['root']
         csr = certs['pwd-cert']['csr']['pem']
         CertificateAuthority.objects.update(private_key_path='not/exist/add-unusable-cas')
@@ -520,18 +537,17 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
 
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.get(self.add_url)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
-        cn = 'test-add.example.com'
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             response = self.client.post(self.add_url, data={
                 'csr': csr,
                 'ca': ca.pk,
                 'profile': 'webserver',
                 'subject_0': 'US',
-                'subject_5': cn,
+                'subject_5': 'test-add.example.com',
                 'subject_alternative_name_1': True,
                 'algorithm': 'SHA256',
                 'expires': ca.expires.strftime('%Y-%m-%d'),
@@ -540,7 +556,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
                 'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
                 'extended_key_usage_1': False,
             })
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 

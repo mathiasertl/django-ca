@@ -14,6 +14,8 @@
 # Register the setting_changed signal here. This should not be done in base.py, because then a test module
 # that does not import base.py would not have the signal registered.
 
+"""handle signal when reloading settings, so that ca_settings is also reloaded."""
+
 import importlib
 
 from django.test.signals import setting_changed
@@ -22,17 +24,15 @@ from .. import ca_settings
 from .. import profiles
 
 
-def reload_ca_settings(sender, setting, **kwargs):  # pragma: no cover
-    # This method will be enabled once support for django<2.2 support is dropped, see notes in
-    # django_ca.tests.base.override_settings.
-
+def reload_ca_settings(sender, setting, **kwargs):  # pylint: disable=unused-argument
+    """Reload ca_settings module if the settings are changed."""
     # WARNING:
     # * Do NOT reload any other modules here, as isinstance() no longer returns True for instances from
     #   reloaded modules
     # * Do NOT set module level attributes, as other modules will not see the new instance
 
     importlib.reload(ca_settings)
-    profiles.profiles._reset()
+    profiles.profiles._reset()  # pylint: disable=protected-access
 
 
 setting_changed.connect(reload_ca_settings)
