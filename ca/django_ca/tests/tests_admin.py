@@ -25,23 +25,16 @@ from django.test import Client
 from django.urls import reverse
 from django.utils.encoding import force_str
 
-from django_webtest import WebTestMixin
 from freezegun import freeze_time
 
 from .. import ca_settings
 from .. import extensions
 from .. import models
-from ..constants import ReasonFlags
 from ..models import Certificate
 from ..models import Watcher
-from ..signals import post_issue_cert
-from ..signals import post_revoke_cert
-from ..signals import pre_issue_cert
-from ..signals import pre_revoke_cert
 from ..subject import Subject
 from ..utils import SUBJECT_FIELDS
 from .base import DjangoCATestCase
-from .base import DjangoCAWithCertTestCase
 from .base import DjangoCAWithGeneratedCertsTestCase
 from .base import certs
 from .base import override_tmpcadir
@@ -201,45 +194,6 @@ class CertificateAdminViewTestCase(CertificateAdminTestCaseMixin, StandardAdminV
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, self.changelist_url)
         self.assertEqual(list(cert.watchers.all()), [watcher])
-
-
-@freeze_time(timestamps['everything_valid'])
-class RevokeActionTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin,
-                           DjangoCAWithGeneratedCertsTestCase):
-    """Test the "revoke" action in the changelist."""
-
-    def setUp(self):
-        super().setUp()
-        self.data = {'action': 'revoke', '_selected_action': [self.obj.pk]}
-
-    def test_basic(self):
-        """Test basic revocation action."""
-        response = self.client.post(self.changelist_url, self.data)
-        self.assertRedirects(response, self.changelist_url)
-        self.assertRevoked(self.obj)
-
-        # revoking revoked certs does nothing:
-        response = self.client.post(self.changelist_url, self.data)
-        self.assertRedirects(response, self.changelist_url)
-        self.assertRevoked(self.obj)
-
-    def test_permissions(self):
-        """Test that change permission is required for this action."""
-        self.user.is_superuser = False
-        self.user.save()
-
-        # Just the view permission is not enough...
-        self.user.user_permissions.add(Permission.objects.get(codename='view_certificate'))
-        response = self.client.post(self.changelist_url, self.data)
-        # NOTE: No HTTP 403/FORBIDDEN, Django just shows the changelist page
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertNotRevoked(self.obj)
-
-        # ... you really need the change permission
-        self.user.user_permissions.add(Permission.objects.get(codename='change_certificate'))
-        response = self.client.post(self.changelist_url, self.data)
-        self.assertRedirects(response, self.changelist_url)
-        self.assertRevoked(self.obj)
 
 
 class CSRDetailTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, DjangoCATestCase):
@@ -509,18 +463,22 @@ class CertDownloadTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin,
 
 class CertDownloadBundleTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin,
                                  DjangoCAWithGeneratedCertsTestCase):
+    """Test downloading certificate bundles."""
 
     def get_url(self, cert):
+        """Get URL for given certificate for this test."""
         return reverse('admin:django_ca_certificate_download_bundle', kwargs={'pk': cert.pk})
 
     @property
     def url(self):
+        """Generic URL for this test."""
         return self.get_url(cert=self.obj)
 
     def test_cert(self):
+        """TRy downloading a certificate bundle."""
         filename = 'root-cert_example_com_bundle.pem'
         response = self.client.get('%s?format=PEM' % self.url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response['Content-Type'], 'application/pkix-cert')
         self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
         self.assertEqual(force_str(response.content),
@@ -528,299 +486,12 @@ class CertDownloadBundleTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMix
         self.assertEqual(self.cas['root'], self.obj.ca)  # just to be sure we test the right thing
 
     def test_invalid_format(self):
+        """Try downloading an invalid format."""
         response = self.client.get('%s?format=INVALID' % self.url)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         self.assertEqual(response.content, b'')
 
         # DER is not supported for bundles
         response = self.client.get('%s?format=DER' % self.url)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         self.assertEqual(response.content, b'DER/ASN.1 certificates cannot be downloaded as a bundle.')
-
-
-@freeze_time(timestamps['everything_valid'])
-class ResignCertTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, WebTestMixin,
-                         DjangoCAWithGeneratedCertsTestCase):
-    def setUp(self):
-        super().setUp()
-        self.obj.profile = 'webserver'
-        self.obj.save()
-
-    def get_url(self, cert):
-        return reverse('admin:django_ca_certificate_actions', kwargs={'pk': cert.pk, 'tool': 'resign'})
-
-    @property
-    def url(self):
-        return self.get_url(cert=self.obj)
-
-    def assertResigned(self, cert=None, resigned=None, expected_cn=None):
-        if cert is None:
-            cert = self.obj
-        if resigned is None:
-            resigned = Certificate.objects.filter(cn=cert.cn).exclude(pk=cert.pk).get()
-        if expected_cn is None:
-            expected_cn = cert.cn
-        self.assertFalse(cert.revoked)
-
-        self.assertEqual(resigned.cn, expected_cn)
-        self.assertEqual(cert.csr, resigned.csr)
-        self.assertEqual(cert.profile, resigned.profile)
-        self.assertEqual(cert.distinguished_name, resigned.distinguished_name)
-        self.assertEqual(cert.extended_key_usage, resigned.extended_key_usage)
-        self.assertEqual(cert.key_usage, resigned.key_usage)
-        self.assertEqual(cert.subject_alternative_name, resigned.subject_alternative_name)
-        self.assertEqual(cert.tls_feature, resigned.tls_feature)
-
-        # Some properties are obviously *not* equal
-        self.assertNotEqual(cert.pub, resigned.pub)
-        self.assertNotEqual(cert.serial, resigned.serial)
-
-    @override_tmpcadir()
-    def test_get(self):
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
-            response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
-
-    @override_tmpcadir()
-    def test_resign(self):
-        """Try a basic resign request."""
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
-            response = self.client.post(self.url, data={
-                'ca': self.obj.ca.pk,
-                'profile': 'webserver',
-                'subject_5': self.obj.cn,
-                'subject_alternative_name_1': True,
-                'algorithm': 'SHA256',
-                'expires': self.obj.ca.expires.strftime('%Y-%m-%d'),
-                'key_usage_0': ['digitalSignature', 'keyAgreement', 'keyEncipherment'],
-                'key_usage_1': True,
-                'extended_key_usage_0': ['clientAuth', 'serverAuth', ],
-                'extended_key_usage_1': False,
-                'tls_feature_0': [],
-                'tls_feature_1': False,
-            })
-        self.assertRedirects(response, self.changelist_url)
-        self.assertEqual(pre.call_count, 1)
-        self.assertEqual(post.call_count, 1)
-        self.assertResigned()
-
-    @override_tmpcadir()  # otherwise there are no usable CAs, hiding the message we want to test
-    def test_no_permission(self):
-        """Try resigning a certificate when we don't have the permissions."""
-        self.user.is_superuser = False
-        self.user.save()
-
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
-            response = self.client.get(self.url)
-        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
-
-    @override_tmpcadir()  # otherwise there are no usable CAs, hiding the message we want to test
-    def test_no_csr(self):
-        """Try resigning a cert that has no CSR."""
-        self.obj.csr = ''
-        self.obj.save()
-
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
-            response = self.client.get(self.url)
-        self.assertRedirects(response, self.change_url())
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
-        self.assertMessages(response, ['Certificate has no CSR (most likely because it was imported).'])
-
-    @override_tmpcadir()
-    def test_no_profile(self):
-        """Test that resigning a cert with no stored profile stores the default profile."""
-
-        self.obj.profile = ''
-        self.obj.save()
-        form = self.app.get(self.url, user=self.user.username).form
-        form.submit().follow()
-
-        resigned = Certificate.objects.filter(cn=self.obj.cn).exclude(pk=self.obj.pk).get()
-        self.assertEqual(resigned.profile, ca_settings.CA_DEFAULT_PROFILE)
-
-    @override_tmpcadir()
-    def test_webtest_basic(self):
-        """Resign basic certificate."""
-        form = self.app.get(self.url, user=self.user.username).form
-        form.submit().follow()
-        self.assertResigned(self.obj)
-
-    @override_tmpcadir()
-    def test_webtest_all(self):
-        """Resign certificate with **all** extensions."""
-        cert = self.certs['all-extensions']
-        cert.profile = 'webserver'
-        cert.save()
-        form = self.app.get(self.get_url(cert), user=self.user.username).form
-        form.submit().follow()
-        self.assertResigned(cert)
-
-    @override_tmpcadir(CA_DEFAULT_SUBJECT={})
-    def test_webtest_no_ext(self):
-        """Resign certificate with **no** extensions."""
-        cert = self.certs['no-extensions']
-        cert.profile = 'webserver'
-        cert.save()
-        form = self.app.get(self.get_url(cert), user=self.user.username).form
-        form.submit().follow()
-        self.assertResigned(cert)
-
-
-class RevokeCertViewTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, DjangoCAWithCertTestCase):
-    def get_url(self, cert):
-        return reverse('admin:django_ca_certificate_actions', kwargs={'pk': cert.pk, 'tool': 'revoke_change'})
-
-    @property
-    def url(self):
-        return self.get_url(cert=self.obj)
-
-    @override_tmpcadir()
-    def test_get(self):
-        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
-            self.client.get(self.url)
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
-
-    def test_no_reason(self):
-        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
-            response = self.client.post(self.url, data={'revoked_reason': ''})
-        self.assertTrue(pre.called)
-        self.assertPostRevoke(post, self.obj)
-        self.assertRedirects(response, self.change_url())
-        self.assertTemplateUsed('admin/django_ca/certificate/revoke_form.html')
-        self.assertRevoked(self.obj)
-
-    def test_with_reason(self):
-        reason = ReasonFlags.certificate_hold
-        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
-            response = self.client.post(self.url, data={'revoked_reason': reason.name})
-        self.assertTrue(pre.called)
-        self.assertPostRevoke(post, self.obj)
-        self.assertRedirects(response, self.change_url())
-        self.assertTemplateUsed('admin/django_ca/certificate/revoke_form.html')
-        self.assertRevoked(self.obj, reason=reason.name)
-
-    def test_with_bogus_reason(self):
-        # so the form is not valid
-
-        reason = 'bogus'
-        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
-            response = self.client.post(self.url, data={'revoked_reason': reason})
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
-        self.assertNotRevoked(self.obj)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed('admin/django_ca/certificate/revoke_form.html')
-        self.assertEqual(
-            response.context['form'].errors,
-            {'revoked_reason': ['Select a valid choice. bogus is not one of the available choices.']})
-
-    def test_revoked(self):
-        cert = Certificate.objects.get(serial=self.obj.serial)
-        cert.revoke()
-        cert.save()
-
-        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
-            response = self.client.get(self.url)
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
-        self.assertRedirects(response, self.change_url())
-
-        # Revoke a second time, does not update
-        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
-            response = self.client.post(self.url, data={'revoked_reason': 'certificateHold'})
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
-        self.assertRedirects(response, self.change_url())
-        self.assertRevoked(self.obj)
-
-    def test_anonymous(self):
-        client = Client()
-
-        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
-            response = client.get(self.url)
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
-        self.assertRequiresLogin(response)
-        self.assertNotRevoked(self.obj)
-
-        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
-            response = client.post(self.url, data={})
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
-        self.assertRequiresLogin(response)
-        self.assertNotRevoked(self.obj)
-
-    def test_plain_user(self):
-        # User isn't staff and has no permissions
-        client = Client()
-        User.objects.create_user(username='plain', password='password', email='plain@example.com')
-        self.assertTrue(client.login(username='plain', password='password'))
-
-        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
-            response = client.get(self.url)
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
-        self.assertRequiresLogin(response)
-        self.assertNotRevoked(self.obj)
-
-        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
-            response = client.post(self.url, data={})
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
-        self.assertRequiresLogin(response)
-        self.assertNotRevoked(self.obj)
-
-    def test_no_perms(self):
-        # User is staff but has no permissions
-        client = Client()
-        user = User.objects.create_user(username='staff', password='password', email='staff@example.com',
-                                        is_staff=True)
-        user.save()
-        self.assertTrue(client.login(username='staff', password='password'))
-
-        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
-            response = client.get(self.url)
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
-        self.assertEqual(response.status_code, 403)
-        self.assertNotRevoked(self.obj)
-
-        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
-            response = client.post(self.url, data={})
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
-        self.assertEqual(response.status_code, 403)
-        self.assertNotRevoked(self.obj)
-
-    def test_no_staff(self):
-        # User isn't staff but has permissions
-        client = Client()
-        user = User.objects.create_user(username='no_perms', password='password',
-                                        email='no_perms@example.com')
-        p = Permission.objects.get(codename='change_certificate')
-        user.user_permissions.add(p)
-        self.assertTrue(client.login(username='no_perms', password='password'))
-
-        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
-            response = client.get(self.url)
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
-        self.assertRequiresLogin(response)
-
-        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
-            response = client.post(self.url, data={})
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
-        self.assertRequiresLogin(response)
-        self.assertNotRevoked(self.obj)
-
-    def test_unknown_object(self):
-        """Test an unknown object (get_change_actions() fetches object, so it should work)."""
-        response = self.client.get(self.change_url(Certificate(pk=1234)))
-        self.assertEqual(response.status_code, 302)
