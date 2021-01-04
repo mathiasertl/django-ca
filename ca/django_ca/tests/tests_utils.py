@@ -57,7 +57,7 @@ from .base import override_settings
 from .base import override_tmpcadir
 
 
-def load_tests(loader, tests, ignore):
+def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
     """Load doctests."""
     tests.addTests(doctest.DocTestSuite(utils))
     return tests
@@ -179,6 +179,7 @@ class ReadFileTestCase(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_file_not_found(self):
+        """Test reading a file that does not exist."""
         name = 'test-data'
         path = os.path.join(ca_settings.CA_DIR, name)
 
@@ -191,6 +192,7 @@ class ReadFileTestCase(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_permission_denied(self):
+        """Test reading a file when permission is denied."""
         name = 'test-data'
         path = os.path.join(ca_settings.CA_DIR, name)
         data = b'test data'
@@ -212,7 +214,7 @@ class ReadFileTestCase(DjangoCATestCase):
 class ParseNameTestCase(DjangoCATestCase):
     """Test :py:func:`django_ca.utils.parse_name`."""
 
-    def assertSubject(self, actual, expected):
+    def assertSubject(self, actual, expected):  # pylint: disable=arguments-differ
         self.assertEqual(parse_name(actual), expected)
 
     def test_basic(self):
@@ -226,26 +228,29 @@ class ParseNameTestCase(DjangoCATestCase):
         self.assertSubject('/emailAddress=user@example.com', [('emailAddress', 'user@example.com')])
 
     def test_multiple(self):
+        """Test subject with multiple tokens."""
         self.assertSubject('/C=AT/OU=foo/CN=example.com', [('C', 'AT'), ('OU', 'foo'), ('CN', 'example.com')])
 
     def test_case(self):
-        # test that we generally ignore case in subject keys
+        """Test that case doesn't matter."""
         self.assertSubject(
             '/c=AT/ou=foo/cn=example.com/eMAIladdreSS=user@example.com',
             [('C', 'AT'), ('OU', 'foo'), ('CN', 'example.com'), ('emailAddress', 'user@example.com')])
 
     def test_emtpy(self):
-        # empty subjects are ok
+        """Test empty subjects."""
         self.assertSubject('', [])
         self.assertSubject('   ', [])
 
     def test_multiple_slashes(self):
+        """Test that we ignore multiple slashes."""
         self.assertSubject('/C=AT/O=GNU', [('C', 'AT'), ('O', 'GNU')])
         self.assertSubject('//C=AT/O=GNU', [('C', 'AT'), ('O', 'GNU')])
         self.assertSubject('/C=AT//O=GNU', [('C', 'AT'), ('O', 'GNU')])
         self.assertSubject('/C=AT///O=GNU', [('C', 'AT'), ('O', 'GNU')])
 
     def test_empty_field(self):
+        """Test empty fields."""
         self.assertSubject('/C=AT/O=GNU/OU=foo', [('C', 'AT'), ('O', 'GNU'), ('OU', 'foo')])
         self.assertSubject('/C=/O=GNU/OU=foo', [('C', ''), ('O', 'GNU'), ('OU', 'foo')])
         self.assertSubject('/C=AT/O=/OU=foo', [('C', 'AT'), ('O', ''), ('OU', 'foo')])
@@ -253,9 +258,11 @@ class ParseNameTestCase(DjangoCATestCase):
         self.assertSubject('/C=/O=/OU=', [('C', ''), ('O', ''), ('OU', '')])
 
     def test_no_slash_at_start(self):
+        """Test that no slash at start is okay."""
         self.assertSubject('CN=example.com', [('CN', 'example.com')])
 
     def test_multiple_ous(self):
+        """Test multiple OUs."""
         self.assertSubject('/OU=foo/OU=bar', [('OU', 'foo'), ('OU', 'bar')])
         self.assertSubject('/C=AT/O=bla/OU=foo/OU=bar/CN=example.com/',
                            [('C', 'AT'), ('O', 'bla'), ('OU', 'foo'), ('OU', 'bar'), ('CN', 'example.com')])
@@ -264,12 +271,14 @@ class ParseNameTestCase(DjangoCATestCase):
                             ('CN', 'example.com')])
 
     def test_multiple_other(self):
+        """Test multiple other tokens (only OUs work)."""
         with self.assertRaisesRegex(ValueError, '^Subject contains multiple "C" fields$'):
             parse_name('/C=AT/C=FOO')
         with self.assertRaisesRegex(ValueError, '^Subject contains multiple "CN" fields$'):
             parse_name('/CN=AT/CN=FOO')
 
     def test_unknown(self):
+        """Test unknown field."""
         field = 'ABC'
         with self.assertRaisesRegex(ValueError, '^Unknown x509 name field: ABC$') as e:
             parse_name('/%s=example.com' % field)
@@ -277,14 +286,16 @@ class ParseNameTestCase(DjangoCATestCase):
 
 
 class RelativeNameTestCase(TestCase):
-    """Test :py:func:`django_ca.utils.format_relative_name`."""
+    """Some tests related to relative names."""
 
     def test_format(self):
+        """Test formatting..."""
         rdn = x509.RelativeDistinguishedName([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')])
         self.assertEqual(format_relative_name([('C', 'AT'), ('CN', 'example.com')]), '/C=AT/CN=example.com')
         self.assertEqual(format_relative_name(rdn), '/CN=example.com')
 
     def test_parse(self):
+        """Test parsing..."""
         expected = x509.RelativeDistinguishedName([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')])
         self.assertEqual(x509_relative_name('/CN=example.com'), expected)
         self.assertEqual(x509_relative_name([('CN', 'example.com')]), expected)
@@ -298,13 +309,16 @@ class ValidateEmailTestCase(DjangoCATestCase):
         self.assertEqual(validate_email('user@example.com'), 'user@example.com')
 
     def test_i18n(self):
+        """Test i18n domain."""
         self.assertEqual(validate_email('user@exämple.com'), 'user@xn--exmple-cua.com')
 
     def test_invalid_domain(self):
+        """Test with an invalid domain."""
         with self.assertRaisesRegex(ValueError, '^Invalid domain: example.com$'):
             validate_email('user@example com')
 
     def test_no_at(self):
+        """Test without "@"."""
         with self.assertRaisesRegex(ValueError, '^Invalid email address: user$'):
             validate_email('user')
 
@@ -316,12 +330,14 @@ class ValidateHostnameTestCase(TestCase):
     """Test :py:func:`django_ca.utils.validate_hostname`."""
 
     def test_no_port(self):
+        """Test with no port."""
         self.assertEqual(validate_hostname('localhost'), 'localhost')
         self.assertEqual(validate_hostname('testserver'), 'testserver')
         self.assertEqual(validate_hostname('example.com'), 'example.com')
         self.assertEqual(validate_hostname('test.example.com'), 'test.example.com')
 
     def test_with_port(self):
+        """Test with a port."""
         self.assertEqual(validate_hostname('localhost:443', allow_port=True), 'localhost:443')
         self.assertEqual(validate_hostname('testserver:443', allow_port=True), 'testserver:443')
         self.assertEqual(validate_hostname('example.com:443', allow_port=True), 'example.com:443')
@@ -330,16 +346,19 @@ class ValidateHostnameTestCase(TestCase):
         self.assertEqual(validate_hostname('example.com:65535', allow_port=True), 'example.com:65535')
 
     def test_invalid_hostname(self):
+        """Test with an invalid hostname."""
         with self.assertRaisesRegex(ValueError, 'example..com: Not a valid hostname'):
             validate_hostname('example..com')
 
     def test_no_allow_port(self):
+        """Test passing a port when it's not allowed."""
         with self.assertRaisesRegex(ValueError, '^localhost:443: Not a valid hostname$'):
             validate_hostname('localhost:443')
         with self.assertRaisesRegex(ValueError, '^test.example.com:443: Not a valid hostname$'):
             validate_hostname('test.example.com:443')
 
     def test_port_errors(self):
+        """Test passing an invalid port."""
         with self.assertRaisesRegex(ValueError, '^no-int: Port must be an integer$'):
             validate_hostname('localhost:no-int', allow_port=True)
         with self.assertRaisesRegex(ValueError, '^0: Port must be between 1 and 65535$'):
@@ -358,26 +377,31 @@ class ParseGeneralNameTest(TestCase):
     """Test :py:func:`django_ca.utils.parse_general_name`."""
 
     def test_ipv4(self):
+        """Test parsing an IPv4 address."""
         self.assertEqual(parse_general_name('1.2.3.4'), x509.IPAddress(ipaddress.ip_address('1.2.3.4')))
         self.assertEqual(parse_general_name('ip:1.2.3.4'), x509.IPAddress(ipaddress.ip_address('1.2.3.4')))
 
     def test_ipv4_network(self):
+        """Test parsing an IPv4 network."""
         self.assertEqual(parse_general_name('1.2.3.0/24'),
                          x509.IPAddress(ipaddress.ip_network('1.2.3.0/24')))
         self.assertEqual(parse_general_name('ip:1.2.3.0/24'),
                          x509.IPAddress(ipaddress.ip_network('1.2.3.0/24')))
 
     def test_ipv6(self):
+        """Test parsing an IPv6 address."""
         self.assertEqual(parse_general_name('fd00::32'), x509.IPAddress(ipaddress.ip_address('fd00::32')))
         self.assertEqual(parse_general_name('ip:fd00::32'), x509.IPAddress(ipaddress.ip_address('fd00::32')))
 
     def test_ipv6_network(self):
+        """Test parsing an IPv6 network,"""
         self.assertEqual(parse_general_name('fd00::0/32'),
                          x509.IPAddress(ipaddress.ip_network('fd00::0/32')))
         self.assertEqual(parse_general_name('ip:fd00::0/32'),
                          x509.IPAddress(ipaddress.ip_network('fd00::0/32')))
 
     def test_domain(self):
+        """Test parsing a domain."""
         self.assertEqual(parse_general_name('DNS:example.com'), x509.DNSName('example.com'))
         self.assertEqual(parse_general_name('DNS:.example.com'), x509.DNSName('.example.com'))
 
@@ -385,6 +409,7 @@ class ParseGeneralNameTest(TestCase):
         self.assertEqual(parse_general_name('.example.com'), x509.DNSName('.example.com'))
 
     def test_wildcard_domain(self):
+        """Test parsing a wildcard domain."""
         self.assertEqual(parse_general_name('*.example.com'), x509.DNSName('*.example.com'))
         self.assertEqual(parse_general_name('DNS:*.example.com'), x509.DNSName('*.example.com'))
 
@@ -400,6 +425,7 @@ class ParseGeneralNameTest(TestCase):
             parse_general_name('example.com.*')
 
     def test_dirname(self):
+        """Test parsing a dirname."""
         self.assertEqual(parse_general_name('/CN=example.com'), x509.DirectoryName(x509.Name([
             x509.NameAttribute(NameOID.COMMON_NAME, 'example.com'),
         ])))
@@ -412,19 +438,23 @@ class ParseGeneralNameTest(TestCase):
         ])))
 
     def test_uri(self):
+        """Test parsing a URI."""
         url = 'https://example.com'
         self.assertEqual(parse_general_name(url), x509.UniformResourceIdentifier(url))
         self.assertEqual(parse_general_name('uri:%s' % url), x509.UniformResourceIdentifier(url))
 
     def test_rid(self):
+        """Test parsing a Registered ID."""
         self.assertEqual(parse_general_name('rid:2.5.4.3'), x509.RegisteredID(NameOID.COMMON_NAME))
 
     def test_othername(self):
+        """Test parsing an otherName name."""
         self.assertEqual(parse_general_name('otherName:2.5.4.3;UTF8:example.com'), x509.OtherName(
             NameOID.COMMON_NAME, b'example.com'
         ))
 
     def test_unicode_domains(self):
+        """Test some unicode domains."""
         self.assertEqual(parse_general_name('https://exämple.com/test'),
                          x509.UniformResourceIdentifier('https://xn--exmple-cua.com/test'))
         self.assertEqual(parse_general_name('https://exämple.com:8000/test'),
@@ -442,13 +472,15 @@ class ParseGeneralNameTest(TestCase):
         self.assertEqual(parse_general_name('dns:*.exämple.com'), x509.DNSName('*.xn--exmple-cua.com'))
 
     def test_wrong_email(self):
+        """Test using an invalid email."""
         with self.assertRaisesRegex(ValueError, r'^Could not parse name: user@$'):
             parse_general_name('user@')
 
         with self.assertRaisesRegex(ValueError, '^Invalid domain: $'):
             parse_general_name('email:user@')
 
-    def test_otherName_octetString(self):
+    def test_othername_octetstring(self):
+        """Test an octet string."""
         self.assertEqual(parse_general_name(
                          'otherName:1.3.6.1.4.1.311.25.1;OctetString:09CFF1A8F6DEFD4B85CE95FFA1B54217'),
                          x509.OtherName(
@@ -462,10 +494,12 @@ class ParseGeneralNameTest(TestCase):
             parse_general_name('otherName:1.2.3;MagicString:Broken')
 
     def test_error(self):
+        """Try parsing an unparseable IP address (b/c it has a network)."""
         with self.assertRaisesRegex(ValueError, r'^Could not parse IP address\.$'):
             parse_general_name('ip:1.2.3.4/24')
 
     def test_unparseable(self):
+        """test some unparseable domains."""
         with self.assertRaisesRegex(ValueError, r'^Could not parse name: http://ex ample\.com$'):
             parse_general_name('http://ex ample.com')
         with self.assertRaisesRegex(ValueError, r'^Could not parse DNS name in URL: http://ex ample\.com$'):
@@ -484,6 +518,7 @@ class FormatGeneralNameTest(TestCase):
                          'IP:127.0.0.1')
 
     def test_dirname(self):
+        """Test formatting a dirname."""
         name = x509.DirectoryName(x509.Name([
             x509.NameAttribute(NameOID.COUNTRY_NAME, 'AT'),
             x509.NameAttribute(NameOID.COMMON_NAME, 'example.com'),
@@ -524,10 +559,12 @@ class Power2TestCase(TestCase):
     """Test :py:func:`django_ca.utils.is_power2`."""
 
     def test_true(self):
+        """Test some numbers that are power of two."""
         for i in range(0, 20):
             self.assertTrue(is_power2(2 ** i))
 
     def test_false(self):
+        """Test some numbers that are not power of two."""
         self.assertFalse(is_power2(0))
         self.assertFalse(is_power2(3))
         self.assertFalse(is_power2(5))
@@ -548,6 +585,7 @@ class ParseKeyCurveTestCase(TestCase):
         self.assertIsInstance(parse_key_curve('SECP192R1'), ec.SECP192R1)
 
     def test_error(self):
+        """Test some error cases."""
         with self.assertRaisesRegex(ValueError, '^FOOBAR: Not a known Eliptic Curve$'):
             parse_key_curve('FOOBAR')
 
@@ -572,6 +610,7 @@ class ParseEncodingTestCase(TestCase):
         self.assertEqual(parse_encoding(Encoding.OpenSSH), Encoding.OpenSSH)
 
     def test_error(self):
+        """Test some error cases."""
         with self.assertRaisesRegex(ValueError, '^Unknown encoding: foo$'):
             parse_encoding('foo')
 
@@ -594,16 +633,19 @@ class AddColonsTestCase(TestCase):
         self.assertEqual(utils.add_colons('abcdefg'), '0a:bc:de:fg')
 
     def test_pad(self):
+        """Test padding."""
         self.assertEqual(utils.add_colons('a', pad='z'), 'za')
         self.assertEqual(utils.add_colons('ab', pad='z'), 'ab')
         self.assertEqual(utils.add_colons('abc', pad='z'), 'za:bc')
 
     def test_no_pad(self):
+        """Test disabling padding."""
         self.assertEqual(utils.add_colons('a', pad=None), 'a')
         self.assertEqual(utils.add_colons('ab', pad=None), 'ab')
         self.assertEqual(utils.add_colons('abc', pad=None), 'ab:c')
 
     def test_zero_padding(self):
+        """Test when there is no padding."""
         self.assertEqual(
             utils.add_colons('F570A555BC5000FA301E8C75FFB31684FCF64436'),
             'F5:70:A5:55:BC:50:00:FA:30:1E:8C:75:FF:B3:16:84:FC:F6:44:36'
