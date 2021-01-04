@@ -442,6 +442,8 @@ lexers['shell-session'] = BashSessionLexer()
 #   See also: https://github.com/sphinx-doc/sphinx/issues/4826
 qualname_overrides = {
     'cryptography.x509.name.Name': 'cg:cryptography.x509.Name',
+    'cryptography.x509.base.CertificateSigningRequest': 'cg:cryptography.x509.CertificateSigningRequest',
+    'cryptography.x509.name.RelativeDistinguishedName': 'cg:cryptography.x509.RelativeDistinguishedName',
 }
 
 fa_orig = sphinx_autodoc_typehints.format_annotation

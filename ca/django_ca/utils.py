@@ -23,6 +23,7 @@ from datetime import datetime
 from datetime import timedelta
 from ipaddress import ip_address
 from ipaddress import ip_network
+from typing import Iterable
 from typing import List
 from typing import Tuple
 from typing import Union
@@ -129,7 +130,7 @@ except ImportError:  # pragma: no cover
             return self
 
 
-def sort_name(subject):
+def sort_name(subject: List[Tuple[str, str]]) -> List[Tuple[str, str]]:
     """Returns the subject in the correct order for a x509 subject."""
     return sorted(subject, key=lambda e: SUBJECT_FIELDS.index(e[0]))
 
@@ -325,8 +326,20 @@ def sanitize_serial(value: str) -> str:
     return serial
 
 
-def parse_csr(csr, csr_format):
-    """Parse a CSR in the given format."""
+def parse_csr(
+        csr: Union[x509.CertificateSigningRequest, str, bytes],
+        csr_format: Encoding
+) -> x509.CertificateSigningRequest:
+    """Parse a CSR in the given format.
+
+    Parameters
+    ----------
+
+    csr : str or bytes or :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
+        The CSR to parse.
+    csr_format : :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding`
+        The format that the CSR is in.
+    """
 
     if isinstance(csr, x509.CertificateSigningRequest):
         return csr
@@ -413,7 +426,7 @@ def x509_name(name: Union[List[Tuple[str, str]], str]) -> x509.Name:
     return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], force_str(value)) for typ, value in name])
 
 
-def x509_relative_name(name):
+def x509_relative_name(name: Union[str, Iterable[Tuple[str, str]]]) -> x509.RelativeDistinguishedName:
     """Parse a relative name (RDN) into a :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`.
 
     >>> x509_relative_name('/CN=example.com')
@@ -481,10 +494,10 @@ def validate_hostname(hostname: str, allow_port: bool = False) -> str:
     """
     port = None
     if allow_port is True and ':' in hostname:
-        hostname, port = hostname.rsplit(':', 1)
+        hostname, port_str = hostname.rsplit(':', 1)
 
         try:
-            port = int(port)
+            port = int(port_str)
         except ValueError as e:
             raise ValueError('%s: Port must be an integer' % port) from e
 
