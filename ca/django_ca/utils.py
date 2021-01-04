@@ -36,11 +36,9 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
 
 from django.core.files.storage import get_storage_class
-from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import URLValidator
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_str
-from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
@@ -101,15 +99,6 @@ MULTIPLE_OIDS = (
 
 # uppercase values as keys for normalizing case
 NAME_CASE_MAPPINGS = {v.upper(): v for v in OID_NAME_MAPPINGS.values()}
-
-
-class LazyEncoder(DjangoJSONEncoder):
-    """Encoder that also encodes strings translated with gettext_lazy."""
-
-    def default(self, o):
-        if isinstance(o, Promise):
-            return force_str(o)
-        return super().default(o)
 
 
 try:

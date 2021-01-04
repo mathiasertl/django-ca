@@ -15,7 +15,6 @@
 
 import doctest
 import ipaddress
-import json
 import os
 from contextlib import contextmanager
 from datetime import datetime
@@ -29,8 +28,6 @@ from cryptography.x509.oid import NameOID
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
-from django.utils.translation import gettext as _
-from django.utils.translation import gettext_lazy as _l
 
 from freezegun import freeze_time
 
@@ -38,7 +35,6 @@ from .. import ca_settings
 from .. import utils
 from ..utils import NAME_RE
 from ..utils import GeneralNameList
-from ..utils import LazyEncoder
 from ..utils import format_general_name
 from ..utils import format_name
 from ..utils import format_relative_name
@@ -164,20 +160,6 @@ class NameMatchTest(TestCase):
 
         self.match('/C=AT/ST=Vienna/L=Loc Fünf/O=Org Name/OU=Org Unit/CN=example.com', expected)
         self.match('/C=AT/ST=Vienna/L="Loc Fünf"/O=\'Org Name\'/OU=Org Unit/CN=example.com', expected)
-
-
-class LazyEncoderTestCase(TestCase):
-    def test_basic(self):
-        """Some basic tests."""
-        self.assertEqual('{"a": "b"}', json.dumps({'a': 'b'}, cls=LazyEncoder))
-
-    def test_translated(self):
-        self.assertEqual('{"a": "b"}', json.dumps({'a': _l('b')}, cls=LazyEncoder))
-
-        # these are just here to improve branch coverage :-)
-        self.assertEqual('{"a": "b"}', json.dumps({'a': _('b')}, cls=LazyEncoder))
-        self.assertEqual('{"a": "2016-03-26T00:00:00"}',
-                         json.dumps({'a': datetime(2016, 3, 26)}, cls=LazyEncoder))
 
 
 class ReadFileTestCase(DjangoCATestCase):
