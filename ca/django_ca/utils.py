@@ -114,7 +114,7 @@ except ImportError:  # pragma: no cover
     #       it is present (but undocumented) in Django 2.2 as well.
     # Copy of classproperty from django 3.1 for older versions
     # pylint: disable=invalid-name,missing-function-docstring
-    class classproperty:
+    class classproperty:  # type: ignore
         """
         Decorator that converts a method with a single cls argument into a property
         that can be accessed directly from the class.
@@ -499,7 +499,7 @@ def validate_hostname(hostname: str, allow_port: bool = False) -> str:
         try:
             port = int(port_str)
         except ValueError as e:
-            raise ValueError('%s: Port must be an integer' % port) from e
+            raise ValueError('%s: Port must be an integer' % port_str) from e
 
         if port < 1 or port > 65535:
             raise ValueError('%s: Port must be between 1 and 65535' % port)
