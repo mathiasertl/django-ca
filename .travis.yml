@@ -23,20 +23,20 @@ install:
   - pip install -U pip setuptools wheel
   - pip install Django==$DJANGO cryptography==$CRYPTOGRAPHY
 stages:
-  - test
   - "Code Quality"
+  - test
 jobs:
   include:
     #- stage: test
     #  name: "Run test suite"
     - stage: "Code Quality"
-      name: isort/flake8
+      name: "Run isort and flake8"
       script:
         - pip install -r requirements/requirements-core.txt
         - pip install -r requirements/requirements-libs.txt
         - pip install -r requirements/requirements-lint.txt
         - ./dev.py code-quality
-    - name: pylint
+    - name: "Run pylint"
       script:
         # pylint requires libs to be installed for import tests
         - pip install -r requirements/requirements-core.txt
@@ -44,14 +44,14 @@ jobs:
         - pip install -r requirements/requirements-test.txt
         - pip install -r requirements/requirements-lint.txt
         - pylint --disable=fixme ca/django_ca/
-    - name: docs
+    - name: "Generate documentation"""
       script:
         # We need core/libs as conf.py has to call django.setup()
         - pip install -r requirements/requirements-core.txt
         - pip install -r requirements/requirements-libs.txt
         - pip install -r requirements/requirements-docs.txt
         - make -C docs html-check
-    - name: demo
+    - name: "Initialize demo"
       script:
         # test libs are required for recreating fixtures
         - pip install -r requirements/requirements-core.txt termcolor
