@@ -38,7 +38,7 @@ jobs:
         # pylint requires libs to be installed for import tests
         - pip install -r requirements/requirements-core.txt
         - pip install -r requirements/requirements-libs.txt
-        - pip install -r requirements/requirements-test.txt
+        - pip install -r requirements/requirements-lint.txt
         - pylint --disable=fixme ca/django_ca/
     - name: docs
       script:
