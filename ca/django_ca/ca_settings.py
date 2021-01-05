@@ -201,7 +201,7 @@ try:
     CA_DIGEST_ALGORITHM = getattr(hashes, CA_DIGEST_ALGORITHM)()
 except AttributeError:
     # pylint: disable=raise-missing-from; not really useful in this context
-    raise ImproperlyConfigured('Unkown CA_DIGEST_ALGORITHM: %s' % settings.CA_DIGEST_ALGORITHM)
+    raise ImproperlyConfigured('Unkown CA_DIGEST_ALGORITHM: %s' % CA_DIGEST_ALGORITHM)
 
 CA_DEFAULT_EXPIRES: timedelta = getattr(settings, 'CA_DEFAULT_EXPIRES', 730)
 if isinstance(CA_DEFAULT_EXPIRES, int):
@@ -227,7 +227,7 @@ try:
         raise ImproperlyConfigured('%s: Not an EllipticCurve.' % _CA_DEFAULT_ECC_CURVE)
 except AttributeError:
     # pylint: disable=raise-missing-from; not really useful in this context
-    raise ImproperlyConfigured('Unkown CA_DEFAULT_ECC_CURVE: %s' % settings.CA_DEFAULT_ECC_CURVE)
+    raise ImproperlyConfigured('Unkown CA_DEFAULT_ECC_CURVE: %s' % _CA_DEFAULT_ECC_CURVE)
 
 CA_FILE_STORAGE = getattr(settings, 'CA_FILE_STORAGE', global_settings.DEFAULT_FILE_STORAGE)
 CA_FILE_STORAGE_KWARGS = getattr(settings, 'CA_FILE_STORAGE_KWARGS', {

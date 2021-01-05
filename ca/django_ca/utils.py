@@ -826,7 +826,7 @@ def parse_encoding(value=None):
     raise ValueError('Unknown type passed: %s' % type(value).__name__)
 
 
-def parse_key_curve(value=None):
+def parse_key_curve(value: Union[ec.EllipticCurve, str] = None) -> ec.EllipticCurve:
     """Parse an elliptic curve value.
 
     This function uses a value identifying an elliptic curve to return an
