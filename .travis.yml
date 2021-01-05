@@ -28,12 +28,10 @@ jobs:
   include:
     - stage: lint
       script:
-        - echo "### TESTING STAGES"
-        - python --version
-        - pip --version
-        - pip install -r requirements/requirements-core.txt pyyaml termcolor
         - pip install -r requirements/requirements-lint.txt
-        - python dev.py code-quality
+        - isort --check-only --diff ca/ *.py
+        - flake8 ca/ *.py
+        - pylint --disable=fixme ca/django_ca/
     - stage: docs
       script:
         - pip install -r requirements/requirements-core.txt pyyaml termcolor
