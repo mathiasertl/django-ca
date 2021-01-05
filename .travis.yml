@@ -23,11 +23,11 @@ install:
   - pip install -U pip setuptools wheel
   - pip install Django==$DJANGO cryptography==$CRYPTOGRAPHY
 stages:
-  - Tests
+  - test
   - "Code Quality"
 jobs:
   include:
-    - stage: Tests
+    - stage: test
       script:
         - pip install -r requirements/requirements-core.txt
         - pip install -r requirements/requirements-libs.txt
