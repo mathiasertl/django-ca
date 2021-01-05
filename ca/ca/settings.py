@@ -2,6 +2,7 @@
 
 import os
 from typing import List
+from typing import Optional
 
 import yaml
 
@@ -213,7 +214,7 @@ if not _skip_local_config:
             globals()[key] = value
 
 
-def _parse_bool(env_value):
+def _parse_bool(env_value: str) -> bool:
     # parse a env variable that is supposed to represent a boolean value
     return env_value.strip().lower() in ('true', 'yes', '1')
 
@@ -251,7 +252,7 @@ if not SECRET_KEY:
 INSTALLED_APPS = INSTALLED_APPS + CA_CUSTOM_APPS
 
 
-def _set_db_setting(name, env_name, default=None):
+def _set_db_setting(name: str, env_name: str, default: Optional[str] = None) -> None:
     if DATABASES['default'].get(name):
         return
 
