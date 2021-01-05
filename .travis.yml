@@ -28,6 +28,7 @@ stages:
 jobs:
   include:
     - stage: test
+      name: "Run test suite"
       script:
         - pip install -r requirements/requirements-core.txt
         - pip install -r requirements/requirements-libs.txt
