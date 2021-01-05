@@ -445,6 +445,9 @@ qualname_overrides = {
     'cryptography.x509.base.CertificateSigningRequest': 'cg:cryptography.x509.CertificateSigningRequest',
     'cryptography.x509.name.RelativeDistinguishedName': 'cg:cryptography.x509.RelativeDistinguishedName',
     'cryptography.x509.base.CertificateBuilder': 'cg:cryptography.x509.CertificateBuilder',
+    'cryptography.hazmat.primitives.serialization.base.Encoding':
+        'cg:cryptography.hazmat.primitives.serialization.Encoding',
+    'cryptography.x509.general_name.GeneralName': 'cg:cryptography.x509.GeneralName',
 }
 
 fa_orig = sphinx_autodoc_typehints.format_annotation
