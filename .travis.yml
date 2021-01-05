@@ -43,7 +43,6 @@ jobs:
     - stage: demo
       - script:
         - pip install -r requirements/requirements-core.txt pyyaml termcolor
-        - pip install -r requirements/requirements-docs.txt
         - python dev.py init-demo
     - stage: test
       # download selenium driver
