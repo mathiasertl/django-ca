@@ -19,14 +19,19 @@ import binascii
 import os
 import re
 import shlex
+from collections import abc
 from datetime import datetime
 from datetime import timedelta
 from ipaddress import ip_address
 from ipaddress import ip_network
+from typing import Any
 from typing import Iterable
 from typing import List
+from typing import Optional
 from typing import Tuple
+from typing import Type
 from typing import Union
+from typing import cast
 from urllib.parse import urlparse
 
 import idna
@@ -195,7 +200,7 @@ def format_name(subject):
     return '/%s' % ('/'.join(['%s=%s' % (force_str(k), force_str(v)) for k, v in subject]))
 
 
-def format_relative_name(name):
+def format_relative_name(name: Union[str, Iterable[Tuple[str, str]]]) -> str:
     """Convert a relative name (RDN) into a canonical form.
 
     Examples::
@@ -213,7 +218,7 @@ def format_relative_name(name):
     return '/%s' % ('/'.join(['%s=%s' % (force_str(k), force_str(v)) for k, v in name]))
 
 
-def format_general_name(name):
+def format_general_name(name: x509.GeneralName) -> str:
     """Format a single general name.
 
     >>> import ipaddress
@@ -583,7 +588,7 @@ def generate_private_key(key_size, key_type, ecc_curve):
     return private_key
 
 
-def parse_general_name(name):
+def parse_general_name(name: Union[x509.GeneralName, str]) -> x509.GeneralName:
     """Parse a general name from user input.
 
     This function will do its best to detect the intended type of any value passed to it:
@@ -706,9 +711,9 @@ def parse_general_name(name):
     elif typ == 'rid':
         return x509.RegisteredID(x509.ObjectIdentifier(name))
     elif typ == 'othername':
-        regex = "(.*);(.*):(.*)"
-        if re.match(regex, name) is not None:
-            oid, asn_typ, val = re.match(regex, name).groups()
+        match = re.match("(.*);(.*):(.*)", name)
+        if match is not None:
+            oid, asn_typ, val = match.groups()
             oid = x509.ObjectIdentifier(oid)
             if asn_typ == 'UTF8':
                 val = val.encode('utf-8')
@@ -730,7 +735,7 @@ def parse_general_name(name):
             raise ValueError('Could not parse DNS name: %s' % name) from e
 
 
-def parse_hash_algorithm(value=None):
+def parse_hash_algorithm(value: Optional[Union[str, hashes.HashAlgorithm]] = None) -> hashes.HashAlgorithm:
     """Parse a hash algorithm value.
 
     The most common use case is to pass a str naming a class in
@@ -783,19 +788,22 @@ def parse_hash_algorithm(value=None):
     if value is None:
         return ca_settings.CA_DIGEST_ALGORITHM
     if isinstance(value, type) and issubclass(value, hashes.HashAlgorithm):
-        return value()
+        # issubclass() doesn't narrow the type, so value() is detected as Any
+        #   https://github.com/python/mypy/issues/8556
+        return cast(hashes.HashAlgorithm, value())
     if isinstance(value, hashes.HashAlgorithm):
         return value
     if isinstance(value, str):
         try:
-            return getattr(hashes, value.strip())()
+            algo: Type[hashes.HashAlgorithm] = getattr(hashes, value.strip())
+            return algo()
         except AttributeError as e:
             raise ValueError('Unknown hash algorithm: %s' % value) from e
 
     raise ValueError('Unknown type passed: %s' % type(value).__name__)
 
 
-def parse_encoding(value=None):
+def parse_encoding(value: Optional[Encoding] = None) -> Encoding:
     """Parse a value to a valid encoding.
 
     This function accepts either a member of
@@ -826,7 +834,7 @@ def parse_encoding(value=None):
     raise ValueError('Unknown type passed: %s' % type(value).__name__)
 
 
-def parse_key_curve(value: Union[ec.EllipticCurve, str] = None) -> ec.EllipticCurve:
+def parse_key_curve(value: Optional[Union[ec.EllipticCurve, str]] = None) -> ec.EllipticCurve:
     """Parse an elliptic curve value.
 
     This function uses a value identifying an elliptic curve to return an
@@ -873,14 +881,14 @@ def parse_key_curve(value: Union[ec.EllipticCurve, str] = None) -> ec.EllipticCu
     if value is None:
         return ca_settings.CA_DEFAULT_ECC_CURVE
 
-    curve = getattr(ec, value.strip(), type)
+    curve: Type[ec.EllipticCurve] = getattr(ec, value.strip(), type)
     if not issubclass(curve, ec.EllipticCurve):
         raise ValueError('%s: Not a known Eliptic Curve' % value)
     return curve()
 
 
 def get_cert_builder(
-        expires: Union[None, timedelta, datetime], serial: int = None
+        expires: Union[None, timedelta, datetime], serial: Optional[int] = None
 ) -> x509.CertificateBuilder:
     """Get a basic X509 cert builder object.
 
@@ -928,7 +936,8 @@ def read_file(path: str) -> bytes:
 
     try:
         # NOTE: In the python:3.9-rc-alpine3.10 Docker image, this is marked as a missed branch :-(
-        return stream.read()  # pragma: no branch
+        data: bytes = stream.read()  # pragma: no branch
+        return data
     finally:
         stream.close()
 
@@ -961,7 +970,7 @@ def shlex_split(val: str, sep: str) -> List[str]:
     return list(lex)
 
 
-class GeneralNameList(list):
+class GeneralNameList(List[x509.GeneralName]):
     """List that holds :py:class:`~cg:cryptography.x509.GeneralName` instances and parses ``str`` when added.
 
     A ``GeneralNameList`` is a ``list`` subclass that will always only hold
@@ -981,23 +990,26 @@ class GeneralNameList(list):
         True
 
     """
-    def __init__(self, iterable=tuple()):
+    # pylint: disable=not-an-iterable; pylint does not detect generic iterables ("class Foo(List[Any])").
+
+    def __init__(self, iterable: Iterable[Union[x509.GeneralName, str]] = tuple()) -> None:
         if isinstance(iterable, (str, x509.GeneralName)):
             iterable = [iterable]
 
         super().__init__(parse_general_name(v) for v in iterable)
 
-    def serialize(self):
+    def serialize(self) -> Iterable[str]:
         """Generate a list of formatted names."""
         for val in self:
             yield format_general_name(val)
 
-    def __add__(self, value):  # self + other_list
-        if isinstance(value, GeneralNameList) is False:
+    def __add__(self, value: Iterable[Union[x509.GeneralName, str]]) -> 'GeneralNameList':
+        # self + other_list
+        if not isinstance(value, GeneralNameList):
             value = GeneralNameList(value)
         return GeneralNameList(list(self) + list(value))
 
-    def __contains__(self, value):  # value in self
+    def __contains__(self, value: Any) -> bool:  # value in self
         try:
             value = parse_general_name(value)
         except ValueError:
@@ -1005,27 +1017,35 @@ class GeneralNameList(list):
 
         return list.__contains__(self, value)
 
-    def __eq__(self, other):  # value == other
+    def __eq__(self, other: Any) -> bool:  # value == other
         if isinstance(other, GeneralNameList) is False and isinstance(other, list) is True:
             other = GeneralNameList(other)
         return list.__eq__(self, other)
 
-    def __iadd__(self, value):  # self += value
+    def __iadd__(self, value: Iterable[Union[x509.GeneralName, str]]) -> 'GeneralNameList':  # self += value
         return list.__iadd__(self, (parse_general_name(v) for v in value))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<GeneralNameList: %r>' % [format_general_name(v) for v in self]
 
-    def __setitem__(self, key, value):  # l[0] = 'example.com'
-        if isinstance(key, slice):  # l[0:1] = ['example.com']
+    def __setitem__(
+            self, key: Union[int, slice],
+            value: Union[Iterable[Union[x509.GeneralName, str]], Union[x509.GeneralName, str]]
+    ) -> None:  # l[0] = 'example.com'
+        if isinstance(key, slice) and isinstance(value, abc.Iterable):
+            # l[0:1] = ['example.com']
             list.__setitem__(self, key, (parse_general_name(v) for v in value))
-        else:
+        elif isinstance(key, int) and isinstance(value, (x509.GeneralName, str)):
             list.__setitem__(self, key, parse_general_name(value))
+        else:
+            raise TypeError("%s/%s: Invalid key/value type." % (key, value))
 
-    def append(self, o):
-        list.append(self, parse_general_name(o))
+    def append(self, value: Union[x509.GeneralName, str]) -> None:
+        """Equivalent to list.append()."""
+        list.append(self, parse_general_name(value))
 
-    def count(self, value):
+    def count(self, value: Union[x509.GeneralName, str]) -> int:
+        """Equivalent to list.count()."""
         try:
             value = parse_general_name(value)
         except ValueError:
@@ -1033,20 +1053,26 @@ class GeneralNameList(list):
 
         return list.count(self, value)
 
-    def extend(self, iterable):
+    def extend(self, iterable: Iterable[Union[x509.GeneralName, str]]) -> None:
+        """Equivalent to list.extend()."""
         list.extend(self, (parse_general_name(i) for i in iterable))
 
-    def index(self, value, *args):
+    def index(self, value: Union[x509.GeneralName, str], *args: int) -> int:
+        """Equivalent to list.index()."""
         return list.index(self, parse_general_name(value), *args)
 
-    def insert(self, index, o):
-        list.insert(self, index, parse_general_name(o))
+    def insert(self, index: int, value: Union[x509.GeneralName, str]) -> None:
+        """Equivalent to list.insert()."""
+        list.insert(self, index, parse_general_name(value))
 
-    def remove(self, value):
+    def remove(self, value: Union[x509.GeneralName, str]) -> None:
+        """Equivalent to list.remove()."""
         list.remove(self, parse_general_name(value))
 
 
-def get_crl_cache_key(serial, algorithm=hashes.SHA512, encoding=Encoding.DER, scope=None):
+def get_crl_cache_key(
+        serial: str, algorithm: Type[hashes.HashAlgorithm] = hashes.SHA512,
+        encoding: Encoding = Encoding.DER, scope: Optional[str] = None) -> str:
     """Function to get a cache key for a CRL with the given parameters."""
 
     return 'crl_%s_%s_%s_%s' % (serial, algorithm.name, encoding.name, scope)

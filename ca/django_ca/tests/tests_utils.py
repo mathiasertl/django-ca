@@ -1055,5 +1055,5 @@ class GeneralNameListTestCase(DjangoCATestCase):
 
         # but we can only add parseable stuff
         gnl4 = GeneralNameList([self.dns1])
-        with self.assertAddTrue():
+        with self.assertRaisesRegex(TypeError, r'^0/True: Invalid key/value type\.$'):
             gnl4[0] = True

@@ -179,7 +179,7 @@ for name, profile in CA_PROFILES.items():
     profile.setdefault('subject', CA_DEFAULT_SUBJECT)
     profile.setdefault('cn_in_san', True)
 
-CA_DEFAULT_ENCODING = getattr(settings, 'CA_DEFAULT_ENCODING', Encoding.PEM)
+CA_DEFAULT_ENCODING: Encoding = getattr(settings, 'CA_DEFAULT_ENCODING', Encoding.PEM)
 CA_DEFAULT_PROFILE = getattr(settings, 'CA_DEFAULT_PROFILE', 'webserver')
 CA_NOTIFICATION_DAYS = getattr(settings, 'CA_NOTIFICATION_DAYS', [14, 7, 3, 1, ])
 CA_CRL_PROFILES = getattr(settings, 'CA_CRL_PROFILES', _CA_CRL_PROFILES)
@@ -196,7 +196,7 @@ CA_MIN_KEY_SIZE = getattr(settings, 'CA_MIN_KEY_SIZE', 2048)
 
 CA_DEFAULT_HOSTNAME = getattr(settings, 'CA_DEFAULT_HOSTNAME', None)
 
-CA_DIGEST_ALGORITHM = getattr(settings, 'CA_DIGEST_ALGORITHM', "sha512").strip().upper()
+CA_DIGEST_ALGORITHM: hashes.HashAlgorithm = getattr(settings, 'CA_DIGEST_ALGORITHM', "sha512").strip().upper()
 try:
     CA_DIGEST_ALGORITHM = getattr(hashes, CA_DIGEST_ALGORITHM)()
 except AttributeError:
@@ -222,7 +222,7 @@ if CA_MIN_KEY_SIZE > CA_DEFAULT_KEY_SIZE:
 
 _CA_DEFAULT_ECC_CURVE = getattr(settings, 'CA_DEFAULT_ECC_CURVE', 'SECP256R1').strip()
 try:
-    CA_DEFAULT_ECC_CURVE = getattr(ec, _CA_DEFAULT_ECC_CURVE)()
+    CA_DEFAULT_ECC_CURVE: ec.EllipticCurve = getattr(ec, _CA_DEFAULT_ECC_CURVE)()
     if not isinstance(CA_DEFAULT_ECC_CURVE, ec.EllipticCurve):
         raise ImproperlyConfigured('%s: Not an EllipticCurve.' % _CA_DEFAULT_ECC_CURVE)
 except AttributeError:
