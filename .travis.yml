@@ -44,7 +44,7 @@ jobs:
         - pip install -r requirements/requirements-test.txt
         - pip install -r requirements/requirements-lint.txt
         - pylint --disable=fixme ca/django_ca/
-    - name: "Generate documentation"""
+    - name: "Generate documentation"
       script:
         # We need core/libs as conf.py has to call django.setup()
         - pip install -r requirements/requirements-core.txt
