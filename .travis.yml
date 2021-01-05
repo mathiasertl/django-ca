@@ -27,6 +27,9 @@ jobs:
     - stage: qa
       name: lint
       script:
+        # pylint requires libs to be installed for import tests
+        - pip install -r requirements/requirements-core.txt
+        - pip install -r requirements/requirements-libs.txt
         - pip install -r requirements/requirements-lint.txt
         - isort --check-only --diff ca/ *.py
         - flake8 ca/ *.py
