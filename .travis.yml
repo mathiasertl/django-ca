@@ -6,6 +6,9 @@ python:  # https://devguide.python.org/#status-of-python-branches
   - "3.7"
   - "3.6"
   #- "nightly"
+
+# Enable pip cache: https://docs.travis-ci.com/user/caching/
+cache: pip
 env:  # https://www.djangoproject.com/download/
   - DJANGO=3.1.4 CRYPTOGRAPHY=3.3.1
   - DJANGO=3.1.4 CRYPTOGRAPHY=3.2.1
