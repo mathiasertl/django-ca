@@ -448,6 +448,7 @@ qualname_overrides = {
     'cryptography.hazmat.primitives.serialization.base.Encoding':
         'cg:cryptography.hazmat.primitives.serialization.Encoding',
     'cryptography.x509.general_name.GeneralName': 'cg:cryptography.x509.GeneralName',
+    'cryptography.hazmat._oid.ObjectIdentifier': 'cg:cryptography.x509.ObjectIdentifier',
 }
 
 fa_orig = sphinx_autodoc_typehints.format_annotation
@@ -456,6 +457,8 @@ fa_orig = sphinx_autodoc_typehints.format_annotation
 def format_annotation(annotation, fully_qualified: bool = False):
     if inspect.isclass(annotation):
         full_name = f'{annotation.__module__}.{annotation.__qualname__}'
+        if 'ident' in full_name.lower():
+            print(full_name)
         override = qualname_overrides.get(full_name)
         if override is not None:
             return f':py:class:`~{override}`'

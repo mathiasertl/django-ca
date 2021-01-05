@@ -124,13 +124,13 @@ except ImportError:  # pragma: no cover
         Decorator that converts a method with a single cls argument into a property
         that can be accessed directly from the class.
         """
-        def __init__(self, method=None):
+        def __init__(self, method=None):  # type: ignore
             self.fget = method
 
-        def __get__(self, instance, cls=None):
+        def __get__(self, instance, cls=None):  # type: ignore
             return self.fget(cls)
 
-        def getter(self, method):
+        def getter(self, method):  # type: ignore
             self.fget = method
             return self
 
@@ -153,7 +153,7 @@ def encode_url(url: str) -> str:
         'https://xn--exmple-cua.com:8000/foobar'
     """
     parsed = urlparse(url)
-    if parsed.port:
+    if parsed.hostname and parsed.port:
         hostname = idna.encode(parsed.hostname).decode('utf-8')
         parsed = parsed._replace(netloc='%s:%s' % (hostname, parsed.port))
     else:
@@ -182,7 +182,7 @@ def encode_dns(name: str) -> str:
     return idna.encode(name).decode('utf-8')
 
 
-def format_name(subject):
+def format_name(subject: Union[x509.Name, Iterable[Tuple[str, str]]]) -> str:
     """Convert a subject into the canonical form for distinguished names.
 
     This function does not take care of sorting the subject in any meaningful order.
@@ -197,10 +197,10 @@ def format_name(subject):
     if isinstance(subject, x509.Name):
         subject = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in subject]
 
-    return '/%s' % ('/'.join(['%s=%s' % (force_str(k), force_str(v)) for k, v in subject]))
+    return '/%s' % ('/'.join(['%s=%s' % (k, v) for k, v in subject]))
 
 
-def format_relative_name(name: Union[str, Iterable[Tuple[str, str]]]) -> str:
+def format_relative_name(name: Union[x509.RelativeDistinguishedName, Iterable[Tuple[str, str]]]) -> str:
     """Convert a relative name (RDN) into a canonical form.
 
     Examples::
@@ -215,7 +215,7 @@ def format_relative_name(name: Union[str, Iterable[Tuple[str, str]]]) -> str:
     if isinstance(name, x509.RelativeDistinguishedName):
         name = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in name]
 
-    return '/%s' % ('/'.join(['%s=%s' % (force_str(k), force_str(v)) for k, v in name]))
+    return '/%s' % ('/'.join(['%s=%s' % (k, v) for k, v in name]))
 
 
 def format_general_name(name: x509.GeneralName) -> str:
@@ -468,7 +468,7 @@ def validate_email(addr: str) -> str:
     node, domain = addr.rsplit('@', 1)
     try:
         domain = idna.encode(domain).decode('utf-8')
-    except idna.core.IDNAError as e:
+    except idna.IDNAError as e:
         raise ValueError('Invalid domain: %s' % domain) from e
 
     return '%s@%s' % (node, domain)
@@ -510,7 +510,7 @@ def validate_hostname(hostname: str, allow_port: bool = False) -> str:
             raise ValueError('%s: Port must be between 1 and 65535' % port)
 
     try:
-        encoded = idna.encode(hostname).decode('utf-8')
+        encoded: str = idna.encode(hostname).decode('utf-8')
     except idna.IDNAError as e:
         raise ValueError('%s: Not a valid hostname' % hostname) from e
 
@@ -519,7 +519,11 @@ def validate_hostname(hostname: str, allow_port: bool = False) -> str:
     return encoded
 
 
-def validate_key_parameters(key_size=None, key_type='RSA', ecc_curve=None):
+def validate_key_parameters(
+        key_size: Optional[int] = None,
+        key_type: Optional[str] = 'RSA',
+        ecc_curve: Optional[ec.EllipticCurve] = None
+) -> Tuple[Optional[int], str, Optional[ec.EllipticCurve]]:
     """Validate parameters for private key generation and return sanitized values.
 
     This function can be used to fail early if invalid parameters are passed, before the private key is
@@ -555,7 +559,8 @@ def validate_key_parameters(key_size=None, key_type='RSA', ecc_curve=None):
     return key_size, key_type, ecc_curve
 
 
-def generate_private_key(key_size, key_type, ecc_curve):
+def generate_private_key(key_size: int, key_type: str, ecc_curve: Optional[ec.EllipticCurve]) \
+        -> Union[rsa.RSAPrivateKey, dsa.DSAPrivateKey, ec.EllipticCurvePrivateKey]:
     """Generate a private key.
 
     This function assumes that you called :py:func:`~django_ca.utils.validate_key_parameters` on the input
@@ -578,14 +583,13 @@ def generate_private_key(key_size, key_type, ecc_curve):
         A private key of the appropriate type.
     """
     if key_type == 'DSA':
-        private_key = dsa.generate_private_key(key_size=key_size, backend=default_backend())
-    elif key_type == 'ECC':
-        private_key = ec.generate_private_key(ecc_curve, default_backend())
-    else:
-        private_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size,
-                                               backend=default_backend())
+        return dsa.generate_private_key(key_size=key_size, backend=default_backend())
+    if key_type == 'ECC' and ecc_curve is not None:
+        return ec.generate_private_key(ecc_curve, default_backend())
+    if key_type == 'RSA':
+        return rsa.generate_private_key(public_exponent=65537, key_size=key_size, backend=default_backend())
 
-    return private_key
+    raise ValueError("%s: Invalid key type." % key_type)
 
 
 def parse_general_name(name: Union[x509.GeneralName, str]) -> x509.GeneralName:
@@ -714,16 +718,14 @@ def parse_general_name(name: Union[x509.GeneralName, str]) -> x509.GeneralName:
         match = re.match("(.*);(.*):(.*)", name)
         if match is not None:
             oid, asn_typ, val = match.groups()
-            oid = x509.ObjectIdentifier(oid)
             if asn_typ == 'UTF8':
-                val = val.encode('utf-8')
+                parsed_value = val.encode('utf-8')
             elif asn_typ == 'OctetString':
-                val = bytes(bytearray.fromhex(val))
-                val = OctetString(val).dump()
+                parsed_value = OctetString(bytes(bytearray.fromhex(val))).dump()
             else:
                 raise ValueError('Unsupported ASN type in otherName: %s' % asn_typ)
-            val = force_bytes(val)
-            return x509.OtherName(oid, val)
+
+            return x509.OtherName(x509.ObjectIdentifier(oid), parsed_value)
 
         raise ValueError('Incorrect otherName format: %s' % name)
     elif typ == 'dirname':
