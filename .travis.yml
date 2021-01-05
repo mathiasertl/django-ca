@@ -30,14 +30,16 @@ jobs:
     - stage: qa
       name: isort/flake8
       script:
+        - pip install -r requirements/requirements-core.txt
+        - pip install -r requirements/requirements-libs.txt
         - pip install -r requirements/requirements-lint.txt
-        - isort --check-only --diff ca/ *.py
-        - flake8 ca/ *.py
+        - ./dev.py code-quality
     - name: pylint
       script:
         # pylint requires libs to be installed for import tests
         - pip install -r requirements/requirements-core.txt
         - pip install -r requirements/requirements-libs.txt
+        - pip install -r requirements/requirements-test.txt
         - pip install -r requirements/requirements-lint.txt
         - pylint --disable=fixme ca/django_ca/
     - name: docs
