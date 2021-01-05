@@ -59,6 +59,9 @@ jobs:
     - stage: test
       # download selenium driver
       script: 
+        - pip install -r requirements/requirements-core.txt
+        - pip install -r requirements/requirements-libs.txt
+        - pip install -r requirements/requirements-test.txt
         - mkdir -p contrib/selenium 
         - wget https://github.com/mozilla/geckodriver/releases/download/v0.26.0/geckodriver-v0.26.0-linux64.tar.gz
         - tar xf geckodriver-v0.26.0-linux64.tar.gz -C contrib/selenium
