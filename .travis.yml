@@ -23,11 +23,11 @@ install:
   - pip install -U pip setuptools wheel
   - pip install Django==$DJANGO cryptography==$CRYPTOGRAPHY
 stages:
-  - qa
-  - test
+  - Tests
+  - "Code Quality"
 jobs:
   include:
-    - stage: test
+    - stage: Tests
       script:
         - pip install -r requirements/requirements-core.txt
         - pip install -r requirements/requirements-libs.txt
@@ -38,7 +38,7 @@ jobs:
         - tar xf geckodriver-v0.26.0-linux64.tar.gz -C contrib/selenium
         - python dev.py coverage --format=text
         - python setup.py install
-    - stage: qa
+    - stage: "Code Quality"
       name: isort/flake8
       script:
         - pip install -r requirements/requirements-core.txt
