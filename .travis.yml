@@ -46,8 +46,10 @@ jobs:
         - make -C docs html-check
     - name: demo
       script:
+        # test libs are required for recreating fixtures
         - pip install -r requirements/requirements-core.txt termcolor
         - pip install -r requirements/requirements-libs.txt
+        - pip install -r requirements/requirements-test.txt
         - python dev.py init-demo
     - stage: test
       # download selenium driver
