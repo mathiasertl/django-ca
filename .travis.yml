@@ -36,10 +36,12 @@ jobs:
         - pip install -r requirements/requirements-lint.txt
         - python dev.py code-quality
     - stage: docs
+      - script:
         - pip install -r requirements/requirements-core.txt pyyaml termcolor
         - pip install -r requirements/requirements-docs.txt
         - make -C docs html-check
     - stage: demo
+      - script:
         - pip install -r requirements/requirements-core.txt pyyaml termcolor
         - pip install -r requirements/requirements-docs.txt
         - python dev.py init-demo
