@@ -34,12 +34,15 @@ jobs:
         - pylint --disable=fixme ca/django_ca/
     - stage: docs
       script:
-        - pip install -r requirements/requirements-core.txt pyyaml termcolor
+        # We need core/libs as conf.py has to call django.setup()
+        - pip install -r requirements/requirements-core.txt
+        - pip install -r requirements/requirements-libs.txt
         - pip install -r requirements/requirements-docs.txt
         - make -C docs html-check
     - stage: demo
       script:
-        - pip install -r requirements/requirements-core.txt pyyaml termcolor
+        - pip install -r requirements/requirements-core.txt termcolor
+        - pip install -r requirements/requirements-libs.txt
         - python dev.py init-demo
     - stage: test
       # download selenium driver
