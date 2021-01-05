@@ -20,26 +20,25 @@ install:
   - pip install -U pip setuptools wheel
   - pip install Django==$DJANGO cryptography==$CRYPTOGRAPHY
 stages:
-  - lint
-  - docs
-  - demo
+  - qa
   - test
 jobs:
   include:
-    - stage: lint
+    - stage: qa
+      name: lint
       script:
         - pip install -r requirements/requirements-lint.txt
         - isort --check-only --diff ca/ *.py
         - flake8 ca/ *.py
         - pylint --disable=fixme ca/django_ca/
-    - stage: docs
+    - name: docs
       script:
         # We need core/libs as conf.py has to call django.setup()
         - pip install -r requirements/requirements-core.txt
         - pip install -r requirements/requirements-libs.txt
         - pip install -r requirements/requirements-docs.txt
         - make -C docs html-check
-    - stage: demo
+    - name: demo
       script:
         - pip install -r requirements/requirements-core.txt termcolor
         - pip install -r requirements/requirements-libs.txt
