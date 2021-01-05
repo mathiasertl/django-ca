@@ -17,7 +17,7 @@ env:  # https://www.djangoproject.com/download/
   - DJANGO=2.2.17 CRYPTOGRAPHY=3.0
 install:
   # Build/test dependencies
-  - pip install -U pip setuptools wheels
+  - pip install -U pip setuptools wheel
   - pip install -r requirements/requirements-travis.txt
   - pip install Django==$DJANGO cryptography==$CRYPTOGRAPHY
 stages:
