@@ -33,6 +33,7 @@ common.setup_django()
 from django_ca.utils import bytes_to_hex  # NOQA: E402
 from django_ca.utils import format_general_name  # NOQA: E402
 from django_ca.utils import format_name  # NOQA: E402
+
 # pylint: enable=import-error,wrong-import-position,wrong-import-order
 
 parser = argparse.ArgumentParser(description="Update tables for ca_examples.rst in docs.")
