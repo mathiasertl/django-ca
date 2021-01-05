@@ -38,6 +38,7 @@ from ..utils import GeneralNameList
 from ..utils import format_general_name
 from ..utils import format_name
 from ..utils import format_relative_name
+from ..utils import generate_private_key
 from ..utils import get_cert_builder
 from ..utils import is_power2
 from ..utils import multiline_url_validator
@@ -371,6 +372,15 @@ class ValidateHostnameTestCase(TestCase):
             validate_hostname('localhost:100000', allow_port=True)
         with self.assertRaisesRegex(ValueError, '^colon: Port must be an integer$'):
             validate_hostname('localhost:double:colon', allow_port=True)
+
+
+class GeneratePrivateKeyTestCase(TestCase):
+    """Test :py:func:`django_ca.utils.generate_private_key`."""
+
+    def test_invalid_type(self):
+        """Test passing an invalid key type."""
+        with self.assertRaisesRegex(ValueError, r'^FOO: Invalid key type\.$'):
+            generate_private_key(16, 'FOO', None)
 
 
 class ParseGeneralNameTest(TestCase):
