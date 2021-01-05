@@ -1,11 +1,11 @@
 dist: "focal"  # https://docs.travis-ci.com/user/reference/overview/
 language: python
 python:  # https://devguide.python.org/#status-of-python-branches
-  - "3.6"
-  - "3.7"
-  - "3.8"
   - "3.9"
-    #- "nightly"
+  - "3.8"
+  - "3.7"
+  - "3.6"
+  #- "nightly"
 env:  # https://www.djangoproject.com/download/
   - DJANGO=3.1.4 CRYPTOGRAPHY=3.3.1
   - DJANGO=3.1.4 CRYPTOGRAPHY=3.2.1
@@ -17,23 +17,37 @@ env:  # https://www.djangoproject.com/download/
   - DJANGO=2.2.17 CRYPTOGRAPHY=3.0
 install:
   # Build/test dependencies
-  - pip install -U pip setuptools
+  - pip install -U pip setuptools wheels
   - pip install -r requirements/requirements-travis.txt
   - pip install Django==$DJANGO cryptography==$CRYPTOGRAPHY
+stages:
+  - lint
+  - docs
+  - demo
+  - test
 jobs:
   include:
+    - stage: lint
+      script:
+        - echo "### TESTING STAGES"
+        - python --version
+        - pip --version
+        - pip install -r requirements/requirements-core.txt pyyaml termcolor
+        - pip install -r requirements/requirements-lint.txt
+        - python dev.py code-quality
+    - stage: docs
+        - pip install -r requirements/requirements-core.txt pyyaml termcolor
+        - pip install -r requirements/requirements-docs.txt
+        - make -C docs html-check
     - stage: demo
-      script: echo 1
-    - script: echo 2
+        - pip install -r requirements/requirements-core.txt pyyaml termcolor
+        - pip install -r requirements/requirements-docs.txt
+        - python dev.py init-demo
     - stage: test
-    # download selenium driver
-    - script: mkdir -p contrib/selenium 
-    - script: wget https://github.com/mozilla/geckodriver/releases/download/v0.26.0/geckodriver-v0.26.0-linux64.tar.gz
-    - script: tar xf geckodriver-v0.26.0-linux64.tar.gz -C contrib/selenium
-
-    - script: echo -e "DEBUG = True\nSECRET_KEY = 'dummy'" > ca/ca/localsettings.py
-    - script: python dev.py code-quality
-    - script: python dev.py coverage --format=text
-    - script: python dev.py init-demo
-    - script: python setup.py install
-    - script: make -C docs html-check
+      # download selenium driver
+      script: 
+        - mkdir -p contrib/selenium 
+        - wget https://github.com/mozilla/geckodriver/releases/download/v0.26.0/geckodriver-v0.26.0-linux64.tar.gz
+        - tar xf geckodriver-v0.26.0-linux64.tar.gz -C contrib/selenium
+        - python dev.py coverage --format=text
+        - python setup.py install
