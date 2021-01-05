@@ -371,10 +371,12 @@ Please create %(localsettings)s from %(example)s and try again.""" % {
     if not os.path.exists(ca_settings.CA_DIR):
         os.makedirs(ca_settings.CA_DIR)
 
+    # NOTE: We pass SKIP_SELENIUM_TESTS=y as environment, because otherwise test_settings will complain that
+    #       the driver isn't there, when in fact we're not running any tests.
     print('Creating fixture data...', end='')
     subprocess.check_call(['python', 'recreate-fixtures.py', '--no-delay', '--no-ocsp', '--no-contrib',
                            '--ca-validity=3650', '--cert-validity=732',
-                           '--dest=%s' % ca_settings.CA_DIR])
+                           '--dest=%s' % ca_settings.CA_DIR], env=dict(os.environ, SKIP_SELENIUM_TESTS='y'))
     with open(os.path.join(ca_settings.CA_DIR, 'cert-data.json')) as stream:
         fixture_data = json.load(stream)
     ok()
