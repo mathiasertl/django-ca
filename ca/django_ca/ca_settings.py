@@ -180,7 +180,6 @@ for name, profile in CA_PROFILES.items():
     profile.setdefault('cn_in_san', True)
 
 CA_DEFAULT_ENCODING = getattr(settings, 'CA_DEFAULT_ENCODING', Encoding.PEM)
-CA_DEFAULT_EXPIRES = getattr(settings, 'CA_DEFAULT_EXPIRES', 730)
 CA_DEFAULT_PROFILE = getattr(settings, 'CA_DEFAULT_PROFILE', 'webserver')
 CA_NOTIFICATION_DAYS = getattr(settings, 'CA_NOTIFICATION_DAYS', [14, 7, 3, 1, ])
 CA_CRL_PROFILES = getattr(settings, 'CA_CRL_PROFILES', _CA_CRL_PROFILES)
@@ -204,6 +203,7 @@ except AttributeError:
     # pylint: disable=raise-missing-from; not really useful in this context
     raise ImproperlyConfigured('Unkown CA_DIGEST_ALGORITHM: %s' % settings.CA_DIGEST_ALGORITHM)
 
+CA_DEFAULT_EXPIRES: timedelta = getattr(settings, 'CA_DEFAULT_EXPIRES', 730)
 if isinstance(CA_DEFAULT_EXPIRES, int):
     CA_DEFAULT_EXPIRES = timedelta(days=CA_DEFAULT_EXPIRES)
 if isinstance(ACME_MAX_CERT_VALIDITY, int):

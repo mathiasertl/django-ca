@@ -879,7 +879,9 @@ def parse_key_curve(value=None):
     return curve()
 
 
-def get_cert_builder(expires, serial=None):
+def get_cert_builder(
+        expires: Union[None, timedelta, datetime], serial: int = None
+) -> x509.CertificateBuilder:
     """Get a basic X509 cert builder object.
 
     .. TODO:: deprecate support for passing datetime as expires
@@ -912,15 +914,15 @@ def get_cert_builder(expires, serial=None):
     return builder
 
 
-def read_file(path):
+def read_file(path: str) -> bytes:
     """Read the file from the given path.
 
     If ``path`` is an absolute path, reads a file from the local filesystem. For relative paths, read the file
     using the storage backend configured using :ref:`CA_FILE_STORAGE <settings-ca-file-storage>`.
     """
     if os.path.isabs(path):
-        with open(path, 'rb') as stream:
-            return stream.read()
+        with open(path, 'rb') as abs_stream:
+            return abs_stream.read()
 
     stream = ca_storage.open(path)
 
@@ -939,7 +941,7 @@ def read_file(path):
 #        fh.write(data)
 
 
-def shlex_split(val, sep):
+def shlex_split(val: str, sep: str) -> List[str]:
     """Split a character on the given set of characters.
 
     Example::
