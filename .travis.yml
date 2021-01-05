@@ -18,7 +18,6 @@ env:  # https://www.djangoproject.com/download/
 install:
   # Build/test dependencies
   - pip install -U pip setuptools wheel
-  - pip install -r requirements/requirements-travis.txt
   - pip install Django==$DJANGO cryptography==$CRYPTOGRAPHY
 stages:
   - lint
