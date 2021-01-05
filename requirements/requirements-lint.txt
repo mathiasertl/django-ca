@@ -1,2 +1,4 @@
 flake8==3.8.4
 isort==5.6.4
+pylint-django==2.3.0
+pylint==2.6.0
