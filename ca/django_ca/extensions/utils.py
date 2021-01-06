@@ -145,7 +145,7 @@ class DistributionPoint:
         if self.full_name is not None:
             names = [textwrap.indent('* %s' % s, '  ') for s in self.full_name.serialize()]
             text = '* Full Name:\n%s' % '\n'.join(names)
-        elif self.relative_name is not None:
+        elif self.relative_name is not None:  # pragma: no branch
             text = '* Relative Name: %s' % format_relative_name(self.relative_name)
 
         if self.crl_issuer is not None:
@@ -320,9 +320,11 @@ class PolicyInformation:
             return 0
 
         try:
-            return self.policy_qualifiers.count(self._parse_policy_qualifier(value))
-        except (ValueError, AttributeError):
+            parsed_value = self._parse_policy_qualifier(value)
+        except ValueError:
             return 0
+
+        return self.policy_qualifiers.count(parsed_value)
 
     def extend(self, value: Iterable[ParsablePolicyQualifier]) -> None:
         """Extend qualifiers with given iterable."""
