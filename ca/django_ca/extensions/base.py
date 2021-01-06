@@ -18,12 +18,14 @@
 import textwrap
 from typing import Any
 from typing import Dict
+from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Union
 
 from cryptography import x509
 
+from ..typehints import AlternativeNameType
 from ..typehints import DistributionPointType
 from ..utils import GeneralNameList
 from ..utils import bytes_to_hex
@@ -518,7 +520,7 @@ class AlternativeNameExtension(ListExtension):  # pylint: disable=abstract-metho
     """
     value: GeneralNameList
 
-    def from_dict(self, value):
+    def from_dict(self, value: Union[GeneralNameList, None, Iterable[Union[x509.GeneralName, str]]]) -> None:
         value = value.get('value')
         if isinstance(value, GeneralNameList):
             self.value = value
@@ -527,7 +529,7 @@ class AlternativeNameExtension(ListExtension):  # pylint: disable=abstract-metho
         else:
             self.value = GeneralNameList(value)
 
-    def from_extension(self, value):
+    def from_extension(self, value: AlternativeNameType) -> None:
         self.value = GeneralNameList(value.value)
 
     def serialize_value(self, value: x509.GeneralName) -> str:
@@ -578,7 +580,7 @@ class CRLDistributionPointsBase(ListExtension):
     def extension_type(self) -> x509.CRLDistributionPoints:
         return x509.CRLDistributionPoints(distribution_points=[dp.for_extension_type for dp in self.value])
 
-    def parse_value(self, value):
+    def parse_value(self, value) -> DistributionPoint:
         if isinstance(value, DistributionPoint):
             return value
         return DistributionPoint(value)
