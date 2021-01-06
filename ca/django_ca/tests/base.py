@@ -70,10 +70,10 @@ from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
 from ..extensions import CRLDistributionPoints
-from ..extensions import Extension
-from ..extensions import IterableExtension
-from ..extensions import ListExtension
 from ..extensions import SubjectKeyIdentifier
+from ..extensions.base import Extension
+from ..extensions.base import IterableExtension
+from ..extensions.base import ListExtension
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..models import X509CertMixin

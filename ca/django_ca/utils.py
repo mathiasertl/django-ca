@@ -1059,6 +1059,22 @@ class GeneralNameList(List[x509.GeneralName]):
         """Equivalent to list.extend()."""
         list.extend(self, (parse_general_name(i) for i in iterable))
 
+    @classmethod
+    def get_from_value(cls,
+                       value: Iterable[Any],
+                       default: Optional['GeneralNameList'] = None
+                       ) -> 'GeneralNameList':
+        """Create a GeneralNameList from the given iterable.
+
+        This will return `value` unchanged, if it is already a GeneralNameList, otherwise it is created from
+        the passed iterable.
+        """
+        if value is None:
+            return default
+        if isinstance(value, GeneralNameList) is True:
+            return value
+        return GeneralNameList(value)
+
     def index(self, value: Union[x509.GeneralName, str], *args: int) -> int:
         """Equivalent to list.index()."""
         return list.index(self, parse_general_name(value), *args)

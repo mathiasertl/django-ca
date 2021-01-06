@@ -11,7 +11,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-"""Test specialized member classes in :py:mod:`django_ca.extensions`."""
+"""Tests for extension utility clases in :py:mod:`django_ca.extensions.utils`."""
 
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
@@ -19,8 +19,8 @@ from cryptography.x509.oid import ObjectIdentifier
 
 from django.test import TestCase
 
-from ..extensions import DistributionPoint
-from ..extensions import PolicyInformation
+from ..extensions.utils import DistributionPoint
+from ..extensions.utils import PolicyInformation
 from .base import DjangoCATestCase
 from .base import certs
 from .base import uri

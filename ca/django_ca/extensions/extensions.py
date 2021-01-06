@@ -19,16 +19,12 @@ The classes in this module wrap cryptography extensions, but allow adding/removi
 in a more pythonic manner and provide access functions."""
 
 import binascii
-import re
 import textwrap
-from typing import Any
 from typing import Dict
 from typing import Iterable
 from typing import List
 from typing import Optional
-from typing import Type
 from typing import Union
-from typing import cast
 
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
@@ -38,955 +34,17 @@ from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import ObjectIdentifier
 
-from django.utils.encoding import force_str
-
-from .utils import GeneralNameList
-from .utils import bytes_to_hex
-from .utils import format_general_name
-from .utils import format_relative_name
-from .utils import hex_to_bytes
-from .utils import x509_relative_name
-
-
-def _gnl_or_empty(value: GeneralNameList, default: Optional[GeneralNameList] = None) -> GeneralNameList:
-    if value is None:
-        return default
-    if isinstance(value, GeneralNameList) is True:
-        return value
-    return GeneralNameList(value)
-
-
-class Extension:
-    """Convenience class to handle X509 Extensions.
-
-    The value is a ``dict`` as used by the :ref:`CA_PROFILES <settings-ca-profiles>` setting::
-
-        >>> KeyUsage({'value': ['keyAgreement', 'keyEncipherment']})
-        <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=True>
-        >>> KeyUsage({'critical': False, 'value': ['key_agreement', 'key_encipherment']})
-        <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=False>
-
-    ... but can also use a subclass of :py:class:`~cg:cryptography.x509.ExtensionType`
-    from ``cryptography``::
-
-        >>> from cryptography import x509
-        >>> cg_ext = x509.extensions.Extension(
-        ...    oid=ExtensionOID.EXTENDED_KEY_USAGE,
-        ...    critical=False,
-        ...    value=x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH])
-        ... )
-        >>> ExtendedKeyUsage(cg_ext)
-        <ExtendedKeyUsage: ['serverAuth'], critical=False>
-        >>> ExtendedKeyUsage({'value': ['serverAuth']})
-        <ExtendedKeyUsage: ['serverAuth'], critical=False>
-
-    Attributes
-    ----------
-
-    name : str
-        A human readable name of this extension
-    value
-        Raw value for this extension. The type various from subclass to subclass.
-    critical : bool
-        If this extension is marked as critical
-    oid : :py:class:`~cg:cryptography.x509.oid.ExtensionOID`
-        The OID for this extension.
-    key : str
-        The key is a reusable ID used in various parts of the application.
-    default_critical : bool
-        The default critical value if you pass a dict without the ``"critical"`` key.
-
-    Parameters
-    ----------
-
-    value : list or tuple or dict or str or :py:class:`~cg:cryptography.x509.ExtensionType`
-        The value of the extension, the description provides further details.
-    """
-    key = ''  # must be overwritten by actual classes
-    """Key used in CA_PROFILES."""
-
-    name = 'Extension'
-    oid: x509.ObjectIdentifier = None  # must be overwritten by actual classes
-    default_critical = False
-
-    def __init__(self, value=None):
-        if value is None:
-            value = {}
-
-        if isinstance(value, x509.extensions.Extension):  # e.g. from a cert object
-            self.critical = value.critical
-            self.from_extension(value)
-        elif isinstance(value, dict):  # e.g. from settings
-            self.critical = value.get('critical', self.default_critical)
-            self.from_dict(value)
-            self._test_value()
-        else:
-            self.from_other(value)
-        if not isinstance(self.critical, bool):
-            raise ValueError('%s: Invalid critical value passed' % self.critical)
-
-    def __hash__(self):
-        return hash((self.value, self.critical, ))
-
-    def __eq__(self, other):
-        return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
-
-    def __repr__(self):
-        return '<%s: %s, critical=%r>' % (self.name, self._repr_value(), self.critical)
-
-    def __str__(self):
-        return repr(self)
-
-    def _repr_value(self):
-        return self.value
-
-    def from_extension(self, value):
-        """Load a wrapper class from a cryptography extension instance.
-
-        Implementing classes are expected to implement this function."""
-        raise NotImplementedError
-
-    def from_dict(self, value):
-        """Load class from a dictionary."""
-        self.value = value['value']
-
-    def from_other(self, value: Any):
-        """Load class from any other value type.
-
-        This class can be overwritten to allow loading classes from different types."""
-        raise ValueError('Value is of unsupported type %s' % type(value).__name__)
-
-    def _test_value(self) -> None:
-        pass
-
-    @property
-    def extension_type(self):
-        """The extension_type for this value."""
-
-        raise NotImplementedError
-
-    def serialize(self):
-        """Serialize this extension to a string in a way that it can be passed to a constructor again.
-
-        For example, this should always be True::
-
-            >>> ku = KeyUsage({'value': ['keyAgreement', 'keyEncipherment']})
-            >>> ku == KeyUsage(ku.serialize())
-            True
-        """
-
-        return {
-            'critical': self.critical,
-            'value': self.value,
-        }
-
-    def as_extension(self):
-        """This extension as :py:class:`~cg:cryptography.x509.ExtensionType`."""
-        return x509.extensions.Extension(oid=self.oid, critical=self.critical, value=self.extension_type)
-
-    def as_text(self):
-        """Human-readable version of the *value*, not including the "critical" flag."""
-        return self.value
-
-    def for_builder(self):
-        """Return kwargs suitable for a :py:class:`~cg:cryptography.x509.CertificateBuilder`.
-
-        Example::
-
-            >>> kwargs = KeyUsage({'value': ['keyAgreement', 'keyEncipherment']}).for_builder()
-            >>> builder.add_extension(**kwargs)  # doctest: +SKIP
-        """
-        return {'extension': self.extension_type, 'critical': self.critical}
-
-
-class UnrecognizedExtension(Extension):
-    """Class wrapping any extension this module does **not** support."""
-
-    # pylint: disable=abstract-method; We don't know the extension_type
-
-    def __init__(self, value, name='', error=''):
-        self._error = error
-        self._name = name
-        super().__init__(value)
-
-    def from_extension(self, value):
-        self.value = value
-
-    @property
-    def name(self):
-        """Name (best effort) for this extension."""
-        if self._name:
-            return self._name
-        return 'Unsupported extension (OID %s)' % (self.value.oid.dotted_string)
-
-    def as_text(self):
-        if self._error:
-            return 'Could not parse extension (%s)' % self._error
-        return 'Could not parse extension'
-
-
-class NullExtension(Extension):
-    """Base class for extensions that have a NULL value.
-
-    Extensions using this base class will ignore any ``"value"`` key in their dict, only the ``"critical"``
-    key is relevant:
-
-        >>> OCSPNoCheck()
-        <OCSPNoCheck: critical=False>
-        >>> OCSPNoCheck({'critical': True})
-        <OCSPNoCheck: critical=True>
-        >>> OCSPNoCheck({'critical': True})
-        <OCSPNoCheck: critical=True>
-        >>> OCSPNoCheck(x509.extensions.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=True, value=None))
-        <OCSPNoCheck: critical=True>
-    """
-
-    def __init__(self, value: Optional[Dict[str, bool]] = None):
-        self.value = {}
-        if not value:
-            self.critical = self.default_critical
-        else:
-            super().__init__(value)
-
-    def __hash__(self):
-        return hash((self.critical, ))
-
-    def __eq__(self, other):
-        return isinstance(other, type(self)) and self.critical == other.critical
-
-    def __repr__(self):
-        return '<%s: critical=%r>' % (self.__class__.__name__, self.critical)
-
-    def as_text(self):
-        return self.name
-
-    @property
-    def extension_type(self):
-        return self.ext_class()  # pylint: disable=no-member; concrete classes are expected to set this
-
-    def from_extension(self, value):
-        pass
-
-    def from_dict(self, value):
-        pass
-
-    def serialize(self) -> Dict[str, bool]:
-        return {'critical': self.critical}
-
-
-class IterableExtension(Extension):
-    """Base class for iterable extensions.
-
-    Extensions of this class can be used just like any other iterable, e.g.:
-
-        >>> e = IterableExtension({'value': ['foo', 'bar']})
-        >>> 'foo' in e
-        True
-        >>> len(e)
-        2
-        >>> for val in e:
-        ...     print(val)
-        foo
-        bar
-    """
-
-    # pylint: disable=abstract-method; class is itself a base class
-
-    def __contains__(self, value):
-        return self.parse_value(value) in self.value
-
-    def __eq__(self, other):
-        return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
-
-    def __hash__(self):
-        return hash((tuple(self.serialize_iterable()), self.critical, ))
-
-    def __iter__(self):
-        return iter(self.serialize_iterable())
-
-    def __len__(self):
-        return len(self.value)
-
-    def _repr_value(self):
-        return self.serialize_iterable()
-
-    def as_text(self):
-        return '\n'.join(['* %s' % v for v in self.serialize_iterable()])
-
-    def parse_value(self, value):
-        """Parse a single value (presumably from an iterable)."""
-        return value
-
-    def serialize(self) -> Dict[str, Any]:
-        return {
-            'critical': self.critical,
-            'value': self.serialize_iterable(),
-        }
-
-    def serialize_iterable(self):
-        """Serialize the whole iterable contained in this extension."""
-
-        return [self.serialize_value(v) for v in self.value]
-
-    def serialize_value(self, value):
-        """Serialize a single value from the iterable contained in this extension."""
-
-        return value
-
-
-class ListExtension(IterableExtension):
-    """Base class for extensions with multiple ordered values."""
-
-    # pylint: disable=abstract-method; class is itself a base class
-
-    def __delitem__(self, key):
-        del self.value[key]
-
-    def __getitem__(self, key):
-        if isinstance(key, int):
-            return self.serialize_value(self.value[key])
-        return [self.serialize_value(v) for v in self.value[key]]
-
-    def __setitem__(self, key, value):
-        if isinstance(key, int):
-            self.value[key] = self.parse_value(value)
-        else:
-            self.value[key] = [self.parse_value(v) for v in value]
-
-    def from_dict(self, value):
-        self.value = [self.parse_value(v) for v in value.get('value', [])]
-
-    def from_extension(self, value):
-        self.value = [self.parse_value(v) for v in value.value]
-
-    # Implement functions provided by list(). Class mentions that this provides the same methods.
-    # pylint: disable=missing-function-docstring
-
-    def append(self, value):
-        self.value.append(self.parse_value(value))
-        self._test_value()
-
-    def clear(self):
-        self.value.clear()
-
-    def count(self, value):
-        try:
-            return self.value.count(self.parse_value(value))
-        except ValueError:
-            return 0
-
-    def extend(self, iterable):
-        self.value.extend([self.parse_value(n) for n in iterable])
-        self._test_value()
-
-    def insert(self, index, value):
-        self.value.insert(index, self.parse_value(value))
-
-    def pop(self, index=-1):
-        return self.serialize_value(self.value.pop(index))
-
-    def remove(self, value):
-        return self.value.remove(self.parse_value(value))
-    # pylint: enable=missing-function-docstring
-
-
-class OrderedSetExtension(IterableExtension):
-    """Base class for extensions that contain a set of values.
-
-    For reproducibility, any serialization will always sort the values contained in this extension.
-
-    Extensions derived from this class can be used like a normal set, for example:
-
-        >>> e = OrderedSetExtension({'value': {'foo', }})
-        >>> e.add('bar')
-        >>> e
-        <OrderedSetExtension: ['bar', 'foo'], critical=False>
-        >>> e -= {'foo', }
-        >>> e
-        <OrderedSetExtension: ['bar'], critical=False>
-    """
-
-    # pylint: disable=abstract-method; class is itself a base class
-
-    name = 'OrderedSetExtension'
-
-    def __and__(self, other):  # & operator == intersection()
-        value = self.value & self.parse_iterable(other)
-        return OrderedSetExtension({'critical': self.critical, 'value': value})
-
-    def __ge__(self, other):  # >= relation == issuperset()
-        return self.value >= self.parse_iterable(other)
-
-    def __gt__(self, other):  # > relation
-        return self.value > self.parse_iterable(other)
-
-    def __iand__(self, other):  # &= operator == intersection_update()
-        self.value &= self.parse_iterable(other)
-        return self
-
-    def __ior__(self, other):  # |= operator == update()
-        self.value |= self.parse_iterable(other)
-        return self
-
-    def __isub__(self, other):
-        self.value -= self.parse_iterable(other)
-        return self
-
-    def __ixor__(self, other):  # ^= operator == symmetric_difference_update()
-        self.value ^= self.parse_iterable(other)
-
-    def __le__(self, other):  # <= relation == issubset()
-        return self.value <= self.parse_iterable(other)
-
-    def __lt__(self, other):  # < relation
-        return self.value < self.parse_iterable(other)
-
-    def __or__(self, other):  # | operator == union()
-        value = self.value.union(self.parse_iterable(other))
-        return OrderedSetExtension({'critical': self.critical, 'value': value})
-
-    def __sub__(self, other):
-        value = self.value - self.parse_iterable(other)
-        return OrderedSetExtension({'critical': self.critical, 'value': value})
-
-    def __xor__(self, other):  # ^ operator == symmetric_difference()
-        value = self.value ^ self.parse_iterable(other)
-        return OrderedSetExtension({'critical': self.critical, 'value': value})
-
-    def _repr_value(self):
-        return [str(v) for v in super()._repr_value()]
-
-    def parse_iterable(self, iterable):
-        """Parse values from the given iterable."""
-        return set(self.parse_value(i) for i in iterable)
-
-    def from_dict(self, value):
-        self.value = self.parse_iterable(value.get('value', set()))
-
-    def serialize_iterable(self):
-        return list(sorted(self.serialize_value(v) for v in self.value))
-
-    # Implement functions provided by set(). Class mentions that this provides the same methods.
-    # pylint: disable=missing-function-docstring
-
-    def add(self, elem):
-        self.value.add(self.parse_value(elem))
-
-    def clear(self):
-        self.value.clear()
-
-    def copy(self):
-        value = self.value.copy()
-        return OrderedSetExtension({'critical': self.critical, 'value': value})
-
-    def difference(self, *others):  # equivalent to & operator
-        value = self.value.difference(*[self.parse_iterable(o) for o in others])
-        return OrderedSetExtension({'critical': self.critical, 'value': value})
-
-    def difference_update(self, *others):  # equivalent to &= operator
-        self.value.difference_update(*[self.parse_iterable(o) for o in others])
-
-    def discard(self, elem):
-        self.value.discard(self.parse_value(elem))
-
-    def intersection(self, *others):  # equivalent to & operator
-        value = self.value.intersection(*[self.parse_iterable(o) for o in others])
-        return OrderedSetExtension({'critical': self.critical, 'value': value})
-
-    def intersection_update(self, *others):  # equivalent to &= operator
-        self.value.intersection_update(*[self.parse_iterable(o) for o in others])
-
-    def isdisjoint(self, other):
-        return self.value.isdisjoint(self.parse_iterable(other))
-
-    def issubset(self, other):
-        return self.value.issubset(self.parse_iterable(other))
-
-    def issuperset(self, other):
-        return self.value.issuperset(self.parse_iterable(other))
-
-    def pop(self):
-        return self.value.pop()
-
-    def remove(self, elem):
-        return self.value.remove(self.parse_value(elem))
-
-    def symmetric_difference(self, other):  # equivalent to ^ operator
-        return self ^ other
-
-    def symmetric_difference_update(self, other):
-        self ^= other
-
-    def union(self, *others):
-        value = self.value.union(*[self.parse_iterable(o) for o in others])
-        return OrderedSetExtension({'critical': self.critical, 'value': value})
-
-    def update(self, *others):
-        for elem in others:
-            self.value.update(self.parse_iterable(elem))
-
-    # pylint: enable=missing-function-docstring
-
-
-class AlternativeNameExtension(ListExtension):  # pylint: disable=abstract-method
-    """Base class for extensions that contain a list of general names.
-
-    This class also allows you to pass :py:class:`~cg:cryptography.x509.GeneralName` instances::
-
-        >>> san = SubjectAlternativeName({'value': [x509.DNSName('example.com'), 'example.net']})
-        >>> san
-        <SubjectAlternativeName: ['DNS:example.com', 'DNS:example.net'], critical=False>
-        >>> 'example.com' in san, 'DNS:example.com' in san, x509.DNSName('example.com') in san
-        (True, True, True)
-
-    """
-    value: GeneralNameList[x509.GeneralName]
-
-    def from_dict(self, value):
-        value = value.get('value')
-        if isinstance(value, GeneralNameList):
-            self.value = value
-        elif value is None:
-            self.value = GeneralNameList()
-        else:
-            self.value = GeneralNameList(value)
-
-    def from_extension(self, value):
-        self.value = GeneralNameList(value.value)
-
-    def serialize_value(self, value: x509.GeneralName) -> str:
-        return format_general_name(value)
-
-
-class KeyIdExtension(Extension):
-    """Base class for extensions that contain a KeyID as value.
-
-    The value can be a hex str or bytes::
-
-        >>> KeyIdExtension({'value': '33:33'})
-        <KeyIdExtension: b'33', critical=False>
-        >>> KeyIdExtension({'value': b'33'})
-        <KeyIdExtension: b'33', critical=False>
-    """
-    # pylint: disable=abstract-method; from_extension is not overwridden in this base class
-    name = 'KeyIdExtension'
-
-    def from_dict(self, value: Dict[str, Union[str, bytes]]) -> None:
-        self.value = value['value']
-
-        if isinstance(self.value, str) and ':' in self.value:
-            self.value = hex_to_bytes(self.value)
-
-    def as_text(self) -> str:
-        return bytes_to_hex(self.value)
-
-    def serialize(self) -> Dict[str, Union[bool, str]]:
-        return {
-            'critical': self.critical,
-            'value': bytes_to_hex(self.value),
-        }
-
-
-class CRLDistributionPointsBase(ListExtension):
-    """Base class for :py:class:`~django_ca.extensions.CRLDistributionPoints` and
-    :py:class:`~django_ca.extensions.FreshestCRL`.
-    """
-    def __hash__(self):
-        return hash((tuple(self.value), self.critical, ))
-
-    def as_text(self):
-        return '\n'.join('* DistributionPoint:\n%s' % textwrap.indent(dp.as_text(), '  ')
-                         for dp in self.value)
-
-    @property
-    def extension_type(self):
-        return x509.CRLDistributionPoints(distribution_points=[dp.for_extension_type for dp in self.value])
-
-    def parse_value(self, value):
-        if isinstance(value, DistributionPoint):
-            return value
-        return DistributionPoint(value)
-
-    def serialize(self):
-        return {
-            'value': [dp.serialize() for dp in self.value],
-            'critical': self.critical,
-        }
-
-
-# NOT AN EXTENSION
-class DistributionPoint:
-    """Class representing a Distribution Point.
-
-    This class is used internally by extensions that have a list of Distribution Points, e.g. the :
-    :py:class:`~django_ca.extensions.CRLDistributionPoints` extension. The class accepts either a
-    :py:class:`cg:cryptography.x509.DistributionPoint` or a ``dict``. Note that in the latter case, you can
-    also pass a ``str`` as ``full_name`` or ``crl_issuer`` if there is only one value::
-
-        >>> DistributionPoint(x509.DistributionPoint(
-        ...     full_name=[x509.UniformResourceIdentifier('http://ca.example.com/crl')],
-        ...     relative_name=None, crl_issuer=None, reasons=None
-        ... ))
-        <DistributionPoint: full_name=['URI:http://ca.example.com/crl']>
-        >>> DistributionPoint({'full_name': ['http://example.com']})
-        <DistributionPoint: full_name=['URI:http://example.com']>
-        >>> DistributionPoint({'full_name': 'http://example.com'})
-        <DistributionPoint: full_name=['URI:http://example.com']>
-        >>> DistributionPoint({
-        ...     'relative_name': '/CN=example.com',
-        ...     'crl_issuer': 'http://example.com',
-        ...     'reasons': ['key_compromise', 'ca_compromise'],
-        ... })  # doctest: +NORMALIZE_WHITESPACE
-        <DistributionPoint: relative_name='/CN=example.com', crl_issuer=['URI:http://example.com'],
-                            reasons=['ca_compromise', 'key_compromise']>
-
-    .. seealso::
-
-        `RFC 5280, section 4.2.1.13 <https://tools.ietf.org/html/rfc5280#section-4.2.1.13>`_
-    """
-
-    full_name = None
-    relative_name = None
-    crl_issuer = None
-    reasons = None
-
-    def __init__(self, data=None):
-        if data is None:
-            data = {}
-
-        if isinstance(data, x509.DistributionPoint):
-            self.full_name = _gnl_or_empty(data.full_name)
-            self.relative_name = data.relative_name
-            self.crl_issuer = _gnl_or_empty(data.crl_issuer)
-            self.reasons = data.reasons
-        elif isinstance(data, dict):
-            self.full_name = _gnl_or_empty(data.get('full_name'))
-            self.relative_name = data.get('relative_name')
-            self.crl_issuer = _gnl_or_empty(data.get('crl_issuer'))
-            self.reasons = data.get('reasons')
-
-            if self.full_name is not None and self.relative_name is not None:
-                raise ValueError('full_name and relative_name cannot both have a value')
-
-            if self.relative_name is not None:
-                self.relative_name = x509_relative_name(self.relative_name)
-            if self.reasons is not None:
-                self.reasons = frozenset([x509.ReasonFlags[r] for r in self.reasons])
-        else:
-            raise ValueError('data must be x509.DistributionPoint or dict')
-
-    def __eq__(self, other):
-        return isinstance(other, DistributionPoint) and self.full_name == other.full_name \
-            and self.relative_name == other.relative_name and self.crl_issuer == other.crl_issuer \
-            and self.reasons == other.reasons
-
-    def __get_values(self) -> List[str]:
-        values: List[str] = []
-        if self.full_name is not None:
-            values.append('full_name=%r' % list(self.full_name.serialize()))
-        if self.relative_name:
-            values.append("relative_name='%s'" % format_relative_name(self.relative_name))
-        if self.crl_issuer is not None:
-            values.append('crl_issuer=%r' % list(self.crl_issuer.serialize()))
-        if self.reasons:
-            values.append('reasons=%s' % sorted([r.name for r in self.reasons]))
-        return values
-
-    def __hash__(self):
-        full_name = tuple(self.full_name) if self.full_name is not None else None
-        crl_issuer = tuple(self.crl_issuer) if self.crl_issuer is not None else None
-        reasons = tuple(self.reasons) if self.reasons else None
-        return hash((full_name, self.relative_name, crl_issuer, reasons))
-
-    def __repr__(self):
-        return '<DistributionPoint: %s>' % ', '.join(self.__get_values())
-
-    def __str__(self):
-        return repr(self)
-
-    def as_text(self) -> str:
-        """Show as text."""
-        if self.full_name is not None:
-            names = [textwrap.indent('* %s' % s, '  ') for s in self.full_name.serialize()]
-            text = '* Full Name:\n%s' % '\n'.join(names)
-        else:
-            text = '* Relative Name: %s' % format_relative_name(self.relative_name)
-
-        if self.crl_issuer is not None:
-            names = [textwrap.indent('* %s' % s, '  ') for s in self.crl_issuer.serialize()]
-            text += '\n* CRL Issuer:\n%s' % '\n'.join(names)
-        if self.reasons:
-            text += '\n* Reasons: %s' % ', '.join(sorted([r.name for r in self.reasons]))
-        return text
-
-    @property
-    def for_extension_type(self):
-        """Convert instance to a suitable cryptography class."""
-        return x509.DistributionPoint(full_name=self.full_name, relative_name=self.relative_name,
-                                      crl_issuer=self.crl_issuer, reasons=self.reasons)
-
-    def serialize(self) -> Dict[str, Union[List[str], str]]:
-        """Serialize this distribution point."""
-        val = {}
-
-        if self.full_name is not None:
-            val['full_name'] = list(self.full_name.serialize())
-        if self.relative_name is not None:
-            val['relative_name'] = format_relative_name(self.relative_name)
-        if self.crl_issuer is not None:
-            val['crl_issuer'] = list(self.crl_issuer.serialize())
-        if self.reasons is not None:
-            val['reasons'] = list(sorted([r.name for r in self.reasons]))
-        return val
-
-
-# NOT AN EXTENSION
-class PolicyInformation:
-    """Class representing a PolicyInformation object.
-
-    This class is internally used by the :py:class:`~django_ca.extensions.CertificatePolicies` extension.
-
-    You can pass a :py:class:`~cg:cryptography.x509.PolicyInformation` instance or a dictionary representing
-    that instance::
-
-        >>> PolicyInformation({'policy_identifier': '2.5.29.32.0', 'policy_qualifiers': ['text1']})
-        <PolicyInformation(oid=2.5.29.32.0, qualifiers=['text1'])>
-        >>> PolicyInformation({
-        ...     'policy_identifier': '2.5.29.32.0',
-        ...     'policy_qualifiers': [{'explicit_text': 'text2', }],
-        ... })
-        <PolicyInformation(oid=2.5.29.32.0, qualifiers=[{'explicit_text': 'text2'}])>
-        >>> PolicyInformation({
-        ...     'policy_identifier': '2.5',
-        ...     'policy_qualifiers': [{
-        ...         'notice_reference': {
-        ...             'organization': 't3',
-        ...             'notice_numbers': [1, ],
-        ...         }
-        ...     }],
-        ... })  # doctest: +ELLIPSIS
-        <PolicyInformation(oid=2.5, qualifiers=[{'notice_reference': {...}}])>
-    """
-    def __init__(self, data=None):
-        if isinstance(data, x509.PolicyInformation):
-            self.policy_identifier = data.policy_identifier
-            self.policy_qualifiers = data.policy_qualifiers
-        elif isinstance(data, dict):
-            self.policy_identifier = data['policy_identifier']
-            self.policy_qualifiers = self.parse_policy_qualifiers(data.get('policy_qualifiers'))
-        elif data is None:
-            self.policy_identifier = None
-            self.policy_qualifiers = None
-        else:
-            raise ValueError('PolicyInformation data must be either x509.PolicyInformation or dict')
-
-    def __contains__(self, value):
-        if self.policy_qualifiers is None:
-            return False
-        return self._parse_policy_qualifier(value) in self.policy_qualifiers
-
-    def __delitem__(self, key):
-        if self.policy_qualifiers is None:
-            raise IndexError('list assignment index out of range')
-        del self.policy_qualifiers[key]
-        if not self.policy_qualifiers:
-            self.policy_qualifiers = None
-
-    def __eq__(self, other):
-        return isinstance(other, PolicyInformation) and self.policy_identifier == other.policy_identifier \
-            and self.policy_qualifiers == other.policy_qualifiers
-
-    def __getitem__(self, key):
-        if self.policy_qualifiers is None:
-            raise IndexError('list index out of range')
-        if isinstance(key, int):
-            return self._serialize_policy_qualifier(self.policy_qualifiers[key])
-
-        return [self._serialize_policy_qualifier(k) for k in self.policy_qualifiers[key]]
-
-    def __hash__(self):
-        if self.policy_qualifiers is None:
-            tup = None
-        else:
-            tup = tuple(self.policy_qualifiers)
-
-        return hash((self.policy_identifier, tup))
-
-    def __len__(self):
-        if self.policy_qualifiers is None:
-            return 0
-        return len(self.policy_qualifiers)
-
-    def __repr__(self):
-        if self.policy_identifier is None:
-            ident = 'None'
-        else:
-            ident = self.policy_identifier.dotted_string
-
-        return '<PolicyInformation(oid=%s, qualifiers=%r)>' % (ident, self.serialize_policy_qualifiers())
-
-    def __str__(self):
-        return repr(self)
-
-    def append(self, value):
-        """Append the given policy qualifier."""
-        if self.policy_qualifiers is None:
-            self.policy_qualifiers = []
-        self.policy_qualifiers.append(self._parse_policy_qualifier(value))
-
-    def as_text(self, width=76):
-        """Show as text."""
-        if self.policy_identifier is None:
-            text = 'Policy Identifier: %s\n' % None
-        else:
-            text = 'Policy Identifier: %s\n' % self.policy_identifier.dotted_string
-
-        if self.policy_qualifiers:
-            text += 'Policy Qualifiers:\n'
-            for qualifier in self.policy_qualifiers:
-                if isinstance(qualifier, str):
-                    lines = textwrap.wrap(qualifier, initial_indent='* ', subsequent_indent='  ', width=width)
-                    text += '%s\n' % '\n'.join(lines)
-                else:
-                    text += '* UserNotice:\n'
-                    if qualifier.explicit_text:
-                        text += '\n'.join(textwrap.wrap(
-                            'Explicit text: %s\n' % qualifier.explicit_text,
-                            initial_indent='  * ', subsequent_indent='    ', width=width - 2
-                        )) + '\n'
-                    if qualifier.notice_reference:
-                        text += '  * Reference:\n'
-                        text += '    * Organiziation: %s\n' % qualifier.notice_reference.organization
-                        text += '    * Notice Numbers: %s\n' % qualifier.notice_reference.notice_numbers
-        else:
-            text += 'No Policy Qualifiers'
-
-        return text.strip()
-
-    def clear(self):
-        """Clear all qualifiers from this information."""
-        self.policy_qualifiers = None
-
-    def count(self, value):
-        """Count qualifiers from this information."""
-        try:
-            return self.policy_qualifiers.count(self._parse_policy_qualifier(value))
-        except (ValueError, AttributeError):
-            return 0
-
-    def extend(self, value):
-        """Extend qualifiers with given iterable."""
-        self.policy_qualifiers.extend([self._parse_policy_qualifier(v) for v in value])
-
-    @property
-    def for_extension_type(self):
-        """Convert instance to a suitable cryptography class."""
-        return x509.PolicyInformation(policy_identifier=self.policy_identifier,
-                                      policy_qualifiers=self.policy_qualifiers)
-
-    def insert(self, index, value):
-        """Insert qualifier at given index."""
-        if self.policy_qualifiers is None:
-            self.policy_qualifiers = []
-        return self.policy_qualifiers.insert(index, self._parse_policy_qualifier(value))
-
-    def _parse_policy_qualifier(self, qualifier):
-        if isinstance(qualifier, str):
-            return force_str(qualifier)
-        if isinstance(qualifier, x509.UserNotice):
-            return qualifier
-        if isinstance(qualifier, dict):
-            explicit_text = qualifier.get('explicit_text')
-
-            notice_reference = qualifier.get('notice_reference')
-            if isinstance(notice_reference, dict):
-                notice_reference = x509.NoticeReference(
-                    organization=force_str(notice_reference.get('organization', '')),
-                    notice_numbers=[int(i) for i in notice_reference.get('notice_numbers', [])]
-                )
-            elif notice_reference is None:
-                pass  # extra branch to ensure test coverage
-            elif isinstance(notice_reference, x509.NoticeReference):
-                pass  # extra branch to ensure test coverage
-            else:
-                raise ValueError('NoticeReference must be either None, a dict or an x509.NoticeReference')
-
-            return x509.UserNotice(explicit_text=explicit_text, notice_reference=notice_reference)
-        raise ValueError('PolicyQualifier must be string, dict or x509.UserNotice')
-
-    def parse_policy_qualifiers(self, qualifiers):
-        """Parse given list of policy qualifiers."""
-        if qualifiers is None:
-            return None
-        return [self._parse_policy_qualifier(q) for q in qualifiers]
-
-    @property
-    def policy_identifier(self):
-        """Return policy identifier."""
-        return self._policy_identifier
-
-    @policy_identifier.setter
-    def policy_identifier(self, value):
-        if isinstance(value, str):
-            value = ObjectIdentifier(value)
-        self._policy_identifier = value
-
-    def pop(self, index=-1):
-        """Pop qualifier from given index."""
-        if self.policy_qualifiers is None:
-            return [].pop()
-
-        val = self._serialize_policy_qualifier(self.policy_qualifiers.pop(index))
-
-        if not self.policy_qualifiers:  # if list is now empty, set to none
-            self.policy_qualifiers = None
-
-        return val
-
-    def remove(self, value):
-        """remove the given qualifier from this policy information."""
-        if self.policy_qualifiers is None:
-            # Shortcut to raise the same Value error as if the element is not in the list
-            return [].remove(None)
-
-        val = self.policy_qualifiers.remove(self._parse_policy_qualifier(value))
-
-        if not self.policy_qualifiers:  # if list is now empty, set to none
-            self.policy_qualifiers = None
-
-        return val
-
-    def _serialize_policy_qualifier(self, qualifier):
-        if isinstance(qualifier, str):
-            return qualifier
-
-        value = {}
-        if qualifier.explicit_text:
-            value['explicit_text'] = qualifier.explicit_text
-        if qualifier.notice_reference:
-            value['notice_reference'] = {
-                'notice_numbers': qualifier.notice_reference.notice_numbers,
-                'organization': qualifier.notice_reference.organization,
-            }
-        return value
-
-    def serialize_policy_qualifiers(self):
-        """Serialize policy qualifiers."""
-        if self.policy_qualifiers is None:
-            return None
-
-        return [self._serialize_policy_qualifier(q) for q in self.policy_qualifiers]
-
-    def serialize(self):
-        """Serialize this policy information."""
-        value = {
-            'policy_identifier': self.policy_identifier.dotted_string,
-        }
-        qualifier = self.serialize_policy_qualifiers()
-        if qualifier:
-            value['policy_qualifiers'] = qualifier
-
-        return value
+from ..utils import GeneralNameList
+from ..utils import bytes_to_hex
+from ..utils import hex_to_bytes
+from .base import AlternativeNameExtension
+from .base import CRLDistributionPointsBase
+from .base import Extension
+from .base import KeyIdExtension
+from .base import ListExtension
+from .base import NullExtension
+from .base import OrderedSetExtension
+from .utils import PolicyInformation
 
 
 class AuthorityInformationAccess(Extension):
@@ -1083,7 +141,7 @@ class AuthorityInformationAccess(Extension):
 
     @issuers.setter
     def issuers(self, value):
-        self.value['issuers'] = _gnl_or_empty(value)
+        self.value['issuers'] = GeneralNameList.get_from_value(value)
 
     @property
     def ocsp(self):
@@ -1092,7 +150,7 @@ class AuthorityInformationAccess(Extension):
 
     @ocsp.setter
     def ocsp(self, value):
-        self.value['ocsp'] = _gnl_or_empty(value)
+        self.value['ocsp'] = GeneralNameList.get_from_value(value)
 
     def serialize(self):
         val = {
@@ -1177,7 +235,7 @@ class AuthorityKeyIdentifier(Extension):
 
     @authority_cert_issuer.setter
     def authority_cert_issuer(self, value):
-        self.value['authority_cert_issuer'] = _gnl_or_empty(value)
+        self.value['authority_cert_issuer'] = GeneralNameList.get_from_value(value)
 
     @property
     def authority_cert_serial_number(self):
@@ -1207,14 +265,14 @@ class AuthorityKeyIdentifier(Extension):
         else:
             self.value = {
                 'key_identifier': self.parse_keyid(value.get('key_identifier')),
-                'authority_cert_issuer': _gnl_or_empty(value.get('authority_cert_issuer')),
+                'authority_cert_issuer': GeneralNameList.get_from_value(value.get('authority_cert_issuer')),
                 'authority_cert_serial_number': value.get('authority_cert_serial_number'),
             }
 
     def from_extension(self, value):
         self.value = {
             'key_identifier': value.value.key_identifier,
-            'authority_cert_issuer': _gnl_or_empty(value.value.authority_cert_issuer),
+            'authority_cert_issuer': GeneralNameList.get_from_value(value.value.authority_cert_issuer),
             'authority_cert_serial_number': value.value.authority_cert_serial_number,
         }
 
@@ -1374,7 +432,7 @@ class CRLDistributionPoints(CRLDistributionPointsBase):
     This extension identifies where a client can retrieve a Certificate Revocation List (CRL).
 
     The value passed to this extension should be a ``list`` of
-    :py:class:`~django_ca.extensions.DistributionPoint` instances. Naturally, you can also pass those in
+    :py:class:`~django_ca.extensions.utils.DistributionPoint` instances. Naturally, you can also pass those in
     serialized form::
 
         >>> CRLDistributionPoints({'value': [
@@ -1398,7 +456,7 @@ class CertificatePolicies(ListExtension):
     """Class representing a Certificate Policies extension.
 
     The value passed to this extension should be a ``list`` of
-    :py:class:`~django_ca.extensions.PolicyInformation` instances. Naturally, you can also pass those in
+    :py:class:`~django_ca.extensions.utils.PolicyInformation` instances. Naturally, you can also pass those in
     serialized form::
 
         >>> CertificatePolicies({'value': [{
@@ -1923,7 +981,7 @@ class NameConstraints(Extension):
 
     @excluded.setter
     def excluded(self, value):
-        self.value['excluded'] = _gnl_or_empty(value, GeneralNameList())
+        self.value['excluded'] = GeneralNameList.get_from_value(value, GeneralNameList())
 
     @property
     def extension_type(self):
@@ -1932,15 +990,15 @@ class NameConstraints(Extension):
 
     def from_extension(self, value):
         self.value = {
-            'permitted': _gnl_or_empty(value.value.permitted_subtrees, GeneralNameList()),
-            'excluded': _gnl_or_empty(value.value.excluded_subtrees, GeneralNameList()),
+            'permitted': GeneralNameList.get_from_value(value.value.permitted_subtrees, GeneralNameList()),
+            'excluded': GeneralNameList.get_from_value(value.value.excluded_subtrees, GeneralNameList()),
         }
 
     def from_dict(self, value):
         value = value.get('value', {})
         self.value = {
-            'permitted': _gnl_or_empty(value.get('permitted', []), GeneralNameList()),
-            'excluded': _gnl_or_empty(value.get('excluded', []), GeneralNameList()),
+            'permitted': GeneralNameList.get_from_value(value.get('permitted', []), GeneralNameList()),
+            'excluded': GeneralNameList.get_from_value(value.get('excluded', []), GeneralNameList()),
         }
 
     @property
@@ -1950,7 +1008,7 @@ class NameConstraints(Extension):
 
     @permitted.setter
     def permitted(self, value: GeneralNameList) -> None:
-        self.value['permitted'] = _gnl_or_empty(value, GeneralNameList())
+        self.value['permitted'] = GeneralNameList.get_from_value(value, GeneralNameList())
 
     def serialize(self) -> Dict[str, Union[bool, Dict[str, List[str]]]]:
         return {
@@ -2203,8 +1261,8 @@ class SubjectKeyIdentifier(KeyIdExtension):
 class TLSFeature(OrderedSetExtension):
     """Class representing a TLSFeature extension.
 
-    As a :py:class:`~django_ca.extensions.OrderedSetExtension`, this extension handles much like it's other
-    sister extensions:::
+    As a :py:class:`~django_ca.extensions.base.OrderedSetExtension`, this extension handles much like it's
+    other sister extensions::
 
         >>> TLSFeature({'value': ['OCSPMustStaple']})
         <TLSFeature: ['OCSPMustStaple'], critical=False>
@@ -2250,39 +1308,3 @@ class TLSFeature(OrderedSetExtension):
         if isinstance(value, str) and value in self.CRYPTOGRAPHY_MAPPING:
             return self.CRYPTOGRAPHY_MAPPING[value]
         raise ValueError('Unknown value: %s' % value)
-
-
-KEY_TO_EXTENSION: Dict[str, Type[Extension]] = {
-    AuthorityInformationAccess.key: AuthorityInformationAccess,
-    AuthorityKeyIdentifier.key: AuthorityKeyIdentifier,
-    BasicConstraints.key: BasicConstraints,
-    CRLDistributionPoints.key: CRLDistributionPoints,
-    CertificatePolicies.key: CertificatePolicies,
-    ExtendedKeyUsage.key: ExtendedKeyUsage,
-    FreshestCRL.key: FreshestCRL,
-    InhibitAnyPolicy.key: InhibitAnyPolicy,
-    IssuerAlternativeName.key: IssuerAlternativeName,
-    KeyUsage.key: KeyUsage,
-    NameConstraints.key: NameConstraints,
-    OCSPNoCheck.key: OCSPNoCheck,
-    PolicyConstraints.key: PolicyConstraints,
-    PrecertPoison.key: PrecertPoison,
-    PrecertificateSignedCertificateTimestamps.key: PrecertificateSignedCertificateTimestamps,
-    SubjectAlternativeName.key: SubjectAlternativeName,
-    SubjectKeyIdentifier.key: SubjectKeyIdentifier,
-    TLSFeature.key: TLSFeature,
-}
-
-OID_TO_EXTENSION: Dict[x509.ObjectIdentifier, Type[Extension]] = {e.oid: e for e in KEY_TO_EXTENSION.values()}
-
-
-def get_extension_name(ext: Extension) -> str:
-    """Function to get the name of an extension."""
-
-    if ext.oid in OID_TO_EXTENSION:
-        return OID_TO_EXTENSION[ext.oid].name
-
-    # pylint: disable=protected-access; there is no other way to get a human-readable name
-    oid_name = cast(str, ext.oid._name)  # type: ignore
-
-    return re.sub('^([a-z])', lambda x: x.groups()[0].upper(), oid_name)

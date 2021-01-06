@@ -32,7 +32,34 @@ somewhere::
    >>> ku
    <KeyUsage: ['cRLSign', 'keyAgreement', 'keyEncipherment', 'nonRepudiation'], critical=True>
 
-The type of operations available to an extension depend on the extension.
+You can always convert extensions to valid cryptography extensions::
+
+   >>> ku.extension_type  # doctest: +ELLIPSIS
+   <KeyUsage(digital_signature=False, ...)>
+   >>> ku.as_extension()  # doctest: +ELLIPSIS
+   <Extension(oid=<ObjectIdentifier(oid=2.5.29.15, name=keyUsage)>, critical=True, value=<KeyUsage(...)>)>
+
+Many extensions are modeled after builtin python types and are designed to be handled in a similar way.
+For example, :py:class:`~django_ca.extensions.KeyUsage` inherits from
+:py:mod:`~django_ca.extensions.base.OrderedSetExtension`, and thus handles like an ordered set::
+
+    >>> ku = KeyUsage()
+    >>> ku |= {'decipherOnly', }
+    >>> ku |= KeyUsage({'value': ['digitalSignature']})
+    >>> ku
+    <KeyUsage: ['decipherOnly', 'digitalSignature'], critical=True>
+    >>> ku.add('nonRepudiation')
+    >>> ku.add('nonRepudiation')
+    >>> ku
+    <KeyUsage: ['decipherOnly', 'digitalSignature', 'nonRepudiation'], critical=True>
+
+When passing a dictionary, you can always pass a ``critical`` value.  If omitted, the default value is
+determined by the ``default_critical`` flag, which matches common X.509 usage for each extension::
+
+    >>> KeyUsage()
+    <KeyUsage: [], critical=True>
+    >>> KeyUsage({'critical': False})
+    <KeyUsage: [], critical=False>
 
 You can always serialize an extension to its ``dict`` representation and later restore it (e.g. after
 transfering it over the network)::
@@ -47,55 +74,39 @@ transfering it over the network)::
 Extension classes
 *****************
 
-Note that extensions are not marked as "critical" by default. Only those that are usually marked as critical
-override the ``default_critical`` attribute.
-
 .. automodule:: django_ca.extensions
    :show-inheritance:
    :members:
-   :exclude-members: Extension, IterableExtension, ListExtension, OrderedSetExtension, AlternativeNameExtension, KeyIdExtension, NullExtension, DistributionPoint, PolicyInformation, CRLDistributionPointsBase
+   :exclude-members: get_extension_name
 
-*****************
-Attribute classes
-*****************
+************************
+Helper functions/classes
+************************
 
-.. autoclass:: django_ca.extensions.DistributionPoint
-   :members:
+In addition to extension classes, there are a few helper functions to ease handling of extensions:
 
-.. autoclass:: django_ca.extensions.PolicyInformation
-   :members:
+.. autofunction:: django_ca.extensions.get_extension_name
 
-************
-Base classes
-************
+.. autoattribute:: django_ca.extensions.KEY_TO_EXTENSION
+   :annotation: {'basic_constraints': <class 'django_ca.extensions.BasicConstraints'>, ...}
 
-.. autoclass:: django_ca.extensions.Extension
-   :members:
+   A dictionary mapping of a unique key to an extension class::
 
-.. autoclass:: django_ca.extensions.IterableExtension
-   :show-inheritance:
-   :members:
+      >>> KEY_TO_EXTENSION['authority_information_access']
+      <class 'django_ca.extensions.extensions.AuthorityInformationAccess'>
 
-.. autoclass:: django_ca.extensions.ListExtension
-   :show-inheritance:
-   :members:
+.. autoattribute:: django_ca.extensions.OID_TO_EXTENSION
+   :annotation: {<ObjectIdentifier(oid=...): <class 'django_ca.extensions...>, ...}
 
-.. autoclass:: django_ca.extensions.OrderedSetExtension
-   :show-inheritance:
-   :members:
+   A dictionary mapping of OIDs to extension classes::
 
-.. autoclass:: django_ca.extensions.KeyIdExtension
-   :show-inheritance:
-   :members:
+      >>> from cryptography.x509.oid import ExtensionOID
+      >>> OID_TO_EXTENSION[ExtensionOID.BASIC_CONSTRAINTS]
+      <class 'django_ca.extensions.extensions.BasicConstraints'>
 
-.. autoclass:: django_ca.extensions.CRLDistributionPointsBase
-   :show-inheritance:
-   :members:
+``django_ca.extensions.utils``
+==============================
 
-.. autoclass:: django_ca.extensions.AlternativeNameExtension
-   :show-inheritance:
-   :members:
-
-.. autoclass:: django_ca.extensions.NullExtension
+.. automodule:: django_ca.extensions.utils
    :show-inheritance:
    :members:

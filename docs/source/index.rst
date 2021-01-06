@@ -58,6 +58,7 @@ Features:
    Introduction <python/intro>
    signals
    python/extensions
+   python/extensions.base
    python/profiles
    python/models
    python/views

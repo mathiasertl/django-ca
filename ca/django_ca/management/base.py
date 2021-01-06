@@ -32,9 +32,9 @@ from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
 from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
-from ..extensions import NullExtension
 from ..extensions import SubjectAlternativeName
 from ..extensions import TLSFeature
+from ..extensions.base import NullExtension
 from ..models import CertificateAuthority
 from ..utils import SUBJECT_FIELDS
 from ..utils import add_colons

@@ -453,8 +453,8 @@ Python API
   ``Certificate.objects.init()`` to ``subject_alternative_name`` to be consistent with other extensions.
 * Document how to use the ``name_constraints`` parameter in 
   :py:meth:`CertificateAuthority.objects.init() <django_ca.managers.CertificateAuthorityManager.init>`
-* Extensions can now always be passed as :py:class:`~django_ca.extensions.Extension` subclass or as any value
-  accepted by the constructor of the specific class.
+* Extensions can now always be passed as :py:class:`~django_ca.extensions.base.Extension` subclass or as any
+  value accepted by the constructor of the specific class.
 * Add ability to add any custom additional extension using the ``extra_extensions`` parameter.
 * :py:class:`~django_ca.subject.Subject` now implements every ``dict`` method.
 * The :py:func:`~django_ca.signals.pre_issue_cert` signal will now receive normalized values.

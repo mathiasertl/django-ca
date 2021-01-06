@@ -26,11 +26,11 @@ from .extensions import AuthorityInformationAccess
 from .extensions import AuthorityKeyIdentifier
 from .extensions import BasicConstraints
 from .extensions import CRLDistributionPoints
-from .extensions import DistributionPoint
 from .extensions import Extension
 from .extensions import IssuerAlternativeName
 from .extensions import SubjectAlternativeName
 from .extensions import SubjectKeyIdentifier
+from .extensions.utils import DistributionPoint
 from .signals import pre_issue_cert
 from .subject import Subject
 from .utils import get_cert_builder
@@ -153,7 +153,7 @@ class Profile:
         algorithm : str or :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
             Override the hash algorithm used when signing the certificate, passed to
             :py:func:`~django_ca.utils.parse_hash_algorithm`.
-        extensions : list or dict of :py:class:`~django_ca.extensions.Extension`
+        extensions : list or dict of :py:class:`~django_ca.extensions.base.Extension`
             List or dict of additional extensions to set for the certificate. Note that values from the CA
             might update the passed extensions: For example, if you pass an
             :py:class:`~django_ca.extensions.IssuerAlternativeName` extension, *add_issuer_alternative_name*

@@ -37,25 +37,25 @@ from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
 from ..extensions import CertificatePolicies
 from ..extensions import CRLDistributionPoints
-from ..extensions import DistributionPoint
 from ..extensions import ExtendedKeyUsage
 from ..extensions import Extension
 from ..extensions import FreshestCRL
 from ..extensions import InhibitAnyPolicy
 from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
-from ..extensions import ListExtension
 from ..extensions import NameConstraints
 from ..extensions import OCSPNoCheck
-from ..extensions import OrderedSetExtension
 from ..extensions import PolicyConstraints
-from ..extensions import PolicyInformation
 from ..extensions import PrecertificateSignedCertificateTimestamps
 from ..extensions import PrecertPoison
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
-from ..extensions import UnrecognizedExtension
+from ..extensions.base import ListExtension
+from ..extensions.base import OrderedSetExtension
+from ..extensions.base import UnrecognizedExtension
+from ..extensions.utils import DistributionPoint
+from ..extensions.utils import PolicyInformation
 from ..models import X509CertMixin
 from .base import DjangoCAWithCertTestCase
 from .base import certs
@@ -68,8 +68,20 @@ def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
     """Load doctests."""
 
     docs_path = os.path.join(settings.DOC_DIR, 'python', 'extensions.rst')
+    tests.addTests(doctest.DocFileSuite(docs_path, module_relative=False, globs={
+        'KEY_TO_EXTENSION': KEY_TO_EXTENSION,
+        'OID_TO_EXTENSION': OID_TO_EXTENSION,
+    }))
     tests.addTests(doctest.DocTestSuite('django_ca.extensions'))
-    tests.addTests(doctest.DocFileSuite(docs_path, module_relative=False))
+    tests.addTests(doctest.DocTestSuite('django_ca.extensions.base', extraglobs={
+        'ExtendedKeyUsage': ExtendedKeyUsage,
+        'ExtendedKeyUsageOID': ExtendedKeyUsageOID,
+        'ExtensionOID': ExtensionOID,
+        'KeyUsage': KeyUsage,
+        'OCSPNoCheck': OCSPNoCheck,
+        'SubjectAlternativeName': SubjectAlternativeName,
+    }))
+    tests.addTests(doctest.DocTestSuite('django_ca.extensions.utils'))
     return tests
 
 

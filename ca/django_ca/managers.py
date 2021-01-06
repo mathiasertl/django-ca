@@ -158,7 +158,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             Integer specifying the key size, must be a power of two (e.g. 2048, 4096, ...). Defaults to
             the :ref:`CA_DEFAULT_KEY_SIZE <settings-ca-default-key-size>`, unused if ``key_type="ECC"``.
         extra_extensions : list of :py:class:`cg:cryptography.x509.Extension` or \
-                :py:class:`django_ca.extensions.Extension`, optional
+                :py:class:`django_ca.extensions.base.Extension`, optional
             An optional list of additional extensions to add to the certificate.
         path : str or pathlib.PurePath, optional
             Where to store the CA private key (default ``ca``).
