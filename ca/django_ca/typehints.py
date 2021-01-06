@@ -42,7 +42,7 @@ ParsablePolicyInformation = Dict[str, Union[ParsablePolicyQualifier, ParsablePol
 PolicyQualifier = Union[str, x509.UserNotice]
 
 # extensions
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     GenericExtensionType = x509.Extension[x509.ExtensionType]
     SubjectAlternativeNameType = x509.Extension[x509.SubjectAlternativeName]
     IssuerAlternativeNameType = x509.Extension[x509.IssuerAlternativeName]
