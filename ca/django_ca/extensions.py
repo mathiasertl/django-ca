@@ -21,10 +21,14 @@ in a more pythonic manner and provide access functions."""
 import binascii
 import re
 import textwrap
+from typing import Any
 from typing import Dict
+from typing import Iterable
 from typing import List
+from typing import Optional
 from typing import Type
 from typing import Union
+from typing import cast
 
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
@@ -44,7 +48,7 @@ from .utils import hex_to_bytes
 from .utils import x509_relative_name
 
 
-def _gnl_or_empty(value, default=None):
+def _gnl_or_empty(value: GeneralNameList, default: Optional[GeneralNameList] = None) -> GeneralNameList:
     if value is None:
         return default
     if isinstance(value, GeneralNameList) is True:
@@ -102,7 +106,7 @@ class Extension:
     """Key used in CA_PROFILES."""
 
     name = 'Extension'
-    oid = None  # must be overwritten by actual classes
+    oid: x509.ObjectIdentifier = None  # must be overwritten by actual classes
     default_critical = False
 
     def __init__(self, value=None):
@@ -146,13 +150,13 @@ class Extension:
         """Load class from a dictionary."""
         self.value = value['value']
 
-    def from_other(self, value):
+    def from_other(self, value: Any):
         """Load class from any other value type.
 
         This class can be overwritten to allow loading classes from different types."""
         raise ValueError('Value is of unsupported type %s' % type(value).__name__)
 
-    def _test_value(self):
+    def _test_value(self) -> None:
         pass
 
     @property
@@ -237,7 +241,7 @@ class NullExtension(Extension):
         <OCSPNoCheck: critical=True>
     """
 
-    def __init__(self, value=None):
+    def __init__(self, value: Optional[Dict[str, bool]] = None):
         self.value = {}
         if not value:
             self.critical = self.default_critical
@@ -266,7 +270,7 @@ class NullExtension(Extension):
     def from_dict(self, value):
         pass
 
-    def serialize(self):
+    def serialize(self) -> Dict[str, bool]:
         return {'critical': self.critical}
 
 
@@ -313,7 +317,7 @@ class IterableExtension(Extension):
         """Parse a single value (presumably from an iterable)."""
         return value
 
-    def serialize(self):
+    def serialize(self) -> Dict[str, Any]:
         return {
             'critical': self.critical,
             'value': self.serialize_iterable(),
@@ -536,6 +540,8 @@ class AlternativeNameExtension(ListExtension):  # pylint: disable=abstract-metho
         (True, True, True)
 
     """
+    value: GeneralNameList[x509.GeneralName]
+
     def from_dict(self, value):
         value = value.get('value')
         if isinstance(value, GeneralNameList):
@@ -1676,7 +1682,7 @@ class InhibitAnyPolicy(Extension):
     """This extension is marked as critical by default (RFC 5280 requires this extension to be marked as
     critical)."""
 
-    def _test_value(self):
+    def _test_value(self) -> None:
         if not isinstance(self.value, int):
             raise ValueError('%s: must be an int' % self.value)
         if self.value < 0:
@@ -1765,7 +1771,7 @@ class PolicyConstraints(Extension):
             values.append('require_explicit_policy=%s' % self.value['require_explicit_policy'])
         return ', '.join(values)
 
-    def _test_value(self):
+    def _test_value(self) -> None:
         rep = self.value['require_explicit_policy']
         ipm = self.value['inhibit_policy_mapping']
         if rep is not None:
@@ -1938,15 +1944,15 @@ class NameConstraints(Extension):
         }
 
     @property
-    def permitted(self):
+    def permitted(self) -> GeneralNameList:
         """The ``permitted`` value of this instance."""
         return self.value['permitted']
 
     @permitted.setter
-    def permitted(self, value):
+    def permitted(self, value: GeneralNameList) -> None:
         self.value['permitted'] = _gnl_or_empty(value, GeneralNameList())
 
-    def serialize(self):
+    def serialize(self) -> Dict[str, Union[bool, Dict[str, List[str]]]]:
         return {
             'critical': self.critical,
             'value': {
@@ -2007,7 +2013,7 @@ class PrecertPoison(NullExtension):
     oid = ExtensionOID.PRECERT_POISON
     ext_class = x509.PrecertPoison
 
-    def __init__(self, value=None):
+    def __init__(self, value: Optional[Dict[str, bool]] = None) -> None:
         super().__init__(value=value)
 
         if self.critical is not True:
@@ -2040,28 +2046,29 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
         LogEntryType.PRE_CERTIFICATE: 'precertificate',
         LogEntryType.X509_CERTIFICATE: 'x509_certificate'
     }
+    value: x509.PrecertificateSignedCertificateTimestamps
 
-    def __contains__(self, value):
+    def __contains__(self, value: Union[x509.SignedCertificateTimestamps, Dict[str, str]]) -> bool:
         if isinstance(value, dict):
             return value in self.serialize()['value']
         return value in self.value
 
-    def __delitem__(self, key):
+    def __delitem__(self, key):  # type: ignore
         raise NotImplementedError
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         # serialize_iterable returns a dict, which is unhashable
         return hash((tuple(self.value), self.critical, ))
 
-    def _repr_value(self):
+    def _repr_value(self) -> str:
         if len(self.value) == 1:  # pragma: no cover - we cannot currently create such an extension
             return '1 timestamp'
         return '%s timestamps' % len(self.value)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value):  # type: ignore
         raise NotImplementedError
 
-    def human_readable_timestamps(self):
+    def human_readable_timestamps(self) -> Iterable[Dict[str, str]]:
         """Convert SCTs into a generator of serializable dicts."""
         for sct in self.value:
             if sct.entry_type == LogEntryType.PRE_CERTIFICATE:
@@ -2080,7 +2087,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
                 'version': sct.version.name,
             }
 
-    def as_text(self):
+    def as_text(self) -> str:
         lines = []
         for val in self.human_readable_timestamps():
             line = '* {type} ({version}):\n    Timestamp: {timestamp}\n    Log ID: {log_id}'.format(**val)
@@ -2088,31 +2095,31 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
 
         return '\n'.join(lines)
 
-    def count(self, value):
+    def count(self, value: Union[Dict[str, str], x509.SignedCertificateTimestamps]) -> int:
         if isinstance(value, dict):
             return self.serialize()['value'].count(value)
         return self.value._signed_certificate_timestamps.count(value)  # pylint: disable=protected-access
 
-    def extend(self, iterable):
+    def extend(self, iterable):  # type: ignore
         raise NotImplementedError
 
     @property
-    def extension_type(self):
+    def extension_type(self) -> x509.PrecertificateSignedCertificateTimestamps:
         return self.value
 
-    def from_extension(self, value):
+    def from_extension(self, value: x509.Extension) -> None:
         self.value = value.value
 
-    def insert(self, index, value):
+    def insert(self, index, value):  # type: ignore
         raise NotImplementedError
 
-    def pop(self, index=-1):
+    def pop(self, index=-1):  # type: ignore
         raise NotImplementedError
 
-    def remove(self, value):
+    def remove(self, value):  # type: ignore
         raise NotImplementedError
 
-    def serialize_value(self, value):
+    def serialize_value(self, value: x509.SignedCertificateTimestamps) -> Dict[str, str]:
         return {
             'type': PrecertificateSignedCertificateTimestamps.LOG_ENTRY_TYPE_MAPPING[value.entry_type],
             'timestamp': value.timestamp.strftime(self._timeformat),
@@ -2139,7 +2146,7 @@ class SubjectAlternativeName(AlternativeNameExtension):
     name = 'SubjectAlternativeName'
     oid = ExtensionOID.SUBJECT_ALTERNATIVE_NAME
 
-    def get_common_name(self):
+    def get_common_name(self) -> Optional[str]:
         """Get a value suitable for use as CommonName in a subject, or None if no such value is found.
 
         This function returns a string representation of the first value that is not a DirectoryName,
@@ -2149,10 +2156,12 @@ class SubjectAlternativeName(AlternativeNameExtension):
         for name in self.value:
             if isinstance(name, (x509.DirectoryName, x509.RegisteredID, x509.OtherName)):
                 continue
-            return name.value
+
+            return str(name.value)  # IPAddress might have a different object, for example
+        return None
 
     @property
-    def extension_type(self):
+    def extension_type(self) -> x509.SubjectAlternativeName:
         return x509.SubjectAlternativeName(self.value)
 
 
@@ -2176,10 +2185,10 @@ class SubjectKeyIdentifier(KeyIdExtension):
     oid = ExtensionOID.SUBJECT_KEY_IDENTIFIER
 
     @property
-    def extension_type(self):
+    def extension_type(self) -> x509.SubjectKeyIdentifier:
         return x509.SubjectKeyIdentifier(digest=self.value)
 
-    def from_other(self, value):
+    def from_other(self, value: x509.SubjectKeyIdentifier) -> None:
         if isinstance(value, x509.SubjectKeyIdentifier):
             self.critical = self.default_critical
             self.value = value.digest
@@ -2187,7 +2196,7 @@ class SubjectKeyIdentifier(KeyIdExtension):
         else:
             super().from_other(value)
 
-    def from_extension(self, value):
+    def from_extension(self, value: x509.SubjectKeyIdentifier) -> None:
         self.value = value.value.digest
 
 
@@ -2224,18 +2233,18 @@ class TLSFeature(OrderedSetExtension):
     KNOWN_PARAMETERS = sorted(CRYPTOGRAPHY_MAPPING)
     """Known values that can be passed to this extension."""
 
-    def from_extension(self, value):
+    def from_extension(self, value: x509.TLSFeature) -> None:
         self.value = set(value.value)
 
     @property
-    def extension_type(self):
+    def extension_type(self) -> x509.TLSFeature:
         # call serialize_value() to ensure consistent sort order
         return x509.TLSFeature(sorted(self.value, key=self.serialize_value))
 
-    def serialize_value(self, value):
+    def serialize_value(self, value: TLSFeatureType) -> str:
         return self._CRYPTOGRAPHY_MAPPING_REVERSED[value]
 
-    def parse_value(self, value):
+    def parse_value(self, value: Union[TLSFeatureType, str]) -> TLSFeatureType:
         if isinstance(value, TLSFeatureType):
             return value
         if isinstance(value, str) and value in self.CRYPTOGRAPHY_MAPPING:
@@ -2264,14 +2273,16 @@ KEY_TO_EXTENSION: Dict[str, Type[Extension]] = {
     TLSFeature.key: TLSFeature,
 }
 
-OID_TO_EXTENSION = {e.oid: e for e in KEY_TO_EXTENSION.values()}
+OID_TO_EXTENSION: Dict[x509.ObjectIdentifier, Type[Extension]] = {e.oid: e for e in KEY_TO_EXTENSION.values()}
 
 
-def get_extension_name(ext):
+def get_extension_name(ext: Extension) -> str:
     """Function to get the name of an extension."""
 
     if ext.oid in OID_TO_EXTENSION:
         return OID_TO_EXTENSION[ext.oid].name
 
     # pylint: disable=protected-access; there is no other way to get a human-readable name
-    return re.sub('^([a-z])', lambda x: x.groups()[0].upper(), ext.oid._name)
+    oid_name = cast(str, ext.oid._name)  # type: ignore
+
+    return re.sub('^([a-z])', lambda x: x.groups()[0].upper(), oid_name)
