@@ -1,5 +1,5 @@
 Django>=2.2
 asn1crypto>=1.0.1
 cryptography>=2.8
-idna>=2.9
+idna>=2.10
 packaging
