@@ -18,11 +18,13 @@
 import textwrap
 from typing import Any
 from typing import Dict
+from typing import List
 from typing import Optional
 from typing import Union
 
 from cryptography import x509
 
+from ..typehints import DistributionPointType
 from ..utils import GeneralNameList
 from ..utils import bytes_to_hex
 from ..utils import format_general_name
@@ -565,15 +567,15 @@ class CRLDistributionPointsBase(ListExtension):
     """Base class for :py:class:`~django_ca.extensions.CRLDistributionPoints` and
     :py:class:`~django_ca.extensions.FreshestCRL`.
     """
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((tuple(self.value), self.critical, ))
 
-    def as_text(self):
+    def as_text(self) -> str:
         return '\n'.join('* DistributionPoint:\n%s' % textwrap.indent(dp.as_text(), '  ')
                          for dp in self.value)
 
     @property
-    def extension_type(self):
+    def extension_type(self) -> x509.CRLDistributionPoints:
         return x509.CRLDistributionPoints(distribution_points=[dp.for_extension_type for dp in self.value])
 
     def parse_value(self, value):
@@ -581,7 +583,7 @@ class CRLDistributionPointsBase(ListExtension):
             return value
         return DistributionPoint(value)
 
-    def serialize(self):
+    def serialize(self) -> Dict[str, Union[bool, List[DistributionPointType]]]:
         return {
             'value': [dp.serialize() for dp in self.value],
             'critical': self.critical,

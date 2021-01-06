@@ -21,7 +21,6 @@ from typing import Dict
 from typing import FrozenSet
 from typing import Iterable
 from typing import List
-from typing import Mapping
 from typing import Optional
 from typing import Union
 from typing import cast
@@ -31,24 +30,15 @@ from cryptography.x509.oid import ObjectIdentifier
 
 from django.utils.encoding import force_str
 
+from ..typehints import ParsablePolicyIdentifier
+from ..typehints import ParsablePolicyInformation
+from ..typehints import ParsablePolicyQualifier
+from ..typehints import PolicyQualifier
+from ..typehints import SerializedPolicyQualifier
+from ..typehints import SerializedPolicyQualifiers
 from ..utils import GeneralNameList
 from ..utils import format_relative_name
 from ..utils import x509_relative_name
-
-# mypy type aliases
-SerializedNoticeReference = Dict[str, Union[str, List[int]]]
-SerializedPolicyQualifier = Union[str, Dict[str, Union[str, SerializedNoticeReference]]]
-SerializedPolicyQualifiers = Optional[List[SerializedPolicyQualifier]]
-
-# Looser variants of the above for incoming arguments
-LooseNoticeReference = Mapping[str, Union[str, Iterable[int]]]  # List->Iterable/Dict->Mapping
-LoosePolicyQualifier = Union[str, Mapping[str, Union[str, LooseNoticeReference]]]  # Dict->Mapping
-
-# Parsable arguments
-ParsablePolicyQualifier = Union[str, x509.UserNotice, LoosePolicyQualifier]
-ParsablePolicyIdentifier = Union[str, x509.ObjectIdentifier]
-ParsablePolicyInformation = Dict[str, Union[ParsablePolicyQualifier, ParsablePolicyQualifier]]
-PolicyQualifier = Union[str, x509.UserNotice]
 
 
 class DistributionPoint:
