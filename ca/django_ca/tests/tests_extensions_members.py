@@ -281,12 +281,13 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.assertNotIn(self.s2['policy_qualifiers'][0], self.pi_empty)
 
     def test_count(self):
-        """Test ext.count()."""
+        """Test PolicyInformation.count()."""
         self.assertEqual(self.pi1.count(self.s1['policy_qualifiers'][0]), 1)
         self.assertEqual(self.pi1.count(self.q1), 1)
         self.assertEqual(self.pi1.count(self.s2), 0)
         self.assertEqual(self.pi1.count(self.q2), 0)
         self.assertEqual(self.pi_empty.count(self.q2), 0)
+        self.assertEqual(self.pi1.count(True), 0)  # pass an unparseable value
 
     def test_delitem(self):
         """Test item deletion (e.g. ``del pi[0]``)."""
@@ -302,7 +303,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
             del self.pi1[0]
 
     def test_extend(self):
-        """Test ext.extend()."""
+        """Test PolicyInformation.extend()."""
         self.pi1.extend([self.q2, self.q4])
         self.assertEqual(self.pi1, PolicyInformation({
             'policy_identifier': self.oid,
@@ -313,6 +314,13 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.assertEqual(self.pi2, PolicyInformation({
             'policy_identifier': self.oid,
             'policy_qualifiers': [self.q2, self.q1],
+        }))
+
+        # extend an empty list
+        self.pi_empty.extend([self.s1['policy_qualifiers'][0]])
+        self.assertEqual(self.pi_empty, PolicyInformation({
+            'policy_identifier': None,
+            'policy_qualifiers': [self.q1],
         }))
 
     def test_getitem(self):
@@ -349,7 +357,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.assertNotEqual(hash(self.pi3), hash(self.pi4))
 
     def test_insert(self):
-        """Test ext.insert()."""
+        """Test PolicyInformation.insert()."""
         self.pi1.insert(0, self.q2)
         self.assertEqual(self.pi1, PolicyInformation({
             'policy_identifier': self.oid,
@@ -390,7 +398,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.assertEqual(pinfo.policy_identifier, new_expected)
 
     def test_pop(self):
-        """Test ext.pop()."""
+        """Test PolicyInformation.pop()."""
         self.pi_empty.policy_identifier = self.oid
         self.assertEqual(self.pi1.pop(), self.s1['policy_qualifiers'][0])
         self.assertEqual(self.pi1, self.pi_empty)
@@ -408,7 +416,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
             self.pi_empty.pop()
 
     def test_remove(self):
-        """Test ext.remove()."""
+        """Test PolicyInformation.remove()."""
         self.pi_empty.policy_identifier = self.oid
         self.pi1.remove(self.q1)
         self.assertEqual(self.pi1, self.pi_empty)
