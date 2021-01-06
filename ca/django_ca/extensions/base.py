@@ -514,7 +514,7 @@ class AlternativeNameExtension(ListExtension):  # pylint: disable=abstract-metho
         (True, True, True)
 
     """
-    value: GeneralNameList[x509.GeneralName]
+    value: GeneralNameList
 
     def from_dict(self, value):
         value = value.get('value')
