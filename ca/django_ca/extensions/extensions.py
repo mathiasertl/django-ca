@@ -1023,7 +1023,7 @@ class NameConstraints(Extension):
 class OCSPNoCheck(NullExtension):
     """Extension to indicate that an OCSP client should (blindly) trust the certificate for it's lifetime.
 
-    Ass a NullExtension, any value is ignored and you can pass a simple empty ``dict`` (or nothing at all) to
+    As a NullExtension, any value is ignored and you can pass a simple empty ``dict`` (or nothing at all) to
     the extension::
 
         >>> OCSPNoCheck()
