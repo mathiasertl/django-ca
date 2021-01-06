@@ -1061,9 +1061,9 @@ class GeneralNameList(List[x509.GeneralName]):
 
     @classmethod
     def get_from_value(cls,
-                       value: Iterable[Any],
+                       value: Optional[Iterable[Any]],
                        default: Optional['GeneralNameList'] = None
-                       ) -> 'GeneralNameList':
+                       ) -> Optional['GeneralNameList']:
         """Create a GeneralNameList from the given iterable.
 
         This will return `value` unchanged, if it is already a GeneralNameList, otherwise it is created from
@@ -1071,7 +1071,7 @@ class GeneralNameList(List[x509.GeneralName]):
         """
         if value is None:
             return default
-        if isinstance(value, GeneralNameList) is True:
+        if isinstance(value, GeneralNameList):
             return value
         return GeneralNameList(value)
 

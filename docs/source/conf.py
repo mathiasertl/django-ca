@@ -449,6 +449,9 @@ qualname_overrides = {
         'cg:cryptography.hazmat.primitives.serialization.Encoding',
     'cryptography.x509.general_name.GeneralName': 'cg:cryptography.x509.GeneralName',
     'cryptography.hazmat._oid.ObjectIdentifier': 'cg:cryptography.x509.ObjectIdentifier',
+    'cryptography.x509.extensions.DistributionPoint': 'cg:cryptography.x509.DistributionPoint',
+    'cryptography.x509.extensions.PolicyInformation': 'cg:cryptography.x509.PolicyInformation',
+    'cryptography.x509.extensions.UserNotice': 'cg:cryptography.x509.UserNotice',
 }
 
 fa_orig = sphinx_autodoc_typehints.format_annotation

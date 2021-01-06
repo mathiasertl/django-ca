@@ -16,6 +16,7 @@
 import os
 import re
 from datetime import timedelta
+from typing import Any
 from typing import Dict
 
 from cryptography.hazmat.primitives import hashes
@@ -34,7 +35,7 @@ else:
 
 CA_DEFAULT_KEY_SIZE = getattr(settings, 'CA_DEFAULT_KEY_SIZE', 4096)
 
-CA_PROFILES: Dict[str, dict] = {
+CA_PROFILES: Dict[str, Dict[str, Any]] = {
     'client': {
         # see: http://security.stackexchange.com/questions/68491/
         'description': _('A certificate for a client.'),
@@ -196,12 +197,12 @@ CA_MIN_KEY_SIZE = getattr(settings, 'CA_MIN_KEY_SIZE', 2048)
 
 CA_DEFAULT_HOSTNAME = getattr(settings, 'CA_DEFAULT_HOSTNAME', None)
 
-CA_DIGEST_ALGORITHM: hashes.HashAlgorithm = getattr(settings, 'CA_DIGEST_ALGORITHM', "sha512").strip().upper()
+_CA_DIGEST_ALGORITHM = getattr(settings, 'CA_DIGEST_ALGORITHM', "sha512").strip().upper()
 try:
-    CA_DIGEST_ALGORITHM = getattr(hashes, CA_DIGEST_ALGORITHM)()
+    CA_DIGEST_ALGORITHM: hashes.HashAlgorithm = getattr(hashes, _CA_DIGEST_ALGORITHM)()
 except AttributeError:
     # pylint: disable=raise-missing-from; not really useful in this context
-    raise ImproperlyConfigured('Unkown CA_DIGEST_ALGORITHM: %s' % CA_DIGEST_ALGORITHM)
+    raise ImproperlyConfigured('Unkown CA_DIGEST_ALGORITHM: %s' % _CA_DIGEST_ALGORITHM)
 
 CA_DEFAULT_EXPIRES: timedelta = getattr(settings, 'CA_DEFAULT_EXPIRES', 730)
 if isinstance(CA_DEFAULT_EXPIRES, int):

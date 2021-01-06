@@ -422,7 +422,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
             'policy_qualifiers': [self.q5],
         }))
 
-        with self.assertRaisesRegex(ValueError, r'^list\.remove\(x\): x not in list$'):
+        with self.assertRaisesRegex(ValueError, r'^.*: not in list\.$'):
             self.pi_empty.remove(self.s3['policy_qualifiers'][0])
 
     def _test_repr(self, func):

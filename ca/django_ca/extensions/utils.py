@@ -16,9 +16,15 @@
 # pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
 
 import textwrap
+from typing import Any
 from typing import Dict
+from typing import FrozenSet
+from typing import Iterable
 from typing import List
+from typing import Mapping
+from typing import Optional
 from typing import Union
+from typing import cast
 
 from cryptography import x509
 from cryptography.x509.oid import ObjectIdentifier
@@ -28,6 +34,21 @@ from django.utils.encoding import force_str
 from ..utils import GeneralNameList
 from ..utils import format_relative_name
 from ..utils import x509_relative_name
+
+# mypy type aliases
+SerializedNoticeReference = Dict[str, Union[str, List[int]]]
+SerializedPolicyQualifier = Union[str, Dict[str, Union[str, SerializedNoticeReference]]]
+SerializedPolicyQualifiers = Optional[List[SerializedPolicyQualifier]]
+
+# Looser variants of the above for incoming arguments
+LooseNoticeReference = Mapping[str, Union[str, Iterable[int]]]  # List->Iterable/Dict->Mapping
+LoosePolicyQualifier = Union[str, Mapping[str, Union[str, LooseNoticeReference]]]  # Dict->Mapping
+
+# Parsable arguments
+ParsablePolicyQualifier = Union[str, x509.UserNotice, LoosePolicyQualifier]
+ParsablePolicyIdentifier = Union[str, x509.ObjectIdentifier]
+ParsablePolicyInformation = Dict[str, Union[ParsablePolicyQualifier, ParsablePolicyQualifier]]
+PolicyQualifier = Union[str, x509.UserNotice]
 
 
 class DistributionPoint:
@@ -60,12 +81,12 @@ class DistributionPoint:
         `RFC 5280, section 4.2.1.13 <https://tools.ietf.org/html/rfc5280#section-4.2.1.13>`_
     """
 
-    full_name = None
-    relative_name = None
-    crl_issuer = None
-    reasons = None
+    full_name: Optional[GeneralNameList] = None
+    relative_name: Optional[x509.RelativeDistinguishedName] = None
+    crl_issuer: Optional[GeneralNameList] = None
+    reasons: Optional[FrozenSet[x509.ReasonFlags]] = None
 
-    def __init__(self, data=None):
+    def __init__(self, data: Union[x509.DistributionPoint, Dict[str, Any]] = None) -> None:
         if data is None:
             data = {}
 
@@ -90,7 +111,7 @@ class DistributionPoint:
         else:
             raise ValueError('data must be x509.DistributionPoint or dict')
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         return isinstance(other, DistributionPoint) and self.full_name == other.full_name \
             and self.relative_name == other.relative_name and self.crl_issuer == other.crl_issuer \
             and self.reasons == other.reasons
@@ -107,16 +128,16 @@ class DistributionPoint:
             values.append('reasons=%s' % sorted([r.name for r in self.reasons]))
         return values
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         full_name = tuple(self.full_name) if self.full_name is not None else None
         crl_issuer = tuple(self.crl_issuer) if self.crl_issuer is not None else None
         reasons = tuple(self.reasons) if self.reasons else None
         return hash((full_name, self.relative_name, crl_issuer, reasons))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<DistributionPoint: %s>' % ', '.join(self.__get_values())
 
-    def __str__(self):
+    def __str__(self) -> str:
         return repr(self)
 
     def as_text(self) -> str:
@@ -124,7 +145,7 @@ class DistributionPoint:
         if self.full_name is not None:
             names = [textwrap.indent('* %s' % s, '  ') for s in self.full_name.serialize()]
             text = '* Full Name:\n%s' % '\n'.join(names)
-        else:
+        elif self.relative_name is not None:
             text = '* Relative Name: %s' % format_relative_name(self.relative_name)
 
         if self.crl_issuer is not None:
@@ -135,14 +156,14 @@ class DistributionPoint:
         return text
 
     @property
-    def for_extension_type(self):
+    def for_extension_type(self) -> x509.DistributionPoint:
         """Convert instance to a suitable cryptography class."""
         return x509.DistributionPoint(full_name=self.full_name, relative_name=self.relative_name,
                                       crl_issuer=self.crl_issuer, reasons=self.reasons)
 
     def serialize(self) -> Dict[str, Union[List[str], str]]:
         """Serialize this distribution point."""
-        val = {}
+        val: Dict[str, Union[List[str], str]] = {}
 
         if self.full_name is not None:
             val['full_name'] = list(self.full_name.serialize())
@@ -181,36 +202,48 @@ class PolicyInformation:
         ... })  # doctest: +ELLIPSIS
         <PolicyInformation(oid=2.5, qualifiers=[{'notice_reference': {...}}])>
     """
-    def __init__(self, data=None):
+
+    _policy_identifier: Optional[x509.ObjectIdentifier]
+    policy_qualifiers: Optional[List[PolicyQualifier]]
+
+    def __init__(
+            self, data: Optional[Union[x509.PolicyInformation, ParsablePolicyInformation]] = None
+    ) -> None:
         if isinstance(data, x509.PolicyInformation):
             self.policy_identifier = data.policy_identifier
             self.policy_qualifiers = data.policy_qualifiers
         elif isinstance(data, dict):
-            self.policy_identifier = data['policy_identifier']
-            self.policy_qualifiers = self.parse_policy_qualifiers(data.get('policy_qualifiers'))
+            self.policy_identifier = cast(ParsablePolicyIdentifier, data['policy_identifier'])
+            self.policy_qualifiers = self.parse_policy_qualifiers(
+                cast(Iterable[ParsablePolicyQualifier], data.get('policy_qualifiers'))
+            )
         elif data is None:
             self.policy_identifier = None
             self.policy_qualifiers = None
         else:
             raise ValueError('PolicyInformation data must be either x509.PolicyInformation or dict')
 
-    def __contains__(self, value):
+    def __contains__(self, value: ParsablePolicyQualifier) -> bool:
         if self.policy_qualifiers is None:
             return False
         return self._parse_policy_qualifier(value) in self.policy_qualifiers
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: Union[int, slice]) -> None:
         if self.policy_qualifiers is None:
             raise IndexError('list assignment index out of range')
         del self.policy_qualifiers[key]
         if not self.policy_qualifiers:
             self.policy_qualifiers = None
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         return isinstance(other, PolicyInformation) and self.policy_identifier == other.policy_identifier \
             and self.policy_qualifiers == other.policy_qualifiers
 
-    def __getitem__(self, key):
+    def __getitem__(
+            self, key: Union[int, slice]
+    ) -> Union[List[SerializedPolicyQualifier], SerializedPolicyQualifier]:
+        """Implement item getter (e.g ``pi[0]`` or ``pi[0:1]``)."""
+
         if self.policy_qualifiers is None:
             raise IndexError('list index out of range')
         if isinstance(key, int):
@@ -218,7 +251,7 @@ class PolicyInformation:
 
         return [self._serialize_policy_qualifier(k) for k in self.policy_qualifiers[key]]
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         if self.policy_qualifiers is None:
             tup = None
         else:
@@ -226,12 +259,12 @@ class PolicyInformation:
 
         return hash((self.policy_identifier, tup))
 
-    def __len__(self):
+    def __len__(self) -> int:
         if self.policy_qualifiers is None:
             return 0
         return len(self.policy_qualifiers)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         if self.policy_identifier is None:
             ident = 'None'
         else:
@@ -239,16 +272,16 @@ class PolicyInformation:
 
         return '<PolicyInformation(oid=%s, qualifiers=%r)>' % (ident, self.serialize_policy_qualifiers())
 
-    def __str__(self):
+    def __str__(self) -> str:
         return repr(self)
 
-    def append(self, value):
+    def append(self, value: ParsablePolicyQualifier) -> None:
         """Append the given policy qualifier."""
         if self.policy_qualifiers is None:
             self.policy_qualifiers = []
         self.policy_qualifiers.append(self._parse_policy_qualifier(value))
 
-    def as_text(self, width=76):
+    def as_text(self, width: int = 76) -> str:
         """Show as text."""
         if self.policy_identifier is None:
             text = 'Policy Identifier: %s\n' % None
@@ -277,36 +310,43 @@ class PolicyInformation:
 
         return text.strip()
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear all qualifiers from this information."""
         self.policy_qualifiers = None
 
-    def count(self, value):
+    def count(self, value: ParsablePolicyQualifier) -> int:
         """Count qualifiers from this information."""
+        if self.policy_qualifiers is None:
+            return 0
+
         try:
             return self.policy_qualifiers.count(self._parse_policy_qualifier(value))
         except (ValueError, AttributeError):
             return 0
 
-    def extend(self, value):
+    def extend(self, value: Iterable[ParsablePolicyQualifier]) -> None:
         """Extend qualifiers with given iterable."""
+        if self.policy_qualifiers is None:
+            self.policy_qualifiers = []
+
         self.policy_qualifiers.extend([self._parse_policy_qualifier(v) for v in value])
 
     @property
-    def for_extension_type(self):
+    def for_extension_type(self) -> x509.PolicyInformation:
         """Convert instance to a suitable cryptography class."""
         return x509.PolicyInformation(policy_identifier=self.policy_identifier,
                                       policy_qualifiers=self.policy_qualifiers)
 
-    def insert(self, index, value):
+    def insert(self, index: int, value: ParsablePolicyQualifier) -> None:
         """Insert qualifier at given index."""
         if self.policy_qualifiers is None:
             self.policy_qualifiers = []
-        return self.policy_qualifiers.insert(index, self._parse_policy_qualifier(value))
+        self.policy_qualifiers.insert(index, self._parse_policy_qualifier(value))
 
-    def _parse_policy_qualifier(self, qualifier):
+    def _parse_policy_qualifier(self, qualifier: ParsablePolicyQualifier) -> PolicyQualifier:
+
         if isinstance(qualifier, str):
-            return force_str(qualifier)
+            return qualifier
         if isinstance(qualifier, x509.UserNotice):
             return qualifier
         if isinstance(qualifier, dict):
@@ -328,24 +368,35 @@ class PolicyInformation:
             return x509.UserNotice(explicit_text=explicit_text, notice_reference=notice_reference)
         raise ValueError('PolicyQualifier must be string, dict or x509.UserNotice')
 
-    def parse_policy_qualifiers(self, qualifiers):
+    def parse_policy_qualifiers(
+            self, qualifiers: Optional[Iterable[ParsablePolicyQualifier]]
+    ) -> Optional[List[PolicyQualifier]]:
         """Parse given list of policy qualifiers."""
         if qualifiers is None:
             return None
         return [self._parse_policy_qualifier(q) for q in qualifiers]
 
-    @property
-    def policy_identifier(self):
-        """Return policy identifier."""
+    def get_policy_identifier(self) -> Optional[x509.ObjectIdentifier]:
+        """Property for the policy identifier.
+
+        Note that you can set any parseable value, it will always be an object identifier::
+
+            >>> pi = PolicyInformation()
+            >>> pi.policy_identifier = '1.2.3'
+            >>> pi.policy_identifier
+            <ObjectIdentifier(oid=1.2.3, name=Unknown OID)>
+        """
         return self._policy_identifier
 
-    @policy_identifier.setter
-    def policy_identifier(self, value):
+    def _set_policy_identifier(self, value: ParsablePolicyIdentifier) -> None:
         if isinstance(value, str):
-            value = ObjectIdentifier(value)
-        self._policy_identifier = value
+            self._policy_identifier = ObjectIdentifier(value)
+        else:
+            self._policy_identifier = value
 
-    def pop(self, index=-1):
+    policy_identifier = property(get_policy_identifier, _set_policy_identifier)
+
+    def pop(self, index: int = -1) -> SerializedPolicyQualifier:
         """Pop qualifier from given index."""
         if self.policy_qualifiers is None:
             return [].pop()
@@ -357,26 +408,31 @@ class PolicyInformation:
 
         return val
 
-    def remove(self, value):
-        """remove the given qualifier from this policy information."""
+    def remove(self, value: ParsablePolicyQualifier) -> PolicyQualifier:
+        """Remove the given qualifier from this policy information.
+
+        Note that unlike list.remove(), this value returns the parsed value.
+        """
         if self.policy_qualifiers is None:
             # Shortcut to raise the same Value error as if the element is not in the list
-            return [].remove(None)
+            raise ValueError('%s: not in list.' % value)
 
-        val = self.policy_qualifiers.remove(self._parse_policy_qualifier(value))
+        parsed_value = self._parse_policy_qualifier(value)
+        self.policy_qualifiers.remove(parsed_value)
 
         if not self.policy_qualifiers:  # if list is now empty, set to none
             self.policy_qualifiers = None
 
-        return val
+        return parsed_value
 
-    def _serialize_policy_qualifier(self, qualifier):
+    def _serialize_policy_qualifier(self, qualifier: PolicyQualifier) -> SerializedPolicyQualifier:
         if isinstance(qualifier, str):
             return qualifier
 
         value = {}
         if qualifier.explicit_text:
             value['explicit_text'] = qualifier.explicit_text
+
         if qualifier.notice_reference:
             value['notice_reference'] = {
                 'notice_numbers': qualifier.notice_reference.notice_numbers,
@@ -384,20 +440,20 @@ class PolicyInformation:
             }
         return value
 
-    def serialize_policy_qualifiers(self):
+    def serialize_policy_qualifiers(self) -> SerializedPolicyQualifiers:
         """Serialize policy qualifiers."""
         if self.policy_qualifiers is None:
             return None
 
         return [self._serialize_policy_qualifier(q) for q in self.policy_qualifiers]
 
-    def serialize(self):
+    def serialize(self) -> Dict[str, Union[str, SerializedPolicyQualifiers]]:
         """Serialize this policy information."""
         value = {
             'policy_identifier': self.policy_identifier.dotted_string,
         }
-        qualifier = self.serialize_policy_qualifiers()
-        if qualifier:
-            value['policy_qualifiers'] = qualifier
+        qualifiers = self.serialize_policy_qualifiers()
+        if qualifiers:
+            value['policy_qualifiers'] = qualifiers
 
         return value
