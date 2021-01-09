@@ -19,11 +19,15 @@ import sys
 
 import sphinx_autodoc_typehints
 import sphinx_rtd_theme
+from docutils.nodes import Text as DocutilsText
+from docutils.nodes import literal
 from pygments.lexer import do_insertions
 from pygments.lexers.shell import BashLexer
 from pygments.lexers.shell import ShellSessionBaseLexer
 from pygments.token import Generic
 from pygments.token import Text
+from sphinx.addnodes import pending_xref
+from sphinx.ext.intersphinx import missing_reference
 from sphinx.highlighting import lexers
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -452,6 +456,15 @@ qualname_overrides = {
     'cryptography.x509.extensions.DistributionPoint': 'cg:cryptography.x509.DistributionPoint',
     'cryptography.x509.extensions.PolicyInformation': 'cg:cryptography.x509.PolicyInformation',
     'cryptography.x509.extensions.UserNotice': 'cg:cryptography.x509.UserNotice',
+    'cryptography.x509.extensions.AuthorityInformationAccess':
+        'cg:cryptography.x509.AuthorityInformationAccess',
+    'cryptography.x509.extensions.Extension': 'cg:cryptography.x509.Extension',
+    'ExtensionTypeVar': 'cg:cryptography.x509.ExtensionType',
+    'Union': 'python:typing.Union',
+}
+
+text_overrides = {
+    'ExtensionTypeVar': 'ExtensionType',
 }
 
 fa_orig = sphinx_autodoc_typehints.format_annotation
@@ -469,3 +482,33 @@ def format_annotation(annotation, fully_qualified: bool = False):
 
 
 sphinx_autodoc_typehints.format_annotation = format_annotation
+
+
+def resolve_internal_aliases(app, doctree):
+    """
+    .. seealso::
+
+        * https://www.sphinx-doc.org/en/master/extdev/appapi.html#events
+        * https://stackoverflow.com/a/62301461
+
+    """
+    pending_xrefs = doctree.traverse(condition=pending_xref)
+    for node in pending_xrefs:
+        alias = node.get('reftarget', None)
+
+        if alias is not None and alias in qualname_overrides:
+            node['reftarget'] = qualname_overrides[alias]
+
+            # In TypeVar cases, this is plain text and not a type, so we wrap it ina literal for common look
+            if not isinstance(node.children[0], literal):
+                node.children = [literal('', '', *node.children, classes=['xref', 'py', 'py-class'])]
+
+        if alias is not None and alias in text_overrides:
+            # this will rewrite the rendered text:
+            # find the text node child
+            text_node = next(iter(node.traverse(lambda n: n.tagname == '#text')))
+            text_node.parent.replace(text_node, DocutilsText(text_overrides[alias], ''))
+
+
+def setup(app):
+    app.connect('doctree-read', resolve_internal_aliases)
