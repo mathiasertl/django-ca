@@ -16,12 +16,16 @@
 # pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
 
 import textwrap
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
+from typing import Generic
 from typing import Iterable
 from typing import List
 from typing import Optional
+from typing import TypeVar
 from typing import Union
+from typing import cast
 
 from cryptography import x509
 
@@ -33,8 +37,28 @@ from ..utils import format_general_name
 from ..utils import hex_to_bytes
 from .utils import DistributionPoint
 
+# pylint: disable=invalid-name
+ExtensionTypeVar = TypeVar('ExtensionTypeVar', bound=x509.ExtensionType)
+"""Generic ExtensionType type var."""
 
-class Extension:
+S = TypeVar('S')  # Serialized value of an extension
+"""Serialized extension value."""
+
+P = TypeVar('P')  # Parsable value of an extension (loose, e.g. Iterable instead of List)
+"""Parseable extension value."""
+
+if TYPE_CHECKING:  # pragma: no cover
+    E = x509.Extension[x509.ExtensionType]
+    UnrecognizedExtensionType = x509.Extension[x509.UnrecognizedExtension]
+else:
+    E = UnrecognizedExtensionType = x509.Extension
+    """Y"""
+SV = Dict[str, Union[bool, S]]
+"""X"""
+# pylint: enable=invalid-name
+
+
+class Extension(Generic[ExtensionTypeVar, P, S]):
     """Convenience class to handle X509 Extensions.
 
     The value is a ``dict`` as used by the :ref:`CA_PROFILES <settings-ca-profiles>` setting::
@@ -83,19 +107,21 @@ class Extension:
     key = ''  # must be overwritten by actual classes
     """Key used in CA_PROFILES."""
 
-    name = 'Extension'
-    oid: x509.ObjectIdentifier = None  # must be overwritten by actual classes
+    critical: bool
     default_critical = False
+    name = 'Extension'
+    oid: x509.ObjectIdentifier  # must be overwritten by actual classes
+    value: Any
 
-    def __init__(self, value=None):
+    def __init__(self, value: Optional[Union[ExtensionTypeVar, SV[P]]] = None) -> None:
         if value is None:
             value = {}
 
-        if isinstance(value, x509.extensions.Extension):  # e.g. from a cert object
+        if isinstance(value, x509.Extension):  # e.g. from a cert object
             self.critical = value.critical
             self.from_extension(value)
         elif isinstance(value, dict):  # e.g. from settings
-            self.critical = value.get('critical', self.default_critical)
+            self.critical = cast(bool, value.get('critical', self.default_critical))
             self.from_dict(value)
             self._test_value()
         else:
@@ -103,32 +129,32 @@ class Extension:
         if not isinstance(self.critical, bool):
             raise ValueError('%s: Invalid critical value passed' % self.critical)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.value, self.critical, ))
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<%s: %s, critical=%r>' % (self.name, self._repr_value(), self.critical)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return repr(self)
 
-    def _repr_value(self):
-        return self.value
+    def _repr_value(self) -> str:
+        return str(self.value)
 
-    def from_extension(self, value):
+    def from_extension(self, value: E) -> None:
         """Load a wrapper class from a cryptography extension instance.
 
         Implementing classes are expected to implement this function."""
         raise NotImplementedError
 
-    def from_dict(self, value):
+    def from_dict(self, value: SV[P]) -> None:
         """Load class from a dictionary."""
         self.value = value['value']
 
-    def from_other(self, value: Any):
+    def from_other(self, value: Any) -> None:
         """Load class from any other value type.
 
         This class can be overwritten to allow loading classes from different types."""
@@ -138,12 +164,11 @@ class Extension:
         pass
 
     @property
-    def extension_type(self):
-        """The extension_type for this value."""
-
+    def extension_type(self) -> ExtensionTypeVar:
+        """This extension as :py:class:`~cg:cryptography.x509.ExtensionType`."""
         raise NotImplementedError
 
-    def serialize(self):
+    def serialize(self) -> SV[S]:
         """Serialize this extension to a string in a way that it can be passed to a constructor again.
 
         For example, this should always be True::
@@ -158,15 +183,16 @@ class Extension:
             'value': self.value,
         }
 
-    def as_extension(self):
-        """This extension as :py:class:`~cg:cryptography.x509.ExtensionType`."""
-        return x509.extensions.Extension(oid=self.oid, critical=self.critical, value=self.extension_type)
+    def as_extension(self) -> E:
+        """This extension as :py:class:`~cg:cryptography.x509.Extension`."""
+        ext = self.extension_type  # extra line to raise NotImplementedError for abstract base classes
+        return x509.Extension(oid=self.oid, critical=self.critical, value=ext)
 
-    def as_text(self):
+    def as_text(self) -> str:
         """Human-readable version of the *value*, not including the "critical" flag."""
-        return self.value
+        return str(self.value)
 
-    def for_builder(self):
+    def for_builder(self) -> Dict[str, Union[bool, ExtensionTypeVar]]:
         """Return kwargs suitable for a :py:class:`~cg:cryptography.x509.CertificateBuilder`.
 
         Example::
@@ -177,27 +203,27 @@ class Extension:
         return {'extension': self.extension_type, 'critical': self.critical}
 
 
-class UnrecognizedExtension(Extension):
+class UnrecognizedExtension(Extension[x509.UnrecognizedExtension, Any, Any]):
     """Class wrapping any extension this module does **not** support."""
 
     # pylint: disable=abstract-method; We don't know the extension_type
 
-    def __init__(self, value, name='', error=''):
+    def __init__(self, value: x509.UnrecognizedExtension, name: str = '', error: str = '') -> None:
         self._error = error
         self._name = name
         super().__init__(value)
 
-    def from_extension(self, value):
+    def from_extension(self, value: UnrecognizedExtensionType) -> None:  # type: ignore[override]
         self.value = value
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Name (best effort) for this extension."""
         if self._name:
             return self._name
         return 'Unsupported extension (OID %s)' % (self.value.oid.dotted_string)
 
-    def as_text(self):
+    def as_text(self) -> str:
         if self._error:
             return 'Could not parse extension (%s)' % self._error
         return 'Could not parse extension'

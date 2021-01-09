@@ -20,23 +20,27 @@ in a more pythonic manner and provide access functions."""
 
 import binascii
 import textwrap
+from typing import TYPE_CHECKING
+from typing import Any
 from typing import Dict
 from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Union
+from typing import cast
 
 from cryptography import x509
+from cryptography.x509 import ObjectIdentifier
 from cryptography.x509 import TLSFeatureType
 from cryptography.x509.certificate_transparency import LogEntryType
 from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import ExtensionOID
-from cryptography.x509.oid import ObjectIdentifier
 
 from ..utils import GeneralNameList
 from ..utils import bytes_to_hex
 from ..utils import hex_to_bytes
+from .base import SV
 from .base import AlternativeNameExtension
 from .base import CRLDistributionPointsBase
 from .base import Extension
@@ -46,8 +50,18 @@ from .base import NullExtension
 from .base import OrderedSetExtension
 from .utils import PolicyInformation
 
+if TYPE_CHECKING:  # pragma: no cover
+    AuthorityInformationAccessType = x509.Extension[x509.AuthorityInformationAccess]
+else:
+    AuthorityInformationAccessType = x509.Extension
 
-class AuthorityInformationAccess(Extension):
+# pylint: disable=invalid-name
+S = Dict[str, Union[List[str], GeneralNameList]]
+P = Dict[str, Union[Iterable[str], GeneralNameList]]
+# pylint: enable=invalid-name
+
+
+class AuthorityInformationAccess(Extension[x509.AuthorityInformationAccess, P, S]):
     """Class representing a AuthorityInformationAccess extension.
 
     .. seealso::
@@ -79,26 +93,27 @@ class AuthorityInformationAccess(Extension):
 
     name = 'AuthorityInformationAccess'
     oid = ExtensionOID.AUTHORITY_INFORMATION_ACCESS
+    value: Dict[str, GeneralNameList]
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return bool(self.value['ocsp']) or bool(self.value['issuers'])
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         return isinstance(other, type(self)) \
             and self.value['issuers'] == other.value['issuers'] \
             and self.value['ocsp'] == other.value['ocsp'] \
             and self.critical == other.critical
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((tuple(self.value['issuers']), tuple(self.value['ocsp']), self.critical, ))
 
-    def _repr_value(self):
+    def _repr_value(self) -> str:
         issuers = list(self.value['issuers'].serialize())
         ocsp = list(self.value['ocsp'].serialize())
 
         return 'issuers=%r, ocsp=%r' % (issuers, ocsp)
 
-    def as_text(self):
+    def as_text(self) -> str:
         text = ''
         if self.value['issuers']:
             text += 'CA Issuers:\n'
@@ -112,14 +127,15 @@ class AuthorityInformationAccess(Extension):
         return text.strip()
 
     @property
-    def extension_type(self):
+    def extension_type(self) -> x509.AuthorityInformationAccess:
+        """Test"""
         descs = [x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, v)
                  for v in self.value['issuers']]
         descs += [x509.AccessDescription(AuthorityInformationAccessOID.OCSP, v)
                   for v in self.value['ocsp']]
         return x509.AuthorityInformationAccess(descriptions=descs)
 
-    def from_extension(self, value):
+    def from_extension(self, value: AuthorityInformationAccessType) -> None:  # type: ignore[override]
         issuers = [v.access_location for v in value.value
                    if v.access_method == AuthorityInformationAccessOID.CA_ISSUERS]
         ocsp = [v.access_location for v in value.value
@@ -127,11 +143,13 @@ class AuthorityInformationAccess(Extension):
 
         self.value = {'issuers': GeneralNameList(issuers), 'ocsp': GeneralNameList(ocsp)}
 
-    def from_dict(self, value):
-        value = value.get('value', {})
+    #P = Dict[str, Union[Iterable[str], GeneralNameList]]
+    #SV = Dict[str, Union[bool, P]]
+    def from_dict(self, value: SV[P]) -> None:
+        dict_value = cast(P, value.get('value', {}))
         self.value = {
-            'issuers': GeneralNameList(value.get('issuers', [])),
-            'ocsp': GeneralNameList(value.get('ocsp', [])),
+            'issuers': GeneralNameList(dict_value.get('issuers', [])),
+            'ocsp': GeneralNameList(dict_value.get('ocsp', [])),
         }
 
     @property
@@ -152,7 +170,7 @@ class AuthorityInformationAccess(Extension):
     def ocsp(self, value):
         self.value['ocsp'] = GeneralNameList.get_from_value(value)
 
-    def serialize(self):
+    def serialize(self) -> SV[S]:
         val = {
             'critical': self.critical,
             'value': {}
