@@ -110,7 +110,7 @@ class Extension(Generic[ExtensionTypeVar, P, S]):
     critical: bool
     default_critical = False
     name = 'Extension'
-    oid: x509.ObjectIdentifier  # must be overwritten by actual classes
+    oid: x509.ObjectIdentifier = None  # must be overwritten by actual classes
     value: Any
 
     def __init__(self, value: Optional[Union[ExtensionTypeVar, SV[P]]] = None) -> None:
