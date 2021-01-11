@@ -16,12 +16,17 @@
 """Test if various imports work, mainly used to test that all dependencies are installed."""
 
 # flake8: NOQA: E408
-# pylint: disable=wrong-import-position
+# pylint: disable=wrong-import-position,unused-import
 
+import argparse
 import os
 
 import django
 from django.conf import settings
+
+parser = argparse.ArgumentParser("Test imports.")
+parser.add_argument('--extra', help="Test extras_require.")
+args = parser.parse_args()
 
 settings.configure(
     SECRET_KEY='dummy',
@@ -38,3 +43,10 @@ from django_ca.extensions import Extension
 from django_ca.acme import constants
 from django_ca import models
 from django_ca import views
+
+if args.extra == 'acme':
+    from django_ca.acme import messages
+    from django_ca.acme import utils
+    from django_ca.acme import views
+elif args.extra:
+    print('Error: %s: Unknown extra.' % args.extra)

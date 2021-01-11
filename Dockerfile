@@ -31,13 +31,26 @@ COPY ca/ ca/
 ###################
 # Test setuptools #
 ###################
-from build as sdist-test
+FROM build as sdist-test
 COPY setup.py ./
 RUN python setup.py sdist
 RUN rm -rf ca/
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install dist/django-ca*.tar.gz
 COPY test-imports.py ./
 RUN ./test-imports.py
+
+FROM build as wheel-test
+COPY setup.py ./
+RUN python setup.py bdist_wheel
+RUN rm -rf ca/
+RUN ls dist/
+RUN --mount=type=cache,target=/root/.cache/pip/http pip install dist/django_ca*.whl
+COPY test-imports.py ./
+RUN ./test-imports.py
+
+FROM wheel-test as wheel-test-acme
+RUN --mount=type=cache,target=/root/.cache/pip/http pip install $(ls dist/django_ca*.whl)[acme]
+RUN ./test-imports.py --extra=acme
 
 ##############
 # Test stage #
