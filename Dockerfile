@@ -18,7 +18,6 @@ RUN --mount=type=cache,target=/etc/apk/cache apk add \
         pcre-dev mailcap mariadb-connector-c-dev postgresql-dev
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install -U setuptools pip wheel
 
-COPY requirements.txt ./
 COPY requirements/ requirements/
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install --no-warn-script-location --prefix=/install \
     -r requirements/requirements-docker.txt \
