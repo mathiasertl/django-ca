@@ -74,14 +74,18 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.todo',
     'sphinx.ext.autosummary',
+    'sphinx.ext.napoleon',
 
     # Enable Celery task docs: https://docs.celeryproject.org/en/latest/userguide/sphinx.html
     'celery.contrib.sphinx',
-    'numpydoc',
-    'sphinx_autodoc_typehints',
+    #'numpydoc',
+    #'sphinx_autodoc_typehints',
 ]
 numpydoc_show_class_members = False
 autodoc_inherit_docstrings = False
+
+napoleon_google_docstring = False
+napoleon_numpy_docstring = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -465,6 +469,9 @@ qualname_overrides = {
 
 text_overrides = {
     'ExtensionTypeVar': 'ExtensionType',
+    'cryptography.x509.extensions.Extension': 'cryptography.x509.Extension',
+    'cryptography.x509.extensions.UserNotice': 'cryptography.x509.UserNotice',
+    'cryptography.hazmat._oid.ObjectIdentifier': 'cryptography.x509.ObjectIdentifier',
 }
 
 fa_orig = sphinx_autodoc_typehints.format_annotation
@@ -481,7 +488,7 @@ def format_annotation(annotation, fully_qualified: bool = False):
     return fa_orig(annotation, fully_qualified=fully_qualified)
 
 
-sphinx_autodoc_typehints.format_annotation = format_annotation
+#sphinx_autodoc_typehints.format_annotation = format_annotation
 
 
 def resolve_internal_aliases(app, doctree):
@@ -500,8 +507,8 @@ def resolve_internal_aliases(app, doctree):
             node['reftarget'] = qualname_overrides[alias]
 
             # In TypeVar cases, this is plain text and not a type, so we wrap it ina literal for common look
-            if not isinstance(node.children[0], literal):
-                node.children = [literal('', '', *node.children, classes=['xref', 'py', 'py-class'])]
+            #if not isinstance(node.children[0], literal):
+            #    node.children = [literal('', '', *node.children, classes=['xref', 'py', 'py-class'])]
 
         if alias is not None and alias in text_overrides:
             # this will rewrite the rendered text:

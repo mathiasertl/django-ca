@@ -57,7 +57,9 @@ else:
 
 # pylint: disable=invalid-name
 S = Dict[str, Union[List[str], GeneralNameList]]
+"""S text."""
 P = Dict[str, Union[Iterable[str], GeneralNameList]]
+"""P text."""
 # pylint: enable=invalid-name
 
 

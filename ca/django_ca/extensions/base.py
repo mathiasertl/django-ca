@@ -82,30 +82,30 @@ class Extension(Generic[ExtensionTypeVar, P, S]):
         >>> ExtendedKeyUsage({'value': ['serverAuth']})
         <ExtendedKeyUsage: ['serverAuth'], critical=False>
 
-    Attributes
-    ----------
-
-    name : str
-        A human readable name of this extension
-    value
-        Raw value for this extension. The type various from subclass to subclass.
-    critical : bool
-        If this extension is marked as critical
-    oid : :py:class:`~cg:cryptography.x509.oid.ExtensionOID`
-        The OID for this extension.
-    key : str
-        The key is a reusable ID used in various parts of the application.
-    default_critical : bool
-        The default critical value if you pass a dict without the ``"critical"`` key.
 
     Parameters
     ----------
 
     value : list or tuple or dict or str or :py:class:`~cg:cryptography.x509.ExtensionType`
         The value of the extension, the description provides further details.
+
+    Attributes
+    ----------
+
+    name
+        A human readable name of this extension
+    value
+        Raw value for this extension. The type various from subclass to subclass.
+    critical : bool
+        If this extension is marked as critical
+    oid
+        The OID for this extension.
+    key : str
+        The key is a reusable ID used in various parts of the application.
+    default_critical : bool
+        The default critical value if you pass a dict without the ``"critical"`` key.
     """
     key = ''  # must be overwritten by actual classes
-    """Key used in CA_PROFILES."""
 
     critical: bool
     default_critical = False
@@ -165,7 +165,7 @@ class Extension(Generic[ExtensionTypeVar, P, S]):
 
     @property
     def extension_type(self) -> ExtensionTypeVar:
-        """This extension as :py:class:`~cg:cryptography.x509.ExtensionType`."""
+        """cryptography.x509.ExtensionType: The ``ExtensionType`` instance of this extension."""
         raise NotImplementedError
 
     def serialize(self) -> SV[S]:
