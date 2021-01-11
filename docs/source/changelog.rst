@@ -4,6 +4,17 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.17.1:
+
+*******************
+1.17.1 (2021-01-11)
+*******************
+
+* Bugfix release for 1.17.0 to address packaging issues for wheels (when installed with ``pip install``).
+* Include acme submodule (fixes `issue 67 <https://github.com/mathiasertl/django-ca/issues/67>`_).
+* Relax dependencies for josepy (fixes `issue 68 <https://github.com/mathiasertl/django-ca/issues/68>`_).
+* Add tests in ``Dockerfile`` to make sure that these issues cannot happen again.
+
 .. _changelog-1.17.0:
 
 *******************
