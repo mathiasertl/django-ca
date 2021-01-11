@@ -83,7 +83,7 @@ setup(
     zip_safe=False,  # because of the static files
     install_requires=install_requires,
     extras_require={
-        'acme': ['acme>=1.10', 'josepy>1.5.0', 'requests'],
+        'acme': ['acme>=1.10', 'josepy>=1.3.0', 'requests'],
         'redis': ['hiredis>=1.0', 'redis>=3.2', 'django-redis-cache>=1.8.0'],
         'celery': ['celery>=4.3'],
     },
