@@ -16,7 +16,7 @@
 """Test if various imports work, mainly used to test that all dependencies are installed."""
 
 # flake8: NOQA: E408
-# pylint: disable=wrong-import-position,unused-import
+# pylint: disable=wrong-import-position,unused-import,reimported
 
 import argparse
 import os
@@ -48,5 +48,9 @@ if args.extra == 'acme':
     from django_ca.acme import messages
     from django_ca.acme import utils
     from django_ca.acme import views
+elif args.extra == 'celery':
+    from django_ca import tasks
+elif args.extra == 'redis':
+    import redis_cache
 elif args.extra:
     print('Error: %s: Unknown extra.' % args.extra)

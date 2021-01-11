@@ -52,6 +52,14 @@ FROM wheel-test as wheel-test-acme
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install $(ls dist/django_ca*.whl)[acme]
 RUN ./test-imports.py --extra=acme
 
+FROM wheel-test as wheel-test-redis
+RUN --mount=type=cache,target=/root/.cache/pip/http pip install $(ls dist/django_ca*.whl)[redis]
+RUN ./test-imports.py --extra=redis
+
+FROM wheel-test as wheel-test-celery
+RUN --mount=type=cache,target=/root/.cache/pip/http pip install $(ls dist/django_ca*.whl)[celery]
+RUN ./test-imports.py --extra=celery
+
 ##############
 # Test stage #
 ##############
