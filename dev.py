@@ -322,7 +322,7 @@ elif args.command == 'docker-test':
     if not failed_images:
         ok("\nCongratulations :)")
     else:
-        error("\nSome images failed.")
+        error("\nSome images failed (%s)" % ', '.join(failed_images))
         sys.exit(1)
 
 elif args.command == 'init-demo':
