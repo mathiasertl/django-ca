@@ -28,6 +28,17 @@ RUN --mount=type=cache,target=/root/.cache/pip/http pip install --no-warn-script
 # Finally, copy sources
 COPY ca/ ca/
 
+###################
+# Test setuptools #
+###################
+from build as sdist-test
+COPY setup.py ./
+RUN python setup.py sdist
+RUN rm -rf ca/
+RUN --mount=type=cache,target=/root/.cache/pip/http pip install dist/django-ca*.tar.gz
+COPY test-imports.py ./
+RUN ./test-imports.py
+
 ##############
 # Test stage #
 ##############
