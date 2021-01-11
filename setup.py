@@ -18,8 +18,8 @@
 import os
 import sys
 
-from setuptools import setup
 from setuptools import find_packages
+from setuptools import setup
 
 LONG_DESCRIPTION = """django-ca is a tool to manage TLS certificate authorities and easily issue and revoke
 certificates. It is based `cryptography <https://cryptography.io/>`_ and `Django
