@@ -44,6 +44,7 @@ from django_ca.acme import constants
 from django_ca import models
 from django_ca import views
 
+# NOTE: extras are tested in the wheel-test-* stages in Dockerfile
 if args.extra == 'acme':
     from django_ca.acme import messages
     from django_ca.acme import utils

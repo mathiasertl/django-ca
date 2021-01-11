@@ -39,6 +39,9 @@ RUN --mount=type=cache,target=/root/.cache/pip/http pip install dist/django-ca*.
 COPY test-imports.py ./
 RUN ./test-imports.py
 
+############################
+# Test wheels (and extras) #
+############################
 FROM build as wheel-test
 COPY setup.py ./
 RUN python setup.py bdist_wheel
@@ -119,6 +122,11 @@ RUN rm dev.py
 
 # Seems like with BuildKit, the test stage is never executed unless we somehow depend on it
 COPY --from=test /usr/src/django-ca/.coverage /tmp
+COPY --from=sdist-test /usr/src/django-ca/test-imports.py /tmp
+COPY --from=wheel-test /usr/src/django-ca/test-imports.py /tmp
+COPY --from=wheel-test-acme /usr/src/django-ca/test-imports.py /tmp
+COPY --from=wheel-test-redis /usr/src/django-ca/test-imports.py /tmp
+COPY --from=wheel-test-celery /usr/src/django-ca/test-imports.py /tmp
 
 ###############
 # final stage #
