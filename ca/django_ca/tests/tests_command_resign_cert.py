@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
+"""Test the resign_cert management command."""
+
 import os
 from unittest.mock import patch
 
@@ -36,11 +38,14 @@ from .base import timestamps
 
 @freeze_time(timestamps['everything_valid'])
 class ResignCertTestCase(DjangoCAWithCertTestCase):
+    """Main test class for this command."""
+
     def setUp(self):
-        super(ResignCertTestCase, self).setUp()
+        super().setUp()
         self.cert = self.certs['root-cert']
 
-    def assertResigned(self, old, new, new_ca=None):
+    def assertResigned(self, old, new, new_ca=None):  # pylint: disable=invalid-name
+        """Assert that the resigned certificate mathes the old cert."""
         new_ca = new_ca or old.ca
         issuer = new_ca.subject
 
@@ -51,7 +56,8 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(issuer, new.issuer)
         self.assertEqual(old.hpkp_pin, new.hpkp_pin)
 
-    def assertEqualExt(self, old, new, new_ca=None):
+    def assertEqualExt(self, old, new, new_ca=None):  # pylint: disable=invalid-name
+        """Assert that the extensions in both certs are equal."""
         new_ca = new_ca or old.ca
         self.assertEqual(old.subject, new.subject)
 
@@ -77,6 +83,7 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_basic(self):
+        """Simplest test while resigning a cert."""
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd('resign_cert', self.cert.serial)
         self.assertEqual(stderr, '')
@@ -89,6 +96,7 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_different_ca(self):
+        """Test writing with a different CA."""
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd('resign_cert', self.cert.serial, ca=self.cas['child'])
 
@@ -102,6 +110,7 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_overwrite(self):
+        """Test overwriting extensions."""
         key_usage = 'cRLSign'
         ext_key_usage = 'critical,emailProtection'
         tls_feature = 'critical,MultipleCertStatusRequest'
@@ -140,10 +149,12 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_to_file(self):
+        """Test writing output to file."""
         out_path = os.path.join(ca_settings.CA_DIR, 'test.pem')
 
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd('resign_cert', self.cert.serial, out=out_path)
+        self.assertEqual(stdout, '')
         self.assertEqual(stderr, '')
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(post.call_count, 1)
@@ -157,6 +168,7 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_no_cn(self):
+        """Test resigning with a subject that has no CN."""
         subject = '/C=AT'  # has no CN
         cert = self.certs['no-extensions']
 
@@ -171,6 +183,7 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_error(self):
+        """Test resign function throwing a random exception."""
         msg = 'foobar'
         msg_re = r'^%s$' % msg
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post, \

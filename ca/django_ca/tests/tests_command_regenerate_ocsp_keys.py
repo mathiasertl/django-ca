@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
+"""Test the regenerate_ocsp_keys management command."""
+
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
@@ -25,12 +27,15 @@ from .base import override_tmpcadir
 
 
 class RegenerateOCSPKeyTestCase(DjangoCATestCase):
+    """Main test class for this command."""
+
     def setUp(self):
-        super(RegenerateOCSPKeyTestCase, self).setUp()
+        super().setUp()
         self.load_usable_cas()
         self.existing_certs = list(Certificate.objects.values_list('pk', flat=True))
 
-    def assertKey(self, ca, key_type=RSAPrivateKey, password=None):
+    def assertKey(self, ca, key_type=RSAPrivateKey, password=None):  # pylint: disable=invalid-name
+        """Assert that they key ispresent and can be read."""
         priv_path = 'ocsp/%s.key' % ca.serial
         cert_path = 'ocsp/%s.pem' % ca.serial
 
@@ -52,7 +57,8 @@ class RegenerateOCSPKeyTestCase(DjangoCATestCase):
 
         return priv, cert
 
-    def assertHasNoKey(self, serial):
+    def assertHasNoKey(self, serial):  # pylint: disable=invalid-name
+        """Assert that the key is **not** present."""
         priv_path = 'ocsp/%s.key' % serial
         cert_path = 'ocsp/%s.pem' % serial
         self.assertFalse(ca_storage.exists(priv_path))
@@ -60,6 +66,7 @@ class RegenerateOCSPKeyTestCase(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_basic(self):
+        """Basic test."""
         stdout, stderr = self.cmd('regenerate_ocsp_keys', certs['root']['serial'])
         self.assertEqual(stdout, '')
         self.assertEqual(stderr, '')
@@ -67,6 +74,7 @@ class RegenerateOCSPKeyTestCase(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_all(self):
+        """Test for all CAs."""
         # Delete pwd_ca, because it will fail, since we do not give a password
         self.cas['pwd'].delete()
         del self.cas['pwd']
@@ -79,6 +87,7 @@ class RegenerateOCSPKeyTestCase(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_overwrite(self):
+        """Test overwriting pre-generated OCSP keys."""
         stdout, stderr = self.cmd('regenerate_ocsp_keys', certs['root']['serial'])
         self.assertEqual(stdout, '')
         self.assertEqual(stderr, '')
@@ -96,6 +105,7 @@ class RegenerateOCSPKeyTestCase(DjangoCATestCase):
 
     @override_tmpcadir()
     def test_wrong_serial(self):
+        """Try passing an unknown CA."""
         serial = 'ZZZZZ'
         stdout, stderr = self.cmd('regenerate_ocsp_keys', serial, no_color=True)
         self.assertEqual(stdout, '')
@@ -104,12 +114,14 @@ class RegenerateOCSPKeyTestCase(DjangoCATestCase):
 
     @override_tmpcadir(CA_PROFILES={'ocsp': None})
     def test_no_ocsp_profile(self):
+        """Try when there is no OCSP profile."""
         with self.assertCommandError(r'^ocsp: Undefined profile\.$'):
             self.cmd('regenerate_ocsp_keys', certs['root']['serial'])
         self.assertHasNoKey(certs['root']['serial'])
 
     @override_tmpcadir()
     def test_no_private_key(self):
+        """Try when there is no private key."""
         ca = self.cas['root']
         ca_storage.delete(ca.private_key_path)
         stdout, stderr = self.cmd('regenerate_ocsp_keys', ca.serial, no_color=True)

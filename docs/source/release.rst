@@ -154,7 +154,6 @@ After a release
 * Update ``VERSION`` and ``__version__`` in ``ca/django_ca/__init__.py`` to the next
   development release (see `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_).
 * Update ``django_ca/deprecation.py``.
-* Update version in ``setup.py``.
 * Drop support for older software versions in ``.travis.yml``, ``tox.ini`` and ``dev.py docker-test``.
 * Remove files in dist: ``rm -rf dist/*``
 * Update ``docker-compose.yml`` to use the ``latest`` version of **django-ca**.

@@ -25,8 +25,8 @@ from ...models import CertificateAuthority
 from ...tasks import generate_ocsp_key
 from ...tasks import run_task
 from ...utils import add_colons
+from ..actions import ExpiresAction
 from ..base import BaseCommand
-from ..base import ExpiresAction
 
 
 class Command(BaseCommand):  # pylint: disable=missing-class-docstring

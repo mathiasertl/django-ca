@@ -30,12 +30,12 @@ from ...models import CertificateAuthority
 from ...tasks import cache_crl
 from ...tasks import generate_ocsp_key
 from ...tasks import run_task
+from ..actions import ExpiresAction
+from ..actions import MultipleURLAction
+from ..actions import PasswordAction
+from ..actions import URLAction
 from ..base import BaseCommand
 from ..base import CertificateAuthorityDetailMixin
-from ..base import ExpiresAction
-from ..base import MultipleURLAction
-from ..base import PasswordAction
-from ..base import URLAction
 
 
 class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=missing-class-docstring
@@ -56,15 +56,15 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=
         )
         self.add_ca(
             parser, '--parent', no_default=True,
-            help='''Make the CA an intermediate CA of the named CA. By default, this is a new root CA.''')
+            help_text='Make the CA an intermediate CA of the named CA. By default, this is a new root CA.')
         parser.add_argument('name', help='Human-readable name of the CA')
         self.add_subject(
-            parser, help='''The subject of the CA in the format "/key1=value1/key2=value2/...",
-                            valid keys are %s. If "CN" is not set, the name is used.'''
+            parser, help_text='''The subject of the CA in the format "/key1=value1/key2=value2/...",
+                                 valid keys are %s. If "CN" is not set, the name is used.'''
             % self.valid_subject_keys)
         self.add_password(
-            parser, help='Optional password used to encrypt the private key. If no argument is passed, you '
-                         'will be prompted.')
+            parser, help_text='Optional password used to encrypt the private key. If no argument is passed, '
+                              'you will be prompted.')
         parser.add_argument('--path', type=pathlib.PurePath,
                             help="Path where to store Certificate Authorities (relative to CA_DIR).")
         parser.add_argument('--parent-password', nargs='?', action=PasswordAction, metavar='PASSWORD',

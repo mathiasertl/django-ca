@@ -12,16 +12,22 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+import inspect
 import os
 import re
 import sys
 
+import sphinx_autodoc_typehints
 import sphinx_rtd_theme
+from docutils.nodes import Text as DocutilsText
+from docutils.nodes import literal
 from pygments.lexer import do_insertions
 from pygments.lexers.shell import BashLexer
 from pygments.lexers.shell import ShellSessionBaseLexer
 from pygments.token import Generic
 from pygments.token import Text
+from sphinx.addnodes import pending_xref
+from sphinx.ext.intersphinx import missing_reference
 from sphinx.highlighting import lexers
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -68,10 +74,18 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.todo',
     'sphinx.ext.autosummary',
-    'numpydoc',
+    'sphinx.ext.napoleon',
+
+    # Enable Celery task docs: https://docs.celeryproject.org/en/latest/userguide/sphinx.html
+    'celery.contrib.sphinx',
+    #'numpydoc',
+    #'sphinx_autodoc_typehints',
 ]
 numpydoc_show_class_members = False
 autodoc_inherit_docstrings = False
+
+napoleon_google_docstring = False
+napoleon_numpy_docstring = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -337,7 +351,7 @@ autodoc_mock_imports = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3.8', None),
+    'python': ('https://docs.python.org/3.9', None),
     'cg': ('https://cryptography.io/en/latest/', None),
     'django': ('https://docs.djangoproject.com/en/dev/', 'https://docs.djangoproject.com/en/dev/_objects/'),
     'acme': ('https://acme-python.readthedocs.io/en/stable/', None),
@@ -345,7 +359,6 @@ intersphinx_mapping = {
 
 html_theme = "sphinx_rtd_theme"
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-
 
 # Custom console lexer to make space part of the prompt
 line_re = re.compile('.*?\n')
@@ -431,3 +444,78 @@ class BashSessionLexer(ShellSessionBaseLexer):
 
 lexers['console'] = BashSessionLexer()
 lexers['shell-session'] = BashSessionLexer()
+
+# Make typehints to third-party libraries work in Shpinx:
+#   https://github.com/agronholm/sphinx-autodoc-typehints/issues/38#issuecomment-448517805
+#   See also: https://github.com/sphinx-doc/sphinx/issues/4826
+qualname_overrides = {
+    'cryptography.x509.name.Name': 'cg:cryptography.x509.Name',
+    'cryptography.x509.base.CertificateSigningRequest': 'cg:cryptography.x509.CertificateSigningRequest',
+    'cryptography.x509.name.RelativeDistinguishedName': 'cg:cryptography.x509.RelativeDistinguishedName',
+    'cryptography.x509.base.CertificateBuilder': 'cg:cryptography.x509.CertificateBuilder',
+    'cryptography.hazmat.primitives.serialization.base.Encoding':
+        'cg:cryptography.hazmat.primitives.serialization.Encoding',
+    'cryptography.x509.general_name.GeneralName': 'cg:cryptography.x509.GeneralName',
+    'cryptography.hazmat._oid.ObjectIdentifier': 'cg:cryptography.x509.ObjectIdentifier',
+    'cryptography.x509.extensions.DistributionPoint': 'cg:cryptography.x509.DistributionPoint',
+    'cryptography.x509.extensions.PolicyInformation': 'cg:cryptography.x509.PolicyInformation',
+    'cryptography.x509.extensions.UserNotice': 'cg:cryptography.x509.UserNotice',
+    'cryptography.x509.extensions.AuthorityInformationAccess':
+        'cg:cryptography.x509.AuthorityInformationAccess',
+    'cryptography.x509.extensions.Extension': 'cg:cryptography.x509.Extension',
+    'ExtensionTypeVar': 'cg:cryptography.x509.ExtensionType',
+    'Union': 'python:typing.Union',
+}
+
+text_overrides = {
+    'ExtensionTypeVar': 'ExtensionType',
+    'cryptography.x509.extensions.Extension': 'cryptography.x509.Extension',
+    'cryptography.x509.extensions.UserNotice': 'cryptography.x509.UserNotice',
+    'cryptography.hazmat._oid.ObjectIdentifier': 'cryptography.x509.ObjectIdentifier',
+}
+
+fa_orig = sphinx_autodoc_typehints.format_annotation
+
+
+def format_annotation(annotation, fully_qualified: bool = False):
+    if inspect.isclass(annotation):
+        full_name = f'{annotation.__module__}.{annotation.__qualname__}'
+        if 'ident' in full_name.lower():
+            print(full_name)
+        override = qualname_overrides.get(full_name)
+        if override is not None:
+            return f':py:class:`~{override}`'
+    return fa_orig(annotation, fully_qualified=fully_qualified)
+
+
+#sphinx_autodoc_typehints.format_annotation = format_annotation
+
+
+def resolve_internal_aliases(app, doctree):
+    """
+    .. seealso::
+
+        * https://www.sphinx-doc.org/en/master/extdev/appapi.html#events
+        * https://stackoverflow.com/a/62301461
+
+    """
+    pending_xrefs = doctree.traverse(condition=pending_xref)
+    for node in pending_xrefs:
+        alias = node.get('reftarget', None)
+
+        if alias is not None and alias in qualname_overrides:
+            node['reftarget'] = qualname_overrides[alias]
+
+            # In TypeVar cases, this is plain text and not a type, so we wrap it ina literal for common look
+            #if not isinstance(node.children[0], literal):
+            #    node.children = [literal('', '', *node.children, classes=['xref', 'py', 'py-class'])]
+
+        if alias is not None and alias in text_overrides:
+            # this will rewrite the rendered text:
+            # find the text node child
+            text_node = next(iter(node.traverse(lambda n: n.tagname == '#text')))
+            text_node.parent.replace(text_node, DocutilsText(text_overrides[alias], ''))
+
+
+def setup(app):
+    app.connect('doctree-read', resolve_internal_aliases)

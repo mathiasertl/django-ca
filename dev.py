@@ -91,8 +91,6 @@ def test(suites):
 
     if not args.virtual_display:
         os.environ['VIRTUAL_DISPLAY'] = 'n'
-    if not args.selenium:
-        os.environ['SKIP_SELENIUM_TESTS'] = 'y'
 
     warnings.filterwarnings(action='always')
     warnings.filterwarnings(action='error', module='django_ca')
@@ -118,7 +116,7 @@ def test(suites):
 
     suites = ['django_ca.tests.%s' % s.strip('.') for s in suites]
 
-    call_command('test', *suites)
+    call_command('test', *suites, parallel=True)
 
 
 def exclude_versions(cov, sw, this_version, version, version_str):
@@ -138,6 +136,9 @@ def exclude_versions(cov, sw, this_version, version, version_str):
 
 
 if args.command == 'test':
+    if not args.selenium:
+        os.environ['SKIP_SELENIUM_TESTS'] = 'y'
+
     setup_django()
     test(args.suites)
 elif args.command == 'coverage':
@@ -149,6 +150,9 @@ elif args.command == 'coverage':
     else:
         report_dir = os.path.join(ROOTDIR, 'docs', 'build', 'coverage')
         data_file = None
+
+    if not args.selenium:
+        os.environ['SKIP_SELENIUM_TESTS'] = 'y'
 
     cov = coverage.Coverage(data_file=data_file, cover_pylib=False, branch=True, source=['django_ca'],
                             omit=['*migrations/*', '*/tests/tests*', ])
@@ -236,9 +240,6 @@ elif args.command == 'docker-test':
         'python:3.6-alpine3.11',
         'python:3.7-alpine3.11',
         'python:3.8-alpine3.11',
-        'python:3.6-alpine3.10',
-        'python:3.7-alpine3.10',
-        'python:3.8-alpine3.10',
     ]
 
     docker_runs = []
@@ -370,10 +371,12 @@ Please create %(localsettings)s from %(example)s and try again.""" % {
     if not os.path.exists(ca_settings.CA_DIR):
         os.makedirs(ca_settings.CA_DIR)
 
+    # NOTE: We pass SKIP_SELENIUM_TESTS=y as environment, because otherwise test_settings will complain that
+    #       the driver isn't there, when in fact we're not running any tests.
     print('Creating fixture data...', end='')
     subprocess.check_call(['python', 'recreate-fixtures.py', '--no-delay', '--no-ocsp', '--no-contrib',
                            '--ca-validity=3650', '--cert-validity=732',
-                           '--dest=%s' % ca_settings.CA_DIR])
+                           '--dest=%s' % ca_settings.CA_DIR], env=dict(os.environ, SKIP_SELENIUM_TESTS='y'))
     with open(os.path.join(ca_settings.CA_DIR, 'cert-data.json')) as stream:
         fixture_data = json.load(stream)
     ok()
@@ -398,7 +401,10 @@ Please create %(localsettings)s from %(example)s and try again.""" % {
             if cert_data['cat'] != 'generated':
                 continue  # Imported cert
 
-            c = Certificate(ca=loaded_cas[cert_data['ca']])
+            with open(os.path.join(ca_settings.CA_DIR, cert_data['csr_filename']), 'r') as stream:
+                csr = stream.read()
+            profile = cert_data.get('profile', ca_settings.CA_DEFAULT_PROFILE)
+            c = Certificate(ca=loaded_cas[cert_data['ca']], csr=csr, profile=profile)
 
         with open(os.path.join(ca_settings.CA_DIR, cert_data['pub_filename']), 'rb') as stream:
             pem = stream.read()

@@ -39,7 +39,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
             --profile. The --subject option allows you to name a CommonName (which is not usually
             in the defaults) and override any default values.'''
 
-    def add_cn_in_san(self, parser):  # pylint: disable=no-self-use
+    def add_cn_in_san(self, parser):
         """Add argument group for the CommonName-in-SubjectAlternativeName options."""
         default = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]['cn_in_san']
 

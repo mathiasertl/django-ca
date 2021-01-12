@@ -171,12 +171,12 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         # revoke a cert
         cert.revoke()
         crl = ca.get_crl().public_bytes(Encoding.PEM)
-        self.assertCRL(crl, certs=[cert], crl_number=2, signer=ca)
+        self.assertCRL(crl, expected=[cert], crl_number=2, signer=ca)
 
         # also revoke a CA
         child.revoke()
         crl = ca.get_crl().public_bytes(Encoding.PEM)
-        self.assertCRL(crl, certs=[cert, child], crl_number=3, signer=ca)
+        self.assertCRL(crl, expected=[cert, child], crl_number=3, signer=ca)
 
         # unrevoke cert (so we have all three combinations)
         cert.revoked = False
@@ -185,7 +185,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         cert.save()
 
         crl = ca.get_crl().public_bytes(Encoding.PEM)
-        self.assertCRL(crl, certs=[child], crl_number=4, signer=ca)
+        self.assertCRL(crl, expected=[child], crl_number=4, signer=ca)
 
     @freeze_time(timestamps['everything_valid'])
     @override_tmpcadir()
@@ -202,7 +202,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         # Revoke a cert
         cert.revoke()
         crl = child.get_crl(full_name=[full_name]).public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=idp, certs=[cert], crl_number=1, signer=child)
+        self.assertCRL(crl, expected=[cert], idp=idp, crl_number=1, signer=child)
 
     @override_settings(USE_TZ=True)
     def test_full_crl_tz(self):
@@ -235,7 +235,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         self.certs['root-cert'].revoke()
         self.certs['child-cert'].revoke()
         crl = ca.get_crl(scope='ca').public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=idp, certs=[child_ca], crl_number=1, signer=ca)
+        self.assertCRL(crl, expected=[child_ca], idp=idp, crl_number=1, signer=ca)
 
     @override_tmpcadir()
     @freeze_time(timestamps['everything_valid'])
@@ -267,7 +267,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         self.certs['child-cert'].revoke()
         self.cas['child'].revoke()
         crl = ca.get_crl(scope='user').public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=idp, certs=[cert], crl_number=1, signer=ca)
+        self.assertCRL(crl, expected=[cert], idp=idp, crl_number=1, signer=ca)
 
     @freeze_time(timestamps['everything_valid'])
     @override_tmpcadir()

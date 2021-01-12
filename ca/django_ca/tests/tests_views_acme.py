@@ -297,7 +297,7 @@ KSAr5SU7IyM/9M95oQIDAQAB
         return jose.decode_b64jose(response['replay-nonce'])
 
     @contextmanager
-    def mock_slug(self):  # pylint: disable=no-self-use
+    def mock_slug(self):
         """Mock random slug generation, yields the static value."""
 
         slug = get_random_string(length=12)
@@ -1165,7 +1165,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
         """Assert a badCSR error."""
         self.assertAcmeProblem(resp, 'badCSR', status=HTTPStatus.BAD_REQUEST, message=message)
 
-    def get_message(self, csr):  # pylint: disable=no-self-use,arguments-differ
+    def get_message(self, csr):  # pylint: disable=arguments-differ
         """Get a message for the given cryptography CSR object."""
         req = X509Req.from_cryptography(csr)
         return acme.messages.CertificateRequest(

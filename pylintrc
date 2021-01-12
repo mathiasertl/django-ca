@@ -34,6 +34,8 @@ unsafe-load-any-extension=no
 # Add init-hook so that django_ca can be imported in pylint
 init-hook="import os, sys; sys.path.insert(0, os.path.abspath('ca'))"
 
+django-settings-module = ca.settings
+
 
 [MESSAGES CONTROL]
 
@@ -129,7 +131,12 @@ disable=print-statement,
         deprecated-sys-function,
         exception-escape,
         comprehension-escape,
-        line-too-long
+        line-too-long,
+        no-self-use,
+        # https://pylint.readthedocs.io/en/latest/faq.html?highlight=flake8#i-am-using-another-popular-linter-alongside-pylint-which-messages-should-i-disable-to-avoid-duplicates
+        wrong-import-order,  # covered by isort
+        undefined-variable, unused-import, unused-variable,  # covered by pyflakes
+        unneeded-not, line-too-long, unnecessary-semicolon, trailing-whitespace, missing-final-newline, bad-indentation, multiple-statements, bare-except,  # covered by pycodestyle
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -195,10 +202,10 @@ ignore-comments=yes
 ignore-docstrings=yes
 
 # Ignore imports when computing similarities.
-ignore-imports=no
+ignore-imports=yes
 
 # Minimum lines number of a similarity.
-min-similarity-lines=4
+min-similarity-lines=8
 
 
 [BASIC]
@@ -502,7 +509,7 @@ max-parents=15
 max-public-methods=20
 
 # Maximum number of return / yield for function / method body.
-max-returns=6
+max-returns=8
 
 # Maximum number of statements in function / method body.
 max-statements=60

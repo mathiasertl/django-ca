@@ -28,7 +28,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         parser.add_argument('-t', '--tree', default=False, action='store_true',
                             help="Output data in a tree view.")
 
-    def qs(self, qs):  # pylint: disable=no-self-use
+    def qs(self, qs):
         """Order given queryset appropriately."""
         return qs.order_by('expires', 'name')
 

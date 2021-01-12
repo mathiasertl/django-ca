@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
+"""Collection of exception classes for ACMEv2."""
+
 from .responses import AcmeResponseBadCSR
 from .responses import AcmeResponseError
 from .responses import AcmeResponseMalformed
@@ -18,6 +20,7 @@ from .responses import AcmeResponseUnauthorized
 
 
 class AcmeException(Exception):
+    """Base class for all ACME exceptions."""
     response = AcmeResponseError
 
     def __init__(self, *args, **kwargs):
@@ -25,14 +28,17 @@ class AcmeException(Exception):
         self.kwargs = kwargs
 
     def get_response(self):
+        """Get the corresponding ACME response class."""
         return self.response(*self.args, **self.kwargs)
 
 
 class AcmeMalformed(AcmeException):
+    """Exception when the request was malformed."""
     response = AcmeResponseMalformed
 
 
 class AcmeUnauthorized(AcmeException):
+    """Exception when the request is unauthorized."""
     response = AcmeResponseUnauthorized
 
 

@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Template tags used by the admin interface."""
+
 from cryptography import x509
 
 from django import template
@@ -45,20 +47,22 @@ def as_hex(value):
 
     if isinstance(value, int):
         return add_colons(int_to_hex(value))
-    else:
-        return bytes_to_hex(value)
+    return bytes_to_hex(value)
 
 
 @register.filter
 def oid_name(value):
-    return value._name
+    """Get name of an OID."""
+    return value._name  # pylint: disable=protected-access; only way to get the OID name
 
 
 @register.filter
 def is_user_notice(value):
+    """Return ``True`` if `value` is :py:class:`~cg:cryptography.x509.UserNotice`."""
     return isinstance(value, x509.UserNotice)
 
 
 @register.inclusion_tag('django_ca/admin/submit_line.html', takes_context=True)
 def django_ca_certificate_submit_row(context):
+    """Submit row for certificate change view."""
     return submit_row(context)

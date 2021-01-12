@@ -66,7 +66,7 @@ class URLPatternTestCase(DjangoCATestCase):
             self.assertNoReverseMatch('django_ca:acme-directory', kwargs={'serial': 'AB:CD'})
             self.assertNoReverseMatch('django_ca:acme-new-nonce', kwargs={'serial': 'AB:CD'})
 
-    def test_enabled(self):  # pylint: disable=no-self-use
+    def test_enabled(self):
         """Test that resolving URLs work if enabled."""
 
         reverse('django_ca:acme-directory')

@@ -113,23 +113,15 @@ class CertificateRevocationListView(View, SingleObjectMixin):
 
 
 @method_decorator(csrf_exempt, name='dispatch')
-class OCSPBaseView(View):
-    """View to provide an OCSP responder.
-
-    django-ca currently provides two OCSP implementations, one using cryptography>=2.4 and one using oscrypto
-    for older versions of cryptography that do not support OCSP. This is a base view that provides some
-    generic settings and common functions to both implementations.
-
-    Note that providing the responder key or certificate using an absolute path is deprecated for the Django
-    file storage API. Please see :ref:`update-file-storage` for more information.
-    """
+class OCSPView(View):
+    """View to provide an OCSP responder."""
 
     ca = None
     """The name or serial of your Certificate Authority."""
 
     responder_key = None
-    """Private key used for signing OCSP responses. Either a relative path used by :ref:`CA_FILE_STORAGE
-    <settings-ca-file-storage>` or (**deprecated**) an absolute path on the local filesystem."""
+    """Private key used for signing OCSP responses. A relative path used by :ref:`CA_FILE_STORAGE
+    <settings-ca-file-storage>`."""
 
     responder_cert = None
     """Public key of the responder.
@@ -137,7 +129,6 @@ class OCSPBaseView(View):
     This may either be:
 
     * A relative path used by :ref:`CA_FILE_STORAGE <settings-ca-file-storage>`
-    * **Deprecated:** An absolute path on the local filesystem
     * A serial of a certificate as stored in the database
     * The PEM of the certificate as string
     * A loaded :py:class:`~cg:cryptography.x509.Certificate`
@@ -170,14 +161,36 @@ class OCSPBaseView(View):
             log.exception(e)
             return self.fail()
 
+    def fail(self, status=ocsp.OCSPResponseStatus.INTERNAL_ERROR):
+        """Generic method to return a failure response."""
+        return self.http_response(
+            ocsp.OCSPResponseBuilder.build_unsuccessful(status).public_bytes(Encoding.DER)
+        )
+
+    def get_responder_key(self):
+        """Get the private key used to sign OCSP responses."""
+        key = self.get_responder_key_data()
+        return serialization.load_pem_private_key(key, None, default_backend())
+
     def get_responder_key_data(self):
+        """Read the file containing the private key used to sign OCSP responses."""
         if os.path.isabs(self.responder_key):
             log.warning('%s: OCSP responder uses absolute path to private key. Please see %s.',
                         self.responder_key, ca_settings.CA_FILE_STORAGE_URL)
 
         return read_file(self.responder_key)
 
+    def get_responder_cert(self):
+        """Get the public key used to sign OCSP responses."""
+        # User configured a loaded certificate
+        if isinstance(self.responder_cert, x509.Certificate):
+            return self.responder_cert
+
+        responder_cert = self.get_responder_cert_data()
+        return load_pem_x509_certificate(responder_cert, default_backend())
+
     def get_responder_cert_data(self):
+        """Read the file containing the public key used to sign OCSP responses."""
         if self.responder_cert.startswith('-----BEGIN CERTIFICATE-----\n'):
             return self.responder_cert.encode('utf-8')
 
@@ -192,44 +205,27 @@ class OCSPBaseView(View):
         return read_file(self.responder_cert)
 
     def get_ca(self):
+        """Get the certificate authority for the request."""
         return CertificateAuthority.objects.get_by_serial_or_cn(self.ca)
 
     def get_cert(self, ca, serial):
+        """Get the certificate that was requested in the OCSP request."""
         if self.ca_ocsp is True:
             return CertificateAuthority.objects.filter(parent=ca).get(serial=serial)
-        else:
-            return Certificate.objects.filter(ca=ca).get(serial=serial)
+
+        return Certificate.objects.filter(ca=ca).get(serial=serial)
 
     def http_response(self, data, status=200):
+        """Get a HTTP OCSP response with given status and data."""
         return HttpResponse(data, status=status, content_type='application/ocsp-response')
 
-
-class OCSPView(OCSPBaseView):
-    """View providing OCSP functionality.
-
-    Depending on the cryptography version used, this view might use either cryptography or oscrypto."""
-
-    def fail(self, status=ocsp.OCSPResponseStatus.INTERNAL_ERROR):
-        return self.http_response(
-            ocsp.OCSPResponseBuilder.build_unsuccessful(status).public_bytes(Encoding.DER)
-        )
-
     def malformed_request(self):
+        """Get a response for a malformed request."""
         return self.fail(ocsp.OCSPResponseStatus.MALFORMED_REQUEST)
 
-    def get_responder_key(self):
-        key = self.get_responder_key_data()
-        return serialization.load_pem_private_key(key, None, default_backend())
-
-    def get_responder_cert(self):
-        # User configured a loaded certificate
-        if isinstance(self.responder_cert, x509.Certificate):
-            return self.responder_cert
-
-        responder_cert = self.get_responder_cert_data()
-        return load_pem_x509_certificate(responder_cert, default_backend())
-
     def process_ocsp_request(self, data):
+        """Process OCSP request data."""
+
         try:
             ocsp_req = ocsp.load_der_ocsp_request(data)  # NOQA
         except Exception as e:  # pylint: disable=broad-except; we really need to catch everything here
@@ -303,7 +299,15 @@ class OCSPView(OCSPBaseView):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class GenericOCSPView(OCSPView):
+    """View providing auto-configured OCSP functionality.
+
+    This view assumes that ``ocsp/$ca_serial.(key|pem)`` point to the private/public key of a responder
+    certificate as created by :py:class:`~django_ca.tasks.generate_ocsp_keys`. The ``serial`` url kwarg must
+    be the serial for this CA.
+    """
+
     def dispatch(self, request, serial, **kwargs):
+        # pylint: disable=arguments-differ; more concrete parameters
         # pylint: disable=missing-function-docstring; standard Django view function
         if request.method == 'GET' and 'data' not in kwargs:
             return self.http_method_not_allowed(request, serial, **kwargs)

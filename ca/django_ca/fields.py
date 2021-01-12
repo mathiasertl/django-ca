@@ -11,6 +11,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Django form fields related to django-ca."""
 
 from django import forms
 
@@ -23,6 +24,8 @@ from .widgets import SubjectWidget
 
 
 class SubjectField(forms.MultiValueField):
+    """A MultiValue field for a :py:class:`~django_ca.subject.Subject`."""
+
     def __init__(self, *args, **kwargs):
         fields = (
             forms.CharField(required=False),  # C
@@ -37,15 +40,16 @@ class SubjectField(forms.MultiValueField):
         # NOTE: do not pass initial here as this is done on webserver invocation
         #       This screws up tests.
         kwargs.setdefault('widget', SubjectWidget)
-        super(SubjectField, self).__init__(fields=fields, require_all_fields=False,
-                                           *args, **kwargs)
+        super().__init__(fields=fields, require_all_fields=False, *args, **kwargs)
 
-    def compress(self, values):
+    def compress(self, data_list):
         # list comprehension is to filter empty fields
-        return Subject([(k, v) for k, v in zip(SUBJECT_FIELDS, values) if v])
+        return Subject([(k, v) for k, v in zip(SUBJECT_FIELDS, data_list) if v])
 
 
 class SubjectAltNameField(forms.MultiValueField):
+    """A MultiValueField for a Subject Alternative Name extension."""
+
     def __init__(self, *args, **kwargs):
         fields = (
             forms.CharField(required=False),
@@ -53,14 +57,15 @@ class SubjectAltNameField(forms.MultiValueField):
         )
         kwargs.setdefault('widget', SubjectAltNameWidget)
         kwargs.setdefault('initial', ['', profile.cn_in_san])
-        super(SubjectAltNameField, self).__init__(
-            fields=fields, require_all_fields=False, *args, **kwargs)
+        super().__init__(fields=fields, require_all_fields=False, *args, **kwargs)
 
-    def compress(self, values):
-        return values
+    def compress(self, data_list):
+        return data_list
 
 
 class MultiValueExtensionField(forms.MultiValueField):
+    """A MultiValueField for multiple-choice extensions (e.g. :py:class:`~django_ca.extensions.KeyUsage`."""
+
     def __init__(self, extension, *args, **kwargs):
         self.extension = extension
         kwargs.setdefault('label', extension.name)
@@ -75,12 +80,10 @@ class MultiValueExtensionField(forms.MultiValueField):
         )
 
         widget = MultiValueExtensionWidget(choices=extension.CHOICES)
-        super(MultiValueExtensionField, self).__init__(
-            fields=fields, require_all_fields=False, widget=widget,
-            *args, **kwargs)
+        super().__init__(fields=fields, require_all_fields=False, widget=widget, *args, **kwargs)
 
-    def compress(self, values):
+    def compress(self, data_list):
         return self.extension({
-            'critical': values[1],
-            'value': values[0],
+            'critical': data_list[1],
+            'value': data_list[0],
         })

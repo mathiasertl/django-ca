@@ -13,14 +13,25 @@
 
 """Central functions to load CA key and cert as PKey/X509 objects."""
 
+# pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
+
 import binascii
 import os
 import re
 import shlex
+from collections import abc
 from datetime import datetime
 from datetime import timedelta
 from ipaddress import ip_address
 from ipaddress import ip_network
+from typing import Any
+from typing import Iterable
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Type
+from typing import Union
+from typing import cast
 from urllib.parse import urlparse
 
 import idna
@@ -36,11 +47,9 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
 
 from django.core.files.storage import get_storage_class
-from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import URLValidator
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_str
-from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
@@ -103,21 +112,35 @@ MULTIPLE_OIDS = (
 NAME_CASE_MAPPINGS = {v.upper(): v for v in OID_NAME_MAPPINGS.values()}
 
 
-class LazyEncoder(DjangoJSONEncoder):
-    """Encoder that also encodes strings translated with gettext_lazy."""
+try:
+    from django.utils.decorators import classproperty  # pylint: disable=unused-import
+except ImportError:  # pragma: no cover
+    # NOTE: Official Django documentation states that this decorator is new in Django 3.1, but in reality
+    #       it is present (but undocumented) in Django 2.2 as well.
+    # Copy of classproperty from django 3.1 for older versions
+    # pylint: disable=invalid-name,missing-function-docstring
+    class classproperty:  # type: ignore
+        """
+        Decorator that converts a method with a single cls argument into a property
+        that can be accessed directly from the class.
+        """
+        def __init__(self, method=None):  # type: ignore
+            self.fget = method
 
-    def default(self, o):
-        if isinstance(o, Promise):
-            return force_str(o)
-        return super().default(o)
+        def __get__(self, instance, cls=None):  # type: ignore
+            return self.fget(cls)
+
+        def getter(self, method):  # type: ignore
+            self.fget = method
+            return self
 
 
-def sort_name(subject):
+def sort_name(subject: List[Tuple[str, str]]) -> List[Tuple[str, str]]:
     """Returns the subject in the correct order for a x509 subject."""
     return sorted(subject, key=lambda e: SUBJECT_FIELDS.index(e[0]))
 
 
-def encode_url(url):
+def encode_url(url: str) -> str:
     """IDNA encoding for domains in URLs.
 
     Examples::
@@ -130,7 +153,7 @@ def encode_url(url):
         'https://xn--exmple-cua.com:8000/foobar'
     """
     parsed = urlparse(url)
-    if parsed.port:
+    if parsed.hostname and parsed.port:
         hostname = idna.encode(parsed.hostname).decode('utf-8')
         parsed = parsed._replace(netloc='%s:%s' % (hostname, parsed.port))
     else:
@@ -138,7 +161,7 @@ def encode_url(url):
     return parsed.geturl()
 
 
-def encode_dns(name):
+def encode_dns(name: str) -> str:
     """IDNA encoding for domains.
 
     Examples::
@@ -159,7 +182,7 @@ def encode_dns(name):
     return idna.encode(name).decode('utf-8')
 
 
-def format_name(subject):
+def format_name(subject: Union[x509.Name, Iterable[Tuple[str, str]]]) -> str:
     """Convert a subject into the canonical form for distinguished names.
 
     This function does not take care of sorting the subject in any meaningful order.
@@ -174,10 +197,10 @@ def format_name(subject):
     if isinstance(subject, x509.Name):
         subject = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in subject]
 
-    return '/%s' % ('/'.join(['%s=%s' % (force_str(k), force_str(v)) for k, v in subject]))
+    return '/%s' % ('/'.join(['%s=%s' % (k, v) for k, v in subject]))
 
 
-def format_relative_name(name):
+def format_relative_name(name: Union[x509.RelativeDistinguishedName, Iterable[Tuple[str, str]]]) -> str:
     """Convert a relative name (RDN) into a canonical form.
 
     Examples::
@@ -192,10 +215,10 @@ def format_relative_name(name):
     if isinstance(name, x509.RelativeDistinguishedName):
         name = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in name]
 
-    return '/%s' % ('/'.join(['%s=%s' % (force_str(k), force_str(v)) for k, v in name]))
+    return '/%s' % ('/'.join(['%s=%s' % (k, v) for k, v in name]))
 
 
-def format_general_name(name):
+def format_general_name(name: x509.GeneralName) -> str:
     """Format a single general name.
 
     >>> import ipaddress
@@ -212,7 +235,7 @@ def format_general_name(name):
     return '%s:%s' % (SAN_NAME_MAPPINGS[type(name)], value)
 
 
-def is_power2(num):
+def is_power2(num: int) -> bool:
     """Return True if num is a power of 2.
 
     >>> is_power2(4)
@@ -223,7 +246,7 @@ def is_power2(num):
     return num != 0 and ((num & (num - 1)) == 0)
 
 
-def multiline_url_validator(value):
+def multiline_url_validator(value: str) -> None:
     """Validate that a TextField contains one valid URL per line.
 
     .. seealso:: https://docs.djangoproject.com/en/1.9/ref/validators/
@@ -234,7 +257,7 @@ def multiline_url_validator(value):
         validator(line)
 
 
-def add_colons(value, pad='0'):
+def add_colons(value: str, pad: str = '0') -> str:
     """Add colons after every second digit.
 
     This function is used in functions to prettify serials.
@@ -258,7 +281,7 @@ def add_colons(value, pad='0'):
     return ':'.join([value[i:i + 2] for i in range(0, len(value), 2)])
 
 
-def int_to_hex(i):
+def int_to_hex(i: int) -> str:
     """Create a hex-representation of the given serial.
 
     >>> int_to_hex(12345678)
@@ -267,7 +290,7 @@ def int_to_hex(i):
     return hex(i)[2:].upper()
 
 
-def bytes_to_hex(value):
+def bytes_to_hex(value: bytes) -> str:
     """Convert a bytes array to hex.
 
     >>> bytes_to_hex(b'test')
@@ -276,7 +299,7 @@ def bytes_to_hex(value):
     return add_colons(binascii.hexlify(value).upper().decode('utf-8'))
 
 
-def hex_to_bytes(value):
+def hex_to_bytes(value: str) -> bytes:
     """Convert a hex number to bytes.
 
     This should be the inverse of :py:func:`~django_ca.utils.bytes_to_hex`.
@@ -287,7 +310,7 @@ def hex_to_bytes(value):
     return binascii.unhexlify(value.replace(':', ''))
 
 
-def sanitize_serial(value):
+def sanitize_serial(value: str) -> str:
     """Sanitize a serial provided by user/untrusted input.
 
     This function is intended to be used to get a serial as used internaly by **django-ca** from untrusted
@@ -308,7 +331,32 @@ def sanitize_serial(value):
     return serial
 
 
-def parse_name(name):
+def parse_csr(
+        csr: Union[x509.CertificateSigningRequest, str, bytes],
+        csr_format: Encoding
+) -> x509.CertificateSigningRequest:
+    """Parse a CSR in the given format.
+
+    Parameters
+    ----------
+
+    csr : str or bytes or :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
+        The CSR to parse.
+    csr_format : :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding`
+        The format that the CSR is in.
+    """
+
+    if isinstance(csr, x509.CertificateSigningRequest):
+        return csr
+    if csr_format == Encoding.PEM:
+        return x509.load_pem_x509_csr(force_bytes(csr), default_backend())
+    if csr_format == Encoding.DER:
+        return x509.load_der_x509_csr(force_bytes(csr), default_backend())
+
+    raise ValueError('Unknown CSR format passed: %s' % csr_format)
+
+
+def parse_name(name: str) -> List[Tuple[str, str]]:
     """Parses a subject string as used in OpenSSLs command line utilities.
 
     The ``name`` is expected to be close to the subject format commonly used by OpenSSL, for example
@@ -367,7 +415,7 @@ def parse_name(name):
     return sort_name(items)
 
 
-def x509_name(name):
+def x509_name(name: Union[List[Tuple[str, str]], str]) -> x509.Name:
     """Parses a subject into a :py:class:`x509.Name <cg:cryptography.x509.Name>`.
 
     If ``name`` is a string, :py:func:`parse_name` is used to parse it.
@@ -383,7 +431,7 @@ def x509_name(name):
     return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], force_str(value)) for typ, value in name])
 
 
-def x509_relative_name(name):
+def x509_relative_name(name: Union[str, Iterable[Tuple[str, str]]]) -> x509.RelativeDistinguishedName:
     """Parse a relative name (RDN) into a :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`.
 
     >>> x509_relative_name('/CN=example.com')
@@ -401,7 +449,7 @@ def x509_relative_name(name):
     ])
 
 
-def validate_email(addr):
+def validate_email(addr: str) -> str:
     """Validate an email address.
 
     This function raises ``ValueError`` if the email address is not valid.
@@ -420,13 +468,13 @@ def validate_email(addr):
     node, domain = addr.rsplit('@', 1)
     try:
         domain = idna.encode(domain).decode('utf-8')
-    except idna.core.IDNAError as e:
+    except idna.IDNAError as e:
         raise ValueError('Invalid domain: %s' % domain) from e
 
     return '%s@%s' % (node, domain)
 
 
-def validate_hostname(hostname, allow_port=False):
+def validate_hostname(hostname: str, allow_port: bool = False) -> str:
     """Validate a hostname, optionally with a given port.
 
     >>> validate_hostname('example.com')
@@ -451,18 +499,18 @@ def validate_hostname(hostname, allow_port=False):
     """
     port = None
     if allow_port is True and ':' in hostname:
-        hostname, port = hostname.rsplit(':', 1)
+        hostname, port_str = hostname.rsplit(':', 1)
 
         try:
-            port = int(port)
+            port = int(port_str)
         except ValueError as e:
-            raise ValueError('%s: Port must be an integer' % port) from e
-        else:
-            if port < 1 or port > 65535:
-                raise ValueError('%s: Port must be between 1 and 65535' % port)
+            raise ValueError('%s: Port must be an integer' % port_str) from e
+
+        if port < 1 or port > 65535:
+            raise ValueError('%s: Port must be between 1 and 65535' % port)
 
     try:
-        encoded = idna.encode(hostname).decode('utf-8')
+        encoded: str = idna.encode(hostname).decode('utf-8')
     except idna.IDNAError as e:
         raise ValueError('%s: Not a valid hostname' % hostname) from e
 
@@ -471,7 +519,11 @@ def validate_hostname(hostname, allow_port=False):
     return encoded
 
 
-def validate_key_parameters(key_size=None, key_type='RSA', ecc_curve=None):
+def validate_key_parameters(
+        key_size: Optional[int] = None,
+        key_type: Optional[str] = 'RSA',
+        ecc_curve: Optional[ec.EllipticCurve] = None
+) -> Tuple[Optional[int], str, Optional[ec.EllipticCurve]]:
     """Validate parameters for private key generation and return sanitized values.
 
     This function can be used to fail early if invalid parameters are passed, before the private key is
@@ -507,7 +559,8 @@ def validate_key_parameters(key_size=None, key_type='RSA', ecc_curve=None):
     return key_size, key_type, ecc_curve
 
 
-def generate_private_key(key_size, key_type, ecc_curve):
+def generate_private_key(key_size: int, key_type: str, ecc_curve: Optional[ec.EllipticCurve]) \
+        -> Union[rsa.RSAPrivateKey, dsa.DSAPrivateKey, ec.EllipticCurvePrivateKey]:
     """Generate a private key.
 
     This function assumes that you called :py:func:`~django_ca.utils.validate_key_parameters` on the input
@@ -530,17 +583,16 @@ def generate_private_key(key_size, key_type, ecc_curve):
         A private key of the appropriate type.
     """
     if key_type == 'DSA':
-        private_key = dsa.generate_private_key(key_size=key_size, backend=default_backend())
-    elif key_type == 'ECC':
-        private_key = ec.generate_private_key(ecc_curve, default_backend())
-    else:
-        private_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size,
-                                               backend=default_backend())
+        return dsa.generate_private_key(key_size=key_size, backend=default_backend())
+    if key_type == 'ECC' and ecc_curve is not None:
+        return ec.generate_private_key(ecc_curve, default_backend())
+    if key_type == 'RSA':
+        return rsa.generate_private_key(public_exponent=65537, key_size=key_size, backend=default_backend())
 
-    return private_key
+    raise ValueError("%s: Invalid key type." % key_type)
 
 
-def parse_general_name(name):
+def parse_general_name(name: Union[x509.GeneralName, str]) -> x509.GeneralName:
     """Parse a general name from user input.
 
     This function will do its best to detect the intended type of any value passed to it:
@@ -663,19 +715,17 @@ def parse_general_name(name):
     elif typ == 'rid':
         return x509.RegisteredID(x509.ObjectIdentifier(name))
     elif typ == 'othername':
-        regex = "(.*);(.*):(.*)"
-        if re.match(regex, name) is not None:
-            oid, asn_typ, val = re.match(regex, name).groups()
-            oid = x509.ObjectIdentifier(oid)
+        match = re.match("(.*);(.*):(.*)", name)
+        if match is not None:
+            oid, asn_typ, val = match.groups()
             if asn_typ == 'UTF8':
-                val = val.encode('utf-8')
+                parsed_value = val.encode('utf-8')
             elif asn_typ == 'OctetString':
-                val = bytes(bytearray.fromhex(val))
-                val = OctetString(val).dump()
+                parsed_value = OctetString(bytes(bytearray.fromhex(val))).dump()
             else:
                 raise ValueError('Unsupported ASN type in otherName: %s' % asn_typ)
-            val = force_bytes(val)
-            return x509.OtherName(oid, val)
+
+            return x509.OtherName(x509.ObjectIdentifier(oid), parsed_value)
 
         raise ValueError('Incorrect otherName format: %s' % name)
     elif typ == 'dirname':
@@ -687,7 +737,7 @@ def parse_general_name(name):
             raise ValueError('Could not parse DNS name: %s' % name) from e
 
 
-def parse_hash_algorithm(value=None):
+def parse_hash_algorithm(value: Optional[Union[str, hashes.HashAlgorithm]] = None) -> hashes.HashAlgorithm:
     """Parse a hash algorithm value.
 
     The most common use case is to pass a str naming a class in
@@ -740,19 +790,22 @@ def parse_hash_algorithm(value=None):
     if value is None:
         return ca_settings.CA_DIGEST_ALGORITHM
     if isinstance(value, type) and issubclass(value, hashes.HashAlgorithm):
-        return value()
+        # issubclass() doesn't narrow the type, so value() is detected as Any
+        #   https://github.com/python/mypy/issues/8556
+        return cast(hashes.HashAlgorithm, value())
     if isinstance(value, hashes.HashAlgorithm):
         return value
     if isinstance(value, str):
         try:
-            return getattr(hashes, value.strip())()
+            algo: Type[hashes.HashAlgorithm] = getattr(hashes, value.strip())
+            return algo()
         except AttributeError as e:
             raise ValueError('Unknown hash algorithm: %s' % value) from e
 
     raise ValueError('Unknown type passed: %s' % type(value).__name__)
 
 
-def parse_encoding(value=None):
+def parse_encoding(value: Optional[Encoding] = None) -> Encoding:
     """Parse a value to a valid encoding.
 
     This function accepts either a member of
@@ -783,7 +836,7 @@ def parse_encoding(value=None):
     raise ValueError('Unknown type passed: %s' % type(value).__name__)
 
 
-def parse_key_curve(value=None):
+def parse_key_curve(value: Optional[Union[ec.EllipticCurve, str]] = None) -> ec.EllipticCurve:
     """Parse an elliptic curve value.
 
     This function uses a value identifying an elliptic curve to return an
@@ -830,13 +883,15 @@ def parse_key_curve(value=None):
     if value is None:
         return ca_settings.CA_DEFAULT_ECC_CURVE
 
-    curve = getattr(ec, value.strip(), type)
+    curve: Type[ec.EllipticCurve] = getattr(ec, value.strip(), type)
     if not issubclass(curve, ec.EllipticCurve):
         raise ValueError('%s: Not a known Eliptic Curve' % value)
     return curve()
 
 
-def get_cert_builder(expires, serial=None):
+def get_cert_builder(
+        expires: Union[None, timedelta, datetime], serial: Optional[int] = None
+) -> x509.CertificateBuilder:
     """Get a basic X509 cert builder object.
 
     .. TODO:: deprecate support for passing datetime as expires
@@ -869,21 +924,22 @@ def get_cert_builder(expires, serial=None):
     return builder
 
 
-def read_file(path):
+def read_file(path: str) -> bytes:
     """Read the file from the given path.
 
     If ``path`` is an absolute path, reads a file from the local filesystem. For relative paths, read the file
     using the storage backend configured using :ref:`CA_FILE_STORAGE <settings-ca-file-storage>`.
     """
     if os.path.isabs(path):
-        with open(path, 'rb') as stream:
-            return stream.read()
+        with open(path, 'rb') as abs_stream:
+            return abs_stream.read()
 
     stream = ca_storage.open(path)
 
     try:
         # NOTE: In the python:3.9-rc-alpine3.10 Docker image, this is marked as a missed branch :-(
-        return stream.read()  # pragma: no branch
+        data: bytes = stream.read()  # pragma: no branch
+        return data
     finally:
         stream.close()
 
@@ -896,7 +952,7 @@ def read_file(path):
 #        fh.write(data)
 
 
-def shlex_split(val, sep):
+def shlex_split(val: str, sep: str) -> List[str]:
     """Split a character on the given set of characters.
 
     Example::
@@ -916,7 +972,7 @@ def shlex_split(val, sep):
     return list(lex)
 
 
-class GeneralNameList(list):
+class GeneralNameList(List[x509.GeneralName]):
     """List that holds :py:class:`~cg:cryptography.x509.GeneralName` instances and parses ``str`` when added.
 
     A ``GeneralNameList`` is a ``list`` subclass that will always only hold
@@ -936,23 +992,26 @@ class GeneralNameList(list):
         True
 
     """
-    def __init__(self, iterable=tuple()):
+    # pylint: disable=not-an-iterable; pylint does not detect generic iterables ("class Foo(List[Any])").
+
+    def __init__(self, iterable: Iterable[Union[x509.GeneralName, str]] = tuple()) -> None:
         if isinstance(iterable, (str, x509.GeneralName)):
             iterable = [iterable]
 
         super().__init__(parse_general_name(v) for v in iterable)
 
-    def serialize(self):
+    def serialize(self) -> Iterable[str]:
         """Generate a list of formatted names."""
         for val in self:
             yield format_general_name(val)
 
-    def __add__(self, value):  # self + other_list
-        if isinstance(value, GeneralNameList) is False:
+    def __add__(self, value: Iterable[Union[x509.GeneralName, str]]) -> 'GeneralNameList':
+        # self + other_list
+        if not isinstance(value, GeneralNameList):
             value = GeneralNameList(value)
         return GeneralNameList(list(self) + list(value))
 
-    def __contains__(self, value):  # value in self
+    def __contains__(self, value: Any) -> bool:  # value in self
         try:
             value = parse_general_name(value)
         except ValueError:
@@ -960,27 +1019,35 @@ class GeneralNameList(list):
 
         return list.__contains__(self, value)
 
-    def __eq__(self, other):  # value == other
+    def __eq__(self, other: Any) -> bool:  # value == other
         if isinstance(other, GeneralNameList) is False and isinstance(other, list) is True:
             other = GeneralNameList(other)
         return list.__eq__(self, other)
 
-    def __iadd__(self, value):  # self += value
+    def __iadd__(self, value: Iterable[Union[x509.GeneralName, str]]) -> 'GeneralNameList':  # self += value
         return list.__iadd__(self, (parse_general_name(v) for v in value))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<GeneralNameList: %r>' % [format_general_name(v) for v in self]
 
-    def __setitem__(self, key, value):  # l[0] = 'example.com'
-        if isinstance(key, slice):  # l[0:1] = ['example.com']
+    def __setitem__(
+            self, key: Union[int, slice],
+            value: Union[Iterable[Union[x509.GeneralName, str]], Union[x509.GeneralName, str]]
+    ) -> None:  # l[0] = 'example.com'
+        if isinstance(key, slice) and isinstance(value, abc.Iterable):
+            # l[0:1] = ['example.com']
             list.__setitem__(self, key, (parse_general_name(v) for v in value))
-        else:
+        elif isinstance(key, int) and isinstance(value, (x509.GeneralName, str)):
             list.__setitem__(self, key, parse_general_name(value))
+        else:
+            raise TypeError("%s/%s: Invalid key/value type." % (key, value))
 
-    def append(self, o):
-        list.append(self, parse_general_name(o))
+    def append(self, value: Union[x509.GeneralName, str]) -> None:
+        """Equivalent to list.append()."""
+        list.append(self, parse_general_name(value))
 
-    def count(self, value):
+    def count(self, value: Union[x509.GeneralName, str]) -> int:
+        """Equivalent to list.count()."""
         try:
             value = parse_general_name(value)
         except ValueError:
@@ -988,23 +1055,48 @@ class GeneralNameList(list):
 
         return list.count(self, value)
 
-    def extend(self, iterable):
+    def extend(self, iterable: Iterable[Union[x509.GeneralName, str]]) -> None:
+        """Equivalent to list.extend()."""
         list.extend(self, (parse_general_name(i) for i in iterable))
 
-    def index(self, value, *args):
+    @classmethod
+    def get_from_value(cls,
+                       value: Optional[Iterable[Any]],
+                       default: Optional['GeneralNameList'] = None
+                       ) -> Optional['GeneralNameList']:
+        """Create a GeneralNameList from the given iterable.
+
+        This will return `value` unchanged, if it is already a GeneralNameList, otherwise it is created from
+        the passed iterable.
+        """
+        if value is None:
+            return default
+        if isinstance(value, GeneralNameList):
+            return value
+        return GeneralNameList(value)
+
+    def index(self, value: Union[x509.GeneralName, str], *args: int) -> int:
+        """Equivalent to list.index()."""
         return list.index(self, parse_general_name(value), *args)
 
-    def insert(self, index, o):
-        list.insert(self, index, parse_general_name(o))
+    def insert(self, index: int, value: Union[x509.GeneralName, str]) -> None:
+        """Equivalent to list.insert()."""
+        list.insert(self, index, parse_general_name(value))
 
-    def remove(self, value):
+    def remove(self, value: Union[x509.GeneralName, str]) -> None:
+        """Equivalent to list.remove()."""
         list.remove(self, parse_general_name(value))
 
 
-def get_crl_cache_key(serial, algorithm=hashes.SHA512, encoding=Encoding.DER, scope=None):
+def get_crl_cache_key(
+        serial: str, algorithm: Type[hashes.HashAlgorithm] = hashes.SHA512,
+        encoding: Encoding = Encoding.DER, scope: Optional[str] = None) -> str:
     """Function to get a cache key for a CRL with the given parameters."""
 
     return 'crl_%s_%s_%s_%s' % (serial, algorithm.name, encoding.name, scope)
 
 
-ca_storage = get_storage_class(ca_settings.CA_FILE_STORAGE)(**ca_settings.CA_FILE_STORAGE_KWARGS)
+# NOTE: get_storage_class is typed to Storage (but really returns the subclass FileSystemStorage).
+#       The default kwargs trigger a type error because the default works for the subclass.
+ca_storage_cls = get_storage_class(ca_settings.CA_FILE_STORAGE)
+ca_storage = ca_storage_cls(**ca_settings.CA_FILE_STORAGE_KWARGS)  # type: ignore

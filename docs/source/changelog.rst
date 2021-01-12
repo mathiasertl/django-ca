@@ -4,6 +4,36 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.18.0:
+
+************
+1.18.0 (TBR)
+************
+
+This version is currently unter development.
+
+* Stop loading ``localsetttings.py`` from the same location as ``settings.py``.
+* Properly check permissions when resigning certificates.
+* Require the ``change certificate`` permission when revoking certificates.
+* Preselect profile of original certificate when resigning certificates.
+* ``./dev.py init-demo`` now also saves profiles and CSRs.
+* Lint code using `pylint <https://www.pylint.org/>`_.
+
+Backwards incompatible changes
+==============================
+
+* Drop support for Django 3.0.
+* Drop support for cryptography 2.8 and 2.9.
+* Drop support for Celery 4.3 and 4.4.
+* Drop support for idna 2.9.
+
+Deprecation notices
+===================
+
+* Creating an index for running an OCSP responder with :manpage:`openssl-ocsp(1SSL)` is deprecated and will be
+  removed in django-ca 1.20.0. The manpage explicitly states it "is only useful for test and demonstration
+  purposes", and we can solidly run our own responders by now.
+
 .. _changelog-1.17.1:
 
 *******************
@@ -391,11 +421,11 @@ OCSP
 ====
 
 * Reimplement OCSP using cryptography, used only if cryptography>=2.4 is installed.
-* :py:class:`django_ca.views.OCSPBaseView.responder_key` may now also be a relative path to be used with the 
+* ``django_ca.views.OCSPBaseView.responder_key`` may now also be a relative path to be used with the
   Django storage system.
-* :py:class:`django_ca.views.OCSPBaseView.responder_cert` may now also be a relative path to be used with the 
+* ``django_ca.views.OCSPBaseView.responder_cert`` may now also be a relative path to be used with the
   Django storage system.
-* :py:class:`django_ca.views.OCSPBaseView.responder_cert` may now also be a pre-loaded certificate. If you
+* ``django_ca.views.OCSPBaseView.responder_cert`` may now also be a pre-loaded certificate. If you
   still use ``cryptography<2.4`` use a ``oscrypto.asymmetric.Certificate``, for newer versions you must
   use a :py:class:`cg:cryptography.x509.Certificate`.
 * Fix log output string interpolation issue in OCSP responder.
@@ -434,8 +464,8 @@ Python API
   ``Certificate.objects.init()`` to ``subject_alternative_name`` to be consistent with other extensions.
 * Document how to use the ``name_constraints`` parameter in 
   :py:meth:`CertificateAuthority.objects.init() <django_ca.managers.CertificateAuthorityManager.init>`
-* Extensions can now always be passed as :py:class:`~django_ca.extensions.Extension` subclass or as any value
-  accepted by the constructor of the specific class.
+* Extensions can now always be passed as :py:class:`~django_ca.extensions.base.Extension` subclass or as any
+  value accepted by the constructor of the specific class.
 * Add ability to add any custom additional extension using the ``extra_extensions`` parameter.
 * :py:class:`~django_ca.subject.Subject` now implements every ``dict`` method.
 * The :py:func:`~django_ca.signals.pre_issue_cert` signal will now receive normalized values.

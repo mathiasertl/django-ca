@@ -11,11 +11,16 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""ModelAdmin classes for django-ca.
+
+.. seealso:: https://docs.djangoproject.com/en/dev/ref/contrib/admin/
+"""
+
 import copy
-import json
 import logging
 from datetime import datetime
 from functools import partial
+from http import HTTPStatus
 from types import MethodType
 
 from cryptography import x509
@@ -29,6 +34,7 @@ from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
 from django.http import HttpResponseRedirect
+from django.http import JsonResponse
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from django.urls import path
@@ -44,15 +50,15 @@ from django_object_actions import DjangoObjectActions
 from . import ca_settings
 from .constants import ReasonFlags
 from .extensions import KEY_TO_EXTENSION
-from .extensions import AlternativeNameExtension
-from .extensions import CRLDistributionPointsBase
 from .extensions import ExtendedKeyUsage
 from .extensions import KeyUsage
-from .extensions import NullExtension
-from .extensions import OrderedSetExtension
 from .extensions import SubjectAlternativeName
 from .extensions import TLSFeature
-from .extensions import UnrecognizedExtension
+from .extensions.base import AlternativeNameExtension
+from .extensions.base import CRLDistributionPointsBase
+from .extensions.base import NullExtension
+from .extensions.base import OrderedSetExtension
+from .extensions.base import UnrecognizedExtension
 from .forms import CreateCertificateForm
 from .forms import ResignCertificateForm
 from .forms import RevokeCertificateForm
@@ -69,21 +75,24 @@ from .profiles import profiles
 from .signals import post_issue_cert
 from .utils import OID_NAME_MAPPINGS
 from .utils import SERIAL_RE
-from .utils import LazyEncoder
 from .utils import add_colons
+from .utils import parse_csr
 
 log = logging.getLogger(__name__)
 
 
 @admin.register(Watcher)
 class WatcherAdmin(admin.ModelAdmin):
-    pass
+    """ModelAdmin for :py:class:`~django_ca.models.Watcher`."""
 
 
-class CertificateMixin(object):
+class CertificateMixin:
+    """Mixin for CA/Certificate."""
+
     form = X509CertMixinAdminForm
 
     def get_urls(self):
+        """Overridden to add urls for download/download_bundle views."""
         info = self.model._meta.app_label, self.model._meta.model_name
         urls = [
             path('<int:pk>/download/', self.admin_site.admin_view(self.download_view),
@@ -91,7 +100,7 @@ class CertificateMixin(object):
             path('<int:pk>/download_bundle/', self.admin_site.admin_view(self.download_bundle_view),
                  name='%s_%s_download_bundle' % info),
         ]
-        urls += super(CertificateMixin, self).get_urls()
+        urls += super().get_urls()
         return urls
 
     def _download_response(self, request, pk, bundle=False):
@@ -102,8 +111,8 @@ class CertificateMixin(object):
         # get object in question
         try:
             obj = self.model.objects.get(pk=pk)
-        except self.model.DoesNotExist:
-            raise Http404
+        except self.model.DoesNotExist as ex:
+            raise Http404 from ex
 
         # get filetype
         filetype = request.GET.get('format', 'PEM').upper().strip()
@@ -136,6 +145,7 @@ class CertificateMixin(object):
         return self._download_response(request, pk, bundle=True)
 
     def has_delete_permission(self, request, obj=None):
+        # pylint: disable=missing-function-docstring,unused-argument; Django standard
         return False
 
     def get_actions(self, request):
@@ -144,39 +154,45 @@ class CertificateMixin(object):
         Otherwise the action is present even though has_delete_permission is False, it just doesn't
         work.
         """
-        actions = super(CertificateMixin, self).get_actions(request)
+        actions = super().get_actions(request)
         actions.pop('delete_selected', '')
         return actions
 
     def hpkp_pin(self, obj):
+        """Property showing the HPKP bin (only adds a short description)."""
         return obj.hpkp_pin
     hpkp_pin.short_description = _('HPKP pin')
 
     def cn_display(self, obj):
+        """Display the common name or ``<none>``."""
         if obj.cn:
             return obj.cn
         return _('<none>')
     cn_display.short_description = _('CommonName')
 
     def serial_field(self, obj):
+        """Display the serial (with colons added)."""
         return add_colons(obj.serial)
     serial_field.short_description = _('Serial')
     serial_field.admin_order_field = 'serial'
 
     def get_search_results(self, request, queryset, search_term):
+        """Overridden to strip any colons from search terms (so you can search for serials with colons)."""
         # Replace ':' from any search term that looks like a serial
         search_term = ' '.join([
             t.replace(':', '').upper() if SERIAL_RE.match(t.upper().strip(':')) else t
             for t in search_term.split()
         ])
 
-        return super(CertificateMixin, self).get_search_results(request, queryset, search_term)
+        return super().get_search_results(request, queryset, search_term)
 
     ##################################
     # Properties for x509 extensions #
     ##################################
 
     def output_template(self, obj, key):
+        """Render extension for the given object."""
+
         ext = getattr(obj, key)
         templates = ['django_ca/admin/extensions/%s.html' % key]
 
@@ -188,14 +204,14 @@ class CertificateMixin(object):
             templates.append('django_ca/admin/extensions/base/crl_distribution_points_base.html')
         if isinstance(ext, OrderedSetExtension):
             templates.append('django_ca/admin/extensions/base/ordered_set_extension.html')
-        if isinstance(ext, UnrecognizedExtension) \
-                or isinstance(ext, x509.UnrecognizedExtension):  # pragma: no cover
+        if isinstance(ext, (UnrecognizedExtension, x509.UnrecognizedExtension)):  # pragma: no cover
             templates.append('django_ca/admin/extensions/base/unrecognized_extension.html')
         else:
             templates.append('django_ca/admin/extensions/base/base.html')
         return render_to_string(templates, {'obj': obj, 'extension': ext})
 
     def unknown_oid(self, oid, obj):
+        """Generic display for extensions that we do not know about and cannot display."""
         ext = obj.x509.extensions.get_extension_for_oid(oid)
         html = ''
         if ext.critical is True:
@@ -206,10 +222,11 @@ class CertificateMixin(object):
         return html
 
     def get_oid_name(self, oid):
+        """Get a normalized name for the given OID."""
         return oid.dotted_string.replace('.', '_')
 
-    def get_fieldsets(self, request, obj=None):
-        fieldsets = super(CertificateMixin, self).get_fieldsets(request, obj=obj)
+    def get_fieldsets(self, request, obj=None):  # pylint: disable=missing-function-docstring
+        fieldsets = super().get_fieldsets(request, obj=obj)
 
         if obj is None:
             return fieldsets
@@ -242,8 +259,8 @@ class CertificateMixin(object):
 
         return fieldsets
 
-    def get_readonly_fields(self, request, obj=None):
-        fields = super(CertificateMixin, self).get_readonly_fields(request, obj=obj)
+    def get_readonly_fields(self, request, obj=None):  # pylint: disable=missing-function-docstring
+        fields = super().get_readonly_fields(request, obj=obj)
 
         if not obj.revoked:
             # We can only change the date when the certificate was compromised if it's actually revoked.
@@ -263,7 +280,7 @@ class CertificateMixin(object):
 
         return fields
 
-    class Media:
+    class Media:  # pylint: disable=too-few-public-methods,missing-class-docstring
         css = {
             'all': (
                 'django_ca/admin/css/base.css',
@@ -274,20 +291,22 @@ class CertificateMixin(object):
 # Attach extension properties to admin if they are not already present.
 # This makes ModelAdmin have a property for every extension that we currently support,
 # rendering as a template based on the extension key.
-for key, ext in KEY_TO_EXTENSION.items():
+for ext_key, ext_cls in KEY_TO_EXTENSION.items():
     # Give Mixin opportunity to override method - not needed right now
     #if hasattr(CertificateMixin, key):
     #    continue
 
-    f = partial(CertificateMixin.output_template, key=key)
-    f.short_description = ext.name
+    f = partial(CertificateMixin.output_template, key=ext_key)
+    f.short_description = ext_cls.name
     f = MethodType(f, CertificateMixin)
 
-    setattr(CertificateMixin, key, f)
+    setattr(CertificateMixin, ext_key, f)
 
 
 @admin.register(CertificateAuthority)
 class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
+    """ModelAdmin for :py:class:`~django_ca.models.CertificateAuthority`."""
+
     fieldsets = (
         (None, {
             'fields': ['name', 'enabled', 'cn_display', 'parent', 'hpkp_pin', 'caa_identity', 'website',
@@ -327,7 +346,7 @@ class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
 
         return fieldsets
 
-    class Media:
+    class Media:  # pylint: disable=too-few-public-methods,missing-class-docstring
         css = {
             'all': (
                 'django_ca/admin/css/base.css',
@@ -336,17 +355,17 @@ class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
         }
 
 
-class DefaultListFilter(admin.SimpleListFilter):
-    """Filter that lists only manually created certs by default.
+class DefaultListFilter(admin.SimpleListFilter):  # pylint: disable=abstract-method; lookup is not overwritten
+    """Baseclass filter that lets you set the default filter.
 
     Inspired by https://stackoverflow.com/a/16556771.
     """
 
-    def choices(self, cl):
+    def choices(self, changelist):
         for lookup, title in self.lookup_choices:
             yield {
                 'selected': self.value() == lookup,
-                'query_string': cl.get_query_string({
+                'query_string': changelist.get_query_string({
                     self.parameter_name: lookup,
                 }, []),
                 'display': title,
@@ -354,6 +373,7 @@ class DefaultListFilter(admin.SimpleListFilter):
 
 
 class StatusListFilter(DefaultListFilter):
+    """Filter for status."""
     title = _('Status')
     parameter_name = 'status'
 
@@ -365,16 +385,17 @@ class StatusListFilter(DefaultListFilter):
             ('all', _('All')),
         )
 
-    def queryset(self, request, queryset):
+    def queryset(self, request, queryset):  # pylint: disable=inconsistent-return-statements
         if self.value() is None:
             return queryset.valid()
-        elif self.value() == 'expired':
+        if self.value() == 'expired':
             return queryset.expired()
-        elif self.value() == 'revoked':
+        if self.value() == 'revoked':
             return queryset.revoked()
 
 
 class AutoGeneratedFilter(DefaultListFilter):
+    """Filter for certificates that were automatically generated."""
     title = _('autogeneration')
     parameter_name = 'auto'
 
@@ -385,16 +406,18 @@ class AutoGeneratedFilter(DefaultListFilter):
             ('all', _('All')),
         )
 
-    def queryset(self, request, queryset):
+    def queryset(self, request, queryset):  # pylint: disable=inconsistent-return-statements
         if self.value() == 'auto':
             return Certificate.objects.filter(autogenerated=True)
-        elif self.value() is None:
+        if self.value() is None:
             return Certificate.objects.filter(autogenerated=False)
         # "all" does not need a filter
 
 
 @admin.register(Certificate)
 class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
+    """ModelAdmin for :py:class:`~django_ca.models.Certificate`."""
+
     actions = ['revoke', ]
     change_actions = ('revoke_change', 'resign', )
     add_form_template = 'admin/django_ca/certificate/add_form.html'
@@ -455,16 +478,20 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                 return True
         return False
 
-    def get_form(self, request, obj=None, **kwargs):
+    def get_form(self, request, obj=None, change=False, **kwargs):
+        """Override to get specialized forms for signing/resigning certs."""
         if hasattr(request, '_resign_obj'):
             return ResignCertificateForm
-        elif obj is None:
+        if obj is None:
             return CreateCertificateForm
-        else:
-            return super(CertificateAdmin, self).get_form(request, obj=obj, **kwargs)
+
+        return super().get_form(request, obj=obj, **kwargs)
 
     def get_changeform_initial_data(self, request):
-        data = super(CertificateAdmin, self).get_changeform_initial_data(request)
+        """Get initial data based on default profile.
+
+        When resigning a certificate, get initial data from the certificate."""
+        data = super().get_changeform_initial_data(request)
 
         if hasattr(request, '_resign_obj'):
             # resign the cert, so we add initial data from the original cert
@@ -477,13 +504,17 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                 san = (','.join(san), False)
             algo = resign_obj.algorithm.__class__.__name__
 
+            if resign_obj.profile:
+                profile = resign_obj.profile
+            else:
+                profile = ca_settings.CA_DEFAULT_PROFILE
+
             data = {
                 'algorithm': algo,
                 'ca': resign_obj.ca,
                 'extended_key_usage': resign_obj.extended_key_usage,
                 'key_usage': resign_obj.key_usage,
-                # TODO: pass profile once it's stored to the database
-                #'profile': '',
+                'profile': profile,
                 'subject': resign_obj.subject,
                 'subject_alternative_name': san,
                 'tls_feature': resign_obj.tls_feature,
@@ -498,10 +529,11 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
         extra_context = extra_context or {}
         extra_context['profiles_url'] = reverse('admin:%s' % self.profiles_view_name)
         extra_context['csr_details_url'] = reverse('admin:%s' % self.csr_details_view_name)
-        return super(CertificateAdmin, self).add_view(request, form_url=form_url, extra_context=extra_context)
+        return super().add_view(request, form_url=form_url, extra_context=extra_context)
 
     @property
     def csr_details_view_name(self):
+        """URL for the CSR details view."""
         return '%s_%s_csr_details' % (self.model._meta.app_label, self.model._meta.verbose_name)
 
     def csr_details_view(self, request):
@@ -513,33 +545,30 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
 
         try:
             csr = x509.load_pem_x509_csr(force_bytes(request.POST['csr']), default_backend())
-        except Exception as e:
-            return HttpResponseBadRequest(json.dumps({
-                'message': str(e),
-            }), content_type='application/json')
+        except Exception as e:  # pylint: disable=broad-except; docs don't list possible exceptions
+            return JsonResponse({'message': str(e)}, status=HTTPStatus.BAD_REQUEST)
 
         subject = {OID_NAME_MAPPINGS[s.oid]: s.value for s in csr.subject}
-        return HttpResponse(json.dumps({
-            'subject': subject,
-        }), content_type='application/json')
+        return JsonResponse({'subject': subject})
 
     @property
     def profiles_view_name(self):
+        """URL for the profiles view."""
         return '%s_%s_profiles' % (self.model._meta.app_label, self.model._meta.verbose_name)
 
     def profiles_view(self, request):
         """Returns profiles."""
 
-        if not request.user.is_staff or not self.has_change_permission(request):
-            # NOTE: is_staff is already assured by ModelAdmin, but just to be sure
+        if not self.has_change_permission(request):
+            # NOTE: is_staff/is_active is checked by self.admin_site.admin_view()
             raise PermissionDenied
 
         data = {name: profiles[name].serialize() for name in ca_settings.CA_PROFILES}
-        return HttpResponse(json.dumps(data, cls=LazyEncoder), content_type='application/json')
+        return JsonResponse(data)
 
     def get_urls(self):
         # Remove the delete action from the URLs
-        urls = super(CertificateAdmin, self).get_urls()
+        urls = super().get_urls()
 
         # add csr-details and profiles
         urls.insert(0, path('ajax/csr-details', self.admin_site.admin_view(self.csr_details_view),
@@ -550,12 +579,18 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
         return urls
 
     def resign(self, request, obj):
+        """View for resigning an existing certificate."""
+
+        if not self.has_view_permission(request, obj) or not self.has_add_permission(request):
+            # NOTE: is_staff/is_active is checked by self.admin_site.admin_view()
+            raise PermissionDenied
+
         if not obj.csr:
             self.message_user(request, _('Certificate has no CSR (most likely because it was imported).'),
                               messages.ERROR)
             return HttpResponseRedirect(obj.admin_change_url)
 
-        request._resign_obj = obj
+        request._resign_obj = obj  # pylint: disable=protected-access; set/used by django-ca only
         extra_context = {
             'title': _('Resign %s for %s') % (obj._meta.verbose_name, obj),
             'original_obj': obj,
@@ -565,8 +600,11 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
     resign.short_description = _('Resign this certificate.')
 
     def revoke_change(self, request, obj):
+        """View for the revoke action."""
         if not self.has_change_permission(request, obj):
+            # NOTE: is_staff/is_active is checked by self.admin_site.admin_view()
             raise PermissionDenied
+
         if obj.revoked:
             self.message_user(request, _('Certificate is already revoked.'), level=messages.ERROR)
             return HttpResponseRedirect(obj.admin_change_url)
@@ -592,12 +630,14 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
     revoke_change.short_description = _('Revoke this certificate')
 
     def revoke(self, request, queryset):
+        """Implement the revoke() action."""
         for cert in queryset:
             cert.revoke()
     revoke.short_description = _('Revoke selected certificates')
+    revoke.allowed_permissions = ('change', )
 
     def get_change_actions(self, request, object_id, form_url):
-        actions = list(super(CertificateAdmin, self).get_change_actions(request, object_id, form_url))
+        actions = list(super().get_change_actions(request, object_id, form_url))
         try:
             obj = self.model.objects.get(pk=object_id)
         except self.model.DoesNotExist:
@@ -609,7 +649,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
 
     def get_fieldsets(self, request, obj=None):
         """Collapse the "Revocation" section unless the certificate is revoked."""
-        fieldsets = super(CertificateAdmin, self).get_fieldsets(request, obj=obj)
+        fieldsets = super().get_fieldsets(request, obj=obj)
 
         if hasattr(request, '_resign_obj'):
             return self.resign_fieldsets
@@ -623,18 +663,19 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         if obj is None:
             return []
-        return super(CertificateAdmin, self).get_readonly_fields(request, obj=obj)
+        return super().get_readonly_fields(request, obj=obj)
 
     def status(self, obj):
+        """Get a string for the status of a certificate."""
         if obj.revoked:
             return _('Revoked')
         if obj.expires < timezone.now():
             return _('Expired')
-        else:
-            return _('Valid')
+        return _('Valid')
     status.short_description = _('Status')
 
     def expires_date(self, obj):
+        """Get the date (without time) when a cert expires."""
         return obj.expires.date()
     expires_date.short_description = _('Expires')
     expires_date.admin_order_field = 'expires'
@@ -653,7 +694,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                 # Note: CSR is set by model form already
                 csr = data['csr']
 
-            parsed_csr = Certificate.objects.parse_csr(csr, Encoding.PEM)
+            parsed_csr = parse_csr(csr, Encoding.PEM)
             expires = datetime.combine(data['expires'], datetime.min.time())
 
             extensions = {}
@@ -661,11 +702,11 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             san = SubjectAlternativeName({'value': [e.strip() for e in san.split(',') if e.strip()]})
             if san:
                 extensions[SubjectAlternativeName.key] = san
-            for ext_key in [KeyUsage.key, ExtendedKeyUsage.key, TLSFeature.key]:
-                if data[ext_key].value:
-                    extensions[ext_key] = data[ext_key]
+            for key in [KeyUsage.key, ExtendedKeyUsage.key, TLSFeature.key]:
+                if data[key].value:
+                    extensions[key] = data[key]
                 else:
-                    extensions[ext_key] = None
+                    extensions[key] = None
 
             obj.profile = profile.name
             obj.x509 = profile.create_cert(data['ca'], parsed_csr, subject=data['subject'], expires=expires,
@@ -676,7 +717,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
         else:
             obj.save()
 
-    class Media:
+    class Media:  # pylint: disable=too-few-public-methods,missing-class-docstring
         css = {
             'all': (
                 'django_ca/admin/css/base.css',
@@ -719,6 +760,7 @@ if ca_settings.CA_ENABLE_ACME:  # pragma: no branch
         search_fields = ('contact', )
 
         def first_contact(self, obj):
+            """return the first contact address."""
             return str(obj)
         first_contact.short_description = _('Contact')
         first_contact.admin_order_field = 'contact'
@@ -732,11 +774,13 @@ if ca_settings.CA_ENABLE_ACME:  # pragma: no branch
         search_fields = ('account__contact', 'slug')
 
         def ca(self, obj):
+            """Property to get a link to the CA."""
             return format_html('<a href="{}">{}</a>', obj.account.ca.admin_change_url, obj.account.ca)
         ca.short_description = _('CA')
         ca.admin_order_field = 'account__ca'
 
         def account_link(self, obj):
+            """Property to get a link to the ACME account."""
             return format_html('<a href="{}">{}</a>', obj.account.admin_change_url, obj.account)
         account_link.short_description = _('Account')
         account_link.admin_order_field = 'account__contact'
@@ -750,17 +794,20 @@ if ca_settings.CA_ENABLE_ACME:  # pragma: no branch
         search_fields = ('value', 'slug', 'order__account__contact', )
 
         def account(self, obj):
+            """Property to get a link to the ACME account."""
             return format_html('<a href="{}">{}</a>', obj.order.account.admin_change_url, obj.order.account)
         account.short_description = _('Account')
         account.admin_order_field = 'order__account__contact'
 
         def ca(self, obj):
+            """Property to get a link to the CA."""
             return format_html('<a href="{}">{}</a>', obj.order.account.ca.admin_change_url,
                                obj.order.account.ca)
         ca.short_description = _('CA')
         ca.admin_order_field = 'account__ca'
 
         def order_display(self, obj):
+            """Property to get a link to the ACME order."""
             return format_html('<a href="{}">{}</a>', obj.order.admin_change_url, obj.order.slug)
         order_display.short_description = _('Order')
         order_display.admin_order_field = 'order__slug'
@@ -780,22 +827,26 @@ if ca_settings.CA_ENABLE_ACME:  # pragma: no branch
         list_select_related = ('order__account__ca', )
 
         def account(self, obj):
+            """Property to get a link to the ACME account."""
             return format_html('<a href="{}">{}</a>', obj.order.account.admin_change_url, obj.order.account)
         account.short_description = _('Account')
         account.admin_order_field = 'order__account__contact'
 
         def ca(self, obj):
+            """Property to get a link to the CA."""
             return format_html('<a href="{}">{}</a>', obj.order.account.ca.admin_change_url,
                                obj.order.account.ca)
         ca.short_description = _('CA')
         ca.admin_order_field = 'order__account__ca'
 
         def order_link(self, obj):
+            """Property to get a link to the oder."""
             return format_html('<a href="{}">{}</a>', obj.order.admin_change_url, obj.order.slug)
         order_link.short_description = _('Order')
         order_link.admin_order_field = 'order'
 
         def status(self, obj):
+            """Property to get the order status."""
             return obj.order.status
         status.short_description = _('Status')
         status.admin_order_field = 'order__status'

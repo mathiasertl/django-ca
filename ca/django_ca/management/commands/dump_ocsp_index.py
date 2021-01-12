@@ -13,6 +13,10 @@
 
 """Management command to write an OCSP index to stdout or a file.
 
+.. deprecated:: 1.18.0
+
+   This function will be removed in django-ca 1.20.0.
+
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 

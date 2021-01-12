@@ -9,7 +9,7 @@ solution on top.
 
    This project is developed using `Python <https://www.python.org/>`_ and 
    `Django <https://www.djangoproject.com/>`_. Using the Python API requires knowledge in both. If you need
-   help, both projects provide excellend documentation.
+   help, both projects provide excellent documentation.
 
 *******
 General

@@ -16,6 +16,8 @@
 import os
 import re
 from datetime import timedelta
+from typing import Any
+from typing import Dict
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -33,7 +35,7 @@ else:
 
 CA_DEFAULT_KEY_SIZE = getattr(settings, 'CA_DEFAULT_KEY_SIZE', 4096)
 
-CA_PROFILES = {
+CA_PROFILES: Dict[str, Dict[str, Any]] = {
     'client': {
         # see: http://security.stackexchange.com/questions/68491/
         'description': _('A certificate for a client.'),
@@ -178,8 +180,7 @@ for name, profile in CA_PROFILES.items():
     profile.setdefault('subject', CA_DEFAULT_SUBJECT)
     profile.setdefault('cn_in_san', True)
 
-CA_DEFAULT_ENCODING = getattr(settings, 'CA_DEFAULT_ENCODING', Encoding.PEM)
-CA_DEFAULT_EXPIRES = getattr(settings, 'CA_DEFAULT_EXPIRES', 730)
+CA_DEFAULT_ENCODING: Encoding = getattr(settings, 'CA_DEFAULT_ENCODING', Encoding.PEM)
 CA_DEFAULT_PROFILE = getattr(settings, 'CA_DEFAULT_PROFILE', 'webserver')
 CA_NOTIFICATION_DAYS = getattr(settings, 'CA_NOTIFICATION_DAYS', [14, 7, 3, 1, ])
 CA_CRL_PROFILES = getattr(settings, 'CA_CRL_PROFILES', _CA_CRL_PROFILES)
@@ -196,13 +197,14 @@ CA_MIN_KEY_SIZE = getattr(settings, 'CA_MIN_KEY_SIZE', 2048)
 
 CA_DEFAULT_HOSTNAME = getattr(settings, 'CA_DEFAULT_HOSTNAME', None)
 
-CA_DIGEST_ALGORITHM = getattr(settings, 'CA_DIGEST_ALGORITHM', "sha512").strip().upper()
+_CA_DIGEST_ALGORITHM = getattr(settings, 'CA_DIGEST_ALGORITHM', "sha512").strip().upper()
 try:
-    CA_DIGEST_ALGORITHM = getattr(hashes, CA_DIGEST_ALGORITHM)()
+    CA_DIGEST_ALGORITHM: hashes.HashAlgorithm = getattr(hashes, _CA_DIGEST_ALGORITHM)()
 except AttributeError:
     # pylint: disable=raise-missing-from; not really useful in this context
-    raise ImproperlyConfigured('Unkown CA_DIGEST_ALGORITHM: %s' % settings.CA_DIGEST_ALGORITHM)
+    raise ImproperlyConfigured('Unkown CA_DIGEST_ALGORITHM: %s' % _CA_DIGEST_ALGORITHM)
 
+CA_DEFAULT_EXPIRES: timedelta = getattr(settings, 'CA_DEFAULT_EXPIRES', 730)
 if isinstance(CA_DEFAULT_EXPIRES, int):
     CA_DEFAULT_EXPIRES = timedelta(days=CA_DEFAULT_EXPIRES)
 if isinstance(ACME_MAX_CERT_VALIDITY, int):
@@ -221,12 +223,12 @@ if CA_MIN_KEY_SIZE > CA_DEFAULT_KEY_SIZE:
 
 _CA_DEFAULT_ECC_CURVE = getattr(settings, 'CA_DEFAULT_ECC_CURVE', 'SECP256R1').strip()
 try:
-    CA_DEFAULT_ECC_CURVE = getattr(ec, _CA_DEFAULT_ECC_CURVE)()
+    CA_DEFAULT_ECC_CURVE: ec.EllipticCurve = getattr(ec, _CA_DEFAULT_ECC_CURVE)()
     if not isinstance(CA_DEFAULT_ECC_CURVE, ec.EllipticCurve):
         raise ImproperlyConfigured('%s: Not an EllipticCurve.' % _CA_DEFAULT_ECC_CURVE)
 except AttributeError:
     # pylint: disable=raise-missing-from; not really useful in this context
-    raise ImproperlyConfigured('Unkown CA_DEFAULT_ECC_CURVE: %s' % settings.CA_DEFAULT_ECC_CURVE)
+    raise ImproperlyConfigured('Unkown CA_DEFAULT_ECC_CURVE: %s' % _CA_DEFAULT_ECC_CURVE)
 
 CA_FILE_STORAGE = getattr(settings, 'CA_FILE_STORAGE', global_settings.DEFAULT_FILE_STORAGE)
 CA_FILE_STORAGE_KWARGS = getattr(settings, 'CA_FILE_STORAGE_KWARGS', {

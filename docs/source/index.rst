@@ -58,6 +58,7 @@ Features:
    Introduction <python/intro>
    signals
    python/extensions
+   python/extensions.base
    python/profiles
    python/models
    python/views
@@ -65,6 +66,7 @@ Features:
    python/utils
    python/constants
    python/acme_messages
+   python/tasks
 
 
 .. toctree::

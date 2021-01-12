@@ -11,7 +11,7 @@ Another easy way of running **django-ca** is as a :doc:`Docker container </docke
 Requirements
 ************
 
-* Python 3.5+
+* Python 3.6+
 * Django 2.2 or later
 * Any database supported by Django (sqlite3/MySQL/PostgreSQL/...)
 * Python, OpenSSL and libffi development headers
@@ -19,12 +19,13 @@ Requirements
 If you're using an older system, you can consult this table to see what versions of Python, Django and
 cryptography where tested with what release (changes to previous versions in **bold**):
 
-=========== ================= ==================== ================= ==============
-django-ca   Python            Django               cryptography      idna
-=========== ================= ==================== ================= ==============
-1.17        **3.6** - **3.9** **2.2** - **3.1**    **2.8** - **3.3** **2.9** - 2.10
-1.16        3.5 - 3.8         **2.2** - **3.1**    2.7 - **3.0**     2.8 - **2.10**
-1.15        **3.5** - 3.8     1.11, 2.1 - **3.0**  **2.7** - 2.8     2.8
+=========== ================= ==================== ================= ============== =============
+django-ca   Python            Django               cryptography      idna           Celery
+=========== ================= ==================== ================= ============== =============
+1.18        3.6 - 3.9         **2.2, 3.1**         **3.0** - **3.3** **2.10**       **5.0**
+1.17        **3.6** - **3.9** **2.2** - **3.1**    **2.8** - **3.3** **2.9** - 2.10 **4.3** - 4.4
+1.16        3.5 - 3.8         **2.2** - **3.1**    2.7 - **3.0**     2.8 - **2.10** **4.2** - 4.4
+1.15        **3.5** - 3.8     1.11, 2.1 - **3.0**  **2.7** - 2.8     2.8            4.0 - 4.4
 1.14        2.7/3.5 - **3.8** 1.11, 2.1 - 2.2      **2.5** - **2.8** **2.8**
 1.13        2.7/3.5 - 3.7     1.11, 2.1 - 2.2      **2.3** - **2.7** 2.7 - 2.8
 1.12        2.7/**3.5** - 3.7 1.11, **2.1 - 2.2**  **2.2** - **2.6** 2.6 - 2.8
@@ -36,7 +37,10 @@ django-ca   Python            Django               cryptography      idna
 1.6         2.7/3.4 - 3.6     1.8, **1.10 - 1.11** **1.8**
 1.5         2.7/3.4 - 3.6     1.8 - **1.11**       1.7
 1.4         2.7/3.4 - 3.6     1.8 - 1.10           1.7
-=========== ================= ==================== ================= ==============
+=========== ================= ==================== ================= ============== =============
+
+Note that we don't deliberately break support for older versions, we merely stop testing it. You can try your
+luck with older versions.
 
 ******************
 Use docker-compose

@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Module for handling x509 subjects."""
+
 from cryptography import x509
 
 from django.core.exceptions import ImproperlyConfigured
@@ -25,7 +27,7 @@ from .utils import parse_name
 from .utils import sort_name
 
 
-class Subject(object):
+class Subject:
     """Convenience class to handle X509 Subjects.
 
     This class accepts a variety of values and intelligently parses them:
@@ -45,6 +47,9 @@ class Subject(object):
     >>> s.get('OU', 'Default OU')
     'Default OU'
     >>> s.setdefault('C', 'AT')
+    ['AT']
+    >>> s.setdefault('C', 'DE')
+    ['AT']
     >>> s['C'], s['CN']
     ('AT', 'example.com')
     """
@@ -68,8 +73,8 @@ class Subject(object):
             if isinstance(oid, str):
                 try:
                     oid = NAME_OID_MAPPINGS[oid]
-                except KeyError:
-                    raise ValueError('Invalid OID: %s' % oid)
+                except KeyError as ex:
+                    raise ValueError('Invalid OID: %s' % oid) from ex
 
             if not value:
                 continue
@@ -97,14 +102,12 @@ class Subject(object):
             if key in MULTIPLE_OIDS:
                 return self._data[key]
             return self._data[key][0]
-        except KeyError:
-            raise KeyError(OID_NAME_MAPPINGS[key])
+        except KeyError as ex:
+            raise KeyError(OID_NAME_MAPPINGS[key]) from ex
 
     def __iter__(self):
-        #return (OID_NAME_MAPPINGS[t[0]] for t in self._iter)
-        for key, value in self._iter:
-            for val in value:
-                yield OID_NAME_MAPPINGS[key]
+        for key, _value in self._iter:
+            yield OID_NAME_MAPPINGS[key]
 
     def __len__(self):
         return len(self._data)
@@ -116,7 +119,7 @@ class Subject(object):
         if not value and key in self._data:
             del self._data[key]
             return
-        elif isinstance(value, str):
+        if isinstance(value, str):
             value = [value]
 
         elif not isinstance(value, list):
@@ -144,33 +147,43 @@ class Subject(object):
         return sorted(self._data.items(), key=lambda t: SUBJECT_FIELDS.index(OID_NAME_MAPPINGS[t[0]]))
 
     def clear(self):
+        """Clear the subject."""
         self._data.clear()
 
     def copy(self):
+        """Create a copy of the subject."""
         return Subject(list(self.items()))
 
     def get(self, key, default=None):
+        """Return the value for key if key is in the subject, else default."""
         try:
             return self[key]
         except KeyError:
             return default
 
     def items(self):
+        """View of the subjects items."""
         for key, value in self._iter:
             key = OID_NAME_MAPPINGS[key]
             for val in value:
                 yield key, val
 
     def keys(self):
+        """View on subject keys, in order."""
         for key in self:
             yield key
 
     def setdefault(self, oid, value):
+        """Insert key with a value of default if key is not in the subject.
+
+        Return the value for key if key is in the subject, else default.
+        """
+
         if isinstance(oid, str):
             oid = NAME_OID_MAPPINGS[oid]
 
         if oid in self._data:  # already set
-            return
+            return self._data[oid]
 
         if isinstance(value, str):
             value = [value]
@@ -181,25 +194,28 @@ class Subject(object):
             raise ValueError('%s: Must not occur multiple times' % OID_NAME_MAPPINGS[oid])
 
         self._data[oid] = value
+        return value
 
     def update(self, e=None, **f):
+        """Update S from subject/dict/iterable E and F."""
         if e is None:
             e = {}
 
         if isinstance(e, Subject):
-            self._data.update(e._data)
+            self._data.update(e._data)  # pylint: disable=protected-access
         elif hasattr(e, 'keys'):
             for k in e.keys():
                 self[k] = e[k]
         else:
-            for k, v in e:
-                self[k] = v
+            for key, value in e:
+                self[key] = value
 
         for k in f:
             self[k] = f[k]
 
     def values(self):
-        for key, value in self._iter:
+        """View on subject values, in order."""
+        for _key, value in self._iter:
             for val in value:
                 yield val
 
@@ -229,7 +245,9 @@ class Subject(object):
 
 
 def get_default_subject():
+    """Get the default subject as configured by the ``CA_DEFAULT_SUBJECT`` setting."""
+
     try:
         return Subject(ca_settings.CA_DEFAULT_SUBJECT)
-    except (ValueError, KeyError) as e:
-        raise ImproperlyConfigured('CA_DEFAULT_SUBJECT: %s' % e)
+    except (ValueError, KeyError) as ex:
+        raise ImproperlyConfigured('CA_DEFAULT_SUBJECT: %s' % ex) from ex

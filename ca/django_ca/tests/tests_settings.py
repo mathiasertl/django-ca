@@ -112,7 +112,7 @@ class ImproperlyConfiguredTestCase(DjangoCATestCase):
 
     def test_digest_algorithm(self):
         """Test invalid ``CA_DIGEST_ALGORITHM``."""
-        with self.assertImproperlyConfigured(r'^Unkown CA_DIGEST_ALGORITHM: foo$'):
+        with self.assertImproperlyConfigured(r'^Unkown CA_DIGEST_ALGORITHM: FOO$'):
             with self.settings(CA_DIGEST_ALGORITHM='foo'):
                 pass
 

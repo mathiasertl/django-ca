@@ -11,17 +11,33 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""OCSP related functions."""
+
+import warnings
 from datetime import timedelta
 
 from django.utils import timezone
 
 from .constants import ReasonFlags
+from .deprecation import RemovedInDjangoCA120Warning
 
 # We need a two-letter year, otherwise OCSP doesn't work
-date_format = '%y%m%d%H%M%SZ'
+DATE_FORMAT = '%y%m%d%H%M%SZ'
 
 
 def get_index(ca):
+    """Generate an index suitable for :manpage:`openssl-ocsp(1SSL)`.
+
+    This function is used by the ``dump_ocsp_index`` management command.
+
+    .. deprecated:: 1.18.0
+
+       This function will be removed in django-ca 1.20.0.
+    """
+
+    warnings.warn("Creating an OCSP index is deprecated and will be removed in 1.20.0.",
+                  RemovedInDjangoCA120Warning)
+
     now = timezone.now()
     yesterday = now - timedelta(seconds=86400)
     certs = ca.certificate_set.order_by('expires', 'cn', 'serial')
@@ -34,7 +50,7 @@ def get_index(ca):
         elif cert.revoked:
             status = 'R'
 
-            revocation = cert.revoked_date.strftime(date_format)
+            revocation = cert.revoked_date.strftime(DATE_FORMAT)
             if cert.revoked_reason != ReasonFlags.unspecified.name:
                 revocation += ',%s' % cert.revoked_reason
         else:
@@ -43,7 +59,7 @@ def get_index(ca):
         # Format see: http://pki-tutorial.readthedocs.org/en/latest/cadb.html
         yield '%s\n' % '\t'.join([
             status,
-            cert.x509.not_valid_after.strftime(date_format),
+            cert.x509.not_valid_after.strftime(DATE_FORMAT),
             revocation,
             cert.serial.replace(':', ''),
             'unknown',  # we don't save to any file

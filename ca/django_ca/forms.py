@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Specialized Django forms for the admin interface."""
+
 from datetime import date
 from datetime import datetime
 
@@ -45,28 +47,29 @@ def _profile_choices():
 
 
 class X509CertMixinAdminForm(forms.ModelForm):
+    """Admin form to add a dynamic help text to the ``pub`` field.
+
+    The help_text is set by adding a value to the help_texts dictionary of the models Meta class. We use this
+    unusual way because it should contain links referencing the currently displayed object and the normal
+    methods do not work this way:
+
+    * You cannot use the normal way of setting ``help_texts`` in the forms ``Meta`` class, because we cannot
+      reference the object instance here.
+    * We cannot access self.fields['pub'] in the constructor, because it is a readonly field and thus not
+      present in the form.
+    """
     def __init__(self, *args, **kwargs):
-        """Override constructor to set the help_text for the pub field.
+        super().__init__(*args, **kwargs)
 
-        The help_text is set by adding a value to the help_texts dictionary of the models Meta
-        class. We use this unusual way because it should contain links referencing the currently
-        displayed object and the normal methods do not work this way:
-
-        * You cannot use the normal way of setting ``help_texts`` in the forms ``Meta`` class,
-          because we cannot reference the object instance here.
-        * We cannot access self.fields['pub'] in the constructor, because it is a readonly field
-          and thus not present in the form.
-        """
-        super(X509CertMixinAdminForm, self).__init__(*args, **kwargs)
-
-        if not getattr(self._meta, 'help_texts', None):  # pragma: no cover
+        meta = self._meta  # pylint: disable=no-member; false positive
+        if not getattr(meta, 'help_texts', None):  # pragma: no cover
             # help_texts is always set since we have a Meta class, but keeping this here as a precaution.
-            self._meta.help_texts = {}
+            meta.help_texts = {}
 
         info = self.instance._meta.app_label, self.instance._meta.model_name
         url = reverse('admin:%s_%s_download' % info, kwargs={'pk': self.instance.pk})
         bundle_url = reverse('admin:%s_%s_download_bundle' % info, kwargs={'pk': self.instance.pk})
-        self._meta.help_texts['pub'] = _(
+        meta.help_texts['pub'] = _(
             'Download: <a href="%s?format=PEM">as PEM</a> | <a href="%s?format=DER">as DER</a><br />'
             'Certificate bundle: <a href="%s?format=PEM">as PEM</a>'
         ) % (url, url, bundle_url)
@@ -80,8 +83,11 @@ on Wikipedia.'''),
 
 
 class CreateCertificateBaseForm(forms.ModelForm):
+    """Base class for forms that create a certificate.
+
+    This is used by forms for creating a new certificate and resigning an existing one."""
     def __init__(self, *args, **kwargs):
-        super(CreateCertificateBaseForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         # Set choices so we can filter out CAs where the private key does not exist locally
         field = self.fields['ca']
@@ -120,30 +126,30 @@ class CreateCertificateBaseForm(forms.ModelForm):
         help_text=EXTENDED_KEY_USAGE_DESC, extension=ExtendedKeyUsage)
     tls_feature = MultiValueExtensionField(extension=TLSFeature)
 
-    def clean_algorithm(self):
+    def clean_algorithm(self):  # pylint: disable=missing-function-docstring
         algo = self.cleaned_data['algorithm']
         try:
             algo = getattr(hashes, algo.upper())()
-        except AttributeError:  # pragma: no cover
+        except AttributeError as ex:  # pragma: no cover
             # We only add what is known to cryptography in `choices`, and other values posted are caught
             # during Djangos standard form validation, so this should never happen.
-            raise forms.ValidationError(_('Unknown hash algorithm: %s') % algo)
+            raise forms.ValidationError(_('Unknown hash algorithm: %s') % algo) from ex
         return algo
 
-    def clean_expires(self):
+    def clean_expires(self):  # pylint: disable=missing-function-docstring
         expires = self.cleaned_data['expires']
         if expires < date.today():
             raise forms.ValidationError(_('Certificate cannot expire in the past.'))
         return expires
 
-    def clean_password(self):
+    def clean_password(self):  # pylint: disable=missing-function-docstring
         password = self.cleaned_data['password']
         if not password:
             return None
         return password.encode('utf-8')
 
     def clean(self):
-        data = super(CreateCertificateBaseForm, self).clean()
+        data = super().clean()
         expires = data.get('expires')
         ca = data.get('ca')
         password = data.get('password')
@@ -153,7 +159,7 @@ class CreateCertificateBaseForm(forms.ModelForm):
         # test the password
         try:
             ca.key(password)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except; for simplicity
             self.add_error('password', str(e))
 
         if cn_in_san and subject and subject.get('CN'):
@@ -176,7 +182,8 @@ class CreateCertificateBaseForm(forms.ModelForm):
 
 
 class CreateCertificateForm(CreateCertificateBaseForm):
-    def clean_csr(self):
+    """Admin form for creating a completely new certificate."""
+    def clean_csr(self):  # pylint: disable=missing-function-docstring
         data = self.cleaned_data['csr']
         lines = data.splitlines()
         if not lines or lines[0] != '-----BEGIN CERTIFICATE REQUEST-----' \
@@ -198,10 +205,12 @@ openssl req -new -key hostname.key -out hostname.csr -utf8 -batch \\
 
 
 class ResignCertificateForm(CreateCertificateBaseForm):
-    pass
+    """Admin form for resigning an existing certificate."""
 
 
 class RevokeCertificateForm(forms.ModelForm):
+    """Admin form for revoking a certificate."""
+
     class Media:
         js = (
             # jquery/core.js for the datetime widgets:

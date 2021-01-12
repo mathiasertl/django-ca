@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
+"""Test the view_ca management command."""
+
 from .base import DjangoCAWithCATestCase
 from .base import override_settings
 from .base import override_tmpcadir
@@ -1111,8 +1113,11 @@ expected['pwd'] = expected['ecc']
 
 
 class ViewCATestCase(DjangoCAWithCATestCase):
+    """Main test class for this command."""
+
     @override_tmpcadir()
     def test_all_cas(self):
+        """Test viewing all CAs."""
         for name, ca in sorted(self.cas.items(), key=lambda t: t[0]):
             stdout, stderr = self.cmd('view_ca', ca.serial)
             data = self.get_cert_context(name)
@@ -1146,6 +1151,7 @@ class ViewCATestCase(DjangoCAWithCATestCase):
 
     @override_tmpcadir()
     def test_no_implemented(self):
+        """Test viewing when we have no private key."""
         def side_effect(cls):
             raise NotImplementedError
 
@@ -1156,8 +1162,12 @@ class ViewCATestCase(DjangoCAWithCATestCase):
 
         path_mock.assert_called_once_with(self.cas['root'].private_key_path)
         exists_mock.assert_called_once_with(self.cas['root'].private_key_path)
+        data = self.get_cert_context('root')
+        data['key_path'] = self.cas['root'].private_key_path
+        self.assertMultiLineEqual(stdout, expected['root'].format(**data))
+        self.assertEqual(stderr, '')
 
 
 @override_settings(USE_TZ=True)
 class ViewCAWithTZTestCase(ViewCATestCase):
-    pass
+    """Main tests but with TZ support."""

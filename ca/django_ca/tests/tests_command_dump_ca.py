@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
+"""Test the dump_ca management command."""
+
 import os
 from io import BytesIO
 
@@ -21,20 +23,23 @@ from .base import DjangoCAWithCATestCase
 from .base import override_tmpcadir
 
 
-class DumpCertTestCase(DjangoCAWithCATestCase):
+class DumpCATestCase(DjangoCAWithCATestCase):
+    """Main test class for this command."""
+
     def setUp(self):
-        super(DumpCertTestCase, self).setUp()
+        super().setUp()
         self.ca = self.cas['root']
 
     @override_tmpcadir()
     def test_basic(self):
-        stdout, stderr = self.cmd('dump_ca', self.ca.serial,
-                                  stdout=BytesIO(), stderr=BytesIO())
+        """Basic test of this command."""
+        stdout, stderr = self.cmd('dump_ca', self.ca.serial, stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
         self.assertEqual(stdout, self.ca.pub.encode('utf-8'))
 
     @override_tmpcadir()
     def test_format(self):
+        """Test various formats."""
         for option in ['PEM', 'DER']:
             encoding = getattr(Encoding, option)
             stdout, stderr = self.cmd('dump_ca', self.ca.serial, format=encoding,
@@ -44,6 +49,7 @@ class DumpCertTestCase(DjangoCAWithCATestCase):
 
     @override_tmpcadir()
     def test_explicit_stdout(self):
+        """Test piping to stdout."""
         stdout, stderr = self.cmd('dump_ca', self.ca.serial, '-',
                                   stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
@@ -51,6 +57,7 @@ class DumpCertTestCase(DjangoCAWithCATestCase):
 
     @override_tmpcadir()
     def test_bundle(self):
+        """Test getting the bundle."""
         stdout, stderr = self.cmd('dump_ca', self.ca.serial, '-', bundle=True,
                                   stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b'')
@@ -64,6 +71,7 @@ class DumpCertTestCase(DjangoCAWithCATestCase):
 
     @override_tmpcadir()
     def test_file_output(self):
+        """Test writing to file."""
         path = os.path.join(ca_settings.CA_DIR, 'test_ca.pem')
         stdout, stderr = self.cmd('dump_ca', self.ca.serial, path,
                                   stdout=BytesIO(), stderr=BytesIO())
@@ -75,6 +83,7 @@ class DumpCertTestCase(DjangoCAWithCATestCase):
 
     @override_tmpcadir()
     def test_errors(self):
+        """Test some error conditions."""
         path = os.path.join(ca_settings.CA_DIR, 'does-not-exist', 'test_ca.pem')
         msg = r"^\[Errno 2\] No such file or directory: '%s/does-not-exist/test_ca\.pem'$" % (
             ca_settings.CA_DIR)

@@ -11,8 +11,9 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Form widgets for django-ca admin interface."""
+
 from django.forms import widgets
-from django.utils.encoding import force_str
 from django.utils.translation import gettext as _
 
 from . import ca_settings
@@ -27,10 +28,10 @@ class LabeledCheckboxInput(widgets.CheckboxInput):
 
     def __init__(self, label, *args, **kwargs):
         self.label = label
-        super(LabeledCheckboxInput, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def get_context(self, *args, **kwargs):
-        ctx = super(LabeledCheckboxInput, self).get_context(*args, **kwargs)
+        ctx = super().get_context(*args, **kwargs)
         ctx['widget']['label'] = self.label
         return ctx
 
@@ -49,10 +50,10 @@ class LabeledTextInput(widgets.TextInput):
 
     def __init__(self, label, *args, **kwargs):
         self.label = label
-        super(LabeledTextInput, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def get_context(self, *args, **kwargs):
-        ctx = super(LabeledTextInput, self).get_context(*args, **kwargs)
+        ctx = super().get_context(*args, **kwargs)
         ctx['widget']['label'] = self.label
         ctx['widget']['cssid'] = self.label.lower().replace(' ', '-')
         return ctx
@@ -64,22 +65,21 @@ class LabeledTextInput(widgets.TextInput):
 
 
 class SubjectTextInput(LabeledTextInput):
+    """Widget used in :py:class:`~django_ca.widgets.SubjectWidget`."""
+
     template_name = 'django_ca/forms/widgets/subjecttextinput.html'
 
 
 class ProfileWidget(widgets.Select):
-    # TODO: shouldn't we set a template_name here? Perhaps that's why render() is still called
+    """Widget for profile selection."""
 
-    def render(self, name, value, attrs=None, renderer=None):
-        html = super(ProfileWidget, self).render(name, value, attrs=attrs, renderer=renderer)
+    template_name = 'django_ca/forms/widgets/profile.html'
 
-        # add the description of the default selected profile as help text (will be updated by JS when
-        # different profile is selected)
-        desc = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get(
+    def get_context(self, *args, **kwargs):
+        ctx = super().get_context(*args, **kwargs)
+        ctx['desc'] = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get(
             'description', ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get('desc', ''))
-        html += '<p class="help profile-desc">%s</p>' % force_str(desc)
-
-        return html
+        return ctx
 
     class Media:
         js = (
@@ -88,13 +88,15 @@ class ProfileWidget(widgets.Select):
         )
 
 
-class CustomMultiWidget(widgets.MultiWidget):
-    """Wraps the multi widget into a <p> element."""
+class CustomMultiWidget(widgets.MultiWidget):  # pylint: disable=abstract-method; decompress() in subclasses
+    """Wraps the multi widget into a <p> element (base class for other widgets)."""
 
     template_name = 'django_ca/forms/widgets/custommultiwidget.html'
 
 
 class SubjectWidget(CustomMultiWidget):
+    """Widget for a :py:class:`~django_ca.subject.Subject`."""
+
     def __init__(self, attrs=None):
         _widgets = (
             SubjectTextInput(label=_('Country'), attrs={'placeholder': '2 character country code'}),
@@ -105,16 +107,16 @@ class SubjectWidget(CustomMultiWidget):
             SubjectTextInput(label=_('CommonName'), attrs={'required': True}),
             SubjectTextInput(label=_('E-Mail')),
         )
-        super(SubjectWidget, self).__init__(_widgets, attrs)
+        super().__init__(_widgets, attrs)
 
     def decompress(self, value):
         if value is None:  # pragma: no cover
             return ('', '', '', '', '', '')
 
         # Multiple OUs are not supported in webinterface
-        ou = value.get('OU', '')
-        if isinstance(ou, list) and ou:
-            ou = ou[0]
+        org_unit = value.get('OU', '')
+        if isinstance(org_unit, list) and org_unit:
+            org_unit = org_unit[0]
 
         # Used e.g. for initial form data (e.g. resigning a cert)
         return [
@@ -122,19 +124,21 @@ class SubjectWidget(CustomMultiWidget):
             value.get('ST', ''),
             value.get('L', ''),
             value.get('O', ''),
-            ou,
+            org_unit,
             value.get('CN', ''),
             value.get('emailAddress', ''),
         ]
 
 
 class SubjectAltNameWidget(CustomMultiWidget):
+    """Widget for a Subject Alternative Name extension."""
+
     def __init__(self, attrs=None):
         _widgets = (
             widgets.TextInput(),
             LabeledCheckboxInput(label="Include CommonName")
         )
-        super(SubjectAltNameWidget, self).__init__(_widgets, attrs)
+        super().__init__(_widgets, attrs)
 
     def decompress(self, value):  # pragma: no cover
         if value:
@@ -143,12 +147,14 @@ class SubjectAltNameWidget(CustomMultiWidget):
 
 
 class MultiValueExtensionWidget(CustomMultiWidget):
+    """A widget for multiple-choice extensions (e.g. :py:class:`~django_ca.extensions.KeyUsage`."""
+
     def __init__(self, choices, attrs=None):
         _widgets = (
             widgets.SelectMultiple(choices=choices, attrs=attrs),
             LabeledCheckboxInput(label=_('critical')),
         )
-        super(MultiValueExtensionWidget, self).__init__(_widgets, attrs)
+        super().__init__(_widgets, attrs)
 
     def decompress(self, value):
         if value:
