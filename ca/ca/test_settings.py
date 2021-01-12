@@ -253,7 +253,10 @@ SKIP_SELENIUM_TESTS = os.environ.get(
 os.environ['COLUMNS'] = '80'
 
 VIRTUAL_DISPLAY = os.environ.get('VIRTUAL_DISPLAY', 'y').lower().strip() == 'y'
-GECKODRIVER_PATH = os.path.join(ROOT_DIR, 'contrib', 'selenium', 'geckodriver')
+if 'GECKOWEBDRIVER' in os.environ:
+    GECKODRIVER_PATH = os.path.join(os.environ['GECKOWEBDRIVER'], 'geckodriver')
+else:
+    GECKODRIVER_PATH = os.path.join(ROOT_DIR, 'contrib', 'selenium', 'geckodriver')
 if 'TOX_ENV_DIR' in os.environ:
     GECKODRIVER_LOG_PATH = os.path.join(os.environ['TOX_ENV_DIR'], 'geckodriver.log')
 else:

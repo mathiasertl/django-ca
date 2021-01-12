@@ -1,5 +1,15 @@
 # django-ca
 
+![image](https://github.com/mathiasertl/django-ca/workflows/Tests/badge.svg)
+![image](https://github.com/mathiasertl/django-ca/workflows/Code%20quality/badge.svg)
+![image](https://img.shields.io/pypi/v/django-ca.svg)
+![image](https://img.shields.io/pypi/dm/django-ca.svg)
+![image](https://img.shields.io/pypi/pyversions/django-ca.svg)
+![image](https://img.shields.io/pypi/status/django-ca.svg)
+![image](https://img.shields.io/github/license/mathiasertl/django-ca)
+
+## About
+
 **django-ca** is a small project to manage TLS certificate authorities and easily issue
 certificates.  It is based on [cryptography](https://cryptography.io/) and
 [Django](https://www.djangoproject.com/>). It can be used as an app in an existing Django project

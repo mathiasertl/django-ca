@@ -1,0 +1,61 @@
+name: Tests
+on:
+  push:
+  pull_request:
+  pull_request_target:
+
+jobs:
+
+  tests:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ] # , macos-latest, windows-latest ]
+        python-version: [ "3.6", "3.7", "3.8", "3.9" ]
+        django-version: [ "2.2", "3.1" ]
+        cryptography-version: [ "3.1.0", "3.2.0", "3.3.0", "3.4.0" ]
+
+    env:
+      DJANGO_CA_SECRET_KEY: dummy
+
+    name: Python ${{ matrix.python-version }}, Django ${{ matrix.django-version }}, cryptography ${{ matrix.cryptography-version }}, OS ${{ matrix.os }}
+    steps:
+
+      - name: Acquire sources
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+
+      - name: Apply caching of dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: os=${{ matrix.os }}-python=${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements-*.txt') }}
+
+      - name: Install designated Django and cryptography versions
+        run: |
+          pip install Django~=${{ matrix.django-version }}
+          pip install cryptography~=${{ matrix.cryptography-version }}
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements/requirements-core.txt
+          pip install -r requirements/requirements-libs.txt
+          pip install -r requirements/requirements-test.txt
+          pip install -r requirements/requirements-docs.txt
+
+      - name: Install program
+        run: python setup.py develop
+
+      - name: Run tests
+        run: |
+          python dev.py init-demo
+          python dev.py coverage --format=text
+
+      - name: Build documentation
+        run: SPHINXOPTS="-j auto" make --directory=docs html-check
