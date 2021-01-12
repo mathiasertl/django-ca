@@ -7,7 +7,7 @@ ChangeLog
 .. _changelog-1.17.1:
 
 *******************
-1.17.1 (2021-01-11)
+1.17.1 (2021-01-12)
 *******************
 
 * Bugfix release for 1.17.0 to address packaging issues for wheels (when installed with ``pip install``).
