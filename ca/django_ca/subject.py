@@ -14,7 +14,6 @@
 """Module for handling x509 subjects."""
 
 from collections import abc
-from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
 from typing import Generator
@@ -22,7 +21,6 @@ from typing import Iterable
 from typing import List
 from typing import Mapping
 from typing import Optional
-from typing import Sequence
 from typing import Tuple
 from typing import Union
 from typing import cast
@@ -96,7 +94,7 @@ class Subject:
         elif isinstance(subject, x509.Name):
             iterable = [(n.oid, n.value) for n in subject]
         elif isinstance(subject, abc.Iterable):
-            # TODO: cast should not be necessary
+            # TODO: cast should not be necessary, but mypy infers the top-level Union here
             iterable = cast(Iterable[Tuple[
                 Union[x509.ObjectIdentifier, str], Union[str, Iterable[str]]
             ]], subject)
