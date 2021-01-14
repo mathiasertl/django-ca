@@ -15,7 +15,6 @@
 
 # pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
 
-from typing import TYPE_CHECKING
 from typing import Dict
 from typing import Iterable
 from typing import List
@@ -40,15 +39,3 @@ ParsablePolicyQualifier = Union[str, x509.UserNotice, LoosePolicyQualifier]
 ParsablePolicyIdentifier = Union[str, x509.ObjectIdentifier]
 ParsablePolicyInformation = Dict[str, Union[ParsablePolicyQualifier, ParsablePolicyQualifier]]
 PolicyQualifier = Union[str, x509.UserNotice]
-
-# extensions
-if TYPE_CHECKING:  # pragma: no cover
-    GenericExtensionType = x509.Extension[x509.ExtensionType]
-    SubjectAlternativeNameType = x509.Extension[x509.SubjectAlternativeName]
-    IssuerAlternativeNameType = x509.Extension[x509.IssuerAlternativeName]
-    AlternativeNameType = Union[SubjectAlternativeNameType, IssuerAlternativeNameType]
-else:
-    GenericExtensionType = x509.Extension
-    SubjectAlternativeNameType = x509.Extension
-    IssuerAlternativeNameType = x509.Extension
-    AlternativeNameType = x509.Extension

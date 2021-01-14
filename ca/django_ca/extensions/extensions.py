@@ -20,14 +20,6 @@ in a more pythonic manner and provide access functions."""
 
 import binascii
 import textwrap
-from typing import TYPE_CHECKING
-from typing import Any
-from typing import Dict
-from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import Union
-from typing import cast
 
 from cryptography import x509
 from cryptography.x509 import ObjectIdentifier
@@ -40,7 +32,6 @@ from cryptography.x509.oid import ExtensionOID
 from ..utils import GeneralNameList
 from ..utils import bytes_to_hex
 from ..utils import hex_to_bytes
-from .base import SV
 from .base import AlternativeNameExtension
 from .base import CRLDistributionPointsBase
 from .base import Extension
@@ -50,20 +41,8 @@ from .base import NullExtension
 from .base import OrderedSetExtension
 from .utils import PolicyInformation
 
-if TYPE_CHECKING:  # pragma: no cover
-    AuthorityInformationAccessType = x509.Extension[x509.AuthorityInformationAccess]
-else:
-    AuthorityInformationAccessType = x509.Extension
 
-# pylint: disable=invalid-name
-S = Dict[str, Union[List[str], GeneralNameList]]
-"""S text."""
-P = Dict[str, Union[Iterable[str], GeneralNameList]]
-"""P text."""
-# pylint: enable=invalid-name
-
-
-class AuthorityInformationAccess(Extension[x509.AuthorityInformationAccess, P, S]):
+class AuthorityInformationAccess(Extension):
     """Class representing a AuthorityInformationAccess extension.
 
     .. seealso::
@@ -95,27 +74,26 @@ class AuthorityInformationAccess(Extension[x509.AuthorityInformationAccess, P, S
 
     name = 'AuthorityInformationAccess'
     oid = ExtensionOID.AUTHORITY_INFORMATION_ACCESS
-    value: Dict[str, GeneralNameList]
 
-    def __bool__(self) -> bool:
+    def __bool__(self):
         return bool(self.value['ocsp']) or bool(self.value['issuers'])
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other):
         return isinstance(other, type(self)) \
             and self.value['issuers'] == other.value['issuers'] \
             and self.value['ocsp'] == other.value['ocsp'] \
             and self.critical == other.critical
 
-    def __hash__(self) -> int:
+    def __hash__(self):
         return hash((tuple(self.value['issuers']), tuple(self.value['ocsp']), self.critical, ))
 
-    def _repr_value(self) -> str:
+    def _repr_value(self):
         issuers = list(self.value['issuers'].serialize())
         ocsp = list(self.value['ocsp'].serialize())
 
         return 'issuers=%r, ocsp=%r' % (issuers, ocsp)
 
-    def as_text(self) -> str:
+    def as_text(self):
         text = ''
         if self.value['issuers']:
             text += 'CA Issuers:\n'
@@ -129,7 +107,7 @@ class AuthorityInformationAccess(Extension[x509.AuthorityInformationAccess, P, S
         return text.strip()
 
     @property
-    def extension_type(self) -> x509.AuthorityInformationAccess:
+    def extension_type(self):
         """Test"""
         descs = [x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, v)
                  for v in self.value['issuers']]
@@ -137,7 +115,7 @@ class AuthorityInformationAccess(Extension[x509.AuthorityInformationAccess, P, S
                   for v in self.value['ocsp']]
         return x509.AuthorityInformationAccess(descriptions=descs)
 
-    def from_extension(self, value: AuthorityInformationAccessType) -> None:  # type: ignore[override]
+    def from_extension(self, value):
         issuers = [v.access_location for v in value.value
                    if v.access_method == AuthorityInformationAccessOID.CA_ISSUERS]
         ocsp = [v.access_location for v in value.value
@@ -145,10 +123,8 @@ class AuthorityInformationAccess(Extension[x509.AuthorityInformationAccess, P, S
 
         self.value = {'issuers': GeneralNameList(issuers), 'ocsp': GeneralNameList(ocsp)}
 
-    #P = Dict[str, Union[Iterable[str], GeneralNameList]]
-    #SV = Dict[str, Union[bool, P]]
-    def from_dict(self, value: SV[P]) -> None:
-        dict_value = cast(P, value.get('value', {}))
+    def from_dict(self, value):
+        dict_value = value.get('value', {})
         self.value = {
             'issuers': GeneralNameList(dict_value.get('issuers', [])),
             'ocsp': GeneralNameList(dict_value.get('ocsp', [])),
@@ -172,7 +148,7 @@ class AuthorityInformationAccess(Extension[x509.AuthorityInformationAccess, P, S
     def ocsp(self, value):
         self.value['ocsp'] = GeneralNameList.get_from_value(value)
 
-    def serialize(self) -> SV[S]:
+    def serialize(self):
         val = {
             'critical': self.critical,
             'value': {}
@@ -225,7 +201,7 @@ class AuthorityKeyIdentifier(Extension):
         return hash((self.value['key_identifier'], issuer, self.value['authority_cert_serial_number'],
                      self.critical))
 
-    def _repr_value(self) -> str:
+    def _repr_value(self):
         values = []
         if self.value['key_identifier'] is not None:
             values.append('keyid: %s' % bytes_to_hex(self.value['key_identifier']))
@@ -236,7 +212,7 @@ class AuthorityKeyIdentifier(Extension):
 
         return ', '.join(values)
 
-    def as_text(self) -> str:
+    def as_text(self):
         values = []
         if self.value['key_identifier'] is not None:
             values.append('* KeyID: %s' % bytes_to_hex(self.value['key_identifier']))
@@ -329,7 +305,7 @@ class AuthorityKeyIdentifier(Extension):
         if value is not None:
             return hex_to_bytes(value)
 
-    def serialize(self) -> Dict[str, Union[str, None, List[str]]]:
+    def serialize(self):
         val = {
             'critical': self.critical,
             'value': {},
@@ -760,7 +736,7 @@ class InhibitAnyPolicy(Extension):
     """This extension is marked as critical by default (RFC 5280 requires this extension to be marked as
     critical)."""
 
-    def _test_value(self) -> None:
+    def _test_value(self):
         if not isinstance(self.value, int):
             raise ValueError('%s: must be an int' % self.value)
         if self.value < 0:
@@ -849,7 +825,7 @@ class PolicyConstraints(Extension):
             values.append('require_explicit_policy=%s' % self.value['require_explicit_policy'])
         return ', '.join(values)
 
-    def _test_value(self) -> None:
+    def _test_value(self):
         rep = self.value['require_explicit_policy']
         ipm = self.value['inhibit_policy_mapping']
         if rep is not None:
@@ -1022,15 +998,15 @@ class NameConstraints(Extension):
         }
 
     @property
-    def permitted(self) -> GeneralNameList:
+    def permitted(self):
         """The ``permitted`` value of this instance."""
         return self.value['permitted']
 
     @permitted.setter
-    def permitted(self, value: GeneralNameList) -> None:
+    def permitted(self, value):
         self.value['permitted'] = GeneralNameList.get_from_value(value, GeneralNameList())
 
-    def serialize(self) -> Dict[str, Union[bool, Dict[str, List[str]]]]:
+    def serialize(self):
         return {
             'critical': self.critical,
             'value': {
@@ -1091,7 +1067,7 @@ class PrecertPoison(NullExtension):
     oid = ExtensionOID.PRECERT_POISON
     ext_class = x509.PrecertPoison
 
-    def __init__(self, value: Optional[Dict[str, bool]] = None) -> None:
+    def __init__(self, value=None):
         super().__init__(value=value)
 
         if self.critical is not True:
@@ -1126,7 +1102,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
     }
     value: x509.PrecertificateSignedCertificateTimestamps
 
-    def __contains__(self, value: Union[x509.SignedCertificateTimestamps, Dict[str, str]]) -> bool:
+    def __contains__(self, value):
         if isinstance(value, dict):
             return value in self.serialize()['value']
         return value in self.value
@@ -1134,11 +1110,11 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
     def __delitem__(self, key):  # type: ignore
         raise NotImplementedError
 
-    def __hash__(self) -> int:
+    def __hash__(self):
         # serialize_iterable returns a dict, which is unhashable
         return hash((tuple(self.value), self.critical, ))
 
-    def _repr_value(self) -> str:
+    def _repr_value(self):
         if len(self.value) == 1:  # pragma: no cover - we cannot currently create such an extension
             return '1 timestamp'
         return '%s timestamps' % len(self.value)
@@ -1146,7 +1122,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
     def __setitem__(self, key, value):  # type: ignore
         raise NotImplementedError
 
-    def human_readable_timestamps(self) -> Iterable[Dict[str, str]]:
+    def human_readable_timestamps(self):
         """Convert SCTs into a generator of serializable dicts."""
         for sct in self.value:
             if sct.entry_type == LogEntryType.PRE_CERTIFICATE:
@@ -1165,7 +1141,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
                 'version': sct.version.name,
             }
 
-    def as_text(self) -> str:
+    def as_text(self):
         lines = []
         for val in self.human_readable_timestamps():
             line = '* {type} ({version}):\n    Timestamp: {timestamp}\n    Log ID: {log_id}'.format(**val)
@@ -1173,31 +1149,31 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
 
         return '\n'.join(lines)
 
-    def count(self, value: Union[Dict[str, str], x509.SignedCertificateTimestamps]) -> int:
+    def count(self, value):
         if isinstance(value, dict):
             return self.serialize()['value'].count(value)
         return self.value._signed_certificate_timestamps.count(value)  # pylint: disable=protected-access
 
-    def extend(self, iterable):  # type: ignore
+    def extend(self, iterable):
         raise NotImplementedError
 
     @property
-    def extension_type(self) -> x509.PrecertificateSignedCertificateTimestamps:
+    def extension_type(self):
         return self.value
 
-    def from_extension(self, value: x509.Extension) -> None:
+    def from_extension(self, value):
         self.value = value.value
 
-    def insert(self, index, value):  # type: ignore
+    def insert(self, index, value):
         raise NotImplementedError
 
-    def pop(self, index=-1):  # type: ignore
+    def pop(self, index=-1):
         raise NotImplementedError
 
-    def remove(self, value):  # type: ignore
+    def remove(self, value):
         raise NotImplementedError
 
-    def serialize_value(self, value: x509.SignedCertificateTimestamps) -> Dict[str, str]:
+    def serialize_value(self, value):
         return {
             'type': PrecertificateSignedCertificateTimestamps.LOG_ENTRY_TYPE_MAPPING[value.entry_type],
             'timestamp': value.timestamp.strftime(self._timeformat),
@@ -1224,7 +1200,7 @@ class SubjectAlternativeName(AlternativeNameExtension):
     name = 'SubjectAlternativeName'
     oid = ExtensionOID.SUBJECT_ALTERNATIVE_NAME
 
-    def get_common_name(self) -> Optional[str]:
+    def get_common_name(self):
         """Get a value suitable for use as CommonName in a subject, or None if no such value is found.
 
         This function returns a string representation of the first value that is not a DirectoryName,
@@ -1239,7 +1215,7 @@ class SubjectAlternativeName(AlternativeNameExtension):
         return None
 
     @property
-    def extension_type(self) -> x509.SubjectAlternativeName:
+    def extension_type(self):
         return x509.SubjectAlternativeName(self.value)
 
 
@@ -1263,10 +1239,10 @@ class SubjectKeyIdentifier(KeyIdExtension):
     oid = ExtensionOID.SUBJECT_KEY_IDENTIFIER
 
     @property
-    def extension_type(self) -> x509.SubjectKeyIdentifier:
+    def extension_type(self):
         return x509.SubjectKeyIdentifier(digest=self.value)
 
-    def from_other(self, value: x509.SubjectKeyIdentifier) -> None:
+    def from_other(self, value: x509.SubjectKeyIdentifier):
         if isinstance(value, x509.SubjectKeyIdentifier):
             self.critical = self.default_critical
             self.value = value.digest
@@ -1274,7 +1250,7 @@ class SubjectKeyIdentifier(KeyIdExtension):
         else:
             super().from_other(value)
 
-    def from_extension(self, value: x509.SubjectKeyIdentifier) -> None:
+    def from_extension(self, value: x509.SubjectKeyIdentifier):
         self.value = value.value.digest
 
 
@@ -1311,18 +1287,18 @@ class TLSFeature(OrderedSetExtension):
     KNOWN_PARAMETERS = sorted(CRYPTOGRAPHY_MAPPING)
     """Known values that can be passed to this extension."""
 
-    def from_extension(self, value: x509.TLSFeature) -> None:
+    def from_extension(self, value: x509.TLSFeature):
         self.value = set(value.value)
 
     @property
-    def extension_type(self) -> x509.TLSFeature:
+    def extension_type(self):
         # call serialize_value() to ensure consistent sort order
         return x509.TLSFeature(sorted(self.value, key=self.serialize_value))
 
-    def serialize_value(self, value: TLSFeatureType) -> str:
+    def serialize_value(self, value: TLSFeatureType):
         return self._CRYPTOGRAPHY_MAPPING_REVERSED[value]
 
-    def parse_value(self, value: Union[TLSFeatureType, str]) -> TLSFeatureType:
+    def parse_value(self, value):
         if isinstance(value, TLSFeatureType):
             return value
         if isinstance(value, str) and value in self.CRYPTOGRAPHY_MAPPING:

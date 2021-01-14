@@ -26,7 +26,7 @@ from typing import Union
 from typing import cast
 
 from cryptography import x509
-from cryptography.x509.oid import ObjectIdentifier
+from cryptography.x509 import ObjectIdentifier
 
 from django.utils.encoding import force_str
 

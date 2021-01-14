@@ -16,49 +16,17 @@
 # pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
 
 import textwrap
-from typing import TYPE_CHECKING
-from typing import Any
-from typing import Dict
-from typing import Generic
-from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import TypeVar
-from typing import Union
-from typing import cast
 
 from cryptography import x509
 
-from ..typehints import AlternativeNameType
-from ..typehints import DistributionPointType
 from ..utils import GeneralNameList
 from ..utils import bytes_to_hex
 from ..utils import format_general_name
 from ..utils import hex_to_bytes
 from .utils import DistributionPoint
 
-# pylint: disable=invalid-name
-ExtensionTypeVar = TypeVar('ExtensionTypeVar', bound=x509.ExtensionType)
-"""Generic ExtensionType type var."""
 
-S = TypeVar('S')  # Serialized value of an extension
-"""Serialized extension value."""
-
-P = TypeVar('P')  # Parsable value of an extension (loose, e.g. Iterable instead of List)
-"""Parseable extension value."""
-
-if TYPE_CHECKING:  # pragma: no cover
-    E = x509.Extension[x509.ExtensionType]
-    UnrecognizedExtensionType = x509.Extension[x509.UnrecognizedExtension]
-else:
-    E = UnrecognizedExtensionType = x509.Extension
-    """Y"""
-SV = Dict[str, Union[bool, S]]
-"""X"""
-# pylint: enable=invalid-name
-
-
-class Extension(Generic[ExtensionTypeVar, P, S]):
+class Extension:
     """Convenience class to handle X509 Extensions.
 
     The value is a ``dict`` as used by the :ref:`CA_PROFILES <settings-ca-profiles>` setting::
@@ -107,13 +75,11 @@ class Extension(Generic[ExtensionTypeVar, P, S]):
     """
     key = ''  # must be overwritten by actual classes
 
-    critical: bool
     default_critical = False
     name = 'Extension'
-    oid: x509.ObjectIdentifier = None  # must be overwritten by actual classes
-    value: Any
+    oid = None
 
-    def __init__(self, value: Optional[Union[ExtensionTypeVar, SV[P]]] = None) -> None:
+    def __init__(self, value=None):
         if value is None:
             value = {}
 
@@ -121,7 +87,7 @@ class Extension(Generic[ExtensionTypeVar, P, S]):
             self.critical = value.critical
             self.from_extension(value)
         elif isinstance(value, dict):  # e.g. from settings
-            self.critical = cast(bool, value.get('critical', self.default_critical))
+            self.critical = value.get('critical', self.default_critical)
             self.from_dict(value)
             self._test_value()
         else:
@@ -132,43 +98,43 @@ class Extension(Generic[ExtensionTypeVar, P, S]):
     def __hash__(self) -> int:
         return hash((self.value, self.critical, ))
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other):
         return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         return '<%s: %s, critical=%r>' % (self.name, self._repr_value(), self.critical)
 
-    def __str__(self) -> str:
+    def __str__(self):
         return repr(self)
 
-    def _repr_value(self) -> str:
+    def _repr_value(self):
         return str(self.value)
 
-    def from_extension(self, value: E) -> None:
+    def from_extension(self, value):
         """Load a wrapper class from a cryptography extension instance.
 
         Implementing classes are expected to implement this function."""
         raise NotImplementedError
 
-    def from_dict(self, value: SV[P]) -> None:
+    def from_dict(self, value):
         """Load class from a dictionary."""
         self.value = value['value']
 
-    def from_other(self, value: Any) -> None:
+    def from_other(self, value):
         """Load class from any other value type.
 
         This class can be overwritten to allow loading classes from different types."""
         raise ValueError('Value is of unsupported type %s' % type(value).__name__)
 
-    def _test_value(self) -> None:
+    def _test_value(self):
         pass
 
     @property
-    def extension_type(self) -> ExtensionTypeVar:
+    def extension_type(self):
         """cryptography.x509.ExtensionType: The ``ExtensionType`` instance of this extension."""
         raise NotImplementedError
 
-    def serialize(self) -> SV[S]:
+    def serialize(self):
         """Serialize this extension to a string in a way that it can be passed to a constructor again.
 
         For example, this should always be True::
@@ -183,16 +149,16 @@ class Extension(Generic[ExtensionTypeVar, P, S]):
             'value': self.value,
         }
 
-    def as_extension(self) -> E:
+    def as_extension(self):
         """This extension as :py:class:`~cg:cryptography.x509.Extension`."""
         ext = self.extension_type  # extra line to raise NotImplementedError for abstract base classes
         return x509.Extension(oid=self.oid, critical=self.critical, value=ext)
 
-    def as_text(self) -> str:
+    def as_text(self):
         """Human-readable version of the *value*, not including the "critical" flag."""
         return str(self.value)
 
-    def for_builder(self) -> Dict[str, Union[bool, ExtensionTypeVar]]:
+    def for_builder(self):
         """Return kwargs suitable for a :py:class:`~cg:cryptography.x509.CertificateBuilder`.
 
         Example::
@@ -203,21 +169,21 @@ class Extension(Generic[ExtensionTypeVar, P, S]):
         return {'extension': self.extension_type, 'critical': self.critical}
 
 
-class UnrecognizedExtension(Extension[x509.UnrecognizedExtension, Any, Any]):
+class UnrecognizedExtension(Extension):
     """Class wrapping any extension this module does **not** support."""
 
     # pylint: disable=abstract-method; We don't know the extension_type
 
-    def __init__(self, value: x509.UnrecognizedExtension, name: str = '', error: str = '') -> None:
+    def __init__(self, value, name='', error=''):
         self._error = error
         self._name = name
         super().__init__(value)
 
-    def from_extension(self, value: UnrecognizedExtensionType) -> None:  # type: ignore[override]
+    def from_extension(self, value):
         self.value = value
 
     @property
-    def name(self) -> str:
+    def name(self):
         """Name (best effort) for this extension."""
         if self._name:
             return self._name
@@ -245,7 +211,7 @@ class NullExtension(Extension):
         <OCSPNoCheck: critical=True>
     """
 
-    def __init__(self, value: Optional[Dict[str, bool]] = None):
+    def __init__(self, value=None):
         self.value = {}
         if not value:
             self.critical = self.default_critical
@@ -274,7 +240,7 @@ class NullExtension(Extension):
     def from_dict(self, value):
         pass
 
-    def serialize(self) -> Dict[str, bool]:
+    def serialize(self):
         return {'critical': self.critical}
 
 
@@ -296,7 +262,7 @@ class IterableExtension(Extension):
 
     # pylint: disable=abstract-method; class is itself a base class
 
-    def __contains__(self, value):
+    def __contains__(self, value: str):
         return self.parse_value(value) in self.value
 
     def __eq__(self, other):
@@ -317,11 +283,11 @@ class IterableExtension(Extension):
     def as_text(self):
         return '\n'.join(['* %s' % v for v in self.serialize_iterable()])
 
-    def parse_value(self, value):
+    def parse_value(self, value: str):
         """Parse a single value (presumably from an iterable)."""
         return value
 
-    def serialize(self) -> Dict[str, Any]:
+    def serialize(self):
         return {
             'critical': self.critical,
             'value': self.serialize_iterable(),
@@ -332,7 +298,7 @@ class IterableExtension(Extension):
 
         return [self.serialize_value(v) for v in self.value]
 
-    def serialize_value(self, value):
+    def serialize_value(self, value: str):
         """Serialize a single value from the iterable contained in this extension."""
 
         return value
@@ -373,7 +339,7 @@ class ListExtension(IterableExtension):
     def clear(self):
         self.value.clear()
 
-    def count(self, value):
+    def count(self, value: str):
         try:
             return self.value.count(self.parse_value(value))
         except ValueError:
@@ -383,10 +349,10 @@ class ListExtension(IterableExtension):
         self.value.extend([self.parse_value(n) for n in iterable])
         self._test_value()
 
-    def insert(self, index, value):
+    def insert(self, index: int, value):
         self.value.insert(index, self.parse_value(value))
 
-    def pop(self, index=-1):
+    def pop(self, index: int = -1):
         return self.serialize_value(self.value.pop(index))
 
     def remove(self, value):
@@ -546,7 +512,7 @@ class AlternativeNameExtension(ListExtension):  # pylint: disable=abstract-metho
     """
     value: GeneralNameList
 
-    def from_dict(self, value: Union[GeneralNameList, None, Iterable[Union[x509.GeneralName, str]]]) -> None:
+    def from_dict(self, value):
         value = value.get('value')
         if isinstance(value, GeneralNameList):
             self.value = value
@@ -555,10 +521,10 @@ class AlternativeNameExtension(ListExtension):  # pylint: disable=abstract-metho
         else:
             self.value = GeneralNameList(value)
 
-    def from_extension(self, value: AlternativeNameType) -> None:
+    def from_extension(self, value):
         self.value = GeneralNameList(value.value)
 
-    def serialize_value(self, value: x509.GeneralName) -> str:
+    def serialize_value(self, value: x509.GeneralName):
         return format_general_name(value)
 
 
@@ -575,16 +541,16 @@ class KeyIdExtension(Extension):
     # pylint: disable=abstract-method; from_extension is not overwridden in this base class
     name = 'KeyIdExtension'
 
-    def from_dict(self, value: Dict[str, Union[str, bytes]]) -> None:
+    def from_dict(self, value):
         self.value = value['value']
 
         if isinstance(self.value, str) and ':' in self.value:
             self.value = hex_to_bytes(self.value)
 
-    def as_text(self) -> str:
+    def as_text(self):
         return bytes_to_hex(self.value)
 
-    def serialize(self) -> Dict[str, Union[bool, str]]:
+    def serialize(self):
         return {
             'critical': self.critical,
             'value': bytes_to_hex(self.value),
@@ -595,23 +561,23 @@ class CRLDistributionPointsBase(ListExtension):
     """Base class for :py:class:`~django_ca.extensions.CRLDistributionPoints` and
     :py:class:`~django_ca.extensions.FreshestCRL`.
     """
-    def __hash__(self) -> int:
+    def __hash__(self):
         return hash((tuple(self.value), self.critical, ))
 
-    def as_text(self) -> str:
+    def as_text(self):
         return '\n'.join('* DistributionPoint:\n%s' % textwrap.indent(dp.as_text(), '  ')
                          for dp in self.value)
 
     @property
-    def extension_type(self) -> x509.CRLDistributionPoints:
+    def extension_type(self):
         return x509.CRLDistributionPoints(distribution_points=[dp.for_extension_type for dp in self.value])
 
-    def parse_value(self, value) -> DistributionPoint:
+    def parse_value(self, value):
         if isinstance(value, DistributionPoint):
             return value
         return DistributionPoint(value)
 
-    def serialize(self) -> Dict[str, Union[bool, List[DistributionPointType]]]:
+    def serialize(self):
         return {
             'value': [dp.serialize() for dp in self.value],
             'critical': self.critical,
