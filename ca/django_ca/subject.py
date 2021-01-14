@@ -13,6 +13,19 @@
 
 """Module for handling x509 subjects."""
 
+from collections import abc
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Dict
+from typing import Generator
+from typing import Iterable
+from typing import List
+from typing import Mapping
+from typing import Optional
+from typing import Tuple
+from typing import Union
+from typing import cast
+
 from cryptography import x509
 
 from django.core.exceptions import ImproperlyConfigured
@@ -54,22 +67,42 @@ class Subject:
     ('AT', 'example.com')
     """
 
-    def __init__(self, subject=None):
+    _data: Dict[x509.ObjectIdentifier, List[str]]
+
+    def __init__(self, subject: Optional[Union[
+            str,
+            Dict[Union[x509.ObjectIdentifier, str], Union[str, Iterable[str]]],
+            x509.Name,
+            Iterable[Tuple[
+                Union[x509.ObjectIdentifier, str],
+                Union[str, Iterable[str]]
+            ]]
+    ]] = None) -> None:
         self._data = {}
+
+        iterable: Iterable[Tuple[
+            Union[x509.ObjectIdentifier, str],
+            Union[str, Iterable[str]],
+        ]]
 
         # Normalize input data to a list
         if subject is None:
-            subject = []
+            iterable = []
         elif isinstance(subject, str):
-            subject = parse_name(subject)
+            iterable = parse_name(subject)
         elif isinstance(subject, dict):
-            subject = subject.items()
+            iterable = subject.items()
         elif isinstance(subject, x509.Name):
-            subject = [(n.oid, n.value) for n in subject]
-        elif not isinstance(subject, (list, tuple)):
+            iterable = [(n.oid, n.value) for n in subject]
+        elif isinstance(subject, abc.Iterable):
+            # TODO: cast should not be necessary
+            iterable = cast(Iterable[Tuple[
+                Union[x509.ObjectIdentifier, str], Union[str, Iterable[str]]
+            ]], subject)
+        else:
             raise ValueError('Invalid subject: %s' % subject)
 
-        for oid, value in subject:
+        for oid, value in iterable:
             if isinstance(oid, str):
                 try:
                     oid = NAME_OID_MAPPINGS[oid]
@@ -86,15 +119,15 @@ class Subject:
             else:
                 self._data[oid].append(value)
 
-    def __contains__(self, oid):
+    def __contains__(self, oid: Union[str, x509.ObjectIdentifier]) -> bool:
         if isinstance(oid, str):
             oid = NAME_OID_MAPPINGS[oid]
         return oid in self._data
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         return isinstance(other, Subject) and self._data == other._data
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Union[x509.ObjectIdentifier, str]) -> Union[List[str], str]:
         if isinstance(key, str):
             key = NAME_OID_MAPPINGS[key]
 
@@ -105,14 +138,16 @@ class Subject:
         except KeyError as ex:
             raise KeyError(OID_NAME_MAPPINGS[key]) from ex
 
-    def __iter__(self):
+    def __iter__(self) -> Generator[str, None, None]:
         for key, _value in self._iter:
             yield OID_NAME_MAPPINGS[key]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._data)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self,
+                    key: Union[x509.ObjectIdentifier, str],
+                    value: Union[str, List[str]]) -> None:
         if isinstance(key, str):
             key = NAME_OID_MAPPINGS[key]
 
@@ -130,50 +165,55 @@ class Subject:
 
         self._data[key] = value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'Subject("%s")' % str(self)
 
-    def __str__(self):
+    def __str__(self) -> str:
         data = []
         for oid, values in self._data.items():
             for val in values:
                 data.append((OID_NAME_MAPPINGS[oid], val))
 
-        data = ['%s=%s' % (k, v) for k, v in sort_name(data)]
-        return '/%s' % '/'.join(data)
+        joined_data = ['%s=%s' % (k, v) for k, v in sort_name(data)]
+        return '/%s' % '/'.join(joined_data)
 
     @property
-    def _iter(self):
+    def _iter(self) -> List[Tuple[x509.ObjectIdentifier, List[str]]]:
         return sorted(self._data.items(), key=lambda t: SUBJECT_FIELDS.index(OID_NAME_MAPPINGS[t[0]]))
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear the subject."""
         self._data.clear()
 
-    def copy(self):
+    def copy(self) -> 'Subject':
         """Create a copy of the subject."""
         return Subject(list(self.items()))
 
-    def get(self, key, default=None):
+    def get(self,
+            key: Union[x509.ObjectIdentifier, str],
+            default: Optional[List[str]] = None) -> Optional[Union[List[str], str]]:
         """Return the value for key if key is in the subject, else default."""
         try:
             return self[key]
         except KeyError:
             return default
 
-    def items(self):
+    def items(self) -> Generator[Tuple[str, str], None, None]:
         """View of the subjects items."""
         for key, value in self._iter:
-            key = OID_NAME_MAPPINGS[key]
+            key_str = OID_NAME_MAPPINGS[key]
             for val in value:
-                yield key, val
+                yield key_str, val
 
-    def keys(self):
+    def keys(self) -> Generator[str, None, None]:
         """View on subject keys, in order."""
         for key in self:
             yield key
 
-    def setdefault(self, oid, value):
+    def setdefault(self,
+                   oid: Union[x509.ObjectIdentifier, str],
+                   value: Union[str, Iterable[str]]
+                   ) -> List[str]:
         """Insert key with a value of default if key is not in the subject.
 
         Return the value for key if key is in the subject, else default.
@@ -196,14 +236,18 @@ class Subject:
         self._data[oid] = value
         return value
 
-    def update(self, e=None, **f):
+    def update(self, e: Optional[Union[
+            'Subject',
+            Mapping[Union[str, x509.ObjectIdentifier], Union[str, List[str]]],
+            Iterable[Tuple[Union[str, x509.ObjectIdentifier], Union[str, List[str]]]],
+    ]] = None, **f: Union[str, List[str]]) -> None:
         """Update S from subject/dict/iterable E and F."""
         if e is None:
             e = {}
 
         if isinstance(e, Subject):
             self._data.update(e._data)  # pylint: disable=protected-access
-        elif hasattr(e, 'keys'):
+        elif isinstance(e, abc.Mapping):
             for k in e.keys():
                 self[k] = e[k]
         else:
@@ -213,7 +257,7 @@ class Subject:
         for k in f:
             self[k] = f[k]
 
-    def values(self):
+    def values(self) -> Generator[str, None, None]:
         """View on subject values, in order."""
         for _key, value in self._iter:
             for val in value:
@@ -223,7 +267,7 @@ class Subject:
     # Actual functions #
     ####################
     @property
-    def fields(self):
+    def fields(self) -> Generator[Tuple[x509.ObjectIdentifier, str], None, None]:
         """This subject as a list of :py:class:`~cg:cryptography.x509.oid.NameOID` instances.
 
         >>> list(Subject('/C=AT/CN=example.com').fields)  # doctest: +NORMALIZE_WHITESPACE
@@ -235,7 +279,7 @@ class Subject:
                 yield oid, force_str(val)
 
     @property
-    def name(self):
+    def name(self) -> x509.Name:
         """This subject as :py:class:`x509.Name <cg:cryptography.x509.Name>`.
 
         >>> Subject('/C=AT/CN=example.com').name
@@ -244,7 +288,7 @@ class Subject:
         return x509.Name([x509.NameAttribute(k, v) for k, v in self.fields])
 
 
-def get_default_subject():
+def get_default_subject() -> Subject:
     """Get the default subject as configured by the ``CA_DEFAULT_SUBJECT`` setting."""
 
     try:
