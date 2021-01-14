@@ -22,6 +22,7 @@ from typing import Iterable
 from typing import List
 from typing import Mapping
 from typing import Optional
+from typing import Sequence
 from typing import Tuple
 from typing import Union
 from typing import cast
@@ -71,7 +72,7 @@ class Subject:
 
     def __init__(self, subject: Optional[Union[
             str,
-            Dict[Union[x509.ObjectIdentifier, str], Union[str, Iterable[str]]],
+            Mapping[Union[x509.ObjectIdentifier, str], Union[str, Iterable[str]]],
             x509.Name,
             Iterable[Tuple[
                 Union[x509.ObjectIdentifier, str],
@@ -90,7 +91,7 @@ class Subject:
             iterable = []
         elif isinstance(subject, str):
             iterable = parse_name(subject)
-        elif isinstance(subject, dict):
+        elif isinstance(subject, abc.Mapping):
             iterable = subject.items()
         elif isinstance(subject, x509.Name):
             iterable = [(n.oid, n.value) for n in subject]
