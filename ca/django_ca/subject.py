@@ -13,6 +13,8 @@
 
 """Module for handling x509 subjects."""
 
+# pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
+
 from collections import abc
 from typing import Any
 from typing import Dict
