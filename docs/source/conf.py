@@ -74,12 +74,12 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.todo',
     'sphinx.ext.autosummary',
-    'sphinx.ext.napoleon',
+    #'sphinx.ext.napoleon',
 
     # Enable Celery task docs: https://docs.celeryproject.org/en/latest/userguide/sphinx.html
     'celery.contrib.sphinx',
-    #'numpydoc',
-    #'sphinx_autodoc_typehints',
+    'numpydoc',
+    'sphinx_autodoc_typehints',
 ]
 numpydoc_show_class_members = False
 autodoc_inherit_docstrings = False
@@ -107,6 +107,7 @@ copyright = '2016 - 2020, Mathias Ertl'
 author = 'Mathias Ertl'
 
 import django_ca  # NOQA
+
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
