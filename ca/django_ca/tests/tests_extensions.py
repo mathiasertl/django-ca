@@ -1686,6 +1686,7 @@ class FreshestCRLTestCase(CRLDistributionPointsTestCase):
     ext_class = FreshestCRL
     ext_class_key = 'freshest_crl'
     ext_class_name = 'FreshestCRL'
+    ext_class_type = x509.FreshestCRL
 
     cg_dps1 = x509.FreshestCRL([CRLDistributionPointsTestCase.cg_dp1])
     cg_dps2 = x509.FreshestCRL([CRLDistributionPointsTestCase.cg_dp2])
