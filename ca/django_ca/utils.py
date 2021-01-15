@@ -25,6 +25,8 @@ from datetime import timedelta
 from ipaddress import ip_address
 from ipaddress import ip_network
 from typing import Any
+from typing import Dict
+from typing import Final
 from typing import Iterable
 from typing import List
 from typing import Optional
@@ -83,7 +85,7 @@ SAN_NAME_MAPPINGS = {
 }
 
 #: Map OID objects to IDs used in subject strings
-OID_NAME_MAPPINGS = {
+OID_NAME_MAPPINGS: Final[Dict[x509.ObjectIdentifier, str]] = {
     NameOID.COUNTRY_NAME: 'C',
     NameOID.STATE_OR_PROVINCE_NAME: 'ST',
     NameOID.LOCALITY_NAME: 'L',
@@ -100,16 +102,16 @@ OID_NAME_MAPPINGS = {
 }
 
 # same, but reversed
-NAME_OID_MAPPINGS = {v: k for k, v in OID_NAME_MAPPINGS.items()}
+NAME_OID_MAPPINGS: Final = {v: k for k, v in OID_NAME_MAPPINGS.items()}
 
 # Some OIDs can occur multiple times
-MULTIPLE_OIDS = (
+MULTIPLE_OIDS: Final = (
     NameOID.ORGANIZATIONAL_UNIT_NAME,
     NameOID.STREET_ADDRESS,
 )
 
 # uppercase values as keys for normalizing case
-NAME_CASE_MAPPINGS = {v.upper(): v for v in OID_NAME_MAPPINGS.values()}
+NAME_CASE_MAPPINGS: Final = {v.upper(): v for v in OID_NAME_MAPPINGS.values()}
 
 
 try:
