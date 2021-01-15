@@ -57,6 +57,7 @@ from ..extensions.base import UnrecognizedExtension
 from ..extensions.utils import DistributionPoint
 from ..extensions.utils import PolicyInformation
 from ..models import X509CertMixin
+from ..utils import GeneralNameList
 from .base import DjangoCAWithCertTestCase
 from .base import certs
 from .base import dns
@@ -1253,6 +1254,13 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
         self.assertEqual(ext.issuers, [uri(self.uri2)])
         self.assertEqual(ext.ocsp, [uri(self.uri1)])
 
+    def test_none_value(self):
+        """Test that we can use and pass None as values for GeneralNamesList values."""
+        ext = self.ext_class({'value': {'issuers': None, 'ocsp': None}})
+        self.assertEqual(ext.issuers, [])
+        self.assertEqual(ext.ocsp, [])
+        self.assertEqual(ext.extension_type, x509.AuthorityInformationAccess(descriptions=[]))
+
 
 class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
     """Test AuthorityKeyIdentifier extension."""
@@ -1350,6 +1358,17 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         expected.authority_cert_serial_number = None
         self.assertEqual(expected, self.ext_class())
 
+    def test_none_value(self):
+        """Test that we can use and pass None as values for GeneralNamesList values."""
+        ext = self.ext_class({'value': {
+            'key_identifier': self.b1,
+            'authority_cert_issuer': None,
+            'authority_cert_serial_number': None,
+        }})
+        self.assertEqual(ext.extension_type, x509.AuthorityKeyIdentifier(
+            key_identifier=self.b1, authority_cert_issuer=None, authority_cert_serial_number=None
+        ))
+
 
 class BasicConstraintsTestCase(ExtensionTestMixin, TestCase):
     """Test BasicConstraints extension."""
@@ -1433,6 +1452,7 @@ class CRLDistributionPointsTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
     ext_class = CRLDistributionPoints
     ext_class_key = 'crl_distribution_points'
     ext_class_name = 'CRLDistributionPoints'
+    ext_class_type = x509.CRLDistributionPoints
 
     uri1 = 'http://ca.example.com/crl'
     uri2 = 'http://ca.example.net/crl'
@@ -1512,6 +1532,22 @@ class CRLDistributionPointsTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
             'extension_type': cg_dps4,
         },
     }
+
+    def test_none_value(self):
+        """Test that we can pass a None value for GeneralNameList items."""
+        ext = self.ext_class()
+        self.assertEqual(ext.extension_type, self.ext_class_type(distribution_points=[]))
+
+        ext.append(DistributionPoint({'full_name': None}))
+        self.assertEqual(ext.extension_type, self.ext_class_type(distribution_points=[
+            x509.DistributionPoint(full_name=None, relative_name=None, reasons=None, crl_issuer=None)
+        ]))
+
+        ext[0].full_name = GeneralNameList()
+        self.assertEqual(ext.extension_type, self.ext_class_type(distribution_points=[
+            x509.DistributionPoint(full_name=[], relative_name=None, reasons=None,
+                                   crl_issuer=None)
+        ]))
 
 
 class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):
@@ -1737,10 +1773,11 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
     ext_class_name = 'IssuerAlternativeName'
     ext_class_type = x509.IssuerAlternativeName
 
-    uri1 = 'https://example.com'
-    uri2 = 'https://example.net'
-    dns1 = 'example.com'
-    dns2 = 'example.net'
+    uri1 = value1 = 'https://example.com'
+    uri2 = value2 = 'https://example.net'
+    dns1 = value3 = 'example.com'
+    dns2 = value4 = 'example.net'
+    et1 = x509.IssuerAlternativeName([uri(value1)])
 
     invalid_values = ['DNS:https://example.com', True, None]
     test_values = {
@@ -1803,6 +1840,14 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
             'extension_type': ext_class_type([dns(dns2), dns(dns1), uri(uri2), uri(uri1)]),
         },
     }
+
+    def test_none_value(self):
+        """Test that we can pass a None value for GeneralNameList items."""
+        empty = self.ext_class({'value': None})
+        self.assertEqual(empty.extension_type, self.ext_class_type([]))
+        self.assertEqual(empty, self.ext_class({'value': []}))
+        empty.insert(0, self.value1)
+        self.assertEqual(empty.extension_type, self.et1)
 
 
 class PolicyConstraintsTestCase(ExtensionTestMixin, TestCase):
@@ -2105,6 +2150,7 @@ class NameConstraintsTestCase(ExtensionTestMixin, TestCase):
         'empty': {
             'values': [
                 {'excluded': [], 'permitted': []},
+                {'excluded': None, 'permitted': None},
             ],
             'expected': x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[]),
             'expected_repr': 'permitted=[], excluded=[]',
@@ -2171,6 +2217,20 @@ class NameConstraintsTestCase(ExtensionTestMixin, TestCase):
             'permitted': ['example.com'],
             'excluded': ['example.net']
         }}))
+
+    def test_none_value(self):
+        """Test that we can use and pass None as values for GeneralNamesList values."""
+        ext = self.ext_class({'value': {}})
+        self.assertEqual(ext.extension_type,
+                         x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[]))
+        self.assertEqual(ext.excluded, [])
+        self.assertEqual(ext.permitted, [])
+
+        ext = self.ext_class({'value': {'permitted': None, 'excluded': None}})
+        self.assertEqual(ext.extension_type,
+                         x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[]))
+        self.assertEqual(ext.excluded, [])
+        self.assertEqual(ext.permitted, [])
 
 
 class OCSPNoCheckTestCase(NullExtensionTestMixin, TestCase):
@@ -2479,10 +2539,11 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
     ext_class_name = 'SubjectAlternativeName'
     ext_class_type = x509.SubjectAlternativeName
 
-    uri1 = 'https://example.com'
+    uri1 = value1 = 'https://example.com'
     uri2 = 'https://example.net'
     dns1 = 'example.com'
     dns2 = 'example.net'
+    et1 = x509.SubjectAlternativeName([uri(value1)])
 
     test_values = {
         'empty': {
