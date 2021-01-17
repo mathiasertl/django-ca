@@ -15,6 +15,7 @@
 
 import doctest
 import functools
+import json
 import operator
 import os
 
@@ -106,10 +107,12 @@ class AbstractExtensionTestMixin:
         if critical is None:
             critical = self.ext_class.default_critical
 
-        self.assertEqual(ext.serialize(), {
+        serialized = ext.serialize()
+        self.assertEqual(serialized, {
             'value': config['expected_serialized'],
             'critical': critical,
         })
+        json.dumps(serialized)  # make sure that we can actually serialize the value
 
     @property
     def critical_values(self):
@@ -1545,8 +1548,7 @@ class CRLDistributionPointsTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
 
         ext[0].full_name = GeneralNameList()
         self.assertEqual(ext.extension_type, self.ext_class_type(distribution_points=[
-            x509.DistributionPoint(full_name=[], relative_name=None, reasons=None,
-                                   crl_issuer=None)
+            x509.DistributionPoint(full_name=None, relative_name=None, reasons=None, crl_issuer=None)
         ]))
 
 

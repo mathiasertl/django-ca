@@ -81,17 +81,17 @@ class DistributionPoint:
             data = {}
 
         if isinstance(data, x509.DistributionPoint):
-            self.full_name = GeneralNameList.get_from_value(data.full_name)
+            self.full_name = GeneralNameList(data.full_name)
             self.relative_name = data.relative_name
-            self.crl_issuer = GeneralNameList.get_from_value(data.crl_issuer)
+            self.crl_issuer = GeneralNameList(data.crl_issuer)
             self.reasons = data.reasons
         elif isinstance(data, dict):
-            self.full_name = GeneralNameList.get_from_value(data.get('full_name'))
+            self.full_name = GeneralNameList(data.get('full_name'))
             self.relative_name = data.get('relative_name')
-            self.crl_issuer = GeneralNameList.get_from_value(data.get('crl_issuer'))
+            self.crl_issuer = GeneralNameList(data.get('crl_issuer'))
             self.reasons = data.get('reasons')
 
-            if self.full_name is not None and self.relative_name is not None:
+            if self.full_name and self.relative_name:
                 raise ValueError('full_name and relative_name cannot both have a value')
 
             if self.relative_name is not None:
@@ -108,19 +108,19 @@ class DistributionPoint:
 
     def __get_values(self) -> List[str]:
         values: List[str] = []
-        if self.full_name is not None:
+        if self.full_name:
             values.append('full_name=%r' % list(self.full_name.serialize()))
         if self.relative_name:
             values.append("relative_name='%s'" % format_relative_name(self.relative_name))
-        if self.crl_issuer is not None:
+        if self.crl_issuer:
             values.append('crl_issuer=%r' % list(self.crl_issuer.serialize()))
         if self.reasons:
             values.append('reasons=%s' % sorted([r.name for r in self.reasons]))
         return values
 
     def __hash__(self) -> int:
-        full_name = tuple(self.full_name) if self.full_name is not None else None
-        crl_issuer = tuple(self.crl_issuer) if self.crl_issuer is not None else None
+        full_name = tuple(self.full_name) if self.full_name else None
+        crl_issuer = tuple(self.crl_issuer) if self.crl_issuer else None
         reasons = tuple(self.reasons) if self.reasons else None
         return hash((full_name, self.relative_name, crl_issuer, reasons))
 
@@ -132,13 +132,13 @@ class DistributionPoint:
 
     def as_text(self) -> str:
         """Show as text."""
-        if self.full_name is not None:
+        if self.full_name:
             names = [textwrap.indent('* %s' % s, '  ') for s in self.full_name.serialize()]
             text = '* Full Name:\n%s' % '\n'.join(names)
         elif self.relative_name is not None:  # pragma: no branch
             text = '* Relative Name: %s' % format_relative_name(self.relative_name)
 
-        if self.crl_issuer is not None:
+        if self.crl_issuer:
             names = [textwrap.indent('* %s' % s, '  ') for s in self.crl_issuer.serialize()]
             text += '\n* CRL Issuer:\n%s' % '\n'.join(names)
         if self.reasons:
@@ -148,18 +148,25 @@ class DistributionPoint:
     @property
     def for_extension_type(self) -> x509.DistributionPoint:
         """Convert instance to a suitable cryptography class."""
-        return x509.DistributionPoint(full_name=self.full_name, relative_name=self.relative_name,
-                                      crl_issuer=self.crl_issuer, reasons=self.reasons)
+        full_name = self.full_name
+        crl_issuer = self.crl_issuer
+        if not full_name:
+            full_name = None
+        if not crl_issuer:
+            crl_issuer = None
+
+        return x509.DistributionPoint(full_name=full_name, relative_name=self.relative_name,
+                                      crl_issuer=crl_issuer, reasons=self.reasons)
 
     def serialize(self) -> Dict[str, Union[List[str], str]]:
         """Serialize this distribution point."""
         val: Dict[str, Union[List[str], str]] = {}
 
-        if self.full_name is not None:
+        if self.full_name:
             val['full_name'] = list(self.full_name.serialize())
         if self.relative_name is not None:
             val['relative_name'] = format_relative_name(self.relative_name)
-        if self.crl_issuer is not None:
+        if self.crl_issuer:
             val['crl_issuer'] = list(self.crl_issuer.serialize())
         if self.reasons is not None:
             val['reasons'] = list(sorted([r.name for r in self.reasons]))

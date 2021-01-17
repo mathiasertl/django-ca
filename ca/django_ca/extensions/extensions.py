@@ -137,7 +137,7 @@ class AuthorityInformationAccess(Extension):
 
     @issuers.setter
     def issuers(self, value):
-        self.value['issuers'] = GeneralNameList.get_from_value(value)
+        self.value['issuers'] = GeneralNameList(value)
 
     @property
     def ocsp(self):
@@ -146,7 +146,7 @@ class AuthorityInformationAccess(Extension):
 
     @ocsp.setter
     def ocsp(self, value):
-        self.value['ocsp'] = GeneralNameList.get_from_value(value)
+        self.value['ocsp'] = GeneralNameList(value)
 
     def serialize(self):
         val = {
@@ -194,10 +194,7 @@ class AuthorityKeyIdentifier(Extension):
     oid = ExtensionOID.AUTHORITY_KEY_IDENTIFIER
 
     def __hash__(self):
-        issuer = self.value['authority_cert_issuer']
-        if issuer is not None:
-            issuer = tuple(issuer)
-
+        issuer = tuple(self.value['authority_cert_issuer'])
         return hash((self.value['key_identifier'], issuer, self.value['authority_cert_serial_number'],
                      self.critical))
 
@@ -205,7 +202,7 @@ class AuthorityKeyIdentifier(Extension):
         values = []
         if self.value['key_identifier'] is not None:
             values.append('keyid: %s' % bytes_to_hex(self.value['key_identifier']))
-        if self.value['authority_cert_issuer'] is not None:
+        if self.value['authority_cert_issuer']:
             values.append('issuer: %r' % list(self.value['authority_cert_issuer'].serialize()))
         if self.value['authority_cert_serial_number'] is not None:
             values.append('serial: %s' % self.value['authority_cert_serial_number'])
@@ -216,7 +213,7 @@ class AuthorityKeyIdentifier(Extension):
         values = []
         if self.value['key_identifier'] is not None:
             values.append('* KeyID: %s' % bytes_to_hex(self.value['key_identifier']))
-        if self.value['authority_cert_issuer'] is not None:
+        if self.value['authority_cert_issuer']:
             values.append('* Issuer:')
             values += [textwrap.indent(v, '  * ') for v in self.value['authority_cert_issuer'].serialize()]
         if self.value['authority_cert_serial_number'] is not None:
@@ -231,7 +228,7 @@ class AuthorityKeyIdentifier(Extension):
 
     @authority_cert_issuer.setter
     def authority_cert_issuer(self, value):
-        self.value['authority_cert_issuer'] = GeneralNameList.get_from_value(value)
+        self.value['authority_cert_issuer'] = GeneralNameList(value)
 
     @property
     def authority_cert_serial_number(self):
@@ -244,9 +241,13 @@ class AuthorityKeyIdentifier(Extension):
 
     @property
     def extension_type(self):
+        issuer = self.value['authority_cert_issuer']
+        if not issuer:
+            issuer = None
+
         return x509.AuthorityKeyIdentifier(
             key_identifier=self.value.get('key_identifier'),
-            authority_cert_issuer=self.value.get('authority_cert_issuer'),
+            authority_cert_issuer=issuer,
             authority_cert_serial_number=self.value.get('authority_cert_serial_number'))
 
     def from_dict(self, value):
@@ -255,20 +256,20 @@ class AuthorityKeyIdentifier(Extension):
         if isinstance(value, (bytes, str)) is True:
             self.value = {
                 'key_identifier': self.parse_keyid(value),
-                'authority_cert_issuer': None,
+                'authority_cert_issuer': GeneralNameList(),
                 'authority_cert_serial_number': None,
             }
         else:
             self.value = {
                 'key_identifier': self.parse_keyid(value.get('key_identifier')),
-                'authority_cert_issuer': GeneralNameList.get_from_value(value.get('authority_cert_issuer')),
+                'authority_cert_issuer': GeneralNameList(value.get('authority_cert_issuer')),
                 'authority_cert_serial_number': value.get('authority_cert_serial_number'),
             }
 
     def from_extension(self, value):
         self.value = {
             'key_identifier': value.value.key_identifier,
-            'authority_cert_issuer': GeneralNameList.get_from_value(value.value.authority_cert_issuer),
+            'authority_cert_issuer': GeneralNameList(value.value.authority_cert_issuer),
             'authority_cert_serial_number': value.value.authority_cert_serial_number,
         }
 
@@ -285,7 +286,7 @@ class AuthorityKeyIdentifier(Extension):
         # pylint: disable=attribute-defined-outside-init; func is designed to be called by init
         self.value = {
             'key_identifier': ext.value,
-            'authority_cert_issuer': None,
+            'authority_cert_issuer': GeneralNameList(),
             'authority_cert_serial_number': None,
         }
 
@@ -313,7 +314,7 @@ class AuthorityKeyIdentifier(Extension):
 
         if self.value['key_identifier'] is not None:
             val['value']['key_identifier'] = bytes_to_hex(self.value['key_identifier'])
-        if self.value['authority_cert_issuer'] is not None:
+        if self.value['authority_cert_issuer']:
             val['value']['authority_cert_issuer'] = list(self.value['authority_cert_issuer'].serialize())
         if self.value['authority_cert_serial_number'] is not None:
             val['value']['authority_cert_serial_number'] = self.value['authority_cert_serial_number']
@@ -977,7 +978,7 @@ class NameConstraints(Extension):
 
     @excluded.setter
     def excluded(self, value):
-        self.value['excluded'] = GeneralNameList.get_from_value(value, GeneralNameList())
+        self.value['excluded'] = GeneralNameList(value)
 
     @property
     def extension_type(self):
@@ -986,15 +987,15 @@ class NameConstraints(Extension):
 
     def from_extension(self, value):
         self.value = {
-            'permitted': GeneralNameList.get_from_value(value.value.permitted_subtrees, GeneralNameList()),
-            'excluded': GeneralNameList.get_from_value(value.value.excluded_subtrees, GeneralNameList()),
+            'permitted': GeneralNameList(value.value.permitted_subtrees),
+            'excluded': GeneralNameList(value.value.excluded_subtrees),
         }
 
     def from_dict(self, value):
         value = value.get('value', {})
         self.value = {
-            'permitted': GeneralNameList.get_from_value(value.get('permitted', []), GeneralNameList()),
-            'excluded': GeneralNameList.get_from_value(value.get('excluded', []), GeneralNameList()),
+            'permitted': GeneralNameList(value.get('permitted')),
+            'excluded': GeneralNameList(value.get('excluded')),
         }
 
     @property
@@ -1004,7 +1005,7 @@ class NameConstraints(Extension):
 
     @permitted.setter
     def permitted(self, value):
-        self.value['permitted'] = GeneralNameList.get_from_value(value, GeneralNameList())
+        self.value['permitted'] = GeneralNameList(value)
 
     def serialize(self):
         return {

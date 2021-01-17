@@ -32,9 +32,9 @@ class DistributionPointTestCase(TestCase):
     def test_init_basic(self):
         """Test basic initialization."""
         dpoint = DistributionPoint()
-        self.assertIsNone(dpoint.full_name)
+        self.assertEqual(len(dpoint.full_name), 0)
         self.assertIsNone(dpoint.relative_name)
-        self.assertIsNone(dpoint.crl_issuer)
+        self.assertEqual(len(dpoint.crl_issuer), 0)
         self.assertIsNone(dpoint.reasons)
 
         dpoint = DistributionPoint({

@@ -524,7 +524,7 @@ class AlternativeNameExtension(ListExtension):  # pylint: disable=abstract-metho
     def from_extension(self, value):
         self.value = GeneralNameList(value.value)
 
-    def serialize_value(self, value: x509.GeneralName):
+    def serialize_value(self, value):
         return format_general_name(value)
 
 
