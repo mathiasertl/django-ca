@@ -146,7 +146,7 @@ class Extension:
 
         return {
             'critical': self.critical,
-            'value': self.value,
+            'value': self.serialize_value(),
         }
 
     def as_extension(self):
@@ -167,6 +167,10 @@ class Extension:
             >>> builder.add_extension(**kwargs)  # doctest: +SKIP
         """
         return {'extension': self.extension_type, 'critical': self.critical}
+
+    def serialize_value(self):
+        """Serialize the value for this extension."""
+        return self.value
 
 
 class UnrecognizedExtension(Extension):
@@ -269,31 +273,25 @@ class IterableExtension(Extension):
         return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
 
     def __hash__(self):
-        return hash((tuple(self.serialize_iterable()), self.critical, ))
+        return hash((tuple(self.serialize_value()), self.critical, ))
 
     def __iter__(self):
-        return iter(self.serialize_iterable())
+        return iter(self.serialize_value())
 
     def __len__(self):
         return len(self.value)
 
     def _repr_value(self):
-        return self.serialize_iterable()
+        return self.serialize_value()
 
     def as_text(self):
-        return '\n'.join(['* %s' % v for v in self.serialize_iterable()])
+        return '\n'.join(['* %s' % v for v in self.serialize_value()])
 
     def parse_value(self, value: str):
         """Parse a single value (presumably from an iterable)."""
         return value
 
-    def serialize(self):
-        return {
-            'critical': self.critical,
-            'value': self.serialize_iterable(),
-        }
-
-    def serialize_iterable(self):
+    def serialize_value(self):
         """Serialize the whole iterable contained in this extension."""
 
         return [self.serialize_item(v) for v in self.value]
@@ -353,7 +351,7 @@ class ListExtension(IterableExtension):
         self.value.insert(index, self.parse_value(value))
 
     def pop(self, index: int = -1):
-        return self.serialize_item(self.value.pop(index))
+        return self.value.pop(index)
 
     def remove(self, value):
         return self.value.remove(self.parse_value(value))
@@ -433,7 +431,7 @@ class OrderedSetExtension(IterableExtension):
     def from_dict(self, value):
         self.value = self.parse_iterable(value.get('value', set()))
 
-    def serialize_iterable(self):
+    def serialize_value(self):
         return list(sorted(self.serialize_item(v) for v in self.value))
 
     # Implement functions provided by set(). Class mentions that this provides the same methods.

@@ -763,10 +763,10 @@ CRLDistributionPoints:
       * Full Name:
         * URI:http://crl.godaddy.com/gdig2s1-1015.crl
 CertificatePolicies{certificate_policies_critical}:
-    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+    * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * http://certificates.godaddy.com/repository/
-    * Policy Identifier: {certificate_policies_1.policy_identifier.dotted_string}
+    * Policy Identifier: {certificate_policies_1[policy_identifier]}
       No Policy Qualifiers
 ExtendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage_0}
@@ -863,11 +863,11 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
 CertificatePolicies{certificate_policies_critical}:
-    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+    * Policy Identifier: {certificate_policies_0[policy_identifier]}
       No Policy Qualifiers
-    * Policy Identifier: {certificate_policies_1.policy_identifier.dotted_string}
+    * Policy Identifier: {certificate_policies_1[policy_identifier]}
       Policy Qualifiers:
-      * http://cps.letsencrypt.org
+      * {certificate_policies_1[policy_qualifiers][0]}
 ExtendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
@@ -918,10 +918,10 @@ CRLDistributionPoints:
       * Full Name:
         * URI:http://crl.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crl
 CertificatePolicies{certificate_policies_critical}:
-    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+    * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * https://secure.comodo.com/CPS
-    * Policy Identifier: {certificate_policies_1.policy_identifier.dotted_string}
+    * Policy Identifier: {certificate_policies_1[policy_identifier]}
       No Policy Qualifiers
 ExtendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage_0}

@@ -778,7 +778,7 @@ VQIDAQAB
                 ctx[key] = value
 
             if isinstance(value, IterableExtension):
-                for i, ext_value in enumerate(value.serialize_iterable()):
+                for i, ext_value in enumerate(value.serialize_value()):
                     ctx['%s_%s' % (key, i)] = ext_value
 
         if certs[name].get('parent'):

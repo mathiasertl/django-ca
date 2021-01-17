@@ -368,9 +368,9 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
 CertificatePolicies{certificate_policies_critical}:
-    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+    * Policy Identifier: {certificate_policies_0[policy_identifier]}
       No Policy Qualifiers
-    * Policy Identifier: {certificate_policies_1.policy_identifier.dotted_string}
+    * Policy Identifier: {certificate_policies_1[policy_identifier]}
       No Policy Qualifiers
 ExtendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage_0}
@@ -415,7 +415,7 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
 CertificatePolicies{certificate_policies_critical}:
-    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+    * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * http://www.geotrust.com/resources/cps
 KeyUsage{key_usage_critical}:
@@ -487,7 +487,7 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
 CertificatePolicies{certificate_policies_critical}:
-    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+    * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * https://secure.comodo.com/CPS
 KeyUsage{key_usage_critical}:
@@ -529,7 +529,7 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
 CertificatePolicies{certificate_policies_critical}:
-    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+    * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * https://www.digicert.com/CPS
 ExtendedKeyUsage{extended_key_usage_critical}:
@@ -604,7 +604,7 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
 CertificatePolicies{certificate_policies_critical}:
-    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+    * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * https://www.globalsign.com/repository/
 KeyUsage{key_usage_critical}:
@@ -646,7 +646,7 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
 CertificatePolicies{certificate_policies_critical}:
-    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+    * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * https://certs.godaddy.com/repository/
 KeyUsage{key_usage_critical}:
@@ -717,7 +717,7 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
 CertificatePolicies{certificate_policies_critical}:
-    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+    * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * https://pki.goog/repository/
 ExtendedKeyUsage{extended_key_usage_critical}:
@@ -765,9 +765,9 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
 CertificatePolicies{certificate_policies_critical}:
-    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+    * Policy Identifier: {certificate_policies_0[policy_identifier]}
       No Policy Qualifiers
-    * Policy Identifier: {certificate_policies_1.policy_identifier.dotted_string}
+    * Policy Identifier: {certificate_policies_1[policy_identifier]}
       Policy Qualifiers:
       * http://cps.root-x1.letsencrypt.org
 KeyUsage{key_usage_critical}:
@@ -815,9 +815,9 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
 CertificatePolicies{certificate_policies_critical}:
-    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+    * Policy Identifier: {certificate_policies_0[policy_identifier]}
       No Policy Qualifiers
-    * Policy Identifier: {certificate_policies_1.policy_identifier.dotted_string}
+    * Policy Identifier: {certificate_policies_1[policy_identifier]}
       Policy Qualifiers:
       * http://cps.root-x1.letsencrypt.org
 KeyUsage{key_usage_critical}:
@@ -853,7 +853,7 @@ AuthorityKeyIdentifier{authority_key_identifier_critical}:
 BasicConstraints{basic_constraints_critical}:
     {basic_constraints_text}
 CertificatePolicies{certificate_policies_critical}:
-    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+    * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * http://www.startssl.com/policy.pdf
       * http://www.startssl.com/intermediate.pdf
@@ -906,7 +906,7 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
 CertificatePolicies{certificate_policies_critical}:
-    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+    * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * http://www.startssl.com/policy.pdf
 KeyUsage{key_usage_critical}:
@@ -950,7 +950,7 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
 CertificatePolicies{certificate_policies_critical}:
-    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+    * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * http://www.startssl.com/policy
 ExtendedKeyUsage{extended_key_usage_critical}:
@@ -997,7 +997,7 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
 CertificatePolicies{certificate_policies_critical}:
-    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+    * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * UserNotice:
         * Reference:
@@ -1088,7 +1088,7 @@ CRLDistributionPoints{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl_distribution_points[1].full_name[0].value}
 CertificatePolicies{certificate_policies_critical}:
-    * Policy Identifier: {certificate_policies_0.policy_identifier.dotted_string}
+    * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * https://www.digicert.com/CPS
 KeyUsage{key_usage_critical}:

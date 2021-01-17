@@ -668,7 +668,7 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
                     with self.assertRaisesRegex(IndexError, '^pop index out of range$'):
                         ext.pop(len(config['expected']))
 
-                exp = reversed(config['expected_serialized'])
+                exp = reversed(config['expected'])
                 if 'expected_djca' in config:
                     exp = reversed(config['expected_djca'])
 

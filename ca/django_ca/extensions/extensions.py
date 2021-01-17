@@ -148,16 +148,13 @@ class AuthorityInformationAccess(Extension):
     def ocsp(self, value):
         self.value['ocsp'] = GeneralNameList(value)
 
-    def serialize(self):
-        val = {
-            'critical': self.critical,
-            'value': {}
-        }
+    def serialize_value(self):
+        value = {}
         if self.value['issuers']:
-            val['value']['issuers'] = list(self.value['issuers'].serialize())
+            value['issuers'] = list(self.value['issuers'].serialize())
         if self.value['ocsp']:
-            val['value']['ocsp'] = list(self.value['ocsp'].serialize())
-        return val
+            value['ocsp'] = list(self.value['ocsp'].serialize())
+        return value
 
 
 class AuthorityKeyIdentifier(Extension):
@@ -306,20 +303,16 @@ class AuthorityKeyIdentifier(Extension):
         if value is not None:
             return hex_to_bytes(value)
 
-    def serialize(self):
-        val = {
-            'critical': self.critical,
-            'value': {},
-        }
-
+    def serialize_value(self):
+        value = {}
         if self.value['key_identifier'] is not None:
-            val['value']['key_identifier'] = bytes_to_hex(self.value['key_identifier'])
+            value['key_identifier'] = bytes_to_hex(self.value['key_identifier'])
         if self.value['authority_cert_issuer']:
-            val['value']['authority_cert_issuer'] = list(self.value['authority_cert_issuer'].serialize())
+            value['authority_cert_issuer'] = list(self.value['authority_cert_issuer'].serialize())
         if self.value['authority_cert_serial_number'] is not None:
-            val['value']['authority_cert_serial_number'] = self.value['authority_cert_serial_number']
+            value['authority_cert_serial_number'] = self.value['authority_cert_serial_number']
 
-        return val
+        return value
 
 
 class BasicConstraints(Extension):
@@ -411,15 +404,12 @@ class BasicConstraints(Extension):
     def pathlen(self, value):
         self.value['pathlen'] = self.parse_pathlen(value)
 
-    def serialize(self):
+    def serialize_value(self):
         value = {
-            'critical': self.critical,
-            'value': {
-                'ca': self.value['ca'],
-            }
+            'ca': self.value['ca'],
         }
         if self.value['ca']:
-            value['value']['pathlen'] = self.value['pathlen']
+            value['pathlen'] = self.value['pathlen']
         return value
 
 
@@ -492,11 +482,8 @@ class CertificatePolicies(ListExtension):
             return value
         return PolicyInformation(value)
 
-    def serialize(self):
-        return {
-            'value': [p.serialize() for p in self.value],
-            'critical': self.critical,
-        }
+    def serialize_item(self, value):
+        return value.serialize()
 
 
 class FreshestCRL(CRLDistributionPointsBase):
@@ -895,16 +882,13 @@ class PolicyConstraints(Extension):
                 raise ValueError('%s: require_explicit_policy must be a positive int' % value)
         self.value['require_explicit_policy'] = value
 
-    def serialize(self):
+    def serialize_value(self):
         value = {}
         if self.value['inhibit_policy_mapping'] is not None:
             value['inhibit_policy_mapping'] = self.value['inhibit_policy_mapping']
         if self.value['require_explicit_policy'] is not None:
             value['require_explicit_policy'] = self.value['require_explicit_policy']
-        return {
-            'critical': self.critical,
-            'value': value,
-        }
+        return value
 
 
 class NameConstraints(Extension):
@@ -1007,13 +991,10 @@ class NameConstraints(Extension):
     def permitted(self, value):
         self.value['permitted'] = GeneralNameList(value)
 
-    def serialize(self):
+    def serialize_value(self):
         return {
-            'critical': self.critical,
-            'value': {
-                'permitted': list(self.value['permitted'].serialize()),
-                'excluded': list(self.value['excluded'].serialize()),
-            },
+            'permitted': list(self.value['permitted'].serialize()),
+            'excluded': list(self.value['excluded'].serialize()),
         }
 
 
