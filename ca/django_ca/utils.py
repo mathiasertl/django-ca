@@ -54,6 +54,8 @@ from django.utils.encoding import force_str
 from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
+from .typehints import ParsableGeneralName
+from .typehints import ParsableGeneralNameList
 
 # List of possible subject fields, in order
 SUBJECT_FIELDS = ['C', 'ST', 'L', 'O', 'OU', 'CN', 'emailAddress', ]
@@ -995,7 +997,7 @@ class GeneralNameList(List[x509.GeneralName]):
     """
     # pylint: disable=not-an-iterable; pylint does not detect generic iterables ("class Foo(List[Any])").
 
-    def __init__(self, iterable: Optional[Iterable[Union[x509.GeneralName, str]]] = tuple()) -> None:
+    def __init__(self, iterable: Optional[ParsableGeneralNameList] = None) -> None:
         if iterable is None:
             iterable = []
         if isinstance(iterable, (str, x509.GeneralName)):
@@ -1008,7 +1010,7 @@ class GeneralNameList(List[x509.GeneralName]):
         for val in self:
             yield format_general_name(val)
 
-    def __add__(self, value: Iterable[Union[x509.GeneralName, str]]) -> 'GeneralNameList':
+    def __add__(self, value: ParsableGeneralNameList) -> 'GeneralNameList':
         # self + other_list
         if not isinstance(value, GeneralNameList):
             value = GeneralNameList(value)
@@ -1027,7 +1029,7 @@ class GeneralNameList(List[x509.GeneralName]):
             other = GeneralNameList(other)
         return list.__eq__(self, other)
 
-    def __iadd__(self, value: Iterable[Union[x509.GeneralName, str]]) -> 'GeneralNameList':  # self += value
+    def __iadd__(self, value: ParsableGeneralNameList) -> 'GeneralNameList':  # self += value
         return list.__iadd__(self, (parse_general_name(v) for v in value))
 
     def __repr__(self) -> str:
@@ -1035,7 +1037,7 @@ class GeneralNameList(List[x509.GeneralName]):
 
     def __setitem__(
             self, key: Union[int, slice],
-            value: Union[Iterable[Union[x509.GeneralName, str]], Union[x509.GeneralName, str]]
+            value: Union[ParsableGeneralNameList, ParsableGeneralName]
     ) -> None:  # l[0] = 'example.com'
         if isinstance(key, slice) and isinstance(value, abc.Iterable):
             # l[0:1] = ['example.com']
@@ -1045,11 +1047,11 @@ class GeneralNameList(List[x509.GeneralName]):
         else:
             raise TypeError("%s/%s: Invalid key/value type." % (key, value))
 
-    def append(self, value: Union[x509.GeneralName, str]) -> None:
+    def append(self, value: ParsableGeneralName) -> None:
         """Equivalent to list.append()."""
         list.append(self, parse_general_name(value))
 
-    def count(self, value: Union[x509.GeneralName, str]) -> int:
+    def count(self, value: ParsableGeneralName) -> int:
         """Equivalent to list.count()."""
         try:
             value = parse_general_name(value)
@@ -1058,13 +1060,13 @@ class GeneralNameList(List[x509.GeneralName]):
 
         return list.count(self, value)
 
-    def extend(self, iterable: Iterable[Union[x509.GeneralName, str]]) -> None:
+    def extend(self, iterable: ParsableGeneralNameList) -> None:
         """Equivalent to list.extend()."""
         list.extend(self, (parse_general_name(i) for i in iterable))
 
     @classmethod
     def get_from_value(cls,
-                       value: Optional[Iterable[Any]],
+                       value: Optional[ParsableGeneralNameList],
                        default: Optional['GeneralNameList'] = None
                        ) -> Optional['GeneralNameList']:
         """Create a GeneralNameList from the given iterable.
@@ -1078,15 +1080,15 @@ class GeneralNameList(List[x509.GeneralName]):
             return value
         return GeneralNameList(value)
 
-    def index(self, value: Union[x509.GeneralName, str], *args: int) -> int:
+    def index(self, value: ParsableGeneralName, *args: int) -> int:
         """Equivalent to list.index()."""
         return list.index(self, parse_general_name(value), *args)
 
-    def insert(self, index: int, value: Union[x509.GeneralName, str]) -> None:
+    def insert(self, index: int, value: ParsableGeneralName) -> None:
         """Equivalent to list.insert()."""
         list.insert(self, index, parse_general_name(value))
 
-    def remove(self, value: Union[x509.GeneralName, str]) -> None:
+    def remove(self, value: ParsableGeneralName) -> None:
         """Equivalent to list.remove()."""
         list.remove(self, parse_general_name(value))
 
