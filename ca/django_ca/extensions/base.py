@@ -296,10 +296,10 @@ class IterableExtension(Extension):
     def serialize_iterable(self):
         """Serialize the whole iterable contained in this extension."""
 
-        return [self.serialize_value(v) for v in self.value]
+        return [self.serialize_item(v) for v in self.value]
 
-    def serialize_value(self, value: str):
-        """Serialize a single value from the iterable contained in this extension."""
+    def serialize_item(self, value: str):
+        """Serialize a single item in the iterable contained in this extension."""
 
         return value
 
@@ -314,8 +314,8 @@ class ListExtension(IterableExtension):
 
     def __getitem__(self, key):
         if isinstance(key, int):
-            return self.serialize_value(self.value[key])
-        return [self.serialize_value(v) for v in self.value[key]]
+            return self.serialize_item(self.value[key])
+        return [self.serialize_item(v) for v in self.value[key]]
 
     def __setitem__(self, key, value):
         if isinstance(key, int):
@@ -353,7 +353,7 @@ class ListExtension(IterableExtension):
         self.value.insert(index, self.parse_value(value))
 
     def pop(self, index: int = -1):
-        return self.serialize_value(self.value.pop(index))
+        return self.serialize_item(self.value.pop(index))
 
     def remove(self, value):
         return self.value.remove(self.parse_value(value))
@@ -434,7 +434,7 @@ class OrderedSetExtension(IterableExtension):
         self.value = self.parse_iterable(value.get('value', set()))
 
     def serialize_iterable(self):
-        return list(sorted(self.serialize_value(v) for v in self.value))
+        return list(sorted(self.serialize_item(v) for v in self.value))
 
     # Implement functions provided by set(). Class mentions that this provides the same methods.
     # pylint: disable=missing-function-docstring
@@ -524,7 +524,7 @@ class AlternativeNameExtension(ListExtension):  # pylint: disable=abstract-metho
     def from_extension(self, value):
         self.value = GeneralNameList(value.value)
 
-    def serialize_value(self, value):
+    def serialize_item(self, value):
         return format_general_name(value)
 
 

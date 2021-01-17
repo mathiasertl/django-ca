@@ -639,7 +639,7 @@ class KeyUsage(OrderedSetExtension):
             raise ValueError('Unknown value: %s' % value) from e
         raise ValueError('Unknown value: %s' % value)  # pragma: no cover - function returns/raises before
 
-    def serialize_value(self, value):
+    def serialize_item(self, value):
         return self._CRYPTOGRAPHY_MAPPING_REVERSED[value]
 
 
@@ -693,10 +693,10 @@ class ExtendedKeyUsage(OrderedSetExtension):
 
     @property
     def extension_type(self):
-        # call serialize_value() to ensure consistent sort order
-        return x509.ExtendedKeyUsage(sorted(self.value, key=self.serialize_value))
+        # call serialize_item() to ensure consistent sort order
+        return x509.ExtendedKeyUsage(sorted(self.value, key=self.serialize_item))
 
-    def serialize_value(self, value):
+    def serialize_item(self, value):
         return self._CRYPTOGRAPHY_MAPPING_REVERSED[value]
 
     def parse_value(self, value):
@@ -1174,7 +1174,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
     def remove(self, value):
         raise NotImplementedError
 
-    def serialize_value(self, value):
+    def serialize_item(self, value):
         return {
             'type': PrecertificateSignedCertificateTimestamps.LOG_ENTRY_TYPE_MAPPING[value.entry_type],
             'timestamp': value.timestamp.strftime(self._timeformat),
@@ -1293,10 +1293,10 @@ class TLSFeature(OrderedSetExtension):
 
     @property
     def extension_type(self):
-        # call serialize_value() to ensure consistent sort order
-        return x509.TLSFeature(sorted(self.value, key=self.serialize_value))
+        # call serialize_item() to ensure consistent sort order
+        return x509.TLSFeature(sorted(self.value, key=self.serialize_item))
 
-    def serialize_value(self, value: TLSFeatureType):
+    def serialize_item(self, value: TLSFeatureType):
         return self._CRYPTOGRAPHY_MAPPING_REVERSED[value]
 
     def parse_value(self, value):
