@@ -997,7 +997,8 @@ class GeneralNameList(List[x509.GeneralName]):
     """
     # pylint: disable=not-an-iterable; pylint does not detect generic iterables ("class Foo(List[Any])").
 
-    def __init__(self, iterable: Optional[ParsableGeneralNameList] = None) -> None:
+    def __init__(self,
+                 iterable: Optional[Union[ParsableGeneralName, ParsableGeneralNameList]] = None) -> None:
         if iterable is None:
             iterable = []
         if isinstance(iterable, (str, x509.GeneralName)):
