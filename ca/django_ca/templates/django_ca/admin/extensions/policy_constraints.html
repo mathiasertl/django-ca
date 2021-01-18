@@ -1,0 +1,8 @@
+{% extends "django_ca/admin/extensions/base/base.html" %}
+
+{% block content %}
+<ul>
+    <li>inhibitPolicyMapping: {{ extension.inhibit_policy_mapping }}</li>
+    <li>requireExplicitPolicy: {{ extension.require_explicit_policy }}</li>
+</ul>
+{% endblock %}

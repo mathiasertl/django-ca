@@ -2,7 +2,7 @@
 {% load i18n django_ca %}
 
 {% block content %}<ul>
-  {% for info in extension %}
+  {% for info in extension.extension_type %}
   <li>{{ info.policy_identifier|oid_name }} ({{ info.policy_identifier.dotted_string }}){% if info.policy_qualifiers %}:{% endif %}
     <ul>
     {% for qualifier in info.policy_qualifiers %}
