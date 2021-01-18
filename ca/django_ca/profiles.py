@@ -291,13 +291,11 @@ class Profile:
 
         if add_ocsp_url is not False and ca.ocsp_url:
             extensions.setdefault(AuthorityInformationAccess.key, AuthorityInformationAccess())
-            extensions[AuthorityInformationAccess.key].value['ocsp'].append(parse_general_name(ca.ocsp_url))
+            extensions[AuthorityInformationAccess.key].ocsp.append(parse_general_name(ca.ocsp_url))
 
         if add_issuer_url is not False and ca.issuer_url:
             extensions.setdefault(AuthorityInformationAccess.key, AuthorityInformationAccess())
-            extensions[AuthorityInformationAccess.key].value['issuers'].append(
-                parse_general_name(ca.issuer_url)
-            )
+            extensions[AuthorityInformationAccess.key].issuers.append(parse_general_name(ca.issuer_url))
         if add_issuer_alternative_name is not False and ca.issuer_alt_name:
             extensions.setdefault(IssuerAlternativeName.key, IssuerAlternativeName())
             extensions[IssuerAlternativeName.key].extend(shlex_split(ca.issuer_alt_name, ','))

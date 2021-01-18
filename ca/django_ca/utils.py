@@ -1006,10 +1006,9 @@ class GeneralNameList(List[x509.GeneralName]):
 
         super().__init__(parse_general_name(v) for v in iterable)
 
-    def serialize(self) -> Iterable[str]:
+    def serialize(self) -> List[str]:
         """Generate a list of formatted names."""
-        for val in self:
-            yield format_general_name(val)
+        return [format_general_name(v) for v in self]
 
     def __add__(self, value: ParsableGeneralNameList) -> 'GeneralNameList':
         # self + other_list

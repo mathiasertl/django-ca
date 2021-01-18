@@ -74,34 +74,31 @@ class AuthorityInformationAccess(Extension):
 
     name = 'AuthorityInformationAccess'
     oid = ExtensionOID.AUTHORITY_INFORMATION_ACCESS
+    ocsp: GeneralNameList
+    issuers: GeneralNameList
 
     def __bool__(self):
-        return bool(self.value['ocsp']) or bool(self.value['issuers'])
+        return bool(self.ocsp) or bool(self.issuers)
 
     def __eq__(self, other):
-        return isinstance(other, type(self)) \
-            and self.value['issuers'] == other.value['issuers'] \
-            and self.value['ocsp'] == other.value['ocsp'] \
-            and self.critical == other.critical
+        return isinstance(other, AuthorityInformationAccess) and self.issuers == other.issuers and \
+            self.ocsp == other.ocsp and self.critical == other.critical
 
     def __hash__(self):
-        return hash((tuple(self.value['issuers']), tuple(self.value['ocsp']), self.critical, ))
+        return hash((tuple(self.issuers), tuple(self.ocsp), self.critical, ))
 
     def _repr_value(self):
-        issuers = list(self.value['issuers'].serialize())
-        ocsp = list(self.value['ocsp'].serialize())
-
-        return 'issuers=%r, ocsp=%r' % (issuers, ocsp)
+        return 'issuers=%r, ocsp=%r' % (self.issuers.serialize(), self.ocsp.serialize())
 
     def as_text(self):
         text = ''
-        if self.value['issuers']:
+        if self.issuers:
             text += 'CA Issuers:\n'
-            for name in self.value['issuers'].serialize():
+            for name in self.issuers.serialize():
                 text += '  * %s\n' % name
-        if self.value['ocsp']:
+        if self.ocsp:
             text += 'OCSP:\n'
-            for name in self.value['ocsp'].serialize():
+            for name in self.ocsp.serialize():
                 text += '  * %s\n' % name
 
         return text.strip()
@@ -109,51 +106,27 @@ class AuthorityInformationAccess(Extension):
     @property
     def extension_type(self):
         """Test"""
-        descs = [x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, v)
-                 for v in self.value['issuers']]
-        descs += [x509.AccessDescription(AuthorityInformationAccessOID.OCSP, v)
-                  for v in self.value['ocsp']]
+        descs = [x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, v) for v in self.issuers]
+        descs += [x509.AccessDescription(AuthorityInformationAccessOID.OCSP, v) for v in self.ocsp]
         return x509.AuthorityInformationAccess(descriptions=descs)
 
     def from_extension(self, value):
-        issuers = [v.access_location for v in value.value
-                   if v.access_method == AuthorityInformationAccessOID.CA_ISSUERS]
-        ocsp = [v.access_location for v in value.value
-                if v.access_method == AuthorityInformationAccessOID.OCSP]
-
-        self.value = {'issuers': GeneralNameList(issuers), 'ocsp': GeneralNameList(ocsp)}
+        self.issuers = GeneralNameList([v.access_location for v in value.value
+                                       if v.access_method == AuthorityInformationAccessOID.CA_ISSUERS])
+        self.ocsp = GeneralNameList([v.access_location for v in value.value
+                                     if v.access_method == AuthorityInformationAccessOID.OCSP])
 
     def from_dict(self, value):
         dict_value = value.get('value', {})
-        self.value = {
-            'issuers': GeneralNameList(dict_value.get('issuers', [])),
-            'ocsp': GeneralNameList(dict_value.get('ocsp', [])),
-        }
-
-    @property
-    def issuers(self):
-        """The issuers in this extension."""
-        return self.value['issuers']
-
-    @issuers.setter
-    def issuers(self, value):
-        self.value['issuers'] = GeneralNameList(value)
-
-    @property
-    def ocsp(self):
-        """The OCSP responders in this extension."""
-        return self.value['ocsp']
-
-    @ocsp.setter
-    def ocsp(self, value):
-        self.value['ocsp'] = GeneralNameList(value)
+        self.issuers = GeneralNameList(dict_value.get('issuers'))
+        self.ocsp = GeneralNameList(dict_value.get('ocsp'))
 
     def serialize_value(self):
         value = {}
-        if self.value['issuers']:
-            value['issuers'] = list(self.value['issuers'].serialize())
-        if self.value['ocsp']:
-            value['ocsp'] = list(self.value['ocsp'].serialize())
+        if self.issuers:
+            value['issuers'] = self.issuers.serialize()
+        if self.ocsp:
+            value['ocsp'] = self.ocsp.serialize()
         return value
 
 
