@@ -1322,38 +1322,6 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
             ext = self.ext_class(ski)
             self.assertExtensionEqual(ext, self.ext_class({'value': config['expected']}))
 
-    def test_shortcuts(self):
-        """Test shortcut properties."""
-        expected = self.ext_class({'value': {
-            'key_identifier': self.b1,
-            'authority_cert_issuer': [dns(self.dns1)],
-            'authority_cert_serial_number': 0,
-        }})
-
-        ext = self.ext_class()
-        ext.key_identifier = self.b1
-        ext.authority_cert_issuer = [dns(self.dns1)]
-        ext.authority_cert_serial_number = 0
-        self.assertExtensionEqual(ext, expected)
-        self.assertEqual(ext.key_identifier, self.b1)
-        self.assertEqual(ext.authority_cert_issuer, [dns(self.dns1)])
-        self.assertEqual(ext.authority_cert_serial_number, 0)
-
-        ext = self.ext_class()
-        ext.key_identifier = self.hex1
-        ext.authority_cert_issuer = [self.dns1]
-        ext.authority_cert_serial_number = 0
-        self.assertExtensionEqual(ext, expected)
-        self.assertEqual(ext.key_identifier, self.b1)
-        self.assertEqual(ext.authority_cert_issuer, [dns(self.dns1)])
-        self.assertEqual(ext.authority_cert_serial_number, 0)
-
-        # test that we can always set None
-        expected.key_identifier = None
-        expected.authority_cert_issuer = None
-        expected.authority_cert_serial_number = None
-        self.assertEqual(expected, self.ext_class())
-
     def test_none_value(self):
         """Test that we can use and pass None as values for GeneralNamesList values."""
         ext = self.ext_class({'value': {
@@ -1364,6 +1332,9 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         self.assertEqual(ext.extension_type, x509.AuthorityKeyIdentifier(
             key_identifier=self.b1, authority_cert_issuer=None, authority_cert_serial_number=None
         ))
+
+    def test_value(self):
+        return
 
 
 class BasicConstraintsTestCase(ExtensionTestMixin, TestCase):
