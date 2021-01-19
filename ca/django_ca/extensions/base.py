@@ -117,8 +117,10 @@ class Extension:
         raise NotImplementedError
 
     def from_dict(self, value):
-        """Load class from a dictionary."""
-        self.value = value['value']
+        """Load class from a dictionary.
+
+        Implementing classes are expected to implement this function."""
+        raise NotImplementedError
 
     def from_other(self, value):
         """Load class from any other value type.
@@ -131,7 +133,9 @@ class Extension:
 
     @property
     def extension_type(self):
-        """cryptography.x509.ExtensionType: The ``ExtensionType`` instance of this extension."""
+        """cryptography.x509.ExtensionType: The ``ExtensionType`` instance of this extension.
+
+        Implementing classes are expected to implement this function."""
         raise NotImplementedError
 
     def serialize(self):
@@ -253,15 +257,14 @@ class IterableExtension(Extension):
 
     Extensions of this class can be used just like any other iterable, e.g.:
 
-        >>> e = IterableExtension({'value': ['foo', 'bar']})
-        >>> 'foo' in e
+        >>> e = KeyUsage({'value': ['cRLSign'], 'critical': True})
+        >>> 'cRLSign' in e
         True
         >>> len(e)
-        2
+        1
         >>> for val in e:
         ...     print(val)
-        foo
-        bar
+        cRLSign
     """
 
     # pylint: disable=abstract-method; class is itself a base class
@@ -531,10 +534,10 @@ class KeyIdExtension(Extension):
 
     The value can be a hex str or bytes::
 
-        >>> KeyIdExtension({'value': '33:33'})
-        <KeyIdExtension: b'33', critical=False>
-        >>> KeyIdExtension({'value': b'33'})
-        <KeyIdExtension: b'33', critical=False>
+        >>> SubjectKeyIdentifier({'value': '33:33'})
+        <SubjectKeyIdentifier: 33:33, critical=False>
+        >>> SubjectKeyIdentifier({'value': b'33'})
+        <SubjectKeyIdentifier: 33:33, critical=False>
     """
     # pylint: disable=abstract-method; from_extension is not overwridden in this base class
     name = 'KeyIdExtension'
@@ -546,6 +549,9 @@ class KeyIdExtension(Extension):
             self.value = hex_to_bytes(self.value)
 
     def as_text(self):
+        return bytes_to_hex(self.value)
+
+    def _repr_value(self):
         return bytes_to_hex(self.value)
 
     def serialize(self):

@@ -82,6 +82,7 @@ def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
         'KeyUsage': KeyUsage,
         'OCSPNoCheck': OCSPNoCheck,
         'SubjectAlternativeName': SubjectAlternativeName,
+        'SubjectKeyIdentifier': SubjectKeyIdentifier,
     }))
     tests.addTests(doctest.DocTestSuite('django_ca.extensions.utils'))
     return tests
@@ -1024,29 +1025,6 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
         self.assertSingleValueOperator(lambda s, o: operator.ior(s, o))
         self.assertMultipleValuesOperator(
             lambda s, o: operator.ior(s, functools.reduce(operator.ior, [t.copy() for t in o])))
-
-
-class ExtensionTestCase(AbstractExtensionTestMixin, TestCase):
-    """Test Extension extension (test basic functionality of abstract extension)."""
-
-    ext_class = Extension
-    ext_class_name = 'Extension'
-    test_values = {
-        'one': {
-            'values': ['foobar', ],
-            'expected': 'foobar',
-            'expected_repr': "foobar",
-            'expected_serialized': 'foobar',
-            'expected_text': 'foobar',
-        },
-    }
-
-    def test_from_extension(self):
-        """Test constructor from cryptography extension - not implemented in base class."""
-        ext = x509.Extension(oid=x509.ExtensionOID.BASIC_CONSTRAINTS, critical=True,
-                             value=x509.BasicConstraints(ca=True, path_length=3))
-        with self.assertRaises(NotImplementedError):
-            Extension(ext)
 
 
 class ListExtensionTestCase(TestCase):
@@ -2584,7 +2562,7 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         'one': {
             'values': [hex1, ],
             'expected': b1,
-            'expected_repr': b1,
+            'expected_repr': hex1,
             'expected_serialized': hex1,
             'expected_text': hex1,
             'extension_type': x509.SubjectKeyIdentifier(b1),
@@ -2592,7 +2570,7 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         'two': {
             'values': [hex2, ],
             'expected': b2,
-            'expected_repr': b2,
+            'expected_repr': hex2,
             'expected_serialized': hex2,
             'expected_text': hex2,
             'extension_type': x509.SubjectKeyIdentifier(b2),
@@ -2600,7 +2578,7 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         'three': {
             'values': [hex3, ],
             'expected': b3,
-            'expected_repr': b3,
+            'expected_repr': hex3,
             'expected_serialized': hex3,
             'expected_text': hex3,
             'extension_type': x509.SubjectKeyIdentifier(b3),
