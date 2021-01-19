@@ -722,28 +722,34 @@ class PolicyConstraints(Extension):
 
     name = 'PolicyConstraints'
     oid = ExtensionOID.POLICY_CONSTRAINTS
+    require_explicit_policy: Optional[int]
+    inhibit_policy_mapping: Optional[int]
 
     default_critical = True
     """This extension is marked as critical by default (RFC 5280 requires this extension to be marked as
     critical)."""
 
+    def __eq__(self, other):
+        return isinstance(other, PolicyConstraints) and self.critical == other.critical and \
+            self.require_explicit_policy == other.require_explicit_policy and \
+            self.inhibit_policy_mapping == other.inhibit_policy_mapping
+
     def __hash__(self):
-        return hash((self.value['require_explicit_policy'], self.value['inhibit_policy_mapping'],
-                     self.critical, ))
+        return hash((self.require_explicit_policy, self.inhibit_policy_mapping, self.critical, ))
 
     def _repr_value(self):
-        if self.value['require_explicit_policy'] is None and self.value['inhibit_policy_mapping'] is None:
+        if self.require_explicit_policy is None and self.inhibit_policy_mapping is None:
             return '-'
         values = []
-        if self.value['inhibit_policy_mapping'] is not None:
-            values.append('inhibit_policy_mapping=%s' % self.value['inhibit_policy_mapping'])
-        if self.value['require_explicit_policy'] is not None:
-            values.append('require_explicit_policy=%s' % self.value['require_explicit_policy'])
+        if self.inhibit_policy_mapping is not None:
+            values.append('inhibit_policy_mapping=%s' % self.inhibit_policy_mapping)
+        if self.require_explicit_policy is not None:
+            values.append('require_explicit_policy=%s' % self.require_explicit_policy)
         return ', '.join(values)
 
     def _test_value(self):
-        rep = self.value['require_explicit_policy']
-        ipm = self.value['inhibit_policy_mapping']
+        rep = self.require_explicit_policy
+        ipm = self.inhibit_policy_mapping
         if rep is not None:
             if not isinstance(rep, int):
                 raise ValueError("%s: require_explicit_policy must be int or None" % rep)
@@ -757,65 +763,33 @@ class PolicyConstraints(Extension):
 
     def as_text(self):
         lines = []
-        if self.value['inhibit_policy_mapping'] is not None:
-            lines.append('* InhibitPolicyMapping: %s' % self.value['inhibit_policy_mapping'])
-        if self.value['require_explicit_policy'] is not None:
-            lines.append('* RequireExplicitPolicy: %s' % self.value['require_explicit_policy'])
+        if self.inhibit_policy_mapping is not None:
+            lines.append('* InhibitPolicyMapping: %s' % self.inhibit_policy_mapping)
+        if self.require_explicit_policy is not None:
+            lines.append('* RequireExplicitPolicy: %s' % self.require_explicit_policy)
 
         return '\n'.join(lines)
 
     @property
     def extension_type(self):
-        return x509.PolicyConstraints(require_explicit_policy=self.value['require_explicit_policy'],
-                                      inhibit_policy_mapping=self.value['inhibit_policy_mapping'])
+        return x509.PolicyConstraints(require_explicit_policy=self.require_explicit_policy,
+                                      inhibit_policy_mapping=self.inhibit_policy_mapping)
 
     def from_dict(self, value):
         value = value.get('value', {})
-        self.value = {
-            'require_explicit_policy': value.get('require_explicit_policy'),
-            'inhibit_policy_mapping': value.get('inhibit_policy_mapping'),
-        }
+        self.require_explicit_policy = value.get('require_explicit_policy')
+        self.inhibit_policy_mapping = value.get('inhibit_policy_mapping')
 
     def from_extension(self, value):
-        self.value = {
-            'require_explicit_policy': value.value.require_explicit_policy,
-            'inhibit_policy_mapping': value.value.inhibit_policy_mapping,
-        }
-
-    @property
-    def inhibit_policy_mapping(self):
-        """The ``inhibit_policy_mapping`` value of this instance."""
-        return self.value['inhibit_policy_mapping']
-
-    @inhibit_policy_mapping.setter
-    def inhibit_policy_mapping(self, value):
-        if value is not None:
-            if not isinstance(value, int):
-                raise ValueError("%s: inhibit_policy_mapping must be int or None" % value)
-            if value < 0:
-                raise ValueError('%s: inhibit_policy_mapping must be a positive int' % value)
-        self.value['inhibit_policy_mapping'] = value
-
-    @property
-    def require_explicit_policy(self):
-        """The ``require_explicit_policy`` value of this instance."""
-        return self.value['require_explicit_policy']
-
-    @require_explicit_policy.setter
-    def require_explicit_policy(self, value):
-        if value is not None:
-            if not isinstance(value, int):
-                raise ValueError("%s: require_explicit_policy must be int or None" % value)
-            if value < 0:
-                raise ValueError('%s: require_explicit_policy must be a positive int' % value)
-        self.value['require_explicit_policy'] = value
+        self.require_explicit_policy = value.value.require_explicit_policy
+        self.inhibit_policy_mapping = value.value.inhibit_policy_mapping
 
     def serialize_value(self):
         value = {}
-        if self.value['inhibit_policy_mapping'] is not None:
-            value['inhibit_policy_mapping'] = self.value['inhibit_policy_mapping']
-        if self.value['require_explicit_policy'] is not None:
-            value['require_explicit_policy'] = self.value['require_explicit_policy']
+        if self.inhibit_policy_mapping is not None:
+            value['inhibit_policy_mapping'] = self.inhibit_policy_mapping
+        if self.require_explicit_policy is not None:
+            value['require_explicit_policy'] = self.require_explicit_policy
         return value
 
 
