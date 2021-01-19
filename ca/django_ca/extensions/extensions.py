@@ -106,7 +106,7 @@ class AuthorityInformationAccess(Extension):
 
     @property
     def extension_type(self):
-        """Test"""
+        # pylint: disable=not-an-iterable; pylint does not detect GeneralNameList as iterable
         descs = [x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, v) for v in self.issuers]
         descs += [x509.AccessDescription(AuthorityInformationAccessOID.OCSP, v) for v in self.ocsp]
         return x509.AuthorityInformationAccess(descriptions=descs)

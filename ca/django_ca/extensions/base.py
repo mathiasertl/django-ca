@@ -78,6 +78,7 @@ class Extension:
     default_critical = False
     name = 'Extension'
     oid = None
+    value = None
 
     def __init__(self, value=None):
         if value is None:
@@ -110,7 +111,7 @@ class Extension:
     def _repr_value(self):
         return str(self.value)
 
-    def from_extension(self, value):
+    def from_extension(self, value):  # pragma: no cover
         """Load a wrapper class from a cryptography extension instance.
 
         Implementing classes are expected to implement this function."""
@@ -132,7 +133,7 @@ class Extension:
         pass
 
     @property
-    def extension_type(self):
+    def extension_type(self):  # pragma: no cover
         """cryptography.x509.ExtensionType: The ``ExtensionType`` instance of this extension.
 
         Implementing classes are expected to implement this function."""
@@ -270,7 +271,7 @@ class IterableExtension(Extension):
     # pylint: disable=abstract-method; class is itself a base class
 
     def __contains__(self, value: str):
-        return self.parse_value(value) in self.value
+        return self.parse_value(value) in self.value  # pylint: disable=unsupported-membership-test
 
     def __eq__(self, other):
         return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
@@ -297,7 +298,7 @@ class IterableExtension(Extension):
     def serialize_value(self):
         """Serialize the whole iterable contained in this extension."""
 
-        return [self.serialize_item(v) for v in self.value]
+        return [self.serialize_item(v) for v in self.value]  # pylint: disable=not-an-iterable
 
     def serialize_item(self, value: str):
         """Serialize a single item in the iterable contained in this extension."""
