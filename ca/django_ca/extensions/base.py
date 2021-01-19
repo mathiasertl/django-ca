@@ -159,9 +159,11 @@ class Extension:
         ext = self.extension_type  # extra line to raise NotImplementedError for abstract base classes
         return x509.Extension(oid=self.oid, critical=self.critical, value=ext)
 
-    def as_text(self):
-        """Human-readable version of the *value*, not including the "critical" flag."""
-        return str(self.value)
+    def as_text(self):  # pragma: no cover
+        """Human-readable version of the *value*, not including the "critical" flag.
+
+        Implementing classes are expected to implement this function."""
+        raise NotImplementedError
 
     def for_builder(self):
         """Return kwargs suitable for a :py:class:`~cg:cryptography.x509.CertificateBuilder`.
