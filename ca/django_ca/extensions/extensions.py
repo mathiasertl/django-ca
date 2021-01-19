@@ -281,54 +281,47 @@ class BasicConstraints(Extension):
 
     name = 'BasicConstraints'
     oid = ExtensionOID.BASIC_CONSTRAINTS
+    ca: bool
+    pathlen: Optional[int]
     default_critical = True
     """This extension is marked as critical by default."""
 
+    def __eq__(self, other):
+        return isinstance(other, BasicConstraints) and self.critical == other.critical and \
+            self.ca == other.ca and self.pathlen == other.pathlen
+
     def __hash__(self):
-        return hash((self.value['ca'], self.value['pathlen'], self.critical, ))
+        return hash((self.ca, self.pathlen, self.critical, ))
 
     def _repr_value(self):
-        val = 'ca=%s' % self.value['ca']
-        if self.value['ca']:
-            val += ', pathlen=%s' % self.value['pathlen']
+        val = 'ca=%s' % self.ca
+        if self.ca:
+            val += ', pathlen=%s' % self.pathlen
         return val
 
-    @property
-    def ca(self):
-        """The ``ca`` property of this extension."""
-        return self.value['ca']
-
-    @ca.setter
-    def ca(self, value):
-        self.value['ca'] = bool(value)
-
     def from_extension(self, value):
-        self.value = {
-            'ca': value.value.ca,
-            'pathlen': value.value.path_length,
-        }
+        self.ca = value.value.ca
+        self.pathlen = value.value.path_length
 
     def from_dict(self, value):
         value = value.get('value', {})
-        ca = bool(value.get('ca', False))
-        if ca:
-            pathlen = self.parse_pathlen(value.get('pathlen', None))
+        self.ca = bool(value.get('ca', False))
+        if self.ca:
+            self.pathlen = self.parse_pathlen(value.get('pathlen'))
         else:  # if ca is not True, we don't use the pathlen
-            pathlen = None
-
-        self.value = {'ca': ca, 'pathlen': pathlen, }
+            self.pathlen = None
 
     @property
     def extension_type(self):
-        return x509.BasicConstraints(ca=self.value['ca'], path_length=self.value['pathlen'])
+        return x509.BasicConstraints(ca=self.ca, path_length=self.pathlen)
 
     def as_text(self):
-        if self.value['ca'] is True:
+        if self.ca is True:
             val = 'CA:TRUE'
         else:
             val = 'CA:FALSE'
-        if self.value['pathlen'] is not None:
-            val += ', pathlen:%s' % self.value['pathlen']
+        if self.pathlen is not None:
+            val += ', pathlen:%s' % self.pathlen
 
         return val
 
@@ -341,21 +334,10 @@ class BasicConstraints(Extension):
                 raise ValueError('Could not parse pathlen: "%s"' % value) from e
         return value
 
-    @property
-    def pathlen(self):
-        """The ``pathlen`` value of this instance."""
-        return self.value['pathlen']
-
-    @pathlen.setter
-    def pathlen(self, value):
-        self.value['pathlen'] = self.parse_pathlen(value)
-
     def serialize_value(self):
-        value = {
-            'ca': self.value['ca'],
-        }
-        if self.value['ca']:
-            value['pathlen'] = self.value['pathlen']
+        value = {'ca': self.ca}
+        if self.ca:
+            value['pathlen'] = self.pathlen
         return value
 
 

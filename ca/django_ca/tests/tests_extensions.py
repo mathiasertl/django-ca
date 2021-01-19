@@ -1390,17 +1390,6 @@ class BasicConstraintsTestCase(ExtensionTestMixin, TestCase):
         },
     }
 
-    def test_setters(self):
-        """Test items etters."""
-        ext = BasicConstraints({'value': {'ca': False, 'pathlen': None}})
-        self.assertFalse(ext.ca)
-        self.assertIsNone(ext.pathlen)
-
-        ext.ca = True
-        ext.pathlen = 3
-        self.assertTrue(ext.ca)
-        self.assertEqual(ext.pathlen, 3)
-
     def test_invalid_pathlen(self):
         """Test passing an invalid pathlen."""
         with self.assertRaisesRegex(ValueError, r'^Could not parse pathlen: "foo"$'):
@@ -1411,6 +1400,9 @@ class BasicConstraintsTestCase(ExtensionTestMixin, TestCase):
 
         with self.assertRaisesRegex(ValueError, r'^Could not parse pathlen: "foobar"$'):
             BasicConstraints({'value': {'ca': True, 'pathlen': 'foobar'}})
+
+    def test_value(self):
+        return
 
 
 class CRLDistributionPointsTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):
