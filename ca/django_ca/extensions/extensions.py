@@ -37,7 +37,6 @@ from ..utils import hex_to_bytes
 from .base import AlternativeNameExtension
 from .base import CRLDistributionPointsBase
 from .base import Extension
-from .base import KeyIdExtension
 from .base import ListExtension
 from .base import NullExtension
 from .base import OrderedSetExtension
@@ -1105,7 +1104,7 @@ class SubjectAlternativeName(AlternativeNameExtension):
         return x509.SubjectAlternativeName(self.value)
 
 
-class SubjectKeyIdentifier(KeyIdExtension):
+class SubjectKeyIdentifier(Extension):
     """Class representing a SubjectKeyIdentifier extension.
 
     This extension identifies the certificate, so it is not usually defined in a profile or instantiated by a
@@ -1124,11 +1123,20 @@ class SubjectKeyIdentifier(KeyIdExtension):
     name = 'SubjectKeyIdentifier'
     oid = ExtensionOID.SUBJECT_KEY_IDENTIFIER
 
+    def _repr_value(self) -> str:
+        return bytes_to_hex(self.value)
+
     @property
-    def extension_type(self):
+    def extension_type(self) -> x509.SubjectKeyIdentifier:
         return x509.SubjectKeyIdentifier(digest=self.value)
 
-    def from_other(self, value: x509.SubjectKeyIdentifier):
+    def from_dict(self, value) -> None:
+        self.value = value['value']
+
+        if isinstance(self.value, str) and ':' in self.value:
+            self.value = hex_to_bytes(self.value)
+
+    def from_other(self, value: x509.SubjectKeyIdentifier) -> None:
         if isinstance(value, x509.SubjectKeyIdentifier):
             self.critical = self.default_critical
             self.value = value.digest
@@ -1136,8 +1144,14 @@ class SubjectKeyIdentifier(KeyIdExtension):
         else:
             super().from_other(value)
 
-    def from_extension(self, value: x509.SubjectKeyIdentifier):
+    def from_extension(self, value: x509.SubjectKeyIdentifier) -> None:
         self.value = value.value.digest
+
+    def as_text(self) -> str:
+        return bytes_to_hex(self.value)
+
+    def serialize_value(self) -> str:
+        return bytes_to_hex(self.value)
 
 
 class TLSFeature(OrderedSetExtension):

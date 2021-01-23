@@ -567,38 +567,6 @@ class AlternativeNameExtension(ListExtension):  # pylint: disable=abstract-metho
         return format_general_name(value)
 
 
-class KeyIdExtension(Extension):
-    """Base class for extensions that contain a KeyID as value.
-
-    The value can be a hex str or bytes::
-
-        >>> SubjectKeyIdentifier({'value': '33:33'})
-        <SubjectKeyIdentifier: 33:33, critical=False>
-        >>> SubjectKeyIdentifier({'value': b'33'})
-        <SubjectKeyIdentifier: 33:33, critical=False>
-    """
-    # pylint: disable=abstract-method; from_extension is not overwridden in this base class
-    name = 'KeyIdExtension'
-
-    def from_dict(self, value):
-        self.value = value['value']
-
-        if isinstance(self.value, str) and ':' in self.value:
-            self.value = hex_to_bytes(self.value)
-
-    def as_text(self):
-        return bytes_to_hex(self.value)
-
-    def _repr_value(self):
-        return bytes_to_hex(self.value)
-
-    def serialize(self):
-        return {
-            'critical': self.critical,
-            'value': bytes_to_hex(self.value),
-        }
-
-
 class CRLDistributionPointsBase(ListExtension):
     """Base class for :py:class:`~django_ca.extensions.CRLDistributionPoints` and
     :py:class:`~django_ca.extensions.FreshestCRL`.
