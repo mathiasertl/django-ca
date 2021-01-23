@@ -22,6 +22,8 @@ import binascii
 import textwrap
 from typing import Any
 from typing import Optional
+from typing import Set
+from typing import Union
 
 from cryptography import x509
 from cryptography.x509 import ObjectIdentifier
@@ -31,6 +33,9 @@ from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import ExtensionOID
 
+from ..typehints import ParsableSubjectKeyIdentifier
+from ..typehints import SubjectKeyIdentifierType
+from ..typehints import TLSFeatureExtensionType
 from ..utils import GeneralNameList
 from ..utils import bytes_to_hex
 from ..utils import hex_to_bytes
@@ -74,7 +79,7 @@ class AuthorityInformationAccess(Extension):
     """Key used in CA_PROFILES."""
 
     name = 'AuthorityInformationAccess'
-    oid = ExtensionOID.AUTHORITY_INFORMATION_ACCESS
+    oid: x509.ObjectIdentifier = ExtensionOID.AUTHORITY_INFORMATION_ACCESS
     ocsp: GeneralNameList
     issuers: GeneralNameList
 
@@ -162,7 +167,7 @@ class AuthorityKeyIdentifier(Extension):
     """Key used in CA_PROFILES."""
 
     name = 'AuthorityKeyIdentifier'
-    oid = ExtensionOID.AUTHORITY_KEY_IDENTIFIER
+    oid: x509.ObjectIdentifier = ExtensionOID.AUTHORITY_KEY_IDENTIFIER
     key_identifier: Optional[bytes] = None
     authority_cert_issuer: GeneralNameList
     authority_cert_serial_number: Optional[int] = None
@@ -280,7 +285,7 @@ class BasicConstraints(Extension):
     """Key used in CA_PROFILES."""
 
     name = 'BasicConstraints'
-    oid = ExtensionOID.BASIC_CONSTRAINTS
+    oid: x509.ObjectIdentifier = ExtensionOID.BASIC_CONSTRAINTS
     ca: bool
     pathlen: Optional[int]
     default_critical = True
@@ -364,7 +369,7 @@ class CRLDistributionPoints(CRLDistributionPointsBase):
     """Key used in CA_PROFILES."""
 
     name = 'CRLDistributionPoints'
-    oid = ExtensionOID.CRL_DISTRIBUTION_POINTS
+    oid: x509.ObjectIdentifier = ExtensionOID.CRL_DISTRIBUTION_POINTS
 
 
 class CertificatePolicies(ListExtension):
@@ -388,7 +393,7 @@ class CertificatePolicies(ListExtension):
     """Key used in CA_PROFILES."""
 
     name = 'CertificatePolicies'
-    oid = ExtensionOID.CERTIFICATE_POLICIES
+    oid: x509.ObjectIdentifier = ExtensionOID.CERTIFICATE_POLICIES
 
     def __hash__(self):
         return hash((tuple(self.value), self.critical, ))
@@ -434,7 +439,7 @@ class FreshestCRL(CRLDistributionPointsBase):
     """Key used in CA_PROFILES."""
 
     name = 'FreshestCRL'
-    oid = ExtensionOID.FRESHEST_CRL
+    oid: x509.ObjectIdentifier = ExtensionOID.FRESHEST_CRL
 
     @property
     def extension_type(self):
@@ -458,7 +463,7 @@ class IssuerAlternativeName(AlternativeNameExtension):
     """Key used in CA_PROFILES."""
 
     name = 'IssuerAlternativeName'
-    oid = ExtensionOID.ISSUER_ALTERNATIVE_NAME
+    oid: x509.ObjectIdentifier = ExtensionOID.ISSUER_ALTERNATIVE_NAME
 
     @property
     def extension_type(self):
@@ -489,7 +494,7 @@ class KeyUsage(OrderedSetExtension):
     """Key used in CA_PROFILES."""
 
     name = 'KeyUsage'
-    oid = ExtensionOID.KEY_USAGE
+    oid: x509.ObjectIdentifier = ExtensionOID.KEY_USAGE
     CRYPTOGRAPHY_MAPPING = {
         'cRLSign': 'crl_sign',
         'dataEncipherment': 'data_encipherment',
@@ -565,7 +570,7 @@ class ExtendedKeyUsage(OrderedSetExtension):
     """Key used in CA_PROFILES."""
 
     name = 'ExtendedKeyUsage'
-    oid = ExtensionOID.EXTENDED_KEY_USAGE
+    oid: x509.ObjectIdentifier = ExtensionOID.EXTENDED_KEY_USAGE
     CRYPTOGRAPHY_MAPPING = {
         'serverAuth': ExtendedKeyUsageOID.SERVER_AUTH,
         'clientAuth': ExtendedKeyUsageOID.CLIENT_AUTH,
@@ -646,7 +651,7 @@ class InhibitAnyPolicy(Extension):
     """Key used in CA_PROFILES."""
 
     name = 'InhibitAnyPolicy'
-    oid = ExtensionOID.INHIBIT_ANY_POLICY
+    oid: x509.ObjectIdentifier = ExtensionOID.INHIBIT_ANY_POLICY
     skip_certs: int
 
     default_critical = True
@@ -719,7 +724,7 @@ class PolicyConstraints(Extension):
     """Key used in CA_PROFILES."""
 
     name = 'PolicyConstraints'
-    oid = ExtensionOID.POLICY_CONSTRAINTS
+    oid: x509.ObjectIdentifier = ExtensionOID.POLICY_CONSTRAINTS
     require_explicit_policy: Optional[int]
     inhibit_policy_mapping: Optional[int]
 
@@ -828,7 +833,7 @@ class NameConstraints(Extension):
     default_critical = True
     """This extension is marked as critical by default."""
 
-    oid = ExtensionOID.NAME_CONSTRAINTS
+    oid: x509.ObjectIdentifier = ExtensionOID.NAME_CONSTRAINTS
 
     def __bool__(self):
         return bool(self.value['permitted']) or bool(self.value['excluded'])
@@ -920,7 +925,7 @@ class OCSPNoCheck(NullExtension):
     """Key used in CA_PROFILES."""
 
     name = 'OCSPNoCheck'
-    oid = ExtensionOID.OCSP_NO_CHECK
+    oid: x509.ObjectIdentifier = ExtensionOID.OCSP_NO_CHECK
 
 
 class PrecertPoison(NullExtension):
@@ -946,7 +951,7 @@ class PrecertPoison(NullExtension):
     """Key used in CA_PROFILES."""
 
     name = 'PrecertPoison'
-    oid = ExtensionOID.PRECERT_POISON
+    oid: x509.ObjectIdentifier = ExtensionOID.PRECERT_POISON
     ext_class = x509.PrecertPoison
 
     def __init__(self, value=None):
@@ -976,7 +981,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
     """Key used in CA_PROFILES."""
 
     name = 'PrecertificateSignedCertificateTimestamps'
-    oid = ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS
+    oid: x509.ObjectIdentifier = ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS
     _timeformat = '%Y-%m-%d %H:%M:%S.%f'
     LOG_ENTRY_TYPE_MAPPING = {
         LogEntryType.PRE_CERTIFICATE: 'precertificate',
@@ -1080,9 +1085,9 @@ class SubjectAlternativeName(AlternativeNameExtension):
     """Key used in CA_PROFILES."""
 
     name = 'SubjectAlternativeName'
-    oid = ExtensionOID.SUBJECT_ALTERNATIVE_NAME
+    oid: x509.ObjectIdentifier = ExtensionOID.SUBJECT_ALTERNATIVE_NAME
 
-    def get_common_name(self):
+    def get_common_name(self) -> Optional[str]:
         """Get a value suitable for use as CommonName in a subject, or None if no such value is found.
 
         This function returns a string representation of the first value that is not a DirectoryName,
@@ -1097,7 +1102,7 @@ class SubjectAlternativeName(AlternativeNameExtension):
         return None
 
     @property
-    def extension_type(self):
+    def extension_type(self) -> x509.SubjectAlternativeName:
         return x509.SubjectAlternativeName(self.value)
 
 
@@ -1118,7 +1123,8 @@ class SubjectKeyIdentifier(Extension):
     """Key used in CA_PROFILES."""
 
     name = 'SubjectKeyIdentifier'
-    oid = ExtensionOID.SUBJECT_KEY_IDENTIFIER
+    oid: x509.ObjectIdentifier = ExtensionOID.SUBJECT_KEY_IDENTIFIER
+    value: bytes
 
     def repr_value(self) -> str:
         return bytes_to_hex(self.value)
@@ -1127,11 +1133,11 @@ class SubjectKeyIdentifier(Extension):
     def extension_type(self) -> x509.SubjectKeyIdentifier:
         return x509.SubjectKeyIdentifier(digest=self.value)
 
-    def from_dict(self, value) -> None:
-        self.value = value['value']
-
-        if isinstance(self.value, str) and ':' in self.value:
-            self.value = hex_to_bytes(self.value)
+    def from_dict(self, value: ParsableSubjectKeyIdentifier) -> None:
+        key = value['value']
+        if isinstance(key, str):
+            key = hex_to_bytes(key)
+        self.value = key
 
     def from_other(self, value: x509.SubjectKeyIdentifier) -> None:
         if isinstance(value, x509.SubjectKeyIdentifier):
@@ -1141,7 +1147,7 @@ class SubjectKeyIdentifier(Extension):
         else:
             super().from_other(value)
 
-    def from_extension(self, value: x509.SubjectKeyIdentifier) -> None:
+    def from_extension(self, value: SubjectKeyIdentifierType) -> None:
         self.value = value.value.digest
 
     def serialize_value(self) -> str:
@@ -1166,7 +1172,8 @@ class TLSFeature(OrderedSetExtension):
     """Key used in CA_PROFILES."""
 
     name = 'TLSFeature'
-    oid = ExtensionOID.TLS_FEATURE
+    oid: x509.ObjectIdentifier = ExtensionOID.TLS_FEATURE
+    value: Set[TLSFeatureType]
     CHOICES = (
         ('OCSPMustStaple', 'OCSP Must-Staple'),
         ('MultipleCertStatusRequest', 'Multiple Certificate Status Request'),
@@ -1181,18 +1188,18 @@ class TLSFeature(OrderedSetExtension):
     KNOWN_PARAMETERS = sorted(CRYPTOGRAPHY_MAPPING)
     """Known values that can be passed to this extension."""
 
-    def from_extension(self, value: x509.TLSFeature):
+    def from_extension(self, value: TLSFeatureExtensionType) -> None:
         self.value = set(value.value)
 
     @property
-    def extension_type(self):
+    def extension_type(self) -> x509.TLSFeature:
         # call serialize_item() to ensure consistent sort order
         return x509.TLSFeature(sorted(self.value, key=self.serialize_item))
 
-    def serialize_item(self, value: TLSFeatureType):
+    def serialize_item(self, value: TLSFeatureType) -> str:
         return self._CRYPTOGRAPHY_MAPPING_REVERSED[value]
 
-    def parse_value(self, value):
+    def parse_value(self, value: Union[TLSFeatureType, str]) -> TLSFeatureType:
         if isinstance(value, TLSFeatureType):
             return value
         if isinstance(value, str) and value in self.CRYPTOGRAPHY_MAPPING:

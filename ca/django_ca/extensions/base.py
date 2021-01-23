@@ -19,6 +19,7 @@ import textwrap
 from abc import ABC
 from abc import abstractmethod
 from typing import Any
+from typing import Iterable
 from typing import Union
 
 from cryptography import x509
@@ -85,8 +86,7 @@ class Extension(ABC):
 
     default_critical = False
     name = 'Extension'
-    oid = None
-    value = None
+    oid: x509.ObjectIdentifier
 
     def __init__(self, value=None):
         if value is None:
@@ -105,9 +105,10 @@ class Extension(ABC):
             raise ValueError('%s: Invalid critical value passed' % self.critical)
 
     def __hash__(self) -> int:
-        return hash((self.value, self.critical, ))
+        return hash((self.value, self.critical, ))  # pylint: disable=no-member
 
     def __eq__(self, other: Any) -> bool:
+        # pylint: disable=no-member
         return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
 
     def __repr__(self) -> str:
@@ -310,6 +311,7 @@ class IterableExtension(Extension):
     """
 
     # pylint: disable=abstract-method; class is itself a base class
+    value: Iterable
 
     def __contains__(self, value):
         return self.parse_value(value) in self.value  # pylint: disable=unsupported-membership-test
@@ -436,10 +438,10 @@ class OrderedSetExtension(IterableExtension):
         value = self.value & self.parse_iterable(other)
         return self.__class__({'critical': self.critical, 'value': value})
 
-    def __ge__(self, other):  # >= relation == issuperset()
+    def __ge__(self, other) -> bool:  # >= relation == issuperset()
         return self.value >= self.parse_iterable(other)
 
-    def __gt__(self, other):  # > relation
+    def __gt__(self, other) -> bool:  # > relation
         return self.value > self.parse_iterable(other)
 
     def __iand__(self, other):  # &= operator == intersection_update()
@@ -457,10 +459,10 @@ class OrderedSetExtension(IterableExtension):
     def __ixor__(self, other):  # ^= operator == symmetric_difference_update()
         self.value ^= self.parse_iterable(other)
 
-    def __le__(self, other):  # <= relation == issubset()
+    def __le__(self, other) -> bool:  # <= relation == issubset()
         return self.value <= self.parse_iterable(other)
 
-    def __lt__(self, other):  # < relation
+    def __lt__(self, other) -> bool:  # < relation
         return self.value < self.parse_iterable(other)
 
     def __or__(self, other):  # | operator == union()
