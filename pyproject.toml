@@ -1,3 +1,20 @@
+[tool.isort]
+line_length = 110
+skip = ["migrations", "stubs"]
+force_single_line = true
+known_crypto = [
+    "cryptography", "ocspbuilder", "ocspbuilder", "asn1crypto", "oscrypto",
+]
+known_django = "django"
+known_django_addon = "django_object_actions"
+known_test = ["freezegun", "selenium", "django_webtest", "pyvirtualdisplay"]
+known_third_party = "OpenSSL"
+known_local_folder = "django_ca"
+sections = [
+    "FUTURE", "STDLIB", "THIRDPARTY", "CRYPTO", "DJANGO", "DJANGO_ADDON",
+    "TEST", "FIRSTPARTY", "LOCALFOLDER",
+]
+
 [tool.pylint.master]
 load-plugins = "pylint_django"
 
@@ -29,7 +46,7 @@ max-parents = 15
 max-returns = 8
 
 # Maximum number of statements in function / method body (see R0915).
-max-statements=60
+max-statements = 60
 
 [tool.pylint.format]
 max-line-length = 110
