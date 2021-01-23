@@ -16,6 +16,8 @@
 # pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
 
 import textwrap
+from abc import ABC
+from abc import abstractmethod
 
 from cryptography import x509
 
@@ -26,7 +28,7 @@ from ..utils import hex_to_bytes
 from .utils import DistributionPoint
 
 
-class Extension:
+class Extension(ABC):
     """Convenience class to handle X509 Extensions.
 
     The value is a ``dict`` as used by the :ref:`CA_PROFILES <settings-ca-profiles>` setting::
@@ -50,6 +52,10 @@ class Extension:
         >>> ExtendedKeyUsage({'value': ['serverAuth']})
         <ExtendedKeyUsage: ['serverAuth'], critical=False>
 
+
+    .. versionchanged:: 1.18.0
+
+       This class is now an abstract base class.
 
     Parameters
     ----------
@@ -111,17 +117,17 @@ class Extension:
     def _repr_value(self):
         return str(self.value)
 
-    def from_extension(self, value):  # pragma: no cover
+    @abstractmethod
+    def from_extension(self, value):
         """Load a wrapper class from a cryptography extension instance.
 
         Implementing classes are expected to implement this function."""
-        raise NotImplementedError
 
+    @abstractmethod
     def from_dict(self, value):
         """Load class from a dictionary.
 
         Implementing classes are expected to implement this function."""
-        raise NotImplementedError
 
     def from_other(self, value):
         """Load class from any other value type.
@@ -133,11 +139,11 @@ class Extension:
         pass
 
     @property
-    def extension_type(self):  # pragma: no cover
+    @abstractmethod
+    def extension_type(self):
         """cryptography.x509.ExtensionType: The ``ExtensionType`` instance of this extension.
 
         Implementing classes are expected to implement this function."""
-        raise NotImplementedError
 
     def serialize(self):
         """Serialize this extension to a string in a way that it can be passed to a constructor again.
@@ -159,11 +165,11 @@ class Extension:
         ext = self.extension_type  # extra line to raise NotImplementedError for abstract base classes
         return x509.Extension(oid=self.oid, critical=self.critical, value=ext)
 
-    def as_text(self):  # pragma: no cover
+    @abstractmethod
+    def as_text(self):
         """Human-readable version of the *value*, not including the "critical" flag.
 
         Implementing classes are expected to implement this function."""
-        raise NotImplementedError
 
     def for_builder(self):
         """Return kwargs suitable for a :py:class:`~cg:cryptography.x509.CertificateBuilder`.
@@ -190,7 +196,15 @@ class UnrecognizedExtension(Extension):
         self._name = name
         super().__init__(value)
 
+    @property
+    def extension_type(self):
+        return self.value.value
+
+    def from_dict(self, value):
+        raise ValueError('%s: Cannot instantiate from dict.' % self.__class__.__name__)
+
     def from_extension(self, value):
+        self.oid = value.oid
         self.value = value
 
     @property
@@ -207,7 +221,15 @@ class UnrecognizedExtension(Extension):
 
 
 class NullExtension(Extension):
-    """Base class for extensions that have a NULL value.
+    """Base class for extensions that do not have a value.
+
+    .. versionchanged:: 1.18.0
+
+       This class is now an abstract base class.
+
+    Some extensions, like :py:class:`~django_ca.extensions.OCSPNoCheck` or
+    :py:class`~django_ca.extensions.PrecertPoison` do not encode any information, but the presence of the
+    extension itself carries meaning.
 
     Extensions using this base class will ignore any ``"value"`` key in their dict, only the ``"critical"``
     key is relevant:
@@ -309,7 +331,12 @@ class IterableExtension(Extension):
 
 
 class ListExtension(IterableExtension):
-    """Base class for extensions with multiple ordered values."""
+    """Base class for extensions with multiple ordered values.
+
+    .. versionchanged:: 1.18.0
+
+       This class is now an abstract base class.
+    """
 
     # pylint: disable=abstract-method; class is itself a base class
 
@@ -367,17 +394,21 @@ class ListExtension(IterableExtension):
 class OrderedSetExtension(IterableExtension):
     """Base class for extensions that contain a set of values.
 
+    .. versionchanged:: 1.18.0
+
+       This class is now an abstract base class.
+
     For reproducibility, any serialization will always sort the values contained in this extension.
 
     Extensions derived from this class can be used like a normal set, for example:
 
-        >>> e = OrderedSetExtension({'value': {'foo', }})
-        >>> e.add('bar')
+        >>> e = KeyUsage({'value': {'cRLSign', }})
+        >>> e.add('keyAgreement')
         >>> e
-        <OrderedSetExtension: ['bar', 'foo'], critical=False>
-        >>> e -= {'foo', }
+        <KeyUsage: ['cRLSign', 'keyAgreement'], critical=True>
+        >>> e -= {'keyAgreement', }
         >>> e
-        <OrderedSetExtension: ['bar'], critical=False>
+        <KeyUsage: ['cRLSign'], critical=True>
     """
 
     # pylint: disable=abstract-method; class is itself a base class

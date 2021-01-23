@@ -52,8 +52,6 @@ from ..extensions import PrecertPoison
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
-from ..extensions.base import ListExtension
-from ..extensions.base import OrderedSetExtension
 from ..extensions.base import UnrecognizedExtension
 from ..extensions.utils import DistributionPoint
 from ..extensions.utils import PolicyInformation
@@ -1026,123 +1024,6 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
         self.assertSingleValueOperator(lambda s, o: operator.ior(s, o))
         self.assertMultipleValuesOperator(
             lambda s, o: operator.ior(s, functools.reduce(operator.ior, [t.copy() for t in o])))
-
-
-class ListExtensionTestCase(TestCase):
-    """Test ListExtension (test basic functionality of abstract extension)."""
-
-    def test_hash(self):
-        """Test hash()."""
-        self.assertEqual(hash(ListExtension({'value': ['foo']})),
-                         hash(ListExtension({'value': ['foo']})))
-        self.assertNotEqual(hash(ListExtension({'value': 'foo', 'critical': False})),
-                            hash(ListExtension({'value': 'bar', 'critical': False})))
-        self.assertNotEqual(hash(ListExtension({'value': 'foo', 'critical': False})),
-                            hash(ListExtension({'value': 'foo', 'critical': True})))
-
-    def test_operators(self):
-        """Test basic operators."""
-        ext = ListExtension({'value': ['foo']})
-        self.assertIn('foo', ext)
-        self.assertNotIn('bar', ext)
-
-    def test_list_funcs(self):
-        """test basic list functionalities."""
-        ext = ListExtension({'value': ['foo']})
-        ext.append('bar')
-        self.assertEqual(ext.value, ['foo', 'bar'])
-        self.assertEqual(ext.count('foo'), 1)
-        self.assertEqual(ext.count('bar'), 1)
-        self.assertEqual(ext.count('bla'), 0)
-
-        ext.clear()
-        self.assertEqual(ext.value, [])
-        self.assertEqual(ext.count('foo'), 0)
-
-        ext.extend(['bar', 'bla'])
-        self.assertEqual(ext.value, ['bar', 'bla'])
-        ext.extend(['foo'])
-        self.assertEqual(ext.value, ['bar', 'bla', 'foo'])
-
-        self.assertEqual(ext.pop(), 'foo')
-        self.assertEqual(ext.value, ['bar', 'bla'])
-
-        self.assertIsNone(ext.remove('bar'))
-        self.assertEqual(ext.value, ['bla'])
-
-        ext.insert(0, 'foo')
-        self.assertEqual(ext.value, ['foo', 'bla'])
-
-    def test_slices(self):
-        """Test accessing slices (e.g. ``ext[0]``)."""
-        val = ['foo', 'bar', 'bla']
-        ext = ListExtension({'value': val})
-        self.assertEqual(ext[0], val[0])
-        self.assertEqual(ext[1], val[1])
-        self.assertEqual(ext[0:], val[0:])
-        self.assertEqual(ext[1:], val[1:])
-        self.assertEqual(ext[:1], val[:1])
-        self.assertEqual(ext[1:2], val[1:2])
-
-        ext[0] = 'test'
-        val[0] = 'test'
-        self.assertEqual(ext.value, val)
-        ext[1:2] = ['x', 'y']
-        val[1:2] = ['x', 'y']
-        self.assertEqual(ext.value, val)
-        ext[1:] = ['a', 'b']
-        val[1:] = ['a', 'b']
-        self.assertEqual(ext.value, val)
-
-        del ext[0]
-        del val[0]
-        self.assertEqual(ext.value, val)
-
-    def test_serialize(self):
-        """Test serialization of extension."""
-        val = ['foo', 'bar', 'bla']
-        ext = ListExtension({'value': val, 'critical': False})
-        self.assertEqual(ext, ListExtension(ext.serialize()))
-        ext = ListExtension({'value': val, 'critical': True})
-        self.assertEqual(ext, ListExtension(ext.serialize()))
-
-
-class OrderedSetExtensionTestCase(OrderedSetExtensionTestMixin, AbstractExtensionTestMixin, TestCase):
-    """Test OrderedSetExtension extension (test basic functionality of abstract extension)."""
-
-    ext_class = OrderedSetExtension
-    test_values = {
-        'one': {
-            'values': [
-                {'one_value', },
-                ['one_value', ],
-            ],
-            'expected': frozenset(['one_value']),
-            'expected_repr': "['one_value']",
-            'expected_serialized': ['one_value'],
-            'expected_text': '* one_value',
-        },
-        'two': {
-            'values': [
-                {'one_value', 'two_value', },
-                ['one_value', 'two_value', ],
-                ['two_value', 'one_value', ],
-            ],
-            'expected': frozenset(['one_value', 'two_value', ]),
-            'expected_repr': "['one_value', 'two_value']",
-            'expected_serialized': ['one_value', 'two_value'],
-            'expected_text': '* one_value\n* two_value',
-        },
-        'three': {
-            'values': [
-                {'three_value', },
-            ],
-            'expected': frozenset(['three_value']),
-            'expected_repr': "['three_value']",
-            'expected_serialized': ['three_value'],
-            'expected_text': '* three_value',
-        },
-    }
 
 
 class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
@@ -2444,12 +2325,17 @@ class UnknownExtensionTestCase(TestCase):
         ext = UnrecognizedExtension(unk)
         self.assertEqual(ext.name, 'Unsupported extension (OID %s)' % unk.oid.dotted_string)
         self.assertEqual(ext.as_text(), 'Could not parse extension')
+        self.assertEqual(ext.as_extension(), unk)
 
         name = 'my name'
         error = 'my error'
         ext = UnrecognizedExtension(unk, name=name, error=error)
         self.assertEqual(ext.name, name)
         self.assertEqual(ext.as_text(), 'Could not parse extension (%s)' % error)
+
+    def test_from_dict(self):
+        with self.assertRaisesRegex(ValueError, r'^UnrecognizedExtension: Cannot instantiate from dict\.$'):
+            UnrecognizedExtension({'value': 'foo'})
 
 
 class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
