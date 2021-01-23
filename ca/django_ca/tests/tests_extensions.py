@@ -402,6 +402,11 @@ class NullExtensionTestMixin(ExtensionTestMixin):
             critical = self.ext_class.default_critical
         self.assertEqual(ext.serialize(), {'critical': critical})
 
+    def test_dummy_functions(self):
+        """NullExtension implements abstract functions for the value which are in reality unused."""
+        self.assertIsNone(self.ext_class().serialize_value())
+        self.assertEqual(self.ext_class().repr_value(), '')
+
 
 class IterableExtensionTestMixin:
     """Mixin for testing IterableExtension-based extensions."""

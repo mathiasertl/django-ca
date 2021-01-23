@@ -111,16 +111,10 @@ class Extension(ABC):
         return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
 
     def __repr__(self) -> str:
-        return '<%s: %s, critical=%r>' % (self.name, self._repr_value(), self.critical)
+        return '<%s: %s, critical=%r>' % (self.name, self.repr_value(), self.critical)
 
     def __str__(self) -> str:
         return repr(self)
-
-    @abstractmethod
-    def _repr_value(self) -> str:
-        """String representation of the current value for this extension.
-
-        Implementing classes are expected to implement this function."""
 
     @abstractmethod
     def from_extension(self, value):
@@ -139,6 +133,12 @@ class Extension(ABC):
 
         This class can be overwritten to allow loading classes from different types."""
         raise ValueError('Value is of unsupported type %s' % type(value).__name__)
+
+    @abstractmethod
+    def repr_value(self) -> str:
+        """String representation of the current value for this extension.
+
+        Implementing classes are expected to implement this function."""
 
     def _test_value(self) -> None:
         pass
@@ -203,7 +203,7 @@ class UnrecognizedExtension(Extension):
         self._name = name
         super().__init__(value)
 
-    def _repr_value(self) -> str:
+    def repr_value(self) -> str:
         return '<unprintable>'
 
     @property
@@ -273,7 +273,7 @@ class NullExtension(Extension):
     def __repr__(self) -> str:
         return '<%s: critical=%r>' % (self.__class__.__name__, self.critical)
 
-    def _repr_value(self) -> str:
+    def repr_value(self) -> str:
         return ''
 
     def as_text(self) -> str:
@@ -328,7 +328,7 @@ class IterableExtension(Extension):
     def __len__(self) -> int:
         return len(self.value)
 
-    def _repr_value(self) -> str:
+    def repr_value(self) -> str:
         return self.serialize_value()
 
     def as_text(self) -> str:
@@ -477,8 +477,8 @@ class OrderedSetExtension(IterableExtension):
         value = self.value ^ self.parse_iterable(other)
         return self.__class__({'critical': self.critical, 'value': value})
 
-    def _repr_value(self):
-        return [str(v) for v in super()._repr_value()]
+    def repr_value(self):
+        return [str(v) for v in super().repr_value()]
 
     def parse_iterable(self, iterable):
         """Parse values from the given iterable."""

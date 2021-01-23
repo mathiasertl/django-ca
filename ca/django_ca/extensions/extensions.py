@@ -88,7 +88,7 @@ class AuthorityInformationAccess(Extension):
     def __hash__(self):
         return hash((tuple(self.issuers), tuple(self.ocsp), self.critical, ))
 
-    def _repr_value(self):
+    def repr_value(self):
         return 'issuers=%r, ocsp=%r' % (self.issuers.serialize(), self.ocsp.serialize())
 
     def as_text(self):
@@ -177,7 +177,7 @@ class AuthorityKeyIdentifier(Extension):
         issuer = tuple(self.authority_cert_issuer)
         return hash((self.key_identifier, issuer, self.authority_cert_serial_number, self.critical))
 
-    def _repr_value(self):
+    def repr_value(self):
         values = []
         if self.key_identifier is not None:
             values.append('keyid: %s' % bytes_to_hex(self.key_identifier))
@@ -293,7 +293,7 @@ class BasicConstraints(Extension):
     def __hash__(self):
         return hash((self.ca, self.pathlen, self.critical, ))
 
-    def _repr_value(self):
+    def repr_value(self):
         val = 'ca=%s' % self.ca
         if self.ca:
             val += ', pathlen=%s' % self.pathlen
@@ -393,7 +393,7 @@ class CertificatePolicies(ListExtension):
     def __hash__(self):
         return hash((tuple(self.value), self.critical, ))
 
-    def _repr_value(self):
+    def repr_value(self):
         if len(self.value) == 1:
             return '1 policy'
         return '%s policies' % len(self.value)
@@ -660,7 +660,7 @@ class InhibitAnyPolicy(Extension):
         return isinstance(other, InhibitAnyPolicy) and self.critical == other.critical and \
             self.skip_certs == other.skip_certs
 
-    def _repr_value(self) -> str:
+    def repr_value(self) -> str:
         return str(self.skip_certs)
 
     def _test_value(self) -> None:
@@ -738,7 +738,7 @@ class PolicyConstraints(Extension):
     def __hash__(self):
         return hash((self.require_explicit_policy, self.inhibit_policy_mapping, self.critical, ))
 
-    def _repr_value(self):
+    def repr_value(self):
         if self.require_explicit_policy is None and self.inhibit_policy_mapping is None:
             return '-'
         values = []
@@ -839,7 +839,7 @@ class NameConstraints(Extension):
     def __hash__(self):
         return hash((tuple(self.value['permitted']), tuple(self.value['excluded']), self.critical, ))
 
-    def _repr_value(self):
+    def repr_value(self):
         permitted = list(self.value['permitted'].serialize())
         excluded = list(self.value['excluded'].serialize())
 
@@ -999,7 +999,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
         # serialize_iterable returns a dict, which is unhashable
         return hash((tuple(self.value), self.critical, ))
 
-    def _repr_value(self):
+    def repr_value(self):
         if len(self.value) == 1:  # pragma: no cover - we cannot currently create such an extension
             return '1 timestamp'
         return '%s timestamps' % len(self.value)
@@ -1123,7 +1123,7 @@ class SubjectKeyIdentifier(Extension):
     name = 'SubjectKeyIdentifier'
     oid = ExtensionOID.SUBJECT_KEY_IDENTIFIER
 
-    def _repr_value(self) -> str:
+    def repr_value(self) -> str:
         return bytes_to_hex(self.value)
 
     @property
