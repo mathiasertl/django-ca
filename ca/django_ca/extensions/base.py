@@ -18,9 +18,13 @@
 import textwrap
 from abc import ABC
 from abc import abstractmethod
+from typing import Any
+from typing import Union
 
 from cryptography import x509
 
+from ..typehints import DistributionPointType
+from ..typehints import SerializedCRLDistributionPoints
 from ..utils import GeneralNameList
 from ..utils import bytes_to_hex
 from ..utils import format_general_name
@@ -105,16 +109,16 @@ class Extension(ABC):
     def __hash__(self) -> int:
         return hash((self.value, self.critical, ))
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<%s: %s, critical=%r>' % (self.name, self._repr_value(), self.critical)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return repr(self)
 
-    def _repr_value(self):
+    def _repr_value(self) -> str:
         return str(self.value)
 
     @abstractmethod
@@ -135,7 +139,7 @@ class Extension(ABC):
         This class can be overwritten to allow loading classes from different types."""
         raise ValueError('Value is of unsupported type %s' % type(value).__name__)
 
-    def _test_value(self):
+    def _test_value(self) -> None:
         pass
 
     @property
@@ -166,7 +170,7 @@ class Extension(ABC):
         return x509.Extension(oid=self.oid, critical=self.critical, value=ext)
 
     @abstractmethod
-    def as_text(self):
+    def as_text(self) -> str:
         """Human-readable version of the *value*, not including the "critical" flag.
 
         Implementing classes are expected to implement this function."""
@@ -208,7 +212,7 @@ class UnrecognizedExtension(Extension):
         self.value = value
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Name (best effort) for this extension."""
         if self._name:
             return self._name
@@ -251,16 +255,16 @@ class NullExtension(Extension):
         else:
             super().__init__(value)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.critical, ))
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         return isinstance(other, type(self)) and self.critical == other.critical
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<%s: critical=%r>' % (self.__class__.__name__, self.critical)
 
-    def as_text(self):
+    def as_text(self) -> str:
         return self.name
 
     @property
@@ -294,28 +298,28 @@ class IterableExtension(Extension):
 
     # pylint: disable=abstract-method; class is itself a base class
 
-    def __contains__(self, value: str):
+    def __contains__(self, value):
         return self.parse_value(value) in self.value  # pylint: disable=unsupported-membership-test
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((tuple(self.serialize_value()), self.critical, ))
 
     def __iter__(self):
         return iter(self.serialize_value())
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.value)
 
-    def _repr_value(self):
+    def _repr_value(self) -> str:
         return self.serialize_value()
 
-    def as_text(self):
+    def as_text(self) -> str:
         return '\n'.join(['* %s' % v for v in self.serialize_value()])
 
-    def parse_value(self, value: str):
+    def parse_value(self, value):
         """Parse a single value (presumably from an iterable)."""
         return value
 
@@ -324,7 +328,7 @@ class IterableExtension(Extension):
 
         return [self.serialize_item(v) for v in self.value]  # pylint: disable=not-an-iterable
 
-    def serialize_item(self, value: str):
+    def serialize_item(self, value) -> str:
         """Serialize a single item in the iterable contained in this extension."""
 
         return value
@@ -599,23 +603,24 @@ class CRLDistributionPointsBase(ListExtension):
     """Base class for :py:class:`~django_ca.extensions.CRLDistributionPoints` and
     :py:class:`~django_ca.extensions.FreshestCRL`.
     """
-    def __hash__(self):
+
+    def __hash__(self) -> int:
         return hash((tuple(self.value), self.critical, ))
 
-    def as_text(self):
+    def as_text(self) -> str:
         return '\n'.join('* DistributionPoint:\n%s' % textwrap.indent(dp.as_text(), '  ')
                          for dp in self.value)
 
     @property
-    def extension_type(self):
+    def extension_type(self) -> x509.CRLDistributionPoints:
         return x509.CRLDistributionPoints(distribution_points=[dp.for_extension_type for dp in self.value])
 
-    def parse_value(self, value):
+    def parse_value(self, value: Union[DistributionPoint, DistributionPointType]) -> DistributionPoint:
         if isinstance(value, DistributionPoint):
             return value
         return DistributionPoint(value)
 
-    def serialize(self):
+    def serialize(self) -> SerializedCRLDistributionPoints:
         return {
             'value': [dp.serialize() for dp in self.value],
             'critical': self.critical,

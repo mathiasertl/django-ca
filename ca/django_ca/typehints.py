@@ -15,6 +15,8 @@
 
 # pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
 
+import sys
+from typing import Any
 from typing import Dict
 from typing import Iterable
 from typing import List
@@ -43,3 +45,14 @@ PolicyQualifier = Union[str, x509.UserNotice]
 # GeneralNameList
 ParsableGeneralName = Union[x509.GeneralName, str]
 ParsableGeneralNameList = Iterable[ParsableGeneralName]
+
+
+if sys.version_info >= (3, 8):  # pragma: only py>=3.8
+    from typing import TypedDict
+
+    SerializedCRLDistributionPoints = TypedDict('SerializedCRLDistributionPoints', {
+        'critical': bool,
+        'value': List[DistributionPointType],
+    })
+else:  # pragma: only py<3.8
+    SerializedCRLDistributionPoints = Dict[str, Union[bool, List[Any]]]
