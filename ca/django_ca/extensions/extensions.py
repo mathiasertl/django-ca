@@ -696,7 +696,7 @@ class InhibitAnyPolicy(Extension):
         else:
             super().from_other(value)
 
-    def serialize_value(self) -> str:
+    def serialize_value(self) -> int:
         return self.skip_certs
 
 

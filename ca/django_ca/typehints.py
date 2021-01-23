@@ -56,7 +56,7 @@ else:
 if sys.version_info >= (3, 8):  # pragma: only py>=3.8
     from typing import TypedDict
 
-    ParsableSubjectKeyIdentifier = TypedDict('ParsableSubjectKeyIdentifierDict', {
+    ParsableSubjectKeyIdentifier = TypedDict('ParsableSubjectKeyIdentifier', {
         'critical': bool,
         'value': Union[str, bytes],
     })
