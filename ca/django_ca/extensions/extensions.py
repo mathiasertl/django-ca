@@ -669,9 +669,6 @@ class InhibitAnyPolicy(Extension):
         if self.skip_certs < 0:
             raise ValueError('%s: must be a positive int' % self.skip_certs)
 
-    def as_text(self):
-        return str(self.skip_certs)
-
     @property
     def extension_type(self):
         return x509.InhibitAnyPolicy(skip_certs=self.skip_certs)
@@ -1146,9 +1143,6 @@ class SubjectKeyIdentifier(Extension):
 
     def from_extension(self, value: x509.SubjectKeyIdentifier) -> None:
         self.value = value.value.digest
-
-    def as_text(self) -> str:
-        return bytes_to_hex(self.value)
 
     def serialize_value(self) -> str:
         return bytes_to_hex(self.value)
