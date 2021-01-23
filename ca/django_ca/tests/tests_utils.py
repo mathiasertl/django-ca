@@ -832,8 +832,8 @@ class GetCertBuilderTestCase(DjangoCATestCase):
         self.assertNotEqual(expires.microsecond, 0)
         expires_expected = datetime(2021, 2, 2, 14, 42)
         builder = get_cert_builder(expires)
-        self.assertEqual(builder._not_valid_after, expires_expected)
-        self.assertIsInstance(builder._serial_number, int)
+        self.assertEqual(builder._not_valid_after, expires_expected)   # pylint: disable=protected-access
+        self.assertIsInstance(builder._serial_number, int)  # pylint: disable=protected-access
 
     def test_negative_timedelta(self):
         """Test passing a date in the past."""
@@ -844,16 +844,19 @@ class GetCertBuilderTestCase(DjangoCATestCase):
             get_cert_builder(timedelta(-1))
 
     def test_serial(self):
+        """Test manually setting a serial."""
         builder = get_cert_builder(serial=123)
-        self.assertEqual(builder._serial_number, 123)
+        self.assertEqual(builder._serial_number, 123)  # pylint: disable=protected-access
 
     @freeze_time('2021-01-23 14:42:11')
     def test_negative_datetime(self):
+        """Test passing a datetime in the past."""
         msg = r"^expires must be in the future$"
         with self.assertRaisesRegex(ValueError, msg):
             get_cert_builder(datetime.utcnow() - timedelta(seconds=60))
 
     def test_invalid_type(self):
+        """Test passing an invalid type."""
         with self.assertRaises(TypeError):
             get_cert_builder('a string')
 
