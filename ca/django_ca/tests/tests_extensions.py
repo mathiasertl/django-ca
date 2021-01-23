@@ -2306,7 +2306,7 @@ class UnknownExtensionTestCase(TestCase):
         self.assertEqual(str(ext), '<Unsupported extension (OID 2.5.29.17): <unprintable>, critical=False>')
 
         with self.assertRaisesRegex(ValueError, r"^Cannot serialize an unrecognized extension$"):
-            self.assertEqual(ext.serialize_value())
+            ext.serialize_value()
 
         name = 'my name'
         error = 'my error'
