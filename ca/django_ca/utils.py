@@ -893,31 +893,45 @@ def parse_key_curve(value: Optional[Union[ec.EllipticCurve, str]] = None) -> ec.
 
 
 def get_cert_builder(
-        expires: Union[None, timedelta, datetime], serial: Optional[int] = None
+        expires: Optional[Union[datetime, timedelta]] = None, serial: Optional[int] = None
 ) -> x509.CertificateBuilder:
     """Get a basic X509 cert builder object.
-
-    .. TODO:: deprecate support for passing datetime as expires
 
     Parameters
     ----------
 
-    expires : datetime or timedelta
-        When this certificate will expire.
+    expires : datetime or timedelta, optional
+        When the certificate will expire. This may be a timedelta for an expiry relative to "now" or a
+        datetime for an absolute expiry date.  If not given, :ref:`CA_DEFAULT_EXPIRES
+        <settings-ca-file-storage>` will be used.
     serial : int, optional
         Serial number to set for this certificate. Use :py:func:`~cg:cryptography.x509.random_serial_number`
         to generate such a value. By default, a value will be generated.
+
+    Returns
+    -------
+
+    x509.CertificateBuilder
     """
+
     now = datetime.utcnow().replace(second=0, microsecond=0)
 
+    # NOTE: Explicitly passing a serial is used when creating a CA, where we want to add extensions where the
+    # value references the serial.
     if serial is None:
         serial = x509.random_serial_number()
+
     if expires is None:
         expires = now + ca_settings.CA_DEFAULT_EXPIRES
     elif isinstance(expires, timedelta):
         expires = now + expires
-    else:
+    elif isinstance(expires, datetime):
+        # NOTE: A datetime is passed when creating an intermediate CA and the expiry is limited by the expiry
+        # of the parent CA.
         expires = expires.replace(second=0, microsecond=0)
+
+    if expires <= now:
+        raise ValueError("expires must be in the future")
 
     builder = x509.CertificateBuilder()
     builder = builder.not_valid_before(now)

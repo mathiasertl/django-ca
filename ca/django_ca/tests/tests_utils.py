@@ -818,17 +818,44 @@ class GetCertBuilderTestCase(DjangoCATestCase):
         self.assertEqual(builder._not_valid_before, before)
         self.assertIsInstance(builder._serial_number, int)
 
-        builder = get_cert_builder(None)
+        builder = get_cert_builder()
         self.assertEqual(builder._not_valid_after, datetime(2019, 2, 11, 11, 21))
         self.assertEqual(builder._not_valid_before, before)  # before shouldn't change
         self.assertIsInstance(builder._serial_number, int)
 
-    @freeze_time('2018-11-03 11:21:33')
-    def test_negative(self):
+    @freeze_time('2021-01-23 14:42:11.1234')
+    def test_datetime(self):
+        """Basic tests."""
+
+        expires = datetime.utcnow() + timedelta(days=10)
+        self.assertNotEqual(expires.second, 0)
+        self.assertNotEqual(expires.microsecond, 0)
+        expires_expected = datetime(2021, 2, 2, 14, 42)
+        builder = get_cert_builder(expires)
+        self.assertEqual(builder._not_valid_after, expires_expected)
+        self.assertIsInstance(builder._serial_number, int)
+
+    def test_negative_timedelta(self):
         """Test passing a date in the past."""
-        with self.assertRaisesRegex(ValueError,
-                                    r'^The not valid after date must be after the not valid before date\.$'):
-            get_cert_builder(datetime(2017, 12, 12))
+        msg = r"^expires must be in the future$"
+        with self.assertRaisesRegex(ValueError, msg):
+            get_cert_builder(timedelta(0))
+        with self.assertRaisesRegex(ValueError, msg):
+            get_cert_builder(timedelta(-1))
+
+    def test_serial(self):
+        builder = get_cert_builder(serial=123)
+        self.assertEqual(builder._serial_number, 123)
+
+    @freeze_time('2021-01-23 14:42:11')
+    def test_negative_datetime(self):
+        msg = r"^expires must be in the future$"
+        with self.assertRaisesRegex(ValueError, msg):
+            get_cert_builder(datetime.utcnow() - timedelta(seconds=60))
+
+    def test_invalid_type(self):
+        with self.assertRaises(TypeError):
+            get_cert_builder('a string')
 
 
 class ValidateKeyParametersTest(TestCase):
