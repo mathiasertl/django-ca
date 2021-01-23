@@ -13,6 +13,8 @@
 
 """Specialized variants of ACME message classes."""
 
+from typing import List
+
 import josepy as jose
 from acme import fields
 from acme import messages
@@ -39,7 +41,9 @@ class NewOrder(messages.ResourceBody):
     """
     resource_type = messages.NewOrder.resource_type
 
-    identifiers = jose.Field('identifiers', omitempty=False,
-                             decoder=messages.Order._fields['identifiers'].fdec)
+    identifiers: jose.Field[List[str]] = jose.Field(
+        'identifiers', omitempty=False,
+        decoder=messages.Order._fields['identifiers'].fdec
+    )
     not_before = fields.RFC3339Field('notBefore', omitempty=True)
     not_after = fields.RFC3339Field('notAfter', omitempty=True)

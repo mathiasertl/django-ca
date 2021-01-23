@@ -19,7 +19,7 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
 
-def parse_acme_csr(value):
+def parse_acme_csr(value: str) -> x509.CertificateSigningRequest:
     """Convert the CSR as received via ACMEv2 into a valid CSR.
 
     ACMEv2 sends the CSR as a base64url encoded string of its DER /ASN.1 representation.
