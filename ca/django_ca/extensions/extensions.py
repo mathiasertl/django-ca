@@ -20,6 +20,7 @@ in a more pythonic manner and provide access functions."""
 
 import binascii
 import textwrap
+from typing import Any
 from typing import Optional
 
 from cryptography import x509
@@ -647,33 +648,44 @@ class InhibitAnyPolicy(Extension):
 
     name = 'InhibitAnyPolicy'
     oid = ExtensionOID.INHIBIT_ANY_POLICY
+    skip_certs: int
 
     default_critical = True
     """This extension is marked as critical by default (RFC 5280 requires this extension to be marked as
     critical)."""
 
-    def _test_value(self):
-        if not isinstance(self.value, int):
-            raise ValueError('%s: must be an int' % self.value)
-        if self.value < 0:
-            raise ValueError('%s: must be a positive int' % self.value)
+    def __hash__(self) -> int:
+        return hash((self.skip_certs, self.critical, ))
+
+    def __eq__(self, other: Any) -> bool:
+        return isinstance(other, InhibitAnyPolicy) and self.critical == other.critical and \
+            self.skip_certs == other.skip_certs
+
+    def _repr_value(self) -> str:
+        return str(self.skip_certs)
+
+    def _test_value(self) -> None:
+        if not isinstance(self.skip_certs, int):
+            raise ValueError('%s: must be an int' % self.skip_certs)
+        if self.skip_certs < 0:
+            raise ValueError('%s: must be a positive int' % self.skip_certs)
 
     def as_text(self):
-        return str(self.value)
+        return str(self.skip_certs)
 
     @property
     def extension_type(self):
-        return x509.InhibitAnyPolicy(skip_certs=self.value)
+        return x509.InhibitAnyPolicy(skip_certs=self.skip_certs)
 
     def from_dict(self, value):
-        self.value = value.get('value')
+        self.skip_certs = value.get('value')
 
     def from_extension(self, value):
-        self.value = value.value.skip_certs
+        self.skip_certs = value.value.skip_certs
 
     def from_int(self, value):
         """Parser allowing creation of an instance just from an int."""
-        self.value = value
+        self.skip_certs = value
 
     def from_other(self, value):
         if isinstance(value, int):
@@ -683,18 +695,8 @@ class InhibitAnyPolicy(Extension):
         else:
             super().from_other(value)
 
-    @property
-    def skip_certs(self):
-        """The ``skip_certs`` value of this instance."""
-        return self.value
-
-    @skip_certs.setter
-    def skip_certs(self, value):
-        if not isinstance(value, int):
-            raise ValueError('%s: must be an int' % value)
-        if value < 0:
-            raise ValueError('%s: must be a positive int' % value)
-        self.value = value
+    def serialize_value(self) -> str:
+        return self.skip_certs
 
 
 class PolicyConstraints(Extension):

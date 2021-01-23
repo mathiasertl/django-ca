@@ -1534,9 +1534,9 @@ class InhibitAnyPolicyTestCase(ExtensionTestMixin, TestCase):
     def test_int(self):
         """Test passing various int values."""
         ext = InhibitAnyPolicy(0)
-        self.assertEqual(ext.value, 0)
+        self.assertEqual(ext.skip_certs, 0)
         ext = InhibitAnyPolicy(1)
-        self.assertEqual(ext.value, 1)
+        self.assertEqual(ext.skip_certs, 1)
 
         with self.assertRaisesRegex(ValueError, r'-1: must be a positive int$'):
             InhibitAnyPolicy(-1)
@@ -1552,19 +1552,8 @@ class InhibitAnyPolicyTestCase(ExtensionTestMixin, TestCase):
         with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type str$'):
             InhibitAnyPolicy('abc')
 
-    def test_skip_certs(self):
-        """Test skip_certs property."""
-        ext = InhibitAnyPolicy(0)
-        self.assertEqual(ext.skip_certs, 0)
-        ext.skip_certs = 3
-        self.assertEqual(ext.skip_certs, 3)
-
-        with self.assertRaisesRegex(ValueError, r'^abc: must be an int$'):
-            ext.skip_certs = 'abc'
-        self.assertEqual(ext.skip_certs, 3)
-        with self.assertRaisesRegex(ValueError, r'-1: must be a positive int$'):
-            ext.skip_certs = -1
-        self.assertEqual(ext.skip_certs, 3)
+    def test_value(self):
+        return
 
 
 class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):
