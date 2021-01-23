@@ -13,11 +13,20 @@
 
 """Specialized variants of ACME message classes."""
 
+# pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
+
+from typing import TYPE_CHECKING
 from typing import List
 
 import josepy as jose
 from acme import fields
 from acme import messages
+
+# https://mypy.readthedocs.io/en/stable/runtime_troubles.html#using-classes-that-are-generic-in-stubs-but-not-at-runtime
+if TYPE_CHECKING:
+    IdentifiersType = jose.Field[List[str]]
+else:
+    IdentifiersType = jose.Field
 
 
 class Order(messages.Order):
@@ -41,7 +50,7 @@ class NewOrder(messages.ResourceBody):
     """
     resource_type = messages.NewOrder.resource_type
 
-    identifiers: jose.Field[List[str]] = jose.Field(
+    identifiers: IdentifiersType = jose.Field(
         'identifiers', omitempty=False,
         decoder=messages.Order._fields['identifiers'].fdec
     )
