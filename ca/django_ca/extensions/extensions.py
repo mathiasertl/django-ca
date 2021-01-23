@@ -22,6 +22,7 @@ import binascii
 import textwrap
 from typing import Any
 from typing import ClassVar
+from typing import Iterator
 from typing import Optional
 from typing import Set
 from typing import Union
@@ -34,7 +35,10 @@ from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import ExtensionOID
 
+from ..typehints import ParsableSignedCertificateTimestamp
 from ..typehints import ParsableSubjectKeyIdentifier
+from ..typehints import PrecertificateSignedCertificateTimestampsType
+from ..typehints import SerializedSignedCertificateTimestamp
 from ..typehints import SubjectKeyIdentifierType
 from ..typehints import TLSFeatureExtensionType
 from ..utils import GeneralNameList
@@ -959,7 +963,7 @@ class PrecertPoison(NullExtension):
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.PRECERT_POISON
     ext_class = x509.PrecertPoison
 
-    def __init__(self, value=None):
+    def __init__(self, value: None = None) -> None:
         super().__init__(value=value)
 
         if self.critical is not True:
@@ -994,19 +998,19 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
     }
     value: x509.PrecertificateSignedCertificateTimestamps
 
-    def __contains__(self, value):
+    def __contains__(self, value: ParsableSignedCertificateTimestamp) -> bool:
         if isinstance(value, dict):
-            return value in self.serialize()['value']
+            return value in self.serialize_value()
         return value in self.value
 
     def __delitem__(self, key):  # type: ignore
         raise NotImplementedError
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         # serialize_iterable returns a dict, which is unhashable
         return hash((tuple(self.value), self.critical, ))
 
-    def repr_value(self):
+    def repr_value(self) -> str:
         if len(self.value) == 1:  # pragma: no cover - we cannot currently create such an extension
             return '1 timestamp'
         return '%s timestamps' % len(self.value)
@@ -1014,7 +1018,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
     def __setitem__(self, key, value):  # type: ignore
         raise NotImplementedError
 
-    def human_readable_timestamps(self):
+    def human_readable_timestamps(self) -> Iterator[SerializedSignedCertificateTimestamp]:
         """Convert SCTs into a generator of serializable dicts."""
         for sct in self.value:
             if sct.entry_type == LogEntryType.PRE_CERTIFICATE:
@@ -1027,13 +1031,12 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
 
             yield {
                 'log_id': binascii.hexlify(sct.log_id).decode('utf-8'),
-                'sct': sct,
                 'timestamp': sct.timestamp.isoformat(str(' ')),
                 'type': entry_type,
                 'version': sct.version.name,
             }
 
-    def as_text(self):
+    def as_text(self) -> str:
         lines = []
         for val in self.human_readable_timestamps():
             line = '* {type} ({version}):\n    Timestamp: {timestamp}\n    Log ID: {log_id}'.format(**val)
@@ -1041,35 +1044,35 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
 
         return '\n'.join(lines)
 
-    def count(self, value):
+    def count(self, value: ParsableSignedCertificateTimestamp) -> int:
         if isinstance(value, dict):
-            return self.serialize()['value'].count(value)
+            return self.serialize_value().count(value)
         return self.value._signed_certificate_timestamps.count(value)  # pylint: disable=protected-access
 
-    def extend(self, iterable):
+    def extend(self, iterable):  # type: ignore
         raise NotImplementedError
 
     @property
-    def extension_type(self):
+    def extension_type(self) -> x509.PrecertificateSignedCertificateTimestamps:
         return self.value
 
-    def from_extension(self, value):
+    def from_extension(self, value: PrecertificateSignedCertificateTimestampsType) -> None:
         self.value = value.value
 
-    def insert(self, index, value):
+    def insert(self, index, value):  # type: ignore
         raise NotImplementedError
 
-    def pop(self, index=-1):
+    def pop(self, index=-1):  # type: ignore
         raise NotImplementedError
 
-    def remove(self, value):
+    def remove(self, value):  # type: ignore
         raise NotImplementedError
 
-    def serialize_item(self, value):
+    def serialize_item(self, value: x509.SignedCertificateTimestamps) -> SerializedSignedCertificateTimestamp:
         return {
-            'type': PrecertificateSignedCertificateTimestamps.LOG_ENTRY_TYPE_MAPPING[value.entry_type],
-            'timestamp': value.timestamp.strftime(self._timeformat),
             'log_id': binascii.hexlify(value.log_id).decode('utf-8'),
+            'timestamp': value.timestamp.strftime(self._timeformat),
+            'type': PrecertificateSignedCertificateTimestamps.LOG_ENTRY_TYPE_MAPPING[value.entry_type],
             'version': value.version.name,
         }
 

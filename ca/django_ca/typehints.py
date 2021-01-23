@@ -51,8 +51,11 @@ if TYPE_CHECKING:
     ExtensionType = x509.Extension[x509.ExtensionType]
     SubjectKeyIdentifierType = x509.Extension[x509.SubjectKeyIdentifier]
     TLSFeatureExtensionType = x509.Extension[x509.TLSFeature]
+    PrecertificateSignedCertificateTimestampsType = \
+        x509.Extension[x509.PrecertificateSignedCertificateTimestamps]
 else:
-    ExtensionType = SubjectKeyIdentifierType = TLSFeatureExtensionType = x509.Extension
+    ExtensionType = SubjectKeyIdentifierType = TLSFeatureExtensionType = \
+        PrecertificateSignedCertificateTimestampsType = x509.Extension
 
 if sys.version_info >= (3, 8):  # pragma: only py>=3.8
     from typing import TypedDict
@@ -66,6 +69,18 @@ if sys.version_info >= (3, 8):  # pragma: only py>=3.8
         'critical': bool,
         'value': List[DistributionPointType],
     })
+    SerializedSignedCertificateTimestamp = TypedDict('SerializedSignedCertificateTimestamp', {
+        'log_id': str,
+        'timestamp': str,
+        'type': str,
+        'version': str,
+    })
+    """A dictionary with four keys: log_id, timestamp, type, version, values are all str."""
 else:  # pragma: only py<3.8
     ParsableSubjectKeyIdentifier = Dict[str, Union[bool, str, bytes]]
     SerializedCRLDistributionPoints = Dict[str, Union[bool, List[Any]]]
+    SerializedSignedCertificateTimestamp = Dict[str, str]
+
+ParsableSignedCertificateTimestamp = Union[
+    SerializedSignedCertificateTimestamp, x509.SignedCertificateTimestamps
+]

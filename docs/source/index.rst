@@ -67,7 +67,7 @@ Features:
    python/constants
    python/acme_messages
    python/tasks
-
+   python/typehints
 
 .. toctree::
    :maxdepth: 1
