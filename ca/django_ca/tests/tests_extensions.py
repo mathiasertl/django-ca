@@ -507,6 +507,7 @@ class IterableExtensionTestMixin:
             self.assertSameInstance(orig_id, orig_value_id, ext, expected_value=container)
         else:
             ext_updated = func(ext, value)
+            self.assertEqual(ext.__class__, ext_updated.__class__)
             s_updated = func(container, set_value)  # apply to set
             self.assertIsCopy(ext, ext_updated, s_updated)
 

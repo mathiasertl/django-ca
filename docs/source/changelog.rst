@@ -18,6 +18,8 @@ This version is currently unter development.
 * Preselect profile of original certificate when resigning certificates.
 * ``./dev.py init-demo`` now also saves profiles and CSRs.
 * Lint code using `pylint <https://www.pylint.org/>`_.
+* Make sure that operators for OrderedSetExtension always return an instance of the implementing class, not of
+  the base class.
 
 Backwards incompatible changes
 ==============================

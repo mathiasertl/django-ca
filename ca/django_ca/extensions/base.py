@@ -386,7 +386,7 @@ class OrderedSetExtension(IterableExtension):
 
     def __and__(self, other):  # & operator == intersection()
         value = self.value & self.parse_iterable(other)
-        return OrderedSetExtension({'critical': self.critical, 'value': value})
+        return self.__class__({'critical': self.critical, 'value': value})
 
     def __ge__(self, other):  # >= relation == issuperset()
         return self.value >= self.parse_iterable(other)
@@ -417,15 +417,15 @@ class OrderedSetExtension(IterableExtension):
 
     def __or__(self, other):  # | operator == union()
         value = self.value.union(self.parse_iterable(other))
-        return OrderedSetExtension({'critical': self.critical, 'value': value})
+        return self.__class__({'critical': self.critical, 'value': value})
 
-    def __sub__(self, other):
+    def __sub__(self, other):  # - operator
         value = self.value - self.parse_iterable(other)
-        return OrderedSetExtension({'critical': self.critical, 'value': value})
+        return self.__class__({'critical': self.critical, 'value': value})
 
     def __xor__(self, other):  # ^ operator == symmetric_difference()
         value = self.value ^ self.parse_iterable(other)
-        return OrderedSetExtension({'critical': self.critical, 'value': value})
+        return self.__class__({'critical': self.critical, 'value': value})
 
     def _repr_value(self):
         return [str(v) for v in super()._repr_value()]
@@ -451,11 +451,11 @@ class OrderedSetExtension(IterableExtension):
 
     def copy(self):
         value = self.value.copy()
-        return OrderedSetExtension({'critical': self.critical, 'value': value})
+        return self.__class__({'critical': self.critical, 'value': value})
 
     def difference(self, *others):  # equivalent to & operator
         value = self.value.difference(*[self.parse_iterable(o) for o in others])
-        return OrderedSetExtension({'critical': self.critical, 'value': value})
+        return self.__class__({'critical': self.critical, 'value': value})
 
     def difference_update(self, *others):  # equivalent to &= operator
         self.value.difference_update(*[self.parse_iterable(o) for o in others])
@@ -465,7 +465,7 @@ class OrderedSetExtension(IterableExtension):
 
     def intersection(self, *others):  # equivalent to & operator
         value = self.value.intersection(*[self.parse_iterable(o) for o in others])
-        return OrderedSetExtension({'critical': self.critical, 'value': value})
+        return self.__class__({'critical': self.critical, 'value': value})
 
     def intersection_update(self, *others):  # equivalent to &= operator
         self.value.intersection_update(*[self.parse_iterable(o) for o in others])
@@ -493,7 +493,7 @@ class OrderedSetExtension(IterableExtension):
 
     def union(self, *others):
         value = self.value.union(*[self.parse_iterable(o) for o in others])
-        return OrderedSetExtension({'critical': self.critical, 'value': value})
+        return self.__class__({'critical': self.critical, 'value': value})
 
     def update(self, *others):
         for elem in others:
