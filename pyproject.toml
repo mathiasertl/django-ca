@@ -1,0 +1,74 @@
+[tool.pylint.master]
+load-plugins = "pylint_django"
+
+# Configure Django
+init-hook = "import os, sys; sys.path.insert(0, os.path.abspath('ca'))"
+django-settings-module = "ca.settings"
+
+[tool.pylint.basic]
+good-names = [
+    "ca",
+    "ex",
+    "pk",
+    "e",  # TODO: consistently use ex
+    "i",
+    "k",
+]
+
+[tool.pylint.design]
+# Maximum number of arguments for function / method (see R0913).
+max-args=10
+
+# Maximum number of branch for function / method body (see R0912).
+max-branches=20
+
+# Maximum number of parents for a class (see R0901).
+max-parents = 15
+
+# Maximum number of return / yield for function / method body (see R0911).
+max-returns = 8
+
+# Maximum number of statements in function / method body (see R0915).
+max-statements=60
+
+[tool.pylint.format]
+max-line-length = 110
+
+# TODO: could be reduced to 1500, only some test modulesare  over that
+max-module-lines = 3000
+
+[tool.pylint.messages_control]
+# https://pylint.readthedocs.io/en/latest/faq.html?highlight=flake8#i-am-using-another-popular-linter-alongside-pylint-which-messages-should-i-disable-to-avoid-duplicates
+disable = [
+    "no-self-use",
+    # covered by isort:
+    "wrong-import-order",
+
+    # covered by pyflakes:
+    "undefined-variable",
+    "unused-import",
+    "unused-variable",
+
+    # covered by pycodestyle:
+    "unneeded-not",
+    "line-too-long",
+    "unnecessary-semicolon",
+    "trailing-whitespace",
+    "missing-final-newline",
+    "bad-indentation",
+    "multiple-statements",
+    "bare-except",
+]
+
+[tool.pylint.similarities]
+# Ignore comments when computing similarities.
+ignore-comments = "yes"
+
+# Ignore docstrings when computing similarities.
+ignore-docstrings = "yes"
+
+# Ignore imports when computing similarities.
+ignore-imports = "yes"
+
+# Minimum lines number of a similarity.
+min-similarity-lines = 8

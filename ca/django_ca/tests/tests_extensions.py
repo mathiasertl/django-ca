@@ -140,30 +140,11 @@ class AbstractExtensionTestMixin:
             val['critical'] = critical
         return self.ext_class(val)
 
-    def test_as_extension(self):
-        """Test as_extension()."""
-        for config in self.test_values.values():
-            with self.assertRaises(NotImplementedError):
-                Extension({'value': config['expected']}).as_extension()
-
     def test_as_text(self):
         """Test as_text()."""
         for config in self.test_values.values():
             ext = self.ext(config['expected'])
             self.assertEqual(ext.as_text(), config['expected_text'])
-
-    def test_extension_type(self):
-        """Test extension_type property."""
-        for config in self.test_values.values():
-            with self.assertRaises(NotImplementedError):
-                # pylint: disable=expression-not-assigned
-                Extension({'value': config['expected']}).extension_type
-
-    def test_for_builder(self):
-        """Test for_builder() method (not implemented here)."""
-        for config in self.test_values.values():
-            with self.assertRaises(NotImplementedError):
-                Extension({'value': config['expected']}).for_builder()
 
     def test_config(self):
         """Test basic extension configuration."""
@@ -340,6 +321,7 @@ class ExtensionTestMixin(AbstractExtensionTestMixin):
     """Override generic implementations to use test_value property."""
 
     def test_as_extension(self):
+        """Test the as_extension property."""
         for config in self.test_values.values():
             if config['extension_type'] is None:
                 continue  # test case is not a valid extension
@@ -385,6 +367,7 @@ class ExtensionTestMixin(AbstractExtensionTestMixin):
             self.assertEqual(ext.extension_type, config['extension_type'])
 
     def test_for_builder(self):
+        """Test the for_builder() method."""
         for config in self.test_values.values():
             if config['extension_type'] is None:
                 continue  # test case is not a valid extension
@@ -2334,6 +2317,7 @@ class UnknownExtensionTestCase(TestCase):
         self.assertEqual(ext.as_text(), 'Could not parse extension (%s)' % error)
 
     def test_from_dict(self):
+        """Test that you cannot instantiate this extension from a dict."""
         with self.assertRaisesRegex(ValueError, r'^UnrecognizedExtension: Cannot instantiate from dict\.$'):
             UnrecognizedExtension({'value': 'foo'})
 

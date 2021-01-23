@@ -77,7 +77,7 @@ RUN --mount=type=cache,target=/root/.cache/pip/http pip install \
     -r requirements/requirements-test.txt \
     -r requirements/requirements-lint.txt
 
-COPY setup.py dev.py common.py tox.ini recreate-fixtures.py ./
+COPY setup.py dev.py common.py tox.ini pyproject.toml recreate-fixtures.py ./
 COPY --chown=django-ca:django-ca docs/ docs/
 COPY --chown=django-ca:django-ca ca/ ca/
 

@@ -330,8 +330,8 @@ class BasicConstraints(Extension):
         if value is not None:
             try:
                 return int(value)
-            except ValueError as e:
-                raise ValueError('Could not parse pathlen: "%s"' % value) from e
+            except ValueError as ex:
+                raise ValueError('Could not parse pathlen: "%s"' % value) from ex
         return value
 
     def serialize_value(self):
@@ -550,8 +550,8 @@ class KeyUsage(OrderedSetExtension):
             return value
         try:
             return self.CRYPTOGRAPHY_MAPPING[value]
-        except KeyError as e:
-            raise ValueError('Unknown value: %s' % value) from e
+        except KeyError as ex:
+            raise ValueError('Unknown value: %s' % value) from ex
         raise ValueError('Unknown value: %s' % value)  # pragma: no cover - function returns/raises before
 
     def serialize_item(self, value):
