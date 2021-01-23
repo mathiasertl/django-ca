@@ -104,13 +104,6 @@ class Extension(ABC):
         if not isinstance(self.critical, bool):
             raise ValueError('%s: Invalid critical value passed' % self.critical)
 
-    def __eq__(self, other: Any) -> bool:
-        # pylint: disable=no-member
-        return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
-
-    def __hash__(self) -> int:
-        return hash((self.value, self.critical, ))  # pylint: disable=no-member
-
     def __repr__(self) -> str:
         return '<%s: %s, critical=%r>' % (self.name, self.repr_value(), self.critical)
 

@@ -838,7 +838,11 @@ class NameConstraints(Extension):
     def __bool__(self):
         return bool(self.value['permitted']) or bool(self.value['excluded'])
 
-    def __hash__(self):
+    def __eq__(self, other: Any) -> bool:
+        return isinstance(other, NameConstraints) and self.critical == other.critical and \
+            self.value == other.value
+
+    def __hash__(self) -> int:
         return hash((tuple(self.value['permitted']), tuple(self.value['excluded']), self.critical, ))
 
     def repr_value(self):
@@ -1125,6 +1129,13 @@ class SubjectKeyIdentifier(Extension):
     name = 'SubjectKeyIdentifier'
     oid: x509.ObjectIdentifier = ExtensionOID.SUBJECT_KEY_IDENTIFIER
     value: bytes
+
+    def __eq__(self, other: Any) -> bool:
+        return isinstance(other, SubjectKeyIdentifier) and self.critical == other.critical and \
+            self.value == other.value
+
+    def __hash__(self) -> int:
+        return hash((self.critical, self.value))
 
     def repr_value(self) -> str:
         return bytes_to_hex(self.value)
