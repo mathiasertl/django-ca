@@ -26,9 +26,7 @@ from cryptography import x509
 from ..typehints import DistributionPointType
 from ..typehints import SerializedCRLDistributionPoints
 from ..utils import GeneralNameList
-from ..utils import bytes_to_hex
 from ..utils import format_general_name
-from ..utils import hex_to_bytes
 from .utils import DistributionPoint
 
 
@@ -118,8 +116,11 @@ class Extension(ABC):
     def __str__(self) -> str:
         return repr(self)
 
+    @abstractmethod
     def _repr_value(self) -> str:
-        return str(self.value)
+        """String representation of the current value for this extension.
+
+        Implementing classes are expected to implement this function."""
 
     @abstractmethod
     def from_extension(self, value):
@@ -185,9 +186,11 @@ class Extension(ABC):
         """
         return {'extension': self.extension_type, 'critical': self.critical}
 
+    @abstractmethod
     def serialize_value(self):
-        """Serialize the value for this extension."""
-        return self.value
+        """Serialize the value for this extension.
+
+        Implementing classes are expected to implement this function."""
 
 
 class UnrecognizedExtension(Extension):
@@ -199,6 +202,9 @@ class UnrecognizedExtension(Extension):
         self._error = error
         self._name = name
         super().__init__(value)
+
+    def _repr_value(self) -> str:
+        return '<unprintable>'
 
     @property
     def extension_type(self):
@@ -222,6 +228,9 @@ class UnrecognizedExtension(Extension):
         if self._error:
             return 'Could not parse extension (%s)' % self._error
         return 'Could not parse extension'
+
+    def serialize_value(self):
+        raise ValueError('Cannot serialize an unrecognized extension')
 
 
 class NullExtension(Extension):
@@ -264,6 +273,9 @@ class NullExtension(Extension):
     def __repr__(self) -> str:
         return '<%s: critical=%r>' % (self.__class__.__name__, self.critical)
 
+    def _repr_value(self) -> str:
+        return ''
+
     def as_text(self) -> str:
         return self.name
 
@@ -279,6 +291,9 @@ class NullExtension(Extension):
 
     def serialize(self):
         return {'critical': self.critical}
+
+    def serialize_value(self) -> None:
+        return
 
 
 class IterableExtension(Extension):

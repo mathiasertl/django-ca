@@ -2298,6 +2298,10 @@ class UnknownExtensionTestCase(TestCase):
         self.assertEqual(ext.name, 'Unsupported extension (OID %s)' % unk.oid.dotted_string)
         self.assertEqual(ext.as_text(), 'Could not parse extension')
         self.assertEqual(ext.as_extension(), unk)
+        self.assertEqual(str(ext), '<Unsupported extension (OID 2.5.29.17): <unprintable>, critical=False>')
+
+        with self.assertRaisesRegex(ValueError, r"^Cannot serialize an unrecognized extension$"):
+            self.assertEqual(ext.serialize_value())
 
         name = 'my name'
         error = 'my error'
