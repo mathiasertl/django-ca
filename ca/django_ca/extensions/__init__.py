@@ -26,6 +26,7 @@ from typing import cast
 
 from cryptography import x509
 
+from ..typehints import ExtensionType
 from .base import Extension
 from .extensions import AuthorityInformationAccess
 from .extensions import AuthorityKeyIdentifier
@@ -70,7 +71,7 @@ KEY_TO_EXTENSION: Dict[str, Type[Extension]] = {
 OID_TO_EXTENSION: Dict[x509.ObjectIdentifier, Type[Extension]] = {e.oid: e for e in KEY_TO_EXTENSION.values()}
 
 
-def get_extension_name(ext: Union[x509.Extension, Extension]) -> str:
+def get_extension_name(ext: Union[ExtensionType, Extension]) -> str:
     """Function to get the name of an extension.
 
     >>> ext = x509.BasicConstraints(ca=True, path_length=3)

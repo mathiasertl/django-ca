@@ -19,7 +19,9 @@ import textwrap
 from abc import ABC
 from abc import abstractmethod
 from typing import Any
-from typing import Iterable
+from typing import ClassVar
+from typing import Collection
+from typing import List
 from typing import Union
 
 from cryptography import x509
@@ -84,9 +86,9 @@ class Extension(ABC):
     """
     key = ''  # must be overwritten by actual classes
 
-    default_critical = False
-    name = 'Extension'
-    oid: x509.ObjectIdentifier
+    default_critical: bool = False
+    name: ClassVar[str]
+    oid: ClassVar[x509.ObjectIdentifier]
 
     def __init__(self, value=None):
         if value is None:
@@ -192,7 +194,7 @@ class UnrecognizedExtension(Extension):
 
     def __init__(self, value, name='', error=''):
         self._error = error
-        self._name = name
+        self.name = name
         super().__init__(value)
 
     def repr_value(self) -> str:
@@ -208,13 +210,8 @@ class UnrecognizedExtension(Extension):
     def from_extension(self, value):
         self.oid = value.oid
         self.value = value
-
-    @property
-    def name(self) -> str:
-        """Name (best effort) for this extension."""
-        if self._name:
-            return self._name
-        return 'Unsupported extension (OID %s)' % (self.value.oid.dotted_string)
+        if not self.name:
+            self.name = 'Unsupported extension (OID %s)' % (self.value.oid.dotted_string)
 
     def as_text(self) -> str:
         if self._error:
@@ -248,6 +245,8 @@ class NullExtension(Extension):
         >>> OCSPNoCheck(x509.extensions.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=True, value=None))
         <OCSPNoCheck: critical=True>
     """
+
+    name: ClassVar[str]
 
     def __init__(self, value=None):
         self.value = {}
@@ -304,7 +303,7 @@ class IterableExtension(Extension):
     """
 
     # pylint: disable=abstract-method; class is itself a base class
-    value: Iterable
+    value: Collection
 
     def __contains__(self, value):
         return self.parse_value(value) in self.value  # pylint: disable=unsupported-membership-test
@@ -351,6 +350,7 @@ class ListExtension(IterableExtension):
     """
 
     # pylint: disable=abstract-method; class is itself a base class
+    value: List[Any]
 
     def __delitem__(self, key):
         del self.value[key]

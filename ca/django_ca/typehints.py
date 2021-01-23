@@ -48,10 +48,11 @@ ParsableGeneralName = Union[x509.GeneralName, str]
 ParsableGeneralNameList = Iterable[ParsableGeneralName]
 
 if TYPE_CHECKING:
+    ExtensionType = x509.Extension[x509.ExtensionType]
     SubjectKeyIdentifierType = x509.Extension[x509.SubjectKeyIdentifier]
     TLSFeatureExtensionType = x509.Extension[x509.TLSFeature]
 else:
-    SubjectKeyIdentifierType = TLSFeatureExtensionType = x509.Extension
+    ExtensionType = SubjectKeyIdentifierType = TLSFeatureExtensionType = x509.Extension
 
 if sys.version_info >= (3, 8):  # pragma: only py>=3.8
     from typing import TypedDict
