@@ -104,18 +104,47 @@ class Extension(ABC):
         if not isinstance(self.critical, bool):
             raise ValueError('%s: Invalid critical value passed' % self.critical)
 
-    def __hash__(self) -> int:
-        return hash((self.value, self.critical, ))  # pylint: disable=no-member
-
     def __eq__(self, other: Any) -> bool:
         # pylint: disable=no-member
         return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
+
+    def __hash__(self) -> int:
+        return hash((self.value, self.critical, ))  # pylint: disable=no-member
 
     def __repr__(self) -> str:
         return '<%s: %s, critical=%r>' % (self.name, self.repr_value(), self.critical)
 
     def __str__(self) -> str:
         return repr(self)
+
+    def _test_value(self) -> None:
+        pass
+
+    def as_extension(self):
+        """This extension as :py:class:`~cg:cryptography.x509.Extension`."""
+        ext = self.extension_type  # extra line to raise NotImplementedError for abstract base classes
+        return x509.Extension(oid=self.oid, critical=self.critical, value=ext)
+
+    def as_text(self) -> str:
+        """Human-readable version of the *value*, not including the "critical" flag."""
+        return self.repr_value()
+
+    @property
+    @abstractmethod
+    def extension_type(self):
+        """cryptography.x509.ExtensionType: The ``ExtensionType`` instance of this extension.
+
+        Implementing classes are expected to implement this function."""
+
+    def for_builder(self):
+        """Return kwargs suitable for a :py:class:`~cg:cryptography.x509.CertificateBuilder`.
+
+        Example::
+
+            >>> kwargs = KeyUsage({'value': ['keyAgreement', 'keyEncipherment']}).for_builder()
+            >>> builder.add_extension(**kwargs)  # doctest: +SKIP
+        """
+        return {'extension': self.extension_type, 'critical': self.critical}
 
     @abstractmethod
     def from_extension(self, value):
@@ -141,16 +170,6 @@ class Extension(ABC):
 
         Implementing classes are expected to implement this function."""
 
-    def _test_value(self) -> None:
-        pass
-
-    @property
-    @abstractmethod
-    def extension_type(self):
-        """cryptography.x509.ExtensionType: The ``ExtensionType`` instance of this extension.
-
-        Implementing classes are expected to implement this function."""
-
     def serialize(self):
         """Serialize this extension to a string in a way that it can be passed to a constructor again.
 
@@ -165,25 +184,6 @@ class Extension(ABC):
             'critical': self.critical,
             'value': self.serialize_value(),
         }
-
-    def as_extension(self):
-        """This extension as :py:class:`~cg:cryptography.x509.Extension`."""
-        ext = self.extension_type  # extra line to raise NotImplementedError for abstract base classes
-        return x509.Extension(oid=self.oid, critical=self.critical, value=ext)
-
-    def as_text(self) -> str:
-        """Human-readable version of the *value*, not including the "critical" flag."""
-        return self.repr_value()
-
-    def for_builder(self):
-        """Return kwargs suitable for a :py:class:`~cg:cryptography.x509.CertificateBuilder`.
-
-        Example::
-
-            >>> kwargs = KeyUsage({'value': ['keyAgreement', 'keyEncipherment']}).for_builder()
-            >>> builder.add_extension(**kwargs)  # doctest: +SKIP
-        """
-        return {'extension': self.extension_type, 'critical': self.critical}
 
     @abstractmethod
     def serialize_value(self):
