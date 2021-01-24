@@ -26,6 +26,7 @@ from typing import Optional
 from typing import Union
 
 from cryptography import x509
+from cryptography.x509.certificate_transparency import SignedCertificateTimestamp
 
 DistributionPointType = Dict[str, Union[List[str], str]]
 
@@ -69,6 +70,14 @@ if sys.version_info >= (3, 8):  # pragma: only py>=3.8
         'critical': bool,
         'value': List[DistributionPointType],
     })
+    SerializedNameConstraints = TypedDict('SerializedNameConstraints', {
+        'permitted': List[str],
+        'excluded': List[str],
+    })
+    SerializedPolicyConstraints = TypedDict('SerializedPolicyConstraints', {
+        'inhibit_policy_mapping': int,
+        'require_explicit_policy': int,
+    }, total=False)
     SerializedSignedCertificateTimestamp = TypedDict('SerializedSignedCertificateTimestamp', {
         'log_id': str,
         'timestamp': str,
@@ -79,8 +88,9 @@ if sys.version_info >= (3, 8):  # pragma: only py>=3.8
 else:  # pragma: only py<3.8
     ParsableSubjectKeyIdentifier = Dict[str, Union[bool, str, bytes]]
     SerializedCRLDistributionPoints = Dict[str, Union[bool, List[Any]]]
+    SerializedNameConstraints = Dict[str, List[str]]
     SerializedSignedCertificateTimestamp = Dict[str, str]
 
 ParsableSignedCertificateTimestamp = Union[
-    SerializedSignedCertificateTimestamp, x509.SignedCertificateTimestamps
+    SerializedSignedCertificateTimestamp, SignedCertificateTimestamp
 ]

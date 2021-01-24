@@ -22,6 +22,7 @@ import binascii
 import textwrap
 from typing import ClassVar
 from typing import Iterator
+from typing import List
 from typing import Optional
 from typing import Set
 from typing import Tuple
@@ -31,6 +32,7 @@ from cryptography import x509
 from cryptography.x509 import ObjectIdentifier
 from cryptography.x509 import TLSFeatureType
 from cryptography.x509.certificate_transparency import LogEntryType
+from cryptography.x509.certificate_transparency import SignedCertificateTimestamp
 from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import ExtensionOID
@@ -38,10 +40,9 @@ from cryptography.x509.oid import ExtensionOID
 from ..typehints import ParsableGeneralNameList
 from ..typehints import ParsableSignedCertificateTimestamp
 from ..typehints import ParsableSubjectKeyIdentifier
-from ..typehints import PrecertificateSignedCertificateTimestampsType
+from ..typehints import SerializedNameConstraints
+from ..typehints import SerializedPolicyConstraints
 from ..typehints import SerializedSignedCertificateTimestamp
-from ..typehints import SubjectKeyIdentifierType
-from ..typehints import TLSFeatureExtensionType
 from ..utils import GeneralNameList
 from ..utils import bytes_to_hex
 from ..utils import hex_to_bytes
@@ -621,18 +622,18 @@ class ExtendedKeyUsage(OrderedSetExtension):
         ('anyExtendedKeyUsage', 'Any Extended Key Usage'),
     )
 
-    def from_extension(self, value):
+    def from_extension(self, value: x509.ExtendedKeyUsage) -> None:
         self.value = set(value)
 
     @property
-    def extension_type(self):
+    def extension_type(self) -> x509.ExtendedKeyUsage:
         # call serialize_item() to ensure consistent sort order
         return x509.ExtendedKeyUsage(sorted(self.value, key=self.serialize_item))
 
-    def serialize_item(self, value):
+    def serialize_item(self, value: x509.ObjectIdentifier) -> str:
         return self._CRYPTOGRAPHY_MAPPING_REVERSED[value]
 
-    def parse_value(self, value):
+    def parse_value(self, value: Union[ObjectIdentifier, str]) -> ObjectIdentifier:
         if isinstance(value, ObjectIdentifier) and value in self._CRYPTOGRAPHY_MAPPING_REVERSED:
             return value
         if isinstance(value, str) and value in self.CRYPTOGRAPHY_MAPPING:
@@ -684,20 +685,20 @@ class InhibitAnyPolicy(Extension):
             raise ValueError('%s: must be a positive int' % self.skip_certs)
 
     @property
-    def extension_type(self):
+    def extension_type(self) -> x509.InhibitAnyPolicy:
         return x509.InhibitAnyPolicy(skip_certs=self.skip_certs)
 
     def from_dict(self, value):
         self.skip_certs = value.get('value')
 
-    def from_extension(self, value):
+    def from_extension(self, value: x509.InhibitAnyPolicy) -> None:
         self.skip_certs = value.skip_certs
 
-    def from_int(self, value):
+    def from_int(self, value: int) -> None:
         """Parser allowing creation of an instance just from an int."""
         self.skip_certs = value
 
-    def from_other(self, value):
+    def from_other(self, value: int) -> None:
         if isinstance(value, int):
             self.critical = self.default_critical
             self.from_int(value)
@@ -741,7 +742,7 @@ class PolicyConstraints(Extension):
     """This extension is marked as critical by default (RFC 5280 requires this extension to be marked as
     critical)."""
 
-    def hash_value(self) -> Tuple[int, int]:
+    def hash_value(self) -> Tuple[Optional[int], Optional[int]]:
         return self.require_explicit_policy, self.inhibit_policy_mapping
 
     def repr_value(self) -> str:
@@ -754,7 +755,7 @@ class PolicyConstraints(Extension):
             values.append('require_explicit_policy=%s' % self.require_explicit_policy)
         return ', '.join(values)
 
-    def _test_value(self):
+    def _test_value(self) -> None:
         rep = self.require_explicit_policy
         ipm = self.inhibit_policy_mapping
         if rep is not None:
@@ -787,11 +788,11 @@ class PolicyConstraints(Extension):
         self.require_explicit_policy = value.get('require_explicit_policy')
         self.inhibit_policy_mapping = value.get('inhibit_policy_mapping')
 
-    def from_extension(self, value):
+    def from_extension(self, value: x509.PolicyConstraints) -> None:
         self.require_explicit_policy = value.require_explicit_policy
         self.inhibit_policy_mapping = value.inhibit_policy_mapping
 
-    def serialize_value(self):
+    def serialize_value(self) -> SerializedPolicyConstraints:
         value = {}
         if self.inhibit_policy_mapping is not None:
             value['inhibit_policy_mapping'] = self.inhibit_policy_mapping
@@ -872,7 +873,7 @@ class NameConstraints(Extension):
         return self._excluded
 
     @excluded.setter
-    def excluded(self, value):
+    def excluded(self, value: Union[GeneralNameList, ParsableGeneralNameList]) -> None:
         if not isinstance(value, GeneralNameList):
             value = GeneralNameList(value)
         self._excluded = value
@@ -881,7 +882,7 @@ class NameConstraints(Extension):
     def extension_type(self) -> x509.NameConstraints:
         return x509.NameConstraints(permitted_subtrees=self._permitted, excluded_subtrees=self._excluded)
 
-    def from_extension(self, value):
+    def from_extension(self, value: x509.NameConstraints):
         self.permitted = value.permitted_subtrees
         self.excluded = value.excluded_subtrees
 
@@ -901,10 +902,10 @@ class NameConstraints(Extension):
             value = GeneralNameList(value)
         self._permitted = value
 
-    def serialize_value(self):
+    def serialize_value(self) -> SerializedNameConstraints:
         return {
-            'permitted': list(self._permitted.serialize()),
-            'excluded': list(self._excluded.serialize()),
+            'permitted': self._permitted.serialize(),
+            'excluded': self._excluded.serialize(),
         }
 
 
@@ -992,7 +993,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
         LogEntryType.PRE_CERTIFICATE: 'precertificate',
         LogEntryType.X509_CERTIFICATE: 'x509_certificate'
     }
-    value: x509.PrecertificateSignedCertificateTimestamps
+    value: List[SignedCertificateTimestamp]
 
     def __contains__(self, value: ParsableSignedCertificateTimestamp) -> bool:
         if isinstance(value, dict):
@@ -1043,17 +1044,17 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
     def count(self, value: ParsableSignedCertificateTimestamp) -> int:
         if isinstance(value, dict):
             return self.serialize_value().count(value)
-        return self.value._signed_certificate_timestamps.count(value)  # pylint: disable=protected-access
+        return self.value.count(value)  # pylint: disable=protected-access
 
     def extend(self, iterable):  # type: ignore
         raise NotImplementedError
 
     @property
     def extension_type(self) -> x509.PrecertificateSignedCertificateTimestamps:
-        return self.value
+        return x509.PrecertificateSignedCertificateTimestamps(self.value)
 
-    def from_extension(self, value: PrecertificateSignedCertificateTimestampsType) -> None:
-        self.value = value
+    def from_extension(self, value: x509.PrecertificateSignedCertificateTimestamps) -> None:
+        self.value = list(value)
 
     def insert(self, index, value):  # type: ignore
         raise NotImplementedError
@@ -1064,7 +1065,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
     def remove(self, value):  # type: ignore
         raise NotImplementedError
 
-    def serialize_item(self, value: x509.SignedCertificateTimestamps) -> SerializedSignedCertificateTimestamp:
+    def serialize_item(self, value: SignedCertificateTimestamp) -> SerializedSignedCertificateTimestamp:
         return {
             'log_id': binascii.hexlify(value.log_id).decode('utf-8'),
             'timestamp': value.timestamp.strftime(self._timeformat),
@@ -1154,7 +1155,7 @@ class SubjectKeyIdentifier(Extension):
         else:
             super().from_other(value)
 
-    def from_extension(self, value: SubjectKeyIdentifierType) -> None:
+    def from_extension(self, value: x509.SubjectKeyIdentifier) -> None:
         self.value = value.digest
 
     def serialize_value(self) -> str:
@@ -1195,7 +1196,7 @@ class TLSFeature(OrderedSetExtension):
     KNOWN_PARAMETERS = sorted(CRYPTOGRAPHY_MAPPING)
     """Known values that can be passed to this extension."""
 
-    def from_extension(self, value: TLSFeatureExtensionType) -> None:
+    def from_extension(self, value: x509.TLSFeature) -> None:
         self.value = set(value)
 
     @property
