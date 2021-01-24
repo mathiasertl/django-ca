@@ -2335,26 +2335,37 @@ class UnknownExtensionTestCase(TestCase):
 
     def test_basic(self):
         """Only test basic functionality."""
-        unk = SubjectAlternativeName({'value': ['https://example.com']}).as_extension()
-        ext = UnrecognizedExtension(unk)
-        self.assertEqual(ext.name, 'Unsupported extension (OID %s)' % unk.oid.dotted_string)
+        oid = x509.ObjectIdentifier('1.2.1')
+        cgext = x509.Extension(oid=oid, value=x509.UnrecognizedExtension(oid=oid, value=b'unrecognized'),
+                               critical=True)
+        ext = UnrecognizedExtension(cgext)
+
+        self.assertEqual(ext.name, 'Unsupported extension (OID %s)' % oid.dotted_string)
         self.assertEqual(ext.as_text(), 'Could not parse extension')
-        self.assertEqual(ext.as_extension(), unk)
-        self.assertEqual(str(ext), '<Unsupported extension (OID 2.5.29.17): <unprintable>, critical=False>')
+        self.assertEqual(ext.as_extension(), cgext)
+        self.assertEqual(str(ext), '<Unsupported extension (OID %s): <unprintable>, critical=True>' %
+                         oid.dotted_string)
 
         with self.assertRaisesRegex(ValueError, r"^Cannot serialize an unrecognized extension$"):
             ext.serialize_value()
 
         name = 'my name'
         error = 'my error'
-        ext = UnrecognizedExtension(unk, name=name, error=error)
+        ext = UnrecognizedExtension(cgext, name=name, error=error)
         self.assertEqual(ext.name, name)
         self.assertEqual(ext.as_text(), 'Could not parse extension (%s)' % error)
 
+    def test_invalid_extension(self):
+        """Test creating from an actually recognized extension."""
+        value = x509.Extension(oid=SubjectAlternativeName.oid, critical=True,
+                               value=x509.SubjectAlternativeName([uri("example.com")]))
+        with self.assertRaisesRegex(TypeError, r"^Extension value must be a x509\.UnrecognizedExtension$"):
+            UnrecognizedExtension(value)
+
     def test_from_dict(self):
         """Test that you cannot instantiate this extension from a dict."""
-        with self.assertRaisesRegex(ValueError, r'^UnrecognizedExtension: Cannot instantiate from dict\.$'):
-            UnrecognizedExtension({'value': 'foo'})
+        with self.assertRaisesRegex(TypeError, r"Value must be a x509\.Extension instance$"):
+            UnrecognizedExtension({"value": "foo"})
 
 
 class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):

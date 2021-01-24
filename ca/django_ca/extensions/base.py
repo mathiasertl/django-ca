@@ -97,7 +97,7 @@ class Extension(ABC):
 
         if isinstance(value, x509.Extension):  # e.g. from a cert object
             self.critical = value.critical
-            self.from_extension(value)
+            self.from_extension(value.value)
         elif isinstance(value, dict):  # e.g. from settings
             self.critical = value.get('critical', self.default_critical)
             self.from_dict(value)
@@ -206,27 +206,34 @@ class UnrecognizedExtension(Extension):
     """Class wrapping any extension this module does **not** support."""
 
     # pylint: disable=abstract-method; We don't know the extension_type
+    # pylint: disable=super-init-not-called; UnrecognizedExtension really is a special case
 
     def __init__(self, value, name='', error=''):
+        if not isinstance(value, x509.Extension):
+            raise TypeError("Value must be a x509.Extension instance")
+        if not isinstance(value.value, x509.UnrecognizedExtension):
+            raise TypeError("Extension value must be a x509.UnrecognizedExtension")
+
         self._error = error
         self.name = name
-        super().__init__(value)
+        self.value = value.value
+        self.critical = value.critical
+        self.oid = value.oid
+        if not self.name:
+            self.name = 'Unsupported extension (OID %s)' % (self.value.oid.dotted_string)
 
     def repr_value(self) -> str:
         return '<unprintable>'
 
     @property
     def extension_type(self):
-        return self.value.value
+        return self.value
 
-    def from_dict(self, value):
-        raise ValueError('%s: Cannot instantiate from dict.' % self.__class__.__name__)
+    def from_dict(self, value):  # pragma: no cover
+        raise NotImplementedError
 
-    def from_extension(self, value):
-        self.oid = value.oid
-        self.value = value
-        if not self.name:
-            self.name = 'Unsupported extension (OID %s)' % (self.value.oid.dotted_string)
+    def from_extension(self, value):  # pragma: no cover
+        raise NotImplementedError
 
     def as_text(self) -> str:
         if self._error:
@@ -385,7 +392,7 @@ class ListExtension(IterableExtension):
         self.value = [self.parse_value(v) for v in value.get('value', [])]
 
     def from_extension(self, value):
-        self.value = [self.parse_value(v) for v in value.value]
+        self.value = [self.parse_value(v) for v in value]
 
     # Implement functions provided by list(). Class mentions that this provides the same methods.
     # pylint: disable=missing-function-docstring
@@ -584,7 +591,7 @@ class AlternativeNameExtension(ListExtension):  # pylint: disable=abstract-metho
             self.value = GeneralNameList(value)
 
     def from_extension(self, value):
-        self.value = GeneralNameList(value.value)
+        self.value = GeneralNameList(value)
 
     def serialize_item(self, value):
         return format_general_name(value)

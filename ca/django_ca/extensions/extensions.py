@@ -130,9 +130,9 @@ class AuthorityInformationAccess(Extension):
         return x509.AuthorityInformationAccess(descriptions=descs)
 
     def from_extension(self, value):
-        self.issuers = [v.access_location for v in value.value
+        self.issuers = [v.access_location for v in value
                         if v.access_method == AuthorityInformationAccessOID.CA_ISSUERS]
-        self.ocsp = [v.access_location for v in value.value
+        self.ocsp = [v.access_location for v in value
                      if v.access_method == AuthorityInformationAccessOID.OCSP]
 
     def from_dict(self, value):
@@ -245,9 +245,9 @@ class AuthorityKeyIdentifier(Extension):
             self.authority_cert_serial_number = value.get('authority_cert_serial_number')
 
     def from_extension(self, value):
-        self.key_identifier = value.value.key_identifier
-        self.authority_cert_issuer = GeneralNameList(value.value.authority_cert_issuer)
-        self.authority_cert_serial_number = value.value.authority_cert_serial_number
+        self.key_identifier = value.key_identifier
+        self.authority_cert_issuer = GeneralNameList(value.authority_cert_issuer)
+        self.authority_cert_serial_number = value.authority_cert_serial_number
 
     def from_other(self, value):
         if isinstance(value, SubjectKeyIdentifier):
@@ -318,8 +318,8 @@ class BasicConstraints(Extension):
         return val
 
     def from_extension(self, value):
-        self.ca = value.value.ca
-        self.pathlen = value.value.path_length
+        self.ca = value.ca
+        self.pathlen = value.path_length
 
     def from_dict(self, value):
         value = value.get('value', {})
@@ -551,7 +551,7 @@ class KeyUsage(OrderedSetExtension):
 
         for val in self.KNOWN_VALUES:
             try:
-                if getattr(value.value, val):
+                if getattr(value, val):
                     self.value.add(val)
             except ValueError:
                 # cryptography throws a ValueError if encipher_only/decipher_only is accessed and
@@ -622,7 +622,7 @@ class ExtendedKeyUsage(OrderedSetExtension):
     )
 
     def from_extension(self, value):
-        self.value = set(value.value)
+        self.value = set(value)
 
     @property
     def extension_type(self):
@@ -691,7 +691,7 @@ class InhibitAnyPolicy(Extension):
         self.skip_certs = value.get('value')
 
     def from_extension(self, value):
-        self.skip_certs = value.value.skip_certs
+        self.skip_certs = value.skip_certs
 
     def from_int(self, value):
         """Parser allowing creation of an instance just from an int."""
@@ -788,8 +788,8 @@ class PolicyConstraints(Extension):
         self.inhibit_policy_mapping = value.get('inhibit_policy_mapping')
 
     def from_extension(self, value):
-        self.require_explicit_policy = value.value.require_explicit_policy
-        self.inhibit_policy_mapping = value.value.inhibit_policy_mapping
+        self.require_explicit_policy = value.require_explicit_policy
+        self.inhibit_policy_mapping = value.inhibit_policy_mapping
 
     def serialize_value(self):
         value = {}
@@ -882,8 +882,8 @@ class NameConstraints(Extension):
         return x509.NameConstraints(permitted_subtrees=self._permitted, excluded_subtrees=self._excluded)
 
     def from_extension(self, value):
-        self.permitted = value.value.permitted_subtrees
-        self.excluded = value.value.excluded_subtrees
+        self.permitted = value.permitted_subtrees
+        self.excluded = value.excluded_subtrees
 
     def from_dict(self, value):
         value = value.get('value', {})
@@ -1053,7 +1053,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
         return self.value
 
     def from_extension(self, value: PrecertificateSignedCertificateTimestampsType) -> None:
-        self.value = value.value
+        self.value = value
 
     def insert(self, index, value):  # type: ignore
         raise NotImplementedError
@@ -1155,7 +1155,7 @@ class SubjectKeyIdentifier(Extension):
             super().from_other(value)
 
     def from_extension(self, value: SubjectKeyIdentifierType) -> None:
-        self.value = value.value.digest
+        self.value = value.digest
 
     def serialize_value(self) -> str:
         return bytes_to_hex(self.value)
@@ -1196,7 +1196,7 @@ class TLSFeature(OrderedSetExtension):
     """Known values that can be passed to this extension."""
 
     def from_extension(self, value: TLSFeatureExtensionType) -> None:
-        self.value = set(value.value)
+        self.value = set(value)
 
     @property
     def extension_type(self) -> x509.TLSFeature:
