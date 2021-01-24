@@ -21,6 +21,7 @@ from abc import abstractmethod
 from typing import Any
 from typing import ClassVar
 from typing import Collection
+from typing import Hashable
 from typing import List
 from typing import Union
 
@@ -106,6 +107,13 @@ class Extension(ABC):
         if not isinstance(self.critical, bool):
             raise ValueError('%s: Invalid critical value passed' % self.critical)
 
+    def __eq__(self, other: Any) -> bool:
+        return isinstance(other, type(self)) and self.critical == other.critical and \
+            self.hash_value() == other.hash_value()
+
+    def __hash__(self) -> int:
+        return hash((self.hash_value(), self.critical, ))
+
     def __repr__(self) -> str:
         return '<%s: %s, critical=%r>' % (self.name, self.repr_value(), self.critical)
 
@@ -158,6 +166,13 @@ class Extension(ABC):
 
         This class can be overwritten to allow loading classes from different types."""
         raise ValueError('Value is of unsupported type %s' % type(value).__name__)
+
+    def hash_value(self) -> Hashable:
+        """Return the current extension value in hashable form.
+
+        This function is used for the default implementations for ``hash()`` and the ``==`` equality
+        operator.
+        """
 
     @abstractmethod
     def repr_value(self) -> str:

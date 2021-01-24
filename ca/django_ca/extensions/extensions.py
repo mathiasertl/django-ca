@@ -20,11 +20,11 @@ in a more pythonic manner and provide access functions."""
 
 import binascii
 import textwrap
-from typing import Any
 from typing import ClassVar
 from typing import Iterator
 from typing import Optional
 from typing import Set
+from typing import Tuple
 from typing import Union
 
 from cryptography import x509
@@ -35,6 +35,7 @@ from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import ExtensionOID
 
+from ..typehints import ParsableGeneralNameList
 from ..typehints import ParsableSignedCertificateTimestamp
 from ..typehints import ParsableSubjectKeyIdentifier
 from ..typehints import PrecertificateSignedCertificateTimestampsType
@@ -85,59 +86,77 @@ class AuthorityInformationAccess(Extension):
 
     name: ClassVar[str] = 'AuthorityInformationAccess'
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.AUTHORITY_INFORMATION_ACCESS
-    ocsp: GeneralNameList
-    issuers: GeneralNameList
+    _ocsp: GeneralNameList
+    _issuers: GeneralNameList
 
     def __bool__(self) -> bool:
-        return bool(self.ocsp) or bool(self.issuers)
+        return bool(self._ocsp) or bool(self._issuers)
 
-    def __eq__(self, other: Any) -> bool:
-        return isinstance(other, AuthorityInformationAccess) and self.issuers == other.issuers and \
-            self.ocsp == other.ocsp and self.critical == other.critical
-
-    def __hash__(self) -> int:
-        return hash((tuple(self.issuers), tuple(self.ocsp), self.critical, ))
+    def hash_value(self) -> Tuple[Tuple[x509.GeneralName, ...], Tuple[x509.GeneralName, ...]]:
+        return tuple(self._issuers), tuple(self._ocsp)
 
     def repr_value(self) -> str:
-        return 'issuers=%r, ocsp=%r' % (self.issuers.serialize(), self.ocsp.serialize())
+        return 'issuers=%r, ocsp=%r' % (self._issuers.serialize(), self._ocsp.serialize())
 
     def as_text(self) -> str:
         text = ''
-        if self.issuers:
+        if self._issuers:
             text += 'CA Issuers:\n'
-            for name in self.issuers.serialize():
+            for name in self._issuers.serialize():
                 text += '  * %s\n' % name
-        if self.ocsp:
+        if self._ocsp:
             text += 'OCSP:\n'
-            for name in self.ocsp.serialize():
+            for name in self._ocsp.serialize():
                 text += '  * %s\n' % name
 
         return text.strip()
 
     @property
+    def issuers(self) -> GeneralNameList:
+        """Issuers named by this extension."""
+        return self._issuers
+
+    @issuers.setter
+    def issuers(self, value: Union[GeneralNameList, ParsableGeneralNameList]) -> None:
+        if not isinstance(value, GeneralNameList):
+            value = GeneralNameList(value)
+        self._issuers = value
+
+    @property
     def extension_type(self) -> x509.AuthorityInformationAccess:
         # pylint: disable=not-an-iterable; pylint does not detect GeneralNameList as iterable
-        descs = [x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, v) for v in self.issuers]
-        descs += [x509.AccessDescription(AuthorityInformationAccessOID.OCSP, v) for v in self.ocsp]
+        descs = [x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, v) for v in self._issuers]
+        descs += [x509.AccessDescription(AuthorityInformationAccessOID.OCSP, v) for v in self._ocsp]
         return x509.AuthorityInformationAccess(descriptions=descs)
 
     def from_extension(self, value):
-        self.issuers = GeneralNameList([v.access_location for v in value.value
-                                       if v.access_method == AuthorityInformationAccessOID.CA_ISSUERS])
-        self.ocsp = GeneralNameList([v.access_location for v in value.value
-                                     if v.access_method == AuthorityInformationAccessOID.OCSP])
+        self.issuers = [v.access_location for v in value.value
+                        if v.access_method == AuthorityInformationAccessOID.CA_ISSUERS]
+        self.ocsp = [v.access_location for v in value.value
+                     if v.access_method == AuthorityInformationAccessOID.OCSP]
 
     def from_dict(self, value):
         dict_value = value.get('value', {})
-        self.issuers = GeneralNameList(dict_value.get('issuers'))
-        self.ocsp = GeneralNameList(dict_value.get('ocsp'))
+        self.issuers = dict_value.get('issuers')
+        self.ocsp = dict_value.get('ocsp')
+
+    @property
+    def ocsp(self) -> GeneralNameList:
+        """OCSP endpoints described by this extension."""
+        return self._ocsp
+
+    @ocsp.setter
+    def ocsp(self, value: Union[GeneralNameList, ParsableGeneralNameList]) -> None:
+        if not isinstance(value, GeneralNameList):
+            value = GeneralNameList(value)
+        self._ocsp = value
 
     def serialize_value(self):
         value = {}
-        if self.issuers:
-            value['issuers'] = self.issuers.serialize()
-        if self.ocsp:
-            value['ocsp'] = self.ocsp.serialize()
+        if self._issuers:
+            value['issuers'] = self._issuers.serialize()
+        if self._ocsp:
+            value['ocsp'] = self._ocsp.serialize()
         return value
 
 
@@ -177,15 +196,8 @@ class AuthorityKeyIdentifier(Extension):
     authority_cert_issuer: GeneralNameList
     authority_cert_serial_number: Optional[int] = None
 
-    def __eq__(self, other):
-        return isinstance(other, AuthorityKeyIdentifier) and self.critical == other.critical and \
-            self.key_identifier == other.key_identifier and \
-            self.authority_cert_issuer == other.authority_cert_issuer and \
-            self.authority_cert_serial_number == other.authority_cert_serial_number
-
-    def __hash__(self):
-        issuer = tuple(self.authority_cert_issuer)
-        return hash((self.key_identifier, issuer, self.authority_cert_serial_number, self.critical))
+    def hash_value(self) -> Tuple[Optional[bytes], Tuple[x509.GeneralName, ...], Optional[int]]:
+        return self.key_identifier, tuple(self.authority_cert_issuer), self.authority_cert_serial_number
 
     def repr_value(self):
         values = []
@@ -296,12 +308,8 @@ class BasicConstraints(Extension):
     default_critical = True
     """This extension is marked as critical by default."""
 
-    def __eq__(self, other):
-        return isinstance(other, BasicConstraints) and self.critical == other.critical and \
-            self.ca == other.ca and self.pathlen == other.pathlen
-
-    def __hash__(self):
-        return hash((self.ca, self.pathlen, self.critical, ))
+    def hash_value(self) -> Tuple[bool, Optional[int]]:
+        return self.ca, self.pathlen
 
     def repr_value(self):
         val = 'ca=%s' % self.ca
@@ -663,12 +671,8 @@ class InhibitAnyPolicy(Extension):
     """This extension is marked as critical by default (RFC 5280 requires this extension to be marked as
     critical)."""
 
-    def __hash__(self) -> int:
-        return hash((self.skip_certs, self.critical, ))
-
-    def __eq__(self, other: Any) -> bool:
-        return isinstance(other, InhibitAnyPolicy) and self.critical == other.critical and \
-            self.skip_certs == other.skip_certs
+    def hash_value(self) -> int:
+        return self.skip_certs
 
     def repr_value(self) -> str:
         return str(self.skip_certs)
@@ -737,15 +741,10 @@ class PolicyConstraints(Extension):
     """This extension is marked as critical by default (RFC 5280 requires this extension to be marked as
     critical)."""
 
-    def __eq__(self, other):
-        return isinstance(other, PolicyConstraints) and self.critical == other.critical and \
-            self.require_explicit_policy == other.require_explicit_policy and \
-            self.inhibit_policy_mapping == other.inhibit_policy_mapping
+    def hash_value(self) -> Tuple[int, int]:
+        return self.require_explicit_policy, self.inhibit_policy_mapping
 
-    def __hash__(self):
-        return hash((self.require_explicit_policy, self.inhibit_policy_mapping, self.critical, ))
-
-    def repr_value(self):
+    def repr_value(self) -> str:
         if self.require_explicit_policy is None and self.inhibit_policy_mapping is None:
             return '-'
         values = []
@@ -769,7 +768,7 @@ class PolicyConstraints(Extension):
             if ipm < 0:
                 raise ValueError('%s: inhibit_policy_mapping must be a positive int' % ipm)
 
-    def as_text(self):
+    def as_text(self) -> str:
         lines = []
         if self.inhibit_policy_mapping is not None:
             lines.append('* InhibitPolicyMapping: %s' % self.inhibit_policy_mapping)
@@ -779,7 +778,7 @@ class PolicyConstraints(Extension):
         return '\n'.join(lines)
 
     @property
-    def extension_type(self):
+    def extension_type(self) -> x509.PolicyConstraints:
         return x509.PolicyConstraints(require_explicit_policy=self.require_explicit_policy,
                                       inhibit_policy_mapping=self.inhibit_policy_mapping)
 
@@ -842,23 +841,19 @@ class NameConstraints(Extension):
     _permitted: GeneralNameList
     _excluded: GeneralNameList
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return bool(self._permitted) or bool(self._excluded)
 
-    def __eq__(self, other: Any) -> bool:
-        return isinstance(other, NameConstraints) and self.critical == other.critical and \
-            self._permitted == other._permitted and self.excluded == other._excluded
+    def hash_value(self) -> Tuple[Tuple[x509.GeneralName, ...], Tuple[x509.GeneralName, ...]]:
+        return tuple(self._permitted), tuple(self._excluded)
 
-    def __hash__(self) -> int:
-        return hash((tuple(self._permitted), tuple(self._excluded), self.critical, ))
-
-    def repr_value(self):
+    def repr_value(self) -> str:
         permitted = list(self._permitted.serialize())
         excluded = list(self._excluded.serialize())
 
         return 'permitted=%r, excluded=%r' % (permitted, excluded)
 
-    def as_text(self):
+    def as_text(self) -> str:
         text = ''
         if self._permitted:
             text += 'Permitted:\n'
@@ -872,7 +867,7 @@ class NameConstraints(Extension):
         return text
 
     @property
-    def excluded(self):
+    def excluded(self) -> GeneralNameList:
         """The ``excluded`` value of this instance."""
         return self._excluded
 
@@ -883,7 +878,7 @@ class NameConstraints(Extension):
         self._excluded = value
 
     @property
-    def extension_type(self):
+    def extension_type(self) -> x509.NameConstraints:
         return x509.NameConstraints(permitted_subtrees=self._permitted, excluded_subtrees=self._excluded)
 
     def from_extension(self, value):
@@ -896,12 +891,12 @@ class NameConstraints(Extension):
         self.excluded = value.get('excluded')
 
     @property
-    def permitted(self):
+    def permitted(self) -> GeneralNameList:
         """The ``permitted`` value of this instance."""
         return self._permitted
 
     @permitted.setter
-    def permitted(self, value):
+    def permitted(self, value: Union[GeneralNameList, ParsableGeneralNameList]) -> None:
         if not isinstance(value, GeneralNameList):
             value = GeneralNameList(value)
         self._permitted = value
@@ -1135,12 +1130,8 @@ class SubjectKeyIdentifier(Extension):
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.SUBJECT_KEY_IDENTIFIER
     value: bytes
 
-    def __eq__(self, other: Any) -> bool:
-        return isinstance(other, SubjectKeyIdentifier) and self.critical == other.critical and \
-            self.value == other.value
-
-    def __hash__(self) -> int:
-        return hash((self.critical, self.value))
+    def hash_value(self) -> bytes:
+        return self.value
 
     def repr_value(self) -> str:
         return bytes_to_hex(self.value)

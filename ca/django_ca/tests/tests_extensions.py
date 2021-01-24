@@ -1105,6 +1105,30 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
         self.assertEqual(ext.ocsp, [])
         self.assertEqual(ext.extension_type, x509.AuthorityInformationAccess(descriptions=[]))
 
+    def test_properties(self):
+        """Test issuers and ocsp properties"""
+        expected_issuers = GeneralNameList([self.uri1])
+        expected_ocsp = GeneralNameList([self.uri2])
+        expected = AuthorityInformationAccess({'value': {"issuers": [self.uri1], "ocsp": [self.uri2]}})
+
+        ext = AuthorityInformationAccess()
+        ext.issuers = [self.uri1]
+        ext.ocsp = [self.uri2]
+        self.assertEqual(ext.issuers, expected_issuers)
+        self.assertEqual(ext.ocsp, expected_ocsp)
+        self.assertIsInstance(ext.issuers, GeneralNameList)
+        self.assertIsInstance(ext.ocsp, GeneralNameList)
+        self.assertEqual(ext, expected)
+
+        ext = AuthorityInformationAccess()
+        ext.issuers = expected_issuers
+        ext.ocsp = expected_ocsp
+        self.assertEqual(ext.issuers, expected_issuers)
+        self.assertEqual(ext.ocsp, expected_ocsp)
+        self.assertIsInstance(ext.issuers, GeneralNameList)
+        self.assertIsInstance(ext.ocsp, GeneralNameList)
+        self.assertEqual(ext, expected)
+
 
 class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
     """Test AuthorityKeyIdentifier extension."""
