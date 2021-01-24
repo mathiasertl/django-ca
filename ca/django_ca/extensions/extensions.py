@@ -11,6 +11,9 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
+# pylint: disable=attribute-defined-outside-init; https://github.com/PyCQA/pylint/issues/3605
+# pylint: disable=missing-function-docstring; https://github.com/PyCQA/pylint/issues/3605
+# pylint: disable=too-few-public-methods; https://github.com/PyCQA/pylint/issues/3605
 # pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
 
 """Module providing wrapper classes for various x509 extensions.
@@ -55,7 +58,7 @@ from .base import OrderedSetExtension
 from .utils import PolicyInformation
 
 
-class AuthorityInformationAccess(Extension):
+class AuthorityInformationAccess(Extension[x509.AuthorityInformationAccess]):
     """Class representing a AuthorityInformationAccess extension.
 
     .. seealso::
@@ -161,7 +164,7 @@ class AuthorityInformationAccess(Extension):
         return value
 
 
-class AuthorityKeyIdentifier(Extension):
+class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier]):
     """Class representing a AuthorityKeyIdentifier extension.
 
     This extension identifies the signing CA, so it is not usually defined in a profile or instantiated by a
@@ -224,7 +227,7 @@ class AuthorityKeyIdentifier(Extension):
         return '\n'.join(values)
 
     @property
-    def extension_type(self):
+    def extension_type(self) -> x509.AuthorityKeyIdentifier:
         issuer = self.authority_cert_issuer
         if not issuer:
             issuer = None
@@ -284,7 +287,7 @@ class AuthorityKeyIdentifier(Extension):
         return value
 
 
-class BasicConstraints(Extension):
+class BasicConstraints(Extension[x509.BasicConstraints]):
     """Class representing a BasicConstraints extension.
 
     This class has the boolean attributes ``ca`` and the attribute ``pathlen``, which is either ``None`` or an
@@ -331,7 +334,7 @@ class BasicConstraints(Extension):
             self.pathlen = None
 
     @property
-    def extension_type(self):
+    def extension_type(self) -> x509.BasicConstraints:
         return x509.BasicConstraints(ca=self.ca, path_length=self.pathlen)
 
     def as_text(self):
@@ -360,7 +363,7 @@ class BasicConstraints(Extension):
         return value
 
 
-class CRLDistributionPoints(CRLDistributionPointsBase):
+class CRLDistributionPoints(CRLDistributionPointsBase[x509.CRLDistributionPoints]):
     """Class representing a CRLDistributionPoints extension.
 
     This extension identifies where a client can retrieve a Certificate Revocation List (CRL).
@@ -386,7 +389,7 @@ class CRLDistributionPoints(CRLDistributionPointsBase):
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.CRL_DISTRIBUTION_POINTS
 
 
-class CertificatePolicies(ListExtension):
+class CertificatePolicies(ListExtension[x509.CertificatePolicies]):
     """Class representing a Certificate Policies extension.
 
     The value passed to this extension should be a ``list`` of
@@ -412,16 +415,16 @@ class CertificatePolicies(ListExtension):
     def __hash__(self):
         return hash((tuple(self.value), self.critical, ))
 
-    def repr_value(self):
+    def repr_value(self) -> str:
         if len(self.value) == 1:
             return '1 policy'
         return '%s policies' % len(self.value)
 
-    def as_text(self):
+    def as_text(self) -> str:
         return '\n'.join('* %s' % textwrap.indent(p.as_text(), '  ').strip() for p in self.value)
 
     @property
-    def extension_type(self):
+    def extension_type(self) -> x509.CertificatePolicies:
         return x509.CertificatePolicies(policies=[p.for_extension_type for p in self.value])
 
     def parse_value(self, value):
@@ -433,7 +436,7 @@ class CertificatePolicies(ListExtension):
         return value.serialize()
 
 
-class FreshestCRL(CRLDistributionPointsBase):
+class FreshestCRL(CRLDistributionPointsBase[x509.FreshestCRL]):
     """Class representing a FreshestCRL extension.
 
     This extension handles identically to the :py:class:`~django_ca.extensions.CRLDistributionPoints`
@@ -456,11 +459,11 @@ class FreshestCRL(CRLDistributionPointsBase):
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.FRESHEST_CRL
 
     @property
-    def extension_type(self):
+    def extension_type(self) -> x509.FreshestCRL:
         return x509.FreshestCRL(distribution_points=[dp.for_extension_type for dp in self.value])
 
 
-class IssuerAlternativeName(AlternativeNameExtension):
+class IssuerAlternativeName(AlternativeNameExtension[x509.IssuerAlternativeName]):
     """Class representing an Issuer Alternative Name extension.
 
     This extension is usually marked as non-critical.
@@ -480,11 +483,11 @@ class IssuerAlternativeName(AlternativeNameExtension):
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.ISSUER_ALTERNATIVE_NAME
 
     @property
-    def extension_type(self):
+    def extension_type(self) -> x509.IssuerAlternativeName:
         return x509.IssuerAlternativeName(self.value)
 
 
-class KeyUsage(OrderedSetExtension):
+class KeyUsage(OrderedSetExtension[x509.KeyUsage]):
     """Class representing a KeyUsage extension, which defines the purpose of a certificate.
 
     This extension is usually marked as critical and RFC 5280 defines that conforming CAs SHOULD mark it as
@@ -577,7 +580,7 @@ class KeyUsage(OrderedSetExtension):
         return self._CRYPTOGRAPHY_MAPPING_REVERSED[value]
 
 
-class ExtendedKeyUsage(OrderedSetExtension):
+class ExtendedKeyUsage(OrderedSetExtension[x509.ExtendedKeyUsage]):
     """Class representing a ExtendedKeyUsage extension."""
 
     key = 'extended_key_usage'
@@ -641,7 +644,7 @@ class ExtendedKeyUsage(OrderedSetExtension):
         raise ValueError('Unknown value: %s' % value)
 
 
-class InhibitAnyPolicy(Extension):
+class InhibitAnyPolicy(Extension[x509.InhibitAnyPolicy]):
     """Class representing a InhibitAnyPolicy extension.
 
     Example::
@@ -710,7 +713,7 @@ class InhibitAnyPolicy(Extension):
         return self.skip_certs
 
 
-class PolicyConstraints(Extension):
+class PolicyConstraints(Extension[x509.PolicyConstraints]):
     """Class representing a PolicyConstraints extension.
 
     Example::
@@ -801,7 +804,7 @@ class PolicyConstraints(Extension):
         return value
 
 
-class NameConstraints(Extension):
+class NameConstraints(Extension[x509.NameConstraints]):
     """Class representing a NameConstraints extension.
 
     Unlike most other extensions, this extension does not accept a string as value, but you can pass a list
@@ -909,7 +912,7 @@ class NameConstraints(Extension):
         }
 
 
-class OCSPNoCheck(NullExtension):
+class OCSPNoCheck(NullExtension[x509.OCSPNoCheck]):
     """Extension to indicate that an OCSP client should (blindly) trust the certificate for it's lifetime.
 
     As a NullExtension, any value is ignored and you can pass a simple empty ``dict`` (or nothing at all) to
@@ -934,7 +937,7 @@ class OCSPNoCheck(NullExtension):
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.OCSP_NO_CHECK
 
 
-class PrecertPoison(NullExtension):
+class PrecertPoison(NullExtension[x509.PrecertPoison]):
     """Extension to indicate that the certificate is a submission to a certificate transparency log.
 
     Note that creating this extension will raise ``ValueError`` if it is not marked as critical:
@@ -967,7 +970,9 @@ class PrecertPoison(NullExtension):
             raise ValueError('PrecertPoison must always be marked as critical')
 
 
-class PrecertificateSignedCertificateTimestamps(ListExtension):
+class PrecertificateSignedCertificateTimestamps(
+    ListExtension[x509.PrecertificateSignedCertificateTimestamps]
+):
     """Class representing signed certificate timestamps.
 
     This extension can be used to verify that a certificate is included in a Certificate Transparency log.
@@ -1074,7 +1079,7 @@ class PrecertificateSignedCertificateTimestamps(ListExtension):
         }
 
 
-class SubjectAlternativeName(AlternativeNameExtension):
+class SubjectAlternativeName(AlternativeNameExtension[x509.SubjectAlternativeName]):
     """Class representing an Subject Alternative Name extension.
 
     This extension is usually marked as non-critical.
@@ -1111,7 +1116,7 @@ class SubjectAlternativeName(AlternativeNameExtension):
         return x509.SubjectAlternativeName(self.value)
 
 
-class SubjectKeyIdentifier(Extension):
+class SubjectKeyIdentifier(Extension[x509.SubjectKeyIdentifier]):
     """Class representing a SubjectKeyIdentifier extension.
 
     This extension identifies the certificate, so it is not usually defined in a profile or instantiated by a
@@ -1162,7 +1167,7 @@ class SubjectKeyIdentifier(Extension):
         return bytes_to_hex(self.value)
 
 
-class TLSFeature(OrderedSetExtension):
+class TLSFeature(OrderedSetExtension[x509.TLSFeature]):
     """Class representing a TLSFeature extension.
 
     As a :py:class:`~django_ca.extensions.base.OrderedSetExtension`, this extension handles much like it's

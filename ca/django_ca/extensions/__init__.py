@@ -19,6 +19,7 @@ in a more pythonic manner and provide access functions."""
 # pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
 
 import re
+from typing import Any
 from typing import Dict
 from typing import Type
 from typing import Union
@@ -47,7 +48,8 @@ from .extensions import SubjectAlternativeName
 from .extensions import SubjectKeyIdentifier
 from .extensions import TLSFeature
 
-KEY_TO_EXTENSION: Dict[str, Type[Extension]] = {
+# NOTE: for some reason, extension classes are Extension[Any] in the dictionary.
+KEY_TO_EXTENSION: Dict[str, Type[Extension[Any]]] = {
     AuthorityInformationAccess.key: AuthorityInformationAccess,
     AuthorityKeyIdentifier.key: AuthorityKeyIdentifier,
     BasicConstraints.key: BasicConstraints,
@@ -68,10 +70,13 @@ KEY_TO_EXTENSION: Dict[str, Type[Extension]] = {
     TLSFeature.key: TLSFeature,
 }
 
-OID_TO_EXTENSION: Dict[x509.ObjectIdentifier, Type[Extension]] = {e.oid: e for e in KEY_TO_EXTENSION.values()}
+OID_TO_EXTENSION: Dict[
+    x509.ObjectIdentifier,
+    Type[Extension[x509.ExtensionType]]
+] = {e.oid: e for e in KEY_TO_EXTENSION.values()}
 
 
-def get_extension_name(ext: Union[ExtensionType, Extension]) -> str:
+def get_extension_name(ext: Union[ExtensionType, Extension[x509.ExtensionType]]) -> str:
     """Function to get the name of an extension.
 
     >>> ext = x509.BasicConstraints(ca=True, path_length=3)

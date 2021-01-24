@@ -23,6 +23,7 @@ from typing import Iterable
 from typing import List
 from typing import Mapping
 from typing import Optional
+from typing import TypeVar
 from typing import Union
 
 from cryptography import x509
@@ -47,6 +48,10 @@ PolicyQualifier = Union[str, x509.UserNotice]
 # GeneralNameList
 ParsableGeneralName = Union[x509.GeneralName, str]
 ParsableGeneralNameList = Iterable[ParsableGeneralName]
+
+ExtensionTypeTypeVar = TypeVar('ExtensionTypeTypeVar', bound=x509.ExtensionType)
+"""A type variable for a :py:class:`~cg:cryptography.x509.ExtensionType` instance."""
+
 
 if TYPE_CHECKING:
     ExtensionType = x509.Extension[x509.ExtensionType]

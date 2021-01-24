@@ -16,11 +16,12 @@
 # pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
 
 import textwrap
-from abc import ABC
+from abc import ABCMeta
 from abc import abstractmethod
 from typing import Any
 from typing import ClassVar
 from typing import Collection
+from typing import Generic
 from typing import Hashable
 from typing import List
 from typing import Union
@@ -28,13 +29,14 @@ from typing import Union
 from cryptography import x509
 
 from ..typehints import DistributionPointType
+from ..typehints import ExtensionTypeTypeVar
 from ..typehints import SerializedCRLDistributionPoints
 from ..utils import GeneralNameList
 from ..utils import format_general_name
 from .utils import DistributionPoint
 
 
-class Extension(ABC):
+class Extension(Generic[ExtensionTypeTypeVar], metaclass=ABCMeta):
     """Convenience class to handle X509 Extensions.
 
     The value is a ``dict`` as used by the :ref:`CA_PROFILES <settings-ca-profiles>` setting::
@@ -134,7 +136,7 @@ class Extension(ABC):
 
     @property
     @abstractmethod
-    def extension_type(self):
+    def extension_type(self) -> ExtensionTypeTypeVar:
         """cryptography.x509.ExtensionType: The ``ExtensionType`` instance of this extension.
 
         Implementing classes are expected to implement this function."""
@@ -150,7 +152,7 @@ class Extension(ABC):
         return {'extension': self.extension_type, 'critical': self.critical}
 
     @abstractmethod
-    def from_extension(self, value):
+    def from_extension(self, value: ExtensionTypeTypeVar) -> None:
         """Load a wrapper class from a cryptography extension instance.
 
         Implementing classes are expected to implement this function."""
@@ -244,7 +246,7 @@ class UnrecognizedExtension(Extension):
         raise ValueError('Cannot serialize an unrecognized extension')
 
 
-class NullExtension(Extension):
+class NullExtension(Extension[ExtensionTypeTypeVar]):
     """Base class for extensions that do not have a value.
 
     .. versionchanged:: 1.18.0
@@ -309,7 +311,7 @@ class NullExtension(Extension):
         return
 
 
-class IterableExtension(Extension):
+class IterableExtension(Extension[ExtensionTypeTypeVar]):
     """Base class for iterable extensions.
 
     Extensions of this class can be used just like any other iterable, e.g.:
@@ -363,7 +365,7 @@ class IterableExtension(Extension):
         return value
 
 
-class ListExtension(IterableExtension):
+class ListExtension(IterableExtension[ExtensionTypeTypeVar]):
     """Base class for extensions with multiple ordered values.
 
     .. versionchanged:: 1.18.0
@@ -425,7 +427,7 @@ class ListExtension(IterableExtension):
     # pylint: enable=missing-function-docstring
 
 
-class OrderedSetExtension(IterableExtension):
+class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar]):
     """Base class for extensions that contain a set of values.
 
     .. versionchanged:: 1.18.0
@@ -567,7 +569,7 @@ class OrderedSetExtension(IterableExtension):
     # pylint: enable=missing-function-docstring
 
 
-class AlternativeNameExtension(ListExtension):  # pylint: disable=abstract-method
+class AlternativeNameExtension(ListExtension[ExtensionTypeTypeVar]):  # pylint: disable=abstract-method
     """Base class for extensions that contain a list of general names.
 
     This class also allows you to pass :py:class:`~cg:cryptography.x509.GeneralName` instances::
@@ -597,7 +599,7 @@ class AlternativeNameExtension(ListExtension):  # pylint: disable=abstract-metho
         return format_general_name(value)
 
 
-class CRLDistributionPointsBase(ListExtension):
+class CRLDistributionPointsBase(ListExtension[ExtensionTypeTypeVar]):
     """Base class for :py:class:`~django_ca.extensions.CRLDistributionPoints` and
     :py:class:`~django_ca.extensions.FreshestCRL`.
     """
