@@ -14,6 +14,7 @@
 """Base classes for x509 extensions."""
 
 # pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
+# pylint: disable=missing-function-docstring; https://github.com/PyCQA/pylint/issues/3605
 
 import textwrap
 from abc import ABCMeta
@@ -502,6 +503,7 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar]):
         return set(self.parse_value(i) for i in iterable)
 
     def from_dict(self, value):
+        # pylint: disable=attribute-defined-outside-init; https://github.com/PyCQA/pylint/issues/3605
         self.value = self.parse_iterable(value.get('value', set()))
 
     def serialize_value(self):
