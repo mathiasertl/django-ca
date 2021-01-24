@@ -839,32 +839,34 @@ class NameConstraints(Extension):
     """This extension is marked as critical by default."""
 
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.NAME_CONSTRAINTS
+    _permitted: GeneralNameList
+    _excluded: GeneralNameList
 
     def __bool__(self):
-        return bool(self.value['permitted']) or bool(self.value['excluded'])
+        return bool(self._permitted) or bool(self._excluded)
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, NameConstraints) and self.critical == other.critical and \
-            self.value == other.value
+            self._permitted == other._permitted and self.excluded == other._excluded
 
     def __hash__(self) -> int:
-        return hash((tuple(self.value['permitted']), tuple(self.value['excluded']), self.critical, ))
+        return hash((tuple(self._permitted), tuple(self._excluded), self.critical, ))
 
     def repr_value(self):
-        permitted = list(self.value['permitted'].serialize())
-        excluded = list(self.value['excluded'].serialize())
+        permitted = list(self._permitted.serialize())
+        excluded = list(self._excluded.serialize())
 
         return 'permitted=%r, excluded=%r' % (permitted, excluded)
 
     def as_text(self):
         text = ''
-        if self.value['permitted']:
+        if self._permitted:
             text += 'Permitted:\n'
-            for name in self.value['permitted'].serialize():
+            for name in self._permitted.serialize():
                 text += '  * %s\n' % name
-        if self.value['excluded']:
+        if self._excluded:
             text += 'Excluded:\n'
-            for name in self.value['excluded'].serialize():
+            for name in self._excluded.serialize():
                 text += '  * %s\n' % name
 
         return text
@@ -872,43 +874,42 @@ class NameConstraints(Extension):
     @property
     def excluded(self):
         """The ``excluded`` value of this instance."""
-        return self.value['excluded']
+        return self._excluded
 
     @excluded.setter
     def excluded(self, value):
-        self.value['excluded'] = GeneralNameList(value)
+        if not isinstance(value, GeneralNameList):
+            value = GeneralNameList(value)
+        self._excluded = value
 
     @property
     def extension_type(self):
-        return x509.NameConstraints(permitted_subtrees=self.value['permitted'],
-                                    excluded_subtrees=self.value['excluded'])
+        return x509.NameConstraints(permitted_subtrees=self._permitted, excluded_subtrees=self._excluded)
 
     def from_extension(self, value):
-        self.value = {
-            'permitted': GeneralNameList(value.value.permitted_subtrees),
-            'excluded': GeneralNameList(value.value.excluded_subtrees),
-        }
+        self.permitted = value.value.permitted_subtrees
+        self.excluded = value.value.excluded_subtrees
 
     def from_dict(self, value):
         value = value.get('value', {})
-        self.value = {
-            'permitted': GeneralNameList(value.get('permitted')),
-            'excluded': GeneralNameList(value.get('excluded')),
-        }
+        self.permitted = value.get('permitted')
+        self.excluded = value.get('excluded')
 
     @property
     def permitted(self):
         """The ``permitted`` value of this instance."""
-        return self.value['permitted']
+        return self._permitted
 
     @permitted.setter
     def permitted(self, value):
-        self.value['permitted'] = GeneralNameList(value)
+        if not isinstance(value, GeneralNameList):
+            value = GeneralNameList(value)
+        self._permitted = value
 
     def serialize_value(self):
         return {
-            'permitted': list(self.value['permitted'].serialize()),
-            'excluded': list(self.value['excluded'].serialize()),
+            'permitted': list(self._permitted.serialize()),
+            'excluded': list(self._excluded.serialize()),
         }
 
 

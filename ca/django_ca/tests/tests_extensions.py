@@ -1988,14 +1988,24 @@ class NameConstraintsTestCase(ExtensionTestMixin, TestCase):
 
     def test_setters(self):
         """Test items etters."""
+        expected = NameConstraints({'value': {
+            'permitted': ['example.com'],
+            'excluded': ['example.net'],
+        }})
+        ext = NameConstraints()
+        ext.permitted = ['example.com']
+        ext.excluded = ['example.net']
+        self.assertEqual(ext, expected)
+
+        ext = NameConstraints()
+        ext.permitted = GeneralNameList(['example.com'])
+        ext.excluded = GeneralNameList(['example.net'])
+        self.assertEqual(ext, expected)
+
         ext = NameConstraints()
         ext.permitted += ['example.com']
         ext.excluded += ['example.net']
-
-        self.assertExtensionEqual(ext, NameConstraints({'value': {
-            'permitted': ['example.com'],
-            'excluded': ['example.net']
-        }}))
+        self.assertExtensionEqual(ext, expected)
 
     def test_none_value(self):
         """Test that we can use and pass None as values for GeneralNamesList values."""
@@ -2010,6 +2020,9 @@ class NameConstraintsTestCase(ExtensionTestMixin, TestCase):
                          x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[]))
         self.assertEqual(ext.excluded, [])
         self.assertEqual(ext.permitted, [])
+
+    def test_value(self):
+        return
 
 
 class OCSPNoCheckTestCase(NullExtensionTestMixin, TestCase):
