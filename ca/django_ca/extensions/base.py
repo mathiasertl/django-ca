@@ -398,7 +398,6 @@ class ListExtension(IterableExtension[ExtensionTypeTypeVar]):
         self.value = [self.parse_value(v) for v in value]
 
     # Implement functions provided by list(). Class mentions that this provides the same methods.
-    # pylint: disable=missing-function-docstring
 
     def append(self, value):
         self.value.append(self.parse_value(value))
@@ -425,7 +424,6 @@ class ListExtension(IterableExtension[ExtensionTypeTypeVar]):
 
     def remove(self, value):
         return self.value.remove(self.parse_value(value))
-    # pylint: enable=missing-function-docstring
 
 
 class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar]):
@@ -510,7 +508,6 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar]):
         return list(sorted(self.serialize_item(v) for v in self.value))
 
     # Implement functions provided by set(). Class mentions that this provides the same methods.
-    # pylint: disable=missing-function-docstring
 
     def add(self, elem):
         self.value.add(self.parse_value(elem))
@@ -567,8 +564,6 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar]):
     def update(self, *others):
         for elem in others:
             self.value.update(self.parse_iterable(elem))
-
-    # pylint: enable=missing-function-docstring
 
 
 class AlternativeNameExtension(ListExtension[ExtensionTypeTypeVar]):  # pylint: disable=abstract-method
