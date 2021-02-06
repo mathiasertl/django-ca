@@ -365,7 +365,7 @@ class IterableExtension(Extension[ExtensionTypeTypeVar, List[SerializedItem]],
 
         return [self.serialize_item(v) for v in self.value]  # pylint: disable=not-an-iterable
 
-    def serialize_item(self, value) -> SerializedItem:
+    def serialize_item(self, value) -> 'SerializedItem':
         """Serialize a single item in the iterable contained in this extension."""
 
         return value

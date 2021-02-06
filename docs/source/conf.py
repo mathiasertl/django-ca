@@ -451,6 +451,7 @@ lexers['shell-session'] = BashSessionLexer()
 #   See also: https://github.com/sphinx-doc/sphinx/issues/4826
 qualname_overrides = {
     'ExtensionTypeTypeVar': 'cg:cryptography.x509.ExtensionType',
+    "SerializedItem": ":py:data:`django_ca.typehints.SerializedItem`",
     'Union': 'python:typing.Union',
     'cryptography.hazmat._oid.ObjectIdentifier': 'cg:cryptography.x509.ObjectIdentifier',
     'cryptography.hazmat.primitives.serialization.base.Encoding':
@@ -499,14 +500,13 @@ fa_orig = sphinx_autodoc_typehints.format_annotation
 def format_annotation(annotation, fully_qualified: bool = False):
     if inspect.isclass(annotation):
         full_name = f'{annotation.__module__}.{annotation.__qualname__}'
-        if 'ident' in full_name.lower():
-            print(full_name)
         override = qualname_overrides.get(full_name)
         if override is not None:
             return f':py:class:`~{override}`'
     return fa_orig(annotation, fully_qualified=fully_qualified)
 
 
+# Appears to be covered by doctree-reload hook, leaving here for future reference
 #sphinx_autodoc_typehints.format_annotation = format_annotation
 
 
@@ -523,7 +523,13 @@ def resolve_internal_aliases(app, doctree):
         alias = node.get('reftarget', None)
 
         if alias is not None and alias in qualname_overrides:
-            node['reftarget'] = qualname_overrides[alias]
+            reftype_match = re.match(r":py:([^:]*):`(.*)`", qualname_overrides[alias])
+            if reftype_match is not None:
+                reftype, target = reftype_match.groups()
+                node["reftype"] = reftype
+                node["reftarget"] = target
+            else:
+                node["reftarget"] = qualname_overrides[alias]
 
             # In TypeVar cases, this is plain text and not a type, so we wrap it ina literal for common look
             #if not isinstance(node.children[0], literal):
