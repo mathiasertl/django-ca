@@ -52,16 +52,22 @@ ParsableGeneralNameList = Iterable[ParsableGeneralName]
 ExtensionTypeTypeVar = TypeVar("ExtensionTypeTypeVar", bound=x509.ExtensionType)
 """A type variable for a :py:class:`~cg:cryptography.x509.ExtensionType` instance."""
 
+ParsableItem = TypeVar("ParsableItem")
+ParsableValue = TypeVar("ParsableValue")
+
 SerializedItem = TypeVar("SerializedItem")
 """TypeVar representing a serialized item for an iterable extension."""
 
 SerializedValue = TypeVar("SerializedValue")
 """TypeVar representing a serialized value for an extension."""
 
+ParsableSubjectKeyIdentifier = Union[str, bytes]
+
 if TYPE_CHECKING:
     ExtensionTypeVar = x509.Extension[ExtensionTypeTypeVar]
     ExtensionType = x509.Extension[x509.ExtensionType]
     SubjectKeyIdentifierType = x509.Extension[x509.SubjectKeyIdentifier]
+    UnrecognizedExtensionType = x509.Extension[x509.UnrecognizedExtension]
     TLSFeatureExtensionType = x509.Extension[x509.TLSFeature]
     PrecertificateSignedCertificateTimestampsType = x509.Extension[
         x509.PrecertificateSignedCertificateTimestamps
@@ -70,20 +76,24 @@ else:
     ExtensionType = ExtensionTypeVar = x509.Extension
     SubjectKeyIdentifierType = (
         TLSFeatureExtensionType
-    ) = PrecertificateSignedCertificateTimestampsType = x509.ExtensionType
+    ) = UnrecognizedExtensionType = PrecertificateSignedCertificateTimestampsType = x509.ExtensionType
 
 if sys.version_info >= (3, 8):  # pragma: only py>=3.8
     # NOTE: without the "as SupportsIndex", mypy won't consider this as "re-exported"
     from typing import SupportsIndex as SupportsIndex  # pylint: disable=useless-import-alias
     from typing import TypedDict
 
-    ParsableSubjectKeyIdentifier = TypedDict(
-        "ParsableSubjectKeyIdentifier",
-        {
-            "critical": bool,
-            "value": Union[str, bytes],
-        },
-    )
+    ParsableNameConstraints = TypedDict("ParsableNameConstraints", {
+        "permitted": ParsableGeneralNameList,
+        "excluded": ParsableGeneralNameList,
+    }, total=False)
+    ParsableNullExtension = TypedDict("ParsableNullExtension", {
+        "critical": bool,
+    }, total=False)
+    ParsablePolicyConstraints = TypedDict("ParsablePolicyConstraints", {
+        "require_explicit_policy": int,
+        "inhibit_policy_mapping": int,
+    }, total=False)
 
     SerializedBasicConstraintsBase = TypedDict("SerializedBasicConstraintsBase", {"ca": bool})
 
@@ -147,12 +157,17 @@ if sys.version_info >= (3, 8):  # pragma: only py>=3.8
     )
     """A dictionary with four keys: log_id, timestamp, type, version, values are all str."""
 else:  # pragma: only py<3.8
-    ParsableSubjectKeyIdentifier = Dict[str, Union[bool, str, bytes]]
     SupportsIndex = Any
+    ParsableExtension = Dict[str, Union[bool, ParsableValue]]
+    ParsableNameConstraints = Dict[str, ParsableGeneralNameList]
+    ParsableNullExtension = Dict[str, bool]
+    ParsablePolicyConstraints = Dict[str, int]
+
     SerializedAuthorityInformationAccess = SerializedNameConstraints = Dict[str, List[str]]
     SerializedAuthorityKeyIdentifier = Dict[str, Union[str, int, List[str]]]
     SerializedBasicConstraints = Dict[str, Union[bool, str, None]]
     SerializedCRLDistributionPoints = Dict[str, Union[bool, List[Any]]]
+    SerializedPolicyConstraints = Dict[str, int]
     SerializedSignedCertificateTimestamp = Dict[str, str]
 
 ParsableSignedCertificateTimestamp = Union[SerializedSignedCertificateTimestamp, SignedCertificateTimestamp]

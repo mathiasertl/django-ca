@@ -25,7 +25,10 @@ from typing import Collection
 from typing import Dict
 from typing import Generic
 from typing import Hashable
+from typing import Iterable
 from typing import List
+from typing import NoReturn
+from typing import Optional
 from typing import Set
 from typing import Union
 
@@ -34,15 +37,19 @@ from cryptography import x509
 from ..typehints import DistributionPointType
 from ..typehints import ExtensionType
 from ..typehints import ExtensionTypeTypeVar
+from ..typehints import ParsableItem
+from ..typehints import ParsableNullExtension
+from ..typehints import ParsableValue
 from ..typehints import SerializedCRLDistributionPoints
 from ..typehints import SerializedItem
 from ..typehints import SerializedValue
+from ..typehints import UnrecognizedExtensionType
 from ..utils import GeneralNameList
 from ..utils import format_general_name
 from .utils import DistributionPoint
 
 
-class Extension(Generic[ExtensionTypeTypeVar, SerializedValue], metaclass=ABCMeta):
+class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], metaclass=ABCMeta):
     """Convenience class to handle X509 Extensions.
 
     The value is a ``dict`` as used by the :ref:`CA_PROFILES <settings-ca-profiles>` setting::
@@ -96,11 +103,11 @@ class Extension(Generic[ExtensionTypeTypeVar, SerializedValue], metaclass=ABCMet
     key = ''  # must be overwritten by actual classes
 
     default_critical: bool = False
-    default_value: ClassVar[Dict] = {}
+    default_value: ParsableValue = {}
     name: ClassVar[str]
     oid: ClassVar[x509.ObjectIdentifier]
 
-    def __init__(self, value=None):
+    def __init__(self, value: Optional[Union[ExtensionType, Dict[str, Any]]] = None) -> None:
         if value is None:
             value = {}
 
@@ -149,7 +156,7 @@ class Extension(Generic[ExtensionTypeTypeVar, SerializedValue], metaclass=ABCMet
 
         Implementing classes are expected to implement this function."""
 
-    def for_builder(self):
+    def for_builder(self) -> Dict[str, Union[bool, ExtensionTypeTypeVar]]:
         """Return kwargs suitable for a :py:class:`~cg:cryptography.x509.CertificateBuilder`.
 
         Example::
@@ -166,12 +173,12 @@ class Extension(Generic[ExtensionTypeTypeVar, SerializedValue], metaclass=ABCMet
         Implementing classes are expected to implement this function."""
 
     @abstractmethod
-    def from_dict(self, value):
+    def from_dict(self, value: ParsableValue) -> None:
         """Load class from a dictionary.
 
         Implementing classes are expected to implement this function."""
 
-    def from_other(self, value):
+    def from_other(self, value: Any) -> None:
         """Load class from any other value type.
 
         This class can be overwritten to allow loading classes from different types."""
@@ -190,7 +197,7 @@ class Extension(Generic[ExtensionTypeTypeVar, SerializedValue], metaclass=ABCMet
 
         Implementing classes are expected to implement this function."""
 
-    def serialize(self):
+    def serialize(self) -> Dict[str, Union[bool, SerializedValue]]:
         """Serialize this extension to a string in a way that it can be passed to a constructor again.
 
         For example, this should always be True::
@@ -206,43 +213,47 @@ class Extension(Generic[ExtensionTypeTypeVar, SerializedValue], metaclass=ABCMet
         }
 
     @abstractmethod
-    def serialize_value(self):
+    def serialize_value(self) -> SerializedValue:
         """Serialize the value for this extension.
 
         Implementing classes are expected to implement this function."""
 
 
-class UnrecognizedExtension(Extension):
+class UnrecognizedExtension(Extension[x509.UnrecognizedExtension, None, None]):
     """Class wrapping any extension this module does **not** support."""
 
     # pylint: disable=abstract-method; We don't know the extension_type
     # pylint: disable=super-init-not-called; UnrecognizedExtension really is a special case
 
-    def __init__(self, value, name='', error=''):
+    name: str  # type: ignore[misc]
+    oid: x509.ObjectIdentifier  # type: ignore[misc]
+
+    def __init__(self, value: UnrecognizedExtensionType, name: str = '', error: str = ''):
         if not isinstance(value, x509.Extension):
             raise TypeError("Value must be a x509.Extension instance")
         if not isinstance(value.value, x509.UnrecognizedExtension):
             raise TypeError("Extension value must be a x509.UnrecognizedExtension")
 
         self._error = error
-        self.name = name
         self.value = value.value
         self.critical = value.critical
         self.oid = value.oid
-        if not self.name:
-            self.name = 'Unsupported extension (OID %s)' % (self.value.oid.dotted_string)
+
+        if not name:
+            name = 'Unsupported extension (OID %s)' % (self.oid.dotted_string)
+        self.name = name
 
     def repr_value(self) -> str:
         return '<unprintable>'
 
     @property
-    def extension_type(self):
+    def extension_type(self) -> x509.UnrecognizedExtension:
         return self.value
 
-    def from_dict(self, value):  # pragma: no cover
+    def from_dict(self, value: Any) -> NoReturn:  # pragma: no cover
         raise NotImplementedError
 
-    def from_extension(self, value):  # pragma: no cover
+    def from_extension(self, value: Any) -> NoReturn:  # pragma: no cover
         raise NotImplementedError
 
     def as_text(self) -> str:
@@ -250,11 +261,11 @@ class UnrecognizedExtension(Extension):
             return 'Could not parse extension (%s)' % self._error
         return 'Could not parse extension'
 
-    def serialize_value(self):
+    def serialize_value(self) -> NoReturn:
         raise ValueError('Cannot serialize an unrecognized extension')
 
 
-class NullExtension(Extension[ExtensionTypeTypeVar, None]):
+class NullExtension(Extension[ExtensionTypeTypeVar, None, None]):
     """Base class for extensions that do not have a value.
 
     .. versionchanged:: 1.18.0
@@ -280,7 +291,7 @@ class NullExtension(Extension[ExtensionTypeTypeVar, None]):
 
     name: ClassVar[str]
 
-    def __init__(self, value=None):
+    def __init__(self, value: Optional[Union[ExtensionTypeTypeVar, ParsableNullExtension]] = None) -> None:
         self.value = {}
         if not value:
             self.critical = self.default_critical
@@ -319,8 +330,8 @@ class NullExtension(Extension[ExtensionTypeTypeVar, None]):
         return
 
 
-class IterableExtension(Extension[ExtensionTypeTypeVar, List[SerializedItem]],
-                        Generic[ExtensionTypeTypeVar, SerializedItem]):
+class IterableExtension(Extension[ExtensionTypeTypeVar, Iterable[ParsableItem], List[SerializedItem]],
+                        Generic[ExtensionTypeTypeVar, ParsableItem, SerializedItem]):
     """Base class for iterable extensions.
 
     Extensions of this class can be used just like any other iterable, e.g.:
@@ -374,7 +385,7 @@ class IterableExtension(Extension[ExtensionTypeTypeVar, List[SerializedItem]],
         return value
 
 
-class ListExtension(IterableExtension[ExtensionTypeTypeVar, SerializedItem]):
+class ListExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, SerializedItem]):
     """Base class for extensions with multiple ordered values.
 
     .. versionchanged:: 1.18.0
@@ -414,7 +425,7 @@ class ListExtension(IterableExtension[ExtensionTypeTypeVar, SerializedItem]):
     def clear(self):
         self.value.clear()
 
-    def count(self, value: str):
+    def count(self, value: ParsableItem):
         try:
             return self.value.count(self.parse_value(value))
         except ValueError:
@@ -434,7 +445,7 @@ class ListExtension(IterableExtension[ExtensionTypeTypeVar, SerializedItem]):
         return self.value.remove(self.parse_value(value))
 
 
-class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, SerializedItem]):
+class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, SerializedItem]):
     """Base class for extensions that contain a set of values.
 
     .. versionchanged:: 1.18.0
@@ -575,7 +586,7 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, SerializedItem
             self.value.update(self.parse_iterable(elem))
 
 
-class AlternativeNameExtension(ListExtension[ExtensionTypeTypeVar, SerializedItem]):
+class AlternativeNameExtension(ListExtension[ExtensionTypeTypeVar, ParsableItem, SerializedItem]):
     """Base class for extensions that contain a list of general names.
 
     This class also allows you to pass :py:class:`~cg:cryptography.x509.GeneralName` instances::
@@ -606,7 +617,7 @@ class AlternativeNameExtension(ListExtension[ExtensionTypeTypeVar, SerializedIte
         return format_general_name(value)
 
 
-class CRLDistributionPointsBase(ListExtension[ExtensionTypeTypeVar, SerializedItem]):
+class CRLDistributionPointsBase(ListExtension[ExtensionTypeTypeVar, ParsableItem, SerializedItem]):
     """Base class for :py:class:`~django_ca.extensions.CRLDistributionPoints` and
     :py:class:`~django_ca.extensions.FreshestCRL`.
     """
