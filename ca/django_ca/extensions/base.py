@@ -30,7 +30,9 @@ from typing import Union
 from cryptography import x509
 
 from ..typehints import DistributionPointType
+from ..typehints import ExtensionType
 from ..typehints import ExtensionTypeTypeVar
+from ..typehints import ExtensionTypeVar
 from ..typehints import SerializedCRLDistributionPoints
 from ..utils import GeneralNameList
 from ..utils import format_general_name
@@ -126,7 +128,7 @@ class Extension(Generic[ExtensionTypeTypeVar], metaclass=ABCMeta):
     def _test_value(self) -> None:
         pass
 
-    def as_extension(self):
+    def as_extension(self) -> ExtensionType:
         """This extension as :py:class:`~cg:cryptography.x509.Extension`."""
         ext = self.extension_type  # extra line to raise NotImplementedError for abstract base classes
         return x509.Extension(oid=self.oid, critical=self.critical, value=ext)

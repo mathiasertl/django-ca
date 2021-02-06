@@ -54,14 +54,16 @@ ExtensionTypeTypeVar = TypeVar('ExtensionTypeTypeVar', bound=x509.ExtensionType)
 
 
 if TYPE_CHECKING:
+    ExtensionTypeVar = x509.Extension[ExtensionTypeTypeVar]
     ExtensionType = x509.Extension[x509.ExtensionType]
     SubjectKeyIdentifierType = x509.Extension[x509.SubjectKeyIdentifier]
     TLSFeatureExtensionType = x509.Extension[x509.TLSFeature]
     PrecertificateSignedCertificateTimestampsType = \
         x509.Extension[x509.PrecertificateSignedCertificateTimestamps]
 else:
-    ExtensionType = SubjectKeyIdentifierType = TLSFeatureExtensionType = \
-        PrecertificateSignedCertificateTimestampsType = x509.Extension
+    ExtensionType = ExtensionTypeVar = x509.Extension
+    SubjectKeyIdentifierType = TLSFeatureExtensionType = \
+        PrecertificateSignedCertificateTimestampsType = x509.ExtensionType
 
 if sys.version_info >= (3, 8):  # pragma: only py>=3.8
     from typing import TypedDict
