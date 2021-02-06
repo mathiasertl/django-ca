@@ -33,6 +33,7 @@ from typing import Tuple
 from typing import Type
 from typing import Union
 from typing import cast
+from typing import overload
 from urllib.parse import urlparse
 
 import idna
@@ -54,6 +55,7 @@ from django.utils.encoding import force_str
 from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
+from .typehints import SupportsIndex
 from .typehints import ParsableGeneralName
 from .typehints import ParsableGeneralNameList
 
@@ -1050,14 +1052,25 @@ class GeneralNameList(List[x509.GeneralName]):
     def __repr__(self) -> str:
         return '<GeneralNameList: %r>' % [format_general_name(v) for v in self]
 
+    # orig
+    #def __setitem__(self, key: int, value: ParsableGeneralName) -> None:
+    @overload
+    def __setitem__(self, key: SupportsIndex, value: ParsableGeneralName) -> None:
+        ...
+
+    @overload
+    def __setitem__(self, key: slice, value: ParsableGeneralNameList) -> None:
+        ...
+
     def __setitem__(
-            self, key: Union[int, slice],
+            self, key: Union[SupportsIndex, slice],
             value: Union[ParsableGeneralNameList, ParsableGeneralName]
     ) -> None:  # l[0] = 'example.com'
         if isinstance(key, slice) and isinstance(value, abc.Iterable):
-            # l[0:1] = ['example.com']
+            # equivalent to l[0:1] = ['example.com']
             list.__setitem__(self, key, (parse_general_name(v) for v in value))
         elif isinstance(key, int) and isinstance(value, (x509.GeneralName, str)):
+            # equivalent to l[0] = 'example.com'
             list.__setitem__(self, key, parse_general_name(value))
         else:
             raise TypeError("%s/%s: Invalid key/value type." % (key, value))

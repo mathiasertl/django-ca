@@ -16,6 +16,7 @@
 # pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
 
 import sys
+from abc import abstractmethod
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
@@ -23,8 +24,10 @@ from typing import Iterable
 from typing import List
 from typing import Mapping
 from typing import Optional
+from typing import Protocol
 from typing import TypeVar
 from typing import Union
+from typing import runtime_checkable
 
 from cryptography import x509
 from cryptography.x509.certificate_transparency import SignedCertificateTimestamp
@@ -71,6 +74,8 @@ else:
         PrecertificateSignedCertificateTimestampsType = x509.ExtensionType
 
 if sys.version_info >= (3, 8):  # pragma: only py>=3.8
+    # NOTE: without the "as SupportsIndex", mypy won't consider this as "re-exported"
+    from typing import SupportsIndex as SupportsIndex
     from typing import TypedDict
 
     ParsableSubjectKeyIdentifier = TypedDict('ParsableSubjectKeyIdentifier', {
@@ -78,7 +83,7 @@ if sys.version_info >= (3, 8):  # pragma: only py>=3.8
         'value': Union[str, bytes],
     })
 
-    SerializedBasicConstraintsBase = TypedDict('SerializedBasicConstraints', {
+    SerializedBasicConstraintsBase = TypedDict('SerializedBasicConstraintsBase', {
         'ca': bool
     })
 
@@ -120,6 +125,18 @@ if sys.version_info >= (3, 8):  # pragma: only py>=3.8
     })
     """A dictionary with four keys: log_id, timestamp, type, version, values are all str."""
 else:  # pragma: only py<3.8
+    @runtime_checkable
+    class SupportsIndex(Protocol):
+        """An ABC with one abstract method __index__.
+
+        1:1 copy of the Python 3.9.0 implementation
+        """
+        __slots__ = ()
+
+        @abstractmethod
+        def __index__(self) -> int:
+            pass
+
     ParsableSubjectKeyIdentifier = Dict[str, Union[bool, str, bytes]]
     SerializedAuthorityInformationAccess = SerializedNameConstraints = Dict[str, List[str]]
     SerializedAuthorityKeyIdentifier = Dict[str, Union[str, int, List[str]]]
