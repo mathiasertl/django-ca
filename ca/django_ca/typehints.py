@@ -151,6 +151,7 @@ else:  # pragma: only py<3.8
     SupportsIndex = Any
     SerializedAuthorityInformationAccess = SerializedNameConstraints = Dict[str, List[str]]
     SerializedAuthorityKeyIdentifier = Dict[str, Union[str, int, List[str]]]
+    SerializedBasicConstraints = Dict[str, Union[bool, str, None]]
     SerializedCRLDistributionPoints = Dict[str, Union[bool, List[Any]]]
     SerializedSignedCertificateTimestamp = Dict[str, str]
 
