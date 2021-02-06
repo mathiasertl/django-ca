@@ -22,6 +22,7 @@ from abc import abstractmethod
 from typing import Any
 from typing import ClassVar
 from typing import Collection
+from typing import Dict
 from typing import Generic
 from typing import Hashable
 from typing import List
@@ -95,6 +96,7 @@ class Extension(Generic[ExtensionTypeTypeVar, SerializedValue], metaclass=ABCMet
     key = ''  # must be overwritten by actual classes
 
     default_critical: bool = False
+    default_value: ClassVar[Dict] = {}
     name: ClassVar[str]
     oid: ClassVar[x509.ObjectIdentifier]
 
@@ -107,7 +109,8 @@ class Extension(Generic[ExtensionTypeTypeVar, SerializedValue], metaclass=ABCMet
             self.from_extension(value.value)
         elif isinstance(value, dict):  # e.g. from settings
             self.critical = value.get('critical', self.default_critical)
-            self.from_dict(value)
+            self.from_dict(value.get('value', self.default_value))
+
             self._test_value()
         else:
             self.from_other(value)
@@ -303,10 +306,10 @@ class NullExtension(Extension[ExtensionTypeTypeVar, None]):
     def extension_type(self):
         return self.ext_class()  # pylint: disable=no-member; concrete classes are expected to set this
 
-    def from_extension(self, value):
+    def from_extension(self, value: ExtensionTypeTypeVar) -> None:
         pass
 
-    def from_dict(self, value):
+    def from_dict(self, value) -> None:
         pass
 
     def serialize(self):
@@ -365,7 +368,7 @@ class IterableExtension(Extension[ExtensionTypeTypeVar, List[SerializedItem]],
 
         return [self.serialize_item(v) for v in self.value]  # pylint: disable=not-an-iterable
 
-    def serialize_item(self, value) -> 'SerializedItem':
+    def serialize_item(self, value) -> SerializedItem:
         """Serialize a single item in the iterable contained in this extension."""
 
         return value
@@ -397,7 +400,7 @@ class ListExtension(IterableExtension[ExtensionTypeTypeVar, SerializedItem]):
             self.value[key] = [self.parse_value(v) for v in value]
 
     def from_dict(self, value):
-        self.value = [self.parse_value(v) for v in value.get('value', [])]
+        self.value = [self.parse_value(v) for v in value]
 
     def from_extension(self, value):
         self.value = [self.parse_value(v) for v in value]
@@ -508,7 +511,7 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, SerializedItem
 
     def from_dict(self, value):
         # pylint: disable=attribute-defined-outside-init; https://github.com/PyCQA/pylint/issues/3605
-        self.value = self.parse_iterable(value.get('value', set()))
+        self.value = self.parse_iterable(value)
 
     def serialize_value(self):
         return list(sorted(self.serialize_item(v) for v in self.value))
@@ -589,7 +592,6 @@ class AlternativeNameExtension(ListExtension[ExtensionTypeTypeVar, SerializedIte
     value: GeneralNameList
 
     def from_dict(self, value):
-        value = value.get('value')
         if isinstance(value, GeneralNameList):
             self.value = value
         elif value is None:

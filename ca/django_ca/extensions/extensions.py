@@ -144,9 +144,8 @@ class AuthorityInformationAccess(Extension[x509.AuthorityInformationAccess,
                      if v.access_method == AuthorityInformationAccessOID.OCSP]
 
     def from_dict(self, value):
-        dict_value = value.get('value', {})
-        self.issuers = dict_value.get('issuers')
-        self.ocsp = dict_value.get('ocsp')
+        self.issuers = value.get('issuers')
+        self.ocsp = value.get('ocsp')
 
     @property
     def ocsp(self) -> GeneralNameList:
@@ -242,8 +241,6 @@ class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier, SerializedAu
             authority_cert_serial_number=self.authority_cert_serial_number)
 
     def from_dict(self, value) -> None:
-        value = value.get('value', {})
-
         if isinstance(value, (bytes, str)) is True:
             self.key_identifier = self.parse_keyid(value)
             self.authority_cert_issuer = GeneralNameList()
@@ -330,7 +327,6 @@ class BasicConstraints(Extension[x509.BasicConstraints, SerializedBasicConstrain
         self.pathlen = value.path_length
 
     def from_dict(self, value):
-        value = value.get('value', {})
         self.ca = bool(value.get('ca', False))
         if self.ca:
             self.pathlen = self.parse_pathlen(value.get('pathlen'))
@@ -675,6 +671,7 @@ class InhibitAnyPolicy(Extension[x509.InhibitAnyPolicy, int]):
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.INHIBIT_ANY_POLICY
     skip_certs: int
 
+    default_value = None
     default_critical = True
     """This extension is marked as critical by default (RFC 5280 requires this extension to be marked as
     critical)."""
@@ -696,7 +693,7 @@ class InhibitAnyPolicy(Extension[x509.InhibitAnyPolicy, int]):
         return x509.InhibitAnyPolicy(skip_certs=self.skip_certs)
 
     def from_dict(self, value) -> None:
-        self.skip_certs = value.get('value')
+        self.skip_certs = value
 
     def from_extension(self, value: x509.InhibitAnyPolicy) -> None:
         self.skip_certs = value.skip_certs
@@ -791,7 +788,6 @@ class PolicyConstraints(Extension[x509.PolicyConstraints, SerializedPolicyConstr
                                       inhibit_policy_mapping=self.inhibit_policy_mapping)
 
     def from_dict(self, value) -> None:
-        value = value.get('value', {})
         self.require_explicit_policy = value.get('require_explicit_policy')
         self.inhibit_policy_mapping = value.get('inhibit_policy_mapping')
 
@@ -894,7 +890,6 @@ class NameConstraints(Extension[x509.NameConstraints, SerializedNameConstraints]
         self.excluded = value.excluded_subtrees
 
     def from_dict(self, value) -> None:
-        value = value.get('value', {})
         self.permitted = value.get('permitted')
         self.excluded = value.get('excluded')
 
@@ -1151,10 +1146,9 @@ class SubjectKeyIdentifier(Extension[x509.SubjectKeyIdentifier, str]):
         return x509.SubjectKeyIdentifier(digest=self.value)
 
     def from_dict(self, value: ParsableSubjectKeyIdentifier) -> None:
-        key = value['value']
-        if isinstance(key, str):
-            key = hex_to_bytes(key)
-        self.value = key
+        if isinstance(value, str):
+            value = hex_to_bytes(value)
+        self.value = value
 
     def from_other(self, value: x509.SubjectKeyIdentifier) -> None:
         if isinstance(value, x509.SubjectKeyIdentifier):
