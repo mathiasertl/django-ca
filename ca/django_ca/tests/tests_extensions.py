@@ -1577,6 +1577,7 @@ class InhibitAnyPolicyTestCase(ExtensionTestMixin, TestCase):
             InhibitAnyPolicy({'value': -1})
 
     def test_default(self):
+        """Test the default value for the constructor."""
         self.assertEqual(InhibitAnyPolicy().skip_certs, 0)
 
     def test_no_int(self):
