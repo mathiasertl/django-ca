@@ -67,11 +67,14 @@ from .base import uri
 def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
     """Load doctests."""
 
-    docs_path = os.path.join(settings.DOC_DIR, 'python', 'extensions.rst')
-    tests.addTests(doctest.DocFileSuite(docs_path, module_relative=False, globs={
-        'KEY_TO_EXTENSION': KEY_TO_EXTENSION,
-        'OID_TO_EXTENSION': OID_TO_EXTENSION,
-    }))
+    if sys.version_info >= (3, 7):
+        # Older python versions return a different str for classes
+        docs_path = os.path.join(settings.DOC_DIR, 'python', 'extensions.rst')
+        tests.addTests(doctest.DocFileSuite(docs_path, module_relative=False, globs={
+            'KEY_TO_EXTENSION': KEY_TO_EXTENSION,
+            'OID_TO_EXTENSION': OID_TO_EXTENSION,
+        }))
+
     tests.addTests(doctest.DocTestSuite('django_ca.extensions'))
     tests.addTests(doctest.DocTestSuite('django_ca.extensions.base', extraglobs={
         'ExtendedKeyUsage': ExtendedKeyUsage,
@@ -1572,10 +1575,11 @@ class InhibitAnyPolicyTestCase(ExtensionTestMixin, TestCase):
         with self.assertRaisesRegex(ValueError, r'-1: must be a positive int$'):
             InhibitAnyPolicy({'value': -1})
 
+    def test_default(self):
+        self.assertEqual(InhibitAnyPolicy().skip_certs, 0)
+
     def test_no_int(self):
         """Test passing invalid values."""
-        with self.assertRaisesRegex(ValueError, r'^None: must be an int$'):
-            InhibitAnyPolicy(None)
         with self.assertRaisesRegex(ValueError, r'^abc: must be an int$'):
             InhibitAnyPolicy({'value': 'abc'})
         with self.assertRaisesRegex(ValueError, r'^Value is of unsupported type str$'):
