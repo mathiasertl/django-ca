@@ -32,7 +32,7 @@ from cryptography.x509.certificate_transparency import SignedCertificateTimestam
 if sys.version_info >= (3, 8):  # pragma: only py>=3.8
     from typing import SupportsIndex as SupportsIndex
     from typing import TypedDict as TypedDict
-else:
+else:  # pragma: only py<3.8
     from typing_extensions import SupportsIndex as SupportsIndex  # NOQA: F401
     from typing_extensions import TypedDict as TypedDict
 # pylint: enable=useless-import-alias
