@@ -40,6 +40,7 @@ from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import ExtensionOID
 
+from ..typehints import ParsableBasicConstraints
 from ..typehints import ParsableGeneralNameList
 from ..typehints import ParsableNameConstraints
 from ..typehints import ParsablePolicyConstraints
@@ -279,12 +280,13 @@ class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier, ParsableValu
         self.authority_cert_issuer = GeneralNameList()
         self.authority_cert_serial_number = None
 
-    def parse_keyid(self, value) -> Optional[bytes]:  # pylint: disable=inconsistent-return-statements
+    def parse_keyid(self, value: Optional[Union[str, bytes]]) -> Optional[bytes]:
         """Parse the given key id (may be None)."""
         if isinstance(value, bytes):
             return value
         if value is not None:
             return hex_to_bytes(value)
+        return None  # or mypy and pylint complain
 
     def serialize_value(self) -> SerializedAuthorityKeyIdentifier:
         value: SerializedAuthorityKeyIdentifier = {}
@@ -298,7 +300,9 @@ class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier, ParsableValu
         return value
 
 
-class BasicConstraints(Extension[x509.BasicConstraints, ParsableValueDummy, SerializedBasicConstraints]):
+class BasicConstraints(Extension[x509.BasicConstraints,
+                                 ParsableBasicConstraints,
+                                 SerializedBasicConstraints]):
     """Class representing a BasicConstraints extension.
 
     This class has the boolean attributes ``ca`` and the attribute ``pathlen``, which is either ``None`` or an
@@ -336,7 +340,7 @@ class BasicConstraints(Extension[x509.BasicConstraints, ParsableValueDummy, Seri
         self.ca = value.ca
         self.pathlen = value.path_length
 
-    def from_dict(self, value):
+    def from_dict(self, value: ParsableBasicConstraints) -> None:
         self.ca = bool(value.get('ca', False))
         if self.ca:
             self.pathlen = self.parse_pathlen(value.get('pathlen'))

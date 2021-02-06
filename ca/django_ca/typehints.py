@@ -84,6 +84,18 @@ if sys.version_info >= (3, 8):  # pragma: only py>=3.8
     from typing import SupportsIndex as SupportsIndex  # pylint: disable=useless-import-alias
     from typing import TypedDict
 
+    BasicConstraintsBase = TypedDict("SerializedBasicConstraintsBase", {"ca": bool})
+
+    class ParsableBasicConstraints(BasicConstraintsBase, total=False):
+        """Serialized representation of a BasicConstraints extension.
+
+        A value of this type is a dictionary with a ``"ca"`` key with a boolean value. If ``True``, it also
+        has a ``"pathlen"`` value that is either ``None`` or an int.
+        """
+
+        # pylint: disable=too-few-public-methods; just a TypedDict
+        pathlen: Union[int, str]
+
     ParsableNameConstraints = TypedDict("ParsableNameConstraints", {
         "permitted": ParsableGeneralNameList,
         "excluded": ParsableGeneralNameList,
@@ -96,9 +108,7 @@ if sys.version_info >= (3, 8):  # pragma: only py>=3.8
         "inhibit_policy_mapping": int,
     }, total=False)
 
-    SerializedBasicConstraintsBase = TypedDict("SerializedBasicConstraintsBase", {"ca": bool})
-
-    class SerializedBasicConstraints(SerializedBasicConstraintsBase, total=False):
+    class SerializedBasicConstraints(BasicConstraintsBase, total=False):
         """Serialized representation of a BasicConstraints extension.
 
         A value of this type is a dictionary with a ``"ca"`` key with a boolean value. If ``True``, it also
