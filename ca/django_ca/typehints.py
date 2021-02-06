@@ -36,6 +36,7 @@ else:  # pragma: only py<3.8
     # pylint: disable=import-error; typing_extensions is not present in newer environments
     from typing_extensions import SupportsIndex as SupportsIndex  # NOQA: F401
     from typing_extensions import TypedDict as TypedDict
+
     # pylint: enable=import-error
 # pylint: enable=useless-import-alias
 
