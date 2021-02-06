@@ -33,8 +33,10 @@ if sys.version_info >= (3, 8):  # pragma: only py>=3.8
     from typing import SupportsIndex as SupportsIndex
     from typing import TypedDict as TypedDict
 else:  # pragma: only py<3.8
+    # pylint: disable=import-error; typing_extensions is not present in newer environments
     from typing_extensions import SupportsIndex as SupportsIndex  # NOQA: F401
     from typing_extensions import TypedDict as TypedDict
+    # pylint: enable=import-error
 # pylint: enable=useless-import-alias
 
 DistributionPointType = Dict[str, Union[List[str], str]]
