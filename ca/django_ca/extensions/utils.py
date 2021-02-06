@@ -34,6 +34,7 @@ from ..typehints import ParsablePolicyIdentifier
 from ..typehints import ParsablePolicyInformation
 from ..typehints import ParsablePolicyQualifier
 from ..typehints import PolicyQualifier
+from ..typehints import SerializedPolicyInformation
 from ..typehints import SerializedPolicyQualifier
 from ..typehints import SerializedPolicyQualifiers
 from ..utils import GeneralNameList
@@ -446,7 +447,7 @@ class PolicyInformation:
 
         return [self._serialize_policy_qualifier(q) for q in self.policy_qualifiers]
 
-    def serialize(self) -> Dict[str, Union[str, SerializedPolicyQualifiers]]:
+    def serialize(self) -> SerializedPolicyInformation:
         """Serialize this policy information."""
         value = {
             'policy_identifier': self.policy_identifier.dotted_string,

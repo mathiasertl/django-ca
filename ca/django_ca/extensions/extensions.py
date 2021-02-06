@@ -43,6 +43,7 @@ from cryptography.x509.oid import ExtensionOID
 from ..typehints import ParsableGeneralNameList
 from ..typehints import ParsableNameConstraints
 from ..typehints import ParsablePolicyConstraints
+from ..typehints import ParsablePolicyInformation
 from ..typehints import ParsableSignedCertificateTimestamp
 from ..typehints import ParsableSubjectKeyIdentifier
 from ..typehints import SerializedAuthorityInformationAccess
@@ -50,6 +51,7 @@ from ..typehints import SerializedAuthorityKeyIdentifier
 from ..typehints import SerializedBasicConstraints
 from ..typehints import SerializedNameConstraints
 from ..typehints import SerializedPolicyConstraints
+from ..typehints import SerializedPolicyInformation
 from ..typehints import SerializedSignedCertificateTimestamp
 from ..utils import GeneralNameList
 from ..utils import bytes_to_hex
@@ -366,7 +368,7 @@ class BasicConstraints(Extension[x509.BasicConstraints, ParsableValueDummy, Seri
 
     def serialize_value(self) -> SerializedBasicConstraints:
         value: SerializedBasicConstraints = {'ca': self.ca}
-        if self.ca:
+        if self.ca and isinstance(self.pathlen, int):
             value['pathlen'] = self.pathlen
         return value
 
@@ -397,7 +399,9 @@ class CRLDistributionPoints(CRLDistributionPointsBase[x509.CRLDistributionPoints
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.CRL_DISTRIBUTION_POINTS
 
 
-class CertificatePolicies(ListExtension[x509.CertificatePolicies, ParsableValueDummy, SerializedDummy]):
+class CertificatePolicies(ListExtension[x509.CertificatePolicies,
+                                        Union[PolicyInformation, ParsablePolicyInformation],
+                                        SerializedPolicyInformation]):
     """Class representing a Certificate Policies extension.
 
     The value passed to this extension should be a ``list`` of
@@ -420,7 +424,7 @@ class CertificatePolicies(ListExtension[x509.CertificatePolicies, ParsableValueD
     name: ClassVar[str] = 'CertificatePolicies'
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.CERTIFICATE_POLICIES
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((tuple(self.value), self.critical, ))
 
     def repr_value(self) -> str:
@@ -435,12 +439,12 @@ class CertificatePolicies(ListExtension[x509.CertificatePolicies, ParsableValueD
     def extension_type(self) -> x509.CertificatePolicies:
         return x509.CertificatePolicies(policies=[p.for_extension_type for p in self.value])
 
-    def parse_value(self, value):
+    def parse_value(self, value: Union[PolicyInformation, ParsablePolicyInformation]) -> PolicyInformation:
         if isinstance(value, PolicyInformation):
             return value
         return PolicyInformation(value)
 
-    def serialize_item(self, value):
+    def serialize_item(self, value: PolicyInformation) -> SerializedPolicyInformation:
         return value.serialize()
 
 

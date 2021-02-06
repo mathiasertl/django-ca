@@ -44,6 +44,7 @@ ParsablePolicyQualifier = Union[str, x509.UserNotice, LoosePolicyQualifier]
 ParsablePolicyIdentifier = Union[str, x509.ObjectIdentifier]
 ParsablePolicyInformation = Dict[str, Union[ParsablePolicyQualifier, ParsablePolicyQualifier]]
 PolicyQualifier = Union[str, x509.UserNotice]
+SerializedPolicyInformation = Dict[str, Union[str, SerializedPolicyQualifiers]]
 
 # GeneralNameList
 ParsableGeneralName = Union[x509.GeneralName, str]
