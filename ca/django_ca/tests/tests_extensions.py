@@ -18,6 +18,7 @@ import functools
 import json
 import operator
 import os
+import sys
 
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
