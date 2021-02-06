@@ -411,7 +411,9 @@ VQIDAQAB
 -----END PUBLIC KEY-----'''
     ACME_SLUG_1 = 'Mr6FfdD68lzp'
     ACME_SLUG_2 = 'DzW4PQ6L76PE'
-    re_false_password = r'^(Bad decrypt\. Incorrect password\?|Could not deserialize key data\.)$'
+
+    # Note: cryptography sometimes adds another sentence at the end
+    re_false_password = r"^(Bad decrypt\. Incorrect password\?|Could not deserialize key data\..*)$"
 
     def setUp(self):  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()
