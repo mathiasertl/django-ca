@@ -52,13 +52,13 @@ PolicyQualifier = Union[str, x509.UserNotice]
 ParsableGeneralName = Union[x509.GeneralName, str]
 ParsableGeneralNameList = Iterable[ParsableGeneralName]
 
-ExtensionTypeTypeVar = TypeVar('ExtensionTypeTypeVar', bound=x509.ExtensionType)
+ExtensionTypeTypeVar = TypeVar("ExtensionTypeTypeVar", bound=x509.ExtensionType)
 """A type variable for a :py:class:`~cg:cryptography.x509.ExtensionType` instance."""
 
-SerializedItem = TypeVar('SerializedItem')
+SerializedItem = TypeVar("SerializedItem")
 """TypeVar representing a serialized item for an iterable extension."""
 
-SerializedValue = TypeVar('SerializedValue')
+SerializedValue = TypeVar("SerializedValue")
 """TypeVar representing a serialized value for an extension."""
 
 if TYPE_CHECKING:
@@ -66,26 +66,29 @@ if TYPE_CHECKING:
     ExtensionType = x509.Extension[x509.ExtensionType]
     SubjectKeyIdentifierType = x509.Extension[x509.SubjectKeyIdentifier]
     TLSFeatureExtensionType = x509.Extension[x509.TLSFeature]
-    PrecertificateSignedCertificateTimestampsType = \
-        x509.Extension[x509.PrecertificateSignedCertificateTimestamps]
+    PrecertificateSignedCertificateTimestampsType = x509.Extension[
+        x509.PrecertificateSignedCertificateTimestamps
+    ]
 else:
     ExtensionType = ExtensionTypeVar = x509.Extension
-    SubjectKeyIdentifierType = TLSFeatureExtensionType = \
-        PrecertificateSignedCertificateTimestampsType = x509.ExtensionType
+    SubjectKeyIdentifierType = (
+        TLSFeatureExtensionType
+    ) = PrecertificateSignedCertificateTimestampsType = x509.ExtensionType
 
 if sys.version_info >= (3, 8):  # pragma: only py>=3.8
     # NOTE: without the "as SupportsIndex", mypy won't consider this as "re-exported"
     from typing import SupportsIndex as SupportsIndex  # pylint: disable=useless-import-alias
     from typing import TypedDict
 
-    ParsableSubjectKeyIdentifier = TypedDict('ParsableSubjectKeyIdentifier', {
-        'critical': bool,
-        'value': Union[str, bytes],
-    })
+    ParsableSubjectKeyIdentifier = TypedDict(
+        "ParsableSubjectKeyIdentifier",
+        {
+            "critical": bool,
+            "value": Union[str, bytes],
+        },
+    )
 
-    SerializedBasicConstraintsBase = TypedDict('SerializedBasicConstraintsBase', {
-        'ca': bool
-    })
+    SerializedBasicConstraintsBase = TypedDict("SerializedBasicConstraintsBase", {"ca": bool})
 
     class SerializedBasicConstraints(SerializedBasicConstraintsBase, total=False):
         """Serialized representation of a BasicConstraints extension.
@@ -93,44 +96,68 @@ if sys.version_info >= (3, 8):  # pragma: only py>=3.8
         A value of this type is a dictionary with a ``"ca"`` key with a boolean value. If ``True``, it also
         has a ``"pathlen"`` value that is either ``None`` or an int.
         """
+
         # pylint: disable=too-few-public-methods; just a TypedDict
         pathlen: int
 
-    SerializedAuthorityInformationAccess = TypedDict('SerializedAuthorityInformationAccess', {
-        'issuers': List[str],
-        'ocsp': List[str],
-    }, total=False)
-    SerializedAuthorityKeyIdentifier = TypedDict('SerializedAuthorityKeyIdentifier', {
-        'key_identifier': str,
-        'authority_cert_issuer': List[str],
-        'authority_cert_serial_number': int,
-    }, total=False)
-    SerializedCRLDistributionPoints = TypedDict('SerializedCRLDistributionPoints', {
-        'critical': bool,
-        'value': List[DistributionPointType],
-    })
-    SerializedNameConstraints = TypedDict('SerializedNameConstraints', {
-        'permitted': List[str],
-        'excluded': List[str],
-    })
-    SerializedPolicyConstraints = TypedDict('SerializedPolicyConstraints', {
-        'inhibit_policy_mapping': int,
-        'require_explicit_policy': int,
-    }, total=False)
-    SerializedSignedCertificateTimestamp = TypedDict('SerializedSignedCertificateTimestamp', {
-        'log_id': str,
-        'timestamp': str,
-        'type': str,
-        'version': str,
-    })
+    SerializedAuthorityInformationAccess = TypedDict(
+        "SerializedAuthorityInformationAccess",
+        {
+            "issuers": List[str],
+            "ocsp": List[str],
+        },
+        total=False,
+    )
+    SerializedAuthorityKeyIdentifier = TypedDict(
+        "SerializedAuthorityKeyIdentifier",
+        {
+            "key_identifier": str,
+            "authority_cert_issuer": List[str],
+            "authority_cert_serial_number": int,
+        },
+        total=False,
+    )
+    SerializedCRLDistributionPoints = TypedDict(
+        "SerializedCRLDistributionPoints",
+        {
+            "critical": bool,
+            "value": List[DistributionPointType],
+        },
+    )
+    SerializedNameConstraints = TypedDict(
+        "SerializedNameConstraints",
+        {
+            "permitted": List[str],
+            "excluded": List[str],
+        },
+    )
+    SerializedPolicyConstraints = TypedDict(
+        "SerializedPolicyConstraints",
+        {
+            "inhibit_policy_mapping": int,
+            "require_explicit_policy": int,
+        },
+        total=False,
+    )
+    SerializedSignedCertificateTimestamp = TypedDict(
+        "SerializedSignedCertificateTimestamp",
+        {
+            "log_id": str,
+            "timestamp": str,
+            "type": str,
+            "version": str,
+        },
+    )
     """A dictionary with four keys: log_id, timestamp, type, version, values are all str."""
 else:  # pragma: only py<3.8
+
     @runtime_checkable
     class SupportsIndex(Protocol):
         """An ABC with one abstract method __index__.
 
         1:1 copy of the Python 3.9.0 implementation
         """
+
         # pylint: disable=too-few-public-methods; just a copy of py3.9 implementation
         __slots__ = ()
 
@@ -144,6 +171,4 @@ else:  # pragma: only py<3.8
     SerializedCRLDistributionPoints = Dict[str, Union[bool, List[Any]]]
     SerializedSignedCertificateTimestamp = Dict[str, str]
 
-ParsableSignedCertificateTimestamp = Union[
-    SerializedSignedCertificateTimestamp, SignedCertificateTimestamp
-]
+ParsableSignedCertificateTimestamp = Union[SerializedSignedCertificateTimestamp, SignedCertificateTimestamp]

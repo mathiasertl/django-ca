@@ -28,7 +28,7 @@ import string
 #   https://tools.ietf.org/html/rfc4648#section-5
 # Jose JWS defines that the padding character ('=') is stripped:
 #   https://tools.ietf.org/html/draft-ietf-jose-json-web-signature-37#section-2
-BASE64_URL_ALPHABET = string.ascii_letters + string.digits + '-_'
+BASE64_URL_ALPHABET = string.ascii_letters + string.digits + "-_"
 
 
 @enum.unique
@@ -37,15 +37,16 @@ class Status(enum.Enum):
 
     Duplicates :py:class:`~acme:acme.messages.Status` to avoid required ``acme`` during model import.
     """
-    UNKNOWN = 'unknown'
-    PENDING = 'pending'
-    PROCESSING = 'processing'
-    VALID = 'valid'
-    INVALID = 'invalid'
-    REVOKED = 'revoked'
-    READY = 'ready'
-    DEACTIVATED = 'deactivated'
-    EXPIRED = 'expired'  # NOTE: not present in acme 1.9.0
+
+    UNKNOWN = "unknown"
+    PENDING = "pending"
+    PROCESSING = "processing"
+    VALID = "valid"
+    INVALID = "invalid"
+    REVOKED = "revoked"
+    READY = "ready"
+    DEACTIVATED = "deactivated"
+    EXPIRED = "expired"  # NOTE: not present in acme 1.9.0
 
 
 @enum.unique
@@ -54,4 +55,5 @@ class IdentifierType(enum.Enum):
 
     Duplicates :py:class:`~acme:acme.messages.IdentifierType` to avoid required ``acme`` during model import.
     """
-    DNS = 'dns'  # equivalent to acme.messages.IDENTIFIER_FQDN
+
+    DNS = "dns"  # equivalent to acme.messages.IDENTIFIER_FQDN

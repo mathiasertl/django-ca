@@ -1,3 +1,6 @@
+[tool.black]
+line-length = 110
+
 [tool.isort]
 line_length = 110
 skip = ["migrations", "stubs"]

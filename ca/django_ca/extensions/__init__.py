@@ -70,10 +70,9 @@ KEY_TO_EXTENSION: Dict[str, Type[Extension[Any, Any]]] = {
     TLSFeature.key: TLSFeature,
 }
 
-OID_TO_EXTENSION: Dict[
-    x509.ObjectIdentifier,
-    Type[Extension[x509.ExtensionType, Any]]
-] = {e.oid: e for e in KEY_TO_EXTENSION.values()}
+OID_TO_EXTENSION: Dict[x509.ObjectIdentifier, Type[Extension[x509.ExtensionType, Any]]] = {
+    e.oid: e for e in KEY_TO_EXTENSION.values()
+}
 
 
 def get_extension_name(ext: Union[ExtensionType, Extension[x509.ExtensionType, Any]]) -> str:
@@ -90,9 +89,9 @@ def get_extension_name(ext: Union[ExtensionType, Extension[x509.ExtensionType, A
     # pylint: disable=protected-access; there is no other way to get a human-readable name
     oid_name = cast(str, ext.oid._name)  # type: ignore
 
-    return re.sub('^([a-z])', lambda x: x.groups()[0].upper(), oid_name)
+    return re.sub("^([a-z])", lambda x: x.groups()[0].upper(), oid_name)
 
 
 __all__ = [
-    'get_extension_name',
+    "get_extension_name",
 ] + [c.__name__ for c in KEY_TO_EXTENSION.values()]
