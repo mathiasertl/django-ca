@@ -22,6 +22,7 @@ from typing import Iterable
 from typing import List
 from typing import Mapping
 from typing import Optional
+from typing import Tuple
 from typing import TypeVar
 from typing import Union
 
@@ -40,8 +41,21 @@ else:  # pragma: only py<3.8
     # pylint: enable=import-error
 # pylint: enable=useless-import-alias
 
-DistributionPointType = Dict[str, Union[List[str], str]]
+# GeneralNameList
+ParsableRelativeDistinguishedName = Union[str, Iterable[Tuple[str, str]]]
+ParsableGeneralName = Union[x509.GeneralName, str]
+ParsableGeneralNameList = Iterable[ParsableGeneralName]
 
+SerializedDistributionPoint = TypedDict(
+    "SerializedDistributionPoint",
+    {
+        "full_name": List[str],
+        "relative_name": str,
+        "crl_issuer": List[str],
+        "reasons": List[str],
+    },
+    total=False,
+)
 SerializedNoticeReference = Dict[str, Union[str, List[int]]]
 SerializedPolicyQualifier = Union[str, Dict[str, Union[str, SerializedNoticeReference]]]
 SerializedPolicyQualifiers = Optional[List[SerializedPolicyQualifier]]
@@ -51,15 +65,21 @@ LooseNoticeReference = Mapping[str, Union[str, Iterable[int]]]  # List->Iterable
 LoosePolicyQualifier = Union[str, Mapping[str, Union[str, LooseNoticeReference]]]  # Dict->Mapping
 
 # Parsable arguments
+ParsableDistributionPoint = TypedDict(
+    "ParsableDistributionPoint",
+    {
+        "full_name": ParsableGeneralNameList,
+        "relative_name": ParsableRelativeDistinguishedName,
+        "crl_issuer": ParsableGeneralNameList,
+        "reasons": Iterable[Union[str, x509.ReasonFlags]],
+    },
+    total=False,
+)
 ParsablePolicyQualifier = Union[str, x509.UserNotice, LoosePolicyQualifier]
 ParsablePolicyIdentifier = Union[str, x509.ObjectIdentifier]
 ParsablePolicyInformation = Dict[str, Union[ParsablePolicyQualifier, ParsablePolicyQualifier]]
 PolicyQualifier = Union[str, x509.UserNotice]
 SerializedPolicyInformation = Dict[str, Union[str, SerializedPolicyQualifiers]]
-
-# GeneralNameList
-ParsableGeneralName = Union[x509.GeneralName, str]
-ParsableGeneralNameList = Iterable[ParsableGeneralName]
 
 ExtensionTypeTypeVar = TypeVar("ExtensionTypeTypeVar", bound=x509.ExtensionType)
 """A type variable for a :py:class:`~cg:cryptography.x509.ExtensionType` instance."""
@@ -174,13 +194,6 @@ SerializedAuthorityKeyIdentifier = TypedDict(
         "authority_cert_serial_number": int,
     },
     total=False,
-)
-SerializedCRLDistributionPoints = TypedDict(
-    "SerializedCRLDistributionPoints",
-    {
-        "critical": bool,
-        "value": List[DistributionPointType],
-    },
 )
 SerializedNameConstraints = TypedDict(
     "SerializedNameConstraints",

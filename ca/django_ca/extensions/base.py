@@ -34,13 +34,13 @@ from typing import Union
 
 from cryptography import x509
 
-from ..typehints import DistributionPointType
 from ..typehints import ExtensionType
 from ..typehints import ExtensionTypeTypeVar
+from ..typehints import ParsableDistributionPoint
 from ..typehints import ParsableItem
 from ..typehints import ParsableNullExtension
 from ..typehints import ParsableValue
-from ..typehints import SerializedCRLDistributionPoints
+from ..typehints import SerializedDistributionPoint
 from ..typehints import SerializedItem
 from ..typehints import SerializedValue
 from ..typehints import UnrecognizedExtensionType
@@ -634,7 +634,9 @@ class AlternativeNameExtension(ListExtension[ExtensionTypeTypeVar, ParsableItem,
         return format_general_name(value)
 
 
-class CRLDistributionPointsBase(ListExtension[ExtensionTypeTypeVar, ParsableItem, SerializedItem]):
+class CRLDistributionPointsBase(
+    ListExtension[ExtensionTypeTypeVar, ParsableDistributionPoint, SerializedDistributionPoint]
+):
     """Base class for :py:class:`~django_ca.extensions.CRLDistributionPoints` and
     :py:class:`~django_ca.extensions.FreshestCRL`.
     """
@@ -656,13 +658,14 @@ class CRLDistributionPointsBase(ListExtension[ExtensionTypeTypeVar, ParsableItem
     def extension_type(self) -> x509.CRLDistributionPoints:
         return x509.CRLDistributionPoints(distribution_points=[dp.for_extension_type for dp in self.value])
 
-    def parse_value(self, value: Union[DistributionPoint, DistributionPointType]) -> DistributionPoint:
+    def parse_value(self, value: Union[DistributionPoint, ParsableDistributionPoint]) -> DistributionPoint:
         if isinstance(value, DistributionPoint):
             return value
         return DistributionPoint(value)
 
-    def serialize(self) -> SerializedCRLDistributionPoints:
-        return {
-            "value": [dp.serialize() for dp in self.value],
-            "critical": self.critical,
-        }
+    def repr_value(self) -> str:
+        # Overwritten so that we can use repr() of utils.DistributionPoint
+        return '[%s]' % ', '.join([repr(v) for v in self.value])
+
+    def serialize_item(self, value: DistributionPoint) -> SerializedDistributionPoint:
+        return value.serialize()

@@ -30,10 +30,12 @@ from cryptography.x509 import ObjectIdentifier
 
 from django.utils.encoding import force_str
 
+from ..typehints import ParsableDistributionPoint
 from ..typehints import ParsablePolicyIdentifier
 from ..typehints import ParsablePolicyInformation
 from ..typehints import ParsablePolicyQualifier
 from ..typehints import PolicyQualifier
+from ..typehints import SerializedDistributionPoint
 from ..typehints import SerializedPolicyInformation
 from ..typehints import SerializedPolicyQualifier
 from ..typehints import SerializedPolicyQualifiers
@@ -77,7 +79,7 @@ class DistributionPoint:
     crl_issuer: Optional[GeneralNameList] = None
     reasons: Optional[FrozenSet[x509.ReasonFlags]] = None
 
-    def __init__(self, data: Union[x509.DistributionPoint, Dict[str, Any]] = None) -> None:
+    def __init__(self, data: Union[x509.DistributionPoint, ParsableDistributionPoint] = None) -> None:
         if data is None:
             data = {}
 
@@ -88,17 +90,15 @@ class DistributionPoint:
             self.reasons = data.reasons
         elif isinstance(data, dict):
             self.full_name = GeneralNameList(data.get('full_name'))
-            self.relative_name = data.get('relative_name')
-            self.crl_issuer = GeneralNameList(data.get('crl_issuer'))
-            self.reasons = data.get('reasons')
+            self.crl_issuer = GeneralNameList(data.get("crl_issuer"))
+
+            if "relative_name" in data:
+                self.relative_name = x509_relative_name(data["relative_name"])
+            if "reasons" in data:
+                self.reasons = frozenset([x509.ReasonFlags[r] for r in data["reasons"]])
 
             if self.full_name and self.relative_name:
                 raise ValueError('full_name and relative_name cannot both have a value')
-
-            if self.relative_name is not None:
-                self.relative_name = x509_relative_name(self.relative_name)
-            if self.reasons is not None:
-                self.reasons = frozenset([x509.ReasonFlags[r] for r in self.reasons])
         else:
             raise ValueError('data must be x509.DistributionPoint or dict')
 
@@ -159,9 +159,9 @@ class DistributionPoint:
         return x509.DistributionPoint(full_name=full_name, relative_name=self.relative_name,
                                       crl_issuer=crl_issuer, reasons=self.reasons)
 
-    def serialize(self) -> Dict[str, Union[List[str], str]]:
+    def serialize(self) -> SerializedDistributionPoint:
         """Serialize this distribution point."""
-        val: Dict[str, Union[List[str], str]] = {}
+        val: SerializedDistributionPoint = {}
 
         if self.full_name:
             val['full_name'] = list(self.full_name.serialize())

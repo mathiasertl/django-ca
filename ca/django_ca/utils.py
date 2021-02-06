@@ -57,6 +57,7 @@ from django.utils.translation import gettext_lazy as _
 from . import ca_settings
 from .typehints import ParsableGeneralName
 from .typehints import ParsableGeneralNameList
+from .typehints import ParsableRelativeDistinguishedName
 from .typehints import SupportsIndex
 
 # List of possible subject fields, in order
@@ -436,7 +437,7 @@ def x509_name(name: Union[List[Tuple[str, str]], str]) -> x509.Name:
     return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], force_str(value)) for typ, value in name])
 
 
-def x509_relative_name(name: Union[str, Iterable[Tuple[str, str]]]) -> x509.RelativeDistinguishedName:
+def x509_relative_name(name: ParsableRelativeDistinguishedName) -> x509.RelativeDistinguishedName:
     """Parse a relative name (RDN) into a :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`.
 
     >>> x509_relative_name('/CN=example.com')

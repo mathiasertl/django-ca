@@ -1378,7 +1378,7 @@ class CRLDistributionPointsTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
             x509.DistributionPoint(full_name=None, relative_name=None, reasons=None, crl_issuer=None)
         ]))
 
-        ext[0].full_name = GeneralNameList()
+        ext.value[0].full_name = GeneralNameList()
         self.assertEqual(ext.extension_type, self.ext_class_type(distribution_points=[
             x509.DistributionPoint(full_name=None, relative_name=None, reasons=None, crl_issuer=None)
         ]))

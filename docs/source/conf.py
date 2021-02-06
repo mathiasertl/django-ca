@@ -481,6 +481,7 @@ qualname_overrides = {
     'cryptography.x509.extensions.PrecertPoison': 'cg:cryptography.x509.PrecertPoison',
     'cryptography.x509.extensions.PrecertificateSignedCertificateTimestamps':
         'cg:cryptography.x509.PrecertificateSignedCertificateTimestamps',
+    "cryptography.x509.extensions.ReasonFlags": "cg:cryptography.x509.ReasonFlags",
     'cryptography.x509.extensions.SubjectAlternativeName': 'cg:cryptography.x509.SubjectAlternativeName',
     'cryptography.x509.extensions.SubjectKeyIdentifier': 'cg:cryptography.x509.SubjectKeyIdentifier',
     'cryptography.x509.extensions.TLSFeature': 'cg:cryptography.x509.TLSFeature',

@@ -386,7 +386,7 @@ class BasicConstraints(
         return value
 
 
-class CRLDistributionPoints(CRLDistributionPointsBase[x509.CRLDistributionPoints, ParsableValueDummy, str]):
+class CRLDistributionPoints(CRLDistributionPointsBase[x509.CRLDistributionPoints]):
     """Class representing a CRLDistributionPoints extension.
 
     This extension identifies where a client can retrieve a Certificate Revocation List (CRL).
@@ -472,7 +472,7 @@ class CertificatePolicies(
         return value.serialize()
 
 
-class FreshestCRL(CRLDistributionPointsBase[x509.FreshestCRL, ParsableValueDummy, str]):
+class FreshestCRL(CRLDistributionPointsBase[x509.FreshestCRL]):
     """Class representing a FreshestCRL extension.
 
     This extension handles identically to the :py:class:`~django_ca.extensions.CRLDistributionPoints`
