@@ -351,7 +351,7 @@ class IterableExtension(Extension[ExtensionTypeTypeVar, List[SerializedItem]],
         return len(self.value)
 
     def repr_value(self) -> str:
-        return repr(self.serialize_value())
+        return self.serialize_value()
 
     def as_text(self) -> str:
         return '\n'.join(['* %s' % v for v in self.serialize_value()])
