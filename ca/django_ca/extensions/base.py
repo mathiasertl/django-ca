@@ -100,7 +100,8 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
     default_critical : bool
         The default critical value if you pass a dict without the ``"critical"`` key.
     """
-    key = ''  # must be overwritten by actual classes
+
+    key = ""  # must be overwritten by actual classes
 
     default_critical: bool = False
     default_value: ParsableValue = {}
@@ -115,24 +116,32 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
             self.critical = value.critical
             self.from_extension(value.value)
         elif isinstance(value, dict):  # e.g. from settings
-            self.critical = value.get('critical', self.default_critical)
-            self.from_dict(value.get('value', self.default_value))
+            self.critical = value.get("critical", self.default_critical)
+            self.from_dict(value.get("value", self.default_value))
 
             self._test_value()
         else:
             self.from_other(value)
         if not isinstance(self.critical, bool):
-            raise ValueError('%s: Invalid critical value passed' % self.critical)
+            raise ValueError("%s: Invalid critical value passed" % self.critical)
 
     def __eq__(self, other: Any) -> bool:
-        return isinstance(other, type(self)) and self.critical == other.critical and \
-            self.hash_value() == other.hash_value()
+        return (
+            isinstance(other, type(self))
+            and self.critical == other.critical
+            and self.hash_value() == other.hash_value()
+        )
 
     def __hash__(self) -> int:
-        return hash((self.hash_value(), self.critical, ))
+        return hash(
+            (
+                self.hash_value(),
+                self.critical,
+            )
+        )
 
     def __repr__(self) -> str:
-        return '<%s: %s, critical=%r>' % (self.name, self.repr_value(), self.critical)
+        return "<%s: %s, critical=%r>" % (self.name, self.repr_value(), self.critical)
 
     def __str__(self) -> str:
         return repr(self)
@@ -164,7 +173,7 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
             >>> kwargs = KeyUsage({'value': ['keyAgreement', 'keyEncipherment']}).for_builder()
             >>> builder.add_extension(**kwargs)  # doctest: +SKIP
         """
-        return {'extension': self.extension_type, 'critical': self.critical}
+        return {"extension": self.extension_type, "critical": self.critical}
 
     @abstractmethod
     def from_extension(self, value: ExtensionTypeTypeVar) -> None:
@@ -182,7 +191,7 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
         """Load class from any other value type.
 
         This class can be overwritten to allow loading classes from different types."""
-        raise ValueError('Value is of unsupported type %s' % type(value).__name__)
+        raise ValueError("Value is of unsupported type %s" % type(value).__name__)
 
     def hash_value(self) -> Hashable:
         """Return the current extension value in hashable form.
@@ -208,8 +217,8 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
         """
 
         return {
-            'critical': self.critical,
-            'value': self.serialize_value(),
+            "critical": self.critical,
+            "value": self.serialize_value(),
         }
 
     @abstractmethod
@@ -228,7 +237,7 @@ class UnrecognizedExtension(Extension[x509.UnrecognizedExtension, None, None]):
     name: str  # type: ignore[misc]
     oid: x509.ObjectIdentifier  # type: ignore[misc]
 
-    def __init__(self, value: UnrecognizedExtensionType, name: str = '', error: str = ''):
+    def __init__(self, value: UnrecognizedExtensionType, name: str = "", error: str = ""):
         if not isinstance(value, x509.Extension):
             raise TypeError("Value must be a x509.Extension instance")
         if not isinstance(value.value, x509.UnrecognizedExtension):
@@ -240,11 +249,11 @@ class UnrecognizedExtension(Extension[x509.UnrecognizedExtension, None, None]):
         self.oid = value.oid
 
         if not name:
-            name = 'Unsupported extension (OID %s)' % (self.oid.dotted_string)
+            name = "Unsupported extension (OID %s)" % (self.oid.dotted_string)
         self.name = name
 
     def repr_value(self) -> str:
-        return '<unprintable>'
+        return "<unprintable>"
 
     @property
     def extension_type(self) -> x509.UnrecognizedExtension:
@@ -258,11 +267,11 @@ class UnrecognizedExtension(Extension[x509.UnrecognizedExtension, None, None]):
 
     def as_text(self) -> str:
         if self._error:
-            return 'Could not parse extension (%s)' % self._error
-        return 'Could not parse extension'
+            return "Could not parse extension (%s)" % self._error
+        return "Could not parse extension"
 
     def serialize_value(self) -> NoReturn:
-        raise ValueError('Cannot serialize an unrecognized extension')
+        raise ValueError("Cannot serialize an unrecognized extension")
 
 
 class NullExtension(Extension[ExtensionTypeTypeVar, None, None]):
@@ -299,16 +308,16 @@ class NullExtension(Extension[ExtensionTypeTypeVar, None, None]):
             super().__init__(value)
 
     def __hash__(self) -> int:
-        return hash((self.critical, ))
+        return hash((self.critical,))
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, type(self)) and self.critical == other.critical
 
     def __repr__(self) -> str:
-        return '<%s: critical=%r>' % (self.__class__.__name__, self.critical)
+        return "<%s: critical=%r>" % (self.__class__.__name__, self.critical)
 
     def repr_value(self) -> str:
-        return ''
+        return ""
 
     def as_text(self) -> str:
         return self.name
@@ -324,14 +333,16 @@ class NullExtension(Extension[ExtensionTypeTypeVar, None, None]):
         pass
 
     def serialize(self):
-        return {'critical': self.critical}
+        return {"critical": self.critical}
 
     def serialize_value(self) -> None:
         return
 
 
-class IterableExtension(Extension[ExtensionTypeTypeVar, Iterable[ParsableItem], List[SerializedItem]],
-                        Generic[ExtensionTypeTypeVar, ParsableItem, SerializedItem]):
+class IterableExtension(
+    Extension[ExtensionTypeTypeVar, Iterable[ParsableItem], List[SerializedItem]],
+    Generic[ExtensionTypeTypeVar, ParsableItem, SerializedItem],
+):
     """Base class for iterable extensions.
 
     Extensions of this class can be used just like any other iterable, e.g.:
@@ -356,7 +367,12 @@ class IterableExtension(Extension[ExtensionTypeTypeVar, Iterable[ParsableItem], 
         return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
 
     def __hash__(self) -> int:
-        return hash((tuple(self.serialize_value()), self.critical, ))
+        return hash(
+            (
+                tuple(self.serialize_value()),
+                self.critical,
+            )
+        )
 
     def __iter__(self):
         return iter(self.serialize_value())
@@ -368,7 +384,7 @@ class IterableExtension(Extension[ExtensionTypeTypeVar, Iterable[ParsableItem], 
         return self.serialize_value()
 
     def as_text(self) -> str:
-        return '\n'.join(['* %s' % v for v in self.serialize_value()])
+        return "\n".join(["* %s" % v for v in self.serialize_value()])
 
     def parse_value(self, value):
         """Parse a single value (presumably from an iterable)."""
@@ -467,12 +483,12 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, 
 
     # pylint: disable=abstract-method; class is itself a base class
 
-    name = 'OrderedSetExtension'
+    name = "OrderedSetExtension"
     value: Set
 
     def __and__(self, other):  # & operator == intersection()
         value = self.value & self.parse_iterable(other)
-        return self.__class__({'critical': self.critical, 'value': value})
+        return self.__class__({"critical": self.critical, "value": value})
 
     def __ge__(self, other) -> bool:  # >= relation == issuperset()
         return self.value >= self.parse_iterable(other)
@@ -503,15 +519,15 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, 
 
     def __or__(self, other):  # | operator == union()
         value = self.value.union(self.parse_iterable(other))
-        return self.__class__({'critical': self.critical, 'value': value})
+        return self.__class__({"critical": self.critical, "value": value})
 
     def __sub__(self, other):  # - operator
         value = self.value - self.parse_iterable(other)
-        return self.__class__({'critical': self.critical, 'value': value})
+        return self.__class__({"critical": self.critical, "value": value})
 
     def __xor__(self, other):  # ^ operator == symmetric_difference()
         value = self.value ^ self.parse_iterable(other)
-        return self.__class__({'critical': self.critical, 'value': value})
+        return self.__class__({"critical": self.critical, "value": value})
 
     def repr_value(self):
         return [str(v) for v in super().repr_value()]
@@ -537,11 +553,11 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, 
 
     def copy(self):
         value = self.value.copy()
-        return self.__class__({'critical': self.critical, 'value': value})
+        return self.__class__({"critical": self.critical, "value": value})
 
     def difference(self, *others):  # equivalent to & operator
         value = self.value.difference(*[self.parse_iterable(o) for o in others])
-        return self.__class__({'critical': self.critical, 'value': value})
+        return self.__class__({"critical": self.critical, "value": value})
 
     def difference_update(self, *others):  # equivalent to &= operator
         self.value.difference_update(*[self.parse_iterable(o) for o in others])
@@ -551,7 +567,7 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, 
 
     def intersection(self, *others):  # equivalent to & operator
         value = self.value.intersection(*[self.parse_iterable(o) for o in others])
-        return self.__class__({'critical': self.critical, 'value': value})
+        return self.__class__({"critical": self.critical, "value": value})
 
     def intersection_update(self, *others):  # equivalent to &= operator
         self.value.intersection_update(*[self.parse_iterable(o) for o in others])
@@ -579,7 +595,7 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, 
 
     def union(self, *others):
         value = self.value.union(*[self.parse_iterable(o) for o in others])
-        return self.__class__({'critical': self.critical, 'value': value})
+        return self.__class__({"critical": self.critical, "value": value})
 
     def update(self, *others):
         for elem in others:
@@ -598,6 +614,7 @@ class AlternativeNameExtension(ListExtension[ExtensionTypeTypeVar, ParsableItem,
         (True, True, True)
 
     """
+
     # pylint: disable=abstract-method; class is itself abstract
 
     value: GeneralNameList
@@ -623,11 +640,17 @@ class CRLDistributionPointsBase(ListExtension[ExtensionTypeTypeVar, ParsableItem
     """
 
     def __hash__(self) -> int:
-        return hash((tuple(self.value), self.critical, ))
+        return hash(
+            (
+                tuple(self.value),
+                self.critical,
+            )
+        )
 
     def as_text(self) -> str:
-        return '\n'.join('* DistributionPoint:\n%s' % textwrap.indent(dp.as_text(), '  ')
-                         for dp in self.value)
+        return "\n".join(
+            "* DistributionPoint:\n%s" % textwrap.indent(dp.as_text(), "  ") for dp in self.value
+        )
 
     @property
     def extension_type(self) -> x509.CRLDistributionPoints:
@@ -640,6 +663,6 @@ class CRLDistributionPointsBase(ListExtension[ExtensionTypeTypeVar, ParsableItem
 
     def serialize(self) -> SerializedCRLDistributionPoints:
         return {
-            'value': [dp.serialize() for dp in self.value],
-            'critical': self.critical,
+            "value": [dp.serialize() for dp in self.value],
+            "critical": self.critical,
         }

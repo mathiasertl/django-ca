@@ -89,15 +89,22 @@ else:
 
 
 BasicConstraintsBase = TypedDict("BasicConstraintsBase", {"ca": bool})
-ParsableAuthorityInformationAccess = TypedDict("ParsableAuthorityInformationAccess", {
-    'ocsp': Optional[ParsableGeneralNameList],
-    'issuers': Optional[ParsableGeneralNameList],
-})
-ParsableAuthorityKeyIdentifierDict = TypedDict("ParsableAuthorityKeyIdentifierDict", {
-    "key_identifier": Optional[bytes],
-    "authority_cert_issuer": Iterable[str],
-    "authority_cert_serial_number": Optional[int],
-}, total=False)
+ParsableAuthorityInformationAccess = TypedDict(
+    "ParsableAuthorityInformationAccess",
+    {
+        "ocsp": Optional[ParsableGeneralNameList],
+        "issuers": Optional[ParsableGeneralNameList],
+    },
+)
+ParsableAuthorityKeyIdentifierDict = TypedDict(
+    "ParsableAuthorityKeyIdentifierDict",
+    {
+        "key_identifier": Optional[bytes],
+        "authority_cert_issuer": Iterable[str],
+        "authority_cert_serial_number": Optional[int],
+    },
+    total=False,
+)
 ParsableAuthorityKeyIdentifier = Union[str, bytes, ParsableAuthorityKeyIdentifierDict]
 
 
@@ -112,17 +119,29 @@ class ParsableBasicConstraints(BasicConstraintsBase, total=False):
     pathlen: Union[int, str]
 
 
-ParsableNameConstraints = TypedDict("ParsableNameConstraints", {
-    "permitted": ParsableGeneralNameList,
-    "excluded": ParsableGeneralNameList,
-}, total=False)
-ParsableNullExtension = TypedDict("ParsableNullExtension", {
-    "critical": bool,
-}, total=False)
-ParsablePolicyConstraints = TypedDict("ParsablePolicyConstraints", {
-    "require_explicit_policy": int,
-    "inhibit_policy_mapping": int,
-}, total=False)
+ParsableNameConstraints = TypedDict(
+    "ParsableNameConstraints",
+    {
+        "permitted": ParsableGeneralNameList,
+        "excluded": ParsableGeneralNameList,
+    },
+    total=False,
+)
+ParsableNullExtension = TypedDict(
+    "ParsableNullExtension",
+    {
+        "critical": bool,
+    },
+    total=False,
+)
+ParsablePolicyConstraints = TypedDict(
+    "ParsablePolicyConstraints",
+    {
+        "require_explicit_policy": int,
+        "inhibit_policy_mapping": int,
+    },
+    total=False,
+)
 
 
 class SerializedBasicConstraints(BasicConstraintsBase, total=False):

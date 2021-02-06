@@ -71,9 +71,13 @@ from .utils import PolicyInformation
 ParsableValueDummy = str
 
 
-class AuthorityInformationAccess(Extension[x509.AuthorityInformationAccess,
-                                           ParsableAuthorityInformationAccess,
-                                           SerializedAuthorityInformationAccess]):
+class AuthorityInformationAccess(
+    Extension[
+        x509.AuthorityInformationAccess,
+        ParsableAuthorityInformationAccess,
+        SerializedAuthorityInformationAccess,
+    ]
+):
     """Class representing a AuthorityInformationAccess extension.
 
     .. seealso::
@@ -100,10 +104,11 @@ class AuthorityInformationAccess(Extension[x509.AuthorityInformationAccess,
         <AuthorityInformationAccess: issuers=['URI:http://issuer.example.com'],
         ocsp=['URI:http://ocsp.example.com/'], critical=False>
     """
-    key = 'authority_information_access'
+
+    key = "authority_information_access"
     """Key used in CA_PROFILES."""
 
-    name: ClassVar[str] = 'AuthorityInformationAccess'
+    name: ClassVar[str] = "AuthorityInformationAccess"
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.AUTHORITY_INFORMATION_ACCESS
     _ocsp: GeneralNameList
     _issuers: GeneralNameList
@@ -115,18 +120,18 @@ class AuthorityInformationAccess(Extension[x509.AuthorityInformationAccess,
         return tuple(self._issuers), tuple(self._ocsp)
 
     def repr_value(self) -> str:
-        return 'issuers=%r, ocsp=%r' % (self._issuers.serialize(), self._ocsp.serialize())
+        return "issuers=%r, ocsp=%r" % (self._issuers.serialize(), self._ocsp.serialize())
 
     def as_text(self) -> str:
-        text = ''
+        text = ""
         if self._issuers:
-            text += 'CA Issuers:\n'
+            text += "CA Issuers:\n"
             for name in self._issuers.serialize():
-                text += '  * %s\n' % name
+                text += "  * %s\n" % name
         if self._ocsp:
-            text += 'OCSP:\n'
+            text += "OCSP:\n"
             for name in self._ocsp.serialize():
-                text += '  * %s\n' % name
+                text += "  * %s\n" % name
 
         return text.strip()
 
@@ -147,14 +152,16 @@ class AuthorityInformationAccess(Extension[x509.AuthorityInformationAccess,
         return x509.AuthorityInformationAccess(descriptions=descs)
 
     def from_extension(self, value: x509.AuthorityInformationAccess) -> None:
-        self.issuers = [v.access_location for v in value
-                        if v.access_method == AuthorityInformationAccessOID.CA_ISSUERS]
-        self.ocsp = [v.access_location for v in value
-                     if v.access_method == AuthorityInformationAccessOID.OCSP]
+        self.issuers = [
+            v.access_location for v in value if v.access_method == AuthorityInformationAccessOID.CA_ISSUERS
+        ]
+        self.ocsp = [
+            v.access_location for v in value if v.access_method == AuthorityInformationAccessOID.OCSP
+        ]
 
     def from_dict(self, value: ParsableAuthorityInformationAccess) -> None:
-        self.issuers = value.get('issuers')
-        self.ocsp = value.get('ocsp')
+        self.issuers = value.get("issuers")
+        self.ocsp = value.get("ocsp")
 
     def _get_ocsp(self) -> GeneralNameList:
         """OCSP endpoints described by this extension."""
@@ -168,18 +175,18 @@ class AuthorityInformationAccess(Extension[x509.AuthorityInformationAccess,
     def serialize_value(self) -> SerializedAuthorityInformationAccess:
         value: SerializedAuthorityInformationAccess = {}
         if self._issuers:
-            value['issuers'] = self._issuers.serialize()
+            value["issuers"] = self._issuers.serialize()
         if self._ocsp:
-            value['ocsp'] = self._ocsp.serialize()
+            value["ocsp"] = self._ocsp.serialize()
         return value
 
     issuers = property(_get_issuers, _set_issuers)
     ocsp = property(_get_ocsp, _set_ocsp)
 
 
-class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier,
-                                       ParsableAuthorityKeyIdentifier,
-                                       SerializedAuthorityKeyIdentifier]):
+class AuthorityKeyIdentifier(
+    Extension[x509.AuthorityKeyIdentifier, ParsableAuthorityKeyIdentifier, SerializedAuthorityKeyIdentifier]
+):
     """Class representing a AuthorityKeyIdentifier extension.
 
     This extension identifies the signing CA, so it is not usually defined in a profile or instantiated by a
@@ -206,10 +213,10 @@ class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier,
         `RFC 5280, section 4.2.1.1 <https://tools.ietf.org/html/rfc5280#section-4.2.1.1>`_
     """
 
-    key = 'authority_key_identifier'
+    key = "authority_key_identifier"
     """Key used in CA_PROFILES."""
 
-    name: ClassVar[str] = 'AuthorityKeyIdentifier'
+    name: ClassVar[str] = "AuthorityKeyIdentifier"
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.AUTHORITY_KEY_IDENTIFIER
     key_identifier: Optional[bytes] = None
     authority_cert_issuer: GeneralNameList
@@ -221,25 +228,25 @@ class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier,
     def repr_value(self) -> str:
         values = []
         if self.key_identifier is not None:
-            values.append('keyid: %s' % bytes_to_hex(self.key_identifier))
+            values.append("keyid: %s" % bytes_to_hex(self.key_identifier))
         if self.authority_cert_issuer:
-            values.append('issuer: %r' % self.authority_cert_issuer.serialize())
+            values.append("issuer: %r" % self.authority_cert_issuer.serialize())
         if self.authority_cert_serial_number is not None:
-            values.append('serial: %s' % self.authority_cert_serial_number)
+            values.append("serial: %s" % self.authority_cert_serial_number)
 
-        return ', '.join(values)
+        return ", ".join(values)
 
     def as_text(self) -> str:
         values = []
         if self.key_identifier is not None:
-            values.append('* KeyID: %s' % bytes_to_hex(self.key_identifier))
+            values.append("* KeyID: %s" % bytes_to_hex(self.key_identifier))
         if self.authority_cert_issuer:
-            values.append('* Issuer:')
-            values += [textwrap.indent(v, '  * ') for v in self.authority_cert_issuer.serialize()]
+            values.append("* Issuer:")
+            values += [textwrap.indent(v, "  * ") for v in self.authority_cert_issuer.serialize()]
         if self.authority_cert_serial_number is not None:
-            values.append('* Serial: %s' % self.authority_cert_serial_number)
+            values.append("* Serial: %s" % self.authority_cert_serial_number)
 
-        return '\n'.join(values)
+        return "\n".join(values)
 
     @property
     def extension_type(self) -> x509.AuthorityKeyIdentifier:
@@ -250,23 +257,24 @@ class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier,
         return x509.AuthorityKeyIdentifier(
             key_identifier=self.key_identifier,
             authority_cert_issuer=issuer,
-            authority_cert_serial_number=self.authority_cert_serial_number)
+            authority_cert_serial_number=self.authority_cert_serial_number,
+        )
 
     def from_dict(self, value: ParsableAuthorityKeyIdentifier) -> None:
         if isinstance(value, (bytes, str)):
             self.key_identifier = self.parse_keyid(value)
             self.authority_cert_issuer = GeneralNameList()
         else:
-            self.key_identifier = self.parse_keyid(value.get('key_identifier'))
-            self.authority_cert_issuer = GeneralNameList(value.get('authority_cert_issuer'))
-            self.authority_cert_serial_number = value.get('authority_cert_serial_number')
+            self.key_identifier = self.parse_keyid(value.get("key_identifier"))
+            self.authority_cert_issuer = GeneralNameList(value.get("authority_cert_issuer"))
+            self.authority_cert_serial_number = value.get("authority_cert_serial_number")
 
     def from_extension(self, value: x509.AuthorityKeyIdentifier) -> None:
         self.key_identifier = value.key_identifier
         self.authority_cert_issuer = GeneralNameList(value.authority_cert_issuer)
         self.authority_cert_serial_number = value.authority_cert_serial_number
 
-    def from_other(self, value: 'SubjectKeyIdentifier') -> None:
+    def from_other(self, value: "SubjectKeyIdentifier") -> None:
         if isinstance(value, SubjectKeyIdentifier):
             self.critical = self.default_critical
             self.from_subject_key_identifier(value)
@@ -274,7 +282,7 @@ class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier,
         else:
             super().from_other(value)
 
-    def from_subject_key_identifier(self, ext: 'SubjectKeyIdentifier') -> None:
+    def from_subject_key_identifier(self, ext: "SubjectKeyIdentifier") -> None:
         """Create an extension based on SubjectKeyIdentifier extension."""
         # pylint: disable=attribute-defined-outside-init; func is designed to be called by init
         self.key_identifier = ext.value
@@ -292,18 +300,18 @@ class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier,
     def serialize_value(self) -> SerializedAuthorityKeyIdentifier:
         value: SerializedAuthorityKeyIdentifier = {}
         if self.key_identifier is not None:
-            value['key_identifier'] = bytes_to_hex(self.key_identifier)
+            value["key_identifier"] = bytes_to_hex(self.key_identifier)
         if self.authority_cert_issuer:
-            value['authority_cert_issuer'] = self.authority_cert_issuer.serialize()
+            value["authority_cert_issuer"] = self.authority_cert_issuer.serialize()
         if self.authority_cert_serial_number is not None:
-            value['authority_cert_serial_number'] = self.authority_cert_serial_number
+            value["authority_cert_serial_number"] = self.authority_cert_serial_number
 
         return value
 
 
-class BasicConstraints(Extension[x509.BasicConstraints,
-                                 ParsableBasicConstraints,
-                                 SerializedBasicConstraints]):
+class BasicConstraints(
+    Extension[x509.BasicConstraints, ParsableBasicConstraints, SerializedBasicConstraints]
+):
     """Class representing a BasicConstraints extension.
 
     This class has the boolean attributes ``ca`` and the attribute ``pathlen``, which is either ``None`` or an
@@ -318,10 +326,10 @@ class BasicConstraints(Extension[x509.BasicConstraints,
         `RFC 5280, section 4.2.1.9 <https://tools.ietf.org/html/rfc5280#section-4.2.1.9>`_
     """
 
-    key = 'basic_constraints'
+    key = "basic_constraints"
     """Key used in CA_PROFILES."""
 
-    name: ClassVar[str] = 'BasicConstraints'
+    name: ClassVar[str] = "BasicConstraints"
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.BASIC_CONSTRAINTS
     ca: bool
     pathlen: Optional[int]
@@ -332,9 +340,9 @@ class BasicConstraints(Extension[x509.BasicConstraints,
         return self.ca, self.pathlen
 
     def repr_value(self) -> str:
-        val = 'ca=%s' % self.ca
+        val = "ca=%s" % self.ca
         if self.ca:
-            val += ', pathlen=%s' % self.pathlen
+            val += ", pathlen=%s" % self.pathlen
         return val
 
     def from_extension(self, value: x509.BasicConstraints) -> None:
@@ -342,9 +350,9 @@ class BasicConstraints(Extension[x509.BasicConstraints,
         self.pathlen = value.path_length
 
     def from_dict(self, value: ParsableBasicConstraints) -> None:
-        self.ca = bool(value.get('ca', False))
+        self.ca = bool(value.get("ca", False))
         if self.ca:
-            self.pathlen = self.parse_pathlen(value.get('pathlen'))
+            self.pathlen = self.parse_pathlen(value.get("pathlen"))
         else:  # if ca is not True, we don't use the pathlen
             self.pathlen = None
 
@@ -354,11 +362,11 @@ class BasicConstraints(Extension[x509.BasicConstraints,
 
     def as_text(self) -> str:
         if self.ca is True:
-            val = 'CA:TRUE'
+            val = "CA:TRUE"
         else:
-            val = 'CA:FALSE'
+            val = "CA:FALSE"
         if self.pathlen is not None:
-            val += ', pathlen:%s' % self.pathlen
+            val += ", pathlen:%s" % self.pathlen
 
         return val
 
@@ -372,9 +380,9 @@ class BasicConstraints(Extension[x509.BasicConstraints,
         return value
 
     def serialize_value(self) -> SerializedBasicConstraints:
-        value: SerializedBasicConstraints = {'ca': self.ca}
+        value: SerializedBasicConstraints = {"ca": self.ca}
         if self.ca:
-            value['pathlen'] = self.pathlen
+            value["pathlen"] = self.pathlen
         return value
 
 
@@ -397,16 +405,21 @@ class CRLDistributionPoints(CRLDistributionPointsBase[x509.CRLDistributionPoints
 
         `RFC 5280, section 4.2.1.13 <https://tools.ietf.org/html/rfc5280#section-4.2.1.13>`_
     """
-    key = 'crl_distribution_points'
+
+    key = "crl_distribution_points"
     """Key used in CA_PROFILES."""
 
-    name: ClassVar[str] = 'CRLDistributionPoints'
+    name: ClassVar[str] = "CRLDistributionPoints"
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.CRL_DISTRIBUTION_POINTS
 
 
-class CertificatePolicies(ListExtension[x509.CertificatePolicies,
-                                        Union[PolicyInformation, ParsablePolicyInformation],
-                                        SerializedPolicyInformation]):
+class CertificatePolicies(
+    ListExtension[
+        x509.CertificatePolicies,
+        Union[PolicyInformation, ParsablePolicyInformation],
+        SerializedPolicyInformation,
+    ]
+):
     """Class representing a Certificate Policies extension.
 
     The value passed to this extension should be a ``list`` of
@@ -423,22 +436,28 @@ class CertificatePolicies(ListExtension[x509.CertificatePolicies,
 
         `RFC 5280, section 4.2.1.4 <https://tools.ietf.org/html/rfc5280#section-4.2.1.4>`_
     """
-    key = 'certificate_policies'
+
+    key = "certificate_policies"
     """Key used in CA_PROFILES."""
 
-    name: ClassVar[str] = 'CertificatePolicies'
+    name: ClassVar[str] = "CertificatePolicies"
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.CERTIFICATE_POLICIES
 
     def __hash__(self) -> int:
-        return hash((tuple(self.value), self.critical, ))
+        return hash(
+            (
+                tuple(self.value),
+                self.critical,
+            )
+        )
 
     def repr_value(self) -> str:
         if len(self.value) == 1:
-            return '1 policy'
-        return '%s policies' % len(self.value)
+            return "1 policy"
+        return "%s policies" % len(self.value)
 
     def as_text(self) -> str:
-        return '\n'.join('* %s' % textwrap.indent(p.as_text(), '  ').strip() for p in self.value)
+        return "\n".join("* %s" % textwrap.indent(p.as_text(), "  ").strip() for p in self.value)
 
     @property
     def extension_type(self) -> x509.CertificatePolicies:
@@ -469,10 +488,11 @@ class FreshestCRL(CRLDistributionPointsBase[x509.FreshestCRL, ParsableValueDummy
 
         `RFC 5280, section 4.2.1.15 <https://tools.ietf.org/html/rfc5280#section-4.2.1.15>`_
     """
-    key = 'freshest_crl'
+
+    key = "freshest_crl"
     """Key used in CA_PROFILES."""
 
-    name: ClassVar[str] = 'FreshestCRL'
+    name: ClassVar[str] = "FreshestCRL"
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.FRESHEST_CRL
 
     @property
@@ -480,8 +500,9 @@ class FreshestCRL(CRLDistributionPointsBase[x509.FreshestCRL, ParsableValueDummy
         return x509.FreshestCRL(distribution_points=[dp.for_extension_type for dp in self.value])
 
 
-class IssuerAlternativeName(AlternativeNameExtension[x509.IssuerAlternativeName,
-                                                     ParsableGeneralNameList, str]):
+class IssuerAlternativeName(
+    AlternativeNameExtension[x509.IssuerAlternativeName, ParsableGeneralNameList, str]
+):
     """Class representing an Issuer Alternative Name extension.
 
     This extension is usually marked as non-critical.
@@ -494,10 +515,10 @@ class IssuerAlternativeName(AlternativeNameExtension[x509.IssuerAlternativeName,
        `RFC 5280, section 4.2.1.7 <https://tools.ietf.org/html/rfc5280#section-4.2.1.7>`_
     """
 
-    key = 'issuer_alternative_name'
+    key = "issuer_alternative_name"
     """Key used in CA_PROFILES."""
 
-    name: ClassVar[str] = 'IssuerAlternativeName'
+    name: ClassVar[str] = "IssuerAlternativeName"
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.ISSUER_ALTERNATIVE_NAME
 
     @property
@@ -525,21 +546,21 @@ class KeyUsage(OrderedSetExtension[x509.KeyUsage, str, str]):
     default_critical = True
     """This extension is marked as critical by default."""
 
-    key = 'key_usage'
+    key = "key_usage"
     """Key used in CA_PROFILES."""
 
-    name: ClassVar[str] = 'KeyUsage'
+    name: ClassVar[str] = "KeyUsage"
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.KEY_USAGE
     CRYPTOGRAPHY_MAPPING = {
-        'cRLSign': 'crl_sign',
-        'dataEncipherment': 'data_encipherment',
-        'decipherOnly': 'decipher_only',
-        'digitalSignature': 'digital_signature',
-        'encipherOnly': 'encipher_only',
-        'keyAgreement': 'key_agreement',
-        'keyCertSign': 'key_cert_sign',
-        'keyEncipherment': 'key_encipherment',
-        'nonRepudiation': 'content_commitment',  # http://marc.info/?t=107176106300005&r=1&w=2
+        "cRLSign": "crl_sign",
+        "dataEncipherment": "data_encipherment",
+        "decipherOnly": "decipher_only",
+        "digitalSignature": "digital_signature",
+        "encipherOnly": "encipher_only",
+        "keyAgreement": "key_agreement",
+        "keyCertSign": "key_cert_sign",
+        "keyEncipherment": "key_encipherment",
+        "nonRepudiation": "content_commitment",  # http://marc.info/?t=107176106300005&r=1&w=2
     }
     _CRYPTOGRAPHY_MAPPING_REVERSED = {v: k for k, v in CRYPTOGRAPHY_MAPPING.items()}
     KNOWN_VALUES = set(CRYPTOGRAPHY_MAPPING.values())
@@ -548,23 +569,23 @@ class KeyUsage(OrderedSetExtension[x509.KeyUsage, str, str]):
     """Known values that can be passed to this extension."""
 
     CHOICES = (
-        ('cRLSign', 'CRL Sign'),
-        ('dataEncipherment', 'dataEncipherment'),
-        ('decipherOnly', 'decipherOnly'),
-        ('digitalSignature', 'Digital Signature'),
-        ('encipherOnly', 'encipherOnly'),
-        ('keyAgreement', 'Key Agreement'),
-        ('keyCertSign', 'Certificate Sign'),
-        ('keyEncipherment', 'Key Encipherment'),
-        ('nonRepudiation', 'nonRepudiation'),
+        ("cRLSign", "CRL Sign"),
+        ("dataEncipherment", "dataEncipherment"),
+        ("decipherOnly", "decipherOnly"),
+        ("digitalSignature", "Digital Signature"),
+        ("encipherOnly", "encipherOnly"),
+        ("keyAgreement", "Key Agreement"),
+        ("keyCertSign", "Certificate Sign"),
+        ("keyEncipherment", "Key Encipherment"),
+        ("nonRepudiation", "nonRepudiation"),
     )
 
     def _test_value(self) -> None:
         # decipherOnly only makes sense if keyAgreement is True
-        if 'decipher_only' in self.value and 'key_agreement' not in self.value:
-            self.value.add('key_agreement')
-        if 'encipher_only' in self.value and 'key_agreement' not in self.value:
-            self.value.add('key_agreement')
+        if "decipher_only" in self.value and "key_agreement" not in self.value:
+            self.value.add("key_agreement")
+        if "encipher_only" in self.value and "key_agreement" not in self.value:
+            self.value.add("key_agreement")
 
     def from_extension(self, value: x509.KeyUsage) -> None:
         self.value = set()
@@ -589,8 +610,8 @@ class KeyUsage(OrderedSetExtension[x509.KeyUsage, str, str]):
         try:
             return self.CRYPTOGRAPHY_MAPPING[value]
         except KeyError as ex:
-            raise ValueError('Unknown value: %s' % value) from ex
-        raise ValueError('Unknown value: %s' % value)  # pragma: no cover - function returns/raises before
+            raise ValueError("Unknown value: %s" % value) from ex
+        raise ValueError("Unknown value: %s" % value)  # pragma: no cover - function returns/raises before
 
     def serialize_item(self, value: str) -> str:
         return self._CRYPTOGRAPHY_MAPPING_REVERSED[value]
@@ -599,26 +620,25 @@ class KeyUsage(OrderedSetExtension[x509.KeyUsage, str, str]):
 class ExtendedKeyUsage(OrderedSetExtension[x509.ExtendedKeyUsage, Union[ObjectIdentifier, str], str]):
     """Class representing a ExtendedKeyUsage extension."""
 
-    key = 'extended_key_usage'
+    key = "extended_key_usage"
     """Key used in CA_PROFILES."""
 
-    name: ClassVar[str] = 'ExtendedKeyUsage'
+    name: ClassVar[str] = "ExtendedKeyUsage"
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.EXTENDED_KEY_USAGE
     CRYPTOGRAPHY_MAPPING = {
-        'serverAuth': ExtendedKeyUsageOID.SERVER_AUTH,
-        'clientAuth': ExtendedKeyUsageOID.CLIENT_AUTH,
-        'codeSigning': ExtendedKeyUsageOID.CODE_SIGNING,
-        'emailProtection': ExtendedKeyUsageOID.EMAIL_PROTECTION,
-        'timeStamping': ExtendedKeyUsageOID.TIME_STAMPING,
-        'OCSPSigning': ExtendedKeyUsageOID.OCSP_SIGNING,
-        'anyExtendedKeyUsage': ExtendedKeyUsageOID.ANY_EXTENDED_KEY_USAGE,
-        'smartcardLogon': ObjectIdentifier("1.3.6.1.4.1.311.20.2.2"),
-        'msKDC': ObjectIdentifier("1.3.6.1.5.2.3.5"),
-
+        "serverAuth": ExtendedKeyUsageOID.SERVER_AUTH,
+        "clientAuth": ExtendedKeyUsageOID.CLIENT_AUTH,
+        "codeSigning": ExtendedKeyUsageOID.CODE_SIGNING,
+        "emailProtection": ExtendedKeyUsageOID.EMAIL_PROTECTION,
+        "timeStamping": ExtendedKeyUsageOID.TIME_STAMPING,
+        "OCSPSigning": ExtendedKeyUsageOID.OCSP_SIGNING,
+        "anyExtendedKeyUsage": ExtendedKeyUsageOID.ANY_EXTENDED_KEY_USAGE,
+        "smartcardLogon": ObjectIdentifier("1.3.6.1.4.1.311.20.2.2"),
+        "msKDC": ObjectIdentifier("1.3.6.1.5.2.3.5"),
         # Defined in RFC 3280, occurs in TrustID Server A52 CA
-        'ipsecEndSystem': ObjectIdentifier('1.3.6.1.5.5.7.3.5'),
-        'ipsecTunnel': ObjectIdentifier('1.3.6.1.5.5.7.3.6'),
-        'ipsecUser': ObjectIdentifier('1.3.6.1.5.5.7.3.7'),
+        "ipsecEndSystem": ObjectIdentifier("1.3.6.1.5.5.7.3.5"),
+        "ipsecTunnel": ObjectIdentifier("1.3.6.1.5.5.7.3.6"),
+        "ipsecUser": ObjectIdentifier("1.3.6.1.5.5.7.3.7"),
     }
     _CRYPTOGRAPHY_MAPPING_REVERSED = {v: k for k, v in CRYPTOGRAPHY_MAPPING.items()}
 
@@ -627,18 +647,18 @@ class ExtendedKeyUsage(OrderedSetExtension[x509.ExtendedKeyUsage, Union[ObjectId
 
     # Used by the HTML form select field
     CHOICES = (
-        ('serverAuth', 'SSL/TLS Web Server Authentication'),
-        ('clientAuth', 'SSL/TLS Web Client Authentication'),
-        ('codeSigning', 'Code signing'),
-        ('emailProtection', 'E-mail Protection (S/MIME)'),
-        ('timeStamping', 'Trusted Timestamping'),
-        ('OCSPSigning', 'OCSP Signing'),
-        ('smartcardLogon', 'Smart card logon'),
-        ('msKDC', 'Kerberos Domain Controller'),
-        ('ipsecEndSystem', 'IPSec EndSystem'),
-        ('ipsecTunnel', 'IPSec Tunnel'),
-        ('ipsecUser', 'IPSec User'),
-        ('anyExtendedKeyUsage', 'Any Extended Key Usage'),
+        ("serverAuth", "SSL/TLS Web Server Authentication"),
+        ("clientAuth", "SSL/TLS Web Client Authentication"),
+        ("codeSigning", "Code signing"),
+        ("emailProtection", "E-mail Protection (S/MIME)"),
+        ("timeStamping", "Trusted Timestamping"),
+        ("OCSPSigning", "OCSP Signing"),
+        ("smartcardLogon", "Smart card logon"),
+        ("msKDC", "Kerberos Domain Controller"),
+        ("ipsecEndSystem", "IPSec EndSystem"),
+        ("ipsecTunnel", "IPSec Tunnel"),
+        ("ipsecUser", "IPSec User"),
+        ("anyExtendedKeyUsage", "Any Extended Key Usage"),
     )
 
     def from_extension(self, value: x509.ExtendedKeyUsage) -> None:
@@ -657,7 +677,7 @@ class ExtendedKeyUsage(OrderedSetExtension[x509.ExtendedKeyUsage, Union[ObjectId
             return value
         if isinstance(value, str) and value in self.CRYPTOGRAPHY_MAPPING:
             return self.CRYPTOGRAPHY_MAPPING[value]
-        raise ValueError('Unknown value: %s' % value)
+        raise ValueError("Unknown value: %s" % value)
 
 
 class InhibitAnyPolicy(Extension[x509.InhibitAnyPolicy, int, int]):
@@ -680,10 +700,10 @@ class InhibitAnyPolicy(Extension[x509.InhibitAnyPolicy, int, int]):
 
     """
 
-    key = 'inhibit_any_policy'
+    key = "inhibit_any_policy"
     """Key used in CA_PROFILES."""
 
-    name: ClassVar[str] = 'InhibitAnyPolicy'
+    name: ClassVar[str] = "InhibitAnyPolicy"
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.INHIBIT_ANY_POLICY
     skip_certs: int
 
@@ -700,9 +720,9 @@ class InhibitAnyPolicy(Extension[x509.InhibitAnyPolicy, int, int]):
 
     def _test_value(self) -> None:
         if not isinstance(self.skip_certs, int):
-            raise ValueError('%s: must be an int' % self.skip_certs)
+            raise ValueError("%s: must be an int" % self.skip_certs)
         if self.skip_certs < 0:
-            raise ValueError('%s: must be a positive int' % self.skip_certs)
+            raise ValueError("%s: must be a positive int" % self.skip_certs)
 
     @property
     def extension_type(self) -> x509.InhibitAnyPolicy:
@@ -730,9 +750,9 @@ class InhibitAnyPolicy(Extension[x509.InhibitAnyPolicy, int, int]):
         return self.skip_certs
 
 
-class PolicyConstraints(Extension[x509.PolicyConstraints,
-                                  ParsablePolicyConstraints,
-                                  SerializedPolicyConstraints]):
+class PolicyConstraints(
+    Extension[x509.PolicyConstraints, ParsablePolicyConstraints, SerializedPolicyConstraints]
+):
     """Class representing a PolicyConstraints extension.
 
     Example::
@@ -752,10 +772,10 @@ class PolicyConstraints(Extension[x509.PolicyConstraints,
 
     """
 
-    key = 'policy_constraints'
+    key = "policy_constraints"
     """Key used in CA_PROFILES."""
 
-    name: ClassVar[str] = 'PolicyConstraints'
+    name: ClassVar[str] = "PolicyConstraints"
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.POLICY_CONSTRAINTS
     require_explicit_policy: Optional[int]
     inhibit_policy_mapping: Optional[int]
@@ -769,13 +789,13 @@ class PolicyConstraints(Extension[x509.PolicyConstraints,
 
     def repr_value(self) -> str:
         if self.require_explicit_policy is None and self.inhibit_policy_mapping is None:
-            return '-'
+            return "-"
         values = []
         if self.inhibit_policy_mapping is not None:
-            values.append('inhibit_policy_mapping=%s' % self.inhibit_policy_mapping)
+            values.append("inhibit_policy_mapping=%s" % self.inhibit_policy_mapping)
         if self.require_explicit_policy is not None:
-            values.append('require_explicit_policy=%s' % self.require_explicit_policy)
-        return ', '.join(values)
+            values.append("require_explicit_policy=%s" % self.require_explicit_policy)
+        return ", ".join(values)
 
     def _test_value(self) -> None:
         rep = self.require_explicit_policy
@@ -784,30 +804,32 @@ class PolicyConstraints(Extension[x509.PolicyConstraints,
             if not isinstance(rep, int):
                 raise ValueError("%s: require_explicit_policy must be int or None" % rep)
             if rep < 0:
-                raise ValueError('%s: require_explicit_policy must be a positive int' % rep)
+                raise ValueError("%s: require_explicit_policy must be a positive int" % rep)
         if ipm is not None:
             if not isinstance(ipm, int):
                 raise ValueError("%s: inhibit_policy_mapping must be int or None" % ipm)
             if ipm < 0:
-                raise ValueError('%s: inhibit_policy_mapping must be a positive int' % ipm)
+                raise ValueError("%s: inhibit_policy_mapping must be a positive int" % ipm)
 
     def as_text(self) -> str:
         lines = []
         if self.inhibit_policy_mapping is not None:
-            lines.append('* InhibitPolicyMapping: %s' % self.inhibit_policy_mapping)
+            lines.append("* InhibitPolicyMapping: %s" % self.inhibit_policy_mapping)
         if self.require_explicit_policy is not None:
-            lines.append('* RequireExplicitPolicy: %s' % self.require_explicit_policy)
+            lines.append("* RequireExplicitPolicy: %s" % self.require_explicit_policy)
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     @property
     def extension_type(self) -> x509.PolicyConstraints:
-        return x509.PolicyConstraints(require_explicit_policy=self.require_explicit_policy,
-                                      inhibit_policy_mapping=self.inhibit_policy_mapping)
+        return x509.PolicyConstraints(
+            require_explicit_policy=self.require_explicit_policy,
+            inhibit_policy_mapping=self.inhibit_policy_mapping,
+        )
 
     def from_dict(self, value: ParsablePolicyConstraints) -> None:
-        self.require_explicit_policy = value.get('require_explicit_policy')
-        self.inhibit_policy_mapping = value.get('inhibit_policy_mapping')
+        self.require_explicit_policy = value.get("require_explicit_policy")
+        self.inhibit_policy_mapping = value.get("inhibit_policy_mapping")
 
     def from_extension(self, value: x509.PolicyConstraints) -> None:
         self.require_explicit_policy = value.require_explicit_policy
@@ -816,9 +838,9 @@ class PolicyConstraints(Extension[x509.PolicyConstraints,
     def serialize_value(self) -> SerializedPolicyConstraints:
         value: SerializedPolicyConstraints = {}
         if self.inhibit_policy_mapping is not None:
-            value['inhibit_policy_mapping'] = self.inhibit_policy_mapping
+            value["inhibit_policy_mapping"] = self.inhibit_policy_mapping
         if self.require_explicit_policy is not None:
-            value['require_explicit_policy'] = self.require_explicit_policy
+            value["require_explicit_policy"] = self.require_explicit_policy
         return value
 
 
@@ -852,10 +874,11 @@ class NameConstraints(Extension[x509.NameConstraints, ParsableNameConstraints, S
        `RFC 5280, section 4.2.1.10 <https://tools.ietf.org/html/rfc5280#section-4.2.1.10>`_
 
     """
-    key = 'name_constraints'
+
+    key = "name_constraints"
     """Key used in CA_PROFILES."""
 
-    name: ClassVar[str] = 'NameConstraints'
+    name: ClassVar[str] = "NameConstraints"
     default_critical = True
     """This extension is marked as critical by default."""
 
@@ -873,18 +896,18 @@ class NameConstraints(Extension[x509.NameConstraints, ParsableNameConstraints, S
         permitted = list(self._permitted.serialize())
         excluded = list(self._excluded.serialize())
 
-        return 'permitted=%r, excluded=%r' % (permitted, excluded)
+        return "permitted=%r, excluded=%r" % (permitted, excluded)
 
     def as_text(self) -> str:
-        text = ''
+        text = ""
         if self._permitted:
-            text += 'Permitted:\n'
+            text += "Permitted:\n"
             for name in self._permitted.serialize():
-                text += '  * %s\n' % name
+                text += "  * %s\n" % name
         if self._excluded:
-            text += 'Excluded:\n'
+            text += "Excluded:\n"
             for name in self._excluded.serialize():
-                text += '  * %s\n' % name
+                text += "  * %s\n" % name
 
         return text
 
@@ -908,8 +931,8 @@ class NameConstraints(Extension[x509.NameConstraints, ParsableNameConstraints, S
         self.excluded = value.excluded_subtrees
 
     def from_dict(self, value: ParsableNameConstraints) -> None:
-        self.permitted = GeneralNameList(value.get('permitted'))
-        self.excluded = GeneralNameList(value.get('excluded'))
+        self.permitted = GeneralNameList(value.get("permitted"))
+        self.excluded = GeneralNameList(value.get("excluded"))
 
     @property
     def permitted(self) -> GeneralNameList:
@@ -924,8 +947,8 @@ class NameConstraints(Extension[x509.NameConstraints, ParsableNameConstraints, S
 
     def serialize_value(self) -> SerializedNameConstraints:
         return {
-            'permitted': self._permitted.serialize(),
-            'excluded': self._excluded.serialize(),
+            "permitted": self._permitted.serialize(),
+            "excluded": self._excluded.serialize(),
         }
 
 
@@ -946,11 +969,12 @@ class OCSPNoCheck(NullExtension[x509.OCSPNoCheck]):
 
        `RFC 6990, section 4.2.2.2.1 <https://tools.ietf.org/html/rfc6960#section-4.2.2.2>`_
     """
+
     ext_class = x509.OCSPNoCheck
-    key = 'ocsp_no_check'
+    key = "ocsp_no_check"
     """Key used in CA_PROFILES."""
 
-    name: ClassVar[str] = 'OCSPNoCheck'
+    name: ClassVar[str] = "OCSPNoCheck"
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.OCSP_NO_CHECK
 
 
@@ -970,13 +994,14 @@ class PrecertPoison(NullExtension[x509.PrecertPoison]):
 
        `RFC 6962, section 3.1 <https://tools.ietf.org/html/rfc6962#section-3.1>`_
     """
+
     default_critical = True
     """This extension is marked as critical by default."""
 
-    key = 'precert_poison'
+    key = "precert_poison"
     """Key used in CA_PROFILES."""
 
-    name: ClassVar[str] = 'PrecertPoison'
+    name: ClassVar[str] = "PrecertPoison"
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.PRECERT_POISON
     ext_class = x509.PrecertPoison
 
@@ -984,13 +1009,15 @@ class PrecertPoison(NullExtension[x509.PrecertPoison]):
         super().__init__(value=value)
 
         if self.critical is not True:
-            raise ValueError('PrecertPoison must always be marked as critical')
+            raise ValueError("PrecertPoison must always be marked as critical")
 
 
 class PrecertificateSignedCertificateTimestamps(
-    ListExtension[x509.PrecertificateSignedCertificateTimestamps,
-                  ParsableSignedCertificateTimestamp,
-                  SerializedSignedCertificateTimestamp]
+    ListExtension[
+        x509.PrecertificateSignedCertificateTimestamps,
+        ParsableSignedCertificateTimestamp,
+        SerializedSignedCertificateTimestamp,
+    ]
 ):
     """Class representing signed certificate timestamps.
 
@@ -1007,15 +1034,16 @@ class PrecertificateSignedCertificateTimestamps(
 
        `RFC 6962 <https://tools.ietf.org/html/rfc6962.html>`_
     """
-    key = 'precertificate_signed_certificate_timestamps'
+
+    key = "precertificate_signed_certificate_timestamps"
     """Key used in CA_PROFILES."""
 
-    name: ClassVar[str] = 'PrecertificateSignedCertificateTimestamps'
+    name: ClassVar[str] = "PrecertificateSignedCertificateTimestamps"
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS
-    _timeformat = '%Y-%m-%d %H:%M:%S.%f'
+    _timeformat = "%Y-%m-%d %H:%M:%S.%f"
     LOG_ENTRY_TYPE_MAPPING = {
-        LogEntryType.PRE_CERTIFICATE: 'precertificate',
-        LogEntryType.X509_CERTIFICATE: 'x509_certificate'
+        LogEntryType.PRE_CERTIFICATE: "precertificate",
+        LogEntryType.X509_CERTIFICATE: "x509_certificate",
     }
     value: List[SignedCertificateTimestamp]
 
@@ -1029,12 +1057,17 @@ class PrecertificateSignedCertificateTimestamps(
 
     def __hash__(self) -> int:
         # serialize_iterable returns a dict, which is unhashable
-        return hash((tuple(self.value), self.critical, ))
+        return hash(
+            (
+                tuple(self.value),
+                self.critical,
+            )
+        )
 
     def repr_value(self) -> str:
         if len(self.value) == 1:  # pragma: no cover - we cannot currently create such an extension
-            return '1 timestamp'
-        return '%s timestamps' % len(self.value)
+            return "1 timestamp"
+        return "%s timestamps" % len(self.value)
 
     def __setitem__(self, key, value):  # type: ignore
         raise NotImplementedError
@@ -1043,27 +1076,27 @@ class PrecertificateSignedCertificateTimestamps(
         """Convert SCTs into a generator of serializable dicts."""
         for sct in self.value:
             if sct.entry_type == LogEntryType.PRE_CERTIFICATE:
-                entry_type = 'Precertificate'
+                entry_type = "Precertificate"
             elif sct.entry_type == LogEntryType.X509_CERTIFICATE:  # pragma: no cover - unseen in the wild
-                entry_type = 'x509 certificate'
+                entry_type = "x509 certificate"
             else:  # pragma: no cover
                 # we support everything that has been specified so far
-                entry_type = 'unknown'
+                entry_type = "unknown"
 
             yield {
-                'log_id': binascii.hexlify(sct.log_id).decode('utf-8'),
-                'timestamp': sct.timestamp.isoformat(str(' ')),
-                'type': entry_type,
-                'version': sct.version.name,
+                "log_id": binascii.hexlify(sct.log_id).decode("utf-8"),
+                "timestamp": sct.timestamp.isoformat(str(" ")),
+                "type": entry_type,
+                "version": sct.version.name,
             }
 
     def as_text(self) -> str:
         lines = []
         for val in self.human_readable_timestamps():
-            line = '* {type} ({version}):\n    Timestamp: {timestamp}\n    Log ID: {log_id}'.format(**val)
+            line = "* {type} ({version}):\n    Timestamp: {timestamp}\n    Log ID: {log_id}".format(**val)
             lines.append(line)
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     def count(self, value: ParsableSignedCertificateTimestamp) -> int:
         if isinstance(value, dict):
@@ -1091,15 +1124,16 @@ class PrecertificateSignedCertificateTimestamps(
 
     def serialize_item(self, value: SignedCertificateTimestamp) -> SerializedSignedCertificateTimestamp:
         return {
-            'log_id': binascii.hexlify(value.log_id).decode('utf-8'),
-            'timestamp': value.timestamp.strftime(self._timeformat),
-            'type': PrecertificateSignedCertificateTimestamps.LOG_ENTRY_TYPE_MAPPING[value.entry_type],
-            'version': value.version.name,
+            "log_id": binascii.hexlify(value.log_id).decode("utf-8"),
+            "timestamp": value.timestamp.strftime(self._timeformat),
+            "type": PrecertificateSignedCertificateTimestamps.LOG_ENTRY_TYPE_MAPPING[value.entry_type],
+            "version": value.version.name,
         }
 
 
-class SubjectAlternativeName(AlternativeNameExtension[x509.SubjectAlternativeName,
-                                                      ParsableGeneralNameList, str]):
+class SubjectAlternativeName(
+    AlternativeNameExtension[x509.SubjectAlternativeName, ParsableGeneralNameList, str]
+):
     """Class representing an Subject Alternative Name extension.
 
     This extension is usually marked as non-critical.
@@ -1111,10 +1145,11 @@ class SubjectAlternativeName(AlternativeNameExtension[x509.SubjectAlternativeNam
 
        `RFC 5280, section 4.2.1.6 <https://tools.ietf.org/html/rfc5280#section-4.2.1.6>`_
     """
-    key = 'subject_alternative_name'
+
+    key = "subject_alternative_name"
     """Key used in CA_PROFILES."""
 
-    name: ClassVar[str] = 'SubjectAlternativeName'
+    name: ClassVar[str] = "SubjectAlternativeName"
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.SUBJECT_ALTERNATIVE_NAME
 
     def get_common_name(self) -> Optional[str]:
@@ -1149,10 +1184,10 @@ class SubjectKeyIdentifier(Extension[x509.SubjectKeyIdentifier, ParsableSubjectK
         <SubjectKeyIdentifier: b'333333', critical=False>
     """
 
-    key = 'subject_key_identifier'
+    key = "subject_key_identifier"
     """Key used in CA_PROFILES."""
 
-    name: ClassVar[str] = 'SubjectKeyIdentifier'
+    name: ClassVar[str] = "SubjectKeyIdentifier"
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.SUBJECT_KEY_IDENTIFIER
     value: bytes
 
@@ -1200,21 +1235,21 @@ class TLSFeature(OrderedSetExtension[x509.TLSFeature, Union[TLSFeatureType, str]
         <TLSFeature: ['MultipleCertStatusRequest', 'OCSPMustStaple'], critical=False>
     """
 
-    key = 'tls_feature'
+    key = "tls_feature"
     """Key used in CA_PROFILES."""
 
-    name: ClassVar[str] = 'TLSFeature'
+    name: ClassVar[str] = "TLSFeature"
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.TLS_FEATURE
     value: Set[TLSFeatureType]
     CHOICES = (
-        ('OCSPMustStaple', 'OCSP Must-Staple'),
-        ('MultipleCertStatusRequest', 'Multiple Certificate Status Request'),
+        ("OCSPMustStaple", "OCSP Must-Staple"),
+        ("MultipleCertStatusRequest", "Multiple Certificate Status Request"),
     )
     CRYPTOGRAPHY_MAPPING = {
         # https://tools.ietf.org/html/rfc6066.html:
-        'OCSPMustStaple': TLSFeatureType.status_request,
+        "OCSPMustStaple": TLSFeatureType.status_request,
         # https://tools.ietf.org/html/rfc6961.html (not commonly used):
-        'MultipleCertStatusRequest': TLSFeatureType.status_request_v2,
+        "MultipleCertStatusRequest": TLSFeatureType.status_request_v2,
     }
     _CRYPTOGRAPHY_MAPPING_REVERSED = {v: k for k, v in CRYPTOGRAPHY_MAPPING.items()}
     KNOWN_PARAMETERS = sorted(CRYPTOGRAPHY_MAPPING)
@@ -1236,4 +1271,4 @@ class TLSFeature(OrderedSetExtension[x509.TLSFeature, Union[TLSFeatureType, str]
             return value
         if isinstance(value, str) and value in self.CRYPTOGRAPHY_MAPPING:
             return self.CRYPTOGRAPHY_MAPPING[value]
-        raise ValueError('Unknown value: %s' % value)
+        raise ValueError("Unknown value: %s" % value)
