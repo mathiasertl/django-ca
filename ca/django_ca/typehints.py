@@ -80,6 +80,12 @@ if sys.version_info >= (3, 8):  # pragma: only py>=3.8
     })
 
     class SerializedBasicConstraints(SerializedBasicConstraintsBase, total=False):
+        """Serialized representation of a BasicConstraints extension.
+
+        A value of this type is a dictionary with a ``"ca"`` key with a boolean value. If ``True``, it also
+        has a ``"pathlen"`` value that is either ``None`` or an int.
+        """
+        # pylint: disable=too-few-public-methods; just a TypedDict
         pathlen: int
 
     SerializedAuthorityInformationAccess = TypedDict('AuthorityInformationAccess', {
