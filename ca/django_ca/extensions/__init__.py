@@ -49,7 +49,7 @@ from .extensions import SubjectKeyIdentifier
 from .extensions import TLSFeature
 
 # NOTE: for some reason, extension classes are Extension[Any] in the dictionary.
-KEY_TO_EXTENSION: Dict[str, Type[Extension[Any]]] = {
+KEY_TO_EXTENSION: Dict[str, Type[Extension[Any, Any]]] = {
     AuthorityInformationAccess.key: AuthorityInformationAccess,
     AuthorityKeyIdentifier.key: AuthorityKeyIdentifier,
     BasicConstraints.key: BasicConstraints,
@@ -72,11 +72,11 @@ KEY_TO_EXTENSION: Dict[str, Type[Extension[Any]]] = {
 
 OID_TO_EXTENSION: Dict[
     x509.ObjectIdentifier,
-    Type[Extension[x509.ExtensionType]]
+    Type[Extension[x509.ExtensionType, Any]]
 ] = {e.oid: e for e in KEY_TO_EXTENSION.values()}
 
 
-def get_extension_name(ext: Union[ExtensionType, Extension[x509.ExtensionType]]) -> str:
+def get_extension_name(ext: Union[ExtensionType, Extension[x509.ExtensionType, Any]]) -> str:
     """Function to get the name of an extension.
 
     >>> ext = x509.BasicConstraints(ca=True, path_length=3)

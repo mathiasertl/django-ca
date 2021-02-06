@@ -53,6 +53,7 @@ ExtensionTypeTypeVar = TypeVar('ExtensionTypeTypeVar', bound=x509.ExtensionType)
 """A type variable for a :py:class:`~cg:cryptography.x509.ExtensionType` instance."""
 
 SerializedItem = TypeVar('SerializedItem')
+SerializedValue = TypeVar('SerializedValue')
 
 if TYPE_CHECKING:
     ExtensionTypeVar = x509.Extension[ExtensionTypeTypeVar]
@@ -74,6 +75,22 @@ if sys.version_info >= (3, 8):  # pragma: only py>=3.8
         'value': Union[str, bytes],
     })
 
+    SerializedBasicConstraintsBase = TypedDict('SerializedBasicConstraints', {
+        'ca': bool
+    })
+
+    class SerializedBasicConstraints(SerializedBasicConstraintsBase, total=False):
+        pathlen: int
+
+    SerializedAuthorityInformationAccess = TypedDict('AuthorityInformationAccess', {
+        'issuers': List[str],
+        'ocsp': List[str],
+    }, total=False)
+    SerializedAuthorityKeyIdentifier = TypedDict('SerializedAuthorityKeyIdentifier', {
+        'key_identifier': str,
+        'authority_cert_issuer': List[str],
+        'authority_cert_serial_number': int,
+    }, total=False)
     SerializedCRLDistributionPoints = TypedDict('SerializedCRLDistributionPoints', {
         'critical': bool,
         'value': List[DistributionPointType],
@@ -95,8 +112,9 @@ if sys.version_info >= (3, 8):  # pragma: only py>=3.8
     """A dictionary with four keys: log_id, timestamp, type, version, values are all str."""
 else:  # pragma: only py<3.8
     ParsableSubjectKeyIdentifier = Dict[str, Union[bool, str, bytes]]
+    SerializedAuthorityInformationAccess = SerializedNameConstraints = Dict[str, List[str]]
+    SerializedAuthorityKeyIdentifier = Dict[str, Union[str, int, List[str]]]
     SerializedCRLDistributionPoints = Dict[str, Union[bool, List[Any]]]
-    SerializedNameConstraints = Dict[str, List[str]]
     SerializedSignedCertificateTimestamp = Dict[str, str]
 
 ParsableSignedCertificateTimestamp = Union[

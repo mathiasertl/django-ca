@@ -43,6 +43,9 @@ from cryptography.x509.oid import ExtensionOID
 from ..typehints import ParsableGeneralNameList
 from ..typehints import ParsableSignedCertificateTimestamp
 from ..typehints import ParsableSubjectKeyIdentifier
+from ..typehints import SerializedAuthorityInformationAccess
+from ..typehints import SerializedAuthorityKeyIdentifier
+from ..typehints import SerializedBasicConstraints
 from ..typehints import SerializedNameConstraints
 from ..typehints import SerializedPolicyConstraints
 from ..typehints import SerializedSignedCertificateTimestamp
@@ -58,7 +61,8 @@ from .base import OrderedSetExtension
 from .utils import PolicyInformation
 
 
-class AuthorityInformationAccess(Extension[x509.AuthorityInformationAccess]):
+class AuthorityInformationAccess(Extension[x509.AuthorityInformationAccess,
+                                           SerializedAuthorityInformationAccess]):
     """Class representing a AuthorityInformationAccess extension.
 
     .. seealso::
@@ -155,7 +159,7 @@ class AuthorityInformationAccess(Extension[x509.AuthorityInformationAccess]):
             value = GeneralNameList(value)
         self._ocsp = value
 
-    def serialize_value(self):
+    def serialize_value(self) -> SerializedAuthorityInformationAccess:
         value = {}
         if self._issuers:
             value['issuers'] = self._issuers.serialize()
@@ -164,7 +168,7 @@ class AuthorityInformationAccess(Extension[x509.AuthorityInformationAccess]):
         return value
 
 
-class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier]):
+class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier, SerializedAuthorityKeyIdentifier]):
     """Class representing a AuthorityKeyIdentifier extension.
 
     This extension identifies the signing CA, so it is not usually defined in a profile or instantiated by a
@@ -237,7 +241,7 @@ class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier]):
             authority_cert_issuer=issuer,
             authority_cert_serial_number=self.authority_cert_serial_number)
 
-    def from_dict(self, value):
+    def from_dict(self, value) -> None:
         value = value.get('value', {})
 
         if isinstance(value, (bytes, str)) is True:
@@ -275,8 +279,8 @@ class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier]):
         if value is not None:
             return hex_to_bytes(value)
 
-    def serialize_value(self):
-        value = {}
+    def serialize_value(self) -> SerializedAuthorityKeyIdentifier:
+        value: SerializedAuthorityKeyIdentifier = {}
         if self.key_identifier is not None:
             value['key_identifier'] = bytes_to_hex(self.key_identifier)
         if self.authority_cert_issuer:
@@ -287,7 +291,7 @@ class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier]):
         return value
 
 
-class BasicConstraints(Extension[x509.BasicConstraints]):
+class BasicConstraints(Extension[x509.BasicConstraints, SerializedBasicConstraints]):
     """Class representing a BasicConstraints extension.
 
     This class has the boolean attributes ``ca`` and the attribute ``pathlen``, which is either ``None`` or an
@@ -356,8 +360,8 @@ class BasicConstraints(Extension[x509.BasicConstraints]):
                 raise ValueError('Could not parse pathlen: "%s"' % value) from ex
         return value
 
-    def serialize_value(self):
-        value = {'ca': self.ca}
+    def serialize_value(self) -> SerializedBasicConstraints:
+        value: SerializedBasicConstraints = {'ca': self.ca}
         if self.ca:
             value['pathlen'] = self.pathlen
         return value
@@ -550,7 +554,7 @@ class KeyUsage(OrderedSetExtension[x509.KeyUsage, str]):
         if 'encipher_only' in self.value and 'key_agreement' not in self.value:
             self.value.add('key_agreement')
 
-    def from_extension(self, value):
+    def from_extension(self, value: x509.KeyUsage) -> None:
         self.value = set()
 
         for val in self.KNOWN_VALUES:
@@ -563,11 +567,11 @@ class KeyUsage(OrderedSetExtension[x509.KeyUsage, str]):
                 pass
 
     @property
-    def extension_type(self):
+    def extension_type(self) -> x509.KeyUsage:
         kwargs = {v: (v in self.value) for v in self.KNOWN_VALUES}
         return x509.KeyUsage(**kwargs)
 
-    def parse_value(self, value):
+    def parse_value(self, value: str) -> str:
         if value in self.KNOWN_VALUES:
             return value
         try:
@@ -576,7 +580,7 @@ class KeyUsage(OrderedSetExtension[x509.KeyUsage, str]):
             raise ValueError('Unknown value: %s' % value) from ex
         raise ValueError('Unknown value: %s' % value)  # pragma: no cover - function returns/raises before
 
-    def serialize_item(self, value):
+    def serialize_item(self, value: str) -> str:
         return self._CRYPTOGRAPHY_MAPPING_REVERSED[value]
 
 
@@ -644,7 +648,7 @@ class ExtendedKeyUsage(OrderedSetExtension[x509.ExtendedKeyUsage, str]):
         raise ValueError('Unknown value: %s' % value)
 
 
-class InhibitAnyPolicy(Extension[x509.InhibitAnyPolicy]):
+class InhibitAnyPolicy(Extension[x509.InhibitAnyPolicy, int]):
     """Class representing a InhibitAnyPolicy extension.
 
     Example::
@@ -713,7 +717,7 @@ class InhibitAnyPolicy(Extension[x509.InhibitAnyPolicy]):
         return self.skip_certs
 
 
-class PolicyConstraints(Extension[x509.PolicyConstraints]):
+class PolicyConstraints(Extension[x509.PolicyConstraints, SerializedPolicyConstraints]):
     """Class representing a PolicyConstraints extension.
 
     Example::
@@ -804,7 +808,7 @@ class PolicyConstraints(Extension[x509.PolicyConstraints]):
         return value
 
 
-class NameConstraints(Extension[x509.NameConstraints]):
+class NameConstraints(Extension[x509.NameConstraints, SerializedNameConstraints]):
     """Class representing a NameConstraints extension.
 
     Unlike most other extensions, this extension does not accept a string as value, but you can pass a list
@@ -1116,7 +1120,7 @@ class SubjectAlternativeName(AlternativeNameExtension[x509.SubjectAlternativeNam
         return x509.SubjectAlternativeName(self.value)
 
 
-class SubjectKeyIdentifier(Extension[x509.SubjectKeyIdentifier]):
+class SubjectKeyIdentifier(Extension[x509.SubjectKeyIdentifier, str]):
     """Class representing a SubjectKeyIdentifier extension.
 
     This extension identifies the certificate, so it is not usually defined in a profile or instantiated by a

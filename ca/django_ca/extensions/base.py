@@ -25,6 +25,7 @@ from typing import Collection
 from typing import Generic
 from typing import Hashable
 from typing import List
+from typing import Set
 from typing import Union
 
 from cryptography import x509
@@ -32,15 +33,15 @@ from cryptography import x509
 from ..typehints import DistributionPointType
 from ..typehints import ExtensionType
 from ..typehints import ExtensionTypeTypeVar
-from ..typehints import ExtensionTypeVar
 from ..typehints import SerializedCRLDistributionPoints
 from ..typehints import SerializedItem
+from ..typehints import SerializedValue
 from ..utils import GeneralNameList
 from ..utils import format_general_name
 from .utils import DistributionPoint
 
 
-class Extension(Generic[ExtensionTypeTypeVar], metaclass=ABCMeta):
+class Extension(Generic[ExtensionTypeTypeVar, SerializedValue], metaclass=ABCMeta):
     """Convenience class to handle X509 Extensions.
 
     The value is a ``dict`` as used by the :ref:`CA_PROFILES <settings-ca-profiles>` setting::
@@ -250,7 +251,7 @@ class UnrecognizedExtension(Extension):
         raise ValueError('Cannot serialize an unrecognized extension')
 
 
-class NullExtension(Extension[ExtensionTypeTypeVar]):
+class NullExtension(Extension[ExtensionTypeTypeVar, None]):
     """Base class for extensions that do not have a value.
 
     .. versionchanged:: 1.18.0
@@ -315,7 +316,8 @@ class NullExtension(Extension[ExtensionTypeTypeVar]):
         return
 
 
-class IterableExtension(Extension[ExtensionTypeTypeVar], Generic[ExtensionTypeTypeVar, SerializedItem]):
+class IterableExtension(Extension[ExtensionTypeTypeVar, List[SerializedItem]],
+                        Generic[ExtensionTypeTypeVar, SerializedItem]):
     """Base class for iterable extensions.
 
     Extensions of this class can be used just like any other iterable, e.g.:
@@ -452,6 +454,7 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, SerializedItem
     # pylint: disable=abstract-method; class is itself a base class
 
     name = 'OrderedSetExtension'
+    value: Set
 
     def __and__(self, other):  # & operator == intersection()
         value = self.value & self.parse_iterable(other)
