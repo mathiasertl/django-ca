@@ -17,7 +17,6 @@
 
 import textwrap
 from typing import Any
-from typing import Dict
 from typing import FrozenSet
 from typing import Iterable
 from typing import List
