@@ -56,6 +56,13 @@ SerializedDistributionPoint = TypedDict(
     },
     total=False,
 )
+SerializedDistributionPoints = TypedDict(
+    "SerializedDistributionPoints",
+    {
+        "critical": bool,
+        "value": List[SerializedDistributionPoint],
+    }
+)
 SerializedNoticeReference = Dict[str, Union[str, List[int]]]
 SerializedPolicyQualifier = Union[str, Dict[str, Union[str, SerializedNoticeReference]]]
 SerializedPolicyQualifiers = Optional[List[SerializedPolicyQualifier]]

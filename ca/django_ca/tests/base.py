@@ -71,6 +71,7 @@ from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
 from ..extensions import CRLDistributionPoints
 from ..extensions import SubjectKeyIdentifier
+from ..extensions.base import CRLDistributionPointsBase
 from ..extensions.base import Extension
 from ..extensions.base import IterableExtension
 from ..extensions.base import ListExtension
@@ -779,7 +780,10 @@ VQIDAQAB
             else:
                 ctx[key] = value
 
-            if isinstance(value, IterableExtension):
+            if isinstance(value, CRLDistributionPointsBase):
+                for i, ext_value in enumerate(value.value):
+                    ctx['%s_%s' % (key, i)] = ext_value
+            elif isinstance(value, IterableExtension):
                 for i, ext_value in enumerate(value.serialize_value()):
                     ctx['%s_%s' % (key, i)] = ext_value
 

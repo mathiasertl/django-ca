@@ -647,7 +647,8 @@ HPKP pin: {hpkp}
                                       stdout=BytesIO(), stderr=BytesIO())
             self.assertEqual(stderr, b'')
 
-            self.assertEqual(stdout.decode('utf-8'), output[name].format(**self.get_cert_context(name)))
+            context = self.get_cert_context(name)
+            self.assertEqual(stdout.decode('utf-8'), output[name].format(**context))
 
     @freeze_time(timestamps['everything_valid'])
     def test_der(self):

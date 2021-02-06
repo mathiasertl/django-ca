@@ -500,9 +500,7 @@ class FreshestCRL(CRLDistributionPointsBase[x509.FreshestCRL]):
         return x509.FreshestCRL(distribution_points=[dp.for_extension_type for dp in self.value])
 
 
-class IssuerAlternativeName(
-    AlternativeNameExtension[x509.IssuerAlternativeName, ParsableGeneralNameList, str]
-):
+class IssuerAlternativeName(AlternativeNameExtension[x509.IssuerAlternativeName]):
     """Class representing an Issuer Alternative Name extension.
 
     This extension is usually marked as non-critical.
@@ -1131,9 +1129,7 @@ class PrecertificateSignedCertificateTimestamps(
         }
 
 
-class SubjectAlternativeName(
-    AlternativeNameExtension[x509.SubjectAlternativeName, ParsableGeneralNameList, str]
-):
+class SubjectAlternativeName(AlternativeNameExtension[x509.SubjectAlternativeName]):
     """Class representing an Subject Alternative Name extension.
 
     This extension is usually marked as non-critical.

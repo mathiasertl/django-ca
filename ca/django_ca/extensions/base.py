@@ -37,10 +37,13 @@ from cryptography import x509
 from ..typehints import ExtensionType
 from ..typehints import ExtensionTypeTypeVar
 from ..typehints import ParsableDistributionPoint
+from ..typehints import ParsableGeneralNameList
+from ..typehints import ParsableGeneralName
 from ..typehints import ParsableItem
 from ..typehints import ParsableNullExtension
 from ..typehints import ParsableValue
 from ..typehints import SerializedDistributionPoint
+from ..typehints import SerializedDistributionPoints
 from ..typehints import SerializedItem
 from ..typehints import SerializedValue
 from ..typehints import UnrecognizedExtensionType
@@ -602,7 +605,7 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, 
             self.value.update(self.parse_iterable(elem))
 
 
-class AlternativeNameExtension(ListExtension[ExtensionTypeTypeVar, ParsableItem, SerializedItem]):
+class AlternativeNameExtension(ListExtension[ExtensionTypeTypeVar, ParsableGeneralName, str]):
     """Base class for extensions that contain a list of general names.
 
     This class also allows you to pass :py:class:`~cg:cryptography.x509.GeneralName` instances::
@@ -619,7 +622,7 @@ class AlternativeNameExtension(ListExtension[ExtensionTypeTypeVar, ParsableItem,
 
     value: GeneralNameList
 
-    def from_dict(self, value):
+    def from_dict(self, value: ParsableGeneralNameList) -> None:
         if isinstance(value, GeneralNameList):
             self.value = value
         elif value is None:
@@ -627,10 +630,10 @@ class AlternativeNameExtension(ListExtension[ExtensionTypeTypeVar, ParsableItem,
         else:
             self.value = GeneralNameList(value)
 
-    def from_extension(self, value):
+    def from_extension(self, value: ExtensionTypeTypeVar) -> None:
         self.value = GeneralNameList(value)
 
-    def serialize_item(self, value):
+    def serialize_item(self, value: x509.GeneralName) -> str:
         return format_general_name(value)
 
 
@@ -667,5 +670,8 @@ class CRLDistributionPointsBase(
         # Overwritten so that we can use repr() of utils.DistributionPoint
         return '[%s]' % ', '.join([repr(v) for v in self.value])
 
-    def serialize_item(self, value: DistributionPoint) -> SerializedDistributionPoint:
-        return value.serialize()
+    def serialize(self) -> SerializedDistributionPoints:
+        return {
+            "value": [dp.serialize() for dp in self.value],
+            "critical": self.critical,
+        }
