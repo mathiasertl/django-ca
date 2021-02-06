@@ -53,7 +53,10 @@ ExtensionTypeTypeVar = TypeVar('ExtensionTypeTypeVar', bound=x509.ExtensionType)
 """A type variable for a :py:class:`~cg:cryptography.x509.ExtensionType` instance."""
 
 SerializedItem = TypeVar('SerializedItem')
+"""TypeVar representing a serialized item for an iterable extension."""
+
 SerializedValue = TypeVar('SerializedValue')
+"""TypeVar representing a serialized value for an extension."""
 
 if TYPE_CHECKING:
     ExtensionTypeVar = x509.Extension[ExtensionTypeTypeVar]
@@ -88,7 +91,7 @@ if sys.version_info >= (3, 8):  # pragma: only py>=3.8
         # pylint: disable=too-few-public-methods; just a TypedDict
         pathlen: int
 
-    SerializedAuthorityInformationAccess = TypedDict('AuthorityInformationAccess', {
+    SerializedAuthorityInformationAccess = TypedDict('SerializedAuthorityInformationAccess', {
         'issuers': List[str],
         'ocsp': List[str],
     }, total=False)

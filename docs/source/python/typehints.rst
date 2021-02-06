@@ -4,3 +4,4 @@
 
 .. automodule:: django_ca.typehints
    :members:
+   :undoc-members:
