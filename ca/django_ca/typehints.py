@@ -84,7 +84,7 @@ if sys.version_info >= (3, 8):  # pragma: only py>=3.8
     from typing import SupportsIndex as SupportsIndex  # pylint: disable=useless-import-alias
     from typing import TypedDict
 
-    BasicConstraintsBase = TypedDict("SerializedBasicConstraintsBase", {"ca": bool})
+    BasicConstraintsBase = TypedDict("BasicConstraintsBase", {"ca": bool})
 
     class ParsableBasicConstraints(BasicConstraintsBase, total=False):
         """Serialized representation of a BasicConstraints extension.
@@ -116,7 +116,7 @@ if sys.version_info >= (3, 8):  # pragma: only py>=3.8
         """
 
         # pylint: disable=too-few-public-methods; just a TypedDict
-        pathlen: int
+        pathlen: Optional[int]
 
     SerializedAuthorityInformationAccess = TypedDict(
         "SerializedAuthorityInformationAccess",
@@ -176,7 +176,7 @@ else:  # pragma: only py<3.8
 
     SerializedAuthorityInformationAccess = SerializedNameConstraints = Dict[str, List[str]]
     SerializedAuthorityKeyIdentifier = Dict[str, Union[str, int, List[str]]]
-    SerializedBasicConstraints = Dict[str, Union[bool, str, None]]
+    SerializedBasicConstraints = ParsableBasicConstraints = Dict[str, Union[bool, str, None]]
     SerializedCRLDistributionPoints = Dict[str, Union[bool, List[Any]]]
     SerializedPolicyConstraints = Dict[str, int]
     SerializedSignedCertificateTimestamp = Dict[str, str]

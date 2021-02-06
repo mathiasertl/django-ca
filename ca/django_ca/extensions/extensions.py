@@ -372,7 +372,7 @@ class BasicConstraints(Extension[x509.BasicConstraints,
 
     def serialize_value(self) -> SerializedBasicConstraints:
         value: SerializedBasicConstraints = {'ca': self.ca}
-        if self.ca and isinstance(self.pathlen, int):
+        if self.ca:
             value['pathlen'] = self.pathlen
         return value
 
