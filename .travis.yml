@@ -46,6 +46,8 @@ jobs:
         - pip install -r requirements/requirements-libs.txt
         - pip install -r requirements/requirements-test.txt
         - pip install -r requirements/requirements-lint.txt
+        # pylint throws import-error, otherwise, but only on Travis
+        - pip install typing-extensions
         - pylint --disable=fixme ca/django_ca/
     - name: "Run mypy"
       script:
