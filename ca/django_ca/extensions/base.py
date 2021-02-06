@@ -37,8 +37,8 @@ from cryptography import x509
 from ..typehints import ExtensionType
 from ..typehints import ExtensionTypeTypeVar
 from ..typehints import ParsableDistributionPoint
-from ..typehints import ParsableGeneralNameList
 from ..typehints import ParsableGeneralName
+from ..typehints import ParsableGeneralNameList
 from ..typehints import ParsableItem
 from ..typehints import ParsableNullExtension
 from ..typehints import ParsableValue
