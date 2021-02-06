@@ -549,9 +549,7 @@ class KeyUsage(OrderedSetExtension[x509.KeyUsage, ParsableValueDummy, str]):
         ('nonRepudiation', 'nonRepudiation'),
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
+    def _test_value(self) -> None:
         # decipherOnly only makes sense if keyAgreement is True
         if 'decipher_only' in self.value and 'key_agreement' not in self.value:
             self.value.add('key_agreement')
