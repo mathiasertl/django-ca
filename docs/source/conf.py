@@ -452,6 +452,7 @@ lexers['shell-session'] = BashSessionLexer()
 qualname_overrides = {
     'ExtensionTypeTypeVar': 'cg:cryptography.x509.ExtensionType',
     "SerializedItem": ":py:data:`django_ca.typehints.SerializedItem`",
+    "SerializedValue": ":py:data:`django_ca.typehints.SerializedValue`",
     'Union': 'python:typing.Union',
     'cryptography.hazmat._oid.ObjectIdentifier': 'cg:cryptography.x509.ObjectIdentifier',
     'cryptography.hazmat.primitives.serialization.base.Encoding':
